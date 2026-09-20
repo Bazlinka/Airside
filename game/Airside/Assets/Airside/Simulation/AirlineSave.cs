@@ -38,6 +38,12 @@ namespace Airside.Simulation
         public string HomeCode;
         public long ClockSeconds;
         public long RunwayFreeAtSeconds;
+        /// <summary>
+        /// When the 12/30 strip is free. 0 on pre-dual-strip saves means "same as
+        /// <see cref="RunwayFreeAtSeconds"/> was historically" — load treats 0 as
+        /// immediately free so the cross strip is not stuck behind the old mutex.
+        /// </summary>
+        public long CrossRunwayFreeAtSeconds;
         public long TotalEvents;
         public uint RandomState;
         public List<AirlineRecord> Airlines = new();
@@ -114,6 +120,7 @@ namespace Airside.Simulation
                 HomeCode = operations.Home.Code,
                 ClockSeconds = operations.ProcessedTo.ElapsedSeconds,
                 RunwayFreeAtSeconds = operations.RunwayFreeAt.ElapsedSeconds,
+                CrossRunwayFreeAtSeconds = operations.CrossRunwayFreeAt.ElapsedSeconds,
                 TotalEvents = operations.TotalEvents,
                 RandomState = operations.RandomState,
                 CareerFunds = operations.CareerState.Funds,
@@ -270,15 +277,22 @@ namespace Airside.Simulation
                         : null,
                     record.CompletedTrips);
                 if (data.Version >= 5)
-                    operations.RestoreMovementData(registration,
-                        Enum.TryParse(record.AssignedRunway, out RunwayDirection runway)
-                            ? runway : RunwayDirection.Runway05,
-                        record.WentAroundThisTrip);
+                {
+                    if (string.IsNullOrEmpty(record.AssignedRunway)
+                        || !Enum.TryParse(record.AssignedRunway, out RunwayDirection runway))
+                        throw new FormatException(
+                            $"Unknown assigned runway '{record.AssignedRunway}' for {registration}.");
+                    operations.RestoreMovementData(registration, runway, record.WentAroundThisTrip);
+                }
                 if (data.Version >= 8 && record.HasPrepStart)
                     operations.RestorePrepData(registration, new SimulationTime(record.PrepStartedAt));
             }
 
-            operations.RestoreTower(new SimulationTime(data.RunwayFreeAtSeconds), data.TotalEvents);
+            operations.RestoreTower(
+                new SimulationTime(data.RunwayFreeAtSeconds),
+                new SimulationTime(data.CrossRunwayFreeAtSeconds),
+                data.TotalEvents);
+            operations.ReconcileRunwayFreeAt();
             operations.Clock = ClockFor(data);
             if (data.Version <= 4)
             {

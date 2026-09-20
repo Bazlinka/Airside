@@ -161,15 +161,21 @@ namespace Airside.Presentation
         /// <summary>Expected trip timeline if pushed back at <paramref name="departAt"/>, before any runway queue.</summary>
         public static PlannedTrip Estimate(FleetAircraft aircraft, long airborneSeconds, SimulationTime departAt)
         {
-            // The untyped overloads default to an ATR 42, so every aircraft's departure
-            // preview showed the same taxi/takeoff time regardless of what was actually
-            // parked on the stand — a 787 planned exactly like an ATR 42.
-            var airborne = departAt.Advance(AirlineOperations.TaxiOutSecondsFrom(aircraft.Stand, aircraft.Type)
-                + AirlineOperations.TakeoffRunwaySecondsFor(aircraft.Type));
+            // Use the strip this type actually flies: jets on 05/23, regionals on 12/30.
+            // Untyped runway defaults used to show every departure as if it taxied to 05.
+            var runway = PlannedRunway(aircraft);
+            var airborne = departAt.Advance(AirlineOperations.TaxiOutSecondsFrom(aircraft.Stand, aircraft.Type, runway)
+                + AirlineOperations.TakeoffRunwaySecondsFor(aircraft.Type, runway));
             var arrive = airborne.Advance(airborneSeconds);
             var leave = arrive.Advance(AirlineOperations.DestinationTurnaroundSeconds);
             var back = leave.Advance(airborneSeconds);
             return new PlannedTrip(departAt, airborne, arrive, leave, back);
+        }
+
+        private static RunwayDirection PlannedRunway(FleetAircraft aircraft)
+        {
+            var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
+            return RunwayWeather.Select(new SurfaceWind(0, 0), aircraft.Type, dest, DestinationCatalogue.Adelaide);
         }
 
         /// <summary>A parked player aircraft with nothing booked, other than <paramref name="excludeId"/>.</summary>
@@ -194,7 +200,7 @@ namespace Airside.Presentation
             if (endsAt.CompareTo(now) < 0)
                 endsAt = now;
             var turnaround = AirlineOperations.DestinationTurnaroundSeconds;
-            var takeoffRunwaySeconds = AirlineOperations.TakeoffRunwaySecondsFor(aircraft.Type);
+            var takeoffRunwaySeconds = AirlineOperations.TakeoffRunwaySecondsFor(aircraft.Type, PlannedRunway(aircraft));
             return aircraft.State switch
             {
                 FleetState.AtStand => null,

@@ -86,11 +86,53 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Operations_DayStripShowsWhereWeAreInTheOperatingDay()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            ops.AddMissingRegionalCarriers();
+            ops.AddMissingTerminalOperators();
+            // Mid-afternoon Adelaide so the caret sits past the morning bank.
+            var afternoon = ops.Clock.AtLocal(ops.Clock.LocalAt(clock.Now).Date.AddHours(15));
+            clock.Set(afternoon);
+            ops.Update();
+
+            var model = new OperationsWorkspaceModel();
+            model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
+
+            Assert.That(model.DayProgress01, Is.InRange(0.45f, 0.75f),
+                "15:00 should sit in the second half of a 06–21 operating day");
+            Assert.That(model.DayCaption, Does.Contain("done"));
+            Assert.That(model.DayCaption, Does.Contain("to go"));
+            Assert.That(model.DayDoneCount + model.DayActiveCount + model.DayUpcomingCount,
+                Is.GreaterThan(10));
+            Assert.That(model.Subtitle, Does.Contain("/"),
+                "subtitle names both active strip ends");
+            Assert.That(model.DayDensity.Count, Is.EqualTo(
+                AirlineOperations.AiLastDepartureHour - AirlineOperations.AiFirstDepartureHour + 1));
+        }
+
+        [Test]
+        public void Operations_IdleParkedAircraftStayOffTheDeparturesBoard()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            clock.Set(new SimulationTime(60));
+            ops.Update();
+
+            var model = new OperationsWorkspaceModel();
+            model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
+
+            Assert.That(model.Rows.Any(r => r.Registration == plane.Registration), Is.False,
+                "an idle stand with no booking is not a departure");
+        }
+
+        [Test]
         public void Operations_SelectionCarriesTheRealPrepAndTheOneActionThatFits()
         {
             var (clock, ops, plane) = HudTestAirline.Create();
-            Assert.That(ops.ScheduleDeparture(plane, HudTestAirline.Code("KGC"), new SimulationTime(3600)).Accepted, Is.True);
-            clock.Set(new SimulationTime(DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds + 60));
+            var departAt = new SimulationTime(DeparturePrep.TotalSeconds(plane.Type) + 60);
+            Assert.That(ops.ScheduleDeparture(plane, HudTestAirline.Code("KGC"), departAt).Accepted, Is.True);
+            clock.Set(new SimulationTime(plane.PrepStartedAt!.Value.ElapsedSeconds
+                + DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds + 60));
             ops.Update();
 
             var model = new OperationsWorkspaceModel();
@@ -102,6 +144,26 @@ namespace Airside.Tests
             Assert.That(model.SelectedPrep[2].Label, Does.StartWith("Boarding "));
             Assert.That(model.PrimaryAction, Is.EqualTo(AircraftHudAction.ViewPlan));
             Assert.That(model.CanCancel, Is.True);
+        }
+
+        [Test]
+        public void Operations_FirstActiveRowSkipsMutedPastMovements()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            ops.AddMissingRegionalCarriers();
+            ops.AddMissingTerminalOperators();
+            var afternoon = ops.Clock.AtLocal(ops.Clock.LocalAt(clock.Now).Date.AddHours(15));
+            clock.Set(afternoon);
+            ops.Update();
+
+            var model = new OperationsWorkspaceModel();
+            model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
+
+            Assert.That(model.FirstActiveRowIndex, Is.GreaterThan(0),
+                "afternoon opens past the morning Departed rows");
+            Assert.That(model.Rows[model.FirstActiveRowIndex].IsPast, Is.False);
+            if (model.FirstActiveRowIndex > 0)
+                Assert.That(model.Rows[model.FirstActiveRowIndex - 1].IsPast, Is.True);
         }
 
         [Test]
@@ -139,6 +201,9 @@ namespace Airside.Tests
                 Assert.That(layout.Board.Right, Is.LessThanOrEqualTo(surface.Right + 0.01f), label);
                 Assert.That(layout.Board.Overlaps(layout.Footer), Is.False, label);
                 Assert.That(layout.Board.Overlaps(layout.Header), Is.False, label);
+                Assert.That(layout.DayStrip.Overlaps(layout.Header), Is.False, label);
+                Assert.That(layout.DayStrip.Overlaps(layout.Board), Is.False, label);
+                Assert.That(layout.DayStrip.Height, Is.EqualTo(OperationsWorkspaceLayout.DayStripHeight), label);
                 if (!layout.Detail.IsEmpty)
                 {
                     Assert.That(layout.Board.Overlaps(layout.Detail), Is.False, label);

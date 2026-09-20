@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Airside.Simulation;
 
 namespace Airside.Presentation
 {
@@ -95,8 +96,23 @@ namespace Airside.Presentation
                    && onField;
         }
 
+        /// <summary>05-frame helper kept for tests; prefer the runway-aware overload.</summary>
         public static bool ApproachIsCloseEnough(float aircraftWorldX, float landingThresholdWorldX) =>
             aircraftWorldX >= landingThresholdWorldX - ApproachSelectableDistanceFromThresholdMetres;
+
+        /// <summary>
+        /// True when the aircraft is within selectable range of the assigned runway's
+        /// landing threshold in world XZ (not raw 05-frame X).
+        /// </summary>
+        public static bool ApproachIsCloseEnough(float worldX, float worldZ, RunwayDirection runway)
+        {
+            RunwayFrame.ToWorld(runway, CircuitProfile.WestThresholdX, 0f, 0f,
+                out var thresholdX, out _, out var thresholdZ);
+            var dx = worldX - thresholdX;
+            var dz = worldZ - thresholdZ;
+            return dx * dx + dz * dz
+                   <= ApproachSelectableDistanceFromThresholdMetres * ApproachSelectableDistanceFromThresholdMetres;
+        }
     }
 
     /// <summary>One raycast candidate for <see cref="AircraftPickRouting.ResolveNearest"/>.</summary>

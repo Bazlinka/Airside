@@ -127,7 +127,8 @@ namespace Airside.Presentation
                 // used to be drawn on the same spot, one inside the other.
                 case FleetGroundLeg.HoldingShort:
                     return AdelaideGround.HoldingShortPose(aircraft.DepartureStand,
-                        FleetVisual.QueueSlot(_operations.Fleet, aircraft), aircraft.AssignedRunway);
+                        FleetVisual.QueueSlot(_operations.Fleet, aircraft), aircraft.AssignedRunway,
+                        aircraft.Type);
                 case FleetGroundLeg.AwaitingStand:
                     return AdelaideGround.AwaitingPose(FleetVisual.QueueSlot(_operations.Fleet, aircraft),
                         aircraft.Type, aircraft.AssignedRunway);
@@ -544,8 +545,7 @@ namespace Airside.Presentation
                 if (view != followed
                     && i < VisualFlights.Count
                     && VisualFlights[i].Operation.Phase == AircraftPhase.Approach
-                    && !AircraftPickRouting.ApproachIsCloseEnough(
-                        view.position.x, AirsideFlightPath.WestThresholdX))
+                    && !ApproachCloseEnough(VisualFlights[i], view.position))
                     continue;
                 _fleetActiveViews.Add(view);
                 if (i < VisualFlights.Count)
@@ -560,6 +560,15 @@ namespace Airside.Presentation
             EnsureFleetPickables(views);
             _fleetFollowTargets = _fleetActiveViews.ToArray();
             _cameraController.SetFollowTargets(_fleetFollowTargets);
+        }
+
+        private bool ApproachCloseEnough(CommercialFlight flight, Vector3 worldPosition)
+        {
+            if (_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
+                return AircraftPickRouting.ApproachIsCloseEnough(
+                    worldPosition.x, worldPosition.z, aircraft.AssignedRunway);
+            return AircraftPickRouting.ApproachIsCloseEnough(
+                worldPosition.x, AirsideFlightPath.WestThresholdX);
         }
 
         private static bool SameTransforms(List<Transform> current, Transform[] previous)

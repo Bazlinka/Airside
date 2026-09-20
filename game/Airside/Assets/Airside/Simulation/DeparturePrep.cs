@@ -90,6 +90,9 @@ namespace Airside.Simulation
             if (aircraft == null || !aircraft.Scheduled.HasValue)
                 return new DeparturePrepStatus(DeparturePrepStage.Idle, 0, true, "No departure planned",
                     0, 0, 0, 0);
+            if (aircraft.Scheduled.Value.Cancelled)
+                return new DeparturePrepStatus(DeparturePrepStage.Idle, 0, true, "Cancelled",
+                    0, 0, 0, 0);
             if (!aircraft.Airline.IsPlayer)
                 return new DeparturePrepStatus(DeparturePrepStage.Ready, 1, true, "Ready",
                     1, 1, 1, 0);

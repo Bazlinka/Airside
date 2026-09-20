@@ -130,6 +130,6 @@ namespace Airside.Tests
             string.Join("\n", ops.Fleet.Select(a =>
                 $"{a.Registration} {a.State} {a.StateStartedAt.ElapsedSeconds} {a.Stand.Value} {a.CurrentDestination?.Code} " +
                 $"{a.Scheduled?.Destination.Code}@{a.Scheduled?.DepartAt.ElapsedSeconds} {a.CompletedTrips}"))
-            + $"\nrunway {ops.RunwayFreeAt.ElapsedSeconds} rng {ops.RandomState}";
+            + $"\nrunway {ops.RunwayFreeAt.ElapsedSeconds}/{ops.CrossRunwayFreeAt.ElapsedSeconds} rng {ops.RandomState}";
     }
 }

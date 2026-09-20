@@ -68,6 +68,7 @@ namespace Airside.Presentation
         private readonly List<OperationsEventLine> _eventHistory = new();
         private RouteMapFilter _mapFilter = RouteMapFilter.Available;
         private int _boardScrollRow;
+        private bool _boardScrollSnapToDay = true;
         private int _rosterScrollRow;
         /// <summary>The player aircraft the flight planner is planning.</summary>
         private FleetAircraft _mapAircraft;
@@ -1021,14 +1022,22 @@ namespace Airside.Presentation
                     : $"On {StandNames.Display(aircraft.Stand)} · no flight planned",
                 FleetState.TaxiOut => $"Taxiing to runway {RunwayWeather.Label(aircraft.AssignedRunway)} · {dest}",
                 FleetState.HoldingShort => $"Holding {RunwayWeather.Label(aircraft.AssignedRunway)} · {dest}{wait}",
-                FleetState.TakingOff => $"Departing {RunwayWeather.Label(aircraft.AssignedRunway)} for {dest}",
+                FleetState.TakingOff => FlightBoard.PhaseLabel(aircraft, _clock.Now) == "Lining up"
+                    ? $"Lining up {RunwayWeather.Label(aircraft.AssignedRunway)} for {dest}"
+                    : $"Departing {RunwayWeather.Label(aircraft.AssignedRunway)} for {dest}",
                 FleetState.Outbound => $"Departed for {dest}{EnrouteAltitudeText(aircraft)} · lands {ends}",
                 FleetState.AtDestination => $"Away at {dest} · departs {ends}",
                 FleetState.Inbound => $"Inbound from {dest}{EnrouteAltitudeText(aircraft)} · {ends}",
                 FleetState.HoldingForLanding =>
                     $"On final {ApproachSide(aircraft.AssignedRunway)} for runway {RunwayWeather.Label(aircraft.AssignedRunway)}{wait}",
                 FleetState.GoAround => $"Going around, runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
-                FleetState.Landing => $"Landing runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
+                FleetState.Landing => FlightBoard.PhaseLabel(aircraft, _clock.Now) switch
+                {
+                    "Go-around" => $"Going around, runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
+                    "Vacating" => $"Vacating runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
+                    "On final" => $"On final for runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
+                    _ => $"Landing runway {RunwayWeather.Label(aircraft.AssignedRunway)}"
+                },
                 FleetState.AwaitingStand => $"Landed · parking{wait}",
                 FleetState.TaxiIn => $"Taxiing to {StandNames.Display(aircraft.Stand)}",
                 _ => aircraft.State.ToString()
@@ -1131,6 +1140,8 @@ namespace Airside.Presentation
         private void SetWorkspace(HudWorkspace target)
         {
             _activeWorkspace = _activeWorkspace == target ? HudWorkspace.None : target;
+            if (_activeWorkspace == HudWorkspace.Operations)
+                _boardScrollSnapToDay = true;
             if (_activeWorkspace != HudWorkspace.None)
                 _devToolsOpen = false;
             PlayUiClick();
@@ -1718,6 +1729,12 @@ namespace Airside.Presentation
                 _selectedAircraftId, _eventHistory);
 
             var layout = OperationsWorkspaceLayout.Create(surface, _operationsWorkspace.Attention.Count);
+            if (_boardScrollSnapToDay)
+            {
+                _boardScrollRow = _operationsWorkspace.FirstActiveRowIndex;
+                _boardScrollSnapToDay = false;
+            }
+
             _boardScrollRow = ScrollRows(_boardScrollRow, layout.Board,
                 _operationsWorkspace.Rows.Count - layout.VisibleRows);
             OperationsWorkspacePainter.Paint(_workspaceDrawList, _operationsWorkspace, layout,
@@ -1823,12 +1840,12 @@ namespace Airside.Presentation
                     return;
                 case HudAction.TabDepartures:
                     _flightsShowArrivals = false;
-                    _boardScrollRow = 0;
+                    _boardScrollSnapToDay = true;
                     PlayUiClick();
                     return;
                 case HudAction.TabArrivals:
                     _flightsShowArrivals = true;
-                    _boardScrollRow = 0;
+                    _boardScrollSnapToDay = true;
                     PlayUiClick();
                     return;
                 case HudAction.FilterAvailable:

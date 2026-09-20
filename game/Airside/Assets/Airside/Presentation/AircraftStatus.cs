@@ -89,6 +89,8 @@ namespace Airside.Presentation
         {
             if (aircraft == null)
                 return string.Empty;
+            if (aircraft.Scheduled is { Cancelled: true } && aircraft.State == FleetState.AtStand)
+                return "cancelled";
             if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue && aircraft.Airline.IsPlayer)
             {
                 var prep = DeparturePrep.For(aircraft, now);
@@ -102,9 +104,15 @@ namespace Airside.Presentation
                 FleetState.HoldingShort => "holding",
                 FleetState.TakingOff => "takeoff",
                 FleetState.HoldingForLanding => "final",
-                FleetState.Landing => "landing",
+                FleetState.GoAround => "go-around",
+                FleetState.Landing => aircraft.WentAroundThisTrip
+                    && AirlineOperations.IsMissedApproachLanding(aircraft)
+                    ? "go-around"
+                    : "landing",
                 FleetState.AwaitingStand => "needs stand",
                 FleetState.TaxiIn => "taxiing in",
+                FleetState.Inbound => "inbound",
+                FleetState.Outbound => "outbound",
                 _ => "away"
             };
         }

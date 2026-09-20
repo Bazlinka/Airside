@@ -84,18 +84,16 @@ namespace Airside.Simulation
                 {
                     var approach = performance.ApproachSeconds;
                     var landing = performance.LandingSeconds;
-                    // A missed approach publishes a full final from way out. A normal
-                    // landing has already been sitting on short final, so restarting
-                    // the 4 km inbound was a teleport and then a crawl.
-                    if (aircraft.WentAroundThisTrip)
+                    // Missed approach: keep the aircraft on the short final it was already
+                    // holding, then hand off to GoAround — do not restart a 4 km inbound.
+                    if (aircraft.WentAroundThisTrip && AirlineOperations.IsMissedApproachLanding(aircraft))
                     {
-                        if (elapsed < approach)
-                            return Air(AircraftPhase.Approach, start);
-                        if (elapsed < approach + landing)
-                            return Air(AircraftPhase.Landing, start.Advance(approach));
-                        var goVacateAt = start.Advance(approach + landing);
-                        return Ground(AircraftPhase.TaxiIn, goVacateAt, FleetGroundLeg.Vacate, goVacateAt,
-                            AdelaideGround.VacateFor(aircraft.Type, aircraft.AssignedRunway).WholeSeconds);
+                        var missedRemaining = ApproachHold.RemainingFinalSeconds(approach, aircraft.Registration);
+                        var missedBackdate = approach - missedRemaining;
+                        var missedStarted = start.ElapsedSeconds >= missedBackdate
+                            ? start.Advance(-missedBackdate)
+                            : new SimulationTime(0);
+                        return Air(AircraftPhase.Approach, missedStarted);
                     }
 
                     var remaining = ApproachHold.RemainingFinalSeconds(approach, aircraft.Registration);
@@ -134,18 +132,23 @@ namespace Airside.Simulation
 
         /// <summary>
         /// Place in the queue for aircraft sharing <paramref name="aircraft"/>'s waiting state
-        /// (holding short, or waiting for a stand): 0 for whoever got there first. Ties break on
-        /// registration so every frame and every load draws the same order.
+        /// and assigned runway (holding short, or waiting for a stand): 0 for whoever got
+        /// there first. Ties break on registration so every frame and every load draws the
+        /// same order. Different strips do not share a queue.
         /// </summary>
         public static int QueueSlot(IReadOnlyList<FleetAircraft> fleet, FleetAircraft aircraft)
         {
             if (fleet == null || aircraft == null)
                 return 0;
             var slot = 0;
+            var shareStrip = aircraft.State != FleetState.AwaitingStand;
             for (var i = 0; i < fleet.Count; i++)
             {
                 var other = fleet[i];
                 if (ReferenceEquals(other, aircraft) || other.State != aircraft.State)
+                    continue;
+                // AwaitingStand shares E2 — do not let each strip claim slot 0 on the same point.
+                if (shareStrip && other.AssignedRunway != aircraft.AssignedRunway)
                     continue;
                 var order = other.StateStartedAt.CompareTo(aircraft.StateStartedAt);
                 if (order < 0 || order == 0

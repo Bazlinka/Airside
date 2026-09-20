@@ -97,6 +97,26 @@ namespace Airside.Presentation
                 return prep.Ready ? "Ready" : prep.Label;
             }
 
+            if (aircraft != null && aircraft.State == FleetState.Landing)
+            {
+                if (aircraft.WentAroundThisTrip && AirlineOperations.IsMissedApproachLanding(aircraft))
+                    return "Go-around";
+                var visual = FleetVisual.For(aircraft, now);
+                if (visual.Leg == FleetGroundLeg.Vacate)
+                    return "Vacating";
+                if (visual.Phase == AircraftPhase.Landing)
+                    return "Landing";
+                return "On final";
+            }
+
+            if (aircraft != null && aircraft.State == FleetState.TakingOff)
+            {
+                var visual = FleetVisual.For(aircraft, now);
+                if (visual.Leg == FleetGroundLeg.Lineup)
+                    return "Lining up";
+                return "Departing";
+            }
+
             return PhaseLabel(aircraft);
         }
 
@@ -146,9 +166,9 @@ namespace Airside.Presentation
                 FleetState.Inbound => "ETA",
                 FleetState.HoldingForLanding => "ON FINAL",
                 FleetState.GoAround => "RE-SEQUENCE",
-                FleetState.Landing => "LANDED",
+                FleetState.Landing => "ON RUNWAY",
                 FleetState.AwaitingStand => "WAIT SINCE",
-                FleetState.TaxiIn => "AT STAND",
+                FleetState.TaxiIn => "ETA STAND",
                 _ => "NEXT"
             };
         }
@@ -156,14 +176,41 @@ namespace Airside.Presentation
         public static string TimeMeaning(FleetAircraft aircraft, SimulationTime now)
         {
             var delay = DepartureDelayMinutes(aircraft, now);
-            return delay > 0 ? $"LATE +{delay} MIN" : TimeMeaning(aircraft);
+            if (delay > 0)
+                return $"LATE +{delay} MIN";
+            if (aircraft != null && aircraft.State == FleetState.Landing)
+            {
+                if (aircraft.WentAroundThisTrip && AirlineOperations.IsMissedApproachLanding(aircraft))
+                    return "GO-AROUND";
+                var visual = FleetVisual.For(aircraft, now);
+                if (visual.Leg == FleetGroundLeg.Vacate)
+                    return "VACATING";
+                if (visual.Phase == AircraftPhase.Landing)
+                    return "TOUCHDOWN";
+                return "ON FINAL";
+            }
+
+            if (aircraft != null && aircraft.State == FleetState.TakingOff)
+            {
+                var visual = FleetVisual.For(aircraft, now);
+                return visual.Leg == FleetGroundLeg.Lineup ? "LINE UP" : "DEPARTING";
+            }
+
+            return TimeMeaning(aircraft);
         }
 
         public static bool IsArrival(FleetAircraft aircraft) => aircraft != null && aircraft.State is
-            FleetState.AtDestination or FleetState.Inbound or FleetState.HoldingForLanding or FleetState.GoAround
+            FleetState.Inbound or FleetState.HoldingForLanding or FleetState.GoAround
             or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn;
 
-        public static bool IsDeparture(FleetAircraft aircraft) => aircraft != null && !IsArrival(aircraft);
+        /// <summary>
+        /// Outbound board rows: moving outbound, or parked with a booked departure.
+        /// Idle aircraft with nothing scheduled stay off the FIDS.
+        /// </summary>
+        public static bool IsDeparture(FleetAircraft aircraft) => aircraft != null && (
+            aircraft.State is FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff
+                or FleetState.Outbound
+            || aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue);
 
         public static string GateText(FleetAircraft aircraft)
         {

@@ -156,8 +156,7 @@ namespace Airside.Simulation
                           || Owns(ownedTypes, AircraftType.AirbusA350900)
                           || Owns(ownedTypes, AircraftType.Boeing78710);
             var ownsWide = Owns(ownedTypes, AircraftType.AirbusA350900)
-                           || Owns(ownedTypes, AircraftType.Boeing78710)
-                           || Owns(ownedTypes, AircraftType.AirbusA321Neo);
+                           || Owns(ownedTypes, AircraftType.Boeing78710);
 
             if (Tier < OperatingTier.Regional
                 && CompletedPlayerRotations >= 8 && Reliability >= 70)

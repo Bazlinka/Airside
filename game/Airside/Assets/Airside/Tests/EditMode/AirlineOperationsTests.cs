@@ -96,7 +96,8 @@ namespace Airside.Tests
 
             RunTo(clock, ops, 600);
             Assert.That(plane.State, Is.EqualTo(FleetState.TaxiOut));
-            Assert.That(ops.IsStandFree(AirlineOperations.AdelaideRegionalBays[0]), Is.True, "stand released at pushback");
+            Assert.That(ops.IsStandFree(AirlineOperations.AdelaideRegionalBays[0]), Is.False,
+                "bay stays held through taxi-out so a landing cannot take it mid-push");
 
             var takeoffAt = plane.StateEndsAt.Value.ElapsedSeconds;
             RunTo(clock, ops, takeoffAt);
@@ -312,8 +313,14 @@ namespace Airside.Tests
                 clock.Set(next.Value);
                 ops.Update();
 
-                var onRunway = ops.Fleet.Count(a => a.State is FleetState.TakingOff or FleetState.Landing);
-                Assert.That(onRunway, Is.LessThanOrEqualTo(1));
+                var mainOnRunway = ops.Fleet.Count(a =>
+                    a.State is FleetState.TakingOff or FleetState.Landing
+                    && RunwayWeather.IsMainRunway(a.AssignedRunway));
+                var crossOnRunway = ops.Fleet.Count(a =>
+                    a.State is FleetState.TakingOff or FleetState.Landing
+                    && !RunwayWeather.IsMainRunway(a.AssignedRunway));
+                Assert.That(mainOnRunway, Is.LessThanOrEqualTo(1));
+                Assert.That(crossOnRunway, Is.LessThanOrEqualTo(1));
                 var held = ops.Fleet.Where(a => a.State is FleetState.AtStand or FleetState.TaxiIn).Select(a => a.Stand).ToList();
                 Assert.That(held.Distinct().Count(), Is.EqualTo(held.Count));
             }

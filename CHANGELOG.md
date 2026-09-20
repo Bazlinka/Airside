@@ -1,5 +1,80 @@
 ## Unreleased
 
+- **Fifteen more Adelaide play fixes.** Cabin doors stay open through
+  boarding; cancelled bookings stay cold and tag as cancelled; windsock
+  follows sim wind; approach pick/follow uses the assigned runway frame;
+  AwaitingStand shares one E2 queue; cross clear-of-runway is longer to
+  reduce exit conflicts; gate lead-in held through hold/takeoff; tower
+  refreshes the live end on clearance; AtDestination off Arrivals;
+  TaxiIn TIME is ETA STAND; holding finals get look-ahead facing; bad
+  saved runways fail restore; DepartureStand required for outbound
+  ground states; empty-stand holding uses the runway hold not bay 50D.
+
+- **12/30 landing and lineup no longer teleport.** Vacate starts at the
+  remapped rollout end; lineup ends at the remapped takeoff start.
+
+- **Arrivals follow the wind, not the away city.** Dest-aligned runway
+  preference stays for departures only. 12/30 go-arounds fly a native
+  cross-strip circuit instead of remapping the 05 racetrack through the
+  terminal.
+
+- **Save mid-vacate frees 12/30 at clear-of-runway.** Delayed day-plan
+  rows mute from EstimatedAt, not ScheduledAt.
+
+- **12/30 frees when clear of the strip.** Vacate still taxis toward E2,
+  but the tower clears the next 12/30 movement after ~280 m off the
+  pavement — not after the full kilometre exit.
+
+- **FIDS names the movement on the field.** Landing reads On final /
+  Landing / Vacating; takeoff reads Lining up / Departing; a missed
+  approach reads Go-around before the circuit starts.
+
+- **Go-around aborts off short final.** Missed approaches no longer
+  teleport 4 km out for a full long final. Rejoin reassigns the live
+  runway end. Both strips reconcile free-at on every save load.
+
+- **Day-plan cover survives a late stand wait.** CoveredBy pins late
+  AwaitingStand / go-around rows to the planned ETA so ghost sky
+  arrivals do not reappear. One live aircraft covers only its nearest
+  same-route slot. Soak assigns fitting stands only.
+
+- **Cathay leaves when the season ends.** Parked CPA frees GATE-18 after
+  ~27 Mar; airborne jets finish the trip first. Prep no longer starts at
+  book time — fuelling begins TotalSeconds before pushback. Rebook
+  recomputes PrepStartedAt; a taken GATE-18 falls back to another gate.
+
+- **Operations opens near now.** Arrivals/Departures snap the scroll to
+  the first live or upcoming row instead of a wall of morning Departed
+  lines. Day-plan stands respect StandFits (no Q400 on walk-outs).
+
+- **International tier needs a real widebody.** A321neo no longer counts
+  as wide. Hold-short poses use the aircraft's own type. Pre-dual-strip
+  saves reconcile the cross-runway free time on load.
+
+- **Operations shows where you are in the day.** A day strip under the
+  header tracks the 06:00–21:00 operating window with a now caret, bank
+  density, and done / live / to-go counts. Past planned rows mute and
+  read Landed or Departed instead of Expected forever.
+
+- **05/23 and 12/30 move in parallel.** The tower keeps a free time per
+  strip, so a regional on 12 no longer waits for a jet wake on 05.
+  Go-arounds only count holders on the same strip.
+
+- **Regional bays stay held through taxi-out.** A landing cannot take
+  the same bay while the departure is still on the apron.
+
+- **Post go-around landings resume from short final.** Only the missed-
+  approach state draws the long inbound; the real landing after that
+  no longer teleports 4 km out.
+
+- **Day-plan rows no longer vanish under the wrong half.** An outbound
+  to Port Lincoln does not suppress the planned arrival from Port
+  Lincoln. Idle parked aircraft stay off the Departures board.
+
+- **Hold queues, planner ETAs and walk-outs match the field.** Queue
+  slots are per runway; trip previews use 12/30 for regionals; AIP
+  walk-outs are SF340-only. The board subtitle names both active ends.
+
 - **Adelaide now has the current Terminal 1 stand map.** Aerobridges
   12L–29 (L and R of the same pier cannot both be occupied), regional
   50A–G, and walk-out 10A–D / 2A all have taxi routes and markings.

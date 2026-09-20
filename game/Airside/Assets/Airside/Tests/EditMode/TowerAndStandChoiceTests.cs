@@ -34,20 +34,28 @@ namespace Airside.Tests
         {
             var method = typeof(AirlineOperations).GetMethod("RestoreAircraft", BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null);
+            var departureStand = AirlineOperations.RequiresDepartureStand(state)
+                ? (stand.Value != null && stand.Value.Length > 0 ? stand
+                    : AirlineOperations.NeedsTerminalGate(type)
+                        ? AirlineOperations.AdelaideTerminalGates[0]
+                        : Bay50D)
+                : default;
             method.Invoke(ops, new object[]
             {
-                registration, airline, type, state, new SimulationTime(startedAt), null, stand, default(StableId),
+                registration, airline, type, state, new SimulationTime(startedAt), null, stand, departureStand,
                 destination, null, 0
             });
             return ops.Fleet[ops.Fleet.Count - 1];
         }
 
-        /// <summary>Runway occupied until <paramref name="seconds"/>, so the tower decides then.</summary>
+        /// <summary>Both strips occupied until <paramref name="seconds"/>, so the tower decides then.</summary>
         private static void RunwayBusyUntil(AirlineOperations ops, long seconds)
         {
-            var method = typeof(AirlineOperations).GetMethod("RestoreTower", BindingFlags.Instance | BindingFlags.NonPublic);
+            var method = typeof(AirlineOperations).GetMethod("RestoreTower", BindingFlags.Instance | BindingFlags.NonPublic,
+                binder: null, types: new[] { typeof(SimulationTime), typeof(SimulationTime), typeof(long) }, modifiers: null);
             Assert.That(method, Is.Not.Null);
-            method.Invoke(ops, new object[] { new SimulationTime(seconds), 0L });
+            var busy = new SimulationTime(seconds);
+            method.Invoke(ops, new object[] { busy, busy, 0L });
         }
 
         private static void RunTo(ManualSimulationClock clock, AirlineOperations ops, long seconds)
@@ -124,8 +132,20 @@ namespace Airside.Tests
             Restore(ops, "VH-QQQ", other, AircraftType.Dash8Q400, FleetState.AtStand, 0, Bay50D);
             var n = 0;
             foreach (var bay in AirlineOperations.AdelaideRegionalBays)
-                if (!bay.Equals(Bay50D) && !bay.Equals(Bay50E))
-                    Restore(ops, $"VH-P{n++}", player, AircraftType.Atr42, FleetState.AtStand, 0, bay);
+            {
+                if (bay.Equals(Bay50D) || bay.Equals(Bay50E))
+                    continue;
+                if (!AirlineOperations.StandFits(AircraftType.Atr42, bay))
+                    continue;
+                Restore(ops, $"VH-P{n++}", player, AircraftType.Atr42, FleetState.AtStand, 0, bay);
+            }
+            // Walk-outs are SF340-only — fill them with Saabs so only 50E is free for the waiter.
+            foreach (var bay in AirlineOperations.AdelaideRegionalBays)
+            {
+                if (bay.Equals(Bay50D) || bay.Equals(Bay50E) || ops.IsStandFree(bay) == false)
+                    continue;
+                Restore(ops, $"VH-S{n++}", player, AircraftType.Saab340, FleetState.AtStand, 0, bay);
+            }
             var waiting = Restore(ops, "VH-WAI", other, AircraftType.Saab340, FleetState.AwaitingStand, 0, default);
 
             Assert.That(ops.SuggestStand(waiting), Is.EqualTo((StableId?)Bay50E));

@@ -1,5 +1,58 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — fifteen more play fixes on day-progress branch
+  (branch `cursor/day-progress-and-bugfixes-4d7a`).** Doors through boarding;
+  cancelled cold; windsock = sim wind; approach pick per runway; shared E2
+  await queue; longer cross clear; lead-in through hold/takeoff; runway
+  refresh on clearance; AtDestination off Arrivals; TaxiIn ETA STAND;
+  holding look-ahead; strict saved runway; required DepartureStand;
+  empty-stand hold uses runway hold not bay 50D.
+  - **Evidence:** `scripts/test-domain.sh` **460/460**.
+  - **NEXT:** Mac Unity EditMode, then merge and rebuild from main.
+
+- **2026-09-20 Cursor — third play-fix wave on day-progress branch
+  (branch `cursor/day-progress-and-bugfixes-4d7a`).** 12/30 landing→vacate
+  and lineup→takeoff continuity; arrivals wind-only runway; native 12/30
+  go-around circuit; mid-vacate save reconcile uses clear-of-runway;
+  delayed board rows use EstimatedAt for past.
+  - **Evidence:** `scripts/test-domain.sh` **458/458**.
+  - **NEXT:** Mac Unity EditMode, then merge and rebuild from main.
+
+- **2026-09-20 Cursor — more play fixes on the day-progress branch
+  (branch `cursor/day-progress-and-bugfixes-4d7a`).** Keep going after
+  the day strip + ten bugs. Second wave: strip clear-of-runway, FIDS
+  Vacating/Lining up/go-around, Cathay alt gate, prep rebook, GA short
+  final (no 4 km teleport), go-around runway reassign, both-strip save
+  reconcile, CoveredBy late stand wait + one-live-one-slot, soak
+  FreeStandsFor.
+  - **Evidence:** `scripts/test-domain.sh` **454/454**.
+  - **NEXT:** Mac Unity EditMode, then merge and rebuild from main.
+    Optional follow-up: 12/30 go-around geometry (still remaps the 05
+    racetrack).
+
+- **2026-09-20 Cursor — Cathay exit, prep timing, scroll-to-now
+  (branch `cursor/day-progress-and-bugfixes-4d7a`).** Keep going after
+  the day strip + ten bugs: Cathay season exit, prep timing, board
+  auto-scroll to now, day-plan StandFits, A321 not widebody, typed
+  hold-short poses, cross-runway save reconcile.
+  - **Evidence:** `scripts/test-domain.sh` **450/450**.
+  - **NEXT:** Mac Unity EditMode, then merge and rebuild from main.
+
+- **2026-09-20 Cursor — day progress + ten high-impact fixes
+  (branch `cursor/day-progress-and-bugfixes-4d7a`).** Bailey: the
+  full-day Operations board was lists with no sense of "where we are
+  in the day"; also fix the biggest bugs before continuing.
+  - **Day strip:** Operations header gains a 06:00–21:00 progress
+    track with now caret, bank density, and done / live / to-go. Past
+    planned rows mute to Landed/Departed.
+  - **Bugs:** dual-strip tower + go-around; bay hold on taxi-out;
+    post-GA short final; CoveredBy half-match; per-runway queue
+    slots; dual-end subtitle; planner runway ETAs; walk-out SF340;
+    idle off Departures; harness excludes Unity settings tests.
+  - **Evidence:** `scripts/test-domain.sh` **446/446**. Unity EditMode
+    still needed before merge (`scripts/test-unity.sh` on a Mac).
+  - **NEXT:** Mac Unity verify, then merge and rebuild from main.
+
 - **2026-09-20 Cursor — full Adelaide stand map.** Bailey: get the
   current Adelaide stand map; make the airport as realistic as possible.
   Live stands now match the 09 JUL 2026 AIP apron chart that OSM has:

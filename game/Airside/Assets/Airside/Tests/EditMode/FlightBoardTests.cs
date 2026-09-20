@@ -96,9 +96,9 @@ namespace Airside.Tests
 
         [TestCase(FleetState.HoldingShort, "HOLD SINCE")]
         [TestCase(FleetState.HoldingForLanding, "ON FINAL")]
-        [TestCase(FleetState.Landing, "LANDED")]
+        [TestCase(FleetState.Landing, "ON RUNWAY")]
         [TestCase(FleetState.TakingOff, "DEPARTING")]
-        [TestCase(FleetState.TaxiIn, "AT STAND")]
+        [TestCase(FleetState.TaxiIn, "ETA STAND")]
         [TestCase(FleetState.AwaitingStand, "WAIT SINCE")]
         public void TimeMeaning_DescribesTheActualMilestone(FleetState state, string expected)
         {
@@ -116,7 +116,9 @@ namespace Airside.Tests
             var enter = typeof(FleetAircraft).GetMethod("Enter", BindingFlags.Instance | BindingFlags.NonPublic);
             enter.Invoke(aircraft, new object[] { state, new SimulationTime(0), (long?)60 });
             Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo(expected));
-            Assert.That(OperationsSummary.CompactState(aircraft, new SimulationTime(0)), Is.EqualTo(expected));
+            // TakingOff at t=0 is still lining up — the live chip says so.
+            var compact = state == FleetState.TakingOff ? "Lining up" : expected;
+            Assert.That(OperationsSummary.CompactState(aircraft, new SimulationTime(0)), Is.EqualTo(compact));
         }
 
         [Test]
@@ -129,13 +131,26 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void IsArrival_ExcludesAircraftStillAwayAtDestination()
+        {
+            var (_, _, aircraft) = PlayerOnly();
+            var enter = typeof(FleetAircraft).GetMethod("Enter", BindingFlags.Instance | BindingFlags.NonPublic);
+            enter.Invoke(aircraft, new object[] { FleetState.AtDestination, new SimulationTime(0), (long?)60 });
+            Assert.That(FlightBoard.IsArrival(aircraft), Is.False,
+                "away aircraft must not clutter the Arrivals board");
+            enter.Invoke(aircraft, new object[] { FleetState.Inbound, new SimulationTime(0), (long?)60 });
+            Assert.That(FlightBoard.IsArrival(aircraft), Is.True);
+        }
+
+        [Test]
         public void DelayedDeparture_IsClearlyLabelledAfterOneMinute()
         {
             var (_, ops, aircraft) = PlayerOnly();
             ops.ScheduleDeparture(aircraft, Code("KGC"), new SimulationTime(600));
+            var prepStart = aircraft.PrepStartedAt!.Value.ElapsedSeconds;
 
             Assert.That(FlightBoard.DepartureDelayMinutes(aircraft, new SimulationTime(659)), Is.Zero);
-            Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(45)), Is.EqualTo("Fuelling 50%"));
+            Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(prepStart + 45)), Is.EqualTo("Fuelling 50%"));
             Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(659)), Is.EqualTo("Ready"));
             Assert.That(FlightBoard.DepartureDelayMinutes(aircraft, new SimulationTime(720)), Is.EqualTo(2));
             Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(720)), Is.EqualTo("Gate hold"));

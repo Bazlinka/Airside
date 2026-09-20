@@ -132,6 +132,7 @@ namespace Airside.Simulation
 
             var home = operations.Home;
             var list = new List<SkyFlight>();
+            var claimed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var planned in ForLocalDay(operations, now))
             {
                 if (planned.Type == null)
@@ -140,16 +141,8 @@ namespace Airside.Simulation
                 if (!DestinationCatalogue.TryFind(awayCode, out var away))
                     continue;
 
-                var covered = false;
-                foreach (var aircraft in operations.Fleet)
-                {
-                    if (!CoveredBy(planned, aircraft))
-                        continue;
-                    covered = true;
-                    break;
-                }
-
-                if (covered || planned.Disruption.Cancelled)
+                if (CoveringAircraft(planned, operations.Fleet, claimed) != null
+                    || planned.Disruption.Cancelled)
                     continue;
 
                 var from = planned.Arrival ? away : home;
@@ -165,27 +158,105 @@ namespace Airside.Simulation
         /// <summary>
         /// True when a live aircraft is already the movement this planned slot describes,
         /// so the board shows the live row instead of a duplicate planned one.
+        /// Arrival slots only match inbound/landing states; departure slots only match
+        /// outbound/scheduled ones — otherwise an outbound Rex to MEL would suppress the
+        /// planned arrival from MEL.
         /// </summary>
         public static bool CoveredBy(PlannedMovement planned, FleetAircraft aircraft)
         {
+            return MatchDeltaSeconds(planned, aircraft) >= 0;
+        }
+
+        /// <summary>
+        /// Nearest live aircraft that covers <paramref name="planned"/>, skipping registrations
+        /// already claimed so one inbound cannot suppress every same-route day-plan slot.
+        /// </summary>
+        public static FleetAircraft CoveringAircraft(PlannedMovement planned,
+            IEnumerable<FleetAircraft> fleet, HashSet<string> claimed = null)
+        {
+            if (fleet == null)
+                return null;
+            FleetAircraft best = null;
+            var bestDelta = long.MaxValue;
+            foreach (var aircraft in fleet)
+            {
+                if (aircraft == null)
+                    continue;
+                if (claimed != null && claimed.Contains(aircraft.Registration))
+                    continue;
+                var delta = MatchDeltaSeconds(planned, aircraft);
+                if (delta < 0 || delta >= bestDelta)
+                    continue;
+                best = aircraft;
+                bestDelta = delta;
+            }
+
+            if (best != null)
+                claimed?.Add(best.Registration);
+            return best;
+        }
+
+        /// <summary>
+        /// Absolute seconds between live and planned times when the aircraft covers the
+        /// slot; otherwise -1.
+        /// </summary>
+        public static long MatchDeltaSeconds(PlannedMovement planned, FleetAircraft aircraft)
+        {
             if (aircraft == null || aircraft.Airline.Id.Value != planned.AirlineId)
-                return false;
+                return -1;
             if (planned.Registration.Length > 0
                 && string.Equals(aircraft.Registration, planned.Registration, StringComparison.OrdinalIgnoreCase))
-                return true;
+                return MatchesHalf(planned, aircraft) ? 0 : -1;
+
+            if (!MatchesHalf(planned, aircraft))
+                return -1;
 
             var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
             if (!dest.HasValue)
-                return false;
+                return -1;
             var code = dest.Value.Code;
             var plannedAway = planned.Arrival ? planned.Origin : planned.Destination;
             if (code != plannedAway)
-                return false;
+                return -1;
 
             var liveSeconds = planned.Arrival
-                ? aircraft.StateEndsAt?.ElapsedSeconds ?? aircraft.StateStartedAt.ElapsedSeconds
+                ? ArrivalMatchSeconds(planned, aircraft)
                 : aircraft.Scheduled?.DepartAt.ElapsedSeconds ?? aircraft.StateStartedAt.ElapsedSeconds;
-            return Math.Abs(liveSeconds - planned.ScheduledAt.ElapsedSeconds) < 25 * 60;
+            var delta = Math.Abs(liveSeconds - planned.ScheduledAt.ElapsedSeconds);
+            return delta < 25 * 60 ? delta : -1;
+        }
+
+        /// <summary>
+        /// Holders, go-arounds and stand waits have no useful StateEndsAt for ETA matching.
+        /// Prefer the inbound ETA when present; otherwise keep covering via the planned slot
+        /// so a long final does not resurrect a ghost day-plan row in the sky.
+        /// </summary>
+        private static long ArrivalMatchSeconds(PlannedMovement planned, FleetAircraft aircraft)
+        {
+            if (aircraft.StateEndsAt.HasValue
+                && aircraft.State is FleetState.Inbound or FleetState.Landing)
+                return aircraft.StateEndsAt.Value.ElapsedSeconds;
+
+            if (aircraft.State == FleetState.HoldingForLanding)
+            {
+                var remaining = ApproachHold.RemainingFinalSeconds(
+                    AircraftPerformance.For(aircraft.Type).ApproachSeconds, aircraft.Registration);
+                return aircraft.StateStartedAt.ElapsedSeconds + remaining;
+            }
+
+            if (aircraft.State is FleetState.GoAround or FleetState.AwaitingStand or FleetState.TaxiIn
+                or FleetState.Landing)
+                return planned.EstimatedAt.ElapsedSeconds;
+
+            return aircraft.StateStartedAt.ElapsedSeconds;
+        }
+
+        private static bool MatchesHalf(PlannedMovement planned, FleetAircraft aircraft)
+        {
+            var liveArrival = aircraft.State is FleetState.Inbound
+                or FleetState.HoldingForLanding or FleetState.GoAround or FleetState.Landing
+                or FleetState.AwaitingStand or FleetState.TaxiIn;
+            return planned.Arrival == liveArrival;
         }
 
         public static AircraftType TypeFor(Airline airline) => airline?.Id.Value switch
@@ -211,12 +282,21 @@ namespace Airside.Simulation
         {
             if (AirlineOperations.NeedsTerminalGate(type))
             {
-                var gates = AirlineOperations.AdelaideTerminalGates;
+                var gates = FittingStands(AirlineOperations.AdelaideTerminalGates, type);
                 return AdelaideGround.StandLabel(gates[slot % gates.Count]);
             }
 
-            var bays = AirlineOperations.AdelaideRegionalBays;
+            var bays = FittingStands(AirlineOperations.AdelaideRegionalBays, type);
             return AdelaideGround.StandLabel(bays[slot % bays.Count]);
+        }
+
+        private static IReadOnlyList<StableId> FittingStands(IReadOnlyList<StableId> stands, AircraftType type)
+        {
+            var fitted = new List<StableId>();
+            foreach (var stand in stands)
+                if (AirlineOperations.StandFits(type, stand))
+                    fitted.Add(stand);
+            return fitted.Count > 0 ? fitted : stands;
         }
     }
 }

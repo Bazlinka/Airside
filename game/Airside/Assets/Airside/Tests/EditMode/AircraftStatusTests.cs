@@ -80,11 +80,12 @@ namespace Airside.Tests
             var plane = ops.AddAircraft(player, "VH-PRP", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
             Assert.That(DestinationCatalogue.TryFind("KGC", out var kgc), Is.True);
             Assert.That(ops.ScheduleDeparture(plane, kgc, new SimulationTime(600)).Accepted, Is.True);
+            var prepStart = plane.PrepStartedAt!.Value.ElapsedSeconds;
 
-            Assert.That(AircraftStatus.TagPhase(plane, new SimulationTime(0)), Is.EqualTo("fuelling 0%"));
-            Assert.That(AircraftStatus.TagPhase(plane, new SimulationTime(DeparturePrep.FuelSeconds / 2)),
+            Assert.That(AircraftStatus.TagPhase(plane, new SimulationTime(prepStart)), Is.EqualTo("fuelling 0%"));
+            Assert.That(AircraftStatus.TagPhase(plane, new SimulationTime(prepStart + DeparturePrep.FuelSeconds / 2)),
                 Is.EqualTo("fuelling 50%"));
-            Assert.That(AircraftStatus.TagPhase(plane, new SimulationTime(DeparturePrep.TotalSeconds(plane.Type))),
+            Assert.That(AircraftStatus.TagPhase(plane, new SimulationTime(prepStart + DeparturePrep.TotalSeconds(plane.Type))),
                 Is.EqualTo("ready"));
         }
 

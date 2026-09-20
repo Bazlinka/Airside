@@ -101,9 +101,19 @@ namespace Airside.Tests
         {
             Assert.That(AirlineOperations.SharedPierPairs.Count, Is.EqualTo(5));
             Assert.That(AirlineOperations.StandFits(AircraftType.Saab340, new StableId("BAY-10A")), Is.True);
+            Assert.That(AirlineOperations.StandFits(AircraftType.Atr42, new StableId("BAY-10A")), Is.False);
             Assert.That(AirlineOperations.StandFits(AircraftType.Dash8Q400, new StableId("BAY-10A")), Is.False);
             Assert.That(AirlineOperations.StandFits(AircraftType.Boeing7378, new StableId("GATE-22L")), Is.True);
             Assert.That(AirlineOperations.StandFits(AircraftType.Atr42, new StableId("GATE-22L")), Is.False);
+
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(1), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideStands);
+            var voz = Airline.VirginAustralia();
+            ops.AddAirline(voz);
+            ops.AddAircraft(voz, "VH-8IA", AircraftType.Boeing7378, new StableId("GATE-18"));
+            Assert.That(ops.IsStandFree(new StableId("GATE-18R")), Is.False,
+                "18L occupied blocks the shared 18R pier line");
         }
 
         [Test]

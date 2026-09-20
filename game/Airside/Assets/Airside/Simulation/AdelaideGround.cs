@@ -97,6 +97,29 @@ namespace Airside.Simulation
             return leg;
         }
 
+        /// <summary>
+        /// Seconds until the aircraft is clear of the strip during vacate — when the
+        /// tower may clear the next movement. For 05/23 that is the full E2 vacate.
+        /// For 12/30 the long taxi toward E2 continues after the strip is free.
+        /// </summary>
+        public static long ClearOfRunwaySeconds(AircraftType type, RunwayDirection runway)
+        {
+            var vacate = VacateFor(type, runway);
+            if (RunwayWeather.IsMainRunway(runway))
+                return vacate.WholeSeconds;
+
+            // Cross strip: free once well clear of the pavement and past the shared
+            // exit conflict zone — not after the full kilometre to E2, but later than
+            // a short 280 m hop that let the next landing meet the vacating aircraft.
+            const float clearMetres = 480f;
+            if (vacate.Parts.Count == 0)
+                return Math.Max(30, vacate.WholeSeconds / 3);
+            var path = vacate.Parts[0].Path;
+            var metres = Math.Min(clearMetres, path.Length * 0.55f);
+            var seconds = path.SecondsAtDistance(metres);
+            return Math.Max(30L, (long)Math.Ceiling(seconds));
+        }
+
         /// <summary>F6 holding point → centreline at the 05 takeoff start, stopped and ready to roll.</summary>
         public static GroundLeg Lineup => _lineupLeg ??= new GroundLeg(
             new GroundLegPart(new GroundPath(AdelaideLayout.Lineup, GroundSpeedLimits.Lineup), tailFirst: false));
@@ -196,14 +219,18 @@ namespace Airside.Simulation
 
         public static GroundPose AwaitingPose(int slot, AircraftType type, RunwayDirection runway)
         {
+            // Wait where vacate ends so Landing → AwaitingStand does not teleport. Cross
+            // vacates still finish at E2 for taxi-in continuity; ClearOfRunwaySeconds frees
+            // the strip earlier. QueueSlot is per AssignedRunway so 05 and 12 do not share
+            // a queue even when both exit toward E2.
             var vacate = VacateFor(type, runway);
             var end = vacate.PoseAt(vacate.Seconds);
             if (slot <= 0)
                 return new GroundPose(end.X, end.Z, end.NoseX, end.NoseZ, 0f, false);
 
             var path = vacate.Parts[vacate.Parts.Count - 1].Path;
-            var back = path.SampleAtDistance(Math.Max(0f, path.Length - AwaitingSpacingMetres * slot));
-            return new GroundPose(back.X, back.Z, back.DirectionX, back.DirectionZ, 0f, false);
+            var sample = path.SampleAtDistance(Math.Max(0f, path.Length - AwaitingSpacingMetres * slot));
+            return new GroundPose(sample.X, sample.Z, sample.DirectionX, sample.DirectionZ, 0f, false);
         }
 
         /// <summary>
@@ -212,17 +239,33 @@ namespace Airside.Simulation
         /// queued back along their own taxi route.
         /// </summary>
         public static GroundPose HoldingShortPose(StableId departureStand, int slot,
-            RunwayDirection runway = RunwayDirection.Runway05)
+            RunwayDirection runway = RunwayDirection.Runway05, AircraftType type = null)
         {
-            var leg = TaxiOut(departureStand,
-                IsTerminalGate(departureStand) ? AircraftType.Boeing7378 : AircraftType.Atr42, runway);
+            // A missing departure stand must not teleport the aircraft onto bay 50D's hold.
+            if (string.IsNullOrEmpty(departureStand.Value))
+            {
+                float[] hold = runway switch
+                {
+                    RunwayDirection.Runway12 => AdelaideCrossRoutes.Hold12,
+                    RunwayDirection.Runway30 => AdelaideCrossRoutes.Hold30,
+                    _ => AdelaideLayout.Runway05Hold
+                };
+                RunwayFrame.Forward(runway, out var fx, out var fz);
+                if (slot <= 0)
+                    return new GroundPose(hold[0], hold[1], fx, fz, 0f, false);
+                var back = AwaitingSpacingMetres * slot;
+                return new GroundPose(hold[0] - fx * back, hold[1] - fz * back, fx, fz, 0f, false);
+            }
+
+            type ??= IsTerminalGate(departureStand) ? AircraftType.Boeing7378 : AircraftType.Atr42;
+            var leg = TaxiOut(departureStand, type, runway);
             var end = leg.PoseAt(leg.Seconds);
             if (slot <= 0)
                 return new GroundPose(end.X, end.Z, end.NoseX, end.NoseZ, 0f, false);
 
             var taxi = leg.Parts[leg.Parts.Count - 1].Path;
-            var back = taxi.SampleAtDistance(Math.Max(0f, taxi.Length - AwaitingSpacingMetres * slot));
-            return new GroundPose(back.X, back.Z, back.DirectionX, back.DirectionZ, 0f, false);
+            var backAlong = taxi.SampleAtDistance(Math.Max(0f, taxi.Length - AwaitingSpacingMetres * slot));
+            return new GroundPose(backAlong.X, backAlong.Z, backAlong.DirectionX, backAlong.DirectionZ, 0f, false);
         }
 
         private static GroundLeg GateTaxiOut(AdelaideTerminalGate gate, AircraftType type, RunwayDirection runway)

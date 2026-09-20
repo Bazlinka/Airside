@@ -39,8 +39,9 @@ namespace Airside.Tests
             EngineState At(double before) => EngineStartSequence.For(plane, depart - before);
 
             Assert.That(At(170).Beacon, Is.True);
-            Assert.That(At(170).DoorsOpen, Is.True);
-            Assert.That(At(150).DoorsOpen, Is.False);
+            Assert.That(At(170).DoorsOpen, Is.True, "doors stay open through boarding");
+            Assert.That(At(20).DoorsOpen, Is.True, "boarding still open twenty seconds out");
+            Assert.That(At(0).DoorsOpen, Is.False, "doors close when ready for pushback");
             Assert.That(At(110).Right, Is.GreaterThan(0f));
             Assert.That(At(110).Left, Is.Zero, "No.2 first");
             Assert.That(At(60).Left, Is.GreaterThan(0f));
@@ -80,6 +81,20 @@ namespace Airside.Tests
             Assert.That(After(80).Beacon, Is.False);
             Assert.That(After(80).DoorsOpen, Is.False);
             Assert.That(After(95).DoorsOpen, Is.True);
+        }
+
+        [Test]
+        public void CancelledDeparture_DoesNotSpoolEngines()
+        {
+            var (_, ops, plane) = Parked();
+            DestinationCatalogue.TryFind("KGC", out var kgc);
+            const long depart = 1000;
+            Assert.That(ops.ScheduleDeparture(plane, kgc, new SimulationTime(depart)).Accepted, Is.True);
+            plane.Scheduled = new ScheduledDeparture(kgc, new SimulationTime(depart), 0, cancelled: true);
+
+            var state = EngineStartSequence.For(plane, depart - 60);
+            Assert.That(state.AnyRunning, Is.False, "cancelled bookings stay cold");
+            Assert.That(state.Beacon, Is.False);
         }
     }
 }

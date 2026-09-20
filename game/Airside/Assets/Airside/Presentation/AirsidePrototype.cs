@@ -1016,7 +1016,9 @@ namespace Airside.Presentation
                     ? fleetAircraft.Type : AircraftType.Atr42;
                 var lane = ApproachLaneOffset(flight);
                 var route = TaxiRouteFor(flight, phase);
-                var position = FleetGroundPosition(flight, 0f) ?? RunwayPosition(flight,
+                var position = FleetGroundPosition(flight, 0f)
+                    ?? FleetGoAroundWorldPosition(flight, 0f)
+                    ?? RunwayPosition(flight,
                     ApplyDepartureTurn(flight, phase, progress,
                         PositionFor(phase, progress, route, lane, aircraftType)));
                 // Keep look-ahead inside the current taxi segment so yaw does not cut corners.
@@ -1026,6 +1028,7 @@ namespace Airside.Presentation
                     : 0.15f;
                 var lookAheadProgress = VisualPhaseProgress(flight, lookAhead);
                 var next = FleetGroundPosition(flight, lookAhead)
+                           ?? FleetGoAroundWorldPosition(flight, lookAhead)
                            ?? RunwayPosition(flight,
                                ApplyDepartureTurn(flight, phase, lookAheadProgress,
                                    PositionFor(phase, lookAheadProgress, route, lane, aircraftType)));
@@ -2075,7 +2078,13 @@ namespace Airside.Presentation
             var phase = operation.Phase;
             if (FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var holding)
                 && holding.State == FleetState.HoldingForLanding && phase == AircraftPhase.Approach)
-                return (float)ApproachHold.HoldingFinalProgress(holding.Registration);
+            {
+                var pinned = (float)ApproachHold.HoldingFinalProgress(holding.Registration);
+                // A tiny look-ahead along final so facing is not frozen on the last rotation.
+                if (lookAheadSeconds > 0f)
+                    return Mathf.Min(0.98f, pinned + 0.008f);
+                return pinned;
+            }
 
             if (phase == AircraftPhase.Circuit)
             {
@@ -2126,10 +2135,12 @@ namespace Airside.Presentation
             if (_windsockSock == null)
                 return;
 
-            // Presentation-only: sock streams with a soft wind sway (not sim weather).
-            var wind = 12f + Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.WindsockSwayHz * Mathf.PI * 2f) * 8f;
-            var sway = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.WindsockRippleHz * Mathf.PI * 2f) * 6f;
-            _windsockSock.localRotation = Quaternion.Euler(0f, wind, sway);
+            // Aim the sock with the sim surface wind; keep a light sway so it does not look frozen.
+            var wind = _operations != null ? _operations.Wind : RunwayWeather.At(_clock, _clock.Now);
+            var heading = RunwayWeather.UnityYawFromTrue(wind.DirectionDegrees);
+            var sway = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.WindsockSwayHz * Mathf.PI * 2f) * 6f;
+            var limp = Mathf.Lerp(18f, 4f, Mathf.Clamp01(wind.Knots / 18f));
+            _windsockSock.localRotation = Quaternion.Euler(limp, heading + sway, 0f);
             // Keep parent scale stable; ripple fabric segments so authored children keep shape.
             _windsockSock.localScale = Vector3.one;
             // Each segment's ripple is an offset from the rotation it was built with. Writing
@@ -2142,12 +2153,13 @@ namespace Airside.Presentation
                     _windsockSegmentRest[i] = _windsockSock.GetChild(i).localRotation;
             }
 
+            var rippleAmp = Mathf.Lerp(2f, 7f, Mathf.Clamp01(wind.Knots / 16f));
             for (var i = 0; i < _windsockSock.childCount; i++)
             {
                 var seg = _windsockSock.GetChild(i);
                 var ripple = Mathf.Sin(
                     Time.unscaledTime * AirsideReusableMotion.WindsockRippleHz * Mathf.PI * 2f * 1.4f
-                    + i * 1.35f) * 5f;
+                    + i * 1.35f) * rippleAmp;
                 seg.localRotation = _windsockSegmentRest[i] * Quaternion.Euler(ripple * 0.25f, 0f, ripple);
             }
         }
@@ -12791,6 +12803,22 @@ namespace Airside.Presentation
                 return new Vector3(x, y, z);
             }
             return position;
+        }
+
+        /// <summary>
+        /// Go-around poses in world space for the assigned runway. 12/30 use a
+        /// cross-strip circuit; remapping the 05 racetrack put regionals through
+        /// the terminal.
+        /// </summary>
+        private Vector3? FleetGoAroundWorldPosition(CommercialFlight flight, float lookAheadSeconds)
+        {
+            if (flight.Operation.Phase != AircraftPhase.GoAround)
+                return null;
+            if (!FleetMode || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
+                return null;
+            var elapsed = _preciseTime - flight.Operation.PhaseStartedAt.ElapsedSeconds + lookAheadSeconds;
+            CircuitTraffic.GoAroundOnRunway(elapsed, aircraft.AssignedRunway, out var x, out var y, out var z);
+            return new Vector3((float)x, (float)y, (float)z);
         }
 
         /// <summary>

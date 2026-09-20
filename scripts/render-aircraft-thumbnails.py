@@ -73,7 +73,8 @@ def colour(name):
     return WHITE
 
 
-def load(path):
+def load_parts(path):
+    """Every node of a runtime glTF as (name, triangles[N,3,3])."""
     with open(path) as f:
         gltf = json.load(f)
     blob = open(os.path.join(os.path.dirname(path), gltf["buffers"][0]["uri"]), "rb").read()
@@ -88,58 +89,99 @@ def load(path):
         data = struct.unpack_from("<" + kind[0] * count, blob, start)
         return np.array(data).reshape(-1, comps)
 
-    triangles = []
+    parts = []
     for node in gltf["nodes"]:
         mesh = gltf["meshes"][node["mesh"]]
+        chunks = []
         for prim in mesh["primitives"]:
             pos = accessor(prim["attributes"]["POSITION"])
             idx = accessor(prim["indices"]).reshape(-1).astype(int)
-            tri = pos[idx].reshape(-1, 3, 3)
-            triangles.append((tri, colour(node["name"])))
-    return triangles
+            chunks.append(pos[idx].reshape(-1, 3, 3))
+        parts.append((node["name"], np.concatenate(chunks)))
+    return parts
 
 
-def render(model_path, out_path):
-    parts = load(model_path)
-    tris = np.concatenate([t for t, _ in parts])
-    cols = np.concatenate([np.tile(np.array(c, float), (len(t), 1)) for t, c in parts])
+def load(path):
+    return [(tri, colour(name)) for name, tri in load_parts(path)]
 
-    # View: model +Z forward, +Y up. Rotate so we look at the nose from front-left and above.
-    az, el = math.radians(AZIMUTH_DEG), math.radians(ELEVATION_DEG)
+
+def view_matrix(azimuth_deg, elevation_deg):
+    """Model +Z forward, +Y up. Azimuth 0 looks at the nose; it swings the camera towards the left wing."""
+    az, el = math.radians(azimuth_deg), math.radians(elevation_deg)
     ry = np.array([[math.cos(az), 0, math.sin(az)], [0, 1, 0], [-math.sin(az), 0, math.cos(az)]])
     rx = np.array([[1, 0, 0], [0, math.cos(el), -math.sin(el)], [0, math.sin(el), math.cos(el)]])
-    # Camera looks down -Z of view space; start looking at the nose (model +Z towards camera).
-    view = rx @ ry
-    v = tris.reshape(-1, 3) @ view.T
-    v = v.reshape(-1, 3, 3)
+    return rx @ ry
 
+
+def rasterise(tris, cols, view, width, height, supersample, bounds=None, margin=0.06):
+    """Orthographic z-buffered flat-shaded raster.
+
+    A painter's algorithm sorts by triangle centre, so a long buried livery stripe painted
+    over the fuselage it sits inside (the slate slab on the 737-8 / A321neo thumbnails).
+    Depth is compared per pixel here, so hidden geometry stays hidden.
+    """
+    v = (tris.reshape(-1, 3) @ view.T).reshape(-1, 3, 3)
     normals = np.cross(tris[:, 1] - tris[:, 0], tris[:, 2] - tris[:, 0])
     lengths = np.linalg.norm(normals, axis=1)
-    keep = lengths > 1e-9
+    keep = lengths > 1e-12
     v, cols, normals = v[keep], cols[keep], normals[keep] / lengths[keep, None]
     light = LIGHT / np.linalg.norm(LIGHT)
     shade = 0.42 + 0.58 * np.abs(normals @ light)          # two-sided: thin parts stay lit
 
-    xy = v[:, :, :2]
-    lo = xy.reshape(-1, 2).min(axis=0)
-    hi = xy.reshape(-1, 2).max(axis=0)
-    margin = 0.06
-    scale = min(WIDTH * (1 - 2 * margin) / (hi[0] - lo[0]), HEIGHT * (1 - 2 * margin) / (hi[1] - lo[1])) * SUPERSAMPLE
+    lo, hi = bounds if bounds is not None else (v[:, :, :2].reshape(-1, 2).min(axis=0), v[:, :, :2].reshape(-1, 2).max(axis=0))
+    scale = min(width * (1 - 2 * margin) / (hi[0] - lo[0]), height * (1 - 2 * margin) / (hi[1] - lo[1])) * supersample
     centre = (lo + hi) / 2
-    ss_w, ss_h = WIDTH * SUPERSAMPLE, HEIGHT * SUPERSAMPLE
+    w, h = width * supersample, height * supersample
+    sx = w / 2 + (v[:, :, 0] - centre[0]) * scale
+    sy = h / 2 - (v[:, :, 1] - centre[1]) * scale
+    depth = v[:, :, 2]
 
-    order = np.argsort(v[:, :, 2].mean(axis=1))              # far first (painter's algorithm)
-    image = Image.new("RGBA", (ss_w, ss_h), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(image)
-    for i in order:
-        pts = [(ss_w / 2 + (p[0] - centre[0]) * scale, ss_h / 2 - (p[1] - centre[1]) * scale) for p in xy[i]]
-        c = tuple(int(min(255, ch * shade[i])) for ch in cols[i])
-        draw.polygon(pts, fill=c + (255,))
+    zbuf = np.full((h, w), -np.inf)
+    rgb = np.zeros((h, w, 3), np.uint8)
+    covered = np.zeros((h, w), bool)
+    colours = np.clip(cols * shade[:, None], 0, 255).astype(np.uint8)
+    for i in range(len(v)):
+        x0, x1, x2 = sx[i]
+        y0, y1, y2 = sy[i]
+        minx, maxx = max(int(math.floor(min(x0, x1, x2))), 0), min(int(math.ceil(max(x0, x1, x2))), w - 1)
+        miny, maxy = max(int(math.floor(min(y0, y1, y2))), 0), min(int(math.ceil(max(y0, y1, y2))), h - 1)
+        if maxx < minx or maxy < miny:
+            continue
+        den = (y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2)
+        if abs(den) < 1e-12:
+            continue
+        gx, gy = np.meshgrid(np.arange(minx, maxx + 1) + 0.5, np.arange(miny, maxy + 1) + 0.5)
+        l0 = ((y1 - y2) * (gx - x2) + (x2 - x1) * (gy - y2)) / den
+        l1 = ((y2 - y0) * (gx - x2) + (x0 - x2) * (gy - y2)) / den
+        l2 = 1.0 - l0 - l1
+        inside = (l0 >= -1e-9) & (l1 >= -1e-9) & (l2 >= -1e-9)
+        if not inside.any():
+            continue
+        z = l0 * depth[i, 0] + l1 * depth[i, 1] + l2 * depth[i, 2]
+        window = zbuf[miny:maxy + 1, minx:maxx + 1]
+        win = inside & (z > window)
+        window[win] = z[win]
+        rgb[miny:maxy + 1, minx:maxx + 1][win] = colours[i]
+        covered[miny:maxy + 1, minx:maxx + 1][win] = True
 
-    image = image.resize((WIDTH, HEIGHT), Image.LANCZOS)
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    alpha = (covered * 255).astype(np.uint8)
+    image = Image.fromarray(np.dstack([rgb, alpha]), "RGBA")
+    return image.resize((width, height), Image.LANCZOS), len(v)
+
+
+def render_view(parts, out_path, azimuth_deg, elevation_deg, width=WIDTH, height=HEIGHT,
+                supersample=SUPERSAMPLE, colour_fn=colour, margin=0.06):
+    tris = np.concatenate([t for _, t in parts])
+    cols = np.concatenate([np.tile(np.array(colour_fn(n), float), (len(t), 1)) for n, t in parts])
+    image, count = rasterise(tris, cols, view_matrix(azimuth_deg, elevation_deg),
+                             width, height, supersample, margin=margin)
+    os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
     image.save(out_path)
-    return len(v)
+    return count
+
+
+def render(model_path, out_path):
+    return render_view(load_parts(model_path), out_path, AZIMUTH_DEG, ELEVATION_DEG)
 
 
 def main():

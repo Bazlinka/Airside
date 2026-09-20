@@ -928,13 +928,15 @@ namespace Airside.Presentation
             if (aircraft.Airline.IsPlayer)
                 SetPlanningAircraft(aircraft);
 
-            var following = TryFollowFleetAircraft(aircraft.Registration);
+            var onField = _fleetViewById.ContainsKey(aircraft.Registration);
+            var following = AirsideSettings.Current.FollowOnSelect
+                && TryFollowFleetAircraft(aircraft.Registration);
             _devToolsOpen = false;
             if (plannerStaysOpen)
             {
                 // Switching aircraft inside the planner keeps planning; the camera still follows.
             }
-            else if (following)
+            else if (following || onField)
             {
                 _activeWorkspace = HudWorkspace.None;
             }

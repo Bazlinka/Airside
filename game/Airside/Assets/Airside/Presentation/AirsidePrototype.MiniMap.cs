@@ -21,6 +21,7 @@ namespace Airside.Presentation
         private void ToggleMiniMap()
         {
             _miniMapVisible = !_miniMapVisible;
+            ApplySettingsAndSave();
             ShowToast(_miniMapVisible ? "Airfield map on (N)." : "Airfield map off (N).");
             PlayUiClick();
         }

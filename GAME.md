@@ -1,5 +1,28 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — full Adelaide stand map.** Bailey: get the
+  current Adelaide stand map; make the airport as realistic as possible.
+  Live stands now match the 09 JUL 2026 AIP apron chart that OSM has:
+  T1 aerobridges 12L–29 (L/R pairs exclusive), regional 50A–G, walk-outs
+  10A–D and 2A. Cargo 80s / 101 stay mapped in OSM only — no passenger
+  routes yet. Each live stand has taxi-in, pushback and taxi-out.
+
+- **2026-09-20 Cursor — Adelaide feel (climb-out, options, name,
+  accuracy).** Bailey: takeoffs must fly the remaining runway before
+  turning and bank with the turn; add a working Options page; it is
+  Adelaide Airport; check buildings and gate count vs the real field.
+  - **Climb-out:** SID blend stays 0 through Takeoff and the first
+    half of Departed (past the far threshold), then eases on. Bank
+    follows the heading change, up to 24°.
+  - **Options:** Esc → Options. Sound, tags, mini-map, follow-on-
+    select, invert orbit, camera speed. PlayerPrefs. Intro and pause
+    title say Adelaide Airport.
+  - **Accuracy:** 05/23 3 100 m, 12/30 ~1 650 m, terminal north of
+    the strip at 14 m, RFDS hangar 8 m to the west. Live stands are
+    gates 13 / 15 / 18L / 20L and bays 50A–F. OSM has 44 parking
+    refs; the rest need routes before they can go live.
+  - **NEXT:** merge when asked, then rebuild from main.
+
 - **2026-09-20 Cursor — play fixes (board, readout, sky, field
   seam).** Bailey: bug fixes / improvements; the bottom strip stayed
   up with nobody selected; overhead traffic crawled and crabbed; the

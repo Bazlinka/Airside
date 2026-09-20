@@ -4,9 +4,8 @@ using Airside.Domain;
 namespace Airside.Simulation
 {
     /// <summary>
-    /// After rotate, a departing aircraft turns toward its destination instead of
-    /// climbing forever along the runway axis. The runway stays the roll; the turn
-    /// eases in through the climb-out.
+    /// Climb-out stays on the runway heading until the far threshold, then banks
+    /// onto the destination track. Takeoff itself is wings-level over the strip.
     /// </summary>
     public static class DepartureTurn
     {
@@ -15,21 +14,27 @@ namespace Airside.Simulation
         public const double Runway23Degrees = RunwayWeather.Heading23;
 
         /// <summary>
-        /// How far through the airborne departure the turn is established (0 on the
-        /// roll, 1 once Departed is well along).
+        /// Departed progress at which the aircraft has flown the remaining runway
+        /// heading and may start the SID turn. Takeoff itself stays wings-level
+        /// over the strip.
+        /// </summary>
+        public const float TurnStartProgress = 0.52f;
+
+        /// <summary>Departed progress at which the heading change is established.</summary>
+        public const float TurnEstablishedProgress = 0.88f;
+
+        /// <summary>
+        /// How far the SID turn is established (0 on the roll and the straight
+        /// climb-out, 1 once the aircraft has cleared the far threshold and turned).
         /// </summary>
         public static float Blend(AircraftPhase phase, float progress)
         {
-            if (phase == AircraftPhase.Takeoff)
-            {
-                var rotate = CircuitProfile.RotateProgress;
-                return progress <= rotate
-                    ? 0f
-                    : Smooth01((progress - rotate) / Math.Max(0.05f, 1f - rotate));
-            }
-            if (phase == AircraftPhase.Departed)
-                return 1f;
-            return 0f;
+            if (phase != AircraftPhase.Departed)
+                return 0f;
+            if (progress <= TurnStartProgress)
+                return 0f;
+            return Smooth01((progress - TurnStartProgress)
+                / Math.Max(0.05f, TurnEstablishedProgress - TurnStartProgress));
         }
 
         /// <summary>

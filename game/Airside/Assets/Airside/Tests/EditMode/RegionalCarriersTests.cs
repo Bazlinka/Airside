@@ -19,10 +19,10 @@ namespace Airside.Tests
             var ops = NewGame(out _);
             Assert.That(ops.Airlines.Select(a => a.Name), Does.Contain("Rex").And.Contain("QantasLink"));
             var regional = ops.Fleet.Where(a => !AirlineOperations.NeedsTerminalGate(a.Type)).ToList();
-            Assert.That(regional.Count, Is.EqualTo(AirlineOperations.AdelaideRegionalBays.Count),
-                "parked regional aircraft plus the opening arrivals fill the six bays");
-            Assert.That(regional.Count(a => a.State == FleetState.AtStand), Is.EqualTo(2),
-                "player plus one QantasLink stay on the apron while Rex is inbound");
+            Assert.That(regional.Count, Is.EqualTo(7),
+                "player ATR plus the six regional-carrier aircraft");
+            Assert.That(regional.Count(a => a.State == FleetState.AtStand), Is.EqualTo(3),
+                "player plus two QantasLink stay on the apron while Rex is inbound");
             Assert.That(regional.Where(a => a.State == FleetState.AtStand).All(a => AirlineOperations.AdelaideRegionalBays.Contains(a.Stand)), Is.True);
             Assert.That(ops.Fleet.Where(a => a.Airline.Name == "Rex").All(a => a.Type == AircraftType.Saab340), Is.True);
             Assert.That(regional.Count(a => a.State == FleetState.Inbound), Is.EqualTo(4));
@@ -62,7 +62,8 @@ namespace Airside.Tests
             ops.AddAircraft(legacy, "VH-LEA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[1]);
             ops.AddAircraft(legacy, "VH-LEB", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[2]);
 
-            Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(3));
+            Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(4),
+                "three Rex plus one Q400 on the remaining 50-series");
             Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(0), "idempotent across reloads");
             Assert.That(ops.Fleet.Select(a => a.Stand).Distinct().Count(), Is.EqualTo(ops.Fleet.Count));
         }
@@ -78,9 +79,9 @@ namespace Airside.Tests
             for (var i = 0; i < 5; i++)
                 ops.AddAircraft(player, $"VH-P{i}", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[i]);
 
-            Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(1), "one free bay: only the first Rex aircraft fits");
+            Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(3), "Rex fills the remaining 50s and walk-outs");
             Assert.That(ops.Fleet.Any(a => a.Registration == "VH-ZRC"), Is.True);
-            Assert.That(ops.Fleet.Any(a => a.Registration == "VH-ZRD"), Is.False);
+            Assert.That(ops.Fleet.Any(a => a.Registration == "VH-ZRE"), Is.True);
             Assert.That(ops.Airlines.Select(a => a.Name), Does.Not.Contain("QantasLink"),
                 "do not register a carrier that could not park anyone");
 
@@ -91,8 +92,9 @@ namespace Airside.Tests
             ops.Update();
             Assert.That(parked.State, Is.EqualTo(FleetState.TaxiOut));
 
-            Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(1), "a later load still fills the rest of Rex");
-            Assert.That(ops.Fleet.Any(a => a.Registration == "VH-ZRD"), Is.True);
+            Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(1),
+                "a later load parks the first Q400 on the freed 50-series");
+            Assert.That(ops.Airlines.Select(a => a.Name), Does.Contain("QantasLink"));
             Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(0));
         }
 
@@ -106,7 +108,7 @@ namespace Airside.Tests
             ops.AddAirline(player);
             ops.AddAircraft(player, "VH-QQQ", AircraftType.Dash8Q400, new StableId("BAY-1"));
 
-            Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(5));
+            Assert.That(ops.AddMissingRegionalCarriers(), Is.EqualTo(6));
             Assert.That(ops.Fleet.First(a => a.Registration == "VH-ZRC").Stand,
                 Is.Not.EqualTo(new StableId("BAY-5")), "the first choice avoids the tight neighbour while alternatives exist");
         }

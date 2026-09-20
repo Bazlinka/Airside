@@ -137,6 +137,7 @@ namespace Airside.Presentation
             if (_awaySummary != null)
                 _awaySummary = null;
             _menuOpen = false;
+            _optionsOpen = false;
 
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
             {

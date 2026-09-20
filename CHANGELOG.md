@@ -1,5 +1,26 @@
 ## Unreleased
 
+- **Adelaide now has the current Terminal 1 stand map.** Aerobridges
+  12L–29 (L and R of the same pier cannot both be occupied), regional
+  50A–G, and walk-out 10A–D / 2A all have taxi routes and markings.
+  Opening traffic still uses a handful of them; the rest sit empty the
+  way a real morning apron does.
+
+- **Departures fly the remaining runway before they turn.** Climb-out
+  stays wings-level over the strip; the SID bank starts after the far
+  threshold and rolls the wings with the heading change.
+
+- **Options is a real settings page.** Sound, aircraft tags, the
+  airfield map, follow-on-select, invert orbit and camera speed persist
+  and change the session. Esc opens the Adelaide Airport menu.
+
+- **The field is named Adelaide Airport.** Intro and pause title drop
+  the generic regional-airport line.
+
+- **Live stands stay the operating subset.** Gates 13, 15, 18L and 20L
+  plus regional 50A–F match the OSM parking that already has taxi
+  routes. Extra Adelaide parking lines are mapped, not live.
+
 - **The field edge no longer draws a bright hairline.** Airport and
   paddock share the same satellite dissolve, and the join is lit from
   the land, not the tuck-under cliff.

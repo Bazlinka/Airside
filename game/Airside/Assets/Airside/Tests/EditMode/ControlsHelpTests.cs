@@ -26,6 +26,7 @@ namespace Airside.Tests
             Assert.That(ControlsHelp.IncludesKey("F8"), Is.True);
             Assert.That(ControlsHelp.IncludesKey("F1"), Is.True);
             Assert.That(ControlsHelp.IncludesKey("Esc"), Is.True);
+            Assert.That(ControlsHelp.IncludesKey("M"), Is.True);
             Assert.That(ControlsHelp.IncludesKey("F"), Is.True);
             Assert.That(ControlsHelp.IncludesKey("WASD"), Is.True);
             Assert.That(ControlsHelp.IncludesKey("XYZ"), Is.False);

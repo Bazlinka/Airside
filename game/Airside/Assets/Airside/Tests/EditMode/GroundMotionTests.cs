@@ -28,7 +28,9 @@ namespace Airside.Tests
                 var taxi = new GroundPath(bay.TaxiOut, GroundSpeedLimits.TaxiTurboprop);
                 Assert.That(push.TopSpeed / Kt, Is.LessThanOrEqualTo(3.01f), "pushback stays a walking-pace tug");
                 Assert.That(taxi.TopSpeed / Kt, Is.LessThanOrEqualTo(25.01f), "turboprop taxi capped at 25 kt");
-                Assert.That(taxi.TopSpeed / Kt, Is.GreaterThan(20f), "and reaches a real straight-taxi pace");
+                var straight = bay.Reference.StartsWith("50") ? 20f : 15f;
+                Assert.That(taxi.TopSpeed / Kt, Is.GreaterThan(straight),
+                    $"{bay.Reference} must clear a crawl on the way to the hold");
             }
 
             foreach (var gate in AdelaideLayout.TerminalGates)

@@ -40,18 +40,26 @@ TAKEOFF_START_X = -1500.0
 HOLD_05 = (-1530.0, 90.0)
 HOLD_23 = (1539.9, 103.3)
 E2_HOLD = (237.0, 199.0)
-# Regional bays along taxilane T4. BAY-1..BAY-4 are 50D..50A (the original four); BAY-5/6
-# are 50E/50F, added for more regional traffic. 50G is left out: it sits on the bend of T4,
-# so the straight lead-in this generator builds would start on the grass.
+# Regional bays along taxilane T4 — AIP PADAP03 09 JUL 2026, 50A–50G.
+# BAY-1..BAY-4 are 50D..50A (the original four); 50E/50F/50G follow west around T4.
 BAYS = [("BAY-1", "50D"), ("BAY-2", "50C"), ("BAY-3", "50B"), ("BAY-4", "50A"),
-        ("BAY-5", "50E"), ("BAY-6", "50F")]
+        ("BAY-5", "50E"), ("BAY-6", "50F"), ("BAY-7", "50G")]
+# Walk-out / marshaller stands east of T1 (AIP PADAP02): 10A–10D SF340, 2A SF340B.
+WALKOUT_BAYS = [("BAY-10A", "10A"), ("BAY-10B", "10B"), ("BAY-10C", "10C"),
+                ("BAY-10D", "10D"), ("BAY-2A", "2A")]
 BAY_LEAD = 26.0          # metres of straight taxilane before turning into a bay
 PUSHBACK_TAIL = 18.0     # metres the tail travels along the lane after the pushback (50A sits at the end of T4)
 
-# Terminal gates (ADR 0047) are a separate stand system from the regional BAYS. Gate 13
-# hosts the domestic 737; Gate 15 hosts trans-Tasman A321neo traffic. Both parking lines
-# come directly from the committed OSM snapshot.
-TERMINAL_GATES = [("GATE-13", "13"), ("GATE-15", "15"), ("GATE-18", "18L"), ("GATE-20", "20L")]
+# Terminal 1 aerobridge stands on the 09 JUL 2026 apron chart that OSM has.
+# The original four ids stay first so saves keep GATE-13/15/18/20.
+TERMINAL_GATES = [
+    ("GATE-13", "13"), ("GATE-15", "15"), ("GATE-18", "18L"), ("GATE-20", "20L"),
+    ("GATE-12L", "12L"), ("GATE-14L", "14L"), ("GATE-16L", "16L"), ("GATE-16R", "16R"),
+    ("GATE-17", "17"), ("GATE-18R", "18R"), ("GATE-19", "19"), ("GATE-20R", "20R"),
+    ("GATE-21", "21"), ("GATE-22L", "22L"), ("GATE-22R", "22R"), ("GATE-23", "23"),
+    ("GATE-24", "24"), ("GATE-25", "25"), ("GATE-26L", "26L"), ("GATE-27", "27"),
+    ("GATE-28L", "28L"), ("GATE-28R", "28R"), ("GATE-29", "29"),
+]
 
 # Gate 13 ground geometry, all anchored on OSM features. Its real parking line starts at
 # the T1/T2/B1 junction, but OSM's terminal apron only begins at z = 358, leaving a 50 m
@@ -63,6 +71,10 @@ GATE13_LINK = [(1520.0, 294.0), (1568.0, 295.0), (1577.0, 297.0), (1611.0, 304.0
 GATE15_LINK = [(1435.0, 300.0), (1518.0, 300.0), (1518.0, 358.0), (1435.0, 358.0)]
 GATE18_LINK = [(1300.0, 300.0), (1435.0, 300.0), (1435.0, 358.0), (1300.0, 358.0)]
 GATE20_LINK = [(1210.0, 300.0), (1300.0, 300.0), (1300.0, 358.0), (1210.0, 358.0)]
+# West T1 frontage (21–29) so those stands sit on rendered pavement without
+# overlapping the original Gate 13–20 apron links.
+T1_WEST = [(860.0, 288.0), (1210.0, 288.0), (1210.0, 360.0), (860.0, 360.0)]
+T1_EAST = [(1638.0, 270.0), (1780.0, 270.0), (1780.0, 460.0), (1638.0, 460.0)]
 
 GATE_ROUTE = {
     "13": ((1543.0, 294.0), (1600.0, 301.7), (1568.0, 295.0)),
@@ -151,6 +163,18 @@ def round_corners(pts, radius):
         out.append(b)
     out.append(pts[-1])
     return dedupe(out, 0.3)
+
+
+def nose_in(pts):
+    """OSM sometimes draws taxilane→stop, sometimes the reverse. T1 nose-in is +Z."""
+    if pts[-1][1] + 8.0 < pts[0][1]:
+        return list(reversed(pts))
+    return list(pts)
+
+
+def auto_gate_route(pts):
+    entry = pts[0]
+    return (entry[0], 300.0), (entry[0] + 32.0, 301.0), (entry[0], 300.0)
 
 
 def bezier(p0, p1, p2, p3, steps=16):
@@ -257,6 +281,12 @@ def main():
     report.append(("vacate 23", vacate23, ["05/23"] + b2_names))
     report.append(("lineup 23", lineup23, ["B2", "23"]))
 
+    def append_bay(bay_id, ref, stop, heading, taxi_in, pushback, taxi_out, taxi_out23, arrive_names, depart_names):
+        bays.append((bay_id, ref, stop, heading, taxi_in, pushback, taxi_out, taxi_out23))
+        report.append((f"taxi-in {bay_id}/{ref}", taxi_in, ["E2"] + arrive_names))
+        report.append((f"pushback {bay_id}/{ref}", pushback, ["stand"]))
+        report.append((f"taxi-out {bay_id}/{ref}", taxi_out, depart_names))
+
     bays = []
     for bay_id, ref in BAYS:
         lane, stop = parking[ref][0], parking[ref][-1]
@@ -265,7 +295,8 @@ def main():
         d = (d[0] / dl, d[1] / dl)
         heading = math.degrees(math.atan2(d[0], d[1]))
 
-        entry = (lane[0] - BAY_LEAD, lane[1])
+        # 50G already sits on the T4 bend — a 26 m west lead-in would start on grass.
+        entry = (lane[0], lane[1]) if ref == "50G" else (lane[0] - BAY_LEAD, lane[1])
         arrive, arrive_names = route(E2_HOLD, entry)
         arrive = round_corners(arrive + [entry], 35.0)
         turn_in = bezier(entry, (lane[0] - 8.0, lane[1]), (stop[0] - d[0] * 14.0, stop[1] - d[1] * 14.0), stop)
@@ -279,19 +310,35 @@ def main():
         depart23, _ = route(push_end, HOLD_23)
         taxi_out23 = round_corners([push_end] + depart23 + [HOLD_23], 35.0)
 
-        bays.append((bay_id, ref, stop, heading, taxi_in, pushback, taxi_out, taxi_out23))
-        report.append((f"taxi-in {bay_id}/{ref}", taxi_in, ["E2"] + arrive_names))
-        report.append((f"pushback {bay_id}/{ref}", pushback, ["stand"]))
-        report.append((f"taxi-out {bay_id}/{ref}", taxi_out, depart_names))
+        append_bay(bay_id, ref, stop, heading, taxi_in, pushback, taxi_out, taxi_out23, arrive_names, depart_names)
+
+    for bay_id, ref in WALKOUT_BAYS:
+        pts = parking[ref]
+        entry, stop = pts[0], pts[-1]
+        d = (stop[0] - entry[0], stop[1] - entry[1])
+        dl = math.hypot(*d)
+        heading = math.degrees(math.atan2(d[0], d[1]))
+        arrive, arrive_names = route(E2_HOLD, entry)
+        taxi_in = dedupe(round_corners(arrive, 35.0) + pts[1:])
+        pushback = list(reversed(pts))
+        depart, depart_names = route(entry, HOLD_05)
+        taxi_out = round_corners([entry] + depart + [HOLD_05], 35.0)
+        depart23, _ = route(entry, HOLD_23)
+        taxi_out23 = round_corners([entry] + depart23 + [HOLD_23], 35.0)
+        append_bay(bay_id, ref, stop, heading, taxi_in, pushback, taxi_out, taxi_out23, arrive_names, depart_names)
 
     # Terminal gates: routes follow the jet's nose datum (AIR-005's model root), nose in.
     aprons.append(("Gate 13 apron link", GATE13_LINK))
     aprons.append(("Gate 15 apron link", GATE15_LINK))
     aprons.append(("Gate 18 apron link", GATE18_LINK))
     aprons.append(("Gate 20 apron link", GATE20_LINK))
+    aprons.append(("Terminal 1 west apron link", T1_WEST))
+    aprons.append(("Terminal 1 east stands", T1_EAST))
     terminal_gates = []
     for gate_id, ref in TERMINAL_GATES:
-        route_entry, push_end, route_junction = GATE_ROUTE[ref]
+        pts = nose_in(parking[ref])
+        route_entry, push_end, route_junction = GATE_ROUTE.get(ref, auto_gate_route(pts))
+        parking[ref] = pts
         entry, stop = parking[ref][0], parking[ref][-1]
         d = (stop[0] - entry[0], stop[1] - entry[1])
         dl = math.hypot(*d)

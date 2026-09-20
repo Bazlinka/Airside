@@ -58,7 +58,7 @@ namespace Airside.Presentation
             }),
             new Section("General", new[]
             {
-                new Binding("Esc", "Close panel, clear selection, then menu"),
+                new Binding("Esc", "Close panel, options, then menu"),
                 new Binding("M", "Mute"),
             }),
         };

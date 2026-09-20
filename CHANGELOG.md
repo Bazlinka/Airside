@@ -1,5 +1,26 @@
 ## Unreleased
 
+- **Clearing the standing backlog: seven items fixed (ADR 0068).** Everything previously
+  flagged and deferred, in one pass. (1) The go-around teleport — the visible jump when a missed
+  approach's racetrack ends is now a smoothed 6-second blend to the pinned holding position
+  instead of an instant 400-1,100m/210-250m snap; not a physically accurate rejoin (the two
+  flight-path systems have no shared parameterisation), but the jump itself is gone. (2) Terminal
+  glazing now follows the real curved wall (`AdelaideTerminalArchitecture.AirsideWallZAt`,
+  interpolated from the actual OSM footprint) instead of one hardcoded Z that put the near end
+  2.14m off the building. (3) Rain and clouds now drift with the actual surface wind instead of
+  a fixed direction — previously only the windsock reacted to wind at all. (4) Overcast now
+  shows visibly more cloud than a partly-cloudy day (each cluster has its own cover-based reveal
+  threshold) instead of the same fixed cluster count at every cover level. (5) Airline rename has
+  a real HUD control now — a text field in the Stats page header. (6) The Stats page's empty
+  lower-right now shows a milestones-reached count and a lifetime contracts-fulfilled total
+  instead of blank space (a real overflow bug in the first draft of this was caught by a new
+  test before merge, not after). (7) A stroke-painted alphabet (0-9 plus the letters Adelaide's
+  real stand/gate references use) now exists, extending the runway's own numeral system — not
+  yet wired into the actual stand labels, since that swap is real integration risk for a
+  cosmetic win with no way to verify it without seeing it rendered. `scripts/test-domain.sh`
+  542/542 (16 new tests); terminal glazing and the stroke alphabet are the first Presentation
+  fixes this session with genuine automated proof rather than inspection-only review.
+
 - **Livery repaint wired into the Stats HUD (ADR 0067).** `AirlineOperations.SetLivery` (ADR
   0066) had no way to actually be reached in-game. The Stats workspace's Overview column now
   has a LIVERY row of six clickable swatches — the same palette offered at airline creation,

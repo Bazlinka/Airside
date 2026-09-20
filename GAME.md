@@ -1,5 +1,49 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Claude — clearing the standing backlog, all seven flagged items (branch
+  `claude/weather-system-improvement-1bgfc3`, ADR 0068).** Bailey asked what was still
+  unresolved across the session, then said "fix all of em." All seven, in the order they'd been
+  flagged:
+  1. **Go-around teleport, smoothed** — `FleetGoAroundRejoinWorldPosition` blends the world
+     position from the go-around racetrack's own endpoint to the pinned holding position over
+     6 eased seconds (`GoAroundRejoin`, Simulation, tested). Not a physically accurate rejoin —
+     the two systems share no parameterisation — but the 400-1,100m/210-250m instant jump this
+     was deferred twice for is gone. Gear/pitch still snap at the same instant (a smaller,
+     separate residual gap, not attempted alongside this).
+  2. **Terminal glazing follows the real wall** — `AirsideWallZAt` interpolates Z from the
+     actual OSM footprint vertices already in `AdelaideLayout.Terminals`, replacing one
+     hardcoded Z that put the near end 2.14m off the building. Headless-tested (this file holds
+     no UnityEngine types).
+  3. **Rain and clouds drift with the real wind** — both now read `AirlineOperations.Wind` the
+     same way the windsock (previously the only wind-reactive visual) already did.
+  4. **Overcast shows more cloud, not just denser-looking cloud** — each of the fixed cluster
+     count has its own cover-based reveal threshold instead of one global opacity knob.
+  5. **Airline rename has a HUD control** — a `GUI.TextField` + RENAME button in the Stats
+     page's header, the one raw-IMGUI exception in an otherwise painter-driven page.
+  6. **Stats page's empty lower-right filled with real content** — "N of M milestones reached"
+     and a lifetime "N contracts fulfilled all-time" line (the true uncapped count, not the
+     10-entry history list). Caught a real bug in its own first draft: a fully-populated
+     worst-case model on a cramped stacked viewport (1024×640) ran the fulfilled line 24px past
+     the footer — found by painting-and-inspecting the actual draw list in a test, not just
+     checking the layout formula, and fixed with the same defensive floor-check
+     `ContractsWorkspacePainter.PaintActive` already uses.
+  7. **A stroke-painted alphabet exists** for stand/gate references (0-9 + A-G, L, R — the
+     exact letters `AdelaideLayout`'s real bay/gate references use), extending the runway
+     numerals' own 7-segment system. **Deliberately not wired into the actual stand labels** —
+     that swap (matching each stand's own position/rotation/scale convention) is real
+     integration risk for a cosmetic win with zero way to verify it without seeing it rendered;
+     the alphabet itself carries none of that risk and is fully tested.
+  - **Evidence:** `scripts/test-domain.sh` **542/542** (16 new tests). (2), (6) and (7) are the
+    first Presentation fixes this session with genuine automated proof rather than
+    inspection-only review — (2) and (7)'s files hold no UnityEngine types and are already in
+    the headless harness, and (6) is the same tested Model/Layout/Painter pattern the whole
+    Stats workspace uses, verified both by tests and by re-rendering via `scripts/hud-mockup`.
+    (1), (3), (4), (5) remain reasoned/traced, not confirmed by eye.
+  - **NEXT:** wire the stroke alphabet into the actual stand-label geometry (needs a real look
+    to get position/rotation right); the residual gear/pitch snap on go-around rejoin; a real
+    Unity look remains the standing, cumulative ask under every Presentation change this
+    session.
+
 - **2026-09-21 Claude — livery repaint wired into the Stats HUD (branch
   `claude/weather-system-improvement-1bgfc3`, ADR 0067).** Bailey asked "any more?" after the
   overnight round below merged. Of that round's two profile features (rename, livery), only

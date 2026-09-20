@@ -131,8 +131,24 @@ namespace Airside.Presentation
         {
             var half = stripLength * 0.5f;
             var list = new List<Mark>(32);
-            AddDesignation(list, -half + DesignationFromThreshold, 1f, nearLabel);
-            AddDesignation(list, half - DesignationFromThreshold, -1f, farLabel);
+            AddDesignation(list, -half + DesignationFromThreshold, 1f, nearLabel, 0f);
+            AddDesignation(list, half - DesignationFromThreshold, -1f, farLabel, 0f);
+            return list.ToArray();
+        }
+
+        /// <summary>
+        /// A general-purpose stroke-painted label — the same block-stencil digits and letters
+        /// (<see cref="GlyphMask"/>) DesignationNumerals paints the runway ends with, for any
+        /// other reference that wants the matching look (ADR 0068 built this for stand/gate
+        /// references; not yet wired up to actually draw them — see the ADR for why).
+        /// <paramref name="centerAcross"/> centres the label across, same axis as
+        /// <see cref="Mark.WidthZ"/>; <paramref name="alongDirection"/> is ±1, which way the
+        /// glyph height grows from <paramref name="baselineAlong"/>.
+        /// </summary>
+        public static Mark[] Label(string text, float baselineAlong, float alongDirection, float centerAcross)
+        {
+            var list = new List<Mark>((text?.Length ?? 0) * 4);
+            AddDesignation(list, baselineAlong, alongDirection, text, centerAcross);
             return list.ToArray();
         }
 
@@ -285,13 +301,14 @@ namespace Airside.Presentation
                 list.Add(new Mark(start + i * step, centerZ, dashLength, barWidth));
         }
 
-        private static void AddDesignation(List<Mark> list, float baselineX, float along, string label)
+        private static void AddDesignation(List<Mark> list, float baselineX, float along, string label,
+            float centerAcross)
         {
             if (string.IsNullOrEmpty(label))
                 return;
             var count = label.Length;
             var span = count * DesignationDigitWidth + Math.Max(0, count - 1) * DesignationDigitGap;
-            var left = -span * 0.5f;
+            var left = centerAcross - span * 0.5f;
             for (var i = 0; i < count; i++)
             {
                 var cx = left + DesignationDigitWidth * 0.5f + i * (DesignationDigitWidth + DesignationDigitGap);
@@ -299,7 +316,7 @@ namespace Airside.Presentation
             }
         }
 
-        private static void AddDigit(List<Mark> list, float baselineX, float centerZ, float along, char digit)
+        private static void AddDigit(List<Mark> list, float baselineX, float centerZ, float along, char glyph)
         {
             var h = DesignationDigitHeight;
             var w = DesignationDigitWidth;
@@ -311,7 +328,7 @@ namespace Airside.Presentation
             var rightZ = centerZ + (w * 0.5f - s * 0.5f);
             var barH = h * 0.5f - s;
             // 7-segment: A top, B right-top, C right-bot, D bottom, E left-bot, F left-top, G mid.
-            var mask = DigitMask(digit);
+            var mask = GlyphMask(glyph);
             if ((mask & 1) != 0)
                 list.Add(new Mark(topX, centerZ, s, w));
             if ((mask & 2) != 0)
@@ -328,13 +345,39 @@ namespace Airside.Presentation
                 list.Add(new Mark(midX, centerZ, s, w));
         }
 
-        private static int DigitMask(char digit) => digit switch
+        /// <summary>
+        /// 7-segment mask for every digit and the specific letters real Adelaide stand/gate
+        /// references actually use (A-G, L, R — see AdelaideLayout's bay and gate reference
+        /// strings, e.g. "50D", "18L"), for a stroke-painted alphabet to match the runway's own
+        /// designation numerals (ADR 0068). A 7-segment display cannot draw every letter
+        /// unambiguously: B and D use the same lowercase-style forms a calculator or digital
+        /// clock would (indistinguishable from 8/0 at a glance is the accepted trade-off of
+        /// this display style), and R is the minimal two-segment form conventionally used
+        /// where 7-segment alphabets need one at all. Every mask here is a distinct value —
+        /// verified by <c>AirsideStripMarkingsTests</c> — so no two characters in this set
+        /// paint identically.
+        /// </summary>
+        private static int GlyphMask(char glyph) => glyph switch
         {
             '0' => 1 | 2 | 4 | 8 | 16 | 32,
             '1' => 2 | 4,
             '2' => 1 | 2 | 8 | 16 | 64,
             '3' => 1 | 2 | 4 | 8 | 64,
+            '4' => 2 | 4 | 32 | 64,
             '5' => 1 | 4 | 8 | 32 | 64,
+            '6' => 1 | 4 | 8 | 16 | 32 | 64,
+            '7' => 1 | 2 | 4,
+            '8' => 1 | 2 | 4 | 8 | 16 | 32 | 64,
+            '9' => 1 | 2 | 4 | 8 | 32 | 64,
+            'A' => 1 | 2 | 4 | 16 | 32 | 64,
+            'B' => 4 | 8 | 16 | 32 | 64,
+            'C' => 1 | 8 | 16 | 32,
+            'D' => 2 | 4 | 8 | 16 | 64,
+            'E' => 1 | 8 | 16 | 32 | 64,
+            'F' => 1 | 16 | 32 | 64,
+            'G' => 1 | 4 | 8 | 16 | 32,
+            'L' => 8 | 16 | 32,
+            'R' => 16 | 64,
             _ => 0
         };
 

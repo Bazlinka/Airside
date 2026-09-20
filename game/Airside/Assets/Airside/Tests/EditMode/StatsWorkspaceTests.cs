@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Airside.Domain;
 using Airside.Presentation;
@@ -87,6 +88,32 @@ namespace Airside.Tests
             Assert.That(Reached("Reached Domestic"), Is.False);
             Assert.That(model.ContractHistory.Count, Is.EqualTo(1));
             Assert.That(model.ContractHistory[0].PaidText, Does.StartWith("$"));
+            Assert.That(model.ContractsFulfilledLine, Is.EqualTo("1 contracts fulfilled all-time"));
+            Assert.That(model.MilestonesReachedLine, Does.Match(@"^\d+ of \d+ milestones reached$"));
+        }
+
+        [Test]
+        public void Stats_ContractsFulfilledLineIsTheLifetimeCountNotTheCappedHistory()
+        {
+            // completedContractIds is the true lifetime record (never trimmed); contractHistory
+            // is the capped-at-MaxHistoryShown recent list — seeded directly rather than
+            // simulated so this tests the Stats model's own counting, not flight simulation.
+            var toFulfil = StatsWorkspaceModel.MaxHistoryShown + 2;
+            var completedIds = Enumerable.Range(0, toFulfil).Select(i => $"STATS-TEST-{i}").ToList();
+            var history = Enumerable.Range(0, StatsWorkspaceModel.MaxHistoryShown)
+                .Select(i => new CompletedContractRecord($"STATS-TEST-{i}", "ADL", "KGC", 100, new SimulationTime(i)))
+                .ToList();
+
+            var (clock, ops, _) = HudTestAirline.Create();
+            ops.RestoreCareerState(ops.CareerState.Funds, ops.CareerState.Reliability,
+                ops.CareerState.Tier.ToString(), null, 0, 0, Array.Empty<string>(),
+                completedIds, ops.CareerState.CompletedPlayerRotations, null,
+                ops.CareerState.LifetimeRevenue, history);
+
+            var model = new StatsWorkspaceModel();
+            model.Rebuild(ops, clock.Now);
+            Assert.That(model.ContractHistory.Count, Is.EqualTo(StatsWorkspaceModel.MaxHistoryShown));
+            Assert.That(model.ContractsFulfilledLine, Is.EqualTo($"{toFulfil} contracts fulfilled all-time"));
         }
 
         [Test]
@@ -109,6 +136,64 @@ namespace Airside.Tests
                 var lastSwatch = layout.LiverySwatch(StatsWorkspaceModel.LiveryPalette.Length - 1);
                 Assert.That(lastSwatch.Right, Is.LessThanOrEqualTo(layout.LeftColumn.Right + 0.01f), label);
                 Assert.That(lastSwatch.Bottom, Is.LessThanOrEqualTo(layout.Footer.Y + 0.01f), label);
+
+                // The rename field + button sit in the header, right-aligned before CLOSE —
+                // must clear the title on the left and CLOSE on the right at every width.
+                Assert.That(layout.RenameFieldBox.Overlaps(layout.TitleBox), Is.False, label);
+                Assert.That(layout.RenameFieldBox.Overlaps(layout.RenameButtonBox), Is.False, label);
+                Assert.That(layout.RenameButtonBox.Right,
+                    Is.LessThanOrEqualTo(OperationsWorkspacePainter.CloseBox(surface).X + 0.01f), label);
+                Assert.That(layout.RenameFieldBox.X, Is.GreaterThanOrEqualTo(layout.TitleBox.Right), label);
+            }
+        }
+
+        [Test]
+        public void Stats_PaintedMilestonesHistoryAndFulfilledLineNeverRunPastTheFooter()
+        {
+            // A fully populated model (all 11 milestones, a full history list) is the worst
+            // case for vertical space — including on a cramped stacked layout, where a
+            // straight-line reservation once let the lifetime line run 24px past the footer
+            // (caught by this test after the fact; StatsWorkspacePainter now stops drawing
+            // rather than overflow, the same defensive pattern ContractsWorkspacePainter's
+            // PaintActive already uses for its own terms list).
+            var (clock, ops, plane) = HudTestAirline.Create();
+            var definition = RouteContractCatalogue.RegionalKingscoteIntro;
+            Assert.That(ops.AcceptContract(definition).Accepted, Is.True);
+            HudTestAirline.CompleteActiveContract(clock, ops, definition);
+            var history = Enumerable.Range(0, StatsWorkspaceModel.MaxHistoryShown)
+                .Select(i => new CompletedContractRecord($"FULL-{i}", "ADL", "KGC", 100, new SimulationTime(i)))
+                .ToList();
+            ops.RestoreCareerState(50_000, 100, nameof(OperatingTier.International), null, 0, 0,
+                Array.Empty<string>(), history.Select(h => h.DefinitionId).ToList(), 40, null, 12_345, history);
+            Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True, "for the jet-operator milestone");
+
+            var model = new StatsWorkspaceModel();
+            model.Rebuild(ops, clock.Now);
+            Assert.That(model.Milestones.Count, Is.EqualTo(11), "worst case assumes the full milestone list");
+            Assert.That(model.ContractHistory.Count, Is.EqualTo(StatsWorkspaceModel.MaxHistoryShown));
+
+            foreach (var (width, height) in HudTestAirline.Viewports)
+            {
+                var surface = HudShell.WorkspaceSurface(width, height);
+                var layout = StatsWorkspaceLayout.Create(surface);
+                var into = new HudDrawList();
+                StatsWorkspacePainter.Paint(into, model, layout);
+
+                var floor = layout.RightColumn.Bottom;
+                foreach (var command in into.Commands)
+                {
+                    // Only the Right column's own content (Milestones/history/fulfilled line):
+                    // exclude the footer's own row (the airline-name attribution, deliberately
+                    // below RightColumn.Bottom) and anything left of the column entirely.
+                    if (command.Kind != HudDrawKind.Text)
+                        continue;
+                    if (command.Box.X < layout.RightColumn.X - 0.01f)
+                        continue;
+                    if (command.Box.Y >= layout.Footer.Y - 0.01f)
+                        continue;
+                    Assert.That(command.Box.Bottom, Is.LessThanOrEqualTo(floor + 0.5f),
+                        $"{width}x{height}: '{command.Text}' runs past the Right column's own bottom");
+                }
             }
         }
     }

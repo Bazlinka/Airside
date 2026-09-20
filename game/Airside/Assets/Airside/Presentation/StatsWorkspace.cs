@@ -75,6 +75,16 @@ namespace Airside.Presentation
         public IReadOnlyList<ContractHistoryRow> ContractHistory => _history;
         public string EmptyHistoryLine => "No contracts fulfilled yet — accept one from Contracts.";
 
+        /// <summary>
+        /// Lifetime count, not the length of <see cref="ContractHistory"/> — that list is
+        /// capped at <see cref="MaxHistoryShown"/> recent entries, so a long career needs its
+        /// own true total (<c>AirlineCareerState.CompletedContractIds</c>, which never drops
+        /// an id) to answer "how many have I actually fulfilled" once it outgrows the list.
+        /// </summary>
+        public string ContractsFulfilledLine { get; private set; } = string.Empty;
+
+        public string MilestonesReachedLine { get; private set; } = string.Empty;
+
         public const int MaxHistoryShown = 5;
 
         public void Rebuild(AirlineOperations operations, SimulationTime now)
@@ -92,6 +102,8 @@ namespace Airside.Presentation
             NextTierTitle = string.Empty;
             NextTierRequirementLine = string.Empty;
             NextTierProgress01 = 0f;
+            ContractsFulfilledLine = string.Empty;
+            MilestonesReachedLine = string.Empty;
             if (operations?.PlayerAirline == null)
                 return;
 
@@ -112,13 +124,19 @@ namespace Airside.Presentation
 
             FillNextTier(career, ownedTypes);
 
-            foreach (var milestone in CareerMilestones.Reached(career, fleetSize, ownedTypes))
+            var milestones = CareerMilestones.Reached(career, fleetSize, ownedTypes);
+            foreach (var milestone in milestones)
                 _milestones.Add(new MilestoneRow(milestone.Title, milestone.Reached));
+            var reachedCount = milestones.Count(m => m.Reached);
+            MilestonesReachedLine = $"{reachedCount} of {milestones.Count} milestones reached";
 
             foreach (var record in career.ContractHistory.Take(MaxHistoryShown))
                 _history.Add(new ContractHistoryRow(
                     $"{OperationsSummary.PlaceName(record.OriginCode)} → {OperationsSummary.PlaceName(record.DestinationCode)}",
                     $"${record.TotalPaid:N0}"));
+            // Lifetime, not the capped list above — the real answer once a long career has
+            // fulfilled more contracts than ContractHistory keeps.
+            ContractsFulfilledLine = $"{career.CompletedContractIds.Count} contracts fulfilled all-time";
         }
 
         private void FillNextTier(AirlineCareerState career, IReadOnlyList<AircraftType> ownedTypes)
@@ -189,6 +207,23 @@ namespace Airside.Presentation
 
         public HudBox TitleBox => new(Header.X + HudShell.SurfacePadding, Header.Y + 16f, 220f, 30f);
 
+        public const float RenameFieldWidth = 150f;
+        public const float RenameButtonWidth = 64f;
+        private const float RenameGap = 6f;
+
+        /// <summary>
+        /// Right-aligned before the CLOSE button (ADR 0068) — raw Unity `GUI.TextField` drawn
+        /// directly by the caller, not through the draw list: no primitive in the shared,
+        /// UnityEngine-free `HudDrawList` renders editable text, and adding one just for this
+        /// single control was a bigger, riskier change than drawing it as one exception.
+        /// </summary>
+        public HudBox RenameFieldBox => new(RenameButtonBox.X - RenameGap - RenameFieldWidth, Header.Y + 18f,
+            RenameFieldWidth, 26f);
+
+        public HudBox RenameButtonBox => new(
+            OperationsWorkspacePainter.CloseBox(Surface).X - RenameGap - RenameButtonWidth,
+            Header.Y + 18f, RenameButtonWidth, 26f);
+
         public HudBox OverviewCaption => LeftColumn.WithHeight(CaptionHeight);
 
         public HudBox StatRow(int index) =>
@@ -219,30 +254,62 @@ namespace Airside.Presentation
 
         public HudBox MilestonesCaption => RightColumn.WithHeight(CaptionHeight);
 
-        public HudBox MilestoneRow(int index) =>
-            new(RightColumn.X, RightColumn.Y + CaptionHeight + 8f + index * MilestoneRowHeight,
-                RightColumn.Width, MilestoneRowHeight);
+        public const float SummaryRowHeight = 20f;
 
-        /// <summary>How many milestone rows fit before the history caption needs room below them.</summary>
+        /// <summary>"N of M milestones reached", right under the caption.</summary>
+        public HudBox MilestonesSummaryBox =>
+            new(RightColumn.X, RightColumn.Y + CaptionHeight + 2f, RightColumn.Width, SummaryRowHeight);
+
+        /// <summary>Where the milestone rows start, below the caption and its summary line.</summary>
+        private float MilestonesListY => RightColumn.Y + CaptionHeight + SummaryRowHeight + 8f;
+
+        public HudBox MilestoneRow(int index) =>
+            new(RightColumn.X, MilestonesListY + index * MilestoneRowHeight, RightColumn.Width, MilestoneRowHeight);
+
+        /// <summary>
+        /// How many milestone rows fit before the history block and the lifetime-fulfilled
+        /// line below it need room. Mirrors the exact gaps <see cref="HistoryY"/> and
+        /// <see cref="ContractsFulfilledBox"/> use, sized for the worst case (a full history
+        /// list) so this never reserves less room than those could actually need.
+        /// </summary>
         public int VisibleMilestones(int totalMilestones)
         {
-            var historyBlock = CaptionHeight + 8f + MaxHistoryRows * HistoryRowHeight + 16f;
-            var available = RightColumn.Height - CaptionHeight - 8f - historyBlock;
+            var beforeList = CaptionHeight + SummaryRowHeight + 8f;
+            const float historyGap = 12f;
+            const float rowsGap = 6f;
+            const float fulfilledGap = 10f;
+            const float fulfilledHeight = 18f;
+            var afterList = historyGap + CaptionHeight + rowsGap + MaxHistoryRows * HistoryRowHeight
+                             + fulfilledGap + fulfilledHeight;
+            var available = RightColumn.Height - beforeList - afterList;
             var fit = available <= 0f ? 0 : (int)(available / MilestoneRowHeight);
             return fit < 0 ? 0 : fit > totalMilestones ? totalMilestones : fit;
         }
 
         public const int MaxHistoryRows = StatsWorkspaceModel.MaxHistoryShown;
 
+        private float HistoryY(int shownMilestones) =>
+            MilestonesListY + shownMilestones * MilestoneRowHeight + 12f;
+
         public HudBox HistoryCaption(int shownMilestones) =>
-            new(RightColumn.X, RightColumn.Y + CaptionHeight + 8f + shownMilestones * MilestoneRowHeight + 12f,
-                RightColumn.Width, CaptionHeight);
+            new(RightColumn.X, HistoryY(shownMilestones), RightColumn.Width, CaptionHeight);
 
         public HudBox HistoryRow(int shownMilestones, int index) =>
-            new(RightColumn.X,
-                RightColumn.Y + CaptionHeight + 8f + shownMilestones * MilestoneRowHeight + 12f + CaptionHeight + 6f
-                + index * HistoryRowHeight,
+            new(RightColumn.X, HistoryY(shownMilestones) + CaptionHeight + 6f + index * HistoryRowHeight,
                 RightColumn.Width, HistoryRowHeight);
+
+        /// <summary>
+        /// The lifetime "N contracts fulfilled all-time" line, below whatever the history
+        /// block actually shows (rows, or its one-line empty state) — the real content that
+        /// used to leave the rest of this column blank once Milestones and Recent Contracts
+        /// ran out of things to say (ADR 0068).
+        /// </summary>
+        public HudBox ContractsFulfilledBox(int shownMilestones, int shownHistory)
+        {
+            var rows = Math.Max(shownHistory, 1); // the empty-state line takes one row's worth of height
+            var y = HistoryY(shownMilestones) + CaptionHeight + 6f + rows * HistoryRowHeight + 10f;
+            return new HudBox(RightColumn.X, y, RightColumn.Width, 18f);
+        }
 
         public static StatsWorkspaceLayout Create(HudBox surface)
         {
@@ -323,9 +390,9 @@ namespace Airside.Presentation
         /// <summary>
         /// Livery repaint (ADR 0067): the same authored swatches offered at airline creation,
         /// clickable here too — a real HUD entry point for AirlineOperations.SetLivery, which
-        /// otherwise had no way to be reached once past the setup screen. Rename has no control
-        /// here yet: it needs a text field, a genuinely different (and riskier) piece of IMGUI
-        /// than a row of buttons, and is deliberately left for its own pass.
+        /// otherwise had no way to be reached once past the setup screen. Rename gets its own
+        /// control in the header (ADR 0068) — a raw `GUI.TextField`, drawn by the caller rather
+        /// than through this painter, since the shared draw list has no editable-text primitive.
         /// </summary>
         private static void PaintProfile(HudDrawList into, StatsWorkspaceModel model, StatsWorkspaceLayout layout)
         {
@@ -345,6 +412,7 @@ namespace Airside.Presentation
             StatsWorkspaceLayout layout)
         {
             into.Caption(layout.MilestonesCaption, "MILESTONES");
+            into.Text(layout.MilestonesSummaryBox, model.MilestonesReachedLine, 12f, HudTone.Muted);
             var shown = layout.VisibleMilestones(model.Milestones.Count);
             for (var i = 0; i < shown; i++)
             {
@@ -357,20 +425,45 @@ namespace Airside.Presentation
             }
 
             into.Caption(layout.HistoryCaption(shown), "RECENT CONTRACTS");
-            if (model.ContractHistory.Count == 0)
+            // A cramped stacked layout (a narrow viewport gives this column under half the
+            // body's height) can legitimately run out of room for a full history list plus the
+            // lifetime line below it — VisibleMilestones' own reservation assumes the common
+            // case, not every combination of viewport and data. Same defensive floor check
+            // ContractsWorkspacePainter.PaintActive already uses for its terms list: stop
+            // drawing rather than run text into or past the footer.
+            var floor = layout.RightColumn.Bottom;
+            var shownHistory = model.ContractHistory.Count;
+            var drawnHistoryRows = 0;
+            if (shownHistory == 0)
             {
-                into.Text(layout.HistoryRow(shown, 0), model.EmptyHistoryLine, 12f, HudTone.Muted, HudTextStyle.Wrap);
-                return;
+                var row = layout.HistoryRow(shown, 0);
+                if (row.Bottom <= floor)
+                {
+                    into.Text(row, model.EmptyHistoryLine, 12f, HudTone.Muted, HudTextStyle.Wrap);
+                    drawnHistoryRows = 1;
+                }
+            }
+            else
+            {
+                for (var i = 0; i < shownHistory; i++)
+                {
+                    var row = layout.HistoryRow(shown, i);
+                    if (row.Bottom > floor)
+                        break;
+                    var record = model.ContractHistory[i];
+                    into.Text(row.SliceLeft(row.Width - 80f), record.RouteText, 12f);
+                    into.Text(new HudBox(row.Right - 80f, row.Y, 80f, row.Height), record.PaidText, 12f,
+                        HudTone.Positive, HudTextStyle.Regular, HudAlign.Right);
+                    drawnHistoryRows = i + 1;
+                }
             }
 
-            for (var i = 0; i < model.ContractHistory.Count; i++)
-            {
-                var record = model.ContractHistory[i];
-                var row = layout.HistoryRow(shown, i);
-                into.Text(row.SliceLeft(row.Width - 80f), record.RouteText, 12f);
-                into.Text(new HudBox(row.Right - 80f, row.Y, 80f, row.Height), record.PaidText, 12f,
-                    HudTone.Positive, HudTextStyle.Regular, HudAlign.Right);
-            }
+            // Lifetime total, below whatever Recent Contracts actually showed — real content
+            // filling what used to be blank space once Milestones and history ran out of rows
+            // to draw (ADR 0068). Skipped, not squeezed in, if it would not fit either.
+            var fulfilledBox = layout.ContractsFulfilledBox(shown, drawnHistoryRows);
+            if (fulfilledBox.Bottom <= floor)
+                into.Text(fulfilledBox, model.ContractsFulfilledLine, 12f, HudTone.Muted);
         }
     }
 }

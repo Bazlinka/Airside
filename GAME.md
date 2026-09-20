@@ -1,5 +1,35 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Claude — road lane markings, bolder apron labels, runway left as-is (branch
+  `claude/weather-system-improvement-1bgfc3`, ADR 0061).** Bailey: "improve visual and ground
+  appearance...including roads," "improve runway appearance," "improve apron labels and make
+  them more natural." Flagged before starting that this session has now made six unverified
+  Presentation changes with no Unity editor available; Bailey chose to keep going and verify
+  everything together later rather than pause.
+  - **Roads:** `AirsideAdelaideRoads` drew one flat vertex-coloured ribbon per OSM road through
+    `Airside/Surroundings` — the same shader the land/sea uses, which blends 92% toward the
+    real satellite photo underneath (`_SatelliteStrength`). Read as a grey band cut out of the
+    aerial image, no lane markings at all. Added `BuildLaneMarkingMesh`: a dashed white
+    centreline on a separate mesh/material (`AirsideMaterialLibrary`'s `PaintedLine`, its own
+    real texture) so the paint isn't diluted by the road's own satellite blend, drawn only on
+    roads wide enough to already get a ribbon.
+  - **Apron labels:** bolded the painted stand/gate `TextMesh` labels (`fontStyle = Bold`) —
+    default weight read thin next to the runway's own purpose-built stroke-drawn ICAO
+    numerals. The thorough fix (a matching stroke-based letter+digit alphabet for stand refs
+    like "50D"/"18L") is a real, larger follow-up, not attempted blind here.
+  - **Runway:** checked first, changed nothing — paint (edges/centreline/threshold/aiming/TDZ/
+    designation numerals as real stroke geometry), asphalt texture, rubber-streak wear, taxiway
+    edge wear, and threshold/PAPI/ALS/edge lighting were all already in place. No concrete gap
+    found worth forcing a change for.
+  - **Evidence:** none possible — both touched files are UnityEngine-dependent, outside the
+    headless harness. `scripts/test-domain.sh` unaffected: 499/499.
+  - **NEXT:** this is now six stacked unverified Presentation changes this session (storm
+    flash/thunder + sun/moon fade, night taxi light, contract-arm reset, the departure-turn
+    fix, and this one). `scripts/test-unity.sh` on a Mac, then a Play-mode look at: a storm, a
+    night departure/arrival, the Contracts workspace, an actual departure with a large turn
+    (Perth off 23 or a regional off 12/30), the landside roads, and the apron stand labels —
+    before trusting any of it the way the tested Simulation-layer parts are trusted.
+
 - **2026-09-20 Claude — departures actually turn after the SID (branch
   `claude/weather-system-improvement-1bgfc3`, ADR 0060).** Bailey, after the graphics bug hunt
   below: "when the plane takes off - it is more realistic and actually follows a correct

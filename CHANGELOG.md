@@ -1,5 +1,18 @@
 ## Unreleased
 
+- **Road lane markings, bolder apron labels (ADR 0061).** Landside roads had no lane markings
+  at all — a flat asphalt ribbon blended 92% toward the real satellite photo underneath it, so
+  it read as a grey band cut out of the aerial image rather than a marked road. Added a dashed
+  white centreline (own mesh/material, so the paint isn't diluted by the road's satellite
+  blend) on every road wide enough to already draw a ribbon. Also bolded the painted apron
+  stand/gate identifier labels, which used Unity's default `TextMesh` weight next to the
+  runway's own purpose-built stroke-drawn designation numerals. Runway appearance was checked
+  and left alone — paint, texture, rubber wear and lighting were already comprehensive; no
+  building a stroke-based letter alphabet for stand references attempted here (a much larger,
+  Unity-verification-dependent job, flagged as a real follow-up instead of guessed at).
+  Presentation/Unity-only, outside the headless harness; `scripts/test-domain.sh` unaffected
+  (499/499).
+
 - **Departures actually turn after the SID establishes (ADR 0060).** Once the destination-track
   turn locked in, the aircraft used to keep translating along the *original* runway heading
   forever — the nose held the new heading while the ground track kept going straight down the

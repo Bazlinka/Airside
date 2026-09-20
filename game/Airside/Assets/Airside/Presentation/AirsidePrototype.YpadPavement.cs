@@ -174,6 +174,12 @@ namespace Airside.Presentation
                 text.anchor = TextAnchor.MiddleCenter;
                 text.alignment = TextAlignment.Center;
                 text.fontSize = 64;
+                // Default TextMesh weight reads thin next to the runway's own block-stencil
+                // designation numerals (AirsideStripMarkings.DesignationNumerals draws those
+                // as real stroke geometry, not font text) — bold is the cheap half-step toward
+                // that painted-numeral look without building a matching stroke alphabet for
+                // stand references, which also need letters (50D, 18L), not just digits.
+                text.fontStyle = FontStyle.Bold;
                 text.characterSize = marking.LabelCharacterSize;
                 text.color = paint;
                 var renderer = label.GetComponent<MeshRenderer>();

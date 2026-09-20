@@ -104,6 +104,14 @@ namespace Airside.Presentation
         private AudioSource _ambientWindAudio;
         private AudioSource _ambientRainAudio;
         private AudioSource _ambientCoastAudio;
+        private AudioSource _thunderAudio;
+        private AudioClip _thunderClip;
+        // ADR 0059: a storm strike's flash and its thunder, decoupled so thunder can lag the
+        // flash the way sound lags light. Both are presentation-only — Lightning.StrikesAt
+        // decides *when*, this only decides how it looks/sounds.
+        private float _lightningFlashAt = float.NegativeInfinity;
+        private float _lightningDistance01;
+        private float _thunderPlayAt = float.PositiveInfinity;
         private AudioSource _uiAudio;
         private AudioClip _uiClickClip;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
@@ -348,6 +356,10 @@ namespace Airside.Presentation
             _ambientCoastAudio.playOnAwake = false;
             _ambientCoastAudio.spatialBlend = 0f;
             _ambientCoastAudio.volume = 0f;
+            _thunderAudio = gameObject.AddComponent<AudioSource>();
+            _thunderAudio.loop = false;
+            _thunderAudio.playOnAwake = false;
+            _thunderAudio.spatialBlend = 0f;
             _uiAudio = gameObject.AddComponent<AudioSource>();
             _uiAudio.playOnAwake = false;
             _uiAudio.spatialBlend = 0f;
@@ -504,6 +516,16 @@ namespace Airside.Presentation
                 if (!FleetMode)
                     _simulation.Update();
                 UpdateAirlineOperations();
+                // ADR 0059: Lightning.StrikesAt is a pure function of the simulated second, so
+                // it must be asked exactly once per second — asking every frame would re-ask
+                // the same answer for as long as that second stays current and never notice
+                // the edge, and a big time-scale jump must never re-fire every second it skips.
+                if (Lightning.StrikesAt(_clock.Now))
+                {
+                    _lightningDistance01 = Lightning.DistanceFor(_clock.Now);
+                    _lightningFlashAt = Time.unscaledTime;
+                    _thunderPlayAt = Time.unscaledTime + Lightning.ThunderDelaySeconds(_lightningDistance01);
+                }
             }
 
             ApplyDayCycle();
@@ -1320,6 +1342,21 @@ namespace Airside.Presentation
                 _ambientCoastAudio.volume = Mathf.MoveTowards(
                     _ambientCoastAudio.volume, coastTarget, Time.unscaledDeltaTime * 0.15f);
                 _ambientCoastAudio.pitch = 0.92f + 0.08f * Mathf.PerlinNoise(Time.unscaledTime * 0.05f, 1.7f);
+            }
+
+            // ADR 0059: the strike already fixed its own moment and delay (Update()); this
+            // only fires the one-shot once real time actually reaches it, so pausing or a
+            // slow frame delays thunder along with everything else instead of it arriving early.
+            if (_thunderAudio != null && Time.unscaledTime >= _thunderPlayAt)
+            {
+                _thunderPlayAt = float.PositiveInfinity;
+                if (!_audioMuted)
+                {
+                    var clip = _thunderClip ??= Resources.Load<AudioClip>("Airside/Audio/thunder_crack_01") ?? CreateThunderClip();
+                    var volume = Mathf.Lerp(0.55f, 0.16f, _lightningDistance01);
+                    _thunderAudio.pitch = Mathf.Lerp(0.92f, 1.05f, 1f - _lightningDistance01);
+                    _thunderAudio.PlayOneShot(clip, volume);
+                }
             }
         }
 
@@ -3623,6 +3660,23 @@ namespace Airside.Presentation
         public static float EaseWeatherGloom(float current, float target, float deltaSeconds) =>
             Mathf.MoveTowards(current, target, deltaSeconds * 0.05f);
 
+        /// <summary>
+        /// A storm strike's flash: an instant spike, a quick partial fade, a smaller second
+        /// pop, then dark within half a second — the double-flicker read of real lightning.
+        /// 0 outside that half-second window either side of the strike.
+        /// </summary>
+        public static float LightningFlashEnvelope(float secondsSinceStrike)
+        {
+            if (secondsSinceStrike < 0f || secondsSinceStrike > 0.5f)
+                return 0f;
+            var primary = Mathf.Exp(-secondsSinceStrike * 14f);
+            const float secondPulseAt = 0.09f;
+            var secondary = secondsSinceStrike > secondPulseAt
+                ? Mathf.Exp(-(secondsSinceStrike - secondPulseAt) * 22f) * 0.5f
+                : 0f;
+            return Mathf.Clamp01(Mathf.Max(primary, secondary));
+        }
+
         /// <summary>The current daylight value (0 night, 1 day), updated once per frame here
         /// so other Presentation types that are not <see cref="AirsidePrototype"/> itself —
         /// e.g. <see cref="AircraftIdentitySideVisibility"/> tinting fuselage titles with the
@@ -3755,6 +3809,24 @@ namespace Airside.Presentation
                 // Tiny dusk haze only — do not orange-wash the whole scene.
                 density += AirsideBareField.Enabled ? warm * 0.00002f : warm * 0.00035f;
                 RenderSettings.fogDensity = density;
+            }
+
+            // ADR 0059: a storm strike briefly overrides the sky/ambient/sun with a white
+            // flash that decays over ~0.5 s of real time, independent of the steady weather
+            // gloom set above — that is the storm's baseline dimness, this is one instant.
+            var flash = LightningFlashEnvelope(Time.unscaledTime - _lightningFlashAt);
+            if (flash > 0f)
+            {
+                var punch = flash * Mathf.Lerp(0.35f, 1f, 1f - _lightningDistance01);
+                _sun.intensity += punch * 2.4f;
+                RenderSettings.ambientIntensity += punch * 1.1f;
+                RenderSettings.ambientSkyColor = Color.Lerp(RenderSettings.ambientSkyColor, Color.white, punch * 0.6f);
+                RenderSettings.ambientEquatorColor = Color.Lerp(RenderSettings.ambientEquatorColor, Color.white, punch * 0.5f);
+                RenderSettings.fogColor = Color.Lerp(RenderSettings.fogColor, Color.white, punch * 0.5f);
+                if (_mainCamera != null)
+                    _mainCamera.backgroundColor = Color.Lerp(_mainCamera.backgroundColor, Color.white, punch * 0.7f);
+                if (_horizonDomeRenderer != null)
+                    SetRendererColor(_horizonDomeRenderer, Color.Lerp(sky, Color.white, punch * 0.7f), Color.white);
             }
 
             // Apron floods come up as daylight falls (presentation only).
@@ -7934,9 +8006,17 @@ namespace Airside.Presentation
             // Place discs on a camera-centred sky sphere so they cannot sit under the terrain.
             var sunDir = _sun != null ? -_sun.transform.forward : Vector3.up;
             var skyAnchor = _mainCamera != null ? _mainCamera.transform.position : Vector3.zero;
+
+            // A crisp sun/moon disc under thick cloud, rain, fog or storm reads wrong — the
+            // discs used to stay fully lit regardless of forecast. A light haze (Cloudy,
+            // cover 0.45) still lets a dimmed disc show through; Overcast (0.78) and beyond
+            // hide it entirely.
+            var cloudCover = WeatherLook.For(CurrentWeather).CloudCover;
+            var discVisibility = Mathf.Clamp01(1f - Mathf.InverseLerp(0.3f, 0.75f, cloudCover));
+
             if (_sunDisc != null)
             {
-                var showSun = sunDir.y > 0.2f && daylight > 0.15f;
+                var showSun = sunDir.y > 0.2f && daylight > 0.15f && discVisibility > 0.02f;
                 _sunDisc.gameObject.SetActive(showSun);
                 if (showSun)
                 {
@@ -7949,7 +8029,8 @@ namespace Airside.Presentation
                     if (_sunDiscRenderer == null)
                         _sunDiscRenderer = _sunDisc.GetComponent<Renderer>();
                     if (_sunDiscRenderer != null)
-                        SetRendererColor(_sunDiscRenderer, sunColor, sunColor * (1.1f + warm * 0.6f));
+                        SetRendererColor(_sunDiscRenderer, sunColor * discVisibility,
+                            sunColor * ((1.1f + warm * 0.6f) * discVisibility));
 
                     var scale = Mathf.Lerp(9.5f, 6.2f, daylight);
                     _sunDisc.localScale = Vector3.one * scale;
@@ -7958,7 +8039,7 @@ namespace Airside.Presentation
 
             if (_moonDisc != null)
             {
-                var showMoon = daylight < 0.45f;
+                var showMoon = daylight < 0.45f && discVisibility > 0.02f;
                 _moonDisc.gameObject.SetActive(showMoon);
                 if (showMoon)
                 {
@@ -7972,7 +8053,7 @@ namespace Airside.Presentation
                     _moonDisc.position = skyAnchor + moonDir.normalized * 420f;
                     // 4.2 m at the old 90 m; keep the same apparent size at 420 m.
                     _moonDisc.localScale = Vector3.one * (4.2f * 420f / 90f);
-                    var alpha = Mathf.Lerp(1f, 0.15f, daylight / 0.45f);
+                    var alpha = Mathf.Lerp(1f, 0.15f, daylight / 0.45f) * discVisibility;
                     if (_moonDiscRenderer == null)
                         _moonDiscRenderer = _moonDisc.GetComponent<Renderer>();
                     if (_moonDiscRenderer != null)
@@ -12750,6 +12831,42 @@ namespace Airside.Presentation
 
             CrossfadeLoop(samples, sampleRate / 20);
             var clip = AudioClip.Create("Ambient rain", samples.Length, 1, sampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
+        }
+
+        /// <summary>
+        /// No CC0 thunder sample has been sourced yet (unlike rain/wind/coast — see
+        /// docs/data/ASSET_AND_DATA_REGISTER.md), so this procedural clap is the only
+        /// implementation for now: a sharp crack (filtered noise transient) into a
+        /// low-frequency rumble that decays over ~2.4 s, mirroring <see cref="CreateTouchdownClip"/>'s
+        /// envelope-plus-tone approach. <c>Resources.Load</c> still checks for
+        /// "Airside/Audio/thunder_crack_01" first so a real clip can replace this without a
+        /// code change.
+        /// </summary>
+        private static AudioClip CreateThunderClip()
+        {
+            const int sampleRate = 22050;
+            const float seconds = 2.4f;
+            var samples = new float[(int)(sampleRate * seconds)];
+            var rumbleState = 0f;
+            for (var i = 0; i < samples.Length; i++)
+            {
+                var time = i / (float)sampleRate;
+                // The crack: a fast-decaying burst of filtered noise in the first ~80 ms.
+                var crackEnvelope = Mathf.Exp(-time * 40f);
+                var crack = (UnityEngine.Random.value * 2f - 1f) * crackEnvelope;
+                // The rumble: low-passed noise (a leaky integrator) shaped by a slower
+                // envelope with a couple of soft secondary swells, like a rolling boom.
+                var white = UnityEngine.Random.value * 2f - 1f;
+                rumbleState = rumbleState * 0.985f + white * 0.015f;
+                var rumbleEnvelope = Mathf.Exp(-time * 1.6f)
+                    * (1f + 0.35f * Mathf.Sin(time * 2f * Mathf.PI * 2.2f) * Mathf.Exp(-time * 0.8f));
+                var rumble = rumbleState * Mathf.Max(0f, rumbleEnvelope) * 3.2f;
+                samples[i] = Mathf.Clamp(crack * 0.6f + rumble, -1f, 1f);
+            }
+
+            var clip = AudioClip.Create("Thunder clap", samples.Length, 1, sampleRate, false);
             clip.SetData(samples, 0);
             return clip;
         }

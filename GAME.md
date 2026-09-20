@@ -1,5 +1,55 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Claude — storm lightning/thunder, cloud-obscured sun, and an infrastructure-
+  accuracy audit (branch `claude/weather-system-improvement-1bgfc3`, ADR 0059).** Bailey asked
+  for lightning/thunder visuals, whether the other weather (cloud/overcast/fog/rain/sunny)
+  looks realistic, and separately to audit airport buildings against real live Adelaide
+  infrastructure.
+  - **Lightning/thunder:** new `Simulation/Lightning.cs`, pure-hash-of-time like `Weather.At`
+    (no RNG) — a storm fires a flash+thunder every 5-13s, distance-drawn per strike so thunder
+    lags the flash realistically. Presentation overlays a ~0.5s double-pulse on sun/ambient/
+    fog/sky and plays a procedural crack-and-rumble (no real sample yet — see asset register
+    AUD-006; a Mac-editor session that can actually listen to a candidate CC0 clip should
+    finish that, not guess at one blind). `LightningTests` (+6). `scripts/test-domain.sh`
+    494/494.
+  - **Realism check on the rest of the weather:** read `UpdateCloudDrift`/`BuildCloudBands`
+    before touching anything — cloud alpha/tint/ground-umbra strength and rain speed/thickness
+    already scale with `WeatherLook.CloudCover`/`Precipitation`, so that system did not need
+    work. The one real gap: `UpdateSunAndMoonDiscs` showed a full-brightness sun/moon disc
+    regardless of forecast. Fixed — both now fade out under Cloudy/Overcast/Rain/Storm.
+  - **Buildings-vs-live-infrastructure audit (research only, nothing changed):** the Overpass
+    extract behind `docs/data/osm/ypad-aeroways-2026-09-14.json` only ever queried
+    `aeroway=runway/taxiway/apron/terminal/parking/holding` — never `building=*` or
+    `aeroway=control_tower`/hangar generally — so only two real buildings ever came back
+    (Terminal, RFDS), both already modelled at their real OSM footprints in
+    `AdelaideTerminalArchitecture`. Everything else that looks like a building (a legacy
+    "Hangar"/"Ops shed"/"ARFF rescue shed"/fuel-farm, `BLD-001/002/003` in
+    `ART_DIRECTION_AND_ASSET_SPEC.md`) sits at invented Kingscote-prototype coordinates with
+    no connection to real Adelaide Airport at all — not modelled off live infrastructure by
+    the user's own bar, though they are already off by default (`AirsideFocusMode.ShowBuildings`
+    is false under bare-field; only the two real OSM prisms, gated by `ShowTerminal`, are
+    unconditionally on). No control tower, GA hangars, ARFF in real coordinates, fuel farm,
+    cargo sheds or a real car park exist anywhere. **Could not fetch fresh OSM data this
+    session:** `overpass-api.de` and the `kumi.systems` mirror both refused/reset the TLS
+    connection through this sandbox's proxy (confirmed repeatedly, including via the WebFetch
+    tool — a 504 there, `ws_closed_mid_exchange`/connection-reset via curl); general web
+    (openstreetmap.org itself) was reachable, so this looks like a block on the Overpass API
+    hosts specifically, not a general outage. Re-running the same generator-script pipeline
+    (`scripts/generate-ypad-layout.py`-style: Overpass extract → `docs/data/osm/*.json` with
+    a hash + attribution row → a `Simulation/Adelaide*.cs` reader → a Presentation extruder,
+    same as the terminal/taxiways/roads/coastline already are) against a broader query
+    (`building=*` plus `aeroway=control_tower` in the existing bbox) is the concrete next
+    step, from a session that can reach Overpass, before adding any more buildings — inventing
+    coordinates for a control tower or hangar would repeat exactly the problem just found in
+    the legacy placeholders.
+  - **NOT verified:** `scripts/test-unity.sh` on a Mac, and no in-engine look at the flash
+    timing, thunder delay/pitch or the sun/moon fading through Cloudy/Overcast/Storm.
+  - **NEXT:** Mac Unity EditMode before merging. Get an Overpass-reachable session to pull
+    `building=*`/`aeroway=control_tower` etc. for YPAD's existing bbox, register the snapshot
+    in `docs/data/ASSET_AND_DATA_REGISTER.md` the way the three existing OSM extracts are, and
+    only then model whatever real structures come back. Source and register a real CC0 thunder
+    clip (AUD-006) the way AUD-002/004 were, on a machine that can audition it first.
+
 - **2026-09-20 Claude — storms hold the runway (branch
   `claude/weather-system-improvement-1bgfc3`, ADR 0058).** Bailey: "I want to do a better
   weather system." Weather (ADR 0013) was cosmetic plus a flat daily surcharge; this closes

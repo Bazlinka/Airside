@@ -1,5 +1,18 @@
 ## Unreleased
 
+- **Storm lightning/thunder, and a sun/moon that hides behind cloud (ADR 0059).** New
+  deterministic `Lightning.StrikesAt` (same pure-hash-of-time style as `Weather.At`) fires a
+  flash-plus-thunder every 5-13s during a storm: a ~0.5s double-pulse brightens the sun/
+  ambient/fog/sky, and a procedurally synthesised crack-and-rumble plays after a distance-based
+  delay (sound lags light). Also fixed a real gap found while checking the rest of the weather
+  visuals: the sun/moon discs used to stay fully bright regardless of forecast, so a storm or
+  overcast sky still showed a crisp sun — they now fade out under Cloudy/Overcast/Rain/Storm.
+  The rest of the cloud/fog/rain system was already weather-reactive on inspection (cloud
+  alpha, tint, ground umbras and rain speed/thickness already scale with `WeatherLook`) — no
+  changes needed there. `LightningTests` (+6, new file); `scripts/test-domain.sh` 494/494.
+  No real thunder sample sourced yet (procedural only, see `docs/data/ASSET_AND_DATA_REGISTER.md`
+  AUD-006); Presentation changes are unverified in Unity, pending `scripts/test-unity.sh`.
+
 - **Storms now hold the runway (ADR 0058).** Weather was cosmetic plus a flat daily
   surcharge (ADR 0013); a `Storm` block now withholds every *new* landing/takeoff clearance
   on both strips until it clears — arrivals hold, departures wait short — while anything

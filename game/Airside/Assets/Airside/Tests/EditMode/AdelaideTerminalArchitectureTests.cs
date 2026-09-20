@@ -14,7 +14,11 @@ namespace Airside.Tests
             Assert.That(bays.Length, Is.EqualTo(28));
             Assert.That(bays.First().X - bays.First().Width * 0.5f, Is.EqualTo(986f).Within(0.01f));
             Assert.That(bays.Last().X + bays.Last().Width * 0.5f, Is.LessThan(1616f));
-            Assert.That(bays.All(b => b.Z < 436f && b.Height > 7f), Is.True);
+            // Z now tracks the real wall's own gentle curve (ADR 0068) instead of one constant
+            // — the near end sits at ~437.7, the far end at ~435.8, not a single fixed value.
+            Assert.That(bays.All(b => b.Z is > 435.7f and < 437.8f && b.Height > 7f), Is.True);
+            Assert.That(bays.First().Z, Is.GreaterThan(bays.Last().Z),
+                "the wall's real Z drifts down across the glazing run, near end higher than far end");
             for (var i = 1; i < bays.Length; i++)
                 Assert.That(bays[i].X - bays[i - 1].X, Is.GreaterThan(bays[i].Width), "mullion gaps must remain visible");
         }
@@ -42,6 +46,24 @@ namespace Airside.Tests
                 // in front of the glass rather than flush or recessed behind it.
                 Assert.That(mullion.Z, Is.GreaterThanOrEqualTo(left.Z));
             }
+        }
+
+        [Test]
+        public void AirsideWallZAt_MatchesTheRealFootprintAndClampsPastEitherEnd()
+        {
+            // Exact vertices from AdelaideLayout.Terminals's own OSM footprint (ADR 0068) —
+            // not re-measured, so this proves the two stay in lockstep.
+            Assert.That(AdelaideTerminalArchitecture.AirsideWallZAt(993.3f), Is.EqualTo(437.7f).Within(0.01f));
+            Assert.That(AdelaideTerminalArchitecture.AirsideWallZAt(1604.0f), Is.EqualTo(435.8f).Within(0.01f));
+            Assert.That(AdelaideTerminalArchitecture.AirsideWallZAt(1036.5f), Is.EqualTo(437.6f).Within(0.01f));
+
+            // Interpolated, not snapped, at a point strictly between two authored vertices.
+            var mid = AdelaideTerminalArchitecture.AirsideWallZAt(1015f);
+            Assert.That(mid, Is.InRange(437.6f, 437.7f));
+
+            // Past either end, clamps to that end rather than extrapolating off the building.
+            Assert.That(AdelaideTerminalArchitecture.AirsideWallZAt(500f), Is.EqualTo(437.7f).Within(0.01f));
+            Assert.That(AdelaideTerminalArchitecture.AirsideWallZAt(2000f), Is.EqualTo(435.8f).Within(0.01f));
         }
 
         [Test]

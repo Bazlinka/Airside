@@ -63,6 +63,8 @@ namespace Airside.Presentation
         private readonly FleetWorkspaceModel _fleetWorkspace = new();
         private readonly ContractsWorkspaceModel _contractsWorkspace = new();
         private readonly StatsWorkspaceModel _statsWorkspace = new();
+        /// <summary>Draft text for the Stats workspace's rename field, reset each time it opens (ADR 0068).</summary>
+        private string _statsRenameDraft = string.Empty;
         private readonly List<OperationsEventLine> _eventHistory = new();
         private RouteMapFilter _mapFilter = RouteMapFilter.Available;
         private int _boardScrollRow;
@@ -1155,6 +1157,10 @@ namespace Airside.Presentation
                 _boardScrollSnapToDay = true;
             if (_activeWorkspace != HudWorkspace.None)
                 _devToolsOpen = false;
+            // Reset to the live name each time Stats opens, so a draft left over from a
+            // previous visit (typed, then closed without renaming) never resurfaces stale.
+            if (_activeWorkspace == HudWorkspace.Stats)
+                _statsRenameDraft = _operations?.PlayerAirline?.Name ?? string.Empty;
             PlayUiClick();
         }
 
@@ -1820,6 +1826,25 @@ namespace Airside.Presentation
             var layout = StatsWorkspaceLayout.Create(Box(rect));
             StatsWorkspacePainter.Paint(_workspaceDrawList, _statsWorkspace, layout);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
+
+            // Raw Unity IMGUI, not through the draw list: no primitive in the shared,
+            // UnityEngine-free HudDrawList renders editable text, so the rename control is
+            // drawn directly here — the one exception in an otherwise painter-driven page.
+            _statsRenameDraft = GUI.TextField(HudPainter.ToRect(layout.RenameFieldBox), _statsRenameDraft ?? string.Empty, 24);
+            if (GUI.Button(HudPainter.ToRect(layout.RenameButtonBox), "RENAME"))
+            {
+                var result = _operations.RenameAirline(_statsRenameDraft);
+                if (result.Accepted)
+                {
+                    PlayUiClick();
+                    SaveAirline();
+                }
+                else
+                {
+                    ShowToast(result.Reason);
+                    _statsRenameDraft = _operations.PlayerAirline?.Name ?? string.Empty;
+                }
+            }
         }
 
         private string _highlightedContractId;

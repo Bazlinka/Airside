@@ -60,6 +60,46 @@ namespace Airside.Presentation
         public const float GlazingStartXMetres = 986f;
         public const int GlazingBayCount = 28;
 
+        /// <summary>
+        /// The airside wall's real X→Z polyline — a sub-run of <see cref="AdelaideLayout.Terminals"/>'s
+        /// own OSM footprint (X=993.3 to X=1604.0, exactly the vertices already authored there),
+        /// not a straight line. Glazing used to sit on a single hardcoded Z (435.55) for every
+        /// bay: fine at the far end, but 2.14 m off the real wall at the near end, since the
+        /// wall itself drifts from Z≈437.7 to Z≈435.8 across the glazing run. Every value here
+        /// is copied from <see cref="AdelaideLayout.Terminals"/>, not re-measured, so the two
+        /// can never quietly drift apart.
+        /// </summary>
+        private static readonly (float X, float Z)[] AirsideWallPolyline =
+        {
+            (993.3f, 437.7f), (1036.5f, 437.6f), (1079.7f, 437.4f), (1122.7f, 437.3f),
+            (1165.9f, 437.1f), (1218.5f, 437.0f), (1262.3f, 436.8f), (1305.8f, 436.7f),
+            (1344.2f, 436.6f), (1349.1f, 436.6f), (1431.7f, 436.3f), (1474.9f, 436.2f),
+            (1517.9f, 436.1f), (1561.0f, 435.9f), (1604.0f, 435.8f)
+        };
+
+        /// <summary>Z on the real airside wall at <paramref name="x"/>, clamped to the polyline's own ends.</summary>
+        public static float AirsideWallZAt(float x)
+        {
+            var points = AirsideWallPolyline;
+            if (x <= points[0].X)
+                return points[0].Z;
+            var last = points[points.Length - 1];
+            if (x >= last.X)
+                return last.Z;
+            for (var i = 0; i < points.Length - 1; i++)
+            {
+                var (x0, z0) = points[i];
+                var (x1, z1) = points[i + 1];
+                if (x < x0 || x > x1)
+                    continue;
+                var span = x1 - x0;
+                var t = span <= 0f ? 0f : (x - x0) / span;
+                return z0 + (z1 - z0) * t;
+            }
+
+            return last.Z;
+        }
+
         public static AdelaideTerminalDetail[] AirsideGlazing()
         {
             var result = new AdelaideTerminalDetail[GlazingBayCount];
@@ -67,7 +107,8 @@ namespace Airside.Presentation
             {
                 var centreX = GlazingStartXMetres + GlazingPaneWidthMetres * 0.5f + i * GlazingBayPitchMetres;
                 result[i] = new AdelaideTerminalDetail(
-                    $"Terminal airside glazing {i + 1:00}", centreX, 7.1f, 435.55f, GlazingPaneWidthMetres, 7.2f, 0.32f);
+                    $"Terminal airside glazing {i + 1:00}", centreX, 7.1f, AirsideWallZAt(centreX),
+                    GlazingPaneWidthMetres, 7.2f, 0.32f);
             }
 
             return result;
@@ -80,6 +121,7 @@ namespace Airside.Presentation
         /// </summary>
         public static AdelaideTerminalDetail[] GlazingMullions()
         {
+            var bays = AirsideGlazing();
             var result = new AdelaideTerminalDetail[GlazingBayCount - 1];
             var gapWidth = GlazingBayPitchMetres - GlazingPaneWidthMetres;
             for (var i = 0; i < result.Length; i++)
@@ -87,8 +129,14 @@ namespace Airside.Presentation
                 // Midpoint of the 3 m gap between bay i and bay i+1, not either bay's edge.
                 var gapCentreX = GlazingStartXMetres + GlazingPaneWidthMetres + gapWidth * 0.5f
                     + i * GlazingBayPitchMetres;
+                // 0.05 m proud of bay i's own glass, not a separate wall lookup at the gap's own
+                // X: the wall's real slope is steep enough in a couple of segments that a fixed
+                // offset from the gap's own (slightly lower) Z could land level with or behind
+                // that bay's pane instead of in front of it. Measuring "proud" from the bay
+                // whose glass it actually sits beside removes that edge case entirely.
                 result[i] = new AdelaideTerminalDetail(
-                    $"Terminal airside mullion {i + 1:00}", gapCentreX, 7.3f, 435.6f, 1.2f, 7.6f, 0.5f);
+                    $"Terminal airside mullion {i + 1:00}", gapCentreX, 7.3f, bays[i].Z + 0.05f,
+                    1.2f, 7.6f, 0.5f);
             }
 
             return result;

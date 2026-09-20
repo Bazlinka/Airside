@@ -1043,6 +1043,7 @@ namespace Airside.Presentation
                 var route = TaxiRouteFor(flight, phase);
                 var position = FleetGroundPosition(flight, 0f)
                     ?? FleetGoAroundWorldPosition(flight, 0f)
+                    ?? FleetGoAroundRejoinWorldPosition(flight, route, lane, aircraftType, 0f)
                     ?? RunwayPosition(flight,
                     ApplyDepartureTurn(flight, phase, progress,
                         PositionFor(phase, progress, route, lane, aircraftType)));
@@ -1054,6 +1055,7 @@ namespace Airside.Presentation
                 var lookAheadProgress = VisualPhaseProgress(flight, lookAhead);
                 var next = FleetGroundPosition(flight, lookAhead)
                            ?? FleetGoAroundWorldPosition(flight, lookAhead)
+                           ?? FleetGoAroundRejoinWorldPosition(flight, route, lane, aircraftType, lookAhead)
                            ?? RunwayPosition(flight,
                                ApplyDepartureTurn(flight, phase, lookAheadProgress,
                                    PositionFor(phase, lookAheadProgress, route, lane, aircraftType)));
@@ -2548,7 +2550,16 @@ namespace Airside.Presentation
                 if (_cameraController != null)
                     _rainRoot.position = RainRootPosition(_cameraController.FocusPoint);
                 var fallBase = storm ? 20f : 12f;
-                var drift = storm ? -3.2f : -1.5f;
+                // Drifts with the real surface wind (ADR 0068), not a fixed -X slide — the rain
+                // root carries no rotation of its own, so local axes already line up with world.
+                var wind = _operations != null ? _operations.Wind : RunwayWeather.At(AirlineClock.Default, _clock.Now);
+                var windYawRad = RunwayWeather.UnityYawFromTrue(wind.DirectionDegrees) * Mathf.Deg2Rad;
+                var driftMagnitude = storm ? 3.2f : 1.5f;
+                var driftX = Mathf.Sin(windYawRad) * driftMagnitude;
+                var driftZ = Mathf.Cos(windYawRad) * driftMagnitude;
+                // Same authored lean as before, just carried round to face the actual drift
+                // direction instead of always leaning toward -X.
+                var windTilt = Quaternion.Euler(0f, windYawRad * Mathf.Rad2Deg, 0f) * Quaternion.Euler(12f, 0f, 8f);
                 for (var i = 0; i < _rainRoot.childCount; i++)
                 {
                     var drop = _rainRoot.GetChild(i);
@@ -2556,10 +2567,18 @@ namespace Airside.Presentation
                     pos.y -= Time.unscaledDeltaTime * (fallBase + (i % 5));
                     if (pos.y < 0.5f)
                         pos.y = 18f + (i % 7);
-                    pos.x += Time.unscaledDeltaTime * drift;
+                    pos.x += Time.unscaledDeltaTime * driftX;
                     if (pos.x < -40f)
                         pos.x += 80f;
+                    else if (pos.x > 40f)
+                        pos.x -= 80f;
+                    pos.z += Time.unscaledDeltaTime * driftZ;
+                    if (pos.z < -10f)
+                        pos.z += 50f;
+                    else if (pos.z > 40f)
+                        pos.z -= 50f;
                     drop.localPosition = pos;
+                    drop.localRotation = windTilt;
                     var thickness = storm ? 0.07f : 0.04f;
                     var length = storm ? 0.85f : 0.55f;
                     drop.localScale = new Vector3(thickness, length, thickness);
@@ -8451,10 +8470,16 @@ namespace Airside.Presentation
             if (_cloudRoot == null)
                 return;
 
-            // Slow eastward drift + day tint so clouds feel alive without sim coupling.
+            // Drift with the real surface wind (ADR 0068) rather than a fixed eastward slide —
+            // clouds and rain used to move the same direction regardless of what the windsock
+            // (the only other wind-reactive visual) was pointing.
             var daylight = PresentationDaylight;
             var look = WeatherLook.For(CurrentWeather);
-            var drift = Time.unscaledDeltaTime * (AirsideBareField.Enabled ? 4.5f : 0.35f);
+            var wind = _operations != null ? _operations.Wind : RunwayWeather.At(AirlineClock.Default, _clock.Now);
+            var windYawRad = RunwayWeather.UnityYawFromTrue(wind.DirectionDegrees) * Mathf.Deg2Rad;
+            var driftSpeed = Time.unscaledDeltaTime * (AirsideBareField.Enabled ? 4.5f : 0.35f);
+            var driftX = Mathf.Sin(windYawRad) * driftSpeed;
+            var driftZ = Mathf.Cos(windYawRad) * driftSpeed;
             var weather = CurrentWeather;
             var overcast = look.CloudCover >= 0.7f;
             var cloudy = look.CloudCover > 0.3f && !overcast;
@@ -8480,10 +8505,18 @@ namespace Airside.Presentation
             {
                 var cloud = _cloudRoot.GetChild(i);
                 var p = cloud.position;
-                p.x += drift;
-                var wrap = AirsideBareField.Enabled ? 4500f : 100f;
-                if (p.x > wrap)
-                    p.x = -wrap;
+                p.x += driftX;
+                p.z += driftZ;
+                var wrapX = AirsideBareField.Enabled ? 4500f : 100f;
+                var wrapZ = AirsideBareField.Enabled ? 2800f : 100f;
+                if (p.x > wrapX)
+                    p.x = -wrapX;
+                else if (p.x < -wrapX)
+                    p.x = wrapX;
+                if (p.z > wrapZ)
+                    p.z = -wrapZ;
+                else if (p.z < -wrapZ)
+                    p.z = wrapZ;
                 cloud.position = p;
 
                 if (_cloudUmbraRoot != null && i < _cloudUmbraRoot.childCount)
@@ -8505,12 +8538,22 @@ namespace Airside.Presentation
                 tint.a = Mathf.Lerp(baseAlpha * 0.85f, baseAlpha, daylight);
 
                 // Combined cluster mesh — one renderer, MPB tint only when the band changes.
+                // More cover shows more clusters, not just denser-looking ones (ADR 0068):
+                // each of the fixed cluster count has its own cloud-cover reveal threshold,
+                // spread evenly across 0..1, so a clear day genuinely has fewer clusters lit
+                // up than an overcast one instead of the same 16 always present at a
+                // different opacity. Ramped over 0.08 cover so a cluster fades in rather
+                // than popping solid the instant cover crosses its threshold.
+                var revealAt = (float)i / _cloudRoot.childCount;
+                var visibility = Mathf.InverseLerp(revealAt, revealAt + 0.08f, look.CloudCover);
+
                 var renderer = cloud.GetComponent<Renderer>();
                 if (renderer != null)
                 {
                     var authoredAlpha = _cloudBaseAlpha[i];
                     if (authoredAlpha > 0.01f)
                         tint.a = Mathf.Max(tint.a, authoredAlpha * (thickSky ? (overcast ? 1.35f : 1.15f) : 1f));
+                    tint.a *= visibility;
                     SetRendererColor(renderer, tint);
                 }
 
@@ -8522,7 +8565,7 @@ namespace Airside.Presentation
                 if (umbraRenderer == null)
                     continue;
                 var umbraColor = GetRendererColor(umbraRenderer);
-                umbraColor.a = umbraAlpha;
+                umbraColor.a = umbraAlpha * visibility;
                 SetRendererColor(umbraRenderer, umbraColor);
             }
         }
@@ -13032,6 +13075,45 @@ namespace Airside.Presentation
             var elapsed = _preciseTime - flight.Operation.PhaseStartedAt.ElapsedSeconds + lookAheadSeconds;
             CircuitTraffic.GoAroundOnRunway(elapsed, aircraft.AssignedRunway, out var x, out var y, out var z);
             return new Vector3((float)x, (float)y, (float)z);
+        }
+
+        /// <summary>
+        /// Smooths the cut when a go-around's racetrack ends and the aircraft re-enters the
+        /// ordinary landing queue (ADR 0068). Without this, the instant `FleetState` flips
+        /// from GoAround to HoldingForLanding, the drawn position jumped straight from the
+        /// circuit (up to 305 m, out over the racetrack) to the pinned approach-queue point —
+        /// a 400-1,100 m horizontal snap and a 210-250 m altitude drop in one frame, gear
+        /// included, verified with real numbers before this fix. The two systems have no
+        /// shared parameterisation to interpolate through physically, so this blends the two
+        /// endpoints' world positions over <see cref="GoAroundRejoin.BlendSeconds"/> instead —
+        /// not a real rejoin flight path, but a slide is a world apart from a teleport.
+        /// Returns null once the blend window has passed, so the ordinary pinned position
+        /// takes over exactly as before for the rest of the approach.
+        /// </summary>
+        private Vector3? FleetGoAroundRejoinWorldPosition(CommercialFlight flight, TaxiRoute route,
+            float laneOffset, AircraftType type, float lookAheadSeconds)
+        {
+            if (flight.Operation.Phase != AircraftPhase.Approach)
+                return null;
+            if (!FleetMode || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
+                return null;
+            if (!aircraft.WentAroundThisTrip || aircraft.State != FleetState.HoldingForLanding)
+                return null;
+
+            var elapsed = _preciseTime - aircraft.StateStartedAt.ElapsedSeconds + lookAheadSeconds;
+            if (elapsed >= GoAroundRejoin.BlendSeconds)
+                return null;
+
+            CircuitTraffic.GoAroundOnRunway(CircuitTraffic.LoopSeconds, aircraft.AssignedRunway,
+                out var gx, out var gy, out var gz);
+            var from = new Vector3((float)gx, (float)gy, (float)gz);
+
+            var pinnedProgress = (float)ApproachHold.HoldingFinalProgress(
+                FleetVisual.QueueSlot(_operations.Fleet, aircraft));
+            var to = RunwayPosition(flight, PositionFor(AircraftPhase.Approach, pinnedProgress, route, laneOffset, type));
+
+            var blend = (float)GoAroundRejoin.Blend01(elapsed);
+            return Vector3.Lerp(from, to, blend);
         }
 
         /// <summary>

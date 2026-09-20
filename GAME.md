@@ -1,5 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — play fixes after the busy-board rebuild
+  (branch `feature/play-fixes`).** Bailey: do some bug fixes /
+  improvements; the game needs lots of work.
+  - **Board:** taxi-in is Taxiing (not Landed); takeoff TIME is
+    DEPARTING (not DEPARTED); parking copy is "Landed · parking".
+  - **Awaiting stand:** 12/30 arrivals queue on their own vacate,
+    not the 05 E2 exit.
+  - **Readout:** the bottom kt / heading strip follows the selected
+    or followed aircraft, not the first one on the field.
+  - **Evidence:** Unity 6.3 EditMode **662/662**.
+  - **NEXT:** merge when asked. Do not run
+    `scripts/rebuild-and-open-mac.sh` on a feature branch.
+
 - **2026-09-20 Cursor — 12/30 taxi follows the taxiways
   (branch `feature/operations-busy-board`).** Bailey: taxiing was
   broken; the plan did not use taxiways.

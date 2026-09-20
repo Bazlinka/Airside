@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Operations matches the field.** Taxi-in reads Taxiing, not Landed.
+  Takeoff TIME is DEPARTING. Arrivals waiting for a bay say parking.
+
+- **12/30 arrivals wait on their own exit.** A second arrival no
+  longer queues back along the 05 vacate.
+
+- **The speed readout follows the aircraft you picked.** Selected or
+  followed, not whichever flight happens to be first.
+
 - **12/30 taxi follows the taxiways.** Regional taxi-out and vacate
   walk the OSM centreline graph (T4–K–A–G1 to 12, A6–D1 across 05/23
   to D2 for 30) instead of a five-point chord across the grass.

@@ -109,7 +109,9 @@ namespace Airside.Simulation
         /// <summary>Runway time for lineup, the takeoff roll and initial climb, from the flown circuit.</summary>
         public static long TakeoffRunwaySeconds => LineupSeconds + CircuitProfile.TakeoffSeconds;
         public static long TakeoffRunwaySecondsFor(AircraftType type) =>
-            LineupSeconds + AircraftPerformance.For(type).TakeoffSeconds;
+            TakeoffRunwaySecondsFor(type, RunwayDirection.Runway05);
+        public static long TakeoffRunwaySecondsFor(AircraftType type, RunwayDirection runway) =>
+            AdelaideGround.LineupFor(runway).WholeSeconds + AircraftPerformance.For(type).TakeoffSeconds;
 
         /// <summary>
         /// Runway time from the landing clearance on long final through flare, rollout

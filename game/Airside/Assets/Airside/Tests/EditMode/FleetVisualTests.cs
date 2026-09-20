@@ -129,6 +129,16 @@ namespace Airside.Tests
             var w0 = AdelaideGround.AwaitingPose(0);
             var w1 = AdelaideGround.AwaitingPose(1);
             Assert.That(System.Math.Abs(w0.X - w1.X) + System.Math.Abs(w0.Z - w1.Z), Is.GreaterThan(30f));
+
+            var vacate12 = AdelaideGround.VacateFor(AircraftType.Atr42, RunwayDirection.Runway12);
+            var end12 = vacate12.PoseAt(vacate12.Seconds);
+            var wait12 = AdelaideGround.AwaitingPose(0, AircraftType.Atr42, RunwayDirection.Runway12);
+            var q12 = AdelaideGround.AwaitingPose(1, AircraftType.Atr42, RunwayDirection.Runway12);
+            var q05 = AdelaideGround.AwaitingPose(1, AircraftType.Atr42, RunwayDirection.Runway05);
+            Assert.That(System.Math.Abs(wait12.X - end12.X) + System.Math.Abs(wait12.Z - end12.Z), Is.LessThan(1f),
+                "12/30 arrivals wait at the end of their own vacate");
+            Assert.That(System.Math.Abs(q12.X - q05.X) + System.Math.Abs(q12.Z - q05.Z),
+                Is.GreaterThan(20f), "the second 12 arrival queues on G1, not the 05 exit");
         }
 
         [Test]

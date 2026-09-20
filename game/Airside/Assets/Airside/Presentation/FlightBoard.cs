@@ -75,7 +75,7 @@ namespace Airside.Presentation
                 FleetState.GoAround => "Go-around",
                 FleetState.Landing => "Landing",
                 FleetState.AwaitingStand => "Landed",
-                FleetState.TaxiIn => "Landed",
+                FleetState.TaxiIn => "Taxiing",
                 _ => aircraft.State.ToString()
             };
         }
@@ -140,7 +140,7 @@ namespace Airside.Presentation
                 FleetState.AtStand => "SINCE",
                 FleetState.TaxiOut => "AT HOLD",
                 FleetState.HoldingShort => "HOLD SINCE",
-                FleetState.TakingOff => "DEPARTED",
+                FleetState.TakingOff => "DEPARTING",
                 FleetState.Outbound => "ARRIVES",
                 FleetState.AtDestination => "RETURNS",
                 FleetState.Inbound => "ETA",
@@ -148,7 +148,7 @@ namespace Airside.Presentation
                 FleetState.GoAround => "RE-SEQUENCE",
                 FleetState.Landing => "LANDED",
                 FleetState.AwaitingStand => "WAIT SINCE",
-                FleetState.TaxiIn => "ON STAND",
+                FleetState.TaxiIn => "AT STAND",
                 _ => "NEXT"
             };
         }

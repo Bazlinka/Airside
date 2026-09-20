@@ -188,16 +188,21 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Where arrival <paramref name="slot"/> waits for a stand: slot 0 at the E2 holding
-        /// point, later ones queued back along the exit.
+        /// Where arrival <paramref name="slot"/> waits for a stand: slot 0 at the end of
+        /// that runway's vacate, later ones queued back along the same exit.
         /// </summary>
         public static GroundPose AwaitingPose(int slot)
+            => AwaitingPose(slot, AircraftType.Atr42, RunwayDirection.Runway05);
+
+        public static GroundPose AwaitingPose(int slot, AircraftType type, RunwayDirection runway)
         {
-            var end = Vacate.PoseAt(Vacate.Seconds);
+            var vacate = VacateFor(type, runway);
+            var end = vacate.PoseAt(vacate.Seconds);
             if (slot <= 0)
                 return new GroundPose(end.X, end.Z, end.NoseX, end.NoseZ, 0f, false);
 
-            var back = VacatePath.SampleAtDistance(Math.Max(0f, VacatePath.Length - AwaitingSpacingMetres * slot));
+            var path = vacate.Parts[vacate.Parts.Count - 1].Path;
+            var back = path.SampleAtDistance(Math.Max(0f, path.Length - AwaitingSpacingMetres * slot));
             return new GroundPose(back.X, back.Z, back.DirectionX, back.DirectionZ, 0f, false);
         }
 

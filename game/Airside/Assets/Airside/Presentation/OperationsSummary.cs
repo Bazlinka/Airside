@@ -200,7 +200,7 @@ namespace Airside.Presentation
                 FleetState.GoAround => "Go-around",
                 FleetState.Landing => "Landing",
                 FleetState.AwaitingStand => "Landed",
-                FleetState.TaxiIn => "Landed",
+                FleetState.TaxiIn => "Taxiing",
                 _ => aircraft.State.ToString()
             };
         }
@@ -240,7 +240,7 @@ namespace Airside.Presentation
 
             var severity = AircraftStatus.Severity(priority, now);
             if (priority.State == FleetState.AwaitingStand)
-                return ($"Next: {priority.Registration} needs a stand", StatusSeverity.Warning);
+                return ($"Next: {priority.Registration} landed · parking", StatusSeverity.Warning);
             if (priority.State == FleetState.AtStand && !priority.Scheduled.HasValue)
                 return ($"Next: plan a flight for {priority.Registration}", StatusSeverity.Normal);
             if (priority.State == FleetState.AtStand && priority.Scheduled.HasValue)

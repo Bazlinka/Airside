@@ -1736,7 +1736,7 @@ namespace Airside.Presentation
             FleetState.HoldingForLanding => "on final at Adelaide",
             FleetState.GoAround => "went around at Adelaide",
             FleetState.Landing => "landed at Adelaide",
-            FleetState.AwaitingStand => "vacated the runway, needs a stand",
+            FleetState.AwaitingStand => "landed, waiting for a stand",
             FleetState.TaxiIn => $"taxiing to {StandNames.Display(e.Aircraft.Stand)}",
             FleetState.AtStand => $"on {StandNames.Display(e.Aircraft.Stand)}",
             _ => e.State.ToString()

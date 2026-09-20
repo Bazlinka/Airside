@@ -322,7 +322,7 @@ namespace Airside.Presentation
         private static string ExceptionText(FleetAircraft aircraft, SimulationTime now, AirlineClock clock)
         {
             if (aircraft.State == FleetState.AwaitingStand)
-                return $"Landed · needs a stand{AircraftStatus.WaitSuffix(aircraft, now)}";
+                return $"Landed · parking{AircraftStatus.WaitSuffix(aircraft, now)}";
 
             if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
             {

@@ -79,6 +79,46 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void DisplayUnityYaw_FacesTheCompressedOnScreenPath()
+        {
+            SkyFlight? found = null;
+            for (var t = 0L; t < 6 * 3600 && !found.HasValue; t += 60)
+            {
+                foreach (var candidate in SkyTraffic.At(new SimulationTime(t)))
+                {
+                    if (!SkyTraffic.TryWorldPosition(candidate, out _, out _, out _))
+                        continue;
+                    found = candidate;
+                    break;
+                }
+            }
+
+            Assert.That(found.HasValue, "a corridor flight must be in draw range within six hours");
+            var flight = found.Value;
+            Assert.That(SkyTraffic.TryWorldPosition(flight, out var x, out _, out var z), Is.True);
+            var step = Math.Min(1.0, flight.Progress + 0.003);
+            FlightRoute.Point(flight.From.Latitude, flight.From.Longitude, flight.To.Latitude, flight.To.Longitude,
+                step, flight.Callsign, out var lat, out var lon);
+            var ahead = new SkyFlight(flight.Callsign, flight.Type, flight.From, flight.To, step,
+                lat, lon, flight.AltitudeFeet, flight.HeadingDegrees);
+            Assert.That(SkyTraffic.TryWorldPosition(ahead, out var ax, out _, out var az), Is.True);
+            var expected = Math.Atan2(ax - x, az - z) * 180.0 / Math.PI;
+            Assert.That(SkyTraffic.DisplayUnityYaw(flight), Is.EqualTo(expected).Within(0.5));
+        }
+
+        [Test]
+        public void NearField_IsAlmostOneToOneSoArrivalsMoveAtReadableSpeed()
+        {
+            SkyTraffic.ToLocalMetres(-34.95, 138.53, out var east, out var north);
+            var trueRange = Math.Sqrt(east * east + north * north);
+            SkyTraffic.ProjectLocal(east, north, out var x, out var z);
+            var display = Math.Sqrt(x * x + z * z);
+            Assert.That(trueRange / 1000.0, Is.LessThan(SkyTraffic.NearFieldKm));
+            Assert.That(display / trueRange, Is.EqualTo(SkyTraffic.NearFieldMetres / (SkyTraffic.NearFieldKm * 1000.0))
+                .Within(0.01));
+        }
+
+        [Test]
         public void DisplayAltitude_SeparatesTurbopropsJetsAndWidebodies()
         {
             Assert.That(DestinationCatalogue.TryFind("ADL", out var adl), Is.True);

@@ -62,7 +62,8 @@ namespace Airside.Presentation
 
         private void ShowSkyFlight(SkyFlight flight, Color livery, HashSet<string> live)
         {
-            if (!SkyTraffic.TryWorldPosition(flight, out var x, out var y, out var z))
+            if (SkyTraffic.OccupiesTheCircuit(flight)
+                || !SkyTraffic.TryWorldPosition(flight, out var x, out var y, out var z))
                 return;
 
             live.Add(flight.Callsign);
@@ -75,8 +76,11 @@ namespace Airside.Presentation
 
             view.gameObject.SetActive(true);
             view.position = new Vector3((float)x, AirsideFlightPath.GroundY + (float)y, (float)z);
-            view.rotation = Quaternion.Euler(0f, (float)flight.HeadingDegrees - RunwayWeather.Heading05 + 90f, 0f)
-                            * Quaternion.Euler(AirsideFlightPath.ClimbPitchDegrees * 0.35f, 0f, 0f);
+            var pitch = flight.To.Code == "ADL" ? -5f
+                : flight.From.Code == "ADL" ? 7f
+                : AirsideFlightPath.ClimbPitchDegrees * 0.35f;
+            view.rotation = Quaternion.Euler(0f, SkyTraffic.DisplayUnityYaw(flight), 0f)
+                            * Quaternion.Euler(pitch, 0f, 0f);
 
             var parts = PartsFor(view);
             UpdateAircraftLightsAndGear(parts.LightsAndGear, AircraftPhase.Circuit, PresentationDaylight, 0.5f,

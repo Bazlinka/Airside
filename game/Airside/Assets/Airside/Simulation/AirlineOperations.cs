@@ -209,12 +209,12 @@ namespace Airside.Simulation
             CareerState = new AirlineCareerState();
         }
 
-        /// <summary>Staggered opening departures so the first half-hour is a bank, not a trickle.</summary>
-        public static readonly long[] AiOpeningDepartureSeconds = { 5 * 60, 10 * 60, 16 * 60, 22 * 60, 28 * 60 };
+        /// <summary>Staggered opening departures so the first twenty minutes is a bank, not a trickle.</summary>
+        public static readonly long[] AiOpeningDepartureSeconds = { 3 * 60, 7 * 60, 12 * 60, 17 * 60, 22 * 60 };
 
         /// <summary>
         /// The ADR 0045 starting position at Adelaide: the player's airline with one
-        /// ATR, real Adelaide operators on the apron, and one aircraft already inbound.
+        /// ATR, real Adelaide operators on the apron, and a bank of aircraft already inbound.
         /// </summary>
         public static AirlineOperations StartAtAdelaide(ISimulationClock clock, IRandomSource random, Airline player,
             AirlineClock airlineClock = null)
@@ -230,8 +230,9 @@ namespace Airside.Simulation
             // Several services are already inbound so the field is a bank, not a
             // quiet apron waiting for the first out-and-back.
             operations.TrySeedOpeningInbound(aiFleet, "QLK", "PLO", 3 * 60);
-            operations.TrySeedOpeningInbound(aiFleet, "REX", "MGB", 8 * 60);
-            operations.TrySeedOpeningInbound(aiFleet, "REX", "PLO", 14 * 60);
+            operations.TrySeedOpeningInbound(aiFleet, "REX", "MGB", 6 * 60);
+            operations.TrySeedOpeningInbound(aiFleet, "REX", "PLO", 11 * 60);
+            operations.TrySeedOpeningInbound(aiFleet, "REX", "CED", 16 * 60);
 
             var terminalFleet = new List<FleetAircraft>();
             operations.AddMissingTerminalOperators(terminalFleet);
@@ -1546,7 +1547,7 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Repeatable 18–40 minute turnarounds. The variation is tied to registration
+        /// Repeatable 10–24 minute turnarounds. The variation is tied to registration
         /// and trip number, so traffic feels human without changing every load.
         /// </summary>
         private static long AiTurnaroundSeconds(FleetAircraft aircraft)
@@ -1557,7 +1558,7 @@ namespace Airside.Simulation
                 foreach (var ch in aircraft.Registration)
                     hash = hash * 31 + ch;
                 hash = hash * 31 + aircraft.CompletedTrips;
-                var minutes = 18 + Math.Abs(hash % 23);
+                var minutes = 10 + Math.Abs(hash % 15);
                 return minutes * 60L;
             }
         }

@@ -21,10 +21,11 @@ namespace Airside.Tests
             var regional = ops.Fleet.Where(a => !AirlineOperations.NeedsTerminalGate(a.Type)).ToList();
             Assert.That(regional.Count, Is.EqualTo(AirlineOperations.AdelaideRegionalBays.Count),
                 "parked regional aircraft plus the opening arrivals fill the six bays");
-            Assert.That(regional.Count(a => a.State == FleetState.AtStand), Is.EqualTo(AirlineOperations.AdelaideRegionalBays.Count - 3));
+            Assert.That(regional.Count(a => a.State == FleetState.AtStand), Is.EqualTo(2),
+                "player plus one QantasLink stay on the apron while Rex is inbound");
             Assert.That(regional.Where(a => a.State == FleetState.AtStand).All(a => AirlineOperations.AdelaideRegionalBays.Contains(a.Stand)), Is.True);
             Assert.That(ops.Fleet.Where(a => a.Airline.Name == "Rex").All(a => a.Type == AircraftType.Saab340), Is.True);
-            Assert.That(regional.Count(a => a.State == FleetState.Inbound), Is.EqualTo(3));
+            Assert.That(regional.Count(a => a.State == FleetState.Inbound), Is.EqualTo(4));
         }
 
         [Test]

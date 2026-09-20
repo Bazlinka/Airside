@@ -818,33 +818,17 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// The aircraft the readout describes: the followed / selected one, else the
-        /// first one on the field. Nothing when every fleet aircraft is away.
+        /// The aircraft the readout describes: only the one being followed or
+        /// explicitly selected. The operations card may still highlight a
+        /// priority aircraft; this strip must not, and it must not fall back to
+        /// the first visible plane on the field.
         /// </summary>
         private bool TryReadoutFlight(out CommercialFlight flight, out Transform view, out FleetAircraft fleetAircraft)
         {
             flight = null;
             view = null;
-            fleetAircraft = SelectionCardAircraft();
-            if (TryReadoutFor(fleetAircraft, out flight, out view))
-                return true;
-
-            var flights = VisualFlights;
-            if (_commercialAircraft == null)
-                return false;
-
-            for (var i = 0; i < flights.Count && i < _commercialAircraft.Length; i++)
-            {
-                var candidate = _commercialAircraft[i];
-                if (candidate == null || !candidate.gameObject.activeSelf)
-                    continue;
-                flight = flights[i];
-                view = candidate;
-                _fleetAircraftById.TryGetValue(flight.AircraftId, out fleetAircraft);
-                return true;
-            }
-
-            return false;
+            fleetAircraft = WatchedAircraft();
+            return TryReadoutFor(fleetAircraft, out flight, out view);
         }
 
         private bool TryReadoutFor(FleetAircraft aircraft, out CommercialFlight flight, out Transform view)

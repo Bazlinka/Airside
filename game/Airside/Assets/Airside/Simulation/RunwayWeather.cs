@@ -62,6 +62,16 @@ namespace Airside.Simulation
             return heading;
         }
 
+        /// <summary>Inverse of <see cref="TrueFromUnityYaw"/>.</summary>
+        public static float UnityYawFromTrue(float trueHeadingDegrees)
+        {
+            var yaw = trueHeadingDegrees - Heading05 - 270f;
+            yaw %= 360f;
+            if (yaw < 0f)
+                yaw += 360f;
+            return yaw;
+        }
+
         /// <summary>Use the runway end with the larger headwind component; calm defaults to 05.</summary>
         public static RunwayDirection Select(SurfaceWind wind) =>
             Select(wind, null, null, null);

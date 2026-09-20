@@ -832,7 +832,12 @@ namespace Airside.Presentation
             aircraft != null && aircraft.Airline.IsPlayer
             && aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue;
 
-        private FleetAircraft SelectionCardAircraft()
+        /// <summary>
+        /// Followed aircraft, else the one the player clicked. Nothing when the
+        /// field is just being watched — used by the speed readout so a parked
+        /// Rex does not keep a strip on screen after deselect.
+        /// </summary>
+        private FleetAircraft WatchedAircraft()
         {
             if (_operations == null)
                 return null;
@@ -849,6 +854,15 @@ namespace Airside.Presentation
             if (!string.IsNullOrEmpty(_selectedAircraftId)
                 && _fleetAircraftById.TryGetValue(_selectedAircraftId, out var selected))
                 return selected;
+
+            return null;
+        }
+
+        private FleetAircraft SelectionCardAircraft()
+        {
+            var watched = WatchedAircraft();
+            if (watched != null)
+                return watched;
 
             var fleet = PlayerFleet();
             var priority = OperationsSummary.PriorityAircraft(fleet, _clock.Now);

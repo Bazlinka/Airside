@@ -1,5 +1,22 @@
 ## Unreleased
 
+- **Night visibility floor raised; Fleet copy names real destinations (ADR 0063).** A real
+  play session reported "I can't see anything" at night. Every light source's own intensity
+  was confirmed correct — the actual cause: the default Fleet/career overview camera sits
+  2400m out over a ~3900x2800m field while every flood/runway light only reaches 9-115m, so
+  from the player's actual starting view almost the whole frame was ambient-only, which a
+  -0.12 EV night exposure and ACES tonemapping plausibly crushed toward black. Raised the
+  night ambient floor and exposure (light sources themselves untouched, so floods/runway
+  lights should still read as the brightest features) — a reasoned, conservative correction,
+  not a confirmed-by-eye fix; still needs a real look. Separately: buying an aircraft's "flies
+  Domestic routes" / "Requires Regional tier" copy used the word "Regional" for two unrelated
+  systems (a route-destination band and an unrelated career-progression tier) with nothing to
+  tell them apart. New `RouteAccess.ExampleDestinations` names real places
+  ("Domestic capability (Melbourne, Sydney, +closer)"), and the tier line now says "career
+  tier" to disambiguate. Verified via `scripts/hud-mockup` re-rendering — the first version
+  clipped against its own text box, caught immediately and fixed. `scripts/test-domain.sh`
+  500/500.
+
 - **Contracts card fill, terminal roof fixes, weather fog tint (ADR 0062).** First real use of
   the offline HUD mockup renderer this session to *see* a change instead of reasoning about it
   blind: found the Contracts market's offer cards pinned to a fixed 86px height regardless of

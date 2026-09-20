@@ -1,5 +1,48 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Claude — night visibility floor raised from a real play report, Fleet route
+  clarity (branch `claude/weather-system-improvement-1bgfc3`, ADR 0063).** Bailey, from an
+  actual play session (not a hypothetical): "I need you like crazy to fix lighting at night! I
+  can't see anything! There should be lights right?" Also, after buying an aircraft: unclear
+  what it gives you, what it costs, where it can fly, what unlocks what, "what is Regional?"
+  - **Night lighting — real diagnosis, conservative fix, NOT confirmed by eye.** A dedicated
+    research pass checked every night light source's actual computed intensity (apron floods
+    52, runway edge 1.55, threshold/approach 1.85, ALS 2.1, stand markers 1.1) — all correct,
+    none reversed or zeroed, `AirsideBareField.Enabled` confirmed true by default so the real
+    Adelaide field's lighting does build. The actual mechanism: the default Fleet/career
+    overview camera sits at `AirsideBareField.OverviewDistance` = 2400m over a ~3900x2800m
+    field, while every one of those lights only reaches 9-115m. From the player's actual
+    starting view, almost the whole frame is ambient-only — and a -0.12 EV night exposure
+    (`AirsideDayVolume`) plus ACES tonemapping's toe curve plausibly crushes that toward black.
+    A comment in `AirsideDayVolume.cs` already worried about exactly this ("do not crush
+    midtones into a purple soup") but GAME.md's own 2026-09-17 entry admits "The grading and
+    camera feel are unverified in a build" — this was never actually checked on screen.
+    **Fixed:** raised the night ambient floor (`ambientNight`/ground tone/`ambientIntensity`
+    in `ApplyDayCycle`) and night `postExposure` (`AirsideDayVolume`, -0.12 → 0.06). Every
+    light source's own intensity and range is untouched, so floods/runway lights should still
+    read as the brightest features relative to the raised floor. **This is a reasoned,
+    conservative correction based on real code tracing, not a confirmed fix** — no Unity
+    editor to watch the result. If it's still too dark, or now too bright, both directions are
+    a small tweak to the same few numbers, not a redesign — but it needs a real look first.
+  - **Fleet/route clarity — fixed and verified.** `OperatingTier.Regional` (career milestone)
+    and `RouteBand.Regional` (destination category) are unrelated systems sharing the word
+    "Regional" right next to each other on screen ("Dash 8-400 · Domestic" /
+    "Requires Regional tier") — a completely reasonable source of "what is Regional?". New
+    `RouteAccess.ExampleDestinations` (Domain, tested) names two real places per band; Fleet
+    market/detail copy now reads e.g. "Domestic capability (Melbourne, Sydney, +closer)"
+    instead of the bare label, and the tier line says "career tier" to disambiguate. First
+    version clipped against its own text box at the widest band (4 cities + a long suffix ran
+    past a ~735px pane) — caught immediately by re-rendering via `scripts/hud-mockup`, fixed
+    by trimming to 2 names and a shorter "+closer" suffix.
+  - **Evidence:** `scripts/test-domain.sh` **500/500** (499 baseline + 1 new
+    `ExampleDestinations` test; one existing `FleetWorkspaceTests` assertion updated for the
+    new, more informative capability text). Fleet copy re-verified visually, not just by
+    reading layout math. Night-lighting change is Unity-only, reviewed by inspection only.
+  - **NEXT, highest priority:** get an actual look at the default Fleet-mode overview at night
+    — this is a real, urgent player complaint and the fix is reasoned but unconfirmed. Then
+    continue down the standing list (go-around teleport, HUD pass on the remaining workspaces,
+    terminal glazing-off-wall, wind-driven weather).
+
 - **2026-09-20 Claude — Contracts card fill (first real HUD-rework step), terminal roof fixes,
   weather fog tint, and a real go-around bug documented not fixed (branch
   `claude/weather-system-improvement-1bgfc3`, ADR 0062).** Bailey: aircraft behaviour bugs,

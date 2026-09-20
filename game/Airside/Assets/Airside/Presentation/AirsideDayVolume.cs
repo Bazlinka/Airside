@@ -205,7 +205,13 @@ namespace Airside.Presentation
             // Day: slight lift + clear contrast so apron/grass/sky separate.
             // Night: keep exposure readable — floods define pools; do not crush midtones
             // into a purple soup (aircraft/hangar must stay identifiable).
-            var exposure = Mathf.Lerp(-0.12f, 0.22f, daylight) + warm * 0.12f - weatherGloom * 0.28f;
+            //
+            // -0.12 EV at night, stacked with ACES's toe curve, plausibly crushed the ambient-
+            // only majority of the field toward black at the default ~2400 m overview distance
+            // (see the matching ambient-floor comment in AirsidePrototype.ApplyDayCycle) — a
+            // real player reported "can't see anything" at night. Raised toward a small
+            // positive EV instead; day's own exposure is unchanged.
+            var exposure = Mathf.Lerp(0.06f, 0.22f, daylight) + warm * 0.12f - weatherGloom * 0.28f;
             var contrast = Mathf.Lerp(6f, 8.5f, daylight) + weatherGloom * 3.5f;
             var dayFilter = Color.Lerp(Color.white, new Color(1f, 0.82f, 0.68f), warm * 0.65f);
             var nightFilter = new Color(0.86f, 0.9f, 1f); // soft cool, not heavy blue cast

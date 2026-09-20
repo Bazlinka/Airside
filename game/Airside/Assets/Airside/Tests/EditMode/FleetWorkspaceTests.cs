@@ -82,7 +82,11 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now, "VH-PAX");
 
             Assert.That(model.HasSelection, Is.True);
-            Assert.That(model.SelectedCapability, Does.Contain("Regional capability"));
+            // Names real destinations now, not just the bare band label — "Requires Regional
+            // tier" and "flies Regional routes" used to share the word "Regional" for two
+            // unrelated systems with nothing to tell them apart.
+            Assert.That(model.SelectedCapability,
+                Does.Contain("Regional capability (Kingscote, Port Lincoln)"));
             Assert.That(model.SelectedCapability, Does.Contain("0 completed rotations"));
             Assert.That(model.AssignmentLine, Is.EqualTo("Adelaide → Kingscote"));
             Assert.That(model.SelectedPrep.Select(p => p.Done), Is.EqualTo(new[] { true, false, false }));

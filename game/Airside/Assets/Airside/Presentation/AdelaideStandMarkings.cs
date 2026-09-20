@@ -145,7 +145,7 @@ namespace Airside.Presentation
         /// the stand stop. Intermediate vertices stay so the paint follows the taxi-in
         /// instead of a straight T that dies in the middle of the apron.
         /// </summary>
-        internal static float[] PolylineBeforeEnd(float[] xz, float distance, float endX, float endZ)
+        public static float[] PolylineBeforeEnd(float[] xz, float distance, float endX, float endZ)
         {
             var reverse = new List<float> { endX, endZ };
             if (xz == null || xz.Length < 4 || distance <= 0f)
@@ -188,7 +188,7 @@ namespace Airside.Presentation
             return path;
         }
 
-        internal static float PolylineLength(float[] xz)
+        public static float PolylineLength(float[] xz)
         {
             if (xz == null || xz.Length < 4)
                 return 0f;

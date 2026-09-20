@@ -33,6 +33,14 @@ assert _spec.loader is not None
 _spec.loader.exec_module(v02)
 v01 = v02.v01
 
+_SKIN_SPEC = importlib.util.spec_from_file_location(
+    "airside_aircraft_skin", SCRIPTS / "aircraft_skin.py"
+)
+skin = importlib.util.module_from_spec(_SKIN_SPEC)
+assert _SKIN_SPEC.loader is not None
+_SKIN_SPEC.loader.exec_module(skin)
+_box = v01._v05.box
+
 # Smoother nose → cabin blend; tip-to-tip z still spans TARGET_LENGTH.
 HALF = TARGET_LENGTH * 0.5
 STATIONS = np.array(
@@ -69,6 +77,11 @@ def surface(z, theta, offset=0.0):
         [(rx + offset) * np.cos(theta), cy + (ry + offset) * np.sin(theta), z],
         np.float32,
     )
+
+
+def _skin(z, angle_deg, offset=0.0):
+    """Fuselage skin in the shared (z, degrees, offset) form used by aircraft_skin."""
+    return surface(z, np.deg2rad(angle_deg), offset)
 
 
 def fuselage_body():
@@ -231,76 +244,59 @@ def final_meshes():
     # --- Fuselage: smoother nose into cabin, same envelope ---
     meshes["fuselage"] = fuselage_body()
 
-    # --- Four clean fitted cockpit panes + explicit pillars ---
+    # --- Fitted cockpit glazing, cabin windows and doors ---
+    # Everything below is sampled from the fuselage skin (aircraft_skin.py): the old flat
+    # quads sank into the curve, which drew the cockpit as jagged dark shards, the windows
+    # as chunky blocks with oversized dark "frame" slabs, and the door outlines as stray slats.
     for name in list(meshes):
-        if name.startswith(("cockpit_", "windscreen_", "cabin_window_")):
+        if name.startswith(("cockpit_", "windscreen_", "cabin_window_", "door_", "cargo_door")):
             del meshes[name]
 
-    panes = {
-        "windscreen_l": [(8.55, 92.0), (8.55, 116.5), (9.72, 113.0), (9.95, 93.0)],
-        "windscreen_r": [(8.55, 63.5), (8.55, 88.0), (9.95, 87.0), (9.72, 67.0)],
-        "cockpit_side_l": [(8.35, 120.0), (8.35, 146.0), (9.45, 141.0), (9.72, 117.5)],
-        "cockpit_side_r": [(8.35, 34.0), (8.35, 60.0), (9.72, 62.5), (9.45, 39.0)],
-    }
-    for name, corners in panes.items():
-        meshes[name] = fitted_cockpit_panel(corners, offset=0.018)
+    def pane(z, angle, half_len, half_arc, front, radius=0.07):
+        return skin.skin_patch(_skin, z, angle, half_len, half_arc,
+                               front=front, radius=radius, rings=2, max_edge=0.12)
 
-    meshes["windscreen_pillar_c"] = pillar_strip(8.52, 9.98, 88.2, 91.8, offset=0.016)
-    meshes["windscreen_pillar_l"] = pillar_strip(8.40, 9.80, 116.8, 120.5, offset=0.016)
-    meshes["windscreen_pillar_r"] = pillar_strip(8.40, 9.80, 59.5, 63.2, offset=0.016)
-    meshes["cockpit_sill_l"] = pillar_strip(8.32, 9.90, 148.5, 152.0, offset=0.015)
-    meshes["cockpit_sill_r"] = pillar_strip(8.32, 9.90, 28.0, 31.5, offset=0.015)
-    meshes["cockpit_glare_l"] = pillar_strip(9.70, 10.15, 112.0, 118.0, offset=0.017)
-    meshes["cockpit_glare_r"] = pillar_strip(9.70, 10.15, 62.0, 68.0, offset=0.017)
+    meshes["windscreen_l"] = pane(9.25, 104.5, 0.55, 0.22, 0.014)
+    meshes["windscreen_r"] = pane(9.25, 75.5, 0.55, 0.22, 0.014)
+    meshes["cockpit_side_l"] = pane(8.95, 133.0, 0.55, 0.27, 0.012)
+    meshes["cockpit_side_r"] = pane(8.95, 47.0, 0.55, 0.27, 0.012)
+    for name, (z, angle, hl, ha) in {
+        "windscreen_pillar_c": (9.25, 90.0, 0.56, 0.045),
+        "windscreen_pillar_l": (9.10, 118.5, 0.60, 0.045),
+        "windscreen_pillar_r": (9.10, 61.5, 0.60, 0.045),
+        "cockpit_sill_l": (9.10, 150.0, 0.75, 0.04),
+        "cockpit_sill_r": (9.10, 30.0, 0.75, 0.04),
+        "cockpit_glare_l": (9.95, 115.0, 0.22, 0.07),
+        "cockpit_glare_r": (9.95, 65.0, 0.22, 0.07),
+    }.items():
+        meshes[name] = skin.skin_patch(_skin, z, angle, hl, ha, front=0.010, radius=0.03,
+                                       rings=0, corner_segments=2, max_edge=0.2)
 
-    # --- Even cabin windows, readable at thumbnail distance ---
-    window_z = np.linspace(5.60, -4.95, 13)
-    for i, z in enumerate(window_z, 1):
-        z = float(z)
-        meshes[f"cabin_window_{i}"] = surface_quad(
-            [
-                (z - 0.22, 147.0),
-                (z - 0.17, 144.2),
-                (z + 0.17, 144.2),
-                (z + 0.22, 147.0),
-                (z + 0.22, 157.0),
-                (z + 0.17, 159.8),
-                (z - 0.17, 159.8),
-                (z - 0.22, 157.0),
-            ],
-            offset=0.023,
-        )
-        meshes[f"cabin_window_r{i}"] = surface_quad(
-            [
-                (z - 0.22, 23.0),
-                (z - 0.17, 20.2),
-                (z + 0.17, 20.2),
-                (z + 0.22, 23.0),
-                (z + 0.22, 33.0),
-                (z + 0.17, 35.8),
-                (z - 0.17, 35.8),
-                (z - 0.22, 33.0),
-            ],
-            offset=0.023,
-        )
-        meshes[f"cabin_window_frame_{i}"] = surface_quad(
-            [
-                (z - 0.26, 146.2),
-                (z - 0.26, 157.8),
-                (z + 0.26, 157.8),
-                (z + 0.26, 146.2),
-            ],
-            offset=0.017,
-        )
-        meshes[f"cabin_window_frame_r{i}"] = surface_quad(
-            [
-                (z - 0.26, 22.2),
-                (z - 0.26, 33.8),
-                (z + 0.26, 33.8),
-                (z + 0.26, 22.2),
-            ],
-            offset=0.017,
-        )
+    # Doors: forward-left passenger door and the rear-right cargo door, curved with the skin.
+    meshes["door_outline_fwd"], meshes["door_fwd"], meshes["door_handle_fwd"] = skin.door_set(
+        _skin, 6.25, 180.0, 0.39, 0.64)
+    meshes["cargo_door_outline"], meshes["cargo_door"], meshes["cargo_door_latch"] = skin.door_set(
+        _skin, -3.25, 0.0, 0.77, 0.69)
+
+    # Windows: tall rounded panes at the 0.51 m frame pitch, ~0.35 m above the cabin axis. Two
+    # panes share a node. The right-side band skips the cargo door.
+    def cargo_zone(z):
+        return -4.02 - 0.40 < z < -2.48 + 0.40
+
+    def pair(z, side):
+        angle = 180.0 - 14.0 if side < 0 else 14.0
+        panes = [skin.window(_skin, z - k * 0.508, angle, width=0.24, height=0.34)
+                 for k in range(2) if not (side > 0 and cargo_zone(z - k * 0.508))]
+        return skin.merge_meshes(panes) if panes else None
+
+    index = {-1: 0, 1: 0}
+    for z in np.arange(5.35, -5.05, -1.016):
+        for side, suffix in ((-1, ""), (1, "r")):
+            merged = pair(float(z), side)
+            if merged is None:
+                continue
+            index[side] += 1
+            meshes[f"cabin_window_{suffix}{index[side]}"] = merged
 
     # --- Compact nacelles blended into the high wing ---
     for name in list(meshes):
@@ -410,7 +406,7 @@ def final_meshes():
             )
         spinner = oval_pod(
             [
-                (5.38, 0.30, 0.30, prop_y),
+                (5.24, 0.30, 0.30, prop_y),
                 (5.70, 0.36, 0.36, prop_y),
                 (6.05, 0.04, 0.04, prop_y),
             ],
@@ -424,6 +420,7 @@ def final_meshes():
             x, prop_y, 5.88, 0.12, 0.12, axis="z", segments=28
         )
 
+    pre_envelope_fuselage = meshes["fuselage"][0].copy()
     # Enforce tyre contact and exact envelope after edits.
     all_verts = np.concatenate([v for v, _ in meshes.values()])
     y_min = float(all_verts[:, 1].min())
@@ -448,6 +445,28 @@ def final_meshes():
             shifted = verts.copy()
             shifted[:, 1] -= y_min
             meshes[name] = (shifted, idx)
+
+    # --- Seat every light, probe and wick on the airframe (they hovered or sat buried) ---
+    # These use final-model coordinates, so they go in after the envelope scaling above. The
+    # fuselage's own before/after vertices give the transform for anything placed on its skin.
+    post = meshes["fuselage"][0]
+    fit = [np.polyfit(pre_envelope_fuselage[:, axis], post[:, axis], 1) for axis in range(3)]
+
+    def to_final(point):
+        return np.array([fit[i][0] * point[i] + fit[i][1] for i in range(3)], np.float64)
+
+    meshes["nav_light_left"] = _box(-12.22, 3.24, 0.45, 0.13, 0.12, 0.13)
+    meshes["nav_light_right"] = _box(12.22, 3.24, 0.45, 0.13, 0.12, 0.13)
+    meshes["static_wick_left"] = _box(-12.20, 3.24, -0.26, 0.05, 0.03, 0.18)
+    meshes["static_wick_right"] = _box(12.20, 3.24, -0.26, 0.05, 0.03, 0.18)
+    for name, angle in (("pitot", 184.0), ("pitot_b", -4.0)):
+        base = to_final(_skin(9.10, angle, 0.0))
+        meshes[name] = _box(float(base[0]), float(base[1]), float(base[2]) + 0.30, 0.035, 0.035, 0.66)
+    meshes["beacon_top"] = _box(0.0, 3.24, -3.0, 0.15, 0.15, 0.20)
+    meshes["landing_light_l"] = _box(-2.60, 2.93, 1.30, 0.40, 0.11, 0.20)
+    meshes["landing_light_r"] = _box(2.60, 2.93, 1.30, 0.40, 0.11, 0.20)
+    meshes["taxi_light"] = _box(0.0, 1.00, 7.94, 0.22, 0.12, 0.19)
+    meshes["gear_door_nose"] = _box(0.0, 0.57, 7.60, 0.54, 0.06, 1.20)   # hangs on the belly
 
     return {name: v01._v06.outward_winding(mesh) for name, mesh in meshes.items()}
 

@@ -35,6 +35,13 @@ _SPEC.loader.exec_module(_v06)
 _v05 = _v06._v05
 
 box = _v05.box
+_SKIN_SPEC = importlib.util.spec_from_file_location(
+    "airside_aircraft_skin", SCRIPTS / "aircraft_skin.py"
+)
+skin = importlib.util.module_from_spec(_SKIN_SPEC)
+assert _SKIN_SPEC.loader is not None
+_SKIN_SPEC.loader.exec_module(skin)
+
 cylinder = _v05.cylinder
 oval_lathe_fuselage = _v05.oval_lathe_fuselage
 lofted_aerofoil = _v05.lofted_aerofoil
@@ -137,8 +144,13 @@ def fuselage_body():
     return verts, np.asarray(faces, np.uint16)
 
 
+def _skin(z, angle_deg, offset=0.0):
+    """Fuselage skin in the shared (z, degrees, offset) form used by aircraft_skin."""
+    return surface(z, np.deg2rad(angle_deg), offset)
+
+
 def surface_quad(corners, offset=0.022):
-    """Flat pane fitted to the local fuselage surface."""
+    """Flat pane fitted to the local fuselage surface (legacy; skin patches replace it)."""
     sampled = np.asarray(
         [surface(z, np.deg2rad(theta), offset) for z, theta in corners], np.float64
     )
@@ -398,8 +410,10 @@ def wing_fairing(side):
             rx = 0.5 * abs(x_outer - x_inner) + 0.08
             cy = 0.5 * (y_inner + y_outer)
             ry = 0.5 * abs(y_outer - y_inner) + 0.10 + 0.18 * envelope
-            # Flatten the belly so it seats on the fuselage roof without a step.
-            y_scale = 0.35 + 0.65 * max(0.0, np.sin(ang))
+            # The belly reaches well below the crown so the root is *in* the fuselage: it used to
+            # hover ~10 cm above it, leaving the whole wing assembly floating free of the hull.
+            belly = max(0.35, (cy - (crown_y - 0.70)) / ry)
+            y_scale = 0.35 + 0.65 * np.sin(ang) if np.sin(ang) > 0.0 else belly
             # Soften the inboard side so the two halves meet as one surface.
             x = cx + rx * np.cos(ang)
             if side > 0:
@@ -435,8 +449,10 @@ def wing_centre_saddle():
         ring = []
         for i in range(segs):
             ang = 2.0 * np.pi * i / segs
-            # Squash the belly hard onto the crown; keep a soft arched roof.
-            y_scale = 0.22 + 0.78 * max(0.0, np.sin(ang))
+            # Soft arched roof; the belly reaches 0.30 m below the crown so it is seated *in* the
+            # fuselage (it used to hover ~10 cm above it).
+            belly = max(0.22, (cy - (crown_y - 0.30)) / ry)
+            y_scale = 0.22 + 0.78 * np.sin(ang) if np.sin(ang) > 0.0 else belly
             # Mild leading/trailing taper already in envelope; keep sides round.
             ring.append(
                 [
@@ -594,8 +610,8 @@ def q400_meshes():
             chord_points=10,
         )
         meshes[f"wing_fence_{name}"] = box(side * 7.35, 4.78, 1.85, 0.04, 0.28, 0.85)
-        meshes[f"flap_track_{name[0]}1"] = box(side * 3.20, 4.22, -0.55, 0.10, 0.16, 0.55)
-        meshes[f"flap_track_{name[0]}2"] = box(side * 5.80, 4.35, -0.20, 0.10, 0.14, 0.48)
+        meshes[f"flap_track_{name[0]}1"] = box(side * 3.20, 4.34, -0.55, 0.10, 0.16, 0.55)
+        meshes[f"flap_track_{name[0]}2"] = box(side * 5.80, 4.45, -0.20, 0.10, 0.14, 0.48)
 
     # Continuous centre wing box across the cabin crown — kills the left/right
     # valley so the high-wing root reads as one fuselage saddle.
@@ -618,7 +634,7 @@ def q400_meshes():
         )
         meshes[f"pylon_{name}"] = box(x, 4.05, 0.35, 0.38, 0.72, 2.40)
         meshes[f"oil_cooler_{name[0]}"] = box(x, 2.88, 1.85, 0.48, 0.16, 0.70)
-        meshes[f"cowl_flap_{name[0]}"] = box(x, 3.05, 0.85, 0.55, 0.06, 0.42)
+        meshes[f"cowl_flap_{name[0]}"] = box(x + side * 0.82, 3.33, 0.85, 0.06, 0.30, 0.42)   # on the nacelle side
 
         # Six pitched blades with clear tips, rooted into a credible hub/spinner.
         for index, suffix in enumerate(("", "_b", "_c", "_d", "_e", "_f")):
@@ -707,41 +723,32 @@ def q400_meshes():
     meshes["tailplane_tip_l"] = box(-6.70, 7.95, -13.55, 0.35, 0.08, 0.55)
     meshes["tailplane_tip_r"] = box(6.70, 7.95, -13.55, 0.35, 0.08, 0.55)
 
-    # Even cabin pitch; panes sit just outside the curved skin.
-    for index, z in enumerate(np.linspace(10.20, -8.40, 18), start=1):
-        meshes[f"cabin_window_{index}"] = cabin_window(float(z), -1.0)
-        meshes[f"cabin_window_r{index}"] = cabin_window(float(z), 1.0)
+    # Passenger windows: tall rounded panes at the 0.51 m frame pitch, ~0.35 m above the cabin
+    # axis, two per node, sampled from the skin. The forward door and cargo door interrupt the rows.
+    def window_pair(z, side):
+        angle = 180.0 - 15.0 if side < 0 else 15.0
+        panes = [skin.window(_skin, z - k * 0.508, angle, width=0.24, height=0.34) for k in range(2)]
+        return skin.merge_meshes(panes)
+
+    for index, z in enumerate(np.arange(10.00, -8.40, -1.016), start=1):
+        meshes[f"cabin_window_{index}"] = window_pair(float(z), -1.0)
+        meshes[f"cabin_window_r{index}"] = window_pair(float(z), 1.0)
 
     # Four discrete panes fitted to the nose curvature, separated by skin-coloured
     # pillars / sill / brow so the flight deck reads as framed glass — not a mask.
-    meshes["windscreen_l"] = surface_quad(
-        [(13.85, 114), (13.90, 134), (14.75, 130), (14.90, 112)], 0.014
-    )
-    meshes["windscreen_r"] = surface_quad(
-        [(13.85, 66), (13.90, 46), (14.90, 68), (14.75, 50)], 0.014
-    )
-    meshes["cockpit_side_l"] = surface_quad(
-        [(13.05, 132), (13.10, 148), (13.85, 144), (14.05, 128)], 0.014
-    )
-    meshes["cockpit_side_r"] = surface_quad(
-        [(13.05, 48), (13.10, 32), (14.05, 52), (13.85, 36)], 0.014
-    )
-    meshes["windscreen_pillar_l"] = surface_quad(
-        [(13.70, 132), (13.80, 142), (14.80, 138), (14.70, 128)], 0.034
-    )
-    meshes["windscreen_pillar_r"] = surface_quad(
-        [(13.70, 48), (13.80, 38), (14.80, 42), (14.70, 52)], 0.034
-    )
-    meshes["windscreen_pillar_c"] = surface_quad(
-        [(14.05, 98), (14.05, 82), (14.95, 84), (14.95, 96)], 0.032
-    )
-    # Slim brow + sill hug the crown / belt — frame the panes without a dark slab.
-    meshes["cockpit_glare"] = surface_quad(
-        [(13.55, 84), (13.55, 96), (14.55, 94), (14.55, 86)], 0.036
-    )
-    meshes["cockpit_sill"] = surface_quad(
-        [(13.55, 108), (13.55, 72), (14.70, 74), (14.70, 106)], 0.028
-    )
+    def pane(z, angle, half_len, half_arc, front, radius=0.07, rings=2):
+        return skin.skin_patch(_skin, z, angle, half_len, half_arc, front=front,
+                               radius=radius, rings=rings, max_edge=0.12)
+
+    meshes["windscreen_l"] = pane(14.35, 122.0, 0.52, 0.18, 0.014)
+    meshes["windscreen_r"] = pane(14.35, 58.0, 0.52, 0.18, 0.014)
+    meshes["cockpit_side_l"] = pane(13.55, 138.0, 0.50, 0.25, 0.012)
+    meshes["cockpit_side_r"] = pane(13.55, 42.0, 0.50, 0.25, 0.012)
+    meshes["windscreen_pillar_l"] = pane(14.25, 135.0, 0.55, 0.05, 0.010, radius=0.03, rings=0)
+    meshes["windscreen_pillar_r"] = pane(14.25, 45.0, 0.55, 0.05, 0.010, radius=0.03, rings=0)
+    meshes["windscreen_pillar_c"] = pane(14.50, 90.0, 0.50, 0.05, 0.010, radius=0.03, rings=0)
+    meshes["cockpit_glare"] = pane(14.05, 90.0, 0.50, 0.10, 0.010, radius=0.04, rings=1)
+    meshes["cockpit_sill"] = pane(14.12, 90.0, 0.57, 0.30, 0.006, radius=0.10, rings=2)
 
     meshes["livery_stripe"] = box(-1.355, 2.05, 0.60, 0.035, 0.14, 23.5)
     meshes["livery_stripe_lower"] = box(1.355, 2.05, 0.60, 0.035, 0.14, 23.5)
@@ -751,12 +758,11 @@ def q400_meshes():
         vertical=True,
     )
 
-    meshes["door_outline_fwd"] = door_patch(11.05, 0.52, 0.95, -1.0, 0.012)
-    meshes["door_fwd"] = door_patch(11.05, 0.44, 0.85, -1.0, 0.022)
-    meshes["door_handle_fwd"] = door_patch(11.28, 0.06, 0.05, -1.0, 0.030)
-    meshes["cargo_door_outline"] = door_patch(-9.40, 0.72, 0.80, 1.0, 0.012)
-    meshes["cargo_door"] = door_patch(-9.40, 0.64, 0.72, 1.0, 0.022)
-    meshes["cargo_door_latch"] = door_patch(-9.00, 0.07, 0.05, 1.0, 0.030)
+    # Doors follow the fuselage curve and sit a few millimetres proud, so they read as flush.
+    meshes["door_outline_fwd"], meshes["door_fwd"], meshes["door_handle_fwd"] = skin.door_set(
+        _skin, 11.05, 180.0, 0.42, 0.85)
+    meshes["cargo_door_outline"], meshes["cargo_door"], meshes["cargo_door_latch"] = skin.door_set(
+        _skin, -9.40, 0.0, 0.66, 0.70)
 
     meshes["belly_fairing"] = oval_lathe_fuselage(
         [
@@ -808,7 +814,7 @@ def q400_meshes():
         0.0, 0.68, 12.15, 0.07, 1.00, axis="y", segments=24
     )
     meshes["gear_scissors_nose"] = box(0.0, 0.98, 12.40, 0.07, 0.52, 0.34)
-    meshes["gear_door_nose"] = box(0.0, 1.15, 11.85, 0.78, 0.08, 1.45)
+    meshes["gear_door_nose"] = box(0.0, 0.90, 11.85, 0.78, 0.08, 1.45)   # hangs on the belly
     meshes["gear_door_nose_l"] = box(-0.42, 1.35, 11.90, 0.10, 0.85, 1.20)
     meshes["gear_door_nose_r"] = box(0.42, 1.35, 11.90, 0.10, 0.85, 1.20)
     wheel_set(meshes, "nose_left", -0.22, 12.18, 0.34, 0.18)
@@ -821,8 +827,9 @@ def q400_meshes():
     meshes["landing_light_l"] = box(-4.35, 3.15, 5.05, 0.22, 0.16, 0.10)
     meshes["landing_light_r"] = box(4.35, 3.15, 5.05, 0.22, 0.16, 0.10)
     meshes["taxi_light"] = box(0.0, 0.78, 12.35, 0.16, 0.12, 0.12)
-    meshes["pitot"] = box(-0.35, 1.55, 14.80, 0.04, 0.04, 0.35)
-    meshes["pitot_b"] = box(0.35, 1.55, 14.80, 0.04, 0.04, 0.35)
+    for name, angle in (("pitot", 186.0), ("pitot_b", -6.0)):   # stand off the nose skin
+        base = _skin(14.15, angle, 0.0)
+        meshes[name] = box(float(base[0]), float(base[1]), float(base[2]) + 0.12, 0.04, 0.04, 0.38)
     meshes["antenna"] = box(0.0, 3.60, 4.50, 0.04, 0.35, 0.08)
     meshes["antenna_aft"] = box(0.0, 3.55, -6.80, 0.04, 0.28, 0.08)
     meshes["hf_antenna"] = box(0.0, 7.55, -12.20, 0.03, 0.55, 0.06)

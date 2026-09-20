@@ -41,6 +41,13 @@ _v05 = importlib.util.module_from_spec(_V05_SPEC)
 assert _V05_SPEC.loader is not None
 _V05_SPEC.loader.exec_module(_v05)
 
+_SKIN_SPEC = importlib.util.spec_from_file_location(
+    "airside_aircraft_skin", SCRIPTS / "aircraft_skin.py"
+)
+skin = importlib.util.module_from_spec(_SKIN_SPEC)
+assert _SKIN_SPEC.loader is not None
+_SKIN_SPEC.loader.exec_module(skin)
+
 box = _auth.box
 cylinder = _auth.cylinder
 write_kit = _auth.write_kit
@@ -63,12 +70,13 @@ FUSE_SEGMENTS = 64
 # (z, rx, ry, cy)
 STATIONS = np.array(
     [
-        (HALF_LENGTH - 0.12, 0.06, 0.05, 4.15),
-        (19.35, 0.22, 0.20, 4.18),
-        (18.95, 0.55, 0.50, 4.22),
-        (18.35, 0.95, 0.88, 4.28),
-        (17.50, 1.35, 1.28, 4.32),
-        (16.40, 1.65, 1.58, 4.33),
+        (HALF_LENGTH - 0.12, 0.30, 0.28, 4.14),
+        (19.35, 0.62, 0.58, 4.16),
+        (19.00, 0.98, 0.92, 4.20),
+        (18.55, 1.32, 1.24, 4.25),
+        (17.95, 1.60, 1.52, 4.29),
+        (17.20, 1.78, 1.72, 4.31),
+        (16.20, 1.86, 1.84, 4.31),
         (15.00, 1.82, 1.78, 4.32),
         (13.20, 1.88, 1.86, 4.31),
         (10.00, 1.88, 1.88, 4.30),
@@ -80,8 +88,8 @@ STATIONS = np.array(
         (-15.60, 1.55, 1.50, 4.22),
         (-17.40, 1.15, 1.12, 4.16),
         (-18.60, 0.70, 0.68, 4.10),
-        (-19.25, 0.32, 0.30, 4.06),
-        (-HALF_LENGTH + 0.12, 0.06, 0.05, 4.04),
+        (-19.25, 0.42, 0.40, 4.06),
+        (-HALF_LENGTH + 0.12, 0.18, 0.16, 4.04),
     ],
     dtype=np.float32,
 )
@@ -173,48 +181,35 @@ def surface_quad(corners, offset=0.018) -> tuple[np.ndarray, np.ndarray]:
     return verts, np.asarray(faces, np.uint16)
 
 
+def _skin(z: float, angle_deg: float, offset: float = 0.0) -> np.ndarray:
+    """Fuselage skin in the shared (z, degrees, offset) form used by aircraft_skin."""
+    return surface(z, np.deg2rad(angle_deg), offset)
+
+
+# Passenger windows: tall rounded panes at real 0.51 m frame pitch, centred ~0.5 m above the
+# cabin axis. Two panes share one node so the part count (and draw calls) stay where they were.
+WINDOW_PITCH = 0.508
+WINDOW_ANGLE_DEG = 15.5
+WINDOW_FIRST_Z, WINDOW_LAST_Z = 13.60, -11.10
+
+
 def cabin_window(z: float, side: float) -> tuple[np.ndarray, np.ndarray]:
-    if side < 0:
-        return surface_quad(
-            [
-                (z - 0.18, 148),
-                (z - 0.14, 146.2),
-                (z + 0.14, 146.2),
-                (z + 0.18, 148),
-                (z + 0.18, 156),
-                (z + 0.14, 157.8),
-                (z - 0.14, 157.8),
-                (z - 0.18, 156),
-            ],
-            0.012,
-        )
-    return surface_quad(
-        [
-            (z - 0.18, 32),
-            (z - 0.14, 33.8),
-            (z + 0.14, 33.8),
-            (z + 0.18, 32),
-            (z + 0.18, 24),
-            (z + 0.14, 22.2),
-            (z - 0.14, 22.2),
-            (z - 0.18, 24),
-        ],
-        0.012,
+    """Two adjacent passenger windows starting at station `z` (nose side first)."""
+    angle = 180.0 - WINDOW_ANGLE_DEG if side < 0 else WINDOW_ANGLE_DEG
+    return skin.merge_meshes(
+        [skin.window(_skin, z - k * WINDOW_PITCH, angle, width=0.25, height=0.36) for k in range(2)]
     )
 
 
-def door_patch(z, half_z, half_h, side, depth=0.016):
-    theta0 = 180.0 if side < 0 else 0.0
-    deg = half_h / FUSE_RX * 57.3 * 0.50
-    return surface_quad(
-        [
-            (z - half_z, theta0 - deg),
-            (z - half_z, theta0 + deg),
-            (z + half_z, theta0 + deg),
-            (z + half_z, theta0 - deg),
-        ],
-        depth,
-    )
+def door_patch(z, half_z, half_arc, side, front=0.004, angle=None):
+    """Curved door-sized shell that follows the skin (see aircraft_skin.py)."""
+    a = angle if angle is not None else (180.0 if side < 0 else 0.0)
+    return skin.skin_patch(_skin, z, a, half_z, half_arc, front=front, radius=0.12, rings=3, max_edge=0.14)
+
+
+def entry_door(z, half_z, half_arc, side, angle=None):
+    a = angle if angle is not None else (180.0 if side < 0 else 0.0)
+    return skin.door_set(_skin, z, a, half_z, half_arc)
 
 
 def _lerp(a: float, b: float, t: float) -> float:
@@ -414,47 +409,37 @@ def wheel_set(meshes, prefix, x, z, radius, width):
 
 def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     meshes: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+    NOSE_Z = 14.55
+    MAIN_Z = -0.75
 
     meshes["fuselage"] = fuselage_body()
 
-    # Soft nose / cockpit crown and fitted flight-deck glazing.  Keep the skin
-    # separate from the glass: using one dark cockpit loft made the whole nose
-    # read as a protruding visor in the Hangar and follow views.
+    # Nose furniture. Everything is sampled from the fuselage skin (aircraft_skin.py), so the
+    # cap, brow panel, windscreens and cockpit side windows sit a few millimetres proud of
+    # the nose and nothing overhangs it. The old hood was wider than the skin, read as a
+    # visor lump and swallowed the cockpit side windows.
+    nose_z = [19.615, 19.45, 19.30, 19.10, 18.85, 18.55]
     meshes["radome"] = oval_lathe_fuselage(
         [
-            (18.60, 0.85, 0.78, 4.25),
-            (19.10, 0.55, 0.50, 4.18),
-            (19.45, 0.28, 0.26, 4.12),
-            (HALF_LENGTH - 0.12, 0.06, 0.05, 4.08),
+            (z, float(np.interp(z, _STATION_Z, _STATION_RX)) + 0.008,
+             float(np.interp(z, _STATION_Z, _STATION_RY)) + 0.008,
+             float(np.interp(z, _STATION_Z, _STATION_CY)))
+            for z in nose_z
         ],
-        segments=48,
+        segments=64,
     )
-    meshes["flightdeck_crown"] = oval_lathe_fuselage(
-        [
-            (16.60, 1.55, 0.55, 4.85),
-            (17.40, 1.45, 0.62, 4.95),
-            (18.10, 1.15, 0.58, 4.92),
-            (18.55, 0.75, 0.42, 4.78),
-        ],
-        segments=36,
-    )
-    # Three small, angled panes sit flush to the crown.  Their gaps make the
-    # pillars readable without a separate dark brow or oversized visor slab.
-    meshes["windscreen_c"] = windscreen_pane(
-        0.0, 5.22, 18.28, 1.10, 0.50, 0.045, pitch_deg=-27.0
-    )
-    meshes["windscreen_l"] = windscreen_pane(
-        -0.74, 5.08, 18.12, 0.46, 0.52, 0.045, pitch_deg=-23.0
-    )
-    meshes["windscreen_r"] = windscreen_pane(
-        0.74, 5.08, 18.12, 0.46, 0.52, 0.045, pitch_deg=-23.0
-    )
-    meshes["cockpit_side_l"] = surface_quad(
-        [(16.82, 121), (16.82, 151), (17.78, 146), (17.94, 115)], 0.018
-    )
-    meshes["cockpit_side_r"] = surface_quad(
-        [(16.82, 59), (16.82, 29), (17.94, 65), (17.78, 34)], 0.018
-    )
+    meshes["flightdeck_crown"] = skin.skin_patch(
+        _skin, 18.20, 90.0, 0.62, 0.98, front=0.005, radius=0.30, rings=3, max_edge=0.16)
+    meshes["windscreen_c"] = skin.skin_patch(
+        _skin, 18.22, 90.0, 0.26, 0.36, front=0.012, radius=0.10, rings=2, max_edge=0.14)
+    meshes["windscreen_l"] = skin.skin_patch(
+        _skin, 18.16, 90.0 + 26.0, 0.26, 0.21, front=0.012, radius=0.09, rings=2, max_edge=0.14)
+    meshes["windscreen_r"] = skin.skin_patch(
+        _skin, 18.16, 90.0 - 26.0, 0.26, 0.21, front=0.012, radius=0.09, rings=2, max_edge=0.14)
+    meshes["cockpit_side_l"] = skin.skin_patch(
+        _skin, 17.35, 180.0 - 40.0, 0.40, 0.27, front=0.010, radius=0.10, rings=2)
+    meshes["cockpit_side_r"] = skin.skin_patch(
+        _skin, 17.35, 40.0, 0.40, 0.27, front=0.010, radius=0.10, rings=2)
 
     # A short, tapered keel follows the wing root.  The previous 21.5 m oval
     # showed as a flat, dark rectangular slab under the fuselage.
@@ -478,20 +463,24 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         vertical=True,
     )
 
-    meshes["door_outline_fwd"] = door_patch(14.55, 0.55, 1.05, -1.0, 0.011)
-    meshes["door_fwd"] = door_patch(14.55, 0.48, 0.95, -1.0, 0.020)
-    meshes["door_handle_fwd"] = door_patch(14.78, 0.07, 0.06, -1.0, 0.028)
-    meshes["cargo_door_outline"] = door_patch(7.20, 0.72, 0.70, 1.0, 0.011)
-    meshes["cargo_door"] = door_patch(7.20, 0.64, 0.62, 1.0, 0.020)
-    meshes["cargo_door_latch"] = door_patch(7.55, 0.07, 0.06, 1.0, 0.028)
-    meshes["door_service_aft"] = door_patch(-11.80, 0.42, 0.88, 1.0, 0.018)
+    # Doors follow the fuselage curve and sit a few millimetres proud, so they read as flush.
+    door_outline, door_panel, door_handle = entry_door(14.55, 0.46, 0.92, -1.0)
+    meshes["door_outline_fwd"], meshes["door_fwd"], meshes["door_handle_fwd"] = (
+        door_outline, door_panel, door_handle)
+    cargo_outline, cargo_panel, cargo_latch = entry_door(7.90, 0.62, 0.52, 1.0, angle=-27.0)
+    meshes["cargo_door_outline"], meshes["cargo_door"], meshes["cargo_door_latch"] = (
+        cargo_outline, cargo_panel, cargo_latch)
+    meshes["door_service_aft"] = door_patch(-11.90, 0.40, 0.80, 1.0)
 
     meshes["antenna"] = box(0.0, 6.22, 8.00, 0.05, 0.50, 0.05)
     meshes["antenna_aft"] = box(0.0, 6.12, -6.50, 0.04, 0.35, 0.04)
-    meshes["pitot"] = box(-1.55, 4.85, 18.85, 0.035, 0.035, 0.42)
-    meshes["pitot_b"] = box(1.55, 4.85, 18.85, 0.035, 0.035, 0.42)
+    # Pitot probes stand off the nose skin just below the cockpit side windows.
+    for name, angle in (("pitot", 186.0), ("pitot_b", -6.0)):
+        base = _skin(18.30, angle, 0.0)
+        meshes[name] = box(float(base[0]), float(base[1]), float(base[2]) + 0.14, 0.035, 0.035, 0.42)
 
-    for index, z in enumerate(np.linspace(13.80, -11.20, 28), start=1):
+    pair_pitch = 2.0 * WINDOW_PITCH
+    for index, z in enumerate(np.arange(WINDOW_FIRST_Z, WINDOW_LAST_Z, -pair_pitch), start=1):
         meshes[f"cabin_window_{index}"] = cabin_window(float(z), -1.0)
         meshes[f"cabin_window_r{index}"] = cabin_window(float(z), 1.0)
 
@@ -578,8 +567,9 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     meshes["flap_fairing_r"] = wing_slab(
         1.0, 4.00, 10.80, from_te=-0.03, to_te=0.14, thickness=0.12, surface="lower"
     )
-    meshes["static_wick_left"] = box(-17.85, 8.95, -0.55, 0.05, 0.03, 0.28)
-    meshes["static_wick_right"] = box(17.85, 8.95, -0.55, 0.05, 0.03, 0.28)
+    # Wicks trail off the winglet tips' trailing edges (tip at y=7.25, chord ends at z=-0.62).
+    meshes["static_wick_left"] = box(-17.90, 7.10, -0.72, 0.05, 0.03, 0.28)
+    meshes["static_wick_right"] = box(17.90, 7.10, -0.72, 0.05, 0.03, 0.28)
 
     # Large high-bypass turbofans hung well forward of the wing.
     for side, suffix in ((-1.0, "left"), (1.0, "right")):
@@ -640,53 +630,58 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     )
     meshes["tailplane"] = lofted_aerofoil(
         [
-            (-7.20, 7.15, -15.80, 2.10, 0.13),
-            (-2.40, 7.05, -14.40, 3.40, 0.18),
-            (-0.30, 7.00, -14.00, 3.90, 0.19),
-            (0.30, 7.00, -14.00, 3.90, 0.19),
-            (2.40, 7.05, -14.40, 3.40, 0.18),
-            (7.20, 7.15, -15.80, 2.10, 0.13),
+            (-7.20, 6.20, -15.80, 2.10, 0.13),
+            (-2.40, 6.10, -14.40, 3.40, 0.18),
+            (-0.30, 6.05, -14.00, 3.90, 0.19),
+            (0.30, 6.05, -14.00, 3.90, 0.19),
+            (2.40, 6.10, -14.40, 3.40, 0.18),
+            (7.20, 6.20, -15.80, 2.10, 0.13),
         ],
         chord_points=16,
     )
-    meshes["tailplane_tip_l"] = box(-7.15, 7.12, -16.55, 0.28, 0.12, 0.90)
-    meshes["tailplane_tip_r"] = box(7.15, 7.12, -16.55, 0.28, 0.12, 0.90)
-    meshes["elevator_left"] = box(-3.60, 7.00, -17.35, 6.60, 0.07, 0.70)
-    meshes["elevator_right"] = box(3.60, 7.00, -17.35, 6.60, 0.07, 0.70)
-    meshes["tail_nav_light"] = box(0.0, 8.40, -19.20, 0.09, 0.09, 0.10)
+    meshes["tailplane_tip_l"] = box(-7.15, 6.17, -16.55, 0.28, 0.12, 0.90)
+    meshes["tailplane_tip_r"] = box(7.15, 6.17, -16.55, 0.28, 0.12, 0.90)
+    meshes["elevator_left"] = box(-3.60, 6.05, -17.35, 6.60, 0.07, 0.70)
+    meshes["elevator_right"] = box(3.60, 6.05, -17.35, 6.60, 0.07, 0.70)
+    meshes["tail_nav_light"] = box(0.0, 4.05, -19.66, 0.09, 0.09, 0.10)
     meshes["beacon_top"] = box(0.0, 12.35, -16.20, 0.10, 0.12, 0.10)
 
-    # Tricycle gear — published-class wheelbase / track, tyres on y=0.
-    NOSE_Z = 13.20
-    MAIN_Z = -2.40
+    # Tricycle gear. Real 737-800 mains sit just behind the wing root and the nose gear ~5 m aft
+    # of the nose; the old spots (13.20 / -2.40) left the main legs hanging 1 m under the wing
+    # and 1.2 m behind its trailing edge. Wheelbase is now ~15.3 m (published 737-800: 15.6 m).
     MAIN_X = 2.86
-    meshes["gear_nose"] = box(0.0, 1.85, NOSE_Z, 0.18, 3.00, 0.38)
+    WING_UNDERSIDE = 4.05
+    leg_top = WING_UNDERSIDE + 0.08
+    leg_h = leg_top - 0.52
+    leg_c = 0.52 + leg_h / 2.0
+    meshes["gear_nose"] = skin.merge_meshes([
+        box(0.0, 1.85, NOSE_Z, 0.18, 3.00, 0.38),
+        box(0.0, 0.55, NOSE_Z, 0.72, 0.10, 0.10),          # axle joins the twin tyres
+    ])
     meshes["gear_oleo_nose"] = cylinder(
         0.0, 1.60, NOSE_Z, 0.09, 2.55, axis="y", segments=24
     )
     meshes["gear_scissors_nose"] = box(0.0, 2.05, NOSE_Z - 0.20, 0.14, 0.58, 0.32)
-    meshes["gear_door_nose"] = box(0.0, 3.10, NOSE_Z, 0.88, 0.07, 1.15)
-    meshes["gear_left"] = box(-MAIN_X, 1.70, MAIN_Z, 0.20, 2.35, 0.45)
-    meshes["gear_right"] = box(MAIN_X, 1.70, MAIN_Z, 0.20, 2.35, 0.45)
-    meshes["gear_oleo_left"] = cylinder(
-        -MAIN_X, 1.60, MAIN_Z, 0.10, 2.05, axis="y", segments=24
-    )
-    meshes["gear_oleo_right"] = cylinder(
-        MAIN_X, 1.60, MAIN_Z, 0.10, 2.05, axis="y", segments=24
-    )
-    meshes["gear_scissors_left"] = box(
-        -MAIN_X, 1.95, MAIN_Z - 0.22, 0.14, 0.58, 0.35
-    )
-    meshes["gear_scissors_right"] = box(
-        MAIN_X, 1.95, MAIN_Z - 0.22, 0.14, 0.58, 0.35
-    )
-    meshes["gear_door_left"] = box(-MAIN_X, 2.95, MAIN_Z, 1.15, 0.07, 1.35)
-    meshes["gear_door_right"] = box(MAIN_X, 2.95, MAIN_Z, 1.15, 0.07, 1.35)
-    meshes["nav_light_left"] = box(-17.85, 8.50, -0.20, 0.09, 0.09, 0.09)
-    meshes["nav_light_right"] = box(17.85, 8.50, -0.20, 0.09, 0.09, 0.09)
-    meshes["landing_light_l"] = box(-5.20, 2.85, 5.00, 0.24, 0.15, 0.09)
-    meshes["landing_light_r"] = box(5.20, 2.85, 5.00, 0.24, 0.15, 0.09)
-    meshes["taxi_light"] = box(0.0, 2.55, 13.55, 0.16, 0.12, 0.12)
+    meshes["gear_door_nose"] = box(0.0, 2.50, NOSE_Z + 0.90, 0.88, 0.06, 1.15)   # hangs on the belly
+    for side, suffix in ((-1.0, "left"), (1.0, "right")):
+        x = side * MAIN_X
+        meshes[f"gear_{suffix}"] = skin.merge_meshes([
+            box(x, leg_c, MAIN_Z, 0.20, leg_h, 0.45),
+            box(x, 0.62, MAIN_Z, 0.88, 0.12, 0.12),         # axle through both wheels
+        ])
+        oleo_h = leg_top - 0.30 - 0.60
+        meshes[f"gear_oleo_{suffix}"] = cylinder(
+            x, 0.60 + oleo_h / 2.0, MAIN_Z, 0.10, oleo_h, axis="y", segments=24
+        )
+        meshes[f"gear_scissors_{suffix}"] = box(x, 1.95, MAIN_Z - 0.22, 0.14, 0.58, 0.35)
+        # Leg-mounted door plate (hangs beside the strut, touching it).
+        meshes[f"gear_door_{suffix}"] = box(x + side * 0.125, 2.75, MAIN_Z, 0.05, 1.50, 1.20)
+    meshes["nav_light_left"] = box(-17.89, 6.95, -0.30, 0.09, 0.09, 0.09)
+    meshes["nav_light_right"] = box(17.89, 6.95, -0.30, 0.09, 0.09, 0.09)
+    # Landing lights sit on the wing-root leading edge underside (they were buried in the nacelles).
+    meshes["landing_light_l"] = box(-3.30, 4.15, 5.40, 0.24, 0.15, 0.09)
+    meshes["landing_light_r"] = box(3.30, 4.15, 5.40, 0.24, 0.15, 0.09)
+    meshes["taxi_light"] = box(0.0, 2.52, NOSE_Z + 0.85, 0.16, 0.12, 0.12)
 
     wheel_set(meshes, "nose_left", -0.30, NOSE_Z, 0.55, 0.22)
     wheel_set(meshes, "nose_right", 0.30, NOSE_Z, 0.55, 0.22)

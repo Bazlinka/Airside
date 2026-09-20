@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Storms now hold the runway (ADR 0058).** Weather was cosmetic plus a flat daily
+  surcharge (ADR 0013); a `Storm` block now withholds every *new* landing/takeoff clearance
+  on both strips until it clears — arrivals hold, departures wait short — while anything
+  already rolling, on final or taxiing continues undisturbed. The Operations subtitle names
+  the current weather and shows "GROUND STOP" while a storm is holding traffic. Deterministic
+  under any step size: `NextEventAt` now also stops at the next weather block boundary while
+  a runway is wanted and storm-held, so a big catch-up jump cannot land past the moment the
+  storm actually cleared. `RunwayWeatherTests` (+2), `OperationsWorkspaceTests` (+1).
+
 - **Aircraft: no gaps, flush doors, proper windows (all seven types).** Doors, windows,
   windscreens and cockpit panes are now curved shells that follow the fuselage a few mm
   proud, instead of flat quads that sank into the skin (a 737 door showed only its top and

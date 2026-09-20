@@ -1,5 +1,40 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Claude — storms hold the runway (branch
+  `claude/weather-system-improvement-1bgfc3`, ADR 0058).** Bailey: "I want to do a better
+  weather system." Weather (ADR 0013) was cosmetic plus a flat daily surcharge; this closes
+  the gap ADR 0013 explicitly left open ("storm closes the runway... future work").
+  - **Change:** `AirlineOperations.RunTowerOnStrip` withholds a *new* landing/takeoff
+    clearance on either strip while `Weather.At(now)` is `Storm`; a movement already
+    underway is never interrupted. Arrivals fall back on the existing indefinite
+    `HoldingForLanding` state, departures on `HoldingShort` — no new state, no save field.
+    `AirlineOperations.CurrentWeather`/`IsGroundStopped` expose it; the Operations subtitle
+    names the current weather and shows "GROUND STOP" while it is active.
+  - **The one real risk, handled:** `Weather.At` is a pure function of time (no RNG), so this
+    had to answer identically at a given instant no matter the step size. `NextEventAt`'s
+    skip-to-next-event catch-up only considered the tracked runway-free times, which can sit
+    at-or-before `now` while the strip is still storm-held (checked against `now` directly,
+    not a tracked reopen time) — a big skip could have landed past the moment a storm cleared.
+    Fixed by also considering the next weather-block boundary while a runway is wanted and
+    storm-held. Verified, not just reasoned about: two new `RunwayWeatherTests` drive a
+    restored `HoldingForLanding` aircraft through the timeline's block 34 (a `Storm` block,
+    found by computing the game's own hash function, bracketed by `Clear`/`Fog`) and assert
+    identical results stepping second-by-second vs. skipping to next event. The pre-existing
+    36-hour `Timeline_IsIdenticalForAnyStepSizeOrSkipping` test independently crosses that
+    same block and stayed green unmodified.
+  - **Evidence:** `scripts/test-domain.sh` **484/484** (481 baseline + 3 new: 2
+    `RunwayWeatherTests`, 1 `OperationsWorkspaceTests`). This environment had no dotnet SDK
+    at session start; installed via Microsoft's `dotnet-install.sh` (not apt — the distro
+    packages 404'd) specifically so this Simulation-layer change could be run, not merely
+    inspected.
+  - **NOT verified:** `scripts/test-unity.sh` on a Mac (no Unity editor here), and no
+    in-engine look at the new "GROUND STOP" subtitle text or at traffic actually backing up
+    during a live storm.
+  - **NEXT:** Mac Unity EditMode before merging, per `AGENTS.md`. Left for later, not
+    started: lightning/thunder presentation for storms (still noted as future work); whether
+    a ground stop should also pause departure prep (fuel/catering/boarding) — left running
+    since none of that needs the runway.
+
 - **2026-09-20 Claude — aircraft fit/finish + taxi/pushback smoothness (branch
   `feature/aircraft-detail-and-taxi-smoothing`).** Bailey: "look at the aircraft", fix the
   Hangar slab and floating specs, no gaps, doors level with the fuselage, windows need work,

@@ -1,3 +1,4 @@
+using System;
 using Airside.Domain;
 using Airside.Simulation;
 using NUnit.Framework;
@@ -65,6 +66,85 @@ namespace Airside.Tests
             var windOnly = RunwayWeather.Select(ops.Wind, AircraftType.Atr42, null, ops.Home);
             Assert.That(ops.RunwayFor(inbound), Is.EqualTo(windOnly),
                 "arrivals must not take the departure-favoured end in light wind");
+        }
+
+        // Block 34 (122400-125999s) hashes to Storm; blocks 33 (Clear) and 35 (Fog) bracket it
+        // (see Weather.At). A holding aircraft restored inside that window exercises the
+        // ground stop (ADR 0058) without waiting on a live day's odds of a storm turning up.
+        private static AirlineOperations HoldingForLandingDuringStorm(ManualSimulationClock clock, long stateStartedAt)
+        {
+            var ops = new AirlineOperations(clock, new SeededRandomSource(7), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideRegionalBays);
+            var player = Airline.Player("Storm Air", "#445566");
+            ops.AddAirline(player);
+            Assert.That(DestinationCatalogue.TryFind("PLO", out var portLincoln), Is.True);
+
+            var restore = typeof(AirlineOperations).GetMethod("RestoreAircraft",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            restore.Invoke(ops, new object[]
+            {
+                "VH-STM", player, AircraftType.Atr42, FleetState.HoldingForLanding,
+                new SimulationTime(stateStartedAt), null, default(StableId), default(StableId),
+                portLincoln, null, 0
+            });
+            return ops;
+        }
+
+        [Test]
+        public void Storm_HoldsTheClearanceUntilWeatherClears()
+        {
+            Assert.That(Weather.At(new SimulationTime(123000)), Is.EqualTo(WeatherKind.Storm));
+            Assert.That(Weather.At(new SimulationTime(126000)), Is.Not.EqualTo(WeatherKind.Storm));
+
+            var clock = new ManualSimulationClock(new SimulationTime(123000));
+            var ops = HoldingForLandingDuringStorm(clock, 120000);
+            var holder = ops.Fleet[0];
+
+            ops.Update();
+            Assert.That(holder.State, Is.EqualTo(FleetState.HoldingForLanding),
+                "a storm withholds a new landing clearance even though the strip is free");
+            Assert.That(ops.IsGroundStopped, Is.True);
+
+            clock.Set(new SimulationTime(126000));
+            ops.Update();
+            Assert.That(holder.State, Is.EqualTo(FleetState.Landing),
+                "the held aircraft lands as soon as the storm block ends");
+            Assert.That(ops.IsGroundStopped, Is.False);
+        }
+
+        [Test]
+        public void Storm_ReleaseIsIdenticalWhetherSteppedBySecondOrSkippedToTheNextEvent()
+        {
+            const long start = 120000;
+            const long horizon = 130000;
+
+            string Run(Func<ManualSimulationClock, AirlineOperations, bool> step)
+            {
+                var clock = new ManualSimulationClock(new SimulationTime(start));
+                var ops = HoldingForLandingDuringStorm(clock, start);
+                while (clock.Now.ElapsedSeconds < horizon && step(clock, ops))
+                {
+                }
+
+                clock.Set(new SimulationTime(horizon));
+                ops.Update();
+                var holder = ops.Fleet[0];
+                return $"{holder.State}@{holder.StateStartedAt.ElapsedSeconds}";
+            }
+
+            var bySecond = Run((c, o) => { c.Advance(1); o.Update(); return true; });
+            var bySkipping = Run((c, o) =>
+            {
+                var next = o.NextEventAt();
+                if (next == null || next.Value.ElapsedSeconds > horizon) return false;
+                c.Set(next.Value);
+                o.Update();
+                return true;
+            });
+
+            Assert.That(bySkipping, Is.EqualTo(bySecond),
+                "a storm's tower gate must answer the same way at the same simulated moment " +
+                "no matter how big a jump catch-up takes to reach it");
         }
 
         [Test]

@@ -27,6 +27,19 @@ namespace Airside.Tests
             Assert.That(model.FleetLine, Is.EqualTo($"1 of {AircraftAcquisition.MaxPlayerAircraft} aircraft"));
             Assert.That(model.ContractHistory, Is.Empty);
             Assert.That(model.EmptyHistoryLine, Is.Not.Empty);
+            Assert.That(model.CurrentLiveryHex, Is.EqualTo(ops.PlayerAirline.LiveryHex));
+        }
+
+        [Test]
+        public void Stats_RepaintingTheLiveryIsReflectedOnTheNextRebuild()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            var target = StatsWorkspaceModel.LiveryPalette.First(l => l.Hex != ops.PlayerAirline.LiveryHex);
+            Assert.That(ops.SetLivery(target.Hex).Accepted, Is.True);
+
+            var model = new StatsWorkspaceModel();
+            model.Rebuild(ops, clock.Now);
+            Assert.That(model.CurrentLiveryHex, Is.EqualTo(target.Hex));
         }
 
         [Test]
@@ -90,6 +103,12 @@ namespace Airside.Tests
                 Assert.That(layout.LeftColumn.Overlaps(layout.Footer), Is.False, label);
                 Assert.That(layout.RightColumn.Overlaps(layout.Footer), Is.False, label);
                 Assert.That(layout.VisibleMilestones(11), Is.GreaterThanOrEqualTo(0), label);
+
+                // The livery swatch row (six 28px squares) must fit inside the column that
+                // holds it and clear of the workspace footer, at every viewport this runs.
+                var lastSwatch = layout.LiverySwatch(StatsWorkspaceModel.LiveryPalette.Length - 1);
+                Assert.That(lastSwatch.Right, Is.LessThanOrEqualTo(layout.LeftColumn.Right + 0.01f), label);
+                Assert.That(lastSwatch.Bottom, Is.LessThanOrEqualTo(layout.Footer.Y + 0.01f), label);
             }
         }
     }

@@ -351,5 +351,26 @@ namespace Airside.Tests
             Assert.That(ops.AcceptContract(RouteContractCatalogue.RegionalKingscoteIntro).Accepted, Is.False,
                 "one active contract");
         }
+
+        [Test]
+        public void InternationalTier_UnlocksWithAJetNotAWidebody()
+        {
+            Assert.That(AircraftAcquisition.AirbusA321Neo.RequiredTier, Is.EqualTo(OperatingTier.Domestic),
+                "A321 is the Tasman step after Domestic, not locked behind International");
+            Assert.That(AircraftAcquisition.AirbusA350900.RequiredTier, Is.EqualTo(OperatingTier.International));
+
+            var (_, ops, _) = PlayerOnly();
+            ops.RestoreCareerState(200_000, 90, nameof(OperatingTier.Domestic), null, 0, 0, Array.Empty<string>(),
+                Array.Empty<string>(), 28);
+            Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True);
+            Assert.That(ops.CareerState.Tier, Is.EqualTo(OperatingTier.International),
+                "28 rotations + jet ownership unlocks International without owning a widebody");
+
+            // A350 still needs its own reliability/rotation floor on top of the tier.
+            ops.RestoreCareerState(ops.CareerState.Funds, 95, nameof(OperatingTier.International), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 40);
+            Assert.That(ops.BuyAircraft(AircraftType.AirbusA350900).Accepted, Is.True,
+                "widebodies become buyable once International is open");
+        }
     }
 }

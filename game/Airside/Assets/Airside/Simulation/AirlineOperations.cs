@@ -125,23 +125,51 @@ namespace Airside.Simulation
             return profile.ApproachSeconds + profile.LandingSeconds + VacateSecondsFor(type);
         }
 
-        public static readonly IReadOnlyList<StableId> AdelaideRegionalBays = new[]
-        {
-            new StableId("BAY-1"), new StableId("BAY-2"), new StableId("BAY-3"), new StableId("BAY-4"),
-            new StableId("BAY-5"), new StableId("BAY-6")
-        };
+        public static readonly IReadOnlyList<StableId> AdelaideRegionalBays = StandIds(AdelaideLayout.Bays);
 
         /// <summary>Terminal gates (ADR 0047): jets only, a separate stand system from the regional bays.</summary>
-        public static readonly IReadOnlyList<StableId> AdelaideTerminalGates = new[]
-        {
-            new StableId("GATE-13"), new StableId("GATE-15"), new StableId("GATE-18"), new StableId("GATE-20")
-        };
+        public static readonly IReadOnlyList<StableId> AdelaideTerminalGates = StandIds(AdelaideLayout.TerminalGates);
 
         /// <summary>Every stand at Adelaide: the regional bays, then the terminal gates.</summary>
-        public static readonly IReadOnlyList<StableId> AdelaideStands = new List<StableId>(AdelaideRegionalBays)
+        public static readonly IReadOnlyList<StableId> AdelaideStands = CombinedStands();
+
+        private static IReadOnlyList<StableId> StandIds(AdelaideBay[] bays)
         {
-            AdelaideTerminalGates[0], AdelaideTerminalGates[1],
-            AdelaideTerminalGates[2], AdelaideTerminalGates[3]
+            var ids = new StableId[bays.Length];
+            for (var i = 0; i < bays.Length; i++)
+                ids[i] = new StableId(bays[i].Id);
+            return ids;
+        }
+
+        private static IReadOnlyList<StableId> StandIds(AdelaideTerminalGate[] gates)
+        {
+            var ids = new StableId[gates.Length];
+            for (var i = 0; i < gates.Length; i++)
+                ids[i] = new StableId(gates[i].Id);
+            return ids;
+        }
+
+        private static IReadOnlyList<StableId> CombinedStands()
+        {
+            var all = new StableId[AdelaideRegionalBays.Count + AdelaideTerminalGates.Count];
+            for (var i = 0; i < AdelaideRegionalBays.Count; i++)
+                all[i] = AdelaideRegionalBays[i];
+            for (var i = 0; i < AdelaideTerminalGates.Count; i++)
+                all[AdelaideRegionalBays.Count + i] = AdelaideTerminalGates[i];
+            return all;
+        }
+
+        /// <summary>
+        /// L/R parking lines on the same T1 pier — AIP treats them as one gate.
+        /// GATE-18 and GATE-20 are the original 18L / 20L ids.
+        /// </summary>
+        public static readonly IReadOnlyList<(StableId A, StableId B)> SharedPierPairs = new[]
+        {
+            (new StableId("GATE-16L"), new StableId("GATE-16R")),
+            (new StableId("GATE-18"), new StableId("GATE-18R")),
+            (new StableId("GATE-20"), new StableId("GATE-20R")),
+            (new StableId("GATE-22L"), new StableId("GATE-22R")),
+            (new StableId("GATE-28L"), new StableId("GATE-28R")),
         };
 
         /// <summary>
@@ -170,14 +198,33 @@ namespace Airside.Simulation
         public static bool NeedsTerminalGate(AircraftType type) =>
             AircraftCatalogue.TryFor(type, out var spec) && spec.StandClass == StandClass.TerminalGate;
 
-        public static bool StandFits(AircraftType type, StableId stand) =>
-            AdelaideGround.IsTerminalGate(stand) == NeedsTerminalGate(type);
+        /// <summary>AIP walk-out stands 2A and 10A–10D are SF340 / marshaller only.</summary>
+        public static bool IsWalkOutStand(StableId stand)
+        {
+            foreach (var bay in AdelaideLayout.Bays)
+            {
+                if (bay.Id != stand.Value)
+                    continue;
+                return bay.Reference is "2A" or "10A" or "10B" or "10C" or "10D";
+            }
+
+            return false;
+        }
+
+        public static bool StandFits(AircraftType type, StableId stand)
+        {
+            if (AdelaideGround.IsTerminalGate(stand) != NeedsTerminalGate(type))
+                return false;
+            return !IsWalkOutStand(stand) || ReferenceEquals(type, AircraftType.Saab340)
+                                         || ReferenceEquals(type, AircraftType.Atr42);
+        }
 
         /// <summary>
         /// Real regional carriers that share Adelaide's regional apron with the player and
         /// the player's airline. New games start with them; older saves gain them on load
         /// (<see cref="AddMissingRegionalCarriers"/>). Six aircraft in all on six bays, so
-        /// everyone always has a stand.
+        /// everyone always has a stand. Extra 50G and the 10-series walk-outs
+        /// sit empty until someone needs them.
         /// </summary>
         public static readonly IReadOnlyList<(Func<Airline> Make, (string Registration, AircraftType Type)[] Fleet)> RegionalCarriers = new (Func<Airline>, (string, AircraftType)[])[]
         {
@@ -589,9 +636,25 @@ namespace Airside.Simulation
             if (!_stands.Contains(stand))
                 return false;
             foreach (var aircraft in _fleet)
-                if (StandHolder(aircraft, stand))
+            {
+                if (StandHolder(aircraft, stand) || StandHolder(aircraft, PierSibling(stand)))
                     return false;
+            }
+
             return true;
+        }
+
+        private static StableId PierSibling(StableId stand)
+        {
+            foreach (var (a, b) in SharedPierPairs)
+            {
+                if (stand.Equals(a))
+                    return b;
+                if (stand.Equals(b))
+                    return a;
+            }
+
+            return default;
         }
 
         /// <summary>

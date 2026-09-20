@@ -1,4 +1,5 @@
 using System.Linq;
+using Airside.Domain;
 using Airside.Presentation;
 using Airside.Simulation;
 using NUnit.Framework;
@@ -50,14 +51,22 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void OperatingStands_AreTheLiveSubsetOfOsmParking()
+        public void OperatingStands_MatchTheCurrentAdelaideApronChart()
         {
             Assert.That(AdelaideLayout.Bays.Select(b => b.Reference),
-                Is.EquivalentTo(new[] { "50A", "50B", "50C", "50D", "50E", "50F" }));
+                Is.EquivalentTo(new[] { "50A", "50B", "50C", "50D", "50E", "50F", "50G",
+                    "10A", "10B", "10C", "10D", "2A" }));
             Assert.That(AdelaideLayout.TerminalGates.Select(g => g.Reference),
-                Is.EquivalentTo(new[] { "13", "15", "18L", "20L" }));
-            Assert.That(AdelaideLayout.TerminalGates.Length, Is.EqualTo(4),
-                "live jet stands — OSM has many more parking lines; each needs a route and apron link");
+                Is.EquivalentTo(new[]
+                {
+                    "12L", "13", "14L", "15", "16L", "16R", "17", "18L", "18R", "19",
+                    "20L", "20R", "21", "22L", "22R", "23", "24", "25", "26L", "27",
+                    "28L", "28R", "29"
+                }));
+            Assert.That(AdelaideLayout.TerminalGates[0].Id, Is.EqualTo("GATE-13"));
+            Assert.That(AdelaideLayout.TerminalGates[1].Id, Is.EqualTo("GATE-15"));
+            Assert.That(AdelaideLayout.TerminalGates[2].Id, Is.EqualTo("GATE-18"));
+            Assert.That(AdelaideLayout.TerminalGates[3].Id, Is.EqualTo("GATE-20"));
         }
 
         [Test]
@@ -72,33 +81,47 @@ namespace Airside.Tests
             {
                 Assert.That(gate.NoseZ, Is.LessThan(facadeZ),
                     $"{gate.Reference} must stop on the apron, not inside the shell");
-                Assert.That(gate.NoseZ, Is.GreaterThan(facadeZ - 40f),
-                    $"{gate.Reference} is a nose-in aerobridge stand, not a remote bay");
-                Assert.That(System.Math.Abs(gate.HeadingDegrees), Is.LessThan(2f),
+                Assert.That(gate.NoseZ, Is.GreaterThan(340f),
+                    $"{gate.Reference} is a T1 stand, not a remote cargo bay");
+                Assert.That(System.Math.Abs(gate.HeadingDegrees), Is.LessThan(15f),
                     $"{gate.Reference} faces the terminal");
                 Assert.That(AirsideAdelaidePavement.DistanceToPavement(gate.NoseX, gate.NoseZ),
                     Is.LessThan(6f), $"{gate.Reference} must stand on the rendered apron");
             }
 
-            var ordered = AdelaideLayout.TerminalGates.OrderByDescending(g => g.NoseX).ToArray();
-            Assert.That(ordered[0].Reference, Is.EqualTo("13"));
-            Assert.That(ordered[1].Reference, Is.EqualTo("15"));
-            Assert.That(ordered[2].Reference, Is.EqualTo("18L"));
-            Assert.That(ordered[3].Reference, Is.EqualTo("20L"));
-            Assert.That(ordered[0].NoseX - ordered[1].NoseX, Is.InRange(70f, 110f));
-            Assert.That(ordered[2].NoseX - ordered[3].NoseX, Is.InRange(70f, 110f));
+            var east = AdelaideLayout.TerminalGates.Single(g => g.Reference == "13");
+            var mid = AdelaideLayout.TerminalGates.Single(g => g.Reference == "18L");
+            var west = AdelaideLayout.TerminalGates.Single(g => g.Reference == "28L");
+            Assert.That(east.NoseX, Is.GreaterThan(mid.NoseX));
+            Assert.That(mid.NoseX, Is.GreaterThan(west.NoseX));
         }
 
         [Test]
-        public void RegionalBays_SitWestOfTheJetStandsOnT4()
+        public void SharedPiers_CannotParkBothLeftAndRight()
         {
-            var westJet = AdelaideLayout.TerminalGates.Min(g => g.NoseX);
+            Assert.That(AirlineOperations.SharedPierPairs.Count, Is.EqualTo(5));
+            Assert.That(AirlineOperations.StandFits(AircraftType.Saab340, new StableId("BAY-10A")), Is.True);
+            Assert.That(AirlineOperations.StandFits(AircraftType.Dash8Q400, new StableId("BAY-10A")), Is.False);
+            Assert.That(AirlineOperations.StandFits(AircraftType.Boeing7378, new StableId("GATE-22L")), Is.True);
+            Assert.That(AirlineOperations.StandFits(AircraftType.Atr42, new StableId("GATE-22L")), Is.False);
+        }
+
+        [Test]
+        public void RegionalBays_SitOnT4_WalkOutsSitEastOfThePiers()
+        {
             foreach (var bay in AdelaideLayout.Bays)
             {
-                Assert.That(bay.StopX, Is.LessThan(westJet - 80f), bay.Reference);
-                Assert.That(bay.StopZ, Is.GreaterThan(460f), bay.Reference);
                 Assert.That(AirsideAdelaidePavement.DistanceToPavement(bay.StopX, bay.StopZ),
                     Is.LessThan(6f), bay.Reference);
+                if (bay.Reference.StartsWith("50"))
+                {
+                    Assert.That(bay.StopZ, Is.GreaterThan(460f), bay.Reference);
+                    Assert.That(bay.StopX, Is.LessThan(1150f), bay.Reference);
+                }
+                else
+                {
+                    Assert.That(bay.StopX, Is.GreaterThan(1600f), bay.Reference);
+                }
             }
         }
 

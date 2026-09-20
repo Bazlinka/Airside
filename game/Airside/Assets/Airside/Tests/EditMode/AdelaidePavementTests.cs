@@ -96,6 +96,12 @@ namespace Airside.Tests
                 OnPavement(bay.Pushback, $"pushback {bay.Id}");
                 OnPavement(bay.TaxiOut, $"taxi-out {bay.Id}");
             }
+            foreach (var gate in AdelaideLayout.TerminalGates)
+            {
+                OnPavement(gate.TaxiIn, $"taxi-in {gate.Id}");
+                OnPavement(gate.Pushback, $"pushback {gate.Id}");
+                OnPavement(gate.TaxiOut, $"taxi-out {gate.Id}");
+            }
         }
 
         [Test]
@@ -117,6 +123,14 @@ namespace Airside.Tests
                 Near(First(bay.Pushback), new[] { bay.StopX, bay.StopZ }, $"{bay.Id} pushback starts on the stand");
                 Near(Last(bay.Pushback), First(bay.TaxiOut), $"{bay.Id} taxi-out starts where the pushback ends");
                 Near(Last(bay.TaxiOut), AdelaideLayout.Runway05Hold, $"{bay.Id} taxi-out ends at the 05 holding point");
+            }
+            foreach (var gate in AdelaideLayout.TerminalGates)
+            {
+                Near(First(gate.TaxiIn), AdelaideLayout.E2Hold, $"{gate.Id} taxi-in starts at E2");
+                Near(Last(gate.TaxiIn), new[] { gate.NoseX, gate.NoseZ }, $"{gate.Id} taxi-in ends on the stand");
+                Near(First(gate.Pushback), new[] { gate.NoseX, gate.NoseZ }, $"{gate.Id} pushback starts on the stand");
+                Near(Last(gate.Pushback), First(gate.TaxiOut), $"{gate.Id} taxi-out starts where the pushback ends");
+                Near(Last(gate.TaxiOut), AdelaideLayout.Runway05Hold, $"{gate.Id} taxi-out ends at the 05 holding point");
             }
         }
 
@@ -199,11 +213,11 @@ namespace Airside.Tests
             // keep at most one parked until a clearance-safe bay becomes available.
             var ops = AirlineOperations.StartAtAdelaide(new ManualSimulationClock(new SimulationTime(0)), new SeededRandomSource(1),
                 Airline.Player("Clearance Air", "#1F3A93"));
-            Assert.That(ops.Fleet.Count(a => a.Type == AircraftType.Dash8Q400 && a.State == FleetState.AtStand), Is.EqualTo(1),
-                "only one Q400 starts parked; the other is inbound and uses the clearance-aware stand chooser");
+            Assert.That(ops.Fleet.Count(a => a.Type == AircraftType.Dash8Q400 && a.State == FleetState.AtStand), Is.EqualTo(2),
+                "two Q400s start parked; the third is inbound");
 
             var shortfalls = new List<string>();
-            var bays = AdelaideLayout.Bays;
+            var bays = AdelaideLayout.Bays.Where(b => b.Reference.StartsWith("50")).ToArray();
             for (var i = 0; i < bays.Length; i++)
             for (var j = i + 1; j < bays.Length; j++)
                 foreach (var ta in types)

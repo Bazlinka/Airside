@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Adelaide now has the current Terminal 1 stand map.** Aerobridges
+  12L–29 (L and R of the same pier cannot both be occupied), regional
+  50A–G, and walk-out 10A–D / 2A all have taxi routes and markings.
+  Opening traffic still uses a handful of them; the rest sit empty the
+  way a real morning apron does.
+
 - **Departures fly the remaining runway before they turn.** Climb-out
   stays wings-level over the strip; the SID bank starts after the far
   threshold and rolls the wings with the heading change.

@@ -1,5 +1,12 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — full Adelaide stand map.** Bailey: get the
+  current Adelaide stand map; make the airport as realistic as possible.
+  Live stands now match the 09 JUL 2026 AIP apron chart that OSM has:
+  T1 aerobridges 12L–29 (L/R pairs exclusive), regional 50A–G, walk-outs
+  10A–D and 2A. Cargo 80s / 101 stay mapped in OSM only — no passenger
+  routes yet. Each live stand has taxi-in, pushback and taxi-out.
+
 - **2026-09-20 Cursor — Adelaide feel (climb-out, options, name,
   accuracy).** Bailey: takeoffs must fly the remaining runway before
   turning and bank with the turn; add a working Options page; it is

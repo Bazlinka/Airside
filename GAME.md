@@ -1,5 +1,62 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Claude — Contracts card fill (first real HUD-rework step), terminal roof fixes,
+  weather fog tint, and a real go-around bug documented not fixed (branch
+  `claude/weather-system-improvement-1bgfc3`, ADR 0062).** Bailey: aircraft behaviour bugs,
+  terminal realism, better rain/cloud types, and "the HUD needs a massive rework." Bailey can't
+  test right now and chose to keep going rather than pause for a Unity check-in.
+  - **New capability this entry is built on:** got `scripts/hud-mockup` +
+    `scripts/render-hud-mockups.py` actually working in this sandbox (installed Pillow) — this
+    renders the real HUD draw list to PNGs headlessly. First time this session could *see* a
+    Presentation change instead of reasoning about it blind. Screenshotted all five pages
+    (Overview/Operations/Map/Fleet/Contracts) at 2015x1260 before touching anything.
+  - **What the renders showed, concretely:** all four workspaces are clean but very sparse —
+    Contracts and Fleet in particular leave most of the panel empty below a small amount of
+    content. That's the real evidence behind "massive rework," not a guess.
+  - **Fixed, verified by re-rendering:** `ContractsWorkspaceLayout.OfferCard` pinned every
+    offer card to a fixed 86px height regardless of the column's real height — with the market
+    only ever running three offers (ADR 0056), a tall window showed three small cards and a
+    large blank void. New `OfferCardHeight(shown)` grows cards to fill the space (capped
+    172px), content centred rather than stretched, plus a subtle outline on every card now
+    (not only the highlighted one). This is a first step, not the "massive rework" — Fleet,
+    Operations and the Map still have the same sparse-panel character and are not touched yet.
+  - **Terminal (from a dedicated research pass, both real and provable):** the roof brow's last
+    segment cantilevered 17.2m past the terminal's own real OSM footprint into open air —
+    narrowed to fit with the same gap pattern the rest of the brow uses. Roof plant/equipment
+    screens now share the brow's corrugated-metal texture instead of flat colour right next to
+    a textured brow. **Not fixed, documented:** the 28 glazing bays float 0.28-2.14m off the
+    real curved wall (constant Z vs. the wall's actual curving polyline) — needs correct
+    per-bay interpolation off a 64-point polygon, easy to get subtly wrong blind.
+  - **Weather (from a dedicated research pass):** Cloudy/Overcast/Rain/Fog/Storm all rendered
+    the *identical* fog colour — `UpdateWeatherPresentation`'s colour came from daylight alone,
+    only density varied by kind. Now Storm/Rain/Overcast darken toward slate grey by Gloom;
+    Fog blends toward a pale near-white haze instead, driven by how far its Visibility loss
+    outruns its own Gloom (the one weather kind where that gap is real — fog scatters light
+    bright even as it dims the sun). **Not fixed, documented:** no wind-driven rain/cloud
+    direction anywhere (windsock is the only wind-reactive visual); `BuildCloudBands`'s cluster
+    count/layout is fixed regardless of `CloudCover`, only tint/alpha respond.
+  - **Aircraft — real bug found, NOT fixed (highest-value remaining item):** a go-around flies
+    a full racetrack ending near short final at ~305m circuit height
+    (`CircuitTraffic.GoAround`), then transitions straight to `HoldingForLanding`, drawn pinned
+    to a queue slot on the ordinary final-approach path
+    (`ApproachHold.HoldingFinalProgress`) — a completely different position/altitude with no
+    relation to where the circuit actually left it. Verified with real numbers: a
+    400-1,100m horizontal jump and ~210-250m altitude drop in one tick, gear included (GoAround
+    forces gear up; the landed-on approach progress is usually well past where gear deploys).
+    Judged too risky to fix blind — it means blending two structurally different flight-path
+    systems (a fixed racetrack vs. a queue-pinned glideslope), and a wrong blend could look
+    worse than the current hard cut with no way here to see the result.
+  - **Evidence:** `scripts/test-domain.sh` **499/499**, unchanged (no new Simulation
+    behaviour). Contracts fill verified by actually re-rendering the mockup and looking at the
+    image, not just reading the layout math — genuinely different from every other
+    Presentation change this session.
+  - **NEXT, in priority order:** (1) the go-around teleport — needs Unity available to try a
+    blend and actually watch it; (2) continue the HUD pass on Fleet/Operations/Map using the
+    same mockup-render-and-look loop now that it's working; (3) the terminal glazing-off-wall
+    fix, with correct wall-edge extraction; (4) wind-driven rain/cloud direction. All of this
+    session's Presentation work (this entry and everything above it) still needs
+    `scripts/test-unity.sh` and a real Play-mode look before merging is fully trusted.
+
 - **2026-09-20 Claude — road lane markings, bolder apron labels, runway left as-is (branch
   `claude/weather-system-improvement-1bgfc3`, ADR 0061).** Bailey: "improve visual and ground
   appearance...including roads," "improve runway appearance," "improve apron labels and make

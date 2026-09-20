@@ -2574,7 +2574,22 @@ namespace Airside.Presentation
                 var daylight = PresentationDaylight;
                 RenderSettings.fog = true;
                 RenderSettings.fogMode = FogMode.ExponentialSquared;
-                RenderSettings.fogColor = Color.Lerp(fogNight, fogDay, Mathf.Max(daylight, 0.25f));
+                var baseFogColor = Color.Lerp(fogNight, fogDay, Mathf.Max(daylight, 0.25f));
+                // This used to be the base colour alone, unconditionally — Cloudy, Overcast,
+                // Rain, Fog and Storm all reached this branch (Gloom > 0.12 for every one of
+                // them) and so all rendered the exact same fog colour, differing only in how
+                // dense it was. Storm/Rain/Overcast now darken toward a slate grey with Gloom.
+                // Fog is the deliberate exception: real fog scatters light into a pale, near-
+                // white haze even though the same Gloom value dims the sun, so it blends
+                // toward white by how much visibility it costs *beyond* what its own Gloom
+                // would already explain — the only WeatherLook whose Visibility loss clearly
+                // outruns its Gloom, which is what a paler-but-still-dim fog actually is.
+                var stormGrey = new Color(0.42f, 0.45f, 0.48f);
+                var fogHaze = new Color(0.82f, 0.83f, 0.82f);
+                var weatherFogColor = Color.Lerp(baseFogColor, stormGrey, look.Gloom);
+                var hazeWeight = Mathf.Clamp01(((1f - look.Visibility) - look.Gloom) * 1.6f);
+                weatherFogColor = Color.Lerp(weatherFogColor, fogHaze, hazeWeight);
+                RenderSettings.fogColor = weatherFogColor;
                 var baseDensity = AirsideBareField.Enabled
                     ? Mathf.Lerp(0.00032f, 0.0002f, daylight)
                     : Mathf.Lerp(0.0065f, 0.0032f, daylight);

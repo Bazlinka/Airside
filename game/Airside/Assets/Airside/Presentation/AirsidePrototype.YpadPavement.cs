@@ -149,9 +149,18 @@ namespace Airside.Presentation
                     CreateSharedSurfaceMaterial(brow, metalAlbedo, new Vector2(3f, 1f));
             }
             foreach (var detail in AdelaideTerminalArchitecture.RoofDetails())
-                CreateBlock(detail.Name, new Vector3(detail.X, groundY + detail.Y, detail.Z),
-                    new Vector3(detail.Width, detail.Height, detail.Depth),
-                    detail.Name.Contains("skylight") ? skylight : plant);
+            {
+                var isSkylight = detail.Name.Contains("skylight");
+                var block = CreateBlock(detail.Name, new Vector3(detail.X, groundY + detail.Y, detail.Z),
+                    new Vector3(detail.Width, detail.Height, detail.Depth), isSkylight ? skylight : plant);
+                // Plant/equipment screens are the same roof-furniture category as the brow
+                // right beside them (arguably more plausibly corrugated-metal-clad than a
+                // canopy) but used to render flat colour while the brow next to it was
+                // textured metal. Skylights correctly stay flat glass-tint, no texture.
+                if (!isSkylight)
+                    block.GetComponent<Renderer>().sharedMaterial =
+                        CreateSharedSurfaceMaterial(plant, metalAlbedo, new Vector2(2f, 2f));
+            }
         }
 
         private static void BuildYpadStandMarkings(Transform root, float paintY, Color paint)

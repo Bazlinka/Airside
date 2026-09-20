@@ -1,17 +1,20 @@
 ## Where to resume — session handoff
 
-- **2026-09-20 Cursor — play fixes after the busy-board rebuild
-  (branch `feature/play-fixes`).** Bailey: do some bug fixes /
-  improvements; the game needs lots of work.
+- **2026-09-20 Cursor — play fixes (board, readout, sky, field
+  seam).** Bailey: bug fixes / improvements; the bottom strip stayed
+  up with nobody selected; overhead traffic crawled and crabbed; the
+  field felt quiet; a bright line where the airport meets the paddock.
   - **Board:** taxi-in is Taxiing (not Landed); takeoff TIME is
-    DEPARTING (not DEPARTED); parking copy is "Landed · parking".
-  - **Awaiting stand:** 12/30 arrivals queue on their own vacate,
-    not the 05 E2 exit.
-  - **Readout:** the bottom kt / heading strip follows the selected
-    or followed aircraft, not the first one on the field.
-  - **Evidence:** Unity 6.3 EditMode **662/662**.
-  - **NEXT:** merge when asked. Do not run
-    `scripts/rebuild-and-open-mac.sh` on a feature branch.
+    DEPARTING; parking copy is "Landed · parking". 12/30 arrivals
+    queue on their own vacate, not the 05 E2 exit.
+  - **Readout:** hidden unless a plane is selected or followed.
+  - **Sky:** overhead flights face the drawn path; near-field
+    arrivals move and descend at a readable speed. Opening bank is
+    four regional arrivals plus ANZ; AI turns 10–24 min.
+  - **Ground:** field and paddock share the same 1050 m dissolve;
+    join normals follow the land, not the 4 m tuck-under cliff.
+  - **Evidence:** Unity 6.3 EditMode **665/665**.
+  - **NEXT:** this PR, then rebuild from main.
 
 - **2026-09-20 Cursor — 12/30 taxi follows the taxiways
   (branch `feature/operations-busy-board`).** Bailey: taxiing was

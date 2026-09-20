@@ -1,13 +1,21 @@
 ## Unreleased
 
+- **The field edge no longer draws a bright hairline.** Airport and
+  paddock share the same satellite dissolve, and the join is lit from
+  the land, not the tuck-under cliff.
+
+- **Overhead traffic faces the path it is drawn on.** Near the field
+  it moves and descends at a readable speed. The opening bank is four
+  regional arrivals plus Air New Zealand; AI turns are 10–24 minutes.
+
 - **Operations matches the field.** Taxi-in reads Taxiing, not Landed.
   Takeoff TIME is DEPARTING. Arrivals waiting for a bay say parking.
 
 - **12/30 arrivals wait on their own exit.** A second arrival no
   longer queues back along the 05 vacate.
 
-- **The speed readout follows the aircraft you picked.** Selected or
-  followed, not whichever flight happens to be first.
+- **The speed readout is off until you pick a plane.** Selected or
+  followed only — a parked Rex does not keep the strip up.
 
 - **12/30 taxi follows the taxiways.** Regional taxi-out and vacate
   walk the OSM centreline graph (T4–K–A–G1 to 12, A6–D1 across 05/23

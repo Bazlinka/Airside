@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Two performance bugs fixed in the storm lightning work (ADR 0059 update).** A requested
+  performance review found: `Lightning.StrikesAt` re-walked its whole storm-block ladder from
+  scratch on every call (quadratic over the block, though never expensive in absolute terms) —
+  now memoises the last two adjacent strike times, so most seconds answer with zero hashing.
+  The procedural thunder clip was built synchronously the first time it was needed (mid-storm,
+  on the audio hot path) instead of pre-warmed like the wind/rain/coast beds — now generated
+  eagerly alongside them. Same behaviour, `scripts/test-domain.sh` still 494/494.
+
 - **Storm lightning/thunder, and a sun/moon that hides behind cloud (ADR 0059).** New
   deterministic `Lightning.StrikesAt` (same pure-hash-of-time style as `Weather.At`) fires a
   flash-plus-thunder every 5-13s during a storm: a ~0.5s double-pulse brightens the sun/

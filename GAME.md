@@ -1,5 +1,28 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Claude — performance bug check on the merged storm/lightning PR (branch
+  restarted from `main` after #335 merged; ADR 0059 updated).** Bailey: "run a performance bug
+  check." Ran `/code-review` (high effort) scoped to the diff just merged in #335, focused on
+  performance. Two real findings, both fixed and verified before this reached `main` again:
+  - **`Lightning.StrikesAt`** re-walked its whole storm-block ladder from the block's first
+    second on every call — O(seconds into the block) per call, quadratic over an hour-long
+    storm (never actually expensive: a few hundred cheap hashes, once a second, only during
+    the ~3% of hours that storm). Fixed with a two-point memo (`_cachedFloor`/`_cachedCeiling`,
+    always adjacent ladder points) so the realistic non-decreasing call pattern answers most
+    seconds with zero hashing; an out-of-order or cross-block query still falls back to a full
+    rebuild and is exactly as correct as before. `scripts/test-domain.sh` 494/494 unchanged —
+    same behaviour confirmed by the full existing `LightningTests` suite, not just new tests.
+  - **The procedural thunder clip synthesised itself lazily** on the audio hot path, at the
+    exact frame the first storm's first strike needed it — a ~53k-sample generation loop
+    running synchronously right when ADR 0059's flash/thunder timing most needed to be on
+    time. Fixed: it now pre-warms in `EnsureAmbientClips` alongside the wind/rain/coast beds
+    instead of on first use.
+  - **Evidence:** `scripts/test-domain.sh` 494/494 (no count change — the fix is behaviourally
+    invisible, only cheaper). The thunder-clip fix is Presentation/Unity-only and still
+    unverified beyond inspection, same caveat as the rest of ADR 0059.
+  - **NEXT:** unchanged from the ADR 0059 entry below — Mac Unity EditMode still needed before
+    trusting the Presentation half of this at the level the Simulation half is tested at.
+
 - **2026-09-20 Claude — storm lightning/thunder, cloud-obscured sun, and an infrastructure-
   accuracy audit (branch `claude/weather-system-improvement-1bgfc3`, ADR 0059).** Bailey asked
   for lightning/thunder visuals, whether the other weather (cloud/overcast/fog/rain/sunny)

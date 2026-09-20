@@ -76,6 +76,41 @@ computed ladder at named seconds, and keeps distance/delay in bounds.
   guessing at a licence/attribution match without either felt like the wrong place to cut a
   corner. The procedural clap is a complete, working implementation on its own in the meantime.
 
+## Update (2026-09-20, same day): two performance bugs from a follow-up review
+
+A requested performance pass over this PR (`/code-review`, high effort, scoped to the storm/
+lightning diff) found two real issues, both fixed on the same branch before it reached `main`
+a second time:
+
+1. **`Lightning.StrikesAt` re-walked the whole ladder from the block's first second on every
+   call**, so the Nth second into an hour-long storm cost O(N/gap) hash iterations that the
+   previous second's call had already computed and discarded — quadratic over the block's
+   duration for what should be an O(1) "has the next strike arrived" check. In absolute terms
+   this was never expensive (a few hundred cheap integer hashes, once a second, only during
+   the ~3% of hours that are storms), but it was a real, fixable inefficiency, not a false
+   positive. Fixed by memoising the last two *adjacent* ladder points reached
+   (`_cachedFloor`/`_cachedCeiling`): for the realistic call pattern — `Update()` asks once
+   per simulated second, non-decreasing — every second strictly between two strikes now
+   answers with zero hashing, and only crossing a strike costs the one hash to extend the
+   bracket. An out-of-order or cross-block query (as a test deliberately makes) still falls
+   back to rebuilding from the block's own first second and is exactly as correct as before
+   the cache existed — verified by re-running the full existing `LightningTests` suite
+   unchanged, including the test that already walks every second of the known storm block in
+   order.
+2. **The procedural thunder clip was synthesised lazily, on the audio hot path, at the exact
+   moment it was first needed** — `_thunderClip ??= ... ?? CreateThunderClip()` sat inside the
+   per-frame `UpdateAmbientAudio` playback check, so the ~53,000-sample generation loop (two
+   `Random.value` calls per sample) ran synchronously on whichever frame the *first* thunderclap
+   of the session was due, risking a hitch right when ADR 0059's flash/thunder timing design
+   most needed to be on time. Fixed by moving the clip's construction into `EnsureAmbientClips`
+   (already called every frame to lazily warm the wind/rain/coast beds), so it is pre-generated
+   in the first few frames after `Awake` like the others; the playback check now only ever
+   reads the already-built `_thunderClip`.
+
+`scripts/test-domain.sh`: 494/494 after the fix (unchanged pass count — same behaviour, less
+work to get there). Still Presentation/Unity-only for item 2, so still reviewed by inspection
+rather than run.
+
 ## Tests
 
 `LightningTests` (+6, new file). `scripts/test-domain.sh`: 494/494.

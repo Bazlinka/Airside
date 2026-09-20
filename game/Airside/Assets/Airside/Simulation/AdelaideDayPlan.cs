@@ -132,6 +132,7 @@ namespace Airside.Simulation
 
             var home = operations.Home;
             var list = new List<SkyFlight>();
+            var claimed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var planned in ForLocalDay(operations, now))
             {
                 if (planned.Type == null)
@@ -140,16 +141,8 @@ namespace Airside.Simulation
                 if (!DestinationCatalogue.TryFind(awayCode, out var away))
                     continue;
 
-                var covered = false;
-                foreach (var aircraft in operations.Fleet)
-                {
-                    if (!CoveredBy(planned, aircraft))
-                        continue;
-                    covered = true;
-                    break;
-                }
-
-                if (covered || planned.Disruption.Cancelled)
+                if (CoveringAircraft(planned, operations.Fleet, claimed) != null
+                    || planned.Disruption.Cancelled)
                     continue;
 
                 var from = planned.Arrival ? away : home;
@@ -171,27 +164,66 @@ namespace Airside.Simulation
         /// </summary>
         public static bool CoveredBy(PlannedMovement planned, FleetAircraft aircraft)
         {
+            return MatchDeltaSeconds(planned, aircraft) >= 0;
+        }
+
+        /// <summary>
+        /// Nearest live aircraft that covers <paramref name="planned"/>, skipping registrations
+        /// already claimed so one inbound cannot suppress every same-route day-plan slot.
+        /// </summary>
+        public static FleetAircraft CoveringAircraft(PlannedMovement planned,
+            IEnumerable<FleetAircraft> fleet, HashSet<string> claimed = null)
+        {
+            if (fleet == null)
+                return null;
+            FleetAircraft best = null;
+            var bestDelta = long.MaxValue;
+            foreach (var aircraft in fleet)
+            {
+                if (aircraft == null)
+                    continue;
+                if (claimed != null && claimed.Contains(aircraft.Registration))
+                    continue;
+                var delta = MatchDeltaSeconds(planned, aircraft);
+                if (delta < 0 || delta >= bestDelta)
+                    continue;
+                best = aircraft;
+                bestDelta = delta;
+            }
+
+            if (best != null)
+                claimed?.Add(best.Registration);
+            return best;
+        }
+
+        /// <summary>
+        /// Absolute seconds between live and planned times when the aircraft covers the
+        /// slot; otherwise -1.
+        /// </summary>
+        public static long MatchDeltaSeconds(PlannedMovement planned, FleetAircraft aircraft)
+        {
             if (aircraft == null || aircraft.Airline.Id.Value != planned.AirlineId)
-                return false;
+                return -1;
             if (planned.Registration.Length > 0
                 && string.Equals(aircraft.Registration, planned.Registration, StringComparison.OrdinalIgnoreCase))
-                return MatchesHalf(planned, aircraft);
+                return MatchesHalf(planned, aircraft) ? 0 : -1;
 
             if (!MatchesHalf(planned, aircraft))
-                return false;
+                return -1;
 
             var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
             if (!dest.HasValue)
-                return false;
+                return -1;
             var code = dest.Value.Code;
             var plannedAway = planned.Arrival ? planned.Origin : planned.Destination;
             if (code != plannedAway)
-                return false;
+                return -1;
 
             var liveSeconds = planned.Arrival
                 ? ArrivalMatchSeconds(planned, aircraft)
                 : aircraft.Scheduled?.DepartAt.ElapsedSeconds ?? aircraft.StateStartedAt.ElapsedSeconds;
-            return Math.Abs(liveSeconds - planned.ScheduledAt.ElapsedSeconds) < 25 * 60;
+            var delta = Math.Abs(liveSeconds - planned.ScheduledAt.ElapsedSeconds);
+            return delta < 25 * 60 ? delta : -1;
         }
 
         /// <summary>

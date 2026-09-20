@@ -117,6 +117,38 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void CoveringAircraft_OneLiveCoversOnlyTheNearestSlot()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(5),
+                Airline.Player("Day Air", "#1F3A93"));
+            var rex = ops.Airlines.First(a => a.Id.Value == "REX");
+            DestinationCatalogue.TryFind("PLO", out var portLincoln);
+
+            var restore = typeof(AirlineOperations).GetMethod("RestoreAircraft",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var eta = new SimulationTime(4 * 3600);
+            restore.Invoke(ops, new object[]
+            {
+                "VH-ONE", rex, AircraftType.Saab340, FleetState.Inbound, new SimulationTime(eta.ElapsedSeconds - 30 * 60),
+                eta, default(StableId), default(StableId), portLincoln, null, 0
+            });
+            var live = ops.Fleet.Single(a => a.Registration == "VH-ONE");
+
+            var near = new PlannedMovement(
+                "RXA100", "REX", rex.Name, rex.LiveryHex, "", AircraftType.Saab340,
+                "PLO", "ADL", eta, arrival: true, "50A");
+            var far = new PlannedMovement(
+                "RXA200", "REX", rex.Name, rex.LiveryHex, "", AircraftType.Saab340,
+                "PLO", "ADL", eta.Advance(20 * 60), arrival: true, "50B");
+
+            var claimed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            Assert.That(AdelaideDayPlan.CoveringAircraft(near, ops.Fleet, claimed), Is.SameAs(live));
+            Assert.That(AdelaideDayPlan.CoveringAircraft(far, ops.Fleet, claimed), Is.Null,
+                "the same inbound must not suppress a second PLO arrival twenty minutes later");
+        }
+
+        [Test]
         public void CoveredBy_KeepsCoveringALateStandWait()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));

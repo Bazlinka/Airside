@@ -248,6 +248,7 @@ namespace Airside.Presentation
             var done = 0;
             var active = 0;
             var upcoming = 0;
+            var claimed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var planned in AdelaideDayPlan.ForLocalDay(operations, now))
             {
                 if (planned.Disruption.Cancelled)
@@ -256,18 +257,8 @@ namespace Airside.Presentation
                     continue;
                 }
 
-                var covered = false;
-                FleetAircraft live = null;
-                foreach (var aircraft in operations.Fleet)
-                {
-                    if (!AdelaideDayPlan.CoveredBy(planned, aircraft))
-                        continue;
-                    covered = true;
-                    live = aircraft;
-                    break;
-                }
-
-                if (covered && live != null && IsLiveMovement(live))
+                var live = AdelaideDayPlan.CoveringAircraft(planned, operations.Fleet, claimed);
+                if (live != null && IsLiveMovement(live))
                 {
                     active++;
                     continue;
@@ -318,6 +309,7 @@ namespace Airside.Presentation
                     _scratch.Add(aircraft);
             FlightBoard.SortForBoard(_scratch, arrivals);
 
+            var claimed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var aircraft in _scratch)
             {
                 var severity = AircraftStatus.Severity(aircraft, now);
@@ -348,16 +340,7 @@ namespace Airside.Presentation
             {
                 if (planned.Arrival != arrivals)
                     continue;
-                var covered = false;
-                foreach (var aircraft in _scratch)
-                {
-                    if (!AdelaideDayPlan.CoveredBy(planned, aircraft))
-                        continue;
-                    covered = true;
-                    break;
-                }
-
-                if (covered)
+                if (AdelaideDayPlan.CoveringAircraft(planned, _scratch, claimed) != null)
                     continue;
                 var plannedStatus = planned.Disruption.Cancelled
                     ? "Cancelled"

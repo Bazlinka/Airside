@@ -1,5 +1,28 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Claude — aircraft fit/finish + taxi/pushback smoothness (branch
+  `feature/aircraft-detail-and-taxi-smoothing`).** Bailey: "look at the aircraft", fix the
+  Hangar slab and floating specs, no gaps, doors level with the fuselage, windows need work,
+  then check taxi logic, especially pushback and taxi smoothness.
+  - **Aircraft:** shared `scripts/aircraft_skin.py` builds skin-conforming doors/windows/panes
+    for all seven generators; every floating/buried part re-seated; gear moved onto real
+    positions with axles; 737/A321 nose rounded; Q400 saddle seated. Models regenerated,
+    StreamingAssets synced, Hangar thumbnails re-rendered with the new z-buffer renderer.
+    Audit: `python3 scripts/audit-aircraft-geometry.py floating` (and `flush`, `views`).
+  - **Taxi:** see CHANGELOG. `GroundMotionSmoothnessTests` is the regression.
+  - **Evidence:** Unity EditMode **701/702**. The one failure,
+    `TerminalGateOperationsTests.Reservations_GateLeadInAndRunwayHeldBeforeMovementAndReleased`
+    ("runway: at most 1 landing/taking off", saw 2), failed identically before any taxi change
+    and is a simulation invariant this branch does not touch; likely the open dual-strip
+    intersection item, or a stale one-runway assumption in the test. **Not fixed here.**
+  - **NOT verified:** nothing was launched (per Bailey's no-rebuild rule). Look at the aircraft
+    in a packaged build at overview/follow cameras, day and night, before trusting the visuals.
+  - **Watch:** 737-8 model wheelbase is now ~15.3 m but `AircraftPerformance` says 17.68 m
+    (marked unconfirmed in `AIRCRAFT_SPECIFICATIONS.md`; the real 737-800 figure is ~15.6 m), so
+    gate-turn steering trails the nose by more than the drawn wheelbase. A350 model now matches
+    its 28.66 m; 787-10 is ~29.3 m vs 28.88 m; A321neo ~17.3 m vs 16.90 m.
+  - **NEXT:** Bailey to look at the models in game; decide the 737 wheelbase source.
+
 - **2026-09-20 Cursor — busier-field branch is on main.**
   [#332](https://github.com/Bazlinka/Airside/pull/332) merged. Traffic,
   stands, camera, 12/30 speed, arrivals, airlines/hours, final queues,

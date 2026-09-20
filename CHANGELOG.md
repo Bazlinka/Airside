@@ -1,5 +1,38 @@
 ## Unreleased
 
+- **Aircraft: no gaps, flush doors, proper windows (all seven types).** Doors, windows,
+  windscreens and cockpit panes are now curved shells that follow the fuselage a few mm
+  proud, instead of flat quads that sank into the skin (a 737 door showed only its top and
+  bottom edges; the Saab's flat-box doors stood 20 cm off the curve). Windows are tall
+  rounded panes at the real 0.51 m pitch and cabin height. Every part now chains back to
+  the fuselage: 737-8/A321neo wicks and nav lights were ~1.7 m above the winglets and the
+  main gear hung ~1 m under the wing; A350/787 mains sat 4.6 m behind the wing (now on the
+  published 28.66 m wheelbase with a gear-bay pod); the Q400's whole wing/engine assembly
+  floated 10 cm above the fuselage crown; wheels now sit on axles; pitots, landing lights,
+  taxi lights and nose-gear doors were buried or hovering. The 737 nose is rounded and the
+  hood that swallowed the cockpit side windows is gone; Saab and 737 tailplanes sit on the
+  fuselage. `scripts/audit-aircraft-geometry.py` and `scripts/test-aircraft-connectivity.py`
+  keep it that way.
+
+- **Hangar thumbnails no longer show a slate slab.** The offline renderer sorted triangles by
+  centre (painter's algorithm), so the 737-8/A321neo livery stripe painted over the fuselage
+  top. It is now a depth-buffered rasteriser, and all seven thumbnails are re-rendered.
+
+- **Smoother, more logical pushback and taxi.** Measured by driving every taxi-in,
+  pushback + taxi-out and vacate leg at 0.25 s: worst nose swing 396 → 37 deg/s, worst yaw
+  acceleration 2880 → 43 deg/s², legs with a mid-route crawl 39 → 0. Fixes: the pushback tug
+  turn blends from the heading the aircraft already has (it snapped back ~95° on curving
+  pushes such as bay 10D) with its turn direction fixed at the start; hairpins, spurs and
+  loops in the baked and router-built routes (the 12/30 crossing that dropped to 0.4 m/s
+  and swung 150°, a gate taxi-out that drove 28 m the wrong way and reversed, a loop before
+  Gate 20R) are rounded to no tighter than the type's wheelbase; the presentation weave now
+  fades in with speed instead of popping the airframe up to 0.55 m sideways at start/stop.
+  Locked in by `GroundMotionSmoothnessTests`.
+
+- **Fix the Unity compile break on main** (`using System;` in `EngineStartSequence.cs` and
+  `AdelaideDayPlanTests.cs`, an NUnit constraint, `IsMissedApproachLanding` visibility, and a
+  `RunwayWeather.At` clock argument).
+
 - **Arrivals queue on final.** Holding traffic stacks in wait order
   along the approach — number-one on short final, later aircraft
   further out — instead of sitting on a registration hash.

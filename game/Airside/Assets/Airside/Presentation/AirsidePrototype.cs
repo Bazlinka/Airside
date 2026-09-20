@@ -13052,7 +13052,18 @@ namespace Airside.Presentation
             var runway = aircraft.AssignedRunway;
             var home = _operations.Home;
             var lateral = DepartureTurn.LateralMetres(runway, home, dest.Value, phase, progress);
-            if (progress <= DepartureTurn.TurnEstablishedProgress)
+            // TurnEstablishedProgress (0.88) is a threshold on DEPARTED's own progress scale —
+            // it means nothing for Takeoff's progress, which runs over a completely different
+            // phase duration (ground roll + initial climb). Comparing them directly used to let
+            // Takeoff's progress cross 0.88 near the end of a long climb-out, at which point the
+            // aircraft fell into the "extra along-track distance past establishment" branch below
+            // using Departed's own along-track reference point (xAtEstablished) — a position far
+            // outside Takeoff's actual range, since Blend() is (correctly) 0 throughout Takeoff.
+            // That snapped the aircraft sideways/forward mid-climb, then "backed up" the instant
+            // the phase actually became Departed and progress reset to 0 — the takeoff-then-jump-
+            // then-back-up a real play session reported. Only Departed's own progress may ever
+            // take the established-track branch.
+            if (phase != AircraftPhase.Departed || progress <= DepartureTurn.TurnEstablishedProgress)
                 return new Vector3(position.x, position.y, position.z + lateral);
 
             // DepartureTurn.Blend (and so LateralMetres/YawDegrees) locks at its established

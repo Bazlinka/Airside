@@ -1,5 +1,23 @@
 ## Unreleased
 
+- **Departure-turn jump, unrealistic departure spacing, stand-queue overflow, apron light
+  starvation (ADR 0065).** Four bugs from one play session. (1) Departing aircraft jumped
+  sideways mid-climb then snapped back — `ApplyDepartureTurn` compared Takeoff's own progress
+  against a threshold (0.88) that only means anything on Departed's progress scale; fixed to
+  only ever apply past that point during Departed itself. (2) The next queued departure waited
+  through the whole previous departure's climb-out (not just its ground roll) plus wake
+  separation before it could even start rolling — the runway-occupancy calc was counting
+  already-airborne climb time; now uses ground-roll-to-rotation only, matching the pattern the
+  arrival side already used correctly. (3) A landing aircraft whose gate was full queued at a
+  taxiway holding point that ran out of room past a certain queue depth, at which every further
+  aircraft collapsed onto the same spot instead of a real place to wait — now extrapolates past
+  the taxiway's end in a straight line (an existing helper built for exactly this, just not used
+  here). (4) Apron floodlights were correctly placed and lit but starved out by URP's
+  per-object light cap (12, 4 on Medium) — with hundreds of runway/threshold/ALS lights and
+  stand markers competing for the same budget on nearby ground meshes, the 10 apron floods could
+  easily lose the competition; raised to 24/12. `scripts/test-domain.sh` 500/500 for the two
+  Simulation-layer fixes; the other two are Presentation-only, reviewed by inspection.
+
 - **Night moonlight for form shading, and a backwards vignette fixed (ADR 0064).** Direct
   follow-up to ADR 0063, same "can't see anything at night" report. Raising the ambient floor
   made the field brighter but ambient light is flat — nothing to differentiate an aircraft from

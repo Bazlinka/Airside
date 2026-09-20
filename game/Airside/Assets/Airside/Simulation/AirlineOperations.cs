@@ -1653,9 +1653,19 @@ namespace Airside.Simulation
                 return true;
             }
 
-            var takeoffSeconds = AdelaideGround.LineupFor(next.AssignedRunway).WholeSeconds + profile.TakeoffSeconds;
+            var lineupSeconds = AdelaideGround.LineupFor(next.AssignedRunway).WholeSeconds;
+            var takeoffSeconds = lineupSeconds + profile.TakeoffSeconds;
             Transition(next, FleetState.TakingOff, now, takeoffSeconds);
-            SetStripFreeAt(mainStrip, now.Advance(takeoffSeconds + WakeSeparationSeconds(next.Type)));
+            // The strip itself is only occupied through the ground roll to rotation — the
+            // arrival side already draws this distinction (ClearOfRunwaySeconds vs. the fuller
+            // vacate/landing duration used for the visible state); this used to reuse the whole
+            // TakingOff *state* duration (roll + the initial climb already well clear of the
+            // tarmac) instead, so the next holder waited through the departing aircraft's climb
+            // as well as its wake separation — the unrealistically long gap a real play session
+            // reported before the next departure gets moving.
+            var rollSeconds = (long)Math.Round(profile.TakeoffRollExactSeconds);
+            SetStripFreeAt(mainStrip,
+                now.Advance(lineupSeconds + rollSeconds + WakeSeparationSeconds(next.Type)));
             return true;
         }
 

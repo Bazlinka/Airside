@@ -21,8 +21,18 @@ namespace Airside.Presentation
         public const int MediumMsaa = 2;
         public const int VSyncCount = 1;
         public const int AnisoLevel = 8;
-        public const int HighAdditionalLights = 12;
-        public const int MediumAdditionalLights = 4;
+        // URP's per-object additional-lights cap: the max real-time Point/Spot lights that
+        // can affect any ONE renderer/mesh at once, chosen fresh each frame from whichever
+        // are nearest. Apron floods (10), runway edge/threshold/PAPI/ALS lights (hundreds
+        // along a ~3.9km strip), stand markers and landside streetlights all compete for
+        // this same budget on any ground mesh they're all near — with the old cap of 12
+        // (4 on Medium), a combined ground/apron mesh could easily lose its apron floods to
+        // nearer or more numerous runway lights, which reads as "the apron floods don't
+        // light anything up" even though the lights themselves are correctly placed and lit.
+        // Raised well clear of that starvation point; still far short of a real cost concern
+        // for a field this size. Unverified without a Unity look at the actual apron.
+        public const int HighAdditionalLights = 24;
+        public const int MediumAdditionalLights = 12;
         public const float HighShadowDistance = 140f;
         public const float MediumShadowDistance = 55f;
         public const int HighShadowCascades = 4;

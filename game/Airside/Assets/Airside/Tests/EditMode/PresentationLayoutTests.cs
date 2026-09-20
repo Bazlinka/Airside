@@ -275,8 +275,8 @@ namespace Airside.Tests
             Assert.That(AirsideRuntimeQuality.VSyncCount, Is.EqualTo(1));
             Assert.That(AirsideRuntimeQuality.HighShadowCascades, Is.EqualTo(4));
             Assert.That(AirsideRuntimeQuality.MediumShadowCascades, Is.EqualTo(2));
-            Assert.That(AirsideRuntimeQuality.HighAdditionalLights, Is.EqualTo(12));
-            Assert.That(AirsideRuntimeQuality.MediumAdditionalLights, Is.EqualTo(4));
+            Assert.That(AirsideRuntimeQuality.HighAdditionalLights, Is.EqualTo(24));
+            Assert.That(AirsideRuntimeQuality.MediumAdditionalLights, Is.EqualTo(12));
             Assert.That(AirsideRuntimeQuality.HighEdgeLightStep, Is.EqualTo(10));
             Assert.That(AirsideRuntimeQuality.MediumEdgeLightStep, Is.EqualTo(16));
             Assert.That(AirsideRuntimeQuality.HighRainDrops, Is.EqualTo(28));

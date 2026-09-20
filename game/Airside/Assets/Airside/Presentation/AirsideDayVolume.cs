@@ -231,7 +231,11 @@ namespace Airside.Presentation
             _bloom.intensity.Override(Mathf.Lerp(0.28f, 0.08f, daylight) * (1f - weatherGloom * 0.28f) + warm * 0.06f
                 + weatherGloom * 0.04f);
             _bloom.threshold.Override(Mathf.Lerp(0.78f, 0.98f, daylight) - weatherGloom * 0.04f);
-            _vignette.intensity.Override(Mathf.Lerp(0.1f, 0.05f, daylight) + weatherGloom * 0.05f);
+            // Was stronger at night (0.1) than day (0.05) — darkening the corners hardest on
+            // exactly the frame that was already struggling for visibility (ADR 0063/0064:
+            // "I can't see anything" at night). Flipped: night now gets the lighter vignette,
+            // day (which has exposure to spare) keeps the slightly heavier one.
+            _vignette.intensity.Override(Mathf.Lerp(0.04f, 0.07f, daylight) + weatherGloom * 0.05f);
             _grain.intensity.Override(Mathf.Lerp(0.06f, 0.01f, daylight) + weatherGloom * 0.04f);
             _grain.response.Override(Mathf.Lerp(0.65f, 0.45f, daylight));
 

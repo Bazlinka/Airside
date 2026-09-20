@@ -1,5 +1,31 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Claude — night moonlight for form shading, backwards vignette fixed (branch
+  `claude/weather-system-improvement-1bgfc3`, ADR 0064).** Direct continuation of ADR 0063,
+  same "I can't see anything at night" report — Bailey asked to keep going on lighting
+  specifically.
+  - **Why 0063 wasn't the whole story:** raising the ambient floor made the field brighter, but
+    ambient light is flat/non-directional — an aircraft, a hangar roof, and open grass all
+    shade identically under ambient alone, so a brighter floor is still just a lighter version
+    of the same undifferentiated wash. There's a difference between "less dark" and "you can
+    tell what you're looking at", and only a directional light source gives the latter.
+  - **Fixed:** the directional "Sun" light's night-floor intensity 0.18 → 0.30 in
+    `AirsidePrototype.ApplyDayCycle` — a moonlight-strength key, still far under every flood
+    (52) and runway light (1.55-2.1) and under daytime's own 2.05, that gives surfaces a real
+    lit side and shaded side.
+  - **Also found while re-reading the code for this pass, unrelated to the moonlight question:**
+    `AirsideDayVolume.Apply`'s vignette was backwards — `Lerp(0.1, 0.05, daylight)` made it
+    *stronger* at night than day, darkening the corners hardest on exactly the frame already
+    too dark to see. Flipped to `Lerp(0.04, 0.07, daylight)`.
+  - **Evidence:** both changes are Presentation/Unity-only, outside the headless harness,
+    reviewed by inspection only. `scripts/test-domain.sh` 500/500 (unchanged — no Domain-layer
+    change this round). Like ADR 0063, this is a reasoned correction, not confirmed by eye.
+  - **NEXT, highest priority (unchanged from 0063, now more urgent):** an actual look at the
+    default Fleet-mode overview at night. Ambient, exposure, key light and vignette have all
+    moved together now on the same unverified assumption — if the combined effect overshoots
+    into washed-out, or still isn't enough, the fix is tuning this same handful of numbers, not
+    a redesign, but it needs eyes on it before any further blind tuning is worth doing.
+
 - **2026-09-20 Claude — night visibility floor raised from a real play report, Fleet route
   clarity (branch `claude/weather-system-improvement-1bgfc3`, ADR 0063).** Bailey, from an
   actual play session (not a hypothetical): "I need you like crazy to fix lighting at night! I

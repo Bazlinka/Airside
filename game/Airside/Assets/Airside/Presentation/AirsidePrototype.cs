@@ -3732,7 +3732,13 @@ namespace Airside.Presentation
                 : Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 2.6f); // dawn/dusk only
             _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.12f));
             // Noon punch; night key stays dim so flood pools (not a blue wash) light the apron.
-            _sun.intensity = Mathf.Lerp(0.18f, 2.05f, Mathf.SmoothStep(0f, 1f, daylight));
+            // Night floor raised 0.18 -> 0.30 alongside ADR 0063's ambient/exposure floor: the
+            // ambient trilight is flat (no shading), so even with that floor raised the field
+            // read as a uniform grey wash with no sense of form. A moonlight-strength key still
+            // well under the floods' own intensity (52 apron / 1.55-2.1 runway, ADR 0063) adds
+            // real directional shading — aircraft, hangars and terrain read as shapes, not silhouettes
+            // dissolved into flat ambient.
+            _sun.intensity = Mathf.Lerp(0.30f, 2.05f, Mathf.SmoothStep(0f, 1f, daylight));
             _sun.shadowStrength = Mathf.Lerp(0.28f, 0.78f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.

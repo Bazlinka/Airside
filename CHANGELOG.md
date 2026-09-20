@@ -1,5 +1,16 @@
 ## Unreleased
 
+- **Night moonlight for form shading, and a backwards vignette fixed (ADR 0064).** Direct
+  follow-up to ADR 0063, same "can't see anything at night" report. Raising the ambient floor
+  made the field brighter but ambient light is flat — nothing to differentiate an aircraft from
+  a hangar from open grass, just a lighter grey wash. Raised the night key ("Sun") light's floor
+  intensity 0.18 → 0.30 (still far under every flood/runway light, and under daytime's 2.05) so
+  surfaces get an actual lit/shaded side. Also found the vignette was backwards: stronger at
+  night (0.1) than day (0.05), darkening the corners hardest on exactly the frame already
+  reported as too dark — flipped to `Lerp(0.04, 0.07, daylight)`. Both Presentation-only,
+  reviewed by inspection; `scripts/test-domain.sh` 500/500 (unchanged, no Domain-layer change
+  this round). Still not confirmed by an actual look at the game — highest-priority open item.
+
 - **Night visibility floor raised; Fleet copy names real destinations (ADR 0063).** A real
   play session reported "I can't see anything" at night. Every light source's own intensity
   was confirmed correct — the actual cause: the default Fleet/career overview camera sits

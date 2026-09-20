@@ -10,11 +10,15 @@
     StreamingAssets synced, Hangar thumbnails re-rendered with the new z-buffer renderer.
     Audit: `python3 scripts/audit-aircraft-geometry.py floating` (and `flush`, `views`).
   - **Taxi:** see CHANGELOG. `GroundMotionSmoothnessTests` is the regression.
-  - **Evidence:** Unity EditMode **701/702**. The one failure,
-    `TerminalGateOperationsTests.Reservations_GateLeadInAndRunwayHeldBeforeMovementAndReleased`
-    ("runway: at most 1 landing/taking off", saw 2), failed identically before any taxi change
-    and is a simulation invariant this branch does not touch; likely the open dual-strip
-    intersection item, or a stale one-runway assumption in the test. **Not fixed here.**
+  - **Evidence:** Unity EditMode **715/717** on this branch. The two failures are
+    **pre-existing**: a clean `origin/main` checkout (`d19b355`) fails the same two of its
+    713 tests — `TerminalGateOperationsTests.Reservations_GateLeadInAndRunwayHeldBeforeMovementAndReleased`
+    ("runway: at most 1 landing/taking off", saw 2; likely the open dual-strip intersection
+    item or a stale one-runway assumption) and
+    `AirlineSaveTests.VersionFiveSave_MigratesSingaporePlaceholderTo787WithoutLosingRotation`
+    (`Stand.Value` null, expected empty). This branch adds 4 tests, all passing. Neither
+    failure was touched here. Note the art tests load from `StreamingAssets`, so run
+    `scripts/sync-art-streaming-assets.sh` after regenerating a model or they test stale art.
   - **NOT verified:** nothing was launched (per Bailey's no-rebuild rule). Look at the aircraft
     in a packaged build at overview/follow cameras, day and night, before trusting the visuals.
   - **Watch:** 737-8 model wheelbase is now ~15.3 m but `AircraftPerformance` says 17.68 m

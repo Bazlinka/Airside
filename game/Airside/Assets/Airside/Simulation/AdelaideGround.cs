@@ -181,7 +181,7 @@ namespace Airside.Simulation
                 var limits = GroundSpeedLimits.TaxiFor(type);
                 leg = new GroundLeg(
                     new GroundLegPart(new GroundPath(bay.Pushback, GroundSpeedLimits.Pushback), tailFirst: true),
-                    new GroundLegPart(new GroundPath(CleanTaxiOut(TaxiOutPath(bay, runway)), limits, 0f, 0f,
+                    new GroundLegPart(new GroundPath(Drivable(CleanTaxiOut(TaxiOutPath(bay, runway)), type), limits, 0f, 0f,
                         new[] { ApronZone(type) }, null), tailFirst: false, TugDisconnectSeconds));
                 TaxiOutLegs[key] = leg;
             }
@@ -202,7 +202,7 @@ namespace Airside.Simulation
             if (!TaxiInLegs.TryGetValue(key, out var leg))
             {
                 var limits = GroundSpeedLimits.TaxiFor(type);
-                leg = new GroundLeg(new GroundLegPart(new GroundPath(bay.TaxiIn, limits, 0f, 0f,
+                leg = new GroundLeg(new GroundLegPart(new GroundPath(Drivable(bay.TaxiIn, type), limits, 0f, 0f,
                     null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false));
                 TaxiInLegs[key] = leg;
             }
@@ -301,7 +301,7 @@ namespace Airside.Simulation
                 var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
                 leg = new GroundLeg(
                     new GroundLegPart(new GroundPath(gate.Pushback, GroundSpeedLimits.Pushback), tailFirst: true, trackMetres: wheelbase),
-                    new GroundLegPart(new GroundPath(CleanTaxiOut(TaxiOutPath(gate, runway)),
+                    new GroundLegPart(new GroundPath(Drivable(CleanTaxiOut(TaxiOutPath(gate, runway)), type),
                             limits, 0f, 0f, new[] { ApronZone(type) }, null),
                         tailFirst: false, TugDisconnectSeconds, wheelbase));
                 TaxiOutLegs[key] = leg;
@@ -317,7 +317,7 @@ namespace Airside.Simulation
             {
                 var limits = GroundSpeedLimits.TaxiFor(type);
                 var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
-                leg = new GroundLeg(new GroundLegPart(new GroundPath(gate.TaxiIn, limits, 0f, 0f,
+                leg = new GroundLeg(new GroundLegPart(new GroundPath(Drivable(gate.TaxiIn, type), limits, 0f, 0f,
                     null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false, trackMetres: wheelbase));
                 TaxiInLegs[key] = leg;
             }
@@ -333,6 +333,18 @@ namespace Airside.Simulation
             new(GroundSpeedLimits.StandLeadInMetres, CircuitProfile.Knots(GroundSpeedLimits.StandLeadInKnots));
 
         private static float[] CleanTaxiOut(float[] xz) => TaxiPathCleanup.WithoutInitialHook(xz);
+
+        /// <summary>
+        /// The baked apron routes contain tight hooks, spurs and loops (a 28 m out-and-back at the
+        /// start of a gate route, a loop just before a gate) that a nose-steered turboprop can swallow
+        /// but a wheelbase-tracked widebody turns into a 150° swing in two seconds. Round them off to
+        /// what the airframe can actually drive: no tighter than about its own wheelbase.
+        /// </summary>
+        private static float[] Drivable(float[] xz, AircraftType type)
+        {
+            var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
+            return GroundPathSmoothing.RelaxTightTurns(xz, Math.Max(20f, wheelbase * 0.9f));
+        }
 
         private static float[] TaxiOutPath(AdelaideBay bay, RunwayDirection runway) =>
             runway switch

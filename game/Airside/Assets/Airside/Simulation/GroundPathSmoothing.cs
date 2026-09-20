@@ -120,6 +120,91 @@ namespace Airside.Simulation
             return points.ToArray();
         }
 
+        /// <summary>
+        /// Rounds off every turn tighter than <paramref name="minRadiusMetres"/> and collapses the
+        /// out-and-back spurs a graph router leaves where it snaps a route's ends to the nearest
+        /// node. The route is resampled every <paramref name="spacingMetres"/>, then each too-sharp
+        /// vertex is pulled halfway toward the midpoint of its neighbours until none is. The first
+        /// and last points never move, and straight runs are left exactly as they were.
+        /// </summary>
+        public static float[] RelaxTightTurns(float[] xz, float minRadiusMetres = 24f,
+            float spacingMetres = 4f, int maxIterations = 400)
+        {
+            if (xz == null || xz.Length < 8 || spacingMetres < 1f || minRadiusMetres <= spacingMetres)
+                return xz ?? Array.Empty<float>();
+
+            var pts = Resample(xz, spacingMetres);
+            var count = pts.Length / 2;
+            if (count < 3)
+                return xz;
+
+            // Largest turn one vertex may make and still be a curve of at least minRadius.
+            var allowed = 2f * (float)Math.Asin(Math.Min(1f, spacingMetres / (2f * minRadiusMetres)));
+            var cosAllowed = (float)Math.Cos(allowed);
+            for (var iteration = 0; iteration < maxIterations; iteration++)
+            {
+                var moved = false;
+                for (var i = 1; i < count - 1; i++)
+                {
+                    float px = pts[(i - 1) * 2], pz = pts[(i - 1) * 2 + 1];
+                    float cx = pts[i * 2], cz = pts[i * 2 + 1];
+                    float nx = pts[(i + 1) * 2], nz = pts[(i + 1) * 2 + 1];
+                    var d1 = Hypot(cx - px, cz - pz);
+                    var d2 = Hypot(nx - cx, nz - cz);
+                    var cos = d1 < 1e-4f || d2 < 1e-4f
+                        ? -1f
+                        : ((cx - px) * (nx - cx) + (cz - pz) * (nz - cz)) / (d1 * d2);
+                    if (cos >= cosAllowed)
+                        continue;
+                    pts[i * 2] = cx + ((px + nx) * 0.5f - cx) * 0.5f;
+                    pts[i * 2 + 1] = cz + ((pz + nz) * 0.5f - cz) * 0.5f;
+                    moved = true;
+                }
+
+                if (!moved)
+                    break;
+            }
+
+            return pts;
+        }
+
+        private static float[] Resample(float[] xz, float stepMetres)
+        {
+            var points = new List<float>(xz.Length) { xz[0], xz[1] };
+            var carried = 0f;
+            for (var i = 2; i + 1 < xz.Length; i += 2)
+            {
+                float ax = xz[i - 2], az = xz[i - 1], bx = xz[i], bz = xz[i + 1];
+                var length = Hypot(bx - ax, bz - az);
+                if (length < 1e-4f)
+                    continue;
+                var at = stepMetres - carried;
+                while (at < length)
+                {
+                    var t = at / length;
+                    points.Add(ax + (bx - ax) * t);
+                    points.Add(az + (bz - az) * t);
+                    at += stepMetres;
+                }
+
+                carried = length - (at - stepMetres);
+            }
+
+            var last = xz.Length - 2;
+            if (Hypot(points[points.Count - 2] - xz[last], points[points.Count - 1] - xz[last + 1]) > 0.5f)
+            {
+                points.Add(xz[last]);
+                points.Add(xz[last + 1]);
+            }
+            else
+            {
+                points[points.Count - 2] = xz[last];
+                points[points.Count - 1] = xz[last + 1];
+            }
+
+            return points.ToArray();
+        }
+
         private static float Hypot(float x, float z) => (float)Math.Sqrt(x * x + z * z);
     }
 }

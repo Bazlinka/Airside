@@ -446,6 +446,7 @@ namespace Airside.Simulation
         /// snapped 180° onto the taxilane. The tug now turns the nose onto the
         /// taxi heading through the last part of the push (and finishes during
         /// the disconnect pause), so the hand-off is a human turn, not a flip.
+        /// The turn starts from whatever the nose is already doing, so it never steps.
         /// </summary>
         private GroundPose TugTurnPose(GroundLegPart part, double pathSeconds, bool stopped,
             int index, double pauseElapsed, double pauseTotal)
@@ -463,7 +464,26 @@ namespace Airside.Simulation
                 return pose;
             if (blend <= 0.0)
                 return pose;
-            SlerpHeading(fromX, fromZ, toX, toZ, (float)blend, out var noseX, out var noseZ);
+            // Blend from the heading the airframe already has (the tail-first tangent while
+            // pushing), not from the stand heading: on a curving push those differ by tens of
+            // degrees, so starting from the stand heading snapped the nose back when the turn began.
+            // The direction of the turn is fixed where the blend begins. Re-picking the shortest way
+            // every frame flips it by 360° the moment the nose swings through the exact opposite of
+            // the taxi heading, which is a real case (a push that curves ~180° from the taxilane).
+            var toHeading = Math.Atan2(toX, toZ);
+            var now = Math.Atan2(pose.NoseX, pose.NoseZ);
+            var turn = toHeading - now;
+            if (part.TailFirst)
+            {
+                var start = Pose(part, part.Path.Seconds * 0.25, false);
+                var reference = WrapPi(toHeading - Math.Atan2(start.NoseX, start.NoseZ));
+                turn += 2.0 * Math.PI * Math.Round((reference - turn) / (2.0 * Math.PI));
+            }
+            else
+                turn = WrapPi(turn);
+            var heading = now + turn * Math.Max(0.0, Math.Min(1.0, blend));
+            var noseX = (float)Math.Sin(heading);
+            var noseZ = (float)Math.Cos(heading);
             return new GroundPose(pose.X, pose.Z, noseX, noseZ, pose.Speed, part.TailFirst);
         }
 
@@ -514,19 +534,13 @@ namespace Airside.Simulation
             return t * t * (3.0 - 2.0 * t);
         }
 
-        private static void SlerpHeading(float fromX, float fromZ, float toX, float toZ, float t,
-            out float x, out float z)
+        private static double WrapPi(double angle)
         {
-            var a0 = Math.Atan2(fromX, fromZ);
-            var a1 = Math.Atan2(toX, toZ);
-            var delta = a1 - a0;
-            while (delta > Math.PI)
-                delta -= 2.0 * Math.PI;
-            while (delta < -Math.PI)
-                delta += 2.0 * Math.PI;
-            var a = a0 + delta * Math.Max(0f, Math.Min(1f, t));
-            x = (float)Math.Sin(a);
-            z = (float)Math.Cos(a);
+            while (angle > Math.PI)
+                angle -= 2.0 * Math.PI;
+            while (angle < -Math.PI)
+                angle += 2.0 * Math.PI;
+            return angle;
         }
 
         /// <summary>Parts in order, for tests and tools that need the individual paths.</summary>

@@ -158,15 +158,18 @@ namespace Airside.Presentation
             if (pose.Speed < 0.15f || leg is not (FleetGroundLeg.TaxiOut or FleetGroundLeg.TaxiIn or FleetGroundLeg.Lineup or FleetGroundLeg.Vacate))
                 return pose;
 
+            // Fade the weave in with speed. A hard on/off at 0.15 m/s popped the airframe up to
+            // half a metre sideways (and a couple of degrees round) as it set off or stopped.
+            var fade = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.15f, 2.5f, pose.Speed));
             var seed = StableRegistrationHash(aircraft.Registration);
             var phase = (seed % 997) * 0.013f;
             var wave = Mathf.Sin((float)_preciseTime * 0.09f + phase)
                        + 0.45f * Mathf.Sin((float)_preciseTime * 0.031f + phase * 1.7f)
                        + 0.18f * Mathf.Sin((float)_preciseTime * 0.19f + phase * 0.4f);
-            var offset = wave * (leg is FleetGroundLeg.Lineup or FleetGroundLeg.Vacate ? 0.16f : 0.55f);
+            var offset = wave * (leg is FleetGroundLeg.Lineup or FleetGroundLeg.Vacate ? 0.16f : 0.55f) * fade;
             var normalX = -pose.NoseZ;
             var normalZ = pose.NoseX;
-            var headingBias = Mathf.Sin((float)_preciseTime * 0.07f + phase * 0.7f) * 2.2f * Mathf.Deg2Rad;
+            var headingBias = Mathf.Sin((float)_preciseTime * 0.07f + phase * 0.7f) * 2.2f * Mathf.Deg2Rad * fade;
             var cos = Mathf.Cos(headingBias);
             var sin = Mathf.Sin(headingBias);
             var noseX = pose.NoseX * cos + pose.NoseZ * sin;

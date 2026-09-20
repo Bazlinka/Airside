@@ -1,7 +1,17 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — busier-field branch is on main.**
+  [#332](https://github.com/Bazlinka/Airside/pull/332) merged. Traffic,
+  stands, camera, 12/30 speed, arrivals, airlines/hours, final queues,
+  T1 landside and WeatherLook are on `origin/main` (`4ed5235`).
+  - **Evidence:** `scripts/test-domain.sh` **477/477**. Mac app built
+    from the branch before merge.
+  - **NEXT:** still open play items: dual-strip intersection mutex;
+    regional pushback apron mutex; Q400 50D/50E hard rule; disruption→sim;
+    weather timing/lightning still future (ADR 0013).
+
 - **2026-09-20 Cursor — queues, T1 landside, weather look
-  (branch `feature/busier-field-and-camera`).** Bailey: shouldn't they
+  (merged via #332).** Bailey: shouldn't they
   be queuing; add roads/realism on the traffic side from aerial; start
   getting ready for cloudy/overcast/stormy/rainy weather.
   - **Queues:** `HoldingForLanding` pins final progress by
@@ -13,10 +23,10 @@
   - **Weather:** `WeatherLook` (cloud, rain, gloom, vis, wet). Adelaide
     clouds are kilometre-scale; rain builds on the default field.
     Timing unchanged (ADR 0013). No lightning yet.
-  - **NEXT:** Mac rebuild from this branch. Do not merge until asked.
+  - **NEXT:** merged via #332.
 
 - **2026-09-20 Cursor — more Adelaide airlines and 05:00–23:00 hours
-  (branch `feature/busier-field-and-camera`).** Bailey: more airline
+  (merged via #332).** Bailey: more airline
   variety, and more realism including open hours.
   - **Operators:** Malaysia (KUL), Emirates (DXB), Qatar (DOH),
     Fiji (NAN). Jetstar now flies Bali; Qantas also flies Auckland.
@@ -24,10 +34,10 @@
   - **Hours:** AI day is 05:00–23:00. No curfew. First domestics
     from 05:00; late internationals after 21:00. Rex still skips
     the afternoon and late-night holes. Widebodies turn 50–89 min.
-  - **NEXT:** rebuild from this branch. Do not merge until asked.
+  - **NEXT:** merged via #332.
 
 - **2026-09-20 Cursor — more arrivals, peak-bank timing
-  (branch `feature/busier-field-and-camera`).** Bailey: should there
+  (merged via #332).** Bailey: should there
   be more arrivals, and is the timing a normal Adelaide day?
   - **Arrivals:** a third Virgin 737, a third Qantas 737 and a
     second Jetstar A321. Opening inbound is twelve aircraft (was
@@ -36,10 +46,10 @@
     strips (one every ~6 min per runway). Departures every ~5 min.
     One movement per strip stays.
   - **Not added:** extra Rex — 50-series bays already starve Q400s.
-  - **NEXT:** rebuild from this branch. Do not merge until asked.
+  - **NEXT:** merged via #332.
 
 - **2026-09-20 Cursor — 12/30 speed matches stated knots
-  (branch `feature/busier-field-and-camera`).** Bailey: HUD knots were
+  (merged via #332).** Bailey: HUD knots were
   right, but aircraft looked too slow — 50 kt did not cover 50 kt of
   ground.
   - **Cause:** `RunwayFrame.RemapAlong` squeezed the 3 100 m 05
@@ -48,11 +58,10 @@
   - **Fix:** 1:1 shift. The 05 west threshold lines up with the 12
     threshold; every extra metre of final, roll or climb-out stays
     a metre. Vacate/lineup still meet the remapped stations.
-  - **NEXT:** Mac rebuild from this branch. Say if you want it
-    merged.
+  - **NEXT:** merged via #332.
 
 - **2026-09-20 Cursor — busier field, stand boxes, slower camera
-  (branch `feature/busier-field-and-camera`).** Bailey: more than one
+  (merged via #332).** Bailey: more than one
   aircraft can leave and arrive at once; the T1 apron looked empty; click-
   drag on a trackpad was too fast.
   - **Traffic:** Qantas and Jetstar join the terminal, plus a second

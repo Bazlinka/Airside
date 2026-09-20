@@ -88,6 +88,8 @@ namespace Airside.Tests
         {
             Assert.That(Airline.Rex().FuselageTitle, Is.EqualTo("REX"));
             Assert.That(Airline.VirginAustralia().FuselageTitle, Is.EqualTo("VIRGIN"));
+            Assert.That(Airline.Qantas().FuselageTitle, Is.EqualTo("QANTAS"));
+            Assert.That(Airline.Jetstar().FuselageTitle, Is.EqualTo("JETSTAR"));
             Assert.That(Airline.AirNewZealand().FuselageTitle, Is.EqualTo("AIR NZ"));
             Assert.That(Airline.QantasLink().FuselageTitle, Is.EqualTo("QANTASLINK"));
             Assert.That(Airline.Player("Southern Cross Regional", "#39708A").FuselageTitle,

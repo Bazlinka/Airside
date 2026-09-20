@@ -185,28 +185,58 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Ground_StaggersSimultaneousPushbacksWithoutLosingEitherFlight()
+        public void NewGame_HasOverlappingArrivalsAndDeparturesNotASingleFileQueue()
         {
-            var (clock, ops, first) = PlayerOnly(aircraft: 2);
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(2026), Player());
+            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.GreaterThanOrEqualTo(8),
+                "a bank of arrivals is already inbound");
+            Assert.That(ops.Airlines.Select(a => a.Name),
+                Does.Contain("Qantas").And.Contain("Jetstar").And.Contain("Virgin Australia"));
+
+            RunTo(clock, ops, 12 * 60);
+            var live = ops.Fleet.Count(a => a.State is
+                FleetState.Inbound or FleetState.HoldingForLanding or FleetState.Landing
+                or FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff
+                or FleetState.TaxiIn);
+            var kinds = ops.Fleet.Select(a => a.State).Distinct().Count();
+            Assert.That(live, Is.GreaterThanOrEqualTo(6), "several aircraft are moving at once");
+            Assert.That(kinds, Is.GreaterThanOrEqualTo(3), "they are not all in the same phase");
+        }
+
+        [Test]
+        public void Ground_AllowsTwoPushbacksOnOneApronAndHoldsTheThird()
+        {
+            var (clock, ops, first) = PlayerOnly(aircraft: 3);
             var second = ops.Fleet[1];
+            var third = ops.Fleet[2];
             var firstDestination = Code("KGC");
             var secondDestination = Code("PLO");
+            var thirdDestination = Code("MGB");
             ops.ScheduleDeparture(first, firstDestination, new SimulationTime(600));
             ops.ScheduleDeparture(second, secondDestination, new SimulationTime(600));
+            ops.ScheduleDeparture(third, thirdDestination, new SimulationTime(600));
 
             RunTo(clock, ops, 600);
             Assert.That(first.State, Is.EqualTo(FleetState.TaxiOut));
-            Assert.That(second.State, Is.EqualTo(FleetState.AtStand));
-            Assert.That(second.Scheduled.Value.Destination, Is.EqualTo(secondDestination));
-            var releaseAt = 600 + AirlineOperations.TaxiClearSecondsFrom(first.Stand, first.Type);
-            Assert.That(ops.NextEventAt(), Is.EqualTo(new SimulationTime(releaseAt)));
+            Assert.That(second.State, Is.EqualTo(FleetState.TaxiOut),
+                "two aircraft may taxi on the same apron at once");
+            Assert.That(third.State, Is.EqualTo(FleetState.AtStand),
+                "a third waits until one of the first two has cleared the stands");
+            Assert.That(third.Scheduled.Value.Destination, Is.EqualTo(thirdDestination));
+            var firstClear = first.StateStartedAt.Advance(
+                AirlineOperations.TaxiClearSecondsFrom(first.DepartureStand, first.Type, first.AssignedRunway));
+            var secondClear = second.StateStartedAt.Advance(
+                AirlineOperations.TaxiClearSecondsFrom(second.DepartureStand, second.Type, second.AssignedRunway));
+            var releaseAt = firstClear.CompareTo(secondClear) < 0 ? firstClear : secondClear;
+            Assert.That(ops.NextEventAt(), Is.EqualTo(releaseAt));
 
-            RunTo(clock, ops, releaseAt - 1);
-            Assert.That(second.State, Is.EqualTo(FleetState.AtStand));
-            RunTo(clock, ops, releaseAt);
-            Assert.That(second.State, Is.EqualTo(FleetState.TaxiOut));
-            Assert.That(second.CurrentDestination, Is.EqualTo(secondDestination));
-            Assert.That(second.Scheduled, Is.Null);
+            RunTo(clock, ops, releaseAt.ElapsedSeconds - 1);
+            Assert.That(third.State, Is.EqualTo(FleetState.AtStand));
+            RunTo(clock, ops, releaseAt.ElapsedSeconds);
+            Assert.That(third.State, Is.EqualTo(FleetState.TaxiOut));
+            Assert.That(third.CurrentDestination, Is.EqualTo(thirdDestination));
+            Assert.That(third.Scheduled, Is.Null);
         }
 
         [Test]

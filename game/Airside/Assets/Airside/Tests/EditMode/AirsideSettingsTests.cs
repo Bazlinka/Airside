@@ -16,7 +16,7 @@ namespace Airside.Tests
             Assert.That(settings.FollowOnSelect, Is.True);
             Assert.That(settings.InvertOrbit, Is.False);
             Assert.That(settings.CameraSpeedIndex, Is.EqualTo(1));
-            Assert.That(settings.CameraSpeed, Is.EqualTo(1f));
+            Assert.That(settings.CameraSpeed, Is.EqualTo(0.65f));
         }
 
         [Test]
@@ -24,11 +24,11 @@ namespace Airside.Tests
         {
             var settings = new AirsideSettings();
             Assert.That(settings.CycleCameraSpeed().CameraSpeedIndex, Is.EqualTo(2));
-            Assert.That(settings.CameraSpeed, Is.EqualTo(1.45f));
-            Assert.That(settings.CycleCameraSpeed().CameraSpeedIndex, Is.EqualTo(0));
-            Assert.That(settings.CameraSpeed, Is.EqualTo(0.65f));
-            Assert.That(settings.CycleCameraSpeed().CameraSpeedIndex, Is.EqualTo(1));
             Assert.That(settings.CameraSpeed, Is.EqualTo(1f));
+            Assert.That(settings.CycleCameraSpeed().CameraSpeedIndex, Is.EqualTo(0));
+            Assert.That(settings.CameraSpeed, Is.EqualTo(0.4f));
+            Assert.That(settings.CycleCameraSpeed().CameraSpeedIndex, Is.EqualTo(1));
+            Assert.That(settings.CameraSpeed, Is.EqualTo(0.65f));
         }
 
         [Test]

@@ -90,8 +90,8 @@ namespace Airside.Tests
                 .Select(a => a.Scheduled.Value.DepartAt.ElapsedSeconds).OrderBy(t => t).ToArray();
             Assert.That(departures.Length, Is.GreaterThanOrEqualTo(3), "several aircraft push in the opening bank");
             Assert.That(departures[0], Is.EqualTo(AirlineOperations.AiOpeningDepartureSeconds[0]));
-            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.GreaterThanOrEqualTo(5),
-                "four regional arrivals plus the opening Air New Zealand arrival");
+            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.GreaterThanOrEqualTo(8),
+                "regional and jet arrivals already in the opening bank");
             Assert.That(departures.Max(), Is.LessThanOrEqualTo(40 * 60), "departures are spread across the opening bank");
         }
     }

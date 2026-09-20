@@ -12,7 +12,7 @@ namespace Airside.Presentation
         public const string PrefPrefix = "airside.settings.";
 
         public static readonly string[] CameraSpeedLabels = { "Slow", "Normal", "Fast" };
-        public static readonly float[] CameraSpeedValues = { 0.65f, 1f, 1.45f };
+        public static readonly float[] CameraSpeedValues = { 0.4f, 0.65f, 1f };
 
         public static AirsideSettings Current { get; private set; } = new();
 

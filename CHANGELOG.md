@@ -1,5 +1,18 @@
 ## Unreleased
 
+- **The field is a bank, not a single-file queue.** Qantas and Jetstar
+  join Virgin, ANZ, Singapore and the regionals. Several arrivals are
+  already inbound at a new game, two aircraft may taxi on the same
+  apron, and 05/23 can move while 12/30 does.
+
+- **Stands look like stands.** Each gate and bay gets a lead-in that
+  follows the taxi-in, a stop bar, an envelope box and a readable
+  painted number.
+
+- **Trackpad drag is slower.** Orbit and pan no longer leap when a
+  finger moves a few points, and a grazing horizon grab cannot teleport
+  the camera.
+
 - **International career is reachable.** A321neo buys at Domestic. The
   International tier unlocks on jet ownership + rotations/reliability —
   not on already owning a widebody (that was a deadlock). A350/787 stay

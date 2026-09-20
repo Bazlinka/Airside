@@ -159,8 +159,11 @@ namespace Airside.Presentation
             var geometry = new SurfaceMesh();
             foreach (var marking in AdelaideStandMarkings.All())
             {
-                AddRibbon(geometry, marking.LeadIn, 0.18f, paintY, roundJoints: false);
-                AddRibbon(geometry, marking.StopBar, 0.28f, paintY + 0.001f, roundJoints: false);
+                AddRibbon(geometry, marking.LeadIn, 0.22f, paintY, roundJoints: false);
+                AddRibbon(geometry, marking.StopBar, 0.32f, paintY + 0.001f, roundJoints: false);
+                AddClosedBox(geometry, marking.Envelope, 0.16f, paintY + 0.0015f);
+                AddRibbon(geometry, marking.LeftShoulder, 0.16f, paintY + 0.001f, roundJoints: false);
+                AddRibbon(geometry, marking.RightShoulder, 0.16f, paintY + 0.001f, roundJoints: false);
 
                 var label = new GameObject($"Stand {marking.Reference} identifier");
                 label.transform.SetParent(root, false);
@@ -171,7 +174,7 @@ namespace Airside.Presentation
                 text.anchor = TextAnchor.MiddleCenter;
                 text.alignment = TextAlignment.Center;
                 text.fontSize = 64;
-                text.characterSize = 0.22f;
+                text.characterSize = marking.LabelCharacterSize;
                 text.color = paint;
                 var renderer = label.GetComponent<MeshRenderer>();
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
@@ -226,6 +229,18 @@ namespace Airside.Presentation
                 Triangles.Add(a);
                 Triangles.Add(b);
                 Triangles.Add(c);
+            }
+        }
+
+        private static void AddClosedBox(SurfaceMesh mesh, float[] xz, float halfWidth, float y)
+        {
+            if (xz == null || xz.Length < 8)
+                return;
+            for (var i = 0; i < 4; i++)
+            {
+                var a = i * 2;
+                var b = ((i + 1) % 4) * 2;
+                AddRibbon(mesh, new[] { xz[a], xz[a + 1], xz[b], xz[b + 1] }, halfWidth, y, roundJoints: false);
             }
         }
 

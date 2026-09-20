@@ -40,6 +40,8 @@ namespace Airside.Domain
                     case "REX": return "REX";
                     case "QLK": return "QANTASLINK";
                     case "VOZ": return "VIRGIN";
+                    case "QFA": return "QANTAS";
+                    case "JST": return "JETSTAR";
                     case "ANZ": return "AIR NZ";
                     case "SIA": return "SINGAPORE";
                     case "CPA": return "CATHAY";
@@ -61,6 +63,12 @@ namespace Airside.Domain
 
         /// <summary>Virgin Australia domestic services from Adelaide (737-8).</summary>
         public static Airline VirginAustralia() => new("VOZ", "Virgin Australia", "#D71964", isPlayer: false);
+
+        /// <summary>Qantas mainline domestic services from Adelaide (737-8).</summary>
+        public static Airline Qantas() => new("QFA", "Qantas", "#E4002B", isPlayer: false);
+
+        /// <summary>Jetstar domestic services from Adelaide (A321neo).</summary>
+        public static Airline Jetstar() => new("JST", "Jetstar", "#F26623", isPlayer: false);
 
         /// <summary>Air New Zealand trans-Tasman services from Adelaide (A321neo).</summary>
         public static Airline AirNewZealand() => new("ANZ", "Air New Zealand", "#111111", isPlayer: false);

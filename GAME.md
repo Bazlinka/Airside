@@ -1,5 +1,22 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — busier field, stand boxes, slower camera
+  (branch `feature/busier-field-and-camera`).** Bailey: more than one
+  aircraft can leave and arrive at once; the T1 apron looked empty; click-
+  drag on a trackpad was too fast.
+  - **Traffic:** Qantas and Jetstar join the terminal, plus a second
+    Virgin 737. Opening bank seeds eight-plus inbounds on both strips.
+    Two aircraft may taxi on the same apron; a third waits. One
+    movement per strip stays (real tower).
+  - **Stands:** lead-ins follow the taxi-in, plus envelope boxes,
+    shoulder ticks and larger painted numbers — not a lone T on empty
+    concrete.
+  - **Camera:** slower orbit, clamped pan, slower Normal/Fast.
+  - **Also:** Unity compile fixes from the last pull (`Math`, public
+    `IsMissedApproachLanding`, `AirlineClock` windsock, test usings).
+  - **NEXT:** `scripts/test-domain.sh`, then Mac rebuild from this
+    branch.
+
 - **2026-09-20 Cursor — all day-progress + career PRs on main.**
   #329 (day strip + play fixes) and #330 (International unlock +
   freeze runway at clearance) are merged. `origin/main` tip:

@@ -26,10 +26,18 @@ namespace Airside.Presentation
 
         public const float MaxZoomPendingLog = 2.4f;
         public const float ZoomEaseRate = 22f;
-        public const float OrbitYawDegreesPerPixel = 0.26f;
-        public const float OrbitPitchDegreesPerPixel = 0.2f;
+        public const float OrbitYawDegreesPerPixel = 0.11f;
+        public const float OrbitPitchDegreesPerPixel = 0.09f;
         /// <summary>Fallback drag pan scale when a ground ray misses (horizon / sky).</summary>
-        public const float PanMetresPerPixelAtUnitDistance = 0.0028f;
+        public const float PanMetresPerPixelAtUnitDistance = 0.0016f;
+        /// <summary>
+        /// A grazing ground hit (far taxiway / horizon) makes one trackpad pixel leap
+        /// hundreds of metres. Past this multiple of orbit distance, use distance-scaled
+        /// pan instead of a raw grab.
+        /// </summary>
+        public const float GrazingHitDistanceFactor = 1.55f;
+        /// <summary>One pointer sample may not jump more than this fraction of orbit distance.</summary>
+        public const float MaxPanFractionOfDistance = 0.22f;
 
         /// <summary>
         /// How far past the overview centre the free camera may pan. Wide enough for the
@@ -72,6 +80,27 @@ namespace Airside.Presentation
         /// <summary>Ground metres moved per drag pixel at the given orbit distance.</summary>
         public static float PanMetresPerPixel(float distance) =>
             Math.Max(0f, distance) * PanMetresPerPixelAtUnitDistance;
+
+        public static bool HitIsGrazing(float hitDistance, float orbitDistance) =>
+            hitDistance > Math.Max(1f, orbitDistance) * GrazingHitDistanceFactor;
+
+        public static float MaxPanStepMetres(float orbitDistance) =>
+            Math.Max(8f, Math.Max(0f, orbitDistance) * MaxPanFractionOfDistance);
+
+        public static void ClampPanStep(float dx, float dz, float maxMetres, out float clampedX, out float clampedZ)
+        {
+            var length = (float)Math.Sqrt(dx * dx + dz * dz);
+            if (length <= maxMetres || length < 0.0001f)
+            {
+                clampedX = dx;
+                clampedZ = dz;
+                return;
+            }
+
+            var scale = maxMetres / length;
+            clampedX = dx * scale;
+            clampedZ = dz * scale;
+        }
 
         /// <summary>
         /// Orbit pose: camera sits <paramref name="distance"/> metres back from the centre

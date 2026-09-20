@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Airside.Domain;
@@ -84,6 +85,15 @@ namespace Airside.Tests
             Assert.That(ops.ScheduleDeparture(outbound, portLincoln, new SimulationTime(600)).Accepted, Is.True);
             clock.Set(new SimulationTime(600));
             ops.Update();
+            var deadline = 600 + 20 * 60;
+            while (outbound.State == FleetState.AtStand && clock.Now.ElapsedSeconds < deadline)
+            {
+                var next = ops.NextEventAt() ?? clock.Now.Advance(30);
+                if (next.ElapsedSeconds > deadline)
+                    break;
+                clock.Set(next);
+                ops.Update();
+            }
             Assert.That(outbound.State, Is.EqualTo(FleetState.TaxiOut).Or.EqualTo(FleetState.HoldingShort)
                 .Or.EqualTo(FleetState.TakingOff).Or.EqualTo(FleetState.Outbound));
 

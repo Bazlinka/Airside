@@ -30,18 +30,19 @@ namespace Airside.Tests
         // ---- Stand system ---------------------------------------------------------------
 
         [Test]
-        public void NewGame_HasExactlyOne737_ParkedAtGate13()
+        public void NewGame_HasVirgin737_ParkedAtGate13()
         {
             var ops = NewGame(out _);
-            var jets = ops.Fleet.Where(a => a.Type == AircraftType.Boeing7378).ToList();
-            Assert.That(jets.Count, Is.EqualTo(1), "only one 737 exists");
-            var jet = jets[0];
+            var jet = ops.Fleet.Single(a => a.Registration == JetRegistration);
+            Assert.That(jet.Type, Is.SameAs(AircraftType.Boeing7378));
             Assert.That(jet.Airline.Name, Is.EqualTo("Virgin Australia"));
             Assert.That(jet.Airline.IsPlayer, Is.False, "the player is not given a 737");
             Assert.That(jet.State, Is.EqualTo(FleetState.AtStand));
             Assert.That(jet.Stand, Is.EqualTo(Gate13));
             Assert.That(jet.Scheduled.HasValue, Is.True);
             Assert.That(AirlineOperations.VirginRotation, Does.Contain(jet.Scheduled.Value.Destination.Code));
+            Assert.That(ops.Fleet.Count(a => a.Type == AircraftType.Boeing7378), Is.GreaterThanOrEqualTo(3),
+                "Virgin plus Qantas put more than one 737 on the field");
         }
 
         [Test]
@@ -223,7 +224,14 @@ namespace Airside.Tests
                 clock.Set(next.Value);
                 ops.Update();
 
-                Assert.That(ops.Fleet.Count(a => a.State is FleetState.TakingOff or FleetState.Landing), Is.LessThanOrEqualTo(1), "runway");
+                var mainOnRunway = ops.Fleet.Count(a =>
+                    a.State is FleetState.TakingOff or FleetState.Landing
+                    && RunwayWeather.IsMainRunway(a.AssignedRunway));
+                var crossOnRunway = ops.Fleet.Count(a =>
+                    a.State is FleetState.TakingOff or FleetState.Landing
+                    && !RunwayWeather.IsMainRunway(a.AssignedRunway));
+                Assert.That(mainOnRunway, Is.LessThanOrEqualTo(1), "05/23");
+                Assert.That(crossOnRunway, Is.LessThanOrEqualTo(1), "12/30");
                 var gateHolders = ops.Fleet.Count(a =>
                     (a.State is FleetState.AtStand or FleetState.TaxiIn && a.Stand.Equals(Gate13))
                     || (a.State == FleetState.TaxiOut && a.DepartureStand.Equals(Gate13)));

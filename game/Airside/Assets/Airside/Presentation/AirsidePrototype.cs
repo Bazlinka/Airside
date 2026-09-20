@@ -2136,7 +2136,9 @@ namespace Airside.Presentation
                 return;
 
             // Aim the sock with the sim surface wind; keep a light sway so it does not look frozen.
-            var wind = _operations != null ? _operations.Wind : RunwayWeather.At(_clock, _clock.Now);
+            var wind = _operations != null
+                ? _operations.Wind
+                : RunwayWeather.At(AirlineClock.Default, _clock.Now);
             var heading = RunwayWeather.UnityYawFromTrue(wind.DirectionDegrees);
             var sway = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.WindsockSwayHz * Mathf.PI * 2f) * 6f;
             var limp = Mathf.Lerp(18f, 4f, Mathf.Clamp01(wind.Knots / 18f));

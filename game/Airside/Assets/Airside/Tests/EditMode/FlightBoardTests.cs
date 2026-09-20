@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using Airside.Domain;
 using Airside.Presentation;
 using Airside.Simulation;
@@ -96,10 +97,26 @@ namespace Airside.Tests
         [TestCase(FleetState.HoldingShort, "HOLD SINCE")]
         [TestCase(FleetState.HoldingForLanding, "ON FINAL")]
         [TestCase(FleetState.Landing, "LANDED")]
+        [TestCase(FleetState.TakingOff, "DEPARTING")]
+        [TestCase(FleetState.TaxiIn, "AT STAND")]
         [TestCase(FleetState.AwaitingStand, "WAIT SINCE")]
         public void TimeMeaning_DescribesTheActualMilestone(FleetState state, string expected)
         {
             Assert.That(FlightBoard.TimeMeaning(state), Is.EqualTo(expected));
+        }
+
+        [TestCase(FleetState.TaxiOut, "Taxiing")]
+        [TestCase(FleetState.TaxiIn, "Taxiing")]
+        [TestCase(FleetState.TakingOff, "Departing")]
+        [TestCase(FleetState.Outbound, "Departed")]
+        [TestCase(FleetState.AwaitingStand, "Landed")]
+        public void PhaseLabel_MatchesTheMovementOnTheField(FleetState state, string expected)
+        {
+            var (_, _, aircraft) = PlayerOnly();
+            var enter = typeof(FleetAircraft).GetMethod("Enter", BindingFlags.Instance | BindingFlags.NonPublic);
+            enter.Invoke(aircraft, new object[] { state, new SimulationTime(0), (long?)60 });
+            Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo(expected));
+            Assert.That(OperationsSummary.CompactState(aircraft, new SimulationTime(0)), Is.EqualTo(expected));
         }
 
         [Test]

@@ -129,7 +129,8 @@ namespace Airside.Presentation
                     return AdelaideGround.HoldingShortPose(aircraft.DepartureStand,
                         FleetVisual.QueueSlot(_operations.Fleet, aircraft), aircraft.AssignedRunway);
                 case FleetGroundLeg.AwaitingStand:
-                    return AdelaideGround.AwaitingPose(FleetVisual.QueueSlot(_operations.Fleet, aircraft));
+                    return AdelaideGround.AwaitingPose(FleetVisual.QueueSlot(_operations.Fleet, aircraft),
+                        aircraft.Type, aircraft.AssignedRunway);
                 default:
                 {
                     var leg = visual.Leg switch

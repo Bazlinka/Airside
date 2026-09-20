@@ -151,8 +151,9 @@ namespace Airside.Presentation
             if (satellite != null)
                 material.SetTexture("_SatelliteAlbedo", satellite);
             material.SetFloat("_SatelliteExtent", AirsideAdelaideSurroundings.SatelliteExtentMetres);
-            material.SetFloat("_SatelliteStrength", satellite != null ? 0.92f : 0f);
-            material.SetFloat("_SatelliteEdgeBlend", 1050f);
+            material.SetFloat("_SatelliteStrength",
+                satellite != null ? AirsideAdelaideSurroundings.SatelliteStrength : 0f);
+            material.SetFloat("_SatelliteEdgeBlend", AirsideAdelaideSurroundings.EdgeTextureBlendMetres);
             material.SetFloat("_GroundHalfX", AirsideAdelaideGround.SizeX * 0.5f);
             material.SetFloat("_GroundHalfZ", AirsideAdelaideGround.SizeZ * 0.5f);
             material.SetColor("_SatelliteTint", new Color(0.56f, 0.58f, 0.56f, 1f));

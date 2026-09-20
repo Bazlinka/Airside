@@ -1,4 +1,5 @@
 using Airside.Presentation;
+using Airside.Simulation;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -32,9 +33,35 @@ namespace Airside.Tests
                 "runway-aligned ESA Adelaide ground image is missing");
             Assert.That(material.GetFloat("_SatelliteExtent"),
                 Is.EqualTo(AirsideAdelaideSurroundings.SatelliteExtentMetres));
-            Assert.That(material.GetFloat("_SatelliteStrength"), Is.GreaterThan(0.85f));
+            Assert.That(material.GetFloat("_SatelliteStrength"), Is.EqualTo(AirsideAdelaideSurroundings.SatelliteStrength));
             Assert.That(material.GetFloat("_EdgeTextureBlend"), Is.EqualTo(AirsideAdelaideSurroundings.EdgeTextureBlendMetres));
+            Assert.That(AirsideAdelaideSurroundings.EdgeTextureBlendMetres, Is.EqualTo(1050f),
+                "must match the airfield satellite dissolve or the rectangle lights up");
             Object.DestroyImmediate(material);
+        }
+
+        [Test]
+        public void SurroundingsMesh_JoinNormalsAreNotPulledDownTheTuck()
+        {
+            var grid = new CoastGrid(AdelaideCoast.SeaPolygon, AdelaideCoast.Coastline,
+                AirsideAdelaideGround.SizeX * 0.5f, AirsideAdelaideGround.SizeZ * 0.5f);
+            var mesh = AirsideAdelaideSurroundings.BuildMesh(grid);
+            var normals = mesh.normals;
+            var nx = grid.CountX;
+            var worst = 0f;
+            var checkedEdge = 0;
+            for (var zi = 0; zi < grid.CountZ; zi++)
+            for (var xi = 0; xi < grid.CountX; xi++)
+            {
+                if (!AirsideAdelaideSurroundings.IsHoleEdge(grid, xi, zi))
+                    continue;
+                checkedEdge++;
+                worst = Mathf.Max(worst, Vector3.Angle(normals[zi * nx + xi], Vector3.up));
+            }
+
+            Assert.That(checkedEdge, Is.GreaterThan(20));
+            Assert.That(worst, Is.LessThan(18f), "the tuck-under cliff was lighting a line around the field");
+            Object.DestroyImmediate(mesh);
         }
 
         [Test]
@@ -74,7 +101,10 @@ namespace Airside.Tests
             Assert.That(material.GetTexture("_GreenMask"), Is.Not.Null);
             Assert.That(material.GetTexture("_DirtMask"), Is.Not.Null);
             Assert.That(material.GetTexture("_SatelliteAlbedo"), Is.Not.Null);
-            Assert.That(material.GetFloat("_SatelliteEdgeBlend"), Is.GreaterThan(500f));
+            Assert.That(material.GetFloat("_SatelliteEdgeBlend"),
+                Is.EqualTo(AirsideAdelaideSurroundings.EdgeTextureBlendMetres));
+            Assert.That(material.GetFloat("_SatelliteStrength"),
+                Is.EqualTo(AirsideAdelaideSurroundings.SatelliteStrength));
             Object.DestroyImmediate(material);
         }
 

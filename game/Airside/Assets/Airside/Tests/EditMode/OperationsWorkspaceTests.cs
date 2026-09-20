@@ -66,7 +66,7 @@ namespace Airside.Tests
             Assert.That(model.Attention, Is.Not.Empty);
             Assert.That(model.Attention[0].Registration, Is.EqualTo("VH-PAX"));
             Assert.That(model.Attention[0].Severity, Is.EqualTo(StatusSeverity.Warning));
-            Assert.That(model.Attention[0].Text, Does.Contain("needs a stand"));
+            Assert.That(model.Attention[0].Text, Does.Contain("parking"));
         }
 
         [Test]

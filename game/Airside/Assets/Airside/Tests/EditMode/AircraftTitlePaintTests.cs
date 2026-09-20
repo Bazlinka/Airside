@@ -111,6 +111,8 @@ namespace Airside.Tests
         {
             Assert.That(RunwayWeather.TrueFromUnityYaw(90f), Is.EqualTo(50f).Within(0.01f));
             Assert.That(RunwayWeather.TrueFromUnityYaw(0f), Is.EqualTo(320f).Within(0.01f));
+            Assert.That(RunwayWeather.TrueFromUnityYaw(RunwayWeather.UnityYawFromTrue(50f)), Is.EqualTo(50f).Within(0.01f));
+            Assert.That(RunwayWeather.TrueFromUnityYaw(RunwayWeather.UnityYawFromTrue(320f)), Is.EqualTo(320f).Within(0.01f));
         }
     }
 }

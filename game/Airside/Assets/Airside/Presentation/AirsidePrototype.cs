@@ -750,16 +750,17 @@ namespace Airside.Presentation
 
         private void DrawSpeedReadout(HudLayout layout, GUIStyle panel)
         {
-            if (!TryReadoutFlight(out var flight, out var view))
+            if (!TryReadoutFlight(out var flight, out var view, out var fleetAircraft))
                 return;
 
             // Taxiing fleet aircraft move along the Adelaide ground routes, which the
             // circuit speed schedule knows nothing about, so measure them directly.
-            _fleetAircraftById.TryGetValue(flight.AircraftId, out var fleetAircraft);
             var type = FleetMode && fleetAircraft != null ? fleetAircraft.Type : AircraftType.Atr42;
-            var knots = FleetGroundSpeed(flight) is { } groundSpeed
+            var knots = flight != null && FleetGroundSpeed(flight) is { } groundSpeed
                 ? CircuitProfile.ToKnots(groundSpeed)
-                : AirsideFlightPath.AirspeedKnots(flight.Operation.Phase, VisualPhaseProgress(flight, 0f), type);
+                : flight != null
+                    ? AirsideFlightPath.AirspeedKnots(flight.Operation.Phase, VisualPhaseProgress(flight, 0f), type)
+                    : 0f;
 
             // Once an airline is running, several aircraft share the field (the player's
             // and every AI carrier's) — with no callsign shown, this box read as an
@@ -817,34 +818,37 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// The aircraft the readout describes: the one being followed, else the first
-        /// one on the field. Nothing when every fleet aircraft is away.
+        /// The aircraft the readout describes: only the one being followed or
+        /// explicitly selected. The operations card may still highlight a
+        /// priority aircraft; this strip must not, and it must not fall back to
+        /// the first visible plane on the field.
         /// </summary>
-        private bool TryReadoutFlight(out CommercialFlight flight, out Transform view)
+        private bool TryReadoutFlight(out CommercialFlight flight, out Transform view, out FleetAircraft fleetAircraft)
         {
             flight = null;
             view = null;
-            var flights = VisualFlights;
-            if (_commercialAircraft == null)
+            fleetAircraft = WatchedAircraft();
+            return TryReadoutFor(fleetAircraft, out flight, out view);
+        }
+
+        private bool TryReadoutFor(FleetAircraft aircraft, out CommercialFlight flight, out Transform view)
+        {
+            flight = null;
+            view = null;
+            if (aircraft == null || !_fleetViewById.TryGetValue(aircraft.Registration, out view)
+                || view == null || !view.gameObject.activeSelf)
                 return false;
 
-            var followed = _cameraController != null && _cameraController.IsFollowing ? _cameraController.FollowTarget : null;
-            for (var i = 0; i < flights.Count && i < _commercialAircraft.Length; i++)
+            var flights = VisualFlights;
+            for (var i = 0; i < flights.Count; i++)
             {
-                var candidate = _commercialAircraft[i];
-                if (candidate == null || !candidate.gameObject.activeSelf)
+                if (flights[i].AircraftId != aircraft.Registration)
                     continue;
-                if (flight == null || candidate == followed)
-                {
-                    flight = flights[i];
-                    view = candidate;
-                }
-
-                if (candidate == followed)
-                    break;
+                flight = flights[i];
+                return true;
             }
 
-            return flight != null;
+            return true;
         }
 
         private GUIStyle _speedReadoutStyle;

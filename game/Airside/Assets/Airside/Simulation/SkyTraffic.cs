@@ -51,8 +51,24 @@ namespace Airside.Simulation
         /// <summary>True kilometres are compressed into this radius so cruise traffic fits the 10 km camera far clip.</summary>
         public const double DrawRadiusMetres = 7_500.0;
 
+        /// <summary>
+        /// Traffic inside this true range is drawn almost 1:1 so inbound and
+        /// outbound legs move at a readable speed instead of the 35× crawl of a
+        /// flat 260 km → 7.5 km map.
+        /// </summary>
+        public const double NearFieldKm = 8.0;
+
+        /// <summary>Display metres used for <see cref="NearFieldKm"/>.</summary>
+        public const double NearFieldMetres = 6_000.0;
+
+        /// <summary>
+        /// Planned Adelaide arrivals/departures closer than this are hidden so
+        /// they do not sit on the live circuit — live inbound/outbound owns that.
+        /// </summary>
+        public const double CircuitClearKm = 1.2;
+
         /// <summary>Display height is compressed so cruise traffic reads from the airfield camera.</summary>
-        public const double DisplayAltitudeScale = 0.22;
+        public const double DisplayAltitudeScale = 0.28;
 
         public static readonly SkyRoute[] Routes =
         {
@@ -180,8 +196,7 @@ namespace Airside.Simulation
         public static bool TryWorldPosition(SkyFlight flight, out double x, out double y, out double z)
         {
             ToLocalMetres(flight.Latitude, flight.Longitude, out var east, out var north);
-            var rangeMetres = Math.Sqrt(east * east + north * north);
-            var rangeKm = rangeMetres / 1000.0;
+            var rangeKm = Math.Sqrt(east * east + north * north) / 1000.0;
             if (rangeKm > VisibleRadiusKm)
             {
                 x = east;
@@ -190,12 +205,83 @@ namespace Airside.Simulation
                 return false;
             }
 
-            var scale = DrawRadiusMetres / (VisibleRadiusKm * 1000.0);
-            ToRunwayFrame(east, north, out var along, out var across);
-            x = along * scale;
-            z = across * scale;
+            ProjectLocal(east, north, out x, out z);
             y = DisplayAltitudeMetres(flight);
             return true;
+        }
+
+        /// <summary>
+        /// Unity yaw that faces the compressed on-screen path, not the true
+        /// heading. A flat 260 km disc squeezed into 7.5 km makes true heading
+        /// crab against the drawn motion.
+        /// </summary>
+        public static float DisplayUnityYaw(SkyFlight flight)
+        {
+            if (TryWorldPosition(flight, out var x, out _, out var z)
+                && TryAheadWorldPosition(flight, out var ax, out var az))
+            {
+                var dx = ax - x;
+                var dz = az - z;
+                if (dx * dx + dz * dz > 0.25)
+                    return (float)(Math.Atan2(dx, dz) * 180.0 / Math.PI);
+            }
+
+            return RunwayWeather.UnityYawFromTrue((float)flight.HeadingDegrees);
+        }
+
+        /// <summary>True when a planned Adelaide movement is already over the live circuit.</summary>
+        public static bool OccupiesTheCircuit(SkyFlight flight)
+        {
+            if (flight.From.Code != "ADL" && flight.To.Code != "ADL")
+                return false;
+            ToLocalMetres(flight.Latitude, flight.Longitude, out var east, out var north);
+            return Math.Sqrt(east * east + north * north) / 1000.0 < CircuitClearKm;
+        }
+
+        /// <summary>
+        /// Near-field almost 1:1, then the remaining 8–260 km true squeezed onto
+        /// the last 1.5 km of draw radius so distant overflights stay in clip.
+        /// </summary>
+        public static void ProjectLocal(double eastMetres, double northMetres, out double x, out double z)
+        {
+            ToRunwayFrame(eastMetres, northMetres, out var along, out var across);
+            var range = Math.Sqrt(along * along + across * across);
+            var rangeKm = range / 1000.0;
+            if (range < 1e-6)
+            {
+                x = 0;
+                z = 0;
+                return;
+            }
+
+            double displayRange;
+            if (rangeKm <= NearFieldKm)
+                displayRange = range * (NearFieldMetres / (NearFieldKm * 1000.0));
+            else
+            {
+                var t = (rangeKm - NearFieldKm) / (VisibleRadiusKm - NearFieldKm);
+                displayRange = NearFieldMetres + t * (DrawRadiusMetres - NearFieldMetres);
+            }
+
+            var scale = displayRange / range;
+            x = along * scale;
+            z = across * scale;
+        }
+
+        private static bool TryAheadWorldPosition(SkyFlight flight, out double x, out double z)
+        {
+            x = 0;
+            z = 0;
+            if (flight.From.Code == null || flight.To.Code == null)
+                return false;
+            var step = Math.Min(1.0, flight.Progress + 0.003);
+            if (step <= flight.Progress)
+                return false;
+            FlightRoute.Point(flight.From.Latitude, flight.From.Longitude, flight.To.Latitude, flight.To.Longitude,
+                step, flight.Callsign, out var lat, out var lon);
+            var ahead = new SkyFlight(flight.Callsign, flight.Type, flight.From, flight.To, step,
+                lat, lon, flight.AltitudeFeet, flight.HeadingDegrees);
+            return TryWorldPosition(ahead, out x, out _, out z);
         }
 
         /// <summary>
@@ -236,7 +322,15 @@ namespace Airside.Simulation
                 }
             }
 
-            return 260.0 + band + jitter + cruise;
+            var height = 260.0 + band + jitter + cruise;
+            if (flight.To.Code != "ADL")
+                return height;
+
+            ToLocalMetres(flight.Latitude, flight.Longitude, out var east, out var north);
+            var rangeKm = Math.Sqrt(east * east + north * north) / 1000.0;
+            var blend = Math.Max(0.0, Math.Min(1.0, (NearFieldKm * 2.0 - rangeKm) / (NearFieldKm * 2.0)));
+            var circuit = 90.0 + band * 0.15;
+            return height * (1.0 - blend) + circuit * blend;
         }
 
         public static void ToLocalMetres(double latitude, double longitude, out double eastMetres, out double northMetres)

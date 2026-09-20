@@ -1,14 +1,22 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — career unlock + freeze runway
+  (branch `cursor/career-and-runway-freeze-4d7a`).** International was a
+  deadlock (needed a widebody you could not buy). A321 is Domestic;
+  International unlocks on jet + rotations. Tower no longer flips
+  05↔23 / 12↔30 at clearance. Empty-stand hold supports 23. Cross
+  go-around starts on a native short final.
+  - **Evidence:** `scripts/test-domain.sh` **462/462**.
+  - **NEXT:** Mac Unity EditMode, then merge. Still open: dual-strip
+    intersection mutex; 12/30 RemapAlong crawl; regional pushback
+    apron mutex; Q400 50D/50E hard rule (Bailey); disruption→sim.
+
 - **2026-09-20 Cursor — fifteen more play fixes on day-progress branch
-  (branch `cursor/day-progress-and-bugfixes-4d7a`).** Doors through boarding;
-  cancelled cold; windsock = sim wind; approach pick per runway; shared E2
-  await queue; longer cross clear; lead-in through hold/takeoff; runway
-  refresh on clearance; AtDestination off Arrivals; TaxiIn ETA STAND;
-  holding look-ahead; strict saved runway; required DepartureStand;
-  empty-stand hold uses runway hold not bay 50D.
+  (merged via #329).** Doors through boarding; cancelled cold; windsock;
+  approach pick; E2 queue; clear; lead-in; runway refresh (superseded by
+  freeze); AtDestination off Arrivals; ETA STAND; look-ahead; save
+  runway; DepartureStand; empty-stand hold.
   - **Evidence:** `scripts/test-domain.sh` **460/460**.
-  - **NEXT:** Mac Unity EditMode, then merge and rebuild from main.
 
 - **2026-09-20 Cursor — third play-fix wave on day-progress branch
   (branch `cursor/day-progress-and-bugfixes-4d7a`).** 12/30 landing→vacate

@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **International career is reachable.** A321neo buys at Domestic. The
+  International tier unlocks on jet ownership + rotations/reliability —
+  not on already owning a widebody (that was a deadlock). A350/787 stay
+  International purchases.
+
+- **Tower keeps the lined-up / short-final runway end.** Clearance no
+  longer flips 05↔23 or 12↔30 and teleports the aircraft. Empty-stand
+  holding uses the 23 lineup start, not the 05 hold. Cross go-arounds
+  start on a native short final outside the threshold.
+
 - **Fifteen more Adelaide play fixes.** Cabin doors stay open through
   boarding; cancelled bookings stay cold and tag as cancelled; windsock
   follows sim wind; approach pick/follow uses the assigned runway frame;

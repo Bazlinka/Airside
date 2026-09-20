@@ -5,11 +5,12 @@
   the day strip + ten bugs. Second wave: strip clear-of-runway, FIDS
   Vacating/Lining up/go-around, Cathay alt gate, prep rebook, GA short
   final (no 4 km teleport), go-around runway reassign, both-strip save
-  reconcile, CoveredBy late stand wait, soak FreeStandsFor.
-  - **Evidence:** `scripts/test-domain.sh` **453/453**.
+  reconcile, CoveredBy late stand wait + one-live-one-slot, soak
+  FreeStandsFor.
+  - **Evidence:** `scripts/test-domain.sh` **454/454**.
   - **NEXT:** Mac Unity EditMode, then merge and rebuild from main.
-    Optional follow-ups: 12/30 go-around geometry (still remaps the 05
-    racetrack), one-live-covers-many CoveredBy matching.
+    Optional follow-up: 12/30 go-around geometry (still remaps the 05
+    racetrack).
 
 - **2026-09-20 Cursor — Cathay exit, prep timing, scroll-to-now
   (branch `cursor/day-progress-and-bugfixes-4d7a`).** Keep going after

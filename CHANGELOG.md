@@ -14,7 +14,8 @@
 
 - **Day-plan cover survives a late stand wait.** CoveredBy pins late
   AwaitingStand / go-around rows to the planned ETA so ghost sky
-  arrivals do not reappear. Soak assigns fitting stands only.
+  arrivals do not reappear. One live aircraft covers only its nearest
+  same-route slot. Soak assigns fitting stands only.
 
 - **Cathay leaves when the season ends.** Parked CPA frees GATE-18 after
   ~27 Mar; airborne jets finish the trip first. Prep no longer starts at

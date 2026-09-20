@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **The opening bank has more arrivals, at peak spacing.** A third
+  Virgin 737, a third Qantas 737 and a second Jetstar join. Twelve
+  aircraft are already inbound, spaced 2–37 min (about one every three
+  minutes across both strips). Opening departures go every ~5 min
+  instead of every three.
+
 - **12/30 takeoff and landing match the stated knots.** Stations shift
   so the 05 threshold lines up with the 12 threshold; one metre of 05
   stays one metre of 12/30. The old squeeze made regionals crawl at

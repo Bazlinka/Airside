@@ -1,5 +1,17 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — more arrivals, peak-bank timing
+  (branch `feature/busier-field-and-camera`).** Bailey: should there
+  be more arrivals, and is the timing a normal Adelaide day?
+  - **Arrivals:** a third Virgin 737, a third Qantas 737 and a
+    second Jetstar A321. Opening inbound is twelve aircraft (was
+    nine), stretched 2–37 min so the bank lasts a peak, not a dump.
+  - **Spacing:** about one arrival every three minutes across both
+    strips (one every ~6 min per runway). Departures every ~5 min.
+    One movement per strip stays.
+  - **Not added:** extra Rex — 50-series bays already starve Q400s.
+  - **NEXT:** rebuild from this branch. Do not merge until asked.
+
 - **2026-09-20 Cursor — 12/30 speed matches stated knots
   (branch `feature/busier-field-and-camera`).** Bailey: HUD knots were
   right, but aircraft looked too slow — 50 kt did not cover 50 kt of

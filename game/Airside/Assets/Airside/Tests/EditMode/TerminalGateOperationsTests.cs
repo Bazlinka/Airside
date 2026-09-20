@@ -327,28 +327,32 @@ namespace Airside.Tests
         {
             var ops = NewGame(out var clock);
             var data = JsonUtility.FromJson<AirlineSaveData>(JsonUtility.ToJson(AirlineSave.Capture(ops)));
-            // Make it a save from before this change: no Virgin Australia, no 737.
-            data.Fleet.RemoveAll(r => r.Registration == JetRegistration);
+            // Make it a save from before Virgin joined: no VOZ airline or aircraft.
+            data.Fleet.RemoveAll(r => r.AirlineId == "VOZ" || r.Registration == JetRegistration);
             data.Airlines.RemoveAll(r => r.Id == "VOZ");
 
             var restored = AirlineSave.Restore(data, new ManualSimulationClock(new SimulationTime(data.ClockSeconds)));
-            Assert.That(restored.Fleet.Any(a => a.Type == AircraftType.Boeing7378), Is.False);
+            Assert.That(restored.Airlines.Any(a => a.Id.Value == "VOZ"), Is.False);
             var regionalBefore = Fingerprint(restored);
+            var virginCount = AirlineOperations.TerminalOperators
+                .First(t => t.Make().Id.Value == "VOZ").Fleet.Length;
 
-            Assert.That(restored.AddMissingTerminalOperators(), Is.EqualTo(1));
+            Assert.That(restored.AddMissingTerminalOperators(), Is.EqualTo(virginCount));
             Assert.That(restored.AddMissingTerminalOperators(), Is.EqualTo(0), "idempotent");
-            Assert.That(restored.Fleet.Count(a => a.Type == AircraftType.Boeing7378), Is.EqualTo(1));
+            Assert.That(restored.Fleet.Count(a => a.Airline.Id.Value == "VOZ"), Is.EqualTo(virginCount));
             Assert.That(Jet(restored).Stand, Is.EqualTo(Gate13));
-            Assert.That(Fingerprint(restored).Replace(Fingerprint(restored).Split('|').Single(f => f.StartsWith(JetRegistration)) + "|", string.Empty)
-                .Replace("|" + Fingerprint(restored).Split('|').Single(f => f.StartsWith(JetRegistration)), string.Empty),
-                Is.EqualTo(regionalBefore), "backfill leaves every other aircraft exactly as it was");
+            Assert.That(WithoutVirgin(Fingerprint(restored)), Is.EqualTo(regionalBefore),
+                "backfill leaves every other aircraft exactly as it was");
 
-            // And the backfilled save round-trips without gaining a second jet.
+            // And the backfilled save round-trips without gaining extra Virgin aircraft.
             var again = AirlineSave.Restore(JsonUtility.FromJson<AirlineSaveData>(JsonUtility.ToJson(AirlineSave.Capture(restored))),
                 new ManualSimulationClock(new SimulationTime(data.ClockSeconds)));
             Assert.That(again.AddMissingTerminalOperators(), Is.EqualTo(0));
-            Assert.That(again.Fleet.Count(a => a.Type == AircraftType.Boeing7378), Is.EqualTo(1));
+            Assert.That(again.Fleet.Count(a => a.Airline.Id.Value == "VOZ"), Is.EqualTo(virginCount));
         }
+
+        private static string WithoutVirgin(string fingerprint) =>
+            string.Join("|", fingerprint.Split('|').Where(part => !part.StartsWith("VH-8I")));
 
         [Test]
         public void Backfill_SkipsWhenTheGateIsNotAvailable()

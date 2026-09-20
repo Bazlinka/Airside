@@ -191,14 +191,20 @@ namespace Airside.Simulation
             (Airline.VirginAustralia, new[]
             {
                 ("VH-8IA", AircraftType.Boeing7378, new StableId("GATE-13")),
-                ("VH-8IB", AircraftType.Boeing7378, new StableId("GATE-14L"))
+                ("VH-8IB", AircraftType.Boeing7378, new StableId("GATE-14L")),
+                ("VH-8IC", AircraftType.Boeing7378, new StableId("GATE-19"))
             }),
             (Airline.Qantas, new[]
             {
                 ("VH-VZX", AircraftType.Boeing7378, new StableId("GATE-21")),
-                ("VH-VZY", AircraftType.Boeing7378, new StableId("GATE-24"))
+                ("VH-VZY", AircraftType.Boeing7378, new StableId("GATE-24")),
+                ("VH-VZZ", AircraftType.Boeing7378, new StableId("GATE-23"))
             }),
-            (Airline.Jetstar, new[] { ("VH-VFH", AircraftType.AirbusA321Neo, new StableId("GATE-17")) }),
+            (Airline.Jetstar, new[]
+            {
+                ("VH-VFH", AircraftType.AirbusA321Neo, new StableId("GATE-17")),
+                ("VH-VFI", AircraftType.AirbusA321Neo, new StableId("GATE-16L"))
+            }),
             (Airline.AirNewZealand, new[] { ("ZK-NNA", AircraftType.AirbusA321Neo, new StableId("GATE-15")) }),
             (Airline.CathayPacific, new[] { ("B-LRB", AircraftType.AirbusA350900, new StableId("GATE-18")) }),
             (Airline.SingaporeAirlines, new[] { ("9V-SCA", AircraftType.Boeing78710, new StableId("GATE-20")) })
@@ -284,9 +290,12 @@ namespace Airside.Simulation
             CareerState = new AirlineCareerState();
         }
 
-        /// <summary>Staggered opening departures so the first half-hour is a bank, not a trickle.</summary>
+        /// <summary>
+        /// Staggered opening departures — about one every five minutes, a normal
+        /// Adelaide peak rather than a three-minute pile-up.
+        /// </summary>
         public static readonly long[] AiOpeningDepartureSeconds =
-            { 2 * 60, 5 * 60, 8 * 60, 11 * 60, 14 * 60, 18 * 60, 22 * 60, 26 * 60, 30 * 60 };
+            { 3 * 60, 7 * 60, 12 * 60, 17 * 60, 22 * 60, 27 * 60, 33 * 60, 39 * 60 };
 
         /// <summary>
         /// The ADR 0045 starting position at Adelaide: the player's airline with one
@@ -303,20 +312,25 @@ namespace Airside.Simulation
             operations.AddAircraft(player, "VH-PAX", AircraftType.Atr42, AdelaideRegionalBays[0]);
             var aiFleet = new List<FleetAircraft>();
             operations.AddMissingRegionalCarriers(aiFleet);
-            // Several services are already inbound so the field is a bank, not a
-            // quiet apron waiting for the first out-and-back.
-            operations.TrySeedOpeningInbound(aiFleet, "QLK", "PLO", 3 * 60);
+            // Opening peak: regionals on 12/30, jets on 05/23, about one arrival
+            // every three minutes across the field — a busy Adelaide morning, not
+            // a dump and then a hole. One QantasLink and the player stay parked
+            // so the 50-series apron is not empty.
+            operations.TrySeedOpeningInbound(aiFleet, "QLK", "PLO", 2 * 60);
             operations.TrySeedOpeningInbound(aiFleet, "REX", "MGB", 5 * 60);
-            operations.TrySeedOpeningInbound(aiFleet, "REX", "PLO", 8 * 60);
-            operations.TrySeedOpeningInbound(aiFleet, "REX", "CED", 12 * 60);
+            operations.TrySeedOpeningInbound(aiFleet, "REX", "PLO", 9 * 60);
+            operations.TrySeedOpeningInbound(aiFleet, "REX", "CED", 21 * 60);
 
             var terminalFleet = new List<FleetAircraft>();
             operations.AddMissingTerminalOperators(terminalFleet);
-            operations.TrySeedOpeningInbound(terminalFleet, "ANZ", "AKL", 6 * 60);
-            operations.TrySeedOpeningInbound(terminalFleet, "VOZ", "MEL", 10 * 60);
-            operations.TrySeedOpeningInbound(terminalFleet, "QFA", "SYD", 14 * 60);
-            operations.TrySeedOpeningInbound(terminalFleet, "JST", "MEL", 19 * 60);
-            operations.TrySeedOpeningInbound(terminalFleet, "SIA", "SIN", 24 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "ANZ", "AKL", 7 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "VOZ", "MEL", 11 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "QFA", "SYD", 15 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "JST", "MEL", 18 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "VOZ", "SYD", 24 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "SIA", "SIN", 28 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "QFA", "BNE", 32 * 60);
+            operations.TrySeedOpeningInbound(terminalFleet, "JST", "SYD", 37 * 60);
 
             var departureIndex = 0;
             foreach (var aircraft in operations.Fleet)

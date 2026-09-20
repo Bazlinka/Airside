@@ -189,8 +189,8 @@ namespace Airside.Tests
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(2026), Player());
-            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.GreaterThanOrEqualTo(8),
-                "a bank of arrivals is already inbound");
+            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.GreaterThanOrEqualTo(11),
+                "a peak bank of arrivals is already inbound");
             Assert.That(ops.Airlines.Select(a => a.Name),
                 Does.Contain("Qantas").And.Contain("Jetstar").And.Contain("Virgin Australia"));
 
@@ -202,6 +202,26 @@ namespace Airside.Tests
             var kinds = ops.Fleet.Select(a => a.State).Distinct().Count();
             Assert.That(live, Is.GreaterThanOrEqualTo(6), "several aircraft are moving at once");
             Assert.That(kinds, Is.GreaterThanOrEqualTo(3), "they are not all in the same phase");
+        }
+
+        [Test]
+        public void NewGame_OpeningArrivalsAreAPeakBankNotAPileUp()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(2026), Player());
+            var arrivals = ops.Fleet
+                .Where(a => a.State == FleetState.Inbound && a.StateEndsAt.HasValue)
+                .Select(a => a.StateEndsAt.Value.ElapsedSeconds)
+                .OrderBy(t => t)
+                .ToArray();
+            Assert.That(arrivals.Length, Is.GreaterThanOrEqualTo(11));
+            Assert.That(arrivals[^1] - arrivals[0], Is.GreaterThanOrEqualTo(25 * 60),
+                "the bank lasts a normal peak, not a ten-minute dump");
+            for (var i = 1; i < arrivals.Length; i++)
+            {
+                Assert.That(arrivals[i] - arrivals[i - 1], Is.GreaterThanOrEqualTo(90),
+                    "arrivals are spaced, not stacked on one minute");
+            }
         }
 
         [Test]

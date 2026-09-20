@@ -87,9 +87,23 @@ namespace Airside.Tests
             var restore = typeof(AirlineOperations).GetMethod("RestoreAircraft",
                 BindingFlags.Instance | BindingFlags.NonPublic);
             var at = startedAt ?? new SimulationTime(0);
+            var stand = AirlineOperations.NeedsTerminalGate(type)
+                ? AirlineOperations.AdelaideTerminalGates[0]
+                : AirlineOperations.AdelaideRegionalBays[0];
+            // Prefer a free stand from the ops list when available.
+            foreach (var candidate in ops.Stands)
+            {
+                if (!ops.IsStandFree(candidate))
+                    continue;
+                if (AirlineOperations.NeedsTerminalGate(type) != AdelaideGround.IsTerminalGate(candidate))
+                    continue;
+                stand = candidate;
+                break;
+            }
+
             restore.Invoke(ops, new object[]
             {
-                registration, airline, type, state, at, null, default(StableId), default(StableId),
+                registration, airline, type, state, at, null, default(StableId), stand,
                 destination, null, 0
             });
             ops.RestoreMovementData(registration, runway, wentAroundThisTrip: false);
@@ -100,8 +114,10 @@ namespace Airside.Tests
         {
             var clear = AdelaideGround.ClearOfRunwaySeconds(AircraftType.Atr42, RunwayDirection.Runway12);
             var vacate = AdelaideGround.VacateFor(AircraftType.Atr42, RunwayDirection.Runway12).WholeSeconds;
-            Assert.That(clear, Is.LessThan(vacate / 2),
+            Assert.That(clear, Is.LessThan(vacate * 0.7),
                 "12/30 must free for the next movement before the long taxi to E2 finishes");
+            Assert.That(clear, Is.GreaterThan(vacate * 0.25),
+                "clear-of-runway must leave enough exit before the next landing joins");
             Assert.That(AdelaideGround.ClearOfRunwaySeconds(AircraftType.Boeing7378, RunwayDirection.Runway05),
                 Is.EqualTo(AdelaideGround.VacateFor(AircraftType.Boeing7378, RunwayDirection.Runway05).WholeSeconds),
                 "05/23 still frees at E2");

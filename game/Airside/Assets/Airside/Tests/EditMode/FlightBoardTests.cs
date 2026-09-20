@@ -98,7 +98,7 @@ namespace Airside.Tests
         [TestCase(FleetState.HoldingForLanding, "ON FINAL")]
         [TestCase(FleetState.Landing, "ON RUNWAY")]
         [TestCase(FleetState.TakingOff, "DEPARTING")]
-        [TestCase(FleetState.TaxiIn, "AT STAND")]
+        [TestCase(FleetState.TaxiIn, "ETA STAND")]
         [TestCase(FleetState.AwaitingStand, "WAIT SINCE")]
         public void TimeMeaning_DescribesTheActualMilestone(FleetState state, string expected)
         {
@@ -128,6 +128,18 @@ namespace Airside.Tests
             Assert.That(FlightBoard.PhaseLabel(aircraft), Is.EqualTo("On stand"));
             Assert.That(FlightBoard.RouteText(aircraft), Does.StartWith("Bay "));
             Assert.That(FlightBoard.SortKeySeconds(aircraft), Is.EqualTo(long.MaxValue));
+        }
+
+        [Test]
+        public void IsArrival_ExcludesAircraftStillAwayAtDestination()
+        {
+            var (_, _, aircraft) = PlayerOnly();
+            var enter = typeof(FleetAircraft).GetMethod("Enter", BindingFlags.Instance | BindingFlags.NonPublic);
+            enter.Invoke(aircraft, new object[] { FleetState.AtDestination, new SimulationTime(0), (long?)60 });
+            Assert.That(FlightBoard.IsArrival(aircraft), Is.False,
+                "away aircraft must not clutter the Arrivals board");
+            enter.Invoke(aircraft, new object[] { FleetState.Inbound, new SimulationTime(0), (long?)60 });
+            Assert.That(FlightBoard.IsArrival(aircraft), Is.True);
         }
 
         [Test]

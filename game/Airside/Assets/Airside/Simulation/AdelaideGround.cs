@@ -108,15 +108,16 @@ namespace Airside.Simulation
             if (RunwayWeather.IsMainRunway(runway))
                 return vacate.WholeSeconds;
 
-            // Cross strip: off the pavement after ~280 m of the vacate, not after the
-            // kilometre taxi to E2 that used to lock 12/30 for the whole exit.
-            const float clearMetres = 280f;
+            // Cross strip: free once well clear of the pavement and past the shared
+            // exit conflict zone — not after the full kilometre to E2, but later than
+            // a short 280 m hop that let the next landing meet the vacating aircraft.
+            const float clearMetres = 480f;
             if (vacate.Parts.Count == 0)
-                return Math.Max(20, vacate.WholeSeconds / 4);
+                return Math.Max(30, vacate.WholeSeconds / 3);
             var path = vacate.Parts[0].Path;
-            var metres = Math.Min(clearMetres, path.Length * 0.4f);
+            var metres = Math.Min(clearMetres, path.Length * 0.55f);
             var seconds = path.SecondsAtDistance(metres);
-            return Math.Max(20L, (long)Math.Ceiling(seconds));
+            return Math.Max(30L, (long)Math.Ceiling(seconds));
         }
 
         /// <summary>F6 holding point → centreline at the 05 takeoff start, stopped and ready to roll.</summary>
@@ -240,6 +241,22 @@ namespace Airside.Simulation
         public static GroundPose HoldingShortPose(StableId departureStand, int slot,
             RunwayDirection runway = RunwayDirection.Runway05, AircraftType type = null)
         {
+            // A missing departure stand must not teleport the aircraft onto bay 50D's hold.
+            if (string.IsNullOrEmpty(departureStand.Value))
+            {
+                float[] hold = runway switch
+                {
+                    RunwayDirection.Runway12 => AdelaideCrossRoutes.Hold12,
+                    RunwayDirection.Runway30 => AdelaideCrossRoutes.Hold30,
+                    _ => AdelaideLayout.Runway05Hold
+                };
+                RunwayFrame.Forward(runway, out var fx, out var fz);
+                if (slot <= 0)
+                    return new GroundPose(hold[0], hold[1], fx, fz, 0f, false);
+                var back = AwaitingSpacingMetres * slot;
+                return new GroundPose(hold[0] - fx * back, hold[1] - fz * back, fx, fz, 0f, false);
+            }
+
             type ??= IsTerminalGate(departureStand) ? AircraftType.Boeing7378 : AircraftType.Atr42;
             var leg = TaxiOut(departureStand, type, runway);
             var end = leg.PoseAt(leg.Seconds);
@@ -247,8 +264,8 @@ namespace Airside.Simulation
                 return new GroundPose(end.X, end.Z, end.NoseX, end.NoseZ, 0f, false);
 
             var taxi = leg.Parts[leg.Parts.Count - 1].Path;
-            var back = taxi.SampleAtDistance(Math.Max(0f, taxi.Length - AwaitingSpacingMetres * slot));
-            return new GroundPose(back.X, back.Z, back.DirectionX, back.DirectionZ, 0f, false);
+            var backAlong = taxi.SampleAtDistance(Math.Max(0f, taxi.Length - AwaitingSpacingMetres * slot));
+            return new GroundPose(backAlong.X, backAlong.Z, backAlong.DirectionX, backAlong.DirectionZ, 0f, false);
         }
 
         private static GroundLeg GateTaxiOut(AdelaideTerminalGate gate, AircraftType type, RunwayDirection runway)

@@ -253,7 +253,7 @@ namespace Airside.Simulation
 
         private static bool MatchesHalf(PlannedMovement planned, FleetAircraft aircraft)
         {
-            var liveArrival = aircraft.State is FleetState.AtDestination or FleetState.Inbound
+            var liveArrival = aircraft.State is FleetState.Inbound
                 or FleetState.HoldingForLanding or FleetState.GoAround or FleetState.Landing
                 or FleetState.AwaitingStand or FleetState.TaxiIn;
             return planned.Arrival == liveArrival;

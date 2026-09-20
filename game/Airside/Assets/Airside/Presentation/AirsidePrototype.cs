@@ -2078,7 +2078,13 @@ namespace Airside.Presentation
             var phase = operation.Phase;
             if (FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var holding)
                 && holding.State == FleetState.HoldingForLanding && phase == AircraftPhase.Approach)
-                return (float)ApproachHold.HoldingFinalProgress(holding.Registration);
+            {
+                var pinned = (float)ApproachHold.HoldingFinalProgress(holding.Registration);
+                // A tiny look-ahead along final so facing is not frozen on the last rotation.
+                if (lookAheadSeconds > 0f)
+                    return Mathf.Min(0.98f, pinned + 0.008f);
+                return pinned;
+            }
 
             if (phase == AircraftPhase.Circuit)
             {
@@ -2129,10 +2135,12 @@ namespace Airside.Presentation
             if (_windsockSock == null)
                 return;
 
-            // Presentation-only: sock streams with a soft wind sway (not sim weather).
-            var wind = 12f + Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.WindsockSwayHz * Mathf.PI * 2f) * 8f;
-            var sway = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.WindsockRippleHz * Mathf.PI * 2f) * 6f;
-            _windsockSock.localRotation = Quaternion.Euler(0f, wind, sway);
+            // Aim the sock with the sim surface wind; keep a light sway so it does not look frozen.
+            var wind = _operations != null ? _operations.Wind : RunwayWeather.At(_clock, _clock.Now);
+            var heading = RunwayWeather.UnityYawFromTrue(wind.DirectionDegrees);
+            var sway = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.WindsockSwayHz * Mathf.PI * 2f) * 6f;
+            var limp = Mathf.Lerp(18f, 4f, Mathf.Clamp01(wind.Knots / 18f));
+            _windsockSock.localRotation = Quaternion.Euler(limp, heading + sway, 0f);
             // Keep parent scale stable; ripple fabric segments so authored children keep shape.
             _windsockSock.localScale = Vector3.one;
             // Each segment's ripple is an offset from the rotation it was built with. Writing
@@ -2145,12 +2153,13 @@ namespace Airside.Presentation
                     _windsockSegmentRest[i] = _windsockSock.GetChild(i).localRotation;
             }
 
+            var rippleAmp = Mathf.Lerp(2f, 7f, Mathf.Clamp01(wind.Knots / 16f));
             for (var i = 0; i < _windsockSock.childCount; i++)
             {
                 var seg = _windsockSock.GetChild(i);
                 var ripple = Mathf.Sin(
                     Time.unscaledTime * AirsideReusableMotion.WindsockRippleHz * Mathf.PI * 2f * 1.4f
-                    + i * 1.35f) * 5f;
+                    + i * 1.35f) * rippleAmp;
                 seg.localRotation = _windsockSegmentRest[i] * Quaternion.Euler(ripple * 0.25f, 0f, ripple);
             }
         }

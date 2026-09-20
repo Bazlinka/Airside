@@ -89,6 +89,8 @@ namespace Airside.Presentation
         {
             if (aircraft == null)
                 return string.Empty;
+            if (aircraft.Scheduled is { Cancelled: true } && aircraft.State == FleetState.AtStand)
+                return "cancelled";
             if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue && aircraft.Airline.IsPlayer)
             {
                 var prep = DeparturePrep.For(aircraft, now);

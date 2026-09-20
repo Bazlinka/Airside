@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **Fifteen more Adelaide play fixes.** Cabin doors stay open through
+  boarding; cancelled bookings stay cold and tag as cancelled; windsock
+  follows sim wind; approach pick/follow uses the assigned runway frame;
+  AwaitingStand shares one E2 queue; cross clear-of-runway is longer to
+  reduce exit conflicts; gate lead-in held through hold/takeoff; tower
+  refreshes the live end on clearance; AtDestination off Arrivals;
+  TaxiIn TIME is ETA STAND; holding finals get look-ahead facing; bad
+  saved runways fail restore; DepartureStand required for outbound
+  ground states; empty-stand holding uses the runway hold not bay 50D.
+
 - **12/30 landing and lineup no longer teleport.** Vacate starts at the
   remapped rollout end; lineup ends at the remapped takeoff start.
 

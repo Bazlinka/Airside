@@ -277,10 +277,13 @@ namespace Airside.Simulation
                         : null,
                     record.CompletedTrips);
                 if (data.Version >= 5)
-                    operations.RestoreMovementData(registration,
-                        Enum.TryParse(record.AssignedRunway, out RunwayDirection runway)
-                            ? runway : RunwayDirection.Runway05,
-                        record.WentAroundThisTrip);
+                {
+                    if (string.IsNullOrEmpty(record.AssignedRunway)
+                        || !Enum.TryParse(record.AssignedRunway, out RunwayDirection runway))
+                        throw new FormatException(
+                            $"Unknown assigned runway '{record.AssignedRunway}' for {registration}.");
+                    operations.RestoreMovementData(registration, runway, record.WentAroundThisTrip);
+                }
                 if (data.Version >= 8 && record.HasPrepStart)
                     operations.RestorePrepData(registration, new SimulationTime(record.PrepStartedAt));
             }

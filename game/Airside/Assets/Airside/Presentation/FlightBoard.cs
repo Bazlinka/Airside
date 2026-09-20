@@ -168,7 +168,7 @@ namespace Airside.Presentation
                 FleetState.GoAround => "RE-SEQUENCE",
                 FleetState.Landing => "ON RUNWAY",
                 FleetState.AwaitingStand => "WAIT SINCE",
-                FleetState.TaxiIn => "AT STAND",
+                FleetState.TaxiIn => "ETA STAND",
                 _ => "NEXT"
             };
         }
@@ -200,7 +200,7 @@ namespace Airside.Presentation
         }
 
         public static bool IsArrival(FleetAircraft aircraft) => aircraft != null && aircraft.State is
-            FleetState.AtDestination or FleetState.Inbound or FleetState.HoldingForLanding or FleetState.GoAround
+            FleetState.Inbound or FleetState.HoldingForLanding or FleetState.GoAround
             or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn;
 
         /// <summary>

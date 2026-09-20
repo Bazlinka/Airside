@@ -140,7 +140,7 @@ namespace Airside.Tests
             Assert.That(System.Math.Abs(q12.X - q05.X) + System.Math.Abs(q12.Z - q05.Z),
                 Is.GreaterThan(20f), "the second 12 arrival queues on its exit, not the 05 exit");
             Assert.That(AdelaideGround.ClearOfRunwaySeconds(AircraftType.Atr42, RunwayDirection.Runway12),
-                Is.LessThan(AdelaideGround.VacateFor(AircraftType.Atr42, RunwayDirection.Runway12).WholeSeconds / 2),
+                Is.LessThan(AdelaideGround.VacateFor(AircraftType.Atr42, RunwayDirection.Runway12).WholeSeconds * 0.7),
                 "the strip frees well before that long vacate finishes");
         }
 
@@ -212,6 +212,8 @@ namespace Airside.Tests
                 "VH-GA2", player, AircraftType.Atr42, FleetState.HoldingForLanding, new SimulationTime(goAroundAt),
                 null, default(StableId), default(StableId), kingscote, null, 0
             });
+            ops.RestoreMovementData("VH-GA1", RunwayDirection.Runway12, wentAroundThisTrip: false);
+            ops.RestoreMovementData("VH-GA2", RunwayDirection.Runway12, wentAroundThisTrip: false);
             var first = ops.Fleet[0];
 
             ops.Update();

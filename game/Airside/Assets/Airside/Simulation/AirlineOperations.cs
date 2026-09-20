@@ -585,6 +585,8 @@ namespace Airside.Simulation
             aircraft.Restore(state, stateStartedAt, stateEndsAt);
             if (RequiresTripDestination(state) && currentDestination == null)
                 throw new FormatException($"{registration} is {state} with no destination.");
+            if (RequiresDepartureStand(state) && string.IsNullOrEmpty(departureStand.Value))
+                throw new FormatException($"{registration} is {state} with no departure stand.");
             if (HoldsStand(aircraft) && (!_stands.Contains(stand) || !IsStandFree(stand)))
                 throw new FormatException($"{registration} is on stand '{stand}', which is missing, unknown or taken.");
             if (HoldsStand(aircraft) && !StandFits(type, stand))
@@ -850,13 +852,15 @@ namespace Airside.Simulation
             return aircraft.State == FleetState.TaxiOut && aircraft.DepartureStand.Equals(stand);
         }
 
-        /// <summary>A gate's lead-in is in use while an aircraft taxis in to it or out from it.</summary>
+        /// <summary>A gate's lead-in is in use while an aircraft taxis in to it, out from it,
+        /// or is still on the apron after pushback (holding short / lining up).</summary>
         private static bool UsesLeadIn(FleetAircraft aircraft, out StableId gate)
         {
             gate = aircraft.State switch
             {
                 FleetState.TaxiIn => aircraft.Stand,
-                FleetState.TaxiOut => aircraft.DepartureStand,
+                FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff
+                    => aircraft.DepartureStand,
                 _ => default
             };
             return gate.Value != null && AdelaideGround.IsTerminalGate(gate);
@@ -1526,6 +1530,12 @@ namespace Airside.Simulation
             if (next == null)
                 return false;
 
+            // Prefer the live end on this strip (05↔23 or 12↔30). Do not bounce a
+            // regional onto the other strip in the middle of a clearance.
+            var refreshed = RunwayFor(next);
+            if (RunwayWeather.IsMainRunway(refreshed) == mainStrip)
+                next.AssignedRunway = refreshed;
+
             var landing = next.State == FleetState.HoldingForLanding;
             var profile = AircraftPerformance.For(next.Type);
             if (landing && ShouldGoAround(next, now, mainStrip))
@@ -1660,6 +1670,10 @@ namespace Airside.Simulation
             FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff
             or FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound
             or FleetState.HoldingForLanding or FleetState.GoAround or FleetState.Landing;
+
+        /// <summary>Outbound ground states must remember which stand they left.</summary>
+        internal static bool RequiresDepartureStand(FleetState state) => state is
+            FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff;
 
         /// <summary>
         /// The tower stores a missed approach as <see cref="FleetState.Landing"/> lasting only

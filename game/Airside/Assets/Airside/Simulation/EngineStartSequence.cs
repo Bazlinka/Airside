@@ -1,3 +1,5 @@
+using Airside.Domain;
+
 namespace Airside.Simulation
 {
     /// <summary>What a parked or departing aircraft's engines, beacon and doors are doing.</summary>
@@ -37,7 +39,12 @@ namespace Airside.Simulation
     public static class EngineStartSequence
     {
         public const double BeaconOnBeforeSeconds = 180;
-        public const double DoorsCloseBeforeSeconds = 160;
+        /// <summary>
+        /// Close doors after boarding would finish for a jet (180 s) and shortly
+        /// before the right engine start. Kept below <see cref="RightStartBeforeSeconds"/>.
+        /// Player prep still forces doors open through Boarding (see <see cref="For"/>).
+        /// </summary>
+        public const double DoorsCloseBeforeSeconds = 25;
         public const double RightStartBeforeSeconds = 120;
         public const double LeftStartBeforeSeconds = 70;
         public const double SpoolSeconds = 30;
@@ -55,16 +62,38 @@ namespace Airside.Simulation
             if (aircraft == null || aircraft.State != FleetState.AtStand)
                 return EngineState.Running;
 
+            if (aircraft.Scheduled is { Cancelled: true })
+            {
+                // A cancelled booking must not spool up for a push that will never happen.
+                if (aircraft.CompletedTrips == 0)
+                    return EngineState.ColdAndOpen;
+                var parkedCancelled = nowSeconds - aircraft.StateStartedAt.ElapsedSeconds;
+                return new EngineState(
+                    1f - Ramp(parkedCancelled - LeftStopAfterSeconds),
+                    1f - Ramp(parkedCancelled - RightStopAfterSeconds),
+                    beacon: parkedCancelled < BeaconOffAfterSeconds,
+                    doorsOpen: parkedCancelled >= DoorsOpenAfterSeconds);
+            }
+
             if (aircraft.Scheduled is { } departure)
             {
                 var until = departure.DepartAt.ElapsedSeconds - nowSeconds;
+                // Keep doors open while the player is still fueling / catering / boarding.
+                var boardingOpen = false;
+                if (aircraft.Airline.IsPlayer)
+                {
+                    var prep = DeparturePrep.For(aircraft, new SimulationTime((long)Math.Max(0, nowSeconds)));
+                    boardingOpen = prep.Stage is DeparturePrepStage.Fuel
+                        or DeparturePrepStage.Catering or DeparturePrepStage.Boarding;
+                }
+
                 if (until <= BeaconOnBeforeSeconds)
                 {
                     return new EngineState(
                         Ramp(LeftStartBeforeSeconds - until),
                         Ramp(RightStartBeforeSeconds - until),
                         beacon: true,
-                        doorsOpen: until > DoorsCloseBeforeSeconds);
+                        doorsOpen: boardingOpen || until > DoorsCloseBeforeSeconds);
                 }
             }
 

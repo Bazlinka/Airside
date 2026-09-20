@@ -34,9 +34,15 @@ namespace Airside.Tests
         {
             var method = typeof(AirlineOperations).GetMethod("RestoreAircraft", BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null);
+            var departureStand = AirlineOperations.RequiresDepartureStand(state)
+                ? (stand.Value != null && stand.Value.Length > 0 ? stand
+                    : AirlineOperations.NeedsTerminalGate(type)
+                        ? AirlineOperations.AdelaideTerminalGates[0]
+                        : Bay50D)
+                : default;
             method.Invoke(ops, new object[]
             {
-                registration, airline, type, state, new SimulationTime(startedAt), null, stand, default(StableId),
+                registration, airline, type, state, new SimulationTime(startedAt), null, stand, departureStand,
                 destination, null, 0
             });
             return ops.Fleet[ops.Fleet.Count - 1];

@@ -141,12 +141,14 @@ namespace Airside.Simulation
             if (fleet == null || aircraft == null)
                 return 0;
             var slot = 0;
+            var shareStrip = aircraft.State != FleetState.AwaitingStand;
             for (var i = 0; i < fleet.Count; i++)
             {
                 var other = fleet[i];
                 if (ReferenceEquals(other, aircraft) || other.State != aircraft.State)
                     continue;
-                if (other.AssignedRunway != aircraft.AssignedRunway)
+                // AwaitingStand shares E2 — do not let each strip claim slot 0 on the same point.
+                if (shareStrip && other.AssignedRunway != aircraft.AssignedRunway)
                     continue;
                 var order = other.StateStartedAt.CompareTo(aircraft.StateStartedAt);
                 if (order < 0 || order == 0

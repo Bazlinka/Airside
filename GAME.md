@@ -1,5 +1,13 @@
 ## Where to resume — session handoff
 
+- **2026-09-20 Cursor — more play fixes on the day-progress branch
+  (branch `cursor/day-progress-and-bugfixes-4d7a`).** Keep going after
+  the day strip + ten bugs: Cathay season exit, prep timing, board
+  auto-scroll to now, day-plan StandFits, A321 not widebody, typed
+  hold-short poses, cross-runway save reconcile.
+  - **Evidence:** `scripts/test-domain.sh` **450/450**.
+  - **NEXT:** Mac Unity EditMode, then merge and rebuild from main.
+
 - **2026-09-20 Cursor — day progress + ten high-impact fixes
   (branch `cursor/day-progress-and-bugfixes-4d7a`).** Bailey: the
   full-day Operations board was lists with no sense of "where we are

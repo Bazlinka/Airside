@@ -1,5 +1,17 @@
 ## Unreleased
 
+- **Cathay leaves when the season ends.** Parked CPA frees GATE-18 after
+  ~27 Mar; airborne jets finish the trip first. Prep no longer starts at
+  book time — fuelling begins TotalSeconds before pushback.
+
+- **Operations opens near now.** Arrivals/Departures snap the scroll to
+  the first live or upcoming row instead of a wall of morning Departed
+  lines. Day-plan stands respect StandFits (no Q400 on walk-outs).
+
+- **International tier needs a real widebody.** A321neo no longer counts
+  as wide. Hold-short poses use the aircraft's own type. Pre-dual-strip
+  saves reconcile the cross-runway free time on load.
+
 - **Operations shows where you are in the day.** A day strip under the
   header tracks the 06:00–21:00 operating window with a now caret, bank
   density, and done / live / to-go counts. Past planned rows mute and

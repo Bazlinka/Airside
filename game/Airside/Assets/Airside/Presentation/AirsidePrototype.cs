@@ -1410,10 +1410,15 @@ namespace Airside.Presentation
             var enginesOn = engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase);
             var night = daylight < 0.35f;
             var landingLights = AirsideReusableMotion.LandingLightsOn(phase, progress01, drawnOnGround: engines.HasValue);
-            // Only with engines running: a cold, parked fleet aircraft used to light its taxi
-            // lamp (a spot light) all night, one per aircraft on the apron.
+            // Ground-movement phases only. This used to also gate on `night ||`, which made
+            // the phase check meaningless after dark: EngineStartSequence spools engines up to
+            // 120s before an at-stand departure and ramps them down over up to 35s after an
+            // at-stand arrival, so `enginesOn` was already true while `phase == AtStand` for
+            // those windows — every night departure/arrival beamed the nose taxi spotlight
+            // from a motionless, gate-parked aircraft. A cold, parked aircraft never lit it;
+            // this was the same bug in a narrower, still-visible form.
             var taxiLights = !airborne && enginesOn
-                && (night || phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback);
+                && phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback;
 
             for (var i = 0; i < parts.Length; i++)
             {

@@ -199,6 +199,16 @@ namespace Airside.Presentation
 
             var overview = _activeWorkspace == HudWorkspace.None && !_devToolsOpen;
 
+            // A first click on a contract card arms it, the second commits (AcceptContractFromHud)
+            // so an accidental click never signs a service commitment — but that arm used to
+            // survive leaving the Contracts workspace entirely (switch pages, Esc, open dev
+            // tools, follow a flight onto the map). Coming back later, one exploratory click on
+            // a card the player had forgotten was armed would silently accept it. Checked here,
+            // every frame, rather than at each of the several places `_activeWorkspace` changes,
+            // so no future navigation path can reintroduce the same gap.
+            if (_activeWorkspace != HudWorkspace.Contracts)
+                _highlightedContractId = null;
+
             // Under every panel, so a tag never sits on top of a button.
             DrawFieldTags(small);
             DrawTopBar(placement);

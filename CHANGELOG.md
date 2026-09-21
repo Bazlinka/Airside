@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Gate lead-ins release at Holding Short (ADR 0095).** A departure still holds its
+  physical gate through taxi-out, but no longer blocks another gate movement after it has
+  cleared the lead-in and joined the runway queue.
+
 - **Base growth is now part of the campaign.** Eyre Peninsula requires the Expanded Regional base, Interstate requires Jet Gate, and Going Global requires the International base. Campaign progress derives from the existing persisted PlayerBaseLevel, so no save migration is needed.
 
 - **Base upgrades explain their payoff.** Career now names current maintenance capability, ground-service speed and stand/gate access, and previews the next base upgrade as concrete operational benefits before the player spends the money.

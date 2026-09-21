@@ -1268,7 +1268,7 @@ namespace Airside.Presentation
         {
             var dest = aircraft.Scheduled.Value.Destination.Name;
             var when = ClockText(aircraft.Scheduled.Value.DepartAt);
-            var prep = DeparturePrep.For(aircraft, _clock.Now);
+            var prep = DeparturePrep.For(aircraft, _clock.Now, _operations.CareerState.BaseLevel);
             if (!prep.Ready)
                 return $"On {StandNames.Display(aircraft.Stand)} · {prep.Label} · {AirlineClock.DurationText(prep.RemainingSeconds)} left · departs {when} for {dest}";
             return $"On {StandNames.Display(aircraft.Stand)} · ready · departs {when} for {dest}";

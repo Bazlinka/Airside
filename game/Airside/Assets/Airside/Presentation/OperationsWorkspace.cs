@@ -506,7 +506,7 @@ namespace Airside.Presentation
 
             if (aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
             {
-                var prep = DeparturePrep.For(aircraft, now);
+                var prep = DeparturePrep.For(aircraft, now, baseLevel);
                 _prep.Add(Check("Fuel", prep.FuelProgress, prep.Stage == DeparturePrepStage.Fuel));
                 _prep.Add(Check("Catering", prep.CateringProgress, prep.Stage == DeparturePrepStage.Catering));
                 _prep.Add(Check("Baggage", prep.BaggageProgress, prep.Stage == DeparturePrepStage.Baggage));

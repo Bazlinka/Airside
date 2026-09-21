@@ -63,7 +63,13 @@ namespace Airside.Simulation
 
         public static PlayerBaseLevel MinimumFor(IEnumerable<AircraftType> ownedTypes, int ownedCount)
         {
-            var level = ownedCount > 1 ? PlayerBaseLevel.ExpandedRegional : PlayerBaseLevel.Starter;
+            var level = ownedCount switch
+            {
+                >= 6 => PlayerBaseLevel.International,
+                >= 4 => PlayerBaseLevel.JetGate,
+                >= 2 => PlayerBaseLevel.ExpandedRegional,
+                _ => PlayerBaseLevel.Starter
+            };
             if (ownedTypes == null) return level;
             foreach (var type in ownedTypes)
             {

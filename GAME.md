@@ -38,6 +38,8 @@
     next base, the same real progress bar, exact remaining gates and what the unlock means.
   - Career-target destination detail now has **VIEW CONTRACTS**, wiring Map → Contracts directly
     through the existing workspace dispatcher rather than making the player tab-hop manually.
+  - Legacy v11 migration now chooses the smallest base that can hold the *entire* existing player fleet,
+    including 4–6-aircraft saves, before applying aircraft-class capability requirements.
   - **Evidence:** connector-only edit; tests cannot be executed in this GitHub session. Branch is
     intentionally not merged. Run Unity EditMode before merge.
   - **NEXT:** visual/test pass, then extend this seam into physical airport capability/facility

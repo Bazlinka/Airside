@@ -54,11 +54,10 @@ namespace Airside.Presentation
     }
 
     /// <summary>
-    /// The Stats/career workspace (ADR 0066): a real answer to "how am I actually doing" —
-    /// funds, lifetime revenue, reliability, tier and exactly what the next one still needs,
-    /// fleet size, milestones and recent contract history. Everything here already exists
-    /// elsewhere (Funds/Reliability on the objective card fallback line, Tier gating buys);
-    /// this is the first place they are all shown together, accurately, without digging.
+    /// The Career page (ADR 0066 / 0079): the player's profile — Adelaide rank, who they are,
+    /// what they fly, funds, and the next hangar step — plus the live ranking table, tier
+    /// progress, milestones and contract history. Ranking is completed rotations in this save,
+    /// not invented passenger share.
     /// </summary>
     public sealed class StatsWorkspaceModel
     {
@@ -86,6 +85,15 @@ namespace Airside.Presentation
         public string ReliabilityLine { get; private set; } = string.Empty;
         public string TierLine { get; private set; } = string.Empty;
         public string FleetLine { get; private set; } = string.Empty;
+
+        /// <summary>"Provisional · 100% reliability · 0 rotations flown" (ADR 0079).</summary>
+        public string ProfileIdentityLine { get; private set; } = string.Empty;
+
+        /// <summary>"1 of 4 aircraft · Saab 340B".</summary>
+        public string ProfileFleetLine { get; private set; } = string.Empty;
+
+        /// <summary>Next hangar step, or fleet-full / nothing left to buy.</summary>
+        public string ProfileNextAircraftLine { get; private set; } = string.Empty;
 
         /// <summary>False only at International — there is nothing further to work toward.</summary>
         public bool HasNextTier { get; private set; }
@@ -124,6 +132,9 @@ namespace Airside.Presentation
             ReliabilityLine = string.Empty;
             TierLine = string.Empty;
             FleetLine = string.Empty;
+            ProfileIdentityLine = string.Empty;
+            ProfileFleetLine = string.Empty;
+            ProfileNextAircraftLine = string.Empty;
             HasNextTier = false;
             NextTierTitle = string.Empty;
             NextTierRequirementLine = string.Empty;
@@ -149,6 +160,9 @@ namespace Airside.Presentation
             ReliabilityLine = $"{career.Reliability}% reliability";
             TierLine = $"{career.Tier} tier";
             FleetLine = $"{fleetSize} of {AircraftAcquisition.MaxPlayerAircraft} aircraft";
+            ProfileIdentityLine = $"{career.Tier} · {career.Reliability}% reliability · {RotationsFlownText(career.CompletedPlayerRotations)}";
+            ProfileFleetLine = $"{FleetLine} · {FleetTypeNames(ownedTypes)}";
+            ProfileNextAircraftLine = NextAircraftLine(career, fleetSize, ownedTypes);
 
             FillNextTier(career, ownedTypes);
             FillAdelaideStandings(operations);
@@ -232,6 +246,51 @@ namespace Airside.Presentation
             var next = _standings.Take(playerIndex).Last(row => row.CompletedRotations > player.CompletedRotations);
             var needed = next.CompletedRotations - player.CompletedRotations + 1;
             CompetitiveTargetLine = $"Pass {next.AirlineName}: {needed} more rotation" + (needed == 1 ? "." : "s.");
+        }
+
+        private static string RotationsFlownText(int rotations) =>
+            rotations == 1 ? "1 rotation flown" : $"{rotations} rotations flown";
+
+        private static string FleetTypeNames(IReadOnlyList<AircraftType> ownedTypes)
+        {
+            if (ownedTypes == null || ownedTypes.Count == 0)
+                return "no aircraft";
+            var seen = new List<string>();
+            foreach (var type in ownedTypes)
+            {
+                if (type == null || seen.Contains(type.Name))
+                    continue;
+                seen.Add(type.Name);
+            }
+
+            return seen.Count == 0 ? "no aircraft" : string.Join(" · ", seen);
+        }
+
+        private static string NextAircraftLine(AirlineCareerState career, int fleetSize,
+            IReadOnlyList<AircraftType> ownedTypes)
+        {
+            var next = CareerProgress.NextAircraft(career, fleetSize);
+            if (next.FleetFull || !next.HasOffer)
+                return "Fleet is full — no further aircraft to buy";
+            var alreadyOwned = false;
+            if (ownedTypes != null)
+            {
+                foreach (var type in ownedTypes)
+                {
+                    if (type != null && type.Id == next.Offer.Type.Id)
+                    {
+                        alreadyOwned = true;
+                        break;
+                    }
+                }
+            }
+
+            var name = alreadyOwned ? $"Another {next.Offer.Type.Name}" : $"Next aircraft · {next.Offer.Type.Name}";
+            if (next.ReadyToBuy)
+                return $"{name} · ready to buy";
+            var funds = Math.Min(career.Funds, next.Offer.Price);
+            var rotations = Math.Min(career.CompletedPlayerRotations, next.Offer.RequiredRotations);
+            return $"{name} · ${funds:N0} of ${next.Offer.Price:N0} · {rotations} of {next.Offer.RequiredRotations} rotations";
         }
 
         private void FillNextTier(AirlineCareerState career, IReadOnlyList<AircraftType> ownedTypes)
@@ -480,14 +539,14 @@ namespace Airside.Presentation
 
         private static void PaintOverview(HudDrawList into, StatsWorkspaceModel model, StatsWorkspaceLayout layout)
         {
-            into.Caption(layout.OverviewCaption, "OVERVIEW");
-            var stats = new[]
-            {
-                model.FundsLine, model.LifetimeRevenueLine, model.ReliabilityLine, model.TierLine,
-                model.FleetLine, model.AdelaideRankLine
-            };
-            for (var i = 0; i < stats.Length; i++)
-                into.Text(layout.StatRow(i).Inset(0f, 2f, 0f, 0f), stats[i], 14f);
+            into.Caption(layout.OverviewCaption, "PROFILE");
+            into.Text(layout.StatRow(0).Inset(0f, 2f, 0f, 0f), model.AdelaideRankLine, 15f,
+                HudTone.Caution, HudTextStyle.Bold);
+            into.Text(layout.StatRow(1).Inset(0f, 2f, 0f, 0f), model.ProfileIdentityLine, 14f);
+            into.Text(layout.StatRow(2).Inset(0f, 2f, 0f, 0f), model.ProfileFleetLine, 14f);
+            into.Text(layout.StatRow(3).Inset(0f, 2f, 0f, 0f), model.FundsLine, 14f);
+            into.Text(layout.StatRow(4).Inset(0f, 2f, 0f, 0f), model.LifetimeRevenueLine, 14f);
+            into.Text(layout.StatRow(5).Inset(0f, 2f, 0f, 0f), model.ProfileNextAircraftLine, 13f, HudTone.Muted);
 
             into.Caption(layout.NextTierCaption, "NEXT TIER");
             into.Text(layout.NextTierTitleBox, model.NextTierTitle, 15f, HudTone.Default, HudTextStyle.Bold);
@@ -532,7 +591,7 @@ namespace Airside.Presentation
             if (shown <= 0)
                 return;
 
-            into.Caption(layout.CompetitionCaption, "ADELAIDE ACTIVITY");
+            into.Caption(layout.CompetitionCaption, "ADELAIDE RANKING");
             into.Text(layout.CompetitionSummary, model.AdelaideRankLine, 12f, HudTone.Muted);
             var rows = model.VisibleStandings(shown);
             for (var i = 0; i < rows.Count; i++)

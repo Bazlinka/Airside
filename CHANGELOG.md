@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Career page is the airline profile (ADR 0079).** Rank is the first line (`#N of M at Adelaide`),
+  then tier, reliability, rotations flown, owned types, funds, and the next hangar step.
+  The live ranking table stays as Adelaide ranking — completed rotations only.
+
 - **Hangar goal on the objective card + on-time reliability (ADR 0078).** No active contract
   → objective shows "Save for a …" with `$funds of $price · N of M rotations` toward the next
   hangar buy (usually ATR). Pushback lateness vs booked time adjusts reliability (+1 / 0 / −1 /

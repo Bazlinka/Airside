@@ -27,6 +27,11 @@ namespace Airside.Tests
             Assert.That(model.TierLine, Is.EqualTo("Provisional tier"));
             Assert.That(model.FleetLine, Is.EqualTo($"1 of {AircraftAcquisition.MaxPlayerAircraft} aircraft"));
             Assert.That(model.AdelaideRankLine, Is.EqualTo("#1 of 1 at Adelaide"));
+            Assert.That(model.ProfileIdentityLine, Does.Contain("Provisional"));
+            Assert.That(model.ProfileIdentityLine, Does.Contain("0 rotations flown"));
+            Assert.That(model.ProfileFleetLine, Does.Contain("Saab 340B"));
+            Assert.That(model.ProfileNextAircraftLine, Does.Contain("ATR 42"));
+            Assert.That(model.ProfileNextAircraftLine, Does.Contain($"${AirlineCareerState.StartingFunds:N0}"));
             Assert.That(model.ContractHistory, Is.Empty);
             Assert.That(model.EmptyHistoryLine, Is.Not.Empty);
             Assert.That(model.CurrentLiveryHex, Is.EqualTo(ops.PlayerAirline.LiveryHex));
@@ -71,6 +76,22 @@ namespace Airside.Tests
                 Is.EqualTo(new[] { 6, 3, 2 }));
             Assert.That(model.AdelaideRankLine, Is.EqualTo("#2 of 3 at Adelaide"));
             Assert.That(model.CompetitiveTargetLine, Is.EqualTo("Pass Rex: 4 more rotations."));
+        }
+
+        [Test]
+        public void Stats_ProfileNamesOwnedTypesAndTheNextHangarStep()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            ops.RestoreCareerState(3_400, 96, nameof(OperatingTier.Provisional), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 3);
+            var model = new StatsWorkspaceModel();
+            model.Rebuild(ops, clock.Now);
+
+            Assert.That(model.ProfileIdentityLine, Is.EqualTo("Provisional · 96% reliability · 3 rotations flown"));
+            Assert.That(model.ProfileFleetLine, Does.StartWith("1 of 4 aircraft · Saab 340B"));
+            Assert.That(model.ProfileNextAircraftLine, Does.Contain("ATR 42"));
+            Assert.That(model.ProfileNextAircraftLine, Does.Contain("$3,400 of $5,200"));
+            Assert.That(model.ProfileNextAircraftLine, Does.Contain("3 of 5 rotations"));
         }
 
         [Test]

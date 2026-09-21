@@ -1,5 +1,14 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Cursor — Career page is the airline profile (branch
+  `cursor/career-profile-rank-22df`, ADR 0079).** Bailey: ranking, and more about "my profile."
+  Career leads with Adelaide rank, identity (tier / reliability / rotations flown), owned
+  types, money, and the next hangar step. The rotation ranking table stays underneath as
+  ADELAIDE RANKING — still real completed rotations, not passenger share.
+  - **Evidence:** `scripts/test-domain.sh` **566/566**.
+  - **NEXT:** Unity Play look at the Career page; punctuality toast and late-pay haircut
+    still open from the earlier suggestion list.
+
 - **2026-09-21 Cursor — hangar goal + on-time reliability (branch
   `cursor/career-mechanics-hangar-ontime-22df`, ADR 0078).** Bailey: keep improving game
   mechanics (after agreeing per-flight pay, not daily/hourly/pax).

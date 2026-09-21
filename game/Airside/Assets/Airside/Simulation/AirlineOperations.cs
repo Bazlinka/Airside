@@ -846,8 +846,35 @@ namespace Airside.Simulation
             return types;
         }
 
-        public IReadOnlyList<RouteContractDefinition> MarketOffers() =>
-            ContractMarket.At(_processedTo, PlayerOwnedTypes(), CareerState.Reliability, CareerState.Tier);
+        /// <summary>How many authored career contracts head the offers at once.</summary>
+        public const int FeaturedCareerContracts = 2;
+
+        /// <summary>
+        /// The contracts on offer: the next authored career contracts the airline's tier allows
+        /// and it has not yet fulfilled (ADR 0084), then the rotating market. The authored ones used
+        /// to appear nowhere but the objective card's fallback.
+        /// </summary>
+        public IReadOnlyList<RouteContractDefinition> MarketOffers()
+        {
+            var offers = new List<RouteContractDefinition>();
+            if (CareerState != null)
+            {
+                foreach (var definition in RouteContractCatalogue.All)
+                {
+                    if (offers.Count >= FeaturedCareerContracts)
+                        break;
+                    if (CareerState.HasCompleted(definition.Id) || CareerState.Tier < definition.RequiredTier)
+                        continue;
+                    if (CareerState.ActiveContract != null && CareerState.ActiveContract.DefinitionId == definition.Id)
+                        continue;
+                    offers.Add(definition);
+                }
+            }
+
+            offers.AddRange(ContractMarket.At(_processedTo, PlayerOwnedTypes(), CareerState?.Reliability ?? 0,
+                CareerState?.Tier ?? OperatingTier.Provisional));
+            return offers;
+        }
 
         /// <summary>Every catalogue destination except home, reachable or not, for the map.</summary>
         public IEnumerable<Destination> MapDestinations()

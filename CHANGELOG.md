@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Twelve more career contracts, now actually on offer (ADR 0084).** Mount Gambier, Ceduna,
+  Coober Pedy, Mildura, Broken Hill, Canberra, Sydney, Brisbane, Perth, Auckland, Singapore and
+  Hong Kong. The Contracts page now leads with the next two your tier allows, then the rotating
+  market; hand-written contracts used to show only as an objective-card fallback.
+  Unity EditMode **845/846** (only the gate lead-in decision test).
+
 - **Career campaign: five chapters (ADR 0083).** Island Hopper → Eyre Peninsula → Regional
   Network → Interstate → Going Global. Each is a checklist of real goals (contracts and
   where, tier, fleet, reliability) with a one-off cash reward; the objective card is headed

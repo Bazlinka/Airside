@@ -83,5 +83,26 @@ namespace Airside.Tests
 
         private static CompletedContractRecord Record(string destination) =>
             new("C-" + destination, "ADL", destination, 1000, new SimulationTime(0));
-    }
+    
+        [Test]
+        public void EveryCareerContract_IsFlyableByItsType()
+        {
+            foreach (var definition in RouteContractCatalogue.All)
+            {
+                Assert.That(DestinationCatalogue.TryFind(definition.DestinationCode, out var destination), Is.True, definition.Id);
+                var km = DestinationCatalogue.Adelaide.DistanceKmTo(destination);
+                Assert.That(definition.EligibleType.CanReach(km), Is.True, $"{definition.Id}: {definition.EligibleType.Name} cannot reach {km:0} km");
+                Assert.That(RouteAccess.Allows(definition.EligibleType, destination), Is.True, $"{definition.Id}: route band");
+            }
+        }
+
+        [Test]
+        public void Offers_LeadWithTheNextCareerContracts()
+        {
+            var (_, ops, _) = HudTestAirline.Create("Offers Air");
+            var offers = ops.MarketOffers();
+            Assert.That(offers.Take(AirlineOperations.FeaturedCareerContracts).Select(o => o.Id),
+                Is.EqualTo(new[] { "REG-KGC-INTRO", "REG-PLO-INTRO" }));
+        }
+}
 }

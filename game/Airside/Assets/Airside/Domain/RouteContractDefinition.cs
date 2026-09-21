@@ -133,12 +133,170 @@ namespace Airside.Domain
             reliabilityLossOnCancel: 4,
             unlocksTier: OperatingTier.Domestic);
 
+        // ---- Career contracts (ADR 0084): a stepping stone per campaign chapter ----
+
+        public static readonly RouteContractDefinition RegionalMountGambier = new(
+            id: "REG-MGB",
+            originCode: "ADL",
+            destinationCode: "MGB",
+            eligibleType: AircraftType.Atr42,
+            requiredRotations: 5,
+            paymentPerRotation: 650,
+            completionReward: 1800,
+            reliabilityGainPerRotation: 2,
+            requiredTier: OperatingTier.Regional,
+            reliabilityLossOnCancel: 3);
+
+        public static readonly RouteContractDefinition RegionalCeduna = new(
+            id: "REG-CED",
+            originCode: "ADL",
+            destinationCode: "CED",
+            eligibleType: AircraftType.Saab340,
+            requiredRotations: 4,
+            paymentPerRotation: 700,
+            completionReward: 1600,
+            reliabilityGainPerRotation: 2,
+            requiredTier: OperatingTier.Regional,
+            reliabilityLossOnCancel: 3);
+
+        public static readonly RouteContractDefinition RegionalCooberPedy = new(
+            id: "REG-CPD",
+            originCode: "ADL",
+            destinationCode: "CPD",
+            eligibleType: AircraftType.Atr42,
+            requiredRotations: 4,
+            paymentPerRotation: 950,
+            completionReward: 2400,
+            reliabilityGainPerRotation: 2,
+            requiredTier: OperatingTier.Regional,
+            reliabilityLossOnCancel: 3);
+
+        public static readonly RouteContractDefinition RegionalMildura = new(
+            id: "REG-MQL",
+            originCode: "ADL",
+            destinationCode: "MQL",
+            eligibleType: AircraftType.Dash8Q400,
+            requiredRotations: 4,
+            paymentPerRotation: 800,
+            completionReward: 2200,
+            reliabilityGainPerRotation: 2,
+            requiredTier: OperatingTier.Regional,
+            reliabilityLossOnCancel: 3);
+
+        public static readonly RouteContractDefinition RegionalBrokenHill = new(
+            id: "REG-BHQ",
+            originCode: "ADL",
+            destinationCode: "BHQ",
+            eligibleType: AircraftType.Dash8Q400,
+            requiredRotations: 4,
+            paymentPerRotation: 900,
+            completionReward: 2400,
+            reliabilityGainPerRotation: 2,
+            requiredTier: OperatingTier.Regional,
+            reliabilityLossOnCancel: 3);
+
+        public static readonly RouteContractDefinition DomesticCanberra = new(
+            id: "DOM-CBR",
+            originCode: "ADL",
+            destinationCode: "CBR",
+            eligibleType: AircraftType.Dash8Q400,
+            requiredRotations: 4,
+            paymentPerRotation: 1300,
+            completionReward: 3200,
+            reliabilityGainPerRotation: 3,
+            requiredTier: OperatingTier.Domestic,
+            reliabilityLossOnCancel: 4);
+
+        public static readonly RouteContractDefinition DomesticSydney = new(
+            id: "DOM-SYD",
+            originCode: "ADL",
+            destinationCode: "SYD",
+            eligibleType: AircraftType.Boeing7378,
+            requiredRotations: 5,
+            paymentPerRotation: 2400,
+            completionReward: 6000,
+            reliabilityGainPerRotation: 3,
+            requiredTier: OperatingTier.Domestic,
+            reliabilityLossOnCancel: 4);
+
+        public static readonly RouteContractDefinition DomesticBrisbane = new(
+            id: "DOM-BNE",
+            originCode: "ADL",
+            destinationCode: "BNE",
+            eligibleType: AircraftType.Boeing7378,
+            requiredRotations: 4,
+            paymentPerRotation: 3000,
+            completionReward: 7500,
+            reliabilityGainPerRotation: 3,
+            requiredTier: OperatingTier.Domestic,
+            reliabilityLossOnCancel: 4);
+
+        public static readonly RouteContractDefinition DomesticPerth = new(
+            id: "DOM-PER",
+            originCode: "ADL",
+            destinationCode: "PER",
+            eligibleType: AircraftType.AirbusA321Neo,
+            requiredRotations: 4,
+            paymentPerRotation: 3800,
+            completionReward: 9000,
+            reliabilityGainPerRotation: 3,
+            requiredTier: OperatingTier.Domestic,
+            reliabilityLossOnCancel: 5);
+
+        public static readonly RouteContractDefinition InternationalAuckland = new(
+            id: "INT-AKL",
+            originCode: "ADL",
+            destinationCode: "AKL",
+            eligibleType: AircraftType.AirbusA321Neo,
+            requiredRotations: 3,
+            paymentPerRotation: 5500,
+            completionReward: 12000,
+            reliabilityGainPerRotation: 3,
+            requiredTier: OperatingTier.International,
+            reliabilityLossOnCancel: 5);
+
+        public static readonly RouteContractDefinition InternationalSingapore = new(
+            id: "INT-SIN",
+            originCode: "ADL",
+            destinationCode: "SIN",
+            eligibleType: AircraftType.AirbusA350900,
+            requiredRotations: 3,
+            paymentPerRotation: 11000,
+            completionReward: 25000,
+            reliabilityGainPerRotation: 3,
+            requiredTier: OperatingTier.International,
+            reliabilityLossOnCancel: 5);
+
+        public static readonly RouteContractDefinition InternationalHongKong = new(
+            id: "INT-HKG",
+            originCode: "ADL",
+            destinationCode: "HKG",
+            eligibleType: AircraftType.Boeing78710,
+            requiredRotations: 3,
+            paymentPerRotation: 13000,
+            completionReward: 30000,
+            reliabilityGainPerRotation: 3,
+            requiredTier: OperatingTier.International,
+            reliabilityLossOnCancel: 5);
+
         public static readonly IReadOnlyList<RouteContractDefinition> All = new[]
         {
             RegionalKingscoteIntro,
             RegionalPortLincolnIntro,
             RegionalWhyallaIntro,
-            DomesticMelbourneIntro
+            DomesticMelbourneIntro,
+            RegionalMountGambier,
+            RegionalCeduna,
+            RegionalCooberPedy,
+            RegionalMildura,
+            RegionalBrokenHill,
+            DomesticCanberra,
+            DomesticSydney,
+            DomesticBrisbane,
+            DomesticPerth,
+            InternationalAuckland,
+            InternationalSingapore,
+            InternationalHongKong
         };
 
         public static bool TryFind(string id, out RouteContractDefinition definition)

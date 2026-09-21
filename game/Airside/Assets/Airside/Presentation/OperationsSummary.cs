@@ -117,14 +117,15 @@ namespace Airside.Presentation
                 var hangar = CareerProgress.NextAircraft(career, FleetCount(playerFleet));
                 if (hangar.HasOffer && !hangar.FleetFull)
                 {
+                    var baseBlocked = !string.IsNullOrEmpty(hangar.BaseRequirementLine);
                     return new CareerObjective(
-                        !string.IsNullOrEmpty(hangar.BaseRequirementLine)
+                        baseBlocked
                             ? "Expand your Adelaide base"
                             : hangar.ReadyToBuy
                                 ? $"Buy {Article.A(hangar.Offer.Type.Name)} in Fleet"
                                 : $"Save for {Article.A(hangar.Offer.Type.Name)}",
-                        HangarProgressText(hangar, career),
-                        HangarProgress01(hangar, career),
+                        baseBlocked ? BaseProgressText(career) : HangarProgressText(hangar, career),
+                        baseBlocked ? BaseProgress01(career) : HangarProgress01(hangar, career),
                         next,
                         nextSeverity);
                 }
@@ -467,6 +468,26 @@ namespace Airside.Presentation
             return ($"{chapter.GoalsDone} of {chapter.Goals.Count} chapter goals · {career.Base.Title}", progress);
         }
 
+        private static string BaseProgressText(AirlineCareerState career)
+        {
+            if (career == null || !PlayerBase.TryNext(career.BaseLevel, out var next))
+                return string.Empty;
+            var funds = Math.Min(career.Funds, next.UpgradeCost);
+            var rotations = Math.Min(career.CompletedPlayerRotations, next.RequiredRotations);
+            return "$" + funds.ToString("N0") + " of $" + next.UpgradeCost.ToString("N0")
+                   + " · " + rotations + " of " + next.RequiredRotations + " rotations";
+        }
+
+        private static float BaseProgress01(AirlineCareerState career)
+        {
+            if (career == null || !PlayerBase.TryNext(career.BaseLevel, out var next))
+                return 1f;
+            var fundsPart = next.UpgradeCost <= 0 ? 1f : Math.Min(1f, career.Funds / (float)next.UpgradeCost);
+            var rotationsPart = next.RequiredRotations <= 0
+                ? 1f
+                : Math.Min(1f, career.CompletedPlayerRotations / (float)next.RequiredRotations);
+            return Math.Min(fundsPart, rotationsPart);
+        }
         private static string HangarProgressText(NextAircraftRequirement hangar, AirlineCareerState career)
         {
             if (career == null || !hangar.HasOffer)

@@ -79,7 +79,9 @@ namespace Airside.Tests
             var objective = OperationsSummary.Objective(ops.FleetOf(ops.PlayerAirline), clock.Now, ops.Clock,
                 ops.CareerState, Array.Empty<RouteContractDefinition>());
             Assert.That(objective.Title, Is.EqualTo("Expand your Adelaide base"));
-            Assert.That(objective.ProgressText, Does.Contain($"${AirlineCareerState.StartingFunds:N0}"));
+            Assert.That(objective.ProgressText, Does.Contain("$1,500 of $1,500"));
+            Assert.That(objective.ProgressText, Does.Contain("0 of 4 rotations"));
+            Assert.That(objective.Progress01, Is.EqualTo(0f));
             Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("expand"));
         }
 

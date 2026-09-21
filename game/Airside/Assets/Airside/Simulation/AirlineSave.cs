@@ -32,9 +32,10 @@ namespace Airside.Simulation
         /// mid-trip aircraft restores with no lateness recorded, so that one settlement skips
         /// the punctuality delta rather than inventing one. 11 adds routine-check wear and an
         /// in-progress check end time (ADR 0085). Older saves load every aircraft as freshly
-        /// checked, so a reload does not invent overdue penalties.
+        /// checked, so a reload does not invent overdue penalties. 12 adds the player's Adelaide
+        /// base level (ADR 0091); older saves infer enough capacity for their existing fleet.
         /// </summary>
-        public const int CurrentVersion = 11;
+        public const int CurrentVersion = 12;
 
         public int Version = CurrentVersion;
 
@@ -79,6 +80,9 @@ namespace Airside.Simulation
         public string ContractRequiredTier;
         public int ContractReliabilityLoss;
         public string ContractUnlocksTier;
+
+        // ---- Player base (v12 / ADR 0091) ----------------------------------------
+        public string PlayerBaseLevel;
 
         // ---- Career stats (v9) -----------------------------------------------------
         public long CareerLifetimeRevenue;
@@ -160,7 +164,8 @@ namespace Airside.Simulation
                 ContractAcceptedAtSeconds = operations.CareerState.ActiveContract?.AcceptedAt.ElapsedSeconds ?? 0,
                 ContractCompletedRotations = operations.CareerState.ActiveContract?.CompletedRotations ?? 0,
                 CompletedPlayerRotations = operations.CareerState.CompletedPlayerRotations,
-                CareerLifetimeRevenue = operations.CareerState.LifetimeRevenue
+                CareerLifetimeRevenue = operations.CareerState.LifetimeRevenue,
+                PlayerBaseLevel = operations.CareerState.BaseLevel.ToString()
             };
             data.ProcessedSettlementKeys.AddRange(operations.CareerState.ProcessedSettlementKeys);
             data.CompletedContractIds.AddRange(operations.CareerState.CompletedContractIds);
@@ -393,6 +398,17 @@ namespace Airside.Simulation
                 }
             }
 
+            PlayerBaseLevel? savedBaseLevel = null;
+            if (data.Version >= 12)
+            {
+                if (string.IsNullOrWhiteSpace(data.PlayerBaseLevel)
+                    || !Enum.TryParse(data.PlayerBaseLevel, out PlayerBaseLevel parsedBase)
+                    || !Enum.IsDefined(typeof(PlayerBaseLevel), parsedBase)
+                    || !string.Equals(parsedBase.ToString(), data.PlayerBaseLevel.Trim(), StringComparison.Ordinal))
+                    throw new FormatException($"Unknown player base level '{data.PlayerBaseLevel}'.");
+                savedBaseLevel = parsedBase;
+            }
+
             operations.RestoreCareerState(
                 data.Version >= 6 ? data.CareerFunds : AirlineCareerState.StartingFunds,
                 data.Version >= 6 ? data.CareerReliability : AirlineCareerState.StartingReliability,
@@ -406,7 +422,8 @@ namespace Airside.Simulation
                 rotationCount,
                 snapshot,
                 data.Version >= 9 ? data.CareerLifetimeRevenue : 0,
-                contractHistory);
+                contractHistory,
+                savedBaseLevel);
 
             return operations;
         }

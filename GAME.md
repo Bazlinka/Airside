@@ -1,5 +1,16 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 ChatGPT — Player Base v1 (branch `feature/player-base-v1`, ADR 0091).**
+  - Persisted Adelaide player-base levels (save v12): starter → expanded regional → jet-gate → international.
+  - Base upgrades spend normal airline funds and require career tier/rotation progress; no second XP.
+  - Aircraft purchases obey base fleet capacity and jet/widebody handling capability.
+  - Career has a real **EXPAND BASE** action; Fleet purchase locks mirror simulation rules.
+  - v11 and older saves infer a base large enough for their existing player fleet.
+  - Added acquisition, UI and save-migration coverage.
+  - Added a presentation-only leased operations compound beside an existing Adelaide hangar precinct; modules appear with base level and use the player livery.
+  - **NEXT:** Unity/EditMode + visual playtest. Check Career EXPAND BASE layout at supported resolutions and inspect the leased compound for clashes with Adelaide scenery.
+  - **Evidence:** GitHub connector implementation only; Unity/EditMode not executed yet.
+
 - **2026-09-21 ChatGPT — career-aware route planning + base capability roadmap (branch `feature/career-roadmap-ui`).**
   Started the map/HUD/career convergence pass without changing saves or flight behaviour.
   - Campaign owns deterministic route guidance for the current chapter; Presentation does not
@@ -27,6 +38,9 @@
     next base, the same real progress bar, exact remaining gates and what the unlock means.
   - Career-target destination detail now has **VIEW CONTRACTS**, wiring Map → Contracts directly
     through the existing workspace dispatcher rather than making the player tab-hop manually.
+  - Legacy v11 migration now chooses the smallest base that can hold the *entire* existing player fleet,
+    including 4–6-aircraft saves, before applying aircraft-class capability requirements.
+  - v12 saves now reject an unknown/corrupt player-base level instead of silently inferring a different base.
   - **Evidence:** connector-only edit; tests cannot be executed in this GitHub session. Branch is
     intentionally not merged. Run Unity EditMode before merge.
   - **NEXT:** visual/test pass, then extend this seam into physical airport capability/facility

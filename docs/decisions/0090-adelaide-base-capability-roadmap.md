@@ -37,3 +37,10 @@ reload or away catch-up.
 When physical facility upgrades are introduced, they should extend this roadmap rather than
 create a parallel level system. A facility must unlock or improve a real operating capability,
 be visible in the airport world, and preserve stand/runway reservation invariants.
+
+
+## Superseded by ADR 0091
+
+ADR 0091 turns base capability into a separately persisted player-airline operating footprint.
+Operating tier and physical base are no longer synonyms: tier represents career permission/proof,
+while the player base represents allocated Adelaide fleet capacity and aircraft handling.

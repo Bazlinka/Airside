@@ -22,6 +22,10 @@ namespace Airside.Presentation
         private static readonly (string label, string hex)[] LiveryChoices = StatsWorkspaceModel.LiveryPalette;
 
         private AirlineOperations _operations;
+        private Transform _playerBaseVisualRoot;
+        private Transform[] _playerBaseStageRoots;
+        private PlayerBaseLevel? _playerBaseVisualLevel;
+        private string _playerBaseVisualLivery = string.Empty;
         private string _airlineNameDraft = "Southern Cross Regional";
         private int _liveryChoice;
         /// <summary>The single player workspace open at a time (ADR 0053).</summary>
@@ -162,6 +166,7 @@ namespace Airside.Presentation
 
         private void DrawAirlineHud(HudLayout layout, GUIStyle panel, GUIStyle title, GUIStyle button)
         {
+            EnsurePlayerBaseVisual();
             // A focused text field or a modal airline panel owns the keyboard.
             if (_cameraController != null)
                 // The Esc menu owns the keyboard too: the camera reads WASD/QE/ZX itself, so without
@@ -254,6 +259,121 @@ namespace Airside.Presentation
             DrawToast(placement.Toast, label);
         }
 
+        /// <summary>
+        /// Presentation-only leased-airline footprint beside an existing Adelaide hangar.
+        /// All stages are built once, then enabled from the persisted base level so an
+        /// upgrade is visible immediately without rebuilding the real OSM airport geometry.
+        /// </summary>
+        private void EnsurePlayerBaseVisual()
+        {
+            if (_operations?.PlayerAirline == null || _airfieldRoot == null)
+                return;
+
+            if (_playerBaseVisualRoot == null)
+                BuildPlayerBaseVisual();
+            if (_playerBaseVisualRoot == null)
+                return;
+
+            var level = _operations.CareerState.BaseLevel;
+            if (_playerBaseVisualLevel != level && _playerBaseStageRoots != null)
+            {
+                for (var i = 0; i < _playerBaseStageRoots.Length; i++)
+                    if (_playerBaseStageRoots[i] != null)
+                        _playerBaseStageRoots[i].gameObject.SetActive(i <= (int)level);
+                _playerBaseVisualLevel = level;
+            }
+
+            var livery = _operations.PlayerAirline.LiveryHex ?? string.Empty;
+            if (string.Equals(livery, _playerBaseVisualLivery, StringComparison.OrdinalIgnoreCase))
+                return;
+            _playerBaseVisualLivery = livery;
+            var colour = AirsideTheme.FromHex(livery);
+            foreach (var renderer in _playerBaseVisualRoot.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer == null)
+                    continue;
+                renderer.GetPropertyBlock(RendererTintBlock);
+                RendererTintBlock.SetColor(BaseColorId, colour);
+                RendererTintBlock.SetColor(ColorId, colour);
+                renderer.SetPropertyBlock(RendererTintBlock);
+            }
+        }
+
+        private void BuildPlayerBaseVisual()
+        {
+            AdelaideBuilding anchor = default;
+            var found = false;
+            foreach (var building in AdelaideBuildings.All)
+            {
+                if (building.Kind != AdelaideBuildingKind.Hangar)
+                    continue;
+                anchor = building;
+                found = true;
+                if (string.Equals(building.Name, "Aerobond", StringComparison.OrdinalIgnoreCase))
+                    break;
+            }
+            if (!found || anchor.Xz == null || anchor.Xz.Length < 4)
+                return;
+
+            var x = 0f;
+            var z = 0f;
+            var points = anchor.Xz.Length / 2;
+            var maxZ = float.MinValue;
+            for (var i = 0; i < points; i++)
+            {
+                x += anchor.Xz[i * 2];
+                z += anchor.Xz[i * 2 + 1];
+                if (anchor.Xz[i * 2 + 1] > maxZ)
+                    maxZ = anchor.Xz[i * 2 + 1];
+            }
+            x /= points;
+            z /= points;
+            var runwayTop = AirsideBareField.RunwayCenterY + AirsideBareField.RunwayHeightMetres * 0.5f;
+            var groundY = TerminalGroundY(anchor.Xz, runwayTop);
+            var yardZ = maxZ + 10f;
+            var livery = AirsideTheme.FromHex(_operations.PlayerAirline.LiveryHex);
+
+            _playerBaseVisualRoot = new GameObject("Player leased Adelaide base").transform;
+            _playerBaseVisualRoot.SetParent(_airfieldRoot, false);
+            _playerBaseStageRoots = new Transform[4];
+            for (var stage = 0; stage < _playerBaseStageRoots.Length; stage++)
+            {
+                var stageRoot = new GameObject("Base stage " + ((PlayerBaseLevel)stage)).transform;
+                stageRoot.SetParent(_playerBaseVisualRoot, false);
+                _playerBaseStageRoots[stage] = stageRoot;
+            }
+
+            AddPlayerBaseBlock("Starter ops module", new Vector3(x - 10f, groundY + 1.6f, yardZ),
+                new Vector3(8f, 3.2f, 5f), livery, PlayerBaseLevel.Starter);
+            AddPlayerBaseBlock("Starter base marker", new Vector3(x - 10f, groundY + 4.6f, yardZ),
+                new Vector3(8.4f, 0.45f, 5.4f), livery, PlayerBaseLevel.Starter);
+
+            AddPlayerBaseBlock("Regional maintenance module", new Vector3(x + 2f, groundY + 2.4f, yardZ),
+                new Vector3(15f, 4.8f, 8f), livery, PlayerBaseLevel.ExpandedRegional);
+            AddPlayerBaseBlock("Regional equipment store", new Vector3(x + 12f, groundY + 1.5f, yardZ + 1f),
+                new Vector3(4f, 3f, 5f), livery, PlayerBaseLevel.ExpandedRegional);
+
+            AddPlayerBaseBlock("Jet handling module", new Vector3(x + 24f, groundY + 2.7f, yardZ),
+                new Vector3(16f, 5.4f, 9f), livery, PlayerBaseLevel.JetGate);
+            AddPlayerBaseBlock("Jet base mast", new Vector3(x + 32f, groundY + 7f, yardZ - 3f),
+                new Vector3(1.2f, 8f, 1.2f), livery, PlayerBaseLevel.JetGate);
+
+            AddPlayerBaseBlock("International handling module", new Vector3(x + 44f, groundY + 3.2f, yardZ),
+                new Vector3(20f, 6.4f, 10f), livery, PlayerBaseLevel.International);
+            AddPlayerBaseBlock("International base crown", new Vector3(x + 44f, groundY + 6.65f, yardZ),
+                new Vector3(20.5f, 0.5f, 10.5f), livery, PlayerBaseLevel.International);
+
+            _playerBaseVisualLevel = null;
+            _playerBaseVisualLivery = string.Empty;
+        }
+
+        private void AddPlayerBaseBlock(string name, Vector3 position, Vector3 scale, Color colour, PlayerBaseLevel stage)
+        {
+            var block = CreateBlock(name, position, scale, colour);
+            if (block == null || _playerBaseStageRoots == null)
+                return;
+            block.transform.SetParent(_playerBaseStageRoots[(int)stage], true);
+        }
         // ---- Start your airline ---------------------------------------------------
 
         private void DrawAirlineSetup(AirlineHudLayout placement, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle button)
@@ -534,6 +654,18 @@ namespace Airside.Presentation
             var available = OperationsSummary.AvailableCount(fleet, _clock.Now);
             var height = Mathf.Min(area.height, 36f + _compactOpsRows.Count * 28f + 28f);
             var rect = new Rect(area.x, area.y, area.width, height);
+            var visibleRows = Mathf.Max(1, Mathf.FloorToInt((rect.height - 64f) / 28f));
+            visibleRows = Mathf.Min(visibleRows, _compactOpsRows.Count);
+            if (_compactOpsRows.Count > visibleRows)
+            {
+                var priorityIndex = _compactOpsRows.FindIndex(row => row.IsPriority);
+                if (priorityIndex >= visibleRows)
+                {
+                    var keep = _compactOpsRows[visibleRows - 1];
+                    _compactOpsRows[visibleRows - 1] = _compactOpsRows[priorityIndex];
+                    _compactOpsRows[priorityIndex] = keep;
+                }
+            }
             AirsideTheme.DrawOpaquePanel(rect);
             GUI.Box(rect, GUIContent.none, panel);
 
@@ -544,8 +676,9 @@ namespace Airside.Presentation
 
             var y = rect.y + 28f;
             var inner = rect.width - 28f;
-            foreach (var row in _compactOpsRows)
+            for (var rowIndex = 0; rowIndex < visibleRows; rowIndex++)
             {
+                var row = _compactOpsRows[rowIndex];
                 var rowRect = new Rect(rect.x + 10f, y, inner + 8f, 26f);
                 if (row.IsPriority)
                     DrawSolid(rowRect, new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.28f));
@@ -575,8 +708,11 @@ namespace Airside.Presentation
                 y += 28f;
             }
 
-            GUI.Label(new Rect(rect.x + 14f, rect.yMax - 22f, inner, 16f),
-                available == 1 ? "1 aircraft available" : $"{available} aircraft available", mute);
+            var hidden = _compactOpsRows.Count - visibleRows;
+            var footer = hidden > 0
+                ? $"{visibleRows} shown · {hidden} more in Operations"
+                : available == 1 ? "1 aircraft available" : $"{available} aircraft available";
+            GUI.Label(new Rect(rect.x + 14f, rect.yMax - 22f, inner, 16f), footer, mute);
         }
 
         /// <summary>A gentle yellow pulse around the control the guide is pointing at.</summary>
@@ -2040,6 +2176,19 @@ namespace Airside.Presentation
                 case HudAction.ViewContracts:
                     SetWorkspace(HudWorkspace.Contracts);
                     return;
+                case HudAction.UpgradeBase:
+                {
+                    var result = _operations.UpgradePlayerBase();
+                    if (result.Accepted)
+                    {
+                        ShowToast($"Adelaide base expanded: {_operations.CareerState.Base.Title}.");
+                        SaveAirline();
+                    }
+                    else
+                        ShowToast(result.Reason);
+                    PlayUiClick();
+                    return;
+                }
                 case HudAction.PlanFlight:
                     ScheduleFromPlanner();
                     return;

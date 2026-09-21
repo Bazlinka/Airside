@@ -25,7 +25,7 @@ namespace Airside.Tests
             Assert.That(model.LifetimeRevenueLine, Is.EqualTo("$0 lifetime revenue"));
             Assert.That(model.ReliabilityLine, Is.EqualTo($"{ops.CareerState.Reliability}% reliability"));
             Assert.That(model.TierLine, Is.EqualTo("Provisional tier"));
-            Assert.That(model.FleetLine, Is.EqualTo($"1 of {AircraftAcquisition.MaxPlayerAircraft} aircraft"));
+            Assert.That(model.FleetLine, Is.EqualTo("1 of 1 base slots"));
             Assert.That(model.BaseCapabilityLine, Does.StartWith("Regional starter base"));
             Assert.That(model.BaseCapabilityLine, Does.Contain("Regional apron"));
             Assert.That(model.AdelaideRankLine, Is.EqualTo("#1 of 1 at Adelaide"));
@@ -117,7 +117,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Stats_NextTierNamesExactlyWhatIsStillMissing()
+        public void Stats_BaseRoadmapNamesExactlyWhatIsStillMissing()
         {
             var (clock, ops, _) = HudTestAirline.Create();
             var model = new StatsWorkspaceModel();
@@ -125,12 +125,28 @@ namespace Airside.Tests
 
             Assert.That(model.HasNextTier, Is.True);
             Assert.That(model.NextTierTitle, Is.EqualTo("Regional starter base → Expanded regional base"));
-            Assert.That(model.NextTierRequirementLine, Does.Contain(
-                $"{AirlineCareerState.RegionalRotations} more rotation"));
-            Assert.That(model.NextTierRequirementLine, Does.Contain("expanded regional base"));
+            Assert.That(model.NextTierRequirementLine, Does.Contain("4 more rotations"));
+            Assert.That(model.NextTierRequirementLine, Does.Contain("Upgrade cost $1,500"));
             Assert.That(model.NextTierProgress01, Is.EqualTo(0f));
+            Assert.That(model.CanUpgradeBase, Is.False);
         }
 
+        [Test]
+        public void Stats_BaseRoadmapOffersUpgradeWhenRequirementsAreMet()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            ops.RestoreCareerState(20_000, 100, nameof(OperatingTier.Provisional), null, 0, 0,
+                System.Array.Empty<string>(), completedPlayerRotations: 4,
+                baseLevel: PlayerBaseLevel.Starter);
+            var model = new StatsWorkspaceModel();
+            model.Rebuild(ops, clock.Now);
+
+            Assert.That(model.CanUpgradeBase, Is.True);
+            var draw = new HudDrawList();
+            var layout = StatsWorkspaceLayout.Create(HudShell.WorkspaceSurface(1440f, 900f));
+            StatsWorkspacePainter.Paint(draw, model, layout);
+            Assert.That(draw.Commands.Any(c => c.ActionId == HudAction.UpgradeBase && c.Enabled), Is.True);
+        }
         [Test]
         public void BaseCapability_RoadmapTracksExistingOperatingTiers()
         {
@@ -149,8 +165,9 @@ namespace Airside.Tests
         public void Stats_NextTierReportsMaxTierReachedAtInternational()
         {
             var (clock, ops, _) = HudTestAirline.Create();
-            ops.RestoreCareerState(ops.CareerState.Funds, 95, nameof(OperatingTier.International), null, 0, 0,
-                System.Array.Empty<string>());
+            ops.RestoreCareerState(50_000, 95, nameof(OperatingTier.International), null, 0, 0,
+                System.Array.Empty<string>(), completedPlayerRotations: 40,
+                baseLevel: PlayerBaseLevel.International);
             var model = new StatsWorkspaceModel();
             model.Rebuild(ops, clock.Now);
 
@@ -257,7 +274,8 @@ namespace Airside.Tests
                 .Select(i => new CompletedContractRecord($"FULL-{i}", "ADL", "KGC", 100, new SimulationTime(i)))
                 .ToList();
             ops.RestoreCareerState(50_000, 100, nameof(OperatingTier.International), null, 0, 0,
-                Array.Empty<string>(), history.Select(h => h.DefinitionId).ToList(), 40, null, 12_345, history);
+                Array.Empty<string>(), history.Select(h => h.DefinitionId).ToList(), 40, null, 12_345, history,
+                baseLevel: PlayerBaseLevel.International);
             Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True, "for the jet-operator milestone");
 
             var model = new StatsWorkspaceModel();

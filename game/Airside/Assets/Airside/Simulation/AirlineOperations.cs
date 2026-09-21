@@ -864,7 +864,8 @@ namespace Airside.Simulation
             long contractAcceptedAtSeconds, int contractCompletedRotations, IEnumerable<string> processedSettlementKeys,
             IEnumerable<string> completedContractIds = null, int completedPlayerRotations = 0,
             RouteContractDefinition activeSnapshot = null, long lifetimeRevenue = 0,
-            IEnumerable<CompletedContractRecord> contractHistory = null)
+            IEnumerable<CompletedContractRecord> contractHistory = null,
+            PlayerBaseLevel? baseLevel = null)
         {
             if (string.IsNullOrWhiteSpace(tier)
                 || !Enum.TryParse(tier, out OperatingTier parsedTier)
@@ -888,8 +889,9 @@ namespace Airside.Simulation
                     activeContractId, new SimulationTime(contractAcceptedAtSeconds), contractCompletedRotations);
             }
 
+            var effectiveBase = baseLevel ?? PlayerBase.MinimumFor(PlayerOwnedTypes(), PlayerFleetCount());
             CareerState = new AirlineCareerState(funds, reliability, parsedTier, contract, processedSettlementKeys,
-                completedContractIds, completedPlayerRotations, issued, lifetimeRevenue, contractHistory);
+                completedContractIds, completedPlayerRotations, issued, lifetimeRevenue, contractHistory, effectiveBase);
         }
 
         // ---- Queries -------------------------------------------------------------
@@ -908,6 +910,15 @@ namespace Airside.Simulation
             && (!aircraft.Airline.IsPlayer || RouteAccess.Allows(aircraft.Type, destination));
 
         /// <summary>Distinct types the player currently owns, for the contract market and purchase gates.</summary>
+        public int PlayerFleetCount()
+        {
+            var count = 0;
+            foreach (var aircraft in _fleet)
+                if (aircraft.Airline.IsPlayer)
+                    count++;
+            return count;
+        }
+
         public List<AircraftType> PlayerOwnedTypes()
         {
             var types = new List<AircraftType>();
@@ -1347,6 +1358,13 @@ namespace Airside.Simulation
                     owned++;
             if (owned >= AircraftAcquisition.MaxPlayerAircraft)
                 return CommandResult.Refused($"Fleet is full ({AircraftAcquisition.MaxPlayerAircraft} aircraft).");
+            if (owned >= CareerState.Base.FleetCapacity)
+                return CommandResult.Refused($"{CareerState.Base.Title} supports {CareerState.Base.FleetCapacity} aircraft. Expand your Adelaide base first.");
+            if (!PlayerBase.Supports(CareerState.BaseLevel, type))
+            {
+                var needed = AircraftCatalogue.IsWidebody(type) ? PlayerBaseLevel.International : PlayerBaseLevel.JetGate;
+                return CommandResult.Refused($"{Article.CapitalA(type.Name)} needs the {PlayerBase.For(needed).Title}.");
+            }
             if (CareerState.Tier < offer.RequiredTier)
                 return CommandResult.Refused($"Buying {Article.A(type.Name)} needs {offer.RequiredTier} tier.");
             if (CareerState.Reliability < offer.RequiredReliability)
@@ -1369,6 +1387,25 @@ namespace Airside.Simulation
 
             CareerState.EvaluateTier(PlayerOwnedTypes());
             ClaimCampaignRewards();
+            return CommandResult.Ok;
+        }
+
+        /// <summary>Expand the player's leased Adelaide operating footprint (ADR 0091).</summary>
+        public CommandResult UpgradePlayerBase()
+        {
+            if (CareerState == null)
+                return CommandResult.Refused("No career to expand.");
+            if (!PlayerBase.TryNext(CareerState.BaseLevel, out var next))
+                return CommandResult.Refused("Your Adelaide base is already fully developed.");
+            if (CareerState.Tier < next.RequiredTier)
+                return CommandResult.Refused($"{next.Title} needs {next.RequiredTier} tier.");
+            if (CareerState.CompletedPlayerRotations < next.RequiredRotations)
+                return CommandResult.Refused($"{next.Title} needs {next.RequiredRotations} completed rotations.");
+            if (!CareerState.TryChargePurchase(next.UpgradeCost))
+                return CommandResult.Refused(next.Title + " costs $" + next.UpgradeCost.ToString("N0")
+                                             + "; you have $" + CareerState.Funds.ToString("N0") + ".");
+
+            CareerState.BaseLevel = next.Level;
             return CommandResult.Ok;
         }
 

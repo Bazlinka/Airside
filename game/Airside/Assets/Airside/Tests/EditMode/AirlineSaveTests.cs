@@ -158,6 +158,69 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void PlayerBase_RoundTripsAndV11InfersEnoughCapacityForExistingFleet()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(73),
+                Airline.Player("Base Test", "#2E7D32"));
+            ops.RestoreCareerState(50_000, 95, nameof(OperatingTier.Regional), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 12, baseLevel: PlayerBaseLevel.ExpandedRegional);
+            Assert.That(ops.BuyAircraft(AircraftType.Atr42).Accepted, Is.True);
+
+            var data = AirlineSave.Capture(ops);
+            Assert.That(data.Version, Is.EqualTo(12));
+            Assert.That(data.PlayerBaseLevel, Is.EqualTo(nameof(PlayerBaseLevel.ExpandedRegional)));
+
+            var restored = AirlineSave.Restore(data, new ManualSimulationClock(clock.Now));
+            Assert.That(restored.CareerState.BaseLevel, Is.EqualTo(PlayerBaseLevel.ExpandedRegional));
+
+            data.Version = 11;
+            data.PlayerBaseLevel = string.Empty;
+            var migrated = AirlineSave.Restore(data, new ManualSimulationClock(clock.Now));
+            Assert.That(migrated.CareerState.Base.FleetCapacity, Is.GreaterThanOrEqualTo(2));
+        }
+
+        [Test]
+        public void V11SixAircraftSave_MigratesToABaseThatCanHoldTheExistingFleet()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(73),
+                Airline.Player("Legacy Fleet", "#2E7D32"));
+            ops.RestoreCareerState(200_000, 95, nameof(OperatingTier.International), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 40, baseLevel: PlayerBaseLevel.International);
+
+            var player = ops.PlayerAirline;
+            var stands = AirlineOperations.AdelaideRegionalBays;
+            for (var i = 1; i < AircraftAcquisition.MaxPlayerAircraft; i++)
+                ops.AddAircraft(player, $"VH-LG{i}", AircraftType.Saab340, stands[i % stands.Count]);
+
+            var data = AirlineSave.Capture(ops);
+            data.Version = 11;
+            data.PlayerBaseLevel = string.Empty;
+
+            var restored = AirlineSave.Restore(data, new ManualSimulationClock(clock.Now));
+
+            Assert.That(restored.FleetOf(restored.PlayerAirline).Count(), Is.EqualTo(AircraftAcquisition.MaxPlayerAircraft));
+            Assert.That(restored.CareerState.Base.FleetCapacity,
+                Is.GreaterThanOrEqualTo(AircraftAcquisition.MaxPlayerAircraft));
+            Assert.That(restored.CareerState.BaseLevel, Is.EqualTo(PlayerBaseLevel.International));
+        }
+
+        [Test]
+        public void V12UnknownPlayerBaseLevel_IsRejectedInsteadOfSilentlyInferred()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(73),
+                Airline.Player("Bad Base", "#2E7D32"));
+            var data = AirlineSave.Capture(ops);
+            data.PlayerBaseLevel = "MegaAirport";
+
+            var ex = Assert.Throws<FormatException>(() =>
+                AirlineSave.Restore(data, new ManualSimulationClock(clock.Now)));
+            Assert.That(ex.Message, Does.Contain("Unknown player base level"));
+        }
+
+        [Test]
         public void VersionFiveSave_MigratesSingaporePlaceholderTo787WithoutLosingRotation()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));

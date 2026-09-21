@@ -14,7 +14,7 @@ namespace Airside.Tests
     public sealed class ContractsWorkspaceTests
     {
         [Test]
-        public void Contracts_LockedTierNamesTheBaseCapability()
+        public void Contracts_LockedTierNamesTheOperatingTier()
         {
             var (clock, ops, _) = HudTestAirline.Create();
             var model = new ContractsWorkspaceModel();
@@ -23,9 +23,8 @@ namespace Airside.Tests
             var locked = model.Offers.FirstOrDefault(o => o.Definition.RequiredTier > OperatingTier.Provisional);
             if (locked.Definition != null)
             {
-                var required = CareerProgress.BaseCapabilityFor(locked.Definition.RequiredTier);
-                Assert.That(locked.LockReason, Does.Contain(required.Title));
                 Assert.That(locked.LockReason, Does.Contain(locked.Definition.RequiredTier.ToString()));
+                Assert.That(locked.LockReason, Does.Contain("operating tier"));
             }
         }
 

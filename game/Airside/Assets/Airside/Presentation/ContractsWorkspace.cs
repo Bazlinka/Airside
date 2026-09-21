@@ -147,10 +147,7 @@ namespace Airside.Presentation
                 if (career.ActiveContract != null)
                     lockReason = "One contract at a time — finish or cancel the active one";
                 else if (career.Tier < definition.RequiredTier)
-                {
-                    var requiredBase = CareerProgress.BaseCapabilityFor(definition.RequiredTier);
-                    lockReason = $"Requires {requiredBase.Title} ({definition.RequiredTier} tier)";
-                }
+                    lockReason = $"Requires {definition.RequiredTier} operating tier";
                 else if (!OwnsType(operations, definition.EligibleType))
                     lockReason = $"Requires {Article.A(definition.EligibleType.Name)} in your fleet";
                 else

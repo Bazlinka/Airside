@@ -78,9 +78,11 @@ namespace Airside.Tests
             // Pass null market and rely on completed intros.
             var objective = OperationsSummary.Objective(ops.FleetOf(ops.PlayerAirline), clock.Now, ops.Clock,
                 ops.CareerState, Array.Empty<RouteContractDefinition>());
-            Assert.That(objective.Title, Does.Contain("ATR 42"));
-            Assert.That(objective.ProgressText, Does.Contain($"${AirlineCareerState.StartingFunds:N0}"));
-            Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("fly").Or.Contain("earn"));
+            Assert.That(objective.Title, Is.EqualTo("Expand your Adelaide base"));
+            Assert.That(objective.ProgressText, Does.Contain("$1,500 of $1,500"));
+            Assert.That(objective.ProgressText, Does.Contain("0 of 4 rotations"));
+            Assert.That(objective.Progress01, Is.EqualTo(0f));
+            Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("expand"));
         }
 
         [Test]
@@ -150,17 +152,19 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void FourPlayerAircraft_RemainIndividualRows()
+        public void SixPlayerAircraft_RemainIndividualRows()
         {
             var (clock, ops, _) = PlayerOnly();
             var player = ops.PlayerAirline;
             ops.AddAircraft(player, "VH-SUN", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[1]);
             ops.AddAircraft(player, "VH-PLO", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[2]);
             ops.AddAircraft(player, "VH-KGC", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[3]);
+            ops.AddAircraft(player, "VH-WYA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[4]);
+            ops.AddAircraft(player, "VH-MGB", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[5]);
             var rows = new List<OperationsRow>();
             OperationsSummary.FillPlayerRows(ops.FleetOf(player), clock.Now, rows);
-            Assert.That(rows, Has.Count.EqualTo(4));
-            Assert.That(OperationsSummary.AvailableCount(ops.FleetOf(player)), Is.EqualTo(4));
+            Assert.That(rows, Has.Count.EqualTo(6));
+            Assert.That(OperationsSummary.AvailableCount(ops.FleetOf(player)), Is.EqualTo(6));
         }
     }
 }

@@ -27,7 +27,7 @@ namespace Airside.Domain
     /// <summary>Authored purchase list. The starter Saab is owned, not bought (ADR 0077).</summary>
     public static class AircraftAcquisition
     {
-        public const int MaxPlayerAircraft = 4;
+        public const int MaxPlayerAircraft = 6;
 
         /// <summary>First step up from the starter Saab — still Provisional, still bay-based.</summary>
         public static readonly AircraftOffer Atr42 = new(

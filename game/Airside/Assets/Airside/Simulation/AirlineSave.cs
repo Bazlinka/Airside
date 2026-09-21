@@ -398,6 +398,17 @@ namespace Airside.Simulation
                 }
             }
 
+            PlayerBaseLevel? savedBaseLevel = null;
+            if (data.Version >= 12)
+            {
+                if (string.IsNullOrWhiteSpace(data.PlayerBaseLevel)
+                    || !Enum.TryParse(data.PlayerBaseLevel, out PlayerBaseLevel parsedBase)
+                    || !Enum.IsDefined(typeof(PlayerBaseLevel), parsedBase)
+                    || !string.Equals(parsedBase.ToString(), data.PlayerBaseLevel.Trim(), StringComparison.Ordinal))
+                    throw new FormatException($"Unknown player base level '{data.PlayerBaseLevel}'.");
+                savedBaseLevel = parsedBase;
+            }
+
             operations.RestoreCareerState(
                 data.Version >= 6 ? data.CareerFunds : AirlineCareerState.StartingFunds,
                 data.Version >= 6 ? data.CareerReliability : AirlineCareerState.StartingReliability,
@@ -412,10 +423,7 @@ namespace Airside.Simulation
                 snapshot,
                 data.Version >= 9 ? data.CareerLifetimeRevenue : 0,
                 contractHistory,
-                data.Version >= 12 && Enum.TryParse(data.PlayerBaseLevel, out PlayerBaseLevel savedBase)
-                    && Enum.IsDefined(typeof(PlayerBaseLevel), savedBase)
-                    ? (PlayerBaseLevel?)savedBase
-                    : null);
+                savedBaseLevel);
 
             return operations;
         }

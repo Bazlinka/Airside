@@ -40,6 +40,7 @@
     through the existing workspace dispatcher rather than making the player tab-hop manually.
   - Legacy v11 migration now chooses the smallest base that can hold the *entire* existing player fleet,
     including 4–6-aircraft saves, before applying aircraft-class capability requirements.
+  - v12 saves now reject an unknown/corrupt player-base level instead of silently inferring a different base.
   - **Evidence:** connector-only edit; tests cannot be executed in this GitHub session. Branch is
     intentionally not merged. Run Unity EditMode before merge.
   - **NEXT:** visual/test pass, then extend this seam into physical airport capability/facility

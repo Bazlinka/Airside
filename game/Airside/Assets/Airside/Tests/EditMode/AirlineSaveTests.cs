@@ -207,6 +207,20 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void V12UnknownPlayerBaseLevel_IsRejectedInsteadOfSilentlyInferred()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(73),
+                Airline.Player("Bad Base", "#2E7D32"));
+            var data = AirlineSave.Capture(ops);
+            data.PlayerBaseLevel = "MegaAirport";
+
+            var ex = Assert.Throws<FormatException>(() =>
+                AirlineSave.Restore(data, new ManualSimulationClock(clock.Now)));
+            Assert.That(ex.Message, Does.Contain("Unknown player base level"));
+        }
+
+        [Test]
         public void VersionFiveSave_MigratesSingaporePlaceholderTo787WithoutLosingRotation()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));

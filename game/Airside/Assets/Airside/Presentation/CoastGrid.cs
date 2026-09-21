@@ -220,8 +220,17 @@ namespace Airside.Presentation
     {
         public const string OpenStreetMap = "Map data © OpenStreetMap contributors";
 
-        /// <summary>The single credit line shown over the field: OSM drives the layout and the coast.</summary>
-        public static string FieldCredit(bool usesOsmLayout, bool usesOsmCoast) =>
-            usesOsmLayout || usesOsmCoast ? OpenStreetMap : string.Empty;
+        /// <summary>
+        /// The single credit line shown over the field: OSM drives the layout and the coast,
+        /// and adsb.lol (also ODbL) is credited while its live aircraft are on screen.
+        /// </summary>
+        public static string FieldCredit(bool usesOsmLayout, bool usesOsmCoast, bool usesLiveTraffic = false)
+        {
+            var map = usesOsmLayout || usesOsmCoast ? OpenStreetMap : string.Empty;
+            if (!usesLiveTraffic)
+                return map;
+            return string.IsNullOrEmpty(map) ? Airside.Simulation.LiveTraffic.Credit
+                : map + "  ·  " + Airside.Simulation.LiveTraffic.Credit;
+        }
     }
 }

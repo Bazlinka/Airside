@@ -110,7 +110,10 @@ namespace Airside.Presentation
             var metres = Mathf.Max(0f, state.Metres - speed * lookAheadSeconds);
             var x = hold.x - metres;
             var y = AirsideFlightPath.GroundY + Mathf.Min(CircuitProfile.GlideslopeHeight(x), ArrivalFinalCapMetres);
-            RunwayFrame.ToWorld(state.Runway, x, y, hold.z, out var wx, out var wy, out var wz);
+            // A holder parked on the 80 % pin (~130 ft) looked frozen while the tower waited
+            // for the previous landing to vacate. A small S-turn keeps them flying until cleared.
+            var weave = metres < 40f ? Mathf.Sin((float)(state.LastTime + lookAheadSeconds) * 0.45f) * 16f : 0f;
+            RunwayFrame.ToWorld(state.Runway, x, y, hold.z + weave, out var wx, out var wy, out var wz);
             return new Vector3(wx, wy, wz);
         }
 

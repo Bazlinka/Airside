@@ -1360,9 +1360,12 @@ namespace Airside.Presentation
             {
                 var phase = VisualFlights[index].Operation.Phase;
                 var engines = FleetEngines(VisualFlights[index]);
+                var type = FleetMode && _fleetAircraftById.TryGetValue(VisualFlights[index].AircraftId, out var fleet)
+                    ? fleet.Type : AircraftType.Atr42;
                 ApplyEngineAudio(_commercialAircraft[index],
                     engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase),
-                    engines is { } e ? Mathf.Max(e.Left, e.Right) : 1f);
+                    engines is { } e ? Mathf.Max(e.Left, e.Right) : 1f,
+                    type, phase);
             }
         }
 
@@ -1379,7 +1382,8 @@ namespace Airside.Presentation
         }
 
         /// <param name="spool">0..1 through an engine start or shutdown; bends the note down while spooling.</param>
-        private void ApplyEngineAudio(Transform aircraft, bool enginesOn, float spool = 1f)
+        private void ApplyEngineAudio(Transform aircraft, bool enginesOn, float spool, AircraftType type,
+            AircraftPhase phase)
         {
             if (aircraft == null)
                 return;
@@ -1393,18 +1397,33 @@ namespace Airside.Presentation
                 _engineAudio[id] = source;
             }
 
+            var clip = LoadEngineClip(type);
+            if (source.clip != clip)
+            {
+                var wasPlaying = source.isPlaying;
+                source.clip = clip;
+                if (wasPlaying || enginesOn)
+                    source.Play();
+            }
+
             if (_audioMuted)
             {
                 source.volume = 0f;
                 return;
             }
 
-            // Engine note follows the spooled RPM. It used to drone at one pitch and one
-            // running volume, so a takeoff sounded exactly like a pushback.
+            // Engine note follows the spooled RPM. Recorded beds still pitch up on takeoff
+            // so a startup idle is not the same sound as rotate.
             var power = _propRpm.TryGetValue(id, out var rpm)
                 ? Mathf.InverseLerp(AirsideReusableMotion.PropRpmTaxi,
                     AirsideReusableMotion.PropRpmTakeoff, rpm)
                 : 0f;
+            if (phase is AircraftPhase.Takeoff or AircraftPhase.Departed)
+                power = Mathf.Max(power, 0.85f);
+            else if (phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.GoAround)
+                power = Mathf.Max(power, 0.55f);
+            else if (phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback)
+                power = Mathf.Max(power, 0.25f);
             source.pitch = Mathf.Lerp(0.85f, 1.2f, power) * Mathf.Lerp(0.55f, 1f, spool);
 
             var target = enginesOn
@@ -8924,15 +8943,7 @@ namespace Airside.Presentation
             if (!HasNamedChild(root, "TaxiLight"))
                 ParentBlock(root, "TaxiLight", new Vector3(0f, 0.68f, 7.35f), new Vector3(0.14f, 0.1f, 0.14f), new Color(0.95f, 0.92f, 0.7f));
 
-            var source = root.gameObject.AddComponent<AudioSource>();
-            source.clip = CreateEngineClip();
-            source.loop = true;
-            source.volume = 0.11f;
-            source.spatialBlend = 0.75f;
-            source.minDistance = 12f;
-            source.maxDistance = 220f;
-            source.rolloffMode = AudioRolloffMode.Linear;
-            source.Play();
+            AttachEngineAudio(root, AircraftType.Saab340, 12f, 220f, 0.11f);
             return root;
         }
 
@@ -9007,15 +9018,7 @@ namespace Airside.Presentation
             if (!HasNamedChild(root, "TaxiLight"))
                 ParentBlock(root, "TaxiLight", new Vector3(0f, 0.85f, 11.4f), new Vector3(0.16f, 0.12f, 0.16f), new Color(0.95f, 0.92f, 0.7f));
 
-            var source = root.gameObject.AddComponent<AudioSource>();
-            source.clip = CreateEngineClip();
-            source.loop = true;
-            source.volume = 0.11f;
-            source.spatialBlend = 0.75f;
-            source.minDistance = 14f;
-            source.maxDistance = 250f;
-            source.rolloffMode = AudioRolloffMode.Linear;
-            source.Play();
+            AttachEngineAudio(root, AircraftType.Dash8Q400, 14f, 250f, 0.11f);
             return root;
         }
 
@@ -9095,15 +9098,7 @@ namespace Airside.Presentation
             if (!HasNamedChild(root, "TaxiLight"))
                 ParentBlock(root, "TaxiLight", new Vector3(0f, 0.8f, -4.2f), new Vector3(0.16f, 0.12f, 0.16f), new Color(0.95f, 0.92f, 0.7f));
 
-            var source = root.gameObject.AddComponent<AudioSource>();
-            source.clip = CreateEngineClip();
-            source.loop = true;
-            source.volume = EngineVolumeRunning;
-            source.spatialBlend = 0.75f;
-            source.minDistance = 16f;
-            source.maxDistance = 300f;
-            source.rolloffMode = AudioRolloffMode.Linear;
-            source.Play();
+            AttachEngineAudio(root, AircraftType.Boeing7378, 16f, 300f, EngineVolumeRunning);
             return root;
         }
 
@@ -9212,15 +9207,7 @@ namespace Airside.Presentation
                 }
             }
 
-            var source = root.gameObject.AddComponent<AudioSource>();
-            source.clip = CreateEngineClip();
-            source.loop = true;
-            source.volume = 0.11f;
-            source.spatialBlend = 0.75f;
-            source.minDistance = 12f;
-            source.maxDistance = 220f;
-            source.rolloffMode = AudioRolloffMode.Linear;
-            source.Play();
+            AttachEngineAudio(root, AircraftType.Atr42, 12f, 220f, 0.11f);
             return root;
         }
 
@@ -12961,6 +12948,31 @@ namespace Airside.Presentation
 
 
         private static AudioClip _engineClip;
+        private static readonly Dictionary<string, AudioClip> _engineClipByResource = new();
+
+        private static AudioClip LoadEngineClip(AircraftType type)
+        {
+            var name = AircraftEngineAudio.ResourceName(type);
+            if (_engineClipByResource.TryGetValue(name, out var cached) && cached != null)
+                return cached;
+            var clip = Resources.Load<AudioClip>(name) ?? CreateEngineClip();
+            _engineClipByResource[name] = clip;
+            return clip;
+        }
+
+        private static void AttachEngineAudio(Transform root, AircraftType type,
+            float minDistance, float maxDistance, float volume)
+        {
+            var source = root.gameObject.AddComponent<AudioSource>();
+            source.clip = LoadEngineClip(type);
+            source.loop = true;
+            source.volume = volume;
+            source.spatialBlend = 0.75f;
+            source.minDistance = minDistance;
+            source.maxDistance = maxDistance;
+            source.rolloffMode = AudioRolloffMode.Linear;
+            source.Play();
+        }
 
         /// <summary>
         /// The procedural engine note. Identical for every aircraft, so it is synthesised once

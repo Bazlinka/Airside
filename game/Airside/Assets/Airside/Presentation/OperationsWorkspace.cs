@@ -152,7 +152,7 @@ namespace Airside.Presentation
 
         public OperationsBoardTab Tab { get; private set; }
 
-        /// <summary>0..1 through the operating day (05:00–23:00 Adelaide).</summary>
+        /// <summary>0..1 through the operating day (06:00–23:00 Adelaide).</summary>
         public float DayProgress01 { get; private set; }
 
         /// <summary>"14:32 · evening bank · 3 on field"</summary>
@@ -170,7 +170,7 @@ namespace Airside.Presentation
 
         /// <summary>
         /// First board row that is not a muted past movement — used to open the list
-        /// near "now" instead of at 05:00 Landed/Departed.
+        /// near "now" instead of at 06:00 Landed/Departed.
         /// </summary>
         public int FirstActiveRowIndex
         {
@@ -269,8 +269,8 @@ namespace Airside.Presentation
         private void FillDayProgress(AirlineOperations operations, SimulationTime now, AirlineClock clock)
         {
             var local = clock.LocalAt(now);
-            var first = AirlineOperations.AiFirstDepartureHour;
-            var last = AirlineOperations.AiLastDepartureHour;
+            var first = AirportCurfew.OpensAtHour;
+            var last = AirportCurfew.ClosedFromHour;
             var startMin = first * 60;
             var endMin = last * 60;
             var span = Math.Max(1, endMin - startMin);

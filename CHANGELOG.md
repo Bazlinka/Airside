@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Adelaide curfew 23:00–06:00, player and RFDS exempt (ADR 0087).** Commercial
+  AI no longer pushes or lands in the real closed window. You can still fly out
+  at night; so can RFDS (`VH-FDA`).
+- **Short final no longer freezes at ~130 ft** while another aircraft lands.
+  A small S-turn on the 80 % pin so a vacate wait is not a statue.
+- **Recorded engine audio** for Dash 8-400 (PW100), other turboprops (Dash 8-300
+  twin), and jets (CC0 turbine), pitched through startup and takeoff.
+  Unity EditMode **868/869** (only the known gate lead-in decision test).
 - **Operations board and pavement are sim aircraft only (ADR 0086).** The board lists
   the player and AI fleet that actually exist — no timetable "Listed" rows for planes
   that are not on the map. Live ADS-B defaults off and, even when enabled, stays in

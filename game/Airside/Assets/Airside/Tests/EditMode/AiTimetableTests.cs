@@ -35,8 +35,8 @@ namespace Airside.Tests
                         if (clock.Now.ElapsedSeconds > 3600)
                         {
                             var local = ops.Clock.LocalAt(aircraft.StateStartedAt);
-                            Assert.That(local.TimeOfDay, Is.InRange(TimeSpan.FromHours(AirlineOperations.AiFirstDepartureHour),
-                                TimeSpan.FromHours(AirlineOperations.AiLastDepartureHour).Add(TimeSpan.FromMinutes(1))),
+                            Assert.That(local.Hour, Is.InRange(AirlineOperations.AiFirstDepartureHour,
+                                AirlineOperations.AiLastDepartureHour),
                                 $"{aircraft.Registration} pushed back at {local:HH:mm}");
                         }
                     }

@@ -125,7 +125,7 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
 
             Assert.That(model.DayProgress01, Is.InRange(0.45f, 0.75f),
-                "15:00 should sit in the second half of a 05–23 operating day");
+                "15:00 should sit in the second half of a 06–23 operating day");
             Assert.That(model.DayCaption, Does.Contain("on field"));
             Assert.That(model.DayCaption, Does.Not.Contain("listed ahead"));
             Assert.That(model.DayOnFieldCount, Is.GreaterThan(0));
@@ -133,7 +133,7 @@ namespace Airside.Tests
             Assert.That(model.Subtitle, Does.Contain("/"),
                 "subtitle names both active strip ends");
             Assert.That(model.DayDensity.Count, Is.EqualTo(
-                AirlineOperations.AiLastDepartureHour - AirlineOperations.AiFirstDepartureHour + 1));
+                AirportCurfew.ClosedFromHour - AirportCurfew.OpensAtHour + 1));
         }
 
         [Test]

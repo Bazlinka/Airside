@@ -241,8 +241,8 @@ namespace Airside.Tests
                     Assert.That(aircraft.CurrentDestination?.Code, Is.EqualTo(city));
             }
 
-            Assert.That(AirlineOperations.AiFirstDepartureHour, Is.EqualTo(5));
-            Assert.That(AirlineOperations.AiLastDepartureHour, Is.EqualTo(23));
+            Assert.That(AirlineOperations.AiFirstDepartureHour, Is.EqualTo(6));
+            Assert.That(AirlineOperations.AiLastDepartureHour, Is.EqualTo(22));
         }
 
         [Test]

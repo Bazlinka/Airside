@@ -1,5 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Cursor — curfew, 130 ft hold, engine audio (branch
+  `feature/maintenance-planning`, ADR 0087).** Stay on this branch; do not
+  merge to main unless Bailey asks.
+  - Adelaide commercial AI follows the real **23:00–06:00** curfew. The
+    player can still fly out; RFDS (`VH-FDA`, Saab stand-in) can too.
+  - Short final no longer parks as a statue at the 80 % / ~130 ft pin while
+    the tower waits for the previous landing to vacate — a small S-turn.
+  - CC0 Dash 8 / jet engine beds, pitched for startup vs takeoff.
+  - **Evidence:** Unity EditMode **868/869** (only the known gate lead-in decision test).
+  - **NEXT:** rebuild this branch and play: night curfew, player still flies, RFDS
+    after 23:00, engines on follow-camera, no 130 ft statue on short final.
+    Gate lead-in still open. Check cost (ADR 0085) still needs a play.
+
 - **2026-09-21 Cursor — AI-only board/ground + real sun/moon (branch
   `feature/maintenance-planning`, ADR 0086).** Bailey: stop merging to main; the board
   and the pavement should show sim aircraft only (player + AI); live ADS-B is not for

@@ -25,7 +25,7 @@ namespace Airside.Tests
             Assert.That(HeadingDegrees(early.NoseX, early.NoseZ, parked.NoseX, parked.NoseZ),
                 Is.LessThan(20f), "the tug has not flipped the nose in the first metres");
             Assert.That(HeadingDegrees(pushed.NoseX, pushed.NoseZ, taxi.NoseX, taxi.NoseZ),
-                Is.LessThan(25f), "tug disconnect is a turnout, not a 180 snap");
+                Is.LessThan(8f), "tug disconnect is a turnout, not a 180 snap");
 
             var previous = start;
             for (var t = 2.0; t <= push.Path.Seconds; t += 2.0)

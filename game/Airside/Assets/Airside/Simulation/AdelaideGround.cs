@@ -180,7 +180,8 @@ namespace Airside.Simulation
             {
                 var limits = GroundSpeedLimits.TaxiFor(type);
                 leg = new GroundLeg(
-                    new GroundLegPart(new GroundPath(bay.Pushback, GroundSpeedLimits.Pushback), tailFirst: true),
+                    new GroundLegPart(new GroundPath(DrivablePushback(bay.Pushback, type), GroundSpeedLimits.Pushback),
+                        tailFirst: true),
                     new GroundLegPart(new GroundPath(Drivable(CleanTaxiOut(TaxiOutPath(bay, runway)), type), limits, 0f, 0f,
                         new[] { ApronZone(type) }, null), tailFirst: false, TugDisconnectSeconds));
                 TaxiOutLegs[key] = leg;
@@ -312,7 +313,8 @@ namespace Airside.Simulation
                 // track a corner the same way. See AircraftPerformanceProfile.NoseToMainGearMetres.
                 var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
                 leg = new GroundLeg(
-                    new GroundLegPart(new GroundPath(gate.Pushback, GroundSpeedLimits.Pushback), tailFirst: true, trackMetres: wheelbase),
+                    new GroundLegPart(new GroundPath(DrivablePushback(gate.Pushback, type), GroundSpeedLimits.Pushback),
+                        tailFirst: true, trackMetres: wheelbase),
                     new GroundLegPart(new GroundPath(Drivable(CleanTaxiOut(TaxiOutPath(gate, runway)), type),
                             limits, 0f, 0f, new[] { ApronZone(type) }, null),
                         tailFirst: false, TugDisconnectSeconds, wheelbase));
@@ -356,6 +358,17 @@ namespace Airside.Simulation
         {
             var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
             return GroundPathSmoothing.RelaxTightTurns(xz, Math.Max(20f, wheelbase * 0.9f));
+        }
+
+        /// <summary>
+        /// Pushback is slow (3 kt) but still hits authored OSM corners that are sharper than a
+        /// tug can turn. Soften them without the taxi min-radius — a 20 m floor would erase the
+        /// real push arc onto the taxiway. Endpoints stay put so the stand stop and taxi join hold.
+        /// </summary>
+        private static float[] DrivablePushback(float[] xz, AircraftType type)
+        {
+            var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
+            return GroundPathSmoothing.RelaxTightTurns(xz, Math.Max(12f, wheelbase * 0.55f));
         }
 
         private static float[] TaxiOutPath(AdelaideBay bay, RunwayDirection runway) =>

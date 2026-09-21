@@ -1,18 +1,18 @@
 ## Where to resume — session handoff
 
-- **2026-09-21 Cursor — Operations NOW stuck two hours behind the clock (branch
-  `cursor/ops-now-follow-clock-22df`).** Bailey: board timings improved, but NOW sat at 09:55
-  while the HUD clock read 11:55.
-  - **Cause 1:** live `Outbound` rows never became `IsPast`, so a morning departure still en
-    route owned the NOW divider for the whole flight.
-  - **Cause 2:** board scroll snapped to NOW once on open, then never followed the clock if
-    Operations stayed open.
-  - **Fix:** Outbound rows whose board time is already past mute like other past movements;
-    scroll keeps auto-following NOW until the player scrolls manually.
-  - **Evidence:** `scripts/test-domain.sh` **556/556** (1 new regression test for the 09:55→11:55
-    case).
-  - **NEXT:** Unity Play confirm on an open Operations board across a couple of hours; then
-    the standing taxi/pushback eye-check.
+- **2026-09-21 Cursor — NOW follow + imperative next action + smoother pushback (branch
+  `cursor/ops-now-follow-clock-22df`).** Bailey: "go for it… do as much as you can."
+  1. **Operations NOW stuck at 09:55 while clock was 11:55** — Outbound rows never became
+     `IsPast`; scroll snapped to NOW once then froze. Fixed both.
+  2. **Objective card next line is now an imperative** — "Finish fuelling on VH-PAX",
+     "Schedule VH-PAX to Kingscote", "Accept a … contract", "Follow … for pushback",
+     "Buy a … in Fleet" — not a status readout like "Fuelling 40%".
+  3. **Pushback polylines now go through `DrivablePushback`** (softer min-radius than taxi)
+     so sharp OSM tug corners stop yaw-spiking; disconnect heading tolerance tightened 25°→8°.
+  - **Evidence:** `scripts/test-domain.sh` **558/558**. Overview HUD re-rendered for the
+    objective line.
+  - **NEXT:** Unity Play confirm NOW follow + pushback look; then deeper taxi router / authored
+    timetable if Bailey wants.
 
 - **2026-09-21 Codex — aircraft-aware competitive Route Map (branch
   `codex/route-map-competitive-production`, ADR 0076).** Replaced the generic reference rings with

@@ -126,14 +126,65 @@ namespace Airside.Tests
 
             Assert.That(model.DayProgress01, Is.InRange(0.45f, 0.75f),
                 "15:00 should sit in the second half of a 05–23 operating day");
-            Assert.That(model.DayCaption, Does.Contain("done"));
-            Assert.That(model.DayCaption, Does.Contain("to go"));
-            Assert.That(model.DayDoneCount + model.DayActiveCount + model.DayUpcomingCount,
-                Is.GreaterThan(10));
+            Assert.That(model.DayCaption, Does.Contain("on field"));
+            Assert.That(model.DayCaption, Does.Contain("listed ahead"));
+            Assert.That(model.DayOnFieldCount + model.DayListedAheadCount,
+                Is.GreaterThan(0));
             Assert.That(model.Subtitle, Does.Contain("/"),
                 "subtitle names both active strip ends");
             Assert.That(model.DayDensity.Count, Is.EqualTo(
                 AirlineOperations.AiLastDepartureHour - AirlineOperations.AiFirstDepartureHour + 1));
+        }
+
+        [Test]
+        public void Operations_PublishedDayPlanRowsDoNotClaimAStand()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            ops.AddMissingRegionalCarriers();
+            ops.AddMissingTerminalOperators();
+            clock.Set(new SimulationTime(60));
+            ops.Update();
+
+            var model = new OperationsWorkspaceModel();
+            model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
+
+            var published = model.Rows.Where(r => !r.OnField && !r.IsPast).ToList();
+            Assert.That(published, Is.Not.Empty, "the day plan still fills the board");
+            Assert.That(published.All(r => r.Stand == "—"), Is.True,
+                "a listed timetable slot must not invent Gate 13 / Bay 50C occupancy");
+            Assert.That(published.All(r => r.Status == "Listed" || r.Status.StartsWith("Delayed")
+                                           || r.Status == "Cancelled"), Is.True);
+
+            var liveAtStand = model.Rows.Where(r => r.OnField && r.Stand != "—").ToList();
+            Assert.That(liveAtStand, Is.Not.Empty,
+                "at least one live aircraft should still show its real stand");
+        }
+
+        [Test]
+        public void Operations_NowDividerSkipsPastCancellations()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            ops.AddMissingRegionalCarriers();
+            ops.AddMissingTerminalOperators();
+            var afternoon = ops.Clock.AtLocal(ops.Clock.LocalAt(clock.Now).Date.AddHours(15));
+            clock.Set(afternoon);
+            ops.Update();
+
+            var model = new OperationsWorkspaceModel();
+            model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
+
+            Assert.That(model.NowDividerRowIndex, Is.GreaterThan(0));
+            var nowRow = model.Rows[model.NowDividerRowIndex];
+            Assert.That(nowRow.IsPast, Is.False);
+            if (model.NowDividerRowIndex > 0)
+                Assert.That(model.Rows[model.NowDividerRowIndex - 1].IsPast, Is.True,
+                    "everything above NOW must be muted past, including morning cancellations");
+            // The active row's printed time should sit near or after midday, not at 08:00.
+            var time = nowRow.ScheduledTime;
+            Assert.That(time.Length, Is.GreaterThanOrEqualTo(4));
+            var hour = int.Parse(time.Substring(0, 2));
+            Assert.That(hour, Is.GreaterThanOrEqualTo(12),
+                $"NOW should open near the current clock, not on {time}");
         }
 
         [Test]

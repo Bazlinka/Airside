@@ -2038,9 +2038,11 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Repeatable turnarounds. Domestics stay a short 10–24 minutes so the
-        /// field keeps moving; widebodies sit 50–89 minutes like a real
-        /// international turn at T1.
+        /// Repeatable turnarounds sized like a real Adelaide gate dwell, not a
+        /// game-speed hop. Domestics sit 28–44 minutes (turboprop) or 40–58
+        /// (narrowbody); widebodies 55–89 like a T1 international turn. Short
+        /// enough that the field stays busy across a soak day; long enough that
+        /// "due to depart" means a real turnaround, not a ten-minute flip.
         /// </summary>
         private static long AiTurnaroundSeconds(FleetAircraft aircraft)
         {
@@ -2052,7 +2054,10 @@ namespace Airside.Simulation
                 hash = hash * 31 + aircraft.CompletedTrips;
                 var wide = ReferenceEquals(aircraft.Type, AircraftType.AirbusA350900)
                            || ReferenceEquals(aircraft.Type, AircraftType.Boeing78710);
-                var minutes = wide ? 50 + Math.Abs(hash % 40) : 10 + Math.Abs(hash % 15);
+                var jet = NeedsTerminalGate(aircraft.Type);
+                var minutes = wide ? 55 + Math.Abs(hash % 35)
+                    : jet ? 40 + Math.Abs(hash % 19)
+                    : 28 + Math.Abs(hash % 17);
                 return minutes * 60L;
             }
         }

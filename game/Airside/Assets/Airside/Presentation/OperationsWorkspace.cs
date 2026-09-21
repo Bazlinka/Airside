@@ -18,7 +18,7 @@ namespace Airside.Presentation
         public OperationsFlightRow(string registration, string scheduledTime, string estimatedTime,
             string flightNumber, string route, string stand, string status, string typeName,
             string operatorName, string liveryHex, StatusSeverity severity, bool isPlayer,
-            bool hasProgress, float progress01, bool isPast = false)
+            bool hasProgress, float progress01, bool onField = true, bool isPast = false)
         {
             Registration = registration ?? string.Empty;
             ScheduledTime = scheduledTime ?? string.Empty;
@@ -34,6 +34,7 @@ namespace Airside.Presentation
             IsPlayer = isPlayer;
             HasProgress = hasProgress;
             Progress01 = progress01;
+            OnField = onField;
             IsPast = isPast;
         }
 
@@ -54,6 +55,13 @@ namespace Airside.Presentation
 
         public bool HasProgress { get; }
         public float Progress01 { get; }
+
+        /// <summary>
+        /// True when a live fleet aircraft is actually flying this slot (parked, taxiing,
+        /// airborne on the field). False for the published day-plan overlay — those rows
+        /// must not claim a stand, because nothing is parked there.
+        /// </summary>
+        public bool OnField { get; }
 
         /// <summary>Scheduled time is earlier than now and the movement is not live — mute on the board.</summary>
         public bool IsPast { get; }
@@ -134,6 +142,7 @@ namespace Airside.Presentation
         private readonly List<OperationsEventLine> _events = new();
         private readonly List<FleetAircraft> _scratch = new();
         private readonly List<float> _dayDensity = new();
+        private readonly List<float> _dayMarks = new();
 
         public string Title { get; private set; } = "OPERATIONS";
         public string Subtitle { get; private set; } = string.Empty;
@@ -146,12 +155,18 @@ namespace Airside.Presentation
         /// <summary>0..1 through the operating day (05:00–23:00 Adelaide).</summary>
         public float DayProgress01 { get; private set; }
 
-        /// <summary>"14:32 · evening bank · 12 done · 31 to go"</summary>
+        /// <summary>"14:32 · evening bank · 3 on field · 8 listed ahead"</summary>
         public string DayCaption { get; private set; } = string.Empty;
 
         public int DayDoneCount { get; private set; }
         public int DayActiveCount { get; private set; }
         public int DayUpcomingCount { get; private set; }
+
+        /// <summary>Live aircraft currently at Adelaide (parked, taxiing, holding, landing).</summary>
+        public int DayOnFieldCount { get; private set; }
+
+        /// <summary>Published day-plan rows still ahead that have no live aircraft covering them.</summary>
+        public int DayListedAheadCount { get; private set; }
 
         /// <summary>
         /// First board row that is not a muted past movement — used to open the list
@@ -168,8 +183,17 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>
+        /// Index of the first non-past row — same as <see cref="FirstActiveRowIndex"/>, exposed
+        /// so the painter can draw a persistent NOW divider between past and upcoming.
+        /// </summary>
+        public int NowDividerRowIndex => FirstActiveRowIndex;
+
         /// <summary>Local-hour density samples across the strip (one per operating hour).</summary>
         public IReadOnlyList<float> DayDensity => _dayDensity;
+
+        /// <summary>0..1 marks on the day strip for on-field movements (where metal actually is).</summary>
+        public IReadOnlyList<float> DayMarks => _dayMarks;
 
         public IReadOnlyList<OperationsFlightRow> Rows => _rows;
         public IReadOnlyList<OperationsAttentionRow> Attention => _attention;
@@ -200,6 +224,7 @@ namespace Airside.Presentation
             _prep.Clear();
             _events.Clear();
             _dayDensity.Clear();
+            _dayMarks.Clear();
             Tab = tab;
             SelectedRegistration = string.Empty;
             SelectedTypeName = string.Empty;
@@ -215,6 +240,8 @@ namespace Airside.Presentation
             DayDoneCount = 0;
             DayActiveCount = 0;
             DayUpcomingCount = 0;
+            DayOnFieldCount = 0;
+            DayListedAheadCount = 0;
             if (operations == null)
                 return;
 
@@ -256,6 +283,7 @@ namespace Airside.Presentation
             var done = 0;
             var active = 0;
             var upcoming = 0;
+            var listedAhead = 0;
             var claimed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var planned in AdelaideDayPlan.ForLocalDay(operations, now))
             {
@@ -277,14 +305,57 @@ namespace Airside.Presentation
                 if (slotMin + 2 < nowMin)
                     done++;
                 else
+                {
                     upcoming++;
+                    if (live == null)
+                        listedAhead++;
+                }
+            }
+
+            var onField = 0;
+            foreach (var aircraft in operations.Fleet)
+            {
+                if (!IsOnFieldNow(aircraft))
+                    continue;
+                onField++;
+                var markMin = MarkMinutes(aircraft, clock, nowMin);
+                if (markMin >= startMin && markMin <= endMin)
+                    _dayMarks.Add(Clamp01((markMin - startMin) / (float)span));
             }
 
             DayDoneCount = done;
             DayActiveCount = active;
             DayUpcomingCount = upcoming;
+            DayOnFieldCount = onField;
+            DayListedAheadCount = listedAhead;
             var bank = BankLabel(local.Hour);
-            DayCaption = $"{clock.TimeText(now)}  ·  {bank}  ·  {done} done  ·  {active} live  ·  {upcoming} to go";
+            // Caption separates metal on the field from the published timetable overlay so
+            // "12 to go" no longer reads as twelve empty gates waiting for pushback.
+            DayCaption = $"{clock.TimeText(now)}  ·  {bank}  ·  {onField} on field  ·  {listedAhead} listed ahead";
+        }
+
+        private static bool IsOnFieldNow(FleetAircraft aircraft) => aircraft.State is
+            FleetState.AtStand or FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff
+            or FleetState.Inbound or FleetState.HoldingForLanding or FleetState.GoAround
+            or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn;
+
+        private static int MarkMinutes(FleetAircraft aircraft, AirlineClock clock, int fallback)
+        {
+            if (aircraft.Scheduled.HasValue)
+            {
+                var local = clock.LocalAt(aircraft.Scheduled.Value.DepartAt);
+                return local.Hour * 60 + local.Minute;
+            }
+
+            if (aircraft.StateEndsAt.HasValue
+                && aircraft.State is FleetState.Inbound or FleetState.HoldingForLanding
+                    or FleetState.Landing or FleetState.TaxiIn or FleetState.AwaitingStand)
+            {
+                var local = clock.LocalAt(aircraft.StateEndsAt.Value);
+                return local.Hour * 60 + local.Minute;
+            }
+
+            return fallback;
         }
 
         private static bool IsLiveMovement(FleetAircraft aircraft) => aircraft.State is
@@ -341,6 +412,7 @@ namespace Airside.Presentation
                     aircraft.Airline.IsPlayer,
                     hasProgress,
                     progress,
+                    onField: true,
                     isPast: false));
             }
 
@@ -354,16 +426,21 @@ namespace Airside.Presentation
                     ? "Cancelled"
                     : planned.Disruption.Delayed
                         ? planned.Disruption.BoardLabel
-                        : arrivals ? "Expected" : "Scheduled";
+                        : arrivals ? "Expected" : "Listed";
                 var plannedSeverity = planned.Disruption.Cancelled
                     ? StatusSeverity.Warning
                     : planned.Disruption.Delayed ? StatusSeverity.Attention : StatusSeverity.Normal;
                 var scheduled = clock.TimeText(planned.ScheduledAt);
                 var etaText = clock.TimeText(planned.EstimatedAt);
-                var past = !planned.Disruption.Cancelled
-                           && BoardClockMinutes(etaText) + 2 < nowMin;
-                if (past)
+                // Cancelled slots used to stay IsPast=false forever, which parked the NOW
+                // divider on an 08:00 cancellation while the clock read 12:30.
+                var slotTime = planned.Disruption.Cancelled ? scheduled : etaText;
+                var past = BoardClockMinutes(slotTime) + 2 < nowMin;
+                if (past && !planned.Disruption.Cancelled)
                     plannedStatus = arrivals ? "Landed" : "Departed";
+                // Day-plan overlays never own a parked aircraft — claiming Gate 13 / Bay 50C
+                // here is what made "due to depart" look like empty pavement. Stand stays "—"
+                // until a live fleet row covers the slot (ADR 0071).
                 _rows.Add(new OperationsFlightRow(
                     planned.Registration.Length > 0 ? planned.Registration : planned.FlightNumber,
                     scheduled,
@@ -371,7 +448,7 @@ namespace Airside.Presentation
                         : planned.Disruption.Delayed ? etaText : "—",
                     planned.FlightNumber,
                     planned.RouteText,
-                    planned.StandLabel.Replace("Gate ", ""),
+                    "—",
                     plannedStatus,
                     planned.Type?.Name ?? string.Empty,
                     planned.AirlineName,
@@ -380,6 +457,7 @@ namespace Airside.Presentation
                     isPlayer: false,
                     hasProgress: false,
                     progress01: 0f,
+                    onField: false,
                     isPast: past));
             }
 
@@ -527,7 +605,7 @@ namespace Airside.Presentation
     /// </summary>
     public readonly struct OperationsWorkspaceLayout
     {
-        public const float DayStripHeight = 48f;
+        public const float DayStripHeight = 58f;
         public const float AttentionRowHeight = 26f;
         public const float AttentionCaptionHeight = 18f;
         public const float TabHeight = 30f;
@@ -581,7 +659,7 @@ namespace Airside.Presentation
 
         public HudBox DayCaptionBox => DayStrip.Inset(10f, 6f, 10f, 0f).WithHeight(16f);
 
-        public HudBox DayTrackBox => new(DayStrip.X + 10f, DayStrip.Y + 26f, DayStrip.Width - 20f, 10f);
+        public HudBox DayTrackBox => new(DayStrip.X + 10f, DayStrip.Y + 34f, DayStrip.Width - 20f, 10f);
 
         public HudBox AttentionCaption => Attention.IsEmpty
             ? HudBox.Empty
@@ -728,9 +806,24 @@ namespace Airside.Presentation
                 }
             }
 
+            // On-field movement ticks — metal that is actually at Adelaide, not the published list.
+            foreach (var mark in model.DayMarks)
+            {
+                var x = track.X + track.Width * mark;
+                into.Fill(new HudBox(x - 0.75f, track.Y + 1f, 1.5f, track.Height - 2f), HudTone.Default, 0.55f);
+            }
+
             into.Bar(track, model.DayProgress01, HudTone.Accent);
             var caretX = track.X + track.Width * model.DayProgress01;
             into.Fill(new HudBox(caretX - 1f, track.Y - 3f, 2f, track.Height + 6f), HudTone.Default, 0.95f);
+            // Persistent NOW label so the caret is not just a thin line to decode.
+            var nowLabel = "NOW";
+            var nowBox = new HudBox(caretX - 14f, track.Y - 14f, 28f, 12f);
+            if (nowBox.X < track.X)
+                nowBox = new HudBox(track.X, nowBox.Y, nowBox.Width, nowBox.Height);
+            if (nowBox.Right > track.Right)
+                nowBox = new HudBox(track.Right - nowBox.Width, nowBox.Y, nowBox.Width, nowBox.Height);
+            into.Caption(nowBox, nowLabel, HudTone.Accent);
         }
 
         public static HudBox CloseBox(HudBox surface) =>
@@ -801,6 +894,15 @@ namespace Airside.Presentation
                 var alpha = row.IsPlayer ? 1f : SubordinateAlpha;
                 if (row.IsPast)
                     alpha *= 0.55f;
+                else if (!row.OnField)
+                    alpha *= 0.78f;
+
+                // Persistent NOW divider: first upcoming row after the muted past block.
+                if (i == model.NowDividerRowIndex && i > 0 && !row.IsPast)
+                {
+                    into.Fill(new HudBox(box.X + 4f, box.Y - 1f, box.Width - 8f, 2f), HudTone.Accent, 0.85f);
+                    into.Caption(new HudBox(box.X + 8f, box.Y - 12f, 40f, 11f), "NOW", HudTone.Accent);
+                }
 
                 if (selected)
                     into.Fill(box, HudTone.Accent, 0.26f);
@@ -823,7 +925,8 @@ namespace Airside.Presentation
                     into.Text(Cell(layout, 1, box.Y + 18f), flightSub, 10f, HudTone.Muted, alpha: alpha);
 
                 into.Text(Cell(layout, 2, textY), row.Route, 13f, HudTone.Default, alpha: alpha);
-                into.Text(Cell(layout, 3, textY), row.Stand, 13f, HudTone.Default, alpha: alpha);
+                into.Text(Cell(layout, 3, textY), row.Stand, 13f,
+                    row.OnField ? HudTone.Default : HudTone.Muted, alpha: alpha);
                 into.Text(Cell(layout, 4, textY), row.Status, 13f, row.StatusTone,
                     row.Severity == StatusSeverity.Normal ? HudTextStyle.Regular : HudTextStyle.Bold,
                     alpha: alpha);

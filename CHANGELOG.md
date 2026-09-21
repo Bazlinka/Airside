@@ -1,5 +1,6 @@
 ## Unreleased
 
+- **Career shows physical base access.** The base summary names the actual Adelaide positions/access currently leased (50D, regional apron, gates 27/29, pier 28 as applicable).
 - **Player Base v2 — operational maintenance.** Routine checks are now facility-dependent: Starter outsources them (+40% cost, +50% time), Expanded Regional handles turboprops locally, Jet Gate adds narrowbody jets, and International adds widebodies. Fleet shows the exact service mode/cost/time.
 - **Player Base v2 — allocated Adelaide stands.** The player's base now maps to real parking access:
   50D starter home, 50G/10A plus shared regional apron at Expanded Regional, gates 27/29 for jet

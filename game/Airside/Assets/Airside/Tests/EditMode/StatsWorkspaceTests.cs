@@ -28,6 +28,7 @@ namespace Airside.Tests
             Assert.That(model.FleetLine, Is.EqualTo("1 of 1 base slots"));
             Assert.That(model.BaseCapabilityLine, Does.StartWith("Regional starter base"));
             Assert.That(model.BaseCapabilityLine, Does.Contain("Regional apron"));
+            Assert.That(model.BaseCapabilityLine, Does.Contain("Stands: 50D"));
             Assert.That(model.AdelaideRankLine, Is.EqualTo("#1 of 1 at Adelaide"));
             Assert.That(model.ContractHistory, Is.Empty);
             Assert.That(model.EmptyHistoryLine, Is.Not.Empty);
@@ -114,6 +115,20 @@ namespace Airside.Tests
             Assert.That(compact, Has.Count.EqualTo(3));
             Assert.That(compact.Count(row => row.IsPlayer), Is.EqualTo(1));
             Assert.That(compact[0].AirlineName, Is.EqualTo("Rex"));
+        }
+
+        [Test]
+        public void Stats_BaseCapabilityNamesItsRealAdelaideStandAccess()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            ops.RestoreCareerState(50_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+                System.Array.Empty<string>(), completedPlayerRotations: 28,
+                baseLevel: PlayerBaseLevel.JetGate);
+            var model = new StatsWorkspaceModel();
+            model.Rebuild(ops, clock.Now);
+
+            Assert.That(model.BaseCapabilityLine, Does.Contain("gates 27/29"));
+            Assert.That(model.BaseCapabilityLine, Does.Contain("shared regional apron"));
         }
 
         [Test]

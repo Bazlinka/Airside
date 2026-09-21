@@ -12,7 +12,8 @@
   - Routine checks now use base capability: Starter outsources checks (+40% cost, +50% time); Expanded Regional performs turboprops locally; Jet Gate adds narrowbody jets; International adds widebodies.
   - Fleet detail shows local vs outsourced maintenance and the exact effective check cost/time; the CHECK button uses the same value as the simulation command.
   - Added maintenance-effect coverage.
-  - **NEXT:** audit Career/Fleet copy for stand allocation, then compile-oriented branch review.
+  - Career overview now names the exact Adelaide stand/gate access owned by the current base.
+  - **NEXT:** compile-oriented branch review and PR preparation.
   - **Evidence:** connector-only; Unity/EditMode not executed.
 
 - **2026-09-21 ChatGPT — Player Base v1 (branch `feature/player-base-v1`, ADR 0091).**

@@ -1189,6 +1189,7 @@ namespace Airside.Presentation
         private readonly List<MapFlight> _mapFlights = new();
         private readonly List<Rect> _mapControlRects = new();
         private string _mapTrackId;
+        private bool _mapRivalsVisible = true;
         private static Texture2D _planeIcon;
 
         /// <summary>Where each off-map flight is right now, to the sub-second, along its great circle.</summary>
@@ -1277,8 +1278,11 @@ namespace Airside.Presentation
                 }
                 flight.HeadingDegrees = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg + 90f;
                 _mapFlights[i] = flight;
-                _mapAircraftRows.Add(flight.Aircraft);
-                _mapAircraftPoints.Add((flight.Point.x, flight.Point.y));
+                if (flight.Aircraft.Airline.IsPlayer || _mapRivalsVisible)
+                {
+                    _mapAircraftRows.Add(flight.Aircraft);
+                    _mapAircraftPoints.Add((flight.Point.x, flight.Point.y));
+                }
             }
 
             // Map controls in the top-left corner; the pointer handler leaves them alone.
@@ -1286,15 +1290,22 @@ namespace Airside.Presentation
             // Bottom-left: the AVAILABLE / LOCKED pills own the top-left corner now.
             var trackRect = new Rect(mapRect.x + 12f, mapRect.yMax - 58f, 170f, 24f);
             var zoomOutRect = new Rect(trackRect.xMax + 6f, trackRect.y, 90f, 24f);
+            var rivalRect = new Rect(mapRect.xMax - 154f, mapRect.y + 12f, 142f, 24f);
+            var rivalFlights = 0;
+            for (var i = 0; i < _mapFlights.Count; i++)
+                if (!_mapFlights[i].Aircraft.Airline.IsPlayer)
+                    rivalFlights++;
             var selectedFlight = -1;
             for (var i = 0; i < _mapFlights.Count; i++)
-                if (_mapFlights[i].Aircraft.Registration == _selectedAircraftId)
+                if (_mapFlights[i].Aircraft.Registration == _selectedAircraftId
+                    && (_mapFlights[i].Aircraft.Airline.IsPlayer || _mapRivalsVisible))
                     selectedFlight = i;
             var showTrack = tracked >= 0 || selectedFlight >= 0;
             if (showTrack)
                 _mapControlRects.Add(trackRect);
             if (_mapLens.Zoom > AustraliaMapLens.MinZoom + 0.01f)
                 _mapControlRects.Add(zoomOutRect);
+            _mapControlRects.Add(rivalRect);
             _mapControlRects.Add(HudPainter.ToRect(workspaceLayout.FilterBox(0)));
             _mapControlRects.Add(HudPainter.ToRect(workspaceLayout.FilterBox(1)));
 
@@ -1305,7 +1316,8 @@ namespace Airside.Presentation
             // same painter the offline mockups render, so what is compared is what is drawn.
             _mapNetworkDrawList.Clear();
             RouteMapWorkspacePainter.PaintNetwork(_mapNetworkDrawList, workspaceLayout.Map, _mapLens,
-                _mapDestinationRows, home, _mapSelection, _operations.PlayerAirline.LiveryHex);
+                _mapDestinationRows, home, _mapSelection, _operations.PlayerAirline.LiveryHex,
+                _routeMapWorkspace.AircraftRangeKm, _routeMapWorkspace.AircraftRangeLabel);
             _hudPainter.Draw(_mapNetworkDrawList);
             DrawMapLabels(mapRect);
 
@@ -1319,6 +1331,8 @@ namespace Airside.Presentation
             // Routes flown right now: flown part solid, the rest faint, along the great circle.
             foreach (var flight in _mapFlights)
             {
+                if (!flight.Aircraft.Airline.IsPlayer && !_mapRivalsVisible)
+                    continue;
                 var colour = AirsideTheme.FromHex(flight.Aircraft.Airline.LiveryHex);
                 DrawGreatCircle(mapRect, flight.From, flight.To, 0.0, flight.Progress,
                     new Color(colour.r, colour.g, colour.b, 0.8f), 2f, flight.Aircraft.Registration);
@@ -1342,6 +1356,8 @@ namespace Airside.Presentation
             for (var i = 0; i < _mapFlights.Count; i++)
             {
                 var flight = _mapFlights[i];
+                if (!flight.Aircraft.Airline.IsPlayer && !_mapRivalsVisible)
+                    continue;
                 if (!mapRect.Contains(flight.Point))
                     continue;
                 var mine = flight.Aircraft.Airline.IsPlayer;
@@ -1370,30 +1386,6 @@ namespace Airside.Presentation
                     GUI.Label(new Rect(labelRect.x + 4f, labelRect.y + 17f, labelRect.width - 8f, 18f),
                         $"{MapFlightDetail(flight)} · {flight.Aircraft.Registration} {flight.Aircraft.Type.Name}", small);
                 GUI.color = labelColour;
-            }
-
-            foreach (var sky in SkyTraffic.At(_preciseTime, _operations?.Clock))
-            {
-                var point = Project(mapRect, sky.Longitude, sky.Latitude);
-                if (!mapRect.Contains(point))
-                    continue;
-                RouteMap.FlightPoint(sky.From.Latitude, sky.From.Longitude, sky.To.Latitude, sky.To.Longitude,
-                    Math.Min(1.0, sky.Progress + 0.004), sky.Callsign, out var aheadLat, out var aheadLon);
-                var ahead = Project(mapRect, aheadLon, aheadLat);
-                var delta = ahead - point;
-                var heading = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg + 90f;
-                var iconSize = Mathf.Lerp(12f, 20f, Mathf.InverseLerp(1f, 12f, _mapLens.Zoom)) * 0.8f;
-                var colour = new Color(0.78f, 0.82f, 0.88f, 0.55f);
-                DrawPlaneIcon(point, iconSize + 2f, heading, new Color(0f, 0f, 0f, 0.35f));
-                DrawPlaneIcon(point, iconSize, heading, colour);
-                if (_mapLens.Zoom >= 5f)
-                {
-                    var previous = GUI.color;
-                    GUI.color = new Color(1f, 1f, 1f, 0.7f);
-                    GUI.Label(new Rect(point.x + iconSize * 0.55f, point.y - 8f, 160f, 16f),
-                        $"{sky.Callsign} → {sky.To.Code}", small);
-                    GUI.color = previous;
-                }
             }
 
             if (hovered >= 0)
@@ -1432,6 +1424,14 @@ namespace Airside.Presentation
             {
                 _mapTrackId = null;
                 _mapLens.Reset();
+            }
+
+            if (GUI.Button(rivalRect, $"RIVALS {rivalFlights} · {(_mapRivalsVisible ? "ON" : "OFF")}", smallButton))
+            {
+                _mapRivalsVisible = !_mapRivalsVisible;
+                if (!_mapRivalsVisible && tracked >= 0 && !_mapFlights[tracked].Aircraft.Airline.IsPlayer)
+                    _mapTrackId = null;
+                PlayUiClick();
             }
 
             // Floating over the finished map, so the pills are never buried under a route.

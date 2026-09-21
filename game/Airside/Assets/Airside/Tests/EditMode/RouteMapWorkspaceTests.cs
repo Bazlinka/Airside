@@ -80,5 +80,44 @@ namespace Airside.Tests
             Assert.That(model.PlanBlockedReason, Does.Contain("parked"));
         }
 
+        [Test]
+        public void Map_ExposesTheSelectedAircraftsActualPracticalRange()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            var model = new RouteMapWorkspaceModel();
+
+            model.Rebuild(ops, plane, null, 900, clock.Now, RouteMapFilter.Available);
+
+            Assert.That(model.AircraftRangeKm, Is.EqualTo(plane.Type.PracticalRangeKm));
+            Assert.That(model.AircraftRangeLabel, Does.Contain(plane.Type.Name));
+            Assert.That(model.AircraftRangeLabel, Does.Contain($"{plane.Type.PracticalRangeKm:N0} km"));
+        }
+
+        [Test]
+        public void Network_DrawsOnlyTheSelectedRouteAndDecluttersLabelsUntilZoomed()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            var model = new RouteMapWorkspaceModel();
+            var selected = HudTestAirline.Code("KGC");
+            model.Rebuild(ops, plane, selected, 900, clock.Now, RouteMapFilter.Available);
+            var map = new HudBox(0f, 0f, 900f, 620f);
+            var lens = new AustraliaMapLens();
+
+            var unselected = new HudDrawList();
+            RouteMapWorkspacePainter.PaintNetwork(unselected, map, lens, model.AllDestinations,
+                ops.Home, null, ops.PlayerAirline.LiveryHex, model.AircraftRangeKm, model.AircraftRangeLabel);
+            var selectedList = new HudDrawList();
+            RouteMapWorkspacePainter.PaintNetwork(selectedList, map, lens, model.AllDestinations,
+                ops.Home, selected, ops.PlayerAirline.LiveryHex, model.AircraftRangeKm, model.AircraftRangeLabel);
+
+            Assert.That(selectedList.Commands.Count(c => c.Kind == HudDrawKind.Line),
+                Is.GreaterThan(unselected.Commands.Count(c => c.Kind == HudDrawKind.Line)));
+            Assert.That(unselected.Commands.Any(c => c.Text == selected.Name), Is.False,
+                "default zoom should show dots rather than a wall of destination names");
+            Assert.That(selectedList.Commands.Any(c => c.Text == selected.Name), Is.True,
+                "the selected destination remains named at every zoom");
+            Assert.That(selectedList.Commands.Any(c => c.Text == model.AircraftRangeLabel), Is.True);
+        }
+
     }
 }

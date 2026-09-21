@@ -68,6 +68,19 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void StrokeLabels_PreserveTheRetiredTextMeshPhysicalHeight()
+        {
+            Assert.That(
+                AdelaideStandMarkings.StrokeLabelScale(AdelaideStandMarkings.RegionalLabelSize)
+                * AirsideStripMarkings.DesignationDigitHeight,
+                Is.EqualTo(AdelaideStandMarkings.RegionalLabelSize * 6.4f).Within(0.001f));
+            Assert.That(
+                AdelaideStandMarkings.StrokeLabelScale(AdelaideStandMarkings.TerminalLabelSize)
+                * AirsideStripMarkings.DesignationDigitHeight,
+                Is.EqualTo(AdelaideStandMarkings.TerminalLabelSize * 6.4f).Within(0.001f));
+        }
+
+        [Test]
         public void MarkingGeometryIsCachedForTheStaticGeneratedLayout()
         {
             Assert.That(AdelaideStandMarkings.All(), Is.SameAs(AdelaideStandMarkings.All()));

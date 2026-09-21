@@ -25,7 +25,7 @@ namespace Airside.Presentation
 
         private void DrawFieldTags(GUIStyle small)
         {
-            if (!_fieldTagsVisible || _mainCamera == null || _fleetViewById.Count == 0)
+            if (!_fieldTagsVisible || _mainCamera == null || _fleetViewById.Count == 0 && _liveDrawn.Count == 0)
                 return;
 
             var scale = HudLayout.ScaleFor(Screen.width, Screen.height);
@@ -116,6 +116,64 @@ namespace Airside.Presentation
                     if (GUI.Button(pill, GUIContent.none, GUIStyle.none))
                         SelectAircraft(aircraft);
                 }
+            }
+
+            DrawLiveFieldTags(tagStyle, cameraPosition, scale);
+        }
+
+        /// <summary>
+        /// Callsign tags over real aircraft from the live feed (ADR 0081/0082): quieter than
+        /// the game's own, marked LIVE, and not selectable — they are not part of the game.
+        /// </summary>
+        private void DrawLiveFieldTags(GUIStyle tagStyle, Vector3 cameraPosition, float scale)
+        {
+            var ink = AirsideTheme.RunwayInk;
+            var accent = AirsideTheme.Cloud;
+            foreach (var (aircraft, view) in _liveDrawn)
+            {
+                if (view == null || !view.gameObject.activeInHierarchy)
+                    continue;
+                var world = view.position + Vector3.up * FieldTagLiftMetres;
+                var distance = Vector3.Distance(cameraPosition, world);
+                if (distance < RouteMap.FieldTagHideDistanceMetres)
+                    continue;
+                var screen = _mainCamera.WorldToScreenPoint(world);
+                if (screen.z <= 0f)
+                    continue;
+                var gui = new Vector2(screen.x / scale, (Screen.height - screen.y) / scale);
+                if (gui.x < 0f || gui.y < 0f || gui.x > Screen.width / scale || gui.y > Screen.height / scale
+                    || IsInsideHudPanel(gui))
+                    continue;
+
+                var fade = Mathf.InverseLerp(RouteMap.FieldTagHideDistanceMetres, RouteMap.FieldTagHideDistanceMetres * 2f,
+                    distance) * Ownership.OtherAlpha;
+                var text = $"LIVE · {aircraft.Label}";
+                var width = tagStyle.CalcSize(new GUIContent(text)).x + 14f;
+                var pill = new Rect(gui.x - width * 0.5f, gui.y - 30f, width, 20f);
+                for (var guard = 0; guard < 8; guard++)
+                {
+                    var bumped = false;
+                    foreach (var placed in _placedTags)
+                    {
+                        if (!placed.Overlaps(pill))
+                            continue;
+                        pill.y = placed.y - pill.height - 2f;
+                        bumped = true;
+                    }
+                    if (!bumped)
+                        break;
+                }
+                if (OverlapsHudPanel(pill))
+                    continue;
+                _placedTags.Add(pill);
+
+                DrawSolid(new Rect(gui.x - 1f, pill.yMax, 2f, Mathf.Max(2f, gui.y - pill.yMax)), new Color(accent.r, accent.g, accent.b, fade));
+                DrawSolid(pill, new Color(ink.r, ink.g, ink.b, 0.7f * fade));
+                AirsideTheme.DrawPanelFrame(pill, new Color(accent.r, accent.g, accent.b, 0.6f * fade));
+                var previous = GUI.color;
+                GUI.color = new Color(1f, 1f, 1f, fade);
+                GUI.Label(pill, text, tagStyle);
+                GUI.color = previous;
             }
         }
 

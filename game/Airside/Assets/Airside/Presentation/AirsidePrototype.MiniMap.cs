@@ -109,6 +109,19 @@ namespace Airside.Presentation
         {
             _miniMapDots.Clear();
             _miniMapDotIds.Clear();
+            // Live traffic first, as small hollow marks under the game's own aircraft, and
+            // not clickable: it is not part of the game (ADR 0082).
+            foreach (var (_, view) in _liveDrawn)
+            {
+                if (view == null || !view.gameObject.activeInHierarchy)
+                    continue;
+                var live = FieldMiniMap.WorldToMap(map, view.position.x, view.position.z);
+                if (!map.Contains(live))
+                    continue;
+                var cloud = AirsideTheme.Cloud;
+                AirsideTheme.DrawPanelFrame(new Rect(live.x - 3f, live.y - 3f, 6f, 6f), new Color(cloud.r, cloud.g, cloud.b, 0.75f));
+            }
+
             // Three passes so your own aircraft draw over other operators and the
             // selection draws over everything; dictionary order used to bury them.
             for (var pass = 0; pass < 3; pass++)

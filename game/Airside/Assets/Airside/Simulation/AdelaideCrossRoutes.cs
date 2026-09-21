@@ -36,6 +36,18 @@ namespace Airside.Simulation
             z = (float)(AdelaideLayout.CrossRunwayCenterZ - sin * localX + cos * localZ);
         }
 
+        /// <summary>Inverse of <see cref="LocalToWorld"/>: metres along and across 12/30.</summary>
+        public static void WorldToLocal(float x, float z, out float localX, out float localZ)
+        {
+            var yaw = AdelaideLayout.CrossRunwayYawDegrees * Math.PI / 180.0;
+            var cos = Math.Cos(yaw);
+            var sin = Math.Sin(yaw);
+            var dx = x - AdelaideLayout.CrossRunwayCenterX;
+            var dz = z - AdelaideLayout.CrossRunwayCenterZ;
+            localX = (float)(cos * dx - sin * dz);
+            localZ = (float)(sin * dx + cos * dz);
+        }
+
         public static float HalfLength => AdelaideLayout.CrossRunwayLengthMetres * 0.5f;
 
         /// <summary>

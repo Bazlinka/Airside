@@ -14,6 +14,22 @@ namespace Airside.Tests
     public sealed class ContractsWorkspaceTests
     {
         [Test]
+        public void Contracts_LockedTierNamesTheBaseCapability()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            var model = new ContractsWorkspaceModel();
+            model.Rebuild(ops, clock.Now);
+
+            var locked = model.Offers.FirstOrDefault(o => o.Definition.RequiredTier > OperatingTier.Provisional);
+            if (locked.Definition != null)
+            {
+                var required = CareerProgress.BaseCapabilityFor(locked.Definition.RequiredTier);
+                Assert.That(locked.LockReason, Does.Contain(required.Title));
+                Assert.That(locked.LockReason, Does.Contain(locked.Definition.RequiredTier.ToString()));
+            }
+        }
+
+        [Test]
         public void Contracts_KeepTheActiveCommitmentApartFromTheMarket()
         {
             var (clock, ops, _) = HudTestAirline.Create();

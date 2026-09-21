@@ -15,6 +15,9 @@
   capability instead of showing unrelated next-aircraft purchase progress.
 - **Career targets read on the map.** Current-chapter destinations now use the caution treatment
   directly on the Australia map as well as the destination list/detail.
+- **One capability language across Career, Fleet and Contracts.** Fleet identifies the current
+  Adelaide base capability, while locked aircraft/contracts name the base capability and tier
+  actually required instead of presenting tier labels as unexplained game levels.
 
 - **Adelaide curfew 23:00–06:00, player and RFDS exempt (ADR 0087).** Commercial
   AI no longer pushes or lands in the real closed window. You can still fly out

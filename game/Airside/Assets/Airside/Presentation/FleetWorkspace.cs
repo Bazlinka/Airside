@@ -154,8 +154,10 @@ namespace Airside.Presentation
             var freeBays = 0;
             foreach (var _ in operations.FreeStands())
                 freeBays++;
+            var baseCapability = CareerProgress.BaseCapabilityFor(operations.CareerState.Tier);
             Subtitle = $"{_mine.Count} of {AircraftAcquisition.MaxPlayerAircraft} aircraft"
-                       + $"  ·  {Plural(freeBays, "regional stand")} available";
+                       + $"  ·  {Plural(freeBays, "regional stand")} available"
+                       + $"  ·  {baseCapability.Title}";
 
             FillMarket(operations, freeBays);
 
@@ -231,7 +233,10 @@ namespace Airside.Presentation
                 if (fleetFull)
                     requirement = $"Fleet is full ({AircraftAcquisition.MaxPlayerAircraft} aircraft)";
                 else if (career.Tier < offer.RequiredTier)
-                    requirement = $"Requires {offer.RequiredTier} career tier";
+                {
+                    var requiredBase = CareerProgress.BaseCapabilityFor(offer.RequiredTier);
+                    requirement = $"Requires {requiredBase.Title} ({offer.RequiredTier} tier)";
+                }
                 else if (career.Reliability < offer.RequiredReliability)
                     requirement = $"Requires {offer.RequiredReliability}% reliability"
                                   + $" — you are at {career.Reliability}%";

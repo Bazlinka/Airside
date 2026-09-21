@@ -31,6 +31,7 @@ namespace Airside.Tests
             Assert.That(model.Mine.All(r => r.IsPlayer), Is.True);
             Assert.That(model.Others.Select(r => r.Registration), Is.EqualTo(new[] { "VH-ZRC" }));
             Assert.That(model.Subtitle, Does.StartWith($"2 of {AircraftAcquisition.MaxPlayerAircraft} aircraft"));
+            Assert.That(model.Subtitle, Does.Contain("Regional starter base"));
         }
 
         [Test]
@@ -53,6 +54,7 @@ namespace Airside.Tests
 
             var dash = model.Market.Single(o => o.Type.Id == AircraftType.Dash8Q400.Id);
             Assert.That(dash.RequirementLine, Does.Contain(OperatingTier.Regional.ToString()));
+            Assert.That(dash.RequirementLine, Does.Contain("Expanded regional base"));
         }
 
         [Test]

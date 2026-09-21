@@ -20,6 +20,9 @@
   - Updated OperationsSummary coverage.
   - Current campaign targets now use the caution treatment directly on the Australia route map,
     not just in the destination list/detail.
+  - Fleet subtitle now names the current base capability, and Fleet/Contracts locked items name
+    the actual base capability they require rather than only an abstract tier.
+  - Added Fleet/Contracts coverage for the shared capability language.
   - **Evidence:** connector-only edit; tests cannot be executed in this GitHub session. Branch is
     intentionally not merged. Run Unity EditMode before merge.
   - **NEXT:** visual/test pass, then extend this seam into physical airport capability/facility

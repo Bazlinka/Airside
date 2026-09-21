@@ -154,10 +154,10 @@ namespace Airside.Presentation
             var freeBays = 0;
             foreach (var _ in operations.FreeStands())
                 freeBays++;
-            var baseCapability = CareerProgress.BaseCapabilityFor(operations.CareerState.Tier);
-            Subtitle = $"{_mine.Count} of {AircraftAcquisition.MaxPlayerAircraft} aircraft"
+            var playerBase = operations.CareerState.Base;
+            Subtitle = $"{_mine.Count} of {playerBase.FleetCapacity} base slots"
                        + $"  ·  {Plural(freeBays, "regional stand")} available"
-                       + $"  ·  {baseCapability.Title}";
+                       + $"  ·  {playerBase.Title}";
 
             FillMarket(operations, freeBays);
 
@@ -215,13 +215,16 @@ namespace Airside.Presentation
             var career = operations.CareerState;
             var owned = _mine.Count;
             var fleetFull = owned >= AircraftAcquisition.MaxPlayerAircraft;
+            var baseFull = owned >= career.Base.FleetCapacity;
 
             foreach (var offer in AircraftAcquisition.All)
             {
                 var spec = AircraftCatalogue.For(offer.Type);
+                var baseSupports = PlayerBase.Supports(career.BaseLevel, offer.Type);
                 var unlocked = career.Tier >= offer.RequiredTier
                                && career.Reliability >= offer.RequiredReliability
-                               && career.CompletedPlayerRotations >= offer.RequiredRotations;
+                               && career.CompletedPlayerRotations >= offer.RequiredRotations
+                               && baseSupports && !baseFull;
                 var affordable = career.CanAfford(offer.Price);
 
                 // "Requires Regional tier" (a career milestone, OperatingTier) and "flies
@@ -232,6 +235,14 @@ namespace Airside.Presentation
                 string requirement;
                 if (fleetFull)
                     requirement = $"Fleet is full ({AircraftAcquisition.MaxPlayerAircraft} aircraft)";
+                else if (baseFull)
+                    requirement = $"{career.Base.Title} is full ({career.Base.FleetCapacity} aircraft) · expand your base";
+                else if (!baseSupports)
+                {
+                    var needed = AircraftCatalogue.IsWidebody(offer.Type)
+                        ? PlayerBaseLevel.International : PlayerBaseLevel.JetGate;
+                    requirement = $"Requires {PlayerBase.For(needed).Title}";
+                }
                 else if (career.Tier < offer.RequiredTier)
                 {
                     var requiredBase = CareerProgress.BaseCapabilityFor(offer.RequiredTier);
@@ -264,7 +275,7 @@ namespace Airside.Presentation
 
                 _market.Add(new FleetMarketOffer(offer.Type, spec.Name,
                     RouteMapWorkspaceModel.BandLabel(offer.Operates), offer.Price,
-                    requirement, standLine, affordable, unlocked, fleetFull));
+                    requirement, standLine, affordable, unlocked, fleetFull || baseFull));
             }
         }
 

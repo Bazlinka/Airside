@@ -2040,6 +2040,19 @@ namespace Airside.Presentation
                 case HudAction.ViewContracts:
                     SetWorkspace(HudWorkspace.Contracts);
                     return;
+                case HudAction.UpgradeBase:
+                {
+                    var result = _operations.UpgradePlayerBase();
+                    if (result.Accepted)
+                    {
+                        ShowToast($"Adelaide base expanded: {_operations.CareerState.Base.Title}.");
+                        SaveAirline();
+                    }
+                    else
+                        ShowToast(result.Reason);
+                    PlayUiClick();
+                    return;
+                }
                 case HudAction.PlanFlight:
                     ScheduleFromPlanner();
                     return;

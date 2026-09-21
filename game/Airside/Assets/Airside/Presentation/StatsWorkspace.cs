@@ -93,6 +93,7 @@ namespace Airside.Presentation
         public string NextTierTitle { get; private set; } = string.Empty;
         public string NextTierRequirementLine { get; private set; } = string.Empty;
         public float NextTierProgress01 { get; private set; }
+        public bool CanUpgradeBase { get; private set; }
 
         public IReadOnlyList<MilestoneRow> Milestones => _milestones;
         public IReadOnlyList<ContractHistoryRow> ContractHistory => _history;
@@ -130,6 +131,7 @@ namespace Airside.Presentation
             NextTierTitle = string.Empty;
             NextTierRequirementLine = string.Empty;
             NextTierProgress01 = 0f;
+            CanUpgradeBase = false;
             ContractsFulfilledLine = string.Empty;
             MilestonesReachedLine = string.Empty;
             AdelaideRankLine = string.Empty;
@@ -150,11 +152,10 @@ namespace Airside.Presentation
             LifetimeRevenueLine = $"${career.LifetimeRevenue:N0} lifetime revenue";
             ReliabilityLine = $"{career.Reliability}% reliability";
             TierLine = $"{career.Tier} tier";
-            FleetLine = $"{fleetSize} of {AircraftAcquisition.MaxPlayerAircraft} aircraft";
-            var capability = CareerProgress.BaseCapabilityFor(career.Tier);
-            BaseCapabilityLine = $"{capability.Title} · {capability.Detail}";
+            FleetLine = $"{fleetSize} of {career.Base.FleetCapacity} base slots";
+            BaseCapabilityLine = $"{career.Base.Title} · {career.Base.Detail}";
 
-            FillNextTier(career, ownedTypes);
+            FillBaseRoadmap(career);
             FillAdelaideStandings(operations);
 
             // The campaign chapter being played heads the list (ADR 0083), then the milestones.
@@ -249,46 +250,30 @@ namespace Airside.Presentation
             CompetitiveTargetLine = $"Pass {next.AirlineName}: {needed} more rotation" + (needed == 1 ? "." : "s.");
         }
 
-        private void FillNextTier(AirlineCareerState career, IReadOnlyList<AircraftType> ownedTypes)
+        private void FillBaseRoadmap(AirlineCareerState career)
         {
-            var next = CareerProgress.NextTier(career, ownedTypes);
-            var currentBase = CareerProgress.BaseCapabilityFor(career.Tier);
-            if (next.IsMaxTier)
+            var current = career.Base;
+            if (!PlayerBase.TryNext(career.BaseLevel, out var next))
             {
-                NextTierTitle = currentBase.Title;
-                NextTierRequirementLine = "All base capabilities unlocked.";
+                NextTierTitle = current.Title;
+                NextTierRequirementLine = "All Adelaide base capabilities unlocked.";
                 NextTierProgress01 = 1f;
+                CanUpgradeBase = false;
                 return;
             }
 
             HasNextTier = true;
-            var nextBase = CareerProgress.BaseCapabilityFor(next.Tier);
-            NextTierTitle = $"{currentBase.Title} → {nextBase.Title}";
-
-            var required = next.Tier switch
-            {
-                OperatingTier.Regional => AirlineCareerState.RegionalRotations,
-                OperatingTier.Domestic => AirlineCareerState.DomesticRotations,
-                OperatingTier.International => AirlineCareerState.InternationalRotations,
-                _ => 1
-            };
-            var done = required - next.RotationsRemaining;
-            NextTierProgress01 = required <= 0 ? 1f : Clamp01(done / (float)required);
-
-            var needs = new List<string>();
-            if (next.RotationsRemaining > 0)
-                needs.Add($"{next.RotationsRemaining} more rotation" + (next.RotationsRemaining == 1 ? "" : "s"));
-            if (next.ReliabilityRemaining > 0)
-                needs.Add($"{next.ReliabilityRemaining} more reliability");
-            if (!string.IsNullOrEmpty(next.MissingAircraftLine))
-                needs.Add(next.MissingAircraftLine);
-            var unlock = CareerProgress.BaseCapabilityFor(next.Tier);
-            var gate = needs.Count == 0
-                ? "Requirements met — clears on the next settlement."
-                : "Needs " + string.Join(", ", needs) + ".";
-            NextTierRequirementLine = $"{gate} Unlocks {unlock.Title.ToLowerInvariant()}.";
+            NextTierTitle = $"{current.Title} → {next.Title}";
+            var rotations = next.RequiredRotations <= 0 ? 1f
+                : Clamp01(career.CompletedPlayerRotations / (float)next.RequiredRotations);
+            var funds = next.UpgradeCost <= 0 ? 1f : Clamp01(career.Funds / (float)next.UpgradeCost);
+            NextTierProgress01 = Math.Min(rotations, funds);
+            NextTierRequirementLine = PlayerBase.Requirement(next, career)
+                                      + " Upgrade cost $" + next.UpgradeCost.ToString("N0") + ".";
+            CanUpgradeBase = career.Tier >= next.RequiredTier
+                             && career.CompletedPlayerRotations >= next.RequiredRotations
+                             && career.Funds >= next.UpgradeCost;
         }
-
         private static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;
     }
 
@@ -353,12 +338,14 @@ namespace Airside.Presentation
             new(LeftColumn.Right - 40f, NextTierY + CaptionHeight + 26f, 40f, 18f);
         public HudBox NextTierRequirementBox =>
             new(LeftColumn.X, NextTierY + CaptionHeight + 48f, LeftColumn.Width, 36f);
+        public HudBox BaseUpgradeButton =>
+            new(LeftColumn.X, NextTierY + CaptionHeight + 86f, Math.Min(180f, LeftColumn.Width), 30f);
 
         public const float SwatchSize = 28f;
         public const float SwatchGap = 8f;
 
         /// <summary>Where the livery-repaint swatches start, below the next-tier requirement text.</summary>
-        public float ProfileY => NextTierY + CaptionHeight + 48f + 36f + 16f;
+        public float ProfileY => NextTierY + CaptionHeight + 86f + 30f + 16f;
 
         public HudBox ProfileCaption => new(LeftColumn.X, ProfileY, LeftColumn.Width, CaptionHeight);
 
@@ -518,6 +505,9 @@ namespace Airside.Presentation
 
             into.Text(layout.NextTierRequirementBox, model.NextTierRequirementLine, 12f, HudTone.Muted,
                 HudTextStyle.Wrap);
+            if (model.HasNextTier)
+                into.Button(layout.BaseUpgradeButton, "EXPAND BASE", HudAction.UpgradeBase,
+                    HudButtonStyle.Primary, model.CanUpgradeBase);
 
             PaintProfile(into, model, layout);
             PaintCompetition(into, model, layout);

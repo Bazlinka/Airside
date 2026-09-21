@@ -199,6 +199,7 @@ namespace Airside.Presentation
         public const string ViewContracts = "contract:view";
         public const string CancelContract = "contract:cancel";
         public const string StartCheck = "check";
+        public const string UpgradeBase = "base:upgrade";
 
         public static string Select(string registration) => SelectPrefix + registration;
         public static string Buy(string typeId) => BuyPrefix + typeId;

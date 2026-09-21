@@ -252,16 +252,18 @@ namespace Airside.Presentation
         private void FillNextTier(AirlineCareerState career, IReadOnlyList<AircraftType> ownedTypes)
         {
             var next = CareerProgress.NextTier(career, ownedTypes);
+            var currentBase = CareerProgress.BaseCapabilityFor(career.Tier);
             if (next.IsMaxTier)
             {
-                NextTierTitle = "International reached";
+                NextTierTitle = currentBase.Title;
                 NextTierRequirementLine = "All base capabilities unlocked.";
                 NextTierProgress01 = 1f;
                 return;
             }
 
             HasNextTier = true;
-            NextTierTitle = $"Next: {next.Tier}";
+            var nextBase = CareerProgress.BaseCapabilityFor(next.Tier);
+            NextTierTitle = $"{currentBase.Title} → {nextBase.Title}";
 
             var required = next.Tier switch
             {
@@ -506,7 +508,7 @@ namespace Airside.Presentation
             for (var i = 0; i < stats.Length; i++)
                 into.Text(layout.StatRow(i).Inset(0f, 2f, 0f, 0f), stats[i], 14f);
 
-            into.Caption(layout.NextTierCaption, "NEXT TIER");
+            into.Caption(layout.NextTierCaption, "BASE ROADMAP");
             into.Text(layout.NextTierTitleBox, model.NextTierTitle, 15f, HudTone.Default, HudTextStyle.Bold);
             if (model.HasNextTier)
             {

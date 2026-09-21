@@ -124,7 +124,7 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now);
 
             Assert.That(model.HasNextTier, Is.True);
-            Assert.That(model.NextTierTitle, Is.EqualTo("Next: Regional"));
+            Assert.That(model.NextTierTitle, Is.EqualTo("Regional starter base → Expanded regional base"));
             Assert.That(model.NextTierRequirementLine, Does.Contain(
                 $"{AirlineCareerState.RegionalRotations} more rotation"));
             Assert.That(model.NextTierRequirementLine, Does.Contain("expanded regional base"));
@@ -155,7 +155,7 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now);
 
             Assert.That(model.HasNextTier, Is.False);
-            Assert.That(model.NextTierTitle, Is.EqualTo("International reached"));
+            Assert.That(model.NextTierTitle, Is.EqualTo("International base"));
         }
 
         [Test]

@@ -23,6 +23,8 @@
   - Fleet subtitle now names the current base capability, and Fleet/Contracts locked items name
     the actual base capability they require rather than only an abstract tier.
   - Added Fleet/Contracts coverage for the shared capability language.
+  - Career's former **NEXT TIER** block is now a **BASE ROADMAP**: current Adelaide base →
+    next base, the same real progress bar, exact remaining gates and what the unlock means.
   - **Evidence:** connector-only edit; tests cannot be executed in this GitHub session. Branch is
     intentionally not merged. Run Unity EditMode before merge.
   - **NEXT:** visual/test pass, then extend this seam into physical airport capability/facility

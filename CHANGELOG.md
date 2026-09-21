@@ -18,6 +18,9 @@
 - **One capability language across Career, Fleet and Contracts.** Fleet identifies the current
   Adelaide base capability, while locked aircraft/contracts name the base capability and tier
   actually required instead of presenting tier labels as unexplained game levels.
+- **Career base roadmap.** The old generic next-tier block now reads as current Adelaide base →
+  next base, with the existing real progress bar, exact remaining requirements and resulting
+  operating capability.
 
 - **Adelaide curfew 23:00–06:00, player and RFDS exempt (ADR 0087).** Commercial
   AI no longer pushes or lands in the real closed window. You can still fly out

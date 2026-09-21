@@ -9,7 +9,10 @@
   - Regional shared-apron fallback remains so ATR/Dash aircraft are not trapped by Saab-only 10A.
   - Existing stand/lead-in occupancy rules remain authoritative; no AI aircraft is displaced.
   - Added deterministic stand-allocation coverage.
-  - **NEXT:** wire base-level maintenance capability/cost/time, then audit UI copy and save invariants.
+  - Routine checks now use base capability: Starter outsources checks (+40% cost, +50% time); Expanded Regional performs turboprops locally; Jet Gate adds narrowbody jets; International adds widebodies.
+  - Fleet detail shows local vs outsourced maintenance and the exact effective check cost/time; the CHECK button uses the same value as the simulation command.
+  - Added maintenance-effect coverage.
+  - **NEXT:** audit Career/Fleet copy for stand allocation, then compile-oriented branch review.
   - **Evidence:** connector-only; Unity/EditMode not executed.
 
 - **2026-09-21 ChatGPT — Player Base v1 (branch `feature/player-base-v1`, ADR 0091).**

@@ -306,6 +306,31 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void LocalBaseMaintenance_IsCheaperAndFasterThanOutsourcing()
+        {
+            var (starterClock, starterOps, starterPlane) = PlayerOnly();
+            var starterBefore = starterOps.CareerState.Funds;
+            Assert.That(starterOps.StartCheck(starterPlane).Accepted, Is.True);
+            var outsourcedCost = starterBefore - starterOps.CareerState.Funds;
+            var outsourcedSeconds = starterPlane.CheckUntil.Value.ElapsedSeconds - starterClock.Now.ElapsedSeconds;
+
+            var (localClock, localOps, localPlane) = PlayerOnly();
+            localOps.RestoreCareerState(20_000, 100, nameof(OperatingTier.Provisional), null, 0, 0,
+                Array.Empty<string>(), completedPlayerRotations: 4,
+                baseLevel: PlayerBaseLevel.ExpandedRegional);
+            var localBefore = localOps.CareerState.Funds;
+            Assert.That(localOps.StartCheck(localPlane).Accepted, Is.True);
+            var localCost = localBefore - localOps.CareerState.Funds;
+            var localSeconds = localPlane.CheckUntil.Value.ElapsedSeconds - localClock.Now.ElapsedSeconds;
+
+            Assert.That(localCost, Is.EqualTo(Maintenance.CheckCost(AircraftType.Saab340)));
+            Assert.That(outsourcedCost, Is.EqualTo(Maintenance.CheckCost(AircraftType.Saab340, PlayerBaseLevel.Starter)));
+            Assert.That(outsourcedCost, Is.GreaterThan(localCost));
+            Assert.That(outsourcedSeconds, Is.GreaterThan(localSeconds));
+            Assert.That(localSeconds, Is.EqualTo(Maintenance.CheckSeconds(AircraftType.Saab340)));
+        }
+
+        [Test]
         public void BuyAircraft_ChargesAndAddsAParkedTypeWhenGatesClear()
         {
             var (_, ops, _) = PlayerOnly();

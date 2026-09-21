@@ -20,9 +20,15 @@ ground-conflict rules stay authoritative; the base never teleports or displaces 
 
 ### Maintenance
 
-The second half of this ADR will make the facility level determine whether a routine check is local
-or outsourced. Local capability must change real check cost/time and Fleet copy, using the existing
-maintenance wear/save state rather than a second maintenance system.
+Routine-check capability follows the physical base:
+- Starter: maintenance is outsourced.
+- Expanded Regional: local turboprop checks.
+- Jet Gate: local turboprop and narrowbody-jet checks.
+- International: local checks for every player aircraft including widebodies.
+
+The existing ADR 0085 check remains the only wear/check system. A local check uses its normal cost
+and duration. Outsourcing costs 40% more and takes 50% longer. Fleet detail and the CHECK button use
+the exact same effective cost/time as the command.
 
 ## Persistence
 

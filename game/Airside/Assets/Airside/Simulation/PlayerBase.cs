@@ -147,6 +147,30 @@ namespace Airside.Simulation
             };
         }
 
+        public static bool HasLocalMaintenance(PlayerBaseLevel level, AircraftType type)
+        {
+            if (type == null || level < PlayerBaseLevel.ExpandedRegional)
+                return false;
+            if (!AirlineOperations.NeedsTerminalGate(type))
+                return true;
+            if (AircraftCatalogue.IsWidebody(type))
+                return level >= PlayerBaseLevel.International;
+            return level >= PlayerBaseLevel.JetGate;
+        }
+
+        public static string MaintenanceLine(PlayerBaseLevel level, AircraftType type)
+        {
+            if (type == null)
+                return string.Empty;
+            if (HasLocalMaintenance(level, type))
+                return AircraftCatalogue.IsWidebody(type)
+                    ? "Local widebody maintenance"
+                    : AirlineOperations.NeedsTerminalGate(type)
+                        ? "Local jet maintenance"
+                        : "Local regional maintenance";
+            return "Maintenance outsourced";
+        }
+
         public static PlayerBaseLevel MinimumFor(IEnumerable<AircraftType> ownedTypes, int ownedCount)
         {
             var level = ownedCount switch

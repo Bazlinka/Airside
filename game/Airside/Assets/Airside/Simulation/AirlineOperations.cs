@@ -1480,14 +1480,14 @@ namespace Airside.Simulation
                 return CommandResult.Refused($"{aircraft.Registration} has a flight booked. Cancel it first.");
             if (Maintenance.InCheck(aircraft, _processedTo))
                 return CommandResult.Refused($"{aircraft.Registration} is already in its check.");
-            var cost = Maintenance.CheckCost(aircraft.Type);
             if (CareerState == null)
                 return CommandResult.Refused("No career to charge the check against.");
+            var cost = Maintenance.CheckCost(aircraft.Type, CareerState.BaseLevel);
             if (!CareerState.TryChargePurchase(cost))
                 return CommandResult.Refused($"A check costs ${cost:N0}; you have ${CareerState.Funds:N0}.");
 
             aircraft.RotationsSinceCheck = 0;
-            aircraft.CheckUntil = _processedTo.Advance(Maintenance.CheckSeconds(aircraft.Type));
+            aircraft.CheckUntil = _processedTo.Advance(Maintenance.CheckSeconds(aircraft.Type, CareerState.BaseLevel));
             return CommandResult.Ok;
         }
 

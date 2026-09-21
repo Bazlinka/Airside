@@ -158,6 +158,29 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void PlayerBase_RoundTripsAndV11InfersEnoughCapacityForExistingFleet()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(73),
+                Airline.Player("Base Test", "#2E7D32"));
+            ops.RestoreCareerState(50_000, 95, nameof(OperatingTier.Regional), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 12, baseLevel: PlayerBaseLevel.ExpandedRegional);
+            Assert.That(ops.BuyAircraft(AircraftType.Atr42).Accepted, Is.True);
+
+            var data = AirlineSave.Capture(ops);
+            Assert.That(data.Version, Is.EqualTo(12));
+            Assert.That(data.PlayerBaseLevel, Is.EqualTo(nameof(PlayerBaseLevel.ExpandedRegional)));
+
+            var restored = AirlineSave.Restore(data, new ManualSimulationClock(clock.Now));
+            Assert.That(restored.CareerState.BaseLevel, Is.EqualTo(PlayerBaseLevel.ExpandedRegional));
+
+            data.Version = 11;
+            data.PlayerBaseLevel = string.Empty;
+            var migrated = AirlineSave.Restore(data, new ManualSimulationClock(clock.Now));
+            Assert.That(migrated.CareerState.Base.FleetCapacity, Is.GreaterThanOrEqualTo(2));
+        }
+
+        [Test]
         public void VersionFiveSave_MigratesSingaporePlaceholderTo787WithoutLosingRotation()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));

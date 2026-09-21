@@ -21,6 +21,8 @@ namespace Airside.Tests
             var rival = Airline.Rex();
             ops.AddAirline(rival);
             ops.AddAircraft(rival, "VH-ZRC", AircraftType.Saab340, AirlineOperations.AdelaideRegionalBays[1]);
+            ops.RestoreCareerState(20_000, 90, nameof(OperatingTier.Provisional), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 6, baseLevel: PlayerBaseLevel.ExpandedRegional);
             ops.AddAircraft(ops.PlayerAirline, "VH-SUN", AircraftType.Atr42,
                 AirlineOperations.AdelaideRegionalBays[2]);
 
@@ -30,7 +32,7 @@ namespace Airside.Tests
             Assert.That(model.Mine.Select(r => r.Registration), Is.EqualTo(new[] { "VH-PAX", "VH-SUN" }));
             Assert.That(model.Mine.All(r => r.IsPlayer), Is.True);
             Assert.That(model.Others.Select(r => r.Registration), Is.EqualTo(new[] { "VH-ZRC" }));
-            Assert.That(model.Subtitle, Does.StartWith($"2 of {AircraftAcquisition.MaxPlayerAircraft} aircraft"));
+            Assert.That(model.Subtitle, Does.StartWith("2 of 3 base slots"));
             Assert.That(model.Subtitle, Does.Contain("Regional starter base"));
         }
 
@@ -53,8 +55,7 @@ namespace Airside.Tests
             }
 
             var dash = model.Market.Single(o => o.Type.Id == AircraftType.Dash8Q400.Id);
-            Assert.That(dash.RequirementLine, Does.Contain(OperatingTier.Regional.ToString()));
-            Assert.That(dash.RequirementLine, Does.Contain("Expanded regional base"));
+            Assert.That(dash.RequirementLine, Does.Contain("expand your base"));
         }
 
         [Test]

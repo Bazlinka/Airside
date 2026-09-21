@@ -25,7 +25,7 @@ namespace Airside.Tests
             Assert.That(model.LifetimeRevenueLine, Is.EqualTo("$0 lifetime revenue"));
             Assert.That(model.ReliabilityLine, Is.EqualTo($"{ops.CareerState.Reliability}% reliability"));
             Assert.That(model.TierLine, Is.EqualTo("Provisional tier"));
-            Assert.That(model.FleetLine, Is.EqualTo($"1 of {AircraftAcquisition.MaxPlayerAircraft} aircraft"));
+            Assert.That(model.FleetLine, Is.EqualTo("1 of 1 base slots"));
             Assert.That(model.BaseCapabilityLine, Does.StartWith("Regional starter base"));
             Assert.That(model.BaseCapabilityLine, Does.Contain("Regional apron"));
             Assert.That(model.AdelaideRankLine, Is.EqualTo("#1 of 1 at Adelaide"));
@@ -117,7 +117,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Stats_NextTierNamesExactlyWhatIsStillMissing()
+        public void Stats_BaseRoadmapNamesExactlyWhatIsStillMissing()
         {
             var (clock, ops, _) = HudTestAirline.Create();
             var model = new StatsWorkspaceModel();
@@ -125,10 +125,10 @@ namespace Airside.Tests
 
             Assert.That(model.HasNextTier, Is.True);
             Assert.That(model.NextTierTitle, Is.EqualTo("Regional starter base → Expanded regional base"));
-            Assert.That(model.NextTierRequirementLine, Does.Contain(
-                $"{AirlineCareerState.RegionalRotations} more rotation"));
-            Assert.That(model.NextTierRequirementLine, Does.Contain("expanded regional base"));
+            Assert.That(model.NextTierRequirementLine, Does.Contain("4 more rotations"));
+            Assert.That(model.NextTierRequirementLine, Does.Contain("Upgrade cost $1,500"));
             Assert.That(model.NextTierProgress01, Is.EqualTo(0f));
+            Assert.That(model.CanUpgradeBase, Is.False);
         }
 
         [Test]
@@ -149,8 +149,9 @@ namespace Airside.Tests
         public void Stats_NextTierReportsMaxTierReachedAtInternational()
         {
             var (clock, ops, _) = HudTestAirline.Create();
-            ops.RestoreCareerState(ops.CareerState.Funds, 95, nameof(OperatingTier.International), null, 0, 0,
-                System.Array.Empty<string>());
+            ops.RestoreCareerState(50_000, 95, nameof(OperatingTier.International), null, 0, 0,
+                System.Array.Empty<string>(), completedPlayerRotations: 40,
+                baseLevel: PlayerBaseLevel.International);
             var model = new StatsWorkspaceModel();
             model.Rebuild(ops, clock.Now);
 

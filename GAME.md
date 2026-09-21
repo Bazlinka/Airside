@@ -1,5 +1,15 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 ChatGPT — Player Base v1 (branch `feature/player-base-v1`, ADR 0091).**
+  - Persisted Adelaide player-base levels (save v12): starter → expanded regional → jet-gate → international.
+  - Base upgrades spend normal airline funds and require career tier/rotation progress; no second XP.
+  - Aircraft purchases obey base fleet capacity and jet/widebody handling capability.
+  - Career has a real **EXPAND BASE** action; Fleet purchase locks mirror simulation rules.
+  - v11 and older saves infer a base large enough for their existing player fleet.
+  - Added acquisition, UI and save-migration coverage.
+  - **NEXT:** compile/EditMode pass, then add a restrained world-visible leased-base marker if runtime refresh is safe.
+  - **Evidence:** GitHub connector implementation only; Unity/EditMode not executed yet.
+
 - **2026-09-21 ChatGPT — career-aware route planning + base capability roadmap (branch `feature/career-roadmap-ui`).**
   Started the map/HUD/career convergence pass without changing saves or flight behaviour.
   - Campaign owns deterministic route guidance for the current chapter; Presentation does not

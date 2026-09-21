@@ -239,13 +239,48 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void BaseUpgrade_ControlsFleetCapacityAndChargesOnce()
+        {
+            var (_, ops, _) = PlayerOnly();
+            ops.RestoreCareerState(20_000, 90, nameof(OperatingTier.Provisional), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 6);
+
+            var blocked = ops.BuyAircraft(AircraftType.Atr42);
+            Assert.That(blocked.Accepted, Is.False);
+            Assert.That(blocked.Reason, Does.Contain("Expand your Adelaide base"));
+
+            var before = ops.CareerState.Funds;
+            Assert.That(ops.UpgradePlayerBase().Accepted, Is.True);
+            Assert.That(ops.CareerState.BaseLevel, Is.EqualTo(PlayerBaseLevel.ExpandedRegional));
+            Assert.That(ops.CareerState.Funds,
+                Is.EqualTo(before - PlayerBase.For(PlayerBaseLevel.ExpandedRegional).UpgradeCost));
+            Assert.That(ops.BuyAircraft(AircraftType.Atr42).Accepted, Is.True);
+        }
+
+        [Test]
+        public void BaseCapability_RefusesJetsUntilJetGateBaseExists()
+        {
+            var (_, ops, _) = PlayerOnly();
+            ops.RestoreCareerState(100_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 28, baseLevel: PlayerBaseLevel.ExpandedRegional);
+
+            var blocked = ops.BuyAircraft(AircraftType.Boeing7378);
+            Assert.That(blocked.Accepted, Is.False);
+            Assert.That(blocked.Reason, Does.Contain("Jet-gate base"));
+
+            Assert.That(ops.UpgradePlayerBase().Accepted, Is.True);
+            Assert.That(ops.CareerState.BaseLevel, Is.EqualTo(PlayerBaseLevel.JetGate));
+            Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True);
+        }
+
+        [Test]
         public void BuyAircraft_ChargesAndAddsAParkedTypeWhenGatesClear()
         {
             var (_, ops, _) = PlayerOnly();
             Assert.That(ops.BuyAircraft(AircraftType.Atr42).Accepted, Is.False, "starter has not met the gates");
 
             ops.RestoreCareerState(20_000, 80, nameof(OperatingTier.Provisional), null, 0, 0, Array.Empty<string>(),
-                Array.Empty<string>(), 6);
+                Array.Empty<string>(), 6, baseLevel: PlayerBaseLevel.ExpandedRegional);
             Assert.That(ops.BuyAircraft(AircraftType.Atr42).Accepted, Is.True);
             Assert.That(ops.CareerState.Funds, Is.EqualTo(20_000 - AircraftAcquisition.Atr42.Price));
             var atr = ops.FleetOf(ops.PlayerAirline).First(a => a.Type.Id == AircraftType.Atr42.Id);

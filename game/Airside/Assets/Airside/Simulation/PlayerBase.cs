@@ -48,7 +48,7 @@ namespace Airside.Simulation
         public static bool TryNext(PlayerBaseLevel current, out PlayerBaseSpec next)
         {
             if (current >= PlayerBaseLevel.International) { next = default; return false; }
-            next = For(current + 1);
+            next = For((PlayerBaseLevel)((int)current + 1));
             return true;
         }
 

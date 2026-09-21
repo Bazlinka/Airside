@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **NOW follow, imperative objective next-action, smoother pushback.** Operations NOW no longer
+  sticks on live Outbound rows (09:55→11:55 bug) and the board scroll keeps following NOW until
+  you scroll. The objective card's yellow line is a concrete verb (finish fuelling / schedule to
+  Kingscote / accept contract / follow for pushback / buy in Fleet). Pushback paths are
+  `DrivablePushback`-smoothed; disconnect heading check tightened. Domain 558/558.
+
 - **Aircraft-aware competitive Route Map (ADR 0076).** Replaced three generic distance rings with
   the selected aircraft's real practical-range ring. The static network now draws only the selected
   route (plus the existing hover preview), destination labels reveal progressively with zoom, and

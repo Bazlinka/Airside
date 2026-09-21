@@ -188,6 +188,43 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Operations_NowDividerSkipsLiveOutboundThatAlreadyLeft()
+        {
+            // Reproduce Bailey's "stuck at 09:55 when it is 11:55": an Outbound that pushed
+            // mid-morning stays on the departures board for the whole flight, and used to keep
+            // IsPast=false so NOW never walked past it.
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(11),
+                Airline.Player("Soak Air", "#1F3A93"));
+            var morning = ops.Clock.AtLocal(ops.Clock.LocalAt(clock.Now).Date.AddHours(9).AddMinutes(55));
+            var lateMorning = ops.Clock.AtLocal(ops.Clock.LocalAt(clock.Now).Date.AddHours(11).AddMinutes(55));
+            DestinationCatalogue.TryFind("MEL", out var melbourne);
+            var voz = ops.Airlines.First(a => a.Id.Value == "VOZ");
+            ops.RestoreAircraft(
+                "VH-STUCK", voz, AircraftType.Boeing7378, FleetState.Outbound,
+                morning, lateMorning.Advance(60 * 60), default, default,
+                melbourne, null, 0);
+
+            clock.Set(lateMorning);
+            ops.Update();
+
+            var model = new OperationsWorkspaceModel();
+            model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
+
+            var liveGone = model.Rows.First(r => r.Registration == "VH-STUCK");
+            Assert.That(liveGone.IsPast, Is.True,
+                "an aircraft that left at 09:55 must not own NOW at 11:55");
+            Assert.That(liveGone.OnField, Is.False);
+
+            var nowRow = model.Rows[model.NowDividerRowIndex];
+            Assert.That(nowRow.IsPast, Is.False);
+            Assert.That(nowRow.Registration, Is.Not.EqualTo("VH-STUCK"));
+            var hour = int.Parse(nowRow.ScheduledTime.Substring(0, 2));
+            Assert.That(hour, Is.GreaterThanOrEqualTo(11),
+                $"NOW should sit near 11:55, not on {nowRow.ScheduledTime}");
+        }
+
+        [Test]
         public void Operations_IdleParkedAircraftStayOffTheDeparturesBoard()
         {
             var (clock, ops, plane) = HudTestAirline.Create();

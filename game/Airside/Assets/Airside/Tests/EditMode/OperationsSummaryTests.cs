@@ -38,6 +38,8 @@ namespace Airside.Tests
             Assert.That(objective.ProgressText, Does.Contain("0 of 5"));
             Assert.That(objective.Progress01, Is.EqualTo(0f));
             Assert.That(objective.NextLine, Does.Contain("VH-PAX"));
+            Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("schedule"));
+            Assert.That(objective.NextLine, Does.Contain("Kingscote"));
         }
 
         [Test]
@@ -48,6 +50,42 @@ namespace Airside.Tests
                 ops.CareerState, ops.MarketOffers());
             Assert.That(objective.Title, Does.Not.Contain("REG-"));
             Assert.That(objective.NextLine, Does.StartWith("Next:"));
+            Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("accept"));
+        }
+
+        [Test]
+        public void Objective_PrepIsAnImperativeNotAStatusReadout()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            Assert.That(ops.AcceptContract(RouteContractCatalogue.RegionalKingscoteIntro).Accepted, Is.True);
+            var departAt = clock.Now.Advance(DeparturePrep.LeadSeconds(plane.Type));
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), departAt).Accepted, Is.True);
+
+            var objective = OperationsSummary.Objective(ops.FleetOf(ops.PlayerAirline), clock.Now, ops.Clock,
+                ops.CareerState);
+            Assert.That(objective.NextLine, Does.StartWith("Next: Finish"));
+            Assert.That(objective.NextLine, Does.Contain("VH-PAX"));
+            Assert.That(objective.NextLine, Does.Not.Contain("%"),
+                "the next line is the action, not a fuelling percent");
+        }
+
+        [Test]
+        public void Objective_ReadyAircraftPointsAtPushback()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            Assert.That(ops.AcceptContract(RouteContractCatalogue.RegionalKingscoteIntro).Accepted, Is.True);
+            var total = DeparturePrep.TotalSeconds(plane.Type);
+            var departAt = clock.Now.Advance(total + 120);
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), departAt).Accepted, Is.True);
+            // Sit at the booked push without Update — Update would already start TaxiOut.
+            clock.Set(departAt);
+            Assert.That(plane.State, Is.EqualTo(FleetState.AtStand));
+            Assert.That(DeparturePrep.For(plane, clock.Now).Ready, Is.True, "prep must be finished for this case");
+
+            var objective = OperationsSummary.Objective(ops.FleetOf(ops.PlayerAirline), clock.Now, ops.Clock,
+                ops.CareerState);
+            Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("follow"));
+            Assert.That(objective.NextLine, Does.Contain("pushback"));
         }
 
         [Test]

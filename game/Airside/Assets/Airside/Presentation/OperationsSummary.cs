@@ -83,7 +83,7 @@ namespace Airside.Presentation
             AirlineCareerState career = null, IReadOnlyList<RouteContractDefinition> marketOffers = null)
         {
             clock ??= AirlineClock.Default;
-            var (next, nextSeverity) = NextAction(playerFleet, now, clock);
+            var (next, nextSeverity) = NextAction(playerFleet, now, clock, career, marketOffers);
 
             if (career?.ActiveContract != null
                 && career.TryFindDefinition(career.ActiveContract.DefinitionId, out var definition))
@@ -105,8 +105,8 @@ namespace Airside.Presentation
                     $"Accept a {PlaceName(offer.DestinationCode)} contract",
                     "No contract accepted yet",
                     0f,
-                    $"Next: open Contracts for {offer.OriginCode} ↔ {offer.DestinationCode}",
-                    StatusSeverity.Attention);
+                    next,
+                    nextSeverity);
             }
 
             if (career != null)
@@ -228,34 +228,99 @@ namespace Airside.Presentation
             return "available";
         }
 
+        /// <summary>
+        /// One concrete next action for the objective card — a verb the player can do now,
+        /// not a status readout. Priority: parking → prep → schedule/accept → follow/track → buy.
+        /// </summary>
         private static (string Text, StatusSeverity Severity) NextAction(
-            IEnumerable<FleetAircraft> playerFleet, SimulationTime now, AirlineClock clock)
+            IEnumerable<FleetAircraft> playerFleet, SimulationTime now, AirlineClock clock,
+            AirlineCareerState career = null, IReadOnlyList<RouteContractDefinition> marketOffers = null)
         {
             if (playerFleet == null || !playerFleet.Any())
                 return ("Next: add an aircraft in Fleet", StatusSeverity.Normal);
 
-            var priority = PriorityAircraft(playerFleet, now);
+            var fleet = playerFleet as IList<FleetAircraft> ?? playerFleet.ToList();
+            var priority = PriorityAircraft(fleet, now);
             if (priority == null)
                 return ("Next: plan a flight when an aircraft is free", StatusSeverity.Normal);
 
             var severity = AircraftStatus.Severity(priority, now);
             if (priority.State == FleetState.AwaitingStand)
-                return ($"Next: {priority.Registration} landed · parking", StatusSeverity.Warning);
-            if (priority.State == FleetState.AtStand && !priority.Scheduled.HasValue)
-                return ($"Next: plan a flight for {priority.Registration}", StatusSeverity.Normal);
+                return ($"Next: assign a stand to {priority.Registration}", StatusSeverity.Warning);
+
             if (priority.State == FleetState.AtStand && priority.Scheduled.HasValue)
             {
-                var when = clock.TimeText(priority.Scheduled.Value.DepartAt);
                 var prep = DeparturePrep.For(priority, now);
-                var stage = prep.Ready ? "ready" : prep.Label;
-                return ($"Next: {priority.Registration} departs {when} · {stage}",
+                if (!prep.Ready)
+                {
+                    var finish = prep.Stage switch
+                    {
+                        DeparturePrepStage.Fuel => "Finish fuelling",
+                        DeparturePrepStage.Catering => "Finish catering",
+                        DeparturePrepStage.Boarding => "Finish boarding",
+                        _ => "Finish turnaround"
+                    };
+                    return ($"Next: {finish} on {priority.Registration}",
+                        severity == StatusSeverity.Normal ? StatusSeverity.Attention : severity);
+                }
+
+                var when = clock.TimeText(priority.Scheduled.Value.DepartAt);
+                return ($"Next: follow {priority.Registration} for pushback at {when}",
                     severity == StatusSeverity.Normal ? StatusSeverity.Attention : severity);
             }
 
-            var dest = RouteLabel(priority);
-            return ($"Next: {priority.Registration} · {CompactState(priority, now)}" +
-                    (dest == "available" ? string.Empty : $" · {dest}"),
-                severity);
+            if (priority.State == FleetState.AtStand && !priority.Scheduled.HasValue)
+            {
+                if (career?.ActiveContract != null
+                    && career.TryFindDefinition(career.ActiveContract.DefinitionId, out var active))
+                {
+                    return ($"Next: schedule {priority.Registration} to {PlaceName(active.DestinationCode)}",
+                        StatusSeverity.Attention);
+                }
+
+                var offer = NextOffer(career, marketOffers);
+                if (offer != null)
+                    return ($"Next: accept a {PlaceName(offer.DestinationCode)} contract",
+                        StatusSeverity.Attention);
+
+                if (TryBuyHint(career, fleet.Count, out var buyLine))
+                    return (buyLine, StatusSeverity.Attention);
+
+                return ($"Next: plan a flight for {priority.Registration}", StatusSeverity.Normal);
+            }
+
+            if (priority.State is FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff
+                or FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound
+                or FleetState.HoldingForLanding or FleetState.GoAround or FleetState.Landing
+                or FleetState.TaxiIn)
+            {
+                return ($"Next: track {priority.Registration}",
+                    severity == StatusSeverity.Normal ? StatusSeverity.Attention : severity);
+            }
+
+            if (TryBuyHint(career, fleet.Count, out var hint))
+                return (hint, StatusSeverity.Attention);
+
+            return ($"Next: plan a flight for {priority.Registration}", StatusSeverity.Normal);
+        }
+
+        private static bool TryBuyHint(AirlineCareerState career, int ownedCount, out string line)
+        {
+            line = null;
+            if (career == null || ownedCount >= AircraftAcquisition.MaxPlayerAircraft)
+                return false;
+            foreach (var offer in AircraftAcquisition.All)
+            {
+                if (career.Tier < offer.RequiredTier
+                    || career.Reliability < offer.RequiredReliability
+                    || career.CompletedPlayerRotations < offer.RequiredRotations
+                    || !career.CanAfford(offer.Price))
+                    continue;
+                line = $"Next: buy a {offer.Type.Name} in Fleet";
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>Worst severity, then soonest booked departure, then first idle aircraft.</summary>

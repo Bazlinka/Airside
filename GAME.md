@@ -1,5 +1,19 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Cursor — NOW follow + imperative next action + smoother pushback (branch
+  `cursor/ops-now-follow-clock-22df`).** Bailey: "go for it… do as much as you can."
+  1. **Operations NOW stuck at 09:55 while clock was 11:55** — Outbound rows never became
+     `IsPast`; scroll snapped to NOW once then froze. Fixed both.
+  2. **Objective card next line is now an imperative** — "Finish fuelling on VH-PAX",
+     "Schedule VH-PAX to Kingscote", "Accept a … contract", "Follow … for pushback",
+     "Buy a … in Fleet" — not a status readout like "Fuelling 40%".
+  3. **Pushback polylines now go through `DrivablePushback`** (softer min-radius than taxi)
+     so sharp OSM tug corners stop yaw-spiking; disconnect heading tolerance tightened 25°→8°.
+  - **Evidence:** `scripts/test-domain.sh` **558/558**. Overview HUD re-rendered for the
+    objective line.
+  - **NEXT:** Unity Play confirm NOW follow + pushback look; then deeper taxi router / authored
+    timetable if Bailey wants.
+
 - **2026-09-21 Codex — aircraft-aware competitive Route Map (branch
   `codex/route-map-competitive-production`, ADR 0076).** Replaced the generic reference rings with
   the selected type's actual practical range, removed default all-route spaghetti, made destination

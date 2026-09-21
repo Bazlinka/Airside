@@ -249,6 +249,17 @@ namespace Airside.Simulation
             Reliability = Clamp(Reliability - amount);
         }
 
+        /// <summary>
+        /// Applies an on-time / late reliability delta from pushback punctuality (ADR 0078).
+        /// Zero is a no-op; the result is always clamped to 0..100.
+        /// </summary>
+        internal void ApplyPunctuality(int reliabilityDelta)
+        {
+            if (reliabilityDelta == 0)
+                return;
+            Reliability = Clamp(Reliability + reliabilityDelta);
+        }
+
         private static bool Owns(IReadOnlyList<AircraftType> owned, AircraftType type)
         {
             if (owned == null || type == null)

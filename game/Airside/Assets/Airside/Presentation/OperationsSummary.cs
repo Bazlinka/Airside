@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Airside.Domain;
@@ -101,16 +102,31 @@ namespace Airside.Presentation
             var offer = NextOffer(career, marketOffers);
             if (offer != null)
             {
+                var hangar = CareerProgress.NextAircraft(career, FleetCount(playerFleet));
+                var progress = HangarProgressText(hangar, career);
                 return new CareerObjective(
                     $"Accept a {PlaceName(offer.DestinationCode)} contract",
-                    "No contract accepted yet",
-                    0f,
+                    string.IsNullOrEmpty(progress) ? "No contract accepted yet" : progress,
+                    HangarProgress01(hangar, career),
                     next,
                     nextSeverity);
             }
 
             if (career != null)
             {
+                var hangar = CareerProgress.NextAircraft(career, FleetCount(playerFleet));
+                if (hangar.HasOffer && !hangar.FleetFull)
+                {
+                    return new CareerObjective(
+                        hangar.ReadyToBuy
+                            ? $"Buy a {hangar.Offer.Type.Name} in Fleet"
+                            : $"Save for a {hangar.Offer.Type.Name}",
+                        HangarProgressText(hangar, career),
+                        HangarProgress01(hangar, career),
+                        next,
+                        nextSeverity);
+                }
+
                 return new CareerObjective(
                     "Keep the airline flying",
                     $"${career.Funds:N0} on hand · {career.Reliability}% reliability",
@@ -286,6 +302,11 @@ namespace Airside.Presentation
                 if (TryBuyHint(career, fleet.Count, out var buyLine))
                     return (buyLine, StatusSeverity.Attention);
 
+                var hangar = CareerProgress.NextAircraft(career, fleet.Count);
+                if (hangar.HasOffer && !hangar.ReadyToBuy && !hangar.FleetFull)
+                    return ($"Next: fly {priority.Registration} to earn toward the {hangar.Offer.Type.Name}",
+                        StatusSeverity.Attention);
+
                 return ($"Next: plan a flight for {priority.Registration}", StatusSeverity.Normal);
             }
 
@@ -390,6 +411,36 @@ namespace Airside.Presentation
             }
 
             return null;
+        }
+
+        private static int FleetCount(IEnumerable<FleetAircraft> playerFleet)
+        {
+            if (playerFleet == null)
+                return 0;
+            var count = 0;
+            foreach (var _ in playerFleet)
+                count++;
+            return count;
+        }
+
+        private static string HangarProgressText(NextAircraftRequirement hangar, AirlineCareerState career)
+        {
+            if (career == null || !hangar.HasOffer)
+                return string.Empty;
+            var funds = Math.Min(career.Funds, hangar.Offer.Price);
+            var rotations = Math.Min(career.CompletedPlayerRotations, hangar.Offer.RequiredRotations);
+            return $"${funds:N0} of ${hangar.Offer.Price:N0} · {rotations} of {hangar.Offer.RequiredRotations} rotations";
+        }
+
+        private static float HangarProgress01(NextAircraftRequirement hangar, AirlineCareerState career)
+        {
+            if (career == null || !hangar.HasOffer || hangar.Offer.Price <= 0)
+                return 0f;
+            var fundsPart = Math.Min(1f, career.Funds / (float)hangar.Offer.Price);
+            var rotPart = hangar.Offer.RequiredRotations <= 0
+                ? 1f
+                : Math.Min(1f, career.CompletedPlayerRotations / (float)hangar.Offer.RequiredRotations);
+            return Math.Min(fundsPart, rotPart);
         }
     }
 }

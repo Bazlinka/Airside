@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Hangar goal on the objective card + on-time reliability (ADR 0078).** No active contract
+  → objective shows "Save for a …" with `$funds of $price · N of M rotations` toward the next
+  hangar buy (usually ATR). Pushback lateness vs booked time adjusts reliability (+1 / 0 / −1 /
+  −2); contract pay stays exact. Save v10. Domain 565/565.
+
 - **Saab starter, bit-by-bit fleet unlocks, light finance pressure, opening redo (ADR 0077).**
   New careers start with a Saab 340B and $2,800 — not an ATR and $4,000. ATR is the first hangar
   step ($5,200); Dash 8 / jets climb on stepped prices and rotation gates. Intro contracts need

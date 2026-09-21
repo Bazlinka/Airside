@@ -109,6 +109,13 @@ namespace Airside.Simulation
         /// <summary>When player departure prep (fuel → catering → boarding) started. Null if none.</summary>
         public SimulationTime? PrepStartedAt { get; internal set; }
 
+        /// <summary>
+        /// Seconds late (or early as negative) when this trip pushed back vs the booked
+        /// <see cref="ScheduledDeparture.DepartAt"/>. Null until pushback, or for AI / pre-v10
+        /// restores that never recorded it (ADR 0078).
+        /// </summary>
+        public int? PushbackLatenessSeconds { get; internal set; }
+
         public bool IsOffMap => State is FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound;
 
         /// <summary>0..1 through a timed state; 0 for waiting states.</summary>

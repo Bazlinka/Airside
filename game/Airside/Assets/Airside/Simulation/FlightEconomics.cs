@@ -59,6 +59,22 @@ namespace Airside.Simulation
         }
 
         /// <summary>
+        /// How many reliability points a player pushback earns or loses vs its booked time
+        /// (ADR 0078). Grace of two minutes counts as on time; AI traffic is not scored.
+        /// </summary>
+        public const int OnTimeGraceSeconds = 2 * 60;
+        public const int SoftLateSeconds = 5 * 60;
+        public const int HardLateSeconds = 15 * 60;
+
+        public static int PunctualityReliabilityDelta(int latenessSeconds)
+        {
+            if (latenessSeconds <= OnTimeGraceSeconds) return 1;
+            if (latenessSeconds <= SoftLateSeconds) return 0;
+            if (latenessSeconds <= HardLateSeconds) return -1;
+            return -2;
+        }
+
+        /// <summary>
         /// Regional turboprops (bay types) are the starter airline's tool; jets cost more to
         /// dispatch. ATR/Saab/Dash 8 cruise above 500 km/h, so a cruise-speed cutoff would
         /// price a turboprop as a 787.

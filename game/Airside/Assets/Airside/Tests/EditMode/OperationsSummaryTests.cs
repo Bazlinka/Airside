@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Airside.Domain;
 using Airside.Presentation;
@@ -51,6 +52,33 @@ namespace Airside.Tests
             Assert.That(objective.Title, Does.Not.Contain("REG-"));
             Assert.That(objective.NextLine, Does.StartWith("Next:"));
             Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("accept"));
+            Assert.That(objective.ProgressText, Does.Contain("of $"));
+            Assert.That(objective.ProgressText.ToLowerInvariant(), Does.Contain("rotation"));
+        }
+
+        [Test]
+        public void Objective_WithoutOffersShowsHangarSaveGoal()
+        {
+            var (clock, ops, _) = PlayerOnly();
+            // Empty market + every authored intro already completed → hangar owns the title.
+            ops.RestoreCareerState(ops.CareerState.Funds, ops.CareerState.Reliability,
+                nameof(OperatingTier.Provisional), null, 0, 0,
+                Array.Empty<string>(),
+                new[]
+                {
+                    RouteContractCatalogue.RegionalKingscoteIntro.Id,
+                    RouteContractCatalogue.RegionalPortLincolnIntro.Id,
+                    RouteContractCatalogue.RegionalWhyallaIntro.Id,
+                    RouteContractCatalogue.DomesticMelbourneIntro.Id
+                },
+                0);
+            // Drain market by advancing? MarketOffers still draws from owned Saab.
+            // Pass null market and rely on completed intros.
+            var objective = OperationsSummary.Objective(ops.FleetOf(ops.PlayerAirline), clock.Now, ops.Clock,
+                ops.CareerState, Array.Empty<RouteContractDefinition>());
+            Assert.That(objective.Title, Does.Contain("ATR 42"));
+            Assert.That(objective.ProgressText, Does.Contain($"${AirlineCareerState.StartingFunds:N0}"));
+            Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("fly").Or.Contain("earn"));
         }
 
         [Test]

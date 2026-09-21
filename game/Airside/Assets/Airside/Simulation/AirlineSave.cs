@@ -28,8 +28,11 @@ namespace Airside.Simulation
         /// by spending, unlike <see cref="CareerFunds"/>) and a capped history of fulfilled
         /// contracts, for a real career-stats view. A pre-9 save loads with 0 lifetime revenue
         /// and no history — same "no retroactive credit" tolerance as every earlier version.
+        /// 10 adds per-aircraft pushback lateness for on-time reliability (ADR 0078). A pre-10
+        /// mid-trip aircraft restores with no lateness recorded, so that one settlement skips
+        /// the punctuality delta rather than inventing one.
         /// </summary>
-        public const int CurrentVersion = 9;
+        public const int CurrentVersion = 10;
 
         public int Version = CurrentVersion;
 
@@ -123,6 +126,8 @@ namespace Airside.Simulation
         public bool WentAroundThisTrip;
         public bool HasPrepStart;
         public long PrepStartedAt;
+        public bool HasPushbackLateness;
+        public int PushbackLatenessSeconds;
     }
 
     public static class AirlineSave
@@ -212,7 +217,9 @@ namespace Airside.Simulation
                     AssignedRunway = a.AssignedRunway.ToString(),
                     WentAroundThisTrip = a.WentAroundThisTrip,
                     HasPrepStart = a.PrepStartedAt.HasValue,
-                    PrepStartedAt = a.PrepStartedAt?.ElapsedSeconds ?? 0
+                    PrepStartedAt = a.PrepStartedAt?.ElapsedSeconds ?? 0,
+                    HasPushbackLateness = a.PushbackLatenessSeconds.HasValue,
+                    PushbackLatenessSeconds = a.PushbackLatenessSeconds ?? 0
                 });
             }
 
@@ -316,6 +323,8 @@ namespace Airside.Simulation
                 }
                 if (data.Version >= 8 && record.HasPrepStart)
                     operations.RestorePrepData(registration, new SimulationTime(record.PrepStartedAt));
+                if (data.Version >= 10 && record.HasPushbackLateness)
+                    operations.RestorePushbackLateness(registration, record.PushbackLatenessSeconds);
             }
 
             operations.RestoreTower(

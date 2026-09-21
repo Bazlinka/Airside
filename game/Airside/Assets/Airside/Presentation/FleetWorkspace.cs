@@ -142,7 +142,7 @@ namespace Airside.Presentation
 
             foreach (var aircraft in operations.Fleet)
             {
-                var row = Row(aircraft, now);
+                var row = Row(aircraft, now, operations.CareerState.BaseLevel);
                 if (player != null && ReferenceEquals(aircraft.Airline, player))
                     _mine.Add(row);
                 else
@@ -166,7 +166,7 @@ namespace Airside.Presentation
         }
 
 
-        private static FleetRosterRow Row(FleetAircraft aircraft, SimulationTime now)
+        private static FleetRosterRow Row(FleetAircraft aircraft, SimulationTime now, PlayerBaseLevel baseLevel)
         {
             var stand = string.IsNullOrEmpty(aircraft.Stand.Value)
                 ? "—"
@@ -174,7 +174,7 @@ namespace Airside.Presentation
             return new FleetRosterRow(
                 aircraft.Registration,
                 aircraft.Type.Name,
-                FleetStatus(aircraft, now),
+                FleetStatus(aircraft, now, baseLevel),
                 stand,
                 aircraft.Airline.Name,
                 aircraft.Airline.LiveryHex,
@@ -183,13 +183,13 @@ namespace Airside.Presentation
         }
 
         /// <summary>Roster wording: the prep stage while a booked departure is turning around.</summary>
-        private static string FleetStatus(FleetAircraft aircraft, SimulationTime now)
+        private static string FleetStatus(FleetAircraft aircraft, SimulationTime now, PlayerBaseLevel baseLevel)
         {
             if (aircraft.Airline.IsPlayer && Maintenance.InCheck(aircraft, now))
                 return Maintenance.Status(aircraft, now, AirlineClock.Default);
             if (aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
             {
-                var prep = DeparturePrep.For(aircraft, now, operations.CareerState.BaseLevel);
+                var prep = DeparturePrep.For(aircraft, now, baseLevel);
                 return prep.Ready ? "Ready for pushback" : prep.Label;
             }
 
@@ -342,7 +342,7 @@ namespace Airside.Presentation
 
             if (aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
             {
-                var prep = DeparturePrep.For(aircraft, now);
+                var prep = DeparturePrep.For(aircraft, now, operations.CareerState.BaseLevel);
                 _prep.Add(PrepCheck("Fuel", prep.FuelProgress, prep.Stage == DeparturePrepStage.Fuel));
                 _prep.Add(PrepCheck("Catering", prep.CateringProgress, prep.Stage == DeparturePrepStage.Catering));
                 _prep.Add(PrepCheck("Baggage", prep.BaggageProgress, prep.Stage == DeparturePrepStage.Baggage));

@@ -3,7 +3,7 @@ using Airside.Domain;
 
 namespace Airside.Simulation
 {
-    /// <summary>Fuel → catering → boarding before a player pushback (ADR 0056). No vehicles.</summary>
+    /// <summary>Fuel → catering → baggage → boarding before a player pushback (ADR 0056 / 0093).</summary>
     public enum DeparturePrepStage
     {
         Idle,
@@ -123,7 +123,7 @@ namespace Airside.Simulation
                 return new DeparturePrepStatus(DeparturePrepStage.Ready, 1, true, "Ready",
                     1, 1, 1, 1, 0);
 
-            var start = StartSeconds(aircraft, now);
+            var start = StartSeconds(aircraft, now, baseLevel);
             var elapsed = now.ElapsedSeconds - start;
             if (elapsed < 0)
                 elapsed = 0;
@@ -169,11 +169,11 @@ namespace Airside.Simulation
         /// When prep-start was not saved, infer it from the booked pushback so fuelling
         /// cannot sit at 0% forever (elapsed would otherwise be <c>now - now</c> every call).
         /// </summary>
-        private static long StartSeconds(FleetAircraft aircraft, SimulationTime now)
+        private static long StartSeconds(FleetAircraft aircraft, SimulationTime now, PlayerBaseLevel baseLevel)
         {
             if (aircraft.PrepStartedAt.HasValue)
                 return aircraft.PrepStartedAt.Value.ElapsedSeconds;
-            var total = TotalSeconds(aircraft.Type, PlayerBaseLevel.Starter);
+            var total = TotalSeconds(aircraft.Type, baseLevel);
             var inferred = aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - total;
             return inferred < 0 ? 0 : inferred;
         }

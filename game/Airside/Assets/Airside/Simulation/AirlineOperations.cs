@@ -1282,7 +1282,7 @@ namespace Airside.Simulation
                 // Align prep with the booked pushback: start TotalSeconds before depart
                 // (or now if that is already later). Recompute on every book so an earlier
                 // rebook cannot leave a future PrepStartedAt that blocks pushback forever.
-                var total = DeparturePrep.TotalSeconds(aircraft.Type);
+                var total = DeparturePrep.TotalSeconds(aircraft.Type, CareerState.BaseLevel);
                 var start = departAt.ElapsedSeconds - total;
                 if (start < _processedTo.ElapsedSeconds)
                     start = _processedTo.ElapsedSeconds;
@@ -1677,7 +1677,7 @@ namespace Airside.Simulation
                     if (aircraft.Airline.IsPlayer && !aircraft.PrepStartedAt.HasValue)
                     {
                         var inferred = aircraft.Scheduled.Value.DepartAt.ElapsedSeconds
-                            - DeparturePrep.TotalSeconds(aircraft.Type);
+                            - DeparturePrep.TotalSeconds(aircraft.Type, CareerState.BaseLevel);
                         aircraft.PrepStartedAt = new SimulationTime(inferred < 0 ? 0 : inferred);
                     }
                     if (!DeparturePrep.IsReady(aircraft, now, CareerState.BaseLevel))
@@ -2163,7 +2163,7 @@ namespace Airside.Simulation
             var ready = aircraft.Scheduled.Value.DepartAt;
             if (aircraft.Airline.IsPlayer && aircraft.PrepStartedAt.HasValue)
             {
-                var prepEnd = aircraft.PrepStartedAt.Value.Advance(DeparturePrep.TotalSeconds(aircraft.Type));
+                var prepEnd = aircraft.PrepStartedAt.Value.Advance(DeparturePrep.TotalSeconds(aircraft.Type, CareerState.BaseLevel));
                 if (prepEnd.CompareTo(ready) > 0)
                     ready = prepEnd;
             }

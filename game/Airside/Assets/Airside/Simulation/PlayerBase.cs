@@ -49,6 +49,11 @@ namespace Airside.Simulation
             new("GATE-27"), new("GATE-29"), new("GATE-28L"), new("GATE-28R")
         };
 
+        private static readonly StableId[] WidebodyGateStands =
+        {
+            new("GATE-28L"), new("GATE-28R")
+        };
+
         public static PlayerBaseSpec For(PlayerBaseLevel level) => level switch
         {
             PlayerBaseLevel.ExpandedRegional => new PlayerBaseSpec(level,
@@ -95,6 +100,8 @@ namespace Airside.Simulation
                 return level >= PlayerBaseLevel.ExpandedRegional ? ExpandedRegionalStands : StarterRegionalStands;
             if (level < PlayerBaseLevel.JetGate)
                 return Array.Empty<StableId>();
+            if (AircraftCatalogue.IsWidebody(type))
+                return level >= PlayerBaseLevel.International ? WidebodyGateStands : Array.Empty<StableId>();
             return level >= PlayerBaseLevel.International ? InternationalGateStands : JetGateStands;
         }
 

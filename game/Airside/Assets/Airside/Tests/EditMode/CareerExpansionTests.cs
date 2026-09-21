@@ -331,6 +331,17 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void InternationalWidebodyAccess_IsRestrictedToPier28()
+        {
+            var stands = PlayerBase.DedicatedStands(PlayerBaseLevel.International, AircraftType.AirbusA350900);
+            Assert.That(stands.Select(s => s.Value), Is.EquivalentTo(new[] { "GATE-28L", "GATE-28R" }));
+            Assert.That(PlayerBase.CanUseStand(PlayerBaseLevel.International, AircraftType.AirbusA350900,
+                new StableId("GATE-27")), Is.False);
+            Assert.That(PlayerBase.CanUseStand(PlayerBaseLevel.International, AircraftType.AirbusA350900,
+                new StableId("GATE-28L")), Is.True);
+        }
+
+        [Test]
         public void BuyAircraft_ChargesAndAddsAParkedTypeWhenGatesClear()
         {
             var (_, ops, _) = PlayerOnly();

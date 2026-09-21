@@ -1,5 +1,13 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Codex — aircraft-aware competitive Route Map (branch
+  `codex/route-map-competitive-production`, ADR 0076).** Replaced the generic reference rings with
+  the selected type's actual practical range, removed default all-route spaghetti, made destination
+  labels zoom-dependent, and added a live `RIVALS n · ON/OFF` control for real simulated AI flights.
+  Ambient SkyTraffic is deliberately absent because it is atmosphere, not competitive state.
+  - **Evidence:** domain **555/555**; shared 1440x900 map render inspected. Unity rebuild deliberately
+    skipped at Bailey's request to finish and merge quickly within the remaining usage window.
+
 - **2026-09-21 Codex — authored cloud-atlas production pass (branch
   `codex/cloud-atlas-production`, ADR 0075).** Replaced the connected-sphere clouds with a generated,
   transparent 4x4 cumulus atlas rendered as deterministic camera-facing cards. Wind drift, cover-based

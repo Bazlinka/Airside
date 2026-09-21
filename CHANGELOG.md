@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Aircraft-aware competitive Route Map (ADR 0076).** Replaced three generic distance rings with
+  the selected aircraft's real practical-range ring. The static network now draws only the selected
+  route (plus the existing hover preview), destination labels reveal progressively with zoom, and
+  actual airborne AI competitors can be shown or hidden through `RIVALS n · ON/OFF`. Ambient sky
+  traffic no longer masquerades as strategic competition. Domain 555/555; shared 1440x900 Route Map
+  render inspected.
+
 - **Authored cumulus atlas and production cloud cards (ADR 0075).** Replaced the still-obvious
   connected-sphere cloud clusters with 16 distinct transparent cumulus silhouettes. Each cluster is
   now one camera-facing renderer rather than three geometry layers, while seeded placement, real-wind

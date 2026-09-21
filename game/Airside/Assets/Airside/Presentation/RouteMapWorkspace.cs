@@ -42,6 +42,8 @@ namespace Airside.Presentation
 
         public bool HasAircraft { get; private set; }
         public string AircraftLabel { get; private set; } = "No aircraft";
+        public double AircraftRangeKm { get; private set; }
+        public string AircraftRangeLabel { get; private set; } = string.Empty;
         public bool CanCycleAircraft { get; private set; }
 
         public bool HasDestination { get; private set; }
@@ -76,6 +78,10 @@ namespace Airside.Presentation
             AvailableCount = 0;
             LockedCount = 0;
             HasAircraft = aircraft != null;
+            AircraftRangeKm = aircraft?.Type?.PracticalRangeKm ?? 0.0;
+            AircraftRangeLabel = aircraft == null
+                ? string.Empty
+                : $"{aircraft.Type.Name}  ·  {aircraft.Type.PracticalRangeKm:N0} km practical range";
             HasDestination = false;
             HasBooking = false;
             BookingLine = string.Empty;
@@ -436,21 +442,20 @@ namespace Airside.Presentation
 
         /// <summary>
         /// The static network layer inside <paramref name="map"/>: coastline, state borders,
-        /// each destination's route from home, and the destination dots and labels. Reachable
-        /// routes read in the airline's own colour; locked ones stay a quiet grey.
+        /// the selected route from home, and destination dots with zoom-dependent labels. The
+        /// previous all-spokes view made route comparison harder, not easier.
         /// </summary>
         public static void PaintNetwork(HudDrawList into, HudBox map, AustraliaMapLens lens,
             IReadOnlyList<PlannerDestination> destinations, Destination home, Destination? selected,
-            string playerLiveryHex)
+            string playerLiveryHex, double aircraftRangeKm = 0.0, string aircraftRangeLabel = null)
         {
             if (into == null || lens == null)
                 return;
 
-            // Real geodesic rings turn aircraft range into something the player can judge at a
-            // glance. Alternating segments keep them quieter than actual routes.
-            RangeRing(into, map, lens, home, 500);
-            RangeRing(into, map, lens, home, 1000);
-            RangeRing(into, map, lens, home, 2000);
+            // One real aircraft limit is useful. Three generic circles looked technical but did
+            // not answer the player's actual question: "how far can this selected aircraft go?"
+            if (aircraftRangeKm > 0.0)
+                RangeRing(into, map, lens, home, aircraftRangeKm, aircraftRangeLabel);
             Polyline(into, map, lens, AustraliaMapGeometry.MainlandCoastLonLat, HudTone.Muted, 1.6f);
             Polyline(into, map, lens, AustraliaMapGeometry.TasmaniaCoastLonLat, HudTone.Muted, 1.6f);
             foreach (var border in AustraliaMapGeometry.StateBorderLonLats)
@@ -458,12 +463,15 @@ namespace Airside.Presentation
 
             if (destinations != null)
             {
-                foreach (var row in destinations)
+                if (selected.HasValue)
                 {
-                    var isSelected = selected.HasValue && selected.Value.Equals(row.Destination);
-                    var tone = isSelected ? HudTone.Caution : row.Reachable ? HudTone.Accent : HudTone.Muted;
-                    GreatCircle(into, map, lens, home, row.Destination, tone,
-                        isSelected ? 2.2f : row.Reachable ? 1.4f : 0.9f);
+                    foreach (var row in destinations)
+                    {
+                        if (!selected.Value.Equals(row.Destination))
+                            continue;
+                        GreatCircle(into, map, lens, home, row.Destination, HudTone.Caution, 2.2f);
+                        break;
+                    }
                 }
 
                 foreach (var row in destinations)
@@ -474,8 +482,13 @@ namespace Airside.Presentation
                     var isSelected = selected.HasValue && selected.Value.Equals(row.Destination);
                     var tone = isSelected ? HudTone.Caution : row.Reachable ? HudTone.Accent : HudTone.Muted;
                     into.Dot(x, y, isSelected ? 13f : 9f, tone);
-                    into.Text(new HudBox(x + 9f, y - 9f, 128f, 17f), row.Destination.Name, 12f,
-                        row.Reachable ? HudTone.Default : HudTone.Muted);
+                    var label = isSelected || lens.Zoom >= 4f
+                        ? row.Destination.Name
+                        : lens.Zoom >= 2f ? row.Destination.Code : string.Empty;
+                    if (label.Length > 0)
+                        into.Text(new HudBox(x + 9f, y - 9f, 128f, 17f), label, 12f,
+                            row.Reachable ? HudTone.Default : HudTone.Muted,
+                            isSelected ? HudTextStyle.Bold : HudTextStyle.Regular);
                     // No hotspot: the map's own pointer handler picks the nearest dot, so it
                     // can tell a click from the start of a pan. An IMGUI control here would
                     // also come and go as zoom culls dots, which is how control ids drift.
@@ -491,7 +504,7 @@ namespace Airside.Presentation
         }
 
         private static void RangeRing(HudDrawList into, HudBox map, AustraliaMapLens lens,
-            Destination home, int distanceKm)
+            Destination home, double distanceKm, string label)
         {
             const int segments = 72;
             RouteMap.DestinationPoint(home.Latitude, home.Longitude, distanceKm, 0.0,
@@ -512,7 +525,8 @@ namespace Airside.Presentation
                 out lat, out lon);
             Project(lens, map, lon, lat, out var lx, out var ly);
             if (map.Contains(lx, ly))
-                into.Text(new HudBox(lx + 4f, ly - 15f, 66f, 15f), $"{distanceKm:N0} km", 9f,
+                into.Text(new HudBox(lx + 4f, ly - 15f, 190f, 15f),
+                    string.IsNullOrEmpty(label) ? $"{distanceKm:N0} km range" : label, 9f,
                     HudTone.Muted);
         }
 

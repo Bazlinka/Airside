@@ -140,7 +140,8 @@ public static class Program
         lens.SetZoom(1.9f);
         lens.CenterOn(layout.Map.Width, layout.Map.Height, 140.5, -32.0);
         RouteMapWorkspacePainter.PaintNetwork(network, layout.Map, lens, model.AllDestinations,
-            scenario.Operations.Home, portLincoln, scenario.Operations.PlayerAirline.LiveryHex);
+            scenario.Operations.Home, portLincoln, scenario.Operations.PlayerAirline.LiveryHex,
+            model.AircraftRangeKm, model.AircraftRangeLabel);
 
         var filters = new HudDrawList();
         RouteMapWorkspacePainter.PaintFilters(filters, model, layout);

@@ -42,7 +42,7 @@ namespace Airside.Presentation
             : AirlineSaveFile.DefaultPath;
 
         // Review shots for packaged-build checks (HUD fit at several window sizes, panels):
-        //   -airsideReviewPanel plan|hangar|flights|devtools|help   open one panel at start
+        //   -airsideReviewPanel plan|operations|map|fleet|contracts|stats|devtools|help
         //   -airsideReviewShot <path.png> [-airsideReviewDelay seconds]   capture, then quit
         //   -airsideReviewTime HH:mm   override local lighting time only (not the sim clock)
         private const string ReviewPanelFlag = "-airsideReviewPanel";
@@ -59,8 +59,13 @@ namespace Airside.Presentation
             switch (args[index + 1])
             {
                 case "plan": OpenPlanner(null); break;
-                case "hangar": SetWorkspace(HudWorkspace.Fleet); break;
-                case "flights": SetWorkspace(HudWorkspace.Operations); break;
+                case "hangar":
+                case "fleet": SetWorkspace(HudWorkspace.Fleet); break;
+                case "flights":
+                case "operations": SetWorkspace(HudWorkspace.Operations); break;
+                case "map": SetWorkspace(HudWorkspace.Map); break;
+                case "contracts": SetWorkspace(HudWorkspace.Contracts); break;
+                case "stats": SetWorkspace(HudWorkspace.Stats); break;
                 case "devtools": ToggleDevTools(); break;
                 case "help": ToggleControlsHelp(); break;
             }

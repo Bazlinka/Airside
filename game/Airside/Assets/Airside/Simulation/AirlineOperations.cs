@@ -104,6 +104,8 @@ namespace Airside.Simulation
         /// <summary>Taxi from the E2 holding point into <paramref name="stand"/>.</summary>
         public static long TaxiInSecondsTo(StableId stand) => AdelaideGround.TaxiIn(stand).WholeSeconds;
         public static long TaxiInSecondsTo(StableId stand, AircraftType type) => AdelaideGround.TaxiIn(stand, type).WholeSeconds;
+        public static long TaxiInSecondsTo(StableId stand, AircraftType type, RunwayDirection runway) =>
+            AdelaideGround.TaxiIn(stand, type, runway).WholeSeconds;
 
         /// <summary>Holding point onto the centreline at the 05 threshold.</summary>
         public static long LineupSeconds => AdelaideGround.Lineup.WholeSeconds;
@@ -616,7 +618,7 @@ namespace Airside.Simulation
             if (!IsStandFree(stand))
                 throw new InvalidOperationException($"{stand} is not free.");
             if (!StandFits(type, stand))
-                throw new InvalidOperationException($"A {type.Name} cannot park on {stand}.");
+                throw new InvalidOperationException($"{Article.CapitalA(type.Name)} cannot park on {stand}.");
 
             var aircraft = new FleetAircraft(registration, airline, type, stand, _processedTo);
             _fleet.Add(aircraft);
@@ -1083,7 +1085,7 @@ namespace Airside.Simulation
                     $"{destination.Name} is {DistanceKm(destination):0} km — beyond the {aircraft.Type.Name}'s {aircraft.Type.PracticalRangeKm:0} km range.");
             if (aircraft.Airline.IsPlayer && !RouteAccess.Allows(aircraft.Type, destination))
                 return CommandResult.Refused(
-                    $"A {aircraft.Type.Name} is cleared for {RouteAccess.Ceiling(aircraft.Type)} routes — {destination.Name} is {RouteAccess.BandOf(destination)}.");
+                    $"{Article.CapitalA(aircraft.Type.Name)} is cleared for {RouteAccess.Ceiling(aircraft.Type)} routes — {destination.Name} is {RouteAccess.BandOf(destination)}.");
             if (departAt.CompareTo(_processedTo) < 0)
                 return CommandResult.Refused("Departure time is in the past.");
 
@@ -1179,18 +1181,18 @@ namespace Airside.Simulation
             if (owned >= AircraftAcquisition.MaxPlayerAircraft)
                 return CommandResult.Refused($"Fleet is full ({AircraftAcquisition.MaxPlayerAircraft} aircraft).");
             if (CareerState.Tier < offer.RequiredTier)
-                return CommandResult.Refused($"Buying a {type.Name} needs {offer.RequiredTier} tier.");
+                return CommandResult.Refused($"Buying {Article.A(type.Name)} needs {offer.RequiredTier} tier.");
             if (CareerState.Reliability < offer.RequiredReliability)
-                return CommandResult.Refused($"Buying a {type.Name} needs {offer.RequiredReliability}% reliability.");
+                return CommandResult.Refused($"Buying {Article.A(type.Name)} needs {offer.RequiredReliability}% reliability.");
             if (CareerState.CompletedPlayerRotations < offer.RequiredRotations)
                 return CommandResult.Refused(
-                    $"Buying a {type.Name} needs {offer.RequiredRotations} completed rotations.");
+                    $"Buying {Article.A(type.Name)} needs {offer.RequiredRotations} completed rotations.");
             if (!CareerState.CanAfford(offer.Price))
-                return CommandResult.Refused($"A {type.Name} costs ${offer.Price:N0}; you have ${CareerState.Funds:N0}.");
+                return CommandResult.Refused($"{Article.CapitalA(type.Name)} costs ${offer.Price:N0}; you have ${CareerState.Funds:N0}.");
 
             var stand = SuggestPurchaseStand(type);
             if (!CareerState.TryChargePurchase(offer.Price))
-                return CommandResult.Refused($"A {type.Name} costs ${offer.Price:N0}; you have ${CareerState.Funds:N0}.");
+                return CommandResult.Refused($"{Article.CapitalA(type.Name)} costs ${offer.Price:N0}; you have ${CareerState.Funds:N0}.");
 
             var registration = NextPlayerRegistration(_fleet);
             if (stand.HasValue)
@@ -1315,14 +1317,14 @@ namespace Airside.Simulation
             if (!_stands.Contains(stand))
                 return CommandResult.Refused($"{stand} is not a stand here.");
             if (!StandFits(aircraft.Type, stand))
-                return CommandResult.Refused($"A {aircraft.Type.Name} cannot use {AdelaideGround.StandLabel(stand)}.");
+                return CommandResult.Refused($"{Article.CapitalA(aircraft.Type.Name)} cannot use {AdelaideGround.StandLabel(stand)}.");
             if (!IsStandFree(stand))
                 return CommandResult.Refused($"{stand} is occupied.");
             if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, aircraft))
                 return CommandResult.Refused($"{AdelaideGround.StandLabel(stand)}'s lead-in is in use.");
 
             aircraft.Stand = stand;
-            Transition(aircraft, FleetState.TaxiIn, _processedTo, TaxiInSecondsTo(stand, aircraft.Type));
+            Transition(aircraft, FleetState.TaxiIn, _processedTo, TaxiInSecondsTo(stand, aircraft.Type, aircraft.AssignedRunway));
             return CommandResult.Ok;
         }
 
@@ -1481,7 +1483,7 @@ namespace Airside.Simulation
                     if (chosen == null)
                         return false;
                     aircraft.Stand = chosen.Value;
-                    Transition(aircraft, FleetState.TaxiIn, now, TaxiInSecondsTo(chosen.Value, aircraft.Type));
+                    Transition(aircraft, FleetState.TaxiIn, now, TaxiInSecondsTo(chosen.Value, aircraft.Type, aircraft.AssignedRunway));
                     return true;
 
                 case FleetState.TaxiIn:

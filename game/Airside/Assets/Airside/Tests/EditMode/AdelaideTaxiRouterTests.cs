@@ -31,15 +31,23 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Vacate_From12And30StaysOnPavementToE2()
+        public void Vacate_From12And30StaysOnPavementOntoTheBayTaxiIn()
         {
             foreach (var runway in new[] { RunwayDirection.Runway12, RunwayDirection.Runway30 })
             {
                 var path = AdelaideCrossRoutes.Vacate(runway);
                 var endX = path[path.Length - 2];
                 var endZ = path[path.Length - 1];
+                // Ends on the E2 → bays corridor, not back at E2 itself: running on to E2 meant
+                // driving down the taxi-in route the wrong way and turning 180° to come back.
                 Assert.That(Distance(endX, endZ, AdelaideLayout.E2Hold[0], AdelaideLayout.E2Hold[1]),
-                    Is.LessThan(8f), $"{runway} vacate should finish at E2");
+                    Is.GreaterThan(50f), $"{runway} vacate must not double back to E2");
+                foreach (var bay in AdelaideLayout.Bays)
+                {
+                    var taxiIn = AdelaideGround.TaxiIn(new StableId(bay.Id), AircraftType.Saab340, runway).PoseAt(0);
+                    Assert.That(Distance(endX, endZ, taxiIn.X, taxiIn.Z), Is.LessThan(3f),
+                        $"{runway} taxi-in to {bay.Reference} must start where the vacate ends");
+                }
                 AssertStaysOnTaxiOrRunway(path, $"vacate {runway}");
             }
         }

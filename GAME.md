@@ -1,5 +1,40 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Claude — taxi/takeoff/landing seam fixes + two HUD fixes (branch
+  `feature/hud-taxi-fixes`).** Bailey: "keep going with more HUD bug fixes but also do some
+  aircraft taxi fixes - takeoff - landing fixes."
+  - **Found them with a probe, not by eye:** new `GroundLegSeamTests` checks position (≤3 m)
+    and nose heading (≤20°) at every hand-off between drawn legs, for all four runway ends ×
+    all seven types × every stand each type fits. Positions all met already; headings didn't:
+    256 snaps on first run.
+  - **12/30 arrival U-turn (236 of them):** `AdelaideCrossRoutes.Vacate12/30` routed to the
+    E2 hold, which is back down the corridor every bay taxi-in then climbs. Now the vacate
+    joins that corridor (derived as the common prefix of all bay taxi-ins) and runs 90 m along
+    it; `AdelaideGround.TaxiIn(stand, type, runway)` trims the taxi-in to start there. Sim
+    timing (`TaxiInSecondsTo(…, runway)`) and the renderer both use the runway-aware leg.
+    The sharp exit→corridor corner keeps its points sparse and is relaxed to 24 m radius (the
+    smoothness test caught a first draft that pivoted on the spot).
+  - **12/30 lineup → takeoff roll 30–41°:** lineup now ends on a 20 m centreline straight.
+  - **Walk-out bays 10A–10D:** generator took the parked heading from the curved line's
+    entry→stop chord (fixed in `generate-ypad-layout.py`, layout regenerated — only the five
+    walk-out headings changed). Taxi-in/pushback also relaxed away the painted U-turn; walk-out
+    bays now follow their stand line as authored (`AdelaideGround.IsWalkOut`).
+  - **`GroundPath` look-ahead ramps from 1 m at the start of every leg** (it already shrank
+    into the end), so legs begin on their own tangent. All smoothness tests still pass.
+  - **HUD:** `Article.A/CapitalA` for "an ATR 42-600" / "an Alice Springs contract" across
+    the objective card, Fleet, Contracts, Route Map and refusals. Route Map `RIVALS` toggle
+    moved into `RouteMapWorkspaceLayout.RivalsToggle`; it covered the LOCKED pill when the
+    map was under ~440 pt (windows under ~700 px wide), now drops below the pills; tested.
+  - **Tests updated to the new design:** two asserted the 12/30 vacate ends at E2; two timing
+    tests assumed 05's lineup + the ATR takeoff for a Saab that can be sent to 12/30.
+  - **Not changed — needs Bailey:** `TerminalGateOperationsTests.Reservations_…` (a known
+    baseline failure) used to fail on "two on 12/30"; with the shorter cross vacate it now gets
+    further and fails on "lead-in released after taxi out". PR #329 deliberately holds a
+    gate's lead-in through HoldingShort/TakingOff, so a jet waiting at the 05 hold blocks the
+    next arrival into its gate. Decide which is intended; then fix code or test.
+  - **Evidence:** Unity EditMode **821/823**; only the two known baseline failures (`VersionFiveSave_…`, `Reservations_GateLeadIn…`). No build or Play run.
+  - **NEXT:** a Play look at a 12/30 arrival, a Saab parking on 10A–10D, and a 12/30 takeoff.
+
 - **2026-09-21 Claude — HUD footer overlap fix (branch `feature/hud-bugfix`).** Bailey: "run a
   bug fix on the HUD." The bottom-edge build stamp from ADR 0080 (and the older ODbL map
   credit) used hard-coded rects at `Viewport.y − 22`, 18 px tall, but every airline panel

@@ -149,7 +149,7 @@ namespace Airside.Presentation
                 else if (career.Tier < definition.RequiredTier)
                     lockReason = $"Requires {definition.RequiredTier} capability";
                 else if (!OwnsType(operations, definition.EligibleType))
-                    lockReason = $"Requires a {definition.EligibleType.Name} in your fleet";
+                    lockReason = $"Requires {Article.A(definition.EligibleType.Name)} in your fleet";
                 else
                     lockReason = string.Empty;
 

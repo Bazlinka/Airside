@@ -119,7 +119,8 @@ namespace Airside.Tests
             RunTo(clock, ops, takeoffAt);
             Assert.That(plane.State, Is.EqualTo(FleetState.TakingOff), "empty runway: no hold");
 
-            var outboundAt = takeoffAt + AirlineOperations.TakeoffRunwaySeconds;
+            // The runway it was given, not 05's lineup: a regional can be sent to 12/30.
+            var outboundAt = takeoffAt + AirlineOperations.TakeoffRunwaySecondsFor(plane.Type, plane.AssignedRunway);
             RunTo(clock, ops, outboundAt + 1);
             Assert.That(plane.State, Is.EqualTo(FleetState.Outbound));
             Assert.That(plane.IsOffMap, Is.True);
@@ -331,7 +332,7 @@ namespace Airside.Tests
             RunTo(clock, ops, 600);
             var airborne = ops.AirborneSeconds(arriving, Code("KGC"));
             var backInCircuit = arriving.StateEndsAt.Value.ElapsedSeconds
-                                + AirlineOperations.TakeoffRunwaySeconds
+                                + AirlineOperations.TakeoffRunwaySecondsFor(arriving.Type, arriving.AssignedRunway)
                                 + airborne + AirlineOperations.DestinationTurnaroundSeconds + airborne;
 
             // Arrive at the hold before the inbound does, whichever 12/30 end they draw.

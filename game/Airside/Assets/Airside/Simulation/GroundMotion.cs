@@ -232,8 +232,11 @@ namespace Airside.Simulation
             var along = _distance[segment] + (len > 1e-6f ? fraction * len : 0f);
             // Point the nose a little ahead of the current tangent so a vertex
             // does not snap the heading. Sixteen metres is about one cockpit
-            // glance down a real taxiway.
-            var look = Math.Min(Length, along + 16f);
+            // glance down a real taxiway. The glance grows from the start the way
+            // it already shrinks into the end, so a leg begins on its own tangent:
+            // a full 16 m chord on the first metre of a curved pushback turned the
+            // parked aircraft up to 30° the instant the tug started.
+            var look = Math.Min(Length, along + Math.Min(16f, 1f + along));
             if (look > along + 0.4f)
             {
                 var ahead = PointAtDistance(look);

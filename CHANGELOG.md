@@ -1,5 +1,22 @@
 ## Unreleased
 
+- **Taxi, takeoff and landing: four visible snaps fixed.** A new seam test drives every
+  hand-off between ground legs (rollout → vacate → wait → taxi-in → stand → pushback →
+  taxi-out → hold → lineup → takeoff roll) for every runway end, type and stand. Before: 256
+  seams snapped. (1) **12/30 arrivals** drove on to E2 down the very taxiway their taxi-in
+  climbs, flipped 180° and drove back; the vacate now joins the bay corridor and the taxi-in
+  starts there. (2) **12/30 lineups** ended 30–41° off the centreline, so the takeoff roll
+  snapped straight; they now finish with a 20 m centreline run-up. (3) **Walk-out bays
+  10A–10D** (where the starter Saab parks) had a parked heading up to 186° off, and the taxi
+  smoothing cut off the painted U-turn; the Saab now follows the line and parks facing out, no
+  snap on arrival or at pushback. (4) **Every ground leg now starts on its own tangent**
+  (look-ahead ramps up from 1 m), so a curved pushback no longer twists the parked aircraft.
+- **HUD: "an ATR 42-600", "an Alice Springs contract".** Objective card, Fleet, Contracts,
+  Route Map and refusal messages wrote "a ATR" / "a Airbus". New `Article` helper.
+- **HUD: Route Map RIVALS toggle no longer covers the LOCKED pill** on narrow windows
+  (under ~700 px wide); it drops below the pills when the row is too short.
+- Unity EditMode **821/823**; only the two known baseline failures (`VersionFiveSave_…`, `Reservations_GateLeadIn…`).
+
 - **HUD fix: build stamp and map credit no longer draw over panel edges.** Both labels sat
   at `height − 22` while every airline HUD panel ends at `height − 16`, so the new `sha ·
   branch` stamp ran across the bottom border of the selected-aircraft card and every

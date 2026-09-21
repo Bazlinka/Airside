@@ -105,7 +105,7 @@ namespace Airside.Presentation
                 var hangar = CareerProgress.NextAircraft(career, FleetCount(playerFleet));
                 var progress = HangarProgressText(hangar, career);
                 return new CareerObjective(
-                    $"Accept a {PlaceName(offer.DestinationCode)} contract",
+                    $"Accept {Article.A(PlaceName(offer.DestinationCode))} contract",
                     string.IsNullOrEmpty(progress) ? "No contract accepted yet" : progress,
                     HangarProgress01(hangar, career),
                     next,
@@ -119,8 +119,8 @@ namespace Airside.Presentation
                 {
                     return new CareerObjective(
                         hangar.ReadyToBuy
-                            ? $"Buy a {hangar.Offer.Type.Name} in Fleet"
-                            : $"Save for a {hangar.Offer.Type.Name}",
+                            ? $"Buy {Article.A(hangar.Offer.Type.Name)} in Fleet"
+                            : $"Save for {Article.A(hangar.Offer.Type.Name)}",
                         HangarProgressText(hangar, career),
                         HangarProgress01(hangar, career),
                         next,
@@ -296,7 +296,7 @@ namespace Airside.Presentation
 
                 var offer = NextOffer(career, marketOffers);
                 if (offer != null)
-                    return ($"Next: accept a {PlaceName(offer.DestinationCode)} contract",
+                    return ($"Next: accept {Article.A(PlaceName(offer.DestinationCode))} contract",
                         StatusSeverity.Attention);
 
                 if (TryBuyHint(career, fleet.Count, out var buyLine))
@@ -337,7 +337,7 @@ namespace Airside.Presentation
                     || career.CompletedPlayerRotations < offer.RequiredRotations
                     || !career.CanAfford(offer.Price))
                     continue;
-                line = $"Next: buy a {offer.Type.Name} in Fleet";
+                line = $"Next: buy {Article.A(offer.Type.Name)} in Fleet";
                 return true;
             }
 

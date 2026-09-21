@@ -1316,7 +1316,7 @@ namespace Airside.Presentation
             // Bottom-left: the AVAILABLE / LOCKED pills own the top-left corner now.
             var trackRect = new Rect(mapRect.x + 12f, mapRect.yMax - 58f, 170f, 24f);
             var zoomOutRect = new Rect(trackRect.xMax + 6f, trackRect.y, 90f, 24f);
-            var rivalRect = new Rect(mapRect.xMax - 154f, mapRect.y + 12f, 142f, 24f);
+            var rivalRect = HudPainter.ToRect(workspaceLayout.RivalsToggle);
             var rivalFlights = 0;
             for (var i = 0; i < _mapFlights.Count; i++)
                 if (!_mapFlights[i].Aircraft.Airline.IsPlayer)
@@ -2059,8 +2059,8 @@ namespace Airside.Presentation
             if (result.Accepted)
             {
                 ShowToast(AircraftAcquisition.TryFor(type, out var offer)
-                    ? $"Bought a {type.Name} for ${offer.Price:N0}."
-                    : $"Bought a {type.Name}.");
+                    ? $"Bought {Article.A(type.Name)} for ${offer.Price:N0}."
+                    : $"Bought {Article.A(type.Name)}.");
                 SaveAirline();
             }
             else

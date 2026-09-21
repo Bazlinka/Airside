@@ -1,5 +1,24 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Claude — arrivals flew in instead of freezing on final (branch
+  `feature/arrival-no-freeze`).** Bailey: "an airliner land on main runway and it just froze and
+  sat there? and then landed like 30 seconds later."
+  - **Cause:** `VisualPhaseProgress` pinned every `HoldingForLanding` aircraft at 80% of the
+    approach (~750 m out, ~40 m up) until the tower cleared it; holds are routine (departure
+    roll, 120/180 s wake after jets, storm = no clearances per ADR 0058). Inbounds were hidden,
+    so arrivals also popped in at that point.
+  - **Fix:** Simulation `ExpectedLandingClearance(aircraft, out runway)` replays the tower rule
+    for the strip (free time, arrivals ahead in wait order, departures past
+    `DepartureMaxHoldSeconds` first, departures freely while the inbound has not joined, storm
+    blocks skipped). Presentation `AirsidePrototype.ArrivalFinal` draws inbound/holding arrivals
+    on an extended 3° final (capped 3,000 ft) `approach speed × time to clearance` back from
+    the hold point; speed flexes 55–160% to absorb estimate changes; an early clearance eases
+    onto the landing path over 3 s; the go-around rejoin blends onto the extended final.
+  - **Evidence:** new `ArrivalClearanceTests` — 43/43 arrivals cleared within 2 s of the estimate
+    (first draft was 37/43; the misses were storm holds and departure priority). Unity EditMode
+    **833/834**. No build or Play run.
+  - **NEXT:** Play look at a busy bank: arrivals should stream down final, no mid-air stops.
+
 - **2026-09-21 Claude — live Adelaide sky traffic + two sky bugs (branch
   `feature/live-adelaide-traffic`, ADR 0081).** Bailey: "continue down the bug fix path. See if
   we can get live traffic connected to the game for adelaide airport? Ideally free."

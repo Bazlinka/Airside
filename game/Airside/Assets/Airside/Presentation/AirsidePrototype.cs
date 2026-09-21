@@ -1114,6 +1114,7 @@ namespace Airside.Presentation
                 var position = FleetGroundPosition(flight, 0f)
                     ?? FleetGoAroundWorldPosition(flight, 0f)
                     ?? FleetGoAroundRejoinWorldPosition(flight, route, lane, aircraftType, 0f)
+                    ?? FleetArrivalFinalPosition(flight, 0f)
                     ?? RunwayPosition(flight,
                     ApplyDepartureTurn(flight, phase, progress,
                         PositionFor(phase, progress, route, lane, aircraftType)));
@@ -1126,9 +1127,14 @@ namespace Airside.Presentation
                 var next = FleetGroundPosition(flight, lookAhead)
                            ?? FleetGoAroundWorldPosition(flight, lookAhead)
                            ?? FleetGoAroundRejoinWorldPosition(flight, route, lane, aircraftType, lookAhead)
+                           ?? FleetArrivalFinalPosition(flight, lookAhead)
                            ?? RunwayPosition(flight,
                                ApplyDepartureTurn(flight, phase, lookAheadProgress,
                                    PositionFor(phase, lookAheadProgress, route, lane, aircraftType)));
+                // An arrival cleared earlier than expected eases onto the landing path.
+                var handoff = ArrivalHandoffOffset(flight, position);
+                position += handoff;
+                next += handoff;
                 // Fractional phase progress is exact — catch-up lag made some phases slide
                 // while airborne phases snapped, which read as inconsistent smoothness.
                 view.position = position;
@@ -2201,7 +2207,8 @@ namespace Airside.Presentation
             var operation = flight.Operation;
             var phase = operation.Phase;
             if (FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var holding)
-                && holding.State == FleetState.HoldingForLanding && phase == AircraftPhase.Approach)
+                && holding.State is FleetState.HoldingForLanding or FleetState.Inbound
+                && phase == AircraftPhase.Approach)
             {
                 var pinned = (float)ApproachHold.HoldingFinalProgress(
                     FleetVisual.QueueSlot(_operations.Fleet, holding));
@@ -13181,9 +13188,11 @@ namespace Airside.Presentation
                 out var gx, out var gy, out var gz);
             var from = new Vector3((float)gx, (float)gy, (float)gz);
 
+            // Rejoin onto the extended final the arrival will fly in on, not a fixed point.
             var pinnedProgress = (float)ApproachHold.HoldingFinalProgress(
                 FleetVisual.QueueSlot(_operations.Fleet, aircraft));
-            var to = RunwayPosition(flight, PositionFor(AircraftPhase.Approach, pinnedProgress, route, laneOffset, type));
+            var to = FleetArrivalFinalPosition(flight, (float)lookAheadSeconds)
+                     ?? RunwayPosition(flight, PositionFor(AircraftPhase.Approach, pinnedProgress, route, laneOffset, type));
 
             var blend = (float)GoAroundRejoin.Blend01(elapsed);
             return Vector3.Lerp(from, to, blend);

@@ -63,8 +63,10 @@ namespace Airside.Presentation
                     _fleetFlightById[id] = flight;
                 }
 
-                if (flight.Operation.Phase != visual.Phase || !flight.Operation.PhaseStartedAt.Equals(visual.PhaseStartedAt))
-                    flight.Operation = AircraftOperation.InPhase(id, visual.Phase, visual.PhaseStartedAt);
+                // An inbound already on the drawn extended final flies it as an approach.
+                var phase = !visual.Visible && IsArrivingOnFinal(aircraft) ? AircraftPhase.Approach : visual.Phase;
+                if (flight.Operation.Phase != phase || !flight.Operation.PhaseStartedAt.Equals(visual.PhaseStartedAt))
+                    flight.Operation = AircraftOperation.InPhase(id, phase, visual.PhaseStartedAt);
 
                 _fleetFlights.Add(flight);
             }
@@ -78,7 +80,7 @@ namespace Airside.Presentation
 
         private bool IsFleetFlightVisible(string aircraftId) =>
             _fleetAircraftById.TryGetValue(aircraftId, out var aircraft)
-            && FleetVisual.For(aircraft, _clock.Now).Visible;
+            && (FleetVisual.For(aircraft, _clock.Now).Visible || IsArrivingOnFinal(aircraft));
 
         private bool TryFleetGround(CommercialFlight flight, out FleetAircraft aircraft, out FleetVisual visual)
         {

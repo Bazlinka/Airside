@@ -1,5 +1,22 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Cursor — build identity (branch `cursor/build-identity-22df`, ADR 0080).**
+  Bailey: after a merge and a rebuild, show which version is running, because the other
+  Mac sometimes has a feature and then loses it after `git pull` and a rebuild.
+  1. **Stamp** — `scripts/stamp-build-identity.sh` writes gitignored
+     `StreamingAssets/build-identity.txt` (8-char SHA, branch, subject, commit time,
+     dirty, built time). Editor load updates it when HEAD/dirty changes; Play and
+     `scripts/build-mac.sh` refresh the built time. Mac Info.plist version matches the SHA.
+  2. **On screen** — bottom edge, left of the map credit: `sha · branch` (plus
+     `local changes` if the tree was dirty). Pause menu adds commit time and built time,
+     both in UTC. Startup log: `Airside ` plus that full line. No file → `build unstamped`.
+  - **Evidence:** `scripts/test-domain.sh` **570/570**. No Unity editor here, so Play and the
+    packaged plist were not opened.
+  - **NEXT:** On each Mac, pull this branch (or main once merged), then either press Play
+    or run `scripts/rebuild-and-open-mac.sh`. Compare the bottom-edge stamp. A different
+    SHA, or `local changes` on only one machine, is why a feature is present on one and
+    missing on the other. Do not commit `build-identity.txt`.
+
 - **2026-09-21 Cursor — hangar goal + on-time reliability (branch
   `cursor/career-mechanics-hangar-ontime-22df`, ADR 0078).** Bailey: keep improving game
   mechanics (after agreeing per-flight pay, not daily/hourly/pax).

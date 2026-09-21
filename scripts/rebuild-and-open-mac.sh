@@ -50,5 +50,11 @@ fi
 echo "== open =="
 open "$app"
 echo "Opened $app"
+identity="$root/game/Airside/Assets/StreamingAssets/build-identity.txt"
+if [[ -f "$identity" ]]; then
+  echo "Running build:"
+  cat "$identity"
+fi
+echo "In the game: bottom edge shows the short stamp; Pause shows commit time and built time."
 echo "For splash/wordmark: Pause → Start new airport (or delete old save)."
-echo "Done. HEAD $(git rev-parse --short HEAD)"
+echo "Done. HEAD $(git rev-parse --short=8 HEAD)"

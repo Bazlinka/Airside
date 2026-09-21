@@ -13,6 +13,9 @@ if [ ! -x "$unity" ]; then
   exit 1
 fi
 
+# Bake the git commit into StreamingAssets before Unity copies it into the .app.
+bash "$root/scripts/stamp-build-identity.sh" --refresh
+
 mkdir -p "$root/work/builds"
 rm -rf "$destination"
 status=0
@@ -38,4 +41,20 @@ if [ -d "$debug_bundle" ]; then
   rm -rf "$debug_bundle"
 fi
 
+# Finder Get Info shows this. Same short sha as the in-game corner label.
+identity="$root/game/Airside/Assets/StreamingAssets/build-identity.txt"
+version="$(git -C "$root" rev-parse --short=8 HEAD)"
+if [[ -f "$identity" ]] && grep -q '^dirty=true$' "$identity"; then
+  version="${version}-dirty"
+fi
+plist="$destination/Contents/Info.plist"
+if [[ -f "$plist" ]] && [[ -x /usr/libexec/PlistBuddy ]]; then
+  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $version" "$plist"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $version" "$plist"
+fi
+
 echo "Mac build created at $destination"
+if [[ -f "$identity" ]]; then
+  echo "Build identity:"
+  cat "$identity"
+fi

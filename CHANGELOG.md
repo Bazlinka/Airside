@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Career-aware Route Map.** Inspecting a destination now explains when an authored contract
+  there would advance the current campaign chapter, using campaign-owned rules rather than
+  presentation guesses. No save, economy, route timing or aircraft behaviour changes.
+
 - **Adelaide curfew 23:00–06:00, player and RFDS exempt (ADR 0087).** Commercial
   AI no longer pushes or lands in the real closed window. You can still fly out
   at night; so can RFDS (`VH-FDA`).

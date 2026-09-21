@@ -25,6 +25,7 @@ namespace Airside.Presentation
         private readonly List<PlannerDestination> _all = new();
         private readonly List<PlannerDestination> _shown = new();
         private readonly List<FleetAircraft> _fleet = new();
+        private readonly List<AircraftType> _ownedTypes = new();
 
         public string Title => "ROUTE MAP";
         public RouteMapFilter Filter { get; private set; }
@@ -55,6 +56,8 @@ namespace Airside.Presentation
         public string ReturnLine { get; private set; } = string.Empty;
         public string AvailabilityLine { get; private set; } = string.Empty;
         public HudTone AvailabilityTone { get; private set; } = HudTone.Muted;
+        public string CareerLine { get; private set; } = string.Empty;
+        public HudTone CareerTone { get; private set; } = HudTone.Muted;
 
         public string DepartureLabel { get; private set; } = string.Empty;
         public string DepartureDetail { get; private set; } = string.Empty;
@@ -95,6 +98,8 @@ namespace Airside.Presentation
             ReturnLine = string.Empty;
             AvailabilityLine = string.Empty;
             AvailabilityTone = HudTone.Muted;
+            CareerLine = string.Empty;
+            CareerTone = HudTone.Muted;
             DepartureLabel = string.Empty;
             DepartureDetail = string.Empty;
             if (operations == null)
@@ -113,10 +118,14 @@ namespace Airside.Presentation
             }
 
             _fleet.Clear();
+            _ownedTypes.Clear();
             var player = operations.PlayerAirline;
             if (player != null)
                 foreach (var owned in operations.FleetOf(player))
+                {
                     _fleet.Add(owned);
+                    _ownedTypes.Add(owned.Type);
+                }
             CanCycleAircraft = _fleet.Count > 1;
             AircraftLabel = aircraft == null
                 ? "No aircraft"
@@ -146,6 +155,10 @@ namespace Airside.Presentation
             var km = operations.DistanceKm(destination);
             var band = RouteAccess.BandOf(destination);
             BandAndDistance = $"{BandLabel(band)}  ·  {km:0} km";
+
+            var career = Campaign.RouteGuidance(operations.CareerState, _ownedTypes, destination);
+            CareerLine = career.Text;
+            CareerTone = career.AdvancesCurrentChapter ? HudTone.Caution : HudTone.Muted;
 
             if (aircraft == null)
             {
@@ -390,6 +403,17 @@ namespace Airside.Presentation
             into.Text(new HudBox(pane.X, y, pane.Width, 36f), model.AvailabilityLine, 13f,
                 model.AvailabilityTone, HudTextStyle.Wrap);
             y += 44f;
+
+            if (model.CareerLine.Length > 0)
+            {
+                into.Hairline(new HudBox(pane.X, y, pane.Width, 1f));
+                y += 10f;
+                into.Caption(new HudBox(pane.X, y, pane.Width, 16f), "CAREER");
+                y += 19f;
+                into.Text(new HudBox(pane.X, y, pane.Width, 34f), model.CareerLine, 12f,
+                    model.CareerTone, HudTextStyle.Bold | HudTextStyle.Wrap);
+                y += 40f;
+            }
 
             if (model.DepartureLabel.Length > 0)
             {

@@ -18,6 +18,24 @@ namespace Airside.Simulation
         public bool Done { get; }
     }
 
+    /// <summary>
+    /// How inspecting a destination relates to the chapter the player is currently working on.
+    /// This is derived campaign truth: the map may present it, but never invents progression.
+    /// </summary>
+    public readonly struct CampaignRouteGuidance
+    {
+        internal CampaignRouteGuidance(bool advancesCurrentChapter, string text)
+        {
+            AdvancesCurrentChapter = advancesCurrentChapter;
+            Text = text ?? string.Empty;
+        }
+
+        public bool AdvancesCurrentChapter { get; }
+        public string Text { get; }
+
+        public static CampaignRouteGuidance None => new(false, string.Empty);
+    }
+
     /// <summary>A chapter of the career campaign, evaluated against the airline as it stands.</summary>
     public sealed class CampaignChapter
     {
@@ -149,6 +167,45 @@ namespace Airside.Simulation
                 if (!chapter.Complete)
                     return chapter;
             return chapters[chapters.Count - 1];
+        }
+
+        /// <summary>
+        /// Explains whether a route would move the current campaign chapter forward. The route
+        /// itself does not settle progress: the relevant authored contract still has to be
+        /// accepted and fulfilled.
+        /// </summary>
+        public static CampaignRouteGuidance RouteGuidance(AirlineCareerState career,
+            IReadOnlyList<AircraftType> ownedTypes, Destination destination)
+        {
+            if (career == null)
+                return CampaignRouteGuidance.None;
+
+            var chapter = Current(Evaluate(career, ownedTypes));
+            if (chapter == null || chapter.Complete)
+                return CampaignRouteGuidance.None;
+
+            var completed = FulfilledDestinations(career);
+            var code = destination.Code ?? string.Empty;
+            switch (chapter.Number)
+            {
+                case 1 when code == "KGC" && !completed.Contains("KGC"):
+                    return new CampaignRouteGuidance(true,
+                        "Chapter 1 target · fulfil the Kingscote contract");
+                case 2 when RouteAccess.BandOf(destination) == RouteBand.Regional && !completed.Contains(code):
+                    return new CampaignRouteGuidance(true,
+                        "Chapter 2 progress · a new regional contract here would count");
+                case 3 when RouteAccess.BandOf(destination) == RouteBand.Regional && !completed.Contains(code):
+                    return new CampaignRouteGuidance(true,
+                        "Chapter 3 progress · a new regional contract here would count");
+                case 4 when !ContainsAny(completed, Interstate) && Interstate.Contains(code):
+                    return new CampaignRouteGuidance(true,
+                        "Chapter 4 target · an interstate contract here would count");
+                case 5 when !ContainsAny(completed, International) && International.Contains(code):
+                    return new CampaignRouteGuidance(true,
+                        "Chapter 5 target · an international contract here would count");
+                default:
+                    return CampaignRouteGuidance.None;
+            }
         }
 
         public static bool IsWidebody(AircraftType type) =>

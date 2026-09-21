@@ -1,5 +1,17 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 ChatGPT — career-aware route planning (branch `feature/career-roadmap-ui`).**
+  Started the map/HUD/career convergence pass without changing saves or flight behaviour.
+  - Campaign owns deterministic route guidance for the current chapter; Presentation does not
+    infer chapter rules.
+  - Route Map destination detail shows a quiet **CAREER** callout only when that destination can
+    advance the chapter.
+  - Added Campaign + Route Map EditMode coverage.
+  - **Evidence:** connector-only edit; tests cannot be executed in this GitHub session. Branch is
+    intentionally not merged. Run Unity EditMode before merge.
+  - **NEXT:** visual/test pass, then extend this seam into physical airport capability/facility
+    upgrades and a clearer career roadmap rather than adding more aircraft.
+
 - **2026-09-21 Cursor — merged `feature/maintenance-planning` to `main` (ADRs 0085–0087).**
   Bailey asked to merge. This is now on `main`.
   - Adelaide commercial AI follows the real **23:00–06:00** curfew. The player can

@@ -32,6 +32,20 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Map_ExplainsWhenASelectedDestinationAdvancesTheCareer()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            var model = new RouteMapWorkspaceModel();
+
+            model.Rebuild(ops, plane, HudTestAirline.Code("KGC"), 900, clock.Now, RouteMapFilter.Available);
+            Assert.That(model.CareerLine, Does.Contain("Chapter 1 target"));
+            Assert.That(model.CareerTone, Is.EqualTo(HudTone.Caution));
+
+            model.Rebuild(ops, plane, HudTestAirline.Code("MEL"), 900, clock.Now, RouteMapFilter.Locked);
+            Assert.That(model.CareerLine, Is.Empty);
+        }
+
+        [Test]
         public void Map_PricesADestinationFromTheSameEconomicsTheBookingCharges()
         {
             var (clock, ops, plane) = HudTestAirline.Create();

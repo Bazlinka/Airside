@@ -69,6 +69,11 @@ namespace Airside.Presentation
         private RouteMapFilter _mapFilter = RouteMapFilter.Available;
         private int _boardScrollRow;
         private bool _boardScrollSnapToDay = true;
+        /// <summary>
+        /// When non-negative, the board is still auto-following NOW at this scroll row.
+        /// Cleared as soon as the player scrolls the list themselves.
+        /// </summary>
+        private int _boardScrollFollowRow = -1;
         private int _rosterScrollRow;
         /// <summary>The player aircraft the flight planner is planning.</summary>
         private FleetAircraft _mapAircraft;
@@ -1746,14 +1751,26 @@ namespace Airside.Presentation
                 _selectedAircraftId, _eventHistory);
 
             var layout = OperationsWorkspaceLayout.Create(surface, _operationsWorkspace.Attention.Count);
+            var nowRow = _operationsWorkspace.FirstActiveRowIndex;
             if (_boardScrollSnapToDay)
             {
-                _boardScrollRow = _operationsWorkspace.FirstActiveRowIndex;
+                _boardScrollRow = nowRow;
+                _boardScrollFollowRow = nowRow;
                 _boardScrollSnapToDay = false;
             }
+            else if (_boardScrollFollowRow >= 0 && _boardScrollRow == _boardScrollFollowRow)
+            {
+                // Still parked on the previous NOW — walk forward with the clock so a board
+                // left open from 09:55 is not still showing 09:55 at 11:55.
+                _boardScrollRow = nowRow;
+                _boardScrollFollowRow = nowRow;
+            }
 
+            var beforeScroll = _boardScrollRow;
             _boardScrollRow = ScrollRows(_boardScrollRow, layout.Board,
                 _operationsWorkspace.Rows.Count - layout.VisibleRows);
+            if (_boardScrollRow != beforeScroll)
+                _boardScrollFollowRow = -1;
             OperationsWorkspacePainter.Paint(_workspaceDrawList, _operationsWorkspace, layout,
                 _selectedAircraftId, _boardScrollRow);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));

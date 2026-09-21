@@ -26,6 +26,7 @@ namespace Airside.Tests
             Assert.That(model.ShownDestinations.Any(d => d.Destination.Code == "KGC"), Is.True);
             Assert.That(model.IsCareerTarget(HudTestAirline.Code("KGC")), Is.True,
                 "the current campaign target should be visible before opening its detail");
+            Assert.That(model.CareerTargetCodes, Does.Contain("KGC"));
 
             model.Rebuild(ops, plane, null, 900, clock.Now, RouteMapFilter.Locked);
             Assert.That(model.ShownDestinations.All(d => !d.Reachable), Is.True);

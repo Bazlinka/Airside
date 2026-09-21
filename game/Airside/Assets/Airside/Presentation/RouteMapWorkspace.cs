@@ -42,6 +42,7 @@ namespace Airside.Presentation
 
         /// <summary>Just the half the filter selects — the side list shows this.</summary>
         public IReadOnlyList<PlannerDestination> ShownDestinations => _shown;
+        public IReadOnlyCollection<string> CareerTargetCodes => _careerTargets;
 
         public bool IsCareerTarget(Destination destination) =>
             !string.IsNullOrEmpty(destination.Code) && _careerTargets.Contains(destination.Code);
@@ -504,7 +505,8 @@ namespace Airside.Presentation
         /// </summary>
         public static void PaintNetwork(HudDrawList into, HudBox map, AustraliaMapLens lens,
             IReadOnlyList<PlannerDestination> destinations, Destination home, Destination? selected,
-            string playerLiveryHex, double aircraftRangeKm = 0.0, string aircraftRangeLabel = null)
+            string playerLiveryHex, double aircraftRangeKm = 0.0, string aircraftRangeLabel = null,
+            IReadOnlyCollection<string> careerTargetCodes = null)
         {
             if (into == null || lens == null)
                 return;
@@ -537,8 +539,11 @@ namespace Airside.Presentation
                     if (!map.Contains(x, y))
                         continue;
                     var isSelected = selected.HasValue && selected.Value.Equals(row.Destination);
-                    var tone = isSelected ? HudTone.Caution : row.Reachable ? HudTone.Accent : HudTone.Muted;
-                    into.Dot(x, y, isSelected ? 13f : 9f, tone);
+                    var careerTarget = ContainsCode(careerTargetCodes, row.Destination.Code);
+                    var tone = isSelected || careerTarget
+                        ? HudTone.Caution
+                        : row.Reachable ? HudTone.Accent : HudTone.Muted;
+                    into.Dot(x, y, isSelected ? 13f : careerTarget ? 11f : 9f, tone);
                     var label = isSelected || lens.Zoom >= 4f
                         ? row.Destination.Name
                         : lens.Zoom >= 2f ? row.Destination.Code : string.Empty;
@@ -558,6 +563,16 @@ namespace Airside.Presentation
             into.Dot(hx, hy, 12f, HudTone.Caution, playerLiveryHex);
             into.Text(new HudBox(hx + 10f, hy - 9f, 120f, 17f), home.Name, 13f, HudTone.Default,
                 HudTextStyle.Bold);
+        }
+
+        private static bool ContainsCode(IReadOnlyCollection<string> codes, string code)
+        {
+            if (codes == null || string.IsNullOrEmpty(code))
+                return false;
+            foreach (var candidate in codes)
+                if (string.Equals(candidate, code, StringComparison.Ordinal))
+                    return true;
+            return false;
         }
 
         private static void RangeRing(HudDrawList into, HudBox map, AustraliaMapLens lens,

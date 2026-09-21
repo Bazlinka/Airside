@@ -13,6 +13,8 @@
 - **Objective progress now matches the objective.** When the next action is to accept a contract,
   the persistent card measures the current campaign chapter and names the current Adelaide base
   capability instead of showing unrelated next-aircraft purchase progress.
+- **Career targets read on the map.** Current-chapter destinations now use the caution treatment
+  directly on the Australia map as well as the destination list/detail.
 
 - **Adelaide curfew 23:00–06:00, player and RFDS exempt (ADR 0087).** Commercial
   AI no longer pushes or lands in the real closed window. You can still fly out

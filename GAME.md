@@ -18,6 +18,8 @@
     progress bar now measures the current campaign chapter and names the current base capability
     instead of displaying unrelated aircraft-purchase progress.
   - Updated OperationsSummary coverage.
+  - Current campaign targets now use the caution treatment directly on the Australia route map,
+    not just in the destination list/detail.
   - **Evidence:** connector-only edit; tests cannot be executed in this GitHub session. Branch is
     intentionally not merged. Run Unity EditMode before merge.
   - **NEXT:** visual/test pass, then extend this seam into physical airport capability/facility

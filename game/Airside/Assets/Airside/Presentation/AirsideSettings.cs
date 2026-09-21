@@ -22,8 +22,11 @@ namespace Airside.Presentation
         public bool FollowOnSelect = true;
         public bool InvertOrbit = false;
 
-        /// <summary>Real aircraft from adsb.lol in the sky (ADR 0081). Needs a connection.</summary>
-        public bool LiveTraffic = true;
+        /// <summary>
+        /// Real aircraft from adsb.lol in the sky only (ADR 0081/0086). Off until the game
+        /// can own the field; never drawn on the ground. Needs a connection.
+        /// </summary>
+        public bool LiveTraffic = false;
         public int CameraSpeedIndex = 1;
 
         public float CameraSpeed =>
@@ -45,7 +48,7 @@ namespace Airside.Presentation
             settings.MiniMap = Pref("minimap", 1) != 0;
             settings.FollowOnSelect = Pref("follow", 1) != 0;
             settings.InvertOrbit = Pref("invert", 0) != 0;
-            settings.LiveTraffic = Pref("livetraffic", 1) != 0;
+            settings.LiveTraffic = Pref("livetraffic.v2", 0) != 0;
             settings.CameraSpeedIndex = Mathf.Clamp(Pref("camera", 1), 0, CameraSpeedValues.Length - 1);
             return settings;
         }
@@ -57,7 +60,7 @@ namespace Airside.Presentation
             PlayerPrefs.SetInt(PrefPrefix + "minimap", MiniMap ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "follow", FollowOnSelect ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "invert", InvertOrbit ? 1 : 0);
-            PlayerPrefs.SetInt(PrefPrefix + "livetraffic", LiveTraffic ? 1 : 0);
+            PlayerPrefs.SetInt(PrefPrefix + "livetraffic.v2", LiveTraffic ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "camera", CameraSpeedIndex);
             PlayerPrefs.Save();
             Current = this;

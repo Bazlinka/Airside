@@ -270,6 +270,15 @@ namespace Airside.Simulation
             (Airline.QantasLink, new[] { ("VH-QOK", AircraftType.Dash8Q400), ("VH-QOL", AircraftType.Dash8Q400), ("VH-QOM", AircraftType.Dash8Q400) })
         };
 
+        /// <summary>
+        /// RFDS emergency turboprop. Uses a Saab 340 stand-in for the real PC-12 / King Air.
+        /// Exempt from the 23:00–06:00 curfew. Parked on a leftover regional bay when one is free.
+        /// </summary>
+        public static readonly IReadOnlyList<(Func<Airline> Make, (string Registration, AircraftType Type)[] Fleet)> EmergencyOperators = new (Func<Airline>, (string, AircraftType)[])[]
+        {
+            (Airline.Rfds, new[] { ("VH-FDA", AircraftType.Saab340) })
+        };
+
         private readonly ISimulationClock _clock;
         private readonly IRandomSource _random;
         private readonly List<Airline> _airlines = new();
@@ -318,6 +327,7 @@ namespace Airside.Simulation
             operations.AddAircraft(player, "VH-PAX", AircraftType.Saab340, AdelaideRegionalBays[0]);
             var aiFleet = new List<FleetAircraft>();
             operations.AddMissingRegionalCarriers(aiFleet);
+            operations.AddMissingEmergencyOperators(aiFleet);
             // Opening peak: regionals on 12/30, jets on 05/23, about one arrival
             // every three minutes across the field — a busy Adelaide morning, not
             // a dump and then a hole. One QantasLink and the player stay parked
@@ -347,7 +357,8 @@ namespace Airside.Simulation
             {
                 if (departureIndex >= AiOpeningDepartureSeconds.Length)
                     break;
-                if (aircraft.Airline.IsPlayer || aircraft.State != FleetState.AtStand || aircraft.Scheduled is not { } first)
+                if (aircraft.Airline.IsPlayer || aircraft.Airline.IsEmergency
+                    || aircraft.State != FleetState.AtStand || aircraft.Scheduled is not { } first)
                     continue;
                 aircraft.Scheduled = new ScheduledDeparture(first.Destination,
                     operations.ProcessedTo.Advance(AiOpeningDepartureSeconds[departureIndex++]));
@@ -392,6 +403,38 @@ namespace Airside.Simulation
         {
             var count = 0;
             foreach (var (make, fleet) in RegionalCarriers)
+            {
+                var template = make();
+                var airline = _airlines.Find(a => a.Id.Equals(template.Id));
+                foreach (var (registration, type) in fleet)
+                {
+                    if (_fleet.Exists(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+                    var stand = SuggestStandFor(type);
+                    if (!stand.HasValue)
+                        break;
+                    if (airline == null)
+                    {
+                        airline = template;
+                        AddAirline(airline);
+                    }
+
+                    var aircraft = AddAircraft(airline, registration, type, stand.Value);
+                    added?.Add(aircraft);
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// Add the RFDS aircraft if this field still has a free regional bay. Safe on every load.
+        /// </summary>
+        public int AddMissingEmergencyOperators(List<FleetAircraft> added = null)
+        {
+            var count = 0;
+            foreach (var (make, fleet) in EmergencyOperators)
             {
                 var template = make();
                 var airline = _airlines.Find(a => a.Id.Equals(template.Id));
@@ -622,7 +665,7 @@ namespace Airside.Simulation
 
             var aircraft = new FleetAircraft(registration, airline, type, stand, _processedTo);
             _fleet.Add(aircraft);
-            if (!airline.IsPlayer)
+            if (!airline.IsPlayer && !airline.IsEmergency)
                 ScheduleAiDeparture(aircraft, _processedTo);
             return aircraft;
         }
@@ -1060,13 +1103,30 @@ namespace Airside.Simulation
                         if (readyAt.CompareTo(now) <= 0)
                         {
                             // Ready but still at the stand: it may be waiting for the ground to
-                            // clear, which is re-checked on the grid.
-                            Consider(GroundTraffic.NextGrid(now));
+                            // clear, which is re-checked on the grid. Curfew is a wall-clock wait.
+                            if (!ExemptFromCurfew(aircraft) && AirportCurfew.IsClosed(now, Clock))
+                                Consider(AirportCurfew.OpensAt(now, Clock));
+                            else
+                                Consider(GroundTraffic.NextGrid(now));
                             if (AdelaideGround.IsTerminalGate(aircraft.Stand))
                                 taxiReleaseWantedGate = true;
                             else
                                 taxiReleaseWantedBay = true;
                         }
+                    }
+                }
+                if (aircraft.Airline.IsEmergency && aircraft.State == FleetState.AtStand
+                    && !aircraft.Scheduled.HasValue)
+                {
+                    if (AirportCurfew.IsClosed(now, Clock))
+                        Consider(GroundTraffic.NextGrid(now));
+                    else
+                    {
+                        var local = Clock.LocalAt(now);
+                        var tonight = local.Date.AddHours(AirportCurfew.ClosedFromHour);
+                        if (local >= tonight)
+                            tonight = tonight.AddDays(1);
+                        Consider(Clock.AtLocal(tonight));
                     }
                 }
                 if (aircraft.State is FleetState.HoldingShort or FleetState.HoldingForLanding)
@@ -1089,7 +1149,10 @@ namespace Airside.Simulation
                     var stripFree = RunwayWeather.IsMainRunway(aircraft.AssignedRunway) ? _mainRunwayFreeAt : _crossRunwayFreeAt;
                     if (stripFree.CompareTo(now) <= 0)
                     {
-                        Consider(GroundTraffic.NextGrid(now));
+                        if (AirportCurfew.IsClosed(now, Clock) && !ExemptFromCurfew(aircraft))
+                            Consider(AirportCurfew.OpensAt(now, Clock));
+                        else
+                            Consider(GroundTraffic.NextGrid(now));
                         break;
                     }
                 }
@@ -1104,6 +1167,22 @@ namespace Airside.Simulation
                 // at the same granularity live play would.
                 if (Weather.At(now) == WeatherKind.Storm)
                     Consider(new SimulationTime((now.ElapsedSeconds / Weather.BlockSeconds + 1) * Weather.BlockSeconds));
+                if (AirportCurfew.IsClosed(now, Clock))
+                {
+                    var anyExempt = false;
+                    foreach (var waiting in _fleet)
+                    {
+                        if (waiting.State is not (FleetState.HoldingForLanding or FleetState.HoldingShort))
+                            continue;
+                        if (!ExemptFromCurfew(waiting))
+                            continue;
+                        anyExempt = true;
+                        break;
+                    }
+
+                    if (!anyExempt)
+                        Consider(AirportCurfew.OpensAt(now, Clock));
+                }
             }
             // Bay and gate pushback releases are tracked separately (NextTaxiReleaseAt):
             // the two aprons never share pavement, so one waiting on the other's release
@@ -1504,7 +1583,16 @@ namespace Airside.Simulation
                         return false;
                     }
 
+                    if (aircraft.Airline.IsEmergency && !aircraft.Scheduled.HasValue
+                        && AirportCurfew.IsClosed(now, Clock))
+                    {
+                        ScheduleAiDeparture(aircraft, now);
+                        return aircraft.Scheduled.HasValue;
+                    }
+
                     if (!aircraft.Scheduled.HasValue || aircraft.Scheduled.Value.DepartAt.CompareTo(now) > 0)
+                        return false;
+                    if (!ExemptFromCurfew(aircraft) && AirportCurfew.IsClosed(now, Clock))
                         return false;
                     if (aircraft.Airline.IsPlayer && !aircraft.PrepStartedAt.HasValue)
                     {
@@ -1578,6 +1666,11 @@ namespace Airside.Simulation
                     return true;
 
                 case FleetState.Inbound:
+                    if (!ExemptFromCurfew(aircraft) && AirportCurfew.IsClosed(now, Clock))
+                    {
+                        aircraft.ExtendUntil(AirportCurfew.OpensAt(now, Clock));
+                        return false;
+                    }
                     aircraft.AssignedRunway = RunwayFor(aircraft);
                     Transition(aircraft, FleetState.HoldingForLanding, now, null);
                     return true;
@@ -1853,6 +1946,14 @@ namespace Airside.Simulation
 
             var arrival = LongestWaiting(FleetState.HoldingForLanding, mainStrip);
             var departure = LongestWaiting(FleetState.HoldingShort, mainStrip);
+            if (arrival != null && !MayUseRunwayDuringCurfew(arrival, now))
+            {
+                if (!ExemptFromCurfew(arrival))
+                    arrival.ExtendUntil(AirportCurfew.OpensAt(now, Clock));
+                arrival = null;
+            }
+            if (departure != null && !MayUseRunwayDuringCurfew(departure, now))
+                departure = null;
             var next = arrival ?? departure;
             if (arrival != null && departure != null
                 && now.ElapsedSeconds - departure.StateStartedAt.ElapsedSeconds >= DepartureMaxHoldSeconds
@@ -2065,6 +2166,22 @@ namespace Airside.Simulation
             return false;
         }
 
+        /// <summary>Player and RFDS may use the runway during the 23:00–06:00 curfew.</summary>
+        public static bool ExemptFromCurfew(FleetAircraft aircraft) =>
+            aircraft?.Airline != null && (aircraft.Airline.IsPlayer || aircraft.Airline.IsEmergency);
+
+        private bool MayUseRunwayDuringCurfew(FleetAircraft aircraft, SimulationTime now)
+        {
+            if (ExemptFromCurfew(aircraft) || !AirportCurfew.IsClosed(now, Clock))
+                return true;
+            // Already moving: taxi-before-23:00 may take off; an arrival already on
+            // short final may land. New commercial inbounds wait until 06:00.
+            if (aircraft.State is FleetState.HoldingShort or FleetState.TaxiOut or FleetState.TakingOff)
+                return true;
+            return aircraft.State == FleetState.HoldingForLanding
+                && !AirportCurfew.IsClosed(aircraft.StateStartedAt, Clock);
+        }
+
         /// <summary>How long a departure keeps its strip from the tower: lineup, roll, wake.</summary>
         private static long DepartureRunwaySeconds(FleetAircraft departure) =>
             AdelaideGround.LineupFor(departure.AssignedRunway).WholeSeconds
@@ -2204,16 +2321,17 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// First Adelaide push hour. The airfield is 24 h; the first domestics
-        /// go around 05:00, not 06:00.
+        /// First commercial AI push hour. Adelaide's curfew lifts at 06:00
+        /// (Adelaide Airport Curfew Act 2000). The player and RFDS may go earlier.
         /// </summary>
-        public const int AiFirstDepartureHour = 5;
+        public const int AiFirstDepartureHour = AirportCurfew.OpensAtHour;
 
         /// <summary>
-        /// Last Adelaide push hour. No SYD-style curfew — late internationals
-        /// still leave after 21:00. Regionals skip the late hole via the hour profile.
+        /// Last commercial AI push hour (22:00–22:59). Curfew begins at 23:00;
+        /// a taxi that started before then is allowed to take off. Regionals skip
+        /// the late-international hole via the hour profile.
         /// </summary>
-        public const int AiLastDepartureHour = 23;
+        public const int AiLastDepartureHour = 22;
 
         /// <summary>
         /// Fallback regional network for a future AI operator.
@@ -2267,6 +2385,12 @@ namespace Airside.Simulation
         public static readonly IReadOnlyList<(string Code, int Weight)> QatarNetwork = new[] { ("DOH", 1) };
         public static readonly IReadOnlyList<(string Code, int Weight)> FijiNetwork = new[] { ("NAN", 1) };
 
+        /// <summary>RFDS emergency legs from Adelaide — SA regionals, any hour.</summary>
+        public static readonly IReadOnlyList<(string Code, int Weight)> RfdsNetwork = new[]
+        {
+            ("PLO", 2), ("MGB", 2), ("CED", 2), ("CPD", 2), ("WYA", 1), ("KGC", 1), ("BHQ", 1)
+        };
+
         public static IReadOnlyList<(string Code, int Weight)> AiNetworkFor(Airline airline) => airline.Id.Value switch
         {
             "REX" => RexNetwork,
@@ -2281,6 +2405,7 @@ namespace Airside.Simulation
             "UAE" => EmiratesNetwork,
             "QTR" => QatarNetwork,
             "FJI" => FijiNetwork,
+            "RFDS" => RfdsNetwork,
             _ => AiNetwork
         };
 
@@ -2372,7 +2497,7 @@ namespace Airside.Simulation
 
         private void BookAiDeparture(FleetAircraft aircraft, Destination destination, SimulationTime now)
         {
-            var departAt = AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft.Type);
+            var departAt = AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft);
             var disruption = FlightDisruption.For(
                 $"{aircraft.Registration}:{aircraft.CompletedTrips}:{destination.Code}",
                 departAt, Clock);
@@ -2383,7 +2508,7 @@ namespace Airside.Simulation
             }
 
             if (disruption.Delayed)
-                departAt = AiDepartureWithinHours(departAt.Advance(disruption.DelayMinutes * 60L), aircraft.Type);
+                departAt = AiDepartureWithinHours(departAt.Advance(disruption.DelayMinutes * 60L), aircraft);
             aircraft.Scheduled = new ScheduledDeparture(destination, departAt, disruption.DelayMinutes);
         }
 
@@ -2413,17 +2538,37 @@ namespace Airside.Simulation
 
         /// <summary>
         /// Regional ready-times jump the afternoon hole onto the next bank.
-        /// Jets keep the 05:00–23:00 window — a 787 ready at 21:40 still goes.
+        /// Jets keep the 06:00–23:00 window — a 787 ready at 21:40 still goes.
+        /// Player and RFDS skip the window entirely.
         /// </summary>
+        internal SimulationTime AiDepartureWithinHours(SimulationTime readyAt, FleetAircraft aircraft)
+        {
+            if (aircraft != null && aircraft.Airline.IsEmergency)
+            {
+                var local = Clock.LocalAt(readyAt);
+                if (AirportCurfew.IsClosed(local))
+                    return readyAt;
+                var tonight = local.Date.AddHours(23).AddMinutes(30);
+                if (local >= tonight)
+                    tonight = tonight.AddDays(1);
+                var at = Clock.AtLocal(tonight);
+                return at.CompareTo(readyAt) > 0 ? at : readyAt;
+            }
+
+            if (aircraft != null && ExemptFromCurfew(aircraft))
+                return readyAt;
+            return AiDepartureWithinHours(readyAt, aircraft?.Type);
+        }
+
         internal SimulationTime AiDepartureWithinHours(SimulationTime readyAt, AircraftType type = null)
         {
             var local = Clock.LocalAt(readyAt);
             DateTime useful;
             if (type != null && NeedsTerminalGate(type))
             {
-                var first = local.Date.AddHours(AiFirstDepartureHour);
-                var last = local.Date.AddHours(AiLastDepartureHour);
-                if (local >= first && local <= last)
+                var first = local.Date.AddHours(AirportCurfew.OpensAtHour);
+                var last = local.Date.AddHours(AirportCurfew.ClosedFromHour);
+                if (local >= first && local < last)
                     return readyAt;
                 useful = local < first ? first : first.AddDays(1);
             }

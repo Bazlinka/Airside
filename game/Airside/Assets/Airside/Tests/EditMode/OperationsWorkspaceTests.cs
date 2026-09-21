@@ -125,19 +125,19 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
 
             Assert.That(model.DayProgress01, Is.InRange(0.45f, 0.75f),
-                "15:00 should sit in the second half of a 05–23 operating day");
+                "15:00 should sit in the second half of a 06–23 operating day");
             Assert.That(model.DayCaption, Does.Contain("on field"));
-            Assert.That(model.DayCaption, Does.Contain("listed ahead"));
-            Assert.That(model.DayOnFieldCount + model.DayListedAheadCount,
-                Is.GreaterThan(0));
+            Assert.That(model.DayCaption, Does.Not.Contain("listed ahead"));
+            Assert.That(model.DayOnFieldCount, Is.GreaterThan(0));
+            Assert.That(model.DayListedAheadCount, Is.EqualTo(0));
             Assert.That(model.Subtitle, Does.Contain("/"),
                 "subtitle names both active strip ends");
             Assert.That(model.DayDensity.Count, Is.EqualTo(
-                AirlineOperations.AiLastDepartureHour - AirlineOperations.AiFirstDepartureHour + 1));
+                AirportCurfew.ClosedFromHour - AirportCurfew.OpensAtHour + 1));
         }
 
         [Test]
-        public void Operations_PublishedDayPlanRowsDoNotClaimAStand()
+        public void Operations_BoardShowsOnlyLiveAircraft()
         {
             var (clock, ops, _) = HudTestAirline.Create();
             ops.AddMissingRegionalCarriers();
@@ -148,12 +148,11 @@ namespace Airside.Tests
             var model = new OperationsWorkspaceModel();
             model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
 
-            var published = model.Rows.Where(r => !r.OnField && !r.IsPast).ToList();
-            Assert.That(published, Is.Not.Empty, "the day plan still fills the board");
-            Assert.That(published.All(r => r.Stand == "—"), Is.True,
-                "a listed timetable slot must not invent Gate 13 / Bay 50C occupancy");
-            Assert.That(published.All(r => r.Status == "Listed" || r.Status.StartsWith("Delayed")
-                                           || r.Status == "Cancelled"), Is.True);
+            var liveRegs = new HashSet<string>(ops.Fleet.Select(a => a.Registration));
+            Assert.That(model.Rows, Is.Not.Empty, "the live AI fleet still fills the board");
+            Assert.That(model.Rows.All(r => liveRegs.Contains(r.Registration)), Is.True,
+                "timetable ghosts must not appear as departures");
+            Assert.That(model.Rows.All(r => r.Status != "Listed" && r.Status != "Expected"), Is.True);
 
             var liveAtStand = model.Rows.Where(r => r.OnField && r.Stand != "—").ToList();
             Assert.That(liveAtStand, Is.Not.Empty,
@@ -161,12 +160,26 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Operations_NowDividerSkipsPastCancellations()
+        public void Operations_NowDividerSkipsPastLiveDepartures()
         {
+            // Timetable ghosts used to fill the morning with Cancelled/Departed rows so NOW
+            // sat in the afternoon. The board is live metal only now: a morning outbound
+            // that already left must still mute, and NOW opens on a later live departure.
             var (clock, ops, _) = HudTestAirline.Create();
-            ops.AddMissingRegionalCarriers();
-            ops.AddMissingTerminalOperators();
+            var rival = Airline.Rex();
+            ops.AddAirline(rival);
+            var morning = ops.Clock.AtLocal(ops.Clock.LocalAt(clock.Now).Date.AddHours(9).AddMinutes(55));
             var afternoon = ops.Clock.AtLocal(ops.Clock.LocalAt(clock.Now).Date.AddHours(15));
+            ops.RestoreAircraft(
+                "VH-GONE", rival, AircraftType.Saab340, FleetState.Outbound,
+                morning, afternoon.Advance(60 * 60), default, default,
+                HudTestAirline.Code("PLO"), null, 0);
+            var later = ops.AddAircraft(ops.PlayerAirline, "VH-LATE", AircraftType.Saab340,
+                AirlineOperations.AdelaideRegionalBays[1]);
+            ops.CancelDeparture(later);
+            Assert.That(ops.ScheduleDeparture(later, HudTestAirline.Code("KGC"), afternoon.Advance(90 * 60)).Accepted,
+                Is.True);
+
             clock.Set(afternoon);
             ops.Update();
 
@@ -176,15 +189,10 @@ namespace Airside.Tests
             Assert.That(model.NowDividerRowIndex, Is.GreaterThan(0));
             var nowRow = model.Rows[model.NowDividerRowIndex];
             Assert.That(nowRow.IsPast, Is.False);
-            if (model.NowDividerRowIndex > 0)
-                Assert.That(model.Rows[model.NowDividerRowIndex - 1].IsPast, Is.True,
-                    "everything above NOW must be muted past, including morning cancellations");
-            // The active row's printed time should sit near or after midday, not at 08:00.
-            var time = nowRow.ScheduledTime;
-            Assert.That(time.Length, Is.GreaterThanOrEqualTo(4));
-            var hour = int.Parse(time.Substring(0, 2));
+            Assert.That(model.Rows[model.NowDividerRowIndex - 1].IsPast, Is.True);
+            var hour = int.Parse(nowRow.ScheduledTime.Substring(0, 2));
             Assert.That(hour, Is.GreaterThanOrEqualTo(12),
-                $"NOW should open near the current clock, not on {time}");
+                $"NOW should open near the current clock, not on {nowRow.ScheduledTime}");
         }
 
         [Test]
@@ -263,9 +271,20 @@ namespace Airside.Tests
         public void Operations_FirstActiveRowSkipsMutedPastMovements()
         {
             var (clock, ops, _) = HudTestAirline.Create();
-            ops.AddMissingRegionalCarriers();
-            ops.AddMissingTerminalOperators();
+            var rival = Airline.Rex();
+            ops.AddAirline(rival);
+            var morning = ops.Clock.AtLocal(ops.Clock.LocalAt(clock.Now).Date.AddHours(9).AddMinutes(55));
             var afternoon = ops.Clock.AtLocal(ops.Clock.LocalAt(clock.Now).Date.AddHours(15));
+            ops.RestoreAircraft(
+                "VH-GONE", rival, AircraftType.Saab340, FleetState.Outbound,
+                morning, afternoon.Advance(60 * 60), default, default,
+                HudTestAirline.Code("PLO"), null, 0);
+            var later = ops.AddAircraft(ops.PlayerAirline, "VH-LATE", AircraftType.Saab340,
+                AirlineOperations.AdelaideRegionalBays[1]);
+            ops.CancelDeparture(later);
+            Assert.That(ops.ScheduleDeparture(later, HudTestAirline.Code("KGC"), afternoon.Advance(90 * 60)).Accepted,
+                Is.True);
+
             clock.Set(afternoon);
             ops.Update();
 
@@ -275,8 +294,7 @@ namespace Airside.Tests
             Assert.That(model.FirstActiveRowIndex, Is.GreaterThan(0),
                 "afternoon opens past the morning Departed rows");
             Assert.That(model.Rows[model.FirstActiveRowIndex].IsPast, Is.False);
-            if (model.FirstActiveRowIndex > 0)
-                Assert.That(model.Rows[model.FirstActiveRowIndex - 1].IsPast, Is.True);
+            Assert.That(model.Rows[model.FirstActiveRowIndex - 1].IsPast, Is.True);
         }
 
         [Test]
@@ -285,7 +303,8 @@ namespace Airside.Tests
             var (clock, ops, _) = HudTestAirline.Create();
             var rival = Airline.Rex();
             ops.AddAirline(rival);
-            ops.AddAircraft(rival, "VH-ZRC", AircraftType.Saab340, AirlineOperations.AdelaideRegionalBays[2]);
+            var rex = ops.AddAircraft(rival, "VH-ZRC", AircraftType.Saab340, AirlineOperations.AdelaideRegionalBays[2]);
+            Assert.That(ops.ScheduleDeparture(rex, HudTestAirline.Code("PLO"), new SimulationTime(1800)).Accepted, Is.True);
             clock.Set(new SimulationTime(60));
             ops.Update();
 

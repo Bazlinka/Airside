@@ -15,6 +15,8 @@ namespace Airside.Tests
             Assert.That(settings.MiniMap, Is.True);
             Assert.That(settings.FollowOnSelect, Is.True);
             Assert.That(settings.InvertOrbit, Is.False);
+            Assert.That(settings.LiveTraffic, Is.False,
+                "live ADS-B stays off until the game can own the field");
             Assert.That(settings.CameraSpeedIndex, Is.EqualTo(1));
             Assert.That(settings.CameraSpeed, Is.EqualTo(0.65f));
         }

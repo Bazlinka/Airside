@@ -1,5 +1,22 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Cursor — merged `feature/maintenance-planning` to `main` (ADRs 0085–0087).**
+  Bailey asked to merge. This is now on `main`.
+  - Adelaide commercial AI follows the real **23:00–06:00** curfew. The player can
+    still fly out; RFDS (`VH-FDA`, Saab stand-in) can too.
+  - Short final no longer parks as a statue at the 80 % / ~130 ft pin while the
+    tower waits for the previous landing to vacate — a small S-turn.
+  - CC0 Dash 8 / jet engine beds, pitched for startup vs takeoff.
+  - Operations board and pavement are sim aircraft only (no timetable ghosts;
+    live ADS-B defaults off and stays in the sky).
+  - Real Adelaide sun and moon in the YpadFrame (noon north of 05/23, east → west).
+  - Routine checks: wear one rotation per trip, due every 8; player chooses when.
+    Save **v11**.
+  - **Evidence:** Unity EditMode **868/869** (only the known gate lead-in decision test).
+  - **NEXT:** play `main` — night curfew, player still flies, RFDS after 23:00,
+    engines on follow-camera, sun/moon path, board vs pavement. Tune check cost
+    (ADR 0085). Gate lead-in still open.
+
 - **2026-09-21 Cursor — routine aircraft checks (branch `feature/maintenance-planning`, ADR
   0085).** Finished Claude's WIP after the session limit: player aircraft wear one rotation
   per trip, a check is due every 8, the player chooses when (Fleet **CHECK $N**, or Send for

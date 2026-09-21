@@ -10,6 +10,9 @@
 - **Cleaner career navigation.** The top-level workspace is now labelled **CAREER** rather than
   the prototype-era **STATS**, and Route Map lists identify current campaign target destinations
   before the player opens their detail.
+- **Objective progress now matches the objective.** When the next action is to accept a contract,
+  the persistent card measures the current campaign chapter and names the current Adelaide base
+  capability instead of showing unrelated next-aircraft purchase progress.
 
 - **Adelaide curfew 23:00–06:00, player and RFDS exempt (ADR 0087).** Commercial
   AI no longer pushes or lands in the real closed window. You can still fly out

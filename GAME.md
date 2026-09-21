@@ -14,6 +14,10 @@
   - Navigation now calls the page **CAREER** instead of the old **STATS** prototype label.
     The Route Map destination list marks current-chapter targets before the player opens them.
   - Added shell/map coverage for those navigation cues.
+  - Fixed objective-card information hierarchy: when the action is "accept a contract", the
+    progress bar now measures the current campaign chapter and names the current base capability
+    instead of displaying unrelated aircraft-purchase progress.
+  - Updated OperationsSummary coverage.
   - **Evidence:** connector-only edit; tests cannot be executed in this GitHub session. Branch is
     intentionally not merged. Run Unity EditMode before merge.
   - **NEXT:** visual/test pass, then extend this seam into physical airport capability/facility

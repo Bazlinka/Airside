@@ -52,8 +52,10 @@ namespace Airside.Tests
             Assert.That(objective.Title, Does.Not.Contain("REG-"));
             Assert.That(objective.NextLine, Does.StartWith("Next:"));
             Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("accept"));
-            Assert.That(objective.ProgressText, Does.Contain("of $"));
-            Assert.That(objective.ProgressText.ToLowerInvariant(), Does.Contain("rotation"));
+            Assert.That(objective.ProgressText, Does.Contain("chapter goals"));
+            Assert.That(objective.ProgressText, Does.Contain("Regional starter base"));
+            Assert.That(objective.Progress01, Is.EqualTo(1f / 3f).Within(0.001f),
+                "fresh Chapter 1 already satisfies its reliability goal");
         }
 
         [Test]

@@ -27,7 +27,8 @@ namespace Airside.Simulation
             ActiveRouteContract activeContract = null, IEnumerable<string> processedSettlementKeys = null,
             IEnumerable<string> completedContractIds = null, int completedPlayerRotations = 0,
             IEnumerable<RouteContractDefinition> issuedDefinitions = null, long lifetimeRevenue = 0,
-            IEnumerable<CompletedContractRecord> contractHistory = null)
+            IEnumerable<CompletedContractRecord> contractHistory = null,
+            PlayerBaseLevel baseLevel = PlayerBaseLevel.Starter)
         {
             Funds = funds ?? StartingFunds;
             Reliability = Clamp(reliability);
@@ -35,6 +36,7 @@ namespace Airside.Simulation
             ActiveContract = activeContract;
             CompletedPlayerRotations = Math.Max(0, completedPlayerRotations);
             LifetimeRevenue = Math.Max(0, lifetimeRevenue);
+            BaseLevel = baseLevel;
             _processedSettlements = processedSettlementKeys == null
                 ? new HashSet<string>(StringComparer.Ordinal)
                 : new HashSet<string>(processedSettlementKeys, StringComparer.Ordinal);
@@ -56,6 +58,8 @@ namespace Airside.Simulation
         public OperatingTier Tier { get; internal set; }
         public ActiveRouteContract ActiveContract { get; internal set; }
         public int CompletedPlayerRotations { get; private set; }
+        public PlayerBaseLevel BaseLevel { get; internal set; }
+        public PlayerBaseSpec Base => PlayerBase.For(BaseLevel);
 
         /// <summary>
         /// Every rotation payment ever settled, including contract bonuses — unlike

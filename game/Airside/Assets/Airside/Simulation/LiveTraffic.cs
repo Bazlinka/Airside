@@ -73,7 +73,18 @@ namespace Airside.Simulation
     public static class LiveTraffic
     {
         public const string Credit = "Live traffic: adsb.lol (ODbL)";
+
+        /// <summary>Drawn in the 3D sky out to here.</summary>
         public const double RadiusNauticalMiles = 60.0;
+
+        /// <summary>Fetched out to here (adsb.lol's maximum) so the Route Map shows the region.</summary>
+        public const double FeedRadiusNauticalMiles = 250.0;
+
+        /// <summary>YPAD elevation: ground-relative height for traffic low over the field.</summary>
+        public const double FieldElevationFeet = 20.0;
+
+        /// <summary>On the ground positions are only dead-reckoned briefly: taxiways turn.</summary>
+        public const double GroundDeadReckonSeconds = 5.0;
         public const float PollSeconds = 10f;
 
         /// <summary>Reports older than this are dropped rather than dead-reckoned.</summary>
@@ -96,7 +107,7 @@ namespace Airside.Simulation
         {
             var adl = DestinationCatalogue.Adelaide;
             return string.Format(CultureInfo.InvariantCulture, "https://api.adsb.lol/v2/point/{0:0.###}/{1:0.###}/{2:0}",
-                adl.Latitude, adl.Longitude, RadiusNauticalMiles);
+                adl.Latitude, adl.Longitude, FeedRadiusNauticalMiles);
         }
 
         /// <summary>
@@ -210,6 +221,52 @@ namespace Airside.Simulation
             var pitch = (float)Math.Max(-3.0, Math.Min(12.0, flightPath + 3.0));
             pose = new LiveTrafficPose(dx, dy, dz, yaw, pitch);
             return true;
+        }
+
+        /// <summary>
+        /// Where to draw a real aircraft that is on the ground, or low over the field landing or
+        /// taking off — the traffic <see cref="TryPose"/> leaves out. 1:1 on the drawn pavement.
+        /// Whether it is actually drawn is the caller's call: it must stand aside for the
+        /// player's fleet (<see cref="LiveGroundClearance"/>).
+        /// </summary>
+        public static bool TryFieldPose(LiveAircraft aircraft, double secondsSinceReport, out LiveTrafficPose pose,
+            out bool onGround)
+        {
+            pose = default;
+            onGround = aircraft.OnGround;
+            if (ModelFor(aircraft.TypeCode) == null)
+                return false;
+            var age = aircraft.PositionAgeSeconds + Math.Max(0.0, secondsSinceReport);
+            if (age > StaleSeconds)
+                return false;
+
+            var moving = aircraft.GroundSpeedKnots >= 2.0;
+            var reckon = onGround ? Math.Min(age, moving ? GroundDeadReckonSeconds : 0.0) : age;
+            Advance(aircraft, reckon, out var x, out var z, out var feet);
+            if (Math.Sqrt(x * x + z * z) > FieldRadiusMetres)
+                return false;
+            if (!onGround && (!aircraft.AltitudeFeet.HasValue || feet >= FieldFloorFeet))
+                return false;
+
+            var height = onGround ? 0.0 : Math.Max(0.0, (feet - FieldElevationFeet) / FeetPerMetre);
+            var speed = Math.Max(30.0, aircraft.GroundSpeedKnots) * KnotsToMetresPerSecond;
+            var climb = aircraft.VerticalRateFpm / FeetPerMetre / 60.0;
+            var pitch = onGround ? 0f
+                : (float)Math.Max(-3.0, Math.Min(12.0, Math.Atan2(climb, speed) * 180.0 / Math.PI + 3.0));
+            pose = new LiveTrafficPose(x, height, z, YpadFrame.UnityYawFromTrue(aircraft.TrackDegrees), pitch);
+            return true;
+        }
+
+        /// <summary>Latitude/longitude <paramref name="seconds"/> along the reported track, for maps.</summary>
+        public static void PositionAfter(LiveAircraft aircraft, double seconds, out double latitude, out double longitude)
+        {
+            var metres = aircraft.OnGround && aircraft.GroundSpeedKnots < 2.0
+                ? 0.0
+                : aircraft.GroundSpeedKnots * KnotsToMetresPerSecond * Math.Max(0.0, Math.Min(seconds, StaleSeconds));
+            var track = aircraft.TrackDegrees * Math.PI / 180.0;
+            latitude = aircraft.Latitude + Math.Cos(track) * metres / 110_574.0;
+            longitude = aircraft.Longitude
+                        + Math.Sin(track) * metres / (111_320.0 * Math.Cos(aircraft.Latitude * Math.PI / 180.0));
         }
 
         private static void Advance(LiveAircraft aircraft, double seconds, out double x, out double z, out double feet)

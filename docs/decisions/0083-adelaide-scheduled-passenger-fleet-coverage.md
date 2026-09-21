@@ -1,4 +1,4 @@
-# ADR 0082 — Adelaide scheduled-passenger fleet coverage
+# ADR 0083 — Adelaide scheduled-passenger fleet coverage
 
 **Date:** 2026-09-21  
 **Status:** Accepted  

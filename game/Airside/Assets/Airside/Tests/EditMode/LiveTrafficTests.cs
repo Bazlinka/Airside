@@ -143,5 +143,56 @@ namespace Airside.Tests
             Assert.That(wx, Is.EqualTo(x).Within(1.0), name + " x");
             Assert.That(wz, Is.EqualTo(z).Within(1.0), name + " z");
         }
-    }
+    
+        [Test]
+        public void FieldPose_DrawsTaxiingAirlinersOnThePavementOneToOne()
+        {
+            var aircraft = LiveTraffic.Parse(Sample);
+            Assert.That(LiveTraffic.TryFieldPose(aircraft[1], 0, out var taxi, out var onGround), Is.True, "taxiing 777");
+            Assert.That(onGround, Is.True);
+            Assert.That(taxi.Y, Is.EqualTo(0).Within(1e-6));
+            Assert.That(taxi.X, Is.EqualTo(806.87).Within(15.0), "on the T1 apron, not squeezed");
+            Assert.That(taxi.Z, Is.EqualTo(196.11).Within(15.0));
+
+            Assert.That(LiveTraffic.TryFieldPose(aircraft[2], 0, out _, out _), Is.False, "no model for a DA40");
+            Assert.That(LiveTraffic.TryFieldPose(aircraft[0], 0, out _, out _), Is.False, "the Dash 8 is up at 3,200 ft");
+
+            var flare = new LiveAircraft("c", "QFA7", "VH-Y", "B738", -34.9575, 138.519, 120, false, 135, 50.2, -650, 0);
+            Assert.That(LiveTraffic.TryFieldPose(flare, 0, out var low, out var grounded), Is.True, "landing over the threshold");
+            Assert.That(grounded, Is.False);
+            Assert.That(low.Y, Is.EqualTo((120 - LiveTraffic.FieldElevationFeet) / 3.28084).Within(0.5));
+        }
+
+        [Test]
+        public void GroundClearance_StandsAsideForTheGameAndItsRunways()
+        {
+            var ship = new[] { new GroundObstacle(1000, 400, 12) };
+            Assert.That(LiveGroundClearance.Clashes(1015, 400, 18, ship, false, false), Is.True, "wingtips would touch");
+            Assert.That(LiveGroundClearance.Clashes(1100, 400, 18, ship, false, false), Is.False);
+
+            Assert.That(LiveGroundClearance.Clashes(-600, 10, 18, null, mainStripInUse: true, crossStripInUse: false), Is.True,
+                "on 05/23 while the game uses it");
+            Assert.That(LiveGroundClearance.Clashes(-600, 10, 18, null, mainStripInUse: false, crossStripInUse: false), Is.False);
+            Assert.That(LiveGroundClearance.Clashes(-600, 300, 18, null, mainStripInUse: true, crossStripInUse: false), Is.False,
+                "an apron well off the runway is fine");
+
+            AdelaideCrossRoutes.LocalToWorld(200f, 5f, out var cx, out var cz);
+            Assert.That(LiveGroundClearance.Clashes(cx, cz, 18, null, false, crossStripInUse: true), Is.True, "on 12/30");
+            AdelaideCrossRoutes.WorldToLocal(cx, cz, out var along, out var across);
+            Assert.That(along, Is.EqualTo(200f).Within(0.01f));
+            Assert.That(across, Is.EqualTo(5f).Within(0.01f));
+        }
+
+        [Test]
+        public void Feed_CoversTheRegionForTheMap_ButTheSkyStaysLocal()
+        {
+            Assert.That(LiveTraffic.RequestUrl(), Does.EndWith("/250"));
+            var far = new LiveAircraft("d", "VOZ9", "VH-Z", "B738", -33.0, 136.0, 37000, false, 450, 90, 0, 0);
+            Assert.That(LiveTraffic.TryPose(far, 0, out _), Is.False, "well past 60 NM: map only");
+
+            LiveTraffic.PositionAfter(far, 60, out var lat, out var lon);
+            Assert.That(lon, Is.GreaterThan(-0.0 + 136.0), "flies east along its track");
+            Assert.That(lat, Is.EqualTo(-33.0).Within(1e-3));
+        }
+}
 }

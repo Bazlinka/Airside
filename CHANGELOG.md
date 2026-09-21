@@ -6,7 +6,15 @@
   traffic now maps those ICAO codes to the correct silhouette instead of an A321, 737-8,
   A350 or 787-10 stand-in. Existing Qantas, Jetstar, Malaysia, Emirates and Fiji equipment
   assignments are corrected from current Adelaide Airport evidence. Charter-only and one-off
-  visitors remain deliberately out of scope (ADR 0082).
+  visitors remain deliberately out of scope (ADR 0083).
+
+- **Live traffic on the maps and on the ground (ADR 0082).** The feed now covers 250 NM, so
+  the Route Map shows real airliners across South Australia (pale icons under your flights;
+  callsign, type and height when zoomed in). Live aircraft on the field get "LIVE · callsign"
+  tags and mini-map marks. Real aircraft taxiing, landing and taking off are drawn 1:1 on the
+  pavement, but always stand aside for the game: hidden while they would overlap one of the
+  game's aircraft or sit on a runway the game is using, with a 10 s hold against flicker.
+  Unity EditMode **836/837** (only the gate lead-in test awaiting a decision).
 
 - **Arrivals no longer freeze in mid-air on final.** An arrival waiting for the runway (a
   departure rolling, the 2–3 min wake gap after a jet, a storm hold) was pinned motionless

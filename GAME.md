@@ -1,7 +1,7 @@
 ## Where to resume — session handoff
 
 - **2026-09-21 Codex — Adelaide scheduled-passenger fleet coverage (branch
-  `feature/adelaide-aircraft-fleet`, ADR 0082).** Audited the seven existing genuine types
+  `feature/adelaide-aircraft-fleet`, ADR 0083).** Audited the seven existing genuine types
   against current Adelaide Airport operator/route releases. Added six missing recurring types:
   A320-200, 737-800, E190, A220-300, A330-900neo and 787-9. All are project-owned procedural
   kits with exact manufacturer envelopes, dedicated thumbnails, catalogue/performance/profile
@@ -9,9 +9,24 @@
   Emirates and Fiji equipment without adding extra traffic; A220/E190 remain available to live
   traffic/catalogue but do not silently increase airport congestion or alter the player ladder.
   - **Evidence:** geometry regression passes for all six; rendered thumbnails visually inspected;
-    headless Domain/Simulation **591/591**. Unity EditMode/build/Play look still required.
+    merged headless Domain/Simulation **594/594**. Unity EditMode/build/Play look still required.
   - **NEXT:** Unity EditMode, then a day/dusk/night follow-camera look at one narrowbody, the
-    A220/E190 pair and both widebodies. Confirm gate clearances before merging.
+    A220/E190 pair and both widebodies. Confirm gate clearances in the next visual QA pass.
+
+- **2026-09-21 Claude — live traffic on maps + real ground traffic (branch
+  `feature/live-maps-ground`, ADR 0082).** Bailey picked "Show live on maps" and "Real ground
+  traffic" after ADR 0081.
+  - Feed radius 250 NM (`LiveTraffic.FeedRadiusNauticalMiles`); 3D sky still 60 NM.
+  - Route Map `DrawLiveMapTraffic`, 3D `DrawLiveFieldTags`, mini-map hollow marks — none
+    selectable, all under the game's own aircraft.
+  - `LiveTraffic.TryFieldPose`: on-ground / below 500 ft within 6 km, 1:1, ground dead-reckoning
+    capped at 5 s, stopped aircraft keep heading. `LiveGroundClearance` (tested): hidden while
+    within wingspans + 10 m of a game aircraft or on a strip the game is using; 10 s hold.
+  - Known limit: parked airliners mostly have transponders off, so ground traffic is mostly
+    taxiing aircraft; RFDS PC-12s/GA not drawn (no model). Game AI airlines still fly their
+    authored day alongside the real ones — replacing that would make the feed a sim input
+    (new ADR).
+  - **Evidence:** Unity EditMode **836/837**. No build or Play run.
 
 - **2026-09-21 Claude — arrivals flew in instead of freezing on final (branch
   `feature/arrival-no-freeze`).** Bailey: "an airliner land on main runway and it just froze and

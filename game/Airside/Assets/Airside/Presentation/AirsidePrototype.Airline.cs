@@ -1378,6 +1378,8 @@ namespace Airside.Presentation
                     AirsideTheme.Cloud);
             }
 
+            DrawLiveMapTraffic(mapRect, small);
+
             // Aircraft icons on top of everything else on the map.
             for (var i = 0; i < _mapFlights.Count; i++)
             {
@@ -1577,6 +1579,47 @@ namespace Airside.Presentation
         }
 
         /// <summary>Top-down aircraft silhouette, nose up, drawn rotated to a heading.</summary>
+        /// <summary>
+        /// Real airliners around South Australia from the live feed (ADR 0082): pale, beneath
+        /// the game's own flights, callsign and height once zoomed in. Not selectable.
+        /// </summary>
+        private void DrawLiveMapTraffic(Rect mapRect, GUIStyle small)
+        {
+            if (!LiveTrafficHealthy)
+                return;
+            var since = Time.realtimeSinceStartup - _liveFetchedAt;
+            var size = Mathf.Lerp(12f, 20f, Mathf.InverseLerp(1f, 12f, _mapLens.Zoom));
+            var labelled = _mapLens.Zoom >= 4f;
+            var cloud = AirsideTheme.Cloud;
+            foreach (var aircraft in _liveAircraft)
+            {
+                if (LiveTraffic.ModelFor(aircraft.TypeCode) == null
+                    || aircraft.PositionAgeSeconds + since > LiveTraffic.StaleSeconds)
+                    continue;
+                LiveTraffic.PositionAfter(aircraft, aircraft.PositionAgeSeconds + since, out var lat, out var lon);
+                var point = Project(mapRect, lon, lat);
+                if (!mapRect.Contains(point))
+                    continue;
+                LiveTraffic.PositionAfter(aircraft, aircraft.PositionAgeSeconds + since + 60.0, out var aheadLat, out var aheadLon);
+                var ahead = Project(mapRect, aheadLon, aheadLat);
+                var delta = ahead - point;
+                var heading = delta.sqrMagnitude > 0.01f
+                    ? Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg + 90f
+                    : (float)aircraft.TrackDegrees;
+                DrawPlaneIcon(point, size + 2f, heading, new Color(0f, 0f, 0f, 0.5f));
+                DrawPlaneIcon(point, size, heading, new Color(cloud.r, cloud.g, cloud.b, 0.7f));
+                if (!labelled)
+                    continue;
+                var height = aircraft.OnGround ? "ground"
+                    : aircraft.AltitudeFeet.HasValue ? $"{aircraft.AltitudeFeet.Value:N0} ft" : string.Empty;
+                var previous = GUI.color;
+                GUI.color = new Color(1f, 1f, 1f, 0.75f);
+                GUI.Label(new Rect(point.x + size * 0.6f, point.y - 9f, 220f, 18f),
+                    $"LIVE {aircraft.Label} · {aircraft.TypeCode} · {height}", small);
+                GUI.color = previous;
+            }
+        }
+
         private static void DrawPlaneIcon(Vector2 centre, float size, float headingDegrees, Color colour)
         {
             var matrix = GUI.matrix;

@@ -11,7 +11,7 @@ namespace Airside.Simulation
     public readonly struct NextAircraftRequirement
     {
         internal NextAircraftRequirement(AircraftOffer offer, long fundsShort, int rotationsShort,
-            int reliabilityShort, bool needsTier, bool fleetFull, bool readyToBuy)
+            int reliabilityShort, bool needsTier, bool fleetFull, string baseRequirementLine, bool readyToBuy)
         {
             Offer = offer;
             FundsShort = fundsShort;
@@ -19,6 +19,7 @@ namespace Airside.Simulation
             ReliabilityShort = reliabilityShort;
             NeedsTier = needsTier;
             FleetFull = fleetFull;
+            BaseRequirementLine = baseRequirementLine ?? string.Empty;
             ReadyToBuy = readyToBuy;
         }
 
@@ -28,6 +29,7 @@ namespace Airside.Simulation
         public int ReliabilityShort { get; }
         public bool NeedsTier { get; }
         public bool FleetFull { get; }
+        public string BaseRequirementLine { get; }
         public bool ReadyToBuy { get; }
         public bool HasOffer => Offer != null;
     }
@@ -126,7 +128,7 @@ namespace Airside.Simulation
         public static NextAircraftRequirement NextAircraft(AirlineCareerState career, int ownedCount)
         {
             if (career == null || ownedCount >= AircraftAcquisition.MaxPlayerAircraft)
-                return new NextAircraftRequirement(null, 0, 0, 0, false, ownedCount >= AircraftAcquisition.MaxPlayerAircraft, false);
+                return new NextAircraftRequirement(null, 0, 0, 0, false, ownedCount >= AircraftAcquisition.MaxPlayerAircraft, string.Empty, false);
 
             AircraftOffer first = null;
             foreach (var offer in AircraftAcquisition.All)
@@ -138,13 +140,24 @@ namespace Airside.Simulation
                 var reliabilityShort = career.Reliability >= offer.RequiredReliability
                     ? 0 : offer.RequiredReliability - career.Reliability;
                 var needsTier = career.Tier < offer.RequiredTier;
-                var ready = fundsShort == 0 && rotationsShort == 0 && reliabilityShort == 0 && !needsTier;
+                string baseRequirement = string.Empty;
+                if (ownedCount >= career.Base.FleetCapacity)
+                    baseRequirement = $"{career.Base.Title} is full — expand your Adelaide base";
+                else if (!PlayerBase.Supports(career.BaseLevel, offer.Type))
+                {
+                    var needed = AircraftCatalogue.IsWidebody(offer.Type)
+                        ? PlayerBaseLevel.International : PlayerBaseLevel.JetGate;
+                    baseRequirement = $"Requires {PlayerBase.For(needed).Title}";
+                }
+                var ready = fundsShort == 0 && rotationsShort == 0 && reliabilityShort == 0
+                            && !needsTier && string.IsNullOrEmpty(baseRequirement);
                 if (!ready)
-                    return new NextAircraftRequirement(offer, fundsShort, rotationsShort, reliabilityShort, needsTier, false, false);
-                return new NextAircraftRequirement(offer, 0, 0, 0, false, false, true);
+                    return new NextAircraftRequirement(offer, fundsShort, rotationsShort, reliabilityShort,
+                        needsTier, false, baseRequirement, false);
+                return new NextAircraftRequirement(offer, 0, 0, 0, false, false, string.Empty, true);
             }
 
-            return new NextAircraftRequirement(first, 0, 0, 0, false, false, false);
+            return new NextAircraftRequirement(first, 0, 0, 0, false, false, string.Empty, false);
         }
 
         public static NextTierRequirement NextTier(AirlineCareerState career, IReadOnlyList<AircraftType> ownedTypes)

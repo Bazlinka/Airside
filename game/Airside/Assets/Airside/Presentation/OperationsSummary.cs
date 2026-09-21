@@ -118,9 +118,11 @@ namespace Airside.Presentation
                 if (hangar.HasOffer && !hangar.FleetFull)
                 {
                     return new CareerObjective(
-                        hangar.ReadyToBuy
-                            ? $"Buy {Article.A(hangar.Offer.Type.Name)} in Fleet"
-                            : $"Save for {Article.A(hangar.Offer.Type.Name)}",
+                        !string.IsNullOrEmpty(hangar.BaseRequirementLine)
+                            ? "Expand your Adelaide base"
+                            : hangar.ReadyToBuy
+                                ? $"Buy {Article.A(hangar.Offer.Type.Name)} in Fleet"
+                                : $"Save for {Article.A(hangar.Offer.Type.Name)}",
                         HangarProgressText(hangar, career),
                         HangarProgress01(hangar, career),
                         next,
@@ -322,7 +324,9 @@ namespace Airside.Presentation
 
                 var hangar = CareerProgress.NextAircraft(career, fleet.Count);
                 if (hangar.HasOffer && !hangar.ReadyToBuy && !hangar.FleetFull)
-                    return ($"Next: fly {priority.Registration} to earn toward the {hangar.Offer.Type.Name}",
+                    return (!string.IsNullOrEmpty(hangar.BaseRequirementLine)
+                            ? $"Next: expand your Adelaide base for the {hangar.Offer.Type.Name}"
+                            : $"Next: fly {priority.Registration} to earn toward the {hangar.Offer.Type.Name}",
                         StatusSeverity.Attention);
 
                 return ($"Next: plan a flight for {priority.Registration}", StatusSeverity.Normal);
@@ -350,7 +354,9 @@ namespace Airside.Presentation
                 return false;
             foreach (var offer in AircraftAcquisition.All)
             {
-                if (career.Tier < offer.RequiredTier
+                if (ownedCount >= career.Base.FleetCapacity
+                    || !PlayerBase.Supports(career.BaseLevel, offer.Type)
+                    || career.Tier < offer.RequiredTier
                     || career.Reliability < offer.RequiredReliability
                     || career.CompletedPlayerRotations < offer.RequiredRotations
                     || !career.CanAfford(offer.Price))
@@ -457,9 +463,8 @@ namespace Airside.Presentation
             if (chapter == null)
                 return (string.Empty, 0f);
 
-            var capability = CareerProgress.BaseCapabilityFor(career.Tier);
             var progress = chapter.Goals.Count <= 0 ? 0f : chapter.GoalsDone / (float)chapter.Goals.Count;
-            return ($"{chapter.GoalsDone} of {chapter.Goals.Count} chapter goals · {capability.Title}", progress);
+            return ($"{chapter.GoalsDone} of {chapter.Goals.Count} chapter goals · {career.Base.Title}", progress);
         }
 
         private static string HangarProgressText(NextAircraftRequirement hangar, AirlineCareerState career)

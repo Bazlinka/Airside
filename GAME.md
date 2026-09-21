@@ -1,10 +1,11 @@
 ## Where to resume — session handoff
 
 - **2026-09-21 Cursor — Operations board honesty, day orientation, taxi weave, no live
-  traffic (branch `cursor/ops-board-honesty-taxi-22df`, ADR 0070).** Bailey: planes show as
+  traffic (branch `cursor/ops-board-honesty-taxi-22df`, ADR 0071).** Bailey: planes show as
   due to depart but nothing is at the terminal; Operations is hard to read for "where am I in
   the day?"; taxi/pushback still feel unreal; arrival/departure times feel wrong — maybe pull
-  live Adelaide traffic.
+  live Adelaide traffic. Renumbered from a colliding ADR 0070 after main merged the competitive
+  Career HUD as 0070.
   - **Root cause of empty gates:** the board overlays a synthetic full-day timetable
     (`AdelaideDayPlan`) on the much smaller live fleet. Uncovered day-plan rows printed a stand
     (Gate 13 / Bay 50C) and "Scheduled", which reads as metal at that gate. **Fix:** uncovered
@@ -18,7 +19,7 @@
     centreline. Pushback polylines / OSM router unchanged — still need a Unity look.
   - **Schedule feel:** AI domestic turnarounds 10–24 min → 28–44 (turboprop) / 40–58
     (narrowbody) / 55–89 (widebody); day-plan dwell matches (35 / 50 / 75).
-  - **Live traffic:** ADR 0070 declines live FlightAware/ADS-B/AIP feeds (determinism, offline,
+  - **Live traffic:** ADR 0071 declines live FlightAware/ADS-B/AIP feeds (determinism, offline,
     licence). Approved path if Bailey wants "more real" later is a static authored snapshot,
     not a live socket.
   - **Evidence:** `scripts/test-domain.sh` **548/548** (2 new Operations tests). Operations HUD
@@ -27,6 +28,26 @@
   - **NEXT:** Unity Play look at taxi/pushback after the weave cut; optional authored
     representative YPAD timetable snapshot if Bailey wants times even closer to a real day;
     do not bolt on live feeds.
+
+- **2026-09-21 Codex — competitive Career HUD with real activity (branch
+  `codex/hud-competitive-pass`, ADR 0070).** Bailey asked for a clearer, real-game HUD with
+  competitive elements. Added an **Adelaide activity** standing based only on live completed
+  rotations already stored for every player/AI aircraft — no invented market share or hidden AI
+  score. Career always shows the player's rank; wider layouts show up to five leaders, keep the
+  player visible even when outside the leaders, and state the next carrier/rotations needed to
+  pass. Ties share a rank and a fresh zero-rotation field says the first rotation takes the lead.
+  - Calmed the shell: active navigation is now a blue underline rather than a full bright tab.
+  - Actual 1024×640 review exposed a pre-existing Career overlap caused by squeezing its two-column
+    content beside the objective. Workspaces now take full width below 680 usable points; the
+    compact Career render is clean and retains the rank summary while omitting the full table.
+  - Made `scripts/render-hud-mockups.py` portable across Linux and macOS fonts so visual QA no
+    longer fails before drawing.
+  - **Evidence:** domain **550/550**; Unity EditMode **784/786**, with the same two unrelated
+    pre-existing failures (`AirlineSaveTests.VersionFiveSave_MigratesSingaporePlaceholderTo787WithoutLosingRotation`
+    and `TerminalGateOperationsTests.Reservations_GateLeadInAndRunwayHeldBeforeMovementAndReleased`).
+    Re-rendered all six shared draw-list pages at 1440×900 and 1024×640; fresh Mac build completed.
+  - **NEXT:** realistic layered cloud silhouettes/shading, then ground macro/detail breakup. Keep
+    each as its own visually verified merge rather than mixing environment work into this HUD PR.
 
 - **2026-09-21 Codex — real YPAD building context + painted stand references (branch
   `codex/adelaide-art-integration`, ADR 0069).** Followed the actual packaged Mac build rather

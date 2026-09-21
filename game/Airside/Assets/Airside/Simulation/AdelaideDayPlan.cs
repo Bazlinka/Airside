@@ -95,7 +95,7 @@ namespace Airside.Simulation
                             break;
                         var arriveMinutes = Math.Min(banks[slot],
                             AirlineOperations.AiLastDepartureHour * 60 - 55);
-                        // Gate dwell matches the live AI turnaround bands (ADR 0070):
+                        // Gate dwell matches the live AI turnaround bands (ADR 0071):
                         // turboprop ~35, narrowbody ~50, widebody ~75 — not a flat 50 for all.
                         var dwell = TurnaroundMinutes(type);
                         var departMinutes = Math.Min(arriveMinutes + dwell,

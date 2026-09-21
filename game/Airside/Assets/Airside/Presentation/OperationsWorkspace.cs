@@ -440,7 +440,7 @@ namespace Airside.Presentation
                     plannedStatus = arrivals ? "Landed" : "Departed";
                 // Day-plan overlays never own a parked aircraft — claiming Gate 13 / Bay 50C
                 // here is what made "due to depart" look like empty pavement. Stand stays "—"
-                // until a live fleet row covers the slot (ADR 0070).
+                // until a live fleet row covers the slot (ADR 0071).
                 _rows.Add(new OperationsFlightRow(
                     planned.Registration.Length > 0 ? planned.Registration : planned.FlightNumber,
                     scheduled,

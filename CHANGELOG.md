@@ -1,14 +1,25 @@
 ## Unreleased
 
-- **Operations board honesty, day orientation, taxi weave, schedule feel (ADR 0070).**
+- **Operations board honesty, day orientation, taxi weave, schedule feel (ADR 0071).**
   Published day-plan rows no longer invent Gate/Bay occupancy when nothing is parked —
   STAND is "—" and STATUS is "Listed"/"Expected" until a live aircraft covers the slot.
   Day caption reads "N on field · M listed ahead"; NOW markers on the strip and board;
   cancelled morning slots no longer steal the NOW divider. Taxi presentation weave reduced
   (~0.55 m → ~0.18 m). AI turnarounds lengthened toward real Adelaide dwells. Live Adelaide
   traffic feeds declined (determinism/offline/licence) — static authored snapshot remains the
-  only approved path to a more timetable-shaped day. `scripts/test-domain.sh` 548/548;
-  Operations HUD re-rendered via hud-mockup.
+  only approved path to a more timetable-shaped day. Numbered 0071 after main claimed 0070 for
+  the competitive Career HUD. `scripts/test-domain.sh` 548/548; Operations HUD re-rendered via
+  hud-mockup.
+
+- **Competitive Career HUD and calmer navigation (ADR 0070).** Career now shows an honest
+  Adelaide activity rank derived from the completed rotations already recorded for every player
+  and AI aircraft. Wide layouts show up to five leaders, always retain the player row and name the
+  next carrier plus the rotations needed to pass it; narrow layouts retain the rank summary without
+  forcing in a cramped table. Selected navigation tabs now use a precise blue underline instead of
+  a large filled block. Workspaces below 680 points take the full width, fixing the pre-existing
+  Career overlap at 1024×640. The offline HUD renderer now finds native macOS fonts as well as its
+  Linux defaults. Domain 550/550; Unity 784/786 with the same two unrelated pre-existing failures;
+  1440×900 and 1024×640 draw-list renders and a fresh Mac build checked.
 
 - **Real Adelaide operational buildings and painted stand references (ADR 0069).** Added a
   reproducible ODbL snapshot and generated runtime geometry for 78 real YPAD operational

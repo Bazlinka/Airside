@@ -26,6 +26,7 @@ namespace Airside.Tests
             Assert.That(model.ReliabilityLine, Is.EqualTo($"{ops.CareerState.Reliability}% reliability"));
             Assert.That(model.TierLine, Is.EqualTo("Provisional tier"));
             Assert.That(model.FleetLine, Is.EqualTo($"1 of {AircraftAcquisition.MaxPlayerAircraft} aircraft"));
+            Assert.That(model.AdelaideRankLine, Is.EqualTo("#1 of 1 at Adelaide"));
             Assert.That(model.ContractHistory, Is.Empty);
             Assert.That(model.EmptyHistoryLine, Is.Not.Empty);
             Assert.That(model.CurrentLiveryHex, Is.EqualTo(ops.PlayerAirline.LiveryHex));
@@ -41,6 +42,76 @@ namespace Airside.Tests
             var model = new StatsWorkspaceModel();
             model.Rebuild(ops, clock.Now);
             Assert.That(model.CurrentLiveryHex, Is.EqualTo(target.Hex));
+        }
+
+        [Test]
+        public void Stats_AdelaideStandingUsesRealCompletedRotationsAndNamesTheNextRival()
+        {
+            var (clock, ops, player) = HudTestAirline.Create("Southern Cross");
+            player.CompletedTrips = 3;
+
+            var rex = Airline.Rex();
+            ops.AddAirline(rex);
+            var rexAircraft = ops.AddAircraft(rex, "VH-REX", AircraftType.Saab340,
+                AirlineOperations.AdelaideRegionalBays[1]);
+            rexAircraft.CompletedTrips = 6;
+
+            var qantasLink = Airline.QantasLink();
+            ops.AddAirline(qantasLink);
+            var qantasAircraft = ops.AddAircraft(qantasLink, "VH-QLK", AircraftType.Dash8Q400,
+                AirlineOperations.AdelaideRegionalBays[2]);
+            qantasAircraft.CompletedTrips = 2;
+
+            var model = new StatsWorkspaceModel();
+            model.Rebuild(ops, clock.Now);
+
+            Assert.That(model.AdelaideStandings.Select(row => row.AirlineName),
+                Is.EqualTo(new[] { "Rex", "Southern Cross", "QantasLink" }));
+            Assert.That(model.AdelaideStandings.Select(row => row.CompletedRotations),
+                Is.EqualTo(new[] { 6, 3, 2 }));
+            Assert.That(model.AdelaideRankLine, Is.EqualTo("#2 of 3 at Adelaide"));
+            Assert.That(model.CompetitiveTargetLine, Is.EqualTo("Pass Rex: 4 more rotations."));
+        }
+
+        [Test]
+        public void Stats_TiedFreshAirlinesNeedARealRotationToTakeTheLead()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            ops.AddAirline(Airline.Rex());
+
+            var model = new StatsWorkspaceModel();
+            model.Rebuild(ops, clock.Now);
+
+            Assert.That(model.AdelaideRankLine, Is.EqualTo("Tied #1 of 2 at Adelaide"));
+            Assert.That(model.CompetitiveTargetLine, Does.Contain("outright lead"));
+        }
+
+        [Test]
+        public void Stats_CompactStandingAlwaysKeepsThePlayerVisible()
+        {
+            var (clock, ops, player) = HudTestAirline.Create();
+            player.CompletedTrips = 0;
+            foreach (var (airline, registration, trips, bay) in new[]
+                     {
+                         (Airline.Rex(), "VH-RXA", 8, 1),
+                         (Airline.QantasLink(), "VH-QXA", 7, 2),
+                         (Airline.VirginAustralia(), "VH-VXA", 6, 3),
+                         (Airline.Jetstar(), "VH-JXA", 5, 4)
+                     })
+            {
+                ops.AddAirline(airline);
+                var aircraft = ops.AddAircraft(airline, registration, AircraftType.Saab340,
+                    AirlineOperations.AdelaideRegionalBays[bay]);
+                aircraft.CompletedTrips = trips;
+            }
+
+            var model = new StatsWorkspaceModel();
+            model.Rebuild(ops, clock.Now);
+            var compact = model.VisibleStandings(3);
+
+            Assert.That(compact, Has.Count.EqualTo(3));
+            Assert.That(compact.Count(row => row.IsPlayer), Is.EqualTo(1));
+            Assert.That(compact[0].AirlineName, Is.EqualTo("Rex"));
         }
 
         [Test]
@@ -136,6 +207,11 @@ namespace Airside.Tests
                 var lastSwatch = layout.LiverySwatch(StatsWorkspaceModel.LiveryPalette.Length - 1);
                 Assert.That(lastSwatch.Right, Is.LessThanOrEqualTo(layout.LeftColumn.Right + 0.01f), label);
                 Assert.That(lastSwatch.Bottom, Is.LessThanOrEqualTo(layout.Footer.Y + 0.01f), label);
+
+                var visibleStandings = layout.VisibleStandingRows(12);
+                if (visibleStandings > 0)
+                    Assert.That(layout.CompetitionTarget(visibleStandings).Bottom,
+                        Is.LessThanOrEqualTo(layout.LeftColumn.Bottom + 0.01f), label);
 
                 // The rename field + button sit in the header, right-aligned before CLOSE —
                 // must clear the title on the left and CLOSE on the right at every width.

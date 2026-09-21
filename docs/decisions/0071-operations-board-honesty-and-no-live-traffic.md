@@ -1,4 +1,4 @@
-# 0070 — Operations board honesty, schedule feel, no live Adelaide traffic feed
+# 0071 — Operations board honesty, schedule feel, no live Adelaide traffic feed
 
 Date: 21 September 2026. Requested by Bailey after play: (1) flights show as due to
 depart but nothing is at the terminal; (2) Operations is hard to read for "where am

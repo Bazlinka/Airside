@@ -33,6 +33,27 @@ namespace Airside.Presentation
     }
 
     /// <summary>
+    /// One honest competitive comparison: completed rotations by an airline in this live
+    /// Adelaide save. This is activity, not invented passenger share or a fake AI rating.
+    /// </summary>
+    public readonly struct AirlineStandingRow
+    {
+        public AirlineStandingRow(int rank, string airlineName, int completedRotations, bool isPlayer)
+        {
+            Rank = rank;
+            AirlineName = airlineName ?? string.Empty;
+            CompletedRotations = completedRotations;
+            IsPlayer = isPlayer;
+        }
+
+        public int Rank { get; }
+        public string AirlineName { get; }
+        public int CompletedRotations { get; }
+        public bool IsPlayer { get; }
+        public string RotationsText => CompletedRotations == 1 ? "1 rotation" : $"{CompletedRotations} rotations";
+    }
+
+    /// <summary>
     /// The Stats/career workspace (ADR 0066): a real answer to "how am I actually doing" —
     /// funds, lifetime revenue, reliability, tier and exactly what the next one still needs,
     /// fleet size, milestones and recent contract history. Everything here already exists
@@ -43,6 +64,7 @@ namespace Airside.Presentation
     {
         private readonly List<MilestoneRow> _milestones = new();
         private readonly List<ContractHistoryRow> _history = new();
+        private readonly List<AirlineStandingRow> _standings = new();
 
         /// <summary>
         /// The livery choices offered at airline creation (ADR 0045), reused here so a player
@@ -84,6 +106,9 @@ namespace Airside.Presentation
         public string ContractsFulfilledLine { get; private set; } = string.Empty;
 
         public string MilestonesReachedLine { get; private set; } = string.Empty;
+        public IReadOnlyList<AirlineStandingRow> AdelaideStandings => _standings;
+        public string AdelaideRankLine { get; private set; } = string.Empty;
+        public string CompetitiveTargetLine { get; private set; } = string.Empty;
 
         public const int MaxHistoryShown = 5;
 
@@ -91,6 +116,7 @@ namespace Airside.Presentation
         {
             _milestones.Clear();
             _history.Clear();
+            _standings.Clear();
             AirlineName = string.Empty;
             CurrentLiveryHex = string.Empty;
             FundsLine = string.Empty;
@@ -104,6 +130,8 @@ namespace Airside.Presentation
             NextTierProgress01 = 0f;
             ContractsFulfilledLine = string.Empty;
             MilestonesReachedLine = string.Empty;
+            AdelaideRankLine = string.Empty;
+            CompetitiveTargetLine = string.Empty;
             if (operations?.PlayerAirline == null)
                 return;
 
@@ -123,6 +151,7 @@ namespace Airside.Presentation
             FleetLine = $"{fleetSize} of {AircraftAcquisition.MaxPlayerAircraft} aircraft";
 
             FillNextTier(career, ownedTypes);
+            FillAdelaideStandings(operations);
 
             var milestones = CareerMilestones.Reached(career, fleetSize, ownedTypes);
             foreach (var milestone in milestones)
@@ -137,6 +166,72 @@ namespace Airside.Presentation
             // Lifetime, not the capped list above — the real answer once a long career has
             // fulfilled more contracts than ContractHistory keeps.
             ContractsFulfilledLine = $"{career.CompletedContractIds.Count} contracts fulfilled all-time";
+        }
+
+        /// <summary>
+        /// Returns the leaders plus the player. A small viewport never hides the player's own
+        /// row merely because several established carriers currently sit above it.
+        /// </summary>
+        public IReadOnlyList<AirlineStandingRow> VisibleStandings(int maxRows)
+        {
+            if (maxRows <= 0 || _standings.Count == 0)
+                return Array.Empty<AirlineStandingRow>();
+            if (_standings.Count <= maxRows)
+                return _standings;
+
+            var playerIndex = _standings.FindIndex(row => row.IsPlayer);
+            if (playerIndex < maxRows)
+                return _standings.Take(maxRows).ToList();
+
+            var visible = _standings.Take(Math.Max(0, maxRows - 1)).ToList();
+            visible.Add(_standings[playerIndex]);
+            return visible;
+        }
+
+        private void FillAdelaideStandings(AirlineOperations operations)
+        {
+            var totals = operations.Airlines
+                .Select(airline => new
+                {
+                    Airline = airline,
+                    Rotations = operations.FleetOf(airline).Sum(aircraft => aircraft.CompletedTrips)
+                })
+                .OrderByDescending(row => row.Rotations)
+                .ThenByDescending(row => row.Airline.IsPlayer)
+                .ThenBy(row => row.Airline.Name, StringComparer.Ordinal)
+                .ToList();
+
+            var previousRotations = int.MinValue;
+            var rank = 0;
+            for (var i = 0; i < totals.Count; i++)
+            {
+                if (totals[i].Rotations != previousRotations)
+                    rank = i + 1;
+                previousRotations = totals[i].Rotations;
+                _standings.Add(new AirlineStandingRow(rank, totals[i].Airline.Name,
+                    totals[i].Rotations, totals[i].Airline.IsPlayer));
+            }
+
+            var playerIndex = _standings.FindIndex(row => row.IsPlayer);
+            if (playerIndex < 0)
+                return;
+            var player = _standings[playerIndex];
+            var tied = _standings.Count(row => row.CompletedRotations == player.CompletedRotations) > 1;
+            AdelaideRankLine = tied
+                ? $"Tied #{player.Rank} of {_standings.Count} at Adelaide"
+                : $"#{player.Rank} of {_standings.Count} at Adelaide";
+
+            if (player.Rank == 1)
+            {
+                CompetitiveTargetLine = tied
+                    ? "Complete the next rotation to take the outright lead."
+                    : "You lead Adelaide activity — keep the gap.";
+                return;
+            }
+
+            var next = _standings.Take(playerIndex).Last(row => row.CompletedRotations > player.CompletedRotations);
+            var needed = next.CompletedRotations - player.CompletedRotations + 1;
+            CompetitiveTargetLine = $"Pass {next.AirlineName}: {needed} more rotation" + (needed == 1 ? "." : "s.");
         }
 
         private void FillNextTier(AirlineCareerState career, IReadOnlyList<AircraftType> ownedTypes)
@@ -229,8 +324,8 @@ namespace Airside.Presentation
         public HudBox StatRow(int index) =>
             new(LeftColumn.X, LeftColumn.Y + CaptionHeight + 8f + index * StatRowHeight, LeftColumn.Width, StatRowHeight);
 
-        /// <summary>Where the "next tier" block starts, below the five overview stat rows.</summary>
-        public float NextTierY => LeftColumn.Y + CaptionHeight + 8f + 5 * StatRowHeight + 16f;
+        /// <summary>Where the "next tier" block starts, below the six overview stat rows.</summary>
+        public float NextTierY => LeftColumn.Y + CaptionHeight + 8f + 6 * StatRowHeight + 16f;
 
         public HudBox NextTierCaption => new(LeftColumn.X, NextTierY, LeftColumn.Width, CaptionHeight);
         public HudBox NextTierTitleBox => new(LeftColumn.X, NextTierY + CaptionHeight + 6f, LeftColumn.Width, 20f);
@@ -251,6 +346,26 @@ namespace Airside.Presentation
         public HudBox LiverySwatch(int index) =>
             new(LeftColumn.X + index * (SwatchSize + SwatchGap), ProfileY + CaptionHeight + 8f,
                 SwatchSize, SwatchSize);
+
+        public float CompetitionY => ProfileY + CaptionHeight + 8f + SwatchSize + 18f;
+        public HudBox CompetitionCaption => new(LeftColumn.X, CompetitionY, LeftColumn.Width, CaptionHeight);
+        public HudBox CompetitionSummary =>
+            new(LeftColumn.X, CompetitionY + CaptionHeight + 2f, LeftColumn.Width, SummaryRowHeight);
+
+        public const float StandingRowHeight = 22f;
+        private float StandingListY => CompetitionY + CaptionHeight + SummaryRowHeight + 8f;
+        public HudBox StandingRow(int index) =>
+            new(LeftColumn.X, StandingListY + index * StandingRowHeight, LeftColumn.Width, StandingRowHeight);
+
+        public HudBox CompetitionTarget(int shownRows) =>
+            new(LeftColumn.X, StandingListY + shownRows * StandingRowHeight + 6f, LeftColumn.Width, 34f);
+
+        public int VisibleStandingRows(int totalRows)
+        {
+            var available = LeftColumn.Bottom - StandingListY - 6f - 34f;
+            var fit = available <= 0f ? 0 : (int)(available / StandingRowHeight);
+            return Math.Max(0, Math.Min(Math.Min(5, totalRows), fit));
+        }
 
         public HudBox MilestonesCaption => RightColumn.WithHeight(CaptionHeight);
 
@@ -368,7 +483,8 @@ namespace Airside.Presentation
             into.Caption(layout.OverviewCaption, "OVERVIEW");
             var stats = new[]
             {
-                model.FundsLine, model.LifetimeRevenueLine, model.ReliabilityLine, model.TierLine, model.FleetLine
+                model.FundsLine, model.LifetimeRevenueLine, model.ReliabilityLine, model.TierLine,
+                model.FleetLine, model.AdelaideRankLine
             };
             for (var i = 0; i < stats.Length; i++)
                 into.Text(layout.StatRow(i).Inset(0f, 2f, 0f, 0f), stats[i], 14f);
@@ -385,6 +501,7 @@ namespace Airside.Presentation
                 HudTextStyle.Wrap);
 
             PaintProfile(into, model, layout);
+            PaintCompetition(into, model, layout);
         }
 
         /// <summary>
@@ -406,6 +523,35 @@ namespace Airside.Presentation
                 into.Outline(swatch, current ? HudTone.Default : HudTone.Muted, current ? 1f : 0.4f);
                 into.Hotspot(swatch, HudAction.Livery(hex));
             }
+        }
+
+        private static void PaintCompetition(HudDrawList into, StatsWorkspaceModel model,
+            StatsWorkspaceLayout layout)
+        {
+            var shown = layout.VisibleStandingRows(model.AdelaideStandings.Count);
+            if (shown <= 0)
+                return;
+
+            into.Caption(layout.CompetitionCaption, "ADELAIDE ACTIVITY");
+            into.Text(layout.CompetitionSummary, model.AdelaideRankLine, 12f, HudTone.Muted);
+            var rows = model.VisibleStandings(shown);
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var standing = rows[i];
+                var row = layout.StandingRow(i);
+                var tone = standing.IsPlayer ? HudTone.Caution : HudTone.Default;
+                into.Text(row.SliceLeft(28f), $"{standing.Rank}.", 12f, tone,
+                    standing.IsPlayer ? HudTextStyle.Bold : HudTextStyle.Regular);
+                into.Text(new HudBox(row.X + 28f, row.Y, row.Width - 130f, row.Height),
+                    standing.IsPlayer ? $"YOU · {standing.AirlineName}" : standing.AirlineName,
+                    12f, tone, standing.IsPlayer ? HudTextStyle.Bold : HudTextStyle.Regular);
+                into.Text(new HudBox(row.Right - 100f, row.Y, 100f, row.Height), standing.RotationsText,
+                    11f, standing.IsPlayer ? HudTone.Caution : HudTone.Muted,
+                    HudTextStyle.Regular, HudAlign.Right);
+            }
+
+            into.Text(layout.CompetitionTarget(rows.Count), model.CompetitiveTargetLine, 11f,
+                HudTone.Caution, HudTextStyle.Bold | HudTextStyle.Wrap);
         }
 
         private static void PaintMilestonesAndHistory(HudDrawList into, StatsWorkspaceModel model,

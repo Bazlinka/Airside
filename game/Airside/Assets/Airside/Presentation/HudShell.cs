@@ -84,7 +84,10 @@ namespace Airside.Presentation
         /// Below this, a workspace beside the objective card would be unusable, so it takes
         /// the full width instead and the card gives way.
         /// </summary>
-        public const float MinimumWorkspaceWidth = 560f;
+        // Below this, two-column pages such as Career become a cramped stacked surface and
+        // their sections compete vertically with the persistent objective. Give the workspace
+        // the whole width instead; the objective is still one click away on the overview.
+        public const float MinimumWorkspaceWidth = 680f;
 
         /// <summary>Gap between the top bar and whatever sits under it.</summary>
         public const float ContentGap = 10f;
@@ -275,7 +278,7 @@ namespace Airside.Presentation
                 return;
 
             into.Fill(bar, HudTone.Default, 1f, AirsidePalette.RunwayInkHex);
-            into.Hairline(new HudBox(bar.X, bar.Bottom - 1f, bar.Width, 1f), HudTone.Accent, 0.5f);
+            into.Hairline(new HudBox(bar.X, bar.Bottom - 1f, bar.Width, 1f), HudTone.Muted, 0.18f);
 
             var mark = HudShell.MarkBox(bar);
             into.Fill(new HudBox(mark.X, mark.Y + 4f, 5f, mark.Height - 8f), HudTone.Default, 1f, liveryHex);
@@ -309,8 +312,9 @@ namespace Airside.Presentation
             {
                 if (tab.Selected)
                 {
-                    into.Fill(tab.Box, HudTone.Accent, 0.9f);
-                    into.Fill(tab.Underline, HudTone.Default, 0.9f, AirsidePalette.OpenSkyHex);
+                    // Selection is a precise navigation cue, not another large coloured panel.
+                    // The previous full-tab fill competed with the objective and warnings.
+                    into.Fill(tab.Underline, HudTone.Default, 1f, AirsidePalette.OpenSkyHex);
                 }
 
                 into.Text(tab.Box.Inset(0f, (tab.Box.Height - 16f) * 0.5f, 0f, 0f).WithHeight(16f),

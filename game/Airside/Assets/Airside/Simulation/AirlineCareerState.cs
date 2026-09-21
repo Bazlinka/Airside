@@ -120,6 +120,18 @@ namespace Airside.Simulation
         internal bool TryChargePurchase(long cost) => TryChargeDispatch(cost);
 
         /// <summary>
+        /// Pays a one-off reward (a campaign chapter) at most once, ever: the key joins the
+        /// settlement keys saves already carry, so a reload cannot pay it twice.
+        /// </summary>
+        internal bool TryAward(string key, long amount)
+        {
+            if (string.IsNullOrEmpty(key) || !_processedSettlements.Add(key))
+                return false;
+            Funds += Math.Max(0, amount);
+            return true;
+        }
+
+        /// <summary>
         /// Applies a settlement exactly once: a repeat <paramref name="id"/> is refused rather
         /// than paid twice. Every player rotation pays <paramref name="baseRevenue"/>, scaled by
         /// <see cref="FlightEconomics.ReliabilityMultiplier"/> — a matching active contract's own

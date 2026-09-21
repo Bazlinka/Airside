@@ -164,7 +164,9 @@ namespace Airside.Tests
                 var pay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(kingscote));
                 var expectedFunds = AirlineCareerState.StartingFunds
                     + (long)rotation * (pay - cost + definition.PaymentPerRotation)
-                    + (fulfilled ? definition.CompletionReward : 0);
+                    + (fulfilled ? definition.CompletionReward : 0)
+                    // Fulfilling Kingscote after 3+ rotations also completes campaign chapter 1 (ADR 0083).
+                    + (fulfilled ? Campaign.Evaluate(ops.CareerState, ops.PlayerOwnedTypes())[0].Reward : 0);
                 Assert.That(ops.CareerState.Funds, Is.EqualTo(expectedFunds), $"funds after rotation {rotation}");
                 Assert.That(ops.CareerState.Reliability, Is.EqualTo(Math.Min(100,
                     AirlineCareerState.StartingReliability + rotation * definition.ReliabilityGainPerRotation)));

@@ -433,9 +433,37 @@ namespace Airside.Presentation
 
             var objective = OperationsSummary.Objective(PlayerFleet(), _clock.Now, _operations.Clock,
                 _operations.CareerState, _operations.MarketOffers());
+            var chapters = _operations.CampaignChapters();
+            AnnounceCampaignProgress(chapters);
             _shellDrawList.Clear();
-            HudShellPainter.PaintObjective(_shellDrawList, Box(rect), objective);
+            HudShellPainter.PaintObjective(_shellDrawList, Box(rect), objective, Campaign.Current(chapters)?.Caption);
             _hudPainter.Draw(_shellDrawList);
+        }
+
+        private int _campaignChaptersAnnounced = -1;
+
+        /// <summary>A toast the moment a chapter's reward lands; quiet about chapters done before this session.</summary>
+        private void AnnounceCampaignProgress(IReadOnlyList<CampaignChapter> chapters)
+        {
+            var rewarded = 0;
+            CampaignChapter latest = null;
+            foreach (var chapter in chapters)
+            {
+                if (!chapter.Rewarded)
+                    break;
+                rewarded++;
+                latest = chapter;
+            }
+
+            if (_campaignChaptersAnnounced >= 0 && rewarded > _campaignChaptersAnnounced && latest != null)
+            {
+                var next = Campaign.Current(chapters);
+                var nextLine = next != null && !next.Complete ? $" Next: Chapter {next.Number}, {next.Title}." : " Campaign complete!";
+                ShowToast($"Chapter {latest.Number} complete: {latest.Title}. +${latest.Reward:N0}.{nextLine}");
+                PlayUiClick();
+            }
+
+            _campaignChaptersAnnounced = rewarded;
         }
 
         /// <summary>True when this window is wide enough to keep the objective card beside a workspace.</summary>

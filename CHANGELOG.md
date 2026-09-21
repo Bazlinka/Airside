@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **Arrivals no longer freeze in mid-air on final.** An arrival waiting for the runway (a
+  departure rolling, the 2–3 min wake gap after a jet, a storm hold) was pinned motionless
+  about 750 m out and 40 m up until cleared — Bailey saw one "land, freeze and sit there, then
+  land 30 seconds later". Every arrival also popped into existence at that point. Now the
+  tower's expected clearance (`AirlineOperations.ExpectedLandingClearance`, replaying its own
+  queue, departure-priority and storm rules) places the arrival back along an extended final so
+  it flies in at approach speed and reaches the hold point as it is cleared; inbounds appear up
+  to 18 km out. Estimate matched the tower exactly for 43/43 arrivals over two simulated days.
+  Unity EditMode **833/834** (only the gate lead-in test awaiting a decision).
+
 - **Live Adelaide traffic in the sky (ADR 0081).** Real airliners within 60 NM of YPAD, from
   the free adsb.lol feed (ODbL, no key), drawn in 3D: Qantas, Virgin, Rex, QantasLink and
   internationals at their real positions, heights and tracks, eased between 10 s updates. Sky

@@ -1758,6 +1758,118 @@ namespace Airside.Simulation
             return true;
         }
 
+        /// <summary>
+        /// When the tower is expected to clear <paramref name="aircraft"/> off short final,
+        /// for an arrival still inbound or holding. Replays the tower's own rule for its strip:
+        /// the strip's free time, arrivals ahead in wait order, a departure that has held past
+        /// <see cref="DepartureMaxHoldSeconds"/> going first, and no clearances in a storm
+        /// (ADR 0058). Presentation flies the arrival in down an extended final to reach the
+        /// hold point just as it is cleared, instead of parking it motionless in mid-air there
+        /// for the whole wait. Null for anything else. An estimate: traffic that has not yet
+        /// reached the queue can still change it.
+        /// </summary>
+        public SimulationTime? ExpectedLandingClearance(FleetAircraft aircraft, out RunwayDirection runway)
+        {
+            runway = RunwayDirection.Runway05;
+            if (aircraft == null)
+                return null;
+            SimulationTime joins;
+            if (aircraft.State == FleetState.HoldingForLanding)
+            {
+                runway = aircraft.AssignedRunway;
+                joins = aircraft.StateStartedAt;
+            }
+            else if (aircraft.State == FleetState.Inbound && aircraft.StateEndsAt.HasValue)
+            {
+                // Not assigned yet: the end the tower would give it now.
+                runway = RunwayFor(aircraft);
+                joins = aircraft.StateEndsAt.Value;
+            }
+            else
+            {
+                return null;
+            }
+
+            var mainStrip = RunwayWeather.IsMainRunway(runway);
+            var arrivals = new List<FleetAircraft>();
+            var departures = new List<FleetAircraft>();
+            foreach (var other in _fleet)
+            {
+                if (ReferenceEquals(other, aircraft) || RunwayWeather.IsMainRunway(other.AssignedRunway) != mainStrip)
+                    continue;
+                if (other.State == FleetState.HoldingForLanding && Before(other, other.StateStartedAt, aircraft, joins))
+                    arrivals.Add(other);
+                else if (other.State == FleetState.HoldingShort)
+                    departures.Add(other);
+            }
+
+            arrivals.Sort((a, b) => Before(a, a.StateStartedAt, b, b.StateStartedAt) ? -1 : 1);
+            departures.Sort((a, b) => a.StateStartedAt.CompareTo(b.StateStartedAt));
+
+            var at = mainStrip ? _mainRunwayFreeAt : _crossRunwayFreeAt;
+            if (at.CompareTo(_clock.Now) < 0)
+                at = _clock.Now;
+            // Until it joins the queue nothing is waiting to land, so holders depart freely.
+            while (aircraft.State == FleetState.Inbound && departures.Count > 0 && at.CompareTo(joins) < 0)
+            {
+                at = AfterStorms(at);
+                if (at.CompareTo(joins) >= 0)
+                    break;
+                at = at.Advance(DepartureRunwaySeconds(departures[0]));
+                departures.RemoveAt(0);
+            }
+
+            if (at.CompareTo(joins) < 0 && aircraft.State == FleetState.Inbound)
+                at = joins;
+
+            for (var guard = 0; guard < 256; guard++)
+            {
+                at = AfterStorms(at);
+                var nextArrivalJoined = arrivals.Count > 0 ? arrivals[0].StateStartedAt : joins;
+                if (departures.Count > 0
+                    && departures[0].StateStartedAt.CompareTo(nextArrivalJoined) < 0
+                    && at.ElapsedSeconds - departures[0].StateStartedAt.ElapsedSeconds >= DepartureMaxHoldSeconds)
+                {
+                    at = at.Advance(DepartureRunwaySeconds(departures[0]));
+                    departures.RemoveAt(0);
+                    continue;
+                }
+
+                if (arrivals.Count == 0)
+                    return at;
+
+                var ahead = arrivals[0];
+                arrivals.RemoveAt(0);
+                var landing = AircraftPerformance.For(ahead.Type);
+                at = at.Advance(ApproachHold.RemainingFinalSeconds(landing.ApproachSeconds, ahead.Registration)
+                                + landing.LandingSeconds
+                                + AdelaideGround.ClearOfRunwaySeconds(ahead.Type, ahead.AssignedRunway)
+                                + WakeSeparationSeconds(ahead.Type));
+            }
+
+            return at;
+        }
+
+        /// <summary>How long a departure keeps its strip from the tower: lineup, roll, wake.</summary>
+        private static long DepartureRunwaySeconds(FleetAircraft departure) =>
+            AdelaideGround.LineupFor(departure.AssignedRunway).WholeSeconds
+            + (long)Math.Round(AircraftPerformance.For(departure.Type).TakeoffRollExactSeconds)
+            + WakeSeparationSeconds(departure.Type);
+
+        private static bool Before(FleetAircraft a, SimulationTime aJoined, FleetAircraft b, SimulationTime bJoined)
+        {
+            var order = aJoined.CompareTo(bJoined);
+            return order < 0 || order == 0 && string.CompareOrdinal(a.Registration, b.Registration) < 0;
+        }
+
+        /// <summary>The first moment at or after <paramref name="at"/> that is not in a storm hold.</summary>
+        private static SimulationTime AfterStorms(SimulationTime at)
+        {
+            for (var i = 0; i < 48 && Weather.At(at) == WeatherKind.Storm; i++)
+                at = new SimulationTime((at.ElapsedSeconds / Weather.BlockSeconds + 1) * Weather.BlockSeconds);
+            return at;
+        }
+
         private void SetStripFreeAt(bool mainStrip, SimulationTime at)
         {
             if (mainStrip)

@@ -12,7 +12,9 @@ namespace Airside.Presentation
 
         private void UpdateSkyTraffic()
         {
-            if (!FleetMode || _operations == null)
+            // Real traffic replaces the authored sky while the live feed is answering;
+            // drawing both would double every Qantas and Virgin arrival.
+            if (!FleetMode || _operations == null || LiveTrafficHealthy)
             {
                 HideSkyTraffic();
                 return;
@@ -76,8 +78,10 @@ namespace Airside.Presentation
 
             view.gameObject.SetActive(true);
             view.position = new Vector3((float)x, AirsideFlightPath.GroundY + (float)y, (float)z);
-            var pitch = flight.To.Code == "ADL" ? -5f
-                : flight.From.Code == "ADL" ? 7f
+            // Negative X is nose up, the same as the fleet's ClimbPitchDegrees. These were
+            // the wrong way round: departures climbed away nose-down, arrivals sank nose-up.
+            var pitch = flight.To.Code == "ADL" ? -2.5f
+                : flight.From.Code == "ADL" ? AirsideFlightPath.ClimbPitchDegrees
                 : AirsideFlightPath.ClimbPitchDegrees * 0.35f;
             view.rotation = Quaternion.Euler(0f, SkyTraffic.DisplayUnityYaw(flight), 0f)
                             * Quaternion.Euler(pitch, 0f, 0f);

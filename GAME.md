@@ -1,5 +1,27 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Claude — live Adelaide sky traffic + two sky bugs (branch
+  `feature/live-adelaide-traffic`, ADR 0081).** Bailey: "continue down the bug fix path. See if
+  we can get live traffic connected to the game for adelaide airport? Ideally free."
+  - **Feed:** adsb.lol `/v2/point/-34.945/138.531/60`, free, no key, ODbL 1.0 (same as OSM).
+    adsb.fi / airplanes.live / OpenSky rejected on non-commercial licences. Verified from inside
+    Unity's Mono `HttpClient` on this Mac: 18 aircraft parsed, 2 drawable at that moment.
+  - **Scope (overrides ADR 0071 only this far):** presentation-only `AirsidePrototype.LiveTraffic`
+    polls every 10 s on a background task (no UnityWebRequest module in the manifest), backs
+    off to 2 min offline. `Simulation/LiveTraffic` (UnityEngine-free, tested) parses tolerantly,
+    maps ICAO types to catalogue models (GA/helis skipped), dead-reckons, and projects 1:1 inside
+    5 km then squeezes to the 7.5 km draw radius. Ground / below 500 ft within 6 km not drawn.
+    Healthy feed hides the authored sky; unhealthy (60 s) brings it back. Options row
+    "Live Adelaide traffic · On · N in view / offline", default on. Credit line extended
+    (`HudLayout.CreditWidth` 470).
+  - **Bugs found on the way:** `SkyTraffic.ToRunwayFrame` used the right of 05 as +z while
+    layout/coast/satellite use the left — every authored overflight was mirrored. Authored sky
+    pitch signs were inverted (negative X is nose up). Both fixed and tested.
+  - **Evidence:** Unity EditMode **831/832**; only the gate lead-in test awaiting a decision. No build or Play run.
+  - **NEXT:** Play look: a real arrival should line up with the drawn 05/23 or 12/30 final;
+    then decide whether ground traffic is wanted (needs its own ADR — it would collide with the
+    sim's stands and runway).
+
 - **2026-09-21 Claude — save migration test green (branch `feature/fix-save-migration`).**
   Bailey: "fix the save test". Not a save bug: the test compared the save record's `""` for
   "no stand / nothing booked" with the restored aircraft's null. It only held while seed 73

@@ -1,5 +1,17 @@
 ## Unreleased
 
+- **Live Adelaide traffic in the sky (ADR 0081).** Real airliners within 60 NM of YPAD, from
+  the free adsb.lol feed (ODbL, no key), drawn in 3D: Qantas, Virgin, Rex, QantasLink and
+  internationals at their real positions, heights and tracks, eased between 10 s updates. Sky
+  only and presentation only: never a simulation input, never saved; aircraft on the ground or
+  low over the field are left out so they never cross your fleet. Offline or switched off
+  (Options → Live Adelaide traffic) the authored sky traffic returns. Credit line adds
+  "Live traffic: adsb.lol (ODbL)" while shown.
+- **Authored sky traffic was mirrored across the runway** (Melbourne traffic over the gulf) and
+  **pitched the wrong way** (departures nose-down). Both fixed; new `YpadFrame` shares the
+  layout generator's exact frame.
+- Unity EditMode **831/832**; only the gate lead-in test awaiting a decision.
+
 - **Save migration test fixed (test only, no save format change).**
   `VersionFiveSave_MigratesSingaporePlaceholderTo787WithoutLosingRotation` compared the save
   record ("" = no stand) to the restored live aircraft (null = no stand); it only passed while

@@ -285,8 +285,11 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// World +X is runway 05, not east. Convert true east/north so overflights
-        /// sit over the gulf and the hills the same way the field is drawn.
+        /// World +X is runway 05, not east, and +Z is the left of 05 (the terminal side)
+        /// — the frame the layout, coast and satellite ground are generated in. Convert
+        /// true east/north so overflights sit over the gulf and the hills the same way the
+        /// field is drawn. This used to take +Z as the right of 05, which mirrored every
+        /// overflight across the runway: Melbourne traffic appeared over the gulf.
         /// </summary>
         public static void ToRunwayFrame(double eastMetres, double northMetres, out double along, out double across)
         {
@@ -294,7 +297,7 @@ namespace Airside.Simulation
             var sin = Math.Sin(heading);
             var cos = Math.Cos(heading);
             along = eastMetres * sin + northMetres * cos;
-            across = eastMetres * cos - northMetres * sin;
+            across = northMetres * sin - eastMetres * cos;
         }
 
         /// <summary>

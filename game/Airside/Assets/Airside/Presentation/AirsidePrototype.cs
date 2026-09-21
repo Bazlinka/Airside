@@ -542,6 +542,7 @@ namespace Airside.Presentation
             ApplyDayCycle();
             AdvancePresentationClock();
             UpdateAircraftVisual();
+            UpdateLiveTraffic();
             UpdateSkyTraffic();
             UpdateWindsock();
             UpdateTerminalFlag();
@@ -800,7 +801,7 @@ namespace Airside.Presentation
         /// </summary>
         private void DrawMapCredit(HudLayout layout)
         {
-            var text = MapAttribution.FieldCredit(usesOsmLayout: true, usesOsmCoast: true);
+            var text = MapAttribution.FieldCredit(usesOsmLayout: true, usesOsmCoast: true, usesLiveTraffic: LiveTrafficHealthy);
             if (string.IsNullOrEmpty(text))
                 return;
             _creditStyle ??= new GUIStyle(GUI.skin.label)
@@ -1074,6 +1075,14 @@ namespace Airside.Presentation
             if (GUI.Button(row, $"Camera speed  ·  {AirsideSettings.CameraSpeedLabels[settings.CameraSpeedIndex]}", button))
             {
                 settings.CycleCameraSpeed().Save();
+                PlayUiClick();
+            }
+
+            row.y += 46f;
+            if (GUI.Button(row, $"Live Adelaide traffic  ·  {LiveTrafficStatus}", button))
+            {
+                settings.LiveTraffic = !settings.LiveTraffic;
+                settings.Save();
                 PlayUiClick();
             }
 

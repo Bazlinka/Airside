@@ -40,7 +40,8 @@ namespace Airside.Presentation
         /// floor (<see cref="HudShell.Margin"/>), so they never draw across a panel's edge.
         /// </summary>
         public const float FooterHeight = 15f;
-        public const float CreditWidth = 320f;
+        /// <summary>Wide enough for the OSM credit plus the live-traffic (adsb.lol) credit.</summary>
+        public const float CreditWidth = 470f;
         public const float StampMaxWidth = 420f;
         private const float FooterInset = 8f;
 

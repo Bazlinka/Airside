@@ -26,6 +26,7 @@ namespace Airside.Presentation
         private readonly List<PlannerDestination> _shown = new();
         private readonly List<FleetAircraft> _fleet = new();
         private readonly List<AircraftType> _ownedTypes = new();
+        private readonly HashSet<string> _careerTargets = new(StringComparer.Ordinal);
 
         public string Title => "ROUTE MAP";
         public RouteMapFilter Filter { get; private set; }
@@ -41,6 +42,9 @@ namespace Airside.Presentation
 
         /// <summary>Just the half the filter selects — the side list shows this.</summary>
         public IReadOnlyList<PlannerDestination> ShownDestinations => _shown;
+
+        public bool IsCareerTarget(Destination destination) =>
+            !string.IsNullOrEmpty(destination.Code) && _careerTargets.Contains(destination.Code);
 
         public bool HasAircraft { get; private set; }
         public string AircraftLabel { get; private set; } = "No aircraft";
@@ -79,6 +83,7 @@ namespace Airside.Presentation
             Filter = filter;
             _all.Clear();
             _shown.Clear();
+            _careerTargets.Clear();
             AvailableCount = 0;
             LockedCount = 0;
             HasAircraft = aircraft != null;
@@ -127,6 +132,10 @@ namespace Airside.Presentation
                     _ownedTypes.Add(owned.Type);
                 }
             CanCycleAircraft = _fleet.Count > 1;
+            foreach (var row in _all)
+                if (Campaign.RouteGuidance(operations.CareerState, _ownedTypes, row.Destination).AdvancesCurrentChapter)
+                    _careerTargets.Add(row.Destination.Code);
+
             AircraftLabel = aircraft == null
                 ? "No aircraft"
                 : $"{aircraft.Registration}  ·  {aircraft.Type.Name}";
@@ -473,8 +482,11 @@ namespace Airside.Presentation
                 into.Text(new HudBox(box.X + 10f, box.Y, box.Width - 100f, 17f),
                     $"{row.Destination.Code}  {row.Destination.Name}", 13f,
                     row.Reachable ? HudTone.Default : HudTone.Muted);
-                into.Text(new HudBox(box.X + 10f, box.Y + 16f, box.Width - 100f, 15f), row.Destination.State,
-                    11f, HudTone.Muted);
+                var careerTarget = model.IsCareerTarget(row.Destination);
+                into.Text(new HudBox(box.X + 10f, box.Y + 16f, box.Width - 100f, 15f),
+                    careerTarget ? $"CAREER TARGET · {row.Destination.State}" : row.Destination.State,
+                    11f, careerTarget ? HudTone.Caution : HudTone.Muted,
+                    careerTarget ? HudTextStyle.Bold : HudTextStyle.Regular);
                 into.Text(new HudBox(box.Right - 96f, box.Y, 96f, 17f), $"{row.DistanceKm:0} km", 12f,
                     HudTone.Muted, HudTextStyle.Regular, HudAlign.Right);
                 into.Text(new HudBox(box.Right - 96f, box.Y + 16f, 96f, 15f),

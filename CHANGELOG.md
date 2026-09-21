@@ -7,6 +7,9 @@
   operating tiers into concrete base growth — regional starter, expanded regional operation,
   jet-gate operation and international handling — and tells the player what the next tier unlocks.
   The roadmap is derived from existing career state and adds no new save data or currency.
+- **Cleaner career navigation.** The top-level workspace is now labelled **CAREER** rather than
+  the prototype-era **STATS**, and Route Map lists identify current campaign target destinations
+  before the player opens their detail.
 
 - **Adelaide curfew 23:00–06:00, player and RFDS exempt (ADR 0087).** Commercial
   AI no longer pushes or lands in the real closed window. You can still fly out

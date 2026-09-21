@@ -11,6 +11,9 @@
     regional starter → expanded regional → jet-gate operation → international base.
     Career overview now shows the current base capability and the next tier says what it unlocks.
   - Added Stats coverage for the roadmap.
+  - Navigation now calls the page **CAREER** instead of the old **STATS** prototype label.
+    The Route Map destination list marks current-chapter targets before the player opens them.
+  - Added shell/map coverage for those navigation cues.
   - **Evidence:** connector-only edit; tests cannot be executed in this GitHub session. Branch is
     intentionally not merged. Run Unity EditMode before merge.
   - **NEXT:** visual/test pass, then extend this seam into physical airport capability/facility

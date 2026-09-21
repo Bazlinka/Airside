@@ -1,5 +1,15 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 ChatGPT — Turnaround v2 (branch `feature/turnaround-v2`, ADR 0093 WIP).**
+  - Player departure prep is now Fuel → Catering → Baggage → Boarding.
+  - The same derived turnaround uses the current PlayerBaseLevel everywhere the simulation decides readiness.
+  - Ground-service speed improves with base growth: Starter 100%, Expanded Regional 90%, Jet Gate 80%, International 70% of baseline service time.
+  - Fleet, Operations workspace, objective card and selected-aircraft HUD all show the four-stage chain.
+  - Added regression coverage for baggage and progressive turnaround speed.
+  - No save migration: prep remains derived from the existing PrepStartedAt + persisted base level.
+  - **NEXT:** static compile audit, then ground-service visual activity if the presentation hook is safe.
+  - **Evidence:** connector-only; Unity/EditMode not executed.
+
 - **2026-09-21 ChatGPT — Player Base v2 allocated stands (branch `feature/player-base-v2`, ADR 0092 WIP).**
   - Player base now has real Adelaide stand/gate access: starter home 50D; Expanded Regional adds
     dedicated 50G/10A plus shared regional-apron access; Jet Gate leases gates 27/29; International

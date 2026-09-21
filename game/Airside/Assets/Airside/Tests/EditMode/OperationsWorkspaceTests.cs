@@ -260,9 +260,9 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, "VH-PAX", null);
 
             Assert.That(model.HasSelection, Is.True);
-            Assert.That(model.SelectedPrep.Select(p => p.Done), Is.EqualTo(new[] { true, true, false }));
+            Assert.That(model.SelectedPrep.Select(p => p.Done), Is.EqualTo(new[] { true, true, false, false }));
             Assert.That(model.SelectedPrep[2].Active, Is.True);
-            Assert.That(model.SelectedPrep[2].Label, Does.StartWith("Boarding "));
+            Assert.That(model.SelectedPrep[2].Label, Does.StartWith("Baggage "));
             Assert.That(model.PrimaryAction, Is.EqualTo(AircraftHudAction.ViewPlan));
             Assert.That(model.CanCancel, Is.True);
         }

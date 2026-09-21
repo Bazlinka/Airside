@@ -662,14 +662,14 @@ namespace Airside.Presentation
             var parkA = stop - nose * 42f + side * 18f;
             var parkB = stop - nose * 44f - side * 18f;
 
-            UpdateVehicle(_fuelTruck, prep.Stage == DeparturePrepStage.Fuel, fuelService, parkA);
-            UpdateVehicle(_cateringTruck, prep.Stage == DeparturePrepStage.Catering, cateringService, parkB);
-            UpdateVehicle(_baggageCart, prep.Stage == DeparturePrepStage.Baggage, baggageService, parkB - nose * 5f);
+            UpdateTurnaroundVehicle(_fuelTruck, prep.Stage == DeparturePrepStage.Fuel, fuelService, parkA);
+            UpdateTurnaroundVehicle(_cateringTruck, prep.Stage == DeparturePrepStage.Catering, cateringService, parkB);
+            UpdateTurnaroundVehicle(_baggageCart, prep.Stage == DeparturePrepStage.Baggage, baggageService, parkB - nose * 5f);
 
             if (terminal)
             {
                 SetEquipmentVisible(_stairs, false);
-                UpdateVehicle(_passengerBus, prep.Stage == DeparturePrepStage.Boarding,
+                UpdateTurnaroundVehicle(_passengerBus, prep.Stage == DeparturePrepStage.Boarding,
                     boardingService + side * 4f, parkA + side * 5f);
             }
             else
@@ -678,6 +678,19 @@ namespace Airside.Presentation
                 PlaceBoardingStairs(_stairs, prep.Stage == DeparturePrepStage.Boarding,
                     boardingService, Quaternion.LookRotation(nose.sqrMagnitude > 0.001f ? nose : Vector3.forward));
             }
+        }
+
+        private void UpdateTurnaroundVehicle(Transform vehicle, bool active, Vector3 servicePosition, Vector3 parkPosition)
+        {
+            if (vehicle == null)
+                return;
+            if (!active)
+            {
+                vehicle.gameObject.SetActive(false);
+                return;
+            }
+            vehicle.gameObject.SetActive(true);
+            UpdateVehicle(vehicle, true, servicePosition, parkPosition);
         }
 
         private static void PlaceBoardingStairs(Transform stairs, bool active, Vector3 position, Quaternion rotation)

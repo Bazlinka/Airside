@@ -5,6 +5,8 @@
   - Fuel shows the fuel truck; Catering shows a dedicated catering truck; Baggage shows the baggage train; Boarding shows stairs on regional stands or the apron bus at terminal gates.
   - The earliest booked player aircraft owns the one visible service team while its prep is incomplete; once no player turnaround is active, the previous ambient gate cycle resumes.
   - Presentation-only: no save/simulation rule changes.
+  - Inactive turnaround equipment is hidden during player prep instead of sitting parked beside the same airframe.
+  - Fixed maintenance completion toast to show the same base-aware check cost actually charged by simulation.
   - **NEXT:** static visual-code review, then service positioning/playtest tuning.
 
 - **2026-09-21 ChatGPT — Turnaround v2 (branch `feature/turnaround-v2`, ADR 0093 WIP).**

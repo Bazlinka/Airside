@@ -2310,7 +2310,7 @@ namespace Airside.Presentation
 
         private void StartCheckFromHud(FleetAircraft aircraft)
         {
-            var cost = Maintenance.CheckCost(aircraft.Type);
+            var cost = Maintenance.CheckCost(aircraft.Type, _operations.CareerState.BaseLevel);
             var result = _operations.StartCheck(aircraft);
             if (result.Accepted)
             {

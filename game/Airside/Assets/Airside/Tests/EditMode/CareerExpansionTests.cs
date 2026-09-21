@@ -306,6 +306,24 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void LegacyPlayerJet_ReturnsToItsLeasedGateInsteadOfOldV1Gate()
+        {
+            var (_, ops, _) = PlayerOnly();
+            ops.RestoreCareerState(100_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 28, baseLevel: PlayerBaseLevel.JetGate);
+            var jet = ops.AddAircraft(ops.PlayerAirline, "VH-OLD", AircraftType.Boeing7378,
+                new StableId("GATE-25"));
+            jet.DepartureStand = new StableId("GATE-25");
+            jet.Stand = default;
+            jet.Restore(FleetState.AwaitingStand, ops.ProcessedTo, null);
+
+            var suggested = ops.SuggestStand(jet);
+
+            Assert.That(suggested.HasValue, Is.True);
+            Assert.That(new[] { "GATE-27", "GATE-29" }, Does.Contain(suggested.Value.Value));
+        }
+
+        [Test]
         public void LocalBaseMaintenance_IsCheaperAndFasterThanOutsourcing()
         {
             var (starterClock, starterOps, starterPlane) = PlayerOnly();

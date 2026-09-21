@@ -13,6 +13,8 @@
   - Fleet detail shows local vs outsourced maintenance and the exact effective check cost/time; the CHECK button uses the same value as the simulation command.
   - Added maintenance-effect coverage.
   - Career overview now names the exact Adelaide stand/gate access owned by the current base.
+  - Existing v12 jets parked on a pre-v2 terminal gate are re-homed onto leased player gates on their next Adelaide arrival; old departure-gate preference cannot bypass the allocation.
+  - Updated the existing maintenance/save tests to the v2 Starter outsourcing rule and current save v12.
   - **NEXT:** compile-oriented branch review and PR preparation.
   - **Evidence:** connector-only; Unity/EditMode not executed.
 

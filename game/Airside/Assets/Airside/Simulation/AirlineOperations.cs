@@ -1878,7 +1878,9 @@ namespace Airside.Simulation
                 && !string.IsNullOrEmpty(aircraft.DepartureStand.Value)
                 && _stands.Contains(aircraft.DepartureStand)
                 && IsStandFree(aircraft.DepartureStand)
-                && IsLeadInFree(aircraft.DepartureStand, aircraft))
+                && IsLeadInFree(aircraft.DepartureStand, aircraft)
+                && (!aircraft.Airline.IsPlayer || CareerState == null
+                    || PlayerBase.CanUseStand(CareerState.BaseLevel, aircraft.Type, aircraft.DepartureStand)))
                 return aircraft.DepartureStand;
 
             // Player turboprops that are away reserve that many regional bays, so a second

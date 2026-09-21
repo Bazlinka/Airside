@@ -190,8 +190,8 @@ namespace Airside.Presentation
         /// </summary>
         private bool _menuOpen;
         private bool _optionsOpen;
-        private const float EngineVolumeRunning = 0.11f;
-        private const float EngineVolumeIdle = 0.02f;
+        private const float EngineVolumeRunning = 0.06f;
+        private const float EngineVolumeIdle = 0f;
         private const float AmbientWindVolume = 0.045f;
         private const float AmbientRainVolume = 0.07f;
         private const float AmbientStormVolume = 0.11f;
@@ -304,6 +304,7 @@ namespace Airside.Presentation
             _preciseTime = _clock.Now.ElapsedSeconds;
 
             BuildLightingAndCamera();
+            ApplyMasterMute();
             StartIntro();
             if (_cameraController != null)
             {
@@ -675,6 +676,7 @@ namespace Airside.Presentation
                 // sound was off, so a stray M looked like broken audio.
                 _audioMuted = !_audioMuted;
                 ApplySettingsAndSave();
+                ApplyMasterMute();
                 ShowToast(_audioMuted ? "Sound off (M)." : "Sound on (M).");
                 PlayUiClick();
             }
@@ -694,6 +696,7 @@ namespace Airside.Presentation
             _audioMuted = !settings.SoundOn;
             _fieldTagsVisible = settings.FieldTags;
             _miniMapVisible = settings.MiniMap;
+            ApplyMasterMute();
         }
 
         private void ApplySettingsAndSave()
@@ -1052,8 +1055,9 @@ namespace Airside.Presentation
             var row = new Rect(rect.x + 20f, rect.y + 62f, rect.width - 40f, 38f);
             if (GUI.Button(row, settings.SoundOn ? "Sound  ·  On" : "Sound  ·  Off", button))
             {
-                _audioMuted = settings.SoundOn;
+                _audioMuted = !_audioMuted;
                 ApplySettingsAndSave();
+                ApplyMasterMute();
                 PlayUiClick();
             }
 
@@ -1354,8 +1358,34 @@ namespace Airside.Presentation
             }
         }
 
+        private void ApplyMasterMute()
+        {
+            AudioListener.volume = _audioMuted ? 0f : 1f;
+            AudioListener.pause = _audioMuted;
+            foreach (var source in _engineAudio.Values)
+            {
+                if (source == null)
+                    continue;
+                source.mute = _audioMuted;
+                if (_audioMuted)
+                {
+                    source.volume = 0f;
+                    if (source.isPlaying)
+                        source.Pause();
+                }
+            }
+        }
+
         private void UpdateEngineAudio()
         {
+            if (_audioMuted)
+            {
+                ApplyMasterMute();
+                return;
+            }
+
+            AudioListener.pause = false;
+            AudioListener.volume = 1f;
             for (var index = 0; index < VisualFlights.Count && index < _commercialAircraft.Length; index++)
             {
                 var phase = VisualFlights[index].Operation.Phase;
@@ -1394,26 +1424,19 @@ namespace Airside.Presentation
                 source = aircraft.GetComponent<AudioSource>();
                 if (source == null)
                     return;
+                source.playOnAwake = false;
+                source.dopplerLevel = 0f;
+                source.spatialBlend = 1f;
                 _engineAudio[id] = source;
             }
 
+            source.mute = false;
             var clip = LoadEngineClip(type);
             if (source.clip != clip)
-            {
-                var wasPlaying = source.isPlaying;
                 source.clip = clip;
-                if (wasPlaying || enginesOn)
-                    source.Play();
-            }
 
-            if (_audioMuted)
-            {
-                source.volume = 0f;
-                return;
-            }
-
-            // Engine note follows the spooled RPM. Recorded beds still pitch up on takeoff
-            // so a startup idle is not the same sound as rotate.
+            // Recorded beds are already takeoff/cruise. Pitching them to 0.47 made a
+            // parked Saab sound like a broken motor; keep pitch near native.
             var power = _propRpm.TryGetValue(id, out var rpm)
                 ? Mathf.InverseLerp(AirsideReusableMotion.PropRpmTaxi,
                     AirsideReusableMotion.PropRpmTakeoff, rpm)
@@ -1424,12 +1447,21 @@ namespace Airside.Presentation
                 power = Mathf.Max(power, 0.55f);
             else if (phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback)
                 power = Mathf.Max(power, 0.25f);
-            source.pitch = Mathf.Lerp(0.85f, 1.2f, power) * Mathf.Lerp(0.55f, 1f, spool);
+            source.pitch = Mathf.Lerp(0.96f, 1.06f, power);
 
-            var target = enginesOn
-                ? Mathf.Lerp(EngineVolumeRunning, EngineVolumeRunning * 1.5f, power) * Mathf.Lerp(0.35f, 1f, spool)
-                : EngineVolumeIdle;
-            source.volume = Mathf.MoveTowards(source.volume, target, Time.unscaledDeltaTime * 0.4f);
+            if (!enginesOn)
+            {
+                source.volume = Mathf.MoveTowards(source.volume, EngineVolumeIdle, Time.unscaledDeltaTime * 1.5f);
+                if (source.volume <= 0.004f && source.isPlaying)
+                    source.Stop();
+                return;
+            }
+
+            var target = Mathf.Lerp(EngineVolumeRunning * 0.4f, EngineVolumeRunning, power)
+                         * Mathf.Lerp(0.35f, 1f, spool);
+            source.volume = Mathf.MoveTowards(source.volume, target, Time.unscaledDeltaTime * 0.8f);
+            if (!source.isPlaying)
+                source.Play();
         }
 
         private void UpdateAmbientAudio()
@@ -12964,14 +12996,16 @@ namespace Airside.Presentation
             float minDistance, float maxDistance, float volume)
         {
             var source = root.gameObject.AddComponent<AudioSource>();
+            source.playOnAwake = false;
+            source.dopplerLevel = 0f;
             source.clip = LoadEngineClip(type);
             source.loop = true;
-            source.volume = volume;
-            source.spatialBlend = 0.75f;
+            source.volume = 0f;
+            source.spatialBlend = 1f;
             source.minDistance = minDistance;
             source.maxDistance = maxDistance;
             source.rolloffMode = AudioRolloffMode.Linear;
-            source.Play();
+            _ = volume;
         }
 
         /// <summary>

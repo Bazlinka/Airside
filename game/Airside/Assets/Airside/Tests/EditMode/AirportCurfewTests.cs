@@ -42,6 +42,47 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void EveningStart_LastFlightsSitNearCurfewNotFortyMinutesFromLaunch()
+        {
+            var simClock = new ManualSimulationClock(new SimulationTime(0));
+            // 21:00 ACST, 14 Sep 2026 — the live evening Bailey launched into.
+            var utc = new DateTime(2026, 9, 14, 11, 30, 0, DateTimeKind.Utc);
+            var ops = AirlineOperations.StartAtAdelaide(simClock, new SeededRandomSource(11),
+                Airline.Player("Evening Air", "#1F3A93"), AirlineClock.Aligned(simClock.Now, utc));
+            Assert.That(ops.Clock.TimeText(simClock.Now), Is.EqualTo("21:00"));
+
+            var last = DateTime.MinValue;
+            foreach (var aircraft in ops.Fleet)
+            {
+                if (aircraft.Airline.IsEmergency || aircraft.Airline.IsPlayer)
+                    continue;
+                if (aircraft.State == FleetState.Inbound && aircraft.StateEndsAt.HasValue)
+                {
+                    var land = ops.Clock.LocalAt(aircraft.StateEndsAt.Value);
+                    Assert.That(land.Hour, Is.LessThan(AirportCurfew.ClosedFromHour),
+                        $"{aircraft.Registration} would land in curfew at {land:HH:mm}");
+                    if (land > last)
+                        last = land;
+                }
+
+                if (aircraft.State == FleetState.AtStand && aircraft.Scheduled is { Cancelled: false } booked)
+                {
+                    var depart = ops.Clock.LocalAt(booked.DepartAt);
+                    if (depart.Hour >= AirportCurfew.ClosedFromHour || depart.Hour < AirportCurfew.OpensAtHour)
+                        continue;
+                    if (depart > last)
+                        last = depart;
+                }
+            }
+
+            Assert.That(last, Is.GreaterThan(new DateTime(2026, 9, 14, 21, 50, 0)),
+                $"last commercial movement was {last:HH:mm}, too early for a 23:00 curfew");
+            var qatar = ops.Fleet.Single(a => a.Airline.Id.Value == "QTR");
+            Assert.That(qatar.State, Is.EqualTo(FleetState.AtStand), "Qatar holds for the 22:00 slot, not an inbound");
+            Assert.That(ops.Clock.LocalAt(qatar.Scheduled.Value.DepartAt).Hour, Is.EqualTo(22));
+        }
+
+        [Test]
         public void CommercialAi_DoesNotMoveDuringCurfew_PlayerAndRfdsMay()
         {
             var simClock = new ManualSimulationClock(new SimulationTime(0));

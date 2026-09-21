@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Career campaign: five chapters (ADR 0083).** Island Hopper → Eyre Peninsula → Regional
+  Network → Interstate → Going Global. Each is a checklist of real goals (contracts and
+  where, tier, fleet, reliability) with a one-off cash reward; the objective card is headed
+  by the current chapter, the Stats page ticks its goals, and a toast celebrates each
+  completion. No save change (rewards use existing settlement keys). Unity EditMode
+  **843/844** (only the gate lead-in decision test).
+
 - **Aircraft no longer drive through each other on the ground.** Taxi legs were fixed paths
   on fixed clocks with no ground control: ~36 collision episodes a busy day (taxi-in head-on
   into taxi-out, taxi-outs into the holding queue, vacates into waiting arrivals). New

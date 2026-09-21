@@ -1220,7 +1220,29 @@ namespace Airside.Simulation
                 AddDeliveryInbound(PlayerAirline, registration, type);
 
             CareerState.EvaluateTier(PlayerOwnedTypes());
+            ClaimCampaignRewards();
             return CommandResult.Ok;
+        }
+
+        /// <summary>The career campaign as the airline stands now (ADR 0083).</summary>
+        public IReadOnlyList<CampaignChapter> CampaignChapters() =>
+            Campaign.Evaluate(CareerState, PlayerAirline == null ? null : PlayerOwnedTypes());
+
+        /// <summary>Pays each newly completed campaign chapter's reward, once.</summary>
+        private bool ClaimCampaignRewards()
+        {
+            if (CareerState == null || PlayerAirline == null)
+                return false;
+            var paid = false;
+            foreach (var chapter in CampaignChapters())
+            {
+                if (!chapter.Complete)
+                    break;
+                if (!chapter.Rewarded)
+                    paid |= CareerState.TryAward(Campaign.RewardKey(chapter.Number), chapter.Reward);
+            }
+
+            return paid;
         }
 
         /// <summary>Renames the player's own airline. AI operators use real airline names and cannot be renamed.</summary>
@@ -1389,6 +1411,7 @@ namespace Airside.Simulation
                 foreach (var aircraft in _fleet)
                     changed |= AdvanceAircraft(aircraft, now);
                 changed |= RunTower(now);
+                changed |= ClaimCampaignRewards();
             } while (changed);
         }
 

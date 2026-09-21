@@ -325,7 +325,8 @@ namespace Airside.Presentation
         }
 
         /// <summary>The current-objective card: one career goal, its progress, and the next step.</summary>
-        public static void PaintObjective(HudDrawList into, HudBox box, CareerObjective objective)
+        public static void PaintObjective(HudDrawList into, HudBox box, CareerObjective objective,
+            string caption = null)
         {
             if (into == null || box.IsEmpty)
                 return;
@@ -335,7 +336,9 @@ namespace Airside.Presentation
 
             var x = box.X + 14f;
             var width = box.Width - 28f;
-            into.Caption(new HudBox(x, box.Y + 8f, width, 14f), "CURRENT OBJECTIVE");
+            // The campaign chapter heads the card when there is one (ADR 0083).
+            into.Caption(new HudBox(x, box.Y + 8f, width, 14f),
+                string.IsNullOrEmpty(caption) ? "CURRENT OBJECTIVE" : caption);
             into.Text(new HudBox(x, box.Y + 24f, width, 24f), objective.Title, 16f, HudTone.Default,
                 HudTextStyle.Bold | HudTextStyle.Wrap);
             into.Text(new HudBox(x, box.Y + 50f, width, 16f), objective.ProgressText, 11f, HudTone.Muted);

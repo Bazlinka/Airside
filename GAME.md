@@ -1,5 +1,16 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Claude — career campaign chapters (branch `feature/campaign-chapters`, ADR
+  0083).** Bailey (low on usage): finish AI collisions, then career goals & tiers, more
+  contracts, and "more things to plan as you play, not just contracts".
+  - `Simulation/Campaign` evaluates 5 chapters from career state; `AirlineOperations.
+    CampaignChapters()` + `ClaimCampaignRewards()` (in `ProcessDue` and after `BuyAircraft`)
+    pay via `AirlineCareerState.TryAward` on settlement key `campaign:N`.
+  - HUD: objective caption, Stats list header + goals, completion toast.
+  - Two tests updated for the new reward and list rows. Unity EditMode **843/844**.
+  - **NEXT (Bailey's list):** maintenance planning (aircraft need checks; choose when), more
+    authored contracts per tier. Reward sizes need a play to tune.
+
 - **2026-09-21 Claude — ground separation (branch `feature/ground-separation`).** Bailey:
   "planes are having collisions (not respecting each other's physical location)."
   - **Measured first:** a probe drove a busy seeded day at 2 s steps and found ~36 episodes of

@@ -995,11 +995,12 @@ namespace Airside.Presentation
 
         private float DrawDeparturePrepChecks(FleetAircraft aircraft, float x, float y, float width, GUIStyle small)
         {
-            var prep = DeparturePrep.For(aircraft, _clock.Now);
-            var slot = width / 3f;
+            var prep = DeparturePrep.For(aircraft, _clock.Now, _operations.CareerState.BaseLevel);
+            var slot = width / 4f;
             DrawPrepCheck(x, y, slot, "Fuel", prep.FuelProgress, prep.Stage == DeparturePrepStage.Fuel, small);
             DrawPrepCheck(x + slot, y, slot, "Catering", prep.CateringProgress, prep.Stage == DeparturePrepStage.Catering, small);
-            DrawPrepCheck(x + slot * 2f, y, slot, "Boarding", prep.BoardingProgress, prep.Stage == DeparturePrepStage.Boarding, small);
+            DrawPrepCheck(x + slot * 2f, y, slot, "Baggage", prep.BaggageProgress, prep.Stage == DeparturePrepStage.Baggage, small);
+            DrawPrepCheck(x + slot * 3f, y, slot, "Boarding", prep.BoardingProgress, prep.Stage == DeparturePrepStage.Boarding, small);
             return y + 22f;
         }
 

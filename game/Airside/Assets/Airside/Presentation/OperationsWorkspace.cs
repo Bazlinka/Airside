@@ -263,7 +263,7 @@ namespace Airside.Presentation
 
             var selected = Find(operations, selectedRegistration);
             if (selected != null)
-                FillSelection(selected, now, clock);
+                FillSelection(selected, now, clock, operations.CareerState.BaseLevel);
         }
 
         private void FillDayProgress(AirlineOperations operations, SimulationTime now, AirlineClock clock)
@@ -432,7 +432,7 @@ namespace Airside.Presentation
                 if (severity < StatusSeverity.Attention)
                     continue;
                 _attention.Add(new OperationsAttentionRow(aircraft.Registration,
-                    $"{aircraft.Registration}  ·  {ExceptionText(aircraft, now, clock)}", severity));
+                    $"{aircraft.Registration}  ·  {ExceptionText(aircraft, now, clock, operations.CareerState.BaseLevel)}", severity));
             }
 
             if (_attention.Count > 0)
@@ -448,10 +448,11 @@ namespace Airside.Presentation
             if (priority == null)
                 return;
             _attention.Add(new OperationsAttentionRow(priority.Registration,
-                $"{priority.Registration}  ·  {ExceptionText(priority, now, clock)}", StatusSeverity.Normal));
+                $"{priority.Registration}  ·  {ExceptionText(priority, now, clock, operations.CareerState.BaseLevel)}", StatusSeverity.Normal));
         }
 
-        private static string ExceptionText(FleetAircraft aircraft, SimulationTime now, AirlineClock clock)
+        private static string ExceptionText(FleetAircraft aircraft, SimulationTime now, AirlineClock clock,
+            PlayerBaseLevel baseLevel)
         {
             if (aircraft.State == FleetState.AwaitingStand)
                 return $"Landed · parking{AircraftStatus.WaitSuffix(aircraft, now)}";
@@ -464,7 +465,7 @@ namespace Airside.Presentation
 
             if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
             {
-                var prep = DeparturePrep.For(aircraft, now);
+                var prep = DeparturePrep.For(aircraft, now, baseLevel);
                 var late = FlightBoard.DepartureDelayMinutes(aircraft, now);
                 var when = clock.TimeText(aircraft.Scheduled.Value.DepartAt);
                 if (late > 0)
@@ -483,7 +484,8 @@ namespace Airside.Presentation
                 : $"{status}{suffix}";
         }
 
-        private void FillSelection(FleetAircraft aircraft, SimulationTime now, AirlineClock clock)
+        private void FillSelection(FleetAircraft aircraft, SimulationTime now, AirlineClock clock,
+            PlayerBaseLevel baseLevel)
         {
             SelectedRegistration = aircraft.Registration;
             SelectedTypeName = aircraft.Type.Name;
@@ -507,6 +509,7 @@ namespace Airside.Presentation
                 var prep = DeparturePrep.For(aircraft, now);
                 _prep.Add(Check("Fuel", prep.FuelProgress, prep.Stage == DeparturePrepStage.Fuel));
                 _prep.Add(Check("Catering", prep.CateringProgress, prep.Stage == DeparturePrepStage.Catering));
+                _prep.Add(Check("Baggage", prep.BaggageProgress, prep.Stage == DeparturePrepStage.Baggage));
                 _prep.Add(Check("Boarding", prep.BoardingProgress, prep.Stage == DeparturePrepStage.Boarding));
             }
 

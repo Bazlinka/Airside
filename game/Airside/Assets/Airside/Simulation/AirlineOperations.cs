@@ -1144,7 +1144,7 @@ namespace Airside.Simulation
                         if (aircraft.Airline.IsPlayer)
                         {
                             var prepEnd = (aircraft.PrepStartedAt ?? now)
-                                .Advance(DeparturePrep.TotalSeconds(aircraft.Type));
+                                .Advance(DeparturePrep.TotalSeconds(aircraft.Type, CareerState.BaseLevel));
                             if (prepEnd.CompareTo(readyAt) > 0)
                                 readyAt = prepEnd;
                         }
@@ -1680,7 +1680,7 @@ namespace Airside.Simulation
                             - DeparturePrep.TotalSeconds(aircraft.Type);
                         aircraft.PrepStartedAt = new SimulationTime(inferred < 0 ? 0 : inferred);
                     }
-                    if (!DeparturePrep.IsReady(aircraft, now))
+                    if (!DeparturePrep.IsReady(aircraft, now, CareerState.BaseLevel))
                         return false;
                     var pushingBackFromGate = AdelaideGround.IsTerminalGate(aircraft.Stand);
                     if (NextTaxiReleaseAt(now, pushingBackFromGate).HasValue)

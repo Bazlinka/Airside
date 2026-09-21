@@ -189,7 +189,7 @@ namespace Airside.Presentation
                 return Maintenance.Status(aircraft, now, AirlineClock.Default);
             if (aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
             {
-                var prep = DeparturePrep.For(aircraft, now);
+                var prep = DeparturePrep.For(aircraft, now, operations.CareerState.BaseLevel);
                 return prep.Ready ? "Ready for pushback" : prep.Label;
             }
 
@@ -345,6 +345,7 @@ namespace Airside.Presentation
                 var prep = DeparturePrep.For(aircraft, now);
                 _prep.Add(PrepCheck("Fuel", prep.FuelProgress, prep.Stage == DeparturePrepStage.Fuel));
                 _prep.Add(PrepCheck("Catering", prep.CateringProgress, prep.Stage == DeparturePrepStage.Catering));
+                _prep.Add(PrepCheck("Baggage", prep.BaggageProgress, prep.Stage == DeparturePrepStage.Baggage));
                 _prep.Add(PrepCheck("Boarding", prep.BoardingProgress, prep.Stage == DeparturePrepStage.Boarding));
             }
 

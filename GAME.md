@@ -1,5 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Cursor — AI-only board/ground + real sun/moon (branch
+  `feature/maintenance-planning`, ADR 0086).** Bailey: stop merging to main; the board
+  and the pavement should show sim aircraft only (player + AI); live ADS-B is not for
+  this game yet. Also a realistic sun figure and moon, walking the right way.
+  - Operations board is the live fleet only — no `AdelaideDayPlan` "Listed" ghosts.
+  - Live traffic defaults **off** (new pref key); even when on, sky only, never ground.
+  - `CelestialSky` drives the key light and camera-centred sun/moon discs in the
+    YpadFrame (noon north of 05/23, east → west).
+  - **Evidence:** Unity EditMode **864/865** (only the known gate lead-in decision test).
+    Celestial tests: equinox noon north, morning east of evening, winter noon lower than summer.
+  - **NEXT:** rebuild this branch and play: board vs pavement, sunrise/sunset path,
+    moon figure at night. Then tune check cost (ADR 0085). Gate lead-in still open.
+
 - **2026-09-21 Cursor — routine aircraft checks (branch `feature/maintenance-planning`, ADR
   0085).** Finished Claude's WIP after the session limit: player aircraft wear one rotation
   per trip, a check is due every 8, the player chooses when (Fleet **CHECK $N**, or Send for

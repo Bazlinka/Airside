@@ -36,10 +36,11 @@ namespace Airside.Tests
             arrivals.Rebuild(ops, clock.Now, OperationsBoardTab.Arrivals, null, null);
             var departures = new OperationsWorkspaceModel();
             departures.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
-            Assert.That(arrivals.Rows.Count, Is.GreaterThan(ops.Fleet.Count(FlightBoard.IsArrival)),
-                "the arrivals board includes the rest of the day's planned inbound");
-            Assert.That(departures.Rows.Count, Is.GreaterThan(ops.Fleet.Count(FlightBoard.IsDeparture)),
-                "the departures board includes the rest of the day's planned outbound");
+            Assert.That(arrivals.Rows.Count, Is.EqualTo(ops.Fleet.Count(FlightBoard.IsArrival)),
+                "the arrivals board is the live fleet, not the published day");
+            Assert.That(departures.Rows.Count, Is.EqualTo(ops.Fleet.Count(FlightBoard.IsDeparture)),
+                "the departures board is the live fleet, not the published day");
+            Assert.That(departures.Rows.All(r => r.Status != "Listed"), Is.True);
         }
 
         [Test]

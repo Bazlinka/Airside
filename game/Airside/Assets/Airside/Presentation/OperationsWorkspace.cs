@@ -155,7 +155,7 @@ namespace Airside.Presentation
         /// <summary>0..1 through the operating day (05:00–23:00 Adelaide).</summary>
         public float DayProgress01 { get; private set; }
 
-        /// <summary>"14:32 · evening bank · 3 on field · 8 listed ahead"</summary>
+        /// <summary>"14:32 · evening bank · 3 on field"</summary>
         public string DayCaption { get; private set; } = string.Empty;
 
         public int DayDoneCount { get; private set; }
@@ -165,7 +165,7 @@ namespace Airside.Presentation
         /// <summary>Live aircraft currently at Adelaide (parked, taxiing, holding, landing).</summary>
         public int DayOnFieldCount { get; private set; }
 
-        /// <summary>Published day-plan rows still ahead that have no live aircraft covering them.</summary>
+        /// <summary>Kept at 0 — the board no longer lists timetable ghosts (ADR 0086).</summary>
         public int DayListedAheadCount { get; private set; }
 
         /// <summary>
@@ -283,55 +283,35 @@ namespace Airside.Presentation
             var done = 0;
             var active = 0;
             var upcoming = 0;
-            var listedAhead = 0;
-            var claimed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var planned in AdelaideDayPlan.ForLocalDay(operations, now))
-            {
-                if (planned.Disruption.Cancelled)
-                {
-                    done++;
-                    continue;
-                }
-
-                var live = AdelaideDayPlan.CoveringAircraft(planned, operations.Fleet, claimed);
-                if (live != null && IsLiveMovement(live))
-                {
-                    active++;
-                    continue;
-                }
-
-                var slotLocal = clock.LocalAt(planned.EstimatedAt);
-                var slotMin = slotLocal.Hour * 60 + slotLocal.Minute;
-                if (slotMin + 2 < nowMin)
-                    done++;
-                else
-                {
-                    upcoming++;
-                    if (live == null)
-                        listedAhead++;
-                }
-            }
-
             var onField = 0;
             foreach (var aircraft in operations.Fleet)
             {
-                if (!IsOnFieldNow(aircraft))
+                if (IsOnFieldNow(aircraft))
+                {
+                    onField++;
+                    active++;
+                    var markMin = MarkMinutes(aircraft, clock, nowMin);
+                    if (markMin >= startMin && markMin <= endMin)
+                        _dayMarks.Add(Clamp01((markMin - startMin) / (float)span));
                     continue;
-                onField++;
-                var markMin = MarkMinutes(aircraft, clock, nowMin);
-                if (markMin >= startMin && markMin <= endMin)
-                    _dayMarks.Add(Clamp01((markMin - startMin) / (float)span));
+                }
+
+                if (!FlightBoard.IsArrival(aircraft) && !FlightBoard.IsDeparture(aircraft))
+                    continue;
+                var mark = MarkMinutes(aircraft, clock, nowMin);
+                if (mark + 2 < nowMin)
+                    done++;
+                else
+                    upcoming++;
             }
 
             DayDoneCount = done;
             DayActiveCount = active;
             DayUpcomingCount = upcoming;
             DayOnFieldCount = onField;
-            DayListedAheadCount = listedAhead;
+            DayListedAheadCount = 0;
             var bank = BankLabel(local.Hour);
-            // Caption separates metal on the field from the published timetable overlay so
-            // "12 to go" no longer reads as twelve empty gates waiting for pushback.
-            DayCaption = $"{clock.TimeText(now)}  ·  {bank}  ·  {onField} on field  ·  {listedAhead} listed ahead";
+            DayCaption = $"{clock.TimeText(now)}  ·  {bank}  ·  {onField} on field";
         }
 
         private static bool IsOnFieldNow(FleetAircraft aircraft) => aircraft.State is
@@ -358,12 +338,6 @@ namespace Airside.Presentation
             return fallback;
         }
 
-        private static bool IsLiveMovement(FleetAircraft aircraft) => aircraft.State is
-            FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff or FleetState.Outbound
-            or FleetState.Inbound or FleetState.HoldingForLanding or FleetState.GoAround
-            or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn
-            or FleetState.AtDestination;
-
         private static string BankLabel(int hour) => hour switch
         {
             >= 6 and <= 8 => "morning bank",
@@ -388,7 +362,6 @@ namespace Airside.Presentation
                     _scratch.Add(aircraft);
             FlightBoard.SortForBoard(_scratch, arrivals);
 
-            var claimed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var aircraft in _scratch)
             {
                 var severity = AircraftStatus.Severity(aircraft, now);
@@ -421,51 +394,6 @@ namespace Airside.Presentation
                     progress,
                     onField: !livePast,
                     isPast: livePast));
-            }
-
-            foreach (var planned in AdelaideDayPlan.ForLocalDay(operations, now))
-            {
-                if (planned.Arrival != arrivals)
-                    continue;
-                if (AdelaideDayPlan.CoveringAircraft(planned, _scratch, claimed) != null)
-                    continue;
-                var plannedStatus = planned.Disruption.Cancelled
-                    ? "Cancelled"
-                    : planned.Disruption.Delayed
-                        ? planned.Disruption.BoardLabel
-                        : arrivals ? "Expected" : "Listed";
-                var plannedSeverity = planned.Disruption.Cancelled
-                    ? StatusSeverity.Warning
-                    : planned.Disruption.Delayed ? StatusSeverity.Attention : StatusSeverity.Normal;
-                var scheduled = clock.TimeText(planned.ScheduledAt);
-                var etaText = clock.TimeText(planned.EstimatedAt);
-                // Cancelled slots used to stay IsPast=false forever, which parked the NOW
-                // divider on an 08:00 cancellation while the clock read 12:30.
-                var slotTime = planned.Disruption.Cancelled ? scheduled : etaText;
-                var past = BoardClockMinutes(slotTime) + 2 < nowMin;
-                if (past && !planned.Disruption.Cancelled)
-                    plannedStatus = arrivals ? "Landed" : "Departed";
-                // Day-plan overlays never own a parked aircraft — claiming Gate 13 / Bay 50C
-                // here is what made "due to depart" look like empty pavement. Stand stays "—"
-                // until a live fleet row covers the slot (ADR 0071).
-                _rows.Add(new OperationsFlightRow(
-                    planned.Registration.Length > 0 ? planned.Registration : planned.FlightNumber,
-                    scheduled,
-                    planned.Disruption.Cancelled ? "—"
-                        : planned.Disruption.Delayed ? etaText : "—",
-                    planned.FlightNumber,
-                    planned.RouteText,
-                    "—",
-                    plannedStatus,
-                    planned.Type?.Name ?? string.Empty,
-                    planned.AirlineName,
-                    planned.LiveryHex,
-                    plannedSeverity,
-                    isPlayer: false,
-                    hasProgress: false,
-                    progress01: 0f,
-                    onField: false,
-                    isPast: past));
             }
 
             _rows.Sort((a, b) =>

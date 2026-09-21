@@ -217,38 +217,56 @@ namespace Airside.Presentation
         }
 
         private float PresentationDaylight =>
-            DaylightPresentation.Resolve(PinDaylightPresentation, PresentationDayCycle.Daylight);
+            DaylightPresentation.Resolve(PinDaylightPresentation, PresentationCelestial.Daylight);
 
-        private long _dayCycleSecond = long.MinValue;
-        private DayCycle _dayCycle;
+        private long _celestialSecond = long.MinValue;
+        private CelestialSky _celestial;
 
         /// <summary>
         /// Time of day for sun, sky, floods and lamps: the real Adelaide wall clock the HUD
-        /// shows. It used to be <c>_simulation.TimeOfDay</c>, which starts at 08:00 whenever
-        /// the game launches, so an evening session was lit as morning and night rarely came.
-        /// Recomputed once per real second; the time-zone conversion is not free.
+        /// shows. Celestial position is cached once per real second.
         /// </summary>
-        private DayCycle PresentationDayCycle
+        private CelestialSky PresentationCelestial
         {
             get
             {
-                var utc = DateTime.UtcNow;
+                var utc = PresentationUtc();
                 var second = utc.Ticks / TimeSpan.TicksPerSecond;
-                if (second != _dayCycleSecond)
+                if (second != _celestialSecond)
                 {
-                    _dayCycleSecond = second;
-                    var local = FleetMode
-                        ? _operations.Clock.LocalAt(_clock.Now)
-                        : TimeZoneInfo.ConvertTimeFromUtc(utc, AirlineClock.Adelaide);
-                    _dayCycle = DayCycle.AtLocalTime(ReviewLocalTime ?? local.TimeOfDay);
+                    _celestialSecond = second;
+                    _celestial = CelestialSky.AtAdelaide(utc);
                 }
 
-                return _dayCycle;
+                return _celestial;
             }
         }
 
+        private DateTime PresentationUtc()
+        {
+            if (FleetMode && _operations?.Clock != null)
+            {
+                var clock = _operations.Clock;
+                if (ReviewLocalTime.HasValue)
+                {
+                    var local = clock.LocalAt(_clock.Now).Date + ReviewLocalTime.Value;
+                    return TimeZoneInfo.ConvertTimeToUtc(
+                        DateTime.SpecifyKind(local, DateTimeKind.Unspecified), AirlineClock.Adelaide);
+                }
+
+                return clock.UtcAt(_clock.Now);
+            }
+
+            var utc = DateTime.UtcNow;
+            if (!ReviewLocalTime.HasValue)
+                return utc;
+            var adelaide = TimeZoneInfo.ConvertTimeFromUtc(utc, AirlineClock.Adelaide).Date + ReviewLocalTime.Value;
+            return TimeZoneInfo.ConvertTimeToUtc(
+                DateTime.SpecifyKind(adelaide, DateTimeKind.Unspecified), AirlineClock.Adelaide);
+        }
+
         private float _apronProbeRefreshAt;
-            private int _probeBand = int.MinValue;
+        private int _probeBand = int.MinValue;
         /// <summary>
         /// The live prototype. Held statically so a second bootstrap — a scene reload,
         /// a duplicate component dropped in a scene, or the runtime hook firing twice —
@@ -1079,7 +1097,7 @@ namespace Airside.Presentation
             }
 
             row.y += 46f;
-            if (GUI.Button(row, $"Live Adelaide traffic  ·  {LiveTrafficStatus}", button))
+            if (GUI.Button(row, $"Live Adelaide sky traffic  ·  {LiveTrafficStatus}", button))
             {
                 settings.LiveTraffic = !settings.LiveTraffic;
                 settings.Save();
@@ -3809,23 +3827,34 @@ namespace Airside.Presentation
 
         private void ApplyDayCycle()
         {
-            var cycle = PresentationDayCycle;
+            var celestial = PresentationCelestial;
             var daylight = PresentationDaylight;
             CurrentDaylight = daylight;
 
-            var elevation = PinDaylightPresentation ? 48f : (float)cycle.SunElevationDegrees;
-            _sun.transform.rotation = PinDaylightPresentation
-                ? Quaternion.Euler(48f, -28f, 0f)
-                : Quaternion.Euler(Mathf.Max(-6f, elevation), -28f - (float)cycle.Fraction * 90f, 0f);
+            var sunElevation = PinDaylightPresentation ? 48.0 : celestial.Sun.ElevationDegrees;
+            var sunAzimuth = PinDaylightPresentation ? 0.0 : celestial.Sun.AzimuthDegrees;
+            SkyDirection.ToWorld(sunAzimuth, sunElevation, out var sunX, out var sunY, out var sunZ);
+            var sunDir = new Vector3((float)sunX, (float)sunY, (float)sunZ);
+            if (sunDir.sqrMagnitude < 1e-6f)
+                sunDir = Vector3.up;
+            sunDir.Normalize();
+            // Clamp the key just below the horizon so night still has a directional shade
+            // without flipping the light through the ground.
+            var lightDir = sunDir;
+            if (lightDir.y < -0.10f)
+            {
+                lightDir.y = -0.10f;
+                lightDir.Normalize();
+            }
 
-            // Warm key, cool fill — day must read bright coastal sun; night must yield to
-            // apron floods so the airfield silhouette stays obvious from overview.
+            _sun.transform.rotation = Quaternion.LookRotation(-lightDir);
+
             var day = new Color(1f, 0.96f, 0.88f);
             var goldenHour = new Color(1f, 0.68f, 0.42f);
             var night = new Color(0.32f, 0.38f, 0.55f);
             var warm = PinDaylightPresentation
                 ? 0f
-                : Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 2.6f); // dawn/dusk only
+                : (float)CelestialSky.GoldenHour(celestial.Sun.ElevationDegrees);
             _sun.color = Color.Lerp(Color.Lerp(night, day, daylight), goldenHour, warm * Mathf.Max(daylight, 0.12f));
             // Noon punch; night key stays dim so flood pools (not a blue wash) light the apron.
             // Night floor raised 0.18 -> 0.30 alongside ADR 0063's ambient/exposure floor: the
@@ -3848,7 +3877,11 @@ namespace Airside.Presentation
 
             if (_fillLight != null)
             {
-                _fillLight.transform.rotation = Quaternion.Euler(25f, 140f - (float)cycle.Fraction * 40f, 0f);
+                SkyDirection.ToWorld(sunAzimuth + 180.0, 28.0, out var fillX, out var fillY, out var fillZ);
+                var fillDir = new Vector3((float)fillX, (float)fillY, (float)fillZ);
+                if (fillDir.sqrMagnitude < 1e-6f)
+                    fillDir = Vector3.up;
+                _fillLight.transform.rotation = Quaternion.LookRotation(-fillDir.normalized);
                 // Cool day fill opens shadows; night fill is soft blue-grey form light only.
                 _fillLight.color = Color.Lerp(
                     new Color(0.28f, 0.34f, 0.52f),
@@ -3920,7 +3953,7 @@ namespace Airside.Presentation
                     SetRendererColor(_horizonDomeRenderer, sky, sky * Mathf.Lerp(0.35f, 1f, daylight));
             }
 
-            UpdateSunAndMoonDiscs(daylight, warm, elevation);
+            UpdateSunAndMoonDiscs(daylight, warm, celestial);
 
             // Soft depth fog only — thick enough for far hills, thin enough that runway,
             // apron and buildings stay obvious from the default overview.
@@ -8086,55 +8119,61 @@ namespace Airside.Presentation
 
         private static void BuildSunAndMoonDiscs()
         {
-            // Visible sun/moon discs so day cycle reads from overview (0025 item 5).
+            // Visible sun/moon so the Adelaide path reads from overview (0025 item 5 / ADR 0086).
             var sun = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             sun.name = "Sun disc";
             Object.Destroy(sun.GetComponent<Collider>());
-            sun.transform.localScale = new Vector3(6.5f, 6.5f, 6.5f);
+            sun.transform.localScale = Vector3.one * 12f;
             var sunMat = AirsideMaterialLibrary.CreateShared(
-                new Color(1f, 0.92f, 0.65f, 1f),
+                new Color(1f, 0.94f, 0.72f, 1f),
                 AirsideMaterialLibrary.SurfaceKind.UnlitSky);
-            if (sunMat.HasProperty("_EmissionColor"))
-                sunMat.EnableKeyword("_EMISSION");
             sunMat.SetInt("_ZWrite", 0);
             sunMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Background;
             var sunRenderer = sun.GetComponent<Renderer>();
             sunRenderer.sharedMaterial = sunMat;
-            SetRendererColor(sunRenderer, new Color(1f, 0.92f, 0.65f, 1f), new Color(1.4f, 1.1f, 0.55f));
+            SetRendererColor(sunRenderer, new Color(1f, 0.94f, 0.72f, 1f), new Color(1.8f, 1.45f, 0.7f));
             sunRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             sunRenderer.receiveShadows = false;
+
+            var glow = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            glow.name = "Sun glow";
+            Object.Destroy(glow.GetComponent<Collider>());
+            glow.transform.SetParent(sun.transform, false);
+            glow.transform.localScale = Vector3.one * 2.6f;
+            var glowMat = AirsideMaterialLibrary.CreateShared(
+                new Color(1f, 0.72f, 0.35f, 1f),
+                AirsideMaterialLibrary.SurfaceKind.UnlitSky);
+            glowMat.SetInt("_ZWrite", 0);
+            glowMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Background;
+            var glowRenderer = glow.GetComponent<Renderer>();
+            glowRenderer.sharedMaterial = glowMat;
+            SetRendererColor(glowRenderer, new Color(1f, 0.7f, 0.32f, 1f), new Color(0.55f, 0.28f, 0.06f));
+            glowRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            glowRenderer.receiveShadows = false;
 
             var moon = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             moon.name = "Moon disc";
             Object.Destroy(moon.GetComponent<Collider>());
-            moon.transform.localScale = new Vector3(4.2f, 4.2f, 4.2f);
+            moon.transform.localScale = Vector3.one * 8.5f;
             var moonMat = AirsideMaterialLibrary.CreateShared(
-                new Color(0.82f, 0.86f, 0.95f, 1f),
-                AirsideMaterialLibrary.SurfaceKind.UnlitSky);
-            if (moonMat.HasProperty("_EmissionColor"))
-                moonMat.EnableKeyword("_EMISSION");
+                new Color(0.78f, 0.80f, 0.84f, 1f),
+                AirsideMaterialLibrary.SurfaceKind.Concrete);
+            moonMat.SetInt("_ZWrite", 0);
+            moonMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Background;
             var moonRenderer = moon.GetComponent<Renderer>();
             moonRenderer.sharedMaterial = moonMat;
-            SetRendererColor(moonRenderer, new Color(0.82f, 0.86f, 0.95f, 1f), new Color(0.55f, 0.6f, 0.75f));
             moonRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             moonRenderer.receiveShadows = false;
             moon.SetActive(false);
         }
 
-        private void UpdateSunAndMoonDiscs(float daylight, float warm, float elevation)
+        private void UpdateSunAndMoonDiscs(float daylight, float warm, CelestialSky sky)
         {
             if (_sunDisc == null)
-            {
                 _sunDisc = AirsideSceneIndex.Find("Sun disc");
-            }
-
             if (_moonDisc == null)
-            {
                 _moonDisc = AirsideSceneIndex.Find("Moon disc");
-            }
 
-            // Sun/moon billboards read wrong from overview and clip through terrain — off
-            // while daylight is pinned; directional light carries the sky.
             if (PinDaylightPresentation)
             {
                 if (_sunDisc != null)
@@ -8144,63 +8183,64 @@ namespace Airside.Presentation
                 return;
             }
 
-            // Place discs on a camera-centred sky sphere so they cannot sit under the terrain.
-            var sunDir = _sun != null ? -_sun.transform.forward : Vector3.up;
             var skyAnchor = _mainCamera != null ? _mainCamera.transform.position : Vector3.zero;
-
-            // A crisp sun/moon disc under thick cloud, rain, fog or storm reads wrong — the
-            // discs used to stay fully lit regardless of forecast. A light haze (Cloudy,
-            // cover 0.45) still lets a dimmed disc show through; Overcast (0.78) and beyond
-            // hide it entirely.
             var cloudCover = WeatherLook.For(CurrentWeather).CloudCover;
             var discVisibility = Mathf.Clamp01(1f - Mathf.InverseLerp(0.3f, 0.75f, cloudCover));
 
+            SkyDirection.ToWorld(sky.Sun, out var sx, out var sy, out var sz);
+            var sunDir = new Vector3((float)sx, (float)sy, (float)sz);
+            if (sunDir.sqrMagnitude > 1e-6f)
+                sunDir.Normalize();
+            else
+                sunDir = Vector3.up;
+
             if (_sunDisc != null)
             {
-                var showSun = sunDir.y > 0.2f && daylight > 0.15f && discVisibility > 0.02f;
+                var showSun = sky.Sun.ElevationDegrees > -0.8 && discVisibility > 0.02f;
                 _sunDisc.gameObject.SetActive(showSun);
                 if (showSun)
                 {
-                    _sunDisc.position = skyAnchor + sunDir.normalized * 420f;
+                    _sunDisc.position = skyAnchor + sunDir * 420f;
                     var sunColor = Color.Lerp(
-                        new Color(1f, 0.55f, 0.28f),
-                        new Color(1f, 0.95f, 0.78f),
-                        Mathf.Clamp01(daylight));
+                        new Color(1f, 0.52f, 0.24f),
+                        new Color(1f, 0.96f, 0.82f),
+                        Mathf.Clamp01((float)(sky.Sun.ElevationDegrees / 18.0)));
                     sunColor = Color.Lerp(sunColor, new Color(1f, 0.7f, 0.4f), warm * 0.55f);
                     if (_sunDiscRenderer == null)
                         _sunDiscRenderer = _sunDisc.GetComponent<Renderer>();
                     if (_sunDiscRenderer != null)
                         SetRendererColor(_sunDiscRenderer, sunColor * discVisibility,
-                            sunColor * ((1.1f + warm * 0.6f) * discVisibility));
-
-                    var scale = Mathf.Lerp(9.5f, 6.2f, daylight);
-                    _sunDisc.localScale = Vector3.one * scale;
+                            sunColor * ((1.35f + warm * 0.5f) * discVisibility));
                 }
             }
 
+            SkyDirection.ToWorld(sky.Moon, out var mx, out var my, out var mz);
+            var moonDir = new Vector3((float)mx, (float)my, (float)mz);
+            if (moonDir.sqrMagnitude > 1e-6f)
+                moonDir.Normalize();
+            else
+                moonDir = -sunDir;
+
             if (_moonDisc != null)
             {
-                var showMoon = daylight < 0.45f && discVisibility > 0.02f;
+                var showMoon = sky.Moon.ElevationDegrees > -0.6 && discVisibility > 0.02f;
                 _moonDisc.gameObject.SetActive(showMoon);
                 if (showMoon)
                 {
-                    // Opposite hemisphere from the sun path.
-                    var moonDir = Quaternion.Euler(0f, 180f, 0f) * sunDir;
-                    if (moonDir.y < 0.05f)
-                        moonDir.y = 0.15f;
-                    // On the same camera-centred sky sphere as the sun. It was placed 90 m from
-                    // the world origin, so orbiting or panning the camera moved past it and it
-                    // could sit inside the hills or among the apron buildings.
-                    _moonDisc.position = skyAnchor + moonDir.normalized * 420f;
-                    // 4.2 m at the old 90 m; keep the same apparent size at 420 m.
-                    _moonDisc.localScale = Vector3.one * (4.2f * 420f / 90f);
-                    var alpha = Mathf.Lerp(1f, 0.15f, daylight / 0.45f) * discVisibility;
+                    _moonDisc.position = skyAnchor + moonDir * 420f;
                     if (_moonDiscRenderer == null)
                         _moonDiscRenderer = _moonDisc.GetComponent<Renderer>();
                     if (_moonDiscRenderer != null)
                     {
-                        var c = new Color(0.82f, 0.86f, 0.95f, 1f) * alpha;
-                        SetRendererColor(_moonDiscRenderer, c, c * 0.7f);
+                        // Pale body; the directional sun lights the correct hemisphere so
+                        // phases read. A little earthshine keeps the night side from vanishing.
+                        var pale = Color.Lerp(
+                            new Color(0.72f, 0.74f, 0.80f, 1f),
+                            new Color(0.88f, 0.89f, 0.92f, 1f),
+                            daylight * 0.45f);
+                        var earthshine = 0.045f + 0.04f * (1f - (float)sky.MoonIllumination);
+                        SetRendererColor(_moonDiscRenderer, pale * discVisibility,
+                            new Color(0.18f, 0.19f, 0.22f) * (earthshine * discVisibility));
                     }
                 }
             }

@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Operations board and pavement are sim aircraft only (ADR 0086).** The board lists
+  the player and AI fleet that actually exist — no timetable "Listed" rows for planes
+  that are not on the map. Live ADS-B defaults off and, even when enabled, stays in
+  the sky; the ground is AI/player only.
+- **Real Adelaide sun and moon.** The key light and visible discs follow a celestial
+  path for YPAD: noon is north of the runway, the sun walks east → west, the moon has
+  its own place and phase rather than sitting opposite the sun.
+  Unity EditMode **864/865** (only the gate lead-in decision test).
+  Unity EditMode **864/865** (only the gate lead-in decision test).
 - **Routine aircraft checks (ADR 0085).** Each aircraft wears a little every rotation and
   needs a check every eight. You choose when: send it from Fleet while it is parked (2 hours
   and $400 for the Saab; four hours and 6% of list price for a jet). Flying on past due costs

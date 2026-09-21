@@ -8,7 +8,13 @@
   TaxiOut. The complete EditMode run before this repair reached runtime checks at
   **874/895 passed**; the remaining failures are post-merge test expectations for baggage,
   base allocation/copy, and preparation timing.
-  **NEXT:** repair those expectations, rerun EditMode, then build and launch the Mac app.
+  **Build:** a fresh development app was produced at
+  `work/builds/Airside.app`, stamped `af2ad8a0` (clean tree, 21 September 2026
+  14:29 UTC). It compiles and packages, but is **not release-validated**: EditMode
+  remains **874/895 passed**. The resolved lead-in assertion now exposes a 12/30
+  runway-separation failure in the same long-running reservation test.
+  **NEXT:** repair the remaining post-merge expectations and investigate that
+  12/30 concurrency before a release build or merge.
 
 - **2026-09-21 ChatGPT — campaign/base convergence (branch `feature/campaign-base-goals`, ADR 0094).**
   - Chapter 2 now requires the Expanded Regional Adelaide base; Chapter 4 requires Jet Gate; Chapter 5 requires the International base.

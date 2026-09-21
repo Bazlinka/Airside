@@ -733,7 +733,7 @@ namespace Airside.Presentation
             into.Fill(new HudBox(caretX - 1f, track.Y - 3f, 2f, track.Height + 6f), HudTone.Default, 0.95f);
         }
 
-        internal static HudBox CloseBox(HudBox surface) =>
+        public static HudBox CloseBox(HudBox surface) =>
             new(surface.Right - HudShell.SurfacePadding - 78f, surface.Y + 18f, 78f, 26f);
 
         private static void PaintAttention(HudDrawList into, OperationsWorkspaceModel model,

@@ -105,8 +105,76 @@ namespace Airside.Presentation
                 }
 
                 SpawnSurface(root, AirsideAdelaidePavement.TerminalsName, buildings, new Color(0.43f, 0.45f, 0.46f), null, castShadows: true);
+                BuildYpadOperationalBuildings(root, runwayTop);
                 BuildAdelaideTerminalArchitecture(groundY);
             }
+        }
+
+        private static void BuildYpadOperationalBuildings(Transform root, float fallbackGroundY)
+        {
+            var support = new SurfaceMesh();
+            var hangars = new SurfaceMesh();
+            var freight = new SurfaceMesh();
+            var fireStation = new SurfaceMesh();
+            var tower = new SurfaceMesh();
+
+            foreach (var building in AdelaideBuildings.All)
+            {
+                var sit = TerminalGroundY(building.Xz, fallbackGroundY);
+                switch (building.Kind)
+                {
+                    case AdelaideBuildingKind.ControlTower:
+                        // Preserve the surveyed footprint while giving the tower a recognisable
+                        // narrow shaft and broader glazed cab instead of one 44 m concrete block.
+                        var shaft = ScaleFootprint(building.Xz, 0.62f);
+                        var shaftHeight = building.HeightMetres * 0.78f;
+                        AddPrism(tower, shaft, sit, shaftHeight);
+                        AddPrism(tower, building.Xz, sit + shaftHeight, building.HeightMetres - shaftHeight);
+                        break;
+                    case AdelaideBuildingKind.FireStation:
+                        AddPrism(fireStation, building.Xz, sit, building.HeightMetres);
+                        break;
+                    case AdelaideBuildingKind.Hangar:
+                        AddPrism(hangars, building.Xz, sit, building.HeightMetres);
+                        break;
+                    case AdelaideBuildingKind.Freight:
+                        AddPrism(freight, building.Xz, sit, building.HeightMetres);
+                        break;
+                    default:
+                        AddPrism(support, building.Xz, sit, building.HeightMetres);
+                        break;
+                }
+            }
+
+            var metalAlbedo = PreferSurfaceBasecolor("tx_corrugated_metal");
+            SpawnSurface(root, "YPAD operational hangars", hangars, new Color(0.48f, 0.50f, 0.50f), metalAlbedo, castShadows: true);
+            SpawnSurface(root, "YPAD freight and catering", freight, new Color(0.40f, 0.43f, 0.45f), metalAlbedo, castShadows: true);
+            SpawnSurface(root, "YPAD support buildings", support, new Color(0.51f, 0.52f, 0.50f), null, castShadows: true);
+            SpawnSurface(root, "YPAD fire station", fireStation, new Color(0.48f, 0.24f, 0.20f), null, castShadows: true);
+            SpawnSurface(root, "YPAD control tower", tower, new Color(0.24f, 0.30f, 0.32f), null, castShadows: true);
+        }
+
+        private static float[] ScaleFootprint(float[] xz, float scale)
+        {
+            var scaled = new float[xz.Length];
+            var centreX = 0f;
+            var centreZ = 0f;
+            var count = xz.Length / 2;
+            for (var i = 0; i < count; i++)
+            {
+                centreX += xz[i * 2];
+                centreZ += xz[i * 2 + 1];
+            }
+
+            centreX /= count;
+            centreZ /= count;
+            for (var i = 0; i < count; i++)
+            {
+                scaled[i * 2] = centreX + (xz[i * 2] - centreX) * scale;
+                scaled[i * 2 + 1] = centreZ + (xz[i * 2 + 1] - centreZ) * scale;
+            }
+
+            return scaled;
         }
 
         private static void BuildAdelaideTerminalArchitecture(float groundY)
@@ -174,45 +242,57 @@ namespace Airside.Presentation
                 AddRibbon(geometry, marking.LeftShoulder, 0.16f, paintY + 0.001f, roundJoints: false);
                 AddRibbon(geometry, marking.RightShoulder, 0.16f, paintY + 0.001f, roundJoints: false);
 
-                var label = new GameObject($"Stand {marking.Reference} identifier");
-                label.transform.SetParent(root, false);
-                label.transform.position = new Vector3(marking.LabelX, paintY + 0.015f, marking.LabelZ);
-                label.transform.rotation = Quaternion.Euler(90f, marking.LabelYawDegrees, 0f);
-                var text = label.AddComponent<TextMesh>();
-                text.text = marking.Reference;
-                text.anchor = TextAnchor.MiddleCenter;
-                text.alignment = TextAlignment.Center;
-                text.fontSize = 64;
-                // Default TextMesh weight reads thin next to the runway's own block-stencil
-                // designation numerals (AirsideStripMarkings.DesignationNumerals draws those
-                // as real stroke geometry, not font text) — bold is the cheap half-step toward
-                // that painted-numeral look without building a matching stroke alphabet for
-                // stand references, which also need letters (50D, 18L), not just digits.
-                text.fontStyle = FontStyle.Bold;
-                text.characterSize = marking.LabelCharacterSize;
-                text.color = paint;
-                var renderer = label.GetComponent<MeshRenderer>();
-                renderer.shadowCastingMode = ShadowCastingMode.Off;
-                renderer.receiveShadows = false;
-                DepthTestStandLabel(renderer);
-                AirsideSceneIndex.Remember(label);
+                // Match the runway's purpose-built stencil alphabet instead of using a
+                // dynamic-font TextMesh. Real paint geometry now shares the same material,
+                // depth and lighting as the lead-in and stop markings around it.
+                var labelScale = AdelaideStandMarkings.StrokeLabelScale(marking.LabelCharacterSize);
+                var labelMarks = AirsideStripMarkings.Label(
+                    marking.Reference,
+                    -AirsideStripMarkings.DesignationDigitHeight * 0.5f,
+                    1f,
+                    0f);
+                AddStandLabel(geometry, labelMarks, marking.LabelX, marking.LabelZ,
+                    marking.LabelYawDegrees, labelScale, paintY + 0.002f);
             }
 
             SpawnSurface(root, "Aircraft stand lead-ins and stop bars", geometry, paint, null, castShadows: false);
         }
 
-        /// <summary>
-        /// TextMesh renders through the default font material on <c>GUI/Text Shader</c>, whose
-        /// depth test is the global <c>unity_GUIZTestMode</c> — Always. The painted stand
-        /// identifiers therefore drew on top of anything in front of them, including a parked
-        /// aircraft standing on the very stand they name. The material's own copy of that
-        /// property makes the labels depth-tested like the paint they sit on.
-        /// </summary>
+        private static void AddStandLabel(SurfaceMesh mesh, AirsideStripMarkings.Mark[] marks,
+            float originX, float originZ, float yawDegrees, float scale, float y)
+        {
+            if (marks == null || scale <= 0f)
+                return;
+
+            var yaw = yawDegrees * Mathf.Deg2Rad;
+            var along = new Vector2(Mathf.Sin(yaw), Mathf.Cos(yaw));
+            var across = new Vector2(Mathf.Cos(yaw), -Mathf.Sin(yaw));
+            foreach (var mark in marks)
+            {
+                var halfAlong = mark.LengthX * scale * 0.5f;
+                var halfAcross = mark.WidthZ * scale * 0.5f;
+                var centre = new Vector2(originX, originZ)
+                             + along * (mark.CenterX * scale)
+                             + across * (mark.CenterZ * scale);
+                var a = centre - along * halfAlong - across * halfAcross;
+                var b = centre - along * halfAlong + across * halfAcross;
+                var c = centre + along * halfAlong + across * halfAcross;
+                var d = centre + along * halfAlong - across * halfAcross;
+                var v0 = mesh.Add(new Vector3(a.x, y, a.y));
+                var v1 = mesh.Add(new Vector3(b.x, y, b.y));
+                var v2 = mesh.Add(new Vector3(c.x, y, c.y));
+                var v3 = mesh.Add(new Vector3(d.x, y, d.y));
+                mesh.Triangle(v0, v1, v2, Vector3.up);
+                mesh.Triangle(v0, v2, v3, Vector3.up);
+            }
+        }
+
+        /// <summary>Depth-tests remaining world-space TextMesh labels, such as aircraft titles.</summary>
         private static void DepthTestStandLabel(MeshRenderer renderer)
         {
             if (renderer == null || renderer.sharedMaterial == null)
                 return;
-            var material = new Material(renderer.sharedMaterial) { name = "mat_stand_identifier_depth_tested" };
+            var material = new Material(renderer.sharedMaterial) { name = "mat_world_label_depth_tested" };
             material.SetInt(GuiZTestMode, (int)CompareFunction.LessEqual);
             renderer.sharedMaterial = material;
         }

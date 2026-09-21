@@ -63,6 +63,12 @@ namespace Airside.Presentation
         public const float TerminalLabelSize = 0.62f;
         public const float ShoulderLengthMetres = 4.5f;
 
+        // The retired stand TextMesh used fontSize 64 and Unity's dynamic-font scale of
+        // ten font pixels per world metre. Keep the replacement stroke glyphs at the same
+        // physical height so this is a readability upgrade, not an arbitrary resize.
+        public static float StrokeLabelScale(float textMeshCharacterSize) =>
+            textMeshCharacterSize * 64f / (10f * AirsideStripMarkings.DesignationDigitHeight);
+
         private static AdelaideStandMarking[] _all;
 
         public static AdelaideStandMarking[] All()

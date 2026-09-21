@@ -1,5 +1,16 @@
 ## Unreleased
 
+- **Real Adelaide operational buildings and painted stand references (ADR 0069).** Added a
+  reproducible ODbL snapshot and generated runtime geometry for 78 real YPAD operational
+  footprints, including the 44 m control tower, airport fire station and 12 hangars. The detailed
+  terminal/RFDS shells remain authoritative; retail/residential clutter and the airport boundary
+  are filtered out. Stand/gate references now use the existing stroke alphabet as actual painted
+  mesh geometry instead of world-space font labels. Also fixed two current-main Unity compile
+  blockers exposed by the verification pass (`reilFlash` local-name collision and the Stats test
+  assembly's inaccessible `CloseBox`). Domain 546/546; Unity 780/782 with the same two unrelated
+  pre-existing failures; fresh Mac build and deterministic overview/tower/stand visual checks
+  completed.
+
 - **Clearing the standing backlog: seven items fixed (ADR 0068).** Everything previously
   flagged and deferred, in one pass. (1) The go-around teleport — the visible jump when a missed
   approach's racetrack ends is now a smoothed 6-second blend to the pinned holding position

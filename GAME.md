@@ -1,5 +1,32 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Codex — real YPAD building context + painted stand references (branch
+  `codex/adelaide-art-integration`, ADR 0069).** Followed the actual packaged Mac build rather
+  than treating the art manifest as a replacement list. The existing aircraft, GSE, people,
+  materials and HUD are already integrated; the visible gaps were Adelaide-specific building
+  context and floating stand-label typography.
+  - Imported a dated official OSM API snapshot and generated **78 operational building
+    footprints**: the 44 m Adelaide Airport Control Tower, airport fire station, 12 hangars,
+    freight/catering and support buildings. The existing detailed terminal and RFDS shells are
+    excluded to prevent doubles; retail/residential objects and the airport boundary are filtered
+    out. The tower renders as a narrow shaft plus cab; other buildings are source-footprint prisms
+    grouped by material/category.
+  - Replaced the apron `TextMesh` stand references with actual stroke-painted geometry using the
+    alphabet delivered in ADR 0068. A fresh Mac build confirmed the `50G` paint sits correctly on
+    the apron and depth-tests with the aircraft and ground.
+  - Fixed two current-main compile blockers found before the art change could be tested: a local
+    `flash` name collision in `AirsidePrototype.cs` and `StatsWorkspaceTests` calling the internal
+    `OperationsWorkspacePainter.CloseBox` across an assembly boundary. Unity also generated the
+    missing `.meta` files for the recently merged source/tests; they are now tracked.
+  - **Evidence:** `scripts/test-domain.sh` **546/546**. Unity EditMode **780/782**; all new tests
+    pass and the remaining failures are the same unrelated main-branch save-migration null/empty
+    assertion and dual-runway reservation-count test. Fresh packaged Mac build completed; 1920×1080
+    deterministic overview and control-tower captures were inspected in addition to the live
+    stand-paint view.
+  - **NEXT:** authored roof/door/glazing detail for the real-footprint hangars and tower is the
+    next sensible environment pass. Do not redraw the whole GSE/character/UI catalogue blindly;
+    review those assets close-up in gameplay first and replace only demonstrated weak links.
+
 - **2026-09-21 Claude — clearing the standing backlog, all seven flagged items (branch
   `claude/weather-system-improvement-1bgfc3`, ADR 0068).** Bailey asked what was still
   unresolved across the session, then said "fix all of em." All seven, in the order they'd been

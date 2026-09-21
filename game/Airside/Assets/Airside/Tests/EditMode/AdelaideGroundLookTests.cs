@@ -33,7 +33,12 @@ namespace Airside.Tests
                 "runway-aligned ESA Adelaide ground image is missing");
             Assert.That(material.GetFloat("_SatelliteExtent"),
                 Is.EqualTo(AirsideAdelaideSurroundings.SatelliteExtentMetres));
-            Assert.That(material.GetFloat("_SatelliteStrength"), Is.EqualTo(AirsideAdelaideSurroundings.SatelliteStrength));
+            Assert.That(material.GetFloat("_SatelliteNearStrength"), Is.EqualTo(AirsideAdelaideSurroundings.SatelliteNearStrength));
+            Assert.That(material.GetFloat("_SatelliteFarStrength"), Is.EqualTo(AirsideAdelaideSurroundings.SatelliteFarStrength));
+            Assert.That(material.GetFloat("_SatelliteFarBlendStart"), Is.EqualTo(AirsideAdelaideSurroundings.SatelliteFarBlendStartMetres));
+            Assert.That(material.GetFloat("_SatelliteFarBlendEnd"), Is.EqualTo(AirsideAdelaideSurroundings.SatelliteFarBlendEndMetres));
+            Assert.That(AirsideAdelaideSurroundings.SatelliteNearStrength,
+                Is.LessThan(AirsideAdelaideSurroundings.SatelliteFarStrength));
             Assert.That(material.GetFloat("_EdgeTextureBlend"), Is.EqualTo(AirsideAdelaideSurroundings.EdgeTextureBlendMetres));
             Assert.That(AirsideAdelaideSurroundings.EdgeTextureBlendMetres, Is.EqualTo(1050f),
                 "must match the airfield satellite dissolve or the rectangle lights up");
@@ -104,7 +109,7 @@ namespace Airside.Tests
             Assert.That(material.GetFloat("_SatelliteEdgeBlend"),
                 Is.EqualTo(AirsideAdelaideSurroundings.EdgeTextureBlendMetres));
             Assert.That(material.GetFloat("_SatelliteStrength"),
-                Is.EqualTo(AirsideAdelaideSurroundings.SatelliteStrength));
+                Is.EqualTo(AirsideAdelaideSurroundings.SatelliteNearStrength));
             Object.DestroyImmediate(material);
         }
 

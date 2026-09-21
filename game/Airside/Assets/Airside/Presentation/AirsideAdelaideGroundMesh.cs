@@ -154,7 +154,7 @@ namespace Airside.Presentation
                 material.SetTexture("_SatelliteAlbedo", satellite);
             material.SetFloat("_SatelliteExtent", AirsideAdelaideSurroundings.SatelliteExtentMetres);
             material.SetFloat("_SatelliteStrength",
-                satellite != null ? AirsideAdelaideSurroundings.SatelliteStrength : 0f);
+                satellite != null ? AirsideAdelaideSurroundings.SatelliteNearStrength : 0f);
             material.SetFloat("_SatelliteEdgeBlend", AirsideAdelaideSurroundings.EdgeTextureBlendMetres);
             material.SetFloat("_GroundHalfX", AirsideAdelaideGround.SizeX * 0.5f);
             material.SetFloat("_GroundHalfZ", AirsideAdelaideGround.SizeZ * 0.5f);
@@ -173,6 +173,15 @@ namespace Airside.Presentation
             if (dryM != null) material.SetTexture("_DryMask", dryM);
             if (greenM != null) material.SetTexture("_GreenMask", greenM);
             if (dirtM != null) material.SetTexture("_DirtMask", dirtM);
+
+            // Ground is almost always viewed obliquely. Retain a little more of the authored
+            // detail mip before it dissolves into the far-scale sample; the conservative bias
+            // avoids the shimmer produced by pushing below -0.5.
+            foreach (var texture in new[] { dry, green, dirt, dryN, greenN, dirtN, dryM, greenM, dirtM })
+                if (texture != null)
+                    texture.mipMapBias = AirsideRuntimeQuality.Current == AirsideRuntimeQuality.Ladder.High
+                        ? -0.28f
+                        : -0.12f;
 
             material.SetFloat("_DryTile", AirsideAdelaideGround.TileSize(AirsideAdelaideGround.LayerDryGrass));
             material.SetFloat("_GreenTile", AirsideAdelaideGround.TileSize(AirsideAdelaideGround.LayerGreenGrass));

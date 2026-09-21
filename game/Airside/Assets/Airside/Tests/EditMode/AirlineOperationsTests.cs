@@ -290,11 +290,12 @@ namespace Airside.Tests
             var secondClear = second.StateStartedAt.Advance(
                 AirlineOperations.TaxiClearSecondsFrom(second.DepartureStand, second.Type, second.AssignedRunway));
             var releaseAt = firstClear.CompareTo(secondClear) < 0 ? firstClear : secondClear;
-            Assert.That(ops.NextEventAt(), Is.EqualTo(releaseAt));
+            // A departure that had to wait moves on the ground-control grid (GroundTraffic).
+            var pushAt = GroundTraffic.OnGrid(releaseAt) ? releaseAt : GroundTraffic.NextGrid(releaseAt);
 
             RunTo(clock, ops, releaseAt.ElapsedSeconds - 1);
             Assert.That(third.State, Is.EqualTo(FleetState.AtStand));
-            RunTo(clock, ops, releaseAt.ElapsedSeconds);
+            RunTo(clock, ops, pushAt.ElapsedSeconds);
             Assert.That(third.State, Is.EqualTo(FleetState.TaxiOut));
             Assert.That(third.CurrentDestination, Is.EqualTo(thirdDestination));
             Assert.That(third.Scheduled, Is.Null);

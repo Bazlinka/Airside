@@ -95,6 +95,29 @@ namespace Airside.Simulation
 
         public float Length => _distance[_distance.Length - 1];
         public double Seconds => _time[_time.Length - 1];
+
+        private (float MinX, float MinZ, float MaxX, float MaxZ)? _bounds;
+
+        /// <summary>Axis-aligned box around every point of the path.</summary>
+        public (float MinX, float MinZ, float MaxX, float MaxZ) Bounds
+        {
+            get
+            {
+                if (_bounds.HasValue)
+                    return _bounds.Value;
+                float minX = float.MaxValue, minZ = float.MaxValue, maxX = float.MinValue, maxZ = float.MinValue;
+                for (var i = 0; i < _x.Length; i++)
+                {
+                    minX = Math.Min(minX, _x[i]);
+                    maxX = Math.Max(maxX, _x[i]);
+                    minZ = Math.Min(minZ, _z[i]);
+                    maxZ = Math.Max(maxZ, _z[i]);
+                }
+
+                _bounds = (minX, minZ, maxX, maxZ);
+                return _bounds.Value;
+            }
+        }
         public float TopSpeed => Max(_speed);
         public float StartX => _x[0];
         public float StartZ => _z[0];
@@ -418,6 +441,76 @@ namespace Airside.Simulation
                 foreach (var part in _parts)
                     total += part.Seconds;
                 return total;
+            }
+        }
+
+        /// <summary>
+        /// Seconds into the leg at which it is <paramref name="metresBeforeEnd"/> short of the
+        /// end of its last part — where an aircraft stops behind a queue at the holding point.
+        /// </summary>
+        public double SecondsShortOfEnd(float metresBeforeEnd)
+        {
+            if (metresBeforeEnd <= 0f)
+                return Seconds;
+            var before = 0.0;
+            for (var i = 0; i < _parts.Count - 1; i++)
+                before += _parts[i].Seconds;
+            var last = _parts[_parts.Count - 1];
+            var along = Math.Max(0f, last.Path.Length - metresBeforeEnd);
+            return before + last.PauseBeforeSeconds + last.Path.SecondsAtDistance(along);
+        }
+
+        private float[] _tableX;
+        private float[] _tableZ;
+
+        /// <summary>
+        /// Where the leg is after <paramref name="seconds"/>, from a one-second table built on first
+        /// use and interpolated. For ground-conflict checks, which ask this hundreds of thousands of
+        /// times; a full <see cref="PoseAt"/> (tug turn, look-ahead) is far too dear for that.
+        /// </summary>
+        public (float X, float Z) PositionAt(double seconds)
+        {
+            if (_tableX == null)
+            {
+                var count = (int)Math.Ceiling(Seconds) + 2;
+                var xs = new float[count];
+                var zs = new float[count];
+                for (var i = 0; i < count; i++)
+                {
+                    var pose = PoseAt(i);
+                    xs[i] = pose.X;
+                    zs[i] = pose.Z;
+                }
+
+                _tableZ = zs;
+                _tableX = xs;
+            }
+
+            var t = Math.Max(0.0, Math.Min(seconds, _tableX.Length - 1));
+            var index = (int)Math.Floor(t);
+            if (index >= _tableX.Length - 1)
+                return (_tableX[_tableX.Length - 1], _tableZ[_tableZ.Length - 1]);
+            var f = (float)(t - index);
+            return (_tableX[index] + (_tableX[index + 1] - _tableX[index]) * f,
+                _tableZ[index] + (_tableZ[index + 1] - _tableZ[index]) * f);
+        }
+
+        /// <summary>Box around every part of the leg.</summary>
+        public (float MinX, float MinZ, float MaxX, float MaxZ) Bounds
+        {
+            get
+            {
+                float minX = float.MaxValue, minZ = float.MaxValue, maxX = float.MinValue, maxZ = float.MinValue;
+                foreach (var part in _parts)
+                {
+                    var b = part.Path.Bounds;
+                    minX = Math.Min(minX, b.MinX);
+                    minZ = Math.Min(minZ, b.MinZ);
+                    maxX = Math.Max(maxX, b.MaxX);
+                    maxZ = Math.Max(maxZ, b.MaxZ);
+                }
+
+                return (minX, minZ, maxX, maxZ);
             }
         }
 

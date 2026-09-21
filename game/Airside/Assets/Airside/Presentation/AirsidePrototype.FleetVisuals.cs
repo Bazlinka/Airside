@@ -113,9 +113,47 @@ namespace Airside.Presentation
                 && cached.Leg == visual.Leg && cached.LegStart == legStart)
                 return cached.Pose;
 
-            var pose = ComputeFleetGroundPose(aircraft, visual, 0f);
+            var pose = QueueShuffle(aircraft, visual.Leg, ComputeFleetGroundPose(aircraft, visual, 0f));
             _fleetPoseNow[aircraft.Registration] = (frame, _preciseTime, visual.Leg, legStart, pose);
             return pose;
+        }
+
+        private readonly Dictionary<string, (double Time, GroundPose Pose)> _queueShown = new();
+
+        /// <summary>Queue shuffles move up at taxi pace instead of jumping a whole queue place.</summary>
+        private const float QueueShuffleMetresPerSecond = 5f;
+
+        /// <summary>
+        /// A queue at the holding point or a runway exit moves up one place (60 m) the instant the
+        /// aircraft in front goes. Ease the drawn aircraft there at taxi pace instead of teleporting.
+        /// Only short hops in the queueing legs are eased; everything else passes straight through.
+        /// </summary>
+        private GroundPose QueueShuffle(FleetAircraft aircraft, FleetGroundLeg leg, GroundPose target)
+        {
+            var queueing = leg is FleetGroundLeg.HoldingShort or FleetGroundLeg.AwaitingStand or FleetGroundLeg.TaxiOut
+                or FleetGroundLeg.Vacate;
+            if (!queueing || !_queueShown.TryGetValue(aircraft.Registration, out var shown))
+            {
+                _queueShown[aircraft.Registration] = (_preciseTime, target);
+                return target;
+            }
+
+            var dt = Math.Max(0.0, _preciseTime - shown.Time);
+            var dx = target.X - shown.Pose.X;
+            var dz = target.Z - shown.Pose.Z;
+            var gap = (float)Math.Sqrt(dx * dx + dz * dz);
+            var reach = (float)(Math.Max(QueueShuffleMetresPerSecond, target.Speed * 1.2f) * dt) + 0.05f;
+            if (gap <= reach || gap > 2.5f * AdelaideGround.AwaitingSpacingMetres)
+            {
+                _queueShown[aircraft.Registration] = (_preciseTime, target);
+                return target;
+            }
+
+            var step = reach / gap;
+            var moving = new GroundPose(shown.Pose.X + dx * step, shown.Pose.Z + dz * step,
+                dx / gap, dz / gap, QueueShuffleMetresPerSecond, false);
+            _queueShown[aircraft.Registration] = (_preciseTime, moving);
+            return moving;
         }
 
         private GroundPose ComputeFleetGroundPose(FleetAircraft aircraft, FleetVisual visual, float lookAheadSeconds)
@@ -129,10 +167,10 @@ namespace Airside.Presentation
                 // used to be drawn on the same spot, one inside the other.
                 case FleetGroundLeg.HoldingShort:
                     return AdelaideGround.HoldingShortPose(aircraft.DepartureStand,
-                        FleetVisual.QueueSlot(_operations.Fleet, aircraft), aircraft.AssignedRunway,
+                        FleetVisual.QueueSlot(_operations.Fleet, aircraft, _clock.Now), aircraft.AssignedRunway,
                         aircraft.Type);
                 case FleetGroundLeg.AwaitingStand:
-                    return AdelaideGround.AwaitingPose(FleetVisual.QueueSlot(_operations.Fleet, aircraft),
+                    return AdelaideGround.AwaitingPose(FleetVisual.QueueSlot(_operations.Fleet, aircraft, _clock.Now),
                         aircraft.Type, aircraft.AssignedRunway);
                 default:
                 {
@@ -145,7 +183,15 @@ namespace Airside.Presentation
                     };
                     var elapsed = _preciseTime - visual.LegStartedAt.ElapsedSeconds + lookAheadSeconds;
                     var scale = visual.LegSeconds > 0 ? leg.Seconds / visual.LegSeconds : 1.0;
-                    return HumanGroundPose(aircraft, visual.Leg, leg.PoseAt(elapsed * scale));
+                    var t = elapsed * scale;
+                    // Stop behind whoever is already holding short (GroundTraffic.TryPose does the same).
+                    if (visual.Leg == FleetGroundLeg.TaxiOut)
+                        t = Math.Min(t, GroundTraffic.QueuedSeconds(leg,
+                            FleetVisual.QueueAhead(_operations.Fleet, aircraft, _clock.Now)));
+                    else if (visual.Leg == FleetGroundLeg.Vacate)
+                        t = Math.Min(t, GroundTraffic.QueuedSeconds(leg,
+                            FleetVisual.ExitQueueAhead(_operations.Fleet, aircraft, _clock.Now)));
+                    return HumanGroundPose(aircraft, visual.Leg, leg.PoseAt(t));
                 }
             }
         }

@@ -113,8 +113,11 @@ namespace Airside.Tests
             var terminalGates = new Queue<StableId>(AirlineOperations.AdelaideTerminalGates);
             foreach (var spec in AircraftCatalogue.All)
             {
-                var stand = spec.StandClass == StandClass.TerminalGate ? terminalGates.Dequeue() : bays.Dequeue();
-                var aircraft = ops.AddAircraft(airline, "VH-C" + spec.Id.Substring(0, 2), spec.Type, stand);
+                // A free stand that fits: 16L/16R and 18/18R share one pier, so list order can collide.
+                var stand = ops.SuggestStandFor(spec.Type)
+                            ?? (spec.StandClass == StandClass.TerminalGate ? terminalGates.Dequeue() : bays.Dequeue());
+                // Full type id: A223 and A21N share their first two letters.
+                var aircraft = ops.AddAircraft(airline, "VH-C" + spec.Id, spec.Type, stand);
                 foreach (var row in FlightPlanner.DestinationsFor(ops, aircraft))
                 {
                     var km = ops.DistanceKm(row.Destination);

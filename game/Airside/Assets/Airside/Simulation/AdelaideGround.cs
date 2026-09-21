@@ -97,6 +97,30 @@ namespace Airside.Simulation
             return leg;
         }
 
+        /// <summary>True when both runway ends vacate to the same waiting point (05/23 → E2).</summary>
+        private static readonly Dictionary<(RunwayDirection, RunwayDirection), bool> SameExitCache = new();
+
+        public static bool SameArrivalExit(RunwayDirection a, RunwayDirection b)
+        {
+            if (a == b)
+                return true;
+            // Asked for every pair of aircraft in every queue check: work each pair out once.
+            if (SameExitCache.TryGetValue((a, b), out var known))
+                return known;
+            return SameExitCache[(a, b)] = SameExitUncached(a, b);
+        }
+
+        private static bool SameExitUncached(RunwayDirection a, RunwayDirection b)
+        {
+            var ea = VacateFor(AircraftType.Atr42, a);
+            var eb = VacateFor(AircraftType.Atr42, b);
+            var pa = ea.PoseAt(ea.Seconds);
+            var pb = eb.PoseAt(eb.Seconds);
+            var dx = pa.X - pb.X;
+            var dz = pa.Z - pb.Z;
+            return dx * dx + dz * dz < 25f;
+        }
+
         /// <summary>
         /// Seconds until the aircraft is clear of the strip during vacate — when the
         /// tower may clear the next movement. For 05/23 that is the full E2 vacate.

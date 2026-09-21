@@ -95,7 +95,7 @@ namespace Airside.Simulation
         public string NextUnlock { get; }
     }
 
-    /// <summary>Career-tier, base-capability and hangar progress, derived only — never stored (ADR 0088).</summary>
+    /// <summary>Career-tier, base-capability and hangar progress, derived only — never stored (ADR 0090).</summary>
     public static class CareerProgress
     {
         public static BaseCapability BaseCapabilityFor(OperatingTier tier) => tier switch

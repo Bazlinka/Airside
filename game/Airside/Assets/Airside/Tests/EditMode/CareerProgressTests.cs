@@ -38,13 +38,14 @@ namespace Airside.Tests
             Assert.That(next.RotationsShort, Is.EqualTo(AircraftAcquisition.Atr42.RequiredRotations));
             Assert.That(next.ReliabilityShort, Is.EqualTo(0));
             Assert.That(next.NeedsTier, Is.False);
+            Assert.That(next.BaseRequirementLine, Does.Contain("expand your Adelaide base"));
         }
 
         [Test]
         public void NextAircraft_ReadyWhenEveryGateClears()
         {
             var career = new AirlineCareerState(funds: 20_000, reliability: 80, tier: OperatingTier.Provisional,
-                completedPlayerRotations: 6);
+                completedPlayerRotations: 6, baseLevel: PlayerBaseLevel.ExpandedRegional);
             var next = CareerProgress.NextAircraft(career, ownedCount: 1);
             Assert.That(next.ReadyToBuy, Is.True);
             Assert.That(next.Offer.Type.Id, Is.EqualTo(AircraftType.Atr42.Id));

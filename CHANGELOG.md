@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Distance-aware Adelaide ground clarity (ADR 0074).** Rebuilt the 2048px runtime surroundings
+  image from a 4096px ESA WMS request so runway alignment no longer throws away source information
+  before the final downsample. The runtime texture size and memory stay unchanged. Near the airport,
+  the shader now favours authored terrain detail; beyond 5.2 km it returns to stronger satellite
+  context, with an exact edge match that avoids revealing the rectangular authored-ground boundary.
+  Authored ground layers retain a little more detail at oblique camera angles through conservative
+  quality-aware mip bias. Domain green; Unity 787/789 with the same two unrelated baseline failures;
+  fresh Mac build and final 1920x1080 overview inspected.
+
 - **Airport-scale ground rhythm and honest route-range rings (ADR 0073).** Adelaide's procedural
   infield now carries subtle 34 m runway-aligned mowing bands, softened along their length and
   suppressed where worn-dirt weight takes over. This breaks up the former single washed carpet

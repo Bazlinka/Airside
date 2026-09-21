@@ -37,7 +37,11 @@ namespace Airside.Presentation
         /// </summary>
         public const float EdgeTextureBlendMetres = 1050f;
 
-        public const float SatelliteStrength = 0.92f;
+        /// <summary>Satellite is colour context, not near-field detail: 10 m source pixels blur the airport edge.</summary>
+        public const float SatelliteNearStrength = 0.78f;
+        public const float SatelliteFarStrength = 0.92f;
+        public const float SatelliteFarBlendStartMetres = 1800f;
+        public const float SatelliteFarBlendEndMetres = 5200f;
         private const float BeachWidthMetres = 55f;
         public const float SatelliteExtentMetres = 12000f;
         public const string SatelliteTexturePath =
@@ -104,7 +108,10 @@ namespace Airside.Presentation
             if (satellite != null)
                 material.SetTexture("_SatelliteAlbedo", satellite);
             material.SetFloat("_SatelliteExtent", SatelliteExtentMetres);
-            material.SetFloat("_SatelliteStrength", satellite != null ? SatelliteStrength : 0f);
+            material.SetFloat("_SatelliteNearStrength", satellite != null ? SatelliteNearStrength : 0f);
+            material.SetFloat("_SatelliteFarStrength", satellite != null ? SatelliteFarStrength : 0f);
+            material.SetFloat("_SatelliteFarBlendStart", SatelliteFarBlendStartMetres);
+            material.SetFloat("_SatelliteFarBlendEnd", SatelliteFarBlendEndMetres);
             material.SetColor("_SatelliteTint", new Color(0.56f, 0.58f, 0.56f, 1f));
             material.SetColor("_AirfieldTint", new Color(0.59f, 0.61f, 0.55f, 1f));
             material.SetFloat("_AirfieldHalfX", AirsideAdelaideGround.SizeX * 0.5f);

@@ -24,13 +24,14 @@ OUTPUT = ROOT / "game/Airside/Assets/Airside/Art/Textures/Environment/tx_adelaid
 
 EXTENT_METRES = 12_000.0
 SIZE = 2048
+SOURCE_SIZE = 4096
 LON_MIN, LAT_MIN = 138.3448, -35.1026
 LON_MAX, LAT_MAX = 138.7156, -34.7966
 WMS_URL = (
     "https://titiler.terrascope.be/wms?service=WMS&version=1.3.0&request=GetMap"
     "&layers=esa-worldcover-s2rgbnir-10m-2021-v2_tcc&styles="
     "&crs=EPSG%3A4326&bbox=-35.1026,138.3448,-34.7966,138.7156"
-    "&width=2048&height=2048&format=image%2Fpng&transparent=false&time=2021-01-01"
+    f"&width={SOURCE_SIZE}&height={SOURCE_SIZE}&format=image%2Fpng&transparent=false&time=2021-01-01"
 )
 
 
@@ -106,7 +107,7 @@ def main() -> None:
     parser.add_argument("--source", type=Path, help="Use an existing WMS PNG instead of downloading")
     args = parser.parse_args()
 
-    source_path = args.source or ROOT / "work/cache/adelaide-esa-worldcover-2021.png"
+    source_path = args.source or ROOT / f"work/cache/adelaide-esa-worldcover-2021-{SOURCE_SIZE}.png"
     if not source_path.exists():
         source_path.parent.mkdir(parents=True, exist_ok=True)
         print("Downloading ESA WorldCover Adelaide composite...")

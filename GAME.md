@@ -1,5 +1,17 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Codex — production ground-clarity pass (branch
+  `codex/ground-clarity-production`, ADR 0074).** Kept the legal 24 km Sentinel-2 context but stopped
+  asking one 10 m-class image to provide every scale of ground detail. The runtime image is still
+  2048px, now derived from a 4096px request before rotation/downsampling. Near/mid/far blending and
+  conservative terrain mip bias restore authored clarity near operations while retaining geographic
+  context in the distance. The airport-to-surroundings join uses the same blend equation on both
+  sides, preventing the reduced near satellite strength from exposing the field rectangle.
+  - **Evidence:** domain green; Unity EditMode **787/789** with the same two unrelated baseline
+    failures; fresh Mac build and final 1920x1080 ground capture inspected.
+  - **NEXT:** replace the still-obvious lobe clouds with a baked transparent atlas, then make Route
+    Map range aircraft-specific and add a real-data rival visibility control.
+
 - **2026-09-21 Codex — ground and route-map readability (branch
   `codex/ground-map-readability-pass`, ADR 0073).** Added restrained, runway-aligned mowing bands
   to the maintained Adelaide infield and true 500/1,000/2,000 km geodesic range rings to the Route

@@ -11,7 +11,10 @@ Shader "Airside/Surroundings"
         _AirfieldAlbedo ("Airfield edge albedo", 2D) = "white" {}
         _SatelliteAlbedo ("Adelaide Sentinel-2 albedo", 2D) = "gray" {}
         _SatelliteExtent ("Satellite half extent metres", Float) = 12000
-        _SatelliteStrength ("Satellite blend", Range(0, 1)) = 0.92
+        _SatelliteNearStrength ("Near satellite blend", Range(0, 1)) = 0.78
+        _SatelliteFarStrength ("Far satellite blend", Range(0, 1)) = 0.92
+        _SatelliteFarBlendStart ("Far satellite start metres", Float) = 1800
+        _SatelliteFarBlendEnd ("Far satellite end metres", Float) = 5200
         _SatelliteTint ("Satellite exposure tint", Color) = (0.56, 0.58, 0.56, 1)
         _AirfieldTint ("Airfield edge tint", Color) = (0.59, 0.61, 0.55, 1)
         _AirfieldHalfX ("Airfield half width X", Float) = 1950
@@ -56,7 +59,10 @@ Shader "Airside/Surroundings"
                 float4 _AirfieldTint;
                 float4 _SatelliteTint;
                 float _SatelliteExtent;
-                float _SatelliteStrength;
+                float _SatelliteNearStrength;
+                float _SatelliteFarStrength;
+                float _SatelliteFarBlendStart;
+                float _SatelliteFarBlendEnd;
                 float _AirfieldHalfX;
                 float _AirfieldHalfZ;
                 float _EdgeTextureBlend;
@@ -158,10 +164,25 @@ Shader "Airside/Surroundings"
                     * _SatelliteTint.rgb;
                 // Sea keeps the purpose-built water shading; the satellite composite is used
                 // for land and the real beach only. This also avoids offshore source-tile gaps.
-                float satelliteBlend = _SatelliteStrength * (1.0 - saturate(input.color.a));
+                float fromAirfield = length(outsideAxis);
+                float distanceBlend = smoothstep(_SatelliteFarBlendStart, _SatelliteFarBlendEnd, fromAirfield);
+                float satelliteStrength = lerp(_SatelliteNearStrength, _SatelliteFarStrength, distanceBlend);
+                float satelliteBlend = satelliteStrength * (1.0 - saturate(input.color.a));
                 float3 broadAlbedo = lerp(input.color.rgb, satellite, satelliteBlend);
-                float grassAtJoin = 1.0 - _SatelliteStrength;
-                float3 albedo = lerp(broadAlbedo, edgeAlbedo, edgeBlend * grassAtJoin);
+                // Two differently oriented detail samples keep the mid-field crisp without
+                // pretending 10 m satellite pixels contain sub-metre information.
+                float2 detailUv = mul(float2x2(0.94, -0.342, 0.342, 0.94), xz + 137.0)
+                    / max(_DryTile * 1.7, 1.0);
+                float3 detailAlbedo = SAMPLE_TEXTURE2D(_AirfieldAlbedo, sampler_AirfieldAlbedo, detailUv).rgb
+                    * _AirfieldTint.rgb;
+                float detailWeight = (1.0 - satelliteStrength) * (1.0 - saturate(input.color.a)) * 0.18;
+                broadAlbedo = lerp(broadAlbedo, broadAlbedo * lerp(0.82, 1.18, dot(detailAlbedo, float3(0.3, 0.59, 0.11))), detailWeight);
+                // At the mesh join this must be the exact same equation as AdelaideGround,
+                // not an approximation based on the palette beneath it. The previous weighted
+                // blend exposed the whole rectangular airfield as soon as satellite influence
+                // was reduced enough to reveal useful procedural detail.
+                float3 edgeTarget = lerp(edgeAlbedo, satellite, _SatelliteNearStrength);
+                float3 albedo = lerp(broadAlbedo, edgeTarget, edgeBlend);
                 float3 color = albedo * (mainLight.color * (mainLight.shadowAttenuation * NdotL) + SampleSH(normalWS));
 
                 // Water sheen: a broad sun glint, strongest looking into the light.

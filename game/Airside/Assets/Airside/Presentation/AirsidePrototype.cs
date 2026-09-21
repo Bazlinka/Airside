@@ -3967,11 +3967,11 @@ namespace Airside.Presentation
                     // Far ALS REIL spots — sharp night flash, not centreline chase.
                     if (_alsReilSide[i] != 0)
                     {
-                        var flash = daylight < 0.42f
+                        var reilFlash = daylight < 0.42f
                             && Mathf.Repeat(
                                 Time.unscaledTime * AirsideReusableMotion.ReilFlashHz
                                 + (_alsReilSide[i] == 2 ? 0.5f : 0f), 1f) < 0.18f;
-                        light.intensity = flash ? 4.2f : alsBase * 0.25f;
+                        light.intensity = reilFlash ? 4.2f : alsBase * 0.25f;
                         light.enabled = daylight < 0.55f;
                         continue;
                     }

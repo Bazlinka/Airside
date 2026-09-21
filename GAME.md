@@ -7,7 +7,7 @@
   - Route Map destination detail shows a quiet **CAREER** callout only when that destination can
     advance the chapter.
   - Added Campaign + Route Map EditMode coverage.
-  - ADR 0088 makes the existing operating tiers legible as an Adelaide base roadmap:
+  - ADR 0090 makes the existing operating tiers legible as an Adelaide base roadmap:
     regional starter → expanded regional → jet-gate operation → international base.
     Career overview now shows the current base capability and the next tier says what it unlocks.
   - Added Stats coverage for the roadmap.
@@ -31,6 +31,25 @@
     intentionally not merged. Run Unity EditMode before merge.
   - **NEXT:** visual/test pass, then extend this seam into physical airport capability/facility
     upgrades and a clearer career roadmap rather than adding more aircraft.
+
+- **2026-09-21 Cursor — engine mute + evening last flights (branch
+  `feature/evening-last-flights`, ADRs 0088–0089).**
+  Bailey: last flights at 9:38pm; engine sound terribly broken; mute did nothing.
+  - Opening bank before 19:00 stays a compact morning peak. From 19:00 it
+    stretches to 22:50; Qatar/Emirates keep the 22:00 slot.
+  - Mute now silences the listener immediately. Engines only play when
+    running, fully 3D, native pitch.
+  - **NEXT:** rebuild this branch and play: last commercial row near 22:00–22:50;
+    M actually silences; engines on follow-camera during taxi/takeoff, quiet on
+    the stand. Gate lead-in still open.
+
+- **2026-09-21 Cursor — evening last flights (branch `feature/evening-last-flights`, ADR 0088).**
+  Bailey: last flights at 9:38pm did not match a 23:00 curfew.
+  - Opening bank before 19:00 stays a compact morning peak. From 19:00 it
+    stretches to 22:50; Qatar/Emirates keep the 22:00 slot.
+  - Live clock is applied before booking.
+  - **NEXT:** merge this branch, rebuild, play an evening launch — last
+    commercial row should sit near 22:00–22:50, not ~40 minutes after start.
 
 - **2026-09-21 Cursor — merged `feature/maintenance-planning` to `main` (ADRs 0085–0087).**
   Bailey asked to merge. This is now on `main`.

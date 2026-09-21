@@ -323,37 +323,58 @@ namespace Airside.Simulation
             if (!player.IsPlayer) throw new ArgumentException("The starting airline must be the player's.", nameof(player));
 
             var operations = new AirlineOperations(clock, random, DestinationCatalogue.Adelaide, AdelaideStands);
+            // Book against the real Adelaide clock first. Assigning it after scheduling
+            // used to stamp an 08:00 morning peak onto whatever live hour you launched.
+            operations.Clock = airlineClock ?? AirlineClock.Default;
             operations.AddAirline(player);
             operations.AddAircraft(player, "VH-PAX", AircraftType.Saab340, AdelaideRegionalBays[0]);
             var aiFleet = new List<FleetAircraft>();
             operations.AddMissingRegionalCarriers(aiFleet);
             operations.AddMissingEmergencyOperators(aiFleet);
-            // Opening peak: regionals on 12/30, jets on 05/23, about one arrival
-            // every three minutes across the field — a busy Adelaide morning, not
-            // a dump and then a hole. One QantasLink and the player stay parked
-            // so the 50-series apron is not empty.
-            operations.TrySeedOpeningInbound(aiFleet, "QLK", "PLO", 2 * 60);
-            operations.TrySeedOpeningInbound(aiFleet, "REX", "MGB", 5 * 60);
-            operations.TrySeedOpeningInbound(aiFleet, "REX", "PLO", 9 * 60);
-            operations.TrySeedOpeningInbound(aiFleet, "REX", "CED", 21 * 60);
-
             var terminalFleet = new List<FleetAircraft>();
             operations.AddMissingTerminalOperators(terminalFleet);
-            operations.TrySeedOpeningInbound(terminalFleet, "ANZ", "AKL", 7 * 60);
-            operations.TrySeedOpeningInbound(terminalFleet, "VOZ", "MEL", 11 * 60);
-            operations.TrySeedOpeningInbound(terminalFleet, "QFA", "SYD", 15 * 60);
-            operations.TrySeedOpeningInbound(terminalFleet, "JST", "MEL", 18 * 60);
-            operations.TrySeedOpeningInbound(terminalFleet, "VOZ", "SYD", 24 * 60);
-            operations.TrySeedOpeningInbound(terminalFleet, "SIA", "SIN", 28 * 60);
-            operations.TrySeedOpeningInbound(terminalFleet, "QFA", "BNE", 32 * 60);
-            operations.TrySeedOpeningInbound(terminalFleet, "JST", "SYD", 37 * 60);
-            operations.TrySeedOpeningInbound(terminalFleet, "MAS", "KUL", 41 * 60);
-            operations.TrySeedOpeningInbound(terminalFleet, "FJI", "NAN", 45 * 60);
-            operations.TrySeedOpeningInbound(terminalFleet, "UAE", "DXB", 49 * 60);
-            operations.TrySeedOpeningInbound(terminalFleet, "QTR", "DOH", 54 * 60);
+            operations.SeedOpeningTraffic(aiFleet, terminalFleet);
+            return operations;
+        }
+
+        /// <summary>
+        /// Morning: a compact 54-minute peak (ADR 0077). Evening: stretch that same
+        /// order onto the remaining time before 22:50 so the board still has the
+        /// 22:00 long-hauls instead of dying ~40 minutes after launch. Curfew: no
+        /// commercial opening peak.
+        /// </summary>
+        private void SeedOpeningTraffic(List<FleetAircraft> regionalFleet, List<FleetAircraft> terminalFleet)
+        {
+            var local = Clock.LocalAt(_processedTo);
+            if (AirportCurfew.IsClosed(local))
+                return;
+
+            var evening = local.Hour >= 19;
+            TrySeedOpeningInbound(regionalFleet, "QLK", "PLO", FitOpeningSeconds(local, 2 * 60, evening));
+            TrySeedOpeningInbound(regionalFleet, "REX", "MGB", FitOpeningSeconds(local, 5 * 60, evening));
+            TrySeedOpeningInbound(regionalFleet, "REX", "PLO", FitOpeningSeconds(local, 9 * 60, evening));
+            TrySeedOpeningInbound(regionalFleet, "REX", "CED", FitOpeningSeconds(local, 21 * 60, evening));
+            TrySeedOpeningInbound(terminalFleet, "ANZ", "AKL", FitOpeningSeconds(local, 7 * 60, evening));
+            TrySeedOpeningInbound(terminalFleet, "VOZ", "MEL", FitOpeningSeconds(local, 11 * 60, evening));
+            TrySeedOpeningInbound(terminalFleet, "QFA", "SYD", FitOpeningSeconds(local, 15 * 60, evening));
+            TrySeedOpeningInbound(terminalFleet, "JST", "MEL", FitOpeningSeconds(local, 18 * 60, evening));
+            TrySeedOpeningInbound(terminalFleet, "VOZ", "SYD", FitOpeningSeconds(local, 24 * 60, evening));
+            TrySeedOpeningInbound(terminalFleet, "SIA", "SIN", FitOpeningSeconds(local, 28 * 60, evening));
+            TrySeedOpeningInbound(terminalFleet, "QFA", "BNE", FitOpeningSeconds(local, 32 * 60, evening));
+            TrySeedOpeningInbound(terminalFleet, "JST", "SYD", FitOpeningSeconds(local, 37 * 60, evening));
+            TrySeedOpeningInbound(terminalFleet, "MAS", "KUL", FitOpeningSeconds(local, 41 * 60, evening));
+            TrySeedOpeningInbound(terminalFleet, "FJI", "NAN", FitOpeningSeconds(local, 45 * 60, evening));
+            if (!evening)
+            {
+                TrySeedOpeningInbound(terminalFleet, "UAE", "DXB", FitOpeningSeconds(local, 49 * 60, evening));
+                TrySeedOpeningInbound(terminalFleet, "QTR", "DOH", FitOpeningSeconds(local, 54 * 60, evening));
+            }
+
+            if (evening)
+                return;
 
             var departureIndex = 0;
-            foreach (var aircraft in operations.Fleet)
+            foreach (var aircraft in _fleet)
             {
                 if (departureIndex >= AiOpeningDepartureSeconds.Length)
                     break;
@@ -361,17 +382,35 @@ namespace Airside.Simulation
                     || aircraft.State != FleetState.AtStand || aircraft.Scheduled is not { } first)
                     continue;
                 aircraft.Scheduled = new ScheduledDeparture(first.Destination,
-                    operations.ProcessedTo.Advance(AiOpeningDepartureSeconds[departureIndex++]));
+                    _processedTo.Advance(AiOpeningDepartureSeconds[departureIndex++]));
             }
+        }
 
-            operations.Clock = airlineClock ?? AirlineClock.Default;
-            return operations;
+        /// <summary>
+        /// Last commercial arrival of the opening bank: 22:50, ten minutes before curfew.
+        /// </summary>
+        public const int LastOpeningArrivalMinute = AirportCurfew.ClosedFromHour * 60 - 10;
+
+        private long FitOpeningSeconds(DateTime local, long nominalSeconds, bool evening)
+        {
+            if (!evening)
+                return nominalSeconds;
+            var last = Clock.AtLocal(local.Date.AddMinutes(LastOpeningArrivalMinute));
+            var remaining = last.ElapsedSeconds - _processedTo.ElapsedSeconds;
+            if (remaining < 8 * 60)
+                return -1;
+            const long nominalLast = 54 * 60;
+            const long nominalFirst = 2 * 60;
+            var span = Math.Max(1, remaining - nominalFirst);
+            var t = (nominalSeconds - nominalFirst) / (double)(nominalLast - nominalFirst);
+            return nominalFirst + (long)Math.Round(t * span);
         }
 
         private void TrySeedOpeningInbound(List<FleetAircraft> fleet, string airlineId, string destinationCode,
             long secondsToCircuit)
         {
-            if (fleet == null || !DestinationCatalogue.TryFind(destinationCode, out var destination))
+            if (secondsToCircuit < 0 || fleet == null
+                || !DestinationCatalogue.TryFind(destinationCode, out var destination))
                 return;
             for (var i = fleet.Count - 1; i >= 0; i--)
             {
@@ -2509,6 +2548,7 @@ namespace Airside.Simulation
 
             if (disruption.Delayed)
                 departAt = AiDepartureWithinHours(departAt.Advance(disruption.DelayMinutes * 60L), aircraft);
+            departAt = PinLongHaulEvening(aircraft, departAt);
             aircraft.Scheduled = new ScheduledDeparture(destination, departAt, disruption.DelayMinutes);
         }
 
@@ -2557,7 +2597,26 @@ namespace Airside.Simulation
 
             if (aircraft != null && ExemptFromCurfew(aircraft))
                 return readyAt;
-            return AiDepartureWithinHours(readyAt, aircraft?.Type);
+            return PinLongHaulEvening(aircraft, AiDepartureWithinHours(readyAt, aircraft?.Type));
+        }
+
+        /// <summary>
+        /// Qatar and Emirates keep the real ~22:00 Adelaide departure when they
+        /// are already in the evening window. A morning-ready jet still turns
+        /// normally so it does not occupy a gate until night.
+        /// </summary>
+        private SimulationTime PinLongHaulEvening(FleetAircraft aircraft, SimulationTime departAt)
+        {
+            if (aircraft == null)
+                return departAt;
+            var id = aircraft.Airline.Id.Value;
+            if (id != "UAE" && id != "QTR")
+                return departAt;
+            var local = Clock.LocalAt(departAt);
+            if (local.Hour < 18 || local.Hour >= 22 || AirportCurfew.IsClosed(local))
+                return departAt;
+            var at = Clock.AtLocal(local.Date.AddHours(22));
+            return at.CompareTo(departAt) > 0 ? at : departAt;
         }
 
         internal SimulationTime AiDepartureWithinHours(SimulationTime readyAt, AircraftType type = null)

@@ -3,7 +3,7 @@
 - **Career-aware Route Map.** Inspecting a destination now explains when an authored contract
   there would advance the current campaign chapter, using campaign-owned rules rather than
   presentation guesses. No save, economy, route timing or aircraft behaviour changes.
-- **Adelaide base capability roadmap (ADR 0088).** The Career overview now translates existing
+- **Adelaide base capability roadmap (ADR 0090).** The Career overview now translates existing
   operating tiers into concrete base growth — regional starter, expanded regional operation,
   jet-gate operation and international handling — and tells the player what the next tier unlocks.
   The roadmap is derived from existing career state and adds no new save data or currency.
@@ -24,6 +24,12 @@
 - **Map → Contracts shortcut.** A selected career-target destination now offers **VIEW CONTRACTS**
   so the player can move straight from route intent to the contract workflow.
 
+- **Mute actually silences, and engines are not a wall of pitched-down takeoff (ADR 0089).**
+  M / Options set the audio listener immediately. Recorded beds only play while
+  engines run, stay 3D, and keep native pitch.
+- **Evening last flights sit near curfew, not 40 minutes after launch (ADR 0088).**
+  Launching at ~21:00 no longer dumps a fake morning peak that dies at 21:38.
+  Arrivals stretch to 22:50; Qatar and Emirates keep the real 22:00 slot.
 - **Adelaide curfew 23:00–06:00, player and RFDS exempt (ADR 0087).** Commercial
   AI no longer pushes or lands in the real closed window. You can still fly out
   at night; so can RFDS (`VH-FDA`).

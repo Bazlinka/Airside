@@ -1,4 +1,4 @@
-# 0088 — Adelaide base capability roadmap
+# 0090 — Adelaide base capability roadmap
 
 Date: 21 September 2026. Bailey asked to push beyond aircraft content into the map,
 navigation/HUD, campaign/career, buildings and environment, and then said to do as much

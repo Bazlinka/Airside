@@ -36,7 +36,8 @@ namespace Airside.Tests
             Assert.That(melbourne.Text, Is.Empty);
 
             var chapterTwo = new AirlineCareerState(completedPlayerRotations: 3,
-                tier: OperatingTier.Regional, contractHistory: new[] { Record("KGC") });
+                tier: OperatingTier.Regional, contractHistory: new[] { Record("KGC") },
+                baseLevel: PlayerBaseLevel.ExpandedRegional);
             var portLincoln = Campaign.RouteGuidance(chapterTwo, Starter, HudTestAirline.Code("PLO"));
             var alreadyDone = Campaign.RouteGuidance(chapterTwo, Starter, HudTestAirline.Code("KGC"));
             Assert.That(portLincoln.AdvancesCurrentChapter, Is.True);
@@ -59,11 +60,49 @@ namespace Airside.Tests
         {
             // Everything chapter 2 asks for, but chapter 1's Kingscote contract never flown.
             var career = new AirlineCareerState(completedPlayerRotations: 9, tier: OperatingTier.Regional,
-                contractHistory: new[] { Record("PLO"), Record("WYA") }, completedContractIds: new[] { "C-PLO", "C-WYA" });
+                contractHistory: new[] { Record("PLO"), Record("WYA") }, completedContractIds: new[] { "C-PLO", "C-WYA" },
+                baseLevel: PlayerBaseLevel.ExpandedRegional);
             var chapters = Campaign.Evaluate(career, new[] { AircraftType.Saab340, AircraftType.Atr42 });
             Assert.That(chapters[1].Goals.All(g => g.Done), Is.True);
             Assert.That(chapters[1].Complete, Is.False, "chapters are played in order");
             Assert.That(Campaign.Current(chapters).Number, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ChapterTwo_RequiresTheExpandedRegionalBase()
+        {
+            var career = new AirlineCareerState(completedPlayerRotations: 9, tier: OperatingTier.Regional,
+                contractHistory: new[] { Record("KGC"), Record("PLO") },
+                completedContractIds: new[] { "C-KGC", "C-PLO" },
+                baseLevel: PlayerBaseLevel.Starter);
+            var types = new[] { AircraftType.Saab340, AircraftType.Atr42 };
+
+            var chapter = Campaign.Evaluate(career, types)[1];
+            Assert.That(chapter.Goals.Single(g => g.Text.StartsWith("Expand the Adelaide base")).Done, Is.False);
+            Assert.That(chapter.Complete, Is.False);
+
+            var expanded = new AirlineCareerState(completedPlayerRotations: 9, tier: OperatingTier.Regional,
+                contractHistory: new[] { Record("KGC"), Record("PLO") },
+                completedContractIds: new[] { "C-KGC", "C-PLO" },
+                baseLevel: PlayerBaseLevel.ExpandedRegional);
+            Assert.That(Campaign.Evaluate(expanded, types)[1].Goals
+                .Single(g => g.Text.StartsWith("Expand the Adelaide base")).Done, Is.True);
+        }
+
+        [Test]
+        public void JetAndInternationalCampaignChaptersRequireTheirPhysicalBase()
+        {
+            var domestic = new AirlineCareerState(completedPlayerRotations: 30,
+                tier: OperatingTier.Domestic, baseLevel: PlayerBaseLevel.ExpandedRegional);
+            var chapterFour = Campaign.Evaluate(domestic,
+                new[] { AircraftType.Saab340, AircraftType.Boeing7378 })[3];
+            Assert.That(chapterFour.Goals.Single(g => g.Text.Contains("jet-gate")).Done, Is.False);
+
+            var global = new AirlineCareerState(completedPlayerRotations: 50,
+                tier: OperatingTier.International, baseLevel: PlayerBaseLevel.JetGate);
+            var chapterFive = Campaign.Evaluate(global,
+                new[] { AircraftType.Saab340, AircraftType.AirbusA350900 })[4];
+            Assert.That(chapterFive.Goals.Single(g => g.Text.Contains("international base")).Done, Is.False);
         }
 
         [Test]

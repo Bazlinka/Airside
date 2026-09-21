@@ -1,12 +1,16 @@
 ## Where to resume — session handoff
 
-- **2026-09-21 ChatGPT — career-aware route planning (branch `feature/career-roadmap-ui`).**
+- **2026-09-21 ChatGPT — career-aware route planning + base capability roadmap (branch `feature/career-roadmap-ui`).**
   Started the map/HUD/career convergence pass without changing saves or flight behaviour.
   - Campaign owns deterministic route guidance for the current chapter; Presentation does not
     infer chapter rules.
   - Route Map destination detail shows a quiet **CAREER** callout only when that destination can
     advance the chapter.
   - Added Campaign + Route Map EditMode coverage.
+  - ADR 0088 makes the existing operating tiers legible as an Adelaide base roadmap:
+    regional starter → expanded regional → jet-gate operation → international base.
+    Career overview now shows the current base capability and the next tier says what it unlocks.
+  - Added Stats coverage for the roadmap.
   - **Evidence:** connector-only edit; tests cannot be executed in this GitHub session. Branch is
     intentionally not merged. Run Unity EditMode before merge.
   - **NEXT:** visual/test pass, then extend this seam into physical airport capability/facility

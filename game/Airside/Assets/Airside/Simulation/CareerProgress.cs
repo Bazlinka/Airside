@@ -73,9 +73,51 @@ namespace Airside.Simulation
             new(OperatingTier.International, 0, 0, string.Empty, isMaxTier: true);
     }
 
-    /// <summary>Career-tier and hangar progress, derived only — never stored (ADR 0053/0056/0078).</summary>
+    /// <summary>
+    /// What the player's Adelaide base is capable of at a career tier. This is descriptive
+    /// progression, not a second upgrade currency: every line maps to systems the career
+    /// already gates today (regional operation, fleet growth, jet access and international
+    /// widebody operation).
+    /// </summary>
+    public readonly struct BaseCapability
+    {
+        internal BaseCapability(OperatingTier tier, string title, string detail, string nextUnlock)
+        {
+            Tier = tier;
+            Title = title ?? string.Empty;
+            Detail = detail ?? string.Empty;
+            NextUnlock = nextUnlock ?? string.Empty;
+        }
+
+        public OperatingTier Tier { get; }
+        public string Title { get; }
+        public string Detail { get; }
+        public string NextUnlock { get; }
+    }
+
+    /// <summary>Career-tier, base-capability and hangar progress, derived only — never stored (ADR 0088).</summary>
     public static class CareerProgress
     {
+        public static BaseCapability BaseCapabilityFor(OperatingTier tier) => tier switch
+        {
+            OperatingTier.Regional => new BaseCapability(tier,
+                "Expanded regional base",
+                "Multiple regional aircraft · Dash 8 growth",
+                "Jet-gate operations"),
+            OperatingTier.Domestic => new BaseCapability(tier,
+                "Jet-gate operation",
+                "Domestic jets · terminal-gate fleet",
+                "International handling"),
+            OperatingTier.International => new BaseCapability(tier,
+                "International base",
+                "Widebody fleet · long-haul handling",
+                string.Empty),
+            _ => new BaseCapability(OperatingTier.Provisional,
+                "Regional starter base",
+                "Regional apron · one-aircraft operation",
+                "Expanded regional base")
+        };
+
         /// <summary>
         /// The cheapest acquisition offer the career has not yet cleared every gate for, or the
         /// first affordable offer when every gate is clear. Null offer when the fleet is full or

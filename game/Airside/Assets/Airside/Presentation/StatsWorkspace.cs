@@ -86,6 +86,7 @@ namespace Airside.Presentation
         public string ReliabilityLine { get; private set; } = string.Empty;
         public string TierLine { get; private set; } = string.Empty;
         public string FleetLine { get; private set; } = string.Empty;
+        public string BaseCapabilityLine { get; private set; } = string.Empty;
 
         /// <summary>False only at International — there is nothing further to work toward.</summary>
         public bool HasNextTier { get; private set; }
@@ -124,6 +125,7 @@ namespace Airside.Presentation
             ReliabilityLine = string.Empty;
             TierLine = string.Empty;
             FleetLine = string.Empty;
+            BaseCapabilityLine = string.Empty;
             HasNextTier = false;
             NextTierTitle = string.Empty;
             NextTierRequirementLine = string.Empty;
@@ -149,6 +151,8 @@ namespace Airside.Presentation
             ReliabilityLine = $"{career.Reliability}% reliability";
             TierLine = $"{career.Tier} tier";
             FleetLine = $"{fleetSize} of {AircraftAcquisition.MaxPlayerAircraft} aircraft";
+            var capability = CareerProgress.BaseCapabilityFor(career.Tier);
+            BaseCapabilityLine = $"{capability.Title} · {capability.Detail}";
 
             FillNextTier(career, ownedTypes);
             FillAdelaideStandings(operations);
@@ -251,7 +255,7 @@ namespace Airside.Presentation
             if (next.IsMaxTier)
             {
                 NextTierTitle = "International reached";
-                NextTierRequirementLine = "No further tier to unlock.";
+                NextTierRequirementLine = "All base capabilities unlocked.";
                 NextTierProgress01 = 1f;
                 return;
             }
@@ -276,9 +280,11 @@ namespace Airside.Presentation
                 needs.Add($"{next.ReliabilityRemaining} more reliability");
             if (!string.IsNullOrEmpty(next.MissingAircraftLine))
                 needs.Add(next.MissingAircraftLine);
-            NextTierRequirementLine = needs.Count == 0
+            var unlock = CareerProgress.BaseCapabilityFor(next.Tier);
+            var gate = needs.Count == 0
                 ? "Requirements met — clears on the next settlement."
-                : "Needs " + string.Join(", ", needs);
+                : "Needs " + string.Join(", ", needs) + ".";
+            NextTierRequirementLine = $"{gate} Unlocks {unlock.Title.ToLowerInvariant()}.";
         }
 
         private static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;
@@ -495,7 +501,7 @@ namespace Airside.Presentation
             var stats = new[]
             {
                 model.FundsLine, model.LifetimeRevenueLine, model.ReliabilityLine, model.TierLine,
-                model.FleetLine, model.AdelaideRankLine
+                model.FleetLine, model.BaseCapabilityLine
             };
             for (var i = 0; i < stats.Length; i++)
                 into.Text(layout.StatRow(i).Inset(0f, 2f, 0f, 0f), stats[i], 14f);

@@ -26,6 +26,8 @@ namespace Airside.Tests
             Assert.That(model.ReliabilityLine, Is.EqualTo($"{ops.CareerState.Reliability}% reliability"));
             Assert.That(model.TierLine, Is.EqualTo("Provisional tier"));
             Assert.That(model.FleetLine, Is.EqualTo($"1 of {AircraftAcquisition.MaxPlayerAircraft} aircraft"));
+            Assert.That(model.BaseCapabilityLine, Does.StartWith("Regional starter base"));
+            Assert.That(model.BaseCapabilityLine, Does.Contain("Regional apron"));
             Assert.That(model.AdelaideRankLine, Is.EqualTo("#1 of 1 at Adelaide"));
             Assert.That(model.ContractHistory, Is.Empty);
             Assert.That(model.EmptyHistoryLine, Is.Not.Empty);
@@ -125,7 +127,22 @@ namespace Airside.Tests
             Assert.That(model.NextTierTitle, Is.EqualTo("Next: Regional"));
             Assert.That(model.NextTierRequirementLine, Does.Contain(
                 $"{AirlineCareerState.RegionalRotations} more rotation"));
+            Assert.That(model.NextTierRequirementLine, Does.Contain("expanded regional base"));
             Assert.That(model.NextTierProgress01, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void BaseCapability_RoadmapTracksExistingOperatingTiers()
+        {
+            Assert.That(CareerProgress.BaseCapabilityFor(OperatingTier.Provisional).Title,
+                Is.EqualTo("Regional starter base"));
+            Assert.That(CareerProgress.BaseCapabilityFor(OperatingTier.Regional).Title,
+                Is.EqualTo("Expanded regional base"));
+            Assert.That(CareerProgress.BaseCapabilityFor(OperatingTier.Domestic).Title,
+                Is.EqualTo("Jet-gate operation"));
+            Assert.That(CareerProgress.BaseCapabilityFor(OperatingTier.International).Title,
+                Is.EqualTo("International base"));
+            Assert.That(CareerProgress.BaseCapabilityFor(OperatingTier.International).NextUnlock, Is.Empty);
         }
 
         [Test]

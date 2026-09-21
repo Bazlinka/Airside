@@ -302,8 +302,8 @@ namespace Airside.Simulation
             { 3 * 60, 7 * 60, 12 * 60, 17 * 60, 22 * 60, 27 * 60, 33 * 60, 39 * 60 };
 
         /// <summary>
-        /// The ADR 0045 starting position at Adelaide: the player's airline with one
-        /// ATR, real Adelaide operators on the apron, and a bank of aircraft already inbound.
+        /// The ADR 0045 / 0077 starting position at Adelaide: the player's airline with one
+        /// Saab 340B, real Adelaide operators on the apron, and a bank of aircraft already inbound.
         /// </summary>
         public static AirlineOperations StartAtAdelaide(ISimulationClock clock, IRandomSource random, Airline player,
             AirlineClock airlineClock = null)
@@ -313,7 +313,7 @@ namespace Airside.Simulation
 
             var operations = new AirlineOperations(clock, random, DestinationCatalogue.Adelaide, AdelaideStands);
             operations.AddAirline(player);
-            operations.AddAircraft(player, "VH-PAX", AircraftType.Atr42, AdelaideRegionalBays[0]);
+            operations.AddAircraft(player, "VH-PAX", AircraftType.Saab340, AdelaideRegionalBays[0]);
             var aiFleet = new List<FleetAircraft>();
             operations.AddMissingRegionalCarriers(aiFleet);
             // Opening peak: regionals on 12/30, jets on 05/23, about one arrival

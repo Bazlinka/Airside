@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Saab starter, bit-by-bit fleet unlocks, light finance pressure, opening redo (ADR 0077).**
+  New careers start with a Saab 340B and $2,800 — not an ATR and $4,000. ATR is the first hangar
+  step ($5,200); Dash 8 / jets climb on stepped prices and rotation gates. Intro contracts need
+  a Saab; dispatch costs a bit more so you fly to earn the next type. Setup + intro sell the
+  ladder (Saab → ATR → Dash 8 → jets). Domain 559/559.
+
 - **NOW follow, imperative objective next-action, smoother pushback.** Operations NOW no longer
   sticks on live Outbound rows (09:55→11:55 bug) and the board scroll keeps following NOW until
   you scroll. The objective card's yellow line is a concrete verb (finish fuelling / schedule to

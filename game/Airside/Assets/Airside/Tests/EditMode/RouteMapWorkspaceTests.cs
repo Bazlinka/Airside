@@ -28,7 +28,7 @@ namespace Airside.Tests
             model.Rebuild(ops, plane, null, 900, clock.Now, RouteMapFilter.Locked);
             Assert.That(model.ShownDestinations.All(d => !d.Reachable), Is.True);
             Assert.That(model.ShownDestinations.Any(d => d.Destination.Code == "MEL"), Is.True,
-                "Melbourne is Domestic — an ATR may not file it whatever its range");
+                "Melbourne is Domestic — a Saab may not file it whatever its range");
         }
 
         [Test]
@@ -44,7 +44,7 @@ namespace Airside.Tests
                 Is.EqualTo($"Dispatch  ${FlightEconomics.DispatchCost(plane.Type, km):N0}"));
             Assert.That(model.ReturnLine, Is.EqualTo(
                 $"Estimated return  ${FlightEconomics.FlightPay(plane.Type, km, RouteBand.Regional):N0}"));
-            Assert.That(model.CompatibilityLine, Is.EqualTo("ATR 42-600 compatible"));
+            Assert.That(model.CompatibilityLine, Is.EqualTo("Saab 340B compatible"));
             Assert.That(model.AvailabilityLine, Is.EqualTo("Available with Regional capability"));
             Assert.That(model.CanPlan, Is.True);
         }

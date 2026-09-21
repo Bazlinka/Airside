@@ -32,7 +32,7 @@ namespace Airside.Tests
                 AirlineOperations.AdelaideRegionalBays);
             var player = Airline.Player(name, "#1F3A93");
             ops.AddAirline(player);
-            var plane = ops.AddAircraft(player, "VH-PAX", AircraftType.Atr42,
+            var plane = ops.AddAircraft(player, "VH-PAX", AircraftType.Saab340,
                 AirlineOperations.AdelaideRegionalBays[0]);
             return (clock, ops, plane);
         }

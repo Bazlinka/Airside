@@ -11,11 +11,11 @@ namespace Airside.Simulation
     public static class FlightEconomics
     {
         /// <summary>
-        /// Opening float for a new Provisional airline. Covers several ATR hops (including a
-        /// long SA leg) before the first aircraft returns, and still leaves room to dispatch
-        /// two parked player aircraft at once.
+        /// Opening float for a new Provisional airline (ADR 0077). Covers several Saab hops
+        /// before the first aircraft returns, but not an ATR on day one — the player has to
+        /// fly to earn the first step up the fleet ladder.
         /// </summary>
-        public const long StartingFunds = 4_000;
+        public const long StartingFunds = 2_800;
 
         /// <summary>
         /// Paid when the player books the rotation (refunded if they cancel before pushback).
@@ -24,7 +24,7 @@ namespace Airside.Simulation
         public static long DispatchCost(AircraftType type, double oneWayKm)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            return Math.Max(80, (long)Math.Round(60 + Math.Max(0, oneWayKm) * 1.1 * Weight(type)));
+            return Math.Max(90, (long)Math.Round(70 + Math.Max(0, oneWayKm) * 1.28 * Weight(type)));
         }
 
         /// <summary>Paid once when a player aircraft returns to stand, with or without a contract.</summary>
@@ -61,7 +61,7 @@ namespace Airside.Simulation
         /// <summary>
         /// Regional turboprops (bay types) are the starter airline's tool; jets cost more to
         /// dispatch. ATR/Saab/Dash 8 cruise above 500 km/h, so a cruise-speed cutoff would
-        /// price the starter ATR as a 787.
+        /// price a turboprop as a 787.
         /// </summary>
         public static double Weight(AircraftType type)
         {

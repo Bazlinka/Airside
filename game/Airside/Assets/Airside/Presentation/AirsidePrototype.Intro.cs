@@ -94,6 +94,8 @@ namespace Airside.Presentation
             GUI.Label(new Rect(0f, centreY, width, 28f), "ADELAIDE AIRPORT", subtitle);
             centreY += 25f;
             GUI.Label(new Rect(0f, centreY, width, 28f), $"ADELAIDE  ·  {local:HH:mm}  ·  LIVE", subtitle);
+            centreY += 28f;
+            GUI.Label(new Rect(0f, centreY, width, 28f), "SAAB 340  →  ATR  →  DASH 8  →  JETS", subtitle);
 
             var hint = _introHintStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label)
                 { fontSize = 13, alignment = TextAnchor.MiddleCenter }, AirsideTheme.OpenSky);

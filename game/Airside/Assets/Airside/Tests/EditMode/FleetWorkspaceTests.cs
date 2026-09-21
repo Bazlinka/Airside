@@ -106,7 +106,7 @@ namespace Airside.Tests
             var model = new FleetWorkspaceModel();
             model.Rebuild(ops, clock.Now, plane.Registration);
             Assert.That(model.SelectedCapability.Any(line => line.StartsWith("Resale value")), Is.False,
-                "the starter ATR was never bought, so it has no resale line");
+                "the starter Saab was never bought, so it has no resale line");
 
             model.Rebuild(ops, clock.Now, bought.Registration);
             var expected = (long)Math.Round(AircraftAcquisition.Dash8Q400.Price * AirlineOperations.ResaleFraction);

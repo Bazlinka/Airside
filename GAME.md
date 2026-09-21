@@ -1,5 +1,19 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Cursor — Saab starter / fleet ladder / finance / opening (branch
+  `cursor/career-rebalance-opening-22df`, ADR 0077).** Bailey: contracts / finance pressure,
+  start with smaller planes and unlock bit by bit, smarter hangar pricing, redo opening.
+  1. **Starter is Saab 340B** (`VH-PAX`); ATR 42 is the first hangar buy ($5,200 / 5 rots /
+     Provisional). Ladder: ATR → Dash 8 → 737 → A321 → A350 / 787 with stepped prices and
+     gates. Saab is owned, not sold.
+  2. **Finance:** opening float **$4,000 → $2,800**; dispatch km coeff **1.1 → 1.28**. Intro
+     regional contracts require Saab; bonuses nudged so contracts fund the ATR climb.
+  3. **Opening:** setup panel + intro wash sell "start small, grow" with the fleet ladder
+     callout. Full HudDrawList setup migration still a follow-up.
+  - **Evidence:** `scripts/test-domain.sh` **559/559**. No Unity editor in this cloud env.
+  - **NEXT:** Unity Play look at Saab-on-bay start + setup panel; optional HudDrawList
+    opening page; Bailey call on deeper insolvency / daily costs later.
+
 - **2026-09-21 Cursor — NOW follow + imperative next action + smoother pushback (branch
   `cursor/ops-now-follow-clock-22df`).** Bailey: "go for it… do as much as you can."
   1. **Operations NOW stuck at 09:55 while clock was 11:55** — Outbound rows never became

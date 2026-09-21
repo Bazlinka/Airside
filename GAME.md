@@ -1,5 +1,16 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Codex — rebuild validation (branch
+  `codex/fix-route-map-layout-test`).** Pulled `main` at `8b5f2b5e`, then corrected
+  the stale two-argument `RouteMapWorkspaceLayout.Create` test call that prevented
+  Unity compilation. The complete EditMode run now reaches runtime checks:
+  **874/895 passed, 21 failed**. Most failures are stale expectations after the
+  base-progression merge (baggage stage, base allocation/copy, and preparation
+  timing). One is the known gate lead-in decision: the test expects release at
+  Holding Short while current behaviour holds it through takeoff.
+  **NEXT:** Bailey decides the lead-in rule; then align test/code, repair the
+  remaining post-merge expectations, rerun EditMode, and build.
+
 - **2026-09-21 ChatGPT — campaign/base convergence (branch `feature/campaign-base-goals`, ADR 0094).**
   - Chapter 2 now requires the Expanded Regional Adelaide base; Chapter 4 requires Jet Gate; Chapter 5 requires the International base.
   - Campaign progress is still derived from existing save v12 career/base state; no new persistence.

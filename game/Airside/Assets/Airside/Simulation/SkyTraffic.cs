@@ -307,12 +307,10 @@ namespace Airside.Simulation
         public static double DisplayAltitudeMetres(SkyFlight flight)
         {
             var cruise = flight.AltitudeFeet / EnrouteProfile.FeetPerMetre * DisplayAltitudeScale;
-            var band = flight.Type?.Id switch
-            {
-                "A359" or "B78X" => 220.0,
-                "B38M" or "A21N" => 120.0,
-                _ => 0.0
-            };
+            var band = AircraftCatalogue.TryFor(flight.Type, out var spec)
+                ? spec.WingspanMetres >= AirlineOperations.HeavyWakeWingspanMetres ? 220.0
+                    : spec.StandClass == StandClass.TerminalGate ? 120.0 : 0.0
+                : 0.0;
             var jitter = 0.0;
             if (!string.IsNullOrEmpty(flight.Callsign))
             {

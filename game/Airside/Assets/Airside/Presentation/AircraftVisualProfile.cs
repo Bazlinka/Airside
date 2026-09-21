@@ -85,6 +85,22 @@ namespace Airside.Presentation
             mainTireRadiusMetres: 0.62f,
             noseTireRadiusMetres: 0.55f);
 
+        public static readonly AircraftVisualProfile Boeing737800 = new(
+            "Models/Aircraft/mdl_737_800_v01.gltf", -0.68f, new Vector3(0f, 0f, -19.735f),
+            new Vector3(40f, 14f, 43f), 6.2f, 34f, 39f, 41f, 1.55f, 0.62f, 0.55f);
+
+        public static readonly AircraftVisualProfile AirbusA320200 = new(
+            "Models/Aircraft/mdl_a320_200_v01.gltf", -0.68f, new Vector3(0f, 0f, -18.785f),
+            new Vector3(40f, 14f, 41f), 5.9f, 34f, 37f, 40f, 1.5f, 0.59f, 0.52f);
+
+        public static readonly AircraftVisualProfile EmbraerE190 = new(
+            "Models/Aircraft/mdl_e190_v01.gltf", -0.68f, new Vector3(0f, 0f, -18.12f),
+            new Vector3(32f, 12f, 39f), 5.2f, 28f, 36f, 35f, 1.4f, 0.55f, 0.46f);
+
+        public static readonly AircraftVisualProfile AirbusA220300 = new(
+            "Models/Aircraft/mdl_a220_300_v01.gltf", -0.68f, new Vector3(0f, 0f, -19.35f),
+            new Vector3(39f, 13f, 42f), 5.6f, 34f, 38f, 40f, 1.5f, 0.58f, 0.50f);
+
         // AIR-008: A321neo-class international narrowbody. Like the 737 kit its
         // authored origin is the nose-stop datum and its tyres sit at local y=0.
         public static readonly AircraftVisualProfile AirbusA321Neo = new(
@@ -126,6 +142,14 @@ namespace Airside.Presentation
             mainTireRadiusMetres: 0.70f,
             noseTireRadiusMetres: 0.55f);
 
+        public static readonly AircraftVisualProfile AirbusA330900 = new(
+            "Models/Aircraft/mdl_a330_900neo_v01.gltf", -0.68f, new Vector3(0f, 0f, -31.83f),
+            new Vector3(67f, 20f, 68f), 8.4f, 62f, 63f, 67f, 2.3f, 0.70f, 0.55f);
+
+        public static readonly AircraftVisualProfile Boeing7879 = new(
+            "Models/Aircraft/mdl_787_9_v01.gltf", -0.68f, new Vector3(0f, 0f, -31.405f),
+            new Vector3(64f, 20f, 68f), 8.5f, 59f, 63f, 65f, 2.3f, 0.70f, 0.55f);
+
         // AIR-007: original Saab 340B-class model. Low-wing regional turboprop with a
         // conventional tail; centred airframe root and tyres at local y=0, like the other
         // regional types, but framed to the compact 19.73 × 21.44 m envelope.
@@ -162,12 +186,24 @@ namespace Airside.Presentation
         {
             if (type != null && type.Id == AircraftType.Boeing7378.Id)
                 return Boeing7378;
+            if (type != null && type.Id == AircraftType.Boeing737800.Id)
+                return Boeing737800;
+            if (type != null && type.Id == AircraftType.AirbusA320200.Id)
+                return AirbusA320200;
+            if (type != null && type.Id == AircraftType.EmbraerE190.Id)
+                return EmbraerE190;
+            if (type != null && type.Id == AircraftType.AirbusA220300.Id)
+                return AirbusA220300;
             if (type != null && type.Id == AircraftType.AirbusA321Neo.Id)
                 return AirbusA321Neo;
             if (type != null && type.Id == AircraftType.AirbusA350900.Id)
                 return AirbusA350900;
             if (type != null && type.Id == AircraftType.Boeing78710.Id)
                 return Boeing78710;
+            if (type != null && type.Id == AircraftType.AirbusA330900.Id)
+                return AirbusA330900;
+            if (type != null && type.Id == AircraftType.Boeing7879.Id)
+                return Boeing7879;
             if (type != null && type.Id == AircraftType.Dash8Q400.Id)
                 return Dash8Q400;
             if (type != null && type.Id == AircraftType.Saab340.Id)
@@ -178,6 +214,11 @@ namespace Airside.Presentation
         public static bool IsBoeing7378(AircraftType type) =>
             type != null && type.Id == AircraftType.Boeing7378.Id;
 
+        public static bool IsBoeing737800(AircraftType type) => type != null && type.Id == AircraftType.Boeing737800.Id;
+        public static bool IsAirbusA320200(AircraftType type) => type != null && type.Id == AircraftType.AirbusA320200.Id;
+        public static bool IsEmbraerE190(AircraftType type) => type != null && type.Id == AircraftType.EmbraerE190.Id;
+        public static bool IsAirbusA220300(AircraftType type) => type != null && type.Id == AircraftType.AirbusA220300.Id;
+
         public static bool IsAirbusA321Neo(AircraftType type) =>
             type != null && type.Id == AircraftType.AirbusA321Neo.Id;
 
@@ -186,6 +227,9 @@ namespace Airside.Presentation
 
         public static bool IsBoeing78710(AircraftType type) =>
             type != null && type.Id == AircraftType.Boeing78710.Id;
+
+        public static bool IsAirbusA330900(AircraftType type) => type != null && type.Id == AircraftType.AirbusA330900.Id;
+        public static bool IsBoeing7879(AircraftType type) => type != null && type.Id == AircraftType.Boeing7879.Id;
 
         public static bool IsDash8Q400(AircraftType type) =>
             type != null && type.Id == AircraftType.Dash8Q400.Id;

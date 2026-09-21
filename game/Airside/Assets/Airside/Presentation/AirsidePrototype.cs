@@ -8784,12 +8784,24 @@ namespace Airside.Presentation
         {
             if (AircraftVisualProfiles.IsBoeing7378(type))
                 return BuildNarrowbody7378(name, accent, liveryDecalRelativePath);
+            if (AircraftVisualProfiles.IsBoeing737800(type))
+                return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.Boeing737800);
+            if (AircraftVisualProfiles.IsAirbusA320200(type))
+                return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.AirbusA320200);
+            if (AircraftVisualProfiles.IsEmbraerE190(type))
+                return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.EmbraerE190);
+            if (AircraftVisualProfiles.IsAirbusA220300(type))
+                return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.AirbusA220300);
             if (AircraftVisualProfiles.IsAirbusA321Neo(type))
                 return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.AirbusA321Neo);
             if (AircraftVisualProfiles.IsAirbusA350900(type))
                 return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.AirbusA350900);
             if (AircraftVisualProfiles.IsBoeing78710(type))
                 return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.Boeing78710);
+            if (AircraftVisualProfiles.IsAirbusA330900(type))
+                return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.AirbusA330900);
+            if (AircraftVisualProfiles.IsBoeing7879(type))
+                return BuildNarrowbody7378(name, accent, liveryDecalRelativePath, AircraftVisualProfiles.Boeing7879);
             if (AircraftVisualProfiles.IsDash8Q400(type))
                 return BuildDash8Q400(name, accent, liveryDecalRelativePath);
             if (AircraftVisualProfiles.IsSaab340(type))
@@ -8977,8 +8989,9 @@ namespace Airside.Presentation
             var profile = profileOverride ?? AircraftVisualProfiles.Boeing7378;
             var root = new GameObject(name).transform;
             AircraftVisualProfileComponent.Ensure(root, profile);
-            var a350 = profile.ArtRelativePath.EndsWith("mdl_a350_900_v01.gltf", StringComparison.Ordinal);
-            var boeing787 = profile.ArtRelativePath.EndsWith("mdl_787_10_v01.gltf", StringComparison.Ordinal);
+            var a350 = profile.ArtRelativePath.Contains("mdl_a350_900", StringComparison.Ordinal)
+                       || profile.ArtRelativePath.Contains("mdl_a330_900", StringComparison.Ordinal);
+            var boeing787 = profile.ArtRelativePath.Contains("mdl_787_", StringComparison.Ordinal);
 
             var usedArt = ArtPresentationLoader.TryInstantiate(
                 profile.ArtRelativePath,

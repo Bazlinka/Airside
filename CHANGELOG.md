@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Six missing real Adelaide passenger types now have genuine models:** A320-200, 737-800,
+  E190, A220-300, A330-900neo and 787-9. Each has a true-scale procedural glTF/FBX kit,
+  dedicated catalogue/performance/profile data and a rendered Hangar thumbnail. Live ADS-B
+  traffic now maps those ICAO codes to the correct silhouette instead of an A321, 737-8,
+  A350 or 787-10 stand-in. Existing Qantas, Jetstar, Malaysia, Emirates and Fiji equipment
+  assignments are corrected from current Adelaide Airport evidence. Charter-only and one-off
+  visitors remain deliberately out of scope (ADR 0082).
+
 - **Arrivals no longer freeze in mid-air on final.** An arrival waiting for the runway (a
   departure rolling, the 2–3 min wake gap after a jet, a storm hold) was pinned motionless
   about 750 m out and 40 m up until cleared — Bailey saw one "land, freeze and sit there, then

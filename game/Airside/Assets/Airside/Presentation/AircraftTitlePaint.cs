@@ -131,12 +131,24 @@ namespace Airside.Presentation
         {
             if (Is(type, AircraftType.Boeing7378))
                 return new AircraftIdentityMarkingLayout(1.98f, 4.05f, -9.0f, 3.92f, -31.0f, 0.22f, 0.13f);
+            if (Is(type, AircraftType.Boeing737800))
+                return new AircraftIdentityMarkingLayout(1.98f, 4.08f, -9.0f, 3.95f, -31.0f, 0.22f, 0.13f);
+            if (Is(type, AircraftType.AirbusA320200))
+                return new AircraftIdentityMarkingLayout(2.06f, 3.90f, -8.2f, 3.78f, -29.2f, 0.21f, 0.13f);
+            if (Is(type, AircraftType.EmbraerE190))
+                return new AircraftIdentityMarkingLayout(1.58f, 3.58f, -7.6f, 3.47f, -28.0f, 0.19f, 0.12f);
+            if (Is(type, AircraftType.AirbusA220300))
+                return new AircraftIdentityMarkingLayout(1.82f, 3.76f, -8.2f, 3.64f, -30.0f, 0.20f, 0.12f);
             if (Is(type, AircraftType.AirbusA321Neo))
                 return new AircraftIdentityMarkingLayout(1.96f, 3.85f, -10.0f, 3.74f, -35.2f, 0.22f, 0.13f);
             if (Is(type, AircraftType.AirbusA350900))
                 return new AircraftIdentityMarkingLayout(3.04f, 6.58f, -13.0f, 6.40f, -55.0f, 0.30f, 0.17f);
             if (Is(type, AircraftType.Boeing78710))
                 return new AircraftIdentityMarkingLayout(2.94f, 6.45f, -13.5f, 6.28f, -56.0f, 0.30f, 0.17f);
+            if (Is(type, AircraftType.AirbusA330900))
+                return new AircraftIdentityMarkingLayout(2.88f, 6.35f, -12.5f, 6.18f, -51.8f, 0.29f, 0.17f);
+            if (Is(type, AircraftType.Boeing7879))
+                return new AircraftIdentityMarkingLayout(2.94f, 6.45f, -12.5f, 6.28f, -51.0f, 0.29f, 0.17f);
             if (Is(type, AircraftType.Dash8Q400))
                 return new AircraftIdentityMarkingLayout(1.44f, 1.78f, 7.0f, 1.70f, -10.4f, 0.15f, 0.10f);
             if (Is(type, AircraftType.Saab340))

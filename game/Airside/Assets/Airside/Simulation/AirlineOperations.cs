@@ -198,22 +198,22 @@ namespace Airside.Simulation
             }),
             (Airline.Qantas, new[]
             {
-                ("VH-VZX", AircraftType.Boeing7378, new StableId("GATE-21")),
-                ("VH-VZY", AircraftType.Boeing7378, new StableId("GATE-24")),
-                ("VH-VZZ", AircraftType.Boeing7378, new StableId("GATE-23"))
+                ("VH-VZX", AircraftType.Boeing737800, new StableId("GATE-21")),
+                ("VH-VZY", AircraftType.Boeing737800, new StableId("GATE-24")),
+                ("VH-VZZ", AircraftType.Boeing737800, new StableId("GATE-23"))
             }),
             (Airline.Jetstar, new[]
             {
-                ("VH-VFH", AircraftType.AirbusA321Neo, new StableId("GATE-17")),
+                ("VH-VFH", AircraftType.AirbusA320200, new StableId("GATE-17")),
                 ("VH-VFI", AircraftType.AirbusA321Neo, new StableId("GATE-16L"))
             }),
             (Airline.AirNewZealand, new[] { ("ZK-NNA", AircraftType.AirbusA321Neo, new StableId("GATE-15")) }),
             (Airline.CathayPacific, new[] { ("B-LRB", AircraftType.AirbusA350900, new StableId("GATE-18")) }),
             (Airline.SingaporeAirlines, new[] { ("9V-SCA", AircraftType.Boeing78710, new StableId("GATE-20")) }),
-            (Airline.MalaysiaAirlines, new[] { ("9M-MAB", AircraftType.AirbusA350900, new StableId("GATE-25")) }),
-            (Airline.Emirates, new[] { ("A6-EVA", AircraftType.Boeing78710, new StableId("GATE-22L")) }),
+            (Airline.MalaysiaAirlines, new[] { ("9M-MAB", AircraftType.AirbusA330900, new StableId("GATE-25")) }),
+            (Airline.Emirates, new[] { ("A6-EVA", AircraftType.AirbusA350900, new StableId("GATE-22L")) }),
             (Airline.QatarAirways, new[] { ("A7-ANC", AircraftType.AirbusA350900, new StableId("GATE-26L")) }),
-            (Airline.FijiAirways, new[] { ("DQ-FAE", AircraftType.AirbusA321Neo, new StableId("GATE-12L")) })
+            (Airline.FijiAirways, new[] { ("DQ-FAE", AircraftType.Boeing7378, new StableId("GATE-12L")) })
         };
 
         /// <summary>
@@ -2187,8 +2187,7 @@ namespace Airside.Simulation
                 foreach (var ch in aircraft.Registration)
                     hash = hash * 31 + ch;
                 hash = hash * 31 + aircraft.CompletedTrips;
-                var wide = ReferenceEquals(aircraft.Type, AircraftType.AirbusA350900)
-                           || ReferenceEquals(aircraft.Type, AircraftType.Boeing78710);
+                var wide = AircraftCatalogue.IsWidebody(aircraft.Type);
                 var jet = NeedsTerminalGate(aircraft.Type);
                 var minutes = wide ? 55 + Math.Abs(hash % 35)
                     : jet ? 40 + Math.Abs(hash % 19)

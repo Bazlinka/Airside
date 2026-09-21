@@ -267,14 +267,14 @@ namespace Airside.Simulation
             "REX" => AircraftType.Saab340,
             "QLK" => AircraftType.Dash8Q400,
             "VOZ" => AircraftType.Boeing7378,
-            "QFA" => AircraftType.Boeing7378,
-            "JST" => AircraftType.AirbusA321Neo,
+            "QFA" => AircraftType.Boeing737800,
+            "JST" => AircraftType.AirbusA320200,
             "ANZ" => AircraftType.AirbusA321Neo,
-            "FJI" => AircraftType.AirbusA321Neo,
+            "FJI" => AircraftType.Boeing7378,
             "SIA" => AircraftType.Boeing78710,
-            "UAE" => AircraftType.Boeing78710,
+            "UAE" => AircraftType.AirbusA350900,
             "CPA" => AircraftType.AirbusA350900,
-            "MAS" => AircraftType.AirbusA350900,
+            "MAS" => AircraftType.AirbusA330900,
             "QTR" => AircraftType.AirbusA350900,
             _ => null
         };
@@ -291,8 +291,7 @@ namespace Airside.Simulation
         {
             if (type == null)
                 return 50;
-            if (ReferenceEquals(type, AircraftType.AirbusA350900)
-                || ReferenceEquals(type, AircraftType.Boeing78710))
+            if (AircraftCatalogue.IsWidebody(type))
                 return 75;
             if (AirlineOperations.NeedsTerminalGate(type))
                 return 50;

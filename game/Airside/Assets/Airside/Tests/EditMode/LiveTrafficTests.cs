@@ -70,8 +70,12 @@ namespace Airside.Tests
             Assert.That(LiveTraffic.ModelFor("DH8D"), Is.EqualTo(AircraftType.Dash8Q400));
             Assert.That(LiveTraffic.ModelFor("sf34"), Is.EqualTo(AircraftType.Saab340));
             Assert.That(LiveTraffic.ModelFor("B38M"), Is.EqualTo(AircraftType.Boeing7378));
-            Assert.That(LiveTraffic.ModelFor("A320"), Is.EqualTo(AircraftType.AirbusA321Neo));
-            Assert.That(LiveTraffic.ModelFor("B789"), Is.EqualTo(AircraftType.Boeing78710));
+            Assert.That(LiveTraffic.ModelFor("A320"), Is.EqualTo(AircraftType.AirbusA320200));
+            Assert.That(LiveTraffic.ModelFor("B738"), Is.EqualTo(AircraftType.Boeing737800));
+            Assert.That(LiveTraffic.ModelFor("E190"), Is.EqualTo(AircraftType.EmbraerE190));
+            Assert.That(LiveTraffic.ModelFor("BCS3"), Is.EqualTo(AircraftType.AirbusA220300));
+            Assert.That(LiveTraffic.ModelFor("A339"), Is.EqualTo(AircraftType.AirbusA330900));
+            Assert.That(LiveTraffic.ModelFor("B789"), Is.EqualTo(AircraftType.Boeing7879));
             Assert.That(LiveTraffic.ModelFor("C172"), Is.Null);
             Assert.That(LiveTraffic.ModelFor(null), Is.Null);
         }

@@ -38,10 +38,16 @@ namespace Airside.Domain
         public static AircraftType Atr42 => AircraftCatalogue.Atr42.Type;
         public static AircraftType Saab340 => AircraftCatalogue.Saab340.Type;
         public static AircraftType Dash8Q400 => AircraftCatalogue.Dash8Q400.Type;
+        public static AircraftType EmbraerE190 => AircraftCatalogue.EmbraerE190.Type;
+        public static AircraftType AirbusA220300 => AircraftCatalogue.AirbusA220300.Type;
+        public static AircraftType AirbusA320200 => AircraftCatalogue.AirbusA320200.Type;
+        public static AircraftType Boeing737800 => AircraftCatalogue.Boeing737800.Type;
         public static AircraftType Boeing7378 => AircraftCatalogue.Boeing7378.Type;
         public static AircraftType AirbusA321Neo => AircraftCatalogue.AirbusA321Neo.Type;
         public static AircraftType AirbusA350900 => AircraftCatalogue.AirbusA350900.Type;
         public static AircraftType Boeing78710 => AircraftCatalogue.Boeing78710.Type;
+        public static AircraftType AirbusA330900 => AircraftCatalogue.AirbusA330900.Type;
+        public static AircraftType Boeing7879 => AircraftCatalogue.Boeing7879.Type;
 
         public bool CanReach(double legKm) => legKm <= PracticalRangeKm;
 

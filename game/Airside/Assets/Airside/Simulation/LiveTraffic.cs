@@ -122,44 +122,51 @@ namespace Airside.Simulation
                 case "DH8C":
                 case "DH8D":
                     return AircraftType.Dash8Q400;
-                case "A319":
                 case "A320":
                 case "A20N":
+                    return AircraftType.AirbusA320200;
+                case "A319":
                 case "A321":
                 case "A21N":
-                case "BCS3":
                     return AircraftType.AirbusA321Neo;
+                case "BCS3":
+                    return AircraftType.AirbusA220300;
                 case "B737":
-                case "B738":
                 case "B739":
                 case "B37M":
                 case "B38M":
                 case "B39M":
                 case "B712":
+                    return AircraftType.Boeing7378;
+                case "B738":
+                    return AircraftType.Boeing737800;
                 case "E190":
                 case "E195":
                 case "E290":
                 case "E295":
+                    return AircraftType.EmbraerE190;
                 case "F100":
                     return AircraftType.Boeing7378;
                 case "A332":
                 case "A333":
                 case "A338":
-                case "A339":
                 case "A359":
                 case "A35K":
                 case "A388":
                     return AircraftType.AirbusA350900;
+                case "A339":
+                    return AircraftType.AirbusA330900;
                 case "B772":
                 case "B773":
                 case "B77L":
                 case "B77W":
                 case "B788":
-                case "B789":
                 case "B78X":
                 case "B744":
                 case "B748":
                     return AircraftType.Boeing78710;
+                case "B789":
+                    return AircraftType.Boeing7879;
                 default:
                     return null;
             }

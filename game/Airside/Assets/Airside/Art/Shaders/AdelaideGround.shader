@@ -26,6 +26,8 @@ Shader "Airside/AdelaideGround"
         _Smoothness ("Smoothness", Range(0, 1)) = 0.1
         _MacroScale ("Macro Variation Metres", Float) = 240
         _MacroStrength ("Macro Brightness", Range(0, 0.5)) = 0.14
+        _MownStripeWidth ("Mown Stripe Width Metres", Float) = 34
+        _MownStripeStrength ("Mown Stripe Contrast", Range(0, 0.12)) = 0.035
         _FarBlendStart ("Far Detail Start Metres", Float) = 120
         _FarBlendEnd ("Far Detail End Metres", Float) = 900
     }
@@ -84,6 +86,8 @@ Shader "Airside/AdelaideGround"
                 float _Smoothness;
                 float _MacroScale;
                 float _MacroStrength;
+                float _MownStripeWidth;
+                float _MownStripeStrength;
                 float _FarBlendStart;
                 float _FarBlendEnd;
             CBUFFER_END
@@ -212,6 +216,14 @@ Shader "Airside/AdelaideGround"
                 float macro = MacroNoise(xz) - 0.5;
                 albedo *= 1.0 + macro * 2.0 * _MacroStrength;
                 albedo.r *= 1.0 + macro * 0.5 * _MacroStrength;
+                // Adelaide's broad runway infields are maintained grass, not one undifferentiated
+                // carpet. Soft alternating cuts parallel to 05/23 add airport-scale structure;
+                // dirt weight suppresses them where service wear has taken over.
+                float stripePhase = xz.y / max(_MownStripeWidth, 1.0)
+                    + ValueNoise(float2(xz.x / 620.0, 11.7)) * 0.22;
+                float stripe = sin(stripePhase * 3.14159265) * _MownStripeStrength;
+                float maintainedGrass = saturate(w.r + w.g - w.b * 1.5);
+                albedo *= 1.0 + stripe * maintainedGrass;
                 // Dissolve the large rectangular field into the same real Adelaide image
                 // used outside it. The central operational area keeps authored grass detail.
                 float insideEdge = min(_GroundHalfX - abs(xz.x), _GroundHalfZ - abs(xz.y));

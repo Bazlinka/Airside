@@ -1,5 +1,15 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Codex — ground and route-map readability (branch
+  `codex/ground-map-readability-pass`, ADR 0073).** Added restrained, runway-aligned mowing bands
+  to the maintained Adelaide infield and true 500/1,000/2,000 km geodesic range rings to the Route
+  Map. The ground change works inside the existing layered terrain shader and fades out under worn
+  dirt; it does not stamp decoration over operational pavement. The map rings are spatial planning
+  guides, not invented competition or fake coverage.
+  - **Evidence:** domain suite green; Unity EditMode **787/789**, with only the same two unrelated
+    baseline failures; shared 1440×900 Route Map render and fresh 1920×1080 Mac ground capture
+    inspected. The mowing bands are visible at overview scale without overpowering taxiways.
+
 - **2026-09-21 Codex — layered cloud realism pass (branch `codex/cloud-realism-pass`, ADR
   0072).** Rebuilt the cheap procedural cloud bank as three shaded layers per cluster rather than
   one/two stretched spheres. Broad grey undersides, irregular bodies and smaller bright crowns give

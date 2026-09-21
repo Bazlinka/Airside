@@ -1,5 +1,33 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Cursor — Operations board honesty, day orientation, taxi weave, no live
+  traffic (branch `cursor/ops-board-honesty-taxi-22df`, ADR 0070).** Bailey: planes show as
+  due to depart but nothing is at the terminal; Operations is hard to read for "where am I in
+  the day?"; taxi/pushback still feel unreal; arrival/departure times feel wrong — maybe pull
+  live Adelaide traffic.
+  - **Root cause of empty gates:** the board overlays a synthetic full-day timetable
+    (`AdelaideDayPlan`) on the much smaller live fleet. Uncovered day-plan rows printed a stand
+    (Gate 13 / Bay 50C) and "Scheduled", which reads as metal at that gate. **Fix:** uncovered
+    rows keep time/route but STAND is always "—", STATUS is "Listed"/"Expected", `OnField =
+    false`. Only a live fleet row may claim a stand. Caption is now "N on field · M listed
+    ahead". Also fixed cancelled morning slots never becoming `IsPast`, which parked the NOW
+    divider on an 08:00 cancellation while the clock read 12:30.
+  - **Day orientation:** persistent NOW on the day strip + board divider; on-field movement
+    ticks on the strip; mockup scroll opens at `FirstActiveRowIndex` like the runtime.
+  - **Taxi:** presentation weave cut from ~0.55 m / 2.2° to ~0.18 m / 0.9° so taxi follows the
+    centreline. Pushback polylines / OSM router unchanged — still need a Unity look.
+  - **Schedule feel:** AI domestic turnarounds 10–24 min → 28–44 (turboprop) / 40–58
+    (narrowbody) / 55–89 (widebody); day-plan dwell matches (35 / 50 / 75).
+  - **Live traffic:** ADR 0070 declines live FlightAware/ADS-B/AIP feeds (determinism, offline,
+    licence). Approved path if Bailey wants "more real" later is a static authored snapshot,
+    not a live socket.
+  - **Evidence:** `scripts/test-domain.sh` **548/548** (2 new Operations tests). Operations HUD
+    re-rendered via `scripts/hud-mockup` — listed rows show "—", live VH-RGN shows 50G, caption
+    and NOW markers visible. No Unity editor here for taxi/pushback eye-check.
+  - **NEXT:** Unity Play look at taxi/pushback after the weave cut; optional authored
+    representative YPAD timetable snapshot if Bailey wants times even closer to a real day;
+    do not bolt on live feeds.
+
 - **2026-09-21 Codex — real YPAD building context + painted stand references (branch
   `codex/adelaide-art-integration`, ADR 0069).** Followed the actual packaged Mac build rather
   than treating the art manifest as a replacement list. The existing aircraft, GSE, people,

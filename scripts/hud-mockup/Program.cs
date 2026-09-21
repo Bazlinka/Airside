@@ -115,7 +115,8 @@ public static class Program
             model.Attention.Count);
 
         var page = new HudDrawList();
-        OperationsWorkspacePainter.Paint(page, model, layout, scenario.SelectedRegistration, 0);
+        OperationsWorkspacePainter.Paint(page, model, layout, scenario.SelectedRegistration,
+            model.FirstActiveRowIndex);
         return new Page("operations", Serialise(list, page));
     }
 

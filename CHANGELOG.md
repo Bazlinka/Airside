@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **Operations board honesty, day orientation, taxi weave, schedule feel (ADR 0070).**
+  Published day-plan rows no longer invent Gate/Bay occupancy when nothing is parked —
+  STAND is "—" and STATUS is "Listed"/"Expected" until a live aircraft covers the slot.
+  Day caption reads "N on field · M listed ahead"; NOW markers on the strip and board;
+  cancelled morning slots no longer steal the NOW divider. Taxi presentation weave reduced
+  (~0.55 m → ~0.18 m). AI turnarounds lengthened toward real Adelaide dwells. Live Adelaide
+  traffic feeds declined (determinism/offline/licence) — static authored snapshot remains the
+  only approved path to a more timetable-shaped day. `scripts/test-domain.sh` 548/548;
+  Operations HUD re-rendered via hud-mockup.
+
 - **Real Adelaide operational buildings and painted stand references (ADR 0069).** Added a
   reproducible ODbL snapshot and generated runtime geometry for 78 real YPAD operational
   footprints, including the 44 m control tower, airport fire station and 12 hangars. The detailed

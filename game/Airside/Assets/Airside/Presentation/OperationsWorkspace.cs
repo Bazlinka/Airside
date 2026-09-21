@@ -527,6 +527,12 @@ namespace Airside.Presentation
             if (aircraft.State == FleetState.AwaitingStand)
                 return $"Landed · parking{AircraftStatus.WaitSuffix(aircraft, now)}";
 
+            if (Maintenance.InCheck(aircraft, now))
+                return Maintenance.Status(aircraft, now, clock);
+
+            if (aircraft.State == FleetState.AtStand && !aircraft.Scheduled.HasValue && Maintenance.IsOverdue(aircraft))
+                return "Check overdue";
+
             if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
             {
                 var prep = DeparturePrep.For(aircraft, now);
@@ -575,7 +581,7 @@ namespace Airside.Presentation
                 _prep.Add(Check("Boarding", prep.BoardingProgress, prep.Stage == DeparturePrepStage.Boarding));
             }
 
-            PrimaryAction = OperationsSummary.PrimaryAction(aircraft);
+            PrimaryAction = OperationsSummary.PrimaryAction(aircraft, now);
             PrimaryActionLabel = OperationsSummary.ActionLabel(PrimaryAction).ToUpperInvariant();
             CanCancel = aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand
                         && aircraft.Scheduled.HasValue;

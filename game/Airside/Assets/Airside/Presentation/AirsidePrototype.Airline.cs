@@ -531,7 +531,7 @@ namespace Airside.Presentation
 
             var fleet = PlayerFleet();
             OperationsSummary.FillPlayerRows(fleet, _clock.Now, _compactOpsRows);
-            var available = OperationsSummary.AvailableCount(fleet);
+            var available = OperationsSummary.AvailableCount(fleet, _clock.Now);
             var height = Mathf.Min(area.height, 36f + _compactOpsRows.Count * 28f + 28f);
             var rect = new Rect(area.x, area.y, area.width, height);
             AirsideTheme.DrawOpaquePanel(rect);
@@ -818,7 +818,7 @@ namespace Airside.Presentation
             if (!aircraft.Airline.IsPlayer)
                 return;
 
-            var action = OperationsSummary.PrimaryAction(aircraft);
+            var action = OperationsSummary.PrimaryAction(aircraft, _clock.Now);
             var primary = _hudPrimaryButton ??= AirsideTheme.PrimaryButtonStyle(
                 new GUIStyle(smallButton) { fontSize = 14, fontStyle = FontStyle.Bold });
             var destructive = _hudDestructiveButton ??= AirsideTheme.DestructiveButtonStyle(
@@ -892,6 +892,9 @@ namespace Airside.Presentation
                         AssignStandFromHud(aircraft, stand.Value);
                     else
                         ShowToast("All stands occupied — wait for one to clear.");
+                    break;
+                case AircraftHudAction.StartCheck:
+                    StartCheckFromHud(aircraft);
                     break;
             }
         }
@@ -1086,7 +1089,9 @@ namespace Airside.Presentation
             {
                 FleetState.AtStand => aircraft.Scheduled.HasValue
                     ? StandDepartureStatus(aircraft)
-                    : $"On {StandNames.Display(aircraft.Stand)} · no flight planned",
+                    : Maintenance.InCheck(aircraft, _clock.Now)
+                        ? $"{StandNames.Display(aircraft.Stand)} · {Maintenance.Status(aircraft, _clock.Now, _operations.Clock)}"
+                        : $"On {StandNames.Display(aircraft.Stand)} · no flight planned",
                 FleetState.TaxiOut => $"Taxiing to runway {RunwayWeather.Label(aircraft.AssignedRunway)} · {dest}",
                 FleetState.HoldingShort => $"Holding {RunwayWeather.Label(aircraft.AssignedRunway)} · {dest}{wait}",
                 FleetState.TakingOff => FlightBoard.PhaseLabel(aircraft, _clock.Now) == "Lining up"
@@ -2021,6 +2026,10 @@ namespace Airside.Presentation
                     if (TryFindFleetAircraft(_selectedAircraftId, out var tracking))
                         SelectAircraft(tracking);
                     return;
+                case HudAction.StartCheck:
+                    if (TryFindFleetAircraft(_selectedAircraftId, out var checking))
+                        StartCheckFromHud(checking);
+                    return;
                 case HudAction.ViewEligibleAircraft:
                     ShowEligibleContractAircraft();
                     return;
@@ -2100,7 +2109,7 @@ namespace Airside.Presentation
         {
             if (!TryFindFleetAircraft(_selectedAircraftId, out var aircraft))
                 return;
-            RunSelectionAction(aircraft, OperationsSummary.PrimaryAction(aircraft));
+            RunSelectionAction(aircraft, OperationsSummary.PrimaryAction(aircraft, _clock.Now));
         }
 
         /// <summary>Select the first aircraft that can actually progress the active contract.</summary>
@@ -2132,6 +2141,23 @@ namespace Airside.Presentation
                 ShowToast(AircraftAcquisition.TryFor(type, out var offer)
                     ? $"Bought {Article.A(type.Name)} for ${offer.Price:N0}."
                     : $"Bought {Article.A(type.Name)}.");
+                SaveAirline();
+            }
+            else
+            {
+                ShowToast(result.Reason);
+            }
+
+            PlayUiClick();
+        }
+
+        private void StartCheckFromHud(FleetAircraft aircraft)
+        {
+            var cost = Maintenance.CheckCost(aircraft.Type);
+            var result = _operations.StartCheck(aircraft);
+            if (result.Accepted)
+            {
+                ShowToast($"{aircraft.Registration} is in check until {ClockText(aircraft.CheckUntil.Value)} · ${cost:N0}.");
                 SaveAirline();
             }
             else

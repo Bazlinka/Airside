@@ -41,7 +41,7 @@ namespace Airside.Presentation
     /// <summary>
     /// One aircraft the player could buy. Every value is read from
     /// <see cref="AircraftAcquisition"/> and current career state — no invented
-    /// maintenance, wear or upgrade economy.
+    /// upgrade economy on the hangar list. Routine checks are a fleet action (ADR 0085).
     /// </summary>
     public readonly struct FleetMarketOffer
     {
@@ -112,6 +112,8 @@ namespace Airside.Presentation
         public AircraftHudAction PrimaryAction { get; private set; }
         public string PrimaryActionLabel { get; private set; } = string.Empty;
         public bool CanTrack { get; private set; }
+        public bool CanStartCheck { get; private set; }
+        public string StartCheckLabel { get; private set; } = string.Empty;
 
         public void Rebuild(AirlineOperations operations, SimulationTime now, string selectedRegistration)
         {
@@ -129,6 +131,8 @@ namespace Airside.Presentation
             PrimaryAction = AircraftHudAction.None;
             PrimaryActionLabel = string.Empty;
             CanTrack = false;
+            CanStartCheck = false;
+            StartCheckLabel = string.Empty;
             if (operations == null)
                 return;
 
@@ -179,11 +183,17 @@ namespace Airside.Presentation
         /// <summary>Roster wording: the prep stage while a booked departure is turning around.</summary>
         private static string FleetStatus(FleetAircraft aircraft, SimulationTime now)
         {
+            if (aircraft.Airline.IsPlayer && Maintenance.InCheck(aircraft, now))
+                return Maintenance.Status(aircraft, now, AirlineClock.Default);
             if (aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
             {
                 var prep = DeparturePrep.For(aircraft, now);
                 return prep.Ready ? "Ready for pushback" : prep.Label;
             }
+
+            if (aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand
+                && (Maintenance.IsOverdue(aircraft) || Maintenance.IsDueSoon(aircraft)))
+                return Maintenance.Status(aircraft, now, AirlineClock.Default);
 
             return aircraft.State switch
             {
@@ -267,6 +277,12 @@ namespace Airside.Presentation
                              + $"({RouteAccess.ExampleDestinations(ceiling)}{ceilingSuffix})");
             _capability.Add(Plural(aircraft.CompletedTrips, "completed rotation"));
             _capability.Add($"{aircraft.Type.PracticalRangeKm:#,0} km planning range");
+            if (aircraft.Airline.IsPlayer)
+            {
+                var check = Maintenance.Status(aircraft, now, clock);
+                if (!string.IsNullOrEmpty(check))
+                    _capability.Add(check);
+            }
             if (!aircraft.Airline.IsPlayer)
                 _capability.Add($"Operated by {aircraft.Airline.Name}");
             // The starter aircraft was never bought (AircraftAcquisition's own doc comment),
@@ -281,6 +297,11 @@ namespace Airside.Presentation
                 AssignmentLine = $"Adelaide → {booked.Destination.Name}";
                 AssignmentDetail = $"Departs {clock.TimeText(booked.DepartAt)}"
                                    + $"  ·  {AdelaideGround.StandLabel(aircraft.Stand)}";
+            }
+            else if (Maintenance.InCheck(aircraft, now))
+            {
+                AssignmentLine = Maintenance.Status(aircraft, now, clock);
+                AssignmentDetail = AdelaideGround.StandLabel(aircraft.Stand);
             }
             else if (aircraft.CurrentDestination.HasValue)
             {
@@ -307,11 +328,17 @@ namespace Airside.Presentation
                 _prep.Add(PrepCheck("Boarding", prep.BoardingProgress, prep.Stage == DeparturePrepStage.Boarding));
             }
 
-            PrimaryAction = OperationsSummary.PrimaryAction(aircraft);
+            PrimaryAction = OperationsSummary.PrimaryAction(aircraft, now);
             PrimaryActionLabel = OperationsSummary.ActionLabel(PrimaryAction).ToUpperInvariant();
             // Track is the primary action for an aircraft that is already flying; offering it
-            // twice on the same card just reads as a mistake.
-            CanTrack = PrimaryAction != AircraftHudAction.TrackFlight;
+            // twice on the same card just reads as a mistake. Parked idle aircraft offer a
+            // check instead (ADR 0085) — following a parked airframe is a click on the field.
+            CanStartCheck = Maintenance.CanStart(aircraft, now) && PrimaryAction != AircraftHudAction.StartCheck;
+            StartCheckLabel = CanStartCheck
+                ? $"CHECK ${Maintenance.CheckCost(aircraft.Type):N0}"
+                : string.Empty;
+            CanTrack = PrimaryAction != AircraftHudAction.TrackFlight && !CanStartCheck
+                       && !Maintenance.InCheck(aircraft, now);
             _ = operations;
         }
 
@@ -590,7 +617,10 @@ namespace Airside.Presentation
             if (model.PrimaryAction != AircraftHudAction.None)
                 into.Button(new HudBox(pane.X, buttonY, half, 34f), model.PrimaryActionLabel,
                     HudAction.Primary, HudButtonStyle.Primary);
-            if (model.CanTrack)
+            if (model.CanStartCheck)
+                into.Button(new HudBox(pane.X + half + 10f, buttonY, half, 34f), model.StartCheckLabel,
+                    HudAction.StartCheck, HudButtonStyle.Secondary);
+            else if (model.CanTrack)
                 into.Button(new HudBox(pane.X + half + 10f, buttonY, half, 34f), "TRACK", HudAction.Track,
                     HudButtonStyle.Secondary);
         }

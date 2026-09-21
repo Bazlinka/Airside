@@ -1129,6 +1129,9 @@ namespace Airside.Simulation
             if (!CanReach(aircraft, destination))
                 return CommandResult.Refused(
                     $"{destination.Name} is {DistanceKm(destination):0} km — beyond the {aircraft.Type.Name}'s {aircraft.Type.PracticalRangeKm:0} km range.");
+            if (aircraft.CheckUntil is { } checkEnds && departAt.CompareTo(checkEnds) < 0)
+                return CommandResult.Refused(
+                    $"{aircraft.Registration} is in its check until {Clock.TimeText(checkEnds)}. Pick a later time.");
             if (aircraft.Airline.IsPlayer && !RouteAccess.Allows(aircraft.Type, destination))
                 return CommandResult.Refused(
                     $"{Article.CapitalA(aircraft.Type.Name)} is cleared for {RouteAccess.Ceiling(aircraft.Type)} routes — {destination.Name} is {RouteAccess.BandOf(destination)}.");
@@ -1307,6 +1310,42 @@ namespace Airside.Simulation
         }
 
         /// <summary>
+        /// Takes a parked player aircraft out of service for its routine check (ADR 0085): pays
+        /// for it, grounds it for <see cref="Maintenance.CheckSeconds"/>, and resets its wear.
+        /// </summary>
+        public CommandResult StartCheck(FleetAircraft aircraft)
+        {
+            if (aircraft == null || !_fleet.Contains(aircraft))
+                return CommandResult.Refused("No such aircraft.");
+            if (!aircraft.Airline.IsPlayer)
+                return CommandResult.Refused("Only your own aircraft can be sent for a check.");
+            if (aircraft.State != FleetState.AtStand)
+                return CommandResult.Refused($"{aircraft.Registration} must be parked at its stand for a check.");
+            if (aircraft.Scheduled.HasValue)
+                return CommandResult.Refused($"{aircraft.Registration} has a flight booked. Cancel it first.");
+            if (Maintenance.InCheck(aircraft, _processedTo))
+                return CommandResult.Refused($"{aircraft.Registration} is already in its check.");
+            var cost = Maintenance.CheckCost(aircraft.Type);
+            if (CareerState == null)
+                return CommandResult.Refused("No career to charge the check against.");
+            if (!CareerState.TryChargePurchase(cost))
+                return CommandResult.Refused($"A check costs ${cost:N0}; you have ${CareerState.Funds:N0}.");
+
+            aircraft.RotationsSinceCheck = 0;
+            aircraft.CheckUntil = _processedTo.Advance(Maintenance.CheckSeconds(aircraft.Type));
+            return CommandResult.Ok;
+        }
+
+        internal void RestoreMaintenance(string registration, int rotationsSinceCheck, long checkUntilSeconds)
+        {
+            var aircraft = _fleet.Find(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase));
+            if (aircraft == null)
+                return;
+            aircraft.RotationsSinceCheck = Math.Max(0, rotationsSinceCheck);
+            aircraft.CheckUntil = checkUntilSeconds > 0 ? new SimulationTime(checkUntilSeconds) : null;
+        }
+
+        /// <summary>
         /// Sells a player aircraft back for a fraction of its purchase price — the market side
         /// of a fleet the player over-committed to, or wants to specialise out of a type.
         /// Refuses a mid-rotation aircraft: only one <see cref="FleetState.AtStand"/> is safe to
@@ -1321,6 +1360,8 @@ namespace Airside.Simulation
                 return CommandResult.Refused("Only your own aircraft can be sold.");
             if (aircraft.State != FleetState.AtStand)
                 return CommandResult.Refused($"{aircraft.Registration} must be parked at its stand to sell.");
+            if (Maintenance.InCheck(aircraft, _processedTo))
+                return CommandResult.Refused($"{aircraft.Registration} is in its check until {Clock.TimeText(aircraft.CheckUntil.Value)}.");
             if (!AircraftAcquisition.TryFor(aircraft.Type, out var offer))
                 return CommandResult.Refused($"{aircraft.Type.Name} has no resale listing.");
 
@@ -1580,6 +1621,10 @@ namespace Airside.Simulation
                 case FleetState.TaxiIn:
                     var justFlown = aircraft.CurrentDestination;
                     aircraft.CompletedTrips++;
+                    aircraft.RotationsSinceCheck++;
+                    // A rotation begun with the check already overdue (ADR 0085).
+                    if (aircraft.Airline.IsPlayer && aircraft.RotationsSinceCheck > Maintenance.IntervalRotations)
+                        CareerState?.ApplyPunctuality(-Maintenance.OverduePenalty);
                     aircraft.CurrentDestination = null;
                     aircraft.WentAroundThisTrip = false;
                     Transition(aircraft, FleetState.AtStand, now, null);

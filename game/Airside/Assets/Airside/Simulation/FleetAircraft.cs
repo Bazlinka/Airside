@@ -100,6 +100,12 @@ namespace Airside.Simulation
 
         public int CompletedTrips { get; internal set; }
 
+        /// <summary>Rotations flown since the last routine check (ADR 0085).</summary>
+        public int RotationsSinceCheck { get; internal set; }
+
+        /// <summary>When the check under way finishes; null when none is.</summary>
+        public SimulationTime? CheckUntil { get; internal set; }
+
         /// <summary>Runway fixed when the movement enters the airport sequence.</summary>
         public RunwayDirection AssignedRunway { get; internal set; } = RunwayDirection.Runway05;
 

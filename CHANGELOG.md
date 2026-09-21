@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Routine aircraft checks (ADR 0085).** Each aircraft wears a little every rotation and
+  needs a check every eight. You choose when: send it from Fleet while it is parked (2 hours
+  and $400 for the Saab; four hours and 6% of list price for a jet). Flying on past due costs
+  2 reliability per extra rotation. The objective card tells you when a check is overdue or
+  under way. Save v11 (older saves load as freshly checked).
+  Unity EditMode **855/856** (only the gate lead-in decision test).
+
 - **Twelve more career contracts, now actually on offer (ADR 0084).** Mount Gambier, Ceduna,
   Coober Pedy, Mildura, Broken Hill, Canberra, Sydney, Brisbane, Perth, Auckland, Singapore and
   Hong Kong. The Contracts page now leads with the next two your tier allows, then the rotating

@@ -149,9 +149,10 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Tracking corrections keep taxiing from looking rail-guided: a larger
-        /// weave, a couple of degrees of heading bias, and they stay on during
-        /// the slow push. Deterministic per registration; no frame-to-frame wobble.
+        /// Tracking corrections keep taxiing from looking perfectly rail-guided, but stay
+        /// subtle: a few centimetres of weave and about a degree of heading bias. A larger
+        /// weave read as wandering off the centreline. Deterministic per registration; no
+        /// frame-to-frame wobble. Pushback is excluded (tail-first legs never reach here).
         /// </summary>
         private GroundPose HumanGroundPose(FleetAircraft aircraft, FleetGroundLeg leg, GroundPose pose)
         {
@@ -166,10 +167,11 @@ namespace Airside.Presentation
             var wave = Mathf.Sin((float)_preciseTime * 0.09f + phase)
                        + 0.45f * Mathf.Sin((float)_preciseTime * 0.031f + phase * 1.7f)
                        + 0.18f * Mathf.Sin((float)_preciseTime * 0.19f + phase * 0.4f);
-            var offset = wave * (leg is FleetGroundLeg.Lineup or FleetGroundLeg.Vacate ? 0.16f : 0.55f) * fade;
+            // Was 0.55 m / 2.2° — felt like drifting off the taxiway. Keep a hint of life only.
+            var offset = wave * (leg is FleetGroundLeg.Lineup or FleetGroundLeg.Vacate ? 0.06f : 0.18f) * fade;
             var normalX = -pose.NoseZ;
             var normalZ = pose.NoseX;
-            var headingBias = Mathf.Sin((float)_preciseTime * 0.07f + phase * 0.7f) * 2.2f * Mathf.Deg2Rad * fade;
+            var headingBias = Mathf.Sin((float)_preciseTime * 0.07f + phase * 0.7f) * 0.9f * Mathf.Deg2Rad * fade;
             var cos = Mathf.Cos(headingBias);
             var sin = Mathf.Sin(headingBias);
             var noseX = pose.NoseX * cos + pose.NoseZ * sin;

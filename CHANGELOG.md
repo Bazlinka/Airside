@@ -1,5 +1,16 @@
 ## Unreleased
 
+- **Operations board honesty, day orientation, taxi weave, schedule feel (ADR 0071).**
+  Published day-plan rows no longer invent Gate/Bay occupancy when nothing is parked —
+  STAND is "—" and STATUS is "Listed"/"Expected" until a live aircraft covers the slot.
+  Day caption reads "N on field · M listed ahead"; NOW markers on the strip and board;
+  cancelled morning slots no longer steal the NOW divider. Taxi presentation weave reduced
+  (~0.55 m → ~0.18 m). AI turnarounds lengthened toward real Adelaide dwells. Live Adelaide
+  traffic feeds declined (determinism/offline/licence) — static authored snapshot remains the
+  only approved path to a more timetable-shaped day. Numbered 0071 after main claimed 0070 for
+  the competitive Career HUD. `scripts/test-domain.sh` 548/548; Operations HUD re-rendered via
+  hud-mockup.
+
 - **Competitive Career HUD and calmer navigation (ADR 0070).** Career now shows an honest
   Adelaide activity rank derived from the completed rotations already recorded for every player
   and AI aircraft. Wide layouts show up to five leaders, always retain the player row and name the

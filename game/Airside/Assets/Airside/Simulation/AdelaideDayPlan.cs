@@ -95,7 +95,10 @@ namespace Airside.Simulation
                             break;
                         var arriveMinutes = Math.Min(banks[slot],
                             AirlineOperations.AiLastDepartureHour * 60 - 55);
-                        var departMinutes = Math.Min(arriveMinutes + 50,
+                        // Gate dwell matches the live AI turnaround bands (ADR 0071):
+                        // turboprop ~35, narrowbody ~50, widebody ~75 — not a flat 50 for all.
+                        var dwell = TurnaroundMinutes(type);
+                        var departMinutes = Math.Min(arriveMinutes + dwell,
                             AirlineOperations.AiLastDepartureHour * 60 - 5);
                         var number = 210 + slot;
                         var stand = StandFor(type, slot);
@@ -282,6 +285,18 @@ namespace Airside.Simulation
             return planned.Arrival
                 ? planned.EstimatedAt.ElapsedSeconds - duration
                 : planned.EstimatedAt.ElapsedSeconds;
+        }
+
+        private static int TurnaroundMinutes(AircraftType type)
+        {
+            if (type == null)
+                return 50;
+            if (ReferenceEquals(type, AircraftType.AirbusA350900)
+                || ReferenceEquals(type, AircraftType.Boeing78710))
+                return 75;
+            if (AirlineOperations.NeedsTerminalGate(type))
+                return 50;
+            return 35;
         }
 
         private static string StandFor(AircraftType type, int slot)

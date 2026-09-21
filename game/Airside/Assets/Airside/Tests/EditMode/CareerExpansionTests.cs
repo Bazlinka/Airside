@@ -258,7 +258,8 @@ namespace Airside.Tests
         public void ContractMarket_DrawsFromOwnedTypesAndChangesWithTheWindow()
         {
             var (clock, ops, _) = PlayerOnly();
-            var first = ops.MarketOffers();
+            // The rotating market only; authored career contracts lead the offers (ADR 0084).
+            var first = ops.MarketOffers().Where(o => o.Id.StartsWith("MKT-")).ToList();
             Assert.That(first.Count, Is.EqualTo(ContractMarket.OffersPerWindow));
             foreach (var offer in first)
             {
@@ -269,7 +270,7 @@ namespace Airside.Tests
 
             clock.Set(new SimulationTime(ContractMarket.WindowSeconds));
             ops.Update();
-            var later = ops.MarketOffers();
+            var later = ops.MarketOffers().Where(o => o.Id.StartsWith("MKT-")).ToList();
             Assert.That(later.Count, Is.EqualTo(ContractMarket.OffersPerWindow));
             Assert.That(later.Select(o => o.Id), Is.Not.EqualTo(first.Select(o => o.Id)),
                 "a new six-hour window is a new draw");

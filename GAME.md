@@ -1,5 +1,11 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Claude — career contracts on offer (branch `feature/more-contracts`, ADR 0084).**
+  12 authored contracts (Regional → International) in `RouteContractCatalogue`;
+  `MarketOffers()` leads with the next 2 eligible, unfulfilled ones (`FeaturedCareerContracts`).
+  One market test now filters to `MKT-` offers. Unity EditMode **845/846**.
+  - **NEXT:** maintenance planning (Bailey's "more to plan than contracts"); a play to tune pay.
+
 - **2026-09-21 Claude — career campaign chapters (branch `feature/campaign-chapters`, ADR
   0083).** Bailey (low on usage): finish AI collisions, then career goals & tiers, more
   contracts, and "more things to plan as you play, not just contracts".

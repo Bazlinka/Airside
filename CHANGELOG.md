@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Mute actually silences, and engines are not a wall of pitched-down takeoff (ADR 0089).**
+  M / Options set the audio listener immediately. Recorded beds only play while
+  engines run, stay 3D, and keep native pitch.
 - **Evening last flights sit near curfew, not 40 minutes after launch (ADR 0088).**
   Launching at ~21:00 no longer dumps a fake morning peak that dies at 21:38.
   Arrivals stretch to 22:50; Qatar and Emirates keep the real 22:00 slot.

@@ -24,8 +24,21 @@ from PIL import Image, ImageDraw, ImageFont
 
 SCALE = 1.4
 
-REGULAR = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+def first_font(*paths):
+    for path in paths:
+        if os.path.isfile(path):
+            return path
+    raise FileNotFoundError(f"No HUD review font found in: {', '.join(paths)}")
+
+
+REGULAR = first_font(
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/System/Library/Fonts/Supplemental/Arial.ttf",
+)
+BOLD = first_font(
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+)
 
 # Airside.Presentation.AirsidePalette, kept in step by palette_check() below.
 PALETTE = {

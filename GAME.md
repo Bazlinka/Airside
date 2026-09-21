@@ -1,5 +1,25 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Codex — competitive Career HUD with real activity (branch
+  `codex/hud-competitive-pass`, ADR 0070).** Bailey asked for a clearer, real-game HUD with
+  competitive elements. Added an **Adelaide activity** standing based only on live completed
+  rotations already stored for every player/AI aircraft — no invented market share or hidden AI
+  score. Career always shows the player's rank; wider layouts show up to five leaders, keep the
+  player visible even when outside the leaders, and state the next carrier/rotations needed to
+  pass. Ties share a rank and a fresh zero-rotation field says the first rotation takes the lead.
+  - Calmed the shell: active navigation is now a blue underline rather than a full bright tab.
+  - Actual 1024×640 review exposed a pre-existing Career overlap caused by squeezing its two-column
+    content beside the objective. Workspaces now take full width below 680 usable points; the
+    compact Career render is clean and retains the rank summary while omitting the full table.
+  - Made `scripts/render-hud-mockups.py` portable across Linux and macOS fonts so visual QA no
+    longer fails before drawing.
+  - **Evidence:** domain **550/550**; Unity EditMode **784/786**, with the same two unrelated
+    pre-existing failures (`AirlineSaveTests.VersionFiveSave_MigratesSingaporePlaceholderTo787WithoutLosingRotation`
+    and `TerminalGateOperationsTests.Reservations_GateLeadInAndRunwayHeldBeforeMovementAndReleased`).
+    Re-rendered all six shared draw-list pages at 1440×900 and 1024×640; fresh Mac build completed.
+  - **NEXT:** realistic layered cloud silhouettes/shading, then ground macro/detail breakup. Keep
+    each as its own visually verified merge rather than mixing environment work into this HUD PR.
+
 - **2026-09-21 Codex — real YPAD building context + painted stand references (branch
   `codex/adelaide-art-integration`, ADR 0069).** Followed the actual packaged Mac build rather
   than treating the art manifest as a replacement list. The existing aircraft, GSE, people,

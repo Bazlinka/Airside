@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **Competitive Career HUD and calmer navigation (ADR 0070).** Career now shows an honest
+  Adelaide activity rank derived from the completed rotations already recorded for every player
+  and AI aircraft. Wide layouts show up to five leaders, always retain the player row and name the
+  next carrier plus the rotations needed to pass it; narrow layouts retain the rank summary without
+  forcing in a cramped table. Selected navigation tabs now use a precise blue underline instead of
+  a large filled block. Workspaces below 680 points take the full width, fixing the pre-existing
+  Career overlap at 1024×640. The offline HUD renderer now finds native macOS fonts as well as its
+  Linux defaults. Domain 550/550; Unity 784/786 with the same two unrelated pre-existing failures;
+  1440×900 and 1024×640 draw-list renders and a fresh Mac build checked.
+
 - **Real Adelaide operational buildings and painted stand references (ADR 0069).** Added a
   reproducible ODbL snapshot and generated runtime geometry for 78 real YPAD operational
   footprints, including the 44 m control tower, airport fire station and 12 hangars. The detailed

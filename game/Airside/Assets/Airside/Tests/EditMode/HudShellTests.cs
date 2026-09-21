@@ -81,6 +81,15 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Shell_GivesCareerPagesTheWholeWidthAt1024RatherThanCrushingTwoColumns()
+        {
+            var workspace = HudShell.WorkspaceSurface(1024f, 640f);
+            Assert.That(HudShell.ObjectiveSurvivesWorkspace(1024f, 640f), Is.False);
+            Assert.That(workspace.X, Is.EqualTo(HudShell.Margin));
+            Assert.That(workspace.Width, Is.EqualTo(1024f - HudShell.Margin * 2f));
+        }
+
+        [Test]
         public void Shell_NeverLetsAWorkspaceRunUnderTheTopBarOrOffTheBottom()
         {
             foreach (var (width, height) in HudTestAirline.Viewports)

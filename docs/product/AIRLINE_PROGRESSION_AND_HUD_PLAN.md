@@ -136,6 +136,15 @@ Migration must:
 - alerts only when an action is genuinely required;
 - one active objective with plain-language progress.
 
+### Competitive layer
+
+- compare the player with live AI airlines using values the simulation genuinely records;
+- begin with completed Adelaide rotations, labelled as activity rather than invented market share;
+- always show the player's rank and a concrete next rival to pass;
+- do not add generic XP, fabricated opponent ratings or permanent leaderboard clutter;
+- add passenger, revenue or network-share competition only when those quantities are actually
+  simulated and explainable to the player.
+
 ### Workspaces
 
 Use one navigation strip with four destinations:

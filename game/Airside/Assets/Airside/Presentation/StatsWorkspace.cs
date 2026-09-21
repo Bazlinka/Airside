@@ -153,7 +153,9 @@ namespace Airside.Presentation
             ReliabilityLine = $"{career.Reliability}% reliability";
             TierLine = $"{career.Tier} tier";
             FleetLine = $"{fleetSize} of {career.Base.FleetCapacity} base slots";
-            BaseCapabilityLine = career.Base.Title + " · " + career.Base.Detail
+            BaseCapabilityLine = career.Base.Title
+                                 + " · " + PlayerBase.MaintenanceCapabilityLine(career.BaseLevel)
+                                 + " · " + PlayerBase.TurnaroundLine(career.BaseLevel)
                                  + " · Stands: " + PlayerBase.StandAccessLine(career.BaseLevel);
 
             FillBaseRoadmap(career);
@@ -270,7 +272,8 @@ namespace Airside.Presentation
             var funds = next.UpgradeCost <= 0 ? 1f : Clamp01(career.Funds / (float)next.UpgradeCost);
             NextTierProgress01 = Math.Min(rotations, funds);
             NextTierRequirementLine = PlayerBase.Requirement(next, career)
-                                      + " Upgrade cost $" + next.UpgradeCost.ToString("N0") + ".";
+                                      + " Upgrade cost $" + next.UpgradeCost.ToString("N0") + "."
+                                      + " Unlocks " + PlayerBase.UpgradeBenefitLine(next.Level) + ".";
             CanUpgradeBase = career.Tier >= next.RequiredTier
                              && career.CompletedPlayerRotations >= next.RequiredRotations
                              && career.Funds >= next.UpgradeCost;

@@ -325,5 +325,35 @@ namespace Airside.Tests
                 }
             }
         }
+
+        [Test]
+        public void Stats_BaseCapabilityExplainsOperationalBenefits()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            var model = new StatsWorkspaceModel();
+
+            model.Rebuild(ops, clock.Now);
+            Assert.That(model.BaseCapabilityLine, Does.Contain("outsourced maintenance"));
+            Assert.That(model.BaseCapabilityLine, Does.Contain("baseline ground services"));
+
+            ops.RestoreCareerState(50_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+                System.Array.Empty<string>(), completedPlayerRotations: 28,
+                baseLevel: PlayerBaseLevel.JetGate);
+            model.Rebuild(ops, clock.Now);
+            Assert.That(model.BaseCapabilityLine, Does.Contain("local jet maintenance"));
+            Assert.That(model.BaseCapabilityLine, Does.Contain("20% faster ground services"));
+        }
+
+        [Test]
+        public void Stats_RoadmapPreviewsWhatTheNextBaseActuallyUnlocks()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            var model = new StatsWorkspaceModel();
+            model.Rebuild(ops, clock.Now);
+
+            Assert.That(model.NextTierRequirementLine, Does.Contain("local regional maintenance"));
+            Assert.That(model.NextTierRequirementLine, Does.Contain("10% faster turns"));
+            Assert.That(model.NextTierRequirementLine, Does.Contain("regional apron"));
+        }
     }
 }

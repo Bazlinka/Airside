@@ -1,5 +1,29 @@
 ## Unreleased
 
+- **Career-aware Route Map.** Inspecting a destination now explains when an authored contract
+  there would advance the current campaign chapter, using campaign-owned rules rather than
+  presentation guesses. No save, economy, route timing or aircraft behaviour changes.
+- **Adelaide base capability roadmap (ADR 0090).** The Career overview now translates existing
+  operating tiers into concrete base growth — regional starter, expanded regional operation,
+  jet-gate operation and international handling — and tells the player what the next tier unlocks.
+  The roadmap is derived from existing career state and adds no new save data or currency.
+- **Cleaner career navigation.** The top-level workspace is now labelled **CAREER** rather than
+  the prototype-era **STATS**, and Route Map lists identify current campaign target destinations
+  before the player opens their detail.
+- **Objective progress now matches the objective.** When the next action is to accept a contract,
+  the persistent card measures the current campaign chapter and names the current Adelaide base
+  capability instead of showing unrelated next-aircraft purchase progress.
+- **Career targets read on the map.** Current-chapter destinations now use the caution treatment
+  directly on the Australia map as well as the destination list/detail.
+- **One capability language across Career, Fleet and Contracts.** Fleet identifies the current
+  Adelaide base capability, while locked aircraft/contracts name the base capability and tier
+  actually required instead of presenting tier labels as unexplained game levels.
+- **Career base roadmap.** The old generic next-tier block now reads as current Adelaide base →
+  next base, with the existing real progress bar, exact remaining requirements and resulting
+  operating capability.
+- **Map → Contracts shortcut.** A selected career-target destination now offers **VIEW CONTRACTS**
+  so the player can move straight from route intent to the contract workflow.
+
 - **Mute actually silences, and engines are not a wall of pitched-down takeoff (ADR 0089).**
   M / Options set the audio listener immediately. Recorded beds only play while
   engines run, stay 3D, and keep native pitch.

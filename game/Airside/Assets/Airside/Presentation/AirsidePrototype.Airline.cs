@@ -1379,7 +1379,8 @@ namespace Airside.Presentation
             _mapNetworkDrawList.Clear();
             RouteMapWorkspacePainter.PaintNetwork(_mapNetworkDrawList, workspaceLayout.Map, _mapLens,
                 _mapDestinationRows, home, _mapSelection, _operations.PlayerAirline.LiveryHex,
-                _routeMapWorkspace.AircraftRangeKm, _routeMapWorkspace.AircraftRangeLabel);
+                _routeMapWorkspace.AircraftRangeKm, _routeMapWorkspace.AircraftRangeLabel,
+                _routeMapWorkspace.CareerTargetCodes);
             _hudPainter.Draw(_mapNetworkDrawList);
             DrawMapLabels(mapRect);
 
@@ -2035,6 +2036,9 @@ namespace Airside.Presentation
                     return;
                 case HudAction.ViewEligibleAircraft:
                     ShowEligibleContractAircraft();
+                    return;
+                case HudAction.ViewContracts:
+                    SetWorkspace(HudWorkspace.Contracts);
                     return;
                 case HudAction.PlanFlight:
                     ScheduleFromPlanner();

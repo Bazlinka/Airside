@@ -24,11 +24,44 @@ namespace Airside.Tests
             Assert.That(model.LockedCount, Is.GreaterThan(0));
             Assert.That(model.ShownDestinations.All(d => d.Reachable), Is.True);
             Assert.That(model.ShownDestinations.Any(d => d.Destination.Code == "KGC"), Is.True);
+            Assert.That(model.IsCareerTarget(HudTestAirline.Code("KGC")), Is.True,
+                "the current campaign target should be visible before opening its detail");
+            Assert.That(model.CareerTargetCodes, Does.Contain("KGC"));
 
             model.Rebuild(ops, plane, null, 900, clock.Now, RouteMapFilter.Locked);
             Assert.That(model.ShownDestinations.All(d => !d.Reachable), Is.True);
             Assert.That(model.ShownDestinations.Any(d => d.Destination.Code == "MEL"), Is.True,
                 "Melbourne is Domestic — a Saab may not file it whatever its range");
+        }
+
+        [Test]
+        public void Map_CareerTargetOffersAContractsShortcut()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            var model = new RouteMapWorkspaceModel();
+            model.Rebuild(ops, plane, HudTestAirline.Code("KGC"), 900, clock.Now, RouteMapFilter.Available);
+
+            var surface = new HudBox(0, 0, 1000, 700);
+            var layout = RouteMapWorkspaceLayout.Create(surface, model.ShownDestinations.Count);
+            var draw = new HudDrawList();
+            RouteMapWorkspacePainter.Paint(draw, model, layout);
+
+            Assert.That(draw.Commands.Any(c => c.ActionId == HudAction.ViewContracts), Is.True);
+        }
+
+        [Test]
+        public void Map_ExplainsWhenASelectedDestinationAdvancesTheCareer()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            var model = new RouteMapWorkspaceModel();
+
+            model.Rebuild(ops, plane, HudTestAirline.Code("KGC"), 900, clock.Now, RouteMapFilter.Available);
+            Assert.That(model.CareerLine, Does.Contain("Chapter 1 target"));
+            Assert.That(model.CareerTone, Is.EqualTo(HudTone.Caution));
+            Assert.That(model.IsCareerTarget(HudTestAirline.Code("KGC")), Is.True);
+
+            model.Rebuild(ops, plane, HudTestAirline.Code("MEL"), 900, clock.Now, RouteMapFilter.Locked);
+            Assert.That(model.CareerLine, Is.Empty);
         }
 
         [Test]

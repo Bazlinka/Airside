@@ -103,12 +103,11 @@ namespace Airside.Presentation
             var offer = NextOffer(career, marketOffers);
             if (offer != null)
             {
-                var hangar = CareerProgress.NextAircraft(career, FleetCount(playerFleet));
-                var progress = HangarProgressText(hangar, career);
+                var chapter = ChapterProgress(playerFleet, career);
                 return new CareerObjective(
                     $"Accept {Article.A(PlaceName(offer.DestinationCode))} contract",
-                    string.IsNullOrEmpty(progress) ? "No contract accepted yet" : progress,
-                    HangarProgress01(hangar, career),
+                    string.IsNullOrEmpty(chapter.Text) ? "No contract accepted yet" : chapter.Text,
+                    chapter.Progress01,
                     next,
                     nextSeverity);
             }
@@ -440,6 +439,27 @@ namespace Airside.Presentation
             foreach (var _ in playerFleet)
                 count++;
             return count;
+        }
+
+        private static (string Text, float Progress01) ChapterProgress(
+            IEnumerable<FleetAircraft> playerFleet, AirlineCareerState career)
+        {
+            if (career == null)
+                return (string.Empty, 0f);
+
+            var owned = new List<AircraftType>();
+            if (playerFleet != null)
+                foreach (var aircraft in playerFleet)
+                    if (aircraft?.Type != null)
+                        owned.Add(aircraft.Type);
+
+            var chapter = Campaign.Current(Campaign.Evaluate(career, owned));
+            if (chapter == null)
+                return (string.Empty, 0f);
+
+            var capability = CareerProgress.BaseCapabilityFor(career.Tier);
+            var progress = chapter.Goals.Count <= 0 ? 0f : chapter.GoalsDone / (float)chapter.Goals.Count;
+            return ($"{chapter.GoalsDone} of {chapter.Goals.Count} chapter goals · {capability.Title}", progress);
         }
 
         private static string HangarProgressText(NextAircraftRequirement hangar, AirlineCareerState career)

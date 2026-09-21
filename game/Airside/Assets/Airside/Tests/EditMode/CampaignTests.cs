@@ -25,6 +25,26 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void RouteGuidance_PointsAtTheDestinationThatAdvancesTheCurrentChapter()
+        {
+            var fresh = new AirlineCareerState();
+            var kingscote = Campaign.RouteGuidance(fresh, Starter, HudTestAirline.Code("KGC"));
+            var melbourne = Campaign.RouteGuidance(fresh, Starter, HudTestAirline.Code("MEL"));
+            Assert.That(kingscote.AdvancesCurrentChapter, Is.True);
+            Assert.That(kingscote.Text, Does.Contain("Chapter 1"));
+            Assert.That(melbourne.AdvancesCurrentChapter, Is.False);
+            Assert.That(melbourne.Text, Is.Empty);
+
+            var chapterTwo = new AirlineCareerState(completedPlayerRotations: 3,
+                tier: OperatingTier.Regional, contractHistory: new[] { Record("KGC") });
+            var portLincoln = Campaign.RouteGuidance(chapterTwo, Starter, HudTestAirline.Code("PLO"));
+            var alreadyDone = Campaign.RouteGuidance(chapterTwo, Starter, HudTestAirline.Code("KGC"));
+            Assert.That(portLincoln.AdvancesCurrentChapter, Is.True);
+            Assert.That(portLincoln.Text, Does.Contain("Chapter 2"));
+            Assert.That(alreadyDone.AdvancesCurrentChapter, Is.False);
+        }
+
+        [Test]
         public void ChapterOne_CompletesOnAKingscoteContractAndThreeRotations()
         {
             var career = new AirlineCareerState(completedPlayerRotations: 3,

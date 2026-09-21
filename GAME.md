@@ -1,5 +1,37 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 ChatGPT — career-aware route planning + base capability roadmap (branch `feature/career-roadmap-ui`).**
+  Started the map/HUD/career convergence pass without changing saves or flight behaviour.
+  - Campaign owns deterministic route guidance for the current chapter; Presentation does not
+    infer chapter rules.
+  - Route Map destination detail shows a quiet **CAREER** callout only when that destination can
+    advance the chapter.
+  - Added Campaign + Route Map EditMode coverage.
+  - ADR 0090 makes the existing operating tiers legible as an Adelaide base roadmap:
+    regional starter → expanded regional → jet-gate operation → international base.
+    Career overview now shows the current base capability and the next tier says what it unlocks.
+  - Added Stats coverage for the roadmap.
+  - Navigation now calls the page **CAREER** instead of the old **STATS** prototype label.
+    The Route Map destination list marks current-chapter targets before the player opens them.
+  - Added shell/map coverage for those navigation cues.
+  - Fixed objective-card information hierarchy: when the action is "accept a contract", the
+    progress bar now measures the current campaign chapter and names the current base capability
+    instead of displaying unrelated aircraft-purchase progress.
+  - Updated OperationsSummary coverage.
+  - Current campaign targets now use the caution treatment directly on the Australia route map,
+    not just in the destination list/detail.
+  - Fleet subtitle now names the current base capability, and Fleet/Contracts locked items name
+    the actual base capability they require rather than only an abstract tier.
+  - Added Fleet/Contracts coverage for the shared capability language.
+  - Career's former **NEXT TIER** block is now a **BASE ROADMAP**: current Adelaide base →
+    next base, the same real progress bar, exact remaining gates and what the unlock means.
+  - Career-target destination detail now has **VIEW CONTRACTS**, wiring Map → Contracts directly
+    through the existing workspace dispatcher rather than making the player tab-hop manually.
+  - **Evidence:** connector-only edit; tests cannot be executed in this GitHub session. Branch is
+    intentionally not merged. Run Unity EditMode before merge.
+  - **NEXT:** visual/test pass, then extend this seam into physical airport capability/facility
+    upgrades and a clearer career roadmap rather than adding more aircraft.
+
 - **2026-09-21 Cursor — engine mute + evening last flights (branch
   `feature/evening-last-flights`, ADRs 0088–0089).**
   Bailey: last flights at 9:38pm; engine sound terribly broken; mute did nothing.

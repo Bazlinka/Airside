@@ -196,6 +196,7 @@ namespace Airside.Presentation
         public const string PreviousDeparture = "departure:previous";
         public const string ClearDestination = "destination:clear";
         public const string ViewEligibleAircraft = "contract:eligible";
+        public const string ViewContracts = "contract:view";
         public const string CancelContract = "contract:cancel";
         public const string StartCheck = "check";
 

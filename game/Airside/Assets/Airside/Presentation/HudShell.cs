@@ -98,7 +98,7 @@ namespace Airside.Presentation
             (HudWorkspace.Map, "MAP"),
             (HudWorkspace.Fleet, "FLEET"),
             (HudWorkspace.Contracts, "CONTRACTS"),
-            (HudWorkspace.Stats, "STATS")
+            (HudWorkspace.Stats, "CAREER")
         };
 
         /// <summary>The persistent full-width status and navigation strip.</summary>

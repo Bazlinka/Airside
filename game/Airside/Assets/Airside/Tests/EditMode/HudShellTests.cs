@@ -15,6 +15,13 @@ namespace Airside.Tests
     public sealed class HudShellTests
     {
         [Test]
+        public void Shell_NamesTheCareerWorkspaceAsCareerNotStats()
+        {
+            Assert.That(HudShell.Tabs.Single(t => t.workspace == HudWorkspace.Stats).label,
+                Is.EqualTo("CAREER"));
+        }
+
+        [Test]
         public void Shell_IsIdenticalOnEveryPage()
         {
             foreach (var (width, height) in HudTestAirline.Viewports)

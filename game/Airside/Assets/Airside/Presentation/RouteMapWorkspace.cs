@@ -25,6 +25,8 @@ namespace Airside.Presentation
         private readonly List<PlannerDestination> _all = new();
         private readonly List<PlannerDestination> _shown = new();
         private readonly List<FleetAircraft> _fleet = new();
+        private readonly List<AircraftType> _ownedTypes = new();
+        private readonly HashSet<string> _careerTargets = new(StringComparer.Ordinal);
 
         public string Title => "ROUTE MAP";
         public RouteMapFilter Filter { get; private set; }
@@ -40,6 +42,10 @@ namespace Airside.Presentation
 
         /// <summary>Just the half the filter selects — the side list shows this.</summary>
         public IReadOnlyList<PlannerDestination> ShownDestinations => _shown;
+        public IReadOnlyCollection<string> CareerTargetCodes => _careerTargets;
+
+        public bool IsCareerTarget(Destination destination) =>
+            !string.IsNullOrEmpty(destination.Code) && _careerTargets.Contains(destination.Code);
 
         public bool HasAircraft { get; private set; }
         public string AircraftLabel { get; private set; } = "No aircraft";
@@ -55,6 +61,8 @@ namespace Airside.Presentation
         public string ReturnLine { get; private set; } = string.Empty;
         public string AvailabilityLine { get; private set; } = string.Empty;
         public HudTone AvailabilityTone { get; private set; } = HudTone.Muted;
+        public string CareerLine { get; private set; } = string.Empty;
+        public HudTone CareerTone { get; private set; } = HudTone.Muted;
 
         public string DepartureLabel { get; private set; } = string.Empty;
         public string DepartureDetail { get; private set; } = string.Empty;
@@ -76,6 +84,7 @@ namespace Airside.Presentation
             Filter = filter;
             _all.Clear();
             _shown.Clear();
+            _careerTargets.Clear();
             AvailableCount = 0;
             LockedCount = 0;
             HasAircraft = aircraft != null;
@@ -95,6 +104,8 @@ namespace Airside.Presentation
             ReturnLine = string.Empty;
             AvailabilityLine = string.Empty;
             AvailabilityTone = HudTone.Muted;
+            CareerLine = string.Empty;
+            CareerTone = HudTone.Muted;
             DepartureLabel = string.Empty;
             DepartureDetail = string.Empty;
             if (operations == null)
@@ -113,11 +124,19 @@ namespace Airside.Presentation
             }
 
             _fleet.Clear();
+            _ownedTypes.Clear();
             var player = operations.PlayerAirline;
             if (player != null)
                 foreach (var owned in operations.FleetOf(player))
+                {
                     _fleet.Add(owned);
+                    _ownedTypes.Add(owned.Type);
+                }
             CanCycleAircraft = _fleet.Count > 1;
+            foreach (var row in _all)
+                if (Campaign.RouteGuidance(operations.CareerState, _ownedTypes, row.Destination).AdvancesCurrentChapter)
+                    _careerTargets.Add(row.Destination.Code);
+
             AircraftLabel = aircraft == null
                 ? "No aircraft"
                 : $"{aircraft.Registration}  ·  {aircraft.Type.Name}";
@@ -146,6 +165,10 @@ namespace Airside.Presentation
             var km = operations.DistanceKm(destination);
             var band = RouteAccess.BandOf(destination);
             BandAndDistance = $"{BandLabel(band)}  ·  {km:0} km";
+
+            var career = Campaign.RouteGuidance(operations.CareerState, _ownedTypes, destination);
+            CareerLine = career.Text;
+            CareerTone = career.AdvancesCurrentChapter ? HudTone.Caution : HudTone.Muted;
 
             if (aircraft == null)
             {
@@ -391,6 +414,20 @@ namespace Airside.Presentation
                 model.AvailabilityTone, HudTextStyle.Wrap);
             y += 44f;
 
+            if (model.CareerLine.Length > 0)
+            {
+                into.Hairline(new HudBox(pane.X, y, pane.Width, 1f));
+                y += 10f;
+                into.Caption(new HudBox(pane.X, y, pane.Width, 16f), "CAREER");
+                y += 19f;
+                into.Text(new HudBox(pane.X, y, pane.Width, 34f), model.CareerLine, 12f,
+                    model.CareerTone, HudTextStyle.Bold | HudTextStyle.Wrap);
+                y += 38f;
+                into.Button(new HudBox(pane.X, y, 132f, 28f), "VIEW CONTRACTS",
+                    HudAction.ViewContracts, HudButtonStyle.Secondary);
+                y += 36f;
+            }
+
             if (model.DepartureLabel.Length > 0)
             {
                 into.Hairline(new HudBox(pane.X, y, pane.Width, 1f));
@@ -449,8 +486,11 @@ namespace Airside.Presentation
                 into.Text(new HudBox(box.X + 10f, box.Y, box.Width - 100f, 17f),
                     $"{row.Destination.Code}  {row.Destination.Name}", 13f,
                     row.Reachable ? HudTone.Default : HudTone.Muted);
-                into.Text(new HudBox(box.X + 10f, box.Y + 16f, box.Width - 100f, 15f), row.Destination.State,
-                    11f, HudTone.Muted);
+                var careerTarget = model.IsCareerTarget(row.Destination);
+                into.Text(new HudBox(box.X + 10f, box.Y + 16f, box.Width - 100f, 15f),
+                    careerTarget ? $"CAREER TARGET · {row.Destination.State}" : row.Destination.State,
+                    11f, careerTarget ? HudTone.Caution : HudTone.Muted,
+                    careerTarget ? HudTextStyle.Bold : HudTextStyle.Regular);
                 into.Text(new HudBox(box.Right - 96f, box.Y, 96f, 17f), $"{row.DistanceKm:0} km", 12f,
                     HudTone.Muted, HudTextStyle.Regular, HudAlign.Right);
                 into.Text(new HudBox(box.Right - 96f, box.Y + 16f, 96f, 15f),
@@ -468,7 +508,8 @@ namespace Airside.Presentation
         /// </summary>
         public static void PaintNetwork(HudDrawList into, HudBox map, AustraliaMapLens lens,
             IReadOnlyList<PlannerDestination> destinations, Destination home, Destination? selected,
-            string playerLiveryHex, double aircraftRangeKm = 0.0, string aircraftRangeLabel = null)
+            string playerLiveryHex, double aircraftRangeKm = 0.0, string aircraftRangeLabel = null,
+            IReadOnlyCollection<string> careerTargetCodes = null)
         {
             if (into == null || lens == null)
                 return;
@@ -501,8 +542,11 @@ namespace Airside.Presentation
                     if (!map.Contains(x, y))
                         continue;
                     var isSelected = selected.HasValue && selected.Value.Equals(row.Destination);
-                    var tone = isSelected ? HudTone.Caution : row.Reachable ? HudTone.Accent : HudTone.Muted;
-                    into.Dot(x, y, isSelected ? 13f : 9f, tone);
+                    var careerTarget = ContainsCode(careerTargetCodes, row.Destination.Code);
+                    var tone = isSelected || careerTarget
+                        ? HudTone.Caution
+                        : row.Reachable ? HudTone.Accent : HudTone.Muted;
+                    into.Dot(x, y, isSelected ? 13f : careerTarget ? 11f : 9f, tone);
                     var label = isSelected || lens.Zoom >= 4f
                         ? row.Destination.Name
                         : lens.Zoom >= 2f ? row.Destination.Code : string.Empty;
@@ -522,6 +566,16 @@ namespace Airside.Presentation
             into.Dot(hx, hy, 12f, HudTone.Caution, playerLiveryHex);
             into.Text(new HudBox(hx + 10f, hy - 9f, 120f, 17f), home.Name, 13f, HudTone.Default,
                 HudTextStyle.Bold);
+        }
+
+        private static bool ContainsCode(IReadOnlyCollection<string> codes, string code)
+        {
+            if (codes == null || string.IsNullOrEmpty(code))
+                return false;
+            foreach (var candidate in codes)
+                if (string.Equals(candidate, code, StringComparison.Ordinal))
+                    return true;
+            return false;
         }
 
         private static void RangeRing(HudDrawList into, HudBox map, AustraliaMapLens lens,

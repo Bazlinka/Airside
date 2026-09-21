@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Operations NOW follows the clock (09:55→11:55 bug).** Live Outbound rows no longer pin
+  the NOW divider for their whole flight; the board scroll keeps auto-following NOW until you
+  scroll it yourself. Domain 556/556.
+
 - **Aircraft-aware competitive Route Map (ADR 0076).** Replaced three generic distance rings with
   the selected aircraft's real practical-range ring. The static network now draws only the selected
   route (plus the existing hover preview), destination labels reveal progressively with zoom, and

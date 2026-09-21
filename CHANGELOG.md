@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **Layered cloud silhouettes and weather-review control (ADR 0072).** Replaced each stretched
+  one/two-sphere cloud with a deterministic three-layer cluster: a broad shaded underside, five
+  to seven irregular body lobes and smaller sunlit crowns. The result keeps the existing real-wind
+  drift, cover-based reveal and moving ground umbras, but reads as a cloud bank instead of isolated
+  translucent blobs. Opaque depth-tested massing avoids exposing every lobe intersection from the
+  overview camera. The three meshes are combined per layer, so the Adelaide sky remains bounded
+  at 48 cloud renderers rather than using expensive realtime volumetrics. Added
+  `-airsideReviewWeather` for deterministic packaged-build weather captures. Domain 550/550;
+  Unity 784/786 with the same two unrelated pre-existing failures; fresh Cloudy Mac build captured
+  and inspected.
 - **Operations board honesty, day orientation, taxi weave, schedule feel (ADR 0071).**
   Published day-plan rows no longer invent Gate/Bay occupancy when nothing is parked —
   STAND is "—" and STATUS is "Listed"/"Expected" until a live aircraft covers the slot.

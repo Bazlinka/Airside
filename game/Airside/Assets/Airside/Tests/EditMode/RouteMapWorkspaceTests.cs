@@ -46,7 +46,7 @@ namespace Airside.Tests
             var draw = new HudDrawList();
             RouteMapWorkspacePainter.Paint(draw, model, layout);
 
-            Assert.That(draw.Commands.Any(c => c.Action == HudAction.ViewContracts), Is.True);
+            Assert.That(draw.Commands.Any(c => c.ActionId == HudAction.ViewContracts), Is.True);
         }
 
         [Test]

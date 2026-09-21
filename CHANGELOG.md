@@ -1,5 +1,7 @@
 ## Unreleased
 
+- **Visible turnaround GSE.** The existing Adelaide service equipment now follows the player’s real active turnaround stage: fuel truck, catering truck, baggage train, then boarding equipment. With no player turnaround active, the previous ambient terminal servicing loop resumes.
+
 - **Turnaround v2.** Player departures now run Fuel → Catering → Baggage → Boarding. Base growth speeds the same operational chain (Starter 100%, Expanded Regional 90%, Jet Gate 80%, International 70%), and every Fleet/Operations prep surface shows baggage and the same base-aware timing.
 
 - **Career shows physical base access.** The base summary names the actual Adelaide positions/access currently leased (50D, regional apron, gates 27/29, pier 28 as applicable).

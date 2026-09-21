@@ -1,5 +1,12 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 ChatGPT — visible turnaround GSE (branch `feature/turnaround-visuals`).**
+  - Existing authored GSE now prioritises the player’s real active turnaround instead of only running an ambient terminal loop.
+  - Fuel shows the fuel truck; Catering shows a dedicated catering truck; Baggage shows the baggage train; Boarding shows stairs on regional stands or the apron bus at terminal gates.
+  - The earliest booked player aircraft owns the one visible service team while its prep is incomplete; once no player turnaround is active, the previous ambient gate cycle resumes.
+  - Presentation-only: no save/simulation rule changes.
+  - **NEXT:** static visual-code review, then service positioning/playtest tuning.
+
 - **2026-09-21 ChatGPT — Turnaround v2 (branch `feature/turnaround-v2`, ADR 0093 WIP).**
   - Player departure prep is now Fuel → Catering → Baggage → Boarding.
   - The same derived turnaround uses the current PlayerBaseLevel everywhere the simulation decides readiness.

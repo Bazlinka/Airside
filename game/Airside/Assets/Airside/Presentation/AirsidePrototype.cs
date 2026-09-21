@@ -155,6 +155,7 @@ namespace Airside.Presentation
         private readonly List<bool> _airfieldLightIsTaxi = new List<bool>();
         private readonly List<Renderer> _nightGlowRenderers = new List<Renderer>();
         private Transform _fuelTruck;
+        private Transform _cateringTruck;
         private Transform _baggageCart;
         private Transform _passengerBus;
         private Transform _stairs;
@@ -457,6 +458,8 @@ namespace Airside.Presentation
                         "Models/Vehicles/mdl_fuel_truck_small_v03.gltf",
                         "Models/Vehicles/mdl_fuel_truck_small_v02.gltf",
                         "Models/Vehicles/mdl_fuel_truck_small_v01.gltf"));
+                _cateringTruck = BuildServiceVehicle("Catering truck", new Color(0.82f, 0.86f, 0.88f),
+                    new Vector3(2.9f, 1.55f, 1.3f));
                 _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f),
                     PreferArtKit(
                         "Models/Vehicles/mdl_baggage_tug_train_v06.gltf",
@@ -477,6 +480,7 @@ namespace Airside.Presentation
                         "Models/Vehicles/mdl_passenger_bus_apron_v01.gltf"));
                 // Authored GSE kits face +X; LookRotation travel aims +Z — nest a -90° yaw so they match.
                 OrientPlusXKitToForward(_fuelTruck);
+                OrientPlusXKitToForward(_cateringTruck);
                 OrientPlusXKitToForward(_baggageCart);
                 OrientPlusXKitToForward(_passengerBus);
             }
@@ -583,34 +587,123 @@ namespace Airside.Presentation
         private readonly List<FleetAircraft> _gateServicingCandidates = new();
 
         /// <summary>
-        /// Cycle a small GSE team around whichever parked terminal aircraft is due, kept on
-        /// the apron. One team, so with more than one jet on the gates at once it rotates
-        /// between them a full 120 s service cycle at a time, rather than parking itself on
-        /// whichever aircraft happened to be first in fleet order and never moving again.
+        /// Visible turnaround activity. A real player departure owns the GSE team while it is
+        /// preparing: the equipment shown is the exact active DeparturePrep stage. When no
+        /// player aircraft is turning, the same authored vehicles fall back to the older
+        /// ambient terminal cycle so Adelaide never becomes visually dead.
         /// </summary>
         private void UpdateGateServicing()
         {
-            if (!FleetMode)
+            if (!FleetMode || _operations == null)
                 return;
+
+            FleetAircraft playerTurn = null;
+            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
+            {
+                if (aircraft.State != FleetState.AtStand || !aircraft.Scheduled.HasValue)
+                    continue;
+                var prep = DeparturePrep.For(aircraft, _clock.Now, _operations.CareerState.BaseLevel);
+                if (prep.Ready)
+                    continue;
+                if (playerTurn == null
+                    || aircraft.Scheduled.Value.DepartAt.CompareTo(playerTurn.Scheduled.Value.DepartAt) < 0)
+                    playerTurn = aircraft;
+            }
+
+            if (playerTurn != null)
+            {
+                UpdatePlayerTurnaroundServicing(playerTurn);
+                return;
+            }
+
             var candidates = _gateServicingCandidates;
             candidates.Clear();
             foreach (var aircraft in _operations.Fleet)
                 if (aircraft.State == FleetState.AtStand && AdelaideGround.IsTerminalGate(aircraft.Stand))
                     candidates.Add(aircraft);
+
             if (candidates.Count == 0)
+            {
+                HideTurnaroundEquipment();
                 return;
+            }
 
             var cycleIndex = (int)(_preciseTime / 120.0) % candidates.Count;
             var parked = candidates[cycleIndex];
-
             var pose = AdelaideGround.StandPose(parked.Stand);
             var nose = new Vector3(pose.NoseX, 0f, pose.NoseZ);
             var side = new Vector3(-nose.z, 0f, nose.x);
             var stop = new Vector3(pose.X, AirsideFlightPath.GroundY, pose.Z);
             var cycle = (float)(_preciseTime % 120.0);
-            UpdateVehicle(_fuelTruck, cycle < 72f, stop - nose * 24f + side * 8f, stop - nose * 42f + side * 18f);
-            UpdateVehicle(_baggageCart, cycle >= 18f && cycle < 96f, stop - nose * 31f - side * 8f, stop - nose * 45f - side * 14f);
-            UpdateVehicle(_passengerBus, cycle >= 48f, stop - nose * 16f + side * 14f, stop - nose * 48f + side * 22f);
+
+            SetEquipmentVisible(_cateringTruck, false);
+            SetEquipmentVisible(_stairs, false);
+            UpdateVehicle(_fuelTruck, cycle < 72f, stop - nose * 24f + side * 8f,
+                stop - nose * 42f + side * 18f);
+            UpdateVehicle(_baggageCart, cycle >= 18f && cycle < 96f,
+                stop - nose * 31f - side * 8f, stop - nose * 45f - side * 14f);
+            UpdateVehicle(_passengerBus, cycle >= 48f,
+                stop - nose * 16f + side * 14f, stop - nose * 48f + side * 22f);
+        }
+
+        private void UpdatePlayerTurnaroundServicing(FleetAircraft aircraft)
+        {
+            var prep = DeparturePrep.For(aircraft, _clock.Now, _operations.CareerState.BaseLevel);
+            var pose = AdelaideGround.StandPose(aircraft.Stand);
+            var nose = new Vector3(pose.NoseX, 0f, pose.NoseZ);
+            var side = new Vector3(-nose.z, 0f, nose.x);
+            var stop = new Vector3(pose.X, AirsideFlightPath.GroundY, pose.Z);
+            var terminal = AdelaideGround.IsTerminalGate(aircraft.Stand);
+
+            var fuelService = stop - nose * 12f + side * 7f;
+            var cateringService = stop - nose * 7f - side * 7f;
+            var baggageService = stop - nose * 15f - side * 7f;
+            var boardingService = stop + nose * 3f + side * 6f;
+            var parkA = stop - nose * 42f + side * 18f;
+            var parkB = stop - nose * 44f - side * 18f;
+
+            UpdateVehicle(_fuelTruck, prep.Stage == DeparturePrepStage.Fuel, fuelService, parkA);
+            UpdateVehicle(_cateringTruck, prep.Stage == DeparturePrepStage.Catering, cateringService, parkB);
+            UpdateVehicle(_baggageCart, prep.Stage == DeparturePrepStage.Baggage, baggageService, parkB - nose * 5f);
+
+            if (terminal)
+            {
+                SetEquipmentVisible(_stairs, false);
+                UpdateVehicle(_passengerBus, prep.Stage == DeparturePrepStage.Boarding,
+                    boardingService + side * 4f, parkA + side * 5f);
+            }
+            else
+            {
+                SetEquipmentVisible(_passengerBus, false);
+                PlaceBoardingStairs(_stairs, prep.Stage == DeparturePrepStage.Boarding,
+                    boardingService, Quaternion.LookRotation(nose.sqrMagnitude > 0.001f ? nose : Vector3.forward));
+            }
+        }
+
+        private static void PlaceBoardingStairs(Transform stairs, bool active, Vector3 position, Quaternion rotation)
+        {
+            if (stairs == null)
+                return;
+            stairs.gameObject.SetActive(active);
+            if (!active)
+                return;
+            stairs.position = position;
+            stairs.rotation = rotation;
+        }
+
+        private void HideTurnaroundEquipment()
+        {
+            SetEquipmentVisible(_fuelTruck, false);
+            SetEquipmentVisible(_cateringTruck, false);
+            SetEquipmentVisible(_baggageCart, false);
+            SetEquipmentVisible(_passengerBus, false);
+            SetEquipmentVisible(_stairs, false);
+        }
+
+        private static void SetEquipmentVisible(Transform equipment, bool visible)
+        {
+            if (equipment != null)
+                equipment.gameObject.SetActive(visible);
         }
 
         /// <summary>

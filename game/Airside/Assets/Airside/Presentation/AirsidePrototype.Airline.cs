@@ -654,6 +654,18 @@ namespace Airside.Presentation
             var available = OperationsSummary.AvailableCount(fleet, _clock.Now);
             var height = Mathf.Min(area.height, 36f + _compactOpsRows.Count * 28f + 28f);
             var rect = new Rect(area.x, area.y, area.width, height);
+            var visibleRows = Mathf.Max(1, Mathf.FloorToInt((rect.height - 64f) / 28f));
+            visibleRows = Mathf.Min(visibleRows, _compactOpsRows.Count);
+            if (_compactOpsRows.Count > visibleRows)
+            {
+                var priorityIndex = _compactOpsRows.FindIndex(row => row.IsPriority);
+                if (priorityIndex >= visibleRows)
+                {
+                    var keep = _compactOpsRows[visibleRows - 1];
+                    _compactOpsRows[visibleRows - 1] = _compactOpsRows[priorityIndex];
+                    _compactOpsRows[priorityIndex] = keep;
+                }
+            }
             AirsideTheme.DrawOpaquePanel(rect);
             GUI.Box(rect, GUIContent.none, panel);
 
@@ -664,8 +676,9 @@ namespace Airside.Presentation
 
             var y = rect.y + 28f;
             var inner = rect.width - 28f;
-            foreach (var row in _compactOpsRows)
+            for (var rowIndex = 0; rowIndex < visibleRows; rowIndex++)
             {
+                var row = _compactOpsRows[rowIndex];
                 var rowRect = new Rect(rect.x + 10f, y, inner + 8f, 26f);
                 if (row.IsPriority)
                     DrawSolid(rowRect, new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.28f));
@@ -695,8 +708,11 @@ namespace Airside.Presentation
                 y += 28f;
             }
 
-            GUI.Label(new Rect(rect.x + 14f, rect.yMax - 22f, inner, 16f),
-                available == 1 ? "1 aircraft available" : $"{available} aircraft available", mute);
+            var hidden = _compactOpsRows.Count - visibleRows;
+            var footer = hidden > 0
+                ? $"{visibleRows} shown · {hidden} more in Operations"
+                : available == 1 ? "1 aircraft available" : $"{available} aircraft available";
+            GUI.Label(new Rect(rect.x + 14f, rect.yMax - 22f, inner, 16f), footer, mute);
         }
 
         /// <summary>A gentle yellow pulse around the control the guide is pointing at.</summary>

@@ -152,17 +152,19 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void FourPlayerAircraft_RemainIndividualRows()
+        public void SixPlayerAircraft_RemainIndividualRows()
         {
             var (clock, ops, _) = PlayerOnly();
             var player = ops.PlayerAirline;
             ops.AddAircraft(player, "VH-SUN", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[1]);
             ops.AddAircraft(player, "VH-PLO", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[2]);
             ops.AddAircraft(player, "VH-KGC", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[3]);
+            ops.AddAircraft(player, "VH-WYA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[4]);
+            ops.AddAircraft(player, "VH-MGB", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[5]);
             var rows = new List<OperationsRow>();
             OperationsSummary.FillPlayerRows(ops.FleetOf(player), clock.Now, rows);
-            Assert.That(rows, Has.Count.EqualTo(4));
-            Assert.That(OperationsSummary.AvailableCount(ops.FleetOf(player)), Is.EqualTo(4));
+            Assert.That(rows, Has.Count.EqualTo(6));
+            Assert.That(OperationsSummary.AvailableCount(ops.FleetOf(player)), Is.EqualTo(6));
         }
     }
 }

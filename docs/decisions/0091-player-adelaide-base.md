@@ -29,3 +29,8 @@ Career exposes the real persisted roadmap and an **EXPAND BASE** command. Fleet 
 ## World visibility
 
 The runtime adds a presentation-only leased operations compound beside an existing Adelaide hangar precinct. Its modular footprint grows with the persisted base level and uses the player airline livery. It has no collider, stand reservation or simulation authority, and does not replace any real OSM airport building.
+
+
+## Fleet ceiling
+
+ADR 0091 raises the old global player fleet ceiling from four to six so later base stages do not advertise unusable slots. The compact overview remains deliberately small: when more aircraft exist than fit, it keeps the priority aircraft visible and points the player to the full Operations workspace for the remainder.

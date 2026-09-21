@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Save migration test fixed (test only, no save format change).**
+  `VersionFiveSave_MigratesSingaporePlaceholderTo787WithoutLosingRotation` compared the save
+  record ("" = no stand) to the restored live aircraft (null = no stand); it only passed while
+  seed 73 left the jet at a gate. Now compares a re-capture to the original record. The
+  migration itself was always correct. Unity EditMode **822/823** (only the gate lead-in
+  decision test remains).
+
 - **Taxi, takeoff and landing: four visible snaps fixed.** A new seam test drives every
   hand-off between ground legs (rollout → vacate → wait → taxi-in → stand → pushback →
   taxi-out → hold → lineup → takeoff roll) for every runway end, type and stand. Before: 256

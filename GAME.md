@@ -1,5 +1,13 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Claude — save migration test green (branch `feature/fix-save-migration`).**
+  Bailey: "fix the save test". Not a save bug: the test compared the save record's `""` for
+  "no stand / nothing booked" with the restored aircraft's null. It only held while seed 73
+  left the Singapore jet parked with a booking; the traffic-timing changes moved it. Test now
+  re-captures the restored game and compares records (stand, booking, state), which is what
+  the migration promises. Unity EditMode **822/823**; the one left is the gate lead-in test
+  awaiting Bailey's call (see the taxi entry below).
+
 - **2026-09-21 Claude — taxi/takeoff/landing seam fixes + two HUD fixes (branch
   `feature/hud-taxi-fixes`).** Bailey: "keep going with more HUD bug fixes but also do some
   aircraft taxi fixes - takeoff - landing fixes."

@@ -174,9 +174,14 @@ namespace Airside.Tests
 
             Assert.That(migrated.Registration, Is.EqualTo("9V-SCA"));
             Assert.That(migrated.Type, Is.EqualTo(AircraftType.Boeing78710));
-            Assert.That(migrated.Stand.Value, Is.EqualTo(singapore.Stand));
-            Assert.That(migrated.Scheduled?.Destination.Code, Is.EqualTo(singapore.ScheduledDestination));
-            Assert.That(migrated.Scheduled?.DepartAt.ElapsedSeconds, Is.EqualTo(singapore.ScheduledDepartAt));
+            // Compare in the save's own form: it writes "no stand / nothing booked" as "" and 0,
+            // which restore reads back as none. Comparing the record to the live object only
+            // held while seed 73 happened to leave the jet at a gate with a flight booked.
+            var resaved = AirlineSave.Capture(restored).Fleet.Single(a => a.AirlineId == "SIA");
+            Assert.That(resaved.Stand, Is.EqualTo(singapore.Stand));
+            Assert.That(resaved.ScheduledDestination, Is.EqualTo(singapore.ScheduledDestination));
+            Assert.That(resaved.ScheduledDepartAt, Is.EqualTo(singapore.ScheduledDepartAt));
+            Assert.That(resaved.State, Is.EqualTo(singapore.State));
             Assert.That(migrated.CompletedTrips, Is.EqualTo(7));
             Assert.That(restored.AddMissingTerminalOperators(), Is.EqualTo(0), "migration must not backfill a duplicate");
             Assert.That(restored.Fleet.Any(a => a.Registration == "9V-SMA"), Is.False);

@@ -173,6 +173,62 @@ namespace Airside.Tests
 
         [TestCase(1280, 720)]
         [TestCase(1440, 900)]
+        [TestCase(1920, 1080)]
+        [TestCase(3456, 2168)]
+        [TestCase(800, 500)]
+        [TestCase(400, 780)]
+        [TestCase(320, 240)]
+        public void FooterCreditAndBuildStamp_SitBelowEveryHudPanel(int screenWidth, int screenHeight)
+        {
+            var scale = HudLayout.ScaleFor(screenWidth, screenHeight);
+            var width = screenWidth / scale;
+            var height = screenHeight / scale;
+            var hud = HudLayout.Create(width, height);
+            var credit = hud.MapCredit;
+            var stamp = hud.BuildStamp;
+            var at = $"{screenWidth}x{screenHeight}";
+
+            Assert.That(credit.width, Is.GreaterThan(0f), "map credit is required (ODbL) " + at);
+            foreach (var (rect, name) in new[] { (credit, "credit"), (stamp, "stamp") })
+            {
+                if (rect.width <= 0f)
+                    continue;
+                Assert.That(rect.xMin, Is.GreaterThanOrEqualTo(-0.01f), $"{name} off the left {at}");
+                Assert.That(rect.xMax, Is.LessThanOrEqualTo(width + 0.01f), $"{name} off the right {at}");
+                Assert.That(rect.yMax, Is.LessThanOrEqualTo(height + 0.01f), $"{name} off the bottom {at}");
+                Assert.That(rect.height, Is.GreaterThanOrEqualTo(14f), $"{name} too short for 11pt text {at}");
+            }
+            if (stamp.width > 0f)
+                Assert.That(stamp.Overlaps(credit), Is.False, "stamp overlaps credit " + at);
+
+            // Every airline panel ends at the shell floor; the footer must start at or below it
+            // so neither line draws across a panel border (the stamp used to, by 6 px).
+            foreach (var guide in new[] { false, true })
+            {
+                var airline = AirlineHudLayout.Create(hud, guide);
+                foreach (var (panel, name) in new[]
+                         {
+                             (airline.Objective, "objective"), (airline.Operations, "operations"),
+                             (airline.Workspace, "workspace"), (airline.MiniMap, "mini-map"),
+                             (airline.SelectedCard, "selected card"), (airline.Toast, "toast"),
+                             (airline.SetupPanel(396f), "setup")
+                         })
+                {
+                    if (panel.width <= 0f || panel.height <= 0f)
+                        continue;
+                    Assert.That(credit.Overlaps(panel), Is.False, $"credit overlaps {name} {at}");
+                    if (stamp.width > 0f)
+                        Assert.That(stamp.Overlaps(panel), Is.False, $"stamp overlaps {name} {at}");
+                }
+            }
+
+            Assert.That(credit.Overlaps(hud.ControlBar), Is.False, "credit overlaps control bar " + at);
+            if (stamp.width > 0f)
+                Assert.That(stamp.Overlaps(hud.ControlBar), Is.False, "stamp overlaps control bar " + at);
+        }
+
+        [TestCase(1280, 720)]
+        [TestCase(1440, 900)]
         [TestCase(3456, 2168)]
         [TestCase(800, 500)]
         [TestCase(400, 780)]

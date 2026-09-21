@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **HUD fix: build stamp and map credit no longer draw over panel edges.** Both labels sat
+  at `height − 22` while every airline HUD panel ends at `height − 16`, so the new `sha ·
+  branch` stamp ran across the bottom border of the selected-aircraft card and every
+  workspace. They now have real rects in `HudLayout` (`MapCredit`, `BuildStamp`) in the
+  16 px strip under the panels, and the stamp hides on windows too narrow for both. New
+  layout test covers seven window sizes. Unity EditMode **811/813**, only the two known baseline failures (`VersionFiveSave_…`, `Reservations_GateLeadIn…`).
+
 - **Build identity stamp (ADR 0080).** Each editor Play and each `scripts/build-mac.sh`
   rebuild writes a gitignored `build-identity.txt` (commit, branch, dirty, commit time,
   built time). The running game shows `sha · branch` on the bottom edge and the full line

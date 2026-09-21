@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Claude — HUD footer overlap fix (branch `feature/hud-bugfix`).** Bailey: "run a
+  bug fix on the HUD." The bottom-edge build stamp from ADR 0080 (and the older ODbL map
+  credit) used hard-coded rects at `Viewport.y − 22`, 18 px tall, but every airline panel
+  (`HudShell` floor) ends at `Viewport.y − 16`. So both labels crossed panel borders: at
+  1440×900 the stamp's right-aligned text ran over the bottom of the selected-aircraft card,
+  and both sat on the bottom edge of every open workspace.
+  - **Fix:** `HudLayout.MapCredit` / `HudLayout.BuildStamp` now own the footer: 15 px tall,
+    starting below the panel floor, stamp right-aligned left of the credit, zero-width (not
+    drawn) when the window can't fit both. Labels drop GUI padding so 11 pt text fits.
+  - **Test:** `PresentationLayoutTests.FooterCreditAndBuildStamp_SitBelowEveryHudPanel`
+    checks 7 window sizes, with and without the guide card, against every airline panel
+    and the circuit control bar.
+  - **Evidence:** Unity EditMode **811/813**, only the two known baseline failures (`VersionFiveSave_…`, `Reservations_GateLeadIn…`). No build or Play run (per standing instruction).
+  - **NEXT:** A Play look at the bottom edge once Bailey next runs the game.
+
 - **2026-09-21 Cursor — build identity (branch `cursor/build-identity-22df`, ADR 0080).**
   Bailey: after a merge and a rebuild, show which version is running, because the other
   Mac sometimes has a feature and then loses it after `git pull` and a rebuild.

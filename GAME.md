@@ -1,5 +1,11 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 ChatGPT — base benefit integration (branch `feature/base-service-benefits`).**
+  - Career now explains the concrete operational value of the current Adelaide base: maintenance capability, ground-service speed and actual stand/gate access.
+  - The base roadmap previews the next upgrade in operational terms before purchase (apron/gates, local maintenance class, faster turnaround).
+  - Added Career coverage so the benefit copy stays tied to real PlayerBase rules.
+  - **NEXT:** merge, then make base upgrades explicit campaign goals so facilities are part of progression rather than optional side content.
+
 - **2026-09-21 ChatGPT — visible turnaround GSE (branch `feature/turnaround-visuals`).**
   - Existing authored GSE now prioritises the player’s real active turnaround instead of only running an ambient terminal loop.
   - Fuel shows the fuel truck; Catering shows a dedicated catering truck; Baggage shows the baggage train; Boarding shows stairs on regional stands or the apron bus at terminal gates.

@@ -178,6 +178,36 @@ namespace Airside.Simulation
             return "Maintenance outsourced";
         }
 
+        public static int TurnaroundSpeedGainPercent(PlayerBaseLevel level) => level switch
+        {
+            PlayerBaseLevel.International => 30,
+            PlayerBaseLevel.JetGate => 20,
+            PlayerBaseLevel.ExpandedRegional => 10,
+            _ => 0
+        };
+
+        public static string TurnaroundLine(PlayerBaseLevel level)
+        {
+            var gain = TurnaroundSpeedGainPercent(level);
+            return gain <= 0 ? "baseline ground services" : gain + "% faster ground services";
+        }
+
+        public static string MaintenanceCapabilityLine(PlayerBaseLevel level) => level switch
+        {
+            PlayerBaseLevel.International => "local widebody maintenance",
+            PlayerBaseLevel.JetGate => "local jet maintenance",
+            PlayerBaseLevel.ExpandedRegional => "local regional maintenance",
+            _ => "outsourced maintenance"
+        };
+
+        public static string UpgradeBenefitLine(PlayerBaseLevel level) => level switch
+        {
+            PlayerBaseLevel.International => "pier 28 · local widebody maintenance · 30% faster turns",
+            PlayerBaseLevel.JetGate => "gates 27/29 · local jet maintenance · 20% faster turns",
+            PlayerBaseLevel.ExpandedRegional => "regional apron · local regional maintenance · 10% faster turns",
+            _ => "50D · outsourced maintenance · baseline turns"
+        };
+
         public static PlayerBaseLevel MinimumFor(IEnumerable<AircraftType> ownedTypes, int ownedCount)
         {
             var level = ownedCount switch

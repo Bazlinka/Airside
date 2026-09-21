@@ -1,5 +1,7 @@
 ## Unreleased
 
+- **Base upgrades explain their payoff.** Career now names current maintenance capability, ground-service speed and stand/gate access, and previews the next base upgrade as concrete operational benefits before the player spends the money.
+
 - **Visible turnaround GSE.** The existing Adelaide service equipment now follows the player’s real active turnaround stage: fuel truck, catering truck, baggage train, then boarding equipment. With no player turnaround active, the previous ambient terminal servicing loop resumes.
 
 - **Turnaround v2.** Player departures now run Fuel → Catering → Baggage → Boarding. Base growth speeds the same operational chain (Starter 100%, Expanded Regional 90%, Jet Gate 80%, International 70%), and every Fleet/Operations prep surface shows baggage and the same base-aware timing.

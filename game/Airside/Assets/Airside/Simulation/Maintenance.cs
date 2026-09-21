@@ -19,6 +19,8 @@ namespace Airside.Simulation
 
         /// <summary>Check cost as a share of the aircraft's list price.</summary>
         public const double CostFraction = 0.06;
+        public const double OutsourcedCostMultiplier = 1.4;
+        public const double OutsourcedTimeMultiplier = 1.5;
 
         public static int RotationsUntilDue(FleetAircraft aircraft) =>
             aircraft == null ? IntervalRotations : IntervalRotations - aircraft.RotationsSinceCheck;
@@ -51,6 +53,25 @@ namespace Airside.Simulation
             AircraftAcquisition.TryFor(type, out var offer)
                 ? Math.Max(300L, (long)Math.Round(offer.Price * CostFraction))
                 : 400L;
+
+        public static long CheckCost(AircraftType type, PlayerBaseLevel baseLevel)
+        {
+            var normal = CheckCost(type);
+            return PlayerBase.HasLocalMaintenance(baseLevel, type)
+                ? normal
+                : (long)Math.Round(normal * OutsourcedCostMultiplier);
+        }
+
+        public static long CheckSeconds(AircraftType type, PlayerBaseLevel baseLevel)
+        {
+            var normal = CheckSeconds(type);
+            return PlayerBase.HasLocalMaintenance(baseLevel, type)
+                ? normal
+                : (long)Math.Round(normal * OutsourcedTimeMultiplier);
+        }
+
+        public static string ServiceMode(PlayerBaseLevel baseLevel, AircraftType type) =>
+            PlayerBase.HasLocalMaintenance(baseLevel, type) ? "Local base check" : "Outsourced check";
 
         /// <summary>A short status for cards and lists, or empty when nothing is worth saying.</summary>
         public static string Status(FleetAircraft aircraft, SimulationTime now, AirlineClock clock)

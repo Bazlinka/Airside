@@ -75,8 +75,10 @@ namespace Airside.Tests
             Assert.That(result.Accepted, Is.True);
             Assert.That(plane.RotationsSinceCheck, Is.EqualTo(0));
             Assert.That(Maintenance.InCheck(plane, clock.Now), Is.True);
-            Assert.That(plane.CheckUntil.Value.ElapsedSeconds, Is.EqualTo(Maintenance.CheckSeconds(plane.Type)));
-            Assert.That(ops.CareerState.Funds, Is.EqualTo(funds - Maintenance.CheckCost(plane.Type)));
+            Assert.That(plane.CheckUntil.Value.ElapsedSeconds,
+                Is.EqualTo(Maintenance.CheckSeconds(plane.Type, PlayerBaseLevel.Starter)));
+            Assert.That(ops.CareerState.Funds,
+                Is.EqualTo(funds - Maintenance.CheckCost(plane.Type, PlayerBaseLevel.Starter)));
             Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(600)).Accepted, Is.False);
             Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), plane.CheckUntil.Value).Accepted, Is.True);
         }
@@ -135,13 +137,13 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void SaveV11_RemembersWearAndAnInProgressCheck()
+        public void SaveV12_RemembersWearAndAnInProgressCheck()
         {
             var (clock, ops, plane) = PlayerOnly();
             Assert.That(ops.StartCheck(plane).Accepted, Is.True);
             plane.RotationsSinceCheck = 0;
             var json = AirlineSave.Capture(ops);
-            Assert.That(json.Version, Is.EqualTo(11));
+            Assert.That(json.Version, Is.EqualTo(AirlineSaveData.CurrentVersion));
             Assert.That(json.Fleet[0].CheckUntilSeconds, Is.EqualTo(plane.CheckUntil.Value.ElapsedSeconds));
 
             var restored = AirlineSave.Restore(json, new ManualSimulationClock(clock.Now));

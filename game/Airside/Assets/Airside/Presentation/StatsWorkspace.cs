@@ -153,7 +153,8 @@ namespace Airside.Presentation
             ReliabilityLine = $"{career.Reliability}% reliability";
             TierLine = $"{career.Tier} tier";
             FleetLine = $"{fleetSize} of {career.Base.FleetCapacity} base slots";
-            BaseCapabilityLine = $"{career.Base.Title} · {career.Base.Detail}";
+            BaseCapabilityLine = career.Base.Title + " · " + career.Base.Detail
+                                 + " · Stands: " + PlayerBase.StandAccessLine(career.BaseLevel);
 
             FillBaseRoadmap(career);
             FillAdelaideStandings(operations);

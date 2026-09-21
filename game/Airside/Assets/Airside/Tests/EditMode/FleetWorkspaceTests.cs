@@ -98,6 +98,24 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Fleet_SelectionExplainsWhetherMaintenanceIsLocalOrOutsourced()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            var model = new FleetWorkspaceModel();
+
+            model.Rebuild(ops, clock.Now, plane.Registration);
+            Assert.That(model.SelectedCapability.Any(line => line.StartsWith("Maintenance outsourced")), Is.True);
+
+            ops.RestoreCareerState(20_000, 100, nameof(OperatingTier.Provisional), null, 0, 0,
+                Array.Empty<string>(), completedPlayerRotations: 4,
+                baseLevel: PlayerBaseLevel.ExpandedRegional);
+            model.Rebuild(ops, clock.Now, plane.Registration);
+            Assert.That(model.SelectedCapability.Any(line => line.StartsWith("Local regional maintenance")), Is.True);
+            Assert.That(model.StartCheckLabel,
+                Is.EqualTo("CHECK $" + Maintenance.CheckCost(plane.Type, PlayerBaseLevel.ExpandedRegional).ToString("N0")));
+        }
+
+        [Test]
         public void Fleet_SelectionShowsResaleValueForABoughtAircraftButNotTheStarter()
         {
             var (clock, ops, plane) = HudTestAirline.Create();

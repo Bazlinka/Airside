@@ -29,6 +29,31 @@ namespace Airside.Simulation
     /// <summary>The player's leased Adelaide operating footprint (ADR 0091), not Adelaide Airport itself.</summary>
     public static class PlayerBase
     {
+        private static readonly StableId[] StarterRegionalStands =
+        {
+            new("BAY-1")
+        };
+
+        private static readonly StableId[] ExpandedRegionalStands =
+        {
+            new("BAY-1"), new("BAY-7"), new("BAY-10A")
+        };
+
+        private static readonly StableId[] JetGateStands =
+        {
+            new("GATE-27"), new("GATE-29")
+        };
+
+        private static readonly StableId[] InternationalGateStands =
+        {
+            new("GATE-27"), new("GATE-29"), new("GATE-28L"), new("GATE-28R")
+        };
+
+        private static readonly StableId[] WidebodyGateStands =
+        {
+            new("GATE-28L"), new("GATE-28R")
+        };
+
         public static PlayerBaseSpec For(PlayerBaseLevel level) => level switch
         {
             PlayerBaseLevel.ExpandedRegional => new PlayerBaseSpec(level,
@@ -59,6 +84,98 @@ namespace Airside.Simulation
             if (AircraftCatalogue.IsWidebody(type)) return spec.Widebodies;
             if (AirlineOperations.NeedsTerminalGate(type)) return spec.TerminalJets;
             return true;
+        }
+
+        /// <summary>
+        /// Dedicated Adelaide positions leased with the base. Regional aircraft may still use
+        /// other compatible bays once Expanded Regional is open; the dedicated positions stay
+        /// protected from AI so the player always retains a real home footprint. Jets are
+        /// restricted to their leased gates so terminal growth is a physical capability.
+        /// </summary>
+        public static IReadOnlyList<StableId> DedicatedStands(PlayerBaseLevel level, AircraftType type)
+        {
+            if (type == null)
+                return Array.Empty<StableId>();
+            if (!AirlineOperations.NeedsTerminalGate(type))
+                return level >= PlayerBaseLevel.ExpandedRegional ? ExpandedRegionalStands : StarterRegionalStands;
+            if (level < PlayerBaseLevel.JetGate)
+                return Array.Empty<StableId>();
+            if (AircraftCatalogue.IsWidebody(type))
+                return level >= PlayerBaseLevel.International ? WidebodyGateStands : Array.Empty<StableId>();
+            return level >= PlayerBaseLevel.International ? InternationalGateStands : JetGateStands;
+        }
+
+        public static bool IsDedicatedStand(PlayerBaseLevel level, StableId stand)
+        {
+            if (string.IsNullOrEmpty(stand.Value))
+                return false;
+            foreach (var candidate in ExpandedRegionalStands)
+                if (level >= PlayerBaseLevel.ExpandedRegional && candidate.Equals(stand))
+                    return true;
+            if (level == PlayerBaseLevel.Starter && StarterRegionalStands[0].Equals(stand))
+                return true;
+            if (level >= PlayerBaseLevel.JetGate)
+                foreach (var candidate in JetGateStands)
+                    if (candidate.Equals(stand))
+                        return true;
+            if (level >= PlayerBaseLevel.International)
+                foreach (var candidate in InternationalGateStands)
+                    if (candidate.Equals(stand))
+                        return true;
+            return false;
+        }
+
+        public static bool CanUseStand(PlayerBaseLevel level, AircraftType type, StableId stand)
+        {
+            if (type == null || string.IsNullOrEmpty(stand.Value) || !Supports(level, type))
+                return false;
+
+            if (!AirlineOperations.NeedsTerminalGate(type))
+            {
+                if (level == PlayerBaseLevel.Starter)
+                    return StarterRegionalStands[0].Equals(stand);
+                return !AdelaideGround.IsTerminalGate(stand);
+            }
+
+            foreach (var candidate in DedicatedStands(level, type))
+                if (candidate.Equals(stand))
+                    return true;
+            return false;
+        }
+
+        public static string StandAccessLine(PlayerBaseLevel level)
+        {
+            var regional = level >= PlayerBaseLevel.ExpandedRegional ? "50D · 50G · 10A + shared regional apron" : "50D";
+            return level switch
+            {
+                PlayerBaseLevel.JetGate => regional + " · gates 27/29",
+                PlayerBaseLevel.International => regional + " · gates 27/29 · pier 28",
+                _ => regional
+            };
+        }
+
+        public static bool HasLocalMaintenance(PlayerBaseLevel level, AircraftType type)
+        {
+            if (type == null || level < PlayerBaseLevel.ExpandedRegional)
+                return false;
+            if (!AirlineOperations.NeedsTerminalGate(type))
+                return true;
+            if (AircraftCatalogue.IsWidebody(type))
+                return level >= PlayerBaseLevel.International;
+            return level >= PlayerBaseLevel.JetGate;
+        }
+
+        public static string MaintenanceLine(PlayerBaseLevel level, AircraftType type)
+        {
+            if (type == null)
+                return string.Empty;
+            if (HasLocalMaintenance(level, type))
+                return AircraftCatalogue.IsWidebody(type)
+                    ? "Local widebody maintenance"
+                    : AirlineOperations.NeedsTerminalGate(type)
+                        ? "Local jet maintenance"
+                        : "Local regional maintenance";
+            return "Maintenance outsourced";
         }
 
         public static PlayerBaseLevel MinimumFor(IEnumerable<AircraftType> ownedTypes, int ownedCount)

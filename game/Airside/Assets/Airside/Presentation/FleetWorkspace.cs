@@ -295,6 +295,10 @@ namespace Airside.Presentation
             _capability.Add($"{aircraft.Type.PracticalRangeKm:#,0} km planning range");
             if (aircraft.Airline.IsPlayer)
             {
+                var baseLevel = operations.CareerState.BaseLevel;
+                _capability.Add(PlayerBase.MaintenanceLine(baseLevel, aircraft.Type)
+                                + " · $" + Maintenance.CheckCost(aircraft.Type, baseLevel).ToString("N0")
+                                + " · " + (Maintenance.CheckSeconds(aircraft.Type, baseLevel) / 3600.0).ToString("0.#") + " h");
                 var check = Maintenance.Status(aircraft, now, clock);
                 if (!string.IsNullOrEmpty(check))
                     _capability.Add(check);
@@ -351,7 +355,7 @@ namespace Airside.Presentation
             // check instead (ADR 0085) — following a parked airframe is a click on the field.
             CanStartCheck = Maintenance.CanStart(aircraft, now) && PrimaryAction != AircraftHudAction.StartCheck;
             StartCheckLabel = CanStartCheck
-                ? $"CHECK ${Maintenance.CheckCost(aircraft.Type):N0}"
+                ? "CHECK $" + Maintenance.CheckCost(aircraft.Type, operations.CareerState.BaseLevel).ToString("N0")
                 : string.Empty;
             CanTrack = PrimaryAction != AircraftHudAction.TrackFlight && !CanStartCheck
                        && !Maintenance.InCheck(aircraft, now);

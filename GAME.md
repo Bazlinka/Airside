@@ -1,5 +1,19 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Codex — layered cloud realism pass (branch `codex/cloud-realism-pass`, ADR
+  0071).** Rebuilt the cheap procedural cloud bank as three shaded layers per cluster rather than
+  one/two stretched spheres. Broad grey undersides, irregular bodies and smaller bright crowns give
+  the kilometre-wide Adelaide view readable depth without the GPU cost of realtime volumetrics.
+  Existing cover-based reveal, real-wind drift and moving ground umbras remain intact. Added a
+  deterministic `-airsideReviewWeather` launch flag for packaged visual checks.
+  - **Evidence:** domain **550/550**; Unity EditMode **784/786**, with the same two unrelated
+    pre-existing failures; fresh Mac build and forced-Cloudy 1920×1080 capture inspected. The first
+    capture exposed alpha-stacked circular lobes, so the shipped revision uses opaque depth-tested
+    massing and stronger tonal separation instead.
+  - **NEXT:** break up the airport ground at macro scale, then make the route/world map read more
+    like an operations map. Keep terrain detail out of paved movement areas and keep map competition
+    based on real simulated data.
+
 - **2026-09-21 Codex — competitive Career HUD with real activity (branch
   `codex/hud-competitive-pass`, ADR 0070).** Bailey asked for a clearer, real-game HUD with
   competitive elements. Added an **Adelaide activity** standing based only on live completed

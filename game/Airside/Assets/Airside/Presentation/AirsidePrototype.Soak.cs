@@ -45,6 +45,7 @@ namespace Airside.Presentation
         //   -airsideReviewPanel plan|operations|map|fleet|contracts|stats|devtools|help
         //   -airsideReviewShot <path.png> [-airsideReviewDelay seconds]   capture, then quit
         //   -airsideReviewTime HH:mm   override local lighting time only (not the sim clock)
+        //   -airsideReviewWeather cloudy|overcast|rain|storm|...   deterministic visual QA
         private const string ReviewPanelFlag = "-airsideReviewPanel";
         private const string ReviewShotFlag = "-airsideReviewShot";
         private const string ReviewDelayFlag = "-airsideReviewDelay";

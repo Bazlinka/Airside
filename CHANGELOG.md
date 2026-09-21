@@ -1,5 +1,16 @@
 ## Unreleased
 
+- **Layered cloud silhouettes and weather-review control (ADR 0071).** Replaced each stretched
+  one/two-sphere cloud with a deterministic three-layer cluster: a broad shaded underside, five
+  to seven irregular body lobes and smaller sunlit crowns. The result keeps the existing real-wind
+  drift, cover-based reveal and moving ground umbras, but reads as a cloud bank instead of isolated
+  translucent blobs. Opaque depth-tested massing avoids exposing every lobe intersection from the
+  overview camera. The three meshes are combined per layer, so the Adelaide sky remains bounded
+  at 48 cloud renderers rather than using expensive realtime volumetrics. Added
+  `-airsideReviewWeather` for deterministic packaged-build weather captures. Domain 550/550;
+  Unity 784/786 with the same two unrelated pre-existing failures; fresh Cloudy Mac build captured
+  and inspected.
+
 - **Competitive Career HUD and calmer navigation (ADR 0070).** Career now shows an honest
   Adelaide activity rank derived from the completed rotations already recorded for every player
   and AI aircraft. Wide layouts show up to five leaders, always retain the player row and name the

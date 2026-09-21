@@ -2037,6 +2037,9 @@ namespace Airside.Presentation
                 case HudAction.ViewEligibleAircraft:
                     ShowEligibleContractAircraft();
                     return;
+                case HudAction.ViewContracts:
+                    SetWorkspace(HudWorkspace.Contracts);
+                    return;
                 case HudAction.PlanFlight:
                     ScheduleFromPlanner();
                     return;

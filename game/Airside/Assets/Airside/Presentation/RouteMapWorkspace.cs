@@ -422,7 +422,10 @@ namespace Airside.Presentation
                 y += 19f;
                 into.Text(new HudBox(pane.X, y, pane.Width, 34f), model.CareerLine, 12f,
                     model.CareerTone, HudTextStyle.Bold | HudTextStyle.Wrap);
-                y += 40f;
+                y += 38f;
+                into.Button(new HudBox(pane.X, y, 132f, 28f), "VIEW CONTRACTS",
+                    HudAction.ViewContracts, HudButtonStyle.Secondary);
+                y += 36f;
             }
 
             if (model.DepartureLabel.Length > 0)

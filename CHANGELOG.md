@@ -21,6 +21,8 @@
 - **Career base roadmap.** The old generic next-tier block now reads as current Adelaide base →
   next base, with the existing real progress bar, exact remaining requirements and resulting
   operating capability.
+- **Map → Contracts shortcut.** A selected career-target destination now offers **VIEW CONTRACTS**
+  so the player can move straight from route intent to the contract workflow.
 
 - **Adelaide curfew 23:00–06:00, player and RFDS exempt (ADR 0087).** Commercial
   AI no longer pushes or lands in the real closed window. You can still fly out

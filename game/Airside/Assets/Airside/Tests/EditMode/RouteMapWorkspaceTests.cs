@@ -35,6 +35,21 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Map_CareerTargetOffersAContractsShortcut()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            var model = new RouteMapWorkspaceModel();
+            model.Rebuild(ops, plane, HudTestAirline.Code("KGC"), 900, clock.Now, RouteMapFilter.Available);
+
+            var surface = new HudBox(0, 0, 1000, 700);
+            var layout = RouteMapWorkspaceLayout.Create(surface, model.ShownDestinations.Count);
+            var draw = new HudDrawList();
+            RouteMapWorkspacePainter.Paint(draw, model, layout);
+
+            Assert.That(draw.Commands.Any(c => c.Action == HudAction.ViewContracts), Is.True);
+        }
+
+        [Test]
         public void Map_ExplainsWhenASelectedDestinationAdvancesTheCareer()
         {
             var (clock, ops, plane) = HudTestAirline.Create();

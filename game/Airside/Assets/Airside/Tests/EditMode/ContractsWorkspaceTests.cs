@@ -27,7 +27,7 @@ namespace Airside.Tests
             Assert.That(model.ActiveRoute, Is.EqualTo("Adelaide ↔ Kingscote"));
             Assert.That(model.ActiveProgressText, Is.EqualTo(
                 $"0 of {RouteContractCatalogue.RegionalKingscoteIntro.RequiredRotations} rotations complete"));
-            Assert.That(model.ActiveTerms, Does.Contain("Eligible: ATR 42-600"));
+            Assert.That(model.ActiveTerms, Does.Contain("Eligible: Saab 340B"));
             Assert.That(model.ActiveTerms, Does.Contain(
                 $"Cancellation: −{RouteContractCatalogue.RegionalKingscoteIntro.ReliabilityLossOnCancel} reliability"));
             Assert.That(model.EligibleAircraftLine, Is.EqualTo("VH-PAX"));

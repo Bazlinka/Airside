@@ -74,7 +74,7 @@ namespace Airside.Tests
             }
 
             Assert.That(list.Commands.Any(c => c.ActionId == HudAction.Select("VH-PAX")), Is.True);
-            Assert.That(list.Commands.Any(c => c.ActionId == HudAction.Buy(AircraftType.Saab340.Id)), Is.True);
+            Assert.That(list.Commands.Any(c => c.ActionId == HudAction.Buy(AircraftType.Atr42.Id)), Is.True);
             Assert.That(HudAction.Payload(HudAction.Select("VH-PAX"), HudAction.SelectPrefix),
                 Is.EqualTo("VH-PAX"));
             Assert.That(HudAction.Payload("nonsense", HudAction.SelectPrefix), Is.Empty);

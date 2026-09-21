@@ -30,7 +30,7 @@ namespace Airside.Tests
             FleetAircraft first = null;
             for (var i = 0; i < aircraft; i++)
             {
-                var added = ops.AddAircraft(player, $"VH-PA{(char)('A' + i)}", AircraftType.Atr42,
+                var added = ops.AddAircraft(player, $"VH-PA{(char)('A' + i)}", AircraftType.Saab340,
                     AirlineOperations.AdelaideRegionalBays[i]);
                 first ??= added;
             }
@@ -67,7 +67,13 @@ namespace Airside.Tests
         [Test]
         public void Atr42_ReachesRegionalAndSouthEastButNotTheFarCities()
         {
-            var (_, ops, plane) = PlayerOnly();
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(7), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideRegionalBays);
+            var player = Player();
+            ops.AddAirline(player);
+            var plane = ops.AddAircraft(player, "VH-ATR", AircraftType.Atr42,
+                AirlineOperations.AdelaideRegionalBays[0]);
             foreach (var code in new[] { "KGC", "PLO", "WYA", "MGB", "CED", "CPD", "MQL", "BHQ", "MEL", "CBR" })
                 Assert.That(ops.CanReach(plane, Code(code)), Is.True, code);
             foreach (var code in new[] { "SYD", "HBA", "ASP", "BNE", "OOL", "CNS", "DRW", "PER" })
@@ -76,11 +82,21 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Saab340_ReachesRegionalHopsButNotSydney()
+        {
+            var (_, ops, plane) = PlayerOnly();
+            foreach (var code in new[] { "KGC", "PLO", "WYA", "MGB", "CED", "MEL" })
+                Assert.That(ops.CanReach(plane, Code(code)), Is.True, code);
+            foreach (var code in new[] { "SYD", "BNE", "PER", "DRW" })
+                Assert.That(ops.CanReach(plane, Code(code)), Is.False, code);
+        }
+
+        [Test]
         public void LegTiming_IsRealLength()
         {
             var (_, ops, plane) = PlayerOnly();
-            Assert.That(ops.AirborneSeconds(plane, Code("KGC")) / 60.0, Is.InRange(20, 26));
-            Assert.That(ops.AirborneSeconds(plane, Code("MEL")) / 60.0, Is.InRange(75, 85));
+            Assert.That(ops.AirborneSeconds(plane, Code("KGC")) / 60.0, Is.InRange(22, 30));
+            Assert.That(ops.AirborneSeconds(plane, Code("MEL")) / 60.0, Is.InRange(80, 95));
         }
 
         [Test]
@@ -482,17 +498,17 @@ namespace Airside.Tests
             var (_, ops, _) = PlayerOnly();
             ops.RestoreCareerState(200_000, 100, nameof(OperatingTier.International), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 40);
-            Assert.That(ops.BuyAircraft(AircraftType.Saab340).Accepted, Is.True);
-            var bought = ops.Fleet.Single(a => a.Type.Id == AircraftType.Saab340.Id);
+            Assert.That(ops.BuyAircraft(AircraftType.Atr42).Accepted, Is.True);
+            var bought = ops.Fleet.Single(a => a.Type.Id == AircraftType.Atr42.Id);
             var fundsBefore = ops.CareerState.Funds;
 
             var result = ops.SellAircraft(bought);
 
             Assert.That(result.Accepted, Is.True);
             Assert.That(ops.Fleet.Contains(bought), Is.False);
-            var expectedRefund = (long)Math.Round(AircraftAcquisition.Saab340.Price * AirlineOperations.ResaleFraction);
+            var expectedRefund = (long)Math.Round(AircraftAcquisition.Atr42.Price * AirlineOperations.ResaleFraction);
             Assert.That(ops.CareerState.Funds, Is.EqualTo(fundsBefore + expectedRefund));
-            Assert.That(expectedRefund, Is.LessThan(AircraftAcquisition.Saab340.Price),
+            Assert.That(expectedRefund, Is.LessThan(AircraftAcquisition.Atr42.Price),
                 "reselling is always a net loss versus buying");
         }
 
@@ -500,7 +516,7 @@ namespace Airside.Tests
         public void SellAircraft_RefusesTheStarterAircraftWithNoPurchasePrice()
         {
             var (_, ops, plane) = PlayerOnly();
-            // The starter ATR was never bought (AircraftAcquisition's own doc comment), so it
+            // The starter Saab was never bought (AircraftAcquisition's own doc comment), so it
             // has no listed price to base a resale fraction on — refused rather than inventing one.
             Assert.That(AircraftAcquisition.TryFor(plane.Type, out _), Is.False);
             Assert.That(ops.SellAircraft(plane).Accepted, Is.False);

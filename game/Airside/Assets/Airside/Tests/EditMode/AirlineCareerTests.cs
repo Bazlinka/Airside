@@ -24,7 +24,7 @@ namespace Airside.Tests
                 AirlineOperations.AdelaideRegionalBays);
             var player = Player();
             ops.AddAirline(player);
-            var plane = ops.AddAircraft(player, "VH-PAA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
+            var plane = ops.AddAircraft(player, "VH-PAA", AircraftType.Saab340, AirlineOperations.AdelaideRegionalBays[0]);
             return (clock, ops, plane);
         }
 
@@ -315,7 +315,7 @@ namespace Airside.Tests
         {
             var (clock, ops, plane) = PlayerOnly();
             Assert.That(ops.ScheduleDeparture(plane, Code("MEL"), new SimulationTime(600)).Accepted, Is.False,
-                "the starter ATR is Regional only");
+                "the starter Saab is Regional only");
             Assert.That(ops.CanOperate(plane, Code("MEL")), Is.False);
             Assert.That(ops.CanReach(plane, Code("MEL")), Is.True, "range still reaches Melbourne; the band does not");
 
@@ -431,7 +431,7 @@ namespace Airside.Tests
             for (var i = 0; i < completed; i++)
             {
                 var definition = new RouteContractDefinition(
-                    $"HIST-TEST-{i}", "ADL", "KGC", AircraftType.Atr42, 1, 50, 25, 0, OperatingTier.Provisional);
+                    $"HIST-TEST-{i}", "ADL", "KGC", AircraftType.Saab340, 1, 50, 25, 0, OperatingTier.Provisional);
                 Assert.That(ops.AcceptContract(definition).Accepted, Is.True, $"accept #{i}");
                 var stand = AirlineOperations.AdelaideRegionalBays[i % AirlineOperations.AdelaideRegionalBays.Count];
                 FlyRoundTrip(clock, ops, plane, kingscote, departAt, stand);

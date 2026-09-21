@@ -261,7 +261,7 @@ namespace Airside.Presentation
             ProbeSavedAirline();
             var hasSave = _savedAirline != null;
             var saveBlock = hasSave || !string.IsNullOrEmpty(_saveError) ? 96f : 0f;
-            var panelHeight = 312f + saveBlock;
+            var panelHeight = 392f + saveBlock;
             var rect = placement.SetupPanel(panelHeight);
             GUI.Box(rect, GUIContent.none, panel);
             var x = rect.x + 20f;
@@ -285,15 +285,20 @@ namespace Airside.Presentation
                 rect.height -= saveBlock;
             }
 
-            GUI.Label(new Rect(x, rect.y + 16f, inner, 30f), hasSave ? "Or start a new airline" : "Start your airline at Adelaide", title);
-            GUI.Label(new Rect(x, rect.y + 56f, inner, 20f), "Airline name", label);
-            _airlineNameDraft = GUI.TextField(new Rect(x, rect.y + 80f, inner, 30f), _airlineNameDraft ?? string.Empty, 32);
+            var eyebrow = Styled(label, "setup-eyebrow", s => AirsideTheme.TextStyle(new GUIStyle(s)
+                { fontSize = 11, fontStyle = FontStyle.Bold }, AirsideTheme.SafetyYellow));
+            GUI.Label(new Rect(x, rect.y + 14f, inner, 16f), "ADELAIDE  ·  PROVISIONAL AIRLINE", eyebrow);
+            GUI.Label(new Rect(x, rect.y + 34f, inner, 28f),
+                hasSave ? "Or start a new airline" : "Start small. Grow the airline.", title);
 
-            GUI.Label(new Rect(x, rect.y + 122f, inner, 20f), "Livery colour", label);
+            GUI.Label(new Rect(x, rect.y + 72f, inner, 18f), "Airline name", label);
+            _airlineNameDraft = GUI.TextField(new Rect(x, rect.y + 94f, inner, 30f), _airlineNameDraft ?? string.Empty, 32);
+
+            GUI.Label(new Rect(x, rect.y + 136f, inner, 18f), "Livery colour", label);
             var swatch = (inner - 5 * 8f) / LiveryChoices.Length;
             for (var i = 0; i < LiveryChoices.Length; i++)
             {
-                var cell = new Rect(x + i * (swatch + 8f), rect.y + 146f, swatch, 36f);
+                var cell = new Rect(x + i * (swatch + 8f), rect.y + 158f, swatch, 36f);
                 DrawSolid(cell, AirsideTheme.FromHex(LiveryChoices[i].hex));
                 if (i == _liveryChoice)
                     AirsideTheme.DrawPanelFrame(cell, AirsideTheme.SafetyYellow);
@@ -301,10 +306,26 @@ namespace Airside.Presentation
                     _liveryChoice = i;
             }
 
-            GUI.Label(new Rect(x, rect.y + 190f, inner, 48f),
-                hasSave
-                    ? "A new airline replaces your saved one."
-                    : $"You start with ${AirlineCareerState.StartingFunds:N0} and one ATR 42-600. Dispatch costs come out of that float; every completed flight pays, and contracts add a bonus.", label);
+            var ladder = Styled(label, "setup-ladder", s => AirsideTheme.TextStyle(new GUIStyle(s)
+                { fontSize = 12, fontStyle = FontStyle.Bold }, AirsideTheme.OpenSky));
+            var blurb = Styled(label, "setup-blurb", s => AirsideTheme.TextStyle(new GUIStyle(s)
+                { fontSize = 13, wordWrap = true }, AirsideTheme.OpenSky));
+            if (!hasSave)
+            {
+                GUI.Label(new Rect(x, rect.y + 208f, inner, 18f),
+                    $"Saab 340B  →  ATR 42  →  Dash 8  →  jets   ·   ${AirlineCareerState.StartingFunds:N0} float",
+                    ladder);
+                GUI.Label(new Rect(x, rect.y + 230f, inner, 56f),
+                    "One Saab on the regional bays. Take contracts, earn enough for the ATR, "
+                    + "then unlock bigger metal step by step. Dispatch comes out of your float; "
+                    + "every flight pays, contracts add the bonus that buys the next aircraft.",
+                    blurb);
+            }
+            else
+            {
+                GUI.Label(new Rect(x, rect.y + 208f, inner, 40f),
+                    "A new airline replaces your saved one.", blurb);
+            }
 
             var name = (_airlineNameDraft ?? string.Empty).Trim();
             GUI.enabled = name.Length > 0;

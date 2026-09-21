@@ -7,16 +7,18 @@ namespace Airside.Tests
     public sealed class FlightEconomicsTests
     {
         [Test]
-        public void KingscoteRoundTrip_IsProfitableOnTheATR()
+        public void KingscoteRoundTrip_IsProfitableOnTheStarterSaab()
         {
             Assert.That(DestinationCatalogue.TryFind("KGC", out var kgc), Is.True);
             var km = DestinationCatalogue.Adelaide.DistanceKmTo(kgc);
-            var cost = FlightEconomics.DispatchCost(AircraftType.Atr42, km);
-            var pay = FlightEconomics.FlightPay(AircraftType.Atr42, km);
+            var cost = FlightEconomics.DispatchCost(AircraftType.Saab340, km);
+            var pay = FlightEconomics.FlightPay(AircraftType.Saab340, km);
             Assert.That(cost, Is.GreaterThan(80));
             Assert.That(pay, Is.GreaterThan(cost), "a starter hop must not go broke on the operating loop alone");
             Assert.That(AirlineCareerState.StartingFunds, Is.GreaterThan(cost * 4),
                 "opening float covers several hops before the first return");
+            Assert.That(AirlineCareerState.StartingFunds, Is.LessThan(AircraftAcquisition.Atr42.Price),
+                "opening float alone cannot buy the first step-up aircraft");
         }
 
         [Test]
@@ -43,14 +45,15 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void OpeningFloat_CoversAnATRMelbourneAndAJetMelbourneTogether()
+        public void OpeningFloat_CoversSeveralSaabHopsButNotTheFirstHangarBuy()
         {
-            Assert.That(DestinationCatalogue.TryFind("MEL", out var mel), Is.True);
-            var km = DestinationCatalogue.Adelaide.DistanceKmTo(mel);
-            var pair = FlightEconomics.DispatchCost(AircraftType.Atr42, km)
-                       + FlightEconomics.DispatchCost(AircraftType.Boeing78710, km);
-            Assert.That(FlightEconomics.StartingFunds, Is.GreaterThan(pair),
-                "tests and a two-ship dispatch must not go broke on the opening float");
+            Assert.That(DestinationCatalogue.TryFind("KGC", out var kgc), Is.True);
+            var kgcKm = DestinationCatalogue.Adelaide.DistanceKmTo(kgc);
+            var saabHop = FlightEconomics.DispatchCost(AircraftType.Saab340, kgcKm);
+            Assert.That(FlightEconomics.StartingFunds, Is.GreaterThan(saabHop * 4),
+                "opening float still covers a short bank of starter hops");
+            Assert.That(FlightEconomics.StartingFunds, Is.LessThan(AircraftAcquisition.Atr42.Price),
+                "tight float — contracts and flying buy the ATR, not the opening cash alone");
         }
 
         [Test]

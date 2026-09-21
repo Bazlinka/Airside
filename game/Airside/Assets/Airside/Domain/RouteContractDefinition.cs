@@ -76,9 +76,9 @@ namespace Airside.Domain
     }
 
     /// <summary>
-    /// Authored intro contracts kept for save compatibility (ADR 0053 / 0055). Live offers
-    /// come from <c>ContractMarket</c> (ADR 0056). Melbourne needs a Dash 8 — the starter ATR
-    /// is Regional only. Payment numbers are placeholders.
+    /// Authored intro contracts kept for save compatibility (ADR 0053 / 0055 / 0077). Live
+    /// offers come from <c>ContractMarket</c> (ADR 0056). Regional intros use the starter
+    /// Saab 340; Melbourne needs a Dash 8. Payment numbers are placeholders.
     /// </summary>
     public static class RouteContractCatalogue
     {
@@ -86,10 +86,10 @@ namespace Airside.Domain
             id: "REG-KGC-INTRO",
             originCode: "ADL",
             destinationCode: "KGC",
-            eligibleType: AircraftType.Atr42,
+            eligibleType: AircraftType.Saab340,
             requiredRotations: 5,
-            paymentPerRotation: 400,
-            completionReward: 1000,
+            paymentPerRotation: 420,
+            completionReward: 1_100,
             reliabilityGainPerRotation: 2,
             requiredTier: OperatingTier.Provisional,
             reliabilityLossOnCancel: 3,
@@ -99,10 +99,10 @@ namespace Airside.Domain
             id: "REG-PLO-INTRO",
             originCode: "ADL",
             destinationCode: "PLO",
-            eligibleType: AircraftType.Atr42,
+            eligibleType: AircraftType.Saab340,
             requiredRotations: 4,
-            paymentPerRotation: 550,
-            completionReward: 1400,
+            paymentPerRotation: 580,
+            completionReward: 1_500,
             reliabilityGainPerRotation: 2,
             requiredTier: OperatingTier.Provisional,
             reliabilityLossOnCancel: 3,
@@ -112,10 +112,10 @@ namespace Airside.Domain
             id: "REG-WYA-INTRO",
             originCode: "ADL",
             destinationCode: "WYA",
-            eligibleType: AircraftType.Atr42,
+            eligibleType: AircraftType.Saab340,
             requiredRotations: 4,
-            paymentPerRotation: 500,
-            completionReward: 1200,
+            paymentPerRotation: 540,
+            completionReward: 1_300,
             reliabilityGainPerRotation: 2,
             requiredTier: OperatingTier.Regional,
             reliabilityLossOnCancel: 3);

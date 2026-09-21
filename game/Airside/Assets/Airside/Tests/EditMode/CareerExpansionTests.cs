@@ -22,7 +22,7 @@ namespace Airside.Tests
                 AirlineOperations.AdelaideRegionalBays);
             var player = Airline.Player("Southern Cross Regional", "#C8102E");
             ops.AddAirline(player);
-            var plane = ops.AddAircraft(player, "VH-PAX", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
+            var plane = ops.AddAircraft(player, "VH-PAX", AircraftType.Saab340, AirlineOperations.AdelaideRegionalBays[0]);
             return (clock, ops, plane);
         }
 
@@ -242,16 +242,16 @@ namespace Airside.Tests
         public void BuyAircraft_ChargesAndAddsAParkedTypeWhenGatesClear()
         {
             var (_, ops, _) = PlayerOnly();
-            Assert.That(ops.BuyAircraft(AircraftType.Saab340).Accepted, Is.False, "starter has not met the gates");
+            Assert.That(ops.BuyAircraft(AircraftType.Atr42).Accepted, Is.False, "starter has not met the gates");
 
             ops.RestoreCareerState(20_000, 80, nameof(OperatingTier.Provisional), null, 0, 0, Array.Empty<string>(),
                 Array.Empty<string>(), 6);
-            Assert.That(ops.BuyAircraft(AircraftType.Saab340).Accepted, Is.True);
-            Assert.That(ops.CareerState.Funds, Is.EqualTo(20_000 - AircraftAcquisition.Saab340.Price));
-            var saab = ops.FleetOf(ops.PlayerAirline).First(a => a.Type.Id == AircraftType.Saab340.Id);
-            Assert.That(saab.State, Is.EqualTo(FleetState.AtStand));
-            Assert.That(ops.CanOperate(saab, Code("KGC")), Is.True);
-            Assert.That(ops.CanOperate(saab, Code("MEL")), Is.False);
+            Assert.That(ops.BuyAircraft(AircraftType.Atr42).Accepted, Is.True);
+            Assert.That(ops.CareerState.Funds, Is.EqualTo(20_000 - AircraftAcquisition.Atr42.Price));
+            var atr = ops.FleetOf(ops.PlayerAirline).First(a => a.Type.Id == AircraftType.Atr42.Id);
+            Assert.That(atr.State, Is.EqualTo(FleetState.AtStand));
+            Assert.That(ops.CanOperate(atr, Code("KGC")), Is.True);
+            Assert.That(ops.CanOperate(atr, Code("MEL")), Is.False);
         }
 
         [Test]
@@ -262,7 +262,7 @@ namespace Airside.Tests
             Assert.That(first.Count, Is.EqualTo(ContractMarket.OffersPerWindow));
             foreach (var offer in first)
             {
-                Assert.That(offer.EligibleType.Id, Is.EqualTo(AircraftType.Atr42.Id));
+                Assert.That(offer.EligibleType.Id, Is.EqualTo(AircraftType.Saab340.Id));
                 Assert.That(RouteAccess.BandOf(offer.DestinationCode), Is.EqualTo(RouteBand.Regional));
                 Assert.That(offer.Id, Does.StartWith("MKT-"));
             }

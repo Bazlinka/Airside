@@ -1476,8 +1476,6 @@ namespace Airside.Simulation
                 return CommandResult.Refused("Only your own aircraft can be sent for a check.");
             if (aircraft.State != FleetState.AtStand)
                 return CommandResult.Refused($"{aircraft.Registration} must be parked at its stand for a check.");
-            if (CareerState.BaseLevel < PlayerBaseLevel.ExpandedRegional)
-                return CommandResult.Refused("Routine checks need Expanded regional base maintenance space.");
             if (aircraft.Scheduled.HasValue)
                 return CommandResult.Refused($"{aircraft.Registration} has a flight booked. Cancel it first.");
             if (Maintenance.InCheck(aircraft, _processedTo))

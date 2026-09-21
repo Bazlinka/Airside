@@ -414,7 +414,7 @@ namespace Airside.Simulation
                 contractHistory,
                 data.Version >= 12 && Enum.TryParse(data.PlayerBaseLevel, out PlayerBaseLevel savedBase)
                     && Enum.IsDefined(typeof(PlayerBaseLevel), savedBase)
-                    ? savedBase
+                    ? (PlayerBaseLevel?)savedBase
                     : null);
 
             return operations;

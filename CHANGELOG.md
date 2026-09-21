@@ -1,6 +1,6 @@
 ## Unreleased
 
-- **Player Adelaide Base v1 (ADR 0091, save v12).** A persisted operating footprint now gates fleet capacity and jet/widebody acquisition. Career can spend normal funds to expand it, Fleet mirrors the same locks, and older saves infer enough base capacity for aircraft already owned.
+- **Player Adelaide Base v1 (ADR 0091, save v12).** A persisted operating footprint now gates fleet capacity and jet/widebody acquisition. Career can spend normal funds to expand it, Fleet mirrors the same locks, older saves infer enough capacity for aircraft already owned, and a livery-coloured leased operations compound grows visibly at Adelaide.
 
 - **Career-aware Route Map.** Inspecting a destination now explains when an authored contract
   there would advance the current campaign chapter, using campaign-owned rules rather than

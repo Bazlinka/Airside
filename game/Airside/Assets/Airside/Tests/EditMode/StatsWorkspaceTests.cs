@@ -132,6 +132,22 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Stats_BaseRoadmapOffersUpgradeWhenRequirementsAreMet()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            ops.RestoreCareerState(20_000, 100, nameof(OperatingTier.Provisional), null, 0, 0,
+                System.Array.Empty<string>(), completedPlayerRotations: 4,
+                baseLevel: PlayerBaseLevel.Starter);
+            var model = new StatsWorkspaceModel();
+            model.Rebuild(ops, clock.Now);
+
+            Assert.That(model.CanUpgradeBase, Is.True);
+            var draw = new HudDrawList();
+            var layout = StatsWorkspaceLayout.Create(HudShell.WorkspaceSurface(1440f, 900f));
+            StatsWorkspacePainter.Paint(draw, model, layout);
+            Assert.That(draw.Commands.Any(c => c.ActionId == HudAction.UpgradeBase && c.Enabled), Is.True);
+        }
+        [Test]
         public void BaseCapability_RoadmapTracksExistingOperatingTiers()
         {
             Assert.That(CareerProgress.BaseCapabilityFor(OperatingTier.Provisional).Title,
@@ -258,7 +274,8 @@ namespace Airside.Tests
                 .Select(i => new CompletedContractRecord($"FULL-{i}", "ADL", "KGC", 100, new SimulationTime(i)))
                 .ToList();
             ops.RestoreCareerState(50_000, 100, nameof(OperatingTier.International), null, 0, 0,
-                Array.Empty<string>(), history.Select(h => h.DefinitionId).ToList(), 40, null, 12_345, history);
+                Array.Empty<string>(), history.Select(h => h.DefinitionId).ToList(), 40, null, 12_345, history,
+                baseLevel: PlayerBaseLevel.International);
             Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True, "for the jet-operator milestone");
 
             var model = new StatsWorkspaceModel();

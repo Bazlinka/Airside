@@ -24,3 +24,8 @@ Save schema v12 stores the base level. v11 and older saves infer the minimum bas
 ## Presentation
 
 Career exposes the real persisted roadmap and an **EXPAND BASE** command. Fleet uses the same rules when enabling aircraft purchases. World presentation should represent the player's leased footprint without hiding or fabricating real Adelaide Airport buildings.
+
+
+## World visibility
+
+The runtime adds a presentation-only leased operations compound beside an existing Adelaide hangar precinct. Its modular footprint grows with the persisted base level and uses the player airline livery. It has no collider, stand reservation or simulation authority, and does not replace any real OSM airport building.

@@ -7,7 +7,8 @@
   - Career has a real **EXPAND BASE** action; Fleet purchase locks mirror simulation rules.
   - v11 and older saves infer a base large enough for their existing player fleet.
   - Added acquisition, UI and save-migration coverage.
-  - **NEXT:** compile/EditMode pass, then add a restrained world-visible leased-base marker if runtime refresh is safe.
+  - Added a presentation-only leased operations compound beside an existing Adelaide hangar precinct; modules appear with base level and use the player livery.
+  - **NEXT:** Unity/EditMode + visual playtest. Check Career EXPAND BASE layout at supported resolutions and inspect the leased compound for clashes with Adelaide scenery.
   - **Evidence:** GitHub connector implementation only; Unity/EditMode not executed yet.
 
 - **2026-09-21 ChatGPT — career-aware route planning + base capability roadmap (branch `feature/career-roadmap-ui`).**

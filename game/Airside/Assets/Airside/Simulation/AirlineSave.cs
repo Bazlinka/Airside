@@ -30,9 +30,11 @@ namespace Airside.Simulation
         /// and no history — same "no retroactive credit" tolerance as every earlier version.
         /// 10 adds per-aircraft pushback lateness for on-time reliability (ADR 0078). A pre-10
         /// mid-trip aircraft restores with no lateness recorded, so that one settlement skips
-        /// the punctuality delta rather than inventing one.
+        /// the punctuality delta rather than inventing one. 11 adds routine-check wear and an
+        /// in-progress check end time (ADR 0085). Older saves load every aircraft as freshly
+        /// checked, so a reload does not invent overdue penalties.
         /// </summary>
-        public const int CurrentVersion = 10;
+        public const int CurrentVersion = 11;
 
         public int Version = CurrentVersion;
 
@@ -128,6 +130,10 @@ namespace Airside.Simulation
         public long PrepStartedAt;
         public bool HasPushbackLateness;
         public int PushbackLatenessSeconds;
+
+        /// <summary>v11 (ADR 0085). Older saves load as 0: every aircraft starts fresh.</summary>
+        public int RotationsSinceCheck;
+        public long CheckUntilSeconds;
     }
 
     public static class AirlineSave
@@ -219,7 +225,9 @@ namespace Airside.Simulation
                     HasPrepStart = a.PrepStartedAt.HasValue,
                     PrepStartedAt = a.PrepStartedAt?.ElapsedSeconds ?? 0,
                     HasPushbackLateness = a.PushbackLatenessSeconds.HasValue,
-                    PushbackLatenessSeconds = a.PushbackLatenessSeconds ?? 0
+                    PushbackLatenessSeconds = a.PushbackLatenessSeconds ?? 0,
+                    RotationsSinceCheck = a.RotationsSinceCheck,
+                    CheckUntilSeconds = a.CheckUntil?.ElapsedSeconds ?? 0
                 });
             }
 
@@ -325,6 +333,8 @@ namespace Airside.Simulation
                     operations.RestorePrepData(registration, new SimulationTime(record.PrepStartedAt));
                 if (data.Version >= 10 && record.HasPushbackLateness)
                     operations.RestorePushbackLateness(registration, record.PushbackLatenessSeconds);
+                if (data.Version >= 11)
+                    operations.RestoreMaintenance(registration, record.RotationsSinceCheck, record.CheckUntilSeconds);
             }
 
             operations.RestoreTower(

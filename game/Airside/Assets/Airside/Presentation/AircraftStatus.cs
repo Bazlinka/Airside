@@ -46,6 +46,9 @@ namespace Airside.Presentation
             if (aircraft == null)
                 return StatusSeverity.Normal;
 
+            if (aircraft.Airline.IsPlayer && Maintenance.IsOverdue(aircraft) && !Maintenance.InCheck(aircraft, now))
+                return StatusSeverity.Warning;
+
             if (aircraft.Scheduled is { Cancelled: true })
                 return StatusSeverity.Warning;
             if (aircraft.Scheduled is { DelayMinutes: > 0 } && aircraft.State == FleetState.AtStand)
@@ -60,6 +63,10 @@ namespace Airside.Presentation
             if (aircraft.State == FleetState.AwaitingStand)
                 // The player must choose a bay; other operators pick their own.
                 return aircraft.Airline.IsPlayer ? StatusSeverity.Warning : StatusSeverity.Attention;
+
+            if (aircraft.Airline.IsPlayer
+                && (Maintenance.InCheck(aircraft, now) || Maintenance.IsDueSoon(aircraft)))
+                return StatusSeverity.Attention;
 
             if (!IsWaiting(aircraft))
                 return StatusSeverity.Normal;
@@ -89,6 +96,11 @@ namespace Airside.Presentation
         {
             if (aircraft == null)
                 return string.Empty;
+            if (aircraft.Airline.IsPlayer && Maintenance.InCheck(aircraft, now))
+                return "in check";
+            if (aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand && !aircraft.Scheduled.HasValue
+                && Maintenance.IsOverdue(aircraft))
+                return "check due";
             if (aircraft.Scheduled is { Cancelled: true } && aircraft.State == FleetState.AtStand)
                 return "cancelled";
             if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue && aircraft.Airline.IsPlayer)

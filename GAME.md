@@ -1,5 +1,15 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Cursor — routine aircraft checks (branch `feature/maintenance-planning`, ADR
+  0085).** Finished Claude's WIP after the session limit: player aircraft wear one rotation
+  per trip, a check is due every 8, the player chooses when (Fleet **CHECK $N**, or Send for
+  check when overdue). 2 h / $400 on the Saab; 4 h / 6% of list on gate jets. Flying overdue
+  costs 2 reliability per extra rotation. Save **v11**. Objective card, Fleet roster and the
+  selected-aircraft card all show the status.
+  - **Evidence:** Unity EditMode **855/856** (only the gate lead-in decision test).
+  - **NEXT:** a play to tune check cost/interval and contract/campaign pay. Gate lead-in
+    decision still open. Wide jets next to parked 737s at gates still need a visual look.
+
 - **2026-09-21 Claude — career contracts on offer (branch `feature/more-contracts`, ADR 0084).**
   12 authored contracts (Regional → International) in `RouteContractCatalogue`;
   `MarketOffers()` leads with the next 2 eligible, unfulfilled ones (`FeaturedCareerContracts`).

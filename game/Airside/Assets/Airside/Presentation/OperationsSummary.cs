@@ -13,7 +13,8 @@ namespace Airside.Presentation
         PlanFlight,
         ViewPlan,
         TrackFlight,
-        AssignStand
+        AssignStand,
+        StartCheck
     }
 
     /// <summary>
@@ -157,26 +158,30 @@ namespace Airside.Presentation
             }
         }
 
-        public static int AvailableCount(IEnumerable<FleetAircraft> playerFleet)
+        public static int AvailableCount(IEnumerable<FleetAircraft> playerFleet, SimulationTime now = default)
         {
             if (playerFleet == null)
                 return 0;
             var count = 0;
             foreach (var aircraft in playerFleet)
             {
-                if (aircraft.State == FleetState.AtStand && !aircraft.Scheduled.HasValue)
+                if (aircraft.State == FleetState.AtStand && !aircraft.Scheduled.HasValue
+                    && !Maintenance.InCheck(aircraft, now))
                     count++;
             }
 
             return count;
         }
 
-        public static AircraftHudAction PrimaryAction(FleetAircraft aircraft)
+        public static AircraftHudAction PrimaryAction(FleetAircraft aircraft, SimulationTime now = default)
         {
             if (aircraft == null || !aircraft.Airline.IsPlayer)
                 return AircraftHudAction.None;
             if (aircraft.State == FleetState.AwaitingStand)
                 return AircraftHudAction.AssignStand;
+            if (aircraft.State == FleetState.AtStand && !aircraft.Scheduled.HasValue
+                && Maintenance.IsOverdue(aircraft) && !Maintenance.InCheck(aircraft, now))
+                return AircraftHudAction.StartCheck;
             if (aircraft.State == FleetState.AtStand && !aircraft.Scheduled.HasValue)
                 return AircraftHudAction.PlanFlight;
             if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
@@ -190,18 +195,25 @@ namespace Airside.Presentation
             AircraftHudAction.ViewPlan => "View plan",
             AircraftHudAction.TrackFlight => "Track flight",
             AircraftHudAction.AssignStand => "Assign stand",
+            AircraftHudAction.StartCheck => "Send for check",
             _ => string.Empty
         };
 
-        public static string CompactState(FleetAircraft aircraft, SimulationTime now)
+        public static string CompactState(FleetAircraft aircraft, SimulationTime now, AirlineClock clock = null)
         {
             if (aircraft == null)
                 return string.Empty;
+            if (aircraft.Airline.IsPlayer && Maintenance.InCheck(aircraft, now))
+                return Maintenance.Status(aircraft, now, clock);
             if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue && aircraft.Airline.IsPlayer)
             {
                 var prep = DeparturePrep.For(aircraft, now);
                 return prep.Ready ? "Ready" : prep.Label;
             }
+
+            if (aircraft.State == FleetState.AtStand && aircraft.Airline.IsPlayer
+                && (Maintenance.IsOverdue(aircraft) || Maintenance.IsDueSoon(aircraft)))
+                return Maintenance.Status(aircraft, now, clock);
 
             return aircraft.State switch
             {
@@ -263,6 +275,13 @@ namespace Airside.Presentation
             var severity = AircraftStatus.Severity(priority, now);
             if (priority.State == FleetState.AwaitingStand)
                 return ($"Next: assign a stand to {priority.Registration}", StatusSeverity.Warning);
+
+            if (Maintenance.InCheck(priority, now))
+                return ($"Next: wait for {priority.Registration}'s check until {clock.TimeText(priority.CheckUntil.Value)}",
+                    StatusSeverity.Attention);
+
+            if (priority.State == FleetState.AtStand && !priority.Scheduled.HasValue && Maintenance.IsOverdue(priority))
+                return ($"Next: send {priority.Registration} for a check", StatusSeverity.Warning);
 
             if (priority.State == FleetState.AtStand && priority.Scheduled.HasValue)
             {

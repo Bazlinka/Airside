@@ -676,6 +676,14 @@ namespace Airside.Simulation
             aircraft.PrepStartedAt = prepStartedAt;
         }
 
+        internal void RestorePushbackLateness(string registration, int latenessSeconds)
+        {
+            var aircraft = _fleet.Find(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase));
+            if (aircraft == null)
+                throw new FormatException($"{registration}: pushback lateness has no aircraft.");
+            aircraft.PushbackLatenessSeconds = latenessSeconds;
+        }
+
         internal void RestoreTower(SimulationTime mainRunwayFreeAt, SimulationTime crossRunwayFreeAt, long totalEvents)
         {
             _mainRunwayFreeAt = mainRunwayFreeAt;
@@ -1280,6 +1288,13 @@ namespace Airside.Simulation
             var settlementId = new SettlementId(aircraft.Registration, aircraft.CompletedTrips);
             var pay = FlightEconomics.FlightPay(aircraft.Type, DistanceKm(justFlown.Value),
                 RouteAccess.BandOf(justFlown.Value));
+            if (aircraft.Airline.IsPlayer && aircraft.PushbackLatenessSeconds.HasValue)
+            {
+                CareerState.ApplyPunctuality(
+                    FlightEconomics.PunctualityReliabilityDelta(aircraft.PushbackLatenessSeconds.Value));
+                aircraft.PushbackLatenessSeconds = null;
+            }
+
             var settlement = CareerState.RecordCompletedRotation(
                 settlementId, pay, matching, PlayerOwnedTypes(), now);
             if (settlement == null)
@@ -1394,6 +1409,12 @@ namespace Airside.Simulation
                     // whenever anything else finishes, since that is the only way it frees.
                     if (pushingBackFromGate && !IsLeadInFree(aircraft.Stand, aircraft))
                         return false;
+                    if (aircraft.Airline.IsPlayer)
+                    {
+                        var lateness = (int)(now.ElapsedSeconds - aircraft.Scheduled.Value.DepartAt.ElapsedSeconds);
+                        aircraft.PushbackLatenessSeconds = lateness;
+                    }
+
                     aircraft.CurrentDestination = aircraft.Scheduled.Value.Destination;
                     aircraft.Scheduled = null;
                     aircraft.PrepStartedAt = null;

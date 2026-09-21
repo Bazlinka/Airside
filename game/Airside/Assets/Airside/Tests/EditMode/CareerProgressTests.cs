@@ -26,6 +26,39 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FreshCareer_NextAircraftIsTheAtrWithFundsAndRotationShortfalls()
+        {
+            var career = Fresh();
+            var next = CareerProgress.NextAircraft(career, ownedCount: 1);
+
+            Assert.That(next.HasOffer, Is.True);
+            Assert.That(next.Offer.Type.Id, Is.EqualTo(AircraftType.Atr42.Id));
+            Assert.That(next.ReadyToBuy, Is.False);
+            Assert.That(next.FundsShort, Is.EqualTo(AircraftAcquisition.Atr42.Price - AirlineCareerState.StartingFunds));
+            Assert.That(next.RotationsShort, Is.EqualTo(AircraftAcquisition.Atr42.RequiredRotations));
+            Assert.That(next.ReliabilityShort, Is.EqualTo(0));
+            Assert.That(next.NeedsTier, Is.False);
+        }
+
+        [Test]
+        public void NextAircraft_ReadyWhenEveryGateClears()
+        {
+            var career = new AirlineCareerState(funds: 20_000, reliability: 80, tier: OperatingTier.Provisional,
+                completedPlayerRotations: 6);
+            var next = CareerProgress.NextAircraft(career, ownedCount: 1);
+            Assert.That(next.ReadyToBuy, Is.True);
+            Assert.That(next.Offer.Type.Id, Is.EqualTo(AircraftType.Atr42.Id));
+        }
+
+        [Test]
+        public void NextAircraft_ReportsFleetFull()
+        {
+            var next = CareerProgress.NextAircraft(Fresh(), ownedCount: AircraftAcquisition.MaxPlayerAircraft);
+            Assert.That(next.FleetFull, Is.True);
+            Assert.That(next.HasOffer, Is.False);
+        }
+
+        [Test]
         public void RegionalTier_FlagsAMissingQualifyingAircraftForDomestic()
         {
             var career = new AirlineCareerState(reliability: 100, tier: OperatingTier.Regional,

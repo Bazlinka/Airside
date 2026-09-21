@@ -1,5 +1,17 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Cursor — hangar goal + on-time reliability (branch
+  `cursor/career-mechanics-hangar-ontime-22df`, ADR 0078).** Bailey: keep improving game
+  mechanics (after agreeing per-flight pay, not daily/hourly/pax).
+  1. **Hangar objective** — with no active contract, the card shows "Save for a …" / funds
+     and rotation progress toward the next `AircraftAcquisition` offer (usually ATR 42).
+     Market-offer titles still invite accepting a contract; progress line still shows hangar.
+  2. **On-time pushback → reliability** — lateness vs booked depart is recorded at TaxiOut;
+     settlement applies +1 / 0 / −1 / −2. Contract bonuses stay exact; save **v10**.
+  - **Evidence:** `scripts/test-domain.sh` **565/565**.
+  - **NEXT:** Unity Play look; optional soft overnight bay fee only if Bailey wants it;
+    HudDrawList setup page still open.
+
 - **2026-09-21 Cursor — Saab starter / fleet ladder / finance / opening (branch
   `cursor/career-rebalance-opening-22df`, ADR 0077).** Bailey: contracts / finance pressure,
   start with smaller planes and unlock bit by bit, smarter hangar pricing, redo opening.

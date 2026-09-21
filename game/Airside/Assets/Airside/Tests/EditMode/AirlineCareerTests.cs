@@ -74,13 +74,60 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void NewCareer_StartsProvisionalWithNoContract()
+        public void OnTimePushback_RecordsLatenessAndKeepsReliabilityCapped()
         {
-            var (_, ops, _) = PlayerOnly();
-            Assert.That(ops.CareerState.Tier, Is.EqualTo(OperatingTier.Provisional));
-            Assert.That(ops.CareerState.Funds, Is.EqualTo(AirlineCareerState.StartingFunds));
-            Assert.That(ops.CareerState.Reliability, Is.EqualTo(AirlineCareerState.StartingReliability));
-            Assert.That(ops.CareerState.ActiveContract, Is.Null);
+            var (clock, ops, plane) = PlayerOnly();
+            var kingscote = Code("KGC");
+            var departAt = DeparturePrep.LeadSeconds(plane.Type);
+            Assert.That(ops.ScheduleDeparture(plane, kingscote, new SimulationTime(departAt)).Accepted, Is.True);
+            RunTo(clock, ops, departAt);
+            Assert.That(plane.State, Is.EqualTo(FleetState.TaxiOut));
+            Assert.That(plane.PushbackLatenessSeconds, Is.Not.Null);
+            Assert.That(plane.PushbackLatenessSeconds.Value, Is.LessThanOrEqualTo(FlightEconomics.OnTimeGraceSeconds));
+
+            while (plane.State is FleetState.TaxiOut or FleetState.HoldingShort)
+                RunTo(clock, ops, (plane.StateEndsAt ?? clock.Now.Advance(1)).ElapsedSeconds);
+            Assert.That(plane.StateEndsAt, Is.Not.Null);
+            RunTo(clock, ops, plane.StateEndsAt.Value.ElapsedSeconds + 1);
+            while (plane.State is FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound)
+                RunTo(clock, ops, plane.StateEndsAt.Value.ElapsedSeconds);
+            var parkedBy = clock.Now.ElapsedSeconds + AirlineOperations.LandingRunwaySecondsFor(plane.Type) + 3600;
+            while (plane.State != FleetState.AtStand && clock.Now.ElapsedSeconds < parkedBy)
+                RunTo(clock, ops, (ops.NextEventAt() ?? clock.Now.Advance(60)).ElapsedSeconds);
+
+            Assert.That(plane.State, Is.EqualTo(FleetState.AtStand));
+            Assert.That(plane.PushbackLatenessSeconds, Is.Null);
+            Assert.That(ops.CareerState.Reliability, Is.EqualTo(100), "on-time bonus cannot push past 100");
+            Assert.That(ops.CareerState.CompletedPlayerRotations, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void LatePushback_DropsReliabilityBeforeSettlementPay()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            ops.RestoreCareerState(AirlineCareerState.StartingFunds, 90, nameof(OperatingTier.Provisional),
+                null, 0, 0, Array.Empty<string>(), Array.Empty<string>(), 0);
+            var kingscote = Code("KGC");
+            var departAt = DeparturePrep.LeadSeconds(plane.Type);
+            Assert.That(ops.ScheduleDeparture(plane, kingscote, new SimulationTime(departAt)).Accepted, Is.True);
+            RunTo(clock, ops, departAt);
+            Assert.That(plane.State, Is.EqualTo(FleetState.TaxiOut));
+            plane.PushbackLatenessSeconds = FlightEconomics.HardLateSeconds + 30;
+
+            while (plane.State is FleetState.TaxiOut or FleetState.HoldingShort)
+                RunTo(clock, ops, (plane.StateEndsAt ?? clock.Now.Advance(1)).ElapsedSeconds);
+            Assert.That(plane.StateEndsAt, Is.Not.Null);
+            RunTo(clock, ops, plane.StateEndsAt.Value.ElapsedSeconds + 1);
+            while (plane.State is FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound)
+                RunTo(clock, ops, plane.StateEndsAt.Value.ElapsedSeconds);
+            var parkedBy = clock.Now.ElapsedSeconds + AirlineOperations.LandingRunwaySecondsFor(plane.Type) + 3600;
+            while (plane.State != FleetState.AtStand && clock.Now.ElapsedSeconds < parkedBy)
+                RunTo(clock, ops, (ops.NextEventAt() ?? clock.Now.Advance(60)).ElapsedSeconds);
+
+            Assert.That(plane.State, Is.EqualTo(FleetState.AtStand));
+            Assert.That(plane.PushbackLatenessSeconds, Is.Null, "consumed at settlement");
+            Assert.That(ops.CareerState.Reliability, Is.EqualTo(88),
+                "90 start − 2 hard-late penalty, no contract bonus");
         }
 
         [Test]

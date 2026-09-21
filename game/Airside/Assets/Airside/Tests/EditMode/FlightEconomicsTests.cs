@@ -84,5 +84,17 @@ namespace Airside.Tests
             Assert.That(FlightEconomics.ReliabilityMultiplier(0), Is.GreaterThan(0),
                 "even a ruined reputation still pays something for the flight");
         }
+
+        [Test]
+        public void PunctualityReliabilityDelta_RewardsOnTimeAndPenalisesLatePushback()
+        {
+            Assert.That(FlightEconomics.PunctualityReliabilityDelta(0), Is.EqualTo(1));
+            Assert.That(FlightEconomics.PunctualityReliabilityDelta(FlightEconomics.OnTimeGraceSeconds), Is.EqualTo(1));
+            Assert.That(FlightEconomics.PunctualityReliabilityDelta(FlightEconomics.OnTimeGraceSeconds + 1), Is.EqualTo(0));
+            Assert.That(FlightEconomics.PunctualityReliabilityDelta(FlightEconomics.SoftLateSeconds), Is.EqualTo(0));
+            Assert.That(FlightEconomics.PunctualityReliabilityDelta(FlightEconomics.SoftLateSeconds + 1), Is.EqualTo(-1));
+            Assert.That(FlightEconomics.PunctualityReliabilityDelta(FlightEconomics.HardLateSeconds), Is.EqualTo(-1));
+            Assert.That(FlightEconomics.PunctualityReliabilityDelta(FlightEconomics.HardLateSeconds + 1), Is.EqualTo(-2));
+        }
     }
 }

@@ -136,7 +136,7 @@ namespace Airside.Simulation
         /// there first. Ties break on registration so every frame and every load draws the
         /// same order. Different strips do not share a queue.
         /// </summary>
-        public static int QueueSlot(IReadOnlyList<FleetAircraft> fleet, FleetAircraft aircraft)
+        public static int QueueSlot(IReadOnlyList<FleetAircraft> fleet, FleetAircraft aircraft, SimulationTime? now = null)
         {
             if (fleet == null || aircraft == null)
                 return 0;
@@ -145,10 +145,28 @@ namespace Airside.Simulation
             for (var i = 0; i < fleet.Count; i++)
             {
                 var other = fleet[i];
+                // The aircraft cleared off the front of the queue starts its lineup from the
+                // holding point itself; the next one waits a slot back until it has gone, or
+                // it was drawn standing on top of it.
+                if (aircraft.State == FleetState.HoldingShort && IsLiningUp(other, aircraft.AssignedRunway, now))
+                {
+                    slot++;
+                    continue;
+                }
+
+                // Likewise the arrival that has just set off for its stand from the exit.
+                if (aircraft.State == FleetState.AwaitingStand && IsLeavingExit(other, aircraft.AssignedRunway, now))
+                {
+                    slot++;
+                    continue;
+                }
+
                 if (ReferenceEquals(other, aircraft) || other.State != aircraft.State)
                     continue;
-                // AwaitingStand shares E2 — do not let each strip claim slot 0 on the same point.
-                if (shareStrip && other.AssignedRunway != aircraft.AssignedRunway)
+                // Holding short queues per runway end. Waiting for a stand queues per runway exit:
+                // 05 and 23 both vacate to E2, while 12 and 30 each join the bay corridor.
+                if (shareStrip ? other.AssignedRunway != aircraft.AssignedRunway
+                               : !AdelaideGround.SameArrivalExit(other.AssignedRunway, aircraft.AssignedRunway))
                     continue;
                 var order = other.StateStartedAt.CompareTo(aircraft.StateStartedAt);
                 if (order < 0 || order == 0
@@ -158,6 +176,63 @@ namespace Airside.Simulation
 
             return slot;
         }
+
+        /// <summary>
+        /// Aircraft ahead of <paramref name="aircraft"/> at its runway's holding point: those holding
+        /// short and one still lining up. A taxi-out stops that many queue places back.
+        /// </summary>
+        public static int QueueAhead(IReadOnlyList<FleetAircraft> fleet, FleetAircraft aircraft, SimulationTime now)
+        {
+            if (fleet == null || aircraft == null)
+                return 0;
+            var ahead = 0;
+            foreach (var other in fleet)
+            {
+                if (ReferenceEquals(other, aircraft) || other.AssignedRunway != aircraft.AssignedRunway)
+                    continue;
+                if (other.State == FleetState.HoldingShort || IsLiningUp(other, aircraft.AssignedRunway, now))
+                    ahead++;
+            }
+
+            return ahead;
+        }
+
+        /// <summary>
+        /// Arrivals already waiting for a stand at the exit a <paramref name="landing"/> aircraft will
+        /// vacate to. Its vacate stops that many places back, where it will then wait.
+        /// </summary>
+        public static int ExitQueueAhead(IReadOnlyList<FleetAircraft> fleet, FleetAircraft landing, SimulationTime? now = null)
+        {
+            if (fleet == null || landing == null)
+                return 0;
+            var ahead = 0;
+            foreach (var other in fleet)
+            {
+                if (ReferenceEquals(other, landing))
+                    continue;
+                if (other.State == FleetState.AwaitingStand
+                    && AdelaideGround.SameArrivalExit(other.AssignedRunway, landing.AssignedRunway)
+                    || IsLeavingExit(other, landing.AssignedRunway, now))
+                    ahead++;
+            }
+
+            return ahead;
+        }
+
+        /// <summary>Seconds a taxi-in takes to move a queue place clear of the runway exit.</summary>
+        public const long LeavingExitSeconds = 20;
+
+        /// <summary>Taxiing in from the same exit and not yet a queue place clear of it.</summary>
+        private static bool IsLeavingExit(FleetAircraft other, RunwayDirection runway, SimulationTime? now) =>
+            now.HasValue && other.State == FleetState.TaxiIn
+            && AdelaideGround.SameArrivalExit(other.AssignedRunway, runway)
+            && now.Value.ElapsedSeconds - other.StateStartedAt.ElapsedSeconds < LeavingExitSeconds;
+
+        /// <summary>Taking off from <paramref name="runway"/> and still on the lineup leg at <paramref name="now"/>.</summary>
+        private static bool IsLiningUp(FleetAircraft other, RunwayDirection runway, SimulationTime? now) =>
+            now.HasValue && other.State == FleetState.TakingOff && other.AssignedRunway == runway
+            && now.Value.ElapsedSeconds - other.StateStartedAt.ElapsedSeconds
+            < AdelaideGround.LineupFor(runway).WholeSeconds;
 
         private static FleetVisual Air(AircraftPhase phase, SimulationTime startedAt) =>
             new(true, phase, startedAt, FleetGroundLeg.None, startedAt, 0);

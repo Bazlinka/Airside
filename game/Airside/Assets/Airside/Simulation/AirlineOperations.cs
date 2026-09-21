@@ -1032,6 +1032,9 @@ namespace Airside.Simulation
                         Consider(readyAt);
                         if (readyAt.CompareTo(now) <= 0)
                         {
+                            // Ready but still at the stand: it may be waiting for the ground to
+                            // clear, which is re-checked on the grid.
+                            Consider(GroundTraffic.NextGrid(now));
                             if (AdelaideGround.IsTerminalGate(aircraft.Stand))
                                 taxiReleaseWantedGate = true;
                             else
@@ -1041,12 +1044,28 @@ namespace Airside.Simulation
                 }
                 if (aircraft.State is FleetState.HoldingShort or FleetState.HoldingForLanding)
                     runwayWanted = true;
+                // Waiting at the exit with a stand to go to: the taxi-in may be held for traffic.
+                if (aircraft.State == FleetState.AwaitingStand && SuggestStand(aircraft) != null)
+                    Consider(GroundTraffic.NextGrid(now));
             }
 
             if (runwayWanted)
             {
                 Consider(_mainRunwayFreeAt);
                 Consider(_crossRunwayFreeAt);
+                // An arrival still holding with its strip already free is being held for taxiing
+                // traffic (or a storm): re-check it on the ground-control grid.
+                foreach (var aircraft in _fleet)
+                {
+                    if (aircraft.State != FleetState.HoldingForLanding)
+                        continue;
+                    var stripFree = RunwayWeather.IsMainRunway(aircraft.AssignedRunway) ? _mainRunwayFreeAt : _crossRunwayFreeAt;
+                    if (stripFree.CompareTo(now) <= 0)
+                    {
+                        Consider(GroundTraffic.NextGrid(now));
+                        break;
+                    }
+                }
                 // ADR 0058: a strip can sit free-at-or-before now yet still be withheld by
                 // a storm, which RunTowerOnStrip checks against `now` itself rather than
                 // any tracked "reopens at" time. Without this, a big skip-to-next-event
@@ -1411,6 +1430,18 @@ namespace Airside.Simulation
                     // whenever anything else finishes, since that is the only way it frees.
                     if (pushingBackFromGate && !IsLeadInFree(aircraft.Stand, aircraft))
                         return false;
+                    // Ground control: push only when the whole route to the runway is clear of
+                    // the traffic already moving. A departure that has to wait for it goes on the
+                    // grid, so the moment it moves does not depend on how the clock is stepped.
+                    var departureRunway = RunwayFor(aircraft);
+                    var readyAt = DepartureReadyAt(aircraft);
+                    if (!now.Equals(readyAt) && !GroundTraffic.OnGrid(now))
+                        return false;
+                    if (!GroundTraffic.PathClear(_fleet, aircraft,
+                            AdelaideGround.TaxiOut(aircraft.Stand, aircraft.Type, departureRunway),
+                            departureRunway, taxiOut: true, now,
+                            includeStationary: now.ElapsedSeconds - readyAt.ElapsedSeconds < GroundTraffic.MaxWaitSeconds))
+                        return false;
                     if (aircraft.Airline.IsPlayer)
                     {
                         var lateness = (int)(now.ElapsedSeconds - aircraft.Scheduled.Value.DepartAt.ElapsedSeconds);
@@ -1422,7 +1453,7 @@ namespace Airside.Simulation
                     aircraft.PrepStartedAt = null;
                     aircraft.DepartureStand = aircraft.Stand;
                     aircraft.Stand = default;
-                    aircraft.AssignedRunway = RunwayFor(aircraft);
+                    aircraft.AssignedRunway = departureRunway;
                     aircraft.WentAroundThisTrip = false;
                     Transition(aircraft, FleetState.TaxiOut, now,
                         TaxiOutSecondsFrom(aircraft.DepartureStand, aircraft.Type, aircraft.AssignedRunway));
@@ -1482,6 +1513,16 @@ namespace Airside.Simulation
                     var chosen = SuggestStand(aircraft);
                     if (chosen == null)
                         return false;
+                    // Ground control, as for a pushback: the taxi-in waits at the exit until its
+                    // route is clear, moving only on the grid once it has had to wait.
+                    if (!now.Equals(aircraft.StateStartedAt) && !GroundTraffic.OnGrid(now))
+                        return false;
+                    if (!GroundTraffic.PathClear(_fleet, aircraft,
+                            AdelaideGround.TaxiIn(chosen.Value, aircraft.Type, aircraft.AssignedRunway),
+                            aircraft.AssignedRunway, taxiOut: false, now,
+                            includeStationary: now.ElapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds
+                                               < GroundTraffic.MaxWaitSeconds))
+                        return false;
                     aircraft.Stand = chosen.Value;
                     Transition(aircraft, FleetState.TaxiIn, now, TaxiInSecondsTo(chosen.Value, aircraft.Type, aircraft.AssignedRunway));
                     return true;
@@ -1532,6 +1573,20 @@ namespace Airside.Simulation
                     if (StandHolder(aircraft, other)
                         && (ReferenceEquals(type, AircraftType.Dash8Q400) || ReferenceEquals(aircraft.Type, AircraftType.Dash8Q400)))
                         return true;
+            }
+
+            // Any stand: a wide jet next to a parked 737 at gates 43 m apart overlapped wingtips.
+            var here = AdelaideGround.StandPose(stand);
+            var half = GroundTraffic.HalfSpan(type);
+            foreach (var aircraft in _fleet)
+            {
+                var held = HoldsStand(aircraft) ? aircraft.Stand
+                    : aircraft.State == FleetState.TaxiOut ? aircraft.DepartureStand
+                    : default;
+                if (string.IsNullOrEmpty(held.Value) || held.Equals(stand))
+                    continue;
+                if (GroundTraffic.TooClose(here, half, AdelaideGround.StandPose(held), GroundTraffic.HalfSpan(aircraft.Type)))
+                    return true;
             }
 
             return false;
@@ -1708,6 +1763,25 @@ namespace Airside.Simulation
                 && now.ElapsedSeconds - departure.StateStartedAt.ElapsedSeconds >= DepartureMaxHoldSeconds
                 && departure.StateStartedAt.CompareTo(arrival.StateStartedAt) < 0)
                 next = departure;
+            // An arrival whose vacate runs through an aircraft holding short (12's exit passes the
+            // 30 hold) would drive through it: send the holder first, then land the arrival.
+            if (next == null)
+                return false;
+            if (next == arrival && departure != null && VacateCrossesHolder(arrival, mainStrip))
+                next = departure;
+            // Nor may its vacate run into traffic already taxiing. If it would, a waiting
+            // departure goes first; otherwise the arrival holds a little longer, re-checked on
+            // the ground-control grid so the result does not depend on how the clock steps.
+            if (next == arrival && !VacateClearOfTaxiing(arrival, now))
+            {
+                if (departure != null)
+                    next = departure;
+                else
+                    return false;
+            }
+            if (next == arrival && !now.Equals(freeAt) && !now.Equals(arrival.StateStartedAt)
+                && !GroundTraffic.OnGrid(now))
+                return false;
             if (next == null)
                 return false;
 
@@ -1768,6 +1842,20 @@ namespace Airside.Simulation
         /// for the whole wait. Null for anything else. An estimate: traffic that has not yet
         /// reached the queue can still change it.
         /// </summary>
+        /// <summary>When a departure at its stand became ready to push: booked time, or prep end.</summary>
+        private SimulationTime DepartureReadyAt(FleetAircraft aircraft)
+        {
+            var ready = aircraft.Scheduled.Value.DepartAt;
+            if (aircraft.Airline.IsPlayer && aircraft.PrepStartedAt.HasValue)
+            {
+                var prepEnd = aircraft.PrepStartedAt.Value.Advance(DeparturePrep.TotalSeconds(aircraft.Type));
+                if (prepEnd.CompareTo(ready) > 0)
+                    ready = prepEnd;
+            }
+
+            return ready;
+        }
+
         public SimulationTime? ExpectedLandingClearance(FleetAircraft aircraft, out RunwayDirection runway)
         {
             runway = RunwayDirection.Runway05;
@@ -1848,6 +1936,38 @@ namespace Airside.Simulation
             }
 
             return at;
+        }
+
+        /// <summary>Its vacate, flown from now, stays clear of every aircraft already moving on the ground.</summary>
+        private bool VacateClearOfTaxiing(FleetAircraft arrival, SimulationTime now)
+        {
+            // Past MaxWaitSeconds on final, land anyway: taxiing traffic always finishes, but the
+            // arrival must not circle behind a steady stream of it.
+            if (now.ElapsedSeconds - arrival.StateStartedAt.ElapsedSeconds >= GroundTraffic.MaxWaitSeconds)
+                return true;
+            var profile = AircraftPerformance.For(arrival.Type);
+            var touchdownIn = ApproachHold.RemainingFinalSeconds(profile.ApproachSeconds, arrival.Registration)
+                              + profile.LandingSeconds;
+            return GroundTraffic.PathClear(_fleet, arrival, AdelaideGround.VacateFor(arrival.Type, arrival.AssignedRunway),
+                arrival.AssignedRunway, taxiOut: false, now.Advance(touchdownIn), includeStationary: false);
+        }
+
+        private bool VacateCrossesHolder(FleetAircraft arrival, bool mainStrip)
+        {
+            var vacate = AdelaideGround.VacateFor(arrival.Type, arrival.AssignedRunway);
+            var half = GroundTraffic.HalfSpan(arrival.Type);
+            foreach (var holder in _fleet)
+            {
+                if (holder.State != FleetState.HoldingShort || RunwayWeather.IsMainRunway(holder.AssignedRunway) != mainStrip)
+                    continue;
+                var pose = AdelaideGround.HoldingShortPose(holder.DepartureStand,
+                    FleetVisual.QueueSlot(_fleet, holder, _processedTo), holder.AssignedRunway, holder.Type);
+                for (var s = 0.0; s <= vacate.Seconds; s += 2.0)
+                    if (GroundTraffic.TooClose(vacate.PoseAt(s), half, pose, GroundTraffic.HalfSpan(holder.Type)))
+                        return true;
+            }
+
+            return false;
         }
 
         /// <summary>How long a departure keeps its strip from the tower: lineup, roll, wake.</summary>

@@ -1,5 +1,27 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Claude — ground separation (branch `feature/ground-separation`).** Bailey:
+  "planes are having collisions (not respecting each other's physical location)."
+  - **Measured first:** a probe drove a busy seeded day at 2 s steps and found ~36 episodes of
+    airframes overlapping: 18 taxi-in × taxi-out head-on, 6 taxi-out into the holding queue,
+    2 taxi-out catch-ups, 3–4 lineup/hold overlaps, 3 vacates into holders/taxi-outs, 4 wide jets
+    next to parked 737s at gates. No runway-crossing clashes found.
+  - **Fix (Simulation `GroundTraffic`, tested):** pushback and AwaitingStand→TaxiIn wait for a
+    clear route (`PathClear`, 2 s samples vs every other ground aircraft's deterministic pose).
+    Waiting aircraft move only at their natural moment or on a 5 s grid (`NextEventAt` adds the
+    grid while one waits) — keeps `Timeline_IsIdenticalForAnyStepSizeOrSkipping`. Stationary
+    aircraft stop counting after 3 min (no deadlock). Taxi-outs/vacates stop behind the queue
+    (`FleetVisual.QueueAhead` / `ExitQueueAhead`, lineup and just-departed taxi-ins count as
+    ahead); presentation eases queue shuffles at 5 m/s. Tower: `VacateCrossesHolder` /
+    `VacateClearOfTaxiing` send the departure first or hold the arrival on the grid.
+    `CrowdsNeighbour` now geometric for every stand (still a preference, never strands).
+  - **Behaviour change:** a departure that had to wait for anything now pushes on the next 5 s
+    grid (e.g. 755 s not 753 s); one test updated to say so.
+  - **Evidence:** `GroundSeparationTests.BusyDay_NoAircraftDriveThroughEachOther` (zero moving
+    episodes; parked neighbours next to their own stand excluded). Unity EditMode **837/838** (only the gate lead-in decision test). The first version made the 30-day soak time out: full taxi-pose evaluation cost ~64 µs × ~500k per 3 days; legs now carry a cached 1 s position table for conflict checks (3 days: 33 s → 0.7 s). Also fixed `AircraftCatalogueTests` broken by #361 (A223/A21N shared a test registration; 16L/16R share a pier).
+  - **Left:** wide jets beside a parked 737 at gates 43–45 m apart measure borderline by nose
+    point — needs a visual look before changing gate rules. `ExpectedLandingClearance` does not
+    model the new vacate hold (rare; the extended-final easing absorbs it).
 - **2026-09-21 Codex — Adelaide scheduled-passenger fleet coverage (branch
   `feature/adelaide-aircraft-fleet`, ADR 0083).** Audited the seven existing genuine types
   against current Adelaide Airport operator/route releases. Added six missing recurring types:

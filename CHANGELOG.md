@@ -1,5 +1,16 @@
 ## Unreleased
 
+- **Aircraft no longer drive through each other on the ground.** Taxi legs were fixed paths
+  on fixed clocks with no ground control: ~36 collision episodes a busy day (taxi-in head-on
+  into taxi-out, taxi-outs into the holding queue, vacates into waiting arrivals). New
+  `GroundTraffic` ground controller: pushbacks and taxi-ins wait until their whole route is clear
+  of moving traffic (re-checked on a 5 s grid so the result never depends on step size; stops
+  waiting for stationary aircraft after 3 min so nothing deadlocks); taxi-outs and vacates stop
+  behind the queue ahead and shuffle up at taxi pace; the tower sends a waiting departure first
+  (or briefly holds the arrival) when a landing's vacate would cross taxiing traffic or a
+  holder; wide jets prefer gates that do not crowd a parked neighbour. New
+  `GroundSeparationTests`: a whole busy day with zero moving collisions.
+  Unity EditMode **837/838** (only the gate lead-in decision test). The first version made the 30-day soak time out: full taxi-pose evaluation cost ~64 µs × ~500k per 3 days; legs now carry a cached 1 s position table for conflict checks (3 days: 33 s → 0.7 s). Also fixed `AircraftCatalogueTests` broken by #361 (A223/A21N shared a test registration; 16L/16R share a pier).
 - **Six missing real Adelaide passenger types now have genuine models:** A320-200, 737-800,
   E190, A220-300, A330-900neo and 787-9. Each has a true-scale procedural glTF/FBX kit,
   dedicated catalogue/performance/profile data and a rendered Hangar thumbnail. Live ADS-B

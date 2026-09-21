@@ -78,9 +78,9 @@ namespace Airside.Tests
             // Pass null market and rely on completed intros.
             var objective = OperationsSummary.Objective(ops.FleetOf(ops.PlayerAirline), clock.Now, ops.Clock,
                 ops.CareerState, Array.Empty<RouteContractDefinition>());
-            Assert.That(objective.Title, Does.Contain("ATR 42"));
+            Assert.That(objective.Title, Is.EqualTo("Expand your Adelaide base"));
             Assert.That(objective.ProgressText, Does.Contain($"${AirlineCareerState.StartingFunds:N0}"));
-            Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("fly").Or.Contain("earn"));
+            Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("expand"));
         }
 
         [Test]

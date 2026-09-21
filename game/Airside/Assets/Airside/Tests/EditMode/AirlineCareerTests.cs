@@ -369,7 +369,7 @@ namespace Airside.Tests
             Assert.That(ops.CanReach(plane, Code("MEL")), Is.True, "range still reaches Melbourne; the band does not");
 
             ops.RestoreCareerState(50_000, 90, nameof(OperatingTier.Regional), null, 0, 0, Array.Empty<string>(),
-                Array.Empty<string>(), 12);
+                Array.Empty<string>(), 12, baseLevel: PlayerBaseLevel.ExpandedRegional);
             Assert.That(ops.BuyAircraft(AircraftType.Dash8Q400).Accepted, Is.True);
             FleetAircraft dash = null;
             foreach (var aircraft in ops.FleetOf(ops.PlayerAirline))
@@ -410,14 +410,14 @@ namespace Airside.Tests
 
             var (_, ops, _) = PlayerOnly();
             ops.RestoreCareerState(200_000, 90, nameof(OperatingTier.Domestic), null, 0, 0, Array.Empty<string>(),
-                Array.Empty<string>(), 28);
+                Array.Empty<string>(), 28, baseLevel: PlayerBaseLevel.JetGate);
             Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True);
             Assert.That(ops.CareerState.Tier, Is.EqualTo(OperatingTier.International),
                 "28 rotations + jet ownership unlocks International without owning a widebody");
 
             // A350 still needs its own reliability/rotation floor on top of the tier.
             ops.RestoreCareerState(ops.CareerState.Funds, 95, nameof(OperatingTier.International), null, 0, 0,
-                Array.Empty<string>(), Array.Empty<string>(), 40);
+                Array.Empty<string>(), Array.Empty<string>(), 40, baseLevel: PlayerBaseLevel.International);
             Assert.That(ops.BuyAircraft(AircraftType.AirbusA350900).Accepted, Is.True,
                 "widebodies become buyable once International is open");
         }

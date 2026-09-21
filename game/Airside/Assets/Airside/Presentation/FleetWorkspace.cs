@@ -349,13 +349,14 @@ namespace Airside.Presentation
             // Track is the primary action for an aircraft that is already flying; offering it
             // twice on the same card just reads as a mistake. Parked idle aircraft offer a
             // check instead (ADR 0085) — following a parked airframe is a click on the field.
-            CanStartCheck = Maintenance.CanStart(aircraft, now) && PrimaryAction != AircraftHudAction.StartCheck;
+            CanStartCheck = operations.CareerState.BaseLevel >= PlayerBaseLevel.ExpandedRegional
+                            && Maintenance.CanStart(aircraft, now)
+                            && PrimaryAction != AircraftHudAction.StartCheck;
             StartCheckLabel = CanStartCheck
                 ? $"CHECK ${Maintenance.CheckCost(aircraft.Type):N0}"
                 : string.Empty;
             CanTrack = PrimaryAction != AircraftHudAction.TrackFlight && !CanStartCheck
                        && !Maintenance.InCheck(aircraft, now);
-            _ = operations;
         }
 
         private static OperationsPrepCheck PrepCheck(string name, double progress, bool active)

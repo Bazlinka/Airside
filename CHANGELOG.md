@@ -1,5 +1,7 @@
 ## Unreleased
 
+- **Base growth is now part of the campaign.** Eyre Peninsula requires the Expanded Regional base, Interstate requires Jet Gate, and Going Global requires the International base. Campaign progress derives from the existing persisted PlayerBaseLevel, so no save migration is needed.
+
 - **Base upgrades explain their payoff.** Career now names current maintenance capability, ground-service speed and stand/gate access, and previews the next base upgrade as concrete operational benefits before the player spends the money.
 
 - **Visible turnaround GSE.** The existing Adelaide service equipment now follows the player’s real active turnaround stage: fuel truck, catering truck, baggage train, then boarding equipment. With no player turnaround active, the previous ambient terminal servicing loop resumes.

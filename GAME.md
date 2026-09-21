@@ -1,5 +1,12 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 ChatGPT — campaign/base convergence (branch `feature/campaign-base-goals`, ADR 0094).**
+  - Chapter 2 now requires the Expanded Regional Adelaide base; Chapter 4 requires Jet Gate; Chapter 5 requires the International base.
+  - Campaign progress is still derived from existing save v12 career/base state; no new persistence.
+  - This makes facilities part of the main career spine rather than an optional economy side-system.
+  - Added deterministic campaign coverage for all three facility gates.
+  - **NEXT:** merge, then improve operational planning choices rather than adding more raw content.
+
 - **2026-09-21 ChatGPT — base benefit integration (branch `feature/base-service-benefits`).**
   - Career now explains the concrete operational value of the current Adelaide base: maintenance capability, ground-service speed and actual stand/gate access.
   - The base roadmap previews the next upgrade in operational terms before purchase (apron/gates, local maintenance class, faster turnaround).

@@ -109,6 +109,7 @@ namespace Airside.Simulation
             var rotations = career.CompletedPlayerRotations;
             var reliability = career.Reliability;
             var tier = career.Tier;
+            var baseLevel = career.BaseLevel;
             var ownsDash8 = Owns(ownedTypes, t => ReferenceEquals(t, AircraftType.Dash8Q400));
             var ownsJet = AirlineCareerState.OwnsAnyJet(ownedTypes);
             var ownsWidebody = Owns(ownedTypes, IsWidebody);
@@ -134,6 +135,8 @@ namespace Airside.Simulation
                 new CampaignGoal($"Fulfil contracts to 2 different towns ({Math.Min(destinations.Count, 2)}/2)",
                     destinations.Count >= 2),
                 new CampaignGoal($"Own 2 aircraft ({Math.Min(fleet, 2)}/2)", fleet >= 2),
+                new CampaignGoal("Expand the Adelaide base for regional operations",
+                    baseLevel >= PlayerBaseLevel.ExpandedRegional),
                 new CampaignGoal("Reach the Regional tier", tier >= OperatingTier.Regional));
 
             Add(3, "Regional Network", "Become the airline country South Australia relies on.", 6_000,
@@ -144,12 +147,15 @@ namespace Airside.Simulation
                 new CampaignGoal($"Keep reliability at 80% or better ({reliability}%)", reliability >= 80));
 
             Add(4, "Interstate", "Jets, capital cities and the big carriers' routes.", 12_000,
+                new CampaignGoal("Open the Adelaide jet-gate base", baseLevel >= PlayerBaseLevel.JetGate),
                 new CampaignGoal("Reach the Domestic tier", tier >= OperatingTier.Domestic),
                 new CampaignGoal("Own a jet", ownsJet),
                 new CampaignGoal("Fulfil an interstate contract", ContainsAny(destinations, Interstate)),
                 new CampaignGoal($"Fulfil 6 contracts in all ({Math.Min(contracts, 6)}/6)", contracts >= 6));
 
             Add(5, "Going Global", "A widebody on the long-haul board: Adelaide to the world.", 25_000,
+                new CampaignGoal("Open the Adelaide international base",
+                    baseLevel >= PlayerBaseLevel.International),
                 new CampaignGoal("Reach the International tier", tier >= OperatingTier.International),
                 new CampaignGoal("Own a widebody", ownsWidebody),
                 new CampaignGoal("Fulfil an international contract", ContainsAny(destinations, International)),

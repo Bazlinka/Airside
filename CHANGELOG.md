@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Player Base v2 — allocated Adelaide stands.** The player's base now maps to real parking access:
+  50D starter home, 50G/10A plus shared regional apron at Expanded Regional, gates 27/29 for jet
+  operations, and pier 28 at International. Player jets cannot silently use unrelated terminal gates,
+  while AI fallback allocation skips the player's dedicated positions.
+
 - **Player-base save hardening.** Pre-v12 saves infer enough Adelaide base capacity for their full
   existing fleet (including 4–6-aircraft careers) as well as jet/widebody capability. v12 saves
   reject an unknown/corrupt base level instead of silently resuming with inferred state.

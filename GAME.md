@@ -1,5 +1,17 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 ChatGPT — Player Base v2 allocated stands (branch `feature/player-base-v2`, ADR 0092 WIP).**
+  - Player base now has real Adelaide stand/gate access: starter home 50D; Expanded Regional adds
+    dedicated 50G/10A plus shared regional-apron access; Jet Gate leases gates 27/29; International
+    adds pier 28 access.
+  - Player jet arrivals, manual stand assignment and aircraft delivery are restricted to the leased
+    gate set. AI fallback stand selection skips the player's dedicated positions.
+  - Regional shared-apron fallback remains so ATR/Dash aircraft are not trapped by Saab-only 10A.
+  - Existing stand/lead-in occupancy rules remain authoritative; no AI aircraft is displaced.
+  - Added deterministic stand-allocation coverage.
+  - **NEXT:** wire base-level maintenance capability/cost/time, then audit UI copy and save invariants.
+  - **Evidence:** connector-only; Unity/EditMode not executed.
+
 - **2026-09-21 ChatGPT — Player Base v1 (branch `feature/player-base-v1`, ADR 0091).**
   - Persisted Adelaide player-base levels (save v12): starter → expanded regional → jet-gate → international.
   - Base upgrades spend normal airline funds and require career tier/rotation progress; no second XP.

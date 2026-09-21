@@ -274,6 +274,38 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void PlayerBase_DedicatedJetGatesAreUsedAndProtectedFromAiSelection()
+        {
+            var (_, ops, _) = PlayerOnly();
+            ops.RestoreCareerState(100_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 28, baseLevel: PlayerBaseLevel.JetGate);
+
+            Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True);
+            var jet = ops.FleetOf(ops.PlayerAirline).First(a => a.Type.Id == AircraftType.Boeing7378.Id);
+            Assert.That(new[] { "GATE-27", "GATE-29" }, Does.Contain(jet.Stand.Value));
+
+            var aiChoice = ops.SuggestStandFor(AircraftType.Boeing7378);
+            if (aiChoice.HasValue)
+                Assert.That(new[] { "GATE-27", "GATE-29" }, Does.Not.Contain(aiChoice.Value.Value),
+                    "AI fallback stand selection must not consume the player's leased jet gates");
+        }
+
+        [Test]
+        public void PlayerCannotAssignAJetOutsideItsBaseGateAllocation()
+        {
+            var (_, ops, _) = PlayerOnly();
+            ops.RestoreCareerState(100_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 28, baseLevel: PlayerBaseLevel.JetGate);
+            Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True);
+            var jet = ops.FleetOf(ops.PlayerAirline).First(a => a.Type.Id == AircraftType.Boeing7378.Id);
+            jet.Restore(FleetState.AwaitingStand, ops.ProcessedTo, null);
+
+            var result = ops.AssignStand(jet, new StableId("GATE-25"));
+            Assert.That(result.Accepted, Is.False);
+            Assert.That(result.Reason, Does.Contain("outside your"));
+        }
+
+        [Test]
         public void BuyAircraft_ChargesAndAddsAParkedTypeWhenGatesClear()
         {
             var (_, ops, _) = PlayerOnly();

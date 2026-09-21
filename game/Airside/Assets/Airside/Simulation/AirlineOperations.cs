@@ -1582,6 +1582,10 @@ namespace Airside.Simulation
                 return CommandResult.Refused($"{stand} is not a stand here.");
             if (!StandFits(aircraft.Type, stand))
                 return CommandResult.Refused($"{Article.CapitalA(aircraft.Type.Name)} cannot use {AdelaideGround.StandLabel(stand)}.");
+            if (aircraft.Airline.IsPlayer && CareerState != null
+                && !PlayerBase.CanUseStand(CareerState.BaseLevel, aircraft.Type, stand))
+                return CommandResult.Refused(
+                    $"{AdelaideGround.StandLabel(stand)} is outside your {CareerState.Base.Title} allocation.");
             if (!IsStandFree(stand))
                 return CommandResult.Refused($"{stand} is occupied.");
             if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, aircraft))
@@ -1889,6 +1893,9 @@ namespace Airside.Simulation
                     return null;
             }
 
+            if (aircraft.Airline.IsPlayer && CareerState != null)
+                return SuggestPlayerStandFor(aircraft.Type, aircraft);
+
             return SuggestStandFor(aircraft.Type, aircraft);
         }
 
@@ -1903,6 +1910,9 @@ namespace Airside.Simulation
 
         private StableId? SuggestPurchaseStand(AircraftType type)
         {
+            if (CareerState != null)
+                return SuggestPlayerStandFor(type);
+
             if (NeedsTerminalGate(type))
                 return SuggestStandFor(type);
             var reserved = PlayerTurbopropsNeedingABay();
@@ -1910,6 +1920,33 @@ namespace Airside.Simulation
             foreach (var _ in FreeStandsFor(type))
                 free++;
             return free <= reserved ? null : SuggestStandFor(type);
+        }
+
+        private StableId? SuggestPlayerStandFor(AircraftType type, FleetAircraft except = null)
+        {
+            if (type == null || CareerState == null || !PlayerBase.Supports(CareerState.BaseLevel, type))
+                return null;
+
+            // First use the player's actual leased positions. This makes the base visible in
+            // day-to-day operations and keeps jet access tied to gates 27/29 (plus pier 28 at
+            // International) instead of silently using any terminal gate.
+            foreach (var stand in PlayerBase.DedicatedStands(CareerState.BaseLevel, type))
+            {
+                if (!_stands.Contains(stand) || !StandFits(type, stand) || !IsStandFree(stand))
+                    continue;
+                if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, except))
+                    continue;
+                return stand;
+            }
+
+            // Expanded regional operations lease capacity across the shared regional apron:
+            // if the authored dedicated bay does not fit (e.g. ATR/Dash on walk-out 10A),
+            // use another free regional bay. Existing away-aircraft reservation logic still
+            // keeps enough shared capacity available for the player's fleet.
+            if (!NeedsTerminalGate(type) && CareerState.BaseLevel >= PlayerBaseLevel.ExpandedRegional)
+                return SuggestStandFor(type, except, allowPlayerDedicated: true);
+
+            return null;
         }
 
         public static string NextPlayerRegistration(IReadOnlyList<FleetAircraft> fleet)
@@ -1964,7 +2001,8 @@ namespace Airside.Simulation
         /// (regional backfill). <paramref name="except"/> is the aircraft already allowed to
         /// use a busy gate lead-in; null means the lead-in must be empty.
         /// </summary>
-        public StableId? SuggestStandFor(AircraftType type, FleetAircraft except = null)
+        public StableId? SuggestStandFor(AircraftType type, FleetAircraft except = null,
+            bool allowPlayerDedicated = false)
         {
             if (type == null)
                 return null;
@@ -1975,6 +2013,9 @@ namespace Airside.Simulation
             foreach (var stand in _stands)
             {
                 if (!StandFits(type, stand) || !IsStandFree(stand))
+                    continue;
+                if (!allowPlayerDedicated && PlayerAirline != null && CareerState != null
+                    && PlayerBase.IsDedicatedStand(CareerState.BaseLevel, stand))
                     continue;
                 if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, except))
                     continue;

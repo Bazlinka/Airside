@@ -3,12 +3,13 @@ using Airside.Domain;
 
 namespace Airside.Simulation
 {
-    /// <summary>Fuel → catering → boarding before a player pushback (ADR 0056). No vehicles.</summary>
+    /// <summary>Fuel → catering → baggage → boarding before a player pushback (ADR 0056 / 0093).</summary>
     public enum DeparturePrepStage
     {
         Idle,
         Fuel,
         Catering,
+        Baggage,
         Boarding,
         Ready
     }
@@ -22,6 +23,7 @@ namespace Airside.Simulation
             string label,
             double fuelProgress,
             double cateringProgress,
+            double baggageProgress,
             double boardingProgress,
             long remainingSeconds)
         {
@@ -31,6 +33,7 @@ namespace Airside.Simulation
             Label = label;
             FuelProgress = fuelProgress;
             CateringProgress = cateringProgress;
+            BaggageProgress = baggageProgress;
             BoardingProgress = boardingProgress;
             RemainingSeconds = remainingSeconds;
         }
@@ -46,6 +49,9 @@ namespace Airside.Simulation
         /// <summary>0..1 through catering.</summary>
         public double CateringProgress { get; }
 
+        /// <summary>0..1 through baggage handling.</summary>
+        public double BaggageProgress { get; }
+
         /// <summary>0..1 through boarding.</summary>
         public double BoardingProgress { get; }
 
@@ -55,6 +61,7 @@ namespace Airside.Simulation
         public int StagePercent => DeparturePrep.Percent(StageProgress);
         public int FuelPercent => DeparturePrep.Percent(FuelProgress);
         public int CateringPercent => DeparturePrep.Percent(CateringProgress);
+        public int BaggagePercent => DeparturePrep.Percent(BaggageProgress);
         public int BoardingPercent => DeparturePrep.Percent(BoardingProgress);
     }
 
@@ -66,80 +73,107 @@ namespace Airside.Simulation
     {
         public const long FuelSeconds = 90;
         public const long CateringSeconds = 75;
+        public const long BaggageSeconds = 90;
         public const long BoardingSeconds = 120;
 
         public static long TotalSeconds(AircraftType type) =>
-            Scale(type, FuelSeconds) + Scale(type, CateringSeconds) + Scale(type, BoardingSeconds);
+            Scale(type, FuelSeconds, PlayerBaseLevel.Starter)
+            + Scale(type, CateringSeconds, PlayerBaseLevel.Starter)
+            + Scale(type, BaggageSeconds, PlayerBaseLevel.Starter)
+            + Scale(type, BoardingSeconds, PlayerBaseLevel.Starter);
+
+        public static long TotalSeconds(AircraftType type, PlayerBaseLevel baseLevel) =>
+            Scale(type, FuelSeconds, baseLevel)
+            + Scale(type, CateringSeconds, baseLevel)
+            + Scale(type, BaggageSeconds, baseLevel)
+            + Scale(type, BoardingSeconds, baseLevel);
 
         /// <summary>Planner lead: prep plus the engine-start window, whichever is longer.</summary>
         public static long LeadSeconds(AircraftType type) =>
             Math.Max(EngineStartSequence.MinimumDepartureLeadSeconds, TotalSeconds(type));
 
-        public static bool IsReady(FleetAircraft aircraft, SimulationTime now)
+        public static long LeadSeconds(AircraftType type, PlayerBaseLevel baseLevel) =>
+            Math.Max(EngineStartSequence.MinimumDepartureLeadSeconds, TotalSeconds(type, baseLevel));
+
+        public static bool IsReady(FleetAircraft aircraft, SimulationTime now) =>
+            IsReady(aircraft, now, PlayerBaseLevel.Starter);
+
+        public static bool IsReady(FleetAircraft aircraft, SimulationTime now, PlayerBaseLevel baseLevel)
         {
             if (aircraft == null || !aircraft.Airline.IsPlayer || !aircraft.Scheduled.HasValue)
                 return true;
-            return For(aircraft, now).Ready;
+            return For(aircraft, now, baseLevel).Ready;
         }
 
         public static int Percent(double progress01) =>
             (int)Math.Round(Math.Max(0, Math.Min(1, progress01)) * 100);
 
-        public static DeparturePrepStatus For(FleetAircraft aircraft, SimulationTime now)
+        public static DeparturePrepStatus For(FleetAircraft aircraft, SimulationTime now) =>
+            For(aircraft, now, PlayerBaseLevel.Starter);
+
+        public static DeparturePrepStatus For(FleetAircraft aircraft, SimulationTime now, PlayerBaseLevel baseLevel)
         {
             if (aircraft == null || !aircraft.Scheduled.HasValue)
                 return new DeparturePrepStatus(DeparturePrepStage.Idle, 0, true, "No departure planned",
-                    0, 0, 0, 0);
+                    0, 0, 0, 0, 0);
             if (aircraft.Scheduled.Value.Cancelled)
                 return new DeparturePrepStatus(DeparturePrepStage.Idle, 0, true, "Cancelled",
-                    0, 0, 0, 0);
+                    0, 0, 0, 0, 0);
             if (!aircraft.Airline.IsPlayer)
                 return new DeparturePrepStatus(DeparturePrepStage.Ready, 1, true, "Ready",
-                    1, 1, 1, 0);
+                    1, 1, 1, 1, 0);
 
-            var start = StartSeconds(aircraft, now);
+            var start = StartSeconds(aircraft, now, baseLevel);
             var elapsed = now.ElapsedSeconds - start;
             if (elapsed < 0)
                 elapsed = 0;
 
-            var fuel = Scale(aircraft.Type, FuelSeconds);
-            var catering = Scale(aircraft.Type, CateringSeconds);
-            var boarding = Scale(aircraft.Type, BoardingSeconds);
+            var fuel = Scale(aircraft.Type, FuelSeconds, baseLevel);
+            var catering = Scale(aircraft.Type, CateringSeconds, baseLevel);
+            var baggage = Scale(aircraft.Type, BaggageSeconds, baseLevel);
+            var boarding = Scale(aircraft.Type, BoardingSeconds, baseLevel);
 
             var fuelProgress = Progress(elapsed, fuel);
             var afterFuel = elapsed - fuel;
             var cateringProgress = afterFuel <= 0 ? 0 : Progress(afterFuel, catering);
             var afterCatering = afterFuel - catering;
-            var boardingProgress = afterCatering <= 0 ? 0 : Progress(afterCatering, boarding);
+            var baggageProgress = afterCatering <= 0 ? 0 : Progress(afterCatering, baggage);
+            var afterBaggage = afterCatering - baggage;
+            var boardingProgress = afterBaggage <= 0 ? 0 : Progress(afterBaggage, boarding);
 
             if (elapsed < fuel)
                 return new DeparturePrepStatus(DeparturePrepStage.Fuel, fuelProgress, false,
                     StageLabel("Fuelling", fuelProgress),
-                    fuelProgress, 0, 0, Remaining(elapsed, fuel));
+                    fuelProgress, 0, 0, 0, Remaining(elapsed, fuel));
 
             if (afterFuel < catering)
                 return new DeparturePrepStatus(DeparturePrepStage.Catering, cateringProgress, false,
                     StageLabel("Catering", cateringProgress),
-                    1, cateringProgress, 0, Remaining(afterFuel, catering));
+                    1, cateringProgress, 0, 0, Remaining(afterFuel, catering));
 
-            if (afterCatering < boarding)
+            if (afterCatering < baggage)
+                return new DeparturePrepStatus(DeparturePrepStage.Baggage, baggageProgress, false,
+                    StageLabel("Baggage", baggageProgress),
+                    1, 1, baggageProgress, 0, Remaining(afterCatering, baggage));
+
+            if (afterBaggage < boarding)
                 return new DeparturePrepStatus(DeparturePrepStage.Boarding, boardingProgress, false,
                     StageLabel("Boarding", boardingProgress),
-                    1, 1, boardingProgress, Remaining(afterCatering, boarding));
+                    1, 1, 1, boardingProgress, Remaining(afterBaggage, boarding));
 
             return new DeparturePrepStatus(DeparturePrepStage.Ready, 1, true, "Ready for pushback",
-                1, 1, 1, 0);
+                1, 1, 1, 1, 0);
         }
 
         /// <summary>
         /// When prep-start was not saved, infer it from the booked pushback so fuelling
         /// cannot sit at 0% forever (elapsed would otherwise be <c>now - now</c> every call).
         /// </summary>
-        private static long StartSeconds(FleetAircraft aircraft, SimulationTime now)
+        private static long StartSeconds(FleetAircraft aircraft, SimulationTime now, PlayerBaseLevel baseLevel)
         {
             if (aircraft.PrepStartedAt.HasValue)
                 return aircraft.PrepStartedAt.Value.ElapsedSeconds;
-            var total = TotalSeconds(aircraft.Type);
+            var total = TotalSeconds(aircraft.Type, baseLevel);
             var inferred = aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - total;
             return inferred < 0 ? 0 : inferred;
         }
@@ -155,12 +189,18 @@ namespace Airside.Simulation
             return (long)Math.Ceiling(left);
         }
 
-        private static long Scale(AircraftType type, long seconds)
+        private static long Scale(AircraftType type, long seconds, PlayerBaseLevel baseLevel)
         {
-            if (type != null && AircraftCatalogue.TryFor(type, out var spec)
-                && spec.StandClass == StandClass.TerminalGate)
-                return (long)Math.Round(seconds * 1.5);
-            return seconds;
+            var typeScale = type != null && AircraftCatalogue.TryFor(type, out var spec)
+                            && spec.StandClass == StandClass.TerminalGate ? 1.5 : 1.0;
+            var baseScale = baseLevel switch
+            {
+                PlayerBaseLevel.ExpandedRegional => 0.90,
+                PlayerBaseLevel.JetGate => 0.80,
+                PlayerBaseLevel.International => 0.70,
+                _ => 1.0
+            };
+            return (long)Math.Round(seconds * typeScale * baseScale);
         }
 
         private static double Progress(double elapsed, long duration) =>

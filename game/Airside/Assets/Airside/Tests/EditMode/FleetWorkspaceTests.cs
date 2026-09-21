@@ -93,7 +93,7 @@ namespace Airside.Tests
                 Does.Contain("Regional capability (Kingscote, Port Lincoln)"));
             Assert.That(model.SelectedCapability, Does.Contain("0 completed rotations"));
             Assert.That(model.AssignmentLine, Is.EqualTo("Adelaide → Kingscote"));
-            Assert.That(model.SelectedPrep.Select(p => p.Done), Is.EqualTo(new[] { true, false, false }));
+            Assert.That(model.SelectedPrep.Select(p => p.Done), Is.EqualTo(new[] { true, false, false, false }));
             Assert.That(model.SelectedPrep[1].Active, Is.True);
         }
 

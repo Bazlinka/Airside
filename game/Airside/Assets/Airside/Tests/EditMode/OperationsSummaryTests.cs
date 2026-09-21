@@ -102,6 +102,21 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Objective_NamesBaggageWhenThatIsTheActiveTurnaroundStage()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            var total = DeparturePrep.TotalSeconds(plane.Type, ops.CareerState.BaseLevel);
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), clock.Now.Advance(total + 120)).Accepted, Is.True);
+            clock.Set(new SimulationTime(plane.PrepStartedAt.Value.ElapsedSeconds
+                + DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds + 10));
+
+            var objective = OperationsSummary.Objective(ops.FleetOf(ops.PlayerAirline), clock.Now, ops.Clock,
+                ops.CareerState);
+
+            Assert.That(objective.NextLine, Does.Contain("Finish baggage"));
+        }
+
+        [Test]
         public void Objective_ReadyAircraftPointsAtPushback()
         {
             var (clock, ops, plane) = PlayerOnly();

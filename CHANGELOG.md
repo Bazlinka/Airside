@@ -1,5 +1,7 @@
 ## Unreleased
 
+- **Turnaround v2.** Player departures now run Fuel → Catering → Baggage → Boarding. Base growth speeds the same operational chain (Starter 100%, Expanded Regional 90%, Jet Gate 80%, International 70%), and every Fleet/Operations prep surface shows baggage and the same base-aware timing.
+
 - **Career shows physical base access.** The base summary names the actual Adelaide positions/access currently leased (50D, regional apron, gates 27/29, pier 28 as applicable).
 - **Player Base v2 — operational maintenance.** Routine checks are now facility-dependent: Starter outsources them (+40% cost, +50% time), Expanded Regional handles turboprops locally, Jet Gate adds narrowbody jets, and International adds widebodies. Fleet shows the exact service mode/cost/time.
 - **Player Base v2 — allocated Adelaide stands.** The player's base now maps to real parking access:

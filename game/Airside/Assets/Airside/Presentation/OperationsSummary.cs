@@ -287,13 +287,14 @@ namespace Airside.Presentation
 
             if (priority.State == FleetState.AtStand && priority.Scheduled.HasValue)
             {
-                var prep = DeparturePrep.For(priority, now);
+                var prep = DeparturePrep.For(priority, now, career?.BaseLevel ?? PlayerBaseLevel.Starter);
                 if (!prep.Ready)
                 {
                     var finish = prep.Stage switch
                     {
                         DeparturePrepStage.Fuel => "Finish fuelling",
                         DeparturePrepStage.Catering => "Finish catering",
+                        DeparturePrepStage.Baggage => "Finish baggage",
                         DeparturePrepStage.Boarding => "Finish boarding",
                         _ => "Finish turnaround"
                     };

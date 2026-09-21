@@ -360,6 +360,21 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void BaseGroundServices_ProgressivelyShortenTurnaround()
+        {
+            var starter = DeparturePrep.TotalSeconds(AircraftType.Saab340, PlayerBaseLevel.Starter);
+            var regional = DeparturePrep.TotalSeconds(AircraftType.Saab340, PlayerBaseLevel.ExpandedRegional);
+            var jetGate = DeparturePrep.TotalSeconds(AircraftType.Saab340, PlayerBaseLevel.JetGate);
+            var international = DeparturePrep.TotalSeconds(AircraftType.Saab340, PlayerBaseLevel.International);
+
+            Assert.That(starter, Is.GreaterThan(regional));
+            Assert.That(regional, Is.GreaterThan(jetGate));
+            Assert.That(jetGate, Is.GreaterThan(international));
+            Assert.That(starter, Is.EqualTo(DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds
+                + DeparturePrep.BaggageSeconds + DeparturePrep.BoardingSeconds));
+        }
+
+        [Test]
         public void BuyAircraft_ChargesAndAddsAParkedTypeWhenGatesClear()
         {
             var (_, ops, _) = PlayerOnly();

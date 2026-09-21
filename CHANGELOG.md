@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Authored cumulus atlas and production cloud cards (ADR 0075).** Replaced the still-obvious
+  connected-sphere cloud clusters with 16 distinct transparent cumulus silhouettes. Each cluster is
+  now one camera-facing renderer rather than three geometry layers, while seeded placement, real-wind
+  drift, weather reveal and ground umbras remain deterministic. The custom shader cleans low-alpha
+  colour fringe, applies day/weather tint and is explicitly retained in player builds. Packaged review
+  caught both initial shader stripping and compressed cards/over-dark shadows before final tuning.
+  Domain 553/553; Unity 787/789 with the same two unrelated baseline failures; fresh Mac build and
+  forced-Overcast 1920x1080 capture inspected.
+
 - **Distance-aware Adelaide ground clarity (ADR 0074).** Rebuilt the 2048px runtime surroundings
   image from a 4096px ESA WMS request so runway alignment no longer throws away source information
   before the final downsample. The runtime texture size and memory stay unchanged. Near the airport,

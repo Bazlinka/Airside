@@ -1,5 +1,14 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Codex — authored cloud-atlas production pass (branch
+  `codex/cloud-atlas-production`, ADR 0075).** Replaced the connected-sphere clouds with a generated,
+  transparent 4x4 cumulus atlas rendered as deterministic camera-facing cards. Wind drift, cover-based
+  reveal and ground umbras stay tied to the real weather model; cloud renderers drop from 48 to 16.
+  A dedicated shader neutralises low-alpha edge contamination and is explicitly always included.
+  - **Evidence:** domain **553/553**; Unity EditMode **787/789**, same two unrelated baseline failures;
+    fresh Mac build; final forced-Overcast 1920x1080 capture inspected after two rejected iterations.
+  - **NEXT:** aircraft-specific reach, route declutter and a live-rival visibility control on Route Map.
+
 - **2026-09-21 Codex — production ground-clarity pass (branch
   `codex/ground-clarity-production`, ADR 0074).** Kept the legal 24 km Sentinel-2 context but stopped
   asking one 10 m-class image to provide every scale of ground detail. The runtime image is still

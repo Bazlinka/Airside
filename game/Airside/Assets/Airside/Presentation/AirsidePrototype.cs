@@ -127,6 +127,7 @@ namespace Airside.Presentation
         private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
         private static readonly int BaseMapStId = Shader.PropertyToID("_BaseMap_ST");
         private static readonly int MainTexStId = Shader.PropertyToID("_MainTex_ST");
+        private static readonly int CloudAtlasRectId = Shader.PropertyToID("_AtlasRect");
         private static readonly Dictionary<string, string> SurfaceBasecolorCache = new();
         private static Transform _airfieldRoot;
         private static Mesh FallbackShrubMesh;
@@ -8140,13 +8141,22 @@ namespace Airside.Presentation
 
         private static void BuildCloudBands()
         {
-            // Layered, low-poly cumulus clusters. Three combined meshes per cloud give the
-            // silhouette a broad shaded base, an irregular body and smaller sunlit crowns;
-            // this is far cheaper than volumetrics at the kilometre-wide Adelaide camera.
-            // The default Adelaide field is kilometres across; the old ±110 m sheet sat
-            // over the 05 threshold and never reached T1.
+            // Authored atlas cards replace the previous combined-sphere clouds. One renderer per
+            // cluster gives a soft, irregular silhouette without exposed sphere intersections;
+            // billboard facing keeps it useful through the overview camera's pitch/yaw range.
             var cloudRoot = new GameObject("Cloud bands").transform;
             var umbraRoot = new GameObject("Cloud umbras").transform;
+            var atlas = AirsideArtTextures.Load(
+                "Textures/Environment/tx_cloud_atlas_cumulus_v01.png",
+                wrap: TextureWrapMode.Clamp);
+            var shader = Shader.Find("Airside/CloudAtlas");
+            if (atlas == null || shader == null)
+                return;
+            var cloudMaterial = new Material(shader) { name = "Airside cloud atlas" };
+            cloudMaterial.SetTexture("_BaseMap", atlas);
+            cloudMaterial.SetColor("_BaseColor", Color.white);
+            cloudMaterial.SetFloat("_AlphaFloor", 0.10f);
+
             var rng = new System.Random(90210);
             var adelaide = AirsideBareField.Enabled;
             var clusterCount = adelaide ? 16 : 9;
@@ -8169,45 +8179,24 @@ namespace Airside.Presentation
                 var yaw = (float)rng.NextDouble() * 360f;
                 cluster.rotation = Quaternion.Euler(0f, yaw, 0f);
 
-                var underside = new Matrix4x4[3];
-                for (var b = 0; b < underside.Length; b++)
-                {
-                    var along = (b - 1f) * sx * 0.24f;
-                    underside[b] = Matrix4x4.TRS(
-                        new Vector3(along, -sy * (0.2f + 0.04f * b), (b % 2 - 0.5f) * sz * 0.12f),
-                        Quaternion.identity,
-                        new Vector3(sx * (0.48f + 0.08f * (b % 2)), sy * 0.32f, sz * (0.58f + 0.08f * b)));
-                }
-                CreateCloudLayer(cluster, "Underside", underside, new Color(0.58f, 0.64f, 0.72f));
-
-                var bodyCount = 5 + i % 3;
-                var body = new Matrix4x4[bodyCount];
-                for (var b = 0; b < body.Length; b++)
-                {
-                    var u = body.Length == 1 ? 0f : b / (body.Length - 1f) - 0.5f;
-                    var depth = ((b * 37 + i * 11) % 7 / 6f - 0.5f) * sz * 0.34f;
-                    var lift = sy * (0.05f + (1f - Mathf.Abs(u) * 1.4f) * (0.22f + 0.09f * (b % 2)));
-                    body[b] = Matrix4x4.TRS(
-                        new Vector3(u * sx * 0.88f, lift, depth),
-                        Quaternion.Euler(0f, (b * 23f) % 80f - 40f, 0f),
-                        new Vector3(
-                            sx * (0.27f + 0.06f * (b % 3)),
-                            sy * (0.58f + 0.16f * ((b + i) % 3)),
-                            sz * (0.38f + 0.07f * ((b + 1) % 3))));
-                }
-                CreateCloudLayer(cluster, "Body", body, new Color(0.84f, 0.87f, 0.91f));
-
-                var crownCount = 3 + i % 2;
-                var crown = new Matrix4x4[crownCount];
-                for (var b = 0; b < crown.Length; b++)
-                {
-                    var u = crown.Length == 1 ? 0f : b / (crown.Length - 1f) - 0.5f;
-                    crown[b] = Matrix4x4.TRS(
-                        new Vector3(u * sx * 0.54f, sy * (0.42f + 0.16f * (b % 2)), (0.5f - b % 2) * sz * 0.14f),
-                        Quaternion.Euler(0f, (b * 31f) % 70f - 35f, 0f),
-                        new Vector3(sx * (0.22f + 0.05f * (b % 2)), sy * (0.46f + 0.12f * ((b + 1) % 2)), sz * 0.3f));
-                }
-                CreateCloudLayer(cluster, "Crown", crown, new Color(0.98f, 0.99f, 1f));
+                var card = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                card.name = "Cloud card";
+                Object.Destroy(card.GetComponent<Collider>());
+                card.transform.SetParent(cluster, false);
+                // The atlas cells contain broad cumulus, not a thin cloud deck. Scaling height
+                // from the old procedural lobe thickness flattened the card into a white smear.
+                card.transform.localScale = new Vector3(sx, sx * 0.68f, 1f);
+                var renderer = card.GetComponent<Renderer>();
+                renderer.sharedMaterial = cloudMaterial;
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+                renderer.GetPropertyBlock(RendererTintBlock);
+                var cellX = i % 4;
+                var cellY = i / 4;
+                RendererTintBlock.SetVector(CloudAtlasRectId,
+                    new Vector4(0.25f, 0.25f, cellX * 0.25f, cellY * 0.25f));
+                renderer.SetPropertyBlock(RendererTintBlock);
+                SetRendererColor(renderer, Color.white);
 
                 // Soft ground umbra under each cloud cluster — drifts with UpdateCloudDrift.
                 var umbra = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -8215,6 +8204,7 @@ namespace Airside.Presentation
                 Object.Destroy(umbra.GetComponent<Collider>());
                 umbra.transform.SetParent(umbraRoot, false);
                 umbra.transform.position = new Vector3(x, 0.06f, z);
+                umbra.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
                 umbra.transform.localScale = new Vector3(sx * 0.9f, 0.02f, sz * 0.9f);
                 var umbraMat = AirsideMaterialLibrary.CreateShared(
                     new Color(0.05f, 0.07f, 0.1f, 0.18f),
@@ -8225,21 +8215,6 @@ namespace Airside.Presentation
                 umbraRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 umbraRenderer.receiveShadows = false;
             }
-        }
-
-        private static void CreateCloudLayer(Transform cluster, string name, Matrix4x4[] lobes, Color colour)
-        {
-            var layer = new GameObject(name);
-            layer.transform.SetParent(cluster, false);
-            layer.AddComponent<MeshFilter>().sharedMesh = AirsideMeshUtil.CombineTransformed(BuiltinSphere(), lobes);
-            var renderer = layer.AddComponent<MeshRenderer>();
-            // Opaque lit lobes depth-test into one coherent mass. Transparent lobes expose every
-            // sphere intersection as a stack of white circles from the normal overview camera.
-            renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
-                colour, AirsideMaterialLibrary.SurfaceKind.Default, useTextures: false);
-            SetRendererColor(renderer, colour);
-            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
         }
 
         /// <summary>
@@ -8526,7 +8501,9 @@ namespace Airside.Presentation
             var overcast = look.CloudCover >= 0.7f;
             var cloudy = look.CloudCover > 0.3f && !overcast;
             var thickSky = overcast || cloudy;
-            var umbraAlpha = Mathf.Lerp(0.04f, 0.10f + look.CloudCover * 0.18f, daylight);
+            // The old solid cylinder needed a stronger value under opaque geometry. Atlas alpha
+            // already describes a soft cloud edge, so its companion umbra must stay broad/subtle.
+            var umbraAlpha = Mathf.Lerp(0.025f, 0.045f + look.CloudCover * 0.065f, daylight);
             var tintKey = ((int)weather << 4) ^ AirsideRuntimeQuality.ProbeBand(daylight, 0f);
             var tintChanged = tintKey != _cloudTintKey;
             if (tintChanged)
@@ -8549,11 +8526,17 @@ namespace Airside.Presentation
                     p.z = wrapZ;
                 cloud.position = p;
 
+                if (_mainCamera != null)
+                {
+                    var toCamera = _mainCamera.transform.position - p;
+                    if (toCamera.sqrMagnitude > 1f)
+                        cloud.rotation = Quaternion.LookRotation(toCamera.normalized, Vector3.up);
+                }
+
                 if (_cloudUmbraRoot != null && i < _cloudUmbraRoot.childCount)
                 {
                     var umbraTransform = _cloudUmbraRoot.GetChild(i);
                     umbraTransform.position = new Vector3(p.x, 0.06f, p.z);
-                    umbraTransform.rotation = cloud.rotation;
                 }
 
                 if (!tintChanged)
@@ -8564,10 +8547,10 @@ namespace Airside.Presentation
                 tint = Color.Lerp(tint, new Color(0.95f, 0.7f, 0.55f), dusk * 0.55f);
                 if (thickSky)
                     tint = Color.Lerp(tint, new Color(0.62f, 0.66f, 0.72f), 0.22f + look.CloudCover * 0.4f);
-                var baseAlpha = 0.16f + look.CloudCover * 0.32f;
+                var baseAlpha = 0.62f + look.CloudCover * 0.34f;
                 tint.a = Mathf.Lerp(baseAlpha * 0.85f, baseAlpha, daylight);
 
-                // Three combined layer meshes per cluster, updated only when the weather band changes.
+                // One authored atlas card per cluster, updated only when the weather band changes.
                 // More cover shows more clusters, not just denser-looking ones (ADR 0068):
                 // each of the fixed cluster count has its own cloud-cover reveal threshold,
                 // spread evenly across 0..1, so a clear day genuinely has fewer clusters lit
@@ -8582,25 +8565,9 @@ namespace Airside.Presentation
                 {
                     var renderer = renderers[r];
                     renderer.enabled = visibility > 0.05f;
-                    var layerTint = tint;
-                    if (renderer.name == "Underside")
-                    {
-                        layerTint = Color.Lerp(tint, new Color(0.38f, 0.44f, 0.54f, tint.a), 0.62f + look.CloudCover * 0.18f);
-                        layerTint.a = tint.a * 1.08f;
-                    }
-                    else if (renderer.name == "Body")
-                    {
-                        // Preserve enough tonal separation to survive the bright aerial exposure;
-                        // near-white body/crown values flattened back into one paper-white shape.
-                        layerTint = Color.Lerp(tint, new Color(0.68f, 0.74f, 0.82f, tint.a), 0.42f);
-                    }
-                    else if (renderer.name == "Crown")
-                    {
-                        layerTint = Color.Lerp(tint, new Color(0.94f, 0.96f, 0.99f, tint.a), 0.2f * daylight);
-                        layerTint.a = tint.a * 0.72f;
-                    }
-                    layerTint.a *= visibility;
-                    SetRendererColor(renderer, layerTint);
+                    var cardTint = tint;
+                    cardTint.a *= visibility;
+                    SetRendererColor(renderer, cardTint);
                 }
 
                 if (_cloudUmbraRoot == null || i >= _cloudUmbraRoot.childCount)

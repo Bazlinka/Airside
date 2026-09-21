@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Evening last flights sit near curfew, not 40 minutes after launch (ADR 0088).**
+  Launching at ~21:00 no longer dumps a fake morning peak that dies at 21:38.
+  Arrivals stretch to 22:50; Qatar and Emirates keep the real 22:00 slot.
 - **Adelaide curfew 23:00–06:00, player and RFDS exempt (ADR 0087).** Commercial
   AI no longer pushes or lands in the real closed window. You can still fly out
   at night; so can RFDS (`VH-FDA`).

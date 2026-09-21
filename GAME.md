@@ -1,5 +1,13 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Cursor — evening last flights (branch `feature/evening-last-flights`, ADR 0088).**
+  Bailey: last flights at 9:38pm did not match a 23:00 curfew.
+  - Opening bank before 19:00 stays a compact morning peak. From 19:00 it
+    stretches to 22:50; Qatar/Emirates keep the 22:00 slot.
+  - Live clock is applied before booking.
+  - **NEXT:** merge this branch, rebuild, play an evening launch — last
+    commercial row should sit near 22:00–22:50, not ~40 minutes after start.
+
 - **2026-09-21 Cursor — merged `feature/maintenance-planning` to `main` (ADRs 0085–0087).**
   Bailey asked to merge. This is now on `main`.
   - Adelaide commercial AI follows the real **23:00–06:00** curfew. The player can

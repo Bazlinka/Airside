@@ -344,6 +344,7 @@ namespace Airside.Presentation
             >= 11 and <= 12 => "midday bank",
             >= 16 and <= 18 => "evening bank",
             >= 19 and <= 21 => "evening wind-down",
+            22 => "last departures",
             >= 9 and <= 15 => "afternoon",
             _ => "overnight"
         };

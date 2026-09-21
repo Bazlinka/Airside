@@ -25,7 +25,8 @@ namespace Airside.Presentation
         public const int ButtonCount = 2;
 
         public const float MenuWidth = 340f;
-        public const float MenuHeight = 284f;
+        /// <summary>Taller than the four buttons so the build-identity line fits under Quit.</summary>
+        public const float MenuHeight = 360f;
         public const float OptionsWidth = 420f;
         public const float OptionsHeight = 460f;
 

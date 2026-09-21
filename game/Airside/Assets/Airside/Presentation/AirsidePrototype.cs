@@ -279,6 +279,7 @@ namespace Airside.Presentation
             }
 
             _active = this;
+            Debug.Log("Airside " + BuildIdentityReader.Current.FullLabel);
             ApplyLoadedSettings();
             _clock = new ManualSimulationClock(new SimulationTime(0));
             _simulation = new AirportSimulation(_clock, new SeededRandomSource(24031996), new ReservationTable());
@@ -773,6 +774,7 @@ namespace Airside.Presentation
             }
             DrawAirlineHud(layout, panel, title, button);
             DrawMapCredit(layout);
+            DrawBuildStamp(layout);
             if (_menuOpen && _optionsOpen)
                 DrawOptionsMenu(layout, panel, title, button);
             else if (_menuOpen)
@@ -811,6 +813,37 @@ namespace Airside.Presentation
             var shadow = _creditShadowStyle ??= new GUIStyle(_creditStyle) { normal = { textColor = new Color(0f, 0f, 0f, 0.55f) } };
             GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), text, shadow);
             GUI.Label(rect, text, _creditStyle);
+        }
+
+        private GUIStyle _buildStampStyle;
+        private GUIStyle _buildStampShadowStyle;
+
+        /// <summary>
+        /// Short git stamp on the bottom edge, left of the map credit and clear of the
+        /// mini-map, so two Macs can be compared without opening the pause menu.
+        /// </summary>
+        private void DrawBuildStamp(HudLayout layout)
+        {
+            var text = BuildIdentityReader.Current.ShortLabel;
+            if (string.IsNullOrEmpty(text))
+                return;
+            _buildStampStyle ??= new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 11,
+                alignment = TextAnchor.LowerRight,
+                clipping = TextClipping.Clip,
+                normal = { textColor = new Color(0.93f, 0.95f, 0.92f, 0.72f) }
+            };
+            var creditLeft = layout.Viewport.x - 330f;
+            var width = Mathf.Min(420f, Mathf.Max(80f, creditLeft - 16f));
+            var x = Mathf.Max(8f, creditLeft - 8f - width);
+            var rect = new Rect(x, layout.Viewport.y - 22f, width, 18f);
+            var shadow = _buildStampShadowStyle ??= new GUIStyle(_buildStampStyle)
+            {
+                normal = { textColor = new Color(0f, 0f, 0f, 0.55f) }
+            };
+            GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), text, shadow);
+            GUI.Label(rect, text, _buildStampStyle);
         }
 
         private void DrawSpeedReadout(HudLayout layout, GUIStyle panel)
@@ -970,7 +1003,22 @@ namespace Airside.Presentation
 
             if (GUI.Button(row, "Quit", button))
                 QuitGame();
+
+            var stamp = BuildIdentityReader.Current.FullLabel;
+            if (!string.IsNullOrEmpty(stamp))
+            {
+                _pauseStampStyle ??= new GUIStyle(GUI.skin.label)
+                {
+                    fontSize = 11,
+                    wordWrap = true,
+                    alignment = TextAnchor.UpperLeft,
+                    normal = { textColor = new Color(0.93f, 0.95f, 0.92f, 0.78f) }
+                };
+                GUI.Label(new Rect(rect.x + 20f, rect.y + rect.height - 80f, rect.width - 40f, 64f), stamp, _pauseStampStyle);
+            }
         }
+
+        private GUIStyle _pauseStampStyle;
 
         private void DrawOptionsMenu(HudLayout layout, GUIStyle panel, GUIStyle title, GUIStyle button)
         {

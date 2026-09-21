@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Build identity stamp (ADR 0080).** Each editor Play and each `scripts/build-mac.sh`
+  rebuild writes a gitignored `build-identity.txt` (commit, branch, dirty, commit time,
+  built time). The running game shows `sha · branch` on the bottom edge and the full line
+  in the pause menu; the Mac app's Finder version is the same short SHA. Domain 570/570.
+
 - **Hangar goal on the objective card + on-time reliability (ADR 0078).** No active contract
   → objective shows "Save for a …" with `$funds of $price · N of M rotations` toward the next
   hangar buy (usually ATR). Pushback lateness vs booked time adjusts reliability (+1 / 0 / −1 /

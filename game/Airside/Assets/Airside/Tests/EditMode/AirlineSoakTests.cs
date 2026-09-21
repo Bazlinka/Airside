@@ -89,7 +89,7 @@ namespace Airside.Tests
                 var home = AirlineOperations.LongHaulHomeOf(aircraft.Airline.Id.Value);
                 var ultraLong = home is "DXB" or "DOH";
                 var minimum = ultraLong ? Days / 2
-                    : aircraft.Type.Id is "A359" or "B78X" or "A21N" ? Days
+                    : AirlineOperations.NeedsTerminalGate(aircraft.Type) ? Days
                     : Days * 2;
                 Assert.That(aircraft.CompletedTrips, Is.GreaterThanOrEqualTo(minimum),
                     $"{aircraft.Registration} flew too few trips");

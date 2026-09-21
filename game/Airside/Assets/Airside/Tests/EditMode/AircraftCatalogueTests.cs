@@ -18,10 +18,16 @@ namespace Airside.Tests
             Assert.That(AircraftType.Atr42, Is.SameAs(AircraftCatalogue.Atr42.Type));
             Assert.That(AircraftType.Saab340, Is.SameAs(AircraftCatalogue.Saab340.Type));
             Assert.That(AircraftType.Dash8Q400, Is.SameAs(AircraftCatalogue.Dash8Q400.Type));
+            Assert.That(AircraftType.EmbraerE190, Is.SameAs(AircraftCatalogue.EmbraerE190.Type));
+            Assert.That(AircraftType.AirbusA220300, Is.SameAs(AircraftCatalogue.AirbusA220300.Type));
+            Assert.That(AircraftType.AirbusA320200, Is.SameAs(AircraftCatalogue.AirbusA320200.Type));
+            Assert.That(AircraftType.Boeing737800, Is.SameAs(AircraftCatalogue.Boeing737800.Type));
             Assert.That(AircraftType.Boeing7378, Is.SameAs(AircraftCatalogue.Boeing7378.Type));
             Assert.That(AircraftType.AirbusA321Neo, Is.SameAs(AircraftCatalogue.AirbusA321Neo.Type));
             Assert.That(AircraftType.AirbusA350900, Is.SameAs(AircraftCatalogue.AirbusA350900.Type));
             Assert.That(AircraftType.Boeing78710, Is.SameAs(AircraftCatalogue.Boeing78710.Type));
+            Assert.That(AircraftType.AirbusA330900, Is.SameAs(AircraftCatalogue.AirbusA330900.Type));
+            Assert.That(AircraftType.Boeing7879, Is.SameAs(AircraftCatalogue.Boeing7879.Type));
             foreach (var spec in AircraftCatalogue.All)
             {
                 Assert.That(AircraftType.TryFromId(spec.Id, out var type), Is.True);
@@ -48,7 +54,11 @@ namespace Airside.Tests
         public void GenuineModels_MatchRealDimensionsWithinFivePercent_AndHaveTheirOwnThumbnail()
         {
             var genuine = AircraftCatalogue.All.Where(s => s.ModelStatus == ModelStatus.Genuine).ToList();
-            Assert.That(genuine.Select(s => s.Id), Is.EquivalentTo(new[] { "ATR42", "SF34", "DH8D", "B38M", "A21N", "A359", "B78X" }));
+            Assert.That(genuine.Select(s => s.Id), Is.EquivalentTo(new[]
+            {
+                "ATR42", "SF34", "DH8D", "E190", "A223", "A320", "B738",
+                "B38M", "A21N", "A339", "A359", "B789", "B78X"
+            }));
             var thumbnails = new HashSet<string>();
             foreach (var spec in genuine)
             {

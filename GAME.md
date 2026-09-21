@@ -1,5 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-21 Codex — Adelaide scheduled-passenger fleet coverage (branch
+  `feature/adelaide-aircraft-fleet`, ADR 0083).** Audited the seven existing genuine types
+  against current Adelaide Airport operator/route releases. Added six missing recurring types:
+  A320-200, 737-800, E190, A220-300, A330-900neo and 787-9. All are project-owned procedural
+  kits with exact manufacturer envelopes, dedicated thumbnails, catalogue/performance/profile
+  entries and exact live ADS-B mapping. Corrected representative Qantas, Jetstar, Malaysia,
+  Emirates and Fiji equipment without adding extra traffic; A220/E190 remain available to live
+  traffic/catalogue but do not silently increase airport congestion or alter the player ladder.
+  - **Evidence:** geometry regression passes for all six; rendered thumbnails visually inspected;
+    merged headless Domain/Simulation **594/594**. Unity EditMode/build/Play look still required.
+  - **NEXT:** Unity EditMode, then a day/dusk/night follow-camera look at one narrowbody, the
+    A220/E190 pair and both widebodies. Confirm gate clearances in the next visual QA pass.
+
 - **2026-09-21 Claude — live traffic on maps + real ground traffic (branch
   `feature/live-maps-ground`, ADR 0082).** Bailey picked "Show live on maps" and "Real ground
   traffic" after ADR 0081.

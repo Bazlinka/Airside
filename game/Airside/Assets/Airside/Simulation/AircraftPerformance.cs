@@ -149,6 +149,22 @@ namespace Airside.Simulation
             135f, 125f, 110f, 116f, 135f, 185f, 1150f, 8.0f, 7.2f,
             25000, 1450, 1700, 24f, 15f, 14f, 0f);
 
+        public static readonly AircraftPerformanceProfile EmbraerE190 = new(
+            150f, 134f, 123f, 140f, 160f, 205f, 1450f, 11.0f, 9.5f,
+            41000, 2000, 1900, 20f, 10f, 15f, 14.65f);
+
+        public static readonly AircraftPerformanceProfile AirbusA220300 = new(
+            150f, 136f, 125f, 142f, 162f, 208f, 1500f, 11.5f, 9.8f,
+            41000, 2100, 1950, 20f, 10f, 15f, 14.86f);
+
+        public static readonly AircraftPerformanceProfile AirbusA320200 = new(
+            153f, 139f, 127f, 144f, 164f, 209f, 1600f, 11.0f, 9.5f,
+            39800, 1950, 1850, 20f, 10f, 15f, 12.64f);
+
+        public static readonly AircraftPerformanceProfile Boeing737800 = new(
+            155f, 143f, 131f, 145f, 165f, 210f, 1700f, 12.0f, 10.0f,
+            41000, 2100, 1900, 20f, 10f, 15f, 15.60f);
+
         // Wheelbase (nose gear to main gear): commonly published Boeing 737-800/-8
         // airport-planning figure. Not independently cross-checked against a fetched
         // primary ACAP PDF this session — verify against the Boeing 737 MAX ACAP
@@ -176,6 +192,14 @@ namespace Airside.Simulation
             166f, 151f, 139f, 159f, 181f, 226f, 2200f, 11.0f, 9.5f,
             43000, 1800, 1800, 20f, 8f, 14f, 28.88f);
 
+        public static readonly AircraftPerformanceProfile AirbusA330900 = new(
+            164f, 148f, 137f, 157f, 179f, 224f, 2100f, 11.5f, 10.0f,
+            41450, 1800, 1800, 20f, 8f, 14f, 25.38f);
+
+        public static readonly AircraftPerformanceProfile Boeing7879 = new(
+            165f, 149f, 138f, 158f, 180f, 225f, 2150f, 11.0f, 9.5f,
+            43000, 1800, 1800, 20f, 8f, 14f, 25.83f);
+
         public static AircraftPerformanceProfile For(AircraftType type)
         {
             if (type == null)
@@ -184,10 +208,16 @@ namespace Airside.Simulation
             {
                 "SF34" => Saab340,
                 "DH8D" => Dash8Q400,
+                "E190" => EmbraerE190,
+                "A223" => AirbusA220300,
+                "A320" => AirbusA320200,
+                "B738" => Boeing737800,
                 "B38M" => Boeing7378,
                 "A21N" => AirbusA321Neo,
                 "A359" => AirbusA350900,
                 "B78X" => Boeing78710,
+                "A339" => AirbusA330900,
+                "B789" => Boeing7879,
                 _ => Atr42
             };
         }

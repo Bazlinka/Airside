@@ -111,6 +111,38 @@ namespace Airside.Domain
             StandClass.RegionalBay, ModelStatus.Genuine,
             "Models/Aircraft/mdl_dash8_q400_v01.gltf", "UI/Aircraft/thb_air_dh8d_v01.png", "SPEC-DASH8-400");
 
+        public static readonly AircraftSpec EmbraerE190 = new(
+            "E190", "Embraer E190", "Regional jet · 98–106 seats",
+            36.24, 28.72, 10.55,
+            planningCruiseKmh: 829, practicalRangeKm: 3500,
+            manufacturerMaxCruiseKmh: 0, manufacturerRangeKm: 0, manufacturerRangeBasis: "performance varies by E190 weight variant",
+            StandClass.TerminalGate, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_e190_v01.gltf", "UI/Aircraft/thb_air_e190_v01.png", "SPEC-EMBRAER-E190");
+
+        public static readonly AircraftSpec AirbusA220300 = new(
+            "A223", "Airbus A220-300", "Regional jet · 120–160 seats",
+            38.70, 35.10, 11.50,
+            planningCruiseKmh: 829, practicalRangeKm: 5500,
+            manufacturerMaxCruiseKmh: 871, manufacturerRangeKm: 6297, manufacturerRangeBasis: "3,400 nm Airbus family figure",
+            StandClass.TerminalGate, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_a220_300_v01.gltf", "UI/Aircraft/thb_air_a223_v01.png", "SPEC-AIRBUS-A220-300");
+
+        public static readonly AircraftSpec AirbusA320200 = new(
+            "A320", "Airbus A320-200", "Narrowbody jet · 180 seats",
+            37.57, 35.80, 11.76,
+            planningCruiseKmh: 830, practicalRangeKm: 5000,
+            manufacturerMaxCruiseKmh: 871, manufacturerRangeKm: 6200, manufacturerRangeBasis: "representative A320 family figure",
+            StandClass.TerminalGate, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_a320_200_v01.gltf", "UI/Aircraft/thb_air_a320_v01.png", "SPEC-AIRBUS-A320-200");
+
+        public static readonly AircraftSpec Boeing737800 = new(
+            "B738", "Boeing 737-800", "Narrowbody jet · 160–189 seats",
+            39.47, 35.80, 12.50,
+            planningCruiseKmh: 839, practicalRangeKm: 4800,
+            manufacturerMaxCruiseKmh: 0, manufacturerRangeKm: 5190, manufacturerRangeBasis: "up to 2,800 nmi",
+            StandClass.TerminalGate, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_737_800_v01.gltf", "UI/Aircraft/thb_air_b738_v01.png", "SPEC-BOEING-737-800");
+
         // Virgin Australia's type (AIR-005). Boeing lists no cruise speed on the cited page; 839 km/h
         // (about Mach 0.79) is the planning figure.
         public static readonly AircraftSpec Boeing7378 = new(
@@ -148,7 +180,28 @@ namespace Airside.Domain
             StandClass.TerminalGate, ModelStatus.Genuine,
             "Models/Aircraft/mdl_787_10_v01.gltf", "UI/Aircraft/thb_air_b78x_v01.png", "SPEC-BOEING-787-10");
 
-        public static IReadOnlyList<AircraftSpec> All { get; } = new[] { Atr42, Saab340, Dash8Q400, Boeing7378, AirbusA321Neo, AirbusA350900, Boeing78710 };
+        public static readonly AircraftSpec AirbusA330900 = new(
+            "A339", "Airbus A330-900neo", "Long-haul widebody · 260–300 seats",
+            63.66, 64.00, 16.79,
+            planningCruiseKmh: 871, practicalRangeKm: 12000,
+            manufacturerMaxCruiseKmh: 871, manufacturerRangeKm: 13334, manufacturerRangeBasis: "7,200 nm Airbus family figure",
+            StandClass.TerminalGate, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_a330_900neo_v01.gltf", "UI/Aircraft/thb_air_a339_v01.png", "SPEC-AIRBUS-A330-900");
+
+        public static readonly AircraftSpec Boeing7879 = new(
+            "B789", "Boeing 787-9", "Long-haul widebody · 250–325 seats",
+            62.81, 60.12, 17.02,
+            planningCruiseKmh: 903, practicalRangeKm: 15000,
+            manufacturerMaxCruiseKmh: 0, manufacturerRangeKm: 15370, manufacturerRangeBasis: "up to 8,300 nmi",
+            StandClass.TerminalGate, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_787_9_v01.gltf", "UI/Aircraft/thb_air_b789_v01.png", "SPEC-BOEING-787-9");
+
+        public static IReadOnlyList<AircraftSpec> All { get; } = new[]
+        {
+            Atr42, Saab340, Dash8Q400, EmbraerE190, AirbusA220300,
+            AirbusA320200, Boeing737800, Boeing7378, AirbusA321Neo,
+            AirbusA330900, AirbusA350900, Boeing7879, Boeing78710
+        };
 
         public static bool TryFor(AircraftType type, out AircraftSpec found)
         {
@@ -164,6 +217,9 @@ namespace Airside.Domain
             }
             return false;
         }
+
+        public static bool IsWidebody(AircraftType type) =>
+            TryFor(type, out var spec) && spec.WingspanMetres >= 45.0;
 
         public static AircraftSpec For(AircraftType type)
         {

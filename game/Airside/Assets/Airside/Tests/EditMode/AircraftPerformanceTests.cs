@@ -76,11 +76,9 @@ namespace Airside.Tests
             // had a narrowbody's gear geometry. Each jet now supplies its own
             // AircraftPerformanceProfile.NoseToMainGearMetres.
             var gate = new StableId("GATE-13");
-            var jetTypes = new[]
-            {
-                AircraftType.Boeing7378, AircraftType.AirbusA321Neo,
-                AircraftType.AirbusA350900, AircraftType.Boeing78710
-            };
+            var jetTypes = AircraftCatalogue.All
+                .Where(spec => spec.StandClass == StandClass.TerminalGate)
+                .Select(spec => spec.Type).ToArray();
             foreach (var type in jetTypes)
             {
                 var expected = AircraftPerformance.For(type).NoseToMainGearMetres;
@@ -97,7 +95,7 @@ namespace Airside.Tests
 
             var wheelbases = jetTypes.Select(type => AircraftPerformance.For(type).NoseToMainGearMetres).ToArray();
             Assert.That(wheelbases.Distinct().Count(), Is.EqualTo(wheelbases.Length),
-                "the four jets must not all share one flat wheelbase any more");
+                "authored jets must not share one flat wheelbase");
         }
 
         [Test]
@@ -110,11 +108,9 @@ namespace Airside.Tests
             // "FLxxx" cruise readout.
             var mediumLegKm = 650.0;
             var turboprop = EnrouteProfile.PlannedCruiseFeet(mediumLegKm, AircraftType.Atr42);
-            foreach (var jetType in new[]
-                     {
-                         AircraftType.Boeing7378, AircraftType.AirbusA321Neo,
-                         AircraftType.AirbusA350900, AircraftType.Boeing78710
-                     })
+            foreach (var jetType in AircraftCatalogue.All
+                         .Where(spec => spec.StandClass == StandClass.TerminalGate)
+                         .Select(spec => spec.Type))
             {
                 Assert.That(EnrouteProfile.PlannedCruiseFeet(mediumLegKm, jetType), Is.GreaterThan(turboprop),
                     $"{jetType.Id} should plan well above a turboprop's cruise level");

@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Six missing real Adelaide passenger types now have genuine models:** A320-200, 737-800,
+  E190, A220-300, A330-900neo and 787-9. Each has a true-scale procedural glTF/FBX kit,
+  dedicated catalogue/performance/profile data and a rendered Hangar thumbnail. Live ADS-B
+  traffic now maps those ICAO codes to the correct silhouette instead of an A321, 737-8,
+  A350 or 787-10 stand-in. Existing Qantas, Jetstar, Malaysia, Emirates and Fiji equipment
+  assignments are corrected from current Adelaide Airport evidence. Charter-only and one-off
+  visitors remain deliberately out of scope (ADR 0083).
+
 - **Live traffic on the maps and on the ground (ADR 0082).** The feed now covers 250 NM, so
   the Route Map shows real airliners across South Australia (pale icons under your flights;
   callsign, type and height when zoomed in). Live aircraft on the field get "LIVE · callsign"

@@ -4,9 +4,9 @@
 Catches the class of defect where a part hovers or a whole assembly floats: static wicks and nav
 lights 1.7 m above a winglet, main gear a metre under the wing, tyres beside (not on) their strut,
 the Q400's wing assembly sitting 10 cm above the fuselage crown. Uses the same audit as
-`scripts/audit-aircraft-geometry.py floating` (5 cm tolerance, runs in a few minutes for all seven).
+`scripts/audit-aircraft-geometry.py floating` (5 cm tolerance, runs in a few minutes for all thirteen).
 
-Usage: python3 scripts/test-aircraft-connectivity.py [ATR42 SF34 DH8D B38M A21N A359 B78X]
+Usage: python3 scripts/test-aircraft-connectivity.py [ATR42 SF34 DH8D E190 A223 A320 B738 B38M A21N A339 A359 B789 B78X]
 """
 import importlib.util
 import os

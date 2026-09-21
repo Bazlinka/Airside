@@ -315,8 +315,11 @@ def main():
     for bay_id, ref in WALKOUT_BAYS:
         pts = parking[ref]
         entry, stop = pts[0], pts[-1]
-        d = (stop[0] - entry[0], stop[1] - entry[1])
-        dl = math.hypot(*d)
+        # Park facing the way the aircraft actually arrives: the walk-out lines curve, so
+        # the entry→stop chord was up to 186° off the last stretch and the parked Saab
+        # snapped round on arrival and again at pushback.
+        before = next(p for p in reversed(pts[:-1]) if math.hypot(stop[0] - p[0], stop[1] - p[1]) > 0.5)
+        d = (stop[0] - before[0], stop[1] - before[1])
         heading = math.degrees(math.atan2(d[0], d[1]))
         arrive, arrive_names = route(E2_HOLD, entry)
         taxi_in = dedupe(round_corners(arrive, 35.0) + pts[1:])

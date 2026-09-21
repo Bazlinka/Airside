@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Airside.Domain;
 using Airside.Simulation;
@@ -179,7 +180,7 @@ namespace Airside.Presentation
             if (!inBand)
             {
                 AvailabilityLine =
-                    $"Locked — a {type.Name} flies {BandLabel(RouteAccess.Ceiling(type))} routes; "
+                    $"Locked — {Article.A(type.Name)} flies {BandLabel(RouteAccess.Ceiling(type))} routes; "
                     + $"{destination.Name} is {BandLabel(band)}";
                 AvailabilityTone = HudTone.Muted;
                 PlanBlockedReason = AvailabilityLine;
@@ -273,6 +274,26 @@ namespace Airside.Presentation
 
         public HudBox FilterBox(int index) =>
             new(Filters.X + index * (FilterWidth + 8f), Filters.Y, FilterWidth, FilterHeight);
+
+        public const float RivalsWidth = 142f;
+        public const float RivalsHeight = 24f;
+
+        /// <summary>
+        /// The RIVALS ON/OFF toggle: top-right of the map, level with the pills when the map
+        /// is wide enough for both, otherwise just under them. Pinned to the top-right on its
+        /// own, it sat on the LOCKED pill on any map narrower than about 440 points.
+        /// </summary>
+        public HudBox RivalsToggle
+        {
+            get
+            {
+                var right = Map.Right - 12f - RivalsWidth;
+                if (right >= Filters.Right + 12f)
+                    return new HudBox(right, Map.Y + 12f, RivalsWidth, RivalsHeight);
+                return new HudBox(Filters.X, Filters.Bottom + 8f, Math.Min(RivalsWidth, Math.Max(1f, Map.Width - 24f)),
+                    RivalsHeight);
+            }
+        }
 
         public static RouteMapWorkspaceLayout Create(HudBox surface)
         {

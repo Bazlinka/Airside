@@ -180,7 +180,7 @@ namespace Airside.Simulation
             {
                 var limits = GroundSpeedLimits.TaxiFor(type);
                 leg = new GroundLeg(
-                    new GroundLegPart(new GroundPath(DrivablePushback(bay.Pushback, type), GroundSpeedLimits.Pushback),
+                    new GroundLegPart(new GroundPath(BayPushback(bay, type), GroundSpeedLimits.Pushback),
                         tailFirst: true),
                     new GroundLegPart(new GroundPath(Drivable(CleanTaxiOut(TaxiOutPath(bay, runway)), type), limits, 0f, 0f,
                         new[] { ApronZone(type) }, null), tailFirst: false, TugDisconnectSeconds));
@@ -203,11 +203,43 @@ namespace Airside.Simulation
             if (!TaxiInLegs.TryGetValue(key, out var leg))
             {
                 var limits = GroundSpeedLimits.TaxiFor(type);
-                leg = new GroundLeg(new GroundLegPart(new GroundPath(Drivable(bay.TaxiIn, type), limits, 0f, 0f,
+                leg = new GroundLeg(new GroundLegPart(new GroundPath(BayTaxiIn(bay, bay.TaxiIn, type), limits, 0f, 0f,
                     null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false));
                 TaxiInLegs[key] = leg;
             }
 
+            return leg;
+        }
+
+        /// <summary>
+        /// Taxi-in for an arrival off <paramref name="runway"/>. A 12/30 vacate ends partway
+        /// along the E2 → bays corridor, so its taxi-in starts there rather than back at E2.
+        /// </summary>
+        public static GroundLeg TaxiIn(StableId stand, AircraftType type, RunwayDirection runway)
+        {
+            if (!AdelaideCrossRoutes.TryArrivalJoin(runway, out _, out _))
+                return TaxiIn(stand, type);
+            var key = stand.Value + "/" + (type?.Id ?? "ATR42") + "/" + runway;
+            if (TaxiInLegs.TryGetValue(key, out var leg))
+                return leg;
+
+            var limits = GroundSpeedLimits.TaxiFor(type);
+            if (TryTerminalGate(stand, out var gate))
+            {
+                var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
+                leg = new GroundLeg(new GroundLegPart(new GroundPath(
+                    Drivable(AdelaideCrossRoutes.TrimToArrivalJoin(gate.TaxiIn, runway), type), limits, 0f, 0f,
+                    null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false, trackMetres: wheelbase));
+            }
+            else
+            {
+                var bay = Bay(stand);
+                leg = new GroundLeg(new GroundLegPart(new GroundPath(
+                    BayTaxiIn(bay, AdelaideCrossRoutes.TrimToArrivalJoin(bay.TaxiIn, runway), type), limits, 0f, 0f,
+                    null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false));
+            }
+
+            TaxiInLegs[key] = leg;
             return leg;
         }
 
@@ -221,8 +253,8 @@ namespace Airside.Simulation
         public static GroundPose AwaitingPose(int slot, AircraftType type, RunwayDirection runway)
         {
             // Wait where vacate ends so Landing → AwaitingStand does not teleport. Cross
-            // vacates still finish at E2 for taxi-in continuity; ClearOfRunwaySeconds frees
-            // the strip earlier. QueueSlot is per AssignedRunway so 05 and 12 do not share
+            // vacates finish just onto the E2 → bays corridor, where their taxi-in starts;
+            // ClearOfRunwaySeconds frees the strip earlier. QueueSlot is per AssignedRunway so 05 and 12 do not share
             // a queue even when both exit toward E2.
             var vacate = VacateFor(type, runway);
             var end = vacate.PoseAt(vacate.Seconds);
@@ -354,6 +386,42 @@ namespace Airside.Simulation
         /// but a wheelbase-tracked widebody turns into a 150° swing in two seconds. Round them off to
         /// what the airframe can actually drive: no tighter than about its own wheelbase.
         /// </summary>
+        /// <summary>
+        /// Walk-out stands (AIP PADAP02 10A–10D, 2A): the painted line ends in a tight U-turn
+        /// so the Saab stops facing out. Relaxing that loop to the taxi turn radius cut it off,
+        /// so the aircraft arrived 20–100° off its parked heading and snapped round on the stand,
+        /// and again when the pushback began. Their stand line is followed as painted.
+        /// </summary>
+        private static bool IsWalkOut(AdelaideBay bay) =>
+            bay.Reference is "10A" or "10B" or "10C" or "10D" or "2A";
+
+        private static float[] BayTaxiIn(AdelaideBay bay, float[] taxiIn, AircraftType type)
+        {
+            if (!IsWalkOut(bay) || bay.Pushback.Length < 4)
+                return Drivable(taxiIn, type);
+
+            // The pushback is the stand line reversed: walk back from the stop while the
+            // taxi-in is still on it. The route may end a point short of the line's start.
+            var split = taxiIn.Length / 2;
+            for (var i = taxiIn.Length / 2 - 1; i >= 0; i--)
+            {
+                if (AdelaideCrossRoutes.DistanceToPolyline(bay.Pushback, taxiIn[i * 2], taxiIn[i * 2 + 1], out _) > 0.5f)
+                    break;
+                split = i;
+            }
+
+            if (split < 1 || split >= taxiIn.Length / 2 - 1)
+                return Drivable(taxiIn, type);
+            var route = new float[(split + 1) * 2];
+            Array.Copy(taxiIn, route, route.Length);
+            var standLine = new float[taxiIn.Length - split * 2];
+            Array.Copy(taxiIn, split * 2, standLine, 0, standLine.Length);
+            return GroundPathSmoothing.Join(Drivable(route, type), standLine);
+        }
+
+        private static float[] BayPushback(AdelaideBay bay, AircraftType type) =>
+            IsWalkOut(bay) ? bay.Pushback : DrivablePushback(bay.Pushback, type);
+
         private static float[] Drivable(float[] xz, AircraftType type)
         {
             var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;

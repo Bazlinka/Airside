@@ -52,7 +52,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void LineupAndVacate_JoinTheCrossStripToE2()
+        public void LineupAndVacate_JoinTheCrossStripToTheTaxiRoutes()
         {
             var lineup12 = AdelaideGround.LineupFor(RunwayDirection.Runway12);
             var lineup30 = AdelaideGround.LineupFor(RunwayDirection.Runway30);
@@ -65,11 +65,14 @@ namespace Airside.Tests
 
             var vacate12 = AdelaideGround.VacateFor(AircraftType.Atr42, RunwayDirection.Runway12);
             var vacate30 = AdelaideGround.VacateFor(AircraftType.Atr42, RunwayDirection.Runway30);
-            var e2 = AdelaideLayout.E2Hold;
+            // The cross-strip vacate hands straight to that runway's taxi-in on the E2 → bays corridor.
+            var bay = new StableId(AdelaideLayout.Bays[0].Id);
             var end12 = vacate12.PoseAt(vacate12.Seconds);
             var end30 = vacate30.PoseAt(vacate30.Seconds);
-            Assert.That(Distance(end12.X, end12.Z, e2[0], e2[1]), Is.LessThan(6f));
-            Assert.That(Distance(end30.X, end30.Z, e2[0], e2[1]), Is.LessThan(6f));
+            var in12 = AdelaideGround.TaxiIn(bay, AircraftType.Atr42, RunwayDirection.Runway12).PoseAt(0);
+            var in30 = AdelaideGround.TaxiIn(bay, AircraftType.Atr42, RunwayDirection.Runway30).PoseAt(0);
+            Assert.That(Distance(end12.X, end12.Z, in12.X, in12.Z), Is.LessThan(6f));
+            Assert.That(Distance(end30.X, end30.Z, in30.X, in30.Z), Is.LessThan(6f));
         }
 
         [Test]

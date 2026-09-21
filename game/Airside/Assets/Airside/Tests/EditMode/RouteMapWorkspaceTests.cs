@@ -119,5 +119,29 @@ namespace Airside.Tests
             Assert.That(selectedList.Commands.Any(c => c.Text == model.AircraftRangeLabel), Is.True);
         }
 
-    }
+    
+        [TestCase(1440f, 900f)]
+        [TestCase(1600f, 900f)]
+        [TestCase(1280f, 800f)]
+        [TestCase(1024f, 640f)]
+        [TestCase(800f, 600f)]
+        [TestCase(1164f, 872f)]
+        public void Controls_RivalsTogglePillsAndDetailNeverOverlap(float width, float height)
+        {
+            var layout = RouteMapWorkspaceLayout.Create(HudShell.WorkspaceSurface(width, height));
+            var rivals = layout.RivalsToggle;
+            var at = $"{width}x{height}";
+            Assert.That(rivals.Width, Is.GreaterThan(80f), "rivals toggle collapsed " + at);
+            for (var i = 0; i < 2; i++)
+                Assert.That(Overlaps(rivals, layout.FilterBox(i)), Is.False, $"rivals toggle on filter pill {i} " + at);
+            if (!layout.Detail.IsEmpty)
+                Assert.That(Overlaps(rivals, layout.Detail), Is.False, "rivals toggle on the detail pane " + at);
+            Assert.That(rivals.X, Is.GreaterThanOrEqualTo(layout.Map.X - 0.01f), at);
+            Assert.That(rivals.Right, Is.LessThanOrEqualTo(layout.Map.Right + 0.01f), at);
+            Assert.That(rivals.Bottom, Is.LessThanOrEqualTo(layout.Map.Bottom + 0.01f), at);
+        }
+
+        private static bool Overlaps(HudBox a, HudBox b) =>
+            a.X < b.Right && b.X < a.Right && a.Y < b.Bottom && b.Y < a.Bottom;
+}
 }

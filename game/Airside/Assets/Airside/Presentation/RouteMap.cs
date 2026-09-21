@@ -69,6 +69,27 @@ namespace Airside.Presentation
             lon = Math.Atan2(y, x) * 180.0 / Math.PI;
         }
 
+        /// <summary>Point reached after travelling <paramref name="distanceKm"/> on a true bearing.</summary>
+        public static void DestinationPoint(double latitude, double longitude, double distanceKm,
+            double bearingDegrees, out double lat, out double lon)
+        {
+            const double earthRadiusKm = 6371.0;
+            var phi1 = latitude * Math.PI / 180.0;
+            var lambda1 = longitude * Math.PI / 180.0;
+            var bearing = bearingDegrees * Math.PI / 180.0;
+            var angularDistance = Math.Max(0.0, distanceKm) / earthRadiusKm;
+            var sinPhi1 = Math.Sin(phi1);
+            var cosPhi1 = Math.Cos(phi1);
+            var sinDistance = Math.Sin(angularDistance);
+            var cosDistance = Math.Cos(angularDistance);
+            var phi2 = Math.Asin(sinPhi1 * cosDistance + cosPhi1 * sinDistance * Math.Cos(bearing));
+            var lambda2 = lambda1 + Math.Atan2(
+                Math.Sin(bearing) * sinDistance * cosPhi1,
+                cosDistance - sinPhi1 * Math.Sin(phi2));
+            lat = phi2 * 180.0 / Math.PI;
+            lon = ((lambda2 * 180.0 / Math.PI + 540.0) % 360.0) - 180.0;
+        }
+
         /// <summary>
         /// Liang–Barsky clip of a segment to a rectangle. False when nothing of it is inside;
         /// otherwise the endpoints are trimmed to the rectangle.

@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Airport-scale ground rhythm and honest route-range rings (ADR 0073).** Adelaide's procedural
+  infield now carries subtle 34 m runway-aligned mowing bands, softened along their length and
+  suppressed where worn-dirt weight takes over. This breaks up the former single washed carpet
+  without painting detail over runways, aprons or taxiways. The Route Map now draws true geodesic
+  500, 1,000 and 2,000 km rings from Adelaide, with restrained dashed strokes and labels, so range
+  and network expansion can be judged spatially rather than from a list alone. Domain suite green;
+  Unity 787/789 with the same two unrelated pre-existing failures; shared map and fresh Mac ground
+  captures inspected.
+
 - **Layered cloud silhouettes and weather-review control (ADR 0072).** Replaced each stretched
   one/two-sphere cloud with a deterministic three-layer cluster: a broad shaded underside, five
   to seven irregular body lobes and smaller sunlit crowns. The result keeps the existing real-wind

@@ -446,6 +446,11 @@ namespace Airside.Presentation
             if (into == null || lens == null)
                 return;
 
+            // Real geodesic rings turn aircraft range into something the player can judge at a
+            // glance. Alternating segments keep them quieter than actual routes.
+            RangeRing(into, map, lens, home, 500);
+            RangeRing(into, map, lens, home, 1000);
+            RangeRing(into, map, lens, home, 2000);
             Polyline(into, map, lens, AustraliaMapGeometry.MainlandCoastLonLat, HudTone.Muted, 1.6f);
             Polyline(into, map, lens, AustraliaMapGeometry.TasmaniaCoastLonLat, HudTone.Muted, 1.6f);
             foreach (var border in AustraliaMapGeometry.StateBorderLonLats)
@@ -483,6 +488,32 @@ namespace Airside.Presentation
             into.Dot(hx, hy, 12f, HudTone.Caution, playerLiveryHex);
             into.Text(new HudBox(hx + 10f, hy - 9f, 120f, 17f), home.Name, 13f, HudTone.Default,
                 HudTextStyle.Bold);
+        }
+
+        private static void RangeRing(HudDrawList into, HudBox map, AustraliaMapLens lens,
+            Destination home, int distanceKm)
+        {
+            const int segments = 72;
+            RouteMap.DestinationPoint(home.Latitude, home.Longitude, distanceKm, 0.0,
+                out var lat, out var lon);
+            Project(lens, map, lon, lat, out var px, out var py);
+            for (var i = 1; i <= segments; i++)
+            {
+                RouteMap.DestinationPoint(home.Latitude, home.Longitude, distanceKm,
+                    i * 360.0 / segments, out lat, out lon);
+                Project(lens, map, lon, lat, out var nx, out var ny);
+                if ((i & 1) == 0)
+                    Clipped(into, map, px, py, nx, ny, HudTone.Muted, 0.65f);
+                px = nx;
+                py = ny;
+            }
+
+            RouteMap.DestinationPoint(home.Latitude, home.Longitude, distanceKm, 90.0,
+                out lat, out lon);
+            Project(lens, map, lon, lat, out var lx, out var ly);
+            if (map.Contains(lx, ly))
+                into.Text(new HudBox(lx + 4f, ly - 15f, 66f, 15f), $"{distanceKm:N0} km", 9f,
+                    HudTone.Muted);
         }
 
         private static void Polyline(HudDrawList into, HudBox map, AustraliaMapLens lens, float[] lonLat,

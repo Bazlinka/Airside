@@ -16,6 +16,8 @@ namespace Airside.Presentation
         public const string FarDetailKeyword = "_GROUND_FAR_DETAIL";
         public const float MacroScaleMetres = 240f;
         public const float MacroStrength = 0.08f;
+        public const float MownStripeWidthMetres = 34f;
+        public const float MownStripeStrength = 0.035f;
         public const float FarBlendStartMetres = 120f;
         public const float FarBlendEndMetres = 900f;
 
@@ -182,6 +184,8 @@ namespace Airside.Presentation
             material.SetColor("_Tint", new Color(0.59f, 0.61f, 0.55f, 1f));
             material.SetFloat("_MacroScale", MacroScaleMetres);
             material.SetFloat("_MacroStrength", MacroStrength);
+            material.SetFloat("_MownStripeWidth", MownStripeWidthMetres);
+            material.SetFloat("_MownStripeStrength", MownStripeStrength);
             material.SetFloat("_FarBlendStart", FarBlendStartMetres);
             material.SetFloat("_FarBlendEnd", FarBlendEndMetres);
             // The far-detail samples cost six texture reads; Medium keeps the single scale.

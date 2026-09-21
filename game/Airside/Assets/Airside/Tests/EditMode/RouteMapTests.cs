@@ -1,3 +1,4 @@
+using Airside.Domain;
 using Airside.Presentation;
 using NUnit.Framework;
 
@@ -29,6 +30,19 @@ namespace Airside.Tests
             // Southern hemisphere great circles bulge south of the straight lat/lon line.
             Assert.That(latMid, Is.LessThan((-34.945 + -31.940) / 2));
             Assert.That(lonMid, Is.InRange(115.967, 138.531));
+        }
+
+        [Test]
+        public void DestinationPoint_ProducesRequestedGeodesicDistance()
+        {
+            var home = DestinationCatalogue.Adelaide;
+            foreach (var distance in new[] { 500.0, 1000.0, 2000.0 })
+            {
+                RouteMap.DestinationPoint(home.Latitude, home.Longitude, distance, 73.0,
+                    out var latitude, out var longitude);
+                var point = new Destination("RING", "Range point", string.Empty, latitude, longitude);
+                Assert.That(home.DistanceKmTo(point), Is.EqualTo(distance).Within(0.01));
+            }
         }
 
         [Test]

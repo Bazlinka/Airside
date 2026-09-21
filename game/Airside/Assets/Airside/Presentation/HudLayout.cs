@@ -35,6 +35,15 @@ namespace Airside.Presentation
         public const float ReadoutHeight = 38f;
         public const float ReadoutGap = 8f;
 
+        /// <summary>
+        /// Map credit and build stamp share one line in the strip under the airline HUD's
+        /// floor (<see cref="HudShell.Margin"/>), so they never draw across a panel's edge.
+        /// </summary>
+        public const float FooterHeight = 15f;
+        public const float CreditWidth = 320f;
+        public const float StampMaxWidth = 420f;
+        private const float FooterInset = 8f;
+
         private HudLayout(Vector2 viewport, Rect controlBar, Rect pauseMenu, Rect optionsMenu, Rect speedReadout)
         {
             Viewport = viewport;
@@ -58,6 +67,30 @@ namespace Airside.Presentation
 
         /// <summary>Live airspeed, directly above the control bar.</summary>
         public Rect SpeedReadout { get; }
+
+        /// <summary>ODbL map credit, bottom-right in the footer strip.</summary>
+        public Rect MapCredit => new(
+            Mathf.Max(FooterInset, Viewport.x - FooterInset - CreditWidth),
+            Viewport.y - FooterHeight,
+            Mathf.Min(CreditWidth, Mathf.Max(1f, Viewport.x - FooterInset * 2f)),
+            FooterHeight);
+
+        /// <summary>
+        /// Git build stamp, right-aligned just left of <see cref="MapCredit"/> in the same
+        /// footer strip. Zero-width when the window is too narrow to fit both.
+        /// </summary>
+        public Rect BuildStamp
+        {
+            get
+            {
+                var credit = MapCredit;
+                var right = credit.x - FooterInset;
+                var width = Mathf.Min(StampMaxWidth, right - FooterInset);
+                return width < 80f
+                    ? new Rect(credit.x, credit.y, 0f, 0f)
+                    : new Rect(right - width, credit.y, width, FooterHeight);
+            }
+        }
 
         public static float ScaleFor(int screenWidth, int screenHeight)
         {

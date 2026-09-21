@@ -807,9 +807,11 @@ namespace Airside.Presentation
             {
                 fontSize = 11,
                 alignment = TextAnchor.LowerRight,
+                padding = new RectOffset(0, 0, 0, 0),
+                margin = new RectOffset(0, 0, 0, 0),
                 normal = { textColor = new Color(0.93f, 0.95f, 0.92f, 0.72f) }
             };
-            var rect = new Rect(layout.Viewport.x - 330f, layout.Viewport.y - 22f, 320f, 18f);
+            var rect = layout.MapCredit;
             var shadow = _creditShadowStyle ??= new GUIStyle(_creditStyle) { normal = { textColor = new Color(0f, 0f, 0f, 0.55f) } };
             GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), text, shadow);
             GUI.Label(rect, text, _creditStyle);
@@ -819,8 +821,8 @@ namespace Airside.Presentation
         private GUIStyle _buildStampShadowStyle;
 
         /// <summary>
-        /// Short git stamp on the bottom edge, left of the map credit and clear of the
-        /// mini-map, so two Macs can be compared without opening the pause menu.
+        /// Short git stamp on the bottom edge, left of the map credit and under every HUD
+        /// panel, so two Macs can be compared without opening the pause menu.
         /// </summary>
         private void DrawBuildStamp(HudLayout layout)
         {
@@ -831,13 +833,14 @@ namespace Airside.Presentation
             {
                 fontSize = 11,
                 alignment = TextAnchor.LowerRight,
+                padding = new RectOffset(0, 0, 0, 0),
+                margin = new RectOffset(0, 0, 0, 0),
                 clipping = TextClipping.Clip,
                 normal = { textColor = new Color(0.93f, 0.95f, 0.92f, 0.72f) }
             };
-            var creditLeft = layout.Viewport.x - 330f;
-            var width = Mathf.Min(420f, Mathf.Max(80f, creditLeft - 16f));
-            var x = Mathf.Max(8f, creditLeft - 8f - width);
-            var rect = new Rect(x, layout.Viewport.y - 22f, width, 18f);
+            var rect = layout.BuildStamp;
+            if (rect.width <= 0f)
+                return;
             var shadow = _buildStampShadowStyle ??= new GUIStyle(_buildStampStyle)
             {
                 normal = { textColor = new Color(0f, 0f, 0f, 0.55f) }

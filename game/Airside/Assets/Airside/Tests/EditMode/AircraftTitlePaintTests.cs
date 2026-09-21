@@ -96,6 +96,8 @@ namespace Airside.Tests
             Assert.That(Airline.Emirates().FuselageTitle, Is.EqualTo("EMIRATES"));
             Assert.That(Airline.QatarAirways().FuselageTitle, Is.EqualTo("QATAR"));
             Assert.That(Airline.FijiAirways().FuselageTitle, Is.EqualTo("FIJI"));
+            Assert.That(Airline.Rfds().FuselageTitle, Is.EqualTo("RFDS"));
+            Assert.That(Airline.Rfds().IsEmergency, Is.True);
             Assert.That(Airline.Player("Southern Cross Regional", "#39708A").FuselageTitle,
                 Is.EqualTo("SOUTHERN CROSS"));
         }

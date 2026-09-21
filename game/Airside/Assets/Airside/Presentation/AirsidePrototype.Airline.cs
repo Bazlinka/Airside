@@ -719,6 +719,7 @@ namespace Airside.Presentation
             // Saves from before the extra regional carriers or the terminal jet gain them now,
             // parked and booked — once only, never a duplicate.
             var joined = restored.AddMissingRegionalCarriers();
+            var emergencyJoined = restored.AddMissingEmergencyOperators();
             var jetJoined = restored.AddMissingTerminalOperators();
 
             _clock = clock;
@@ -730,6 +731,8 @@ namespace Airside.Presentation
             // An old enough save gains both; the else-if used to swallow the jet's news.
             if (joined > 0)
                 ShowToast("Rex and QantasLink now fly from Adelaide's regional apron too.");
+            if (emergencyJoined > 0)
+                ShowToast("RFDS can still fly through the 23:00–06:00 curfew.");
             if (jetJoined > 0)
                 ShowToast("Virgin Australia's 737-8 now operates from Gate 13.");
             RefreshFleetFlights();

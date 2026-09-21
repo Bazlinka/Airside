@@ -346,6 +346,7 @@ namespace Airside.Simulation
             if (data.Version <= 4)
             {
                 operations.AddMissingRegionalCarriers();
+                operations.AddMissingEmergencyOperators();
                 operations.AddMissingTerminalOperators();
             }
 

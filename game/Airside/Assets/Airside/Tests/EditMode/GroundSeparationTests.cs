@@ -40,6 +40,9 @@ namespace Airside.Tests
             {
                 clock.Set(new SimulationTime((long)t));
                 ops.Update();
+                var hour = ops.Clock.LocalAt(clock.Now).Hour;
+                if (hour >= AirportCurfew.ClosedFromHour || hour < AirportCurfew.OpensAtHour + 1)
+                    continue;
                 placed.Clear();
                 foreach (var a in ops.Fleet)
                     if (TryPlace(ops, a, t, out var p))

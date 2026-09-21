@@ -119,22 +119,14 @@ namespace Airside.Presentation
             }
 
             var since = Time.realtimeSinceStartup - _liveFetchedAt;
-            CollectLiveObstacles(out var mainStripInUse, out var crossStripInUse);
             _liveDrawn.Clear();
             foreach (var aircraft in _liveAircraft)
             {
-                var onField = false;
-                var onGround = false;
+                // Sky only. Ground / low traffic is the sim's AI and player fleet (ADR 0086).
                 if (!LiveTraffic.TryPose(aircraft, since, out var pose))
-                {
-                    if (!LiveTraffic.TryFieldPose(aircraft, since, out pose, out onGround))
-                        continue;
-                    onField = true;
-                }
+                    continue;
 
                 var type = LiveTraffic.ModelFor(aircraft.TypeCode);
-                if (onField && StandsAside(aircraft.Hex, pose, type, mainStripInUse, crossStripInUse))
-                    continue;
                 _liveShown.Add(aircraft.Hex);
                 var target = new Vector3((float)pose.X, AirsideFlightPath.GroundY + (float)pose.Y, (float)pose.Z);
                 if (!_liveViews.TryGetValue(aircraft.Hex, out var view) || view == null)
@@ -147,26 +139,18 @@ namespace Airside.Presentation
 
                 view.gameObject.SetActive(true);
                 _liveDrawn.Add((aircraft, view));
-                // Each report nudges the dead-reckoned track; ease onto it instead of jumping.
                 var ease = 1f - Mathf.Exp(-3f * PresentationDeltaTime);
                 view.position = Vector3.Distance(view.position, target) > 400f
                     ? target
                     : Vector3.Lerp(view.position, target, ease);
-                // Stopped on the ground the reported track is noise; keep the last heading.
-                if (!(onGround && aircraft.GroundSpeedKnots < 2.0))
-                    view.rotation = Quaternion.Slerp(view.rotation,
-                        Quaternion.Euler(0f, pose.YawDegrees, 0f) * Quaternion.Euler(-pose.PitchDegrees, 0f, 0f), ease);
+                view.rotation = Quaternion.Slerp(view.rotation,
+                    Quaternion.Euler(0f, pose.YawDegrees, 0f) * Quaternion.Euler(-pose.PitchDegrees, 0f, 0f), ease);
 
-                // Gear, lights and engines read the phase: taxiing on the ground, landing or
-                // climbing low over the field, cruising otherwise.
-                var phase = onGround ? AircraftPhase.TaxiIn
-                    : onField ? (aircraft.VerticalRateFpm < 0 ? AircraftPhase.Landing : AircraftPhase.Takeoff)
-                    : AircraftPhase.Circuit;
                 var parts = PartsFor(view);
-                UpdateAircraftLightsAndGear(parts.LightsAndGear, phase, PresentationDaylight, 0.5f,
+                UpdateAircraftLightsAndGear(parts.LightsAndGear, AircraftPhase.Circuit, PresentationDaylight, 0.5f,
                     PresentationDeltaTime, PresentationClock, null);
-                SpinJetFans(view, parts.FanLeft, parts.FanRight, phase, null);
-                SpinPropellers(view, parts.Propellers, phase, null);
+                SpinJetFans(view, parts.FanLeft, parts.FanRight, AircraftPhase.Circuit, null);
+                SpinPropellers(view, parts.Propellers, AircraftPhase.Circuit, null);
             }
 
             _liveGone.Clear();

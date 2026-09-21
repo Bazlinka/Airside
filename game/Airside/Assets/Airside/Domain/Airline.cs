@@ -49,6 +49,7 @@ namespace Airside.Domain
                     case "UAE": return "EMIRATES";
                     case "QTR": return "QATAR";
                     case "FJI": return "FIJI";
+                    case "RFDS": return "RFDS";
                     default: return Wordmark(Name);
                 }
             }
@@ -58,6 +59,9 @@ namespace Airside.Domain
         public string LiveryHex { get; private set; }
 
         public bool IsPlayer { get; }
+
+        /// <summary>Emergency medical flights — exempt from the Adelaide curfew.</summary>
+        public bool IsEmergency => Id.Value == "RFDS";
 
         /// <summary>
         /// Renames the airline in place — every existing reference (fleet aircraft, save
@@ -118,6 +122,12 @@ namespace Airside.Domain
 
         /// <summary>Fiji Airways Nadi service.</summary>
         public static Airline FijiAirways() => new("FJI", "Fiji Airways", "#1B4F9C", isPlayer: false);
+
+        /// <summary>
+        /// Royal Flying Doctor Service from Adelaide. Real metal is a PC-12 / King Air;
+        /// the sim flies a Saab 340 until that type exists. Exempt from the 23:00–06:00 curfew.
+        /// </summary>
+        public static Airline Rfds() => new("RFDS", "Royal Flying Doctor Service", "#C8102E", isPlayer: false);
 
         public static Airline Player(string name, string liveryHex) => new("PLAYER", name, liveryHex, isPlayer: true);
 

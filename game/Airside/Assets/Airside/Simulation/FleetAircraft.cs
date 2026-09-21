@@ -144,6 +144,9 @@ namespace Airside.Simulation
             StateEndsAt = endsAt;
         }
 
+        /// <summary>Stretch a timed state (e.g. inbound waiting out the curfew) without restarting it.</summary>
+        internal void ExtendUntil(SimulationTime endsAt) => StateEndsAt = endsAt;
+
         internal void Enter(FleetState state, SimulationTime now, long? durationSeconds)
         {
             State = state;

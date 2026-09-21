@@ -17,10 +17,10 @@ namespace Airside.Tests
         public void NewGame_HasRexAndQantasLinkOnTheExtraBays()
         {
             var ops = NewGame(out _);
-            Assert.That(ops.Airlines.Select(a => a.Name), Does.Contain("Rex").And.Contain("QantasLink"));
+            Assert.That(ops.Airlines.Select(a => a.Name), Does.Contain("Rex").And.Contain("QantasLink").And.Contain("Royal Flying Doctor Service"));
             var regional = ops.Fleet.Where(a => !AirlineOperations.NeedsTerminalGate(a.Type)).ToList();
-            Assert.That(regional.Count, Is.EqualTo(7),
-                "player ATR plus the six regional-carrier aircraft");
+            Assert.That(regional.Count, Is.EqualTo(8),
+                "player Saab plus the six regional-carrier aircraft and RFDS");
             Assert.That(regional.Count(a => a.State == FleetState.AtStand), Is.GreaterThanOrEqualTo(2),
                 "the player plus parked QantasLink stay on the apron");
             Assert.That(regional.Where(a => a.State == FleetState.AtStand).All(a => AirlineOperations.AdelaideRegionalBays.Contains(a.Stand)), Is.True);

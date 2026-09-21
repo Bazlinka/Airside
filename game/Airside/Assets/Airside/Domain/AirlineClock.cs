@@ -68,9 +68,11 @@ namespace Airside.Domain
             return new SimulationTime((long)Math.Ceiling(SecondsAt(utc)));
         }
 
+        public DateTime UtcAt(SimulationTime time) =>
+            new(EpochUtcTicks + time.ElapsedSeconds * TimeSpan.TicksPerSecond, DateTimeKind.Utc);
+
         public DateTime LocalAt(SimulationTime time) =>
-            TimeZoneInfo.ConvertTimeFromUtc(
-                new DateTime(EpochUtcTicks + time.ElapsedSeconds * TimeSpan.TicksPerSecond, DateTimeKind.Utc), Adelaide);
+            TimeZoneInfo.ConvertTimeFromUtc(UtcAt(time), Adelaide);
 
         public string TimeText(SimulationTime time) => LocalAt(time).ToString("HH:mm", CultureInfo.InvariantCulture);
 

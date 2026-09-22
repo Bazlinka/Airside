@@ -19,7 +19,7 @@ namespace Airside.Tests
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = new AirlineOperations(clock, new SeededRandomSource(7), DestinationCatalogue.Adelaide,
-                AirlineOperations.AdelaideRegionalBays);
+                AirlineOperations.AdelaideStands);
             var player = Airline.Player("Southern Cross Regional", "#C8102E");
             ops.AddAirline(player);
             var plane = ops.AddAircraft(player, "VH-PAX", AircraftType.Saab340, AirlineOperations.AdelaideRegionalBays[0]);
@@ -64,7 +64,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void DeparturePrep_RunsFuelThenCateringThenBoardingBeforePushback()
+        public void DeparturePrep_RunsFuelThenCateringBaggageThenBoardingBeforePushback()
         {
             var (clock, ops, plane) = PlayerOnly();
             var departAt = new SimulationTime(DeparturePrep.TotalSeconds(plane.Type));
@@ -76,6 +76,7 @@ namespace Airside.Tests
             Assert.That(start.Stage, Is.EqualTo(DeparturePrepStage.Fuel));
             Assert.That(start.FuelProgress, Is.EqualTo(0));
             Assert.That(start.CateringProgress, Is.EqualTo(0));
+            Assert.That(start.BaggageProgress, Is.EqualTo(0));
             Assert.That(start.BoardingProgress, Is.EqualTo(0));
             Assert.That(start.Label, Is.EqualTo("Fuelling 0%"));
             Assert.That(start.RemainingSeconds, Is.EqualTo(DeparturePrep.FuelSeconds));
@@ -84,6 +85,7 @@ namespace Airside.Tests
             Assert.That(midFuel.Stage, Is.EqualTo(DeparturePrepStage.Fuel));
             Assert.That(midFuel.FuelProgress, Is.EqualTo(0.5).Within(0.001));
             Assert.That(midFuel.CateringProgress, Is.EqualTo(0));
+            Assert.That(midFuel.BaggageProgress, Is.EqualTo(0));
             Assert.That(midFuel.BoardingProgress, Is.EqualTo(0));
             Assert.That(midFuel.Label, Is.EqualTo("Fuelling 50%"));
             Assert.That(midFuel.RemainingSeconds, Is.EqualTo(DeparturePrep.FuelSeconds / 2));
@@ -92,6 +94,7 @@ namespace Airside.Tests
             Assert.That(catering.Stage, Is.EqualTo(DeparturePrepStage.Catering));
             Assert.That(catering.FuelProgress, Is.EqualTo(1));
             Assert.That(catering.CateringProgress, Is.EqualTo(0));
+            Assert.That(catering.BaggageProgress, Is.EqualTo(0));
             Assert.That(catering.BoardingProgress, Is.EqualTo(0));
             Assert.That(catering.Label, Is.EqualTo("Catering 0%"));
 
@@ -100,23 +103,43 @@ namespace Airside.Tests
             Assert.That(midCatering.Stage, Is.EqualTo(DeparturePrepStage.Catering));
             Assert.That(midCatering.FuelProgress, Is.EqualTo(1));
             Assert.That(midCatering.CateringProgress, Is.EqualTo(0.4).Within(0.001));
+            Assert.That(midCatering.BaggageProgress, Is.EqualTo(0));
             Assert.That(midCatering.BoardingProgress, Is.EqualTo(0));
             Assert.That(midCatering.Label, Is.EqualTo("Catering 40%"));
 
-            var boarding = DeparturePrep.For(plane,
+            var baggage = DeparturePrep.For(plane,
                 new SimulationTime(DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds));
+            Assert.That(baggage.Stage, Is.EqualTo(DeparturePrepStage.Baggage));
+            Assert.That(baggage.FuelProgress, Is.EqualTo(1));
+            Assert.That(baggage.CateringProgress, Is.EqualTo(1));
+            Assert.That(baggage.BaggageProgress, Is.EqualTo(0));
+            Assert.That(baggage.BoardingProgress, Is.EqualTo(0));
+            Assert.That(baggage.Label, Is.EqualTo("Baggage 0%"));
+
+            var midBaggage = DeparturePrep.For(plane,
+                new SimulationTime(DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds
+                    + DeparturePrep.BaggageSeconds / 2));
+            Assert.That(midBaggage.Stage, Is.EqualTo(DeparturePrepStage.Baggage));
+            Assert.That(midBaggage.BaggageProgress, Is.EqualTo(0.5).Within(0.001));
+            Assert.That(midBaggage.Label, Is.EqualTo("Baggage 50%"));
+
+            var boarding = DeparturePrep.For(plane,
+                new SimulationTime(DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds
+                    + DeparturePrep.BaggageSeconds));
             Assert.That(boarding.Stage, Is.EqualTo(DeparturePrepStage.Boarding));
             Assert.That(boarding.FuelProgress, Is.EqualTo(1));
             Assert.That(boarding.CateringProgress, Is.EqualTo(1));
+            Assert.That(boarding.BaggageProgress, Is.EqualTo(1));
             Assert.That(boarding.BoardingProgress, Is.EqualTo(0));
             Assert.That(boarding.Label, Is.EqualTo("Boarding 0%"));
 
             var midBoard = DeparturePrep.For(plane,
                 new SimulationTime(DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds
-                    + DeparturePrep.BoardingSeconds / 2));
+                    + DeparturePrep.BaggageSeconds + DeparturePrep.BoardingSeconds / 2));
             Assert.That(midBoard.Stage, Is.EqualTo(DeparturePrepStage.Boarding));
             Assert.That(midBoard.FuelProgress, Is.EqualTo(1));
             Assert.That(midBoard.CateringProgress, Is.EqualTo(1));
+            Assert.That(midBoard.BaggageProgress, Is.EqualTo(1));
             Assert.That(midBoard.BoardingProgress, Is.EqualTo(0.5).Within(0.001));
             Assert.That(midBoard.Label, Is.EqualTo("Boarding 50%"));
 
@@ -125,6 +148,7 @@ namespace Airside.Tests
             Assert.That(DeparturePrep.IsReady(plane, readyAt), Is.True);
             Assert.That(ready.FuelProgress, Is.EqualTo(1));
             Assert.That(ready.CateringProgress, Is.EqualTo(1));
+            Assert.That(ready.BaggageProgress, Is.EqualTo(1));
             Assert.That(ready.BoardingProgress, Is.EqualTo(1));
             Assert.That(ready.Label, Is.EqualTo("Ready for pushback"));
 
@@ -172,7 +196,14 @@ namespace Airside.Tests
             Assert.That(DeparturePrep.For(plane, new SimulationTime(cateringAt + 20)).Stage,
                 Is.EqualTo(DeparturePrepStage.Catering));
 
-            var boardingAt = DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds;
+            var baggageAt = DeparturePrep.FuelSeconds + DeparturePrep.CateringSeconds;
+            var baggageStart = DeparturePrep.For(plane, new SimulationTime(baggageAt)).RemainingSeconds;
+            var baggageLater = DeparturePrep.For(plane, new SimulationTime(baggageAt + 20)).RemainingSeconds;
+            Assert.That(baggageLater, Is.LessThan(baggageStart));
+            Assert.That(DeparturePrep.For(plane, new SimulationTime(baggageAt + 20)).Stage,
+                Is.EqualTo(DeparturePrepStage.Baggage));
+
+            var boardingAt = baggageAt + DeparturePrep.BaggageSeconds;
             var boardingStart = DeparturePrep.For(plane, new SimulationTime(boardingAt)).RemainingSeconds;
             var boardingLater = DeparturePrep.For(plane, new SimulationTime(boardingAt + 20)).RemainingSeconds;
             Assert.That(boardingLater, Is.LessThan(boardingStart));

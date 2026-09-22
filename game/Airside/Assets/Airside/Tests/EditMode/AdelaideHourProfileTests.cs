@@ -48,5 +48,18 @@ namespace Airside.Tests
             var morning = new DateTime(2026, 9, 19, 7, 40, 0);
             Assert.That(AdelaideHourProfile.NextUsefulLocal(morning, 6, 21), Is.EqualTo(morning));
         }
+
+        [Test]
+        public void SnapToBankLocal_CeilingsOntoFiveMinuteMarksDuringPeaks()
+        {
+            var almost = new DateTime(2026, 9, 19, 7, 2, 0);
+            var snapped = AdelaideHourProfile.SnapToBankLocal(almost, 6, 22);
+            Assert.That(snapped, Is.EqualTo(new DateTime(2026, 9, 19, 7, 5, 0)));
+            var onMark = new DateTime(2026, 9, 19, 7, 0, 0);
+            Assert.That(AdelaideHourProfile.SnapToBankLocal(onMark, 6, 22), Is.EqualTo(onMark));
+            var quiet = new DateTime(2026, 9, 19, 14, 12, 0);
+            Assert.That(AdelaideHourProfile.SnapToBankLocal(quiet, 6, 22).Hour, Is.EqualTo(16),
+                "quiet hours still jump to the next bank");
+        }
     }
 }

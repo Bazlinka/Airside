@@ -287,7 +287,10 @@ namespace Airside.Presentation
             var onField = 0;
             foreach (var aircraft in operations.Fleet)
             {
-                if (IsOnFieldNow(aircraft))
+                // Same rule as drawing: Inbound / Away / far Outbound are off the map
+                // (FleetVisual.Hidden). Counting them here used to print "17 on field"
+                // while the apron looked empty.
+                if (IsDrawnOnField(aircraft, now))
                 {
                     onField++;
                     active++;
@@ -315,10 +318,12 @@ namespace Airside.Presentation
             DayCaption = $"{clock.TimeText(now)}  ·  {bank}  ·  {onField} on field";
         }
 
-        private static bool IsOnFieldNow(FleetAircraft aircraft) => aircraft.State is
-            FleetState.AtStand or FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff
-            or FleetState.Inbound or FleetState.HoldingForLanding or FleetState.GoAround
-            or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn;
+        /// <summary>
+        /// Metal the player can actually see at Adelaide right now. Matches
+        /// <see cref="FleetVisual.For"/> — not every fleet state that is "busy".
+        /// </summary>
+        private static bool IsDrawnOnField(FleetAircraft aircraft, SimulationTime now) =>
+            FleetVisual.For(aircraft, now).Visible;
 
         private static int MarkMinutes(FleetAircraft aircraft, AirlineClock clock, int fallback)
         {
@@ -382,6 +387,9 @@ namespace Airside.Presentation
                 var livePast = !arrivals
                     && aircraft.State == FleetState.Outbound
                     && BoardClockMinutes(time) + 2 < nowMin;
+                // Inbound (and other Hidden states) stay on the board as arrivals/departures
+                // but must not read as metal already on the field.
+                var drawn = IsDrawnOnField(aircraft, now);
                 _rows.Add(new OperationsFlightRow(
                     aircraft.Registration,
                     time,
@@ -397,7 +405,7 @@ namespace Airside.Presentation
                     aircraft.Airline.IsPlayer,
                     hasProgress,
                     progress,
-                    onField: !livePast,
+                    onField: drawn && !livePast,
                     isPast: livePast));
             }
 

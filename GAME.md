@@ -1,5 +1,17 @@
 ## Where to resume — session handoff
 
+- **2026-09-22 Cursor — apron density + buy→plan + career suggest (ADR 0100, uncommitted).**
+  Bailey: more apron metal; ADL-style doubles OK (not forced every flight — opening has
+  authored same-minute pairs; later snaps coalesce on 5-min marks). Bought aircraft sat idle
+  with no plan — buy now opens Map with chapter/contract destination suggested and names the
+  turnaround lead; delivery inbound objective says wait-then-schedule. Fuelling is intentional
+  DeparturePrep (~6–10 min before pushback depending on type/base).
+  - **Career want:** Bailey asked for more career development beyond this handoff. Chapters +
+    base gates exist (0083/0091/0094); next product pick needed (more contracts, mid-chapter
+    goals, auto-dispatch helpers, economy tuning).
+  - **NEXT:** rebuild/play apron + buy flow. Commit when Bailey wants. Ask which career slice
+    to do next.
+
 - **2026-09-22 Codex — live Adelaide weather and environment (branch
   `codex/live-weather-environment`, ADR 0099).** The real-scale Adelaide path omitted the
   existing astronomical sun, moon and stars entirely; it now builds them. Stars are a denser

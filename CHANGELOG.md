@@ -1,5 +1,24 @@
 ## Unreleased
 
+- **Buy aircraft → plan first flight.** Purchasing no longer stops at a toast. If the new
+  airframe parks immediately, Fleet opens the Route Map with a career-suggested destination
+  (active contract, then chapter target, then Kingscote) and tells you how long fuelling and
+  boarding need before pushback. Delivery inbound says to wait until it parks. Objective card
+  matches: "wait for VH-xxx to park, then schedule".
+
+- **Busier Adelaide apron and ADL-shaped departure banks (ADR 0100).** Opening used to
+  put ~16 aircraft Inbound (invisible) and leave ~5 on stands. Now a short ~7-aircraft
+  arrival bank keeps short final alive while most metal stays parked; Rex gains two Saabs
+  on the spare walk-outs. Opening pushbacks cluster with intentional same-minute doubles
+  like a real ADL morning peak; later AI bookings snap onto 5-minute bank marks. Still not
+  live flight times — simulation density only (ADR 0071 / 0086).
+
+- **Operations "on field" matches visible metal.** The day caption counted every Inbound as
+  on field even though those aircraft are off the map until short final
+  (`FleetVisual.Hidden`). Opening traffic seeds a bank of them, so the strip could read
+  "17 on field" over an apron that looked empty. The count (and each board row's OnField
+  flag) now follows `FleetVisual.Visible` — same rule as drawing.
+
 - **Live Adelaide weather and complete sky (ADR 0099).** The fixed YPAD forecast now drives
   presentation-only cloud cover, rain strength, fog visibility, wet surfaces, puddles, tyre
   spray and wind-reactive visuals, with a 15-minute poll, two-hour stale limit, Options toggle,

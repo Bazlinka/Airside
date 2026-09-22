@@ -85,14 +85,15 @@ namespace Airside.Tests
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(8), Airline.Player("Live Air", "#2E7D32"));
-            // Regional openings only; the Gate 13 jet (ADR 0047) keeps its own timetable.
             var departures = ops.Fleet.Where(a => !a.Airline.IsPlayer && a.State == FleetState.AtStand && a.Scheduled.HasValue)
                 .Select(a => a.Scheduled.Value.DepartAt.ElapsedSeconds).OrderBy(t => t).ToArray();
-            Assert.That(departures.Length, Is.GreaterThanOrEqualTo(3), "several aircraft push in the opening bank");
+            Assert.That(departures.Length, Is.GreaterThanOrEqualTo(8), "apron metal fills the opening bank");
             Assert.That(departures[0], Is.EqualTo(AirlineOperations.AiOpeningDepartureSeconds[0]));
-            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.GreaterThanOrEqualTo(11),
-                "regional and jet arrivals already in the opening bank");
-            Assert.That(departures.Max(), Is.LessThanOrEqualTo(40 * 60), "departures are spread across the opening bank");
+            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.InRange(5, 9),
+                "short inbound bank; the rest stay parked (ADR 0100)");
+            Assert.That(departures.Distinct().Count(), Is.LessThan(departures.Length),
+                "opening bank includes intentional same-minute doubles");
+            Assert.That(departures.Max(), Is.LessThanOrEqualTo(40 * 60), "departures stay inside the opening bank");
         }
     }
 }

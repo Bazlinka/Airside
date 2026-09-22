@@ -45,6 +45,7 @@ namespace Airside.Presentation
         private readonly List<(float x, float y)> _mapAircraftPoints = new();
         private readonly List<FleetAircraft> _mapAircraftRows = new();
         private readonly List<FleetAircraft> _playerFleetRows = new();
+        private readonly List<AircraftType> _ownedTypeScratch = new();
         private readonly List<OperationsRow> _compactOpsRows = new();
         // Departures first: the board opens on what you are about to send, not what is coming.
         private bool _flightsShowArrivals;
@@ -2310,9 +2311,33 @@ namespace Airside.Presentation
             var result = _operations.BuyAircraft(type);
             if (result.Accepted)
             {
-                ShowToast(AircraftAcquisition.TryFor(type, out var offer)
-                    ? $"Bought {Article.A(type.Name)} for ${offer.Price:N0}."
-                    : $"Bought {Article.A(type.Name)}.");
+                var bought = NewestPlayerOfType(type);
+                var priceBit = AircraftAcquisition.TryFor(type, out var offer)
+                    ? $" for ${offer.Price:N0}"
+                    : string.Empty;
+                if (bought != null && bought.State == FleetState.AtStand)
+                {
+                    OpenPlanner(bought);
+                    SuggestFirstDestinationOnMap(bought);
+                    var leadMin = Math.Max(1,
+                        (DeparturePrep.LeadSeconds(bought.Type, _operations.CareerState.BaseLevel) + 59) / 60);
+                    ShowToast($"Bought {Article.A(type.Name)}{priceBit}. "
+                              + $"Pick a destination — fuelling and boarding need ~{leadMin} min before pushback.");
+                }
+                else if (bought != null)
+                {
+                    _selectedAircraftId = bought.Registration;
+                    _activeWorkspace = HudWorkspace.Map;
+                    _mapLens.Reset();
+                    SetPlanningAircraft(bought, force: true);
+                    ShowToast($"Bought {Article.A(type.Name)}{priceBit} — delivering in about 8 minutes. "
+                              + "Schedule its first flight once it parks.");
+                }
+                else
+                {
+                    ShowToast($"Bought {Article.A(type.Name)}{priceBit}.");
+                }
+
                 SaveAirline();
             }
             else
@@ -2321,6 +2346,40 @@ namespace Airside.Presentation
             }
 
             PlayUiClick();
+        }
+
+        private FleetAircraft NewestPlayerOfType(AircraftType type)
+        {
+            FleetAircraft newest = null;
+            foreach (var aircraft in PlayerFleet())
+            {
+                if (!ReferenceEquals(aircraft.Type, type))
+                    continue;
+                if (newest == null
+                    || string.CompareOrdinal(aircraft.Registration, newest.Registration) > 0)
+                    newest = aircraft;
+            }
+
+            return newest;
+        }
+
+        private void SuggestFirstDestinationOnMap(FleetAircraft aircraft)
+        {
+            if (aircraft == null || _operations == null)
+                return;
+            var suggested = Campaign.SuggestedFirstDestination(
+                _operations.CareerState, PlayerOwnedTypes(), aircraft, _operations.CanOperate);
+            if (suggested.HasValue)
+                _mapSelection = suggested;
+        }
+
+        private IReadOnlyList<AircraftType> PlayerOwnedTypes()
+        {
+            _ownedTypeScratch.Clear();
+            foreach (var aircraft in PlayerFleet())
+                if (!_ownedTypeScratch.Contains(aircraft.Type))
+                    _ownedTypeScratch.Add(aircraft.Type);
+            return _ownedTypeScratch;
         }
 
         private void StartCheckFromHud(FleetAircraft aircraft)

@@ -167,6 +167,22 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Objective_DeliveryInboundAsksToWaitThenSchedule()
+        {
+            var (clock, ops, _) = PlayerOnly();
+            ops.RestoreAircraft(
+                "VH-NEW", ops.PlayerAirline, AircraftType.Atr42, FleetState.Inbound,
+                clock.Now, clock.Now.Advance(8 * 60), default, default,
+                Code("KGC"), null, 0);
+            var delivery = ops.Fleet.Single(a => a.Registration == "VH-NEW");
+
+            var objective = OperationsSummary.Objective(new[] { delivery }, clock.Now, ops.Clock,
+                ops.CareerState);
+            Assert.That(objective.NextLine, Does.Contain("wait for VH-NEW to park"));
+            Assert.That(objective.NextLine, Does.Contain("schedule"));
+        }
+
+        [Test]
         public void SixPlayerAircraft_RemainIndividualRows()
         {
             var (clock, ops, _) = PlayerOnly();

@@ -1,5 +1,19 @@
 ## Where to resume — session handoff
 
+- **2026-09-22 Cursor — Operations board honesty (branch `feature/board-honesty-fix`).**
+  Bailey's Departures FIDS looked unreal: departed flights showed "est HH:MM" hours later
+  (SIA488 07:46 / est 13:55), and COMING UP said "VH-PAX · Departed · Mount Gambier".
+  - **Cause:** `FlightBoard.EstimatedTime` printed `StateEndsAt` for every row — on Outbound
+    that is destination arrival, not a revised departure. Quiet COMING UP fell through
+    `PriorityAircraft` → `FirstOrDefault()` onto any airborne player jet.
+  - **Fix:** Departures never print an "est" (or enroute progress bar) from destination ETA;
+    COMING UP Normal fallback only for aircraft still `AtStand`.
+  - **Evidence:** Unity EditMode **938/938** (new `FlightBoardTests` /
+    `OperationsWorkspaceTests` regressions).
+  - **NEXT:** Play look at Departures around midday; COMING UP should be empty or a stand
+    commitment, never Departed. Invented flight numbers / representative AI routes are
+    unchanged (ADR 0071). Merge when the Play look is clean.
+
 - **2026-09-22 Claude — E190 and A220-300 own geometry (branch
   `feature/aircraft-surface-detail`, ADR 0098).** Both types were built by taking the AIR-005
   737-8 mesh and scaling it on three axes, which reproduces a bounding box and nothing else:

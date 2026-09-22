@@ -366,7 +366,10 @@ namespace Airside.Presentation
             foreach (var aircraft in _scratch)
             {
                 var severity = AircraftStatus.Severity(aircraft, now);
-                var hasProgress = aircraft.StateEndsAt.HasValue || AircraftStatus.IsWaiting(aircraft);
+                // Outbound StateEndsAt is destination arrival — not a departure-board progress bar.
+                var showLegProgress = arrivals || aircraft.State != FleetState.Outbound;
+                var hasProgress = showLegProgress
+                    && (aircraft.StateEndsAt.HasValue || AircraftStatus.IsWaiting(aircraft));
                 var progress = aircraft.StateEndsAt.HasValue
                     ? (float)aircraft.StateProgress(now)
                     : AircraftStatus.WaitProgress(aircraft, now);
@@ -381,7 +384,7 @@ namespace Airside.Presentation
                 _rows.Add(new OperationsFlightRow(
                     aircraft.Registration,
                     time,
-                    FlightBoard.EstimatedTime(aircraft, clock.TimeText),
+                    FlightBoard.EstimatedTime(aircraft, arrivals, clock.TimeText),
                     FlightNumber.OrRegistration(aircraft),
                     FlightBoard.RouteText(aircraft),
                     StandColumn(aircraft),
@@ -445,7 +448,10 @@ namespace Airside.Presentation
             foreach (var aircraft in operations.FleetOf(player))
                 _scratch.Add(aircraft);
             var priority = OperationsSummary.PriorityAircraft(_scratch, now);
-            if (priority == null)
+            // Quiet "COMING UP" is the next stand commitment — never an airborne Departed /
+            // Away / Inbound jet. PriorityAircraft falls through to FirstOrDefault(), which
+            // used to put "VH-PAX · Departed · Mount Gambier" under the COMING UP caption.
+            if (priority == null || priority.State != FleetState.AtStand)
                 return;
             _attention.Add(new OperationsAttentionRow(priority.Registration,
                 $"{priority.Registration}  ·  {ExceptionText(priority, now, clock, operations.CareerState.BaseLevel)}", StatusSeverity.Normal));

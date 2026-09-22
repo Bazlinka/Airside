@@ -229,9 +229,24 @@ namespace Airside.Presentation
             return clockText(aircraft.StateStartedAt);
         }
 
-        public static string EstimatedTime(FleetAircraft aircraft, Func<SimulationTime, string> clockText)
+        /// <summary>
+        /// Secondary TIME under the board clock, printed as "est …". On Departures this must
+        /// never be the destination arrival (<see cref="FleetState.Outbound"/>'s
+        /// <c>StateEndsAt</c>) — that reads as "scheduled in the future but already departed".
+        /// Outbound destination ETA belongs under <see cref="TimeMeaning"/> ("ARRIVES"), not
+        /// as a FIDS estimate. Arrivals may still surface a touchdown estimate when it differs
+        /// from the primary TIME.
+        /// </summary>
+        public static string EstimatedTime(FleetAircraft aircraft, Func<SimulationTime, string> clockText) =>
+            EstimatedTime(aircraft, arrivals: true, clockText);
+
+        public static string EstimatedTime(FleetAircraft aircraft, bool arrivals,
+            Func<SimulationTime, string> clockText)
         {
             if (aircraft == null || clockText == null)
+                return "—";
+            // Departures FIDS: TIME is STD / ATD. Destination airborne ETA is not an "est".
+            if (!arrivals)
                 return "—";
             return aircraft.StateEndsAt.HasValue ? clockText(aircraft.StateEndsAt.Value) : "—";
         }

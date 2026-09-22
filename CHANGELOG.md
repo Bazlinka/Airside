@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Operations board honesty.** Departures no longer print destination arrival as "est" under
+  a Departed row (the SIA488 07:46 / est 13:55 lie), and COMING UP never advertises an already-
+  departed player aircraft. Enroute-to-destination progress bars stay off the departures FIDS.
+
 - **The E190 and A220-300 are real aircraft now, not scaled 737s (ADR 0098).** Both were built
   by taking the 737-8 mesh and scaling it on three axes, which reproduces a bounding box and
   nothing else. Each now has its own generator lofted from its own dimensions: the E-Jet's

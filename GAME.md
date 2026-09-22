@@ -9,9 +9,13 @@
   fleet views were still sent `AudioSource.Play` every frame, producing over 48,000 disabled-
   source errors in about two minutes. Playback is now guarded until the view/source is active,
   with a Unity regression.
-  **NEXT:** run the focused and full Unity checks, rebuild, then verify the new player-log
-  segment stays clean during an active/hidden fleet soak before recording measured CPU/memory
-  baselines. This branch is still unmerged and is not release-validated.
+  The first performance pass also found a 1.8 GB idle physical footprint on this M1 Pro's
+  3456×2168 display: High had 4× MSAA *and* high-quality SMAA. Above five million display
+  pixels, High now retains its world/lighting setting but uses 2× MSAA. Unity EditMode is
+  **896/896 passed** before the measurement rebuild.
+  **NEXT:** rebuild, verify the new player-log segment stays clean during an active/hidden
+  fleet soak, and compare physical memory in the same packaged scenario. This branch is still
+  unmerged and is not release-validated.
 
 - **2026-09-21 ChatGPT — campaign/base convergence (branch `feature/campaign-base-goals`, ADR 0094).**
   - Chapter 2 now requires the Expanded Regional Adelaide base; Chapter 4 requires Jet Gate; Chapter 5 requires the International base.

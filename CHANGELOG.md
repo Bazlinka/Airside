@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **High quality no longer over-allocates anti-aliasing at Retina/4K sizes.** High retains its
+  lighting, shadows and scene detail, but above five million display pixels uses 2× MSAA alongside
+  its existing high-quality SMAA instead of multiplying every HDR/depth target by four.
+
 - **Hidden fleet audio no longer floods the player log.** Away aircraft still retain their
   cached visual model, but the engine voice only starts once its root and AudioSource are active.
   This removes the per-frame `Can not play a disabled audio source` error and keeps real runtime

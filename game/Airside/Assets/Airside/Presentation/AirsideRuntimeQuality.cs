@@ -103,6 +103,23 @@ namespace Airside.Presentation
 
         public static int PanePointLights => Current == Ladder.High ? 4 : 0;
 
+        /// <summary>Daylight change below which static light tints are not rewritten.</summary>
+        public const float DaylightTintEpsilon = 0.002f;
+
+        /// <summary>
+        /// True when a daylight-only tint pass last applied at <paramref name="applied"/> would
+        /// write the same values again. NaN (never applied, or reset) is never steady.
+        /// </summary>
+        public static bool DaylightSteady(float applied, float daylight) =>
+            !float.IsNaN(applied) && Mathf.Abs(daylight - applied) < DaylightTintEpsilon;
+
+        /// <summary>
+        /// Landing lamps cast soft shadows only after dark (ADR 0101). Each shadowed spot is
+        /// another shadow-caster pass per frame; in daylight the sun's shadow hides it anyway.
+        /// </summary>
+        public static LightShadows LandingLampShadows(bool night) =>
+            night ? LightShadows.Soft : LightShadows.None;
+
         /// <summary>False in the Editor, where the pipeline asset is a tracked project file.</summary>
         public static bool WritesPipelineAsset => !Application.isEditor;
 
@@ -110,6 +127,8 @@ namespace Airside.Presentation
         {
             Current = ChooseLadder();
             QualitySettings.vSyncCount = VSyncCount;
+            // ADR 0101: cap ProMotion/120 Hz+ at 60 and throttle background windows.
+            AirsideFramePacing.Apply(AirsideSettings.Current.UncappedFrameRate, soak: false);
             QualitySettings.antiAliasing = MsaaSamples;
             QualitySettings.anisotropicFiltering = AnisotropicFiltering.ForceEnable;
             QualitySettings.asyncUploadTimeSlice = 4;

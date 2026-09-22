@@ -154,6 +154,12 @@ namespace Airside.Presentation
         // read, so the taxi/edge split is resolved once at collect time, not every frame.
         private readonly List<bool> _airfieldLightIsTaxi = new List<bool>();
         private readonly List<Renderer> _nightGlowRenderers = new List<Renderer>();
+        // Parallel to _nightGlowRenderers: 0 window, 1 airside glazing, 2 interior card.
+        // Resolved once — the glow pass read gameObject.name (a fresh string) twice per pane.
+        private readonly List<byte> _nightGlowKind = new List<byte>();
+        // Daylight each static tint pass last wrote. NaN forces the next pass (ADR 0101).
+        private float _airfieldLightsAppliedDaylight = float.NaN;
+        private float _nightGlowAppliedDaylight = float.NaN;
         private Transform _fuelTruck;
         private Transform _cateringTruck;
         private Transform _baggageCart;
@@ -551,6 +557,7 @@ namespace Airside.Presentation
 
             ReadSimulationControls();
             DriveSoak();
+            AirsideFramePacing.Tick(AirsideSettings.Current.UncappedFrameRate, SoakMode);
 
             // Live time: once an airline runs, simulation time is read off the real clock.
             // Before that the demo circuit simply runs at 1x.
@@ -1244,6 +1251,15 @@ namespace Airside.Presentation
                 PlayUiClick();
             }
 
+            row.y += 46f;
+            if (GUI.Button(row, settings.UncappedFrameRate ? "Frame rate  ·  Display max" : "Frame rate  ·  60 fps", button))
+            {
+                settings.UncappedFrameRate = !settings.UncappedFrameRate;
+                settings.Save();
+                AirsideFramePacing.Apply(settings.UncappedFrameRate, SoakMode);
+                PlayUiClick();
+            }
+
             row.y += 56f;
             if (GUI.Button(row, "Back", button))
             {
@@ -1760,23 +1776,28 @@ namespace Airside.Presentation
                             engines?.AnyRunning ?? enginesOn,
                             engines?.Beacon ?? enginesOn);
                         child.gameObject.SetActive(navOn);
-                        EnsureNavPointLight(child, navOn, parts[i].NavLight);
+                        EnsureNavPointLight(parts[i], navOn);
                         if (parts[i].NavLight is AircraftNavigationLight.Left or AircraftNavigationLight.Right)
-                            EnsureWingtipStrobe(child, AirsideReusableMotion.StrobeIntensity(phase, presentationTime));
+                            EnsureWingtipStrobe(parts[i], AirsideReusableMotion.StrobeIntensity(phase, presentationTime));
                         break;
                     }
                     case LightGearKind.Beacon:
                     {
                         var beacon = AirsideReusableMotion.BeaconIntensity(engines?.Beacon ?? enginesOn, presentationTime);
                         child.gameObject.SetActive(beacon > 0.01f);
-                        EnsureBeaconPointLight(child, beacon);
+                        EnsureBeaconPointLight(parts[i], beacon);
                         break;
                     }
                     case LightGearKind.LandingLight:
                     {
                         child.gameObject.SetActive(landingLights);
-                        EnsureLandingSpotLight(child, landingLights, night);
-                        var lamp = child.GetComponent<Renderer>();
+                        EnsureLandingSpotLight(parts[i], landingLights, night);
+                        if (!parts[i].LampResolved)
+                        {
+                            parts[i].Lamp = child.GetComponent<Renderer>();
+                            parts[i].LampResolved = true;
+                        }
+                        var lamp = parts[i].Lamp;
                         if (lamp != null)
                         {
                             // Through SetRendererColor so the lamp material's _EMISSION keyword is
@@ -1794,7 +1815,7 @@ namespace Airside.Presentation
                     case LightGearKind.TaxiLight:
                     {
                         child.gameObject.SetActive(taxiLights);
-                        EnsureTaxiSpotLight(child, taxiLights);
+                        EnsureTaxiSpotLight(parts[i], taxiLights);
                         break;
                     }
                 }
@@ -1804,9 +1825,13 @@ namespace Airside.Presentation
         /// <summary>
         /// Decision 0025 items 5+7 — wingtip nav lights cast real coloured PointLights.
         /// </summary>
-        private static void EnsureNavPointLight(Transform lamp, bool on, AircraftNavigationLight kind)
+        private static void EnsureNavPointLight(LightGearPart part, bool on)
         {
-            var light = lamp.GetComponent<Light>();
+            var lamp = part.Transform;
+            var kind = part.NavLight;
+            if (part.Light == null)
+                part.Light = lamp.GetComponent<Light>();
+            var light = part.Light;
             if (light == null)
             {
                 light = lamp.gameObject.AddComponent<Light>();
@@ -1819,6 +1844,7 @@ namespace Airside.Presentation
                 };
                 light.range = 8f;
                 light.shadows = LightShadows.None;
+                part.Light = light;
             }
 
             light.enabled = on;
@@ -1826,31 +1852,40 @@ namespace Airside.Presentation
                 light.intensity = 1.8f * AirsideReusableMotion.NavSteady;
         }
 
-        private static void EnsureWingtipStrobe(Transform wingtip, float intensity)
+        private static void EnsureWingtipStrobe(LightGearPart part, float intensity)
         {
-            var strobe = wingtip.Find("White strobe");
-            if (strobe == null)
+            var point = part.Strobe;
+            if (point == null)
             {
-                strobe = new GameObject("White strobe").transform;
-                strobe.SetParent(wingtip, false);
-                var light = strobe.gameObject.AddComponent<Light>();
-                light.type = LightType.Point;
-                light.color = new Color(0.92f, 0.96f, 1f);
-                light.range = 18f;
-                light.shadows = LightShadows.None;
+                var wingtip = part.Transform;
+                var strobe = wingtip.Find("White strobe");
+                if (strobe == null)
+                {
+                    strobe = new GameObject("White strobe").transform;
+                    strobe.SetParent(wingtip, false);
+                    var light = strobe.gameObject.AddComponent<Light>();
+                    light.type = LightType.Point;
+                    light.color = new Color(0.92f, 0.96f, 1f);
+                    light.range = 18f;
+                    light.shadows = LightShadows.None;
+                }
+
+                point = part.Strobe = strobe.GetComponent<Light>();
             }
 
-            var point = strobe.GetComponent<Light>();
             point.enabled = intensity > 0.01f;
             point.intensity = 12f * intensity;
         }
 
-        private static void EnsureBeaconPointLight(Transform lamp, float intensity)
+        private static void EnsureBeaconPointLight(LightGearPart part, float intensity)
         {
-            var light = lamp.GetComponent<Light>();
+            var lamp = part.Transform;
+            if (part.Light == null)
+                part.Light = lamp.GetComponent<Light>();
+            var light = part.Light;
             if (light == null)
             {
-                light = lamp.gameObject.AddComponent<Light>();
+                light = part.Light = lamp.gameObject.AddComponent<Light>();
                 light.type = LightType.Point;
                 light.color = new Color(1f, 0.25f, 0.12f);
                 light.range = 10f;
@@ -1865,23 +1900,31 @@ namespace Airside.Presentation
         /// Decision 0025 items 5+7 — real SpotLights on landing / taxi lamp meshes so
         /// approach and night taxi cast light on the runway and apron.
         /// </summary>
-        private static void EnsureLandingSpotLight(Transform lamp, bool on, bool night)
+        private static void EnsureLandingSpotLight(LightGearPart part, bool on, bool night)
         {
-            var light = lamp.GetComponent<Light>();
+            var lamp = part.Transform;
+            if (part.Light == null)
+                part.Light = lamp.GetComponent<Light>();
+            var light = part.Light;
             if (light == null)
             {
-                light = lamp.gameObject.AddComponent<Light>();
+                light = part.Light = lamp.gameObject.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.97f, 0.88f);
                 light.range = 42f;
                 light.spotAngle = 48f;
                 light.innerSpotAngle = 22f;
-                light.shadows = LightShadows.Soft;
             }
 
             light.enabled = on;
             if (!on)
                 return;
+            // ADR 0101: every shadowed spot re-renders the shadow casters into the additional-
+            // light atlas each frame. In daylight the sun's key shadow swamps a landing lamp's,
+            // so the extra pass bought nothing; keep it for night, where the beam is the key.
+            var shadows = AirsideRuntimeQuality.LandingLampShadows(night);
+            if (light.shadows != shadows)
+                light.shadows = shadows;
             // Pinned daylight washes a night-tuned lamp. Keep the beam readable in follow.
             light.intensity = night ? 7.5f : 9.5f;
             light.range = 90f;
@@ -1891,12 +1934,15 @@ namespace Airside.Presentation
             light.transform.localRotation = Quaternion.identity;
         }
 
-        private static void EnsureTaxiSpotLight(Transform lamp, bool on)
+        private static void EnsureTaxiSpotLight(LightGearPart part, bool on)
         {
-            var light = lamp.GetComponent<Light>();
+            var lamp = part.Transform;
+            if (part.Light == null)
+                part.Light = lamp.GetComponent<Light>();
+            var light = part.Light;
             if (light == null)
             {
-                light = lamp.gameObject.AddComponent<Light>();
+                light = part.Light = lamp.gameObject.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.94f, 0.78f);
                 light.range = 18f;
@@ -3617,6 +3663,7 @@ namespace Airside.Presentation
         private void CollectAirfieldLights(Renderer[] renderers = null)
         {
             _airfieldLightRenderers.Clear();
+            _airfieldLightsAppliedDaylight = float.NaN;
             _airfieldLightIsTaxi.Clear();
             renderers ??= AirsideSceneIndex.Renderers;
             foreach (var renderer in renderers)
@@ -4470,6 +4517,11 @@ namespace Airside.Presentation
         private void UpdateAirfieldNavLights(float daylight)
         {
             // Edge / taxi lights punch up at dusk/night so the airfield stays readable.
+            // No time term here: in steady day or night every lamp gets the same tint as last
+            // frame, so hundreds of property-block writes are skipped until daylight moves.
+            if (AirsideRuntimeQuality.DaylightSteady(_airfieldLightsAppliedDaylight, daylight))
+                return;
+            _airfieldLightsAppliedDaylight = daylight;
             var night = 1f - daylight;
             var intensity = Mathf.Lerp(0.35f, 1.35f, night);
             var warmWhite = Color.Lerp(new Color(0.85f, 0.88f, 0.7f), new Color(1f, 0.95f, 0.75f), night);
@@ -4602,6 +4654,16 @@ namespace Airside.Presentation
             }
 
             _windowLights = lights.ToArray();
+            _nightGlowKind.Clear();
+            foreach (var renderer in _nightGlowRenderers)
+            {
+                var n = renderer.gameObject.name;
+                _nightGlowKind.Add(n.StartsWith("Terminal airside glazing", StringComparison.Ordinal) ? (byte)1
+                    : n.StartsWith("Terminal airside interior glow", StringComparison.Ordinal) ? (byte)2
+                    : (byte)0);
+            }
+
+            _nightGlowAppliedDaylight = float.NaN;
             UpdateNightGlow(PresentationDaylight);
         }
 
@@ -4611,7 +4673,13 @@ namespace Airside.Presentation
             // with a soft per-window flicker so night interiors feel occupied (0025 item 5).
             var glow = Mathf.Lerp(1.15f, 0.05f, daylight);
             var night = 1f - daylight;
-            for (var i = 0; i < _nightGlowRenderers.Count; i++)
+            // Flicker (the only time term) runs at night; by day the panes and window lights
+            // hold still, so skip rewriting them until daylight itself moves (ADR 0101).
+            var flickering = night > 0.35f;
+            var steady = !flickering && AirsideRuntimeQuality.DaylightSteady(_nightGlowAppliedDaylight, daylight);
+            if (!steady)
+                _nightGlowAppliedDaylight = flickering ? float.NaN : daylight;
+            for (var i = 0; !steady && i < _nightGlowRenderers.Count; i++)
             {
                 var renderer = _nightGlowRenderers[i];
                 if (renderer == null)
@@ -4620,7 +4688,8 @@ namespace Airside.Presentation
                     ? 1f + 0.06f * Mathf.Sin(
                         Time.unscaledTime * (AirsideReusableMotion.WindowFlickerHz * Mathf.PI * 2f + i * 0.37f) + i)
                     : 1f;
-                if (renderer.gameObject.name.StartsWith("Terminal airside glazing", StringComparison.Ordinal))
+                var kind = i < _nightGlowKind.Count ? _nightGlowKind[i] : (byte)0;
+                if (kind == 1)
                 {
                     var lit = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.35f, 0.85f, night));
                     var facade = Color.Lerp(
@@ -4631,7 +4700,7 @@ namespace Airside.Presentation
                     SetRendererColor(renderer, facade, facade * lit);
                     continue;
                 }
-                if (renderer.gameObject.name.StartsWith("Terminal airside interior glow", StringComparison.Ordinal))
+                if (kind == 2)
                 {
                     // Behind the blue glass, use HDR unlit interior cards. At real-airport
                     // overview distance ordinary Lit emission is lost to night exposure.
@@ -4649,7 +4718,7 @@ namespace Airside.Presentation
                 SetRendererColor(renderer, color, emission);
             }
 
-            if (_windowLights != null)
+            if (_windowLights != null && !steady)
             {
                 var intensity = Mathf.Lerp(2.4f, 0.02f, daylight);
                 for (var i = 0; i < _windowLights.Length; i++)
@@ -11062,11 +11131,18 @@ namespace Airside.Presentation
 
         private enum LightGearKind { GearDoor, GearStrut, NavigationLight, Beacon, LandingLight, TaxiLight }
 
-        private readonly struct LightGearPart
+        private sealed class LightGearPart
         {
             public readonly Transform Transform;
             public readonly LightGearKind Kind;
             public readonly AircraftNavigationLight NavLight;
+            // Resolved on first use, then reused every frame: the lights pass used to run
+            // GetComponent<Light>, GetComponent<Renderer> and a by-name Transform.Find for
+            // the wingtip strobe on every lamp of every visible aircraft, every frame.
+            public Light Light;
+            public Light Strobe;
+            public Renderer Lamp;
+            public bool LampResolved;
 
             public LightGearPart(Transform transform, LightGearKind kind, AircraftNavigationLight navLight = AircraftNavigationLight.None)
             {

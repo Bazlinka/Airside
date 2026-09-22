@@ -1,5 +1,50 @@
 ## Where to resume — session handoff
 
+- **2026-09-22 Claude — macOS performance pass (branch `feature/macos-perf-pass`, ADR 0101).**
+  Presentation only. Bailey: "give this airside app a macos optimisation pass — for performance".
+  - **Frame pacing.** `vSyncCount = 1` rendered the full HDR/SSAO/MSAA/SMAA stack at 120 fps on
+    a ProMotion panel, and `runInBackground` kept it at full rate behind other apps. New
+    `AirsideFramePacing`: focused → vsync divisor for 60 fps (120 Hz → 2, 144 Hz → 2); unfocused
+    → ~30 fps; soak runs exempt. Re-checked once a second and on focus change (window can move
+    screens). Options → **Frame rate · 60 fps / Display max** (PlayerPrefs, no save change).
+  - **SSAO at half resolution** (`PC_Renderer` `Downsample: 1`) — invisible on Retina.
+  - **Landing lamps shadow only at night** — each shadowed spot was an extra shadow-caster pass
+    per frame, by day hidden under the sun's shadow.
+  - **Static tints skip unchanged frames** — airfield light renderers and the day-time window
+    glow only rewrite property blocks when daylight moves ≥ 0.002; night flicker unchanged.
+  - **Cached per-frame lookups** — the aircraft lights pass did `GetComponent<Light>`,
+    `GetComponent<Renderer>` and `Transform.Find("White strobe")` per lamp per aircraft per
+    frame, and the glow pass read `gameObject.name` twice per pane (string allocation each).
+  - **Evidence:** Unity EditMode **972/972** before rebasing (new `AirsideFramePacingTests`,
+    `MacRenderBudgetTests`). After rebasing onto #381/#382: 969/977. The same 8 fail on
+    `origin/main` without this change (949/957). **`main` is red from #381**: it did not compile
+    (`OperationsSummaryTests` lacked `using System.Linq`, fixed here), and once it compiles,
+    8 apron-density/schedule tests fail — `RegionalCarriersTests` ×3, `AdelaidePavementTests`
+    parked-Q400 clearance, `AirlineOperationsTests.AiAirline_FliesAllDay…`, `AirlineSoakTests`
+    30-day (A6-EVA booked 43253 s ahead), `AirportCurfewTests` evening start,
+    `GroundSeparationTests.BusyDay` (SF34 rollout × B38M taxi-out). Those belong to the #381
+    owner (ADR 0100), not this pass.
+  - **NEXT:** packaged look on the ProMotion Mac: 60 fps focused / ~30 unfocused, half-res AO
+    reads the same at overview and follow, dusk transition still smooth. If the Metal player
+    ignores a vsync divisor > 1, fall back to `vSyncCount = 0` + `targetFrameRate` (ADR 0101).
+    Bigger remaining levers, not taken (visual trade-offs, need Bailey's eye): render scale
+    below 1 on >5 MP Retina surfaces, and moving per-renderer tints off MaterialPropertyBlocks
+    so the SRP Batcher / GPU Resident Drawer can batch them.
+
+- **2026-09-22 Codex — live Adelaide weather and environment (branch
+  `codex/live-weather-environment`, ADR 0099).** The real-scale Adelaide path omitted the
+  existing astronomical sun, moon and stars entirely; it now builds them. Stars are a denser
+  camera-centred single mesh and fade with dawn/dusk and cloud. Open-Meteo current conditions at
+  the fixed YPAD coordinate drive presentation cloud/rain/fog/wetness/wind, with 15-minute
+  polling, two-hour stale fallback, an Options toggle and on-screen attribution. Rain density is
+  continuous; Adelaide stands gain rain-only puddle accents and moving aircraft gain tyre spray.
+  Simulation weather, runway logic, commands, saves and replay are unchanged.
+  - **Licence:** private non-commercial prototype only on the free endpoint; public/commercial
+    release must use approved terms/endpoint or disable live weather.
+  - **NEXT:** compile and run Unity EditMode, then inspect a packaged Adelaide overview/follow
+    at day, sunset, clear night, overcast, rain and fog. Check puddle placement around regional
+    bays and terminal gates and tune only from the rendered result.
+
 - **2026-09-22 Cursor — apron density + buy→plan merged (PR #381, ADR 0100).** On `main`
   at `772eb3ce`. Opening keeps most AI on stands; ADL-shaped departure clusters with
   doubles OK; "on field" = drawn metal; buy opens Map with chapter/contract suggestion

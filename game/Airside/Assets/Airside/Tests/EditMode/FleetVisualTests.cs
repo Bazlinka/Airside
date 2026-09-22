@@ -198,6 +198,10 @@ namespace Airside.Tests
                 AirlineOperations.AdelaideRegionalBays);
             var player = Airline.Player("Test Air", "#123456");
             ops.AddAirline(player);
+            // This fixture brings two player aircraft home. Give it the two-aircraft regional
+            // footprint the scenario needs, rather than asking a Starter base to park both.
+            ops.RestoreCareerState(10_000, 90, nameof(OperatingTier.Provisional), null, 0, 0,
+                new List<string>(), new List<string>(), 4, baseLevel: PlayerBaseLevel.ExpandedRegional);
             DestinationCatalogue.TryFind("KGC", out var kingscote);
             var restore = typeof(AirlineOperations).GetMethod("RestoreAircraft",
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
@@ -258,7 +262,8 @@ namespace Airside.Tests
             }
 
             Assert.That(first.State, Is.EqualTo(FleetState.AtStand),
-                "a go-around must still reach a stand instead of looping the circuit");
+                $"a go-around must still reach a stand instead of looping the circuit; "
+                + $"at {clock.Now.ElapsedSeconds}s first={first.State}, second={ops.Fleet[1].State}");
         }
     }
 }

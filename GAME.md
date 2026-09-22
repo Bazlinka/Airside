@@ -1,30 +1,16 @@
 ## Where to resume — session handoff
 
-- **2026-09-22 Cursor — apron density + buy→plan + career suggest (ADR 0100, uncommitted).**
-  Bailey: more apron metal; ADL-style doubles OK (not forced every flight — opening has
-  authored same-minute pairs; later snaps coalesce on 5-min marks). Bought aircraft sat idle
-  with no plan — buy now opens Map with chapter/contract destination suggested and names the
-  turnaround lead; delivery inbound objective says wait-then-schedule. Fuelling is intentional
-  DeparturePrep (~6–10 min before pushback depending on type/base).
-  - **Career want:** Bailey asked for more career development beyond this handoff. Chapters +
-    base gates exist (0083/0091/0094); next product pick needed (more contracts, mid-chapter
-    goals, auto-dispatch helpers, economy tuning).
-  - **NEXT:** rebuild/play apron + buy flow. Commit when Bailey wants. Ask which career slice
-    to do next.
+- **2026-09-22 Cursor — apron density + buy→plan merged (PR #381, ADR 0100).** On `main`
+  at `772eb3ce`. Opening keeps most AI on stands; ADL-shaped departure clusters with
+  doubles OK; "on field" = drawn metal; buy opens Map with chapter/contract suggestion
+  and names prep lead.
+  - **NEXT:** rebuild Mac app and play the apron + buy flow. Then Bailey picks the next
+    career slice: (1) more mid-tier contracts, (2) clearer unlock economy, or (3)
+    auto-offer "fly this for your contract" after park.
 
-- **2026-09-22 Codex — live Adelaide weather and environment (branch
-  `codex/live-weather-environment`, ADR 0099).** The real-scale Adelaide path omitted the
-  existing astronomical sun, moon and stars entirely; it now builds them. Stars are a denser
-  camera-centred single mesh and fade with dawn/dusk and cloud. Open-Meteo current conditions at
-  the fixed YPAD coordinate drive presentation cloud/rain/fog/wetness/wind, with 15-minute
-  polling, two-hour stale fallback, an Options toggle and on-screen attribution. Rain density is
-  continuous; Adelaide stands gain rain-only puddle accents and moving aircraft gain tyre spray.
-  Simulation weather, runway logic, commands, saves and replay are unchanged.
-  - **Licence:** private non-commercial prototype only on the free endpoint; public/commercial
-    release must use approved terms/endpoint or disable live weather.
-  - **NEXT:** compile and run Unity EditMode, then inspect a packaged Adelaide overview/follow
-    at day, sunset, clear night, overcast, rain and fog. Check puddle placement around regional
-    bays and terminal gates and tune only from the rendered result.
+- **2026-09-22 Codex — live Adelaide weather and environment (ADR 0099, in main).**
+  Open-Meteo presentation weather + full celestial sky on the real Adelaide path.
+  - **NEXT:** packaged Adelaide overview/follow at day/sunset/night/overcast/rain/fog.
 
 - **2026-09-22 Cursor — Operations board honesty (branch `feature/board-honesty-fix`).**
   Bailey's Departures FIDS looked unreal: departed flights showed "est HH:MM" hours later

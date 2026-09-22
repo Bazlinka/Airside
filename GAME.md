@@ -4,17 +4,20 @@
   `codex/fix-route-map-layout-test`, ADR 0095).** The initial repair sweep established that
   the 21 red tests were stale fixtures/assertions after baggage and base-progression changes,
   rather than 21 production-rule defects. Full Unity EditMode is now **895/895 passed**.
-  A fresh packaged build at `work/builds/Airside.app` is stamped `76066429` (clean tree,
-  22 September 2026 00:19 UTC). Packaged smoke testing found a real P1 runtime defect: hidden
+  A fresh packaged build at `work/builds/Airside.app` is stamped `92c931bb` (clean tree,
+  22 September 2026 00:39 UTC). Packaged smoke testing found a real P1 runtime defect: hidden
   fleet views were still sent `AudioSource.Play` every frame, producing over 48,000 disabled-
   source errors in about two minutes. Playback is now guarded until the view/source is active,
   with a Unity regression.
   The first performance pass also found a 1.8 GB idle physical footprint on this M1 Pro's
   3456×2168 display: High had 4× MSAA *and* high-quality SMAA. Above five million display
-  pixels, High now retains its world/lighting setting but uses 2× MSAA. Unity EditMode is
-  **896/896 passed** before the measurement rebuild.
-  **NEXT:** rebuild, verify the new player-log segment stays clean during an active/hidden
-  fleet soak, and compare physical memory in the same packaged scenario. This branch is still
+  pixels, High now retains its world/lighting setting but uses 2× MSAA. The same packaged
+  M1 Pro/3456×2168 scenario fell from **1.8 GB to 1.7 GB** physical footprint (peak 2.0 GB to
+  1.9 GB), with the overview visually unchanged. Unity EditMode is **896/896 passed**;
+  isolated one- and five-minute self-driving soaks completed without crash/stall or disabled-
+  audio errors (the five-minute run reaches engine start).
+  **NEXT:** profile remaining GPU allocations (the current 1.7 GB is still too high), then
+  exercise a longer rotation/return soak and save/reload checkpoints. This branch is still
   unmerged and is not release-validated.
 
 - **2026-09-21 ChatGPT — campaign/base convergence (branch `feature/campaign-base-goals`, ADR 0094).**

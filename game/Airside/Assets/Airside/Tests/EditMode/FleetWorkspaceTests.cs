@@ -33,7 +33,7 @@ namespace Airside.Tests
             Assert.That(model.Mine.All(r => r.IsPlayer), Is.True);
             Assert.That(model.Others.Select(r => r.Registration), Is.EqualTo(new[] { "VH-ZRC" }));
             Assert.That(model.Subtitle, Does.StartWith("2 of 3 base slots"));
-            Assert.That(model.Subtitle, Does.Contain("Regional starter base"));
+            Assert.That(model.Subtitle, Does.Contain("Expanded regional base"));
         }
 
         [Test]
@@ -120,7 +120,7 @@ namespace Airside.Tests
         {
             var (clock, ops, plane) = HudTestAirline.Create();
             ops.RestoreCareerState(50_000, 100, nameof(OperatingTier.Regional), null, 0, 0,
-                Array.Empty<string>(), Array.Empty<string>(), 12);
+                Array.Empty<string>(), Array.Empty<string>(), 12, baseLevel: PlayerBaseLevel.ExpandedRegional);
             Assert.That(ops.BuyAircraft(AircraftType.Dash8Q400).Accepted, Is.True);
             var bought = ops.Fleet.Single(a => a.Type.Id == AircraftType.Dash8Q400.Id);
 

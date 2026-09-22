@@ -39,7 +39,7 @@ namespace Airside.Tests
         public void RotationAndFleetMilestones_FlipOnAsThresholdsAreCrossed()
         {
             var career = new AirlineCareerState(completedPlayerRotations: 10, reliability: 95);
-            var milestones = CareerMilestones.Reached(career, fleetSize: 4, new[]
+            var milestones = CareerMilestones.Reached(career, fleetSize: AircraftAcquisition.MaxPlayerAircraft, new[]
             {
                 AircraftType.Atr42, AircraftType.Boeing7378
             });

@@ -1,5 +1,27 @@
 ## Where to resume — session handoff
 
+- **2026-09-22 Codex — whole-game bug audit (branch
+  `codex/fix-route-map-layout-test`, ADR 0095).** The initial repair sweep established that
+  the 21 red tests were stale fixtures/assertions after baggage and base-progression changes,
+  rather than 21 production-rule defects. Full Unity EditMode is now **895/895 passed**.
+  A fresh packaged build at `work/builds/Airside.app` is stamped `92c931bb` (clean tree,
+  22 September 2026 00:39 UTC). Packaged smoke testing found a real P1 runtime defect: hidden
+  fleet views were still sent `AudioSource.Play` every frame, producing over 48,000 disabled-
+  source errors in about two minutes. Playback is now guarded until the view/source is active,
+  with a Unity regression.
+  The first performance pass also found a 1.8 GB idle physical footprint on this M1 Pro's
+  3456×2168 display: High had 4× MSAA *and* high-quality SMAA. Above five million display
+  pixels, High now retains its world/lighting setting but uses 2× MSAA. The same packaged
+  M1 Pro/3456×2168 scenario fell from **1.8 GB to 1.7 GB** physical footprint (peak 2.0 GB to
+  1.9 GB), with the overview visually unchanged. Unity EditMode is **896/896 passed**;
+  isolated one- and five-minute self-driving soaks completed without crash/stall or disabled-
+  audio errors (the five-minute run reaches engine start).
+  Packaged Route Map review then found overlapping rival-flight labels around Adelaide at native
+  resolution. `MapLabelLayout` now fans labels into non-overlapping in-map slots and has a
+  16-aircraft cluster regression; Unity EditMode is **898/898 passed**.
+  **NEXT:** merge this branch, then profile the remaining GPU allocations and complete a longer
+  rotation/return soak plus save/reload checkpoints. This branch is not release-validated.
+
 - **2026-09-21 ChatGPT — campaign/base convergence (branch `feature/campaign-base-goals`, ADR 0094).**
   - Chapter 2 now requires the Expanded Regional Adelaide base; Chapter 4 requires Jet Gate; Chapter 5 requires the International base.
   - Campaign progress is still derived from existing save v12 career/base state; no new persistence.

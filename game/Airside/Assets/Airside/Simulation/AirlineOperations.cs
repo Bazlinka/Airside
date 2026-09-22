@@ -1058,15 +1058,14 @@ namespace Airside.Simulation
             return aircraft.State == FleetState.TaxiOut && aircraft.DepartureStand.Equals(stand);
         }
 
-        /// <summary>A gate's lead-in is in use while an aircraft taxis in to it, out from it,
-        /// or is still on the apron after pushback (holding short / lining up).</summary>
+        /// <summary>A gate's lead-in is in use while an aircraft taxis in to it or pushes
+        /// back from it. It is free once the departure reaches Holding Short.</summary>
         private static bool UsesLeadIn(FleetAircraft aircraft, out StableId gate)
         {
             gate = aircraft.State switch
             {
                 FleetState.TaxiIn => aircraft.Stand,
-                FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff
-                    => aircraft.DepartureStand,
+                FleetState.TaxiOut => aircraft.DepartureStand,
                 _ => default
             };
             return gate.Value != null && AdelaideGround.IsTerminalGate(gate);

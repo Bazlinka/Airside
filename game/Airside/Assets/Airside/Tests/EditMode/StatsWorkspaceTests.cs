@@ -27,7 +27,7 @@ namespace Airside.Tests
             Assert.That(model.TierLine, Is.EqualTo("Provisional tier"));
             Assert.That(model.FleetLine, Is.EqualTo("1 of 1 base slots"));
             Assert.That(model.BaseCapabilityLine, Does.StartWith("Regional starter base"));
-            Assert.That(model.BaseCapabilityLine, Does.Contain("Regional apron"));
+            Assert.That(model.BaseCapabilityLine, Does.Contain("outsourced maintenance"));
             Assert.That(model.BaseCapabilityLine, Does.Contain("Stands: 50D"));
             Assert.That(model.AdelaideRankLine, Is.EqualTo("#1 of 1 at Adelaide"));
             Assert.That(model.ContractHistory, Is.Empty);

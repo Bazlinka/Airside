@@ -42,7 +42,7 @@ namespace Airside.Tests
             model.Rebuild(ops, plane, HudTestAirline.Code("KGC"), 900, clock.Now, RouteMapFilter.Available);
 
             var surface = new HudBox(0, 0, 1000, 700);
-            var layout = RouteMapWorkspaceLayout.Create(surface, model.ShownDestinations.Count);
+            var layout = RouteMapWorkspaceLayout.Create(surface);
             var draw = new HudDrawList();
             RouteMapWorkspacePainter.Paint(draw, model, layout);
 

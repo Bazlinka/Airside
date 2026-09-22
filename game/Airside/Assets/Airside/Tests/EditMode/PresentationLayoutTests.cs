@@ -328,6 +328,12 @@ namespace Airside.Tests
         {
             Assert.That(AirsideRuntimeQuality.HighMsaa, Is.EqualTo(4));
             Assert.That(AirsideRuntimeQuality.MediumMsaa, Is.EqualTo(2));
+            Assert.That(AirsideRuntimeQuality.MsaaForPixels(AirsideRuntimeQuality.Ladder.High, 2560, 1440),
+                Is.EqualTo(AirsideRuntimeQuality.HighMsaa), "normal desktop High keeps 4x MSAA");
+            Assert.That(AirsideRuntimeQuality.MsaaForPixels(AirsideRuntimeQuality.Ladder.High, 3456, 2168),
+                Is.EqualTo(AirsideRuntimeQuality.MediumMsaa), "Retina/4K High avoids oversized MSAA targets");
+            Assert.That(AirsideRuntimeQuality.MsaaForPixels(AirsideRuntimeQuality.Ladder.Medium, 7680, 4320),
+                Is.EqualTo(AirsideRuntimeQuality.MediumMsaa), "Medium is stable at every display size");
             Assert.That(AirsideRuntimeQuality.VSyncCount, Is.EqualTo(1));
             Assert.That(AirsideRuntimeQuality.HighShadowCascades, Is.EqualTo(4));
             Assert.That(AirsideRuntimeQuality.MediumShadowCascades, Is.EqualTo(2));

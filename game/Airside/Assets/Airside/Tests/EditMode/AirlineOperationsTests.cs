@@ -151,8 +151,8 @@ namespace Airside.Tests
             RunTo(clock, ops, 100);
             Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(50)).Accepted, Is.False, "in the past");
 
-            ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(400));
-            RunTo(clock, ops, 401);
+            ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(500));
+            RunTo(clock, ops, 501);
             Assert.That(ops.ScheduleDeparture(plane, Code("PLO"), new SimulationTime(500)).Accepted, Is.False, "already taxiing");
             Assert.That(ops.CancelDeparture(plane).Accepted, Is.False);
 
@@ -499,7 +499,7 @@ namespace Airside.Tests
         {
             var (_, ops, _) = PlayerOnly();
             ops.RestoreCareerState(200_000, 100, nameof(OperatingTier.International), null, 0, 0,
-                Array.Empty<string>(), Array.Empty<string>(), 40);
+                Array.Empty<string>(), Array.Empty<string>(), 40, baseLevel: PlayerBaseLevel.ExpandedRegional);
             Assert.That(ops.BuyAircraft(AircraftType.Atr42).Accepted, Is.True);
             var bought = ops.Fleet.Single(a => a.Type.Id == AircraftType.Atr42.Id);
             var fundsBefore = ops.CareerState.Funds;

@@ -224,11 +224,12 @@ namespace Airside.Tests
                 clock.Set(next.Value);
                 ops.Update();
 
-                var mainOnRunway = ops.Fleet.Count(a =>
-                    a.State is FleetState.TakingOff or FleetState.Landing
+                // A 12/30 arrival remains in Landing while it follows its long exit to E2,
+                // but its strip is already clear. Count physical occupancy rather than the
+                // broader presentation state so this checks tower safety, not taxi duration.
+                var mainOnRunway = ops.Fleet.Count(a => ops.IsOccupyingRunway(a)
                     && RunwayWeather.IsMainRunway(a.AssignedRunway));
-                var crossOnRunway = ops.Fleet.Count(a =>
-                    a.State is FleetState.TakingOff or FleetState.Landing
+                var crossOnRunway = ops.Fleet.Count(a => ops.IsOccupyingRunway(a)
                     && !RunwayWeather.IsMainRunway(a.AssignedRunway));
                 Assert.That(mainOnRunway, Is.LessThanOrEqualTo(1), "05/23");
                 Assert.That(crossOnRunway, Is.LessThanOrEqualTo(1), "12/30");

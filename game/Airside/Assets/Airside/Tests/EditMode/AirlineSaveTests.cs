@@ -184,15 +184,16 @@ namespace Airside.Tests
         public void V11SixAircraftSave_MigratesToABaseThatCanHoldTheExistingFleet()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
-            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(73),
-                Airline.Player("Legacy Fleet", "#2E7D32"));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(73), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideRegionalBays);
+            ops.AddAirline(Airline.Player("Legacy Fleet", "#2E7D32"));
             ops.RestoreCareerState(200_000, 95, nameof(OperatingTier.International), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 40, baseLevel: PlayerBaseLevel.International);
 
             var player = ops.PlayerAirline;
             var stands = AirlineOperations.AdelaideRegionalBays;
-            for (var i = 1; i < AircraftAcquisition.MaxPlayerAircraft; i++)
-                ops.AddAircraft(player, $"VH-LG{i}", AircraftType.Saab340, stands[i % stands.Count]);
+            for (var i = 0; i < AircraftAcquisition.MaxPlayerAircraft; i++)
+                ops.AddAircraft(player, $"VH-LG{i}", AircraftType.Saab340, stands[i]);
 
             var data = AirlineSave.Capture(ops);
             data.Version = 11;

@@ -86,7 +86,10 @@ namespace Airside.Tests
                 "do not register a carrier that could not park anyone");
 
             Assert.That(DestinationCatalogue.TryFind("KGC", out var kgc), Is.True);
-            var parked = ops.Fleet.First(a => a.Airline.IsPlayer && a.State == FleetState.AtStand);
+            // BAY-1 is the Starter-base home and remains protected from AI backfill; free a
+            // shared apron bay to verify that a newly available compatible position is filled.
+            var parked = ops.Fleet.First(a => a.Airline.IsPlayer && a.State == FleetState.AtStand
+                && !a.Stand.Equals(new StableId("BAY-1")));
             Assert.That(ops.ScheduleDeparture(parked, kgc, clock.Now.Advance(DeparturePrep.LeadSeconds(parked.Type))).Accepted, Is.True);
             clock.Set(clock.Now.Advance(DeparturePrep.LeadSeconds(parked.Type)));
             ops.Update();

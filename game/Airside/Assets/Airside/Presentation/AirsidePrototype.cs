@@ -1541,6 +1541,14 @@ namespace Airside.Presentation
             if (source.clip != clip)
                 source.clip = clip;
 
+            // Fleet views deliberately stay alive while their aircraft are away, but are
+            // hidden outside the currently visible operating set.  AudioSource.Play logs an
+            // error every frame for those inactive roots, which both obscures real faults and
+            // burns time writing the player log.  Do not start a voice until its aircraft is
+            // active again; the next active-frame update restores the correct engine state.
+            if (!CanStartAudio(source))
+                return;
+
             // Recorded beds are already takeoff/cruise. Pitching them to 0.47 made a
             // parked Saab sound like a broken motor; keep pitch near native.
             var power = _propRpm.TryGetValue(id, out var rpm)
@@ -1568,6 +1576,17 @@ namespace Airside.Presentation
             source.volume = Mathf.MoveTowards(source.volume, target, Time.unscaledDeltaTime * 0.8f);
             if (!source.isPlaying)
                 source.Play();
+        }
+
+        /// <summary>
+        /// Unity rejects <see cref="AudioSource.Play"/> for a disabled component or an
+        /// inactive hierarchy.  Fleet presentation intentionally uses both states while it
+        /// culls aircraft that are away, so callers must guard playback rather than retrying
+        /// each frame.
+        /// </summary>
+        public static bool CanStartAudio(AudioSource source)
+        {
+            return source != null && source.isActiveAndEnabled && source.clip != null;
         }
 
         private void UpdateAmbientAudio()

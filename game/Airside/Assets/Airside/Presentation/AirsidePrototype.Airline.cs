@@ -1387,6 +1387,7 @@ namespace Airside.Presentation
 
         private readonly List<MapFlight> _mapFlights = new();
         private readonly List<Rect> _mapControlRects = new();
+        private readonly List<HudBox> _mapFlightLabelBoxes = new();
         private string _mapTrackId;
         private bool _mapRivalsVisible = true;
         private static Texture2D _planeIcon;
@@ -1555,6 +1556,11 @@ namespace Airside.Presentation
             DrawLiveMapTraffic(mapRect, small);
 
             // Aircraft icons on top of everything else on the map.
+            // A dozen simultaneous arrivals at Adelaide used to print their labels straight on
+            // top of each other. The map stays informative by giving the nearest labels a
+            // sidecar slot and leaving only a saturated cluster's lower-priority text out.
+            _mapFlightLabelBoxes.Clear();
+            var labelBounds = Box(mapRect).Inset(6f, 48f, 6f, 28f);
             for (var i = 0; i < _mapFlights.Count; i++)
             {
                 var flight = _mapFlights[i];
@@ -1579,7 +1585,16 @@ namespace Airside.Presentation
                 var labelColour = GUI.color;
                 GUI.color = new Color(1f, 1f, 1f, iconAlpha);
                 var detailed = isSelected || i == tracked || _mapLens.Zoom >= 4f;
-                var labelRect = new Rect(flight.Point.x + iconSize * 0.6f, flight.Point.y - 10f, 300f, detailed ? 36f : 18f);
+                var labelWidth = detailed ? 300f : 150f;
+                var labelHeight = detailed ? 36f : 18f;
+                if (!MapLabelLayout.TryPlace(labelBounds, flight.Point.x, flight.Point.y, iconSize * 0.6f,
+                        labelWidth, labelHeight, _mapFlightLabelBoxes, out var labelBox))
+                {
+                    GUI.color = labelColour;
+                    continue;
+                }
+                _mapFlightLabelBoxes.Add(labelBox);
+                var labelRect = HudPainter.ToRect(labelBox);
                 if (detailed)
                     DrawSolid(labelRect, new Color(ink.r, ink.g, ink.b, 0.75f));
                 GUI.Label(new Rect(labelRect.x + 4f, labelRect.y + 1f, labelRect.width - 8f, 18f),

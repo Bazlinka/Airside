@@ -1,5 +1,22 @@
 ## Unreleased
 
+- **Busy route maps keep aircraft labels readable.** Nearby aircraft labels now fan into
+  non-overlapping in-map slots; when a local cluster is truly full, lower-priority text is
+  omitted while the aircraft icons remain visible.
+
+- **High quality no longer over-allocates anti-aliasing at Retina/4K sizes.** High retains its
+  lighting, shadows and scene detail, but above five million display pixels uses 2× MSAA alongside
+  its existing high-quality SMAA instead of multiplying every HDR/depth target by four.
+
+- **Hidden fleet audio no longer floods the player log.** Away aircraft still retain their
+  cached visual model, but the engine voice only starts once its root and AudioSource are active.
+  This removes the per-frame `Can not play a disabled audio source` error and keeps real runtime
+  faults visible in a packaged-player log.
+
+- **Gate lead-ins release at Holding Short (ADR 0095).** A departure still holds its
+  physical gate through taxi-out, but no longer blocks another gate movement after it has
+  cleared the lead-in and joined the runway queue.
+
 - **Base growth is now part of the campaign.** Eyre Peninsula requires the Expanded Regional base, Interstate requires Jet Gate, and Going Global requires the International base. Campaign progress derives from the existing persisted PlayerBaseLevel, so no save migration is needed.
 
 - **Base upgrades explain their payoff.** Career now names current maintenance capability, ground-service speed and stand/gate access, and previews the next base upgrade as concrete operational benefits before the player spends the money.

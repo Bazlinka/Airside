@@ -111,7 +111,7 @@ namespace Airside.Tests
         {
             var (_, ops, player, other) = Empty();
             Restore(ops, "VH-QQQ", other, AircraftType.Dash8Q400, FleetState.AtStand, 0, Bay50D);
-            var waiting = Restore(ops, "VH-WAI", player, AircraftType.Atr42, FleetState.AwaitingStand, 0, default);
+            var waiting = Restore(ops, "VH-WAI", other, AircraftType.Atr42, FleetState.AwaitingStand, 0, default);
 
             Assert.That(ops.CrowdsNeighbour(AircraftType.Atr42, Bay50E), Is.True);
             var suggested = ops.SuggestStand(waiting);

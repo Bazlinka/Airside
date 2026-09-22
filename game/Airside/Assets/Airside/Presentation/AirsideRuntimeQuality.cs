@@ -19,6 +19,10 @@ namespace Airside.Presentation
 
         public const int HighMsaa = 4;
         public const int MediumMsaa = 2;
+        // At a 4K-class backing surface, 4x MSAA allocates several very large HDR/depth
+        // buffers for little visible gain because the camera already uses high-quality SMAA.
+        // Keep the high world/lighting ladder, but cap only MSAA above this pixel budget.
+        public const long HighMsaaPixelBudget = 5_000_000;
         public const int VSyncCount = 1;
         public const int AnisoLevel = 8;
         // URP's per-object additional-lights cap: the max real-time Point/Spot lights that
@@ -52,7 +56,20 @@ namespace Airside.Presentation
 
         public static Ladder Current { get; private set; } = Ladder.High;
 
-        public static int MsaaSamples => Current == Ladder.High ? HighMsaa : MediumMsaa;
+        public static int MsaaSamples => MsaaForPixels(Current, Screen.width, Screen.height);
+
+        /// <summary>
+        /// Chooses the multi-sample count independently from the visual ladder.  A capable
+        /// Mac driving a Retina/4K display should keep High's lights, shadows and detail, but
+        /// avoid multiplying all of its HDR targets by four when SMAA already cleans edges.
+        /// </summary>
+        public static int MsaaForPixels(Ladder ladder, int width, int height)
+        {
+            if (ladder != Ladder.High)
+                return MediumMsaa;
+            var pixels = (long)Mathf.Max(0, width) * Mathf.Max(0, height);
+            return pixels > HighMsaaPixelBudget ? MediumMsaa : HighMsaa;
+        }
 
         public static bool UseTerminalProbe => Current == Ladder.High;
 

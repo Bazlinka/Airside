@@ -42,8 +42,14 @@ namespace Airside.Tests
         private static void FlyRoundTrip(ManualSimulationClock clock, AirlineOperations ops, FleetAircraft plane,
             Destination destination, long departAtSeconds, StableId returnStand)
         {
-            Assert.That(ops.ScheduleDeparture(plane, destination, new SimulationTime(departAtSeconds)).Accepted, Is.True);
-            RunTo(clock, ops, departAtSeconds);
+            // Contract-history tests schedule successive rotations with the old fixed 300 s
+            // gap. A full player turn now includes baggage, so retain the test's round-trip
+            // intent while never booking a pushback before its derived preparation can finish.
+            var earliestDeparture = clock.Now.ElapsedSeconds
+                + DeparturePrep.LeadSeconds(plane.Type, ops.CareerState.BaseLevel);
+            var scheduledDeparture = Math.Max(departAtSeconds, earliestDeparture);
+            Assert.That(ops.ScheduleDeparture(plane, destination, new SimulationTime(scheduledDeparture)).Accepted, Is.True);
+            RunTo(clock, ops, scheduledDeparture);
             Assert.That(plane.State, Is.EqualTo(FleetState.TaxiOut));
 
             while (plane.State is FleetState.TaxiOut or FleetState.HoldingShort)

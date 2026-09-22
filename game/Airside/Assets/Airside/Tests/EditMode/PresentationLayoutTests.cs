@@ -117,6 +117,21 @@ namespace Airside.Tests
             AssertAirlinePanelsFit(screenWidth, screenHeight, showGuide: true);
         }
 
+        [TestCase(1280, 720)]
+        [TestCase(800, 500)]
+        [TestCase(320, 240)]
+        public void AirlineHudLayout_OpenWorkspaceToastDoesNotCoverItsHeading(int screenWidth,
+            int screenHeight)
+        {
+            var scale = HudLayout.ScaleFor(screenWidth, screenHeight);
+            var hud = HudLayout.Create(screenWidth / scale, screenHeight / scale);
+            var airline = AirlineHudLayout.Create(hud, showGuide: true, workspaceOpen: true);
+            Assert.That(airline.Toast.Overlaps(airline.Workspace), Is.False);
+            Assert.That(airline.Toast.Overlaps(airline.Objective), Is.False);
+            if (airline.Toast.width > 0f)
+                Assert.That(airline.Toast.yMax, Is.LessThanOrEqualTo(hud.Viewport.y));
+        }
+
         private static void AssertAirlinePanelsFit(int screenWidth, int screenHeight, bool showGuide)
         {
             var scale = HudLayout.ScaleFor(screenWidth, screenHeight);

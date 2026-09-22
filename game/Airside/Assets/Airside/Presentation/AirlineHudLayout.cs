@@ -82,7 +82,8 @@ namespace Airside.Presentation
         /// <summary>True when the window is too narrow for Operations beside the objective.</summary>
         public bool WorkspaceCoversOverview { get; }
 
-        public static AirlineHudLayout Create(HudLayout hud, bool showGuide = false)
+        public static AirlineHudLayout Create(HudLayout hud, bool showGuide = false,
+            bool workspaceOpen = false)
         {
             var width = hud.Viewport.x;
             var height = hud.Viewport.y;
@@ -162,6 +163,21 @@ namespace Airside.Presentation
 
             var workspaceTop = topBar.yMax + HudShell.ContentGap;
             var workspace = ToRect(HudShell.WorkspaceSurface(width, height));
+            if (workspaceOpen)
+            {
+                // A toast centred at the top of an open workspace covers its heading.
+                // The free strip below Today's Priority keeps feedback beside the desk.
+                var toastSpace = workspace.xMin - Margin * 2f;
+                var leftWidth = Mathf.Min(objective.width, toastSpace);
+                var leftHeight = leftWidth < 240f ? 64f : ToastHeight;
+                var leftToast = new Rect(Margin, objective.yMax + 8f, leftWidth, leftHeight);
+                toast = leftWidth >= 170f && leftToast.yMax <= floor
+                        && !leftToast.Overlaps(operations)
+                        && !leftToast.Overlaps(selectedCard)
+                        && !leftToast.Overlaps(mini)
+                    ? leftToast
+                    : new Rect(Margin, floor, 0f, 0f);
+            }
             var setup = new Rect(Margin, workspaceTop, inner, Mathf.Max(1f, floor - workspaceTop));
 
             return new AirlineHudLayout(

@@ -30,12 +30,13 @@ namespace Airside.Presentation
         public StatusSeverity Severity { get; }
         public bool IsPlayer { get; }
 
-        public HudTone StatusTone => Severity switch
-        {
-            StatusSeverity.Warning => HudTone.Negative,
-            StatusSeverity.Attention => HudTone.Caution,
-            _ => HudTone.Default
-        };
+        public HudTone StatusTone => Status.IndexOf("delay", StringComparison.OrdinalIgnoreCase) >= 0
+                                     || Status.IndexOf("late", StringComparison.OrdinalIgnoreCase) >= 0
+            ? HudTone.Negative
+            : Status.StartsWith("Ready", StringComparison.OrdinalIgnoreCase)
+              || Status.StartsWith("Completed", StringComparison.OrdinalIgnoreCase)
+                ? HudTone.Positive
+                : Severity >= StatusSeverity.Attention ? HudTone.Caution : HudTone.Default;
     }
 
     /// <summary>

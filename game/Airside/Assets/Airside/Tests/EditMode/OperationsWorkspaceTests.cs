@@ -440,5 +440,35 @@ namespace Airside.Tests
             }
         }
 
+        [Test]
+        public void Operations_AllMovementsKeepsTheLongBoardAccessible()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(17),
+                Airline.Player("Soak Air", "#1F3A93"));
+            clock.Set(new SimulationTime(30));
+            ops.Update();
+
+            var model = new OperationsWorkspaceModel();
+            model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
+            Assert.That(model.Rows.Count, Is.GreaterThan(5));
+
+            var layout = OperationsWorkspaceLayout.Create(HudShell.WorkspaceSurface(1440f, 900f),
+                model.Attention.Count);
+            var list = new HudDrawList();
+            OperationsWorkspacePainter.Paint(list, model, layout, null, 0);
+            var compact = list.Commands.Count(c => c.Kind == HudDrawKind.Hotspot
+                && c.Box.Y >= layout.Board.Y && c.Box.Bottom <= layout.Board.Bottom);
+            Assert.That(list.Commands.Any(c => c.ActionId == HudAction.ToggleMovements), Is.True);
+
+            OperationsWorkspacePainter.Paint(list, model, layout, null, 0, allMovements: true);
+            var complete = list.Commands.Count(c => c.Kind == HudDrawKind.Hotspot
+                && c.Box.Y >= layout.Board.Y && c.Box.Bottom <= layout.Board.Bottom);
+            Assert.That(compact, Is.LessThanOrEqualTo(5));
+            Assert.That(complete, Is.GreaterThan(compact));
+            Assert.That(list.Commands.Any(c => c.Text == "LIVE APRON"
+                && c.ActionId == HudAction.ToggleMovements), Is.True);
+        }
+
     }
 }

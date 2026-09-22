@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Airside.Presentation
@@ -349,7 +350,9 @@ namespace Airside.Presentation
                 $"{(int)(objective.Progress01 * 100f)}%", 11f, HudTone.Muted, HudTextStyle.Regular,
                 HudAlign.Right);
             into.Text(new HudBox(x, box.Y + 88f, width, 26f), objective.NextLine, 12f,
-                objective.NextSeverity == StatusSeverity.Warning ? HudTone.Negative : HudTone.Caution,
+                (objective.NextLine ?? string.Empty).IndexOf("delay", StringComparison.OrdinalIgnoreCase) >= 0
+                || (objective.NextLine ?? string.Empty).IndexOf("late", StringComparison.OrdinalIgnoreCase) >= 0
+                    ? HudTone.Negative : HudTone.Caution,
                 HudTextStyle.Bold | HudTextStyle.Wrap);
         }
     }

@@ -15,7 +15,9 @@ hierarchy rather than replacing it or changing game state.
 - Operations becomes **Live Apron**. It opens on the current player commitment,
   ranks that flight and real exceptions before airport context, shows at most five
   immediate movements, and gives the selected aircraft a horizontal
-  Fuel → Catering → Baggage → Boarding timeline.
+  Fuel → Catering → Baggage → Boarding timeline. An **All Movements** control keeps
+  the full six-hour arrivals/departures history and scroll interaction from ADR
+  0103 accessible inside the same workspace.
 - Route Map becomes a deliberate planning desk: the map owns most of the surface,
   opens on a real operable destination, draws only live/career route context, and
   places one destination dossier and one primary plan/update action at right.
@@ -26,6 +28,8 @@ hierarchy rather than replacing it or changing game state.
   reached achievements.
 - Runway Ink surfaces remain translucent so the miniature airport and moving
   aircraft stay visibly behind every workspace.
+- Toast feedback moves to the strip beside an open workspace, leaving its title
+  readable. The toast hides only when a tiny window offers no clear position.
 
 Cloud white carries primary text, coastal blue selection/actions, eucalyptus
 green ready/completed state, safety yellow the objective and attention state, and
@@ -61,11 +65,12 @@ same rules as before.
 
 ## Evidence
 
-- HUD plus presentation layout EditMode suite: 160/160, including the 320×240
-  toast/objective constraint.
+- HUD plus presentation layout EditMode suite: 164/164, including the 320×240
+  toast/objective constraint, open-workspace toast placement and complete-board
+  access.
 - Packaged Mac build captured and inspected at 1225×768 and 800×600 for
   Operations, Map, Fleet and Career (`work/hud-*-redesign*.png`).
-- Complete Unity EditMode after rebasing over the new stand-choice work: 983/991.
+- Complete Unity EditMode after rebasing over the new stand-choice work: 987/995.
   The eight failures are the exact pre-existing
   main apron-density/schedule set already recorded in `GAME.md`
   (RegionalCarriers ×3, AdelaidePavement, AirlineOperations, AirlineSoak,

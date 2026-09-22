@@ -73,6 +73,7 @@ namespace Airside.Presentation
         private readonly List<OperationsEventLine> _eventHistory = new();
         private RouteMapFilter _mapFilter = RouteMapFilter.Available;
         private int _boardScrollRow;
+        private bool _operationsAllMovements;
         private bool _boardScrollSnapToDay = true;
         /// <summary>
         /// When non-negative, the board is still auto-following NOW at this scroll row.
@@ -189,7 +190,8 @@ namespace Airside.Presentation
                 ShowToast("First trip complete. Keep your aircraft flying — plan the next one any time.");
             _lastGuideStep = _guideStep;
             var showGuide = !AirlineModalOpen && _guideStep != GuideStep.Complete;
-            var placement = AirlineHudLayout.Create(layout, showGuide);
+            var placement = AirlineHudLayout.Create(layout, showGuide,
+                workspaceOpen: _activeWorkspace != HudWorkspace.None);
             RememberHudPanels(layout, placement, showGuide);
 
             var label = _hudLabel ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true });
@@ -2113,12 +2115,13 @@ namespace Airside.Presentation
             }
 
             var beforeScroll = _boardScrollRow;
-            _boardScrollRow = ScrollRows(_boardScrollRow, layout.Board,
-                _operationsWorkspace.Rows.Count - layout.VisibleRows);
+            if (_operationsAllMovements)
+                _boardScrollRow = ScrollRows(_boardScrollRow, layout.Board,
+                    _operationsWorkspace.Rows.Count - layout.VisibleRows);
             if (_boardScrollRow != beforeScroll)
                 _boardScrollFollowRow = -1;
             OperationsWorkspacePainter.Paint(_workspaceDrawList, _operationsWorkspace, layout,
-                _selectedAircraftId, _boardScrollRow);
+                _selectedAircraftId, _boardScrollRow, _operationsAllMovements);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
         }
 
@@ -2269,6 +2272,13 @@ namespace Airside.Presentation
                 case HudAction.TabArrivals:
                     _flightsShowArrivals = true;
                     _boardScrollSnapToDay = true;
+                    PlayUiClick();
+                    return;
+                case HudAction.ToggleMovements:
+                    _operationsAllMovements = !_operationsAllMovements;
+                    _boardScrollRow = 0;
+                    _boardScrollFollowRow = -1;
+                    _boardScrollSnapToDay = _operationsAllMovements;
                     PlayUiClick();
                     return;
                 case HudAction.FilterAvailable:
@@ -2786,6 +2796,8 @@ namespace Airside.Presentation
 
         private void DrawToast(Rect rect, GUIStyle label)
         {
+            if (rect.width <= 0f || rect.height <= 0f)
+                return;
             var now = Time.unscaledTime;
             _toasts.Visible(now, _visibleToasts);
             if (_visibleToasts.Count == 0)

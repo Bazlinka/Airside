@@ -4,16 +4,19 @@
   `codex/hud-interface-redesign`, ADR 0104).** Presentation-only restructure of Operations,
   Route Map, Fleet and Career. Runway Ink surfaces are more translucent; the persistent
   objective is now `TODAY'S PRIORITY`; Operations opens on the player commitment and shows
-  five immediate movements plus a Fuel → Catering → Baggage → Boarding timeline; Map opens
+  five immediate movements plus a Fuel → Catering → Baggage → Boarding timeline. Its
+  `ALL MOVEMENTS` switch keeps main's six-hour movement history and scrolling accessible;
+  Map opens
   with one real operable destination dossier; Fleet opens with an aircraft selected and a
   three-option gated market; Career leads with a four-stage capability roadmap, one next
   milestone and a quiet achievements strip. No simulation, command, economy, save or data
   source changed.
-  - **Evidence:** HUD plus presentation layout EditMode **160/160**, including 320×240;
+  - **Evidence:** HUD plus presentation layout EditMode **164/164**, including 320×240;
     packaged Mac Operations inspected at 1225×768 and 800×600 after rebasing over stand
     choice, with the other three workspaces inspected at both sizes before rebase. Full
-    EditMode **983/991**: exactly main's eight known apron-density/schedule failures, no HUD
-    failure. The tiny-window toast now hides if it cannot clear Today's Priority.
+    EditMode **987/995** after the final history switch: exactly main's eight known
+    apron-density/schedule failures, no HUD failure. The tiny-window toast hides when it
+    cannot clear Today's Priority; with a workspace open, toast feedback sits beside it.
   - **NEXT:** Bailey reviews PR #385 and the packaged screenshots; merge after visual approval.
 
 - **2026-09-22 Cursor — stand choice + longer Arrivals/Departures (PR #378, ADR 0103).**

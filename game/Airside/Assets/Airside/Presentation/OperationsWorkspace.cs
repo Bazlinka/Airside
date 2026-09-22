@@ -70,12 +70,13 @@ namespace Airside.Presentation
         public bool ShowsEstimate =>
             EstimatedTime.Length > 0 && EstimatedTime != "—" && EstimatedTime != ScheduledTime;
 
-        public HudTone StatusTone => Severity switch
-        {
-            StatusSeverity.Warning => HudTone.Negative,
-            StatusSeverity.Attention => HudTone.Caution,
-            _ => HudTone.Default
-        };
+        public HudTone StatusTone => Status.IndexOf("delay", StringComparison.OrdinalIgnoreCase) >= 0
+                                     || Status.IndexOf("late", StringComparison.OrdinalIgnoreCase) >= 0
+            ? HudTone.Negative
+            : Status.StartsWith("Ready", StringComparison.OrdinalIgnoreCase)
+              || Status.StartsWith("Completed", StringComparison.OrdinalIgnoreCase)
+                ? HudTone.Positive
+                : Severity >= StatusSeverity.Attention ? HudTone.Caution : HudTone.Default;
     }
 
     /// <summary>One player exception or imminent commitment, pinned above the board.</summary>
@@ -92,7 +93,9 @@ namespace Airside.Presentation
         public string Text { get; }
         public StatusSeverity Severity { get; }
 
-        public HudTone Tone => Severity == StatusSeverity.Warning ? HudTone.Negative : HudTone.Caution;
+        public HudTone Tone => Text.IndexOf("delay", StringComparison.OrdinalIgnoreCase) >= 0
+                               || Text.IndexOf("late", StringComparison.OrdinalIgnoreCase) >= 0
+            ? HudTone.Negative : HudTone.Caution;
     }
 
     /// <summary>One turnaround stage on the selected-flight pane.</summary>
@@ -876,7 +879,8 @@ namespace Airside.Presentation
         public const float SubordinateAlpha = 0.62f;
 
         public static void Paint(HudDrawList into, OperationsWorkspaceModel model,
-            OperationsWorkspaceLayout layout, string selectedRegistration, int scrollRow)
+            OperationsWorkspaceLayout layout, string selectedRegistration, int scrollRow,
+            bool allMovements = false)
         {
             if (into == null || model == null)
                 return;
@@ -887,7 +891,7 @@ namespace Airside.Presentation
             PaintDayStrip(into, model, layout);
             PaintAttention(into, model, layout);
             PaintTabs(into, model, layout);
-            PaintBoard(into, model, layout, selectedRegistration, scrollRow);
+            PaintBoard(into, model, layout, selectedRegistration, scrollRow, allMovements);
             PaintDetail(into, model, layout);
             PaintFooter(into, model, layout);
         }
@@ -987,13 +991,15 @@ namespace Airside.Presentation
         }
 
         private static void PaintBoard(HudDrawList into, OperationsWorkspaceModel model,
-            OperationsWorkspaceLayout layout, string selectedRegistration, int scrollRow)
+            OperationsWorkspaceLayout layout, string selectedRegistration, int scrollRow,
+            bool allMovements)
         {
             var header = layout.ColumnHeader;
-            into.Caption(new HudBox(header.X, header.Y + 4f, header.Width * 0.7f, 16f),
-                "IMMEDIATE MOVEMENTS");
-            into.Caption(new HudBox(header.X + header.Width * 0.7f, header.Y + 4f,
-                    header.Width * 0.3f, 16f), "LIVE / NEXT", HudTone.Muted);
+            into.Caption(new HudBox(header.X, header.Y + 4f, header.Width - 140f, 16f),
+                allMovements ? "ALL MOVEMENTS" : "IMMEDIATE MOVEMENTS");
+            into.Button(new HudBox(header.Right - 136f, header.Y, 136f, 21f),
+                allMovements ? "LIVE APRON" : "ALL MOVEMENTS", HudAction.ToggleMovements,
+                HudButtonStyle.Secondary);
             into.Hairline(new HudBox(layout.Board.X, header.Bottom - 1f, layout.Board.Width, 1f));
 
             if (model.Rows.Count == 0)
@@ -1005,29 +1011,34 @@ namespace Airside.Presentation
                 return;
             }
 
-            // Keep the underlying board complete, but present only the metal and player
-            // commitments that matter now. This is a lens over live data, never a second
-            // timetable or a change to simulation state.
+            // The compact apron is a lens over the complete live board. Players can
+            // explicitly open All Movements to inspect the longer arrivals/departures
+            // history and scroll it using the existing board control.
             var relevant = new List<int>();
-            // First: the player's decision, the explicit selection and anything genuinely
-            // late/blocked. These are the apron, not background airport ambience.
-            for (var i = 0; i < model.Rows.Count; i++)
+            if (allMovements)
             {
-                var row = model.Rows[i];
-                if ((row.IsPlayer && !row.IsPast) || row.Severity >= StatusSeverity.Attention
-                                                  || row.Registration == selectedRegistration)
+                for (var i = 0; i < model.Rows.Count; i++)
                     relevant.Add(i);
             }
-            // Then add only enough live context to make the apron feel inhabited. The
-            // complete movement collection remains in the model and Arrivals/Departures
-            // keep their existing meanings; the HUD deliberately declines to become FIDS.
-            for (var i = 0; i < model.Rows.Count && relevant.Count < 5; i++)
-                if (model.Rows[i].OnField && !relevant.Contains(i))
-                    relevant.Add(i);
+            else
+            {
+                // First: player commitments, explicit selection and genuine exceptions.
+                for (var i = 0; i < model.Rows.Count; i++)
+                {
+                    var row = model.Rows[i];
+                    if ((row.IsPlayer && !row.IsPast) || row.Severity >= StatusSeverity.Attention
+                                                      || row.Registration == selectedRegistration)
+                        relevant.Add(i);
+                }
+                // Then only enough live context to make the apron feel inhabited.
+                for (var i = 0; i < model.Rows.Count && relevant.Count < 5; i++)
+                    if (model.Rows[i].OnField && !relevant.Contains(i))
+                        relevant.Add(i);
+            }
             if (relevant.Count == 0)
                 relevant.Add(model.FirstActiveRowIndex < model.Rows.Count ? model.FirstActiveRowIndex : 0);
 
-            var first = 0;
+            var first = allMovements ? Math.Max(0, Math.Min(scrollRow, relevant.Count - 1)) : 0;
             var last = Math.Min(relevant.Count, first + layout.VisibleRows);
 
             for (var visible = first; visible < last; visible++)
@@ -1078,6 +1089,11 @@ namespace Airside.Presentation
 
                 into.Hotspot(box, HudAction.Select(row.Registration));
             }
+
+            if (allMovements && last < relevant.Count)
+                into.Text(new HudBox(layout.Board.X, layout.Board.Bottom - 16f,
+                        layout.Board.Width, 16f), $"{relevant.Count - last} more below · scroll to browse",
+                    11f, HudTone.Muted, HudTextStyle.Caption);
 
         }
 
@@ -1174,7 +1190,7 @@ namespace Airside.Presentation
                     HudAction.Primary, HudButtonStyle.Primary);
             if (model.CanCancel)
                 into.Button(new HudBox(pane.X, buttonY + 42f, pane.Width, 30f), "CANCEL", HudAction.Cancel,
-                    HudButtonStyle.Destructive);
+                    HudButtonStyle.Secondary);
         }
 
         private static void PaintFooter(HudDrawList into, OperationsWorkspaceModel model,

@@ -64,6 +64,10 @@ namespace Airside.Presentation
                 case "fleet": SetWorkspace(HudWorkspace.Fleet); break;
                 case "flights":
                 case "operations": SetWorkspace(HudWorkspace.Operations); break;
+                case "operations-all":
+                    _operationsAllMovements = true;
+                    SetWorkspace(HudWorkspace.Operations);
+                    break;
                 case "map": OpenPlanner(null); break;
                 case "contracts": SetWorkspace(HudWorkspace.Contracts); break;
                 case "stats": SetWorkspace(HudWorkspace.Stats); break;

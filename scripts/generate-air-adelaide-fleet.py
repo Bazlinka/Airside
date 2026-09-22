@@ -34,6 +34,8 @@ def _load(name: str, filename: str):
 b737 = _load("airside_737_8_for_adelaide", "generate-air-005-narrowbody-737-8.py")
 a350 = _load("airside_a350_for_adelaide", "generate-air-009-a350-900.py")
 b78x = _load("airside_787_10_for_adelaide", "generate-air-010-787-10.py")
+e190 = _load("airside_e190_for_adelaide", "generate-air-013-e190.py")
+a223 = _load("airside_a220_300_for_adelaide", "generate-air-014-a220-300.py")
 
 
 SPECS = {
@@ -92,14 +94,16 @@ def boeing_737_800_meshes():
 
 
 def embraer_e190_meshes():
-    # Compact 2+2 regional-jet cabin and proportionally smaller wing/engines.
-    return _narrowbody(28.72, 10.55, 36.24, 3.01)
+    # Lofted from its own tables by AIR-013, not scaled from the 737. A squashed 737 kept a
+    # six-abreast section, a 737 wing planform and 737 nacelle proportions at E-Jet size.
+    return e190.e190_meshes()
 
 
 def airbus_a220_300_meshes():
-    # Purpose-sized five-abreast cabin.  The A220 retains larger geared-fan
-    # nacelles than the E190 and its own 38.7 x 35.1 m proportions.
-    return _narrowbody(35.10, 11.50, 38.70, 3.50)
+    # Lofted from its own tables by AIR-014, not scaled from the 737. The A220's slim
+    # five-abreast tube, high-aspect-ratio raked wing and oversized geared-fan nacelles
+    # cannot come out of an axis scale.
+    return a223.a220_300_meshes()
 
 
 def airbus_a330_900neo_meshes():

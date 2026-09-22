@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AIR-011 — tx_aircraft_skin_*_v02: a real airliner skin at a known metre scale.
+"""tx_aircraft_skin_*_v02 — a real airliner skin at a known metre scale.
 
 The v01 set is 256x256, its basecolor is near-flat white (std 6.5/255) and its mask is a
 single constant value, so it carried no panel, rivet or wear information at all. It could

@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **The E190 and A220-300 are real aircraft now, not scaled 737s (ADR 0098).** Both were built
+  by taking the 737-8 mesh and scaling it on three axes, which reproduces a bounding box and
+  nothing else. Each now has its own generator lofted from its own dimensions: the E-Jet's
+  four-abreast tube, aft wing, deep root fairing, small CF34-class engines and canted winglet
+  fences; the A220's five-abreast tube, long pointed drooped nose, high-aspect-ratio wing with
+  **raked tips and no vertical fence**, and oversized geared-fan nacelles. Envelopes, nose
+  datum and tyre radii are unchanged, so no C# or save change.
+
 - **Aircraft skin finally has surface detail (ADR 0097).** The aircraft glTFs carry no UVs, so
   the loader generates them — and the generic unwrap normalised each part's own bounding box to
   0..1, making texel density vary by over a hundred times across one airframe while unwrapping

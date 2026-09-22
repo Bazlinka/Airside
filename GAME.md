@@ -1,5 +1,32 @@
 ## Where to resume — session handoff
 
+- **2026-09-22 Claude — E190 and A220-300 own geometry (branch
+  `feature/aircraft-surface-detail`, ADR 0098).** Both types were built by taking the AIR-005
+  737-8 mesh and scaling it on three axes, which reproduces a bounding box and nothing else:
+  a 737 squashed to E-Jet span still has a six-abreast section, a 737 wing planform, 737
+  nacelle proportions and 737 split-scimitar winglets. Each now has a dedicated generator
+  lofted from its own tables — `scripts/generate-air-013-e190.py` and
+  `scripts/generate-air-014-a220-300.py`.
+  - **E190:** 3.01 m four-abreast shallow double bubble, wing set well aft with a deep root
+    fairing, CF34-class 1.16 m fan in slim cowls, small canted winglet fences, 0.787 m frame
+    pitch, tall fin with a long dorsal.
+  - **A220-300:** 3.50 m five-abreast tube, long finely pointed strongly drooped nose,
+    high-aspect-ratio wing with **raked tips and no vertical fence at all**, PW1500G-class
+    1.85 m fan in short fat cowls.
+  - The fleet script still regenerates all six Adelaide types from one entry point; for these
+    two it calls the dedicated builders instead of `_narrowbody`.
+  - Envelopes, the nose-stop datum at local z=0 and the tyre radii are all preserved, so
+    `AircraftVisualProfiles.EmbraerE190` / `AirbusA220300` stay correct with **no C# change**.
+    Part counts fall (179 → 154 and 179 → 162) because the scaled copy carried 737 furniture
+    these types do not have.
+  - **Evidence:** `test-air-adelaide-fleet.py` passes (all six envelopes exact); each generator
+    validates its own envelope, tyres at y=0, nose datum, tail station and fuselage half-width
+    and refuses to write otherwise; `test-aircraft-connectivity.py` clean on all 13; top-down
+    renders of E190 / A220 / 737-8 compared and now show three distinct planforms, spans,
+    fuselage widths, nacelle sizes and tip devices; thumbnails regenerated.
+  - **NEXT:** the A320, A330-900 and 787-9 are still axis-scaled copies (of the 737-8, A350-900
+    and 787-10). Same treatment, one type at a time.
+
 - **2026-09-22 Claude — aircraft surface detail (branch `feature/aircraft-surface-detail`,
   stacked on `feature/aircraft-visual-pass`, ADR 0097).** Why the aircraft read as flat plastic:
   - **They had no usable UVs.** The glTFs carry `POSITION` only, so `ArtGltfLoader` generates

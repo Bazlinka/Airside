@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Daily Service Pattern (ADR 0101).** Each campaign chapter now has a local-day "fly this
+  today" target on the objective card (`TODAY · Kingscote 0/2`, and so on). Completing it
+  pays a once-per-Adelaide-day bonus via existing settlement keys; incomplete days just miss
+  the bonus. No new save schema.
+
 - **Buy aircraft → plan first flight.** Purchasing no longer stops at a toast. If the new
   airframe parks immediately, Fleet opens the Route Map with a career-suggested destination
   (active contract, then chapter target, then Kingscote) and tells you how long fuelling and

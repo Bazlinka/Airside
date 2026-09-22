@@ -1,12 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-22 Cursor — Daily Service Pattern (ADR 0101, branch
+  `feature/daily-service-pattern`).** Session-level TODAY loop per campaign chapter:
+  objective card shows `TODAY · … n/m`; completing the pattern pays a once-per-local-day
+  bonus via settlement keys. Wired on settle; EditMode tests in `DailyServiceTests`.
+  - **NEXT:** run `scripts/test-unity.sh` (or `test-domain.sh` first), play Chapter 1 for
+    two KGC rotations → bonus once; merge via PR. Then rebuild Mac app (still owed from
+    apron / buy→plan) and play apron + buy + TODAY line together.
+  - **Watch:** Chapter 4/5 patterns stay inactive until jet/widebody ownership.
+
 - **2026-09-22 Cursor — apron density + buy→plan merged (PR #381, ADR 0100).** On `main`
-  at `772eb3ce`. Opening keeps most AI on stands; ADL-shaped departure clusters with
-  doubles OK; "on field" = drawn metal; buy opens Map with chapter/contract suggestion
-  and names prep lead.
-  - **NEXT:** rebuild Mac app and play the apron + buy flow. Then Bailey picks the next
-    career slice: (1) more mid-tier contracts, (2) clearer unlock economy, or (3)
-    auto-offer "fly this for your contract" after park.
+  at merge of #381/#382. Opening keeps most AI on stands; ADL-shaped departure clusters;
+  buy opens Map with chapter/contract suggestion.
+  - **NEXT:** covered by Daily Service handoff above (rebuild + play).
 
 - **2026-09-22 Codex — live Adelaide weather and environment (ADR 0099, in main).**
   Open-Meteo presentation weather + full celestial sky on the real Adelaide path.

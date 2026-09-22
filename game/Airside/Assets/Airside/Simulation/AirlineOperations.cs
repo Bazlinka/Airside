@@ -1570,6 +1570,9 @@ namespace Airside.Simulation
             if (settlement == null)
                 return;
 
+            if (aircraft.Airline.IsPlayer)
+                DailyService.TryRecordAndAward(CareerState, PlayerOwnedTypes(), justFlown.Value, Clock, now);
+
             _recentSettlements.Add(settlement.Value);
             TotalSettlements++;
             if (_recentSettlements.Count > MaxRecentEvents)

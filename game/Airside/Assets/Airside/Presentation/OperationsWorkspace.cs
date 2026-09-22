@@ -140,6 +140,7 @@ namespace Airside.Presentation
         private readonly List<OperationsAttentionRow> _attention = new();
         private readonly List<OperationsPrepCheck> _prep = new();
         private readonly List<OperationsEventLine> _events = new();
+        private readonly List<StableId> _standChoices = new();
         private readonly List<FleetAircraft> _scratch = new();
         private readonly List<float> _dayDensity = new();
         private readonly List<float> _dayMarks = new();
@@ -167,6 +168,14 @@ namespace Airside.Presentation
 
         /// <summary>Kept at 0 — the board no longer lists timetable ghosts (ADR 0086).</summary>
         public int DayListedAheadCount { get; private set; }
+
+        /// <summary>
+        /// How far back completed movements stay on the Arrivals/Departures boards (seconds).
+        /// </summary>
+        public const long BoardHistorySeconds = 6 * 3600;
+
+        /// <summary>How many EVENT HISTORY lines the footer paints.</summary>
+        public const int MaxEventHistoryLines = 5;
 
         /// <summary>
         /// First board row that is not a muted past movement — used to open the list
@@ -199,6 +208,12 @@ namespace Airside.Presentation
         public IReadOnlyList<OperationsAttentionRow> Attention => _attention;
         public IReadOnlyList<OperationsEventLine> Events => _events;
 
+        /// <summary>Stands the selected player aircraft may take right now (AwaitingStand only).</summary>
+        public IReadOnlyList<StableId> StandChoices => _standChoices;
+
+        /// <summary>Suggested stand among <see cref="StandChoices"/>, or empty.</summary>
+        public string SuggestedStandId { get; private set; } = string.Empty;
+
         /// <summary>The registration the board and the detail pane agree on, or empty.</summary>
         public string SelectedRegistration { get; private set; } = string.Empty;
 
@@ -223,6 +238,7 @@ namespace Airside.Presentation
             _attention.Clear();
             _prep.Clear();
             _events.Clear();
+            _standChoices.Clear();
             _dayDensity.Clear();
             _dayMarks.Clear();
             Tab = tab;
@@ -234,6 +250,7 @@ namespace Airside.Presentation
             PrimaryAction = AircraftHudAction.None;
             PrimaryActionLabel = string.Empty;
             CanCancel = false;
+            SuggestedStandId = string.Empty;
             GroundStopped = false;
             DayProgress01 = 0f;
             DayCaption = string.Empty;
@@ -258,12 +275,19 @@ namespace Airside.Presentation
             FillAttention(operations, now, clock);
 
             if (events != null)
+            {
+                var cap = MaxEventHistoryLines;
                 foreach (var line in events)
+                {
+                    if (_events.Count >= cap)
+                        break;
                     _events.Add(line);
+                }
+            }
 
             var selected = Find(operations, selectedRegistration);
             if (selected != null)
-                FillSelection(selected, now, clock, operations.CareerState.BaseLevel);
+                FillSelection(selected, now, clock, operations);
         }
 
         private void FillDayProgress(AirlineOperations operations, SimulationTime now, AirlineClock clock)
@@ -358,9 +382,15 @@ namespace Airside.Presentation
             _scratch.Clear();
             var arrivals = tab == OperationsBoardTab.Arrivals;
             var nowMin = BoardClockMinutes(clock.TimeText(now));
+            var liveRegs = new HashSet<string>();
             foreach (var aircraft in operations.Fleet)
-                if (arrivals ? FlightBoard.IsArrival(aircraft) : FlightBoard.IsDeparture(aircraft))
-                    _scratch.Add(aircraft);
+            {
+                if (!(arrivals ? FlightBoard.IsArrival(aircraft) : FlightBoard.IsDeparture(aircraft)))
+                    continue;
+                _scratch.Add(aircraft);
+                liveRegs.Add(aircraft.Registration);
+            }
+
             FlightBoard.SortForBoard(_scratch, arrivals);
 
             foreach (var aircraft in _scratch)
@@ -397,11 +427,118 @@ namespace Airside.Presentation
                     isPast: livePast));
             }
 
+            AppendHistoryRows(operations, now, arrivals, clock, liveRegs, nowMin);
+
             _rows.Sort((a, b) =>
             {
                 var byTime = BoardClockMinutes(a.ScheduledTime).CompareTo(BoardClockMinutes(b.ScheduledTime));
                 return byTime != 0 ? byTime : string.CompareOrdinal(a.FlightNumber, b.FlightNumber);
             });
+        }
+
+        /// <summary>
+        /// Keep recent Landed / Departed movements on the board after the live aircraft
+        /// leaves that half — built from frozen <see cref="FleetEvent"/> snapshots so a
+        /// later state change cannot rewrite the route or time.
+        /// </summary>
+        private void AppendHistoryRows(AirlineOperations operations, SimulationTime now, bool arrivals,
+            AirlineClock clock, HashSet<string> liveRegs, int nowMin)
+        {
+            var cutoff = now.ElapsedSeconds - BoardHistorySeconds;
+            var seen = new HashSet<string>();
+            var events = operations.RecentEvents;
+            for (var i = events.Count - 1; i >= 0; i--)
+            {
+                var e = events[i];
+                if (e.At.ElapsedSeconds < cutoff)
+                    continue;
+                if (string.IsNullOrEmpty(e.Registration) || seen.Contains(e.Registration))
+                    continue;
+                if (liveRegs.Contains(e.Registration))
+                    continue;
+
+                string status;
+                string route;
+                if (arrivals)
+                {
+                    if (e.State is not (FleetState.Landing or FleetState.AwaitingStand
+                        or FleetState.TaxiIn or FleetState.AtStand))
+                        continue;
+                    status = "Landed";
+                    route = string.IsNullOrEmpty(e.DestinationCode)
+                        ? "→ ADL"
+                        : $"{e.DestinationCode} → ADL";
+                }
+                else
+                {
+                    if (e.State is not (FleetState.TakingOff or FleetState.Outbound))
+                        continue;
+                    status = "Departed";
+                    route = string.IsNullOrEmpty(e.DestinationCode)
+                        ? "ADL → —"
+                        : $"ADL → {e.DestinationCode}";
+                }
+
+                seen.Add(e.Registration);
+                var time = clock.TimeText(e.At);
+                var stand = string.IsNullOrEmpty(e.Stand.Value) ? "—" : StandNames.Short(e.Stand);
+                _rows.Add(new OperationsFlightRow(
+                    e.Registration,
+                    time,
+                    "—",
+                    e.Registration,
+                    route,
+                    stand,
+                    status,
+                    e.TypeName,
+                    e.AirlineName,
+                    string.IsNullOrEmpty(e.LiveryHex) ? AirsidePalette.ConcreteHex : e.LiveryHex,
+                    StatusSeverity.Normal,
+                    e.IsPlayer,
+                    hasProgress: false,
+                    progress01: 0f,
+                    onField: false,
+                    isPast: true));
+            }
+
+            // Also keep aircraft that are away (AtDestination) as muted Departed rows when the
+            // Outbound event has already rolled out of RecentEvents but they left recently.
+            if (arrivals)
+                return;
+            foreach (var aircraft in operations.Fleet)
+            {
+                if (aircraft.State != FleetState.AtDestination)
+                    continue;
+                if (liveRegs.Contains(aircraft.Registration) || seen.Contains(aircraft.Registration))
+                    continue;
+                if (aircraft.StateStartedAt.ElapsedSeconds < cutoff)
+                    continue;
+                seen.Add(aircraft.Registration);
+                var dest = aircraft.CurrentDestination;
+                var route = dest.HasValue ? $"ADL → {dest.Value.Code}" : "ADL → —";
+                var time = clock.TimeText(aircraft.StateStartedAt);
+                if (BoardClockMinutes(time) + 2 >= nowMin)
+                    continue;
+                _rows.Add(new OperationsFlightRow(
+                    aircraft.Registration,
+                    time,
+                    "—",
+                    FlightNumber.OrRegistration(aircraft),
+                    route,
+                    string.IsNullOrEmpty(aircraft.DepartureStand.Value)
+                        ? "—"
+                        : StandNames.Short(aircraft.DepartureStand),
+                    "Departed",
+                    aircraft.Type.Name,
+                    aircraft.Airline.Name,
+                    aircraft.Airline.LiveryHex,
+                    StatusSeverity.Normal,
+                    aircraft.Airline.IsPlayer,
+                    hasProgress: false,
+                    progress01: 0f,
+                    onField: false,
+                    isPast: true));
+            }
         }
 
         private static int BoardClockMinutes(string time)
@@ -485,8 +622,9 @@ namespace Airside.Presentation
         }
 
         private void FillSelection(FleetAircraft aircraft, SimulationTime now, AirlineClock clock,
-            PlayerBaseLevel baseLevel)
+            AirlineOperations operations)
         {
+            var baseLevel = operations.CareerState.BaseLevel;
             SelectedRegistration = aircraft.Registration;
             SelectedTypeName = aircraft.Type.Name;
             SelectedIsPlayer = aircraft.Airline.IsPlayer;
@@ -517,6 +655,21 @@ namespace Airside.Presentation
             PrimaryActionLabel = OperationsSummary.ActionLabel(PrimaryAction).ToUpperInvariant();
             CanCancel = aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand
                         && aircraft.Scheduled.HasValue;
+
+            if (aircraft.Airline.IsPlayer && aircraft.State == FleetState.AwaitingStand)
+            {
+                foreach (var stand in operations.AssignableStands(aircraft))
+                    _standChoices.Add(stand);
+                var suggested = operations.SuggestStand(aircraft);
+                SuggestedStandId = suggested?.Value ?? string.Empty;
+                // Stand buttons replace the single primary — keep AssignStand as a fallback
+                // label only when somehow no stands are listed.
+                if (_standChoices.Count > 0)
+                {
+                    PrimaryAction = AircraftHudAction.None;
+                    PrimaryActionLabel = string.Empty;
+                }
+            }
         }
 
 
@@ -560,6 +713,8 @@ namespace Airside.Presentation
         public const float DetailWidth = 248f;
         public const float DetailGap = 16f;
         public const float MinBoardWidth = 360f;
+        /// <summary>Taller than the shared shell footer so several EVENT HISTORY lines fit.</summary>
+        public const float EventFooterHeight = 118f;
 
         private OperationsWorkspaceLayout(HudBox surface, HudBox header, HudBox dayStrip, HudBox attention,
             HudBox tabs, HudBox board, HudBox detail, HudBox footer, float[] columns)
@@ -640,8 +795,15 @@ namespace Airside.Presentation
         public static OperationsWorkspaceLayout Create(HudBox surface, int attentionRows)
         {
             var header = HudShell.Header(surface);
-            var footer = HudShell.Footer(surface);
-            var body = HudShell.Body(surface, hasFooter: true);
+            var footer = surface.SliceBottom(EventFooterHeight);
+            // Match HudShell.Body padding, but stop above the taller event-history footer.
+            var top = surface.Y + HudShell.HeaderHeight + 1f;
+            var bottom = footer.Y;
+            var bodyHeight = bottom - top - 24f;
+            if (bodyHeight < 0f)
+                bodyHeight = 0f;
+            var body = new HudBox(surface.X + HudShell.SurfacePadding, top + 12f,
+                surface.Width - HudShell.SurfacePadding * 2f, bodyHeight);
 
             var y = body.Y;
             var dayStrip = new HudBox(body.X, y, body.Width, DayStripHeight);
@@ -946,6 +1108,27 @@ namespace Airside.Presentation
                 return;
             }
 
+            if (model.StandChoices.Count > 0)
+            {
+                into.Caption(new HudBox(pane.X, y, pane.Width, 14f), "CHOOSE STAND");
+                y += 18f;
+                for (var i = 0; i < model.StandChoices.Count; i++)
+                {
+                    var stand = model.StandChoices[i];
+                    var label = StandNames.Short(stand);
+                    var isBest = stand.Value == model.SuggestedStandId;
+                    var buttonLabel = isBest ? $"BEST · {label}" : label;
+                    var style = isBest ? HudButtonStyle.Primary : HudButtonStyle.Secondary;
+                    into.Button(new HudBox(pane.X, y, pane.Width, 30f), buttonLabel,
+                        HudAction.Stand(stand.Value), style);
+                    y += 34f;
+                    if (y + 34f > pane.Bottom)
+                        break;
+                }
+
+                return;
+            }
+
             // Under the content it belongs to, not pinned to the bottom of a tall pane —
             // an action marooned half a screen below its flight reads as unrelated to it.
             var stack = model.CanCancel ? 76f : 40f;
@@ -963,19 +1146,27 @@ namespace Airside.Presentation
         private static void PaintFooter(HudDrawList into, OperationsWorkspaceModel model,
             OperationsWorkspaceLayout layout)
         {
-            into.Hairline(HudShell.FooterRule(layout.Surface));
+            into.Hairline(new HudBox(layout.Surface.X + HudShell.SurfacePadding, layout.Footer.Y,
+                layout.Surface.Width - HudShell.SurfacePadding * 2f, 1f));
             var footer = layout.Footer.Inset(HudShell.SurfacePadding, 6f, HudShell.SurfacePadding, 5f);
             into.Caption(footer.WithHeight(13f), "EVENT HISTORY");
-            var lineBox = new HudBox(footer.X, footer.Y + 14f, footer.Width, 15f);
             if (model.Events.Count == 0)
             {
-                into.Text(lineBox, "Nothing yet today.", 11f, HudTone.Muted);
+                into.Text(new HudBox(footer.X, footer.Y + 16f, footer.Width, 15f),
+                    "Nothing yet today.", 11f, HudTone.Muted);
                 return;
             }
 
-            var line = model.Events[0];
-            into.Text(lineBox.WithWidth(52f), line.Time, 11f, HudTone.Muted);
-            into.Text(lineBox.Offset(58f, 0f).WithWidth(footer.Width - 58f), line.Text, 11f);
+            var y = footer.Y + 16f;
+            var lines = Math.Min(model.Events.Count, OperationsWorkspaceModel.MaxEventHistoryLines);
+            for (var i = 0; i < lines; i++)
+            {
+                var line = model.Events[i];
+                var lineBox = new HudBox(footer.X, y, footer.Width, 15f);
+                into.Text(lineBox.WithWidth(52f), line.Time, 11f, HudTone.Muted);
+                into.Text(lineBox.Offset(58f, 0f).WithWidth(footer.Width - 58f), line.Text, 11f);
+                y += 16f;
+            }
         }
     }
 }

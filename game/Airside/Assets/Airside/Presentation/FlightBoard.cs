@@ -229,27 +229,51 @@ namespace Airside.Presentation
             return clockText(aircraft.StateStartedAt);
         }
 
-        public static string EstimatedTime(FleetAircraft aircraft, Func<SimulationTime, string> clockText)
-        {
-            if (aircraft == null || clockText == null)
-                return "—";
-            return aircraft.StateEndsAt.HasValue ? clockText(aircraft.StateEndsAt.Value) : "—";
-        }
-
         /// <summary>
         /// The clock value a movement reads under TIME on its half of the board: a
-        /// departure's pushback, an arrival's touchdown. Idle parked aircraft have none and
-        /// sort to the bottom.
+        /// departure's published pushback (or the moment it actually left), an arrival's
+        /// touchdown or ETA. Idle parked aircraft have none and sort to the bottom.
         /// </summary>
         public static long BoardTimeSeconds(FleetAircraft aircraft, bool arrivals)
         {
             if (aircraft == null)
                 return long.MaxValue;
             if (arrivals)
+            {
+                // Once on the ground, TIME is touchdown (when Landing ended / AwaitingStand began),
+                // not the remaining taxi-in ETA — that belongs under EST when it differs.
+                if (aircraft.State is FleetState.AwaitingStand or FleetState.TaxiIn)
+                    return aircraft.StateStartedAt.ElapsedSeconds;
                 return aircraft.StateEndsAt?.ElapsedSeconds ?? aircraft.StateStartedAt.ElapsedSeconds;
+            }
+
+            // Prefer the booked departure while it still exists; after pushback use the moment
+            // the aircraft left the stand (TaxiOut start) — DepartureStand is set then and
+            // StateStartedAt walks forward through Holding/Takeoff/Outbound.
+            if (aircraft.Scheduled.HasValue)
+                return aircraft.Scheduled.Value.DepartAt.ElapsedSeconds;
             if (aircraft.State == FleetState.AtStand)
-                return aircraft.Scheduled?.DepartAt.ElapsedSeconds ?? long.MaxValue;
+                return long.MaxValue;
+            if (aircraft.State is FleetState.TaxiOut or FleetState.HoldingShort)
+                return aircraft.StateStartedAt.ElapsedSeconds;
+            // TakingOff / Outbound: StateStartedAt is the start of that phase, not pushback.
+            // PushbackLatenessSeconds + a recovered schedule is unavailable; use phase start for
+            // TakingOff (closer to wheels-up) and keep Outbound on StateStartedAt (climb-out).
             return aircraft.StateStartedAt.ElapsedSeconds;
+        }
+
+        public static string EstimatedTime(FleetAircraft aircraft, Func<SimulationTime, string> clockText)
+        {
+            if (aircraft == null || clockText == null)
+                return "—";
+            // Departures board: an airborne ETA at the destination is not an "est" of the
+            // departure time — leave it blank so the TIME column stays honest.
+            if (aircraft.State is FleetState.Outbound or FleetState.TakingOff)
+                return "—";
+            // Arrivals still taxiing: show stand ETA under the touchdown time.
+            if (aircraft.State == FleetState.TaxiIn && aircraft.StateEndsAt.HasValue)
+                return clockText(aircraft.StateEndsAt.Value);
+            return aircraft.StateEndsAt.HasValue ? clockText(aircraft.StateEndsAt.Value) : "—";
         }
 
         public static string BoardTime(FleetAircraft aircraft, bool arrivals,

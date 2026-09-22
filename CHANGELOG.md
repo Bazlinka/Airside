@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Player can choose a stand after landing (ADR 0099).** Auto-stand no longer fires on the
+  landing tick. The selection card and Operations detail list assignable stands (BEST first);
+  after 90 s the tower still parks for you. Toast and first-flight guide match the real choice.
+
+- **Arrivals / Departures boards keep recent Landed and Departed rows (ADR 0099).** Six-hour
+  history from frozen fleet events; departure TIME no longer shows an airborne ETA as "est";
+  taxi-in shows touchdown plus stand ETA; EVENT HISTORY shows five airport lines.
+
 - **The E190 and A220-300 are real aircraft now, not scaled 737s (ADR 0098).** Both were built
   by taking the 737-8 mesh and scaling it on three axes, which reproduces a bounding box and
   nothing else. Each now has its own generator lofted from its own dimensions: the E-Jet's

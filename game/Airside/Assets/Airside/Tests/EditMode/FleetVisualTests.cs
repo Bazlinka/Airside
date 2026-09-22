@@ -54,8 +54,8 @@ namespace Airside.Tests
             Assert.That(seenLegs, Is.EqualTo(new[]
             {
                 FleetGroundLeg.Parked, FleetGroundLeg.TaxiOut, FleetGroundLeg.Lineup, FleetGroundLeg.None,
-                FleetGroundLeg.Vacate, FleetGroundLeg.TaxiIn, FleetGroundLeg.Parked
-            }), "the empty runway means no hold at the holding point; auto-stand skips the wait");
+                FleetGroundLeg.Vacate, FleetGroundLeg.AwaitingStand, FleetGroundLeg.TaxiIn, FleetGroundLeg.Parked
+            }), "empty runway means no hold; player stand window holds AwaitingStand before taxi-in");
             Assert.That(seenPhases, Is.EqualTo(new[]
             {
                 AircraftPhase.AtStand, AircraftPhase.TaxiOut, AircraftPhase.Takeoff, AircraftPhase.Departed,

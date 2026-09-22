@@ -28,11 +28,32 @@ namespace Airside.Simulation
             At = at;
             Aircraft = aircraft;
             State = state;
+            Registration = aircraft?.Registration ?? string.Empty;
+            AirlineName = aircraft?.Airline?.Name ?? string.Empty;
+            LiveryHex = aircraft?.Airline?.LiveryHex ?? string.Empty;
+            TypeName = aircraft?.Type?.Name ?? string.Empty;
+            IsPlayer = aircraft?.Airline?.IsPlayer ?? false;
+            var dest = aircraft?.CurrentDestination ?? aircraft?.Scheduled?.Destination;
+            DestinationCode = dest?.Code ?? string.Empty;
+            DestinationName = dest?.Name ?? string.Empty;
+            Stand = aircraft?.Stand ?? default;
+            if (string.IsNullOrEmpty(Stand.Value) && aircraft != null)
+                Stand = aircraft.DepartureStand;
         }
 
         public SimulationTime At { get; }
         public FleetAircraft Aircraft { get; }
         public FleetState State { get; }
+
+        /// <summary>Frozen at the moment of the event — safe for history after the aircraft moves on.</summary>
+        public string Registration { get; }
+        public string AirlineName { get; }
+        public string LiveryHex { get; }
+        public string TypeName { get; }
+        public bool IsPlayer { get; }
+        public string DestinationCode { get; }
+        public string DestinationName { get; }
+        public StableId Stand { get; }
     }
 
     /// <summary>
@@ -65,7 +86,14 @@ namespace Airside.Simulation
         /// push wait in a single-file queue even when the taxilane was empty.
         /// </summary>
         public const int MaxSimultaneousTaxiOutsPerApron = 2;
-        public const int MaxRecentEvents = 30;
+        public const int MaxRecentEvents = 80;
+
+        /// <summary>
+        /// How long a player aircraft waits at the exit for a manual stand choice before the
+        /// tower parks it on the suggested stand (ADR 0056). Fixed from
+        /// <see cref="FleetAircraft.StateStartedAt"/> so skip-to-next-event stays deterministic.
+        /// </summary>
+        public const long PlayerStandAutoSeconds = 90;
 
         // Ground times are measured off the real Adelaide routes with ATR speed limits
         // (AdelaideGround), never picked: a taxi takes as long as driving it takes.
@@ -1026,6 +1054,53 @@ namespace Airside.Simulation
         }
 
         /// <summary>
+        /// Stands the player (or any owner) may assign right now: free, type-fit, lead-in clear,
+        /// and inside the player's base allocation when that applies. Best/suggested stand is
+        /// listed first when it is among them.
+        /// </summary>
+        public IReadOnlyList<StableId> AssignableStands(FleetAircraft aircraft)
+        {
+            var list = new List<StableId>();
+            if (aircraft == null || aircraft.State != FleetState.AwaitingStand)
+                return list;
+
+            foreach (var stand in FreeStandsFor(aircraft.Type))
+            {
+                if (aircraft.Airline.IsPlayer && CareerState != null
+                    && !PlayerBase.CanUseStand(CareerState.BaseLevel, aircraft.Type, stand))
+                    continue;
+                if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, aircraft))
+                    continue;
+                list.Add(stand);
+            }
+
+            list.Sort((a, b) =>
+            {
+                var byTaxi = TaxiInSecondsTo(a, aircraft.Type, aircraft.AssignedRunway)
+                    .CompareTo(TaxiInSecondsTo(b, aircraft.Type, aircraft.AssignedRunway));
+                return byTaxi != 0 ? byTaxi : string.CompareOrdinal(a.Value, b.Value);
+            });
+
+            var suggested = SuggestStand(aircraft);
+            if (suggested.HasValue)
+            {
+                for (var i = 0; i < list.Count; i++)
+                {
+                    if (!list[i].Equals(suggested.Value))
+                        continue;
+                    if (i > 0)
+                    {
+                        list.RemoveAt(i);
+                        list.Insert(0, suggested.Value);
+                    }
+                    break;
+                }
+            }
+
+            return list;
+        }
+
+        /// <summary>
         /// Who holds a ground resource right now: a stand id, or a gate's
         /// <see cref="AdelaideGround.LeadInResource"/>. Null when free. Derived from aircraft state,
         /// so it is always consistent with a save and with catch-up.
@@ -1181,8 +1256,20 @@ namespace Airside.Simulation
                 if (aircraft.State is FleetState.HoldingShort or FleetState.HoldingForLanding)
                     runwayWanted = true;
                 // Waiting at the exit with a stand to go to: the taxi-in may be held for traffic.
-                if (aircraft.State == FleetState.AwaitingStand && SuggestStand(aircraft) != null)
-                    Consider(GroundTraffic.NextGrid(now));
+                // Player aircraft first get a fixed decision window to pick a stand themselves.
+                if (aircraft.State == FleetState.AwaitingStand)
+                {
+                    if (aircraft.Airline.IsPlayer)
+                    {
+                        var autoAt = aircraft.StateStartedAt.Advance(PlayerStandAutoSeconds);
+                        if (autoAt.CompareTo(now) > 0)
+                            Consider(autoAt);
+                        else if (SuggestStand(aircraft) != null)
+                            Consider(GroundTraffic.NextGrid(now));
+                    }
+                    else if (SuggestStand(aircraft) != null)
+                        Consider(GroundTraffic.NextGrid(now));
+                }
             }
 
             if (runwayWanted)
@@ -1776,6 +1863,12 @@ namespace Airside.Simulation
                     var chosen = SuggestStand(aircraft);
                     if (chosen == null)
                         return false;
+                    // Player: wait for AssignStand, or auto-park after PlayerStandAutoSeconds
+                    // so a missed toast never strands them (ADR 0056). The deadline is fixed
+                    // from StateStartedAt — any step size / skip lands on the same moment.
+                    if (aircraft.Airline.IsPlayer
+                        && now.ElapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds < PlayerStandAutoSeconds)
+                        return false;
                     // Ground control, as for a pushback: the taxi-in waits at the exit until its
                     // route is clear, moving only on the grid once it has had to wait.
                     if (!now.Equals(aircraft.StateStartedAt) && !GroundTraffic.OnGrid(now))
@@ -1797,9 +1890,11 @@ namespace Airside.Simulation
                     // A rotation begun with the check already overdue (ADR 0085).
                     if (aircraft.Airline.IsPlayer && aircraft.RotationsSinceCheck > Maintenance.IntervalRotations)
                         CareerState?.ApplyPunctuality(-Maintenance.OverduePenalty);
-                    aircraft.CurrentDestination = null;
                     aircraft.WentAroundThisTrip = false;
+                    // Transition before clearing the destination so the AtStand event still
+                    // carries the route for the Operations board history strip.
                     Transition(aircraft, FleetState.AtStand, now, null);
+                    aircraft.CurrentDestination = null;
                     if (aircraft.Airline.IsPlayer)
                         TrySettleFlight(aircraft, justFlown, now);
                     else

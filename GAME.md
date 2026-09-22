@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-22 Cursor — stand choice + longer Arrivals/Departures (branch
+  `cursor/stand-choice-and-ops-board-0487`, ADR 0099).** Bailey: cannot choose a stand when
+  flights land; Arrivals/Departures nowhere near long enough or accurate.
+  - **Stand choice:** player aircraft wait 90 s at the exit (`PlayerStandAutoSeconds`) for a
+    manual pick. Selection card and Operations detail list assignable stands with **BEST** on
+    the suggested bay/gate. After the deadline the tower auto-parks (ADR 0056 kept, landing-tick
+    race removed). First-flight guide step is ChooseStand again.
+  - **Boards:** six-hour history of Landed/Departed from frozen `FleetEvent` snapshots; departure
+    TIME no longer shows an airborne ETA as "est"; taxi-in shows touchdown + stand ETA; EVENT
+    HISTORY paints five airport lines in a taller Operations-only footer.
+  - **Evidence:** `scripts/test-domain.sh` **691 passed** (new `StandChoiceAndBoardHistoryTests`).
+    Unity EditMode / packaged play not run on this cloud agent (no Mac editor).
+  - **NEXT:** Mac Unity compile + playtest a return (pick a stand, confirm boards keep recent
+    Landed/Departed). Merge when happy.
+
 - **2026-09-22 Claude — E190 and A220-300 own geometry (branch
   `feature/aircraft-surface-detail`, ADR 0098).** Both types were built by taking the AIR-005
   737-8 mesh and scaling it on three axes, which reproduces a bounding box and nothing else:

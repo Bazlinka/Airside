@@ -108,6 +108,63 @@ namespace Airside.Tests
             Assert.That(model.Attention, Has.Count.EqualTo(1));
             Assert.That(model.Attention[0].Severity, Is.EqualTo(StatusSeverity.Normal));
             Assert.That(model.Attention[0].Text, Does.Contain("VH-PAX"));
+            Assert.That(model.Attention[0].Text, Does.Not.Contain("Departed"));
+        }
+
+        [Test]
+        public void Operations_ComingUpNeverShowsADepartedAircraft()
+        {
+            // Quiet COMING UP used to fall through to PriorityAircraft → FirstOrDefault(),
+            // so an airborne player jet became "VH-PAX · Departed · Mount Gambier".
+            var (clock, ops, plane) = HudTestAirline.Create();
+            Assert.That(ops.ScheduleDeparture(plane, HudTestAirline.Code("MGB"), new SimulationTime(600)).Accepted,
+                Is.True);
+            var outboundAt = 600 + AirlineOperations.TaxiOutSecondsFrom(plane.Stand)
+                             + AirlineOperations.TakeoffRunwaySeconds + 1;
+            for (var t = 60L; t <= outboundAt; t += 60)
+            {
+                clock.Set(new SimulationTime(t));
+                ops.Update();
+            }
+
+            Assert.That(plane.State, Is.EqualTo(FleetState.Outbound));
+
+            var model = new OperationsWorkspaceModel();
+            model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
+
+            Assert.That(model.Attention.Any(a => a.Text.Contains("Departed")), Is.False,
+                "COMING UP must not advertise a flight that has already left");
+            Assert.That(model.Attention.All(a => a.Severity >= StatusSeverity.Attention || !a.Text.Contains("Departed")),
+                Is.True);
+        }
+
+        [Test]
+        public void Operations_DepartedRowsDoNotShowDestinationEtaAsEst()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(11),
+                Airline.Player("Soak Air", "#1F3A93"));
+            var morning = ops.Clock.AtLocal(ops.Clock.LocalAt(clock.Now).Date.AddHours(7).AddMinutes(46));
+            var afternoon = ops.Clock.AtLocal(ops.Clock.LocalAt(clock.Now).Date.AddHours(13).AddMinutes(55));
+            DestinationCatalogue.TryFind("SIN", out var singapore);
+            var sia = ops.Airlines.First(a => a.Id.Value == "SIA");
+            ops.RestoreAircraft(
+                "VH-SIN", sia, AircraftType.Boeing78710, FleetState.Outbound,
+                morning, afternoon, default, default,
+                singapore, null, 0);
+
+            clock.Set(ops.Clock.AtLocal(ops.Clock.LocalAt(clock.Now).Date.AddHours(12).AddMinutes(45)));
+            ops.Update();
+
+            var model = new OperationsWorkspaceModel();
+            model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
+
+            var row = model.Rows.First(r => r.Registration == "VH-SIN");
+            Assert.That(row.Status, Is.EqualTo("Departed"));
+            Assert.That(row.ShowsEstimate, Is.False,
+                "destination ETA must not print as 'est' under a departed departure");
+            Assert.That(row.HasProgress, Is.False,
+                "enroute-to-destination progress is not a departures FIDS bar");
         }
 
         [Test]

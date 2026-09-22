@@ -17,6 +17,8 @@ namespace Airside.Tests
             Assert.That(settings.InvertOrbit, Is.False);
             Assert.That(settings.LiveTraffic, Is.False,
                 "live ADS-B stays off until the game can own the field");
+            Assert.That(settings.LiveWeather, Is.True,
+                "Adelaide presentation follows the fixed-location forecast and fails back offline");
             Assert.That(settings.CameraSpeedIndex, Is.EqualTo(1));
             Assert.That(settings.CameraSpeed, Is.EqualTo(0.65f));
         }

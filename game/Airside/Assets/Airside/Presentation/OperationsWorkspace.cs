@@ -217,7 +217,8 @@ namespace Airside.Presentation
         /// aircraft on the field; an unknown one simply leaves the detail pane empty.
         /// </summary>
         public void Rebuild(AirlineOperations operations, SimulationTime now, OperationsBoardTab tab,
-            string selectedRegistration, IReadOnlyList<OperationsEventLine> events)
+            string selectedRegistration, IReadOnlyList<OperationsEventLine> events,
+            string presentationWeather = null)
         {
             _rows.Clear();
             _attention.Clear();
@@ -250,7 +251,7 @@ namespace Airside.Presentation
             Subtitle = $"Adelaide  ·  {RunwayWeather.Label(operations.ActiveRunway)}"
                        + $"/{RunwayWeather.Label(operations.ActiveCrossRunway)}"
                        + $"  ·  {operations.Wind.Text}"
-                       + $"  ·  {Weather.Describe(operations.CurrentWeather)}"
+                       + $"  ·  {presentationWeather ?? Weather.Describe(operations.CurrentWeather)}"
                        + (GroundStopped ? "  ·  GROUND STOP" : string.Empty);
 
             FillDayProgress(operations, now, clock);

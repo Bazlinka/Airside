@@ -263,6 +263,8 @@ namespace Airside.Tests
             Assert.That(AirsidePrototype.StarFieldFade(0.42f), Is.EqualTo(0f));
             Assert.That(AirsidePrototype.StarFieldFade(0.34f), Is.LessThan(0.2f));
             Assert.That(AirsidePrototype.StarFieldFade(0.2f), Is.GreaterThan(AirsidePrototype.StarFieldFade(0.3f)));
+            Assert.That(AirsidePrototype.StarFieldFade(0f, 0.95f),
+                Is.LessThan(AirsidePrototype.StarFieldFade(0f, 0f) * 0.1f));
         }
     
         [Test]

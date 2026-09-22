@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Live Adelaide weather and complete sky (ADR 0099).** The fixed YPAD forecast now drives
+  presentation-only cloud cover, rain strength, fog visibility, wet surfaces, puddles, tyre
+  spray and wind-reactive visuals, with a 15-minute poll, two-hour stale limit, Options toggle,
+  visible Open-Meteo attribution and deterministic offline fallback. The real Adelaide scene
+  now actually builds its astronomical sun, moon and a denser one-draw-call star field; stars
+  follow the overview camera and fade behind daylight and cloud. Operational weather, runway
+  selection, clearances, saves and replay remain deterministic.
+
 - **Operations board honesty.** Departures no longer print destination arrival as "est" under
   a Departed row (the SIA488 07:46 / est 13:55 lie), and COMING UP never advertises an already-
   departed player aircraft. Enroute-to-destination progress bars stay off the departures FIDS.

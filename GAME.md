@@ -1,5 +1,19 @@
 ## Where to resume — session handoff
 
+- **2026-09-22 Codex — live Adelaide weather and environment (branch
+  `codex/live-weather-environment`, ADR 0099).** The real-scale Adelaide path omitted the
+  existing astronomical sun, moon and stars entirely; it now builds them. Stars are a denser
+  camera-centred single mesh and fade with dawn/dusk and cloud. Open-Meteo current conditions at
+  the fixed YPAD coordinate drive presentation cloud/rain/fog/wetness/wind, with 15-minute
+  polling, two-hour stale fallback, an Options toggle and on-screen attribution. Rain density is
+  continuous; Adelaide stands gain rain-only puddle accents and moving aircraft gain tyre spray.
+  Simulation weather, runway logic, commands, saves and replay are unchanged.
+  - **Licence:** private non-commercial prototype only on the free endpoint; public/commercial
+    release must use approved terms/endpoint or disable live weather.
+  - **NEXT:** compile and run Unity EditMode, then inspect a packaged Adelaide overview/follow
+    at day, sunset, clear night, overcast, rain and fog. Check puddle placement around regional
+    bays and terminal gates and tune only from the rendered result.
+
 - **2026-09-22 Cursor — Operations board honesty (branch `feature/board-honesty-fix`).**
   Bailey's Departures FIDS looked unreal: departed flights showed "est HH:MM" hours later
   (SIA488 07:46 / est 13:55), and COMING UP said "VH-PAX · Departed · Mount Gambier".

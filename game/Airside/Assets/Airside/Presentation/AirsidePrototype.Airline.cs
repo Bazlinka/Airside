@@ -2001,7 +2001,7 @@ namespace Airside.Presentation
             FillEventHistory();
             _operationsWorkspace.Rebuild(_operations, _clock.Now,
                 _flightsShowArrivals ? OperationsBoardTab.Arrivals : OperationsBoardTab.Departures,
-                _selectedAircraftId, _eventHistory);
+                _selectedAircraftId, _eventHistory, PresentationWeatherSummary);
 
             var layout = OperationsWorkspaceLayout.Create(surface, _operationsWorkspace.Attention.Count);
             var nowRow = _operationsWorkspace.FirstActiveRowIndex;

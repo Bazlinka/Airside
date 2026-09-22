@@ -1300,7 +1300,7 @@ namespace Airside.Presentation
                 SpinJetFans(view, viewParts.FanLeft, viewParts.FanRight, phase, engines);
                 UpdateNoseWheelSteering(viewParts.GearNose,
                     FleetNoseWheelSteering(flight, viewParts.WheelbaseMetres), PresentationDeltaTime);
-                RollLandingGearTires(view, phase, progress, aircraftType);
+                RollLandingGearTires(view, FleetTireRollSpeed(flight, phase, progress, aircraftType));
                 ApplyOleoSettling(view, phase, progress);
                 UpdateControlSurfaces(viewParts.ControlSurfaces, phase, progress, bank, PresentationDeltaTime,
                     engines.HasValue);
@@ -2122,7 +2122,8 @@ namespace Airside.Presentation
                     child.gameObject.SetActive(blend > 0.01f);
                     var discRenderer = child.GetComponent<Renderer>();
                     if (discRenderer != null)
-                        SetRendererColor(discRenderer, new Color(0.72f, 0.74f, 0.78f, 0.11f * blend));
+                        SetRendererColor(discRenderer, new Color(0.72f, 0.74f, 0.78f,
+                            AirsideReusableMotion.PropDiscPeakAlpha * blend));
                     continue;
                 }
 
@@ -2144,7 +2145,8 @@ namespace Airside.Presentation
                     child.gameObject.SetActive(blend > 0.01f);
                     var discRenderer = child.GetComponent<Renderer>();
                     if (discRenderer != null)
-                        SetRendererColor(discRenderer, new Color(0.26f, 0.34f, 0.39f, 0.18f * blend));
+                        SetRendererColor(discRenderer, new Color(0.26f, 0.34f, 0.39f,
+                            AirsideReusableMotion.JetFanDiscPeakAlpha * blend));
                     continue;
                 }
 
@@ -2157,12 +2159,14 @@ namespace Airside.Presentation
             }
         }
 
-        private void RollLandingGearTires(Transform aircraft, AircraftPhase phase, float progress, AircraftType type)
+        private void RollLandingGearTires(Transform aircraft, float rollSpeedMetresPerSecond)
         {
-            // Distance travelled / radius — stops naturally when ground speed is zero.
-            var groundSpeed = AirsideFlightPath.GroundSpeedMetresPerSecond(phase, progress, type);
-            if (groundSpeed <= 0.001f || PresentationDeltaTime <= 0f)
+            // Distance travelled / radius — stops naturally when ground speed is zero, and
+            // turns the other way on the tail-first pushback.
+            if (PresentationDeltaTime <= 0f || Mathf.Abs(rollSpeedMetresPerSecond) <= 0.001f)
                 return;
+            var direction = rollSpeedMetresPerSecond < 0f ? -1f : 1f;
+            var groundSpeed = Mathf.Abs(rollSpeedMetresPerSecond);
 
             var profile = PartsFor(aircraft).Profile;
             var namedChildren8 = AirsideNamedChildren.Get(aircraft);
@@ -2179,7 +2183,7 @@ namespace Airside.Presentation
                 var degrees = PresentationDeltaTime
                     * AirsideFlightPath.TireAngularDegreesPerSecond(groundSpeed, radius);
                 if (degrees > 0f)
-                    child.Rotate(Vector3.right, degrees, Space.Self);
+                    child.Rotate(Vector3.right, degrees * direction, Space.Self);
             }
         }
 
@@ -10811,7 +10815,7 @@ namespace Airside.Presentation
                 disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
                 // Thin glass disc — reads as motion blur, not a grey cylinder slab.
                 disc.transform.localScale = new Vector3(diameter * 1.02f, 0.0035f, diameter * 1.02f);
-                var discColor = new Color(0.72f, 0.74f, 0.78f, 0.11f);
+                var discColor = new Color(0.72f, 0.74f, 0.78f, AirsideReusableMotion.PropDiscPeakAlpha);
                 var discMat = AirsideMaterialLibrary.CreateShared(
                     discColor,
                     AirsideMaterialLibrary.SurfaceKind.Glass);
@@ -10854,7 +10858,7 @@ namespace Airside.Presentation
                 disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
                 var diameter = Mathf.Clamp(radius * 2.05f, 0.8f, 2.7f);
                 disc.transform.localScale = new Vector3(diameter, 0.003f, diameter);
-                var colour = new Color(0.26f, 0.34f, 0.39f, 0.18f);
+                var colour = new Color(0.26f, 0.34f, 0.39f, AirsideReusableMotion.JetFanDiscPeakAlpha);
                 var renderer = disc.GetComponent<Renderer>();
                 renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(colour,
                     AirsideMaterialLibrary.SurfaceKind.Glass);
@@ -11270,14 +11274,9 @@ namespace Airside.Presentation
             {
                 var child = namedChildren28[childIndex28];
                 var childName = childNames28[childIndex28];
-                var n = childName;
-                // Cover segmented turboprop fuselage parts (v04 + lofted cabin rings / nose rings).
-                if (n != "Fuselage" && n != "FuselageMid" && n != "Fuselage mid" && n != "FuselageAft" && n != "Fuselage aft"
-                    && n != "Nose"
-                    && n.IndexOf("fuselage", StringComparison.OrdinalIgnoreCase) < 0
-                    && n.IndexOf("nose", StringComparison.OrdinalIgnoreCase) < 0
-                    && n.IndexOf("cabin_ring", StringComparison.OrdinalIgnoreCase) < 0
-                    && n.IndexOf("tail_cone", StringComparison.OrdinalIgnoreCase) < 0)
+                // Covers segmented turboprop fuselage parts (v04 + lofted cabin rings / nose
+                // rings) while keeping the nose gear's own tyres, wheels and rims unpainted.
+                if (!AirsideAircraftParts.TakesFuselageLivery(childName))
                     continue;
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer == null)

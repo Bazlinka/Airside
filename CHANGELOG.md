@@ -1,5 +1,47 @@
 ## Unreleased
 
+- **The E190 and A220-300 are real aircraft now, not scaled 737s (ADR 0098).** Both were built
+  by taking the 737-8 mesh and scaling it on three axes, which reproduces a bounding box and
+  nothing else. Each now has its own generator lofted from its own dimensions: the E-Jet's
+  four-abreast tube, aft wing, deep root fairing, small CF34-class engines and canted winglet
+  fences; the A220's five-abreast tube, long pointed drooped nose, high-aspect-ratio wing with
+  **raked tips and no vertical fence**, and oversized geared-fan nacelles. Envelopes, nose
+  datum and tyre radii are unchanged, so no C# or save change.
+
+- **Aircraft skin finally has surface detail (ADR 0097).** The aircraft glTFs carry no UVs, so
+  the loader generates them — and the generic unwrap normalised each part's own bounding box to
+  0..1, making texel density vary by over a hundred times across one airframe while unwrapping
+  the fuselage straight down its own length. Aircraft kits now unwrap cylindrically in metres,
+  so one metre of skin is one metre of UV everywhere, and a new 1024² `tx_aircraft_skin_*_v02`
+  carries real frame (0.508 m), stringer, rivet and lap-joint spacing. The v01 it replaces was
+  256² with a near-flat basecolor and a completely constant mask.
+
+- **The 737-8 reads as a 737 (ADR 0097).** A blunt drooped radome in place of a near-conical
+  nose, a flight deck that reads as one wraparound band instead of two dark specks, a
+  flat-bottomed lower cowl, and a 4 cm fuselage waist removed. Four other narrowbodies
+  (A320, 737-800, E190, A220-300) are axis-scaled copies of this mesh, so all five improve.
+
+- **Aircraft wheels now turn while taxiing (ADR 0096).** The tyre roll read the circuit's
+  phase speed, which is non-zero only during the takeoff roll and the landing rollout, so
+  aircraft crossed the whole Adelaide taxi network on stationary wheels. Tyres now roll at
+  the same authored ground-leg pose speed that already moved the aircraft, stop when the
+  aircraft stops in a queue, and counter-rotate on the tail-first pushback.
+
+- **Aircraft no longer roll on livery-painted nose wheels (ADR 0096).** The fuselage livery
+  filter accepted any part whose name contained "nose", which swept up the nose gear's own
+  tyres, wheels, rims, oleo, scissors and doors. All 23 shipped aircraft models were
+  affected, between 1 and 12 parts each; landing gear now keeps its own rubber and metal.
+
+- **Propellers stay visible at power (ADR 0096).** Individual blades switch off once the
+  blur disc takes over, so at takeoff power the disc is the whole propeller — and at its
+  previous 0.11 peak alpha it was close to invisible. Peak disc opacity is now 0.30 for
+  propellers and 0.26 for turbofan intakes, still translucent.
+
+- **`scripts/test-domain.sh` builds again.** `MapLabelLayoutTests` and
+  `GroundSeparationTests` arrived without their harness entries, so the headless check had
+  been failing to compile. `MapLabelLayout` is UnityEngine-free and is now compiled and
+  covered; `GroundSeparationTests` needs `AirsideFlightPath` and is deferred to the Unity run.
+
 - **Busy route maps keep aircraft labels readable.** Nearby aircraft labels now fan into
   non-overlapping in-map slots; when a local cluster is truly full, lower-priority text is
   omitted while the aircraft icons remain visible.

@@ -107,8 +107,11 @@ namespace Airside.Presentation
             [SurfaceKind.Sand] = new Vector2(5f, 5f),
             [SurfaceKind.Metal] = new Vector2(2.5f, 1.5f),
             [SurfaceKind.PaintedMetal] = new Vector2(2f, 1.2f),
-            [SurfaceKind.AircraftSkin] = new Vector2(1.5f, 1.5f),
-            [SurfaceKind.AircraftGlazing] = new Vector2(1.2f, 1.2f),
+            // Aircraft UVs are metres (ArtGltfLoader.BuildMetreUvs), so these are repeats per
+            // metre, not repeats per part. One skin tile every two metres puts the authored
+            // frame pitch and rivet rows at roughly their real spacing on every airframe.
+            [SurfaceKind.AircraftSkin] = new Vector2(0.5f, 0.5f),
+            [SurfaceKind.AircraftGlazing] = new Vector2(0.5f, 0.5f),
             [SurfaceKind.PaintedLine] = new Vector2(3f, 1f),
             [SurfaceKind.Glass] = new Vector2(1.2f, 1.2f),
             [SurfaceKind.Rubber] = new Vector2(2.5f, 2.5f),

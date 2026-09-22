@@ -37,6 +37,16 @@ namespace Airside.Presentation
         public const float JetFanBlurFadeStartRpm = 700f;
         public const float JetFanBlurFadeEndRpm = 1800f;
 
+        /// <summary>
+        /// Peak opacity of the propeller and turbofan blur discs. The blades are switched off
+        /// once the blur is established, so the disc is the whole propeller at takeoff power —
+        /// at the old 0.11 it was so close to invisible that a turboprop at full power read as
+        /// having no propellers at all. Still translucent: the nacelle and the far wing stay
+        /// visible through it.
+        /// </summary>
+        public const float PropDiscPeakAlpha = 0.30f;
+        public const float JetFanDiscPeakAlpha = 0.26f;
+
         /// <summary>True when individual blades should hide behind the translucent disc.</summary>
         public static bool PropBlurActive(float rpm) => rpm >= PropHighRpmThreshold;
 

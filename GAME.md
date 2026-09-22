@@ -1,5 +1,93 @@
 ## Where to resume — session handoff
 
+- **2026-09-22 Claude — E190 and A220-300 own geometry (branch
+  `feature/aircraft-surface-detail`, ADR 0098).** Both types were built by taking the AIR-005
+  737-8 mesh and scaling it on three axes, which reproduces a bounding box and nothing else:
+  a 737 squashed to E-Jet span still has a six-abreast section, a 737 wing planform, 737
+  nacelle proportions and 737 split-scimitar winglets. Each now has a dedicated generator
+  lofted from its own tables — `scripts/generate-air-013-e190.py` and
+  `scripts/generate-air-014-a220-300.py`.
+  - **E190:** 3.01 m four-abreast shallow double bubble, wing set well aft with a deep root
+    fairing, CF34-class 1.16 m fan in slim cowls, small canted winglet fences, 0.787 m frame
+    pitch, tall fin with a long dorsal.
+  - **A220-300:** 3.50 m five-abreast tube, long finely pointed strongly drooped nose,
+    high-aspect-ratio wing with **raked tips and no vertical fence at all**, PW1500G-class
+    1.85 m fan in short fat cowls.
+  - The fleet script still regenerates all six Adelaide types from one entry point; for these
+    two it calls the dedicated builders instead of `_narrowbody`.
+  - Envelopes, the nose-stop datum at local z=0 and the tyre radii are all preserved, so
+    `AircraftVisualProfiles.EmbraerE190` / `AirbusA220300` stay correct with **no C# change**.
+    Part counts fall (179 → 154 and 179 → 162) because the scaled copy carried 737 furniture
+    these types do not have.
+  - **Evidence:** `test-air-adelaide-fleet.py` passes (all six envelopes exact); each generator
+    validates its own envelope, tyres at y=0, nose datum, tail station and fuselage half-width
+    and refuses to write otherwise; `test-aircraft-connectivity.py` clean on all 13; top-down
+    renders of E190 / A220 / 737-8 compared and now show three distinct planforms, spans,
+    fuselage widths, nacelle sizes and tip devices; thumbnails regenerated.
+  - **NEXT:** the A320, A330-900 and 787-9 are still axis-scaled copies (of the 737-8, A350-900
+    and 787-10). Same treatment, one type at a time.
+
+- **2026-09-22 Claude — aircraft surface detail (branch `feature/aircraft-surface-detail`,
+  stacked on `feature/aircraft-visual-pass`, ADR 0097).** Why the aircraft read as flat plastic:
+  - **They had no usable UVs.** The glTFs carry `POSITION` only, so `ArtGltfLoader` generates
+    UVs — and the generic unwrap normalises each part's own bounding box to 0..1 *and* drops the
+    part's longest axis. A 39.47 m fuselage got one texture repeat over its whole length while a
+    0.36 m window got one across 36 cm, and the fuselage was unwrapped looking down its own
+    length so every ring collapsed onto the same UV. The whole material system was wired up and
+    doing nothing. Aircraft kits now unwrap cylindrically in metres (`BuildMetreUvs`); other
+    kits are untouched, scoped by path.
+  - **The skin carried no detail.** `tx_aircraft_skin_v01` is 256² with a near-flat basecolor
+    (std 6.5/255) and a *constant* mask — no metallic or smoothness variation anywhere. New
+    1024² v02 authored as exactly 2.032 m square with frames at 0.508 m, stringers 0.254 m,
+    rivets 0.0635 m, lap joints 1.016 m; every pitch a harmonic of the frame pitch so it wraps
+    seamlessly. `PreferAuthoredMap` already prefers `_v02`, so nothing binds it by hand.
+  - **AIR-005 shape.** Blunt drooped radome (was a 0.30 m tip with 0.16 m of droop — a cone),
+    flight deck enlarged into one wraparound band, flat-bottomed lower cowl, and a 4 cm
+    fuselage waist at z=15.00 removed. The A320, 737-800, E190 and A220-300 are axis-scaled
+    copies of this mesh, so the same errors were showing five times over.
+  - **Evidence:** `scripts/test-domain.sh` **687 passed** (new `AircraftSkinUvTests` covers the
+    density contract against real fuselage/window dimensions); `test-air-005-737-8.py` and
+    `test-air-adelaide-fleet.py` pass with envelopes unchanged; all four v02 maps verified to
+    tile with no seam; regenerated AIR-005 inspected in multi-view render.
+  - **NEXT:** this is the change most likely to need tuning by eye. Compile in the Editor GUI,
+    then look at a packaged build at day/dusk/night: check the skin tile scale on the fuselage,
+    that the cylindrical unwrap's single seam is not landing somewhere obvious, and the disc
+    opacity from ADR 0096. Still open from the survey: the E190/A220/A320/A330/787-9 are
+    axis-scaled copies rather than their own geometry, which no texture work can disguise.
+
+- **2026-09-22 Claude — aircraft visual fidelity pass (branch
+  `feature/aircraft-visual-pass`, ADR 0096).** Presentation-only. Three real defects and one
+  tuning change, all on how the aircraft themselves read:
+  - **Taxiing wheels were frozen.** The tyre roll took its speed from
+    `AirsideFlightPath.GroundSpeedMetresPerSecond`, which returns zero for every phase except
+    the takeoff roll and the landing rollout. Aircraft crossed the entire Adelaide ground
+    network with stationary wheels. The roll now uses the authored ground-leg pose speed —
+    the same one that already positions the aircraft — so wheels turn while taxiing, stop
+    when the aircraft holds in a queue, and counter-rotate on the tail-first pushback.
+  - **Every aircraft had a livery-painted nose gear.** The fuselage livery filter matched any
+    part name containing "nose", which also caught `tire_nose_*`, `wheel_nose_*`,
+    `rim_nose_*`, `gear_oleo_nose`, `gear_scissors_nose`, `gear_door_nose` and `gear_nose`.
+    Diffed against the authored node names of all 23 runtime `.gltf` models: the fix removes
+    only landing-gear parts and newly paints nothing.
+  - **Propellers vanished at power.** Blades switch off once the blur disc establishes, and
+    the disc's 0.11 peak alpha was near-invisible. Now 0.30 (props) / 0.26 (fan intakes).
+  - **`scripts/test-domain.sh` did not compile on `main`** — `MapLabelLayoutTests` and
+    `GroundSeparationTests` landed without harness entries. `MapLabelLayout` is
+    UnityEngine-free and is now compiled and covered; `GroundSeparationTests` is deferred to
+    the Unity run.
+  - The two pure decisions live in `AirsideAircraftParts` (`TireRollMetresPerSecond`,
+    `TakesFuselageLivery`), so the headless harness covers them: **682 passed**, and the new
+    rules are mutation-checked (reverting either fails 11 tests).
+  - **Evidence and its limit:** `scripts/test-domain.sh` 682 passed. `scripts/test-unity.sh`
+    was attempted and **could not run on this Mac** — it hangs in the batchmode licensing
+    reconnect loop documented on `docs/build-mac-batchmode-dead-end` (8.5 min wall for 9 s of
+    CPU, `Channel LicenseClient-bailey.fleming doesn't exist`), so it was stopped. The harness
+    does not compile `AirsidePrototype*.cs`, so **the Unity compile of this branch is
+    unverified** and needs an Editor GUI run before merge.
+  - **NEXT:** compile in the Unity Editor GUI, then judge the disc opacity — the one change
+    that is a look judgement rather than a defect — on a packaged build at day/dusk/night,
+    with a follow-camera taxi to confirm the wheel roll rate reads correctly.
+
 - **2026-09-22 Codex — whole-game bug audit (branch
   `codex/fix-route-map-layout-test`, ADR 0095).** The initial repair sweep established that
   the 21 red tests were stale fixtures/assertions after baggage and base-progression changes,

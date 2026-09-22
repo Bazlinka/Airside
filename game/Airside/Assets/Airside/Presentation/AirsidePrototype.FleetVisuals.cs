@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Airside.Domain;
 using Airside.Simulation;
 using UnityEngine;
 
@@ -267,6 +268,26 @@ namespace Airside.Presentation
             if (!TryFleetGround(flight, out var aircraft, out var visual))
                 return null;
             return FleetGroundPose(aircraft, visual, 0f).Speed;
+        }
+
+        /// <summary>
+        /// Signed speed the tyres roll at: the real Adelaide ground-leg pose speed where one
+        /// applies, negative on the tail-first pushback, else the circuit's phase speed.
+        /// </summary>
+        private float FleetTireRollSpeed(CommercialFlight flight, AircraftPhase phase, float progress,
+            AircraftType type)
+        {
+            float? legSpeed = null;
+            var tailFirst = false;
+            if (TryFleetGround(flight, out var aircraft, out var visual))
+            {
+                var pose = FleetGroundPose(aircraft, visual, 0f);
+                legSpeed = pose.Speed;
+                tailFirst = pose.TailFirst;
+            }
+
+            return AirsideAircraftParts.TireRollMetresPerSecond(legSpeed, tailFirst,
+                AirsideFlightPath.GroundSpeedMetresPerSecond(phase, progress, type));
         }
 
         /// <summary>Visual steering angle from the current and near-future authored taxi poses.</summary>

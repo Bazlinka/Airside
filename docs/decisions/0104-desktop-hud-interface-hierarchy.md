@@ -28,7 +28,8 @@ hierarchy rather than replacing it or changing game state.
   begin folded away and remain accessible through a roster toggle.
 - Career leads with the four real base capability stages (Starter, Regional,
   Jet-gate, International), one next live milestone, and a restrained strip of
-  reached achievements.
+  reached achievements. Secondary operation metrics lose their card furniture;
+  the local-activity peek is limited to three rows without changing its model data.
 - Runway Ink surfaces remain translucent so the miniature airport and moving
   aircraft stay visibly behind every workspace.
 - Toast feedback moves to the strip beside an open workspace, leaving its title

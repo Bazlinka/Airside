@@ -10,7 +10,8 @@
   with one real operable destination dossier and rival route lines hidden by default;
   Fleet opens with an aircraft selected, other operators folded away, and a
   three-option gated market; Career leads with a four-stage capability roadmap, one next
-  milestone and a quiet achievements strip. No simulation, command, economy, save or data
+  milestone and a quiet achievements strip; its operation and local-activity summaries are
+  subordinate. No simulation, command, economy, save or data
   source changed. The first-flight guide now shares Today's Priority styling.
   - **Evidence:** HUD plus presentation layout EditMode **165/165**, including 320×240
     and a folded/revealed other-operator roster regression; packaged Mac Operations inspected

@@ -382,7 +382,7 @@ namespace Airside.Presentation
         {
             var available = LeftColumn.Bottom - StandingListY - 6f - 34f;
             var fit = available <= 0f ? 0 : (int)(available / StandingRowHeight);
-            return Math.Max(0, Math.Min(Math.Min(5, totalRows), fit));
+            return Math.Max(0, Math.Min(Math.Min(3, totalRows), fit));
         }
 
         public HudBox MilestonesCaption => RightColumn.WithHeight(CaptionHeight);
@@ -511,7 +511,6 @@ namespace Airside.Presentation
                 var column = i % 2;
                 var card = new HudBox(layout.LeftColumn.X + column * (cardWidth + 8f),
                     layout.LeftColumn.Y + StatsWorkspaceLayout.CaptionHeight + 6f + row * 27f, cardWidth, 23f);
-                into.Fill(card, HudTone.Default, 0.04f);
                 into.Text(card.Inset(8f, 4f, 6f, 0f), stats[i], i == 5 ? 10f : 12f,
                     i == 5 ? HudTone.Muted : HudTone.Default,
                     i == 0 || i == 2 ? HudTextStyle.Bold : HudTextStyle.Regular);
@@ -545,13 +544,13 @@ namespace Airside.Presentation
             var slot = layout.LeftColumn.Width / labels.Length;
             var lineY = layout.NextTierY + StatsWorkspaceLayout.CaptionHeight + 24f;
             into.Line(layout.LeftColumn.X + slot * 0.5f, lineY,
-                layout.LeftColumn.Right - slot * 0.5f, lineY, HudTone.Muted, 2f);
+                layout.LeftColumn.Right - slot * 0.5f, lineY, HudTone.Muted, 3f);
             for (var i = 0; i < labels.Length; i++)
             {
                 var x = layout.LeftColumn.X + slot * (i + 0.5f);
                 var tone = i < (int)model.CurrentBaseLevel ? HudTone.Positive
                     : i == (int)model.CurrentBaseLevel ? HudTone.Accent : HudTone.Muted;
-                into.Dot(x, lineY, i == (int)model.CurrentBaseLevel ? 18f : 13f, tone);
+                into.Dot(x, lineY, i == (int)model.CurrentBaseLevel ? 20f : 15f, tone);
                 into.Text(new HudBox(layout.LeftColumn.X + slot * i, lineY + 12f, slot, 15f), labels[i],
                     9f, tone, i == (int)model.CurrentBaseLevel ? HudTextStyle.Bold | HudTextStyle.Caption
                         : HudTextStyle.Caption, HudAlign.Center);

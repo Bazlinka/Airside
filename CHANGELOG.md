@@ -18,6 +18,8 @@
   tiny windows yield to the objective. Simulation, commands, saves and real data are unchanged.
   The first-flight guide shares the priority treatment; Map starts with rival routes hidden
   (one-click reveal), and Fleet starts with other operators folded away (one-click reveal).
+  Career's secondary operation and local activity summary is quieter so the real roadmap
+  and next milestone stay visually primary.
 
 - **Daily Service Pattern (ADR 0102).** Each campaign chapter now has a local-day "fly this
   today" target on the objective card (`TODAY · Kingscote 0/2`, and so on). Completing it

@@ -146,7 +146,7 @@ namespace Airside.Presentation
 
         /// <summary>
         /// Prefaces the objective progress line with the day's service pattern when active
-        /// (ADR 0101): "TODAY · Kingscote 1/2 · …".
+        /// (ADR 0102): "TODAY · Kingscote 1/2 · …".
         /// </summary>
         private static string WithToday(AirlineCareerState career, IEnumerable<FleetAircraft> playerFleet,
             AirlineClock clock, SimulationTime now, string progress)

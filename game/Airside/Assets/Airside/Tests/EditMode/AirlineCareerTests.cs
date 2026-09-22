@@ -169,7 +169,7 @@ namespace Airside.Tests
                 var fulfilled = rotation == definition.RequiredRotations;
                 var cost = FlightEconomics.DispatchCost(plane.Type, ops.DistanceKm(kingscote));
                 var pay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(kingscote));
-                // Chapter-1 day pattern pays once after the second Kingscote hop (ADR 0101).
+                // Chapter-1 day pattern pays once after the second Kingscote hop (ADR 0102).
                 // After the contract fulfils, Campaign.Current moves on — still count the bonus
                 // already banked under the chapter-1 key for this local day.
                 var dateKey = DailyService.DateKey(ops.Clock, clock.Now);
@@ -241,7 +241,7 @@ namespace Airside.Tests
             var fundsBeforeSave = ops.CareerState.Funds;
             var data = AirlineSave.Capture(ops);
             Assert.That(data.Version, Is.EqualTo(AirlineSaveData.CurrentVersion));
-            // Flight settlement + the day's first service-pattern hop key (ADR 0101).
+            // Flight settlement + the day's first service-pattern hop key (ADR 0102).
             Assert.That(data.ProcessedSettlementKeys, Has.Count.EqualTo(2));
             Assert.That(data.ProcessedSettlementKeys, Does.Contain(new SettlementId(plane.Registration, 1).Key));
             Assert.That(

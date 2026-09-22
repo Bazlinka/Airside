@@ -7,7 +7,7 @@ using Airside.Domain;
 namespace Airside.Simulation
 {
     /// <summary>
-    /// One local day's career service pattern for the current campaign chapter (ADR 0101).
+    /// One local day's career service pattern for the current campaign chapter (ADR 0102).
     /// Derived from settlement keys — no save schema of its own.
     /// </summary>
     public readonly struct DailyServicePattern
@@ -45,7 +45,7 @@ namespace Airside.Simulation
     }
 
     /// <summary>
-    /// Session-level "fly this today" pattern per campaign chapter (ADR 0101). Counts
+    /// Session-level "fly this today" pattern per campaign chapter (ADR 0102). Counts
     /// qualifying player rotations against once-per-local-day settlement keys; completing
     /// the pattern pays a small bonus (and +1 reliability) at most once that day.
     /// Incomplete at the end of the day pays nothing — the next local date resets the count.

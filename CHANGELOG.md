@@ -1,9 +1,15 @@
 ## Unreleased
 
-- **Daily Service Pattern (ADR 0101).** Each campaign chapter now has a local-day "fly this
+- **Daily Service Pattern (ADR 0102).** Each campaign chapter now has a local-day "fly this
   today" target on the objective card (`TODAY · Kingscote 0/2`, and so on). Completing it
   pays a once-per-Adelaide-day bonus via existing settlement keys; incomplete days just miss
   the bonus. No new save schema.
+
+- **macOS performance pass (ADR 0101).** Frames are paced to the game, not the panel: 60 fps
+  on ProMotion/120 Hz+ displays (Options → Frame rate · Display max to lift it) and ~30 fps
+  while the window is in the background. SSAO renders at half resolution, landing lamps cast
+  shadows only at night, static light tints stop rewriting every frame, and the per-aircraft
+  light pass no longer looks components up by type and name every frame.
 
 - **Buy aircraft → plan first flight.** Purchasing no longer stops at a toast. If the new
   airframe parks immediately, Fleet opens the Route Map with a career-suggested destination

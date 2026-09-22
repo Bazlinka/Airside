@@ -1,4 +1,4 @@
-# 0101 — Daily Service Pattern
+# 0102 — Daily Service Pattern
 
 Date: 22 September 2026. Bailey approved the career session loop after apron
 density / buy→plan (ADR 0100): chapters are unlock checklists and contracts are

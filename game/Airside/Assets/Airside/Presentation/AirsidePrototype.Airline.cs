@@ -912,6 +912,7 @@ namespace Airside.Presentation
 
         private void OnApplicationFocus(bool hasFocus)
         {
+            AirsideFramePacing.Apply(AirsideSettings.Current.UncappedFrameRate, SoakMode, hasFocus);
             if (!hasFocus)
                 SaveAirline();
         }

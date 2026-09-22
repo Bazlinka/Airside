@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Daily Service Pattern (ADR 0102).** Each campaign chapter now has a local-day "fly this
+  today" target on the objective card (`TODAY · Kingscote 0/2`, and so on). Completing it
+  pays a once-per-Adelaide-day bonus via existing settlement keys; incomplete days just miss
+  the bonus. No new save schema.
+
 - **macOS performance pass (ADR 0101).** Frames are paced to the game, not the panel: 60 fps
   on ProMotion/120 Hz+ displays (Options → Frame rate · Display max to lift it) and ~30 fps
   while the window is in the background. SSAO renders at half resolution, landing lamps cast

@@ -1,5 +1,16 @@
 ## Where to resume — session handoff
 
+- **2026-09-22 Cursor — Daily Service Pattern (ADR 0102, PR #384,
+  `feature/daily-service-pattern`).** Session-level TODAY loop per campaign chapter:
+  objective card shows `TODAY · … n/m`; completing the pattern pays a once-per-local-day
+  bonus via settlement keys. Wired on settle; EditMode `DailyServiceTests|AirlineCareerTests|
+  OperationsSummaryTests` **37/37**. Renumbered from 0101 because macOS perf already took
+  that number on main.
+  - **NEXT:** merge PR #384; play Chapter 1 for two KGC rotations → bonus once; rebuild Mac
+    app (still owed) and play apron + buy + TODAY together.
+  - **Watch:** Chapter 4/5 patterns stay inactive until jet/widebody ownership. Full
+    `test-unity.sh` still has pre-existing #381 apron-density failures on main.
+
 - **2026-09-22 Claude — macOS performance pass (branch `feature/macos-perf-pass`, ADR 0101).**
   Presentation only. Bailey: "give this airside app a macos optimisation pass — for performance".
   - **Frame pacing.** `vSyncCount = 1` rendered the full HDR/SSAO/MSAA/SMAA stack at 120 fps on
@@ -46,16 +57,9 @@
     bays and terminal gates and tune only from the rendered result.
 
 - **2026-09-22 Cursor — apron density + buy→plan merged (PR #381, ADR 0100).** On `main`
-  at `772eb3ce`. Opening keeps most AI on stands; ADL-shaped departure clusters with
-  doubles OK; "on field" = drawn metal; buy opens Map with chapter/contract suggestion
-  and names prep lead.
-  - **NEXT:** rebuild Mac app and play the apron + buy flow. Then Bailey picks the next
-    career slice: (1) more mid-tier contracts, (2) clearer unlock economy, or (3)
-    auto-offer "fly this for your contract" after park.
-
-- **2026-09-22 Codex — live Adelaide weather and environment (ADR 0099, in main).**
-  Open-Meteo presentation weather + full celestial sky on the real Adelaide path.
-  - **NEXT:** packaged Adelaide overview/follow at day/sunset/night/overcast/rain/fog.
+  at merge of #381/#382. Opening keeps most AI on stands; ADL-shaped departure clusters;
+  buy opens Map with chapter/contract suggestion.
+  - **NEXT:** covered by Daily Service handoff above (rebuild + play).
 
 - **2026-09-22 Cursor — Operations board honesty (branch `feature/board-honesty-fix`).**
   Bailey's Departures FIDS looked unreal: departed flights showed "est HH:MM" hours later

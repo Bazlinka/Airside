@@ -15,8 +15,15 @@
   - **Cached per-frame lookups** — the aircraft lights pass did `GetComponent<Light>`,
     `GetComponent<Renderer>` and `Transform.Find("White strobe")` per lamp per aircraft per
     frame, and the glow pass read `gameObject.name` twice per pane (string allocation each).
-  - **Evidence:** Unity EditMode **972/972** (new `AirsideFramePacingTests`,
-    `MacRenderBudgetTests`).
+  - **Evidence:** Unity EditMode **972/972** before rebasing (new `AirsideFramePacingTests`,
+    `MacRenderBudgetTests`). After rebasing onto #381/#382: 969/977. The same 8 fail on
+    `origin/main` without this change (949/957). **`main` is red from #381**: it did not compile
+    (`OperationsSummaryTests` lacked `using System.Linq`, fixed here), and once it compiles,
+    8 apron-density/schedule tests fail — `RegionalCarriersTests` ×3, `AdelaidePavementTests`
+    parked-Q400 clearance, `AirlineOperationsTests.AiAirline_FliesAllDay…`, `AirlineSoakTests`
+    30-day (A6-EVA booked 43253 s ahead), `AirportCurfewTests` evening start,
+    `GroundSeparationTests.BusyDay` (SF34 rollout × B38M taxi-out). Those belong to the #381
+    owner (ADR 0100), not this pass.
   - **NEXT:** packaged look on the ProMotion Mac: 60 fps focused / ~30 unfocused, half-res AO
     reads the same at overview and follow, dusk transition still smooth. If the Metal player
     ignores a vsync divisor > 1, fall back to `vSyncCount = 0` + `targetFrameRate` (ADR 0101).

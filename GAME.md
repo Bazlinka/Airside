@@ -1,5 +1,38 @@
 ## Where to resume — session handoff
 
+- **2026-09-22 Claude — aircraft visual fidelity pass (branch
+  `feature/aircraft-visual-pass`, ADR 0096).** Presentation-only. Three real defects and one
+  tuning change, all on how the aircraft themselves read:
+  - **Taxiing wheels were frozen.** The tyre roll took its speed from
+    `AirsideFlightPath.GroundSpeedMetresPerSecond`, which returns zero for every phase except
+    the takeoff roll and the landing rollout. Aircraft crossed the entire Adelaide ground
+    network with stationary wheels. The roll now uses the authored ground-leg pose speed —
+    the same one that already positions the aircraft — so wheels turn while taxiing, stop
+    when the aircraft holds in a queue, and counter-rotate on the tail-first pushback.
+  - **Every aircraft had a livery-painted nose gear.** The fuselage livery filter matched any
+    part name containing "nose", which also caught `tire_nose_*`, `wheel_nose_*`,
+    `rim_nose_*`, `gear_oleo_nose`, `gear_scissors_nose`, `gear_door_nose` and `gear_nose`.
+    Diffed against the authored node names of all 23 runtime `.gltf` models: the fix removes
+    only landing-gear parts and newly paints nothing.
+  - **Propellers vanished at power.** Blades switch off once the blur disc establishes, and
+    the disc's 0.11 peak alpha was near-invisible. Now 0.30 (props) / 0.26 (fan intakes).
+  - **`scripts/test-domain.sh` did not compile on `main`** — `MapLabelLayoutTests` and
+    `GroundSeparationTests` landed without harness entries. `MapLabelLayout` is
+    UnityEngine-free and is now compiled and covered; `GroundSeparationTests` is deferred to
+    the Unity run.
+  - The two pure decisions live in `AirsideAircraftParts` (`TireRollMetresPerSecond`,
+    `TakesFuselageLivery`), so the headless harness covers them: **682 passed**, and the new
+    rules are mutation-checked (reverting either fails 11 tests).
+  - **Evidence and its limit:** `scripts/test-domain.sh` 682 passed. `scripts/test-unity.sh`
+    was attempted and **could not run on this Mac** — it hangs in the batchmode licensing
+    reconnect loop documented on `docs/build-mac-batchmode-dead-end` (8.5 min wall for 9 s of
+    CPU, `Channel LicenseClient-bailey.fleming doesn't exist`), so it was stopped. The harness
+    does not compile `AirsidePrototype*.cs`, so **the Unity compile of this branch is
+    unverified** and needs an Editor GUI run before merge.
+  - **NEXT:** compile in the Unity Editor GUI, then judge the disc opacity — the one change
+    that is a look judgement rather than a defect — on a packaged build at day/dusk/night,
+    with a follow-camera taxi to confirm the wheel roll rate reads correctly.
+
 - **2026-09-22 Codex — whole-game bug audit (branch
   `codex/fix-route-map-layout-test`, ADR 0095).** The initial repair sweep established that
   the 21 red tests were stale fixtures/assertions after baggage and base-progression changes,

@@ -76,6 +76,57 @@ namespace Airside.Presentation
                    || partName.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
+        /// <summary>
+        /// Metres per second the tyres roll at, signed for direction of travel.
+        ///
+        /// <paramref name="groundLegSpeed"/> is the authored Adelaide taxi/pushback pose speed,
+        /// and is null only when the aircraft is flying the demo circuit path, where
+        /// <paramref name="circuitSpeed"/> applies. The circuit speed covers the takeoff roll
+        /// and the landing rollout and reports zero for every other phase, so using it alone
+        /// left the wheels stationary through every taxi, pushback and queue shuffle.
+        ///
+        /// Pushback is drawn tail-first, so its wheels have to turn the other way.
+        /// </summary>
+        public static float TireRollMetresPerSecond(float? groundLegSpeed, bool tailFirst, float circuitSpeed)
+        {
+            if (!groundLegSpeed.HasValue)
+                return circuitSpeed;
+            return tailFirst ? -groundLegSpeed.Value : groundLegSpeed.Value;
+        }
+
+        /// <summary>
+        /// True for the skin panels the fuselage livery sheet belongs on.
+        ///
+        /// The filter this replaced accepted any part whose name merely contained "nose",
+        /// which also matched the nose gear's own <c>Tire nose *</c>, <c>Wheel nose *</c>,
+        /// <c>Rim nose *</c> and <c>Gear nose</c> parts — so every liveried aircraft rolled
+        /// on livery-painted nose wheels. Anything carried by a landing-gear leg is skin,
+        /// not fuselage, and keeps its own rubber and metal.
+        /// </summary>
+        public static bool TakesFuselageLivery(string partName)
+        {
+            if (string.IsNullOrEmpty(partName))
+                return false;
+
+            // Landing gear first: it owns most of the "nose" names on the airframe.
+            if (RollsInPlace(partName))
+                return false;
+            if (partName.IndexOf("gear", StringComparison.OrdinalIgnoreCase) >= 0
+                || partName.IndexOf("strut", StringComparison.OrdinalIgnoreCase) >= 0
+                || partName.IndexOf("oleo", StringComparison.OrdinalIgnoreCase) >= 0
+                || partName.IndexOf("scissors", StringComparison.OrdinalIgnoreCase) >= 0
+                || partName.IndexOf("bay", StringComparison.OrdinalIgnoreCase) >= 0
+                || partName.IndexOf("fairing", StringComparison.OrdinalIgnoreCase) >= 0)
+                return false;
+
+            return partName is "Fuselage" or "FuselageMid" or "Fuselage mid"
+                       or "FuselageAft" or "Fuselage aft" or "Nose"
+                   || partName.IndexOf("fuselage", StringComparison.OrdinalIgnoreCase) >= 0
+                   || partName.IndexOf("nose", StringComparison.OrdinalIgnoreCase) >= 0
+                   || partName.IndexOf("cabin_ring", StringComparison.OrdinalIgnoreCase) >= 0
+                   || partName.IndexOf("tail_cone", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         private static bool StartsWith(string value, string prefix) =>
             value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
     }

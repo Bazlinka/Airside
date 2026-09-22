@@ -1,5 +1,26 @@
 ## Unreleased
 
+- **Aircraft wheels now turn while taxiing (ADR 0096).** The tyre roll read the circuit's
+  phase speed, which is non-zero only during the takeoff roll and the landing rollout, so
+  aircraft crossed the whole Adelaide taxi network on stationary wheels. Tyres now roll at
+  the same authored ground-leg pose speed that already moved the aircraft, stop when the
+  aircraft stops in a queue, and counter-rotate on the tail-first pushback.
+
+- **Aircraft no longer roll on livery-painted nose wheels (ADR 0096).** The fuselage livery
+  filter accepted any part whose name contained "nose", which swept up the nose gear's own
+  tyres, wheels, rims, oleo, scissors and doors. All 23 shipped aircraft models were
+  affected, between 1 and 12 parts each; landing gear now keeps its own rubber and metal.
+
+- **Propellers stay visible at power (ADR 0096).** Individual blades switch off once the
+  blur disc takes over, so at takeoff power the disc is the whole propeller — and at its
+  previous 0.11 peak alpha it was close to invisible. Peak disc opacity is now 0.30 for
+  propellers and 0.26 for turbofan intakes, still translucent.
+
+- **`scripts/test-domain.sh` builds again.** `MapLabelLayoutTests` and
+  `GroundSeparationTests` arrived without their harness entries, so the headless check had
+  been failing to compile. `MapLabelLayout` is UnityEngine-free and is now compiled and
+  covered; `GroundSeparationTests` needs `AirsideFlightPath` and is deferred to the Unity run.
+
 - **Busy route maps keep aircraft labels readable.** Nearby aircraft labels now fan into
   non-overlapping in-map slots; when a local cluster is truly full, lower-priority text is
   omitted while the aircraft icons remain visible.

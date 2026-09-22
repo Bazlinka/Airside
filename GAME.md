@@ -55,16 +55,11 @@
   - **NEXT:** compile and run Unity EditMode, then inspect a packaged Adelaide overview/follow
     at day, sunset, clear night, overcast, rain and fog. Check puddle placement around regional
     bays and terminal gates and tune only from the rendered result.
->>>>>>> origin/main
 
 - **2026-09-22 Cursor — apron density + buy→plan merged (PR #381, ADR 0100).** On `main`
   at merge of #381/#382. Opening keeps most AI on stands; ADL-shaped departure clusters;
   buy opens Map with chapter/contract suggestion.
   - **NEXT:** covered by Daily Service handoff above (rebuild + play).
-
-- **2026-09-22 Codex — live Adelaide weather and environment (ADR 0099, in main).**
-  Open-Meteo presentation weather + full celestial sky on the real Adelaide path.
-  - **NEXT:** packaged Adelaide overview/follow at day/sunset/night/overcast/rain/fog.
 
 - **2026-09-22 Cursor — Operations board honesty (branch `feature/board-honesty-fix`).**
   Bailey's Departures FIDS looked unreal: departed flights showed "est HH:MM" hours later

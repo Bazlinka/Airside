@@ -27,7 +27,8 @@ namespace Airside.Tests
         [Test]
         public void ChapterOne_TwoKingscoteHopsPayBonusOnce()
         {
-            var career = new AirlineCareerState();
+            // Start below the reliability cap so the day-pattern +1 is observable.
+            var career = new AirlineCareerState(reliability: 90);
             var kingscote = Code("KGC");
             var melbourne = Code("MEL");
 

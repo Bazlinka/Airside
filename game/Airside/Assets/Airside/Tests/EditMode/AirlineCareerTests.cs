@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Airside.Domain;
 using Airside.Simulation;
 using NUnit.Framework;
@@ -168,14 +169,24 @@ namespace Airside.Tests
                 var fulfilled = rotation == definition.RequiredRotations;
                 var cost = FlightEconomics.DispatchCost(plane.Type, ops.DistanceKm(kingscote));
                 var pay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(kingscote));
+                // Chapter-1 day pattern pays once after the second Kingscote hop (ADR 0101).
+                // After the contract fulfils, Campaign.Current moves on — still count the bonus
+                // already banked under the chapter-1 key for this local day.
+                var dateKey = DailyService.DateKey(ops.Clock, clock.Now);
+                var dayBonusPaid = ops.CareerState.ProcessedSettlementKeys
+                    .Contains(DailyService.BonusKey(dateKey, 1));
+                var dailyBonus = dayBonusPaid ? 200L : 0L;
                 var expectedFunds = AirlineCareerState.StartingFunds
                     + (long)rotation * (pay - cost + definition.PaymentPerRotation)
                     + (fulfilled ? definition.CompletionReward : 0)
                     // Fulfilling Kingscote after 3+ rotations also completes campaign chapter 1 (ADR 0083).
-                    + (fulfilled ? Campaign.Evaluate(ops.CareerState, ops.PlayerOwnedTypes())[0].Reward : 0);
+                    + (fulfilled ? Campaign.Evaluate(ops.CareerState, ops.PlayerOwnedTypes())[0].Reward : 0)
+                    + dailyBonus;
                 Assert.That(ops.CareerState.Funds, Is.EqualTo(expectedFunds), $"funds after rotation {rotation}");
                 Assert.That(ops.CareerState.Reliability, Is.EqualTo(Math.Min(100,
-                    AirlineCareerState.StartingReliability + rotation * definition.ReliabilityGainPerRotation)));
+                    AirlineCareerState.StartingReliability
+                    + rotation * definition.ReliabilityGainPerRotation
+                    + (dayBonusPaid ? DailyService.ReliabilityBonus : 0))));
 
                 if (fulfilled)
                 {
@@ -230,7 +241,12 @@ namespace Airside.Tests
             var fundsBeforeSave = ops.CareerState.Funds;
             var data = AirlineSave.Capture(ops);
             Assert.That(data.Version, Is.EqualTo(AirlineSaveData.CurrentVersion));
-            Assert.That(data.ProcessedSettlementKeys, Has.Count.EqualTo(1));
+            // Flight settlement + the day's first service-pattern hop key (ADR 0101).
+            Assert.That(data.ProcessedSettlementKeys, Has.Count.EqualTo(2));
+            Assert.That(data.ProcessedSettlementKeys, Does.Contain(new SettlementId(plane.Registration, 1).Key));
+            Assert.That(
+                data.ProcessedSettlementKeys.Count(k => k != null && k.StartsWith("dailyservice:", StringComparison.Ordinal)),
+                Is.EqualTo(1));
 
             var resumedClock = new ManualSimulationClock(clock.Now);
             var resumed = AirlineSave.Restore(data, resumedClock);

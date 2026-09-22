@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Player can choose a stand after landing (ADR 0103).** Auto-stand no longer fires on the
+  landing tick. The selection card and Operations detail list assignable stands (BEST first);
+  after 90 s the tower still parks for you. Toast and first-flight guide match the real choice.
+
+- **Arrivals / Departures boards keep recent Landed and Departed rows (ADR 0103).** Six-hour
+  history from frozen fleet events; departure TIME no longer shows an airborne ETA as "est";
+  taxi-in shows touchdown plus stand ETA; EVENT HISTORY shows five airport lines.
+
 - **Daily Service Pattern (ADR 0102).** Each campaign chapter now has a local-day "fly this
   today" target on the objective card (`TODAY · Kingscote 0/2`, and so on). Completing it
   pays a once-per-Adelaide-day bonus via existing settlement keys; incomplete days just miss
@@ -41,7 +49,6 @@
 - **Operations board honesty.** Departures no longer print destination arrival as "est" under
   a Departed row (the SIA488 07:46 / est 13:55 lie), and COMING UP never advertises an already-
   departed player aircraft. Enroute-to-destination progress bars stay off the departures FIDS.
-
 - **The E190 and A220-300 are real aircraft now, not scaled 737s (ADR 0098).** Both were built
   by taking the 737-8 mesh and scaling it on three axes, which reproduces a bounding box and
   nothing else. Each now has its own generator lofted from its own dimensions: the E-Jet's

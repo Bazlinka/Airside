@@ -43,7 +43,8 @@ namespace Airside.Simulation
                 FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff => GuideStep.Departing,
                 FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound => GuideStep.Away,
                 FleetState.HoldingForLanding or FleetState.Landing or FleetState.GoAround => GuideStep.Landing,
-                FleetState.AwaitingStand or FleetState.TaxiIn => GuideStep.TaxiingIn,
+                FleetState.AwaitingStand => GuideStep.ChooseStand,
+                FleetState.TaxiIn => GuideStep.TaxiingIn,
                 _ => GuideStep.Complete
             };
         }

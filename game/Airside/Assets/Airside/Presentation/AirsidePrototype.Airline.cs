@@ -597,6 +597,7 @@ namespace Airside.Presentation
 
         private GUIStyle _hudPrimaryButton;
         private GUIStyle _hudDestructiveButton;
+        private GUIStyle _hudSecondaryButton;
 
         /// <summary>
         /// Slim persistent strip: airline, Adelaide time, funds, reliability, tier and the
@@ -742,7 +743,7 @@ namespace Airside.Presentation
                 GuideStep.Landing => ("5 · Coming home",
                     $"The tower is bringing {reg} in to land. Click the aircraft on final (or Follow) to watch the touchdown."),
                 GuideStep.ChooseStand => ("6 · Parking",
-                    $"{reg} has landed and is taking a stand on its own."),
+                    $"{reg} has landed. Pick a stand on the card (Best is the shortest taxi), or wait and the tower will park it."),
                 GuideStep.TaxiingIn => ("6 · Taxiing in",
                     $"{reg} is taxiing to {StandNames.Display(aircraft.Stand)}. That completes your first trip."),
                 _ => (string.Empty, string.Empty)
@@ -928,9 +929,8 @@ namespace Airside.Presentation
                 ShowToast(result.Reason);
         }
 
-        /// <summary>
-        /// Contextual selected-aircraft card: one dominant action, prep state for booked
-        /// departures, and Cancel as a smaller red secondary.
+        /// <summary>Contextual selected-aircraft card: one dominant action, prep state for booked
+        /// departures, stand choices after landing, and Cancel as a smaller red secondary.
         /// </summary>
         private void DrawSelectionHudCard(HudLayout hud, AirlineHudLayout placement, GUIStyle panel, GUIStyle label, GUIStyle small,
             GUIStyle smallButton)
@@ -959,6 +959,12 @@ namespace Airside.Presentation
             if (!aircraft.Airline.IsPlayer)
                 return;
 
+            if (aircraft.State == FleetState.AwaitingStand)
+            {
+                DrawStandChoices(aircraft, x, rect.yMax - StandChoicesBlockHeight(aircraft) - 8f, inner, smallButton);
+                return;
+            }
+
             var action = OperationsSummary.PrimaryAction(aircraft, _clock.Now);
             var primary = _hudPrimaryButton ??= AirsideTheme.PrimaryButtonStyle(
                 new GUIStyle(smallButton) { fontSize = 14, fontStyle = FontStyle.Bold });
@@ -979,6 +985,64 @@ namespace Airside.Presentation
                 AirsideTheme.DrawPanelFrame(cancelRect, AirsideTheme.SignalRed);
                 if (GUI.Button(cancelRect, "CANCEL", destructive))
                     CancelPlannedFlight(aircraft);
+            }
+        }
+
+        private float StandChoicesBlockHeight(FleetAircraft aircraft)
+        {
+            var count = 0;
+            foreach (var _ in _operations.AssignableStands(aircraft))
+                count++;
+            if (count == 0)
+                count = 1;
+            // Two columns of 30px buttons + gap.
+            var rows = (count + 1) / 2;
+            return 18f + rows * 34f;
+        }
+
+        private void DrawStandChoices(FleetAircraft aircraft, float x, float y, float width, GUIStyle smallButton)
+        {
+            var choices = _operations.AssignableStands(aircraft);
+            var suggested = _operations.SuggestStand(aircraft);
+            var caption = Styled(GUI.skin.label, "stand-cap",
+                s => AirsideTheme.TextStyle(new GUIStyle(s) { fontSize = 11, fontStyle = FontStyle.Bold },
+                    AirsideTheme.Concrete));
+            GUI.Label(new Rect(x, y, width, 16f), "CHOOSE STAND", caption);
+            y += 18f;
+
+            var primary = _hudPrimaryButton ??= AirsideTheme.PrimaryButtonStyle(
+                new GUIStyle(smallButton) { fontSize = 13, fontStyle = FontStyle.Bold });
+            var secondary = _hudSecondaryButton ??= AirsideTheme.ButtonStyle(
+                new GUIStyle(smallButton) { fontSize = 13, fontStyle = FontStyle.Bold }, AirsideTheme.Cloud);
+
+            var col = 0;
+            var rowY = y;
+            var gap = 8f;
+            var buttonWidth = (width - gap) * 0.5f;
+            if (choices.Count == 0)
+            {
+                if (GUI.Button(new Rect(x, rowY, width, 30f), "ALL STANDS FULL", secondary))
+                    ShowToast("All stands occupied — wait for one to clear.");
+                return;
+            }
+
+            foreach (var stand in choices)
+            {
+                var isBest = suggested.HasValue && stand.Equals(suggested.Value);
+                var label = isBest
+                    ? $"BEST · {StandNames.Short(stand)}"
+                    : StandNames.Short(stand);
+                var bx = x + col * (buttonWidth + gap);
+                var style = isBest ? primary : secondary;
+                if (IsGuided(aircraft, GuideStep.ChooseStand) && isBest)
+                    DrawGuideHighlight(new Rect(bx, rowY, buttonWidth, 30f));
+                if (GUI.Button(new Rect(bx, rowY, buttonWidth, 30f), label, style))
+                    AssignStandFromHud(aircraft, stand);
+                col++;
+                if (col < 2)
+                    continue;
+                col = 0;
+                rowY += 34f;
             }
         }
 
@@ -1029,6 +1093,8 @@ namespace Airside.Presentation
                     SelectAircraft(aircraft);
                     break;
                 case AircraftHudAction.AssignStand:
+                    // Prefer opening the stand list on the selection card / Operations detail.
+                    // If somehow there is only a one-shot action path, take the suggested stand.
                     var stand = _operations.SuggestStand(aircraft);
                     if (stand.HasValue)
                         AssignStandFromHud(aircraft, stand.Value);
@@ -1097,7 +1163,9 @@ namespace Airside.Presentation
                 return false;
             if (_activeWorkspace != HudWorkspace.None || _devToolsOpen)
                 return false;
-            var height = ShowsDeparturePrep(aircraft) ? 168f
+            var height = aircraft.State == FleetState.AwaitingStand && aircraft.Airline.IsPlayer
+                ? Mathf.Min(72f + StandChoicesBlockHeight(aircraft) + 16f, placement.SelectedCard.height)
+                : ShowsDeparturePrep(aircraft) ? 168f
                 : aircraft.Airline.IsPlayer ? 134f
                 : 88f;
             height = Mathf.Min(height, placement.SelectedCard.height);
@@ -2031,20 +2099,26 @@ namespace Airside.Presentation
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
         }
 
-        /// <summary>The player's own recent movements, newest first, for the event-history strip.</summary>
+        /// <summary>Recent airport movements for the Operations event-history strip.</summary>
         private void FillEventHistory()
         {
             _eventHistory.Clear();
             var events = _operations.RecentEvents;
-            for (var i = events.Count - 1; i >= 0 && _eventHistory.Count < 6; i--)
+            for (var i = events.Count - 1; i >= 0
+                 && _eventHistory.Count < OperationsWorkspaceModel.MaxEventHistoryLines; i--)
             {
                 var e = events[i];
-                if (!e.Aircraft.Airline.IsPlayer)
+                if (!IsBoardHistoryEvent(e.State))
                     continue;
                 _eventHistory.Add(new OperationsEventLine(ClockText(e.At),
-                    $"{e.Aircraft.Registration} · {EventPhrase(e)}"));
+                    $"{e.Registration} · {EventPhrase(e)}"));
             }
         }
+
+        private static bool IsBoardHistoryEvent(FleetState state) => state is
+            FleetState.TaxiOut or FleetState.TakingOff or FleetState.Outbound
+            or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn
+            or FleetState.AtStand or FleetState.HoldingForLanding or FleetState.Inbound;
 
         /// <summary>What the aircraft did, from the state the event recorded — not from now.</summary>
         private static string EventPhrase(FleetEvent e) => e.State switch
@@ -2059,13 +2133,17 @@ namespace Airside.Presentation
             FleetState.GoAround => "went around at Adelaide",
             FleetState.Landing => "landed at Adelaide",
             FleetState.AwaitingStand => "landed, waiting for a stand",
-            FleetState.TaxiIn => $"taxiing to {StandNames.Display(e.Aircraft.Stand)}",
-            FleetState.AtStand => $"on {StandNames.Display(e.Aircraft.Stand)}",
+            FleetState.TaxiIn => $"taxiing to {StandNames.Display(e.Stand)}",
+            FleetState.AtStand => string.IsNullOrEmpty(e.Stand.Value)
+                ? "on stand"
+                : $"on {StandNames.Display(e.Stand)}",
             _ => e.State.ToString()
         };
 
         private static string Where(FleetEvent e) =>
-            e.Aircraft.CurrentDestination?.Name ?? e.Aircraft.Scheduled?.Destination.Name ?? "its route";
+            !string.IsNullOrEmpty(e.DestinationName) ? e.DestinationName
+            : !string.IsNullOrEmpty(e.DestinationCode) ? e.DestinationCode
+            : "its route";
 
         /// <summary>The Fleet workspace (ADR 0057): your aircraft, their detail, the real market.</summary>
         private void DrawFleetWorkspace(Rect rect)
@@ -2268,7 +2346,19 @@ namespace Airside.Presentation
 
             var liveryHex = HudAction.Payload(action, HudAction.LiveryPrefix);
             if (liveryHex.Length > 0 && _operations.SetLivery(liveryHex).Accepted)
+            {
                 PlayUiClick();
+                return;
+            }
+
+            var standId = HudAction.Payload(action, HudAction.StandPrefix);
+            if (standId.Length > 0)
+            {
+                if (TryFindFleetAircraft(_selectedAircraftId, out var waiting)
+                    && waiting.State == FleetState.AwaitingStand)
+                    AssignStandFromHud(waiting, new StableId(standId));
+                PlayUiClick();
+            }
         }
 
         private bool TryFindFleetAircraft(string registration, out FleetAircraft aircraft)

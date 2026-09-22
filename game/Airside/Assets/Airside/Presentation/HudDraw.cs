@@ -200,12 +200,14 @@ namespace Airside.Presentation
         public const string CancelContract = "contract:cancel";
         public const string StartCheck = "check";
         public const string UpgradeBase = "base:upgrade";
+        public const string StandPrefix = "stand:";
 
         public static string Select(string registration) => SelectPrefix + registration;
         public static string Buy(string typeId) => BuyPrefix + typeId;
         public static string Accept(string contractId) => AcceptPrefix + contractId;
         public static string Destination(string code) => DestinationPrefix + code;
         public static string Livery(string hex) => LiveryPrefix + hex;
+        public static string Stand(string standId) => StandPrefix + standId;
 
         /// <summary>The payload of a prefixed action id, or empty when the prefix does not match.</summary>
         public static string Payload(string actionId, string prefix) =>

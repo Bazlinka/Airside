@@ -194,7 +194,7 @@ namespace Airside.Presentation
 
             try
             {
-                kit = ParseKit(fullPath);
+                kit = ParseKit(fullPath, IsAircraftKit(artRelativePath));
                 KitCache[artRelativePath] = kit;
                 return kit != null;
             }
@@ -206,7 +206,16 @@ namespace Airside.Presentation
             }
         }
 
-        private static GltfKit ParseKit(string gltfPath)
+        /// <summary>
+        /// Aircraft kits unwrap in metres rather than per-part 0..1 (see
+        /// <see cref="BuildMetreUvs"/>). Scoped by path so the building, vehicle and prop
+        /// kits keep the bounding-box unwrap their surface tiling was tuned against.
+        /// </summary>
+        private static bool IsAircraftKit(string artRelativePath) =>
+            !string.IsNullOrEmpty(artRelativePath)
+            && artRelativePath.IndexOf("Models/Aircraft", StringComparison.OrdinalIgnoreCase) >= 0;
+
+        private static GltfKit ParseKit(string gltfPath, bool metreUvs = false)
         {
             var json = File.ReadAllText(gltfPath);
             var binUri = MatchFirst(json, "\"uri\"\\s*:\\s*\"([^\"]+)\"");
@@ -271,7 +280,7 @@ namespace Airside.Presentation
                 // position and smooths by angle instead, matching how Unity's own asset
                 // importer treats a smoothing-angle setting.
                 MeshNormalSmoothing.RecalculateSmoothNormals(mesh, vertices, indices);
-                var uvs = BuildPlanarUvs(vertices);
+                var uvs = metreUvs ? BuildMetreUvs(vertices) : BuildPlanarUvs(vertices);
                 mesh.SetUVs(0, uvs);
                 mesh.RecalculateBounds();
                 // Kit part meshes stay CPU-readable: the aircraft rebakes props, control
@@ -425,6 +434,54 @@ namespace Airside.Presentation
 
         private static bool SameColor(Color a, Color b) =>
             a.r.Equals(b.r) && a.g.Equals(b.g) && a.b.Equals(b.b) && a.a.Equals(b.a);
+
+        /// <summary>
+        /// Cylindrical unwrap in metres about each part's longest axis, for aircraft kits.
+        ///
+        /// <see cref="BuildPlanarUvs"/> normalises each part's own bounding box to 0..1, so
+        /// texel density varied by over a hundred times across one airframe: a 39 m fuselage
+        /// got a single texture repeat over its whole length while a 0.3 m window got one
+        /// across 30 cm. Worse, its axis choice drops the *longest* axis, so a fuselage was
+        /// unwrapped looking straight down its own length and every ring of the tube landed
+        /// on the same UV — the skin maps could only ever read as a lengthwise smear.
+        ///
+        /// Aircraft parts are overwhelmingly bodies of revolution or extrusions (fuselage,
+        /// nacelles, gear legs, wings), so one rule suits them all: V runs along the longest
+        /// axis in metres and U is arc length in metres around it. Density is then constant across
+        /// every part, which is what makes an authored panel-line skin possible at all.
+        /// </summary>
+        private static Vector2[] BuildMetreUvs(Vector3[] vertices)
+        {
+            if (vertices == null || vertices.Length == 0)
+                return Array.Empty<Vector2>();
+
+            var min = vertices[0];
+            var max = vertices[0];
+            for (var i = 1; i < vertices.Length; i++)
+            {
+                min = Vector3.Min(min, vertices[i]);
+                max = Vector3.Max(max, vertices[i]);
+            }
+
+            var size = max - min;
+            var axis = AircraftSkinUv.LongestAxis(size.x, size.y, size.z);
+            var b = (axis + 1) % 3;
+            var c = (axis + 2) % 3;
+            var centreB = (min[b] + max[b]) * 0.5f;
+            var centreC = (min[c] + max[c]) * 0.5f;
+            var radius = AircraftSkinUv.ArcRadiusMetres(size[b], size[c]);
+
+            var uvs = new Vector2[vertices.Length];
+            for (var i = 0; i < vertices.Length; i++)
+            {
+                var p = vertices[i];
+                AircraftSkinUv.Unwrap(p[axis], p[b] - centreB, p[c] - centreC, radius,
+                    out var u, out var v);
+                uvs[i] = new Vector2(u, v);
+            }
+
+            return uvs;
+        }
 
         /// <summary>
         /// Simple planar UVs from dominant axes so Batch B basecolours tile on

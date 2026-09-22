@@ -1,5 +1,33 @@
 ## Where to resume — session handoff
 
+- **2026-09-22 Claude — aircraft surface detail (branch `feature/aircraft-surface-detail`,
+  stacked on `feature/aircraft-visual-pass`, ADR 0097).** Why the aircraft read as flat plastic:
+  - **They had no usable UVs.** The glTFs carry `POSITION` only, so `ArtGltfLoader` generates
+    UVs — and the generic unwrap normalises each part's own bounding box to 0..1 *and* drops the
+    part's longest axis. A 39.47 m fuselage got one texture repeat over its whole length while a
+    0.36 m window got one across 36 cm, and the fuselage was unwrapped looking down its own
+    length so every ring collapsed onto the same UV. The whole material system was wired up and
+    doing nothing. Aircraft kits now unwrap cylindrically in metres (`BuildMetreUvs`); other
+    kits are untouched, scoped by path.
+  - **The skin carried no detail.** `tx_aircraft_skin_v01` is 256² with a near-flat basecolor
+    (std 6.5/255) and a *constant* mask — no metallic or smoothness variation anywhere. New
+    1024² v02 authored as exactly 2.032 m square with frames at 0.508 m, stringers 0.254 m,
+    rivets 0.0635 m, lap joints 1.016 m; every pitch a harmonic of the frame pitch so it wraps
+    seamlessly. `PreferAuthoredMap` already prefers `_v02`, so nothing binds it by hand.
+  - **AIR-005 shape.** Blunt drooped radome (was a 0.30 m tip with 0.16 m of droop — a cone),
+    flight deck enlarged into one wraparound band, flat-bottomed lower cowl, and a 4 cm
+    fuselage waist at z=15.00 removed. The A320, 737-800, E190 and A220-300 are axis-scaled
+    copies of this mesh, so the same errors were showing five times over.
+  - **Evidence:** `scripts/test-domain.sh` **687 passed** (new `AircraftSkinUvTests` covers the
+    density contract against real fuselage/window dimensions); `test-air-005-737-8.py` and
+    `test-air-adelaide-fleet.py` pass with envelopes unchanged; all four v02 maps verified to
+    tile with no seam; regenerated AIR-005 inspected in multi-view render.
+  - **NEXT:** this is the change most likely to need tuning by eye. Compile in the Editor GUI,
+    then look at a packaged build at day/dusk/night: check the skin tile scale on the fuselage,
+    that the cylindrical unwrap's single seam is not landing somewhere obvious, and the disc
+    opacity from ADR 0096. Still open from the survey: the E190/A220/A320/A330/787-9 are
+    axis-scaled copies rather than their own geometry, which no texture work can disguise.
+
 - **2026-09-22 Claude — aircraft visual fidelity pass (branch
   `feature/aircraft-visual-pass`, ADR 0096).** Presentation-only. Three real defects and one
   tuning change, all on how the aircraft themselves read:

@@ -1,5 +1,18 @@
 ## Unreleased
 
+- **Aircraft skin finally has surface detail (ADR 0097).** The aircraft glTFs carry no UVs, so
+  the loader generates them — and the generic unwrap normalised each part's own bounding box to
+  0..1, making texel density vary by over a hundred times across one airframe while unwrapping
+  the fuselage straight down its own length. Aircraft kits now unwrap cylindrically in metres,
+  so one metre of skin is one metre of UV everywhere, and a new 1024² `tx_aircraft_skin_*_v02`
+  carries real frame (0.508 m), stringer, rivet and lap-joint spacing. The v01 it replaces was
+  256² with a near-flat basecolor and a completely constant mask.
+
+- **The 737-8 reads as a 737 (ADR 0097).** A blunt drooped radome in place of a near-conical
+  nose, a flight deck that reads as one wraparound band instead of two dark specks, a
+  flat-bottomed lower cowl, and a 4 cm fuselage waist removed. Four other narrowbodies
+  (A320, 737-800, E190, A220-300) are axis-scaled copies of this mesh, so all five improve.
+
 - **Aircraft wheels now turn while taxiing (ADR 0096).** The tyre roll read the circuit's
   phase speed, which is non-zero only during the takeoff roll and the landing rollout, so
   aircraft crossed the whole Adelaide taxi network on stationary wheels. Tyres now roll at

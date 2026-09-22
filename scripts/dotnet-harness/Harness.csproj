@@ -86,6 +86,8 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/TaxiwayEdgeWear.cs" />
     <!-- UnityEngine-free; the map label fan-out is pure HUD geometry, checked headlessly. -->
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/MapLabelLayout.cs" />
+    <!-- UnityEngine-free; the aircraft skin unwrap's texel-density contract is checked here. -->
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftSkinUv.cs" />
     <!--
       Exclude EditMode tests that import UnityEngine / UnityEditor. Mini-map, named-children
       cache and ground-look tests belong in scripts/test-unity.sh, not this headless run.

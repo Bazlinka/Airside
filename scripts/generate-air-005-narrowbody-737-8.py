@@ -70,15 +70,21 @@ FUSE_SEGMENTS = 64
 # (z, rx, ry, cy)
 STATIONS = np.array(
     [
-        (HALF_LENGTH - 0.12, 0.30, 0.28, 4.14),
-        (19.35, 0.62, 0.58, 4.16),
-        (19.00, 0.98, 0.92, 4.20),
-        (18.55, 1.32, 1.24, 4.25),
-        (17.95, 1.60, 1.52, 4.29),
-        (17.20, 1.78, 1.72, 4.31),
-        (16.20, 1.86, 1.84, 4.31),
-        (15.00, 1.82, 1.78, 4.32),
-        (13.20, 1.88, 1.86, 4.31),
+        # Radome: blunt and drooped, not a dart. The previous 0.30 m tip with only 0.16 m of
+        # droop over the whole nose read as a long cone and made the type look like anything
+        # but a 737 — and four other narrowbodies scale this same mesh, so it read wrong five
+        # times over. The tip is now 0.46 m and the nose centreline sits 0.24 m below the
+        # cabin axis, which is what gives the type its chin.
+        (HALF_LENGTH - 0.12, 0.46, 0.42, 4.06),
+        (19.35, 0.78, 0.72, 4.09),
+        (19.00, 1.12, 1.05, 4.14),
+        (18.55, 1.42, 1.33, 4.20),
+        (17.95, 1.66, 1.58, 4.26),
+        (17.20, 1.80, 1.74, 4.29),
+        # Was 1.86 -> 1.82 -> 1.88: a 4 cm waist behind the flight deck that no airframe has.
+        (16.20, 1.87, 1.86, 4.30),
+        (15.00, 1.88, 1.87, 4.30),
+        (13.20, 1.88, 1.87, 4.30),
         (10.00, 1.88, 1.88, 4.30),
         (5.00, 1.88, 1.88, 4.30),
         (0.00, 1.88, 1.88, 4.30),
@@ -308,7 +314,18 @@ def nacelle_pod(x: float) -> tuple[np.ndarray, np.ndarray]:
         ring = []
         for i in range(segs):
             ang = 2.0 * np.pi * i / segs
-            ring.append([x + rx * np.cos(ang), cy + ry * np.sin(ang), z])
+            c, s = np.cos(ang), np.sin(ang)
+            # The 737's lower cowl is visibly flattened for ground clearance — the shape the
+            # type is known for. A plain ellipse read as a generic round pod, which is part of
+            # why the airframe did not identify as a 737 at any distance. The upper cowl stays
+            # circular; below the centreline the section flattens toward a chord and widens
+            # slightly, exactly where the real cowl does.
+            if s < 0.0:
+                flat = abs(s) ** 0.62
+                ring.append([x + rx * c * (1.0 + 0.07 * (1.0 - abs(s))),
+                             cy - ry * flat, z])
+            else:
+                ring.append([x + rx * c, cy + ry * s, z])
         rings.append(np.asarray(ring, np.float32))
     verts: list = []
     indices: list = []
@@ -428,18 +445,23 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         ],
         segments=64,
     )
+    # Flight deck. The panes were individually small and spread far apart, so from any normal
+    # viewing distance the deck read as two dark specks near the nose rather than the
+    # continuous wraparound band that identifies an airliner. Each pane is larger and the
+    # side windows move forward and further round, so the whole assembly reads as one visor.
+    # Panes stay under the 0.70 m z-span the AIR-005 check enforces.
     meshes["flightdeck_crown"] = skin.skin_patch(
-        _skin, 18.20, 90.0, 0.62, 0.98, front=0.005, radius=0.30, rings=3, max_edge=0.16)
+        _skin, 18.20, 90.0, 0.66, 1.04, front=0.005, radius=0.30, rings=3, max_edge=0.16)
     meshes["windscreen_c"] = skin.skin_patch(
-        _skin, 18.22, 90.0, 0.26, 0.36, front=0.012, radius=0.10, rings=2, max_edge=0.14)
+        _skin, 18.22, 90.0, 0.30, 0.34, front=0.012, radius=0.10, rings=2, max_edge=0.14)
     meshes["windscreen_l"] = skin.skin_patch(
-        _skin, 18.16, 90.0 + 26.0, 0.26, 0.21, front=0.012, radius=0.09, rings=2, max_edge=0.14)
+        _skin, 18.16, 90.0 + 24.0, 0.30, 0.26, front=0.012, radius=0.09, rings=2, max_edge=0.14)
     meshes["windscreen_r"] = skin.skin_patch(
-        _skin, 18.16, 90.0 - 26.0, 0.26, 0.21, front=0.012, radius=0.09, rings=2, max_edge=0.14)
+        _skin, 18.16, 90.0 - 24.0, 0.30, 0.26, front=0.012, radius=0.09, rings=2, max_edge=0.14)
     meshes["cockpit_side_l"] = skin.skin_patch(
-        _skin, 17.35, 180.0 - 40.0, 0.40, 0.27, front=0.010, radius=0.10, rings=2)
+        _skin, 17.55, 180.0 - 44.0, 0.46, 0.30, front=0.010, radius=0.10, rings=2)
     meshes["cockpit_side_r"] = skin.skin_patch(
-        _skin, 17.35, 40.0, 0.40, 0.27, front=0.010, radius=0.10, rings=2)
+        _skin, 17.55, 44.0, 0.46, 0.30, front=0.010, radius=0.10, rings=2)
 
     # A short, tapered keel follows the wing root.  The previous 21.5 m oval
     # showed as a flat, dark rectangular slab under the fuselage.

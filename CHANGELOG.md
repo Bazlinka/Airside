@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Busy route maps keep aircraft labels readable.** Nearby aircraft labels now fan into
+  non-overlapping in-map slots; when a local cluster is truly full, lower-priority text is
+  omitted while the aircraft icons remain visible.
+
 - **High quality no longer over-allocates anti-aliasing at Retina/4K sizes.** High retains its
   lighting, shadows and scene detail, but above five million display pixels uses 2× MSAA alongside
   its existing high-quality SMAA instead of multiplying every HDR/depth target by four.

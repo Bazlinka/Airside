@@ -16,9 +16,11 @@
   1.9 GB), with the overview visually unchanged. Unity EditMode is **896/896 passed**;
   isolated one- and five-minute self-driving soaks completed without crash/stall or disabled-
   audio errors (the five-minute run reaches engine start).
-  **NEXT:** profile remaining GPU allocations (the current 1.7 GB is still too high), then
-  exercise a longer rotation/return soak and save/reload checkpoints. This branch is still
-  unmerged and is not release-validated.
+  Packaged Route Map review then found overlapping rival-flight labels around Adelaide at native
+  resolution. `MapLabelLayout` now fans labels into non-overlapping in-map slots and has a
+  16-aircraft cluster regression; Unity EditMode is **898/898 passed**.
+  **NEXT:** merge this branch, then profile the remaining GPU allocations and complete a longer
+  rotation/return soak plus save/reload checkpoints. This branch is not release-validated.
 
 - **2026-09-21 ChatGPT — campaign/base convergence (branch `feature/campaign-base-goals`, ADR 0094).**
   - Chapter 2 now requires the Expanded Regional Adelaide base; Chapter 4 requires Jet Gate; Chapter 5 requires the International base.

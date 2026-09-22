@@ -168,6 +168,37 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Operations_DayOnFieldCountMatchesDrawnMetalNotHiddenInbound()
+        {
+            // Opening traffic seeds a bank of Inbound aircraft that are off the map until
+            // short final. Counting them as "on field" produced a busy caption over an
+            // empty-looking apron (Bailey: "17 on field and I can't see any").
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(17),
+                Airline.Player("Soak Air", "#1F3A93"));
+            clock.Set(new SimulationTime(30));
+            ops.Update();
+
+            var expected = 0;
+            foreach (var aircraft in ops.Fleet)
+                if (FleetVisual.For(aircraft, clock.Now).Visible)
+                    expected++;
+            Assert.That(expected, Is.GreaterThan(0), "opening still parks some metal on stands");
+            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.GreaterThan(0),
+                "opening still seeds hidden inbound traffic");
+
+            var model = new OperationsWorkspaceModel();
+            model.Rebuild(ops, clock.Now, OperationsBoardTab.Arrivals, null, null);
+
+            Assert.That(model.DayOnFieldCount, Is.EqualTo(expected));
+            Assert.That(model.DayCaption, Does.Contain($"{expected} on field"));
+            foreach (var row in model.Rows.Where(r =>
+                         ops.Fleet.First(a => a.Registration == r.Registration).State == FleetState.Inbound))
+                Assert.That(row.OnField, Is.False,
+                    $"inbound {row.Registration} must not read as on-field metal");
+        }
+
+        [Test]
         public void Operations_DayStripShowsWhereWeAreInTheOperatingDay()
         {
             var (clock, ops, _) = HudTestAirline.Create();

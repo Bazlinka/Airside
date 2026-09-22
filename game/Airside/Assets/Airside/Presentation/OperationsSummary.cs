@@ -278,6 +278,12 @@ namespace Airside.Presentation
             if (priority.State == FleetState.AwaitingStand)
                 return ($"Next: assign a stand to {priority.Registration}", StatusSeverity.Warning);
 
+            // Delivery inbound (purchase with no free stand) — do not say "track" like a line flight.
+            if (priority.State == FleetState.Inbound && priority.CompletedTrips == 0
+                && !priority.Scheduled.HasValue)
+                return ($"Next: wait for {priority.Registration} to park, then schedule its first flight",
+                    StatusSeverity.Attention);
+
             if (Maintenance.InCheck(priority, now))
                 return ($"Next: wait for {priority.Registration}'s check until {clock.TimeText(priority.CheckUntil.Value)}",
                     StatusSeverity.Attention);

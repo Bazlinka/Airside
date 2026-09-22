@@ -77,7 +77,7 @@ namespace Airside.Presentation
         public const float TopBarHeight = 44f;
         public const float ObjectiveWidth = 360f;
         public const float ObjectiveHeight = 122f;
-        public const float GuideHeight = 104f;
+        public const float GuideHeight = ObjectiveHeight;
         public const float NavStripMaxWidth = 460f;
         public const float NavTabMinWidth = 86f;
 

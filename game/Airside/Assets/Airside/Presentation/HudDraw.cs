@@ -186,6 +186,7 @@ namespace Airside.Presentation
         public const string TabDepartures = "tab:departures";
         public const string TabArrivals = "tab:arrivals";
         public const string ToggleMovements = "operations:all-movements";
+        public const string ToggleOtherOperators = "fleet:other-operators";
         public const string FilterAvailable = "filter:available";
         public const string FilterLocked = "filter:locked";
         public const string Primary = "primary";

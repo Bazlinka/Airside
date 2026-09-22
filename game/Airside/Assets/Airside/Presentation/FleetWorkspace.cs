@@ -416,10 +416,12 @@ namespace Airside.Presentation
         public HudBox SubtitleBox => new(Header.X + HudShell.SurfacePadding, Header.Y + 40f,
             Header.Width - HudShell.SurfacePadding * 2f, 18f);
 
-        public HudBox RosterRow(int index) =>
-            new(Roster.X, Roster.Y + index * RosterRowHeight, Roster.Width, RosterRowHeight - 2f);
+        public HudBox RosterToolbar => new(Roster.X, Roster.Y, Roster.Width, 30f);
 
-        public int VisibleRosterRows => Roster.Height <= 0f ? 0 : (int)(Roster.Height / RosterRowHeight);
+        public HudBox RosterRow(int index) =>
+            new(Roster.X, Roster.Y + 30f + index * RosterRowHeight, Roster.Width, RosterRowHeight - 2f);
+
+        public int VisibleRosterRows => Roster.Height <= 30f ? 0 : (int)((Roster.Height - 30f) / RosterRowHeight);
 
         public HudBox MarketCaption => Market.IsEmpty
             ? HudBox.Empty
@@ -476,7 +478,7 @@ namespace Airside.Presentation
     public static class FleetWorkspacePainter
     {
         public static void Paint(HudDrawList into, FleetWorkspaceModel model, FleetWorkspaceLayout layout,
-            string selectedRegistration, int scrollRow)
+            string selectedRegistration, int scrollRow, bool showOtherOperators = false)
         {
             if (into == null || model == null)
                 return;
@@ -489,7 +491,7 @@ namespace Airside.Presentation
                 HudButtonStyle.Secondary);
             into.Hairline(HudShell.HeaderRule(layout.Surface));
 
-            PaintRoster(into, model, layout, selectedRegistration, scrollRow);
+            PaintRoster(into, model, layout, selectedRegistration, scrollRow, showOtherOperators);
             if (!layout.Divider.IsEmpty)
                 into.Hairline(layout.Divider);
             PaintDetail(into, model, layout);
@@ -497,8 +499,18 @@ namespace Airside.Presentation
         }
 
         private static void PaintRoster(HudDrawList into, FleetWorkspaceModel model,
-            FleetWorkspaceLayout layout, string selectedRegistration, int scrollRow)
+            FleetWorkspaceLayout layout, string selectedRegistration, int scrollRow, bool showOtherOperators)
         {
+            var toolbar = layout.RosterToolbar;
+            if (toolbar.Width >= 285f)
+                into.Caption(new HudBox(toolbar.X, toolbar.Y + 8f, toolbar.Width - 175f, 18f), "YOUR AIRCRAFT");
+            if (model.Others.Count > 0)
+            {
+                var buttonWidth = toolbar.Width >= 285f ? 170f : toolbar.Width;
+                into.Button(new HudBox(toolbar.Right - buttonWidth, toolbar.Y, buttonWidth, 26f),
+                    showOtherOperators ? "HIDE OTHER OPERATORS" : $"OTHER OPERATORS · {model.Others.Count}",
+                    HudAction.ToggleOtherOperators, HudButtonStyle.Secondary);
+            }
             var index = 0;
             var drawn = 0;
             var capacity = layout.VisibleRosterRows;
@@ -514,7 +526,7 @@ namespace Airside.Presentation
                 PaintRosterRow(into, layout, model.Mine[i], drawn++, selectedRegistration, quiet: false);
             }
 
-            if (model.Others.Count == 0 || drawn >= capacity)
+            if (!showOtherOperators || model.Others.Count == 0 || drawn >= capacity)
                 return;
 
             if (index++ >= skip)

@@ -16,6 +16,8 @@
   the real four-stage base roadmap, one next milestone and recent achievements. Runway Ink
   remains translucent over the airport. Workspace toast feedback sits beside the desk, while
   tiny windows yield to the objective. Simulation, commands, saves and real data are unchanged.
+  The first-flight guide shares the priority treatment; Map starts with rival routes hidden
+  (one-click reveal), and Fleet starts with other operators folded away (one-click reveal).
 
 - **Daily Service Pattern (ADR 0102).** Each campaign chapter now has a local-day "fly this
   today" target on the objective card (`TODAY · Kingscote 0/2`, and so on). Completing it

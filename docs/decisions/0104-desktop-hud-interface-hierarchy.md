@@ -12,6 +12,7 @@ hierarchy rather than replacing it or changing game state.
 
 - The persistent objective becomes **Today's Priority**: one dominant live action,
   a safety-yellow objective rail and the existing campaign/day progress beneath it.
+  The first-flight guide uses the same treatment while onboarding is active.
 - Operations becomes **Live Apron**. It opens on the current player commitment,
   ranks that flight and real exceptions before airport context, shows at most five
   immediate movements, and gives the selected aircraft a horizontal
@@ -21,8 +22,10 @@ hierarchy rather than replacing it or changing game state.
 - Route Map becomes a deliberate planning desk: the map owns most of the surface,
   opens on a real operable destination, draws only live/career route context, and
   places one destination dossier and one primary plan/update action at right.
+  Rival route lines begin hidden but remain available through the existing toggle.
 - Fleet uses a compact roster beside one selected-aircraft operational detail. The
-  market exposes exactly three real, career-gated offers at a time.
+  market exposes exactly three real, career-gated offers at a time. Other operators
+  begin folded away and remain accessible through a roster toggle.
 - Career leads with the four real base capability stages (Starter, Regional,
   Jet-gate, International), one next live milestone, and a restrained strip of
   reached achievements.
@@ -65,12 +68,12 @@ same rules as before.
 
 ## Evidence
 
-- HUD plus presentation layout EditMode suite: 164/164, including the 320×240
+- HUD plus presentation layout EditMode suite: 165/165, including the 320×240
   toast/objective constraint, open-workspace toast placement and complete-board
   access.
 - Packaged Mac build captured and inspected at 1225×768 and 800×600 for
   Operations, Map, Fleet and Career (`work/hud-*-redesign*.png`).
-- Complete Unity EditMode after rebasing over the new stand-choice work: 987/995.
+- Complete Unity EditMode after rebasing over the new stand-choice work: 988/996.
   The eight failures are the exact pre-existing
   main apron-density/schedule set already recorded in `GAME.md`
   (RegionalCarriers ×3, AdelaidePavement, AirlineOperations, AirlineSoak,

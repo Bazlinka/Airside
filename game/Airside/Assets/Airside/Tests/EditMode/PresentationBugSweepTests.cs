@@ -8,6 +8,33 @@ namespace Airside.Tests
     public sealed class PresentationBugSweepTests
     {
         [Test]
+        public void EngineAudio_DoesNotStartOnHiddenOrDisabledFleetViews()
+        {
+            var aircraft = new GameObject("Hidden fleet aircraft");
+            var source = aircraft.AddComponent<AudioSource>();
+            var clip = AudioClip.Create("engine", 32, 1, 22050, false);
+            source.clip = clip;
+            try
+            {
+                Assert.That(AirsidePrototype.CanStartAudio(source), Is.True);
+
+                aircraft.SetActive(false);
+                Assert.That(AirsidePrototype.CanStartAudio(source), Is.False,
+                    "an away fleet view must not receive Play calls every frame");
+
+                aircraft.SetActive(true);
+                source.enabled = false;
+                Assert.That(AirsidePrototype.CanStartAudio(source), Is.False,
+                    "a disabled AudioSource cannot be started by Unity");
+            }
+            finally
+            {
+                Object.DestroyImmediate(aircraft);
+                Object.DestroyImmediate(clip);
+            }
+        }
+
+        [Test]
         public void WetConcreteAlbedo_OnlyAcceptsConcreteDryMaps()
         {
             var concrete = new Texture2D(2, 2) { name = "tx_concrete_apron_basecolor_v03" };

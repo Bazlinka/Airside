@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Hidden fleet audio no longer floods the player log.** Away aircraft still retain their
+  cached visual model, but the engine voice only starts once its root and AudioSource are active.
+  This removes the per-frame `Can not play a disabled audio source` error and keeps real runtime
+  faults visible in a packaged-player log.
+
 - **Gate lead-ins release at Holding Short (ADR 0095).** A departure still holds its
   physical gate through taxi-out, but no longer blocks another gate movement after it has
   cleared the lead-in and joined the runway queue.

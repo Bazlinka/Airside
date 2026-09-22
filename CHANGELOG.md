@@ -13,7 +13,8 @@
   quieter planning desk with one live destination dossier and plan action; Fleet combines a
   compact roster, selected operational detail and three gated market choices; Career centres
   the real four-stage base roadmap, one next milestone and recent achievements. Runway Ink
-  remains translucent over the airport. Simulation, commands, saves and real data are unchanged.
+  remains translucent over the airport. At tiny windows, transient toast text yields to the
+  objective. Simulation, commands, saves and real data are unchanged.
 
 - **Daily Service Pattern (ADR 0102).** Each campaign chapter now has a local-day "fly this
   today" target on the objective card (`TODAY · Kingscote 0/2`, and so on). Completing it

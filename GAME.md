@@ -9,11 +9,12 @@
   three-option gated market; Career leads with a four-stage capability roadmap, one next
   milestone and a quiet achievements strip. No simulation, command, economy, save or data
   source changed.
-  - **Evidence before the final rebase:** HUD/layout EditMode suite **65/65**; packaged Mac
-    build inspected at 1225×768 and constrained 800×600 for all four workspaces. Full EditMode
-    was **979/987** with exactly main's eight then-known apron-density/schedule failures.
-  - **NEXT:** rerun the focused suite and packaged constrained visual after rebasing over the
-    stand-choice/long-history Operations work, then merge if clean.
+  - **Evidence:** HUD plus presentation layout EditMode **160/160**, including 320×240;
+    packaged Mac Operations inspected at 1225×768 and 800×600 after rebasing over stand
+    choice, with the other three workspaces inspected at both sizes before rebase. Full
+    EditMode **983/991**: exactly main's eight known apron-density/schedule failures, no HUD
+    failure. The tiny-window toast now hides if it cannot clear Today's Priority.
+  - **NEXT:** Bailey reviews PR #385 and the packaged screenshots; merge after visual approval.
 
 - **2026-09-22 Cursor — stand choice + longer Arrivals/Departures (PR #378, ADR 0103).**
   Bailey: cannot choose a stand when flights land; Arrivals/Departures nowhere near long

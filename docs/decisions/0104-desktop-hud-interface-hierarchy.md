@@ -61,10 +61,12 @@ same rules as before.
 
 ## Evidence
 
-- HUD/layout EditMode suite: 65/65.
+- HUD plus presentation layout EditMode suite: 160/160, including the 320×240
+  toast/objective constraint.
 - Packaged Mac build captured and inspected at 1225×768 and 800×600 for
   Operations, Map, Fleet and Career (`work/hud-*-redesign*.png`).
-- Complete Unity EditMode: 979/987. The eight failures are the exact pre-existing
+- Complete Unity EditMode after rebasing over the new stand-choice work: 983/991.
+  The eight failures are the exact pre-existing
   main apron-density/schedule set already recorded in `GAME.md`
   (RegionalCarriers ×3, AdelaidePavement, AirlineOperations, AirlineSoak,
   AirportCurfew and GroundSeparation); no HUD or constrained-layout test failed.

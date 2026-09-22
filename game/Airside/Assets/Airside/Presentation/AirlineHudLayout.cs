@@ -153,6 +153,12 @@ namespace Airside.Presentation
                     || (mini.width > 0f && toast.Overlaps(mini)))
                     toast = new Rect(toast.x, topBar.yMax + 4f, toastWidth, Mathf.Min(ToastHeight, 20f));
             }
+            // At the smallest supported window even the short top-edge toast can cover
+            // Today's Priority. Hide this transient message when no clear slot remains.
+            if (toast.Overlaps(objective) || (operations.width > 0f && toast.Overlaps(operations))
+                || (selectedCard.height > 0f && toast.Overlaps(selectedCard))
+                || (mini.width > 0f && toast.Overlaps(mini)))
+                toast = new Rect(toast.x, toast.y, 0f, 0f);
 
             var workspaceTop = topBar.yMax + HudShell.ContentGap;
             var workspace = ToRect(HudShell.WorkspaceSurface(width, height));

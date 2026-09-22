@@ -79,3 +79,5 @@ same rules as before.
   main apron-density/schedule set already recorded in `GAME.md`
   (RegionalCarriers ×3, AdelaidePavement, AirlineOperations, AirlineSoak,
   AirportCurfew and GroundSeparation); no HUD or constrained-layout test failed.
+- Clean packaged Mac build stamped `83f283fa`; final 1225×768 and 800×600
+  workspace screenshots inspected under `work/hud-*-final*.png`.

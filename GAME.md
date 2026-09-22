@@ -14,14 +14,14 @@
   subordinate. No simulation, command, economy, save or data
   source changed. The first-flight guide now shares Today's Priority styling.
   - **Evidence:** HUD plus presentation layout EditMode **165/165**, including 320×240
-    and a folded/revealed other-operator roster regression; packaged Mac Operations inspected
-    at 1225×768 and 800×600 after rebasing over stand choice, with the other three
-    workspaces inspected at both sizes before rebase. Full EditMode **988/996** after the
-    final roster/map defaults: exactly main's eight known
+    and a folded/revealed other-operator roster regression; clean packaged Mac build
+    `83f283fa` inspected at 1225×768 and all four workspaces at 800×600 after the final
+    changes (`work/hud-*-final*.png`). Full EditMode **988/996**: exactly main's eight known
     apron-density/schedule failures, no HUD failure. The tiny-window toast hides when it
     cannot clear Today's Priority; with a workspace open, toast feedback sits beside it.
-  - **NEXT:** Finish final full-suite and packaged visual checks, then merge PR #385 if no new
-    regressions; Bailey playtests the four workspaces and the first-flight flow.
+  - **NEXT:** PR #385 is pushed and mergeable but remains open because the full Unity suite is
+    red on eight pre-existing simulation failures; Bailey decides whether to accept that
+    baseline exception for merge. Playtest the four workspaces and first-flight flow.
 
 - **2026-09-22 Cursor — stand choice + longer Arrivals/Departures (PR #378, ADR 0103).**
   Bailey: cannot choose a stand when flights land; Arrivals/Departures nowhere near long

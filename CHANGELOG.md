@@ -1,13 +1,54 @@
 ## Unreleased
 
-- **Player can choose a stand after landing (ADR 0099).** Auto-stand no longer fires on the
+- **Player can choose a stand after landing (ADR 0103).** Auto-stand no longer fires on the
   landing tick. The selection card and Operations detail list assignable stands (BEST first);
   after 90 s the tower still parks for you. Toast and first-flight guide match the real choice.
 
-- **Arrivals / Departures boards keep recent Landed and Departed rows (ADR 0099).** Six-hour
+- **Arrivals / Departures boards keep recent Landed and Departed rows (ADR 0103).** Six-hour
   history from frozen fleet events; departure TIME no longer shows an airborne ETA as "est";
   taxi-in shows touchdown plus stand ETA; EVENT HISTORY shows five airport lines.
 
+- **Daily Service Pattern (ADR 0102).** Each campaign chapter now has a local-day "fly this
+  today" target on the objective card (`TODAY · Kingscote 0/2`, and so on). Completing it
+  pays a once-per-Adelaide-day bonus via existing settlement keys; incomplete days just miss
+  the bonus. No new save schema.
+
+- **macOS performance pass (ADR 0101).** Frames are paced to the game, not the panel: 60 fps
+  on ProMotion/120 Hz+ displays (Options → Frame rate · Display max to lift it) and ~30 fps
+  while the window is in the background. SSAO renders at half resolution, landing lamps cast
+  shadows only at night, static light tints stop rewriting every frame, and the per-aircraft
+  light pass no longer looks components up by type and name every frame.
+
+- **Buy aircraft → plan first flight.** Purchasing no longer stops at a toast. If the new
+  airframe parks immediately, Fleet opens the Route Map with a career-suggested destination
+  (active contract, then chapter target, then Kingscote) and tells you how long fuelling and
+  boarding need before pushback. Delivery inbound says to wait until it parks. Objective card
+  matches: "wait for VH-xxx to park, then schedule".
+
+- **Busier Adelaide apron and ADL-shaped departure banks (ADR 0100).** Opening used to
+  put ~16 aircraft Inbound (invisible) and leave ~5 on stands. Now a short ~7-aircraft
+  arrival bank keeps short final alive while most metal stays parked; Rex gains two Saabs
+  on the spare walk-outs. Opening pushbacks cluster with intentional same-minute doubles
+  like a real ADL morning peak; later AI bookings snap onto 5-minute bank marks. Still not
+  live flight times — simulation density only (ADR 0071 / 0086).
+
+- **Operations "on field" matches visible metal.** The day caption counted every Inbound as
+  on field even though those aircraft are off the map until short final
+  (`FleetVisual.Hidden`). Opening traffic seeds a bank of them, so the strip could read
+  "17 on field" over an apron that looked empty. The count (and each board row's OnField
+  flag) now follows `FleetVisual.Visible` — same rule as drawing.
+
+- **Live Adelaide weather and complete sky (ADR 0099).** The fixed YPAD forecast now drives
+  presentation-only cloud cover, rain strength, fog visibility, wet surfaces, puddles, tyre
+  spray and wind-reactive visuals, with a 15-minute poll, two-hour stale limit, Options toggle,
+  visible Open-Meteo attribution and deterministic offline fallback. The real Adelaide scene
+  now actually builds its astronomical sun, moon and a denser one-draw-call star field; stars
+  follow the overview camera and fade behind daylight and cloud. Operational weather, runway
+  selection, clearances, saves and replay remain deterministic.
+
+- **Operations board honesty.** Departures no longer print destination arrival as "est" under
+  a Departed row (the SIA488 07:46 / est 13:55 lie), and COMING UP never advertises an already-
+  departed player aircraft. Enroute-to-destination progress bars stay off the departures FIDS.
 - **The E190 and A220-300 are real aircraft now, not scaled 737s (ADR 0098).** Both were built
   by taking the 737-8 mesh and scaling it on three axes, which reproduces a bounding box and
   nothing else. Each now has its own generator lofted from its own dimensions: the E-Jet's

@@ -154,6 +154,12 @@ namespace Airside.Presentation
         // read, so the taxi/edge split is resolved once at collect time, not every frame.
         private readonly List<bool> _airfieldLightIsTaxi = new List<bool>();
         private readonly List<Renderer> _nightGlowRenderers = new List<Renderer>();
+        // Parallel to _nightGlowRenderers: 0 window, 1 airside glazing, 2 interior card.
+        // Resolved once — the glow pass read gameObject.name (a fresh string) twice per pane.
+        private readonly List<byte> _nightGlowKind = new List<byte>();
+        // Daylight each static tint pass last wrote. NaN forces the next pass (ADR 0101).
+        private float _airfieldLightsAppliedDaylight = float.NaN;
+        private float _nightGlowAppliedDaylight = float.NaN;
         private Transform _fuelTruck;
         private Transform _cateringTruck;
         private Transform _baggageCart;
@@ -206,7 +212,18 @@ namespace Airside.Presentation
         private static readonly WeatherKind? ReviewWeather = ReviewWeatherOverride(Environment.GetCommandLineArgs());
 
         /// <summary>Sky over the field: the demo circuit's weather, or the airline clock's in airline mode.</summary>
-        private WeatherKind CurrentWeather => ReviewWeather ?? (FleetMode ? Weather.At(_clock.Now) : _simulation.CurrentWeather);
+        private WeatherKind CurrentWeather => ReviewWeather
+            ?? (LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Kind
+                : FleetMode ? Weather.At(_clock.Now) : _simulation.CurrentWeather);
+
+        private WeatherLook CurrentWeatherLook => ReviewWeather.HasValue
+            ? WeatherLook.For(ReviewWeather.Value)
+            : LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Look : WeatherLook.For(CurrentWeather);
+
+        /// <summary>Actual Adelaide wind for cloth/weather motion; never runway selection.</summary>
+        private SurfaceWind PresentationWind => LiveWeatherHealthy
+            ? _liveWeatherSnapshot.Value.Wind
+            : _operations != null ? _operations.Wind : RunwayWeather.At(AirlineClock.Default, _clock.Now);
 
         private static WeatherKind? ReviewWeatherOverride(string[] args)
         {
@@ -298,6 +315,11 @@ namespace Airside.Presentation
             }
 
             _active = this;
+            // Automated packaged review/soak runs may not own foreground focus. Keep their
+            // clock and capture coroutine moving; ordinary player launches retain Unity's
+            // normal pause-when-backgrounded behaviour.
+            if (SoakMode)
+                Application.runInBackground = true;
             Debug.Log("Airside " + BuildIdentityReader.Current.FullLabel);
             ApplyLoadedSettings();
             _clock = new ManualSimulationClock(new SimulationTime(0));
@@ -360,7 +382,9 @@ namespace Airside.Presentation
             _touchdownSmoke = BuildTouchdownSmoke();
             BuildWheelSmoke();
             _skidMarkRoot = null;
-            _taxiSprayRoot = AirsideFocusMode.ShowEnvironment ? BuildTaxiSprayRoot() : null;
+            _taxiSprayRoot = AirsideFocusMode.ShowEnvironment || AirsideBareField.Enabled
+                ? BuildTaxiSprayRoot()
+                : null;
             _touchdownClip = CreateTouchdownClip();
             _rotateClip = CreateRotateClip();
             // Its own child: the touchdown and rotate cues move this source to the aircraft,
@@ -404,7 +428,7 @@ namespace Airside.Presentation
                 ? AirsideSceneIndex.FindLight("ARFF bay light") : null;
             var worldRenderers = AirsideSceneIndex.Renderers;
             CollectWetSurfaces(worldRenderers);
-            if (AirsideFocusMode.ShowEnvironment)
+            if (AirsideFocusMode.ShowEnvironment || AirsideBareField.Enabled)
                 BuildWetPuddles();
             CollectHoldShortMarkings(worldRenderers);
             CollectAirfieldLights(worldRenderers);
@@ -533,6 +557,7 @@ namespace Airside.Presentation
 
             ReadSimulationControls();
             DriveSoak();
+            AirsideFramePacing.Tick(AirsideSettings.Current.UncappedFrameRate, SoakMode);
 
             // Live time: once an airline runs, simulation time is read off the real clock.
             // Before that the demo circuit simply runs at 1x.
@@ -562,6 +587,7 @@ namespace Airside.Presentation
                 }
             }
 
+            UpdateLiveWeather();
             ApplyDayCycle();
             AdvancePresentationClock();
             UpdateAircraftVisual();
@@ -928,7 +954,8 @@ namespace Airside.Presentation
         /// </summary>
         private void DrawMapCredit(HudLayout layout)
         {
-            var text = MapAttribution.FieldCredit(usesOsmLayout: true, usesOsmCoast: true, usesLiveTraffic: LiveTrafficHealthy);
+            var text = MapAttribution.FieldCredit(usesOsmLayout: true, usesOsmCoast: true,
+                usesLiveTraffic: LiveTrafficHealthy, usesLiveWeather: LiveWeatherHealthy);
             if (string.IsNullOrEmpty(text))
                 return;
             _creditStyle ??= new GUIStyle(GUI.skin.label)
@@ -1211,6 +1238,25 @@ namespace Airside.Presentation
             {
                 settings.LiveTraffic = !settings.LiveTraffic;
                 settings.Save();
+                PlayUiClick();
+            }
+
+            row.y += 46f;
+            if (GUI.Button(row, $"Live Adelaide weather  ·  {LiveWeatherStatus}", button))
+            {
+                settings.LiveWeather = !settings.LiveWeather;
+                settings.Save();
+                if (settings.LiveWeather)
+                    _nextLiveWeatherPollAt = 0f;
+                PlayUiClick();
+            }
+
+            row.y += 46f;
+            if (GUI.Button(row, settings.UncappedFrameRate ? "Frame rate  ·  Display max" : "Frame rate  ·  60 fps", button))
+            {
+                settings.UncappedFrameRate = !settings.UncappedFrameRate;
+                settings.Save();
+                AirsideFramePacing.Apply(settings.UncappedFrameRate, SoakMode);
                 PlayUiClick();
             }
 
@@ -1730,23 +1776,28 @@ namespace Airside.Presentation
                             engines?.AnyRunning ?? enginesOn,
                             engines?.Beacon ?? enginesOn);
                         child.gameObject.SetActive(navOn);
-                        EnsureNavPointLight(child, navOn, parts[i].NavLight);
+                        EnsureNavPointLight(parts[i], navOn);
                         if (parts[i].NavLight is AircraftNavigationLight.Left or AircraftNavigationLight.Right)
-                            EnsureWingtipStrobe(child, AirsideReusableMotion.StrobeIntensity(phase, presentationTime));
+                            EnsureWingtipStrobe(parts[i], AirsideReusableMotion.StrobeIntensity(phase, presentationTime));
                         break;
                     }
                     case LightGearKind.Beacon:
                     {
                         var beacon = AirsideReusableMotion.BeaconIntensity(engines?.Beacon ?? enginesOn, presentationTime);
                         child.gameObject.SetActive(beacon > 0.01f);
-                        EnsureBeaconPointLight(child, beacon);
+                        EnsureBeaconPointLight(parts[i], beacon);
                         break;
                     }
                     case LightGearKind.LandingLight:
                     {
                         child.gameObject.SetActive(landingLights);
-                        EnsureLandingSpotLight(child, landingLights, night);
-                        var lamp = child.GetComponent<Renderer>();
+                        EnsureLandingSpotLight(parts[i], landingLights, night);
+                        if (!parts[i].LampResolved)
+                        {
+                            parts[i].Lamp = child.GetComponent<Renderer>();
+                            parts[i].LampResolved = true;
+                        }
+                        var lamp = parts[i].Lamp;
                         if (lamp != null)
                         {
                             // Through SetRendererColor so the lamp material's _EMISSION keyword is
@@ -1764,7 +1815,7 @@ namespace Airside.Presentation
                     case LightGearKind.TaxiLight:
                     {
                         child.gameObject.SetActive(taxiLights);
-                        EnsureTaxiSpotLight(child, taxiLights);
+                        EnsureTaxiSpotLight(parts[i], taxiLights);
                         break;
                     }
                 }
@@ -1774,9 +1825,13 @@ namespace Airside.Presentation
         /// <summary>
         /// Decision 0025 items 5+7 — wingtip nav lights cast real coloured PointLights.
         /// </summary>
-        private static void EnsureNavPointLight(Transform lamp, bool on, AircraftNavigationLight kind)
+        private static void EnsureNavPointLight(LightGearPart part, bool on)
         {
-            var light = lamp.GetComponent<Light>();
+            var lamp = part.Transform;
+            var kind = part.NavLight;
+            if (part.Light == null)
+                part.Light = lamp.GetComponent<Light>();
+            var light = part.Light;
             if (light == null)
             {
                 light = lamp.gameObject.AddComponent<Light>();
@@ -1789,6 +1844,7 @@ namespace Airside.Presentation
                 };
                 light.range = 8f;
                 light.shadows = LightShadows.None;
+                part.Light = light;
             }
 
             light.enabled = on;
@@ -1796,31 +1852,40 @@ namespace Airside.Presentation
                 light.intensity = 1.8f * AirsideReusableMotion.NavSteady;
         }
 
-        private static void EnsureWingtipStrobe(Transform wingtip, float intensity)
+        private static void EnsureWingtipStrobe(LightGearPart part, float intensity)
         {
-            var strobe = wingtip.Find("White strobe");
-            if (strobe == null)
+            var point = part.Strobe;
+            if (point == null)
             {
-                strobe = new GameObject("White strobe").transform;
-                strobe.SetParent(wingtip, false);
-                var light = strobe.gameObject.AddComponent<Light>();
-                light.type = LightType.Point;
-                light.color = new Color(0.92f, 0.96f, 1f);
-                light.range = 18f;
-                light.shadows = LightShadows.None;
+                var wingtip = part.Transform;
+                var strobe = wingtip.Find("White strobe");
+                if (strobe == null)
+                {
+                    strobe = new GameObject("White strobe").transform;
+                    strobe.SetParent(wingtip, false);
+                    var light = strobe.gameObject.AddComponent<Light>();
+                    light.type = LightType.Point;
+                    light.color = new Color(0.92f, 0.96f, 1f);
+                    light.range = 18f;
+                    light.shadows = LightShadows.None;
+                }
+
+                point = part.Strobe = strobe.GetComponent<Light>();
             }
 
-            var point = strobe.GetComponent<Light>();
             point.enabled = intensity > 0.01f;
             point.intensity = 12f * intensity;
         }
 
-        private static void EnsureBeaconPointLight(Transform lamp, float intensity)
+        private static void EnsureBeaconPointLight(LightGearPart part, float intensity)
         {
-            var light = lamp.GetComponent<Light>();
+            var lamp = part.Transform;
+            if (part.Light == null)
+                part.Light = lamp.GetComponent<Light>();
+            var light = part.Light;
             if (light == null)
             {
-                light = lamp.gameObject.AddComponent<Light>();
+                light = part.Light = lamp.gameObject.AddComponent<Light>();
                 light.type = LightType.Point;
                 light.color = new Color(1f, 0.25f, 0.12f);
                 light.range = 10f;
@@ -1835,23 +1900,31 @@ namespace Airside.Presentation
         /// Decision 0025 items 5+7 — real SpotLights on landing / taxi lamp meshes so
         /// approach and night taxi cast light on the runway and apron.
         /// </summary>
-        private static void EnsureLandingSpotLight(Transform lamp, bool on, bool night)
+        private static void EnsureLandingSpotLight(LightGearPart part, bool on, bool night)
         {
-            var light = lamp.GetComponent<Light>();
+            var lamp = part.Transform;
+            if (part.Light == null)
+                part.Light = lamp.GetComponent<Light>();
+            var light = part.Light;
             if (light == null)
             {
-                light = lamp.gameObject.AddComponent<Light>();
+                light = part.Light = lamp.gameObject.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.97f, 0.88f);
                 light.range = 42f;
                 light.spotAngle = 48f;
                 light.innerSpotAngle = 22f;
-                light.shadows = LightShadows.Soft;
             }
 
             light.enabled = on;
             if (!on)
                 return;
+            // ADR 0101: every shadowed spot re-renders the shadow casters into the additional-
+            // light atlas each frame. In daylight the sun's key shadow swamps a landing lamp's,
+            // so the extra pass bought nothing; keep it for night, where the beam is the key.
+            var shadows = AirsideRuntimeQuality.LandingLampShadows(night);
+            if (light.shadows != shadows)
+                light.shadows = shadows;
             // Pinned daylight washes a night-tuned lamp. Keep the beam readable in follow.
             light.intensity = night ? 7.5f : 9.5f;
             light.range = 90f;
@@ -1861,12 +1934,15 @@ namespace Airside.Presentation
             light.transform.localRotation = Quaternion.identity;
         }
 
-        private static void EnsureTaxiSpotLight(Transform lamp, bool on)
+        private static void EnsureTaxiSpotLight(LightGearPart part, bool on)
         {
-            var light = lamp.GetComponent<Light>();
+            var lamp = part.Transform;
+            if (part.Light == null)
+                part.Light = lamp.GetComponent<Light>();
+            var light = part.Light;
             if (light == null)
             {
-                light = lamp.gameObject.AddComponent<Light>();
+                light = part.Light = lamp.gameObject.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.94f, 0.78f);
                 light.range = 18f;
@@ -2466,9 +2542,7 @@ namespace Airside.Presentation
                 return;
 
             // Aim the sock with the sim surface wind; keep a light sway so it does not look frozen.
-            var wind = _operations != null
-                ? _operations.Wind
-                : RunwayWeather.At(AirlineClock.Default, _clock.Now);
+            var wind = PresentationWind;
             var heading = RunwayWeather.UnityYawFromTrue(wind.DirectionDegrees);
             var sway = Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.WindsockSwayHz * Mathf.PI * 2f) * 6f;
             var limp = Mathf.Lerp(18f, 4f, Mathf.Clamp01(wind.Knots / 18f));
@@ -2809,7 +2883,7 @@ namespace Airside.Presentation
         private void UpdateWeatherPresentation()
         {
             var weather = CurrentWeather;
-            var look = WeatherLook.For(weather);
+            var look = CurrentWeatherLook;
             var raining = look.IsRaining;
             var wet = Weather.IsAdverse(weather) || look.Wetness > 0.05f;
             var storm = weather == WeatherKind.Storm;
@@ -2822,12 +2896,36 @@ namespace Airside.Presentation
                 // The drop box is 80 x 50 m. Built once at the origin, it only ever rained
                 // where the world origin happened to be on screen, never round a followed
                 // aircraft; it now travels with what the camera is looking at.
+                // The same authored rain box serves a close follow and the 3.9 km overview.
+                // Scale the whole volume with camera range so rain still reads across the
+                // screen instead of becoming an invisible 80 m postage stamp from overview.
+                var cameraRange = _mainCamera != null && _cameraController != null
+                    ? Vector3.Distance(_mainCamera.transform.position, _cameraController.FocusPoint)
+                    : 100f;
+                var coverageScale = Mathf.Clamp(cameraRange / 100f, 1f, 30f);
+                _rainRoot.localScale = Vector3.one * coverageScale;
                 if (_cameraController != null)
-                    _rainRoot.position = RainRootPosition(_cameraController.FocusPoint);
-                var fallBase = storm ? 20f : 12f;
+                {
+                    var focusPosition = RainRootPosition(_cameraController.FocusPoint);
+                    if (_mainCamera != null)
+                    {
+                        // Bring the enlarged volume partway toward a distant overview camera
+                        // and keep its top near the lens. Otherwise every streak is kilometres
+                        // below the camera and visually collapses into the ground texture.
+                        var cameraWeight = Mathf.InverseLerp(120f, 1200f, cameraRange) * 0.55f;
+                        var cameraPosition = _mainCamera.transform.position;
+                        focusPosition.x = Mathf.Lerp(focusPosition.x, cameraPosition.x, cameraWeight);
+                        focusPosition.z = Mathf.Lerp(focusPosition.z, cameraPosition.z, cameraWeight);
+                        focusPosition.y = Mathf.Max(focusPosition.y,
+                            cameraPosition.y - 17f * coverageScale);
+                    }
+                    _rainRoot.position = focusPosition;
+                }
+                var rainStrength = Mathf.Clamp01(look.Precipitation);
+                var fallBase = Mathf.Lerp(10f, 22f, rainStrength);
                 // Drifts with the real surface wind (ADR 0068), not a fixed -X slide — the rain
                 // root carries no rotation of its own, so local axes already line up with world.
-                var wind = _operations != null ? _operations.Wind : RunwayWeather.At(AirlineClock.Default, _clock.Now);
+                var wind = PresentationWind;
                 var windYawRad = RunwayWeather.UnityYawFromTrue(wind.DirectionDegrees) * Mathf.Deg2Rad;
                 var driftMagnitude = storm ? 3.2f : 1.5f;
                 var driftX = Mathf.Sin(windYawRad) * driftMagnitude;
@@ -2835,9 +2933,15 @@ namespace Airside.Presentation
                 // Same authored lean as before, just carried round to face the actual drift
                 // direction instead of always leaning toward -X.
                 var windTilt = Quaternion.Euler(0f, windYawRad * Mathf.Rad2Deg, 0f) * Quaternion.Euler(12f, 0f, 8f);
+                var activeDrops = Mathf.CeilToInt(_rainRoot.childCount * Mathf.Lerp(0.28f, 1f, rainStrength));
                 for (var i = 0; i < _rainRoot.childCount; i++)
                 {
                     var drop = _rainRoot.GetChild(i);
+                    var active = i < activeDrops;
+                    if (drop.gameObject.activeSelf != active)
+                        drop.gameObject.SetActive(active);
+                    if (!active)
+                        continue;
                     var pos = drop.localPosition;
                     pos.y -= Time.unscaledDeltaTime * (fallBase + (i % 5));
                     if (pos.y < 0.5f)
@@ -2854,8 +2958,8 @@ namespace Airside.Presentation
                         pos.z -= 50f;
                     drop.localPosition = pos;
                     drop.localRotation = windTilt;
-                    var thickness = storm ? 0.07f : 0.04f;
-                    var length = storm ? 0.85f : 0.55f;
+                    var thickness = Mathf.Lerp(0.025f, 0.075f, rainStrength);
+                    var length = Mathf.Lerp(0.38f, 0.95f, rainStrength);
                     drop.localScale = new Vector3(thickness, length, thickness);
                 }
             }
@@ -2881,7 +2985,12 @@ namespace Airside.Presentation
                 var stormGrey = new Color(0.42f, 0.45f, 0.48f);
                 var fogHaze = new Color(0.82f, 0.83f, 0.82f);
                 var weatherFogColor = Color.Lerp(baseFogColor, stormGrey, look.Gloom);
-                var hazeWeight = Mathf.Clamp01(((1f - look.Visibility) - look.Gloom) * 1.6f);
+                // Visibility must remain the dominant fog cue at real-airport scale. The
+                // previous subtraction by Gloom left authored Fog only 32% pale and barely
+                // denser than rain from the kilometre-high overview: it read as a dark LUT,
+                // not suspended water. Keep rain/storm slate, but let lost visibility push
+                // true fog toward the daylight haze colour independently of cloud gloom.
+                var hazeWeight = Mathf.Clamp01((1f - look.Visibility) * 0.9f);
                 weatherFogColor = Color.Lerp(weatherFogColor, fogHaze, hazeWeight);
                 RenderSettings.fogColor = weatherFogColor;
                 var baseDensity = AirsideBareField.Enabled
@@ -2889,7 +2998,7 @@ namespace Airside.Presentation
                     : Mathf.Lerp(0.0065f, 0.0032f, daylight);
                 var visLoss = 1f - look.Visibility;
                 RenderSettings.fogDensity = AirsideBareField.Enabled
-                    ? baseDensity + visLoss * 0.00038f
+                    ? baseDensity + visLoss * 0.00115f
                     : baseDensity + visLoss * 0.012f;
             }
             // Clear weather keeps the soft day fog applied in ApplyDayCycle.
@@ -2898,7 +3007,7 @@ namespace Airside.Presentation
             // Fog alone thickens atmosphere — it does not soak the apron.
             // Clear weather keeps a soft residual damp on paved slabs (REF day apron).
             var rainWetness = look.Wetness;
-            // Wetness only changes when the weather changes (four discrete values), and
+            // Wetness changes when a live sample arrives or the authored weather changes.
             // ApplyWetness toggles shader keywords — which invalidates the SRP Batcher
             // batch for that material. Re-applying every frame tore the batcher down
             // continuously, so only walk the surfaces when the target actually moves.
@@ -3428,7 +3537,9 @@ namespace Airside.Presentation
         {
             var root = new GameObject("Wet puddles").transform;
             _wetPuddleRoot = root;
-            var spots = new[]
+            var spots = AirsideBareField.Enabled
+                ? AdelaideWetPuddleSpots()
+                : new[]
             {
                 new Vector3(18f, 0.07f, 15f),
                 new Vector3(24f, 0.07f, 19f),
@@ -3465,7 +3576,9 @@ namespace Airside.Presentation
             };
 
             // Batch F4 VFX-004 — reusable wet accent kit first (presentation only).
-            var hasWetKit = ArtPresentationLoader.TryInstantiatePrefab("vfx_wet_surface_response_v01", out var wetKit);
+            Transform wetKit = null;
+            var hasWetKit = !AirsideBareField.Enabled
+                && ArtPresentationLoader.TryInstantiatePrefab("vfx_wet_surface_response_v01", out wetKit);
             if (hasWetKit)
             {
                 wetKit.SetParent(root, false);
@@ -3481,7 +3594,9 @@ namespace Airside.Presentation
                 var cluster = new GameObject($"Puddle {i}").transform;
                 cluster.SetParent(root, false);
                 cluster.position = spots[i];
-                var blobs = hasWetKit ? 1 + (i % 2) : 2 + (i % 3);
+                // One irregular accent per real Adelaide stand keeps the large field cheap;
+                // the legacy miniature keeps its denser clustered treatment.
+                var blobs = AirsideBareField.Enabled ? 1 : hasWetKit ? 1 + (i % 2) : 2 + (i % 3);
                 for (var b = 0; b < blobs; b++)
                 {
                     var puddle = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -3511,9 +3626,44 @@ namespace Airside.Presentation
             root.gameObject.SetActive(false);
         }
 
+        private static Vector3[] AdelaideWetPuddleSpots()
+        {
+            var spots = new List<Vector3>(AdelaideLayout.Bays.Length + AdelaideLayout.TerminalGates.Length);
+
+            void Add(float x, float z, float headingDegrees, int index)
+            {
+                // Keep pooled water out from under parked wheels and break up the otherwise
+                // immaculate apron. Alternating sides prevents a visibly repeated stripe.
+                var radians = headingDegrees * Mathf.Deg2Rad;
+                var side = index % 2 == 0 ? 1f : -1f;
+                var rightX = Mathf.Cos(radians) * side;
+                var rightZ = -Mathf.Sin(radians) * side;
+                var forwardX = Mathf.Sin(radians);
+                var forwardZ = Mathf.Cos(radians);
+                var px = x + rightX * (5f + index % 3) - forwardX * (3f + index % 2);
+                var pz = z + rightZ * (5f + index % 3) - forwardZ * (3f + index % 2);
+                spots.Add(new Vector3(px, AirsideAdelaideGround.WorldHeight(px, pz) + 0.07f, pz));
+            }
+
+            for (var i = 0; i < AdelaideLayout.Bays.Length; i++)
+            {
+                var bay = AdelaideLayout.Bays[i];
+                Add(bay.StopX, bay.StopZ, bay.HeadingDegrees, i);
+            }
+
+            for (var i = 0; i < AdelaideLayout.TerminalGates.Length; i++)
+            {
+                var gate = AdelaideLayout.TerminalGates[i];
+                Add(gate.NoseX, gate.NoseZ, gate.HeadingDegrees, AdelaideLayout.Bays.Length + i);
+            }
+
+            return spots.ToArray();
+        }
+
         private void CollectAirfieldLights(Renderer[] renderers = null)
         {
             _airfieldLightRenderers.Clear();
+            _airfieldLightsAppliedDaylight = float.NaN;
             _airfieldLightIsTaxi.Clear();
             renderers ??= AirsideSceneIndex.Renderers;
             foreach (var renderer in renderers)
@@ -4047,7 +4197,7 @@ namespace Airside.Presentation
             _sun.shadowStrength = Mathf.Lerp(0.28f, 0.78f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
-            var weatherGloom = EaseWeatherGloom(_weatherGloom, WeatherGloomTarget(CurrentWeather),
+            var weatherGloom = EaseWeatherGloom(_weatherGloom, CurrentWeatherLook.Gloom,
                 _weatherGloomReady ? Time.unscaledDeltaTime : float.PositiveInfinity);
             _weatherGloom = weatherGloom;
             _weatherGloomReady = true;
@@ -4139,7 +4289,7 @@ namespace Airside.Presentation
             // apron and buildings stay obvious from the default overview.
             if (!Weather.IsAdverse(CurrentWeather))
             {
-                var look = WeatherLook.For(CurrentWeather);
+                var look = CurrentWeatherLook;
                 var cloudy = look.CloudCover > 0.3f;
                 RenderSettings.fog = true;
                 RenderSettings.fogMode = FogMode.ExponentialSquared;
@@ -4367,6 +4517,11 @@ namespace Airside.Presentation
         private void UpdateAirfieldNavLights(float daylight)
         {
             // Edge / taxi lights punch up at dusk/night so the airfield stays readable.
+            // No time term here: in steady day or night every lamp gets the same tint as last
+            // frame, so hundreds of property-block writes are skipped until daylight moves.
+            if (AirsideRuntimeQuality.DaylightSteady(_airfieldLightsAppliedDaylight, daylight))
+                return;
+            _airfieldLightsAppliedDaylight = daylight;
             var night = 1f - daylight;
             var intensity = Mathf.Lerp(0.35f, 1.35f, night);
             var warmWhite = Color.Lerp(new Color(0.85f, 0.88f, 0.7f), new Color(1f, 0.95f, 0.75f), night);
@@ -4499,6 +4654,16 @@ namespace Airside.Presentation
             }
 
             _windowLights = lights.ToArray();
+            _nightGlowKind.Clear();
+            foreach (var renderer in _nightGlowRenderers)
+            {
+                var n = renderer.gameObject.name;
+                _nightGlowKind.Add(n.StartsWith("Terminal airside glazing", StringComparison.Ordinal) ? (byte)1
+                    : n.StartsWith("Terminal airside interior glow", StringComparison.Ordinal) ? (byte)2
+                    : (byte)0);
+            }
+
+            _nightGlowAppliedDaylight = float.NaN;
             UpdateNightGlow(PresentationDaylight);
         }
 
@@ -4508,7 +4673,13 @@ namespace Airside.Presentation
             // with a soft per-window flicker so night interiors feel occupied (0025 item 5).
             var glow = Mathf.Lerp(1.15f, 0.05f, daylight);
             var night = 1f - daylight;
-            for (var i = 0; i < _nightGlowRenderers.Count; i++)
+            // Flicker (the only time term) runs at night; by day the panes and window lights
+            // hold still, so skip rewriting them until daylight itself moves (ADR 0101).
+            var flickering = night > 0.35f;
+            var steady = !flickering && AirsideRuntimeQuality.DaylightSteady(_nightGlowAppliedDaylight, daylight);
+            if (!steady)
+                _nightGlowAppliedDaylight = flickering ? float.NaN : daylight;
+            for (var i = 0; !steady && i < _nightGlowRenderers.Count; i++)
             {
                 var renderer = _nightGlowRenderers[i];
                 if (renderer == null)
@@ -4517,7 +4688,8 @@ namespace Airside.Presentation
                     ? 1f + 0.06f * Mathf.Sin(
                         Time.unscaledTime * (AirsideReusableMotion.WindowFlickerHz * Mathf.PI * 2f + i * 0.37f) + i)
                     : 1f;
-                if (renderer.gameObject.name.StartsWith("Terminal airside glazing", StringComparison.Ordinal))
+                var kind = i < _nightGlowKind.Count ? _nightGlowKind[i] : (byte)0;
+                if (kind == 1)
                 {
                     var lit = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.35f, 0.85f, night));
                     var facade = Color.Lerp(
@@ -4528,7 +4700,7 @@ namespace Airside.Presentation
                     SetRendererColor(renderer, facade, facade * lit);
                     continue;
                 }
-                if (renderer.gameObject.name.StartsWith("Terminal airside interior glow", StringComparison.Ordinal))
+                if (kind == 2)
                 {
                     // Behind the blue glass, use HDR unlit interior cards. At real-airport
                     // overview distance ordinary Lit emission is lost to night exposure.
@@ -4546,7 +4718,7 @@ namespace Airside.Presentation
                 SetRendererColor(renderer, color, emission);
             }
 
-            if (_windowLights != null)
+            if (_windowLights != null && !steady)
             {
                 var intensity = Mathf.Lerp(2.4f, 0.02f, daylight);
                 for (var i = 0; i < _windowLights.Length; i++)
@@ -5194,6 +5366,11 @@ namespace Airside.Presentation
             AirsideAdelaideLandside.TryBuild(_airfieldRoot, pavementY);
             BuildYpadLandsideLife();
             BuildCloudBands();
+            // Real Adelaide used to omit these entirely because only the legacy compact
+            // environment called BuildHorizonDome. Keep the real-scale clear-colour sky,
+            // but give it the same astronomical bodies and a camera-centred star shell.
+            BuildSunAndMoonDiscs();
+            BuildStarField();
             if (AirsideBareField.HasLaunchFlag("-airsidePerimeterFence"))
                 BuildBareAdelaidePerimeterFence();
         }
@@ -8176,45 +8353,62 @@ namespace Airside.Presentation
 
         private static void BuildStarField()
         {
-            // One mesh of inward quads — 72 spheres were 72 UnlitSky draw calls.
+            // One mesh of inward quads: a denser sky still costs a single draw call.
             var root = new GameObject("Star field").transform;
             var rng = new System.Random(31415);
-            const int count = 72;
-            var vertices = new Vector3[count * 4];
-            var triangles = new int[count * 6];
-            var colors = new Color[count * 4];
+            const int count = 720;
+            const int points = 8;
+            const int verticesPerStar = points + 1;
+            var vertices = new Vector3[count * verticesPerStar];
+            var triangles = new int[count * points * 3];
+            var colors = new Color[count * verticesPerStar];
             for (var i = 0; i < count; i++)
             {
                 var yaw = (float)rng.NextDouble() * 360f;
-                var pitch = 10f + (float)rng.NextDouble() * 72f;
-                var dir = (Quaternion.Euler(pitch, yaw, 0f) * Vector3.forward).normalized;
+                // Uniform by sky area rather than pitch, avoiding an artificial bright
+                // ring near the zenith. The real-airport overview looks only a few degrees
+                // above the horizon, so begin at 2° rather than hiding the whole field at 8°.
+                var y = Mathf.Lerp(Mathf.Sin(2f * Mathf.Deg2Rad), 0.985f, (float)rng.NextDouble());
+                var horizontal = Mathf.Sqrt(1f - y * y);
+                var dir = new Vector3(
+                    Mathf.Sin(yaw * Mathf.Deg2Rad) * horizontal,
+                    y,
+                    Mathf.Cos(yaw * Mathf.Deg2Rad) * horizontal);
                 // Far enough out to sit beyond the whole flight envelope — an arrival
                 // joining final 430 m out must not be occluded by a star. Radius and
                 // quad size scale together, so the night sky looks unchanged.
                 const float radius = 128f * StarDistanceScale;
                 var pos = dir * radius;
-                var s = (0.22f + (float)rng.NextDouble() * 0.42f) * StarDistanceScale;
+                var hero = i % 31 == 0 ? 1.65f : i % 11 == 0 ? 1.22f : 1f;
+                var s = (0.10f + (float)rng.NextDouble() * 0.18f) * StarDistanceScale * hero;
                 var bright = 0.65f + (float)rng.NextDouble() * 0.35f;
-                var color = new Color(bright, bright, 0.95f * bright, 1f);
+                var tint = (float)rng.NextDouble();
+                var color = tint < 0.18f
+                    ? new Color(0.84f * bright, 0.91f * bright, bright, 1f)
+                    : tint > 0.84f
+                        ? new Color(bright, 0.91f * bright, 0.78f * bright, 1f)
+                        : new Color(bright, bright, 0.95f * bright, 1f);
                 var right = Vector3.Cross(dir, Vector3.up);
                 if (right.sqrMagnitude < 0.001f)
                     right = Vector3.right;
                 right.Normalize();
                 var up = Vector3.Cross(right, dir).normalized;
-                var v = i * 4;
-                vertices[v] = pos + (-right - up) * s;
-                vertices[v + 1] = pos + (right - up) * s;
-                vertices[v + 2] = pos + (right + up) * s;
-                vertices[v + 3] = pos + (-right + up) * s;
-                var t = i * 6;
-                triangles[t] = v;
-                triangles[t + 1] = v + 1;
-                triangles[t + 2] = v + 2;
-                triangles[t + 3] = v;
-                triangles[t + 4] = v + 2;
-                triangles[t + 5] = v + 3;
-                for (var k = 0; k < 4; k++)
-                    colors[v + k] = color;
+                var v = i * verticesPerStar;
+                vertices[v] = pos;
+                colors[v] = color;
+                for (var p = 0; p < points; p++)
+                {
+                    var radians = p * Mathf.PI * 2f / points;
+                    var radiusScale = p % 2 == 0 ? 1f : 0.28f;
+                    vertices[v + 1 + p] = pos
+                        + (right * Mathf.Cos(radians) + up * Mathf.Sin(radians)) * (s * radiusScale);
+                    colors[v + 1 + p] = new Color(color.r * 0.82f, color.g * 0.82f, color.b * 0.82f, 1f);
+
+                    var t = (i * points + p) * 3;
+                    triangles[t] = v;
+                    triangles[t + 1] = v + 1 + p;
+                    triangles[t + 2] = v + 1 + (p + 1) % points;
+                }
             }
 
             var mesh = new Mesh { name = "Star field" };
@@ -8260,8 +8454,16 @@ namespace Airside.Presentation
         }
 
         /// <summary>Star brightness for the daylight level: full at night, gone by mid-dawn.</summary>
-        public static float StarFieldFade(float daylight) =>
-            (1.1f - Mathf.Clamp01(daylight)) * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.42f, 0.12f, daylight));
+        public static float StarFieldFade(float daylight) => StarFieldFade(daylight, 0f);
+
+        public static float StarFieldFade(float daylight, float cloudCover)
+        {
+            var daylightFade = (1.1f - Mathf.Clamp01(daylight))
+                * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.42f, 0.12f, daylight));
+            var cloudFade = Mathf.Lerp(1f, 0.04f,
+                Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.28f, 0.88f, cloudCover)));
+            return daylightFade * cloudFade;
+        }
 
         private void UpdateStarField()
         {
@@ -8276,12 +8478,17 @@ namespace Airside.Presentation
             var daylight = PresentationDaylight;
             // Stars used to switch off at daylight 0.35 while still three-quarters bright,
             // so the whole sky blinked once every dawn and dusk. Fade them out instead.
-            var fade = StarFieldFade(daylight);
+            var fade = StarFieldFade(daylight, CurrentWeatherLook.CloudCover);
             var show = fade > 0.002f;
             if (_starFieldRoot.gameObject.activeSelf != show)
                 _starFieldRoot.gameObject.SetActive(show);
             if (!show)
                 return;
+
+            // The Adelaide field spans kilometres. Keep the celestial shell centred on
+            // the active camera so stars cannot be left behind by overview/follow pans.
+            if (_mainCamera != null)
+                _starFieldRoot.position = _mainCamera.transform.position;
 
             var twinkle = 0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.StarTwinkleHz);
             if (_starFieldRenderer == null)
@@ -8303,7 +8510,7 @@ namespace Airside.Presentation
             var sun = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             sun.name = "Sun disc";
             Object.Destroy(sun.GetComponent<Collider>());
-            sun.transform.localScale = Vector3.one * 12f;
+            sun.transform.localScale = Vector3.one * 7.5f;
             var sunMat = AirsideMaterialLibrary.CreateShared(
                 new Color(1f, 0.94f, 0.72f, 1f),
                 AirsideMaterialLibrary.SurfaceKind.UnlitSky);
@@ -8319,7 +8526,7 @@ namespace Airside.Presentation
             glow.name = "Sun glow";
             Object.Destroy(glow.GetComponent<Collider>());
             glow.transform.SetParent(sun.transform, false);
-            glow.transform.localScale = Vector3.one * 2.6f;
+            glow.transform.localScale = Vector3.one * 3.2f;
             var glowMat = AirsideMaterialLibrary.CreateShared(
                 new Color(1f, 0.72f, 0.35f, 1f),
                 AirsideMaterialLibrary.SurfaceKind.UnlitSky);
@@ -8334,7 +8541,7 @@ namespace Airside.Presentation
             var moon = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             moon.name = "Moon disc";
             Object.Destroy(moon.GetComponent<Collider>());
-            moon.transform.localScale = Vector3.one * 8.5f;
+            moon.transform.localScale = Vector3.one * 6.5f;
             var moonMat = AirsideMaterialLibrary.CreateShared(
                 new Color(0.78f, 0.80f, 0.84f, 1f),
                 AirsideMaterialLibrary.SurfaceKind.Concrete);
@@ -8364,7 +8571,7 @@ namespace Airside.Presentation
             }
 
             var skyAnchor = _mainCamera != null ? _mainCamera.transform.position : Vector3.zero;
-            var cloudCover = WeatherLook.For(CurrentWeather).CloudCover;
+            var cloudCover = CurrentWeatherLook.CloudCover;
             var discVisibility = Mathf.Clamp01(1f - Mathf.InverseLerp(0.3f, 0.75f, cloudCover));
 
             SkyDirection.ToWorld(sky.Sun, out var sx, out var sy, out var sz);
@@ -8446,7 +8653,7 @@ namespace Airside.Presentation
 
             var rng = new System.Random(90210);
             var adelaide = AirsideBareField.Enabled;
-            var clusterCount = adelaide ? 16 : 9;
+            var clusterCount = adelaide ? 24 : 9;
             var spreadX = adelaide ? 4200f : 110f;
             var spreadZ = adelaide ? 2800f : 100f;
             var yBase = adelaide ? 240f : 24f;
@@ -8460,7 +8667,7 @@ namespace Airside.Presentation
                 var y = yBase + (float)rng.NextDouble() * ySpan;
                 cluster.position = new Vector3(x, y, z);
 
-                var sx = (adelaide ? 280f : 16f) + (float)rng.NextDouble() * (adelaide ? 220f : 30f);
+                var sx = (adelaide ? 360f : 16f) + (float)rng.NextDouble() * (adelaide ? 300f : 30f);
                 var sy = (adelaide ? 28f : 3.4f) + (float)rng.NextDouble() * (adelaide ? 22f : 4.5f);
                 var sz = (adelaide ? 180f : 9f) + (float)rng.NextDouble() * (adelaide ? 160f : 18f);
                 var yaw = (float)rng.NextDouble() * 360f;
@@ -8479,7 +8686,7 @@ namespace Airside.Presentation
                 renderer.receiveShadows = false;
                 renderer.GetPropertyBlock(RendererTintBlock);
                 var cellX = i % 4;
-                var cellY = i / 4;
+                var cellY = (i / 4) % 4;
                 RendererTintBlock.SetVector(CloudAtlasRectId,
                     new Vector4(0.25f, 0.25f, cellX * 0.25f, cellY * 0.25f));
                 renderer.SetPropertyBlock(RendererTintBlock);
@@ -8778,8 +8985,8 @@ namespace Airside.Presentation
             // clouds and rain used to move the same direction regardless of what the windsock
             // (the only other wind-reactive visual) was pointing.
             var daylight = PresentationDaylight;
-            var look = WeatherLook.For(CurrentWeather);
-            var wind = _operations != null ? _operations.Wind : RunwayWeather.At(AirlineClock.Default, _clock.Now);
+            var look = CurrentWeatherLook;
+            var wind = PresentationWind;
             var windYawRad = RunwayWeather.UnityYawFromTrue(wind.DirectionDegrees) * Mathf.Deg2Rad;
             var driftSpeed = Time.unscaledDeltaTime * (AirsideBareField.Enabled ? 4.5f : 0.35f);
             var driftX = Mathf.Sin(windYawRad) * driftSpeed;
@@ -8791,7 +8998,9 @@ namespace Airside.Presentation
             // The old solid cylinder needed a stronger value under opaque geometry. Atlas alpha
             // already describes a soft cloud edge, so its companion umbra must stay broad/subtle.
             var umbraAlpha = Mathf.Lerp(0.025f, 0.045f + look.CloudCover * 0.065f, daylight);
-            var tintKey = ((int)weather << 4) ^ AirsideRuntimeQuality.ProbeBand(daylight, 0f);
+            var cloudBand = Mathf.RoundToInt(look.CloudCover * 20f);
+            var tintKey = ((int)weather << 12) ^ (cloudBand << 5)
+                ^ AirsideRuntimeQuality.ProbeBand(daylight, 0f);
             var tintChanged = tintKey != _cloudTintKey;
             if (tintChanged)
                 _cloudTintKey = tintKey;
@@ -8846,6 +9055,7 @@ namespace Airside.Presentation
                 // than popping solid the instant cover crosses its threshold.
                 var revealAt = (float)i / _cloudRoot.childCount;
                 var visibility = Mathf.InverseLerp(revealAt, revealAt + 0.08f, look.CloudCover);
+                cloud.localScale = Vector3.one * Mathf.Lerp(0.78f, 1.65f, look.CloudCover);
 
                 var renderers = cloud.GetComponentsInChildren<Renderer>();
                 for (var r = 0; r < renderers.Length; r++)
@@ -10921,11 +11131,18 @@ namespace Airside.Presentation
 
         private enum LightGearKind { GearDoor, GearStrut, NavigationLight, Beacon, LandingLight, TaxiLight }
 
-        private readonly struct LightGearPart
+        private sealed class LightGearPart
         {
             public readonly Transform Transform;
             public readonly LightGearKind Kind;
             public readonly AircraftNavigationLight NavLight;
+            // Resolved on first use, then reused every frame: the lights pass used to run
+            // GetComponent<Light>, GetComponent<Renderer> and a by-name Transform.Find for
+            // the wingtip strobe on every lamp of every visible aircraft, every frame.
+            public Light Light;
+            public Light Strobe;
+            public Renderer Lamp;
+            public bool LampResolved;
 
             public LightGearPart(Transform transform, LightGearKind kind, AircraftNavigationLight navLight = AircraftNavigationLight.None)
             {

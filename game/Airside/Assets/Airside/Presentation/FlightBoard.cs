@@ -262,13 +262,21 @@ namespace Airside.Presentation
             return aircraft.StateStartedAt.ElapsedSeconds;
         }
 
-        public static string EstimatedTime(FleetAircraft aircraft, Func<SimulationTime, string> clockText)
+        /// <summary>
+        /// Secondary TIME under the board clock, printed as "est …". On Departures this must
+        /// never be the destination arrival (<see cref="FleetState.Outbound"/>'s
+        /// <c>StateEndsAt</c>). Arrivals taxiing in show stand ETA under touchdown TIME.
+        /// </summary>
+        public static string EstimatedTime(FleetAircraft aircraft, Func<SimulationTime, string> clockText) =>
+            EstimatedTime(aircraft, arrivals: true, clockText);
+
+        public static string EstimatedTime(FleetAircraft aircraft, bool arrivals,
+            Func<SimulationTime, string> clockText)
         {
             if (aircraft == null || clockText == null)
                 return "—";
-            // Departures board: an airborne ETA at the destination is not an "est" of the
-            // departure time — leave it blank so the TIME column stays honest.
-            if (aircraft.State is FleetState.Outbound or FleetState.TakingOff)
+            // Departures FIDS: TIME is STD / ATD. Destination airborne ETA is not an "est".
+            if (!arrivals)
                 return "—";
             // Arrivals still taxiing: show stand ETA under the touchdown time.
             if (aircraft.State == FleetState.TaxiIn && aircraft.StateEndsAt.HasValue)

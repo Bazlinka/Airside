@@ -294,7 +294,12 @@ namespace Airside.Simulation
         /// </summary>
         public static readonly IReadOnlyList<(Func<Airline> Make, (string Registration, AircraftType Type)[] Fleet)> RegionalCarriers = new (Func<Airline>, (string, AircraftType)[])[]
         {
-            (Airline.Rex, new[] { ("VH-ZRC", AircraftType.Saab340), ("VH-ZRD", AircraftType.Saab340), ("VH-ZRE", AircraftType.Saab340) }),
+            (Airline.Rex, new[]
+            {
+                ("VH-ZRC", AircraftType.Saab340), ("VH-ZRD", AircraftType.Saab340),
+                ("VH-ZRE", AircraftType.Saab340), ("VH-ZRF", AircraftType.Saab340),
+                ("VH-ZRG", AircraftType.Saab340)
+            }),
             (Airline.QantasLink, new[] { ("VH-QOK", AircraftType.Dash8Q400), ("VH-QOL", AircraftType.Dash8Q400), ("VH-QOM", AircraftType.Dash8Q400) })
         };
 
@@ -334,15 +339,27 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Staggered opening departures — about one every five minutes, a normal
-        /// Adelaide peak rather than a three-minute pile-up.
+        /// Opening pushbacks shaped like an Adelaide morning bank: clustered minutes with
+        /// intentional doubles (ADR 0100). Tower/ground still serialise the strip — same
+        /// DepartAt is fine; the apron should look busy, not single-file.
         /// </summary>
         public static readonly long[] AiOpeningDepartureSeconds =
-            { 3 * 60, 7 * 60, 12 * 60, 17 * 60, 22 * 60, 27 * 60, 33 * 60, 39 * 60 };
+        {
+            2 * 60, 2 * 60,
+            5 * 60, 5 * 60,
+            8 * 60, 8 * 60,
+            12 * 60,
+            15 * 60, 15 * 60,
+            20 * 60,
+            25 * 60, 25 * 60,
+            32 * 60,
+            38 * 60
+        };
 
         /// <summary>
-        /// The ADR 0045 / 0077 starting position at Adelaide: the player's airline with one
-        /// Saab 340B, real Adelaide operators on the apron, and a bank of aircraft already inbound.
+        /// The ADR 0045 / 0077 / 0100 starting position at Adelaide: the player's airline with one
+        /// Saab 340B, real Adelaide operators filling the apron, a short inbound bank already
+        /// flying, and opening departures clustered like an ADL morning peak.
         /// </summary>
         public static AirlineOperations StartAtAdelaide(ISimulationClock clock, IRandomSource random, Airline player,
             AirlineClock airlineClock = null)
@@ -366,10 +383,9 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Morning: a compact 54-minute peak (ADR 0077). Evening: stretch that same
-        /// order onto the remaining time before 22:50 so the board still has the
-        /// 22:00 long-hauls instead of dying ~40 minutes after launch. Curfew: no
-        /// commercial opening peak.
+        /// Short opening arrival bank so most authored metal stays on stands (ADR 0100).
+        /// Morning: ~7 inbound over ~40 minutes. Evening: stretch those onto the remaining
+        /// time before 22:50. Curfew: no commercial opening peak.
         /// </summary>
         private void SeedOpeningTraffic(List<FleetAircraft> regionalFleet, List<FleetAircraft> terminalFleet)
         {
@@ -378,25 +394,14 @@ namespace Airside.Simulation
                 return;
 
             var evening = local.Hour >= 19;
-            TrySeedOpeningInbound(regionalFleet, "QLK", "PLO", FitOpeningSeconds(local, 2 * 60, evening));
-            TrySeedOpeningInbound(regionalFleet, "REX", "MGB", FitOpeningSeconds(local, 5 * 60, evening));
-            TrySeedOpeningInbound(regionalFleet, "REX", "PLO", FitOpeningSeconds(local, 9 * 60, evening));
-            TrySeedOpeningInbound(regionalFleet, "REX", "CED", FitOpeningSeconds(local, 21 * 60, evening));
-            TrySeedOpeningInbound(terminalFleet, "ANZ", "AKL", FitOpeningSeconds(local, 7 * 60, evening));
-            TrySeedOpeningInbound(terminalFleet, "VOZ", "MEL", FitOpeningSeconds(local, 11 * 60, evening));
-            TrySeedOpeningInbound(terminalFleet, "QFA", "SYD", FitOpeningSeconds(local, 15 * 60, evening));
-            TrySeedOpeningInbound(terminalFleet, "JST", "MEL", FitOpeningSeconds(local, 18 * 60, evening));
-            TrySeedOpeningInbound(terminalFleet, "VOZ", "SYD", FitOpeningSeconds(local, 24 * 60, evening));
-            TrySeedOpeningInbound(terminalFleet, "SIA", "SIN", FitOpeningSeconds(local, 28 * 60, evening));
-            TrySeedOpeningInbound(terminalFleet, "QFA", "BNE", FitOpeningSeconds(local, 32 * 60, evening));
-            TrySeedOpeningInbound(terminalFleet, "JST", "SYD", FitOpeningSeconds(local, 37 * 60, evening));
-            TrySeedOpeningInbound(terminalFleet, "MAS", "KUL", FitOpeningSeconds(local, 41 * 60, evening));
-            TrySeedOpeningInbound(terminalFleet, "FJI", "NAN", FitOpeningSeconds(local, 45 * 60, evening));
-            if (!evening)
-            {
-                TrySeedOpeningInbound(terminalFleet, "UAE", "DXB", FitOpeningSeconds(local, 49 * 60, evening));
-                TrySeedOpeningInbound(terminalFleet, "QTR", "DOH", FitOpeningSeconds(local, 54 * 60, evening));
-            }
+            // Keep a readable short-final stream; leave the rest of T1 / the bays parked.
+            TrySeedOpeningInbound(regionalFleet, "QLK", "PLO", FitOpeningSeconds(local, 3 * 60, evening));
+            TrySeedOpeningInbound(regionalFleet, "REX", "MGB", FitOpeningSeconds(local, 8 * 60, evening));
+            TrySeedOpeningInbound(terminalFleet, "VOZ", "MEL", FitOpeningSeconds(local, 12 * 60, evening));
+            TrySeedOpeningInbound(terminalFleet, "QFA", "SYD", FitOpeningSeconds(local, 18 * 60, evening));
+            TrySeedOpeningInbound(terminalFleet, "JST", "MEL", FitOpeningSeconds(local, 24 * 60, evening));
+            TrySeedOpeningInbound(terminalFleet, "ANZ", "AKL", FitOpeningSeconds(local, 30 * 60, evening));
+            TrySeedOpeningInbound(terminalFleet, "SIA", "SIN", FitOpeningSeconds(local, 40 * 60, evening));
 
             if (evening)
                 return;
@@ -427,8 +432,8 @@ namespace Airside.Simulation
             var remaining = last.ElapsedSeconds - _processedTo.ElapsedSeconds;
             if (remaining < 8 * 60)
                 return -1;
-            const long nominalLast = 54 * 60;
-            const long nominalFirst = 2 * 60;
+            const long nominalLast = 40 * 60;
+            const long nominalFirst = 3 * 60;
             var span = Math.Max(1, remaining - nominalFirst);
             var t = (nominalSeconds - nominalFirst) / (double)(nominalLast - nominalFirst);
             return nominalFirst + (long)Math.Round(t * span);
@@ -1652,6 +1657,9 @@ namespace Airside.Simulation
             if (settlement == null)
                 return;
 
+            if (aircraft.Airline.IsPlayer)
+                DailyService.TryRecordAndAward(CareerState, PlayerOwnedTypes(), justFlown.Value, Clock, now);
+
             _recentSettlements.Add(settlement.Value);
             TotalSettlements++;
             if (_recentSettlements.Count > MaxRecentEvents)
@@ -2722,8 +2730,23 @@ namespace Airside.Simulation
 
             if (disruption.Delayed)
                 departAt = AiDepartureWithinHours(departAt.Advance(disruption.DelayMinutes * 60L), aircraft);
+            departAt = SnapCommercialDeparture(aircraft, departAt);
             departAt = PinLongHaulEvening(aircraft, departAt);
             aircraft.Scheduled = new ScheduledDeparture(destination, departAt, disruption.DelayMinutes);
+        }
+
+        /// <summary>
+        /// Cluster commercial AI onto 5-minute ADL bank marks so turns that finish a
+        /// minute apart can share a departure time (ADR 0100). Player and RFDS untouched.
+        /// </summary>
+        private SimulationTime SnapCommercialDeparture(FleetAircraft aircraft, SimulationTime departAt)
+        {
+            if (aircraft == null || aircraft.Airline.IsPlayer || aircraft.Airline.IsEmergency)
+                return departAt;
+            var local = Clock.LocalAt(departAt);
+            var snapped = AdelaideHourProfile.SnapToBankLocal(local, AiFirstDepartureHour, AiLastDepartureHour);
+            var at = Clock.AtLocal(snapped);
+            return at.CompareTo(departAt) > 0 ? at : departAt;
         }
 
         /// <summary>

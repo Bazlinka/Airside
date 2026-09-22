@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Airside.Domain;
 using Airside.Presentation;
 using Airside.Simulation;
@@ -164,6 +165,22 @@ namespace Airside.Tests
             var departAt = clock.Now.Advance(DeparturePrep.LeadSeconds(plane.Type));
             Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), departAt).Accepted, Is.True);
             Assert.That(OperationsSummary.PrimaryAction(plane), Is.EqualTo(AircraftHudAction.ViewPlan));
+        }
+
+        [Test]
+        public void Objective_DeliveryInboundAsksToWaitThenSchedule()
+        {
+            var (clock, ops, _) = PlayerOnly();
+            ops.RestoreAircraft(
+                "VH-NEW", ops.PlayerAirline, AircraftType.Atr42, FleetState.Inbound,
+                clock.Now, clock.Now.Advance(8 * 60), default, default,
+                Code("KGC"), null, 0);
+            var delivery = ops.Fleet.Single(a => a.Registration == "VH-NEW");
+
+            var objective = OperationsSummary.Objective(new[] { delivery }, clock.Now, ops.Clock,
+                ops.CareerState);
+            Assert.That(objective.NextLine, Does.Contain("wait for VH-NEW to park"));
+            Assert.That(objective.NextLine, Does.Contain("schedule"));
         }
 
         [Test]

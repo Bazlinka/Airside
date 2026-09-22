@@ -206,8 +206,10 @@ namespace Airside.Tests
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(2026), Player());
-            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.GreaterThanOrEqualTo(11),
-                "a peak bank of arrivals is already inbound");
+            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.InRange(5, 9),
+                "a short inbound bank, not the whole terminal airborne (ADR 0100)");
+            Assert.That(ops.Fleet.Count(a => a.State == FleetState.AtStand), Is.GreaterThanOrEqualTo(12),
+                "most authored metal stays on the apron at opening");
             Assert.That(ops.Airlines.Select(a => a.Name),
                 Does.Contain("Qantas").And.Contain("Jetstar").And.Contain("Virgin Australia")
                     .And.Contain("Malaysia Airlines").And.Contain("Emirates")
@@ -255,14 +257,33 @@ namespace Airside.Tests
                 .Select(a => a.StateEndsAt.Value.ElapsedSeconds)
                 .OrderBy(t => t)
                 .ToArray();
-            Assert.That(arrivals.Length, Is.GreaterThanOrEqualTo(11));
-            Assert.That(arrivals[^1] - arrivals[0], Is.GreaterThanOrEqualTo(25 * 60),
+            Assert.That(arrivals.Length, Is.InRange(5, 9));
+            Assert.That(arrivals[^1] - arrivals[0], Is.GreaterThanOrEqualTo(20 * 60),
                 "the bank lasts a normal peak, not a ten-minute dump");
             for (var i = 1; i < arrivals.Length; i++)
             {
                 Assert.That(arrivals[i] - arrivals[i - 1], Is.GreaterThanOrEqualTo(90),
                     "arrivals are spaced, not stacked on one minute");
             }
+        }
+
+        [Test]
+        public void NewGame_OpeningDeparturesClusterWithIntentionalDoubles()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(2026), Player());
+            var departures = ops.Fleet
+                .Where(a => !a.Airline.IsPlayer && !a.Airline.IsEmergency
+                            && a.State == FleetState.AtStand && a.Scheduled.HasValue)
+                .Select(a => a.Scheduled.Value.DepartAt.ElapsedSeconds)
+                .OrderBy(t => t)
+                .ToArray();
+            Assert.That(departures.Length, Is.GreaterThanOrEqualTo(8),
+                "a busy apron means a full opening departure bank");
+            Assert.That(departures[0], Is.EqualTo(AirlineOperations.AiOpeningDepartureSeconds[0]));
+            Assert.That(departures.Distinct().Count(), Is.LessThan(departures.Length),
+                "ADL-style doubles: at least one shared departure minute");
+            Assert.That(departures.Max(), Is.LessThanOrEqualTo(40 * 60));
         }
 
         [Test]

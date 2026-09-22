@@ -163,5 +163,23 @@ namespace Airside.Tests
             Assert.That(offers.Take(AirlineOperations.FeaturedCareerContracts).Select(o => o.Id),
                 Is.EqualTo(new[] { "REG-KGC-INTRO", "REG-PLO-INTRO" }));
         }
+
+        [Test]
+        public void SuggestedFirstDestination_PrefersActiveContractThenChapterTarget()
+        {
+            var (_, ops, plane) = HudTestAirline.Create("Suggest Air");
+            Assert.That(ops.AcceptContract(RouteContractCatalogue.RegionalKingscoteIntro).Accepted, Is.True);
+            var suggested = Campaign.SuggestedFirstDestination(
+                ops.CareerState, new[] { plane.Type }, plane, ops.CanOperate);
+            Assert.That(suggested.HasValue, Is.True);
+            Assert.That(suggested.Value.Code, Is.EqualTo("KGC"));
+
+            var fresh = new AirlineCareerState();
+            var withoutContract = Campaign.SuggestedFirstDestination(
+                fresh, Starter, plane, ops.CanOperate);
+            Assert.That(withoutContract.HasValue, Is.True);
+            Assert.That(withoutContract.Value.Code, Is.EqualTo("KGC"),
+                "chapter 1 still points the starter at Kingscote with no contract yet");
+        }
 }
 }

@@ -214,12 +214,65 @@ namespace Airside.Simulation
             }
         }
 
+        /// <summary>
+        /// Best first destination after buying or parking an aircraft: active contract if the
+        /// type matches, else a chapter-advancing city the type can reach, else Kingscote.
+        /// </summary>
+        public static Destination? SuggestedFirstDestination(AirlineCareerState career,
+            IReadOnlyList<AircraftType> ownedTypes, FleetAircraft aircraft,
+            Func<FleetAircraft, Destination, bool> canOperate)
+        {
+            if (aircraft == null || canOperate == null)
+                return null;
+
+            if (career?.ActiveContract != null
+                && career.TryFindDefinition(career.ActiveContract.DefinitionId, out var active)
+                && ReferenceEquals(active.EligibleType, aircraft.Type)
+                && DestinationCatalogue.TryFind(active.DestinationCode, out var contractDest)
+                && canOperate(aircraft, contractDest))
+                return contractDest;
+
+            Destination? best = null;
+            foreach (var destination in DestinationCatalogue.All)
+            {
+                if (destination.Equals(DestinationCatalogue.Adelaide))
+                    continue;
+                if (!canOperate(aircraft, destination))
+                    continue;
+                if (!RouteGuidance(career, ownedTypes, destination).AdvancesCurrentChapter)
+                    continue;
+                if (best == null
+                    || string.CompareOrdinal(destination.Code, best.Value.Code) < 0)
+                    best = destination;
+            }
+
+            if (best.HasValue)
+                return best;
+            if (DestinationCatalogue.TryFind("KGC", out var kingscote) && canOperate(aircraft, kingscote))
+                return kingscote;
+            return null;
+        }
+
         public static bool IsWidebody(AircraftType type) =>
             type != null && type.Id is "A359" or "B78X" or "B789" or "A339";
+
+        /// <summary>True when the code is one of the campaign's interstate capital / national targets.</summary>
+        public static bool IsInterstate(string code) =>
+            !string.IsNullOrEmpty(code) && ContainsCode(Interstate, code);
+
+        /// <summary>True when the code is one of the campaign's international targets.</summary>
+        public static bool IsInternational(string code) =>
+            !string.IsNullOrEmpty(code) && ContainsCode(International, code);
+
+        /// <summary>Destination codes already fulfilled via completed contracts / history.</summary>
+        public static HashSet<string> FulfilledDestinationCodes(AirlineCareerState career) =>
+            FulfilledDestinations(career);
 
         private static HashSet<string> FulfilledDestinations(AirlineCareerState career)
         {
             var codes = new HashSet<string>(StringComparer.Ordinal);
+            if (career == null)
+                return codes;
             foreach (var id in career.CompletedContractIds)
                 if (career.TryFindDefinition(id, out var definition) && !string.IsNullOrEmpty(definition.DestinationCode))
                     codes.Add(definition.DestinationCode);
@@ -227,6 +280,14 @@ namespace Airside.Simulation
                 if (!string.IsNullOrEmpty(record.DestinationCode))
                     codes.Add(record.DestinationCode);
             return codes;
+        }
+
+        private static bool ContainsCode(string[] codes, string code)
+        {
+            foreach (var candidate in codes)
+                if (string.Equals(candidate, code, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            return false;
         }
 
         private static bool Owns(IReadOnlyList<AircraftType> types, Func<AircraftType, bool> match)

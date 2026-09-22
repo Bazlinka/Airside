@@ -1,4 +1,4 @@
-# 0099 — Player stand choice and longer Operations boards
+# 0103 — Player stand choice and longer Operations boards
 
 Date: 22 September 2026. Bailey: cannot choose a stand when flights land; Arrivals
 and Departures are nowhere near long enough or accurate.

@@ -1,8 +1,8 @@
 ## Where to resume — session handoff
 
-- **2026-09-22 Cursor — stand choice + longer Arrivals/Departures (branch
-  `cursor/stand-choice-and-ops-board-0487`, ADR 0099).** Bailey: cannot choose a stand when
-  flights land; Arrivals/Departures nowhere near long enough or accurate.
+- **2026-09-22 Cursor — stand choice + longer Arrivals/Departures (PR #378, ADR 0103).**
+  Bailey: cannot choose a stand when flights land; Arrivals/Departures nowhere near long
+  enough or accurate.
   - **Stand choice:** player aircraft wait 90 s at the exit (`PlayerStandAutoSeconds`) for a
     manual pick. Selection card and Operations detail list assignable stands with **BEST** on
     the suggested bay/gate. After the deadline the tower auto-parks (ADR 0056 kept, landing-tick
@@ -10,10 +10,25 @@
   - **Boards:** six-hour history of Landed/Departed from frozen `FleetEvent` snapshots; departure
     TIME no longer shows an airborne ETA as "est"; taxi-in shows touchdown + stand ETA; EVENT
     HISTORY paints five airport lines in a taller Operations-only footer.
-  - **Evidence:** `scripts/test-domain.sh` **691 passed** (new `StandChoiceAndBoardHistoryTests`).
-    Unity EditMode / packaged play not run on this cloud agent (no Mac editor).
-  - **NEXT:** Mac Unity compile + playtest a return (pick a stand, confirm boards keep recent
-    Landed/Departed). Merge when happy.
+  - **Evidence:** rebased onto main (ADR renumbered 0099→0103; FlightBoard honesty kept).
+  - **NEXT:** playtest a return — pick a stand, confirm boards keep recent Landed/Departed;
+    rebuild Mac app still owed.
+
+- **2026-09-22 Cursor — Daily Service Pattern (ADR 0102, PR #384 merged).** Session-level TODAY
+  loop per campaign chapter on the objective card; once-per-local-day bonus via settlement keys.
+  - **NEXT:** play Chapter 1 for two KGC rotations → bonus once; rebuild Mac app with apron +
+    buy + TODAY + stand choice together.
+
+- **2026-09-22 Claude — macOS performance pass (ADR 0101, merged).** Frame pacing 60/30, half-res
+  SSAO, night-only landing-lamp shadows, static tint skip, cached light lookups.
+  - **NEXT:** packaged look on the ProMotion Mac.
+
+- **2026-09-22 Codex — live Adelaide weather and environment (ADR 0099, in main).**
+  Open-Meteo presentation weather + full celestial sky on the real Adelaide path.
+  - **NEXT:** packaged Adelaide overview/follow at day/sunset/night/overcast/rain/fog.
+
+- **2026-09-22 Cursor — apron density + buy→plan merged (PR #381, ADR 0100).** On `main`.
+  - **NEXT:** covered by stand-choice / rebuild handoff above.
 
 - **2026-09-22 Claude — E190 and A220-300 own geometry (branch
   `feature/aircraft-surface-detail`, ADR 0098).** Both types were built by taking the AIR-005

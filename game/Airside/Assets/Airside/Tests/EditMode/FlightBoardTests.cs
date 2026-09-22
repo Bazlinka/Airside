@@ -167,5 +167,25 @@ namespace Airside.Tests
             aircraft.Scheduled = new ScheduledDeparture(Code("KGC"), new SimulationTime(900), 0, cancelled: true);
             Assert.That(FlightBoard.PhaseLabel(aircraft, new SimulationTime(100)), Is.EqualTo("Cancelled"));
         }
+
+        [Test]
+        public void EstimatedTime_OnDeparturesNeverShowsDestinationEta()
+        {
+            // Bailey's FIDS lie: Departed SIA488 at 07:46 with "est 13:55" — that second
+            // clock was Singapore arrival, mislabeled as a departure estimate.
+            var (clock, ops, aircraft) = PlayerOnly();
+            ops.ScheduleDeparture(aircraft, Code("BHQ"), new SimulationTime(600));
+            var outboundAt = 600 + AirlineOperations.TaxiOutSecondsFrom(aircraft.Stand)
+                             + AirlineOperations.TakeoffRunwaySeconds + 1;
+            RunTo(clock, ops, outboundAt);
+            Assert.That(aircraft.State, Is.EqualTo(FleetState.Outbound));
+            Assert.That(aircraft.StateEndsAt.HasValue, Is.True, "sim still tracks destination ETA");
+
+            string Clock(SimulationTime t) => $"T{t.ElapsedSeconds}";
+            Assert.That(FlightBoard.EstimatedTime(aircraft, arrivals: false, Clock), Is.EqualTo("—"));
+            Assert.That(FlightBoard.EstimatedTime(aircraft, arrivals: true, Clock),
+                Is.EqualTo(Clock(aircraft.StateEndsAt.Value)),
+                "arrivals may still surface the touchdown/away estimate");
+        }
     }
 }

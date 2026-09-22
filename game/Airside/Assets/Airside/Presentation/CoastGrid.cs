@@ -224,13 +224,18 @@ namespace Airside.Presentation
         /// The single credit line shown over the field: OSM drives the layout and the coast,
         /// and adsb.lol (also ODbL) is credited while its live aircraft are on screen.
         /// </summary>
-        public static string FieldCredit(bool usesOsmLayout, bool usesOsmCoast, bool usesLiveTraffic = false)
+        public static string FieldCredit(bool usesOsmLayout, bool usesOsmCoast,
+            bool usesLiveTraffic = false, bool usesLiveWeather = false)
         {
             var map = usesOsmLayout || usesOsmCoast ? OpenStreetMap : string.Empty;
-            if (!usesLiveTraffic)
-                return map;
-            return string.IsNullOrEmpty(map) ? Airside.Simulation.LiveTraffic.Credit
-                : map + "  ·  " + Airside.Simulation.LiveTraffic.Credit;
+            var credit = map;
+            if (usesLiveTraffic)
+                credit = string.IsNullOrEmpty(credit) ? Airside.Simulation.LiveTraffic.Credit
+                    : credit + "  ·  " + Airside.Simulation.LiveTraffic.Credit;
+            if (usesLiveWeather)
+                credit = string.IsNullOrEmpty(credit) ? Airside.Simulation.LiveWeather.Credit
+                    : credit + "  ·  " + Airside.Simulation.LiveWeather.Credit;
+            return credit;
         }
     }
 }

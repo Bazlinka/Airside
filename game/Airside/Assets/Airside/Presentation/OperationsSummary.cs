@@ -94,7 +94,7 @@ namespace Airside.Presentation
                 var required = definition.RequiredRotations;
                 return new CareerObjective(
                     ProveTitle(definition),
-                    $"{done} of {required} rotations complete",
+                    WithToday(career, playerFleet, clock, now, $"{done} of {required} rotations complete"),
                     required <= 0 ? 0f : done / (float)required,
                     next,
                     nextSeverity);
@@ -106,7 +106,8 @@ namespace Airside.Presentation
                 var chapter = ChapterProgress(playerFleet, career);
                 return new CareerObjective(
                     $"Accept {Article.A(PlaceName(offer.DestinationCode))} contract",
-                    string.IsNullOrEmpty(chapter.Text) ? "No contract accepted yet" : chapter.Text,
+                    WithToday(career, playerFleet, clock, now,
+                        string.IsNullOrEmpty(chapter.Text) ? "No contract accepted yet" : chapter.Text),
                     chapter.Progress01,
                     next,
                     nextSeverity);
@@ -124,7 +125,8 @@ namespace Airside.Presentation
                             : hangar.ReadyToBuy
                                 ? $"Buy {Article.A(hangar.Offer.Type.Name)} in Fleet"
                                 : $"Save for {Article.A(hangar.Offer.Type.Name)}",
-                        baseBlocked ? BaseProgressText(career) : HangarProgressText(hangar, career),
+                        WithToday(career, playerFleet, clock, now,
+                            baseBlocked ? BaseProgressText(career) : HangarProgressText(hangar, career)),
                         baseBlocked ? BaseProgress01(career) : HangarProgress01(hangar, career),
                         next,
                         nextSeverity);
@@ -132,13 +134,35 @@ namespace Airside.Presentation
 
                 return new CareerObjective(
                     "Keep the airline flying",
-                    $"${career.Funds:N0} on hand · {career.Reliability}% reliability",
+                    WithToday(career, playerFleet, clock, now,
+                        $"${career.Funds:N0} on hand · {career.Reliability}% reliability"),
                     0f,
                     next,
                     nextSeverity);
             }
 
             return new CareerObjective("Keep the airline flying", string.Empty, 0f, next, nextSeverity);
+        }
+
+        /// <summary>
+        /// Prefaces the objective progress line with the day's service pattern when active
+        /// (ADR 0102): "TODAY · Kingscote 1/2 · …".
+        /// </summary>
+        private static string WithToday(AirlineCareerState career, IEnumerable<FleetAircraft> playerFleet,
+            AirlineClock clock, SimulationTime now, string progress)
+        {
+            var owned = new List<AircraftType>();
+            if (playerFleet != null)
+                foreach (var aircraft in playerFleet)
+                    if (aircraft?.Type != null)
+                        owned.Add(aircraft.Type);
+
+            var today = DailyService.Evaluate(career, owned, clock, now);
+            if (!today.Active)
+                return progress ?? string.Empty;
+            if (string.IsNullOrEmpty(progress))
+                return today.Line;
+            return $"{today.Line} · {progress}";
         }
 
         public static void FillPlayerRows(IEnumerable<FleetAircraft> playerFleet, SimulationTime now,
@@ -277,6 +301,12 @@ namespace Airside.Presentation
             var severity = AircraftStatus.Severity(priority, now);
             if (priority.State == FleetState.AwaitingStand)
                 return ($"Next: assign a stand to {priority.Registration}", StatusSeverity.Warning);
+
+            // Delivery inbound (purchase with no free stand) — do not say "track" like a line flight.
+            if (priority.State == FleetState.Inbound && priority.CompletedTrips == 0
+                && !priority.Scheduled.HasValue)
+                return ($"Next: wait for {priority.Registration} to park, then schedule its first flight",
+                    StatusSeverity.Attention);
 
             if (Maintenance.InCheck(priority, now))
                 return ($"Next: wait for {priority.Registration}'s check until {clock.TimeText(priority.CheckUntil.Value)}",

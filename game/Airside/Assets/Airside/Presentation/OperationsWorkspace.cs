@@ -232,7 +232,8 @@ namespace Airside.Presentation
         /// aircraft on the field; an unknown one simply leaves the detail pane empty.
         /// </summary>
         public void Rebuild(AirlineOperations operations, SimulationTime now, OperationsBoardTab tab,
-            string selectedRegistration, IReadOnlyList<OperationsEventLine> events)
+            string selectedRegistration, IReadOnlyList<OperationsEventLine> events,
+            string presentationWeather = null)
         {
             _rows.Clear();
             _attention.Clear();
@@ -267,7 +268,7 @@ namespace Airside.Presentation
             Subtitle = $"Adelaide  ·  {RunwayWeather.Label(operations.ActiveRunway)}"
                        + $"/{RunwayWeather.Label(operations.ActiveCrossRunway)}"
                        + $"  ·  {operations.Wind.Text}"
-                       + $"  ·  {Weather.Describe(operations.CurrentWeather)}"
+                       + $"  ·  {presentationWeather ?? Weather.Describe(operations.CurrentWeather)}"
                        + (GroundStopped ? "  ·  GROUND STOP" : string.Empty);
 
             FillDayProgress(operations, now, clock);
@@ -310,7 +311,10 @@ namespace Airside.Presentation
             var onField = 0;
             foreach (var aircraft in operations.Fleet)
             {
-                if (IsOnFieldNow(aircraft))
+                // Same rule as drawing: Inbound / Away / far Outbound are off the map
+                // (FleetVisual.Hidden). Counting them here used to print "17 on field"
+                // while the apron looked empty.
+                if (IsDrawnOnField(aircraft, now))
                 {
                     onField++;
                     active++;
@@ -338,10 +342,12 @@ namespace Airside.Presentation
             DayCaption = $"{clock.TimeText(now)}  ·  {bank}  ·  {onField} on field";
         }
 
-        private static bool IsOnFieldNow(FleetAircraft aircraft) => aircraft.State is
-            FleetState.AtStand or FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff
-            or FleetState.Inbound or FleetState.HoldingForLanding or FleetState.GoAround
-            or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn;
+        /// <summary>
+        /// Metal the player can actually see at Adelaide right now. Matches
+        /// <see cref="FleetVisual.For"/> — not every fleet state that is "busy".
+        /// </summary>
+        private static bool IsDrawnOnField(FleetAircraft aircraft, SimulationTime now) =>
+            FleetVisual.For(aircraft, now).Visible;
 
         private static int MarkMinutes(FleetAircraft aircraft, AirlineClock clock, int fallback)
         {
@@ -396,7 +402,10 @@ namespace Airside.Presentation
             foreach (var aircraft in _scratch)
             {
                 var severity = AircraftStatus.Severity(aircraft, now);
-                var hasProgress = aircraft.StateEndsAt.HasValue || AircraftStatus.IsWaiting(aircraft);
+                // Outbound StateEndsAt is destination arrival — not a departure-board progress bar.
+                var showLegProgress = arrivals || aircraft.State != FleetState.Outbound;
+                var hasProgress = showLegProgress
+                    && (aircraft.StateEndsAt.HasValue || AircraftStatus.IsWaiting(aircraft));
                 var progress = aircraft.StateEndsAt.HasValue
                     ? (float)aircraft.StateProgress(now)
                     : AircraftStatus.WaitProgress(aircraft, now);
@@ -408,10 +417,13 @@ namespace Airside.Presentation
                 var livePast = !arrivals
                     && aircraft.State == FleetState.Outbound
                     && BoardClockMinutes(time) + 2 < nowMin;
+                // Inbound (and other Hidden states) stay on the board as arrivals/departures
+                // but must not read as metal already on the field.
+                var drawn = IsDrawnOnField(aircraft, now);
                 _rows.Add(new OperationsFlightRow(
                     aircraft.Registration,
                     time,
-                    FlightBoard.EstimatedTime(aircraft, clock.TimeText),
+                    FlightBoard.EstimatedTime(aircraft, arrivals, clock.TimeText),
                     FlightNumber.OrRegistration(aircraft),
                     FlightBoard.RouteText(aircraft),
                     StandColumn(aircraft),
@@ -423,7 +435,7 @@ namespace Airside.Presentation
                     aircraft.Airline.IsPlayer,
                     hasProgress,
                     progress,
-                    onField: !livePast,
+                    onField: drawn && !livePast,
                     isPast: livePast));
             }
 
@@ -582,7 +594,10 @@ namespace Airside.Presentation
             foreach (var aircraft in operations.FleetOf(player))
                 _scratch.Add(aircraft);
             var priority = OperationsSummary.PriorityAircraft(_scratch, now);
-            if (priority == null)
+            // Quiet "COMING UP" is the next stand commitment — never an airborne Departed /
+            // Away / Inbound jet. PriorityAircraft falls through to FirstOrDefault(), which
+            // used to put "VH-PAX · Departed · Mount Gambier" under the COMING UP caption.
+            if (priority == null || priority.State != FleetState.AtStand)
                 return;
             _attention.Add(new OperationsAttentionRow(priority.Registration,
                 $"{priority.Registration}  ·  {ExceptionText(priority, now, clock, operations.CareerState.BaseLevel)}", StatusSeverity.Normal));

@@ -73,6 +73,31 @@ namespace Airside.Simulation
         }
 
         /// <summary>
+        /// Round a ready time up onto a 5-minute bank mark during busy Adelaide hours so
+        /// several aircraft can share a departure minute (simulation-style ADL peaks).
+        /// Quiet hours jump via <see cref="NextUsefulLocal"/>. Never goes earlier.
+        /// </summary>
+        public static DateTime SnapToBankLocal(DateTime local, int firstHour, int lastHour)
+        {
+            if (local.Hour < firstHour)
+                return local.Date.AddHours(firstHour);
+            if (local.Hour > lastHour)
+                return local.Date.AddDays(1).AddHours(firstHour);
+
+            if (Density(local.Hour) < 0.45f)
+                return NextUsefulLocal(local, firstHour, lastHour);
+
+            var totalMin = local.Hour * 60 + local.Minute;
+            var snapped = (totalMin + 4) / 5 * 5;
+            if (snapped == totalMin)
+                return new DateTime(local.Year, local.Month, local.Day, local.Hour, local.Minute, 0,
+                    local.Kind);
+            if (snapped >= (lastHour + 1) * 60)
+                return local.Date.AddDays(1).AddHours(firstHour);
+            return local.Date.AddMinutes(snapped);
+        }
+
+        /// <summary>
         /// Next time an AI departure should go if the ready time falls in a quiet hole.
         /// Peak hours stay as-is so a scheduled 07:40 does not jump.
         /// </summary>

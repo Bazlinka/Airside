@@ -331,22 +331,24 @@ namespace Airside.Presentation
             if (into == null || box.IsEmpty)
                 return;
 
-            into.Fill(box, HudTone.Default, 0.94f, AirsidePalette.RunwayInkHex);
-            into.Outline(box, HudTone.Accent, 0.4f);
+            into.Fill(box, HudTone.Default, 0.90f, AirsidePalette.RunwayInkHex);
+            into.Outline(box, HudTone.Accent, 0.55f);
+            into.Fill(new HudBox(box.X, box.Y, 4f, box.Height), HudTone.Caution, 0.95f);
 
-            var x = box.X + 14f;
-            var width = box.Width - 28f;
-            // The campaign chapter heads the card when there is one (ADR 0083).
-            into.Caption(new HudBox(x, box.Y + 8f, width, 14f),
-                string.IsNullOrEmpty(caption) ? "CURRENT OBJECTIVE" : caption);
-            into.Text(new HudBox(x, box.Y + 24f, width, 24f), objective.Title, 16f, HudTone.Default,
+            var x = box.X + 18f;
+            var width = box.Width - 32f;
+            into.Caption(new HudBox(x, box.Y + 8f, width * 0.52f, 14f), "TODAY'S PRIORITY", HudTone.Caution);
+            if (!string.IsNullOrEmpty(caption))
+                into.Caption(new HudBox(x + width * 0.48f, box.Y + 8f, width * 0.52f, 14f), caption,
+                    HudTone.Muted, HudAlign.Right, 10f);
+            into.Text(new HudBox(x, box.Y + 26f, width, 24f), objective.Title, 17f, HudTone.Default,
                 HudTextStyle.Bold | HudTextStyle.Wrap);
-            into.Text(new HudBox(x, box.Y + 50f, width, 16f), objective.ProgressText, 11f, HudTone.Muted);
-            into.Bar(new HudBox(x, box.Y + 70f, width - 34f, 8f), objective.Progress01, HudTone.Caution);
-            into.Text(new HudBox(x + width - 30f, box.Y + 64f, 30f, 16f),
+            into.Text(new HudBox(x, box.Y + 52f, width, 16f), objective.ProgressText, 11f, HudTone.Muted);
+            into.Bar(new HudBox(x, box.Y + 72f, width - 34f, 7f), objective.Progress01, HudTone.Caution);
+            into.Text(new HudBox(x + width - 30f, box.Y + 66f, 30f, 16f),
                 $"{(int)(objective.Progress01 * 100f)}%", 11f, HudTone.Muted, HudTextStyle.Regular,
                 HudAlign.Right);
-            into.Text(new HudBox(x, box.Y + 84f, width, 30f), objective.NextLine, 12f,
+            into.Text(new HudBox(x, box.Y + 88f, width, 26f), objective.NextLine, 12f,
                 objective.NextSeverity == StatusSeverity.Warning ? HudTone.Negative : HudTone.Caution,
                 HudTextStyle.Bold | HudTextStyle.Wrap);
         }

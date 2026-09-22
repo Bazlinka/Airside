@@ -264,15 +264,15 @@ namespace Airside.Presentation
     public readonly struct RouteMapWorkspaceLayout
     {
         public const float FilterHeight = 28f;
-        public const float FilterWidth = 128f;
-        public const float DetailWidth = 276f;
+        public const float FilterWidth = 118f;
+        public const float DetailWidth = 320f;
         public const float DetailGap = 20f;
 
         /// <summary>
         /// Below this the map is not worth looking at, and the detail pane gives way. Kept
         /// low enough that a 1024-point window still gets both.
         /// </summary>
-        public const float MinMapWidth = 256f;
+        public const float MinMapWidth = 320f;
 
         private RouteMapWorkspaceLayout(HudBox surface, HudBox header, HudBox filters, HudBox map, HudBox detail)
         {
@@ -393,19 +393,17 @@ namespace Airside.Presentation
 
             into.Text(new HudBox(pane.X, pane.Y, pane.Width, 30f), model.DestinationTitle, 22f,
                 HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
-            into.Hairline(new HudBox(pane.X, pane.Y + 36f, pane.Width, 1f));
+            into.Caption(new HudBox(pane.X, pane.Y + 27f, pane.Width, 14f), "DESTINATION DOSSIER",
+                model.CareerLine.Length > 0 ? HudTone.Caution : HudTone.Muted);
+            into.Hairline(new HudBox(pane.X, pane.Y + 46f, pane.Width, 1f));
 
-            var y = pane.Y + 48f;
-            into.Text(new HudBox(pane.X, y, pane.Width, 18f), model.BandAndDistance, 13f);
-            y += 23f;
-            into.Text(new HudBox(pane.X, y, pane.Width, 18f), model.CompatibilityLine, 13f);
-            y += 23f;
+            var y = pane.Y + 58f;
+            PaintFact(into, pane, ref y, "ROUTE", model.BandAndDistance, HudTone.Default);
+            PaintFact(into, pane, ref y, "AIRCRAFT", model.CompatibilityLine, HudTone.Default);
             if (model.DispatchLine.Length > 0)
             {
-                into.Text(new HudBox(pane.X, y, pane.Width, 18f), model.DispatchLine, 13f);
-                y += 23f;
-                into.Text(new HudBox(pane.X, y, pane.Width, 18f), model.ReturnLine, 13f);
-                y += 28f;
+                PaintFact(into, pane, ref y, "OUTBOUND", model.DispatchLine, HudTone.Default);
+                PaintFact(into, pane, ref y, "RETURN", model.ReturnLine, HudTone.Positive);
             }
 
             into.Hairline(new HudBox(pane.X, y, pane.Width, 1f));
@@ -423,9 +421,12 @@ namespace Airside.Presentation
                 into.Text(new HudBox(pane.X, y, pane.Width, 34f), model.CareerLine, 12f,
                     model.CareerTone, HudTextStyle.Bold | HudTextStyle.Wrap);
                 y += 38f;
-                into.Button(new HudBox(pane.X, y, 132f, 28f), "VIEW CONTRACTS",
-                    HudAction.ViewContracts, HudButtonStyle.Secondary);
-                y += 36f;
+                if (pane.Height >= 520f)
+                {
+                    into.Button(new HudBox(pane.X, y, 132f, 28f), "VIEW CONTRACTS",
+                        HudAction.ViewContracts, HudButtonStyle.Secondary);
+                    y += 36f;
+                }
             }
 
             if (model.DepartureLabel.Length > 0)
@@ -452,10 +453,10 @@ namespace Airside.Presentation
                     HudTone.Muted);
             }
 
-            var buttonY = pane.Bottom - 74f;
-            into.Button(new HudBox(pane.X, buttonY, pane.Width, 36f), model.PlanLabel, HudAction.PlanFlight,
+            var buttonY = pane.Bottom - 84f;
+            into.Button(new HudBox(pane.X, buttonY, pane.Width, 44f), model.PlanLabel, HudAction.PlanFlight,
                 HudButtonStyle.Primary, model.CanPlan);
-            into.Button(new HudBox(pane.X, buttonY + 42f, pane.Width, 30f), "RESET MAP", HudAction.ResetMap,
+            into.Button(new HudBox(pane.X, buttonY + 50f, pane.Width, 30f), "RESET MAP", HudAction.ResetMap,
                 HudButtonStyle.Secondary);
             if (!model.CanPlan && model.PlanBlockedReason.Length > 0)
                 into.Text(new HudBox(pane.X, buttonY - 34f, pane.Width, 32f), model.PlanBlockedReason, 11f,
@@ -463,6 +464,17 @@ namespace Airside.Presentation
             else if (model.HasBooking)
                 into.Text(new HudBox(pane.X, buttonY - 34f, pane.Width, 32f), model.BookingLine, 11f,
                     HudTone.Muted, HudTextStyle.Wrap);
+        }
+
+        private static void PaintFact(HudDrawList into, HudBox pane, ref float y, string caption,
+            string value, HudTone tone)
+        {
+            var row = new HudBox(pane.X, y, pane.Width, 26f);
+            into.Fill(row, HudTone.Default, 0.035f);
+            into.Caption(new HudBox(row.X + 8f, row.Y + 6f, 78f, 15f), caption);
+            into.Text(new HudBox(row.X + 88f, row.Y + 5f, row.Width - 96f, 17f), value, 12f, tone,
+                HudTextStyle.Bold, HudAlign.Right);
+            y += 32f;
         }
 
         private static void PaintDestinationList(HudDrawList into, RouteMapWorkspaceModel model, HudBox pane)

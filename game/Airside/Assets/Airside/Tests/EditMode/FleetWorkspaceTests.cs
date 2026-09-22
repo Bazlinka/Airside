@@ -153,5 +153,16 @@ namespace Airside.Tests
             }
         }
 
+        [Test]
+        public void Fleet_MarketPresentsAtMostThreeNonOverlappingCards()
+        {
+            var layout = FleetWorkspaceLayout.Create(HudShell.WorkspaceSurface(1440f, 900f), 8);
+
+            Assert.That(layout.MarketRows, Is.EqualTo(3));
+            Assert.That(layout.MarketRow(0).Overlaps(layout.MarketRow(1)), Is.False);
+            Assert.That(layout.MarketRow(1).Overlaps(layout.MarketRow(2)), Is.False);
+            Assert.That(layout.MarketRow(2).Right, Is.LessThanOrEqualTo(layout.Market.Right + 0.01f));
+        }
+
     }
 }

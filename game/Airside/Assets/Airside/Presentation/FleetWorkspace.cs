@@ -376,10 +376,10 @@ namespace Airside.Presentation
     /// <summary>Where the Fleet workspace draws its roster, detail pane and market strip.</summary>
     public readonly struct FleetWorkspaceLayout
     {
-        public const float RosterRowHeight = 34f;
+        public const float RosterRowHeight = 44f;
         public const float SectionCaptionHeight = 18f;
         public const float DetailGap = 24f;
-        public const float MarketRowHeight = 52f;
+        public const float MarketRowHeight = 92f;
         public const float MarketCaptionHeight = 20f;
         public const float MinRosterWidth = 260f;
         public const float MinDetailWidth = 300f;
@@ -424,10 +424,10 @@ namespace Airside.Presentation
             ? HudBox.Empty
             : Market.WithHeight(MarketCaptionHeight);
 
-        public HudBox MarketRow(int index) => Market.IsEmpty
+        public HudBox MarketRow(int index) => Market.IsEmpty || MarketRows <= 0
             ? HudBox.Empty
-            : new HudBox(Market.X, Market.Y + MarketCaptionHeight + 6f + index * MarketRowHeight,
-                Market.Width, MarketRowHeight - 6f);
+            : new HudBox(Market.X + index * (Market.Width / MarketRows), Market.Y + MarketCaptionHeight + 6f,
+                Market.Width / MarketRows - 10f, MarketRowHeight);
 
         public static FleetWorkspaceLayout Create(HudBox surface, int marketOffers)
         {
@@ -437,12 +437,11 @@ namespace Airside.Presentation
             var rows = marketOffers < 0 ? 0 : marketOffers > 3 ? 3 : marketOffers;
             var marketHeight = rows == 0
                 ? 0f
-                : MarketCaptionHeight + 6f + rows * MarketRowHeight + 8f;
+                : MarketCaptionHeight + 6f + MarketRowHeight + 8f;
             if (marketHeight > body.Height * 0.45f)
             {
-                rows = (int)((body.Height * 0.45f - MarketCaptionHeight - 14f) / MarketRowHeight);
-                rows = rows < 0 ? 0 : rows;
-                marketHeight = rows == 0 ? 0f : MarketCaptionHeight + 6f + rows * MarketRowHeight + 8f;
+                rows = 0;
+                marketHeight = 0f;
             }
 
             var market = rows == 0
@@ -611,15 +610,20 @@ namespace Airside.Presentation
                 into.Caption(new HudBox(pane.X, y, pane.Width, 16f), "PREPARATION");
                 y += 20f;
                 var slot = pane.Width / model.SelectedPrep.Count;
+                var centreY = y + 10f;
+                into.Line(pane.X + slot * 0.5f, centreY,
+                    pane.Right - slot * 0.5f, centreY, HudTone.Muted, 2f);
                 for (var i = 0; i < model.SelectedPrep.Count; i++)
                 {
                     var check = model.SelectedPrep[i];
-                    into.Text(new HudBox(pane.X + i * slot, y, slot - 8f, 18f),
-                        (check.Done ? "✓ " : check.Active ? "● " : "○ ") + check.Label, 12f, check.Tone,
-                        check.Active ? HudTextStyle.Bold : HudTextStyle.Regular);
+                    var centreX = pane.X + slot * (i + 0.5f);
+                    into.Dot(centreX, centreY, check.Active ? 18f : 15f, check.Tone);
+                    into.Text(new HudBox(pane.X + i * slot, centreY + 15f, slot - 4f, 30f),
+                        check.Label, 11f, check.Tone,
+                        check.Active ? HudTextStyle.Bold : HudTextStyle.Regular, HudAlign.Center);
                 }
 
-                y += 26f;
+                y += 56f;
             }
 
             if (!model.SelectedIsPlayer)
@@ -663,14 +667,14 @@ namespace Airside.Presentation
                 if (offer.CanBuy)
                     into.Outline(box, HudTone.Accent, 0.6f);
 
-                into.Text(new HudBox(box.X + 14f, box.Y + 8f, box.Width - 260f, 18f),
+                into.Text(new HudBox(box.X + 12f, box.Y + 8f, box.Width - 24f, 18f),
                     $"{offer.TypeName}  ·  {offer.BandLabel}", 14f, HudTone.Default, HudTextStyle.Bold);
-                into.Text(new HudBox(box.X + 14f, box.Y + 26f, box.Width - 260f, 16f),
+                into.Text(new HudBox(box.X + 12f, box.Y + 29f, box.Width - 24f, 30f),
                     offer.CanBuy ? offer.StandLine : offer.RequirementLine, 11f,
-                    offer.CanBuy ? HudTone.Muted : HudTone.Caution);
-                into.Text(new HudBox(box.Right - 240f, box.Y + 12f, 110f, 20f), $"${offer.Price:N0}", 14f,
-                    offer.Affordable ? HudTone.Default : HudTone.Muted, HudTextStyle.Bold, HudAlign.Right);
-                into.Button(new HudBox(box.Right - 118f, box.Y + 9f, 108f, 28f), "BUY",
+                    offer.CanBuy ? HudTone.Muted : HudTone.Caution, HudTextStyle.Wrap);
+                into.Text(new HudBox(box.X + 12f, box.Bottom - 25f, box.Width - 94f, 18f), $"${offer.Price:N0}", 14f,
+                    offer.Affordable ? HudTone.Default : HudTone.Muted, HudTextStyle.Bold);
+                into.Button(new HudBox(box.Right - 76f, box.Bottom - 30f, 68f, 26f), "BUY",
                     HudAction.Buy(offer.Type.Id), HudButtonStyle.Primary, offer.CanBuy);
             }
         }

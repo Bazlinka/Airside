@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-22 Codex — desktop HUD hierarchy pass (branch
+  `codex/hud-interface-redesign`, ADR 0104).** Presentation-only restructure of Operations,
+  Route Map, Fleet and Career. Runway Ink surfaces are more translucent; the persistent
+  objective is now `TODAY'S PRIORITY`; Operations opens on the player commitment and shows
+  five immediate movements plus a Fuel → Catering → Baggage → Boarding timeline; Map opens
+  with one real operable destination dossier; Fleet opens with an aircraft selected and a
+  three-option gated market; Career leads with a four-stage capability roadmap, one next
+  milestone and a quiet achievements strip. No simulation, command, economy, save or data
+  source changed.
+  - **Evidence before the final rebase:** HUD/layout EditMode suite **65/65**; packaged Mac
+    build inspected at 1225×768 and constrained 800×600 for all four workspaces. Full EditMode
+    was **979/987** with exactly main's eight then-known apron-density/schedule failures.
+  - **NEXT:** rerun the focused suite and packaged constrained visual after rebasing over the
+    stand-choice/long-history Operations work, then merge if clean.
+
 - **2026-09-22 Cursor — stand choice + longer Arrivals/Departures (PR #378, ADR 0103).**
   Bailey: cannot choose a stand when flights land; Arrivals/Departures nowhere near long
   enough or accurate.

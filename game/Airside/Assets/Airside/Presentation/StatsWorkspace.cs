@@ -87,6 +87,8 @@ namespace Airside.Presentation
         public string TierLine { get; private set; } = string.Empty;
         public string FleetLine { get; private set; } = string.Empty;
         public string BaseCapabilityLine { get; private set; } = string.Empty;
+        public PlayerBaseLevel CurrentBaseLevel { get; private set; }
+        public string NextMilestoneTitle { get; private set; } = string.Empty;
 
         /// <summary>False only at International — there is nothing further to work toward.</summary>
         public bool HasNextTier { get; private set; }
@@ -127,6 +129,8 @@ namespace Airside.Presentation
             TierLine = string.Empty;
             FleetLine = string.Empty;
             BaseCapabilityLine = string.Empty;
+            CurrentBaseLevel = PlayerBaseLevel.Starter;
+            NextMilestoneTitle = string.Empty;
             HasNextTier = false;
             NextTierTitle = string.Empty;
             NextTierRequirementLine = string.Empty;
@@ -157,6 +161,7 @@ namespace Airside.Presentation
                                  + " · " + PlayerBase.MaintenanceCapabilityLine(career.BaseLevel)
                                  + " · " + PlayerBase.TurnaroundLine(career.BaseLevel)
                                  + " · Stands: " + PlayerBase.StandAccessLine(career.BaseLevel);
+            CurrentBaseLevel = career.BaseLevel;
 
             FillBaseRoadmap(career);
             FillAdelaideStandings(operations);
@@ -177,6 +182,9 @@ namespace Airside.Presentation
                 _milestones.Add(new MilestoneRow(milestone.Title, milestone.Reached));
             var reachedCount = milestones.Count(m => m.Reached);
             MilestonesReachedLine = $"{reachedCount} of {milestones.Count} milestones reached";
+            NextMilestoneTitle = _milestones.FirstOrDefault(m => !m.Reached).Title;
+            if (string.IsNullOrEmpty(NextMilestoneTitle))
+                NextMilestoneTitle = "All current milestones complete";
 
             foreach (var record in career.ContractHistory.Take(MaxHistoryShown))
                 _history.Add(new ContractHistoryRow(
@@ -332,8 +340,8 @@ namespace Airside.Presentation
         public HudBox StatRow(int index) =>
             new(LeftColumn.X, LeftColumn.Y + CaptionHeight + 8f + index * StatRowHeight, LeftColumn.Width, StatRowHeight);
 
-        /// <summary>Where the "next tier" block starts, below the six overview stat rows.</summary>
-        public float NextTierY => LeftColumn.Y + CaptionHeight + 8f + 6 * StatRowHeight + 16f;
+        /// <summary>Where the visual base roadmap starts, below the compact operation summary.</summary>
+        public float NextTierY => LeftColumn.Y + 112f;
 
         public HudBox NextTierCaption => new(LeftColumn.X, NextTierY, LeftColumn.Width, CaptionHeight);
         public HudBox NextTierTitleBox => new(LeftColumn.X, NextTierY + CaptionHeight + 6f, LeftColumn.Width, 20f);
@@ -349,7 +357,7 @@ namespace Airside.Presentation
         public const float SwatchGap = 8f;
 
         /// <summary>Where the livery-repaint swatches start, below the next-tier requirement text.</summary>
-        public float ProfileY => NextTierY + CaptionHeight + 86f + 30f + 16f;
+        public float ProfileY => NextTierY + 210f;
 
         public HudBox ProfileCaption => new(LeftColumn.X, ProfileY, LeftColumn.Width, CaptionHeight);
 
@@ -490,31 +498,64 @@ namespace Airside.Presentation
 
         private static void PaintOverview(HudDrawList into, StatsWorkspaceModel model, StatsWorkspaceLayout layout)
         {
-            into.Caption(layout.OverviewCaption, "OVERVIEW");
+            into.Caption(layout.OverviewCaption, "CURRENT OPERATION");
             var stats = new[]
             {
                 model.FundsLine, model.LifetimeRevenueLine, model.ReliabilityLine, model.TierLine,
                 model.FleetLine, model.BaseCapabilityLine
             };
+            var cardWidth = (layout.LeftColumn.Width - 8f) * 0.5f;
             for (var i = 0; i < stats.Length; i++)
-                into.Text(layout.StatRow(i).Inset(0f, 2f, 0f, 0f), stats[i], 14f);
-
-            into.Caption(layout.NextTierCaption, "BASE ROADMAP");
-            into.Text(layout.NextTierTitleBox, model.NextTierTitle, 15f, HudTone.Default, HudTextStyle.Bold);
-            if (model.HasNextTier)
             {
-                into.Bar(layout.NextTierBar, model.NextTierProgress01, HudTone.Accent);
-                into.Text(layout.NextTierPercent, $"{(int)(model.NextTierProgress01 * 100f)}%", 12f, HudTone.Muted);
+                var row = i / 2;
+                var column = i % 2;
+                var card = new HudBox(layout.LeftColumn.X + column * (cardWidth + 8f),
+                    layout.LeftColumn.Y + StatsWorkspaceLayout.CaptionHeight + 6f + row * 27f, cardWidth, 23f);
+                into.Fill(card, HudTone.Default, 0.04f);
+                into.Text(card.Inset(8f, 4f, 6f, 0f), stats[i], i == 5 ? 10f : 12f,
+                    i == 5 ? HudTone.Muted : HudTone.Default,
+                    i == 0 || i == 2 ? HudTextStyle.Bold : HudTextStyle.Regular);
             }
 
-            into.Text(layout.NextTierRequirementBox, model.NextTierRequirementLine, 12f, HudTone.Muted,
-                HudTextStyle.Wrap);
+            into.Caption(layout.NextTierCaption, "BASE ROADMAP");
+            PaintBaseRoadmap(into, model, layout);
+            into.Text(layout.NextTierTitleBox.Offset(0f, 48f), model.NextTierTitle, 14f,
+                HudTone.Default, HudTextStyle.Bold);
             if (model.HasNextTier)
-                into.Button(layout.BaseUpgradeButton, "EXPAND BASE", HudAction.UpgradeBase,
+            {
+                into.Bar(layout.NextTierBar.Offset(0f, 48f), model.NextTierProgress01, HudTone.Accent);
+                into.Text(layout.NextTierPercent.Offset(0f, 48f), $"{(int)(model.NextTierProgress01 * 100f)}%",
+                    12f, HudTone.Muted);
+            }
+
+            into.Text(layout.NextTierRequirementBox.Offset(0f, 48f), model.NextTierRequirementLine, 11f,
+                HudTone.Muted, HudTextStyle.Wrap);
+            if (model.HasNextTier)
+                into.Button(layout.BaseUpgradeButton.Offset(0f, 48f), "EXPAND BASE", HudAction.UpgradeBase,
                     HudButtonStyle.Primary, model.CanUpgradeBase);
 
             PaintProfile(into, model, layout);
             PaintCompetition(into, model, layout);
+        }
+
+        private static void PaintBaseRoadmap(HudDrawList into, StatsWorkspaceModel model,
+            StatsWorkspaceLayout layout)
+        {
+            var labels = new[] { "STARTER", "REGIONAL", "JET-GATE", "INTERNATIONAL" };
+            var slot = layout.LeftColumn.Width / labels.Length;
+            var lineY = layout.NextTierY + StatsWorkspaceLayout.CaptionHeight + 24f;
+            into.Line(layout.LeftColumn.X + slot * 0.5f, lineY,
+                layout.LeftColumn.Right - slot * 0.5f, lineY, HudTone.Muted, 2f);
+            for (var i = 0; i < labels.Length; i++)
+            {
+                var x = layout.LeftColumn.X + slot * (i + 0.5f);
+                var tone = i < (int)model.CurrentBaseLevel ? HudTone.Positive
+                    : i == (int)model.CurrentBaseLevel ? HudTone.Accent : HudTone.Muted;
+                into.Dot(x, lineY, i == (int)model.CurrentBaseLevel ? 18f : 13f, tone);
+                into.Text(new HudBox(layout.LeftColumn.X + slot * i, lineY + 12f, slot, 15f), labels[i],
+                    9f, tone, i == (int)model.CurrentBaseLevel ? HudTextStyle.Bold | HudTextStyle.Caption
+                        : HudTextStyle.Caption, HudAlign.Center);
+            }
         }
 
         /// <summary>
@@ -570,32 +611,47 @@ namespace Airside.Presentation
         private static void PaintMilestonesAndHistory(HudDrawList into, StatsWorkspaceModel model,
             StatsWorkspaceLayout layout)
         {
-            into.Caption(layout.MilestonesCaption, "MILESTONES");
-            into.Text(layout.MilestonesSummaryBox, model.MilestonesReachedLine, 12f, HudTone.Muted);
-            var shown = layout.VisibleMilestones(model.Milestones.Count);
-            for (var i = 0; i < shown; i++)
+            into.Caption(layout.MilestonesCaption, "NEXT MILESTONE", HudTone.Caution);
+            var milestoneCard = new HudBox(layout.RightColumn.X,
+                layout.RightColumn.Y + StatsWorkspaceLayout.CaptionHeight + 4f,
+                layout.RightColumn.Width, 76f);
+            into.Fill(milestoneCard, HudTone.Caution, 0.06f);
+            into.Outline(milestoneCard, HudTone.Caution, 0.55f);
+            into.Text(milestoneCard.Inset(14f, 12f, 14f, 0f).WithHeight(36f), model.NextMilestoneTitle,
+                16f, HudTone.Default, HudTextStyle.Bold | HudTextStyle.Wrap);
+            into.Text(new HudBox(milestoneCard.X + 14f, milestoneCard.Bottom - 23f,
+                milestoneCard.Width - 28f, 16f), model.MilestonesReachedLine, 11f, HudTone.Muted);
+
+            var y = milestoneCard.Bottom + 18f;
+            into.Caption(new HudBox(layout.RightColumn.X, y, layout.RightColumn.Width,
+                StatsWorkspaceLayout.CaptionHeight),
+                "RECENT ACHIEVEMENTS");
+            y += StatsWorkspaceLayout.CaptionHeight + 4f;
+            var achievements = 0;
+            for (var i = 0; i < model.Milestones.Count && achievements < 3; i++)
             {
                 var milestone = model.Milestones[i];
-                var row = layout.MilestoneRow(i);
-                into.Text(row.SliceLeft(20f), milestone.Reached ? "✓" : "•",
-                    14f, milestone.Reached ? HudTone.Positive : HudTone.Muted, HudTextStyle.Bold);
-                into.Text(row.Inset(24f, 2f, 0f, 0f), milestone.Title, 13f,
-                    milestone.Reached ? HudTone.Default : HudTone.Muted);
+                if (!milestone.Reached)
+                    continue;
+                var row = new HudBox(layout.RightColumn.X, y, layout.RightColumn.Width, 24f);
+                into.Text(row.SliceLeft(20f), "✓", 14f, HudTone.Positive, HudTextStyle.Bold);
+                into.Text(row.Inset(24f, 2f, 0f, 0f), milestone.Title, 12f, HudTone.Default);
+                y += 24f;
+                achievements++;
             }
 
-            into.Caption(layout.HistoryCaption(shown), "RECENT CONTRACTS");
-            // A cramped stacked layout (a narrow viewport gives this column under half the
-            // body's height) can legitimately run out of room for a full history list plus the
-            // lifetime line below it — VisibleMilestones' own reservation assumes the common
-            // case, not every combination of viewport and data. Same defensive floor check
-            // ContractsWorkspacePainter.PaintActive already uses for its terms list: stop
-            // drawing rather than run text into or past the footer.
+            y += 12f;
+            into.Caption(new HudBox(layout.RightColumn.X, y, layout.RightColumn.Width,
+                StatsWorkspaceLayout.CaptionHeight),
+                "RECENT CONTRACTS");
+            y += StatsWorkspaceLayout.CaptionHeight + 4f;
             var floor = layout.RightColumn.Bottom;
-            var shownHistory = model.ContractHistory.Count;
+            var shownHistory = Math.Min(3, model.ContractHistory.Count);
             var drawnHistoryRows = 0;
             if (shownHistory == 0)
             {
-                var row = layout.HistoryRow(shown, 0);
+                var row = new HudBox(layout.RightColumn.X, y, layout.RightColumn.Width,
+                    StatsWorkspaceLayout.HistoryRowHeight);
                 if (row.Bottom <= floor)
                 {
                     into.Text(row, model.EmptyHistoryLine, 12f, HudTone.Muted, HudTextStyle.Wrap);
@@ -606,7 +662,9 @@ namespace Airside.Presentation
             {
                 for (var i = 0; i < shownHistory; i++)
                 {
-                    var row = layout.HistoryRow(shown, i);
+                    var row = new HudBox(layout.RightColumn.X,
+                        y + i * StatsWorkspaceLayout.HistoryRowHeight,
+                        layout.RightColumn.Width, StatsWorkspaceLayout.HistoryRowHeight);
                     if (row.Bottom > floor)
                         break;
                     var record = model.ContractHistory[i];
@@ -617,10 +675,9 @@ namespace Airside.Presentation
                 }
             }
 
-            // Lifetime total, below whatever Recent Contracts actually showed — real content
-            // filling what used to be blank space once Milestones and history ran out of rows
-            // to draw (ADR 0068). Skipped, not squeezed in, if it would not fit either.
-            var fulfilledBox = layout.ContractsFulfilledBox(shown, drawnHistoryRows);
+            var fulfilledBox = new HudBox(layout.RightColumn.X,
+                y + Math.Max(1, drawnHistoryRows) * StatsWorkspaceLayout.HistoryRowHeight + 8f,
+                layout.RightColumn.Width, 18f);
             if (fulfilledBox.Bottom <= floor)
                 into.Text(fulfilledBox, model.ContractsFulfilledLine, 12f, HudTone.Muted);
         }

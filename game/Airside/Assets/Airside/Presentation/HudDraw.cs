@@ -114,7 +114,9 @@ namespace Airside.Presentation
 
         public void Clear() => _commands.Clear();
 
-        public void Surface(HudBox box) => Add(HudDrawKind.Surface, box, value: 0.96f);
+        // Workspaces sit over a world the player is still operating.  A slightly softer
+        // surface keeps the miniature airport present without sacrificing text contrast.
+        public void Surface(HudBox box) => Add(HudDrawKind.Surface, box, value: 0.90f);
 
         public void Fill(HudBox box, HudTone tone, float alpha, string colourHex = null) =>
             Add(HudDrawKind.Fill, box, tone: tone, value: alpha, colourHex: colourHex);

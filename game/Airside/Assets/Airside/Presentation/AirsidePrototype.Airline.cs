@@ -1375,6 +1375,18 @@ namespace Airside.Presentation
                 TryFollowFleetAircraft(chosen.Registration);
             }
             SetPlanningAircraft(chosen, force: true);
+            if (!_mapSelection.HasValue && chosen != null)
+            {
+                // Start the desk with one real, operable dossier instead of an empty
+                // instruction pane. The player can still clear or choose any map point.
+                foreach (var destination in _operations.MapDestinations())
+                {
+                    if (!_operations.CanOperate(chosen, destination))
+                        continue;
+                    _mapSelection = destination;
+                    break;
+                }
+            }
             PlayUiClick();
         }
 
@@ -2073,6 +2085,17 @@ namespace Airside.Presentation
                 _flightsShowArrivals ? OperationsBoardTab.Arrivals : OperationsBoardTab.Departures,
                 _selectedAircraftId, _eventHistory, PresentationWeatherSummary);
 
+            // Opening Operations should land on the one live decision, not an empty detail
+            // pane. Selection is presentation state only; all commands still pass through
+            // AirlineOperations and the complete movement model remains untouched.
+            if (!_operationsWorkspace.HasSelection && _operationsWorkspace.Attention.Count > 0)
+            {
+                _selectedAircraftId = _operationsWorkspace.Attention[0].Registration;
+                _operationsWorkspace.Rebuild(_operations, _clock.Now,
+                    _flightsShowArrivals ? OperationsBoardTab.Arrivals : OperationsBoardTab.Departures,
+                    _selectedAircraftId, _eventHistory, PresentationWeatherSummary);
+            }
+
             var layout = OperationsWorkspaceLayout.Create(surface, _operationsWorkspace.Attention.Count);
             var nowRow = _operationsWorkspace.FirstActiveRowIndex;
             if (_boardScrollSnapToDay)
@@ -2150,6 +2173,11 @@ namespace Airside.Presentation
         {
             var surface = Box(rect);
             _fleetWorkspace.Rebuild(_operations, _clock.Now, _selectedAircraftId);
+            if (!_fleetWorkspace.HasSelection && _fleetWorkspace.Mine.Count > 0)
+            {
+                _selectedAircraftId = _fleetWorkspace.Mine[0].Registration;
+                _fleetWorkspace.Rebuild(_operations, _clock.Now, _selectedAircraftId);
+            }
             var layout = FleetWorkspaceLayout.Create(surface, _fleetWorkspace.Market.Count);
             var rows = _fleetWorkspace.Mine.Count + _fleetWorkspace.Others.Count
                        + (_fleetWorkspace.Others.Count > 0 ? 1 : 0);

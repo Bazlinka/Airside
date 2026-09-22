@@ -19,6 +19,8 @@ namespace Airside.Tests
                 "live ADS-B stays off until the game can own the field");
             Assert.That(settings.LiveWeather, Is.True,
                 "Adelaide presentation follows the fixed-location forecast and fails back offline");
+            Assert.That(settings.UncappedFrameRate, Is.False,
+                "high-refresh Macs cap at 60 fps unless the player opts into display max");
             Assert.That(settings.CameraSpeedIndex, Is.EqualTo(1));
             Assert.That(settings.CameraSpeed, Is.EqualTo(0.65f));
         }

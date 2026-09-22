@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **macOS performance pass (ADR 0101).** Frames are paced to the game, not the panel: 60 fps
+  on ProMotion/120 Hz+ displays (Options → Frame rate · Display max to lift it) and ~30 fps
+  while the window is in the background. SSAO renders at half resolution, landing lamps cast
+  shadows only at night, static light tints stop rewriting every frame, and the per-aircraft
+  light pass no longer looks components up by type and name every frame.
+
 - **Buy aircraft → plan first flight.** Purchasing no longer stops at a toast. If the new
   airframe parks immediately, Fleet opens the Route Map with a career-suggested destination
   (active contract, then chapter target, then Kingscote) and tells you how long fuelling and

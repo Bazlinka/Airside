@@ -28,7 +28,7 @@ namespace Airside.Presentation
         /// <summary>Taller than the four buttons so the build-identity line fits under Quit.</summary>
         public const float MenuHeight = 360f;
         public const float OptionsWidth = 420f;
-        public const float OptionsHeight = 460f;
+        public const float OptionsHeight = 506f;
 
         /// <summary>Live speed / altitude / heading, centred just above the control bar.</summary>
         public const float ReadoutWidth = 420f;

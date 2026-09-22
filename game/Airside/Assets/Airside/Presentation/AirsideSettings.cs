@@ -27,6 +27,11 @@ namespace Airside.Presentation
         /// can own the field; never drawn on the ground. Needs a connection.
         /// </summary>
         public bool LiveTraffic = false;
+        /// <summary>
+        /// Fixed-location Adelaide forecast used by sky/weather presentation only.
+        /// On by default with a deterministic offline fallback.
+        /// </summary>
+        public bool LiveWeather = true;
         public int CameraSpeedIndex = 1;
 
         public float CameraSpeed =>
@@ -49,6 +54,7 @@ namespace Airside.Presentation
             settings.FollowOnSelect = Pref("follow", 1) != 0;
             settings.InvertOrbit = Pref("invert", 0) != 0;
             settings.LiveTraffic = Pref("livetraffic.v2", 0) != 0;
+            settings.LiveWeather = Pref("liveweather.v1", 1) != 0;
             settings.CameraSpeedIndex = Mathf.Clamp(Pref("camera", 1), 0, CameraSpeedValues.Length - 1);
             return settings;
         }
@@ -61,6 +67,7 @@ namespace Airside.Presentation
             PlayerPrefs.SetInt(PrefPrefix + "follow", FollowOnSelect ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "invert", InvertOrbit ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "livetraffic.v2", LiveTraffic ? 1 : 0);
+            PlayerPrefs.SetInt(PrefPrefix + "liveweather.v1", LiveWeather ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "camera", CameraSpeedIndex);
             PlayerPrefs.Save();
             Current = this;

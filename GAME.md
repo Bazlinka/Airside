@@ -1,5 +1,21 @@
 ## Where to resume — session handoff
 
+- **2026-09-23 Codex — beginner-aircraft airframe shapes (branch
+  `codex/starter-airframe-shapes`, ADR 0108).** All preceding A320, A330 and
+  fitted-livery changes are merged into `main` through PR #388. This slice
+  corrects the ATR 42's out-of-order nose stations and reseats its taxi light;
+  fills out the Dash 8 and Saab radomes; and replaces the Saab's box wing-root
+  fairings with rounded lofts. The existing envelopes, moving-part names,
+  operational types, fallback, simulation and saves are unchanged. Runtime
+  kits and Hangar thumbnails are synced.
+  - **Evidence:** three generator tests including new profile-order/shape
+    assertions, 5 cm all-part connectivity and before/after model renders
+    passed. Mac build succeeded; a packaged 1600×900 daytime screenshot at
+    regional bays 50D–50F shows the updated Saab among live traffic
+    (`work/shape-saab-in-game.png`, local evidence only).
+  - **NEXT:** merge this aircraft-only slice; continue later
+    with separate wing/engine refinements and in-game follow-camera review.
+
 - **2026-09-23 Codex — starter turboprop appearance pass (branch
   `codex/starter-aircraft-polish`, ADR 0107).** A320 PR #386 and A330 PR #387
   are merged into `main`. ATR 42, Dash 8 Q400 and Saab 340B now have

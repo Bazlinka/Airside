@@ -76,10 +76,11 @@ FUSE_STATIONS = np.array(
         (3.80, 1.14, 1.12, 2.00),
         (5.60, 1.10, 1.08, 1.96),
         (6.90, 0.98, 0.94, 1.88),
-        (7.80, 0.78, 0.72, 1.76),
-        (8.55, 0.52, 0.46, 1.64),
-        (9.15, 0.26, 0.22, 1.52),
-        (HALF_LENGTH - 0.12, 0.05, 0.04, 1.46),
+        (7.80, 0.86, 0.79, 1.79),
+        (8.55, 0.70, 0.63, 1.70),
+        (9.15, 0.48, 0.42, 1.59),
+        (9.48, 0.30, 0.26, 1.52),
+        (HALF_LENGTH - 0.12, 0.12, 0.10, 1.48),
     ],
     dtype=np.float32,
 )
@@ -187,8 +188,18 @@ def saab_meshes():
         meshes[f"aileron_{name}"] = panel(
             side, 5.70, 10.20, 2.05, 2.15, -0.05, 0.25, 0.55, 0.28, 0.06
         )
-        meshes[f"wing_fairing_{name}"] = box(
-            side * 0.85, 1.72, 0.55, 0.55, 0.38, 2.40
+        meshes[f"wing_fairing_{name}"] = translated(
+            oval_lathe_fuselage(
+                [
+                    (-0.85, 0.12, 0.08, 1.75),
+                    (-0.35, 0.29, 0.19, 1.77),
+                    (0.55, 0.34, 0.23, 1.80),
+                    (1.30, 0.25, 0.16, 1.81),
+                    (1.75, 0.10, 0.07, 1.81),
+                ],
+                segments=28,
+            ),
+            side * 0.85, 0.0, 0.0,
         )
 
     # Under-wing nacelles house the CT7-class engines and the main gear bays.
@@ -362,10 +373,12 @@ def saab_meshes():
     )
     meshes["radome"] = oval_lathe_fuselage(
         [
-            (8.20, 0.72, 0.62, 1.62),
-            (8.80, 0.48, 0.42, 1.52),
-            (9.25, 0.24, 0.20, 1.46),
-            (HALF_LENGTH - 0.12, 0.04, 0.03, 1.46),
+            # Begin ahead of the windscreen edge: an overlaid shell across the
+            # flight deck masks its fitted glass as the nose grows rounder.
+            (8.78, 0.63, 0.55, 1.66),
+            (9.25, 0.44, 0.38, 1.57),
+            (9.48, 0.31, 0.27, 1.52),
+            (HALF_LENGTH - 0.12, 0.13, 0.11, 1.48),
         ],
         segments=36,
     )

@@ -20,6 +20,7 @@ v02 = load("atr_v02", SCRIPTS / "generate-air-001-atr42-v02.py")
 v01 = v02.v01
 
 meshes = v03.final_meshes()
+assert np.all(np.diff(v03.STATIONS[:, 0]) > 0), "ATR nose stations must advance monotonically"
 baseline = v02.final_meshes()
 verts = np.concatenate([v for v, _ in meshes.values()])
 

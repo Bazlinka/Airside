@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Beginner aircraft shape pass (ADR 0108).** Corrected the ATR 42's reversed
+  nose-profile station, rounded Dash 8 and Saab radomes, and replaced the Saab's
+  square wing-root blocks with curved fairings. Updated runtime kits and Hangar
+  thumbnails without changing flight operations or saves.
+
 - **Starter turboprop livery polish (ADR 0107).** ATR 42, Dash 8 Q400 and Saab
   340B now carry fitted, operator-coloured fuselage bands; the repeating
   traffic decal no longer barcodes those aircraft. Runtime models and Hangar

@@ -1,5 +1,12 @@
 ## Where to resume — session handoff
 
+- **2026-09-23 Cursor — full-res SSAO restored (ADR 0101).** Half-res ambient occlusion
+  made the packaged Mac look flat; Options → Frame rate does not affect that. SSAO is full
+  resolution again. Mac still paces 60 fps focused / ~30 unfocused, skips day landing-lamp
+  shadows, and keeps the light/tint CPU skips.
+  - **NEXT:** play the rebuilt `work/builds/Airside.app` at overview and follow day/dusk —
+    AO should read again; if heat climbs too far, leave pacing on and only revisit MSAA.
+
 - **2026-09-23 Codex — beginner-aircraft airframe shapes (branch
   `codex/starter-airframe-shapes`, ADR 0108).** All preceding A320, A330 and
   fitted-livery changes are merged into `main` through PR #388. This slice

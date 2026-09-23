@@ -107,6 +107,8 @@ namespace Airside.Presentation
                 SpawnSurface(root, AirsideAdelaidePavement.TerminalsName, buildings, new Color(0.43f, 0.45f, 0.46f), null, castShadows: true);
                 BuildYpadOperationalBuildings(root, runwayTop);
                 BuildAdelaideTerminalArchitecture(groundY);
+                // Aerobridges hang off this terminal; built once the world exists (ADR 0113).
+                _terminalGroundY = groundY;
             }
         }
 

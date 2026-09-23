@@ -29,6 +29,7 @@ thumbs = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(thumbs)
 
 CS_FILE = os.path.join(thumbs.ROOT, "game/Airside/Assets/Airside/Presentation/AircraftTitlePaint.cs")
+DOOR_FILE = os.path.join(thumbs.ROOT, "game/Airside/Assets/Airside/Simulation/AdelaideAerobridges.cs")
 
 # Catalogue id -> (C# AircraftType member, art-root ground offset from AircraftVisualProfile).
 TYPES = {
@@ -149,21 +150,46 @@ def table():
     return "\n".join(cs_line(layout(cid)) for cid in TYPES)
 
 
+def door_table():
+    """Each jet's forward-left (L1) passenger door, where an aerobridge docks (ADR 0113)."""
+    lines = []
+    for cid, (member, offset) in TYPES.items():
+        if offset != -0.68:
+            continue                      # turboprops use the regional bays, never a bridge
+        path = [os.path.join(thumbs.ART, m) for c, m, _ in thumbs.MODELS if c == cid][0]
+        parts = dict(thumbs.load_parts(path))
+        name = "door_fwd" if "door_fwd" in parts else "door_left_1"
+        p = parts[name].reshape(-1, 3)
+        c = p.mean(axis=0)
+        lines.append(f"            if (Is(type, AircraftType.{member}))\n"
+                     f"                return new AircraftDoor({c[0]:.2f}f, {c[2]:.2f}f, {p[:, 1].min() + offset:.2f}f, "
+                     f"{p[:, 1].max() + offset:.2f}f);")
+    return "\n".join(lines)
+
+
+def _block(path, begin, end):
+    source = open(path).read()
+    return source[source.index(begin) + len(begin):source.index(end)].strip("\n").rstrip()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     generated = table()
+    doors = door_table()
     if not args.check:
         print(generated)
+        print("// ---- doors (Simulation/AdelaideAerobridges.cs) ----")
+        print(doors)
         return 0
-    source = open(CS_FILE).read()
-    begin, end = "// <generated title layout>", "// </generated title layout>"
-    current = source[source.index(begin) + len(begin):source.index(end)].strip("\n").rstrip()
-    if current.strip() != generated.strip():
+    if _block(CS_FILE, "// <generated title layout>", "// </generated title layout>").strip() != generated.strip():
         print("AircraftIdentityMarkings table is stale: rerun scripts/generate-aircraft-title-layout.py")
         return 1
-    print(f"PASS: {len(TYPES)} title layouts match their meshes")
+    if _block(DOOR_FILE, "// <generated door layout>", "// </generated door layout>").strip() != doors.strip():
+        print("AircraftDoors table is stale: rerun scripts/generate-aircraft-title-layout.py")
+        return 1
+    print(f"PASS: {len(TYPES)} title layouts and the jet L1 doors match their meshes")
     return 0
 
 

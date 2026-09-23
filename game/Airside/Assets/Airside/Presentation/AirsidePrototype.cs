@@ -522,6 +522,8 @@ namespace Airside.Presentation
                 _windsockSock = BuildWindsock();
             if (AirsideFocusMode.ShowBuildings)
                 EnsureStandThreeVisual();
+            if (AirsideFocusMode.ShowTerminal && _terminalGroundY.HasValue)
+                BuildAerobridges(_terminalGroundY.Value);
             if (_commercialAircraft.Length > 0)
                 _cameraController.SetFollowTargets((Transform[])_commercialAircraft.Clone());
             AirsideRuntimeQuality.AfterWorldBuilt();
@@ -591,6 +593,7 @@ namespace Airside.Presentation
             ApplyDayCycle();
             AdvancePresentationClock();
             UpdateAircraftVisual();
+            UpdateAerobridges();
             UpdateLiveTraffic();
             UpdateSkyTraffic();
             UpdateWindsock();

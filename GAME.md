@@ -1,5 +1,25 @@
 ## Where to resume — session handoff
 
+- **2026-09-23 Claude — Terminal 1 aerobridges (same branch `claude/stoic-curie-girf9n`, ADR 0113).**
+  - **Where:** 17 T1 gates have a moving bridge. Sites are derived from the OSM gate
+    stops and terminal footprint (`Simulation/AdelaideAerobridges.cs`).
+  - **When:** a pure timeline docks the bridge after the beacon is off and retracts it
+    before the push; `EngineStartSequence` takes its door state from the bridge.
+  - **Drawing:** primitive geometry in `Presentation/AirsidePrototype.Aerobridges.cs`;
+    the cab meets the live aircraft's L1 door.
+  - **No bridge:** 20R and 22R (78 m out) and 27–29 (west of the terminal footprint,
+    including the player's jet gates).
+  - **Evidence:** `scripts/test-domain.sh` shows 744/744 passing, including 7
+    `AerobridgeTests`; the door table `--check` passes.
+  - **Tugs:** planned only, in `docs/architecture/PUSHBACK_TUGS_PLAN.md` (becomes
+    ADR 0114).
+  - **NEXT:**
+    - Unity compile (new Presentation partial).
+    - Watch a Qantas jet arrive at gate 21: the bridge swings out after the beacon goes
+      off and the door opens.
+    - Before its push: the door closes and the bridge folds back along the face.
+    - Check the MARS clusters (15/16L/16R, 18/18R) for clearance.
+
 - **2026-09-23 Claude — livery and paint pass, titles fixed (same branch `claude/stoic-curie-girf9n`, ADR 0112).**
   - **Liveries:** every aircraft type now carries the fitted operator sash. The E190,
     A220 and A321neo had buried boxes; the A350 and 787s had nothing and used the

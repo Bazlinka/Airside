@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Terminal 1 aerobridges (ADR 0113).**
+  - 17 gates get a moving bridge that drives out to the parked jet's front-left door
+    once the beacon is off, and pulls back before the push.
+  - The door opens and closes with the bridge.
+  - Remote stands (20R, 22R) and the western stands (27–29), which lie off the
+    terminal footprint, keep stairs.
+  - Pushback tugs are planned in `docs/architecture/PUSHBACK_TUGS_PLAN.md`.
+
 - **Liveries on every type; titles no longer show through the wings (ADR 0112).**
   - E190, A220, A321neo, A350 and 787s now wear the fitted operator sash, so no type
     uses the barcode decal.

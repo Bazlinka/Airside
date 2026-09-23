@@ -84,7 +84,7 @@ namespace Airside.Simulation
     /// </summary>
     public static class AdelaideLayout
     {
-        public const string Attribution = "Airfield layout © OpenStreetMap contributors (ODbL)";
+        public const string Attribution = "Airport layout © OpenStreetMap contributors (ODbL)";
 
         public const float MainRunwayLengthMetres = 3079.0f;
         public const float RolloutEndX = -200.0f;

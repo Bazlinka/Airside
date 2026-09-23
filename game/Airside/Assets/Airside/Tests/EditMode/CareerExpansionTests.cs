@@ -383,7 +383,7 @@ namespace Airside.Tests
         public void InternationalWidebodyAccess_IsRestrictedToPier28()
         {
             var stands = PlayerBase.DedicatedStands(PlayerBaseLevel.International, AircraftType.AirbusA350900);
-            Assert.That(stands.Select(s => s.Value), Is.EquivalentTo(new[] { "GATE-28L", "GATE-28R" }));
+            Assert.That(stands.Select(s => s.Value), Is.EquivalentTo(new[] { "GATE-28L" }), "28L is the pier's code E line (ADR 0110)");
             Assert.That(PlayerBase.CanUseStand(PlayerBaseLevel.International, AircraftType.AirbusA350900,
                 new StableId("GATE-27")), Is.False);
             Assert.That(PlayerBase.CanUseStand(PlayerBaseLevel.International, AircraftType.AirbusA350900,

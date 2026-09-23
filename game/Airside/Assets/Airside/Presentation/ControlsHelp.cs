@@ -48,8 +48,8 @@ namespace Airside.Presentation
             {
                 new Binding("Tab", "Map workspace — routes and flight planning"),
                 new Binding("[ / ]", "Previous / next aircraft"),
-                new Binding("L", "Aircraft tags on the field"),
-                new Binding("N", "Airfield mini-map (click or drag to move)"),
+                new Binding("L", "Aircraft tags at the airport"),
+                new Binding("N", "Airport mini-map (click or drag to move)"),
                 new Binding("H", "Fleet workspace — aircraft and market"),
                 new Binding("T", "Operations workspace — movement board"),
                 new Binding("C", "Contracts workspace — active and offers"),

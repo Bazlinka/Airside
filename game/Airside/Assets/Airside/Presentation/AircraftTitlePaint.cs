@@ -63,9 +63,13 @@ namespace Airside.Presentation
         {
             if (type == null)
                 return 8f;
-            return AircraftCatalogue.TryFor(type, out var spec)
+            var fraction = AircraftCatalogue.TryFor(type, out var spec)
                 ? (float)spec.LengthMetres * TitleLengthFraction
                 : 8f;
+            // The fitted layout also knows where a high wing root or the aft taper stops the
+            // paint (ADR 0112); a title never runs past that.
+            var fitted = AircraftIdentityMarkings.For(type).TitleMaxLengthMetres;
+            return fitted > 0f ? System.Math.Min(fraction, fitted) : fraction;
         }
 
         /// <summary>
@@ -89,8 +93,12 @@ namespace Airside.Presentation
 
     /// <summary>
     /// Local-space placement for the painted operator title and registration on an
-    /// aircraft's two fuselage sides. The authored 737 uses a nose-stop origin while
-    /// the turboprops use a centred origin, so one generic offset cannot fit them all.
+    /// aircraft's two fuselage sides, in the art root's frame (nose +Z). Generated from each
+    /// type's mesh by scripts/generate-aircraft-title-layout.py (ADR 0112): the title sits
+    /// above the cabin windows, tangent to the skin, starting just aft of the flight deck
+    /// (<see cref="OperatorZ"/> is its forward end) and stopping short of a high wing root;
+    /// the registration is small on the aft fuselage (<see cref="RegistrationZ"/> is its
+    /// aft end). X is the right side; the left side mirrors it.
     /// </summary>
     public readonly struct AircraftIdentityMarkingLayout
     {
@@ -98,62 +106,85 @@ namespace Airside.Presentation
             float sideX,
             float operatorY,
             float operatorZ,
+            float registrationX,
             float registrationY,
             float registrationZ,
             float operatorCharacterSize,
-            float registrationCharacterSize)
+            float registrationCharacterSize,
+            float operatorTiltDegrees,
+            float registrationTiltDegrees,
+            float titleMaxLengthMetres)
         {
             SideX = sideX;
             OperatorY = operatorY;
             OperatorZ = operatorZ;
+            RegistrationX = registrationX;
             RegistrationY = registrationY;
             RegistrationZ = registrationZ;
             OperatorCharacterSize = operatorCharacterSize;
             RegistrationCharacterSize = registrationCharacterSize;
+            OperatorTiltDegrees = operatorTiltDegrees;
+            RegistrationTiltDegrees = registrationTiltDegrees;
+            TitleMaxLengthMetres = titleMaxLengthMetres;
         }
 
+        /// <summary>Title's distance out from the centreline: skin plus a coat of paint.</summary>
         public float SideX { get; }
         public float OperatorY { get; }
+        /// <summary>Forward end of the title; it reads aft from here on both sides.</summary>
         public float OperatorZ { get; }
+        public float RegistrationX { get; }
         public float RegistrationY { get; }
+        /// <summary>Aft end of the registration.</summary>
         public float RegistrationZ { get; }
         public float OperatorCharacterSize { get; }
         public float RegistrationCharacterSize { get; }
+        /// <summary>How far the title leans back to lie on the upper fuselage, from vertical.</summary>
+        public float OperatorTiltDegrees { get; }
+        public float RegistrationTiltDegrees { get; }
+        /// <summary>Longest title this fuselage has room for; 0 means use the length fraction.</summary>
+        public float TitleMaxLengthMetres { get; }
     }
 
     /// <summary>
     /// Where each type's titles sit. Free of UnityEngine — it is only floats — so the
-    /// harness can check every authored size against <see cref="AircraftTitlePaint"/>.
+    /// harness can check every authored size against <see cref="AircraftTitlePaint"/>;
+    /// scripts/generate-aircraft-title-layout.py --check keeps it matched to the meshes.
     /// </summary>
     public static class AircraftIdentityMarkings
     {
         public static AircraftIdentityMarkingLayout For(AircraftType type)
         {
-            if (Is(type, AircraftType.Boeing7378))
-                return new AircraftIdentityMarkingLayout(1.98f, 4.05f, -9.0f, 3.92f, -31.0f, 0.22f, 0.13f);
-            if (Is(type, AircraftType.Boeing737800))
-                return new AircraftIdentityMarkingLayout(1.98f, 4.08f, -9.0f, 3.95f, -31.0f, 0.22f, 0.13f);
-            if (Is(type, AircraftType.AirbusA320200))
-                return new AircraftIdentityMarkingLayout(2.06f, 3.90f, -8.2f, 3.78f, -29.2f, 0.21f, 0.13f);
-            if (Is(type, AircraftType.EmbraerE190))
-                return new AircraftIdentityMarkingLayout(1.58f, 3.58f, -7.6f, 3.47f, -28.0f, 0.19f, 0.12f);
-            if (Is(type, AircraftType.AirbusA220300))
-                return new AircraftIdentityMarkingLayout(1.82f, 3.76f, -8.2f, 3.64f, -30.0f, 0.20f, 0.12f);
-            if (Is(type, AircraftType.AirbusA321Neo))
-                return new AircraftIdentityMarkingLayout(1.96f, 3.85f, -10.0f, 3.74f, -35.2f, 0.22f, 0.13f);
-            if (Is(type, AircraftType.AirbusA350900))
-                return new AircraftIdentityMarkingLayout(3.04f, 6.58f, -13.0f, 6.40f, -55.0f, 0.30f, 0.17f);
-            if (Is(type, AircraftType.Boeing78710))
-                return new AircraftIdentityMarkingLayout(2.94f, 6.45f, -13.5f, 6.28f, -56.0f, 0.30f, 0.17f);
-            if (Is(type, AircraftType.AirbusA330900))
-                return new AircraftIdentityMarkingLayout(2.88f, 6.35f, -12.5f, 6.18f, -51.8f, 0.29f, 0.17f);
-            if (Is(type, AircraftType.Boeing7879))
-                return new AircraftIdentityMarkingLayout(2.94f, 6.45f, -12.5f, 6.28f, -51.0f, 0.29f, 0.17f);
-            if (Is(type, AircraftType.Dash8Q400))
-                return new AircraftIdentityMarkingLayout(1.44f, 1.78f, 7.0f, 1.70f, -10.4f, 0.15f, 0.10f);
+            // <generated title layout>
+            if (Is(type, AircraftType.Atr42))
+                return new AircraftIdentityMarkingLayout(1.16f, 1.94f, 7.22f, 1.23f, 1.84f, -4.68f, 0.092f, 0.049f, 36.29f, 31.28f, 4.54f);
             if (Is(type, AircraftType.Saab340))
-                return new AircraftIdentityMarkingLayout(1.22f, 1.48f, 3.1f, 1.42f, -5.7f, 0.13f, 0.085f);
-            return new AircraftIdentityMarkingLayout(0.88f, 1.48f, 3.3f, 1.40f, -5.2f, 0.13f, 0.085f);
+                return new AircraftIdentityMarkingLayout(0.91f, 2.02f, 3.69f, 0.98f, 1.93f, -3.71f, 0.078f, 0.040f, 39.23f, 33.61f, 6.71f);
+            if (Is(type, AircraftType.Dash8Q400))
+                return new AircraftIdentityMarkingLayout(1.11f, 2.34f, 10.13f, 1.18f, 2.23f, -9.27f, 0.092f, 0.047f, 37.17f, 31.91f, 5.98f);
+            if (Is(type, AircraftType.EmbraerE190))
+                return new AircraftIdentityMarkingLayout(1.21f, 3.80f, -4.39f, 1.31f, 3.66f, -27.69f, 0.113f, 0.053f, 36.79f, 30.64f, 12.32f);
+            if (Is(type, AircraftType.AirbusA220300))
+                return new AircraftIdentityMarkingLayout(1.41f, 3.75f, -5.85f, 1.52f, 3.59f, -28.15f, 0.132f, 0.061f, 36.72f, 30.48f, 13.16f);
+            if (Is(type, AircraftType.AirbusA320200))
+                return new AircraftIdentityMarkingLayout(1.63f, 4.62f, -4.72f, 1.75f, 4.42f, -27.52f, 0.155f, 0.069f, 35.47f, 28.73f, 12.77f);
+            if (Is(type, AircraftType.Boeing737800))
+                return new AircraftIdentityMarkingLayout(1.53f, 4.78f, -4.12f, 1.65f, 4.60f, -28.42f, 0.143f, 0.066f, 36.31f, 29.85f, 13.42f);
+            if (Is(type, AircraftType.Boeing7378))
+                return new AircraftIdentityMarkingLayout(1.53f, 4.75f, -4.12f, 1.65f, 4.57f, -28.42f, 0.142f, 0.066f, 36.50f, 30.07f, 13.42f);
+            if (Is(type, AircraftType.AirbusA321Neo))
+                return new AircraftIdentityMarkingLayout(1.52f, 4.47f, -4.16f, 1.63f, 4.31f, -31.96f, 0.134f, 0.065f, 38.12f, 31.91f, 15.13f);
+            if (Is(type, AircraftType.AirbusA350900))
+                return new AircraftIdentityMarkingLayout(2.43f, 7.36f, -9.95f, 2.62f, 7.06f, -54.75f, 0.233f, 0.104f, 35.66f, 29.05f, 22.71f);
+            if (Is(type, AircraftType.AirbusA330900))
+                return new AircraftIdentityMarkingLayout(2.30f, 7.23f, -6.32f, 2.49f, 6.93f, -52.62f, 0.230f, 0.098f, 34.48f, 27.75f, 21.65f);
+            if (Is(type, AircraftType.Boeing7879))
+                return new AircraftIdentityMarkingLayout(2.36f, 7.34f, -9.46f, 2.54f, 7.04f, -51.26f, 0.233f, 0.101f, 34.75f, 28.05f, 21.36f);
+            if (Is(type, AircraftType.Boeing78710))
+                return new AircraftIdentityMarkingLayout(2.36f, 7.34f, -9.95f, 2.54f, 7.04f, -55.75f, 0.233f, 0.101f, 34.75f, 28.05f, 23.22f);
+            // </generated title layout>
+            // Unknown or primitive-fallback types: the ATR's regional fuselage.
+            return For(AircraftType.Atr42);
         }
 
         private static bool Is(AircraftType type, AircraftType candidate) =>

@@ -156,10 +156,10 @@ namespace Airside.Presentation
 
         public OperationsBoardTab Tab { get; private set; }
 
-        /// <summary>0..1 through the operating day (06:00–23:00 Adelaide).</summary>
+        /// <summary>0..1 through the operating day (05:00–23:00 Adelaide).</summary>
         public float DayProgress01 { get; private set; }
 
-        /// <summary>"14:32 · evening bank · 3 on field"</summary>
+        /// <summary>"14:32 · evening bank · 3 at the airport"</summary>
         public string DayCaption { get; private set; } = string.Empty;
 
         public int DayDoneCount { get; private set; }
@@ -182,7 +182,7 @@ namespace Airside.Presentation
 
         /// <summary>
         /// First board row that is not a muted past movement — used to open the list
-        /// near "now" instead of at 06:00 Landed/Departed.
+        /// near "now" instead of at 05:00 Landed/Departed.
         /// </summary>
         public int FirstActiveRowIndex
         {
@@ -342,7 +342,7 @@ namespace Airside.Presentation
             DayOnFieldCount = onField;
             DayListedAheadCount = 0;
             var bank = BankLabel(local.Hour);
-            DayCaption = $"{clock.TimeText(now)}  ·  {bank}  ·  {onField} on field";
+            DayCaption = $"{clock.TimeText(now)}  ·  {bank}  ·  {onField} at the airport";
         }
 
         /// <summary>
@@ -373,6 +373,7 @@ namespace Airside.Presentation
 
         private static string BankLabel(int hour) => hour switch
         {
+            5 => "first wave",
             >= 6 and <= 8 => "morning bank",
             >= 11 and <= 12 => "midday bank",
             >= 16 and <= 18 => "evening bank",
@@ -416,9 +417,10 @@ namespace Airside.Presentation
                 // Live Outbound rows used to stay IsPast=false forever, so a 09:55 departure
                 // still airborne at 11:55 pinned the NOW divider (and the one-shot scroll snap)
                 // two hours behind the clock. Once they have left the field, treat them like
-                // any other past movement.
+                // any other past movement. A cancelled departure whose time has gone is past too
+                // (it stays listed, muted, like a real screen) — ADR 0111.
                 var livePast = !arrivals
-                    && aircraft.State == FleetState.Outbound
+                    && (aircraft.State == FleetState.Outbound || aircraft.Scheduled is { Cancelled: true })
                     && BoardClockMinutes(time) + 2 < nowMin;
                 // Inbound (and other Hidden states) stay on the board as arrivals/departures
                 // but must not read as metal already on the field.
@@ -644,7 +646,8 @@ namespace Airside.Presentation
         {
             var baseLevel = operations.CareerState.BaseLevel;
             SelectedRegistration = aircraft.Registration;
-            SelectedTypeName = aircraft.Type.Name;
+            // "Airbus A350-900 · Code E" so the gate it needs reads next to the type (ADR 0110).
+            SelectedTypeName = $"{aircraft.Type.Name}  ·  Code {AircraftCatalogue.CodeLetter(aircraft.Type)}";
             SelectedIsPlayer = aircraft.Airline.IsPlayer;
             SelectedStatusLine = FlightBoard.PhaseLabel(aircraft, now);
 

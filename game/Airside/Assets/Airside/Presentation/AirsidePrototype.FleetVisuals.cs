@@ -332,13 +332,10 @@ namespace Airside.Presentation
             // Fitted aircraft carry operator colour on their own geometry. Repeating
             // the generic traffic decal over their metre-UV fuselages makes dark
             // barcode stripes at overview distance, obscuring the authored skin.
-            var hasFittedLivery = AircraftVisualProfiles.IsAirbusA320200(aircraft.Type)
-                                  || AircraftVisualProfiles.IsAirbusA330900(aircraft.Type)
-                                  || AircraftVisualProfiles.IsBoeing7378(aircraft.Type)
-                                  || AircraftVisualProfiles.IsBoeing737800(aircraft.Type)
-                                  || AircraftVisualProfiles.IsDash8Q400(aircraft.Type)
-                                  || AircraftVisualProfiles.IsSaab340(aircraft.Type)
-                                  || aircraft.Type.Id == AircraftType.Atr42.Id;
+            // Every authored kit now carries a skin-conforming operator sash (ADR 0112: the
+            // E190, A220, A321neo, A350 and 787s joined the A320/A330/737/turboprops), so the
+            // decal is kept only for the primitive fallback, which has no sash of its own.
+            var hasFittedLivery = HasNamedChild(view, "Livery stripe lower");
             var decal = hasFittedLivery ? null : TintedLiveryDecal(airline.LiveryHex, accent);
             if (decal != null)
                 ApplyLiveryTexture(view, decal);
@@ -434,12 +431,17 @@ namespace Airside.Presentation
             sideVisibility.Initialise(aircraftView);
             for (var side = -1; side <= 1; side += 2)
             {
+                // Title: its forward end is pinned just aft of the flight deck and it reads
+                // aft from there on both sides, so a long name grows toward the tail, never
+                // off the nose (ADR 0112).
                 AddAircraftIdentityText(
                     aircraftView,
                     side < 0 ? "Operator title L" : "Operator title R",
                     operatorText,
                     new Vector3(side * layout.SideX, layout.OperatorY, layout.OperatorZ),
                     side,
+                    layout.OperatorTiltDegrees,
+                    anchorAtNose: true,
                     operatorSize,
                     titleColour,
                     FontStyle.Bold,
@@ -448,8 +450,10 @@ namespace Airside.Presentation
                     aircraftView,
                     side < 0 ? "Registration L" : "Registration R",
                     aircraft.Registration,
-                    new Vector3(side * layout.SideX, layout.RegistrationY, layout.RegistrationZ),
+                    new Vector3(side * layout.RegistrationX, layout.RegistrationY, layout.RegistrationZ),
                     side,
+                    layout.RegistrationTiltDegrees,
+                    anchorAtNose: false,
                     layout.RegistrationCharacterSize,
                     RegistrationInk,
                     FontStyle.Normal,
@@ -472,6 +476,8 @@ namespace Airside.Presentation
             string value,
             Vector3 localPosition,
             int side,
+            float tiltDegrees,
+            bool anchorAtNose,
             float characterSize,
             Color colour,
             FontStyle style,
@@ -480,14 +486,21 @@ namespace Airside.Presentation
             var label = new GameObject(name);
             label.transform.SetParent(parent, false);
             label.transform.localPosition = localPosition;
-            // TextMesh's readable face points along local -Z. Turn that face
-            // outward from each side of the fuselage rather than into its skin.
-            label.transform.localRotation = Quaternion.Euler(0f, side < 0 ? 90f : -90f, 0f);
+            // TextMesh's readable face points along local -Z. Turn that face outward from
+            // each side of the fuselage, then lean it back about the fuselage axis so it lies
+            // on the curved upper skin instead of standing off it as a flat board — the
+            // board's lower edge used to float up to 0.4 m clear of the tube and poke
+            // through the wing root (ADR 0112).
+            label.transform.localRotation = Quaternion.AngleAxis(side * tiltDegrees, Vector3.forward)
+                                            * Quaternion.Euler(0f, side < 0 ? 90f : -90f, 0f);
 
             var text = label.AddComponent<TextMesh>();
             text.text = value;
-            text.anchor = TextAnchor.MiddleCenter;
-            text.alignment = TextAlignment.Center;
+            // Left side reads nose→tail left to right, right side tail→nose. So the nose end
+            // is the text's left edge on the left side and its right edge on the right.
+            var noseIsLeftEdge = side < 0;
+            text.anchor = anchorAtNose == noseIsLeftEdge ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight;
+            text.alignment = TextAlignment.Left;
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
                 ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
             text.fontSize = AircraftTitlePaint.FontPixelSize;
@@ -502,12 +515,65 @@ namespace Airside.Presentation
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = false;
 
-            DepthTestStandLabel(renderer);
+            PaintOnFuselage(renderer, text.font);
 
             // The legacy font shader is double-sided. Keep only the camera-facing
             // fuselage title enabled so the opposite title cannot appear backwards
             // through the top of the aircraft in elevated follow views.
             sideVisibility.Register(text, renderer, side, colour);
+        }
+
+        private const string FuselagePaintShader = "Airside/FuselagePaint";
+        private static readonly List<Material> FuselagePaintMaterials = new();
+        private static bool _fuselagePaintWatchingFonts;
+
+        /// <summary>
+        /// Titles and registrations are paint (ADR 0112): opaque, alpha-tested, depth-tested
+        /// and lit like the airframe with the always-included Airside/FuselagePaint shader.
+        /// Falls back to the stand-label depth test only if that shader is missing.
+        /// </summary>
+        private static void PaintOnFuselage(MeshRenderer renderer, Font font)
+        {
+            var shader = Shader.Find(FuselagePaintShader);
+            if (shader == null || renderer == null)
+            {
+                DepthTestStandLabel(renderer);
+                return;
+            }
+
+            var material = new Material(shader) { name = "mat_fuselage_paint" };
+            var atlas = font != null && font.material != null ? font.material.mainTexture : null;
+            if (atlas != null)
+                material.SetTexture("_BaseMap", atlas);
+            material.SetColor("_BaseColor", Color.white);
+            renderer.sharedMaterial = material;
+
+            FuselagePaintMaterials.Add(material);
+            if (!_fuselagePaintWatchingFonts)
+            {
+                // A dynamic font grows its atlas when new glyphs are requested; the paint must
+                // follow the new texture or every title turns to garbled boxes.
+                Font.textureRebuilt += RefreshFuselagePaintAtlas;
+                _fuselagePaintWatchingFonts = true;
+            }
+        }
+
+        private static void RefreshFuselagePaintAtlas(Font font)
+        {
+            var atlas = font != null && font.material != null ? font.material.mainTexture : null;
+            if (atlas == null)
+                return;
+            for (var i = FuselagePaintMaterials.Count - 1; i >= 0; i--)
+            {
+                var material = FuselagePaintMaterials[i];
+                if (material == null)
+                {
+                    FuselagePaintMaterials.RemoveAt(i);
+                    continue;
+                }
+
+                material.SetTexture("_BaseMap", atlas);
+            }
         }
 
         /// <summary>
@@ -756,6 +822,7 @@ namespace Airside.Presentation
         private readonly List<Renderer> _renderers = new();
         private readonly List<int> _sides = new();
         private readonly List<Color> _baseColours = new();
+        private readonly List<bool> _litPaint = new();
 
         public void Initialise(Transform aircraft)
         {
@@ -768,6 +835,10 @@ namespace Airside.Presentation
             _renderers.Add(labelRenderer);
             _sides.Add(side);
             _baseColours.Add(baseColour);
+            var shader = labelRenderer != null && labelRenderer.sharedMaterial != null
+                ? labelRenderer.sharedMaterial.shader
+                : null;
+            _litPaint.Add(shader != null && shader.name == "Airside/FuselagePaint");
             RefreshOne(_renderers.Count - 1, ResolveCamera());
         }
 
@@ -819,10 +890,14 @@ namespace Airside.Presentation
             if (_labels[index] == null)
                 return;
             var baseColour = _baseColours[index];
+            var material = _renderers[index] != null ? _renderers[index].sharedMaterial : null;
+            // Lit fuselage paint (ADR 0112) takes its day/night from the sun and sky like the
+            // skin it sits on; dimming it again here would make titles darker than the tube.
+            if (_litPaint[index])
+                tint = 1f;
             var tinted = new Color(baseColour.r * tint, baseColour.g * tint, baseColour.b * tint, baseColour.a);
             _labels[index].color = tinted;
             // URP Unlit identity materials tint via _BaseColor; TextMesh.color alone is not enough.
-            var material = _renderers[index] != null ? _renderers[index].sharedMaterial : null;
             if (material != null && material.HasProperty("_BaseColor"))
                 material.SetColor("_BaseColor", tinted);
         }

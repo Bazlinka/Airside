@@ -86,14 +86,22 @@ namespace Airside.Tests
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(8), Airline.Player("Live Air", "#2E7D32"));
             var departures = ops.Fleet.Where(a => !a.Airline.IsPlayer && a.State == FleetState.AtStand && a.Scheduled.HasValue)
-                .Select(a => a.Scheduled.Value.DepartAt.ElapsedSeconds).OrderBy(t => t).ToArray();
+                .Select(a => a.Scheduled.Value.DepartAt.ElapsedSeconds).OrderBy(t => t)
+                .Take(AirlineOperations.AiOpeningDepartureSeconds.Length).ToArray();
             Assert.That(departures.Length, Is.GreaterThanOrEqualTo(8), "apron metal fills the opening bank");
-            Assert.That(departures[0], Is.EqualTo(AirlineOperations.AiOpeningDepartureSeconds[0]));
-            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.InRange(5, 9),
+            // Published on the next 5-minute clock mark after the ladder offset (ADR 0110).
+            Assert.That(departures[0], Is.InRange(AirlineOperations.AiOpeningDepartureSeconds[0],
+                AirlineOperations.AiOpeningDepartureSeconds[0] + 5 * 60));
+            foreach (var at in departures)
+            {
+                var local = ops.Clock.LocalAt(new SimulationTime(at));
+                Assert.That(local.Minute % 5 == 0 && local.Second == 0, Is.True, $"{local:HH:mm:ss} is on a board mark");
+            }
+            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound && a.StateEndsAt.HasValue && a.StateEndsAt.Value.ElapsedSeconds <= clock.Now.ElapsedSeconds + 45 * 60), Is.InRange(5, 9),
                 "short inbound bank; the rest stay parked (ADR 0100)");
             Assert.That(departures.Distinct().Count(), Is.LessThan(departures.Length),
                 "opening bank includes intentional same-minute doubles");
-            Assert.That(departures.Max(), Is.LessThanOrEqualTo(40 * 60), "departures stay inside the opening bank");
+            Assert.That(departures.Max(), Is.LessThanOrEqualTo(45 * 60), "departures stay inside the opening bank");
         }
     }
 }

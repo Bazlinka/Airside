@@ -642,7 +642,7 @@ namespace Airside.Presentation
             if (!model.SelectedIsPlayer)
             {
                 into.Text(new HudBox(pane.X, y, pane.Width, 36f),
-                    "Another operator's aircraft — visible on the field, not yours to command.", 12f,
+                    "Another operator's aircraft — visible at the airport, not yours to command.", 12f,
                     HudTone.Muted, HudTextStyle.Wrap);
                 return;
             }

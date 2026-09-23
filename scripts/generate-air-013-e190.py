@@ -334,7 +334,10 @@ def e190_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         segments=40,
     )
 
-    meshes["livery_stripe"] = box(0.0, 3.30, 0.80, 3.03, 0.10, 25.0)
+    # Operator sash follows the tube (ADR 0112), like the A320/737 family. The buried box
+    # it replaces vanished under the skin, leaving only the barcode decal to carry colour.
+    meshes["livery_stripe"] = skin.livery_ribbon(_skin, 11.5, -13.3, -1, half_width=0.24, rise_degrees=20.0)
+    meshes["livery_stripe_lower"] = skin.livery_ribbon(_skin, 11.5, -13.3, 1, half_width=0.24, rise_degrees=20.0)
     meshes["livery_tail_sweep"] = lofted_aerofoil(
         [(5.10, 0.0, -12.60, 2.10, 0.07), (9.30, 0.0, -14.60, 0.95, 0.045)],
         chord_points=10,

@@ -222,18 +222,33 @@ namespace Airside.Simulation
             {
                 ("VH-8IA", AircraftType.Boeing7378, new StableId("GATE-13")),
                 ("VH-8IB", AircraftType.Boeing7378, new StableId("GATE-14L")),
-                ("VH-8IC", AircraftType.Boeing7378, new StableId("GATE-19"))
+                ("VH-8IC", AircraftType.Boeing7378, new StableId("GATE-19")),
+                // ADR 0111: extra frames with no home gate — any free code C gate, else they
+                // night-stop at the other end and fly in with the morning arrivals.
+                ("VH-8ID", AircraftType.Boeing7378, default),
+                ("VH-8IE", AircraftType.Boeing7378, default),
+                ("VH-8IF", AircraftType.Boeing7378, default),
+                ("VH-8IG", AircraftType.Boeing7378, default)
             }),
             (Airline.Qantas, new[]
             {
                 ("VH-VZX", AircraftType.Boeing737800, new StableId("GATE-21")),
                 ("VH-VZY", AircraftType.Boeing737800, new StableId("GATE-24")),
-                ("VH-VZZ", AircraftType.Boeing737800, new StableId("GATE-23"))
+                ("VH-VZZ", AircraftType.Boeing737800, new StableId("GATE-23")),
+                ("VH-VZU", AircraftType.Boeing737800, default),
+                ("VH-VZV", AircraftType.Boeing737800, default),
+                ("VH-VZW", AircraftType.Boeing737800, default),
+                ("VH-VZR", AircraftType.Boeing737800, default),
+                ("VH-VZS", AircraftType.Boeing737800, default),
+                ("VH-VZT", AircraftType.Boeing737800, default)
             }),
             (Airline.Jetstar, new[]
             {
                 ("VH-VFH", AircraftType.AirbusA320200, new StableId("GATE-17")),
-                ("VH-VFI", AircraftType.AirbusA321Neo, new StableId("GATE-16L"))
+                ("VH-VFI", AircraftType.AirbusA321Neo, new StableId("GATE-16L")),
+                ("VH-VFJ", AircraftType.AirbusA320200, default),
+                ("VH-VFK", AircraftType.AirbusA321Neo, default),
+                ("VH-VFL", AircraftType.AirbusA320200, default)
             }),
             (Airline.AirNewZealand, new[] { ("ZK-NNA", AircraftType.AirbusA321Neo, new StableId("GATE-15")) }),
             (Airline.CathayPacific, new[] { ("B-LRB", AircraftType.AirbusA350900, new StableId("GATE-18")) }),
@@ -277,7 +292,45 @@ namespace Airside.Simulation
             return false;
         }
 
+        /// <summary>
+        /// T1 contact positions that take a code E widebody (A330, 787, A350): the MARS
+        /// centre lines of the 18 / 20 / 22 / 28 piers and the 25 / 26 international gates,
+        /// which is where Cathay, Singapore, Malaysia, Emirates, Qatar and the player's
+        /// International widebody lease already park. Every other gate is code C
+        /// (737 / A320 family and smaller). ADR 0110.
+        /// </summary>
+        public static readonly IReadOnlyList<StableId> CodeEGates = new[]
+        {
+            new StableId("GATE-18"), new StableId("GATE-20"), new StableId("GATE-22L"),
+            new StableId("GATE-25"), new StableId("GATE-26L"), new StableId("GATE-28L")
+        };
+
+        /// <summary>Largest ICAO code letter this stand can take (regional bays and most gates: C).</summary>
+        public static char StandCodeLetter(StableId stand)
+        {
+            foreach (var gate in CodeEGates)
+                if (gate.Equals(stand))
+                    return 'E';
+            return 'C';
+        }
+
+        /// <summary>
+        /// Gate or bay suits the aircraft: terminal vs regional class, the ICAO code letter
+        /// (no A350 on a narrowbody gate), and the SF340-only walk-outs.
+        /// </summary>
         public static bool StandFits(AircraftType type, StableId stand)
+        {
+            if (!StandClassFits(type, stand))
+                return false;
+            return AircraftCatalogue.CodeLetter(type) <= StandCodeLetter(stand);
+        }
+
+        /// <summary>
+        /// The pre-ADR 0110 fit (stand class and walk-outs, no code letter). Only used when
+        /// restoring a save, so an older game with a widebody parked on a code C gate still
+        /// loads; the aircraft keeps that gate until it departs.
+        /// </summary>
+        public static bool StandClassFits(AircraftType type, StableId stand)
         {
             if (AdelaideGround.IsTerminalGate(stand) != NeedsTerminalGate(type))
                 return false;
@@ -286,11 +339,24 @@ namespace Airside.Simulation
         }
 
         /// <summary>
+        /// True when parking here would take a position another type needs more: a code C jet
+        /// on a code E gate, or a Saab on a 50-series bay while a walk-out could take it.
+        /// </summary>
+        public static bool WastesStand(AircraftType type, StableId stand) =>
+            IsOversized(type, stand)
+            || ReferenceEquals(type, AircraftType.Saab340) && !AdelaideGround.IsTerminalGate(stand)
+               && !IsWalkOutStand(stand);
+
+        /// <summary>True when a smaller aircraft would take a gate a bigger one needs.</summary>
+        public static bool IsOversized(AircraftType type, StableId stand) =>
+            StandCodeLetter(stand) > 'C' && AircraftCatalogue.CodeLetter(type) < StandCodeLetter(stand);
+
+        /// <summary>
         /// Real regional carriers that share Adelaide's regional apron with the player and
         /// the player's airline. New games start with them; older saves gain them on load
-        /// (<see cref="AddMissingRegionalCarriers"/>). Three Rex Saabs and three
-        /// QantasLink Q400s share the 50-series and walk-outs with the player.
-        /// Extra 50G and the 10-series sit empty until someone needs them.
+        /// (<see cref="AddMissingRegionalCarriers"/>). Six Rex Saabs and four QantasLink
+        /// Q400s share the 50-series and walk-outs with the player; whoever has no free bay
+        /// night-stops at the other end and flies in with the morning arrivals (ADR 0111).
         /// </summary>
         public static readonly IReadOnlyList<(Func<Airline> Make, (string Registration, AircraftType Type)[] Fleet)> RegionalCarriers = new (Func<Airline>, (string, AircraftType)[])[]
         {
@@ -298,14 +364,18 @@ namespace Airside.Simulation
             {
                 ("VH-ZRC", AircraftType.Saab340), ("VH-ZRD", AircraftType.Saab340),
                 ("VH-ZRE", AircraftType.Saab340), ("VH-ZRF", AircraftType.Saab340),
-                ("VH-ZRG", AircraftType.Saab340)
+                ("VH-ZRG", AircraftType.Saab340), ("VH-ZRH", AircraftType.Saab340)
             }),
-            (Airline.QantasLink, new[] { ("VH-QOK", AircraftType.Dash8Q400), ("VH-QOL", AircraftType.Dash8Q400), ("VH-QOM", AircraftType.Dash8Q400) })
+            (Airline.QantasLink, new[]
+            {
+                ("VH-QOK", AircraftType.Dash8Q400), ("VH-QOL", AircraftType.Dash8Q400), ("VH-QOM", AircraftType.Dash8Q400),
+                ("VH-QON", AircraftType.Dash8Q400)
+            })
         };
 
         /// <summary>
         /// RFDS emergency turboprop. Uses a Saab 340 stand-in for the real PC-12 / King Air.
-        /// Exempt from the 23:00–06:00 curfew. Parked on a leftover regional bay when one is free.
+        /// Exempt from the 23:00–05:00 curfew. Parked on a leftover regional bay when one is free.
         /// </summary>
         public static readonly IReadOnlyList<(Func<Airline> Make, (string Registration, AircraftType Type)[] Fleet)> EmergencyOperators = new (Func<Airline>, (string, AircraftType)[])[]
         {
@@ -374,8 +444,10 @@ namespace Airside.Simulation
             operations.AddAirline(player);
             operations.AddAircraft(player, "VH-PAX", AircraftType.Saab340, AdelaideRegionalBays[0]);
             var aiFleet = new List<FleetAircraft>();
-            operations.AddMissingRegionalCarriers(aiFleet);
+            // RFDS first so the emergency aircraft always has a bay; the larger regional
+            // fleets overflow to night-stops away rather than squeezing it out (ADR 0111).
             operations.AddMissingEmergencyOperators(aiFleet);
+            operations.AddMissingRegionalCarriers(aiFleet);
             var terminalFleet = new List<FleetAircraft>();
             operations.AddMissingTerminalOperators(terminalFleet);
             operations.SeedOpeningTraffic(aiFleet, terminalFleet);
@@ -415,8 +487,23 @@ namespace Airside.Simulation
                     || aircraft.State != FleetState.AtStand || aircraft.Scheduled is not { } first)
                     continue;
                 aircraft.Scheduled = new ScheduledDeparture(first.Destination,
-                    _processedTo.Advance(AiOpeningDepartureSeconds[departureIndex++]));
+                    OpeningDepartureAt(AiOpeningDepartureSeconds[departureIndex++]));
             }
+        }
+
+        /// <summary>
+        /// An opening pushback published on the next 5-minute clock mark at or after the
+        /// ladder offset, so the board reads 07:05 / 07:05 / 07:10 like a real departures
+        /// screen rather than launch-relative odd minutes (ADR 0110).
+        /// </summary>
+        private SimulationTime OpeningDepartureAt(long offsetSeconds)
+        {
+            var at = _processedTo.Advance(offsetSeconds);
+            var local = Clock.LocalAt(at);
+            var minutes = local.Hour * 60 + local.Minute + (local.Second > 0 || local.Millisecond > 0 ? 1 : 0);
+            var mark = (minutes + 4) / 5 * 5;
+            var published = Clock.AtLocal(local.Date.AddMinutes(mark));
+            return published.CompareTo(at) >= 0 ? published : at;
         }
 
         /// <summary>
@@ -483,7 +570,7 @@ namespace Airside.Simulation
                     if (_fleet.Exists(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase)))
                         continue;
                     var stand = SuggestStandFor(type);
-                    if (!stand.HasValue)
+                    if (!stand.HasValue && !HasStandFor(type))
                         break;
                     if (airline == null)
                     {
@@ -491,7 +578,9 @@ namespace Airside.Simulation
                         AddAirline(airline);
                     }
 
-                    var aircraft = AddAircraft(airline, registration, type, stand.Value);
+                    var aircraft = stand.HasValue
+                        ? AddAircraft(airline, registration, type, stand.Value)
+                        : AddAircraftAway(airline, registration, type);
                     added?.Add(aircraft);
                     count++;
                 }
@@ -546,6 +635,9 @@ namespace Airside.Simulation
         {
             var asOf = at ?? _processedTo;
             var count = 0;
+            // Pass 0 parks the aircraft that own a gate; pass 1 the extra frames, which take
+            // only a spare gate their size (never a widebody's code E gate) or start away.
+            for (var pass = 0; pass < 2; pass++)
             foreach (var (make, fleet) in TerminalOperators)
             {
                 var template = make();
@@ -554,18 +646,25 @@ namespace Airside.Simulation
                 var airline = _airlines.Find(a => a.Id.Equals(template.Id));
                 foreach (var (registration, type, gate) in fleet)
                 {
+                    if (string.IsNullOrEmpty(gate.Value) != (pass == 1))
+                        continue;
                     if (_fleet.Exists(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase)))
                         continue;
-                    var stand = gate;
-                    if (!_stands.Contains(stand) || !IsStandFree(stand) || !StandFits(type, stand))
+                    StableId? stand = gate;
+                    if (string.IsNullOrEmpty(gate.Value) || !_stands.Contains(gate) || !IsStandFree(gate)
+                        || !StandFits(type, gate))
                     {
                         // Seasonal Cathay used to vanish for the whole summer when GATE-18
-                        // (or its pier sibling) was taken. Fall back to any free fitting gate.
-                        var alt = SuggestStandFor(type);
-                        if (!alt.HasValue)
-                            continue;
-                        stand = alt.Value;
+                        // (or its pier sibling) was taken. Fall back to any free fitting gate;
+                        // with none, the aircraft is away and flies in (ADR 0111).
+                        stand = SuggestStandFor(type);
+                        if (pass == 1 && stand.HasValue && IsOversized(type, stand.Value))
+                            stand = null;
                     }
+
+                    // An airport with no stand this type could ever use does not get it at all.
+                    if (!stand.HasValue && !HasStandFor(type))
+                        continue;
 
                     if (airline == null)
                     {
@@ -573,7 +672,9 @@ namespace Airside.Simulation
                         AddAirline(airline);
                     }
 
-                    var aircraft = AddAircraft(airline, registration, type, stand);
+                    var aircraft = stand.HasValue
+                        ? AddAircraft(airline, registration, type, stand.Value)
+                        : AddAircraftAway(airline, registration, type);
                     added?.Add(aircraft);
                     count++;
                 }
@@ -583,9 +684,9 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Cathay's summer service leaves when the season ends. Aircraft still flying
-        /// finish their trip; once they are back on the stand they are removed so
-        /// GATE-18 is not held through winter.
+        /// Cathay's summer service leaves when the season ends. A parked A350 keeps its
+        /// gate until its booked departure, flies home, and is removed while away (off the
+        /// map) so GATE-18 is not held through winter and no aircraft vanishes from a stand.
         /// </summary>
         public int RetireOutOfSeasonOperators(SimulationTime? at = null)
         {
@@ -599,7 +700,12 @@ namespace Airside.Simulation
                 var aircraft = _fleet[i];
                 if (aircraft.Airline.Id.Value != "CPA")
                     continue;
-                if (aircraft.State != FleetState.AtStand)
+                // The apron keeps its aircraft until they depart (ADR 0110): a parked A350
+                // flies its last rotation home and is retired off-map, never lifted off GATE-18.
+                // Only a parked jet with nothing booked (nothing left to fly) is removed here.
+                var offMap = aircraft.State is FleetState.AtDestination or FleetState.Inbound;
+                var idleOnStand = aircraft.State == FleetState.AtStand && !aircraft.Scheduled.HasValue;
+                if (!offMap && !idleOnStand)
                     continue;
                 aircraft.Scheduled = null;
                 aircraft.PrepStartedAt = null;
@@ -743,6 +849,73 @@ namespace Airside.Simulation
         }
 
         /// <summary>
+        /// Add an AI aircraft that has no free stand here: it is at its outstation and flies
+        /// in on a real arrival — soon if the field is open, otherwise with tomorrow's
+        /// 06:00–08:30 morning arrivals — so the apron never holds more than it has room
+        /// for (ADR 0111). Draws no random numbers.
+        /// </summary>
+        private FleetAircraft AddAircraftAway(Airline airline, string registration, AircraftType type)
+        {
+            if (!_airlines.Contains(airline))
+                throw new InvalidOperationException("Add the airline before its aircraft.");
+            var aircraft = new FleetAircraft(registration, airline, type, default, _processedTo);
+            aircraft.CurrentDestination = AwayBaseFor(airline, type);
+            var key = FirstWaveKey(aircraft);
+            var local = Clock.LocalAt(_processedTo);
+            // After the ADR 0100 opening bank (first 45 min), so the start is not a pile-up.
+            var soon = _processedTo.Advance((50 + key % 120) * 60L);
+            var landsAt = AirportCurfew.IsClosed(Clock.LocalAt(soon)) || AirportCurfew.IsClosed(local)
+                ? MorningArrivalAt(aircraft, _processedTo)
+                : soon;
+            aircraft.Restore(FleetState.Inbound, _processedTo, landsAt);
+            _fleet.Add(aircraft);
+            return aircraft;
+        }
+
+        /// <summary>True when this airport has at least one stand the type could ever use.</summary>
+        private bool HasStandFor(AircraftType type)
+        {
+            foreach (var stand in _stands)
+                if (StandFits(type, stand))
+                    return true;
+            return false;
+        }
+
+        /// <summary>The airline's busiest reachable city — where a spare frame night-stops.</summary>
+        private Destination AwayBaseFor(Airline airline, AircraftType type)
+        {
+            var longHaul = LongHaulHomeOf(airline.Id.Value);
+            if (longHaul != null && DestinationCatalogue.TryFind(longHaul, out var home))
+                return home;
+            Destination? best = null;
+            var bestWeight = -1;
+            foreach (var (code, weight) in AiNetworkFor(airline))
+            {
+                if (!DestinationCatalogue.TryFind(code, out var destination) || destination.Equals(Home))
+                    continue;
+                if (!type.CanReach(DistanceKm(destination)) || weight <= bestWeight)
+                    continue;
+                best = destination;
+                bestWeight = weight;
+            }
+
+            return best ?? DeliveryOrigin(type);
+        }
+
+        /// <summary>
+        /// Next morning arrival for an aircraft kept out overnight: 06:00–08:30, spread by
+        /// registration, never earlier than the 05:00 opening (ADR 0111). Replaces landing
+        /// every overnight inbound at 05:00 exactly.
+        /// </summary>
+        internal SimulationTime MorningArrivalAt(FleetAircraft aircraft, SimulationTime now)
+        {
+            var local = Clock.LocalAt(now);
+            var day = local.Hour < AirportCurfew.OpensAtHour ? local.Date : local.Date.AddDays(1);
+            var at = Clock.AtLocal(day.AddHours(6).AddMinutes(FirstWaveKey(aircraft) % 150));
+            return at.CompareTo(now) > 0 ? at : now;
+        }
+
+        /// <summary>
         /// Re-add an aircraft exactly as saved. Unlike <see cref="AddAircraft"/> this never
         /// schedules an AI departure, so the random sequence resumes where it left off.
         /// </summary>
@@ -765,7 +938,7 @@ namespace Airside.Simulation
                 throw new FormatException($"{registration} is {state} with no departure stand.");
             if (HoldsStand(aircraft) && (!_stands.Contains(stand) || !IsStandFree(stand)))
                 throw new FormatException($"{registration} is on stand '{stand}', which is missing, unknown or taken.");
-            if (HoldsStand(aircraft) && !StandFits(type, stand))
+            if (HoldsStand(aircraft) && !StandClassFits(type, stand))
                 throw new FormatException($"{registration} ({type.Name}) cannot be on stand '{stand}'.");
 
             aircraft.Stand = stand;
@@ -1252,7 +1425,8 @@ namespace Airside.Simulation
                     else
                     {
                         var local = Clock.LocalAt(now);
-                        var tonight = local.Date.AddHours(AirportCurfew.ClosedFromHour);
+                        // First closed instant: 23:00 is still the last open minute.
+                        var tonight = local.Date.AddMinutes(AirportCurfew.LastMovementMinute).AddSeconds(1);
                         if (local >= tonight)
                             tonight = tonight.AddDays(1);
                         Consider(Clock.AtLocal(tonight));
@@ -1720,6 +1894,9 @@ namespace Airside.Simulation
 
             _processedTo = target;
             ProcessDue(_processedTo);
+            // A Cathay that flew its last rotation home during this step is retired off-map.
+            if (!IsCathaySeason(target))
+                RetireOutOfSeasonOperators(at: target);
         }
 
         /// <summary>Resolve everything due at <paramref name="now"/> until nothing else changes.</summary>
@@ -1825,6 +2002,9 @@ namespace Airside.Simulation
                     return true;
 
                 case FleetState.AtDestination:
+                    // Out of season Cathay stays in Hong Kong; it is retired while away.
+                    if (aircraft.Airline.Id.Value == "CPA" && !IsCathaySeason(now))
+                        return false;
                     var inboundSeconds = LegAirborne(aircraft);
                     if (!aircraft.Airline.IsPlayer)
                     {
@@ -1842,7 +2022,8 @@ namespace Airside.Simulation
                 case FleetState.Inbound:
                     if (!ExemptFromCurfew(aircraft) && AirportCurfew.IsClosed(now, Clock))
                     {
-                        aircraft.ExtendUntil(AirportCurfew.OpensAt(now, Clock));
+                        // Kept out overnight: fly in with the morning arrivals, not all at 05:00.
+                        aircraft.ExtendUntil(MorningArrivalAt(aircraft, now));
                         return false;
                     }
                     aircraft.AssignedRunway = RunwayFor(aircraft);
@@ -1979,6 +2160,7 @@ namespace Airside.Simulation
             if (NeedsTerminalGate(aircraft.Type)
                 && !string.IsNullOrEmpty(aircraft.DepartureStand.Value)
                 && _stands.Contains(aircraft.DepartureStand)
+                && StandFits(aircraft.Type, aircraft.DepartureStand)
                 && IsStandFree(aircraft.DepartureStand)
                 && IsLeadInFree(aircraft.DepartureStand, aircraft)
                 && (!aircraft.Airline.IsPlayer || CareerState == null
@@ -2113,6 +2295,7 @@ namespace Airside.Simulation
 
             StableId? best = null;
             var bestCrowds = true;
+            var bestOversized = true;
             var bestSeconds = long.MaxValue;
             foreach (var stand in _stands)
             {
@@ -2124,11 +2307,31 @@ namespace Airside.Simulation
                 if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, except))
                     continue;
                 var crowds = CrowdsNeighbour(type, stand);
+                // Keep code E gates for the widebodies that need them (ADR 0110), and the
+                // 50-series for the ATR / Q400s that cannot use a Saab walk-out (ADR 0111).
+                var oversized = WastesStand(type, stand);
                 var seconds = TaxiInSecondsTo(stand, type);
-                if (best != null && (crowds && !bestCrowds || crowds == bestCrowds && seconds >= bestSeconds))
-                    continue;
+                // Wasting a stand another type needs outranks a tight neighbour: crowding is
+                // cosmetic, but a Q400 with every 50-series bay full of Saabs cannot park.
+                if (best != null)
+                {
+                    if (oversized != bestOversized)
+                    {
+                        if (oversized)
+                            continue;
+                    }
+                    else if (crowds != bestCrowds)
+                    {
+                        if (crowds)
+                            continue;
+                    }
+                    else if (seconds >= bestSeconds)
+                        continue;
+                }
+
                 best = stand;
                 bestCrowds = crowds;
+                bestOversized = oversized;
                 bestSeconds = seconds;
             }
 
@@ -2387,7 +2590,7 @@ namespace Airside.Simulation
             return false;
         }
 
-        /// <summary>Player and RFDS may use the runway during the 23:00–06:00 curfew.</summary>
+        /// <summary>Player and RFDS may use the runway during the 23:00–05:00 curfew.</summary>
         public static bool ExemptFromCurfew(FleetAircraft aircraft) =>
             aircraft?.Airline != null && (aircraft.Airline.IsPlayer || aircraft.Airline.IsEmergency);
 
@@ -2396,7 +2599,7 @@ namespace Airside.Simulation
             if (ExemptFromCurfew(aircraft) || !AirportCurfew.IsClosed(now, Clock))
                 return true;
             // Already moving: taxi-before-23:00 may take off; an arrival already on
-            // short final may land. New commercial inbounds wait until 06:00.
+            // short final may land. New commercial inbounds wait until 05:00.
             if (aircraft.State is FleetState.HoldingShort or FleetState.TaxiOut or FleetState.TakingOff)
                 return true;
             return aircraft.State == FleetState.HoldingForLanding
@@ -2542,13 +2745,13 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// First commercial AI push hour. Adelaide's curfew lifts at 06:00
-        /// (Adelaide Airport Curfew Act 2000). The player and RFDS may go earlier.
+        /// First commercial AI push hour: the 05:00 first wave (ADR 0110). The player and
+        /// RFDS may go earlier.
         /// </summary>
         public const int AiFirstDepartureHour = AirportCurfew.OpensAtHour;
 
         /// <summary>
-        /// Last commercial AI push hour (22:00–22:59). Curfew begins at 23:00;
+        /// Last commercial AI push hour (22:00–23:00; the 23:00 mark is the last flight).
         /// a taxi that started before then is allowed to take off. Regionals skip
         /// the late-international hole via the hour profile.
         /// </summary>
@@ -2647,7 +2850,7 @@ namespace Airside.Simulation
             if (aircraft.Airline.Id.Value == "VOZ")
             {
                 // Rotation, not a random draw, so the mainline timetable is stable.
-                var code = VirginRotation[aircraft.CompletedTrips % VirginRotation.Count];
+                var code = VirginRotation[RotationIndex(aircraft, VirginRotation.Count)];
                 if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
                     BookAiDeparture(aircraft, next, now);
                 return;
@@ -2655,7 +2858,7 @@ namespace Airside.Simulation
 
             if (aircraft.Airline.Id.Value == "QFA")
             {
-                var code = QantasRotation[aircraft.CompletedTrips % QantasRotation.Count];
+                var code = QantasRotation[RotationIndex(aircraft, QantasRotation.Count)];
                 if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
                     BookAiDeparture(aircraft, next, now);
                 return;
@@ -2663,7 +2866,7 @@ namespace Airside.Simulation
 
             if (aircraft.Airline.Id.Value == "JST")
             {
-                var code = JetstarRotation[aircraft.CompletedTrips % JetstarRotation.Count];
+                var code = JetstarRotation[RotationIndex(aircraft, JetstarRotation.Count)];
                 if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
                     BookAiDeparture(aircraft, next, now);
                 return;
@@ -2672,7 +2875,7 @@ namespace Airside.Simulation
             if (aircraft.Airline.Id.Value == "ANZ")
             {
                 // Rotation, not a random draw, so international traffic is stable too.
-                var code = AirNewZealandRotation[aircraft.CompletedTrips % AirNewZealandRotation.Count];
+                var code = AirNewZealandRotation[RotationIndex(aircraft, AirNewZealandRotation.Count)];
                 if (DestinationCatalogue.TryFind(code, out var next) && CanReach(aircraft, next))
                     BookAiDeparture(aircraft, next, now);
                 return;
@@ -2680,8 +2883,6 @@ namespace Airside.Simulation
             var longHaulHome = LongHaulHomeOf(aircraft.Airline.Id.Value);
             if (longHaulHome != null)
             {
-                if (aircraft.Airline.Id.Value == "CPA" && !IsCathaySeason(now))
-                    return;
                 if (DestinationCatalogue.TryFind(longHaulHome, out var next) && CanReach(aircraft, next))
                     BookAiDeparture(aircraft, next, now);
                 return;
@@ -2716,6 +2917,13 @@ namespace Airside.Simulation
             BookAiDeparture(aircraft, pick, now);
         }
 
+        /// <summary>
+        /// Where this airframe is in its airline's rotation. The registration offsets the start
+        /// so six Qantas 737s do not all fly the same first city (ADR 0111).
+        /// </summary>
+        private static int RotationIndex(FleetAircraft aircraft, int count) =>
+            (aircraft.CompletedTrips + FirstWaveKey(aircraft) % count) % count;
+
         private void BookAiDeparture(FleetAircraft aircraft, Destination destination, SimulationTime now)
         {
             var departAt = AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft);
@@ -2732,7 +2940,47 @@ namespace Airside.Simulation
                 departAt = AiDepartureWithinHours(departAt.Advance(disruption.DelayMinutes * 60L), aircraft);
             departAt = SnapCommercialDeparture(aircraft, departAt);
             departAt = PinLongHaulEvening(aircraft, departAt);
-            aircraft.Scheduled = new ScheduledDeparture(destination, departAt, disruption.DelayMinutes);
+            var delayMinutes = disruption.DelayMinutes;
+            if (ShouldNightStopHere(aircraft, destination, departAt))
+            {
+                departAt = FirstWaveAfter(aircraft, departAt);
+                delayMinutes = 0;
+            }
+
+            aircraft.Scheduled = new ScheduledDeparture(destination, departAt, delayMinutes);
+        }
+
+        /// <summary>
+        /// Most Adelaide-based domestic and regional frames stay the night on the apron
+        /// rather than fly an evening (18:00+) hop they cannot get back from before 23:00 — that is
+        /// what fills the 05:00 first wave (ADR 0111). One in three still flies out and
+        /// night-stops at the other end, so the late board is not empty. Long-haul,
+        /// player and RFDS are never held.
+        /// </summary>
+        private bool ShouldNightStopHere(FleetAircraft aircraft, Destination destination, SimulationTime departAt)
+        {
+            if (ExemptFromCurfew(aircraft) || LongHaulHomeOf(aircraft.Airline.Id.Value) != null
+                || FirstWaveKey(aircraft) % 3 == 0)
+                return false;
+            var local = Clock.LocalAt(departAt);
+            if (local.Hour < 18 || AirportCurfew.IsClosed(local))
+                return false;
+            // Only short domestic / regional hops: a trans-Tasman or Bali leg is a
+            // different operation, not an Adelaide-based evening shuttle.
+            var leg = AirborneSeconds(aircraft, destination);
+            if (leg > 150 * 60)
+                return false;
+            var backAt = departAt.Advance(2 * leg + DestinationTurnaroundSeconds + 15 * 60);
+            var closes = Clock.AtLocal(local.Date.AddMinutes(AirportCurfew.LastMovementMinute));
+            return backAt.CompareTo(closes) > 0;
+        }
+
+        private SimulationTime FirstWaveAfter(FleetAircraft aircraft, SimulationTime departAt)
+        {
+            var local = Clock.LocalAt(departAt);
+            var day = local.Hour < AirportCurfew.OpensAtHour ? local.Date : local.Date.AddDays(1);
+            var at = Clock.AtLocal(AdelaideHourProfile.FirstWaveLocal(day, FirstWaveKey(aircraft)));
+            return at.CompareTo(departAt) > 0 ? at : departAt;
         }
 
         /// <summary>
@@ -2744,7 +2992,8 @@ namespace Airside.Simulation
             if (aircraft == null || aircraft.Airline.IsPlayer || aircraft.Airline.IsEmergency)
                 return departAt;
             var local = Clock.LocalAt(departAt);
-            var snapped = AdelaideHourProfile.SnapToBankLocal(local, AiFirstDepartureHour, AiLastDepartureHour);
+            var snapped = AdelaideHourProfile.SnapToBankLocal(local, AiFirstDepartureHour, AiLastDepartureHour,
+                FirstWaveKey(aircraft));
             var at = Clock.AtLocal(snapped);
             return at.CompareTo(departAt) > 0 ? at : departAt;
         }
@@ -2775,7 +3024,7 @@ namespace Airside.Simulation
 
         /// <summary>
         /// Regional ready-times jump the afternoon hole onto the next bank.
-        /// Jets keep the 06:00–23:00 window — a 787 ready at 21:40 still goes.
+        /// Jets keep the 05:00–23:00 window — a 787 ready at 21:40 still goes.
         /// Player and RFDS skip the window entirely.
         /// </summary>
         internal SimulationTime AiDepartureWithinHours(SimulationTime readyAt, FleetAircraft aircraft)
@@ -2794,7 +3043,23 @@ namespace Airside.Simulation
 
             if (aircraft != null && ExemptFromCurfew(aircraft))
                 return readyAt;
-            return PinLongHaulEvening(aircraft, AiDepartureWithinHours(readyAt, aircraft?.Type));
+            return PinLongHaulEvening(aircraft,
+                AiDepartureWithinHours(readyAt, aircraft?.Type, aircraft == null ? 0 : FirstWaveKey(aircraft)));
+        }
+
+        /// <summary>
+        /// Stable per-airframe key that spreads night-stopped aircraft across the 05:00–06:30
+        /// first wave instead of stacking every one on 05:00 (ADR 0110).
+        /// </summary>
+        internal static int FirstWaveKey(FleetAircraft aircraft)
+        {
+            unchecked
+            {
+                var hash = 23;
+                foreach (var ch in aircraft.Registration)
+                    hash = hash * 31 + ch;
+                return hash & int.MaxValue;
+            }
         }
 
         /// <summary>
@@ -2816,23 +3081,27 @@ namespace Airside.Simulation
             return at.CompareTo(departAt) > 0 ? at : departAt;
         }
 
-        internal SimulationTime AiDepartureWithinHours(SimulationTime readyAt, AircraftType type = null)
+        internal SimulationTime AiDepartureWithinHours(SimulationTime readyAt, AircraftType type = null,
+            int firstWaveKey = 0)
         {
             var local = Clock.LocalAt(readyAt);
             DateTime useful;
             if (type != null && NeedsTerminalGate(type))
             {
-                var first = local.Date.AddHours(AirportCurfew.OpensAtHour);
-                var last = local.Date.AddHours(AirportCurfew.ClosedFromHour);
-                if (local >= first && local < last)
+                if (!AirportCurfew.IsClosed(local))
                     return readyAt;
-                useful = local < first ? first : first.AddDays(1);
+                // Night-stop: the jet stays on its gate and leads tomorrow's first wave.
+                var day = local.Hour < AirportCurfew.OpensAtHour ? local.Date : local.Date.AddDays(1);
+                useful = AdelaideHourProfile.FirstWaveLocal(day, firstWaveKey);
             }
             else
             {
                 useful = AdelaideHourProfile.NextUsefulLocal(local, AiFirstDepartureHour, AiLastDepartureHour);
                 if (useful == local)
                     return readyAt;
+                // Rolled past the evening: night-stop on the bay, out with the first wave.
+                if (useful.Date != local.Date || local.Hour < AiFirstDepartureHour)
+                    useful = AdelaideHourProfile.FirstWaveLocal(useful.Date, firstWaveKey);
             }
 
             var at = Clock.AtLocal(useful);

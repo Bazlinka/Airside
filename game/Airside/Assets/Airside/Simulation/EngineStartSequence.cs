@@ -60,6 +60,17 @@ namespace Airside.Simulation
 
         public static EngineState For(FleetAircraft aircraft, double nowSeconds)
         {
+            var state = ForStairs(aircraft, nowSeconds);
+            // On a bridged Terminal 1 gate the L1 door follows the aerobridge instead: it opens
+            // once the cab is docked and closes before the bridge pulls back (ADR 0113).
+            var bridged = AerobridgeTimeline.DoorsOpen(aircraft, nowSeconds);
+            return bridged.HasValue
+                ? new EngineState(state.Left, state.Right, state.Beacon, bridged.Value)
+                : state;
+        }
+
+        private static EngineState ForStairs(FleetAircraft aircraft, double nowSeconds)
+        {
             if (aircraft == null || aircraft.State != FleetState.AtStand)
                 return EngineState.Running;
 

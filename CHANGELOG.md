@@ -1,5 +1,44 @@
 ## Unreleased
 
+- **Terminal 1 aerobridges (ADR 0113).**
+  - 17 gates get a moving bridge that drives out to the parked jet's front-left door
+    once the beacon is off, and pulls back before the push.
+  - The door opens and closes with the bridge.
+  - Remote stands (20R, 22R) and the western stands (27–29), which lie off the
+    terminal footprint, keep stairs.
+  - Pushback tugs are planned in `docs/architecture/PUSHBACK_TUGS_PLAN.md`.
+
+- **Liveries on every type; titles no longer show through the wings (ADR 0112).**
+  - E190, A220, A321neo, A350 and 787s now wear the fitted operator sash, so no type
+    uses the barcode decal.
+  - Engines are painted grey and white instead of blue.
+  - Airline titles are generated from each mesh: above the windows, tangent to the skin,
+    starting behind the flight deck and clear of the wing root.
+  - Titles are drawn with a new lit, depth-tested `Airside/FuselagePaint` shader that is
+    always included in builds.
+
+- **Realistic Adelaide traffic: 38 AI aircraft, about 110 airline departures a day
+  (ADR 0111).**
+  - Qantas has 9 aircraft, Virgin 7, Jetstar 5, Rex 6 and QantasLink 4.
+  - Aircraft with no free stand start away and fly in; overnight arrivals come in over
+    06:00–08:30.
+  - Most evening domestic frames night-stop, so 05:00–06:59 is the big dawn wave.
+  - The afternoon is quieter but no longer empty.
+  - Saabs use the walk-outs.
+  - Player-facing "Airfield" wording now says "Airport", for example "Airport map" and
+    "N at the airport".
+
+- **Operations realism: 05:00–23:00 day, banked departures, gates sized to aircraft
+  (ADR 0110).**
+  - Commercial AI now flies from 05:00, and the last flight is 23:00; RFDS and the
+    player are still exempt.
+  - Departures cluster on shared published times (for example, several at 06:00).
+  - Aircraft that night-stop leave in a 05:00–06:30 first wave.
+  - A parked aircraft stays on its stand until its own departure: no off-season Cathay
+    vanishing from GATE-18, and no timetable-only flights appearing in the sky.
+  - Gates carry an ICAO code letter, so widebodies only use code E gates.
+  - The board shows Boarding, Final call and Gate closed.
+
 - **737 fitted livery + titles no longer show through wings (ADR 0109).** 737-8 and
   737-800 get the same skin-conforming operator sash as the A320; the barcode traffic
   decal is off for both. Fuselage wordmarks use a depth-tested cutout material so they

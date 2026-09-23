@@ -1,5 +1,98 @@
 ## Where to resume — session handoff
 
+- **2026-09-23 Claude — Terminal 1 aerobridges (same branch `claude/stoic-curie-girf9n`, ADR 0113).**
+  - **Where:** 17 T1 gates have a moving bridge. Sites are derived from the OSM gate
+    stops and terminal footprint (`Simulation/AdelaideAerobridges.cs`).
+  - **When:** a pure timeline docks the bridge after the beacon is off and retracts it
+    before the push; `EngineStartSequence` takes its door state from the bridge.
+  - **Drawing:** primitive geometry in `Presentation/AirsidePrototype.Aerobridges.cs`;
+    the cab meets the live aircraft's L1 door.
+  - **No bridge:** 20R and 22R (78 m out) and 27–29 (west of the terminal footprint,
+    including the player's jet gates).
+  - **Evidence:** `scripts/test-domain.sh` shows 744/744 passing, including 7
+    `AerobridgeTests`; the door table `--check` passes.
+  - **Tugs:** planned only, in `docs/architecture/PUSHBACK_TUGS_PLAN.md` (becomes
+    ADR 0114).
+  - **NEXT:**
+    - Unity compile (new Presentation partial).
+    - Watch a Qantas jet arrive at gate 21: the bridge swings out after the beacon goes
+      off and the door opens.
+    - Before its push: the door closes and the bridge folds back along the face.
+    - Check the MARS clusters (15/16L/16R, 18/18R) for clearance.
+
+- **2026-09-23 Claude — livery and paint pass, titles fixed (same branch `claude/stoic-curie-girf9n`, ADR 0112).**
+  - **Liveries:** every aircraft type now carries the fitted operator sash. The E190,
+    A220 and A321neo had buried boxes; the A350 and 787s had nothing and used the
+    barcode decal. Engines are grey and white instead of blue.
+  - **Why names showed through wings:** titles were flat 1.4 m boards, authored without
+    the -0.68 m model offset. They stood off the skin and poked up through the 737
+    wing root. The ATR's title sat inside its own fuselage.
+  - **Title fix:** layouts are now generated from each mesh
+    (`scripts/generate-aircraft-title-layout.py`). Titles sit above the windows,
+    tangent to the skin, anchored behind the flight deck.
+  - **Title shader:** titles use a new always-included `Airside/FuselagePaint` shader
+    (lit, depth-tested and depth-writing).
+  - **Evidence:**
+    - `scripts/test-aircraft-paint.py` passes.
+    - Connectivity and the per-type generator tests pass.
+    - `scripts/test-domain.sh` shows 737/737 passing.
+    - Glyph-accurate z-buffered renders from `scripts/render-aircraft-paint.py`.
+  - **NEXT:**
+    - **Compile check:** open in Unity to compile the new shader and Presentation code;
+      the headless harness does not compile `AirsidePrototype`.
+    - **Title check:** in follow camera, check that titles read the right way round on
+      both sides, lean onto the skin, and hide behind the wing from low rear views.
+    - **Livery check:** confirm no barcode decal on the Air NZ / Jetstar A321neo or the
+      Emirates / Qatar / Singapore widebodies.
+
+- **2026-09-23 Claude — realistic Adelaide traffic (same branch `claude/stoic-curie-girf9n`, ADR 0111).**
+  Bailey asked for traffic that is "realistic to Adelaide", and for the place not to be
+  called an airfield.
+  - **Fleet:** the AI fleet is now 38 aircraft. Qantas has 9, Virgin 7, Jetstar 5, Rex 6
+    and QantasLink 4.
+  - **Overflow:** an aircraft with no stand starts away and flies in; overnight
+    arrivals come in 06:00–08:30.
+  - **Night-stops:** evening domestic frames mostly stay on the apron for the 05:00
+    wave.
+  - **Afternoon:** quieter but not empty.
+  - **Measured:** about 108–114 AI departures a day, against real Adelaide's roughly
+    110–130, with every hour from 05:00 to 23:00 active.
+  - **Wording:** player-facing "Airfield" text now says "Airport" (Airport map, "N at
+    the airport", the layout credit).
+  - **Evidence:** `scripts/test-domain.sh` shows **736/736** passing.
+  - **NEXT:** Mac Unity run, then play a morning and an afternoon to confirm the dawn
+    wave and that gates never overflow.
+
+- **2026-09-23 Claude — Operations realism (branch `claude/stoic-curie-girf9n`, ADR 0110).**
+  Bailey asked for the arrivals and departures to match a real airport.
+  - **Hours.** The commercial day is now **05:00–23:00**: first wave at 05:00, and a
+    flight at exactly 23:00 still goes. RFDS and the player stay exempt.
+  - **Published times.** Departures snap to shared anchors such as 06:00, 17:30 and
+    23:00, so several go at once. Night-stops spread across 05:00–06:30. The evening no
+    longer rolls a 22:10 jet into tomorrow.
+  - **Apron hold.**
+    - A parked aircraft keeps its stand until its own departure.
+    - An off-season Cathay flies home and is retired while away.
+    - The sky draws only the live fleet's own legs, with no timetable phantoms.
+  - **Gate codes.** Gates carry an ICAO code: E at 18/20/22L/25/26L/28L, C elsewhere.
+    Widebodies only park on code E gates, and narrowbodies prefer code C. A legacy
+    save with a widebody on a code C gate still loads.
+  - **Board statuses.** Scheduled → Boarding → Final call → Gate closed; RFDS reads
+    "RFDS · Emergency".
+  - **Evidence:** `scripts/test-domain.sh` shows 731/735 passing. The 4 failures also
+    fail on `main` before this change: three RegionalCarriers bay-count tests and
+    `AiAirline_FliesAllDayWithoutDoubleBookingStandsOrRunway`. That run also newly
+    passes `EveningStart_LastFlightsSitNearCurfew…` and
+    `ThirtyDays_NoDeadlock…`. There are 9 new tests in `OperationsRealismTests`.
+    The harness now excludes `AirsideFramePacingTests` because it uses UnityEngine.
+  - **NEXT:**
+    - Run `scripts/test-unity.sh` on the Mac; the Presentation compile has not been
+      checked in Unity.
+    - Play a 04:50 launch: the first wave should push from 05:00, and the 06:00 board
+      should show several departures together.
+    - Check that widebodies only use 18/20/22L/25/26L/28L.
+    - Verify the code E list against the ADL AIP stand chart.
+
 - **2026-09-23 Cursor — 737 fitted livery + title depth (ADR 0109, merged #392).**
   737-8/800 use `livery_ribbon` + `hasFittedLivery` (no barcode decal). Fuselage titles
   use URP Unlit cutout with ZWrite. Mac app rebuilt at `work/builds/Airside.app`

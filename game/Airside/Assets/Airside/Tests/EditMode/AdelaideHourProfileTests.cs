@@ -9,11 +9,12 @@ namespace Airside.Tests
         [Test]
         public void Density_PeaksInTheMorningAndEveningBanks()
         {
-            Assert.That(AdelaideHourProfile.Density(5), Is.LessThan(0.1f),
-                "curfew until 06:00");
+            Assert.That(AdelaideHourProfile.Density(5), Is.GreaterThanOrEqualTo(0.45f),
+                "05:00 first wave of night-stopped aircraft (ADR 0110)");
             Assert.That(AdelaideHourProfile.Density(7), Is.EqualTo(1f));
             Assert.That(AdelaideHourProfile.Density(17), Is.EqualTo(1f));
-            Assert.That(AdelaideHourProfile.Density(14), Is.LessThan(0.5f));
+            Assert.That(AdelaideHourProfile.Density(14), Is.LessThan(AdelaideHourProfile.Density(17)),
+                "the afternoon is quieter than the evening bank, though not empty");
             Assert.That(AdelaideHourProfile.Density(22), Is.LessThan(0.45f),
                 "regionals skip the late-international hole");
             Assert.That(AdelaideHourProfile.Density(23), Is.LessThan(0.1f), "curfew from 23:00");
@@ -40,13 +41,16 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void NextUsefulLocal_SkipsTheAfternoonHole()
+        public void NextUsefulLocal_KeepsTheAfternoonButSkipsTheLateEvening()
         {
+            // ADR 0111: Adelaide still moves traffic mid-afternoon; only the late-evening
+            // regional hole rolls to the next morning.
             var afternoon = new DateTime(2026, 9, 19, 14, 20, 0);
-            var next = AdelaideHourProfile.NextUsefulLocal(afternoon, 6, 21);
-            Assert.That(next.Hour, Is.EqualTo(16));
+            Assert.That(AdelaideHourProfile.NextUsefulLocal(afternoon, 5, 22), Is.EqualTo(afternoon));
             var morning = new DateTime(2026, 9, 19, 7, 40, 0);
-            Assert.That(AdelaideHourProfile.NextUsefulLocal(morning, 6, 21), Is.EqualTo(morning));
+            Assert.That(AdelaideHourProfile.NextUsefulLocal(morning, 5, 22), Is.EqualTo(morning));
+            var late = new DateTime(2026, 9, 19, 20, 20, 0);
+            Assert.That(AdelaideHourProfile.NextUsefulLocal(late, 5, 22).Date, Is.EqualTo(late.Date.AddDays(1)));
         }
 
         [Test]
@@ -58,8 +62,8 @@ namespace Airside.Tests
             var onMark = new DateTime(2026, 9, 19, 7, 0, 0);
             Assert.That(AdelaideHourProfile.SnapToBankLocal(onMark, 6, 22), Is.EqualTo(onMark));
             var quiet = new DateTime(2026, 9, 19, 14, 12, 0);
-            Assert.That(AdelaideHourProfile.SnapToBankLocal(quiet, 6, 22).Hour, Is.EqualTo(16),
-                "quiet hours still jump to the next bank");
+            Assert.That(AdelaideHourProfile.SnapToBankLocal(quiet, 6, 22), Is.EqualTo(new DateTime(2026, 9, 19, 14, 15, 0)),
+                "the afternoon publishes on the next 5-minute mark, not the 16:00 bank (ADR 0111)");
         }
     }
 }

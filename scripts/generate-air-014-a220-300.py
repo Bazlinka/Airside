@@ -344,7 +344,9 @@ def a220_300_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         segments=40,
     )
 
-    meshes["livery_stripe"] = box(0.0, 3.12, 0.90, 3.52, 0.10, 27.0)
+    # Operator sash follows the tube (ADR 0112) instead of a buried box.
+    meshes["livery_stripe"] = skin.livery_ribbon(_skin, 12.6, -14.4, -1, half_width=0.26, rise_degrees=20.0)
+    meshes["livery_stripe_lower"] = skin.livery_ribbon(_skin, 12.6, -14.4, 1, half_width=0.26, rise_degrees=20.0)
     meshes["livery_tail_sweep"] = lofted_aerofoil(
         [(5.40, 0.0, -13.40, 2.20, 0.075), (9.90, 0.0, -15.50, 1.00, 0.05)],
         chord_points=10,

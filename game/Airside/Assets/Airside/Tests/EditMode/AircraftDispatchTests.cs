@@ -247,9 +247,13 @@ namespace Airside.Tests
             var jet = AircraftIdentityMarkings.For(AircraftType.Boeing7378);
             var a321 = AircraftIdentityMarkings.For(AircraftType.AirbusA321Neo);
 
-            Assert.That(atr.SideX, Is.LessThan(saab.SideX));
+            // Titles lean onto the upper skin (ADR 0112), so SideX follows each tube's width at
+            // title height: the slim Saab innermost, the widebody-free jets outermost. The
+            // ATR used to sit at 0.88 m — inside its own 1.40 m fuselage.
+            Assert.That(saab.SideX, Is.LessThan(atr.SideX));
             Assert.That(saab.SideX, Is.LessThan(q400.SideX));
             Assert.That(q400.SideX, Is.LessThan(jet.SideX));
+            Assert.That(atr.SideX, Is.GreaterThan(1.0f));
             Assert.That(jet.OperatorZ, Is.LessThan(0f),
                 "the 737 art root is its nose stop, so fuselage paint sits aft of zero");
             Assert.That(jet.RegistrationZ, Is.LessThan(jet.OperatorZ));

@@ -191,7 +191,7 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now, OperationsBoardTab.Arrivals, null, null);
 
             Assert.That(model.DayOnFieldCount, Is.EqualTo(expected));
-            Assert.That(model.DayCaption, Does.Contain($"{expected} on field"));
+            Assert.That(model.DayCaption, Does.Contain($"{expected} at the airport"));
             foreach (var row in model.Rows.Where(r =>
                          ops.Fleet.First(a => a.Registration == r.Registration).State == FleetState.Inbound))
                 Assert.That(row.OnField, Is.False,
@@ -214,7 +214,7 @@ namespace Airside.Tests
 
             Assert.That(model.DayProgress01, Is.InRange(0.45f, 0.75f),
                 "15:00 should sit in the second half of a 06–23 operating day");
-            Assert.That(model.DayCaption, Does.Contain("on field"));
+            Assert.That(model.DayCaption, Does.Contain("at the airport"));
             Assert.That(model.DayCaption, Does.Not.Contain("listed ahead"));
             Assert.That(model.DayOnFieldCount, Is.GreaterThan(0));
             Assert.That(model.DayListedAheadCount, Is.EqualTo(0));

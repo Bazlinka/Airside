@@ -750,7 +750,7 @@ namespace Airside.Presentation
                 GuideStep.WaitForDeparture => ($"Track {reg}'s departure",
                     $"Fuel, catering, bags and boarding finish before {ClockText(aircraft.Scheduled.Value.DepartAt)}. Click the aircraft or press Follow (F)."),
                 GuideStep.Departing => ($"Follow {reg}",
-                    "Click the aircraft on the field or press Follow (F) to watch taxi and takeoff."),
+                    "Click the aircraft at the airport or press Follow (F) to watch taxi and takeoff."),
                 GuideStep.Away => ($"Watch {reg} return",
                     $"En route to {dest}. Track it on Map (Tab); the airport also continues while the game is closed."),
                 GuideStep.Landing => ($"Watch {reg} land",
@@ -883,7 +883,7 @@ namespace Airside.Presentation
             if (joined > 0)
                 ShowToast("Rex and QantasLink now fly from Adelaide's regional apron too.");
             if (emergencyJoined > 0)
-                ShowToast("RFDS can still fly through the 23:00–06:00 curfew.");
+                ShowToast("RFDS can still fly through the 23:00–05:00 curfew.");
             if (jetJoined > 0)
                 ShowToast("Virgin Australia's 737-8 now operates from Gate 13.");
             RefreshFleetFlights();

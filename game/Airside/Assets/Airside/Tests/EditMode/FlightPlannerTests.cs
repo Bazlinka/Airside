@@ -113,7 +113,7 @@ namespace Airside.Tests
             var player = Airline.Player("Southern Cross Regional", "#C8102E");
             ops.AddAirline(player);
             var atr = ops.AddAircraft(player, "VH-PAA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
-            var jet = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing78710, AirlineOperations.AdelaideTerminalGates[0]);
+            var jet = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing78710, new StableId("GATE-18"));
 
             var depart = new SimulationTime(1000);
             var jetTrip = FlightPlanner.Estimate(jet, 3600, depart);
@@ -139,7 +139,7 @@ namespace Airside.Tests
             var player = Airline.Player("Southern Cross Regional", "#C8102E");
             ops.AddAirline(player);
             var atr = ops.AddAircraft(player, "VH-PAA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
-            var jet = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing78710, AirlineOperations.AdelaideTerminalGates[0]);
+            var jet = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing78710, new StableId("GATE-18"));
             var kingscote = DestinationCatalogue.Australia.First(d => d.Code == "KGC");
             var melbourne = DestinationCatalogue.Australia.First(d => d.Code == "MEL");
             ops.ScheduleDeparture(atr, kingscote, new SimulationTime(600));

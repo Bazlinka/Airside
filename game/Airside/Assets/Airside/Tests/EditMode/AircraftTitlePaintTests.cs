@@ -60,9 +60,11 @@ namespace Airside.Tests
             var atr = AircraftTitlePaint.TitleLengthBudgetMetres(AircraftType.Atr42);
             var widebody = AircraftTitlePaint.TitleLengthBudgetMetres(AircraftType.AirbusA350900);
             Assert.That(widebody, Is.GreaterThan(atr * 2f));
-            Assert.That(atr, Is.EqualTo(
+            Assert.That(atr, Is.LessThanOrEqualTo(
                 (float)AircraftCatalogue.For(AircraftType.Atr42).LengthMetres
-                * AircraftTitlePaint.TitleLengthFraction).Within(0.001f));
+                * AircraftTitlePaint.TitleLengthFraction + 0.001f));
+            Assert.That(atr, Is.EqualTo(AircraftIdentityMarkings.For(AircraftType.Atr42).TitleMaxLengthMetres).Within(0.001f),
+                "the ATR's high wing root stops its title short of the fraction (ADR 0112)");
         }
 
         [Test]
@@ -80,6 +82,26 @@ namespace Airside.Tests
                     spec.Name);
                 Assert.That(AircraftTitlePaint.LineHeightMetres(fitted), Is.GreaterThan(0.2f),
                     $"{spec.Name}: titles must stay legible at overview distance");
+            }
+        }
+
+        [Test]
+        public void TitlesSitAboveTheWindowsOnTheSkinAndClearOfTheWing()
+        {
+            // ADR 0112: generated from each mesh. These guard the shape of the table: the
+            // title leans back onto the upper fuselage, starts forward of the registration,
+            // and a real title-sized cap (not the old 1.4 m board).
+            foreach (var spec in AircraftCatalogue.All)
+            {
+                var layout = AircraftIdentityMarkings.For(spec.Type);
+                Assert.That(layout.OperatorTiltDegrees, Is.InRange(20f, 50f), $"{spec.Name}: title lies on the upper skin");
+                Assert.That(layout.OperatorZ, Is.GreaterThan(layout.RegistrationZ), $"{spec.Name}: title forward, registration aft");
+                Assert.That(layout.OperatorZ - layout.TitleMaxLengthMetres, Is.GreaterThan(layout.RegistrationZ),
+                    $"{spec.Name}: a full-length title stops before the registration");
+                var cap = AircraftTitlePaint.LineHeightMetres(layout.OperatorCharacterSize) * 0.716f;
+                var widebody = spec.WingspanMetres >= 45.0;
+                Assert.That(cap, Is.InRange(widebody ? 0.8f : 0.25f, widebody ? 1.3f : 0.8f), $"{spec.Name}: cap height {cap:0.00} m");
+                Assert.That(layout.RegistrationCharacterSize, Is.LessThan(layout.OperatorCharacterSize));
             }
         }
 

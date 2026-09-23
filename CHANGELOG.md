@@ -26,6 +26,10 @@
   airside wall — 44 m clear even of a fully extended aerobridge — so nothing in the real data
   passes under the building.
 
+- **Enable Unity Animation module for boarding walk clips.** ADR 0114 samples
+  `AnimationClip`s; the built-in package was missing from `Packages/manifest.json`,
+  so Mac batch builds failed with CS1069.
+
 - **People board and deplane; turboprops use their own airstairs; stair trucks for jets on
   stands without a bridge (ADR 0114).**
   - Nine CC0 Quaternius characters walk between the terminal and the aircraft.

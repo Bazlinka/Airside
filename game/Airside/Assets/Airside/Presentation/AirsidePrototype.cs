@@ -594,6 +594,7 @@ namespace Airside.Presentation
             AdvancePresentationClock();
             UpdateAircraftVisual();
             UpdateAerobridges();
+            UpdateBoardingPresentation();
             UpdateLiveTraffic();
             UpdateSkyTraffic();
             UpdateWindsock();
@@ -1973,7 +1974,17 @@ namespace Airside.Presentation
                 var child = parts[i].Transform;
                 if (child == null)
                     continue;
-                if (parts[i].Kind == CabinDoorKind.Cabin)
+                if (parts[i].Kind == CabinDoorKind.Airstair)
+                {
+                    // Saab / Dash 8 / ATR airstair door (ADR 0114): hinged at the sill, it folds
+                    // down and out until its steps rest on the apron.
+                    var euler = child.localEulerAngles;
+                    var current = euler.z > 180f ? euler.z - 360f : euler.z;
+                    var target = Mathf.Lerp(0f, parts[i].OpenDegrees, doorBias);
+                    euler.z = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 55f);
+                    child.localEulerAngles = euler;
+                }
+                else if (parts[i].Kind == CabinDoorKind.Cabin)
                 {
                     var euler = child.localEulerAngles;
                     var current = euler.y > 180f ? euler.y - 360f : euler.y;
@@ -9271,6 +9282,7 @@ namespace Airside.Presentation
                 NestLandingGearParts(root);
                 RebakeWheelPivots(root);
                 NestCabinDoorParts(root);
+                ConvertToAirstairDoor(root);
                 NestFlapParts(root);
                 NestWingMountedParts(root);
                 EnsureAircraftLod(root);
@@ -9347,6 +9359,7 @@ namespace Airside.Presentation
                 NestLandingGearParts(root);
                 RebakeWheelPivots(root);
                 NestCabinDoorParts(root);
+                ConvertToAirstairDoor(root);
                 NestFlapParts(root);
                 NestWingMountedParts(root);
                 EnsureAircraftLod(root);
@@ -9512,6 +9525,7 @@ namespace Airside.Presentation
                 // them in place — the landing-gear mirror of RebakePropellerPivots.
                 RebakeWheelPivots(root);
                 NestCabinDoorParts(root);
+                ConvertToAirstairDoor(root);
                 NestFlapParts(root);
                 NestWingMountedParts(root);
                 if (finalAtr42)
@@ -9792,6 +9806,7 @@ namespace Airside.Presentation
             "rim_left" => "Rim L",
             "rim_right" => "Rim R",
             "door_fwd" => "CabinDoor",
+            "door_left_1" => "CabinDoor",
             "door_outline_fwd" => "Cabin door frame",
             "cargo_door_outline" => "Cargo door frame",
             "cargo_door" => "Cargo door",
@@ -11195,17 +11210,20 @@ namespace Airside.Presentation
             }
         }
 
-        private enum CabinDoorKind { Cabin, Cargo }
+        private enum CabinDoorKind { Cabin, Cargo, Airstair }
 
         private readonly struct CabinDoorPart
         {
             public readonly Transform Transform;
             public readonly CabinDoorKind Kind;
+            /// <summary>Airstair only: signed fold about the fuselage axis that puts the steps on the ground.</summary>
+            public readonly float OpenDegrees;
 
-            public CabinDoorPart(Transform transform, CabinDoorKind kind)
+            public CabinDoorPart(Transform transform, CabinDoorKind kind, float openDegrees = 0f)
             {
                 Transform = transform;
                 Kind = kind;
+                OpenDegrees = openDegrees;
             }
         }
 
@@ -11372,7 +11390,12 @@ namespace Airside.Presentation
 
                 // -- cabin/cargo doors (UpdateCabinDoor) --
                 if (childName.StartsWith("CabinDoor", StringComparison.Ordinal))
-                    cabinDoors.Add(new CabinDoorPart(child, CabinDoorKind.Cabin));
+                {
+                    var airstair = child.GetComponent<AirstairDoor>();
+                    cabinDoors.Add(airstair != null
+                        ? new CabinDoorPart(child, CabinDoorKind.Airstair, airstair.OpenDegrees)
+                        : new CabinDoorPart(child, CabinDoorKind.Cabin));
+                }
                 else if (childName.StartsWith("Cargo door", StringComparison.OrdinalIgnoreCase)
                          || childName.Equals("CargoDoor", StringComparison.OrdinalIgnoreCase))
                     cabinDoors.Add(new CabinDoorPart(child, CabinDoorKind.Cargo));

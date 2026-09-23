@@ -1,5 +1,27 @@
 ## Where to resume — session handoff
 
+- **2026-09-23 Claude — boarding people, turboprop airstairs, stair trucks (branch `claude/stoic-curie-girf9n`, ADR 0114).**
+  - **People:** nine CC0 Quaternius characters (seven passengers, two ramp crew, crew
+    not yet placed) in `Resources/Airside/Characters`. Re-export them with
+    `scripts/import-quaternius-people.py`. Their walk is sampled on the simulation
+    clock.
+  - **When:** `Simulation/BoardingFlow.cs` (pure) handles deplaning after the door
+    opens, and boarding so the last passenger is aboard before the door shuts. Player
+    boarding fills the Boarding prep stage. Bridged gates have no walkers.
+  - **Stairs:**
+    - The Saab, Q400 and ATR forward door is now a fold-down airstair.
+    - Jets on stands without a bridge (20R, 22R, 27–29) get a stair truck, which
+      drives on after the engines stop and leaves before the beacon.
+    - Widebody L1 doors now animate.
+  - **Evidence:** `scripts/test-domain.sh` shows 750/750 passing, including
+    `BoardingFlowTests`.
+  - **NEXT:**
+    - Unity compile (new `AirsidePrototype.Boarding.cs`).
+    - Check the FBX import (Generic rig, clips) in play.
+    - Watch a Rex Saab board: the airstair reaches the ground and people walk up it.
+    - Watch a jet at gate 27 get its stair truck.
+    - Then: ramp crew, remote-stand buses, pushback tugs (ADR 0115).
+
 - **2026-09-23 Claude — Terminal 1 aerobridges (same branch `claude/stoic-curie-girf9n`, ADR 0113).**
   - **Where:** 17 T1 gates have a moving bridge. Sites are derived from the OSM gate
     stops and terminal footprint (`Simulation/AdelaideAerobridges.cs`).
@@ -12,7 +34,7 @@
   - **Evidence:** `scripts/test-domain.sh` shows 744/744 passing, including 7
     `AerobridgeTests`; the door table `--check` passes.
   - **Tugs:** planned only, in `docs/architecture/PUSHBACK_TUGS_PLAN.md` (becomes
-    ADR 0114).
+    ADR 0115).
   - **NEXT:**
     - Unity compile (new Presentation partial).
     - Watch a Qantas jet arrive at gate 21: the bridge swings out after the beacon goes

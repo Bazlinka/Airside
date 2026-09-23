@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Starter turboprop livery polish (ADR 0107).** ATR 42, Dash 8 Q400 and Saab
+  340B now carry fitted, operator-coloured fuselage bands; the repeating
+  traffic decal no longer barcodes those aircraft. Runtime models and Hangar
+  thumbnails were refreshed without changing simulation or saves.
+
 - **AIR-015 A330-900 appearance pass (ADR 0106).** Replaced the scaled-A350
   pointed nose and flight deck with a rounder fuselage and four fitted panes;
   added a skin-conforming operator-coloured ribbon, removed the repeating

@@ -420,6 +420,10 @@ def final_meshes():
             x, prop_y, 5.88, 0.12, 0.12, axis="z", segments=28
         )
 
+    # Painted sashes follow the curved skin; the inherited bar sat inside it.
+    meshes["livery_stripe"] = skin.livery_ribbon(_skin, 7.0, -8.5, -1, half_width=0.16, rise_degrees=12.0)
+    meshes["livery_stripe_lower"] = skin.livery_ribbon(_skin, 7.0, -8.5, 1, half_width=0.16, rise_degrees=12.0)
+
     pre_envelope_fuselage = meshes["fuselage"][0].copy()
     # Enforce tyre contact and exact envelope after edits.
     all_verts = np.concatenate([v for v, _ in meshes.values()])

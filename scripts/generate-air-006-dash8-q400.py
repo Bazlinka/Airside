@@ -750,8 +750,8 @@ def q400_meshes():
     meshes["cockpit_glare"] = pane(14.05, 90.0, 0.50, 0.10, 0.010, radius=0.04, rings=1)
     meshes["cockpit_sill"] = pane(14.12, 90.0, 0.57, 0.30, 0.006, radius=0.10, rings=2)
 
-    meshes["livery_stripe"] = box(-1.355, 2.05, 0.60, 0.035, 0.14, 23.5)
-    meshes["livery_stripe_lower"] = box(1.355, 2.05, 0.60, 0.035, 0.14, 23.5)
+    meshes["livery_stripe"] = skin.livery_ribbon(_skin, 11.6, -12.5, -1, half_width=0.20, rise_degrees=14.0, samples=80)
+    meshes["livery_stripe_lower"] = skin.livery_ribbon(_skin, 11.6, -12.5, 1, half_width=0.20, rise_degrees=14.0, samples=80)
     meshes["livery_tail_sweep"] = lofted_aerofoil(
         [(3.80, 0.0, -11.80, 1.80, 0.06), (7.40, 0.0, -13.60, 0.90, 0.04)],
         chord_points=8,

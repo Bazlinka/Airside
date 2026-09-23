@@ -1,5 +1,13 @@
 ## Where to resume — session handoff
 
+- **2026-09-23 Cursor — 737 fitted livery + title depth (ADR 0109, branch
+  `feature/737-fitted-livery`).** Virgin/Qantas 737s kept the barcode decal; Hangar
+  previews for A320 looked fine. 737-8/800 now use `livery_ribbon` and `hasFittedLivery`.
+  Fuselage TextMesh titles use URP Unlit cutout with ZWrite so they no longer show through
+  wings. Kits + StreamingAssets + Hangar thumbs regenerated.
+  - **NEXT:** merge PR; rebuild Mac app; play overview of Virgin/Qantas gates and a follow
+    camera past a titled fuselage/wing. Then E190/A220/A321neo if barcodes remain annoying.
+
 - **2026-09-23 Cursor — full-res SSAO restored (ADR 0101).** Half-res ambient occlusion
   made the packaged Mac look flat; Options → Frame rate does not affect that. SSAO is full
   resolution again. Mac still paces 60 fps focused / ~30 unfocused, skips day landing-lamp

@@ -477,8 +477,13 @@ def narrowbody_737_8_meshes() -> dict[str, tuple[np.ndarray, np.ndarray]]:
         segments=40,
     )
 
-    meshes["livery_stripe"] = box(0.0, 4.05, 1.50, 3.78, 0.11, 28.5)
-    meshes["livery_stripe_lower"] = box(0.0, 3.70, 1.60, 3.70, 0.055, 27.8)
+    # Operator sash follows the tube (same skin-conforming ribbon as A320/A330). The
+    # previous buried boxes vanished under metre-UV skin and the generic traffic decal
+    # then barcoded the fuselage at overview distance.
+    meshes["livery_stripe"] = skin.livery_ribbon(
+        _skin, 13.0, -14.5, -1, half_width=0.28, rise_degrees=22.0)
+    meshes["livery_stripe_lower"] = skin.livery_ribbon(
+        _skin, 13.0, -14.5, 1, half_width=0.28, rise_degrees=22.0)
     meshes["livery_tail_sweep"] = lofted_aerofoil(
         [(6.20, 0.0, -13.20, 2.40, 0.08), (11.20, 0.0, -15.60, 1.10, 0.05)],
         chord_points=10,

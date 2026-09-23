@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **737 fitted livery + titles no longer show through wings (ADR 0109).** 737-8 and
+  737-800 get the same skin-conforming operator sash as the A320; the barcode traffic
+  decal is off for both. Fuselage wordmarks use a depth-tested cutout material so they
+  no longer read through the wing from follow camera.
+
 - **Full-res SSAO again (ADR 0101).** Half-resolution ambient occlusion made the field look
   flat on Retina. Mac still paces to 60 fps focused / ~30 unfocused, skips day landing-lamp
   shadows, and keeps the light/tint CPU skips — those do not soften the image.

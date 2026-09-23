@@ -38,4 +38,10 @@ for name in ("livery_stripe", "livery_stripe_lower"):
     vertices, _ = a339[name]
     assert vertices.shape[0] >= 300 and np.ptp(vertices[:, 2]) > 49.0
 
+# 737-8 / 737-800 inherit the skin-conforming sash (ADR 0109); no buried boxes.
+b738 = fleet.boeing_737_800_meshes()
+for name in ("livery_stripe", "livery_stripe_lower"):
+    vertices, _ = b738[name]
+    assert vertices.shape[0] >= 128 and np.ptp(vertices[:, 2]) > 25.0
+
 print("PASS: six Adelaide fleet models have exact envelopes, valid geometry and family cues.")

@@ -162,6 +162,22 @@ namespace Airside.Tests
             StatsWorkspacePainter.Paint(draw, model, layout);
             Assert.That(draw.Commands.Any(c => c.ActionId == HudAction.UpgradeBase && c.Enabled), Is.True);
         }
+
+        [Test]
+        public void Stats_PainterShowsFourRealBaseStagesAndOneNextMilestone()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            var model = new StatsWorkspaceModel();
+            model.Rebuild(ops, clock.Now);
+            var draw = new HudDrawList();
+            StatsWorkspacePainter.Paint(draw, model,
+                StatsWorkspaceLayout.Create(HudShell.WorkspaceSurface(1440f, 900f)));
+
+            foreach (var stage in new[] { "STARTER", "REGIONAL", "JET-GATE", "INTERNATIONAL" })
+                Assert.That(draw.Commands.Any(c => c.Text == stage), Is.True, stage);
+            Assert.That(draw.Commands.Count(c => c.Text == "NEXT MILESTONE"), Is.EqualTo(1));
+            Assert.That(draw.Commands.Count(c => c.Text == "RECENT ACHIEVEMENTS"), Is.EqualTo(1));
+        }
         [Test]
         public void BaseCapability_RoadmapTracksExistingOperatingTiers()
         {

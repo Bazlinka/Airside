@@ -22,6 +22,18 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Shell_ObjectiveReadsAsOneTodaysPriority()
+        {
+            var draw = new HudDrawList();
+            HudShellPainter.PaintObjective(draw, HudShell.Objective(1440f, 900f, false),
+                new CareerObjective("Plan Kingscote", "0 of 2", 0f, "Choose an aircraft",
+                    StatusSeverity.Attention), "CHAPTER 1 · ISLAND HOPPER");
+
+            Assert.That(draw.Commands.Count(c => c.Text == "TODAY'S PRIORITY"), Is.EqualTo(1));
+            Assert.That(draw.Commands.Any(c => c.Text == "Plan Kingscote" && c.FontSize >= 17f), Is.True);
+        }
+
+        [Test]
         public void Shell_IsIdenticalOnEveryPage()
         {
             foreach (var (width, height) in HudTestAirline.Viewports)

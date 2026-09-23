@@ -73,6 +73,7 @@ namespace Airside.Presentation
         private readonly List<OperationsEventLine> _eventHistory = new();
         private RouteMapFilter _mapFilter = RouteMapFilter.Available;
         private int _boardScrollRow;
+        private bool _operationsAllMovements;
         private bool _boardScrollSnapToDay = true;
         /// <summary>
         /// When non-negative, the board is still auto-following NOW at this scroll row.
@@ -80,6 +81,7 @@ namespace Airside.Presentation
         /// </summary>
         private int _boardScrollFollowRow = -1;
         private int _rosterScrollRow;
+        private bool _fleetShowOtherOperators;
         /// <summary>The player aircraft the flight planner is planning.</summary>
         private FleetAircraft _mapAircraft;
         private string _selectedAircraftId;
@@ -189,7 +191,8 @@ namespace Airside.Presentation
                 ShowToast("First trip complete. Keep your aircraft flying — plan the next one any time.");
             _lastGuideStep = _guideStep;
             var showGuide = !AirlineModalOpen && _guideStep != GuideStep.Complete;
-            var placement = AirlineHudLayout.Create(layout, showGuide);
+            var placement = AirlineHudLayout.Create(layout, showGuide,
+                workspaceOpen: _activeWorkspace != HudWorkspace.None);
             RememberHudPanels(layout, placement, showGuide);
 
             var label = _hudLabel ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true });
@@ -535,12 +538,22 @@ namespace Airside.Presentation
 
         private void DrawGuide(Rect rect, GUIStyle panel, GUIStyle label, GUIStyle small)
         {
+            if (rect.width < 8f || rect.height < 8f)
+                return;
             var (heading, hint) = GuideText(_guideStep, _guideAircraft);
-            GUI.Box(rect, GUIContent.none, panel);
-            AirsideTheme.DrawPanelFrame(rect, AirsideTheme.SafetyYellow);
-            var bold = Styled(label, "bold", s => new GUIStyle(s) { fontStyle = FontStyle.Bold });
-            GUI.Label(new Rect(rect.x + 14f, rect.y + 10f, rect.width - 28f, 22f), heading, bold);
-            GUI.Label(new Rect(rect.x + 14f, rect.y + 34f, rect.width - 28f, rect.height - 40f), hint, small);
+            DrawSolid(rect, new Color(AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g,
+                AirsideTheme.RunwayInk.b, 0.90f));
+            AirsideTheme.DrawPanelFrame(rect, AirsideTheme.OpenSky);
+            DrawSolid(new Rect(rect.x, rect.y, 4f, rect.height), AirsideTheme.SafetyYellow);
+            var caption = Styled(small, "priority-guide-caption", s => AirsideTheme.TextStyle(
+                new GUIStyle(s) { fontSize = 11, fontStyle = FontStyle.Bold }, AirsideTheme.SafetyYellow));
+            var bold = Styled(label, "priority-guide-heading", s => new GUIStyle(s)
+                { fontSize = 17, fontStyle = FontStyle.Bold, wordWrap = true });
+            GUI.Label(new Rect(rect.x + 18f, rect.y + 8f, rect.width - 32f, 16f),
+                "TODAY'S PRIORITY", caption);
+            GUI.Label(new Rect(rect.x + 18f, rect.y + 27f, rect.width - 32f, 28f), heading, bold);
+            GUI.Label(new Rect(rect.x + 18f, rect.y + 59f, rect.width - 32f,
+                Mathf.Max(0f, rect.height - 66f)), hint, small);
         }
 
         /// <summary>
@@ -732,20 +745,20 @@ namespace Airside.Presentation
             var dest = aircraft?.CurrentDestination?.Name ?? aircraft?.Scheduled?.Destination.Name ?? "its destination";
             return step switch
             {
-                GuideStep.PlanFirstFlight => ("1 · Plan your first flight",
-                    $"Click Plan flight for {reg}, pick a green destination and when it leaves. Kingscote is a short hop."),
-                GuideStep.WaitForDeparture => ("2 · Getting ready",
-                    $"{reg} is fuelling, catering and boarding, then leaves at {ClockText(aircraft.Scheduled.Value.DepartAt)} Adelaide time. The airport runs in real time — click the aircraft on the field, or press Follow (F)."),
-                GuideStep.Departing => ("3 · Departing",
-                    $"{reg} is heading out. Click it on the field (or press Follow) to ride along through the taxi and takeoff."),
-                GuideStep.Away => ("4 · Away to " + dest,
-                    "Flights take real time. Track it on the route map (Tab), or close the game — the airport keeps running and tells you what happened."),
-                GuideStep.Landing => ("5 · Coming home",
-                    $"The tower is bringing {reg} in to land. Click the aircraft on final (or Follow) to watch the touchdown."),
-                GuideStep.ChooseStand => ("6 · Parking",
-                    $"{reg} has landed. Pick a stand on the card (Best is the shortest taxi), or wait and the tower will park it."),
-                GuideStep.TaxiingIn => ("6 · Taxiing in",
-                    $"{reg} is taxiing to {StandNames.Display(aircraft.Stand)}. That completes your first trip."),
+                GuideStep.PlanFirstFlight => ($"Plan {reg}'s first flight",
+                    "Open Map, choose a reachable destination and departure time. Kingscote is a short first hop."),
+                GuideStep.WaitForDeparture => ($"Track {reg}'s departure",
+                    $"Fuel, catering, bags and boarding finish before {ClockText(aircraft.Scheduled.Value.DepartAt)}. Click the aircraft or press Follow (F)."),
+                GuideStep.Departing => ($"Follow {reg}",
+                    "Click the aircraft on the field or press Follow (F) to watch taxi and takeoff."),
+                GuideStep.Away => ($"Watch {reg} return",
+                    $"En route to {dest}. Track it on Map (Tab); the airport also continues while the game is closed."),
+                GuideStep.Landing => ($"Watch {reg} land",
+                    "Click the aircraft on final or press Follow (F) to watch the touchdown."),
+                GuideStep.ChooseStand => ($"Choose {reg}'s stand",
+                    "Pick a stand on the aircraft card. Best is the shortest taxi; the tower parks it after 90 seconds."),
+                GuideStep.TaxiingIn => ($"Follow {reg} to stand",
+                    $"Taxiing to {StandNames.Display(aircraft.Stand)}. Parking completes your first trip."),
                 _ => (string.Empty, string.Empty)
             };
         }
@@ -1375,6 +1388,18 @@ namespace Airside.Presentation
                 TryFollowFleetAircraft(chosen.Registration);
             }
             SetPlanningAircraft(chosen, force: true);
+            if (!_mapSelection.HasValue && chosen != null)
+            {
+                // Start the desk with one real, operable dossier instead of an empty
+                // instruction pane. The player can still clear or choose any map point.
+                foreach (var destination in _operations.MapDestinations())
+                {
+                    if (!_operations.CanOperate(chosen, destination))
+                        continue;
+                    _mapSelection = destination;
+                    break;
+                }
+            }
             PlayUiClick();
         }
 
@@ -1459,7 +1484,7 @@ namespace Airside.Presentation
         private readonly List<Rect> _mapControlRects = new();
         private readonly List<HudBox> _mapFlightLabelBoxes = new();
         private string _mapTrackId;
-        private bool _mapRivalsVisible = true;
+        private bool _mapRivalsVisible;
         private static Texture2D _planeIcon;
 
         /// <summary>Where each off-map flight is right now, to the sub-second, along its great circle.</summary>
@@ -2073,6 +2098,17 @@ namespace Airside.Presentation
                 _flightsShowArrivals ? OperationsBoardTab.Arrivals : OperationsBoardTab.Departures,
                 _selectedAircraftId, _eventHistory, PresentationWeatherSummary);
 
+            // Opening Operations should land on the one live decision, not an empty detail
+            // pane. Selection is presentation state only; all commands still pass through
+            // AirlineOperations and the complete movement model remains untouched.
+            if (!_operationsWorkspace.HasSelection && _operationsWorkspace.Attention.Count > 0)
+            {
+                _selectedAircraftId = _operationsWorkspace.Attention[0].Registration;
+                _operationsWorkspace.Rebuild(_operations, _clock.Now,
+                    _flightsShowArrivals ? OperationsBoardTab.Arrivals : OperationsBoardTab.Departures,
+                    _selectedAircraftId, _eventHistory, PresentationWeatherSummary);
+            }
+
             var layout = OperationsWorkspaceLayout.Create(surface, _operationsWorkspace.Attention.Count);
             var nowRow = _operationsWorkspace.FirstActiveRowIndex;
             if (_boardScrollSnapToDay)
@@ -2090,12 +2126,13 @@ namespace Airside.Presentation
             }
 
             var beforeScroll = _boardScrollRow;
-            _boardScrollRow = ScrollRows(_boardScrollRow, layout.Board,
-                _operationsWorkspace.Rows.Count - layout.VisibleRows);
+            if (_operationsAllMovements)
+                _boardScrollRow = ScrollRows(_boardScrollRow, layout.Board,
+                    _operationsWorkspace.Rows.Count - layout.VisibleRows);
             if (_boardScrollRow != beforeScroll)
                 _boardScrollFollowRow = -1;
             OperationsWorkspacePainter.Paint(_workspaceDrawList, _operationsWorkspace, layout,
-                _selectedAircraftId, _boardScrollRow);
+                _selectedAircraftId, _boardScrollRow, _operationsAllMovements);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
         }
 
@@ -2150,12 +2187,18 @@ namespace Airside.Presentation
         {
             var surface = Box(rect);
             _fleetWorkspace.Rebuild(_operations, _clock.Now, _selectedAircraftId);
+            if (!_fleetWorkspace.HasSelection && _fleetWorkspace.Mine.Count > 0)
+            {
+                _selectedAircraftId = _fleetWorkspace.Mine[0].Registration;
+                _fleetWorkspace.Rebuild(_operations, _clock.Now, _selectedAircraftId);
+            }
             var layout = FleetWorkspaceLayout.Create(surface, _fleetWorkspace.Market.Count);
-            var rows = _fleetWorkspace.Mine.Count + _fleetWorkspace.Others.Count
-                       + (_fleetWorkspace.Others.Count > 0 ? 1 : 0);
+            var rows = _fleetWorkspace.Mine.Count + (_fleetShowOtherOperators
+                ? _fleetWorkspace.Others.Count + (_fleetWorkspace.Others.Count > 0 ? 1 : 0)
+                : 0);
             _rosterScrollRow = ScrollRows(_rosterScrollRow, layout.Roster, rows - layout.VisibleRosterRows);
             FleetWorkspacePainter.Paint(_workspaceDrawList, _fleetWorkspace, layout, _selectedAircraftId,
-                _rosterScrollRow);
+                _rosterScrollRow, _fleetShowOtherOperators);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
         }
 
@@ -2241,6 +2284,18 @@ namespace Airside.Presentation
                 case HudAction.TabArrivals:
                     _flightsShowArrivals = true;
                     _boardScrollSnapToDay = true;
+                    PlayUiClick();
+                    return;
+                case HudAction.ToggleMovements:
+                    _operationsAllMovements = !_operationsAllMovements;
+                    _boardScrollRow = 0;
+                    _boardScrollFollowRow = -1;
+                    _boardScrollSnapToDay = _operationsAllMovements;
+                    PlayUiClick();
+                    return;
+                case HudAction.ToggleOtherOperators:
+                    _fleetShowOtherOperators = !_fleetShowOtherOperators;
+                    _rosterScrollRow = 0;
                     PlayUiClick();
                     return;
                 case HudAction.FilterAvailable:
@@ -2758,6 +2813,8 @@ namespace Airside.Presentation
 
         private void DrawToast(Rect rect, GUIStyle label)
         {
+            if (rect.width <= 0f || rect.height <= 0f)
+                return;
             var now = Time.unscaledTime;
             _toasts.Visible(now, _visibleToasts);
             if (_visibleToasts.Count == 0)

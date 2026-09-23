@@ -8,6 +8,19 @@
   history from frozen fleet events; departure TIME no longer shows an airborne ETA as "est";
   taxi-in shows touchdown plus stand ETA; EVENT HISTORY shows five airport lines.
 
+- **Desktop HUD hierarchy pass (ADR 0104).** Operations now leads with one Today's Priority,
+  five immediate apron movements, an optional full movement history and a selected-aircraft
+  turnaround timeline; Route Map is a
+  quieter planning desk with one live destination dossier and plan action; Fleet combines a
+  compact roster, selected operational detail and three gated market choices; Career centres
+  the real four-stage base roadmap, one next milestone and recent achievements. Runway Ink
+  remains translucent over the airport. Workspace toast feedback sits beside the desk, while
+  tiny windows yield to the objective. Simulation, commands, saves and real data are unchanged.
+  The first-flight guide shares the priority treatment; Map starts with rival routes hidden
+  (one-click reveal), and Fleet starts with other operators folded away (one-click reveal).
+  Career's secondary operation and local activity summary is quieter so the real roadmap
+  and next milestone stay visually primary.
+
 - **Daily Service Pattern (ADR 0102).** Each campaign chapter now has a local-day "fly this
   today" target on the objective card (`TODAY · Kingscote 0/2`, and so on). Completing it
   pays a once-per-Adelaide-day bonus via existing settlement keys; incomplete days just miss

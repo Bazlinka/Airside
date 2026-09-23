@@ -58,6 +58,9 @@ namespace Airside.Tests
             var (clock, ops, plane) = HudTestAirline.Create();
             clock.Set(new SimulationTime(60));
             ops.Update();
+            var other = new Airline("OTH", "Other Air", "#39708A", isPlayer: false);
+            ops.AddAirline(other);
+            HudTestAirline.Park(ops, other, "VH-OTH", AirlineOperations.AdelaideRegionalBays[1]);
 
             var surface = HudShell.WorkspaceSurface(1440f, 900f);
             var list = new HudDrawList();
@@ -74,6 +77,8 @@ namespace Airside.Tests
             }
 
             Assert.That(list.Commands.Any(c => c.ActionId == HudAction.Select("VH-PAX")), Is.True);
+            Assert.That(list.Commands.Any(c => c.ActionId == HudAction.ToggleOtherOperators), Is.True,
+                "The compact roster must keep other operators accessible");
             Assert.That(list.Commands.Any(c => c.ActionId == HudAction.Buy(AircraftType.Atr42.Id)), Is.True);
             Assert.That(list.Commands.Any(c => c.ActionId == HudAction.StartCheck), Is.True,
                 "a parked idle aircraft offers a check (ADR 0085)");
@@ -81,6 +86,27 @@ namespace Airside.Tests
                 Is.EqualTo("VH-PAX"));
             Assert.That(HudAction.Payload("nonsense", HudAction.SelectPrefix), Is.Empty);
             _ = plane;
+        }
+
+        [Test]
+        public void FleetRoster_OpensOnOwnAircraft_AndCanRevealOtherOperators()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            var other = new Airline("OTH", "Other Air", "#39708A", isPlayer: false);
+            ops.AddAirline(other);
+            HudTestAirline.Park(ops, other, "VH-OTH", AirlineOperations.AdelaideRegionalBays[1]);
+            var model = new FleetWorkspaceModel();
+            model.Rebuild(ops, clock.Now, "VH-PAX");
+            var layout = FleetWorkspaceLayout.Create(HudShell.WorkspaceSurface(1280f, 800f), model.Market.Count);
+            var list = new HudDrawList();
+
+            FleetWorkspacePainter.Paint(list, model, layout, "VH-PAX", 0);
+            Assert.That(list.Commands.Any(c => c.ActionId == HudAction.Select("VH-PAX")), Is.True);
+            Assert.That(list.Commands.Any(c => c.ActionId == HudAction.Select("VH-OTH")), Is.False);
+            Assert.That(list.Commands.Any(c => c.ActionId == HudAction.ToggleOtherOperators), Is.True);
+
+            FleetWorkspacePainter.Paint(list, model, layout, "VH-PAX", 0, showOtherOperators: true);
+            Assert.That(list.Commands.Any(c => c.ActionId == HudAction.Select("VH-OTH")), Is.True);
         }
 
         private static void AssertInside(HudDrawList list, HudBox surface, string label)

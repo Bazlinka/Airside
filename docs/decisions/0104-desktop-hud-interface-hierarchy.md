@@ -1,0 +1,83 @@
+# 0104 — Desktop HUD interface hierarchy
+
+Date: 22 September 2026. Bailey approved a presentation-only redesign against
+four supplied interface references. The existing workspaces contained the right
+live information and controls, but gave too many rows and sections equal visual
+weight.
+
+## Decision
+
+Keep the current IMGUI/shared-draw-list architecture and restructure its visual
+hierarchy rather than replacing it or changing game state.
+
+- The persistent objective becomes **Today's Priority**: one dominant live action,
+  a safety-yellow objective rail and the existing campaign/day progress beneath it.
+  The first-flight guide uses the same treatment while onboarding is active.
+- Operations becomes **Live Apron**. It opens on the current player commitment,
+  ranks that flight and real exceptions before airport context, shows at most five
+  immediate movements, and gives the selected aircraft a horizontal
+  Fuel → Catering → Baggage → Boarding timeline. An **All Movements** control keeps
+  the full six-hour arrivals/departures history and scroll interaction from ADR
+  0103 accessible inside the same workspace.
+- Route Map becomes a deliberate planning desk: the map owns most of the surface,
+  opens on a real operable destination, draws only live/career route context, and
+  places one destination dossier and one primary plan/update action at right.
+  Rival route lines begin hidden but remain available through the existing toggle.
+- Fleet uses a compact roster beside one selected-aircraft operational detail. The
+  market exposes exactly three real, career-gated offers at a time. Other operators
+  begin folded away and remain accessible through a roster toggle.
+- Career leads with the four real base capability stages (Starter, Regional,
+  Jet-gate, International), one next live milestone, and a restrained strip of
+  reached achievements. Secondary operation metrics lose their card furniture;
+  the local-activity peek is limited to three rows without changing its model data.
+- Runway Ink surfaces remain translucent so the miniature airport and moving
+  aircraft stay visibly behind every workspace.
+- Toast feedback moves to the strip beside an open workspace, leaving its title
+  readable. The toast hides only when a tiny window offers no clear position.
+
+Cloud white carries primary text, coastal blue selection/actions, eucalyptus
+green ready/completed state, safety yellow the objective and attention state, and
+muted red delays/cancellation only. All labels remain Unity-rendered text and all
+identities remain fictional game identities.
+
+## Affected systems
+
+`HudDraw`, `HudShell`, `OperationsWorkspace`, `RouteMapWorkspace`,
+`FleetWorkspace`, `StatsWorkspace`, and the presentation-only workspace opening
+defaults in `AirsidePrototype`. Layout and painter tests cover the hierarchy and
+the existing constrained viewport matrix.
+
+## Migration impact
+
+None. No simulation rule, command, timing, economy value, persisted field, save
+version, asset, data source, or external identity changes. Selecting the first
+live priority/aircraft/destination on workspace open is transient presentation
+state; commands still route through `AirlineOperations` and may be refused by the
+same rules as before.
+
+## Guardrails
+
+- Never manufacture a metric, chart, route, aircraft state or destination fact
+  for visual fullness.
+- Do not turn Operations back into a dense full-airport spreadsheet; the complete
+  live movement collection remains available to the model while the apron lens
+  shows only the immediate decision and context.
+- Do not add raster text, real-world logos, real airline branding or decorative
+  corporate dashboard furniture.
+- Preserve current controls, responsive layout contracts and the visible 3D
+  airport beneath the shell.
+
+## Evidence
+
+- HUD plus presentation layout EditMode suite: 165/165, including the 320×240
+  toast/objective constraint, open-workspace toast placement and complete-board
+  access.
+- Packaged Mac build captured and inspected at 1225×768 and 800×600 for
+  Operations, Map, Fleet and Career (`work/hud-*-redesign*.png`).
+- Complete Unity EditMode after rebasing over the new stand-choice work: 988/996.
+  The eight failures are the exact pre-existing
+  main apron-density/schedule set already recorded in `GAME.md`
+  (RegionalCarriers ×3, AdelaidePavement, AirlineOperations, AirlineSoak,
+  AirportCurfew and GroundSeparation); no HUD or constrained-layout test failed.
+- Clean packaged Mac build stamped `83f283fa`; final 1225×768 and 800×600
+  workspace screenshots inspected under `work/hud-*-final*.png`.

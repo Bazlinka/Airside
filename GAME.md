@@ -1,5 +1,28 @@
 ## Where to resume — session handoff
 
+- **2026-09-23 Codex — desktop HUD hierarchy pass (branch
+  `codex/hud-interface-redesign`, ADR 0104).** Presentation-only restructure of Operations,
+  Route Map, Fleet and Career. Runway Ink surfaces are more translucent; the persistent
+  objective is now `TODAY'S PRIORITY`; Operations opens on the player commitment and shows
+  five immediate movements plus a Fuel → Catering → Baggage → Boarding timeline. Its
+  `ALL MOVEMENTS` switch keeps main's six-hour movement history and scrolling accessible;
+  Map opens
+  with one real operable destination dossier and rival route lines hidden by default;
+  Fleet opens with an aircraft selected, other operators folded away, and a
+  three-option gated market; Career leads with a four-stage capability roadmap, one next
+  milestone and a quiet achievements strip; its operation and local-activity summaries are
+  subordinate. No simulation, command, economy, save or data
+  source changed. The first-flight guide now shares Today's Priority styling.
+  - **Evidence:** HUD plus presentation layout EditMode **165/165**, including 320×240
+    and a folded/revealed other-operator roster regression; clean packaged Mac build
+    `83f283fa` inspected at 1225×768 and all four workspaces at 800×600 after the final
+    changes (`work/hud-*-final*.png`). Full EditMode **988/996**: exactly main's eight known
+    apron-density/schedule failures, no HUD failure. The tiny-window toast hides when it
+    cannot clear Today's Priority; with a workspace open, toast feedback sits beside it.
+  - **NEXT:** PR #385 is pushed and mergeable but remains open because the full Unity suite is
+    red on eight pre-existing simulation failures; Bailey decides whether to accept that
+    baseline exception for merge. Playtest the four workspaces and first-flight flow.
+
 - **2026-09-22 Cursor — stand choice + longer Arrivals/Departures (PR #378, ADR 0103).**
   Bailey: cannot choose a stand when flights land; Arrivals/Departures nowhere near long
   enough or accurate.

@@ -1,6 +1,6 @@
 ## Where to resume — session handoff
 
-- **2026-09-23 Codex — AIR-015 A330-900 appearance pass (branch
+- **2026-09-23 Codex — AIR-015 A330-900 appearance pass (PR #387, branch
   `codex/a330-appearance-pass`, stacked on AIR-011 PR #386; ADR 0106).** New
   rounder nose skin, four-pane unmasked flight deck, fitted operator-coloured
   ribbon and lower engine pylons replace the most visible scaled-A350 cues.
@@ -12,8 +12,10 @@
     (`work/a330-gate25-*.png`): clean operator ribbon, no A350 nose mask or
     repeating decal. Unity EditMode **988/996**, the same eight existing
     simulation failures as main and PR #386; no aircraft/presentation failure.
-  - **NEXT:** finish packaged validation, then push a separate A330 PR stacked
-    on #386. AIR-016 787-9 remains a scaled 787-10 and needs its own pass.
+  - **NEXT:** review/merge #386 first, then retarget/review #387 against main.
+    AIR-016 787-9 remains a scaled 787-10 and needs its own pass. The generic
+    fuselage decal still barcodes other aircraft in packaged shots; tackle
+    those types one by one, preserving their authored or fallback markings.
 
 - **2026-09-23 Codex — AIR-011 A320 appearance pass (branch
   `codex/aircraft-appearance-pass`, ADR 0105).** Dedicated rounded fuselage,

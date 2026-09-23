@@ -32,6 +32,47 @@ def metres_per_degree(surface: Surface, z: float, angle_deg: float) -> float:
     return float(np.linalg.norm(b - a))
 
 
+def livery_ribbon(
+    surface: Surface,
+    z_front: float,
+    z_aft: float,
+    side: int,
+    *,
+    half_width: float = 0.28,
+    rise_degrees: float = 20.0,
+    samples: int = 64,
+) -> tuple[np.ndarray, np.ndarray]:
+    """A thin painted sash following the actual fuselage rather than a buried box.
+
+    The band sits below the windows over the forward cabin and rises toward the
+    fin. It is geometry, not a copied airline graphic or a texture stretched by
+    the loader's per-part UVs. `side` is -1 for the left fuselage and +1 for right.
+    """
+    if side not in (-1, 1) or z_front <= z_aft or samples < 2:
+        raise ValueError("livery ribbon needs a side and ordered fuselage stations")
+    vertices = []
+    for z in np.linspace(z_front, z_aft, samples):
+        progress = (z_front - z) / (z_front - z_aft)
+        # Rise mainly aft of the wing, preserving a clear title/window belt.
+        rise = rise_degrees * max(0.0, (progress - 0.86) / 0.14) ** 1.4
+        centre = rise if side > 0 else 180.0 - rise
+        degrees = half_width / metres_per_degree(surface, float(z), centre)
+        for offset in (0.045, 0.030):
+            for angle in (centre - degrees, centre + degrees):
+                vertices.append(surface(float(z), angle, offset))
+    faces = []
+    for i in range(samples - 1):
+        a, b = i * 4, (i + 1) * 4
+        faces.extend((a, a + 1, b + 1, a, b + 1, b))
+        faces.extend((a + 2, b + 3, a + 3, a + 2, b + 2, b + 3))
+        faces.extend((a, b, b + 2, a, b + 2, a + 2))
+        faces.extend((a + 1, a + 3, b + 3, a + 1, b + 3, b + 1))
+    faces.extend((0, 2, 3, 0, 3, 1))
+    last = (samples - 1) * 4
+    faces.extend((last, last + 1, last + 3, last, last + 3, last + 2))
+    return _outward_fixed(np.asarray(vertices, np.float32), np.asarray(faces, np.uint16))
+
+
 def rounded_outline(half_u, half_v, radius, corner_segments=3, max_edge=0.12) -> np.ndarray:
     """Counter-clockwise rounded-rectangle outline in (u, v) metres."""
     r = max(1e-4, min(radius, half_u, half_v))

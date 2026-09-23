@@ -60,12 +60,14 @@ STATIONS = np.array(
         (8.15, 1.34, 1.27, 1.81),
         (8.85, 1.28, 1.18, 1.74),
         (9.55, 1.18, 1.05, 1.64),
-        (10.20, 1.04, 0.90, 1.50),
-        (10.80, 0.86, 0.72, 1.36),
-        (11.30, 0.64, 0.52, 1.24),
-        (11.70, 0.40, 0.32, 1.16),
-        (11.98, 0.20, 0.16, 1.11),
-        (HALF - 0.001, 0.05, 0.045, 1.09),
+        # All stations must advance toward the tip. The previous profile ran
+        # past 11.335 m and then jumped backward, pinching the visible nose.
+        (10.05, 1.12, 0.98, 1.56),
+        (10.50, 0.99, 0.84, 1.44),
+        (10.85, 0.78, 0.64, 1.32),
+        (11.10, 0.55, 0.45, 1.23),
+        (11.25, 0.31, 0.25, 1.18),
+        (HALF - 0.001, 0.11, 0.09, 1.16),
     ],
     dtype=np.float32,
 )
@@ -469,7 +471,9 @@ def final_meshes():
     meshes["beacon_top"] = _box(0.0, 3.24, -3.0, 0.15, 0.15, 0.20)
     meshes["landing_light_l"] = _box(-2.60, 2.93, 1.30, 0.40, 0.11, 0.20)
     meshes["landing_light_r"] = _box(2.60, 2.93, 1.30, 0.40, 0.11, 0.20)
-    meshes["taxi_light"] = _box(0.0, 1.00, 7.94, 0.22, 0.12, 0.19)
+    taxi_base = to_final(_skin(7.94, 270.0, 0.0))
+    meshes["taxi_light"] = _box(float(taxi_base[0]), float(taxi_base[1]) - 0.03,
+                                float(taxi_base[2]), 0.22, 0.12, 0.19)
     meshes["gear_door_nose"] = _box(0.0, 0.57, 7.60, 0.54, 0.06, 1.20)   # hangs on the belly
 
     return {name: v01._v06.outward_winding(mesh) for name, mesh in meshes.items()}

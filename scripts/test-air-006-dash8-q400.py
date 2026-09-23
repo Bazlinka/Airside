@@ -15,6 +15,8 @@ assert spec.loader is not None
 spec.loader.exec_module(module)
 
 meshes = module.q400_meshes()
+assert np.all(np.diff(module.STATIONS[:, 0]) > 0)
+assert float(module.surface(15.55, 0.0)[0]) > 0.40, "Q400 nose must stay rounded ahead of the flight deck"
 module.validate(meshes)
 vertices = np.concatenate([verts for verts, _ in meshes.values()])
 

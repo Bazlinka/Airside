@@ -15,6 +15,8 @@ assert spec.loader is not None
 spec.loader.exec_module(module)
 
 meshes = module.saab_meshes()
+assert np.all(np.diff(module.FUSE_STATIONS[:, 0]) > 0)
+assert float(module.fuselage_surface(9.15, 0.0)[0]) > 0.45, "Saab radome should not taper to a needle"
 module.validate(meshes)
 vertices = np.concatenate([verts for verts, _ in meshes.values()])
 

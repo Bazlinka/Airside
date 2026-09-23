@@ -6,6 +6,7 @@ REF-003 / REF-005 fidelity jump over Batch F2 v05 / parked-car cube proof:
   mdl_fuel_truck_small_v06        — VEH-001
   mdl_baggage_tug_train_v06       — VEH-002
   mdl_passenger_bus_apron_v06     — VEH-003
+  mdl_catering_truck_v01          — VEH-004 (new: the catering truck had no model at all)
   mdl_pushback_tug_v03            — VEH-004
 
 Distinct ids — does not overwrite v05 / pushback v02 / parked v01.
@@ -403,6 +404,74 @@ def pushback_tug_v03() -> dict[str, tuple[np.ndarray, np.ndarray]]:
     meshes["beacon"] = cylinder(0.72, 1.52, 0, 0.12, 0.18, axis="y", segments=10)
     return meshes
 
+
+# ---------------------------------------------------------------------------
+# VEH-004 catering hi-loader v01 — scissor-lift box body raised to a cabin door
+# ---------------------------------------------------------------------------
+
+
+def catering_truck_v01() -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    """A catering hi-loader, built from scratch rather than from a v05 base.
+
+    The catering truck was the one turnaround vehicle with no model at all: it fell back to
+    a flat-shaded box because BuildServiceVehicle was called without an art path. What makes
+    the type readable is the scissor lift — a box body carried well above the chassis with
+    the lift legs and a bridge platform out front, level with a cabin door — so that is what
+    this builds. Part names follow the existing kit conventions so the loader's colour rules
+    (dark wheels, tinted glass, orange beacon) apply with no C# change.
+    """
+    meshes: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+
+    # Chassis and cab, forward of the body.
+    meshes["chassis"] = soft_box(-0.1, 0.52, 0, 4.6, 0.36, 1.32)
+    meshes["cab"] = soft_box(1.72, 1.12, 0, 1.25, 1.02, 1.42)
+    meshes["cab_roof"] = soft_box(1.72, 1.68, 0, 1.18, 0.12, 1.32)
+    meshes["cab_window"] = soft_box(2.28, 1.24, 0, 0.05, 0.62, 1.16)
+    for i, z in enumerate((-0.46, 0.46), start=1):
+        meshes[f"glass_pane_{i}"] = soft_box(1.72, 1.24, z, 0.92, 0.56, 0.05)
+
+    # Scissor lift: two crossed legs each side, carrying the body clear of the chassis.
+    for side, z in (("l", 0.52), ("r", -0.52)):
+        meshes[f"scissor_{side}_a"] = soft_box(-0.55, 1.28, z, 0.16, 1.62, 0.12)
+        meshes[f"scissor_{side}_b"] = soft_box(-0.55, 1.28, z, 1.62, 0.16, 0.12)
+        meshes[f"scissor_pivot_{side}"] = cylinder(-0.55, 1.28, z, 0.11, 0.16, axis="z", segments=12)
+
+    # Raised box body — the silhouette that says catering rather than fuel.
+    meshes["box_body"] = soft_box(-0.55, 2.62, 0, 2.95, 1.55, 1.44)
+    meshes["box_roof"] = soft_box(-0.55, 3.44, 0, 2.85, 0.12, 1.36)
+    meshes["box_rail_l"] = soft_box(-0.55, 3.60, 0.66, 2.75, 0.06, 0.06)
+    meshes["box_rail_r"] = soft_box(-0.55, 3.60, -0.66, 2.75, 0.06, 0.06)
+    meshes["box_door"] = soft_box(0.92, 2.58, 0, 0.06, 1.28, 1.18)
+    meshes["box_door_handle"] = soft_box(0.98, 2.52, 0.38, 0.05, 0.10, 0.22)
+
+    # Bridge platform reaching to the aircraft door, with a handrail.
+    meshes["platform"] = soft_box(1.42, 2.02, 0, 1.25, 0.10, 1.30)
+    meshes["platform_rail_l"] = soft_box(1.42, 2.48, 0.60, 1.18, 0.05, 0.05)
+    meshes["platform_rail_r"] = soft_box(1.42, 2.48, -0.60, 1.18, 0.05, 0.05)
+    for i, x in enumerate((0.88, 1.96), start=1):
+        meshes[f"platform_post_{i}l"] = cylinder(x, 2.26, 0.60, 0.035, 0.46, axis="y", segments=8)
+        meshes[f"platform_post_{i}r"] = cylinder(x, 2.26, -0.60, 0.035, 0.46, axis="y", segments=8)
+
+    # Running gear, named so the loader paints it dark.
+    for tag, x, z in (("fl", 1.62, 0.62), ("fr", 1.62, -0.62),
+                      ("rl", -1.72, 0.62), ("rr", -1.72, -0.62)):
+        meshes[f"wheel_{tag}"] = cylinder(x, 0.32, z, 0.32, 0.24, axis="z", segments=16)
+        meshes[f"hub_{tag}"] = cylinder(x, 0.32, z, 0.13, 0.12, axis="z", segments=10)
+    meshes["fender_fl"] = soft_box(1.62, 0.58, 0.74, 0.82, 0.20, 0.20)
+    meshes["fender_fr"] = soft_box(1.62, 0.58, -0.74, 0.82, 0.20, 0.20)
+    meshes["fender_rl"] = soft_box(-1.72, 0.58, 0.74, 0.82, 0.20, 0.20)
+    meshes["fender_rr"] = soft_box(-1.72, 0.58, -0.74, 0.82, 0.20, 0.20)
+
+    meshes["bumper"] = soft_box(2.40, 0.42, 0, 0.22, 0.34, 1.34)
+    meshes["bumper_rear"] = soft_box(-2.42, 0.42, 0, 0.22, 0.34, 1.26)
+    meshes["headlight_l"] = soft_box(2.44, 0.78, 0.48, 0.07, 0.16, 0.24)
+    meshes["headlight_r"] = soft_box(2.44, 0.78, -0.48, 0.07, 0.16, 0.24)
+    meshes["taillight_l"] = soft_box(-2.46, 0.78, 0.44, 0.06, 0.16, 0.20)
+    meshes["taillight_r"] = soft_box(-2.46, 0.78, -0.44, 0.06, 0.16, 0.20)
+    meshes["beacon"] = cylinder(1.72, 1.82, 0, 0.09, 0.16, axis="y", segments=12)
+    return meshes
+
+
 def main() -> None:
     VEHICLES.mkdir(parents=True, exist_ok=True)
     write_kit(VEHICLES, "mdl_parked_car_v02", parked_car_v02())
@@ -410,6 +479,7 @@ def main() -> None:
     write_kit(VEHICLES, "mdl_baggage_tug_train_v06", baggage_tug_v06())
     write_kit(VEHICLES, "mdl_passenger_bus_apron_v06", passenger_bus_v06())
     write_kit(VEHICLES, "mdl_pushback_tug_v03", pushback_tug_v03())
+    write_kit(VEHICLES, "mdl_catering_truck_v01", catering_truck_v01())
 
 
 if __name__ == "__main__":

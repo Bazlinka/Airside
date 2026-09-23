@@ -286,6 +286,16 @@ namespace Airside.Presentation
             "chr_passenger_m_suit", "chr_passenger_f_suit", "chr_passenger_m_holiday"
         };
 
+        /// <summary>
+        /// The hi-vis ramp workers. ADR 0114 imported these two and never placed them, so the
+        /// only people ever drawn were boarding passengers — and those appear for stairs
+        /// boarding only, leaving an aerobridge gate with nobody on the apron at all.
+        /// </summary>
+        private static readonly string[] RampCharacters =
+        {
+            "chr_ramp_m_worker", "chr_ramp_f_worker"
+        };
+
         private const int MaxVisiblePassengers = 60;
         private const float PassengerStairSpeed = 0.55f;
 
@@ -319,6 +329,9 @@ namespace Airside.Presentation
         }
 
         private readonly List<CharacterKind> _characterKinds = new();
+        private readonly List<CharacterKind> _rampKinds = new();
+        private readonly List<RampCrewMember> _rampScratch = new();
+        private readonly List<Transform> _rampViews = new();
         private bool _charactersLoaded;
         private readonly Dictionary<long, PassengerView> _passengers = new();
         private readonly Dictionary<CharacterKind, List<PassengerView>> _passengerPool = new();
@@ -451,12 +464,105 @@ namespace Airside.Presentation
             return new PassengerView { Instance = instance, Kind = kind, Height = height, Phase = look % 97 / 97f };
         }
 
+        /// <summary>
+        /// Draw the hi-vis ramp crew around the player's active turnaround.
+        ///
+        /// Positions come from <see cref="RampCrew"/> in stand-local metres and are rotated
+        /// onto the stand here. Idle poses only: these are people standing at a vehicle or a
+        /// door, not walking a path, so they need no gait. Presentation only.
+        /// </summary>
+        private void UpdateRampCrew(FleetAircraft aircraft, DeparturePrepStatus prep)
+        {
+            if (aircraft == null || _rampKinds.Count == 0)
+            {
+                HideRampCrew();
+                return;
+            }
+
+            RampCrew.For(prep, RampCrew.VehicleFor(prep.Stage), _rampScratch);
+            if (_rampScratch.Count == 0)
+            {
+                HideRampCrew();
+                return;
+            }
+
+            var pose = AdelaideGround.StandPose(aircraft.Stand);
+            var nose = new Vector3(pose.NoseX, 0f, pose.NoseZ);
+            if (nose.sqrMagnitude < 0.001f)
+                nose = Vector3.forward;
+            nose.Normalize();
+            var right = new Vector3(-nose.z, 0f, nose.x);
+            var ground = new Vector3(pose.X, AirsideFlightPath.GroundY, pose.Z);
+
+            for (var i = 0; i < _rampScratch.Count; i++)
+            {
+                var member = _rampScratch[i];
+                var view = EnsureRampWorker(i);
+                if (view == null)
+                    continue;
+                view.gameObject.SetActive(true);
+                view.position = ground + nose * member.AlongMetres + right * member.AcrossMetres;
+                view.rotation = Quaternion.LookRotation(
+                    Quaternion.AngleAxis(member.FacingDegrees, Vector3.up) * nose, Vector3.up);
+            }
+
+            for (var i = _rampScratch.Count; i < _rampViews.Count; i++)
+                if (_rampViews[i] != null)
+                    _rampViews[i].gameObject.SetActive(false);
+        }
+
+        private Transform EnsureRampWorker(int index)
+        {
+            while (_rampViews.Count <= index)
+            {
+                var kind = _rampKinds[RampCrew.IsFemale(_rampViews.Count) && _rampKinds.Count > 1 ? 1 : 0];
+                var instance = Instantiate(kind.Prefab);
+                instance.name = $"Ramp worker {_rampViews.Count + 1}";
+                var t = instance.transform;
+                // Characters import at an arbitrary height; normalise then give a real one.
+                var height = 1.72f + (_rampViews.Count % 2 == 0 ? 0.06f : -0.05f);
+                t.localScale = Vector3.one * (kind.ScaleToMetre * height);
+                if (kind.Idle != null)
+                {
+                    kind.Idle.SampleAnimation(instance, 0f);
+                    var animator = instance.GetComponent<Animator>();
+                    if (animator != null)
+                        animator.enabled = false;
+                }
+
+                foreach (var renderer in instance.GetComponentsInChildren<Renderer>(true))
+                    renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                _rampViews.Add(t);
+            }
+
+            return _rampViews[index];
+        }
+
+        private void HideRampCrew()
+        {
+            for (var i = 0; i < _rampViews.Count; i++)
+                if (_rampViews[i] != null)
+                    _rampViews[i].gameObject.SetActive(false);
+        }
+
         private bool EnsureCharacters()
         {
             if (_charactersLoaded)
                 return _characterKinds.Count > 0;
             _charactersLoaded = true;
-            foreach (var id in PassengerCharacters)
+            LoadCharacterKinds(PassengerCharacters, _characterKinds);
+            LoadCharacterKinds(RampCharacters, _rampKinds);
+            return _characterKinds.Count > 0;
+        }
+
+        /// <summary>
+        /// Load a set of character prefabs and their Walk/Idle clips, normalised to a 1 m
+        /// figure. Shared by the boarding passengers and the hi-vis ramp crew so the two sets
+        /// cannot drift apart in how they are imported or scaled.
+        /// </summary>
+        private void LoadCharacterKinds(string[] ids, List<CharacterKind> into)
+        {
+            foreach (var id in ids)
             {
                 var prefab = Resources.Load<GameObject>("Airside/Characters/" + id);
                 if (prefab == null)
@@ -485,10 +591,8 @@ namespace Airside.Presentation
 
                 kind.ScaleToMetre = any && bounds.size.y > 0.1f ? 1f / bounds.size.y : 1f / 1.8f;
                 Destroy(probe);
-                _characterKinds.Add(kind);
+                into.Add(kind);
             }
-
-            return _characterKinds.Count > 0;
         }
 
         /// <summary>

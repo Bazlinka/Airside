@@ -1,5 +1,31 @@
 ## Unreleased
 
+- **The catering truck now exists (ADR 0116).** It was the one turnaround vehicle built with no
+  art path, so it fell back to a flat-shaded box while the fuel truck, baggage tug and apron bus
+  all loaded authored kits — and there was no catering model on disk at all. VEH-004 gives it
+  the scissor-lift hi-loader silhouette: chassis and cab, crossed lift legs, a raised box body
+  and a bridge platform at cabin-door height.
+
+- **There are people on the apron now (ADR 0116).** Passengers were drawn for stairs boarding
+  only, which is right as far as it goes — you cannot see anyone inside an aerobridge — but
+  every Terminal 1 jet gate uses a bridge, so at a terminal gate nobody was visible at all.
+  ADR 0114 had also imported two hi-vis ramp workers and never placed them. They now work
+  whichever vehicle is active: at the fuel panel and under the wing, steadying the hi-loader
+  and at the galley door, at the hold and on the baggage cart, and one marshaller clear of the
+  door during boarding.
+
+- **Fuel, catering and baggage vehicles now drive to the aircraft (ADR 0115).** They used to
+  appear beside the stand when their prep stage began and vanish when it ended. Each now
+  leaves a depot 90 seconds ahead of its stage, drives the real Adelaide airside frontage road
+  — 1,122 m along the Terminal 1 face, imported from OpenStreetMap — works while the stage
+  runs, and drives home. The baggage vehicle works out of the hall beneath the terminal, so it
+  drives out through an undercroft on every trip.
+
+  The undercroft is **authored, not imported**, and the generated file says so: OSM has no
+  tunnel, covered or layer tag at Adelaide, and the real frontage runs about 91 m off the
+  airside wall — 44 m clear even of a fully extended aerobridge — so nothing in the real data
+  passes under the building.
+
 - **Enable Unity Animation module for boarding walk clips.** ADR 0114 samples
   `AnimationClip`s; the built-in package was missing from `Packages/manifest.json`,
   so Mac batch builds failed with CS1069.

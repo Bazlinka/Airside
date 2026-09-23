@@ -936,9 +936,15 @@ namespace Airside.Simulation
                 throw new FormatException($"{registration} is {state} with no destination.");
             if (RequiresDepartureStand(state) && string.IsNullOrEmpty(departureStand.Value))
                 throw new FormatException($"{registration} is {state} with no departure stand.");
-            if (HoldsStand(aircraft) && (!_stands.Contains(stand) || !IsStandFree(stand)))
+            // AtStand/TaxiIn always require a stand. Newer saves may also contain an AI
+            // arrival reservation while holding or landing; older saves legitimately do not.
+            var requiresStand = state is FleetState.AtStand or FleetState.TaxiIn;
+            var hasReservation = !string.IsNullOrEmpty(stand.Value)
+                                 && state is FleetState.HoldingForLanding or FleetState.Landing
+                                     or FleetState.GoAround or FleetState.AwaitingStand;
+            if ((requiresStand || hasReservation) && (!_stands.Contains(stand) || !IsStandFree(stand)))
                 throw new FormatException($"{registration} is on stand '{stand}', which is missing, unknown or taken.");
-            if (HoldsStand(aircraft) && !StandClassFits(type, stand))
+            if ((requiresStand || hasReservation) && !StandClassFits(type, stand))
                 throw new FormatException($"{registration} ({type.Name}) cannot be on stand '{stand}'.");
 
             aircraft.Stand = stand;
@@ -1186,12 +1192,16 @@ namespace Airside.Simulation
         public long AirborneSeconds(FleetAircraft aircraft, Destination destination) =>
             LegTiming.AirborneSeconds(DistanceKm(destination), aircraft.Type);
 
-        public bool IsStandFree(StableId stand)
+        public bool IsStandFree(StableId stand) => IsStandFree(stand, null);
+
+        private bool IsStandFree(StableId stand, FleetAircraft except)
         {
             if (!_stands.Contains(stand))
                 return false;
             foreach (var aircraft in _fleet)
             {
+                if (ReferenceEquals(aircraft, except))
+                    continue;
                 if (StandHolder(aircraft, stand) || StandHolder(aircraft, PierSibling(stand)))
                     return false;
             }
@@ -2026,6 +2036,21 @@ namespace Airside.Simulation
                         aircraft.ExtendUntil(MorningArrivalAt(aircraft, now));
                         return false;
                     }
+                    // Do not land an aircraft that has nowhere to park. Before this guard a
+                    // late arrival could touch down onto a full apron just before curfew and
+                    // sit across the runway-exit taxiway until the 05:00 departure wave. Keep
+                    // it in flow control and recheck at a useful interval instead.
+                    var arrivalStand = SuggestStand(aircraft);
+                    if (!aircraft.Airline.IsPlayer && arrivalStand == null)
+                    {
+                        aircraft.ExtendUntil(now.Advance(5 * 60));
+                        return false;
+                    }
+                    // AI arrivals reserve the chosen position before joining final. Without
+                    // this, simultaneous runway queues could both see the same free gate and
+                    // the second aircraft would land with nowhere to go.
+                    if (!aircraft.Airline.IsPlayer)
+                        aircraft.Stand = arrivalStand.Value;
                     aircraft.AssignedRunway = RunwayFor(aircraft);
                     Transition(aircraft, FleetState.HoldingForLanding, now, null);
                     return true;
@@ -2153,6 +2178,14 @@ namespace Airside.Simulation
         {
             if (aircraft == null)
                 return null;
+
+            // An AI arrival reserves its stand before joining final. Keep that reservation
+            // through a go-around and the runway roll, then taxi to the same position.
+            if (!string.IsNullOrEmpty(aircraft.Stand.Value)
+                && _stands.Contains(aircraft.Stand)
+                && StandFits(aircraft.Type, aircraft.Stand)
+                && IsStandFree(aircraft.Stand, aircraft))
+                return aircraft.Stand;
 
             // Scheduled terminal operators return to their own gate when it is available.
             // This keeps the Air New Zealand and Virgin streams operationally legible while
@@ -2544,7 +2577,7 @@ namespace Airside.Simulation
                 }
 
                 if (arrivals.Count == 0)
-                    return at;
+                    return GroundClearanceAt(aircraft, at);
 
                 var ahead = arrivals[0];
                 arrivals.RemoveAt(0);
@@ -2555,21 +2588,38 @@ namespace Airside.Simulation
                                 + WakeSeparationSeconds(ahead.Type));
             }
 
+            return GroundClearanceAt(aircraft, at);
+        }
+
+        /// <summary>Apply the tower's taxi/vacate check to a displayed landing estimate.</summary>
+        private SimulationTime GroundClearanceAt(FleetAircraft aircraft, SimulationTime at)
+        {
+            // Ground releases are checked on the five-second grid. Taxi legs are short, so
+            // twelve minutes is a generous bounded horizon while keeping this HUD estimate cheap.
+            for (var i = 0; i < 144 && !VacateClearOfTaxiing(aircraft, at); i++)
+                at = GroundTraffic.NextGrid(at);
             return at;
         }
 
         /// <summary>Its vacate, flown from now, stays clear of every aircraft already moving on the ground.</summary>
         private bool VacateClearOfTaxiing(FleetAircraft arrival, SimulationTime now)
         {
-            // Past MaxWaitSeconds on final, land anyway: taxiing traffic always finishes, but the
-            // arrival must not circle behind a steady stream of it.
-            if (now.ElapsedSeconds - arrival.StateStartedAt.ElapsedSeconds >= GroundTraffic.MaxWaitSeconds)
-                return true;
             var profile = AircraftPerformance.For(arrival.Type);
             var touchdownIn = ApproachHold.RemainingFinalSeconds(profile.ApproachSeconds, arrival.Registration)
                               + profile.LandingSeconds;
-            return GroundTraffic.PathClear(_fleet, arrival, AdelaideGround.VacateFor(arrival.Type, arrival.AssignedRunway),
-                arrival.AssignedRunway, taxiOut: false, now.Advance(touchdownIn), includeStationary: false);
+            var vacate = AdelaideGround.VacateFor(arrival.Type, arrival.AssignedRunway);
+            if (!GroundTraffic.PathClear(_fleet, arrival, vacate, arrival.AssignedRunway, taxiOut: false,
+                    now.Advance(touchdownIn), includeStationary: false))
+                return false;
+
+            // A reserved stand lets the tower validate the route beyond the runway exit too.
+            // Checking only the vacate allowed an outbound aircraft to cross that waiting point
+            // a few seconds after the arrival stopped there.
+            if (string.IsNullOrEmpty(arrival.Stand.Value))
+                return true;
+            var taxiIn = AdelaideGround.TaxiIn(arrival.Stand, arrival.Type, arrival.AssignedRunway);
+            return GroundTraffic.PathClear(_fleet, arrival, taxiIn, arrival.AssignedRunway, taxiOut: false,
+                now.Advance(touchdownIn + vacate.WholeSeconds), includeStationary: false);
         }
 
         private bool VacateCrossesHolder(FleetAircraft arrival, bool mainStrip)
@@ -2716,7 +2766,9 @@ namespace Airside.Simulation
             aircraft.CurrentDestination.HasValue ? AirborneSeconds(aircraft, aircraft.CurrentDestination.Value) : 0;
 
         private static bool HoldsStand(FleetAircraft aircraft) =>
-            aircraft.State is FleetState.AtStand or FleetState.TaxiIn;
+            !string.IsNullOrEmpty(aircraft.Stand.Value)
+            && (aircraft.State is FleetState.AtStand or FleetState.HoldingForLanding or FleetState.Landing
+                or FleetState.GoAround or FleetState.AwaitingStand or FleetState.TaxiIn);
 
         /// <summary>
         /// These states are mid-trip. A save that omits <see cref="FleetAircraft.CurrentDestination"/>

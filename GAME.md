@@ -1,5 +1,25 @@
 ## Where to resume — session handoff
 
+- **2026-09-24 Codex — latest-main bug sweep (branch `fix/bug-sweep-20260923`).**
+  Pulled `main` at `383edcb6` and repaired the five failures exposed by the authoritative
+  Unity run. Ground control now includes the wheels-on-runway part of takeoff and landing
+  in its conflict prediction, validates an arrival's vacate and reserved taxi-in route,
+  and keeps AI arrivals in flow control when no compatible stand is available. AI stands
+  are reserved before final, so two runway queues cannot land for the same gate. Player
+  arrivals keep the existing manual stand-choice and auto-park flow. The arrival ETA uses
+  the same ground-clearance rule as the tower, and restored saves validate optional arrival
+  reservations without rejecting older in-flight records. Three stale presentation/layout
+  assertions now reflect the four-aircraft Q400 fleet, ICAO gate code letters and integrated
+  Saab airstairs.
+  - **Evidence:** `scripts/test-unity.sh` **1047/1047 passed**, including the 30-day airline
+    soak and busy-day ground-separation test. `scripts/build-mac.sh` produced a 300 MB
+    `work/builds/Airside.app`; direct launch initialized Unity 6000.3.23f1, Metal, PhysX and
+    the runtime with no errors or missing-file messages in `Player.log`. The app was stopped
+    after the smoke test. The Mac was locked, so this session did not visually inspect a frame.
+  - **NEXT:** review and merge the bug-fix PR, then open the merged build on an unlocked Mac
+    for the visual play check. Do not rework the traffic fixes unless a new deterministic
+    failure or visible collision is reproduced.
+
 - **2026-09-23 Claude — catering truck and ramp crew (branch `feature/gse-service-roads`,
   ADR 0116).** Bailey asked for more detail on the fuel/catering trucks and boarding, and
   asked where the passengers are. Three real gaps:

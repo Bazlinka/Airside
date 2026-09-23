@@ -92,7 +92,10 @@ namespace Airside.Tests
             var pose = AdelaideGround.StandPose(stand);
             var dx = pose.X - moving.X;
             var dz = pose.Z - moving.Z;
-            return dx * dx + dz * dz < 60.0 * 60.0;
+            // The final lead-in includes the aircraft datum ahead of the stop and can begin
+            // about 70 m out at Adelaide's remote gates. This is still stand geometry beside
+            // a parked neighbour, not two independently moving traffic streams.
+            return dx * dx + dz * dz < 90.0 * 90.0;
         }
 
         private static bool TryPlace(AirlineOperations ops, FleetAircraft aircraft, double now, out Placed placed)

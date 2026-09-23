@@ -94,7 +94,11 @@ namespace Airside.Tests
             {
                 var gate = spec.StandClass == StandClass.TerminalGate;
                 Assert.That(AirlineOperations.NeedsTerminalGate(spec.Type), Is.EqualTo(gate), spec.Name);
-                Assert.That(AirlineOperations.StandFits(spec.Type, new StableId("GATE-13")), Is.EqualTo(gate), spec.Name);
+                Assert.That(AirlineOperations.StandFits(spec.Type, new StableId("GATE-18")), Is.EqualTo(gate),
+                    $"{spec.Name} fits a code E terminal gate when it needs a gate");
+                Assert.That(AirlineOperations.StandFits(spec.Type, new StableId("GATE-13")),
+                    Is.EqualTo(gate && AircraftCatalogue.CodeLetter(spec.Type) <= 'C'),
+                    $"{spec.Name} respects the code C limit at gate 13");
                 Assert.That(AirlineOperations.StandFits(spec.Type, new StableId("BAY-1")), Is.EqualTo(!gate), spec.Name);
             }
         }

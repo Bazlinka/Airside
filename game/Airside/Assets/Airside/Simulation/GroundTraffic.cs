@@ -106,6 +106,7 @@ namespace Airside.Simulation
             switch (visual.Leg)
             {
                 case FleetGroundLeg.None:
+                    return TryRunwayGroundPose(aircraft, visual, seconds, out pose);
                 case FleetGroundLeg.Parked:
                     return false;
                 case FleetGroundLeg.HoldingShort:
@@ -149,6 +150,61 @@ namespace Airside.Simulation
                 }
             }
         }
+
+        /// <summary>
+        /// A takeoff or landing is still ground traffic until rotation or touchdown/rollout ends.
+        /// FleetVisual deliberately describes those parts as airborne phases, so ground control
+        /// reconstructs just the wheels-on-runway portion here without depending on Presentation.
+        /// </summary>
+        private static bool TryRunwayGroundPose(FleetAircraft aircraft, FleetVisual visual, double seconds,
+            out GroundPose pose)
+        {
+            pose = default;
+            if (visual.Phase is not (AircraftPhase.Landing or AircraftPhase.Takeoff))
+                return false;
+
+            var profile = AircraftPerformance.For(aircraft.Type);
+            var duration = visual.Phase == AircraftPhase.Landing ? profile.LandingSeconds : profile.TakeoffSeconds;
+            if (duration <= 0)
+                return false;
+            var progress = Clamp01((seconds - visual.PhaseStartedAt.ElapsedSeconds) / duration);
+            float localX;
+            if (visual.Phase == AircraftPhase.Landing)
+            {
+                if (progress < profile.TouchdownProgress)
+                    return false;
+                var rollout = DistanceFraction(Local(progress, profile.TouchdownProgress, 1.0),
+                    profile.TouchdownKnots, profile.RunwayExitKnots);
+                localX = Lerp(CircuitProfile.TouchdownX, CircuitProfile.RolloutEndX, rollout);
+            }
+            else
+            {
+                if (progress > profile.RotateProgress)
+                    return false;
+                var roll = DistanceFraction(Local(progress, 0.0, profile.RotateProgress), 0.0,
+                    profile.RotateKnots);
+                localX = Lerp(CircuitProfile.TakeoffStartX, profile.RotateX, roll);
+            }
+
+            RunwayFrame.ToWorld(aircraft.AssignedRunway, localX, 0f, 0f, out var x, out _, out var z);
+            RunwayFrame.Forward(aircraft.AssignedRunway, out var fx, out var fz);
+            pose = new GroundPose(x, z, fx, fz, 0f, false);
+            return true;
+        }
+
+        private static double DistanceFraction(double progress, double startSpeed, double endSpeed)
+        {
+            var mean = (startSpeed + endSpeed) * 0.5;
+            return mean <= 0.0001
+                ? Clamp01(progress)
+                : Clamp01((startSpeed * progress + (endSpeed - startSpeed) * progress * progress * 0.5) / mean);
+        }
+
+        private static double Local(double value, double from, double to) =>
+            to <= from ? 0.0 : Clamp01((value - from) / (to - from));
+
+        private static double Clamp01(double value) => value < 0.0 ? 0.0 : value > 1.0 ? 1.0 : value;
+        private static float Lerp(float a, float b, double t) => (float)(a + (b - a) * Clamp01(t));
 
         /// <summary>How far into a taxi-out it goes before stopping behind <paramref name="ahead"/> aircraft.</summary>
         public static double QueuedSeconds(GroundLeg taxiOut, int ahead) =>
@@ -242,13 +298,15 @@ namespace Airside.Simulation
             var leg = aircraft.State switch
             {
                 FleetState.TaxiOut => FleetGroundLeg.TaxiOut,
-                FleetState.TakingOff => FleetGroundLeg.Lineup,
-                FleetState.Landing => FleetGroundLeg.Vacate,
                 FleetState.TaxiIn => FleetGroundLeg.TaxiIn,
                 _ => FleetGroundLeg.None
             };
             if (leg != FleetGroundLeg.None)
                 return LegFor(aircraft, leg).Bounds;
+            // These states move between a runway roll and a ground leg. Keep them in the
+            // candidate set; TryPose supplies the exact position for every sample.
+            if (aircraft.State is FleetState.TakingOff or FleetState.Landing)
+                return (-2200f, -2200f, 2200f, 2200f);
             // Standing still: its queue place, with room for the queue to shuffle up.
             if (!TryPose(fleet, aircraft, at.ElapsedSeconds, out var pose, out _))
                 return (float.MaxValue, float.MaxValue, float.MinValue, float.MinValue);

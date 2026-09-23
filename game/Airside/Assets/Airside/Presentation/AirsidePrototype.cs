@@ -9906,8 +9906,42 @@ namespace Airside.Presentation
             };
         }
 
+        /// <summary>
+        /// Engine paint (ADR 0112): cowlings are painted metal, not airline colour. The shared
+        /// fallback painted every narrowbody and turboprop nacelle one steel blue, which no
+        /// Adelaide operator flies. Jets get pale grey cowls with a bare-metal intake lip;
+        /// turboprop nacelles match the white fuselage.
+        /// </summary>
+        private static Color? EnginePaint(string kitName, bool turboprop)
+        {
+            switch (kitName)
+            {
+                case "intake_left":
+                case "intake_right":
+                    return new Color(0.64f, 0.66f, 0.69f);
+                case "engine_left":
+                case "engine_right":
+                case "nacelle_left":
+                case "nacelle_right":
+                case "nacelle_fillet_left":
+                case "nacelle_fillet_right":
+                case "cowl_flap_l":
+                case "cowl_flap_r":
+                case "oil_cooler_l":
+                case "oil_cooler_r":
+                    return turboprop ? new Color(0.91f, 0.93f, 0.95f) : new Color(0.84f, 0.86f, 0.89f);
+                case "pylon_left":
+                case "pylon_right":
+                    return new Color(0.80f, 0.82f, 0.85f);
+            }
+
+            return null;
+        }
+
         private static Color? Saab340PartColor(string kitName, Color accent)
         {
+            if (EnginePaint(kitName, turboprop: true) is { } saabEngine)
+                return saabEngine;
             // The Saab is a compact commuter aircraft, not a flying colour block.
             // Reserve the operator accent for the vertical tail while keeping the
             // broad lifting surfaces a restrained painted-aluminium grey.
@@ -9937,6 +9971,8 @@ namespace Airside.Presentation
 
         private static Color? Boeing7378PartColor(string kitName, Color accent)
         {
+            if (EnginePaint(kitName, turboprop: false) is { } jetEngine)
+                return jetEngine;
             // Keep the broad lifting surfaces visually light. Airline colour is
             // strongest on the fin and split winglets, where it reads as livery
             // rather than making the whole aircraft look moulded from plastic.
@@ -10066,6 +10102,8 @@ namespace Airside.Presentation
 
         private static Color? Dash8Q400PartColor(string kitName, Color accent)
         {
+            if (EnginePaint(kitName, turboprop: true) is { } q400Engine)
+                return q400Engine;
             // Preserve airline colour on the tall fin and compact tip devices,
             // not across the Q400's entire high wing and T-tail.
             switch (kitName)
@@ -10102,6 +10140,8 @@ namespace Airside.Presentation
 
         private static Color? Atr42PartColor(string kitName, Color accent)
         {
+            if (EnginePaint(kitName, turboprop: true) is { } atrEngine)
+                return atrEngine;
             // Keep the ATR's operator identity on its fin and compact wingtips.
             // The broad high wing and T-tail planes should read as aircraft
             // structure, not as two large blocks of airline colour.

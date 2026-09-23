@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Liveries on every type; titles no longer show through the wings (ADR 0112).**
+  - E190, A220, A321neo, A350 and 787s now wear the fitted operator sash, so no type
+    uses the barcode decal.
+  - Engines are painted grey and white instead of blue.
+  - Airline titles are generated from each mesh: above the windows, tangent to the skin,
+    starting behind the flight deck and clear of the wing root.
+  - Titles are drawn with a new lit, depth-tested `Airside/FuselagePaint` shader that is
+    always included in builds.
+
 - **Realistic Adelaide traffic: 38 AI aircraft, about 110 airline departures a day
   (ADR 0111).**
   - Qantas has 9 aircraft, Virgin 7, Jetstar 5, Rex 6 and QantasLink 4.

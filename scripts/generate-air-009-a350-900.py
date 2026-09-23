@@ -279,6 +279,13 @@ def a350_900_meshes():
     meshes["elevator_left"] = box(-6.4, 7.95, -31.0, 11.6, 0.08, 1.15)
     meshes["elevator_right"] = box(6.4, 7.95, -31.0, 11.6, 0.08, 1.15)
 
+    # Fitted operator sash (ADR 0112): skin-conforming like the A330/A320/737 kits, so the
+    # widebody no longer needs the repeating traffic decal that barcoded its fuselage.
+    meshes["livery_stripe"] = skin.livery_ribbon(
+        _surface, 23.5, -27.5, -1, half_width=0.40, rise_degrees=18.0, samples=96)
+    meshes["livery_stripe_lower"] = skin.livery_ribbon(
+        _surface, 23.5, -27.5, 1, half_width=0.40, rise_degrees=18.0, samples=96)
+
     # Published A350-900 wheelbase is 28.66 m (nose gear at 25.2 -> mains at -3.46); the mains
     # used to sit at -5.8, 4.6 m behind the wing's trailing edge with nothing above them. A
     # gear-bay pod now grows out of the fuselage belly over each leg, and every wheel truck

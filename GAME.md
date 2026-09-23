@@ -1,5 +1,30 @@
 ## Where to resume — session handoff
 
+- **2026-09-23 Claude — livery and paint pass, titles fixed (same branch `claude/stoic-curie-girf9n`, ADR 0112).**
+  - **Liveries:** every aircraft type now carries the fitted operator sash. The E190,
+    A220 and A321neo had buried boxes; the A350 and 787s had nothing and used the
+    barcode decal. Engines are grey and white instead of blue.
+  - **Why names showed through wings:** titles were flat 1.4 m boards, authored without
+    the -0.68 m model offset. They stood off the skin and poked up through the 737
+    wing root. The ATR's title sat inside its own fuselage.
+  - **Title fix:** layouts are now generated from each mesh
+    (`scripts/generate-aircraft-title-layout.py`). Titles sit above the windows,
+    tangent to the skin, anchored behind the flight deck.
+  - **Title shader:** titles use a new always-included `Airside/FuselagePaint` shader
+    (lit, depth-tested and depth-writing).
+  - **Evidence:**
+    - `scripts/test-aircraft-paint.py` passes.
+    - Connectivity and the per-type generator tests pass.
+    - `scripts/test-domain.sh` shows 737/737 passing.
+    - Glyph-accurate z-buffered renders from `scripts/render-aircraft-paint.py`.
+  - **NEXT:**
+    - **Compile check:** open in Unity to compile the new shader and Presentation code;
+      the headless harness does not compile `AirsidePrototype`.
+    - **Title check:** in follow camera, check that titles read the right way round on
+      both sides, lean onto the skin, and hide behind the wing from low rear views.
+    - **Livery check:** confirm no barcode decal on the Air NZ / Jetstar A321neo or the
+      Emirates / Qatar / Singapore widebodies.
+
 - **2026-09-23 Claude — realistic Adelaide traffic (same branch `claude/stoic-curie-girf9n`, ADR 0111).**
   Bailey asked for traffic that is "realistic to Adelaide", and for the place not to be
   called an airfield.

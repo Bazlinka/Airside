@@ -78,6 +78,7 @@ def boeing_787_10_meshes():
             name == "fuselage" or name == "belly_fairing"
             or name.startswith("cabin_window_") or name.startswith("door_")
             or name.startswith("beacon_") or name == "taxi_light"
+            or name.startswith("livery_")
         )
         meshes[name] = (vertices * (FUSE_SCALE if fuselage_attached else SCALE), indices.copy())
 

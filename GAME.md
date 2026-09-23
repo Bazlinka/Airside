@@ -1,5 +1,29 @@
 ## Where to resume — session handoff
 
+- **2026-09-23 Claude — airside service roads and GSE trips (branch
+  `feature/gse-service-roads`, ADR 0115).** Bailey asked for catering, baggage and fuel
+  trucks, and for vehicles to drive under the terminal as at the real Adelaide.
+  - **The trucks already existed**; the trips did not. `_fuelTruck`, `_cateringTruck` and
+    `_baggageCart` appeared beside the aircraft when their stage began and vanished when it
+    ended. There was no service-road network in the project at all.
+  - **Roads are real.** `scripts/generate-ypad-service-roads.py` bakes
+    `Simulation/AdelaideServiceRoads.cs` from a committed Overpass snapshot (ODbL, OSM base
+    2026-09-23T05:40:02Z): the 1,122 m Terminal 1 apron frontage plus Airside Access Road,
+    Security Road and Localiser Road. Same runway frame and method as the taxiways.
+  - **The undercroft is authored, and the code says so.** OSM has no tunnel/covered/layer tag
+    here, and the real frontage runs ~91 m off the airside wall — a fully extended aerobridge
+    reaches 47.5 m, so its tip is still 44 m clear of the road. The frontage passes under
+    *nothing*; `AdelaideServiceRoadPath.IsUndercroft` returns false for every frontage point
+    and a test locks that down. A short authored spur runs inward under the terminal instead.
+  - **Baggage uses it.** Its depot is the hall beneath the terminal, so it drives out through
+    the undercroft on every trip; fuel and catering stay on the frontage.
+  - **Evidence:** `scripts/test-domain.sh` **766 passed** (16 new), mutation-checked, and the
+    generator reproduces byte-identically.
+  - **NEXT:** the undercroft is a route, not yet a hole — `AdelaideTerminalArchitecture` has no
+    modelled opening, so a vehicle on the spur drives beneath an unbroken shell. Cut the void,
+    then decide whether the frontage should also gain an authored covered stretch under the
+    aerobridges. Unity compile still unverified on this Mac.
+
 - **2026-09-23 Claude — boarding people, turboprop airstairs, stair trucks (branch `claude/stoic-curie-girf9n`, ADR 0114).**
   - **People:** nine CC0 Quaternius characters (seven passengers, two ramp crew, crew
     not yet placed) in `Resources/Airside/Characters`. Re-export them with

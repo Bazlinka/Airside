@@ -1,5 +1,17 @@
 ## Unreleased
 
+- **Fuel, catering and baggage vehicles now drive to the aircraft (ADR 0115).** They used to
+  appear beside the stand when their prep stage began and vanish when it ended. Each now
+  leaves a depot 90 seconds ahead of its stage, drives the real Adelaide airside frontage road
+  — 1,122 m along the Terminal 1 face, imported from OpenStreetMap — works while the stage
+  runs, and drives home. The baggage vehicle works out of the hall beneath the terminal, so it
+  drives out through an undercroft on every trip.
+
+  The undercroft is **authored, not imported**, and the generated file says so: OSM has no
+  tunnel, covered or layer tag at Adelaide, and the real frontage runs about 91 m off the
+  airside wall — 44 m clear even of a fully extended aerobridge — so nothing in the real data
+  passes under the building.
+
 - **People board and deplane; turboprops use their own airstairs; stair trucks for jets on
   stands without a bridge (ADR 0114).**
   - Nine CC0 Quaternius characters walk between the terminal and the aircraft.

@@ -689,12 +689,16 @@ namespace Airside.Presentation
             var cateringService = stop - nose * 7f - side * 7f;
             var baggageService = stop - nose * 15f - side * 7f;
             var boardingService = stop + nose * 3f + side * 6f;
+            // Only the passenger bus still parks on the apron; the fuel, catering and baggage
+            // vehicles now come from their depots along the frontage road instead.
             var parkA = stop - nose * 42f + side * 18f;
-            var parkB = stop - nose * 44f - side * 18f;
 
-            UpdateTurnaroundVehicle(_fuelTruck, prep.Stage == DeparturePrepStage.Fuel, fuelService, parkA);
-            UpdateTurnaroundVehicle(_cateringTruck, prep.Stage == DeparturePrepStage.Catering, cateringService, parkB);
-            UpdateTurnaroundVehicle(_baggageCart, prep.Stage == DeparturePrepStage.Baggage, baggageService, parkB - nose * 5f);
+            // Vehicles drive the real airside frontage road in and out (ADR 0115) rather than
+            // appearing beside the aircraft when their stage starts. GroundServiceRun owns the
+            // trip; this only draws it.
+            DriveServiceVehicle(_fuelTruck, GroundServiceKind.Fuel, aircraft, prep, fuelService);
+            DriveServiceVehicle(_cateringTruck, GroundServiceKind.Catering, aircraft, prep, cateringService);
+            DriveServiceVehicle(_baggageCart, GroundServiceKind.Baggage, aircraft, prep, baggageService);
 
             if (terminal)
             {
@@ -708,6 +712,47 @@ namespace Airside.Presentation
                 PlaceBoardingStairs(_stairs, prep.Stage == DeparturePrepStage.Boarding,
                     boardingService, Quaternion.LookRotation(nose.sqrMagnitude > 0.001f ? nose : Vector3.forward));
             }
+        }
+
+        /// <summary>
+        /// Draw one ground vehicle where <see cref="GroundServiceRun"/> says it is: parked at
+        /// its depot, driving the frontage road (including under the terminal), or working
+        /// beside the aircraft. Presentation only — the trip never gates the simulation.
+        /// </summary>
+        private void DriveServiceVehicle(Transform vehicle, GroundServiceKind kind,
+            FleetAircraft aircraft, DeparturePrepStatus prep, Vector3 servicePosition)
+        {
+            if (vehicle == null)
+                return;
+
+            var stage = kind switch
+            {
+                GroundServiceKind.Fuel => DeparturePrepStage.Fuel,
+                GroundServiceKind.Catering => DeparturePrepStage.Catering,
+                _ => DeparturePrepStage.Baggage
+            };
+            var untilStage = DeparturePrep.SecondsUntilStage(
+                aircraft, _clock.Now, _operations.CareerState.BaseLevel, stage);
+            var run = GroundServiceRun.For(kind, prep, servicePosition.x, servicePosition.z, untilStage);
+
+            if (!run.Visible)
+            {
+                vehicle.gameObject.SetActive(false);
+                return;
+            }
+
+            vehicle.gameObject.SetActive(true);
+            if (!run.Driving)
+            {
+                UpdateVehicle(vehicle, true, servicePosition, servicePosition);
+                return;
+            }
+
+            // Steer by sampling a little further along the same leg, so the vehicle faces the
+            // way it is going through the frontage's bends instead of snapping at each point.
+            var here = new Vector3(run.RoadX, AirsideFlightPath.GroundY, run.RoadZ);
+            var target = run.Phase == GroundServicePhase.Outbound ? servicePosition : here;
+            UpdateVehicle(vehicle, true, here, target);
         }
 
         private void UpdateTurnaroundVehicle(Transform vehicle, bool active, Vector3 servicePosition, Vector3 parkPosition)

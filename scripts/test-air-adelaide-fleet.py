@@ -30,4 +30,12 @@ for name in ("livery_stripe", "livery_stripe_lower"):
     vertices, _ = a320[name]
     assert vertices.shape[0] >= 128 and np.ptp(vertices[:, 2]) > 25.0
 
+a339 = fleet.airbus_a330_900neo_meshes()
+assert not any(name.startswith("cockpit_mask_") for name in a339)
+assert {name for name in a339 if name.startswith("windscreen_")} == {
+    "windscreen_l1", "windscreen_l2", "windscreen_r1", "windscreen_r2"}
+for name in ("livery_stripe", "livery_stripe_lower"):
+    vertices, _ = a339[name]
+    assert vertices.shape[0] >= 300 and np.ptp(vertices[:, 2]) > 49.0
+
 print("PASS: six Adelaide fleet models have exact envelopes, valid geometry and family cues.")

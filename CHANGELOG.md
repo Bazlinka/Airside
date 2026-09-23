@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **AIR-015 A330-900 appearance pass (ADR 0106).** Replaced the scaled-A350
+  pointed nose and flight deck with a rounder fuselage and four fitted panes;
+  added a skin-conforming operator-coloured ribbon, removed the repeating
+  fuselage decal and lowered the protruding engine pylons. The Hangar thumbnail
+  follows the authored model. No simulation or save change.
+
 - **AIR-011 A320 appearance pass (ADR 0105).** Replaced its scaled 737 fuselage,
   flight deck, cabin windows, wing and split tips with a rounder A320 silhouette,
   single sharklets and a skin-conforming operator-coloured ribbon; the repeating

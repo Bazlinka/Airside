@@ -271,14 +271,72 @@ def airbus_a220_300_meshes():
 
 def airbus_a330_900neo_meshes():
     source = a350.a350_900_meshes()
-    # A330neo: narrower legacy A330 fuselage, no A350 cockpit mask, A350-inspired
-    # raked wingtip and large Trent 7000-class nacelles.
-    return _scale(
+    # Keep the proven widebody gear, wing articulation and engine animation,
+    # but give this type its own much rounder flight deck and fitted colour.
+    meshes = _scale(
         source,
         (64.00 / a350.TARGET_SPAN_M, 16.79 / a350.TARGET_HEIGHT_M, 63.66 / a350.TARGET_LENGTH_M),
         fuselage_x=5.64 / (a350.FUSE_RX * 2.0),
         drop=("cockpit_mask_",),
     )
+    half_length = 63.66 / 2.0
+    sy = 16.79 / a350.TARGET_HEIGHT_M
+    sz = 63.66 / a350.TARGET_LENGTH_M
+    sx = 5.64 / (a350.FUSE_RX * 2.0)
+    original = [tuple(float(v) for v in station) for station in a350.FUSELAGE_STATIONS]
+    stations = [(z * sz, rx * sx, ry * sy, cy * sy) for z, rx, ry, cy in original if z <= 24.0]
+    stations += [
+        (25.8, 2.78, 2.90, 6.17),
+        (27.8, 2.65, 2.68, 6.17),
+        (29.3, 2.30, 2.28, 6.16),
+        (30.4, 1.85, 1.76, 6.13),
+        (31.2, 1.18, 1.08, 6.10),
+        (31.71, 0.40, 0.35, 6.08),
+    ]
+    station_data = np.asarray(stations, np.float32)
+
+    def surface(z, angle, offset=0.0):
+        rx = float(np.interp(z, station_data[:, 0], station_data[:, 1]))
+        ry = float(np.interp(z, station_data[:, 0], station_data[:, 2]))
+        cy = float(np.interp(z, station_data[:, 0], station_data[:, 3]))
+        radians = np.deg2rad(angle)
+        return np.asarray(((rx + offset) * np.cos(radians),
+                           cy + (ry + offset) * np.sin(radians), z), np.float32)
+
+    def nose_stop(mesh):
+        vertices, indices = mesh
+        return b737.orient_outward(vertices + np.asarray((0.0, 0.0, -half_length), np.float32), indices)
+
+    dense_z = np.linspace(stations[0][0], stations[-1][0], 120)
+    meshes["fuselage"] = nose_stop(a350.oval_lathe_fuselage([
+        (float(z), float(np.interp(z, station_data[:, 0], station_data[:, 1])),
+         float(np.interp(z, station_data[:, 0], station_data[:, 2])),
+         float(np.interp(z, station_data[:, 0], station_data[:, 3])))
+        for z in dense_z], segments=72))
+
+    # Four independent panes instead of the scaled A350 six-pane masked nose.
+    for name in list(meshes):
+        if name.startswith("windscreen_"):
+            del meshes[name]
+    for suffix, centre in (("l", 119.0), ("r", 61.0)):
+        meshes[f"windscreen_{suffix}1"] = nose_stop(skin.skin_patch(
+            surface, 29.75, centre, 0.76, 0.39, front=0.025, radius=0.13, rings=3))
+    for suffix, centre in (("l", 151.0), ("r", 29.0)):
+        meshes[f"windscreen_{suffix}2"] = nose_stop(skin.skin_patch(
+            surface, 29.20, centre, 0.57, 0.28, front=0.023, radius=0.12, rings=3))
+    for side, suffix in ((-1, "left"), (1, "right")):
+        meshes[f"door_{suffix}_1"] = nose_stop(skin.skin_patch(
+            surface, 27.1 * sz, 180.0 if side < 0 else 0.0,
+            0.53, 0.95, front=0.006, radius=0.14, rings=3, max_edge=0.16))
+
+    meshes["livery_stripe"] = nose_stop(skin.livery_ribbon(
+        surface, 23.0, -27.2, -1, half_width=0.38, rise_degrees=18.0, samples=96))
+    meshes["livery_stripe_lower"] = nose_stop(skin.livery_ribbon(
+        surface, 23.0, -27.2, 1, half_width=0.38, rise_degrees=18.0, samples=96))
+    for side, suffix in ((-1, "left"), (1, "right")):
+        meshes[f"pylon_{suffix}"] = nose_stop(a350.box(
+            side * 10.62, 5.85, 4.38, 0.69, 1.10, 3.7))
+    return meshes
 
 
 def boeing_787_9_meshes():

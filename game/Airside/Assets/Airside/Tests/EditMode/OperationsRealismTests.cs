@@ -88,9 +88,9 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void BusierDay_EightyPlusDeparturesWithABigDawnFirstWave()
+        public void RealisticAdelaideDay_AboutAHundredAndTenDeparturesWithABigDawnWave()
         {
-            // ADR 0111: more Qantas / Virgin / Jetstar / Rex / QantasLink frames, most of
+            // ADR 0111: Adelaide-sized Qantas / Virgin / Jetstar / Rex / QantasLink fleets, most of
             // them night-stopping on the apron so 05:00–06:59 is the day's biggest bank.
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = NewGame(clock);
@@ -120,8 +120,8 @@ namespace Airside.Tests
                 }
             }
 
-            Assert.That(ops.Fleet.Count(a => !a.Airline.IsPlayer), Is.GreaterThanOrEqualTo(30));
-            Assert.That(seen.Count, Is.InRange(75, 110), "a realistic busy regional-capital day");
+            Assert.That(ops.Fleet.Count(a => !a.Airline.IsPlayer), Is.GreaterThanOrEqualTo(36));
+            Assert.That(seen.Count, Is.InRange(95, 140), "real Adelaide runs roughly 110–130 airline departures a day");
             Assert.That(parkedAtFour, Is.GreaterThanOrEqualTo(15), "most of the fleet night-stops on the apron");
             Assert.That(dawn, Is.GreaterThanOrEqualTo(15), "the first wave is the big morning bank");
         }

@@ -474,7 +474,7 @@ def main():
         "    /// </summary>",
         "    public static class AdelaideLayout",
         "    {",
-        '        public const string Attribution = "Airfield layout © OpenStreetMap contributors (ODbL)";',
+        '        public const string Attribution = "Airport layout © OpenStreetMap contributors (ODbL)";',
         "",
         f"        public const float MainRunwayLengthMetres = {fmt(LENGTH)};",
         f"        public const float RolloutEndX = {fmt(ROLLOUT_END_X)};",

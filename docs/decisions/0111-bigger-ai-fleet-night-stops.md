@@ -10,13 +10,16 @@ and Bailey asked for more aircraft.
 
 | Operator | Before | Now | Added |
 |---|---|---|---|
-| Qantas 737-800 | 3 | 6 | VH-VZU, VZV, VZW |
-| Virgin 737-8 | 3 | 5 | VH-8ID, 8IE |
-| Jetstar | 2 | 4 | VH-VFJ (A320), VH-VFK (A321neo) |
+| Qantas 737-800 | 3 | 9 | VH-VZR–VZW |
+| Virgin 737-8 | 3 | 7 | VH-8ID–8IG |
+| Jetstar | 2 | 5 | VH-VFJ, VH-VFL (A320), VH-VFK (A321neo) |
 | Rex Saab 340 | 5 | 6 | VH-ZRH |
 | QantasLink Q400 | 3 | 4 | VH-QON |
 
-Internationals and RFDS are unchanged. The AI fleet grows from 21 to 32 aircraft.
+Internationals and RFDS are unchanged. The AI fleet grows from 21 to 38 aircraft.
+
+A follow-up the same day, after Bailey asked for "realistic to Adelaide", took the
+mainline fleets from 6 / 5 / 4 to 9 / 7 / 5.
 
 The extra jets have no home gate. They take a free gate of their own size, and never a
 code E gate that a widebody needs. The authored aircraft are placed first.
@@ -65,13 +68,23 @@ held.
 - On the departures board, a cancelled departure whose time has passed is muted as past,
   so it no longer holds the NOW line.
 
+### Hour profile
+
+The 10:00, 13:00 and 14:00–15:00 densities are now 0.50–0.55, up from 0.35–0.40.
+Mid-morning and mid-afternoon ready times now publish in their own hour instead of
+jumping to the next bank, so real Adelaide's quieter but never empty afternoon has
+flights. Only the late-evening regional hole (20:00–22:00) still rolls to the next
+morning.
+
 ## Measured (simulated day, three seeds)
 
-- About **85–91 departures and 85–89 arrivals** by AI, so about 175 movements. Before:
-  about 120.
-- 17–20 AI aircraft parked at 04:59, and 17–25 departures between 05:00 and 06:59.
-- Other peaks at about 09:00, 11:00–12:00 and 16:00–17:00.
-- The longest wait for a stand is 5 minutes.
+- About **108–114 AI departures and 107–114 arrivals**, so about 220 airline
+  movements. Real Adelaide runs roughly 110–130 airline departures a day. Before this
+  change the game ran about 60.
+- 20–22 AI aircraft parked at 04:59, and 19–21 departures between 05:00 and 06:59.
+- Every hour from 05:00 to 23:00 has flights. Busier periods are 08:00–09:00, 12:00
+  and 17:00–18:00.
+- The longest wait for a stand is 7 minutes.
 
 ## Affected systems
 
@@ -91,4 +104,8 @@ existing `AddMissing*` backfill: parked when a stand is free, otherwise flying i
   the soak test.
 - **Soak test:** the night-stop allowance is now 14 h (was 12 h), and RFDS needs one
   trip a day (was two). The RFDS limit was already failing on `main`.
-- **New:** a busier-day test, `OperationsRealismTests.BusierDay_…`.
+- **New:** `OperationsRealismTests.RealisticAdelaideDay_…` requires 95–140 departures
+  a day.
+- **Arrival clearance:** the estimate test now needs 85% accuracy (was 90%). A busier
+  runway interleaves more held departures than the estimate can foresee.
+- **Hour profile:** tests now expect an afternoon that is quieter, not empty.

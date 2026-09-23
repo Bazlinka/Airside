@@ -1,19 +1,22 @@
 ## Where to resume — session handoff
 
-- **2026-09-23 Claude — bigger AI fleet (same branch `claude/stoic-curie-girf9n`, ADR 0111).**
-  Bailey found about 60 departures a day too thin.
-  - **Fleet:** the AI fleet is now 32 aircraft. Qantas has 6, Virgin 5, Jetstar 4, Rex 6
+- **2026-09-23 Claude — realistic Adelaide traffic (same branch `claude/stoic-curie-girf9n`, ADR 0111).**
+  Bailey asked for traffic that is "realistic to Adelaide", and for the place not to be
+  called an airfield.
+  - **Fleet:** the AI fleet is now 38 aircraft. Qantas has 9, Virgin 7, Jetstar 5, Rex 6
     and QantasLink 4.
   - **Overflow:** an aircraft with no stand starts away and flies in; overnight
     arrivals come in 06:00–08:30.
   - **Night-stops:** evening domestic frames mostly stay on the apron for the 05:00
     wave.
-  - **Measured:** about 85–91 AI departures a day, and 17–25 of them between 05:00
-    and 06:59.
-  - **Evidence:** `scripts/test-domain.sh` shows **735/735** passing, including the
-    tests that already failed on `main`.
-  - **NEXT:** Mac Unity run, then play a morning to confirm the dawn wave and that
-    gates never overflow.
+  - **Afternoon:** quieter but not empty.
+  - **Measured:** about 108–114 AI departures a day, against real Adelaide's roughly
+    110–130, with every hour from 05:00 to 23:00 active.
+  - **Wording:** player-facing "Airfield" text now says "Airport" (Airport map, "N at
+    the airport", the layout credit).
+  - **Evidence:** `scripts/test-domain.sh` shows **736/736** passing.
+  - **NEXT:** Mac Unity run, then play a morning and an afternoon to confirm the dawn
+    wave and that gates never overflow.
 
 - **2026-09-23 Claude — Operations realism (branch `claude/stoic-curie-girf9n`, ADR 0110).**
   Bailey asked for the arrivals and departures to match a real airport.

@@ -226,7 +226,9 @@ namespace Airside.Simulation
                 // ADR 0111: extra frames with no home gate — any free code C gate, else they
                 // night-stop at the other end and fly in with the morning arrivals.
                 ("VH-8ID", AircraftType.Boeing7378, default),
-                ("VH-8IE", AircraftType.Boeing7378, default)
+                ("VH-8IE", AircraftType.Boeing7378, default),
+                ("VH-8IF", AircraftType.Boeing7378, default),
+                ("VH-8IG", AircraftType.Boeing7378, default)
             }),
             (Airline.Qantas, new[]
             {
@@ -235,14 +237,18 @@ namespace Airside.Simulation
                 ("VH-VZZ", AircraftType.Boeing737800, new StableId("GATE-23")),
                 ("VH-VZU", AircraftType.Boeing737800, default),
                 ("VH-VZV", AircraftType.Boeing737800, default),
-                ("VH-VZW", AircraftType.Boeing737800, default)
+                ("VH-VZW", AircraftType.Boeing737800, default),
+                ("VH-VZR", AircraftType.Boeing737800, default),
+                ("VH-VZS", AircraftType.Boeing737800, default),
+                ("VH-VZT", AircraftType.Boeing737800, default)
             }),
             (Airline.Jetstar, new[]
             {
                 ("VH-VFH", AircraftType.AirbusA320200, new StableId("GATE-17")),
                 ("VH-VFI", AircraftType.AirbusA321Neo, new StableId("GATE-16L")),
                 ("VH-VFJ", AircraftType.AirbusA320200, default),
-                ("VH-VFK", AircraftType.AirbusA321Neo, default)
+                ("VH-VFK", AircraftType.AirbusA321Neo, default),
+                ("VH-VFL", AircraftType.AirbusA320200, default)
             }),
             (Airline.AirNewZealand, new[] { ("ZK-NNA", AircraftType.AirbusA321Neo, new StableId("GATE-15")) }),
             (Airline.CathayPacific, new[] { ("B-LRB", AircraftType.AirbusA350900, new StableId("GATE-18")) }),

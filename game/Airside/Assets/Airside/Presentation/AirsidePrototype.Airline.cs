@@ -750,7 +750,7 @@ namespace Airside.Presentation
                 GuideStep.WaitForDeparture => ($"Track {reg}'s departure",
                     $"Fuel, catering, bags and boarding finish before {ClockText(aircraft.Scheduled.Value.DepartAt)}. Click the aircraft or press Follow (F)."),
                 GuideStep.Departing => ($"Follow {reg}",
-                    "Click the aircraft on the field or press Follow (F) to watch taxi and takeoff."),
+                    "Click the aircraft at the airport or press Follow (F) to watch taxi and takeoff."),
                 GuideStep.Away => ($"Watch {reg} return",
                     $"En route to {dest}. Track it on Map (Tab); the airport also continues while the game is closed."),
                 GuideStep.Landing => ($"Watch {reg} land",

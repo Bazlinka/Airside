@@ -1,12 +1,15 @@
 ## Unreleased
 
-- **Busier Adelaide: 32 AI aircraft, about 175 movements a day (ADR 0111).**
-  - More Qantas, Virgin, Jetstar, Rex and QantasLink aircraft.
+- **Realistic Adelaide traffic: 38 AI aircraft, about 110 airline departures a day
+  (ADR 0111).**
+  - Qantas has 9 aircraft, Virgin 7, Jetstar 5, Rex 6 and QantasLink 4.
   - Aircraft with no free stand start away and fly in; overnight arrivals come in over
     06:00–08:30.
-  - Most evening domestic frames night-stop on the apron, so 05:00–06:59 is the biggest
-    departure bank.
-  - Saabs use the walk-outs, leaving the 50-series for Q400s.
+  - Most evening domestic frames night-stop, so 05:00–06:59 is the big dawn wave.
+  - The afternoon is quieter but no longer empty.
+  - Saabs use the walk-outs.
+  - Player-facing "Airfield" wording now says "Airport", for example "Airport map" and
+    "N at the airport".
 
 - **Operations realism: 05:00–23:00 day, banked departures, gates sized to aircraft
   (ADR 0110).**

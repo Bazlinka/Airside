@@ -30,7 +30,9 @@ namespace Airside.Tests
             Assert.That(ops.IsCathaySeason(clock.Now), Is.False);
             Assert.That(ops.Fleet.Any(a => a.Airline.Id.Value == "CPA"), Is.False,
                 "Cathay flies its last rotation home and is retired while away (ADR 0110)");
-            Assert.That(ops.IsStandFree(new StableId("GATE-18")), Is.True);
+            // GATE-18 no longer belongs to Cathay; another widebody (or a jet short of a gate)
+            // may be using it by now in a busy Adelaide day.
+            Assert.That(ops.Fleet.Any(a => a.Stand.Equals(new StableId("GATE-18")) && a.Airline.Id.Value == "CPA"), Is.False);
             Assert.That(ops.Airlines.Any(a => a.Id.Value == "CPA"), Is.False);
         }
 

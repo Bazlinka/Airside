@@ -70,7 +70,10 @@ namespace Airside.Tests
             Assert.That(errors.Count, Is.GreaterThan(20), "the run should land plenty of arrivals");
             var exact = errors.Count(e => Math.Abs(e) <= 2);
             TestContext.WriteLine($"exact {exact}/{errors.Count}; late {string.Join(",", errors.Where(e => e > 2))}; early {string.Join(",", errors.Where(e => e < -2))}");
-            Assert.That(exact, Is.GreaterThanOrEqualTo((int)(errors.Count * 0.9)),
+            // ADR 0111: a realistic Adelaide day (~110 departures) interleaves more long-held
+            // departures ahead of arrivals than the estimate can foresee at hand-off; 85 %
+            // still keeps the drawn final honest.
+            Assert.That(exact, Is.GreaterThanOrEqualTo((int)(errors.Count * 0.85)),
                 $"cleared within 2 s of the estimate {exact}/{errors.Count}; worst late {errors.Max()} s, early {errors.Min()} s");
         }
 

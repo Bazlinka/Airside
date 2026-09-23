@@ -22,7 +22,7 @@ namespace Airside.Presentation
         {
             _miniMapVisible = !_miniMapVisible;
             ApplySettingsAndSave();
-            ShowToast(_miniMapVisible ? "Airfield map on (N)." : "Airfield map off (N).");
+            ShowToast(_miniMapVisible ? "Airport map on (N)." : "Airport map off (N).");
             PlayUiClick();
         }
 

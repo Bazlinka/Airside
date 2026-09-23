@@ -15,10 +15,12 @@ namespace Airside.Simulation
             5 => 0.70f,
             6 or 7 or 8 => 1.00f,
             9 => 0.70f,
-            10 => 0.40f,
+            // Quieter between banks, but real Adelaide still moves traffic mid-morning and
+            // mid-afternoon, so these no longer push every ready time to the next bank (ADR 0111).
+            10 => 0.50f,
             11 or 12 => 0.80f,
-            13 => 0.50f,
-            14 or 15 => 0.35f,
+            13 => 0.55f,
+            14 or 15 => 0.50f,
             16 or 17 or 18 => 1.00f,
             19 => 0.60f,
             20 => 0.30f,

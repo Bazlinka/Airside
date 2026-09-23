@@ -159,7 +159,7 @@ namespace Airside.Presentation
         /// <summary>0..1 through the operating day (05:00–23:00 Adelaide).</summary>
         public float DayProgress01 { get; private set; }
 
-        /// <summary>"14:32 · evening bank · 3 on field"</summary>
+        /// <summary>"14:32 · evening bank · 3 at the airport"</summary>
         public string DayCaption { get; private set; } = string.Empty;
 
         public int DayDoneCount { get; private set; }
@@ -342,7 +342,7 @@ namespace Airside.Presentation
             DayOnFieldCount = onField;
             DayListedAheadCount = 0;
             var bank = BankLabel(local.Hour);
-            DayCaption = $"{clock.TimeText(now)}  ·  {bank}  ·  {onField} on field";
+            DayCaption = $"{clock.TimeText(now)}  ·  {bank}  ·  {onField} at the airport";
         }
 
         /// <summary>

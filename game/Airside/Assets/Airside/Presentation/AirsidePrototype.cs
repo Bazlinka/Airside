@@ -1203,7 +1203,7 @@ namespace Airside.Presentation
             }
 
             row.y += 46f;
-            if (GUI.Button(row, settings.MiniMap ? "Airfield map  ·  On" : "Airfield map  ·  Off", button))
+            if (GUI.Button(row, settings.MiniMap ? "Airport map  ·  On" : "Airport map  ·  Off", button))
             {
                 _miniMapVisible = !settings.MiniMap;
                 ApplySettingsAndSave();

@@ -13,8 +13,8 @@
     passed. Mac build succeeded; a packaged 1600×900 daytime screenshot at
     regional bays 50D–50F shows the updated Saab among live traffic
     (`work/shape-saab-in-game.png`, local evidence only).
-  - **NEXT:** merge this aircraft-only slice; continue later
-    with separate wing/engine refinements and in-game follow-camera review.
+  - **NEXT:** PR #389 is merged. Continue later with separate
+    wing/engine refinements and in-game follow-camera review.
 
 - **2026-09-23 Codex — starter turboprop appearance pass (branch
   `codex/starter-aircraft-polish`, ADR 0107).** A320 PR #386 and A330 PR #387

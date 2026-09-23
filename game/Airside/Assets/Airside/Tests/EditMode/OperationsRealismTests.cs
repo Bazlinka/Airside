@@ -88,6 +88,45 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void BusierDay_EightyPlusDeparturesWithABigDawnFirstWave()
+        {
+            // ADR 0111: more Qantas / Virgin / Jetstar / Rex / QantasLink frames, most of
+            // them night-stopping on the apron so 05:00–06:59 is the day's biggest bank.
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = NewGame(clock);
+            var start = ops.Clock.AtLocal(ops.Clock.LocalAt(clock.Now).Date.AddDays(1));
+            var end = start.Advance(86400);
+            var seen = new HashSet<string>();
+            var dawn = 0;
+            var parkedAtFour = -1;
+            while (clock.Now.CompareTo(end) < 0)
+            {
+                clock.Advance(30);
+                ops.Update();
+                if (clock.Now.CompareTo(start) < 0)
+                    continue;
+                var local = ops.Clock.LocalAt(clock.Now);
+                if (parkedAtFour < 0 && local.Hour == 4 && local.Minute == 30)
+                    parkedAtFour = ops.Fleet.Count(a => !a.Airline.IsPlayer && a.State == FleetState.AtStand);
+                foreach (var aircraft in ops.Fleet)
+                {
+                    if (aircraft.Airline.IsPlayer || aircraft.State != FleetState.TaxiOut)
+                        continue;
+                    if (!seen.Add($"{aircraft.Registration}@{aircraft.StateStartedAt.ElapsedSeconds}"))
+                        continue;
+                    var hour = ops.Clock.LocalAt(aircraft.StateStartedAt).Hour;
+                    if (hour is 5 or 6)
+                        dawn++;
+                }
+            }
+
+            Assert.That(ops.Fleet.Count(a => !a.Airline.IsPlayer), Is.GreaterThanOrEqualTo(30));
+            Assert.That(seen.Count, Is.InRange(75, 110), "a realistic busy regional-capital day");
+            Assert.That(parkedAtFour, Is.GreaterThanOrEqualTo(15), "most of the fleet night-stops on the apron");
+            Assert.That(dawn, Is.GreaterThanOrEqualTo(15), "the first wave is the big morning bank");
+        }
+
+        [Test]
         public void SnapToBankLocal_PullsReadyTimesOntoSharedPublishedMarks()
         {
             var day = new DateTime(2026, 9, 24);

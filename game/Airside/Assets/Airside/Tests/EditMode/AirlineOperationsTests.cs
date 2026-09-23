@@ -206,7 +206,7 @@ namespace Airside.Tests
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(2026), Player());
-            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound), Is.InRange(5, 9),
+            Assert.That(ops.Fleet.Count(a => a.State == FleetState.Inbound && a.StateEndsAt.HasValue && a.StateEndsAt.Value.ElapsedSeconds <= clock.Now.ElapsedSeconds + 45 * 60), Is.InRange(5, 9),
                 "a short inbound bank, not the whole terminal airborne (ADR 0100)");
             Assert.That(ops.Fleet.Count(a => a.State == FleetState.AtStand), Is.GreaterThanOrEqualTo(12),
                 "most authored metal stays on the apron at opening");
@@ -253,7 +253,7 @@ namespace Airside.Tests
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(2026), Player());
             var arrivals = ops.Fleet
-                .Where(a => a.State == FleetState.Inbound && a.StateEndsAt.HasValue)
+                .Where(a => a.State == FleetState.Inbound && a.StateEndsAt.HasValue && a.StateEndsAt.Value.ElapsedSeconds <= clock.Now.ElapsedSeconds + 45 * 60)
                 .Select(a => a.StateEndsAt.Value.ElapsedSeconds)
                 .OrderBy(t => t)
                 .ToArray();
@@ -277,6 +277,7 @@ namespace Airside.Tests
                             && a.State == FleetState.AtStand && a.Scheduled.HasValue)
                 .Select(a => a.Scheduled.Value.DepartAt.ElapsedSeconds)
                 .OrderBy(t => t)
+                .Take(AirlineOperations.AiOpeningDepartureSeconds.Length) // the opening bank (ADR 0111: more metal)
                 .ToArray();
             Assert.That(departures.Length, Is.GreaterThanOrEqualTo(8),
                 "a busy apron means a full opening departure bank");
@@ -421,7 +422,8 @@ namespace Airside.Tests
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(11), Player());
             var emu = ops.Airlines.Single(a => a.Name == "Rex");
 
-            Assert.That(ops.FleetOf(emu).Count(), Is.EqualTo(3));
+            Assert.That(ops.FleetOf(emu).Count(),
+                Is.EqualTo(AirlineOperations.RegionalCarriers.Single(c => c.Make().Id.Value == "REX").Fleet.Length));
             Assert.That(ops.FleetOf(emu).Where(a => a.State == FleetState.AtStand).All(a => a.Scheduled.HasValue),
                 Is.True, "parked AI schedules itself while the opening arrival is already flying");
 

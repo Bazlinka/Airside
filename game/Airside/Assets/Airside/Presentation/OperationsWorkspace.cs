@@ -417,9 +417,10 @@ namespace Airside.Presentation
                 // Live Outbound rows used to stay IsPast=false forever, so a 09:55 departure
                 // still airborne at 11:55 pinned the NOW divider (and the one-shot scroll snap)
                 // two hours behind the clock. Once they have left the field, treat them like
-                // any other past movement.
+                // any other past movement. A cancelled departure whose time has gone is past too
+                // (it stays listed, muted, like a real screen) — ADR 0111.
                 var livePast = !arrivals
-                    && aircraft.State == FleetState.Outbound
+                    && (aircraft.State == FleetState.Outbound || aircraft.Scheduled is { Cancelled: true })
                     && BoardClockMinutes(time) + 2 < nowMin;
                 // Inbound (and other Hidden states) stay on the board as arrivals/departures
                 // but must not read as metal already on the field.

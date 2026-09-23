@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-23 Claude — bigger AI fleet (same branch `claude/stoic-curie-girf9n`, ADR 0111).**
+  Bailey found about 60 departures a day too thin.
+  - **Fleet:** the AI fleet is now 32 aircraft. Qantas has 6, Virgin 5, Jetstar 4, Rex 6
+    and QantasLink 4.
+  - **Overflow:** an aircraft with no stand starts away and flies in; overnight
+    arrivals come in 06:00–08:30.
+  - **Night-stops:** evening domestic frames mostly stay on the apron for the 05:00
+    wave.
+  - **Measured:** about 85–91 AI departures a day, and 17–25 of them between 05:00
+    and 06:59.
+  - **Evidence:** `scripts/test-domain.sh` shows **735/735** passing, including the
+    tests that already failed on `main`.
+  - **NEXT:** Mac Unity run, then play a morning to confirm the dawn wave and that
+    gates never overflow.
+
 - **2026-09-23 Claude — Operations realism (branch `claude/stoic-curie-girf9n`, ADR 0110).**
   Bailey asked for the arrivals and departures to match a real airport.
   - **Hours.** The commercial day is now **05:00–23:00**: first wave at 05:00, and a

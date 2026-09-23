@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Busier Adelaide: 32 AI aircraft, about 175 movements a day (ADR 0111).**
+  - More Qantas, Virgin, Jetstar, Rex and QantasLink aircraft.
+  - Aircraft with no free stand start away and fly in; overnight arrivals come in over
+    06:00–08:30.
+  - Most evening domestic frames night-stop on the apron, so 05:00–06:59 is the biggest
+    departure bank.
+  - Saabs use the walk-outs, leaving the 50-series for Q400s.
+
 - **Operations realism: 05:00–23:00 day, banked departures, gates sized to aircraft
   (ADR 0110).**
   - Commercial AI now flies from 05:00, and the last flight is 23:00; RFDS and the

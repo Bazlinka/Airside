@@ -72,13 +72,14 @@ namespace Airside.Tests
                     if (aircraft.StateEndsAt.HasValue)
                         continue;
                     // Parked overnight with the first flight of the day booked is a schedule,
-                    // not a stall — commercial AI only departs 06:00–22:59 — as long as it is booked.
+                    // not a stall — commercial AI only departs 05:00–23:00, and an evening
+                    // arrival night-stops for the first wave (ADR 0111) — as long as it is booked.
                     if (aircraft.State == FleetState.AtStand
                         && (aircraft.Scheduled.HasValue || aircraft.Airline.IsEmergency))
                     {
                         if (aircraft.Scheduled.HasValue)
                         {
-                            var limit = aircraft.Airline.IsEmergency ? 20 * 3600 : 12 * 3600;
+                            var limit = aircraft.Airline.IsEmergency ? 20 * 3600 : 14 * 3600;
                             Assert.That(aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - clock.Now.ElapsedSeconds,
                                 Is.LessThan(limit), $"{aircraft} booked too far ahead");
                         }
@@ -94,7 +95,9 @@ namespace Airside.Tests
             {
                 var home = AirlineOperations.LongHaulHomeOf(aircraft.Airline.Id.Value);
                 var ultraLong = home is "DXB" or "DOH";
+                // RFDS flies emergency taskings (mostly overnight), not a timetable: one a day.
                 var minimum = ultraLong ? Days / 2
+                    : aircraft.Airline.IsEmergency ? Days
                     : AirlineOperations.NeedsTerminalGate(aircraft.Type) ? Days
                     : Days * 2;
                 Assert.That(aircraft.CompletedTrips, Is.GreaterThanOrEqualTo(minimum),

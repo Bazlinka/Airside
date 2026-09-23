@@ -342,8 +342,8 @@ def saab_meshes():
     meshes["cockpit_side_l"] = pane(7.70, 136.0, 0.50, 0.24, 0.010)
     meshes["cockpit_side_r"] = pane(7.70, 44.0, 0.50, 0.24, 0.010)
 
-    meshes["livery_stripe"] = box(-1.135, 1.78, 0.40, 0.03, 0.12, 13.5)
-    meshes["livery_stripe_lower"] = box(1.135, 1.78, 0.40, 0.03, 0.12, 13.5)
+    meshes["livery_stripe"] = skin.livery_ribbon(fuselage_surface, 6.8, -6.8, -1, half_width=0.14, rise_degrees=12.0)
+    meshes["livery_stripe_lower"] = skin.livery_ribbon(fuselage_surface, 6.8, -6.8, 1, half_width=0.14, rise_degrees=12.0)
 
     # Forward left passenger door and aft right cargo door, curved with the skin.
     meshes["door_outline_fwd"], meshes["door_fwd"], _handle = skin.door_set(

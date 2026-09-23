@@ -1,5 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-23 Codex — starter turboprop appearance pass (branch
+  `codex/starter-aircraft-polish`, ADR 0107).** A320 PR #386 and A330 PR #387
+  are merged into `main`. ATR 42, Dash 8 Q400 and Saab 340B now have
+  skin-conforming, operator-coloured fuselage bands instead of buried box
+  stripes; the repeating traffic decal is disabled on those three authored
+  types. Their runtime kits, StreamingAssets copies and Hangar thumbnails are
+  updated. No simulation, save, control or data-source change.
+  - **Evidence:** three generator tests and strict 5 cm connectivity passed;
+    neutral multi-view renders inspected; Mac build completed successfully.
+  - **NEXT:** merge this branch, then tackle remaining
+    aircraft as separate appearance slices. AIR-016 787-9 still needs its own
+    silhouette pass; do not mistake these livery fixes for a full fleet rebuild.
+
 - **2026-09-23 Codex — AIR-015 A330-900 appearance pass (PR #387, branch
   `codex/a330-appearance-pass`, stacked on AIR-011 PR #386; ADR 0106).** New
   rounder nose skin, four-pane unmasked flight deck, fitted operator-coloured

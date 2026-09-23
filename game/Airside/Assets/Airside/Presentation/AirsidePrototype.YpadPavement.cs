@@ -287,14 +287,39 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>Depth-tests remaining world-space TextMesh labels, such as aircraft titles.</summary>
+        /// <summary>
+        /// World-space TextMesh defaults to the GUI/Text Shader (ZTest Always, ZWrite Off),
+        /// so fuselage titles read through wings. Swap to a cutout Unlit that depth-tests
+        /// and writes depth like real paint. Falls back to GUI ZTest if URP Unlit is missing.
+        /// </summary>
         private static void DepthTestStandLabel(MeshRenderer renderer)
         {
             if (renderer == null || renderer.sharedMaterial == null)
                 return;
-            var material = new Material(renderer.sharedMaterial) { name = "mat_world_label_depth_tested" };
-            material.SetInt(GuiZTestMode, (int)CompareFunction.LessEqual);
-            renderer.sharedMaterial = material;
+
+            var source = renderer.sharedMaterial;
+            var urpUnlit = Shader.Find("Universal Render Pipeline/Unlit");
+            if (urpUnlit != null)
+            {
+                var material = new Material(urpUnlit) { name = "mat_world_label_depth_tested" };
+                if (source.mainTexture != null)
+                    material.SetTexture("_BaseMap", source.mainTexture);
+                material.SetColor("_BaseColor", Color.white);
+                material.SetFloat("_Surface", 0f);
+                material.SetFloat("_AlphaClip", 1f);
+                material.SetFloat("_Cutoff", 0.2f);
+                material.EnableKeyword("_ALPHATEST_ON");
+                material.SetOverrideTag("RenderType", "TransparentCutout");
+                material.SetInt("_ZWrite", 1);
+                material.SetInt("_Cull", (int)CullMode.Off);
+                material.renderQueue = (int)RenderQueue.AlphaTest;
+                renderer.sharedMaterial = material;
+                return;
+            }
+
+            var fallback = new Material(source) { name = "mat_world_label_depth_tested" };
+            fallback.SetInt(GuiZTestMode, (int)CompareFunction.LessEqual);
+            renderer.sharedMaterial = fallback;
         }
 
         private static readonly int GuiZTestMode = Shader.PropertyToID("unity_GUIZTestMode");

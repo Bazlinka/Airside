@@ -334,6 +334,8 @@ namespace Airside.Presentation
             // barcode stripes at overview distance, obscuring the authored skin.
             var hasFittedLivery = AircraftVisualProfiles.IsAirbusA320200(aircraft.Type)
                                   || AircraftVisualProfiles.IsAirbusA330900(aircraft.Type)
+                                  || AircraftVisualProfiles.IsBoeing7378(aircraft.Type)
+                                  || AircraftVisualProfiles.IsBoeing737800(aircraft.Type)
                                   || AircraftVisualProfiles.IsDash8Q400(aircraft.Type)
                                   || AircraftVisualProfiles.IsSaab340(aircraft.Type)
                                   || aircraft.Type.Id == AircraftType.Atr42.Id;
@@ -495,7 +497,8 @@ namespace Airside.Presentation
             text.richText = false;
 
             var renderer = label.GetComponent<MeshRenderer>();
-            renderer.sortingOrder = 2;
+            // Do not raise sortingOrder: GUI/Text used to draw on top of opaque wings.
+            renderer.sortingOrder = 0;
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = false;
 
@@ -816,7 +819,12 @@ namespace Airside.Presentation
             if (_labels[index] == null)
                 return;
             var baseColour = _baseColours[index];
-            _labels[index].color = new Color(baseColour.r * tint, baseColour.g * tint, baseColour.b * tint, baseColour.a);
+            var tinted = new Color(baseColour.r * tint, baseColour.g * tint, baseColour.b * tint, baseColour.a);
+            _labels[index].color = tinted;
+            // URP Unlit identity materials tint via _BaseColor; TextMesh.color alone is not enough.
+            var material = _renderers[index] != null ? _renderers[index].sharedMaterial : null;
+            if (material != null && material.HasProperty("_BaseColor"))
+                material.SetColor("_BaseColor", tinted);
         }
     }
 }

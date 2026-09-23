@@ -1,5 +1,11 @@
 ## Where to resume — session handoff
 
+- **2026-09-23 Cursor — Animation module for boarding builds.** ADR 0114 walk sampling
+  needs `com.unity.modules.animation`; it was missing from the package manifest so Mac
+  batch builds failed. Added to `Packages/manifest.json` + lock.
+  - **NEXT:** merge PR; rebuild `work/builds/Airside.app`; play a turboprop turn for
+    walkers/airstairs and a jet on 20R/22R/27–29 for stair trucks.
+
 - **2026-09-23 Claude — boarding people, turboprop airstairs, stair trucks (branch `claude/stoic-curie-girf9n`, ADR 0114).**
   - **People:** nine CC0 Quaternius characters (seven passengers, two ramp crew, crew
     not yet placed) in `Resources/Airside/Characters`. Re-export them with

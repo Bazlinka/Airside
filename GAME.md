@@ -1,5 +1,25 @@
 ## Where to resume — session handoff
 
+- **2026-09-23 Claude — catering truck and ramp crew (branch `feature/gse-service-roads`,
+  ADR 0116).** Bailey asked for more detail on the fuel/catering trucks and boarding, and
+  asked where the passengers are. Three real gaps:
+  - **The catering truck had no model.** It was the one vehicle whose `BuildServiceVehicle`
+    call passed no art path, so it fell back to a flat-shaded box; no catering model existed
+    on disk. VEH-004 `mdl_catering_truck_v01` is a scissor-lift hi-loader, 44 meshes,
+    rendered and inspected before wiring in.
+  - **Passengers appear for stairs boarding only.** `UpdatePassengers` skips any aircraft
+    whose `BoardingMode` is not `IntegralAirstair`/`StairTruck`. Correct in itself — nobody
+    is visible inside an aerobridge — but all 17 T1 jet gates use bridges, which is where the
+    player's jets park, so the apron had no people on it.
+  - **Two hi-vis ramp workers were imported by ADR 0114 and never placed.** Nothing
+    referenced them. `Simulation/RampCrew.cs` now positions them per stage, and they
+    alternate so two workers beside one aircraft are never the same person.
+  - **Evidence:** `scripts/test-domain.sh` **776 passed**, 10 new in `RampCrewTests`.
+  - **NEXT:** passengers still never appear at an aerobridge gate (options: figures in the
+    gate lounge behind the glazing, or leave it) and there is no bus-boarding queue —
+    `BoardingMode` has no bus value. The catering scissor lift is static; it does not extend
+    to the door. Unity compile still unverified on this Mac.
+
 - **2026-09-23 Claude — airside service roads and GSE trips (branch
   `feature/gse-service-roads`, ADR 0115).** Bailey asked for catering, baggage and fuel
   trucks, and for vehicles to drive under the terminal as at the real Adelaide.

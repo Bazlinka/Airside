@@ -482,8 +482,11 @@ namespace Airside.Presentation
                         "Models/Vehicles/mdl_fuel_truck_small_v03.gltf",
                         "Models/Vehicles/mdl_fuel_truck_small_v02.gltf",
                         "Models/Vehicles/mdl_fuel_truck_small_v01.gltf"));
+                // Was the one turnaround vehicle with no art path at all, so it fell back to a
+                // flat-shaded box. VEH-004 gives it the scissor-lift hi-loader silhouette.
                 _cateringTruck = BuildServiceVehicle("Catering truck", new Color(0.82f, 0.86f, 0.88f),
-                    new Vector3(2.9f, 1.55f, 1.3f));
+                    new Vector3(2.9f, 1.55f, 1.3f),
+                    PreferArtKit("Models/Vehicles/mdl_catering_truck_v01.gltf"));
                 _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f),
                     PreferArtKit(
                         "Models/Vehicles/mdl_baggage_tug_train_v06.gltf",
@@ -700,6 +703,10 @@ namespace Airside.Presentation
             DriveServiceVehicle(_cateringTruck, GroundServiceKind.Catering, aircraft, prep, cateringService);
             DriveServiceVehicle(_baggageCart, GroundServiceKind.Baggage, aircraft, prep, baggageService);
 
+            // Hi-vis crew around whichever vehicle is working, so the apron has people on it
+            // through the whole turnaround and not only during a stairs boarding (ADR 0116).
+            UpdateRampCrew(aircraft, prep);
+
             if (terminal)
             {
                 SetEquipmentVisible(_stairs, false);
@@ -786,6 +793,7 @@ namespace Airside.Presentation
             SetEquipmentVisible(_baggageCart, false);
             SetEquipmentVisible(_passengerBus, false);
             SetEquipmentVisible(_stairs, false);
+            HideRampCrew();
         }
 
         private static void SetEquipmentVisible(Transform equipment, bool visible)

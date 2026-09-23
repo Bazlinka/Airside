@@ -1,5 +1,19 @@
 ## Unreleased
 
+- **The catering truck now exists (ADR 0116).** It was the one turnaround vehicle built with no
+  art path, so it fell back to a flat-shaded box while the fuel truck, baggage tug and apron bus
+  all loaded authored kits — and there was no catering model on disk at all. VEH-004 gives it
+  the scissor-lift hi-loader silhouette: chassis and cab, crossed lift legs, a raised box body
+  and a bridge platform at cabin-door height.
+
+- **There are people on the apron now (ADR 0116).** Passengers were drawn for stairs boarding
+  only, which is right as far as it goes — you cannot see anyone inside an aerobridge — but
+  every Terminal 1 jet gate uses a bridge, so at a terminal gate nobody was visible at all.
+  ADR 0114 had also imported two hi-vis ramp workers and never placed them. They now work
+  whichever vehicle is active: at the fuel panel and under the wing, steadying the hi-loader
+  and at the galley door, at the hold and on the baggage cart, and one marshaller clear of the
+  door during boarding.
+
 - **Fuel, catering and baggage vehicles now drive to the aircraft (ADR 0115).** They used to
   appear beside the stand when their prep stage began and vanish when it ended. Each now
   leaves a depot 90 seconds ahead of its stage, drives the real Adelaide airside frontage road

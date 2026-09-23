@@ -19,8 +19,6 @@ The Mac player paces its frames to the game rather than to the panel:
 
 The render budget also drops work that bought nothing visible:
 
-- **SSAO renders at half resolution** (`PC_Renderer` `Downsample: 1`). On a 3456×2168 Retina
-  surface one AO texel still covers a single logical point.
 - **Landing lamps cast shadows only at night.** Each shadowed spot is another shadow-caster pass
   every frame. In daylight the sun's key shadow hides a lamp's shadow.
 - **Static tint passes skip unchanged frames.** Airfield light renderers, and the terminal and
@@ -30,6 +28,11 @@ The render budget also drops work that bought nothing visible:
   `GetComponent<Renderer>` and a by-name `Transform.Find("White strobe")` for every lamp on
   every visible aircraft every frame. It also read `gameObject.name` (a fresh string) twice per
   glow pane. All of these are now resolved once.
+
+**SSAO stays at full resolution** (`PC_Renderer` `Downsample: 0`). Half-res AO was tried as a
+budget cut and made the field read flat on Retina overview/follow; Bailey asked for a
+visually nice Mac build, so the soft AO is not worth the save. Frame pacing and the
+CPU/light skips above remain the Mac optimisation path.
 
 ## Why
 
@@ -50,6 +53,6 @@ Presentation only: `AirsideFramePacing` (new), `AirsideRuntimeQuality`, `Airside
 
 EditMode covers the divisor, focus/soak targets, tint gate, lamp shadow rule and Options fit.
 Still owed: a packaged look on the ProMotion panel. Check the frame rate (60 focused, ~30
-unfocused), that half-res AO is indistinguishable at overview and follow, and that dusk
-lighting transitions stay smooth. If Unity's Metal player does not honour a vsync divisor
-above 1, the fallback is `vSyncCount = 0` plus `targetFrameRate`.
+unfocused), that full-res AO reads clean at overview and follow, and that dusk lighting
+transitions stay smooth. If Unity's Metal player does not honour a vsync divisor above 1,
+the fallback is `vSyncCount = 0` plus `targetFrameRate`.

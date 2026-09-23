@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Full-res SSAO again (ADR 0101).** Half-resolution ambient occlusion made the field look
+  flat on Retina. Mac still paces to 60 fps focused / ~30 unfocused, skips day landing-lamp
+  shadows, and keeps the light/tint CPU skips — those do not soften the image.
+
 - **Beginner aircraft shape pass (ADR 0108).** Corrected the ATR 42's reversed
   nose-profile station, rounded Dash 8 and Saab radomes, and replaced the Saab's
   square wing-root blocks with curved fairings. Updated runtime kits and Hangar

@@ -189,6 +189,10 @@ namespace Airside.Simulation
             return (long)Math.Ceiling(left);
         }
 
+        /// <summary>How long the Boarding stage takes for this type at this base level.</summary>
+        public static long BoardingSecondsFor(AircraftType type, PlayerBaseLevel baseLevel) =>
+            Scale(type, BoardingSeconds, baseLevel);
+
         private static long Scale(AircraftType type, long seconds, PlayerBaseLevel baseLevel)
         {
             var typeScale = type != null && AircraftCatalogue.TryFor(type, out var spec)

@@ -56,6 +56,9 @@ Airside/
     generate-aircraft-title-layout.py
                              Fits each type's fuselage title/registration to its mesh (--check);
                              test-aircraft-paint.py and render-aircraft-paint.py verify the paint
+    import-quaternius-people.py
+                             Re-exports the CC0 Quaternius passengers/ramp crew (bpy) into
+                             Resources/Airside/Characters with the kept clips, forced opaque
     sync-art-streaming-assets.sh
                              Copy runtime glTF/PNG art into StreamingAssets for packaged builds
     dotnet-harness/          Hand-authored csproj backing test-domain.sh

@@ -2,7 +2,7 @@
 
 Status: planned (Bailey asked for it on 23 September 2026, after the Terminal 1
 aerobridges, ADR 0113). Written as the AGENTS.md task packet. Build it as its own
-ADR, 0114.
+ADR, 0115.
 
 ## Player-visible outcome
 
@@ -85,7 +85,7 @@ aircraft pushes, taxis or takes off changes.
 - `Presentation/AirsidePrototype.cs` (retire the static tug; add the update hook)
 - `scripts/generate-aircraft-title-layout.py`
 - `Tests/EditMode/PushbackTugTests.cs`
-- ADR 0114, `GAME.md` and `CHANGELOG.md`
+- ADR 0115, `GAME.md` and `CHANGELOG.md`
 
 ## Acceptance criteria
 

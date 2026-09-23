@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **People board and deplane; turboprops use their own airstairs; stair trucks for jets on
+  stands without a bridge (ADR 0114).**
+  - Nine CC0 Quaternius characters walk between the terminal and the aircraft.
+  - Arriving passengers get off after the door opens, and boarding finishes before the
+    door shuts.
+  - The Saab 340, Dash 8 and ATR forward doors fold down into airstairs.
+  - Jets on stands 20R, 22R and 27–29 get a stair truck.
+  - Widebody front doors now open and close.
+
 - **Terminal 1 aerobridges (ADR 0113).**
   - 17 gates get a moving bridge that drives out to the parked jet's front-left door
     once the beacon is off, and pulls back before the push.

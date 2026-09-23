@@ -236,6 +236,35 @@ namespace Airside.Domain
             : wingspanMetres < 65.0 ? 'E'
             : 'F';
 
+        /// <summary>
+        /// Typical seats from the catalogue role ("· 34 seats", "· 160–189 seats": the middle of
+        /// a range). Drives how many passengers walk to a stand (ADR 0114); 150 if unknown.
+        /// </summary>
+        public static int TypicalSeats(AircraftType type)
+        {
+            if (!TryFor(type, out var spec) || spec.Role == null)
+                return 150;
+            var marker = spec.Role.IndexOf(" seats", StringComparison.Ordinal);
+            if (marker < 0)
+                return 150;
+            var start = marker;
+            while (start > 0 && (char.IsDigit(spec.Role[start - 1]) || spec.Role[start - 1] == '–' || spec.Role[start - 1] == '-'))
+                start--;
+            var numbers = spec.Role.Substring(start, marker - start).Split('–', '-');
+            var total = 0;
+            var count = 0;
+            foreach (var number in numbers)
+            {
+                if (int.TryParse(number, out var value))
+                {
+                    total += value;
+                    count++;
+                }
+            }
+
+            return count == 0 ? 150 : total / count;
+        }
+
         /// <summary>The type's ICAO code letter; unknown types are treated as code C.</summary>
         public static char CodeLetter(AircraftType type) =>
             TryFor(type, out var spec) ? spec.CodeLetter : 'C';

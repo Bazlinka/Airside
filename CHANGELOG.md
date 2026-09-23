@@ -78,6 +78,13 @@
   - Gates carry an ICAO code letter, so widebodies only use code E gates.
   - The board shows Boarding, Final call and Gate closed.
 
+- **The headless test gate cannot silently break again.** `scripts/test-domain.sh` now checks
+  the `Harness.csproj` exclude list before building and names any EditMode test that imports
+  UnityEngine but is not listed, instead of letting one `CS0246` replace every result. That
+  break has happened twice — `MapLabelLayout`/`GroundSeparation`, then `AirsideFramePacingTests`
+  — and each time it hid the whole suite until someone noticed.
+
+
 - **737 fitted livery + titles no longer show through wings (ADR 0109).** 737-8 and
   737-800 get the same skin-conforming operator sash as the A320; the barcode traffic
   decal is off for both. Fuselage wordmarks use a depth-tested cutout material so they

@@ -165,6 +165,20 @@
     - Check that widebodies only use 18/20/22L/25/26L/28L.
     - Verify the code E list against the ADL AIP stand chart.
 
+- **2026-09-23 Claude — headless test gate guard (merged from
+  `cursor/restore-headless-test-gate-7114`).** `scripts/test-domain.sh` now reads the
+  `Harness.csproj` exclude list before building and names any EditMode test that imports
+  UnityEngine without being listed, so a single `CS0246` can no longer replace every result.
+  The break it was written for has already happened twice: `MapLabelLayout`/`GroundSeparation`,
+  then `AirsideFramePacingTests`.
+  - The branch's own csproj exclusion for `AirsideFramePacingTests` was already on `main` by
+    the time this merged, so only the guard is new.
+  - **Its handoff entry claimed `main` was red at 719 passed / 6 failed from #381. That was
+    stale and has not been carried over:** `main` at this merge is **776 passed / 0 failed**,
+    and the specific tests it named (`RegionalCarriersTests`, `AirportCurfewTests`) were
+    re-run individually and pass. Do not treat `main` as red on the strength of that entry.
+
+
 - **2026-09-23 Cursor — 737 fitted livery + title depth (ADR 0109, merged #392).**
   737-8/800 use `livery_ribbon` + `hasFittedLivery` (no barcode decal). Fuselage titles
   use URP Unlit cutout with ZWrite. Mac app rebuilt at `work/builds/Airside.app`

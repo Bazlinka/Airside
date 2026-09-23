@@ -9,22 +9,29 @@ namespace Airside.Tests
     public sealed class AirportCurfewTests
     {
         [Test]
-        public void Closed_From2300To0600Adelaide()
+        public void Closed_After2300UntilFiveAdelaide()
         {
             Assert.That(AirportCurfew.IsClosed(new DateTime(2026, 9, 21, 22, 59, 0)), Is.False);
-            Assert.That(AirportCurfew.IsClosed(new DateTime(2026, 9, 21, 23, 0, 0)), Is.True);
+            Assert.That(AirportCurfew.IsClosed(new DateTime(2026, 9, 21, 23, 0, 0)), Is.False,
+                "23:00 is the last flight (ADR 0110)");
+            Assert.That(AirportCurfew.IsClosed(new DateTime(2026, 9, 21, 23, 0, 1)), Is.True);
+            Assert.That(AirportCurfew.IsClosed(new DateTime(2026, 9, 21, 23, 30, 0)), Is.True);
             Assert.That(AirportCurfew.IsClosed(new DateTime(2026, 9, 22, 3, 15, 0)), Is.True);
-            Assert.That(AirportCurfew.IsClosed(new DateTime(2026, 9, 22, 5, 59, 0)), Is.True);
-            Assert.That(AirportCurfew.IsClosed(new DateTime(2026, 9, 22, 6, 0, 0)), Is.False);
+            Assert.That(AirportCurfew.IsClosed(new DateTime(2026, 9, 22, 4, 59, 0)), Is.True);
+            Assert.That(AirportCurfew.IsClosed(new DateTime(2026, 9, 22, 5, 0, 0)), Is.False,
+                "first flight 05:00");
         }
 
         [Test]
-        public void OpensAt_JumpsOvernightToSix()
+        public void OpensAt_JumpsOvernightToFive()
         {
             var clock = AirlineClock.Default;
             var evening = clock.AtLocal(new DateTime(2026, 9, 14, 23, 30, 0));
             var open = AirportCurfew.OpensAt(evening, clock);
-            Assert.That(clock.LocalAt(open), Is.EqualTo(new DateTime(2026, 9, 15, 6, 0, 0)).Within(TimeSpan.FromSeconds(1)));
+            Assert.That(clock.LocalAt(open), Is.EqualTo(new DateTime(2026, 9, 15, 5, 0, 0)).Within(TimeSpan.FromSeconds(1)));
+            var small = clock.AtLocal(new DateTime(2026, 9, 15, 2, 0, 0));
+            Assert.That(clock.LocalAt(AirportCurfew.OpensAt(small, clock)),
+                Is.EqualTo(new DateTime(2026, 9, 15, 5, 0, 0)).Within(TimeSpan.FromSeconds(1)));
         }
 
         [Test]

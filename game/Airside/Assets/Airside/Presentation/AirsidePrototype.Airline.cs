@@ -883,7 +883,7 @@ namespace Airside.Presentation
             if (joined > 0)
                 ShowToast("Rex and QantasLink now fly from Adelaide's regional apron too.");
             if (emergencyJoined > 0)
-                ShowToast("RFDS can still fly through the 23:00–06:00 curfew.");
+                ShowToast("RFDS can still fly through the 23:00–05:00 curfew.");
             if (jetJoined > 0)
                 ShowToast("Virgin Australia's 737-8 now operates from Gate 13.");
             RefreshFleetFlights();

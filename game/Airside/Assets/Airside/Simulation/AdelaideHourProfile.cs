@@ -11,7 +11,8 @@ namespace Airside.Simulation
     {
         public static float Density(int hour) => hour switch
         {
-            5 => 0.06f,
+            // First wave (ADR 0110): night-stopped aircraft push from 05:00 onward.
+            5 => 0.70f,
             6 or 7 or 8 => 1.00f,
             9 => 0.70f,
             10 => 0.40f,
@@ -73,29 +74,88 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Round a ready time up onto a 5-minute bank mark during busy Adelaide hours so
-        /// several aircraft can share a departure minute (simulation-style ADL peaks).
-        /// Quiet hours jump via <see cref="NextUsefulLocal"/>. Never goes earlier.
+        /// Published departure marks (minutes past midnight) that pull nearby ready times
+        /// together, so several operators share one scheduled time the way a real ADL bank
+        /// does (06:00 Qantas, Virgin and Jetstar all on the board together). The tower
+        /// still sequences the actual takeoffs a minute or two apart. ADR 0110.
         /// </summary>
-        public static DateTime SnapToBankLocal(DateTime local, int firstHour, int lastHour)
+        public static readonly int[] BankAnchorMinutes =
         {
+            5 * 60 + 30, 5 * 60 + 45, 6 * 60, 6 * 60 + 15, 6 * 60 + 30, 7 * 60, 7 * 60 + 30, 8 * 60,
+            8 * 60 + 30, 9 * 60, 11 * 60 + 30, 12 * 60, 12 * 60 + 30, 16 * 60 + 30, 17 * 60,
+            17 * 60 + 30, 18 * 60, 18 * 60 + 30, 19 * 60, 20 * 60, 21 * 60, 21 * 60 + 30, 22 * 60,
+            22 * 60 + 30, 23 * 60
+        };
+
+        /// <summary>A ready time this close before an anchor is published on the anchor.</summary>
+        public const int AnchorPullMinutes = 15;
+
+        /// <summary>
+        /// First-wave marks for aircraft that night-stopped on the apron: 05:00–06:30,
+        /// weighted toward 06:00 so the dawn board clusters rather than steps.
+        /// </summary>
+        public static readonly int[] FirstWaveMinutes =
+        {
+            5 * 60, 5 * 60 + 30, 5 * 60 + 45, 6 * 60, 6 * 60, 6 * 60 + 15, 6 * 60 + 30
+        };
+
+        /// <summary>The first-wave departure for a night-stopped aircraft, picked by a stable key.</summary>
+        public static DateTime FirstWaveLocal(DateTime day, int key)
+        {
+            var index = (key & int.MaxValue) % FirstWaveMinutes.Length;
+            return day.Date.AddMinutes(FirstWaveMinutes[index]);
+        }
+
+        /// <summary>
+        /// Round a ready time up onto a published mark: the next <see cref="BankAnchorMinutes"/>
+        /// within <see cref="AnchorPullMinutes"/>, otherwise the next 5-minute mark. The
+        /// afternoon hole jumps to the next bank (<see cref="NextUsefulLocal"/>); the evening
+        /// wind-down does not roll to tomorrow while the day is still open. A ready time
+        /// after the last movement (23:00) goes to tomorrow's first wave
+        /// (<paramref name="spreadKey"/> spreads those across 05:00–06:30). Never goes earlier.
+        /// </summary>
+        public static DateTime SnapToBankLocal(DateTime local, int firstHour, int lastHour, int spreadKey = 0)
+        {
+            var lastMinute = (lastHour + 1) * 60;
             if (local.Hour < firstHour)
-                return local.Date.AddHours(firstHour);
-            if (local.Hour > lastHour)
-                return local.Date.AddDays(1).AddHours(firstHour);
+                return Later(local, FirstWaveLocal(local.Date, spreadKey));
+            if (local.TimeOfDay > TimeSpan.FromMinutes(lastMinute))
+                return FirstWaveLocal(local.Date.AddDays(1), spreadKey);
 
             if (Density(local.Hour) < 0.45f)
-                return NextUsefulLocal(local, firstHour, lastHour);
+            {
+                var useful = NextUsefulLocal(local, firstHour, lastHour);
+                if (useful.Date == local.Date && useful > local)
+                    return useful;
+            }
 
-            var totalMin = local.Hour * 60 + local.Minute;
+            var totalMin = local.Hour * 60 + local.Minute + (local.Second > 0 || local.Millisecond > 0 ? 1 : 0);
+            if (local.Second == 0 && local.Millisecond == 0 && IsAnchor(totalMin))
+                return local;
+            foreach (var anchor in BankAnchorMinutes)
+            {
+                if (anchor < totalMin || anchor > lastMinute)
+                    continue;
+                if (anchor - totalMin <= AnchorPullMinutes)
+                    return local.Date.AddMinutes(anchor);
+                break;
+            }
+
             var snapped = (totalMin + 4) / 5 * 5;
-            if (snapped == totalMin)
-                return new DateTime(local.Year, local.Month, local.Day, local.Hour, local.Minute, 0,
-                    local.Kind);
-            if (snapped >= (lastHour + 1) * 60)
-                return local.Date.AddDays(1).AddHours(firstHour);
+            if (snapped > lastMinute)
+                return FirstWaveLocal(local.Date.AddDays(1), spreadKey);
             return local.Date.AddMinutes(snapped);
         }
+
+        private static bool IsAnchor(int minute)
+        {
+            foreach (var anchor in BankAnchorMinutes)
+                if (anchor == minute)
+                    return true;
+            return false;
+        }
+
+        private static DateTime Later(DateTime a, DateTime b) => a > b ? a : b;
 
         /// <summary>
         /// Next time an AI departure should go if the ready time falls in a quiet hole.

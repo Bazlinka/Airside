@@ -49,9 +49,10 @@ namespace Airside.Simulation
             new("GATE-27"), new("GATE-29"), new("GATE-28L"), new("GATE-28R")
         };
 
+        // 28L is the pier's code E centre line; 28R is a code C narrowbody line (ADR 0110).
         private static readonly StableId[] WidebodyGateStands =
         {
-            new("GATE-28L"), new("GATE-28R")
+            new("GATE-28L")
         };
 
         public static PlayerBaseSpec For(PlayerBaseLevel level) => level switch

@@ -125,7 +125,7 @@ namespace Airside.Domain
 
         /// <summary>
         /// Royal Flying Doctor Service from Adelaide. Real metal is a PC-12 / King Air;
-        /// the sim flies a Saab 340 until that type exists. Exempt from the 23:00–06:00 curfew.
+        /// the sim flies a Saab 340 until that type exists. Exempt from the 23:00–05:00 curfew.
         /// </summary>
         public static Airline Rfds() => new("RFDS", "Royal Flying Doctor Service", "#C8102E", isPlayer: false);
 

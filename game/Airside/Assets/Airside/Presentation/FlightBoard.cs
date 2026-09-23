@@ -97,6 +97,10 @@ namespace Airside.Presentation
                 return prep.Ready ? "Ready" : prep.Label;
             }
 
+            if (aircraft != null && !aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand
+                && aircraft.Scheduled.HasValue)
+                return GateStatus(aircraft, now);
+
             if (aircraft != null && aircraft.State == FleetState.Landing)
             {
                 if (aircraft.WentAroundThisTrip && AirlineOperations.IsMissedApproachLanding(aircraft))
@@ -118,6 +122,28 @@ namespace Airside.Presentation
             }
 
             return PhaseLabel(aircraft);
+        }
+
+        /// <summary>
+        /// Airport departures-screen status for an AI aircraft still on its gate (ADR 0110):
+        /// Scheduled, then Boarding (jets 40 min out, turboprops 25), Final call at 15,
+        /// Gate closed at 5. RFDS reads as an emergency tasking at any hour.
+        /// </summary>
+        public static string GateStatus(FleetAircraft aircraft, SimulationTime now)
+        {
+            if (aircraft?.Scheduled == null)
+                return string.Empty;
+            if (aircraft.Airline.IsEmergency)
+                return "RFDS · Emergency";
+            var minutes = (aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - now.ElapsedSeconds) / 60.0;
+            var boarding = AirlineOperations.NeedsTerminalGate(aircraft.Type) ? 40 : 25;
+            if (minutes <= 5)
+                return "Gate closed";
+            if (minutes <= 15)
+                return "Final call";
+            if (minutes <= boarding)
+                return "Boarding";
+            return "Scheduled";
         }
 
         /// <summary>Whole minutes late, once a scheduled aircraft is at least a minute overdue.</summary>
@@ -178,6 +204,10 @@ namespace Airside.Presentation
             var delay = DepartureDelayMinutes(aircraft, now);
             if (delay > 0)
                 return $"LATE +{delay} MIN";
+            if (aircraft != null && !aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand
+                && aircraft.Scheduled.HasValue)
+                return GateStatus(aircraft, now);
+
             if (aircraft != null && aircraft.State == FleetState.Landing)
             {
                 if (aircraft.WentAroundThisTrip && AirlineOperations.IsMissedApproachLanding(aircraft))

@@ -1,5 +1,16 @@
 ## Unreleased
 
+- **Operations realism: 05:00–23:00 day, banked departures, gates sized to aircraft
+  (ADR 0110).**
+  - Commercial AI now flies from 05:00, and the last flight is 23:00; RFDS and the
+    player are still exempt.
+  - Departures cluster on shared published times (for example, several at 06:00).
+  - Aircraft that night-stop leave in a 05:00–06:30 first wave.
+  - A parked aircraft stays on its stand until its own departure: no off-season Cathay
+    vanishing from GATE-18, and no timetable-only flights appearing in the sky.
+  - Gates carry an ICAO code letter, so widebodies only use code E gates.
+  - The board shows Boarding, Final call and Gate closed.
+
 - **737 fitted livery + titles no longer show through wings (ADR 0109).** 737-8 and
   737-800 get the same skin-conforming operator sash as the A320; the barcode traffic
   decal is off for both. Fuselage wordmarks use a depth-tested cutout material so they

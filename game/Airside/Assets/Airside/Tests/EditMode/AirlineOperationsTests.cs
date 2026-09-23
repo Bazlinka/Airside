@@ -243,7 +243,7 @@ namespace Airside.Tests
                     Assert.That(aircraft.CurrentDestination?.Code, Is.EqualTo(city));
             }
 
-            Assert.That(AirlineOperations.AiFirstDepartureHour, Is.EqualTo(6));
+            Assert.That(AirlineOperations.AiFirstDepartureHour, Is.EqualTo(5), "first wave 05:00 (ADR 0110)");
             Assert.That(AirlineOperations.AiLastDepartureHour, Is.EqualTo(22));
         }
 
@@ -280,10 +280,17 @@ namespace Airside.Tests
                 .ToArray();
             Assert.That(departures.Length, Is.GreaterThanOrEqualTo(8),
                 "a busy apron means a full opening departure bank");
-            Assert.That(departures[0], Is.EqualTo(AirlineOperations.AiOpeningDepartureSeconds[0]));
+            // Published on the next 5-minute clock mark after the ladder offset (ADR 0110).
+            Assert.That(departures[0], Is.InRange(AirlineOperations.AiOpeningDepartureSeconds[0],
+                AirlineOperations.AiOpeningDepartureSeconds[0] + 5 * 60));
+            foreach (var at in departures)
+            {
+                var local = ops.Clock.LocalAt(new SimulationTime(at));
+                Assert.That(local.Minute % 5 == 0 && local.Second == 0, Is.True, $"{local:HH:mm:ss} is on a board mark");
+            }
             Assert.That(departures.Distinct().Count(), Is.LessThan(departures.Length),
                 "ADL-style doubles: at least one shared departure minute");
-            Assert.That(departures.Max(), Is.LessThanOrEqualTo(40 * 60));
+            Assert.That(departures.Max(), Is.LessThanOrEqualTo(45 * 60));
         }
 
         [Test]
@@ -335,7 +342,7 @@ namespace Airside.Tests
             var player = Player();
             ops.AddAirline(player);
             var bayPlane = ops.AddAircraft(player, "VH-PAA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
-            var gatePlane = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing78710, AirlineOperations.AdelaideTerminalGates[0]);
+            var gatePlane = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing78710, new StableId("GATE-18"));
             ops.ScheduleDeparture(bayPlane, Code("KGC"), new SimulationTime(600));
             ops.ScheduleDeparture(gatePlane, Code("MEL"), new SimulationTime(600));
 

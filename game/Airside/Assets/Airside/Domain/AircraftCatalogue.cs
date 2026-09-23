@@ -78,6 +78,9 @@ namespace Airside.Domain
         public string SourceId { get; }
 
         public string StandClassLabel => StandClass == StandClass.TerminalGate ? "Terminal gate" : "Regional bay";
+
+        /// <summary>ICAO aerodrome reference code letter from wingspan (Annex 14): stand sizing.</summary>
+        public char CodeLetter => AircraftCatalogue.CodeLetterForSpan(WingspanMetres);
     }
 
     /// <summary>Every aircraft type the game knows, in display order.</summary>
@@ -220,6 +223,22 @@ namespace Airside.Domain
 
         public static bool IsWidebody(AircraftType type) =>
             TryFor(type, out var spec) && spec.WingspanMetres >= 45.0;
+
+        /// <summary>
+        /// ICAO code letter by wingspan: A &lt; 15 m, B &lt; 24 m, C &lt; 36 m, D &lt; 52 m,
+        /// E &lt; 65 m, F otherwise. A 737 or A321 is C; an A330, 787 or A350 is E (ADR 0110).
+        /// </summary>
+        public static char CodeLetterForSpan(double wingspanMetres) =>
+            wingspanMetres < 15.0 ? 'A'
+            : wingspanMetres < 24.0 ? 'B'
+            : wingspanMetres < 36.0 ? 'C'
+            : wingspanMetres < 52.0 ? 'D'
+            : wingspanMetres < 65.0 ? 'E'
+            : 'F';
+
+        /// <summary>The type's ICAO code letter; unknown types are treated as code C.</summary>
+        public static char CodeLetter(AircraftType type) =>
+            TryFor(type, out var spec) ? spec.CodeLetter : 'C';
 
         public static AircraftSpec For(AircraftType type)
         {

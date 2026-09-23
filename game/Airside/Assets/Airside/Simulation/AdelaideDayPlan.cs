@@ -50,9 +50,8 @@ namespace Airside.Simulation
 
     /// <summary>
     /// A representative Adelaide day: every official AI operator's network, both
-    /// arrivals and departures, from the first pushback hour to the last. Planned
-    /// movements that are currently airborne are drawn as sky traffic so the
-    /// whole day is visible without parking extra aircraft on the stands.
+    /// arrivals and departures, 05:00–23:00, each turn on a stand that fits the type and
+    /// is not already taken. The sky draws only the live fleet's legs (ADR 0110).
     /// </summary>
     public static class AdelaideDayPlan
     {
@@ -64,6 +63,8 @@ namespace Airside.Simulation
             var clock = operations.Clock ?? AirlineClock.Default;
             var day = clock.LocalAt(now).Date;
             var list = new List<PlannedMovement>();
+            // Minute each stand is next free, so two overlapping turns never share a gate.
+            var standFreeAt = new Dictionary<StableId, int>();
 
             foreach (var airline in operations.Airlines)
             {
@@ -93,15 +94,13 @@ namespace Airside.Simulation
                     {
                         if (slot >= banks.Length)
                             break;
-                        var arriveMinutes = Math.Min(banks[slot],
-                            AirlineOperations.AiLastDepartureHour * 60 - 55);
                         // Gate dwell matches the live AI turnaround bands (ADR 0071):
                         // turboprop ~35, narrowbody ~50, widebody ~75 — not a flat 50 for all.
                         var dwell = TurnaroundMinutes(type);
-                        var departMinutes = Math.Min(arriveMinutes + dwell,
-                            AirlineOperations.AiLastDepartureHour * 60 - 5);
+                        var arriveMinutes = Math.Min(banks[slot], AirportCurfew.LastMovementMinute - dwell);
+                        var departMinutes = Math.Min(arriveMinutes + dwell, AirportCurfew.LastMovementMinute);
                         var number = 210 + slot;
-                        var stand = StandFor(type, slot);
+                        var stand = StandFor(type, slot, arriveMinutes, departMinutes, standFreeAt);
                         var arriveAt = clock.AtLocal(day.AddMinutes(arriveMinutes));
                         var departAt = clock.AtLocal(day.AddMinutes(departMinutes));
                         var arriveNumber = $"{airline.Id.Value}{number}";
@@ -125,8 +124,11 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Planned Adelaide movements that are in the air right now and are not
-        /// already a live fleet aircraft. Overflights stay in <see cref="SkyTraffic"/>.
+        /// Adelaide flights in the air right now, drawn from the live fleet's own off-map
+        /// legs (ADR 0110): an aircraft that left one of our gates climbing away, or one
+        /// flying home to take a stand. Timetable-only "phantom" flights are no longer
+        /// drawn, so nothing departs Adelaide without first having been parked at a gate.
+        /// Overflights stay in <see cref="SkyTraffic"/>.
         /// </summary>
         public static IReadOnlyList<SkyFlight> AirborneAt(AirlineOperations operations, SimulationTime now)
         {
@@ -135,23 +137,41 @@ namespace Airside.Simulation
 
             var home = operations.Home;
             var list = new List<SkyFlight>();
-            var claimed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var planned in ForLocalDay(operations, now))
+            foreach (var aircraft in operations.Fleet)
             {
-                if (planned.Type == null)
+                if (aircraft?.Type == null || !aircraft.CurrentDestination.HasValue)
                     continue;
-                var awayCode = planned.Arrival ? planned.Origin : planned.Destination;
-                if (!DestinationCatalogue.TryFind(awayCode, out var away))
+                var away = aircraft.CurrentDestination.Value;
+                var duration = LegTiming.AirborneSeconds(home.DistanceKmTo(away), aircraft.Type);
+                double start;
+                Destination from;
+                Destination to;
+                if (aircraft.State == FleetState.Outbound)
+                {
+                    // The fleet draws the climb-out itself for DepartedSeconds; hand over after.
+                    var departed = AircraftPerformance.For(aircraft.Type).DepartedSeconds;
+                    if (now.ElapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds < departed)
+                        continue;
+                    start = aircraft.StateStartedAt.ElapsedSeconds;
+                    from = home;
+                    to = away;
+                }
+                else if (aircraft.State == FleetState.Inbound && aircraft.StateEndsAt.HasValue)
+                {
+                    // Inbound may include a ground delay at the outstation: fly the last
+                    // leg-length of it, arriving as the aircraft joins the circuit.
+                    start = aircraft.StateEndsAt.Value.ElapsedSeconds - duration;
+                    from = away;
+                    to = home;
+                }
+                else
+                {
                     continue;
+                }
 
-                if (CoveringAircraft(planned, operations.Fleet, claimed) != null
-                    || planned.Disruption.Cancelled)
-                    continue;
-
-                var from = planned.Arrival ? away : home;
-                var to = planned.Arrival ? home : away;
-                if (SkyTraffic.TryEnroute(planned.FlightNumber, planned.Type, from, to,
-                        now.ElapsedSeconds, StartSeconds(planned, from, to), out var flight))
+                var callsign = aircraft.Airline.Id.Value + aircraft.Registration;
+                if (SkyTraffic.TryEnroute(callsign, aircraft.Type, from, to, now.ElapsedSeconds, start,
+                        out var flight))
                     list.Add(flight);
             }
 
@@ -279,14 +299,6 @@ namespace Airside.Simulation
             _ => null
         };
 
-        private static double StartSeconds(PlannedMovement planned, Destination from, Destination to)
-        {
-            var duration = LegTiming.AirborneSeconds(from.DistanceKmTo(to), planned.Type);
-            return planned.Arrival
-                ? planned.EstimatedAt.ElapsedSeconds - duration
-                : planned.EstimatedAt.ElapsedSeconds;
-        }
-
         private static int TurnaroundMinutes(AircraftType type)
         {
             if (type == null)
@@ -298,16 +310,36 @@ namespace Airside.Simulation
             return 35;
         }
 
-        private static string StandFor(AircraftType type, int slot)
+        /// <summary>
+        /// A stand that fits the type (class and ICAO code letter) and is free for the whole
+        /// turn, preferring one that is not bigger than needed. Falls back to the old
+        /// round-robin only when every fitting stand is busy.
+        /// </summary>
+        private static string StandFor(AircraftType type, int slot, int arriveMinutes, int departMinutes,
+            Dictionary<StableId, int> standFreeAt)
         {
-            if (AirlineOperations.NeedsTerminalGate(type))
+            var pool = AirlineOperations.NeedsTerminalGate(type)
+                ? AirlineOperations.AdelaideTerminalGates
+                : AirlineOperations.AdelaideRegionalBays;
+            var fitted = FittingStands(pool, type);
+            StableId? pick = null;
+            for (var pass = 0; pass < 2 && pick == null; pass++)
             {
-                var gates = FittingStands(AirlineOperations.AdelaideTerminalGates, type);
-                return AdelaideGround.StandLabel(gates[slot % gates.Count]);
+                for (var i = 0; i < fitted.Count; i++)
+                {
+                    var stand = fitted[(slot + i) % fitted.Count];
+                    if (pass == 0 && AirlineOperations.IsOversized(type, stand))
+                        continue;
+                    if (standFreeAt.TryGetValue(stand, out var freeAt) && freeAt > arriveMinutes)
+                        continue;
+                    pick = stand;
+                    break;
+                }
             }
 
-            var bays = FittingStands(AirlineOperations.AdelaideRegionalBays, type);
-            return AdelaideGround.StandLabel(bays[slot % bays.Count]);
+            var chosen = pick ?? fitted[slot % fitted.Count];
+            standFreeAt[chosen] = departMinutes;
+            return AdelaideGround.StandLabel(chosen);
         }
 
         private static IReadOnlyList<StableId> FittingStands(IReadOnlyList<StableId> stands, AircraftType type)

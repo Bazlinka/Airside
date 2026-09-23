@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **AIR-011 A320 appearance pass (ADR 0105).** Replaced its scaled 737 fuselage,
+  flight deck, cabin windows, wing and split tips with a rounder A320 silhouette,
+  single sharklets and a skin-conforming operator-coloured ribbon; the repeating
+  fuselage decal no longer produces dark barcode bands on this type. Its Hangar
+  thumbnail now matches the model. Flight state,
+  controls, saves and fallback are unchanged.
+
 - **Player can choose a stand after landing (ADR 0103).** Auto-stand no longer fires on the
   landing tick. The selection card and Operations detail list assignable stands (BEST first);
   after 90 s the tower still parks for you. Toast and first-flight guide match the real choice.

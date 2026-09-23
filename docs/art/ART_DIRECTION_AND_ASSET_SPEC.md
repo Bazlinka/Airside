@@ -339,7 +339,9 @@ Do not generate or integrate this set until the related gameplay milestone is
 approved. ADR 0046 is the explicit exception for Bailey's one-at-a-time Adelaide
 aircraft rollout, beginning with AIR-005. AIR-013 (E190) and AIR-014 (A220-300) are now
 lofted from their own dimension tables rather than scaled from AIR-005 (ADR 0098); AIR-011
-(A320), AIR-015 (A330-900) and AIR-016 (787-9) remain axis-scaled copies. Each later type
+(A320) now has its own rounded fuselage, wing, flight deck and livery geometry (ADR 0105),
+while inherited running gear and nacelles remain. AIR-015 (A330-900) and AIR-016 (787-9)
+remain axis-scaled copies. Each later type
 still needs its own
 reviewable slice. The broader backlog includes terminal interiors and passenger
 agents; narrow-body, wide-body, cargo and general-aviation fleets; modular terminal construction;

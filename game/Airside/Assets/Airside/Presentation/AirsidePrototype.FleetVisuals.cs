@@ -329,7 +329,11 @@ namespace Airside.Presentation
             // The same neutral skin sheet works across every authored type. Repainting
             // it here gives AI traffic a coherent operator colour instead of leaving
             // Rex, QantasLink and Virgin in the old generic blue traffic texture.
-            var decal = TintedLiveryDecal(airline.LiveryHex, accent);
+            // AIR-011 carries its operator colour on fitted geometry. Repeating
+            // the generic traffic decal over the metre-UV fuselage makes dark
+            // barcode stripes at overview distance, obscuring the new skin.
+            var hasFittedA320Livery = AircraftVisualProfiles.IsAirbusA320200(aircraft.Type);
+            var decal = hasFittedA320Livery ? null : TintedLiveryDecal(airline.LiveryHex, accent);
             if (decal != null)
                 ApplyLiveryTexture(view, decal);
 

@@ -1,5 +1,22 @@
 ## Where to resume — session handoff
 
+- **2026-09-23 Codex — AIR-011 A320 appearance pass (branch
+  `codex/aircraft-appearance-pass`, ADR 0105).** Dedicated rounded fuselage,
+  wider-chord wing with single sharklets, broad flight deck, cabin rhythm and a
+  skin-conforming fictional livery ribbon replace the most visible scaled-737
+  cues. Existing gear, nacelles, controls, simulation, save format and primitive
+  fallback remain. The generated glTF/FBX and StreamingAssets kit are in sync.
+  - **Evidence:** six-type geometry suite passes; strict A320 connectivity
+    passes within 5 cm; neutral multi-view and refreshed Hangar thumbnail
+    inspected. The packaged Mac build was reviewed at Gate 17 from the apron
+    at day, dusk and night (`work/aircraft-a320-apron-*.png`); the first pass
+    exposed a repeating dark decal, and the final build shows a clean fitted
+    ribbon and no protruding pylon. Final Unity EditMode **988/996**, matching
+    main's eight known simulation failures; no aircraft/presentation failure.
+  - **NEXT:** merge this A320 slice after reviewing its packaged evidence and
+    accepting the unchanged eight-failure baseline; then take AIR-015 A330-900 and AIR-016 787-9 as
+    separate aircraft slices, not more scaled-copy repaints.
+
 - **2026-09-23 Codex — desktop HUD hierarchy pass (branch
   `codex/hud-interface-redesign`, ADR 0104).** Presentation-only restructure of Operations,
   Route Map, Fleet and Career. Runway Ink surfaces are more translucent; the persistent

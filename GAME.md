@@ -1,5 +1,23 @@
 ## Where to resume — session handoff
 
+- **2026-09-23 Cursor — headless test gate restored; `main` is red from #381.**
+  `scripts/test-domain.sh` has not compiled since #383 (2026-09-22): `AirsideFramePacingTests`
+  imports `UnityEngine` and was never added to the `Harness.csproj` exclude list, so a single
+  `CS0246` replaced every test result. 12 PRs merged behind that blind spot. The file is now
+  excluded and `test-domain.sh` fails fast naming any unlisted Unity-importing test, so the
+  same break cannot hide results a third time (it already happened once with
+  `MapLabelLayout`/`GroundSeparation`).
+  - **Evidence:** `scripts/test-domain.sh` now runs — **719 passed, 6 failed, 725 total**.
+    The 6 are the #381 apron-density regressions already recorded below, confirmed by
+    bisect: `0e3faa7f` (immediately before #381) was **704/704 green**, `3650cca2` (#381)
+    is the first red commit.
+  - **NEXT:** the 6 failures belong to the #381 / ADR 0100 owner and are unfixed here —
+    `RegionalCarriersTests` ×3 (bay counts 8→5, 10→8, 3→5),
+    `AirlineOperationsTests.AiAirline_FliesAllDayWithoutDoubleBookingStandsOrRunway`,
+    `AirlineSoakTests` 30-day (A6-EVA `AtStand` booked 43253 s ahead, limit 43200), and
+    `AirportCurfewTests` evening start (22 → 6). Decide per test whether the apron-density
+    change or the fixture is wrong; do not merge more work over a red `main`.
+
 - **2026-09-23 Cursor — 737 fitted livery + title depth (ADR 0109, merged #392).**
   737-8/800 use `livery_ribbon` + `hasFittedLivery` (no barcode decal). Fuselage titles
   use URP Unlit cutout with ZWrite. Mac app rebuilt at `work/builds/Airside.app`

@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Headless test gate compiles again, and cannot silently break the same way.**
+  `AirsideFramePacingTests` imports `UnityEngine`, so its arrival in #383 stopped
+  `scripts/test-domain.sh` compiling at all and hid every other result for 12 merges. It is
+  excluded like the other Unity-importing EditMode tests, and `test-domain.sh` now checks the
+  exclude list first and names any unlisted file instead of emitting a bare `CS0246`. The run
+  is 719 passed / 6 failed — the 6 are the pre-existing #381 apron-density regressions.
+
 - **737 fitted livery + titles no longer show through wings (ADR 0109).** 737-8 and
   737-800 get the same skin-conforming operator sash as the A320; the barcode traffic
   decal is off for both. Fuselage wordmarks use a depth-tested cutout material so they

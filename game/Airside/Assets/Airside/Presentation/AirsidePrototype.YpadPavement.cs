@@ -101,7 +101,8 @@ namespace Airside.Presentation
                     var sit = TerminalGroundY(terminal.Xz, runwayTop);
                     if (sit < groundY)
                         groundY = sit;
-                    AddPrism(buildings, terminal.Xz, sit, height);
+                    AddPrism(buildings, terminal.Xz, sit, height,
+                        cutUndercroftPortal: terminal.Name == "Domestic & International Terminal");
                 }
 
                 SpawnSurface(root, AirsideAdelaidePavement.TerminalsName, buildings, new Color(0.43f, 0.45f, 0.46f), null, castShadows: true);
@@ -486,7 +487,7 @@ namespace Airside.Presentation
             return AirsideAdelaideGround.WorldHeight(sumX / n, sumZ / n);
         }
 
-        private static void AddPrism(SurfaceMesh mesh, float[] xz, float baseY, float height)
+        private static void AddPrism(SurfaceMesh mesh, float[] xz, float baseY, float height, bool cutUndercroftPortal = false)
         {
             var count = xz.Length / 2;
             if (count < 3)
@@ -515,16 +516,36 @@ namespace Airside.Presentation
                 var j = (i + 1) % count;
                 var a = new Vector3(xz[i * 2], baseY, xz[i * 2 + 1]);
                 var b = new Vector3(xz[j * 2], baseY, xz[j * 2 + 1]);
-                var up = Vector3.up * height;
                 var edge = b - a;
                 var outward = new Vector3(edge.z, 0f, -edge.x) * winding;
-                var v0 = mesh.Add(a);
-                var v1 = mesh.Add(b);
-                var v2 = mesh.Add(b + up);
-                var v3 = mesh.Add(a + up);
-                mesh.Triangle(v0, v1, v2, outward);
-                mesh.Triangle(v0, v2, v3, outward);
+                if (cutUndercroftPortal && height > AdelaideTerminalArchitecture.UndercroftPortalHeightMetres
+                    && AdelaideTerminalArchitecture.TryUndercroftPortalOnWall(
+                        a.x, a.z, b.x, b.z, out var first, out var last))
+                {
+                    var openingStart = Vector3.Lerp(a, b, first);
+                    var openingEnd = Vector3.Lerp(a, b, last);
+                    var lintel = Vector3.up * AdelaideTerminalArchitecture.UndercroftPortalHeightMetres;
+                    AddPrismWall(mesh, a, openingStart, height, outward);
+                    AddPrismWall(mesh, openingStart + lintel, openingEnd + lintel,
+                        height - AdelaideTerminalArchitecture.UndercroftPortalHeightMetres, outward);
+                    AddPrismWall(mesh, openingEnd, b, height, outward);
+                }
+                else
+                    AddPrismWall(mesh, a, b, height, outward);
             }
+        }
+
+        private static void AddPrismWall(SurfaceMesh mesh, Vector3 a, Vector3 b, float height, Vector3 outward)
+        {
+            if ((b - a).sqrMagnitude < 0.0001f)
+                return;
+            var up = Vector3.up * height;
+            var v0 = mesh.Add(a);
+            var v1 = mesh.Add(b);
+            var v2 = mesh.Add(b + up);
+            var v3 = mesh.Add(a + up);
+            mesh.Triangle(v0, v1, v2, outward);
+            mesh.Triangle(v0, v2, v3, outward);
         }
 
         /// <summary>Ear-clipping triangulation of a simple x,z polygon; returns index triples.</summary>

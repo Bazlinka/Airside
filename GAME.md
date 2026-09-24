@@ -1,17 +1,16 @@
 ## Where to resume — session handoff
 
-- **2026-09-24 Codex — sky-traffic frame allocation fix (local branch
-  `fix/sky-traffic-frame-allocations-20260924`).** Fallback sky rendering now
-  reuses its flight, live-ID and stale-ID buffers, caches repeating route callsigns,
-  and avoids redundant aircraft active-state changes. Independent snapshot APIs
-  remain available; flight positions, schedules and live-feed ownership are unchanged.
-  - **Evidence:** domain suite 781/781 passed, including reusable-buffer and
-    callsign regressions. Unity EditMode 1057/1057 passed. A clean Mac package
-    stamped `4e89df17` built and launched in headless smoke mode with no startup
-    errors in its fresh player log; the test player was stopped.
-  - **NEXT:** push/review only with explicit approval for the private remote.
-    Frame-time profiling and a visible playtest remain useful; this is not a
-    claim that every source of stutter has been removed.
+- **2026-09-24 Codex — combined undercroft and sky-traffic fixes (branch
+  `fix/sky-traffic-frame-allocations-20260924`).** The baggage-hall service road
+  now passes through a 9 m × 3.4 m terminal opening, with the lintel and other
+  walls intact (ADR 0115). Fallback sky traffic reuses per-frame buffers and
+  recurring callsigns, and avoids redundant aircraft activation changes. Routes,
+  timing, saves and flight paths are unchanged.
+  - **Evidence:** each fix passed its separate domain/Unity suites; the combined
+    branch still requires full tests and a clean package before merge.
+  - **NEXT:** rerun domain and Unity suites, build/smoke the combined package,
+    then merge to main. A visible undercroft playtest and frame-time profiling
+    remain useful after the merge.
 
 - **2026-09-24 Codex — fitted aircraft glazing (branch `codex/aircraft-glazing-polish`,
   ADR 0117).** Rebuilt all 13 genuine aircraft kits with curvature-following pale trim,

@@ -55,6 +55,39 @@ namespace Airside.Presentation
         public const float FloodHeightMetres = 18f;
         public const float FloodRangeMetres = 115f;
 
+        /// <summary>The authored baggage-hall spur passes through this airside portal.</summary>
+        public const float UndercroftPortalHalfWidthMetres = 4.5f;
+        public const float UndercroftPortalHeightMetres = 3.4f;
+        public static float UndercroftPortalCentreX => AdelaideServiceRoads.UndercroftSpur[0];
+
+        /// <summary>
+        /// Portion of a terminal facade edge occupied by the portal. Only the real
+        /// airside wall may be cut; the landside walls and RFDS hangar stay intact.
+        /// </summary>
+        public static bool TryUndercroftPortalOnWall(float ax, float az, float bx, float bz,
+            out float first, out float last)
+        {
+            first = last = 0f;
+            var dx = bx - ax;
+            if (Math.Abs(dx) < 0.01f)
+                return false;
+
+            var left = Math.Max(Math.Min(ax, bx), UndercroftPortalCentreX - UndercroftPortalHalfWidthMetres);
+            var right = Math.Min(Math.Max(ax, bx), UndercroftPortalCentreX + UndercroftPortalHalfWidthMetres);
+            if (right - left < 0.01f)
+                return false;
+
+            var middle = (left + right) * 0.5f;
+            var t = (middle - ax) / dx;
+            var edgeZ = az + (bz - az) * t;
+            if (Math.Abs(edgeZ - AirsideWallZAt(middle)) > 0.15f)
+                return false;
+
+            first = Math.Min((left - ax) / dx, (right - ax) / dx);
+            last = Math.Max((left - ax) / dx, (right - ax) / dx);
+            return true;
+        }
+
         public const float GlazingBayPitchMetres = 22f;
         public const float GlazingPaneWidthMetres = 19f;
         public const float GlazingStartXMetres = 986f;

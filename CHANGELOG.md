@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Aircraft windows have a fitted glazing pass (ADR 0117).** All 13 fleet models now carry
+  separate raised surrounds, dark recessed gaskets and restrained upper-edge reflections
+  around the existing cabin and flight-deck panes. Hangar thumbnails and packaged runtime
+  art have been regenerated from the same geometry.
+
 - **Clouds no longer blanket the airport and takeoff rotation is stable.** Adelaide weather is
   back to the 16 atlas clusters approved by ADR 0075, with a higher 650–950 m deck, smaller cards
   and restrained translucency instead of 24 low cards expanding past a kilometre wide. Aircraft

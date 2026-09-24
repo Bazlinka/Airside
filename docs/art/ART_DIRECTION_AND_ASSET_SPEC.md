@@ -351,6 +351,13 @@ baggage systems; emergency services; cargo buildings; rail/surface access;
 seasonal biome variants; research/construction illustrations; and iPhone companion
 art. Each later system extends this manifest instead of creating a separate style.
 
+All 13 current aircraft share the fitted glazing revision in ADR 0117. The existing
+window shapes and shell curvature remain authored per type; a separate narrow trim,
+dark gasket and restrained upper reflection make the cabin and cockpit openings
+readable at close range without changing dimensions, liveries or aircraft identity.
+Regenerate models with `scripts/polish-aircraft-glazing.py` and then the Hangar
+thumbnails and StreamingAssets mirror; the prior git revision is the fallback.
+
 ## Generation recipe
 
 Every image-generation request must repeat these anchors:

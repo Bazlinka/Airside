@@ -1,5 +1,17 @@
 ## Where to resume — session handoff
 
+- **2026-09-24 Codex — fitted aircraft glazing (branch `codex/aircraft-glazing-polish`,
+  ADR 0117).** Rebuilt all 13 genuine aircraft kits with curvature-following pale trim,
+  dark gasket and upper-edge reflections on every cabin and flight-deck pane. Regenerated
+  the Hangar renders and exact StreamingAssets mirrors. Source is the reproducible
+  `scripts/polish-aircraft-glazing.py`; original type generators and window shapes remain.
+  - **Evidence:** close renders inspected for A320, A220, Saab 340 and A350; all 13 models
+    passed connectivity and the art audit passed with 1304 unique GUIDs and 336 exact
+    runtime mirrors. Domain tests passed **776/776**; Unity EditMode passed **1052/1052**,
+    including three new material-classification regression cases. The fresh Mac package
+    built successfully with `dirty=false`.
+  - **NEXT:** inspect an aircraft close-up in the package before final visual approval.
+
 - **2026-09-24 Codex — cloud scale and takeoff stability (branch
   `fix/cloud-scale-takeoff-jitter-20260924`).** The packaged overview exposed two presentation
   faults. Cloud generation had drifted from ADR 0075's approved 16 clusters to 24, enlarged

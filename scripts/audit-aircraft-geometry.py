@@ -29,7 +29,10 @@ _spec.loader.exec_module(thumbs)
 MODELS = {cid: os.path.join(thumbs.ART, model) for cid, model, _ in thumbs.MODELS}
 
 # Parts that legitimately float or sit apart: everything else must touch the airframe.
-INTENTIONALLY_LOOSE = ("fan_blade_", "propeller_", "fan_")
+INTENTIONALLY_LOOSE = ("fan_blade_", "propeller_", "fan_", "pilot_",
+                       "glazing_flightdeck_left_interior", "glazing_flightdeck_right_interior",
+                       "glazing_cabin_left_interior", "glazing_cabin_right_interior")
+
 
 VIEWS = {
     "front_left_high": (38.0, 18.0),
@@ -158,7 +161,7 @@ def floating(cid, tol):
 def flush(cid):
     """Signed distance of door/window vertices from the fuselage skin (outward positive)."""
     parts = dict(thumbs.load_parts(MODELS[cid]))
-    fuselage = parts["fuselage"]
+    fuselage = np.concatenate([parts[name] for name in ("fuselage", "fuselage_port") if name in parts])
     dense = sample_triangles(fuselage, 0.03)
     tri_n = np.cross(fuselage[:, 1] - fuselage[:, 0], fuselage[:, 2] - fuselage[:, 0])
     centroid = fuselage.mean(axis=1)

@@ -9903,12 +9903,18 @@ namespace Airside.Presentation
             if (kitName.StartsWith("glazing_", StringComparison.Ordinal))
             {
                 if (kitName.EndsWith("_trim", StringComparison.Ordinal))
-                    return new Color(0.64f, 0.69f, 0.73f);
+                    return new Color(0.79f, 0.82f, 0.84f);
                 if (kitName.EndsWith("_gasket", StringComparison.Ordinal))
-                    return new Color(0.025f, 0.045f, 0.06f);
+                    return new Color(0.025f, 0.035f, 0.045f);
                 if (kitName.EndsWith("_reflection", StringComparison.Ordinal))
-                    return new Color(0.24f, 0.42f, 0.50f);
+                    return new Color(0.67f, 0.79f, 0.84f, 0.16f);
+                if (kitName.EndsWith("_interior", StringComparison.Ordinal))
+                    return new Color(0.028f, 0.043f, 0.057f);
             }
+            if (kitName.StartsWith("pilot_", StringComparison.Ordinal))
+                return kitName.EndsWith("_head", StringComparison.Ordinal)
+                    ? new Color(0.53f, 0.40f, 0.33f)
+                    : new Color(0.075f, 0.105f, 0.15f);
             if (kitName.StartsWith("fan_", StringComparison.Ordinal))
                 return new Color(0.16f, 0.18f, 0.21f);
             if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)
@@ -9924,7 +9930,7 @@ namespace Airside.Presentation
 
             return kitName switch
             {
-            "fuselage" or "fuselage_mid" or "fuselage_aft"
+            "fuselage" or "fuselage_mid" or "fuselage_aft" or "fuselage_port"
                 or "cabin_ring_fwd" or "cabin_ring_mid" or "cabin_ring_aft" or "cabin_ring_tail" or "tail_cone"
                 or "nose" or "nose_tip" or "nose_ring_a" or "nose_ring_b" or "radome"
                 or "belly_fairing" or "cargo_door" or "door_frame_fwd"
@@ -9941,21 +9947,22 @@ namespace Airside.Presentation
                 or "cabin_window_frame_r4" or "cabin_window_frame_r5" or "cabin_window_frame_r7"
                 or "cockpit_frame" or "cockpit_sill" or "windscreen_pillar_l" or "windscreen_pillar_r" or "windscreen_pillar_c"
                 => new Color(0.75f, 0.78f, 0.82f),
-            "livery_stripe" or "livery_stripe_lower" or "livery_tail_sweep" => new Color(0.15f, 0.35f, 0.65f),
+            "livery_stripe" or "livery_stripe_lower" or "livery_tail_sweep" => accent,
             "door_handle_fwd" or "cargo_door_latch" or "cargo_sill"
                 or "door_outline_fwd" or "cargo_door_outline" => new Color(0.48f, 0.52f, 0.55f),
             "inspection_panel_fwd" or "inspection_panel_aft" => new Color(0.86f, 0.88f, 0.90f),
             "wing_left" or "wing_right" or "wing_root_left" or "wing_root_right"
                 or "wing_fairing_left" or "wing_fairing_right" or "wing_centre_saddle"
-                or "wingtip_left" or "wingtip_right" or "winglet_left" or "winglet_right"
+                or "wingtip_left" or "wingtip_right"
                 or "wing_fence_left" or "wing_fence_right" or "wing_fence_mid_l" or "wing_fence_mid_r"
                 or "flap_left" or "flap_right" or "flap_fairing_l" or "flap_fairing_r"
                 or "spoiler_left" or "spoiler_right"
                 or "aileron_left" or "aileron_right"
-                or "tail_fin" or "tail_fin_tip" or "tailplane" or "dorsal_fin"
+                or "tailplane"
                 or "tail_root_fairing" or "tailplane_saddle"
                 or "tailplane_tip_l" or "tailplane_tip_r"
-                or "elevator_left" or "elevator_right" or "rudder" => accent,
+                or "elevator_left" or "elevator_right" => new Color(0.86f, 0.89f, 0.91f),
+            "tail_fin" or "tail_fin_tip" or "dorsal_fin" or "rudder" or "winglet_left" or "winglet_right" => accent,
             "flap_track_l1" or "flap_track_l2" or "flap_track_r1" or "flap_track_r2"
                 => new Color(0.32f, 0.34f, 0.38f),
             "engine_left" or "engine_right" or "pylon_left" or "pylon_right"
@@ -9963,7 +9970,7 @@ namespace Airside.Presentation
                 or "nacelle_fillet_left" or "nacelle_fillet_right"
                 or "intake_left" or "intake_right"
                 or "oil_cooler_l" or "oil_cooler_r" or "cowl_flap_l" or "cowl_flap_r"
-                => new Color(0.15f, 0.38f, 0.55f),
+                => new Color(0.86f, 0.89f, 0.91f),
             "exhaust_left" or "exhaust_right" or "exhaust_stack_l" or "exhaust_stack_r"
                 => new Color(0.35f, 0.36f, 0.38f),
             "propeller_left" or "propeller_right" or "propeller_left_b" or "propeller_right_b"

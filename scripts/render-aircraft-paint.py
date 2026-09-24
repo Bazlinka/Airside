@@ -25,7 +25,8 @@ _spec2 = importlib.util.spec_from_file_location("layoutgen", os.path.join(HERE, 
 layoutgen = importlib.util.module_from_spec(_spec2)
 _spec2.loader.exec_module(layoutgen)
 
-FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+FONT = next(p for p in ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                        "/System/Library/Fonts/Supplemental/Arial Bold.ttf") if os.path.exists(p))
 LINE_PER_C = 6.4            # TextMesh line box metres per character size at font size 64
 CAP_OF_LINE = 0.716
 ADVANCE = 0.62              # AircraftTitlePaint.AverageAdvanceFraction
@@ -35,7 +36,7 @@ OPERATORS = {
     "ATR42": ("SOUTHERN CROSS", "#39708A", "VH-PAX"), "SF34": ("REX", "#D2491E", "VH-ZRC"),
     "DH8D": ("QANTASLINK", "#D8141E", "VH-QOK"), "E190": ("AIRSIDE", "#1F3A93", "VH-PEA"),
     "A223": ("AIRSIDE", "#1F3A93", "VH-PAB"), "A320": ("JETSTAR", "#F26623", "VH-VFH"),
-    "B738": ("QANTAS", "#E4002B", "VH-VZX"), "B38M": ("VIRGIN", "#D71964", "VH-8IA"),
+    "B738": ("QANTAS", "#E4002B", "VH-VZX"), "B38M": ("VIRGIN", "#D71920", "VH-8IA"),
     "A21N": ("AIR NZ", "#111111", "ZK-NNA"), "A359": ("EMIRATES", "#D71921", "A6-EVA"),
     "A339": ("MALAYSIA", "#ED1B2F", "9M-MAB"), "B789": ("QANTAS", "#E4002B", "VH-ZNA"),
     "B78X": ("SINGAPORE", "#1B3F8B", "9V-SCA"),

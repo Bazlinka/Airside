@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Aircraft glazing now has real depth (ADR 0118).** All 13 aircraft have apertures
+  under single-layer translucent cabin and flight-deck panes, recessed dark interiors and
+  simple pilots. Side paint follows the operator accent instead of a universal blue;
+  Virgin Australia's overly pink accent is corrected to red; main wings and engines
+  return to neutral paint. Packaged visual approval pending.
+
 - **Fallback sky traffic creates less per-frame garbage.** Rendering reuses its
   temporary flight and ID collections, caches repeating corridor callsigns, and
   skips redundant aircraft activation changes. The snapshot APIs and flight

@@ -94,7 +94,9 @@ namespace Airside.Tests
         [TestCase("Fuselage", AirsideMaterialLibrary.SurfaceKind.AircraftSkin)]
         [TestCase("glazing_cabin_left_trim", AirsideMaterialLibrary.SurfaceKind.PaintedMetal)]
         [TestCase("glazing_cabin_left_gasket", AirsideMaterialLibrary.SurfaceKind.Rubber)]
-        [TestCase("glazing_flightdeck_right_reflection", AirsideMaterialLibrary.SurfaceKind.AircraftGlazing)]
+        [TestCase("glazing_flightdeck_right_reflection", AirsideMaterialLibrary.SurfaceKind.Glass)]
+        [TestCase("glazing_flightdeck_right_interior", AirsideMaterialLibrary.SurfaceKind.Default)]
+        [TestCase("pilot_left_head", AirsideMaterialLibrary.SurfaceKind.Default)]
         [TestCase("tree_a_trunk", AirsideMaterialLibrary.SurfaceKind.Default)]
         [TestCase("rock_b", AirsideMaterialLibrary.SurfaceKind.Default)]
         [TestCase("tree_b_canopy", AirsideMaterialLibrary.SurfaceKind.Grass)]
@@ -106,19 +108,17 @@ namespace Airside.Tests
         [TestCase("Windscreen L")]
         [TestCase("Cockpit")]
         [TestCase("Cabin Windows")]
-        public void AircraftGlazing_IsOpaqueAndDistinctFromTerminalGlass(string mesh)
+        public void AircraftGlazing_IsTransparentAndDistinctFromTerminalGlass(string mesh)
         {
             var kind = AirsideMaterialLibrary.InferFromMeshName(mesh);
             Assert.That(kind, Is.EqualTo(AirsideMaterialLibrary.SurfaceKind.AircraftGlazing));
-            Assert.That(AirsideMaterialLibrary.GetProfile(kind).Transparent, Is.False);
+            Assert.That(AirsideMaterialLibrary.GetProfile(kind).Transparent, Is.True);
             Assert.That(AirsideMaterialLibrary.InferFromMeshName("terminal glass pane"),
                 Is.EqualTo(AirsideMaterialLibrary.SurfaceKind.Glass));
-            Assert.That(AirsideMaterialLibrary.GetProfile(AirsideMaterialLibrary.SurfaceKind.Glass).Transparent,
-                Is.True);
         }
 
         [Test]
-        public void AircraftGlazing_LegacyTintAlphaCannotMakeThePlaneSeeThrough()
+        public void AircraftGlazing_UsesTranslucentPaneOverTheOpenedSkin()
         {
             var material = AirsideMaterialLibrary.Create(
                 new Color(0.05f, 0.12f, 0.18f, 0.42f),
@@ -129,8 +129,8 @@ namespace Airside.Tests
                 var colour = material.HasProperty("_BaseColor")
                     ? material.GetColor("_BaseColor")
                     : material.color;
-                Assert.That(colour.a, Is.EqualTo(1f));
-                Assert.That(material.renderQueue, Is.LessThan(3000));
+                Assert.That(colour.a, Is.EqualTo(0.42f).Within(0.001f));
+                Assert.That(material.renderQueue, Is.GreaterThanOrEqualTo(3000));
             }
             finally
             {

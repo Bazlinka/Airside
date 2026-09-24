@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Rebuild the thirteen runtime aircraft with fitted glazing detail.
+"""Rebuild the thirteen runtime aircraft with fitted, transparent glazing.
 
-The original generators remain the source for each airframe. This finishing pass adds
-one merged trim, gasket and reflection mesh per glazing group, so even the long jets
-do not pay a draw call for each passenger window. It writes the same glTF, bin and
-editable FBX paths; run the asset sync and thumbnail renderer afterwards.
+The original generators remain the source for each airframe. This finishing pass
+opens the skin beneath each pane, adds recessed cabin/cockpit surfaces and two
+crew silhouettes, and merges glazing detail by group to protect draw-call cost.
+It writes the same glTF, bin and editable FBX paths; sync and render afterwards.
 """
 
 from __future__ import annotations
@@ -106,10 +106,9 @@ def pane_detail(vertices: np.ndarray, indices: np.ndarray, *, cockpit: bool):
             faces.extend((i, j, n + j, i, n + j, n + i))
         return points, np.asarray(faces, np.uint16)
 
-    # The broad white metal surround and thin black rubber seal make the glazing
-    # read as an inset opening rather than a dark decal laid over white paint.
-    trim = ring(1.11 if not cockpit else 1.035, 0.88 if not cockpit else 0.925, 0.011)
-    gasket = ring(0.91 if not cockpit else 0.942, 0.79 if not cockpit else 0.870, 0.014)
+    # Restrained metal reveal and rubber seal, not a raised applique.
+    trim = ring(1.055 if not cockpit else 1.025, 0.935 if not cockpit else 0.955, 0.008)
+    gasket = ring(0.945 if not cockpit else 0.962, 0.835 if not cockpit else 0.885, 0.011)
 
     # A short, curved upper/front reflection uses the sampled shell rings. Unlike
     # a flat quad it remains on the nose and cabin curvature at close follow zoom.
@@ -123,9 +122,8 @@ def pane_detail(vertices: np.ndarray, indices: np.ndarray, *, cockpit: bool):
     v = radial @ vertical
     u /= max(np.max(np.abs(u)), 1e-6)
     v /= max(np.max(np.abs(v)), 1e-6)
-    # Select only the upper front quadrant, avoiding an artificial stripe over
-    # every pane and preserving enough dark glass to read from overview.
-    selected = (v > -0.05) & (u > -0.50)
+    # Small upper-corner glint; broad cyan bands looked like painted plastic.
+    selected = (v > 0.38) & (u > 0.12)
     highlight_vertices = []
     highlight_indices = []
     for i in range(n):
@@ -134,20 +132,164 @@ def pane_detail(vertices: np.ndarray, indices: np.ndarray, *, cockpit: bool):
             continue
         base = len(highlight_vertices)
         for k in (i, j):
-            a = outer[k] * 0.70 + inner[k] * 0.30 + normal * 0.019
-            b = outer[k] * 0.28 + inner[k] * 0.72 + normal * 0.019
+            a = outer[k] * 0.80 + inner[k] * 0.20 + normal * 0.026
+            b = outer[k] * 0.60 + inner[k] * 0.40 + normal * 0.026
             highlight_vertices.extend((a, b))
         highlight_indices.extend((base, base + 2, base + 3, base, base + 3, base + 1))
-    if not highlight_vertices:
-        raise ValueError("glazing reflection has no visible faces")
     reflection = (np.asarray(highlight_vertices, np.float32),
-                  np.asarray(highlight_indices, np.uint16))
-    return trim, gasket, reflection
+                  np.asarray(highlight_indices, np.uint16)) if highlight_vertices else None
+
+    # The dark cabin/flight deck lies behind an actual skin opening. It stops the
+    # opposite white fuselage shining through the translucent outer glazing.
+    face_tris = indices.reshape(-1, 3)
+    face_tris = face_tris[np.all(face_tris < front_count, axis=1)]
+    depth = 0.43 if cockpit else 0.13
+    interior = (vertices[:front_count] - normal * depth,
+                face_tris.reshape(-1).astype(np.uint16))
+    return trim, gasket, reflection, interior, (centre, normal, outer, cockpit)
+
+
+def _inside_polygon(points: np.ndarray, polygon: np.ndarray) -> np.ndarray:
+    """Vectorised even/odd test for a pane outline in its tangent plane."""
+    x, y = points[:, 0], points[:, 1]
+    inside = np.zeros(len(points), dtype=bool)
+    for a, b in zip(polygon, np.roll(polygon, -1, axis=0)):
+        crossing = (a[1] > y) != (b[1] > y)
+        edge_x = (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1] + 1e-12) + a[0]
+        inside ^= crossing & (x < edge_x)
+    return inside
+
+
+def _refine_near_pane(vertices, triangles, centre, normal, tangent, up, polygon, edge_limit):
+    """Split only skin faces crossing one aperture, sharing their edge midpoints."""
+    tri_points = vertices[triangles].astype(np.float64)
+    relative = tri_points - centre
+    u, v, d = relative @ tangent, relative @ up, relative @ normal
+    limit = np.max(np.abs(polygon), axis=0) + edge_limit
+    nearby = ((u.min(axis=1) < limit[0]) & (u.max(axis=1) > -limit[0])
+              & (v.min(axis=1) < limit[1]) & (v.max(axis=1) > -limit[1])
+              & (d.min(axis=1) < 0.10) & (d.max(axis=1) > -0.22))
+    if not nearby.any():
+        return vertices, triangles
+    points = vertices.tolist()
+    mids = {}
+    refined = []
+
+    def midpoint(a, b):
+        key = (min(a, b), max(a, b))
+        if key not in mids:
+            mids[key] = len(points)
+            points.append(((np.asarray(points[a]) + points[b]) * 0.5).tolist())
+        return mids[key]
+
+    def split(a, b, c):
+        # A widebody loft may have metre-wide source triangles. Recurse only
+        # into the sliver touching this aperture, not the entire source face.
+        patch = np.asarray((points[a], points[b], points[c])) - centre
+        pu, pv, pd = patch @ tangent, patch @ up, patch @ normal
+        if (pu.min() >= limit[0] or pu.max() <= -limit[0]
+                or pv.min() >= limit[1] or pv.max() <= -limit[1]
+                or pd.min() >= 0.10 or pd.max() <= -0.22):
+            refined.append((a, b, c))
+            return
+        edges = ((a, b, c), (b, c, a), (c, a, b))
+        lengths = [np.linalg.norm(np.asarray(points[p]) - points[q]) for p, q, _ in edges]
+        longest = int(np.argmax(lengths))
+        if lengths[longest] <= edge_limit:
+            refined.append((a, b, c))
+            return
+        p, q, other = edges[longest]
+        mid = midpoint(p, q)
+        split(p, mid, other)
+        split(mid, q, other)
+
+    for tri, near in zip(triangles, nearby):
+        a, b, c = (int(value) for value in tri)
+        if near:
+            split(a, b, c)
+        else:
+            refined.append((a, b, c))
+    # Work in 32-bit indices until all panes are cut; oversized widebody
+    # fuselages are partitioned into two 16-bit runtime nodes below.
+    return np.asarray(points, np.float32), np.asarray(refined, np.uint32)
+
+
+def open_skin(meshes, panes):
+    """Cut smooth, bounded apertures inside each window's rubber gasket."""
+    shells = ("fuselage", "nose", "radome", "flightdeck_crown",
+              "cockpit_mask_left", "cockpit_mask_right")
+    total = 0
+    for name in shells:
+        if name not in meshes:
+            continue
+        vertices, indices = meshes[name]
+        triangles = indices.reshape(-1, 3)
+        for centre, normal, outer, cockpit in panes:
+            tangent = np.array((0.0, 0.0, 1.0)) - normal * normal[2]
+            tangent /= np.linalg.norm(tangent)
+            up = np.cross(normal, tangent)
+            polygon = np.column_stack(((outer - centre) @ tangent, (outer - centre) @ up))
+            polygon *= 0.76 if cockpit else 0.72
+            edge_limit = 0.13 if cockpit else 0.10
+            vertices, triangles = _refine_near_pane(
+                vertices, triangles, centre, normal, tangent, up, polygon, edge_limit)
+            centres = vertices[triangles].mean(axis=1).astype(np.float64)
+            relative = centres - centre
+            depth = relative @ normal
+            near = (depth > -0.18) & (depth < 0.06)
+            if not near.any():
+                continue
+            points = np.column_stack((relative[near] @ tangent, relative[near] @ up))
+            candidates = np.flatnonzero(near)
+            remove = candidates[_inside_polygon(points, polygon)]
+            if len(remove):
+                keep = np.ones(len(triangles), dtype=bool)
+                keep[remove] = False
+                triangles = triangles[keep]
+                total += len(remove)
+        if len(vertices) < 65536:
+            meshes[name] = vertices, triangles.reshape(-1).astype(np.uint16)
+            continue
+        if name != "fuselage" or "fuselage_port" in meshes:
+            raise ValueError(f"{name} exceeds the 16-bit runtime mesh limit")
+
+        # Keep both sides full-length: title/paint fit still sees the complete
+        # aircraft silhouette through the starboard "fuselage" node. The port
+        # node touches the same centre seam and has identical white skin paint.
+        side = vertices[triangles].mean(axis=1)[:, 0] >= 0.0
+        if not side.any() or side.all():
+            raise ValueError("widebody fuselage could not be split by side")
+        for key, selected in (("fuselage", triangles[side]),
+                              ("fuselage_port", triangles[~side])):
+            used, compact = np.unique(selected.reshape(-1), return_inverse=True)
+            if len(used) >= 65536:
+                raise ValueError(f"{key} still exceeds the 16-bit runtime mesh limit")
+            meshes[key] = vertices[used], compact.astype(np.uint16)
+    return total
+
+def ellipsoid(centre, radii, sides=12, rings=8):
+    """Low-poly original cockpit crew silhouette; no borrowed character art."""
+    vertices = []
+    for j in range(rings + 1):
+        lat = -np.pi / 2 + np.pi * j / rings
+        for i in range(sides):
+            lon = 2 * np.pi * i / sides
+            vertices.append(centre + radii * np.array((np.cos(lat) * np.cos(lon),
+                                                        np.sin(lat), np.cos(lat) * np.sin(lon))))
+    faces = []
+    for j in range(rings):
+        for i in range(sides):
+            a, b = j * sides + i, j * sides + (i + 1) % sides
+            c, d = a + sides, b + sides
+            faces.extend((a, b, d, a, d, c))
+    return np.asarray(vertices, np.float32), np.asarray(faces, np.uint16)
 
 
 def polish(meshes: dict[str, tuple[np.ndarray, np.ndarray]]):
     skin = load_module("aircraft_skin.py")
     groups: dict[str, dict[str, list]] = {}
+    panes = []
+    flightdeck = {}
     count = 0
     for name, (vertices, indices) in list(meshes.items()):
         if name.startswith("cabin_window_"):
@@ -156,20 +298,48 @@ def polish(meshes: dict[str, tuple[np.ndarray, np.ndarray]]):
             kind = "flightdeck"
         else:
             continue
-        side = "right" if name.startswith("cabin_window_r") or name.endswith("_r") or "right" in name else "left"
-        group = groups.setdefault(f"{kind}_{side}", {"trim": [], "gasket": [], "reflection": []})
+        side = "right" if name.startswith(("cabin_window_r", "windscreen_r", "cockpit_side_r")) \
+            or name.endswith("_r") or "right" in name else "left"
+        group = groups.setdefault(f"{kind}_{side}", {
+            "trim": [], "gasket": [], "reflection": [], "interior": []})
+        outer_lites = []
         for pane_vertices, pane_indices in components(vertices, indices):
-            trim, gasket, reflection = pane_detail(pane_vertices, pane_indices,
-                                                     cockpit=kind == "flightdeck")
-            for key, mesh in (("trim", trim), ("gasket", gasket), ("reflection", reflection)):
-                group[key].append(mesh)
+            front_count = len(pane_vertices) // 2
+            front_faces = pane_indices.reshape(-1, 3)
+            front_faces = front_faces[np.all(front_faces < front_count, axis=1)]
+            outer_lites.append((pane_vertices[:front_count], front_faces.reshape(-1)))
+            trim, gasket, reflection, interior, pane = pane_detail(
+                pane_vertices, pane_indices, cockpit=kind == "flightdeck")
+            for key, mesh in (("trim", trim), ("gasket", gasket),
+                              ("reflection", reflection), ("interior", interior)):
+                if mesh is not None:
+                    group[key].append(mesh)
+            panes.append(pane)
+            if kind == "flightdeck" and (side not in flightdeck
+                                         or pane[0][2] > flightdeck[side][0][2]):
+                flightdeck[side] = pane
             count += 1
+        # A closed shell renders twice through itself, making translucent glazing opaque.
+        # Keep one outward-facing lite; the recessed cabin provides the depth behind it.
+        meshes[name] = skin.merge_meshes(outer_lites)
     if not count:
         raise ValueError("aircraft has no curvature-fitted glazing")
     for group_name, parts in groups.items():
         for key, pieces in parts.items():
             if pieces:
                 meshes[f"glazing_{group_name}_{key}"] = skin.merge_meshes(pieces)
+    removed = open_skin(meshes, panes)
+    if removed < count:
+        raise ValueError(f"only {removed} skin triangles opened for {count} panes")
+    for side, (centre, normal, outer, _) in flightdeck.items():
+        inner = centre - normal * 0.26
+        size = min(0.12, max(0.065, np.ptp(outer[:, 1]) * 0.19))
+        meshes[f"pilot_{side}_head"] = ellipsoid(
+            inner - np.array((0, size * 0.10, 0)),
+            np.array((size * 0.82, size, size * 0.82)))
+        meshes[f"pilot_{side}_uniform"] = ellipsoid(
+            inner - np.array((0, size * 2.0, 0.07)),
+            np.array((size * 1.35, size * 1.55, size)))
     return count
 
 

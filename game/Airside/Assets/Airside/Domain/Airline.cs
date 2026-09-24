@@ -96,7 +96,7 @@ namespace Airside.Domain
         public static Airline QantasLink() => new("QLK", "QantasLink", "#D8141E", isPlayer: false);
 
         /// <summary>Virgin Australia domestic services from Adelaide (737-8).</summary>
-        public static Airline VirginAustralia() => new("VOZ", "Virgin Australia", "#D71964", isPlayer: false);
+        public static Airline VirginAustralia() => new("VOZ", "Virgin Australia", "#D71920", isPlayer: false);
 
         /// <summary>Qantas mainline domestic services from Adelaide (737-8).</summary>
         public static Airline Qantas() => new("QFA", "Qantas", "#E4002B", isPlayer: false);

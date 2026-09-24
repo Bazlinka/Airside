@@ -9,9 +9,13 @@
   path look-ahead to yaw before the authored phase pitch is applied; takeoff climb pitch is no
   longer composed twice around rotation and the follow camera receives a stable forward vector.
   - **Evidence:** `scripts/test-unity.sh` **1049/1049 passed**, including new cloud-count/scale
-    and climbing-heading regressions.
-  - **NEXT:** build the clean commit, inspect clear/cloudy packaged views and follow a takeoff,
-    then merge if the visible motion is stable.
+    and climbing-heading regressions. `scripts/build-mac.sh` produced a **300 MB** package stamped
+    `32cf5d07`, `dirty=false`. A forced-Cloudy packaged overview was inspected: runway, taxiways,
+    terminal and field stayed readable, with restrained cloud edges instead of foreground cards
+    blanketing the airport. The fresh player log contains no exceptions, missing files, errors or
+    stalls. The app was stopped and no packaged process remains.
+  - **NEXT:** merge the PR, then keep cloud count/scale and horizontal-heading tests in the full
+    gate. If a specific aircraft still twitches, record its type/runway and whether Follow is on.
 
 - **2026-09-24 Codex — 50-check whole-game verification (branch
   `fix/50-bug-sweep-20260924`).** Reviewed merged `main` through 50 explicit player/system

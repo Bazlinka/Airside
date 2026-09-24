@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Clouds no longer blanket the airport and takeoff rotation is stable.** Adelaide weather is
+  back to the 16 atlas clusters approved by ADR 0075, with a higher 650–950 m deck, smaller cards
+  and restrained translucency instead of 24 low cards expanding past a kilometre wide. Aircraft
+  look-ahead now supplies horizontal heading only; the authored phase curve remains the sole
+  pitch source, removing the double-pitch twitch around rotation and from the follow camera.
+
 - **Unity art imports are stable on a clean checkout.** The 70 Quaternius character materials
   externalised from the nine passenger/ramp-worker FBXs now ship with fixed Unity GUIDs, rather
   than being recreated differently and left untracked on each Mac. The catering truck's two

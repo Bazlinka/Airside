@@ -19,6 +19,17 @@ namespace Airside.Presentation
     public static class AirsideAircraftMotion
     {
         /// <summary>
+        /// Heading owns yaw only. The authored phase curve owns pitch separately, so feeding
+        /// its vertical rise into LookRotation and then applying phase pitch a second time made
+        /// the nose hunt around rotate and passed that twitch into the follow camera.
+        /// </summary>
+        public static Vector3 HorizontalHeading(Vector3 travel)
+        {
+            travel.y = 0f;
+            return travel.sqrMagnitude > 0.000001f ? travel.normalized : Vector3.zero;
+        }
+
+        /// <summary>
         /// Phase progress at a fractional presentation time, from the phase start second
         /// the simulation published. Clamped to 1, so presentation can never render an
         /// aircraft past the end of a phase the simulation has not left yet — a departure

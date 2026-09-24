@@ -9900,6 +9900,15 @@ namespace Airside.Presentation
 
         private static Color? AircraftPartColor(string kitName, Color accent)
         {
+            if (kitName.StartsWith("glazing_", StringComparison.Ordinal))
+            {
+                if (kitName.EndsWith("_trim", StringComparison.Ordinal))
+                    return new Color(0.64f, 0.69f, 0.73f);
+                if (kitName.EndsWith("_gasket", StringComparison.Ordinal))
+                    return new Color(0.025f, 0.045f, 0.06f);
+                if (kitName.EndsWith("_reflection", StringComparison.Ordinal))
+                    return new Color(0.24f, 0.42f, 0.50f);
+            }
             if (kitName.StartsWith("fan_", StringComparison.Ordinal))
                 return new Color(0.16f, 0.18f, 0.21f);
             if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)

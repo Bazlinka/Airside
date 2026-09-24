@@ -163,6 +163,15 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(meshName))
                 return SurfaceKind.Default;
             var n = meshName.ToLowerInvariant();
+            if (n.StartsWith("glazing_", StringComparison.Ordinal))
+            {
+                if (n.EndsWith("_trim", StringComparison.Ordinal))
+                    return SurfaceKind.PaintedMetal;
+                if (n.EndsWith("_gasket", StringComparison.Ordinal))
+                    return SurfaceKind.Rubber;
+                if (n.EndsWith("_reflection", StringComparison.Ordinal))
+                    return SurfaceKind.AircraftGlazing;
+            }
             // Frame / pillar members must beat the glass rule below: they carry "window" or
             // "windscreen" in their name but are painted metal mullions, not glazing.
             if (n.Contains("mullion") || n.Contains("transom") || n.Contains("sill") || n.Contains("header")

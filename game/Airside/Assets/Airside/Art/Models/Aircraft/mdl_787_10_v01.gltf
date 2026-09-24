@@ -6,7 +6,7 @@
   "buffers": [
     {
       "uri": "mdl_787_10_v01.bin",
-      "byteLength": 837288
+      "byteLength": 1083696
     }
   ],
   "bufferViews": [
@@ -2660,6 +2660,150 @@
       "buffer": 0,
       "byteOffset": 836952,
       "byteLength": 336,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 837288,
+      "byteLength": 31248,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 868536,
+      "byteLength": 15624,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 884160,
+      "byteLength": 31248,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 915408,
+      "byteLength": 15624,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 931032,
+      "byteLength": 17856,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 948888,
+      "byteLength": 4464,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 953352,
+      "byteLength": 31248,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 984600,
+      "byteLength": 15624,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1000224,
+      "byteLength": 31248,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1031472,
+      "byteLength": 15624,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1047096,
+      "byteLength": 17856,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1064952,
+      "byteLength": 4464,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1069416,
+      "byteLength": 1920,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1071336,
+      "byteLength": 960,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1072296,
+      "byteLength": 1920,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1074216,
+      "byteLength": 960,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1075176,
+      "byteLength": 1104,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1076280,
+      "byteLength": 276,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1076556,
+      "byteLength": 1920,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1078476,
+      "byteLength": 960,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1079436,
+      "byteLength": 1920,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1081356,
+      "byteLength": 960,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1082316,
+      "byteLength": 1104,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1083420,
+      "byteLength": 276,
       "target": 34963
     }
   ],
@@ -7525,6 +7669,270 @@
       "componentType": 5123,
       "count": 168,
       "type": "SCALAR"
+    },
+    {
+      "bufferView": 442,
+      "componentType": 5126,
+      "count": 2604,
+      "type": "VEC3",
+      "max": [
+        -2.5795984268188477,
+        7.323554515838623,
+        -8.549004554748535
+      ],
+      "min": [
+        -2.826414108276367,
+        6.882169246673584,
+        -59.734642028808594
+      ]
+    },
+    {
+      "bufferView": 443,
+      "componentType": 5123,
+      "count": 7812,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 444,
+      "componentType": 5126,
+      "count": 2604,
+      "type": "VEC3",
+      "max": [
+        -2.5937767028808594,
+        7.290287017822266,
+        -8.574565887451172
+      ],
+      "min": [
+        -2.8201756477355957,
+        6.91792106628418,
+        -59.709083557128906
+      ]
+    },
+    {
+      "bufferView": 445,
+      "componentType": 5123,
+      "count": 7812,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 446,
+      "componentType": 5126,
+      "count": 1488,
+      "type": "VEC3",
+      "max": [
+        -2.6023242473602295,
+        7.281671047210693,
+        -8.582234382629395
+      ],
+      "min": [
+        -2.783540725708008,
+        7.0793843269348145,
+        -59.61015701293945
+      ]
+    },
+    {
+      "bufferView": 447,
+      "componentType": 5123,
+      "count": 2232,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 448,
+      "componentType": 5126,
+      "count": 2604,
+      "type": "VEC3",
+      "max": [
+        2.826414108276367,
+        7.323554515838623,
+        -8.549004554748535
+      ],
+      "min": [
+        2.5795984268188477,
+        6.882169246673584,
+        -59.734642028808594
+      ]
+    },
+    {
+      "bufferView": 449,
+      "componentType": 5123,
+      "count": 7812,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 450,
+      "componentType": 5126,
+      "count": 2604,
+      "type": "VEC3",
+      "max": [
+        2.8201756477355957,
+        7.290287017822266,
+        -8.574565887451172
+      ],
+      "min": [
+        2.5937767028808594,
+        6.91792106628418,
+        -59.709083557128906
+      ]
+    },
+    {
+      "bufferView": 451,
+      "componentType": 5123,
+      "count": 7812,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 452,
+      "componentType": 5126,
+      "count": 1488,
+      "type": "VEC3",
+      "max": [
+        2.783540725708008,
+        7.281671047210693,
+        -8.582234382629395
+      ],
+      "min": [
+        2.6023242473602295,
+        7.0793843269348145,
+        -59.61015701293945
+      ]
+    },
+    {
+      "bufferView": 453,
+      "componentType": 5123,
+      "count": 2232,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 454,
+      "componentType": 5126,
+      "count": 160,
+      "type": "VEC3",
+      "max": [
+        -0.8368477821350098,
+        8.37099838256836,
+        -2.375932216644287
+      ],
+      "min": [
+        -2.146186590194702,
+        6.891216278076172,
+        -4.167783737182617
+      ]
+    },
+    {
+      "bufferView": 455,
+      "componentType": 5123,
+      "count": 480,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 456,
+      "componentType": 5126,
+      "count": 160,
+      "type": "VEC3",
+      "max": [
+        -0.8826206922531128,
+        8.331543922424316,
+        -2.4472484588623047
+      ],
+      "min": [
+        -2.1130149364471436,
+        6.9280266761779785,
+        -4.0964674949646
+      ]
+    },
+    {
+      "bufferView": 457,
+      "componentType": 5123,
+      "count": 480,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 458,
+      "componentType": 5126,
+      "count": 92,
+      "type": "VEC3",
+      "max": [
+        -0.9035378694534302,
+        8.212872505187988,
+        -2.4794559478759766
+      ],
+      "min": [
+        -1.7053306102752686,
+        7.158059120178223,
+        -3.6170384883880615
+      ]
+    },
+    {
+      "bufferView": 459,
+      "componentType": 5123,
+      "count": 138,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 460,
+      "componentType": 5126,
+      "count": 160,
+      "type": "VEC3",
+      "max": [
+        2.146186590194702,
+        8.37099838256836,
+        -2.375932216644287
+      ],
+      "min": [
+        0.8368477821350098,
+        6.891216278076172,
+        -4.167783737182617
+      ]
+    },
+    {
+      "bufferView": 461,
+      "componentType": 5123,
+      "count": 480,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 462,
+      "componentType": 5126,
+      "count": 160,
+      "type": "VEC3",
+      "max": [
+        2.1130149364471436,
+        8.331543922424316,
+        -2.4472484588623047
+      ],
+      "min": [
+        0.8826206922531128,
+        6.9280266761779785,
+        -4.0964674949646
+      ]
+    },
+    {
+      "bufferView": 463,
+      "componentType": 5123,
+      "count": 480,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 464,
+      "componentType": 5126,
+      "count": 92,
+      "type": "VEC3",
+      "max": [
+        1.7053306102752686,
+        8.212872505187988,
+        -2.4794559478759766
+      ],
+      "min": [
+        0.9035378694534302,
+        7.158059120178223,
+        -3.6170384883880615
+      ]
+    },
+    {
+      "bufferView": 465,
+      "componentType": 5123,
+      "count": 138,
+      "type": "SCALAR"
     }
   ],
   "meshes": [
@@ -10179,6 +10587,150 @@
           "mode": 4
         }
       ]
+    },
+    {
+      "name": "glazing_cabin_left_trim",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 442
+          },
+          "indices": 443,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "glazing_cabin_left_gasket",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 444
+          },
+          "indices": 445,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "glazing_cabin_left_reflection",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 446
+          },
+          "indices": 447,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "glazing_cabin_right_trim",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 448
+          },
+          "indices": 449,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "glazing_cabin_right_gasket",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 450
+          },
+          "indices": 451,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "glazing_cabin_right_reflection",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 452
+          },
+          "indices": 453,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "glazing_flightdeck_left_trim",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 454
+          },
+          "indices": 455,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "glazing_flightdeck_left_gasket",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 456
+          },
+          "indices": 457,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "glazing_flightdeck_left_reflection",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 458
+          },
+          "indices": 459,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "glazing_flightdeck_right_trim",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 460
+          },
+          "indices": 461,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "glazing_flightdeck_right_gasket",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 462
+          },
+          "indices": 463,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "glazing_flightdeck_right_reflection",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 464
+          },
+          "indices": 465,
+          "mode": 4
+        }
+      ]
     }
   ],
   "nodes": [
@@ -11065,6 +11617,54 @@
     {
       "name": "exhaust_chevron_right",
       "mesh": 220
+    },
+    {
+      "name": "glazing_cabin_left_trim",
+      "mesh": 221
+    },
+    {
+      "name": "glazing_cabin_left_gasket",
+      "mesh": 222
+    },
+    {
+      "name": "glazing_cabin_left_reflection",
+      "mesh": 223
+    },
+    {
+      "name": "glazing_cabin_right_trim",
+      "mesh": 224
+    },
+    {
+      "name": "glazing_cabin_right_gasket",
+      "mesh": 225
+    },
+    {
+      "name": "glazing_cabin_right_reflection",
+      "mesh": 226
+    },
+    {
+      "name": "glazing_flightdeck_left_trim",
+      "mesh": 227
+    },
+    {
+      "name": "glazing_flightdeck_left_gasket",
+      "mesh": 228
+    },
+    {
+      "name": "glazing_flightdeck_left_reflection",
+      "mesh": 229
+    },
+    {
+      "name": "glazing_flightdeck_right_trim",
+      "mesh": 230
+    },
+    {
+      "name": "glazing_flightdeck_right_gasket",
+      "mesh": 231
+    },
+    {
+      "name": "glazing_flightdeck_right_reflection",
+      "mesh": 232
     }
   ],
   "scenes": [
@@ -11291,7 +11891,19 @@
         217,
         218,
         219,
-        220
+        220,
+        221,
+        222,
+        223,
+        224,
+        225,
+        226,
+        227,
+        228,
+        229,
+        230,
+        231,
+        232
       ]
     }
   ],

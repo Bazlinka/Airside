@@ -58,6 +58,13 @@ def colour(name):
         return METAL
     # Pillars / brow must win before the broad windscreen/cockpit glass match,
     # otherwise the flight deck collapses into one dark mask in the Hangar thumb.
+    if n.startswith("glazing_"):
+        if n.endswith("_trim"):
+            return (191, 201, 209)
+        if n.endswith("_gasket"):
+            return (31, 46, 56)
+        if n.endswith("_reflection"):
+            return (118, 167, 185)
     if n.startswith(("cabin_window_frame", "cockpit_frame", "windscreen_pillar", "cockpit_glare", "cockpit_sill")):
         return LIGHT_GREY
     if n.startswith(("cabin_window", "cockpit", "windscreen")):

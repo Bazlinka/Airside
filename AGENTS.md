@@ -61,6 +61,7 @@ Airside/
                              Resources/Airside/Characters with the kept clips, forced opaque
     sync-art-streaming-assets.sh
                              Copy runtime glTF/PNG art into StreamingAssets for packaged builds
+    audit-unity-assets.py    Check Unity metadata GUIDs and byte-identical packaged art mirrors
     dotnet-harness/          Hand-authored csproj backing test-domain.sh
     build-mac.sh             Local macOS application build
   work/                      Local scratch, downloads, builds — git-ignored, never committed

@@ -1,5 +1,19 @@
 ## Where to resume — session handoff
 
+- **2026-09-24 Codex — 50-check whole-game verification (branch
+  `fix/50-bug-sweep-20260924`).** Reviewed merged `main` through 50 explicit player/system
+  checks. Unity EditMode is **1047/1047 passed**. Aircraft source validators pass for every
+  fleet type, including geometry connectivity and fitted paint. The sweep found one clean-clone
+  reproducibility fault: Unity externalised the nine Quaternius character FBXs into 70 local,
+  untracked materials with newly generated GUIDs, and the catering truck's two new runtime art
+  files lacked committed metadata. Those materials and all 143 associated paths are now
+  committed. `scripts/audit-unity-assets.py` verifies complete metadata, unique GUIDs and an
+  exact source-to-StreamingAssets mirror; it passes with **1304 unique GUIDs, 336 runtime art
+  files and 70 character materials**. Full matrix: `docs/testing/BUGFIX_PASS_50_2026-09-24.md`.
+  - **NEXT:** build and directly launch the Mac player from this commit, inspect its log, then
+    merge the PR if the packaged smoke is clean. Visual inspection still requires an unlocked
+    Mac display.
+
 - **2026-09-24 Codex — latest-main bug sweep (branch `fix/bug-sweep-20260923`).**
   Pulled `main` at `383edcb6` and repaired the five failures exposed by the authoritative
   Unity run. Ground control now includes the wheels-on-runway part of takeoff and landing

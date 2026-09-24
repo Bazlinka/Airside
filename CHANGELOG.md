@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Unity art imports are stable on a clean checkout.** The 70 Quaternius character materials
+  externalised from the nine passenger/ramp-worker FBXs now ship with fixed Unity GUIDs, rather
+  than being recreated differently and left untracked on each Mac. The catering truck's two
+  packaged glTF files also have committed metadata. A new read-only asset audit checks every
+  asset/directory metadata pair, rejects orphan or duplicate GUIDs, and confirms every one of
+  the 336 runtime art files is a byte-identical `StreamingAssets` mirror. The accompanying
+  50-check whole-game pass is green at 1047/1047 Unity EditMode tests.
+
 - **Air traffic no longer drives through runway movements or lands onto a full apron.**
   Ground-control prediction now includes the ground roll during takeoff and landing, checks
   the complete vacate-to-stand path, and reserves a fitting stand for each AI arrival before

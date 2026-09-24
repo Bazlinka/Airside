@@ -6,10 +6,12 @@
   and avoids redundant aircraft active-state changes. Independent snapshot APIs
   remain available; flight positions, schedules and live-feed ownership are unchanged.
   - **Evidence:** domain suite 781/781 passed, including reusable-buffer and
-    callsign regressions. Unity EditMode 1057/1057 passed. Packaged runtime check
-    pending.
-  - **NEXT:** finish the packaged check; push/review only with explicit approval
-    for the private remote. Frame-time profiling on a live scene remains useful.
+    callsign regressions. Unity EditMode 1057/1057 passed. A clean Mac package
+    stamped `4e89df17` built and launched in headless smoke mode with no startup
+    errors in its fresh player log; the test player was stopped.
+  - **NEXT:** push/review only with explicit approval for the private remote.
+    Frame-time profiling and a visible playtest remain useful; this is not a
+    claim that every source of stutter has been removed.
 
 - **2026-09-24 Codex — fitted aircraft glazing (branch `codex/aircraft-glazing-polish`,
   ADR 0117).** Rebuilt all 13 genuine aircraft kits with curvature-following pale trim,

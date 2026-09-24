@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **Fallback sky traffic creates less per-frame garbage.** Rendering reuses its
+  temporary flight and ID collections, caches repeating corridor callsigns, and
+  skips redundant aircraft activation changes. The snapshot APIs and flight
+  paths are unchanged.
+
+- **Baggage vehicles no longer clip through the terminal wall.** The authored
+  baggage-hall spur now passes through a real 9 m × 3.4 m opening in the
+  airside facade. The roof, other walls and existing ground-service timing stay
+  unchanged; a mesh regression checks the opening and its lintel (ADR 0115).
+
 - **Aircraft windows have a fitted glazing pass (ADR 0117).** All 13 fleet models now carry
   separate raised surrounds, dark recessed gaskets and restrained upper-edge reflections
   around the existing cabin and flight-deck panes. Hangar thumbnails and packaged runtime

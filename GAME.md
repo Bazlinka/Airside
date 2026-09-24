@@ -1,5 +1,19 @@
 ## Where to resume — session handoff
 
+- **2026-09-24 Codex — combined undercroft and sky-traffic fixes (branch
+  `fix/sky-traffic-frame-allocations-20260924`).** The baggage-hall service road
+  now passes through a 9 m × 3.4 m terminal opening, with the lintel and other
+  walls intact (ADR 0115). Fallback sky traffic reuses per-frame buffers and
+  recurring callsigns, and avoids redundant aircraft activation changes. Routes,
+  timing, saves and flight paths are unchanged.
+  - **Evidence:** combined domain **782/782** and Unity EditMode **1059/1059**
+    passed. The asset audit passed with 1305 unique GUIDs and 336 exact mirrors.
+    A clean Mac package stamped `c608b494` launched headlessly with no startup
+    errors in its fresh player log; the test player was stopped.
+  - **NEXT:** visually check the moving baggage vehicle through the opening and
+    profile frame times during busy traffic. Neither visual fit nor all sources of
+    stutter are proved by the headless checks.
+
 - **2026-09-24 Codex — fitted aircraft glazing (branch `codex/aircraft-glazing-polish`,
   ADR 0117).** Rebuilt all 13 genuine aircraft kits with curvature-following pale trim,
   dark gasket and upper-edge reflections on every cabin and flight-deck pane. Regenerated

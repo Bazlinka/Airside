@@ -10,9 +10,15 @@
   committed. `scripts/audit-unity-assets.py` verifies complete metadata, unique GUIDs and an
   exact source-to-StreamingAssets mirror; it passes with **1304 unique GUIDs, 336 runtime art
   files and 70 character materials**. Full matrix: `docs/testing/BUGFIX_PASS_50_2026-09-24.md`.
-  - **NEXT:** build and directly launch the Mac player from this commit, inspect its log, then
-    merge the PR if the packaged smoke is clean. Visual inspection still requires an unlocked
-    Mac display.
+  - **Packaged evidence:** `scripts/build-mac.sh` produced a **300 MB** app stamped
+    `a52e3d70`, `dirty=false`. Direct launch used Unity 6000.3.23f1, Metal on the Apple M1 Pro
+    and PhysX. The title/new-airline screen and the resumed saved airline both rendered: Adelaide
+    satellite ground, runway/taxi network, buildings, clouds, HUD and live aircraft state were
+    visible rather than a grey screen. The fresh 31-line `Player.log` contains no exception,
+    missing-file, fallback-primitive, error or stall match. The app was stopped after inspection
+    and no packaged Airside process remains.
+  - **NEXT:** merge the verification PR. Re-run `scripts/audit-unity-assets.py` after any future
+    art sync; do not discard or regenerate the committed character-material GUIDs.
 
 - **2026-09-24 Codex — latest-main bug sweep (branch `fix/bug-sweep-20260923`).**
   Pulled `main` at `383edcb6` and repaired the five failures exposed by the authoritative

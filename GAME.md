@@ -6,11 +6,11 @@
   walls intact (ADR 0115). Fallback sky traffic reuses per-frame buffers and
   recurring callsigns, and avoids redundant aircraft activation changes. Routes,
   timing, saves and flight paths are unchanged.
-  - **Evidence:** each fix passed its separate domain/Unity suites; the combined
-    branch still requires full tests and a clean package before merge.
-  - **NEXT:** rerun domain and Unity suites, build/smoke the combined package,
-    then merge to main. A visible undercroft playtest and frame-time profiling
-    remain useful after the merge.
+  - **Evidence:** combined domain **782/782** and Unity EditMode **1059/1059**
+    passed. The asset audit passed with 1305 unique GUIDs and 336 exact mirrors.
+    A clean combined Mac package and startup smoke test are pending.
+  - **NEXT:** build and smoke-test the combined package, then merge its PR to
+    main. A visible undercroft playtest and frame-time profiling remain useful.
 
 - **2026-09-24 Codex — fitted aircraft glazing (branch `codex/aircraft-glazing-polish`,
   ADR 0117).** Rebuilt all 13 genuine aircraft kits with curvature-following pale trim,

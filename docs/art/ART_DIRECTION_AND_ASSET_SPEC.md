@@ -358,6 +358,13 @@ readable at close range without changing dimensions, liveries or aircraft identi
 Regenerate models with `scripts/polish-aircraft-glazing.py` and then the Hangar
 thumbnails and StreamingAssets mirror; the prior git revision is the fallback.
 
+AIR-001 adds the first open flight deck under ADR 0118: four sloped, cut-out
+panes, translucent glass, a dark interior and two seated original crew silhouettes.
+Its existing six-blade props now have a slight outer sweep and its spinners follow
+the fictional operator accent. All 13 fleet sashes now use their operator accent.
+Do not make another type transparent until its own cockpit opening, interior
+and close-view QA exist; a clear pane over a sealed fuselage is not acceptable.
+
 ## Generation recipe
 
 Every image-generation request must repeat these anchors:

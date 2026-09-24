@@ -152,7 +152,7 @@ def polish(meshes: dict[str, tuple[np.ndarray, np.ndarray]]):
     for name, (vertices, indices) in list(meshes.items()):
         if name.startswith("cabin_window_"):
             kind = "cabin"
-        elif name.startswith(("windscreen_", "cockpit_side_")) and not name.startswith("windscreen_pillar"):
+        elif name.startswith(("windscreen_", "cockpit_side_", "cockpit_glass_")) and not name.startswith("windscreen_pillar"):
             kind = "flightdeck"
         else:
             continue
@@ -185,8 +185,14 @@ def main():
     args.output_dir.mkdir(parents=True, exist_ok=True)
     for type_id in args.types or SOURCES:
         filename, function, basename = SOURCES[type_id]
-        meshes = getattr(load_module(filename), function)()
+        generator = load_module(filename)
+        meshes = getattr(generator, function)()
+        atr = load_module("atr_aircraft_authenticity.py") if type_id == "ATR42" and not args.baseline else None
+        if atr is not None:
+            atr.enhance(meshes, generator)
         count = 0 if args.baseline else polish(meshes)
+        if atr is not None:
+            atr.finalize(meshes)
         writer(args.output_dir, basename, meshes)
         print(f"{type_id}: {count} fitted panes, {len(meshes)} named meshes -> {args.output_dir / basename}")
 

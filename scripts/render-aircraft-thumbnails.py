@@ -52,6 +52,14 @@ METAL = (140, 143, 148)
 
 def colour(name):
     n = name
+    if n.startswith("pilot_"):
+        if n.endswith("_head"):
+            return (176, 132, 105)
+        if n.endswith("_torso"):
+            return (82, 105, 121)
+        return (44, 54, 63)
+    if n in ("cockpit_bulkhead", "cockpit_instrument_panel"):
+        return (38, 49, 59)
     if n.startswith(("tire_",)):
         return RUBBER
     if n.startswith(("wheel_", "rim_")):

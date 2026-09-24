@@ -15,13 +15,13 @@ namespace Airside.Tests
     /// </summary>
     public sealed class AircraftDispatchTests
     {
-        private static Transform Build(AircraftType type)
+        private static Transform Build(AircraftType type, Color? accent = null)
         {
             // Runtime builders use Object.Destroy for scratch parts; edit mode logs that as an error.
             LogAssert.ignoreFailingMessages = true;
             var method = typeof(AirsidePrototype).GetMethod("BuildAircraftForType", BindingFlags.NonPublic | BindingFlags.Static);
             Assert.That(method, Is.Not.Null, "BuildAircraftForType dispatch");
-            return (Transform)method.Invoke(null, new object[] { $"Dispatch {type.Id}", type, Color.white, null });
+            return (Transform)method.Invoke(null, new object[] { $"Dispatch {type.Id}", type, accent ?? Color.white, null });
         }
 
         private static Bounds RenderedBounds(Transform root)
@@ -86,6 +86,57 @@ namespace Airside.Tests
                 Object.DestroyImmediate(root.gameObject);
             }
         }
+
+        [Test]
+        public void Atr42_TransparentCockpitHasCrewAndOperatorMatchedPaint()
+        {
+            var accent = new Color(0.22f, 0.55f, 0.34f);
+            var root = Build(AircraftType.Atr42, accent);
+            try
+            {
+                var renderers = root.GetComponentsInChildren<Renderer>(true);
+                var panes = renderers.Where(r => r.name.StartsWith("cockpit_glass_")).ToArray();
+                Assert.That(panes.Length, Is.EqualTo(4), "four separate ATR flight-deck panes");
+                foreach (var pane in panes)
+                {
+                    Assert.That(pane.sharedMaterial.color.a, Is.LessThan(0.5f), pane.name);
+                    Assert.That(pane.sharedMaterial.renderQueue, Is.GreaterThanOrEqualTo(3000), pane.name);
+                }
+                Assert.That(renderers.Count(r => r.name.EndsWith("_head") && r.name.StartsWith("pilot_")),
+                    Is.EqualTo(2), "captain and first officer are inside the modelled cockpit");
+                var stripe = renderers.Single(r => r.name == "Livery stripe");
+                Assert.That(stripe.sharedMaterial.color.r, Is.EqualTo(accent.r).Within(0.02f));
+                Assert.That(stripe.sharedMaterial.color.g, Is.EqualTo(accent.g).Within(0.02f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root.gameObject);
+            }
+        }
+
+        [Test]
+        public void FleetPaintSashesFollowTheOperatorAccent()
+        {
+            var accent = new Color(0.24f, 0.53f, 0.37f);
+            foreach (var spec in AircraftCatalogue.All.Where(s => s.ModelStatus == ModelStatus.Genuine))
+            {
+                var root = Build(spec.Type, accent);
+                try
+                {
+                    var stripe = root.GetComponentsInChildren<Renderer>(true)
+                        .Single(r => r.name == "Livery stripe");
+                    Assert.That(stripe.sharedMaterial.color.r, Is.EqualTo(accent.r).Within(0.02f),
+                        spec.Name);
+                    Assert.That(stripe.sharedMaterial.color.g, Is.EqualTo(accent.g).Within(0.02f),
+                        spec.Name);
+                }
+                finally
+                {
+                    Object.DestroyImmediate(root.gameObject);
+                }
+            }
+        }
+
 
         [Test]
         public void Dash8Q400_BuildsAir006_WithSixBladePropellersRatherThanTheAtr()

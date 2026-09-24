@@ -9941,7 +9941,7 @@ namespace Airside.Presentation
                 or "cabin_window_frame_r4" or "cabin_window_frame_r5" or "cabin_window_frame_r7"
                 or "cockpit_frame" or "cockpit_sill" or "windscreen_pillar_l" or "windscreen_pillar_r" or "windscreen_pillar_c"
                 => new Color(0.75f, 0.78f, 0.82f),
-            "livery_stripe" or "livery_stripe_lower" or "livery_tail_sweep" => new Color(0.15f, 0.35f, 0.65f),
+            "livery_stripe" or "livery_stripe_lower" or "livery_tail_sweep" => accent,
             "door_handle_fwd" or "cargo_door_latch" or "cargo_sill"
                 or "door_outline_fwd" or "cargo_door_outline" => new Color(0.48f, 0.52f, 0.55f),
             "inspection_panel_fwd" or "inspection_panel_aft" => new Color(0.86f, 0.88f, 0.90f),
@@ -10235,6 +10235,24 @@ namespace Airside.Presentation
 
         private static Color? Atr42PartColor(string kitName, Color accent)
         {
+            // Only AIR-001 has real cockpit apertures and an interior. Other aircraft
+            // keep their opaque glazing until their own shells receive cutouts.
+            if (kitName.StartsWith("cockpit_glass_", StringComparison.Ordinal))
+                return new Color(0.14f, 0.28f, 0.36f, 0.28f);
+            if (kitName.StartsWith("pilot_", StringComparison.Ordinal))
+            {
+                if (kitName.EndsWith("_head", StringComparison.Ordinal))
+                    return new Color(0.70f, 0.51f, 0.40f);
+                if (kitName.EndsWith("_torso", StringComparison.Ordinal))
+                    return new Color(0.32f, 0.40f, 0.48f);
+                return new Color(0.12f, 0.16f, 0.20f);
+            }
+            if (kitName is "cockpit_bulkhead" or "cockpit_instrument_panel")
+                return new Color(0.10f, 0.15f, 0.19f);
+            if (kitName is "livery_stripe" or "livery_stripe_lower")
+                return accent;
+            if (kitName.StartsWith("spinner_", StringComparison.Ordinal))
+                return Color.Lerp(accent, new Color(0.78f, 0.82f, 0.85f), 0.58f);
             if (EnginePaint(kitName, turboprop: true) is { } atrEngine)
                 return atrEngine;
             // Keep the ATR's operator identity on its fin and compact wingtips.
@@ -11085,7 +11103,8 @@ namespace Airside.Presentation
                     || n.StartsWith("LandingLight", StringComparison.Ordinal)
                     || n.StartsWith("NavLight", StringComparison.Ordinal)
                     || n.StartsWith("Beacon", StringComparison.Ordinal);
-                var fine = n.IndexOf("rim", StringComparison.OrdinalIgnoreCase) >= 0
+                var fine = n.StartsWith("pilot_", StringComparison.Ordinal)
+                    || n.IndexOf("rim", StringComparison.OrdinalIgnoreCase) >= 0
                     || n.IndexOf("scissors", StringComparison.OrdinalIgnoreCase) >= 0
                     || n.IndexOf("rivet", StringComparison.OrdinalIgnoreCase) >= 0
                     || n.IndexOf("antenna", StringComparison.OrdinalIgnoreCase) >= 0

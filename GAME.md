@@ -1,5 +1,19 @@
 ## Where to resume — session handoff
 
+- **2026-09-24 Codex — ATR cockpit/prop/paint authenticity (branch
+  `feature/atr-cockpit-authenticity-20260924`, ADR 0118).** AIR-001 is the first
+  aircraft with four sloped cut-out flight-deck panes, genuinely translucent glass,
+  a dark cockpit and two seated low-detail pilots. The six pitched blades gain a
+  subtle outer sweep; ATR spinners and all fleet sashes now use their operator accent.
+  The other 12 aircraft retain opaque glazing until they have modelled interiors.
+  - **Evidence:** original ATR manufacturer factsheet/cockpit references only, no
+    copied art. The candidate close crop and Hangar thumbnail were inspected.
+    `scripts/test-atr-authenticity.py` passed exact dimensions and geometry;
+    5 cm connectivity and all 13 fitted-paint/title-layout checks passed.
+    Unity EditMode passed **1055/1055**, including cockpit/material and fleet-paint regressions.
+  - **NEXT:** inspect the ATR close-follow view in the Mac package; review this
+    vertical slice before extending it to other aircraft.
+
 - **2026-09-24 Codex — fitted aircraft glazing (branch `codex/aircraft-glazing-polish`,
   ADR 0117).** Rebuilt all 13 genuine aircraft kits with curvature-following pale trim,
   dark gasket and upper-edge reflections on every cabin and flight-deck pane. Regenerated

@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **ATR flight deck now has real openings and visible crew (ADR 0118).** Four sloped
+  transparent panes reveal an original dark cockpit and two pilots instead of an opaque
+  blue shell. The existing six blades gain a restrained swept planform and its spinners
+  take the operator accent; all 13 sashes now match their operator colour. Other
+  aircraft keep their sealed windows
+  until their own interiors are built.
+
 - **Aircraft windows have a fitted glazing pass (ADR 0117).** All 13 fleet models now carry
   separate raised surrounds, dark recessed gaskets and restrained upper-edge reflections
   around the existing cabin and flight-deck panes. Hangar thumbnails and packaged runtime

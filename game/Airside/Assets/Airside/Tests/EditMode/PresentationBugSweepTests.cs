@@ -95,6 +95,7 @@ namespace Airside.Tests
         [TestCase("glazing_cabin_left_trim", AirsideMaterialLibrary.SurfaceKind.PaintedMetal)]
         [TestCase("glazing_cabin_left_gasket", AirsideMaterialLibrary.SurfaceKind.Rubber)]
         [TestCase("glazing_flightdeck_right_reflection", AirsideMaterialLibrary.SurfaceKind.AircraftGlazing)]
+        [TestCase("cockpit_glass_front_l", AirsideMaterialLibrary.SurfaceKind.Glass)]
         [TestCase("tree_a_trunk", AirsideMaterialLibrary.SurfaceKind.Default)]
         [TestCase("rock_b", AirsideMaterialLibrary.SurfaceKind.Default)]
         [TestCase("tree_b_canopy", AirsideMaterialLibrary.SurfaceKind.Grass)]

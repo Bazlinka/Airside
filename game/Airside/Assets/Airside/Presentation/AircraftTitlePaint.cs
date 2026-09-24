@@ -157,7 +157,7 @@ namespace Airside.Presentation
         {
             // <generated title layout>
             if (Is(type, AircraftType.Atr42))
-                return new AircraftIdentityMarkingLayout(1.16f, 1.94f, 7.22f, 1.23f, 1.84f, -4.68f, 0.092f, 0.049f, 36.29f, 31.28f, 4.54f);
+                return new AircraftIdentityMarkingLayout(1.16f, 1.94f, 7.22f, 1.23f, 1.84f, -4.68f, 0.092f, 0.049f, 36.29f, 31.28f, 4.55f);
             if (Is(type, AircraftType.Saab340))
                 return new AircraftIdentityMarkingLayout(0.91f, 2.02f, 3.69f, 0.98f, 1.93f, -3.71f, 0.078f, 0.040f, 39.23f, 33.61f, 6.71f);
             if (Is(type, AircraftType.Dash8Q400))

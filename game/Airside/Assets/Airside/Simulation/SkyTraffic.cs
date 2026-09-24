@@ -133,6 +133,19 @@ namespace Airside.Simulation
         public static IReadOnlyList<SkyFlight> At(double elapsedSeconds, AirlineClock clock)
         {
             var flights = new List<SkyFlight>();
+            FillAt(elapsedSeconds, clock, flights);
+            return flights;
+        }
+
+        /// <summary>
+        /// Refill a caller-owned buffer for per-frame presentation. The snapshot API above
+        /// still returns an independent list for simulation and test callers.
+        /// </summary>
+        public static void FillAt(double elapsedSeconds, AirlineClock clock, List<SkyFlight> flights)
+        {
+            if (flights == null)
+                throw new ArgumentNullException(nameof(flights));
+            flights.Clear();
             foreach (var route in Routes)
             {
                 if (!DestinationCatalogue.TryFind(route.FromCode, out var from)
@@ -151,14 +164,11 @@ namespace Airside.Simulation
                         continue;
                     if (clock != null && QuietHourSkip(route, start, clock))
                         continue;
-                    var number = route.FlightNumber + Math.Abs(start / route.IntervalSeconds) % 40;
-                    if (TryEnroute($"{route.Airline}{number}", route.Type, from, to, elapsedSeconds, start,
+                    if (TryEnroute(route.CallsignForStart(start), route.Type, from, to, elapsedSeconds, start,
                             out var flight))
                         flights.Add(flight);
                 }
             }
-
-            return flights;
         }
 
         /// <summary>
@@ -392,6 +402,10 @@ namespace Airside.Simulation
 
     public readonly struct SkyRoute
     {
+        // The same flight number stays on screen for minutes; create its callsign
+        // once, not another string on every rendered frame.
+        private readonly string[] _callsigns;
+
         public SkyRoute(string airline, int flightNumber, long intervalSeconds, string fromCode, string toCode,
             AircraftType type)
         {
@@ -401,6 +415,7 @@ namespace Airside.Simulation
             FromCode = fromCode;
             ToCode = toCode;
             Type = type;
+            _callsigns = new string[40];
         }
 
         public string Airline { get; }
@@ -409,5 +424,11 @@ namespace Airside.Simulation
         public string FromCode { get; }
         public string ToCode { get; }
         public AircraftType Type { get; }
+
+        public string CallsignForStart(long startSeconds)
+        {
+            var slot = (int)(Math.Abs(startSeconds / IntervalSeconds) % _callsigns.Length);
+            return _callsigns[slot] ??= Airline + (FlightNumber + slot);
+        }
     }
 }

@@ -62,6 +62,27 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void ReusableAirborneSnapshot_MatchesTheIndependentSnapshotAndClears()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(3 * 3600));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(5),
+                Airline.Player("Day Air", "#1F3A93"));
+            var buffer = new List<SkyFlight> { default };
+            AdelaideDayPlan.FillAirborneAt(ops, clock.Now, buffer);
+            var snapshot = AdelaideDayPlan.AirborneAt(ops, clock.Now);
+            Assert.That(buffer.Count, Is.EqualTo(snapshot.Count));
+            for (var i = 0; i < buffer.Count; i++)
+            {
+                Assert.That(buffer[i].Callsign, Is.EqualTo(snapshot[i].Callsign));
+                Assert.That(buffer[i].Progress, Is.EqualTo(snapshot[i].Progress).Within(1e-9));
+            }
+
+            AdelaideDayPlan.FillAirborneAt(null, clock.Now, buffer);
+            Assert.That(buffer, Is.Empty, "an unavailable fleet must clear last frame's aircraft");
+            Assert.That(AdelaideDayPlan.AirborneAt(null, clock.Now), Is.Empty);
+        }
+
+        [Test]
         public void Plan_IsDeterministicForTheSameClock()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));

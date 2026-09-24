@@ -135,8 +135,21 @@ namespace Airside.Simulation
             if (operations == null)
                 return Array.Empty<SkyFlight>();
 
+            var flights = new List<SkyFlight>();
+            FillAirborneAt(operations, now, flights);
+            return flights;
+        }
+
+        /// <summary>Refill a caller-owned buffer without allocating a new flight list each frame.</summary>
+        public static void FillAirborneAt(AirlineOperations operations, SimulationTime now, List<SkyFlight> flights)
+        {
+            if (flights == null)
+                throw new ArgumentNullException(nameof(flights));
+            flights.Clear();
+            if (operations == null)
+                return;
+
             var home = operations.Home;
-            var list = new List<SkyFlight>();
             foreach (var aircraft in operations.Fleet)
             {
                 if (aircraft?.Type == null || !aircraft.CurrentDestination.HasValue)
@@ -172,10 +185,8 @@ namespace Airside.Simulation
                 var callsign = aircraft.Airline.Id.Value + aircraft.Registration;
                 if (SkyTraffic.TryEnroute(callsign, aircraft.Type, from, to, now.ElapsedSeconds, start,
                         out var flight))
-                    list.Add(flight);
+                    flights.Add(flight);
             }
-
-            return list;
         }
 
         /// <summary>

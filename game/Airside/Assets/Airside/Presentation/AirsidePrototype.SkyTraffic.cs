@@ -9,6 +9,10 @@ namespace Airside.Presentation
     {
         private Transform _skyTrafficRoot;
         private readonly Dictionary<string, Transform> _skyViews = new();
+        private readonly List<SkyFlight> _skyCorridorFlights = new(16);
+        private readonly List<SkyFlight> _skyFleetFlights = new(16);
+        private readonly HashSet<string> _skyLive = new();
+        private readonly List<string> _skyStale = new(16);
 
         private void UpdateSkyTraffic()
         {
@@ -26,18 +30,22 @@ namespace Airside.Presentation
                 _skyTrafficRoot.SetParent(transform, false);
             }
 
-            var live = new HashSet<string>();
-            foreach (var flight in SkyTraffic.At(_preciseTime, _operations.Clock))
+            var live = _skyLive;
+            live.Clear();
+            SkyTraffic.FillAt(_preciseTime, _operations.Clock, _skyCorridorFlights);
+            foreach (var flight in _skyCorridorFlights)
                 ShowSkyFlight(flight, new Color(0.82f, 0.84f, 0.88f), live);
-            foreach (var flight in AdelaideDayPlan.AirborneAt(_operations, new SimulationTime((long)_preciseTime)))
+            AdelaideDayPlan.FillAirborneAt(_operations, new SimulationTime((long)_preciseTime), _skyFleetFlights);
+            foreach (var flight in _skyFleetFlights)
                 ShowSkyFlight(flight, ColorForSkyAirline(flight.Callsign), live);
 
-            var stale = new List<string>();
+            var stale = _skyStale;
+            stale.Clear();
             foreach (var pair in _skyViews)
             {
                 if (live.Contains(pair.Key))
                     continue;
-                if (pair.Value != null)
+                if (pair.Value != null && pair.Value.gameObject.activeSelf)
                     pair.Value.gameObject.SetActive(false);
                 stale.Add(pair.Key);
             }
@@ -76,7 +84,8 @@ namespace Airside.Presentation
                 _skyViews[flight.Callsign] = view;
             }
 
-            view.gameObject.SetActive(true);
+            if (!view.gameObject.activeSelf)
+                view.gameObject.SetActive(true);
             view.position = new Vector3((float)x, AirsideFlightPath.GroundY + (float)y, (float)z);
             // Negative X is nose up, the same as the fleet's ClimbPitchDegrees. These were
             // the wrong way round: departures climbed away nose-down, arrivals sank nose-up.
@@ -113,7 +122,7 @@ namespace Airside.Presentation
         private void HideSkyTraffic()
         {
             foreach (var pair in _skyViews)
-                if (pair.Value != null)
+                if (pair.Value != null && pair.Value.gameObject.activeSelf)
                     pair.Value.gameObject.SetActive(false);
         }
     }

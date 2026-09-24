@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Fallback sky traffic creates less per-frame garbage.** Rendering reuses its
+  temporary flight and ID collections, caches repeating corridor callsigns, and
+  skips redundant aircraft activation changes. The snapshot APIs and flight
+  paths are unchanged.
+
 - **Aircraft windows have a fitted glazing pass (ADR 0117).** All 13 fleet models now carry
   separate raised surrounds, dark recessed gaskets and restrained upper-edge reflections
   around the existing cabin and flight-deck panes. Hangar thumbnails and packaged runtime

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Airside.Domain;
 using Airside.Simulation;
 using NUnit.Framework;
@@ -22,6 +23,41 @@ namespace Airside.Tests
                 Assert.That(a[i].To.Code, Is.Not.EqualTo("ADL"));
                 Assert.That(a[i].Progress, Is.InRange(0.0, 1.0));
             }
+        }
+
+        [TestCase(0.0)]
+        [TestCase(10800.25)]
+        [TestCase(86400.0)]
+        public void ReusableSnapshot_MatchesTheIndependentSnapshot(double seconds)
+        {
+            var buffer = new List<SkyFlight> { default };
+            SkyTraffic.FillAt(seconds, null, buffer);
+            var snapshot = SkyTraffic.At(seconds);
+            Assert.That(buffer.Count, Is.EqualTo(snapshot.Count));
+            for (var i = 0; i < buffer.Count; i++)
+            {
+                Assert.That(buffer[i].Callsign, Is.EqualTo(snapshot[i].Callsign));
+                Assert.That(buffer[i].Latitude, Is.EqualTo(snapshot[i].Latitude).Within(1e-9));
+                Assert.That(buffer[i].Longitude, Is.EqualTo(snapshot[i].Longitude).Within(1e-9));
+                Assert.That(buffer[i].Progress, Is.EqualTo(snapshot[i].Progress).Within(1e-9));
+            }
+
+            SkyTraffic.FillAt(seconds + 60, null, buffer);
+            Assert.That(buffer.Count, Is.EqualTo(SkyTraffic.At(seconds + 60).Count),
+                "a reused buffer must not retain flights from the previous frame");
+        }
+
+        [Test]
+        public void RouteCallsign_IsCachedAcrossFrames()
+        {
+            var route = SkyTraffic.Routes[0];
+            var first = route.CallsignForStart(0);
+            Assert.That(first, Is.EqualTo(route.Airline + route.FlightNumber));
+            Assert.That(ReferenceEquals(first, route.CallsignForStart(0)), Is.True);
+            Assert.That(route.CallsignForStart(route.IntervalSeconds),
+                Is.EqualTo(route.Airline + (route.FlightNumber + 1)));
+            Assert.That(ReferenceEquals(first, route.CallsignForStart(route.IntervalSeconds * 40)), Is.True,
+                "the numbered service repeats without allocating another callsign");
         }
 
         [Test]

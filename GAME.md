@@ -1,5 +1,16 @@
 ## Where to resume — session handoff
 
+- **2026-09-24 Codex — sky-traffic frame allocation fix (local branch
+  `fix/sky-traffic-frame-allocations-20260924`).** Fallback sky rendering now
+  reuses its flight, live-ID and stale-ID buffers, caches repeating route callsigns,
+  and avoids redundant aircraft active-state changes. Independent snapshot APIs
+  remain available; flight positions, schedules and live-feed ownership are unchanged.
+  - **Evidence:** domain suite 781/781 passed, including reusable-buffer and
+    callsign regressions. Unity EditMode 1057/1057 passed. Packaged runtime check
+    pending.
+  - **NEXT:** finish the packaged check; push/review only with explicit approval
+    for the private remote. Frame-time profiling on a live scene remains useful.
+
 - **2026-09-24 Codex — fitted aircraft glazing (branch `codex/aircraft-glazing-polish`,
   ADR 0117).** Rebuilt all 13 genuine aircraft kits with curvature-following pale trim,
   dark gasket and upper-edge reflections on every cabin and flight-deck pane. Regenerated

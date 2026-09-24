@@ -1,5 +1,17 @@
 ## Where to resume — session handoff
 
+- **2026-09-24 Codex — baggage undercroft wall clipping (branch
+  `fix/terminal-undercroft-opening-20260924`, ADR 0115 follow-up).** The baggage
+  tug no longer drives through an unbroken terminal facade: the Domestic &
+  International Terminal prism now leaves a 9 m × 3.4 m opening centred on the
+  authored baggage-hall spur. The roof and wall above remain, while other walls,
+  RFDS hangar, routes, timing and saves are unchanged.
+  - **Evidence:** the mesh regression checks open vehicle-height and intact
+    lintel-height positions; it also proves only the route-aligned wall is cut.
+    Domain **777/777**, Unity EditMode **1054/1054** and art audit passed.
+  - **NEXT:** inspect the opening and moving baggage vehicle together in the
+    packaged Mac game before final visual approval.
+
 - **2026-09-24 Codex — fitted aircraft glazing (branch `codex/aircraft-glazing-polish`,
   ADR 0117).** Rebuilt all 13 genuine aircraft kits with curvature-following pale trim,
   dark gasket and upper-edge reflections on every cabin and flight-deck pane. Regenerated

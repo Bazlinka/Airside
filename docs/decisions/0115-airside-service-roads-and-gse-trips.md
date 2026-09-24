@@ -78,9 +78,19 @@ Not verified: the Unity compile and the in-engine look. `scripts/test-unity.sh` 
 on this Mac (batchmode licensing loop, `docs/build-mac-batchmode-dead-end`), and the harness
 does not compile `AirsidePrototype.cs`, where `DriveServiceVehicle` was added.
 
-## Still open
+## Original open issue (resolved below)
 
 The undercroft is a route, not yet a hole: the terminal shell in
 `AdelaideTerminalArchitecture` has no modelled opening, so a vehicle on the spur currently
 drives beneath an unbroken building. Cutting the void — and deciding whether the frontage
 should also gain an authored covered section under the aerobridges — is the next step.
+
+## 24 September 2026 follow-up
+
+The undercroft facade issue above is resolved: the Domestic & International
+Terminal's procedural shell now cuts a 9 m × 3.4 m portal around the authored
+baggage spur and retains its wall above. The real OSM frontage remains open-air;
+nothing is claimed to pass under the aerobridges. Ground-service routing, timing
+and saves are unchanged. A Unity mesh regression checks the opening and all
+other terminal walls; packaged close-view inspection of a moving baggage tug
+is still required.

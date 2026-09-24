@@ -1,11 +1,39 @@
 using System.Linq;
 using Airside.Presentation;
+using Airside.Simulation;
 using NUnit.Framework;
 
 namespace Airside.Tests
 {
     public sealed class AdelaideTerminalArchitectureTests
     {
+        [Test]
+        public void UndercroftPortal_LeavesOtherWallsAndTheRfdsHangarIntact()
+        {
+            var footprint = AdelaideLayout.Terminals[0].Xz;
+            var hitCount = 0;
+            for (var i = 0; i < footprint.Length / 2; i++)
+            {
+                var j = (i + 1) % (footprint.Length / 2);
+                if (AdelaideTerminalArchitecture.TryUndercroftPortalOnWall(
+                    footprint[2 * i], footprint[2 * i + 1],
+                    footprint[2 * j], footprint[2 * j + 1], out var first, out var last))
+                {
+                    hitCount++;
+                    Assert.That(last - first, Is.GreaterThan(0.1f));
+                }
+            }
+            Assert.That(hitCount, Is.EqualTo(1), "only the route-aligned airside facade edge is cut");
+            var rfds = AdelaideLayout.Terminals[1].Xz;
+            for (var i = 0; i < rfds.Length / 2; i++)
+            {
+                var j = (i + 1) % (rfds.Length / 2);
+                Assert.That(AdelaideTerminalArchitecture.TryUndercroftPortalOnWall(
+                    rfds[2 * i], rfds[2 * i + 1], rfds[2 * j], rfds[2 * j + 1],
+                    out _, out _), Is.False);
+            }
+        }
+
         [Test]
         public void AirsideGlazing_SpansTheRealApronFacadeInSeparatedBays()
         {

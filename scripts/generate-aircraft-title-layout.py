@@ -54,7 +54,8 @@ TITLE_FRACTION = 0.34         # AircraftTitlePaint.TitleLengthFraction
 
 
 def fuselage_frame(parts):
-    fus = np.concatenate([tri.reshape(-1, 3) for name, tri in parts if name == "fuselage"])
+    fus = np.concatenate([tri.reshape(-1, 3) for name, tri in parts
+                          if name in ("fuselage", "fuselage_port")])
     z0, z1 = fus[:, 2].min(), fus[:, 2].max()
     bins = np.arange(z0, z1 + 0.5, 0.5)
     rows = []

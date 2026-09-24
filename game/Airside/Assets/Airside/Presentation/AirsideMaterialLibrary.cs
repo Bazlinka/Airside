@@ -62,9 +62,9 @@ namespace Airside.Presentation
             [SurfaceKind.Metal] = new Profile(0.68f, 0.52f, 0.32f, 0.96f),
             [SurfaceKind.PaintedMetal] = new Profile(0.22f, 0.55f, 0.24f, 0.97f),
             [SurfaceKind.AircraftSkin] = new Profile(0.16f, 0.68f, 0.14f, 0.98f),
-            // Aircraft windows are deliberately opaque. With no modelled cabin behind them,
-            // transparent panes expose the opposite fuselage and read as missing geometry.
-            [SurfaceKind.AircraftGlazing] = new Profile(0.06f, 0.82f, 0.02f, 1f),
+            // Cut-through windows reveal recessed cabin/flight-deck geometry. A low-metallic,
+            // smooth translucent outer lite catches the sky without becoming a blue decal.
+            [SurfaceKind.AircraftGlazing] = new Profile(0.015f, 0.93f, 0.01f, 1f, transparent: true),
             // Flat painted markings — matte, not aircraft-skin gloss.
             [SurfaceKind.PaintedLine] = new Profile(0.02f, 0.22f, 0.08f, 0.96f),
             // Slightly softer glass so curtain walls read as panes, not chrome mirrors.
@@ -170,8 +170,12 @@ namespace Airside.Presentation
                 if (n.EndsWith("_gasket", StringComparison.Ordinal))
                     return SurfaceKind.Rubber;
                 if (n.EndsWith("_reflection", StringComparison.Ordinal))
-                    return SurfaceKind.AircraftGlazing;
+                    return SurfaceKind.Glass;
+                if (n.EndsWith("_interior", StringComparison.Ordinal))
+                    return SurfaceKind.Default;
             }
+            if (n.StartsWith("pilot_", StringComparison.Ordinal))
+                return SurfaceKind.Default;
             // Frame / pillar members must beat the glass rule below: they carry "window" or
             // "windscreen" in their name but are painted metal mullions, not glazing.
             if (n.Contains("mullion") || n.Contains("transom") || n.Contains("sill") || n.Contains("header")
@@ -363,10 +367,10 @@ namespace Airside.Presentation
             var profile = GetProfile(kind);
             EnsureSharedMaps();
             EnsureAuthoredMaps();
-            // Aircraft glazing is a painted illusion over a sealed fuselage: retain the
-            // dark tint but never let a legacy colour alpha route it back to transparency.
+            // Generated aircraft now have apertures and recessed interiors, so
+            // their panes can transmit the flight deck instead of masking white skin.
             if (kind == SurfaceKind.AircraftGlazing)
-                color.a = 1f;
+                color.a = Mathf.Min(color.a, 0.50f);
             // Opaque RGB callers (terminal glass colors) still need real alpha panes.
             if ((kind == SurfaceKind.Glass || kind == SurfaceKind.Water) && color.a >= 0.99f)
                 color.a = kind == SurfaceKind.Glass ? 0.42f : 0.62f;
@@ -633,7 +637,7 @@ namespace Airside.Presentation
         {
             instance = null;
             if (kind == SurfaceKind.AircraftGlazing)
-                color.a = 1f;
+                color.a = Mathf.Min(color.a, 0.50f);
             var key = AuthoredMaterialKey(kind);
             if (key == null)
                 return false;

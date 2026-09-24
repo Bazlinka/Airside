@@ -1,5 +1,15 @@
 ## Where to resume — session handoff
 
+- **2026-09-25 Codex — cut-through aircraft glazing and operator colours (ADR 0118).**
+  Rebuilds all 13 aircraft with actual openings behind one translucent pane per window,
+  dark recessed cabins, and two original cockpit crew silhouettes. Window trim is thinner;
+  the broad fake cyan shine is gone. Side markings now use each airline's own accent rather
+  than universal blue, and Virgin Australia's magenta-tinted accent is red. Main wings,
+  horizontal tails and engines are neutral rather than brand-coloured.
+  - **Evidence:** domain **782/782**, Unity EditMode **1061/1061**, 13/13 fitted-paint,
+    single-pane/interior/pilot and connected-airframe checks, and the asset audit
+    (1305 unique GUIDs; 336 byte-identical runtime mirrors) pass. Neutral Hangar and
+    operator-colour renders were inspected; a packaged close-view remains visual QA.
 - **2026-09-24 Codex — combined undercroft and sky-traffic fixes (branch
   `fix/sky-traffic-frame-allocations-20260924`).** The baggage-hall service road
   now passes through a 9 m × 3.4 m terminal opening, with the lintel and other

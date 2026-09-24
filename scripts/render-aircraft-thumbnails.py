@@ -65,10 +65,16 @@ def colour(name):
             return (31, 46, 56)
         if n.endswith("_reflection"):
             return (118, 167, 185)
+        if n.endswith("_interior"):
+            return (24, 37, 48)
+    if n.startswith("pilot_"):
+        return (128, 94, 76) if n.endswith("_head") else (33, 45, 60)
     if n.startswith(("cabin_window_frame", "cockpit_frame", "windscreen_pillar", "cockpit_glare", "cockpit_sill")):
         return LIGHT_GREY
     if n.startswith(("cabin_window", "cockpit", "windscreen")):
         return GLASS
+    if n == "fuselage_port":
+        return WHITE
     if "_tip" in n and n.startswith("propeller_"):
         return (210, 180, 70)  # readable tip stripe at Hangar distance
     if n.startswith(("spinner", "prop_hub", "hub_cap")):

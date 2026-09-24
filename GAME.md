@@ -8,9 +8,11 @@
   timing, saves and flight paths are unchanged.
   - **Evidence:** combined domain **782/782** and Unity EditMode **1059/1059**
     passed. The asset audit passed with 1305 unique GUIDs and 336 exact mirrors.
-    A clean combined Mac package and startup smoke test are pending.
-  - **NEXT:** build and smoke-test the combined package, then merge its PR to
-    main. A visible undercroft playtest and frame-time profiling remain useful.
+    A clean Mac package stamped `c608b494` launched headlessly with no startup
+    errors in its fresh player log; the test player was stopped.
+  - **NEXT:** visually check the moving baggage vehicle through the opening and
+    profile frame times during busy traffic. Neither visual fit nor all sources of
+    stutter are proved by the headless checks.
 
 - **2026-09-24 Codex — fitted aircraft glazing (branch `codex/aircraft-glazing-polish`,
   ADR 0117).** Rebuilt all 13 genuine aircraft kits with curvature-following pale trim,

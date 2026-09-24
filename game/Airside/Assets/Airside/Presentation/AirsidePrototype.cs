@@ -1370,9 +1370,13 @@ namespace Airside.Presentation
                 // while airborne phases snapped, which read as inconsistent smoothness.
                 view.position = position;
 
-                var direction = FleetGroundFacing(flight, next - position);
+                // Position look-ahead supplies yaw only. AirsideFlightPath.PitchDegrees is the
+                // sole pitch owner; including the path's climb here applied pitch twice and
+                // made the airframe/follow camera visibly twitch around rotation.
+                var direction = AirsideAircraftMotion.HorizontalHeading(
+                    FleetGroundFacing(flight, next - position));
                 var heading = direction.sqrMagnitude > 0.001f
-                    ? Quaternion.LookRotation(direction.normalized)
+                    ? Quaternion.LookRotation(direction)
                     : view.rotation;
                 heading = DepartureLookRotation(flight, phase, progress, heading);
                 var pitch = PhasePitchDegrees(phase, progress);
@@ -8700,6 +8704,16 @@ namespace Airside.Presentation
             }
         }
 
+        public const int AdelaideCloudClusterCount = 16;
+
+        /// <summary>Restrained weather growth keeps atlas cards readable without hiding the field.</summary>
+        public static float CloudCardScale(float cloudCover) =>
+            Mathf.Lerp(0.88f, 1.15f, Mathf.Clamp01(cloudCover));
+
+        /// <summary>The atlas already contains shaded bodies, so cards remain translucent.</summary>
+        public static float CloudCardAlpha(float cloudCover) =>
+            Mathf.Lerp(0.42f, 0.72f, Mathf.Clamp01(cloudCover));
+
         private static void BuildCloudBands()
         {
             // Authored atlas cards replace the previous combined-sphere clouds. One renderer per
@@ -8720,11 +8734,14 @@ namespace Airside.Presentation
 
             var rng = new System.Random(90210);
             var adelaide = AirsideBareField.Enabled;
-            var clusterCount = adelaide ? 24 : 9;
+            // ADR 0075 approved sixteen atlas clusters. A later change silently raised this
+            // to 24, then cover scaling grew individual cards past a kilometre wide, so the
+            // airport was hidden behind low photo cut-outs in the normal overview.
+            var clusterCount = adelaide ? AdelaideCloudClusterCount : 9;
             var spreadX = adelaide ? 4200f : 110f;
             var spreadZ = adelaide ? 2800f : 100f;
-            var yBase = adelaide ? 240f : 24f;
-            var ySpan = adelaide ? 160f : 26f;
+            var yBase = adelaide ? 650f : 24f;
+            var ySpan = adelaide ? 300f : 26f;
             for (var i = 0; i < clusterCount; i++)
             {
                 var cluster = new GameObject($"Cloud {i}").transform;
@@ -8734,9 +8751,9 @@ namespace Airside.Presentation
                 var y = yBase + (float)rng.NextDouble() * ySpan;
                 cluster.position = new Vector3(x, y, z);
 
-                var sx = (adelaide ? 360f : 16f) + (float)rng.NextDouble() * (adelaide ? 300f : 30f);
-                var sy = (adelaide ? 28f : 3.4f) + (float)rng.NextDouble() * (adelaide ? 22f : 4.5f);
-                var sz = (adelaide ? 180f : 9f) + (float)rng.NextDouble() * (adelaide ? 160f : 18f);
+                var sx = (adelaide ? 240f : 16f) + (float)rng.NextDouble() * (adelaide ? 180f : 30f);
+                var sy = (adelaide ? 105f : 3.4f) + (float)rng.NextDouble() * (adelaide ? 65f : 4.5f);
+                var sz = (adelaide ? 140f : 9f) + (float)rng.NextDouble() * (adelaide ? 140f : 18f);
                 var yaw = (float)rng.NextDouble() * 360f;
                 cluster.rotation = Quaternion.Euler(0f, yaw, 0f);
 
@@ -8744,9 +8761,7 @@ namespace Airside.Presentation
                 card.name = "Cloud card";
                 Object.Destroy(card.GetComponent<Collider>());
                 card.transform.SetParent(cluster, false);
-                // The atlas cells contain broad cumulus, not a thin cloud deck. Scaling height
-                // from the old procedural lobe thickness flattened the card into a white smear.
-                card.transform.localScale = new Vector3(sx, sx * 0.68f, 1f);
+                card.transform.localScale = new Vector3(sx, sy, 1f);
                 var renderer = card.GetComponent<Renderer>();
                 renderer.sharedMaterial = cloudMaterial;
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -9110,7 +9125,7 @@ namespace Airside.Presentation
                 tint = Color.Lerp(tint, new Color(0.95f, 0.7f, 0.55f), dusk * 0.55f);
                 if (thickSky)
                     tint = Color.Lerp(tint, new Color(0.62f, 0.66f, 0.72f), 0.22f + look.CloudCover * 0.4f);
-                var baseAlpha = 0.62f + look.CloudCover * 0.34f;
+                var baseAlpha = CloudCardAlpha(look.CloudCover);
                 tint.a = Mathf.Lerp(baseAlpha * 0.85f, baseAlpha, daylight);
 
                 // One authored atlas card per cluster, updated only when the weather band changes.
@@ -9122,7 +9137,7 @@ namespace Airside.Presentation
                 // than popping solid the instant cover crosses its threshold.
                 var revealAt = (float)i / _cloudRoot.childCount;
                 var visibility = Mathf.InverseLerp(revealAt, revealAt + 0.08f, look.CloudCover);
-                cloud.localScale = Vector3.one * Mathf.Lerp(0.78f, 1.65f, look.CloudCover);
+                cloud.localScale = Vector3.one * CloudCardScale(look.CloudCover);
 
                 var renderers = cloud.GetComponentsInChildren<Renderer>();
                 for (var r = 0; r < renderers.Length; r++)

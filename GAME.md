@@ -1,5 +1,18 @@
 ## Where to resume — session handoff
 
+- **2026-09-24 Codex — cloud scale and takeoff stability (branch
+  `fix/cloud-scale-takeoff-jitter-20260924`).** The packaged overview exposed two presentation
+  faults. Cloud generation had drifted from ADR 0075's approved 16 clusters to 24, enlarged
+  high-cover cards to as much as roughly 1.1 km wide, and placed them only 240–400 m above the
+  airport. Adelaide is back to 16 restrained, translucent 240–420 m cards at 650–950 m, so
+  weather remains visible without covering the working field. Aircraft heading now flattens
+  path look-ahead to yaw before the authored phase pitch is applied; takeoff climb pitch is no
+  longer composed twice around rotation and the follow camera receives a stable forward vector.
+  - **Evidence:** `scripts/test-unity.sh` **1049/1049 passed**, including new cloud-count/scale
+    and climbing-heading regressions.
+  - **NEXT:** build the clean commit, inspect clear/cloudy packaged views and follow a takeoff,
+    then merge if the visible motion is stable.
+
 - **2026-09-24 Codex — 50-check whole-game verification (branch
   `fix/50-bug-sweep-20260924`).** Reviewed merged `main` through 50 explicit player/system
   checks. Unity EditMode is **1047/1047 passed**. Aircraft source validators pass for every

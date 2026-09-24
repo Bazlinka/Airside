@@ -692,6 +692,31 @@ namespace Airside.Tests
             }
         }
 
+        [Test]
+        public void AircraftMotion_TakeoffHeadingOwnsYawWithoutApplyingClimbPitchTwice()
+        {
+            var rotate = AirsideFlightPath.RotateProgress;
+            var from = AirsideFlightPath.Takeoff(rotate + 0.02f);
+            var to = AirsideFlightPath.Takeoff(rotate + 0.04f);
+            var travel = to - from;
+            Assert.That(travel.y, Is.GreaterThan(0f), "the sampled path must actually be climbing");
+
+            var heading = AirsideAircraftMotion.HorizontalHeading(travel);
+            Assert.That(heading.y, Is.Zero.Within(1e-6f));
+            Assert.That(heading.magnitude, Is.EqualTo(1f).Within(1e-5f));
+            Assert.That(AirsideAircraftMotion.HorizontalHeading(Vector3.up), Is.EqualTo(Vector3.zero));
+        }
+
+        [Test]
+        public void CloudCards_StayAtTheApprovedCountAndRestrainedScale()
+        {
+            Assert.That(AirsidePrototype.AdelaideCloudClusterCount, Is.EqualTo(16));
+            Assert.That(AirsidePrototype.CloudCardScale(0f), Is.EqualTo(0.88f).Within(0.001f));
+            Assert.That(AirsidePrototype.CloudCardScale(1f), Is.EqualTo(1.15f).Within(0.001f));
+            Assert.That(AirsidePrototype.CloudCardAlpha(0f), Is.EqualTo(0.42f).Within(0.001f));
+            Assert.That(AirsidePrototype.CloudCardAlpha(1f), Is.EqualTo(0.72f).Within(0.001f));
+        }
+
         private const float AirsideRunwayHalfWidth = 3.4f;
 
         private static float HeadingDegrees(Vector3 from, Vector3 to)

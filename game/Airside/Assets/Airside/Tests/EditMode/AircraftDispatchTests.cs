@@ -136,7 +136,10 @@ namespace Airside.Tests
                     Assert.That(blades, Is.EqualTo(4), $"four Dowty blades on the {side} propeller");
                 }
 
-                Assert.That(root.GetComponentsInChildren<Transform>(true).Any(t => t.name == "CabinDoor"), Is.True);
+                var airstair = root.GetComponentsInChildren<Transform>(true)
+                    .Single(t => t.name.StartsWith("CabinDoor airstair"));
+                Assert.That(airstair.Cast<Transform>().Count(t => t.name.StartsWith("Airstair tread")),
+                    Is.GreaterThanOrEqualTo(3), "the Saab door is the integrated airstair");
                 Assert.That(root.GetComponentsInChildren<Transform>(true).Any(t => t.name == "Gear L"), Is.True);
                 Assert.That(root.GetComponentsInChildren<Transform>(true).Any(t => t.name == "Gear R"), Is.True);
                 Assert.That(root.GetComponentsInChildren<Transform>(true).Any(t => t.name == "Gear nose"), Is.True);

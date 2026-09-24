@@ -1,5 +1,18 @@
 ## Unreleased
 
+- **Air traffic no longer drives through runway movements or lands onto a full apron.**
+  Ground-control prediction now includes the ground roll during takeoff and landing, checks
+  the complete vacate-to-stand path, and reserves a fitting stand for each AI arrival before
+  final. If the apron is full, AI traffic remains airborne until a stand frees instead of
+  blocking the runway exit through the overnight curfew. Player arrivals retain their stand
+  choice window and automatic fallback. Arrival ETAs now include the same ground-route hold
+  used by the tower, and saved games safely round-trip optional arrival reservations.
+
+- **Current fleet and aircraft presentation checks are accurate again.** The Adelaide layout
+  test derives its parked Q400 count from the four-aircraft fleet, terminal compatibility
+  distinguishes code C from code E gates, and the Saab dispatch check recognises its renamed
+  integrated airstair door and verifies the generated treads.
+
 - **The catering truck now exists (ADR 0116).** It was the one turnaround vehicle built with no
   art path, so it fell back to a flat-shaded box while the fuel truck, baggage tug and apron bus
   all loaded authored kits — and there was no catering model on disk at all. VEH-004 gives it

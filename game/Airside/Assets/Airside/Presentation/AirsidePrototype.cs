@@ -3372,7 +3372,7 @@ namespace Airside.Presentation
             {
                 var mark = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 mark.name = "Skid mark";
-                Object.Destroy(mark.GetComponent<Collider>());
+                DestroyPresentationObject(mark.GetComponent<Collider>());
                 mark.transform.SetParent(_skidMarkRoot, false);
                 var side = i == 0 ? -2.05f : 2.05f;
                 mark.transform.position = aircraft.position
@@ -3401,7 +3401,7 @@ namespace Airside.Presentation
                 var renderer = mark.GetComponent<Renderer>();
                 if (renderer == null)
                 {
-                    Object.Destroy(mark.gameObject);
+                    DestroyPresentationObject(mark.gameObject);
                     continue;
                 }
 
@@ -3409,7 +3409,7 @@ namespace Airside.Presentation
                 color.a -= Time.unscaledDeltaTime / 22f;
                 if (color.a <= 0.02f)
                 {
-                    Object.Destroy(mark.gameObject);
+                    DestroyPresentationObject(mark.gameObject);
                     continue;
                 }
 
@@ -3710,7 +3710,7 @@ namespace Airside.Presentation
                 {
                     var puddle = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                     puddle.name = $"Puddle {i} blob {b}";
-                    Object.Destroy(puddle.GetComponent<Collider>());
+                    DestroyPresentationObject(puddle.GetComponent<Collider>());
                     puddle.transform.SetParent(cluster, false);
                     var ox = ((b * 37 + i * 13) % 17) * 0.06f - 0.4f;
                     var oz = ((b * 29 + i * 11) % 15) * 0.07f - 0.35f;
@@ -3843,7 +3843,7 @@ namespace Airside.Presentation
                         AirsideMaterialLibrary.SurfaceKind.Default);
                     var collider = drop.GetComponent<Collider>();
                     if (collider != null)
-                        Object.Destroy(collider);
+                        DestroyPresentationObject(collider);
                 }
 
                 drop.transform.localPosition = new Vector3(
@@ -3854,7 +3854,7 @@ namespace Airside.Presentation
             }
 
             if (seed != null)
-                Object.Destroy(seed.gameObject);
+                DestroyPresentationObject(seed.gameObject);
 
             root.gameObject.SetActive(false);
             return root;
@@ -3883,7 +3883,7 @@ namespace Airside.Presentation
                 SetRendererColor(smokeRenderer, new Color(0.85f, 0.85f, 0.88f, 0.4f));
                 var collider = smoke.GetComponent<Collider>();
                 if (collider != null)
-                    Object.Destroy(collider);
+                    DestroyPresentationObject(collider);
             }
 
             root.gameObject.SetActive(false);
@@ -3909,7 +3909,7 @@ namespace Airside.Presentation
                 puff.transform.SetParent(root, false);
                 var collider = puff.GetComponent<Collider>();
                 if (collider != null)
-                    Object.Destroy(collider);
+                    DestroyPresentationObject(collider);
 
                 var renderer = puff.GetComponent<Renderer>();
                 // One shared material for the pool: per-puff alpha rides on a
@@ -4163,7 +4163,7 @@ namespace Airside.Presentation
             {
                 var puff = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 puff.name = $"Spray {i}";
-                Object.Destroy(puff.GetComponent<Collider>());
+                DestroyPresentationObject(puff.GetComponent<Collider>());
                 puff.transform.SetParent(root, false);
                 puff.transform.localScale = new Vector3(0.5f, 0.22f, 0.5f);
                 var puffRenderer = puff.GetComponent<Renderer>();
@@ -5320,7 +5320,7 @@ namespace Airside.Presentation
             {
                 var pole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 pole.name = "Beacon mast";
-                Object.Destroy(pole.GetComponent<Collider>());
+                DestroyPresentationObject(pole.GetComponent<Collider>());
                 pole.transform.SetParent(mast, false);
                 pole.transform.localPosition = new Vector3(0f, 4.5f, 0f);
                 pole.transform.localScale = new Vector3(0.18f, 4.5f, 0.18f);
@@ -5329,7 +5329,7 @@ namespace Airside.Presentation
 
                 var head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 head.name = "Beacon head";
-                Object.Destroy(head.GetComponent<Collider>());
+                DestroyPresentationObject(head.GetComponent<Collider>());
                 head.transform.SetParent(mast, false);
                 head.transform.localPosition = new Vector3(0f, 9.1f, 0f);
                 head.transform.localScale = new Vector3(0.55f, 0.55f, 0.55f);
@@ -7276,7 +7276,7 @@ namespace Airside.Presentation
                 Place("trolley_post_r", steel);
                 if (placed == 0)
                 {
-                    Object.Destroy(root.gameObject);
+                    DestroyPresentationObject(root.gameObject);
                     root = null;
                 }
             }
@@ -7346,7 +7346,7 @@ namespace Airside.Presentation
                 Place("bench_leg_r", steel);
                 if (placed == 0)
                 {
-                    Object.Destroy(root.gameObject);
+                    DestroyPresentationObject(root.gameObject);
                     root = null;
                 }
             }
@@ -8438,7 +8438,7 @@ namespace Airside.Presentation
             // Unlit-ish pale Open Sky; day/dusk still tint via camera background underneath.
             var dome = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             dome.name = "Horizon dome";
-            Object.Destroy(dome.GetComponent<Collider>());
+            DestroyPresentationObject(dome.GetComponent<Collider>());
             dome.transform.position = new Vector3(0f, 0f, 0f);
             dome.transform.localScale = new Vector3(330f, 150f, 330f);
             var material = AirsideMaterialLibrary.Create(AirsideTheme.OpenSky, AirsideMaterialLibrary.SurfaceKind.UnlitSky);
@@ -8618,7 +8618,7 @@ namespace Airside.Presentation
             // Visible sun/moon so the Adelaide path reads from overview (0025 item 5 / ADR 0086).
             var sun = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             sun.name = "Sun disc";
-            Object.Destroy(sun.GetComponent<Collider>());
+            DestroyPresentationObject(sun.GetComponent<Collider>());
             sun.transform.localScale = Vector3.one * 7.5f;
             var sunMat = AirsideMaterialLibrary.CreateShared(
                 new Color(1f, 0.94f, 0.72f, 1f),
@@ -8633,7 +8633,7 @@ namespace Airside.Presentation
 
             var glow = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             glow.name = "Sun glow";
-            Object.Destroy(glow.GetComponent<Collider>());
+            DestroyPresentationObject(glow.GetComponent<Collider>());
             glow.transform.SetParent(sun.transform, false);
             glow.transform.localScale = Vector3.one * 3.2f;
             var glowMat = AirsideMaterialLibrary.CreateShared(
@@ -8649,7 +8649,7 @@ namespace Airside.Presentation
 
             var moon = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             moon.name = "Moon disc";
-            Object.Destroy(moon.GetComponent<Collider>());
+            DestroyPresentationObject(moon.GetComponent<Collider>());
             moon.transform.localScale = Vector3.one * 6.5f;
             var moonMat = AirsideMaterialLibrary.CreateShared(
                 new Color(0.78f, 0.80f, 0.84f, 1f),
@@ -8797,7 +8797,7 @@ namespace Airside.Presentation
 
                 var card = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 card.name = "Cloud card";
-                Object.Destroy(card.GetComponent<Collider>());
+                DestroyPresentationObject(card.GetComponent<Collider>());
                 card.transform.SetParent(cluster, false);
                 card.transform.localScale = new Vector3(sx, sy, 1f);
                 var renderer = card.GetComponent<Renderer>();
@@ -8815,7 +8815,7 @@ namespace Airside.Presentation
                 // Soft ground umbra under each cloud cluster — drifts with UpdateCloudDrift.
                 var umbra = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 umbra.name = $"Cloud umbra {i}";
-                Object.Destroy(umbra.GetComponent<Collider>());
+                DestroyPresentationObject(umbra.GetComponent<Collider>());
                 umbra.transform.SetParent(umbraRoot, false);
                 umbra.transform.position = new Vector3(x, 0.06f, z);
                 umbra.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
@@ -8850,7 +8850,7 @@ namespace Airside.Presentation
         {
             var shadow = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             shadow.name = name;
-            Object.Destroy(shadow.GetComponent<Collider>());
+            DestroyPresentationObject(shadow.GetComponent<Collider>());
             shadow.transform.position = position;
             shadow.transform.localScale = scale;
             var color = new Color(0.05f, 0.06f, 0.08f, Mathf.Clamp01(alpha));
@@ -9215,7 +9215,7 @@ namespace Airside.Presentation
 
                 var body = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 body.name = "Body";
-                Object.Destroy(body.GetComponent<Collider>());
+                DestroyPresentationObject(body.GetComponent<Collider>());
                 body.transform.SetParent(bird, false);
                 body.transform.localScale = new Vector3(0.12f, 0.05f, 0.55f);
                 var bodyRenderer = body.GetComponent<Renderer>();
@@ -9233,7 +9233,7 @@ namespace Airside.Presentation
         {
             var wing = GameObject.CreatePrimitive(PrimitiveType.Cube);
             wing.name = name;
-            Object.Destroy(wing.GetComponent<Collider>());
+            DestroyPresentationObject(wing.GetComponent<Collider>());
             wing.transform.SetParent(bird, false);
             wing.transform.localPosition = localPos;
             wing.transform.localScale = new Vector3(0.55f, 0.02f, 0.14f);
@@ -9391,6 +9391,7 @@ namespace Airside.Presentation
                 ConvertToAirstairDoor(root);
                 NestFlapParts(root);
                 NestWingMountedParts(root);
+                AirsideAircraftRenderBatcher.CombineStaticGlazing(root);
                 EnsureAircraftLod(root);
             }
             else
@@ -9468,6 +9469,7 @@ namespace Airside.Presentation
                 ConvertToAirstairDoor(root);
                 NestFlapParts(root);
                 NestWingMountedParts(root);
+                AirsideAircraftRenderBatcher.CombineStaticGlazing(root);
                 EnsureAircraftLod(root);
             }
             else
@@ -9552,6 +9554,7 @@ namespace Airside.Presentation
                 NestFlapParts(root);
                 NestWingMountedParts(root);
                 EnsureJetFanDiscs(root);
+                AirsideAircraftRenderBatcher.CombineStaticGlazing(root);
                 EnsureAircraftLod(root);
             }
             else
@@ -9634,6 +9637,7 @@ namespace Airside.Presentation
                 ConvertToAirstairDoor(root);
                 NestFlapParts(root);
                 NestWingMountedParts(root);
+                AirsideAircraftRenderBatcher.CombineStaticGlazing(root);
                 if (finalAtr42)
                 {
                     PolishFinalAtrMaterials(root);
@@ -9692,7 +9696,7 @@ namespace Airside.Presentation
                         child.SetParent(root, false);
                     }
 
-                    Object.Destroy(heatKit.gameObject);
+                    DestroyPresentationObject(heatKit.gameObject);
                 }
                 else
                 {
@@ -11198,7 +11202,7 @@ namespace Airside.Presentation
                 var diameter = Mathf.Clamp(radius * 2.05f, 1.2f, 4.05f);
                 var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 disc.name = "PropDisc";
-                Object.Destroy(disc.GetComponent<Collider>());
+                DestroyPresentationObject(disc.GetComponent<Collider>());
                 disc.transform.SetParent(child, false);
                 disc.transform.localPosition = Vector3.zero;
                 // Cylinder axis → local Z so the face is perpendicular to the spin axis.
@@ -11242,7 +11246,7 @@ namespace Airside.Presentation
 
                 var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 disc.name = "FanDisc";
-                Object.Destroy(disc.GetComponent<Collider>());
+                DestroyPresentationObject(disc.GetComponent<Collider>());
                 disc.transform.SetParent(fan, false);
                 disc.transform.localPosition = new Vector3(0f, 0f, 0.035f);
                 disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
@@ -11273,7 +11277,7 @@ namespace Airside.Presentation
             var centre = profile != null ? profile.VisualCentreOffsetMetres : Vector3.zero;
             var shadow = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             shadow.name = "GroundShadow";
-            Object.Destroy(shadow.GetComponent<Collider>());
+            DestroyPresentationObject(shadow.GetComponent<Collider>());
             shadow.transform.SetParent(aircraft, false);
             shadow.transform.localPosition = new Vector3(centre.x, -0.55f, centre.z);
             shadow.transform.localRotation = Quaternion.identity;
@@ -11913,7 +11917,7 @@ namespace Airside.Presentation
                 return root;
             }
 
-            Object.Destroy(root.gameObject);
+            DestroyPresentationObject(root.gameObject);
             if (ArtPresentationLoader.TryInstantiatePrefab("mdl_passenger_stairs_v02", out var prefabRoot)
                 || ArtPresentationLoader.TryInstantiatePrefab("mdl_passenger_stairs_v01", out prefabRoot))
             {
@@ -11985,7 +11989,7 @@ namespace Airside.Presentation
                 return root;
             }
 
-            Object.Destroy(root.gameObject);
+            DestroyPresentationObject(root.gameObject);
             if (ArtPresentationLoader.TryInstantiatePrefab("mdl_wheel_chocks_v01", out var prefabRoot))
             {
                 prefabRoot.name = "Wheel chocks";
@@ -12060,7 +12064,7 @@ namespace Airside.Presentation
                 return root;
             }
 
-            Object.Destroy(root.gameObject);
+            DestroyPresentationObject(root.gameObject);
             if (ArtPresentationLoader.TryInstantiatePrefab("mdl_gpu_cart_v01", out var prefabRoot))
             {
                 prefabRoot.name = "GPU cart";
@@ -12238,7 +12242,7 @@ namespace Airside.Presentation
             {
                 var cylinder = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 cylinder.name = "Windsock fabric";
-                Object.Destroy(cylinder.GetComponent<Collider>());
+                DestroyPresentationObject(cylinder.GetComponent<Collider>());
                 cylinder.transform.SetParent(sock, false);
                 cylinder.transform.localPosition = Vector3.zero;
                 cylinder.transform.localScale = new Vector3(0.55f, 0.55f, 1.35f);
@@ -12286,7 +12290,7 @@ namespace Airside.Presentation
 
             var cone = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             cone.name = "Safety cone";
-            Object.Destroy(cone.GetComponent<Collider>());
+            DestroyPresentationObject(cone.GetComponent<Collider>());
             cone.transform.position = position;
             cone.transform.localScale = new Vector3(0.28f, 0.35f, 0.28f);
             cone.GetComponent<Renderer>().sharedMaterial = CreateMaterial(new Color(0.95f, 0.45f, 0.08f));
@@ -13444,7 +13448,7 @@ namespace Airside.Presentation
         {
             var tank = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             tank.name = name;
-            Object.Destroy(tank.GetComponent<Collider>());
+            DestroyPresentationObject(tank.GetComponent<Collider>());
             tank.transform.position = position;
             tank.transform.localScale = new Vector3(2.0f, 1.15f, 2.0f);
             tank.GetComponent<Renderer>().sharedMaterial = AirsideMaterialLibrary.CreateShared(
@@ -13973,6 +13977,16 @@ namespace Airside.Presentation
             return block;
         }
 
+        private static void DestroyPresentationObject(UnityEngine.Object target)
+        {
+            if (target == null)
+                return;
+            if (Application.isPlaying)
+                UnityEngine.Object.Destroy(target);
+            else
+                UnityEngine.Object.DestroyImmediate(target);
+        }
+
         private static void CreateDecalQuad(string name, Vector3 position, Vector3 scale, string artTextureRelativePath)
         {
             var texture = TryLoadArtTexture(artTextureRelativePath);
@@ -13981,7 +13995,7 @@ namespace Airside.Presentation
 
             var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             quad.name = name;
-            UnityEngine.Object.Destroy(quad.GetComponent<Collider>());
+            DestroyPresentationObject(quad.GetComponent<Collider>());
             quad.transform.position = position;
             quad.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
             quad.transform.localScale = scale;

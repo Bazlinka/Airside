@@ -613,7 +613,7 @@ namespace Airside.Presentation
 
             var marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             marker.name = AircraftPickRouting.MarkerChildName;
-            UnityEngine.Object.Destroy(marker.GetComponent<Collider>());
+            DestroyPresentationObject(marker.GetComponent<Collider>());
             marker.transform.SetParent(aircraft, false);
             marker.transform.localPosition = new Vector3(0f, -0.4f, 0f);
             marker.transform.localRotation = Quaternion.identity;

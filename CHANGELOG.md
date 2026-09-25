@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Graphics-on play returns to a steady 60 fps on the measured Mac scene.** Static aircraft
+  cabin glass, windscreens and fitted reflections are combined into material batches without
+  removing named art parts or changing the visible aircraft. A same-time packaged comparison
+  improved 40→60 fps, p95 25.8→16.8 ms and render-thread time 17.0→5.7 ms. The accompanying
+  100-gate whole-game pass also repairs unsafe EditMode object cleanup, generated-mesh lifetime,
+  nine malformed Unity GUIDs and the metadata audit that previously accepted them.
+
 - **Career mode compiles in Unity.** Outstation base lookups use `HasOutstationBase` instead of
   `Contains` on a read-only collection, two shadowed locals in the network actions are renamed,
   and the save round-trip test expects the current save version (13).

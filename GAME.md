@@ -13,9 +13,18 @@
     and macOS indexing, so it is not a clean performance benchmark. A packaged 800×600
     Route Map shot had no control overlap. The full-airport QA switch is an older
     miniature scene; do not use its follow view as final normal-play art approval.
-  - **NEXT:** finish close-view aircraft capture and an isolated main/render frame-time
-    run; a real first-time human 20–30 minute playtest is still required. Keep default
-    focused field, saves, authored schedules and economy balance unchanged.
+  - **Packaged follow-up:** close-view A350 and Saab captures were taken. The glass
+    still reads dark/flat at play distance, so this branch does not claim an art fix.
+    The old `-airsideFullAirport` QA scene visibly contains a miniature terrain tile
+    and curved backdrop; it is not the normal map and must not be presented as one.
+    A graphics-on full-airport soak stopped logging after minute five, then remained
+    CPU-busy without progress for over ten wall-clock minutes; it was stopped and is
+    **not** a passing performance test. A hidden `-batchmode -nographics` normal-mode
+    seven-minute soak completed with no stall or exception, but cannot validate graphics.
+  - **NEXT:** do not merge PR #406 until the graphics-on full-airport hang is located
+    and fixed or explicitly scoped out. Re-run an isolated rendered soak; a real
+    first-time human 20–30 minute playtest is still required. Keep default focused
+    field, saves, authored schedules and economy balance unchanged.
 
 - **2026-09-25 Codex — cut-through aircraft glazing and operator colours (ADR 0118).**
   Rebuilds all 13 aircraft with actual openings behind one translucent pane per window,

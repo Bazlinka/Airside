@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-25 Codex — PR #406 merge handoff.** Bailey asked to merge the
+  completed route-warning and packaged-QA work while the graphics-on performance
+  issue remains open. A Unity Development-player CPU trace of the normal Adelaide
+  view showed `DrawTransparentObjects` at about **12.6 ms** of an **18.7 ms** render
+  loop in a sampled slow frame. In a disposable packaged A/B, excluding the entire
+  transparent pass raised the run from roughly **30 fps** to **53–57 fps**, but
+  removed glazing and other visible surfaces; that trial was reverted. Disabling
+  individual renderers after the scene was built gave misleading draw counts and
+  did not provide a shippable fix. Existing Medium quality, GPU occlusion, a static
+  mesh merge, and per-camera postprocessing/MSAA trials also failed to restore
+  smooth pacing and were reverted. **Next:** profile which transparent materials
+  and objects account for the pass cost, then simplify or batch them without
+  changing the approved airport look. Re-run the normal-map graphics-on soak and
+  human playtest before release. PR #406's merge does not validate performance.
+
 - **2026-09-25 Codex — PR #406 follow-up (branch
   `feature/operations-playtest-profile-20260925`).** The Route Map now shows the
   matching contract's pay/cancellation warning together with a due or overdue

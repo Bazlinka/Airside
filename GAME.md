@@ -1,5 +1,20 @@
 ## Where to resume — session handoff
 
+- **2026-09-25 Codex — graphics-on stutter investigation (branch
+  `feature/operations-playtest-profile-20260925`, PR #406).** Cabin glass now updates
+  its material property block only when the visible glow band changes. The packaged
+  soak reports per-frame Update/HUD and aircraft/sky/ground stage timings. Domain
+  **787/787**, Unity EditMode **1068/1068** and Mac build passed. A hidden, normal-map
+  graphics-on three-minute soak produced one heartbeat at 35 fps, p95 33.6 ms, with
+  Update 3.29 ms and HUD 1.01 ms; it then stopped logging while CPU-busy. A process
+  sample pointed to Unity GPU-driven culling/Metal rendering, not the measured game
+  Update. A trial of disabling GPU Resident Drawer stalled at startup and was reverted.
+  The hung QA app was stopped. This remains an **unresolved render-path blocker**;
+  the glass cache has not been shown to fix frame pacing. Do not merge PR #406 on
+  performance grounds. Next: isolate renderer batches/culling in a focused packaged
+  A/B, then repeat a normal-map graphics-on soak and human playtest. Do not use the
+  old miniature `-airsideFullAirport` scene for art approval.
+
 - **2026-09-25 Codex — route-plan operating preview and packaged QA (ADR 0119; branch
   `feature/operations-playtest-profile-20260925`).** The Route Map now shows the
   incremental cost of rebooking, indicative return/net with current reliability and

@@ -27,7 +27,7 @@ namespace Airside.Presentation
         private long _soakLastClock = -1;
         private int _soakStalledBeats;
         private int _soakFrames;
-        private readonly float[] _soakFrameMs = new float[4096];
+        private readonly float[] _soakFrameMs = new float[8192];
         private int _soakFrameSamples;
         private int _soakSlowFrames;
         private float _soakWorstFrameMs;
@@ -38,6 +38,14 @@ namespace Airside.Presentation
         private long _soakMainThreadNs;
         private long _soakRenderThreadNs;
         private int _soakProfilerSamples;
+        private long _soakFleetTicks;
+        private long _soakSkyTicks;
+        private long _soakGroundTicks;
+        private long _soakOpsTicks;
+        private int _soakOpsCalls;
+        private long _soakUpdateTicks;
+        private long _soakHudTicks;
+        private int _soakHudCalls;
         private readonly SeededRandomSource _soakChoices = new(31337);
 
         private static bool SoakMode
@@ -241,11 +249,28 @@ namespace Airside.Presentation
                 var renderMs = _soakProfilerSamples > 0 ? _soakRenderThreadNs / (1_000_000f * _soakProfilerSamples) : 0f;
                 var systemMb = _soakSystemMemoryRecorder.Valid
                     ? _soakSystemMemoryRecorder.LastValue / (1024 * 1024) : -1;
+                var stageScale = 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+                var stageFrames = Math.Max(1, _soakFrames);
+                var fleetMs = _soakFleetTicks * stageScale / stageFrames;
+                var skyMs = _soakSkyTicks * stageScale / stageFrames;
+                var groundMs = _soakGroundTicks * stageScale / stageFrames;
+                var opsMs = _soakOpsTicks * stageScale / Math.Max(1, _soakOpsCalls);
+                var updateMs = _soakUpdateTicks * stageScale / stageFrames;
+                var hudMs = _soakHudTicks * stageScale / stageFrames;
                 Debug.Log($"{SoakLogTag} {(now - _soakStartedAt) / 60f:0} min · sim {AirlineClockText()} · trips {trips} · " +
                           $"fps {_soakFrames / Math.Max(0.01f, now - _soakLastHeartbeatAt):0} · p95 {p95:0.0} ms · " +
-                          $">33ms {_soakSlowFrames} · worst {_soakWorstFrameMs:0.0} ms · cpu main/render {mainMs:0.0}/{renderMs:0.0} ms · system/gc {systemMb}/{GC.GetTotalMemory(false) / (1024 * 1024)} MB · {states}");
+                          $">33ms {_soakSlowFrames} · worst {_soakWorstFrameMs:0.0} ms · cpu main/render {mainMs:0.0}/{renderMs:0.0} ms · " +
+                          $"stage update/hud {updateMs:0.00}/{hudMs:0.00} ms ({_soakHudCalls} GUI) · fleet/sky/ground {fleetMs:0.00}/{skyMs:0.00}/{groundMs:0.00} ms · ops {opsMs:0.00} ms/{_soakOpsCalls} updates · system/gc {systemMb}/{GC.GetTotalMemory(false) / (1024 * 1024)} MB · {states}");
                 _soakFrames = 0;
                 _soakFrameSamples = 0;
+                _soakFleetTicks = 0;
+                _soakSkyTicks = 0;
+                _soakUpdateTicks = 0;
+                _soakHudTicks = 0;
+                _soakHudCalls = 0;
+                _soakGroundTicks = 0;
+                _soakOpsTicks = 0;
+                _soakOpsCalls = 0;
                 _soakSlowFrames = 0;
                 _soakWorstFrameMs = 0f;
                 _soakLastHeartbeatAt = now;

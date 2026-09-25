@@ -175,6 +175,22 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void AircraftWindowGlow_RewritesOnlyWhenVisibleGlowBandChanges()
+        {
+            var method = typeof(AirsidePrototype).GetMethod("CabinWindowGlowState",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            Assert.That(method, Is.Not.Null);
+            int Key(Airside.Simulation.AircraftPhase phase, float daylight) =>
+                (int)method.Invoke(null, new object[] { phase, daylight });
+            Assert.That(Key(Airside.Simulation.AircraftPhase.AtStand, 1f), Is.EqualTo(1));
+            Assert.That(Key(Airside.Simulation.AircraftPhase.Departed, 1f), Is.EqualTo(2));
+            Assert.That(Key(Airside.Simulation.AircraftPhase.TaxiOut, 0.4f), Is.EqualTo(3));
+            Assert.That(Key(Airside.Simulation.AircraftPhase.AtStand, 0f), Is.EqualTo(4));
+            Assert.That(Key(Airside.Simulation.AircraftPhase.Departed, 0f), Is.EqualTo(5));
+            Assert.That(Key(Airside.Simulation.AircraftPhase.TaxiOut, 0.39f), Is.EqualTo(6));
+        }
+
+        [Test]
         public void FleetAircraft_OnTheGround_KeepLandingLightsOffAndFlapsUpOnStand()
         {
             Assert.That(AirsideReusableMotion.LandingLightsOn(Airside.Simulation.AircraftPhase.AtStand, 1f, drawnOnGround: true), Is.False);

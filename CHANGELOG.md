@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Soak profiling now isolates game update from render-thread stalls.** The packaged
+  soak reports per-frame Update, HUD, aircraft, sky and ground time alongside Unity's
+  main/render counters. Cabin glass glow is rewritten only when its day/night or
+  aircraft-phase band changes. A graphics-on normal-map soak still stalls in Unity's
+  GPU-driven culling path; this is not a completed stutter fix.
+
 - **Aircraft glazing stays translucent in play.** The per-frame cabin/flight-deck glow
   now keeps each pane's authored tint and alpha instead of replacing it with opaque
   white. A day/night Unity regression covers the property block; the packaged Saab

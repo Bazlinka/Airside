@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Route Map shows contract and maintenance warnings together.** A due or overdue check
+  now appears on a second line instead of replacing the matching contract's pay and
+  cancellation penalty. The packaged soak has QA-only renderer-isolation flags to
+  diagnose the unresolved graphics-on frame pacing problem; no performance fix is
+  claimed from these flags.
+
 - **Soak profiling now isolates game update from render-thread stalls.** The packaged
   soak reports per-frame Update, HUD, aircraft, sky and ground time alongside Unity's
   main/render counters. Cabin glass glow is rewritten only when its day/night or

@@ -1,5 +1,22 @@
 ## Where to resume — session handoff
 
+- **2026-09-25 Codex — PR #406 follow-up (branch
+  `feature/operations-playtest-profile-20260925`).** The Route Map now shows the
+  matching contract's pay/cancellation warning together with a due or overdue
+  maintenance warning. A dedicated EditMode test covers both alerts. Domain
+  **788/788**, Unity EditMode **1069/1069**, and the final Mac build passed.
+  The packaged soak has QA-only renderer-isolation and heartbeat flags.
+  On the 1280×720 normal map, graphics-on runs still settled near **29 fps** with
+  p95 frame time over **33 ms**. Hiding world and aircraft renderers, disabling
+  shadows, disabling the GPU Resident Drawer, changing frame pacing, and combining
+  parked-car meshes did not produce a safe repeatable fix; all visual/quality
+  trials were reverted. The car trial cut T1 renderers from 1509 to 69 without
+  moving the observed frame rate. Soak draw/batch counts also stayed high with
+  most scene renderers hidden, so they must not be treated as visible-object
+  counts. **Do not merge PR #406 yet.** Next: capture a Unity Profiler timeline
+  and GPU frame trace on the normal map, identify the actual main/render work,
+  then rerun a sustained graphics-on soak and a human playtest.
+
 - **2026-09-25 Codex — graphics-on stutter investigation (branch
   `feature/operations-playtest-profile-20260925`, PR #406).** Cabin glass now updates
   its material property block only when the visible glow band changes. The packaged

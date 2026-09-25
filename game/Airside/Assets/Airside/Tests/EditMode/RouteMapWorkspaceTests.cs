@@ -157,6 +157,24 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Map_ShowsContractAndOverdueCheckTogether()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            Assert.That(ops.AcceptContract(RouteContractCatalogue.RegionalKingscoteIntro).Accepted, Is.True);
+            ops.RestoreMaintenance(plane.Registration, Maintenance.IntervalRotations, 0);
+            var model = new RouteMapWorkspaceModel();
+
+            model.Rebuild(ops, plane, HudTestAirline.Code("KGC"), 900, clock.Now,
+                RouteMapFilter.Available);
+
+            Assert.That(model.AvailabilityLine, Does.Contain("Contract +$420"));
+            Assert.That(model.AvailabilityLine, Does.Contain("cancel −3 reliability"));
+            Assert.That(model.AvailabilityLine, Does.Contain("Check overdue"));
+            Assert.That(model.AvailabilityLine, Does.Contain("−2 reliability"));
+            Assert.That(model.AvailabilityLine.Split('\n').Length, Is.EqualTo(2));
+        }
+
+        [Test]
         public void Map_ResetsTheButtonLabelWhenTheBookingIsGone()
         {
             var (clock, ops, plane) = HudTestAirline.Create();

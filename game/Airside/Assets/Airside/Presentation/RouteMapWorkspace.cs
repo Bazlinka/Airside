@@ -217,9 +217,14 @@ namespace Airside.Presentation
                 : $"Dispatch  ${dispatch:N0}";
             ReturnLine = $"Est. return  ${pay:N0}  ·  net {(pay - dispatch >= 0 ? "+" : "−")}${Math.Abs(pay - dispatch):N0}";
             if (Maintenance.IsDueSoon(aircraft))
-                OperatingNote = Maintenance.IsOverdue(aircraft)
-                    ? $"Check overdue: next rotation costs {Maintenance.OverduePenalty} reliability"
+            {
+                var checkNote = Maintenance.IsOverdue(aircraft)
+                    ? $"Check overdue · next flight −{Maintenance.OverduePenalty} reliability"
                     : "Check due after this rotation";
+                OperatingNote = OperatingNote.Length > 0
+                    ? OperatingNote + "\n" + checkNote
+                    : checkNote;
+            }
 
             if (!inRange)
             {

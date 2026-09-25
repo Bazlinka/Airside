@@ -92,6 +92,8 @@ namespace Airside.Simulation
         internal void MarkFinale() { if (FinaleAtSeconds == 0) FinaleAtSeconds = ActivePlaySeconds; }
         public IReadOnlyCollection<string> ServedDestinations => _servedDestinations;
         public IReadOnlyCollection<string> OutstationBases => _outstationBases;
+
+        public bool HasOutstationBase(string code) => code != null && _outstationBases.Contains(code);
         public IReadOnlyCollection<long> RecentServiceMargins => _recentServiceMargins;
         public int BaseCount => 1 + _outstationBases.Count;
         public long RecentOperatingMargin

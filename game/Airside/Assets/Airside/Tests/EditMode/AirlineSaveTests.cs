@@ -168,7 +168,7 @@ namespace Airside.Tests
             Assert.That(ops.BuyAircraft(AircraftType.Atr42).Accepted, Is.True);
 
             var data = AirlineSave.Capture(ops);
-            Assert.That(data.Version, Is.EqualTo(12));
+            Assert.That(data.Version, Is.EqualTo(AirlineSaveData.CurrentVersion));
             Assert.That(data.PlayerBaseLevel, Is.EqualTo(nameof(PlayerBaseLevel.ExpandedRegional)));
 
             var restored = AirlineSave.Restore(data, new ManualSimulationClock(clock.Now));

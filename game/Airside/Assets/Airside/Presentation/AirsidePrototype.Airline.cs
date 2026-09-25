@@ -2225,7 +2225,7 @@ namespace Airside.Presentation
             {
                 var code = candidates[i];
                 var row = new HudBox(left.X, left.Y + 24f + i * 30f, left.Width, 27f);
-                var open = _operations.CareerState.OutstationBases.Contains(code);
+                var open = _operations.CareerState.HasOutstationBase(code);
                 if (code == _selectedNetworkBase)
                     _workspaceDrawList.Fill(row, HudTone.Accent, 0.22f);
                 _workspaceDrawList.Text(new HudBox(row.X + 9f, row.Y + 5f, row.Width - 150f, 19f),
@@ -2271,7 +2271,7 @@ namespace Airside.Presentation
                 "network:type-next", HudButtonStyle.Secondary);
             _workspaceDrawList.Button(new HudBox(right.Right - 135f, right.Y + 60f, 135f, 28f),
                 "BUY AT BASE", "network:buy", HudButtonStyle.Primary,
-                _operations.CareerState.OutstationBases.Contains(_selectedNetworkBase));
+                _operations.CareerState.HasOutstationBase(_selectedNetworkBase));
             _workspaceDrawList.Hairline(new HudBox(right.X, right.Y + 103f, right.Width, 1f));
             OutstationAircraft selected = null;
             foreach (var aircraft in based)
@@ -2502,10 +2502,10 @@ namespace Airside.Presentation
 
             if (action.StartsWith("network:open:", StringComparison.Ordinal))
             {
-                var code = action.Substring("network:open:".Length);
-                var result = _operations.OpenOutstationBase(code);
-                ShowToast(result.Accepted ? code + " base opened." : result.Reason);
-                if (result.Accepted) { _selectedNetworkBase = code; SaveAirline(); }
+                var baseCode = action.Substring("network:open:".Length);
+                var result = _operations.OpenOutstationBase(baseCode);
+                ShowToast(result.Accepted ? baseCode + " base opened." : result.Reason);
+                if (result.Accepted) { _selectedNetworkBase = baseCode; SaveAirline(); }
                 PlayUiClick();
                 return;
             }
@@ -2585,17 +2585,17 @@ namespace Airside.Presentation
                         a.Registration == _selectedNetworkRegistration);
                     var routes = NetworkDestinations(aircraft);
                     if (aircraft == null || routes.Count == 0) return;
-                    var destination = routes[_networkDestinationIndex % routes.Count];
+                    var networkDestination = routes[_networkDestinationIndex % routes.Count];
                     CommandResult result;
                     if (action == "network:plan")
                         result = _operations.ScheduleOutstationService(aircraft.Registration,
-                            destination.Code, _clock.Now.Advance(30 * 60));
+                            networkDestination.Code, _clock.Now.Advance(30 * 60));
                     else
                     {
                         var repeat = _operations.RepeatSchedules.FirstOrDefault(p =>
                             p.Registration == aircraft.Registration);
                         result = repeat == null
-                            ? _operations.SetRepeatSchedule(aircraft.Registration, destination.Code, 12)
+                            ? _operations.SetRepeatSchedule(aircraft.Registration, networkDestination.Code, 12)
                             : _operations.PauseRepeatSchedule(aircraft.Registration, !repeat.Paused);
                     }
                     ShowToast(result.Accepted ? (action == "network:plan" ? "Service planned." : "Repeat schedule updated.")

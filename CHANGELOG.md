@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Aircraft glazing stays translucent in play.** The per-frame cabin/flight-deck glow
+  now keeps each pane's authored tint and alpha instead of replacing it with opaque
+  white. A day/night Unity regression covers the property block; the packaged Saab
+  close-up shows the openings again, though final visual polish is still pending.
+
 - **Route decisions now show clearer immediate trade-offs (ADR 0119).** The Route Map refunds an existing booking when checking affordability, blocks departures during an aircraft check, and previews return and net with current reliability and matching-contract pay. It flags due checks and the reliability cost of cancelling a matching contract booking. The separate-save packaged soak now records frame times and memory, and can follow and zoom in on a registered aircraft for visual review. The simulation and save format are unchanged.
 
 - **Aircraft glazing now has real depth (ADR 0118).** All 13 aircraft have apertures

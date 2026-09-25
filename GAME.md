@@ -21,6 +21,12 @@
     CPU-busy without progress for over ten wall-clock minutes; it was stopped and is
     **not** a passing performance test. A hidden `-batchmode -nographics` normal-mode
     seven-minute soak completed with no stall or exception, but cannot validate graphics.
+  - **2026-09-25 follow-up:** the live window-glow pass was overriding authored
+    translucent panes with opaque white every frame. It now caches each pane's
+    base colour and alpha once and retains them at day and night. Domain **787/787**,
+    Unity EditMode **1067/1067**, and a packaged Mac build pass; a normal-map Saab
+    close-up shows visible apertures. The panes still read dark at play distance,
+    so this is a real bug fix, not final visual approval.
   - **NEXT:** do not merge PR #406 until the graphics-on full-airport hang is located
     and fixed or explicitly scoped out. Re-run an isolated rendered soak; a real
     first-time human 20–30 minute playtest is still required. Keep default focused

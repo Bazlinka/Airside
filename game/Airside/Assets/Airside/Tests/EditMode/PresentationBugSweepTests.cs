@@ -139,6 +139,42 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void AircraftWindowGlow_PreservesAuthoredPaneTintAndAlpha()
+        {
+            var pane = new GameObject("Cabin window");
+            var renderer = pane.AddComponent<MeshRenderer>();
+            var authored = new Color(0.05f, 0.12f, 0.18f, 0.42f);
+            var material = AirsideMaterialLibrary.Create(authored,
+                AirsideMaterialLibrary.SurfaceKind.AircraftGlazing, useTextures: false);
+            renderer.sharedMaterial = material;
+            try
+            {
+                var method = typeof(AirsidePrototype).GetMethod("UpdateCabinWindowGlow",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                Assert.That(method, Is.Not.Null);
+                var panes = new (Transform Transform, Renderer Renderer, Color BaseColor)[]
+                    { (pane.transform, renderer, authored) };
+                var block = new MaterialPropertyBlock();
+                foreach (var daylight in new[] { 1f, 0f })
+                {
+                    method.Invoke(null, new object[]
+                        { panes, Airside.Simulation.AircraftPhase.AtStand, daylight });
+                    renderer.GetPropertyBlock(block);
+                    var actual = block.GetColor(Shader.PropertyToID("_BaseColor"));
+                    Assert.That(actual.a, Is.EqualTo(authored.a).Within(0.001f),
+                        "day and night glow must not turn cut-through glass opaque");
+                    Assert.That(actual.r, Is.EqualTo(authored.r).Within(0.001f),
+                        "the pane must retain its own tint, not become white");
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(pane);
+                Object.DestroyImmediate(material);
+            }
+        }
+
+        [Test]
         public void FleetAircraft_OnTheGround_KeepLandingLightsOffAndFlapsUpOnStand()
         {
             Assert.That(AirsideReusableMotion.LandingLightsOn(Airside.Simulation.AircraftPhase.AtStand, 1f, drawnOnGround: true), Is.False);

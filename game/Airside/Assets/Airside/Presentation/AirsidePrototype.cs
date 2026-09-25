@@ -2064,7 +2064,7 @@ namespace Airside.Presentation
         /// at night and a softer stand dwell glow so the airframe reads alive.
         /// </summary>
         private static void UpdateCabinWindowGlow(
-            (Transform Transform, Renderer Renderer)[] glass, AircraftPhase phase, float daylight)
+            (Transform Transform, Renderer Renderer, Color BaseColor)[] glass, AircraftPhase phase, float daylight)
         {
             var night = daylight < 0.4f;
             var atStand = phase == AircraftPhase.AtStand;
@@ -2080,7 +2080,7 @@ namespace Airside.Presentation
             {
                 if (glass[i].Renderer == null)
                     continue;
-                SetRendererColor(glass[i].Renderer, Color.white, intensity > 0.01f ? glow : Color.black);
+                SetRendererColor(glass[i].Renderer, glass[i].BaseColor, intensity > 0.01f ? glow : Color.black);
             }
         }
 
@@ -11352,7 +11352,7 @@ namespace Airside.Presentation
             public ControlSurfacePart[] ControlSurfaces;
             public LightGearPart[] LightsAndGear;
             public CabinDoorPart[] CabinDoors;
-            public (Transform Transform, Renderer Renderer)[] CabinWindowGlass;
+            public (Transform Transform, Renderer Renderer, Color BaseColor)[] CabinWindowGlass;
             public (Transform Transform, Renderer Renderer)[] EngineHeatVents;
             public PropellerPart[] Propellers;
         }
@@ -11423,7 +11423,7 @@ namespace Airside.Presentation
             var controlSurfaces = new List<ControlSurfacePart>();
             var lightsAndGear = new List<LightGearPart>();
             var cabinDoors = new List<CabinDoorPart>();
-            var cabinWindowGlass = new List<(Transform, Renderer)>();
+            var cabinWindowGlass = new List<(Transform, Renderer, Color)>();
             var engineHeatVents = new List<(Transform, Renderer)>();
             var propellers = new List<PropellerPart>();
 
@@ -11495,7 +11495,7 @@ namespace Airside.Presentation
                 {
                     var glassRenderer = child.GetComponent<Renderer>();
                     if (glassRenderer != null)
-                        cabinWindowGlass.Add((child, glassRenderer));
+                        cabinWindowGlass.Add((child, glassRenderer, GetRendererColor(glassRenderer)));
                 }
 
                 // -- engine heat shimmer (UpdateEngineHeat) --

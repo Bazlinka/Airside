@@ -541,7 +541,7 @@ namespace Airside.Simulation
                     if (record == null || string.IsNullOrWhiteSpace(record.Registration)
                         || !AircraftType.TryFromId(record.TypeId, out var type)
                         || !DestinationCatalogue.TryFind(record.BaseCode, out var origin)
-                        || !operations.CareerState.OutstationBases.Contains(record.BaseCode)
+                        || !operations.CareerState.HasOutstationBase(record.BaseCode)
                         || !seenRegistrations.Add(record.Registration)
                         || record.CompletedServices < 0 || record.RotationsSinceCheck < 0
                         || record.CheckUntilSeconds < 0)

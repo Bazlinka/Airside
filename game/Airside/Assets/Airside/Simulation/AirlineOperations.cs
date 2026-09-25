@@ -1746,7 +1746,7 @@ namespace Airside.Simulation
             foreach (var candidate in OutstationCandidates)
                 if (candidate == code) allowed = true;
             if (!allowed) return CommandResult.Refused("Choose Melbourne, Sydney, Brisbane or Perth for an outstation base.");
-            if (CareerState.OutstationBases.Contains(code)) return CommandResult.Refused("That base is already open.");
+            if (CareerState.HasOutstationBase(code)) return CommandResult.Refused("That base is already open.");
             if (CareerState.OutstationBases.Count >= 3) return CommandResult.Refused("The network already has three outstation bases.");
             var cost = NextOutstationCost;
             if (!CareerState.TryChargePurchase(cost))
@@ -1759,7 +1759,7 @@ namespace Airside.Simulation
 
         public CommandResult BuyAircraftAtOutstation(AircraftType type, string baseCode)
         {
-            if (!CareerState.OutstationBases.Contains(baseCode))
+            if (!CareerState.HasOutstationBase(baseCode))
                 return CommandResult.Refused("Open that base first.");
             if (type == null || !AircraftAcquisition.TryFor(type, out var offer))
                 return CommandResult.Refused("That aircraft is not for sale.");

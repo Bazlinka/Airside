@@ -9,11 +9,16 @@
   Update 3.29 ms and HUD 1.01 ms; it then stopped logging while CPU-busy. A process
   sample pointed to Unity GPU-driven culling/Metal rendering, not the measured game
   Update. A trial of disabling GPU Resident Drawer stalled at startup and was reverted.
-  The hung QA app was stopped. This remains an **unresolved render-path blocker**;
-  the glass cache has not been shown to fix frame pacing. Do not merge PR #406 on
-  performance grounds. Next: isolate renderer batches/culling in a focused packaged
-  A/B, then repeat a normal-map graphics-on soak and human playtest. Do not use the
-  old miniature `-airsideFullAirport` scene for art approval.
+  The hung QA app was stopped. A **non-hidden** normal-map two-minute soak did complete
+  with no stall, but only 29-34 fps (p95 41.7-49.1 ms). Its measured Update was
+  2.71-3.23 ms, HUD 0.97-1.00 ms. A separate 1280x720 one-minute run still managed
+  just 29 fps/p95 41.7 ms; a 1280x720 review capture verified the smaller resolution.
+  Thus pixel count is not the main bottleneck, and the hidden-launch stall is not yet
+  proved to be a normal-play deadlock. **Frame pacing is still unacceptable**; the glass
+  cache has not been shown to fix it. Do not merge PR #406 on performance grounds.
+  Next: isolate renderer batches/culling in a focused packaged A/B, then repeat a
+  normal-map graphics-on soak and human playtest. Do not use the old miniature
+  `-airsideFullAirport` scene for art approval.
 
 - **2026-09-25 Codex — route-plan operating preview and packaged QA (ADR 0119; branch
   `feature/operations-playtest-profile-20260925`).** The Route Map now shows the

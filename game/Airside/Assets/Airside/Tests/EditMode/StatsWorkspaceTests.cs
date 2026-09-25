@@ -311,10 +311,9 @@ namespace Airside.Tests
 
             var model = new StatsWorkspaceModel();
             model.Rebuild(ops, clock.Now);
-            // 11 milestones plus the current campaign chapter's header and goals (ADR 0083).
-            var chapter = Campaign.Current(ops.CampaignChapters());
-            Assert.That(model.Milestones.Count, Is.EqualTo(11 + 1 + chapter.Goals.Count),
-                "worst case assumes the full milestone list");
+            var roadmapCount = ops.CareerGoals().Count(goal => goal.Stage <= ops.CareerState.Tier);
+            Assert.That(model.Milestones.Count, Is.EqualTo(11 + roadmapCount),
+                "career goals and earned milestones share the stats list");
             Assert.That(model.ContractHistory.Count, Is.EqualTo(StatsWorkspaceModel.MaxHistoryShown));
 
             foreach (var (width, height) in HudTestAirline.Viewports)

@@ -56,7 +56,7 @@ namespace Airside.Tests
             var model = new RouteMapWorkspaceModel();
 
             model.Rebuild(ops, plane, HudTestAirline.Code("KGC"), 900, clock.Now, RouteMapFilter.Available);
-            Assert.That(model.CareerLine, Does.Contain("Chapter 1 target"));
+            Assert.That(model.CareerLine, Does.Contain("Career goal"));
             Assert.That(model.CareerTone, Is.EqualTo(HudTone.Caution));
             Assert.That(model.IsCareerTarget(HudTestAirline.Code("KGC")), Is.True);
 
@@ -74,7 +74,7 @@ namespace Airside.Tests
 
             var km = ops.DistanceKm(kingscote);
             var dispatch = FlightEconomics.DispatchCost(plane.Type, km);
-            var pay = FlightEconomics.FlightPay(plane.Type, km, RouteBand.Regional);
+            var pay = RouteForecast.For(ops.Home, kingscote, plane.Type).Revenue;
             Assert.That(model.DispatchLine,
                 Is.EqualTo($"Dispatch  ${dispatch:N0}"));
             Assert.That(model.ReturnLine, Is.EqualTo($"Est. return  ${pay:N0}  ·  net +${pay - dispatch:N0}"));
@@ -127,7 +127,7 @@ namespace Airside.Tests
 
             model.Rebuild(ops, plane, destination, 900, clock.Now, RouteMapFilter.Available);
 
-            var basePay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(destination), RouteBand.Regional);
+            var basePay = RouteForecast.For(ops.Home, destination, plane.Type).Revenue;
             var expectedPay = (long)System.Math.Round(basePay * FlightEconomics.ReliabilityMultiplier(69));
             Assert.That(model.ReturnLine, Does.Contain($"${expectedPay:N0}"));
             Assert.That(model.AvailabilityLine, Does.Contain("Check overdue"));
@@ -141,7 +141,7 @@ namespace Airside.Tests
             var contract = RouteContractCatalogue.RegionalKingscoteIntro;
             Assert.That(ops.AcceptContract(contract).Accepted, Is.True);
             var destination = HudTestAirline.Code("KGC");
-            var basePay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(destination), RouteBand.Regional);
+            var basePay = RouteForecast.For(ops.Home, destination, plane.Type).Revenue;
             var model = new RouteMapWorkspaceModel();
 
             model.Rebuild(ops, plane, destination, 900, clock.Now, RouteMapFilter.Available);
@@ -151,7 +151,7 @@ namespace Airside.Tests
 
             var unrelated = HudTestAirline.Code("PLO");
             model.Rebuild(ops, plane, unrelated, 900, clock.Now, RouteMapFilter.Available);
-            var unrelatedPay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(unrelated), RouteBand.Regional);
+            var unrelatedPay = RouteForecast.For(ops.Home, unrelated, plane.Type).Revenue;
             Assert.That(model.ReturnLine, Does.Contain($"${unrelatedPay:N0}"));
             Assert.That(model.AvailabilityLine, Does.Not.Contain("Contract"));
         }

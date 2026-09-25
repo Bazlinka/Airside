@@ -142,7 +142,9 @@ namespace Airside.Simulation
                 var needsTier = career.Tier < offer.RequiredTier;
                 string baseRequirement = string.Empty;
                 if (ownedCount >= career.Base.FleetCapacity)
-                    baseRequirement = $"{career.Base.Title} is full — expand your Adelaide base";
+                    baseRequirement = career.BaseLevel == PlayerBaseLevel.International
+                        ? "Adelaide is full — add aircraft at an outstation in Fleet → Network"
+                        : $"{career.Base.Title} is full — expand your Adelaide base";
                 else if (!PlayerBase.Supports(career.BaseLevel, offer.Type))
                 {
                     var needed = AircraftCatalogue.IsWidebody(offer.Type)

@@ -1,13 +1,13 @@
 # Airside Product Plan
 
-Version 3.0
-16 September 2026
+Version 4.0
+25 September 2026
 
 ## Approved product direction
 
 Airside is an airline management game set inside an autonomous Adelaide Airport.
 The player owns and grows an airline; the airport, tower and other operators continue
-to function around it. The first aircraft is an ATR 42 and the long-term aspiration is
+to function around it. The first aircraft is a Saab 340 and the long-term aspiration is
 to build a credible domestic and international operation.
 
 This plan supersedes the old Kingscote airport-management plan. Decision 0045 remains
@@ -28,12 +28,37 @@ sessions feel unrewarding.
 - **A living airport:** AI traffic makes Adelaide feel active but does not compete for
   resources unfairly or obscure the player's next decision.
 
+## Approved long career expansion (25 September 2026)
+
+Bailey approved a self-led career targeting 100–150 hours of active play. Players choose
+and pin goals within the current operating tier. A Saab 340 starter airline grows through
+regional, domestic and international operations into a network of roughly 18–20 aircraft.
+The old five-chapter checklist is superseded as the principal career path. Route demand,
+fleet fit, contracts, base assignments, repeat schedules and service quality supply the
+ongoing decisions. No real-time unlock, daily-login reward or absence penalty is used.
+
+Adelaide stays fully simulated and keeps its physical six-aircraft allocation. Later
+outstation bases hold additional aircraft on deterministic off-map services; flights at
+Adelaide continue to use the live airport. Delegation is earned through manual service
+and generates no new flights while the game is closed. A recoverable airline can reach an
+established-airline milestone, then continue in sandbox. The exact final requirements,
+save migration and pacing evidence are recorded in ADR 0120.
+
+The stage targets are 0–8 active hours Provisional, 8–35 Regional, 35–70 Domestic,
+70–110 International and 110–150 to the established-airline ending. These are
+playtesting targets, never gates. The foreground play-time metric is for tuning only.
+
+## Historical first-slice design
+
+The sections below record the 16 September first-slice plan. Their six-aircraft and
+chapter-era assumptions have been superseded by the approved expansion above and ADR 0120.
+
 ## Current playable foundation
 
 The game already provides the foundation for the career:
 
 - a deterministic aircraft movement and reservation simulation;
-- a player airline with a persistent ATR 42;
+- a player airline with a persistent Saab 340;
 - player-selected destinations, departure times and stands;
 - schedule, cancel and stand-assignment commands;
 - autonomous Adelaide traffic across regional, domestic and international aircraft;

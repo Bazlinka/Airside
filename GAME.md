@@ -1,3 +1,7 @@
+## Where to resume — career mode implementation
+
+- **2026-09-25 Codex — `feature/full-career-mode-20260925` (ADR 0120).** The approved self-led career is implemented in a temporary working checkout at `/private/tmp/airside-pr406` because the usual `/Users/bailey.fleming/Documents/ChatGPT/Airside` workspace is absent on this host. Core changes: pinnable capability goals, save v13 migration, route forecasts, outstation fleet and bases, repeat schedules earned after 12 manual services, final milestone and continuing sandbox. The 100–150 active-hour target is a playtest tuning target, not a timed gate. Evidence: the final full domain suite passed 799/799; `scripts/audit-unity-assets.py` passed (1309 GUIDs, 336 runtime mirrors). Unity EditMode repeatedly lost its licensing-client connection; the bounded Mac build stalled at licensing initialization and timed out after 120 seconds. No rendered career playtest or 100–150-hour human pacing evidence exists yet. Re-run domain, Unity EditMode, Mac build and a larger-fleet rendered playtest before merging. Graphics-on performance remains unresolved. The initial `git pull` could not resolve GitHub, and automatic approval review rejected the later `git push` as sensitive code transfer to an unverified remote. This commit is local only; obtain explicit approval for the configured destination, then inspect remote state before pushing or merging.
+
 ## Where to resume — session handoff
 
 - **2026-09-25 Codex — PR #406 merge handoff.** Bailey asked to merge the

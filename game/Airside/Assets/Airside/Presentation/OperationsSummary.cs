@@ -87,6 +87,25 @@ namespace Airside.Presentation
             clock ??= AirlineClock.Default;
             var (next, nextSeverity) = NextAction(playerFleet, now, clock, career, marketOffers);
 
+            if (career != null)
+            {
+                var owned = new List<AircraftType>();
+                var fleetCount = 0;
+                if (playerFleet != null)
+                    foreach (var aircraft in playerFleet)
+                    {
+                        if (aircraft == null || aircraft.Type == null) continue;
+                        owned.Add(aircraft.Type);
+                        fleetCount++;
+                    }
+                var goal = CareerRoadmap.Pinned(career, owned, fleetCount);
+                if (!string.IsNullOrEmpty(goal.Id))
+                    return new CareerObjective(goal.Title,
+                        $"{goal.ProgressText} · {career.Reliability}% reliability",
+                        goal.Target <= 0 ? 0f : goal.Progress / (float)goal.Target,
+                        next, nextSeverity);
+            }
+
             if (career?.ActiveContract != null
                 && career.TryFindDefinition(career.ActiveContract.DefinitionId, out var definition))
             {

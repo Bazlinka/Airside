@@ -193,6 +193,7 @@ namespace Airside.Presentation
         public const string Cancel = "cancel";
         public const string Track = "track";
         public const string PlanFlight = "plan";
+        public const string RepeatFlight = "plan:repeat";
         public const string ResetMap = "reset-map";
         public const string NextAircraft = "aircraft:next";
         public const string PreviousAircraft = "aircraft:previous";
@@ -204,8 +205,12 @@ namespace Airside.Presentation
         public const string CancelContract = "contract:cancel";
         public const string StartCheck = "check";
         public const string UpgradeBase = "base:upgrade";
+        public const string CareerRoadmap = "career:roadmap";
+        public const string ContractMarket = "career:offers";
+        public const string PinGoalPrefix = "career:pin:";
         public const string StandPrefix = "stand:";
 
+        public static string PinGoal(string id) => PinGoalPrefix + id;
         public static string Select(string registration) => SelectPrefix + registration;
         public static string Buy(string typeId) => BuyPrefix + typeId;
         public static string Accept(string contractId) => AcceptPrefix + contractId;

@@ -100,6 +100,9 @@ namespace Airside.Simulation
 
         public int CompletedTrips { get; internal set; }
 
+        /// <summary>Current trip was booked by an earned repeat schedule.</summary>
+        public bool AutomatedTrip { get; internal set; }
+
         /// <summary>Rotations flown since the last routine check (ADR 0085).</summary>
         public int RotationsSinceCheck { get; internal set; }
 

@@ -1,9 +1,14 @@
 # Airline Progression and HUD Plan
 
-**Status:** Approved direction
+**Status:** Approved foundation; long-career expansion in ADR 0120
 **Owner:** Bailey
 **Approved:** 16 September 2026
 **Decision:** ADR 0053
+
+The long-form expansion approved on 25 September 2026 supersedes the original
+five-chapter pacing and six-aircraft end state. See ADR 0120 and PROJECT_PLAN.md v4.0.
+The starter fleet is now a Saab 340; references to an ATR 42 below describe the
+original 16 September design, not the current opening save.
 
 ## Player-visible outcome
 

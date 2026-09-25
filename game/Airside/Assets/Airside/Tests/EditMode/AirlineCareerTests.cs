@@ -168,25 +168,14 @@ namespace Airside.Tests
                 Assert.That(plane.CompletedTrips, Is.EqualTo(rotation));
                 var fulfilled = rotation == definition.RequiredRotations;
                 var cost = FlightEconomics.DispatchCost(plane.Type, ops.DistanceKm(kingscote));
-                var pay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(kingscote));
-                // Chapter-1 day pattern pays once after the second Kingscote hop (ADR 0102).
-                // After the contract fulfils, Campaign.Current moves on — still count the bonus
-                // already banked under the chapter-1 key for this local day.
-                var dateKey = DailyService.DateKey(ops.Clock, clock.Now);
-                var dayBonusPaid = ops.CareerState.ProcessedSettlementKeys
-                    .Contains(DailyService.BonusKey(dateKey, 1));
-                var dailyBonus = dayBonusPaid ? 200L : 0L;
+                var pay = RouteForecast.For(ops.Home, kingscote, plane.Type).Revenue;
                 var expectedFunds = AirlineCareerState.StartingFunds
                     + (long)rotation * (pay - cost + definition.PaymentPerRotation)
-                    + (fulfilled ? definition.CompletionReward : 0)
-                    // Fulfilling Kingscote after 3+ rotations also completes campaign chapter 1 (ADR 0083).
-                    + (fulfilled ? Campaign.Evaluate(ops.CareerState, ops.PlayerOwnedTypes())[0].Reward : 0)
-                    + dailyBonus;
+                    + (fulfilled ? definition.CompletionReward : 0);
                 Assert.That(ops.CareerState.Funds, Is.EqualTo(expectedFunds), $"funds after rotation {rotation}");
                 Assert.That(ops.CareerState.Reliability, Is.EqualTo(Math.Min(100,
                     AirlineCareerState.StartingReliability
-                    + rotation * definition.ReliabilityGainPerRotation
-                    + (dayBonusPaid ? DailyService.ReliabilityBonus : 0))));
+                    + rotation * definition.ReliabilityGainPerRotation)));
 
                 if (fulfilled)
                 {
@@ -241,12 +230,10 @@ namespace Airside.Tests
             var fundsBeforeSave = ops.CareerState.Funds;
             var data = AirlineSave.Capture(ops);
             Assert.That(data.Version, Is.EqualTo(AirlineSaveData.CurrentVersion));
-            // Flight settlement + the day's first service-pattern hop key (ADR 0102).
-            Assert.That(data.ProcessedSettlementKeys, Has.Count.EqualTo(2));
+            // Only the completed service settles; legacy daily-pattern bonuses are retired.
+            Assert.That(data.ProcessedSettlementKeys, Has.Count.EqualTo(1));
             Assert.That(data.ProcessedSettlementKeys, Does.Contain(new SettlementId(plane.Registration, 1).Key));
-            Assert.That(
-                data.ProcessedSettlementKeys.Count(k => k != null && k.StartsWith("dailyservice:", StringComparison.Ordinal)),
-                Is.EqualTo(1));
+
 
             var resumedClock = new ManualSimulationClock(clock.Now);
             var resumed = AirlineSave.Restore(data, resumedClock);
@@ -308,7 +295,7 @@ namespace Airside.Tests
             FlyRoundTrip(clock, ops, plane, Code("PLO"), 600, AirlineOperations.AdelaideRegionalBays[1]);
 
             var cost = FlightEconomics.DispatchCost(plane.Type, ops.DistanceKm(Code("PLO")));
-            var pay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(Code("PLO")));
+            var pay = RouteForecast.For(ops.Home, Code("PLO"), plane.Type).Revenue;
             Assert.That(ops.CareerState.Funds, Is.EqualTo(AirlineCareerState.StartingFunds - cost + pay),
                 "an unmatched route still pays the flight, just not the contract bonus");
             Assert.That(ops.CareerState.ActiveContract, Is.Not.Null);
@@ -407,7 +394,7 @@ namespace Airside.Tests
             FlyRoundTrip(clock, ops, dash, melbourne, departAt, AirlineOperations.AdelaideRegionalBays[2]);
 
             var cost = FlightEconomics.DispatchCost(dash.Type, ops.DistanceKm(melbourne));
-            var pay = FlightEconomics.FlightPay(dash.Type, ops.DistanceKm(melbourne), RouteBand.Domestic);
+            var pay = RouteForecast.For(ops.Home, melbourne, dash.Type).Revenue;
             Assert.That(ops.CareerState.Funds, Is.EqualTo(50_000 - AircraftAcquisition.Dash8Q400.Price - cost + pay
                 + definition.PaymentPerRotation));
             Assert.That(pay, Is.GreaterThan(FlightEconomics.FlightPay(AircraftType.Atr42,
@@ -424,7 +411,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void InternationalTier_UnlocksWithAJetNotAWidebody()
+        public void InternationalTier_RequiresNetworkProofAndJet()
         {
             Assert.That(AircraftAcquisition.AirbusA321Neo.RequiredTier, Is.EqualTo(OperatingTier.Domestic),
                 "A321 is the Tasman step after Domestic, not locked behind International");
@@ -434,8 +421,14 @@ namespace Airside.Tests
             ops.RestoreCareerState(200_000, 90, nameof(OperatingTier.Domestic), null, 0, 0, Array.Empty<string>(),
                 Array.Empty<string>(), 28, baseLevel: PlayerBaseLevel.JetGate);
             Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True);
+            Assert.That(ops.CareerState.Tier, Is.EqualTo(OperatingTier.Domestic),
+                "a jet and 28 services are not enough for International");
+            ops.RestoreCareerState(ops.CareerState.Funds, 90, nameof(OperatingTier.Domestic), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 75, baseLevel: PlayerBaseLevel.JetGate,
+                servedDestinations: new[] { "MEL", "SYD", "CBR" }, outstationBases: new[] { "MEL" });
+            ops.CareerState.EvaluateTier(ops.PlayerOwnedTypes(), ops.PlayerFleetCount());
             Assert.That(ops.CareerState.Tier, Is.EqualTo(OperatingTier.International),
-                "28 rotations + jet ownership unlocks International without owning a widebody");
+                "domestic network, outstation and jet proof unlock International");
 
             // A350 still needs its own reliability/rotation floor on top of the tier.
             ops.RestoreCareerState(ops.CareerState.Funds, 95, nameof(OperatingTier.International), null, 0, 0,
@@ -453,7 +446,7 @@ namespace Airside.Tests
             var kingscote = Code("KGC");
             FlyRoundTrip(clock, ops, plane, kingscote, 600, AirlineOperations.AdelaideRegionalBays[1]);
 
-            var pay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(kingscote));
+            var pay = RouteForecast.For(ops.Home, kingscote, plane.Type).Revenue;
             var expectedRevenue = pay + definition.PaymentPerRotation;
             Assert.That(ops.CareerState.LifetimeRevenue, Is.EqualTo(expectedRevenue));
 
@@ -555,7 +548,7 @@ namespace Airside.Tests
             FlyRoundTrip(clock, ops, plane, kingscote, 600, AirlineOperations.AdelaideRegionalBays[1]);
 
             var cost = FlightEconomics.DispatchCost(plane.Type, ops.DistanceKm(kingscote));
-            var pay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(kingscote));
+            var pay = RouteForecast.For(ops.Home, kingscote, plane.Type).Revenue;
             var scaledPay = (long)Math.Round(pay * 0.8);
             Assert.That(ops.CareerState.Funds,
                 Is.EqualTo(AirlineCareerState.StartingFunds - cost + scaledPay),

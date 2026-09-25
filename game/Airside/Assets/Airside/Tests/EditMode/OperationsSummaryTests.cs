@@ -35,9 +35,9 @@ namespace Airside.Tests
             Assert.That(ops.AcceptContract(RouteContractCatalogue.RegionalKingscoteIntro).Accepted, Is.True);
 
             var objective = OperationsSummary.Objective(ops.FleetOf(ops.PlayerAirline), clock.Now, ops.Clock, ops.CareerState);
-            Assert.That(objective.Title, Is.EqualTo("Prove the Kingscote service"));
+            Assert.That(objective.Title, Is.EqualTo("Fulfil a regional contract"));
             Assert.That(objective.Title, Does.Not.Contain("REG-KGC"));
-            Assert.That(objective.ProgressText, Does.Contain("0 of 5"));
+            Assert.That(objective.ProgressText, Does.Contain("0/1"));
             Assert.That(objective.Progress01, Is.EqualTo(0f));
             Assert.That(objective.NextLine, Does.Contain("VH-PAX"));
             Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("schedule"));
@@ -53,10 +53,9 @@ namespace Airside.Tests
             Assert.That(objective.Title, Does.Not.Contain("REG-"));
             Assert.That(objective.NextLine, Does.StartWith("Next:"));
             Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("accept"));
-            Assert.That(objective.ProgressText, Does.Contain("chapter goals"));
-            Assert.That(objective.ProgressText, Does.Contain("Regional starter base"));
-            Assert.That(objective.Progress01, Is.EqualTo(1f / 3f).Within(0.001f),
-                "fresh Chapter 1 already satisfies its reliability goal");
+            Assert.That(objective.Title, Is.EqualTo("Fulfil a regional contract"));
+            Assert.That(objective.ProgressText, Does.Contain("0/1"));
+            Assert.That(objective.Progress01, Is.EqualTo(0f));
         }
 
         [Test]
@@ -79,9 +78,8 @@ namespace Airside.Tests
             // Pass null market and rely on completed intros.
             var objective = OperationsSummary.Objective(ops.FleetOf(ops.PlayerAirline), clock.Now, ops.Clock,
                 ops.CareerState, Array.Empty<RouteContractDefinition>());
-            Assert.That(objective.Title, Is.EqualTo("Expand your Adelaide base"));
-            Assert.That(objective.ProgressText, Does.Contain("$1,500 of $1,500"));
-            Assert.That(objective.ProgressText, Does.Contain("0 of 4 rotations"));
+            Assert.That(objective.Title, Is.EqualTo("Complete five services"));
+            Assert.That(objective.ProgressText, Does.Contain("0/5"));
             Assert.That(objective.Progress01, Is.EqualTo(0f));
             Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("expand"));
         }

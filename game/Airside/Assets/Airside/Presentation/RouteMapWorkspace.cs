@@ -72,6 +72,8 @@ namespace Airside.Presentation
         public bool CanPlan { get; private set; }
 
         public string PlanLabel { get; private set; } = "PLAN FLIGHT";
+        public bool CanDelegate { get; private set; }
+        public string RepeatLabel { get; private set; } = "REPEAT 12H";
 
         /// <summary>Why the plan button is disabled, or empty when it is not.</summary>
         public string PlanBlockedReason { get; private set; } = string.Empty;
@@ -99,6 +101,8 @@ namespace Airside.Presentation
             CanPlan = false;
             PlanBlockedReason = string.Empty;
             PlanLabel = "PLAN FLIGHT";
+            CanDelegate = false;
+            RepeatLabel = "REPEAT 12H";
             DestinationTitle = string.Empty;
             BandAndDistance = string.Empty;
             CompatibilityLine = string.Empty;
@@ -137,7 +141,7 @@ namespace Airside.Presentation
                 }
             CanCycleAircraft = _fleet.Count > 1;
             foreach (var row in _all)
-                if (Campaign.RouteGuidance(operations.CareerState, _ownedTypes, row.Destination).AdvancesCurrentChapter)
+                if (CareerRoadmap.RouteGuidance(operations.CareerState, _ownedTypes, row.Destination).Length > 0)
                     _careerTargets.Add(row.Destination.Code);
 
             AircraftLabel = aircraft == null
@@ -159,6 +163,13 @@ namespace Airside.Presentation
                 return;
 
             FillDestination(operations, aircraft, selected.Value, departureDelaySeconds, now, clock);
+            CanDelegate = operations.DelegationUnlocked && aircraft != null
+                          && operations.CanOperate(aircraft, selected.Value);
+            if (aircraft != null)
+                foreach (var repeat in operations.RepeatSchedules)
+                    if (repeat.Registration == aircraft.Registration
+                        && repeat.DestinationCode == selected.Value.Code)
+                        RepeatLabel = repeat.Paused ? "RESUME REPEAT" : "PAUSE REPEAT";
         }
 
         private void FillDestination(AirlineOperations operations, FleetAircraft aircraft,
@@ -170,9 +181,8 @@ namespace Airside.Presentation
             var band = RouteAccess.BandOf(destination);
             BandAndDistance = $"{BandLabel(band)}  ·  {km:0} km";
 
-            var career = Campaign.RouteGuidance(operations.CareerState, _ownedTypes, destination);
-            CareerLine = career.Text;
-            CareerTone = career.AdvancesCurrentChapter ? HudTone.Caution : HudTone.Muted;
+            CareerLine = CareerRoadmap.RouteGuidance(operations.CareerState, _ownedTypes, destination);
+            CareerTone = CareerLine.Length > 0 ? HudTone.Caution : HudTone.Muted;
 
             if (aircraft == null)
             {
@@ -195,7 +205,9 @@ namespace Airside.Presentation
                 ? FlightEconomics.DispatchCost(type, operations.DistanceKm(aircraft.Scheduled.Value.Destination))
                 : 0;
             var changeCost = dispatch - alreadyPaid;
-            var basePay = FlightEconomics.FlightPay(type, km, band);
+            var forecast = RouteForecast.For(operations.Home, destination, type);
+            var basePay = forecast.Revenue;
+            BandAndDistance += $" · {forecast.ExpectedPassengers}/{forecast.Seats} seats";
             var pay = (long)Math.Round(basePay *
                 FlightEconomics.ReliabilityMultiplier(operations.CareerState.Reliability));
             var active = operations.CareerState.ActiveContract;
@@ -497,8 +509,17 @@ namespace Airside.Presentation
             var buttonY = pane.Bottom - 84f;
             into.Button(new HudBox(pane.X, buttonY, pane.Width, 44f), model.PlanLabel, HudAction.PlanFlight,
                 HudButtonStyle.Primary, model.CanPlan);
-            into.Button(new HudBox(pane.X, buttonY + 50f, pane.Width, 30f), "RESET MAP", HudAction.ResetMap,
-                HudButtonStyle.Secondary);
+            if (model.CanDelegate)
+            {
+                into.Button(new HudBox(pane.X, buttonY + 50f, (pane.Width - 8f) * 0.5f, 30f),
+                    model.RepeatLabel, HudAction.RepeatFlight, HudButtonStyle.Secondary);
+                into.Button(new HudBox(pane.X + (pane.Width + 8f) * 0.5f, buttonY + 50f,
+                    (pane.Width - 8f) * 0.5f, 30f), "RESET MAP", HudAction.ResetMap,
+                    HudButtonStyle.Secondary);
+            }
+            else
+                into.Button(new HudBox(pane.X, buttonY + 50f, pane.Width, 30f), "RESET MAP",
+                    HudAction.ResetMap, HudButtonStyle.Secondary);
             if (!model.CanPlan && model.PlanBlockedReason.Length > 0)
                 into.Text(new HudBox(pane.X, buttonY - 34f, pane.Width, 32f), model.PlanBlockedReason, 11f,
                     HudTone.Muted, HudTextStyle.Wrap);

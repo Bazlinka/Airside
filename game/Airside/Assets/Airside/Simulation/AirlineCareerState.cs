@@ -21,6 +21,9 @@ namespace Airside.Simulation
         private readonly HashSet<string> _completedContracts;
         private readonly Dictionary<string, RouteContractDefinition> _issued;
         private readonly List<CompletedContractRecord> _contractHistory;
+        private readonly HashSet<string> _servedDestinations;
+        private readonly HashSet<string> _outstationBases;
+        private readonly Queue<long> _recentServiceMargins;
 
         public AirlineCareerState(
             long? funds = null, int reliability = StartingReliability, OperatingTier tier = OperatingTier.Provisional,
@@ -28,7 +31,12 @@ namespace Airside.Simulation
             IEnumerable<string> completedContractIds = null, int completedPlayerRotations = 0,
             IEnumerable<RouteContractDefinition> issuedDefinitions = null, long lifetimeRevenue = 0,
             IEnumerable<CompletedContractRecord> contractHistory = null,
-            PlayerBaseLevel baseLevel = PlayerBaseLevel.Starter)
+            PlayerBaseLevel baseLevel = PlayerBaseLevel.Starter,
+            string pinnedGoalId = null, IEnumerable<string> servedDestinations = null,
+            IEnumerable<string> outstationBases = null, IEnumerable<long> recentServiceMargins = null,
+            int manualRotations = 0, long activePlaySeconds = 0,
+            long regionalAtSeconds = 0, long domesticAtSeconds = 0,
+            long internationalAtSeconds = 0, long finaleAtSeconds = 0)
         {
             Funds = funds ?? StartingFunds;
             Reliability = Clamp(reliability);
@@ -37,6 +45,19 @@ namespace Airside.Simulation
             CompletedPlayerRotations = Math.Max(0, completedPlayerRotations);
             LifetimeRevenue = Math.Max(0, lifetimeRevenue);
             BaseLevel = baseLevel;
+            PinnedGoalId = pinnedGoalId ?? string.Empty;
+            ManualRotations = Math.Max(0, manualRotations);
+            ActivePlaySeconds = Math.Max(0, activePlaySeconds);
+            RegionalAtSeconds = Math.Max(0, regionalAtSeconds);
+            DomesticAtSeconds = Math.Max(0, domesticAtSeconds);
+            InternationalAtSeconds = Math.Max(0, internationalAtSeconds);
+            FinaleAtSeconds = Math.Max(0, finaleAtSeconds);
+            _servedDestinations = new HashSet<string>(servedDestinations ?? Array.Empty<string>(), StringComparer.Ordinal);
+            _outstationBases = new HashSet<string>(outstationBases ?? Array.Empty<string>(), StringComparer.Ordinal);
+            _recentServiceMargins = new Queue<long>();
+            if (recentServiceMargins != null)
+                foreach (var margin in recentServiceMargins)
+                    AppendMargin(margin);
             _processedSettlements = processedSettlementKeys == null
                 ? new HashSet<string>(StringComparer.Ordinal)
                 : new HashSet<string>(processedSettlementKeys, StringComparer.Ordinal);
@@ -60,6 +81,43 @@ namespace Airside.Simulation
         public int CompletedPlayerRotations { get; private set; }
         public PlayerBaseLevel BaseLevel { get; internal set; }
         public PlayerBaseSpec Base => PlayerBase.For(BaseLevel);
+        public string PinnedGoalId { get; private set; }
+        public int ManualRotations { get; private set; }
+        public long ActivePlaySeconds { get; private set; }
+        public long RegionalAtSeconds { get; private set; }
+        public long DomesticAtSeconds { get; private set; }
+        public long InternationalAtSeconds { get; private set; }
+        public long FinaleAtSeconds { get; private set; }
+        internal void AddActivePlaySecond() => ActivePlaySeconds++;
+        internal void MarkFinale() { if (FinaleAtSeconds == 0) FinaleAtSeconds = ActivePlaySeconds; }
+        public IReadOnlyCollection<string> ServedDestinations => _servedDestinations;
+        public IReadOnlyCollection<string> OutstationBases => _outstationBases;
+        public IReadOnlyCollection<long> RecentServiceMargins => _recentServiceMargins;
+        public int BaseCount => 1 + _outstationBases.Count;
+        public long RecentOperatingMargin
+        {
+            get { long total = 0; foreach (var value in _recentServiceMargins) total += value; return total; }
+        }
+
+        internal void PinGoal(string id) => PinnedGoalId = id ?? string.Empty;
+
+        internal void RecordService(string destinationCode, long margin, bool manual)
+        {
+            if (!string.IsNullOrWhiteSpace(destinationCode))
+                _servedDestinations.Add(destinationCode);
+            AppendMargin(margin);
+            if (manual) ManualRotations++;
+        }
+
+        internal bool AddOutstationBase(string code) =>
+            !string.IsNullOrWhiteSpace(code) && code != "ADL" && _outstationBases.Add(code);
+
+        private void AppendMargin(long margin)
+        {
+            _recentServiceMargins.Enqueue(margin);
+            while (_recentServiceMargins.Count > 30)
+                _recentServiceMargins.Dequeue();
+        }
 
         /// <summary>
         /// Every rotation payment ever settled, including contract bonuses — unlike
@@ -115,6 +173,20 @@ namespace Airside.Simulation
             return true;
         }
 
+        // A recovery contract underwrites its own first dispatch when cash has run out.
+        // The cost still leaves the balance, and the scheduled service must settle to repay it.
+        internal bool TryChargeRecoveryDispatch(long cost, string destinationCode)
+        {
+            if (cost < 0 || ActiveContract == null
+                || !ActiveContract.DefinitionId.StartsWith("REC-", StringComparison.Ordinal)
+                || !TryFindDefinition(ActiveContract.DefinitionId, out var definition)
+                || definition.DestinationCode != destinationCode
+                || Funds < 0 || Funds >= cost)
+                return false;
+            Funds -= cost;
+            return true;
+        }
+
         internal void RefundDispatch(long cost)
         {
             if (cost > 0)
@@ -144,7 +216,7 @@ namespace Airside.Simulation
         /// </summary>
         internal FlightSettlement? RecordCompletedRotation(
             SettlementId id, long baseRevenue, RouteContractDefinition matchingContract,
-            IReadOnlyList<AircraftType> ownedTypes = null, SimulationTime now = default)
+            IReadOnlyList<AircraftType> ownedTypes = null, SimulationTime now = default, int fleetCount = 0)
         {
             if (!_processedSettlements.Add(id.Key))
                 return null;
@@ -175,8 +247,6 @@ namespace Airside.Simulation
                 if (fulfilled)
                 {
                     _completedContracts.Add(matchingContract.Id);
-                    if (matchingContract.UnlocksTier > Tier)
-                        Tier = matchingContract.UnlocksTier;
                     AddContractHistory(new CompletedContractRecord(matchingContract.Id, matchingContract.OriginCode,
                         matchingContract.DestinationCode, ActiveContract.TotalPaid, now));
                     ActiveContract = null;
@@ -185,7 +255,7 @@ namespace Airside.Simulation
 
             Funds += payment;
             LifetimeRevenue += payment;
-            EvaluateTier(ownedTypes);
+            EvaluateTier(ownedTypes, fleetCount);
             return new FlightSettlement(id, contractId, payment, reliability, rotations, fulfilled);
         }
 
@@ -197,40 +267,35 @@ namespace Airside.Simulation
                 _contractHistory.RemoveAt(_contractHistory.Count - 1);
         }
 
-        // Tier thresholds — named so CareerProgress (the "what's left for the next tier" HUD
-        // helper) can read the exact same numbers instead of a second, driftable copy.
-        public const int RegionalRotations = 8;
+        // Retained as named baselines for older guidance; the actual tier decision is
+        // CareerRoadmap.CanReach, which includes routes, fleet and operating capacity.
+        public const int RegionalRotations = 5;
         public const int RegionalReliability = 70;
-        public const int DomesticRotations = 18;
+        public const int DomesticRotations = 30;
         public const int DomesticReliability = 80;
-        public const int InternationalRotations = 28;
+        public const int InternationalRotations = 75;
         public const int InternationalReliability = 88;
 
-        /// <summary>
-        /// Capability milestone from rotations, reliability and owned types — not a named
-        /// contract ladder (ADR 0056). Never drops a tier.
-        /// </summary>
-        internal void EvaluateTier(IReadOnlyList<AircraftType> ownedTypes)
+        internal void EvaluateTier(IReadOnlyList<AircraftType> ownedTypes, int fleetCount = 0)
         {
-            var ownsDash = Owns(ownedTypes, AircraftType.Dash8Q400);
-            var ownsJet = Owns(ownedTypes, AircraftType.Boeing7378)
-                          || Owns(ownedTypes, AircraftType.AirbusA321Neo)
-                          || Owns(ownedTypes, AircraftType.AirbusA350900)
-                          || Owns(ownedTypes, AircraftType.Boeing78710);
-
             if (Tier < OperatingTier.Regional
-                && CompletedPlayerRotations >= RegionalRotations && Reliability >= RegionalReliability)
+                && CareerRoadmap.CanReach(this, ownedTypes, OperatingTier.Regional, fleetCount))
+            {
                 Tier = OperatingTier.Regional;
+                if (RegionalAtSeconds == 0) RegionalAtSeconds = ActivePlaySeconds;
+            }
             if (Tier < OperatingTier.Domestic
-                && CompletedPlayerRotations >= DomesticRotations && Reliability >= DomesticReliability
-                && (ownsDash || ownsJet))
+                && CareerRoadmap.CanReach(this, ownedTypes, OperatingTier.Domestic, fleetCount))
+            {
                 Tier = OperatingTier.Domestic;
-            // International unlocks on jet ops — not on already owning a widebody (A350/787
-            // still require International to buy, so requiring ownsWide was a deadlock).
+                if (DomesticAtSeconds == 0) DomesticAtSeconds = ActivePlaySeconds;
+            }
             if (Tier < OperatingTier.International
-                && CompletedPlayerRotations >= InternationalRotations && Reliability >= InternationalReliability
-                && ownsJet)
+                && CareerRoadmap.CanReach(this, ownedTypes, OperatingTier.International, fleetCount))
+            {
                 Tier = OperatingTier.International;
+                if (InternationalAtSeconds == 0) InternationalAtSeconds = ActivePlaySeconds;
+            }
         }
 
         /// <summary>True if any listed type is one of the jet types Domestic/International accept.</summary>

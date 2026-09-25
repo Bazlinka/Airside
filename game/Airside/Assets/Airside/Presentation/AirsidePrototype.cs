@@ -547,6 +547,7 @@ namespace Airside.Presentation
 
         private void OnDestroy()
         {
+            DisposeSoakRecorders();
             if (_active == this)
                 _active = null;
             if (_miniMapTexture != null)

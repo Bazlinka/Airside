@@ -1,5 +1,22 @@
 ## Where to resume — session handoff
 
+- **2026-09-25 Codex — route-plan operating preview and packaged QA (ADR 0119; branch
+  `feature/operations-playtest-profile-20260925`).** The Route Map now shows the
+  incremental cost of rebooking, indicative return/net with current reliability and
+  matching-contract pay, contract cancellation risk and maintenance timing. The
+  separate-save soak logs p95 frame time, slow frames, CPU main/render time and memory;
+  packaged review can follow and zoom in on a registration.
+  - **Evidence so far:** domain **787/787**, Unity EditMode **1066/1066**, asset audit
+    (1305 GUIDs, 336 exact mirrors), 13/13 paint/glazing/pilot and connectivity checks.
+    A baseline full-airport package completed 30 real minutes, 3 player rotations, no
+    clock stall or logged exception. Its fps was contaminated by concurrent Unity tests
+    and macOS indexing, so it is not a clean performance benchmark. A packaged 800×600
+    Route Map shot had no control overlap. The full-airport QA switch is an older
+    miniature scene; do not use its follow view as final normal-play art approval.
+  - **NEXT:** finish close-view aircraft capture and an isolated main/render frame-time
+    run; a real first-time human 20–30 minute playtest is still required. Keep default
+    focused field, saves, authored schedules and economy balance unchanged.
+
 - **2026-09-25 Codex — cut-through aircraft glazing and operator colours (ADR 0118).**
   Rebuilds all 13 aircraft with actual openings behind one translucent pane per window,
   dark recessed cabins, and two original cockpit crew silhouettes. Window trim is thinner;

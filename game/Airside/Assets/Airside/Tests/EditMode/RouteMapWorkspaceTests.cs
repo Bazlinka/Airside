@@ -73,13 +73,104 @@ namespace Airside.Tests
             model.Rebuild(ops, plane, kingscote, 900, clock.Now, RouteMapFilter.Available);
 
             var km = ops.DistanceKm(kingscote);
+            var dispatch = FlightEconomics.DispatchCost(plane.Type, km);
+            var pay = FlightEconomics.FlightPay(plane.Type, km, RouteBand.Regional);
             Assert.That(model.DispatchLine,
-                Is.EqualTo($"Dispatch  ${FlightEconomics.DispatchCost(plane.Type, km):N0}"));
-            Assert.That(model.ReturnLine, Is.EqualTo(
-                $"Estimated return  ${FlightEconomics.FlightPay(plane.Type, km, RouteBand.Regional):N0}"));
+                Is.EqualTo($"Dispatch  ${dispatch:N0}"));
+            Assert.That(model.ReturnLine, Is.EqualTo($"Est. return  ${pay:N0}  ·  net +${pay - dispatch:N0}"));
             Assert.That(model.CompatibilityLine, Is.EqualTo("Saab 340B compatible"));
             Assert.That(model.AvailabilityLine, Is.EqualTo("Available with Regional capability"));
             Assert.That(model.CanPlan, Is.True);
+        }
+
+        [Test]
+        public void Map_RebookingUsesTheRefundAlreadyPaidForTheFlight()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            var destination = HudTestAirline.Code("KGC");
+            Assert.That(ops.ScheduleDeparture(plane, destination, new SimulationTime(3600)).Accepted, Is.True);
+            Assert.That(ops.CareerState.TryChargeDispatch(ops.CareerState.Funds), Is.True);
+
+            var model = new RouteMapWorkspaceModel();
+            model.Rebuild(ops, plane, destination, 3600, clock.Now, RouteMapFilter.Available);
+
+            Assert.That(model.DispatchLine, Is.EqualTo("Change  +$0"));
+            Assert.That(model.CanPlan, Is.True);
+            Assert.That(ops.ScheduleDeparture(plane, destination, new SimulationTime(3600)).Accepted, Is.True);
+        }
+
+        [Test]
+        public void Map_BlocksDeparturesBeforeTheAircraftCheckEnds()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            Assert.That(ops.StartCheck(plane).Accepted, Is.True);
+            var destination = HudTestAirline.Code("KGC");
+            var model = new RouteMapWorkspaceModel();
+
+            model.Rebuild(ops, plane, destination, 900, clock.Now, RouteMapFilter.Available);
+            Assert.That(model.CanPlan, Is.False);
+            Assert.That(model.PlanBlockedReason, Does.Contain("in its check"));
+
+            model.Rebuild(ops, plane, destination, plane.CheckUntil.Value.ElapsedSeconds,
+                clock.Now, RouteMapFilter.Available);
+            Assert.That(model.CanPlan, Is.True);
+        }
+
+        [Test]
+        public void Map_WarnsOfOverdueMaintenanceAndDiscountsReturnForPoorReliability()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            var destination = HudTestAirline.Code("KGC");
+            ops.RestoreMaintenance(plane.Registration, Maintenance.IntervalRotations, 0);
+            ops.CareerState.ApplyPunctuality(-31);
+            var model = new RouteMapWorkspaceModel();
+
+            model.Rebuild(ops, plane, destination, 900, clock.Now, RouteMapFilter.Available);
+
+            var basePay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(destination), RouteBand.Regional);
+            var expectedPay = (long)System.Math.Round(basePay * FlightEconomics.ReliabilityMultiplier(69));
+            Assert.That(model.ReturnLine, Does.Contain($"${expectedPay:N0}"));
+            Assert.That(model.AvailabilityLine, Does.Contain("Check overdue"));
+            Assert.That(model.AvailabilityLine, Does.Contain("2 reliability"));
+        }
+
+        [Test]
+        public void Map_IncludesOnlyTheMatchingContractInItsReturnEstimate()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            var contract = RouteContractCatalogue.RegionalKingscoteIntro;
+            Assert.That(ops.AcceptContract(contract).Accepted, Is.True);
+            var destination = HudTestAirline.Code("KGC");
+            var basePay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(destination), RouteBand.Regional);
+            var model = new RouteMapWorkspaceModel();
+
+            model.Rebuild(ops, plane, destination, 900, clock.Now, RouteMapFilter.Available);
+            Assert.That(model.ReturnLine, Does.Contain($"${basePay + contract.PaymentPerRotation:N0}"));
+            Assert.That(model.AvailabilityLine, Does.Contain("Contract +$420"));
+            Assert.That(model.AvailabilityLine, Does.Contain("cancel −3 reliability"));
+
+            var unrelated = HudTestAirline.Code("PLO");
+            model.Rebuild(ops, plane, unrelated, 900, clock.Now, RouteMapFilter.Available);
+            var unrelatedPay = FlightEconomics.FlightPay(plane.Type, ops.DistanceKm(unrelated), RouteBand.Regional);
+            Assert.That(model.ReturnLine, Does.Contain($"${unrelatedPay:N0}"));
+            Assert.That(model.AvailabilityLine, Does.Not.Contain("Contract"));
+        }
+
+        [Test]
+        public void Map_ResetsTheButtonLabelWhenTheBookingIsGone()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            var model = new RouteMapWorkspaceModel();
+            var destination = HudTestAirline.Code("KGC");
+            Assert.That(ops.ScheduleDeparture(plane, destination, new SimulationTime(3600)).Accepted, Is.True);
+
+            model.Rebuild(ops, plane, destination, 3600, clock.Now, RouteMapFilter.Available);
+            Assert.That(model.PlanLabel, Is.EqualTo("UPDATE PLAN"));
+
+            Assert.That(ops.CancelDeparture(plane).Accepted, Is.True);
+            model.Rebuild(ops, plane, HudTestAirline.Code("MEL"), 3600, clock.Now, RouteMapFilter.Locked);
+            Assert.That(model.CanPlan, Is.False);
+            Assert.That(model.PlanLabel, Is.EqualTo("PLAN FLIGHT"));
         }
 
         [Test]

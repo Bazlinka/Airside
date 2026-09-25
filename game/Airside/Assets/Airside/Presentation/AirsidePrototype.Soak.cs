@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Airside.Simulation;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace Airside.Presentation
@@ -26,6 +27,17 @@ namespace Airside.Presentation
         private long _soakLastClock = -1;
         private int _soakStalledBeats;
         private int _soakFrames;
+        private readonly float[] _soakFrameMs = new float[4096];
+        private int _soakFrameSamples;
+        private int _soakSlowFrames;
+        private float _soakWorstFrameMs;
+        private float _soakLastHeartbeatAt;
+        private ProfilerRecorder _soakMainThreadRecorder;
+        private ProfilerRecorder _soakRenderThreadRecorder;
+        private ProfilerRecorder _soakSystemMemoryRecorder;
+        private long _soakMainThreadNs;
+        private long _soakRenderThreadNs;
+        private int _soakProfilerSamples;
         private readonly SeededRandomSource _soakChoices = new(31337);
 
         private static bool SoakMode
@@ -44,13 +56,18 @@ namespace Airside.Presentation
         // Review shots for packaged-build checks (HUD fit at several window sizes, panels):
         //   -airsideReviewPanel plan|operations|map|fleet|contracts|stats|devtools|help
         //   -airsideReviewShot <path.png> [-airsideReviewDelay seconds]   capture, then quit
+        //   -airsideReviewAircraft <registration>   follow a live 3D aircraft in the shot
+        //   -airsideReviewFollowZoom 0.35   bounded close-up of the followed aircraft
         //   -airsideReviewTime HH:mm   override local lighting time only (not the sim clock)
         //   -airsideReviewWeather cloudy|overcast|rain|storm|...   deterministic visual QA
         private const string ReviewPanelFlag = "-airsideReviewPanel";
         private const string ReviewShotFlag = "-airsideReviewShot";
         private const string ReviewDelayFlag = "-airsideReviewDelay";
+        private const string ReviewAircraftFlag = "-airsideReviewAircraft";
         private float _reviewShotAt = -1f;
         private bool _reviewShotTaken;
+        private bool _reviewFollowStarted;
+        private string _reviewAircraftId;
 
         private void OpenReviewPanel(string[] args)
         {
@@ -122,6 +139,13 @@ namespace Airside.Presentation
                 return;
 
             _soakFrames++;
+            var frameMs = Time.unscaledDeltaTime * 1000f;
+            if (_soakFrameSamples < _soakFrameMs.Length)
+                _soakFrameMs[_soakFrameSamples++] = frameMs;
+            if (frameMs > 33.3f)
+                _soakSlowFrames++;
+            if (frameMs > _soakWorstFrameMs)
+                _soakWorstFrameMs = frameMs;
             if (_soakStartedAt < 0f)
             {
                 var args = Environment.GetCommandLineArgs();
@@ -136,13 +160,31 @@ namespace Airside.Presentation
 
                 _soakStartedAt = Time.unscaledTime;
                 _soakNextHeartbeat = _soakStartedAt + 60f;
+                _soakLastHeartbeatAt = _soakStartedAt;
+                _soakMainThreadRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "CPU Main Thread Frame Time", 1);
+                _soakRenderThreadRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "CPU Render Thread Frame Time", 1);
+                _soakSystemMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "System Used Memory", 1);
                 _saveProbed = true; // never offer or read the player's save
                 StartAirline("Soak Air");
                 Debug.Log($"{SoakLogTag} started for {_soakMinutes:0} min in live time");
+                var followIndex = Array.IndexOf(args, ReviewAircraftFlag);
+                _reviewAircraftId = followIndex >= 0 && followIndex + 1 < args.Length
+                    ? args[followIndex + 1] : null;
                 OpenReviewPanel(args);
             }
-
+            if (_soakMainThreadRecorder.Valid && _soakRenderThreadRecorder.Valid)
+            {
+                _soakMainThreadNs += _soakMainThreadRecorder.LastValue;
+                _soakRenderThreadNs += _soakRenderThreadRecorder.LastValue;
+                _soakProfilerSamples++;
+            }
             DriveReviewShot();
+            if (!_reviewFollowStarted && !string.IsNullOrEmpty(_reviewAircraftId))
+            {
+                _reviewFollowStarted = TryFollowFleetAircraft(_reviewAircraftId);
+                if (_reviewFollowStarted)
+                    Debug.Log($"{SoakLogTag} following {_reviewAircraftId}");
+            }
 
             if (_awaySummary != null)
                 _awaySummary = null;
@@ -191,9 +233,25 @@ namespace Airside.Presentation
                     var e = EngineStartSequence.For(a, _preciseTime);
                     return $"{a.Registration} {a.State} eng L{e.Left:0.00}/R{e.Right:0.00}{(e.Beacon ? " beacon" : "")}{(e.DoorsOpen ? " doors" : "")}";
                 }));
+                Array.Sort(_soakFrameMs, 0, _soakFrameSamples);
+                var p95 = _soakFrameSamples > 0
+                    ? _soakFrameMs[Math.Max(0, (int)Math.Ceiling(_soakFrameSamples * 0.95) - 1)]
+                    : 0f;
+                var mainMs = _soakProfilerSamples > 0 ? _soakMainThreadNs / (1_000_000f * _soakProfilerSamples) : 0f;
+                var renderMs = _soakProfilerSamples > 0 ? _soakRenderThreadNs / (1_000_000f * _soakProfilerSamples) : 0f;
+                var systemMb = _soakSystemMemoryRecorder.Valid
+                    ? _soakSystemMemoryRecorder.LastValue / (1024 * 1024) : -1;
                 Debug.Log($"{SoakLogTag} {(now - _soakStartedAt) / 60f:0} min · sim {AirlineClockText()} · trips {trips} · " +
-                          $"fps {_soakFrames / 60f:0} · mem {GC.GetTotalMemory(false) / (1024 * 1024)} MB · {states}");
+                          $"fps {_soakFrames / Math.Max(0.01f, now - _soakLastHeartbeatAt):0} · p95 {p95:0.0} ms · " +
+                          $">33ms {_soakSlowFrames} · worst {_soakWorstFrameMs:0.0} ms · cpu main/render {mainMs:0.0}/{renderMs:0.0} ms · system/gc {systemMb}/{GC.GetTotalMemory(false) / (1024 * 1024)} MB · {states}");
                 _soakFrames = 0;
+                _soakFrameSamples = 0;
+                _soakSlowFrames = 0;
+                _soakWorstFrameMs = 0f;
+                _soakLastHeartbeatAt = now;
+                _soakMainThreadNs = 0;
+                _soakRenderThreadNs = 0;
+                _soakProfilerSamples = 0;
                 if (_soakStalledBeats >= 2)
                     Debug.LogError($"{SoakLogTag} STALL: simulation clock has not moved for two minutes");
             }
@@ -205,6 +263,16 @@ namespace Airside.Presentation
                           $"stalls {(_soakStalledBeats > 0 ? "yes" : "none")}");
                 QuitGame();
             }
+        }
+
+        private void DisposeSoakRecorders()
+        {
+            if (_soakMainThreadRecorder.Valid)
+                _soakMainThreadRecorder.Dispose();
+            if (_soakRenderThreadRecorder.Valid)
+                _soakRenderThreadRecorder.Dispose();
+            if (_soakSystemMemoryRecorder.Valid)
+                _soakSystemMemoryRecorder.Dispose();
         }
 
         private string AirlineClockText() =>

@@ -59,6 +59,7 @@ namespace Airside.Presentation
         public string CompatibilityLine { get; private set; } = string.Empty;
         public string DispatchLine { get; private set; } = string.Empty;
         public string ReturnLine { get; private set; } = string.Empty;
+        public string OperatingNote { get; private set; } = string.Empty;
         public string AvailabilityLine { get; private set; } = string.Empty;
         public HudTone AvailabilityTone { get; private set; } = HudTone.Muted;
         public string CareerLine { get; private set; } = string.Empty;
@@ -97,11 +98,13 @@ namespace Airside.Presentation
             BookingLine = string.Empty;
             CanPlan = false;
             PlanBlockedReason = string.Empty;
+            PlanLabel = "PLAN FLIGHT";
             DestinationTitle = string.Empty;
             BandAndDistance = string.Empty;
             CompatibilityLine = string.Empty;
             DispatchLine = string.Empty;
             ReturnLine = string.Empty;
+            OperatingNote = string.Empty;
             AvailabilityLine = string.Empty;
             AvailabilityTone = HudTone.Muted;
             CareerLine = string.Empty;
@@ -144,6 +147,7 @@ namespace Airside.Presentation
             if (aircraft != null)
             {
                 HasBooking = aircraft.Scheduled.HasValue;
+                PlanLabel = HasBooking ? "UPDATE PLAN" : "PLAN FLIGHT";
                 if (HasBooking)
                 {
                     var booked = aircraft.Scheduled.Value;
@@ -187,9 +191,40 @@ namespace Airside.Presentation
                 : $"{type.Name} not cleared for this route";
 
             var dispatch = FlightEconomics.DispatchCost(type, km);
-            var pay = FlightEconomics.FlightPay(type, km, band);
-            DispatchLine = $"Dispatch  ${dispatch:N0}";
-            ReturnLine = $"Estimated return  ${pay:N0}";
+            var alreadyPaid = aircraft.Scheduled.HasValue
+                ? FlightEconomics.DispatchCost(type, operations.DistanceKm(aircraft.Scheduled.Value.Destination))
+                : 0;
+            var changeCost = dispatch - alreadyPaid;
+            var basePay = FlightEconomics.FlightPay(type, km, band);
+            var pay = (long)Math.Round(basePay *
+                FlightEconomics.ReliabilityMultiplier(operations.CareerState.Reliability));
+            var active = operations.CareerState.ActiveContract;
+            if (active != null
+                && operations.CareerState.TryFindDefinition(active.DefinitionId, out var contract)
+                && contract.EligibleType == type
+                && contract.MatchesRoute(operations.Home.Code, destination.Code))
+            {
+                var contractPay = contract.PaymentPerRotation;
+                if (active.CompletedRotations + 1 >= contract.RequiredRotations)
+                    contractPay += contract.CompletionReward;
+                pay += contractPay;
+                OperatingNote = contract.ReliabilityLossOnCancel > 0
+                    ? $"Contract +${contractPay:N0} · cancel −{contract.ReliabilityLossOnCancel} reliability"
+                    : $"Contract +${contractPay:N0} on return";
+            }
+            DispatchLine = alreadyPaid > 0
+                ? $"Change  {(changeCost >= 0 ? "+" : "−")}${Math.Abs(changeCost):N0}"
+                : $"Dispatch  ${dispatch:N0}";
+            ReturnLine = $"Est. return  ${pay:N0}  ·  net {(pay - dispatch >= 0 ? "+" : "−")}${Math.Abs(pay - dispatch):N0}";
+            if (Maintenance.IsDueSoon(aircraft))
+            {
+                var checkNote = Maintenance.IsOverdue(aircraft)
+                    ? $"Check overdue · next flight −{Maintenance.OverduePenalty} reliability"
+                    : "Check due after this rotation";
+                OperatingNote = OperatingNote.Length > 0
+                    ? OperatingNote + "\n" + checkNote
+                    : checkNote;
+            }
 
             if (!inRange)
             {
@@ -214,6 +249,8 @@ namespace Airside.Presentation
             // Dash 8 on a Kingscote hop is flying a Regional route, not a Domestic one.
             AvailabilityLine = $"Available with {BandLabel(band)} capability";
             AvailabilityTone = HudTone.Caution;
+            if (OperatingNote.Length > 0)
+                AvailabilityLine = OperatingNote;
 
             var delay = FlightPlanner.ClampDelay(departureDelaySeconds, type);
             var departAt = now.Advance(delay);
@@ -226,14 +263,18 @@ namespace Airside.Presentation
                 PlanBlockedReason = $"{aircraft.Registration} must be parked at Adelaide to be planned";
                 return;
             }
-
-            if (!operations.CareerState.CanAfford(dispatch))
+            if (aircraft.CheckUntil is { } checkEnds && departAt.CompareTo(checkEnds) < 0)
             {
-                PlanBlockedReason =
-                    $"Dispatch costs ${dispatch:N0}; you have ${operations.CareerState.Funds:N0}";
+                PlanBlockedReason = $"{aircraft.Registration} is in its check until {clock.TimeText(checkEnds)}";
                 return;
             }
 
+            if (operations.CareerState.Funds + alreadyPaid < dispatch)
+            {
+                PlanBlockedReason =
+                    $"{(alreadyPaid > 0 ? "Change" : "Dispatch")} costs ${changeCost:N0}; you have ${operations.CareerState.Funds:N0}";
+                return;
+            }
 
             CanPlan = true;
             PlanLabel = aircraft.Scheduled.HasValue ? "UPDATE PLAN" : "PLAN FLIGHT";

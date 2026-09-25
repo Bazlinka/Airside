@@ -1,5 +1,89 @@
 ## Where to resume — session handoff
 
+- **2026-09-25 Codex — PR #406 merge handoff.** Bailey asked to merge the
+  completed route-warning and packaged-QA work while the graphics-on performance
+  issue remains open. A Unity Development-player CPU trace of the normal Adelaide
+  view showed `DrawTransparentObjects` at about **12.6 ms** of an **18.7 ms** render
+  loop in a sampled slow frame. In a disposable packaged A/B, excluding the entire
+  transparent pass raised the run from roughly **30 fps** to **53–57 fps**, but
+  removed glazing and other visible surfaces; that trial was reverted. Disabling
+  individual renderers after the scene was built gave misleading draw counts and
+  did not provide a shippable fix. Existing Medium quality, GPU occlusion, a static
+  mesh merge, and per-camera postprocessing/MSAA trials also failed to restore
+  smooth pacing and were reverted. **Next:** profile which transparent materials
+  and objects account for the pass cost, then simplify or batch them without
+  changing the approved airport look. Re-run the normal-map graphics-on soak and
+  human playtest before release. PR #406's merge does not validate performance.
+
+- **2026-09-25 Codex — PR #406 follow-up (branch
+  `feature/operations-playtest-profile-20260925`).** The Route Map now shows the
+  matching contract's pay/cancellation warning together with a due or overdue
+  maintenance warning. A dedicated EditMode test covers both alerts. Domain
+  **788/788**, Unity EditMode **1069/1069**, and the final Mac build passed.
+  The packaged soak has QA-only renderer-isolation and heartbeat flags.
+  On the 1280×720 normal map, graphics-on runs still settled near **29 fps** with
+  p95 frame time over **33 ms**. Hiding world and aircraft renderers, disabling
+  shadows, disabling the GPU Resident Drawer, changing frame pacing, and combining
+  parked-car meshes did not produce a safe repeatable fix; all visual/quality
+  trials were reverted. The car trial cut T1 renderers from 1509 to 69 without
+  moving the observed frame rate. Soak draw/batch counts also stayed high with
+  most scene renderers hidden, so they must not be treated as visible-object
+  counts. **Do not merge PR #406 yet.** Next: capture a Unity Profiler timeline
+  and GPU frame trace on the normal map, identify the actual main/render work,
+  then rerun a sustained graphics-on soak and a human playtest.
+
+- **2026-09-25 Codex — graphics-on stutter investigation (branch
+  `feature/operations-playtest-profile-20260925`, PR #406).** Cabin glass now updates
+  its material property block only when the visible glow band changes. The packaged
+  soak reports per-frame Update/HUD and aircraft/sky/ground stage timings. Domain
+  **787/787**, Unity EditMode **1068/1068** and Mac build passed. A hidden, normal-map
+  graphics-on three-minute soak produced one heartbeat at 35 fps, p95 33.6 ms, with
+  Update 3.29 ms and HUD 1.01 ms; it then stopped logging while CPU-busy. A process
+  sample pointed to Unity GPU-driven culling/Metal rendering, not the measured game
+  Update. A trial of disabling GPU Resident Drawer stalled at startup and was reverted.
+  The hung QA app was stopped. A **non-hidden** normal-map two-minute soak did complete
+  with no stall, but only 29-34 fps (p95 41.7-49.1 ms). Its measured Update was
+  2.71-3.23 ms, HUD 0.97-1.00 ms. A separate 1280x720 one-minute run still managed
+  just 29 fps/p95 41.7 ms; a 1280x720 review capture verified the smaller resolution.
+  Thus pixel count is not the main bottleneck, and the hidden-launch stall is not yet
+  proved to be a normal-play deadlock. **Frame pacing is still unacceptable**; the glass
+  cache has not been shown to fix it. Do not merge PR #406 on performance grounds.
+  Next: isolate renderer batches/culling in a focused packaged A/B, then repeat a
+  normal-map graphics-on soak and human playtest. Do not use the old miniature
+  `-airsideFullAirport` scene for art approval.
+
+- **2026-09-25 Codex — route-plan operating preview and packaged QA (ADR 0119; branch
+  `feature/operations-playtest-profile-20260925`).** The Route Map now shows the
+  incremental cost of rebooking, indicative return/net with current reliability and
+  matching-contract pay, contract cancellation risk and maintenance timing. The
+  separate-save soak logs p95 frame time, slow frames, CPU main/render time and memory;
+  packaged review can follow and zoom in on a registration.
+  - **Evidence so far:** domain **787/787**, Unity EditMode **1066/1066**, asset audit
+    (1305 GUIDs, 336 exact mirrors), 13/13 paint/glazing/pilot and connectivity checks.
+    A baseline full-airport package completed 30 real minutes, 3 player rotations, no
+    clock stall or logged exception. Its fps was contaminated by concurrent Unity tests
+    and macOS indexing, so it is not a clean performance benchmark. A packaged 800×600
+    Route Map shot had no control overlap. The full-airport QA switch is an older
+    miniature scene; do not use its follow view as final normal-play art approval.
+  - **Packaged follow-up:** close-view A350 and Saab captures were taken. The glass
+    still reads dark/flat at play distance, so this branch does not claim an art fix.
+    The old `-airsideFullAirport` QA scene visibly contains a miniature terrain tile
+    and curved backdrop; it is not the normal map and must not be presented as one.
+    A graphics-on full-airport soak stopped logging after minute five, then remained
+    CPU-busy without progress for over ten wall-clock minutes; it was stopped and is
+    **not** a passing performance test. A hidden `-batchmode -nographics` normal-mode
+    seven-minute soak completed with no stall or exception, but cannot validate graphics.
+  - **2026-09-25 follow-up:** the live window-glow pass was overriding authored
+    translucent panes with opaque white every frame. It now caches each pane's
+    base colour and alpha once and retains them at day and night. Domain **787/787**,
+    Unity EditMode **1067/1067**, and a packaged Mac build pass; a normal-map Saab
+    close-up shows visible apertures. The panes still read dark at play distance,
+    so this is a real bug fix, not final visual approval.
+  - **NEXT:** do not merge PR #406 until the graphics-on full-airport hang is located
+    and fixed or explicitly scoped out. Re-run an isolated rendered soak; a real
+    first-time human 20–30 minute playtest is still required. Keep default focused
+    field, saves, authored schedules and economy balance unchanged.
+
 - **2026-09-25 Codex — cut-through aircraft glazing and operator colours (ADR 0118).**
   Rebuilds all 13 aircraft with actual openings behind one translucent pane per window,
   dark recessed cabins, and two original cockpit crew silhouettes. Window trim is thinner;

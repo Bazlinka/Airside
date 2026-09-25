@@ -1,5 +1,25 @@
 ## Unreleased
 
+- **Route Map shows contract and maintenance warnings together.** A due or overdue check
+  now appears on a second line instead of replacing the matching contract's pay and
+  cancellation penalty. The packaged soak has QA-only renderer-isolation flags to
+  diagnose the unresolved graphics-on frame pacing problem; no performance fix is
+  claimed from these flags.
+
+- **Soak profiling now isolates game update from render-thread stalls.** The packaged
+  soak reports per-frame Update, HUD, aircraft, sky and ground time alongside Unity's
+  main/render counters. Cabin glass glow is rewritten only when its day/night or
+  aircraft-phase band changes. A non-hidden normal-map soak completes but only reaches
+  29-34 fps; reducing to 720p did not improve it. A hidden launch still failed to
+  complete. This is not a completed stutter fix.
+
+- **Aircraft glazing stays translucent in play.** The per-frame cabin/flight-deck glow
+  now keeps each pane's authored tint and alpha instead of replacing it with opaque
+  white. A day/night Unity regression covers the property block; the packaged Saab
+  close-up shows the openings again, though final visual polish is still pending.
+
+- **Route decisions now show clearer immediate trade-offs (ADR 0119).** The Route Map refunds an existing booking when checking affordability, blocks departures during an aircraft check, and previews return and net with current reliability and matching-contract pay. It flags due checks and the reliability cost of cancelling a matching contract booking. The separate-save packaged soak now records frame times and memory, and can follow and zoom in on a registered aircraft for visual review. The simulation and save format are unchanged.
+
 - **Aircraft glazing now has real depth (ADR 0118).** All 13 aircraft have apertures
   under single-layer translucent cabin and flight-deck panes, recessed dark interiors and
   simple pilots. Side paint follows the operator accent instead of a universal blue;

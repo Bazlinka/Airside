@@ -120,7 +120,13 @@ namespace Airside.Presentation
             if (_operations == null)
                 return;
 
+            var soakOpsStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             _operations.Update();
+            if (SoakMode)
+            {
+                _soakOpsTicks += System.Diagnostics.Stopwatch.GetTimestamp() - soakOpsStarted;
+                _soakOpsCalls++;
+            }
             RefreshFleetFlights();
             AnnounceNewEvents();
             AnnounceNewSettlements();

@@ -547,6 +547,7 @@ namespace Airside.Presentation
 
         private void OnDestroy()
         {
+            DisposeSoakRecorders();
             if (_active == this)
                 _active = null;
             if (_miniMapTexture != null)
@@ -560,6 +561,7 @@ namespace Airside.Presentation
             if (_simulation == null)
                 return;
 
+            var soakUpdateStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             ReadSimulationControls();
             DriveSoak();
             AirsideFramePacing.Tick(AirsideSettings.Current.UncappedFrameRate, SoakMode);
@@ -595,11 +597,17 @@ namespace Airside.Presentation
             UpdateLiveWeather();
             ApplyDayCycle();
             AdvancePresentationClock();
+            var soakStageStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             UpdateAircraftVisual();
+            if (SoakMode)
+                _soakFleetTicks += System.Diagnostics.Stopwatch.GetTimestamp() - soakStageStarted;
             UpdateAerobridges();
             UpdateBoardingPresentation();
+            soakStageStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             UpdateLiveTraffic();
             UpdateSkyTraffic();
+            if (SoakMode)
+                _soakSkyTicks += System.Diagnostics.Stopwatch.GetTimestamp() - soakStageStarted;
             UpdateWindsock();
             UpdateTerminalFlag();
             UpdateEngineAudio();
@@ -613,8 +621,13 @@ namespace Airside.Presentation
             UpdateCoastalMotion();
             UpdateOpsAntenna();
             UpdateStarField();
+            soakStageStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             UpdateApronLife();
             UpdateGateServicing();
+            if (SoakMode)
+                _soakGroundTicks += System.Diagnostics.Stopwatch.GetTimestamp() - soakStageStarted;
+            if (SoakMode)
+                _soakUpdateTicks += System.Diagnostics.Stopwatch.GetTimestamp() - soakUpdateStarted;
         }
 
         private readonly List<FleetAircraft> _gateServicingCandidates = new();
@@ -950,6 +963,7 @@ namespace Airside.Presentation
         {
             if (_simulation == null)
                 return;
+            var soakHudStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
 
             var scale = HudLayout.ScaleFor(Screen.width, Screen.height);
             var previousMatrix = GUI.matrix;
@@ -960,6 +974,11 @@ namespace Airside.Presentation
             {
                 DrawIntro(layout);
                 GUI.matrix = previousMatrix;
+                if (SoakMode)
+                {
+                    _soakHudTicks += System.Diagnostics.Stopwatch.GetTimestamp() - soakHudStarted;
+                    _soakHudCalls++;
+                }
                 return;
             }
 
@@ -991,6 +1010,11 @@ namespace Airside.Presentation
             else if (_menuOpen)
                 DrawPauseMenu(layout, panel, title, button);
 
+            if (SoakMode)
+            {
+                _soakHudTicks += System.Diagnostics.Stopwatch.GetTimestamp() - soakHudStarted;
+                _soakHudCalls++;
+            }
             GUI.matrix = previousMatrix;
         }
 
@@ -1416,7 +1440,13 @@ namespace Airside.Presentation
                 UpdateAircraftLightsAndGear(viewParts.LightsAndGear, phase, PresentationDaylight, progress,
                     PresentationDeltaTime, PresentationClock, engines);
                 UpdateCabinDoor(viewParts.CabinDoors, phase, engines?.DoorsOpen);
-                UpdateCabinWindowGlow(viewParts.CabinWindowGlass, phase, PresentationDaylight);
+                var glowState = CabinWindowGlowState(phase, PresentationDaylight);
+                if (viewParts.CabinWindowGlowState != glowState)
+                {
+                    UpdateCabinWindowGlow(viewParts.CabinWindowGlass, phase, PresentationDaylight);
+                    viewParts.CabinWindowGlowState = glowState;
+                    _aircraftViewParts[view.GetInstanceID()] = viewParts;
+                }
                 UpdateEngineHeat(viewParts.EngineHeatVents, phase, engines?.AnyRunning);
 
                 if (_cameraController != null
@@ -2058,12 +2088,20 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>Glow has only six distinct outputs; do not rewrite every pane each frame.</summary>
+        private static int CabinWindowGlowState(AircraftPhase phase, float daylight)
+        {
+            var phaseBand = phase == AircraftPhase.AtStand ? 1
+                : phase == AircraftPhase.Departed ? 2 : 3;
+            return phaseBand + (daylight < 0.4f ? 3 : 0);
+        }
+
         /// <summary>
         /// Decision 0025 items 5+7 — cabin / cockpit glass picks up warm emissive glow
         /// at night and a softer stand dwell glow so the airframe reads alive.
         /// </summary>
         private static void UpdateCabinWindowGlow(
-            (Transform Transform, Renderer Renderer)[] glass, AircraftPhase phase, float daylight)
+            (Transform Transform, Renderer Renderer, Color BaseColor)[] glass, AircraftPhase phase, float daylight)
         {
             var night = daylight < 0.4f;
             var atStand = phase == AircraftPhase.AtStand;
@@ -2079,7 +2117,7 @@ namespace Airside.Presentation
             {
                 if (glass[i].Renderer == null)
                     continue;
-                SetRendererColor(glass[i].Renderer, Color.white, intensity > 0.01f ? glow : Color.black);
+                SetRendererColor(glass[i].Renderer, glass[i].BaseColor, intensity > 0.01f ? glow : Color.black);
             }
         }
 
@@ -11351,7 +11389,8 @@ namespace Airside.Presentation
             public ControlSurfacePart[] ControlSurfaces;
             public LightGearPart[] LightsAndGear;
             public CabinDoorPart[] CabinDoors;
-            public (Transform Transform, Renderer Renderer)[] CabinWindowGlass;
+            public (Transform Transform, Renderer Renderer, Color BaseColor)[] CabinWindowGlass;
+            public int CabinWindowGlowState;
             public (Transform Transform, Renderer Renderer)[] EngineHeatVents;
             public PropellerPart[] Propellers;
         }
@@ -11422,7 +11461,7 @@ namespace Airside.Presentation
             var controlSurfaces = new List<ControlSurfacePart>();
             var lightsAndGear = new List<LightGearPart>();
             var cabinDoors = new List<CabinDoorPart>();
-            var cabinWindowGlass = new List<(Transform, Renderer)>();
+            var cabinWindowGlass = new List<(Transform, Renderer, Color)>();
             var engineHeatVents = new List<(Transform, Renderer)>();
             var propellers = new List<PropellerPart>();
 
@@ -11494,7 +11533,7 @@ namespace Airside.Presentation
                 {
                     var glassRenderer = child.GetComponent<Renderer>();
                     if (glassRenderer != null)
-                        cabinWindowGlass.Add((child, glassRenderer));
+                        cabinWindowGlass.Add((child, glassRenderer, GetRendererColor(glassRenderer)));
                 }
 
                 // -- engine heat shimmer (UpdateEngineHeat) --

@@ -124,7 +124,8 @@ namespace Airside.Presentation
         /// frame — a raw scroll would be erased before the next one was drawn.
         /// Sticky across follow sessions so a preferred framing survives a toggle.
         /// </summary>
-        private float _followZoom = 1f;
+        // QA close-ups use the same bounds as player scroll zoom; normal launches stay at 1.
+        private float _followZoom = Mathf.Clamp(CommandLineFloat("-airsideReviewFollowZoom", 1f), 0.35f, 3.5f);
         private const float MinFollowZoom = 0.35f;
         private const float MaxFollowZoom = 3.5f;
 

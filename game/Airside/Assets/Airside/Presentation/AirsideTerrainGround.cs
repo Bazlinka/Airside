@@ -119,7 +119,10 @@ namespace Airside.Presentation
             var terrain = go.GetComponent<Terrain>();
             if (terrain == null || terrain.terrainData == null)
             {
-                Object.Destroy(go);
+                if (Application.isPlaying)
+                    Object.Destroy(go);
+                else
+                    Object.DestroyImmediate(go);
                 return false;
             }
 

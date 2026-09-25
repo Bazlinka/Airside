@@ -52,7 +52,10 @@ namespace Airside.Presentation
                 {
                     // The 2x2 placeholder is already on the GPU; dropping the reference
                     // without destroying it leaked one texture per unreadable file.
-                    Object.Destroy(texture);
+                    if (Application.isPlaying)
+                        Object.Destroy(texture);
+                    else
+                        Object.DestroyImmediate(texture);
                     Misses.Add(key);
                     return null;
                 }

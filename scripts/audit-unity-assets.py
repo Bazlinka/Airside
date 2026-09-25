@@ -16,7 +16,8 @@ ART_SOURCE = ASSETS / "Airside/Art"
 ART_RUNTIME = ASSETS / "StreamingAssets/Airside/Art"
 RUNTIME_SUFFIXES = {".gltf", ".bin", ".png", ".jpg", ".jpeg"}
 NUMBERED_COPY = re.compile(r" \d+$")
-GUID = re.compile(r"^guid:\s*([0-9a-fA-F]+)\s*$", re.MULTILINE)
+GUID = re.compile(r"^guid:\s*(\S+)\s*$", re.MULTILINE)
+VALID_GUID = re.compile(r"^[0-9a-fA-F]{32}$")
 
 
 def relative(path: Path) -> str:
@@ -57,20 +58,26 @@ def main() -> int:
     orphan_meta = []
     guid_paths: defaultdict[str, list[str]] = defaultdict(list)
     unreadable_meta = []
+    malformed_guid = []
     for meta in ASSETS.rglob("*.meta"):
         target = Path(str(meta)[:-5])
         if not target.exists():
             orphan_meta.append(relative(meta))
         text = meta.read_text(encoding="utf-8", errors="replace")
         match = GUID.search(text)
-        if match:
+        if match and VALID_GUID.fullmatch(match.group(1)):
             guid_paths[match.group(1).lower()].append(relative(meta))
+        elif match:
+            malformed_guid.append(f"{relative(meta)}: {match.group(1)}")
         else:
             unreadable_meta.append(relative(meta))
     if orphan_meta:
         problems.append("Orphan .meta files:\n  " + "\n  ".join(orphan_meta))
     if unreadable_meta:
         problems.append(".meta files without a GUID:\n  " + "\n  ".join(unreadable_meta))
+    if malformed_guid:
+        problems.append(".meta files with malformed GUIDs (expected 32 hex characters):\n  "
+                        + "\n  ".join(malformed_guid))
 
     duplicate_guids = {guid: paths for guid, paths in guid_paths.items() if len(paths) > 1}
     if duplicate_guids:

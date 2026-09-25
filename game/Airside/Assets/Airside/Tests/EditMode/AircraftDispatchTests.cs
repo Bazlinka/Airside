@@ -5,7 +5,6 @@ using Airside.Presentation;
 using Airside.Simulation;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace Airside.Tests
 {
@@ -17,8 +16,6 @@ namespace Airside.Tests
     {
         private static Transform Build(AircraftType type)
         {
-            // Runtime builders use Object.Destroy for scratch parts; edit mode logs that as an error.
-            LogAssert.ignoreFailingMessages = true;
             var method = typeof(AirsidePrototype).GetMethod("BuildAircraftForType", BindingFlags.NonPublic | BindingFlags.Static);
             Assert.That(method, Is.Not.Null, "BuildAircraftForType dispatch");
             return (Transform)method.Invoke(null, new object[] { $"Dispatch {type.Id}", type, Color.white, null });

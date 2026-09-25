@@ -4,6 +4,25 @@
 
 ## Where to resume — session handoff
 
+- **2026-09-26 Codex — graphics-on performance repaired and 100-gate whole-game pass.**
+  The normal Adelaide package was render-thread bound by thousands of separate transparent
+  aircraft panes: the census found 1,792 cabin-window renderers and 2,775 transparent material
+  submissions. Static glazing is now combined by material per aircraft while its named source
+  transforms remain available to animation and art tests. In a same-time 1280×720 packaged A/B,
+  the steady state moved from **40 to 60 fps**, p95 **25.8 to 16.8 ms**, render thread **17.0 to
+  5.7 ms**, and SetPass calls **1,047 to 453**. A longer revised soak held 60 fps at 16.9–17.2 ms
+  p95 with zero >33 ms frames in its last four windows. Baseline/revised 787 follow captures match
+  visually and retain all cabin/flight-deck glass. The pass also repaired 36 unsafe EditMode
+  destruction paths, removed two global log suppressions, fixed nine malformed Unity GUIDs, made
+  the asset audit reject malformed IDs, and added generated-mesh lifetime coverage. Full evidence
+  and the 100 named gates are in
+  `docs/testing/PERFORMANCE_AND_BUGFIX_PASS_100_2026-09-26.md`.
+  - **Evidence:** Unity EditMode **1,083/1,083 passed** without global log suppression;
+    aircraft validators and the **1,312-GUID** asset audit pass. Final build identity and merge
+    state are recorded in the delivery commit/PR.
+  - **NEXT:** after merge, use the normal release package for Bailey's ordinary human playtest;
+    do not reopen the reverted whole-pass or renderer-hiding experiments.
+
 - **2026-09-25 Codex — PR #406 merge handoff.** Bailey asked to merge the
   completed route-warning and packaged-QA work while the graphics-on performance
   issue remains open. A Unity Development-player CPU trace of the normal Adelaide

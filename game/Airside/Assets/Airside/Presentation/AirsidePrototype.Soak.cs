@@ -58,6 +58,7 @@ namespace Airside.Presentation
         private long _soakUpdateTicks;
         private long _soakHudTicks;
         private int _soakHudCalls;
+        private bool _soakRenderSetDescribed;
         private readonly SeededRandomSource _soakChoices = new(31337);
 
         private static bool SoakMode
@@ -217,6 +218,11 @@ namespace Airside.Presentation
                 _soakRenderStatsSamples++;
             }
             DriveReviewShot();
+            if (!_soakRenderSetDescribed && Time.unscaledTime >= _soakStartedAt + 2f)
+            {
+                _soakRenderSetDescribed = true;
+                DescribeSoakRenderSet();
+            }
             if (!_reviewFollowStarted && !string.IsNullOrEmpty(_reviewAircraftId))
             {
                 _reviewFollowStarted = TryFollowFleetAircraft(_reviewAircraftId);
@@ -376,6 +382,60 @@ namespace Airside.Presentation
             Debug.Log($"{SoakLogTag} render set: world {worldCount} ({(hideWorld ? "hidden" : "visible")}), " +
                       $"aircraft {aircraftRenderers.Count} ({(hideAircraft ? "hidden" : "visible")}), " +
                       $"world prefix {hiddenPrefix ?? "none"}");
+        }
+
+        private static void DescribeSoakRenderSet()
+        {
+            var transparentRenderers = 0;
+            var transparentTriangles = 0L;
+            var activeRenderers = 0;
+            var groups = new System.Collections.Generic.Dictionary<string, (int Renderers, long Triangles)>(
+                StringComparer.Ordinal);
+            var renderers = FindObjectsByType<Renderer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            foreach (var renderer in renderers)
+            {
+                if (renderer == null || !renderer.enabled || renderer.forceRenderingOff
+                    || !renderer.gameObject.activeInHierarchy)
+                    continue;
+                activeRenderers++;
+                var mesh = renderer.GetComponent<MeshFilter>()?.sharedMesh;
+                var triangles = 0L;
+                if (mesh != null)
+                {
+                    // Runtime static batching gives every source renderer the same combined
+                    // mesh. Count only the submesh range owned by this renderer, otherwise
+                    // the diagnostic multiplies the entire airport mesh by every fixture.
+                    var firstSubMesh = renderer is MeshRenderer meshRenderer && meshRenderer.isPartOfStaticBatch
+                        ? meshRenderer.subMeshStartIndex
+                        : 0;
+                    var subMeshCount = Math.Max(1, renderer.sharedMaterials.Length);
+                    var lastSubMesh = Math.Min(mesh.subMeshCount, firstSubMesh + subMeshCount);
+                    for (var subMesh = firstSubMesh; subMesh < lastSubMesh; subMesh++)
+                        if (mesh.GetTopology(subMesh) == MeshTopology.Triangles)
+                            triangles += (long)mesh.GetIndexCount(subMesh) / 3L;
+                }
+                foreach (var material in renderer.sharedMaterials)
+                {
+                    if (material == null || material.renderQueue < (int)UnityEngine.Rendering.RenderQueue.Transparent)
+                        continue;
+                    transparentRenderers++;
+                    transparentTriangles += triangles;
+                    var name = renderer.gameObject.name;
+                    var separator = name.IndexOf(' ');
+                    var prefix = separator > 0 ? name.Substring(0, separator) : name;
+                    var key = $"{material.name} / {material.shader.name} / {prefix}";
+                    groups.TryGetValue(key, out var group);
+                    groups[key] = (group.Renderers + 1, group.Triangles + triangles);
+                }
+            }
+
+            Debug.Log($"{SoakLogTag} active renderers {activeRenderers}; transparent material slots " +
+                      $"{transparentRenderers}; transparent triangles {transparentTriangles}");
+            Debug.Log($"{SoakLogTag} largest transparent groups: " +
+                      string.Join(", ", groups.OrderByDescending(pair => pair.Value.Renderers)
+                          .ThenByDescending(pair => pair.Value.Triangles)
+                          .Take(40)
+                          .Select(pair => $"{pair.Key} {pair.Value.Renderers}/{pair.Value.Triangles}")));
         }
 
         private void DisposeSoakRecorders()

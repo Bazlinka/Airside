@@ -115,10 +115,21 @@ namespace Airside.Presentation
 
         // ---- Frame hooks called from AirsidePrototype ----------------------------
 
+        private float _activeCareerSecondRemainder;
+
         private void UpdateAirlineOperations()
         {
             if (_operations == null)
                 return;
+            if (Application.isFocused && !AirlineModalOpen)
+            {
+                _activeCareerSecondRemainder += Mathf.Min(Time.unscaledDeltaTime, 1f);
+                while (_activeCareerSecondRemainder >= 1f)
+                {
+                    _operations.RecordActivePlaySecond();
+                    _activeCareerSecondRemainder -= 1f;
+                }
+            }
 
             var soakOpsStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             _operations.Update();
@@ -573,37 +584,10 @@ namespace Airside.Presentation
 
             var objective = OperationsSummary.Objective(PlayerFleet(), _clock.Now, _operations.Clock,
                 _operations.CareerState, _operations.MarketOffers());
-            var chapters = _operations.CampaignChapters();
-            AnnounceCampaignProgress(chapters);
             _shellDrawList.Clear();
-            HudShellPainter.PaintObjective(_shellDrawList, Box(rect), objective, Campaign.Current(chapters)?.Caption);
+            HudShellPainter.PaintObjective(_shellDrawList, Box(rect), objective,
+                _operations.PinnedCareerGoal().Stage + " · CAREER");
             _hudPainter.Draw(_shellDrawList);
-        }
-
-        private int _campaignChaptersAnnounced = -1;
-
-        /// <summary>A toast the moment a chapter's reward lands; quiet about chapters done before this session.</summary>
-        private void AnnounceCampaignProgress(IReadOnlyList<CampaignChapter> chapters)
-        {
-            var rewarded = 0;
-            CampaignChapter latest = null;
-            foreach (var chapter in chapters)
-            {
-                if (!chapter.Rewarded)
-                    break;
-                rewarded++;
-                latest = chapter;
-            }
-
-            if (_campaignChaptersAnnounced >= 0 && rewarded > _campaignChaptersAnnounced && latest != null)
-            {
-                var next = Campaign.Current(chapters);
-                var nextLine = next != null && !next.Complete ? $" Next: Chapter {next.Number}, {next.Title}." : " Campaign complete!";
-                ShowToast($"Chapter {latest.Number} complete: {latest.Title}. +${latest.Reward:N0}.{nextLine}");
-                PlayUiClick();
-            }
-
-            _campaignChaptersAnnounced = rewarded;
         }
 
         /// <summary>True when this window is wide enough to keep the objective card beside a workspace.</summary>
@@ -870,6 +854,7 @@ namespace Airside.Presentation
             var away = target.ElapsedSeconds - clock.Now.ElapsedSeconds;
             clock.Set(target);
             restored.Update();
+            restored.ResumeRepeatSchedules();
             if (away >= AwayCatchUp.MinimumSeconds)
                 _awaySummary = AwaySummary.Build(data, restored, away);
 
@@ -2188,9 +2173,182 @@ namespace Airside.Presentation
             : !string.IsNullOrEmpty(e.DestinationCode) ? e.DestinationCode
             : "its route";
 
+        private bool _fleetNetworkView;
+        private string _selectedNetworkBase = "MEL";
+        private string _selectedNetworkRegistration;
+        private int _networkDestinationIndex;
+        private int _networkBuyTypeIndex;
+        private int _networkScroll;
+
+        private List<Destination> NetworkDestinations(OutstationAircraft aircraft)
+        {
+            var list = new List<Destination>();
+            if (aircraft == null || !DestinationCatalogue.TryFind(aircraft.BaseCode, out var origin))
+                return list;
+            foreach (var destination in DestinationCatalogue.All)
+            {
+                if (destination.Code == "ADL" || destination.Code == aircraft.BaseCode)
+                    continue;
+                if (RouteAccess.BandOf(destination) >= RouteBand.Tasman
+                    && _operations.CareerState.Tier < OperatingTier.International)
+                    continue;
+                if (!aircraft.Type.CanReach(origin.DistanceKmTo(destination))
+                    || !RouteAccess.Allows(aircraft.Type, destination))
+                    continue;
+                list.Add(destination);
+            }
+            return list;
+        }
+
+        private void DrawNetworkWorkspace(Rect rect)
+        {
+            var surface = Box(rect);
+            var body = HudShell.Body(surface, hasFooter: true);
+            var listWidth = body.Width * 0.47f;
+            var left = new HudBox(body.X, body.Y, listWidth, body.Height);
+            var right = new HudBox(body.X + listWidth + 18f, body.Y, body.Width - listWidth - 18f,
+                body.Height);
+            _workspaceDrawList.Clear();
+            _workspaceDrawList.Surface(surface);
+            var header = HudShell.Header(surface);
+            _workspaceDrawList.Text(new HudBox(header.X + HudShell.SurfacePadding, header.Y + 16f,
+                header.Width - 260f, 30f), "FLEET · NETWORK", 25f, HudTone.Default,
+                HudTextStyle.Bold | HudTextStyle.Caption);
+            var close = OperationsWorkspacePainter.CloseBox(surface);
+            _workspaceDrawList.Button(new HudBox(close.X - 112f, close.Y, 104f, close.Height),
+                "ADELAIDE", "network:back", HudButtonStyle.Secondary);
+            _workspaceDrawList.Button(close, "CLOSE", HudAction.Close, HudButtonStyle.Secondary);
+            _workspaceDrawList.Hairline(HudShell.HeaderRule(surface));
+            _workspaceDrawList.Caption(left.WithHeight(18f), "BASES");
+            var candidates = new[] { "MEL", "SYD", "BNE", "PER" };
+            for (var i = 0; i < candidates.Length; i++)
+            {
+                var code = candidates[i];
+                var row = new HudBox(left.X, left.Y + 24f + i * 30f, left.Width, 27f);
+                var open = _operations.CareerState.OutstationBases.Contains(code);
+                if (code == _selectedNetworkBase)
+                    _workspaceDrawList.Fill(row, HudTone.Accent, 0.22f);
+                _workspaceDrawList.Text(new HudBox(row.X + 9f, row.Y + 5f, row.Width - 150f, 19f),
+                    code + (open ? " · open" : $" · ${_operations.NextOutstationCost:N0}"), 13f,
+                    open ? HudTone.Default : HudTone.Muted);
+                _workspaceDrawList.Button(new HudBox(row.Right - 112f, row.Y + 1f, 108f, 25f),
+                    open ? "SELECT" : "OPEN",
+                    (open ? "network:base:" : "network:open:") + code, HudButtonStyle.Secondary);
+            }
+            var fleetArea = new HudBox(left.X, left.Y + 157f, left.Width, left.Height - 160f);
+            _workspaceDrawList.Caption(fleetArea.WithHeight(18f), _selectedNetworkBase + " AIRCRAFT");
+            var based = new List<OutstationAircraft>();
+            foreach (var aircraft in _operations.OutstationFleet)
+                if (aircraft.BaseCode == _selectedNetworkBase) based.Add(aircraft);
+            var visible = Math.Max(1, (int)((fleetArea.Height - 22f) / 34f));
+            _networkScroll = ScrollRows(_networkScroll, fleetArea, based.Count - visible);
+            if (based.Count == 0)
+                _workspaceDrawList.Text(new HudBox(fleetArea.X, fleetArea.Y + 27f, fleetArea.Width, 30f),
+                    "No aircraft based here yet.", 12f, HudTone.Muted);
+            for (var i = _networkScroll; i < based.Count && i < _networkScroll + visible; i++)
+            {
+                var aircraft = based[i];
+                var row = new HudBox(fleetArea.X, fleetArea.Y + 24f + (i - _networkScroll) * 34f,
+                    fleetArea.Width, 31f);
+                if (aircraft.Registration == _selectedNetworkRegistration)
+                    _workspaceDrawList.Fill(row, HudTone.Accent, 0.20f);
+                _workspaceDrawList.Text(new HudBox(row.X + 8f, row.Y + 7f, row.Width - 16f, 18f),
+                    aircraft.Registration + " · " + aircraft.Type.Name + " · "
+                    + (aircraft.HasFlight ? "on " + aircraft.DestinationCode
+                        : aircraft.InCheck(_clock.Now.ElapsedSeconds) ? "in check"
+                        : aircraft.CheckDue ? "check due" : "available"), 12f);
+                _workspaceDrawList.Hotspot(row, "network:select:" + aircraft.Registration);
+            }
+
+            _workspaceDrawList.Caption(right.WithHeight(18f), "GROW AND OPERATE");
+            var offer = AircraftAcquisition.All[_networkBuyTypeIndex % AircraftAcquisition.All.Count];
+            _workspaceDrawList.Text(new HudBox(right.X, right.Y + 29f, right.Width, 24f),
+                $"Next aircraft · {offer.Type.Name} · ${offer.Price:N0}", 14f, HudTone.Default,
+                HudTextStyle.Bold);
+            _workspaceDrawList.Button(new HudBox(right.X, right.Y + 60f, 58f, 28f), "PREV",
+                "network:type-prev", HudButtonStyle.Secondary);
+            _workspaceDrawList.Button(new HudBox(right.X + 64f, right.Y + 60f, 58f, 28f), "NEXT",
+                "network:type-next", HudButtonStyle.Secondary);
+            _workspaceDrawList.Button(new HudBox(right.Right - 135f, right.Y + 60f, 135f, 28f),
+                "BUY AT BASE", "network:buy", HudButtonStyle.Primary,
+                _operations.CareerState.OutstationBases.Contains(_selectedNetworkBase));
+            _workspaceDrawList.Hairline(new HudBox(right.X, right.Y + 103f, right.Width, 1f));
+            OutstationAircraft selected = null;
+            foreach (var aircraft in based)
+                if (aircraft.Registration == _selectedNetworkRegistration) selected = aircraft;
+            if (selected == null)
+            {
+                _workspaceDrawList.Text(new HudBox(right.X, right.Y + 122f, right.Width, 48f),
+                    "Select an aircraft to plan a route or assign repeat service.", 13f, HudTone.Muted,
+                    HudTextStyle.Wrap);
+            }
+            else
+            {
+                _workspaceDrawList.Text(new HudBox(right.X, right.Y + 121f, right.Width, 25f),
+                    selected.Registration + " · " + selected.Type.Name, 17f, HudTone.Default,
+                    HudTextStyle.Bold);
+                var destinations = NetworkDestinations(selected);
+                if (destinations.Count > 0)
+                {
+                    _networkDestinationIndex %= destinations.Count;
+                    var destination = destinations[_networkDestinationIndex];
+                    _workspaceDrawList.Text(new HudBox(right.X, right.Y + 152f, right.Width, 22f),
+                        "Route: " + selected.BaseCode + " ↔ " + destination.Name, 13f);
+                    _workspaceDrawList.Button(new HudBox(right.X, right.Y + 180f, 58f, 28f), "PREV",
+                        "network:route-prev", HudButtonStyle.Secondary);
+                    _workspaceDrawList.Button(new HudBox(right.X + 64f, right.Y + 180f, 58f, 28f), "NEXT",
+                        "network:route-next", HudButtonStyle.Secondary);
+                    if (DestinationCatalogue.TryFind(selected.BaseCode, out var origin))
+                    {
+                        var km = origin.DistanceKmTo(destination);
+                        var forecast = RouteForecast.For(origin, destination, selected.Type);
+                        var pay = forecast.Revenue;
+                        var cost = forecast.Cost;
+                        _workspaceDrawList.Text(new HudBox(right.X, right.Y + 220f, right.Width, 20f),
+                            $"{forecast.ExpectedPassengers}/{forecast.Seats} seats · return ${pay:N0} · margin ${pay - cost:N0}",
+                            12f, pay >= cost ? HudTone.Positive : HudTone.Caution);
+                    }
+                    _workspaceDrawList.Button(new HudBox(right.X, right.Y + 256f, 150f, 32f),
+                        selected.CheckDue ? "START CHECK" : "PLAN SERVICE",
+                        selected.CheckDue ? "network:check" : "network:plan",
+                        HudButtonStyle.Primary, !selected.HasFlight
+                        && !selected.InCheck(_clock.Now.ElapsedSeconds));
+                    var repeat = _operations.RepeatSchedules.FirstOrDefault(p => p.Registration == selected.Registration);
+                    _workspaceDrawList.Button(new HudBox(right.X + 160f, right.Y + 256f, 155f, 32f),
+                        repeat == null ? "REPEAT 12 HOURS" : repeat.Paused ? "RESUME REPEAT" : "PAUSE REPEAT",
+                        "network:repeat", HudButtonStyle.Secondary, _operations.DelegationUnlocked);
+                    if (repeat != null)
+                    {
+                        _workspaceDrawList.Text(new HudBox(right.X, right.Y + 300f, right.Width, 45f),
+                            repeat.Exception.Length > 0 ? repeat.Exception :
+                            $"Delegated {repeat.DestinationCode} every {repeat.IntervalHours} h while playing",
+                            12f, repeat.Exception.Length > 0 ? HudTone.Caution : HudTone.Muted,
+                            HudTextStyle.Wrap);
+                        _workspaceDrawList.Button(new HudBox(right.X, right.Y + 349f, 155f, 28f),
+                            "REMOVE REPEAT", "network:remove-repeat", HudButtonStyle.Secondary);
+                    }
+                    else if (!_operations.DelegationUnlocked)
+                        _workspaceDrawList.Text(new HudBox(right.X, right.Y + 300f, right.Width, 32f),
+                            $"Delegation unlocks after 12 manually planned services "
+                            + $"({_operations.CareerState.ManualRotations}/12).", 12f, HudTone.Muted);
+                }
+            }
+            var footer = HudShell.Footer(surface);
+            _workspaceDrawList.Hairline(HudShell.FooterRule(surface));
+            _workspaceDrawList.Text(footer.Inset(HudShell.SurfacePadding, 8f, HudShell.SurfacePadding, 0f)
+                .WithHeight(20f), "Outstation flights run off-map. Adelaide flights use the live airport.",
+                11f, HudTone.Muted);
+            DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
+        }
+
         /// <summary>The Fleet workspace (ADR 0057): your aircraft, their detail, the real market.</summary>
         private void DrawFleetWorkspace(Rect rect)
         {
+            if (_fleetNetworkView)
+            {
+                DrawNetworkWorkspace(rect);
+                return;
+            }
             var surface = Box(rect);
             _fleetWorkspace.Rebuild(_operations, _clock.Now, _selectedAircraftId);
             if (!_fleetWorkspace.HasSelection && _fleetWorkspace.Mine.Count > 0)
@@ -2205,16 +2363,81 @@ namespace Airside.Presentation
             _rosterScrollRow = ScrollRows(_rosterScrollRow, layout.Roster, rows - layout.VisibleRosterRows);
             FleetWorkspacePainter.Paint(_workspaceDrawList, _fleetWorkspace, layout, _selectedAircraftId,
                 _rosterScrollRow, _fleetShowOtherOperators);
+            var close = OperationsWorkspacePainter.CloseBox(surface);
+            _workspaceDrawList.Button(new HudBox(close.X - 112f, close.Y, 104f, close.Height),
+                "NETWORK", "network:view", HudButtonStyle.Secondary);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
         }
 
         /// <summary>The Contracts workspace (ADR 0057): the active commitment beside the market.</summary>
+        private bool _careerRoadmapView;
+        private int _careerRoadmapScroll;
+
         private void DrawContractsWorkspace(Rect rect)
         {
+            if (_careerRoadmapView)
+            {
+                DrawCareerRoadmap(rect);
+                return;
+            }
             _contractsWorkspace.Rebuild(_operations, _clock.Now);
             var layout = ContractsWorkspaceLayout.Create(Box(rect), _contractsWorkspace.ActiveTerms.Count);
             ContractsWorkspacePainter.Paint(_workspaceDrawList, _contractsWorkspace, layout,
                 _highlightedContractId);
+            var close = OperationsWorkspacePainter.CloseBox(Box(rect));
+            _workspaceDrawList.Button(new HudBox(close.X - 112f, close.Y, 104f, close.Height),
+                "CAREER", HudAction.CareerRoadmap, HudButtonStyle.Secondary);
+            DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
+        }
+
+        private void DrawCareerRoadmap(Rect rect)
+        {
+            var surface = Box(rect);
+            var goals = _operations.CareerGoals();
+            var body = HudShell.Body(surface, hasFooter: true);
+            const float rowHeight = 44f;
+            var visible = Math.Max(1, (int)(body.Height / rowHeight));
+            _careerRoadmapScroll = ScrollRows(_careerRoadmapScroll, body, goals.Count - visible);
+            _workspaceDrawList.Clear();
+            _workspaceDrawList.Surface(surface);
+            var header = HudShell.Header(surface);
+            _workspaceDrawList.Text(new HudBox(header.X + HudShell.SurfacePadding, header.Y + 16f,
+                header.Width - 260f, 30f), "CAREER ROADMAP", 25f, HudTone.Default,
+                HudTextStyle.Bold | HudTextStyle.Caption);
+            var close = OperationsWorkspacePainter.CloseBox(surface);
+            _workspaceDrawList.Button(new HudBox(close.X - 112f, close.Y, 104f, close.Height),
+                "OFFERS", HudAction.ContractMarket, HudButtonStyle.Secondary);
+            _workspaceDrawList.Button(close, "CLOSE", HudAction.Close, HudButtonStyle.Secondary);
+            _workspaceDrawList.Hairline(HudShell.HeaderRule(surface));
+            for (var i = _careerRoadmapScroll; i < goals.Count && i < _careerRoadmapScroll + visible; i++)
+            {
+                var goal = goals[i];
+                var row = new HudBox(body.X, body.Y + (i - _careerRoadmapScroll) * rowHeight,
+                    body.Width, rowHeight - 3f);
+                var available = goal.Stage <= _operations.CareerState.Tier;
+                var pinned = goal.Id == _operations.CareerState.PinnedGoalId;
+                _workspaceDrawList.Fill(row, pinned ? HudTone.Accent : HudTone.Default,
+                    pinned ? 0.23f : (i & 1) == 0 ? 0.06f : 0.025f);
+                _workspaceDrawList.Text(new HudBox(row.X + 12f, row.Y + 4f, row.Width - 245f, 20f),
+                    goal.Title, 13f, available ? HudTone.Default : HudTone.Muted,
+                    pinned ? HudTextStyle.Bold : HudTextStyle.Regular);
+                _workspaceDrawList.Text(new HudBox(row.X + 12f, row.Y + 23f, row.Width - 245f, 16f),
+                    goal.Stage + " · " + (goal.Complete ? "Complete" : goal.ProgressText), 11f,
+                    goal.Complete ? HudTone.Positive : HudTone.Muted);
+                if (available && !pinned)
+                    _workspaceDrawList.Button(new HudBox(row.Right - 96f, row.Y + 7f, 82f, 27f),
+                        "PIN", HudAction.PinGoal(goal.Id), HudButtonStyle.Secondary);
+            }
+            var footer = HudShell.Footer(surface);
+            _workspaceDrawList.Hairline(HudShell.FooterRule(surface));
+            var finished = _operations.CareerState.ProcessedSettlementKeys.Contains(CareerRoadmap.FinaleKey);
+            _workspaceDrawList.Text(footer.Inset(HudShell.SurfacePadding, 8f, HudShell.SurfacePadding, 0f)
+                .WithHeight(22f), finished
+                    ? "Established airline achieved · continue in sandbox"
+                    : $"{_operations.CareerState.BaseCount} bases · {_operations.PlayerFleetCount()} aircraft · "
+                      + $"{_operations.CareerState.ServedDestinations.Count} destinations · "
+                      + $"{_operations.CareerState.ActivePlaySeconds / 3600} h active", 12f,
+                finished ? HudTone.Positive : HudTone.Muted);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
         }
 
@@ -2277,10 +2500,133 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(action))
                 return;
 
+            if (action.StartsWith("network:open:", StringComparison.Ordinal))
+            {
+                var code = action.Substring("network:open:".Length);
+                var result = _operations.OpenOutstationBase(code);
+                ShowToast(result.Accepted ? code + " base opened." : result.Reason);
+                if (result.Accepted) { _selectedNetworkBase = code; SaveAirline(); }
+                PlayUiClick();
+                return;
+            }
+            if (action.StartsWith("network:base:", StringComparison.Ordinal))
+            {
+                _selectedNetworkBase = action.Substring("network:base:".Length);
+                _selectedNetworkRegistration = null;
+                _networkScroll = 0;
+                PlayUiClick();
+                return;
+            }
+            if (action.StartsWith("network:select:", StringComparison.Ordinal))
+            {
+                _selectedNetworkRegistration = action.Substring("network:select:".Length);
+                _networkDestinationIndex = 0;
+                PlayUiClick();
+                return;
+            }
+
+            var goalId = HudAction.Payload(action, HudAction.PinGoalPrefix);
+            if (goalId.Length > 0)
+            {
+                var result = _operations.PinCareerGoal(goalId);
+                ShowToast(result.Accepted ? "Career goal pinned." : result.Reason);
+                if (result.Accepted) SaveAirline();
+                PlayUiClick();
+                return;
+            }
+
             switch (action)
             {
                 case HudAction.Close:
                     TryCloseAirlineOverlay();
+                    return;
+                case "network:view":
+                    _fleetNetworkView = true;
+                    PlayUiClick();
+                    return;
+                case "network:back":
+                    _fleetNetworkView = false;
+                    PlayUiClick();
+                    return;
+                case "network:type-prev":
+                    _networkBuyTypeIndex = (_networkBuyTypeIndex + AircraftAcquisition.All.Count - 1)
+                                           % AircraftAcquisition.All.Count;
+                    PlayUiClick();
+                    return;
+                case "network:type-next":
+                    _networkBuyTypeIndex = (_networkBuyTypeIndex + 1) % AircraftAcquisition.All.Count;
+                    PlayUiClick();
+                    return;
+                case "network:route-prev":
+                case "network:route-next":
+                {
+                    var aircraft = _operations.OutstationFleet.FirstOrDefault(a =>
+                        a.Registration == _selectedNetworkRegistration);
+                    var routes = NetworkDestinations(aircraft);
+                    if (routes.Count > 0)
+                        _networkDestinationIndex = (_networkDestinationIndex
+                            + (action == "network:route-next" ? 1 : routes.Count - 1)) % routes.Count;
+                    PlayUiClick();
+                    return;
+                }
+                case "network:buy":
+                {
+                    var offer = AircraftAcquisition.All[_networkBuyTypeIndex];
+                    var result = _operations.BuyAircraftAtOutstation(offer.Type, _selectedNetworkBase);
+                    ShowToast(result.Accepted ? offer.Type.Name + " bought for " + _selectedNetworkBase + "." : result.Reason);
+                    if (result.Accepted) SaveAirline();
+                    PlayUiClick();
+                    return;
+                }
+                case "network:plan":
+                case "network:repeat":
+                {
+                    var aircraft = _operations.OutstationFleet.FirstOrDefault(a =>
+                        a.Registration == _selectedNetworkRegistration);
+                    var routes = NetworkDestinations(aircraft);
+                    if (aircraft == null || routes.Count == 0) return;
+                    var destination = routes[_networkDestinationIndex % routes.Count];
+                    CommandResult result;
+                    if (action == "network:plan")
+                        result = _operations.ScheduleOutstationService(aircraft.Registration,
+                            destination.Code, _clock.Now.Advance(30 * 60));
+                    else
+                    {
+                        var repeat = _operations.RepeatSchedules.FirstOrDefault(p =>
+                            p.Registration == aircraft.Registration);
+                        result = repeat == null
+                            ? _operations.SetRepeatSchedule(aircraft.Registration, destination.Code, 12)
+                            : _operations.PauseRepeatSchedule(aircraft.Registration, !repeat.Paused);
+                    }
+                    ShowToast(result.Accepted ? (action == "network:plan" ? "Service planned." : "Repeat schedule updated.")
+                        : result.Reason);
+                    if (result.Accepted) SaveAirline();
+                    PlayUiClick();
+                    return;
+                }
+                case "network:check":
+                {
+                    var result = _operations.StartOutstationCheck(_selectedNetworkRegistration);
+                    ShowToast(result.Accepted ? "Routine check started." : result.Reason);
+                    if (result.Accepted) SaveAirline();
+                    PlayUiClick();
+                    return;
+                }
+                case "network:remove-repeat":
+                {
+                    var result = _operations.RemoveRepeatSchedule(_selectedNetworkRegistration);
+                    ShowToast(result.Accepted ? "Repeat schedule removed." : result.Reason);
+                    if (result.Accepted) SaveAirline();
+                    PlayUiClick();
+                    return;
+                }
+                case HudAction.CareerRoadmap:
+                    _careerRoadmapView = true;
+                    PlayUiClick();
+                    return;
+                case HudAction.ContractMarket:
+                    _careerRoadmapView = false;
+                    PlayUiClick();
                     return;
                 case HudAction.TabDepartures:
                     _flightsShowArrivals = false;
@@ -2349,6 +2695,20 @@ namespace Airside.Presentation
                 case HudAction.PlanFlight:
                     ScheduleFromPlanner();
                     return;
+                case HudAction.RepeatFlight:
+                {
+                    if (_mapAircraft == null || !_mapSelection.HasValue) return;
+                    var existing = _operations.RepeatSchedules.FirstOrDefault(p =>
+                        p.Registration == _mapAircraft.Registration
+                        && p.DestinationCode == _mapSelection.Value.Code);
+                    var result = existing == null
+                        ? _operations.SetRepeatSchedule(_mapAircraft.Registration, _mapSelection.Value.Code, 12)
+                        : _operations.PauseRepeatSchedule(_mapAircraft.Registration, !existing.Paused);
+                    ShowToast(result.Accepted ? "Repeat schedule updated." : result.Reason);
+                    if (result.Accepted) SaveAirline();
+                    PlayUiClick();
+                    return;
+                }
                 case HudAction.ResetMap:
                     _mapTrackId = null;
                     _mapSelection = null;
@@ -2519,10 +2879,26 @@ namespace Airside.Presentation
         {
             if (aircraft == null || _operations == null)
                 return;
-            var suggested = Campaign.SuggestedFirstDestination(
-                _operations.CareerState, PlayerOwnedTypes(), aircraft, _operations.CanOperate);
-            if (suggested.HasValue)
-                _mapSelection = suggested;
+            var active = _operations.CareerState.ActiveContract;
+            if (active != null && _operations.CareerState.TryFindDefinition(active.DefinitionId,
+                    out var contract)
+                && DestinationCatalogue.TryFind(contract.DestinationCode, out var contracted)
+                && _operations.CanOperate(aircraft, contracted))
+            {
+                _mapSelection = contracted;
+                return;
+            }
+            foreach (var destination in DestinationCatalogue.All)
+                if (_operations.CanOperate(aircraft, destination)
+                    && CareerRoadmap.RouteGuidance(_operations.CareerState, PlayerOwnedTypes(),
+                        destination).Length > 0)
+                {
+                    _mapSelection = destination;
+                    return;
+                }
+            if (DestinationCatalogue.TryFind("KGC", out var kingscote)
+                && _operations.CanOperate(aircraft, kingscote))
+                _mapSelection = kingscote;
         }
 
         private IReadOnlyList<AircraftType> PlayerOwnedTypes()

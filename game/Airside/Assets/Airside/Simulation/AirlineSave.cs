@@ -34,8 +34,10 @@ namespace Airside.Simulation
         /// in-progress check end time (ADR 0085). Older saves load every aircraft as freshly
         /// checked, so a reload does not invent overdue penalties. 12 adds the player's Adelaide
         /// base level (ADR 0091); older saves infer enough capacity for their existing fleet.
+        /// 13 adds selectable career goals, route proof, outstation fleet/bases, earned repeat
+        /// schedules, recent service margins and active-play timing (ADR 0120).
         /// </summary>
-        public const int CurrentVersion = 12;
+        public const int CurrentVersion = 13;
 
         public int Version = CurrentVersion;
 
@@ -84,6 +86,20 @@ namespace Airside.Simulation
         // ---- Player base (v12 / ADR 0091) ----------------------------------------
         public string PlayerBaseLevel;
 
+        // ---- Career roadmap (v13) -------------------------------------------------
+        public string PinnedCareerGoalId;
+        public List<string> ServedDestinationCodes = new();
+        public List<string> OutstationBaseCodes = new();
+        public List<long> RecentServiceMargins = new();
+        public int ManualRotations;
+        public long ActivePlaySeconds;
+        public long RegionalAtSeconds;
+        public long DomesticAtSeconds;
+        public long InternationalAtSeconds;
+        public long FinaleAtSeconds;
+        public List<OutstationAircraftSaveRecord> OutstationFleet = new();
+        public List<RepeatScheduleSaveRecord> RepeatSchedules = new();
+
         // ---- Career stats (v9) -----------------------------------------------------
         public long CareerLifetimeRevenue;
         public List<CompletedContractSaveRecord> ContractHistory = new();
@@ -98,6 +114,32 @@ namespace Airside.Simulation
         public string DestinationCode;
         public long TotalPaid;
         public long CompletedAtSeconds;
+    }
+
+    [Serializable]
+    public sealed class OutstationAircraftSaveRecord
+    {
+        public string Registration;
+        public string TypeId;
+        public string BaseCode;
+        public string DestinationCode;
+        public long DepartAtSeconds;
+        public long ReturnAtSeconds;
+        public int CompletedServices;
+        public bool Automated;
+        public int RotationsSinceCheck;
+        public long CheckUntilSeconds;
+    }
+
+    [Serializable]
+    public sealed class RepeatScheduleSaveRecord
+    {
+        public string Registration;
+        public string DestinationCode;
+        public int IntervalHours;
+        public long NextEligibleAtSeconds;
+        public bool Paused;
+        public string Exception;
     }
 
     [Serializable]
@@ -128,6 +170,7 @@ namespace Airside.Simulation
         public int ScheduledDelayMinutes;
         public bool ScheduledCancelled;
         public int CompletedTrips;
+        public bool AutomatedTrip;
         public string AssignedRunway;
         public bool WentAroundThisTrip;
         public bool HasPrepStart;
@@ -165,9 +208,43 @@ namespace Airside.Simulation
                 ContractCompletedRotations = operations.CareerState.ActiveContract?.CompletedRotations ?? 0,
                 CompletedPlayerRotations = operations.CareerState.CompletedPlayerRotations,
                 CareerLifetimeRevenue = operations.CareerState.LifetimeRevenue,
-                PlayerBaseLevel = operations.CareerState.BaseLevel.ToString()
+                PlayerBaseLevel = operations.CareerState.BaseLevel.ToString(),
+                PinnedCareerGoalId = operations.CareerState.PinnedGoalId,
+                ManualRotations = operations.CareerState.ManualRotations,
+                ActivePlaySeconds = operations.CareerState.ActivePlaySeconds,
+                RegionalAtSeconds = operations.CareerState.RegionalAtSeconds,
+                DomesticAtSeconds = operations.CareerState.DomesticAtSeconds,
+                InternationalAtSeconds = operations.CareerState.InternationalAtSeconds,
+                FinaleAtSeconds = operations.CareerState.FinaleAtSeconds
             };
             data.ProcessedSettlementKeys.AddRange(operations.CareerState.ProcessedSettlementKeys);
+            data.ServedDestinationCodes.AddRange(operations.CareerState.ServedDestinations);
+            data.OutstationBaseCodes.AddRange(operations.CareerState.OutstationBases);
+            data.RecentServiceMargins.AddRange(operations.CareerState.RecentServiceMargins);
+            foreach (var aircraft in operations.OutstationFleet)
+                data.OutstationFleet.Add(new OutstationAircraftSaveRecord
+                {
+                    Registration = aircraft.Registration,
+                    TypeId = aircraft.Type.Id,
+                    BaseCode = aircraft.BaseCode,
+                    DestinationCode = aircraft.DestinationCode,
+                    DepartAtSeconds = aircraft.DepartAtSeconds,
+                    ReturnAtSeconds = aircraft.ReturnAtSeconds,
+                    CompletedServices = aircraft.CompletedServices,
+                    Automated = aircraft.Automated,
+                    RotationsSinceCheck = aircraft.RotationsSinceCheck,
+                    CheckUntilSeconds = aircraft.CheckUntilSeconds
+                });
+            foreach (var plan in operations.RepeatSchedules)
+                data.RepeatSchedules.Add(new RepeatScheduleSaveRecord
+                {
+                    Registration = plan.Registration,
+                    DestinationCode = plan.DestinationCode,
+                    IntervalHours = plan.IntervalHours,
+                    NextEligibleAtSeconds = plan.NextEligibleAtSeconds,
+                    Paused = plan.Paused,
+                    Exception = plan.Exception
+                });
             data.CompletedContractIds.AddRange(operations.CareerState.CompletedContractIds);
             foreach (var record in operations.CareerState.ContractHistory)
             {
@@ -225,6 +302,7 @@ namespace Airside.Simulation
                     ScheduledDelayMinutes = a.Scheduled?.DelayMinutes ?? 0,
                     ScheduledCancelled = a.Scheduled?.Cancelled ?? false,
                     CompletedTrips = a.CompletedTrips,
+                    AutomatedTrip = a.AutomatedTrip,
                     AssignedRunway = a.AssignedRunway.ToString(),
                     WentAroundThisTrip = a.WentAroundThisTrip,
                     HasPrepStart = a.PrepStartedAt.HasValue,
@@ -340,6 +418,8 @@ namespace Airside.Simulation
                     operations.RestorePushbackLateness(registration, record.PushbackLatenessSeconds);
                 if (data.Version >= 11)
                     operations.RestoreMaintenance(registration, record.RotationsSinceCheck, record.CheckUntilSeconds);
+                if (data.Version >= 13 && airline.IsPlayer)
+                    operations.RestoreAutomatedTrip(registration, record.AutomatedTrip);
             }
 
             operations.RestoreTower(
@@ -409,6 +489,20 @@ namespace Airside.Simulation
                 savedBaseLevel = parsedBase;
             }
 
+            if (data.Version >= 13)
+            {
+                var bases = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var code in data.OutstationBaseCodes ?? new List<string>())
+                    if ((code != "MEL" && code != "SYD" && code != "BNE" && code != "PER")
+                        || !bases.Add(code))
+                        throw new FormatException("Invalid outstation base in save.");
+                if (bases.Count > 3)
+                    throw new FormatException("Too many outstation bases in save.");
+                foreach (var code in data.ServedDestinationCodes ?? new List<string>())
+                    if (code == data.HomeCode || !DestinationCatalogue.TryFind(code, out _))
+                        throw new FormatException("Invalid served destination in save.");
+            }
+
             operations.RestoreCareerState(
                 data.Version >= 6 ? data.CareerFunds : AirlineCareerState.StartingFunds,
                 data.Version >= 6 ? data.CareerReliability : AirlineCareerState.StartingReliability,
@@ -423,9 +517,97 @@ namespace Airside.Simulation
                 snapshot,
                 data.Version >= 9 ? data.CareerLifetimeRevenue : 0,
                 contractHistory,
-                savedBaseLevel);
+                savedBaseLevel,
+                data.Version >= 13 ? data.PinnedCareerGoalId : null,
+                data.Version >= 13 ? data.ServedDestinationCodes : ProvenHistoricalDestinations(data, contractHistory),
+                data.Version >= 13 ? data.OutstationBaseCodes : null,
+                data.Version >= 13 ? data.RecentServiceMargins : null,
+                data.Version >= 13 ? data.ManualRotations : 0,
+                data.Version >= 13 ? data.ActivePlaySeconds : 0,
+                data.Version >= 13 ? data.RegionalAtSeconds : 0,
+                data.Version >= 13 ? data.DomesticAtSeconds : 0,
+                data.Version >= 13 ? data.InternationalAtSeconds : 0,
+                data.Version >= 13 ? data.FinaleAtSeconds : 0);
+
+            if (data.Version >= 13)
+            {
+                var networkFleet = new List<OutstationAircraft>();
+                var seenRegistrations = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var local in operations.Fleet)
+                    seenRegistrations.Add(local.Registration);
+                var basedCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+                foreach (var record in data.OutstationFleet ?? new List<OutstationAircraftSaveRecord>())
+                {
+                    if (record == null || string.IsNullOrWhiteSpace(record.Registration)
+                        || !AircraftType.TryFromId(record.TypeId, out var type)
+                        || !DestinationCatalogue.TryFind(record.BaseCode, out var origin)
+                        || !operations.CareerState.OutstationBases.Contains(record.BaseCode)
+                        || !seenRegistrations.Add(record.Registration)
+                        || record.CompletedServices < 0 || record.RotationsSinceCheck < 0
+                        || record.CheckUntilSeconds < 0)
+                        throw new FormatException("Invalid outstation aircraft in save.");
+                    basedCounts.TryGetValue(record.BaseCode, out var based);
+                    if (++based > AirlineOperations.OutstationCapacity
+                        || operations.PlayerFleetCount() + networkFleet.Count + 1 > AircraftAcquisition.MaxPlayerAircraft)
+                        throw new FormatException("Outstation fleet exceeds capacity.");
+                    basedCounts[record.BaseCode] = based;
+                    var hasFlight = !string.IsNullOrEmpty(record.DestinationCode);
+                    if (hasFlight)
+                    {
+                        if (!DestinationCatalogue.TryFind(record.DestinationCode, out var destination)
+                            || destination.Code == record.BaseCode || destination.Code == operations.Home.Code
+                            || !type.CanReach(origin.DistanceKmTo(destination))
+                            || !RouteAccess.Allows(type, destination)
+                            || record.DepartAtSeconds < 0 || record.ReturnAtSeconds <= record.DepartAtSeconds)
+                            throw new FormatException("Invalid outstation service in save.");
+                    }
+                    else if (record.DepartAtSeconds != 0 || record.ReturnAtSeconds != 0 || record.Automated)
+                        throw new FormatException("Inactive outstation aircraft has service state.");
+                    networkFleet.Add(new OutstationAircraft(record.Registration, type, record.BaseCode,
+                        record.DestinationCode, record.DepartAtSeconds, record.ReturnAtSeconds,
+                        record.CompletedServices, record.Automated, record.RotationsSinceCheck,
+                        record.CheckUntilSeconds));
+                }
+                var plans = new List<RepeatSchedule>();
+                var seenPlans = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var record in data.RepeatSchedules ?? new List<RepeatScheduleSaveRecord>())
+                {
+                    if (record == null || string.IsNullOrWhiteSpace(record.Registration)
+                        || !seenPlans.Add(record.Registration)
+                        || !seenRegistrations.Contains(record.Registration)
+                        || !DestinationCatalogue.TryFind(record.DestinationCode, out _)
+                        || record.NextEligibleAtSeconds < 0
+                        || (record.IntervalHours != 6 && record.IntervalHours != 12 && record.IntervalHours != 24))
+                        throw new FormatException("Invalid repeat schedule in save.");
+                    plans.Add(new RepeatSchedule(record.Registration, record.DestinationCode,
+                        record.IntervalHours, record.NextEligibleAtSeconds, record.Paused, record.Exception));
+                }
+                operations.RestoreNetworkState(networkFleet, plans);
+            }
 
             return operations;
+        }
+
+        /// <summary>Only destinations proven by the old contract ledger are credited during migration.</summary>
+        private static IReadOnlyList<string> ProvenHistoricalDestinations(AirlineSaveData data,
+            IReadOnlyList<CompletedContractRecord> history)
+        {
+            var codes = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var record in history)
+                if (!string.IsNullOrEmpty(record.DestinationCode)) codes.Add(record.DestinationCode);
+            foreach (var id in data.CompletedContractIds ?? new List<string>())
+            {
+                if (RouteContractCatalogue.TryFind(id, out var definition))
+                    codes.Add(definition.DestinationCode);
+                else if (id != null)
+                {
+                    var parts = id.Split('-');
+                    if (parts.Length >= 5 && parts[0] == "MKT"
+                        && DestinationCatalogue.TryFind(parts[3], out _))
+                        codes.Add(parts[3]);
+                }
+            }
+            return new List<string>(codes);
         }
 
         /// <summary>

@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Self-led airline career (ADR 0120, save v13).** Four capability tiers now use selectable, pinnable goals backed by contract, route, fleet, base, reliability and service records. A finished 18-aircraft, three-base, 12-destination airline with three international destinations and a positive 30-service margin records the ending once, then keeps playing. The old chapter and daily bonus no longer drive the HUD or pay rewards. Older saves keep earned tiers and only receive route credit supported by their contract history.
+
+- **Network operations and earned delegation.** The airline can own up to 25 aircraft across Adelaide and three outstation bases. Outstation services settle through the existing career ledger; Adelaide flights still use the physical stands and runway. Route planning shows estimated passengers, revenue, dispatch cost and margin. The final 30-service operating margin excludes one-off contract completion rewards. After 12 manual services, repeat plans can book flights during active play and pause with an actionable exception; they create no flights or charges while the game is closed. A recovery contract can underwrite its own first dispatch when cash runs out, with the cost charged to the balance and repaid by settlement.
+
+
 - **Route Map shows contract and maintenance warnings together.** A due or overdue check
   now appears on a second line instead of replacing the matching contract's pay and
   cancellation penalty. The packaged soak has QA-only renderer-isolation flags to

@@ -192,7 +192,7 @@ namespace Airside.Tests
 
             var player = ops.PlayerAirline;
             var stands = AirlineOperations.AdelaideRegionalBays;
-            for (var i = 0; i < AircraftAcquisition.MaxPlayerAircraft; i++)
+            for (var i = 0; i < PlayerBase.For(PlayerBaseLevel.International).FleetCapacity; i++)
                 ops.AddAircraft(player, $"VH-LG{i}", AircraftType.Saab340, stands[i]);
 
             var data = AirlineSave.Capture(ops);
@@ -201,9 +201,10 @@ namespace Airside.Tests
 
             var restored = AirlineSave.Restore(data, new ManualSimulationClock(clock.Now));
 
-            Assert.That(restored.FleetOf(restored.PlayerAirline).Count(), Is.EqualTo(AircraftAcquisition.MaxPlayerAircraft));
+            Assert.That(restored.FleetOf(restored.PlayerAirline).Count(),
+                Is.EqualTo(PlayerBase.For(PlayerBaseLevel.International).FleetCapacity));
             Assert.That(restored.CareerState.Base.FleetCapacity,
-                Is.GreaterThanOrEqualTo(AircraftAcquisition.MaxPlayerAircraft));
+                Is.GreaterThanOrEqualTo(restored.FleetOf(restored.PlayerAirline).Count()));
             Assert.That(restored.CareerState.BaseLevel, Is.EqualTo(PlayerBaseLevel.International));
         }
 

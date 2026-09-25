@@ -389,6 +389,9 @@ namespace Airside.Simulation
         private readonly List<StableId> _stands;
         private readonly List<FleetEvent> _recentEvents = new();
         private readonly List<FlightSettlement> _recentSettlements = new();
+        private readonly List<OutstationAircraft> _outstationFleet = new();
+        private readonly List<RepeatSchedule> _repeatSchedules = new();
+        private bool _repeatSchedulesLive = true;
         private SimulationTime _processedTo;
         private SimulationTime _mainRunwayFreeAt;
         private SimulationTime _crossRunwayFreeAt;
@@ -734,6 +737,14 @@ namespace Airside.Simulation
         }
 
         public Destination Home { get; }
+        public IReadOnlyList<OutstationAircraft> OutstationFleet => _outstationFleet;
+        public IReadOnlyList<RepeatSchedule> RepeatSchedules => _repeatSchedules;
+        public bool DelegationUnlocked => CareerState != null && CareerState.ManualRotations >= 12;
+
+        /// <summary>Call after away catch-up; saved repeat plans never generate offline flights.</summary>
+        public void ResumeRepeatSchedules() => _repeatSchedulesLive = true;
+        public void RecordActivePlaySecond() => CareerState?.AddActivePlaySecond();
+
 
         /// <summary>Maps simulation time to real Adelaide time. Live: one simulated second per real second.</summary>
         public AirlineClock Clock { get; internal set; } = AirlineClock.Default;
@@ -1077,7 +1088,11 @@ namespace Airside.Simulation
             IEnumerable<string> completedContractIds = null, int completedPlayerRotations = 0,
             RouteContractDefinition activeSnapshot = null, long lifetimeRevenue = 0,
             IEnumerable<CompletedContractRecord> contractHistory = null,
-            PlayerBaseLevel? baseLevel = null)
+            PlayerBaseLevel? baseLevel = null, string pinnedGoalId = null,
+            IEnumerable<string> servedDestinations = null, IEnumerable<string> outstationBases = null,
+            IEnumerable<long> recentServiceMargins = null, int manualRotations = 0,
+            long activePlaySeconds = 0, long regionalAtSeconds = 0, long domesticAtSeconds = 0,
+            long internationalAtSeconds = 0, long finaleAtSeconds = 0)
         {
             if (string.IsNullOrWhiteSpace(tier)
                 || !Enum.TryParse(tier, out OperatingTier parsedTier)
@@ -1103,7 +1118,15 @@ namespace Airside.Simulation
 
             var effectiveBase = baseLevel ?? PlayerBase.MinimumFor(PlayerOwnedTypes(), PlayerFleetCount());
             CareerState = new AirlineCareerState(funds, reliability, parsedTier, contract, processedSettlementKeys,
-                completedContractIds, completedPlayerRotations, issued, lifetimeRevenue, contractHistory, effectiveBase);
+                completedContractIds, completedPlayerRotations, issued, lifetimeRevenue, contractHistory, effectiveBase,
+                pinnedGoalId, servedDestinations, outstationBases, recentServiceMargins, manualRotations,
+                activePlaySeconds, regionalAtSeconds, domesticAtSeconds, internationalAtSeconds, finaleAtSeconds);
+        }
+
+        internal void RestoreAutomatedTrip(string registration, bool automated)
+        {
+            var aircraft = _fleet.Find(a => a.Registration == registration && a.Airline.IsPlayer);
+            if (aircraft != null) aircraft.AutomatedTrip = automated;
         }
 
         // ---- Queries -------------------------------------------------------------
@@ -1128,7 +1151,7 @@ namespace Airside.Simulation
             foreach (var aircraft in _fleet)
                 if (aircraft.Airline.IsPlayer)
                     count++;
-            return count;
+            return count + _outstationFleet.Count;
         }
 
         public List<AircraftType> PlayerOwnedTypes()
@@ -1148,6 +1171,24 @@ namespace Airside.Simulation
                     types.Add(aircraft.Type);
             }
 
+            foreach (var aircraft in _outstationFleet)
+            {
+                var seen = false;
+                foreach (var existing in types)
+                    if (existing.Id == aircraft.Type.Id) seen = true;
+                if (!seen) types.Add(aircraft.Type);
+            }
+            return types;
+        }
+
+        private List<AircraftType> AdelaideOwnedTypes()
+        {
+            var types = new List<AircraftType>();
+            foreach (var aircraft in _fleet)
+            {
+                if (!aircraft.Airline.IsPlayer) continue;
+                if (!types.Exists(type => type.Id == aircraft.Type.Id)) types.Add(aircraft.Type);
+            }
             return types;
         }
 
@@ -1176,8 +1217,30 @@ namespace Airside.Simulation
                 }
             }
 
-            offers.AddRange(ContractMarket.At(_processedTo, PlayerOwnedTypes(), CareerState?.Reliability ?? 0,
+            var localTypes = AdelaideOwnedTypes();
+            offers.AddRange(ContractMarket.At(_processedTo, localTypes, CareerState?.Reliability ?? 0,
                 CareerState?.Tier ?? OperatingTier.Provisional));
+            var usable = false;
+            foreach (var offer in offers)
+                if (!CareerState.HasCompleted(offer.Id) && localTypes.Exists(t => t.Id == offer.EligibleType.Id))
+                    usable = true;
+            // A usable-looking offer is still a dead end when the airline cannot afford
+            // even one dispatch. Keep a funded recovery path visible in that case too.
+            var hasRecoveryRoute = DestinationCatalogue.TryFind("KGC", out var recovery);
+            var strandedForCash = hasRecoveryRoute && localTypes.Count > 0 && CareerState.Funds <
+                FlightEconomics.DispatchCost(localTypes[0], DistanceKm(recovery));
+            if ((!usable || strandedForCash) && localTypes.Count > 0 && hasRecoveryRoute)
+            {
+                var type = localTypes[0];
+                if (RouteAccess.Allows(type, recovery) && type.CanReach(DistanceKm(recovery)))
+                {
+                    var id = $"REC-{CareerState.CompletedPlayerRotations}-{type.Id}";
+                    var basePay = FlightEconomics.FlightPay(type, DistanceKm(recovery));
+                    offers.Insert(0, new RouteContractDefinition(id, Home.Code, recovery.Code, type, 2,
+                        Math.Max(200, basePay / 2), Math.Max(200, basePay), 1,
+                        OperatingTier.Provisional, reliabilityLossOnCancel: 2));
+                }
+            }
             return offers;
         }
 
@@ -1548,12 +1611,17 @@ namespace Airside.Simulation
                 var alreadyPaid = aircraft.Scheduled.HasValue
                     ? FlightEconomics.DispatchCost(aircraft.Type, DistanceKm(aircraft.Scheduled.Value.Destination))
                     : 0;
-                if (CareerState.Funds + alreadyPaid < cost)
+                var recoveryCredit = CareerState.Funds + alreadyPaid < cost
+                    && alreadyPaid == 0
+                    && CareerState.TryChargeRecoveryDispatch(cost, destination.Code);
+                if (CareerState.Funds + alreadyPaid < cost && !recoveryCredit)
                     return CommandResult.Refused(
                         $"This flight costs ${cost:N0}; you have ${CareerState.Funds:N0}.");
-                if (alreadyPaid > 0)
-                    CareerState.RefundDispatch(alreadyPaid);
-                CareerState.TryChargeDispatch(cost);
+                if (!recoveryCredit)
+                {
+                    if (alreadyPaid > 0) CareerState.RefundDispatch(alreadyPaid);
+                    CareerState.TryChargeDispatch(cost);
+                }
                 // Align prep with the booked pushback: start TotalSeconds before depart
                 // (or now if that is already later). Recompute on every book so an earlier
                 // rebook cannot leave a future PrepStartedAt that blocks pushback forever.
@@ -1631,7 +1699,7 @@ namespace Airside.Simulation
             foreach (var aircraft in _fleet)
                 if (aircraft.Airline.IsPlayer)
                     owned++;
-            if (owned >= AircraftAcquisition.MaxPlayerAircraft)
+            if (PlayerFleetCount() >= AircraftAcquisition.MaxPlayerAircraft)
                 return CommandResult.Refused($"Fleet is full ({AircraftAcquisition.MaxPlayerAircraft} aircraft).");
             if (owned >= CareerState.Base.FleetCapacity)
                 return CommandResult.Refused($"{CareerState.Base.Title} supports {CareerState.Base.FleetCapacity} aircraft. Expand your Adelaide base first.");
@@ -1660,9 +1728,267 @@ namespace Airside.Simulation
             else
                 AddDeliveryInbound(PlayerAirline, registration, type);
 
-            CareerState.EvaluateTier(PlayerOwnedTypes());
-            ClaimCampaignRewards();
+            CareerState.EvaluateTier(PlayerOwnedTypes(), PlayerFleetCount());
+            CheckCareerFinale();
             return CommandResult.Ok;
+        }
+
+        public const int OutstationCapacity = 8;
+        private static readonly string[] OutstationCandidates = { "MEL", "SYD", "BNE", "PER" };
+
+        public long NextOutstationCost => CareerState.OutstationBases.Count == 0 ? 40_000 : 65_000;
+
+        public CommandResult OpenOutstationBase(string code)
+        {
+            if (CareerState.Tier < OperatingTier.Domestic)
+                return CommandResult.Refused("A domestic operating tier is required for another base.");
+            var allowed = false;
+            foreach (var candidate in OutstationCandidates)
+                if (candidate == code) allowed = true;
+            if (!allowed) return CommandResult.Refused("Choose Melbourne, Sydney, Brisbane or Perth for an outstation base.");
+            if (CareerState.OutstationBases.Contains(code)) return CommandResult.Refused("That base is already open.");
+            if (CareerState.OutstationBases.Count >= 3) return CommandResult.Refused("The network already has three outstation bases.");
+            var cost = NextOutstationCost;
+            if (!CareerState.TryChargePurchase(cost))
+                return CommandResult.Refused($"Opening this base costs ${cost:N0}; you have ${CareerState.Funds:N0}.");
+            CareerState.AddOutstationBase(code);
+            CareerState.EvaluateTier(PlayerOwnedTypes(), PlayerFleetCount());
+            CheckCareerFinale();
+            return CommandResult.Ok;
+        }
+
+        public CommandResult BuyAircraftAtOutstation(AircraftType type, string baseCode)
+        {
+            if (!CareerState.OutstationBases.Contains(baseCode))
+                return CommandResult.Refused("Open that base first.");
+            if (type == null || !AircraftAcquisition.TryFor(type, out var offer))
+                return CommandResult.Refused("That aircraft is not for sale.");
+            if (PlayerFleetCount() >= AircraftAcquisition.MaxPlayerAircraft)
+                return CommandResult.Refused("The airline fleet is full.");
+            var based = 0;
+            foreach (var aircraft in _outstationFleet)
+                if (aircraft.BaseCode == baseCode) based++;
+            if (based >= OutstationCapacity)
+                return CommandResult.Refused($"{baseCode} supports {OutstationCapacity} based aircraft.");
+            if (!PlayerBase.Supports(CareerState.BaseLevel, type) || CareerState.Tier < offer.RequiredTier
+                || CareerState.Reliability < offer.RequiredReliability
+                || CareerState.CompletedPlayerRotations < offer.RequiredRotations)
+                return CommandResult.Refused("Aircraft capability, reliability or service requirement is not met.");
+            if (!CareerState.TryChargePurchase(offer.Price))
+                return CommandResult.Refused($"{type.Name} costs ${offer.Price:N0}; you have ${CareerState.Funds:N0}.");
+            var number = 1;
+            while (true)
+            {
+                var registration = $"VH-O{number:00}";
+                var used = false;
+                foreach (var existing in _fleet)
+                    if (existing.Registration == registration) used = true;
+                foreach (var existing in _outstationFleet)
+                    if (existing.Registration == registration) used = true;
+                if (!used)
+                {
+                    _outstationFleet.Add(new OutstationAircraft(registration, type, baseCode));
+                    break;
+                }
+                number++;
+            }
+            CareerState.EvaluateTier(PlayerOwnedTypes(), PlayerFleetCount());
+            CheckCareerFinale();
+            return CommandResult.Ok;
+        }
+
+        public CommandResult ScheduleOutstationService(string registration, string destinationCode, SimulationTime departAt) =>
+            ScheduleOutstationService(registration, destinationCode, departAt, automated: false);
+
+        private CommandResult ScheduleOutstationService(string registration, string destinationCode,
+            SimulationTime departAt, bool automated)
+        {
+            OutstationAircraft aircraft = null;
+            foreach (var candidate in _outstationFleet)
+                if (candidate.Registration == registration) aircraft = candidate;
+            if (aircraft == null) return CommandResult.Refused("Unknown outstation aircraft.");
+            if (aircraft.HasFlight) return CommandResult.Refused("That aircraft already has a service.");
+            if (aircraft.InCheck(_processedTo.ElapsedSeconds))
+                return CommandResult.Refused("That aircraft is in a routine check.");
+            if (aircraft.CheckDue)
+                return CommandResult.Refused("Routine check is due before the next service.");
+            if (!DestinationCatalogue.TryFind(aircraft.BaseCode, out var origin)
+                || !DestinationCatalogue.TryFind(destinationCode, out var destination))
+                return CommandResult.Refused("Unknown network destination.");
+            if (destinationCode == aircraft.BaseCode) return CommandResult.Refused("Choose another destination.");
+            // Any Adelaide movement must use the rendered airport's real runway and stand
+            // reservations. Network aircraft therefore work only routes outside Adelaide.
+            if (destinationCode == Home.Code)
+                return CommandResult.Refused("Adelaide services must use an aircraft based at Adelaide.");
+            var km = origin.DistanceKmTo(destination);
+            if (!aircraft.Type.CanReach(km) || !RouteAccess.Allows(aircraft.Type, destination))
+                return CommandResult.Refused("That aircraft cannot operate this route.");
+            if (RouteAccess.BandOf(destination) >= RouteBand.Tasman
+                && CareerState.Tier < OperatingTier.International)
+                return CommandResult.Refused("International network service requires International tier.");
+            if (departAt.CompareTo(_processedTo) < 0)
+                return CommandResult.Refused("Departure time is in the past.");
+            var cost = FlightEconomics.DispatchCost(aircraft.Type, km);
+            if (!CareerState.TryChargeDispatch(cost))
+                return CommandResult.Refused($"This service costs ${cost:N0}; you have ${CareerState.Funds:N0}.");
+            var duration = 2 * LegTiming.AirborneSeconds(km, aircraft.Type) + 45 * 60;
+            aircraft.Plan(destinationCode, departAt.ElapsedSeconds, departAt.ElapsedSeconds + duration, automated);
+            return CommandResult.Ok;
+        }
+
+        public CommandResult StartOutstationCheck(string registration)
+        {
+            var aircraft = _outstationFleet.Find(a => a.Registration == registration);
+            if (aircraft == null) return CommandResult.Refused("Unknown outstation aircraft.");
+            if (aircraft.HasFlight) return CommandResult.Refused("Finish the service before a check.");
+            if (aircraft.InCheck(_processedTo.ElapsedSeconds))
+                return CommandResult.Refused("A check is already under way.");
+            if (!aircraft.CheckDue) return CommandResult.Refused("This aircraft is not due for a check.");
+            var cost = Maintenance.CheckCost(aircraft.Type, PlayerBaseLevel.ExpandedRegional);
+            if (!CareerState.TryChargePurchase(cost))
+                return CommandResult.Refused($"Routine check costs ${cost:N0}; you have ${CareerState.Funds:N0}.");
+            aircraft.StartCheck(_processedTo.ElapsedSeconds
+                + Maintenance.CheckSeconds(aircraft.Type, PlayerBaseLevel.ExpandedRegional));
+            return CommandResult.Ok;
+        }
+
+        public CommandResult SetRepeatSchedule(string registration, string destinationCode, int intervalHours)
+        {
+            if (!DelegationUnlocked)
+                return CommandResult.Refused("Complete 12 manually planned services to unlock delegation.");
+            if (intervalHours != 6 && intervalHours != 12 && intervalHours != 24)
+                return CommandResult.Refused("Choose a 6, 12 or 24 hour repeat interval.");
+            var local = _fleet.Find(a => a.Registration == registration && a.Airline.IsPlayer);
+            var remote = _outstationFleet.Find(a => a.Registration == registration);
+            if (local == null && remote == null) return CommandResult.Refused("Unknown player aircraft.");
+            if (!DestinationCatalogue.TryFind(destinationCode, out var destination))
+                return CommandResult.Refused("Unknown destination.");
+            if (local != null && !CanOperate(local, destination))
+                return CommandResult.Refused("That Adelaide aircraft cannot operate this route.");
+            if (remote != null)
+            {
+                if (destinationCode == Home.Code || destinationCode == remote.BaseCode
+                    || !DestinationCatalogue.TryFind(remote.BaseCode, out var origin)
+                    || !remote.Type.CanReach(origin.DistanceKmTo(destination))
+                    || !RouteAccess.Allows(remote.Type, destination)
+                    || (RouteAccess.BandOf(destination) >= RouteBand.Tasman
+                        && CareerState.Tier < OperatingTier.International))
+                    return CommandResult.Refused("That outstation aircraft cannot operate this route.");
+            }
+            _repeatSchedules.RemoveAll(p => p.Registration == registration);
+            _repeatSchedules.Add(new RepeatSchedule(registration, destinationCode, intervalHours,
+                _processedTo.ElapsedSeconds));
+            return CommandResult.Ok;
+        }
+
+        public CommandResult PauseRepeatSchedule(string registration, bool paused)
+        {
+            foreach (var plan in _repeatSchedules)
+            {
+                if (plan.Registration != registration) continue;
+                plan.Paused = paused;
+                if (!paused) plan.Exception = string.Empty;
+                return CommandResult.Ok;
+            }
+            return CommandResult.Refused("No repeat schedule for that aircraft.");
+        }
+
+        public CommandResult RemoveRepeatSchedule(string registration)
+        {
+            return _repeatSchedules.RemoveAll(p => p.Registration == registration) > 0
+                ? CommandResult.Ok : CommandResult.Refused("No repeat schedule for that aircraft.");
+        }
+
+        private void ProcessOutstationServices(SimulationTime target)
+        {
+            foreach (var aircraft in _outstationFleet)
+            {
+                if (!aircraft.HasFlight || aircraft.ReturnAtSeconds > target.ElapsedSeconds) continue;
+                var destinationCode = aircraft.DestinationCode;
+                var wasAutomated = aircraft.Automated;
+                DestinationCatalogue.TryFind(aircraft.BaseCode, out var origin);
+                DestinationCatalogue.TryFind(destinationCode, out var destination);
+                var returnedAt = new SimulationTime(aircraft.ReturnAtSeconds);
+                var km = origin.DistanceKmTo(destination);
+                var forecast = RouteForecast.For(origin, destination, aircraft.Type);
+                aircraft.Complete();
+                RouteContractDefinition matching = null;
+                var active = CareerState.ActiveContract;
+                if (active != null && CareerState.TryFindDefinition(active.DefinitionId, out var definition)
+                    && definition.EligibleType.Id == aircraft.Type.Id
+                    && definition.MatchesRoute(aircraft.BaseCode, destinationCode))
+                    matching = definition;
+                var settlement = CareerState.RecordCompletedRotation(
+                    new SettlementId(aircraft.Registration, aircraft.CompletedServices),
+                    forecast.Revenue, matching,
+                    PlayerOwnedTypes(), returnedAt, PlayerFleetCount());
+                if (settlement == null) continue;
+                var completionBonus = settlement.Value.ContractFulfilled ? matching.CompletionReward : 0;
+                CareerState.RecordService(destinationCode,
+                    settlement.Value.Payment - completionBonus - forecast.Cost, !wasAutomated);
+                CareerState.EvaluateTier(PlayerOwnedTypes(), PlayerFleetCount());
+                CheckCareerFinale();
+                _recentSettlements.Add(settlement.Value);
+                TotalSettlements++;
+                if (_recentSettlements.Count > MaxRecentEvents)
+                    _recentSettlements.RemoveAt(0);
+            }
+        }
+
+        private void ProcessRepeatSchedules(SimulationTime target)
+        {
+            foreach (var plan in _repeatSchedules)
+            {
+                if (plan.Paused || plan.NextEligibleAtSeconds > target.ElapsedSeconds) continue;
+                var local = _fleet.Find(a => a.Registration == plan.Registration && a.Airline.IsPlayer);
+                var remote = _outstationFleet.Find(a => a.Registration == plan.Registration);
+                if (local != null && (local.State != FleetState.AtStand || local.Scheduled.HasValue
+                    || Maintenance.InCheck(local, target))) continue;
+                if (remote != null && remote.HasFlight) continue;
+                if (remote != null && remote.InCheck(target.ElapsedSeconds)) continue;
+                if (remote != null && remote.CheckDue)
+                {
+                    plan.Paused = true;
+                    plan.Exception = "Routine check due; complete a check before resuming.";
+                    continue;
+                }
+                if (local == null && remote == null)
+                {
+                    plan.Paused = true;
+                    plan.Exception = "Aircraft is no longer available.";
+                    continue;
+                }
+                if (!DestinationCatalogue.TryFind(plan.DestinationCode, out var destination))
+                {
+                    plan.Paused = true;
+                    plan.Exception = "Destination is unavailable.";
+                    continue;
+                }
+                var departAt = target.Advance(local == null ? 15 * 60
+                    : DeparturePrep.TotalSeconds(local.Type, CareerState.BaseLevel) + 60);
+                var result = local != null
+                    ? ScheduleDeparture(local, destination, departAt)
+                    : ScheduleOutstationService(remote.Registration, destination.Code, departAt, automated: true);
+                if (!result.Accepted)
+                {
+                    plan.Paused = true;
+                    plan.Exception = result.Reason;
+                    continue;
+                }
+                if (local != null) local.AutomatedTrip = true;
+                plan.Exception = string.Empty;
+                plan.NextEligibleAtSeconds = target.ElapsedSeconds + plan.IntervalHours * 3600L;
+            }
+        }
+
+        internal void RestoreNetworkState(IEnumerable<OutstationAircraft> aircraft,
+            IEnumerable<RepeatSchedule> schedules)
+        {
+            _outstationFleet.Clear();
+            _repeatSchedules.Clear();
+            if (aircraft != null) _outstationFleet.AddRange(aircraft);
+            if (schedules != null) _repeatSchedules.AddRange(schedules);
+            _repeatSchedulesLive = false;
         }
 
         /// <summary>Expand the player's leased Adelaide operating footprint (ADR 0091).</summary>
@@ -1681,29 +2007,38 @@ namespace Airside.Simulation
                                              + "; you have $" + CareerState.Funds.ToString("N0") + ".");
 
             CareerState.BaseLevel = next.Level;
+            CareerState.EvaluateTier(PlayerOwnedTypes(), PlayerFleetCount());
+            CheckCareerFinale();
             return CommandResult.Ok;
+        }
+
+        public IReadOnlyList<CareerGoalStatus> CareerGoals() =>
+            CareerRoadmap.Evaluate(CareerState, PlayerOwnedTypes(), PlayerFleetCount());
+
+        public CareerGoalStatus PinnedCareerGoal() =>
+            CareerRoadmap.Pinned(CareerState, PlayerOwnedTypes(), PlayerFleetCount());
+
+        public CommandResult PinCareerGoal(string id)
+        {
+            foreach (var goal in CareerGoals())
+            {
+                if (goal.Id != id || goal.Stage > CareerState.Tier) continue;
+                CareerState.PinGoal(id);
+                return CommandResult.Ok;
+            }
+            return CommandResult.Refused("That career goal is not available yet.");
+        }
+
+        private void CheckCareerFinale()
+        {
+            if (CareerRoadmap.FinaleReady(CareerState, PlayerOwnedTypes(), PlayerFleetCount())
+                && CareerState.TryAward(CareerRoadmap.FinaleKey, 0))
+                CareerState.MarkFinale();
         }
 
         /// <summary>The career campaign as the airline stands now (ADR 0083).</summary>
         public IReadOnlyList<CampaignChapter> CampaignChapters() =>
             Campaign.Evaluate(CareerState, PlayerAirline == null ? null : PlayerOwnedTypes());
-
-        /// <summary>Pays each newly completed campaign chapter's reward, once.</summary>
-        private bool ClaimCampaignRewards()
-        {
-            if (CareerState == null || PlayerAirline == null)
-                return false;
-            var paid = false;
-            foreach (var chapter in CampaignChapters())
-            {
-                if (!chapter.Complete)
-                    break;
-                if (!chapter.Rewarded)
-                    paid |= CareerState.TryAward(Campaign.RewardKey(chapter.Number), chapter.Reward);
-            }
-
-            return paid;
-        }
 
         /// <summary>Renames the player's own airline. AI operators use real airline names and cannot be renamed.</summary>
         public CommandResult RenameAirline(string name)
@@ -1827,8 +2162,8 @@ namespace Airside.Simulation
                 matching = definition;
 
             var settlementId = new SettlementId(aircraft.Registration, aircraft.CompletedTrips);
-            var pay = FlightEconomics.FlightPay(aircraft.Type, DistanceKm(justFlown.Value),
-                RouteAccess.BandOf(justFlown.Value));
+            var forecast = RouteForecast.For(Home, justFlown.Value, aircraft.Type);
+            var pay = forecast.Revenue;
             if (aircraft.Airline.IsPlayer && aircraft.PushbackLatenessSeconds.HasValue)
             {
                 CareerState.ApplyPunctuality(
@@ -1837,12 +2172,21 @@ namespace Airside.Simulation
             }
 
             var settlement = CareerState.RecordCompletedRotation(
-                settlementId, pay, matching, PlayerOwnedTypes(), now);
+                settlementId, pay, matching, PlayerOwnedTypes(), now, PlayerFleetCount());
             if (settlement == null)
                 return;
 
             if (aircraft.Airline.IsPlayer)
-                DailyService.TryRecordAndAward(CareerState, PlayerOwnedTypes(), justFlown.Value, Clock, now);
+            {
+                var dispatchCost = forecast.Cost;
+                var completionBonus = settlement.Value.ContractFulfilled ? matching.CompletionReward : 0;
+                CareerState.RecordService(justFlown.Value.Code,
+                    settlement.Value.Payment - completionBonus - dispatchCost,
+                    manual: !aircraft.AutomatedTrip);
+                aircraft.AutomatedTrip = false;
+                CareerState.EvaluateTier(PlayerOwnedTypes(), PlayerFleetCount());
+                CheckCareerFinale();
+            }
 
             _recentSettlements.Add(settlement.Value);
             TotalSettlements++;
@@ -1903,6 +2247,8 @@ namespace Airside.Simulation
             }
 
             _processedTo = target;
+            ProcessOutstationServices(target);
+            if (_repeatSchedulesLive) ProcessRepeatSchedules(target);
             ProcessDue(_processedTo);
             // A Cathay that flew its last rotation home during this step is retired off-map.
             if (!IsCathaySeason(target))
@@ -1919,7 +2265,6 @@ namespace Airside.Simulation
                 foreach (var aircraft in _fleet)
                     changed |= AdvanceAircraft(aircraft, now);
                 changed |= RunTower(now);
-                changed |= ClaimCampaignRewards();
             } while (changed);
         }
 

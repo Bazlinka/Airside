@@ -166,16 +166,10 @@ namespace Airside.Presentation
             FillBaseRoadmap(career);
             FillAdelaideStandings(operations);
 
-            // The campaign chapter being played heads the list (ADR 0083), then the milestones.
-            var chapter = Campaign.Current(Campaign.Evaluate(career, ownedTypes));
-            if (chapter != null)
-            {
-                _milestones.Add(new MilestoneRow(
-                    $"Chapter {chapter.Number}: {chapter.Title} ({chapter.GoalsDone}/{chapter.Goals.Count}) · +${chapter.Reward:N0}",
-                    chapter.Complete));
-                foreach (var goal in chapter.Goals)
-                    _milestones.Add(new MilestoneRow("   " + goal.Text, goal.Done));
-            }
+            var roadmap = CareerRoadmap.Evaluate(career, ownedTypes, operations.PlayerFleetCount());
+            foreach (var goal in roadmap)
+                if (goal.Stage <= career.Tier)
+                    _milestones.Add(new MilestoneRow(goal.Title + " (" + goal.ProgressText + ")", goal.Complete));
 
             var milestones = CareerMilestones.Reached(career, fleetSize, ownedTypes);
             foreach (var milestone in milestones)

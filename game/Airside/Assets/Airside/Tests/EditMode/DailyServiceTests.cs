@@ -124,12 +124,13 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Objective_PrefacesProgressWithTodayLine()
+        public void Objective_ShowsPinnedCareerProgressWithoutDailyPressure()
         {
             var (_, ops, _) = HudTestAirline.Create("Daily Air");
             var objective = OperationsSummary.Objective(
                 ops.FleetOf(ops.PlayerAirline), Morning, Clock, ops.CareerState, ops.MarketOffers());
-            Assert.That(objective.ProgressText, Does.StartWith("TODAY · Kingscote 0/2"));
+            Assert.That(objective.ProgressText, Does.Contain("0/1"));
+            Assert.That(objective.ProgressText, Does.Not.Contain("TODAY"));
         }
 
         private static AirlineCareerState ChapterTwoCareer() =>

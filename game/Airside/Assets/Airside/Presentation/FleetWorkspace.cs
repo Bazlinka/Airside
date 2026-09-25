@@ -215,7 +215,7 @@ namespace Airside.Presentation
         {
             var career = operations.CareerState;
             var owned = _mine.Count;
-            var fleetFull = owned >= AircraftAcquisition.MaxPlayerAircraft;
+            var fleetFull = operations.PlayerFleetCount() >= AircraftAcquisition.MaxPlayerAircraft;
             var baseFull = owned >= career.Base.FleetCapacity;
 
             foreach (var offer in AircraftAcquisition.All)
@@ -237,7 +237,9 @@ namespace Airside.Presentation
                 if (fleetFull)
                     requirement = $"Fleet is full ({AircraftAcquisition.MaxPlayerAircraft} aircraft)";
                 else if (baseFull)
-                    requirement = $"{career.Base.Title} is full ({career.Base.FleetCapacity} aircraft) · expand your base";
+                    requirement = career.BaseLevel == PlayerBaseLevel.International
+                        ? "Adelaide is full · buy at an outstation in Network"
+                        : $"{career.Base.Title} is full ({career.Base.FleetCapacity} aircraft) · expand your base";
                 else if (!baseSupports)
                 {
                     var needed = AircraftCatalogue.IsWidebody(offer.Type)

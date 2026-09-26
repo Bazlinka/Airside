@@ -38,6 +38,9 @@ namespace Airside.Tests
                     yield return stand;
         }
 
+        private static bool UsesRunway(AircraftType type, RunwayDirection runway) =>
+            RunwayWeather.IsMainRunway(runway) || !AirlineOperations.NeedsTerminalGate(type);
+
         [Test]
         public void Arrival_RolloutVacateAwaitAndTaxiInMeet()
         {
@@ -48,6 +51,8 @@ namespace Airside.Tests
                 RunwayFrame.Forward(runway, out var fx, out var fz);
                 foreach (var type in Types())
                 {
+                    if (!UsesRunway(type, runway))
+                        continue;
                     var vacate = AdelaideGround.VacateFor(type, runway);
                     var start = vacate.PoseAt(0);
                     Check(failures, $"{runway} {type.Id} rollout→vacate", rollX, rollZ, fx, fz, start);
@@ -83,6 +88,8 @@ namespace Airside.Tests
 
                 foreach (var runway in Runways)
                 {
+                    if (!UsesRunway(type, runway))
+                        continue;
                     var taxiOut = AdelaideGround.TaxiOut(stand, type, runway);
                     Check(failures, $"{runway} {type.Id} stand→pushback {stand.Value}",
                         parked.X, parked.Z, parked.NoseX, parked.NoseZ, taxiOut.PoseAt(0));
@@ -98,15 +105,19 @@ namespace Airside.Tests
             var failures = new List<string>();
             foreach (var runway in Runways)
             {
-                var lineup = AdelaideGround.LineupFor(runway);
-                var lineupStart = lineup.PoseAt(0);
-                var lineupEnd = lineup.PoseAt(lineup.Seconds);
                 RunwayFrame.ToWorld(runway, CircuitProfile.TakeoffStartX, 0f, 0f, out var rollX, out _, out var rollZ);
                 RunwayFrame.Forward(runway, out var fx, out var fz);
-                Check(failures, $"{runway} lineup→takeoff roll", lineupEnd.X, lineupEnd.Z, lineupEnd.NoseX,
-                    lineupEnd.NoseZ, new GroundPose(rollX, rollZ, fx, fz, 0f, false));
 
                 foreach (var type in Types())
+                {
+                    if (!UsesRunway(type, runway))
+                        continue;
+                    var lineup = AdelaideGround.LineupFor(runway, type);
+                    var lineupStart = lineup.PoseAt(0);
+                    var lineupEnd = lineup.PoseAt(lineup.Seconds);
+                    Check(failures, $"{runway} {type.Id} lineup→takeoff roll", lineupEnd.X, lineupEnd.Z,
+                        lineupEnd.NoseX, lineupEnd.NoseZ, new GroundPose(rollX, rollZ, fx, fz, 0f, false));
+
                 foreach (var stand in StandsFor(type))
                 {
                     var taxiOut = AdelaideGround.TaxiOut(stand, type, runway);
@@ -117,6 +128,7 @@ namespace Airside.Tests
                     // Lineup turns onto the runway, so only position must meet here.
                     Check(failures, $"{runway} {type.Id} hold→lineup {stand.Value}",
                         hold.X, hold.Z, hold.NoseX, hold.NoseZ, lineupStart, checkHeading: false);
+                }
                 }
             }
 

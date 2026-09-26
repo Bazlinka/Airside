@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Airside.Domain;
 using Airside.Simulation;
 using NUnit.Framework;
@@ -21,11 +22,13 @@ namespace Airside.Tests
         private const double MaxYawDegreesPerSecond = 60.0;
         private const double MaxYawAccelerationDegreesPerSecondSquared = 120.0;
 
-        private static readonly AircraftType[] Regionals =
-            { AircraftType.Atr42, AircraftType.Saab340, AircraftType.Dash8Q400 };
+        private static readonly AircraftType[] Regionals = AircraftCatalogue.All
+            .Where(spec => spec.StandClass == StandClass.RegionalBay)
+            .Select(spec => spec.Type).ToArray();
 
-        private static readonly AircraftType[] Jets =
-            { AircraftType.Boeing7378, AircraftType.AirbusA321Neo, AircraftType.AirbusA350900, AircraftType.Boeing78710 };
+        private static readonly AircraftType[] Jets = AircraftCatalogue.All
+            .Where(spec => spec.StandClass == StandClass.TerminalGate)
+            .Select(spec => spec.Type).ToArray();
 
         private static double Heading(GroundPose p) => Math.Atan2(p.NoseX, p.NoseZ) * 180.0 / Math.PI;
 
@@ -101,6 +104,8 @@ namespace Airside.Tests
                 var stand = new StableId(bay.Id);
                 foreach (var type in Regionals)
                 {
+                    if (!AirlineOperations.StandFits(type, stand))
+                        continue;
                     Check($"IN  bay {bay.Reference} {type.Id}", AdelaideGround.TaxiIn(stand, type), failures);
                     foreach (var runway in allRunways)
                         Check($"OUT bay {bay.Reference} {type.Id} {runway}", AdelaideGround.TaxiOut(stand, type, runway), failures);
@@ -113,6 +118,8 @@ namespace Airside.Tests
                 var stand = new StableId(gate.Id);
                 foreach (var type in Jets)
                 {
+                    if (!AirlineOperations.StandFits(type, stand))
+                        continue;
                     Check($"IN  gate {gate.Reference} {type.Id}", AdelaideGround.TaxiIn(stand, type), failures);
                     foreach (var runway in mainRunways)
                         Check($"OUT gate {gate.Reference} {type.Id} {runway}", AdelaideGround.TaxiOut(stand, type, runway), failures);

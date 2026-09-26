@@ -71,56 +71,79 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void GateTaxi_SteersEachJetsMainGearByItsOwnWheelbaseNotAFlatConstant()
+        public void EveryGroundLeg_SteersTheRuntimeMainGearForEveryAircraft()
         {
-            // AdelaideGround.GateTaxiOut/In used to steer every jet's main gear through
-            // turns with one flat 19 m constant (the 737's own figure) regardless of type,
-            // so a widebody with a materially longer wheelbase tracked a corner as if it
-            // had a narrowbody's gear geometry. Each jet now supplies its own
-            // AircraftPerformanceProfile.NoseToMainGearMetres.
-            var gate = new StableId("GATE-13");
-            var jetTypes = AircraftCatalogue.All
-                .Where(spec => spec.StandClass == StandClass.TerminalGate)
-                .Select(spec => spec.Type).ToArray();
-            foreach (var type in jetTypes)
+            var mainRunways = new[] { RunwayDirection.Runway05, RunwayDirection.Runway23 };
+            var crossRunways = new[] { RunwayDirection.Runway12, RunwayDirection.Runway30 };
+            foreach (var spec in AircraftCatalogue.All)
             {
+                var type = spec.Type;
                 var expected = AircraftPerformance.For(type).NoseToMainGearMetres;
-                Assert.That(expected, Is.GreaterThan(0f), $"{type.Id} should have a real wheelbase");
+                Assert.That(expected, Is.GreaterThan(0f), $"{type.Id} should have measured gear geometry");
 
-                var outLeg = AdelaideGround.TaxiOut(gate, type);
-                Assert.That(outLeg.Parts[outLeg.Parts.Count - 1].TrackMetres, Is.EqualTo(expected),
-                    $"{type.Id} taxi-out should steer its main gear by its own wheelbase");
+                foreach (var runway in mainRunways)
+                {
+                    AssertTracked(AdelaideGround.VacateFor(type, runway), expected, $"{type.Id} vacate {runway}");
+                    AssertTracked(AdelaideGround.LineupFor(runway, type), expected, $"{type.Id} lineup {runway}");
+                }
+                if (spec.StandClass == StandClass.RegionalBay)
+                    foreach (var runway in crossRunways)
+                    {
+                        AssertTracked(AdelaideGround.VacateFor(type, runway), expected, $"{type.Id} vacate {runway}");
+                        AssertTracked(AdelaideGround.LineupFor(runway, type), expected, $"{type.Id} lineup {runway}");
+                    }
 
-                var inLeg = AdelaideGround.TaxiIn(gate, type);
-                Assert.That(inLeg.Parts[0].TrackMetres, Is.EqualTo(expected),
-                    $"{type.Id} taxi-in should steer its main gear by its own wheelbase");
+                foreach (var stand in AirlineOperations.AdelaideStands)
+                {
+                    if (!AirlineOperations.StandFits(type, stand))
+                        continue;
+                    AssertTracked(AdelaideGround.TaxiIn(stand, type), expected, $"{type.Id} taxi-in {stand}");
+                    foreach (var runway in mainRunways)
+                        AssertTracked(AdelaideGround.TaxiOut(stand, type, runway), expected,
+                            $"{type.Id} taxi-out {stand} {runway}");
+                    if (spec.StandClass == StandClass.RegionalBay)
+                        foreach (var runway in crossRunways)
+                        {
+                            AssertTracked(AdelaideGround.TaxiIn(stand, type, runway), expected,
+                                $"{type.Id} taxi-in {stand} {runway}");
+                            AssertTracked(AdelaideGround.TaxiOut(stand, type, runway), expected,
+                                $"{type.Id} taxi-out {stand} {runway}");
+                        }
+                }
             }
+        }
 
-            var wheelbases = jetTypes.Select(type => AircraftPerformance.For(type).NoseToMainGearMetres).ToArray();
-            Assert.That(wheelbases.Distinct().Count(), Is.EqualTo(wheelbases.Length),
-                "authored jets must not share one flat wheelbase");
+        private static void AssertTracked(GroundLeg leg, float expected, string label)
+        {
+            foreach (var part in leg.Parts)
+                Assert.That(part.TrackMetres, Is.EqualTo(expected), $"{label} part should steer the visible main gear");
         }
 
         [Test]
-        public void Boeing7378TaxiWheelbase_MatchesTheRuntimeGearGeometry()
+        public void EveryTaxiWheelbase_MatchesTheShippingRuntimeGearGeometry()
         {
-            // Gate turns steer the main gear behind the route's nose datum. The profile used
-            // 17.68 m while AIR-005's actual gear pivots are 15.30 m apart, so the solver and
-            // the aircraft drawn over it disagreed through every taxi-in, pushback and taxi-out
-            // corner. Measure the shipping glTF so a later art revision cannot silently reopen it.
-            var spec = AircraftCatalogue.For(AircraftType.Boeing7378);
-            var path = ArtRuntimePaths.ResolveExisting(spec.RuntimeModelPath);
-            Assert.That(path, Is.Not.Null, "the 737 runtime model must exist");
-            var json = File.ReadAllText(path);
-            Assert.That(AircraftModelBounds.TryMeasurePart(json, "gear_nose", out var noseMin, out var noseMax),
-                Is.True, "nose-gear geometry must be measurable");
-            Assert.That(AircraftModelBounds.TryMeasurePart(json, "gear_left", out var mainMin, out var mainMax),
-                Is.True, "main-gear geometry must be measurable");
+            foreach (var spec in AircraftCatalogue.All)
+            {
+                var path = ArtRuntimePaths.ResolveExisting(spec.RuntimeModelPath);
+                Assert.That(path, Is.Not.Null, $"{spec.Id} runtime model must exist");
+                var json = File.ReadAllText(path);
+                Assert.That(AircraftModelBounds.TryMeasurePart(json, "gear_nose", out var noseMin, out var noseMax),
+                    Is.True, $"{spec.Id} nose gear must be measurable");
+                Assert.That(AircraftModelBounds.TryMeasurePart(json, "gear_left", out var leftMin, out var leftMax),
+                    Is.True, $"{spec.Id} left main gear must be measurable");
+                Assert.That(AircraftModelBounds.TryMeasurePart(json, "gear_right", out var rightMin, out var rightMax),
+                    Is.True, $"{spec.Id} right main gear must be measurable");
 
-            var modelWheelbase = Math.Abs((noseMin.z + noseMax.z - mainMin.z - mainMax.z) * 0.5f);
-            Assert.That(AircraftPerformance.Boeing7378.NoseToMainGearMetres,
-                Is.EqualTo(modelWheelbase).Within(0.02f),
-                $"taxi solver must match AIR-005's {modelWheelbase:0.00} m gear spacing");
+                var noseZ = (noseMin.z + noseMax.z) * 0.5f;
+                var leftZ = (leftMin.z + leftMax.z) * 0.5f;
+                var rightZ = (rightMin.z + rightMax.z) * 0.5f;
+                Assert.That(leftZ, Is.EqualTo(rightZ).Within(0.02f),
+                    $"{spec.Id} main gear should share one longitudinal pivot");
+                var modelWheelbase = Math.Abs(noseZ - (leftZ + rightZ) * 0.5f);
+                Assert.That(AircraftPerformance.For(spec.Type).NoseToMainGearMetres,
+                    Is.EqualTo(modelWheelbase).Within(0.02f),
+                    $"{spec.Id} taxi solver must match its {modelWheelbase:0.00} m visible gear spacing");
+            }
         }
 
         [Test]

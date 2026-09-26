@@ -70,7 +70,7 @@ namespace Airside.Simulation
                     return Ground(AircraftPhase.TaxiOut, start, FleetGroundLeg.HoldingShort, start, 0);
 
                 case FleetState.TakingOff:
-                    var lineupSeconds = AdelaideGround.LineupFor(aircraft.AssignedRunway).WholeSeconds;
+                    var lineupSeconds = AdelaideGround.LineupFor(aircraft.AssignedRunway, aircraft.Type).WholeSeconds;
                     if (elapsed < lineupSeconds)
                         return Ground(AircraftPhase.TaxiOut, start, FleetGroundLeg.Lineup, start, lineupSeconds);
                     return Air(AircraftPhase.Takeoff, start.Advance(lineupSeconds));
@@ -232,7 +232,7 @@ namespace Airside.Simulation
         private static bool IsLiningUp(FleetAircraft other, RunwayDirection runway, SimulationTime? now) =>
             now.HasValue && other.State == FleetState.TakingOff && other.AssignedRunway == runway
             && now.Value.ElapsedSeconds - other.StateStartedAt.ElapsedSeconds
-            < AdelaideGround.LineupFor(runway).WholeSeconds;
+            < AdelaideGround.LineupFor(runway, other.Type).WholeSeconds;
 
         private static FleetVisual Air(AircraftPhase phase, SimulationTime startedAt) =>
             new(true, phase, startedAt, FleetGroundLeg.None, startedAt, 0);

@@ -391,7 +391,7 @@ namespace Airside.Simulation
         /// trails this far behind along the same path, so the body points from the mains to the
         /// nose instead of along the tangent at the nose. A 39 m jet steered off its nose tangent
         /// swings its tail across the grass in every turn; tracked like this it stays on the
-        /// taxiway. Zero keeps the original tangent heading (regional turboprops).
+        /// taxiway. Zero is retained only for callers without authored gear geometry.
         /// </summary>
         public float TrackMetres { get; }
         public double Seconds => PauseBeforeSeconds + Path.Seconds;

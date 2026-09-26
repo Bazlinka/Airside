@@ -1,12 +1,36 @@
-## Where to resume — career coherence + Glass Cockpit HUD (Claude, in progress)
+## Where to resume — career coherence + Glass Cockpit HUD + title screen
 
-- **2026-09-26 Claude — branch `claude/career-mode-hud-redesign-rhbjok`.** Bailey asked for the
-  career logic/progression to be fixed and made coherent, a new opening splash, and a completely
-  new in-game HUD. Part 1 (career, ADR 0121) is committed: `CareerRoadmap` is the one authority,
-  tiers are earned in order, contracts can be abandoned, sold registrations are never reissued,
-  one fleet count and one meaning of "international", career news events. Headless
-  `scripts/test-domain.sh` passes. HUD and splash work follows on the same branch.
-  **Needs a Mac Unity EditMode run and build before merge.**
+- **2026-09-26 Claude — branch `claude/career-mode-hud-redesign-rhbjok`.** Bailey asked for
+  the career logic/progression to be fixed and made coherent, a new opening splash, and a
+  completely new in-game HUD ("nothing like it does now").
+  - **Career (ADR 0121):** `CareerRoadmap` is the one progression authority. Tiers are earned
+    in order; goals say which tier they earn ("TOWARD DOMESTIC"); contracts can be abandoned
+    (no dead saves); sold registrations are never reissued (their flights were never paid);
+    one fleet count; Cairns/Darwin are Australian, not international; tier-ups, goals and the
+    finale are announced. Dead `Campaign`/`DailyService`/`NextTier` systems removed. No save
+    schema change (v13).
+  - **HUD (ADR 0122):** the top bar, tab strip, yellow "Today's priority" card, square framed
+    panels and blue buttons are gone. New Glass Cockpit: left navigation rail, floating status
+    capsule, career ring card, live flight tiles, radar minimap, glass selected-aircraft card
+    with a turnaround timeline, glass toasts, rounded graphite glass everywhere (generated
+    rounded textures + IMGUI's rounded `DrawTexture`), amber primary pills, aqua selection,
+    new instrument palette. Every workspace uses the new sheet header; Career opens on a new
+    tier track page. Pure layers (`HudShell`, `SelectionCard`, `CareerTrackWorkspace`,
+    `SplashScreen`) are covered headlessly.
+  - **Title screen (ADR 0122):** the approved-but-unused dawn illustration (UI-ILL-001) and
+    wordmark (BRD-001) now make a real title screen with Continue / New airline / Options /
+    Quit; the camera intro plays as the hand-off after the player chooses.
+  - **Evidence:** `scripts/test-domain.sh` **790/790**. The full Presentation + EditMode
+    sources type-check against UnityEngine 2021.3 reference assemblies with stubs for URP,
+    Addressables and the Input System (only four pre-existing Unity-6/URP-only symbol
+    errors). Offline mockups rendered at 1440×900, 1280×800 and 1024×640 via
+    `scripts/hud-mockup` + `scripts/render-hud-mockups.py`.
+  - **Not yet verified (must happen on Bailey's Mac before merge):** `scripts/test-unity.sh`
+    (Unity EditMode — `PresentationLayoutTests`/`FieldMiniMapTests` were updated for the new
+    shell), `scripts/build-mac.sh`, and a rendered play session: check the rounded glass,
+    the icon tinting (`AirsideTheme.IconMask` needs the icon PNGs readable), the title-screen
+    name field focus, and the camera hand-off.
+  - **NEXT:** Unity run + playtest; then tune the career pacing with real hours played.
 
 ## Where to resume — career mode implementation
 
@@ -4680,22 +4704,27 @@ true 3D assets; animation and VFX mirror simulation state and never drive it.
 
 Open `game/Airside` in Unity 6.3 LTS and press Play.
 
-The game opens with a short intro (any key skips). Time is **live Adelaide time**:
-once an airline starts, one second in the game is one real second, and the clock
-shows the real local time. There is no pause, no time rates and no skip; the menu
-does not stop the airport. On-screen controls at the bottom centre are **Follow ·
-Overview**, with live airspeed in knots just above.
+The game opens on the **title screen** (ADR 0122): the dawn illustration of the airport,
+the live Adelaide clock and one card — **Continue** your saved airline, **New airline**
+(name + livery), Options or Quit. Enter continues; Esc steps back or opens the menu.
+Choosing one dissolves the art into the live airport while the camera glides down (any
+key skips). Time is **live Adelaide time**: one second in the game is one real second.
+There is no pause, no time rates and no skip; the menu does not stop the airport.
 
-Airline (ADR 0045): name your airline and pick a livery on the start screen. The
-fleet panel (top right) plans flights and offers stands when your aircraft lands;
-click a registration (or click the aircraft on the field) to follow it. The map
-(top left, or Tab) shows every destination — green in range, grey locked — and
-tracks aircraft that are away.
+The in-game HUD is the **Glass Cockpit** (ADR 0122): a vertical navigation rail on the
+left (Ops, Map, Fleet, Contracts, Career), a floating status capsule at the top (airline,
+Adelaide time, funds, reliability gauge, tier), the **career ring** bottom-left (steps done
+in the current stage, the pinned goal and one next action — click it for the Career track),
+your live flight tiles top-right, the airfield radar bottom-right and the selected-aircraft
+card bottom-centre. Toasts appear under the capsule. A workspace opens as one glass sheet
+right of the rail. **Career** opens on the tier track; **Airline** on its header flips to the
+profile (name, livery, base, achievements, history).
 
 Simulation:
 
-- Escape: clears aircraft selection and returns to overview when one is selected;
-  otherwise opens or closes the menu (Resume, Restart circuit, Quit) — time keeps running
+- Escape: steps back on the title screen's new-airline form; clears aircraft selection
+  and returns to overview when one is selected; otherwise opens or closes the menu
+  (Resume, Options, Quit) — time keeps running
 - Tab: open or close the destinations map (scroll to zoom, drag to pan; state labels appear when zoomed)
 - H: open or close the Hangar (all aircraft + flight progress)
 - M: mute audio

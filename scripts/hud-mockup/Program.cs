@@ -25,11 +25,14 @@ public static class Program
         var scenario = Scenario.Play();
         var pages = new List<Page>
         {
+            SplashPage(scenario, width, height, SplashStep.Menu),
+            SplashPage(scenario, width, height, SplashStep.NewAirline),
             Overview(scenario, width, height),
             Operations(scenario, width, height),
             RouteMapPage(scenario, width, height),
             Fleet(scenario, width, height),
             Contracts(scenario, width, height),
+            Career(scenario, width, height),
             Stats(scenario, width, height)
         };
 
@@ -95,18 +98,93 @@ public static class Program
     {
         var list = new HudDrawList();
         PaintShell(list, scenario, HudWorkspace.None, width, height);
+        var shell = HudShell.Layout(width, height);
 
+        var operations = scenario.Operations;
         var objective = OperationsSummary.Objective(scenario.PlayerFleet, scenario.Now,
-            scenario.Operations.Clock, scenario.Operations.CareerState, scenario.Operations.MarketOffers());
-        HudShellPainter.PaintObjective(list, HudShell.Objective(width, height, showGuide: false), objective);
+            operations.Clock, operations.CareerState, operations.MarketOffers(), operations.PinnedCareerGoal());
+        var stage = operations.CareerStage();
+        HudShellPainter.PaintCareer(list, shell.Career, objective, stage.Fraction, $"{stage.Done}/{stage.Total}");
+
+        var rows = new List<OperationsRow>();
+        OperationsSummary.FillPlayerRows(scenario.PlayerFleet, scenario.Now, rows);
+        HudShellPainter.PaintOperations(list, shell.Operations, rows, scenario.SelectedRegistration,
+            $"{OperationsSummary.AvailableCount(scenario.PlayerFleet, scenario.Now)} available");
+
+        // The runtime words these from the live aircraft; the mockup uses the scenario's own.
+        var selected = scenario.Selected;
+        var card = new SelectionCardData
+        {
+            Registration = selected.Registration,
+            TypeName = selected.Type.Name,
+            LiveryHex = operations.PlayerAirline.LiveryHex,
+            RouteLine = selected.Scheduled.HasValue
+                ? $"Adelaide → {selected.Scheduled.Value.Destination.Name} · departs {operations.Clock.TimeText(selected.Scheduled.Value.DepartAt)}"
+                : "Adelaide",
+            LiveLine = "Parked · 0 kt",
+            PhaseLabel = "Turnaround",
+            IsPlayer = true,
+            PrimaryLabel = "View plan",
+            CanCancel = selected.Scheduled.HasValue
+        };
+        if (selected.Scheduled.HasValue)
+        {
+            var prep = DeparturePrep.For(selected, scenario.Now, operations.CareerState.BaseLevel);
+            card.Prep.Add(new SelectionPrepStage("Fuel", (float)prep.FuelProgress, prep.Stage == DeparturePrepStage.Fuel));
+            card.Prep.Add(new SelectionPrepStage("Catering", (float)prep.CateringProgress, prep.Stage == DeparturePrepStage.Catering));
+            card.Prep.Add(new SelectionPrepStage("Baggage", (float)prep.BaggageProgress, prep.Stage == DeparturePrepStage.Baggage));
+            card.Prep.Add(new SelectionPrepStage("Boarding", (float)prep.BoardingProgress, prep.Stage == DeparturePrepStage.Boarding));
+        }
+        var cardHeight = Math.Min(shell.SelectedCard.Height, SelectionCardPainter.HeightFor(card));
+        SelectionCardPainter.Paint(list, new HudBox(shell.SelectedCard.X, shell.SelectedCard.Bottom - cardHeight,
+            shell.SelectedCard.Width, cardHeight), card);
+
+        ToastPainter.Paint(list, shell.Toast, "Soak Air is open for business. Plan a flight for VH-PAX.",
+            HudTone.Accent, 1f);
+        if (!shell.MiniMap.IsEmpty)
+            MiniMapFrame.Paint(list, shell.MiniMap, "ADELAIDE · 23 / 05");
         return new Page("overview", Serialise(list));
+    }
+
+    private static Page SplashPage(Scenario scenario, float width, float height, SplashStep step)
+    {
+        var operations = scenario.Operations;
+        var model = new SplashModel
+        {
+            Step = step,
+            HasSave = true,
+            SaveName = operations.PlayerAirline.Name,
+            SaveLiveryHex = operations.PlayerAirline.LiveryHex,
+            SaveTier = operations.CareerState.Tier.ToString(),
+            SaveSummary = $"{operations.PlayerFleetCount()} aircraft · ${operations.CareerState.Funds:N0} · {operations.CareerState.Reliability}% reliability",
+            SavedWhen = "Saved 26 Sep 12:06 · 4 services flown",
+            ClockText = operations.Clock.TimeText(scenario.Now),
+            StartingFunds = AirlineCareerState.StartingFunds,
+            SelectedLivery = 1
+        };
+        foreach (var livery in StatsWorkspaceModel.LiveryPalette)
+            model.Liveries.Add(livery);
+        var list = new HudDrawList();
+        SplashPainter.Paint(list, SplashLayout.Create(width, height, step, model.HasSave), model, 0.3f);
+        return new Page(step == SplashStep.Menu ? "splash" : "splash-new", Serialise(list));
+    }
+
+    private static Page Career(Scenario scenario, float width, float height)
+    {
+        var list = new HudDrawList();
+        PaintShell(list, scenario, HudWorkspace.Stats, width, height);
+        var model = new CareerTrackModel();
+        model.Rebuild(scenario.Operations);
+        var layout = CareerTrackLayout.Create(HudShell.WorkspaceSurface(width, height), model.CurrentGoals.Count);
+        var page = new HudDrawList();
+        CareerTrackPainter.Paint(page, model, layout);
+        return new Page("career", Serialise(list, page));
     }
 
     private static Page Operations(Scenario scenario, float width, float height)
     {
         var list = new HudDrawList();
         PaintShell(list, scenario, HudWorkspace.Operations, width, height);
-        PaintObjective(list, scenario, width, height);
 
         var model = new OperationsWorkspaceModel();
         model.Rebuild(scenario.Operations, scenario.Now, OperationsBoardTab.Departures,
@@ -124,7 +202,6 @@ public static class Program
     {
         var list = new HudDrawList();
         PaintShell(list, scenario, HudWorkspace.Map, width, height);
-        PaintObjective(list, scenario, width, height);
 
         DestinationCatalogue.TryFind("PLO", out var portLincoln);
         var model = new RouteMapWorkspaceModel();
@@ -155,7 +232,6 @@ public static class Program
     {
         var list = new HudDrawList();
         PaintShell(list, scenario, HudWorkspace.Fleet, width, height);
-        PaintObjective(list, scenario, width, height);
 
         var model = new FleetWorkspaceModel();
         model.Rebuild(scenario.Operations, scenario.Now, scenario.SelectedRegistration);
@@ -170,7 +246,6 @@ public static class Program
     {
         var list = new HudDrawList();
         PaintShell(list, scenario, HudWorkspace.Contracts, width, height);
-        PaintObjective(list, scenario, width, height);
 
         var model = new ContractsWorkspaceModel();
         model.Rebuild(scenario.Operations, scenario.Now);
@@ -195,7 +270,6 @@ public static class Program
     {
         var list = new HudDrawList();
         PaintShell(list, scenario, HudWorkspace.Stats, width, height);
-        PaintObjective(list, scenario, width, height);
 
         var model = new StatsWorkspaceModel();
         model.Rebuild(scenario.Operations, scenario.Now);
@@ -211,33 +285,17 @@ public static class Program
     private static void PaintShell(HudDrawList list, Scenario scenario, HudWorkspace active,
         float width, float height)
     {
-        var bar = HudShell.TopBar(width, height);
-        var nav = HudShell.NavStrip(width, height);
+        var shell = HudShell.Layout(width, height, workspaceOpen: active != HudWorkspace.None);
         var airline = scenario.Operations.PlayerAirline;
-        var career = scenario.Operations.CareerState;
-        var clock = scenario.Operations.Clock;
-
-        var segments = new List<HudTopBarSegment>();
-        HudShell.FillSegments(bar, airline.Name, nav, new[]
-        {
-            $"ADELAIDE  {clock.TimeText(scenario.Now)}",
-            $"${career.Funds:N0}",
-            $"RELIABILITY {career.Reliability}%",
-            career.Tier.ToString().ToUpperInvariant()
-        }, segments);
-
         var tabs = new List<HudNavTab>();
-        HudShell.FillTabs(nav, active, tabs);
-        HudShellPainter.PaintTopBar(list, bar, nav, airline.Name, airline.LiveryHex, segments, tabs);
-    }
+        HudShell.FillTabs(shell.Rail, height, active, tabs);
+        HudShellPainter.PaintRail(list, shell.Rail, airline.LiveryHex, tabs);
 
-    private static void PaintObjective(HudDrawList list, Scenario scenario, float width, float height)
-    {
-        if (!HudShell.ObjectiveSurvivesWorkspace(width, height))
-            return;
-        var objective = OperationsSummary.Objective(scenario.PlayerFleet, scenario.Now,
-            scenario.Operations.Clock, scenario.Operations.CareerState, scenario.Operations.MarketOffers());
-        HudShellPainter.PaintObjective(list, HudShell.Objective(width, height, showGuide: false), objective);
+        var values = new List<HudCapsuleValue>();
+        HudShellPainter.CapsuleValues(scenario.Operations, scenario.Operations.Clock.TimeText(scenario.Now), values);
+        var segments = new List<HudCapsuleSegment>();
+        HudShell.FillCapsule(shell.Capsule, values, segments);
+        HudShellPainter.PaintCapsule(list, shell.Capsule, segments);
     }
 
     // ---- Serialisation -------------------------------------------------------------

@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **A completely new in-game HUD — the Glass Cockpit (ADR 0122).** A left navigation
+  rail, a floating status capsule, a career ring card, live flight tiles, a radar minimap
+  and a glass selected-aircraft card with a turnaround timeline replace the top bar, tab
+  strip, "Today's priority" card and square framed panels. Rounded graphite glass, amber
+  primary pills and aqua selection throughout, including menus, help and every workspace.
+  Career opens on a new tier-track page.
+- **A real title screen (ADR 0122).** The approved dawn illustration and wordmark open the
+  game with the live Adelaide clock and Continue / New airline / Options / Quit; the camera
+  glide now plays as the hand-off into the live airport.
+
 - **Career mode is one coherent path (ADR 0121).** The roadmap is the only progression
   system; the dead chapter and daily-bonus systems are gone. Tiers are earned in order,
   goals say which tier they earn ("TOWARD DOMESTIC"), completed pins release, and tier-ups,

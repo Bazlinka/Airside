@@ -66,7 +66,7 @@ namespace Airside.Presentation
 
                 var identity = FlightNumber.OrRegistration(aircraft);
                 var text = mine ? $"{Ownership.PlayerBadge} · {identity} · {AircraftStatus.TagPhase(aircraft, _clock.Now)}" : identity;
-                var width = tagStyle.CalcSize(new GUIContent(text)).x + 18f;
+                var width = tagStyle.CalcSize(new GUIContent(text)).x + 26f;
                 var pill = new Rect(gui.x - width * 0.5f, gui.y - 30f, width, 20f);
                 // Parked side by side, tags would print over each other: lift each one above
                 // any tag already placed where it would land.
@@ -92,21 +92,23 @@ namespace Airside.Presentation
 
                 // Stem from the pill down to the aircraft.
                 DrawSolid(new Rect(gui.x - 1f, pill.yMax, 2f, Mathf.Max(2f, gui.y - pill.yMax)), new Color(livery.r, livery.g, livery.b, fade));
-                DrawSolid(pill, new Color(ink.r, ink.g, ink.b, 0.82f * fade));
-                DrawSolid(new Rect(pill.x, pill.y, 5f, pill.height), new Color(livery.r, livery.g, livery.b, fade));
+                // Glass callout pill (ADR 0122): livery dot leading, rounded ends.
+                AirsideTheme.DrawRounded(pill, AirsideTheme.WithAlpha(AirsideTheme.Glass, 0.86f * fade), pill.height * 0.5f);
+                AirsideTheme.DrawRounded(new Rect(pill.x + 6f, pill.y + pill.height * 0.5f - 4f, 8f, 8f),
+                    new Color(livery.r, livery.g, livery.b, fade), 4f);
                 var severity = mine ? AircraftStatus.Severity(aircraft, _clock.Now) : StatusSeverity.Normal;
                 if (selected)
-                    AirsideTheme.DrawPanelFrame(pill, new Color(AirsideTheme.SafetyYellow.r, AirsideTheme.SafetyYellow.g, AirsideTheme.SafetyYellow.b, fade));
+                    AirsideTheme.DrawRounded(pill, AirsideTheme.WithAlpha(AirsideTheme.Amber, fade), pill.height * 0.5f, 1.5f);
                 else if (severity != StatusSeverity.Normal)
                 {
                     var alert = SeverityColour(severity, livery);
-                    AirsideTheme.DrawPanelFrame(pill, new Color(alert.r, alert.g, alert.b, fade));
+                    AirsideTheme.DrawRounded(pill, new Color(alert.r, alert.g, alert.b, fade), pill.height * 0.5f, 1.5f);
                 }
                 else if (mine)
-                    AirsideTheme.DrawPanelFrame(pill, new Color(livery.r, livery.g, livery.b, fade));
+                    AirsideTheme.DrawRounded(pill, new Color(livery.r, livery.g, livery.b, 0.7f * fade), pill.height * 0.5f, 1f);
                 var previous = GUI.color;
                 GUI.color = new Color(1f, 1f, 1f, fade);
-                GUI.Label(new Rect(pill.x + 4f, pill.y, pill.width - 4f, pill.height), text, tagStyle);
+                GUI.Label(new Rect(pill.x + 10f, pill.y, pill.width - 12f, pill.height), text, tagStyle);
                 GUI.color = previous;
 
                 if (fade > 0.3f)
@@ -168,8 +170,8 @@ namespace Airside.Presentation
                 _placedTags.Add(pill);
 
                 DrawSolid(new Rect(gui.x - 1f, pill.yMax, 2f, Mathf.Max(2f, gui.y - pill.yMax)), new Color(accent.r, accent.g, accent.b, fade));
-                DrawSolid(pill, new Color(ink.r, ink.g, ink.b, 0.7f * fade));
-                AirsideTheme.DrawPanelFrame(pill, new Color(accent.r, accent.g, accent.b, 0.6f * fade));
+                AirsideTheme.DrawRounded(pill, AirsideTheme.WithAlpha(AirsideTheme.Glass, 0.7f * fade), pill.height * 0.5f);
+                AirsideTheme.DrawRounded(pill, new Color(accent.r, accent.g, accent.b, 0.6f * fade), pill.height * 0.5f, 1f);
                 var previous = GUI.color;
                 GUI.color = new Color(1f, 1f, 1f, fade);
                 GUI.Label(pill, text, tagStyle);

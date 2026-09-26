@@ -77,7 +77,7 @@ namespace Airside.Presentation
             ("Sunset", "#E8772E"), ("Violet", "#6A3FA0"), ("Gold", "#D4A017")
         };
 
-        public string Title => "CAREER";
+        public string Title => "AIRLINE";
 
         public string AirlineName { get; private set; } = string.Empty;
         public string CurrentLiveryHex { get; private set; } = string.Empty;
@@ -322,12 +322,13 @@ namespace Airside.Presentation
         /// UnityEngine-free `HudDrawList` renders editable text, and adding one just for this
         /// single control was a bigger, riskier change than drawing it as one exception.
         /// </summary>
-        public HudBox RenameFieldBox => new(RenameButtonBox.X - RenameGap - RenameFieldWidth, Header.Y + 18f,
-            RenameFieldWidth, 26f);
+        public HudBox RenameFieldBox => new(RenameButtonBox.X - RenameGap - RenameFieldWidth, Header.Y + 16f,
+            RenameFieldWidth, 32f);
 
+        // Left of the header's TRACK action (ADR 0122), which sits left of the round close.
         public HudBox RenameButtonBox => new(
-            OperationsWorkspacePainter.CloseBox(Surface).X - RenameGap - RenameButtonWidth,
-            Header.Y + 18f, RenameButtonWidth, 26f);
+            HudShellPainter.HeaderActionBox(Surface).X - RenameGap * 2f - RenameButtonWidth,
+            Header.Y + 16f, RenameButtonWidth, 32f);
 
         public HudBox OverviewCaption => LeftColumn.WithHeight(CaptionHeight);
 
@@ -475,10 +476,8 @@ namespace Airside.Presentation
 
             into.Clear();
             into.Surface(layout.Surface);
-            into.Text(layout.TitleBox, model.Title, 26f, HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
-            into.Button(OperationsWorkspacePainter.CloseBox(layout.Surface), "CLOSE", HudAction.Close,
-                HudButtonStyle.Secondary);
-            into.Hairline(HudShell.HeaderRule(layout.Surface));
+            HudShellPainter.PaintSheetHeader(into, layout.Surface, model.Title, string.Empty,
+                layout.TitleBox, HudBox.Empty);
 
             PaintOverview(into, model, layout);
             if (!layout.Divider.IsEmpty)

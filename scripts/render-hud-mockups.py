@@ -40,28 +40,35 @@ BOLD = first_font(
     "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
 )
 
-# Airside.Presentation.AirsidePalette, kept in step by palette_check() below.
+# Airside.Presentation.AirsidePalette (Glass Cockpit, ADR 0122), kept in step by palette_check() below.
 PALETTE = {
-    "RunwayInk": "#17242A",
-    "Tarmac": "#343B40",
-    "Concrete": "#9CA3A2",
-    "CoastalBlue": "#39708A",
-    "CoastalBlueStrong": "#2E86B0",
-    "SafetyYellow": "#F2C14B",
-    "SignalRed": "#C95D50",
-    "ClearGreen": "#5F8B68",
-    "Cloud": "#EEF1EC",
-    "OpenSky": "#A7C9D9",
+    "Glass": "#0E1216",
+    "GlassRaised": "#1B222A",
+    "GlassEdge": "#FFFFFF",
+    "InstrumentText": "#E8EDF1",
+    "InstrumentMuted": "#8793A0",
+    "Aqua": "#3FD0C9",
+    "Amber": "#FFB547",
+    "GoGreen": "#4CD37A",
+    "WarnRed": "#FF5F56",
+    "RouteMagenta": "#E15AA8",
+    "OnAccent": "#0B0F12",
 }
 
 TONE = {
-    "Default": PALETTE["Cloud"],
-    "Muted": PALETTE["Concrete"],
-    "Accent": PALETTE["CoastalBlueStrong"],
-    "Caution": PALETTE["SafetyYellow"],
-    "Positive": PALETTE["ClearGreen"],
-    "Negative": PALETTE["SignalRed"],
+    "Default": PALETTE["InstrumentText"],
+    "Muted": PALETTE["InstrumentMuted"],
+    "Accent": PALETTE["Aqua"],
+    "Caution": PALETTE["Amber"],
+    "Positive": PALETTE["GoGreen"],
+    "Negative": PALETTE["WarnRed"],
+    "Route": PALETTE["RouteMagenta"],
 }
+
+ART_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                       "game/Airside/Assets/Airside/Art")
+ICON_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "game/Airside/Assets/Airside/Art/UI/Icons")
 
 STYLE_BOLD = 1
 STYLE_CAPTION = 2
@@ -126,13 +133,35 @@ def blend(base, layer):
     return Image.alpha_composite(base, layer)
 
 
-def draw_rect(image, rect, colour, alpha):
-    if alpha >= 0.999:
-        ImageDraw.Draw(image).rectangle(rect, fill=colour + (255,))
-        return
+def draw_rect(image, rect, colour, alpha, radius=0.0, outline=None, width=1):
     layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
-    ImageDraw.Draw(layer).rectangle(rect, fill=colour + (int(255 * max(0.0, min(1.0, alpha))),))
+    a = int(255 * max(0.0, min(1.0, alpha)))
+    d = ImageDraw.Draw(layer)
+    x0, y0, x1, y1 = rect
+    if x1 - x0 < 0.5 or y1 - y0 < 0.5:
+        return
+    r = max(0.0, min(radius, (x1 - x0) / 2.0, (y1 - y0) / 2.0))
+    if outline is None:
+        d.rounded_rectangle(rect, radius=r, fill=colour + (a,))
+    else:
+        d.rounded_rectangle(rect, radius=r, outline=colour + (a,), width=width)
     image.alpha_composite(layer)
+
+
+def fill_radius(w, h):
+    """The painter's rule: fills of real size are softly rounded, rules stay square."""
+    if w < 4 * SCALE or h < 4 * SCALE:
+        return 0.0
+    return min(6.0 * SCALE, w / 2.0, h / 2.0)
+
+
+def glass(image, rect, alpha, radius):
+    x0, y0, x1, y1 = rect
+    for spread, a in ((10, 0.05), (6, 0.07), (3, 0.09)):
+        s = spread * SCALE
+        draw_rect(image, (x0 - s * 0.4, y0 + s * 0.2, x1 + s * 0.4, y1 + s), (0, 0, 0), a, radius + s)
+    draw_rect(image, rect, rgb(PALETTE["Glass"]), alpha, radius)
+    draw_rect(image, rect, rgb(PALETTE["GlassEdge"]), 0.09, radius, outline=True)
 
 
 def text_width(draw, value, f, tracking):
@@ -203,35 +232,113 @@ def draw_button(image, command):
     style = int(command.get("Value", 0))
     enabled = command.get("Enabled", True)
     label = command.get("Text") or ""
+    radius = h / 2.0
 
-    if style == 0:  # Primary
-        fill = rgb(PALETTE["CoastalBlueStrong"])
-        draw_rect(image, rect, fill, 1.0 if enabled else 0.28)
-        text_colour = PALETTE["Cloud"] if enabled else PALETTE["Concrete"]
-        border = None
-    elif style == 2:  # Destructive
-        draw_rect(image, rect, rgb(PALETTE["Tarmac"]), 0.45)
-        border = rgb(PALETTE["SignalRed"])
-        text_colour = PALETTE["SignalRed"]
-    else:  # Secondary
-        draw_rect(image, rect, rgb(PALETTE["Tarmac"]), 0.85 if enabled else 0.45)
-        border = rgb(PALETTE["Concrete"])
-        text_colour = PALETTE["Cloud"] if enabled else PALETTE["Concrete"]
+    if style == 0:  # Primary — amber pill
+        draw_rect(image, rect, rgb(PALETTE["Amber"]), 1.0 if enabled else 0.25, radius)
+        text_colour = PALETTE["OnAccent"] if enabled else PALETTE["InstrumentMuted"]
+    elif style == 2:  # Destructive — red-outlined pill
+        draw_rect(image, rect, rgb(PALETTE["WarnRed"]), 0.10, radius)
+        draw_rect(image, rect, rgb(PALETTE["WarnRed"]), 0.85, radius, outline=True, width=max(1, int(SCALE)))
+        text_colour = PALETTE["WarnRed"]
+    else:  # Secondary — raised glass pill
+        draw_rect(image, rect, rgb(PALETTE["GlassRaised"]), 0.95 if enabled else 0.5, radius)
+        draw_rect(image, rect, rgb(PALETTE["GlassEdge"]), 0.14, radius, outline=True)
+        text_colour = PALETTE["InstrumentText"] if enabled else PALETTE["InstrumentMuted"]
 
-    if border:
-        layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
-        ImageDraw.Draw(layer).rectangle(rect, outline=border + (150 if enabled else 80,), width=1)
-        image.alpha_composite(layer)
-
+    size = 11.0 if label != "×" else 18.0
     draw_text(image, {
-        "Box": [command["Box"][0], command["Box"][1] + (command["Box"][3] - 13) / 2.0,
-                command["Box"][2], 16],
+        "Box": [command["Box"][0], command["Box"][1] + (command["Box"][3] - size * 1.15) / 2.0,
+                command["Box"][2], size * 1.3],
         "Text": label,
-        "FontSize": 12.0,
-        "Style": STYLE_BOLD | STYLE_CAPTION,
+        "FontSize": size,
+        "Style": STYLE_BOLD | (STYLE_CAPTION if label != "×" else 0),
         "Align": "Center",
         "Colour": text_colour,
         "Value": 1.0 if enabled else 0.55,
+    })
+
+
+_icon_cache = {}
+
+
+def draw_icon(image, command):
+    x, y, w, h = box(command)
+    category, _, name = (command.get("Text") or "/").partition("/")
+    path = os.path.join(ICON_DIR, f"ui_{category}_{name}_v01.png")
+    if not os.path.exists(path):
+        return
+    if path not in _icon_cache:
+        _icon_cache[path] = Image.open(path).convert("RGBA")
+    src = _icon_cache[path].resize((max(1, int(w)), max(1, int(h))), Image.LANCZOS)
+    alpha = src.getchannel("A").point(lambda v: int(v * max(0.0, min(1.0, command.get("Value", 1.0) or 1.0))))
+    tint = Image.new("RGBA", src.size, colour_of(command) + (255,))
+    tint.putalpha(alpha)
+    image.alpha_composite(tint, (int(x), int(y)))
+
+
+_art_cache = {}
+
+
+def draw_image(image, command):
+    x, y, w, h = box(command)
+    path = os.path.join(ART_DIR, command.get("Text") or "")
+    if not os.path.exists(path) or w < 1 or h < 1:
+        return
+    if path not in _art_cache:
+        _art_cache[path] = Image.open(path).convert("RGBA")
+    src = _art_cache[path]
+    # Cover-crop, like IMGUI ScaleAndCrop.
+    scale = max(w / src.width, h / src.height)
+    resized = src.resize((max(1, int(src.width * scale)), max(1, int(src.height * scale))), Image.LANCZOS)
+    left = (resized.width - int(w)) // 2
+    top = (resized.height - int(h)) // 2
+    cropped = resized.crop((left, top, left + int(w), top + int(h)))
+    ox, oy = int(x), int(y)
+    # Clip to the canvas.
+    cx0, cy0 = max(0, -ox), max(0, -oy)
+    cropped = cropped.crop((cx0, cy0, min(cropped.width, image.width - ox), min(cropped.height, image.height - oy)))
+    image.alpha_composite(cropped, (max(0, ox), max(0, oy)))
+
+
+def draw_ring(image, command):
+    x, y, w, h = box(command)
+    thickness = max(1, int(command.get("FontSize", 6.0) * SCALE))
+    progress = max(0.0, min(1.0, command.get("Value", 0.0)))
+    if progress <= 0.0:
+        return
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    alpha = 90 if command.get("Tone") == "Muted" else 255
+    if progress >= 0.999:
+        d.ellipse((x, y, x + w, y + h), outline=colour_of(command) + (alpha,), width=thickness)
+    else:
+        d.arc((x, y, x + w, y + h), start=-90, end=-90 + 360 * progress, fill=colour_of(command) + (alpha,),
+              width=thickness)
+    image.alpha_composite(layer)
+
+
+def draw_pill(image, command):
+    x, y, w, h = box(command)
+    rect = (x, y, x + w, y + h)
+    filled = (command.get("Value", 0.0) or 0.0) >= 0.5
+    colour = colour_of(command)
+    if filled:
+        draw_rect(image, rect, colour, 1.0, h / 2.0)
+        text_colour = PALETTE["OnAccent"]
+    else:
+        draw_rect(image, rect, colour, 0.16, h / 2.0)
+        text_colour = "#%02X%02X%02X" % colour
+    size = command.get("FontSize", 10.0)
+    draw_text(image, {
+        "Box": [command["Box"][0], command["Box"][1] + (command["Box"][3] - size * 1.15) / 2.0,
+                command["Box"][2], size * 1.3],
+        "Text": command.get("Text") or "",
+        "FontSize": size,
+        "Style": STYLE_BOLD | STYLE_CAPTION,
+        "Align": "Center",
+        "Colour": text_colour,
+        "Value": 1.0,
     })
 
 
@@ -244,26 +351,44 @@ def render(page, width, height):
         rect = (x, y, x + w, y + h)
 
         if kind == "Surface":
-            draw_rect(image, rect, rgb(PALETTE["RunwayInk"]), command.get("Value", 0.96))
-            layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
-            ImageDraw.Draw(layer).rectangle(rect, outline=rgb(PALETTE["CoastalBlue"]) + (120,), width=1)
-            image.alpha_composite(layer)
-        elif kind in ("Fill", "Hairline"):
+            glass(image, rect, command.get("Value", 0.9), 14 * SCALE)
+        elif kind == "Card":
+            draw_rect(image, rect, rgb(PALETTE["GlassRaised"]), 0.9 * (command.get("Value", 1.0) or 1.0), 10 * SCALE)
+            draw_rect(image, rect, rgb(PALETTE["GlassEdge"]), 0.06, 10 * SCALE, outline=True)
+        elif kind == "Fill":
+            draw_rect(image, rect, colour_of(command), command.get("Value", 1.0), fill_radius(w, h))
+        elif kind == "Hairline":
             draw_rect(image, rect, colour_of(command), command.get("Value", 1.0))
         elif kind == "Outline":
-            layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
-            ImageDraw.Draw(layer).rectangle(
-                rect, outline=colour_of(command) + (int(255 * command.get("Value", 1.0)),), width=1)
-            image.alpha_composite(layer)
+            draw_rect(image, rect, colour_of(command), command.get("Value", 1.0), min(10 * SCALE, h / 2.0),
+                      outline=True, width=max(1, int(1.5 * SCALE)))
         elif kind == "Text":
             draw_text(image, command)
         elif kind == "Bar":
-            draw_rect(image, rect, rgb(PALETTE["Tarmac"]), 1.0)
+            draw_rect(image, rect, rgb(PALETTE["GlassEdge"]), 0.10, h / 2.0)
             progress = max(0.0, min(1.0, command.get("Value", 0.0)))
             if progress > 0.0:
-                draw_rect(image, (x, y, x + w * progress, y + h), colour_of(command), 1.0)
+                draw_rect(image, (x, y, x + max(h, w * progress), y + h), colour_of(command), 1.0, h / 2.0)
         elif kind == "Button":
             draw_button(image, command)
+        elif kind == "Pill":
+            draw_pill(image, command)
+        elif kind == "Ring":
+            draw_ring(image, command)
+        elif kind == "Icon":
+            draw_icon(image, command)
+        elif kind == "Image":
+            draw_image(image, command)
+        elif kind == "Gradient":
+            layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+            d = ImageDraw.Draw(layer)
+            colour = colour_of(command)
+            top = command.get("Value", 1.0)
+            steps = max(1, int(w))
+            for i in range(steps):
+                t = i / max(1, steps - 1)
+                d.line([(x + i, y), (x + i, y + h)], fill=colour + (int(255 * top * (1 - t * t)),))
+            image.alpha_composite(layer)
         elif kind == "Dot":
             layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
             ImageDraw.Draw(layer).ellipse(rect, fill=colour_of(command) + (255,))

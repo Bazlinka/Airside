@@ -487,11 +487,8 @@ namespace Airside.Presentation
 
             into.Clear();
             into.Surface(layout.Surface);
-            into.Text(layout.TitleBox, model.Title, 26f, HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
-            into.Text(layout.SubtitleBox, model.Subtitle, 12f, HudTone.Muted);
-            into.Button(OperationsWorkspacePainter.CloseBox(layout.Surface), "CLOSE", HudAction.Close,
-                HudButtonStyle.Secondary);
-            into.Hairline(HudShell.HeaderRule(layout.Surface));
+            HudShellPainter.PaintSheetHeader(into, layout.Surface, model.Title, model.Subtitle,
+                layout.TitleBox, layout.SubtitleBox);
 
             PaintRoster(into, model, layout, selectedRegistration, scrollRow, showOtherOperators);
             if (!layout.Divider.IsEmpty)

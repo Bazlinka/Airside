@@ -32,14 +32,53 @@ namespace Airside.Presentation
         /// <summary>Panel interior a shade below Runway Ink, for workspace bodies and table wells.</summary>
         public const string CoastalBlueDeepHex = "#101C24";
 
+        // ---- Glass Cockpit HUD (ADR 0122) -------------------------------------------------
+        // The in-game HUD's own instrument palette: graphite glass panels, avionics amber for
+        // the one thing that needs the player, aqua for selection and live state. The world
+        // palette above stays the art-direction palette for the airport itself.
+
+        /// <summary>Graphite glass — every HUD card and sheet, drawn translucent.</summary>
+        public const string GlassHex = "#0E1216";
+
+        /// <summary>A raised glass layer inside a sheet: sub-cards, secondary buttons, wells.</summary>
+        public const string GlassRaisedHex = "#1B222A";
+
+        /// <summary>The 1 px inner highlight around glass.</summary>
+        public const string GlassEdgeHex = "#FFFFFF";
+
+        /// <summary>Primary instrument text.</summary>
+        public const string InstrumentTextHex = "#E8EDF1";
+
+        /// <summary>Secondary instrument text — captions, units, column headers.</summary>
+        public const string InstrumentMutedHex = "#8793A0";
+
+        /// <summary>Aqua — selection, live state, links and progress.</summary>
+        public const string AquaHex = "#3FD0C9";
+
+        /// <summary>Avionics amber — the primary action and the one current priority.</summary>
+        public const string AmberHex = "#FFB547";
+
+        /// <summary>Go green — done, on time, available.</summary>
+        public const string GoGreenHex = "#4CD37A";
+
+        /// <summary>Warning red — refused, cancelled, overdue.</summary>
+        public const string WarnRedHex = "#FF5F56";
+
+        /// <summary>Magenta — routes and flight paths, as on a nav display.</summary>
+        public const string RouteMagentaHex = "#E15AA8";
+
+        /// <summary>Text drawn on an amber or aqua fill.</summary>
+        public const string OnAccentHex = "#0B0F12";
+
         public static string Hex(HudTone tone) => tone switch
         {
-            HudTone.Muted => ConcreteHex,
-            HudTone.Accent => CoastalBlueStrongHex,
-            HudTone.Caution => SafetyYellowHex,
-            HudTone.Positive => ClearGreenHex,
-            HudTone.Negative => SignalRedHex,
-            _ => CloudHex
+            HudTone.Muted => InstrumentMutedHex,
+            HudTone.Accent => AquaHex,
+            HudTone.Caution => AmberHex,
+            HudTone.Positive => GoGreenHex,
+            HudTone.Negative => WarnRedHex,
+            HudTone.Route => RouteMagentaHex,
+            _ => InstrumentTextHex
         };
     }
 }

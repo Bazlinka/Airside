@@ -404,10 +404,8 @@ namespace Airside.Presentation
 
             into.Clear();
             into.Surface(layout.Surface);
-            into.Text(layout.TitleBox, model.Title, 26f, HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
-            into.Button(OperationsWorkspacePainter.CloseBox(layout.Surface), "CLOSE", HudAction.Close,
-                HudButtonStyle.Secondary);
-            into.Hairline(HudShell.HeaderRule(layout.Surface));
+            HudShellPainter.PaintSheetHeader(into, layout.Surface, model.Title, string.Empty,
+                layout.TitleBox, HudBox.Empty);
 
             // The map well is darker than the surface so the coastline and routes read.
             into.Fill(layout.Map, HudTone.Default, 0.55f, AirsidePalette.CoastalBlueDeepHex);

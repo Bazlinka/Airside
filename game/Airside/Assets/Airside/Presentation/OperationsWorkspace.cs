@@ -902,10 +902,8 @@ namespace Airside.Presentation
         private static void PaintHeader(HudDrawList into, OperationsWorkspaceModel model,
             OperationsWorkspaceLayout layout)
         {
-            into.Text(layout.TitleBox, model.Title, 26f, HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
-            into.Text(layout.SubtitleBox, model.Subtitle, 12f, HudTone.Muted);
-            into.Button(CloseBox(layout.Surface), "CLOSE", HudAction.Close, HudButtonStyle.Secondary);
-            into.Hairline(HudShell.HeaderRule(layout.Surface));
+            HudShellPainter.PaintSheetHeader(into, layout.Surface, model.Title, model.Subtitle,
+                layout.TitleBox, layout.SubtitleBox);
         }
 
         private static void PaintDayStrip(HudDrawList into, OperationsWorkspaceModel model,
@@ -956,8 +954,7 @@ namespace Airside.Presentation
             into.Caption(nowBox, nowLabel, HudTone.Accent);
         }
 
-        public static HudBox CloseBox(HudBox surface) =>
-            new(surface.Right - HudShell.SurfacePadding - 78f, surface.Y + 18f, 78f, 26f);
+        public static HudBox CloseBox(HudBox surface) => HudShellPainter.CloseBox(surface);
 
         private static void PaintAttention(HudDrawList into, OperationsWorkspaceModel model,
             OperationsWorkspaceLayout layout)

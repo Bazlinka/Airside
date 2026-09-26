@@ -328,7 +328,7 @@ namespace Airside.Presentation
 
             BuildLightingAndCamera();
             ApplyMasterMute();
-            StartIntro();
+            // The title screen opens first; the camera glide plays when the player continues.
             if (_cameraController != null)
             {
                 _cameraController.PointerOverHud = IsPointerOverHud;
@@ -849,6 +849,8 @@ namespace Airside.Presentation
 
                 if (TryCloseControlsHelp())
                     return;
+                if (TrySplashBack())
+                    return;
                 if (TryCloseAirlineOverlay())
                     return;
                 if (ClearAircraftSelection())
@@ -991,7 +993,7 @@ namespace Airside.Presentation
             var title = _hudTitleStyle ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold });
             var button = _hudButtonStyle ??= AirsideTheme.ButtonStyle(
                 new GUIStyle(GUI.skin.button) { fontSize = 15, fontStyle = FontStyle.Bold },
-                AirsideTheme.Cloud);
+                AirsideTheme.InstrumentText);
 
             // Follow / Overview live on the circuit HUD only. The airline overview
             // uses the selected-aircraft card and Esc/R instead (ADR 0053). The
@@ -1104,7 +1106,9 @@ namespace Airside.Presentation
             // unexplained, seemingly random speed with no indication whose it was.
             var label = FleetMode && fleetAircraft != null ? FlightNumber.OrRegistration(fleetAircraft) : null;
 
-            var rect = layout.SpeedReadout;
+            var rect = SpeedReadoutRect(layout);
+            if (rect.width <= 0f)
+                return;
             GUI.Box(rect, GUIContent.none, panel);
             GUI.Label(rect, ReadoutText(knots, view, label), _speedReadoutStyle ??= SpeedReadoutStyle());
         }
@@ -1194,11 +1198,11 @@ namespace Airside.Presentation
             AirsideTheme.TextStyle(
                 new GUIStyle(GUI.skin.label)
                 {
-                    fontSize = 18,
+                    fontSize = 17,
                     fontStyle = FontStyle.Bold,
                     alignment = TextAnchor.MiddleCenter
                 },
-                AirsideTheme.Cloud);
+                AirsideTheme.Aqua);
 
         private void DrawControlBar(HudLayout layout, GUIStyle button)
         {

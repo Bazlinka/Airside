@@ -60,9 +60,7 @@ namespace Airside.Presentation
         private readonly HudDrawList _workspaceDrawList = new();
         private readonly HudDrawList _mapNetworkDrawList = new();
         private readonly HudDrawList _mapFilterDrawList = new();
-        private readonly List<HudTopBarSegment> _topBarSegments = new();
         private readonly List<HudNavTab> _navTabs = new();
-        private readonly string[] _topBarValues = new string[4];
         private readonly OperationsWorkspaceModel _operationsWorkspace = new();
         private readonly RouteMapWorkspaceModel _routeMapWorkspace = new();
         private readonly FleetWorkspaceModel _fleetWorkspace = new();
@@ -147,9 +145,12 @@ namespace Airside.Presentation
         /// <summary>True when the airline layer owns the keyboard this frame.</summary>
         private bool ReadAirlineControls(Keyboard keyboard)
         {
-            // The start and away-summary panels own the keyboard until dismissed.
+            // The title screen and away-summary panels own the keyboard until dismissed.
             if (AirlineModalOpen)
+            {
+                ReadSplashKeys(keyboard);
                 return true;
+            }
 
             // Help owns the keyboard while open (except F1 here and Esc in Prototype). The
             // other hotkeys used to run first, opening the hangar or planner behind it.
@@ -198,6 +199,9 @@ namespace Airside.Presentation
             // workspace panels behind it produced overlapping labels and live buttons.
             if (_menuOpen)
             {
+                // The title screen stays behind its Options menu, inert.
+                if (AirlineSetupOpen)
+                    DrawSplash(layout, interactive: false);
                 // Keep the full-screen pointer capture that prevents camera drags and
                 // scrolls behind the menu even though the underlying HUD is not drawn.
                 RememberHudPanels(layout, AirlineHudLayout.Create(layout, false), false);
@@ -209,16 +213,16 @@ namespace Airside.Presentation
             _lastGuideStep = _guideStep;
             var showGuide = !AirlineModalOpen && _guideStep != GuideStep.Complete;
             var placement = AirlineHudLayout.Create(layout, showGuide,
-                workspaceOpen: _activeWorkspace != HudWorkspace.None);
+                workspaceOpen: _activeWorkspace != HudWorkspace.None || _devToolsOpen);
             RememberHudPanels(layout, placement, showGuide);
 
             var label = _hudLabel ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true });
-            var small = _hudSmall ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 12, wordWrap = true }, AirsideTheme.OpenSky);
-            var smallButton = _hudSmallButton ??= AirsideTheme.ButtonStyle(new GUIStyle(GUI.skin.button) { fontSize = 13, fontStyle = FontStyle.Bold }, AirsideTheme.Cloud);
+            var small = _hudSmall ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 12, wordWrap = true }, AirsideTheme.InstrumentMuted);
+            var smallButton = _hudSmallButton ??= AirsideTheme.ButtonStyle(new GUIStyle(GUI.skin.button) { fontSize = 13, fontStyle = FontStyle.Bold }, AirsideTheme.InstrumentText);
 
             if (AirlineSetupOpen)
             {
-                DrawAirlineSetup(placement, panel, title, label, button);
+                DrawSplash(layout);
                 return;
             }
 
@@ -242,16 +246,15 @@ namespace Airside.Presentation
 
             // Under every panel, so a tag never sits on top of a button.
             DrawFieldTags(small);
-            DrawTopBar(placement);
-            // The objective card is part of the persistent shell: it stays in the same place
-            // whichever workspace is open, so the five pages read as one screen. It only gives
-            // way on a window too narrow to hold a usable workspace beside it.
-            if (showGuide)
-                DrawGuide(placement.Objective, panel, label, small);
-            else if (overview || ObjectiveSurvivesWorkspace(layout))
+            AnnounceCareerEvents();
+            DrawShellChrome(layout, placement);
+            // The career card and flight tiles belong to the overview; an open sheet replaces them.
+            if (overview && showGuide)
+                DrawGuide(placement.Objective);
+            else if (overview)
                 DrawObjectiveCard(placement.Objective);
             if (overview && placement.Operations.width > 0f)
-                DrawCompactOperations(placement.Operations, panel, label, small);
+                DrawCompactOperations(placement.Operations);
             if (_devToolsOpen)
                 DrawDevToolsPanel(placement.Workspace, panel, title, label, small, smallButton);
             else switch (_activeWorkspace)
@@ -274,10 +277,10 @@ namespace Airside.Presentation
             }
             DrawMiniMap(FieldMiniMap.PanelFor(layout, placement), panel, small);
             if (overview)
-                DrawSelectionHudCard(layout, placement, panel, label, small, smallButton);
+                DrawSelectionHudCard(layout, placement);
             if (_controlsHelpOpen)
                 DrawControlsHelp(layout, panel, title, label, small, smallButton);
-            DrawToast(placement.Toast, label);
+            DrawToast(placement.Toast);
         }
 
         /// <summary>
@@ -397,84 +400,6 @@ namespace Airside.Presentation
         }
         // ---- Start your airline ---------------------------------------------------
 
-        private void DrawAirlineSetup(AirlineHudLayout placement, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle button)
-        {
-            ProbeSavedAirline();
-            var hasSave = _savedAirline != null;
-            var saveBlock = hasSave || !string.IsNullOrEmpty(_saveError) ? 96f : 0f;
-            var panelHeight = 392f + saveBlock;
-            var rect = placement.SetupPanel(panelHeight);
-            GUI.Box(rect, GUIContent.none, panel);
-            var x = rect.x + 20f;
-            var inner = rect.width - 40f;
-
-            if (saveBlock > 0f)
-            {
-                var small = Styled(label, "setup-small", s => AirsideTheme.TextStyle(new GUIStyle(s) { fontSize = 12 }, AirsideTheme.OpenSky));
-                if (hasSave)
-                {
-                    if (GUI.Button(new Rect(x, rect.y + 16f, inner, 40f), $"Continue {SavedAirlineName()}", button))
-                        ContinueAirline();
-                    GUI.Label(new Rect(x, rect.y + 58f, inner, 20f), SavedAirlineSummary(), small);
-                }
-                else
-                {
-                    GUI.Label(new Rect(x, rect.y + 16f, inner, 60f), _saveError, small);
-                }
-
-                rect.y += saveBlock;
-                rect.height -= saveBlock;
-            }
-
-            var eyebrow = Styled(label, "setup-eyebrow", s => AirsideTheme.TextStyle(new GUIStyle(s)
-                { fontSize = 11, fontStyle = FontStyle.Bold }, AirsideTheme.SafetyYellow));
-            GUI.Label(new Rect(x, rect.y + 14f, inner, 16f), "ADELAIDE  ·  PROVISIONAL AIRLINE", eyebrow);
-            GUI.Label(new Rect(x, rect.y + 34f, inner, 28f),
-                hasSave ? "Or start a new airline" : "Start small. Grow the airline.", title);
-
-            GUI.Label(new Rect(x, rect.y + 72f, inner, 18f), "Airline name", label);
-            _airlineNameDraft = GUI.TextField(new Rect(x, rect.y + 94f, inner, 30f), _airlineNameDraft ?? string.Empty, 32);
-
-            GUI.Label(new Rect(x, rect.y + 136f, inner, 18f), "Livery colour", label);
-            var swatch = (inner - 5 * 8f) / LiveryChoices.Length;
-            for (var i = 0; i < LiveryChoices.Length; i++)
-            {
-                var cell = new Rect(x + i * (swatch + 8f), rect.y + 158f, swatch, 36f);
-                DrawSolid(cell, AirsideTheme.FromHex(LiveryChoices[i].hex));
-                if (i == _liveryChoice)
-                    AirsideTheme.DrawPanelFrame(cell, AirsideTheme.SafetyYellow);
-                if (GUI.Button(cell, GUIContent.none, GUIStyle.none))
-                    _liveryChoice = i;
-            }
-
-            var ladder = Styled(label, "setup-ladder", s => AirsideTheme.TextStyle(new GUIStyle(s)
-                { fontSize = 12, fontStyle = FontStyle.Bold }, AirsideTheme.OpenSky));
-            var blurb = Styled(label, "setup-blurb", s => AirsideTheme.TextStyle(new GUIStyle(s)
-                { fontSize = 13, wordWrap = true }, AirsideTheme.OpenSky));
-            if (!hasSave)
-            {
-                GUI.Label(new Rect(x, rect.y + 208f, inner, 18f),
-                    $"Saab 340B  →  ATR 42  →  Dash 8  →  jets   ·   ${AirlineCareerState.StartingFunds:N0} float",
-                    ladder);
-                GUI.Label(new Rect(x, rect.y + 230f, inner, 56f),
-                    "One Saab on the regional bays. Take contracts, earn enough for the ATR, "
-                    + "then unlock bigger metal step by step. Dispatch comes out of your float; "
-                    + "every flight pays, contracts add the bonus that buys the next aircraft.",
-                    blurb);
-            }
-            else
-            {
-                GUI.Label(new Rect(x, rect.y + 208f, inner, 40f),
-                    "A new airline replaces your saved one.", blurb);
-            }
-
-            var name = (_airlineNameDraft ?? string.Empty).Trim();
-            GUI.enabled = name.Length > 0;
-            if (GUI.Button(new Rect(x, rect.y + rect.height - 58f, inner, 40f), "Start airline", button))
-                StartAirline(name);
-            GUI.enabled = true;
-        }
-
         private void StartAirline(string name)
         {
             var player = Airline.Player(name, LiveryChoices[_liveryChoice].hex);
@@ -487,6 +412,7 @@ namespace Airside.Presentation
             ShowToast($"{name} is open for business. Plan a flight for {FirstPlayerAircraft()?.Registration}.");
             SaveAirline();
             PlayUiClick();
+            StartIntro($"Welcome to {name}");
         }
 
         // ---- Pointer over HUD ------------------------------------------------------------------
@@ -500,12 +426,15 @@ namespace Airside.Presentation
         /// <summary>Record where HUD panels are this frame, in virtual GUI points.</summary>
         private void RememberHudPanels(HudLayout layout, AirlineHudLayout placement, bool showGuide)
         {
+            _ = showGuide;
             _hudScale = HudLayout.ScaleFor(Screen.width, Screen.height);
             _hudPanels.Clear();
             _hudOverlays.Clear();
             if (!FleetMode)
                 _hudPanels.Add(layout.ControlBar);
-            _hudPanels.Add(layout.SpeedReadout);
+            var readout = SpeedReadoutRect(layout);
+            if (readout.width > 0f)
+                _hudPanels.Add(readout);
             // The menu is modal: the whole screen is HUD while it is up, so dragging or scrolling
             // beside it no longer orbits, pans or zooms the camera behind it.
             if (_menuOpen)
@@ -518,13 +447,12 @@ namespace Airside.Presentation
             }
 
             var overview = _activeWorkspace == HudWorkspace.None && !_devToolsOpen;
-            _hudPanels.Add(placement.TopBar);
-            // The objective card is persistent: it is still on screen, and still swallowing
-            // clicks, while a workspace is open beside it.
-            if (overview || showGuide || ObjectiveSurvivesWorkspace(layout))
+            _hudPanels.Add(placement.Rail);
+            _hudPanels.Add(placement.Capsule);
+            if (overview && placement.Objective.width > 0f)
                 _hudPanels.Add(placement.Objective);
             if (overview && placement.Operations.width > 0f)
-                _hudPanels.Add(placement.Operations);
+                _hudPanels.Add(OperationsTilesRect(placement.Operations));
             if (_activeWorkspace != HudWorkspace.None || _devToolsOpen)
                 _hudPanels.Add(placement.Workspace);
             if (MiniMapShows)
@@ -553,29 +481,20 @@ namespace Airside.Presentation
         private bool IsGuided(FleetAircraft aircraft, GuideStep step) =>
             _guideStep == step && ReferenceEquals(aircraft, _guideAircraft);
 
-        private void DrawGuide(Rect rect, GUIStyle panel, GUIStyle label, GUIStyle small)
+        private void DrawGuide(Rect rect)
         {
             if (rect.width < 8f || rect.height < 8f)
                 return;
             var (heading, hint) = GuideText(_guideStep, _guideAircraft);
-            DrawSolid(rect, new Color(AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g,
-                AirsideTheme.RunwayInk.b, 0.90f));
-            AirsideTheme.DrawPanelFrame(rect, AirsideTheme.OpenSky);
-            DrawSolid(new Rect(rect.x, rect.y, 4f, rect.height), AirsideTheme.SafetyYellow);
-            var caption = Styled(small, "priority-guide-caption", s => AirsideTheme.TextStyle(
-                new GUIStyle(s) { fontSize = 11, fontStyle = FontStyle.Bold }, AirsideTheme.SafetyYellow));
-            var bold = Styled(label, "priority-guide-heading", s => new GUIStyle(s)
-                { fontSize = 17, fontStyle = FontStyle.Bold, wordWrap = true });
-            GUI.Label(new Rect(rect.x + 18f, rect.y + 8f, rect.width - 32f, 16f),
-                "TODAY'S PRIORITY", caption);
-            GUI.Label(new Rect(rect.x + 18f, rect.y + 27f, rect.width - 32f, 28f), heading, bold);
-            GUI.Label(new Rect(rect.x + 18f, rect.y + 59f, rect.width - 32f,
-                Mathf.Max(0f, rect.height - 66f)), hint, small);
+            _shellDrawList.Clear();
+            HudShellPainter.PaintGuide(_shellDrawList, Box(rect), (int)_guideStep + 1, (int)GuideStep.Complete,
+                heading, hint);
+            _hudPainter.Draw(_shellDrawList);
         }
 
         /// <summary>
-        /// The current-objective card (ADR 0053): one contract or career action, a progress
-        /// bar, and a single Next line. Safety yellow is reserved for that current priority.
+        /// The career ring card (ADR 0121/0122): how much of the current stage is done, what it
+        /// earns, the pinned goal and one concrete next action.
         /// </summary>
         private void DrawObjectiveCard(Rect rect)
         {
@@ -584,52 +503,45 @@ namespace Airside.Presentation
 
             var objective = OperationsSummary.Objective(PlayerFleet(), _clock.Now, _operations.Clock,
                 _operations.CareerState, _operations.MarketOffers(), _operations.PinnedCareerGoal());
+            var stage = _operations.CareerStage();
             _shellDrawList.Clear();
-            HudShellPainter.PaintObjective(_shellDrawList, Box(rect), objective, objective.Caption);
-            _hudPainter.Draw(_shellDrawList);
+            HudShellPainter.PaintCareer(_shellDrawList, Box(rect), objective, stage.Fraction,
+                stage.FinaleReached ? "★" : $"{stage.Done}/{stage.Total}");
+            var clicked = _hudPainter.Draw(_shellDrawList);
+            if (clicked == null && GUI.Button(rect, GUIContent.none, GUIStyle.none))
+                SetWorkspace(HudWorkspace.Stats);
         }
-
-        /// <summary>True when this window is wide enough to keep the objective card beside a workspace.</summary>
-        private static bool ObjectiveSurvivesWorkspace(HudLayout layout) =>
-            HudShell.ObjectiveSurvivesWorkspace(layout.Viewport.x, layout.Viewport.y);
 
         private static HudBox Box(Rect rect) => new(rect.x, rect.y, rect.width, rect.height);
 
         // ---- Top bar and workspaces ---------------------------------------------------------
 
-        private GUIStyle _hudPrimaryButton;
-        private GUIStyle _hudDestructiveButton;
-        private GUIStyle _hudSecondaryButton;
+        private readonly List<HudCapsuleValue> _capsuleValues = new();
+        private readonly List<HudCapsuleSegment> _capsuleSegments = new();
 
         /// <summary>
-        /// Slim persistent strip: airline, Adelaide time, funds, reliability, tier and the
-        /// five workspaces. Operations stays visually selected on the default overview.
+        /// The persistent chrome (ADR 0122): the navigation rail with the airline's livery-ringed
+        /// brand mark, and the status capsule with Adelaide time, funds, reliability and tier.
         /// </summary>
-        private void DrawTopBar(AirlineHudLayout placement)
+        private void DrawShellChrome(HudLayout layout, AirlineHudLayout placement)
         {
-            var bar = Box(placement.TopBar);
-            var nav = Box(placement.NavStrip);
             var airline = _operations.PlayerAirline;
-            var career = _operations.CareerState;
-
-            _topBarValues[0] = $"ADELAIDE  {StampText(_clock.Now)}";
-            _topBarValues[1] = $"${career.Funds:N0}";
-            _topBarValues[2] = $"RELIABILITY {career.Reliability}%";
-            _topBarValues[3] = career.Tier.ToString().ToUpperInvariant();
-            HudShell.FillSegments(bar, airline.Name, nav, _topBarValues, _topBarSegments);
-            HudShell.FillTabs(nav, _activeWorkspace, _navTabs);
+            var rail = Box(placement.Rail);
+            HudShell.FillTabs(rail, layout.Viewport.y, _activeWorkspace, _navTabs);
+            HudShellPainter.CapsuleValues(_operations, StampText(_clock.Now), _capsuleValues);
+            HudShell.FillCapsule(Box(placement.Capsule), _capsuleValues, _capsuleSegments);
 
             _shellDrawList.Clear();
-            HudShellPainter.PaintTopBar(_shellDrawList, bar, nav, airline.Name, airline.LiveryHex,
-                _topBarSegments, _navTabs);
+            HudShellPainter.PaintRail(_shellDrawList, rail, airline.LiveryHex, _navTabs);
+            HudShellPainter.PaintCapsule(_shellDrawList, Box(placement.Capsule), _capsuleSegments);
             var clicked = _hudPainter.Draw(_shellDrawList);
 
-            // The approved brand mark, over the livery bar the painter lays down for it.
+            // The approved brand mark inside its livery ring.
             var mark = AirsideTheme.AppMarkLight;
             if (mark != null)
             {
-                var markBox = HudShell.MarkBox(bar);
-                GUI.DrawTexture(HudPainter.ToRect(markBox), mark, ScaleMode.ScaleToFit, true);
+                var markBox = HudShell.RailMark(rail);
+                GUI.DrawTexture(HudPainter.ToRect(markBox.Inset(7f)), mark, ScaleMode.ScaleToFit, true);
             }
 
             if (clicked == null)
@@ -647,21 +559,19 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>Compact player-only Operations list. AI traffic stays on the full board.</summary>
-        private void DrawCompactOperations(Rect area, GUIStyle panel, GUIStyle label, GUIStyle small)
+        /// <summary>Live flight tiles for the player's own fleet. AI traffic stays on the full board.</summary>
+        private void DrawCompactOperations(Rect area)
         {
             if (area.width < 8f || area.height < 8f)
                 return;
 
             var fleet = PlayerFleet();
             OperationsSummary.FillPlayerRows(fleet, _clock.Now, _compactOpsRows);
-            var available = OperationsSummary.AvailableCount(fleet, _clock.Now);
-            var height = Mathf.Min(area.height, 36f + _compactOpsRows.Count * 28f + 28f);
-            var rect = new Rect(area.x, area.y, area.width, height);
-            var visibleRows = Mathf.Max(1, Mathf.FloorToInt((rect.height - 64f) / 28f));
-            visibleRows = Mathf.Min(visibleRows, _compactOpsRows.Count);
-            if (_compactOpsRows.Count > visibleRows)
+            var box = Box(area);
+            var visibleRows = HudShellPainter.VisibleTiles(box, _compactOpsRows.Count);
+            if (visibleRows > 0 && _compactOpsRows.Count > visibleRows)
             {
+                // The priority aircraft always keeps a tile.
                 var priorityIndex = _compactOpsRows.FindIndex(row => row.IsPriority);
                 if (priorityIndex >= visibleRows)
                 {
@@ -670,60 +580,41 @@ namespace Airside.Presentation
                     _compactOpsRows[priorityIndex] = keep;
                 }
             }
-            AirsideTheme.DrawOpaquePanel(rect);
-            GUI.Box(rect, GUIContent.none, panel);
-
-            var mute = Styled(small, "ops-mute", s => AirsideTheme.TextStyle(
-                new GUIStyle(s) { fontSize = 11, fontStyle = FontStyle.Bold }, AirsideTheme.Concrete));
-            var bold = Styled(label, "ops-reg", s => new GUIStyle(s) { fontSize = 13, fontStyle = FontStyle.Bold });
-            GUI.Label(new Rect(rect.x + 14f, rect.y + 8f, rect.width - 28f, 16f), "OPERATIONS", mute);
-
-            var y = rect.y + 28f;
-            var inner = rect.width - 28f;
-            for (var rowIndex = 0; rowIndex < visibleRows; rowIndex++)
-            {
-                var row = _compactOpsRows[rowIndex];
-                var rowRect = new Rect(rect.x + 10f, y, inner + 8f, 26f);
-                if (row.IsPriority)
-                    DrawSolid(rowRect, new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.28f));
-                else if (_selectedAircraftId == row.Registration)
-                    DrawSolid(rowRect, new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.18f));
-
-                DrawSolid(new Rect(rowRect.x + 4f, rowRect.y + 7f, 4f, 12f),
-                    row.IsPriority ? AirsideTheme.CoastalBlue : AirsideTheme.ClearGreen);
-                GUI.Label(new Rect(rowRect.x + 14f, rowRect.y + 4f, 72f, 18f), row.Registration, bold);
-                GUI.Label(new Rect(rowRect.x + 90f, rowRect.y + 4f, 48f, 18f), row.Route.ToUpperInvariant(), small);
-                var stateStyle = row.IsPriority
-                    ? Styled(small, "ops-priority", s => AirsideTheme.TextStyle(new GUIStyle(s) { fontStyle = FontStyle.Bold }, AirsideTheme.SafetyYellow))
-                    : small;
-                GUI.Label(new Rect(rowRect.x + 140f, rowRect.y + 4f, rowRect.width - 148f, 18f), row.State, stateStyle);
-                if (GUI.Button(rowRect, GUIContent.none, GUIStyle.none))
-                {
-                    foreach (var aircraft in fleet)
-                    {
-                        if (aircraft.Registration == row.Registration)
-                        {
-                            SelectAircraft(aircraft);
-                            break;
-                        }
-                    }
-                }
-
-                y += 28f;
-            }
-
+            var available = OperationsSummary.AvailableCount(fleet, _clock.Now);
             var hidden = _compactOpsRows.Count - visibleRows;
             var footer = hidden > 0
-                ? $"{visibleRows} shown · {hidden} more in Operations"
+                ? $"{visibleRows} shown · {hidden} more in Ops"
                 : available == 1 ? "1 aircraft available" : $"{available} aircraft available";
-            GUI.Label(new Rect(rect.x + 14f, rect.yMax - 22f, inner, 16f), footer, mute);
+            _shellDrawList.Clear();
+            HudShellPainter.PaintOperations(_shellDrawList, box, _compactOpsRows, _selectedAircraftId, footer);
+            var clicked = _hudPainter.Draw(_shellDrawList);
+            var registration = HudAction.Payload(clicked, HudAction.SelectPrefix);
+            if (registration.Length == 0)
+                return;
+            foreach (var aircraft in fleet)
+            {
+                if (aircraft.Registration != registration)
+                    continue;
+                SelectAircraft(aircraft);
+                break;
+            }
+        }
+
+        /// <summary>The part of the tiles slot actually drawn, so clicks below it still reach the field.</summary>
+        private Rect OperationsTilesRect(Rect area)
+        {
+            var count = _compactOpsRows.Count > 0 ? _compactOpsRows.Count : 1;
+            var box = Box(area);
+            var visible = HudShellPainter.VisibleTiles(box, count);
+            var height = HudShell.OperationsHeaderHeight + visible * (HudShell.OperationsTileHeight + 6f) + 22f;
+            return new Rect(area.x, area.y, area.width, Mathf.Min(area.height, height));
         }
 
         /// <summary>A gentle yellow pulse around the control the guide is pointing at.</summary>
         private static void DrawGuideHighlight(Rect rect)
         {
             var pulse = 0.45f + 0.55f * Mathf.PingPong(Time.unscaledTime * 1.6f, 1f);
-            var colour = AirsideTheme.SafetyYellow;
+            var colour = AirsideTheme.Amber;
             colour.a = pulse;
             AirsideTheme.DrawPanelFrame(new Rect(rect.x - 3f, rect.y - 3f, rect.width + 6f, rect.height + 6f), colour);
         }
@@ -881,6 +772,7 @@ namespace Airside.Presentation
                 ShowToast($"Welcome back to {_operations.PlayerAirline.Name}.");
             SaveAirline();
             PlayUiClick();
+            StartIntro($"Welcome back to {_operations.PlayerAirline.Name}");
         }
 
         private void RequestAutosave() => _nextAutosaveAt = Mathf.Min(_nextAutosaveAt, Time.unscaledTime + 2f);
@@ -932,120 +824,93 @@ namespace Airside.Presentation
                 ShowToast(result.Reason);
         }
 
-        /// <summary>Contextual selected-aircraft card: one dominant action, prep state for booked
-        /// departures, stand choices after landing, and Cancel as a smaller red secondary.
+        /// <summary>
+        /// Where the live speed/altitude strip sits: the circuit's own slot, or — in the airline —
+        /// a glass strip in the selected-card slot, only while no card is up (the card already
+        /// carries the live readout). Zero-sized when there is nowhere free for it.
         /// </summary>
-        private void DrawSelectionHudCard(HudLayout hud, AirlineHudLayout placement, GUIStyle panel, GUIStyle label, GUIStyle small,
-            GUIStyle smallButton)
+        private Rect SpeedReadoutRect(HudLayout layout)
+        {
+            if (!FleetMode || _operations == null)
+                return layout.SpeedReadout;
+            if (_activeWorkspace != HudWorkspace.None || _devToolsOpen)
+                return default;
+            var placement = AirlineHudLayout.Create(layout, _guideStep != GuideStep.Complete);
+            var slot = placement.SelectedCard;
+            if (slot.height <= 0f || TrySelectionHudCardRect(layout, placement, out _))
+                return default;
+            var width = Mathf.Min(HudLayout.ReadoutWidth, slot.width);
+            return new Rect(slot.center.x - width * 0.5f, slot.yMax - HudLayout.ReadoutHeight, width,
+                HudLayout.ReadoutHeight);
+        }
+
+        private readonly SelectionCardData _selectionCard = new();
+        private readonly HudDrawList _selectionDrawList = new();
+
+        /// <summary>
+        /// Contextual selected-aircraft card (ADR 0122): identity and phase chip, route and live
+        /// readout, the turnaround timeline for a booked departure, one amber action and Cancel —
+        /// or the stand choices after landing.
+        /// </summary>
+        private void DrawSelectionHudCard(HudLayout hud, AirlineHudLayout placement)
         {
             if (!TrySelectionHudCardRect(hud, placement, out var rect, out var aircraft))
                 return;
 
-            AirsideTheme.DrawOpaquePanel(rect);
-            GUI.Box(rect, GUIContent.none, panel);
-            var accent = AirsideTheme.FromHex(aircraft.Airline.LiveryHex);
-            DrawSolid(new Rect(rect.x, rect.y, 4f, rect.height), accent);
-
-            var bold = Styled(label, "sel-title", s => new GUIStyle(s) { fontSize = 16, fontStyle = FontStyle.Bold });
-            var mute = Styled(small, "sel-mute", s => AirsideTheme.TextStyle(new GUIStyle(s) { wordWrap = false }, AirsideTheme.Concrete));
-            var x = rect.x + 16f;
-            var inner = rect.width - 32f;
-            GUI.Label(new Rect(x, rect.y + 10f, inner, 22f),
-                $"{aircraft.Registration}  ·  {aircraft.Type.Name}", bold);
-            GUI.Label(new Rect(x, rect.y + 32f, inner, 18f), SelectionRouteLine(aircraft), mute);
-            GUI.Label(new Rect(x, rect.y + 50f, inner, 18f), SelectionLiveStats(aircraft), mute);
-
-            var y = rect.y + 72f;
-            if (ShowsDeparturePrep(aircraft))
-                DrawDeparturePrepChecks(aircraft, x, y, inner, small);
-
-            if (!aircraft.Airline.IsPlayer)
-                return;
-
-            if (aircraft.State == FleetState.AwaitingStand)
-            {
-                DrawStandChoices(aircraft, x, rect.yMax - StandChoicesBlockHeight(aircraft) - 8f, inner, smallButton);
-                return;
-            }
-
             var action = OperationsSummary.PrimaryAction(aircraft, _clock.Now);
-            var primary = _hudPrimaryButton ??= AirsideTheme.PrimaryButtonStyle(
-                new GUIStyle(smallButton) { fontSize = 14, fontStyle = FontStyle.Bold });
-            var destructive = _hudDestructiveButton ??= AirsideTheme.DestructiveButtonStyle(
-                new GUIStyle(smallButton) { fontSize = 13 });
-
-            var canCancel = aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue;
-            var primaryWidth = canCancel ? inner - 118f : inner;
-            var primaryRect = new Rect(x, rect.yMax - 52f, primaryWidth, 40f);
-            if (IsGuided(aircraft, GuideStep.PlanFirstFlight) && action == AircraftHudAction.PlanFlight)
-                DrawGuideHighlight(primaryRect);
-            if (GUI.Button(primaryRect, OperationsSummary.ActionLabel(action).ToUpperInvariant(), primary))
-                RunSelectionAction(aircraft, action);
-
-            if (canCancel)
-            {
-                var cancelRect = new Rect(x + primaryWidth + 10f, rect.yMax - 52f, 108f, 40f);
-                AirsideTheme.DrawPanelFrame(cancelRect, AirsideTheme.SignalRed);
-                if (GUI.Button(cancelRect, "CANCEL", destructive))
-                    CancelPlannedFlight(aircraft);
-            }
-        }
-
-        private float StandChoicesBlockHeight(FleetAircraft aircraft)
-        {
-            var count = 0;
-            foreach (var _ in _operations.AssignableStands(aircraft))
-                count++;
-            if (count == 0)
-                count = 1;
-            // Two columns of 30px buttons + gap.
-            var rows = (count + 1) / 2;
-            return 18f + rows * 34f;
-        }
-
-        private void DrawStandChoices(FleetAircraft aircraft, float x, float y, float width, GUIStyle smallButton)
-        {
-            var choices = _operations.AssignableStands(aircraft);
-            var suggested = _operations.SuggestStand(aircraft);
-            var caption = Styled(GUI.skin.label, "stand-cap",
-                s => AirsideTheme.TextStyle(new GUIStyle(s) { fontSize = 11, fontStyle = FontStyle.Bold },
-                    AirsideTheme.Concrete));
-            GUI.Label(new Rect(x, y, width, 16f), "CHOOSE STAND", caption);
-            y += 18f;
-
-            var primary = _hudPrimaryButton ??= AirsideTheme.PrimaryButtonStyle(
-                new GUIStyle(smallButton) { fontSize = 13, fontStyle = FontStyle.Bold });
-            var secondary = _hudSecondaryButton ??= AirsideTheme.ButtonStyle(
-                new GUIStyle(smallButton) { fontSize = 13, fontStyle = FontStyle.Bold }, AirsideTheme.Cloud);
-
-            var col = 0;
-            var rowY = y;
-            var gap = 8f;
-            var buttonWidth = (width - gap) * 0.5f;
-            if (choices.Count == 0)
-            {
-                if (GUI.Button(new Rect(x, rowY, width, 30f), "ALL STANDS FULL", secondary))
-                    ShowToast("All stands occupied — wait for one to clear.");
+            _selectionDrawList.Clear();
+            SelectionCardPainter.Paint(_selectionDrawList, Box(rect), _selectionCard);
+            var clicked = _hudPainter.Draw(_selectionDrawList);
+            if (clicked == null || !aircraft.Airline.IsPlayer)
                 return;
-            }
-
-            foreach (var stand in choices)
+            if (clicked == HudAction.Primary)
+                RunSelectionAction(aircraft, action);
+            else if (clicked == HudAction.Cancel)
+                CancelPlannedFlight(aircraft);
+            else
             {
-                var isBest = suggested.HasValue && stand.Equals(suggested.Value);
-                var label = isBest
-                    ? $"BEST · {StandNames.Short(stand)}"
-                    : StandNames.Short(stand);
-                var bx = x + col * (buttonWidth + gap);
-                var style = isBest ? primary : secondary;
-                if (IsGuided(aircraft, GuideStep.ChooseStand) && isBest)
-                    DrawGuideHighlight(new Rect(bx, rowY, buttonWidth, 30f));
-                if (GUI.Button(new Rect(bx, rowY, buttonWidth, 30f), label, style))
-                    AssignStandFromHud(aircraft, stand);
-                col++;
-                if (col < 2)
-                    continue;
-                col = 0;
-                rowY += 34f;
+                var standId = HudAction.Payload(clicked, HudAction.StandPrefix);
+                if (standId.Length > 0)
+                    AssignStandFromHud(aircraft, new StableId(standId));
+            }
+        }
+
+        /// <summary>Words the selected aircraft into the card's data, reusing one instance per frame.</summary>
+        private void FillSelectionCard(FleetAircraft aircraft)
+        {
+            var card = _selectionCard;
+            card.Registration = aircraft.Registration;
+            card.TypeName = aircraft.Type.Name;
+            card.LiveryHex = aircraft.Airline.LiveryHex;
+            card.RouteLine = SelectionRouteLine(aircraft);
+            card.LiveLine = SelectionLiveStats(aircraft);
+            card.PhaseLabel = AircraftStatus.TagPhase(aircraft, _clock.Now);
+            var severity = AircraftStatus.Severity(aircraft, _clock.Now);
+            card.PhaseTone = severity == StatusSeverity.Warning ? HudTone.Negative
+                : severity == StatusSeverity.Attention ? HudTone.Caution : HudTone.Accent;
+            card.IsPlayer = aircraft.Airline.IsPlayer;
+            card.AwaitingStand = aircraft.State == FleetState.AwaitingStand;
+            var action = OperationsSummary.PrimaryAction(aircraft, _clock.Now);
+            card.PrimaryLabel = OperationsSummary.ActionLabel(action);
+            card.CanCancel = aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue;
+            card.GuidePrimary = IsGuided(aircraft, GuideStep.PlanFirstFlight) && action == AircraftHudAction.PlanFlight;
+            card.GuideBestStand = IsGuided(aircraft, GuideStep.ChooseStand);
+            card.Prep.Clear();
+            if (ShowsDeparturePrep(aircraft))
+            {
+                var prep = DeparturePrep.For(aircraft, _clock.Now, _operations.CareerState.BaseLevel);
+                card.Prep.Add(new SelectionPrepStage("Fuel", (float)prep.FuelProgress, prep.Stage == DeparturePrepStage.Fuel));
+                card.Prep.Add(new SelectionPrepStage("Catering", (float)prep.CateringProgress, prep.Stage == DeparturePrepStage.Catering));
+                card.Prep.Add(new SelectionPrepStage("Baggage", (float)prep.BaggageProgress, prep.Stage == DeparturePrepStage.Baggage));
+                card.Prep.Add(new SelectionPrepStage("Boarding", (float)prep.BoardingProgress, prep.Stage == DeparturePrepStage.Boarding));
+            }
+            card.Stands.Clear();
+            if (card.IsPlayer && card.AwaitingStand)
+            {
+                var suggested = _operations.SuggestStand(aircraft);
+                foreach (var stand in _operations.AssignableStands(aircraft))
+                    card.Stands.Add(new SelectionStandChoice(stand.Value, StandNames.Short(stand),
+                        suggested.HasValue && stand.Equals(suggested.Value)));
             }
         }
 
@@ -1060,28 +925,6 @@ namespace Airside.Presentation
             if (aircraft.CurrentDestination.HasValue)
                 return $"Adelaide → {aircraft.CurrentDestination.Value.Name}";
             return StandNames.Display(aircraft.Stand);
-        }
-
-        private float DrawDeparturePrepChecks(FleetAircraft aircraft, float x, float y, float width, GUIStyle small)
-        {
-            var prep = DeparturePrep.For(aircraft, _clock.Now, _operations.CareerState.BaseLevel);
-            var slot = width / 4f;
-            DrawPrepCheck(x, y, slot, "Fuel", prep.FuelProgress, prep.Stage == DeparturePrepStage.Fuel, small);
-            DrawPrepCheck(x + slot, y, slot, "Catering", prep.CateringProgress, prep.Stage == DeparturePrepStage.Catering, small);
-            DrawPrepCheck(x + slot * 2f, y, slot, "Baggage", prep.BaggageProgress, prep.Stage == DeparturePrepStage.Baggage, small);
-            DrawPrepCheck(x + slot * 3f, y, slot, "Boarding", prep.BoardingProgress, prep.Stage == DeparturePrepStage.Boarding, small);
-            return y + 22f;
-        }
-
-        private void DrawPrepCheck(float x, float y, float width, string name, double progress, bool active, GUIStyle small)
-        {
-            var done = progress >= 1;
-            var colour = done ? AirsideTheme.ClearGreen : active ? AirsideTheme.SafetyYellow : AirsideTheme.Concrete;
-            var mark = done ? "✓" : active ? "●" : "○";
-            var text = active ? $"{name} {DeparturePrep.Percent(progress)}%" : name;
-            var style = Styled(small, done ? "prep-done" : active ? "prep-active" : "prep-wait",
-                s => AirsideTheme.TextStyle(new GUIStyle(s) { fontStyle = FontStyle.Bold }, colour));
-            GUI.Label(new Rect(x, y, width, 18f), $"{mark}  {text}", style);
         }
 
         private void RunSelectionAction(FleetAircraft aircraft, AircraftHudAction action)
@@ -1166,15 +1009,9 @@ namespace Airside.Presentation
                 return false;
             if (_activeWorkspace != HudWorkspace.None || _devToolsOpen)
                 return false;
-            var height = aircraft.State == FleetState.AwaitingStand && aircraft.Airline.IsPlayer
-                ? Mathf.Min(72f + StandChoicesBlockHeight(aircraft) + 16f, placement.SelectedCard.height)
-                : ShowsDeparturePrep(aircraft) ? 168f
-                : aircraft.Airline.IsPlayer ? 134f
-                : 88f;
-            height = Mathf.Min(height, placement.SelectedCard.height);
+            FillSelectionCard(aircraft);
+            var height = Mathf.Min(SelectionCardPainter.HeightFor(_selectionCard), placement.SelectedCard.height);
             var bottom = placement.SelectedCard.yMax;
-            if (FleetMode)
-                bottom = Mathf.Min(bottom, hud.SpeedReadout.y - HudLayout.ReadoutGap);
             rect = new Rect(placement.SelectedCard.x, bottom - height,
                 placement.SelectedCard.width, height);
             return true;
@@ -1511,7 +1348,7 @@ namespace Airside.Presentation
             var home = _operations.Home;
             var workspaceLayout = RouteMapWorkspaceLayout.Create(Box(rect));
             var mapRect = HudPainter.ToRect(workspaceLayout.Map);
-            var ink = AirsideTheme.RunwayInk;
+            var ink = AirsideTheme.Glass;
 
             // Surface, title and the destination detail pane come from the shared painter;
             // the live map inside it keeps its own zoom, pan, tracking and pointer handling.
@@ -1633,9 +1470,9 @@ namespace Airside.Presentation
                 var hoverPoint = new Vector2(_mapDestinationPoints[hovered].x, _mapDestinationPoints[hovered].y);
                 if (!(_mapSelection.HasValue && _mapSelection.Value.Equals(_mapDestinationRows[hovered].Destination)))
                     DrawGreatCircle(mapRect, home, _mapDestinationRows[hovered].Destination, 0.0, 1.0,
-                        new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.35f), 1.5f);
+                        new Color(AirsideTheme.InstrumentText.r, AirsideTheme.InstrumentText.g, AirsideTheme.InstrumentText.b, 0.35f), 1.5f);
                 AirsideTheme.DrawPanelFrame(new Rect(hoverPoint.x - 9f, hoverPoint.y - 9f, 18f, 18f),
-                    AirsideTheme.Cloud);
+                    AirsideTheme.InstrumentText);
             }
 
             DrawLiveMapTraffic(mapRect, small);
@@ -1659,7 +1496,7 @@ namespace Airside.Presentation
                 var iconSize = Mathf.Lerp(18f, 30f, Mathf.InverseLerp(1f, 12f, _mapLens.Zoom)) * (mine ? 1.15f : 0.85f);
                 var iconAlpha = isSelected || i == tracked ? 1f : Ownership.AlphaFor(flight.Aircraft.Airline);
                 if (isSelected || i == tracked)
-                    DrawPlaneIcon(flight.Point, iconSize + 8f, flight.HeadingDegrees, AirsideTheme.SafetyYellow);
+                    DrawPlaneIcon(flight.Point, iconSize + 8f, flight.HeadingDegrees, AirsideTheme.Amber);
                 else if (mine)
                     DrawPlaneIcon(flight.Point, iconSize + 6f, flight.HeadingDegrees, new Color(1f, 1f, 1f, 0.85f));
                 DrawPlaneIcon(flight.Point, iconSize + 3f, flight.HeadingDegrees, new Color(0f, 0f, 0f, 0.75f * iconAlpha));
@@ -1681,7 +1518,7 @@ namespace Airside.Presentation
                 _mapFlightLabelBoxes.Add(labelBox);
                 var labelRect = HudPainter.ToRect(labelBox);
                 if (detailed)
-                    DrawSolid(labelRect, new Color(ink.r, ink.g, ink.b, 0.75f));
+                    AirsideTheme.DrawRounded(labelRect, new Color(ink.r, ink.g, ink.b, 0.8f), 5f);
                 GUI.Label(new Rect(labelRect.x + 4f, labelRect.y + 1f, labelRect.width - 8f, 18f),
                     $"{FlightNumber.OrRegistration(flight.Aircraft)} → {flight.To.Code}", small);
                 if (detailed)
@@ -1703,8 +1540,8 @@ namespace Airside.Presentation
                     Mathf.Max(mapRect.x, Mathf.Min(h.x + 12f, mapRect.xMax - 250f)),
                     h.y + 12f + 22f > mapRect.yMax ? h.y - 12f - 22f : h.y + 12f,
                     250f, 22f);
-                DrawSolid(tipRect, new Color(ink.r, ink.g, ink.b, 0.92f));
-                AirsideTheme.DrawPanelFrame(tipRect, row.Reachable ? AirsideTheme.ClearGreen : AirsideTheme.Concrete);
+                AirsideTheme.DrawRounded(tipRect, new Color(ink.r, ink.g, ink.b, 0.92f), 8f);
+                AirsideTheme.DrawPanelFrame(tipRect, row.Reachable ? AirsideTheme.GoGreen : AirsideTheme.InstrumentMuted);
                 GUI.Label(new Rect(tipRect.x + 6f, tipRect.y + 2f, tipRect.width - 12f, 18f), tip, small);
             }
 
@@ -1864,7 +1701,7 @@ namespace Airside.Presentation
             var since = Time.realtimeSinceStartup - _liveFetchedAt;
             var size = Mathf.Lerp(12f, 20f, Mathf.InverseLerp(1f, 12f, _mapLens.Zoom));
             var labelled = _mapLens.Zoom >= 4f;
-            var cloud = AirsideTheme.Cloud;
+            var cloud = AirsideTheme.InstrumentText;
             foreach (var aircraft in _liveAircraft)
             {
                 if (LiveTraffic.ModelFor(aircraft.TypeCode) == null
@@ -2051,7 +1888,7 @@ namespace Airside.Presentation
                     fontSize = 11,
                     fontStyle = FontStyle.Bold,
                     alignment = TextAnchor.MiddleCenter
-                }, AirsideTheme.OpenSky));
+                }, AirsideTheme.InstrumentMuted));
                 foreach (var (code, lon, lat) in AustraliaMapGeometry.StateLabels)
                 {
                     var p = Project(mapRect, lon, lat);
@@ -2066,7 +1903,7 @@ namespace Airside.Presentation
                 {
                     fontSize = 10,
                     alignment = TextAnchor.MiddleCenter
-                }, AirsideTheme.Cloud));
+                }, AirsideTheme.InstrumentText));
                 foreach (var (name, lon, lat) in AustraliaMapGeometry.RegionLabels)
                 {
                     var p = Project(mapRect, lon, lat);
@@ -2075,7 +1912,7 @@ namespace Airside.Presentation
                 }
             }
 
-            var hint = Styled(GUI.skin.label, "map-hint", s => AirsideTheme.TextStyle(new GUIStyle(s) { fontSize = 11 }, AirsideTheme.Concrete));
+            var hint = Styled(GUI.skin.label, "map-hint", s => AirsideTheme.TextStyle(new GUIStyle(s) { fontSize = 11 }, AirsideTheme.InstrumentMuted));
             GUI.Label(new Rect(mapRect.x + 6f, mapRect.yMax - 20f, mapRect.width - 12f, 18f),
                 "Scroll to zoom · drag to pan · click a destination, or a plane to track it", hint);
         }
@@ -2210,14 +2047,13 @@ namespace Airside.Presentation
             _workspaceDrawList.Clear();
             _workspaceDrawList.Surface(surface);
             var header = HudShell.Header(surface);
-            _workspaceDrawList.Text(new HudBox(header.X + HudShell.SurfacePadding, header.Y + 16f,
-                header.Width - 260f, 30f), "FLEET · NETWORK", 25f, HudTone.Default,
-                HudTextStyle.Bold | HudTextStyle.Caption);
+            HudShellPainter.PaintSheetHeader(_workspaceDrawList, surface, "Network",
+                "Outstation bases and the aircraft flying from them",
+                new HudBox(header.X + HudShell.SurfacePadding + 12f, header.Y + 14f, header.Width * 0.5f, 30f),
+                new HudBox(header.X + HudShell.SurfacePadding, header.Y + 44f, header.Width - 300f, 16f));
             var close = OperationsWorkspacePainter.CloseBox(surface);
-            _workspaceDrawList.Button(new HudBox(close.X - 112f, close.Y, 104f, close.Height),
+            _workspaceDrawList.Button(HudShellPainter.HeaderActionBox(surface),
                 "ADELAIDE", "network:back", HudButtonStyle.Secondary);
-            _workspaceDrawList.Button(close, "CLOSE", HudAction.Close, HudButtonStyle.Secondary);
-            _workspaceDrawList.Hairline(HudShell.HeaderRule(surface));
             _workspaceDrawList.Caption(left.WithHeight(18f), "BASES");
             var candidates = new[] { "MEL", "SYD", "BNE", "PER" };
             for (var i = 0; i < candidates.Length; i++)
@@ -2268,9 +2104,13 @@ namespace Airside.Presentation
                 "network:type-prev", HudButtonStyle.Secondary);
             _workspaceDrawList.Button(new HudBox(right.X + 64f, right.Y + 60f, 58f, 28f), "NEXT",
                 "network:type-next", HudButtonStyle.Secondary);
+            var flyable = _operations.HasOutstationRoute(offer.Type, _selectedNetworkBase);
             _workspaceDrawList.Button(new HudBox(right.Right - 135f, right.Y + 60f, 135f, 28f),
                 "BUY AT BASE", "network:buy", HudButtonStyle.Primary,
-                _operations.CareerState.HasOutstationBase(_selectedNetworkBase));
+                _operations.CareerState.HasOutstationBase(_selectedNetworkBase) && flyable);
+            if (!flyable)
+                _workspaceDrawList.Text(new HudBox(right.X + 130f, right.Y + 66f, right.Width - 275f, 18f),
+                    $"No route from {_selectedNetworkBase}", 11f, HudTone.Caution);
             _workspaceDrawList.Hairline(new HudBox(right.X, right.Y + 103f, right.Width, 1f));
             OutstationAircraft selected = null;
             foreach (var aircraft in based)
@@ -2312,7 +2152,8 @@ namespace Airside.Presentation
                         selected.CheckDue ? "network:check" : "network:plan",
                         HudButtonStyle.Primary, !selected.HasFlight
                         && !selected.InCheck(_clock.Now.ElapsedSeconds));
-                    var repeat = _operations.RepeatSchedules.FirstOrDefault(p => p.Registration == selected.Registration);
+                    var repeat = _operations.RepeatSchedules.FirstOrDefault(p => p.Registration == selected.Registration
+                        && p.DestinationCode == destination.Code);
                     _workspaceDrawList.Button(new HudBox(right.X + 160f, right.Y + 256f, 155f, 32f),
                         repeat == null ? "REPEAT 12 HOURS" : repeat.Paused ? "RESUME REPEAT" : "PAUSE REPEAT",
                         "network:repeat", HudButtonStyle.Secondary, _operations.DelegationUnlocked);
@@ -2363,96 +2204,89 @@ namespace Airside.Presentation
             FleetWorkspacePainter.Paint(_workspaceDrawList, _fleetWorkspace, layout, _selectedAircraftId,
                 _rosterScrollRow, _fleetShowOtherOperators);
             var close = OperationsWorkspacePainter.CloseBox(surface);
-            _workspaceDrawList.Button(new HudBox(close.X - 112f, close.Y, 104f, close.Height),
+            _workspaceDrawList.Button(HudShellPainter.HeaderActionBox(surface),
                 "NETWORK", "network:view", HudButtonStyle.Secondary);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
         }
 
         /// <summary>The Contracts workspace (ADR 0057): the active commitment beside the market.</summary>
-        private bool _careerRoadmapView;
-        private int _careerRoadmapScroll;
-
         private void DrawContractsWorkspace(Rect rect)
         {
-            if (_careerRoadmapView)
-            {
-                DrawCareerRoadmap(rect);
-                return;
-            }
             _contractsWorkspace.Rebuild(_operations, _clock.Now);
             var layout = ContractsWorkspaceLayout.Create(Box(rect), _contractsWorkspace.ActiveTerms.Count);
             ContractsWorkspacePainter.Paint(_workspaceDrawList, _contractsWorkspace, layout,
                 _highlightedContractId);
-            var close = OperationsWorkspacePainter.CloseBox(Box(rect));
-            _workspaceDrawList.Button(new HudBox(close.X - 112f, close.Y, 104f, close.Height),
+            _workspaceDrawList.Button(HudShellPainter.HeaderActionBox(Box(rect)),
                 "CAREER", HudAction.CareerRoadmap, HudButtonStyle.Secondary);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
         }
 
-        private void DrawCareerRoadmap(Rect rect)
+        private float _abandonArmedUntil;
+
+        /// <summary>Two clicks within five seconds, so a stray click never costs reliability.</summary>
+        private void AbandonContractFromHud()
         {
-            var surface = Box(rect);
-            var goals = _operations.CareerGoals();
-            var body = HudShell.Body(surface, hasFooter: true);
-            const float rowHeight = 44f;
-            var visible = Math.Max(1, (int)(body.Height / rowHeight));
-            _careerRoadmapScroll = ScrollRows(_careerRoadmapScroll, body, goals.Count - visible);
-            _workspaceDrawList.Clear();
-            _workspaceDrawList.Surface(surface);
-            var header = HudShell.Header(surface);
-            _workspaceDrawList.Text(new HudBox(header.X + HudShell.SurfacePadding, header.Y + 16f,
-                header.Width - 260f, 30f), "CAREER ROADMAP", 25f, HudTone.Default,
-                HudTextStyle.Bold | HudTextStyle.Caption);
-            var close = OperationsWorkspacePainter.CloseBox(surface);
-            _workspaceDrawList.Button(new HudBox(close.X - 112f, close.Y, 104f, close.Height),
-                "OFFERS", HudAction.ContractMarket, HudButtonStyle.Secondary);
-            _workspaceDrawList.Button(close, "CLOSE", HudAction.Close, HudButtonStyle.Secondary);
-            _workspaceDrawList.Hairline(HudShell.HeaderRule(surface));
-            for (var i = _careerRoadmapScroll; i < goals.Count && i < _careerRoadmapScroll + visible; i++)
+            var career = _operations.CareerState;
+            if (career.ActiveContract == null)
+                return;
+            if (Time.unscaledTime > _abandonArmedUntil)
             {
-                var goal = goals[i];
-                var row = new HudBox(body.X, body.Y + (i - _careerRoadmapScroll) * rowHeight,
-                    body.Width, rowHeight - 3f);
-                var available = goal.Stage <= _operations.CareerState.Tier;
-                var pinned = goal.Id == _operations.CareerState.PinnedGoalId;
-                _workspaceDrawList.Fill(row, pinned ? HudTone.Accent : HudTone.Default,
-                    pinned ? 0.23f : (i & 1) == 0 ? 0.06f : 0.025f);
-                _workspaceDrawList.Text(new HudBox(row.X + 12f, row.Y + 4f, row.Width - 245f, 20f),
-                    goal.Title, 13f, available ? HudTone.Default : HudTone.Muted,
-                    pinned ? HudTextStyle.Bold : HudTextStyle.Regular);
-                _workspaceDrawList.Text(new HudBox(row.X + 12f, row.Y + 23f, row.Width - 245f, 16f),
-                    goal.Stage + " · " + (goal.Complete ? "Complete" : goal.ProgressText), 11f,
-                    goal.Complete ? HudTone.Positive : HudTone.Muted);
-                if (available && !pinned)
-                    _workspaceDrawList.Button(new HudBox(row.Right - 96f, row.Y + 7f, 82f, 27f),
-                        "PIN", HudAction.PinGoal(goal.Id), HudButtonStyle.Secondary);
+                _abandonArmedUntil = Time.unscaledTime + 5f;
+                var loss = career.TryFindDefinition(career.ActiveContract.DefinitionId, out var definition)
+                    ? definition.ReliabilityLossOnCancel : 3;
+                ShowToast($"Click ABANDON again to drop this contract (−{loss}% reliability).", HudTone.Caution);
+                PlayUiClick();
+                return;
             }
-            var footer = HudShell.Footer(surface);
-            _workspaceDrawList.Hairline(HudShell.FooterRule(surface));
-            var finished = _operations.CareerState.FinaleReached;
-            _workspaceDrawList.Text(footer.Inset(HudShell.SurfacePadding, 8f, HudShell.SurfacePadding, 0f)
-                .WithHeight(22f), finished
-                    ? "Established airline achieved · continue in sandbox"
-                    : $"{_operations.CareerState.BaseCount} bases · {_operations.PlayerFleetCount()} aircraft · "
-                      + $"{_operations.CareerState.ServedDestinations.Count} destinations · "
-                      + $"{_operations.CareerState.ActivePlaySeconds / 3600} h active", 12f,
-                finished ? HudTone.Positive : HudTone.Muted);
+            _abandonArmedUntil = 0f;
+            var result = _operations.AbandonContract();
+            ShowToast(result.Accepted ? "Contract abandoned. The market is open again." : result.Reason,
+                result.Accepted ? HudTone.Accent : HudTone.Negative);
+            if (result.Accepted) SaveAirline();
+            PlayUiClick();
+        }
+
+        // The Career tab opens on the tier track; AIRLINE flips to the profile page (name, livery,
+        // base, achievements, history) and TRACK flips back.
+        private bool _careerProfileView;
+        private GUIStyle _renameFieldStyle;
+        private GUIStyle _renameButtonStyle;
+        private readonly CareerTrackModel _careerTrack = new();
+
+        private void DrawCareerTrack(Rect rect)
+        {
+            _careerTrack.Rebuild(_operations);
+            var layout = CareerTrackLayout.Create(Box(rect), _careerTrack.CurrentGoals.Count);
+            CareerTrackPainter.Paint(_workspaceDrawList, _careerTrack, layout);
+            _workspaceDrawList.Button(HudShellPainter.HeaderActionBox(Box(rect)),
+                "AIRLINE", "career:profile", HudButtonStyle.Secondary);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
         }
 
         /// <summary>The Stats workspace (ADR 0066): career overview, next-tier progress, milestones, contract history.</summary>
         private void DrawStatsWorkspace(Rect rect)
         {
+            if (!_careerProfileView)
+            {
+                DrawCareerTrack(rect);
+                return;
+            }
             _statsWorkspace.Rebuild(_operations, _clock.Now);
             var layout = StatsWorkspaceLayout.Create(Box(rect));
             StatsWorkspacePainter.Paint(_workspaceDrawList, _statsWorkspace, layout);
+            var trackClose = OperationsWorkspacePainter.CloseBox(Box(rect));
+            _workspaceDrawList.Button(HudShellPainter.HeaderActionBox(Box(rect)),
+                "TRACK", "career:track", HudButtonStyle.Secondary);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
 
             // Raw Unity IMGUI, not through the draw list: no primitive in the shared,
             // UnityEngine-free HudDrawList renders editable text, so the rename control is
             // drawn directly here — the one exception in an otherwise painter-driven page.
-            _statsRenameDraft = GUI.TextField(HudPainter.ToRect(layout.RenameFieldBox), _statsRenameDraft ?? string.Empty, 24);
-            if (GUI.Button(HudPainter.ToRect(layout.RenameButtonBox), "RENAME"))
+            _renameFieldStyle ??= AirsideTheme.TextFieldStyle(GUI.skin.textField);
+            _renameButtonStyle ??= AirsideTheme.ButtonStyle(new GUIStyle(GUI.skin.button) { fontSize = 11, fontStyle = FontStyle.Bold });
+            _statsRenameDraft = GUI.TextField(HudPainter.ToRect(layout.RenameFieldBox), _statsRenameDraft ?? string.Empty, 24,
+                _renameFieldStyle);
+            if (GUI.Button(HudPainter.ToRect(layout.RenameButtonBox), "RENAME", _renameButtonStyle))
             {
                 var result = _operations.RenameAirline(_statsRenameDraft);
                 if (result.Accepted)
@@ -2591,8 +2425,9 @@ namespace Airside.Presentation
                             networkDestination.Code, _clock.Now.Advance(30 * 60));
                     else
                     {
+                        // Pause/resume only the plan for this route; another route replaces it.
                         var repeat = _operations.RepeatSchedules.FirstOrDefault(p =>
-                            p.Registration == aircraft.Registration);
+                            p.Registration == aircraft.Registration && p.DestinationCode == networkDestination.Code);
                         result = repeat == null
                             ? _operations.SetRepeatSchedule(aircraft.Registration, networkDestination.Code, 12)
                             : _operations.PauseRepeatSchedule(aircraft.Registration, !repeat.Paused);
@@ -2619,12 +2454,19 @@ namespace Airside.Presentation
                     PlayUiClick();
                     return;
                 }
+                case HudAction.CancelContract:
+                    AbandonContractFromHud();
+                    return;
                 case HudAction.CareerRoadmap:
-                    _careerRoadmapView = true;
+                    _careerProfileView = false;
+                    SetWorkspace(HudWorkspace.Stats);
+                    return;
+                case "career:profile":
+                    _careerProfileView = true;
                     PlayUiClick();
                     return;
-                case HudAction.ContractMarket:
-                    _careerRoadmapView = false;
+                case "career:track":
+                    _careerProfileView = false;
                     PlayUiClick();
                     return;
                 case HudAction.TabDepartures:
@@ -2987,18 +2829,16 @@ namespace Airside.Presentation
 
         private void DrawDevToolsPanel(Rect rect, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle small, GUIStyle smallButton)
         {
-            var ink = AirsideTheme.RunwayInk;
-            DrawSolid(rect, new Color(ink.r, ink.g, ink.b, 0.96f));
-            GUI.Box(rect, GUIContent.none, panel);
+            AirsideTheme.DrawGlass(rect, 0.96f);
             // Diagnostic overlay, not a player workspace (ADR 0053): a distinct accent and
             // badge keep it from reading as one more tab beside Operations/Map/Fleet/Contracts.
-            AirsideTheme.DrawPanelFrame(rect, AirsideTheme.SignalRed);
+            AirsideTheme.DrawPanelFrame(rect, AirsideTheme.WarnRed);
 
             var x = rect.x + 16f;
             var inner = rect.width - 32f;
             GUI.Label(new Rect(x, rect.y + 10f, inner - 174f, 26f), "Dev tools", title);
             GUI.Label(new Rect(rect.xMax - 172f, rect.y + 16f, 50f, 20f), "DEV", Styled(small, "devBadge", st =>
-                AirsideTheme.TextStyle(new GUIStyle(st) { fontStyle = FontStyle.Bold }, AirsideTheme.SignalRed)));
+                AirsideTheme.TextStyle(new GUIStyle(st) { fontStyle = FontStyle.Bold }, AirsideTheme.WarnRed)));
             if (GUI.Button(new Rect(rect.xMax - 108f, rect.y + 10f, 92f, 26f), "Close", smallButton))
                 ToggleDevTools();
 
@@ -3031,9 +2871,9 @@ namespace Airside.Presentation
                 var row = new Rect(0f, y, inner - 22f, 24f);
                 var selected = _selectedAircraftId == aircraft.Registration;
                 if (selected)
-                    DrawSolid(row, new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.28f));
+                    DrawSolid(row, new Color(AirsideTheme.Aqua.r, AirsideTheme.Aqua.g, AirsideTheme.Aqua.b, 0.28f));
                 else if (row.Contains(Event.current.mousePosition))
-                    DrawSolid(row, new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g, AirsideTheme.CoastalBlue.b, 0.14f));
+                    DrawSolid(row, new Color(AirsideTheme.Aqua.r, AirsideTheme.Aqua.g, AirsideTheme.Aqua.b, 0.14f));
 
                 GUI.Label(new Rect(8f, y + 2f, inner - 36f, 20f), DevTools.FleetLine(aircraft), small);
                 if (GUI.Button(row, GUIContent.none, GUIStyle.none))
@@ -3191,7 +3031,10 @@ namespace Airside.Presentation
             }
         }
 
-        private void DrawToast(Rect rect, GUIStyle label)
+        private readonly HudDrawList _toastDrawList = new();
+
+        /// <summary>Glass toast pills (ADR 0122): newest in the slot, older ones stepping away from the edge.</summary>
+        private void DrawToast(Rect rect)
         {
             if (rect.width <= 0f || rect.height <= 0f)
                 return;
@@ -3200,32 +3043,45 @@ namespace Airside.Presentation
             if (_visibleToasts.Count == 0)
                 return;
 
-            // Newest sits in the toast slot; older ones step away from the screen edge it hugs.
-            var step = (rect.height + 6f) * (rect.center.y < Screen.height / HudLayout.ScaleFor(Screen.width, Screen.height) * 0.5f ? 1f : -1f);
-            var centred = Styled(label, "middle-center", s => new GUIStyle(s) { alignment = TextAnchor.MiddleCenter });
-            var previous = GUI.color;
+            var step = rect.height + HudShell.ToastGap;
+            _toastDrawList.Clear();
             for (var i = 0; i < _visibleToasts.Count; i++)
             {
                 var entry = _visibleToasts[i];
-                var alpha = ToastQueue.Alpha(entry, now) * (i == 0 ? 1f : 0.78f);
+                var alpha = ToastQueue.Alpha(entry, now) * (i == 0 ? 1f : 0.8f);
                 var slot = new Rect(rect.x, rect.y + step * i, rect.width, rect.height);
                 _hudOverlays.Add(slot);
-                DrawSolid(slot, new Color(AirsideTheme.RunwayInk.r, AirsideTheme.RunwayInk.g, AirsideTheme.RunwayInk.b, 0.9f * alpha));
-                var frame = i == 0 ? AirsideTheme.SafetyYellow : AirsideTheme.Concrete;
-                AirsideTheme.DrawPanelFrame(slot, new Color(frame.r, frame.g, frame.b, alpha));
-                GUI.color = new Color(1f, 1f, 1f, alpha);
-                GUI.Label(slot, entry.Repeats > 1 ? $"{entry.Message}  ×{entry.Repeats}" : entry.Message, centred);
-                GUI.color = previous;
+                ToastPainter.Paint(_toastDrawList, Box(slot),
+                    entry.Repeats > 1 ? $"{entry.Message}  ×{entry.Repeats}" : entry.Message, entry.Tone, alpha);
             }
+            _hudPainter.Draw(_toastDrawList);
         }
 
         private void ShowToast(string message) => _toasts.Push(message, Time.unscaledTime);
 
+        private void ShowToast(string message, HudTone tone) => _toasts.Push(message, Time.unscaledTime, tone);
+
+        /// <summary>Career news from the simulation (ADR 0121): tier-ups, finished goals, the finale.</summary>
+        private void AnnounceCareerEvents()
+        {
+            var any = false;
+            while (_operations.TryTakeCareerEvent(out var careerEvent))
+            {
+                ShowToast(careerEvent.Text, careerEvent.Kind == CareerEventKind.GoalComplete ? HudTone.Positive : HudTone.Caution);
+                any = true;
+            }
+            if (any)
+            {
+                PlayUiClick();
+                SaveAirline();
+            }
+        }
+
         /// <summary>Text/bar colour for a status severity; <paramref name="normal"/> when nothing is wrong.</summary>
         private static Color SeverityColour(StatusSeverity severity, Color normal) => severity switch
         {
-            StatusSeverity.Warning => AirsideTheme.SignalRed,
-            StatusSeverity.Attention => AirsideTheme.SafetyYellow,
+            StatusSeverity.Warning => AirsideTheme.WarnRed,
+            StatusSeverity.Attention => AirsideTheme.Amber,
             _ => normal
         };
 
@@ -3252,10 +3108,8 @@ namespace Airside.Presentation
             var height = Mathf.Min(520f, viewport.y - AirlineHudLayout.Margin * 2f);
             var rect = new Rect((viewport.x - width) * 0.5f, (viewport.y - height) * 0.5f, width, height);
 
-            var ink = AirsideTheme.RunwayInk;
-            DrawSolid(rect, new Color(ink.r, ink.g, ink.b, 0.96f));
-            GUI.Box(rect, GUIContent.none, panel);
-            AirsideTheme.DrawPanelFrame(rect, AirsideTheme.SafetyYellow);
+            AirsideTheme.DrawGlass(rect, 0.96f);
+            AirsideTheme.DrawPanelFrame(rect, AirsideTheme.Amber);
 
             var x = rect.x + 18f;
             var inner = rect.width - 36f;

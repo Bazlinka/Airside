@@ -15,19 +15,20 @@ namespace Airside.Presentation
     {
         public const float PanelWidth = AirlineHudLayout.MiniMapWidth;
         public const float PanelHeight = AirlineHudLayout.MiniMapHeight;
-        public const float HeaderHeight = 20f;
+        public const float HeaderHeight = MiniMapFrame.HeaderHeight;
         public const float PaddingMetres = 90f;
         public const float DotHitRadius = 10f;
 
         /// <summary>Texture pixels per GUI point, so the baked map stays crisp on Retina.</summary>
         public const int TextureScale = 2;
 
-        public static readonly Color32 Grass = new(46, 64, 54, 235);
-        public static readonly Color32 Water = new(28, 78, 102, 235);
-        public static readonly Color32 Apron = new(112, 118, 118, 255);
-        public static readonly Color32 Taxiway = new(140, 146, 145, 255);
-        public static readonly Color32 Runway = new(214, 218, 212, 255);
-        public static readonly Color32 Building = new(200, 178, 134, 255);
+        // Radar palette (ADR 0122): a dark scope with the pavement lit, not a painted field.
+        public static readonly Color32 Grass = new(16, 25, 28, 235);
+        public static readonly Color32 Water = new(14, 44, 58, 235);
+        public static readonly Color32 Apron = new(52, 62, 68, 255);
+        public static readonly Color32 Taxiway = new(78, 92, 98, 255);
+        public static readonly Color32 Runway = new(196, 214, 218, 255);
+        public static readonly Color32 Building = new(96, 104, 110, 255);
 
         /// <summary>How far west of the 05 threshold the map keeps so a 23 climb-out stays over the gulf.</summary>
         public const float WestDepartureMetres = 1200f;

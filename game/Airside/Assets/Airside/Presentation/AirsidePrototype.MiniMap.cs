@@ -29,13 +29,24 @@ namespace Airside.Presentation
         private bool MiniMapShows =>
             _miniMapVisible && !(_activeWorkspace != HudWorkspace.None || _devToolsOpen || _controlsHelpOpen);
 
+        private readonly HudDrawList _miniMapDrawList = new();
+
+        private static string RunwayName(Airside.Simulation.RunwayDirection runway)
+        {
+            var text = runway.ToString();
+            var digits = new System.Text.StringBuilder();
+            foreach (var c in text)
+                if (char.IsDigit(c)) digits.Append(c);
+            return digits.Length > 0 ? digits.ToString() : text.ToUpperInvariant();
+        }
+
         private Texture2D MiniMapTexture()
         {
             if (_miniMapTexture != null)
                 return _miniMapTexture;
 
             var width = Mathf.RoundToInt(FieldMiniMap.PanelWidth * FieldMiniMap.TextureScale);
-            var mapArea = FieldMiniMap.FitMap(new Rect(0f, 0f, width, (FieldMiniMap.PanelHeight - FieldMiniMap.HeaderHeight) * FieldMiniMap.TextureScale));
+            var mapArea = FieldMiniMap.FitMap(new Rect(0f, 0f, width, (FieldMiniMap.PanelHeight - FieldMiniMap.HeaderHeight - 10f) * FieldMiniMap.TextureScale));
             var w = Mathf.Max(8, Mathf.RoundToInt(mapArea.width));
             var h = Mathf.Max(8, Mathf.RoundToInt(mapArea.height));
             _miniMapTexture = new Texture2D(w, h, TextureFormat.RGBA32, false)
@@ -61,10 +72,12 @@ namespace Airside.Presentation
                 return;
             }
 
-            GUI.Label(new Rect(panelRect.x + 10f, panelRect.y + 2f, panelRect.width - 20f, FieldMiniMap.HeaderHeight),
-                "ADELAIDE AIRFIELD", small);
-            var area = new Rect(panelRect.x + 6f, panelRect.y + FieldMiniMap.HeaderHeight, panelRect.width - 12f,
-                panelRect.height - FieldMiniMap.HeaderHeight - 6f);
+            // Radar (ADR 0122): a glass frame with its header, the lit airfield scope inside.
+            _miniMapDrawList.Clear();
+            MiniMapFrame.Paint(_miniMapDrawList, Box(panelRect),
+                "ADELAIDE  ·  RWY " + (_operations != null ? RunwayName(_operations.ActiveRunway) : "23"));
+            _hudPainter.Draw(_miniMapDrawList);
+            var area = HudPainter.ToRect(MiniMapFrame.Inner(Box(panelRect)).Inset(3f));
             var map = FieldMiniMap.FitMap(area);
             GUI.DrawTexture(map, MiniMapTexture(), ScaleMode.StretchToFill, true);
             DrawMiniMapRunwayNames(map, small);
@@ -77,7 +90,7 @@ namespace Airside.Presentation
         private static void DrawMiniMapRunwayNames(Rect map, GUIStyle small)
         {
             var colour = GUI.color;
-            GUI.color = new Color(0.12f, 0.13f, 0.14f, 0.9f);
+            GUI.color = new Color(0.05f, 0.07f, 0.08f, 0.9f);
             foreach (var (label, x, z) in FieldMiniMap.RunwayLabels())
             {
                 var point = FieldMiniMap.WorldToMap(map, x, z);
@@ -99,10 +112,10 @@ namespace Airside.Presentation
             var mapForward = new Vector2(flatForward.x, -flatForward.z);
             FieldMiniMap.ViewChevron(map, centre, mapForward, out var tip, out var left, out var right);
 
-            var heading = new Color(AirsideTheme.Cloud.r, AirsideTheme.Cloud.g, AirsideTheme.Cloud.b, 0.72f);
-            DrawLine(left, tip, heading, 1.4f);
-            DrawLine(tip, right, heading, 1.4f);
-            DrawSolid(new Rect(centre.x - 2f, centre.y - 2f, 4f, 4f), AirsideTheme.SafetyYellow);
+            var heading = AirsideTheme.WithAlpha(AirsideTheme.Aqua, 0.85f);
+            DrawLine(left, tip, heading, 1.6f);
+            DrawLine(tip, right, heading, 1.6f);
+            AirsideTheme.DrawRounded(new Rect(centre.x - 3f, centre.y - 3f, 6f, 6f), AirsideTheme.Aqua, 3f);
         }
 
         private void DrawMiniMapAircraft(Rect map)
@@ -118,8 +131,8 @@ namespace Airside.Presentation
                 var live = FieldMiniMap.WorldToMap(map, view.position.x, view.position.z);
                 if (!map.Contains(live))
                     continue;
-                var cloud = AirsideTheme.Cloud;
-                AirsideTheme.DrawPanelFrame(new Rect(live.x - 3f, live.y - 3f, 6f, 6f), new Color(cloud.r, cloud.g, cloud.b, 0.75f));
+                AirsideTheme.DrawRounded(new Rect(live.x - 3f, live.y - 3f, 6f, 6f),
+                    AirsideTheme.WithAlpha(AirsideTheme.InstrumentText, 0.7f), 3f, 1f);
             }
 
             // Three passes so your own aircraft draw over other operators and the
@@ -146,11 +159,12 @@ namespace Airside.Presentation
                 var size = mine || selected ? 8f : 6f;
                 var severity = AircraftStatus.Severity(aircraft, _clock.Now);
                 var ring = selected
-                    ? AirsideTheme.SafetyYellow
-                    : mine ? SeverityColour(severity, AirsideTheme.Cloud) : AirsideTheme.RunwayInk;
-                DrawSolid(new Rect(point.x - size * 0.5f - 1.5f, point.y - size * 0.5f - 1.5f, size + 3f, size + 3f), ring);
+                    ? AirsideTheme.Amber
+                    : mine ? SeverityColour(severity, AirsideTheme.InstrumentText) : AirsideTheme.Glass;
+                AirsideTheme.DrawRounded(new Rect(point.x - size * 0.5f - 1.5f, point.y - size * 0.5f - 1.5f,
+                    size + 3f, size + 3f), ring, size);
                 var fill = mine || selected ? livery : new Color(livery.r, livery.g, livery.b, Ownership.OtherAlpha + 0.2f);
-                DrawSolid(new Rect(point.x - size * 0.5f, point.y - size * 0.5f, size, size), fill);
+                AirsideTheme.DrawRounded(new Rect(point.x - size * 0.5f, point.y - size * 0.5f, size, size), fill, size);
             }
         }
 

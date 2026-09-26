@@ -29,6 +29,184 @@ namespace Airside.Presentation
         public static readonly Color Cloud = FromHex(AirsidePalette.CloudHex);
         public static readonly Color OpenSky = FromHex(AirsidePalette.OpenSkyHex);
 
+        // Glass Cockpit HUD (ADR 0122).
+        public static readonly Color Glass = FromHex(AirsidePalette.GlassHex);
+        public static readonly Color GlassRaised = FromHex(AirsidePalette.GlassRaisedHex);
+        public static readonly Color InstrumentText = FromHex(AirsidePalette.InstrumentTextHex);
+        public static readonly Color InstrumentMuted = FromHex(AirsidePalette.InstrumentMutedHex);
+        public static readonly Color Aqua = FromHex(AirsidePalette.AquaHex);
+        public static readonly Color Amber = FromHex(AirsidePalette.AmberHex);
+        public static readonly Color GoGreen = FromHex(AirsidePalette.GoGreenHex);
+        public static readonly Color WarnRed = FromHex(AirsidePalette.WarnRedHex);
+        public static readonly Color RouteMagenta = FromHex(AirsidePalette.RouteMagentaHex);
+        public static readonly Color OnAccent = FromHex(AirsidePalette.OnAccentHex);
+
+        public const float PanelRadius = 14f;
+        public const float CardRadius = 10f;
+        public const float ControlRadius = 8f;
+
+        public static Color WithAlpha(Color colour, float alpha) => new(colour.r, colour.g, colour.b, Mathf.Clamp01(alpha));
+
+        /// <summary>
+        /// A rounded rectangle — filled, or an outline when <paramref name="borderWidth"/> is set —
+        /// drawn by IMGUI's own rounded-texture path, so corners stay crisp at every HUD scale.
+        /// </summary>
+        public static void DrawRounded(Rect rect, Color colour, float radius, float borderWidth = 0f)
+        {
+            if (rect.width <= 0.5f || rect.height <= 0.5f || colour.a <= 0.001f)
+                return;
+            radius = Mathf.Min(radius, rect.width * 0.5f, rect.height * 0.5f);
+            GUI.DrawTexture(rect, SolidWhite, ScaleMode.StretchToFill, true, 0f, colour, borderWidth, radius);
+        }
+
+        /// <summary>
+        /// A floating graphite-glass panel: a soft three-step drop shadow, the translucent glass
+        /// body and a faint 1 pt inner edge. Every HUD surface is one of these.
+        /// </summary>
+        public static void DrawGlass(Rect rect, float alpha = 0.9f, float radius = PanelRadius)
+        {
+            if (rect.width <= 1f || rect.height <= 1f)
+                return;
+            for (var i = 3; i >= 1; i--)
+            {
+                var spread = i * 3.5f;
+                DrawRounded(new Rect(rect.x - spread * 0.4f, rect.y + spread * 0.25f, rect.width + spread * 0.8f,
+                    rect.height + spread), new Color(0f, 0f, 0f, 0.07f * alpha), radius + spread);
+            }
+            DrawRounded(rect, WithAlpha(Glass, alpha), radius);
+            DrawRounded(rect, new Color(1f, 1f, 1f, 0.09f * alpha), radius, 1f);
+        }
+
+        /// <summary>A raised glass sub-card inside a panel.</summary>
+        public static void DrawCard(Rect rect, float alpha = 1f)
+        {
+            DrawRounded(rect, WithAlpha(GlassRaised, 0.9f * alpha), CardRadius);
+            DrawRounded(rect, new Color(1f, 1f, 1f, 0.06f * alpha), CardRadius, 1f);
+        }
+
+        private static readonly Dictionary<string, Texture2D> RoundedTextures = new();
+
+        /// <summary>
+        /// A 9-slice rounded texture for GUIStyle backgrounds (raw-IMGUI panels and buttons), baked
+        /// once per colour: a signed-distance rounded rectangle with an anti-aliased edge and an
+        /// optional 1 px rim.
+        /// </summary>
+        public static Texture2D RoundedTexture(Color fill, Color rim, int radius)
+        {
+            var key = $"{ColorUtility.ToHtmlStringRGBA(fill)}:{ColorUtility.ToHtmlStringRGBA(rim)}:{radius}";
+            if (RoundedTextures.TryGetValue(key, out var cached) && cached != null)
+                return cached;
+            var size = radius * 2 + 4;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            var pixels = new Color[size * size];
+            var half = size * 0.5f;
+            for (var y = 0; y < size; y++)
+            for (var x = 0; x < size; x++)
+            {
+                // Distance outside the rounded rectangle (negative inside).
+                var qx = Mathf.Abs(x + 0.5f - half) - (half - radius);
+                var qy = Mathf.Abs(y + 0.5f - half) - (half - radius);
+                var outside = new Vector2(Mathf.Max(qx, 0f), Mathf.Max(qy, 0f)).magnitude
+                              + Mathf.Min(Mathf.Max(qx, qy), 0f) - radius;
+                var coverage = Mathf.Clamp01(0.5f - outside);
+                var rimMix = Mathf.Clamp01(1.5f - Mathf.Abs(outside + 0.75f)) * rim.a;
+                var colour = Color.Lerp(fill, new Color(rim.r, rim.g, rim.b, Mathf.Max(fill.a, rim.a)), rimMix);
+                colour.a *= coverage;
+                pixels[y * size + x] = colour;
+            }
+            texture.SetPixels(pixels);
+            texture.Apply(false, false);
+            RoundedTextures[key] = texture;
+            return texture;
+        }
+
+        private static Texture2D _fadeRight;
+
+        /// <summary>White, opaque on the left and clear on the right with an ease-out curve — tinted by GUI.color.</summary>
+        public static Texture2D FadeRight
+        {
+            get
+            {
+                if (_fadeRight != null)
+                    return _fadeRight;
+                const int width = 256;
+                _fadeRight = new Texture2D(width, 1, TextureFormat.RGBA32, false)
+                {
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp,
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+                for (var x = 0; x < width; x++)
+                {
+                    var t = x / (width - 1f);
+                    _fadeRight.SetPixel(x, 0, new Color(1f, 1f, 1f, 1f - t * t));
+                }
+                _fadeRight.Apply(false, true);
+                return _fadeRight;
+            }
+        }
+
+        private static readonly Dictionary<string, Texture2D> ArtTextures = new();
+
+        /// <summary>An approved art texture by Art-relative path (splash, wordmark), cached; null when missing.</summary>
+        public static Texture2D ArtTexture(string artRelativePath)
+        {
+            if (string.IsNullOrEmpty(artRelativePath))
+                return null;
+            if (artRelativePath == "UI/Illustrations/ui_splash_airport_dawn_v01.png")
+                return SplashDawn;
+            if (artRelativePath == "Brand/airside_wordmark_light_v01.png")
+                return WordmarkLight;
+            if (ArtTextures.TryGetValue(artRelativePath, out var cached))
+                return cached;
+            var texture = LoadArtTexture(artRelativePath);
+            ArtTextures[artRelativePath] = texture;
+            return texture;
+        }
+
+        private static readonly Dictionary<string, Texture2D> IconMasks = new();
+
+        /// <summary>
+        /// The approved line icon as a white alpha mask, so GUI.color can tint it to any HUD tone.
+        /// The source art is black line work on transparency. Null when the file is missing.
+        /// </summary>
+        public static Texture2D IconMask(string category, string name)
+        {
+            var key = category + "/" + name;
+            if (IconMasks.TryGetValue(key, out var cached))
+                return cached;
+            var source = Icon(category, name);
+            Texture2D mask = null;
+            if (source != null)
+            {
+                try
+                {
+                    var pixels = source.GetPixels32();
+                    for (var i = 0; i < pixels.Length; i++)
+                        pixels[i] = new Color32(255, 255, 255, pixels[i].a);
+                    mask = new Texture2D(source.width, source.height, TextureFormat.RGBA32, true)
+                    {
+                        filterMode = FilterMode.Trilinear,
+                        wrapMode = TextureWrapMode.Clamp,
+                        hideFlags = HideFlags.HideAndDontSave
+                    };
+                    mask.SetPixels32(pixels);
+                    mask.Apply(true, false);
+                }
+                catch (UnityException)
+                {
+                    mask = null;
+                }
+            }
+            IconMasks[key] = mask;
+            return mask;
+        }
+
         private static Texture2D _panelBackground;
         private static Texture2D _panelBackgroundLight;
         private static Texture2D _solidWhite;
@@ -145,17 +323,9 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>Draw a thin frame around a panel for separation from the 3D world.</summary>
-        public static void DrawPanelFrame(Rect rect, Color? edge = null)
-        {
-            var previous = GUI.color;
-            GUI.color = edge ?? new Color(CoastalBlue.r, CoastalBlue.g, CoastalBlue.b, 0.55f);
-            GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width, 2f), SolidWhite);
-            GUI.DrawTexture(new Rect(rect.x, rect.yMax - 2f, rect.width, 2f), SolidWhite);
-            GUI.DrawTexture(new Rect(rect.x, rect.y, 2f, rect.height), SolidWhite);
-            GUI.DrawTexture(new Rect(rect.xMax - 2f, rect.y, 2f, rect.height), SolidWhite);
-            GUI.color = previous;
-        }
+        /// <summary>A rounded 1.5 pt outline — selection, the current priority, a guided control.</summary>
+        public static void DrawPanelFrame(Rect rect, Color? edge = null) =>
+            DrawRounded(rect, edge ?? new Color(1f, 1f, 1f, 0.12f), CardRadius, 1.5f);
 
         /// <summary>Opaque white 1x1 for tinted progress fills and tracks.</summary>
         public static Texture2D SolidWhite
@@ -179,109 +349,106 @@ namespace Airside.Presentation
         /// </summary>
         public static void DrawProgressBar(Rect rect, float progress01, Color fill, Color track)
         {
-            var previous = GUI.color;
-            GUI.color = track;
-            GUI.DrawTexture(rect, SolidWhite);
+            var radius = rect.height * 0.5f;
+            DrawRounded(rect, track, radius);
             var fillWidth = rect.width * Mathf.Clamp01(progress01);
             if (fillWidth > 0.5f)
-            {
-                GUI.color = fill;
-                GUI.DrawTexture(new Rect(rect.x, rect.y, fillWidth, rect.height), SolidWhite);
-            }
-
-            GUI.color = previous;
+                DrawRounded(new Rect(rect.x, rect.y, Mathf.Max(rect.height, fillWidth), rect.height), fill, radius);
         }
 
-        /// <summary>
-        /// Dark panel bevel in source-texture pixels, measured off
-        /// <c>ui_panel_9slice_dark_v01.png</c> (128×128, 8px on every edge).
-        /// Without this, Unity stretches the whole 128×128 — bevel included —
-        /// across the panel and the authored edge smears into a soft gradient.
-        /// </summary>
-        private static readonly RectOffset PanelBorder = new(8, 8, 8, 8);
+        private static readonly RectOffset PanelBorder = new(16, 16, 16, 16);
+        private static readonly RectOffset ControlBorder = new(10, 10, 10, 10);
 
-        /// <summary>A box/panel style on the given basis, themed with the Runway Ink panel and Cloud text.</summary>
+        /// <summary>A rounded graphite-glass box style — every raw-IMGUI panel (menus, help, dev tools).</summary>
         public static GUIStyle PanelStyle(GUIStyle basis)
         {
             var style = new GUIStyle(basis);
-            style.normal.background = PanelBackground;
-            style.normal.textColor = Cloud;
+            style.normal.background = RoundedTexture(WithAlpha(Glass, 0.93f), new Color(1f, 1f, 1f, 0.10f), 14);
+            style.normal.textColor = InstrumentText;
             style.border = PanelBorder;
             return style;
         }
 
-        /// <summary>A label/button style on the given basis with themed text colour (Cloud by default).</summary>
+        /// <summary>A label/button style on the given basis with themed text colour (instrument text by default).</summary>
         public static GUIStyle TextStyle(GUIStyle basis, Color? textColor = null)
         {
             var style = new GUIStyle(basis);
-            style.normal.textColor = textColor ?? Cloud;
+            style.normal.textColor = textColor ?? InstrumentText;
             return style;
         }
 
-        /// <summary>
-        /// A themed button: every control in the HUD funnels through the two style-cache
-        /// sites that call this (<c>_hudButtonStyle</c>, <c>_hudSmallButton</c>), so this one
-        /// change is what stops every button in the game being Unity's stock grey bevel with
-        /// only its text colour touched — the single biggest gap between the approved
-        /// navy/charcoal palette and what was actually on screen.
-        /// </summary>
+        private static void SetButtonStates(GUIStyle style, Texture2D normal, Texture2D hover, Texture2D active, Color text,
+            Color? hoverText = null)
+        {
+            style.normal.background = normal;
+            style.normal.textColor = text;
+            style.hover.background = hover;
+            style.hover.textColor = hoverText ?? text;
+            style.active.background = active;
+            style.active.textColor = hoverText ?? text;
+            style.focused.background = normal;
+            style.focused.textColor = text;
+            style.onNormal.background = active;
+            style.onNormal.textColor = hoverText ?? text;
+            style.border = ControlBorder;
+            style.alignment = TextAnchor.MiddleCenter;
+        }
+
+        /// <summary>A recessed glass text field with an aqua rim while focused.</summary>
+        public static GUIStyle TextFieldStyle(GUIStyle basis)
+        {
+            var style = new GUIStyle(basis)
+            {
+                fontSize = 13,
+                alignment = TextAnchor.MiddleLeft,
+                padding = new RectOffset(10, 10, 3, 3),
+                border = ControlBorder
+            };
+            var rest = RoundedTexture(WithAlpha(Glass, 0.95f), new Color(1f, 1f, 1f, 0.14f), 9);
+            var focus = RoundedTexture(WithAlpha(Glass, 0.98f), Aqua, 9);
+            style.normal.background = rest;
+            style.hover.background = rest;
+            style.focused.background = focus;
+            style.active.background = focus;
+            style.normal.textColor = style.hover.textColor = style.focused.textColor = style.active.textColor = InstrumentText;
+            return style;
+        }
+
+        /// <summary>A raised glass pill button; hover lifts it with an aqua rim.</summary>
         public static GUIStyle ButtonStyle(GUIStyle basis, Color? textColor = null)
         {
             var style = new GUIStyle(basis);
-            style.normal.background = ButtonNormal;
-            style.normal.textColor = textColor ?? Cloud;
-            style.hover.background = ButtonHover;
-            style.hover.textColor = textColor ?? Cloud;
-            style.active.background = ButtonActive;
-            style.active.textColor = textColor ?? Cloud;
-            style.focused.background = ButtonNormal;
-            style.focused.textColor = textColor ?? Cloud;
+            SetButtonStates(style, ButtonNormal, ButtonHover, ButtonActive, textColor ?? InstrumentText);
             return style;
         }
 
-        /// <summary>Filled Coastal Blue primary action — one dominant button per card.</summary>
+        /// <summary>Filled avionics-amber primary action — one dominant button per card.</summary>
         public static GUIStyle PrimaryButtonStyle(GUIStyle basis)
         {
             var style = new GUIStyle(basis);
-            style.normal.background = ButtonActive;
-            style.normal.textColor = Cloud;
-            style.hover.background = ButtonHover;
-            style.hover.textColor = Cloud;
-            style.active.background = ButtonActive;
-            style.active.textColor = Cloud;
-            style.focused.background = ButtonActive;
-            style.focused.textColor = Cloud;
+            SetButtonStates(style,
+                RoundedTexture(Amber, new Color(1f, 1f, 1f, 0.18f), 9),
+                RoundedTexture(Color.Lerp(Amber, Color.white, 0.18f), new Color(1f, 1f, 1f, 0.3f), 9),
+                RoundedTexture(Color.Lerp(Amber, Color.black, 0.12f), new Color(1f, 1f, 1f, 0.1f), 9),
+                OnAccent);
             style.fontStyle = FontStyle.Bold;
-            style.alignment = TextAnchor.MiddleCenter;
             return style;
         }
 
-        /// <summary>Red-outline destructive action, visually secondary to the primary.</summary>
+        /// <summary>Red-rimmed destructive pill, visually below the primary.</summary>
         public static GUIStyle DestructiveButtonStyle(GUIStyle basis)
         {
             var style = new GUIStyle(basis);
-            style.normal.background = ButtonNormal;
-            style.normal.textColor = SignalRed;
-            style.hover.background = ButtonNormal;
-            style.hover.textColor = SignalRed;
-            style.active.background = ButtonNormal;
-            style.active.textColor = SignalRed;
-            style.focused.background = ButtonNormal;
-            style.focused.textColor = SignalRed;
-            style.alignment = TextAnchor.MiddleCenter;
+            SetButtonStates(style,
+                RoundedTexture(WithAlpha(WarnRed, 0.10f), WithAlpha(WarnRed, 0.85f), 9),
+                RoundedTexture(WithAlpha(WarnRed, 0.22f), WarnRed, 9),
+                RoundedTexture(WithAlpha(WarnRed, 0.32f), WarnRed, 9),
+                WarnRed);
             return style;
         }
 
-        /// <summary>Opaque navy fill so runway markings cannot wash out HUD text.</summary>
-        public static void DrawOpaquePanel(Rect rect, float alpha = 0.96f)
-        {
-            var previous = GUI.color;
-            var fill = RunwayInk;
-            fill.a = alpha;
-            GUI.color = fill;
-            GUI.DrawTexture(rect, SolidWhite);
-            GUI.color = previous;
-        }
+        /// <summary>A graphite-glass panel behind raw-IMGUI content, so runway markings never wash out text.</summary>
+        public static void DrawOpaquePanel(Rect rect, float alpha = 0.94f) => DrawGlass(rect, alpha);
 
         private static Texture2D Solid(Color colour)
         {
@@ -291,15 +458,15 @@ namespace Airside.Presentation
             return texture;
         }
 
-        /// <summary>Resting button fill — a shade lighter than the panels behind it, so a
-        /// control reads as raised and clickable rather than melting into the panel.</summary>
-        public static Texture2D ButtonNormal => _buttonNormal ??= Solid(Tarmac);
+        /// <summary>Resting button — raised glass with a faint rim, so it reads as clickable.</summary>
+        public static Texture2D ButtonNormal => _buttonNormal ??= RoundedTexture(GlassRaised, new Color(1f, 1f, 1f, 0.16f), 9);
 
         /// <summary>Hover fill — Coastal Blue, the approved accent for interaction.</summary>
-        public static Texture2D ButtonHover => _buttonHover ??= Solid(new Color(CoastalBlue.r, CoastalBlue.g, CoastalBlue.b, 0.82f));
+        public static Texture2D ButtonHover => _buttonHover ??=
+            RoundedTexture(Color.Lerp(GlassRaised, Aqua, 0.18f), WithAlpha(Aqua, 0.8f), 9);
 
-        /// <summary>Pressed fill — the full-strength accent colour.</summary>
-        public static Texture2D ButtonActive => _buttonActive ??= Solid(CoastalBlue);
+        /// <summary>Pressed — full aqua.</summary>
+        public static Texture2D ButtonActive => _buttonActive ??= RoundedTexture(WithAlpha(Aqua, 0.85f), Aqua, 9);
 
         internal static Color FromHex(string hex) =>
             ColorUtility.TryParseHtmlString(hex, out var color) ? color : Color.magenta;
@@ -393,7 +560,7 @@ namespace Airside.Presentation
         /// <summary>A caution-style label with the alert stripe behind Safety Yellow text, or a flat fallback.</summary>
         public static GUIStyle CautionStyle(GUIStyle basis)
         {
-            var style = TextStyle(basis, SafetyYellow);
+            var style = TextStyle(basis, Amber);
             if (AlertStripeBackground != null)
                 style.normal.background = AlertStripeBackground;
             return style;

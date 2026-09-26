@@ -31,19 +31,26 @@ namespace Airside.Presentation
                 switch (command.Kind)
                 {
                     case HudDrawKind.Surface:
-                        AirsideTheme.DrawOpaquePanel(rect, command.Value);
-                        AirsideTheme.DrawPanelFrame(rect,
-                            new Color(AirsideTheme.CoastalBlue.r, AirsideTheme.CoastalBlue.g,
-                                AirsideTheme.CoastalBlue.b, 0.5f));
+                        AirsideTheme.DrawGlass(rect, command.Value <= 0f ? 0.9f : command.Value);
+                        break;
+
+                    case HudDrawKind.Card:
+                        AirsideTheme.DrawCard(rect, command.Value <= 0f ? 1f : command.Value);
                         break;
 
                     case HudDrawKind.Fill:
+                        // Fills of real size are softly rounded; thin rules and ticks stay crisp.
+                        AirsideTheme.DrawRounded(rect, WithAlpha(Colour(command), command.Value),
+                            rect.width < 4f || rect.height < 4f ? 0f : Mathf.Min(6f, rect.height * 0.5f));
+                        break;
+
                     case HudDrawKind.Hairline:
                         DrawSolid(rect, WithAlpha(Colour(command), command.Value));
                         break;
 
                     case HudDrawKind.Outline:
-                        AirsideTheme.DrawPanelFrame(rect, WithAlpha(Colour(command), command.Value));
+                        AirsideTheme.DrawRounded(rect, WithAlpha(Colour(command), command.Value),
+                            Mathf.Min(AirsideTheme.CardRadius, rect.height * 0.5f), 1.5f);
                         break;
 
                     case HudDrawKind.Text:
@@ -51,7 +58,7 @@ namespace Airside.Presentation
                         break;
 
                     case HudDrawKind.Bar:
-                        AirsideTheme.DrawProgressBar(rect, command.Value, Colour(command), AirsideTheme.Tarmac);
+                        AirsideTheme.DrawProgressBar(rect, command.Value, Colour(command), new Color(1f, 1f, 1f, 0.10f));
                         break;
 
                     case HudDrawKind.Button:
@@ -73,6 +80,38 @@ namespace Airside.Presentation
                             new Vector2(command.Box.X + command.Box.Width, command.Box.Y + command.Box.Height),
                             Colour(command), command.Value);
                         break;
+
+                    case HudDrawKind.Pill:
+                        DrawPill(command, rect);
+                        break;
+
+                    case HudDrawKind.Ring:
+                        DrawRing(rect, Colour(command), command.Value, command.FontSize,
+                            command.Tone == HudTone.Muted ? 0.35f : 1f);
+                        break;
+
+                    case HudDrawKind.Icon:
+                        DrawIcon(command, rect);
+                        break;
+
+                    case HudDrawKind.Gradient:
+                        var tint = Colour(command);
+                        var fadeBefore = GUI.color;
+                        GUI.color = new Color(tint.r, tint.g, tint.b, Mathf.Clamp01(command.Value));
+                        GUI.DrawTexture(rect, AirsideTheme.FadeRight, ScaleMode.StretchToFill, true);
+                        GUI.color = fadeBefore;
+                        break;
+
+                    case HudDrawKind.Image:
+                        var image = AirsideTheme.ArtTexture(command.Text);
+                        if (image != null)
+                        {
+                            var before = GUI.color;
+                            GUI.color = new Color(1f, 1f, 1f, command.Value <= 0f ? 1f : command.Value);
+                            GUI.DrawTexture(rect, image, ScaleMode.ScaleAndCrop, true);
+                            GUI.color = before;
+                        }
+                        break;
                 }
             }
 
@@ -83,12 +122,13 @@ namespace Airside.Presentation
 
         public static Color Colour(HudTone tone) => tone switch
         {
-            HudTone.Muted => AirsideTheme.Concrete,
-            HudTone.Accent => AirsideTheme.FromHex(AirsidePalette.CoastalBlueStrongHex),
-            HudTone.Caution => AirsideTheme.SafetyYellow,
-            HudTone.Positive => AirsideTheme.ClearGreen,
-            HudTone.Negative => AirsideTheme.SignalRed,
-            _ => AirsideTheme.Cloud
+            HudTone.Muted => AirsideTheme.InstrumentMuted,
+            HudTone.Accent => AirsideTheme.Aqua,
+            HudTone.Caution => AirsideTheme.Amber,
+            HudTone.Positive => AirsideTheme.GoGreen,
+            HudTone.Negative => AirsideTheme.WarnRed,
+            HudTone.Route => AirsideTheme.RouteMagenta,
+            _ => AirsideTheme.InstrumentText
         };
 
         private static Color Colour(HudDrawCommand command) =>
@@ -112,12 +152,62 @@ namespace Airside.Presentation
         {
             var enabled = GUI.enabled;
             GUI.enabled = enabled && command.Enabled;
-            var style = ButtonStyle(command.ButtonStyle);
-            if (command.ButtonStyle == HudButtonStyle.Destructive)
-                AirsideTheme.DrawPanelFrame(rect, AirsideTheme.SignalRed);
+            var style = ButtonStyle(command.ButtonStyle, command.Text == "×");
             var pressed = GUI.Button(rect, command.Text, style);
             GUI.enabled = enabled;
             return pressed;
+        }
+
+        private void DrawPill(HudDrawCommand command, Rect rect)
+        {
+            var colour = Colour(command);
+            var filled = command.Value >= 0.5f;
+            AirsideTheme.DrawRounded(rect, filled ? colour : AirsideTheme.WithAlpha(colour, 0.16f), rect.height * 0.5f);
+            var style = TextStyle(new HudDrawCommand(HudDrawKind.Text, command.Box, command.Text, command.Tone,
+                command.FontSize, HudTextStyle.Bold | HudTextStyle.Caption, HudAlign.Center, 1f, null, null, true));
+            style.normal.textColor = filled ? AirsideTheme.OnAccent : colour;
+            var height = command.FontSize * 1.35f;
+            GUI.Label(new Rect(rect.x, rect.y + (rect.height - height) * 0.5f, rect.width, height), command.Text, style);
+        }
+
+        private static void DrawIcon(HudDrawCommand command, Rect rect)
+        {
+            var slash = command.Text.IndexOf('/');
+            if (slash <= 0)
+                return;
+            var mask = AirsideTheme.IconMask(command.Text.Substring(0, slash), command.Text.Substring(slash + 1));
+            if (mask == null)
+                return;
+            var previous = GUI.color;
+            GUI.color = WithAlpha(Colour(command), command.Value <= 0f ? 1f : command.Value);
+            GUI.DrawTexture(rect, mask, ScaleMode.ScaleToFit, true);
+            GUI.color = previous;
+        }
+
+        /// <summary>
+        /// A circular gauge built from short rotated segments, clockwise from twelve o'clock. Cheap
+        /// enough for the handful of rings on screen, and needs no custom shader.
+        /// </summary>
+        private static void DrawRing(Rect rect, Color colour, float progress01, float thickness, float alpha)
+        {
+            if (progress01 <= 0f)
+                return;
+            if (thickness <= 0f)
+                thickness = 4f;
+            colour.a *= alpha;
+            var centre = rect.center;
+            var radius = rect.width * 0.5f - thickness * 0.5f;
+            const int segments = 72;
+            var count = Mathf.CeilToInt(segments * Mathf.Clamp01(progress01));
+            var step = Mathf.PI * 2f / segments;
+            for (var i = 0; i < count; i++)
+            {
+                var a0 = -Mathf.PI * 0.5f + i * step;
+                var a1 = Mathf.Min(a0 + step * 1.15f, -Mathf.PI * 0.5f + Mathf.PI * 2f * progress01);
+                var from = centre + new Vector2(Mathf.Cos(a0), Mathf.Sin(a0)) * radius;
+                var to = centre + new Vector2(Mathf.Cos(a1), Mathf.Sin(a1)) * radius;
+                DrawLine(from, to, colour, thickness);
+            }
         }
 
         private GUIStyle TextStyle(HudDrawCommand command)
@@ -150,28 +240,29 @@ namespace Airside.Presentation
             return style;
         }
 
-        private GUIStyle ButtonStyle(HudButtonStyle kind)
+        private GUIStyle ButtonStyle(HudButtonStyle kind, bool glyph)
         {
-            if (_buttonStyles.TryGetValue((int)kind, out var cached))
+            var key = (int)kind * 2 + (glyph ? 1 : 0);
+            if (_buttonStyles.TryGetValue(key, out var cached))
                 return cached;
 
             var basis = new GUIStyle(GUI.skin.button)
             {
-                fontSize = 12,
+                fontSize = glyph ? 18 : 11,
                 fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.MiddleCenter,
                 wordWrap = false,
                 clipping = TextClipping.Clip,
-                padding = new RectOffset(6, 6, 2, 2)
+                padding = new RectOffset(8, 8, 2, glyph ? 4 : 2)
             };
 
             var style = kind switch
             {
                 HudButtonStyle.Primary => AirsideTheme.PrimaryButtonStyle(basis),
                 HudButtonStyle.Destructive => AirsideTheme.DestructiveButtonStyle(basis),
-                _ => AirsideTheme.ButtonStyle(basis, AirsideTheme.Cloud)
+                _ => AirsideTheme.ButtonStyle(basis, AirsideTheme.InstrumentText)
             };
-            _buttonStyles[(int)kind] = style;
+            _buttonStyles[key] = style;
             return style;
         }
 

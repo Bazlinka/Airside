@@ -6,7 +6,7 @@ namespace Airside.Presentation
     /// <summary>What one entry of a <see cref="HudDrawList"/> paints.</summary>
     public enum HudDrawKind
     {
-        /// <summary>Opaque workspace surface with a hairline frame.</summary>
+        /// <summary>A floating graphite-glass panel: rounded, shadowed, with a 1 pt inner edge.</summary>
         Surface,
         /// <summary>Flat tinted rectangle. <see cref="HudDrawCommand.Value"/> is its alpha.</summary>
         Fill,
@@ -23,7 +23,19 @@ namespace Airside.Presentation
         /// <summary>A filled disc used for map destinations and status pips.</summary>
         Dot,
         /// <summary>A straight line from the box's top-left to its bottom-right corner.</summary>
-        Line
+        Line,
+        /// <summary>A raised glass sub-card inside a surface. <see cref="HudDrawCommand.Value"/> is its alpha.</summary>
+        Card,
+        /// <summary>A fully rounded chip with a centred label: status, tier, phase.</summary>
+        Pill,
+        /// <summary>A circular progress gauge; <see cref="HudDrawCommand.Value"/> is 0..1.</summary>
+        Ring,
+        /// <summary>A tinted line icon; <see cref="HudDrawCommand.Text"/> is "category/name" (Art/UI/Icons).</summary>
+        Icon,
+        /// <summary>An approved art image, cropped to fill; <see cref="HudDrawCommand.Text"/> is its Art-relative path.</summary>
+        Image,
+        /// <summary>A left-to-right fade: <see cref="HudDrawCommand.Value"/> alpha at the left edge, clear at the right.</summary>
+        Gradient
     }
 
     [Flags]
@@ -46,11 +58,11 @@ namespace Airside.Presentation
     /// <summary>Which of the three button treatments a <see cref="HudDrawKind.Button"/> uses.</summary>
     public enum HudButtonStyle
     {
-        /// <summary>Filled Coastal Blue — one per card.</summary>
+        /// <summary>Filled avionics amber pill — one per card.</summary>
         Primary,
-        /// <summary>Outlined on the panel fill.</summary>
+        /// <summary>Raised glass pill with an edge.</summary>
         Secondary,
-        /// <summary>Signal Red outline, visually below the primary.</summary>
+        /// <summary>Red-outlined pill, visually below the primary.</summary>
         Destructive
     }
 
@@ -114,15 +126,48 @@ namespace Airside.Presentation
 
         public void Clear() => _commands.Clear();
 
-        // Workspaces sit over a world the player is still operating.  A slightly softer
-        // surface keeps the miniature airport present without sacrificing text contrast.
-        public void Surface(HudBox box) => Add(HudDrawKind.Surface, box, value: 0.90f);
+        // Workspaces sit over a world the player is still operating. Graphite glass keeps the
+        // miniature airport present behind it without sacrificing text contrast.
+        public void Surface(HudBox box, float alpha = 0.90f) => Add(HudDrawKind.Surface, box, value: alpha);
+
+        /// <summary>A raised glass sub-card — a section, a list well, an offer.</summary>
+        public void Card(HudBox box, float alpha = 1f) => Add(HudDrawKind.Card, box, value: alpha);
+
+        /// <summary>
+        /// A rounded chip. Filled chips put dark text on the tone; unfilled ones tint the glass and
+        /// colour the label, so several chips in a row never shout at once.
+        /// </summary>
+        public void Pill(HudBox box, string text, HudTone tone, bool filled = false, float fontSize = 10f,
+            string colourHex = null) =>
+            Add(HudDrawKind.Pill, box, text: text, tone: tone, fontSize: fontSize,
+                style: HudTextStyle.Bold | HudTextStyle.Caption, align: HudAlign.Center,
+                value: filled ? 1f : 0f, colourHex: colourHex);
+
+        /// <summary>An approved UI line icon ("operation", "departure"), tinted by tone.</summary>
+        public void Icon(HudBox box, string category, string name, HudTone tone = HudTone.Default, float alpha = 1f) =>
+            Add(HudDrawKind.Icon, box, text: category + "/" + name, tone: tone, value: alpha);
+
+        /// <summary>A circular progress gauge centred on (x, y).</summary>
+        public void Ring(float centreX, float centreY, float diameter, float progress01, HudTone tone,
+            float thickness = 6f) =>
+            Add(HudDrawKind.Ring,
+                new HudBox(centreX - diameter * 0.5f, centreY - diameter * 0.5f, diameter, diameter),
+                tone: tone, fontSize: thickness, value: progress01 < 0f ? 0f : progress01 > 1f ? 1f : progress01);
 
         public void Fill(HudBox box, HudTone tone, float alpha, string colourHex = null) =>
             Add(HudDrawKind.Fill, box, tone: tone, value: alpha, colourHex: colourHex);
 
-        public void Hairline(HudBox box, HudTone tone = HudTone.Muted, float alpha = 0.35f) =>
-            Add(HudDrawKind.Hairline, box, tone: tone, value: alpha);
+        /// <summary>A square-edged rule or band (never rounded, unlike <see cref="Fill"/>).</summary>
+        public void Hairline(HudBox box, HudTone tone = HudTone.Muted, float alpha = 0.35f, string colourHex = null) =>
+            Add(HudDrawKind.Hairline, box, tone: tone, value: alpha, colourHex: colourHex);
+
+        /// <summary>A horizontal fade from <paramref name="alpha"/> at the left edge to clear at the right.</summary>
+        public void Gradient(HudBox box, string colourHex, float alpha) =>
+            Add(HudDrawKind.Gradient, box, value: alpha, colourHex: colourHex);
+
+        /// <summary>An approved art image (Art-relative path), scaled to cover the box.</summary>
+        public void Image(HudBox box, string artPath, float alpha = 1f) =>
+            Add(HudDrawKind.Image, box, text: artPath, value: alpha);
 
         public void Outline(HudBox box, HudTone tone, float alpha = 1f) =>
             Add(HudDrawKind.Outline, box, tone: tone, value: alpha);

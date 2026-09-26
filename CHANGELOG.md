@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **The 737 now follows gate turns with its actual landing gear.** Taxi-in, pushback and
+  taxi-out previously steered a 17.68 m wheelbase while the shipping AIR-005 aircraft's
+  nose and main gear are 15.30 m apart. The motion profile now matches the runtime glTF,
+  with a regression that measures the model's gear centres so art and taxi geometry cannot
+  silently drift apart again.
+
 - **Graphics-on play returns to a steady 60 fps on the measured Mac scene.** Static aircraft
   cabin glass, windscreens and fitted reflections are combined into material batches without
   removing named art parts or changing the visible aircraft. A same-time packaged comparison

@@ -1,5 +1,8 @@
+using System;
+using System.IO;
 using System.Linq;
 using Airside.Domain;
+using Airside.Presentation;
 using Airside.Simulation;
 using NUnit.Framework;
 
@@ -96,6 +99,28 @@ namespace Airside.Tests
             var wheelbases = jetTypes.Select(type => AircraftPerformance.For(type).NoseToMainGearMetres).ToArray();
             Assert.That(wheelbases.Distinct().Count(), Is.EqualTo(wheelbases.Length),
                 "authored jets must not share one flat wheelbase");
+        }
+
+        [Test]
+        public void Boeing7378TaxiWheelbase_MatchesTheRuntimeGearGeometry()
+        {
+            // Gate turns steer the main gear behind the route's nose datum. The profile used
+            // 17.68 m while AIR-005's actual gear pivots are 15.30 m apart, so the solver and
+            // the aircraft drawn over it disagreed through every taxi-in, pushback and taxi-out
+            // corner. Measure the shipping glTF so a later art revision cannot silently reopen it.
+            var spec = AircraftCatalogue.For(AircraftType.Boeing7378);
+            var path = ArtRuntimePaths.ResolveExisting(spec.RuntimeModelPath);
+            Assert.That(path, Is.Not.Null, "the 737 runtime model must exist");
+            var json = File.ReadAllText(path);
+            Assert.That(AircraftModelBounds.TryMeasurePart(json, "gear_nose", out var noseMin, out var noseMax),
+                Is.True, "nose-gear geometry must be measurable");
+            Assert.That(AircraftModelBounds.TryMeasurePart(json, "gear_left", out var mainMin, out var mainMax),
+                Is.True, "main-gear geometry must be measurable");
+
+            var modelWheelbase = Math.Abs((noseMin.z + noseMax.z - mainMin.z - mainMax.z) * 0.5f);
+            Assert.That(AircraftPerformance.Boeing7378.NoseToMainGearMetres,
+                Is.EqualTo(modelWheelbase).Within(0.02f),
+                $"taxi solver must match AIR-005's {modelWheelbase:0.00} m gear spacing");
         }
 
         [Test]

@@ -4,6 +4,23 @@
 
 ## Where to resume — session handoff
 
+- **2026-09-26 Codex — 737 taxi wheelbase mismatch repaired
+  (`codex/taxiing-bugfix-20260926`).**
+  - **Player-visible outcome:** the AIR-005 737's body and landing gear now follow the same
+    15.30 m steering geometry through terminal-gate taxi-in, pushback and taxi-out turns;
+    the solver no longer trails an invisible main gear 2.38 m behind the rendered wheels.
+  - **Scope / invariants:** only the 737 taxi wheelbase, its factual specification, regression
+    coverage and handoff notes changed. The Adelaide real-metre pavement and existing simulation
+    topology, routes, speeds, reservations, schedules, economy, random draws and save schema stay
+    unchanged.
+  - **Acceptance / evidence:** the new regression measures `gear_nose` and `gear_left` directly
+    from the shipping glTF. It failed before the fix at **17.68 m versus 15.30 m**, then passed;
+    AIR-005's geometry validator passed and Unity EditMode is **1,084/1,084**. The supplementary
+    .NET mirror could not run because no .NET SDK is on this Mac's PATH. Package build and merge
+    identity are recorded in the delivery commit/PR.
+  - **NEXT:** ordinary human playtest can watch the Gate 13 737 through a complete turn; no further
+    taxi or aircraft redesign is part of this narrow fix.
+
 - **2026-09-26 Codex — graphics-on performance repaired and 100-gate whole-game pass.**
   The normal Adelaide package was render-thread bound by thousands of separate transparent
   aircraft panes: the census found 1,792 cabin-window renderers and 2,775 transparent material

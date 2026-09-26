@@ -4,6 +4,22 @@
 
 ## Where to resume — session handoff
 
+- **2026-09-26 Codex — off-map aircraft active-state guard (`main`).**
+  - **Player-visible outcome:** aircraft flying off-map cannot briefly reappear piled up at
+    the 180 ft end of the departure presentation path. Fleet refresh/reordering also cannot
+    draw a reusable view under the wrong aircraft ID.
+  - **Scope / invariants:** presentation visibility only. Domain/Simulation, traffic and
+    runway sequencing, aircraft paths, schedules, saves, economy, clocks and random draws
+    are unchanged.
+  - **Acceptance / evidence:** the pre-pose guard independently checks the simulation-visible
+    state and the view-to-flight ID assignment, forces stale roots inactive, and skips pose
+    work until both agree. Its Unity regression covers off-map stale activation, mismatched
+    reordering and restoration of the correctly assigned visible view. Full Unity EditMode
+    passes **1,085/1,085**.
+  - **NEXT:** ordinary packaged play can keep cycling/following traffic through several
+    departure and return transitions; no further fleet or traffic redesign is part of this
+    narrow repair.
+
 - **2026-09-26 Codex — all-aircraft taxi movement and gate-location pass
   (`codex/all-aircraft-taxi-gates-20260926`).**
   - **Player-visible outcome:** all 13 aircraft steer the main wheels actually visible on

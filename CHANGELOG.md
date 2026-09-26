@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Career mode is one coherent path (ADR 0121).** The roadmap is the only progression
+  system; the dead chapter and daily-bonus systems are gone. Tiers are earned in order,
+  goals say which tier they earn ("TOWARD DOMESTIC"), completed pins release, and tier-ups,
+  goal completions and the finale are announced. Fixed: rebought aircraft reusing a sold
+  registration and never getting paid; no way to abandon a contract (a dead save when broke);
+  Cairns/Darwin counting as international; three different fleet counts; the next-aircraft
+  hint stuck on the ATR; stranded outstation aircraft; veterans re-locked out of repeat
+  schedules after migration. No save schema change.
+
 - **Taxi movement now follows the visible landing gear for all 13 aircraft, across the
   whole ground loop.** Regional aircraft no longer use nose-tangent steering, and vacate
   and lineup no longer lose the type-aware gear geometry used at terminal gates. Each

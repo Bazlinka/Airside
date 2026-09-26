@@ -522,7 +522,9 @@ namespace Airside.Simulation
                 data.Version >= 13 ? data.ServedDestinationCodes : ProvenHistoricalDestinations(data, contractHistory),
                 data.Version >= 13 ? data.OutstationBaseCodes : null,
                 data.Version >= 13 ? data.RecentServiceMargins : null,
-                data.Version >= 13 ? data.ManualRotations : 0,
+                // Before v13 every service was planned by hand, so the delegation count is the
+                // rotation count; starting it at zero re-locked repeat schedules for veterans.
+                data.Version >= 13 ? data.ManualRotations : rotationCount,
                 data.Version >= 13 ? data.ActivePlaySeconds : 0,
                 data.Version >= 13 ? data.RegionalAtSeconds : 0,
                 data.Version >= 13 ? data.DomesticAtSeconds : 0,
@@ -533,8 +535,12 @@ namespace Airside.Simulation
             {
                 var networkFleet = new List<OutstationAircraft>();
                 var seenRegistrations = new HashSet<string>(StringComparer.Ordinal);
+                var playerRegistrations = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var local in operations.Fleet)
+                {
                     seenRegistrations.Add(local.Registration);
+                    if (local.Airline.IsPlayer) playerRegistrations.Add(local.Registration);
+                }
                 var basedCounts = new Dictionary<string, int>(StringComparer.Ordinal);
                 foreach (var record in data.OutstationFleet ?? new List<OutstationAircraftSaveRecord>())
                 {
@@ -563,6 +569,7 @@ namespace Airside.Simulation
                     }
                     else if (record.DepartAtSeconds != 0 || record.ReturnAtSeconds != 0 || record.Automated)
                         throw new FormatException("Inactive outstation aircraft has service state.");
+                    playerRegistrations.Add(record.Registration);
                     networkFleet.Add(new OutstationAircraft(record.Registration, type, record.BaseCode,
                         record.DestinationCode, record.DepartAtSeconds, record.ReturnAtSeconds,
                         record.CompletedServices, record.Automated, record.RotationsSinceCheck,
@@ -574,7 +581,7 @@ namespace Airside.Simulation
                 {
                     if (record == null || string.IsNullOrWhiteSpace(record.Registration)
                         || !seenPlans.Add(record.Registration)
-                        || !seenRegistrations.Contains(record.Registration)
+                        || !playerRegistrations.Contains(record.Registration)
                         || !DestinationCatalogue.TryFind(record.DestinationCode, out _)
                         || record.NextEligibleAtSeconds < 0
                         || (record.IntervalHours != 6 && record.IntervalHours != 12 && record.IntervalHours != 24))

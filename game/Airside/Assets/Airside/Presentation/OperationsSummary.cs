@@ -24,8 +24,9 @@ namespace Airside.Presentation
     public readonly struct CareerObjective
     {
         public CareerObjective(string title, string progressText, float progress01, string nextLine,
-            StatusSeverity nextSeverity)
+            StatusSeverity nextSeverity, string caption = null)
         {
+            Caption = caption ?? string.Empty;
             Title = title ?? string.Empty;
             ProgressText = progressText ?? string.Empty;
             Progress01 = progress01;
@@ -33,6 +34,8 @@ namespace Airside.Presentation
             NextSeverity = nextSeverity;
         }
 
+        /// <summary>"TOWARD DOMESTIC" — what the goal's stage earns. Empty without a career.</summary>
+        public string Caption { get; }
         public string Title { get; }
         public string ProgressText { get; }
         public float Progress01 { get; }
@@ -80,108 +83,43 @@ namespace Airside.Presentation
                 objective.NextSeverity);
         }
 
+        /// <summary>
+        /// The career card: the pinned (or first open) roadmap goal — the single source of career
+        /// direction (ADR 0121) — plus one concrete next action. Pass <paramref name="goal"/> from
+        /// <see cref="AirlineOperations.PinnedCareerGoal"/> so outstation aircraft count too; without
+        /// it the goal is derived from <paramref name="playerFleet"/> alone.
+        /// </summary>
         public static CareerObjective Objective(
             IEnumerable<FleetAircraft> playerFleet, SimulationTime now, AirlineClock clock = null,
-            AirlineCareerState career = null, IReadOnlyList<RouteContractDefinition> marketOffers = null)
+            AirlineCareerState career = null, IReadOnlyList<RouteContractDefinition> marketOffers = null,
+            CareerGoalStatus? goal = null)
         {
             clock ??= AirlineClock.Default;
             var (next, nextSeverity) = NextAction(playerFleet, now, clock, career, marketOffers);
+            if (career == null)
+                return new CareerObjective("Keep the airline flying", string.Empty, 0f, next, nextSeverity);
 
-            if (career != null)
+            if (!goal.HasValue)
             {
                 var owned = new List<AircraftType>();
-                var fleetCount = 0;
                 if (playerFleet != null)
                     foreach (var aircraft in playerFleet)
-                    {
-                        if (aircraft == null || aircraft.Type == null) continue;
-                        owned.Add(aircraft.Type);
-                        fleetCount++;
-                    }
-                var goal = CareerRoadmap.Pinned(career, owned, fleetCount);
-                if (!string.IsNullOrEmpty(goal.Id))
-                    return new CareerObjective(goal.Title,
-                        $"{goal.ProgressText} · {career.Reliability}% reliability",
-                        goal.Target <= 0 ? 0f : goal.Progress / (float)goal.Target,
-                        next, nextSeverity);
+                        if (aircraft?.Type != null)
+                            owned.Add(aircraft.Type);
+                goal = CareerRoadmap.Pinned(career, owned, owned.Count);
             }
 
-            if (career?.ActiveContract != null
-                && career.TryFindDefinition(career.ActiveContract.DefinitionId, out var definition))
-            {
-                var done = career.ActiveContract.CompletedRotations;
-                var required = definition.RequiredRotations;
-                return new CareerObjective(
-                    ProveTitle(definition),
-                    WithToday(career, playerFleet, clock, now, $"{done} of {required} rotations complete"),
-                    required <= 0 ? 0f : done / (float)required,
-                    next,
-                    nextSeverity);
-            }
-
-            var offer = NextOffer(career, marketOffers);
-            if (offer != null)
-            {
-                var chapter = ChapterProgress(playerFleet, career);
-                return new CareerObjective(
-                    $"Accept {Article.A(PlaceName(offer.DestinationCode))} contract",
-                    WithToday(career, playerFleet, clock, now,
-                        string.IsNullOrEmpty(chapter.Text) ? "No contract accepted yet" : chapter.Text),
-                    chapter.Progress01,
-                    next,
-                    nextSeverity);
-            }
-
-            if (career != null)
-            {
-                var hangar = CareerProgress.NextAircraft(career, FleetCount(playerFleet));
-                if (hangar.HasOffer && !hangar.FleetFull)
-                {
-                    var baseBlocked = !string.IsNullOrEmpty(hangar.BaseRequirementLine);
-                    return new CareerObjective(
-                        baseBlocked
-                            ? "Expand your Adelaide base"
-                            : hangar.ReadyToBuy
-                                ? $"Buy {Article.A(hangar.Offer.Type.Name)} in Fleet"
-                                : $"Save for {Article.A(hangar.Offer.Type.Name)}",
-                        WithToday(career, playerFleet, clock, now,
-                            baseBlocked ? BaseProgressText(career) : HangarProgressText(hangar, career)),
-                        baseBlocked ? BaseProgress01(career) : HangarProgress01(hangar, career),
-                        next,
-                        nextSeverity);
-                }
-
-                return new CareerObjective(
-                    "Keep the airline flying",
-                    WithToday(career, playerFleet, clock, now,
-                        $"${career.Funds:N0} on hand · {career.Reliability}% reliability"),
-                    0f,
-                    next,
-                    nextSeverity);
-            }
-
-            return new CareerObjective("Keep the airline flying", string.Empty, 0f, next, nextSeverity);
-        }
-
-        /// <summary>
-        /// Prefaces the objective progress line with the day's service pattern when active
-        /// (ADR 0102): "TODAY · Kingscote 1/2 · …".
-        /// </summary>
-        private static string WithToday(AirlineCareerState career, IEnumerable<FleetAircraft> playerFleet,
-            AirlineClock clock, SimulationTime now, string progress)
-        {
-            var owned = new List<AircraftType>();
-            if (playerFleet != null)
-                foreach (var aircraft in playerFleet)
-                    if (aircraft?.Type != null)
-                        owned.Add(aircraft.Type);
-
-            var today = DailyService.Evaluate(career, owned, clock, now);
-            if (!today.Active)
-                return progress ?? string.Empty;
-            if (string.IsNullOrEmpty(progress))
-                return today.Line;
-            return $"{today.Line} · {progress}";
+            var g = goal.Value;
+            if (string.IsNullOrEmpty(g.Id))
+                return new CareerObjective("Keep the airline flying",
+                    $"${career.Funds:N0} on hand · {career.Reliability}% reliability", 0f, next, nextSeverity);
+            var finale = career.FinaleReached;
+            return new CareerObjective(
+                finale ? "Established airline" : g.Title,
+                finale ? "Every career goal met · sandbox" : g.ProgressText,
+                finale ? 1f : g.Target <= 0 ? 0f : g.Progress / (float)g.Target,
+                next, nextSeverity,
+                finale ? "CAREER COMPLETE" : "TOWARD " + g.UnlocksLabel.ToUpperInvariant());
         }
 
         public static void FillPlayerRows(IEnumerable<FleetAircraft> playerFleet, SimulationTime now,
@@ -373,7 +311,7 @@ namespace Airside.Presentation
                 if (TryBuyHint(career, fleet.Count, out var buyLine))
                     return (buyLine, StatusSeverity.Attention);
 
-                var hangar = CareerProgress.NextAircraft(career, fleet.Count);
+                var hangar = CareerProgress.NextAircraft(career, fleet.Count, fleet.Select(a => a.Type).ToList());
                 if (hangar.HasOffer && !hangar.ReadyToBuy && !hangar.FleetFull)
                     return (!string.IsNullOrEmpty(hangar.BaseRequirementLine)
                             ? $"Next: expand your Adelaide base for the {hangar.Offer.Type.Name}"
@@ -486,76 +424,6 @@ namespace Airside.Presentation
             }
 
             return null;
-        }
-
-        private static int FleetCount(IEnumerable<FleetAircraft> playerFleet)
-        {
-            if (playerFleet == null)
-                return 0;
-            var count = 0;
-            foreach (var _ in playerFleet)
-                count++;
-            return count;
-        }
-
-        private static (string Text, float Progress01) ChapterProgress(
-            IEnumerable<FleetAircraft> playerFleet, AirlineCareerState career)
-        {
-            if (career == null)
-                return (string.Empty, 0f);
-
-            var owned = new List<AircraftType>();
-            if (playerFleet != null)
-                foreach (var aircraft in playerFleet)
-                    if (aircraft?.Type != null)
-                        owned.Add(aircraft.Type);
-
-            var chapter = Campaign.Current(Campaign.Evaluate(career, owned));
-            if (chapter == null)
-                return (string.Empty, 0f);
-
-            var progress = chapter.Goals.Count <= 0 ? 0f : chapter.GoalsDone / (float)chapter.Goals.Count;
-            return ($"{chapter.GoalsDone} of {chapter.Goals.Count} chapter goals · {career.Base.Title}", progress);
-        }
-
-        private static string BaseProgressText(AirlineCareerState career)
-        {
-            if (career == null || !PlayerBase.TryNext(career.BaseLevel, out var next))
-                return string.Empty;
-            var funds = Math.Min(career.Funds, next.UpgradeCost);
-            var rotations = Math.Min(career.CompletedPlayerRotations, next.RequiredRotations);
-            return "$" + funds.ToString("N0") + " of $" + next.UpgradeCost.ToString("N0")
-                   + " · " + rotations + " of " + next.RequiredRotations + " rotations";
-        }
-
-        private static float BaseProgress01(AirlineCareerState career)
-        {
-            if (career == null || !PlayerBase.TryNext(career.BaseLevel, out var next))
-                return 1f;
-            var fundsPart = next.UpgradeCost <= 0 ? 1f : Math.Min(1f, career.Funds / (float)next.UpgradeCost);
-            var rotationsPart = next.RequiredRotations <= 0
-                ? 1f
-                : Math.Min(1f, career.CompletedPlayerRotations / (float)next.RequiredRotations);
-            return Math.Min(fundsPart, rotationsPart);
-        }
-        private static string HangarProgressText(NextAircraftRequirement hangar, AirlineCareerState career)
-        {
-            if (career == null || !hangar.HasOffer)
-                return string.Empty;
-            var funds = Math.Min(career.Funds, hangar.Offer.Price);
-            var rotations = Math.Min(career.CompletedPlayerRotations, hangar.Offer.RequiredRotations);
-            return $"${funds:N0} of ${hangar.Offer.Price:N0} · {rotations} of {hangar.Offer.RequiredRotations} rotations";
-        }
-
-        private static float HangarProgress01(NextAircraftRequirement hangar, AirlineCareerState career)
-        {
-            if (career == null || !hangar.HasOffer || hangar.Offer.Price <= 0)
-                return 0f;
-            var fundsPart = Math.Min(1f, career.Funds / (float)hangar.Offer.Price);
-            var rotPart = hangar.Offer.RequiredRotations <= 0
-                ? 1f
-                : Math.Min(1f, career.CompletedPlayerRotations / (float)hangar.Offer.RequiredRotations);
-            return Math.Min(fundsPart, rotPart);
         }
     }
 }

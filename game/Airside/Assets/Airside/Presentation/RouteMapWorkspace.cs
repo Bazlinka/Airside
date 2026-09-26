@@ -141,7 +141,7 @@ namespace Airside.Presentation
                 }
             CanCycleAircraft = _fleet.Count > 1;
             foreach (var row in _all)
-                if (CareerRoadmap.RouteGuidance(operations.CareerState, _ownedTypes, row.Destination).Length > 0)
+                if (operations.CareerRouteGuidance(row.Destination).Length > 0)
                     _careerTargets.Add(row.Destination.Code);
 
             AircraftLabel = aircraft == null
@@ -181,7 +181,7 @@ namespace Airside.Presentation
             var band = RouteAccess.BandOf(destination);
             BandAndDistance = $"{BandLabel(band)}  ·  {km:0} km";
 
-            CareerLine = CareerRoadmap.RouteGuidance(operations.CareerState, _ownedTypes, destination);
+            CareerLine = operations.CareerRouteGuidance(destination);
             CareerTone = CareerLine.Length > 0 ? HudTone.Caution : HudTone.Muted;
 
             if (aircraft == null)

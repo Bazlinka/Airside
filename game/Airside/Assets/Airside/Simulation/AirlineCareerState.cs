@@ -89,6 +89,8 @@ namespace Airside.Simulation
         public long InternationalAtSeconds { get; private set; }
         public long FinaleAtSeconds { get; private set; }
         internal void AddActivePlaySecond() => ActivePlaySeconds++;
+        /// <summary>The established-airline finale has been recorded (once, ever; setbacks never remove it).</summary>
+        public bool FinaleReached => _processedSettlements.Contains(CareerRoadmap.FinaleKey);
         internal void MarkFinale() { if (FinaleAtSeconds == 0) FinaleAtSeconds = ActivePlaySeconds; }
         public IReadOnlyCollection<string> ServedDestinations => _servedDestinations;
         public IReadOnlyCollection<string> OutstationBases => _outstationBases;
@@ -140,6 +142,17 @@ namespace Airside.Simulation
         public IEnumerable<RouteContractDefinition> IssuedDefinitions => _issued.Values;
 
         public bool HasSettled(SettlementId id) => _processedSettlements.Contains(id.Key);
+
+        /// <summary>True when any flight has already settled under <paramref name="registration"/>.</summary>
+        public bool HasSettlementHistory(string registration)
+        {
+            if (string.IsNullOrWhiteSpace(registration)) return false;
+            var prefix = registration.Trim() + "#";
+            foreach (var key in _processedSettlements)
+                if (key.StartsWith(prefix, StringComparison.Ordinal))
+                    return true;
+            return false;
+        }
 
         public bool HasCompleted(string definitionId) =>
             !string.IsNullOrEmpty(definitionId) && _completedContracts.Contains(definitionId);
@@ -269,35 +282,29 @@ namespace Airside.Simulation
                 _contractHistory.RemoveAt(_contractHistory.Count - 1);
         }
 
-        // Retained as named baselines for older guidance; the actual tier decision is
-        // CareerRoadmap.CanReach, which includes routes, fleet and operating capacity.
-        public const int RegionalRotations = 5;
-        public const int RegionalReliability = 70;
-        public const int DomesticRotations = 30;
-        public const int DomesticReliability = 80;
-        public const int InternationalRotations = 75;
-        public const int InternationalReliability = 88;
-
-        internal void EvaluateTier(IReadOnlyList<AircraftType> ownedTypes, int fleetCount = 0)
+        /// <summary>
+        /// Promotes one operating tier at a time, in order: a tier is reached only after the one
+        /// below it, so a player can never skip Regional by finishing Regional-stage goals while
+        /// still Provisional. Returns how many tiers were gained (0 almost always).
+        /// </summary>
+        internal int EvaluateTier(IReadOnlyList<AircraftType> ownedTypes, int fleetCount = 0)
         {
-            if (Tier < OperatingTier.Regional
-                && CareerRoadmap.CanReach(this, ownedTypes, OperatingTier.Regional, fleetCount))
+            var gained = 0;
+            while (Tier < OperatingTier.International)
             {
-                Tier = OperatingTier.Regional;
-                if (RegionalAtSeconds == 0) RegionalAtSeconds = ActivePlaySeconds;
+                var next = Tier + 1;
+                if (!CareerRoadmap.CanReach(this, ownedTypes, next, fleetCount))
+                    break;
+                Tier = next;
+                gained++;
+                switch (next)
+                {
+                    case OperatingTier.Regional when RegionalAtSeconds == 0: RegionalAtSeconds = ActivePlaySeconds; break;
+                    case OperatingTier.Domestic when DomesticAtSeconds == 0: DomesticAtSeconds = ActivePlaySeconds; break;
+                    case OperatingTier.International when InternationalAtSeconds == 0: InternationalAtSeconds = ActivePlaySeconds; break;
+                }
             }
-            if (Tier < OperatingTier.Domestic
-                && CareerRoadmap.CanReach(this, ownedTypes, OperatingTier.Domestic, fleetCount))
-            {
-                Tier = OperatingTier.Domestic;
-                if (DomesticAtSeconds == 0) DomesticAtSeconds = ActivePlaySeconds;
-            }
-            if (Tier < OperatingTier.International
-                && CareerRoadmap.CanReach(this, ownedTypes, OperatingTier.International, fleetCount))
-            {
-                Tier = OperatingTier.International;
-                if (InternationalAtSeconds == 0) InternationalAtSeconds = ActivePlaySeconds;
-            }
+            return gained;
         }
 
         /// <summary>True if any listed type is one of the jet types Domestic/International accept.</summary>
@@ -330,6 +337,20 @@ namespace Airside.Simulation
             if (amount <= 0 || ActiveContract == null || ActiveContract.DefinitionId != definitionId)
                 return;
             Reliability = Clamp(Reliability - amount);
+        }
+
+        /// <summary>
+        /// Walks away from the active contract: it pays nothing more, costs
+        /// <paramref name="reliabilityLoss"/>, and can be accepted again later. The only way out of
+        /// a contract the airline can no longer fly (sold type, no cash), so it must always exist.
+        /// </summary>
+        internal bool AbandonContract(int reliabilityLoss)
+        {
+            if (ActiveContract == null)
+                return false;
+            Reliability = Clamp(Reliability - Math.Max(0, reliabilityLoss));
+            ActiveContract = null;
+            return true;
         }
 
         /// <summary>

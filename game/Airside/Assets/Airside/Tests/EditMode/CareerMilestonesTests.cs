@@ -8,17 +8,16 @@ namespace Airside.Tests
     public sealed class CareerMilestonesTests
     {
         [Test]
-        public void FreshCareer_OnlyStartingReliabilityIsAlreadyReached()
+        public void FreshCareer_HasEarnedNothingYet()
         {
             var career = new AirlineCareerState();
-            var milestones = CareerMilestones.Reached(career, fleetSize: 1, new[] { AircraftType.Atr42 });
+            var milestones = CareerMilestones.Reached(career, fleetSize: 1, new[] { AircraftType.Saab340 });
 
             Assert.That(milestones, Is.Not.Empty);
-            // A fresh career starts at 100% reliability (StartingReliability), so the
-            // reliability milestone is trivially already met — everything earned through
-            // actually flying (rotations, contracts, tier, fleet growth, jets) is not.
+            // Reliability starts at 100%, so the reliability keepsake also needs 50 services flown:
+            // nothing is handed out before the player has actually operated.
             foreach (var milestone in milestones)
-                Assert.That(milestone.Reached, Is.EqualTo(milestone.Id == "elite-reliability"), milestone.Id);
+                Assert.That(milestone.Reached, Is.False, milestone.Id);
         }
 
         [Test]
@@ -38,7 +37,8 @@ namespace Airside.Tests
         [Test]
         public void RotationAndFleetMilestones_FlipOnAsThresholdsAreCrossed()
         {
-            var career = new AirlineCareerState(completedPlayerRotations: 10, reliability: 95);
+            var career = new AirlineCareerState(completedPlayerRotations: 60, reliability: 95,
+                outstationBases: new[] { "MEL" });
             var milestones = CareerMilestones.Reached(career, fleetSize: AircraftAcquisition.MaxPlayerAircraft, new[]
             {
                 AircraftType.Atr42, AircraftType.Boeing7378
@@ -46,11 +46,13 @@ namespace Airside.Tests
 
             bool Reached(string id) => milestones.Single(m => m.Id == id).Reached;
             Assert.That(Reached("first-rotation"), Is.True);
-            Assert.That(Reached("ten-rotations"), Is.True);
-            Assert.That(Reached("twenty-five-rotations"), Is.False);
-            Assert.That(Reached("full-fleet"), Is.True);
+            Assert.That(Reached("century"), Is.False);
+            Assert.That(Reached("full-fleet"), Is.True, "fleet size is the whole airline, outstations included");
             Assert.That(Reached("jet-operator"), Is.True);
+            Assert.That(Reached("widebody-operator"), Is.False);
+            Assert.That(Reached("first-outstation"), Is.True);
             Assert.That(Reached("elite-reliability"), Is.True);
+            Assert.That(Reached("established"), Is.False);
         }
     }
 }

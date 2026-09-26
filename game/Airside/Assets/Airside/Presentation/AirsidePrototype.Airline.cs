@@ -583,10 +583,9 @@ namespace Airside.Presentation
                 return;
 
             var objective = OperationsSummary.Objective(PlayerFleet(), _clock.Now, _operations.Clock,
-                _operations.CareerState, _operations.MarketOffers());
+                _operations.CareerState, _operations.MarketOffers(), _operations.PinnedCareerGoal());
             _shellDrawList.Clear();
-            HudShellPainter.PaintObjective(_shellDrawList, Box(rect), objective,
-                _operations.PinnedCareerGoal().Stage + " · CAREER");
+            HudShellPainter.PaintObjective(_shellDrawList, Box(rect), objective, objective.Caption);
             _hudPainter.Draw(_shellDrawList);
         }
 
@@ -2430,7 +2429,7 @@ namespace Airside.Presentation
             }
             var footer = HudShell.Footer(surface);
             _workspaceDrawList.Hairline(HudShell.FooterRule(surface));
-            var finished = _operations.CareerState.ProcessedSettlementKeys.Contains(CareerRoadmap.FinaleKey);
+            var finished = _operations.CareerState.FinaleReached;
             _workspaceDrawList.Text(footer.Inset(HudShell.SurfacePadding, 8f, HudShell.SurfacePadding, 0f)
                 .WithHeight(22f), finished
                     ? "Established airline achieved · continue in sandbox"
@@ -2890,8 +2889,7 @@ namespace Airside.Presentation
             }
             foreach (var destination in DestinationCatalogue.All)
                 if (_operations.CanOperate(aircraft, destination)
-                    && CareerRoadmap.RouteGuidance(_operations.CareerState, PlayerOwnedTypes(),
-                        destination).Length > 0)
+                    && _operations.CareerRouteGuidance(destination).Length > 0)
                 {
                     _mapSelection = destination;
                     return;

@@ -1360,6 +1360,19 @@ namespace Airside.Presentation
                 var view = _commercialAircraft[index];
                 if (view == null)
                     continue;
+                if (FleetMode)
+                {
+                    var assignedId = index < _commercialAircraftIds.Length
+                        ? _commercialAircraftIds[index]
+                        : null;
+                    if (!PrepareFleetViewForPose(view, assignedId, flight.AircraftId,
+                            IsFleetFlightVisible(flight.AircraftId)))
+                        continue;
+                }
+                else if (!view.gameObject.activeSelf)
+                {
+                    continue;
+                }
                 var phase = flight.Operation.Phase;
                 var progress = VisualPhaseProgress(flight, 0f);
                 var aircraftType = FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var fleetAircraft)
@@ -1419,9 +1432,9 @@ namespace Airside.Presentation
                     targetRotation,
                     AirsideFlightPath.DampFactor(turnRate, PresentationDeltaTime));
 
-                // A fleet aircraft away on a leg is hidden for hours. Its pose above stays
-                // current so it reappears on the right heading, but the prop, gear, light,
-                // door, glow, shadow and marker passes below touch nothing visible.
+                // The pre-pose guard above excludes off-map and temporarily misassigned views.
+                // Keep this defensive check in case another presentation pass deactivates the
+                // root while its pose is being updated.
                 if (!view.gameObject.activeSelf)
                     continue;
 

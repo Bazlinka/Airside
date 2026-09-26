@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Off-map aircraft can no longer reappear stacked at the departure-path endpoint.**
+  The presentation loop now verifies both simulation visibility and the aircraft ID
+  assigned to each reusable view immediately before applying a world pose. A stale active
+  root is forced inactive, and a view caught between slots during fleet reordering cannot
+  be drawn as the wrong aircraft. Simulation state, traffic sequencing, saves, aircraft
+  paths and normal visible-aircraft motion are unchanged.
+
 - **Taxi movement now follows the visible landing gear for all 13 aircraft, across the
   whole ground loop.** Regional aircraft no longer use nose-tangent steering, and vacate
   and lineup no longer lose the type-aware gear geometry used at terminal gates. Each

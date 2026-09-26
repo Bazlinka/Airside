@@ -8,6 +8,34 @@ namespace Airside.Tests
     public sealed class PresentationBugSweepTests
     {
         [Test]
+        public void FleetVisibilityGuard_HidesOffMapAndMisorderedViewsBeforePose()
+        {
+            var aircraft = new GameObject("Fleet view");
+            try
+            {
+                Assert.That(AirsidePrototype.PrepareFleetViewForPose(
+                    aircraft.transform, "VH-OFF", "VH-OFF", simulationVisible: false), Is.False);
+                Assert.That(aircraft.activeSelf, Is.False,
+                    "an off-map aircraft cannot retain a stale active root");
+
+                aircraft.SetActive(true);
+                Assert.That(AirsidePrototype.PrepareFleetViewForPose(
+                    aircraft.transform, "VH-OLD", "VH-NEW", simulationVisible: true), Is.False);
+                Assert.That(aircraft.activeSelf, Is.False,
+                    "a reordered view cannot be rendered as another aircraft");
+
+                Assert.That(AirsidePrototype.PrepareFleetViewForPose(
+                    aircraft.transform, "VH-NEW", "VH-NEW", simulationVisible: true), Is.True);
+                Assert.That(aircraft.activeSelf, Is.True,
+                    "the correctly assigned visible aircraft is restored normally");
+            }
+            finally
+            {
+                Object.DestroyImmediate(aircraft);
+            }
+        }
+
+        [Test]
         public void EngineAudio_DoesNotStartOnHiddenOrDisabledFleetViews()
         {
             var aircraft = new GameObject("Hidden fleet aircraft");

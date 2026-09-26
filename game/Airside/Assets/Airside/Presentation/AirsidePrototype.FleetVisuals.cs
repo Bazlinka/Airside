@@ -83,6 +83,26 @@ namespace Airside.Presentation
             _fleetAircraftById.TryGetValue(aircraftId, out var aircraft)
             && (FleetVisual.For(aircraft, _clock.Now).Visible || IsArrivingOnFinal(aircraft));
 
+        /// <summary>
+        /// Last-line visibility guard immediately before a fleet view receives a world pose.
+        /// Sync normally keeps the parallel flight/view/id arrays aligned, but a stale active
+        /// root must never be drawn as another flight while those arrays are being reordered.
+        /// Off-map aircraft are also forced inactive here rather than trusting an earlier sync.
+        /// </summary>
+        public static bool PrepareFleetViewForPose(Transform view, string assignedAircraftId,
+            string flightAircraftId, bool simulationVisible)
+        {
+            if (view == null)
+                return false;
+
+            var visible = simulationVisible
+                          && !string.IsNullOrEmpty(assignedAircraftId)
+                          && string.Equals(assignedAircraftId, flightAircraftId, StringComparison.Ordinal);
+            if (view.gameObject.activeSelf != visible)
+                view.gameObject.SetActive(visible);
+            return visible;
+        }
+
         private bool TryFleetGround(CommercialFlight flight, out FleetAircraft aircraft, out FleetVisual visual)
         {
             visual = default;

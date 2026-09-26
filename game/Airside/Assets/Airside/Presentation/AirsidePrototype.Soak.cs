@@ -243,7 +243,7 @@ namespace Airside.Presentation
                     // indexed an empty list and ended the unattended run with an exception.
                     var reachable = _operations.MapDestinations().Where(d => _operations.CanOperate(aircraft, d)
                         && _operations.CareerState.CanAfford(
-                            FlightEconomics.DispatchCost(aircraft.Type, _operations.DistanceKm(d)))).ToList();
+                            _operations.DispatchCost(aircraft.Type, _operations.DistanceKm(d)))).ToList();
                     if (reachable.Count == 0)
                         continue;
                     var destination = reachable[_soakChoices.NextInt(0, reachable.Count)];

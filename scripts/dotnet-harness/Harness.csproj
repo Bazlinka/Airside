@@ -65,6 +65,8 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CareerTrackWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/SelectionCard.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/SplashScreen.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightManual.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirlineSetup.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudDraw.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/OperationsWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RouteMapWorkspace.cs" />

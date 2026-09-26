@@ -36,9 +36,11 @@ namespace Airside.Simulation
             IEnumerable<string> outstationBases = null, IEnumerable<long> recentServiceMargins = null,
             int manualRotations = 0, long activePlaySeconds = 0,
             long regionalAtSeconds = 0, long domesticAtSeconds = 0,
-            long internationalAtSeconds = 0, long finaleAtSeconds = 0)
+            long internationalAtSeconds = 0, long finaleAtSeconds = 0,
+            CareerDifficulty difficulty = CareerDifficulty.Standard)
         {
-            Funds = funds ?? StartingFunds;
+            Difficulty = difficulty;
+            Funds = funds ?? Simulation.Difficulty.For(difficulty).StartingFunds;
             Reliability = Clamp(reliability);
             Tier = tier;
             ActiveContract = activeContract;
@@ -74,6 +76,9 @@ namespace Airside.Simulation
                 Remember(definition);
         }
 
+        /// <summary>Chosen when the airline was founded (ADR 0123); never changes afterwards.</summary>
+        public CareerDifficulty Difficulty { get; }
+        public DifficultyProfile DifficultyProfile => Simulation.Difficulty.For(Difficulty);
         public long Funds { get; private set; }
         public int Reliability { get; private set; }
         public OperatingTier Tier { get; internal set; }
@@ -359,6 +364,7 @@ namespace Airside.Simulation
         /// </summary>
         internal void ApplyPunctuality(int reliabilityDelta)
         {
+            reliabilityDelta = DifficultyProfile.ScalePenalty(reliabilityDelta);
             if (reliabilityDelta == 0)
                 return;
             Reliability = Clamp(Reliability + reliabilityDelta);

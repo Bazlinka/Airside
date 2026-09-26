@@ -152,7 +152,7 @@ namespace Airside.Presentation
         {
             var enabled = GUI.enabled;
             GUI.enabled = enabled && command.Enabled;
-            var style = ButtonStyle(command.ButtonStyle, command.Text == "×");
+            var style = ButtonStyle(command.ButtonStyle, command.Text == "×" || command.Text == "?");
             var pressed = GUI.Button(rect, command.Text, style);
             GUI.enabled = enabled;
             return pressed;

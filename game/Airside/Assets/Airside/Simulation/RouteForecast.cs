@@ -20,6 +20,10 @@ namespace Airside.Simulation
         public long Revenue { get; }
         public long Margin => Revenue - Cost;
 
+        /// <summary>The same forecast under a difficulty's revenue and cost dials (ADR 0123).</summary>
+        public RouteForecast Under(DifficultyProfile difficulty) =>
+            new(ExpectedPassengers, Seats, difficulty.ScaleCost(Cost), difficulty.ScaleRevenue(Revenue));
+
         public static RouteForecast For(Destination origin, Destination destination, AircraftType type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));

@@ -71,11 +71,7 @@ namespace Airside.Presentation
         /// who wants to repaint later picks from the same authored set rather than a free
         /// colour picker — one shared source of truth with <c>AirsidePrototype.LiveryChoices</c>.
         /// </summary>
-        public static readonly (string Label, string Hex)[] LiveryPalette =
-        {
-            ("Crimson", "#C8102E"), ("Navy", "#1F3A93"), ("Forest", "#2E7D32"),
-            ("Sunset", "#E8772E"), ("Violet", "#6A3FA0"), ("Gold", "#D4A017")
-        };
+        public static readonly (string Label, string Hex)[] LiveryPalette = AirlineSetupModel.Palette;
 
         public string Title => "AIRLINE";
 
@@ -356,9 +352,13 @@ namespace Airside.Presentation
 
         public HudBox ProfileCaption => new(LeftColumn.X, ProfileY, LeftColumn.Width, CaptionHeight);
 
-        public HudBox LiverySwatch(int index) =>
-            new(LeftColumn.X + index * (SwatchSize + SwatchGap), ProfileY + CaptionHeight + 8f,
-                SwatchSize, SwatchSize);
+        public HudBox LiverySwatch(int index)
+        {
+            // Twelve colours share the column; they shrink rather than run past it.
+            var count = StatsWorkspaceModel.LiveryPalette.Length;
+            var size = Math.Min(SwatchSize, (LeftColumn.Width - (count - 1) * SwatchGap) / count);
+            return new HudBox(LeftColumn.X + index * (size + SwatchGap), ProfileY + CaptionHeight + 8f, size, size);
+        }
 
         public float CompetitionY => ProfileY + CaptionHeight + 8f + SwatchSize + 18f;
         public HudBox CompetitionCaption => new(LeftColumn.X, CompetitionY, LeftColumn.Width, CaptionHeight);

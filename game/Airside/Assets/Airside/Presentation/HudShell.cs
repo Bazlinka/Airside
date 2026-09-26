@@ -167,7 +167,7 @@ namespace Airside.Presentation
         public const float RailMarkHeight = 70f;
         public const float RailItemHeight = 64f;
         public const float RailItemMinHeight = 46f;
-        public const float RailFootHeight = 12f;
+        public const float RailFootHeight = 56f;
 
         public const float CapsuleHeight = 52f;
         public const float CapsuleMaxWidth = 700f;
@@ -245,6 +245,10 @@ namespace Airside.Presentation
         /// <summary>The brand-mark slot at the top of the rail.</summary>
         public static HudBox RailMark(HudBox rail) =>
             new(rail.X + (rail.Width - 40f) * 0.5f, rail.Y + 14f, 40f, 40f);
+
+        /// <summary>The round "?" at the foot of the rail that opens the Flight Manual.</summary>
+        public static HudBox RailHelp(HudBox rail) =>
+            new(rail.X + (rail.Width - 34f) * 0.5f, rail.Bottom - 46f, 34f, 34f);
 
         /// <summary>The five workspace items, stacked under the brand mark.</summary>
         public static void FillTabs(HudBox rail, float viewportHeight, HudWorkspace active, List<HudNavTab> into)
@@ -525,6 +529,9 @@ namespace Airside.Presentation
                     HudAlign.Center);
                 into.Hotspot(tab.Box, WorkspaceAction(tab.Workspace));
             }
+            var help = HudShell.RailHelp(rail);
+            if (tabs.Count > 0 && help.Y >= tabs[tabs.Count - 1].Box.Bottom)
+                into.Button(help, "?", HelpAction, HudButtonStyle.Secondary);
         }
 
         /// <summary>The status capsule: caption-over-value instruments with a gauge and a tier chip.</summary>

@@ -37,7 +37,7 @@ namespace Airside.Simulation
         /// 13 adds selectable career goals, route proof, outstation fleet/bases, earned repeat
         /// schedules, recent service margins and active-play timing (ADR 0120).
         /// </summary>
-        public const int CurrentVersion = 13;
+        public const int CurrentVersion = 14;
 
         public int Version = CurrentVersion;
 
@@ -88,6 +88,12 @@ namespace Airside.Simulation
 
         // ---- Career roadmap (v13) -------------------------------------------------
         public string PinnedCareerGoalId;
+
+        /// <summary>v14 (ADR 0123): Relaxed / Standard / Demanding. Older saves play as Standard.</summary>
+        public string Difficulty;
+
+        /// <summary>v14: true when the player turned the first-flight coaching off at setup.</summary>
+        public bool CoachingOff;
         public List<string> ServedDestinationCodes = new();
         public List<string> OutstationBaseCodes = new();
         public List<long> RecentServiceMargins = new();
@@ -149,6 +155,9 @@ namespace Airside.Simulation
         public string Name;
         public string LiveryHex;
         public bool IsPlayer;
+
+        /// <summary>v14: the player's chosen flight code, or empty to derive one from the name.</summary>
+        public string Code;
     }
 
     [Serializable]
@@ -211,6 +220,8 @@ namespace Airside.Simulation
                 PlayerBaseLevel = operations.CareerState.BaseLevel.ToString(),
                 PinnedCareerGoalId = operations.CareerState.PinnedGoalId,
                 ManualRotations = operations.CareerState.ManualRotations,
+                Difficulty = operations.CareerState.Difficulty.ToString(),
+                CoachingOff = !operations.FirstFlightCoaching,
                 ActivePlaySeconds = operations.CareerState.ActivePlaySeconds,
                 RegionalAtSeconds = operations.CareerState.RegionalAtSeconds,
                 DomesticAtSeconds = operations.CareerState.DomesticAtSeconds,
@@ -278,7 +289,8 @@ namespace Airside.Simulation
             {
                 data.Airlines.Add(new AirlineRecord
                 {
-                    Id = airline.Id.Value, Name = airline.Name, LiveryHex = airline.LiveryHex, IsPlayer = airline.IsPlayer
+                    Id = airline.Id.Value, Name = airline.Name, LiveryHex = airline.LiveryHex, IsPlayer = airline.IsPlayer,
+                    Code = airline.Code ?? string.Empty
                 });
             }
 
@@ -348,7 +360,8 @@ namespace Airside.Simulation
                 {
                     airline = data.Version <= 3 && record.Id == "WTB"
                         ? Airline.VirginAustralia()
-                        : new Airline(record.Id, record.Name, record.LiveryHex, record.IsPlayer);
+                        : new Airline(record.Id, record.Name, record.LiveryHex, record.IsPlayer,
+                            data.Version >= 14 && record.IsPlayer ? record.Code : null);
                 }
                 catch (ArgumentException e)
                 {
@@ -529,7 +542,9 @@ namespace Airside.Simulation
                 data.Version >= 13 ? data.RegionalAtSeconds : 0,
                 data.Version >= 13 ? data.DomesticAtSeconds : 0,
                 data.Version >= 13 ? data.InternationalAtSeconds : 0,
-                data.Version >= 13 ? data.FinaleAtSeconds : 0);
+                data.Version >= 13 ? data.FinaleAtSeconds : 0,
+                ParseDifficulty(data));
+            operations.FirstFlightCoaching = data.Version < 14 || !data.CoachingOff;
 
             if (data.Version >= 13)
             {
@@ -596,6 +611,19 @@ namespace Airside.Simulation
         }
 
         /// <summary>Only destinations proven by the old contract ledger are credited during migration.</summary>
+        /// <summary>v14 difficulty; every earlier save plays as Standard, the only economy it knew.</summary>
+        private static CareerDifficulty ParseDifficulty(AirlineSaveData data)
+        {
+            if (data.Version < 14)
+                return CareerDifficulty.Standard;
+            if (string.IsNullOrWhiteSpace(data.Difficulty)
+                || !Enum.TryParse(data.Difficulty, out CareerDifficulty difficulty)
+                || !Enum.IsDefined(typeof(CareerDifficulty), difficulty)
+                || !string.Equals(difficulty.ToString(), data.Difficulty.Trim(), StringComparison.Ordinal))
+                throw new FormatException($"Unknown difficulty '{data.Difficulty}'.");
+            return difficulty;
+        }
+
         private static IReadOnlyList<string> ProvenHistoricalDestinations(AirlineSaveData data,
             IReadOnlyList<CompletedContractRecord> history)
         {

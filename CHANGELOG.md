@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Found your airline properly (ADR 0123).** New airline is now a four-step setup with a
+  live preview: name and your own two- or three-letter flight code; a livery from twelve
+  colours or your own hue and shade; Relaxed / Standard / Demanding difficulty (starting
+  float, fares, flight costs and how hard lateness hits); and a briefing with an optional
+  first-flight coach. Save v14 keeps the choices; older saves play Standard.
+- **The Flight Manual.** Seven pages on how Airside actually works — first flight, money and
+  contracts, reliability, career, growing, controls — from HOW TO PLAY on the title screen,
+  the setup briefing, the **?** on the rail, or F1.
+
 - **A completely new in-game HUD — the Glass Cockpit (ADR 0122).** A left navigation
   rail, a floating status capsule, a career ring card, live flight tiles, a radar minimap
   and a glass selected-aircraft card with a turnaround timeline replace the top bar, tab

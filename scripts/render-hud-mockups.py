@@ -246,13 +246,14 @@ def draw_button(image, command):
         draw_rect(image, rect, rgb(PALETTE["GlassEdge"]), 0.14, radius, outline=True)
         text_colour = PALETTE["InstrumentText"] if enabled else PALETTE["InstrumentMuted"]
 
-    size = 11.0 if label != "×" else 18.0
+    glyph = label in ("×", "?")
+    size = 18.0 if glyph else 11.0
     draw_text(image, {
         "Box": [command["Box"][0], command["Box"][1] + (command["Box"][3] - size * 1.15) / 2.0,
                 command["Box"][2], size * 1.3],
         "Text": label,
         "FontSize": size,
-        "Style": STYLE_BOLD | (STYLE_CAPTION if label != "×" else 0),
+        "Style": STYLE_BOLD | (0 if glyph else STYLE_CAPTION),
         "Align": "Center",
         "Colour": text_colour,
         "Value": 1.0 if enabled else 0.55,

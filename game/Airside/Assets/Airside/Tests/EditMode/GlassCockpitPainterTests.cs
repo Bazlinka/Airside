@@ -33,10 +33,8 @@ namespace Airside.Tests
             {
                 Step = step, HasSave = hasSave, SaveName = "Southern Cross Regional", SaveTier = "Regional",
                 SaveSummary = "4 aircraft · $23,400 · 91% reliability", SavedWhen = "Saved 26 Sep 14:05",
-                ClockText = "14:05", StartingFunds = AirlineCareerState.StartingFunds
+                ClockText = "14:05"
             };
-            foreach (var livery in StatsWorkspaceModel.LiveryPalette)
-                model.Liveries.Add(livery);
             return model;
         }
 
@@ -56,16 +54,16 @@ namespace Airside.Tests
                 if (step == SplashStep.Menu)
                 {
                     Assert.That(actions, Does.Contain(SplashPainter.NewAirline));
+                    Assert.That(actions, Does.Contain(SplashPainter.HowToPlay));
                     Assert.That(actions, Does.Contain(SplashPainter.Quit));
                     Assert.That(actions.Contains(SplashPainter.Continue), Is.EqualTo(hasSave));
                 }
                 else
                 {
-                    Assert.That(actions, Does.Contain(SplashPainter.Start));
-                    Assert.That(actions, Does.Contain(SplashPainter.Back));
-                    Assert.That(actions.Count(a => a.StartsWith(SplashPainter.LiveryPrefix)),
-                        Is.EqualTo(StatsWorkspaceModel.LiveryPalette.Length));
-                    Assert.That(layout.NameField.Y, Is.GreaterThan(layout.Card.Y));
+                    Assert.That(actions, Does.Contain(AirlineSetupPainter.Next));
+                    Assert.That(actions, Does.Contain(AirlineSetupPainter.Back));
+                    Assert.That(layout.Setup.NameField.Y, Is.GreaterThan(layout.Card.Y));
+                    Assert.That(layout.Setup.CodeField.Bottom, Is.LessThan(layout.Card.Bottom));
                 }
             }
         }

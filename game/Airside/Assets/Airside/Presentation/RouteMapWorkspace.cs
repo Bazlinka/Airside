@@ -200,12 +200,12 @@ namespace Airside.Presentation
                 ? $"{type.Name} compatible"
                 : $"{type.Name} not cleared for this route";
 
-            var dispatch = FlightEconomics.DispatchCost(type, km);
+            var dispatch = operations.DispatchCost(type, km);
             var alreadyPaid = aircraft.Scheduled.HasValue
-                ? FlightEconomics.DispatchCost(type, operations.DistanceKm(aircraft.Scheduled.Value.Destination))
+                ? operations.DispatchCost(type, operations.DistanceKm(aircraft.Scheduled.Value.Destination))
                 : 0;
             var changeCost = dispatch - alreadyPaid;
-            var forecast = RouteForecast.For(operations.Home, destination, type);
+            var forecast = operations.Forecast(operations.Home, destination, type);
             var basePay = forecast.Revenue;
             BandAndDistance += $" · {forecast.ExpectedPassengers}/{forecast.Seats} seats";
             var pay = (long)Math.Round(basePay *

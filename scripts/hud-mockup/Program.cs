@@ -26,7 +26,11 @@ public static class Program
         var pages = new List<Page>
         {
             SplashPage(scenario, width, height, SplashStep.Menu),
-            SplashPage(scenario, width, height, SplashStep.NewAirline),
+            SplashPage(scenario, width, height, SplashStep.NewAirline, SetupStep.Identity),
+            SplashPage(scenario, width, height, SplashStep.NewAirline, SetupStep.Livery),
+            SplashPage(scenario, width, height, SplashStep.NewAirline, SetupStep.Difficulty),
+            SplashPage(scenario, width, height, SplashStep.NewAirline, SetupStep.Briefing),
+            ManualPage(width, height, 1),
             Overview(scenario, width, height),
             Operations(scenario, width, height),
             RouteMapPage(scenario, width, height),
@@ -146,7 +150,15 @@ public static class Program
         return new Page("overview", Serialise(list));
     }
 
-    private static Page SplashPage(Scenario scenario, float width, float height, SplashStep step)
+    private static Page ManualPage(float width, float height, int page)
+    {
+        var list = new HudDrawList();
+        FlightManualPainter.Paint(list, FlightManualPainter.Panel(width, height), page);
+        return new Page("manual", Serialise(list));
+    }
+
+    private static Page SplashPage(Scenario scenario, float width, float height, SplashStep step,
+        SetupStep setupStep = SetupStep.Identity)
     {
         var operations = scenario.Operations;
         var model = new SplashModel
@@ -158,15 +170,19 @@ public static class Program
             SaveTier = operations.CareerState.Tier.ToString(),
             SaveSummary = $"{operations.PlayerFleetCount()} aircraft · ${operations.CareerState.Funds:N0} · {operations.CareerState.Reliability}% reliability",
             SavedWhen = "Saved 26 Sep 12:06 · 4 services flown",
-            ClockText = operations.Clock.TimeText(scenario.Now),
-            StartingFunds = AirlineCareerState.StartingFunds,
-            SelectedLivery = 1
+            ClockText = operations.Clock.TimeText(scenario.Now)
         };
-        foreach (var livery in StatsWorkspaceModel.LiveryPalette)
-            model.Liveries.Add(livery);
+        model.Setup.Step = setupStep;
+        if (setupStep == SetupStep.Livery)
+        {
+            model.Setup.Hue = 20;
+            model.Setup.Shade = 4;
+            model.Setup.PaletteIndex = -1;
+        }
         var list = new HudDrawList();
         SplashPainter.Paint(list, SplashLayout.Create(width, height, step, model.HasSave), model, 0.3f);
-        return new Page(step == SplashStep.Menu ? "splash" : "splash-new", Serialise(list));
+        return new Page(step == SplashStep.Menu ? "splash" : "setup-" + setupStep.ToString().ToLowerInvariant(),
+            Serialise(list));
     }
 
     private static Page Career(Scenario scenario, float width, float height)

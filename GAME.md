@@ -1,4 +1,16 @@
-## Where to resume — career coherence + Glass Cockpit HUD + title screen
+## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
+
+- **2026-09-26 Claude (follow-up, same branch) — first-time airline setup (ADR 0123).**
+  Four-step New airline wizard (identity + flight code, livery with custom hue/shade,
+  difficulty, briefing + coaching toggle) with a live preview; difficulty in the economy via
+  `AirlineOperations.DispatchCost`/`Forecast` and `DifficultyProfile.ScalePenalty`; save v14
+  (`Difficulty`, `CoachingOff`, airline `Code`); seven-page Flight Manual replacing the F1
+  controls sheet, also on the title screen and a new rail **?** button. Evidence:
+  `scripts/test-domain.sh` **799/799**; Presentation and EditMode type-check per assembly
+  (Domain / Simulation / Presentation / Tests, as the asmdefs split them) against UnityEngine
+  reference assemblies with only three editor-only baseline errors. **Unity checks to add on
+  the Mac:** typing into the name and code fields, Enter/Esc through the wizard, the manual
+  over the title screen.
 
 - **2026-09-26 Claude — branch `claude/career-mode-hud-redesign-rhbjok`.** Bailey asked for
   the career logic/progression to be fixed and made coherent, a new opening splash, and a
@@ -4705,8 +4717,12 @@ true 3D assets; animation and VFX mirror simulation state and never drive it.
 Open `game/Airside` in Unity 6.3 LTS and press Play.
 
 The game opens on the **title screen** (ADR 0122): the dawn illustration of the airport,
-the live Adelaide clock and one card — **Continue** your saved airline, **New airline**
-(name + livery), Options or Quit. Enter continues; Esc steps back or opens the menu.
+the live Adelaide clock and one card — **Continue** your saved airline, **New airline**,
+**How to play**, Options or Quit. Enter continues; Esc steps back or opens the menu.
+New airline is a four-step setup (ADR 0123) with a live preview: name and flight code,
+livery (twelve colours or your own hue/shade), difficulty (Relaxed / Standard / Demanding)
+and a briefing with an optional first-flight coach. The **Flight Manual** (How to play, the
+**?** on the rail, or F1; ←/→ to page) explains the rules and lists the controls.
 Choosing one dissolves the art into the live airport while the camera glides down (any
 key skips). Time is **live Adelaide time**: one second in the game is one real second.
 There is no pause, no time rates and no skip; the menu does not stop the airport.

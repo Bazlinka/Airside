@@ -457,7 +457,8 @@ namespace Airside.Simulation
         /// flying, and opening departures clustered like an ADL morning peak.
         /// </summary>
         public static AirlineOperations StartAtAdelaide(ISimulationClock clock, IRandomSource random, Airline player,
-            AirlineClock airlineClock = null)
+            AirlineClock airlineClock = null, CareerDifficulty difficulty = CareerDifficulty.Standard,
+            bool firstFlightCoaching = true)
         {
             if (player == null) throw new ArgumentNullException(nameof(player));
             if (!player.IsPlayer) throw new ArgumentException("The starting airline must be the player's.", nameof(player));
@@ -466,6 +467,8 @@ namespace Airside.Simulation
             // Book against the real Adelaide clock first. Assigning it after scheduling
             // used to stamp an 08:00 morning peak onto whatever live hour you launched.
             operations.Clock = airlineClock ?? AirlineClock.Default;
+            operations.CareerState = new AirlineCareerState(difficulty: difficulty);
+            operations.FirstFlightCoaching = firstFlightCoaching;
             operations.AddAirline(player);
             operations.AddAircraft(player, "VH-PAX", AircraftType.Saab340, AdelaideRegionalBays[0]);
             var aiFleet = new List<FleetAircraft>();
@@ -1114,7 +1117,8 @@ namespace Airside.Simulation
             IEnumerable<string> servedDestinations = null, IEnumerable<string> outstationBases = null,
             IEnumerable<long> recentServiceMargins = null, int manualRotations = 0,
             long activePlaySeconds = 0, long regionalAtSeconds = 0, long domesticAtSeconds = 0,
-            long internationalAtSeconds = 0, long finaleAtSeconds = 0)
+            long internationalAtSeconds = 0, long finaleAtSeconds = 0,
+            CareerDifficulty difficulty = CareerDifficulty.Standard)
         {
             if (string.IsNullOrWhiteSpace(tier)
                 || !Enum.TryParse(tier, out OperatingTier parsedTier)
@@ -1145,7 +1149,8 @@ namespace Airside.Simulation
             CareerState = new AirlineCareerState(funds, reliability, parsedTier, contract, processedSettlementKeys,
                 completedContractIds, completedPlayerRotations, issued, lifetimeRevenue, contractHistory, effectiveBase,
                 pinnedGoalId, servedDestinations, outstationBases, recentServiceMargins, manualRotations,
-                activePlaySeconds, regionalAtSeconds, domesticAtSeconds, internationalAtSeconds, finaleAtSeconds);
+                activePlaySeconds, regionalAtSeconds, domesticAtSeconds, internationalAtSeconds, finaleAtSeconds,
+                difficulty);
         }
 
         internal void RestoreAutomatedTrip(string registration, bool automated)
@@ -1168,6 +1173,26 @@ namespace Airside.Simulation
         public bool CanOperate(FleetAircraft aircraft, Destination destination) =>
             CanReach(aircraft, destination)
             && (!aircraft.Airline.IsPlayer || RouteAccess.Allows(aircraft.Type, destination));
+
+        /// <summary>What dispatching this leg costs the player, under the airline's difficulty (ADR 0123).</summary>
+        public long DispatchCost(AircraftType type, double km)
+        {
+            var cost = FlightEconomics.DispatchCost(type, km);
+            return CareerState == null ? cost : CareerState.DifficultyProfile.ScaleCost(cost);
+        }
+
+        /// <summary>The route forecast the player sees and is settled on, under the airline's difficulty.</summary>
+        public RouteForecast Forecast(Destination origin, Destination destination, AircraftType type)
+        {
+            var forecast = RouteForecast.For(origin, destination, type);
+            return CareerState == null ? forecast : forecast.Under(CareerState.DifficultyProfile);
+        }
+
+        /// <summary>
+        /// The first-flight coaching card (ADR 0123). Chosen at setup; experienced players can turn it
+        /// off. Saved with the airline.
+        /// </summary>
+        public bool FirstFlightCoaching { get; set; } = true;
 
         /// <summary>Distinct types the player currently owns, for the contract market and purchase gates.</summary>
         public int PlayerFleetCount()
@@ -1260,7 +1285,7 @@ namespace Airside.Simulation
             // even one dispatch. Keep a funded recovery path visible in that case too.
             var hasRecoveryRoute = DestinationCatalogue.TryFind("KGC", out var recovery);
             var strandedForCash = hasRecoveryRoute && localTypes.Count > 0 && CareerState.Funds <
-                FlightEconomics.DispatchCost(localTypes[0], DistanceKm(recovery));
+                DispatchCost(localTypes[0], DistanceKm(recovery));
             if ((!usable || strandedForCash) && localTypes.Count > 0 && hasRecoveryRoute)
             {
                 var type = localTypes[0];
@@ -1643,9 +1668,9 @@ namespace Airside.Simulation
 
             if (aircraft.Airline.IsPlayer)
             {
-                var cost = FlightEconomics.DispatchCost(aircraft.Type, DistanceKm(destination));
+                var cost = DispatchCost(aircraft.Type, DistanceKm(destination));
                 var alreadyPaid = aircraft.Scheduled.HasValue
-                    ? FlightEconomics.DispatchCost(aircraft.Type, DistanceKm(aircraft.Scheduled.Value.Destination))
+                    ? DispatchCost(aircraft.Type, DistanceKm(aircraft.Scheduled.Value.Destination))
                     : 0;
                 var recoveryCredit = CareerState.Funds + alreadyPaid < cost
                     && alreadyPaid == 0
@@ -1685,7 +1710,7 @@ namespace Airside.Simulation
                 return CommandResult.Refused($"{aircraft.Registration} has no departure waiting to start.");
 
             if (aircraft.Airline.IsPlayer && aircraft.Scheduled.HasValue)
-                CareerState.RefundDispatch(FlightEconomics.DispatchCost(aircraft.Type,
+                CareerState.RefundDispatch(DispatchCost(aircraft.Type,
                     DistanceKm(aircraft.Scheduled.Value.Destination)));
 
             // ADR 0053: a broken commitment against the active career contract costs
@@ -1898,7 +1923,7 @@ namespace Airside.Simulation
                 return CommandResult.Refused("International network service requires International tier.");
             if (departAt.CompareTo(_processedTo) < 0)
                 return CommandResult.Refused("Departure time is in the past.");
-            var cost = FlightEconomics.DispatchCost(aircraft.Type, km);
+            var cost = DispatchCost(aircraft.Type, km);
             if (!CareerState.TryChargeDispatch(cost))
                 return CommandResult.Refused($"This service costs ${cost:N0}; you have ${CareerState.Funds:N0}.");
             var duration = 2 * LegTiming.AirborneSeconds(km, aircraft.Type) + 45 * 60;
@@ -1983,7 +2008,7 @@ namespace Airside.Simulation
                 DestinationCatalogue.TryFind(destinationCode, out var destination);
                 var returnedAt = new SimulationTime(aircraft.ReturnAtSeconds);
                 var km = origin.DistanceKmTo(destination);
-                var forecast = RouteForecast.For(origin, destination, aircraft.Type);
+                var forecast = Forecast(origin, destination, aircraft.Type);
                 aircraft.Complete();
                 RouteContractDefinition matching = null;
                 var active = CareerState.ActiveContract;
@@ -2290,7 +2315,7 @@ namespace Airside.Simulation
                 matching = definition;
 
             var settlementId = new SettlementId(aircraft.Registration, aircraft.CompletedTrips);
-            var forecast = RouteForecast.For(Home, justFlown.Value, aircraft.Type);
+            var forecast = Forecast(Home, justFlown.Value, aircraft.Type);
             var pay = forecast.Revenue;
             if (aircraft.Airline.IsPlayer && aircraft.PushbackLatenessSeconds.HasValue)
             {

@@ -24,7 +24,7 @@ namespace Airside.Simulation
         public static GuideStep For(AirlineOperations operations, out FleetAircraft aircraft)
         {
             aircraft = null;
-            if (operations?.PlayerAirline == null)
+            if (operations?.PlayerAirline == null || !operations.FirstFlightCoaching)
                 return GuideStep.Complete;
 
             foreach (var candidate in operations.FleetOf(operations.PlayerAirline))

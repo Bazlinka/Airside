@@ -19,15 +19,12 @@ namespace Airside.Presentation
     {
 
         /// <summary>Shared with the Stats workspace's post-game-start livery swatches (ADR 0067).</summary>
-        private static readonly (string label, string hex)[] LiveryChoices = StatsWorkspaceModel.LiveryPalette;
 
         private AirlineOperations _operations;
         private Transform _playerBaseVisualRoot;
         private Transform[] _playerBaseStageRoots;
         private PlayerBaseLevel? _playerBaseVisualLevel;
         private string _playerBaseVisualLivery = string.Empty;
-        private string _airlineNameDraft = "Southern Cross Regional";
-        private int _liveryChoice;
         /// <summary>The single player workspace open at a time (ADR 0053).</summary>
         private HudWorkspace _activeWorkspace;
         private bool _devToolsOpen;
@@ -158,6 +155,10 @@ namespace Airside.Presentation
             {
                 if (keyboard.f1Key.wasPressedThisFrame)
                     ToggleControlsHelp();
+                if (keyboard.rightArrowKey.wasPressedThisFrame)
+                    PageManual(1);
+                if (keyboard.leftArrowKey.wasPressedThisFrame)
+                    PageManual(-1);
                 return true;
             }
 
@@ -279,7 +280,7 @@ namespace Airside.Presentation
             if (overview)
                 DrawSelectionHudCard(layout, placement);
             if (_controlsHelpOpen)
-                DrawControlsHelp(layout, panel, title, label, small, smallButton);
+                DrawControlsHelp(layout);
             DrawToast(placement.Toast);
         }
 
@@ -400,16 +401,23 @@ namespace Airside.Presentation
         }
         // ---- Start your airline ---------------------------------------------------
 
-        private void StartAirline(string name)
+        /// <summary>Soak and tests: a Standard airline with the default livery and a derived code.</summary>
+        private void StartAirline(string name) => StartAirline(new AirlineSetupModel { Name = name });
+
+        /// <summary>Founds the airline exactly as the setup wizard chose it (ADR 0123).</summary>
+        private void StartAirline(AirlineSetupModel setup)
         {
-            var player = Airline.Player(name, LiveryChoices[_liveryChoice].hex);
+            var name = setup.TrimmedName;
+            var player = Airline.Player(name, setup.LiveryHex, setup.CodeEdited ? setup.EffectiveCode : null);
             // Live time: whatever the demo circuit's clock reads now is this real instant.
             _operations = AirlineOperations.StartAtAdelaide(_clock, new SeededRandomSource(20260913), player,
-                AirlineClock.Aligned(_clock.Now, DateTime.UtcNow));
+                AirlineClock.Aligned(_clock.Now, DateTime.UtcNow), setup.Difficulty, setup.Coaching);
             _seenEvents = _operations.TotalEvents;
             _seenSettlements = _operations.TotalSettlements;
             RefreshFleetFlights();
             ShowToast($"{name} is open for business. Plan a flight for {FirstPlayerAircraft()?.Registration}.");
+            if (!setup.Coaching)
+                ShowToast("The Flight Manual is always one click away: the ? on the rail, or F1.", HudTone.Caution);
             SaveAirline();
             PlayUiClick();
             StartIntro($"Welcome to {name}");
@@ -546,6 +554,11 @@ namespace Airside.Presentation
 
             if (clicked == null)
                 return;
+            if (clicked == HudShellPainter.HelpAction)
+            {
+                ToggleControlsHelp();
+                return;
+            }
 
             foreach (var (workspace, _) in HudShell.Tabs)
             {
@@ -2140,7 +2153,7 @@ namespace Airside.Presentation
                     if (DestinationCatalogue.TryFind(selected.BaseCode, out var origin))
                     {
                         var km = origin.DistanceKmTo(destination);
-                        var forecast = RouteForecast.For(origin, destination, selected.Type);
+                        var forecast = _operations.Forecast(origin, destination, selected.Type);
                         var pay = forecast.Revenue;
                         var cost = forecast.Cost;
                         _workspaceDrawList.Text(new HudBox(right.X, right.Y + 220f, right.Width, 20f),
@@ -3101,41 +3114,41 @@ namespace Airside.Presentation
             return true;
         }
 
-        private void DrawControlsHelp(HudLayout layout, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle small, GUIStyle smallButton)
+        private int _manualPage;
+        private readonly HudDrawList _manualDrawList = new();
+
+        /// <summary>The Flight Manual overlay (ADR 0123): how to play, then the controls.</summary>
+        private void DrawControlsHelp(HudLayout layout)
         {
-            var viewport = layout.Viewport;
-            var width = Mathf.Min(520f, viewport.x - AirlineHudLayout.Margin * 2f);
-            var height = Mathf.Min(520f, viewport.y - AirlineHudLayout.Margin * 2f);
-            var rect = new Rect((viewport.x - width) * 0.5f, (viewport.y - height) * 0.5f, width, height);
-
-            AirsideTheme.DrawGlass(rect, 0.96f);
-            AirsideTheme.DrawPanelFrame(rect, AirsideTheme.Amber);
-
-            var x = rect.x + 18f;
-            var inner = rect.width - 36f;
-            GUI.Label(new Rect(x, rect.y + 12f, inner - 100f, 26f), "Controls", title);
-            if (GUI.Button(new Rect(rect.xMax - 110f, rect.y + 12f, 92f, 26f), "Close", smallButton))
+            _hudPanels.Add(new Rect(0f, 0f, layout.Viewport.x, layout.Viewport.y));
+            var panel = FlightManualPainter.Panel(layout.Viewport.x, layout.Viewport.y);
+            // A soft scrim so the manual reads over the live airport or the title art.
+            _manualDrawList.Clear();
+            _manualDrawList.Hairline(new HudBox(0f, 0f, layout.Viewport.x, layout.Viewport.y), HudTone.Default, 0.45f,
+                AirsidePalette.GlassHex);
+            _hudPainter.Draw(_manualDrawList);
+            FlightManualPainter.Paint(_manualDrawList, panel, _manualPage);
+            var clicked = _hudPainter.Draw(_manualDrawList);
+            if (clicked == null)
+                return;
+            var next = FlightManualPainter.Apply(clicked, _manualPage);
+            if (next < 0)
                 ToggleControlsHelp();
-
-            GUI.Label(new Rect(x, rect.y + 42f, inner, 18f),
-                "Hotkeys for camera, airline panels and playtest tools. Press F1 again to close.", small);
-
-            var y = rect.y + 70f;
-            foreach (var section in ControlsHelp.Sections)
+            else if (next != _manualPage)
             {
-                GUI.Label(new Rect(x, y, inner, 20f), section.Title.ToUpperInvariant(), label);
-                y += 24f;
-                foreach (var binding in section.Bindings)
-                {
-                    GUI.Label(new Rect(x, y, 110f, 18f), binding.Key, smallButton);
-                    GUI.Label(new Rect(x + 120f, y, inner - 120f, 18f), binding.Action, small);
-                    y += 22f;
-                }
-
-                y += 10f;
+                _manualPage = next;
+                PlayUiClick();
             }
         }
 
+        private void PageManual(int delta)
+        {
+            var next = Mathf.Clamp(_manualPage + delta, 0, FlightManual.Pages.Count - 1);
+            if (next == _manualPage)
+                return;
+            _manualPage = next;
+            PlayUiClick();
+        }
 
         // ---- Helpers ------------------------------------------------------------------
 

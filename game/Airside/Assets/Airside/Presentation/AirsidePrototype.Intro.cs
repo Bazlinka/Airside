@@ -87,11 +87,12 @@ namespace Airside.Presentation
             }
         }
 
-        // ---- Title screen -----------------------------------------------------------------
+        // ---- Title screen and first-time setup (ADR 0122 / 0123) ---------------------------
 
-        private GUIStyle _splashNameStyle;
+        private GUIStyle _setupFieldStyle;
+        private GUIStyle _setupCodeStyle;
 
-        /// <summary>The title screen: Continue / New airline / Options / Quit, or the new-airline form.</summary>
+        /// <summary>The title screen: Continue / New airline / How to play / Options / Quit, or the setup wizard.</summary>
         private void DrawSplash(HudLayout layout, bool interactive = true)
         {
             ProbeSavedAirline();
@@ -100,31 +101,56 @@ namespace Airside.Presentation
             SplashPainter.Paint(_splashDrawList, splashLayout, _splash, Mathf.Clamp01(Time.unscaledTime / 40f));
 
             var enabled = GUI.enabled;
-            GUI.enabled = enabled && interactive;
+            GUI.enabled = enabled && interactive && !_controlsHelpOpen;
             var clicked = _hudPainter.Draw(_splashDrawList);
-
-            if (_splash.Step == SplashStep.NewAirline)
-            {
-                var style = _splashNameStyle ??= new GUIStyle(GUI.skin.textField)
-                {
-                    fontSize = 17,
-                    fontStyle = FontStyle.Bold,
-                    alignment = TextAnchor.MiddleLeft,
-                    padding = new RectOffset(14, 14, 4, 4),
-                    normal = { background = null, textColor = AirsideTheme.InstrumentText },
-                    focused = { background = null, textColor = AirsideTheme.InstrumentText },
-                    hover = { background = null, textColor = AirsideTheme.InstrumentText }
-                };
-                GUI.SetNextControlName("airline-name");
-                _airlineNameDraft = GUI.TextField(HudPainter.ToRect(splashLayout.NameField), _airlineNameDraft ?? string.Empty, 32, style);
-                if (interactive && GUI.GetNameOfFocusedControl() != "airline-name" && Event.current.type == EventType.Repaint
-                    && string.IsNullOrEmpty(GUI.GetNameOfFocusedControl()))
-                    GUI.FocusControl("airline-name");
-            }
+            if (_splash.Step == SplashStep.NewAirline && _splash.Setup.Step == SetupStep.Identity)
+                DrawSetupFields(splashLayout.Setup, interactive && !_controlsHelpOpen);
             GUI.enabled = enabled;
 
+            if (_controlsHelpOpen)
+            {
+                DrawControlsHelp(layout);
+                return;
+            }
             if (interactive && clicked != null)
                 RunSplashAction(clicked);
+        }
+
+        /// <summary>The two editable fields on the Identity card: airline name and flight code.</summary>
+        private void DrawSetupFields(AirlineSetupLayout setupLayout, bool interactive)
+        {
+            var setup = _splash.Setup;
+            var field = _setupFieldStyle ??= new GUIStyle(GUI.skin.textField)
+            {
+                fontSize = 17,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleLeft,
+                padding = new RectOffset(14, 14, 4, 4),
+                normal = { background = null, textColor = AirsideTheme.InstrumentText },
+                focused = { background = null, textColor = AirsideTheme.InstrumentText },
+                hover = { background = null, textColor = AirsideTheme.InstrumentText }
+            };
+            var codeStyle = _setupCodeStyle ??= new GUIStyle(field) { alignment = TextAnchor.MiddleCenter, fontSize = 18 };
+
+            GUI.SetNextControlName("airline-name");
+            setup.Name = GUI.TextField(HudPainter.ToRect(setupLayout.NameField), setup.Name ?? string.Empty,
+                AirlineSetupModel.NameLimit, field);
+
+            var shown = setup.EffectiveCode;
+            GUI.SetNextControlName("airline-code");
+            var typed = GUI.TextField(HudPainter.ToRect(setupLayout.CodeField), shown, 3, codeStyle);
+            if (typed != shown)
+            {
+                var letters = new System.Text.StringBuilder(3);
+                foreach (var c in typed)
+                    if (char.IsLetter(c) && letters.Length < 3)
+                        letters.Append(char.ToUpperInvariant(c));
+                setup.Code = letters.ToString();
+                setup.CodeEdited = setup.Code.Length > 0;
+            }
+
+            if (interactive && Event.current.type == EventType.Repaint && string.IsNullOrEmpty(GUI.GetNameOfFocusedControl()))
+                GUI.FocusControl("airline-name");
         }
 
         private void FillSplashModel()
@@ -132,12 +158,6 @@ namespace Airside.Presentation
             _splash.HasSave = _savedAirline != null;
             _splash.SaveError = _saveError ?? string.Empty;
             _splash.ClockText = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, AirlineClock.Adelaide).ToString("HH:mm");
-            _splash.StartingFunds = AirlineCareerState.StartingFunds;
-            _splash.NameValid = (_airlineNameDraft ?? string.Empty).Trim().Length > 0;
-            _splash.SelectedLivery = _liveryChoice;
-            if (_splash.Liveries.Count == 0)
-                foreach (var livery in LiveryChoices)
-                    _splash.Liveries.Add(livery);
             if (_savedAirline == null)
                 return;
             _splash.SaveName = SavedAirlineName();
@@ -147,7 +167,9 @@ namespace Airside.Presentation
                     _splash.SaveLiveryHex = airline.LiveryHex;
             _splash.SaveTier = string.IsNullOrEmpty(_savedAirline.CareerTier) ? "Provisional" : _savedAirline.CareerTier;
             var fleet = SavedPlayerFleetCount();
-            _splash.SaveSummary = $"{fleet} aircraft  ·  ${_savedAirline.CareerFunds:N0}  ·  {_savedAirline.CareerReliability}% reliability";
+            var difficulty = string.IsNullOrEmpty(_savedAirline.Difficulty) ? "Standard" : _savedAirline.Difficulty;
+            _splash.SaveSummary = $"{fleet} aircraft  ·  ${_savedAirline.CareerFunds:N0}  ·  "
+                                  + $"{_savedAirline.CareerReliability}% reliability  ·  {difficulty}";
             _splash.SavedWhen = SavedAirlineSummary();
         }
 
@@ -170,15 +192,11 @@ namespace Airside.Presentation
                     return;
                 case SplashPainter.NewAirline:
                     _splash.Step = SplashStep.NewAirline;
+                    _splash.Setup.Step = SetupStep.Identity;
                     PlayUiClick();
                     return;
-                case SplashPainter.Back:
-                    _splash.Step = SplashStep.Menu;
-                    GUI.FocusControl(null);
-                    PlayUiClick();
-                    return;
-                case SplashPainter.Start:
-                    TryStartFromSplash();
+                case SplashPainter.HowToPlay:
+                    OpenManual(0);
                     return;
                 case SplashPainter.Options:
                     _menuOpen = true;
@@ -190,53 +208,78 @@ namespace Airside.Presentation
                     return;
             }
 
-            var hex = HudAction.Payload(action, SplashPainter.LiveryPrefix);
-            for (var i = 0; i < LiveryChoices.Length && hex.Length > 0; i++)
-            {
-                if (!string.Equals(LiveryChoices[i].hex, hex, StringComparison.OrdinalIgnoreCase))
-                    continue;
-                _liveryChoice = i;
-                PlayUiClick();
+            if (!_splash.Setup.Apply(action, out var outcome))
                 return;
+            PlayUiClick();
+            switch (outcome)
+            {
+                case SetupOutcome.Start:
+                    TryStartFromSplash();
+                    break;
+                case SetupOutcome.Leave:
+                    _splash.Step = SplashStep.Menu;
+                    GUI.FocusControl(null);
+                    break;
+                case SetupOutcome.OpenManual:
+                    OpenManual(0);
+                    break;
+                default:
+                    if (_splash.Setup.Step != SetupStep.Identity)
+                        GUI.FocusControl(null);
+                    break;
             }
+        }
+
+        private void OpenManual(int page)
+        {
+            _manualPage = Mathf.Clamp(page, 0, FlightManual.Pages.Count - 1);
+            if (!_controlsHelpOpen)
+                ToggleControlsHelp();
         }
 
         private void TryStartFromSplash()
         {
-            var name = (_airlineNameDraft ?? string.Empty).Trim();
-            if (name.Length == 0)
+            if (!_splash.Setup.CanStart)
                 return;
             GUI.FocusControl(null);
             _splash.Step = SplashStep.Menu;
-            StartAirline(name);
+            StartAirline(_splash.Setup);
         }
 
-        /// <summary>Enter continues or starts; the title screen owns the keyboard while it is up.</summary>
+        /// <summary>Enter steps the title screen forward; arrows page the manual while it is open.</summary>
         private void ReadSplashKeys(Keyboard keyboard)
         {
             if (!AirlineSetupOpen || _menuOpen)
                 return;
+            if (_controlsHelpOpen)
+            {
+                if (keyboard.rightArrowKey.wasPressedThisFrame)
+                    PageManual(1);
+                if (keyboard.leftArrowKey.wasPressedThisFrame)
+                    PageManual(-1);
+                return;
+            }
             if (!keyboard.enterKey.wasPressedThisFrame && !keyboard.numpadEnterKey.wasPressedThisFrame)
                 return;
             if (_splash.Step == SplashStep.NewAirline)
-                TryStartFromSplash();
+            {
+                if (_splash.Setup.Step == SetupStep.Briefing)
+                    TryStartFromSplash();
+                else
+                    RunSplashAction(AirlineSetupPainter.Next);
+            }
             else if (_savedAirline != null)
                 ContinueAirline();
             else
-            {
-                _splash.Step = SplashStep.NewAirline;
-                PlayUiClick();
-            }
+                RunSplashAction(SplashPainter.NewAirline);
         }
 
-        /// <summary>Esc on the new-airline form steps back to the title menu instead of opening the pause menu.</summary>
+        /// <summary>Esc on the setup wizard steps back a card (or back to the title menu).</summary>
         private bool TrySplashBack()
         {
             if (!AirlineSetupOpen || _splash.Step != SplashStep.NewAirline)
                 return false;
-            _splash.Step = SplashStep.Menu;
-            GUI.FocusControl(null);
-            PlayUiClick();
+            RunSplashAction(AirlineSetupPainter.Back);
             return true;
         }
     }

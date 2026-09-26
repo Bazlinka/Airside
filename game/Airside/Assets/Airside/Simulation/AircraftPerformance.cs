@@ -165,13 +165,12 @@ namespace Airside.Simulation
             155f, 143f, 131f, 145f, 165f, 210f, 1700f, 12.0f, 10.0f,
             41000, 2100, 1900, 20f, 10f, 15f, 15.60f);
 
-        // Wheelbase (nose gear to main gear): commonly published Boeing 737-800/-8
-        // airport-planning figure. Not independently cross-checked against a fetched
-        // primary ACAP PDF this session — verify against the Boeing 737 MAX ACAP
-        // "Ground Maneuvering" section if precision matters beyond taxi-turn visuals.
+        // AIR-005's runtime nose/main gear centres are 15.30 m apart. Gate taxi paths
+        // steer those exact rendered pivots, so the motion profile must match the kit
+        // rather than the former unverified 17.68 m planning value.
         public static readonly AircraftPerformanceProfile Boeing7378 = new(
             155f, 145f, 132f, 145f, 165f, 210f, 1650f, 12.0f, 10.0f,
-            41000, 2100, 1900, 20f, 10f, 15f, 17.68f);
+            41000, 2100, 1900, 20f, 10f, 15f, 15.30f);
 
         // Representative normal-weight A321neo values. Like the other jets these are
         // visual-planning values; crews calculate actual speeds for each departure.

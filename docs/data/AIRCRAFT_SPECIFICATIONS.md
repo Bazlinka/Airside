@@ -124,7 +124,7 @@ instead of swinging its tail across the grass. Retrieved 2026-09-17.
 
 | Type | Wheelbase (nose→main gear) | Source |
 |---|---:|---|
-| Boeing 737-8 | 17.68 m | Commonly published Boeing 737-800/-8 airport-planning figure. **Not independently confirmed against a fetched primary source** — cross-check against the Boeing 737 MAX ACAP (Rev K, cited above) "Ground Maneuvering" section before relying on this beyond taxi-turn visuals. |
+| Boeing 737-8 | 15.30 m | Measured between the nose- and main-gear centres in the shipping AIR-005 runtime glTF (`NOSE_Z = 14.55`, `MAIN_Z = -0.75` in `generate-air-005-narrowbody-737-8.py`). Taxi steering follows the rendered kit's pivots; the previous unverified 17.68 m value disagreed with the aircraft on screen. |
 | Airbus A321neo | 16.90 m | Airbus, *A321 Aircraft Characteristics* — https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2023-02/Airbus-techdata-AC_A321_0322%20(2).pdf |
 | Airbus A350-900 | 28.66 m | Airbus, *A350-900/-1000 Aircraft Characteristics* — https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2023-02/Airbus-Commercial-Aircraft-AC-A350-900-1000.pdf |
 | Boeing 787-10 | 28.88 m | Boeing 787 ACAP (787_Rev_P.pdf); its 68.30 m overall-length figure matches this project's own recorded AIR-010 runtime-model envelope exactly (see the specifications table above), corroborating the source. |

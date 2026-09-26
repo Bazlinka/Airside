@@ -4,6 +4,36 @@
 
 ## Where to resume — session handoff
 
+- **2026-09-26 Codex — all-aircraft taxi movement and gate-location pass
+  (`codex/all-aircraft-taxi-gates-20260926`).**
+  - **Player-visible outcome:** all 13 aircraft steer the main wheels actually visible on
+    their runtime models through taxi-in, pushback, taxi-out, runway vacate and lineup.
+    Regional aircraft no longer rotate from the nose tangent, and ATR/Q400 arrivals finish
+    straight on the 50-series bay line instead of snapping 20–31° when parking.
+  - **Scope / files:** ground-leg construction and type-aware timing consumers, the seven
+    generated 50-series taxi-in lead-ins, model-measured taxi datums, full-fleet regressions,
+    the Adelaide layout generator/check and factual documentation. The 12 regional plus 23
+    terminal operating positions were checked against the committed OSM/AIP-derived source.
+  - **Relevant invariants:** Domain/Simulation remains Unity-independent and deterministic;
+    reservations and exactly-once commands are unchanged. Adelaide stays in real metres.
+    Stop coordinates, stand compatibility, runway assignment, pavement, speeds, schedules,
+    economy, random draws and save schema remain unchanged.
+  - **Acceptance / evidence:** `generate-ypad-layout.py --check` reproduces all 35 operating
+    positions/routes exactly; Unity EditMode passes **1,084/1,084**, including every legal
+    aircraft/stand/runway combination, quarter-second smoothness sampling, seams, queues,
+    pavement and runtime glTF gear measurement. All 13 model connectivity and paint/glazing/
+    pilot audits pass; the asset audit passes **1,312 GUIDs / 336 runtime mirrors**. The
+    supplementary .NET mirror cannot run because the .NET SDK is absent from this Mac's PATH.
+  - **Packaged inspection:** the macOS build passes. A normal-map 1280×720 overview confirms
+    the full regional/terminal stand line is populated on pavement without overlap; a close
+    follow at bay 50D confirms the Saab sits squarely on its unchanged stop/centreline. A
+    seven-minute release-package run stayed responsive with no exception or clock stall. Its
+    intentionally busy inbound queue held the ready Saab at the bay, so no stationary frame is
+    being misrepresented as live taxi proof; movement proof is the exhaustive Unity sampling
+    above.
+  - **NEXT:** merge the review branch, then use ordinary play for subjective long-session feel.
+    No airport redesign or gate relocation is part of this fix.
+
 - **2026-09-26 Codex — 737 taxi wheelbase mismatch repaired
   (`codex/taxiing-bugfix-20260926`).**
   - **Player-visible outcome:** the AIR-005 737's body and landing gear now follow the same

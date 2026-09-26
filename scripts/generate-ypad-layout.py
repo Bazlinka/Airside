@@ -18,7 +18,9 @@ the real taxiway network and smoothed through junctions:
   taxi-out end of pushback -> T4 / K / A / F -> runway 05 holding point
 
 Run: python3 scripts/generate-ypad-layout.py
+Check without writing: python3 scripts/generate-ypad-layout.py --check
 """
+import argparse
 import heapq
 import json
 import math
@@ -48,6 +50,7 @@ BAYS = [("BAY-1", "50D"), ("BAY-2", "50C"), ("BAY-3", "50B"), ("BAY-4", "50A"),
 WALKOUT_BAYS = [("BAY-10A", "10A"), ("BAY-10B", "10B"), ("BAY-10C", "10C"),
                 ("BAY-10D", "10D"), ("BAY-2A", "2A")]
 BAY_LEAD = 26.0          # metres of straight taxilane before turning into a bay
+BAY_STRAIGHT_IN = 22.0   # final painted centreline long enough to settle every regional's main gear
 PUSHBACK_TAIL = 18.0     # metres the tail travels along the lane after the pushback (50A sits at the end of T4)
 
 # Terminal 1 aerobridge stands on the 09 JUL 2026 apron chart that OSM has.
@@ -189,6 +192,10 @@ def bezier(p0, p1, p2, p3, steps=16):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Generate or verify Adelaide's OSM-derived runtime layout")
+    parser.add_argument("--check", action="store_true",
+                        help="fail if AdelaideLayout.cs is not exactly reproducible; do not write")
+    args = parser.parse_args()
     data = json.load(open(SOURCE))
     taxiways, aprons, terminals, holds, parking = [], [], [], [], {}
     nodes, adj, label = {}, {}, {}
@@ -299,8 +306,13 @@ def main():
         entry = (lane[0], lane[1]) if ref == "50G" else (lane[0] - BAY_LEAD, lane[1])
         arrive, arrive_names = route(E2_HOLD, entry)
         arrive = round_corners(arrive + [entry], 35.0)
-        turn_in = bezier(entry, (lane[0] - 8.0, lane[1]), (stop[0] - d[0] * 14.0, stop[1] - d[1] * 14.0), stop)
-        taxi_in = dedupe(arrive + turn_in[1:])
+        # Finish on a straight painted centreline longer than the longest regional
+        # wheelbase. A Bezier curved right to the stop: nose-tangent steering hid that,
+        # but the visible main gear left ATR/Q400 bodies 20–31° off the parked heading.
+        lead = (stop[0] - d[0] * BAY_STRAIGHT_IN, stop[1] - d[1] * BAY_STRAIGHT_IN)
+        turn_in = bezier(entry, (lane[0] - 8.0, lane[1]),
+                         (lead[0] - d[0] * 12.0, lead[1] - d[1] * 12.0), lead)
+        taxi_in = dedupe(arrive + turn_in[1:] + [stop])
 
         push_end = (lane[0] + PUSHBACK_TAIL, lane[1])
         pushback = bezier(stop, (stop[0] - d[0] * 14.0, stop[1] - d[1] * 14.0), (lane[0] + 6.0, lane[1]), push_end)
@@ -518,16 +530,25 @@ def main():
         lines.append(f'            new AdelaideOutline("{name}", {arr(pts)}),')
     lines += ["        };", "    }", "}", ""]
 
-    with open(OUTPUT, "w") as f:
-        f.write("\n".join(lines))
+    generated = "\n".join(lines)
+    if args.check:
+        with open(OUTPUT) as f:
+            committed = f.read()
+        if committed != generated:
+            print(f"ERROR: {os.path.relpath(OUTPUT, ROOT)} differs from the licensed OSM source; regenerate it")
+            return 1
+    else:
+        with open(OUTPUT, "w") as f:
+            f.write(generated)
 
     print(f"05/23 {LENGTH:.0f} m · 12/30 {math.dist(cross_a, cross_b):.0f} m centred "
           f"({(cross_a[0] + cross_b[0]) / 2:.0f}, {(cross_a[1] + cross_b[1]) / 2:.0f})")
     print(f"{len(taxiways)} taxiways, {len(aprons)} aprons, {len(terminals)} terminals, {len(holds)} holding positions")
     for name, pts, names in report:
         print(f"  {name:<22} {polyline_length(pts):6.0f} m  via {' '.join(names)}")
-    print(f"wrote {os.path.relpath(OUTPUT, ROOT)}")
+    print(("verified " if args.check else "wrote ") + os.path.relpath(OUTPUT, ROOT))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -196,12 +196,13 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void RegionalBays_KeepTangentSteering()
+        public void RegionalBays_SteerTheirVisibleMainGear()
         {
+            var atrWheelbase = AircraftPerformance.Atr42.NoseToMainGearMetres;
             foreach (var part in AdelaideGround.TaxiOut(new StableId("BAY-1")).Parts)
-                Assert.That(part.TrackMetres, Is.EqualTo(0f));
+                Assert.That(part.TrackMetres, Is.EqualTo(atrWheelbase));
             foreach (var part in AdelaideGround.TaxiIn(new StableId("BAY-6")).Parts)
-                Assert.That(part.TrackMetres, Is.EqualTo(0f));
+                Assert.That(part.TrackMetres, Is.EqualTo(atrWheelbase));
         }
 
         // ---- Reservations -----------------------------------------------------------------------

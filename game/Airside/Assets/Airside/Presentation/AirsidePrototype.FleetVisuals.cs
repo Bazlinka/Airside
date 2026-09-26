@@ -178,7 +178,7 @@ namespace Airside.Presentation
                     var leg = visual.Leg switch
                     {
                         FleetGroundLeg.TaxiOut => AdelaideGround.TaxiOut(aircraft.DepartureStand, aircraft.Type, aircraft.AssignedRunway),
-                        FleetGroundLeg.Lineup => AdelaideGround.LineupFor(aircraft.AssignedRunway),
+                        FleetGroundLeg.Lineup => AdelaideGround.LineupFor(aircraft.AssignedRunway, aircraft.Type),
                         FleetGroundLeg.Vacate => AdelaideGround.VacateFor(aircraft.Type, aircraft.AssignedRunway),
                         _ => AdelaideGround.TaxiIn(aircraft.Stand, aircraft.Type, aircraft.AssignedRunway)
                     };

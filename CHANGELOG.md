@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Taxi movement now follows the visible landing gear for all 13 aircraft, across the
+  whole ground loop.** Regional aircraft no longer use nose-tangent steering, and vacate
+  and lineup no longer lose the type-aware gear geometry used at terminal gates. Each
+  aircraft's runtime gear centres now drive taxi-in, pushback, taxi-out, vacate and lineup.
+  The seven 50-series bay lead-ins finish with a 22 m straight settling section, removing
+  the 20–31° ATR/Q400 arrival snap while preserving the OSM-derived stop locations. A
+  reproducibility check now proves all 35 operating gate/bay positions and routes still
+  match the committed Adelaide source snapshot.
+
 - **The 737 now follows gate turns with its actual landing gear.** Taxi-in, pushback and
   taxi-out previously steered a 17.68 m wheelbase while the shipping AIR-005 aircraft's
   nose and main gear are 15.30 m apart. The motion profile now matches the runtime glTF,

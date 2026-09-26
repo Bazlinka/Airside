@@ -29,10 +29,7 @@ namespace Airside.Simulation
         public static string LeadInResource(StableId gate) => gate.Value + "/lead-in";
         private static readonly Dictionary<string, GroundPath> VacatePaths = new(StringComparer.Ordinal);
         private static readonly Dictionary<string, GroundLeg> VacateLegs = new(StringComparer.Ordinal);
-        private static GroundLeg _lineupLeg;
-        private static GroundLeg _lineup23Leg;
-        private static GroundLeg _lineup12Leg;
-        private static GroundLeg _lineup30Leg;
+        private static readonly Dictionary<string, GroundLeg> LineupLegs = new(StringComparer.Ordinal);
 
         public static IReadOnlyList<AdelaideBay> Bays => AdelaideLayout.Bays;
 
@@ -91,7 +88,9 @@ namespace Airside.Simulation
             var key = (type?.Id ?? "ATR42") + "/" + runway;
             if (!VacateLegs.TryGetValue(key, out var leg))
             {
-                leg = new GroundLeg(new GroundLegPart(VacatePathFor(type, runway), tailFirst: false));
+                var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
+                leg = new GroundLeg(new GroundLegPart(VacatePathFor(type, runway), tailFirst: false,
+                    trackMetres: wheelbase));
                 VacateLegs[key] = leg;
             }
             return leg;
@@ -145,21 +144,29 @@ namespace Airside.Simulation
         }
 
         /// <summary>F6 holding point → centreline at the 05 takeoff start, stopped and ready to roll.</summary>
-        public static GroundLeg Lineup => _lineupLeg ??= new GroundLeg(
-            new GroundLegPart(new GroundPath(AdelaideLayout.Lineup, GroundSpeedLimits.Lineup), tailFirst: false));
+        public static GroundLeg Lineup => LineupFor(RunwayDirection.Runway05, AircraftType.Atr42);
 
-        public static GroundLeg LineupFor(RunwayDirection runway) => runway switch
+        public static GroundLeg LineupFor(RunwayDirection runway) => LineupFor(runway, AircraftType.Atr42);
+
+        /// <summary>Holding point onto the runway, steering the visible main gear for this type.</summary>
+        public static GroundLeg LineupFor(RunwayDirection runway, AircraftType type)
         {
-            RunwayDirection.Runway23 => _lineup23Leg ??= new GroundLeg(new GroundLegPart(
-                new GroundPath(AdelaideLayout.Lineup23, GroundSpeedLimits.Lineup), tailFirst: false)),
-            RunwayDirection.Runway12 => _lineup12Leg ??= new GroundLeg(new GroundLegPart(
-                new GroundPath(AdelaideCrossRoutes.Lineup(RunwayDirection.Runway12), GroundSpeedLimits.Lineup),
-                tailFirst: false)),
-            RunwayDirection.Runway30 => _lineup30Leg ??= new GroundLeg(new GroundLegPart(
-                new GroundPath(AdelaideCrossRoutes.Lineup(RunwayDirection.Runway30), GroundSpeedLimits.Lineup),
-                tailFirst: false)),
-            _ => Lineup
-        };
+            type ??= AircraftType.Atr42;
+            var key = type.Id + "/" + runway;
+            if (LineupLegs.TryGetValue(key, out var leg))
+                return leg;
+            var xz = runway switch
+            {
+                RunwayDirection.Runway23 => AdelaideLayout.Lineup23,
+                RunwayDirection.Runway12 => AdelaideCrossRoutes.Lineup(RunwayDirection.Runway12),
+                RunwayDirection.Runway30 => AdelaideCrossRoutes.Lineup(RunwayDirection.Runway30),
+                _ => AdelaideLayout.Lineup
+            };
+            leg = new GroundLeg(new GroundLegPart(new GroundPath(xz, GroundSpeedLimits.Lineup),
+                tailFirst: false, trackMetres: AircraftPerformance.For(type).NoseToMainGearMetres));
+            LineupLegs[key] = leg;
+            return leg;
+        }
 
         /// <summary>Where an aircraft parked on <paramref name="stand"/> stands: its stop and nose heading.</summary>
         public static GroundPose StandPose(StableId stand)
@@ -203,11 +210,12 @@ namespace Airside.Simulation
             if (!TaxiOutLegs.TryGetValue(key, out var leg))
             {
                 var limits = GroundSpeedLimits.TaxiFor(type);
+                var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
                 leg = new GroundLeg(
                     new GroundLegPart(new GroundPath(BayPushback(bay, type), GroundSpeedLimits.Pushback),
-                        tailFirst: true),
+                        tailFirst: true, trackMetres: wheelbase),
                     new GroundLegPart(new GroundPath(Drivable(CleanTaxiOut(TaxiOutPath(bay, runway)), type), limits, 0f, 0f,
-                        new[] { ApronZone(type) }, null), tailFirst: false, TugDisconnectSeconds));
+                        new[] { ApronZone(type) }, null), tailFirst: false, TugDisconnectSeconds, wheelbase));
                 TaxiOutLegs[key] = leg;
             }
 
@@ -227,8 +235,9 @@ namespace Airside.Simulation
             if (!TaxiInLegs.TryGetValue(key, out var leg))
             {
                 var limits = GroundSpeedLimits.TaxiFor(type);
+                var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
                 leg = new GroundLeg(new GroundLegPart(new GroundPath(BayTaxiIn(bay, bay.TaxiIn, type), limits, 0f, 0f,
-                    null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false));
+                    null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false, trackMetres: wheelbase));
                 TaxiInLegs[key] = leg;
             }
 
@@ -258,9 +267,10 @@ namespace Airside.Simulation
             else
             {
                 var bay = Bay(stand);
+                var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
                 leg = new GroundLeg(new GroundLegPart(new GroundPath(
                     BayTaxiIn(bay, AdelaideCrossRoutes.TrimToArrivalJoin(bay.TaxiIn, runway), type), limits, 0f, 0f,
-                    null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false));
+                    null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false, trackMetres: wheelbase));
             }
 
             TaxiInLegs[key] = leg;

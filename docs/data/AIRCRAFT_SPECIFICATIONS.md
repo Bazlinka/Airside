@@ -115,29 +115,32 @@ Breakaway / taxi acceleration uses ≈0.55 m/s² (turboprop ADS-B study average 
 lineup bands above are deliberately not type-specific: they are SOP/walking-pace figures
 independent of aircraft size in real operations, not a gap in this data.
 
-### Gate-turn steering geometry (nose-to-main-gear wheelbase)
+### Ground-turn steering geometry (nose-to-main-gear wheelbase)
 
-`AdelaideGround.GateTaxiOut`/`GateTaxiIn` steers each jet's main gear — not its nose —
-through terminal-gate turns, trailing the nose datum by the aircraft's own wheelbase
-(`AircraftPerformanceProfile.NoseToMainGearMetres`) so its body tracks the pavement
-instead of swinging its tail across the grass. Retrieved 2026-09-17.
+Every taxi-in, pushback, taxi-out, vacate and lineup leg steers the aircraft's visible
+main gear — not its nose tangent — through turns. `NoseToMainGearMetres` therefore uses
+the distance measured between the named `gear_nose`, `gear_left` and `gear_right` parts
+in each shipping runtime glTF. This is a runtime motion datum: external planning-manual
+figures remain useful references, but substituting one while drawing differently placed
+wheels makes the body and its landing gear disagree on screen. The EditMode regression
+remeasures every shipping model and rejects either an art or logic change that separates
+the two. Reviewed 2026-09-26.
 
-| Type | Wheelbase (nose→main gear) | Source |
+| Type | Runtime taxi datum | External reference / note |
 |---|---:|---|
-| Boeing 737-8 | 15.30 m | Measured between the nose- and main-gear centres in the shipping AIR-005 runtime glTF (`NOSE_Z = 14.55`, `MAIN_Z = -0.75` in `generate-air-005-narrowbody-737-8.py`). Taxi steering follows the rendered kit's pivots; the previous unverified 17.68 m value disagreed with the aircraft on screen. |
-| Airbus A321neo | 16.90 m | Airbus, *A321 Aircraft Characteristics* — https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2023-02/Airbus-techdata-AC_A321_0322%20(2).pdf |
-| Airbus A350-900 | 28.66 m | Airbus, *A350-900/-1000 Aircraft Characteristics* — https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2023-02/Airbus-Commercial-Aircraft-AC-A350-900-1000.pdf |
-| Boeing 787-10 | 28.88 m | Boeing 787 ACAP (787_Rev_P.pdf); its 68.30 m overall-length figure matches this project's own recorded AIR-010 runtime-model envelope exactly (see the specifications table above), corroborating the source. |
-| Embraer E190 | 14.65 m | Embraer E190 Airport Planning Manual; used for gate-turn visuals. |
-| Airbus A220-300 | 14.86 m | Airbus A220 aircraft characteristics; used for gate-turn visuals. |
-| Airbus A320-200 | 12.64 m | Airbus A320 product/aircraft characteristics. |
-| Boeing 737-800 | 15.60 m | Boeing 737NG ACAP Rev C. |
-| Airbus A330-900neo | 25.38 m | Airbus A330 aircraft characteristics; used for gate-turn visuals. |
-| Boeing 787-9 | 25.83 m | Boeing 787 ACAP Rev Q. |
-
-Turboprops (ATR 42, Saab 340B, Dash 8-400) are not currently steered by this mechanism —
-only the terminal-gate jets are — so their wheelbase is left at 0 in
-`AircraftPerformance.cs` rather than recording an unsourced figure that nothing reads.
+| ATR 42-600 | 8.70 m | Runtime AIR-001 gear centres; external wheelbase not yet independently sourced. |
+| Saab 340B | 7.70 m | Runtime AIR-002 gear centres; external wheelbase not yet independently sourced. |
+| Dash 8-400 | 14.05 m | Runtime AIR-003 gear centres; external wheelbase not yet independently sourced. |
+| Embraer E190 | 14.15 m | Runtime AIR-013 gear centres; Embraer E190 Airport Planning Manual reference 14.65 m. |
+| Airbus A220-300 | 15.00 m | Runtime AIR-014 gear centres; Airbus aircraft-characteristics reference 14.86 m. |
+| Airbus A320-200 | 14.56 m | Runtime AIR-011 gear centres; Airbus aircraft-characteristics reference 12.64 m. |
+| Boeing 737-800 | 15.30 m | Runtime AIR-012 gear centres; Boeing 737NG ACAP Rev C reference 15.60 m. |
+| Boeing 737-8 | 15.30 m | Runtime AIR-005 gear centres (`NOSE_Z = 14.55`, `MAIN_Z = -0.75`); the former unverified 17.68 m value disagreed with the aircraft on screen. |
+| Airbus A321neo | 17.25 m | Runtime AIR-004 gear centres; Airbus A321 Aircraft Characteristics reference 16.90 m. |
+| Airbus A330-900neo | 27.31 m | Runtime AIR-015 gear centres; Airbus aircraft-characteristics reference 25.38 m. |
+| Airbus A350-900 | 28.66 m | Runtime AIR-009 gear centres and Airbus A350 Aircraft Characteristics agree. |
+| Boeing 787-9 | 26.95 m | Runtime AIR-016 gear centres; Boeing 787 ACAP Rev Q reference 25.83 m. |
+| Boeing 787-10 | 29.30 m | Runtime AIR-010 gear centres; Boeing 787 ACAP reference 28.88 m. |
 
 ## Runtime model check
 

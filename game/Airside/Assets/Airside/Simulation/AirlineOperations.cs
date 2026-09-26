@@ -147,7 +147,7 @@ namespace Airside.Simulation
         public static long TakeoffRunwaySecondsFor(AircraftType type) =>
             TakeoffRunwaySecondsFor(type, RunwayDirection.Runway05);
         public static long TakeoffRunwaySecondsFor(AircraftType type, RunwayDirection runway) =>
-            AdelaideGround.LineupFor(runway).WholeSeconds + AircraftPerformance.For(type).TakeoffSeconds;
+            AdelaideGround.LineupFor(runway, type).WholeSeconds + AircraftPerformance.For(type).TakeoffSeconds;
 
         /// <summary>
         /// Runway time from the landing clearance on long final through flare, rollout
@@ -2814,7 +2814,7 @@ namespace Airside.Simulation
                 return true;
             }
 
-            var lineupSeconds = AdelaideGround.LineupFor(next.AssignedRunway).WholeSeconds;
+            var lineupSeconds = AdelaideGround.LineupFor(next.AssignedRunway, next.Type).WholeSeconds;
             var takeoffSeconds = lineupSeconds + profile.TakeoffSeconds;
             Transition(next, FleetState.TakingOff, now, takeoffSeconds);
             // The strip itself is only occupied through the ground roll to rotation — the
@@ -3003,7 +3003,7 @@ namespace Airside.Simulation
 
         /// <summary>How long a departure keeps its strip from the tower: lineup, roll, wake.</summary>
         private static long DepartureRunwaySeconds(FleetAircraft departure) =>
-            AdelaideGround.LineupFor(departure.AssignedRunway).WholeSeconds
+            AdelaideGround.LineupFor(departure.AssignedRunway, departure.Type).WholeSeconds
             + (long)Math.Round(AircraftPerformance.For(departure.Type).TakeoffRollExactSeconds)
             + WakeSeparationSeconds(departure.Type);
 

@@ -125,6 +125,12 @@ namespace Airside.Simulation
         /// </summary>
         public int? PushbackLatenessSeconds { get; internal set; }
 
+        /// <summary>What made that pushback late (ADR 0128), held with the lateness until the rotation settles.</summary>
+        public DelayBreakdown? PushbackDelay { get; internal set; }
+
+        /// <summary>The current wait at the stand, sampled on the ground-control grid. Not saved.</summary>
+        internal DelayLedger DelayLedger { get; set; }
+
         public bool IsOffMap => State is FleetState.Outbound or FleetState.AtDestination or FleetState.Inbound;
 
         /// <summary>0..1 through a timed state; 0 for waiting states.</summary>

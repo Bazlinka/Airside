@@ -103,7 +103,7 @@ namespace Airside.Tests
             for (var i = 0; i < 7; i++)
                 ops.CareerState.RecordPushback(true);
             var saved = AirlineSave.Capture(ops);
-            Assert.That(saved.Version, Is.EqualTo(15));
+            Assert.That(saved.Version, Is.GreaterThanOrEqualTo(15));
             var restored = AirlineSave.Restore(saved, clock);
             Assert.That(restored.CareerState.TryFindDefinition(freight.Id, out var back), Is.True);
             Assert.That(back.Kind, Is.EqualTo(ContractKind.Freight));

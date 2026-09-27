@@ -903,7 +903,10 @@ namespace Airside.Presentation
             _selectionDrawList.Clear();
             SelectionCardPainter.Paint(_selectionDrawList, Box(rect), _selectionCard);
             var clicked = _hudPainter.Draw(_selectionDrawList);
-            if (clicked == null || !aircraft.Airline.IsPlayer)
+            if (clicked == null)
+                return;
+            // ADR 0128: the hold line (and the back chip) select another aircraft — any card, AI too.
+            if (FollowHoldLink(aircraft, clicked) || !aircraft.Airline.IsPlayer)
                 return;
             if (clicked == HudAction.Primary)
                 RunSelectionAction(aircraft, action);
@@ -915,6 +918,50 @@ namespace Airside.Presentation
                 if (standId.Length > 0)
                     AssignStandFromHud(aircraft, new StableId(standId));
             }
+        }
+
+        /// <summary>Where a followed hold link came from, so the card can offer the way back (ADR 0128).</summary>
+        private string _holdLinkFrom;
+        private string _holdLinkTo;
+        private float _holdLinkAt;
+        private const float HoldLinkBackSeconds = 30f;
+
+        /// <summary>The aircraft a hold is waiting on, as a select action, or empty when nothing to follow.</summary>
+        private string HoldLink(FleetAircraft aircraft, HoldReason hold)
+        {
+            var target = hold.Blocker;
+            if (target == null && hold.Others.Count > 0)
+                target = hold.Others[0];
+            if (target == null || target == aircraft)
+                return string.Empty;
+            return HudAction.SelectPrefix + target.Registration;
+        }
+
+        private string SelectionBackRegistration(FleetAircraft aircraft)
+        {
+            if (_holdLinkFrom == null || aircraft.Registration != _holdLinkTo
+                || Time.unscaledTime - _holdLinkAt > HoldLinkBackSeconds)
+                return string.Empty;
+            return _holdLinkFrom;
+        }
+
+        private bool FollowHoldLink(FleetAircraft from, string clicked)
+        {
+            var registration = HudAction.Payload(clicked, HudAction.SelectPrefix);
+            if (registration.Length == 0)
+                return false;
+            FleetAircraft target = null;
+            foreach (var candidate in _operations.Fleet)
+                if (string.Equals(candidate.Registration, registration, StringComparison.Ordinal))
+                    target = candidate;
+            if (target == null)
+                return true;
+            var goingBack = registration == _holdLinkFrom && from.Registration == _holdLinkTo;
+            _holdLinkFrom = goingBack ? null : from.Registration;
+            _holdLinkTo = goingBack ? null : target.Registration;
+            _holdLinkAt = Time.unscaledTime;
+            SelectAircraft(target);
+            return true;
         }
 
         /// <summary>Words the selected aircraft into the card's data, reusing one instance per frame.</summary>
@@ -934,6 +981,8 @@ namespace Airside.Presentation
                 : string.Empty;
             if (card.HoldLine.Length > 0)
                 card.PhaseLabel = HoldReasonText.Short(hold);
+            card.HoldAction = card.HoldLine.Length > 0 ? HoldLink(aircraft, hold) : string.Empty;
+            card.BackRegistration = SelectionBackRegistration(aircraft);
             var severity = AircraftStatus.Severity(aircraft, _clock.Now);
             card.PhaseTone = severity == StatusSeverity.Warning ? HudTone.Negative
                 : severity == StatusSeverity.Attention ? HudTone.Caution : HudTone.Accent;
@@ -3069,14 +3118,9 @@ namespace Airside.Presentation
             var start = Math.Max(0, settlements.Count - (int)Math.Min(fresh, settlements.Count));
             for (var i = start; i < settlements.Count; i++)
             {
+                // ADR 0128: the pay line also says whether it pushed on time, and what made it late.
                 var s = settlements[i];
-                var reg = s.SettlementId.Registration;
-                if (s.ContractFulfilled)
-                    ShowToast($"{reg} earned ${s.Payment:N0} — {s.ContractDefinitionId} complete!");
-                else if (!string.IsNullOrEmpty(s.ContractDefinitionId))
-                    ShowToast($"{reg} earned ${s.Payment:N0} on {s.ContractDefinitionId} ({s.RotationsCompleted} rotations so far).");
-                else
-                    ShowToast($"{reg} earned ${s.Payment:N0} from that rotation.");
+                ShowToast(DelayText.SettlementToast(s, _operations.CareerState?.OnTimeStreak ?? 0), DelayText.Tone(s));
             }
         }
 

@@ -6,8 +6,9 @@ namespace Airside.Simulation
     public readonly struct FlightSettlement
     {
         public FlightSettlement(SettlementId settlementId, string contractDefinitionId, long payment,
-            int reliabilityDelta, int rotationsCompleted, bool contractFulfilled)
+            int reliabilityDelta, int rotationsCompleted, bool contractFulfilled, DelayBreakdown? delay = null)
         {
+            Delay = delay;
             SettlementId = settlementId;
             ContractDefinitionId = contractDefinitionId;
             Payment = payment;
@@ -26,5 +27,14 @@ namespace Airside.Simulation
 
         /// <summary>True when this settlement completed the contract's required rotation count.</summary>
         public bool ContractFulfilled { get; }
+
+        /// <summary>
+        /// How late this rotation pushed back and why (ADR 0128). Null for flights that never recorded
+        /// a pushback (AI, older saves).
+        /// </summary>
+        public DelayBreakdown? Delay { get; }
+
+        internal FlightSettlement WithDelay(DelayBreakdown? delay) =>
+            new(SettlementId, ContractDefinitionId, Payment, ReliabilityDelta, RotationsCompleted, ContractFulfilled, delay);
     }
 }

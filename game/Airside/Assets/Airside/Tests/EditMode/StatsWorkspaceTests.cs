@@ -312,8 +312,9 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now);
             var roadmapCount = ops.CareerGoals().Count(goal => goal.Stage <= ops.CareerState.Tier);
             var openChallenges = ops.CareerChallengeStatus().Count(c => c.Open && !c.Complete);
-            Assert.That(model.Milestones.Count, Is.EqualTo(11 + roadmapCount + openChallenges),
-                "open challenges, career goals and earned milestones share the stats list");
+            var punctuality = model.PunctualityLine.Length > 0 ? 1 : 0;
+            Assert.That(model.Milestones.Count, Is.EqualTo(11 + roadmapCount + openChallenges + punctuality),
+                "punctuality, open challenges, career goals and earned milestones share the stats list");
             Assert.That(model.ContractHistory.Count, Is.EqualTo(StatsWorkspaceModel.MaxHistoryShown));
 
             foreach (var (width, height) in HudTestAirline.Viewports)

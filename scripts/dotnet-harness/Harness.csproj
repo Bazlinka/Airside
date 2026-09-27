@@ -67,6 +67,8 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/SplashScreen.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightManual.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HoldReasonText.cs" />
+    <!-- ADR 0128 delay wording. -->
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/DelayText.cs" />
     <!-- ADR 0124 procedural building detail and the chamfered block mesh. -->
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BuildingDetail.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BevelledBox.cs" />

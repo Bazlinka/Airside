@@ -112,6 +112,43 @@ namespace Airside.Presentation
 
         public const int MaxHistoryShown = 5;
 
+        /// <summary>ADR 0128: "Punctuality · 7 on time in a row · 2 of the last 6 late, mostly runway crossings".</summary>
+        public string PunctualityLine { get; private set; } = string.Empty;
+
+        private static string Punctuality(AirlineOperations operations)
+        {
+            var late = 0;
+            var scored = 0;
+            var byCause = new Dictionary<DelayCause, int>();
+            foreach (var settlement in operations.RecentSettlements)
+            {
+                if (settlement.Delay is not { } delay)
+                    continue;
+                scored++;
+                if (!delay.IsLate)
+                    continue;
+                late++;
+                foreach (var part in delay.Parts)
+                    if (part.Cause != DelayCause.Other)
+                        byCause[part.Cause] = (byCause.TryGetValue(part.Cause, out var sum) ? sum : 0) + part.Seconds;
+            }
+
+            if (scored == 0)
+                return string.Empty;
+            var streak = operations.CareerState.OnTimeStreak;
+            var line = $"Punctuality · {streak} on time in a row";
+            if (late == 0)
+                return $"{line} · the last {scored} all on time";
+            line += $" · {late} of the last {scored} late";
+            if (byCause.Count > 0)
+            {
+                var worst = byCause.OrderByDescending(p => p.Value).ThenBy(p => p.Key).First().Key;
+                line += $", mostly {DelayCauses.Label(worst)}";
+            }
+
+            return line;
+        }
+
         public void Rebuild(AirlineOperations operations, SimulationTime now)
         {
             _milestones.Clear();
@@ -136,6 +173,7 @@ namespace Airside.Presentation
             MilestonesReachedLine = string.Empty;
             AdelaideRankLine = string.Empty;
             CompetitiveTargetLine = string.Empty;
+            PunctualityLine = string.Empty;
             if (operations?.PlayerAirline == null)
                 return;
 
@@ -161,6 +199,11 @@ namespace Airside.Presentation
 
             FillBaseRoadmap(career);
             FillAdelaideStandings(operations);
+
+            // ADR 0128: punctuality first — the streak, and what has been making recent flights late.
+            PunctualityLine = Punctuality(operations);
+            if (PunctualityLine.Length > 0)
+                _milestones.Add(new MilestoneRow(PunctualityLine, false));
 
             // Open challenges head the list (ADR 0127): what they pay and how far along you are.
             foreach (var challenge in operations.CareerChallengeStatus())

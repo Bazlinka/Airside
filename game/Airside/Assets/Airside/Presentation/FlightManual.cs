@@ -97,6 +97,10 @@ namespace Airside.Presentation
                     ("Punctuality",
                         "Pushing back within 2 minutes of the booked time earns +1. Up to 5 minutes late is neutral; up to "
                         + "15 costs 1; later costs 2. Contract rotations add their own bonus."),
+                    ("Why was I late?",
+                        "When a flight is paid, its message says how late it pushed back and why — a turnaround booked too "
+                        + "tight, apron or taxiway traffic, a busy gate lead-in, or a runway crossing. A waiting aircraft's "
+                        + "card names what holds it; tap that line to jump to the aircraft in the way (‹ goes back)."),
                     ("Maintenance",
                         "Every aircraft needs a routine check every 8 rotations (SEND FOR CHECK on its card, or Fleet). "
                         + "Flying overdue costs reliability on every rotation."),

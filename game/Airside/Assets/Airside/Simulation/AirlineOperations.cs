@@ -1018,12 +1018,14 @@ namespace Airside.Simulation
             aircraft.PrepStartedAt = prepStartedAt;
         }
 
-        internal void RestorePushbackLateness(string registration, int latenessSeconds)
+        internal void RestorePushbackLateness(string registration, int latenessSeconds, string delay = null)
         {
             var aircraft = _fleet.Find(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase));
             if (aircraft == null)
                 throw new FormatException($"{registration}: pushback lateness has no aircraft.");
             aircraft.PushbackLatenessSeconds = latenessSeconds;
+            // v16 (ADR 0128): the saved breakdown; older saves have none, so it is all "Other".
+            aircraft.PushbackDelay = DelayBreakdown.Parse(latenessSeconds, delay);
         }
 
         internal void RestoreTower(SimulationTime mainRunwayFreeAt, SimulationTime crossRunwayFreeAt, long totalEvents)
@@ -2320,6 +2322,40 @@ namespace Airside.Simulation
 
             public long Margin => Revenue - Cost;
 
+            /// <summary>ADR 0128: late pushbacks today, their minutes, and which cause cost the most.</summary>
+            public int LateFlights;
+            public int LateSeconds;
+            public readonly Dictionary<DelayCause, int> DelayByCause = new();
+
+            public void RecordDelay(DelayBreakdown delay)
+            {
+                if (!delay.IsLate)
+                    return;
+                LateFlights++;
+                LateSeconds += delay.LatenessSeconds;
+                foreach (var part in delay.Parts)
+                {
+                    DelayByCause.TryGetValue(part.Cause, out var sum);
+                    DelayByCause[part.Cause] = sum + part.Seconds;
+                }
+            }
+
+            /// <summary>The named cause that cost the most today, or null.</summary>
+            public DelayCause? WorstCause()
+            {
+                DelayCause? worst = null;
+                var most = 0;
+                foreach (DelayCause cause in Enum.GetValues(typeof(DelayCause)))
+                {
+                    if (cause == DelayCause.Other || !DelayByCause.TryGetValue(cause, out var seconds) || seconds <= most)
+                        continue;
+                    most = seconds;
+                    worst = cause;
+                }
+
+                return worst;
+            }
+
             public void Record(Destination destination, long payment, long cost)
             {
                 Flights++;
@@ -2341,6 +2377,9 @@ namespace Airside.Simulation
                 BestCode = string.Empty;
                 BestMargin = long.MinValue;
                 StartReliability = reliability;
+                LateFlights = 0;
+                LateSeconds = 0;
+                DelayByCause.Clear();
             }
         }
 
@@ -2394,9 +2433,18 @@ namespace Airside.Simulation
             _careerEvents.Add(new CareerEvent(CareerEventKind.DailyReport, CareerState.Tier,
                 $"Day's results: {_today.Flights} flight{(_today.Flights == 1 ? "" : "s")} · ${_today.Revenue:N0} revenue · "
                 + $"{(_today.Margin >= 0 ? "+" : "−")}${Math.Abs(_today.Margin):N0} margin · reliability {CareerState.Reliability}% "
-                + $"({(change >= 0 ? "+" : "")}{change}) · best: {best}."));
+                + $"({(change >= 0 ? "+" : "")}{change}) · best: {best} · {DelaySummary(_today)}."));
             CheckChallenges(profitableDay: _today.Flights >= 4 && _today.Margin > 0);
             _today.Reset(CareerState.Reliability);
+        }
+
+        private static string DelaySummary(DayLedger day)
+        {
+            if (day.LateFlights == 0)
+                return "every pushback on time";
+            var minutes = Math.Max(1, (int)Math.Round(day.LateSeconds / 60.0));
+            var text = $"{day.LateFlights} late ({minutes} min)";
+            return day.WorstCause() is { } worst ? $"{text}, mostly {DelayCauses.Label(worst)}" : text;
         }
 
         /// <summary>When the active contract's deadline passes, or null (ADR 0127).</summary>
@@ -2584,8 +2632,12 @@ namespace Airside.Simulation
             var settlementId = new SettlementId(aircraft.Registration, aircraft.CompletedTrips);
             var forecast = Forecast(Home, justFlown.Value, aircraft.Type);
             var pay = forecast.Revenue;
+            DelayBreakdown? delay = null;
             if (aircraft.Airline.IsPlayer && aircraft.PushbackLatenessSeconds.HasValue)
             {
+                delay = aircraft.PushbackDelay
+                        ?? DelayBreakdown.Parse(aircraft.PushbackLatenessSeconds.Value, null);
+                aircraft.PushbackDelay = null;
                 CareerState.ApplyPunctuality(
                     FlightEconomics.PunctualityReliabilityDelta(aircraft.PushbackLatenessSeconds.Value));
                 CareerState.RecordPushback(aircraft.PushbackLatenessSeconds.Value <= FlightEconomics.OnTimeGraceSeconds);
@@ -2596,6 +2648,8 @@ namespace Airside.Simulation
                 settlementId, pay, matching, PlayerOwnedTypes(), now, PlayerFleetCount());
             if (settlement == null)
                 return;
+            if (delay.HasValue)
+                settlement = settlement.Value.WithDelay(delay);
 
             if (aircraft.Airline.IsPlayer)
             {
@@ -2605,6 +2659,8 @@ namespace Airside.Simulation
                     settlement.Value.Payment - completionBonus - dispatchCost,
                     manual: !aircraft.AutomatedTrip);
                 _today.Record(justFlown.Value, settlement.Value.Payment, dispatchCost);
+                if (delay.HasValue)
+                    _today.RecordDelay(delay.Value);
                 aircraft.AutomatedTrip = false;
                 AdvanceCareer();
             }
@@ -2734,32 +2790,37 @@ namespace Airside.Simulation
                     if (!DeparturePrep.IsReady(aircraft, now, CareerState.BaseLevel))
                         return false;
                     var pushingBackFromGate = AdelaideGround.IsTerminalGate(aircraft.Stand);
+                    var readyAt = DepartureReadyAt(aircraft);
                     if (NextTaxiReleaseAt(now, pushingBackFromGate).HasValue)
-                        return false;
+                        return NoteDelay(aircraft, now, readyAt, DelayCause.ApronBusy);
                     // A gate pushback needs its lead-in clear before the tug moves; it is re-checked
                     // whenever anything else finishes, since that is the only way it frees.
                     if (pushingBackFromGate && !IsLeadInFree(aircraft.Stand, aircraft))
-                        return false;
+                        return NoteDelay(aircraft, now, readyAt, DelayCause.LeadIn);
                     // Ground control: push only when the whole route to the runway is clear of
                     // the traffic already moving. A departure that has to wait for it goes on the
                     // grid, so the moment it moves does not depend on how the clock is stepped.
                     var departureRunway = RunwayFor(aircraft);
-                    var readyAt = DepartureReadyAt(aircraft);
                     if (!now.Equals(readyAt) && !GroundTraffic.OnGrid(now))
                         return false;
                     var taxiOutLeg = AdelaideGround.TaxiOut(aircraft.Stand, aircraft.Type, departureRunway);
                     if (!GroundTraffic.PathClear(_fleet, aircraft, taxiOutLeg,
                             departureRunway, taxiOut: true, now,
                             includeStationary: now.ElapsedSeconds - readyAt.ElapsedSeconds < GroundTraffic.MaxWaitSeconds))
-                        return false;
+                        return NoteDelay(aircraft, now, readyAt, DelayCause.Taxiway);
                     // ADR 0126: not onto a route that crosses a runway while that runway is busy.
                     if (CrossingIntoBusyStrip(taxiOutLeg, departureRunway, now).HasValue)
-                        return false;
+                        return NoteDelay(aircraft, now, readyAt, DelayCause.RunwayCrossing);
                     if (aircraft.Airline.IsPlayer)
                     {
-                        var lateness = (int)(now.ElapsedSeconds - aircraft.Scheduled.Value.DepartAt.ElapsedSeconds);
+                        var departAt = aircraft.Scheduled.Value.DepartAt.ElapsedSeconds;
+                        var lateness = (int)(now.ElapsedSeconds - departAt);
                         aircraft.PushbackLatenessSeconds = lateness;
+                        aircraft.PushbackDelay = DelayLedger.Close(aircraft.DelayLedger, departAt,
+                            readyAt.ElapsedSeconds, now.ElapsedSeconds);
                     }
+
+                    aircraft.DelayLedger = null;
 
                     aircraft.CurrentDestination = aircraft.Scheduled.Value.Destination;
                     aircraft.Scheduled = null;
@@ -3290,6 +3351,27 @@ namespace Airside.Simulation
         /// for the whole wait. Null for anything else. An estimate: traffic that has not yet
         /// reached the queue can still change it.
         /// </summary>
+        /// <summary>
+        /// ADR 0128: a ready player departure was held by <paramref name="cause"/>. Sampled only at the
+        /// moment it became ready and on the ground-control grid — the times every step size visits —
+        /// so the breakdown does not depend on how the clock is stepped. Always returns false (the
+        /// pushback did not happen), so a gate can return it directly.
+        /// </summary>
+        private bool NoteDelay(FleetAircraft aircraft, SimulationTime now, SimulationTime readyAt, DelayCause cause)
+        {
+            if (!aircraft.Airline.IsPlayer || !aircraft.Scheduled.HasValue)
+                return false;
+            if (!now.Equals(readyAt) && !GroundTraffic.OnGrid(now))
+                return false;
+            var departAt = aircraft.Scheduled.Value.DepartAt.ElapsedSeconds;
+            var ledger = aircraft.DelayLedger;
+            if (ledger == null || ledger.DepartAtSeconds != departAt)
+                aircraft.DelayLedger = new DelayLedger(departAt, now.ElapsedSeconds, cause);
+            else
+                ledger.Sample(now.ElapsedSeconds, cause);
+            return false;
+        }
+
         /// <summary>When a departure at its stand became ready to push: booked time, or prep end.</summary>
         private SimulationTime DepartureReadyAt(FleetAircraft aircraft)
         {

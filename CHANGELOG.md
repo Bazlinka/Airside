@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Why was I late? (ADR 0128).** When a flight is paid, the message now says whether it
+  pushed back on time (and your streak) or how late it was and why — a turnaround booked too
+  tight, apron or taxiway traffic, a busy gate lead-in or a runway crossing — with a tip. The
+  nightly report sums the day's delays. A waiting aircraft's hold line is now a link: tap it to
+  jump to the aircraft in the way, and ‹ to come back. Stats shows your punctuality. Save v16.
+
 - **A livelier career (ADR 0127).** The contract market now offers charters (one flight, big
   pay, 6 h), medical calls (3 h, big reliability boost) and freight runs as well as
   scheduled work, and market contracts have deadlines. Most days bring a demand event —

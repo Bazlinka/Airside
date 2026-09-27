@@ -1,5 +1,16 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — delay feedback (ADR 0128).** PR #414 merged first.
+  `Simulation/DelayAttribution.cs` (`DelayCause`, `DelayBreakdown`, `DelayLedger`): a ready
+  player departure's failed pushback gates are sampled at ready time and on the 5 s grid only
+  (`AirlineOperations.NoteDelay`), closed at pushback into `FleetAircraft.PushbackDelay`, carried
+  into `FlightSettlement.Delay`, and summed into the daily report. Save v16 stores the pending
+  breakdown (older saves: all "Other"). Presentation: `DelayText` (toast wording, tone, tip), a
+  linked hold line + back chip on the selection card, the same link and a "Last flight" line in
+  Ops, a Punctuality row on Stats, a manual entry. Tests **849/849**, type-check clean. **Mac
+  checks:** tap a hold line on your card and on an AI card and confirm the camera follows the
+  blocker and ‹ returns; push a flight late behind taxiing traffic and read the paid toast.
+
 - **2026-09-27 Claude (same branch) — career variety (ADR 0127).** `ContractKind` + deadlines
   (`ContractMarket.Terms`, `AirlineOperations.ExpireContract`, save v15 incl. `OnTimeStreak`),
   `DemandEvents` in `Forecast`, daily report + news in `AnnounceTheDay`, `CareerChallenges`
@@ -4851,6 +4862,9 @@ your live flight tiles top-right, the airfield radar bottom-right and the select
 card bottom-centre. Toasts appear under the capsule. A workspace opens as one glass sheet
 right of the rail. **Career** opens on the tier track; **Airline** on its header flips to the
 profile (name, livery, base, achievements, history).
+A waiting aircraft's card says what holds it; when that is another aircraft the line is a
+link (tap it, **‹** goes back). Each paid flight's toast says whether it pushed on time and,
+if not, what made it late (ADR 0128).
 
 Simulation:
 

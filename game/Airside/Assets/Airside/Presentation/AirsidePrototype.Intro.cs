@@ -167,9 +167,8 @@ namespace Airside.Presentation
                     _splash.SaveLiveryHex = airline.LiveryHex;
             _splash.SaveTier = string.IsNullOrEmpty(_savedAirline.CareerTier) ? "Provisional" : _savedAirline.CareerTier;
             var fleet = SavedPlayerFleetCount();
-            var difficulty = string.IsNullOrEmpty(_savedAirline.Difficulty) ? "Standard" : _savedAirline.Difficulty;
             _splash.SaveSummary = $"{fleet} aircraft  ·  ${_savedAirline.CareerFunds:N0}  ·  "
-                                  + $"{_savedAirline.CareerReliability}% reliability  ·  {difficulty}";
+                                  + $"{_savedAirline.CareerReliability}% reliability";
             _splash.SavedWhen = SavedAirlineSummary();
         }
 

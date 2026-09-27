@@ -162,6 +162,13 @@ namespace Airside.Presentation
             FillBaseRoadmap(career);
             FillAdelaideStandings(operations);
 
+            // Open challenges head the list (ADR 0127): what they pay and how far along you are.
+            foreach (var challenge in operations.CareerChallengeStatus())
+                if (challenge.Open && !challenge.Complete)
+                    _milestones.Add(new MilestoneRow(
+                        $"Challenge · {challenge.Challenge.Title} ({challenge.Progress}/{challenge.Target}) · ${challenge.Challenge.Reward:N0}",
+                        false));
+
             var roadmap = CareerRoadmap.Evaluate(career, ownedTypes, operations.PlayerFleetCount());
             foreach (var goal in roadmap)
                 if (goal.Stage <= career.Tier)

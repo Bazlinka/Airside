@@ -143,6 +143,7 @@ namespace Airside.Presentation
 
         /// <summary>Queue shuffles move up at taxi pace instead of jumping a whole queue place.</summary>
         private const float QueueShuffleMetresPerSecond = 5f;
+        private const float QueueShuffleAcceleration = 0.5f;
 
         /// <summary>
         /// A queue at the holding point or a runway exit moves up one place (60 m) the instant the
@@ -163,7 +164,13 @@ namespace Airside.Presentation
             var dx = target.X - shown.Pose.X;
             var dz = target.Z - shown.Pose.Z;
             var gap = (float)Math.Sqrt(dx * dx + dz * dz);
-            var reach = (float)(Math.Max(QueueShuffleMetresPerSecond, target.Speed * 1.2f) * dt) + 0.05f;
+            // Move up a queue place like an aircraft (ADR 0126): pull away gently, brake to the new
+            // spot, rather than sliding at a flat 5 m/s from and to a standstill.
+            var cruise = Math.Max(QueueShuffleMetresPerSecond, target.Speed * 1.2f);
+            var accelerated = shown.Pose.Speed + QueueShuffleAcceleration * (float)dt;
+            var braking = (float)Math.Sqrt(2f * GroundLeg.QueueBrakingMetresPerSecondSquared * gap);
+            var speed = Mathf.Max(0.4f, Mathf.Min(cruise, Mathf.Min(accelerated, braking)));
+            var reach = (float)(speed * dt) + 0.05f;
             if (gap <= reach || gap > 2.5f * AdelaideGround.AwaitingSpacingMetres)
             {
                 _queueShown[aircraft.Registration] = (_preciseTime, target);
@@ -171,8 +178,9 @@ namespace Airside.Presentation
             }
 
             var step = reach / gap;
+            // Keep facing the way the aircraft already points; the hop is along its own line.
             var moving = new GroundPose(shown.Pose.X + dx * step, shown.Pose.Z + dz * step,
-                dx / gap, dz / gap, QueueShuffleMetresPerSecond, false);
+                dx / gap, dz / gap, speed, false);
             _queueShown[aircraft.Registration] = (_preciseTime, moving);
             return moving;
         }
@@ -205,14 +213,20 @@ namespace Airside.Presentation
                     var elapsed = _preciseTime - visual.LegStartedAt.ElapsedSeconds + lookAheadSeconds;
                     var scale = visual.LegSeconds > 0 ? leg.Seconds / visual.LegSeconds : 1.0;
                     var t = elapsed * scale;
-                    // Stop behind whoever is already holding short (GroundTraffic.TryPose does the same).
+                    // Brake to a stop behind whoever is already holding short (GroundTraffic.TryPose
+                    // does the same), and report the real speed so a stopped aircraft stops weaving
+                    // and its wheels stop turning (ADR 0126).
+                    var braked = -1f;
                     if (visual.Leg == FleetGroundLeg.TaxiOut)
-                        t = Math.Min(t, GroundTraffic.QueuedSeconds(leg,
-                            FleetVisual.QueueAhead(_operations.Fleet, aircraft, _clock.Now)));
+                        t = leg.BrakedSeconds(t, GroundTraffic.QueuedSeconds(leg,
+                            FleetVisual.QueueAhead(_operations.Fleet, aircraft, _clock.Now)), out braked);
                     else if (visual.Leg == FleetGroundLeg.Vacate)
-                        t = Math.Min(t, GroundTraffic.QueuedSeconds(leg,
-                            FleetVisual.ExitQueueAhead(_operations.Fleet, aircraft, _clock.Now)));
-                    return HumanGroundPose(aircraft, visual.Leg, leg.PoseAt(t));
+                        t = leg.BrakedSeconds(t, GroundTraffic.QueuedSeconds(leg,
+                            FleetVisual.ExitQueueAhead(_operations.Fleet, aircraft, _clock.Now)), out braked);
+                    var pose = leg.PoseAt(t);
+                    if (braked >= 0f)
+                        pose = new GroundPose(pose.X, pose.Z, pose.NoseX, pose.NoseZ, braked, pose.TailFirst);
+                    return HumanGroundPose(aircraft, visual.Leg, pose);
                 }
             }
         }

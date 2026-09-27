@@ -24,12 +24,16 @@ namespace Airside.Simulation
         public RouteForecast Under(DifficultyProfile difficulty) =>
             new(ExpectedPassengers, Seats, difficulty.ScaleCost(Cost), difficulty.ScaleRevenue(Revenue));
 
-        public static RouteForecast For(Destination origin, Destination destination, AircraftType type)
+        public static RouteForecast For(Destination origin, Destination destination, AircraftType type) =>
+            For(origin, destination, type, 1.0);
+
+        /// <summary>…with demand scaled for the day's events (<see cref="DemandEvents"/>, ADR 0127).</summary>
+        public static RouteForecast For(Destination origin, Destination destination, AircraftType type, double demandMultiplier)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             var km = origin.DistanceKmTo(destination);
             var seats = Math.Max(1, AircraftCatalogue.TypicalSeats(type));
-            var passengers = Math.Min(seats, DemandFor(destination.Code));
+            var passengers = Math.Min(seats, (int)Math.Round(DemandFor(destination.Code) * Math.Max(0.0, demandMultiplier)));
             var filled = passengers / (double)seats;
             var basePay = FlightEconomics.FlightPay(type, km, RouteAccess.BandOf(destination));
             var revenue = Math.Max(0, (long)Math.Round(basePay * (0.35 + 0.90 * filled)));

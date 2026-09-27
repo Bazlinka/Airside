@@ -751,6 +751,9 @@ namespace Airside.Tests
             // so the player sees only plane, runway, ground and sun lighting.
             Assert.That(AirsideFocusMode.ShowGroundVehicles, Is.False);
             Assert.That(AirsideFocusMode.ShowStandEquipment, Is.False);
+            // ADR 0126: the turnaround itself (service vehicles, stand equipment, pushback tugs)
+            // is operation, not scenery, and shows on the default field.
+            Assert.That(AirsideFocusMode.ShowTurnaroundVehicles, Is.True);
             Assert.That(AirsideFocusMode.ShowPeople, Is.False);
             Assert.That(AirsideFocusMode.ShowBuildings, Is.False);
             Assert.That(AirsideFocusMode.ShowTerminal, Is.True, "the passenger terminal stays on the default field");

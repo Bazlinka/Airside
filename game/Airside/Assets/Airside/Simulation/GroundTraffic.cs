@@ -131,11 +131,12 @@ namespace Airside.Simulation
                     var elapsed = seconds - visual.LegStartedAt.ElapsedSeconds;
                     var scale = visual.LegSeconds > 0 ? ground.Seconds / visual.LegSeconds : 1.0;
                     var t = elapsed * scale;
+                    // Brake into a queue place rather than stopping dead (ADR 0126).
                     if (visual.Leg == FleetGroundLeg.TaxiOut)
-                        t = Math.Min(t, QueuedSeconds(ground, track?.Ahead ?? FleetVisual.QueueAhead(fleet, aircraft, at)));
+                        t = ground.BrakedSeconds(t, QueuedSeconds(ground, track?.Ahead ?? FleetVisual.QueueAhead(fleet, aircraft, at)), out _);
                     else if (visual.Leg == FleetGroundLeg.Vacate)
-                        t = Math.Min(t, QueuedSeconds(ground,
-                            track?.ExitAhead ?? FleetVisual.ExitQueueAhead(fleet, aircraft, at)));
+                        t = ground.BrakedSeconds(t, QueuedSeconds(ground,
+                            track?.ExitAhead ?? FleetVisual.ExitQueueAhead(fleet, aircraft, at)), out _);
                     if (track != null)
                     {
                         // Positions only for conflict checks: the table is far cheaper than a pose.

@@ -43,11 +43,9 @@ namespace Airside.Simulation
                 if (!type.CanReach(km) || !RouteAccess.Allows(type, dest.Value))
                     continue;
 
-                var rotations = 2 + rng.NextInt(0, 3);
                 var basePay = FlightEconomics.FlightPay(type, km, RouteAccess.BandOf(dest.Value));
-                var bonus = Math.Max(200, (long)Math.Round(basePay * 0.55));
-                var reward = bonus * rotations / 2;
-                var id = $"MKT-{window}-{offers.Count}-{dest.Value.Code}-{type.Id}";
+                var terms = Terms(KindFor(type, dest.Value, rng), basePay, rng);
+                var id = $"MKT-{window}-{offers.Count}-{dest.Value.Code}-{type.Id}{terms.Suffix}";
                 var duplicate = false;
                 foreach (var existing in offers)
                     if (existing.DestinationCode == dest.Value.Code && existing.EligibleType.Id == type.Id)
@@ -56,13 +54,86 @@ namespace Airside.Simulation
                     continue;
 
                 offers.Add(new RouteContractDefinition(
-                    id, "ADL", dest.Value.Code, type, rotations, bonus, reward,
-                    reliabilityGainPerRotation: 1,
+                    id, "ADL", dest.Value.Code, type, terms.Rotations, terms.Bonus, terms.Reward,
+                    reliabilityGainPerRotation: terms.Gain,
                     requiredTier: OperatingTier.Provisional,
-                    reliabilityLossOnCancel: 3));
+                    reliabilityLossOnCancel: terms.Loss,
+                    kind: terms.Kind,
+                    deadlineSeconds: terms.Deadline));
             }
 
             return offers;
+        }
+
+        /// <summary>
+        /// ADR 0127: the market is not only "fly A–B N times". About one offer in six is a charter (one
+        /// well-paid flight, due within 6 h), one in ten an urgent medical flight to a regional town
+        /// (3 h, a big reliability gain), and turboprops also see freight runs. Scheduled work now
+        /// has a generous deadline too, so an accepted contract is a commitment.
+        /// </summary>
+        public static ContractKind KindFor(AircraftType type, Destination destination, SeededRandomSource rng)
+        {
+            var roll = rng.NextInt(0, 100);
+            var turboprop = AircraftCatalogue.For(type).StandClass == StandClass.RegionalBay;
+            if (roll < 16)
+                return ContractKind.Charter;
+            if (roll < 26 && turboprop && RouteAccess.BandOf(destination) == RouteBand.Regional)
+                return ContractKind.Medical;
+            if (roll < 42 && turboprop)
+                return ContractKind.Freight;
+            return ContractKind.Scheduled;
+        }
+
+        public readonly struct ContractTerms
+        {
+            public ContractTerms(ContractKind kind, int rotations, long bonus, long reward, int gain, int loss, long deadline,
+                string suffix)
+            {
+                Kind = kind;
+                Rotations = rotations;
+                Bonus = bonus;
+                Reward = reward;
+                Gain = gain;
+                Loss = loss;
+                Deadline = deadline;
+                Suffix = suffix;
+            }
+
+            public ContractKind Kind { get; }
+            public int Rotations { get; }
+            public long Bonus { get; }
+            public long Reward { get; }
+            public int Gain { get; }
+            public int Loss { get; }
+            public long Deadline { get; }
+            public string Suffix { get; }
+        }
+
+        public static ContractTerms Terms(ContractKind kind, long basePay, SeededRandomSource rng)
+        {
+            switch (kind)
+            {
+                case ContractKind.Charter:
+                    return new ContractTerms(kind, 1, Math.Max(300, (long)Math.Round(basePay * 1.3)),
+                        Math.Max(200, basePay / 2), 1, 4, 6 * 3600, "-CH");
+                case ContractKind.Medical:
+                    return new ContractTerms(kind, 1, Math.Max(250, (long)Math.Round(basePay * 0.8)),
+                        Math.Max(150, (long)Math.Round(basePay * 0.4)), 4, 5, 3 * 3600, "-MED");
+                case ContractKind.Freight:
+                {
+                    var rotations = 2 + rng.NextInt(0, 2);
+                    var bonus = Math.Max(180, (long)Math.Round(basePay * 0.45));
+                    return new ContractTerms(kind, rotations, bonus, bonus * rotations * 6 / 10, 1, 2,
+                        rotations * 12 * 3600L, "-FRT");
+                }
+                default:
+                {
+                    var rotations = 2 + rng.NextInt(0, 3);
+                    var bonus = Math.Max(200, (long)Math.Round(basePay * 0.55));
+                    return new ContractTerms(ContractKind.Scheduled, rotations, bonus, bonus * rotations / 2, 1, 3,
+                        rotations * 10 * 3600L, string.Empty);
+                }
+            }
         }
 
         public static SimulationTime WindowEnd(SimulationTime now)

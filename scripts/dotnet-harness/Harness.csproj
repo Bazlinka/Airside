@@ -71,6 +71,9 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BuildingDetail.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BevelledBox.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirfieldFixture.cs" />
+    <!-- ADR 0126 pushback tugs and AI turnaround timing. -->
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/PushbackTugTimeline.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronServiceSchedule.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirlineSetup.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudDraw.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/OperationsWorkspace.cs" />

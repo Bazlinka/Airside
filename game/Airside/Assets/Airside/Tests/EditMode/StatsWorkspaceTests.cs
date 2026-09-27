@@ -311,8 +311,9 @@ namespace Airside.Tests
             var model = new StatsWorkspaceModel();
             model.Rebuild(ops, clock.Now);
             var roadmapCount = ops.CareerGoals().Count(goal => goal.Stage <= ops.CareerState.Tier);
-            Assert.That(model.Milestones.Count, Is.EqualTo(11 + roadmapCount),
-                "career goals and earned milestones share the stats list");
+            var openChallenges = ops.CareerChallengeStatus().Count(c => c.Open && !c.Complete);
+            Assert.That(model.Milestones.Count, Is.EqualTo(11 + roadmapCount + openChallenges),
+                "open challenges, career goals and earned milestones share the stats list");
             Assert.That(model.ContractHistory.Count, Is.EqualTo(StatsWorkspaceModel.MaxHistoryShown));
 
             foreach (var (width, height) in HudTestAirline.Viewports)

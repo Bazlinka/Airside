@@ -68,6 +68,10 @@ namespace Airside.Presentation
                     return $"Holding airborne — {reason.Detail} until {Time(reason.Until, clock)}";
                 case HoldKind.InCheck:
                     return $"In maintenance until {Time(reason.Until, clock)}";
+                case HoldKind.CrossingRunway:
+                    return reason.Blocker != null
+                        ? $"{Where(departing, rwy)} — {who} is crossing the runway"
+                        : $"Waiting to taxi — runway {(string.IsNullOrEmpty(reason.Detail) ? "crossing" : reason.Detail)} busy at the crossing";
                 default:
                     return string.Empty;
             }
@@ -92,6 +96,7 @@ namespace Airside.Presentation
             HoldKind.ChooseStand => "choose stand",
             HoldKind.HeldAirborne => "held airborne",
             HoldKind.InCheck => "in check",
+            HoldKind.CrossingRunway => reason.Blocker != null ? "hold · crossing traffic" : "wait · runway crossing",
             _ => string.Empty
         };
 

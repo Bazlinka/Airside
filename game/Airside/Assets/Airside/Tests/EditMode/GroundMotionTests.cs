@@ -13,8 +13,8 @@ namespace Airside.Tests
         [Test]
         public void Speeds_MatchVerifiedTurbopropAndJetBands()
         {
-            Assert.That(GroundSpeedLimits.TurbopropStraightKnots, Is.EqualTo(25f));
-            Assert.That(GroundSpeedLimits.JetStraightKnots, Is.EqualTo(25f));
+            Assert.That(GroundSpeedLimits.TurbopropStraightKnots, Is.EqualTo(22f));
+            Assert.That(GroundSpeedLimits.JetStraightKnots, Is.EqualTo(20f));
             Assert.That(GroundSpeedLimits.JetNormalTaxiKnots, Is.EqualTo(20f));
             Assert.That(GroundSpeedLimits.ApronTurbopropKnots, Is.EqualTo(15f));
             Assert.That(GroundSpeedLimits.ApronJetKnots, Is.EqualTo(10f));

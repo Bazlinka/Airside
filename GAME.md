@@ -1,5 +1,37 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — career variety (ADR 0127).** `ContractKind` + deadlines
+  (`ContractMarket.Terms`, `AirlineOperations.ExpireContract`, save v15 incl. `OnTimeStreak`),
+  `DemandEvents` in `Forecast`, daily report + news in `AnnounceTheDay`, `CareerChallenges`
+  (award keys) with prestige after the finale, milestone announcements; new `CareerEventKind`s
+  toasted by tone; Stats lists open challenges; manual updated. Balance report
+  `docs/testing/career-balance-2026-09-27/variety/`: Standard competent Regional 10.8 h,
+  Domestic 29.3 h, International 69 h, finale 139 h. Tests **841/841**, type-check clean.
+  **Needs humans:** does a charter/medical deadline feel fair at real play pace; toast volume
+  (news + report + challenges) on a busy day.
+
+- **2026-09-27 Claude (same branch) — difficulty removed (ADR 0127).** `SetupStep` is
+  Identity/Livery/Briefing; `AirlineSave.ParseDifficulty` always returns Standard (field still
+  written); title summary, manual entry and HUD mockup page removed; balance sim is single
+  difficulty. Tests 835/835.
+
+- **2026-09-27 Claude (same branch) — taxiing (ADR 0126).** `GroundLeg.BrakedSeconds` replaces
+  the queue clamp (sim + presentation); `QueueShuffle` accelerates/brakes; straight taxi 20 kt
+  jets / 22 kt turboprops; `RunwayCrossings` + tower/ground gates (`CrossingDue`,
+  `CrossingIntoBusyStrip`, grid re-check), `HoldKind.CrossingRunway`; taxi light only while
+  taxiing forward. Evidence: `scripts/test-domain.sh` **835/835** (incl. step-size timeline and
+  landing-estimate accuracy), type-check clean, balance sim pacing unchanged. **Mac checks:**
+  a queue at 05 at dusk (braking, lights), a 05 arrival crossing 12/30 while 12 is in use.
+
+- **2026-09-27 Claude (branch restarted from main after PR #413) — vehicles and tugs (ADR 0126).**
+  Root cause: `ShowGroundVehicles`/`ShowStandEquipment` are false on the bare field, so no
+  turnaround vehicle was ever built. New `AirsideFocusMode.ShowTurnaroundVehicles` (always on)
+  gates the turnaround set. Fleet pushback tugs (`PushbackTugTimeline`,
+  `AirsidePrototype.PushbackTugs.cs`, pool of 8). AI stands get pooled fuel/baggage vehicles
+  (`ApronServiceSchedule`, 4 sets). Player chocks and GPU are placed. **Mac checks:** watch a
+  gate pushback (towbar on the nose gear for 737/A320/A350/Q400 kits; tug facing), an AI
+  turnaround, and the soak FPS.
+
 - **2026-09-27 Claude (same branch) — career tuning pass (ADR 0125).** Fixed: Adelaide
   aircraft can be planned abroad (`PlannableDestinations()`), narrowbodies take 28L last, AI
   no longer returns to a gate the player leases. Tuned: four starter services; turboprop
@@ -4804,9 +4836,8 @@ plays every difficulty with a simulated player and writes a report (ADR 0125).
 The game opens on the **title screen** (ADR 0122): the dawn illustration of the airport,
 the live Adelaide clock and one card — **Continue** your saved airline, **New airline**,
 **How to play**, Options or Quit. Enter continues; Esc steps back or opens the menu.
-New airline is a four-step setup (ADR 0123) with a live preview: name and flight code,
-livery (twelve colours or your own hue/shade), difficulty (Relaxed / Standard / Demanding)
-and a briefing with an optional first-flight coach. The **Flight Manual** (How to play, the
+New airline is a three-step setup (ADR 0123/0127) with a live preview: name and flight code,
+livery (twelve colours or your own hue/shade) and a briefing with an optional first-flight coach. The **Flight Manual** (How to play, the
 **?** on the rail, or F1; ←/→ to page) explains the rules and lists the controls.
 Choosing one dissolves the art into the live airport while the camera glides down (any
 key skips). Time is **live Adelaide time**: one second in the game is one real second.

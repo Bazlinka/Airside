@@ -1,6 +1,6 @@
 # Pushback tugs — implementation plan
 
-Status: planned (Bailey asked for it on 23 September 2026, after the Terminal 1
+Status: implemented as presentation (ADR 0126); tugs as a simulated resource (item 7) still open. Originally planned (Bailey asked for it on 23 September 2026, after the Terminal 1
 aerobridges, ADR 0113). Written as the AGENTS.md task packet. Build it as its own
 ADR, 0115.
 

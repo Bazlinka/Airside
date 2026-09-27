@@ -6,13 +6,12 @@ using Airside.Domain;
 using Airside.Simulation;
 using Airside.Tests;
 
-// Usage: CareerSim <out-dir> [seeds=5] [max-open-hours=180] [difficulty|all] [style|all]
+// Usage: CareerSim <out-dir> [seeds=5] [max-open-hours=180] [ignored] [style|all]
 var outDir = args.Length > 0 ? args[0] : "career-balance";
 var seeds = args.Length > 1 ? int.Parse(args[1], CultureInfo.InvariantCulture) : 5;
 var maxHours = args.Length > 2 ? double.Parse(args[2], CultureInfo.InvariantCulture) : 180;
-var difficulties = args.Length > 3 && args[3] != "all"
-    ? new[] { Enum.Parse<CareerDifficulty>(args[3], true) }
-    : new[] { CareerDifficulty.Relaxed, CareerDifficulty.Standard, CareerDifficulty.Demanding };
+// One career balance since ADR 0127; the difficulty column is kept for older reports' shape.
+var difficulties = new[] { CareerDifficulty.Standard };
 var styles = args.Length > 4 && args[4] != "all"
     ? new[] { Enum.Parse<CareerPlayStyle>(args[4], true) }
     : new[] { CareerPlayStyle.Competent, CareerPlayStyle.Casual };
@@ -67,6 +66,17 @@ foreach (var s in styles)
 }
 
 md.AppendLine();
+md.AppendLine("## Contracts and challenges (ADR 0127, totals over all seeds)");
+md.AppendLine();
+md.AppendLine("| Style | Contracts lapsed | Challenges paid | Daily reports |");
+md.AppendLine("|---|---|---|---|");
+foreach (var s in styles)
+{
+    var rows = results.Where(r => r.Style == s).ToList();
+    md.AppendLine($"| {s} | {rows.Sum(r => r.ExpiredContracts)} | {rows.Sum(r => r.ChallengesPaid)} | {rows.Sum(r => r.DailyReports)} |");
+}
+
+md.AppendLine();
 md.AppendLine("## Goal completion (median open hours, all seeds)");
 md.AppendLine();
 var goalIds = results.SelectMany(r => r.GoalDoneAtOpenHours.Keys).Distinct().ToList();
@@ -117,7 +127,7 @@ File.WriteAllText(Path.Combine(outDir, "runs.json"), JsonSerializer.Serialize(re
     goals = r.GoalDoneAtOpenHours.ToDictionary(p => p.Key, p => Math.Round(p.Value, 1)),
     finale = r.FinaleAtOpenHours, openHours = Math.Round(r.OpenHours, 1), r.MinFunds, r.FinalFunds, r.MinReliability,
     r.FinalReliability, finalTier = r.FinalTier.ToString(), r.FinalFleet, r.FinalRotations, r.RecoveryContracts,
-    r.OpenGoalsAtEnd, r.Flags, r.Refusals
+    r.OpenGoalsAtEnd, r.Flags, r.Refusals, r.ExpiredContracts, r.ChallengesPaid, r.DailyReports
 }), new JsonSerializerOptions { WriteIndented = true }));
 
 Console.WriteLine($"Wrote {outDir}/report.md in {watch.Elapsed.TotalSeconds:0}s");

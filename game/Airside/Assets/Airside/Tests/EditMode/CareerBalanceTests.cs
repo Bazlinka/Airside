@@ -22,9 +22,9 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void DemandingCasualPlayer_NeverDeadEndsInTheFirstDays()
+        public void CasualPlayer_NeverDeadEndsInTheFirstDays()
         {
-            var run = CareerSimulation.Run(CareerDifficulty.Demanding, CareerPlayStyle.Casual, seed: 1, maxOpenHours: 40);
+            var run = CareerSimulation.Run(CareerDifficulty.Standard, CareerPlayStyle.Casual, seed: 1, maxOpenHours: 40);
             Assert.That(run.Flags, Is.Empty, string.Join("; ", run.Flags));
             Assert.That(run.FinalRotations, Is.GreaterThan(10), "still flying");
             Assert.That(run.FinalTier, Is.GreaterThanOrEqualTo(OperatingTier.Regional));
@@ -33,8 +33,8 @@ namespace Airside.Tests
         [Test]
         public void TheSameSeed_PlaysTheSameCareer()
         {
-            var a = CareerSimulation.Run(CareerDifficulty.Relaxed, CareerPlayStyle.Casual, seed: 3, maxOpenHours: 10);
-            var b = CareerSimulation.Run(CareerDifficulty.Relaxed, CareerPlayStyle.Casual, seed: 3, maxOpenHours: 10);
+            var a = CareerSimulation.Run(CareerDifficulty.Standard, CareerPlayStyle.Casual, seed: 3, maxOpenHours: 10);
+            var b = CareerSimulation.Run(CareerDifficulty.Standard, CareerPlayStyle.Casual, seed: 3, maxOpenHours: 10);
             Assert.That(b.Samples.Select(s => (s.Funds, s.Reliability, s.Fleet, s.Rotations)),
                 Is.EqualTo(a.Samples.Select(s => (s.Funds, s.Reliability, s.Fleet, s.Rotations))));
         }

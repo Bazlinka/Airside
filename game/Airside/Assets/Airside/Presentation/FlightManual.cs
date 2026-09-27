@@ -75,12 +75,20 @@ namespace Airside.Presentation
                     ("Contracts",
                         "Contracts (Contracts page) pay a bonus per rotation on their route and a completion reward. "
                         + "One at a time. ABANDON drops one for a small reliability cost if you can no longer fly it."),
+                    ("Charters, medical and freight",
+                        "Besides scheduled runs the market offers charters (one well-paid flight within 6 hours), medical "
+                        + "calls to regional towns (within 3 hours, a big reliability gain) and turboprop freight. Market work "
+                        + "has a deadline: miss it and the contract lapses for its reliability cost."),
+                    ("Busy days",
+                        "Most days something draws extra passengers somewhere — a festival, school holidays, the footy. "
+                        + "It is announced in the morning and shows in the forecast; fill those flights while it lasts."),
+                    ("Challenges",
+                        "Optional challenges pay cash: on-time streaks, a profitable day, charters and medical calls flown. "
+                        + "After the finale, prestige challenges keep the sandbox going. See them on the Stats page. "
+                        + "Each night at 23:00 the day's results are reported."),
                     ("Out of cash",
                         "If you cannot afford a flight, a recovery contract to Kingscote appears and pays for its own "
-                        + "first dispatch, so an airline is never stranded."),
-                    ("Difficulty",
-                        "Relaxed, Standard or Demanding is chosen when the airline is founded. It sets your float, fares, "
-                        + "flight costs and how hard lateness is punished. Contract terms are never scaled.")
+                        + "first dispatch, so an airline is never stranded.")
                 }),
             new FlightManualPage("reliability", "Reliability",
                 "Partners trust punctual airlines. Reliability starts at 100% — keep it there.",

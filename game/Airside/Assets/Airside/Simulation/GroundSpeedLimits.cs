@@ -36,16 +36,16 @@ namespace Airside.Simulation
         /// ATR / Dash 8 / Saab straight taxiway. ATR 42/72-500 SOP (PIA, cited AIAA Journal
         /// of Aircraft 2023) max 25 kt straight; Saab 340 operator flow 25 kt taxiway;
         /// regional-turboprop ADS-B study mean/median top speed ≈ 20 kt with a 25 kt
-        /// design target (AIAA).
+        /// design target (AIAA). ADR 0126 sits between the two at 22 kt.
         /// </summary>
-        public const float TurbopropStraightKnots = 25f;
+        public const float TurbopropStraightKnots = 22f;
 
         /// <summary>
         /// Boeing 737 FCTM: normal taxi ≈ 20 kt; long clear straights up to 30 kt are
-        /// acceptable. YPAD parallel routes are long enough that 25 kt is the working
-        /// straight band (still under the 30 kt tiller caution).
+        /// acceptable. Was 25 kt; ADR 0126 settles on the FCTM's normal 20 kt, which reads
+        /// right at the game's viewing distance where 25 kt looked like a drag race.
         /// </summary>
-        public const float JetStraightKnots = 25f;
+        public const float JetStraightKnots = 20f;
 
         /// <summary>Boeing 737 FCTM "normal taxi speed is approximately 20 knots".</summary>
         public const float JetNormalTaxiKnots = 20f;

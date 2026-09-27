@@ -28,7 +28,6 @@ public static class Program
             SplashPage(scenario, width, height, SplashStep.Menu),
             SplashPage(scenario, width, height, SplashStep.NewAirline, SetupStep.Identity),
             SplashPage(scenario, width, height, SplashStep.NewAirline, SetupStep.Livery),
-            SplashPage(scenario, width, height, SplashStep.NewAirline, SetupStep.Difficulty),
             SplashPage(scenario, width, height, SplashStep.NewAirline, SetupStep.Briefing),
             ManualPage(width, height, 1),
             Overview(scenario, width, height),

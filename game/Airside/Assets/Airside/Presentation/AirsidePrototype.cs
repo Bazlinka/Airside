@@ -168,7 +168,6 @@ namespace Airside.Presentation
         private Transform _chocks;
         private Transform _wetPuddleRoot;
         private Transform _gpuCart;
-        private Transform _pushbackTug;
         private Transform _windsockSock;
         private Quaternion[] _windsockSegmentRest;
         private Transform _terminalFlag;
@@ -473,7 +472,7 @@ namespace Airside.Presentation
             _commercialAircraft = Array.Empty<Transform>();
             _commercialAircraftIds = Array.Empty<string>();
             SyncCommercialAircraftViews();
-            if (AirsideFocusMode.ShowGroundVehicles)
+            if (AirsideFocusMode.ShowTurnaroundVehicles)
             {
                 _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.95f, 0.76f, 0.12f), new Vector3(3.1f, 1.25f, 1.35f),
                     PreferArtKit(
@@ -514,13 +513,12 @@ namespace Airside.Presentation
                 OrientPlusXKitToForward(_passengerBus);
             }
 
-            if (AirsideFocusMode.ShowStandEquipment)
+            if (AirsideFocusMode.ShowTurnaroundVehicles)
             {
                 _stairs = BuildStairs();
                 _chocks = BuildChocks();
                 _gpuCart = BuildGpuCart();
-                _pushbackTug = BuildPushbackTug();
-                OrientPlusXKitToForward(_pushbackTug);
+                // Pushback tugs are a fleet pool now (AirsidePrototype.PushbackTugs.cs, ADR 0126).
             }
 
             if (AirsideFocusMode.ShowWorldProps)
@@ -626,6 +624,7 @@ namespace Airside.Presentation
             soakStageStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             UpdateApronLife();
             UpdateGateServicing();
+            UpdatePushbackTugs();
             if (SoakMode)
                 _soakGroundTicks += System.Diagnostics.Stopwatch.GetTimestamp() - soakStageStarted;
             if (SoakMode)
@@ -661,8 +660,12 @@ namespace Airside.Presentation
             if (playerTurn != null)
             {
                 UpdatePlayerTurnaroundServicing(playerTurn);
+                UpdateAmbientServicing(playerTurn, null);
                 return;
             }
+
+            SetEquipmentVisible(_chocks, false);
+            SetEquipmentVisible(_gpuCart, false);
 
             var candidates = _gateServicingCandidates;
             candidates.Clear();
@@ -673,6 +676,7 @@ namespace Airside.Presentation
             if (candidates.Count == 0)
             {
                 HideTurnaroundEquipment();
+                UpdateAmbientServicing(null, null);
                 return;
             }
 
@@ -692,6 +696,114 @@ namespace Airside.Presentation
                 stop - nose * 31f - side * 8f, stop - nose * 45f - side * 14f);
             UpdateVehicle(_passengerBus, cycle >= 48f,
                 stop - nose * 16f + side * 14f, stop - nose * 48f + side * 22f);
+            UpdateAmbientServicing(null, parked);
+        }
+
+        // ---- AI turnarounds (ADR 0126) ---------------------------------------------------
+
+        private const int AmbientServiceSets = 4;
+        private readonly List<(Transform Fuel, Transform Bags, string Registration)> _ambientSets = new();
+        private readonly List<FleetAircraft> _ambientWanted = new();
+
+        /// <summary>
+        /// A small pool of fuel trucks and baggage trains for AI aircraft on stand, besides the full
+        /// sequenced set the player's own turnaround (or the rotating showcase) already uses. Each works
+        /// its aircraft on <see cref="ApronServiceSchedule"/>'s window and drives off when it ends.
+        /// </summary>
+        private void UpdateAmbientServicing(FleetAircraft skipA, FleetAircraft skipB)
+        {
+            var wanted = _ambientWanted;
+            wanted.Clear();
+            foreach (var aircraft in _operations.Fleet)
+            {
+                if (wanted.Count >= AmbientServiceSets)
+                    break;
+                if (aircraft.Airline.IsPlayer || aircraft.State != FleetState.AtStand
+                    || aircraft == skipA || aircraft == skipB || string.IsNullOrEmpty(aircraft.Stand.Value))
+                    continue;
+                var onStand = _preciseTime - aircraft.StateStartedAt.ElapsedSeconds;
+                double? toDeparture = aircraft.Scheduled.HasValue
+                    ? aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - _preciseTime
+                    : null;
+                if (ApronServiceSchedule.FuelAlongside(onStand, toDeparture)
+                    || ApronServiceSchedule.BaggageAlongside(onStand, toDeparture))
+                    wanted.Add(aircraft);
+            }
+
+            while (_ambientSets.Count < wanted.Count)
+                _ambientSets.Add((BuildAmbientVehicle("Fuel truck"), BuildAmbientVehicle("Baggage cart"), null));
+
+            for (var i = 0; i < _ambientSets.Count; i++)
+            {
+                var set = _ambientSets[i];
+                if (i >= wanted.Count)
+                {
+                    DriveOffAndHide(set.Fuel);
+                    DriveOffAndHide(set.Bags);
+                    continue;
+                }
+
+                var aircraft = wanted[i];
+                if (set.Registration != aircraft.Registration)
+                {
+                    // A new job: start from this stand's park points rather than gliding across the apron.
+                    set = (set.Fuel, set.Bags, aircraft.Registration);
+                    _ambientSets[i] = set;
+                    if (set.Fuel != null) set.Fuel.position = Vector3.zero;
+                    if (set.Bags != null) set.Bags.position = Vector3.zero;
+                }
+
+                var pose = AdelaideGround.StandPose(aircraft.Stand);
+                var nose = new Vector3(pose.NoseX, 0f, pose.NoseZ);
+                var side = new Vector3(-nose.z, 0f, nose.x);
+                var stop = new Vector3(pose.X, AirsideFlightPath.GroundY, pose.Z);
+                var onStand = _preciseTime - aircraft.StateStartedAt.ElapsedSeconds;
+                double? toDeparture = aircraft.Scheduled.HasValue
+                    ? aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - _preciseTime
+                    : null;
+                var span = GroundTraffic.HalfSpan(aircraft.Type);
+                ServeOrPark(set.Fuel, ApronServiceSchedule.FuelAlongside(onStand, toDeparture),
+                    stop - nose * 12f + side * 7f, stop - nose * 30f + side * (float)(span + 14));
+                ServeOrPark(set.Bags, ApronServiceSchedule.BaggageAlongside(onStand, toDeparture),
+                    stop - nose * 15f - side * 7f, stop - nose * 30f - side * (float)(span + 14));
+            }
+        }
+
+        private Transform BuildAmbientVehicle(string kind)
+        {
+            var vehicle = kind == "Fuel truck"
+                ? BuildServiceVehicle("Fuel truck (AI)", new Color(0.95f, 0.76f, 0.12f), new Vector3(3.1f, 1.25f, 1.35f),
+                    PreferArtKit(
+                        "Models/Vehicles/mdl_fuel_truck_small_v06.gltf",
+                        "Models/Vehicles/mdl_fuel_truck_small_v05.gltf",
+                        "Models/Vehicles/mdl_fuel_truck_small_authored_v01.gltf"))
+                : BuildServiceVehicle("Baggage cart (AI)", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f),
+                    PreferArtKit(
+                        "Models/Vehicles/mdl_baggage_tug_train_v06.gltf",
+                        "Models/Vehicles/mdl_baggage_tug_train_v05.gltf",
+                        "Models/Vehicles/mdl_baggage_tug_train_authored_v01.gltf"));
+            OrientPlusXKitToForward(vehicle);
+            return vehicle;
+        }
+
+        /// <summary>Drive to the aircraft while serving; drive back to the park point and vanish when done.</summary>
+        private void ServeOrPark(Transform vehicle, bool serving, Vector3 service, Vector3 park)
+        {
+            if (vehicle == null)
+                return;
+            if (!serving && (!vehicle.gameObject.activeSelf || Vector3.Distance(vehicle.position, park) < 0.1f))
+            {
+                vehicle.gameObject.SetActive(false);
+                return;
+            }
+
+            UpdateVehicle(vehicle, serving, service, park);
+        }
+
+        private static void DriveOffAndHide(Transform vehicle)
+        {
+            if (vehicle != null)
+                vehicle.gameObject.SetActive(false);
         }
 
         private void UpdatePlayerTurnaroundServicing(FleetAircraft aircraft)
@@ -721,6 +833,12 @@ namespace Airside.Presentation
             // Hi-vis crew around whichever vehicle is working, so the apron has people on it
             // through the whole turnaround and not only during a stairs boarding (ADR 0116).
             UpdateRampCrew(aircraft, prep);
+
+            // Chocks at the nose gear and the ground power cart by the nose for the whole turn
+            // (ADR 0126); built since the first turnaround pass and never placed until now.
+            var facing = Quaternion.LookRotation(nose.sqrMagnitude > 0.001f ? nose : Vector3.forward);
+            PlaceBoardingStairs(_chocks, true, stop, facing);
+            PlaceBoardingStairs(_gpuCart, true, stop - nose * 4f + side * 3.5f, facing);
 
             if (terminal)
             {
@@ -808,6 +926,8 @@ namespace Airside.Presentation
             SetEquipmentVisible(_baggageCart, false);
             SetEquipmentVisible(_passengerBus, false);
             SetEquipmentVisible(_stairs, false);
+            SetEquipmentVisible(_chocks, false);
+            SetEquipmentVisible(_gpuCart, false);
             HideRampCrew();
         }
 
@@ -1456,8 +1576,11 @@ namespace Airside.Presentation
                     engines.HasValue);
                 UpdateGroundShadow(view);
                 UpdateSelectionMarker(view, flight.AircraftId);
+                GroundPose? groundPose = TryFleetGround(flight, out var groundAircraft, out var groundVisual)
+                    ? FleetGroundPose(groundAircraft, groundVisual, 0f)
+                    : null;
                 UpdateAircraftLightsAndGear(viewParts.LightsAndGear, phase, PresentationDaylight, progress,
-                    PresentationDeltaTime, PresentationClock, engines);
+                    PresentationDeltaTime, PresentationClock, engines, groundPose);
                 UpdateCabinDoor(viewParts.CabinDoors, phase, engines?.DoorsOpen);
                 var glowState = CabinWindowGlowState(phase, PresentationDaylight);
                 if (viewParts.CabinWindowGlowState != glowState)
@@ -1824,7 +1947,7 @@ namespace Airside.Presentation
 
         private static void UpdateAircraftLightsAndGear(
             LightGearPart[] parts, AircraftPhase phase, float daylight, float progress01 = 1f, float deltaTime = -1f,
-            float presentationTime = 0f, EngineState? engines = null)
+            float presentationTime = 0f, EngineState? engines = null, GroundPose? groundPose = null)
         {
             if (deltaTime < 0f)
                 deltaTime = Time.unscaledDeltaTime;
@@ -1845,8 +1968,11 @@ namespace Airside.Presentation
             // those windows — every night departure/arrival beamed the nose taxi spotlight
             // from a motionless, gate-parked aircraft. A cold, parked aircraft never lit it;
             // this was the same bug in a narrower, still-visible form.
+            // ADR 0126: and only while actually taxiing forward — dark on the tail-first push and
+            // while stopped in a queue, as crews do, instead of lit from pushback to the hold.
             var taxiLights = !airborne && enginesOn
-                && phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback;
+                && phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback
+                && (groundPose == null || (!groundPose.Value.TailFirst && groundPose.Value.Speed > 0.5f));
 
             for (var i = 0; i < parts.Length; i++)
             {

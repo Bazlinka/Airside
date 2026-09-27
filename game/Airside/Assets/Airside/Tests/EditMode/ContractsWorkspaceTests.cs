@@ -96,7 +96,12 @@ namespace Airside.Tests
                 var total = definition.PaymentPerRotation * definition.RequiredRotations
                             + definition.CompletionReward;
                 Assert.That(offer.Terms, Does.Contain($"${total:N0} total"));
-                Assert.That(offer.Terms, Does.StartWith($"{definition.RequiredRotations} rotations"));
+                Assert.That(offer.Terms, Does.StartWith(definition.RequiredRotations == 1
+                    ? "1 flight"
+                    : $"{definition.RequiredRotations} rotations"));
+                // ADR 0127: every market offer is a commitment with a deadline, shown on the card.
+                if (definition.HasDeadline)
+                    Assert.That(offer.Terms, Does.Contain("within"));
             }
         }
 
@@ -106,7 +111,7 @@ namespace Airside.Tests
             foreach (var (width, height) in HudTestAirline.Viewports)
             {
                 var surface = HudShell.WorkspaceSurface(width, height);
-                var layout = ContractsWorkspaceLayout.Create(surface, activeTerms: 4);
+                var layout = ContractsWorkspaceLayout.Create(surface, activeTerms: 5);
                 var label = $"{width}x{height}";
 
                 Assert.That(layout.ActiveColumn.Overlaps(layout.OffersColumn), Is.False, label);

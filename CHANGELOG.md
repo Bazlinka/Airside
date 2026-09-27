@@ -1,5 +1,29 @@
 ## Unreleased
 
+- **A livelier career (ADR 0127).** The contract market now offers charters (one flight, big
+  pay, 6 h), medical calls (3 h, big reliability boost) and freight runs as well as
+  scheduled work, and market contracts have deadlines. Most days bring a demand event —
+  festivals, school holidays, the footy — that fills flights to a few places. Every night at
+  23:00 you get the day's results. Optional challenges pay cash (on-time streaks, a
+  profitable day, charters and medical calls), prestige challenges carry on after the
+  finale, and achievements are announced when you earn them. Save v15.
+
+- **One career, no difficulty setting (ADR 0127).** New airline is now three cards: name and
+  code, livery, briefing. Every airline plays the one tuned balance; saved games founded on
+  Relaxed or Demanding carry on under it with their progress kept.
+
+- **Better taxiing (ADR 0126).** Aircraft brake smoothly into a queue instead of stopping dead
+  (and stop weaving and rolling once stopped), move up the queue like aircraft, and taxi at
+  the manuals' normal 20–22 kt instead of 25. The tower now respects runway crossings: no
+  takeoff or landing while someone is taxiing across, and nobody is released onto a crossing
+  while that runway is busy. Taxi lights stay off on the push and while stopped.
+
+- **Tugs and turnaround vehicles now appear (ADR 0126).** They had been built behind a
+  switch that hid them on the default field. Every pushback now has a tug that reverses onto
+  the nose, pushes, unhooks and drives clear of the wing before the aircraft taxis. Your
+  turnaround shows its fuel, catering and baggage vehicles, chocks, ground power and bus or
+  stairs. AI aircraft at their stands get fuel trucks and baggage trains too.
+
 - **Career tuned against the balance sim (ADR 0125).** You can now plan Adelaide flights to
   Auckland, Singapore and the rest of the international network; before, the finale's
   international goal and the international contracts could not be flown from Adelaide. Your

@@ -1,5 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude (same branch) — ground movement never jumps (ADR 0144).** Presentation ground
+  chains (taxi-out→holding→lineup, vacate→awaiting→taxi-in): the drawn aircraft follows the sim's
+  chain position, catches up at up to 1.6× pace, never reverses or snaps (replaces `QueueShuffle`).
+  Holding queue ordered per strip like the tower. **Mac checks:** busy departure bank, release off
+  the stand, arrivals leaving the exit.
+
 - **2026-09-27 Claude (same branch) — weather drift, one sky, fog, clouds (ADR 0143).** `Weather.At`
   is a Markov chain (neighbour-mostly, 5% jumps, fog only 04–09 local); `Weather.LookAt` eases 15
   game-min between hours; `AtmosphereLook` gives one sky colour for background/dome/fog, fog density

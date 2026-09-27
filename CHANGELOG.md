@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **No more teleporting on the ground.** Aircraft waiting in a taxi queue no longer freeze and then
+  jump down the taxiway or onto the runway. They move up the queue and set off smoothly, and the
+  aircraft cleared for takeoff is always the one at the front.
+
 - **Weather that feels real.** The weather now changes gradually, from clear to cloudy to overcast to
   rain and back, and the sky eases between them instead of snapping. Fog only rolls in on early
   mornings, with mist lying over the airfield. The sky's colour follows the weather, and the fog

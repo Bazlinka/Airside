@@ -125,7 +125,13 @@ namespace Airside.Presentation
         private GroundPose FleetGroundPose(FleetAircraft aircraft, FleetVisual visual, float lookAheadSeconds)
         {
             if (lookAheadSeconds != 0f)
-                return ComputeFleetGroundPose(aircraft, visual, lookAheadSeconds);
+            {
+                // ADR 0144: look ahead from where the aircraft is drawn, not from where the plan says.
+                var ahead = GroundFlowPose(aircraft, visual, lookAheadSeconds);
+                return ahead.HasValue
+                    ? HumanGroundPose(aircraft, visual.Leg, ahead.Value)
+                    : ComputeFleetGroundPose(aircraft, visual, lookAheadSeconds);
+            }
 
             var frame = Time.frameCount;
             var legStart = visual.LegStartedAt.ElapsedSeconds;
@@ -134,55 +140,14 @@ namespace Airside.Presentation
                 && cached.Leg == visual.Leg && cached.LegStart == legStart)
                 return cached.Pose;
 
-            var pose = QueueShuffle(aircraft, visual.Leg, ComputeFleetGroundPose(aircraft, visual, 0f));
+            // ADR 0144: every taxiing, queueing and lineup pose comes from the ground-flow chain, so an
+            // aircraft never jumps; parked stays exact.
+            var flow = GroundFlowPose(aircraft, visual, 0f);
+            var pose = flow.HasValue
+                ? HumanGroundPose(aircraft, visual.Leg, flow.Value)
+                : ComputeFleetGroundPose(aircraft, visual, 0f);
             _fleetPoseNow[aircraft.Registration] = (frame, _preciseTime, visual.Leg, legStart, pose);
             return pose;
-        }
-
-        private readonly Dictionary<string, (double Time, GroundPose Pose)> _queueShown = new();
-
-        /// <summary>Queue shuffles move up at taxi pace instead of jumping a whole queue place.</summary>
-        private const float QueueShuffleMetresPerSecond = 5f;
-        private const float QueueShuffleAcceleration = 0.5f;
-
-        /// <summary>
-        /// A queue at the holding point or a runway exit moves up one place (60 m) the instant the
-        /// aircraft in front goes. Ease the drawn aircraft there at taxi pace instead of teleporting.
-        /// Only short hops in the queueing legs are eased; everything else passes straight through.
-        /// </summary>
-        private GroundPose QueueShuffle(FleetAircraft aircraft, FleetGroundLeg leg, GroundPose target)
-        {
-            var queueing = leg is FleetGroundLeg.HoldingShort or FleetGroundLeg.AwaitingStand or FleetGroundLeg.TaxiOut
-                or FleetGroundLeg.Vacate;
-            if (!queueing || !_queueShown.TryGetValue(aircraft.Registration, out var shown))
-            {
-                _queueShown[aircraft.Registration] = (_preciseTime, target);
-                return target;
-            }
-
-            var dt = Math.Max(0.0, _preciseTime - shown.Time);
-            var dx = target.X - shown.Pose.X;
-            var dz = target.Z - shown.Pose.Z;
-            var gap = (float)Math.Sqrt(dx * dx + dz * dz);
-            // Move up a queue place like an aircraft (ADR 0126): pull away gently, brake to the new
-            // spot, rather than sliding at a flat 5 m/s from and to a standstill.
-            var cruise = Math.Max(QueueShuffleMetresPerSecond, target.Speed * 1.2f);
-            var accelerated = shown.Pose.Speed + QueueShuffleAcceleration * (float)dt;
-            var braking = (float)Math.Sqrt(2f * GroundLeg.QueueBrakingMetresPerSecondSquared * gap);
-            var speed = Mathf.Max(0.4f, Mathf.Min(cruise, Mathf.Min(accelerated, braking)));
-            var reach = (float)(speed * dt) + 0.05f;
-            if (gap <= reach || gap > 2.5f * AdelaideGround.AwaitingSpacingMetres)
-            {
-                _queueShown[aircraft.Registration] = (_preciseTime, target);
-                return target;
-            }
-
-            var step = reach / gap;
-            // Keep facing the way the aircraft already points; the hop is along its own line.
-            var moving = new GroundPose(shown.Pose.X + dx * step, shown.Pose.Z + dz * step,
-                dx / gap, dz / gap, speed, false);
-            _queueShown[aircraft.Registration] = (_preciseTime, moving);
-            return moving;
         }
 
         private GroundPose ComputeFleetGroundPose(FleetAircraft aircraft, FleetVisual visual, float lookAheadSeconds)

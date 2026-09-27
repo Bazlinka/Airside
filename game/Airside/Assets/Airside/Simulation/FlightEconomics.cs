@@ -33,7 +33,23 @@ namespace Airside.Simulation
         /// the Domestic stage asks for inside ADR 0120's play-time window.
         /// </summary>
         public static double CostPerKm(AircraftType type) =>
-            Weight(type) <= 1.0 ? TurbopropCostPerKm : JetCostPerKm * Weight(type);
+            Weight(type) <= 1.0 ? TurbopropCostPerKm : JetCostPerKm * Weight(type) * RunningCostFactor(type);
+
+        /// <summary>
+        /// ADR 0131: how thirsty a jet is against the modern types the economy was tuned on (1.0). Only
+        /// the running cost moves, never the pay, so older jets are cheaper to buy and dearer to fly.
+        /// </summary>
+        public static double RunningCostFactor(AircraftType type)
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            if (type.Id == AircraftType.EmbraerE190.Id) return 0.92;
+            if (type.Id == AircraftType.AirbusA220300.Id) return 0.95;
+            if (type.Id == AircraftType.Boeing737800.Id) return 1.12;
+            if (type.Id == AircraftType.AirbusA320200.Id) return 1.10;
+            if (type.Id == AircraftType.AirbusA330900.Id) return 1.02;
+            if (type.Id == AircraftType.Boeing7879.Id) return 0.98;
+            return 1.0;
+        }
 
         public const double TurbopropCostPerKm = 1.12;
         public const double JetCostPerKm = 1.28;

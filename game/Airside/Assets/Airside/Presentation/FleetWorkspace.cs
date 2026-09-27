@@ -289,6 +289,20 @@ namespace Airside.Presentation
                     RouteMapWorkspaceModel.BandLabel(offer.Operates), offer.Price,
                     requirement, standLine, affordable, unlocked, fleetFull || baseFull));
             }
+
+            // ADR 0131: twelve types for sale, three cards at a time — what you can buy leads, then what
+            // is unlocked but short of money, then the rest in career order (AircraftAcquisition.All).
+            var ordered = new List<(int Rank, int Index, FleetMarketOffer Offer)>();
+            for (var i = 0; i < _market.Count; i++)
+            {
+                var offer = _market[i];
+                var rank = offer.CanBuy ? 0 : offer.Unlocked && !offer.FleetFull ? 1 : 2;
+                ordered.Add((rank, i, offer));
+            }
+            ordered.Sort((a, b) => a.Rank != b.Rank ? a.Rank.CompareTo(b.Rank) : a.Index.CompareTo(b.Index));
+            _market.Clear();
+            foreach (var entry in ordered)
+                _market.Add(entry.Offer);
         }
 
         private void AddFact(string icon, string text)
@@ -497,8 +511,11 @@ namespace Airside.Presentation
     /// <summary>Paints the Fleet workspace into the shared draw list.</summary>
     public static class FleetWorkspacePainter
     {
+        public const string MarketPrevious = "market:previous";
+        public const string MarketNext = "market:next";
+
         public static void Paint(HudDrawList into, FleetWorkspaceModel model, FleetWorkspaceLayout layout,
-            string selectedRegistration, int scrollRow, bool showOtherOperators = false)
+            string selectedRegistration, int scrollRow, bool showOtherOperators = false, int marketStart = 0)
         {
             if (into == null || model == null)
                 return;
@@ -512,8 +529,12 @@ namespace Airside.Presentation
             if (!layout.Divider.IsEmpty)
                 into.Hairline(layout.Divider);
             PaintDetail(into, model, layout);
-            PaintMarket(into, model, layout);
+            PaintMarket(into, model, layout, marketStart);
         }
+
+        /// <summary>Clamps a market page start so the last page is full where it can be.</summary>
+        public static int ClampMarketStart(int start, int offers, int rows) =>
+            rows <= 0 || offers <= rows ? 0 : Math.Max(0, Math.Min(start, offers - rows));
 
         private static void PaintRoster(HudDrawList into, FleetWorkspaceModel model,
             FleetWorkspaceLayout layout, string selectedRegistration, int scrollRow, bool showOtherOperators)
@@ -708,6 +729,14 @@ namespace Airside.Presentation
             into.Image(new HudBox(stage.X + (stage.Width - width) * 0.5f, stage.Y + 4f, width, height), thumbnail, alpha);
         }
 
+        private static IReadOnlyList<FleetMarketOffer> Page(IReadOnlyList<FleetMarketOffer> offers, int start, int rows)
+        {
+            var page = new List<FleetMarketOffer>(rows);
+            for (var i = start; i < offers.Count && page.Count < rows; i++)
+                page.Add(offers[i]);
+            return page;
+        }
+
         /// <summary>The type's picture, Art-relative, or empty for a type without one.</summary>
         public static string Thumbnail(AircraftType type) =>
             type != null && AircraftCatalogue.TryFor(type, out var spec) ? spec.ThumbnailPath ?? string.Empty : string.Empty;
@@ -731,7 +760,8 @@ namespace Airside.Presentation
             return count >= 2 ? shared : null;
         }
 
-        private static void PaintMarket(HudDrawList into, FleetWorkspaceModel model, FleetWorkspaceLayout layout)
+        private static void PaintMarket(HudDrawList into, FleetWorkspaceModel model, FleetWorkspaceLayout layout,
+            int marketStart)
         {
             if (layout.Market.IsEmpty)
                 return;
@@ -739,16 +769,27 @@ namespace Airside.Presentation
             into.Hairline(new HudBox(layout.Market.X, layout.Market.Y - 10f, layout.Market.Width, 1f));
             into.Caption(layout.MarketCaption, "AIRCRAFT MARKET");
             // One reason for every card (a full base) is said once, beside the caption, not three times.
-            var shared = SharedLockReason(model.Market, layout.MarketRows);
+            var start = ClampMarketStart(marketStart, model.Market.Count, layout.MarketRows);
+            if (model.Market.Count > layout.MarketRows)
+            {
+                // ‹ 4–6 of 12 › — page through the whole market (ADR 0131).
+                var pager = new HudBox(layout.Market.Right - 150f, layout.MarketCaption.Y - 5f, 150f, 22f);
+                into.Button(pager.WithWidth(30f), "‹", MarketPrevious, HudButtonStyle.Secondary, start > 0);
+                into.Text(new HudBox(pager.X + 34f, pager.Y + 3f, 82f, 16f),
+                    $"{start + 1}–{Math.Min(start + layout.MarketRows, model.Market.Count)} of {model.Market.Count}", 11f,
+                    HudTone.Muted, HudTextStyle.Regular, HudAlign.Center);
+                into.Button(new HudBox(pager.Right - 30f, pager.Y, 30f, 22f), "›", MarketNext, HudButtonStyle.Secondary,
+                    start + layout.MarketRows < model.Market.Count);
+            }
+
+            var shared = SharedLockReason(Page(model.Market, start, layout.MarketRows), layout.MarketRows);
             if (shared != null)
                 into.Text(new HudBox(layout.MarketCaption.X + 170f, layout.MarketCaption.Y - 1f,
-                        layout.Market.Width - 170f, 16f), shared, 11f, HudTone.Caution, HudTextStyle.Bold);
+                        layout.Market.Width - 170f - 160f, 16f), shared, 11f, HudTone.Caution, HudTextStyle.Bold);
 
             var shown = 0;
-            foreach (var offer in model.Market)
+            foreach (var offer in Page(model.Market, start, layout.MarketRows))
             {
-                if (shown >= layout.MarketRows)
-                    break;
                 var box = layout.MarketRow(shown++);
                 into.Fill(box, HudTone.Default, offer.CanBuy ? 0.06f : 0.03f);
                 if (offer.CanBuy)

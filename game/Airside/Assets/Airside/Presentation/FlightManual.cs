@@ -131,8 +131,10 @@ namespace Airside.Presentation
                 new[]
                 {
                     ("Aircraft",
-                        "Buy them in Fleet: the ATR 42, then the Dash 8-400, 737-8 and A321neo, then the A350 and 787. "
-                        + "Each needs a tier, a reliability level and a number of flights. Selling one gets back "
+                        "Buy them in Fleet: the ATR 42 and Dash 8-400, then jets from the E190 to the 737-8 and "
+                        + "A321neo, then widebodies from the A330 to the A350. Older jets are cheaper to buy and "
+                        + "dearer to fly. Each needs a tier, a reliability level and a number of flights. Selling one "
+                        + "gets back "
                         + $"{(int)Math.Round(AirlineOperations.ResaleFraction * 100)}% of the price."),
                     ("Your Adelaide base",
                         "EXPAND BASE (Career › Airline) adds room for more aircraft, jet gates, your own maintenance "

@@ -322,10 +322,17 @@ namespace Airside.Simulation
             return gained;
         }
 
-        /// <summary>True if any listed type is one of the jet types Domestic/International accept.</summary>
-        internal static bool OwnsAnyJet(IReadOnlyList<AircraftType> ownedTypes) =>
-            Owns(ownedTypes, AircraftType.Boeing7378) || Owns(ownedTypes, AircraftType.AirbusA321Neo)
-            || Owns(ownedTypes, AircraftType.AirbusA350900) || Owns(ownedTypes, AircraftType.Boeing78710);
+        /// <summary>True if any listed type is a jet: anything that needs a terminal gate (ADR 0131: every
+        /// jet counts, the E190 and the older narrowbodies included).</summary>
+        internal static bool OwnsAnyJet(IReadOnlyList<AircraftType> ownedTypes)
+        {
+            if (ownedTypes == null)
+                return false;
+            foreach (var type in ownedTypes)
+                if (type != null && AirlineOperations.NeedsTerminalGate(type))
+                    return true;
+            return false;
+        }
 
         /// <summary>True if any listed type is the Dash 8 (Domestic's other qualifying type).</summary>
         internal static bool OwnsDash8(IReadOnlyList<AircraftType> ownedTypes) =>

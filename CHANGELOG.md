@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Six more aircraft to buy.** The Embraer E190 is now the cheapest first jet, the A220-300 can
+  cross the Tasman, the older 737-800 and A320 are cheaper to buy but cost more to fly, and the
+  A330-900neo and 787-9 are cheaper ways into long-haul. The Fleet market shows what you can buy
+  first and pages through all twelve.
+
 - **The HUD looks more like a game.** The Ops page is now a split-flap departures board. Fleet
   shows each aircraft in your colours with icons for its facts, and the market shows the aircraft
   for sale. Contract offers are proper cards with a badge for the kind of job, the aircraft, the

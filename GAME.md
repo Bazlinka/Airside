@@ -1,5 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — every modelled aircraft for sale (ADR 0131).** E190,
+  A220-300, 737-800, A320-200, A330-900neo and 787-9 join the market (`AircraftAcquisition.All`, now
+  in career order); `RouteAccess.Ceiling` bands; `FlightEconomics.RunningCostFactor` (cost only);
+  `OwnsAnyJet` counts every terminal-gate type. Fleet market leads with what you can buy and pages
+  (‹ 1–3 of 12 ›). Balance (`docs/testing/career-balance-2026-09-27/lineup/`): competent International
+  61.5 h, finale 141 h; casual International 74.3 h. **Watch:** the bot runs cash lower (min $1).
+  Tests **863/863**. **Mac checks:** new types render in the player livery with titles; E190/A220
+  take terminal gates.
+
 - **2026-09-27 Claude (same branch) — HUD game feel, first pass (ADR 0130).** Ops board in
   split-flap tiles; Fleet detail opens on the aircraft picture over its livery with icon facts,
   market cards show aircraft; contract offers get kind badges, chips, aircraft picture and big pay;

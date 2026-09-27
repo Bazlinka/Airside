@@ -889,6 +889,9 @@ namespace Airside.Presentation
         private readonly SelectionCardData _selectionCard = new();
         private readonly HudDrawList _selectionDrawList = new();
 
+        /// <summary>First aircraft-market card shown on the Fleet page (ADR 0131).</summary>
+        private int _fleetMarketStart;
+
         /// <summary>
         /// Contextual selected-aircraft card (ADR 0122): identity and phase chip, route and live
         /// readout, the turnaround timeline for a booked departure, one amber action and Cancel —
@@ -2299,8 +2302,10 @@ namespace Airside.Presentation
                 ? _fleetWorkspace.Others.Count + (_fleetWorkspace.Others.Count > 0 ? 1 : 0)
                 : 0);
             _rosterScrollRow = ScrollRows(_rosterScrollRow, layout.Roster, rows - layout.VisibleRosterRows);
+            _fleetMarketStart = FleetWorkspacePainter.ClampMarketStart(_fleetMarketStart, _fleetWorkspace.Market.Count,
+                layout.MarketRows);
             FleetWorkspacePainter.Paint(_workspaceDrawList, _fleetWorkspace, layout, _selectedAircraftId,
-                _rosterScrollRow, _fleetShowOtherOperators);
+                _rosterScrollRow, _fleetShowOtherOperators, _fleetMarketStart);
             var close = OperationsWorkspacePainter.CloseBox(surface);
             _workspaceDrawList.Button(HudShellPainter.HeaderActionBox(surface),
                 "NETWORK", "network:view", HudButtonStyle.Secondary);
@@ -2582,6 +2587,14 @@ namespace Airside.Presentation
                     _boardScrollRow = 0;
                     _boardScrollFollowRow = -1;
                     _boardScrollSnapToDay = _operationsAllMovements;
+                    PlayUiClick();
+                    return;
+                case FleetWorkspacePainter.MarketPrevious:
+                    _fleetMarketStart = Math.Max(0, _fleetMarketStart - 3);
+                    PlayUiClick();
+                    return;
+                case FleetWorkspacePainter.MarketNext:
+                    _fleetMarketStart += 3;
                     PlayUiClick();
                     return;
                 case HudAction.ToggleOtherOperators:

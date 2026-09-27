@@ -406,14 +406,15 @@ namespace Airside.Tests
             bool Allowed(AircraftOffer offer) => Career.Tier >= offer.RequiredTier
                                                  && Career.Reliability >= offer.RequiredReliability
                                                  && Career.CompletedPlayerRotations >= offer.RequiredRotations;
-            if (goals.Contains("international-widebody") && Allowed(AircraftAcquisition.Boeing78710))
-                return AircraftType.Boeing78710;
+            // ADR 0131: a goal that only asks for "a widebody" or "a jet" is met by the cheapest one.
+            if (goals.Contains("international-widebody") && Allowed(AircraftAcquisition.AirbusA330900))
+                return AircraftType.AirbusA330900;
             bool OwnsReach(RouteBand band) => owned.Any(t => RouteAccess.Ceiling(t) >= band);
             // The cheap interstate turboprop first: it starts the network goal while the jet is saved for.
             if (goals.Contains("domestic-network") && !OwnsReach(RouteBand.Domestic) && Allowed(AircraftAcquisition.Dash8Q400))
                 return AircraftType.Dash8Q400;
-            if (goals.Contains("domestic-jet") && Allowed(AircraftAcquisition.Boeing7378))
-                return AircraftType.Boeing7378;
+            if (goals.Contains("domestic-jet") && Allowed(AircraftAcquisition.EmbraerE190))
+                return AircraftType.EmbraerE190;
             if (goals.Contains("international-network") && !OwnsReach(RouteBand.Tasman) && Allowed(AircraftAcquisition.AirbusA321Neo))
                 return AircraftType.AirbusA321Neo;
             if (goals.Contains("domestic-network") && !OwnsReach(RouteBand.Domestic) && Allowed(AircraftAcquisition.Dash8Q400))

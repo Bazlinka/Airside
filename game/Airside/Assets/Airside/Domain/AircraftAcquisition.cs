@@ -48,9 +48,38 @@ namespace Airside.Domain
         public static readonly AircraftOffer Boeing78710 = new(
             AircraftType.Boeing78710, 82_000, OperatingTier.International, 92, 40);
 
+        // ADR 0131: every type Airside already models is for sale. Older narrowbodies are cheaper to buy
+        // and dearer to run (FlightEconomics.RunningCostFactor); regional jets are the first jet step.
+
+        /// <summary>The first jet: cheaper than a 737, flies the domestic band.</summary>
+        public static readonly AircraftOffer EmbraerE190 = new(
+            AircraftType.EmbraerE190, 20_000, OperatingTier.Domestic, 80, 16);
+
+        /// <summary>A small modern jet with the range for the Tasman.</summary>
+        public static readonly AircraftOffer AirbusA220300 = new(
+            AircraftType.AirbusA220300, 24_000, OperatingTier.Domestic, 82, 18);
+
+        /// <summary>Older narrowbodies: a cheaper way onto national routes, dearer to fly.</summary>
+        public static readonly AircraftOffer Boeing737800 = new(
+            AircraftType.Boeing737800, 24_500, OperatingTier.Domestic, 80, 18);
+
+        public static readonly AircraftOffer AirbusA320200 = new(
+            AircraftType.AirbusA320200, 25_500, OperatingTier.Domestic, 80, 18);
+
+        /// <summary>A cheaper first widebody.</summary>
+        public static readonly AircraftOffer AirbusA330900 = new(
+            AircraftType.AirbusA330900, 66_000, OperatingTier.International, 90, 36);
+
+        /// <summary>The long-range widebody for thinner long-haul routes.</summary>
+        public static readonly AircraftOffer Boeing7879 = new(
+            AircraftType.Boeing7879, 74_000, OperatingTier.International, 91, 38);
+
+        /// <summary>Every offer, in the order a career meets them (tier, then price).</summary>
         public static readonly IReadOnlyList<AircraftOffer> All = new[]
         {
-            Atr42, Dash8Q400, Boeing7378, AirbusA321Neo, AirbusA350900, Boeing78710
+            Atr42, Dash8Q400,
+            EmbraerE190, AirbusA220300, Boeing737800, AirbusA320200, Boeing7378, AirbusA321Neo,
+            AirbusA330900, Boeing7879, Boeing78710, AirbusA350900
         };
 
         public static bool TryFor(AircraftType type, out AircraftOffer offer)

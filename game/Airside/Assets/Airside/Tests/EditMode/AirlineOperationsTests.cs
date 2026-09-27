@@ -297,23 +297,22 @@ namespace Airside.Tests
         [Test]
         public void Ground_AllowsTwoPushbacksOnOneApronAndHoldsTheThird()
         {
-            var (clock, ops, first) = PlayerOnly(aircraft: 3);
-            var second = ops.Fleet[1];
-            var third = ops.Fleet[2];
-            var firstDestination = Code("KGC");
-            var secondDestination = Code("PLO");
-            var thirdDestination = Code("MGB");
-            ops.ScheduleDeparture(first, firstDestination, new SimulationTime(600));
-            ops.ScheduleDeparture(second, secondDestination, new SimulationTime(600));
-            ops.ScheduleDeparture(third, thirdDestination, new SimulationTime(600));
+            var (clock, ops, _) = PlayerOnly(aircraft: 3);
+            var destinations = new[] { Code("KGC"), Code("PLO"), Code("MGB") };
+            for (var i = 0; i < 3; i++)
+                ops.ScheduleDeparture(ops.Fleet[i], destinations[i], new SimulationTime(600));
 
             RunTo(clock, ops, 600);
-            Assert.That(first.State, Is.EqualTo(FleetState.TaxiOut));
-            Assert.That(second.State, Is.EqualTo(FleetState.TaxiOut),
-                "two aircraft may taxi on the same apron at once");
-            Assert.That(third.State, Is.EqualTo(FleetState.AtStand),
+            // Which two go first is ground control's call: a push that would trail too close behind a
+            // neighbour's on the same taxilane waits for a later slot (ADR 0146).
+            var taxiing = ops.Fleet.Where(a => a.State == FleetState.TaxiOut).ToList();
+            Assert.That(taxiing.Count, Is.EqualTo(2), "two aircraft may taxi on the same apron at once");
+            var third = ops.Fleet.Single(a => a.State == FleetState.AtStand);
+            var first = taxiing[0];
+            var second = taxiing[1];
+            var thirdDestination = destinations[ops.Fleet.ToList().IndexOf(third)];
+            Assert.That(third.Scheduled.Value.Destination, Is.EqualTo(thirdDestination),
                 "a third waits until one of the first two has cleared the stands");
-            Assert.That(third.Scheduled.Value.Destination, Is.EqualTo(thirdDestination));
             var firstClear = first.StateStartedAt.Advance(
                 AirlineOperations.TaxiClearSecondsFrom(first.DepartureStand, first.Type, first.AssignedRunway));
             var secondClear = second.StateStartedAt.Advance(

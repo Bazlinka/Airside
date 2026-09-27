@@ -1,5 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — pushback rejoin fix (ADR 0149).** Running the suite on main after PR #419
+  showed 3 failures, now fixed (933/933). The runway 23 pushes from gates 15, 16R and 21 were driving
+  the route's opening hook and reversing. The rejoin now skips hooks. The two apron tests no longer
+  assume bays 1 and 2 push first, because ground control rightly holds bay 2 behind bay 1.
+  **Mac checks:** 23 pushbacks from gates 15, 16R and 21; three bay departures at once.
+
 - **2026-09-28 Claude (same branch) — propellers (ADR 0148).** Blur by per-frame blade step vs blade
   gap (no wagon-wheel), procedural blur disc (hub-clear, tip ring, faint ghosts, counter-rotated),
   spool capped +170/−75 rpm/s, props and fans stop when paused. **Mac checks:** Saab/ATR/Q400 start,

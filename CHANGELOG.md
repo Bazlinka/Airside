@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Pushbacks towards runway 23 fixed.** Jets pushed back from gates 15, 16R and 21 for runway 23
+  no longer stop and reverse on the taxiway after the tug lets go. They drive straight on.
+
 - **Better propellers.** Propellers no longer flicker or appear to spin backwards. You see the
   blades turn as an engine starts, then a soft blur disc at speed, and they wind down slowly at
   shutdown. Pausing the game now stops them.

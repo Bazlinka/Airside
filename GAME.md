@@ -1,5 +1,12 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude (same branch) — stands and tug pushback (ADR 0145, 0146).** Bays park along their
+  lead-in (`ParkedHeadingDegrees`; walk-outs split arrival/departure). `PushbackGeometry` builds each
+  push per runway: straight back, tail swing away from the taxi direction on the aircraft's radius,
+  nose-first down the taxilane; taxi-out starts there. The old sideways heading blend is gone for
+  aligned pushes. **Mac checks:** gate pushes on 05 and 23, tug on the nose, 10A/10C parking,
+  `GroundSeparationTests`, `TerminalGateOperationsTests`.
+
 - **2026-09-28 Claude (same branch) — ground movement never jumps (ADR 0144).** Presentation ground
   chains (taxi-out→holding→lineup, vacate→awaiting→taxi-in): the drawn aircraft follows the sim's
   chain position, catches up at up to 1.6× pace, never reverses or snaps (replaces `QueueShuffle`).

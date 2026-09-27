@@ -168,6 +168,25 @@ namespace Airside.Simulation
             return leg;
         }
 
+        /// <summary>
+        /// ADR 0145: a bay's parked heading is the way its lead-in arrives, so the aircraft does not
+        /// turn on the spot after stopping. The walk-out stands 10A and 10C were 9–11° off; there the
+        /// heading splits the difference with the line it leaves on, halving both turns.
+        /// </summary>
+        public static double ParkedHeadingDegrees(AdelaideBay bay)
+        {
+            var ti = bay.TaxiIn;
+            if (ti == null || ti.Length < 8)
+                return bay.HeadingDegrees;
+            var n = ti.Length;
+            var arrive = Math.Atan2(ti[n - 2] - ti[n - 8], ti[n - 1] - ti[n - 7]) * 180.0 / Math.PI;
+            if (!IsWalkOut(bay) || bay.Pushback == null || bay.Pushback.Length < 8)
+                return arrive;
+            var leave = Math.Atan2(bay.Pushback[0] - bay.Pushback[6], bay.Pushback[1] - bay.Pushback[7]) * 180.0 / Math.PI;
+            var diff = ((leave - arrive) % 360.0 + 540.0) % 360.0 - 180.0;
+            return arrive + diff * 0.5;
+        }
+
         /// <summary>Where an aircraft parked on <paramref name="stand"/> stands: its stop and nose heading.</summary>
         public static GroundPose StandPose(StableId stand)
         {
@@ -184,7 +203,7 @@ namespace Airside.Simulation
                 var bay = Bay(stand);
                 x = bay.StopX;
                 z = bay.StopZ;
-                heading = bay.HeadingDegrees * Math.PI / 180.0;
+                heading = ParkedHeadingDegrees(bay) * Math.PI / 180.0;
             }
 
             return new GroundPose(x, z, (float)Math.Sin(heading), (float)Math.Cos(heading), 0f, false);
@@ -211,10 +230,14 @@ namespace Airside.Simulation
             {
                 var limits = GroundSpeedLimits.TaxiFor(type);
                 var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
+                var (push, taxi) = IsWalkOut(bay)
+                    ? (BayPushback(bay, type), CleanTaxiOut(TaxiOutPath(bay, runway)))
+                    : PushAndTaxi(bay.StopX, bay.StopZ, bay.HeadingDegrees, BayPushback(bay, type),
+                        CleanTaxiOut(TaxiOutPath(bay, runway)), CleanTaxiOut(bay.TaxiOut), type);
                 leg = new GroundLeg(
-                    new GroundLegPart(new GroundPath(BayPushback(bay, type), GroundSpeedLimits.Pushback),
+                    new GroundLegPart(new GroundPath(push, GroundSpeedLimits.Pushback),
                         tailFirst: true, trackMetres: wheelbase),
-                    new GroundLegPart(new GroundPath(Drivable(CleanTaxiOut(TaxiOutPath(bay, runway)), type), limits, 0f, 0f,
+                    new GroundLegPart(new GroundPath(Drivable(taxi, type), limits, 0f, 0f,
                         new[] { ApronZone(type) }, null), tailFirst: false, TugDisconnectSeconds, wheelbase));
                 TaxiOutLegs[key] = leg;
             }
@@ -378,10 +401,13 @@ namespace Airside.Simulation
                 // the nose datum by its own actual wheelbase — a 737 and an A350 do not
                 // track a corner the same way. See AircraftPerformanceProfile.NoseToMainGearMetres.
                 var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
+                var (push, taxi) = PushAndTaxi(gate.NoseX, gate.NoseZ, gate.HeadingDegrees,
+                    DrivablePushback(gate.Pushback, type), CleanTaxiOut(TaxiOutPath(gate, runway)),
+                    CleanTaxiOut(gate.TaxiOut), type);
                 leg = new GroundLeg(
-                    new GroundLegPart(new GroundPath(DrivablePushback(gate.Pushback, type), GroundSpeedLimits.Pushback),
+                    new GroundLegPart(new GroundPath(push, GroundSpeedLimits.Pushback),
                         tailFirst: true, trackMetres: wheelbase),
-                    new GroundLegPart(new GroundPath(Drivable(CleanTaxiOut(TaxiOutPath(gate, runway)), type),
+                    new GroundLegPart(new GroundPath(Drivable(taxi, type),
                             limits, 0f, 0f, new[] { ApronZone(type) }, null),
                         tailFirst: false, TugDisconnectSeconds, wheelbase));
                 TaxiOutLegs[key] = leg;
@@ -413,6 +439,20 @@ namespace Airside.Simulation
             new(GroundSpeedLimits.StandLeadInMetres, CircuitProfile.Knots(GroundSpeedLimits.StandLeadInKnots));
 
         private static float[] CleanTaxiOut(float[] xz) => TaxiPathCleanup.WithoutInitialHook(xz);
+
+        /// <summary>
+        /// ADR 0146: a tug push built for this runway's taxi route (straight back, the tail swung away
+        /// from the taxi direction on the aircraft's own turning radius), and the taxi-out that starts
+        /// where it ends. Falls back to the baked pair where the geometry does not suit.
+        /// </summary>
+        private static (float[] Push, float[] Taxi) PushAndTaxi(float stopX, float stopZ, float heading,
+            float[] bakedPush, float[] bakedTaxi, float[] hint, AircraftType type)
+        {
+            var radius = Math.Max(12f, AircraftPerformance.For(type).NoseToMainGearMetres * 1.4f);
+            return PushbackGeometry.TryBuild(stopX, stopZ, heading, bakedTaxi, hint, radius, out var push, out var taxi)
+                ? (push, taxi)
+                : (bakedPush, bakedTaxi);
+        }
 
         /// <summary>
         /// The baked apron routes contain tight hooks, spurs and loops (a 28 m out-and-back at the

@@ -643,6 +643,23 @@ namespace Airside.Simulation
             // the taxi heading, which is a real case (a push that curves ~180° from the taxilane).
             var toHeading = Math.Atan2(toX, toZ);
             var now = Math.Atan2(pose.NoseX, pose.NoseZ);
+            // ADR 0146: when the push itself already ends close to the taxi heading, only that small
+            // leftover is turned in, over the last fifth of the push, so the nose follows the push
+            // instead of crabbing sideways along it. A baked push that ends the wrong way round still
+            // gets the full tug turn below.
+            if (part.TailFirst)
+            {
+                var endPose = Pose(part, part.Path.Seconds, false);
+                var residual = WrapPi(toHeading - Math.Atan2(endPose.NoseX, endPose.NoseZ));
+                if (Math.Abs(residual) < Math.PI / 3.0)
+                {
+                    var span = part.Path.Seconds;
+                    var u = span > 1e-6 ? pathSeconds / span : 1.0;
+                    var late = now + residual * Smooth01((u - 0.8) / 0.2);
+                    return new GroundPose(pose.X, pose.Z, (float)Math.Sin(late), (float)Math.Cos(late), pose.Speed, true);
+                }
+            }
+
             var turn = toHeading - now;
             if (part.TailFirst)
             {
@@ -681,6 +698,11 @@ namespace Airside.Simulation
 
             var start = Pose(push, 0, true);
             var end = Pose(taxi, 0, true);
+            // ADR 0146: a push built to finish nose-first down the taxilane needs no turn of its own;
+            // blending the heading there only made the airframe crab sideways along the push.
+            var pushEnd = Pose(push, push.Path.Seconds, true);
+            if (pushEnd.NoseX * end.NoseX + pushEnd.NoseZ * end.NoseZ > 0.99985f)
+                return false;
             fromX = start.NoseX;
             fromZ = start.NoseZ;
             toX = end.NoseX;

@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Realistic pushbacks.** The tug now pushes aircraft straight back and swings the tail round so they
+  end up facing down the taxiway, ready to go. They no longer slide sideways. Aircraft on the
+  small regional bays park facing the way they drove in.
+
 - **No more teleporting on the ground.** Aircraft waiting in a taxi queue no longer freeze and then
   jump down the taxiway or onto the runway. They move up the queue and set off smoothly, and the
   aircraft cleared for takeoff is always the one at the front.

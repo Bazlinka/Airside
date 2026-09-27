@@ -93,7 +93,7 @@ namespace Airside.Simulation
 
             // Provisional → Regional: prove the airline can keep a commitment.
             goals.Add(new CareerGoalStatus("prove-service", "Fulfil a regional contract", OperatingTier.Provisional, regionalContracts, 1));
-            goals.Add(new CareerGoalStatus("first-rotations", "Fly five services", OperatingTier.Provisional, career.CompletedPlayerRotations, 5));
+            goals.Add(new CareerGoalStatus("first-rotations", "Fly four services", OperatingTier.Provisional, career.CompletedPlayerRotations, 4));
             goals.Add(new CareerGoalStatus("regional-reliability", "Hold reliability at 70%+", OperatingTier.Provisional, rel, 70));
             // Regional → Domestic: a small regional network with its own base.
             goals.Add(new CareerGoalStatus("regional-network", "Serve four regional destinations", OperatingTier.Regional, regional, 4));

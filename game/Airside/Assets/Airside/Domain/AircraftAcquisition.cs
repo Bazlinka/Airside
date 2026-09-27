@@ -37,16 +37,16 @@ namespace Airside.Domain
             AircraftType.Dash8Q400, 14_500, OperatingTier.Regional, 75, 12);
 
         public static readonly AircraftOffer Boeing7378 = new(
-            AircraftType.Boeing7378, 38_000, OperatingTier.Domestic, 82, 20);
+            AircraftType.Boeing7378, 28_000, OperatingTier.Domestic, 82, 20);
 
         public static readonly AircraftOffer AirbusA321Neo = new(
-            AircraftType.AirbusA321Neo, 55_000, OperatingTier.Domestic, 88, 28);
+            AircraftType.AirbusA321Neo, 45_000, OperatingTier.Domestic, 88, 28);
 
         public static readonly AircraftOffer AirbusA350900 = new(
-            AircraftType.AirbusA350900, 98_000, OperatingTier.International, 92, 40);
+            AircraftType.AirbusA350900, 85_000, OperatingTier.International, 92, 40);
 
         public static readonly AircraftOffer Boeing78710 = new(
-            AircraftType.Boeing78710, 95_000, OperatingTier.International, 92, 40);
+            AircraftType.Boeing78710, 82_000, OperatingTier.International, 92, 40);
 
         public static readonly IReadOnlyList<AircraftOffer> All = new[]
         {

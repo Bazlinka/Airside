@@ -69,7 +69,7 @@ namespace Airside.Tests
 
     /// <summary>
     /// ADR 0125 — a simulated player for the career balance runs. Uses only the public commands
-    /// the HUD uses, and only destinations the flight planner offers (<see cref="AirlineOperations.MapDestinations"/>
+    /// the HUD uses, and only destinations the flight planner offers (<see cref="AirlineOperations.PlannableDestinations"/>
     /// for Adelaide aircraft), so anything it cannot do a real player cannot do either.
     /// </summary>
     public sealed class CareerBot
@@ -218,7 +218,7 @@ namespace Airside.Tests
         /// <summary>What the flight planner lists for an Adelaide aircraft.</summary>
         private bool Plannable(Destination destination)
         {
-            foreach (var listed in _ops.MapDestinations())
+            foreach (var listed in _ops.PlannableDestinations())
                 if (listed.Code == destination.Code)
                     return true;
             return false;
@@ -227,7 +227,7 @@ namespace Airside.Tests
         private Destination? ChooseDestination(FleetAircraft aircraft, HashSet<string> goals)
         {
             var candidates = new List<(Destination destination, double score)>();
-            foreach (var destination in _ops.MapDestinations())
+            foreach (var destination in _ops.PlannableDestinations())
             {
                 if (!_ops.CanOperate(aircraft, destination)
                     || Career.Tier < RouteAccess.RequiredTier(RouteAccess.BandOf(destination)))
@@ -237,10 +237,12 @@ namespace Airside.Tests
                 // round trip (both legs plus the outstation turn and the prep before pushback).
                 var blockHours = (2 * _ops.AirborneSeconds(aircraft, destination) + 40 * 60
                                   + DeparturePrep.TotalSeconds(aircraft.Type, Career.BaseLevel)) / 3600.0;
-                var value = (double)forecast.Margin + GoalBonus(destination, goals);
+                var bonus = GoalBonus(destination, goals);
+                var value = (double)forecast.Margin + bonus;
                 if (goals.Contains("first-rotations") || goals.Contains("regional-service") || goals.Contains("domestic-service"))
                     value += 1500;
-                var score = value / Math.Max(0.5, blockHours);
+                // A new city an open goal needs beats a better-paying repeat.
+                var score = value / Math.Max(0.5, blockHours) * (bonus > 0 ? 3 : 1);
                 if (Career.ActiveContract != null
                     && Career.TryFindDefinition(Career.ActiveContract.DefinitionId, out var contract)
                     && contract.EligibleType.Id == aircraft.Type.Id
@@ -271,7 +273,8 @@ namespace Airside.Tests
                     continue;
                 var forecast = _ops.Forecast(origin, destination, aircraft.Type);
                 var blockHours = (2 * LegTiming.AirborneSeconds(origin.DistanceKmTo(destination), aircraft.Type) + 45 * 60) / 3600.0;
-                candidates.Add((destination.Code, (forecast.Margin + GoalBonus(destination, goals)) / Math.Max(0.5, blockHours)));
+                var bonus = GoalBonus(destination, goals);
+                candidates.Add((destination.Code, (forecast.Margin + bonus) / Math.Max(0.5, blockHours) * (bonus > 0 ? 3 : 1)));
             }
 
             if (candidates.Count == 0)
@@ -338,19 +341,16 @@ namespace Airside.Tests
                 return;
             }
 
-            if ((goals.Contains("domestic-base") || goals.Contains("international-bases")
-                 || (goals.Contains("established-fleet") && adelaide >= Career.Base.FleetCapacity))
-                && Career.Tier >= OperatingTier.Domestic && Career.OutstationBases.Count < 3
-                && Career.Funds >= _ops.NextOutstationCost + reserve)
+            if (!wantAircraft || wantType == null || !AircraftAcquisition.TryFor(wantType, out var offer)
+                || Career.Tier < offer.RequiredTier
+                || Career.Reliability < offer.RequiredReliability || Career.CompletedPlayerRotations < offer.RequiredRotations)
             {
-                var code = new[] { "MEL", "SYD", "BNE", "PER" }.First(c => !Career.HasOutstationBase(c));
-                Record(_ops.OpenOutstationBase(code));
+                OpenOutstation(goals, adelaide, reserve);
                 return;
             }
 
-            if (!wantAircraft || wantType == null || !AircraftAcquisition.TryFor(wantType, out var offer)
-                || Career.Funds < offer.Price + reserve || Career.Tier < offer.RequiredTier
-                || Career.Reliability < offer.RequiredReliability || Career.CompletedPlayerRotations < offer.RequiredRotations)
+            // Saving for an aircraft that is in reach of the goal: don't spend the money on a base.
+            if (Career.Funds < offer.Price + reserve)
                 return;
             if (adelaide < Career.Base.FleetCapacity && PlayerBase.Supports(Career.BaseLevel, wantType))
             {
@@ -366,6 +366,22 @@ namespace Airside.Tests
                 Record(_ops.BuyAircraftAtOutstation(wantType, code));
                 return;
             }
+
+            // Nowhere to put it: that is when a new base earns its keep.
+            OpenOutstation(goals, adelaide, reserve);
+        }
+
+        /// <summary>Bases after aircraft: an aircraft earns money, a base only unlocks.</summary>
+        private void OpenOutstation(HashSet<string> goals, int adelaide, long reserve)
+        {
+            if ((goals.Contains("domestic-base") || goals.Contains("international-bases")
+                 || (goals.Contains("established-fleet") && adelaide >= Career.Base.FleetCapacity))
+                && Career.Tier >= OperatingTier.Domestic && Career.OutstationBases.Count < 3
+                && Career.Funds >= _ops.NextOutstationCost + reserve)
+            {
+                var code = new[] { "MEL", "SYD", "BNE", "PER" }.First(c => !Career.HasOutstationBase(c));
+                Record(_ops.OpenOutstationBase(code));
+            }
         }
 
         /// <summary>The type a sensible player buys next: whatever the open goal needs, else the tier's workhorse.</summary>
@@ -376,13 +392,19 @@ namespace Airside.Tests
                                                  && Career.CompletedPlayerRotations >= offer.RequiredRotations;
             if (goals.Contains("international-widebody") && Allowed(AircraftAcquisition.Boeing78710))
                 return AircraftType.Boeing78710;
+            bool OwnsReach(RouteBand band) => owned.Any(t => RouteAccess.Ceiling(t) >= band);
+            // The cheap interstate turboprop first: it starts the network goal while the jet is saved for.
+            if (goals.Contains("domestic-network") && !OwnsReach(RouteBand.Domestic) && Allowed(AircraftAcquisition.Dash8Q400))
+                return AircraftType.Dash8Q400;
             if (goals.Contains("domestic-jet") && Allowed(AircraftAcquisition.Boeing7378))
                 return AircraftType.Boeing7378;
-            bool OwnsReach(RouteBand band) => owned.Any(t => RouteAccess.Ceiling(t) >= band);
             if (goals.Contains("international-network") && !OwnsReach(RouteBand.Tasman) && Allowed(AircraftAcquisition.AirbusA321Neo))
                 return AircraftType.AirbusA321Neo;
             if (goals.Contains("domestic-network") && !OwnsReach(RouteBand.Domestic) && Allowed(AircraftAcquisition.Dash8Q400))
                 return AircraftType.Dash8Q400;
+            // A fleet-count goal is met by the cheapest aircraft that can work.
+            if (goals.Contains("regional-fleet") && Allowed(AircraftAcquisition.Atr42))
+                return AircraftType.Atr42;
             if (Career.Tier >= OperatingTier.International && Allowed(AircraftAcquisition.AirbusA321Neo))
                 return AircraftType.AirbusA321Neo;
             if (Career.Tier >= OperatingTier.Domestic && Allowed(AircraftAcquisition.Boeing7378))

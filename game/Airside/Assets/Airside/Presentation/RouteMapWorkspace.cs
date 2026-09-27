@@ -143,6 +143,14 @@ namespace Airside.Presentation
             foreach (var row in _all)
                 if (operations.CareerRouteGuidance(row.Destination).Length > 0)
                     _careerTargets.Add(row.Destination.Code);
+            // Career targets head the list so a far one (an international goal) is never cut
+            // off below the fold; the rest keep their reach-then-distance order.
+            var targets = _shown.FindAll(row => _careerTargets.Contains(row.Destination.Code));
+            if (targets.Count > 0)
+            {
+                _shown.RemoveAll(row => _careerTargets.Contains(row.Destination.Code));
+                _shown.InsertRange(0, targets);
+            }
 
             AircraftLabel = aircraft == null
                 ? "No aircraft"

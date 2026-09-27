@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **Career tuned against the balance sim (ADR 0125).** You can now plan Adelaide flights to
+  Auckland, Singapore and the rest of the international network; before, the finale's
+  international goal and the international contracts could not be flown from Adelaide. Your
+  widebody no longer waits for its own gate: your narrowbodies take 28L last, and Qantas stops
+  parking on the pier you lease. Cheaper steps into the jet age: turboprop flights cost less to
+  dispatch, outstations cost $15k / $40k, the jet-gate upgrade costs $6k, and jets and widebodies
+  cost less. The first tier needs four services, not five. On Standard, a steady player now
+  reaches the established-airline finale in about 140–180 hours of play, and every difficulty
+  can finish.
+
 - **Career balance simulator (ADR 0125).** `scripts/career-balance.sh` plays whole careers
   headlessly — Relaxed/Standard/Demanding × a competent and a casual simulated player × five
   seeds — and reports time to each tier in active-play hours, cash, fleet and stuck states.

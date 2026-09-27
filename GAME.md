@@ -1,5 +1,16 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — career tuning pass (ADR 0125).** Fixed: Adelaide
+  aircraft can be planned abroad (`PlannableDestinations()`), narrowbodies take 28L last, AI
+  no longer returns to a gate the player leases. Tuned: four starter services; turboprop
+  dispatch 1.12/km; outstations $15k/$40k; jet gate $6k; 737 $28k, A321 $45k, A350 $85k,
+  787 $82k. Tuned report: `docs/testing/career-balance-2026-09-27/tuned/report.md`. Standard
+  competent: Regional 9.5 h, Domestic 29.6 h, International 78.4 h, finale 141 h; every
+  difficulty/style finishes, no stuck flags. `CareerBalanceTests` guards it. Evidence:
+  `scripts/test-domain.sh` **825/825**, type-check clean. **Needs humans:** real first-hour
+  pace, lateness/reliability pressure (the bot is always punctual), and whether International
+  at ~80 h feels long.
+
 - **2026-09-27 Claude (same branch) — career balance simulator, baseline (ADR 0125).**
   `Tests/EditMode/CareerBot.cs` is a simulated player that uses only HUD commands and planner
   destinations (competent and casual styles); `scripts/career-sim` + `scripts/career-balance.sh`
@@ -4770,6 +4781,9 @@ true 3D assets; animation and VFX mirror simulation state and never drive it.
 ## Run it
 
 Open `game/Airside` in Unity 6.3 LTS and press Play.
+
+Career pacing report (no Unity needed): `scripts/career-balance.sh [out-dir] [seeds] [hours]`
+plays every difficulty with a simulated player and writes a report (ADR 0125).
 
 The game opens on the **title screen** (ADR 0122): the dawn illustration of the airport,
 the live Adelaide clock and one card — **Continue** your saved airline, **New airline**,

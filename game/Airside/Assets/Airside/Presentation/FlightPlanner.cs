@@ -140,7 +140,7 @@ namespace Airside.Presentation
         public static void DestinationsFor(AirlineOperations operations, FleetAircraft aircraft, List<PlannerDestination> list)
         {
             list.Clear();
-            foreach (var destination in operations.MapDestinations())
+            foreach (var destination in operations.PlannableDestinations())
             {
                 var reachable = aircraft != null && operations.CanOperate(aircraft, destination);
                 var airborne = aircraft != null ? operations.AirborneSeconds(aircraft, destination) : 0L;

@@ -1309,6 +1309,20 @@ namespace Airside.Simulation
                     yield return destination;
         }
 
+        /// <summary>
+        /// Everywhere an Adelaide aircraft can be planned to (ADR 0125): Australia plus the
+        /// international catalogue. The planner used <see cref="MapDestinations"/>, which is
+        /// Australia only, so no Adelaide aircraft could ever be sent to Auckland or Singapore —
+        /// the authored international contracts and the finale's international goal were unreachable
+        /// from the planner.
+        /// </summary>
+        public IEnumerable<Destination> PlannableDestinations()
+        {
+            foreach (var destination in DestinationCatalogue.All)
+                if (!destination.Equals(Home))
+                    yield return destination;
+        }
+
         public long AirborneSeconds(FleetAircraft aircraft, Destination destination) =>
             LegTiming.AirborneSeconds(DistanceKm(destination), aircraft.Type);
 
@@ -1814,7 +1828,7 @@ namespace Airside.Simulation
         public const int OutstationCapacity = 8;
         private static readonly string[] OutstationCandidates = { "MEL", "SYD", "BNE", "PER" };
 
-        public long NextOutstationCost => CareerState.OutstationBases.Count == 0 ? 40_000 : 65_000;
+        public long NextOutstationCost => CareerState.OutstationBases.Count == 0 ? 15_000 : 40_000;
 
         public CommandResult OpenOutstationBase(string code)
         {
@@ -2696,7 +2710,11 @@ namespace Airside.Simulation
                 && IsStandFree(aircraft.DepartureStand)
                 && IsLeadInFree(aircraft.DepartureStand, aircraft)
                 && (!aircraft.Airline.IsPlayer || CareerState == null
-                    || PlayerBase.CanUseStand(CareerState.BaseLevel, aircraft.Type, aircraft.DepartureStand)))
+                    || PlayerBase.CanUseStand(CareerState.BaseLevel, aircraft.Type, aircraft.DepartureStand))
+                // A gate the player now leases is no longer an AI operator's home (ADR 0125):
+                // Qantas returning to 28R blocked pier 28's widebody line under the player's 787.
+                && (aircraft.Airline.IsPlayer || CareerState == null || PlayerAirline == null
+                    || !PlayerBase.IsDedicatedStand(CareerState.BaseLevel, aircraft.DepartureStand)))
                 return aircraft.DepartureStand;
 
             // Player turboprops that are away reserve that many regional bays, so a second

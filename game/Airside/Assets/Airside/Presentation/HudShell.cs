@@ -413,6 +413,43 @@ namespace Airside.Presentation
             return new HudBox(x, top, Max(1f, viewportWidth - Margin - x), Max(1f, floor - top));
         }
 
+        /// <summary>
+        /// ADR 0135: a side sheet for workspaces that don't need the full width (Fleet, Contracts, Airline):
+        /// anchored right, about two-thirds of the workspace, so the live airport stays in view on the left.
+        /// Small windows keep the full width, where every layout was tuned.
+        /// </summary>
+        public static HudBox SideSheet(HudBox workspace)
+        {
+            if (workspace.Width < SideSheetMinWorkspace)
+                return workspace;
+            var width = Max(SideSheetMinWidth, workspace.Width * 0.68f);
+            return new HudBox(workspace.Right - width, workspace.Y, width, workspace.Height);
+        }
+
+        /// <summary>
+        /// The largest size up to <paramref name="size"/> at which <paramref name="text"/> fits
+        /// <paramref name="width"/>, never below <paramref name="minimum"/> (ADR 0135: side sheets are narrower).
+        /// </summary>
+        public static float FitFontSize(string text, float size, float width, float minimum)
+        {
+            var measured = Measure(text, size);
+            if (measured <= width || measured <= 0f)
+                return size;
+            return Max(minimum, size * width / measured);
+        }
+
+        public const float SideSheetMinWorkspace = 1150f;
+        public const float SideSheetMinWidth = 900f;
+
+        /// <summary>How far a sheet sits to the right while it slides in, and its opacity (ADR 0135).</summary>
+        public static (float OffsetX, float Alpha) SheetEntrance(float secondsOpen)
+        {
+            const float duration = 0.18f;
+            var t = secondsOpen <= 0f ? 0f : secondsOpen >= duration ? 1f : secondsOpen / duration;
+            var eased = 1f - (1f - t) * (1f - t) * (1f - t);
+            return ((1f - eased) * 28f, eased);
+        }
+
         /// <summary>A modal card centred in <paramref name="area"/>, never larger than it.</summary>
         public static HudBox CentredPanel(HudBox area, float preferredWidth, float preferredHeight)
         {

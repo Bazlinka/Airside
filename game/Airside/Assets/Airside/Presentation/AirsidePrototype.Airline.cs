@@ -256,26 +256,36 @@ namespace Airside.Presentation
                 DrawObjectiveCard(placement.Objective);
             if (overview && placement.Operations.width > 0f)
                 DrawCompactOperations(placement.Operations);
+            // ADR 0135: a newly opened sheet slides in from the right.
+            if (_activeWorkspace != _workspaceShown)
+            {
+                _workspaceShown = _activeWorkspace;
+                _workspaceOpenedAt = Time.unscaledTime;
+            }
+            var entrance = HudShell.SheetEntrance(Time.unscaledTime - _workspaceOpenedAt);
+            _hudPainter.Offset = new Vector2(entrance.OffsetX, 0f);
+            var sheet = WorkspaceRect(placement);
             if (_devToolsOpen)
                 DrawDevToolsPanel(placement.Workspace, panel, title, label, small, smallButton);
             else switch (_activeWorkspace)
             {
                 case HudWorkspace.Operations:
-                    DrawOperationsWorkspace(placement.Workspace);
+                    DrawOperationsWorkspace(sheet);
                     break;
                 case HudWorkspace.Fleet:
-                    DrawFleetWorkspace(placement.Workspace);
+                    DrawFleetWorkspace(sheet);
                     break;
                 case HudWorkspace.Map:
-                    DrawDestinationsMap(placement.Workspace, panel, title, label, small, smallButton);
+                    DrawDestinationsMap(sheet, panel, title, label, small, smallButton);
                     break;
                 case HudWorkspace.Contracts:
-                    DrawContractsWorkspace(placement.Workspace);
+                    DrawContractsWorkspace(sheet);
                     break;
                 case HudWorkspace.Stats:
-                    DrawStatsWorkspace(placement.Workspace);
+                    DrawStatsWorkspace(sheet);
                     break;
             }
+            _hudPainter.Offset = Vector2.zero;
             DrawMiniMap(FieldMiniMap.PanelFor(layout, placement), panel, small);
             if (overview)
                 DrawSelectionHudCard(layout, placement);
@@ -493,7 +503,7 @@ namespace Airside.Presentation
             if (overview && placement.Operations.width > 0f)
                 _hudPanels.Add(OperationsTilesRect(placement.Operations));
             if (_activeWorkspace != HudWorkspace.None || _devToolsOpen)
-                _hudPanels.Add(placement.Workspace);
+                _hudPanels.Add(WorkspaceRect(placement));
             if (MiniMapShows)
             {
                 var miniMap = FieldMiniMap.PanelFor(layout, placement);
@@ -895,6 +905,21 @@ namespace Airside.Presentation
 
         private readonly SelectionCardData _selectionCard = new();
         private readonly HudDrawList _selectionDrawList = new();
+
+        private HudWorkspace _workspaceShown = HudWorkspace.None;
+        private float _workspaceOpenedAt;
+
+        /// <summary>
+        /// Where the open workspace draws (ADR 0135): Fleet, Contracts and the Airline page as a side sheet
+        /// so the airport stays in view; Ops and the Map need the full width.
+        /// </summary>
+        private Rect WorkspaceRect(AirlineHudLayout placement)
+        {
+            if (_devToolsOpen || _activeWorkspace is not (HudWorkspace.Fleet or HudWorkspace.Contracts or HudWorkspace.Stats))
+                return placement.Workspace;
+            var sheet = HudShell.SideSheet(Box(placement.Workspace));
+            return new Rect(sheet.X, sheet.Y, sheet.Width, sheet.Height);
+        }
 
         /// <summary>First aircraft-market card shown on the Fleet page (ADR 0131).</summary>
         private int _fleetMarketStart;

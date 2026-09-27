@@ -1,5 +1,12 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — side sheets and motion (ADR 0135).** Fleet, Contracts and
+  Airline/Career open as a right-anchored sheet (~⅔ width, ≥900 px) so the airport stays in view;
+  Ops and Map stay full width; small windows unchanged. Workspaces slide in (0.18 s), buttons lift
+  and glow on hover, rows get a hover wash. Contract cards, roadmap title and recent flights fit the
+  narrower sheet. Tests **873/873**. **Mac checks:** clicking the airport beside a sheet selects
+  aircraft; slide-in feel; hover; clicks during the slide land correctly.
+
 - **2026-09-27 Claude (same branch) — cash for the usual flight (ADR 0134).** The "cash squeeze"
   was the bot's reserve costing every aircraft at 1,500 km; after a cheap widebody it retried
   long-haul flights it could not pay for. `FlightEconomics.TypicalLegKm`; the Fleet market now warns

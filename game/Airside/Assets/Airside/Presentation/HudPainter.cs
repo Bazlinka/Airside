@@ -18,10 +18,32 @@ namespace Airside.Presentation
         /// Draws every command in order. Returns the action id of the control clicked this
         /// event, or null. Only one action can fire per event, as IMGUI intends.
         /// </summary>
+        /// <summary>ADR 0135: shifts everything drawn (and its click areas) while a sheet slides in.</summary>
+        public Vector2 Offset { get; set; }
+
         public string Draw(HudDrawList list)
         {
             if (list == null)
                 return null;
+            if (Offset != Vector2.zero)
+            {
+                var matrix = GUI.matrix;
+                GUI.matrix = matrix * Matrix4x4.Translate(new Vector3(Offset.x, Offset.y, 0f));
+                try
+                {
+                    return DrawList(list);
+                }
+                finally
+                {
+                    GUI.matrix = matrix;
+                }
+            }
+
+            return DrawList(list);
+        }
+
+        private string DrawList(HudDrawList list)
+        {
 
             string clicked = null;
             for (var i = 0; i < list.Count; i++)
@@ -67,6 +89,9 @@ namespace Airside.Presentation
                         break;
 
                     case HudDrawKind.Hotspot:
+                        // A faint wash under the pointer so rows and cards read as clickable (ADR 0135).
+                        if (Event.current != null && rect.Contains(Event.current.mousePosition))
+                            AirsideTheme.DrawRounded(rect, new Color(1f, 1f, 1f, 0.04f), Mathf.Min(6f, rect.height * 0.5f));
                         if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
                             clicked = command.ActionId;
                         break;
@@ -153,6 +178,14 @@ namespace Airside.Presentation
             var enabled = GUI.enabled;
             GUI.enabled = enabled && command.Enabled;
             var style = ButtonStyle(command.ButtonStyle, command.Text == "×" || command.Text == "?");
+            // ADR 0135: an enabled button lifts a little and glows under the pointer.
+            if (command.Enabled && enabled && Event.current != null && rect.Contains(Event.current.mousePosition))
+            {
+                AirsideTheme.DrawRounded(new Rect(rect.x - 2f, rect.y - 1f, rect.width + 4f, rect.height + 4f),
+                    new Color(AirsideTheme.Aqua.r, AirsideTheme.Aqua.g, AirsideTheme.Aqua.b, 0.16f),
+                    Mathf.Min(rect.height * 0.5f + 2f, 20f));
+                rect = new Rect(rect.x, rect.y - 1.5f, rect.width, rect.height);
+            }
             var pressed = GUI.Button(rect, command.Text, style);
             GUI.enabled = enabled;
             return pressed;

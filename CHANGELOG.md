@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Keep your eye on the airport.** Fleet, Contracts and the Airline page now open as a panel on the
+  right, so the airport stays visible beside them. Panels slide in, and buttons lift when you point
+  at them.
+
 - **The aircraft market warns you before you overspend.** If buying an aircraft would leave too
   little money to fly it on its usual kind of route, the card tells you how much you'd have left
   and what that flight costs.

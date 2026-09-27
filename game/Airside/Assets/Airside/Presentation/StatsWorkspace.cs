@@ -635,7 +635,8 @@ namespace Airside.Presentation
 
             into.Caption(layout.NextTierCaption, "BASE ROADMAP");
             PaintBaseRoadmap(into, model, layout);
-            into.Text(layout.NextTierTitleBox.Offset(0f, 48f), model.NextTierTitle, 14f,
+            into.Text(layout.NextTierTitleBox.Offset(0f, 48f), model.NextTierTitle,
+                HudShell.FitFontSize(model.NextTierTitle, 14f, layout.NextTierTitleBox.Width, 11f),
                 HudTone.Default, HudTextStyle.Bold);
             if (model.HasNextTier)
             {
@@ -823,7 +824,8 @@ namespace Airside.Presentation
                 into.Text(new HudBox(row.X + 104f, row.Y + 5f, 90f, 16f), flight.PaidText, 12f, HudTone.Positive,
                     HudTextStyle.Bold);
                 var note = flight.ContractDone ? flight.Punctuality + "  ·  contract done" : flight.Punctuality;
-                into.Text(new HudBox(row.X + 196f, row.Y + 5f, row.Width - 204f, 16f), note, 11f, flight.Tone);
+                into.Text(new HudBox(row.X + 196f, row.Y + 5f, row.Width - 204f, 16f), note,
+                    HudShell.FitFontSize(note, 11f, row.Width - 204f, 9f), flight.Tone);
                 flightsY += 30f;
             }
         }

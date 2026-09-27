@@ -75,6 +75,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudSounds.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/EngineVoice.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ArrivalApproach.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AtmosphereLook.cs" />
     <!-- ADR 0124 procedural building detail and the chamfered block mesh. -->
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BuildingDetail.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BevelledBox.cs" />

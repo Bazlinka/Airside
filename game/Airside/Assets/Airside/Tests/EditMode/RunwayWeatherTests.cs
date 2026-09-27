@@ -68,7 +68,7 @@ namespace Airside.Tests
                 "arrivals must not take the departure-favoured end in light wind");
         }
 
-        // Block 34 (122400-125999s) hashes to Storm; blocks 33 (Clear) and 35 (Fog) bracket it
+        // Block 249 (896400-899999s) is a storm; blocks 248 (Cloudy) and 250 (Rain) bracket it
         // (see Weather.At). A holding aircraft restored inside that window exercises the
         // ground stop (ADR 0058) without waiting on a live day's odds of a storm turning up.
         private static AirlineOperations HoldingForLandingDuringStorm(ManualSimulationClock clock, long stateStartedAt)
@@ -93,11 +93,11 @@ namespace Airside.Tests
         [Test]
         public void Storm_HoldsTheClearanceUntilWeatherClears()
         {
-            Assert.That(Weather.At(new SimulationTime(123000)), Is.EqualTo(WeatherKind.Storm));
-            Assert.That(Weather.At(new SimulationTime(126000)), Is.Not.EqualTo(WeatherKind.Storm));
+            Assert.That(Weather.At(new SimulationTime(897000)), Is.EqualTo(WeatherKind.Storm));
+            Assert.That(Weather.At(new SimulationTime(900000)), Is.Not.EqualTo(WeatherKind.Storm));
 
-            var clock = new ManualSimulationClock(new SimulationTime(123000));
-            var ops = HoldingForLandingDuringStorm(clock, 120000);
+            var clock = new ManualSimulationClock(new SimulationTime(897000));
+            var ops = HoldingForLandingDuringStorm(clock, 894000);
             var holder = ops.Fleet[0];
 
             ops.Update();
@@ -105,7 +105,7 @@ namespace Airside.Tests
                 "a storm withholds a new landing clearance even though the strip is free");
             Assert.That(ops.IsGroundStopped, Is.True);
 
-            clock.Set(new SimulationTime(126000));
+            clock.Set(new SimulationTime(900000));
             ops.Update();
             Assert.That(holder.State, Is.EqualTo(FleetState.Landing),
                 "the held aircraft lands as soon as the storm block ends");
@@ -115,8 +115,8 @@ namespace Airside.Tests
         [Test]
         public void Storm_ReleaseIsIdenticalWhetherSteppedBySecondOrSkippedToTheNextEvent()
         {
-            const long start = 120000;
-            const long horizon = 130000;
+            const long start = 894000;
+            const long horizon = 904000;
 
             string Run(Func<ManualSimulationClock, AirlineOperations, bool> step)
             {

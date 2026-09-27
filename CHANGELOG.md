@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Weather that feels real.** The weather now changes gradually, from clear to cloudy to overcast to
+  rain and back, and the sky eases between them instead of snapping. Fog only rolls in on early
+  mornings, with mist lying over the airfield. The sky's colour follows the weather, and the fog
+  matches it. On a clear day you can see much further, and overcast days bring a real cloud
+  ceiling. Storm clouds are dark and tall, clouds drift with the wind, and their shadows follow
+  the sun.
+
 - **Arrivals come from further away.** Incoming aircraft now appear about 32 km out and descend on
   their approach, curving in from the direction of the city they are flying from. Far-off aircraft
   show their landing lights, so you can pick them out long before they land.

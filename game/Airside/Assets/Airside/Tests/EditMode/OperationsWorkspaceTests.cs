@@ -36,10 +36,10 @@ namespace Airside.Tests
         [Test]
         public void Operations_SubtitleNamesTheWeatherAndFlagsAGroundStop()
         {
-            // Block 34 (122400-125999s) hashes to Storm; block 35 (Fog) follows it (see
+            // Block 249 (896400-899999s) is a storm; block 250 (Rain) follows it (see
             // Weather.At / RunwayWeatherTests) — used here instead of a live day's odds.
             var (clock, ops, _) = HudTestAirline.Create();
-            clock.Set(new SimulationTime(123000));
+            clock.Set(new SimulationTime(897000));
             ops.Update();
 
             var model = new OperationsWorkspaceModel();
@@ -49,12 +49,12 @@ namespace Airside.Tests
             Assert.That(model.Subtitle, Does.Contain("Storm"));
             Assert.That(model.Subtitle, Does.Contain("GROUND STOP"));
 
-            clock.Set(new SimulationTime(126000));
+            clock.Set(new SimulationTime(900000));
             ops.Update();
             model.Rebuild(ops, clock.Now, OperationsBoardTab.Departures, null, null);
 
             Assert.That(model.GroundStopped, Is.False);
-            Assert.That(model.Subtitle, Does.Contain("Fog"));
+            Assert.That(model.Subtitle, Does.Contain("Rain"));
             Assert.That(model.Subtitle, Does.Not.Contain("GROUND STOP"));
         }
 

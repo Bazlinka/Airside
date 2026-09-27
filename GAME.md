@@ -1,5 +1,23 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — weather drift, one sky, fog, clouds (ADR 0143).** `Weather.At`
+  is a Markov chain (neighbour-mostly, 5% jumps, fog only 04–09 local); `Weather.LookAt` eases 15
+  game-min between hours; `AtmosphereLook` gives one sky colour for background/dome/fog, fog density
+  from visibility (eased for a high camera); single fog path. Overcast sheet (only below it),
+  horizon band, low mist; clouds yaw-billboard with partial tilt, darker/towering storms,
+  wind-speed drift, wrap fade, sun-projected shadows. Tests **933/933**.
+  **Mac checklist for ADR 0136–0143:**
+  - Sound: Saab vs 737 vs A350 levels; far jets muffled; PA chime over an hour.
+  - Board: delayed row reads published time + "Delayed +N" + est; departure TIME fixed through taxi.
+  - Contracts: widebody offers have sensible deadlines; Accept refuses the impossible.
+  - Career: new "Needs …" lines on the base roadmap and Network page.
+  - Map: fps at every zoom; zoom into ADL runways; World/Australia button; LAX tracking.
+  - Gates: one straight row at T1; bridges dock; taxi-in/pushback at 12L, 22L, 25, 26L;
+    `GroundSeparationTests`, `TerminalGateOperationsTests`.
+  - Arrivals: visible far out, curving in from their city's side; distant lights at dusk.
+  - Weather: clouds from overview and low camera; overcast sheet; horizon band; morning fog + mist
+    with the field readable; storm darkness; no cloud pop at wrap; fps with the 30 km far clip.
+
 - **2026-09-27 Claude (same branch) — arrivals from further out (ADR 0142).** `ArrivalApproach`:
   arrivals drawn from 32 km (was 18) at up to 6,000 ft on the 3° path, curving in from their
   origin's side beyond 12 km; far clip 30 km; aircraft LOD cull 0.4% (was 2%); distant light glow

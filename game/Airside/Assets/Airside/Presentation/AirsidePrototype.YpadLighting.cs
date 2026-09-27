@@ -213,7 +213,7 @@ namespace Airside.Presentation
             var marker = new Color(1f, 0.86f, 0.55f);
             var leadIn = new Color(0.25f, 0.55f, 1f);
 
-            foreach (var gate in AdelaideLayout.TerminalGates)
+            foreach (var gate in AdelaideGateAlignment.Gates)
             {
                 var stop = new Vector3(gate.NoseX, 0.24f, gate.NoseZ);
                 PlaceYpadLens($"Stand marker {gate.Id}", stop, marker, 0.5f);

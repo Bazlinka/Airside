@@ -52,7 +52,7 @@ namespace Airside.Tests
         public void Gate13_GetsAJetSizedLeadInStopBarAndIdentifier()
         {
             var marking = AdelaideStandMarkings.All().Single(item => item.StandId == "GATE-13");
-            var gate = AdelaideLayout.TerminalGates.Single(item => item.Id == "GATE-13");
+            var gate = AdelaideGateAlignment.Gates.Single(item => item.Id == "GATE-13");
 
             Assert.That(marking.LeadIn[^2], Is.EqualTo(gate.NoseX).Within(0.001f));
             Assert.That(marking.LeadIn[^1], Is.EqualTo(gate.NoseZ).Within(0.001f));

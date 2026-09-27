@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Tidy gates.** Jets at the terminal now park in one straight row close to the building, instead
+  of scattered up to 38 m out on the apron. Stand boxes fit the aircraft they are for, and paired
+  gates share one box.
+
 - **A real map, and the wider world.** The route map now uses accurate coastlines, including
   Kangaroo Island, and every airport sits where it really is. Zoom out to see Asia, the Pacific and
   Los Angeles, or zoom in to see towns and, closer still, each airport's runways and elevation.

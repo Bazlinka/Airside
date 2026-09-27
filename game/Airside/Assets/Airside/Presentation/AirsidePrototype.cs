@@ -3949,7 +3949,7 @@ namespace Airside.Presentation
 
         private static Vector3[] AdelaideWetPuddleSpots()
         {
-            var spots = new List<Vector3>(AdelaideLayout.Bays.Length + AdelaideLayout.TerminalGates.Length);
+            var spots = new List<Vector3>(AdelaideLayout.Bays.Length + AdelaideGateAlignment.Gates.Length);
 
             void Add(float x, float z, float headingDegrees, int index)
             {
@@ -3972,9 +3972,9 @@ namespace Airside.Presentation
                 Add(bay.StopX, bay.StopZ, bay.HeadingDegrees, i);
             }
 
-            for (var i = 0; i < AdelaideLayout.TerminalGates.Length; i++)
+            for (var i = 0; i < AdelaideGateAlignment.Gates.Length; i++)
             {
-                var gate = AdelaideLayout.TerminalGates[i];
+                var gate = AdelaideGateAlignment.Gates[i];
                 Add(gate.NoseX, gate.NoseZ, gate.HeadingDegrees, AdelaideLayout.Bays.Length + i);
             }
 

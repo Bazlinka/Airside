@@ -1,5 +1,12 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — gates lined up (ADR 0141).** `AdelaideGateAlignment.Gates`
+  (used by ground, bridges, paint, lights): contact gates stop 11 m (code C) / 14 m (code E) off
+  the T1 wall, squared to it; 20R/22R keep place but squared; last 40 m of taxi-in and start of
+  pushback rebuilt. Boxes sized by code (E 42×72), capped halfway to the next gate, one shared box
+  for 16/18/28 pier pairs. Tests **916/916**. **Mac checks:** `GroundSeparationTests`,
+  `TerminalGateOperationsTests`, bridges docking, taxi-in/pushback at 12L/22L/25/26L.
+
 - **2026-09-27 Claude (same branch) — countries and world map (ADR 0140).** `Destination.Country`
   (ISO-2, `Region`, `IsAustralian`); 12 new airports (NRT KIX ICN PVG BKK SGN MNL CGK POM NOU HNL
   LAX); Pacific band (NAN NOU POM DPS, A321neo/A220 may fly it). Map geography generated from

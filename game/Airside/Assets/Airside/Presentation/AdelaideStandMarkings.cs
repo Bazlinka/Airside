@@ -60,6 +60,12 @@ namespace Airside.Presentation
         public const float TerminalLabelBeforeStopMetres = 24f;
         public const float TerminalEnvelopeWidthMetres = 30f;
         public const float TerminalEnvelopeLengthMetres = 44f;
+        /// <summary>
+        /// ADR 0141: a code E (widebody) box, sized for an A330 or 787 rather than a 737. 42 m wide is
+        /// as much as gates 25 and 26L, 42.8 m apart, allow without their boxes crossing.
+        /// </summary>
+        public const float CodeEEnvelopeWidthMetres = 42f;
+        public const float CodeEEnvelopeLengthMetres = 72f;
         public const float TerminalLabelSize = 0.62f;
         public const float ShoulderLengthMetres = 4.5f;
 
@@ -76,23 +82,107 @@ namespace Airside.Presentation
             if (_all != null)
                 return _all;
 
-            _all = new AdelaideStandMarking[AdelaideLayout.Bays.Length + AdelaideLayout.TerminalGates.Length];
+            _all = new AdelaideStandMarking[AdelaideLayout.Bays.Length + AdelaideGateAlignment.Gates.Length];
             for (var i = 0; i < AdelaideLayout.Bays.Length; i++)
                 _all[i] = For(AdelaideLayout.Bays[i]);
-            for (var i = 0; i < AdelaideLayout.TerminalGates.Length; i++)
-                _all[AdelaideLayout.Bays.Length + i] = For(AdelaideLayout.TerminalGates[i]);
+            for (var i = 0; i < AdelaideGateAlignment.Gates.Length; i++)
+                _all[AdelaideLayout.Bays.Length + i] = For(AdelaideGateAlignment.Gates[i]);
+            ShareBoxes(_all);
             return _all;
         }
+
+        /// <summary>
+        /// ADR 0141: the L/R lines of one pier (16, 18, 20, 22, 28) are one gate with two stop bars,
+        /// painted as one shared box, the way a real MARS stand is, instead of two overlapping boxes.
+        /// The first of each pair carries the box; the second paints none.
+        /// </summary>
+        private static void ShareBoxes(AdelaideStandMarking[] all)
+        {
+            foreach (var (a, b) in AirlineOperations.SharedPierPairs)
+            {
+                var ia = Array.FindIndex(all, m => m.StandId == a.Value);
+                var ib = Array.FindIndex(all, m => m.StandId == b.Value);
+                if (ia < 0 || ib < 0 || IsRemote(a.Value) || IsRemote(b.Value))
+                    continue;
+                float minX = float.MaxValue, maxX = float.MinValue, minZ = float.MaxValue, maxZ = float.MinValue;
+                foreach (var envelope in new[] { all[ia].Envelope, all[ib].Envelope })
+                    for (var i = 0; i + 1 < envelope.Length; i += 2)
+                    {
+                        minX = Math.Min(minX, envelope[i]);
+                        maxX = Math.Max(maxX, envelope[i]);
+                        minZ = Math.Min(minZ, envelope[i + 1]);
+                        maxZ = Math.Max(maxZ, envelope[i + 1]);
+                    }
+
+                all[ia] = WithEnvelope(all[ia], new[] { minX, maxZ, maxX, maxZ, maxX, minZ, minX, minZ });
+                all[ib] = WithEnvelope(all[ib], Array.Empty<float>());
+            }
+        }
+
+        /// <summary>A remote (bus) stand keeps its own box: sharing would swallow the next gate's.</summary>
+        private static bool IsRemote(string standId)
+        {
+            foreach (var gate in AdelaideGateAlignment.Gates)
+                if (gate.Id == standId)
+                    return AdelaideGateAlignment.IsRemote(gate);
+            return false;
+        }
+
+        /// <summary>True when the stand's box is painted with its pier partner's (ADR 0141).</summary>
+        public static bool SharesPartnerBox(string standId)
+        {
+            foreach (var (a, b) in AirlineOperations.SharedPierPairs)
+                if (b.Value == standId)
+                    return !IsRemote(a.Value) && !IsRemote(b.Value);
+            return false;
+        }
+
+        private static AdelaideStandMarking WithEnvelope(AdelaideStandMarking m, float[] envelope) =>
+            new(m.StandId, m.Reference, m.LeadIn, m.StopBar, envelope, m.LeftShoulder, m.RightShoulder, m.LabelX,
+                m.LabelZ, m.LabelYawDegrees, m.LabelCharacterSize);
 
         private static AdelaideStandMarking For(AdelaideBay bay) => Create(
             bay.Id, bay.Reference, bay.StopX, bay.StopZ, bay.HeadingDegrees, bay.TaxiIn,
             LeadInLengthMetres, StopBarWidthMetres, LabelBeforeStopMetres,
             RegionalEnvelopeWidthMetres, RegionalEnvelopeLengthMetres, RegionalLabelSize);
 
-        private static AdelaideStandMarking For(AdelaideTerminalGate gate) => Create(
-            gate.Id, gate.Reference, gate.NoseX, gate.NoseZ, gate.HeadingDegrees, gate.TaxiIn,
-            TerminalLeadInLengthMetres, TerminalStopBarWidthMetres, TerminalLabelBeforeStopMetres,
-            TerminalEnvelopeWidthMetres, TerminalEnvelopeLengthMetres, TerminalLabelSize);
+        private static AdelaideStandMarking For(AdelaideTerminalGate gate)
+        {
+            var codeE = AdelaideGateAlignment.SetbackFor(gate.Id) == AdelaideGateAlignment.CodeESetbackMetres;
+            var width = Math.Min(codeE ? CodeEEnvelopeWidthMetres : TerminalEnvelopeWidthMetres, RoomBetween(gate));
+            return Create(
+                gate.Id, gate.Reference, gate.NoseX, gate.NoseZ, gate.HeadingDegrees, gate.TaxiIn,
+                TerminalLeadInLengthMetres, TerminalStopBarWidthMetres, TerminalLabelBeforeStopMetres,
+                width, codeE ? CodeEEnvelopeLengthMetres : TerminalEnvelopeLengthMetres, TerminalLabelSize);
+        }
+
+        /// <summary>
+        /// Twice the gap to the nearest gate that is not this one's pier partner, less a line's width:
+        /// where two gates are closer than a box is wide (15 and 16R, 25.5 m), each box stops halfway.
+        /// </summary>
+        private static float RoomBetween(AdelaideTerminalGate gate)
+        {
+            var room = float.MaxValue;
+            foreach (var other in AdelaideGateAlignment.Gates)
+            {
+                if (other.Id == gate.Id || PierPartners(gate.Id, other.Id))
+                    continue;
+                // Only neighbours on the same row compete for width.
+                if (Math.Abs(other.NoseZ - gate.NoseZ) > 30f)
+                    continue;
+                room = Math.Min(room, Math.Abs(other.NoseX - gate.NoseX));
+            }
+
+            return room - 1f;
+        }
+
+        private static bool PierPartners(string a, string b)
+        {
+            foreach (var (x, y) in AirlineOperations.SharedPierPairs)
+                if ((x.Value == a && y.Value == b) || (x.Value == b && y.Value == a))
+                    return true;
+            return false;
+        }
 
         private static AdelaideStandMarking Create(string standId, string reference, float stopX, float stopZ,
             float headingDegrees, float[] taxiIn, float leadInLength, float stopBarWidth, float labelBeforeStop,

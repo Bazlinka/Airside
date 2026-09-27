@@ -3116,7 +3116,13 @@ namespace Airside.Presentation
             var any = false;
             while (_operations.TryTakeCareerEvent(out var careerEvent))
             {
-                ShowToast(careerEvent.Text, careerEvent.Kind == CareerEventKind.GoalComplete ? HudTone.Positive : HudTone.Caution);
+                ShowToast(careerEvent.Text, careerEvent.Kind switch
+                {
+                    CareerEventKind.GoalComplete or CareerEventKind.Challenge or CareerEventKind.Milestone => HudTone.Positive,
+                    CareerEventKind.ContractExpired => HudTone.Negative,
+                    CareerEventKind.News or CareerEventKind.DailyReport => HudTone.Accent,
+                    _ => HudTone.Caution
+                });
                 any = true;
             }
             if (any)

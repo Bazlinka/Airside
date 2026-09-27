@@ -123,7 +123,7 @@ namespace Airside.Tests
                 Airline.Player("Gulf Link", "#0F8B8D", "GLK"), difficulty: CareerDifficulty.Demanding,
                 firstFlightCoaching: false);
             var saved = AirlineSave.Capture(ops);
-            Assert.That(saved.Version, Is.EqualTo(14));
+            Assert.That(saved.Version, Is.EqualTo(AirlineSaveData.CurrentVersion));
             var restored = AirlineSave.Restore(saved, clock);
             // A game founded on Demanding (ADR 0123) continues on the one balance (ADR 0127).
             Assert.That(restored.CareerState.Difficulty, Is.EqualTo(CareerDifficulty.Standard));

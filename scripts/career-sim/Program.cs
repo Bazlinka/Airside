@@ -66,6 +66,17 @@ foreach (var s in styles)
 }
 
 md.AppendLine();
+md.AppendLine("## Contracts and challenges (ADR 0127, totals over all seeds)");
+md.AppendLine();
+md.AppendLine("| Style | Contracts lapsed | Challenges paid | Daily reports |");
+md.AppendLine("|---|---|---|---|");
+foreach (var s in styles)
+{
+    var rows = results.Where(r => r.Style == s).ToList();
+    md.AppendLine($"| {s} | {rows.Sum(r => r.ExpiredContracts)} | {rows.Sum(r => r.ChallengesPaid)} | {rows.Sum(r => r.DailyReports)} |");
+}
+
+md.AppendLine();
 md.AppendLine("## Goal completion (median open hours, all seeds)");
 md.AppendLine();
 var goalIds = results.SelectMany(r => r.GoalDoneAtOpenHours.Keys).Distinct().ToList();
@@ -116,7 +127,7 @@ File.WriteAllText(Path.Combine(outDir, "runs.json"), JsonSerializer.Serialize(re
     goals = r.GoalDoneAtOpenHours.ToDictionary(p => p.Key, p => Math.Round(p.Value, 1)),
     finale = r.FinaleAtOpenHours, openHours = Math.Round(r.OpenHours, 1), r.MinFunds, r.FinalFunds, r.MinReliability,
     r.FinalReliability, finalTier = r.FinalTier.ToString(), r.FinalFleet, r.FinalRotations, r.RecoveryContracts,
-    r.OpenGoalsAtEnd, r.Flags, r.Refusals
+    r.OpenGoalsAtEnd, r.Flags, r.Refusals, r.ExpiredContracts, r.ChallengesPaid, r.DailyReports
 }), new JsonSerializerOptions { WriteIndented = true }));
 
 Console.WriteLine($"Wrote {outDir}/report.md in {watch.Elapsed.TotalSeconds:0}s");

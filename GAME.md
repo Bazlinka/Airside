@@ -1,5 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — career variety (ADR 0127).** `ContractKind` + deadlines
+  (`ContractMarket.Terms`, `AirlineOperations.ExpireContract`, save v15 incl. `OnTimeStreak`),
+  `DemandEvents` in `Forecast`, daily report + news in `AnnounceTheDay`, `CareerChallenges`
+  (award keys) with prestige after the finale, milestone announcements; new `CareerEventKind`s
+  toasted by tone; Stats lists open challenges; manual updated. Balance report
+  `docs/testing/career-balance-2026-09-27/variety/`: Standard competent Regional 10.8 h,
+  Domestic 29.3 h, International 69 h, finale 139 h. Tests **841/841**, type-check clean.
+  **Needs humans:** does a charter/medical deadline feel fair at real play pace; toast volume
+  (news + report + challenges) on a busy day.
+
 - **2026-09-27 Claude (same branch) — difficulty removed (ADR 0127).** `SetupStep` is
   Identity/Livery/Briefing; `AirlineSave.ParseDifficulty` always returns Standard (field still
   written); title summary, manual entry and HUD mockup page removed; balance sim is single

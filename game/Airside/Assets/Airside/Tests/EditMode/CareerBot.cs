@@ -61,6 +61,9 @@ namespace Airside.Tests
         public int FinalFleet;
         public int FinalRotations;
         public int RecoveryContracts;
+        public int ExpiredContracts;
+        public int ChallengesPaid;
+        public int DailyReports;
         public readonly List<string> OpenGoalsAtEnd = new();
         public readonly List<string> Flags = new();
         public readonly Dictionary<string, int> Refusals = new();
@@ -188,7 +191,8 @@ namespace Airside.Tests
             var owned = _ops.Fleet.Where(a => a.Airline.IsPlayer).Select(a => a.Type.Id).ToHashSet();
             var usable = _ops.MarketOffers()
                 .Where(o => !Career.HasCompleted(o.Id) && Career.Tier >= o.RequiredTier && owned.Contains(o.EligibleType.Id)
-                            && DestinationCatalogue.TryFind(o.DestinationCode, out var d) && Plannable(d))
+                            && DestinationCatalogue.TryFind(o.DestinationCode, out var d) && Plannable(d)
+                            && CanFinishInTime(o, d))
                 .ToList();
             if (usable.Count == 0)
                 return;
@@ -198,6 +202,18 @@ namespace Airside.Tests
             if (pick.Id.StartsWith("REC-", StringComparison.Ordinal))
                 _result.RecoveryContracts++;
             Record(_ops.AcceptContract(pick));
+        }
+
+        /// <summary>A sensible player only signs what one eligible aircraft can fly before the deadline (ADR 0127).</summary>
+        private bool CanFinishInTime(RouteContractDefinition offer, Destination destination)
+        {
+            if (!offer.HasDeadline)
+                return true;
+            var km = DestinationCatalogue.Adelaide.DistanceKmTo(destination);
+            var rotation = 2 * LegTiming.AirborneSeconds(km, offer.EligibleType) + 40 * 60
+                           + DeparturePrep.TotalSeconds(offer.EligibleType, Career.BaseLevel) + 20 * 60;
+            var slack = Competent ? 1.3 : 1.8;
+            return rotation * offer.RequiredRotations * slack < offer.DeadlineSeconds;
         }
 
         private static double ContractValue(RouteContractDefinition offer, HashSet<string> goals)
@@ -467,6 +483,15 @@ namespace Airside.Tests
                 clock.Set(new SimulationTime(target));
                 ops.Update();
                 open += openStep / 3600.0;
+                while (ops.TryTakeCareerEvent(out var news))
+                {
+                    if (news.Kind == CareerEventKind.ContractExpired)
+                        result.ExpiredContracts++;
+                    else if (news.Kind == CareerEventKind.Challenge)
+                        result.ChallengesPaid++;
+                    else if (news.Kind == CareerEventKind.DailyReport)
+                        result.DailyReports++;
+                }
 
                 var career = ops.CareerState;
                 if (career.Tier != tier)

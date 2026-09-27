@@ -25,7 +25,17 @@ namespace Airside.Simulation
     {
         GoalComplete,
         TierReached,
-        Finale
+        Finale,
+        /// <summary>A contract's deadline passed before it was flown (ADR 0127).</summary>
+        ContractExpired,
+        /// <summary>A demand event starts: somewhere is busier today.</summary>
+        News,
+        /// <summary>The day's results at curfew.</summary>
+        DailyReport,
+        /// <summary>A challenge completed and paid.</summary>
+        Challenge,
+        /// <summary>A milestone (achievement) unlocked.</summary>
+        Milestone
     }
 
     /// <summary>Career news for the HUD: announced once, never stored in the save.</summary>
@@ -1184,7 +1194,9 @@ namespace Airside.Simulation
         /// <summary>The route forecast the player sees and is settled on, under the airline's difficulty.</summary>
         public RouteForecast Forecast(Destination origin, Destination destination, AircraftType type)
         {
-            var forecast = RouteForecast.For(origin, destination, type);
+            // Today's demand event (ADR 0127) is in both the forecast and the settlement.
+            var forecast = RouteForecast.For(origin, destination, type,
+                DemandEvents.MultiplierFor(destination.Code, _processedTo, Clock));
             return CareerState == null ? forecast : forecast.Under(CareerState.DifficultyProfile);
         }
 
@@ -1574,6 +1586,9 @@ namespace Airside.Simulation
                 if (candidate.CompareTo(now) > 0 && (next == null || candidate.CompareTo(next.Value) < 0))
                     next = candidate;
             }
+
+            if (ContractExpiresAt() is { } expiry)
+                Consider(expiry);
 
             var runwayWanted = false;
             var taxiReleaseWantedBay = false;
@@ -2244,6 +2259,8 @@ namespace Airside.Simulation
                     $"{reached} operating tier reached. New aircraft, routes and goals are open."));
             }
             CheckCareerFinale();
+            CheckChallenges(profitableDay: false);
+            AnnounceMilestones();
         }
 
         private void SeedCareerAnnouncements()
@@ -2253,7 +2270,174 @@ namespace Airside.Simulation
             foreach (var goal in CareerGoals())
                 if (goal.Complete && goal.Stage <= CareerState.Tier)
                     _announcedGoals.Add(goal.Id);
+            foreach (var milestone in CareerMilestones.Reached(CareerState, PlayerFleetCount(), PlayerOwnedTypes()))
+                if (milestone.Reached)
+                    _announcedMilestones.Add(milestone.Id);
         }
+
+        // ---- Challenges, milestones, news and the daily report (ADR 0127) --------------------
+
+        private readonly HashSet<string> _announcedMilestones = new(StringComparer.Ordinal);
+
+        /// <summary>The optional challenges and how far along each is.</summary>
+        public IReadOnlyList<CareerChallengeStatus> CareerChallengeStatus() =>
+            CareerChallenges.Status(CareerState, CareerChallenges.FactsFor(CareerState, PlayerFleetCount(), false));
+
+        private void CheckChallenges(bool profitableDay)
+        {
+            if (CareerState == null)
+                return;
+            var facts = CareerChallenges.FactsFor(CareerState, PlayerFleetCount(), profitableDay);
+            foreach (var challenge in CareerChallenges.All)
+            {
+                if (challenge.Prestige && !CareerState.FinaleReached)
+                    continue;
+                var (progress, target) = challenge.Progress(facts);
+                if (progress < target || !CareerState.TryAward(challenge.Key, challenge.Reward))
+                    continue;
+                _careerEvents.Add(new CareerEvent(CareerEventKind.Challenge, CareerState.Tier,
+                    $"Challenge complete: {challenge.Title} — ${challenge.Reward:N0} paid."));
+            }
+        }
+
+        private void AnnounceMilestones()
+        {
+            foreach (var milestone in CareerMilestones.Reached(CareerState, PlayerFleetCount(), PlayerOwnedTypes()))
+                if (milestone.Reached && _announcedMilestones.Add(milestone.Id))
+                    _careerEvents.Add(new CareerEvent(CareerEventKind.Milestone, CareerState.Tier,
+                        $"Achievement: {milestone.Title}."));
+        }
+
+        /// <summary>The player's flying since the last daily report. Runtime only: a reload starts a fresh day.</summary>
+        private sealed class DayLedger
+        {
+            public int Flights;
+            public long Revenue;
+            public long Cost;
+            public string BestCode = string.Empty;
+            public long BestMargin = long.MinValue;
+            public int? StartReliability;
+
+            public long Margin => Revenue - Cost;
+
+            public void Record(Destination destination, long payment, long cost)
+            {
+                Flights++;
+                Revenue += payment;
+                Cost += cost;
+                var margin = payment - cost;
+                if (margin > BestMargin)
+                {
+                    BestMargin = margin;
+                    BestCode = destination.Code;
+                }
+            }
+
+            public void Reset(int reliability)
+            {
+                Flights = 0;
+                Revenue = 0;
+                Cost = 0;
+                BestCode = string.Empty;
+                BestMargin = long.MinValue;
+                StartReliability = reliability;
+            }
+        }
+
+        private readonly DayLedger _today = new();
+        private long? _newsDay;
+        private long? _reportedDay;
+
+        /// <summary>The day so far, for the HUD: flights, revenue, margin.</summary>
+        public (int Flights, long Revenue, long Margin) TodaySoFar => (_today.Flights, _today.Revenue, _today.Margin);
+
+        /// <summary>Today's demand event, if there is one.</summary>
+        public DemandEvent? TodaysDemandEvent => DemandEvents.At(_processedTo, Clock);
+
+        /// <summary>
+        /// Once per Adelaide day: announce the day's demand event, and at curfew (23:00) the day's
+        /// results, paying the profitable-day challenge. Presentation news only — nothing here changes
+        /// the timeline, so it is checked once per update rather than as an event.
+        /// </summary>
+        private void AnnounceTheDay(SimulationTime now)
+        {
+            if (CareerState == null || PlayerAirline == null)
+                return;
+            _today.StartReliability ??= CareerState.Reliability;
+            var day = DemandEvents.DayOf(now, Clock);
+            if (_newsDay != day)
+            {
+                _newsDay = day;
+                if (DemandEvents.OnDay(day) is { } today)
+                {
+                    var names = new List<string>(today.Codes.Length);
+                    foreach (var code in today.Codes)
+                        names.Add(DestinationCatalogue.TryFind(code, out var d) ? d.Name : code);
+                    var places = string.Join(", ", names);
+                    _careerEvents.Add(new CareerEvent(CareerEventKind.News, CareerState.Tier,
+                        $"{today.Headline}: demand up {(int)Math.Round((today.Multiplier - 1) * 100)}% today to {places}."));
+                }
+            }
+
+            var local = Clock.LocalAt(now);
+            if (local.Hour < AirportCurfew.ClosedFromHour || _reportedDay == day)
+                return;
+            _reportedDay = day;
+            if (_today.Flights == 0)
+            {
+                _today.Reset(CareerState.Reliability);
+                return;
+            }
+
+            var change = CareerState.Reliability - (_today.StartReliability ?? CareerState.Reliability);
+            var best = DestinationCatalogue.TryFind(_today.BestCode, out var bestPlace) ? bestPlace.Name : _today.BestCode;
+            _careerEvents.Add(new CareerEvent(CareerEventKind.DailyReport, CareerState.Tier,
+                $"Day's results: {_today.Flights} flight{(_today.Flights == 1 ? "" : "s")} · ${_today.Revenue:N0} revenue · "
+                + $"{(_today.Margin >= 0 ? "+" : "−")}${Math.Abs(_today.Margin):N0} margin · reliability {CareerState.Reliability}% "
+                + $"({(change >= 0 ? "+" : "")}{change}) · best: {best}."));
+            CheckChallenges(profitableDay: _today.Flights >= 4 && _today.Margin > 0);
+            _today.Reset(CareerState.Reliability);
+        }
+
+        /// <summary>When the active contract's deadline passes, or null (ADR 0127).</summary>
+        public SimulationTime? ContractExpiresAt()
+        {
+            var active = CareerState?.ActiveContract;
+            if (active == null || !CareerState.TryFindDefinition(active.DefinitionId, out var definition)
+                || !definition.HasDeadline)
+                return null;
+            return active.AcceptedAt.Advance(definition.DeadlineSeconds);
+        }
+
+        /// <summary>
+        /// A contract not flown by its deadline lapses (ADR 0127): the reliability it promised is lost,
+        /// flights already paid stay paid, and anything still in the air flies on at the ordinary rate.
+        /// Processed at the exact deadline, so the result never depends on how the clock was stepped.
+        /// </summary>
+        private bool ExpireContract(SimulationTime now)
+        {
+            var expiry = ContractExpiresAt();
+            if (!expiry.HasValue || expiry.Value.CompareTo(now) > 0)
+                return false;
+            var active = CareerState.ActiveContract;
+            CareerState.TryFindDefinition(active.DefinitionId, out var definition);
+            CareerState.AbandonContract(definition.ReliabilityLossOnCancel);
+            _careerEvents.Add(new CareerEvent(CareerEventKind.ContractExpired, CareerState.Tier,
+                $"{ContractKindLabel(definition.Kind)} to {DestinationName(definition.DestinationCode)} lapsed — "
+                + $"{active.CompletedRotations} of {definition.RequiredRotations} flown. Reliability −{definition.ReliabilityLossOnCancel}."));
+            return true;
+        }
+
+        public static string ContractKindLabel(ContractKind kind) => kind switch
+        {
+            ContractKind.Charter => "Charter",
+            ContractKind.Medical => "Medical flight",
+            ContractKind.Freight => "Freight run",
+            _ => "Contract"
+        };
+
+        private static string DestinationName(string code) =>
+            DestinationCatalogue.TryFind(code, out var destination) ? destination.Name : code;
 
         /// <summary>Oldest-first career news since the last call — tier-ups, goals, the finale.</summary>
         public bool TryTakeCareerEvent(out CareerEvent careerEvent)
@@ -2404,6 +2588,7 @@ namespace Airside.Simulation
             {
                 CareerState.ApplyPunctuality(
                     FlightEconomics.PunctualityReliabilityDelta(aircraft.PushbackLatenessSeconds.Value));
+                CareerState.RecordPushback(aircraft.PushbackLatenessSeconds.Value <= FlightEconomics.OnTimeGraceSeconds);
                 aircraft.PushbackLatenessSeconds = null;
             }
 
@@ -2419,6 +2604,7 @@ namespace Airside.Simulation
                 CareerState.RecordService(justFlown.Value.Code,
                     settlement.Value.Payment - completionBonus - dispatchCost,
                     manual: !aircraft.AutomatedTrip);
+                _today.Record(justFlown.Value, settlement.Value.Payment, dispatchCost);
                 aircraft.AutomatedTrip = false;
                 AdvanceCareer();
             }
@@ -2487,6 +2673,7 @@ namespace Airside.Simulation
             ProcessOutstationServices(target);
             if (_repeatSchedulesLive) ProcessRepeatSchedules(target);
             ProcessDue(_processedTo);
+            AnnounceTheDay(target);
             // A Cathay that flew its last rotation home during this step is retired off-map.
             if (!IsCathaySeason(target))
                 RetireOutOfSeasonOperators(at: target);
@@ -2499,6 +2686,7 @@ namespace Airside.Simulation
             do
             {
                 changed = false;
+                changed |= ExpireContract(now);
                 foreach (var aircraft in _fleet)
                     changed |= AdvanceAircraft(aircraft, now);
                 changed |= RunTower(now);

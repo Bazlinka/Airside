@@ -219,6 +219,16 @@ namespace Airside.Simulation
         /// Pays a one-off reward (a campaign chapter) at most once, ever: the key joins the
         /// settlement keys saves already carry, so a reload cannot pay it twice.
         /// </summary>
+        /// <summary>Consecutive on-time player pushbacks (ADR 0127 challenges). Saved from v15.</summary>
+        public int OnTimeStreak { get; private set; }
+
+        internal void RecordPushback(bool onTime) => OnTimeStreak = onTime ? OnTimeStreak + 1 : 0;
+
+        internal void RestoreOnTimeStreak(int streak) => OnTimeStreak = Math.Max(0, streak);
+
+        /// <summary>True once <see cref="TryAward"/> has paid <paramref name="key"/> (challenges, the finale).</summary>
+        public bool HasAward(string key) => !string.IsNullOrEmpty(key) && _processedSettlements.Contains(key);
+
         internal bool TryAward(string key, long amount)
         {
             if (string.IsNullOrEmpty(key) || !_processedSettlements.Add(key))

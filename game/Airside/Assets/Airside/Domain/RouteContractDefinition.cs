@@ -3,6 +3,19 @@ using System.Collections.Generic;
 
 namespace Airside.Domain
 {
+    /// <summary>What sort of work a contract is (ADR 0127).</summary>
+    public enum ContractKind
+    {
+        /// <summary>A run of scheduled rotations on one route.</summary>
+        Scheduled,
+        /// <summary>One well-paid flight that has to go soon.</summary>
+        Charter,
+        /// <summary>An urgent regional flight: short deadline, a big reliability gain.</summary>
+        Medical,
+        /// <summary>Turboprop freight rotations: modest pay, generous deadline.</summary>
+        Freight
+    }
+
     /// <summary>
     /// An authored airline service contract (ADR 0053): a route, an eligible aircraft, how
     /// many rotations it takes and what each one — and completing the whole contract — pays.
@@ -15,7 +28,8 @@ namespace Airside.Domain
             string id, string originCode, string destinationCode, AircraftType eligibleType,
             int requiredRotations, long paymentPerRotation, long completionReward,
             int reliabilityGainPerRotation, OperatingTier requiredTier, int reliabilityLossOnCancel = 0,
-            OperatingTier unlocksTier = OperatingTier.Provisional)
+            OperatingTier unlocksTier = OperatingTier.Provisional, ContractKind kind = ContractKind.Scheduled,
+            long deadlineSeconds = 0)
         {
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentException("A contract id is required.", nameof(id));
@@ -43,7 +57,16 @@ namespace Airside.Domain
             RequiredTier = requiredTier;
             ReliabilityLossOnCancel = Math.Max(0, reliabilityLossOnCancel);
             UnlocksTier = unlocksTier;
+            Kind = kind;
+            DeadlineSeconds = Math.Max(0, deadlineSeconds);
         }
+
+        public ContractKind Kind { get; }
+
+        /// <summary>Seconds from acceptance to fly every rotation, or 0 for no deadline (ADR 0127).</summary>
+        public long DeadlineSeconds { get; }
+
+        public bool HasDeadline => DeadlineSeconds > 0;
 
         public string Id { get; }
         public string OriginCode { get; }

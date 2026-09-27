@@ -37,7 +37,7 @@ namespace Airside.Simulation
         /// 13 adds selectable career goals, route proof, outstation fleet/bases, earned repeat
         /// schedules, recent service margins and active-play timing (ADR 0120).
         /// </summary>
-        public const int CurrentVersion = 14;
+        public const int CurrentVersion = 15;
 
         public int Version = CurrentVersion;
 
@@ -82,6 +82,14 @@ namespace Airside.Simulation
         public string ContractRequiredTier;
         public int ContractReliabilityLoss;
         public string ContractUnlocksTier;
+
+        // ---- Contract variety (v15 / ADR 0127) -------------------------------------
+        /// <summary>Scheduled / Charter / Medical / Freight. Older saves are Scheduled.</summary>
+        public string ContractKind;
+        /// <summary>Seconds from acceptance to fly the contract; 0 for none (every pre-v15 contract).</summary>
+        public long ContractDeadlineSeconds;
+        /// <summary>Consecutive on-time pushbacks, for the challenges.</summary>
+        public int OnTimeStreak;
 
         // ---- Player base (v12 / ADR 0091) ----------------------------------------
         public string PlayerBaseLevel;
@@ -222,6 +230,7 @@ namespace Airside.Simulation
                 ManualRotations = operations.CareerState.ManualRotations,
                 Difficulty = operations.CareerState.Difficulty.ToString(),
                 CoachingOff = !operations.FirstFlightCoaching,
+                OnTimeStreak = operations.CareerState.OnTimeStreak,
                 ActivePlaySeconds = operations.CareerState.ActivePlaySeconds,
                 RegionalAtSeconds = operations.CareerState.RegionalAtSeconds,
                 DomesticAtSeconds = operations.CareerState.DomesticAtSeconds,
@@ -283,6 +292,8 @@ namespace Airside.Simulation
                 data.ContractRequiredTier = definition.RequiredTier.ToString();
                 data.ContractReliabilityLoss = definition.ReliabilityLossOnCancel;
                 data.ContractUnlocksTier = definition.UnlocksTier.ToString();
+                data.ContractKind = definition.Kind.ToString();
+                data.ContractDeadlineSeconds = definition.DeadlineSeconds;
             }
 
             foreach (var airline in operations.Airlines)
@@ -467,11 +478,17 @@ namespace Airside.Simulation
                     && Enum.TryParse(data.ContractUnlocksTier, out OperatingTier parsedUnlock)
                     && Enum.IsDefined(typeof(OperatingTier), parsedUnlock))
                     unlocksTier = parsedUnlock;
+                // v15: the contract's kind and deadline. Older saves had neither: Scheduled, no deadline.
+                var kind = ContractKind.Scheduled;
+                if (data.Version >= 15 && !string.IsNullOrEmpty(data.ContractKind)
+                    && (!Enum.TryParse(data.ContractKind, out kind) || !Enum.IsDefined(typeof(ContractKind), kind)))
+                    throw new FormatException($"Unknown contract kind '{data.ContractKind}'.");
                 snapshot = new RouteContractDefinition(
                     data.ContractDefinitionId, data.ContractOriginCode, data.ContractDestinationCode, contractType,
                     Math.Max(1, data.ContractRequiredRotations), Math.Max(0, data.ContractPaymentPerRotation),
                     Math.Max(0, data.ContractCompletionReward), data.ContractReliabilityGain, requiredTier,
-                    data.ContractReliabilityLoss, unlocksTier);
+                    data.ContractReliabilityLoss, unlocksTier, kind,
+                    data.Version >= 15 ? Math.Max(0, data.ContractDeadlineSeconds) : 0);
             }
 
             var processedKeys = data.Version >= 6 ? data.ProcessedSettlementKeys ?? new List<string>() : new List<string>();
@@ -545,6 +562,8 @@ namespace Airside.Simulation
                 data.Version >= 13 ? data.FinaleAtSeconds : 0,
                 ParseDifficulty(data));
             operations.FirstFlightCoaching = data.Version < 14 || !data.CoachingOff;
+            if (data.Version >= 15)
+                operations.CareerState.RestoreOnTimeStreak(data.OnTimeStreak);
 
             if (data.Version >= 13)
             {

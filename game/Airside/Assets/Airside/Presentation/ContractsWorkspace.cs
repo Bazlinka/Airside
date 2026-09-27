@@ -92,13 +92,13 @@ namespace Airside.Presentation
 
             if (career.ActiveContract != null
                 && career.TryFindDefinition(career.ActiveContract.DefinitionId, out var active))
-                FillActive(operations, career, active);
+                FillActive(operations, career, active, now);
 
             FillOffers(operations, career);
         }
 
         private void FillActive(AirlineOperations operations, AirlineCareerState career,
-            RouteContractDefinition definition)
+            RouteContractDefinition definition, SimulationTime now)
         {
             HasActive = true;
             ActiveTitle = OperationsSummary.ProveTitle(definition);
@@ -119,6 +119,12 @@ namespace Airside.Presentation
                 : "Cancellation: no reliability penalty");
             if (definition.ReliabilityGainPerRotation > 0)
                 _activeTerms.Add($"+{definition.ReliabilityGainPerRotation} reliability per rotation");
+            // ADR 0127: a deadline turns the contract into a commitment with a clock on it.
+            if (operations.ContractExpiresAt() is { } due)
+            {
+                var left = Math.Max(0, due.ElapsedSeconds - now.ElapsedSeconds);
+                _activeTerms.Add($"Due in {RouteMapWorkspaceModel.Duration(left)} — lapses for −{definition.ReliabilityLossOnCancel} reliability");
+            }
 
 
             EligibleAircraftLine = EligibleRegistrations(operations, definition.EligibleType, out var any);
@@ -137,11 +143,11 @@ namespace Airside.Presentation
 
                 var total = definition.PaymentPerRotation * definition.RequiredRotations
                             + definition.CompletionReward;
-                var title = $"{OperationsSummary.PlaceName(definition.DestinationCode)} "
-                            + $"{RouteMapWorkspaceModel.BandLabel(RouteAccess.BandOf(definition.DestinationCode)).ToLowerInvariant()} service";
-                var terms = $"{definition.RequiredRotations} rotations"
+                var title = OfferTitle(definition);
+                var terms = $"{definition.RequiredRotations} {(definition.RequiredRotations == 1 ? "flight" : "rotations")}"
                             + $"  ·  {definition.EligibleType.Name}"
-                            + $"  ·  ${total:N0} total";
+                            + $"  ·  ${total:N0} total"
+                            + (definition.HasDeadline ? $"  ·  within {RouteMapWorkspaceModel.Duration(definition.DeadlineSeconds)}" : string.Empty);
 
                 string lockReason;
                 if (career.ActiveContract != null)
@@ -161,6 +167,19 @@ namespace Airside.Presentation
                 EmptyOffersLine = offers.Count == 0
                     ? "No offers this window — fly, raise reliability, or buy a type that opens longer routes."
                     : "Every offer this window is already complete. New offers are on the way.";
+        }
+
+        /// <summary>"Kingscote charter", "Ceduna medical flight", "Mildura freight run", "Melbourne domestic service".</summary>
+        public static string OfferTitle(RouteContractDefinition definition)
+        {
+            var place = OperationsSummary.PlaceName(definition.DestinationCode);
+            return definition.Kind switch
+            {
+                ContractKind.Charter => $"{place} charter",
+                ContractKind.Medical => $"{place} medical flight",
+                ContractKind.Freight => $"{place} freight run",
+                _ => $"{place} {RouteMapWorkspaceModel.BandLabel(RouteAccess.BandOf(definition.DestinationCode)).ToLowerInvariant()} service"
+            };
         }
 
         private static bool OwnsType(AirlineOperations operations, AircraftType type)

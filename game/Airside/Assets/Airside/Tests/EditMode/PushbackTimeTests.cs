@@ -83,7 +83,7 @@ namespace Airside.Tests
                     $"TIME moved while {plane.State}");
             }
 
-            Assert.That(seen, Does.Contain(FleetState.TaxiOut).And.Contain(FleetState.Outbound));
+            Assert.That(seen, Has.Member(FleetState.TaxiOut).And.Member(FleetState.Outbound));
         }
 
         [Test]

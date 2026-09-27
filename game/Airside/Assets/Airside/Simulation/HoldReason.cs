@@ -39,6 +39,8 @@ namespace Airside.Simulation
         ChooseStand,
         /// <summary>Held airborne: curfew, or no stand to taxi to.</summary>
         HeldAirborne,
+        /// <summary>Held for taxiing traffic crossing the runway, or a taxi held because its crossing is busy (ADR 0126).</summary>
+        CrossingRunway,
         /// <summary>Routine maintenance check.</summary>
         InCheck
     }
@@ -172,6 +174,10 @@ namespace Airside.Simulation
                     includeStationary: now.ElapsedSeconds - readyAt.ElapsedSeconds < GroundTraffic.MaxWaitSeconds,
                     out var blocker))
                 return new HoldReason(HoldKind.TaxiwayBlocked, blocker, runway);
+            var busy = CrossingIntoBusyStrip(AdelaideGround.TaxiOut(aircraft.Stand, aircraft.Type, runway), runway, now);
+            if (busy.HasValue)
+                return new HoldReason(HoldKind.CrossingRunway, runway: runway,
+                    detail: busy.Value.MainStrip ? "05/23" : "12/30");
             // Everything is clear: it pushes on the next ground-control tick.
             return HoldReason.Nothing;
         }
@@ -191,6 +197,11 @@ namespace Airside.Simulation
                     includeStationary: now.ElapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds < GroundTraffic.MaxWaitSeconds,
                     out var blocker))
                 return new HoldReason(HoldKind.TaxiwayBlocked, blocker, aircraft.AssignedRunway);
+            var busy = CrossingIntoBusyStrip(AdelaideGround.TaxiIn(chosen.Value, aircraft.Type, aircraft.AssignedRunway),
+                aircraft.AssignedRunway, now);
+            if (busy.HasValue)
+                return new HoldReason(HoldKind.CrossingRunway, runway: aircraft.AssignedRunway,
+                    detail: busy.Value.MainStrip ? "05/23" : "12/30");
             return HoldReason.Nothing;
         }
 
@@ -269,6 +280,9 @@ namespace Airside.Simulation
             }
             if (!departure && !VacateClearOfTaxiing(aircraft, now))
                 return new HoldReason(HoldKind.TaxiwayBlocked, runway: runway, detail: "the runway exit");
+            var crossing = CrossingDue(main, now, now.Advance(RunwayBusySeconds(aircraft, landing: !departure)));
+            if (crossing != null)
+                return new HoldReason(HoldKind.CrossingRunway, crossing, runway);
             // Clear to go on the next tower tick.
             return HoldReason.Nothing;
         }

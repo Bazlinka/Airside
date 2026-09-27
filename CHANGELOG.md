@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Better taxiing (ADR 0126).** Aircraft brake smoothly into a queue instead of stopping dead
+  (and stop weaving and rolling once stopped), move up the queue like aircraft, and taxi at
+  the manuals' normal 20–22 kt instead of 25. The tower now respects runway crossings: no
+  takeoff or landing while someone is taxiing across, and nobody is released onto a crossing
+  while that runway is busy. Taxi lights stay off on the push and while stopped.
+
 - **Tugs and turnaround vehicles now appear (ADR 0126).** They had been built behind a
   switch that hid them on the default field. Every pushback now has a tug that reverses onto
   the nose, pushes, unhooks and drives clear of the wing before the aircraft taxis. Your

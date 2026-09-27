@@ -1576,8 +1576,11 @@ namespace Airside.Presentation
                     engines.HasValue);
                 UpdateGroundShadow(view);
                 UpdateSelectionMarker(view, flight.AircraftId);
+                GroundPose? groundPose = TryFleetGround(flight, out var groundAircraft, out var groundVisual)
+                    ? FleetGroundPose(groundAircraft, groundVisual, 0f)
+                    : null;
                 UpdateAircraftLightsAndGear(viewParts.LightsAndGear, phase, PresentationDaylight, progress,
-                    PresentationDeltaTime, PresentationClock, engines);
+                    PresentationDeltaTime, PresentationClock, engines, groundPose);
                 UpdateCabinDoor(viewParts.CabinDoors, phase, engines?.DoorsOpen);
                 var glowState = CabinWindowGlowState(phase, PresentationDaylight);
                 if (viewParts.CabinWindowGlowState != glowState)
@@ -1944,7 +1947,7 @@ namespace Airside.Presentation
 
         private static void UpdateAircraftLightsAndGear(
             LightGearPart[] parts, AircraftPhase phase, float daylight, float progress01 = 1f, float deltaTime = -1f,
-            float presentationTime = 0f, EngineState? engines = null)
+            float presentationTime = 0f, EngineState? engines = null, GroundPose? groundPose = null)
         {
             if (deltaTime < 0f)
                 deltaTime = Time.unscaledDeltaTime;
@@ -1965,8 +1968,11 @@ namespace Airside.Presentation
             // those windows — every night departure/arrival beamed the nose taxi spotlight
             // from a motionless, gate-parked aircraft. A cold, parked aircraft never lit it;
             // this was the same bug in a narrower, still-visible form.
+            // ADR 0126: and only while actually taxiing forward — dark on the tail-first push and
+            // while stopped in a queue, as crews do, instead of lit from pushback to the hold.
             var taxiLights = !airborne && enginesOn
-                && phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback;
+                && phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback
+                && (groundPose == null || (!groundPose.Value.TailFirst && groundPose.Value.Speed > 0.5f));
 
             for (var i = 0; i < parts.Length; i++)
             {

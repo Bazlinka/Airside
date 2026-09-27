@@ -460,6 +460,81 @@ namespace Airside.Simulation
             return before + last.PauseBeforeSeconds + last.Path.SecondsAtDistance(along);
         }
 
+        /// <summary>Comfortable braking into a queue place (ADR 0126), gentler than the path's own 0.8 m/s².</summary>
+        public const float QueueBrakingMetresPerSecondSquared = 0.6f;
+
+        private readonly Dictionary<long, (double Start, float Distance, float Speed, float Braking)> _queueBrakes = new();
+
+        /// <summary>
+        /// The leg time that puts the aircraft where it really is when it must stop at
+        /// <paramref name="stopSeconds"/> (a queue place short of the end) instead of carrying on:
+        /// it follows the plan until it has to start braking, then slows at an even rate to stand still
+        /// exactly at the stop. <paramref name="speed"/> is its real speed, zero once stopped. Stopping
+        /// used to be a clamp, so an aircraft at 19 kt froze on the spot and kept "rolling" in place.
+        /// </summary>
+        public double BrakedSeconds(double seconds, double stopSeconds, out float speed)
+        {
+            speed = -1f;
+            if (stopSeconds >= Seconds - 1e-6 || seconds <= 0)
+                return seconds;
+            var before = 0.0;
+            for (var i = 0; i < _parts.Count - 1; i++)
+                before += _parts[i].Seconds;
+            var last = _parts[_parts.Count - 1];
+            before += last.PauseBeforeSeconds;
+            if (stopSeconds <= before)
+            {
+                if (seconds < stopSeconds)
+                    return seconds;
+                speed = 0f;
+                return stopSeconds;
+            }
+
+            var path = last.Path;
+            var stopLocal = stopSeconds - before;
+            var key = (long)Math.Round(stopLocal * 1000.0);
+            if (!_queueBrakes.TryGetValue(key, out var brake))
+            {
+                var stopDistance = path.DistanceAt(stopLocal);
+                // Latest point on the plan from which an even brake stops exactly at the queue place.
+                var t = stopLocal;
+                var sample = path.SampleAt(t);
+                while (t > 0)
+                {
+                    sample = path.SampleAt(t);
+                    var room = stopDistance - path.DistanceAt(t);
+                    if (sample.Speed * sample.Speed <= 2f * QueueBrakingMetresPerSecondSquared * room)
+                        break;
+                    t = Math.Max(0, t - 0.25);
+                }
+
+                var startDistance = path.DistanceAt(t);
+                var gap = Math.Max(0.01f, stopDistance - startDistance);
+                var v0 = sample.Speed;
+                brake = (t, startDistance, v0, v0 > 0.01f ? v0 * v0 / (2f * gap) : QueueBrakingMetresPerSecondSquared);
+                _queueBrakes[key] = brake;
+            }
+
+            var local = seconds - before;
+            if (local <= brake.Start)
+                return seconds;
+            var tau = (float)(local - brake.Start);
+            var stopAfter = brake.Speed / Math.Max(1e-4f, brake.Braking);
+            float distance;
+            if (brake.Speed <= 0.01f || tau >= stopAfter)
+            {
+                distance = brake.Distance + brake.Speed * stopAfter * 0.5f;
+                speed = 0f;
+            }
+            else
+            {
+                distance = brake.Distance + brake.Speed * tau - 0.5f * brake.Braking * tau * tau;
+                speed = brake.Speed - brake.Braking * tau;
+            }
+
+            return before + path.SecondsAtDistance(distance);
+        }
+
         private float[] _tableX;
         private float[] _tableZ;
 

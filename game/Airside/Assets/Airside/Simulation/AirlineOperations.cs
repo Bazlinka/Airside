@@ -1323,6 +1323,61 @@ namespace Airside.Simulation
                     yield return destination;
         }
 
+        // ---- Runway crossings (ADR 0126) ------------------------------------------------------
+
+        private static SimulationTime GridBefore(SimulationTime now) =>
+            new(Math.Max(0, now.ElapsedSeconds - GroundTraffic.GridSeconds));
+
+        /// <summary>How long a movement cleared now would have the strip.</summary>
+        internal long RunwayBusySeconds(FleetAircraft aircraft, bool landing)
+        {
+            var profile = AircraftPerformance.For(aircraft.Type);
+            if (landing)
+                return ApproachHold.RemainingFinalSeconds(profile.ApproachSeconds, aircraft.Registration)
+                       + profile.LandingSeconds + AdelaideGround.ClearOfRunwaySeconds(aircraft.Type, aircraft.AssignedRunway);
+            return AdelaideGround.LineupFor(aircraft.AssignedRunway, aircraft.Type).WholeSeconds
+                   + (long)Math.Round(profile.TakeoffRollExactSeconds);
+        }
+
+        /// <summary>A taxiing aircraft due on <paramref name="mainStrip"/> between the two times, or null.</summary>
+        internal FleetAircraft CrossingDue(bool mainStrip, SimulationTime from, SimulationTime until)
+        {
+            foreach (var aircraft in _fleet)
+            {
+                GroundLeg leg;
+                if (aircraft.State == FleetState.TaxiOut)
+                    leg = AdelaideGround.TaxiOut(aircraft.DepartureStand, aircraft.Type, aircraft.AssignedRunway);
+                else if (aircraft.State == FleetState.TaxiIn)
+                    leg = AdelaideGround.TaxiIn(aircraft.Stand, aircraft.Type, aircraft.AssignedRunway);
+                else
+                    continue;
+                foreach (var crossing in RunwayCrossings.For(leg, aircraft.AssignedRunway))
+                {
+                    if (crossing.MainStrip != mainStrip)
+                        continue;
+                    var enter = aircraft.StateStartedAt.ElapsedSeconds + (long)Math.Floor(crossing.EnterSeconds);
+                    var exit = aircraft.StateStartedAt.ElapsedSeconds + (long)Math.Ceiling(crossing.ExitSeconds);
+                    if (exit > from.ElapsedSeconds && enter < until.ElapsedSeconds)
+                        return aircraft;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>The first crossing on <paramref name="leg"/>, started now, that would meet a busy strip.</summary>
+        internal RunwayCrossing? CrossingIntoBusyStrip(GroundLeg leg, RunwayDirection ownRunway, SimulationTime start)
+        {
+            foreach (var crossing in RunwayCrossings.For(leg, ownRunway))
+            {
+                var freeAt = crossing.MainStrip ? _mainRunwayFreeAt : _crossRunwayFreeAt;
+                if (freeAt.ElapsedSeconds > start.ElapsedSeconds + (long)Math.Floor(crossing.EnterSeconds))
+                    return crossing;
+            }
+
+            return null;
+        }
+
         public long AirborneSeconds(FleetAircraft aircraft, Destination destination) =>
             LegTiming.AirborneSeconds(DistanceKm(destination), aircraft.Type);
 
@@ -1626,6 +1681,20 @@ namespace Airside.Simulation
                 // at the same granularity live play would.
                 if (Weather.At(now) == WeatherKind.Storm)
                     Consider(new SimulationTime((now.ElapsedSeconds / Weather.BlockSeconds + 1) * Weather.BlockSeconds));
+                // A departure held short for crossing traffic (ADR 0126) is re-checked on the grid.
+                foreach (var aircraft in _fleet)
+                {
+                    if (aircraft.State != FleetState.HoldingShort)
+                        continue;
+                    var main = RunwayWeather.IsMainRunway(aircraft.AssignedRunway);
+                    if ((main ? _mainRunwayFreeAt : _crossRunwayFreeAt).CompareTo(now) <= 0
+                        && CrossingDue(main, GridBefore(now),
+                            now.Advance(RunwayBusySeconds(aircraft, landing: false))) != null)
+                    {
+                        Consider(GroundTraffic.NextGrid(now));
+                        break;
+                    }
+                }
                 if (AirportCurfew.IsClosed(now, Clock))
                 {
                     var anyExempt = false;
@@ -2490,10 +2559,13 @@ namespace Airside.Simulation
                     var readyAt = DepartureReadyAt(aircraft);
                     if (!now.Equals(readyAt) && !GroundTraffic.OnGrid(now))
                         return false;
-                    if (!GroundTraffic.PathClear(_fleet, aircraft,
-                            AdelaideGround.TaxiOut(aircraft.Stand, aircraft.Type, departureRunway),
+                    var taxiOutLeg = AdelaideGround.TaxiOut(aircraft.Stand, aircraft.Type, departureRunway);
+                    if (!GroundTraffic.PathClear(_fleet, aircraft, taxiOutLeg,
                             departureRunway, taxiOut: true, now,
                             includeStationary: now.ElapsedSeconds - readyAt.ElapsedSeconds < GroundTraffic.MaxWaitSeconds))
+                        return false;
+                    // ADR 0126: not onto a route that crosses a runway while that runway is busy.
+                    if (CrossingIntoBusyStrip(taxiOutLeg, departureRunway, now).HasValue)
                         return false;
                     if (aircraft.Airline.IsPlayer)
                     {
@@ -2600,11 +2672,13 @@ namespace Airside.Simulation
                     // route is clear, moving only on the grid once it has had to wait.
                     if (!now.Equals(aircraft.StateStartedAt) && !GroundTraffic.OnGrid(now))
                         return false;
-                    if (!GroundTraffic.PathClear(_fleet, aircraft,
-                            AdelaideGround.TaxiIn(chosen.Value, aircraft.Type, aircraft.AssignedRunway),
+                    var taxiInLeg = AdelaideGround.TaxiIn(chosen.Value, aircraft.Type, aircraft.AssignedRunway);
+                    if (!GroundTraffic.PathClear(_fleet, aircraft, taxiInLeg,
                             aircraft.AssignedRunway, taxiOut: false, now,
                             includeStationary: now.ElapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds
                                                < GroundTraffic.MaxWaitSeconds))
+                        return false;
+                    if (CrossingIntoBusyStrip(taxiInLeg, aircraft.AssignedRunway, now).HasValue)
                         return false;
                     aircraft.Stand = chosen.Value;
                     Transition(aircraft, FleetState.TaxiIn, now, TaxiInSecondsTo(chosen.Value, aircraft.Type, aircraft.AssignedRunway));
@@ -2968,6 +3042,14 @@ namespace Airside.Simulation
             // wind was near a tie. Go-around rejoin still reassigns via AdvanceAircraft.
             var landing = next.State == FleetState.HoldingForLanding;
             var profile = AircraftPerformance.For(next.Type);
+            // ADR 0126: no landing or takeoff while taxiing traffic is due across this strip. The
+            // crossing aircraft is already moving, so the wait is short; re-checked on the grid.
+            if (CrossingDue(mainStrip, now, now.Advance(RunwayBusySeconds(next, landing))) != null)
+                return false;
+            // …and once it is across, the clearance waits for the grid, so it does not depend on how
+            // the clock was stepped past the moment the crossing ended.
+            if (!GroundTraffic.OnGrid(now) && CrossingDue(mainStrip, GridBefore(now), now) != null)
+                return false;
             if (landing && ShouldGoAround(next, now, mainStrip))
             {
                 // Abort off short final — same remaining final the holder is already flying —
@@ -3121,7 +3203,12 @@ namespace Airside.Simulation
         {
             // Ground releases are checked on the five-second grid. Taxi legs are short, so
             // twelve minutes is a generous bounded horizon while keeping this HUD estimate cheap.
-            for (var i = 0; i < 144 && !VacateClearOfTaxiing(aircraft, at); i++)
+            var main = RunwayWeather.IsMainRunway(aircraft.AssignedRunway);
+            var busy = RunwayBusySeconds(aircraft, landing: true);
+            // …and, like the tower, wait out taxiing traffic due across the strip (ADR 0126).
+            for (var i = 0; i < 144 && (!VacateClearOfTaxiing(aircraft, at)
+                                        || CrossingDue(main, at, at.Advance(busy)) != null
+                                        || (!GroundTraffic.OnGrid(at) && CrossingDue(main, GridBefore(at), at) != null)); i++)
                 at = GroundTraffic.NextGrid(at);
             return at;
         }

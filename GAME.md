@@ -1,5 +1,13 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — taxiing (ADR 0126).** `GroundLeg.BrakedSeconds` replaces
+  the queue clamp (sim + presentation); `QueueShuffle` accelerates/brakes; straight taxi 20 kt
+  jets / 22 kt turboprops; `RunwayCrossings` + tower/ground gates (`CrossingDue`,
+  `CrossingIntoBusyStrip`, grid re-check), `HoldKind.CrossingRunway`; taxi light only while
+  taxiing forward. Evidence: `scripts/test-domain.sh` **835/835** (incl. step-size timeline and
+  landing-estimate accuracy), type-check clean, balance sim pacing unchanged. **Mac checks:**
+  a queue at 05 at dusk (braking, lights), a 05 arrival crossing 12/30 while 12 is in use.
+
 - **2026-09-27 Claude (branch restarted from main after PR #413) — vehicles and tugs (ADR 0126).**
   Root cause: `ShowGroundVehicles`/`ShowStandEquipment` are false on the bare field, so no
   turnaround vehicle was ever built. New `AirsideFocusMode.ShowTurnaroundVehicles` (always on)

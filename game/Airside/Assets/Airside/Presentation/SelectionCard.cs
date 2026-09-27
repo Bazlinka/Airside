@@ -44,6 +44,12 @@ namespace Airside.Presentation
 
         /// <summary>Why the aircraft is waiting (ADR 0124), or empty.</summary>
         public string HoldLine = string.Empty;
+
+        /// <summary>ADR 0128: what tapping the hold line does (e.g. select the blocker), or empty for no link.</summary>
+        public string HoldAction = string.Empty;
+
+        /// <summary>Registration to go back to after following a hold link, or empty.</summary>
+        public string BackRegistration = string.Empty;
         public string PhaseLabel = string.Empty;
         public HudTone PhaseTone = HudTone.Accent;
         public bool IsPlayer;
@@ -98,9 +104,20 @@ namespace Airside.Presentation
             else
             {
                 into.Dot(x + 4f, box.Y + 66f, 7f, HudTone.Caution);
-                into.Text(new HudBox(x + 14f, box.Y + 58f, inner - 14f, 16f), data.HoldLine, 11f, HudTone.Caution,
-                    HudTextStyle.Bold);
+                var linked = !string.IsNullOrEmpty(data.HoldAction);
+                into.Text(new HudBox(x + 14f, box.Y + 58f, inner - (linked ? 28f : 14f), 16f), data.HoldLine, 11f,
+                    HudTone.Caution, HudTextStyle.Bold);
+                if (linked)
+                {
+                    // ADR 0128: the hold line is a link to what is holding it.
+                    into.Text(new HudBox(x + inner - 12f, box.Y + 57f, 12f, 16f), "›", 14f, HudTone.Caution, HudTextStyle.Bold);
+                    into.Hotspot(new HudBox(x, box.Y + 55f, inner, 22f), data.HoldAction);
+                }
             }
+
+            if (!string.IsNullOrEmpty(data.BackRegistration))
+                into.Button(new HudBox(box.Right - 20f - 108f - 86f, box.Y + 14f, 78f, 20f), "‹ " + data.BackRegistration,
+                    HudAction.SelectPrefix + data.BackRegistration, HudButtonStyle.Secondary);
 
             if (data.Prep.Count > 0)
                 PaintPrep(into, new HudBox(x, box.Y + 86f, inner, 44f), data.Prep);
@@ -163,7 +180,7 @@ namespace Airside.Presentation
             var width = (area.Width - gap) * 0.5f;
             if (data.Stands.Count == 0)
             {
-                into.Pill(new HudBox(area.X, y, area.Width, 28f), "ALL STANDS FULL — WAIT FOR ONE TO CLEAR",
+                into.Pill(new HudBox(area.X, y, area.Width, 28f), "EVERY STAND IS TAKEN. WAIT FOR ONE",
                     HudTone.Negative, fontSize: 9f);
                 return;
             }

@@ -116,7 +116,7 @@ namespace Airside.Presentation
             var finale = career.FinaleReached;
             return new CareerObjective(
                 finale ? "Established airline" : g.Title,
-                finale ? "Every career goal met · sandbox" : g.ProgressText,
+                finale ? "Every goal done. Keep flying" : g.ProgressText,
                 finale ? 1f : g.Target <= 0 ? 0f : g.Progress / (float)g.Target,
                 next, nextSeverity,
                 finale ? "CAREER COMPLETE" : "TOWARD " + g.UnlocksLabel.ToUpperInvariant());
@@ -231,7 +231,7 @@ namespace Airside.Presentation
         {
             if (definition == null)
                 return "Current contract";
-            return $"Prove the {PlaceName(definition.DestinationCode)} service";
+            return $"Fly the {PlaceName(definition.DestinationCode)} contract";
         }
 
         public static string PlaceName(string code)
@@ -273,11 +273,11 @@ namespace Airside.Presentation
             // Delivery inbound (purchase with no free stand) — do not say "track" like a line flight.
             if (priority.State == FleetState.Inbound && priority.CompletedTrips == 0
                 && !priority.Scheduled.HasValue)
-                return ($"Next: wait for {priority.Registration} to park, then schedule its first flight",
+                return ($"Next: let {priority.Registration} park, then plan its first flight",
                     StatusSeverity.Attention);
 
             if (Maintenance.InCheck(priority, now))
-                return ($"Next: wait for {priority.Registration}'s check until {clock.TimeText(priority.CheckUntil.Value)}",
+                return ($"Next: {priority.Registration} is in its check until {clock.TimeText(priority.CheckUntil.Value)}",
                     StatusSeverity.Attention);
 
             if (priority.State == FleetState.AtStand && !priority.Scheduled.HasValue && Maintenance.IsOverdue(priority))
@@ -301,7 +301,7 @@ namespace Airside.Presentation
                 }
 
                 var when = clock.TimeText(priority.Scheduled.Value.DepartAt);
-                return ($"Next: follow {priority.Registration} for pushback at {when}",
+                return ($"Next: watch {priority.Registration} push back at {when}",
                     severity == StatusSeverity.Normal ? StatusSeverity.Attention : severity);
             }
 
@@ -310,7 +310,7 @@ namespace Airside.Presentation
                 if (career?.ActiveContract != null
                     && career.TryFindDefinition(career.ActiveContract.DefinitionId, out var active))
                 {
-                    return ($"Next: schedule {priority.Registration} to {PlaceName(active.DestinationCode)}",
+                    return ($"Next: plan {priority.Registration} to {PlaceName(active.DestinationCode)}",
                         StatusSeverity.Attention);
                 }
 
@@ -326,7 +326,7 @@ namespace Airside.Presentation
                 if (hangar.HasOffer && !hangar.ReadyToBuy && !hangar.FleetFull)
                     return (!string.IsNullOrEmpty(hangar.BaseRequirementLine)
                             ? $"Next: expand your Adelaide base for the {hangar.Offer.Type.Name}"
-                            : $"Next: fly {priority.Registration} to earn toward the {hangar.Offer.Type.Name}",
+                            : $"Next: keep flying {priority.Registration} to earn the {hangar.Offer.Type.Name}",
                         StatusSeverity.Attention);
 
                 return ($"Next: plan a flight for {priority.Registration}", StatusSeverity.Normal);

@@ -46,19 +46,19 @@ namespace Airside.Presentation
             }),
             new Section("Airline", new[]
             {
-                new Binding("Tab", "Map workspace — routes and flight planning"),
+                new Binding("Tab", "Map: plan flights"),
                 new Binding("[ / ]", "Previous / next aircraft"),
                 new Binding("L", "Aircraft tags at the airport"),
                 new Binding("N", "Airport mini-map (click or drag to move)"),
-                new Binding("H", "Fleet workspace — aircraft and market"),
-                new Binding("T", "Operations workspace — movement board"),
-                new Binding("C", "Contracts workspace — active and offers"),
+                new Binding("H", "Fleet: your aircraft and the market"),
+                new Binding("T", "Ops: the departures and arrivals board"),
+                new Binding("C", "Contracts: yours and the offers"),
                 new Binding("F8", "Dev tools (playtest)"),
-                new Binding("F1", "Flight Manual — how to play and controls"),
+                new Binding("F1", "Flight Manual"),
             }),
             new Section("General", new[]
             {
-                new Binding("Esc", "Close panel, options, then menu"),
+                new Binding("Esc", "Close a panel, then open the menu"),
                 new Binding("M", "Mute"),
             }),
         };

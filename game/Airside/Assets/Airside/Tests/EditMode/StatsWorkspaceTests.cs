@@ -22,10 +22,10 @@ namespace Airside.Tests
 
             Assert.That(model.AirlineName, Is.EqualTo(ops.PlayerAirline.Name));
             Assert.That(model.FundsLine, Is.EqualTo($"${ops.CareerState.Funds:N0} on hand"));
-            Assert.That(model.LifetimeRevenueLine, Is.EqualTo("$0 lifetime revenue"));
+            Assert.That(model.LifetimeRevenueLine, Is.EqualTo("$0 earned"));
             Assert.That(model.ReliabilityLine, Is.EqualTo($"{ops.CareerState.Reliability}% reliability"));
             Assert.That(model.TierLine, Is.EqualTo("Provisional tier"));
-            Assert.That(model.FleetLine, Is.EqualTo("1 of 1 base slots"));
+            Assert.That(model.FleetLine, Is.EqualTo("1 of 1 aircraft"));
             Assert.That(model.BaseCapabilityLine, Does.StartWith("Regional starter base"));
             Assert.That(model.BaseCapabilityLine, Does.Contain("outsourced maintenance"));
             Assert.That(model.BaseCapabilityLine, Does.Contain("Stands: 50D"));
@@ -73,7 +73,7 @@ namespace Airside.Tests
             Assert.That(model.AdelaideStandings.Select(row => row.CompletedRotations),
                 Is.EqualTo(new[] { 6, 3, 2 }));
             Assert.That(model.AdelaideRankLine, Is.EqualTo("#2 of 3 at Adelaide"));
-            Assert.That(model.CompetitiveTargetLine, Is.EqualTo("Pass Rex: 4 more rotations."));
+            Assert.That(model.CompetitiveTargetLine, Is.EqualTo("Pass Rex: 4 more flights."));
         }
 
         [Test]
@@ -86,7 +86,7 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now);
 
             Assert.That(model.AdelaideRankLine, Is.EqualTo("Tied #1 of 2 at Adelaide"));
-            Assert.That(model.CompetitiveTargetLine, Does.Contain("outright lead"));
+            Assert.That(model.CompetitiveTargetLine, Does.Contain("take the lead"));
         }
 
         [Test]
@@ -140,8 +140,8 @@ namespace Airside.Tests
 
             Assert.That(model.HasNextTier, Is.True);
             Assert.That(model.NextTierTitle, Is.EqualTo("Regional starter base → Expanded regional base"));
-            Assert.That(model.NextTierRequirementLine, Does.Contain("4 more rotations"));
-            Assert.That(model.NextTierRequirementLine, Does.Contain("Upgrade cost $1,500"));
+            Assert.That(model.NextTierRequirementLine, Does.Contain("4 more flights"));
+            Assert.That(model.NextTierRequirementLine, Does.Contain("Costs $1,500"));
             Assert.That(model.NextTierProgress01, Is.EqualTo(0f));
             Assert.That(model.CanUpgradeBase, Is.False);
         }
@@ -218,12 +218,12 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now);
 
             bool Reached(string title) => model.Milestones.Single(m => m.Title == title).Reached;
-            Assert.That(Reached("First service flown"), Is.True);
-            Assert.That(Reached("First contract fulfilled"), Is.True);
+            Assert.That(Reached("First flight flown"), Is.True);
+            Assert.That(Reached("First contract finished"), Is.True);
             Assert.That(Reached("First jet in the fleet"), Is.False);
             Assert.That(model.ContractHistory.Count, Is.EqualTo(1));
             Assert.That(model.ContractHistory[0].PaidText, Does.StartWith("$"));
-            Assert.That(model.ContractsFulfilledLine, Is.EqualTo("1 contracts fulfilled all-time"));
+            Assert.That(model.ContractsFulfilledLine, Is.EqualTo("1 contract finished"));
             Assert.That(model.MilestonesReachedLine, Does.Match(@"^\d+ of \d+ milestones reached$"));
         }
 
@@ -248,7 +248,7 @@ namespace Airside.Tests
             var model = new StatsWorkspaceModel();
             model.Rebuild(ops, clock.Now);
             Assert.That(model.ContractHistory.Count, Is.EqualTo(StatsWorkspaceModel.MaxHistoryShown));
-            Assert.That(model.ContractsFulfilledLine, Is.EqualTo($"{toFulfil} contracts fulfilled all-time"));
+            Assert.That(model.ContractsFulfilledLine, Is.EqualTo($"{toFulfil} contracts finished"));
         }
 
         [Test]
@@ -284,6 +284,33 @@ namespace Airside.Tests
                 Assert.That(layout.RenameButtonBox.Right,
                     Is.LessThanOrEqualTo(OperationsWorkspacePainter.CloseBox(surface).X + 0.01f), label);
                 Assert.That(layout.RenameFieldBox.X, Is.GreaterThanOrEqualTo(layout.TitleBox.Right), label);
+            }
+        }
+
+        [Test]
+        public void Stats_OverviewCardsFitTheirText()
+        {
+            // ADR 0129: the base card used to print ~110 characters into a half-column card.
+            foreach (var level in new[] { PlayerBaseLevel.Starter, PlayerBaseLevel.International })
+            {
+                var (clock, ops, _) = HudTestAirline.Create();
+                ops.RestoreCareerState(1_234_567, 100, nameof(OperatingTier.International), null, 0, 0,
+                    Array.Empty<string>(), Array.Empty<string>(), 40, null, 12_345_678, null, baseLevel: level);
+                var model = new StatsWorkspaceModel();
+                model.Rebuild(ops, clock.Now);
+                foreach (var (width, height) in HudTestAirline.Viewports)
+                {
+                    var layout = StatsWorkspaceLayout.Create(HudShell.WorkspaceSurface(width, height));
+                    var into = new HudDrawList();
+                    StatsWorkspacePainter.Paint(into, model, layout);
+                    foreach (var line in new[] { model.FundsLine, model.LifetimeRevenueLine, model.ReliabilityLine,
+                                 model.TierLine, model.FleetLine, model.BaseSummaryLine })
+                    {
+                        var command = into.Commands.First(c => c.Kind == HudDrawKind.Text && c.Text == line);
+                        Assert.That(HudShell.Measure(line, command.FontSize), Is.LessThanOrEqualTo(command.Box.Width + 0.5f),
+                            $"{width}x{height} {level}: '{line}'");
+                    }
+                }
             }
         }
 
@@ -349,14 +376,14 @@ namespace Airside.Tests
 
             model.Rebuild(ops, clock.Now);
             Assert.That(model.BaseCapabilityLine, Does.Contain("outsourced maintenance"));
-            Assert.That(model.BaseCapabilityLine, Does.Contain("baseline ground services"));
+            Assert.That(model.BaseCapabilityLine, Does.Contain("standard turnaround speed"));
 
             ops.RestoreCareerState(50_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 System.Array.Empty<string>(), completedPlayerRotations: 28,
                 baseLevel: PlayerBaseLevel.JetGate);
             model.Rebuild(ops, clock.Now);
             Assert.That(model.BaseCapabilityLine, Does.Contain("local jet maintenance"));
-            Assert.That(model.BaseCapabilityLine, Does.Contain("20% faster ground services"));
+            Assert.That(model.BaseCapabilityLine, Does.Contain("20% faster turnarounds"));
         }
 
         [Test]

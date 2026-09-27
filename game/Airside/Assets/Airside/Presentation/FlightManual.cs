@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Airside.Simulation;
 
 namespace Airside.Presentation
 {
@@ -33,113 +34,118 @@ namespace Airside.Presentation
         public static IReadOnlyList<FlightManualPage> Pages { get; } = new[]
         {
             new FlightManualPage("welcome", "Welcome to Airside",
-                "You run a small airline from Adelaide Airport, in live Adelaide time.",
+                "You run a small airline out of Adelaide Airport, on Adelaide time.",
                 new[]
                 {
-                    ("The airport is real and it is live",
-                        "One second in the game is one real second, and the clock is Adelaide's own. There is no pause "
-                        + "or fast-forward: the airport keeps running while the menu is open, and while the game is "
-                        + "closed your booked flights still land and settle."),
+                    ("The clock is real",
+                        "One second in the game is one real second, and the clock is Adelaide's. You can't pause or "
+                        + "speed up. The airport keeps going while the menu is open, and your booked flights still land "
+                        + "and get paid while the game is closed."),
                     ("You start small",
-                        "One Saab 340B on the regional bays and a small float of cash. Everything else — more aircraft, "
-                        + "jets, interstate and international routes, other bases — is earned."),
+                        "You have one Saab 340B on the regional bays and a little cash. More aircraft, jets, interstate "
+                        + "and overseas routes and other bases all have to be earned."),
                     ("The screen",
-                        "Left: the navigation rail. Top: your status (time, funds, reliability, tier). Bottom-left: the "
-                        + "career ring. Top-right: your flights. Bottom-right: the airfield radar. Bottom-centre: the "
-                        + "aircraft you have selected.")
+                        "The rail on the left opens each page. Across the top: the time, your money, reliability and "
+                        + "tier. Bottom left is the career ring. Top right, your flights. Bottom right, the airfield "
+                        + "radar. Bottom centre, the aircraft you have selected.")
                 }),
             new FlightManualPage("first-flight", "Your first flight",
                 "Plan it, turn it round, watch it go and bring it home.",
                 new[]
                 {
                     ("1 · Plan",
-                        "Select your aircraft (click it, a flight tile, or press [ / ]) and press PLAN FLIGHT, or open "
-                        + "Map with Tab. Choose a green destination and a departure time, then press PLAN FLIGHT on the "
-                        + "map. Kingscote is a short first hop."),
+                        "Select your aircraft (click it or its flight tile, or press [ or ]) and press PLAN FLIGHT, or "
+                        + "open the Map with Tab. Pick a green destination and a time, then press PLAN FLIGHT again. "
+                        + "Kingscote is a short first hop."),
                     ("2 · Turnaround",
-                        "Fuel, catering, baggage and boarding run on their own before pushback. The selected-aircraft "
-                        + "card shows each one. Follow the aircraft (F) to watch it push back, taxi and take off."),
+                        "Fuel, catering, bags and boarding happen on their own before it leaves. The aircraft's card "
+                        + "shows each one. Press F to follow it as it pushes back, taxis and takes off."),
                     ("3 · Away and back",
-                        "Track it on the Map while it is away. When it lands, choose a stand on its card — BEST is the "
-                        + "shortest taxi — or the tower parks it after 90 seconds."),
+                        "Watch it on the Map while it is away. When it lands, pick a stand on its card. BEST is the "
+                        + "shortest taxi. After 90 seconds the tower picks one for you."),
                     ("4 · Paid",
-                        "Parking completes the trip and settles it: the revenue lands in your funds straight away.")
+                        "The flight is paid the moment it parks. The money goes straight into your funds.")
                 }),
             new FlightManualPage("money", "Money and contracts",
-                "Every flight pays. Contracts add a bonus that buys the next aircraft.",
+                "Every flight pays. Contracts pay extra, and that buys the next aircraft.",
                 new[]
                 {
-                    ("Revenue and cost",
-                        "Booking a flight charges its dispatch cost; landing it pays revenue from the seats you fill. The "
-                        + "Map shows the forecast before you book. A big aircraft on a thin route can lose money."),
+                    ("What a flight earns",
+                        "A flight costs money when you plan it and earns its fares when it comes home. The Map shows "
+                        + "what it should earn first. A big aircraft on a quiet route can lose money."),
                     ("Contracts",
-                        "Contracts (Contracts page) pay a bonus per rotation on their route and a completion reward. "
-                        + "One at a time. ABANDON drops one for a small reliability cost if you can no longer fly it."),
-                    ("Charters, medical and freight",
-                        "Besides scheduled runs the market offers charters (one well-paid flight within 6 hours), medical "
-                        + "calls to regional towns (within 3 hours, a big reliability gain) and turboprop freight. Market work "
-                        + "has a deadline: miss it and the contract lapses for its reliability cost."),
+                        "A contract pays a bonus for each flight on its route and a reward when it is done. One at a "
+                        + "time. ABANDON drops it for a little reliability."),
+                    ("Charters, medical calls and freight",
+                        "Charters are one well-paid flight within 6 hours. Medical calls go to country towns within 3 "
+                        + "hours and lift reliability. Freight is for turboprops. Miss a deadline and you lose reliability."),
                     ("Busy days",
-                        "Most days something draws extra passengers somewhere — a festival, school holidays, the footy. "
-                        + "It is announced in the morning and shows in the forecast; fill those flights while it lasts."),
-                    ("Challenges",
-                        "Optional challenges pay cash: on-time streaks, a profitable day, charters and medical calls flown. "
-                        + "After the finale, prestige challenges keep the sandbox going. See them on the Stats page. "
-                        + "Each night at 23:00 the day's results are reported."),
-                    ("Out of cash",
-                        "If you cannot afford a flight, a recovery contract to Kingscote appears and pays for its own "
-                        + "first dispatch, so an airline is never stranded.")
+                        "Most days a festival, the school holidays or the footy brings extra passengers somewhere. The "
+                        + "news says where, and the Map's forecast shows it."),
+                    ("Out of money",
+                        "If you can't afford a flight, a rescue contract to Kingscote pays for its own first flight.")
                 }),
             new FlightManualPage("reliability", "Reliability",
-                "Partners trust punctual airlines. Reliability starts at 100% — keep it there.",
+                "Airlines that run on time get the good work. You start at 100%.",
                 new[]
                 {
-                    ("Punctuality",
-                        "Pushing back within 2 minutes of the booked time earns +1. Up to 5 minutes late is neutral; up to "
-                        + "15 costs 1; later costs 2. Contract rotations add their own bonus."),
-                    ("Maintenance",
-                        "Every aircraft needs a routine check every 8 rotations (SEND FOR CHECK on its card, or Fleet). "
-                        + "Flying overdue costs reliability on every rotation."),
+                    ("Leaving on time",
+                        "Push back within 2 minutes of the booked time for +1. Up to 5 minutes late costs nothing. Up "
+                        + "to 15 minutes late costs 1, and any later costs 2. Contract flights can add their own bonus."),
+                    ("Why was I late?",
+                        "When a flight is paid, the message says how late it left and why. The reasons are a "
+                        + "turnaround booked too tight, traffic on the apron or taxiway, someone on the lead-in, or a "
+                        + "runway crossing. A waiting aircraft's card says what it is waiting for. Tap that line to "
+                        + "jump to the aircraft in the way, and ‹ to come back."),
+                    ("Checks",
+                        $"Every aircraft needs a check every {Maintenance.IntervalRotations} flights. Use SEND FOR "
+                        + "CHECK on its card or in Fleet. Every flight it makes while overdue costs reliability."),
                     ("Why it matters",
-                        "Below 70% only regional offers appear and flight revenue is cut. Each tier asks you to hold a "
-                        + "reliability level.")
+                        "Below 70% you only get regional offers, and flights earn less. Each tier needs a certain "
+                        + "reliability.")
                 }),
             new FlightManualPage("career", "Career",
-                "Four operating tiers, then the established-airline ending.",
+                "Four tiers, then you become an established airline.",
                 new[]
                 {
                     ("The ring",
-                        "The career ring (bottom-left) shows how many of this tier's goals are done and what finishing "
-                        + "them earns: TOWARD REGIONAL, TOWARD DOMESTIC … Click it for the Career track."),
+                        "The career ring (bottom left) shows how many of this tier's goals you have done and what the "
+                        + "next tier unlocks. Click it to open the Career page."),
                     ("Goals",
-                        "Each tier has a handful of goals — fulfil a contract, fly services, serve destinations, expand "
-                        + "the base, hold reliability. Do them in any order; PIN one to lead the HUD."),
+                        "Each tier has a few goals: finish a contract, fly a number of flights, serve new places, "
+                        + "grow your base, keep your reliability up. Do them in any order. PIN one to show it on the "
+                        + "HUD."),
                     ("Tiers",
-                        "Provisional → Regional → Domestic → International. Tiers are earned in order and never lost. "
-                        + "They unlock aircraft, base upgrades and international routes."),
-                    ("The ending",
-                        "Finish every International goal — 18 aircraft, three bases, 12 destinations, a widebody and a "
-                        + "profitable network — to become an established airline. Then keep flying.")
+                        "Provisional, then Regional, Domestic and International. You earn them in order and never lose "
+                        + "them. Each one opens new aircraft, base upgrades and routes."),
+                    ("Challenges",
+                        "Challenges pay cash for on-time streaks, a profitable day, charters and medical calls. Bigger "
+                        + "ones open after the finale. See them on Stats. At 23:00 you get the day's report."),
+                    ("The finale",
+                        $"Finish every International goal to become an established airline: {CareerRoadmap.FinalFleet} "
+                        + $"aircraft, three bases, {CareerRoadmap.FinalDestinations} destinations, a widebody and a "
+                        + "profit. Then keep flying.")
                 }),
             new FlightManualPage("growing", "Growing the airline",
-                "More aircraft, a bigger base, other cities, and schedules that run themselves.",
+                "More aircraft, a bigger base, other cities, and flights that repeat on their own.",
                 new[]
                 {
                     ("Aircraft",
-                        "Buy in Fleet: ATR 42, then Dash 8-400, 737-8 and A321neo, then the A350 and 787. Each asks for a "
-                        + "tier, a reliability level and a number of flights. Selling returns 55%."),
-                    ("Adelaide base",
-                        "EXPAND BASE (Career › Airline) adds aircraft slots, jet gates, local maintenance and faster "
-                        + "turnarounds."),
+                        "Buy them in Fleet: the ATR 42, then the Dash 8-400, 737-8 and A321neo, then the A350 and 787. "
+                        + "Each needs a tier, a reliability level and a number of flights. Selling one gets back "
+                        + $"{(int)Math.Round(AirlineOperations.ResaleFraction * 100)}% of the price."),
+                    ("Your Adelaide base",
+                        "EXPAND BASE (Career › Airline) adds room for more aircraft, jet gates, your own maintenance "
+                        + "and quicker turnarounds."),
                     ("Outstations",
-                        "From Domestic, open bases in Melbourne, Sydney, Brisbane or Perth (Fleet › Network). Aircraft "
-                        + "based there fly between other cities off-map."),
+                        "From the Domestic tier you can open bases in Melbourne, Sydney, Brisbane or Perth (Fleet › "
+                        + "Network). Aircraft based there fly between other cities off the map."),
                     ("Repeat schedules",
-                        "After 12 hand-planned flights, REPEAT keeps an aircraft flying a route every 6, 12 or 24 hours "
-                        + "while you play.")
+                        "After 12 hand-planned flights, REPEAT keeps an aircraft flying a route every 6, 12 or 24 "
+                        + "hours while you play.")
                 }),
             new FlightManualPage(ControlsPageId, "Controls",
-                "Mouse for everything; keys for speed.",
+                "The mouse does everything. The keys are shortcuts.",
                 Controls())
         };
 
@@ -158,7 +164,7 @@ namespace Airside.Presentation
             {
                 var lines = new List<string>();
                 foreach (var binding in section.Bindings)
-                    lines.Add(binding.Key + "  —  " + binding.Action);
+                    lines.Add(binding.Key + "    " + binding.Action);
                 sections.Add((section.Title, string.Join("\n", lines)));
             }
             return sections;

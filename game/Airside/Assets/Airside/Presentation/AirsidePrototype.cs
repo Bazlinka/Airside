@@ -14346,7 +14346,7 @@ namespace Airside.Presentation
             AircraftPhase.TaxiIn => "Taxi via Alpha",
             AircraftPhase.AtStand => "Turnaround at stand",
             AircraftPhase.Pushback => "Pushback approved",
-            AircraftPhase.TaxiOut => "Taxi — hold short 05",
+            AircraftPhase.TaxiOut => "Taxi to hold short 05",
             AircraftPhase.Takeoff => "Cleared for takeoff",
             AircraftPhase.Departed => "Departed",
             AircraftPhase.Circuit => "In the circuit",

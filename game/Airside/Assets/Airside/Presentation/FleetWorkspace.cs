@@ -156,8 +156,8 @@ namespace Airside.Presentation
             foreach (var _ in operations.FreeStands())
                 freeBays++;
             var playerBase = operations.CareerState.Base;
-            Subtitle = $"{_mine.Count} of {playerBase.FleetCapacity} base slots"
-                       + $"  ·  {Plural(freeBays, "regional stand")} available"
+            Subtitle = $"{_mine.Count} of {playerBase.FleetCapacity} aircraft"
+                       + $"  ·  {Plural(freeBays, "regional stand")} free"
                        + $"  ·  {playerBase.Title}";
 
             FillMarket(operations, freeBays);
@@ -235,46 +235,44 @@ namespace Airside.Presentation
                 // buying a plane answers "where can it fly" concretely, not abstractly.
                 string requirement;
                 if (fleetFull)
-                    requirement = $"Fleet is full ({AircraftAcquisition.MaxPlayerAircraft} aircraft)";
+                    requirement = $"Your fleet is full at {AircraftAcquisition.MaxPlayerAircraft} aircraft";
                 else if (baseFull)
                     requirement = career.BaseLevel == PlayerBaseLevel.International
-                        ? "Adelaide is full · buy at an outstation in Network"
-                        : $"{career.Base.Title} is full ({career.Base.FleetCapacity} aircraft) · expand your base";
+                        ? "Adelaide is full. Buy for an outstation in Network"
+                        : $"The {career.Base.Title} holds {career.Base.FleetCapacity}. Expand your base";
                 else if (!baseSupports)
                 {
                     var needed = AircraftCatalogue.IsWidebody(offer.Type)
                         ? PlayerBaseLevel.International : PlayerBaseLevel.JetGate;
-                    requirement = $"Requires {PlayerBase.For(needed).Title}";
+                    requirement = $"Needs the {PlayerBase.For(needed).Title}";
                 }
                 else if (career.Tier < offer.RequiredTier)
                 {
                     var requiredBase = CareerProgress.BaseCapabilityFor(offer.RequiredTier);
-                    requirement = $"Requires {requiredBase.Title} ({offer.RequiredTier} tier)";
+                    requirement = $"Needs the {requiredBase.Title} and the {offer.RequiredTier} tier";
                 }
                 else if (career.Reliability < offer.RequiredReliability)
-                    requirement = $"Requires {offer.RequiredReliability}% reliability"
-                                  + $" — you are at {career.Reliability}%";
+                    requirement = $"Needs {offer.RequiredReliability}% reliability. You have {career.Reliability}%";
                 else if (career.CompletedPlayerRotations < offer.RequiredRotations)
-                    requirement = $"Requires {offer.RequiredRotations} completed rotations"
-                                  + $" — you have {career.CompletedPlayerRotations}";
+                    requirement = $"Needs {offer.RequiredRotations} flights. You have flown {career.CompletedPlayerRotations}";
                 else if (!affordable)
-                    requirement = $"Costs ${offer.Price:N0} — you have ${career.Funds:N0}";
+                    requirement = $"Costs ${offer.Price:N0}. You have ${career.Funds:N0}";
                 else
                 {
                     var reach = RouteAccess.ExampleDestinations(offer.Operates);
                     var suffix = offer.Operates == RouteBand.Regional ? "" : ", +closer";
-                    requirement = $"Cleared to buy · flies {RouteMapWorkspaceModel.BandLabel(offer.Operates)} "
+                    requirement = $"Ready to buy · flies {RouteMapWorkspaceModel.BandLabel(offer.Operates).ToLowerInvariant()} "
                                   + $"routes ({reach}{suffix})";
                 }
 
                 var needsGate = AirlineOperations.NeedsTerminalGate(offer.Type);
                 string standLine;
                 if (needsGate)
-                    standLine = "Parks at a free terminal gate, or ferries in";
+                    standLine = "Arrives at a free gate, or is flown in";
                 else if (freeBays > 1)
-                    standLine = "Parks on a free regional bay on delivery";
+                    standLine = "Arrives on a free regional bay";
                 else
-                    standLine = "No spare bay — delivered on a short ferry in";
+                    standLine = "No bay free, so it is flown in";
 
                 _market.Add(new FleetMarketOffer(offer.Type, spec.Name,
                     RouteMapWorkspaceModel.BandLabel(offer.Operates), offer.Price,
@@ -292,10 +290,10 @@ namespace Airside.Presentation
 
             var ceiling = RouteAccess.Ceiling(aircraft.Type);
             var ceilingSuffix = ceiling == RouteBand.Regional ? "" : ", +closer";
-            _capability.Add($"{RouteMapWorkspaceModel.BandLabel(ceiling)} capability "
+            _capability.Add($"Flies {RouteMapWorkspaceModel.BandLabel(ceiling).ToLowerInvariant()} routes "
                              + $"({RouteAccess.ExampleDestinations(ceiling)}{ceilingSuffix})");
-            _capability.Add(Plural(aircraft.CompletedTrips, "completed rotation"));
-            _capability.Add($"{aircraft.Type.PracticalRangeKm:#,0} km planning range");
+            _capability.Add(Plural(aircraft.CompletedTrips, "flight") + " flown");
+            _capability.Add($"{aircraft.Type.PracticalRangeKm:#,0} km range");
             if (aircraft.Airline.IsPlayer)
             {
                 var baseLevel = operations.CareerState.BaseLevel;
@@ -312,7 +310,7 @@ namespace Airside.Presentation
             // so it has no purchase price to base a resale figure on — line omitted for it
             // rather than showing a made-up number.
             else if (AircraftAcquisition.TryFor(aircraft.Type, out var ownedOffer))
-                _capability.Add($"Resale value ${(long)Math.Round(ownedOffer.Price * AirlineOperations.ResaleFraction):N0}");
+                _capability.Add($"Sells for ${(long)Math.Round(ownedOffer.Price * AirlineOperations.ResaleFraction):N0}");
 
             if (aircraft.Scheduled.HasValue)
             {
@@ -507,7 +505,7 @@ namespace Airside.Presentation
             {
                 var buttonWidth = toolbar.Width >= 285f ? 170f : toolbar.Width;
                 into.Button(new HudBox(toolbar.Right - buttonWidth, toolbar.Y, buttonWidth, 26f),
-                    showOtherOperators ? "HIDE OTHER OPERATORS" : $"OTHER OPERATORS · {model.Others.Count}",
+                    showOtherOperators ? "HIDE OTHER AIRLINES" : $"OTHER AIRLINES · {model.Others.Count}",
                     HudAction.ToggleOtherOperators, HudButtonStyle.Secondary);
             }
             var index = 0;
@@ -530,7 +528,7 @@ namespace Airside.Presentation
 
             if (index++ >= skip)
             {
-                into.Caption(layout.RosterRow(drawn).Inset(0f, 8f, 0f, 0f), "OTHER OPERATORS");
+                into.Caption(layout.RosterRow(drawn).Inset(0f, 8f, 0f, 0f), "OTHER AIRLINES");
                 drawn++;
             }
 
@@ -587,7 +585,7 @@ namespace Airside.Presentation
             if (!model.HasSelection)
             {
                 into.Text(new HudBox(pane.X, pane.Y + 8f, pane.Width, 40f),
-                    "Select an aircraft to see its capability, assignment and turnaround.", 13f,
+                    "Select an aircraft to see what it can fly, where it is going and its turnaround.", 13f,
                     HudTone.Muted, HudTextStyle.Wrap);
                 return;
             }
@@ -607,7 +605,7 @@ namespace Airside.Presentation
             y += 12f;
             into.Hairline(new HudBox(pane.X, y, pane.Width, 1f));
             y += 12f;
-            into.Caption(new HudBox(pane.X, y, pane.Width, 16f), "CURRENT ASSIGNMENT");
+            into.Caption(new HudBox(pane.X, y, pane.Width, 16f), "NOW");
             y += 20f;
             into.Text(new HudBox(pane.X, y, pane.Width, 20f), model.AssignmentLine, 14f, HudTone.Default,
                 HudTextStyle.Bold);
@@ -641,7 +639,7 @@ namespace Airside.Presentation
             if (!model.SelectedIsPlayer)
             {
                 into.Text(new HudBox(pane.X, y, pane.Width, 36f),
-                    "Another operator's aircraft — visible at the airport, not yours to command.", 12f,
+                    "Another airline's aircraft. You can see it but not give it orders.", 12f,
                     HudTone.Muted, HudTextStyle.Wrap);
                 return;
             }

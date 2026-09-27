@@ -105,13 +105,13 @@ namespace Airside.Simulation
                 string baseRequirement = string.Empty;
                 if (ownedCount >= career.Base.FleetCapacity)
                     baseRequirement = career.BaseLevel == PlayerBaseLevel.International
-                        ? "Adelaide is full — add aircraft at an outstation in Fleet → Network"
-                        : $"{career.Base.Title} is full — expand your Adelaide base";
+                        ? "Adelaide is full. Add aircraft at an outstation in Fleet › Network"
+                        : $"The {career.Base.Title} is full. Expand your Adelaide base";
                 else if (!PlayerBase.Supports(career.BaseLevel, offer.Type))
                 {
                     var needed = AircraftCatalogue.IsWidebody(offer.Type)
                         ? PlayerBaseLevel.International : PlayerBaseLevel.JetGate;
-                    baseRequirement = $"Requires {PlayerBase.For(needed).Title}";
+                    baseRequirement = $"Needs the {PlayerBase.For(needed).Title}";
                 }
                 var ready = fundsShort == 0 && rotationsShort == 0 && reliabilityShort == 0
                             && !needsTier && string.IsNullOrEmpty(baseRequirement);

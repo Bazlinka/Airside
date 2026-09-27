@@ -224,6 +224,12 @@ namespace Airside.Presentation
         public string SelectedTypeName { get; private set; } = string.Empty;
         public string SelectedRouteLine { get; private set; } = string.Empty;
         public string SelectedStatusLine { get; private set; } = string.Empty;
+
+        /// <summary>ADR 0128: selects the aircraft the hold is waiting on, or empty.</summary>
+        public string SelectedHoldAction { get; private set; } = string.Empty;
+
+        /// <summary>ADR 0128: "Last flight: 4 min late: 3 min runway crossings", or empty.</summary>
+        public string SelectedLastFlightLine { get; private set; } = string.Empty;
         public bool SelectedIsPlayer { get; private set; }
         public IReadOnlyList<OperationsPrepCheck> SelectedPrep => _prep;
         public AircraftHudAction PrimaryAction { get; private set; }
@@ -250,6 +256,8 @@ namespace Airside.Presentation
             SelectedTypeName = string.Empty;
             SelectedRouteLine = string.Empty;
             SelectedStatusLine = string.Empty;
+            SelectedHoldAction = string.Empty;
+            SelectedLastFlightLine = string.Empty;
             SelectedIsPlayer = false;
             PrimaryAction = AircraftHudAction.None;
             PrimaryActionLabel = string.Empty;
@@ -641,7 +649,7 @@ namespace Airside.Presentation
             }
 
             if (aircraft.State == FleetState.AtStand)
-                return $"Available on {StandNames.Display(aircraft.Stand)} · no flight planned";
+                return $"Parked on {StandNames.Display(aircraft.Stand)}, no flight planned";
 
             var suffix = AircraftStatus.WaitSuffix(aircraft, now);
             var status = OperationsSummary.CompactState(aircraft, now);
@@ -663,6 +671,20 @@ namespace Airside.Presentation
             var hold = operations.Why(aircraft);
             if (hold.IsHolding)
                 SelectedStatusLine = HoldReasonText.Long(aircraft, hold, now, clock);
+            var blocker = hold.Blocker ?? (hold.Others.Count > 0 ? hold.Others[0] : null);
+            SelectedHoldAction = hold.IsHolding && blocker != null && blocker != aircraft
+                ? HudAction.SelectPrefix + blocker.Registration
+                : string.Empty;
+            SelectedLastFlightLine = string.Empty;
+            var settlements = operations.RecentSettlements;
+            for (var i = settlements.Count - 1; i >= 0; i--)
+            {
+                if (settlements[i].SettlementId.Registration != aircraft.Registration)
+                    continue;
+                if (settlements[i].Delay is { } delay)
+                    SelectedLastFlightLine = $"Last flight: {DelayText.Summary(delay)}";
+                break;
+            }
 
             if (aircraft.Scheduled.HasValue)
                 SelectedRouteLine =
@@ -1105,7 +1127,7 @@ namespace Airside.Presentation
 
             if (allMovements && last < relevant.Count)
                 into.Text(new HudBox(layout.Board.X, layout.Board.Bottom - 16f,
-                        layout.Board.Width, 16f), $"{relevant.Count - last} more below · scroll to browse",
+                        layout.Board.Width, 16f), $"{relevant.Count - last} more below. Scroll to see them.",
                     11f, HudTone.Muted, HudTextStyle.Caption);
 
         }
@@ -1159,14 +1181,27 @@ namespace Airside.Presentation
             }
             else
             {
-                into.Text(new HudBox(pane.X, y, pane.Width, 18f), model.SelectedStatusLine, 13f, HudTone.Default);
+                var linked = model.SelectedHoldAction.Length > 0;
+                into.Text(new HudBox(pane.X, y, pane.Width - (linked ? 16f : 0f), 18f), model.SelectedStatusLine, 13f,
+                    linked ? HudTone.Caution : HudTone.Default);
+                if (linked)
+                {
+                    into.Text(new HudBox(pane.Right - 12f, y - 1f, 12f, 18f), "›", 15f, HudTone.Caution, HudTextStyle.Bold);
+                    into.Hotspot(new HudBox(pane.X, y - 3f, pane.Width, 24f), model.SelectedHoldAction);
+                }
                 y += 28f;
+            }
+
+            if (model.SelectedLastFlightLine.Length > 0)
+            {
+                into.Text(new HudBox(pane.X, y - 6f, pane.Width, 16f), model.SelectedLastFlightLine, 11f, HudTone.Muted);
+                y += 16f;
             }
 
             if (!model.SelectedIsPlayer)
             {
                 into.Text(new HudBox(pane.X, y, pane.Width, 36f),
-                    "Another operator's flight — you can watch it, but not command it.", 12f, HudTone.Muted,
+                    "Another airline's flight. You can watch it but not give it orders.", 12f, HudTone.Muted,
                     HudTextStyle.Wrap);
                 return;
             }

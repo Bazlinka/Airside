@@ -210,7 +210,7 @@ namespace Airside.Presentation
             }
             _guideStep = FirstFlightGuide.For(_operations, out _guideAircraft);
             if (_lastGuideStep == GuideStep.TaxiingIn && _guideStep == GuideStep.Complete)
-                ShowToast("First trip complete. Keep your aircraft flying — plan the next one any time.");
+                ShowToast("First flight done. Plan the next one whenever you like.");
             _lastGuideStep = _guideStep;
             var showGuide = !AirlineModalOpen && _guideStep != GuideStep.Complete;
             var placement = AirlineHudLayout.Create(layout, showGuide,
@@ -444,9 +444,9 @@ namespace Airside.Presentation
             _seenEvents = _operations.TotalEvents;
             _seenSettlements = _operations.TotalSettlements;
             RefreshFleetFlights();
-            ShowToast($"{name} is open for business. Plan a flight for {FirstPlayerAircraft()?.Registration}.");
+            ShowToast($"{name} is open. Plan a flight for {FirstPlayerAircraft()?.Registration}.");
             if (!setup.Coaching)
-                ShowToast("The Flight Manual is always one click away: the ? on the rail, or F1.", HudTone.Caution);
+                ShowToast("Stuck? The Flight Manual is on the ? button, or press F1.", HudTone.Caution);
             SaveAirline();
             PlayUiClick();
             StartIntro($"Welcome to {name}");
@@ -668,19 +668,19 @@ namespace Airside.Presentation
             return step switch
             {
                 GuideStep.PlanFirstFlight => ($"Plan {reg}'s first flight",
-                    "Open Map, choose a reachable destination and departure time. Kingscote is a short first hop."),
+                    "Open Map, pick a destination in range and a departure time. Kingscote is a short first hop."),
                 GuideStep.WaitForDeparture => ($"Track {reg}'s departure",
-                    $"Fuel, catering, bags and boarding finish before {ClockText(aircraft.Scheduled.Value.DepartAt)}. Click the aircraft or press Follow (F)."),
+                    $"Fuel, catering, bags and boarding will be done by {ClockText(aircraft.Scheduled.Value.DepartAt)}. Click the aircraft or press F to follow it."),
                 GuideStep.Departing => ($"Follow {reg}",
-                    "Click the aircraft at the airport or press Follow (F) to watch taxi and takeoff."),
+                    "Click the aircraft or press F to watch it taxi and take off."),
                 GuideStep.Away => ($"Watch {reg} return",
-                    $"En route to {dest}. Track it on Map (Tab); the airport also continues while the game is closed."),
+                    $"On its way to {dest}. Watch it on the Map (Tab). It keeps flying while the game is closed."),
                 GuideStep.Landing => ($"Watch {reg} land",
-                    "Click the aircraft on final or press Follow (F) to watch the touchdown."),
+                    "Click the aircraft on final or press F to watch it land."),
                 GuideStep.ChooseStand => ($"Choose {reg}'s stand",
-                    "Pick a stand on the aircraft card. Best is the shortest taxi; the tower parks it after 90 seconds."),
+                    "Pick a stand on the aircraft card. BEST is the shortest taxi. After 90 seconds the tower picks one."),
                 GuideStep.TaxiingIn => ($"Follow {reg} to stand",
-                    $"Taxiing to {StandNames.Display(aircraft.Stand)}. Parking completes your first trip."),
+                    $"Taxiing to {StandNames.Display(aircraft.Stand)}. Your first flight is done when it parks."),
                 _ => (string.Empty, string.Empty)
             };
         }
@@ -775,7 +775,7 @@ namespace Airside.Presentation
             catch (Exception e) when (e is FormatException or ArgumentException or InvalidOperationException)
             {
                 _savedAirline = null;
-                _saveError = $"Your saved airline could not be loaded ({e.Message}). Starting a new airline will replace it.";
+                _saveError = $"Your saved airline couldn't be loaded ({e.Message}). Starting a new one will replace it.";
                 return;
             }
 
@@ -806,9 +806,9 @@ namespace Airside.Presentation
             if (joined > 0)
                 ShowToast("Rex and QantasLink now fly from Adelaide's regional apron too.");
             if (emergencyJoined > 0)
-                ShowToast("RFDS can still fly through the 23:00–05:00 curfew.");
+                ShowToast("The RFDS can fly through the 23:00 to 05:00 curfew.");
             if (jetJoined > 0)
-                ShowToast("Virgin Australia's 737-8 now operates from Gate 13.");
+                ShowToast("Virgin Australia's 737-8 now uses Gate 13.");
             RefreshFleetFlights();
             if (_awaySummary == null)
                 ShowToast($"Welcome back to {_operations.PlayerAirline.Name}.");
@@ -842,7 +842,7 @@ namespace Airside.Presentation
                 if (_saveFailureShown)
                     return;
                 _saveFailureShown = true;
-                ShowToast($"Could not save: {e.Message}");
+                ShowToast($"Couldn't save: {e.Message}");
             }
         }
 
@@ -903,7 +903,10 @@ namespace Airside.Presentation
             _selectionDrawList.Clear();
             SelectionCardPainter.Paint(_selectionDrawList, Box(rect), _selectionCard);
             var clicked = _hudPainter.Draw(_selectionDrawList);
-            if (clicked == null || !aircraft.Airline.IsPlayer)
+            if (clicked == null)
+                return;
+            // ADR 0128: the hold line (and the back chip) select another aircraft — any card, AI too.
+            if (FollowHoldLink(aircraft, clicked) || !aircraft.Airline.IsPlayer)
                 return;
             if (clicked == HudAction.Primary)
                 RunSelectionAction(aircraft, action);
@@ -915,6 +918,50 @@ namespace Airside.Presentation
                 if (standId.Length > 0)
                     AssignStandFromHud(aircraft, new StableId(standId));
             }
+        }
+
+        /// <summary>Where a followed hold link came from, so the card can offer the way back (ADR 0128).</summary>
+        private string _holdLinkFrom;
+        private string _holdLinkTo;
+        private float _holdLinkAt;
+        private const float HoldLinkBackSeconds = 30f;
+
+        /// <summary>The aircraft a hold is waiting on, as a select action, or empty when nothing to follow.</summary>
+        private string HoldLink(FleetAircraft aircraft, HoldReason hold)
+        {
+            var target = hold.Blocker;
+            if (target == null && hold.Others.Count > 0)
+                target = hold.Others[0];
+            if (target == null || target == aircraft)
+                return string.Empty;
+            return HudAction.SelectPrefix + target.Registration;
+        }
+
+        private string SelectionBackRegistration(FleetAircraft aircraft)
+        {
+            if (_holdLinkFrom == null || aircraft.Registration != _holdLinkTo
+                || Time.unscaledTime - _holdLinkAt > HoldLinkBackSeconds)
+                return string.Empty;
+            return _holdLinkFrom;
+        }
+
+        private bool FollowHoldLink(FleetAircraft from, string clicked)
+        {
+            var registration = HudAction.Payload(clicked, HudAction.SelectPrefix);
+            if (registration.Length == 0)
+                return false;
+            FleetAircraft target = null;
+            foreach (var candidate in _operations.Fleet)
+                if (string.Equals(candidate.Registration, registration, StringComparison.Ordinal))
+                    target = candidate;
+            if (target == null)
+                return true;
+            var goingBack = registration == _holdLinkFrom && from.Registration == _holdLinkTo;
+            _holdLinkFrom = goingBack ? null : from.Registration;
+            _holdLinkTo = goingBack ? null : target.Registration;
+            _holdLinkAt = Time.unscaledTime;
+            SelectAircraft(target);
+            return true;
         }
 
         /// <summary>Words the selected aircraft into the card's data, reusing one instance per frame.</summary>
@@ -934,6 +981,8 @@ namespace Airside.Presentation
                 : string.Empty;
             if (card.HoldLine.Length > 0)
                 card.PhaseLabel = HoldReasonText.Short(hold);
+            card.HoldAction = card.HoldLine.Length > 0 ? HoldLink(aircraft, hold) : string.Empty;
+            card.BackRegistration = SelectionBackRegistration(aircraft);
             var severity = AircraftStatus.Severity(aircraft, _clock.Now);
             card.PhaseTone = severity == StatusSeverity.Warning ? HudTone.Negative
                 : severity == StatusSeverity.Attention ? HudTone.Caution : HudTone.Accent;
@@ -994,7 +1043,7 @@ namespace Airside.Presentation
                     if (stand.HasValue)
                         AssignStandFromHud(aircraft, stand.Value);
                     else
-                        ShowToast("All stands occupied — wait for one to clear.");
+                        ShowToast("Every stand is taken. Wait for one to free up.");
                     break;
                 case AircraftHudAction.StartCheck:
                     StartCheckFromHud(aircraft);
@@ -1306,7 +1355,7 @@ namespace Airside.Presentation
             {
                 var lost = reliabilityBefore - _operations.CareerState.Reliability;
                 ShowToast(lost > 0
-                    ? $"{aircraft.Registration}'s flight is cancelled — reliability down {lost}."
+                    ? $"{aircraft.Registration}'s flight is cancelled. Reliability −{lost}."
                     : $"{aircraft.Registration}'s flight is cancelled.");
                 SaveAirline();
             }
@@ -2144,7 +2193,7 @@ namespace Airside.Presentation
                 _workspaceDrawList.Hotspot(row, "network:select:" + aircraft.Registration);
             }
 
-            _workspaceDrawList.Caption(right.WithHeight(18f), "GROW AND OPERATE");
+            _workspaceDrawList.Caption(right.WithHeight(18f), "GROW THIS BASE");
             var offer = AircraftAcquisition.All[_networkBuyTypeIndex % AircraftAcquisition.All.Count];
             _workspaceDrawList.Text(new HudBox(right.X, right.Y + 29f, right.Width, 24f),
                 $"Next aircraft · {offer.Type.Name} · ${offer.Price:N0}", 14f, HudTone.Default,
@@ -2167,7 +2216,7 @@ namespace Airside.Presentation
             if (selected == null)
             {
                 _workspaceDrawList.Text(new HudBox(right.X, right.Y + 122f, right.Width, 48f),
-                    "Select an aircraft to plan a route or assign repeat service.", 13f, HudTone.Muted,
+                    "Select an aircraft to plan a flight or set a repeat schedule.", 13f, HudTone.Muted,
                     HudTextStyle.Wrap);
             }
             else
@@ -2193,11 +2242,11 @@ namespace Airside.Presentation
                         var pay = forecast.Revenue;
                         var cost = forecast.Cost;
                         _workspaceDrawList.Text(new HudBox(right.X, right.Y + 220f, right.Width, 20f),
-                            $"{forecast.ExpectedPassengers}/{forecast.Seats} seats · return ${pay:N0} · margin ${pay - cost:N0}",
+                            $"{forecast.ExpectedPassengers}/{forecast.Seats} seats · pays about ${pay:N0} · profit ${pay - cost:N0}",
                             12f, pay >= cost ? HudTone.Positive : HudTone.Caution);
                     }
                     _workspaceDrawList.Button(new HudBox(right.X, right.Y + 256f, 150f, 32f),
-                        selected.CheckDue ? "START CHECK" : "PLAN SERVICE",
+                        selected.CheckDue ? "START CHECK" : "PLAN FLIGHT",
                         selected.CheckDue ? "network:check" : "network:plan",
                         HudButtonStyle.Primary, !selected.HasFlight
                         && !selected.InCheck(_clock.Now.ElapsedSeconds));
@@ -2210,7 +2259,7 @@ namespace Airside.Presentation
                     {
                         _workspaceDrawList.Text(new HudBox(right.X, right.Y + 300f, right.Width, 45f),
                             repeat.Exception.Length > 0 ? repeat.Exception :
-                            $"Delegated {repeat.DestinationCode} every {repeat.IntervalHours} h while playing",
+                            $"Repeats to {repeat.DestinationCode} every {repeat.IntervalHours} h while you play",
                             12f, repeat.Exception.Length > 0 ? HudTone.Caution : HudTone.Muted,
                             HudTextStyle.Wrap);
                         _workspaceDrawList.Button(new HudBox(right.X, right.Y + 349f, 155f, 28f),
@@ -2218,14 +2267,14 @@ namespace Airside.Presentation
                     }
                     else if (!_operations.DelegationUnlocked)
                         _workspaceDrawList.Text(new HudBox(right.X, right.Y + 300f, right.Width, 32f),
-                            $"Delegation unlocks after 12 manually planned services "
+                            $"Repeat schedules unlock after 12 flights you plan yourself "
                             + $"({_operations.CareerState.ManualRotations}/12).", 12f, HudTone.Muted);
                 }
             }
             var footer = HudShell.Footer(surface);
             _workspaceDrawList.Hairline(HudShell.FooterRule(surface));
             _workspaceDrawList.Text(footer.Inset(HudShell.SurfacePadding, 8f, HudShell.SurfacePadding, 0f)
-                .WithHeight(20f), "Outstation flights run off-map. Adelaide flights use the live airport.",
+                .WithHeight(20f), "Outstation flights happen off the map. Adelaide flights use the live airport.",
                 11f, HudTone.Muted);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
         }
@@ -2283,13 +2332,13 @@ namespace Airside.Presentation
                 _abandonArmedUntil = Time.unscaledTime + 5f;
                 var loss = career.TryFindDefinition(career.ActiveContract.DefinitionId, out var definition)
                     ? definition.ReliabilityLossOnCancel : 3;
-                ShowToast($"Click ABANDON again to drop this contract (−{loss}% reliability).", HudTone.Caution);
+                ShowToast($"Click ABANDON again to drop this contract. It costs {loss}% reliability.", HudTone.Caution);
                 PlayUiClick();
                 return;
             }
             _abandonArmedUntil = 0f;
             var result = _operations.AbandonContract();
-            ShowToast(result.Accepted ? "Contract abandoned. The market is open again." : result.Reason,
+            ShowToast(result.Accepted ? "Contract dropped. You can take another." : result.Reason,
                 result.Accepted ? HudTone.Accent : HudTone.Negative);
             if (result.Accepted) SaveAirline();
             PlayUiClick();
@@ -2386,7 +2435,7 @@ namespace Airside.Presentation
             {
                 var baseCode = action.Substring("network:open:".Length);
                 var result = _operations.OpenOutstationBase(baseCode);
-                ShowToast(result.Accepted ? baseCode + " base opened." : result.Reason);
+                ShowToast(result.Accepted ? "Your " + baseCode + " base is open." : result.Reason);
                 if (result.Accepted) { _selectedNetworkBase = baseCode; SaveAirline(); }
                 PlayUiClick();
                 return;
@@ -2455,7 +2504,7 @@ namespace Airside.Presentation
                 {
                     var offer = AircraftAcquisition.All[_networkBuyTypeIndex];
                     var result = _operations.BuyAircraftAtOutstation(offer.Type, _selectedNetworkBase);
-                    ShowToast(result.Accepted ? offer.Type.Name + " bought for " + _selectedNetworkBase + "." : result.Reason);
+                    ShowToast(result.Accepted ? "Bought " + Article.A(offer.Type.Name) + " for " + _selectedNetworkBase + "." : result.Reason);
                     if (result.Accepted) SaveAirline();
                     PlayUiClick();
                     return;
@@ -2481,7 +2530,7 @@ namespace Airside.Presentation
                             ? _operations.SetRepeatSchedule(aircraft.Registration, networkDestination.Code, 12)
                             : _operations.PauseRepeatSchedule(aircraft.Registration, !repeat.Paused);
                     }
-                    ShowToast(result.Accepted ? (action == "network:plan" ? "Service planned." : "Repeat schedule updated.")
+                    ShowToast(result.Accepted ? (action == "network:plan" ? "Flight planned." : "Repeat schedule updated.")
                         : result.Reason);
                     if (result.Accepted) SaveAirline();
                     PlayUiClick();
@@ -2490,7 +2539,7 @@ namespace Airside.Presentation
                 case "network:check":
                 {
                     var result = _operations.StartOutstationCheck(_selectedNetworkRegistration);
-                    ShowToast(result.Accepted ? "Routine check started." : result.Reason);
+                    ShowToast(result.Accepted ? "Check started." : result.Reason);
                     if (result.Accepted) SaveAirline();
                     PlayUiClick();
                     return;
@@ -2574,7 +2623,7 @@ namespace Airside.Presentation
                     var result = _operations.UpgradePlayerBase();
                     if (result.Accepted)
                     {
-                        ShowToast($"Adelaide base expanded: {_operations.CareerState.Base.Title}.");
+                        ShowToast($"Your Adelaide base is now the {_operations.CareerState.Base.Title}.");
                         SaveAirline();
                     }
                     else
@@ -2703,7 +2752,7 @@ namespace Airside.Presentation
                 return;
             }
 
-            ShowToast($"You have no {definition.EligibleType.Name} to fly {definition.Id}.");
+            ShowToast($"You need {Article.A(definition.EligibleType.Name)} for this contract.");
         }
 
         private void BuyAircraftFromHud(string typeId)
@@ -2724,7 +2773,7 @@ namespace Airside.Presentation
                     var leadMin = Math.Max(1,
                         (DeparturePrep.LeadSeconds(bought.Type, _operations.CareerState.BaseLevel) + 59) / 60);
                     ShowToast($"Bought {Article.A(type.Name)}{priceBit}. "
-                              + $"Pick a destination — fuelling and boarding need ~{leadMin} min before pushback.");
+                              + $"Pick a destination. The turnaround takes about {leadMin} min.");
                 }
                 else if (bought != null)
                 {
@@ -2732,8 +2781,8 @@ namespace Airside.Presentation
                     _activeWorkspace = HudWorkspace.Map;
                     _mapLens.Reset();
                     SetPlanningAircraft(bought, force: true);
-                    ShowToast($"Bought {Article.A(type.Name)}{priceBit} — delivering in about 8 minutes. "
-                              + "Schedule its first flight once it parks.");
+                    ShowToast($"Bought {Article.A(type.Name)}{priceBit}. It arrives in about 8 minutes. "
+                              + "Plan its first flight once it parks.");
                 }
                 else
                 {
@@ -2805,7 +2854,7 @@ namespace Airside.Presentation
             var result = _operations.StartCheck(aircraft);
             if (result.Accepted)
             {
-                ShowToast($"{aircraft.Registration} is in check until {ClockText(aircraft.CheckUntil.Value)} · ${cost:N0}.");
+                ShowToast($"{aircraft.Registration} is in its check until {ClockText(aircraft.CheckUntil.Value)}. It cost ${cost:N0}.");
                 SaveAirline();
             }
             else
@@ -2838,8 +2887,8 @@ namespace Airside.Presentation
             if (result.Accepted)
             {
                 _highlightedContractId = null;
-                ShowToast($"Accepted {definition.OriginCode} ↔ {definition.DestinationCode}: "
-                          + $"{definition.RequiredRotations} rotations.");
+                ShowToast($"Contract taken: {definition.OriginCode} to {definition.DestinationCode}, "
+                          + $"{definition.RequiredRotations} flight{(definition.RequiredRotations == 1 ? "" : "s")}.");
                 SaveAirline();
             }
             else
@@ -2860,8 +2909,7 @@ namespace Airside.Presentation
             var result = _operations.ScheduleDeparture(_mapAircraft, _mapSelection.Value, departAt);
             if (result.Accepted)
             {
-                ShowToast($"{_mapAircraft.Registration} pushes back {ClockText(departAt)} "
-                          + $"for {_mapSelection.Value.Name}.");
+                ShowToast($"{_mapAircraft.Registration} leaves for {_mapSelection.Value.Name} at {ClockText(departAt)}.");
                 _activeWorkspace = HudWorkspace.None;
                 _mapSelection = null;
                 SaveAirline();
@@ -2892,7 +2940,7 @@ namespace Airside.Presentation
                 ToggleDevTools();
 
             GUI.Label(new Rect(x, rect.y + 40f, inner, 18f),
-                "Playtest helpers — inspect the fleet, auto-schedule idle aircraft, park arrivals. Live time stays on.", small);
+                "Playtest helpers: inspect the fleet, plan idle aircraft, park arrivals. Time keeps running.", small);
 
             var next = _operations.NextEventAt();
             GUI.Label(new Rect(x, rect.y + 62f, inner, 18f), DevTools.NextEventLabel(next, ClockText), label);
@@ -3047,7 +3095,7 @@ namespace Airside.Presentation
                         ShowToast($"{reg} is on final at Adelaide.");
                         break;
                     case FleetState.AwaitingStand:
-                        ShowToast($"{reg} has landed — choose a stand.");
+                        ShowToast($"{reg} has landed. Choose a stand.");
                         break;
                     case FleetState.AtStand:
                         ShowToast($"{reg} is parked on {StandNames.Display(e.Aircraft.Stand)}.");
@@ -3069,14 +3117,9 @@ namespace Airside.Presentation
             var start = Math.Max(0, settlements.Count - (int)Math.Min(fresh, settlements.Count));
             for (var i = start; i < settlements.Count; i++)
             {
+                // ADR 0128: the pay line also says whether it pushed on time, and what made it late.
                 var s = settlements[i];
-                var reg = s.SettlementId.Registration;
-                if (s.ContractFulfilled)
-                    ShowToast($"{reg} earned ${s.Payment:N0} — {s.ContractDefinitionId} complete!");
-                else if (!string.IsNullOrEmpty(s.ContractDefinitionId))
-                    ShowToast($"{reg} earned ${s.Payment:N0} on {s.ContractDefinitionId} ({s.RotationsCompleted} rotations so far).");
-                else
-                    ShowToast($"{reg} earned ${s.Payment:N0} from that rotation.");
+                ShowToast(DelayText.SettlementToast(s, _operations.CareerState?.OnTimeStreak ?? 0), DelayText.Tone(s));
             }
         }
 

@@ -1018,12 +1018,14 @@ namespace Airside.Simulation
             aircraft.PrepStartedAt = prepStartedAt;
         }
 
-        internal void RestorePushbackLateness(string registration, int latenessSeconds)
+        internal void RestorePushbackLateness(string registration, int latenessSeconds, string delay = null)
         {
             var aircraft = _fleet.Find(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase));
             if (aircraft == null)
                 throw new FormatException($"{registration}: pushback lateness has no aircraft.");
             aircraft.PushbackLatenessSeconds = latenessSeconds;
+            // v16 (ADR 0128): the saved breakdown; older saves have none, so it is all "Other".
+            aircraft.PushbackDelay = DelayBreakdown.Parse(latenessSeconds, delay);
         }
 
         internal void RestoreTower(SimulationTime mainRunwayFreeAt, SimulationTime crossRunwayFreeAt, long totalEvents)
@@ -1750,17 +1752,17 @@ namespace Airside.Simulation
                 return CommandResult.Refused($"{aircraft.Registration} is already at {Home.Name}.");
             if (!CanReach(aircraft, destination))
                 return CommandResult.Refused(
-                    $"{destination.Name} is {DistanceKm(destination):0} km — beyond the {aircraft.Type.Name}'s {aircraft.Type.PracticalRangeKm:0} km range.");
+                    $"{destination.Name} is {DistanceKm(destination):N0} km away. The {aircraft.Type.Name} only reaches {aircraft.Type.PracticalRangeKm:N0} km.");
             if (aircraft.CheckUntil is { } checkEnds && departAt.CompareTo(checkEnds) < 0)
                 return CommandResult.Refused(
                     $"{aircraft.Registration} is in its check until {Clock.TimeText(checkEnds)}. Pick a later time.");
             if (aircraft.Airline.IsPlayer && !RouteAccess.Allows(aircraft.Type, destination))
                 return CommandResult.Refused(
-                    $"{Article.CapitalA(aircraft.Type.Name)} is cleared for {RouteAccess.Ceiling(aircraft.Type)} routes — {destination.Name} is {RouteAccess.BandOf(destination)}.");
+                    $"{Article.CapitalA(aircraft.Type.Name)} only flies {RouteAccess.Label(RouteAccess.Ceiling(aircraft.Type))} routes. {destination.Name} is {RouteAccess.Label(RouteAccess.BandOf(destination))}.");
             if (aircraft.Airline.IsPlayer && CareerState != null
                 && CareerState.Tier < RouteAccess.RequiredTier(RouteAccess.BandOf(destination)))
                 return CommandResult.Refused(
-                    $"{destination.Name} is an international route — it needs the International operating tier.");
+                    $"{destination.Name} is international. You need the International tier to fly there.");
             if (departAt.CompareTo(_processedTo) < 0)
                 return CommandResult.Refused("Departure time is in the past.");
 
@@ -1775,7 +1777,7 @@ namespace Airside.Simulation
                     && CareerState.TryChargeRecoveryDispatch(cost, destination.Code);
                 if (CareerState.Funds + alreadyPaid < cost && !recoveryCredit)
                     return CommandResult.Refused(
-                        $"This flight costs ${cost:N0}; you have ${CareerState.Funds:N0}.");
+                        $"This flight costs ${cost:N0}. You have ${CareerState.Funds:N0}.");
                 if (!recoveryCredit)
                 {
                     if (alreadyPaid > 0) CareerState.RefundDispatch(alreadyPaid);
@@ -1805,7 +1807,7 @@ namespace Airside.Simulation
             if (aircraft == null || !_fleet.Contains(aircraft))
                 return CommandResult.Refused("Unknown aircraft.");
             if (aircraft.State != FleetState.AtStand || !aircraft.Scheduled.HasValue)
-                return CommandResult.Refused($"{aircraft.Registration} has no departure waiting to start.");
+                return CommandResult.Refused($"{aircraft.Registration} has no flight waiting to start.");
 
             if (aircraft.Airline.IsPlayer && aircraft.Scheduled.HasValue)
                 CareerState.RefundDispatch(DispatchCost(aircraft.Type,
@@ -1835,14 +1837,14 @@ namespace Airside.Simulation
             if (definition == null)
                 return CommandResult.Refused("Unknown contract.");
             if (CareerState.ActiveContract != null)
-                return CommandResult.Refused("Already operating a contract.");
+                return CommandResult.Refused("You already have a contract. Finish or abandon it first.");
             if (CareerState.HasCompleted(definition.Id))
-                return CommandResult.Refused($"{definition.Id} is already complete.");
+                return CommandResult.Refused("You have already completed this contract.");
             if (CareerState.Tier < definition.RequiredTier)
-                return CommandResult.Refused($"{definition.Id} needs {definition.RequiredTier} tier.");
+                return CommandResult.Refused($"This contract needs the {definition.RequiredTier} tier.");
             if (!AdelaideOwnedTypes().Exists(t => t.Id == definition.EligibleType.Id))
                 return CommandResult.Refused(
-                    $"This contract needs {Article.A(definition.EligibleType.Name)} based at Adelaide.");
+                    $"This contract needs {Article.A(definition.EligibleType.Name)} at Adelaide.");
 
             CareerState.Remember(definition);
             CareerState.ActiveContract = new ActiveRouteContract(definition.Id, _processedTo);
@@ -1856,7 +1858,7 @@ namespace Airside.Simulation
         public CommandResult AbandonContract()
         {
             if (CareerState?.ActiveContract == null)
-                return CommandResult.Refused("No contract is active.");
+                return CommandResult.Refused("You have no contract.");
             var loss = CareerState.TryFindDefinition(CareerState.ActiveContract.DefinitionId, out var definition)
                 ? definition.ReliabilityLossOnCancel
                 : 3;
@@ -1877,27 +1879,27 @@ namespace Airside.Simulation
                 if (aircraft.Airline.IsPlayer)
                     owned++;
             if (PlayerFleetCount() >= AircraftAcquisition.MaxPlayerAircraft)
-                return CommandResult.Refused($"Fleet is full ({AircraftAcquisition.MaxPlayerAircraft} aircraft).");
+                return CommandResult.Refused($"Your fleet is full at {AircraftAcquisition.MaxPlayerAircraft} aircraft.");
             if (owned >= CareerState.Base.FleetCapacity)
-                return CommandResult.Refused($"{CareerState.Base.Title} supports {CareerState.Base.FleetCapacity} aircraft. Expand your Adelaide base first.");
+                return CommandResult.Refused($"The {CareerState.Base.Title} holds {CareerState.Base.FleetCapacity} aircraft. Expand your Adelaide base first.");
             if (!PlayerBase.Supports(CareerState.BaseLevel, type))
             {
                 var needed = AircraftCatalogue.IsWidebody(type) ? PlayerBaseLevel.International : PlayerBaseLevel.JetGate;
-                return CommandResult.Refused($"{Article.CapitalA(type.Name)} needs the {PlayerBase.For(needed).Title}.");
+                return CommandResult.Refused($"{Article.CapitalA(type.Name)} needs the {PlayerBase.For(needed).Title}. Expand your base in Career.");
             }
             if (CareerState.Tier < offer.RequiredTier)
-                return CommandResult.Refused($"Buying {Article.A(type.Name)} needs {offer.RequiredTier} tier.");
+                return CommandResult.Refused($"{Article.CapitalA(type.Name)} needs the {offer.RequiredTier} tier.");
             if (CareerState.Reliability < offer.RequiredReliability)
-                return CommandResult.Refused($"Buying {Article.A(type.Name)} needs {offer.RequiredReliability}% reliability.");
+                return CommandResult.Refused($"{Article.CapitalA(type.Name)} needs {offer.RequiredReliability}% reliability.");
             if (CareerState.CompletedPlayerRotations < offer.RequiredRotations)
                 return CommandResult.Refused(
-                    $"Buying {Article.A(type.Name)} needs {offer.RequiredRotations} completed rotations.");
+                    $"{Article.CapitalA(type.Name)} needs {offer.RequiredRotations} completed flights.");
             if (!CareerState.CanAfford(offer.Price))
-                return CommandResult.Refused($"{Article.CapitalA(type.Name)} costs ${offer.Price:N0}; you have ${CareerState.Funds:N0}.");
+                return CommandResult.Refused($"{Article.CapitalA(type.Name)} costs ${offer.Price:N0}. You have ${CareerState.Funds:N0}.");
 
             var stand = SuggestPurchaseStand(type);
             if (!CareerState.TryChargePurchase(offer.Price))
-                return CommandResult.Refused($"{Article.CapitalA(type.Name)} costs ${offer.Price:N0}; you have ${CareerState.Funds:N0}.");
+                return CommandResult.Refused($"{Article.CapitalA(type.Name)} costs ${offer.Price:N0}. You have ${CareerState.Funds:N0}.");
 
             var registration = NextPlayerRegistration(_fleet, CareerState.HasSettlementHistory);
             if (stand.HasValue)
@@ -1917,16 +1919,16 @@ namespace Airside.Simulation
         public CommandResult OpenOutstationBase(string code)
         {
             if (CareerState.Tier < OperatingTier.Domestic)
-                return CommandResult.Refused("A domestic operating tier is required for another base.");
+                return CommandResult.Refused("You need the Domestic tier to open another base.");
             var allowed = false;
             foreach (var candidate in OutstationCandidates)
                 if (candidate == code) allowed = true;
-            if (!allowed) return CommandResult.Refused("Choose Melbourne, Sydney, Brisbane or Perth for an outstation base.");
+            if (!allowed) return CommandResult.Refused("Outstations can open in Melbourne, Sydney, Brisbane or Perth.");
             if (CareerState.HasOutstationBase(code)) return CommandResult.Refused("That base is already open.");
-            if (CareerState.OutstationBases.Count >= 3) return CommandResult.Refused("The network already has three outstation bases.");
+            if (CareerState.OutstationBases.Count >= 3) return CommandResult.Refused("You already have three outstations.");
             var cost = NextOutstationCost;
             if (!CareerState.TryChargePurchase(cost))
-                return CommandResult.Refused($"Opening this base costs ${cost:N0}; you have ${CareerState.Funds:N0}.");
+                return CommandResult.Refused($"Opening this base costs ${cost:N0}. You have ${CareerState.Funds:N0}.");
             CareerState.AddOutstationBase(code);
             AdvanceCareer();
             return CommandResult.Ok;
@@ -1939,21 +1941,21 @@ namespace Airside.Simulation
             if (type == null || !AircraftAcquisition.TryFor(type, out var offer))
                 return CommandResult.Refused("That aircraft is not for sale.");
             if (PlayerFleetCount() >= AircraftAcquisition.MaxPlayerAircraft)
-                return CommandResult.Refused("The airline fleet is full.");
+                return CommandResult.Refused("Your fleet is full.");
             var based = 0;
             foreach (var aircraft in _outstationFleet)
                 if (aircraft.BaseCode == baseCode) based++;
             if (based >= OutstationCapacity)
-                return CommandResult.Refused($"{baseCode} supports {OutstationCapacity} based aircraft.");
+                return CommandResult.Refused($"{baseCode} holds {OutstationCapacity} aircraft.");
             if (!PlayerBase.Supports(CareerState.BaseLevel, type) || CareerState.Tier < offer.RequiredTier
                 || CareerState.Reliability < offer.RequiredReliability
                 || CareerState.CompletedPlayerRotations < offer.RequiredRotations)
-                return CommandResult.Refused("Aircraft capability, reliability or service requirement is not met.");
+                return CommandResult.Refused("You don't meet this aircraft's requirements yet. See Fleet for what it needs.");
             if (!HasOutstationRoute(type, baseCode))
                 return CommandResult.Refused(
-                    $"{Article.CapitalA(type.Name)} based at {baseCode} would have no route it can fly. Choose a longer-range type.");
+                    $"{Article.CapitalA(type.Name)} at {baseCode} would have nowhere in range to fly. Choose a longer-range type.");
             if (!CareerState.TryChargePurchase(offer.Price))
-                return CommandResult.Refused($"{type.Name} costs ${offer.Price:N0}; you have ${CareerState.Funds:N0}.");
+                return CommandResult.Refused($"{Article.CapitalA(type.Name)} costs ${offer.Price:N0}. You have ${CareerState.Funds:N0}.");
             var number = 1;
             while (true)
             {
@@ -2001,11 +2003,11 @@ namespace Airside.Simulation
             foreach (var candidate in _outstationFleet)
                 if (candidate.Registration == registration) aircraft = candidate;
             if (aircraft == null) return CommandResult.Refused("Unknown outstation aircraft.");
-            if (aircraft.HasFlight) return CommandResult.Refused("That aircraft already has a service.");
+            if (aircraft.HasFlight) return CommandResult.Refused("That aircraft already has a flight.");
             if (aircraft.InCheck(_processedTo.ElapsedSeconds))
-                return CommandResult.Refused("That aircraft is in a routine check.");
+                return CommandResult.Refused("That aircraft is in its check.");
             if (aircraft.CheckDue)
-                return CommandResult.Refused("Routine check is due before the next service.");
+                return CommandResult.Refused("A check is due before its next flight.");
             if (!DestinationCatalogue.TryFind(aircraft.BaseCode, out var origin)
                 || !DestinationCatalogue.TryFind(destinationCode, out var destination))
                 return CommandResult.Refused("Unknown network destination.");
@@ -2013,17 +2015,17 @@ namespace Airside.Simulation
             // Any Adelaide movement must use the rendered airport's real runway and stand
             // reservations. Network aircraft therefore work only routes outside Adelaide.
             if (destinationCode == Home.Code)
-                return CommandResult.Refused("Adelaide services must use an aircraft based at Adelaide.");
+                return CommandResult.Refused("Flights from Adelaide need an aircraft based at Adelaide.");
             var km = origin.DistanceKmTo(destination);
             if (!aircraft.Type.CanReach(km) || !RouteAccess.Allows(aircraft.Type, destination))
                 return CommandResult.Refused("That aircraft cannot operate this route.");
             if (CareerState.Tier < RouteAccess.RequiredTier(RouteAccess.BandOf(destination)))
-                return CommandResult.Refused("International network service requires International tier.");
+                return CommandResult.Refused("International flights need the International tier.");
             if (departAt.CompareTo(_processedTo) < 0)
                 return CommandResult.Refused("Departure time is in the past.");
             var cost = DispatchCost(aircraft.Type, km);
             if (!CareerState.TryChargeDispatch(cost))
-                return CommandResult.Refused($"This service costs ${cost:N0}; you have ${CareerState.Funds:N0}.");
+                return CommandResult.Refused($"This flight costs ${cost:N0}. You have ${CareerState.Funds:N0}.");
             var duration = 2 * LegTiming.AirborneSeconds(km, aircraft.Type) + 45 * 60;
             aircraft.Plan(destinationCode, departAt.ElapsedSeconds, departAt.ElapsedSeconds + duration, automated);
             return CommandResult.Ok;
@@ -2033,17 +2035,17 @@ namespace Airside.Simulation
         {
             var aircraft = _outstationFleet.Find(a => a.Registration == registration);
             if (aircraft == null) return CommandResult.Refused("Unknown outstation aircraft.");
-            if (aircraft.HasFlight) return CommandResult.Refused("Finish the service before a check.");
+            if (aircraft.HasFlight) return CommandResult.Refused("Let it finish its flight first.");
             if (aircraft.InCheck(_processedTo.ElapsedSeconds))
-                return CommandResult.Refused("A check is already under way.");
-            if (!aircraft.CheckDue) return CommandResult.Refused("This aircraft is not due for a check.");
+                return CommandResult.Refused("It is already in its check.");
+            if (!aircraft.CheckDue) return CommandResult.Refused("It isn't due for a check yet.");
             // An outstation is equipped for the types it is allowed to base, so its checks are
             // priced and timed like a local check at the matching Adelaide capability.
             var outstationCapability = AircraftCatalogue.IsWidebody(aircraft.Type) ? PlayerBaseLevel.International
                 : NeedsTerminalGate(aircraft.Type) ? PlayerBaseLevel.JetGate : PlayerBaseLevel.ExpandedRegional;
             var cost = Maintenance.CheckCost(aircraft.Type, outstationCapability);
             if (!CareerState.TryChargePurchase(cost))
-                return CommandResult.Refused($"Routine check costs ${cost:N0}; you have ${CareerState.Funds:N0}.");
+                return CommandResult.Refused($"A check costs ${cost:N0}. You have ${CareerState.Funds:N0}.");
             aircraft.StartCheck(_processedTo.ElapsedSeconds
                 + Maintenance.CheckSeconds(aircraft.Type, outstationCapability));
             return CommandResult.Ok;
@@ -2052,16 +2054,16 @@ namespace Airside.Simulation
         public CommandResult SetRepeatSchedule(string registration, string destinationCode, int intervalHours)
         {
             if (!DelegationUnlocked)
-                return CommandResult.Refused("Complete 12 manually planned services to unlock delegation.");
+                return CommandResult.Refused("Plan 12 flights yourself to unlock repeat schedules.");
             if (intervalHours != 6 && intervalHours != 12 && intervalHours != 24)
-                return CommandResult.Refused("Choose a 6, 12 or 24 hour repeat interval.");
+                return CommandResult.Refused("Repeat every 6, 12 or 24 hours.");
             var local = _fleet.Find(a => a.Registration == registration && a.Airline.IsPlayer);
             var remote = _outstationFleet.Find(a => a.Registration == registration);
             if (local == null && remote == null) return CommandResult.Refused("Unknown player aircraft.");
             if (!DestinationCatalogue.TryFind(destinationCode, out var destination))
                 return CommandResult.Refused("Unknown destination.");
             if (local != null && !CanOperate(local, destination))
-                return CommandResult.Refused("That Adelaide aircraft cannot operate this route.");
+                return CommandResult.Refused("That aircraft can't fly this route.");
             if (remote != null)
             {
                 if (destinationCode == Home.Code || destinationCode == remote.BaseCode
@@ -2069,7 +2071,7 @@ namespace Airside.Simulation
                     || !remote.Type.CanReach(origin.DistanceKmTo(destination))
                     || !RouteAccess.Allows(remote.Type, destination)
                     || CareerState.Tier < RouteAccess.RequiredTier(RouteAccess.BandOf(destination)))
-                    return CommandResult.Refused("That outstation aircraft cannot operate this route.");
+                    return CommandResult.Refused("That aircraft can't fly this route from its base.");
             }
             _repeatSchedules.RemoveAll(p => p.Registration == registration);
             _repeatSchedules.Add(new RepeatSchedule(registration, destinationCode, intervalHours,
@@ -2144,19 +2146,19 @@ namespace Airside.Simulation
                 if (remote != null && remote.CheckDue)
                 {
                     plan.Paused = true;
-                    plan.Exception = "Routine check due; complete a check before resuming.";
+                    plan.Exception = "Paused: a check is due.";
                     continue;
                 }
                 if (local == null && remote == null)
                 {
                     plan.Paused = true;
-                    plan.Exception = "Aircraft is no longer available.";
+                    plan.Exception = "Paused: the aircraft is gone.";
                     continue;
                 }
                 if (!DestinationCatalogue.TryFind(plan.DestinationCode, out var destination))
                 {
                     plan.Paused = true;
-                    plan.Exception = "Destination is unavailable.";
+                    plan.Exception = "Paused: that destination is closed.";
                     continue;
                 }
                 var departAt = target.Advance(local == null ? 15 * 60
@@ -2192,14 +2194,14 @@ namespace Airside.Simulation
             if (CareerState == null)
                 return CommandResult.Refused("No career to expand.");
             if (!PlayerBase.TryNext(CareerState.BaseLevel, out var next))
-                return CommandResult.Refused("Your Adelaide base is already fully developed.");
+                return CommandResult.Refused("Your Adelaide base is already at its largest.");
             if (CareerState.Tier < next.RequiredTier)
-                return CommandResult.Refused($"{next.Title} needs {next.RequiredTier} tier.");
+                return CommandResult.Refused($"The {next.Title} needs the {next.RequiredTier} tier.");
             if (CareerState.CompletedPlayerRotations < next.RequiredRotations)
-                return CommandResult.Refused($"{next.Title} needs {next.RequiredRotations} completed rotations.");
+                return CommandResult.Refused($"The {next.Title} needs {next.RequiredRotations} completed flights.");
             if (!CareerState.TryChargePurchase(next.UpgradeCost))
-                return CommandResult.Refused(next.Title + " costs $" + next.UpgradeCost.ToString("N0")
-                                             + "; you have $" + CareerState.Funds.ToString("N0") + ".");
+                return CommandResult.Refused("The " + next.Title + " costs $" + next.UpgradeCost.ToString("N0")
+                                             + ". You have $" + CareerState.Funds.ToString("N0") + ".");
 
             CareerState.BaseLevel = next.Level;
             AdvanceCareer();
@@ -2220,7 +2222,7 @@ namespace Airside.Simulation
                 CareerState.PinGoal(id);
                 return CommandResult.Ok;
             }
-            return CommandResult.Refused("That career goal is not available yet.");
+            return CommandResult.Refused("That goal isn't open yet.");
         }
 
         private void CheckCareerFinale()
@@ -2230,7 +2232,7 @@ namespace Airside.Simulation
             {
                 CareerState.MarkFinale();
                 _careerEvents.Add(new CareerEvent(CareerEventKind.Finale, CareerState.Tier,
-                    "Established airline — every career goal met. Keep flying in sandbox."));
+                    "You are an established airline. Every career goal is done, and the airport is yours to keep running."));
             }
         }
 
@@ -2256,7 +2258,7 @@ namespace Airside.Simulation
                 var reached = _announcedTier.Value + 1;
                 _announcedTier = reached;
                 _careerEvents.Add(new CareerEvent(CareerEventKind.TierReached, reached,
-                    $"{reached} operating tier reached. New aircraft, routes and goals are open."));
+                    $"{reached} tier reached! New aircraft, routes and goals are open."));
             }
             CheckCareerFinale();
             CheckChallenges(profitableDay: false);
@@ -2296,7 +2298,7 @@ namespace Airside.Simulation
                 if (progress < target || !CareerState.TryAward(challenge.Key, challenge.Reward))
                     continue;
                 _careerEvents.Add(new CareerEvent(CareerEventKind.Challenge, CareerState.Tier,
-                    $"Challenge complete: {challenge.Title} — ${challenge.Reward:N0} paid."));
+                    $"Challenge done: {challenge.Title}. ${challenge.Reward:N0} paid."));
             }
         }
 
@@ -2320,6 +2322,40 @@ namespace Airside.Simulation
 
             public long Margin => Revenue - Cost;
 
+            /// <summary>ADR 0128: late pushbacks today, their minutes, and which cause cost the most.</summary>
+            public int LateFlights;
+            public int LateSeconds;
+            public readonly Dictionary<DelayCause, int> DelayByCause = new();
+
+            public void RecordDelay(DelayBreakdown delay)
+            {
+                if (!delay.IsLate)
+                    return;
+                LateFlights++;
+                LateSeconds += delay.LatenessSeconds;
+                foreach (var part in delay.Parts)
+                {
+                    DelayByCause.TryGetValue(part.Cause, out var sum);
+                    DelayByCause[part.Cause] = sum + part.Seconds;
+                }
+            }
+
+            /// <summary>The named cause that cost the most today, or null.</summary>
+            public DelayCause? WorstCause()
+            {
+                DelayCause? worst = null;
+                var most = 0;
+                foreach (DelayCause cause in Enum.GetValues(typeof(DelayCause)))
+                {
+                    if (cause == DelayCause.Other || !DelayByCause.TryGetValue(cause, out var seconds) || seconds <= most)
+                        continue;
+                    most = seconds;
+                    worst = cause;
+                }
+
+                return worst;
+            }
+
             public void Record(Destination destination, long payment, long cost)
             {
                 Flights++;
@@ -2341,6 +2377,9 @@ namespace Airside.Simulation
                 BestCode = string.Empty;
                 BestMargin = long.MinValue;
                 StartReliability = reliability;
+                LateFlights = 0;
+                LateSeconds = 0;
+                DelayByCause.Clear();
             }
         }
 
@@ -2375,7 +2414,7 @@ namespace Airside.Simulation
                         names.Add(DestinationCatalogue.TryFind(code, out var d) ? d.Name : code);
                     var places = string.Join(", ", names);
                     _careerEvents.Add(new CareerEvent(CareerEventKind.News, CareerState.Tier,
-                        $"{today.Headline}: demand up {(int)Math.Round((today.Multiplier - 1) * 100)}% today to {places}."));
+                        $"{today.Headline}. Demand is up {(int)Math.Round((today.Multiplier - 1) * 100)}% today to {places}."));
                 }
             }
 
@@ -2392,11 +2431,20 @@ namespace Airside.Simulation
             var change = CareerState.Reliability - (_today.StartReliability ?? CareerState.Reliability);
             var best = DestinationCatalogue.TryFind(_today.BestCode, out var bestPlace) ? bestPlace.Name : _today.BestCode;
             _careerEvents.Add(new CareerEvent(CareerEventKind.DailyReport, CareerState.Tier,
-                $"Day's results: {_today.Flights} flight{(_today.Flights == 1 ? "" : "s")} · ${_today.Revenue:N0} revenue · "
+                $"Today: {_today.Flights} flight{(_today.Flights == 1 ? "" : "s")} · ${_today.Revenue:N0} in · "
                 + $"{(_today.Margin >= 0 ? "+" : "−")}${Math.Abs(_today.Margin):N0} margin · reliability {CareerState.Reliability}% "
-                + $"({(change >= 0 ? "+" : "")}{change}) · best: {best}."));
+                + $"({(change >= 0 ? "+" : "")}{change}) · best route {best} · {DelaySummary(_today)}."));
             CheckChallenges(profitableDay: _today.Flights >= 4 && _today.Margin > 0);
             _today.Reset(CareerState.Reliability);
+        }
+
+        private static string DelaySummary(DayLedger day)
+        {
+            if (day.LateFlights == 0)
+                return "every pushback on time";
+            var minutes = Math.Max(1, (int)Math.Round(day.LateSeconds / 60.0));
+            var text = $"{day.LateFlights} late ({minutes} min)";
+            return day.WorstCause() is { } worst ? $"{text}, mostly {DelayCauses.Label(worst)}" : text;
         }
 
         /// <summary>When the active contract's deadline passes, or null (ADR 0127).</summary>
@@ -2423,8 +2471,8 @@ namespace Airside.Simulation
             CareerState.TryFindDefinition(active.DefinitionId, out var definition);
             CareerState.AbandonContract(definition.ReliabilityLossOnCancel);
             _careerEvents.Add(new CareerEvent(CareerEventKind.ContractExpired, CareerState.Tier,
-                $"{ContractKindLabel(definition.Kind)} to {DestinationName(definition.DestinationCode)} lapsed — "
-                + $"{active.CompletedRotations} of {definition.RequiredRotations} flown. Reliability −{definition.ReliabilityLossOnCancel}."));
+                $"{ContractKindLabel(definition.Kind)} to {DestinationName(definition.DestinationCode)} ran out of time. "
+                + $"You flew {active.CompletedRotations} of {definition.RequiredRotations}. Reliability −{definition.ReliabilityLossOnCancel}."));
             return true;
         }
 
@@ -2503,9 +2551,9 @@ namespace Airside.Simulation
             if (aircraft == null || !_fleet.Contains(aircraft))
                 return CommandResult.Refused("No such aircraft.");
             if (!aircraft.Airline.IsPlayer)
-                return CommandResult.Refused("Only your own aircraft can be sent for a check.");
+                return CommandResult.Refused("You can only send your own aircraft for a check.");
             if (aircraft.State != FleetState.AtStand)
-                return CommandResult.Refused($"{aircraft.Registration} must be parked at its stand for a check.");
+                return CommandResult.Refused($"{aircraft.Registration} has to be parked for a check.");
             if (aircraft.Scheduled.HasValue)
                 return CommandResult.Refused($"{aircraft.Registration} has a flight booked. Cancel it first.");
             if (Maintenance.InCheck(aircraft, _processedTo))
@@ -2514,7 +2562,7 @@ namespace Airside.Simulation
                 return CommandResult.Refused("No career to charge the check against.");
             var cost = Maintenance.CheckCost(aircraft.Type, CareerState.BaseLevel);
             if (!CareerState.TryChargePurchase(cost))
-                return CommandResult.Refused($"A check costs ${cost:N0}; you have ${CareerState.Funds:N0}.");
+                return CommandResult.Refused($"A check costs ${cost:N0}. You have ${CareerState.Funds:N0}.");
 
             aircraft.RotationsSinceCheck = 0;
             aircraft.CheckUntil = _processedTo.Advance(Maintenance.CheckSeconds(aircraft.Type, CareerState.BaseLevel));
@@ -2542,13 +2590,13 @@ namespace Airside.Simulation
             if (aircraft == null)
                 return CommandResult.Refused("No such aircraft.");
             if (!aircraft.Airline.IsPlayer)
-                return CommandResult.Refused("Only your own aircraft can be sold.");
+                return CommandResult.Refused("You can only sell your own aircraft.");
             if (aircraft.State != FleetState.AtStand)
-                return CommandResult.Refused($"{aircraft.Registration} must be parked at its stand to sell.");
+                return CommandResult.Refused($"{aircraft.Registration} has to be parked to sell.");
             if (Maintenance.InCheck(aircraft, _processedTo))
                 return CommandResult.Refused($"{aircraft.Registration} is in its check until {Clock.TimeText(aircraft.CheckUntil.Value)}.");
             if (!AircraftAcquisition.TryFor(aircraft.Type, out var offer))
-                return CommandResult.Refused($"{aircraft.Type.Name} has no resale listing.");
+                return CommandResult.Refused($"Nobody is buying {aircraft.Type.Name}s.");
 
             var refund = (long)Math.Round(offer.Price * ResaleFraction);
             CareerState.RefundDispatch(refund);
@@ -2584,8 +2632,12 @@ namespace Airside.Simulation
             var settlementId = new SettlementId(aircraft.Registration, aircraft.CompletedTrips);
             var forecast = Forecast(Home, justFlown.Value, aircraft.Type);
             var pay = forecast.Revenue;
+            DelayBreakdown? delay = null;
             if (aircraft.Airline.IsPlayer && aircraft.PushbackLatenessSeconds.HasValue)
             {
+                delay = aircraft.PushbackDelay
+                        ?? DelayBreakdown.Parse(aircraft.PushbackLatenessSeconds.Value, null);
+                aircraft.PushbackDelay = null;
                 CareerState.ApplyPunctuality(
                     FlightEconomics.PunctualityReliabilityDelta(aircraft.PushbackLatenessSeconds.Value));
                 CareerState.RecordPushback(aircraft.PushbackLatenessSeconds.Value <= FlightEconomics.OnTimeGraceSeconds);
@@ -2596,6 +2648,8 @@ namespace Airside.Simulation
                 settlementId, pay, matching, PlayerOwnedTypes(), now, PlayerFleetCount());
             if (settlement == null)
                 return;
+            if (delay.HasValue)
+                settlement = settlement.Value.WithDelay(delay);
 
             if (aircraft.Airline.IsPlayer)
             {
@@ -2605,6 +2659,8 @@ namespace Airside.Simulation
                     settlement.Value.Payment - completionBonus - dispatchCost,
                     manual: !aircraft.AutomatedTrip);
                 _today.Record(justFlown.Value, settlement.Value.Payment, dispatchCost);
+                if (delay.HasValue)
+                    _today.RecordDelay(delay.Value);
                 aircraft.AutomatedTrip = false;
                 AdvanceCareer();
             }
@@ -2628,11 +2684,11 @@ namespace Airside.Simulation
             if (aircraft.Airline.IsPlayer && CareerState != null
                 && !PlayerBase.CanUseStand(CareerState.BaseLevel, aircraft.Type, stand))
                 return CommandResult.Refused(
-                    $"{AdelaideGround.StandLabel(stand)} is outside your {CareerState.Base.Title} allocation.");
+                    $"{AdelaideGround.StandLabel(stand)} isn't part of your {CareerState.Base.Title}.");
             if (!IsStandFree(stand))
-                return CommandResult.Refused($"{stand} is occupied.");
+                return CommandResult.Refused($"{AdelaideGround.StandLabel(stand)} is taken.");
             if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, aircraft))
-                return CommandResult.Refused($"{AdelaideGround.StandLabel(stand)}'s lead-in is in use.");
+                return CommandResult.Refused($"Someone is on the {AdelaideGround.StandLabel(stand)} lead-in.");
 
             aircraft.Stand = stand;
             Transition(aircraft, FleetState.TaxiIn, _processedTo, TaxiInSecondsTo(stand, aircraft.Type, aircraft.AssignedRunway));
@@ -2734,32 +2790,37 @@ namespace Airside.Simulation
                     if (!DeparturePrep.IsReady(aircraft, now, CareerState.BaseLevel))
                         return false;
                     var pushingBackFromGate = AdelaideGround.IsTerminalGate(aircraft.Stand);
+                    var readyAt = DepartureReadyAt(aircraft);
                     if (NextTaxiReleaseAt(now, pushingBackFromGate).HasValue)
-                        return false;
+                        return NoteDelay(aircraft, now, readyAt, DelayCause.ApronBusy);
                     // A gate pushback needs its lead-in clear before the tug moves; it is re-checked
                     // whenever anything else finishes, since that is the only way it frees.
                     if (pushingBackFromGate && !IsLeadInFree(aircraft.Stand, aircraft))
-                        return false;
+                        return NoteDelay(aircraft, now, readyAt, DelayCause.LeadIn);
                     // Ground control: push only when the whole route to the runway is clear of
                     // the traffic already moving. A departure that has to wait for it goes on the
                     // grid, so the moment it moves does not depend on how the clock is stepped.
                     var departureRunway = RunwayFor(aircraft);
-                    var readyAt = DepartureReadyAt(aircraft);
                     if (!now.Equals(readyAt) && !GroundTraffic.OnGrid(now))
                         return false;
                     var taxiOutLeg = AdelaideGround.TaxiOut(aircraft.Stand, aircraft.Type, departureRunway);
                     if (!GroundTraffic.PathClear(_fleet, aircraft, taxiOutLeg,
                             departureRunway, taxiOut: true, now,
                             includeStationary: now.ElapsedSeconds - readyAt.ElapsedSeconds < GroundTraffic.MaxWaitSeconds))
-                        return false;
+                        return NoteDelay(aircraft, now, readyAt, DelayCause.Taxiway);
                     // ADR 0126: not onto a route that crosses a runway while that runway is busy.
                     if (CrossingIntoBusyStrip(taxiOutLeg, departureRunway, now).HasValue)
-                        return false;
+                        return NoteDelay(aircraft, now, readyAt, DelayCause.RunwayCrossing);
                     if (aircraft.Airline.IsPlayer)
                     {
-                        var lateness = (int)(now.ElapsedSeconds - aircraft.Scheduled.Value.DepartAt.ElapsedSeconds);
+                        var departAt = aircraft.Scheduled.Value.DepartAt.ElapsedSeconds;
+                        var lateness = (int)(now.ElapsedSeconds - departAt);
                         aircraft.PushbackLatenessSeconds = lateness;
+                        aircraft.PushbackDelay = DelayLedger.Close(aircraft.DelayLedger, departAt,
+                            readyAt.ElapsedSeconds, now.ElapsedSeconds);
                     }
+
+                    aircraft.DelayLedger = null;
 
                     aircraft.CurrentDestination = aircraft.Scheduled.Value.Destination;
                     aircraft.Scheduled = null;
@@ -3290,6 +3351,27 @@ namespace Airside.Simulation
         /// for the whole wait. Null for anything else. An estimate: traffic that has not yet
         /// reached the queue can still change it.
         /// </summary>
+        /// <summary>
+        /// ADR 0128: a ready player departure was held by <paramref name="cause"/>. Sampled only at the
+        /// moment it became ready and on the ground-control grid — the times every step size visits —
+        /// so the breakdown does not depend on how the clock is stepped. Always returns false (the
+        /// pushback did not happen), so a gate can return it directly.
+        /// </summary>
+        private bool NoteDelay(FleetAircraft aircraft, SimulationTime now, SimulationTime readyAt, DelayCause cause)
+        {
+            if (!aircraft.Airline.IsPlayer || !aircraft.Scheduled.HasValue)
+                return false;
+            if (!now.Equals(readyAt) && !GroundTraffic.OnGrid(now))
+                return false;
+            var departAt = aircraft.Scheduled.Value.DepartAt.ElapsedSeconds;
+            var ledger = aircraft.DelayLedger;
+            if (ledger == null || ledger.DepartAtSeconds != departAt)
+                aircraft.DelayLedger = new DelayLedger(departAt, now.ElapsedSeconds, cause);
+            else
+                ledger.Sample(now.ElapsedSeconds, cause);
+            return false;
+        }
+
         /// <summary>When a departure at its stand became ready to push: booked time, or prep end.</summary>
         private SimulationTime DepartureReadyAt(FleetAircraft aircraft)
         {

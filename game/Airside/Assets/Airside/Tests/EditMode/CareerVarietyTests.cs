@@ -103,7 +103,7 @@ namespace Airside.Tests
             for (var i = 0; i < 7; i++)
                 ops.CareerState.RecordPushback(true);
             var saved = AirlineSave.Capture(ops);
-            Assert.That(saved.Version, Is.EqualTo(15));
+            Assert.That(saved.Version, Is.GreaterThanOrEqualTo(15));
             var restored = AirlineSave.Restore(saved, clock);
             Assert.That(restored.CareerState.TryFindDefinition(freight.Id, out var back), Is.True);
             Assert.That(back.Kind, Is.EqualTo(ContractKind.Freight));
@@ -184,7 +184,7 @@ namespace Airside.Tests
 
             var reports = events.Where(e => e.Kind == CareerEventKind.DailyReport).ToList();
             Assert.That(reports.Count, Is.InRange(2, 3), "one report per flown day");
-            Assert.That(reports[0].Text, Does.StartWith("Day's results:"));
+            Assert.That(reports[0].Text, Does.StartWith("Today:"));
             Assert.That(events.Any(e => e.Kind == CareerEventKind.News)
                         || Enumerable.Range(0, 3).All(d => DemandEvents.At(new SimulationTime(d * 86400L), ops.Clock) == null),
                 Is.True, "a demand day is announced");

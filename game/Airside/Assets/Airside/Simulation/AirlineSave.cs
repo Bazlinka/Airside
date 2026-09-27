@@ -37,7 +37,7 @@ namespace Airside.Simulation
         /// 13 adds selectable career goals, route proof, outstation fleet/bases, earned repeat
         /// schedules, recent service margins and active-play timing (ADR 0120).
         /// </summary>
-        public const int CurrentVersion = 15;
+        public const int CurrentVersion = 16;
 
         public int Version = CurrentVersion;
 
@@ -195,6 +195,9 @@ namespace Airside.Simulation
         public bool HasPushbackLateness;
         public int PushbackLatenessSeconds;
 
+        /// <summary>v16 (ADR 0128): what made that pushback late, "Cause:seconds;…". Empty before v16.</summary>
+        public string PushbackDelay;
+
         /// <summary>v11 (ADR 0085). Older saves load as 0: every aircraft starts fresh.</summary>
         public int RotationsSinceCheck;
         public long CheckUntilSeconds;
@@ -332,6 +335,7 @@ namespace Airside.Simulation
                     PrepStartedAt = a.PrepStartedAt?.ElapsedSeconds ?? 0,
                     HasPushbackLateness = a.PushbackLatenessSeconds.HasValue,
                     PushbackLatenessSeconds = a.PushbackLatenessSeconds ?? 0,
+                    PushbackDelay = a.PushbackDelay?.Serialize() ?? string.Empty,
                     RotationsSinceCheck = a.RotationsSinceCheck,
                     CheckUntilSeconds = a.CheckUntil?.ElapsedSeconds ?? 0
                 });
@@ -439,7 +443,8 @@ namespace Airside.Simulation
                 if (data.Version >= 8 && record.HasPrepStart)
                     operations.RestorePrepData(registration, new SimulationTime(record.PrepStartedAt));
                 if (data.Version >= 10 && record.HasPushbackLateness)
-                    operations.RestorePushbackLateness(registration, record.PushbackLatenessSeconds);
+                    operations.RestorePushbackLateness(registration, record.PushbackLatenessSeconds,
+                        data.Version >= 16 ? record.PushbackDelay : null);
                 if (data.Version >= 11)
                     operations.RestoreMaintenance(registration, record.RotationsSinceCheck, record.CheckUntilSeconds);
                 if (data.Version >= 13 && airline.IsPlayer)

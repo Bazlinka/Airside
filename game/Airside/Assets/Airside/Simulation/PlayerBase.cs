@@ -192,7 +192,7 @@ namespace Airside.Simulation
         public static string TurnaroundLine(PlayerBaseLevel level)
         {
             var gain = TurnaroundSpeedGainPercent(level);
-            return gain <= 0 ? "baseline ground services" : gain + "% faster ground services";
+            return gain <= 0 ? "standard turnaround speed" : gain + "% faster turnarounds";
         }
 
         public static string MaintenanceCapabilityLine(PlayerBaseLevel level) => level switch
@@ -238,10 +238,10 @@ namespace Airside.Simulation
             if (career.CompletedPlayerRotations < next.RequiredRotations)
             {
                 var remaining = next.RequiredRotations - career.CompletedPlayerRotations;
-                parts.Add($"{remaining} more rotation" + (remaining == 1 ? "" : "s"));
+                parts.Add($"{remaining} more flight" + (remaining == 1 ? "" : "s"));
             }
             if (career.Funds < next.UpgradeCost)
-                parts.Add("$" + (next.UpgradeCost - career.Funds).ToString("N0") + " more funds");
+                parts.Add("$" + (next.UpgradeCost - career.Funds).ToString("N0") + " more");
             return parts.Count == 0 ? "Ready to expand." : "Needs " + string.Join(", ", parts) + ".";
         }
     }

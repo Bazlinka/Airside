@@ -136,7 +136,7 @@ namespace Airside.Tests
             Assert.That(reason.Others.Count, Is.EqualTo(2));
             Assert.That(reason.Until.HasValue, Is.True);
             var text = HoldReasonText.Long(planes[2], reason, new SimulationTime(600));
-            Assert.That(text, Does.Contain("apron busy"));
+            Assert.That(text, Does.Contain("already taxiing out"));
             Assert.That(text, Does.Contain("VH-PAA").Or.Contain(FlightNumber.OrRegistration(planes[0])));
         }
 

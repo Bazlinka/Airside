@@ -147,7 +147,7 @@ namespace Airside.Tests
         {
             string All(string id) => string.Join(" ", FlightManual.Pages[FlightManual.IndexOf(id)].Sections
                 .Select(s => s.Heading + " " + s.Body));
-            Assert.That(All("reliability"), Does.Contain($"every {Maintenance.IntervalRotations} rotations"));
+            Assert.That(All("reliability"), Does.Contain($"every {Maintenance.IntervalRotations} flights"));
             Assert.That(All("growing"), Does.Contain($"{(int)Math.Round(AirlineOperations.ResaleFraction * 100)}%"));
             Assert.That(All("career"), Does.Contain($"{CareerRoadmap.FinalFleet} aircraft"));
             Assert.That(All("career"), Does.Contain($"{CareerRoadmap.FinalDestinations} destinations"));
@@ -171,6 +171,9 @@ namespace Airside.Tests
                     Assert.That(c.Box.Bottom, Is.LessThanOrEqualTo(panel.Bottom + 0.5f), $"{width}x{height} p{page} '{c.Text}'");
                 }
                 Assert.That(draw.Commands.Any(c => c.ActionId == HudAction.Close), Is.True);
+                // Nothing is cut off: every section heading on the page is drawn.
+                foreach (var (heading, _) in FlightManual.Pages[page].Sections)
+                    Assert.That(draw.Commands.Any(c => c.Text == heading), Is.True, $"{width}x{height} p{page} lost '{heading}'");
             }
             Assert.That(FlightManualPainter.Apply(FlightManualPainter.Next, 0), Is.EqualTo(1));
             Assert.That(FlightManualPainter.Apply(FlightManualPainter.Previous, 0), Is.EqualTo(0));

@@ -35,12 +35,12 @@ namespace Airside.Tests
             Assert.That(ops.AcceptContract(RouteContractCatalogue.RegionalKingscoteIntro).Accepted, Is.True);
 
             var objective = OperationsSummary.Objective(ops.FleetOf(ops.PlayerAirline), clock.Now, ops.Clock, ops.CareerState);
-            Assert.That(objective.Title, Is.EqualTo("Fulfil a regional contract"));
+            Assert.That(objective.Title, Is.EqualTo("Finish a regional contract"));
             Assert.That(objective.Title, Does.Not.Contain("REG-KGC"));
             Assert.That(objective.ProgressText, Does.Contain("0/1"));
             Assert.That(objective.Progress01, Is.EqualTo(0f));
             Assert.That(objective.NextLine, Does.Contain("VH-PAX"));
-            Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("schedule"));
+            Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("plan"));
             Assert.That(objective.NextLine, Does.Contain("Kingscote"));
         }
 
@@ -53,7 +53,7 @@ namespace Airside.Tests
             Assert.That(objective.Title, Does.Not.Contain("REG-"));
             Assert.That(objective.NextLine, Does.StartWith("Next:"));
             Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("accept"));
-            Assert.That(objective.Title, Is.EqualTo("Fulfil a regional contract"));
+            Assert.That(objective.Title, Is.EqualTo("Finish a regional contract"));
             Assert.That(objective.ProgressText, Does.Contain("0/1"));
             Assert.That(objective.Progress01, Is.EqualTo(0f));
         }
@@ -78,7 +78,7 @@ namespace Airside.Tests
             // Pass null market and rely on completed intros.
             var objective = OperationsSummary.Objective(ops.FleetOf(ops.PlayerAirline), clock.Now, ops.Clock,
                 ops.CareerState, Array.Empty<RouteContractDefinition>());
-            Assert.That(objective.Title, Is.EqualTo("Fly four services"));
+            Assert.That(objective.Title, Is.EqualTo("Complete 4 flights"));
             Assert.That(objective.Caption, Is.EqualTo("TOWARD REGIONAL"));
             Assert.That(objective.ProgressText, Does.Contain("0/4"));
             Assert.That(objective.Progress01, Is.EqualTo(0f));
@@ -131,8 +131,8 @@ namespace Airside.Tests
 
             var objective = OperationsSummary.Objective(ops.FleetOf(ops.PlayerAirline), clock.Now, ops.Clock,
                 ops.CareerState);
-            Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("follow"));
-            Assert.That(objective.NextLine, Does.Contain("pushback"));
+            Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("push back"));
+            Assert.That(objective.NextLine, Does.Contain("push back"));
         }
 
         [Test]
@@ -178,8 +178,8 @@ namespace Airside.Tests
 
             var objective = OperationsSummary.Objective(new[] { delivery }, clock.Now, ops.Clock,
                 ops.CareerState);
-            Assert.That(objective.NextLine, Does.Contain("wait for VH-NEW to park"));
-            Assert.That(objective.NextLine, Does.Contain("schedule"));
+            Assert.That(objective.NextLine, Does.Contain("let VH-NEW park"));
+            Assert.That(objective.NextLine, Does.Contain("plan its first flight"));
         }
 
         [Test]

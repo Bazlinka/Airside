@@ -83,8 +83,8 @@ namespace Airside.Simulation
             if (IsOverdue(aircraft))
                 return "Check overdue";
             if (IsDueSoon(aircraft))
-                return "Check due next rotation";
-            return $"Check in {RotationsUntilDue(aircraft)} rotations";
+                return "Check due after the next flight";
+            return $"Check in {RotationsUntilDue(aircraft)} flights";
         }
     }
 }

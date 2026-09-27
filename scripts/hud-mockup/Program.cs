@@ -39,6 +39,7 @@ public static class Program
             Career(scenario, width, height),
             Stats(scenario, width, height)
         };
+        pages.AddRange(RouteMapZooms(scenario, width, height));
 
         var document = new Document(new[] { width, height }, pages);
         var directory = Path.GetDirectoryName(Path.GetFullPath(output));
@@ -222,7 +223,20 @@ public static class Program
         return new Page("operations", Serialise(list, page));
     }
 
-    private static Page RouteMapPage(Scenario scenario, float width, float height)
+    private static Page RouteMapPage(Scenario scenario, float width, float height) =>
+        RouteMapPage(scenario, width, height, "map", lens => lens.SetZoom(1.9f), 140.5, -32.0);
+
+    /// <summary>ADR 0140: the map at world, Australia, state and airport zoom.</summary>
+    private static IEnumerable<Page> RouteMapZooms(Scenario scenario, float width, float height)
+    {
+        yield return RouteMapPage(scenario, width, height, "map-world", null, 0, 0, world: true);
+        yield return RouteMapPage(scenario, width, height, "map-australia", lens => lens.Reset(), 133.5, -27.0);
+        yield return RouteMapPage(scenario, width, height, "map-state", lens => lens.SetZoom(7f), 138.3, -34.8);
+        yield return RouteMapPage(scenario, width, height, "map-airport", lens => lens.SetZoom(250f), 138.531, -34.945);
+    }
+
+    private static Page RouteMapPage(Scenario scenario, float width, float height, string name,
+        Action<AustraliaMapLens> zoom, double lon, double lat, bool world = false)
     {
         var list = new HudDrawList();
         PaintShell(list, scenario, HudWorkspace.Map, width, height);
@@ -238,18 +252,25 @@ public static class Program
 
         var network = new HudDrawList();
         var lens = new AustraliaMapLens();
-        lens.SetZoom(1.9f);
-        lens.CenterOn(layout.Map.Width, layout.Map.Height, 140.5, -32.0);
+        if (world)
+            lens.ShowWorld(layout.Map.Width, layout.Map.Height);
+        else
+        {
+            zoom?.Invoke(lens);
+            lens.CenterOn(layout.Map.Width, layout.Map.Height, lon, lat);
+        }
         RouteMapWorkspacePainter.PaintNetwork(network, layout.Map, lens, model.AllDestinations,
             scenario.Operations.Home, portLincoln, scenario.Operations.PlayerAirline.LiveryHex,
             model.AircraftRangeKm, model.AircraftRangeLabel);
+        RouteMapWorkspacePainter.PaintAirports(network, layout.Map, lens, model.AllDestinations,
+            scenario.Operations.Home);
 
         var filters = new HudDrawList();
         RouteMapWorkspacePainter.PaintFilters(filters, model, layout);
 
         // Surface and map well, then the network inside it, then the pills floating over it —
         // the same order the runtime map paints in.
-        return new Page("map", Serialise(list, page, network, filters));
+        return new Page(name, Serialise(list, page, network, filters));
     }
 
     private static Page Fleet(Scenario scenario, float width, float height)

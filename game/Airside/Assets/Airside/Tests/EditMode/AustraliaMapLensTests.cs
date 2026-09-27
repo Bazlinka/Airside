@@ -1,3 +1,4 @@
+using System.Linq;
 using Airside.Presentation;
 using NUnit.Framework;
 
@@ -12,7 +13,7 @@ namespace Airside.Tests
             lens.SetZoom(4f);
             lens.Reset();
 
-            Assert.That(lens.Zoom, Is.EqualTo(AustraliaMapLens.MinZoom));
+            Assert.That(lens.Zoom, Is.EqualTo(AustraliaMapLens.HomeZoom));
             Assert.That(lens.ShowStateLabels, Is.False);
             Assert.That(lens.ShowCountyDetail, Is.False);
         }
@@ -46,9 +47,9 @@ namespace Airside.Tests
         [Test]
         public void Geometry_HasDenseCoastsAndStateBorders()
         {
-            Assert.That(AustraliaMapGeometry.PointCount(AustraliaMapGeometry.MainlandCoastLonLat), Is.GreaterThan(60));
-            Assert.That(AustraliaMapGeometry.PointCount(AustraliaMapGeometry.TasmaniaCoastLonLat), Is.GreaterThan(8));
-            Assert.That(AustraliaMapGeometry.StateBorderLonLats.Length, Is.GreaterThanOrEqualTo(5));
+            // ADR 0140: generated from Natural Earth, not typed in.
+            Assert.That(MapGeographyData.DetailCoasts.Sum(r => r.Length / 2), Is.GreaterThan(5_000));
+            Assert.That(MapGeographyData.StateBorders.Length, Is.GreaterThanOrEqualTo(5));
             Assert.That(AustraliaMapGeometry.StateLabels.Length, Is.EqualTo(8));
             Assert.That(AustraliaMapGeometry.RegionLabels.Length, Is.GreaterThanOrEqualTo(10));
         }

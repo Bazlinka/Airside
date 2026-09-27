@@ -242,7 +242,7 @@ namespace Airside.Simulation
             var count = 0;
             foreach (var code in career.ServedDestinations)
                 if (DestinationCatalogue.TryFind(code, out var destination)
-                    && destination.State != "SA" && destination.State != "New Zealand"
+                    && destination.IsAustralian && destination.State != "SA"
                     && RouteAccess.BandOf(destination) >= RouteBand.Domestic
                     && RouteAccess.BandOf(destination) <= RouteBand.National)
                     count++;

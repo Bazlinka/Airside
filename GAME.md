@@ -1,5 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — countries and world map (ADR 0140).** `Destination.Country`
+  (ISO-2, `Region`, `IsAustralian`); 12 new airports (NRT KIX ICN PVG BKK SGN MNL CGK POM NOU HNL
+  LAX); Pacific band (NAN NOU POM DPS, A321neo/A220 may fly it). Map geography generated from
+  Natural Earth + OurAirports (`scripts/map/build_map_data.py` → `MapGeographyData.cs`): 3 coast
+  LODs, fine coast round airports, state borders, 210 towns, runways/elevation for 40 airports.
+  Map zooms 0.2 (Doha–LA) to 400 (runways); World/Australia button; country chips; towns from
+  zoom 3; runways from zoom 30. Tests **910/910**. **Mac checks:** map fps at every zoom, zoom
+  into ADL runways, LAX tracking across the Pacific.
+
 - **2026-09-27 Claude (same branch) — tighter progress gates (ADR 0139).** Base upgrades need
   reliability (75/80/88%) and more flights (Jet-gate 16, International 50); outstations earned one
   at a time (85%·40, 88%·70, 90%·110 flights); aircraft flight gates now bind (E190 32 … A350 100);

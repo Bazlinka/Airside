@@ -307,7 +307,7 @@ namespace Airside.Tests
             var bonus = 0.0;
             if (goals.Contains("regional-network") && band == RouteBand.Regional)
                 bonus += 4000;
-            if (goals.Contains("domestic-network") && destination.State != "SA" && band >= RouteBand.Domestic
+            if (goals.Contains("domestic-network") && destination.IsAustralian && destination.State != "SA" && band >= RouteBand.Domestic
                 && band <= RouteBand.National)
                 bonus += 6000;
             if (goals.Contains("international-network") && RouteAccess.IsInternational(destination.Code))

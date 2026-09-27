@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **A real map, and the wider world.** The route map now uses accurate coastlines, including
+  Kangaroo Island, and every airport sits where it really is. Zoom out to see Asia, the Pacific and
+  Los Angeles, or zoom in to see towns and, closer still, each airport's runways and elevation.
+  Twelve new overseas airports have arrived, among them Tokyo, Seoul, Bangkok, Honolulu and Los
+  Angeles. The near Pacific (Bali, Fiji, Nouméa, Port Moresby) is a new route band that the
+  A321neo and A220 can fly.
+
 - **Progress takes proving.** Bigger bases and each outstation now need a reliability level and a
   track record of flights. Each jet and widebody unlocks at its own flight count, beyond just
   reaching the tier. Reliability goals ask you to hold the level for your last 10 flights, so

@@ -20,7 +20,11 @@ namespace Airside.Simulation
         private static readonly string[] Domestic = { "MEL", "CBR", "SYD", "HBA" };
         private static readonly string[] National = { "BNE", "OOL", "ASP", "PER", "CNS", "DRW" };
         private static readonly string[] Tasman = { "AKL", "CHC" };
-        private static readonly string[] LongHaul = { "DPS", "SIN", "HKG", "KUL", "NAN", "DOH", "DXB" };
+        private static readonly string[] Pacific = { "NAN", "NOU", "POM", "DPS" };
+        private static readonly string[] LongHaul =
+        {
+            "SIN", "HKG", "KUL", "CGK", "BKK", "SGN", "MNL", "PVG", "ICN", "KIX", "NRT", "HNL", "LAX", "DOH", "DXB"
+        };
 
         /// <summary>A medical call has to be flown within this, so it only goes where that is possible.</summary>
         public const long MedicalDeadlineSeconds = 3 * 3600;
@@ -239,7 +243,10 @@ namespace Airside.Simulation
             switch (ceiling)
             {
                 case RouteBand.LongHaul:
-                    pool = rng.NextInt(0, 4) == 0 ? LongHaul : National;
+                    pool = rng.NextInt(0, 4) switch { 0 => LongHaul, 1 => Pacific, _ => National };
+                    break;
+                case RouteBand.Pacific:
+                    pool = rng.NextInt(0, 4) switch { 0 => Pacific, 1 => Tasman, 2 => National, _ => Domestic };
                     break;
                 case RouteBand.Tasman:
                     // ADR 0138: a Tasman-capable jet also flies the long national legs.

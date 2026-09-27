@@ -63,7 +63,7 @@ namespace Airside.Simulation
                 RouteBand.Regional => 300.0,
                 RouteBand.Domestic => 1000.0,
                 RouteBand.National => 2000.0,
-                RouteBand.Tasman => 3200.0,
+                RouteBand.Tasman or RouteBand.Pacific => 3200.0,
                 _ => 6000.0
             };
             return Math.Min(km, type.PracticalRangeKm);

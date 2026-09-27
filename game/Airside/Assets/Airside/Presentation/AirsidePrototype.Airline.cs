@@ -1648,8 +1648,7 @@ namespace Airside.Presentation
             var showTrack = tracked >= 0 || selectedFlight >= 0;
             if (showTrack)
                 _mapControlRects.Add(trackRect);
-            if (_mapLens.Zoom > AustraliaMapLens.MinZoom + 0.01f)
-                _mapControlRects.Add(zoomOutRect);
+            _mapControlRects.Add(zoomOutRect);
             _mapControlRects.Add(rivalRect);
             _mapControlRects.Add(HudPainter.ToRect(workspaceLayout.FilterBox(0)));
             _mapControlRects.Add(HudPainter.ToRect(workspaceLayout.FilterBox(1)));
@@ -1664,6 +1663,8 @@ namespace Airside.Presentation
                 _mapDestinationRows, home, _mapSelection, _operations.PlayerAirline.LiveryHex,
                 _routeMapWorkspace.AircraftRangeKm, _routeMapWorkspace.AircraftRangeLabel,
                 _routeMapWorkspace.CareerTargetCodes);
+            RouteMapWorkspacePainter.PaintAirports(_mapNetworkDrawList, workspaceLayout.Map, _mapLens,
+                _mapDestinationRows, home);
             _hudPainter.Draw(_mapNetworkDrawList);
             DrawMapLabels(mapRect);
 
@@ -1782,10 +1783,15 @@ namespace Airside.Presentation
                 }
             }
 
-            if (_mapLens.Zoom > AustraliaMapLens.MinZoom + 0.01f && GUI.Button(zoomOutRect, "Zoom out", smallButton))
+            // ADR 0140: one button between the two views that matter: Australia and the whole map.
+            var atHome = Mathf.Abs(_mapLens.Zoom - AustraliaMapLens.HomeZoom) < 0.01f;
+            if (GUI.Button(zoomOutRect, atHome ? "World" : "Australia", smallButton))
             {
                 _mapTrackId = null;
-                _mapLens.Reset();
+                if (atHome)
+                    _mapLens.ShowWorld(mapRect.width, mapRect.height);
+                else
+                    _mapLens.Reset();
             }
 
             if (GUI.Button(rivalRect, $"RIVALS {rivalFlights} · {(_mapRivalsVisible ? "ON" : "OFF")}", smallButton))

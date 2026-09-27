@@ -9,7 +9,9 @@ namespace Airside.Domain
         Domestic = 1,
         National = 2,
         Tasman = 3,
-        LongHaul = 4
+        /// <summary>ADR 0140: the near Pacific and Bali, between the Tasman and long-haul.</summary>
+        Pacific = 4,
+        LongHaul = 5
     }
 
     /// <summary>
@@ -48,6 +50,11 @@ namespace Airside.Domain
                 case "AKL":
                 case "CHC":
                     return RouteBand.Tasman;
+                case "NAN":
+                case "NOU":
+                case "POM":
+                case "DPS":
+                    return RouteBand.Pacific;
                 default:
                     return RouteBand.LongHaul;
             }
@@ -66,8 +73,9 @@ namespace Airside.Domain
             if (type.Id == AircraftType.Boeing7378.Id || type.Id == AircraftType.Boeing737800.Id
                 || type.Id == AircraftType.AirbusA320200.Id)
                 return RouteBand.National;
+            // ADR 0140: the Tasman narrowbodies also fly the near Pacific when it is in range.
             if (type.Id == AircraftType.AirbusA321Neo.Id || type.Id == AircraftType.AirbusA220300.Id)
-                return RouteBand.Tasman;
+                return RouteBand.Pacific;
             return RouteBand.LongHaul;
         }
 
@@ -90,6 +98,7 @@ namespace Airside.Domain
             RouteBand.Domestic => 1.25,
             RouteBand.National => 1.45,
             RouteBand.Tasman => 1.60,
+            RouteBand.Pacific => 1.70,
             RouteBand.LongHaul => 1.80,
             _ => 1.0
         };
@@ -108,6 +117,7 @@ namespace Airside.Domain
             RouteBand.Domestic => "domestic",
             RouteBand.National => "national",
             RouteBand.Tasman => "Tasman",
+            RouteBand.Pacific => "Pacific",
             RouteBand.LongHaul => "long-haul",
             _ => "regional"
         };
@@ -117,6 +127,7 @@ namespace Airside.Domain
             RouteBand.Domestic => "Melbourne, Sydney",
             RouteBand.National => "Perth, Brisbane",
             RouteBand.Tasman => "Auckland, Christchurch",
+            RouteBand.Pacific => "Bali, Nadi",
             RouteBand.LongHaul => "further afield",
             _ => "Kingscote, Port Lincoln"
         };

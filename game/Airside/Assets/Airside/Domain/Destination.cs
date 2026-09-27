@@ -6,21 +6,36 @@ namespace Airside.Domain
     /// <summary>A real airport an airline can fly to, identified by IATA code.</summary>
     public readonly struct Destination : IEquatable<Destination>
     {
-        public Destination(string code, string name, string state, double latitude, double longitude)
+        public Destination(string code, string name, string state, double latitude, double longitude,
+            string country = "AU")
         {
             if (string.IsNullOrWhiteSpace(code))
                 throw new ArgumentException("A destination code is required.", nameof(code));
 
             Code = code;
             Name = name;
-            State = state;
+            State = state ?? string.Empty;
             Latitude = latitude;
             Longitude = longitude;
+            Country = string.IsNullOrEmpty(country) ? "AU" : country;
         }
 
         public string Code { get; }
         public string Name { get; }
+
+        /// <summary>Australian state or territory ("SA", "VIC"); empty for an overseas airport (ADR 0140).</summary>
         public string State { get; }
+
+        /// <summary>ISO 3166 country code: "AU", "NZ", "JP" (ADR 0140).</summary>
+        public string Country { get; }
+
+        public bool IsAustralian => Country == "AU";
+
+        /// <summary>The country's name: "Australia", "New Zealand", "Japan".</summary>
+        public string CountryName => Countries.Name(Country);
+
+        /// <summary>Where it is, for a label: the state at home, the country overseas.</summary>
+        public string Region => IsAustralian ? State : CountryName;
         public double Latitude { get; }
         public double Longitude { get; }
 
@@ -44,6 +59,33 @@ namespace Airside.Domain
         public override bool Equals(object obj) => obj is Destination other && Equals(other);
         public override int GetHashCode() => Code == null ? 0 : StringComparer.Ordinal.GetHashCode(Code);
         public override string ToString() => $"{Name} ({Code})";
+    }
+
+    /// <summary>Country names for the ISO codes the catalogue uses (ADR 0140).</summary>
+    public static class Countries
+    {
+        public static string Name(string iso) => iso switch
+        {
+            "AU" => "Australia",
+            "NZ" => "New Zealand",
+            "FJ" => "Fiji",
+            "NC" => "New Caledonia",
+            "PG" => "Papua New Guinea",
+            "ID" => "Indonesia",
+            "SG" => "Singapore",
+            "MY" => "Malaysia",
+            "TH" => "Thailand",
+            "VN" => "Vietnam",
+            "PH" => "Philippines",
+            "HK" => "Hong Kong",
+            "CN" => "China",
+            "KR" => "South Korea",
+            "JP" => "Japan",
+            "US" => "United States",
+            "QA" => "Qatar",
+            "AE" => "United Arab Emirates",
+            _ => iso ?? string.Empty
+        };
     }
 
     /// <summary>
@@ -77,18 +119,33 @@ namespace Airside.Domain
             new Destination("PER", "Perth", "WA", -31.940, 115.967),
         };
 
-        /// <summary>International airports used by current Adelaide traffic.</summary>
+        /// <summary>
+        /// Overseas airports: those Adelaide traffic flies today, and (ADR 0140) the wider
+        /// Asia-Pacific and the US west coast. Coordinates match OurAirports to under 2 km.
+        /// </summary>
         public static readonly IReadOnlyList<Destination> International = new[]
         {
-            new Destination("AKL", "Auckland", "New Zealand", -37.008, 174.792),
-            new Destination("CHC", "Christchurch", "New Zealand", -43.489, 172.532),
-            new Destination("NAN", "Nadi", "Fiji", -17.755, 177.443),
-            new Destination("DPS", "Denpasar (Bali)", "Indonesia", -8.748, 115.167),
-            new Destination("SIN", "Singapore", "Singapore", 1.364, 103.991),
-            new Destination("KUL", "Kuala Lumpur", "Malaysia", 2.745, 101.710),
-            new Destination("HKG", "Hong Kong", "Hong Kong", 22.308, 113.918),
-            new Destination("DOH", "Doha", "Qatar", 25.273, 51.608),
-            new Destination("DXB", "Dubai", "United Arab Emirates", 25.253, 55.364),
+            new Destination("AKL", "Auckland", "", -37.008, 174.792, "NZ"),
+            new Destination("CHC", "Christchurch", "", -43.489, 172.532, "NZ"),
+            new Destination("NAN", "Nadi", "", -17.755, 177.443, "FJ"),
+            new Destination("NOU", "Nouméa", "", -22.015, 166.213, "NC"),
+            new Destination("POM", "Port Moresby", "", -9.443, 147.220, "PG"),
+            new Destination("DPS", "Denpasar (Bali)", "", -8.748, 115.167, "ID"),
+            new Destination("CGK", "Jakarta", "", -6.126, 106.656, "ID"),
+            new Destination("SIN", "Singapore", "", 1.364, 103.991, "SG"),
+            new Destination("KUL", "Kuala Lumpur", "", 2.745, 101.710, "MY"),
+            new Destination("BKK", "Bangkok", "", 13.681, 100.747, "TH"),
+            new Destination("SGN", "Ho Chi Minh City", "", 10.819, 106.652, "VN"),
+            new Destination("MNL", "Manila", "", 14.509, 121.020, "PH"),
+            new Destination("HKG", "Hong Kong", "", 22.308, 113.918, "HK"),
+            new Destination("PVG", "Shanghai", "", 31.143, 121.805, "CN"),
+            new Destination("ICN", "Seoul", "", 37.469, 126.451, "KR"),
+            new Destination("KIX", "Osaka", "", 34.427, 135.244, "JP"),
+            new Destination("NRT", "Tokyo", "", 35.769, 140.389, "JP"),
+            new Destination("HNL", "Honolulu", "", 21.318, -157.926, "US"),
+            new Destination("LAX", "Los Angeles", "", 33.943, -118.408, "US"),
+            new Destination("DOH", "Doha", "", 25.273, 51.608, "QA"),
+            new Destination("DXB", "Dubai", "", 25.253, 55.364, "AE"),
         };
 
         public static IEnumerable<Destination> All

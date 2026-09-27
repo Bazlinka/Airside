@@ -92,7 +92,9 @@ namespace Airside.Simulation
     {
         public const string KeyPrefix = "challenge:";
 
-        public static readonly string[] LongHaulCities = { "DPS", "SIN", "HKG", "KUL", "NAN", "DOH", "DXB" };
+        /// <summary>Every long-haul city in the catalogue (ADR 0140: now Asia, Hawaii and Los Angeles too).</summary>
+        public static readonly string[] LongHaulCities = DestinationCatalogue.International
+            .Where(d => RouteAccess.BandOf(d) == RouteBand.LongHaul).Select(d => d.Code).ToArray();
 
         public static readonly IReadOnlyList<CareerChallenge> All = new[]
         {
@@ -106,7 +108,7 @@ namespace Airside.Simulation
                 f => (Math.Min(f.Charters, 3), 3)),
             new CareerChallenge("on-time-30", "Push back on time 30 times in a row", 5_000, false,
                 f => (Math.Min(f.OnTimeStreak, 30), 30)),
-            new CareerChallenge("long-haul-all", "Serve every long-haul city", 25_000, true,
+            new CareerChallenge("long-haul-all", "Serve every long-haul city", 40_000, true,
                 f => (f.LongHaulServed, LongHaulCities.Length)),
             new CareerChallenge("fleet-25", "Fly 25 aircraft", 20_000, true,
                 f => (Math.Min(f.FleetCount, AircraftAcquisition.MaxPlayerAircraft), AircraftAcquisition.MaxPlayerAircraft)),

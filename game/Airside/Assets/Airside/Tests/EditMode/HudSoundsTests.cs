@@ -13,8 +13,21 @@ namespace Airside.Tests
             ("flap rattle", HudSounds.FlapRattle, 0.6f),
             ("cash ching", HudSounds.CashChing, 0.7f),
             ("tier sting", HudSounds.TierSting, 1.5f),
-            ("contract chime", HudSounds.ContractChime, 1.0f)
+            ("contract chime", HudSounds.ContractChime, 1.0f),
+            ("panel whoosh", HudSounds.PanelWhoosh, 0.3f),
+            ("PA chime", HudSounds.PaChime, 2.3f)
         };
+
+        [Test]
+        public void ApronBed_IsAQuietSeamlessLoop()
+        {
+            var bed = HudSounds.ApronBed();
+            Assert.That(bed.Length / (float)HudSounds.SampleRate, Is.InRange(10f, 12f));
+            Assert.That(bed.All(v => !float.IsNaN(v)), Is.True);
+            var typicalStep = Enumerable.Range(0, bed.Length - 1).Average(i => Math.Abs(bed[i + 1] - bed[i]));
+            Assert.That(Math.Abs(bed[^1] - bed[0]), Is.LessThan(typicalStep * 4 + 0.01), "no click at the wrap");
+            Assert.That(bed, Is.EqualTo(HudSounds.ApronBed()), "deterministic");
+        }
 
         [Test]
         public void EverySound_IsShortAudibleAndNeverClips()

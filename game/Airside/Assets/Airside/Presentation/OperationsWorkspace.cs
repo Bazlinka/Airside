@@ -18,8 +18,10 @@ namespace Airside.Presentation
         public OperationsFlightRow(string registration, string scheduledTime, string estimatedTime,
             string flightNumber, string route, string stand, string status, string typeName,
             string operatorName, string liveryHex, StatusSeverity severity, bool isPlayer,
-            bool hasProgress, float progress01, bool onField = true, bool isPast = false)
+            bool hasProgress, float progress01, bool onField = true, bool isPast = false,
+            long sortSeconds = long.MaxValue)
         {
+            SortSeconds = sortSeconds;
             Registration = registration ?? string.Empty;
             ScheduledTime = scheduledTime ?? string.Empty;
             EstimatedTime = estimatedTime ?? string.Empty;
@@ -49,6 +51,9 @@ namespace Airside.Presentation
         public string OperatorName { get; }
         public string LiveryHex { get; }
         public StatusSeverity Severity { get; }
+
+        /// <summary>The TIME column as game seconds, so the board sorts across midnight (ADR 0137).</summary>
+        public long SortSeconds { get; }
 
         /// <summary>Your airline reads at full contrast; other operators stay visible but subordinate.</summary>
         public bool IsPlayer { get; }
@@ -399,7 +404,6 @@ namespace Airside.Presentation
         {
             _scratch.Clear();
             var arrivals = tab == OperationsBoardTab.Arrivals;
-            var nowMin = BoardClockMinutes(clock.TimeText(now));
             var liveRegs = new HashSet<string>();
             foreach (var aircraft in operations.Fleet)
             {
@@ -421,6 +425,7 @@ namespace Airside.Presentation
                 var progress = aircraft.StateEndsAt.HasValue
                     ? (float)aircraft.StateProgress(now)
                     : AircraftStatus.WaitProgress(aircraft, now);
+                var timeSeconds = FlightBoard.BoardTimeSeconds(aircraft, arrivals);
                 var time = FlightBoard.BoardTime(aircraft, arrivals, clock.TimeText);
                 // Live Outbound rows used to stay IsPast=false forever, so a 09:55 departure
                 // still airborne at 11:55 pinned the NOW divider (and the one-shot scroll snap)
@@ -429,14 +434,14 @@ namespace Airside.Presentation
                 // (it stays listed, muted, like a real screen) — ADR 0111.
                 var livePast = !arrivals
                     && (aircraft.State == FleetState.Outbound || aircraft.Scheduled is { Cancelled: true })
-                    && BoardClockMinutes(time) + 2 < nowMin;
+                    && timeSeconds != long.MaxValue && timeSeconds + 120 < now.ElapsedSeconds;
                 // Inbound (and other Hidden states) stay on the board as arrivals/departures
                 // but must not read as metal already on the field.
                 var drawn = IsDrawnOnField(aircraft, now);
                 _rows.Add(new OperationsFlightRow(
                     aircraft.Registration,
                     time,
-                    FlightBoard.EstimatedTime(aircraft, arrivals, clock.TimeText),
+                    FlightBoard.EstimatedTime(aircraft, arrivals, now, clock.TimeText),
                     FlightNumber.OrRegistration(aircraft),
                     FlightBoard.RouteText(aircraft),
                     StandColumn(aircraft),
@@ -449,14 +454,15 @@ namespace Airside.Presentation
                     hasProgress,
                     progress,
                     onField: drawn && !livePast,
-                    isPast: livePast));
+                    isPast: livePast,
+                    sortSeconds: timeSeconds));
             }
 
-            AppendHistoryRows(operations, now, arrivals, clock, liveRegs, nowMin);
+            AppendHistoryRows(operations, now, arrivals, clock, liveRegs);
 
             _rows.Sort((a, b) =>
             {
-                var byTime = BoardClockMinutes(a.ScheduledTime).CompareTo(BoardClockMinutes(b.ScheduledTime));
+                var byTime = a.SortSeconds.CompareTo(b.SortSeconds);
                 return byTime != 0 ? byTime : string.CompareOrdinal(a.FlightNumber, b.FlightNumber);
             });
         }
@@ -467,11 +473,17 @@ namespace Airside.Presentation
         /// later state change cannot rewrite the route or time.
         /// </summary>
         private void AppendHistoryRows(AirlineOperations operations, SimulationTime now, bool arrivals,
-            AirlineClock clock, HashSet<string> liveRegs, int nowMin)
+            AirlineClock clock, HashSet<string> liveRegs)
         {
             var cutoff = now.ElapsedSeconds - BoardHistorySeconds;
             var seen = new HashSet<string>();
             var events = operations.RecentEvents;
+            // A departed row reads the moment it pushed back (its TaxiOut), not the takeoff or
+            // climb-out event that happened to be kept (ADR 0137).
+            var pushedBack = new Dictionary<string, SimulationTime>();
+            foreach (var e in events)
+                if (e.State == FleetState.TaxiOut && !string.IsNullOrEmpty(e.Registration))
+                    pushedBack[e.Registration] = e.At;
             for (var i = events.Count - 1; i >= 0; i--)
             {
                 var e = events[i];
@@ -505,7 +517,10 @@ namespace Airside.Presentation
                 }
 
                 seen.Add(e.Registration);
-                var time = clock.TimeText(e.At);
+                var at = e.At;
+                if (!arrivals && pushedBack.TryGetValue(e.Registration, out var push) && push.CompareTo(at) <= 0)
+                    at = push;
+                var time = clock.TimeText(at);
                 var stand = string.IsNullOrEmpty(e.Stand.Value) ? "—" : StandNames.Short(e.Stand);
                 _rows.Add(new OperationsFlightRow(
                     e.Registration,
@@ -523,7 +538,8 @@ namespace Airside.Presentation
                     hasProgress: false,
                     progress01: 0f,
                     onField: false,
-                    isPast: true));
+                    isPast: true,
+                    sortSeconds: at.ElapsedSeconds));
             }
 
             // Also keep aircraft that are away (AtDestination) as muted Departed rows when the
@@ -541,8 +557,9 @@ namespace Airside.Presentation
                 seen.Add(aircraft.Registration);
                 var dest = aircraft.CurrentDestination;
                 var route = dest.HasValue ? $"ADL → {dest.Value.Code}" : "ADL → —";
-                var time = clock.TimeText(aircraft.StateStartedAt);
-                if (BoardClockMinutes(time) + 2 >= nowMin)
+                var left = aircraft.PushedBackAt ?? aircraft.StateStartedAt;
+                var time = clock.TimeText(left);
+                if (left.ElapsedSeconds + 120 >= now.ElapsedSeconds)
                     continue;
                 _rows.Add(new OperationsFlightRow(
                     aircraft.Registration,
@@ -562,7 +579,8 @@ namespace Airside.Presentation
                     hasProgress: false,
                     progress01: 0f,
                     onField: false,
-                    isPast: true));
+                    isPast: true,
+                    sortSeconds: left.ElapsedSeconds));
             }
         }
 

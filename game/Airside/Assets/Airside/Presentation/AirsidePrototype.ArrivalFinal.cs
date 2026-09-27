@@ -17,11 +17,8 @@ namespace Airside.Presentation
     /// </summary>
     public sealed partial class AirsidePrototype
     {
-        /// <summary>Beyond this an inbound is not drawn yet (it is still well out on the approach).</summary>
-        private const float ArrivalFinalShowMetres = 18_000f;
-
-        /// <summary>3,000 ft: the extended final levels off here rather than climbing forever.</summary>
-        private const float ArrivalFinalCapMetres = 915f;
+        /// <summary>Beyond this an inbound is not drawn yet (ADR 0142: 32 km, was 18).</summary>
+        private const float ArrivalFinalShowMetres = ArrivalApproach.ShowMetres;
 
         private const float ArrivalMinSpeedFactor = 0.55f;
         private const float ArrivalMaxSpeedFactor = 1.6f;
@@ -39,6 +36,8 @@ namespace Airside.Presentation
             public Vector3 World;
             public RunwayDirection Runway;
             public AircraftType Type;
+            /// <summary>Which side the arrival joins the final from (ADR 0142), fixed when first drawn.</summary>
+            public float Lateral;
         }
 
         private readonly Dictionary<string, ArrivalFinalState> _arrivalFinal = new();
@@ -77,7 +76,11 @@ namespace Airside.Presentation
             {
                 if (target > ArrivalFinalShowMetres)
                     return false;
-                state = new ArrivalFinalState { Metres = target, LastTime = _preciseTime };
+                state = new ArrivalFinalState
+                {
+                    Metres = target, LastTime = _preciseTime,
+                    Lateral = ArrivalApproach.LateralFactor(aircraft, runway)
+                };
                 _arrivalFinal[aircraft.Registration] = state;
             }
 
@@ -109,11 +112,13 @@ namespace Airside.Presentation
             var speed = CircuitProfile.Knots(AircraftPerformance.For(state.Type).ApproachKnots);
             var metres = Mathf.Max(0f, state.Metres - speed * lookAheadSeconds);
             var x = hold.x - metres;
-            var y = AirsideFlightPath.GroundY + Mathf.Min(CircuitProfile.GlideslopeHeight(x), ArrivalFinalCapMetres);
+            var y = AirsideFlightPath.GroundY + ArrivalApproach.Height(CircuitProfile.GlideslopeHeight(x));
             // A holder parked on the 80 % pin (~130 ft) looked frozen while the tower waited
             // for the previous landing to vacate. A small S-turn keeps them flying until cleared.
             var weave = metres < 40f ? Mathf.Sin((float)(state.LastTime + lookAheadSeconds) * 0.45f) * 16f : 0f;
-            RunwayFrame.ToWorld(state.Runway, x, y, hold.z + weave, out var wx, out var wy, out var wz);
+            // ADR 0142: beyond 12 km the arrival curves in from its origin's side of the final.
+            var join = ArrivalApproach.LateralOffset(metres, state.Lateral);
+            RunwayFrame.ToWorld(state.Runway, x, y, hold.z + weave + join, out var wx, out var wy, out var wz);
             return new Vector3(wx, wy, wz);
         }
 

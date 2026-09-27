@@ -46,7 +46,7 @@ namespace Airside.Tests
         {
             var codes = new[] { "KGC", "PLO", "MGB", "CED", "MEL", "SYD", "CBR", "BNE", "PER",
                 "AKL", "SIN", "HKG" };
-            var career = new AirlineCareerState(500_000, 90, OperatingTier.International,
+            var career = new AirlineCareerState(500_000, 90, OperatingTier.International, completedPlayerRotations: 120,
                 servedDestinations: codes, outstationBases: new[] { "MEL", "SYD" },
                 recentServiceMargins: Enumerable.Repeat(100L, 30));
             var fleet = Enumerable.Repeat(AircraftType.Boeing7378, 17).Append(AircraftType.AirbusA350900).ToArray();
@@ -153,7 +153,7 @@ namespace Airside.Tests
         {
             var (_, operations) = NewAirline();
             operations.RestoreCareerState(5_000_000, 100, nameof(OperatingTier.International), null, 0, 0,
-                Array.Empty<string>(), Array.Empty<string>(), 100,
+                Array.Empty<string>(), Array.Empty<string>(), 110,
                 baseLevel: PlayerBaseLevel.JetGate);
             foreach (var code in new[] { "MEL", "SYD", "BNE" })
             {

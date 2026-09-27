@@ -1,5 +1,78 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — weather drift, one sky, fog, clouds (ADR 0143).** `Weather.At`
+  is a Markov chain (neighbour-mostly, 5% jumps, fog only 04–09 local); `Weather.LookAt` eases 15
+  game-min between hours; `AtmosphereLook` gives one sky colour for background/dome/fog, fog density
+  from visibility (eased for a high camera); single fog path. Overcast sheet (only below it),
+  horizon band, low mist; clouds yaw-billboard with partial tilt, darker/towering storms,
+  wind-speed drift, wrap fade, sun-projected shadows. Tests **933/933**.
+  **Mac checklist for ADR 0136–0143:**
+  - Sound: Saab vs 737 vs A350 levels; far jets muffled; PA chime over an hour.
+  - Board: delayed row reads published time + "Delayed +N" + est; departure TIME fixed through taxi.
+  - Contracts: widebody offers have sensible deadlines; Accept refuses the impossible.
+  - Career: new "Needs …" lines on the base roadmap and Network page.
+  - Map: fps at every zoom; zoom into ADL runways; World/Australia button; LAX tracking.
+  - Gates: one straight row at T1; bridges dock; taxi-in/pushback at 12L, 22L, 25, 26L;
+    `GroundSeparationTests`, `TerminalGateOperationsTests`.
+  - Arrivals: visible far out, curving in from their city's side; distant lights at dusk.
+  - Weather: clouds from overview and low camera; overcast sheet; horizon band; morning fog + mist
+    with the field readable; storm darkness; no cloud pop at wrap; fps with the 30 km far clip.
+
+- **2026-09-27 Claude (same branch) — arrivals from further out (ADR 0142).** `ArrivalApproach`:
+  arrivals drawn from 32 km (was 18) at up to 6,000 ft on the 3° path, curving in from their
+  origin's side beyond 12 km; far clip 30 km; aircraft LOD cull 0.4% (was 2%); distant light glow
+  beyond 6 km. Tests **922/922**. **Mac checks:** far arrivals visible and curving in, fps with 30 km
+  clip, apron paint depth fighting, distant lights at dusk.
+
+- **2026-09-27 Claude (same branch) — gates lined up (ADR 0141).** `AdelaideGateAlignment.Gates`
+  (used by ground, bridges, paint, lights): contact gates stop 11 m (code C) / 14 m (code E) off
+  the T1 wall, squared to it; 20R/22R keep place but squared; last 40 m of taxi-in and start of
+  pushback rebuilt. Boxes sized by code (E 42×72), capped halfway to the next gate, one shared box
+  for 16/18/28 pier pairs. Tests **916/916**. **Mac checks:** `GroundSeparationTests`,
+  `TerminalGateOperationsTests`, bridges docking, taxi-in/pushback at 12L/22L/25/26L.
+
+- **2026-09-27 Claude (same branch) — countries and world map (ADR 0140).** `Destination.Country`
+  (ISO-2, `Region`, `IsAustralian`); 12 new airports (NRT KIX ICN PVG BKK SGN MNL CGK POM NOU HNL
+  LAX); Pacific band (NAN NOU POM DPS, A321neo/A220 may fly it). Map geography generated from
+  Natural Earth + OurAirports (`scripts/map/build_map_data.py` → `MapGeographyData.cs`): 3 coast
+  LODs, fine coast round airports, state borders, 210 towns, runways/elevation for 40 airports.
+  Map zooms 0.2 (Doha–LA) to 400 (runways); World/Australia button; country chips; towns from
+  zoom 3; runways from zoom 30. Tests **910/910**. **Mac checks:** map fps at every zoom, zoom
+  into ADL runways, LAX tracking across the Pacific.
+
+- **2026-09-27 Claude (same branch) — tighter progress gates (ADR 0139).** Base upgrades need
+  reliability (75/80/88%) and more flights (Jet-gate 16, International 50); outstations earned one
+  at a time (85%·40, 88%·70, 90%·110 flights); aircraft flight gates now bind (E190 32 … A350 100);
+  reliability goals are held for 10 flights (4 at Provisional). Balance (`career-balance-2026-09-27/gates`):
+  Competent 9.5 / 27.5 / 53 / 141 h, inside ADR 0120 targets. Tests **900/900**. **Mac checks:**
+  Airline page base roadmap and Network page show the new "Needs …" lines.
+
+- **2026-09-27 Claude (same branch) — contracts you can finish (ADR 0138).** `ContractFeasibility`
+  (legs + turnaround + base prep + 20 min, ×1.25): the market lengthens any too-tight deadline,
+  medical calls only where 3 h fits (else charter), a daily medical for turboprop owners, Tasman
+  jets also draw national cities. Featured authored contracts need an aircraft you own or
+  `CouldBuyNow`. Accept refuses work you can't finish. Expiry runs after everything else at that
+  instant. Reliability challenge is a real streak. **Save v17:** day so far, 95% streak, recent
+  reliability. Tests **895/895**. **Mac checks:** a widebody's contract offers read sensible
+  deadlines; an old save loads.
+
+- **2026-09-27 Claude (same branch) — pushback times (ADR 0137).** `ScheduledDeparture.PublishedAt`:
+  an AI delay moves pushback, never the published slot, and `DelayMinutes` is derived (no more
+  double-counted "Delayed +N"). Departure TIME stays fixed through taxi/takeoff/climb
+  (`PublishedDepartureAt`/`PushedBackAt`); departures get EST (delay, prep, gate hold, actual);
+  board sorts by seconds (midnight-safe). Prep everywhere reads `FleetAircraft.BaseLevel`;
+  reopening the planner never pushes a booked flight later; planner/dev/AI times on whole minutes.
+  Tests **887/887**. **Mac checks:** a delayed Qantas row reads "10:05 · Delayed +20 · est 10:25";
+  a departing row keeps its time as it taxis; prep % matches the aircraft card after a base upgrade.
+
+- **2026-09-27 Claude (same branch) — sound pass (ADR 0136).** Engine beds level-matched to
+  −20 dBFS with clean loops (`scripts/audio/process_beds.py`); coast rebuilt as a 16 s irregular
+  bed. `EngineVoice` gives turboprop / regional jet / narrowbody / widebody their own pitch, level
+  and range, a per-aircraft detune and distance low-pass. Apron bed, PA chime every 4–8 min,
+  panel whoosh, ambience ducking under fanfares. Listening copies in `docs/testing/audio-2026-09-27/`.
+  Tests **878/878**. **Mac checks:** Saab vs 737 vs A350 level; far jets muffled; PA chime over an
+  hour; apron bed sits under everything.
+
 - **2026-09-27 Claude (same branch) — side sheets and motion (ADR 0135).** Fleet, Contracts and
   Airline/Career open as a right-anchored sheet (~⅔ width, ≥900 px) so the airport stays in view;
   Ops and Map stay full width; small windows unchanged. Workspaces slide in (0.18 s), buttons lift

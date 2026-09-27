@@ -42,7 +42,10 @@ namespace Airside.Tests
                     {
                         case ContractKind.Charter:
                             Assert.That(offer.RequiredRotations, Is.EqualTo(1));
-                            Assert.That(offer.DeadlineSeconds, Is.LessThanOrEqualTo(6 * 3600));
+                            // 6 h, unless the aircraft needs longer: then the fair deadline (ADR 0138).
+                            Assert.That(DestinationCatalogue.TryFind(offer.DestinationCode, out var place), Is.True);
+                            Assert.That(offer.DeadlineSeconds, Is.LessThanOrEqualTo(Math.Max(6 * 3600,
+                                ContractFeasibility.FairDeadlineSeconds(offer.EligibleType, place, 1, PlayerBaseLevel.Starter))));
                             break;
                         case ContractKind.Medical:
                             Assert.That(RouteAccess.BandOf(offer.DestinationCode), Is.EqualTo(RouteBand.Regional));
@@ -65,12 +68,13 @@ namespace Airside.Tests
             (long at, int reliability, bool active) Run(int stepSeconds)
             {
                 var ops = Start(out var clock);
-                var charter = new RouteContractDefinition("TEST-CH", "ADL", "KGC", AircraftType.Saab340, 3, 500, 800, 1,
-                    OperatingTier.Provisional, reliabilityLossOnCancel: 4, kind: ContractKind.Charter, deadlineSeconds: 2 * 3600);
+                // One flight in 3 hours can be flown (so Accept takes it, ADR 0138); it simply isn't.
+                var charter = new RouteContractDefinition("TEST-CH", "ADL", "KGC", AircraftType.Saab340, 1, 500, 800, 1,
+                    OperatingTier.Provisional, reliabilityLossOnCancel: 4, kind: ContractKind.Charter, deadlineSeconds: 3 * 3600);
                 Assert.That(ops.AcceptContract(charter).Accepted, Is.True);
                 var due = ops.ContractExpiresAt().Value.ElapsedSeconds;
                 long lapsedAt = -1;
-                for (var t = 0L; t < 3 * 3600; t += stepSeconds)
+                for (var t = 0L; t < 4 * 3600; t += stepSeconds)
                 {
                     clock.Set(new SimulationTime(t));
                     ops.Update();
@@ -81,7 +85,7 @@ namespace Airside.Tests
                     }
                 }
 
-                Assert.That(due, Is.EqualTo(2 * 3600));
+                Assert.That(due, Is.EqualTo(3 * 3600));
                 return (lapsedAt, ops.CareerState.Reliability, ops.CareerState.ActiveContract != null);
             }
 
@@ -90,7 +94,7 @@ namespace Airside.Tests
             Assert.That(fine.active, Is.False);
             Assert.That(fine.reliability, Is.EqualTo(coarse.reliability), "same outcome for any step size");
             Assert.That(fine.reliability, Is.EqualTo(AirlineCareerState.StartingReliability - 4));
-            Assert.That(fine.at, Is.EqualTo(2 * 3600));
+            Assert.That(fine.at, Is.EqualTo(3 * 3600));
         }
 
         [Test]

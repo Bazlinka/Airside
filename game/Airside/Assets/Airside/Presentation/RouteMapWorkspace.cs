@@ -272,8 +272,8 @@ namespace Airside.Presentation
             if (OperatingNote.Length > 0)
                 AvailabilityLine = OperatingNote;
 
-            var delay = FlightPlanner.ClampDelay(departureDelaySeconds, type);
-            var departAt = now.Advance(delay);
+            var delay = FlightPlanner.ClampDelay(departureDelaySeconds, aircraft, now);
+            var departAt = AirlineOperations.WholeMinute(now.Advance(delay));
             DepartureLabel = clock.TimeText(departAt);
             DepartureDetail = $"in {Duration(delay)}  ·  "
                               + $"{Duration(operations.AirborneSeconds(aircraft, destination))} each way";
@@ -305,6 +305,7 @@ namespace Airside.Presentation
             RouteBand.Domestic => "Domestic",
             RouteBand.National => "National",
             RouteBand.Tasman => "Tasman",
+            RouteBand.Pacific => "Pacific",
             RouteBand.LongHaul => "Long-haul",
             _ => "Regional"
         };
@@ -568,7 +569,7 @@ namespace Airside.Presentation
                     row.Reachable ? HudTone.Default : HudTone.Muted);
                 var careerTarget = model.IsCareerTarget(row.Destination);
                 into.Text(new HudBox(box.X + 10f, box.Y + 16f, box.Width - 100f, 15f),
-                    careerTarget ? $"CAREER TARGET · {row.Destination.State}" : row.Destination.State,
+                    careerTarget ? $"CAREER TARGET · {row.Destination.Region}" : row.Destination.Region,
                     11f, careerTarget ? HudTone.Caution : HudTone.Muted,
                     careerTarget ? HudTextStyle.Bold : HudTextStyle.Regular);
                 into.Text(new HudBox(box.Right - 96f, box.Y, 96f, 17f), $"{row.DistanceKm:0} km", 12f,
@@ -598,10 +599,7 @@ namespace Airside.Presentation
             // not answer the player's actual question: "how far can this selected aircraft go?"
             if (aircraftRangeKm > 0.0)
                 RangeRing(into, map, lens, home, aircraftRangeKm, aircraftRangeLabel);
-            Polyline(into, map, lens, AustraliaMapGeometry.MainlandCoastLonLat, HudTone.Muted, 1.6f);
-            Polyline(into, map, lens, AustraliaMapGeometry.TasmaniaCoastLonLat, HudTone.Muted, 1.6f);
-            foreach (var border in AustraliaMapGeometry.StateBorderLonLats)
-                Polyline(into, map, lens, border, HudTone.Muted, 0.9f);
+            PaintGeography(into, map, lens);
 
             if (destinations != null)
             {
@@ -616,6 +614,17 @@ namespace Airside.Presentation
                     }
                 }
 
+                // Labels never pile up: home and the selected city claim their space first, then
+                // each other city is labelled only where it fits (its dot is always drawn).
+                var taken = new List<HudBox>();
+                Project(lens, map, home.Longitude, home.Latitude, out var homeX, out var homeY);
+                taken.Add(new HudBox(homeX + 10f, homeY - 9f, HudShell.Measure(home.Name, 13f), 17f));
+                if (selected.HasValue)
+                {
+                    Project(lens, map, selected.Value.Longitude, selected.Value.Latitude, out var sx, out var sy);
+                    taken.Add(new HudBox(sx + 9f, sy - 9f, HudShell.Measure(selected.Value.Name, 12f) + 26f, 17f));
+                }
+
                 foreach (var row in destinations)
                 {
                     Project(lens, map, row.Destination.Longitude, row.Destination.Latitude, out var x, out var y);
@@ -627,13 +636,27 @@ namespace Airside.Presentation
                         ? HudTone.Caution
                         : row.Reachable ? HudTone.Accent : HudTone.Muted;
                     into.Dot(x, y, isSelected ? 13f : careerTarget ? 11f : 9f, tone);
-                    var label = isSelected || lens.Zoom >= 4f
+                    var overseas = !row.Destination.IsAustralian;
+                    // Overseas cities are few and far apart, so they keep their names further out.
+                    var label = isSelected || lens.Zoom >= 4f || (overseas && lens.Zoom >= 0.45f)
                         ? row.Destination.Name
-                        : lens.Zoom >= 2f ? row.Destination.Code : string.Empty;
+                        : lens.Zoom >= 2f || overseas ? row.Destination.Code : string.Empty;
+                    var labelBox = new HudBox(x + 9f, y - 9f, HudShell.Measure(label, 12f) + (overseas ? 26f : 0f), 17f);
+                    // The selected city always shows its name; beside home it drops below instead of over it.
+                    var labelDy = isSelected && Collides(labelBox, taken.GetRange(0, 1)) ? 16f : 0f;
+                    if (label.Length > 0 && !isSelected && Collides(labelBox, taken))
+                        label = string.Empty;
+                    else if (label.Length > 0 && !isSelected)
+                        taken.Add(labelBox);
                     if (label.Length > 0)
-                        into.Text(new HudBox(x + 9f, y - 9f, 128f, 17f), label, 12f,
-                            row.Reachable ? HudTone.Default : HudTone.Muted,
-                            isSelected ? HudTextStyle.Bold : HudTextStyle.Regular);
+                    {
+                        var style = isSelected ? HudTextStyle.Bold : HudTextStyle.Regular;
+                        into.Text(new HudBox(x + 9f, y - 9f + labelDy, 128f, 17f), label, 12f,
+                            row.Reachable ? HudTone.Default : HudTone.Muted, style);
+                        if (overseas)
+                            CountryChip(into, x + 11f + HudShell.Measure(label, 12f), y - 7f + labelDy,
+                                row.Destination.Country, row.Reachable);
+                    }
                     // No hotspot: the map's own pointer handler picks the nearest dot, so it
                     // can tell a click from the start of a pan. An IMGUI control here would
                     // also come and go as zoom culls dots, which is how control ids drift.
@@ -646,6 +669,132 @@ namespace Airside.Presentation
             into.Dot(hx, hy, 12f, HudTone.Caution, playerLiveryHex);
             into.Text(new HudBox(hx + 10f, hy - 9f, 120f, 17f), home.Name, 13f, HudTone.Default,
                 HudTextStyle.Bold);
+        }
+
+        /// <summary>Runway detail for home and every destination in view (ADR 0140).</summary>
+        public static void PaintAirports(HudDrawList into, HudBox map, AustraliaMapLens lens,
+            IReadOnlyList<PlannerDestination> destinations, Destination home)
+        {
+            if (into == null || lens == null || lens.Zoom < AustraliaMapLens.AirportDetailZoom)
+                return;
+            PaintAirportDetail(into, map, lens, home);
+            if (destinations != null)
+                foreach (var row in destinations)
+                    PaintAirportDetail(into, map, lens, row.Destination);
+        }
+
+        /// <summary>
+        /// ADR 0140: coastline at the zoom's level of detail, Australian state borders, towns once
+        /// zoomed in, and each airport's runways once zoomed right in. Points closer than a few pixels
+        /// are skipped, so a detailed coast costs no more than the view can show.
+        /// </summary>
+        public static void PaintGeography(HudDrawList into, HudBox map, AustraliaMapLens lens)
+        {
+            lens.GuiToLonLat(map.X, map.Y, map.Width, map.Height, map.X, map.Y, out var west, out var north);
+            lens.GuiToLonLat(map.X, map.Y, map.Width, map.Height, map.Right, map.Bottom, out var east, out var south);
+            var view = (W: west, E: east, S: south, N: north);
+            var coastWidth = lens.Detail == MapDetail.Detail ? 1.4f : 1.6f;
+            // Zoomed right in, the fine coast drawn around each airport takes over there, and the
+            // detail coast is skipped inside those boxes so the shore is not drawn twice.
+            var fine = lens.Zoom >= MapGeography.AirportCoastZoom;
+            foreach (var ring in MapGeography.Coasts(lens.Detail))
+                if (Overlaps(MapGeography.BoundsOf(ring), view))
+                    Polyline(into, map, lens, ring, HudTone.Muted, coastWidth, fine);
+            if (fine)
+                foreach (var piece in MapGeographyData.AirportCoasts)
+                    if (Overlaps(MapGeography.BoundsOf(piece), view))
+                        Polyline(into, map, lens, piece, HudTone.Muted, coastWidth);
+            if (lens.Zoom >= 0.6f)
+                foreach (var border in MapGeographyData.StateBorders)
+                    if (Overlaps(MapGeography.BoundsOf(border), view))
+                        Polyline(into, map, lens, border, HudTone.Muted, 0.8f);
+            PaintTowns(into, map, lens, view);
+        }
+
+        private static bool Collides(HudBox box, List<HudBox> taken)
+        {
+            foreach (var other in taken)
+                if (box.X < other.Right && other.X < box.Right && box.Y < other.Bottom && other.Y < box.Bottom)
+                    return true;
+            return false;
+        }
+
+        private static bool Overlaps((float W, float E, float S, float N) b, (float W, float E, float S, float N) view) =>
+            !(b.E < view.W || b.W > view.E || b.N < view.S || b.S > view.N);
+
+        /// <summary>Towns as small grey dots, the biggest first, dropping labels that would overlap.</summary>
+        private static void PaintTowns(HudDrawList into, HudBox map, AustraliaMapLens lens,
+            (float W, float E, float S, float N) view)
+        {
+            var rank = lens.TownRank;
+            if (rank < 0)
+                return;
+            var taken = new List<HudBox>();
+            foreach (var town in MapGeographyData.Towns)
+            {
+                if (town.Rank > rank || town.Lon < view.W || town.Lon > view.E || town.Lat < view.S || town.Lat > view.N
+                    || MapGeography.IsAirportTown(town.Name, town.Lon, town.Lat))
+                    continue;
+                Project(lens, map, town.Lon, town.Lat, out var x, out var y);
+                if (!map.Contains(x, y))
+                    continue;
+                var size = town.Rank <= 1 ? 10f : 9f;
+                var box = new HudBox(x + 5f, y - 7f, HudShell.Measure(town.Name, size) + 2f, 13f);
+                var clear = true;
+                foreach (var other in taken)
+                    if (box.X < other.Right && other.X < box.Right && box.Y < other.Bottom && other.Y < box.Bottom)
+                        clear = false;
+                into.Dot(x, y, town.Rank <= 1 ? 4f : 3f, HudTone.Muted);
+                if (!clear || taken.Count > 60)
+                    continue;
+                taken.Add(box);
+                into.Text(box, town.Name, size, HudTone.Muted);
+            }
+        }
+
+        /// <summary>A small pill with the country's ISO code beside an overseas city (ADR 0140).</summary>
+        private static void CountryChip(HudDrawList into, float x, float y, string iso, bool reachable)
+        {
+            var box = new HudBox(x, y, 22f, 13f);
+            into.Fill(box, reachable ? HudTone.Accent : HudTone.Muted, 0.28f);
+            into.Text(box, iso, 8.5f, reachable ? HudTone.Default : HudTone.Muted, HudTextStyle.Bold, HudAlign.Center);
+        }
+
+        /// <summary>
+        /// Zoomed right in on an airport (ADR 0140): its runways to scale with their numbers, and
+        /// its name, code and elevation.
+        /// </summary>
+        public static void PaintAirportDetail(HudDrawList into, HudBox map, AustraliaMapLens lens, Destination airport)
+        {
+            if (lens.Zoom < AustraliaMapLens.AirportDetailZoom)
+                return;
+            Project(lens, map, airport.Longitude, airport.Latitude, out var ax, out var ay);
+            var margin = 400f;
+            if (ax < map.X - margin || ax > map.Right + margin || ay < map.Y - margin || ay > map.Bottom + margin)
+                return;
+            var metresPerPixel = 111_320f / lens.PixelsPerDegree(map.Width, map.Height);
+            var any = false;
+            foreach (var runway in MapGeography.RunwaysAt(airport.Code))
+            {
+                any = true;
+                Project(lens, map, runway.Lon1, runway.Lat1, out var x1, out var y1);
+                Project(lens, map, runway.Lon2, runway.Lat2, out var x2, out var y2);
+                var width = Math.Max(2.5f, runway.WidthM / metresPerPixel);
+                Clipped(into, map, x1, y1, x2, y2, HudTone.Default, width);
+                if (map.Contains(x1, y1))
+                    into.Text(new HudBox(x1 - 14f, y1 - 7f, 28f, 14f), runway.End1, 9f, HudTone.Caution,
+                        HudTextStyle.Bold, HudAlign.Center);
+                if (map.Contains(x2, y2))
+                    into.Text(new HudBox(x2 - 14f, y2 - 7f, 28f, 14f), runway.End2, 9f, HudTone.Caution,
+                        HudTextStyle.Bold, HudAlign.Center);
+            }
+
+            if (!any || !map.Contains(ax, ay))
+                return;
+            var elevation = MapGeography.ElevationFt(airport.Code);
+            var line = $"{MapGeography.AirportName(airport.Code)} · {airport.Code}"
+                       + (elevation.HasValue ? $" · {elevation.Value:N0} ft" : string.Empty);
+            into.Text(new HudBox(ax + 14f, ay + 24f, 320f, 16f), line, 11f, HudTone.Default, HudTextStyle.Bold);
         }
 
         private static bool ContainsCode(IReadOnlyCollection<string> codes, string code)
@@ -665,15 +814,17 @@ namespace Airside.Presentation
             RouteMap.DestinationPoint(home.Latitude, home.Longitude, distanceKm, 0.0,
                 out var lat, out var lon);
             Project(lens, map, lon, lat, out var px, out var py);
+            var prevLon = lon;
             for (var i = 1; i <= segments; i++)
             {
                 RouteMap.DestinationPoint(home.Latitude, home.Longitude, distanceKm,
                     i * 360.0 / segments, out lat, out lon);
                 Project(lens, map, lon, lat, out var nx, out var ny);
-                if ((i & 1) == 0)
+                if ((i & 1) == 0 && !Wraps(prevLon, lon))
                     Clipped(into, map, px, py, nx, ny, HudTone.Muted, 0.65f);
                 px = nx;
                 py = ny;
+                prevLon = lon;
             }
 
             RouteMap.DestinationPoint(home.Latitude, home.Longitude, distanceKm, 90.0,
@@ -685,17 +836,35 @@ namespace Airside.Presentation
                     HudTone.Muted);
         }
 
+        /// <summary>Screen pixels a coast vertex must move before it is drawn (ADR 0140).</summary>
+        public const float MinSegmentPixels = 2.5f;
+
         private static void Polyline(HudDrawList into, HudBox map, AustraliaMapLens lens, float[] lonLat,
-            HudTone tone, float thickness)
+            HudTone tone, float thickness, bool skipNearAirports = false)
         {
-            var count = AustraliaMapGeometry.PointCount(lonLat);
+            var count = lonLat.Length / 2;
+            if (count < 2)
+                return;
+            Project(lens, map, lonLat[0], lonLat[1], out var x0, out var y0);
+            var nearBefore = skipNearAirports && MapGeography.NearAirport(lonLat[0], lonLat[1]);
             for (var i = 1; i < count; i++)
             {
-                Project(lens, map, lonLat[(i - 1) * 2], lonLat[(i - 1) * 2 + 1], out var x0, out var y0);
                 Project(lens, map, lonLat[i * 2], lonLat[i * 2 + 1], out var x1, out var y1);
-                Clipped(into, map, x0, y0, x1, y1, tone, thickness);
+                var last = i == count - 1;
+                if (!last && Math.Abs(x1 - x0) + Math.Abs(y1 - y0) < MinSegmentPixels)
+                    continue;
+                var near = skipNearAirports && MapGeography.NearAirport(lonLat[i * 2], lonLat[i * 2 + 1]);
+                if (!(near && nearBefore))
+                    Clipped(into, map, x0, y0, x1, y1, tone, thickness);
+                x0 = x1;
+                y0 = y1;
+                nearBefore = near;
             }
         }
+
+        /// <summary>Two points more than half the world apart in longitude never join (antimeridian guard).</summary>
+        private static bool Wraps(double lonA, double lonB) =>
+            Math.Abs(AustraliaMapLens.Unwrap(lonA) - AustraliaMapLens.Unwrap(lonB)) > 180.0;
 
         private static void GreatCircle(HudDrawList into, HudBox map, AustraliaMapLens lens, Destination from,
             Destination to, HudTone tone, float thickness)
@@ -704,14 +873,17 @@ namespace Airside.Presentation
             RouteMap.GreatCirclePoint(from.Latitude, from.Longitude, to.Latitude, to.Longitude, 0.0,
                 out var lat, out var lon);
             Project(lens, map, lon, lat, out var px, out var py);
+            var prevLon = lon;
             for (var i = 1; i <= segments; i++)
             {
                 RouteMap.GreatCirclePoint(from.Latitude, from.Longitude, to.Latitude, to.Longitude,
                     i / (double)segments, out lat, out lon);
                 Project(lens, map, lon, lat, out var nx, out var ny);
-                Clipped(into, map, px, py, nx, ny, tone, thickness);
+                if (!Wraps(prevLon, lon))
+                    Clipped(into, map, px, py, nx, ny, tone, thickness);
                 px = nx;
                 py = ny;
+                prevLon = lon;
             }
         }
 

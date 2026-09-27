@@ -33,7 +33,7 @@ namespace Airside.Simulation
 
         public static IReadOnlyList<AdelaideBay> Bays => AdelaideLayout.Bays;
 
-        public static IReadOnlyList<AdelaideTerminalGate> TerminalGates => AdelaideLayout.TerminalGates;
+        public static IReadOnlyList<AdelaideTerminalGate> TerminalGates => AdelaideGateAlignment.Gates;
 
         /// <summary>True for a terminal gate (a separate stand system from the regional bays).</summary>
         public static bool IsTerminalGate(StableId stand) => TryTerminalGate(stand, out _);
@@ -41,7 +41,7 @@ namespace Airside.Simulation
         public static bool TryTerminalGate(StableId stand, out AdelaideTerminalGate gate)
         {
             if (GatesById.Count == 0)
-                foreach (var candidate in AdelaideLayout.TerminalGates)
+                foreach (var candidate in AdelaideGateAlignment.Gates)
                     GatesById[candidate.Id] = candidate;
             gate = default;
             return stand.Value != null && GatesById.TryGetValue(stand.Value, out gate);

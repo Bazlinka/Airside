@@ -36,8 +36,11 @@ namespace Airside.Simulation
         /// base level (ADR 0091); older saves infer enough capacity for their existing fleet.
         /// 13 adds selectable career goals, route proof, outstation fleet/bases, earned repeat
         /// schedules, recent service margins and active-play timing (ADR 0120).
+        /// 17 (ADR 0138) adds the day so far (so a reload keeps the day's report and the
+        /// profitable-day challenge), the 95% reliability streak and the recent post-flight
+        /// reliability readings. Older saves start a fresh day and an empty streak.
         /// </summary>
-        public const int CurrentVersion = 16;
+        public const int CurrentVersion = 17;
 
         public int Version = CurrentVersion;
 
@@ -113,6 +116,21 @@ namespace Airside.Simulation
         public long FinaleAtSeconds;
         public List<OutstationAircraftSaveRecord> OutstationFleet = new();
         public List<RepeatScheduleSaveRecord> RepeatSchedules = new();
+
+        // ---- Day so far and reliability history (v17 / ADR 0138) -------------------
+        public int DayFlights;
+        public long DayRevenue;
+        public long DayCost;
+        public string DayBestCode;
+        public long DayBestMargin;
+        public bool HasDayStartReliability;
+        public int DayStartReliability;
+        public int DayLateFlights;
+        public int DayLateSeconds;
+        public bool HasReportedDay;
+        public long ReportedDay;
+        public int HighReliabilityStreak;
+        public List<int> RecentReliability = new();
 
         // ---- Career stats (v9) -----------------------------------------------------
         public long CareerLifetimeRevenue;
@@ -244,6 +262,20 @@ namespace Airside.Simulation
             data.ServedDestinationCodes.AddRange(operations.CareerState.ServedDestinations);
             data.OutstationBaseCodes.AddRange(operations.CareerState.OutstationBases);
             data.RecentServiceMargins.AddRange(operations.CareerState.RecentServiceMargins);
+            var day = operations.SaveToday();
+            data.DayFlights = day.Flights;
+            data.DayRevenue = day.Revenue;
+            data.DayCost = day.Cost;
+            data.DayBestCode = day.BestCode ?? string.Empty;
+            data.DayBestMargin = day.BestMargin;
+            data.HasDayStartReliability = day.StartReliability.HasValue;
+            data.DayStartReliability = day.StartReliability ?? 0;
+            data.DayLateFlights = day.LateFlights;
+            data.DayLateSeconds = day.LateSeconds;
+            data.HasReportedDay = day.ReportedDay.HasValue;
+            data.ReportedDay = day.ReportedDay ?? 0;
+            data.HighReliabilityStreak = operations.CareerState.HighReliabilityStreak;
+            data.RecentReliability.AddRange(operations.CareerState.RecentReliability);
             foreach (var aircraft in operations.OutstationFleet)
                 data.OutstationFleet.Add(new OutstationAircraftSaveRecord
                 {
@@ -569,6 +601,15 @@ namespace Airside.Simulation
             operations.FirstFlightCoaching = data.Version < 14 || !data.CoachingOff;
             if (data.Version >= 15)
                 operations.CareerState.RestoreOnTimeStreak(data.OnTimeStreak);
+            if (data.Version >= 17)
+            {
+                operations.CareerState.RestoreReliabilityHistory(data.HighReliabilityStreak, data.RecentReliability);
+                operations.RestoreToday(new AirlineOperations.DaySnapshot(data.DayFlights, data.DayRevenue, data.DayCost,
+                    data.DayBestCode, data.DayBestMargin,
+                    data.HasDayStartReliability ? data.DayStartReliability : null,
+                    data.DayLateFlights, data.DayLateSeconds,
+                    data.HasReportedDay ? data.ReportedDay : null));
+            }
 
             if (data.Version >= 13)
             {

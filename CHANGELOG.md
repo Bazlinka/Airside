@@ -1,5 +1,50 @@
 ## Unreleased
 
+- **Weather that feels real.** The weather now changes gradually, from clear to cloudy to overcast to
+  rain and back, and the sky eases between them instead of snapping. Fog only rolls in on early
+  mornings, with mist lying over the airfield. The sky's colour follows the weather, and the fog
+  matches it. On a clear day you can see much further, and overcast days bring a real cloud
+  ceiling. Storm clouds are dark and tall, clouds drift with the wind, and their shadows follow
+  the sun.
+
+- **Arrivals come from further away.** Incoming aircraft now appear about 32 km out and descend on
+  their approach, curving in from the direction of the city they are flying from. Far-off aircraft
+  show their landing lights, so you can pick them out long before they land.
+
+- **Tidy gates.** Jets at the terminal now park in one straight row close to the building, instead
+  of scattered up to 38 m out on the apron. Stand boxes fit the aircraft they are for, and paired
+  gates share one box.
+
+- **A real map, and the wider world.** The route map now uses accurate coastlines, including
+  Kangaroo Island, and every airport sits where it really is. Zoom out to see Asia, the Pacific and
+  Los Angeles, or zoom in to see towns and, closer still, each airport's runways and elevation.
+  Twelve new overseas airports have arrived, among them Tokyo, Seoul, Bangkok, Honolulu and Los
+  Angeles. The near Pacific (Bali, Fiji, Nouméa, Port Moresby) is a new route band that the
+  A321neo and A220 can fly.
+
+- **Progress takes proving.** Bigger bases and each outstation now need a reliability level and a
+  track record of flights. Each jet and widebody unlocks at its own flight count, beyond just
+  reaching the tier. Reliability goals ask you to hold the level for your last 10 flights, so
+  touching it once isn't enough.
+
+- **Every contract can be finished.** Deadlines now allow for how long your aircraft really takes,
+  so long-haul work no longer asks for the impossible. Medical calls only go where you can get
+  there and back in 3 hours, and turboprop owners get one every day. Featured contracts only
+  appear for aircraft you own or can buy now. The game won't let you sign work you can't fly in
+  time. A flight that parks right on the deadline counts. The 95% reliability challenge is now a
+  real streak, and a reload no longer forgets today's flights.
+
+- **Pushback times you can trust.** A delayed flight now shows its original time with the new time
+  under EST, instead of counting the delay twice. A departure keeps its time on the board as it
+  taxis and takes off, and you can see when it actually left. Prep times match your base on every
+  screen, reopening the planner no longer makes a booked flight later, and bookings land on whole
+  minutes.
+
+- **Better sound.** Turboprops and jets are now evenly loud, and the jet no longer clicks as its
+  sound loops. Each aircraft size has its own engine note: an E190 sounds lighter than a 737, and
+  an A350 deeper and louder. Far-off aircraft sound muffled. The apron hums quietly, the terminal
+  chimes now and then, and the sea sounds less repetitive.
+
 - **Keep your eye on the airport.** Fleet, Contracts and the Airline page now open as a panel on the
   right, so the airport stays visible beside them. Panels slide in, and buttons lift when you point
   at them.

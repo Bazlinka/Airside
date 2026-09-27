@@ -96,7 +96,7 @@ namespace Airside.Simulation
             Math.Max(EngineStartSequence.MinimumDepartureLeadSeconds, TotalSeconds(type, baseLevel));
 
         public static bool IsReady(FleetAircraft aircraft, SimulationTime now) =>
-            IsReady(aircraft, now, PlayerBaseLevel.Starter);
+            IsReady(aircraft, now, aircraft?.BaseLevel ?? PlayerBaseLevel.Starter);
 
         public static bool IsReady(FleetAircraft aircraft, SimulationTime now, PlayerBaseLevel baseLevel)
         {
@@ -109,7 +109,7 @@ namespace Airside.Simulation
             (int)Math.Round(Math.Max(0, Math.Min(1, progress01)) * 100);
 
         public static DeparturePrepStatus For(FleetAircraft aircraft, SimulationTime now) =>
-            For(aircraft, now, PlayerBaseLevel.Starter);
+            For(aircraft, now, aircraft?.BaseLevel ?? PlayerBaseLevel.Starter);
 
         public static DeparturePrepStatus For(FleetAircraft aircraft, SimulationTime now, PlayerBaseLevel baseLevel)
         {
@@ -207,6 +207,15 @@ namespace Airside.Simulation
             if (elapsed < startsAt)
                 return startsAt - elapsed;
             return elapsed <= endsAt ? 0.0 : endsAt - elapsed;
+        }
+
+        /// <summary>When the player's prep for the booked flight will be done (game seconds).</summary>
+        public static long ReadyAtSeconds(FleetAircraft aircraft)
+        {
+            if (aircraft == null || !aircraft.Scheduled.HasValue || !aircraft.Airline.IsPlayer)
+                return 0;
+            var level = aircraft.BaseLevel;
+            return StartSeconds(aircraft, aircraft.Scheduled.Value.DepartAt, level) + TotalSeconds(aircraft.Type, level);
         }
 
         private static long StartSeconds(FleetAircraft aircraft, SimulationTime now, PlayerBaseLevel baseLevel)

@@ -9,8 +9,10 @@ namespace Airside.Simulation
     public readonly struct PlayerBaseSpec
     {
         public PlayerBaseSpec(PlayerBaseLevel level, string title, string detail, int fleetCapacity,
-            long upgradeCost, int requiredRotations, OperatingTier requiredTier, bool terminalJets, bool widebodies)
+            long upgradeCost, int requiredRotations, OperatingTier requiredTier, bool terminalJets, bool widebodies,
+            int requiredReliability = 0)
         {
+            RequiredReliability = requiredReliability;
             Level = level; Title = title ?? string.Empty; Detail = detail ?? string.Empty;
             FleetCapacity = fleetCapacity; UpgradeCost = upgradeCost; RequiredRotations = requiredRotations;
             RequiredTier = requiredTier; TerminalJets = terminalJets; Widebodies = widebodies;
@@ -22,6 +24,9 @@ namespace Airside.Simulation
         public long UpgradeCost { get; }
         public int RequiredRotations { get; }
         public OperatingTier RequiredTier { get; }
+
+        /// <summary>Reliability needed to open this base (ADR 0139).</summary>
+        public int RequiredReliability { get; }
         public bool TerminalJets { get; }
         public bool Widebodies { get; }
     }
@@ -29,6 +34,12 @@ namespace Airside.Simulation
     /// <summary>The player's leased Adelaide operating footprint (ADR 0091), not Adelaide Airport itself.</summary>
     public static class PlayerBase
     {
+        /// <summary>True when every gate but money is met (ADR 0139).</summary>
+        public static bool GatesMet(PlayerBaseSpec next, AirlineCareerState career) =>
+            career != null && career.Tier >= next.RequiredTier
+                           && career.CompletedPlayerRotations >= next.RequiredRotations
+                           && career.Reliability >= next.RequiredReliability;
+
         private static readonly StableId[] StarterRegionalStands =
         {
             new("BAY-1")
@@ -61,13 +72,13 @@ namespace Airside.Simulation
         {
             PlayerBaseLevel.ExpandedRegional => new PlayerBaseSpec(level,
                 "Expanded regional base", "3 aircraft · regional apron and maintenance space",
-                3, 1_500, 4, OperatingTier.Provisional, false, false),
+                3, 1_500, 4, OperatingTier.Provisional, false, false, requiredReliability: 75),
             PlayerBaseLevel.JetGate => new PlayerBaseSpec(level,
                 "Jet-gate base", "5 aircraft · terminal-gate jet handling",
-                5, 6_000, 12, OperatingTier.Regional, true, false),
+                5, 6_000, 16, OperatingTier.Regional, true, false, requiredReliability: 80),
             PlayerBaseLevel.International => new PlayerBaseSpec(level,
                 "International base", "6 aircraft · widebody and long-haul handling",
-                6, 20_000, 24, OperatingTier.Domestic, true, true),
+                6, 20_000, 50, OperatingTier.Domestic, true, true, requiredReliability: 88),
             _ => new PlayerBaseSpec(PlayerBaseLevel.Starter,
                 "Regional starter base", "1 aircraft · regional apron operation",
                 1, 0, 0, OperatingTier.Provisional, false, false)
@@ -235,6 +246,7 @@ namespace Airside.Simulation
             if (career == null) return "No career.";
             var parts = new List<string>();
             if (career.Tier < next.RequiredTier) parts.Add($"{next.RequiredTier} tier");
+            if (career.Reliability < next.RequiredReliability) parts.Add($"{next.RequiredReliability}% reliability");
             if (career.CompletedPlayerRotations < next.RequiredRotations)
             {
                 var remaining = next.RequiredRotations - career.CompletedPlayerRotations;

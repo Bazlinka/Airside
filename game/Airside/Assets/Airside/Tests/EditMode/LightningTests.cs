@@ -6,16 +6,17 @@ namespace Airside.Tests
 {
     public sealed class LightningTests
     {
-        // Block 34 (122400-125999s) hashes to Storm (see RunwayWeatherTests / Weather.At);
-        // blocks 33 (Clear) and 35 (Fog) bracket it.
-        private const long StormBlockStart = 122400;
-        private const long StormBlockEnd = 126000;
+        // Block 249 (896400-899999s) is a one-hour storm on the ADR 0143 drifting chain (see
+        // Weather.At); blocks 248 (Cloudy) and 250 (Rain) bracket it.
+        private const long StormBlockStart = 896400;
+        private const long StormBlockEnd = 900000;
 
         [Test]
         public void Lightning_NeverStrikesOutsideAStorm()
         {
             for (long t = 0; t < StormBlockStart; t += 61)
-                Assert.That(Lightning.StrikesAt(new SimulationTime(t)), Is.False);
+                if (Weather.At(new SimulationTime(t)) != WeatherKind.Storm)
+                    Assert.That(Lightning.StrikesAt(new SimulationTime(t)), Is.False);
             for (long t = StormBlockEnd; t < StormBlockEnd + 3600; t += 61)
                 Assert.That(Lightning.StrikesAt(new SimulationTime(t)), Is.False);
         }
@@ -50,11 +51,11 @@ namespace Airside.Tests
             Assert.That(previous, Is.Not.Null, "the block should have produced at least one strike");
         }
 
-        [TestCase(122400, true)]
-        [TestCase(122411, true)]
-        [TestCase(122418, true)]
-        [TestCase(122405, false)]
-        [TestCase(125999, false)]
+        [TestCase(896400, true)]
+        [TestCase(896412, true)]
+        [TestCase(896420, true)]
+        [TestCase(896405, false)]
+        [TestCase(899999, false)]
         public void Lightning_MatchesTheComputedLadderForAKnownStormBlock(long second, bool expectedStrike)
         {
             Assert.That(Lightning.StrikesAt(new SimulationTime(second)), Is.EqualTo(expectedStrike));

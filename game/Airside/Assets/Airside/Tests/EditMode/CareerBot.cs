@@ -192,7 +192,7 @@ namespace Airside.Tests
             var usable = _ops.MarketOffers()
                 .Where(o => !Career.HasCompleted(o.Id) && Career.Tier >= o.RequiredTier && owned.Contains(o.EligibleType.Id)
                             && DestinationCatalogue.TryFind(o.DestinationCode, out var d) && Plannable(d)
-                            && CanFinishInTime(o, d))
+                            && CanFinishInTime(o, d) && _ops.CanStillFinish(o))
                 .ToList();
             if (usable.Count == 0)
                 return;
@@ -209,11 +209,11 @@ namespace Airside.Tests
         {
             if (!offer.HasDeadline)
                 return true;
-            var km = DestinationCatalogue.Adelaide.DistanceKmTo(destination);
-            var rotation = 2 * LegTiming.AirborneSeconds(km, offer.EligibleType) + 40 * 60
-                           + DeparturePrep.TotalSeconds(offer.EligibleType, Career.BaseLevel) + 20 * 60;
+            // The same rule the market uses (ADR 0138), with the bot's own caution on top.
+            var minimum = ContractFeasibility.MinimumSeconds(offer.EligibleType, destination, offer.RequiredRotations,
+                Career.BaseLevel);
             var slack = Competent ? 1.3 : 1.8;
-            return rotation * offer.RequiredRotations * slack < offer.DeadlineSeconds;
+            return minimum * slack < offer.DeadlineSeconds;
         }
 
         private static double ContractValue(RouteContractDefinition offer, HashSet<string> goals)
@@ -307,7 +307,7 @@ namespace Airside.Tests
             var bonus = 0.0;
             if (goals.Contains("regional-network") && band == RouteBand.Regional)
                 bonus += 4000;
-            if (goals.Contains("domestic-network") && destination.State != "SA" && band >= RouteBand.Domestic
+            if (goals.Contains("domestic-network") && destination.IsAustralian && destination.State != "SA" && band >= RouteBand.Domestic
                 && band <= RouteBand.National)
                 bonus += 6000;
             if (goals.Contains("international-network") && RouteAccess.IsInternational(destination.Code))

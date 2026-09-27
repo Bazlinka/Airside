@@ -71,6 +71,18 @@ namespace Airside.Simulation
         public const int FinalInternationalDestinations = 3;
         public const int FinalMarginServices = 30;
 
+        /// <summary>
+        /// ADR 0139: a reliability goal is held, not touched: the last this-many flights all ended at the
+        /// level. Provisional asks for 4 (its whole flight goal), later tiers for 10.
+        /// </summary>
+        public const int HeldFlights = 10;
+        public const int ProvisionalHeldFlights = 4;
+
+        private static CareerGoalStatus Held(string id, int percent, int flights, OperatingTier stage,
+            AirlineCareerState career) =>
+            new(id, $"Keep reliability at {percent}% for {flights} flights", stage,
+                Math.Min(career.FlightsHeldAtOrAbove(percent), flights), flights, $"{career.Reliability}% now");
+
         public static IReadOnlyList<CareerGoalStatus> Evaluate(AirlineCareerState career,
             IReadOnlyList<AircraftType> fleet, int fleetCount = 0)
         {
@@ -84,7 +96,6 @@ namespace Airside.Simulation
             var regionalContracts = CountRegionalContracts(career);
             var hasJet = AirlineCareerState.OwnsAnyJet(fleet) ? 1 : 0;
             var hasWidebody = OwnsWidebody(fleet) ? 1 : 0;
-            var rel = career.Reliability;
             var margins = career.RecentServiceMargins.Count;
             var marginPositive = career.RecentOperatingMargin > 0;
             var marginProgress = marginPositive ? margins : Math.Min(margins, FinalMarginServices - 1);
@@ -94,7 +105,7 @@ namespace Airside.Simulation
             // Provisional → Regional: prove the airline can keep a commitment.
             goals.Add(new CareerGoalStatus("prove-service", "Finish a regional contract", OperatingTier.Provisional, regionalContracts, 1));
             goals.Add(new CareerGoalStatus("first-rotations", "Complete 4 flights", OperatingTier.Provisional, career.CompletedPlayerRotations, 4));
-            goals.Add(new CareerGoalStatus("regional-reliability", "Keep reliability at 70% or more", OperatingTier.Provisional, rel, 70));
+            goals.Add(Held("regional-reliability", 70, ProvisionalHeldFlights, OperatingTier.Provisional, career));
             // Regional → Domestic: a small regional network with its own base.
             goals.Add(new CareerGoalStatus("regional-network", "Serve 4 regional towns", OperatingTier.Regional, regional, 4));
             goals.Add(new CareerGoalStatus("regional-fleet", "Fly 3 aircraft", OperatingTier.Regional, fleetCount, 3));
@@ -102,7 +113,7 @@ namespace Airside.Simulation
                 career.BaseLevel >= PlayerBaseLevel.ExpandedRegional ? 1 : 0, 1));
             goals.Add(new CareerGoalStatus("regional-service", "Complete 30 flights", OperatingTier.Regional,
                 career.CompletedPlayerRotations, 30));
-            goals.Add(new CareerGoalStatus("domestic-reliability", "Keep reliability at 80% or more", OperatingTier.Regional, rel, 80));
+            goals.Add(Held("domestic-reliability", 80, HeldFlights, OperatingTier.Regional, career));
             // Domestic → International: jets, interstate cities and a second base.
             goals.Add(new CareerGoalStatus("domestic-network", "Serve 3 interstate cities", OperatingTier.Domestic, domestic, 3));
             goals.Add(new CareerGoalStatus("domestic-jet", "Fly a jet", OperatingTier.Domestic, hasJet, 1));
@@ -110,7 +121,7 @@ namespace Airside.Simulation
                 career.OutstationBases.Count, 1));
             goals.Add(new CareerGoalStatus("domestic-service", "Complete 75 flights", OperatingTier.Domestic,
                 career.CompletedPlayerRotations, 75));
-            goals.Add(new CareerGoalStatus("international-reliability", "Keep reliability at 88% or more", OperatingTier.Domestic, rel, 88));
+            goals.Add(Held("international-reliability", 88, HeldFlights, OperatingTier.Domestic, career));
             // International → established airline (the finale; see FinaleReady).
             goals.Add(new CareerGoalStatus("international-network", "Serve 3 overseas cities",
                 OperatingTier.International, international, FinalInternationalDestinations));
@@ -123,7 +134,7 @@ namespace Airside.Simulation
                 career.ServedDestinations.Count, FinalDestinations));
             goals.Add(new CareerGoalStatus("established-margin", "Make a profit over your last 30 flights",
                 OperatingTier.International, marginProgress, FinalMarginServices, marginDetail));
-            goals.Add(new CareerGoalStatus("established-reliability", "Keep reliability at 90% or more", OperatingTier.International, rel, 90));
+            goals.Add(Held("established-reliability", 90, HeldFlights, OperatingTier.International, career));
             return goals;
         }
 
@@ -231,7 +242,7 @@ namespace Airside.Simulation
             var count = 0;
             foreach (var code in career.ServedDestinations)
                 if (DestinationCatalogue.TryFind(code, out var destination)
-                    && destination.State != "SA" && destination.State != "New Zealand"
+                    && destination.IsAustralian && destination.State != "SA"
                     && RouteAccess.BandOf(destination) >= RouteBand.Domestic
                     && RouteAccess.BandOf(destination) <= RouteBand.National)
                     count++;

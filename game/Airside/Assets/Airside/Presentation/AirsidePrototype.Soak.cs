@@ -252,6 +252,7 @@ namespace Airside.Presentation
                     var delay = aircraft.CompletedTrips == 0
                         ? 4 * 60
                         : _soakChoices.NextInt((int)EngineStartSequence.MinimumDepartureLeadSeconds, 1800);
+                    delay = Math.Max(delay, (int)DeparturePrep.LeadSeconds(aircraft.Type, aircraft.BaseLevel));
                     _operations.ScheduleDeparture(aircraft, destination, _clock.Now.Advance(delay));
                 }
                 else if (aircraft.State == FleetState.AwaitingStand)

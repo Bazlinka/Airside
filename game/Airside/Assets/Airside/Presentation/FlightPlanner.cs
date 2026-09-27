@@ -80,6 +80,26 @@ namespace Airside.Presentation
             return Math.Max(floor, Math.Min(MaxDepartureDelaySeconds, seconds));
         }
 
+        /// <summary>
+        /// Clamp for a real aircraft (ADR 0137): the prep lead comes from the player's base level,
+        /// and an aircraft already booked inside that lead keeps its time, so reopening the planner
+        /// never pushes a booked flight later.
+        /// </summary>
+        public static long ClampDelay(long seconds, FleetAircraft aircraft, SimulationTime now)
+        {
+            if (aircraft == null)
+                return ClampDelay(seconds);
+            var floor = DeparturePrep.LeadSeconds(aircraft.Type, aircraft.BaseLevel);
+            if (aircraft.Scheduled is { Cancelled: false } booked)
+            {
+                var left = booked.DepartAt.ElapsedSeconds - now.ElapsedSeconds;
+                if (left >= 0 && left < floor)
+                    floor = left;
+            }
+
+            return Math.Max(floor, Math.Min(MaxDepartureDelaySeconds, seconds));
+        }
+
         /// <summary>Nudge a delay by whole steps, snapping to the step grid (except the 3 min floor).</summary>
         public static long StepDelay(long seconds, int steps)
         {

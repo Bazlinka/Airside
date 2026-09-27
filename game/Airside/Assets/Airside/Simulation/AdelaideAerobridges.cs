@@ -152,7 +152,7 @@ namespace Airside.Simulation
             if (face == null)
                 return sites;
 
-            foreach (var gate in AdelaideLayout.TerminalGates)
+            foreach (var gate in AdelaideGateAlignment.Gates)
             {
                 var heading = gate.HeadingDegrees * Math.PI / 180.0;
                 var fx = (float)Math.Sin(heading);

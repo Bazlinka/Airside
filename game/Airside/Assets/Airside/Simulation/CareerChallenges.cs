@@ -9,8 +9,9 @@ namespace Airside.Simulation
     public readonly struct ChallengeFacts
     {
         public ChallengeFacts(int onTimeStreak, bool profitableDay, int charters, int medicalFlights, bool finaleReached,
-            int longHaulServed, int fleetCount, int reliability, int rotations)
+            int longHaulServed, int fleetCount, int reliability, int rotations, int highReliabilityStreak = 0)
         {
+            HighReliabilityStreak = highReliabilityStreak;
             OnTimeStreak = onTimeStreak;
             ProfitableDay = profitableDay;
             Charters = charters;
@@ -31,6 +32,9 @@ namespace Airside.Simulation
         public int FleetCount { get; }
         public int Reliability { get; }
         public int Rotations { get; }
+
+        /// <summary>Flights in a row ending at 95% reliability or more (ADR 0138).</summary>
+        public int HighReliabilityStreak { get; }
     }
 
     /// <summary>One optional challenge: a cash reward for playing well, beside the career goals.</summary>
@@ -88,7 +92,9 @@ namespace Airside.Simulation
     {
         public const string KeyPrefix = "challenge:";
 
-        public static readonly string[] LongHaulCities = { "DPS", "SIN", "HKG", "KUL", "NAN", "DOH", "DXB" };
+        /// <summary>Every long-haul city in the catalogue (ADR 0140: now Asia, Hawaii and Los Angeles too).</summary>
+        public static readonly string[] LongHaulCities = DestinationCatalogue.International
+            .Where(d => RouteAccess.BandOf(d) == RouteBand.LongHaul).Select(d => d.Code).ToArray();
 
         public static readonly IReadOnlyList<CareerChallenge> All = new[]
         {
@@ -102,12 +108,14 @@ namespace Airside.Simulation
                 f => (Math.Min(f.Charters, 3), 3)),
             new CareerChallenge("on-time-30", "Push back on time 30 times in a row", 5_000, false,
                 f => (Math.Min(f.OnTimeStreak, 30), 30)),
-            new CareerChallenge("long-haul-all", "Serve every long-haul city", 25_000, true,
+            new CareerChallenge("long-haul-all", "Serve every long-haul city", 40_000, true,
                 f => (f.LongHaulServed, LongHaulCities.Length)),
             new CareerChallenge("fleet-25", "Fly 25 aircraft", 20_000, true,
                 f => (Math.Min(f.FleetCount, AircraftAcquisition.MaxPlayerAircraft), AircraftAcquisition.MaxPlayerAircraft)),
-            new CareerChallenge("reliability-95", "Keep 95% reliability to 300 flights", 15_000, true,
-                f => (f.Reliability >= 95 ? Math.Min(f.Rotations, 300) : 0, 300))
+            // ADR 0138: a real streak. It used to show every flight ever flown whenever reliability
+            // happened to be 95% right now, and dropped to nothing when it dipped.
+            new CareerChallenge("reliability-95", "Fly 300 flights in a row at 95% reliability", 15_000, true,
+                f => (Math.Min(f.HighReliabilityStreak, 300), 300))
         };
 
         public static ChallengeFacts FactsFor(AirlineCareerState career, int fleetCount, bool profitableDay)
@@ -124,7 +132,7 @@ namespace Airside.Simulation
 
             var longHaul = LongHaulCities.Count(code => career.ServedDestinations.Contains(code));
             return new ChallengeFacts(career.OnTimeStreak, profitableDay, charters, medical, career.FinaleReached, longHaul,
-                fleetCount, career.Reliability, career.CompletedPlayerRotations);
+                fleetCount, career.Reliability, career.CompletedPlayerRotations, career.HighReliabilityStreak);
         }
 
         public static IReadOnlyList<CareerChallengeStatus> Status(AirlineCareerState career, ChallengeFacts facts)

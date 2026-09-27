@@ -20,10 +20,25 @@ namespace Airside.Simulation
         private static readonly string[] Domestic = { "MEL", "CBR", "SYD", "HBA" };
         private static readonly string[] National = { "BNE", "OOL", "ASP", "PER", "CNS", "DRW" };
         private static readonly string[] Tasman = { "AKL", "CHC" };
-        private static readonly string[] LongHaul = { "DPS", "SIN", "HKG", "KUL", "NAN", "DOH", "DXB" };
+        private static readonly string[] Pacific = { "NAN", "NOU", "POM", "DPS" };
+        private static readonly string[] LongHaul =
+        {
+            "SIN", "HKG", "KUL", "CGK", "BKK", "SGN", "MNL", "PVG", "ICN", "KIX", "NRT", "HNL", "LAX", "DOH", "DXB"
+        };
+
+        /// <summary>A medical call has to be flown within this, so it only goes where that is possible.</summary>
+        public const long MedicalDeadlineSeconds = 3 * 3600;
+
+        /// <summary>One window in this many (once a day) always has a medical call for a turboprop owner.</summary>
+        public const int MedicalEveryWindows = 4;
 
         public static IReadOnlyList<RouteContractDefinition> At(
-            SimulationTime now, IReadOnlyList<AircraftType> ownedTypes, int reliability, OperatingTier tier)
+            SimulationTime now, IReadOnlyList<AircraftType> ownedTypes, int reliability, OperatingTier tier) =>
+            At(now, ownedTypes, reliability, tier, PlayerBaseLevel.Starter);
+
+        public static IReadOnlyList<RouteContractDefinition> At(
+            SimulationTime now, IReadOnlyList<AircraftType> ownedTypes, int reliability, OperatingTier tier,
+            PlayerBaseLevel baseLevel)
         {
             var window = now.ElapsedSeconds < 0 ? 0 : now.ElapsedSeconds / WindowSeconds;
             var offers = new List<RouteContractDefinition>(OffersPerWindow);
@@ -44,7 +59,11 @@ namespace Airside.Simulation
                     continue;
 
                 var basePay = FlightEconomics.FlightPay(type, km, RouteAccess.BandOf(dest.Value));
-                var terms = Terms(KindFor(type, dest.Value, rng), basePay, rng);
+                var kind = KindFor(type, dest.Value, rng);
+                // ADR 0138: a medical call the aircraft cannot fly in 3 hours is offered as a charter.
+                if (kind == ContractKind.Medical && !MedicalFits(type, dest.Value, baseLevel))
+                    kind = ContractKind.Charter;
+                var terms = FitDeadline(Terms(kind, basePay, rng), type, dest.Value, baseLevel);
                 var id = $"MKT-{window}-{offers.Count}-{dest.Value.Code}-{type.Id}{terms.Suffix}";
                 var duplicate = false;
                 foreach (var existing in offers)
@@ -62,7 +81,75 @@ namespace Airside.Simulation
                     deadlineSeconds: terms.Deadline));
             }
 
+            if (window % MedicalEveryWindows == 0)
+                GuaranteeMedical(offers, window, ownedTypes, baseLevel, rng);
             return offers;
+        }
+
+        /// <summary>A medical call is flown out and back within 3 hours, with the market's margin.</summary>
+        public static bool MedicalFits(AircraftType type, Destination destination, PlayerBaseLevel baseLevel) =>
+            ContractFeasibility.MinimumSeconds(type, destination, 1, baseLevel) * ContractFeasibility.Margin
+            <= MedicalDeadlineSeconds;
+
+        /// <summary>
+        /// ADR 0138: every deadline leaves the margin over the fastest possible flying. A deadline too
+        /// tight for the aircraft (a widebody charter to Dubai "within 6 h") is lengthened, never offered
+        /// impossible. Medical calls keep their 3 hours: they are only drawn where that fits.
+        /// </summary>
+        public static ContractTerms FitDeadline(ContractTerms terms, AircraftType type, Destination destination,
+            PlayerBaseLevel baseLevel)
+        {
+            if (terms.Deadline <= 0 || terms.Kind == ContractKind.Medical)
+                return terms;
+            var fair = ContractFeasibility.FairDeadlineSeconds(type, destination, terms.Rotations, baseLevel);
+            return fair <= terms.Deadline
+                ? terms
+                : new ContractTerms(terms.Kind, terms.Rotations, terms.Bonus, terms.Reward, terms.Gain, terms.Loss,
+                    fair, terms.Suffix);
+        }
+
+        /// <summary>
+        /// Once a day a turboprop owner is offered a medical call (ADR 0138), so the "fly 2 medical
+        /// calls" challenge never waits on luck. It replaces the last offer.
+        /// </summary>
+        private static void GuaranteeMedical(List<RouteContractDefinition> offers, long window,
+            IReadOnlyList<AircraftType> ownedTypes, PlayerBaseLevel baseLevel, SeededRandomSource rng)
+        {
+            foreach (var offer in offers)
+                if (offer.Kind == ContractKind.Medical)
+                    return;
+            AircraftType turboprop = null;
+            foreach (var type in ownedTypes)
+                if (AircraftCatalogue.For(type).StandClass == StandClass.RegionalBay)
+                {
+                    turboprop = type;
+                    break;
+                }
+
+            if (turboprop == null)
+                return;
+            var start = rng.NextInt(0, Regional.Length);
+            for (var i = 0; i < Regional.Length; i++)
+            {
+                if (!DestinationCatalogue.TryFind(Regional[(start + i) % Regional.Length], out var town))
+                    continue;
+                var km = DestinationCatalogue.Adelaide.DistanceKmTo(town);
+                if (!turboprop.CanReach(km) || !RouteAccess.Allows(turboprop, town)
+                    || !MedicalFits(turboprop, town, baseLevel))
+                    continue;
+                var terms = Terms(ContractKind.Medical, FlightEconomics.FlightPay(turboprop, km, RouteBand.Regional), rng);
+                var index = Math.Min(offers.Count, OffersPerWindow - 1);
+                var medical = new RouteContractDefinition(
+                    $"MKT-{window}-{index}-{town.Code}-{turboprop.Id}{terms.Suffix}", "ADL", town.Code, turboprop,
+                    terms.Rotations, terms.Bonus, terms.Reward, reliabilityGainPerRotation: terms.Gain,
+                    requiredTier: OperatingTier.Provisional, reliabilityLossOnCancel: terms.Loss, kind: terms.Kind,
+                    deadlineSeconds: terms.Deadline);
+                if (index < offers.Count)
+                    offers[index] = medical;
+                else
+                    offers.Add(medical);
+                return;
+            }
         }
 
         /// <summary>
@@ -156,10 +243,14 @@ namespace Airside.Simulation
             switch (ceiling)
             {
                 case RouteBand.LongHaul:
-                    pool = rng.NextInt(0, 4) == 0 ? LongHaul : National;
+                    pool = rng.NextInt(0, 4) switch { 0 => LongHaul, 1 => Pacific, _ => National };
+                    break;
+                case RouteBand.Pacific:
+                    pool = rng.NextInt(0, 4) switch { 0 => Pacific, 1 => Tasman, 2 => National, _ => Domestic };
                     break;
                 case RouteBand.Tasman:
-                    pool = rng.NextInt(0, 3) == 0 ? Tasman : Domestic;
+                    // ADR 0138: a Tasman-capable jet also flies the long national legs.
+                    pool = rng.NextInt(0, 3) switch { 0 => Tasman, 1 => National, _ => Domestic };
                     break;
                 case RouteBand.National:
                     pool = rng.NextInt(0, 2) == 0 ? National : Domestic;

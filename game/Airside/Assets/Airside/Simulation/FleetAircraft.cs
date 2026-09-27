@@ -38,18 +38,37 @@ namespace Airside.Simulation
     /// <summary>A departure the owner has asked for but that has not started yet.</summary>
     public readonly struct ScheduledDeparture
     {
+        /// <param name="departAt">When the aircraft will actually push back.</param>
+        /// <param name="delayMinutes">Legacy form: minutes <paramref name="departAt"/> is behind the
+        /// published time. Ignored when <paramref name="publishedAt"/> is given.</param>
+        /// <param name="publishedAt">The time printed on the board (ADR 0137). Defaults to
+        /// <paramref name="departAt"/> less any delay.</param>
         public ScheduledDeparture(Destination destination, SimulationTime departAt,
-            int delayMinutes = 0, bool cancelled = false)
+            int delayMinutes = 0, bool cancelled = false, SimulationTime? publishedAt = null)
         {
             Destination = destination;
             DepartAt = departAt;
-            DelayMinutes = cancelled ? 0 : delayMinutes < 0 ? 0 : delayMinutes;
             Cancelled = cancelled;
+            if (cancelled)
+                PublishedAt = publishedAt ?? departAt;
+            else if (publishedAt.HasValue)
+                PublishedAt = publishedAt.Value.CompareTo(departAt) < 0 ? publishedAt.Value : departAt;
+            else
+                PublishedAt = new SimulationTime(Math.Max(0,
+                    departAt.ElapsedSeconds - (delayMinutes < 0 ? 0 : delayMinutes) * 60L));
         }
 
         public Destination Destination { get; }
+
+        /// <summary>When the aircraft will push back (the published time plus any delay).</summary>
         public SimulationTime DepartAt { get; }
-        public int DelayMinutes { get; }
+
+        /// <summary>The scheduled time on the board, which never moves when a delay is added.</summary>
+        public SimulationTime PublishedAt { get; }
+
+        /// <summary>Whole minutes behind the published time, worked out from the two times.</summary>
+        public int DelayMinutes => Cancelled ? 0 : (int)((DepartAt.ElapsedSeconds - PublishedAt.ElapsedSeconds) / 60);
+
         public bool Cancelled { get; }
     }
 
@@ -78,6 +97,15 @@ namespace Airside.Simulation
         public AircraftType Type { get; }
         public StableId Id => new(Registration);
 
+        /// <summary>The operations that own this aircraft; set when it joins the fleet.</summary>
+        internal AirlineOperations Owner { get; set; }
+
+        /// <summary>
+        /// The player's base level, which sets how long departure prep takes (ADR 0137). Every
+        /// status line reads it from here so the board, the card and the simulation agree.
+        /// </summary>
+        public PlayerBaseLevel BaseLevel => Owner?.CareerState?.BaseLevel ?? PlayerBaseLevel.Starter;
+
         public FleetState State { get; private set; }
         public SimulationTime StateStartedAt { get; private set; }
 
@@ -94,6 +122,16 @@ namespace Airside.Simulation
         public Destination? CurrentDestination { get; internal set; }
 
         public ScheduledDeparture? Scheduled { get; internal set; }
+
+        /// <summary>
+        /// The published time of the flight now under way, kept after pushback so the departures
+        /// board's TIME never moves once the aircraft leaves (ADR 0137). Not saved: after a reload
+        /// mid-taxi the board falls back to the phase start.
+        /// </summary>
+        public SimulationTime? PublishedDepartureAt { get; internal set; }
+
+        /// <summary>When the flight now under way actually pushed back. Not saved.</summary>
+        public SimulationTime? PushedBackAt { get; internal set; }
 
         /// <summary>The stand the aircraft last pushed back from, so its taxi-out can be drawn from there.</summary>
         public StableId DepartureStand { get; internal set; }

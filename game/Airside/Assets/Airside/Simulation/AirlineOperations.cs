@@ -888,6 +888,7 @@ namespace Airside.Simulation
                 throw new InvalidOperationException($"{Article.CapitalA(type.Name)} cannot park on {stand}.");
 
             var aircraft = new FleetAircraft(registration, airline, type, stand, _processedTo);
+            aircraft.Owner = this;
             _fleet.Add(aircraft);
             if (!airline.IsPlayer && !airline.IsEmergency)
                 ScheduleAiDeparture(aircraft, _processedTo);
@@ -905,6 +906,7 @@ namespace Airside.Simulation
             if (!_airlines.Contains(airline))
                 throw new InvalidOperationException("Add the airline before its aircraft.");
             var aircraft = new FleetAircraft(registration, airline, type, default, _processedTo);
+            aircraft.Owner = this;
             aircraft.CurrentDestination = AwayBaseFor(airline, type);
             var key = FirstWaveKey(aircraft);
             var local = Clock.LocalAt(_processedTo);
@@ -977,6 +979,7 @@ namespace Airside.Simulation
                 throw new FormatException($"Duplicate or missing registration '{registration}'.");
 
             var aircraft = new FleetAircraft(registration, airline, type, default, stateStartedAt);
+            aircraft.Owner = this;
             aircraft.Restore(state, stateStartedAt, stateEndsAt);
             if (RequiresTripDestination(state) && currentDestination == null)
                 throw new FormatException($"{registration} is {state} with no destination.");
@@ -1281,16 +1284,17 @@ namespace Airside.Simulation
                     // Feature only work the airline can fly now or buy into at its tier: an
                     // authored Dash 8 contract must not hold a featured slot for a player who
                     // never buys one, hiding every later authored offer.
+                    // ADR 0138: "buy into" means every purchase gate is met now (tier, reliability,
+                    // flights and base), not just the tier, or the featured card is a dead end.
                     if (!localTypes.Exists(t => t.Id == definition.EligibleType.Id)
-                        && !(AircraftAcquisition.TryFor(definition.EligibleType, out var purchasable)
-                             && purchasable.RequiredTier <= CareerState.Tier))
+                        && !CouldBuyNow(definition.EligibleType))
                         continue;
                     offers.Add(definition);
                 }
             }
 
             offers.AddRange(ContractMarket.At(_processedTo, localTypes, CareerState?.Reliability ?? 0,
-                CareerState?.Tier ?? OperatingTier.Provisional));
+                CareerState?.Tier ?? OperatingTier.Provisional, CareerState?.BaseLevel ?? PlayerBaseLevel.Starter));
             var usable = false;
             foreach (var offer in offers)
                 if (!CareerState.HasCompleted(offer.Id) && localTypes.Exists(t => t.Id == offer.EligibleType.Id))
@@ -1845,6 +1849,8 @@ namespace Airside.Simulation
             if (!AdelaideOwnedTypes().Exists(t => t.Id == definition.EligibleType.Id))
                 return CommandResult.Refused(
                     $"This contract needs {Article.A(definition.EligibleType.Name)} at Adelaide.");
+            if (definition.HasDeadline && !CanStillFinish(definition))
+                return CommandResult.Refused("You can't fly this in time with your aircraft.");
 
             CareerState.Remember(definition);
             CareerState.ActiveContract = new ActiveRouteContract(definition.Id, _processedTo);
@@ -1864,6 +1870,21 @@ namespace Airside.Simulation
                 : 3;
             CareerState.AbandonContract(loss);
             return CommandResult.Ok;
+        }
+
+        /// <summary>
+        /// Every purchase gate but money is met now: tier, reliability, flights, base support and fleet
+        /// room (ADR 0138). What the featured contracts use to decide an aircraft is within reach.
+        /// </summary>
+        public bool CouldBuyNow(AircraftType type)
+        {
+            if (CareerState == null || type == null || !AircraftAcquisition.TryFor(type, out var offer))
+                return false;
+            return CareerState.Tier >= offer.RequiredTier
+                   && CareerState.Reliability >= offer.RequiredReliability
+                   && CareerState.CompletedPlayerRotations >= offer.RequiredRotations
+                   && PlayerBase.Supports(CareerState.BaseLevel, type)
+                   && PlayerFleetCount() < AircraftAcquisition.MaxPlayerAircraft;
         }
 
         /// <summary>Buy one more aircraft of an authored type when funds, tier, reliability and rotations clear (ADR 0056).</summary>
@@ -1916,6 +1937,34 @@ namespace Airside.Simulation
 
         public long NextOutstationCost => CareerState.OutstationBases.Count == 0 ? 15_000 : 40_000;
 
+        /// <summary>ADR 0139: each outstation is earned, not just bought: (reliability, flights) for the 1st, 2nd, 3rd.</summary>
+        public static readonly (int Reliability, int Flights)[] OutstationGates = { (85, 40), (88, 70), (90, 110) };
+
+        /// <summary>The gate for the next outstation, or null once all three are open.</summary>
+        public (int Reliability, int Flights)? NextOutstationGate =>
+            CareerState.OutstationBases.Count < OutstationGates.Length
+                ? OutstationGates[CareerState.OutstationBases.Count]
+                : null;
+
+        /// <summary>"Needs 88% reliability, 12 more flights." for the next outstation, or empty when met.</summary>
+        public string NextOutstationRequirement()
+        {
+            if (NextOutstationGate is not { } gate)
+                return string.Empty;
+            var parts = new List<string>();
+            if (CareerState.Tier < OperatingTier.Domestic)
+                parts.Add("Domestic tier");
+            if (CareerState.Reliability < gate.Reliability)
+                parts.Add($"{gate.Reliability}% reliability");
+            if (CareerState.CompletedPlayerRotations < gate.Flights)
+            {
+                var more = gate.Flights - CareerState.CompletedPlayerRotations;
+                parts.Add($"{more} more flight{(more == 1 ? "" : "s")}");
+            }
+
+            return parts.Count == 0 ? string.Empty : "Needs " + string.Join(", ", parts) + ".";
+        }
+
         public CommandResult OpenOutstationBase(string code)
         {
             if (CareerState.Tier < OperatingTier.Domestic)
@@ -1926,6 +1975,13 @@ namespace Airside.Simulation
             if (!allowed) return CommandResult.Refused("Outstations can open in Melbourne, Sydney, Brisbane or Perth.");
             if (CareerState.HasOutstationBase(code)) return CommandResult.Refused("That base is already open.");
             if (CareerState.OutstationBases.Count >= 3) return CommandResult.Refused("You already have three outstations.");
+            if (NextOutstationGate is { } gate)
+            {
+                if (CareerState.Reliability < gate.Reliability)
+                    return CommandResult.Refused($"Your next outstation needs {gate.Reliability}% reliability. You have {CareerState.Reliability}%.");
+                if (CareerState.CompletedPlayerRotations < gate.Flights)
+                    return CommandResult.Refused($"Your next outstation needs {gate.Flights} flights. You have flown {CareerState.CompletedPlayerRotations}.");
+            }
             var cost = NextOutstationCost;
             if (!CareerState.TryChargePurchase(cost))
                 return CommandResult.Refused($"Opening this base costs ${cost:N0}. You have ${CareerState.Funds:N0}.");
@@ -2199,6 +2255,8 @@ namespace Airside.Simulation
                 return CommandResult.Refused($"The {next.Title} needs the {next.RequiredTier} tier.");
             if (CareerState.CompletedPlayerRotations < next.RequiredRotations)
                 return CommandResult.Refused($"The {next.Title} needs {next.RequiredRotations} completed flights.");
+            if (CareerState.Reliability < next.RequiredReliability)
+                return CommandResult.Refused($"The {next.Title} needs {next.RequiredReliability}% reliability. You have {CareerState.Reliability}%.");
             if (!CareerState.TryChargePurchase(next.UpgradeCost))
                 return CommandResult.Refused("The " + next.Title + " costs $" + next.UpgradeCost.ToString("N0")
                                              + ". You have $" + CareerState.Funds.ToString("N0") + ".");
@@ -2310,7 +2368,8 @@ namespace Airside.Simulation
                         $"Achievement: {milestone.Title}."));
         }
 
-        /// <summary>The player's flying since the last daily report. Runtime only: a reload starts a fresh day.</summary>
+        /// <summary>The player's flying since the last daily report. Saved from v17 (ADR 0138), so a reload
+        /// mid-day keeps the day's flights for the report and the profitable-day challenge.</summary>
         private sealed class DayLedger
         {
             public int Flights;
@@ -2387,6 +2446,51 @@ namespace Airside.Simulation
         private long? _newsDay;
         private long? _reportedDay;
 
+        /// <summary>The day ledger as plain values, for the save (ADR 0138).</summary>
+        internal DaySnapshot SaveToday() => new(_today.Flights, _today.Revenue, _today.Cost, _today.BestCode,
+            _today.BestMargin, _today.StartReliability, _today.LateFlights, _today.LateSeconds, _reportedDay);
+
+        internal void RestoreToday(DaySnapshot day)
+        {
+            _today.Reset(day.StartReliability ?? CareerState?.Reliability ?? 0);
+            _today.StartReliability = day.StartReliability;
+            _today.Flights = Math.Max(0, day.Flights);
+            _today.Revenue = day.Revenue;
+            _today.Cost = day.Cost;
+            _today.BestCode = day.BestCode ?? string.Empty;
+            _today.BestMargin = day.BestMargin;
+            _today.LateFlights = Math.Max(0, day.LateFlights);
+            _today.LateSeconds = Math.Max(0, day.LateSeconds);
+            _reportedDay = day.ReportedDay;
+        }
+
+        internal readonly struct DaySnapshot
+        {
+            public DaySnapshot(int flights, long revenue, long cost, string bestCode, long bestMargin,
+                int? startReliability, int lateFlights, int lateSeconds, long? reportedDay)
+            {
+                Flights = flights;
+                Revenue = revenue;
+                Cost = cost;
+                BestCode = bestCode;
+                BestMargin = bestMargin;
+                StartReliability = startReliability;
+                LateFlights = lateFlights;
+                LateSeconds = lateSeconds;
+                ReportedDay = reportedDay;
+            }
+
+            public int Flights { get; }
+            public long Revenue { get; }
+            public long Cost { get; }
+            public string BestCode { get; }
+            public long BestMargin { get; }
+            public int? StartReliability { get; }
+            public int LateFlights { get; }
+            public int LateSeconds { get; }
+            public long? ReportedDay { get; }
+        }
+
         /// <summary>The day so far, for the HUD: flights, revenue, margin.</summary>
         public (int Flights, long Revenue, long Margin) TodaySoFar => (_today.Flights, _today.Revenue, _today.Margin);
 
@@ -2445,6 +2549,49 @@ namespace Airside.Simulation
             var minutes = Math.Max(1, (int)Math.Round(day.LateSeconds / 60.0));
             var text = $"{day.LateFlights} late ({minutes} min)";
             return day.WorstCause() is { } worst ? $"{text}, mostly {DelayCauses.Label(worst)}" : text;
+        }
+
+        /// <summary>
+        /// ADR 0138: could the airline's eligible aircraft at Adelaide fly every flight of
+        /// <paramref name="definition"/> before its deadline, starting now? An aircraft away on a flight
+        /// counts from when it should be back.
+        /// </summary>
+        public bool CanStillFinish(RouteContractDefinition definition)
+        {
+            if (definition == null || !definition.HasDeadline)
+                return true;
+            if (!DestinationCatalogue.TryFind(definition.DestinationCode, out var destination))
+                return false;
+            var count = 0;
+            var firstFree = long.MaxValue;
+            foreach (var aircraft in _fleet)
+            {
+                if (!aircraft.Airline.IsPlayer || aircraft.Type.Id != definition.EligibleType.Id)
+                    continue;
+                count++;
+                firstFree = Math.Min(firstFree, SecondsUntilHome(aircraft));
+            }
+
+            return ContractFeasibility.CanStillFinish(definition.EligibleType, destination,
+                definition.RequiredRotations, CareerState.BaseLevel, count, firstFree == long.MaxValue ? 0 : firstFree,
+                definition.DeadlineSeconds);
+        }
+
+        /// <summary>Roughly how long until an aircraft is parked at Adelaide and free to fly again.</summary>
+        private long SecondsUntilHome(FleetAircraft aircraft)
+        {
+            var now = _processedTo.ElapsedSeconds;
+            var phaseLeft = aircraft.StateEndsAt.HasValue ? Math.Max(0, aircraft.StateEndsAt.Value.ElapsedSeconds - now) : 0;
+            var leg = aircraft.CurrentDestination is { } away ? AirborneSeconds(aircraft, away) : 0;
+            return aircraft.State switch
+            {
+                FleetState.AtStand => 0,
+                FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff =>
+                    phaseLeft + 2 * leg + DestinationTurnaroundSeconds + ContractFeasibility.GroundSeconds,
+                FleetState.Outbound => phaseLeft + DestinationTurnaroundSeconds + leg + ContractFeasibility.GroundSeconds / 2,
+                FleetState.AtDestination => phaseLeft + leg + ContractFeasibility.GroundSeconds / 2,
+                _ => phaseLeft + ContractFeasibility.GroundSeconds / 2
+            };
         }
 
         /// <summary>When the active contract's deadline passes, or null (ADR 0127).</summary>
@@ -2742,10 +2889,13 @@ namespace Airside.Simulation
             do
             {
                 changed = false;
-                changed |= ExpireContract(now);
                 foreach (var aircraft in _fleet)
                     changed |= AdvanceAircraft(aircraft, now);
                 changed |= RunTower(now);
+                // ADR 0138: a contract lapses only once everything else due at this instant has
+                // happened, so a flight that parks exactly on the deadline still counts.
+                if (!changed)
+                    changed |= ExpireContract(now);
             } while (changed);
         }
 
@@ -2823,6 +2973,8 @@ namespace Airside.Simulation
                     aircraft.DelayLedger = null;
 
                     aircraft.CurrentDestination = aircraft.Scheduled.Value.Destination;
+                    aircraft.PublishedDepartureAt = aircraft.Scheduled.Value.PublishedAt;
+                    aircraft.PushedBackAt = now;
                     aircraft.Scheduled = null;
                     aircraft.PrepStartedAt = null;
                     aircraft.DepartureStand = aircraft.Stand;
@@ -3144,6 +3296,7 @@ namespace Airside.Simulation
 
             var from = DeliveryOrigin(type);
             var aircraft = new FleetAircraft(registration, airline, type, default, _processedTo);
+            aircraft.Owner = this;
             aircraft.CurrentDestination = from;
             aircraft.Restore(FleetState.Inbound, _processedTo, _processedTo.Advance(8 * 60));
             _fleet.Add(aircraft);
@@ -3860,28 +4013,49 @@ namespace Airside.Simulation
 
         private void BookAiDeparture(FleetAircraft aircraft, Destination destination, SimulationTime now)
         {
-            var departAt = AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft);
-            var disruption = FlightDisruption.For(
-                $"{aircraft.Registration}:{aircraft.CompletedTrips}:{destination.Code}",
-                departAt, Clock);
+            var planned = AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft);
+            var disruption = FlightDisruption.For(DisruptionKey(aircraft, destination), planned, Clock);
+            // The published time is the timetable slot; a delay moves pushback, never the slot, so
+            // the board reads "10:05 · Delayed +20" rather than a late time plus a second delay
+            // (ADR 0137).
+            var published = WholeMinute(PinLongHaulEvening(aircraft, SnapCommercialDeparture(aircraft, planned)));
             if (disruption.Cancelled)
             {
-                aircraft.Scheduled = new ScheduledDeparture(destination, departAt, 0, cancelled: true);
+                aircraft.Scheduled = new ScheduledDeparture(destination, published, cancelled: true);
                 return;
             }
 
-            if (disruption.Delayed)
-                departAt = AiDepartureWithinHours(departAt.Advance(disruption.DelayMinutes * 60L), aircraft);
-            departAt = SnapCommercialDeparture(aircraft, departAt);
-            departAt = PinLongHaulEvening(aircraft, departAt);
-            var delayMinutes = disruption.DelayMinutes;
-            if (ShouldNightStopHere(aircraft, destination, departAt))
+            if (ShouldNightStopHere(aircraft, destination, published))
             {
-                departAt = FirstWaveAfter(aircraft, departAt);
-                delayMinutes = 0;
+                published = WholeMinute(FirstWaveAfter(aircraft, published));
+                aircraft.Scheduled = new ScheduledDeparture(destination, published);
+                return;
             }
 
-            aircraft.Scheduled = new ScheduledDeparture(destination, departAt, delayMinutes);
+            var departAt = published;
+            if (disruption.Delayed)
+            {
+                departAt = WholeMinute(AiDepartureWithinHours(published.Advance(disruption.DelayMinutes * 60L), aircraft));
+                // A delay that runs into the curfew becomes tomorrow's flight, not a 9-hour delay.
+                if (departAt.ElapsedSeconds - published.ElapsedSeconds > (disruption.DelayMinutes + 1) * 60L)
+                    published = departAt;
+            }
+
+            aircraft.Scheduled = new ScheduledDeparture(destination, departAt, publishedAt: published);
+        }
+
+        /// <summary>
+        /// The key a flight's disruption is drawn from. The day plan uses the same one, so the plan's
+        /// "Delayed +N" is the delay the aircraft really flies (ADR 0137).
+        /// </summary>
+        internal static string DisruptionKey(FleetAircraft aircraft, Destination destination) =>
+            $"{aircraft.Registration}:{aircraft.CompletedTrips}:{destination.Code}";
+
+        /// <summary>Rounds up to the next whole minute, so HH:mm and "+N min" always agree (ADR 0137).</summary>
+        public static SimulationTime WholeMinute(SimulationTime at)
+        {
+            var rest = at.ElapsedSeconds % 60;
+            return rest == 0 ? at : new SimulationTime(at.ElapsedSeconds + 60 - rest);
         }
 
         /// <summary>

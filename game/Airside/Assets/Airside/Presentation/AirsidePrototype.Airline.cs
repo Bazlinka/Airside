@@ -259,6 +259,8 @@ namespace Airside.Presentation
             // ADR 0135: a newly opened sheet slides in from the right.
             if (_activeWorkspace != _workspaceShown)
             {
+                if (_activeWorkspace != HudWorkspace.None)
+                    PlayPanelWhoosh();
                 _workspaceShown = _activeWorkspace;
                 _workspaceOpenedAt = Time.unscaledTime;
             }
@@ -995,6 +997,7 @@ namespace Airside.Presentation
                     PlayMoment(ref _chimeClip, HudSounds.ContractChime, "Contract chime", 0.8f);
                 else
                     PlayMoment(ref _stingClip, HudSounds.TierSting, "Tier sting", 0.8f);
+                DuckAmbience(1.8f);
             }
             var panel = CelebrationPainter.Panel(layout.Viewport.x, layout.Viewport.y);
             _celebrationDrawList.Clear();
@@ -1461,7 +1464,7 @@ namespace Airside.Presentation
             {
                 _mapSelection = aircraft.Scheduled.Value.Destination;
                 _departureDelaySeconds = FlightPlanner.ClampDelay(
-                    aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - _clock.Now.ElapsedSeconds, aircraft.Type);
+                    aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - _clock.Now.ElapsedSeconds, aircraft, _clock.Now);
             }
             else if (_mapSelection.HasValue && aircraft != null && !_operations.CanOperate(aircraft, _mapSelection.Value))
             {
@@ -1645,8 +1648,7 @@ namespace Airside.Presentation
             var showTrack = tracked >= 0 || selectedFlight >= 0;
             if (showTrack)
                 _mapControlRects.Add(trackRect);
-            if (_mapLens.Zoom > AustraliaMapLens.MinZoom + 0.01f)
-                _mapControlRects.Add(zoomOutRect);
+            _mapControlRects.Add(zoomOutRect);
             _mapControlRects.Add(rivalRect);
             _mapControlRects.Add(HudPainter.ToRect(workspaceLayout.FilterBox(0)));
             _mapControlRects.Add(HudPainter.ToRect(workspaceLayout.FilterBox(1)));
@@ -1661,6 +1663,8 @@ namespace Airside.Presentation
                 _mapDestinationRows, home, _mapSelection, _operations.PlayerAirline.LiveryHex,
                 _routeMapWorkspace.AircraftRangeKm, _routeMapWorkspace.AircraftRangeLabel,
                 _routeMapWorkspace.CareerTargetCodes);
+            RouteMapWorkspacePainter.PaintAirports(_mapNetworkDrawList, workspaceLayout.Map, _mapLens,
+                _mapDestinationRows, home);
             _hudPainter.Draw(_mapNetworkDrawList);
             DrawMapLabels(mapRect);
 
@@ -1779,10 +1783,15 @@ namespace Airside.Presentation
                 }
             }
 
-            if (_mapLens.Zoom > AustraliaMapLens.MinZoom + 0.01f && GUI.Button(zoomOutRect, "Zoom out", smallButton))
+            // ADR 0140: one button between the two views that matter: Australia and the whole map.
+            var atHome = Mathf.Abs(_mapLens.Zoom - AustraliaMapLens.HomeZoom) < 0.01f;
+            if (GUI.Button(zoomOutRect, atHome ? "World" : "Australia", smallButton))
             {
                 _mapTrackId = null;
-                _mapLens.Reset();
+                if (atHome)
+                    _mapLens.ShowWorld(mapRect.width, mapRect.height);
+                else
+                    _mapLens.Reset();
             }
 
             if (GUI.Button(rivalRect, $"RIVALS {rivalFlights} · {(_mapRivalsVisible ? "ON" : "OFF")}", smallButton))
@@ -2287,11 +2296,14 @@ namespace Airside.Presentation
                 _workspaceDrawList.Text(new HudBox(row.X + 9f, row.Y + 5f, row.Width - 150f, 19f),
                     code + (open ? " · open" : $" · ${_operations.NextOutstationCost:N0}"), 13f,
                     open ? HudTone.Default : HudTone.Muted);
+                if (!open && i == 0 && _operations.NextOutstationRequirement() is { Length: > 0 } needs)
+                    _workspaceDrawList.Text(new HudBox(left.X + 9f, left.Y + 24f + candidates.Length * 30f, left.Width - 18f, 16f),
+                        needs, 11f, HudTone.Caution);
                 _workspaceDrawList.Button(new HudBox(row.Right - 112f, row.Y + 1f, 108f, 25f),
                     open ? "SELECT" : "OPEN",
                     (open ? "network:base:" : "network:open:") + code, HudButtonStyle.Secondary);
             }
-            var fleetArea = new HudBox(left.X, left.Y + 157f, left.Width, left.Height - 160f);
+            var fleetArea = new HudBox(left.X, left.Y + 172f, left.Width, left.Height - 175f);
             _workspaceDrawList.Caption(fleetArea.WithHeight(18f), _selectedNetworkBase + " AIRCRAFT");
             var based = new List<OutstationAircraft>();
             foreach (var aircraft in _operations.OutstationFleet)
@@ -3037,8 +3049,9 @@ namespace Airside.Presentation
         {
             if (_mapAircraft == null || !_mapSelection.HasValue)
                 return;
-            var departAt = _clock.Now.Advance(
-                FlightPlanner.ClampDelay(_departureDelaySeconds, _mapAircraft.Type));
+            // Booked on a whole minute, so the board's HH:mm and "LATE +N" agree (ADR 0137).
+            var departAt = AirlineOperations.WholeMinute(_clock.Now.Advance(
+                FlightPlanner.ClampDelay(_departureDelaySeconds, _mapAircraft, _clock.Now)));
             var result = _operations.ScheduleDeparture(_mapAircraft, _mapSelection.Value, departAt);
             if (result.Accepted)
             {
@@ -3208,7 +3221,10 @@ namespace Airside.Presentation
                 var pick = reachable[_devToolsRandom.NextInt(0, reachable.Count)];
                 var delay = DevTools.AutoScheduleDelaySeconds(aircraft.CompletedTrips,
                     _devToolsRandom.NextInt(0, DevTools.LaterAutoDepartureLeadMaxSeconds));
-                var result = _operations.ScheduleDeparture(aircraft, pick, _clock.Now.Advance(delay));
+                // Never inside the prep lead, or the flight is late before it is booked (ADR 0137).
+                delay = Math.Max(delay, DeparturePrep.LeadSeconds(aircraft.Type, aircraft.BaseLevel));
+                var result = _operations.ScheduleDeparture(aircraft, pick,
+                    AirlineOperations.WholeMinute(_clock.Now.Advance(delay)));
                 if (result.Accepted)
                     scheduled++;
             }

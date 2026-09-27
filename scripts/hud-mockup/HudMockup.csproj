@@ -25,6 +25,8 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftTitlePaint.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsidePalette.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AustraliaMapLens.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/MapGeography.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/MapGeographyData.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ContractsWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/StatsWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FleetWorkspace.cs" />

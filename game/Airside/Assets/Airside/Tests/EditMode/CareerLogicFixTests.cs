@@ -145,7 +145,7 @@ namespace Airside.Tests
         public void InternationalRoutes_NeedTheInternationalTierFromAdelaideAndInTheMarket()
         {
             var (_, operations) = NewAirline();
-            Restore(operations, tier: OperatingTier.Domestic, rotations: 40, reliability: 95,
+            Restore(operations, tier: OperatingTier.Domestic, rotations: 60, reliability: 95,
                 baseLevel: PlayerBaseLevel.JetGate, funds: 500_000);
             Assert.That(operations.BuyAircraft(AircraftType.AirbusA321Neo).Accepted, Is.True);
             var jet = operations.FleetOf(operations.PlayerAirline).First(a => a.Type.Id == AircraftType.AirbusA321Neo.Id);
@@ -225,7 +225,7 @@ namespace Airside.Tests
         public void Outstation_RefusesATypeWithNoRouteItCanFly()
         {
             var (_, operations) = NewAirline();
-            Restore(operations, tier: OperatingTier.Domestic, rotations: 40, reliability: 95,
+            Restore(operations, tier: OperatingTier.Domestic, rotations: 60, reliability: 95,
                 baseLevel: PlayerBaseLevel.JetGate, funds: 500_000);
             Assert.That(operations.OpenOutstationBase("PER").Accepted, Is.True);
             Assert.That(operations.HasOutstationRoute(AircraftType.Atr42, "PER"), Is.False);

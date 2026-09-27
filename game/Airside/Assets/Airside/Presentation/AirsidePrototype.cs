@@ -201,7 +201,7 @@ namespace Airside.Presentation
         private const float AmbientWindVolume = 0.045f;
         private const float AmbientRainVolume = 0.07f;
         private const float AmbientStormVolume = 0.11f;
-        private const float AmbientCoastVolume = 0.035f;
+        private const float AmbientCoastVolume = 0.016f; // ADR 0136: the rebuilt bed is ~7 dB hotter than the old single wave
         // Live Adelaide time drives sun, floods and aircraft lamps. Set true only to
         // force noon while debugging lighting (was pinned through the 24 h day cutover).
         private static readonly bool PinDaylightPresentation =
@@ -217,7 +217,14 @@ namespace Airside.Presentation
 
         private WeatherLook CurrentWeatherLook => ReviewWeather.HasValue
             ? WeatherLook.For(ReviewWeather.Value)
-            : LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Look : WeatherLook.For(CurrentWeather);
+            : LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Look
+            // ADR 0143: eased between hours so the sky never snaps.
+            : FleetMode ? Weather.LookAt(_clock.Now) : WeatherLook.For(CurrentWeather);
+
+        /// <summary>This frame's sky, fog, mist and cloud layers (ADR 0143).</summary>
+        private AtmosphereLook _atmosphere;
+
+        private static Color ToColor(Rgb rgb) => new(rgb.R, rgb.G, rgb.B);
 
         /// <summary>Actual Adelaide wind for cloth/weather motion; never runway selection.</summary>
         private SurfaceWind PresentationWind => LiveWeatherHealthy
@@ -612,10 +619,12 @@ namespace Airside.Presentation
             UpdateTerminalFlag();
             UpdateEngineAudio();
             UpdateAmbientAudio();
+            UpdateSoundscape();
             UpdateWeatherPresentation();
             UpdateTouchdownSmoke();
             UpdateWheelSmoke();
             UpdateCloudDrift();
+            UpdateAtmosphereLayers();
             UpdateBirdFlock();
             UpdateHangarDoor();
             UpdateCoastalMotion();
@@ -1581,6 +1590,7 @@ namespace Airside.Presentation
                     : null;
                 UpdateAircraftLightsAndGear(viewParts.LightsAndGear, phase, PresentationDaylight, progress,
                     PresentationDeltaTime, PresentationClock, engines, groundPose);
+                UpdateDistantLight(view, AirsideReusableMotion.LandingLightsOn(phase, progress, engines.HasValue));
                 UpdateCabinDoor(viewParts.CabinDoors, phase, engines?.DoorsOpen);
                 var glowState = CabinWindowGlowState(phase, PresentationDaylight);
                 if (viewParts.CabinWindowGlowState != glowState)
@@ -1780,7 +1790,7 @@ namespace Airside.Presentation
                 ApplyEngineAudio(_commercialAircraft[index],
                     engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase),
                     engines is { } e ? Mathf.Max(e.Left, e.Right) : 1f,
-                    type, phase);
+                    type, phase, VisualFlights[index].AircraftId);
             }
         }
 
@@ -1798,7 +1808,7 @@ namespace Airside.Presentation
 
         /// <param name="spool">0..1 through an engine start or shutdown; bends the note down while spooling.</param>
         private void ApplyEngineAudio(Transform aircraft, bool enginesOn, float spool, AircraftType type,
-            AircraftPhase phase)
+            AircraftPhase phase, string aircraftId = null)
         {
             if (aircraft == null)
                 return;
@@ -1810,8 +1820,13 @@ namespace Airside.Presentation
                 if (source == null)
                     return;
                 source.playOnAwake = false;
-                source.dopplerLevel = 0f;
+                // ADR 0136: a touch of doppler for flybys, and a range that matches the aircraft's size.
+                source.dopplerLevel = 0.35f;
                 source.spatialBlend = 1f;
+                var range = EngineVoice.Range(EngineVoice.ClassOf(type));
+                source.minDistance = range.Min;
+                source.maxDistance = range.Max;
+                source.rolloffMode = AudioRolloffMode.Logarithmic;
                 _engineAudio[id] = source;
             }
 
@@ -1834,13 +1849,24 @@ namespace Airside.Presentation
                 ? Mathf.InverseLerp(AirsideReusableMotion.PropRpmTaxi,
                     AirsideReusableMotion.PropRpmTakeoff, rpm)
                 : 0f;
-            if (phase is AircraftPhase.Takeoff or AircraftPhase.Departed)
+            if (phase is AircraftPhase.Takeoff)
+                power = 1f; // the takeoff roll swells to full power
+            else if (phase is AircraftPhase.Departed)
                 power = Mathf.Max(power, 0.85f);
             else if (phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.GoAround)
                 power = Mathf.Max(power, 0.55f);
             else if (phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback)
                 power = Mathf.Max(power, 0.25f);
-            source.pitch = Mathf.Lerp(0.96f, 1.06f, power);
+            var kind = EngineVoice.ClassOf(type);
+            source.pitch = EngineVoice.Pitch(kind, power, enginesOn ? spool : 0f, EngineVoice.Detune(aircraftId));
+
+            // Distant engines are duller as well as quieter: only the rumble carries.
+            var lowPass = source.GetComponent<AudioLowPassFilter>();
+            if (lowPass == null)
+                lowPass = source.gameObject.AddComponent<AudioLowPassFilter>();
+            var listener = _mainCamera != null ? _mainCamera.transform.position : aircraft.position;
+            lowPass.cutoffFrequency = EngineVoice.LowPassHz(Vector3.Distance(listener, aircraft.position),
+                source.maxDistance, power);
 
             if (!enginesOn)
             {
@@ -1850,8 +1876,7 @@ namespace Airside.Presentation
                 return;
             }
 
-            var target = Mathf.Lerp(EngineVolumeRunning * 0.4f, EngineVolumeRunning, power)
-                         * Mathf.Lerp(0.35f, 1f, spool);
+            var target = EngineVoice.Volume(kind, power, spool);
             source.volume = Mathf.MoveTowards(source.volume, target, Time.unscaledDeltaTime * 0.8f);
             if (!source.isPlaying)
                 source.Play();
@@ -1878,9 +1903,10 @@ namespace Airside.Presentation
             var weather = CurrentWeather;
             var raining = weather == WeatherKind.Rain || weather == WeatherKind.Storm;
             var storm = weather == WeatherKind.Storm;
-            var windTarget = _audioMuted ? 0f : AmbientWindVolume;
-            var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume);
-            var coastTarget = _audioMuted || AirsideFocusMode.BareWorld ? 0f : AmbientCoastVolume * (storm ? 1.45f : raining ? 1.2f : 1f);
+            var windTarget = _audioMuted ? 0f : AmbientWindVolume * AmbientDuck;
+            var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume) * AmbientDuck;
+            var coastTarget = _audioMuted || AirsideFocusMode.BareWorld ? 0f
+                : AmbientCoastVolume * (storm ? 1.45f : raining ? 1.2f : 1f) * AmbientDuck;
             // Slight day/night wind variation (presentation only).
             if (!_audioMuted)
                 windTarget *= Mathf.Lerp(0.75f, 1.1f, 1f - PresentationDaylight);
@@ -3268,44 +3294,9 @@ namespace Airside.Presentation
                 }
             }
 
-            if (wet || look.Gloom > 0.12f)
-            {
-                // Cooler, denser atmosphere from WeatherLook — stacks on base day fog.
-                var fogDay = new Color(0.55f, 0.6f, 0.66f);
-                var fogNight = new Color(0.18f, 0.22f, 0.3f);
-                var daylight = PresentationDaylight;
-                RenderSettings.fog = true;
-                RenderSettings.fogMode = FogMode.ExponentialSquared;
-                var baseFogColor = Color.Lerp(fogNight, fogDay, Mathf.Max(daylight, 0.25f));
-                // This used to be the base colour alone, unconditionally — Cloudy, Overcast,
-                // Rain, Fog and Storm all reached this branch (Gloom > 0.12 for every one of
-                // them) and so all rendered the exact same fog colour, differing only in how
-                // dense it was. Storm/Rain/Overcast now darken toward a slate grey with Gloom.
-                // Fog is the deliberate exception: real fog scatters light into a pale, near-
-                // white haze even though the same Gloom value dims the sun, so it blends
-                // toward white by how much visibility it costs *beyond* what its own Gloom
-                // would already explain — the only WeatherLook whose Visibility loss clearly
-                // outruns its Gloom, which is what a paler-but-still-dim fog actually is.
-                var stormGrey = new Color(0.42f, 0.45f, 0.48f);
-                var fogHaze = new Color(0.82f, 0.83f, 0.82f);
-                var weatherFogColor = Color.Lerp(baseFogColor, stormGrey, look.Gloom);
-                // Visibility must remain the dominant fog cue at real-airport scale. The
-                // previous subtraction by Gloom left authored Fog only 32% pale and barely
-                // denser than rain from the kilometre-high overview: it read as a dark LUT,
-                // not suspended water. Keep rain/storm slate, but let lost visibility push
-                // true fog toward the daylight haze colour independently of cloud gloom.
-                var hazeWeight = Mathf.Clamp01((1f - look.Visibility) * 0.9f);
-                weatherFogColor = Color.Lerp(weatherFogColor, fogHaze, hazeWeight);
-                RenderSettings.fogColor = weatherFogColor;
-                var baseDensity = AirsideBareField.Enabled
-                    ? Mathf.Lerp(0.00032f, 0.0002f, daylight)
-                    : Mathf.Lerp(0.0065f, 0.0032f, daylight);
-                var visLoss = 1f - look.Visibility;
-                RenderSettings.fogDensity = AirsideBareField.Enabled
-                    ? baseDensity + visLoss * 0.00115f
-                    : baseDensity + visLoss * 0.012f;
-            }
-            // Clear weather keeps the soft day fog applied in ApplyDayCycle.
+            // Fog colour and density are set once, in ApplyDayCycle, from AtmosphereLook (ADR 0143);
+            // this used to set a second, competing fog here for wet or gloomy weather.
+
 
             // Darken + gloss paved surfaces when wet (VFX-004 / material wet variants).
             // Fog alone thickens atmosphere — it does not soak the apron.
@@ -3932,7 +3923,7 @@ namespace Airside.Presentation
 
         private static Vector3[] AdelaideWetPuddleSpots()
         {
-            var spots = new List<Vector3>(AdelaideLayout.Bays.Length + AdelaideLayout.TerminalGates.Length);
+            var spots = new List<Vector3>(AdelaideLayout.Bays.Length + AdelaideGateAlignment.Gates.Length);
 
             void Add(float x, float z, float headingDegrees, int index)
             {
@@ -3955,9 +3946,9 @@ namespace Airside.Presentation
                 Add(bay.StopX, bay.StopZ, bay.HeadingDegrees, i);
             }
 
-            for (var i = 0; i < AdelaideLayout.TerminalGates.Length; i++)
+            for (var i = 0; i < AdelaideGateAlignment.Gates.Length; i++)
             {
-                var gate = AdelaideLayout.TerminalGates[i];
+                var gate = AdelaideGateAlignment.Gates[i];
                 Add(gate.NoseX, gate.NoseZ, gate.HeadingDegrees, AdelaideLayout.Bays.Length + i);
             }
 
@@ -4572,12 +4563,12 @@ namespace Airside.Presentation
                 new Color(0.38f, 0.28f, 0.26f),
                 warm);
 
-            // REF-001 coastal day sky (clear blue, not grey mush); dusk warmth stays on the
-            // horizon without orange-fogging the whole overview (art direction).
-            var skyDay = new Color(0.55f, 0.68f, 0.82f);
-            var skyDusk = new Color(0.62f, 0.38f, 0.3f);
-            var skyNight = new Color(0.04f, 0.055f, 0.1f);
-            var sky = Color.Lerp(Color.Lerp(skyNight, skyDay, daylight), skyDusk, warm * 0.55f);
+            // ADR 0143: one sky for the frame. The background, horizon dome and fog all come from
+            // AtmosphereLook, which carries the weather (REF-001 clear blue on a clear day, grey-blue
+            // overcast, slate storm, pale fog) and the camera's height for the fog.
+            var cameraHeight = _mainCamera != null ? Mathf.Max(0f, _mainCamera.transform.position.y) : 0f;
+            _atmosphere = AtmosphereLook.For(CurrentWeatherLook, daylight, warm, sunAzimuth < 180.0, cameraHeight);
+            var sky = ToColor(_atmosphere.Sky);
             if (_mainCamera != null)
                 _mainCamera.backgroundColor = sky;
             if (_horizonDome != null)
@@ -4590,34 +4581,16 @@ namespace Airside.Presentation
 
             UpdateSunAndMoonDiscs(daylight, warm, celestial);
 
-            // Soft depth fog only — thick enough for far hills, thin enough that runway,
-            // apron and buildings stay obvious from the default overview.
-            if (!Weather.IsAdverse(CurrentWeather))
+            // ADR 0143: the only fog path. Colour matches the sky; density comes from visibility
+            // (thinner for a high camera). The compact QA scene keeps its own small-scale density.
             {
                 var look = CurrentWeatherLook;
-                var cloudy = look.CloudCover > 0.3f;
                 RenderSettings.fog = true;
                 RenderSettings.fogMode = FogMode.ExponentialSquared;
-                var clearFog = Color.Lerp(
-                    new Color(0.06f, 0.08f, 0.14f),
-                    Color.Lerp(skyDay * 0.95f, new Color(0.7f, 0.55f, 0.48f), warm * 0.45f),
-                    Mathf.Clamp01(daylight + warm * 0.15f));
-                if (cloudy)
-                    clearFog = Color.Lerp(clearFog, new Color(0.58f, 0.62f, 0.68f), 0.22f + look.Gloom * 0.35f);
-                RenderSettings.fogColor = clearFog;
-                var density = AirsideBareField.Enabled
-                    ? Mathf.Lerp(AirsideBareField.NightFogDensity, AirsideBareField.DayFogDensity, daylight)
-                    : Mathf.Lerp(0.0036f, 0.0016f, daylight);
-                if (cloudy)
-                {
-                    var extra = AirsideBareField.Enabled
-                        ? look.Gloom * 0.00014f
-                        : Mathf.Lerp(0.005f, 0.0028f, daylight);
-                    density = Mathf.Max(density, density + extra);
-                }
-                // Tiny dusk haze only — do not orange-wash the whole scene.
-                density += AirsideBareField.Enabled ? warm * 0.00002f : warm * 0.00035f;
-                RenderSettings.fogDensity = density;
+                RenderSettings.fogColor = ToColor(_atmosphere.Fog);
+                RenderSettings.fogDensity = AirsideBareField.Enabled
+                    ? _atmosphere.FogDensity
+                    : Mathf.Lerp(0.0036f, 0.0016f, daylight) + (1f - look.Visibility) * 0.012f + warm * 0.00035f;
             }
 
             // ADR 0059: a storm strike briefly overrides the sky/ambient/sun with a white
@@ -9328,7 +9301,10 @@ namespace Airside.Presentation
             var look = CurrentWeatherLook;
             var wind = PresentationWind;
             var windYawRad = RunwayWeather.UnityYawFromTrue(wind.DirectionDegrees) * Mathf.Deg2Rad;
-            var driftSpeed = Time.unscaledDeltaTime * (AirsideBareField.Enabled ? 4.5f : 0.35f);
+            // ADR 0143: drift at the wind's own speed (knots to m/s, quickened 1.6× so it reads
+            // from the overview); calm days still creep.
+            var windMetres = Mathf.Max(1.5f, wind.Knots * 0.5144f);
+            var driftSpeed = Time.unscaledDeltaTime * (AirsideBareField.Enabled ? windMetres * 1.6f : 0.35f);
             var driftX = Mathf.Sin(windYawRad) * driftSpeed;
             var driftZ = Mathf.Cos(windYawRad) * driftSpeed;
             var weather = CurrentWeather;
@@ -9339,8 +9315,9 @@ namespace Airside.Presentation
             // already describes a soft cloud edge, so its companion umbra must stay broad/subtle.
             var umbraAlpha = Mathf.Lerp(0.025f, 0.045f + look.CloudCover * 0.065f, daylight);
             var cloudBand = Mathf.RoundToInt(look.CloudCover * 20f);
+            var cloudShade = _atmosphere.CloudShade > 0f ? _atmosphere.CloudShade : 1f;
             var tintKey = ((int)weather << 12) ^ (cloudBand << 5)
-                ^ AirsideRuntimeQuality.ProbeBand(daylight, 0f);
+                ^ AirsideRuntimeQuality.ProbeBand(daylight, 0f) ^ (Mathf.RoundToInt(cloudShade * 10f) << 20);
             var tintChanged = tintKey != _cloudTintKey;
             if (tintChanged)
                 _cloudTintKey = tintKey;
@@ -9364,25 +9341,44 @@ namespace Airside.Presentation
 
                 if (_mainCamera != null)
                 {
+                    // ADR 0143: turn about the vertical, tipping only part-way toward a high camera,
+                    // so a card reads as a body of cloud rather than a cut-out held up to the lens.
                     var toCamera = _mainCamera.transform.position - p;
-                    if (toCamera.sqrMagnitude > 1f)
-                        cloud.rotation = Quaternion.LookRotation(toCamera.normalized, Vector3.up);
+                    var flat = new Vector3(toCamera.x, 0f, toCamera.z);
+                    if (flat.sqrMagnitude > 1f)
+                    {
+                        var facing = Quaternion.LookRotation(flat.normalized, Vector3.up);
+                        var pitch = -Mathf.Atan2(toCamera.y, flat.magnitude) * Mathf.Rad2Deg * 0.35f;
+                        cloud.rotation = facing * Quaternion.Euler(pitch, 0f, 0f);
+                    }
                 }
 
                 if (_cloudUmbraRoot != null && i < _cloudUmbraRoot.childCount)
                 {
+                    // ADR 0143: the shadow falls along the sun, not straight down.
                     var umbraTransform = _cloudUmbraRoot.GetChild(i);
-                    umbraTransform.position = new Vector3(p.x, 0.06f, p.z);
+                    var toSun = _sun != null ? -_sun.transform.forward : Vector3.up;
+                    var along = toSun.y > 0.15f ? p.y / toSun.y : 0f;
+                    umbraTransform.position = new Vector3(p.x - toSun.x * along, 0.06f, p.z - toSun.z * along);
                 }
 
+                // ADR 0143: fade out near the wrap edges and back in on the far side, instead of popping.
+                var edge = Mathf.Min(
+                    Mathf.InverseLerp(wrapX, wrapX - 700f, Mathf.Abs(p.x)),
+                    Mathf.InverseLerp(wrapZ, wrapZ - 500f, Mathf.Abs(p.z)));
                 if (!tintChanged)
+                {
+                    ApplyCloudEdgeFade(cloud, i, edge);
                     continue;
+                }
 
                 var dusk = Mathf.Clamp01(Mathf.Min(daylight, 1f - daylight) * 3f);
                 var tint = Color.Lerp(new Color(0.55f, 0.6f, 0.75f), new Color(0.95f, 0.96f, 0.98f), daylight);
                 tint = Color.Lerp(tint, new Color(0.95f, 0.7f, 0.55f), dusk * 0.55f);
                 if (thickSky)
                     tint = Color.Lerp(tint, new Color(0.62f, 0.66f, 0.72f), 0.22f + look.CloudCover * 0.4f);
+                // ADR 0143: rain and storm clouds are darker bodies, and storm clusters tower.
+                tint = new Color(tint.r * cloudShade, tint.g * cloudShade, tint.b * cloudShade, tint.a);
                 var baseAlpha = CloudCardAlpha(look.CloudCover);
                 tint.a = Mathf.Lerp(baseAlpha * 0.85f, baseAlpha, daylight);
 
@@ -9395,17 +9391,13 @@ namespace Airside.Presentation
                 // than popping solid the instant cover crosses its threshold.
                 var revealAt = (float)i / _cloudRoot.childCount;
                 var visibility = Mathf.InverseLerp(revealAt, revealAt + 0.08f, look.CloudCover);
-                cloud.localScale = Vector3.one * CloudCardScale(look.CloudCover);
+                var tower = weather == WeatherKind.Storm && i % 3 == 0 ? 1.7f : 1f;
+                cloud.localScale = new Vector3(1f, tower, 1f) * CloudCardScale(look.CloudCover);
 
-                var renderers = cloud.GetComponentsInChildren<Renderer>();
-                for (var r = 0; r < renderers.Length; r++)
-                {
-                    var renderer = renderers[r];
-                    renderer.enabled = visibility > 0.05f;
-                    var cardTint = tint;
-                    cardTint.a *= visibility;
-                    SetRendererColor(renderer, cardTint);
-                }
+                var cardTint = tint;
+                cardTint.a *= visibility;
+                StoreCloudTint(i, cardTint);
+                ApplyCloudEdgeFade(cloud, i, edge);
 
                 if (_cloudUmbraRoot == null || i >= _cloudUmbraRoot.childCount)
                     continue;
@@ -11384,7 +11376,9 @@ namespace Airside.Presentation
             group.SetLODs(new[]
             {
                 new LOD(detailHeight, all.ToArray()),
-                new LOD(0.02f, far.ToArray())
+                // ADR 0142: 0.4 % (was 2 %), so a jet on a 10 km final is still drawn; beyond
+                // that its distant light (AirsidePrototype.DistantLights) carries it.
+                new LOD(0.004f, far.ToArray())
             });
             group.RecalculateBounds();
         }

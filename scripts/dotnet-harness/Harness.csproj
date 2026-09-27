@@ -44,6 +44,8 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideAircraftParts.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftPickRouting.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AustraliaMapLens.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/MapGeography.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/MapGeographyData.cs" />
     <!-- UnityEngine-free; great-circle/zoom math is checked headlessly. -->
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RouteMap.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightBoard.cs" />
@@ -71,6 +73,9 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/DelayText.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudMoments.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudSounds.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/EngineVoice.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/ArrivalApproach.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AtmosphereLook.cs" />
     <!-- ADR 0124 procedural building detail and the chamfered block mesh. -->
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BuildingDetail.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BevelledBox.cs" />

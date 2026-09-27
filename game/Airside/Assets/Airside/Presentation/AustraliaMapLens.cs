@@ -3,37 +3,74 @@ using System;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// Zoom/pan math for the Australia destinations map. No UnityEngine dependency so
-    /// the headless harness can cover projection and label thresholds.
+    /// Zoom/pan math for the route map. No UnityEngine dependency so the headless harness can cover
+    /// projection and label thresholds. ADR 0140: the map now reaches from Doha to Los Angeles.
+    /// Zoom 1 still frames Australia (the home view). Zooming out shows Asia and the Pacific, and
+    /// zooming in goes as far as an airport's runways. Longitudes are unwrapped east (Honolulu is
+    /// 202°, not −158°), so routes across the Pacific never jump across the map.
     /// </summary>
     public sealed class AustraliaMapLens
     {
-        public const float MinLongitude = 112f;
-        public const float MaxLongitude = 155f;
-        public const float MinLatitude = -44.5f;
-        public const float MaxLatitude = -9.5f;
-        public const float MinZoom = 1f;
-        public const float MaxZoom = 60f;
+        // The home frame: what zoom 1 fits to the panel.
+        public const float HomeMinLongitude = 112f;
+        public const float HomeMaxLongitude = 155f;
+        public const float HomeMinLatitude = -44.5f;
+        public const float HomeMaxLatitude = -9.5f;
+
+        // How far the map can be panned: every destination and its coastline.
+        public const float MinLongitude = 20f;
+        public const float MaxLongitude = 260f;
+        public const float MinLatitude = -56f;
+        public const float MaxLatitude = 62f;
+
+        public const float MinZoom = 0.2f;
+        public const float HomeZoom = 1f;
+        public const float MaxZoom = 400f;
         public const float MidLatitudeDegrees = 27f;
 
-        public float Zoom { get; private set; } = MinZoom;
-        public float CenterLongitude { get; private set; } = 133.5f;
-        public float CenterLatitude { get; private set; } = -27f;
+        /// <summary>From here the airport runway detail is drawn (ADR 0140).</summary>
+        public const float AirportDetailZoom = 30f;
 
+        private const float HomeCenterLongitude = 133.5f;
+        private const float HomeCenterLatitude = -27f;
+        private const float WorldCenterLongitude = 140f;
+        private const float WorldCenterLatitude = 5f;
+
+        public float Zoom { get; private set; } = HomeZoom;
+        public float CenterLongitude { get; private set; } = HomeCenterLongitude;
+        public float CenterLatitude { get; private set; } = HomeCenterLatitude;
+
+        /// <summary>Back to the home view: Australia filling the panel.</summary>
         public void Reset()
         {
+            Zoom = HomeZoom;
+            CenterLongitude = HomeCenterLongitude;
+            CenterLatitude = HomeCenterLatitude;
+        }
+
+        /// <summary>The whole map: Asia, the Pacific and the US west coast.</summary>
+        public void ShowWorld(float areaWidth, float areaHeight)
+        {
             Zoom = MinZoom;
-            CenterLongitude = 133.5f;
-            CenterLatitude = -27f;
+            CenterLongitude = WorldCenterLongitude;
+            CenterLatitude = WorldCenterLatitude;
+            ClampCenterToView(areaWidth, areaHeight);
         }
 
         public void SetZoom(float zoom) =>
             Zoom = Clamp(zoom, MinZoom, MaxZoom);
 
+        /// <summary>
+        /// Longitude as the map uses it: the Americas and the far Pacific (west of 60°W) wrap to
+        /// 180..300. Europe and Africa stay where they are, off the map's western edge. Wrapping them
+        /// too drew coast segments right across the map.
+        /// </summary>
+        public static double Unwrap(double longitude) => longitude < -60.0 ? longitude + 360.0 : longitude;
+
         /// <summary>Centre the view on a point (e.g. a tracked flight), kept inside the map bounds.</summary>
         public void CenterOn(float areaWidth, float areaHeight, double longitude, double latitude)
         {
-            CenterLongitude = Clamp((float)longitude, MinLongitude, MaxLongitude);
+            CenterLongitude = Clamp((float)Unwrap(longitude), MinLongitude, MaxLongitude);
             CenterLatitude = Clamp((float)latitude, MinLatitude, MaxLatitude);
             ClampCenterToView(areaWidth, areaHeight);
         }
@@ -41,18 +78,32 @@ namespace Airside.Presentation
         public bool ShowStateLabels => Zoom >= 1.55f;
         public bool ShowCountyDetail => Zoom >= 3.2f;
 
+        /// <summary>Which coastline to draw (ADR 0140): world, region or detail.</summary>
+        public MapDetail Detail => Zoom < 0.55f ? MapDetail.World : Zoom < 1.8f ? MapDetail.Region : MapDetail.Detail;
+
+        /// <summary>Towns of this rank or better are drawn (−1: none). Rank 0 is a capital city.</summary>
+        public int TownRank => Zoom >= 14f ? 3 : Zoom >= 7f ? 2 : Zoom >= 3f ? 1 : -1;
+
+        /// <summary>Screen pixels per degree of latitude at the current zoom, for a panel this size.</summary>
+        public float PixelsPerDegree(float areaWidth, float areaHeight)
+        {
+            var aspect = Aspect;
+            var worldWidth = (HomeMaxLongitude - HomeMinLongitude) * aspect;
+            var worldHeight = HomeMaxLatitude - HomeMinLatitude;
+            return Math.Min(areaWidth / worldWidth, areaHeight / worldHeight) * Zoom;
+        }
+
+        private static float Aspect => (float)Math.Cos(MidLatitudeDegrees * Math.PI / 180.0);
+
         public void Project(
             float areaX, float areaY, float areaWidth, float areaHeight,
             double longitude, double latitude,
             out float x, out float y)
         {
-            var aspect = (float)Math.Cos(MidLatitudeDegrees * Math.PI / 180.0);
-            var worldWidth = (MaxLongitude - MinLongitude) * aspect;
-            var worldHeight = MaxLatitude - MinLatitude;
-            var fit = Math.Min(areaWidth / worldWidth, areaHeight / worldHeight) * Zoom;
+            var fit = PixelsPerDegree(areaWidth, areaHeight);
             var centerX = areaX + areaWidth * 0.5f;
             var centerY = areaY + areaHeight * 0.5f;
-            x = centerX + ((float)longitude - CenterLongitude) * aspect * fit;
+            x = centerX + ((float)Unwrap(longitude) - CenterLongitude) * Aspect * fit;
             y = centerY + (CenterLatitude - (float)latitude) * fit;
         }
 
@@ -61,10 +112,7 @@ namespace Airside.Presentation
             float guiX, float guiY,
             out float longitude, out float latitude)
         {
-            var aspect = (float)Math.Cos(MidLatitudeDegrees * Math.PI / 180.0);
-            var worldWidth = (MaxLongitude - MinLongitude) * aspect;
-            var worldHeight = MaxLatitude - MinLatitude;
-            var fit = Math.Min(areaWidth / worldWidth, areaHeight / worldHeight) * Zoom;
+            var fit = PixelsPerDegree(areaWidth, areaHeight);
             if (fit < 0.0001f)
             {
                 longitude = CenterLongitude;
@@ -74,7 +122,7 @@ namespace Airside.Presentation
 
             var centerX = areaX + areaWidth * 0.5f;
             var centerY = areaY + areaHeight * 0.5f;
-            longitude = CenterLongitude + (guiX - centerX) / (aspect * fit);
+            longitude = CenterLongitude + (guiX - centerX) / (Aspect * fit);
             latitude = CenterLatitude - (guiY - centerY) / fit;
         }
 
@@ -105,13 +153,10 @@ namespace Airside.Presentation
 
         private void ClampCenterToView(float areaWidth, float areaHeight)
         {
-            var aspect = (float)Math.Cos(MidLatitudeDegrees * Math.PI / 180.0);
-            var worldWidth = (MaxLongitude - MinLongitude) * aspect;
-            var worldHeight = MaxLatitude - MinLatitude;
-            var fit = Math.Min(areaWidth / worldWidth, areaHeight / worldHeight) * Zoom;
+            var fit = PixelsPerDegree(areaWidth, areaHeight);
             if (fit < 0.0001f)
                 return;
-            var halfLon = (areaWidth * 0.5f) / (aspect * fit);
+            var halfLon = (areaWidth * 0.5f) / (Aspect * fit);
             var halfLat = (areaHeight * 0.5f) / fit;
             CenterLongitude = ClampAxis(CenterLongitude, MinLongitude, MaxLongitude, halfLon);
             CenterLatitude = ClampAxis(CenterLatitude, MinLatitude, MaxLatitude, halfLat);
@@ -130,57 +175,19 @@ namespace Airside.Presentation
             value < min ? min : value > max ? max : value;
     }
 
+    public enum MapDetail
+    {
+        World,
+        Region,
+        Detail
+    }
+
     /// <summary>
-    /// Reading-aid coastline, state borders and labels. Approximate shapes for play —
-    /// not survey data. Stored as lon/lat pairs (x = lon, y = lat).
+    /// Hand-placed labels for states and regions. The coastline and borders themselves are
+    /// generated from Natural Earth (<see cref="MapGeographyData"/>, ADR 0140).
     /// </summary>
     public static class AustraliaMapGeometry
     {
-        public static readonly float[] MainlandCoastLonLat =
-        {
-            113.15f, -21.80f, 113.05f, -23.60f, 113.45f, -25.40f, 114.10f, -27.20f,
-            114.60f, -28.80f, 115.20f, -30.40f, 115.55f, -31.80f, 115.35f, -32.80f,
-            115.05f, -33.70f, 115.15f, -34.35f, 116.20f, -34.90f, 117.80f, -35.10f,
-            119.40f, -34.40f, 121.40f, -33.85f, 123.60f, -33.10f, 126.00f, -32.25f,
-            128.20f, -31.85f, 129.00f, -31.70f, 130.40f, -31.55f, 131.80f, -31.45f,
-            133.20f, -31.90f, 134.60f, -32.80f, 135.90f, -34.55f, 136.80f, -33.40f,
-            137.70f, -32.70f, 137.20f, -34.40f, 137.55f, -35.00f, 138.20f, -34.50f,
-            138.55f, -34.85f, 138.25f, -35.55f, 139.20f, -35.95f, 140.20f, -37.20f,
-            140.90f, -38.00f, 141.70f, -38.35f, 143.00f, -38.70f, 144.40f, -38.45f,
-            145.20f, -38.55f, 146.20f, -39.00f, 147.40f, -38.40f, 148.40f, -37.80f,
-            149.50f, -37.55f, 150.10f, -36.40f, 150.25f, -35.40f, 150.90f, -34.40f,
-            151.30f, -33.85f, 151.70f, -33.10f, 152.40f, -31.80f, 153.00f, -30.40f,
-            153.40f, -29.20f, 153.55f, -28.20f, 153.40f, -27.00f, 153.20f, -25.40f,
-            152.40f, -24.40f, 150.90f, -23.40f, 149.40f, -22.20f, 147.80f, -20.40f,
-            146.60f, -19.20f, 145.90f, -17.80f, 145.40f, -16.40f, 145.10f, -15.20f,
-            144.20f, -14.20f, 143.20f, -12.90f, 142.60f, -11.60f, 142.50f, -10.80f,
-            142.10f, -11.80f, 141.80f, -13.40f, 141.50f, -15.00f, 140.90f, -16.80f,
-            140.20f, -17.50f, 139.20f, -17.35f, 137.80f, -16.60f, 136.90f, -15.70f,
-            136.85f, -13.80f, 136.60f, -12.20f, 135.40f, -12.05f, 133.80f, -11.70f,
-            132.20f, -11.40f, 130.90f, -12.20f, 129.80f, -14.20f, 128.40f, -15.20f,
-            126.60f, -14.60f, 124.80f, -15.20f, 123.40f, -16.40f, 122.00f, -17.90f,
-            120.40f, -19.20f, 118.40f, -20.20f, 116.60f, -20.55f, 114.80f, -21.40f,
-            113.15f, -21.80f
-        };
-
-        public static readonly float[] TasmaniaCoastLonLat =
-        {
-            144.70f, -40.70f, 146.00f, -40.75f, 147.40f, -40.85f, 148.20f, -41.40f,
-            148.30f, -42.20f, 147.90f, -43.20f, 147.00f, -43.55f, 146.00f, -43.40f,
-            145.20f, -42.60f, 144.80f, -41.60f, 144.70f, -40.70f
-        };
-
-        public static readonly float[][] StateBorderLonLats =
-        {
-            new[] { 129.00f, -14.90f, 129.00f, -26.00f, 129.00f, -31.70f },
-            new[] { 138.00f, -16.60f, 138.00f, -26.00f, 129.00f, -26.00f },
-            new[] { 141.00f, -26.00f, 141.00f, -34.00f, 141.00f, -38.05f },
-            new[] { 129.00f, -26.00f, 138.00f, -26.00f, 141.00f, -26.00f },
-            new[] { 141.00f, -34.10f, 142.50f, -34.20f, 144.00f, -35.10f, 146.50f, -36.00f, 148.20f, -37.00f, 149.90f, -37.50f },
-            new[] { 141.00f, -29.00f, 145.00f, -29.00f, 150.00f, -28.20f, 153.50f, -28.20f },
-            new[] { 148.75f, -35.10f, 149.40f, -35.10f, 149.40f, -35.90f, 148.75f, -35.90f, 148.75f, -35.10f }
-        };
-
         public static readonly (string code, float lon, float lat)[] StateLabels =
         {
             ("WA", 122.0f, -25.5f), ("NT", 133.5f, -19.5f), ("SA", 135.5f, -29.5f),

@@ -145,7 +145,7 @@ namespace Airside.Presentation
 
                 string lockReason;
                 if (career.ActiveContract != null)
-                    lockReason = "One contract at a time — finish or cancel the active one";
+                    lockReason = "One contract at a time — finish or abandon the active one";
                 else if (career.Tier < definition.RequiredTier)
                     lockReason = $"Requires {definition.RequiredTier} operating tier";
                 else if (!OwnsType(operations, definition.EligibleType))
@@ -327,11 +327,8 @@ namespace Airside.Presentation
 
             into.Clear();
             into.Surface(layout.Surface);
-            into.Text(layout.TitleBox, model.Title, 26f, HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
-            into.Text(layout.RefreshBox, model.RefreshLine, 12f, HudTone.Muted);
-            into.Button(OperationsWorkspacePainter.CloseBox(layout.Surface), "CLOSE", HudAction.Close,
-                HudButtonStyle.Secondary);
-            into.Hairline(HudShell.HeaderRule(layout.Surface));
+            HudShellPainter.PaintSheetHeader(into, layout.Surface, model.Title, model.RefreshLine,
+                layout.TitleBox, layout.RefreshBox);
 
             PaintActive(into, model, layout);
             if (!layout.Divider.IsEmpty)
@@ -389,9 +386,13 @@ namespace Airside.Presentation
             }
 
             y = body.Bottom - 44f;
-            into.Button(new HudBox(x, y, width, 30f),
+            // Abandon is the only way out of a contract the airline can no longer fly (ADR 0121).
+            const float abandonWidth = 112f;
+            into.Button(new HudBox(x, y, width - abandonWidth - 8f, 30f),
                 model.HasEligibleAircraft ? $"ELIGIBLE: {model.EligibleAircraftLine}" : "NO ELIGIBLE AIRCRAFT",
                 HudAction.ViewEligibleAircraft, HudButtonStyle.Secondary, model.HasEligibleAircraft);
+            into.Button(new HudBox(x + width - abandonWidth, y, abandonWidth, 30f), "ABANDON",
+                HudAction.CancelContract, HudButtonStyle.Destructive);
         }
 
         private static void PaintOffers(HudDrawList into, ContractsWorkspaceModel model,

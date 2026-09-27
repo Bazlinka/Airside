@@ -100,17 +100,19 @@ namespace Airside.Presentation
     /// </summary>
     public enum HudTone
     {
-        /// <summary>Primary Cloud text.</summary>
+        /// <summary>Primary instrument text.</summary>
         Default,
-        /// <summary>Secondary Concrete text — captions, column headers, unit suffixes.</summary>
+        /// <summary>Secondary text — captions, column headers, unit suffixes.</summary>
         Muted,
-        /// <summary>Coastal Blue — selection, links and the primary action.</summary>
+        /// <summary>Aqua — selection, live state, links and progress.</summary>
         Accent,
-        /// <summary>Safety Yellow — the one thing that needs the player right now.</summary>
+        /// <summary>Avionics amber — the one thing that needs the player right now.</summary>
         Caution,
-        /// <summary>Clear Green — done, on time, available.</summary>
+        /// <summary>Green — done, on time, available.</summary>
         Positive,
-        /// <summary>Signal Red — refused, cancelled, overdue.</summary>
-        Negative
+        /// <summary>Red — refused, cancelled, overdue.</summary>
+        Negative,
+        /// <summary>Magenta — routes and flight paths.</summary>
+        Route
     }
 }

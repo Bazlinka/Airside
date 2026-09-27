@@ -71,13 +71,9 @@ namespace Airside.Presentation
         /// who wants to repaint later picks from the same authored set rather than a free
         /// colour picker — one shared source of truth with <c>AirsidePrototype.LiveryChoices</c>.
         /// </summary>
-        public static readonly (string Label, string Hex)[] LiveryPalette =
-        {
-            ("Crimson", "#C8102E"), ("Navy", "#1F3A93"), ("Forest", "#2E7D32"),
-            ("Sunset", "#E8772E"), ("Violet", "#6A3FA0"), ("Gold", "#D4A017")
-        };
+        public static readonly (string Label, string Hex)[] LiveryPalette = AirlineSetupModel.Palette;
 
-        public string Title => "CAREER";
+        public string Title => "AIRLINE";
 
         public string AirlineName { get; private set; } = string.Empty;
         public string CurrentLiveryHex { get; private set; } = string.Empty;
@@ -322,12 +318,13 @@ namespace Airside.Presentation
         /// UnityEngine-free `HudDrawList` renders editable text, and adding one just for this
         /// single control was a bigger, riskier change than drawing it as one exception.
         /// </summary>
-        public HudBox RenameFieldBox => new(RenameButtonBox.X - RenameGap - RenameFieldWidth, Header.Y + 18f,
-            RenameFieldWidth, 26f);
+        public HudBox RenameFieldBox => new(RenameButtonBox.X - RenameGap - RenameFieldWidth, Header.Y + 16f,
+            RenameFieldWidth, 32f);
 
+        // Left of the header's TRACK action (ADR 0122), which sits left of the round close.
         public HudBox RenameButtonBox => new(
-            OperationsWorkspacePainter.CloseBox(Surface).X - RenameGap - RenameButtonWidth,
-            Header.Y + 18f, RenameButtonWidth, 26f);
+            HudShellPainter.HeaderActionBox(Surface).X - RenameGap * 2f - RenameButtonWidth,
+            Header.Y + 16f, RenameButtonWidth, 32f);
 
         public HudBox OverviewCaption => LeftColumn.WithHeight(CaptionHeight);
 
@@ -355,9 +352,13 @@ namespace Airside.Presentation
 
         public HudBox ProfileCaption => new(LeftColumn.X, ProfileY, LeftColumn.Width, CaptionHeight);
 
-        public HudBox LiverySwatch(int index) =>
-            new(LeftColumn.X + index * (SwatchSize + SwatchGap), ProfileY + CaptionHeight + 8f,
-                SwatchSize, SwatchSize);
+        public HudBox LiverySwatch(int index)
+        {
+            // Twelve colours share the column; they shrink rather than run past it.
+            var count = StatsWorkspaceModel.LiveryPalette.Length;
+            var size = Math.Min(SwatchSize, (LeftColumn.Width - (count - 1) * SwatchGap) / count);
+            return new HudBox(LeftColumn.X + index * (size + SwatchGap), ProfileY + CaptionHeight + 8f, size, size);
+        }
 
         public float CompetitionY => ProfileY + CaptionHeight + 8f + SwatchSize + 18f;
         public HudBox CompetitionCaption => new(LeftColumn.X, CompetitionY, LeftColumn.Width, CaptionHeight);
@@ -475,10 +476,8 @@ namespace Airside.Presentation
 
             into.Clear();
             into.Surface(layout.Surface);
-            into.Text(layout.TitleBox, model.Title, 26f, HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
-            into.Button(OperationsWorkspacePainter.CloseBox(layout.Surface), "CLOSE", HudAction.Close,
-                HudButtonStyle.Secondary);
-            into.Hairline(HudShell.HeaderRule(layout.Surface));
+            HudShellPainter.PaintSheetHeader(into, layout.Surface, model.Title, string.Empty,
+                layout.TitleBox, HudBox.Empty);
 
             PaintOverview(into, model, layout);
             if (!layout.Divider.IsEmpty)

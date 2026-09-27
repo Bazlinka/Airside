@@ -76,7 +76,7 @@ namespace Airside.Tests
                 var panel = FieldMiniMap.PanelFor(hud, airline);
                 if (panel.width <= 0f)
                     continue;
-                foreach (var other in new[] { airline.TopBar, airline.Objective, airline.Operations, airline.Toast, airline.SelectedCard })
+                foreach (var other in new[] { airline.Rail, airline.Capsule, airline.Objective, airline.Operations, airline.Toast, airline.SelectedCard })
                 {
                     if (other.width <= 0f || other.height <= 0f)
                         continue;

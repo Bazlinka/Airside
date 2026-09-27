@@ -32,29 +32,40 @@ namespace Airside.Simulation
             if (career == null)
                 return list;
 
-            list.Add(new CareerMilestone("first-rotation", "First rotation completed",
+            // Achievements are keepsakes, not requirements: none repeats a CareerRoadmap goal or a
+            // tier (those have their own track), and fleet size is the whole airline, outstations
+            // included, so "fleet at capacity" is reachable.
+            list.Add(new CareerMilestone("first-rotation", "First service flown",
                 career.CompletedPlayerRotations >= 1));
-            list.Add(new CareerMilestone("ten-rotations", "10 rotations completed",
-                career.CompletedPlayerRotations >= 10));
-            list.Add(new CareerMilestone("twenty-five-rotations", "25 rotations completed",
-                career.CompletedPlayerRotations >= 25));
             list.Add(new CareerMilestone("first-contract", "First contract fulfilled",
-                career.ContractHistory.Count >= 1));
-            list.Add(new CareerMilestone("regional-tier", "Reached Regional",
-                career.Tier >= OperatingTier.Regional));
-            list.Add(new CareerMilestone("domestic-tier", "Reached Domestic",
-                career.Tier >= OperatingTier.Domestic));
-            list.Add(new CareerMilestone("international-tier", "Reached International",
-                career.Tier >= OperatingTier.International));
+                career.CompletedContractIds.Count >= 1));
             list.Add(new CareerMilestone("second-aircraft", "Fleet grown past the starter aircraft",
                 fleetSize >= 2));
-            list.Add(new CareerMilestone("full-fleet", $"Fleet at capacity ({AircraftAcquisition.MaxPlayerAircraft})",
-                fleetSize >= AircraftAcquisition.MaxPlayerAircraft));
+            list.Add(new CareerMilestone("ten-contracts", "10 contracts fulfilled",
+                career.CompletedContractIds.Count >= 10));
             list.Add(new CareerMilestone("jet-operator", "First jet in the fleet",
                 AirlineCareerState.OwnsAnyJet(ownedTypes)));
+            list.Add(new CareerMilestone("first-outstation", "First outstation base",
+                career.OutstationBases.Count >= 1));
+            list.Add(new CareerMilestone("century", "100 services flown",
+                career.CompletedPlayerRotations >= 100));
+            list.Add(new CareerMilestone("widebody-operator", "First widebody in the fleet",
+                OwnsWidebody(ownedTypes)));
             list.Add(new CareerMilestone("elite-reliability", "Reliability at 95 or better",
-                career.Reliability >= 95));
+                career.Reliability >= 95 && career.CompletedPlayerRotations >= 50));
+            list.Add(new CareerMilestone("full-fleet", $"Fleet at capacity ({AircraftAcquisition.MaxPlayerAircraft})",
+                fleetSize >= AircraftAcquisition.MaxPlayerAircraft));
+            list.Add(new CareerMilestone("established", "Established airline",
+                career.FinaleReached));
             return list;
+        }
+
+        private static bool OwnsWidebody(IReadOnlyList<AircraftType> owned)
+        {
+            if (owned == null) return false;
+            foreach (var type in owned)
+                if (type != null && AircraftCatalogue.IsWidebody(type)) return true;
+            return false;
         }
     }
 }

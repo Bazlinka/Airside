@@ -62,6 +62,16 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsidePalette.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudShell.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/CareerTrackWorkspace.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/SelectionCard.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/SplashScreen.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightManual.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/HoldReasonText.cs" />
+    <!-- ADR 0124 procedural building detail and the chamfered block mesh. -->
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/BuildingDetail.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/BevelledBox.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirfieldFixture.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirlineSetup.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudDraw.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/OperationsWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RouteMapWorkspace.cs" />
@@ -97,6 +107,7 @@
     -->
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/*.cs" Exclude="../../game/Airside/Assets/Airside/Tests/EditMode/TerminalUndercroftMeshTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/PresentationLayoutTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAssetTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/CircuitPresentationLogicTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AirlineSaveTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AdelaidePavementTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftDispatchTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/HudHitTestTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/TerminalGateOperationsTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AircraftCatalogueTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/EnrouteProfileTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideGroundLookTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AirsideNamedChildrenTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/FieldMiniMapTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AirsideTerrainGroundCalibrationTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/PresentationBugSweepTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/MeshNormalSmoothingTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AirsideSettingsTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/TaxiRunwayNightTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/GroundSeparationTests.cs;../../game/Airside/Assets/Airside/Tests/EditMode/AirsideFramePacingTests.cs" />
     <Compile Remove="../../game/Airside/Assets/Airside/Tests/EditMode/AirsideAircraftRenderBatcherTests.cs" />
+    <Compile Remove="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftPerformanceTests.cs" />
   </ItemGroup>
 
 </Project>

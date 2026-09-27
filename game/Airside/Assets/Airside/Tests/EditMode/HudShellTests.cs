@@ -1,50 +1,97 @@
 using System.Collections.Generic;
 using System.Linq;
-using Airside.Domain;
 using Airside.Presentation;
-using Airside.Simulation;
 using NUnit.Framework;
 
 namespace Airside.Tests
 {
     /// <summary>
-    /// The persistent HUD shell (ADR 0057): the top bar, the workspace tabs and the
-    /// surface each page is laid out on. UnityEngine-free, so the fits-and-never-overlaps
-    /// contract is checked here rather than by eye on a Mac build.
+    /// The Glass Cockpit shell (ADR 0122): the navigation rail, status capsule, career ring card,
+    /// flight tiles, radar, selected card, toast and workspace sheet. UnityEngine-free, so the
+    /// fits-and-never-overlaps contract runs headlessly at every supported window.
     /// </summary>
     public sealed class HudShellTests
     {
-        [Test]
-        public void Shell_NamesTheCareerWorkspaceAsCareerNotStats()
+        /// <summary>Virtual viewports: the HUD test set plus the physical sizes after HUD scaling.</summary>
+        private static IEnumerable<(float Width, float Height)> Viewports()
         {
-            Assert.That(HudShell.Tabs.Single(t => t.workspace == HudWorkspace.Stats).label,
-                Is.EqualTo("CAREER"));
-        }
-
-        [Test]
-        public void Shell_ObjectiveReadsAsOneTodaysPriority()
-        {
-            var draw = new HudDrawList();
-            HudShellPainter.PaintObjective(draw, HudShell.Objective(1440f, 900f, false),
-                new CareerObjective("Plan Kingscote", "0 of 2", 0f, "Choose an aircraft",
-                    StatusSeverity.Attention), "CHAPTER 1 · ISLAND HOPPER");
-
-            Assert.That(draw.Commands.Count(c => c.Text == "TODAY'S PRIORITY"), Is.EqualTo(1));
-            Assert.That(draw.Commands.Any(c => c.Text == "Plan Kingscote" && c.FontSize >= 17f), Is.True);
-        }
-
-        [Test]
-        public void Shell_IsIdenticalOnEveryPage()
-        {
-            foreach (var (width, height) in HudTestAirline.Viewports)
+            foreach (var viewport in HudTestAirline.Viewports)
+                yield return viewport;
+            foreach (var (w, h) in new[] { (1280, 720), (1440, 900), (1920, 1080), (3456, 2168), (800, 500), (400, 780), (320, 240) })
             {
-                var bar = HudShell.TopBar(width, height);
-                var nav = HudShell.NavStrip(width, height);
-                Assert.That(bar.X, Is.EqualTo(0f), $"{width}x{height}");
-                Assert.That(bar.Width, Is.EqualTo(width), $"{width}x{height}");
-                Assert.That(nav.Right, Is.EqualTo(width).Within(0.01f), $"{width}x{height}");
-                Assert.That(nav.Width, Is.LessThanOrEqualTo(width * 0.5f + 0.01f), $"{width}x{height}");
+                var scale = System.Math.Clamp(System.Math.Min(w / 1440f, h / 900f), 0.55f, 2.25f);
+                yield return (w / scale, h / scale);
+            }
+        }
 
+        [Test]
+        public void Shell_NamesTheCareerWorkspaceCareer()
+        {
+            Assert.That(HudShell.Tabs.Single(t => t.workspace == HudWorkspace.Stats).label, Is.EqualTo("CAREER"));
+        }
+
+        [Test]
+        public void Shell_EveryPanelFitsAndNothingOverlaps()
+        {
+            foreach (var (width, height) in Viewports())
+            foreach (var guide in new[] { false, true })
+            foreach (var workspaceOpen in new[] { false, true })
+            {
+                var shell = HudShell.Layout(width, height, guide, workspaceOpen);
+                var at = $"{width:0}x{height:0} guide={guide} sheet={workspaceOpen}";
+                var shown = shell.Panels.Where(p => !p.Box.IsEmpty).ToList();
+                foreach (var (name, box) in shown)
+                {
+                    Assert.That(box.X, Is.GreaterThanOrEqualTo(-0.01f), $"{name} off the left {at}");
+                    Assert.That(box.Y, Is.GreaterThanOrEqualTo(-0.01f), $"{name} off the top {at}");
+                    Assert.That(box.Right, Is.LessThanOrEqualTo(width + 0.01f), $"{name} off the right {at}");
+                    Assert.That(box.Bottom, Is.LessThanOrEqualTo(height - HudShell.Margin + 0.01f),
+                        $"{name} runs into the credit footer {at}");
+                }
+                for (var i = 0; i < shown.Count; i++)
+                for (var j = i + 1; j < shown.Count; j++)
+                    Assert.That(shown[i].Box.Overlaps(shown[j].Box), Is.False,
+                        $"{shown[i].Name} overlaps {shown[j].Name} {at}");
+                Assert.That(shell.Rail.IsEmpty, Is.False, "the rail is the navigation: always shown " + at);
+                Assert.That(shell.Capsule.IsEmpty, Is.False, "the capsule is always shown " + at);
+                if (workspaceOpen)
+                    Assert.That(shell.Workspace.Width, Is.GreaterThan(300f), "sheet is usable " + at);
+            }
+        }
+
+        [Test]
+        public void Shell_DesktopShowsEveryOverviewPanel()
+        {
+            var shell = HudShell.Layout(1440f, 900f);
+            Assert.That(shell.Career.IsEmpty, Is.False);
+            Assert.That(shell.Operations.IsEmpty, Is.False);
+            Assert.That(shell.MiniMap.IsEmpty, Is.False);
+            Assert.That(shell.SelectedCard.IsEmpty, Is.False);
+            Assert.That(shell.Toast.IsEmpty, Is.False);
+            Assert.That(shell.Career.X, Is.LessThan(shell.SelectedCard.X), "career card bottom-left");
+            Assert.That(shell.MiniMap.X, Is.GreaterThan(shell.SelectedCard.Right), "radar bottom-right");
+            Assert.That(shell.Operations.Y, Is.LessThan(shell.MiniMap.Y), "flight tiles top-right");
+            Assert.That(System.Math.Abs(shell.Capsule.X + shell.Capsule.Width * 0.5f - 720f), Is.LessThan(1f),
+                "the capsule is centred on a desktop window");
+        }
+
+        [Test]
+        public void Shell_OpenSheetReplacesTheOverviewPanels()
+        {
+            var shell = HudShell.Layout(1440f, 900f, workspaceOpen: true);
+            Assert.That(shell.Career.IsEmpty && shell.Operations.IsEmpty && shell.MiniMap.IsEmpty
+                        && shell.SelectedCard.IsEmpty, Is.True);
+            Assert.That(shell.Workspace.X, Is.GreaterThan(shell.Rail.Right));
+            Assert.That(shell.Workspace.Y, Is.GreaterThan(shell.Capsule.Bottom));
+            Assert.That(shell.Toast.Overlaps(shell.Workspace), Is.False, "feedback never covers the sheet's heading");
+        }
+
+        [Test]
+        public void Rail_HasOneSelectedItemPerPageAndItemsNeverOverlap()
+        {
+            foreach (var (width, height) in Viewports())
+            {
+                var rail = HudShell.Rail(width, height);
                 foreach (var workspace in new[]
                          {
                              HudWorkspace.None, HudWorkspace.Operations, HudWorkspace.Map,
@@ -52,75 +99,62 @@ namespace Airside.Tests
                          })
                 {
                     var tabs = new List<HudNavTab>();
-                    HudShell.FillTabs(nav, workspace, tabs);
+                    HudShell.FillTabs(rail, height, workspace, tabs);
                     Assert.That(tabs, Has.Count.EqualTo(HudShell.Tabs.Length), $"{workspace} {width}x{height}");
-                    Assert.That(tabs.Count(t => t.Selected), Is.EqualTo(1),
-                        $"exactly one tab reads as the open page ({workspace})");
+                    Assert.That(tabs.Count(t => t.Selected), Is.EqualTo(1));
                     for (var i = 1; i < tabs.Count; i++)
-                        Assert.That(tabs[i].Box.X, Is.GreaterThanOrEqualTo(tabs[i - 1].Box.Right - 0.01f),
-                            "tabs never overlap");
+                        Assert.That(tabs[i].Box.Y, Is.GreaterThanOrEqualTo(tabs[i - 1].Box.Bottom - 0.01f));
+                    Assert.That(tabs.Last().Box.Bottom, Is.LessThanOrEqualTo(rail.Bottom + 0.01f));
                 }
             }
         }
 
         [Test]
-        public void Shell_DropsTopBarValuesRatherThanRunningThemUnderTheTabs()
+        public void Capsule_DropsReadoutsRatherThanOverflowing()
         {
-            var values = new[] { "ADELAIDE  12:36", "$12,480", "RELIABILITY 97%", "REGIONAL" };
-            foreach (var (width, height) in HudTestAirline.Viewports)
+            var values = new[]
             {
-                var bar = HudShell.TopBar(width, height);
-                var nav = HudShell.NavStrip(width, height);
-                var segments = new List<HudTopBarSegment>();
-                HudShell.FillSegments(bar, "A Very Long Airline Name Indeed", nav, values, segments);
+                new HudCapsuleValue("AIRLINE", "A Very Long Airline Name Indeed"),
+                new HudCapsuleValue("ADELAIDE", "12:36"),
+                new HudCapsuleValue("FUNDS", "$1,234,567"),
+                new HudCapsuleValue("RELIABILITY", "97%", HudTone.Default, HudCapsuleKind.Gauge, 0.97f),
+                new HudCapsuleValue("TIER", "INTERNATIONAL", HudTone.Accent, HudCapsuleKind.Chip)
+            };
+            foreach (var (width, height) in Viewports())
+            {
+                var capsule = HudShell.Capsule(width, height);
+                var segments = new List<HudCapsuleSegment>();
+                HudShell.FillCapsule(capsule, values, segments);
+                Assert.That(segments.Count, Is.GreaterThanOrEqualTo(2), $"{width}x{height}");
                 foreach (var segment in segments)
-                    Assert.That(segment.Box.Right, Is.LessThanOrEqualTo(nav.X + 0.01f),
-                        $"{width}x{height}: a value ran under the workspace tabs");
+                    Assert.That(segment.Box.Right, Is.LessThanOrEqualTo(capsule.Right + 0.01f), $"{width}x{height}");
             }
         }
 
         [Test]
-        public void Shell_KeepsTheObjectiveCardBesideTheWorkspaceWhenThereIsRoom()
+        public void CareerCard_PaintsTheRingTheStageTargetAndTheNextAction()
         {
-            var workspace = HudShell.WorkspaceSurface(1440f, 900f);
-            var objective = HudShell.Objective(1440f, 900f, showGuide: false);
-            Assert.That(HudShell.ObjectiveSurvivesWorkspace(1440f, 900f), Is.True);
-            Assert.That(workspace.Overlaps(objective), Is.False);
-            Assert.That(workspace.X, Is.GreaterThan(objective.Right));
-            Assert.That(workspace.Right, Is.LessThanOrEqualTo(1440f - HudShell.Margin + 0.01f));
+            var draw = new HudDrawList();
+            HudShellPainter.PaintCareer(draw, HudShell.Layout(1440f, 900f).Career,
+                new CareerObjective("Fly five services", "2/5", 0.4f, "Next: plan a flight for VH-PAX",
+                    StatusSeverity.Attention, "TOWARD REGIONAL"), 1f / 3f, "1/3");
+
+            Assert.That(draw.Commands.Count(c => c.Kind == HudDrawKind.Ring), Is.EqualTo(2), "track and progress");
+            Assert.That(draw.Commands.Any(c => c.Text == "TOWARD REGIONAL"), Is.True);
+            Assert.That(draw.Commands.Any(c => c.Text == "Fly five services" && c.FontSize >= 15f), Is.True);
+            Assert.That(draw.Commands.Any(c => c.Text == "plan a flight for VH-PAX"), Is.True);
         }
 
         [Test]
-        public void Shell_GivesTheWholeWidthToAWorkspaceTooNarrowToShareIt()
+        public void SheetHeader_UsesTitleCaseAndARoundClose()
         {
-            var workspace = HudShell.WorkspaceSurface(820f, 600f);
-            Assert.That(HudShell.ObjectiveSurvivesWorkspace(820f, 600f), Is.False);
-            Assert.That(workspace.X, Is.EqualTo(HudShell.Margin));
-            Assert.That(workspace.Width, Is.EqualTo(820f - HudShell.Margin * 2f));
+            var draw = new HudDrawList();
+            var surface = HudShell.WorkspaceSurface(1440f, 900f);
+            HudShellPainter.PaintSheetHeader(draw, surface, "CAREER ROADMAP", "subtitle",
+                new HudBox(surface.X + 30f, surface.Y + 14f, 300f, 30f), new HudBox(surface.X + 24f, surface.Y + 44f, 300f, 16f));
+            Assert.That(draw.Commands.Any(c => c.Text == "Career Roadmap"), Is.True);
+            var close = draw.Commands.Single(c => c.ActionId == HudAction.Close);
+            Assert.That(close.Box.Width, Is.EqualTo(close.Box.Height), "the close control is round");
         }
-
-        [Test]
-        public void Shell_GivesCareerPagesTheWholeWidthAt1024RatherThanCrushingTwoColumns()
-        {
-            var workspace = HudShell.WorkspaceSurface(1024f, 640f);
-            Assert.That(HudShell.ObjectiveSurvivesWorkspace(1024f, 640f), Is.False);
-            Assert.That(workspace.X, Is.EqualTo(HudShell.Margin));
-            Assert.That(workspace.Width, Is.EqualTo(1024f - HudShell.Margin * 2f));
-        }
-
-        [Test]
-        public void Shell_NeverLetsAWorkspaceRunUnderTheTopBarOrOffTheBottom()
-        {
-            foreach (var (width, height) in HudTestAirline.Viewports)
-            {
-                var bar = HudShell.TopBar(width, height);
-                var workspace = HudShell.WorkspaceSurface(width, height);
-                Assert.That(workspace.Y, Is.GreaterThanOrEqualTo(bar.Bottom), $"{width}x{height}");
-                Assert.That(workspace.Bottom, Is.LessThanOrEqualTo(height - HudShell.Margin + 0.01f),
-                    $"{width}x{height}");
-                Assert.That(workspace.Width, Is.GreaterThan(0f), $"{width}x{height}");
-            }
-        }
-
     }
 }

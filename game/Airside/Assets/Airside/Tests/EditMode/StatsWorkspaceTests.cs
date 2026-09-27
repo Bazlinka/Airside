@@ -218,10 +218,9 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now);
 
             bool Reached(string title) => model.Milestones.Single(m => m.Title == title).Reached;
-            Assert.That(Reached("First rotation completed"), Is.True);
+            Assert.That(Reached("First service flown"), Is.True);
             Assert.That(Reached("First contract fulfilled"), Is.True);
-            Assert.That(Reached("Reached Regional"), Is.True);
-            Assert.That(Reached("Reached Domestic"), Is.False);
+            Assert.That(Reached("First jet in the fleet"), Is.False);
             Assert.That(model.ContractHistory.Count, Is.EqualTo(1));
             Assert.That(model.ContractHistory[0].PaidText, Does.StartWith("$"));
             Assert.That(model.ContractsFulfilledLine, Is.EqualTo("1 contracts fulfilled all-time"));

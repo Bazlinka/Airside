@@ -9,8 +9,11 @@ namespace Airside.Domain
     /// </summary>
     public sealed class Airline
     {
-        public Airline(string id, string name, string liveryHex, bool isPlayer)
+        public Airline(string id, string name, string liveryHex, bool isPlayer, string code = null)
         {
+            if (!string.IsNullOrWhiteSpace(code) && !IsValidCode(code))
+                throw new ArgumentException("An airline code is two or three letters.", nameof(code));
+            Code = string.IsNullOrWhiteSpace(code) ? null : code.Trim().ToUpperInvariant();
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentException("An airline id is required.", nameof(id));
             if (string.IsNullOrWhiteSpace(name))
@@ -25,6 +28,26 @@ namespace Airside.Domain
         }
 
         public StableId Id { get; }
+
+        /// <summary>
+        /// The player's chosen two- or three-letter flight code (ADR 0123), shown before flight
+        /// numbers ("SX 101"). Null means derive one from the name.
+        /// </summary>
+        public string Code { get; }
+
+        /// <summary>Two or three letters A–Z.</summary>
+        public static bool IsValidCode(string code)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+                return false;
+            var trimmed = code.Trim();
+            if (trimmed.Length < 2 || trimmed.Length > 3)
+                return false;
+            foreach (var c in trimmed)
+                if (!(c >= 'A' && c <= 'Z') && !(c >= 'a' && c <= 'z'))
+                    return false;
+            return true;
+        }
         public string Name { get; private set; }
 
         /// <summary>
@@ -129,7 +152,8 @@ namespace Airside.Domain
         /// </summary>
         public static Airline Rfds() => new("RFDS", "Royal Flying Doctor Service", "#C8102E", isPlayer: false);
 
-        public static Airline Player(string name, string liveryHex) => new("PLAYER", name, liveryHex, isPlayer: true);
+        public static Airline Player(string name, string liveryHex, string code = null) =>
+            new("PLAYER", name, liveryHex, isPlayer: true, code);
 
         internal static string Wordmark(string name)
         {

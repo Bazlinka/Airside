@@ -18,9 +18,9 @@ namespace Airside.Simulation
 
         private static readonly string[] Regional = { "KGC", "PLO", "WYA", "MGB", "CED", "CPD", "MQL", "BHQ" };
         private static readonly string[] Domestic = { "MEL", "CBR", "SYD", "HBA" };
-        private static readonly string[] National = { "BNE", "OOL", "ASP", "PER" };
+        private static readonly string[] National = { "BNE", "OOL", "ASP", "PER", "CNS", "DRW" };
         private static readonly string[] Tasman = { "AKL", "CHC" };
-        private static readonly string[] LongHaul = { "CNS", "DRW", "DPS", "SIN", "HKG", "KUL", "NAN", "DOH", "DXB" };
+        private static readonly string[] LongHaul = { "DPS", "SIN", "HKG", "KUL", "NAN", "DOH", "DXB" };
 
         public static IReadOnlyList<RouteContractDefinition> At(
             SimulationTime now, IReadOnlyList<AircraftType> ownedTypes, int reliability, OperatingTier tier)
@@ -30,14 +30,13 @@ namespace Airside.Simulation
             if (ownedTypes == null || ownedTypes.Count == 0)
                 return offers;
 
-            _ = tier;
             var rng = new SeededRandomSource((uint)(window * 1_000_003 + 97));
             var attempts = 0;
             while (offers.Count < OffersPerWindow && attempts < 24)
             {
                 attempts++;
                 var type = ownedTypes[rng.NextInt(0, ownedTypes.Count)];
-                var dest = PickDestination(type, reliability, rng);
+                var dest = PickDestination(type, reliability, tier, rng);
                 if (dest == null)
                     continue;
                 var km = DestinationCatalogue.Adelaide.DistanceKmTo(dest.Value);
@@ -72,9 +71,13 @@ namespace Airside.Simulation
             return new SimulationTime((window + 1) * WindowSeconds);
         }
 
-        private static Destination? PickDestination(AircraftType type, int reliability, SeededRandomSource rng)
+        private static Destination? PickDestination(AircraftType type, int reliability, OperatingTier tier,
+            SeededRandomSource rng)
         {
             var ceiling = RouteAccess.Ceiling(type);
+            // International routes need the International tier, the same rule as filing one.
+            if (tier < OperatingTier.International && ceiling > RouteBand.National)
+                ceiling = RouteBand.National;
             if (reliability < DomesticReliabilityFloor && ceiling > RouteBand.Regional)
                 ceiling = RouteBand.Regional;
 

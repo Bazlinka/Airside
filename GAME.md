@@ -1,3 +1,115 @@
+## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
+
+- **2026-09-27 Claude (same branch) — career tuning pass (ADR 0125).** Fixed: Adelaide
+  aircraft can be planned abroad (`PlannableDestinations()`), narrowbodies take 28L last, AI
+  no longer returns to a gate the player leases. Tuned: four starter services; turboprop
+  dispatch 1.12/km; outstations $15k/$40k; jet gate $6k; 737 $28k, A321 $45k, A350 $85k,
+  787 $82k. Tuned report: `docs/testing/career-balance-2026-09-27/tuned/report.md`. Standard
+  competent: Regional 9.5 h, Domestic 29.6 h, International 78.4 h, finale 141 h; every
+  difficulty/style finishes, no stuck flags. `CareerBalanceTests` guards it. Evidence:
+  `scripts/test-domain.sh` **825/825**, type-check clean. **Needs humans:** real first-hour
+  pace, lateness/reliability pressure (the bot is always punctual), and whether International
+  at ~80 h feels long.
+
+- **2026-09-27 Claude (same branch) — career balance simulator, baseline (ADR 0125).**
+  `Tests/EditMode/CareerBot.cs` is a simulated player that uses only HUD commands and planner
+  destinations (competent and casual styles); `scripts/career-sim` + `scripts/career-balance.sh`
+  run the difficulty × style × seed matrix and write `report.md`/`runs.json`/`daily.csv`.
+  Baseline in `docs/testing/career-balance-2026-09-27/baseline/`. Findings, before any tuning:
+  no finale on any run (Adelaide aircraft cannot plan international routes — the planner lists
+  only `MapDestinations()`, Australia); International ~93 h Standard/competent vs ADR 0120's
+  70 h; Regional ~11 h vs 8 h; player narrowbodies take the only widebody line (28L) first, so
+  the 787 waits for a stand. **NEXT:** the tuning commit.
+
+- **2026-09-27 Claude (same branch) — round 3 complete (ADR 0124).** Bailey asked for hold
+  reasons, building detail, less blocky objects and better lights; all four are in (commits
+  above/below this entry). This last step: rounded aerobridge tunnels (`BevelledBox.RoundedTube`,
+  profile-only so per-frame length changes are safe), cylinder drive column, stair trucks with
+  wheels/handrails/posts (the fixed-height stairs kit cannot match per-door sills, so it stays
+  unused), and player-base modules as clad buildings with a livery fascia (tint limited to
+  `… livery` parts). Evidence: `scripts/test-domain.sh` **821/821**, per-assembly type-check
+  clean (3 editor-only baseline errors). **Everything in round 3 still needs the Mac:**
+  `scripts/test-unity.sh`, `scripts/build-mac.sh`, the graphics-on 60 fps soak at 1280×720
+  (SetPass/batches vs the 453 baseline), and day/dusk/night captures of the terminal, tower,
+  hangar row, runway lights and a night taxi.
+
+- **2026-09-27 Claude (same branch) — lighting (ADR 0124).** Aircraft lights hang off a
+  `Lamp pivot` at each lamp mesh's bounds centre; nav/beacon lenses glow via emission (strobe
+  flash on the wingtip lens); `beacon_bottom` → "Beacon bottom". `PlaceYpadLens` now queues
+  domed fixtures (`AirfieldFixture`) into merged per-colour lens meshes + one base mesh +
+  additive halo meshes, built by `FlushYpadLenses()` after the lighting setup and tinted by
+  `UpdateLensGroups` (amber caution edges stay amber; approach/PAPI readable by day). Blue
+  taxiway edges, red stop bars, T1 streetlight lens + glow pool. No new `Light`s. Evidence:
+  `scripts/test-domain.sh` **820/820**, type-check clean. **Mac checks:** night overview and
+  approach follow — halo brightness/size, the additive halo material in a player build (URP
+  Unlit), strobes on the wingtips, stop-bar placement at each holding point, SetPass at night.
+
+- **2026-09-27 Claude (same branch) — building detail + chamfered blocks (ADR 0124).**
+  `Presentation/BuildingDetail.cs` plans parapets, window bands (lit/dark panes), hangar
+  doors + roof monitors, fire bays, freight doors, rooftop plant, the tower cab/mast/red
+  light and the terminal kerb canopy; `YpadPavement.cs` merges them into one mesh per
+  material (`YPAD building windows lit` and `YPAD tower cab glass` join the night-glow pass
+  as kind 3). Wall UVs now run along/up walls. `CreateBlock` uses the cached chamfered
+  `BevelledBox` mesh for untextured blocks ≥ 5 cm. Evidence: `scripts/test-domain.sh`
+  **817/817**, type-check clean (3 editor-only baseline errors), geometry preview rendered
+  offline from the generator (`docs/testing/building-detail-2026-09-27/`). **Mac checks:**
+  day/night overview of the terminal, tower and hangar row; SetPass/batches in the 60 fps
+  soak must not regress; confirm corrugated texture direction on hangar walls.
+
+- **2026-09-27 Claude (follow-up, same branch) — hold reasons (ADR 0124).**
+  `AirlineOperations.Why(aircraft)` (`Simulation/HoldReason.cs`) re-derives why an aircraft
+  is held — queue position, arrival/departure first, runway occupied, wake, storm, curfew,
+  apron busy, lead-in, taxi route blocker (new `GroundTraffic.PathClear(..., out blocker)`),
+  no stand free, choose stand, held airborne, in check — without mutating anything (no save
+  change). `Presentation/HoldReasonText` words it for the selection card, Ops board,
+  attention band, tiles and field tags. Evidence: `scripts/test-domain.sh` **808/808**
+  (new `HoldReasonTests`), per-assembly type-check clean apart from the three editor-only
+  baseline errors. **Mac check:** watch a busy morning and read the card/board wording.
+
+- **2026-09-26 Claude (follow-up, same branch) — first-time airline setup (ADR 0123).**
+  Four-step New airline wizard (identity + flight code, livery with custom hue/shade,
+  difficulty, briefing + coaching toggle) with a live preview; difficulty in the economy via
+  `AirlineOperations.DispatchCost`/`Forecast` and `DifficultyProfile.ScalePenalty`; save v14
+  (`Difficulty`, `CoachingOff`, airline `Code`); seven-page Flight Manual replacing the F1
+  controls sheet, also on the title screen and a new rail **?** button. Evidence:
+  `scripts/test-domain.sh` **799/799**; Presentation and EditMode type-check per assembly
+  (Domain / Simulation / Presentation / Tests, as the asmdefs split them) against UnityEngine
+  reference assemblies with only three editor-only baseline errors. **Unity checks to add on
+  the Mac:** typing into the name and code fields, Enter/Esc through the wizard, the manual
+  over the title screen.
+
+- **2026-09-26 Claude — branch `claude/career-mode-hud-redesign-rhbjok`.** Bailey asked for
+  the career logic/progression to be fixed and made coherent, a new opening splash, and a
+  completely new in-game HUD ("nothing like it does now").
+  - **Career (ADR 0121):** `CareerRoadmap` is the one progression authority. Tiers are earned
+    in order; goals say which tier they earn ("TOWARD DOMESTIC"); contracts can be abandoned
+    (no dead saves); sold registrations are never reissued (their flights were never paid);
+    one fleet count; Cairns/Darwin are Australian, not international; tier-ups, goals and the
+    finale are announced. Dead `Campaign`/`DailyService`/`NextTier` systems removed. No save
+    schema change (v13).
+  - **HUD (ADR 0122):** the top bar, tab strip, yellow "Today's priority" card, square framed
+    panels and blue buttons are gone. New Glass Cockpit: left navigation rail, floating status
+    capsule, career ring card, live flight tiles, radar minimap, glass selected-aircraft card
+    with a turnaround timeline, glass toasts, rounded graphite glass everywhere (generated
+    rounded textures + IMGUI's rounded `DrawTexture`), amber primary pills, aqua selection,
+    new instrument palette. Every workspace uses the new sheet header; Career opens on a new
+    tier track page. Pure layers (`HudShell`, `SelectionCard`, `CareerTrackWorkspace`,
+    `SplashScreen`) are covered headlessly.
+  - **Title screen (ADR 0122):** the approved-but-unused dawn illustration (UI-ILL-001) and
+    wordmark (BRD-001) now make a real title screen with Continue / New airline / Options /
+    Quit; the camera intro plays as the hand-off after the player chooses.
+  - **Evidence:** `scripts/test-domain.sh` **790/790**. The full Presentation + EditMode
+    sources type-check against UnityEngine 2021.3 reference assemblies with stubs for URP,
+    Addressables and the Input System (only four pre-existing Unity-6/URP-only symbol
+    errors). Offline mockups rendered at 1440×900, 1280×800 and 1024×640 via
+    `scripts/hud-mockup` + `scripts/render-hud-mockups.py`.
+  - **Not yet verified (must happen on Bailey's Mac before merge):** `scripts/test-unity.sh`
+    (Unity EditMode — `PresentationLayoutTests`/`FieldMiniMapTests` were updated for the new
+    shell), `scripts/build-mac.sh`, and a rendered play session: check the rounded glass,
+    the icon tinting (`AirsideTheme.IconMask` needs the icon PNGs readable), the title-screen
+    name field focus, and the camera hand-off.
+  - **NEXT:** Unity run + playtest; then tune the career pacing with real hours played.
+
 ## Where to resume — career mode implementation
 
 - **2026-09-25 Codex — `feature/full-career-mode-20260925` (ADR 0120).** The approved self-led career is implemented in a temporary working checkout at `/private/tmp/airside-pr406` because the usual `/Users/bailey.fleming/Documents/ChatGPT/Airside` workspace is absent on this host. Core changes: pinnable capability goals, save v13 migration, route forecasts, outstation fleet and bases, repeat schedules earned after 12 manual services, final milestone and continuing sandbox. The 100–150 active-hour target is a playtest tuning target, not a timed gate. Evidence: the final full domain suite passed 799/799; `scripts/audit-unity-assets.py` passed (1309 GUIDs, 336 runtime mirrors). Unity EditMode repeatedly lost its licensing-client connection; the bounded Mac build stalled at licensing initialization and timed out after 120 seconds. No rendered career playtest or 100–150-hour human pacing evidence exists yet. Re-run domain, Unity EditMode, Mac build and a larger-fleet rendered playtest before merging. Graphics-on performance remains unresolved. The initial `git pull` could not resolve GitHub, and automatic approval review rejected the later `git push` as sensitive code transfer to an unverified remote. This commit is local only; obtain explicit approval for the configured destination, then inspect remote state before pushing or merging.
@@ -4686,22 +4798,34 @@ true 3D assets; animation and VFX mirror simulation state and never drive it.
 
 Open `game/Airside` in Unity 6.3 LTS and press Play.
 
-The game opens with a short intro (any key skips). Time is **live Adelaide time**:
-once an airline starts, one second in the game is one real second, and the clock
-shows the real local time. There is no pause, no time rates and no skip; the menu
-does not stop the airport. On-screen controls at the bottom centre are **Follow ·
-Overview**, with live airspeed in knots just above.
+Career pacing report (no Unity needed): `scripts/career-balance.sh [out-dir] [seeds] [hours]`
+plays every difficulty with a simulated player and writes a report (ADR 0125).
 
-Airline (ADR 0045): name your airline and pick a livery on the start screen. The
-fleet panel (top right) plans flights and offers stands when your aircraft lands;
-click a registration (or click the aircraft on the field) to follow it. The map
-(top left, or Tab) shows every destination — green in range, grey locked — and
-tracks aircraft that are away.
+The game opens on the **title screen** (ADR 0122): the dawn illustration of the airport,
+the live Adelaide clock and one card — **Continue** your saved airline, **New airline**,
+**How to play**, Options or Quit. Enter continues; Esc steps back or opens the menu.
+New airline is a four-step setup (ADR 0123) with a live preview: name and flight code,
+livery (twelve colours or your own hue/shade), difficulty (Relaxed / Standard / Demanding)
+and a briefing with an optional first-flight coach. The **Flight Manual** (How to play, the
+**?** on the rail, or F1; ←/→ to page) explains the rules and lists the controls.
+Choosing one dissolves the art into the live airport while the camera glides down (any
+key skips). Time is **live Adelaide time**: one second in the game is one real second.
+There is no pause, no time rates and no skip; the menu does not stop the airport.
+
+The in-game HUD is the **Glass Cockpit** (ADR 0122): a vertical navigation rail on the
+left (Ops, Map, Fleet, Contracts, Career), a floating status capsule at the top (airline,
+Adelaide time, funds, reliability gauge, tier), the **career ring** bottom-left (steps done
+in the current stage, the pinned goal and one next action — click it for the Career track),
+your live flight tiles top-right, the airfield radar bottom-right and the selected-aircraft
+card bottom-centre. Toasts appear under the capsule. A workspace opens as one glass sheet
+right of the rail. **Career** opens on the tier track; **Airline** on its header flips to the
+profile (name, livery, base, achievements, history).
 
 Simulation:
 
-- Escape: clears aircraft selection and returns to overview when one is selected;
-  otherwise opens or closes the menu (Resume, Restart circuit, Quit) — time keeps running
+- Escape: steps back on the title screen's new-airline form; clears aircraft selection
+  and returns to overview when one is selected; otherwise opens or closes the menu
+  (Resume, Options, Quit) — time keeps running
 - Tab: open or close the destinations map (scroll to zoom, drag to pan; state labels appear when zoomed)
 - H: open or close the Hangar (all aircraft + flight progress)
 - M: mute audio

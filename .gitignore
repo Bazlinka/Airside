@@ -29,6 +29,8 @@
 /scripts/dotnet-harness/obj/
 !/scripts/hud-mockup/*.csproj
 /scripts/hud-mockup/bin/
+/scripts/career-sim/bin/
+/scripts/career-sim/obj/
 /scripts/hud-mockup/obj/
 
 # Xcode generated output

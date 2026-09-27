@@ -54,7 +54,7 @@ namespace Airside.Presentation
                 new Binding("T", "Operations workspace — movement board"),
                 new Binding("C", "Contracts workspace — active and offers"),
                 new Binding("F8", "Dev tools (playtest)"),
-                new Binding("F1", "This controls sheet"),
+                new Binding("F1", "Flight Manual — how to play and controls"),
             }),
             new Section("General", new[]
             {

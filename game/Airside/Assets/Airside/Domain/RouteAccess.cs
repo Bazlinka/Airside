@@ -42,6 +42,8 @@ namespace Airside.Domain
                 case "OOL":
                 case "ASP":
                 case "PER":
+                case "CNS":
+                case "DRW":
                     return RouteBand.National;
                 case "AKL":
                 case "CHC":
@@ -70,6 +72,16 @@ namespace Airside.Domain
 
         public static bool Allows(AircraftType type, Destination destination) =>
             type != null && BandOf(destination) <= Ceiling(type);
+
+        /// <summary>
+        /// Australian cities are Regional/Domestic/National; only Tasman and beyond are
+        /// international. One definition for the career, the market and network flying.
+        /// </summary>
+        public static bool IsInternational(string destinationCode) => BandOf(destinationCode) >= RouteBand.Tasman;
+
+        /// <summary>The operating tier the player needs before filing a route in this band.</summary>
+        public static OperatingTier RequiredTier(RouteBand band) =>
+            band >= RouteBand.Tasman ? OperatingTier.International : OperatingTier.Provisional;
 
         /// <summary>Revenue multiplier on top of the type weight — bigger bands pay more.</summary>
         public static double PayMultiplier(RouteBand band) => band switch

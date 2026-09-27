@@ -1,5 +1,76 @@
 ## Unreleased
 
+- **Career tuned against the balance sim (ADR 0125).** You can now plan Adelaide flights to
+  Auckland, Singapore and the rest of the international network; before, the finale's
+  international goal and the international contracts could not be flown from Adelaide. Your
+  widebody no longer waits for its own gate: your narrowbodies take 28L last, and Qantas stops
+  parking on the pier you lease. Cheaper steps into the jet age: turboprop flights cost less to
+  dispatch, outstations cost $15k / $40k, the jet-gate upgrade costs $6k, and jets and widebodies
+  cost less. The first tier needs four services, not five. On Standard, a steady player now
+  reaches the established-airline finale in about 140–180 hours of play, and every difficulty
+  can finish.
+
+- **Career balance simulator (ADR 0125).** `scripts/career-balance.sh` plays whole careers
+  headlessly — Relaxed/Standard/Demanding × a competent and a casual simulated player × five
+  seeds — and reports time to each tier in active-play hours, cash, fleet and stuck states.
+  The baseline (`docs/testing/career-balance-2026-09-27/baseline/`) shows no run reaching the
+  established-airline finale, International arriving ~93 h in on Standard against a 70 h
+  target, and Regional at ~11 h against 8 h.
+
+- **Rounder aerobridges, proper stair trucks, a real-looking base (ADR 0124).** Aerobridge
+  tunnels have rounded profiles; stair trucks have wheels, handrails and posts; your
+  airline's base buildings are clad modules with your colours on a fascia band, windows and
+  hangar doors instead of solid livery blocks.
+
+- **Lights that behave like lights (ADR 0124).** Aircraft nav lights, strobes, beacons and
+  landing lights now shine from their lamps instead of the belly, and the lenses glow —
+  including the 787/A330/A350 belly beacon, which never flashed before. Runway and taxiway
+  lights are domed fixtures with a soft night halo, keep their colour (the amber caution
+  zones no longer turn white), and go quiet by day except approach lights and PAPI. New blue
+  taxiway edge lights, red stop bars at the runway holding points, and glowing streetlights.
+
+- **Every building has a facade now (ADR 0124).** Parapets, storey window bands (most lit
+  at night, some dark), hangar doors and roof monitors, fire-station bays, freight doors,
+  rooftop plant, a terminal kerb canopy, and a proper control tower with a glass cab, mast
+  and red obstruction light. Wall textures run along the walls instead of streaking.
+- **Softer objects.** Every procedural block — vehicles, stands, signs, props — has
+  chamfered edges that catch the light instead of razor-sharp cube corners.
+
+- **Holds say why (ADR 0124).** An aircraft that is waiting now tells you what it is
+  waiting for and who is in the way: "Number 2 for 23 — behind QFA412 (737-8)", "Holding
+  short 23 — RXA201 (340B) landing, clear in 40 s", "Waiting to push back — apron busy with
+  VH-SUN and QFA671", wake separation, storm ground stops, curfew, no stand free, choose a
+  stand. The sentence shows on the selected-aircraft card, the Ops board and attention band;
+  a short tag ("hold · wake") shows on field labels. Derived live, nothing saved.
+
+- **Found your airline properly (ADR 0123).** New airline is now a four-step setup with a
+  live preview: name and your own two- or three-letter flight code; a livery from twelve
+  colours or your own hue and shade; Relaxed / Standard / Demanding difficulty (starting
+  float, fares, flight costs and how hard lateness hits); and a briefing with an optional
+  first-flight coach. Save v14 keeps the choices; older saves play Standard.
+- **The Flight Manual.** Seven pages on how Airside actually works — first flight, money and
+  contracts, reliability, career, growing, controls — from HOW TO PLAY on the title screen,
+  the setup briefing, the **?** on the rail, or F1.
+
+- **A completely new in-game HUD — the Glass Cockpit (ADR 0122).** A left navigation
+  rail, a floating status capsule, a career ring card, live flight tiles, a radar minimap
+  and a glass selected-aircraft card with a turnaround timeline replace the top bar, tab
+  strip, "Today's priority" card and square framed panels. Rounded graphite glass, amber
+  primary pills and aqua selection throughout, including menus, help and every workspace.
+  Career opens on a new tier-track page.
+- **A real title screen (ADR 0122).** The approved dawn illustration and wordmark open the
+  game with the live Adelaide clock and Continue / New airline / Options / Quit; the camera
+  glide now plays as the hand-off into the live airport.
+
+- **Career mode is one coherent path (ADR 0121).** The roadmap is the only progression
+  system; the dead chapter and daily-bonus systems are gone. Tiers are earned in order,
+  goals say which tier they earn ("TOWARD DOMESTIC"), completed pins release, and tier-ups,
+  goal completions and the finale are announced. Fixed: rebought aircraft reusing a sold
+  registration and never getting paid; no way to abandon a contract (a dead save when broke);
+  Cairns/Darwin counting as international; three different fleet counts; the next-aircraft
+  hint stuck on the ATR; stranded outstation aircraft; veterans re-locked out of repeat
+  schedules after migration. No save schema change.
+
 - **Off-map aircraft can no longer reappear stacked at the departure-path endpoint.**
   The presentation loop now verifies both simulation visibility and the aircraft ID
   assigned to each reusable view immediately before applying a world pose. A stale active

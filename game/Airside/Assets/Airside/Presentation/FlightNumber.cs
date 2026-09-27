@@ -21,8 +21,13 @@ namespace Airside.Presentation
         {
             if (airline == null)
                 return "XX";
-            return airline.IsPlayer ? CodeFromName(airline.Name) : airline.Id.Value;
+            if (!airline.IsPlayer)
+                return airline.Id.Value;
+            return string.IsNullOrEmpty(airline.Code) ? CodeFromName(airline.Name) : airline.Code;
         }
+
+        /// <summary>The code a new airline is offered before the player types their own.</summary>
+        public static string SuggestCode(string name) => CodeFromName(name);
 
         private static string CodeFromName(string name)
         {

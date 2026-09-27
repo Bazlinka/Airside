@@ -85,6 +85,9 @@ namespace Airside.Presentation
                     var height = BridgeCabHeight - i * 0.16f;
                     view.Sections[i] = BridgeBox(view.Pivot, $"Tunnel {i + 1}", Vector3.zero,
                         new Vector3(width, height, 1f), BridgeSkin);
+                    // Rounded cross-section (ADR 0124): the section stretches along z every
+                    // frame, so the rounding lives only in the profile, never on the ends.
+                    view.Sections[i].GetComponent<MeshFilter>().sharedMesh = TunnelMesh(width, height);
                     view.SectionGlazing[i * 2] = BridgeBox(view.Pivot, $"Tunnel {i + 1} glazing L", Vector3.zero,
                         new Vector3(0.04f, height * 0.34f, 1f), BridgeGlazing);
                     view.SectionGlazing[i * 2 + 1] = BridgeBox(view.Pivot, $"Tunnel {i + 1} glazing R", Vector3.zero,
@@ -101,7 +104,7 @@ namespace Airside.Presentation
                 BridgeBox(view.Cab, "Cab bellows", new Vector3(0f, BridgeCabHeight / 2f, BridgeCabDepth / 2f + 0.25f),
                     new Vector3(BridgeCabWidth + 0.2f, BridgeCabHeight + 0.2f, 0.5f), BridgeRubber);
 
-                view.DriveColumn = BridgeBox(view.Root, "Drive column", Vector3.zero, new Vector3(0.7f, 1f, 0.7f), BridgeHazard);
+                view.DriveColumn = BridgeCylinder(view.Root, "Drive column", Vector3.zero, new Vector3(0.7f, 0.5f, 0.7f), BridgeHazard);
                 view.DriveBogie = BridgeBox(view.Root, "Drive bogie", Vector3.zero, new Vector3(3.0f, 0.9f, 1.3f), BridgeRubber);
                 PoseAerobridge(view, ParkedCab(view), ParkedYaw(view));
                 _aerobridges.Add(view);
@@ -255,13 +258,28 @@ namespace Airside.Presentation
             var ground = AirsideFlightPath.GroundY;
             var columnHeight = Mathf.Max(0.5f, drive.y - ground);
             view.DriveColumn.position = new Vector3(drive.x, ground + columnHeight / 2f, drive.z);
-            view.DriveColumn.localScale = new Vector3(0.7f, columnHeight, 0.7f);
+            // Unity's cylinder is 2 m tall at unit scale.
+            view.DriveColumn.localScale = new Vector3(0.7f, columnHeight / 2f, 0.7f);
             view.DriveColumn.rotation = Quaternion.Euler(0f, yaw, 0f);
             view.DriveBogie.position = new Vector3(drive.x, ground + 0.45f, drive.z);
             view.DriveBogie.rotation = Quaternion.Euler(0f, yaw, 0f);
         }
 
         private static Vector3 Flat(Vector3 v) => new(v.x, 0f, v.z);
+
+        private const float TunnelCornerRadiusMetres = 0.6f;
+        private static readonly Dictionary<(int, int), Mesh> TunnelMeshes = new();
+
+        private static Mesh TunnelMesh(float width, float height)
+        {
+            var key = (Mathf.RoundToInt(width * 100f), Mathf.RoundToInt(height * 100f));
+            if (TunnelMeshes.TryGetValue(key, out var cached) && cached != null)
+                return cached;
+            var mesh = GeometryMesh(BevelledBox.RoundedTube(TunnelCornerRadiusMetres / width,
+                TunnelCornerRadiusMetres / height, segmentsPerCorner: 5), "Aerobridge tunnel");
+            TunnelMeshes[key] = mesh;
+            return mesh;
+        }
 
         private static Transform BridgeBox(Transform parent, string name, Vector3 localPosition, Vector3 scale, Color color)
         {

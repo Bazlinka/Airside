@@ -12,7 +12,7 @@ namespace Airside.Tests
         [Test]
         public void LaunchIntro_IsBriefAndHasADeliberateMarkReveal()
         {
-            Assert.That(AirsidePrototype.IntroSeconds, Is.EqualTo(4.8f).Within(0.001f));
+            Assert.That(AirsidePrototype.IntroSeconds, Is.EqualTo(4.2f).Within(0.001f));
             Assert.That(AirsidePrototype.IntroMarkRevealSeconds, Is.GreaterThan(0f));
             Assert.That(AirsidePrototype.IntroMarkRevealSeconds, Is.LessThan(AirsidePrototype.IntroSeconds));
         }
@@ -157,8 +157,8 @@ namespace Airside.Tests
                 Assert.That(a.Overlaps(b), Is.False, $"{aName} overlaps {bName} at {screenWidth}x{screenHeight}");
             }
 
-            Inside(airline.TopBar, "top bar");
-            Inside(airline.NavStrip, "nav strip");
+            Inside(airline.Rail, "rail");
+            Inside(airline.Capsule, "capsule");
             Inside(airline.Objective, "objective");
             Inside(airline.Operations, "operations");
             Inside(airline.Toast, "toast");
@@ -167,23 +167,25 @@ namespace Airside.Tests
             Inside(airline.SelectedCard, "selected card");
             Inside(airline.SetupPanel(396f), "setup");
 
-            Assert.That(airline.TopBar.width, Is.EqualTo(width).Within(0.01f), "top bar is full width");
-            Assert.That(airline.TopBar.height, Is.GreaterThanOrEqualTo(36f), "top bar is too short to read");
-            Assert.That(airline.NavStrip.yMin, Is.GreaterThanOrEqualTo(airline.TopBar.yMin - 0.01f));
-            Assert.That(airline.NavStrip.yMax, Is.LessThanOrEqualTo(airline.TopBar.yMax + 0.01f));
+            Assert.That(airline.Rail.width, Is.GreaterThan(0f), "the navigation rail is always shown");
+            Assert.That(airline.Capsule.height, Is.GreaterThanOrEqualTo(36f), "status capsule is too short to read");
+            Apart(airline.Rail, "rail", airline.Capsule, "capsule");
 
-            Apart(airline.Objective, "objective", airline.TopBar, "top bar");
-            Apart(airline.Operations, "operations", airline.TopBar, "top bar");
+            Apart(airline.Objective, "objective", airline.Rail, "rail");
+            Apart(airline.Objective, "objective", airline.Capsule, "capsule");
+            Apart(airline.Operations, "operations", airline.Capsule, "capsule");
             Apart(airline.Objective, "objective", airline.Operations, "operations");
-            Apart(airline.MiniMap, "mini-map", airline.TopBar, "top bar");
+            Apart(airline.MiniMap, "mini-map", airline.Capsule, "capsule");
             Apart(airline.MiniMap, "mini-map", airline.Objective, "objective");
             Apart(airline.MiniMap, "mini-map", airline.Operations, "operations");
             Apart(airline.MiniMap, "mini-map", airline.SelectedCard, "selected card");
-            Apart(airline.SelectedCard, "selected card", airline.TopBar, "top bar");
+            Apart(airline.SelectedCard, "selected card", airline.Rail, "rail");
             Apart(airline.SelectedCard, "selected card", airline.Objective, "objective");
             Apart(airline.SelectedCard, "selected card", airline.Operations, "operations");
             Apart(airline.Toast, "toast", airline.Objective, "objective");
             Apart(airline.Toast, "toast", airline.Operations, "operations");
+            Apart(airline.Toast, "toast", airline.Capsule, "capsule");
+            Apart(airline.Toast, "toast", airline.Rail, "rail");
         }
 
         [TestCase(1280, 720)]
@@ -248,29 +250,28 @@ namespace Airside.Tests
         [TestCase(800, 500)]
         [TestCase(400, 780)]
         [TestCase(320, 240)]
-        public void AirlineHudLayout_NavStripFitsFourReadableTabs(int screenWidth, int screenHeight)
+        public void AirlineHudLayout_RailItemsStayClickable(int screenWidth, int screenHeight)
         {
             var scale = HudLayout.ScaleFor(screenWidth, screenHeight);
             var hud = HudLayout.Create(screenWidth / scale, screenHeight / scale);
             var airline = AirlineHudLayout.Create(hud);
-
-            // Regression guard: the nav strip used to be locked to the 300 px clock column,
-            // giving four tabs ~75 px each — nowhere near enough for "Operations", which
-            // overflowed clean off the left edge of the window in a packaged build.
-            const float tabs = 4f;
-            Assert.That(airline.NavStrip.width / tabs, Is.GreaterThanOrEqualTo(65f),
-                $"{screenWidth}x{screenHeight}: nav tabs too narrow to hold their labels");
+            var tabs = new System.Collections.Generic.List<HudNavTab>();
+            HudShell.FillTabs(airline.Shell.Rail, hud.Viewport.y, HudWorkspace.None, tabs);
+            Assert.That(tabs.Count, Is.EqualTo(HudShell.Tabs.Length), $"{screenWidth}x{screenHeight}: a rail item fell off");
+            foreach (var tab in tabs)
+                Assert.That(tab.Box.Height, Is.GreaterThanOrEqualTo(HudShell.RailItemMinHeight - 0.01f));
         }
 
         [Test]
-        public void AirlineHudLayout_DesktopKeepsOperationsBesideTheObjective()
+        public void AirlineHudLayout_DesktopPutsEachPanelInItsCorner()
         {
             var airline = AirlineHudLayout.Create(HudLayout.Create(1440f, 900f));
-            Assert.That(airline.WorkspaceCoversOverview, Is.False);
-            Assert.That(airline.Operations.x, Is.GreaterThan(airline.Objective.xMax));
+            Assert.That(airline.Operations.x, Is.GreaterThan(airline.Capsule.xMax));
+            Assert.That(airline.Objective.x, Is.LessThan(airline.SelectedCard.x));
+            Assert.That(airline.MiniMap.x, Is.GreaterThan(airline.SelectedCard.xMax));
             Assert.That(airline.MiniMap.width, Is.EqualTo(AirlineHudLayout.MiniMapWidth));
             Assert.That(airline.SelectedCard.width, Is.EqualTo(AirlineHudLayout.SelectedCardWidth));
-            Assert.That(airline.MiniMap.width, Is.LessThan(280f), "mini-map stays compact");
+            Assert.That(airline.MiniMap.width, Is.LessThan(280f), "radar stays compact");
         }
 
         [TestCase(1280, 720)]
@@ -282,7 +283,7 @@ namespace Airside.Tests
             var airline = AirlineHudLayout.Create(HudLayout.Create(screenWidth / scale, screenHeight / scale));
             Assert.That(airline.Objective.width, Is.GreaterThanOrEqualTo(280f));
             Assert.That(airline.Operations.width, Is.GreaterThanOrEqualTo(240f));
-            Assert.That(airline.NavStrip.width / 4f, Is.GreaterThanOrEqualTo(70f));
+            Assert.That(airline.Capsule.width, Is.GreaterThanOrEqualTo(HudShell.CapsuleMinWidth));
             Assert.That(airline.SelectedCard.height, Is.GreaterThanOrEqualTo(100f));
         }
 

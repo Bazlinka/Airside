@@ -141,8 +141,16 @@ namespace Airside.Presentation
                 }
             CanCycleAircraft = _fleet.Count > 1;
             foreach (var row in _all)
-                if (CareerRoadmap.RouteGuidance(operations.CareerState, _ownedTypes, row.Destination).Length > 0)
+                if (operations.CareerRouteGuidance(row.Destination).Length > 0)
                     _careerTargets.Add(row.Destination.Code);
+            // Career targets head the list so a far one (an international goal) is never cut
+            // off below the fold; the rest keep their reach-then-distance order.
+            var targets = _shown.FindAll(row => _careerTargets.Contains(row.Destination.Code));
+            if (targets.Count > 0)
+            {
+                _shown.RemoveAll(row => _careerTargets.Contains(row.Destination.Code));
+                _shown.InsertRange(0, targets);
+            }
 
             AircraftLabel = aircraft == null
                 ? "No aircraft"
@@ -181,7 +189,7 @@ namespace Airside.Presentation
             var band = RouteAccess.BandOf(destination);
             BandAndDistance = $"{BandLabel(band)}  ·  {km:0} km";
 
-            CareerLine = CareerRoadmap.RouteGuidance(operations.CareerState, _ownedTypes, destination);
+            CareerLine = operations.CareerRouteGuidance(destination);
             CareerTone = CareerLine.Length > 0 ? HudTone.Caution : HudTone.Muted;
 
             if (aircraft == null)
@@ -200,12 +208,12 @@ namespace Airside.Presentation
                 ? $"{type.Name} compatible"
                 : $"{type.Name} not cleared for this route";
 
-            var dispatch = FlightEconomics.DispatchCost(type, km);
+            var dispatch = operations.DispatchCost(type, km);
             var alreadyPaid = aircraft.Scheduled.HasValue
-                ? FlightEconomics.DispatchCost(type, operations.DistanceKm(aircraft.Scheduled.Value.Destination))
+                ? operations.DispatchCost(type, operations.DistanceKm(aircraft.Scheduled.Value.Destination))
                 : 0;
             var changeCost = dispatch - alreadyPaid;
-            var forecast = RouteForecast.For(operations.Home, destination, type);
+            var forecast = operations.Forecast(operations.Home, destination, type);
             var basePay = forecast.Revenue;
             BandAndDistance += $" · {forecast.ExpectedPassengers}/{forecast.Seats} seats";
             var pay = (long)Math.Round(basePay *
@@ -404,10 +412,8 @@ namespace Airside.Presentation
 
             into.Clear();
             into.Surface(layout.Surface);
-            into.Text(layout.TitleBox, model.Title, 26f, HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
-            into.Button(OperationsWorkspacePainter.CloseBox(layout.Surface), "CLOSE", HudAction.Close,
-                HudButtonStyle.Secondary);
-            into.Hairline(HudShell.HeaderRule(layout.Surface));
+            HudShellPainter.PaintSheetHeader(into, layout.Surface, model.Title, string.Empty,
+                layout.TitleBox, HudBox.Empty);
 
             // The map well is darker than the surface so the coastline and routes read.
             into.Fill(layout.Map, HudTone.Default, 0.55f, AirsidePalette.CoastalBlueDeepHex);

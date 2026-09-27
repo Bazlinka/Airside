@@ -228,6 +228,15 @@ aimed south over the stands, plus night-only warm interior cards behind the 28 b
 The 23:30 ambient key/fill/trilight is lifted enough to preserve pavement and aircraft silhouettes
 without making night read as day. Matched packaged evidence is under
 `work/review/night-lighting-accepted.png` and `work/review/night-lighting-day-accepted.png`.
+ADR 0124 extends the procedural pass to every surveyed building and fixture, still with no
+external asset: parapets, storey window bands (lit and dark panes), hangar doors and roof
+monitors, fire-station bays, freight doors, rooftop plant, a glazed tower cab with mast and
+red obstruction light, and a terminal kerb canopy (`Presentation/BuildingDetail.cs`, merged
+one mesh per material); chamfered edges on every procedural block (`BevelledBox`) and
+rounded aerobridge tunnels; domed airfield light fixtures merged per colour with additive
+night halos (`AirfieldFixture`), blue taxiway edges and red stop bars. Offline geometry
+previews are in `docs/testing/building-detail-2026-09-27/`; packaged Mac day/dusk/night
+captures are still owed.
 
 Paths in this and later tables are relative to
 `game/Airside/Assets/Airside/Art/`.

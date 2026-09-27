@@ -96,6 +96,7 @@ namespace Airside.Presentation
         private static void AddYpadTaxiCentrelineLights(List<Light> lights)
         {
             var green = new Color(0.12f, 1f, 0.42f);
+            var blue = new Color(0.18f, 0.42f, 1f);
             var occupied = new HashSet<long>();
             var fixture = 0;
             foreach (var taxiway in AdelaideLayout.Taxiways)
@@ -123,6 +124,13 @@ namespace Airside.Presentation
                         {
                             var position = new Vector3(point.x, 0.19f, point.y);
                             PlaceYpadLens($"Taxi CL green {fixture:000}", position, green, 0.25f);
+                            if (TakesTaxiEdgeLights(point))
+                            {
+                                var across = new Vector2(-segment.y, segment.x) / length
+                                             * (taxiway.Width * 0.5f + AirsideAdelaidePavement.TaxiSealedShoulderMetres + 0.8f);
+                                PlaceYpadLens($"Taxi edge blue {fixture:000} L", new Vector3(point.x + across.x, 0.2f, point.y + across.y), blue, 0.22f);
+                                PlaceYpadLens($"Taxi edge blue {fixture:000} R", new Vector3(point.x - across.x, 0.2f, point.y - across.y), blue, 0.22f);
+                            }
                             if (fixture % 8 == 0)
                                 lights.Add(CreateYpadPointLight($"Taxi CL point {fixture:000}",
                                     position + Vector3.up * 0.12f, green, 10f));
@@ -135,6 +143,30 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>
+        /// Blue edge lights line the taxiways between aprons and runways (ADR 0124): not on an
+        /// apron (stand lighting covers those) and not inside a runway strip, where they would
+        /// clutter the runway edge and guard lights.
+        /// </summary>
+        private static bool TakesTaxiEdgeLights(Vector2 point)
+        {
+            if (Mathf.Abs(point.y) < AirsideBareField.RunwayHalfWidth + 45f
+                && Mathf.Abs(point.x) < AirsideBareField.RunwayHalfLength + 60f)
+                return false;
+            var radians = AirsideAdelaidePavement.CrossYawRadians;
+            var dx = point.x - AirsideAdelaidePavement.CrossCenterX;
+            var dz = point.y - AirsideAdelaidePavement.CrossCenterZ;
+            var alongCross = Mathf.Cos(radians) * dx - Mathf.Sin(radians) * dz;
+            var acrossCross = Mathf.Sin(radians) * dx + Mathf.Cos(radians) * dz;
+            if (Mathf.Abs(acrossCross) < AirsideAdelaidePavement.CrossHalfWidth + 45f
+                && Mathf.Abs(alongCross) < AirsideAdelaidePavement.CrossHalfLength + 60f)
+                return false;
+            foreach (var apron in AdelaideLayout.Aprons)
+                if (BuildingDetail.Contains(apron.Xz, point.x, point.y))
+                    return false;
+            return true;
+        }
+
         private static void AddYpadRunwayGuardLights(List<Light> lights)
         {
             var yellow = new Color(1f, 0.72f, 0.08f);
@@ -145,6 +177,17 @@ namespace Airside.Presentation
                 var z = hold[i + 1];
                 if (!AdelaideAirfieldLighting.IsMainRunwayGuardPosition(x, z))
                     continue;
+
+                // Red stop bar across the taxiway at the holding position (ADR 0124).
+                var (direction, width) = NearestTaxiwayAt(x, z);
+                var across = new Vector3(-direction.z, 0f, direction.x);
+                // Just short of the painted bars, on the side away from the runway (z = 0).
+                var away = Vector3.Dot(direction, new Vector3(0f, 0f, Mathf.Sign(z))) >= 0f ? direction : -direction;
+                var bar = Mathf.Max(2, Mathf.RoundToInt(width / 3f));
+                for (var b = 0; b <= bar; b++)
+                    PlaceYpadLens($"Stopbar {i / 2:00} {b:00}",
+                        new Vector3(x, 0.2f, z) + across * ((b / (float)bar - 0.5f) * width) + away * 1.9f,
+                        new Color(1f, 0.1f, 0.08f), 0.24f);
 
                 for (var side = -1; side <= 1; side += 2)
                 {
@@ -353,17 +396,262 @@ namespace Airside.Presentation
                 AirsideAdelaidePavement.CrossCenterZ - sin * localX + cos * localZ);
         }
 
+        // ---- Merged fixtures (ADR 0124) ----------------------------------------------------
+        // Every lens used to be its own cube GameObject (hundreds of them). Lenses now append a
+        // domed fixture into one mesh per colour group, the metal bases into one shared mesh,
+        // and a soft additive halo per lens into one halo mesh per group. The night pass tints
+        // a dozen group renderers instead of every lens.
+
+        private sealed class LensGroup
+        {
+            public string Name;
+            public Color Colour;
+            public LensDayResponse Response;
+            public readonly List<Vector3> Vertices = new();
+            public readonly List<Vector3> Normals = new();
+            public readonly List<int> Triangles = new();
+            public readonly List<Vector3> HaloVertices = new();
+            public readonly List<Vector2> HaloUvs = new();
+            public readonly List<int> HaloTriangles = new();
+            public Renderer Lens;
+            public Renderer Halo;
+            public float HaloGain = 0.55f;
+        }
+
+        private static readonly Dictionary<string, LensGroup> LensGroups = new();
+        private static readonly List<LensGroup> BuiltLensGroups = new();
+        private static readonly List<Vector3> FixtureBaseVertices = new();
+        private static readonly List<Vector3> FixtureBaseNormals = new();
+        private static readonly List<int> FixtureBaseTriangles = new();
+        private static AirfieldFixture.Geometry _fixtureBase;
+        private static AirfieldFixture.Geometry _fixtureLens;
+        private static Material _haloMaterial;
+        public const string LensGroupPrefix = "Airfield lenses ";
+        public const string HaloGroupPrefix = "Airfield halos ";
+
         private static void PlaceYpadLens(string name, Vector3 position, Color colour, float diameter = 0.34f)
         {
-            var lens = CreateBlock(name, position, new Vector3(diameter, 0.16f, diameter), colour);
-            var renderer = lens.GetComponent<Renderer>();
-            if (renderer == null)
+            var response = AirfieldFixture.ResponseFor(name);
+            var key = $"{response} {ColorUtility.ToHtmlStringRGB(colour)}";
+            if (!LensGroups.TryGetValue(key, out var group))
+            {
+                group = new LensGroup { Name = key, Colour = colour, Response = response };
+                LensGroups[key] = group;
+            }
+
+            _fixtureBase ??= AirfieldFixture.Base();
+            _fixtureLens ??= AirfieldFixture.Lens();
+            // Same footprint as the old lens cube: `diameter` across, 0.16 m tall, centred on y.
+            var scale = new Vector3(diameter, 0.16f, diameter);
+            var origin = position - Vector3.up * 0.08f;
+            AppendFixture(_fixtureLens, origin, scale, group.Vertices, group.Normals, group.Triangles);
+            AppendFixture(_fixtureBase, origin, scale, FixtureBaseVertices, FixtureBaseNormals, FixtureBaseTriangles);
+            AddHalo(group, position, AirfieldFixture.HaloSize(diameter, response));
+        }
+
+        private static void AppendFixture(AirfieldFixture.Geometry g, Vector3 origin, Vector3 scale,
+            List<Vector3> vertices, List<Vector3> normals, List<int> triangles)
+        {
+            var first = vertices.Count;
+            for (var i = 0; i < g.VertexCount; i++)
+            {
+                vertices.Add(origin + Vector3.Scale(new Vector3(g.Positions[i * 3], g.Positions[i * 3 + 1], g.Positions[i * 3 + 2]), scale));
+                normals.Add(new Vector3(g.Normals[i * 3] / scale.x, g.Normals[i * 3 + 1] / scale.y,
+                    g.Normals[i * 3 + 2] / scale.z).normalized);
+            }
+
+            foreach (var t in g.Triangles)
+                triangles.Add(first + t);
+        }
+
+        /// <summary>A ground pool plus two crossed upright cards: reads as glow from the overview and at eye level.</summary>
+        private static void AddHalo(LensGroup group, Vector3 centre, float size, Vector3? cardCentre = null,
+            float cardSize = 0f)
+        {
+            void Quad(Vector3 c, Vector3 u, Vector3 v)
+            {
+                var first = group.HaloVertices.Count;
+                group.HaloVertices.Add(c - u - v);
+                group.HaloVertices.Add(c + u - v);
+                group.HaloVertices.Add(c + u + v);
+                group.HaloVertices.Add(c - u + v);
+                group.HaloUvs.Add(new Vector2(0f, 0f));
+                group.HaloUvs.Add(new Vector2(1f, 0f));
+                group.HaloUvs.Add(new Vector2(1f, 1f));
+                group.HaloUvs.Add(new Vector2(0f, 1f));
+                group.HaloTriangles.AddRange(new[] { first, first + 2, first + 1, first, first + 3, first + 2 });
+            }
+
+            var half = size * 0.5f;
+            Quad(centre + Vector3.up * 0.03f, Vector3.right * half, Vector3.forward * half);
+            var card = cardCentre.HasValue ? cardSize * 0.5f : half * 0.55f;
+            var at = cardCentre ?? centre + Vector3.up * card * 0.6f;
+            Quad(at, Vector3.right * card, Vector3.up * card);
+            Quad(at, Vector3.forward * card, Vector3.up * card);
+        }
+
+        /// <summary>
+        /// A streetlight's night glow (ADR 0124): a warm pool on the ground under the head and a
+        /// soft card round the lamp. No real light — the landside keeps its point-light budget.
+        /// </summary>
+        private static void AddStreetlightGlow(Vector3 lamp, float groundY)
+        {
+            const string key = "Streetlights";
+            if (!LensGroups.TryGetValue(key, out var group))
+            {
+                group = new LensGroup
+                {
+                    Name = key, Colour = new Color(1f, 0.82f, 0.55f), Response = LensDayResponse.Guidance, HaloGain = 0.32f
+                };
+                LensGroups[key] = group;
+            }
+
+            AddHalo(group, new Vector3(lamp.x, groundY, lamp.z), 13f, cardCentre: lamp, cardSize: 1.8f);
+        }
+
+        /// <summary>Builds the merged fixture, lens and halo meshes queued by <see cref="PlaceYpadLens"/>.</summary>
+        private static void FlushYpadLenses()
+        {
+            // Statics outlive a play session when domain reload is off; drop destroyed groups.
+            BuiltLensGroups.RemoveAll(g => g.Lens == null && g.Halo == null);
+            if (LensGroups.Count == 0)
                 return;
+            var root = new GameObject("Airfield light fixtures").transform;
+            if (_airfieldRoot != null)
+                root.SetParent(_airfieldRoot, false);
+
+            SpawnFixtureMesh(root, "Airfield light fixture bases", FixtureBaseVertices, FixtureBaseNormals,
+                FixtureBaseTriangles, AirsideMaterialLibrary.CreateShared(new Color(0.42f, 0.43f, 0.44f),
+                    AirsideMaterialLibrary.SurfaceKind.Metal, null, Vector2.one, useTextures: false));
+            foreach (var group in LensGroups.Values)
+            {
+                group.Lens = SpawnFixtureMesh(root, LensGroupPrefix + group.Name, group.Vertices, group.Normals,
+                    group.Triangles, AirsideMaterialLibrary.CreateShared(group.Colour,
+                        AirsideMaterialLibrary.SurfaceKind.Default, null, Vector2.one, useTextures: false));
+                group.Halo = SpawnHaloMesh(root, HaloGroupPrefix + group.Name, group);
+                BuiltLensGroups.Add(group);
+            }
+
+            LensGroups.Clear();
+            FixtureBaseVertices.Clear();
+            FixtureBaseNormals.Clear();
+            FixtureBaseTriangles.Clear();
+        }
+
+        private static Renderer SpawnFixtureMesh(Transform root, string name, List<Vector3> vertices, List<Vector3> normals,
+            List<int> triangles, Material material)
+        {
+            if (triangles.Count == 0)
+                return null;
+            var mesh = new Mesh { name = name, indexFormat = IndexFormat.UInt32 };
+            mesh.SetVertices(vertices);
+            mesh.SetNormals(normals);
+            mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateBounds();
+            AirsideMeshUtil.UploadStatic(mesh);
+            var go = new GameObject(name);
+            go.transform.SetParent(root, false);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
             renderer.shadowCastingMode = ShadowCastingMode.Off;
             renderer.receiveShadows = false;
-            // Restrained emission preserves individual fixtures; a stronger value blooms
-            // neighbouring stations into the continuous neon rails seen in the old build.
-            SetRendererColor(renderer, colour, colour * 1.25f);
+            AirsideSceneIndex.Remember(go);
+            return renderer;
+        }
+
+        private static Renderer SpawnHaloMesh(Transform root, string name, LensGroup group)
+        {
+            var material = HaloMaterial();
+            if (material == null || group.HaloTriangles.Count == 0)
+                return null;
+            var mesh = new Mesh { name = name, indexFormat = IndexFormat.UInt32 };
+            mesh.SetVertices(group.HaloVertices);
+            mesh.SetUVs(0, group.HaloUvs);
+            mesh.SetTriangles(group.HaloTriangles, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            AirsideMeshUtil.UploadStatic(mesh);
+            var go = new GameObject(name);
+            go.transform.SetParent(root, false);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.enabled = false;
+            AirsideSceneIndex.Remember(go);
+            return renderer;
+        }
+
+        /// <summary>URP Unlit, additive, depth-tested, no depth write, with a generated soft radial falloff.</summary>
+        private static Material HaloMaterial()
+        {
+            if (_haloMaterial != null)
+                return _haloMaterial;
+            var shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader == null)
+                return null;
+            const int size = 64;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                name = "airside_halo_falloff", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear
+            };
+            var pixels = new Color32[size * size];
+            for (var y = 0; y < size; y++)
+            for (var x = 0; x < size; x++)
+            {
+                var dx = (x + 0.5f) / size * 2f - 1f;
+                var dy = (y + 0.5f) / size * 2f - 1f;
+                var r = Mathf.Clamp01(Mathf.Sqrt(dx * dx + dy * dy));
+                // Bright core, long soft tail, exactly zero at the card edge.
+                var v = Mathf.Pow(1f - r, 2.6f) * 0.85f + Mathf.Pow(1f - r, 12f) * 0.15f;
+                var b = (byte)Mathf.RoundToInt(Mathf.Clamp01(v) * 255f);
+                pixels[y * size + x] = new Color32(b, b, b, b);
+            }
+
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+            var material = new Material(shader) { name = "mat_airfield_halo_additive" };
+            material.SetTexture("_BaseMap", texture);
+            material.SetColor("_BaseColor", Color.black);
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", 2f);
+            material.SetInt("_SrcBlend", (int)BlendMode.One);
+            material.SetInt("_DstBlend", (int)BlendMode.One);
+            material.SetInt("_ZWrite", 0);
+            material.SetInt("_Cull", (int)CullMode.Off);
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.renderQueue = (int)RenderQueue.Transparent;
+            _haloMaterial = material;
+            return material;
+        }
+
+        /// <summary>
+        /// Day/night for the merged lens groups (ADR 0124): every group keeps its own colour —
+        /// amber caution edges stay amber — and dims by day by its response; halos fade in at dusk.
+        /// </summary>
+        private static void UpdateLensGroups(float daylight)
+        {
+            var night = 1f - daylight;
+            var halo = AirfieldFixture.HaloStrength(night);
+            foreach (var group in BuiltLensGroups)
+            {
+                if (group.Lens != null)
+                {
+                    var glow = AirfieldFixture.LensEmission(group.Response, night);
+                    var body = Color.Lerp(group.Colour * 0.5f, group.Colour, Mathf.Clamp01(glow));
+                    body.a = 1f;
+                    SetRendererColor(group.Lens, body, group.Colour * glow);
+                }
+
+                if (group.Halo == null)
+                    continue;
+                group.Halo.enabled = halo > 0f;
+                if (halo > 0f)
+                    SetRendererColor(group.Halo, group.Colour * (group.HaloGain * halo));
+            }
         }
 
         private static Light CreateYpadPointLight(

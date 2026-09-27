@@ -24,8 +24,19 @@ namespace Airside.Simulation
         public static long DispatchCost(AircraftType type, double oneWayKm)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            return Math.Max(90, (long)Math.Round(70 + Math.Max(0, oneWayKm) * 1.28 * Weight(type)));
+            return Math.Max(90, (long)Math.Round(70 + Math.Max(0, oneWayKm) * CostPerKm(type)));
         }
+
+        /// <summary>
+        /// Dispatch cost per one-way km. Turboprops were tuned down from 1.28 to 1.12 (ADR 0125):
+        /// the balance runs showed the regional fleet could not fund the jet, gate and outstation
+        /// the Domestic stage asks for inside ADR 0120's play-time window.
+        /// </summary>
+        public static double CostPerKm(AircraftType type) =>
+            Weight(type) <= 1.0 ? TurbopropCostPerKm : JetCostPerKm * Weight(type);
+
+        public const double TurbopropCostPerKm = 1.12;
+        public const double JetCostPerKm = 1.28;
 
         /// <summary>Paid once when a player aircraft returns to stand, with or without a contract.</summary>
         public static long FlightPay(AircraftType type, double oneWayKm) =>

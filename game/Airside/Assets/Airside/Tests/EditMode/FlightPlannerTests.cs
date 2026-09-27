@@ -53,7 +53,9 @@ namespace Airside.Tests
             var (_, ops, fleet) = PlayerFleet(1);
             var list = FlightPlanner.DestinationsFor(ops, fleet[0]);
 
-            Assert.That(list.Count, Is.EqualTo(ops.MapDestinations().Count()));
+            // The planner lists international cities too (ADR 0125), not just the Australian map.
+            Assert.That(list.Count, Is.EqualTo(ops.PlannableDestinations().Count()));
+            Assert.That(list.Any(d => d.Destination.Code == "AKL"), Is.True);
             var firstLocked = list.FindIndex(d => !d.Reachable);
             if (firstLocked >= 0)
                 Assert.That(list.Skip(firstLocked).All(d => !d.Reachable), Is.True);

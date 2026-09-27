@@ -230,8 +230,18 @@ namespace Airside.Simulation
         /// finishes its leg, so it is always respected.
         /// </param>
         public static bool PathClear(IReadOnlyList<FleetAircraft> fleet, FleetAircraft candidate, GroundLeg leg,
-            RunwayDirection candidateRunway, bool taxiOut, SimulationTime start, bool includeStationary = true)
+            RunwayDirection candidateRunway, bool taxiOut, SimulationTime start, bool includeStationary = true) =>
+            PathClear(fleet, candidate, leg, candidateRunway, taxiOut, start, includeStationary, out _);
+
+        /// <summary>
+        /// <see cref="PathClear(IReadOnlyList{FleetAircraft}, FleetAircraft, GroundLeg, RunwayDirection, bool, SimulationTime, bool)"/>
+        /// that also names the first aircraft in the way, so a hold can say who it is waiting for.
+        /// </summary>
+        public static bool PathClear(IReadOnlyList<FleetAircraft> fleet, FleetAircraft candidate, GroundLeg leg,
+            RunwayDirection candidateRunway, bool taxiOut, SimulationTime start, bool includeStationary,
+            out FleetAircraft blocker)
         {
+            blocker = null;
             if (fleet == null || candidate == null || leg == null)
                 return true;
             var half = HalfSpan(candidate.Type);
@@ -284,7 +294,10 @@ namespace Airside.Simulation
                     if (!got)
                         continue;
                     if (TooClose(mine, half, theirs, other.HalfSpan))
+                    {
+                        blocker = other.Aircraft;
                         return false;
+                    }
                 }
             }
 

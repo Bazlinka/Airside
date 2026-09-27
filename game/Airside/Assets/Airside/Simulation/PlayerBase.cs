@@ -44,9 +44,11 @@ namespace Airside.Simulation
             new("GATE-27"), new("GATE-29")
         };
 
+        // 28L last: it is the only widebody line, so narrowbodies take it only when nothing
+        // else is free — otherwise the player's own 737 locked their 787 out (ADR 0125).
         private static readonly StableId[] InternationalGateStands =
         {
-            new("GATE-27"), new("GATE-29"), new("GATE-28L"), new("GATE-28R")
+            new("GATE-27"), new("GATE-29"), new("GATE-28R"), new("GATE-28L")
         };
 
         // 28L is the pier's code E centre line; 28R is a code C narrowbody line (ADR 0110).
@@ -62,7 +64,7 @@ namespace Airside.Simulation
                 3, 1_500, 4, OperatingTier.Provisional, false, false),
             PlayerBaseLevel.JetGate => new PlayerBaseSpec(level,
                 "Jet-gate base", "5 aircraft · terminal-gate jet handling",
-                5, 8_000, 12, OperatingTier.Regional, true, false),
+                5, 6_000, 12, OperatingTier.Regional, true, false),
             PlayerBaseLevel.International => new PlayerBaseSpec(level,
                 "International base", "6 aircraft · widebody and long-haul handling",
                 6, 20_000, 24, OperatingTier.Domestic, true, true),

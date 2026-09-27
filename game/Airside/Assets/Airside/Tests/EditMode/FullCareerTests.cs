@@ -49,8 +49,11 @@ namespace Airside.Tests
             var career = new AirlineCareerState(500_000, 90, OperatingTier.International,
                 servedDestinations: codes, outstationBases: new[] { "MEL", "SYD" },
                 recentServiceMargins: Enumerable.Repeat(100L, 30));
-            var fleet = Enumerable.Repeat(AircraftType.Boeing7378, 18).ToArray();
+            var fleet = Enumerable.Repeat(AircraftType.Boeing7378, 17).Append(AircraftType.AirbusA350900).ToArray();
             Assert.That(CareerRoadmap.FinaleReady(career, fleet, fleet.Length), Is.True);
+            var noWidebody = Enumerable.Repeat(AircraftType.Boeing7378, 18).ToArray();
+            Assert.That(CareerRoadmap.FinaleReady(career, noWidebody, noWidebody.Length), Is.False,
+                "the finale needs every International-stage goal, the widebody included");
             var loss = new AirlineCareerState(500_000, 90, OperatingTier.International,
                 servedDestinations: codes, outstationBases: new[] { "MEL", "SYD" },
                 recentServiceMargins: Enumerable.Repeat(-100L, 30));

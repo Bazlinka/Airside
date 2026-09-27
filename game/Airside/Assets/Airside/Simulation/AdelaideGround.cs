@@ -162,8 +162,14 @@ namespace Airside.Simulation
                 RunwayDirection.Runway30 => AdelaideCrossRoutes.Lineup(RunwayDirection.Runway30),
                 _ => AdelaideLayout.Lineup
             };
+            // ADR 0147: one turn on the aircraft's own radius, finishing straight on the centreline.
+            var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
+            RunwayFrame.Forward(runway, out var fx, out var fz);
+            var radius = Math.Max(18f, Math.Min(45f, wheelbase * 2f));
+            if (LineupGeometry.TryBest(xz, fx, fz, radius, wheelbase, out var steered))
+                xz = steered;
             leg = new GroundLeg(new GroundLegPart(new GroundPath(xz, GroundSpeedLimits.Lineup),
-                tailFirst: false, trackMetres: AircraftPerformance.For(type).NoseToMainGearMetres));
+                tailFirst: false, trackMetres: wheelbase));
             LineupLegs[key] = leg;
             return leg;
         }

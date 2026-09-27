@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Smoother onto the runway.** Aircraft now turn onto the runway in one steady curve and line up
+  straight before taking off, instead of whipping round. Arrivals cleared to land glide onto their
+  landing path without a lurch.
+
 - **Realistic pushbacks.** The tug now pushes aircraft straight back and swings the tail round so they
   end up facing down the taxiway, ready to go. They no longer slide sideways. Aircraft on the
   small regional bays park facing the way they drove in.

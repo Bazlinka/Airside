@@ -1,5 +1,28 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude (same branch) — propellers (ADR 0148).** Blur by per-frame blade step vs blade
+  gap (no wagon-wheel), procedural blur disc (hub-clear, tip ring, faint ghosts, counter-rotated),
+  spool capped +170/−75 rpm/s, props and fans stop when paused. **Mac checks:** Saab/ATR/Q400 start,
+  taxi, takeoff, shutdown; pause.
+
+- **2026-09-28 Claude (same branch) — runway entry and approach handoff (ADR 0147).** `LineupGeometry`:
+  straight from the hold, one turn on the aircraft's radius, straight on the centreline (12/30 turns
+  were 3–9 m radius, now 11–13 m; 05/23 737 aligned). Approach handoff 6 s smootherstep; gentle
+  hold drift. **Mac checks:** lineups per runway/type, takeoff roll start, early-cleared arrivals.
+
+- **2026-09-28 Claude (same branch) — stands and tug pushback (ADR 0145, 0146).** Bays park along their
+  lead-in (`ParkedHeadingDegrees`; walk-outs split arrival/departure). `PushbackGeometry` builds each
+  push per runway: straight back, tail swing away from the taxi direction on the aircraft's radius,
+  nose-first down the taxilane; taxi-out starts there. The old sideways heading blend is gone for
+  aligned pushes. **Mac checks:** gate pushes on 05 and 23, tug on the nose, 10A/10C parking,
+  `GroundSeparationTests`, `TerminalGateOperationsTests`.
+
+- **2026-09-28 Claude (same branch) — ground movement never jumps (ADR 0144).** Presentation ground
+  chains (taxi-out→holding→lineup, vacate→awaiting→taxi-in): the drawn aircraft follows the sim's
+  chain position, catches up at up to 1.6× pace, never reverses or snaps (replaces `QueueShuffle`).
+  Holding queue ordered per strip like the tower. **Mac checks:** busy departure bank, release off
+  the stand, arrivals leaving the exit.
+
 - **2026-09-27 Claude (same branch) — weather drift, one sky, fog, clouds (ADR 0143).** `Weather.At`
   is a Markov chain (neighbour-mostly, 5% jumps, fog only 04–09 local); `Weather.LookAt` eases 15
   game-min between hours; `AtmosphereLook` gives one sky colour for background/dome/fog, fog density

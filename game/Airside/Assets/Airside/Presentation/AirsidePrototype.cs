@@ -2397,18 +2397,11 @@ namespace Airside.Presentation
                 return;
             }
 
-            // Constants are true RPM — convert to degrees/sec (×6) so blades read as spinning.
-            var degrees = PresentationDeltaTime * rpm * 6f;
-            if (degrees <= 0f)
-                return;
-            var blur = AirsideReusableMotion.PropBlurBlend(rpm);
             for (var i = 0; i < propellers.Length; i++)
             {
                 var child = propellers[i].Transform;
-                if (child == null)
-                    continue;
-                child.Rotate(Vector3.forward, degrees, Space.Self);
-                ApplyPropBlurToHub(child, blur);
+                if (child != null)
+                    SpinOnePropeller(child, rpm);
             }
         }
 
@@ -2432,10 +2425,7 @@ namespace Airside.Presentation
                 var child = propellers[i].Transform;
                 if (child == null)
                     continue;
-                var rpm = propellers[i].IsLeft ? left : right;
-                ApplyPropBlurToHub(child, AirsideReusableMotion.PropBlurBlend(rpm));
-                if (rpm >= 1f)
-                    child.Rotate(Vector3.forward, PresentationDeltaTime * rpm * 6f, Space.Self);
+                SpinOnePropeller(child, propellers[i].IsLeft ? left : right);
             }
         }
 
@@ -2463,14 +2453,14 @@ namespace Airside.Presentation
             if (fanLeft != null)
             {
                 ApplyJetFanBlurToHub(fanLeft, AirsideReusableMotion.JetFanBlurBlend(left));
-                if (left >= 1f && PresentationDeltaTime > 0f)
-                    fanLeft.Rotate(Vector3.forward, PresentationDeltaTime * left * 6f, Space.Self);
+                if (left >= 1f && PropDeltaTime > 0f)
+                    fanLeft.Rotate(Vector3.forward, PropDeltaTime * left * 6f, Space.Self);
             }
             if (fanRight != null)
             {
                 ApplyJetFanBlurToHub(fanRight, AirsideReusableMotion.JetFanBlurBlend(right));
-                if (right >= 1f && PresentationDeltaTime > 0f)
-                    fanRight.Rotate(Vector3.forward, PresentationDeltaTime * right * 6f, Space.Self);
+                if (right >= 1f && PropDeltaTime > 0f)
+                    fanRight.Rotate(Vector3.forward, PropDeltaTime * right * 6f, Space.Self);
             }
         }
 
@@ -2481,7 +2471,7 @@ namespace Airside.Presentation
             // Fan spool is intentionally quicker than a prop governor but still smooth
             // enough that engine start and shutdown read as machinery, not a toggle.
             var rate = targetRpm > current ? 2.3f : 1.1f;
-            current = Mathf.Lerp(current, targetRpm, AirsideFlightPath.DampFactor(rate, PresentationDeltaTime));
+            current = Mathf.Lerp(current, targetRpm, AirsideFlightPath.DampFactor(rate, PropDeltaTime));
             _jetFanRpm[key] = current;
             return current;
         }
@@ -2493,10 +2483,136 @@ namespace Airside.Presentation
         {
             if (!spools.TryGetValue(key, out var current))
                 current = targetRpm;
+            var dt = PropDeltaTime;
             var rate = targetRpm > current ? 1.6f : 0.8f;
-            current = Mathf.Lerp(current, targetRpm, AirsideFlightPath.DampFactor(rate, PresentationDeltaTime));
+            var eased = Mathf.Lerp(current, targetRpm, AirsideFlightPath.DampFactor(rate, dt));
+            // ADR 0148: a turbine accepts throttle over seconds and a propeller runs down slowly, so
+            // the change per second is capped too: a start turns the blades visibly before light-off.
+            var up = AirsideReusableMotion.PropSpoolUpRpmPerSecond * dt;
+            var down = AirsideReusableMotion.PropSpoolDownRpmPerSecond * dt;
+            current = Mathf.Clamp(eased, current - down, current + up);
             spools[key] = current;
             return current;
+        }
+
+        /// <summary>Blade counts per propeller, read from the model when its disc is built.</summary>
+        private static readonly Dictionary<int, int> PropBladeCounts = new();
+
+        /// <summary>How far each propeller has turned, so its blur disc can be held nearly still.</summary>
+        private readonly Dictionary<int, float> _propSpinDegrees = new();
+
+        private double _propClockSeen = double.NaN;
+        private int _propClockFrame = -1;
+        private float _propDelta;
+
+        /// <summary>
+        /// Real seconds for propeller motion this frame, or 0 while the game is paused (the presentation
+        /// clock did not move). Props used to keep spinning on unscaled time through a pause.
+        /// </summary>
+        private float PropDeltaTime
+        {
+            get
+            {
+                if (_propClockFrame == Time.frameCount)
+                    return _propDelta;
+                _propClockFrame = Time.frameCount;
+                var moved = double.IsNaN(_propClockSeen) || _preciseTime != _propClockSeen;
+                _propClockSeen = _preciseTime;
+                _propDelta = moved ? Time.unscaledDeltaTime : 0f;
+                return _propDelta;
+            }
+        }
+
+        /// <summary>
+        /// ADR 0148: blades show only while the frame can draw them turning. Past a third of the gap
+        /// between blades per frame they wagon-wheel, so they fade into the blur disc, which is held
+        /// nearly still against the spin so its faint blade ghosts drift slowly instead of strobing.
+        /// </summary>
+        private void SpinOnePropeller(Transform propeller, float rpm)
+        {
+            var dt = PropDeltaTime;
+            var id = propeller.GetInstanceID();
+            var step = rpm * 6f * dt;
+            if (!PropBladeCounts.TryGetValue(id, out var blades))
+                blades = 4;
+            var blur = rpm < 1f ? 0f : AirsideReusableMotion.PropBlurForStep(step, blades);
+            ApplyPropBlurToHub(propeller, blur);
+            if (step <= 0f)
+                return;
+            propeller.Rotate(Vector3.forward, step, Space.Self);
+            _propSpinDegrees.TryGetValue(id, out var spun);
+            spun = (spun + step) % 360f;
+            _propSpinDegrees[id] = spun;
+            var disc = propeller.Find("PropDisc");
+            if (disc != null && disc.gameObject.activeSelf)
+                disc.localRotation = Quaternion.Euler(0f, 0f, -spun * 0.97f);
+        }
+
+        private static int CountBlades(Transform propeller)
+        {
+            var count = 0;
+            foreach (var renderer in propeller.GetComponentsInChildren<Renderer>(true))
+                if (renderer != null && renderer.name.IndexOf("blade", StringComparison.OrdinalIgnoreCase) >= 0)
+                    count++;
+            return count >= 2 && count <= 8 ? count : 4;
+        }
+
+        private static readonly Dictionary<int, Material> PropBlurMaterials = new();
+
+        /// <summary>URP Unlit, alpha blended, double-sided, over a procedural propeller-blur texture.</summary>
+        private static Material PropBlurMaterial(int blades)
+        {
+            if (PropBlurMaterials.TryGetValue(blades, out var cached) && cached != null)
+                return cached;
+            var shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader == null)
+                return AirsideMaterialLibrary.CreateShared(new Color(0.72f, 0.74f, 0.78f, 0.3f),
+                    AirsideMaterialLibrary.SurfaceKind.Glass);
+            const int size = 128;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, true)
+            {
+                name = $"airside_prop_blur_{blades}", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear
+            };
+            var pixels = new Color32[size * size];
+            for (var y = 0; y < size; y++)
+            for (var x = 0; x < size; x++)
+            {
+                var dx = (x + 0.5f) / size * 2f - 1f;
+                var dy = (y + 0.5f) / size * 2f - 1f;
+                var r = Mathf.Sqrt(dx * dx + dy * dy);
+                var a = Mathf.Atan2(dy, dx);
+                var alpha = 0f;
+                if (r < 1f)
+                {
+                    // Blades sweep more area near the tips, so the blur thickens outward, clear at the hub.
+                    var body = Mathf.SmoothStep(0.12f, 0.45f, r) * (0.55f + 0.35f * r);
+                    // Faint ghosts of the blades.
+                    var ghost = 0.18f * Mathf.Pow(0.5f + 0.5f * Mathf.Cos(a * blades), 6f) * Mathf.SmoothStep(0.2f, 0.7f, r);
+                    // The painted tips read as a thin bright ring.
+                    var ring = 0.35f * Mathf.Exp(-Mathf.Pow((r - 0.95f) / 0.025f, 2f));
+                    var edge = 1f - Mathf.SmoothStep(0.97f, 1f, r);
+                    alpha = Mathf.Clamp01((body + ghost + ring) * edge);
+                }
+
+                pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
+            }
+
+            texture.SetPixels32(pixels);
+            texture.Apply(true, true);
+            var material = new Material(shader) { name = "mat_prop_blur" };
+            material.SetTexture("_BaseMap", texture);
+            material.SetColor("_BaseColor", new Color(0.72f, 0.74f, 0.78f, AirsideReusableMotion.PropDiscPeakAlpha));
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", 0f);
+            material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            material.SetInt("_ZWrite", 0);
+            material.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            PropBlurMaterials[blades] = material;
+            return material;
         }
 
         /// <summary>
@@ -11417,24 +11533,24 @@ namespace Airside.Presentation
                 }
 
                 var diameter = Mathf.Clamp(radius * 2.05f, 1.2f, 4.05f);
-                var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                // ADR 0148: a double-sided quad with a blur texture (soft hub-to-tip density, faint
+                // blade ghosts, a brighter tip ring) instead of a flat glass cylinder that read as a
+                // grey pancake. It sits in the propeller's own disc plane (local XY, spin axis Z).
+                var blades = CountBlades(child);
+                var disc = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 disc.name = "PropDisc";
                 DestroyPresentationObject(disc.GetComponent<Collider>());
                 disc.transform.SetParent(child, false);
                 disc.transform.localPosition = Vector3.zero;
-                // Cylinder axis → local Z so the face is perpendicular to the spin axis.
-                disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                // Thin glass disc — reads as motion blur, not a grey cylinder slab.
-                disc.transform.localScale = new Vector3(diameter * 1.02f, 0.0035f, diameter * 1.02f);
+                disc.transform.localRotation = Quaternion.identity;
+                disc.transform.localScale = new Vector3(diameter * 1.02f, diameter * 1.02f, 1f);
                 var discColor = new Color(0.72f, 0.74f, 0.78f, AirsideReusableMotion.PropDiscPeakAlpha);
-                var discMat = AirsideMaterialLibrary.CreateShared(
-                    discColor,
-                    AirsideMaterialLibrary.SurfaceKind.Glass);
                 var discRenderer = disc.GetComponent<Renderer>();
-                discRenderer.sharedMaterial = discMat;
+                discRenderer.sharedMaterial = PropBlurMaterial(blades);
                 discRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 discRenderer.receiveShadows = false;
                 SetRendererColor(discRenderer, discColor);
+                PropBladeCounts[child.GetInstanceID()] = blades;
                 disc.SetActive(false);
             }
         }

@@ -163,9 +163,11 @@ namespace Airside.Simulation
 
                 if (ReferenceEquals(other, aircraft) || other.State != aircraft.State)
                     continue;
-                // Holding short queues per runway end. Waiting for a stand queues per runway exit:
-                // 05 and 23 both vacate to E2, while 12 and 30 each join the bay corridor.
-                if (shareStrip ? other.AssignedRunway != aircraft.AssignedRunway
+                // Holding short queues per runway strip, in the order the tower clears them (ADR 0144):
+                // it takes the longest-waiting departure per strip, so the aircraft it clears is always
+                // the one drawn at the front. Waiting for a stand queues per runway exit: 05 and 23
+                // both vacate to E2, while 12 and 30 each join the bay corridor.
+                if (shareStrip ? RunwayWeather.IsMainRunway(other.AssignedRunway) != RunwayWeather.IsMainRunway(aircraft.AssignedRunway)
                                : !AdelaideGround.SameArrivalExit(other.AssignedRunway, aircraft.AssignedRunway))
                     continue;
                 var order = other.StateStartedAt.CompareTo(aircraft.StateStartedAt);

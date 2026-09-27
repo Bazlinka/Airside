@@ -22,7 +22,7 @@ namespace Airside.Presentation
 
         private const float ArrivalMinSpeedFactor = 0.55f;
         private const float ArrivalMaxSpeedFactor = 1.6f;
-        private const float ArrivalHandoffSeconds = 3f;
+        private const float ArrivalHandoffSeconds = 6f;
 
         private sealed class ArrivalFinalState
         {
@@ -115,7 +115,8 @@ namespace Airside.Presentation
             var y = AirsideFlightPath.GroundY + ArrivalApproach.Height(CircuitProfile.GlideslopeHeight(x));
             // A holder parked on the 80 % pin (~130 ft) looked frozen while the tower waited
             // for the previous landing to vacate. A small S-turn keeps them flying until cleared.
-            var weave = metres < 40f ? Mathf.Sin((float)(state.LastTime + lookAheadSeconds) * 0.45f) * 16f : 0f;
+            // ADR 0147: a gentle drift rather than a 16 m S-turn at 130 ft.
+            var weave = metres < 40f ? Mathf.Sin((float)(state.LastTime + lookAheadSeconds) * 0.22f) * 5f : 0f;
             // ADR 0142: beyond 12 km the arrival curves in from its origin's side of the final.
             var join = ArrivalApproach.LateralOffset(metres, state.Lateral);
             RunwayFrame.ToWorld(state.Runway, x, y, hold.z + weave + join, out var wx, out var wy, out var wz);
@@ -160,7 +161,9 @@ namespace Airside.Presentation
                 return Vector3.zero;
             }
 
-            var remaining = 1f - Mathf.SmoothStep(0f, 1f, (Time.time - state.HandoffAt) / ArrivalHandoffSeconds);
+            // Smootherstep: no kink in speed at either end of the handoff (ADR 0147).
+            var u = Mathf.Clamp01((Time.time - state.HandoffAt) / ArrivalHandoffSeconds);
+            var remaining = 1f - u * u * u * (u * (u * 6f - 15f) + 10f);
             if (remaining <= 0f)
             {
                 _arrivalFinal.Remove(flight.AircraftId);

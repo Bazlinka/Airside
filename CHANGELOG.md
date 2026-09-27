@@ -1,5 +1,21 @@
 ## Unreleased
 
+- **Better propellers.** Propellers no longer flicker or appear to spin backwards. You see the
+  blades turn as an engine starts, then a soft blur disc at speed, and they wind down slowly at
+  shutdown. Pausing the game now stops them.
+
+- **Smoother onto the runway.** Aircraft now turn onto the runway in one steady curve and line up
+  straight before taking off, instead of whipping round. Arrivals cleared to land glide onto their
+  landing path without a lurch.
+
+- **Realistic pushbacks.** The tug now pushes aircraft straight back and swings the tail round so they
+  end up facing down the taxiway, ready to go. They no longer slide sideways. Aircraft on the
+  small regional bays park facing the way they drove in.
+
+- **No more teleporting on the ground.** Aircraft waiting in a taxi queue no longer freeze and then
+  jump down the taxiway or onto the runway. They move up the queue and set off smoothly, and the
+  aircraft cleared for takeoff is always the one at the front.
+
 - **Weather that feels real.** The weather now changes gradually, from clear to cloudy to overcast to
   rain and back, and the sky eases between them instead of snapping. Fog only rolls in on early
   mornings, with mist lying over the airfield. The sky's colour follows the weather, and the fog

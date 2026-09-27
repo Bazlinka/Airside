@@ -22,6 +22,13 @@ namespace Airside.Presentation
         /// <summary>Stairs, chocks, GPU cart, pushback tug.</summary>
         public static bool ShowStandEquipment => !AircraftOnly && !BareWorld;
 
+        /// <summary>
+        /// The turnaround itself: fuel, catering and baggage vehicles, apron bus, stairs, chocks, GPU
+        /// and the fleet's pushback tugs (ADR 0126). On in every build, the bare field included —
+        /// the clean-field rule (ADR 0032/0041) still hides scenery vehicles, not the operation.
+        /// </summary>
+        public static bool ShowTurnaroundVehicles => true;
+
         /// <summary>Marshallers, ground crew, passengers, landside walkers.</summary>
         public static bool ShowPeople => !AircraftOnly && !BareWorld;
 

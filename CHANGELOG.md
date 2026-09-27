@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Tugs and turnaround vehicles now appear (ADR 0126).** They had been built behind a
+  switch that hid them on the default field. Every pushback now has a tug that reverses onto
+  the nose, pushes, unhooks and drives clear of the wing before the aircraft taxis. Your
+  turnaround shows its fuel, catering and baggage vehicles, chocks, ground power and bus or
+  stairs. AI aircraft at their stands get fuel trucks and baggage trains too.
+
 - **Career tuned against the balance sim (ADR 0125).** You can now plan Adelaide flights to
   Auckland, Singapore and the rest of the international network; before, the finale's
   international goal and the international contracts could not be flown from Adelaide. Your

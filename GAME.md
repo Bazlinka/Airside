@@ -1,5 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (branch restarted from main after PR #413) — vehicles and tugs (ADR 0126).**
+  Root cause: `ShowGroundVehicles`/`ShowStandEquipment` are false on the bare field, so no
+  turnaround vehicle was ever built. New `AirsideFocusMode.ShowTurnaroundVehicles` (always on)
+  gates the turnaround set. Fleet pushback tugs (`PushbackTugTimeline`,
+  `AirsidePrototype.PushbackTugs.cs`, pool of 8). AI stands get pooled fuel/baggage vehicles
+  (`ApronServiceSchedule`, 4 sets). Player chocks and GPU are placed. **Mac checks:** watch a
+  gate pushback (towbar on the nose gear for 737/A320/A350/Q400 kits; tug facing), an AI
+  turnaround, and the soak FPS.
+
 - **2026-09-27 Claude (same branch) — career tuning pass (ADR 0125).** Fixed: Adelaide
   aircraft can be planned abroad (`PlannableDestinations()`), narrowbodies take 28L last, AI
   no longer returns to a gate the player leases. Tuned: four starter services; turboprop

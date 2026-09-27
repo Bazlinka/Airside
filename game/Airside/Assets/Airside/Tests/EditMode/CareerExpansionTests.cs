@@ -293,7 +293,7 @@ namespace Airside.Tests
         {
             var (_, ops, _) = PlayerOnly();
             ops.RestoreCareerState(100_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
-                Array.Empty<string>(), Array.Empty<string>(), 28, baseLevel: PlayerBaseLevel.ExpandedRegional);
+                Array.Empty<string>(), Array.Empty<string>(), 42, baseLevel: PlayerBaseLevel.ExpandedRegional);
 
             var blocked = ops.BuyAircraft(AircraftType.Boeing7378);
             Assert.That(blocked.Accepted, Is.False);
@@ -309,7 +309,7 @@ namespace Airside.Tests
         {
             var (_, ops, _) = PlayerOnly();
             ops.RestoreCareerState(100_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
-                Array.Empty<string>(), Array.Empty<string>(), 28, baseLevel: PlayerBaseLevel.JetGate);
+                Array.Empty<string>(), Array.Empty<string>(), 42, baseLevel: PlayerBaseLevel.JetGate);
 
             Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True);
             var jet = ops.FleetOf(ops.PlayerAirline).First(a => a.Type.Id == AircraftType.Boeing7378.Id);
@@ -326,7 +326,7 @@ namespace Airside.Tests
         {
             var (_, ops, _) = PlayerOnly();
             ops.RestoreCareerState(100_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
-                Array.Empty<string>(), Array.Empty<string>(), 28, baseLevel: PlayerBaseLevel.JetGate);
+                Array.Empty<string>(), Array.Empty<string>(), 42, baseLevel: PlayerBaseLevel.JetGate);
             Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True);
             var jet = ops.FleetOf(ops.PlayerAirline).First(a => a.Type.Id == AircraftType.Boeing7378.Id);
             jet.Restore(FleetState.AwaitingStand, ops.ProcessedTo, null);
@@ -341,7 +341,7 @@ namespace Airside.Tests
         {
             var (_, ops, _) = PlayerOnly();
             ops.RestoreCareerState(100_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
-                Array.Empty<string>(), Array.Empty<string>(), 28, baseLevel: PlayerBaseLevel.JetGate);
+                Array.Empty<string>(), Array.Empty<string>(), 42, baseLevel: PlayerBaseLevel.JetGate);
             var jet = ops.AddAircraft(ops.PlayerAirline, "VH-OLD", AircraftType.Boeing7378,
                 new StableId("GATE-25"));
             jet.DepartureStand = new StableId("GATE-25");

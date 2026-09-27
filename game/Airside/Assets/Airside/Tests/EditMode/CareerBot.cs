@@ -192,7 +192,7 @@ namespace Airside.Tests
             var usable = _ops.MarketOffers()
                 .Where(o => !Career.HasCompleted(o.Id) && Career.Tier >= o.RequiredTier && owned.Contains(o.EligibleType.Id)
                             && DestinationCatalogue.TryFind(o.DestinationCode, out var d) && Plannable(d)
-                            && CanFinishInTime(o, d))
+                            && CanFinishInTime(o, d) && _ops.CanStillFinish(o))
                 .ToList();
             if (usable.Count == 0)
                 return;

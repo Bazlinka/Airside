@@ -56,6 +56,13 @@ namespace Airside.Simulation
             FinaleAtSeconds = Math.Max(0, finaleAtSeconds);
             _servedDestinations = new HashSet<string>(servedDestinations ?? Array.Empty<string>(), StringComparer.Ordinal);
             _outstationBases = new HashSet<string>(outstationBases ?? Array.Empty<string>(), StringComparer.Ordinal);
+            // ADR 0139: a career restored with flights already flown (an older save, a test fixture)
+            // has no post-flight readings; seed them from today's reliability so held goals it had
+            // already met stay met. A v17 save replaces these with the real readings.
+            var seeded = Math.Min(CompletedPlayerRotations, ReliabilityHistoryLength);
+            for (var i = 0; i < seeded; i++)
+                _recentReliability.Add(Reliability);
+            HighReliabilityStreak = Reliability >= HighReliability ? seeded : 0;
             _recentServiceMargins = new Queue<long>();
             if (recentServiceMargins != null)
                 foreach (var margin in recentServiceMargins)

@@ -371,13 +371,13 @@ namespace Airside.Presentation
             var rotations = next.RequiredRotations <= 0 ? 1f
                 : Clamp01(career.CompletedPlayerRotations / (float)next.RequiredRotations);
             var funds = next.UpgradeCost <= 0 ? 1f : Clamp01(career.Funds / (float)next.UpgradeCost);
-            NextTierProgress01 = Math.Min(rotations, funds);
+            var reliability = next.RequiredReliability <= 0 ? 1f
+                : Clamp01(career.Reliability / (float)next.RequiredReliability);
+            NextTierProgress01 = Math.Min(Math.Min(rotations, funds), reliability);
             NextTierRequirementLine = PlayerBase.Requirement(next, career)
                                       + " Costs $" + next.UpgradeCost.ToString("N0") + "."
                                       + " Adds " + PlayerBase.UpgradeBenefitLine(next.Level) + ".";
-            CanUpgradeBase = career.Tier >= next.RequiredTier
-                             && career.CompletedPlayerRotations >= next.RequiredRotations
-                             && career.Funds >= next.UpgradeCost;
+            CanUpgradeBase = PlayerBase.GatesMet(next, career) && career.Funds >= next.UpgradeCost;
         }
         private static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;
     }

@@ -170,11 +170,13 @@ namespace Airside.Tests
             Assert.That(restored.CareerState.HighReliabilityStreak, Is.EqualTo(ops.CareerState.HighReliabilityStreak));
             Assert.That(restored.CareerState.RecentReliability, Is.EqualTo(ops.CareerState.RecentReliability));
 
-            // A v16 save has none of this: a fresh day and an empty history.
+            // A v16 save has none of this: a fresh day, and readings seeded from today's reliability
+            // (ADR 0139) so goals it had met stay met.
             data.Version = 16;
             var old = AirlineSave.Restore(data, new ManualSimulationClock(clock.Now));
             Assert.That(old.TodaySoFar.Flights, Is.Zero);
-            Assert.That(old.CareerState.RecentReliability, Is.Empty);
+            Assert.That(old.CareerState.RecentReliability,
+                Is.EqualTo(Enumerable.Repeat(ops.CareerState.Reliability, ops.CareerState.CompletedPlayerRotations)));
         }
     }
 }

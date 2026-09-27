@@ -1937,6 +1937,34 @@ namespace Airside.Simulation
 
         public long NextOutstationCost => CareerState.OutstationBases.Count == 0 ? 15_000 : 40_000;
 
+        /// <summary>ADR 0139: each outstation is earned, not just bought: (reliability, flights) for the 1st, 2nd, 3rd.</summary>
+        public static readonly (int Reliability, int Flights)[] OutstationGates = { (85, 40), (88, 70), (90, 110) };
+
+        /// <summary>The gate for the next outstation, or null once all three are open.</summary>
+        public (int Reliability, int Flights)? NextOutstationGate =>
+            CareerState.OutstationBases.Count < OutstationGates.Length
+                ? OutstationGates[CareerState.OutstationBases.Count]
+                : null;
+
+        /// <summary>"Needs 88% reliability, 12 more flights." for the next outstation, or empty when met.</summary>
+        public string NextOutstationRequirement()
+        {
+            if (NextOutstationGate is not { } gate)
+                return string.Empty;
+            var parts = new List<string>();
+            if (CareerState.Tier < OperatingTier.Domestic)
+                parts.Add("Domestic tier");
+            if (CareerState.Reliability < gate.Reliability)
+                parts.Add($"{gate.Reliability}% reliability");
+            if (CareerState.CompletedPlayerRotations < gate.Flights)
+            {
+                var more = gate.Flights - CareerState.CompletedPlayerRotations;
+                parts.Add($"{more} more flight{(more == 1 ? "" : "s")}");
+            }
+
+            return parts.Count == 0 ? string.Empty : "Needs " + string.Join(", ", parts) + ".";
+        }
+
         public CommandResult OpenOutstationBase(string code)
         {
             if (CareerState.Tier < OperatingTier.Domestic)
@@ -1947,6 +1975,13 @@ namespace Airside.Simulation
             if (!allowed) return CommandResult.Refused("Outstations can open in Melbourne, Sydney, Brisbane or Perth.");
             if (CareerState.HasOutstationBase(code)) return CommandResult.Refused("That base is already open.");
             if (CareerState.OutstationBases.Count >= 3) return CommandResult.Refused("You already have three outstations.");
+            if (NextOutstationGate is { } gate)
+            {
+                if (CareerState.Reliability < gate.Reliability)
+                    return CommandResult.Refused($"Your next outstation needs {gate.Reliability}% reliability. You have {CareerState.Reliability}%.");
+                if (CareerState.CompletedPlayerRotations < gate.Flights)
+                    return CommandResult.Refused($"Your next outstation needs {gate.Flights} flights. You have flown {CareerState.CompletedPlayerRotations}.");
+            }
             var cost = NextOutstationCost;
             if (!CareerState.TryChargePurchase(cost))
                 return CommandResult.Refused($"Opening this base costs ${cost:N0}. You have ${CareerState.Funds:N0}.");
@@ -2220,6 +2255,8 @@ namespace Airside.Simulation
                 return CommandResult.Refused($"The {next.Title} needs the {next.RequiredTier} tier.");
             if (CareerState.CompletedPlayerRotations < next.RequiredRotations)
                 return CommandResult.Refused($"The {next.Title} needs {next.RequiredRotations} completed flights.");
+            if (CareerState.Reliability < next.RequiredReliability)
+                return CommandResult.Refused($"The {next.Title} needs {next.RequiredReliability}% reliability. You have {CareerState.Reliability}%.");
             if (!CareerState.TryChargePurchase(next.UpgradeCost))
                 return CommandResult.Refused("The " + next.Title + " costs $" + next.UpgradeCost.ToString("N0")
                                              + ". You have $" + CareerState.Funds.ToString("N0") + ".");

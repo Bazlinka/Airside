@@ -2290,11 +2290,14 @@ namespace Airside.Presentation
                 _workspaceDrawList.Text(new HudBox(row.X + 9f, row.Y + 5f, row.Width - 150f, 19f),
                     code + (open ? " · open" : $" · ${_operations.NextOutstationCost:N0}"), 13f,
                     open ? HudTone.Default : HudTone.Muted);
+                if (!open && i == 0 && _operations.NextOutstationRequirement() is { Length: > 0 } needs)
+                    _workspaceDrawList.Text(new HudBox(left.X + 9f, left.Y + 24f + candidates.Length * 30f, left.Width - 18f, 16f),
+                        needs, 11f, HudTone.Caution);
                 _workspaceDrawList.Button(new HudBox(row.Right - 112f, row.Y + 1f, 108f, 25f),
                     open ? "SELECT" : "OPEN",
                     (open ? "network:base:" : "network:open:") + code, HudButtonStyle.Secondary);
             }
-            var fleetArea = new HudBox(left.X, left.Y + 157f, left.Width, left.Height - 160f);
+            var fleetArea = new HudBox(left.X, left.Y + 172f, left.Width, left.Height - 175f);
             _workspaceDrawList.Caption(fleetArea.WithHeight(18f), _selectedNetworkBase + " AIRCRAFT");
             var based = new List<OutstationAircraft>();
             foreach (var aircraft in _operations.OutstationFleet)

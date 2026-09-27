@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Progress takes proving.** Bigger bases and each outstation now need a reliability level and a
+  track record of flights. Each jet and widebody unlocks at its own flight count, beyond just
+  reaching the tier. Reliability goals ask you to hold the level for your last 10 flights, so
+  touching it once isn't enough.
+
 - **Every contract can be finished.** Deadlines now allow for how long your aircraft really takes,
   so long-haul work no longer asks for the impossible. Medical calls only go where you can get
   there and back in 3 hours, and turboprop owners get one every day. Featured contracts only

@@ -331,7 +331,7 @@ namespace Airside.Tests
                 .Select(i => new CompletedContractRecord($"FULL-{i}", "ADL", "KGC", 100, new SimulationTime(i)))
                 .ToList();
             ops.RestoreCareerState(50_000, 100, nameof(OperatingTier.International), null, 0, 0,
-                Array.Empty<string>(), history.Select(h => h.DefinitionId).ToList(), 40, null, 12_345, history,
+                Array.Empty<string>(), history.Select(h => h.DefinitionId).ToList(), 42, null, 12_345, history,
                 baseLevel: PlayerBaseLevel.International);
             Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True, "for the jet-operator milestone");
 

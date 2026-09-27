@@ -1,5 +1,12 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — tighter progress gates (ADR 0139).** Base upgrades need
+  reliability (75/80/88%) and more flights (Jet-gate 16, International 50); outstations earned one
+  at a time (85%·40, 88%·70, 90%·110 flights); aircraft flight gates now bind (E190 32 … A350 100);
+  reliability goals are held for 10 flights (4 at Provisional). Balance (`career-balance-2026-09-27/gates`):
+  Competent 9.5 / 27.5 / 53 / 141 h, inside ADR 0120 targets. Tests **900/900**. **Mac checks:**
+  Airline page base roadmap and Network page show the new "Needs …" lines.
+
 - **2026-09-27 Claude (same branch) — contracts you can finish (ADR 0138).** `ContractFeasibility`
   (legs + turnaround + base prep + 20 min, ×1.25): the market lengthens any too-tight deadline,
   medical calls only where 3 h fits (else charter), a daily medical for turboprop owners, Tasman

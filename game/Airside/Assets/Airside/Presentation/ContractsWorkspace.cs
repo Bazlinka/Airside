@@ -413,6 +413,47 @@ namespace Airside.Presentation
                 HudAction.CancelContract, HudButtonStyle.Destructive);
         }
 
+        /// <summary>"4 flights", "ATR 42-600", "within 30 h": an offer's terms as chips (ADR 0130).</summary>
+        public static IReadOnlyList<string> Chips(RouteContractDefinition definition)
+        {
+            var chips = new List<string>
+            {
+                definition.RequiredRotations == 1 ? "1 flight" : $"{definition.RequiredRotations} flights",
+                definition.EligibleType.Name
+            };
+            if (definition.HasDeadline)
+                chips.Add($"within {RouteMapWorkspaceModel.Duration(definition.DeadlineSeconds)}");
+            return chips;
+        }
+
+        /// <summary>The lock reason every shown offer shares, or null when they differ or any is open.</summary>
+        public static string SharedLockReason(IReadOnlyList<ContractOfferRow> offers, int shown)
+        {
+            string shared = null;
+            var count = 0;
+            for (var i = 0; i < offers.Count && i < shown; i++)
+            {
+                var reason = offers[i].LockReason;
+                if (reason.Length == 0)
+                    return null;
+                if (shared == null)
+                    shared = reason;
+                else if (shared != reason)
+                    return null;
+                count++;
+            }
+
+            return count >= 2 ? shared : null;
+        }
+
+        private static ((string Category, string Name) Icon, HudTone Tone) KindBadge(ContractKind kind) => kind switch
+        {
+            ContractKind.Charter => (("economy", "income"), HudTone.Caution),
+            ContractKind.Medical => (("service", "priority"), HudTone.Negative),
+            ContractKind.Freight => (("service", "baggage"), HudTone.Muted),
+            _ => (("economy", "route"), HudTone.Accent)
+        };
+
         private static void PaintOffers(HudDrawList into, ContractsWorkspaceModel model,
             ContractsWorkspaceLayout layout, string highlightedContractId)
         {
@@ -427,36 +468,72 @@ namespace Airside.Presentation
             }
 
             var shown = Math.Min(model.Offers.Count, layout.VisibleOffers);
-            // The offer market only ever runs three at a time (ADR 0056), so this column is
-            // almost always taller than three compact cards need. OfferCardHeight grows each
-            // card to use the room instead of leaving it blank below them; the text/button
-            // block itself stays its natural size and centres in whatever extra height that
-            // card ends up with, so a bigger card reads as "more breathing room", not
-            // "content stretched thin".
-            const float contentHeight = 78f;
+            // ADR 0130: a reason every card shares (one contract at a time) is said once, by the caption.
+            var shared = SharedLockReason(model.Offers, shown);
+            if (shared != null)
+                into.Text(new HudBox(layout.OffersCaption.X + 170f, layout.OffersCaption.Y + 1f,
+                        layout.OffersColumn.Width - 170f, 16f), shared, 11f, HudTone.Caution, HudTextStyle.Bold);
+
+            // The offer market only ever runs three at a time (ADR 0056), so cards grow to use the
+            // column (OfferCardHeight) and the content centres in whatever height each card gets.
             for (var i = 0; i < shown; i++)
             {
                 var offer = model.Offers[i];
+                var definition = offer.Definition;
                 var card = layout.OfferCard(i, shown);
-                var highlighted = offer.CanAccept && offer.Definition.Id == highlightedContractId;
+                var highlighted = offer.CanAccept && definition.Id == highlightedContractId;
                 into.Fill(card, highlighted ? HudTone.Accent : HudTone.Default, highlighted ? 0.22f : 0.04f);
                 into.Outline(card, highlighted ? HudTone.Accent : HudTone.Muted, highlighted ? 0.9f : 0.25f);
 
+                var reason = shared == null ? offer.LockReason : string.Empty;
+                var contentHeight = reason.Length > 0 ? 70f : 52f;
                 var contentY = card.Y + (card.Height - contentHeight) * 0.5f;
-                var buttonWidth = 168f;
-                var textWidth = card.Width - buttonWidth - 40f;
-                into.Text(new HudBox(card.X + 16f, contentY, textWidth, 22f), offer.Title, 15f,
-                    HudTone.Default, HudTextStyle.Bold);
-                into.Text(new HudBox(card.X + 16f, contentY + 24f, textWidth, 18f), offer.Terms, 12f,
-                    HudTone.Muted);
-                if (offer.LockReason.Length > 0)
-                    into.Text(new HudBox(card.X + 16f, contentY + 44f, textWidth, 18f), offer.LockReason, 11f,
-                        HudTone.Caution);
 
-                into.Button(new HudBox(card.Right - buttonWidth - 16f, contentY + 12f, buttonWidth, 32f),
-                    "ACCEPT CONTRACT", HudAction.Accept(offer.Definition.Id),
+                // Kind badge: a disc with the kind's icon.
+                var (kindIcon, kindTone) = KindBadge(definition.Kind);
+                into.Dot(card.X + 34f, contentY + 22f, 36f, kindTone);
+                into.Icon(new HudBox(card.X + 24f, contentY + 12f, 20f, 20f), kindIcon.Category, kindIcon.Name,
+                    HudTone.Default);
+
+                const float rightWidth = 150f;
+                var picture = card.Width >= 560f && card.Height >= 96f ? 96f : 0f;
+                var textX = card.X + 64f;
+                var textWidth = card.Width - 64f - rightWidth - picture - 24f;
+                into.Text(new HudBox(textX, contentY, textWidth, 22f), offer.Title, 15f, HudTone.Default,
+                    HudTextStyle.Bold);
+
+                // Chips: how many flights, which aircraft, how long you have.
+                var chipX = textX;
+                var chipY = contentY + 27f;
+                foreach (var chip in Chips(definition))
+                {
+                    var chipWidth = HudShell.Measure(chip, 10f, 0.6f) + 22f;
+                    if (chipX + chipWidth > textX + textWidth)
+                        break;
+                    into.Pill(new HudBox(chipX, chipY, chipWidth, 20f), chip, HudTone.Muted);
+                    chipX += chipWidth + 6f;
+                }
+
+                if (reason.Length > 0)
+                    into.Text(new HudBox(textX, contentY + 53f, textWidth, 16f), reason, 11f, HudTone.Caution);
+
+                if (picture > 0f)
+                {
+                    var thumb = FleetWorkspacePainter.Thumbnail(definition.EligibleType);
+                    if (thumb.Length > 0)
+                        into.Image(new HudBox(card.Right - rightWidth - 16f - picture, card.Y + (card.Height - picture / 1.5f) * 0.5f,
+                            picture, picture / 1.5f), thumb, offer.CanAccept ? 1f : 0.6f);
+                }
+
+                // The money, big, over the button.
+                var total = definition.PaymentPerRotation * definition.RequiredRotations + definition.CompletionReward;
+                var right = new HudBox(card.Right - rightWidth - 16f, contentY - 4f, rightWidth, 26f);
+                into.Text(right, $"${total:N0}", 20f, offer.CanAccept ? HudTone.Positive : HudTone.Muted,
+                    HudTextStyle.Bold, HudAlign.Right);
+                into.Button(new HudBox(right.X, right.Y + 30f, rightWidth, 30f), "ACCEPT",
+                    HudAction.Accept(definition.Id),
                     highlighted ? HudButtonStyle.Primary : HudButtonStyle.Secondary, offer.CanAccept);
-                into.Hotspot(card, HudAction.Accept(offer.Definition.Id));
+                into.Hotspot(card, HudAction.Accept(definition.Id));
             }
 
             if (shown < model.Offers.Count)

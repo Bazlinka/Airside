@@ -1,5 +1,13 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — HUD game feel, first pass (ADR 0130).** Ops board in
+  split-flap tiles; Fleet detail opens on the aircraft picture over its livery with icon facts,
+  market cards show aircraft; contract offers get kind badges, chips, aircraft picture and big pay;
+  shared lock reasons said once; Airline page figures get icons and a Recent flights list. Renders in
+  `docs/testing/hud-game-feel-2026-09-27/`. Tests **859/859**, type-check clean. **Mac checks:**
+  thumbnails load in Fleet/Contracts; flap board readability and frame time (~100 draw commands a
+  row); icons tint correctly. Next (needs Mac): side sheets over the airport, motion, reward moments.
+
 - **2026-09-27 Claude (same branch) — wording follow-up (ADR 0129 addendum).** Away summary,
   Network page and base turnaround wording; Stats overview cards fit at every viewport (base name
   only, "$X earned", shrink-to-fit, tested); "Contract done!" ends the pay toast; new

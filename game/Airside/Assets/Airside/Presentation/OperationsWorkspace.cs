@@ -981,7 +981,7 @@ namespace Airside.Presentation
             into.Fill(new HudBox(caretX - 1f, track.Y - 3f, 2f, track.Height + 6f), HudTone.Default, 0.95f);
             // Persistent NOW label so the caret is not just a thin line to decode.
             var nowLabel = "NOW";
-            var nowBox = new HudBox(caretX - 14f, track.Y - 14f, 28f, 12f);
+            var nowBox = new HudBox(caretX - 20f, track.Y - 14f, 40f, 12f);
             if (nowBox.X < track.X)
                 nowBox = new HudBox(track.X, nowBox.Y, nowBox.Width, nowBox.Height);
             if (nowBox.Right > track.Right)
@@ -1096,28 +1096,7 @@ namespace Airside.Presentation
                 if (row.IsPlayer)
                     into.Fill(new HudBox(box.X, box.Y, 3f, box.Height), HudTone.Default, 1f, row.LiveryHex);
 
-                var left = box.X + 12f;
-                var rightWidth = Math.Min(118f, box.Width * 0.28f);
-                into.Text(new HudBox(left, box.Y + 7f, 52f, 18f), row.ScheduledTime, 13f,
-                    row.IsPast ? HudTone.Muted : HudTone.Default,
-                    HudTextStyle.Bold, alpha: alpha);
-                if (row.ShowsEstimate)
-                    into.Text(new HudBox(left, box.Y + 28f, 60f, 15f), "est " + row.EstimatedTime,
-                        10f, HudTone.Muted, alpha: alpha);
-
-                into.Text(new HudBox(left + 60f, box.Y + 7f, box.Width - rightWidth - 78f, 18f),
-                    row.FlightNumber, 13f, HudTone.Default, HudTextStyle.Bold, alpha: alpha);
-                var flightSub = row.OperatorName.Length > 0 ? row.OperatorName : row.Registration;
-                if (flightSub.Length > 0 && flightSub != row.FlightNumber)
-                    into.Text(new HudBox(left + 60f, box.Y + 28f, box.Width - rightWidth - 78f, 15f),
-                        $"{flightSub}  ·  {row.Route}  ·  Stand {row.Stand}", 10f, HudTone.Muted,
-                        alpha: alpha);
-
-                into.Text(new HudBox(box.Right - rightWidth - 10f, box.Y + 8f, rightWidth, 34f),
-                    row.Status, 12f, row.StatusTone,
-                    row.Severity == StatusSeverity.Normal ? HudTextStyle.Regular : HudTextStyle.Bold,
-                    HudAlign.Right, alpha: alpha);
-
+                PaintFlapRow(into, box, row, alpha);
                 if (row.HasProgress)
                     into.Bar(new HudBox(layout.ColumnX(0), box.Bottom - 3f, layout.Board.Right - layout.ColumnX(0), 2f),
                         row.Progress01, row.IsPlayer ? HudTone.Accent : HudTone.Muted);
@@ -1130,6 +1109,98 @@ namespace Airside.Presentation
                         layout.Board.Width, 16f), $"{relevant.Count - last} more below. Scroll to see them.",
                     11f, HudTone.Muted, HudTextStyle.Caption);
 
+        }
+
+        /// <summary>Split-flap tile colours: near-black tiles, a darker hinge line across each field.</summary>
+        public const string FlapTileHex = "#0B0E12";
+        public const string FlapHingeHex = "#000000";
+
+        /// <summary>
+        /// ADR 0130 — one departures-board line in split-flap tiles: TIME, FLIGHT, TO/FROM, GATE and
+        /// REMARKS, each character on its own tile, with the operator and type in small print under it.
+        /// Tile width follows the row so the board fits every window.
+        /// </summary>
+        private static void PaintFlapRow(HudDrawList into, HudBox box, OperationsFlightRow row, float alpha)
+        {
+            var inner = box.Inset(12f, 6f, 10f, 0f);
+            const int timeChars = 5, flightChars = 7, placeChars = 13, gateChars = 4, minRemarks = 8;
+            const float fieldGap = 10f;
+            var fixedChars = timeChars + flightChars + placeChars + gateChars;
+            var tile = Math.Min(22f, (inner.Width - fieldGap * 4f) / (fixedChars + 14));
+            var remarks = Math.Max(minRemarks, Math.Min(20, (int)((inner.Width - fieldGap * 4f) / tile) - fixedChars));
+            var tileHeight = Math.Min(28f, tile * 1.4f);
+            var font = Math.Min(15f, tileHeight * 0.55f);
+            var x = inner.X;
+            var y = inner.Y;
+            var remarkTone = row.StatusTone == HudTone.Default ? HudTone.Default : row.StatusTone;
+
+            x = FlapField(into, x, y, tile, tileHeight, font, row.ScheduledTime, timeChars,
+                row.IsPast ? HudTone.Muted : HudTone.Default, alpha) + fieldGap;
+            x = FlapField(into, x, y, tile, tileHeight, font, row.FlightNumber, flightChars, HudTone.Default, alpha)
+                + fieldGap;
+            x = FlapField(into, x, y, tile, tileHeight, font, BoardPlace(row.Route), placeChars, HudTone.Default,
+                alpha) + fieldGap;
+            x = FlapField(into, x, y, tile, tileHeight, font, row.OnField ? row.Stand : string.Empty, gateChars,
+                HudTone.Default, alpha) + fieldGap;
+            FlapField(into, x, y, tile, tileHeight, font, row.Status, remarks, remarkTone, alpha);
+
+            var small = new List<string>();
+            if (row.OperatorName.Length > 0) small.Add(row.OperatorName);
+            if (row.TypeName.Length > 0) small.Add(row.TypeName);
+            if (row.ShowsEstimate) small.Add("est " + row.EstimatedTime);
+            if (small.Count > 0)
+                into.Text(new HudBox(inner.X, y + tileHeight + 4f, inner.Width, 13f), string.Join("  ·  ", small), 10f,
+                    HudTone.Muted, alpha: alpha);
+        }
+
+        /// <summary>Paints <paramref name="cells"/> tiles for <paramref name="text"/> (upper-cased, cut to fit);
+        /// returns the x after the last tile.</summary>
+        public static float FlapField(HudDrawList into, float x, float y, float tile, float height, float fontSize,
+            string text, int cells, HudTone tone, float alpha)
+        {
+            var value = (text ?? string.Empty).ToUpperInvariant();
+            if (value.Length > cells)
+                value = value.Substring(0, cells);
+            for (var i = 0; i < cells; i++)
+            {
+                var cell = new HudBox(x + i * tile, y, tile - 1.5f, height);
+                into.Fill(cell, HudTone.Default, 0.92f * alpha, FlapTileHex);
+                if (i < value.Length && value[i] != ' ')
+                {
+                    // Text boxes anchor at the top: centre one line of glyphs on the tile.
+                    var line = fontSize * 1.3f;
+                    into.Text(new HudBox(cell.X, cell.Y + (height - line) * 0.5f, cell.Width, line), value[i].ToString(),
+                        fontSize, tone, HudTextStyle.Bold, HudAlign.Center, alpha: alpha);
+                }
+            }
+
+            var width = cells * tile - 1.5f;
+            into.Fill(new HudBox(x, y + height * 0.5f - 0.5f, width, 1f), HudTone.Default, 0.55f * alpha, FlapHingeHex);
+            return x + cells * tile;
+        }
+
+        /// <summary>"ADL → SYD" → "SYDNEY": the far end of the route, as a board prints it.</summary>
+        public static string BoardPlace(string route)
+        {
+            if (string.IsNullOrEmpty(route))
+                return string.Empty;
+            var parts = route.Split('→');
+            var from = parts[0].Trim();
+            var to = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+            var far = from == "ADL" ? to : from;
+            if (far.Length == 0 || far == "—")
+                return string.Empty;
+            return OperationsSummary.PlaceName(far);
+        }
+
+        private static (string Name, string Percent) SplitPercent(string label)
+        {
+            if (string.IsNullOrEmpty(label))
+                return (string.Empty, string.Empty);
+            var space = label.LastIndexOf(' ');
+            return space > 0 && label.EndsWith("%", StringComparison.Ordinal)
+                ? (label.Substring(0, space), label.Substring(space + 1))
+                : (label, string.Empty);
         }
 
         private static void PaintDetail(HudDrawList into, OperationsWorkspaceModel model,
@@ -1174,8 +1245,13 @@ namespace Airside.Presentation
                     var check = model.SelectedPrep[i];
                     var centreX = pane.X + slot * (i + 0.5f);
                     into.Dot(centreX, centreY, check.Active ? 18f : 15f, check.Tone);
-                    into.Text(new HudBox(pane.X + slot * i, centreY + 15f, slot, 34f), check.Label, 11f,
+                    // "Catering 91%" does not fit a quarter of the pane: the name, then the percent under it.
+                    var (name, percent) = SplitPercent(check.Label);
+                    into.Text(new HudBox(pane.X + slot * i, centreY + 15f, slot, 16f), name, 11f,
                         check.Tone, check.Active ? HudTextStyle.Bold : HudTextStyle.Regular, HudAlign.Center);
+                    if (percent.Length > 0)
+                        into.Text(new HudBox(pane.X + slot * i, centreY + 30f, slot, 14f), percent, 10f,
+                            check.Tone, HudTextStyle.Regular, HudAlign.Center);
                 }
                 y += 64f;
             }

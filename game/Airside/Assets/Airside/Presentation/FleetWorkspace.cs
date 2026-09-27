@@ -91,6 +91,7 @@ namespace Airside.Presentation
         private readonly List<FleetMarketOffer> _market = new();
         private readonly List<OperationsPrepCheck> _prep = new();
         private readonly List<string> _capability = new();
+        private readonly List<string> _capabilityIcons = new();
 
         public string Title => "FLEET";
         public string Subtitle { get; private set; } = string.Empty;
@@ -106,6 +107,13 @@ namespace Airside.Presentation
 
         /// <summary>Real capability facts: route band, rotations flown, planning range.</summary>
         public IReadOnlyList<string> SelectedCapability => _capability;
+
+        /// <summary>ADR 0130: one "category/name" icon per <see cref="SelectedCapability"/> line.</summary>
+        public IReadOnlyList<string> SelectedCapabilityIcons => _capabilityIcons;
+
+        /// <summary>The selected type's picture (Art-relative), and the livery it wears.</summary>
+        public string SelectedThumbnail { get; private set; } = string.Empty;
+        public string SelectedLiveryHex { get; private set; } = string.Empty;
 
         public string AssignmentLine { get; private set; } = string.Empty;
         public string AssignmentDetail { get; private set; } = string.Empty;
@@ -123,6 +131,9 @@ namespace Airside.Presentation
             _market.Clear();
             _prep.Clear();
             _capability.Clear();
+            _capabilityIcons.Clear();
+            SelectedThumbnail = string.Empty;
+            SelectedLiveryHex = string.Empty;
             HasSelection = false;
             SelectedRegistration = string.Empty;
             SelectedTypeName = string.Empty;
@@ -280,6 +291,12 @@ namespace Airside.Presentation
             }
         }
 
+        private void AddFact(string icon, string text)
+        {
+            _capability.Add(text);
+            _capabilityIcons.Add(icon);
+        }
+
         private void FillSelection(AirlineOperations operations, FleetAircraft aircraft,
             SimulationTime now, AirlineClock clock)
         {
@@ -288,29 +305,32 @@ namespace Airside.Presentation
             SelectedTypeName = aircraft.Type.Name;
             SelectedIsPlayer = aircraft.Airline.IsPlayer;
 
+            SelectedThumbnail = FleetWorkspacePainter.Thumbnail(aircraft.Type);
+            SelectedLiveryHex = aircraft.Airline.LiveryHex;
+
             var ceiling = RouteAccess.Ceiling(aircraft.Type);
             var ceilingSuffix = ceiling == RouteBand.Regional ? "" : ", +closer";
-            _capability.Add($"Flies {RouteMapWorkspaceModel.BandLabel(ceiling).ToLowerInvariant()} routes "
-                             + $"({RouteAccess.ExampleDestinations(ceiling)}{ceilingSuffix})");
-            _capability.Add(Plural(aircraft.CompletedTrips, "flight") + " flown");
-            _capability.Add($"{aircraft.Type.PracticalRangeKm:#,0} km range");
+            AddFact("operation/departure", $"Flies {RouteMapWorkspaceModel.BandLabel(ceiling).ToLowerInvariant()} routes "
+                                           + $"({RouteAccess.ExampleDestinations(ceiling)}{ceilingSuffix})");
+            AddFact("operation/completed", Plural(aircraft.CompletedTrips, "flight") + " flown");
+            AddFact("economy/route", $"{aircraft.Type.PracticalRangeKm:#,0} km range");
             if (aircraft.Airline.IsPlayer)
             {
                 var baseLevel = operations.CareerState.BaseLevel;
-                _capability.Add(PlayerBase.MaintenanceLine(baseLevel, aircraft.Type)
-                                + " · $" + Maintenance.CheckCost(aircraft.Type, baseLevel).ToString("N0")
-                                + " · " + (Maintenance.CheckSeconds(aircraft.Type, baseLevel) / 3600.0).ToString("0.#") + " h");
+                AddFact("service/inspection", PlayerBase.MaintenanceLine(baseLevel, aircraft.Type)
+                                              + " · $" + Maintenance.CheckCost(aircraft.Type, baseLevel).ToString("N0")
+                                              + " · " + (Maintenance.CheckSeconds(aircraft.Type, baseLevel) / 3600.0).ToString("0.#") + " h");
                 var check = Maintenance.Status(aircraft, now, clock);
                 if (!string.IsNullOrEmpty(check))
-                    _capability.Add(check);
+                    AddFact("operation/turnaround", check);
             }
             if (!aircraft.Airline.IsPlayer)
-                _capability.Add($"Operated by {aircraft.Airline.Name}");
+                AddFact("economy/reputation", $"Operated by {aircraft.Airline.Name}");
             // The starter aircraft was never bought (AircraftAcquisition's own doc comment),
             // so it has no purchase price to base a resale figure on — line omitted for it
             // rather than showing a made-up number.
             else if (AircraftAcquisition.TryFor(aircraft.Type, out var ownedOffer))
-                _capability.Add($"Sells for ${(long)Math.Round(ownedOffer.Price * AirlineOperations.ResaleFraction):N0}");
+                AddFact("economy/cash", $"Sells for ${(long)Math.Round(ownedOffer.Price * AirlineOperations.ResaleFraction):N0}");
 
             if (aircraft.Scheduled.HasValue)
             {
@@ -590,15 +610,28 @@ namespace Airside.Presentation
                 return;
             }
 
-            into.Text(new HudBox(pane.X, pane.Y, pane.Width, 28f),
+            var top = pane.Y;
+            // ADR 0130: the aircraft itself, on its livery, when the pane has the height for it.
+            if (pane.Height >= 560f && model.SelectedThumbnail.Length > 0)
+            {
+                var stage = new HudBox(pane.X, pane.Y, pane.Width, 118f);
+                PaintAircraftStage(into, stage, model.SelectedThumbnail, model.SelectedLiveryHex);
+                top = stage.Bottom + 10f;
+            }
+
+            into.Text(new HudBox(pane.X, top, pane.Width, 28f),
                 $"{model.SelectedRegistration}  ·  {model.SelectedTypeName}", 20f, HudTone.Default,
                 HudTextStyle.Bold);
 
-            var y = pane.Y + 38f;
-            into.Fill(new HudBox(pane.X, y, 3f, model.SelectedCapability.Count * 21f), HudTone.Accent, 1f);
-            foreach (var fact in model.SelectedCapability)
+            var y = top + 38f;
+            for (var i = 0; i < model.SelectedCapability.Count; i++)
             {
-                into.Text(new HudBox(pane.X + 14f, y, pane.Width - 14f, 18f), fact, 13f);
+                var icon = i < model.SelectedCapabilityIcons.Count ? model.SelectedCapabilityIcons[i] : string.Empty;
+                var slash = icon.IndexOf('/');
+                if (slash > 0)
+                    into.Icon(new HudBox(pane.X, y, 16f, 16f), icon.Substring(0, slash), icon.Substring(slash + 1),
+                        HudTone.Accent);
+                into.Text(new HudBox(pane.X + 24f, y, pane.Width - 24f, 18f), model.SelectedCapability[i], 13f);
                 y += 21f;
             }
 
@@ -659,6 +692,45 @@ namespace Airside.Presentation
                     HudButtonStyle.Secondary);
         }
 
+        /// <summary>
+        /// An aircraft picture on a stage: a raised glass backdrop with the airline's livery as the lower
+        /// band, the way the setup preview shows the starter Saab (ADR 0123/0130).
+        /// </summary>
+        public static void PaintAircraftStage(HudDrawList into, HudBox stage, string thumbnail, string liveryHex,
+            float alpha = 1f)
+        {
+            into.Fill(stage, HudTone.Default, 0.9f * alpha, AirsidePalette.GlassRaisedHex);
+            if (!string.IsNullOrEmpty(liveryHex))
+                into.Fill(new HudBox(stage.X, stage.Y + stage.Height * 0.62f, stage.Width, stage.Height * 0.38f),
+                    HudTone.Default, 0.8f * alpha, liveryHex);
+            var height = stage.Height - 8f;
+            var width = Math.Min(stage.Width - 12f, height * 1.5f);
+            into.Image(new HudBox(stage.X + (stage.Width - width) * 0.5f, stage.Y + 4f, width, height), thumbnail, alpha);
+        }
+
+        /// <summary>The type's picture, Art-relative, or empty for a type without one.</summary>
+        public static string Thumbnail(AircraftType type) =>
+            type != null && AircraftCatalogue.TryFor(type, out var spec) ? spec.ThumbnailPath ?? string.Empty : string.Empty;
+
+        /// <summary>The one reason every locked offer shares (a full base, say), or null when they differ.</summary>
+        public static string SharedLockReason(IReadOnlyList<FleetMarketOffer> offers, int shown)
+        {
+            string shared = null;
+            var count = 0;
+            for (var i = 0; i < offers.Count && i < shown; i++)
+            {
+                if (offers[i].CanBuy)
+                    return null;
+                if (shared == null)
+                    shared = offers[i].RequirementLine;
+                else if (shared != offers[i].RequirementLine)
+                    return null;
+                count++;
+            }
+
+            return count >= 2 ? shared : null;
+        }
+
         private static void PaintMarket(HudDrawList into, FleetWorkspaceModel model, FleetWorkspaceLayout layout)
         {
             if (layout.Market.IsEmpty)
@@ -666,6 +738,11 @@ namespace Airside.Presentation
 
             into.Hairline(new HudBox(layout.Market.X, layout.Market.Y - 10f, layout.Market.Width, 1f));
             into.Caption(layout.MarketCaption, "AIRCRAFT MARKET");
+            // One reason for every card (a full base) is said once, beside the caption, not three times.
+            var shared = SharedLockReason(model.Market, layout.MarketRows);
+            if (shared != null)
+                into.Text(new HudBox(layout.MarketCaption.X + 170f, layout.MarketCaption.Y - 1f,
+                        layout.Market.Width - 170f, 16f), shared, 11f, HudTone.Caution, HudTextStyle.Bold);
 
             var shown = 0;
             foreach (var offer in model.Market)
@@ -677,12 +754,19 @@ namespace Airside.Presentation
                 if (offer.CanBuy)
                     into.Outline(box, HudTone.Accent, 0.6f);
 
-                into.Text(new HudBox(box.X + 12f, box.Y + 8f, box.Width - 24f, 18f),
-                    $"{offer.TypeName}  ·  {offer.BandLabel}", 14f, HudTone.Default, HudTextStyle.Bold);
-                into.Text(new HudBox(box.X + 12f, box.Y + 29f, box.Width - 24f, 30f),
-                    offer.CanBuy ? offer.StandLine : offer.RequirementLine, 11f,
-                    offer.CanBuy ? HudTone.Muted : HudTone.Caution, HudTextStyle.Wrap);
-                into.Text(new HudBox(box.X + 12f, box.Bottom - 25f, box.Width - 94f, 18f), $"${offer.Price:N0}", 14f,
+                // The aircraft on the left when the card is wide enough; the words beside it.
+                var picture = box.Width >= 300f && Thumbnail(offer.Type).Length > 0 ? 108f : 0f;
+                if (picture > 0f)
+                    into.Image(new HudBox(box.X + 6f, box.Y + 10f, picture, picture / 1.5f), Thumbnail(offer.Type),
+                        offer.CanBuy ? 1f : 0.55f);
+                var textX = box.X + 12f + picture;
+                var textWidth = box.Width - 24f - picture;
+                into.Text(new HudBox(textX, box.Y + 8f, textWidth, 18f), offer.TypeName, 14f, HudTone.Default,
+                    HudTextStyle.Bold);
+                var line = offer.CanBuy ? offer.StandLine : shared != null ? offer.BandLabel + " routes" : offer.RequirementLine;
+                into.Text(new HudBox(textX, box.Y + 29f, textWidth, 30f), line, 11f,
+                    offer.CanBuy || shared != null ? HudTone.Muted : HudTone.Caution, HudTextStyle.Wrap);
+                into.Text(new HudBox(textX, box.Bottom - 25f, textWidth - 82f, 18f), $"${offer.Price:N0}", 14f,
                     offer.Affordable ? HudTone.Default : HudTone.Muted, HudTextStyle.Bold);
                 into.Button(new HudBox(box.Right - 76f, box.Bottom - 30f, 68f, 26f), "BUY",
                     HudAction.Buy(offer.Type.Id), HudButtonStyle.Primary, offer.CanBuy);

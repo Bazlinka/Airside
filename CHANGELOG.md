@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **The HUD looks more like a game.** The Ops page is now a split-flap departures board. Fleet
+  shows each aircraft in your colours with icons for its facts, and the market shows the aircraft
+  for sale. Contract offers are proper cards with a badge for the kind of job, the aircraft, the
+  deadline and the pay up front. The Airline page lists your recent flights with what they paid and
+  whether they left on time. Warnings that applied to every card are now said once.
+
 - **Wording tidy-up.** The "while you were away" summary and the outstation page now use the
   same plain words as the rest of the game, the Airline page's figures no longer run off their
   cards in small windows, and a finished contract is announced at the end of the pay message.

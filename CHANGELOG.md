@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Better propellers.** Propellers no longer flicker or appear to spin backwards. You see the
+  blades turn as an engine starts, then a soft blur disc at speed, and they wind down slowly at
+  shutdown. Pausing the game now stops them.
+
 - **Smoother onto the runway.** Aircraft now turn onto the runway in one steady curve and line up
   straight before taking off, instead of whipping round. Arrivals cleared to land glide onto their
   landing path without a lurch.

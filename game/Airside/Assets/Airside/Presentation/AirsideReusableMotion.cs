@@ -53,6 +53,21 @@ namespace Airside.Presentation
         /// <summary>True when the 737 intake should show its restrained fan disc.</summary>
         public static bool JetFanBlurActive(float rpm) => rpm >= JetFanHighRpmThreshold;
 
+        /// <summary>ADR 0148: how fast a propeller can gain and lose speed (rpm per second).</summary>
+        public const float PropSpoolUpRpmPerSecond = 170f;
+        public const float PropSpoolDownRpmPerSecond = 75f;
+
+        /// <summary>
+        /// ADR 0148: 0..1 blur from how far a blade moves in one frame against the gap between blades.
+        /// Under 15% of the gap the blades are drawn turning; by 35% they would wagon-wheel, so the disc
+        /// has taken over. At 60 fps a four-blade Saab blurs from ~135 rpm, a six-blade Q400 from ~90.
+        /// </summary>
+        public static float PropBlurForStep(float degreesPerFrame, int blades)
+        {
+            var gap = 360f / Mathf.Max(2, blades);
+            return SmoothBand(degreesPerFrame, gap * 0.15f, gap * 0.35f);
+        }
+
         /// <summary>0..1 overlap between visible blades and the motion-blur disc.</summary>
         public static float PropBlurBlend(float rpm) => SmoothBand(rpm, PropBlurFadeStartRpm, PropBlurFadeEndRpm);
 

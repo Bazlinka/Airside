@@ -1,5 +1,10 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude (same branch) — propellers (ADR 0148).** Blur by per-frame blade step vs blade
+  gap (no wagon-wheel), procedural blur disc (hub-clear, tip ring, faint ghosts, counter-rotated),
+  spool capped +170/−75 rpm/s, props and fans stop when paused. **Mac checks:** Saab/ATR/Q400 start,
+  taxi, takeoff, shutdown; pause.
+
 - **2026-09-28 Claude (same branch) — runway entry and approach handoff (ADR 0147).** `LineupGeometry`:
   straight from the hold, one turn on the aircraft's radius, straight on the centreline (12/30 turns
   were 3–9 m radius, now 11–13 m; 05/23 737 aligned). Approach handoff 6 s smootherstep; gentle

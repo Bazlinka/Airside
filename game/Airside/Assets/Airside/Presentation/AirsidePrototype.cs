@@ -375,6 +375,8 @@ namespace Airside.Presentation
                 // under 50 m deep along Z, so a single box-projected probe reaches both).
                 _apronProbe = AirsideBareField.Enabled ? BuildBareApronReflectionProbe() : null;
             }
+            // Every lens queued above becomes one merged mesh per colour (ADR 0124).
+            FlushYpadLenses();
             _rainRoot = AirsideFocusMode.ShowEnvironment || AirsideBareField.Enabled
                 ? BuildRainRoot()
                 : null;
@@ -1870,17 +1872,24 @@ namespace Airside.Presentation
                         var navOn = AirsideReusableMotion.NavigationLightsOn(
                             engines?.AnyRunning ?? enginesOn,
                             engines?.Beacon ?? enginesOn);
-                        child.gameObject.SetActive(navOn);
+                        // The lens is always there; only its glow and light switch (ADR 0124).
+                        child.gameObject.SetActive(true);
                         EnsureNavPointLight(parts[i], navOn);
+                        var strobe = 0f;
                         if (parts[i].NavLight is AircraftNavigationLight.Left or AircraftNavigationLight.Right)
-                            EnsureWingtipStrobe(parts[i], AirsideReusableMotion.StrobeIntensity(phase, presentationTime));
+                        {
+                            strobe = navOn ? AirsideReusableMotion.StrobeIntensity(phase, presentationTime) : 0f;
+                            EnsureWingtipStrobe(parts[i], strobe);
+                        }
+                        GlowLamp(parts[i], NavLensColor(parts[i].NavLight), navOn ? 1f : 0f, strobe);
                         break;
                     }
                     case LightGearKind.Beacon:
                     {
                         var beacon = AirsideReusableMotion.BeaconIntensity(engines?.Beacon ?? enginesOn, presentationTime);
-                        child.gameObject.SetActive(beacon > 0.01f);
+                        child.gameObject.SetActive(true);
                         EnsureBeaconPointLight(parts[i], beacon);
+                        GlowLamp(parts[i], new Color(1f, 0.16f, 0.08f), beacon, 0f);
                         break;
                     }
                     case LightGearKind.LandingLight:
@@ -1918,6 +1927,49 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// Where a lamp's light sits (ADR 0124). The glTF aircraft kits export every lamp node with
+        /// a zero transform and the lens baked into the mesh, so a Light on the node shone from
+        /// the airframe origin — nav lights and strobes lit the belly. A child at the lens mesh's
+        /// bounds centre puts the light in the lens; procedural lamps (centred cubes) get zero.
+        /// </summary>
+        private static Transform LampPivot(Transform lamp)
+        {
+            var pivot = lamp.Find(LampPivotName);
+            if (pivot != null)
+                return pivot;
+            pivot = new GameObject(LampPivotName).transform;
+            pivot.SetParent(lamp, false);
+            var filter = lamp.GetComponent<MeshFilter>();
+            if (filter != null && filter.sharedMesh != null)
+                pivot.localPosition = filter.sharedMesh.bounds.center;
+            return pivot;
+        }
+
+        private const string LampPivotName = "Lamp pivot";
+
+        private static Color NavLensColor(AircraftNavigationLight kind) => kind switch
+        {
+            AircraftNavigationLight.Right => new Color(0.95f, 0.15f, 0.12f),
+            AircraftNavigationLight.Tail => new Color(0.95f, 0.95f, 0.90f),
+            _ => new Color(0.12f, 0.95f, 0.28f)
+        };
+
+        /// <summary>Lens glow: its own colour when on, a white flash for the wingtip strobe.</summary>
+        private static void GlowLamp(LightGearPart part, Color lens, float on, float strobe)
+        {
+            if (!part.LampResolved)
+            {
+                part.Lamp = part.Transform.GetComponent<Renderer>();
+                part.LampResolved = true;
+            }
+
+            if (part.Lamp == null)
+                return;
+            var emission = lens * (2.4f * on) + new Color(3.5f, 3.6f, 3.8f) * strobe;
+            SetRendererColor(part.Lamp, Color.Lerp(lens * 0.55f, lens, on), emission);
+        }
+
+        /// <summary>
         /// Decision 0025 items 5+7 — wingtip nav lights cast real coloured PointLights.
         /// </summary>
         private static void EnsureNavPointLight(LightGearPart part, bool on)
@@ -1929,7 +1981,7 @@ namespace Airside.Presentation
             var light = part.Light;
             if (light == null)
             {
-                light = lamp.gameObject.AddComponent<Light>();
+                light = LampPivot(lamp).gameObject.AddComponent<Light>();
                 light.type = LightType.Point;
                 light.color = kind switch
                 {
@@ -1952,7 +2004,7 @@ namespace Airside.Presentation
             var point = part.Strobe;
             if (point == null)
             {
-                var wingtip = part.Transform;
+                var wingtip = LampPivot(part.Transform);
                 var strobe = wingtip.Find("White strobe");
                 if (strobe == null)
                 {
@@ -1980,7 +2032,7 @@ namespace Airside.Presentation
             var light = part.Light;
             if (light == null)
             {
-                light = part.Light = lamp.gameObject.AddComponent<Light>();
+                light = part.Light = LampPivot(lamp).gameObject.AddComponent<Light>();
                 light.type = LightType.Point;
                 light.color = new Color(1f, 0.25f, 0.12f);
                 light.range = 10f;
@@ -2003,7 +2055,7 @@ namespace Airside.Presentation
             var light = part.Light;
             if (light == null)
             {
-                light = part.Light = lamp.gameObject.AddComponent<Light>();
+                light = part.Light = LampPivot(lamp).gameObject.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.97f, 0.88f);
                 light.range = 42f;
@@ -2037,7 +2089,7 @@ namespace Airside.Presentation
             var light = part.Light;
             if (light == null)
             {
-                light = part.Light = lamp.gameObject.AddComponent<Light>();
+                light = part.Light = LampPivot(lamp).gameObject.AddComponent<Light>();
                 light.type = LightType.Spot;
                 light.color = new Color(1f, 0.94f, 0.78f);
                 light.range = 18f;
@@ -3789,6 +3841,7 @@ namespace Airside.Presentation
                     n.StartsWith("ALS", StringComparison.Ordinal) ||
                     n.StartsWith("REIL", StringComparison.Ordinal) ||
                     n.StartsWith("Apron flood", StringComparison.Ordinal) ||
+                    n.StartsWith("T1 streetlight lamp", StringComparison.Ordinal) ||
                     n.StartsWith("edge_", StringComparison.Ordinal) ||
                     n.StartsWith("taxi_", StringComparison.Ordinal) ||
                     n.StartsWith("flood_", StringComparison.Ordinal) ||
@@ -4635,6 +4688,7 @@ namespace Airside.Presentation
             if (AirsideRuntimeQuality.DaylightSteady(_airfieldLightsAppliedDaylight, daylight))
                 return;
             _airfieldLightsAppliedDaylight = daylight;
+            UpdateLensGroups(daylight);
             var night = 1f - daylight;
             var intensity = Mathf.Lerp(0.35f, 1.35f, night);
             var warmWhite = Color.Lerp(new Color(0.85f, 0.88f, 0.7f), new Color(1f, 0.95f, 0.75f), night);
@@ -7006,8 +7060,11 @@ namespace Airside.Presentation
             {
                 var p = new Vector3(lamps[i].X, 0f, lamps[i].Z);
                 CreateBlock($"T1 streetlight pole {i}", p + new Vector3(0f, 4.4f, 0f), new Vector3(0.22f, 8.8f, 0.22f), steel);
-                CreateBlock($"T1 streetlight head {i}", p + new Vector3(0.55f, 8.7f, 0f), new Vector3(1.1f, 0.28f, 0.45f), head);
-                CreateBlock($"T1 streetlight lamp {i}", p + new Vector3(0.85f, 8.45f, 0f), new Vector3(0.4f, 0.22f, 0.4f), lamp);
+                CreateBlock($"T1 streetlight head {i}", p + new Vector3(0.85f, 8.66f, 0f), new Vector3(0.9f, 0.24f, 0.45f), head);
+                // A slim outreach arm and a lens under the head instead of a cube (ADR 0124).
+                CreateBlock($"T1 streetlight arm {i}", p + new Vector3(0.3f, 8.5f, 0f), new Vector3(0.6f, 0.1f, 0.1f), steel);
+                CreateBlock($"T1 streetlight lamp {i}", p + new Vector3(0.85f, 8.5f, 0f), new Vector3(0.5f, 0.08f, 0.3f), lamp);
+                AddStreetlightGlow(p + new Vector3(0.85f, 8.4f, 0f), AirsideAdelaideGround.WorldHeight(p.x + 0.85f, p.z) + 0.05f);
             }
 
             var bayPaint = new Color(0.92f, 0.92f, 0.88f);
@@ -9952,6 +10009,9 @@ namespace Airside.Presentation
             "nav_light_left" => "NavLight L",
             "nav_light_right" => "NavLight R",
             "beacon_top" => "Beacon",
+            // Widebody belly beacon (787, A330neo, A350): it was left under its kit name, so it
+            // never matched the "Beacon" prefix and never flashed (ADR 0124).
+            "beacon_bottom" => "Beacon bottom",
             "landing_light_l" => "LandingLight L",
             "landing_light_r" => "LandingLight R",
             "taxi_light" => "TaxiLight",
@@ -10067,7 +10127,7 @@ namespace Airside.Presentation
                 or "hf_antenna" or "static_wick_left" or "static_wick_right" => new Color(0.35f, 0.35f, 0.38f),
             "nav_light_left" => new Color(0.2f, 0.9f, 0.3f),
             "nav_light_right" => new Color(0.9f, 0.2f, 0.2f),
-            "beacon_top" => new Color(0.95f, 0.35f, 0.12f),
+            "beacon_top" or "beacon_bottom" => new Color(0.95f, 0.35f, 0.12f),
             "tail_nav_light" => new Color(0.95f, 0.95f, 0.9f),
             "landing_light_l" or "landing_light_r" or "taxi_light" => new Color(0.95f, 0.95f, 0.85f),
             _ => null

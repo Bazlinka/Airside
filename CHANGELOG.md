@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Lights that behave like lights (ADR 0124).** Aircraft nav lights, strobes, beacons and
+  landing lights now shine from their lamps instead of the belly, and the lenses glow —
+  including the 787/A330/A350 belly beacon, which never flashed before. Runway and taxiway
+  lights are domed fixtures with a soft night halo, keep their colour (the amber caution
+  zones no longer turn white), and go quiet by day except approach lights and PAPI. New blue
+  taxiway edge lights, red stop bars at the runway holding points, and glowing streetlights.
+
 - **Every building has a facade now (ADR 0124).** Parapets, storey window bands (most lit
   at night, some dark), hangar doors and roof monitors, fire-station bays, freight doors,
   rooftop plant, a terminal kerb canopy, and a proper control tower with a glass cab, mast

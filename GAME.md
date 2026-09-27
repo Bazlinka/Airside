@@ -1,5 +1,16 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — lighting (ADR 0124).** Aircraft lights hang off a
+  `Lamp pivot` at each lamp mesh's bounds centre; nav/beacon lenses glow via emission (strobe
+  flash on the wingtip lens); `beacon_bottom` → "Beacon bottom". `PlaceYpadLens` now queues
+  domed fixtures (`AirfieldFixture`) into merged per-colour lens meshes + one base mesh +
+  additive halo meshes, built by `FlushYpadLenses()` after the lighting setup and tinted by
+  `UpdateLensGroups` (amber caution edges stay amber; approach/PAPI readable by day). Blue
+  taxiway edges, red stop bars, T1 streetlight lens + glow pool. No new `Light`s. Evidence:
+  `scripts/test-domain.sh` **820/820**, type-check clean. **Mac checks:** night overview and
+  approach follow — halo brightness/size, the additive halo material in a player build (URP
+  Unlit), strobes on the wingtips, stop-bar placement at each holding point, SetPass at night.
+
 - **2026-09-27 Claude (same branch) — building detail + chamfered blocks (ADR 0124).**
   `Presentation/BuildingDetail.cs` plans parapets, window bands (lit/dark panes), hangar
   doors + roof monitors, fire bays, freight doors, rooftop plant, the tower cab/mast/red

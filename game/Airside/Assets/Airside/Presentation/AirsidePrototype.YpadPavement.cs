@@ -490,6 +490,15 @@ namespace Airside.Presentation
         private static void AddHoldBars(SurfaceMesh mesh, float x, float z, float y)
         {
             // Bars run across the nearest taxiway, so find its direction at this point.
+            var (direction, width) = NearestTaxiwayAt(x, z);
+
+            // ICAO pattern A: two solid and two dashed bars; drawn here as four bars.
+            AddHoldBarQuads(mesh, x, z, y, direction, width);
+        }
+
+        /// <summary>The direction and width of the taxiway segment nearest (x, z).</summary>
+        private static (Vector3 direction, float width) NearestTaxiwayAt(float x, float z)
+        {
             var direction = Vector3.right;
             var best = float.MaxValue;
             var width = AirsideAdelaidePavement.TaxiwayWidthMetres;
@@ -511,7 +520,11 @@ namespace Airside.Presentation
                 }
             }
 
-            // ICAO pattern A: two solid and two dashed bars; drawn here as four bars.
+            return (direction, width);
+        }
+
+        private static void AddHoldBarQuads(SurfaceMesh mesh, float x, float z, float y, Vector3 direction, float width)
+        {
             var across = new Vector3(-direction.z, 0f, direction.x);
             for (var bar = 0; bar < 4; bar++)
             {

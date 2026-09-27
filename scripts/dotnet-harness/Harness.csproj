@@ -70,6 +70,7 @@
     <!-- ADR 0124 procedural building detail and the chamfered block mesh. -->
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BuildingDetail.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BevelledBox.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirfieldFixture.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirlineSetup.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudDraw.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/OperationsWorkspace.cs" />

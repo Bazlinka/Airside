@@ -63,6 +63,31 @@ is the same world size on every edge once scaled (15 % of the smallest side, at 
 Meshes are cached by quantised chamfer. Paint-thin blocks (under 5 cm) and art-textured blocks
 keep the primitive (invisible bevel / exact UV layout).
 
+## Decision — lights in the right place, the right colour, at the right time
+
+**Aircraft.** The glTF kits export every lamp node with a zero transform and the lens baked into
+the mesh, so each aircraft `Light` sat at the airframe origin: nav lights and strobes lit the
+belly. Lights now hang off a `Lamp pivot` child at the lamp mesh's bounds centre (procedural
+lamps are centred, so nothing moves for them). Nav and beacon lenses stay visible and glow
+through emission — nav lenses in their colour when on, a white flash on each strobe pulse,
+the beacon lens pulsing with its light. The widebody belly beacon (`beacon_bottom`, on the
+787, A330neo and A350) is renamed so it is recognised and flashes.
+
+**Airfield lenses are merged fixtures.** Every runway, taxiway, stand, threshold, PAPI, approach
+and guard lens used to be its own cube. `PlaceYpadLens` now appends a low-poly domed fixture
+(`AirfieldFixture`: octagonal metal base, smooth two-ring lens) into **one mesh per colour
+group**, one shared mesh for all metal bases, and one additive halo mesh per group (a ground
+pool plus two crossed cards per lens, with a generated radial falloff). About a dozen lens and
+halo renderers replace several hundred objects; halos are switched off by day.
+
+Each group keeps **its own colour** — the amber caution-zone edges were being repainted white
+by the night pass and now stay amber — and answers daylight by its role: edge, taxi and stand
+lenses go dark-glass by day, approach lights, thresholds and PAPI stay readable at noon,
+guard lights stay bright. New fixtures: **blue taxiway edge lights** beside the centreline
+lights (off aprons and outside runway strips) and **red stop bars** across the taxiway at every
+main-runway holding position. T1 streetlights get an arm and a lens that warms at night with a
+glow pool under it. No real lights were added.
+
 ## Consequences
 
 - The player can see why their aircraft is not moving and who is in the way, which is the
@@ -74,5 +99,8 @@ keep the primitive (invisible bevel / exact UV layout).
 - New building detail is opaque merged geometry: roughly seven extra draws for the whole
   airport, one extra night-glow renderer, and no new real lights. `BuildingDetailTests` pins
   that detail stays on its footprint, lit/dark panes, doors, tower cab order and determinism.
+- Lens groups: ~12 opaque lens draws + one fixture-base draw + ~12 additive halo draws at night,
+  against several hundred lens objects before. Stop bars are always lit at night, not switched
+  by clearance. `AirfieldFixtureTests` pins the geometry and each group's day response.
 - Bevelled blocks carry 96 vertices instead of 24; with ~460 blocks that is about 33k extra
   vertices, all static-batched as before.

@@ -65,7 +65,11 @@ namespace Airside.Presentation
                 var ink = AirsideTheme.RunwayInk;
 
                 var identity = FlightNumber.OrRegistration(aircraft);
-                var text = mine ? $"{Ownership.PlayerBadge} · {identity} · {AircraftStatus.TagPhase(aircraft, _clock.Now)}" : identity;
+                // A held aircraft says why in two words (ADR 0124): "hold · 737-8 landing".
+                var holdTag = mine || selected ? HoldReasonText.Short(_operations.Why(aircraft)) : string.Empty;
+                var phase = holdTag.Length > 0 ? holdTag : AircraftStatus.TagPhase(aircraft, _clock.Now);
+                var text = mine ? $"{Ownership.PlayerBadge} · {identity} · {phase}"
+                    : holdTag.Length > 0 ? $"{identity} · {holdTag}" : identity;
                 var width = tagStyle.CalcSize(new GUIContent(text)).x + 26f;
                 var pill = new Rect(gui.x - width * 0.5f, gui.y - 30f, width, 20f);
                 // Parked side by side, tags would print over each other: lift each one above

@@ -1,5 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (follow-up, same branch) — hold reasons (ADR 0124).**
+  `AirlineOperations.Why(aircraft)` (`Simulation/HoldReason.cs`) re-derives why an aircraft
+  is held — queue position, arrival/departure first, runway occupied, wake, storm, curfew,
+  apron busy, lead-in, taxi route blocker (new `GroundTraffic.PathClear(..., out blocker)`),
+  no stand free, choose stand, held airborne, in check — without mutating anything (no save
+  change). `Presentation/HoldReasonText` words it for the selection card, Ops board,
+  attention band, tiles and field tags. Evidence: `scripts/test-domain.sh` **808/808**
+  (new `HoldReasonTests`), per-assembly type-check clean apart from the three editor-only
+  baseline errors. **Mac check:** watch a busy morning and read the card/board wording.
+
 - **2026-09-26 Claude (follow-up, same branch) — first-time airline setup (ADR 0123).**
   Four-step New airline wizard (identity + flight code, livery with custom hue/shade,
   difficulty, briefing + coaching toggle) with a live preview; difficulty in the economy via

@@ -90,7 +90,7 @@ namespace Airside.Simulation
     /// wake separation on that strip. Owners only choose where and when an aircraft
     /// goes, and which stand it parks on. AI airlines make both choices automatically.
     /// </summary>
-    public sealed class AirlineOperations
+    public sealed partial class AirlineOperations
     {
         public const long DestinationTurnaroundSeconds = 40 * 60;
         public const long AiStandTurnaroundSeconds = 45 * 60;

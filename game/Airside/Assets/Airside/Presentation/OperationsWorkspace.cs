@@ -586,7 +586,7 @@ namespace Airside.Presentation
                 if (severity < StatusSeverity.Attention)
                     continue;
                 _attention.Add(new OperationsAttentionRow(aircraft.Registration,
-                    $"{aircraft.Registration}  ·  {ExceptionText(aircraft, now, clock, operations.CareerState.BaseLevel)}", severity));
+                    $"{aircraft.Registration}  ·  {WithReason(ExceptionText(aircraft, now, clock, operations.CareerState.BaseLevel), aircraft, now, clock, operations)}", severity));
             }
 
             if (_attention.Count > 0)
@@ -605,7 +605,17 @@ namespace Airside.Presentation
             if (priority == null || priority.State != FleetState.AtStand)
                 return;
             _attention.Add(new OperationsAttentionRow(priority.Registration,
-                $"{priority.Registration}  ·  {ExceptionText(priority, now, clock, operations.CareerState.BaseLevel)}", StatusSeverity.Normal));
+                $"{priority.Registration}  ·  {WithReason(ExceptionText(priority, now, clock, operations.CareerState.BaseLevel), priority, now, clock, operations)}", StatusSeverity.Normal));
+        }
+
+        /// <summary>Adds why a held aircraft is waiting (ADR 0124) to its exception line.</summary>
+        private static string WithReason(string text, FleetAircraft aircraft, SimulationTime now, AirlineClock clock,
+            AirlineOperations operations)
+        {
+            var reason = operations.Why(aircraft);
+            if (!reason.IsHolding || reason.Kind is HoldKind.Turnaround or HoldKind.InCheck)
+                return text;
+            return $"{text}  ·  {HoldReasonText.Long(aircraft, reason, now, clock)}";
         }
 
         private static string ExceptionText(FleetAircraft aircraft, SimulationTime now, AirlineClock clock,
@@ -650,6 +660,9 @@ namespace Airside.Presentation
             SelectedTypeName = $"{aircraft.Type.Name}  ·  Code {AircraftCatalogue.CodeLetter(aircraft.Type)}";
             SelectedIsPlayer = aircraft.Airline.IsPlayer;
             SelectedStatusLine = FlightBoard.PhaseLabel(aircraft, now);
+            var hold = operations.Why(aircraft);
+            if (hold.IsHolding)
+                SelectedStatusLine = HoldReasonText.Long(aircraft, hold, now, clock);
 
             if (aircraft.Scheduled.HasValue)
                 SelectedRouteLine =

@@ -579,7 +579,7 @@ namespace Airside.Presentation
                 return;
 
             var fleet = PlayerFleet();
-            OperationsSummary.FillPlayerRows(fleet, _clock.Now, _compactOpsRows);
+            OperationsSummary.FillPlayerRows(fleet, _clock.Now, _compactOpsRows, _operations);
             var box = Box(area);
             var visibleRows = HudShellPainter.VisibleTiles(box, _compactOpsRows.Count);
             if (visibleRows > 0 && _compactOpsRows.Count > visibleRows)
@@ -898,6 +898,13 @@ namespace Airside.Presentation
             card.RouteLine = SelectionRouteLine(aircraft);
             card.LiveLine = SelectionLiveStats(aircraft);
             card.PhaseLabel = AircraftStatus.TagPhase(aircraft, _clock.Now);
+            // Why it is waiting (ADR 0124): the chip gets the short form, the live line the sentence.
+            var hold = _operations.Why(aircraft);
+            card.HoldLine = hold.IsHolding && hold.Kind != HoldKind.Turnaround
+                ? HoldReasonText.Long(aircraft, hold, _clock.Now, _operations.Clock)
+                : string.Empty;
+            if (card.HoldLine.Length > 0)
+                card.PhaseLabel = HoldReasonText.Short(hold);
             var severity = AircraftStatus.Severity(aircraft, _clock.Now);
             card.PhaseTone = severity == StatusSeverity.Warning ? HudTone.Negative
                 : severity == StatusSeverity.Attention ? HudTone.Caution : HudTone.Accent;

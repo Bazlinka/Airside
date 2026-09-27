@@ -122,8 +122,12 @@ namespace Airside.Presentation
                 finale ? "CAREER COMPLETE" : "TOWARD " + g.UnlocksLabel.ToUpperInvariant());
         }
 
+        /// <summary>
+        /// One row per player aircraft. With <paramref name="operations"/>, a held aircraft's state
+        /// line says why it is waiting (ADR 0124) instead of only "Holding".
+        /// </summary>
         public static void FillPlayerRows(IEnumerable<FleetAircraft> playerFleet, SimulationTime now,
-            List<OperationsRow> into)
+            List<OperationsRow> into, AirlineOperations operations = null)
         {
             into.Clear();
             if (playerFleet == null)
@@ -132,10 +136,17 @@ namespace Airside.Presentation
             var priority = PriorityAircraft(playerFleet, now);
             foreach (var aircraft in playerFleet)
             {
+                var state = CompactState(aircraft, now);
+                if (operations != null)
+                {
+                    var reason = operations.Why(aircraft);
+                    if (reason.IsHolding && reason.Kind != HoldKind.Turnaround)
+                        state = HoldReasonText.Long(aircraft, reason, now, operations.Clock);
+                }
                 into.Add(new OperationsRow(
                     aircraft.Registration,
                     RouteLabel(aircraft),
-                    CompactState(aircraft, now),
+                    state,
                     AircraftStatus.Severity(aircraft, now),
                     priority != null && ReferenceEquals(priority, aircraft)));
             }

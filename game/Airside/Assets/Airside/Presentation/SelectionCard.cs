@@ -41,6 +41,9 @@ namespace Airside.Presentation
         public string LiveryHex;
         public string RouteLine = string.Empty;
         public string LiveLine = string.Empty;
+
+        /// <summary>Why the aircraft is waiting (ADR 0124), or empty.</summary>
+        public string HoldLine = string.Empty;
         public string PhaseLabel = string.Empty;
         public HudTone PhaseTone = HudTone.Accent;
         public bool IsPlayer;
@@ -90,7 +93,14 @@ namespace Airside.Presentation
                 into.Pill(new HudBox(box.Right - 20f - 108f, box.Y + 14f, 108f, 20f), data.PhaseLabel.ToUpperInvariant(),
                     data.PhaseTone, fontSize: 9f);
             into.Text(new HudBox(x, box.Y + 40f, inner, 16f), data.RouteLine, 12f, HudTone.Default);
-            into.Text(new HudBox(x, box.Y + 58f, inner, 16f), data.LiveLine, 11f, HudTone.Muted);
+            if (string.IsNullOrEmpty(data.HoldLine))
+                into.Text(new HudBox(x, box.Y + 58f, inner, 16f), data.LiveLine, 11f, HudTone.Muted);
+            else
+            {
+                into.Dot(x + 4f, box.Y + 66f, 7f, HudTone.Caution);
+                into.Text(new HudBox(x + 14f, box.Y + 58f, inner - 14f, 16f), data.HoldLine, 11f, HudTone.Caution,
+                    HudTextStyle.Bold);
+            }
 
             if (data.Prep.Count > 0)
                 PaintPrep(into, new HudBox(x, box.Y + 86f, inner, 44f), data.Prep);

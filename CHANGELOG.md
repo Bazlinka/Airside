@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Holds say why (ADR 0124).** An aircraft that is waiting now tells you what it is
+  waiting for and who is in the way: "Number 2 for 23 — behind QFA412 (737-8)", "Holding
+  short 23 — RXA201 (340B) landing, clear in 40 s", "Waiting to push back — apron busy with
+  VH-SUN and QFA671", wake separation, storm ground stops, curfew, no stand free, choose a
+  stand. The sentence shows on the selected-aircraft card, the Ops board and attention band;
+  a short tag ("hold · wake") shows on field labels. Derived live, nothing saved.
+
 - **Found your airline properly (ADR 0123).** New airline is now a four-step setup with a
   live preview: name and your own two- or three-letter flight code; a livery from twelve
   colours or your own hue and shade; Relaxed / Standard / Demanding difficulty (starting

@@ -226,6 +226,51 @@ namespace Airside.Simulation
 
         internal void RestoreOnTimeStreak(int streak) => OnTimeStreak = Math.Max(0, streak);
 
+        /// <summary>Reliability at 95% or more counts toward the prestige challenge (ADR 0138).</summary>
+        public const int HighReliability = 95;
+
+        /// <summary>How many post-flight reliability readings are kept (ADR 0138/0139).</summary>
+        public const int ReliabilityHistoryLength = 20;
+
+        private readonly List<int> _recentReliability = new();
+
+        /// <summary>Flights in a row that ended with reliability at 95% or more. Saved from v17.</summary>
+        public int HighReliabilityStreak { get; private set; }
+
+        /// <summary>Reliability after each of the last flights, oldest first. Saved from v17.</summary>
+        public IReadOnlyList<int> RecentReliability => _recentReliability;
+
+        /// <summary>
+        /// How many of the latest flights in a row ended with reliability at <paramref name="percent"/> or
+        /// more: "held" reliability for the career gates (ADR 0139).
+        /// </summary>
+        public int FlightsHeldAtOrAbove(int percent)
+        {
+            var held = 0;
+            for (var i = _recentReliability.Count - 1; i >= 0 && _recentReliability[i] >= percent; i--)
+                held++;
+            return held;
+        }
+
+        private void NoteReliabilityAfterFlight()
+        {
+            HighReliabilityStreak = Reliability >= HighReliability ? HighReliabilityStreak + 1 : 0;
+            _recentReliability.Add(Reliability);
+            while (_recentReliability.Count > ReliabilityHistoryLength)
+                _recentReliability.RemoveAt(0);
+        }
+
+        internal void RestoreReliabilityHistory(int highStreak, IEnumerable<int> recent)
+        {
+            HighReliabilityStreak = Math.Max(0, highStreak);
+            _recentReliability.Clear();
+            if (recent != null)
+                foreach (var value in recent)
+                    _recentReliability.Add(Clamp(value));
+            while (_recentReliability.Count > ReliabilityHistoryLength)
+                _recentReliability.RemoveAt(0);
+        }
+
         /// <summary>True once <see cref="TryAward"/> has paid <paramref name="key"/> (challenges, the finale).</summary>
         public bool HasAward(string key) => !string.IsNullOrEmpty(key) && _processedSettlements.Contains(key);
 
@@ -285,6 +330,7 @@ namespace Airside.Simulation
 
             Funds += payment;
             LifetimeRevenue += payment;
+            NoteReliabilityAfterFlight();
             EvaluateTier(ownedTypes, fleetCount);
             return new FlightSettlement(id, contractId, payment, reliability, rotations, fulfilled);
         }

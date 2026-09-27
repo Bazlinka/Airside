@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Every contract can be finished.** Deadlines now allow for how long your aircraft really takes,
+  so long-haul work no longer asks for the impossible. Medical calls only go where you can get
+  there and back in 3 hours, and turboprop owners get one every day. Featured contracts only
+  appear for aircraft you own or can buy now. The game won't let you sign work you can't fly in
+  time. A flight that parks right on the deadline counts. The 95% reliability challenge is now a
+  real streak, and a reload no longer forgets today's flights.
+
 - **Pushback times you can trust.** A delayed flight now shows its original time with the new time
   under EST, instead of counting the delay twice. A departure keeps its time on the board as it
   taxis and takes off, and you can see when it actually left. Prep times match your base on every

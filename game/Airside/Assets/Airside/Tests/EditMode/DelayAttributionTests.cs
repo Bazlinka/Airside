@@ -179,7 +179,7 @@ namespace Airside.Tests
 
             AirlineSaveData Fresh() => AirlineSave.Capture(ops);
             var data = Fresh();
-            Assert.That(data.Version, Is.EqualTo(16));
+            Assert.That(data.Version, Is.EqualTo(AirlineSaveData.CurrentVersion));
             var restoredClock = new ManualSimulationClock(clock.Now);
             var restored = AirlineSave.Restore(data, restoredClock);
             var again = restored.Fleet.Single(a => a.Registration == "VH-PAA");

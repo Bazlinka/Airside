@@ -209,11 +209,11 @@ namespace Airside.Tests
         {
             if (!offer.HasDeadline)
                 return true;
-            var km = DestinationCatalogue.Adelaide.DistanceKmTo(destination);
-            var rotation = 2 * LegTiming.AirborneSeconds(km, offer.EligibleType) + 40 * 60
-                           + DeparturePrep.TotalSeconds(offer.EligibleType, Career.BaseLevel) + 20 * 60;
+            // The same rule the market uses (ADR 0138), with the bot's own caution on top.
+            var minimum = ContractFeasibility.MinimumSeconds(offer.EligibleType, destination, offer.RequiredRotations,
+                Career.BaseLevel);
             var slack = Competent ? 1.3 : 1.8;
-            return rotation * offer.RequiredRotations * slack < offer.DeadlineSeconds;
+            return minimum * slack < offer.DeadlineSeconds;
         }
 
         private static double ContractValue(RouteContractDefinition offer, HashSet<string> goals)

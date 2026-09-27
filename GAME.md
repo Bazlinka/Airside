@@ -1,5 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — contracts you can finish (ADR 0138).** `ContractFeasibility`
+  (legs + turnaround + base prep + 20 min, ×1.25): the market lengthens any too-tight deadline,
+  medical calls only where 3 h fits (else charter), a daily medical for turboprop owners, Tasman
+  jets also draw national cities. Featured authored contracts need an aircraft you own or
+  `CouldBuyNow`. Accept refuses work you can't finish. Expiry runs after everything else at that
+  instant. Reliability challenge is a real streak. **Save v17:** day so far, 95% streak, recent
+  reliability. Tests **895/895**. **Mac checks:** a widebody's contract offers read sensible
+  deadlines; an old save loads.
+
 - **2026-09-27 Claude (same branch) — pushback times (ADR 0137).** `ScheduledDeparture.PublishedAt`:
   an AI delay moves pushback, never the published slot, and `DelayMinutes` is derived (no more
   double-counted "Delayed +N"). Departure TIME stays fixed through taxi/takeoff/climb

@@ -1,5 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — moments (ADR 0132).** `Presentation/HudMoments.cs`:
+  funds count up/down in the capsule (green/red while moving); departures-board fields flip through
+  letters when they change; celebration cards for a new tier, a finished contract and the finale
+  (queued, CONTINUE or 20 s). Tests **866/866**, type-check clean. **Mac checks:** the card over
+  the airport, the funds count after a paid flight, board flips and frame time.
+
 - **2026-09-27 Claude (same branch) — every modelled aircraft for sale (ADR 0131).** E190,
   A220-300, 737-800, A320-200, A330-900neo and 787-9 join the market (`AircraftAcquisition.All`, now
   in career order); `RouteAccess.Ceiling` bands; `FlightEconomics.RunningCostFactor` (cost only);

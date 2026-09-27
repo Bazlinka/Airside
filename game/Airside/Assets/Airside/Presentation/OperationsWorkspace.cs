@@ -918,7 +918,7 @@ namespace Airside.Presentation
 
         public static void Paint(HudDrawList into, OperationsWorkspaceModel model,
             OperationsWorkspaceLayout layout, string selectedRegistration, int scrollRow,
-            bool allMovements = false)
+            bool allMovements = false, FlapBoardState flaps = null, float now = 0f)
         {
             if (into == null || model == null)
                 return;
@@ -929,7 +929,7 @@ namespace Airside.Presentation
             PaintDayStrip(into, model, layout);
             PaintAttention(into, model, layout);
             PaintTabs(into, model, layout);
-            PaintBoard(into, model, layout, selectedRegistration, scrollRow, allMovements);
+            PaintBoard(into, model, layout, selectedRegistration, scrollRow, allMovements, flaps, now);
             PaintDetail(into, model, layout);
             PaintFooter(into, model, layout);
         }
@@ -1027,7 +1027,7 @@ namespace Airside.Presentation
 
         private static void PaintBoard(HudDrawList into, OperationsWorkspaceModel model,
             OperationsWorkspaceLayout layout, string selectedRegistration, int scrollRow,
-            bool allMovements)
+            bool allMovements, FlapBoardState flaps, float now)
         {
             var header = layout.ColumnHeader;
             into.Caption(new HudBox(header.X, header.Y + 4f, header.Width - 140f, 16f),
@@ -1096,7 +1096,7 @@ namespace Airside.Presentation
                 if (row.IsPlayer)
                     into.Fill(new HudBox(box.X, box.Y, 3f, box.Height), HudTone.Default, 1f, row.LiveryHex);
 
-                PaintFlapRow(into, box, row, alpha);
+                PaintFlapRow(into, box, row, alpha, flaps, now);
                 if (row.HasProgress)
                     into.Bar(new HudBox(layout.ColumnX(0), box.Bottom - 3f, layout.Board.Right - layout.ColumnX(0), 2f),
                         row.Progress01, row.IsPlayer ? HudTone.Accent : HudTone.Muted);
@@ -1120,8 +1120,12 @@ namespace Airside.Presentation
         /// REMARKS, each character on its own tile, with the operator and type in small print under it.
         /// Tile width follows the row so the board fits every window.
         /// </summary>
-        private static void PaintFlapRow(HudDrawList into, HudBox box, OperationsFlightRow row, float alpha)
+        private static void PaintFlapRow(HudDrawList into, HudBox box, OperationsFlightRow row, float alpha,
+            FlapBoardState flaps = null, float now = 0f)
         {
+            // ADR 0132: a field whose text changed flips through letters before it settles.
+            string Show(string field, string text) =>
+                flaps == null ? text : flaps.Display(row.Registration + "|" + row.FlightNumber + "|" + field, text, now);
             var inner = box.Inset(12f, 6f, 10f, 0f);
             const int timeChars = 5, flightChars = 7, placeChars = 13, gateChars = 4, minRemarks = 8;
             const float fieldGap = 10f;
@@ -1134,15 +1138,15 @@ namespace Airside.Presentation
             var y = inner.Y;
             var remarkTone = row.StatusTone == HudTone.Default ? HudTone.Default : row.StatusTone;
 
-            x = FlapField(into, x, y, tile, tileHeight, font, row.ScheduledTime, timeChars,
+            x = FlapField(into, x, y, tile, tileHeight, font, Show("time", row.ScheduledTime), timeChars,
                 row.IsPast ? HudTone.Muted : HudTone.Default, alpha) + fieldGap;
             x = FlapField(into, x, y, tile, tileHeight, font, row.FlightNumber, flightChars, HudTone.Default, alpha)
                 + fieldGap;
             x = FlapField(into, x, y, tile, tileHeight, font, BoardPlace(row.Route), placeChars, HudTone.Default,
                 alpha) + fieldGap;
-            x = FlapField(into, x, y, tile, tileHeight, font, row.OnField ? row.Stand : string.Empty, gateChars,
+            x = FlapField(into, x, y, tile, tileHeight, font, Show("gate", row.OnField ? row.Stand : string.Empty), gateChars,
                 HudTone.Default, alpha) + fieldGap;
-            FlapField(into, x, y, tile, tileHeight, font, row.Status, remarks, remarkTone, alpha);
+            FlapField(into, x, y, tile, tileHeight, font, Show("remarks", row.Status), remarks, remarkTone, alpha);
 
             var small = new List<string>();
             if (row.OperatorName.Length > 0) small.Add(row.OperatorName);

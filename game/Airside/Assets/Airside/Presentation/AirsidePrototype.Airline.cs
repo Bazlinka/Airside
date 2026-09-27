@@ -281,6 +281,8 @@ namespace Airside.Presentation
                 DrawSelectionHudCard(layout, placement);
             if (_controlsHelpOpen)
                 DrawControlsHelp(layout);
+            else
+                DrawCelebration(layout);
             DrawToast(placement.Toast);
         }
 
@@ -565,7 +567,11 @@ namespace Airside.Presentation
             var airline = _operations.PlayerAirline;
             var rail = Box(placement.Rail);
             HudShell.FillTabs(rail, layout.Viewport.y, _activeWorkspace, _navTabs);
-            HudShellPainter.CapsuleValues(_operations, StampText(_clock.Now), _capsuleValues);
+            var fundsShown = _operations?.CareerState == null
+                ? (long?)null
+                : _fundsTicker.Show(_operations.CareerState.Funds, Time.unscaledTime);
+            HudShellPainter.CapsuleValues(_operations, StampText(_clock.Now), _capsuleValues, fundsShown,
+                _fundsTicker.Direction);
             HudShell.FillCapsule(Box(placement.Capsule), _capsuleValues, _capsuleSegments);
 
             _shellDrawList.Clear();
@@ -891,6 +897,45 @@ namespace Airside.Presentation
 
         /// <summary>First aircraft-market card shown on the Fleet page (ADR 0131).</summary>
         private int _fleetMarketStart;
+
+        // ADR 0132 — moments: counting funds, flipping board tiles, and cards for the big ones.
+        private readonly FundsTicker _fundsTicker = new();
+        private readonly FlapBoardState _boardFlaps = new();
+        private readonly Queue<CelebrationCard> _celebrations = new();
+        private float _celebrationShownAt = -1f;
+        private readonly HudDrawList _celebrationDrawList = new();
+
+        /// <summary>A card nobody closes leaves on its own: the airport keeps running underneath.</summary>
+        private const float CelebrationAutoCloseSeconds = 20f;
+
+        private void Celebrate(CelebrationCard card)
+        {
+            if (card != null)
+                _celebrations.Enqueue(card);
+        }
+
+        /// <summary>Draws the oldest waiting celebration; returns true while one is on screen.</summary>
+        private bool DrawCelebration(HudLayout layout)
+        {
+            if (_celebrations.Count == 0)
+                return false;
+            var now = Time.unscaledTime;
+            if (_celebrationShownAt < 0f)
+                _celebrationShownAt = now;
+            var panel = CelebrationPainter.Panel(layout.Viewport.x, layout.Viewport.y);
+            _celebrationDrawList.Clear();
+            CelebrationPainter.Paint(_celebrationDrawList, panel, _celebrations.Peek(), now - _celebrationShownAt);
+            _hudPanels.Add(new Rect(panel.X, panel.Y, panel.Width, panel.Height));
+            var clicked = _hudPainter.Draw(_celebrationDrawList);
+            if (clicked == CelebrationPainter.Close || now - _celebrationShownAt > CelebrationAutoCloseSeconds)
+            {
+                _celebrations.Dequeue();
+                _celebrationShownAt = -1f;
+                PlayUiClick();
+            }
+
+            return true;
+        }
 
         /// <summary>
         /// Contextual selected-aircraft card (ADR 0122): identity and phase chip, route and live
@@ -2060,7 +2105,7 @@ namespace Airside.Presentation
             if (_boardScrollRow != beforeScroll)
                 _boardScrollFollowRow = -1;
             OperationsWorkspacePainter.Paint(_workspaceDrawList, _operationsWorkspace, layout,
-                _selectedAircraftId, _boardScrollRow, _operationsAllMovements);
+                _selectedAircraftId, _boardScrollRow, _operationsAllMovements, _boardFlaps, Time.unscaledTime);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
         }
 
@@ -3133,6 +3178,10 @@ namespace Airside.Presentation
                 // ADR 0128: the pay line also says whether it pushed on time, and what made it late.
                 var s = settlements[i];
                 ShowToast(DelayText.SettlementToast(s, _operations.CareerState?.OnTimeStreak ?? 0), DelayText.Tone(s));
+                if (s.ContractFulfilled && _operations.CareerState != null
+                    && _operations.CareerState.TryFindDefinition(s.ContractDefinitionId, out var fulfilled))
+                    Celebrate(CelebrationCard.ForContract(ContractsWorkspaceModel.OfferTitle(fulfilled), s.Payment,
+                        s.ReliabilityDelta, FleetWorkspacePainter.Thumbnail(fulfilled.EligibleType)));
             }
         }
 
@@ -3172,6 +3221,13 @@ namespace Airside.Presentation
             var any = false;
             while (_operations.TryTakeCareerEvent(out var careerEvent))
             {
+                // ADR 0132: the big moments get a card as well as the toast.
+                if (careerEvent.Kind == CareerEventKind.TierReached)
+                    Celebrate(CelebrationCard.ForTier(careerEvent.Tier, _operations.PlayerAirline?.Name ?? "Your airline"));
+                else if (careerEvent.Kind == CareerEventKind.Finale && _operations.CareerState != null)
+                    Celebrate(CelebrationCard.ForFinale(_operations.PlayerAirline?.Name ?? "Your airline",
+                        _operations.PlayerFleetCount(), _operations.CareerState.ServedDestinations.Count,
+                        _operations.CareerState.ActivePlaySeconds / 3600));
                 ShowToast(careerEvent.Text, careerEvent.Kind switch
                 {
                     CareerEventKind.GoalComplete or CareerEventKind.Challenge or CareerEventKind.Milestone => HudTone.Positive,

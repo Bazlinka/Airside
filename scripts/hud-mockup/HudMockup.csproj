@@ -40,6 +40,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightManual.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HoldReasonText.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/DelayText.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudMoments.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ControlsHelp.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirlineSetup.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudWorkspace.cs" />

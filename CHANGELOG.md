@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Big moments feel big.** Reaching a new tier, finishing a contract and becoming an established
+  airline now bring up a card showing what you've unlocked. Your money counts up when you're
+  paid, and the departures board flips its letters when a flight's status changes.
+
 - **Six more aircraft to buy.** The Embraer E190 is now the cheapest first jet, the A220-300 can
   cross the Tasman, the older 737-800 and A320 are cheaper to buy but cost more to fly, and the
   A330-900neo and 787-9 are cheaper ways into long-haul. The Fleet market shows what you can buy

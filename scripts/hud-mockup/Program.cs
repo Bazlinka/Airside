@@ -30,6 +30,7 @@ public static class Program
             SplashPage(scenario, width, height, SplashStep.NewAirline, SetupStep.Livery),
             SplashPage(scenario, width, height, SplashStep.NewAirline, SetupStep.Briefing),
             ManualPage(width, height, 1),
+            CelebrationPage(width, height),
             Overview(scenario, width, height),
             Operations(scenario, width, height),
             RouteMapPage(scenario, width, height),
@@ -147,6 +148,14 @@ public static class Program
         if (!shell.MiniMap.IsEmpty)
             MiniMapFrame.Paint(list, shell.MiniMap, "ADELAIDE · 23 / 05");
         return new Page("overview", Serialise(list));
+    }
+
+    private static Page CelebrationPage(float width, float height)
+    {
+        var list = new HudDrawList();
+        var card = CelebrationCard.ForTier(Airside.Domain.OperatingTier.Domestic, "Soak Air");
+        CelebrationPainter.Paint(list, CelebrationPainter.Panel(width, height), card, 1f);
+        return new Page("celebration", Serialise(list));
     }
 
     private static Page ManualPage(float width, float height, int page)

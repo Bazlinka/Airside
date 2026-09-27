@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Better sound.** Turboprops and jets are now evenly loud, and the jet no longer clicks as its
+  sound loops. Each aircraft size has its own engine note: an E190 sounds lighter than a 737, and
+  an A350 deeper and louder. Far-off aircraft sound muffled. The apron hums quietly, the terminal
+  chimes now and then, and the sea sounds less repetitive.
+
 - **Keep your eye on the airport.** Fleet, Contracts and the Airline page now open as a panel on the
   right, so the airport stays visible beside them. Panels slide in, and buttons lift when you point
   at them.

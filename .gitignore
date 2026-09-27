@@ -60,3 +60,5 @@ __pycache__/
 # Not source: committing it would churn and could disagree with the commit that contains it.
 /game/Airside/Assets/StreamingAssets/build-identity.txt
 /game/Airside/Assets/StreamingAssets/build-identity.txt.meta
+/scripts/audio/render-sounds/bin/
+/scripts/audio/render-sounds/obj/

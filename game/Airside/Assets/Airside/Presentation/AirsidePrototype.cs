@@ -201,7 +201,7 @@ namespace Airside.Presentation
         private const float AmbientWindVolume = 0.045f;
         private const float AmbientRainVolume = 0.07f;
         private const float AmbientStormVolume = 0.11f;
-        private const float AmbientCoastVolume = 0.035f;
+        private const float AmbientCoastVolume = 0.016f; // ADR 0136: the rebuilt bed is ~7 dB hotter than the old single wave
         // Live Adelaide time drives sun, floods and aircraft lamps. Set true only to
         // force noon while debugging lighting (was pinned through the 24 h day cutover).
         private static readonly bool PinDaylightPresentation =
@@ -612,6 +612,7 @@ namespace Airside.Presentation
             UpdateTerminalFlag();
             UpdateEngineAudio();
             UpdateAmbientAudio();
+            UpdateSoundscape();
             UpdateWeatherPresentation();
             UpdateTouchdownSmoke();
             UpdateWheelSmoke();
@@ -1780,7 +1781,7 @@ namespace Airside.Presentation
                 ApplyEngineAudio(_commercialAircraft[index],
                     engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase),
                     engines is { } e ? Mathf.Max(e.Left, e.Right) : 1f,
-                    type, phase);
+                    type, phase, VisualFlights[index].AircraftId);
             }
         }
 
@@ -1798,7 +1799,7 @@ namespace Airside.Presentation
 
         /// <param name="spool">0..1 through an engine start or shutdown; bends the note down while spooling.</param>
         private void ApplyEngineAudio(Transform aircraft, bool enginesOn, float spool, AircraftType type,
-            AircraftPhase phase)
+            AircraftPhase phase, string aircraftId = null)
         {
             if (aircraft == null)
                 return;
@@ -1810,8 +1811,13 @@ namespace Airside.Presentation
                 if (source == null)
                     return;
                 source.playOnAwake = false;
-                source.dopplerLevel = 0f;
+                // ADR 0136: a touch of doppler for flybys, and a range that matches the aircraft's size.
+                source.dopplerLevel = 0.35f;
                 source.spatialBlend = 1f;
+                var range = EngineVoice.Range(EngineVoice.ClassOf(type));
+                source.minDistance = range.Min;
+                source.maxDistance = range.Max;
+                source.rolloffMode = AudioRolloffMode.Logarithmic;
                 _engineAudio[id] = source;
             }
 
@@ -1834,13 +1840,24 @@ namespace Airside.Presentation
                 ? Mathf.InverseLerp(AirsideReusableMotion.PropRpmTaxi,
                     AirsideReusableMotion.PropRpmTakeoff, rpm)
                 : 0f;
-            if (phase is AircraftPhase.Takeoff or AircraftPhase.Departed)
+            if (phase is AircraftPhase.Takeoff)
+                power = 1f; // the takeoff roll swells to full power
+            else if (phase is AircraftPhase.Departed)
                 power = Mathf.Max(power, 0.85f);
             else if (phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.GoAround)
                 power = Mathf.Max(power, 0.55f);
             else if (phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback)
                 power = Mathf.Max(power, 0.25f);
-            source.pitch = Mathf.Lerp(0.96f, 1.06f, power);
+            var kind = EngineVoice.ClassOf(type);
+            source.pitch = EngineVoice.Pitch(kind, power, enginesOn ? spool : 0f, EngineVoice.Detune(aircraftId));
+
+            // Distant engines are duller as well as quieter: only the rumble carries.
+            var lowPass = source.GetComponent<AudioLowPassFilter>();
+            if (lowPass == null)
+                lowPass = source.gameObject.AddComponent<AudioLowPassFilter>();
+            var listener = _mainCamera != null ? _mainCamera.transform.position : aircraft.position;
+            lowPass.cutoffFrequency = EngineVoice.LowPassHz(Vector3.Distance(listener, aircraft.position),
+                source.maxDistance, power);
 
             if (!enginesOn)
             {
@@ -1850,8 +1867,7 @@ namespace Airside.Presentation
                 return;
             }
 
-            var target = Mathf.Lerp(EngineVolumeRunning * 0.4f, EngineVolumeRunning, power)
-                         * Mathf.Lerp(0.35f, 1f, spool);
+            var target = EngineVoice.Volume(kind, power, spool);
             source.volume = Mathf.MoveTowards(source.volume, target, Time.unscaledDeltaTime * 0.8f);
             if (!source.isPlaying)
                 source.Play();
@@ -1878,9 +1894,10 @@ namespace Airside.Presentation
             var weather = CurrentWeather;
             var raining = weather == WeatherKind.Rain || weather == WeatherKind.Storm;
             var storm = weather == WeatherKind.Storm;
-            var windTarget = _audioMuted ? 0f : AmbientWindVolume;
-            var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume);
-            var coastTarget = _audioMuted || AirsideFocusMode.BareWorld ? 0f : AmbientCoastVolume * (storm ? 1.45f : raining ? 1.2f : 1f);
+            var windTarget = _audioMuted ? 0f : AmbientWindVolume * AmbientDuck;
+            var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume) * AmbientDuck;
+            var coastTarget = _audioMuted || AirsideFocusMode.BareWorld ? 0f
+                : AmbientCoastVolume * (storm ? 1.45f : raining ? 1.2f : 1f) * AmbientDuck;
             // Slight day/night wind variation (presentation only).
             if (!_audioMuted)
                 windTarget *= Mathf.Lerp(0.75f, 1.1f, 1f - PresentationDaylight);

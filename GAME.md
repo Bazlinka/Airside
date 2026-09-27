@@ -1,5 +1,13 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — sound pass (ADR 0136).** Engine beds level-matched to
+  −20 dBFS with clean loops (`scripts/audio/process_beds.py`); coast rebuilt as a 16 s irregular
+  bed. `EngineVoice` gives turboprop / regional jet / narrowbody / widebody their own pitch, level
+  and range, a per-aircraft detune and distance low-pass. Apron bed, PA chime every 4–8 min,
+  panel whoosh, ambience ducking under fanfares. Listening copies in `docs/testing/audio-2026-09-27/`.
+  Tests **878/878**. **Mac checks:** Saab vs 737 vs A350 level; far jets muffled; PA chime over an
+  hour; apron bed sits under everything.
+
 - **2026-09-27 Claude (same branch) — side sheets and motion (ADR 0135).** Fleet, Contracts and
   Airline/Career open as a right-anchored sheet (~⅔ width, ≥900 px) so the airport stays in view;
   Ops and Map stay full width; small windows unchanged. Workspaces slide in (0.18 s), buttons lift

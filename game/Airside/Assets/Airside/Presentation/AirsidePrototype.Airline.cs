@@ -259,6 +259,8 @@ namespace Airside.Presentation
             // ADR 0135: a newly opened sheet slides in from the right.
             if (_activeWorkspace != _workspaceShown)
             {
+                if (_activeWorkspace != HudWorkspace.None)
+                    PlayPanelWhoosh();
                 _workspaceShown = _activeWorkspace;
                 _workspaceOpenedAt = Time.unscaledTime;
             }
@@ -995,6 +997,7 @@ namespace Airside.Presentation
                     PlayMoment(ref _chimeClip, HudSounds.ContractChime, "Contract chime", 0.8f);
                 else
                     PlayMoment(ref _stingClip, HudSounds.TierSting, "Tier sting", 0.8f);
+                DuckAmbience(1.8f);
             }
             var panel = CelebrationPainter.Panel(layout.Viewport.x, layout.Viewport.y);
             _celebrationDrawList.Clear();

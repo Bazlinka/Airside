@@ -63,6 +63,76 @@ namespace Airside.Presentation
         /// <summary>A finished contract: a shorter two-note "done".</summary>
         public static float[] ContractChime() => Arpeggio(new[] { 783.99, 1046.5 }, 0.12, 0.9f, 0.55f);
 
+        /// <summary>A panel opening: a short, soft rising air whoosh (ADR 0136).</summary>
+        public static float[] PanelWhoosh()
+        {
+            var samples = new float[(int)(SampleRate * 0.28f)];
+            var noise = new Noise(11);
+            var low = 0f;
+            for (var i = 0; i < samples.Length; i++)
+            {
+                var t = i / (float)samples.Length;
+                // A one-pole low-pass whose corner rises: the whoosh brightens as the sheet arrives.
+                var alpha = 0.02f + 0.18f * t;
+                low += alpha * (noise.Next() - low);
+                var envelope = (float)Math.Sin(Math.PI * t) * (1f - t * 0.4f);
+                samples[i] = low * envelope;
+            }
+
+            return Normalise(samples, 0.35f);
+        }
+
+        /// <summary>The terminal PA's three-tone chime before an announcement: a gentle "bing-bong-bing".</summary>
+        public static float[] PaChime() => Arpeggio(new[] { 659.25, 523.25, 783.99 }, 0.42, 2.2f, 0.5f);
+
+        /// <summary>
+        /// ADR 0136 — the working apron under everything: distant rumble, a faint mains hum from ground
+        /// power, and now and then a far-off reversing beep. A 12 s loop, level at both ends.
+        /// </summary>
+        public static float[] ApronBed()
+        {
+            var length = SampleRate * 12;
+            var samples = new float[length];
+            var noise = new Noise(23);
+            var rumble = 0f;
+            var rumble2 = 0f;
+            for (var i = 0; i < length; i++)
+            {
+                var time = i / (double)SampleRate;
+                rumble += 0.01f * (noise.Next() - rumble);
+                rumble2 += 0.05f * (rumble - rumble2);
+                var hum = 0.18 * Math.Sin(2 * Math.PI * 100 * time) + 0.08 * Math.Sin(2 * Math.PI * 200 * time);
+                // A slow swell so the bed breathes, periodic over the loop so it joins cleanly.
+                var swell = 0.8 + 0.2 * Math.Sin(2 * Math.PI * time / 12.0);
+                samples[i] = (float)((rumble2 * 6.0 + hum * 0.25) * swell);
+            }
+
+            // Reversing beeps from a distant tug: two bursts of three, well inside the loop.
+            foreach (var start in new[] { 3.2, 8.7 })
+                for (var b = 0; b < 3; b++)
+                {
+                    var from = (int)((start + b * 0.9) * SampleRate);
+                    for (var k = 0; k < SampleRate * 0.35 && from + k < length; k++)
+                    {
+                        var t = k / (double)SampleRate;
+                        var edge = Math.Min(1.0, Math.Min(t, 0.35 - t) / 0.01);
+                        samples[from + k] += (float)(0.06 * edge * Math.Sin(2 * Math.PI * 1150 * t));
+                    }
+                }
+
+            // Crossfade the ends so the loop is seamless.
+            var fade = SampleRate / 2;
+            for (var i = 0; i < fade; i++)
+            {
+                var t = i / (float)fade;
+                samples[i] = samples[i] * t + samples[length - fade + i] * (1f - t);
+            }
+
+            var looped = new float[length - fade];
+            Array.Copy(samples, looped, looped.Length);
+            return Normalise(looped, 0.5f);
+        }
+
         private static float[] Arpeggio(double[] notes, double step, float seconds, float peak)
         {
             var samples = new float[(int)(SampleRate * seconds)];

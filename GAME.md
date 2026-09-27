@@ -1,5 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — cash for the usual flight (ADR 0134).** The "cash squeeze"
+  was the bot's reserve costing every aircraft at 1,500 km; after a cheap widebody it retried
+  long-haul flights it could not pay for. `FlightEconomics.TypicalLegKm`; the Fleet market now warns
+  when a buy leaves less than the aircraft's usual flight; bot reserve fixed. Refusals ~2,600 → 0,
+  pacing unchanged. Tests **869/869**.
+
 - **2026-09-27 Claude (same branch) — Showcase + moment sounds (ADR 0133).** Dev tools (F8)
   Showcase row fires every new moment on demand; `HudSounds` synthesises a flap rattle, cash ching,
   tier sting and contract chime (no files). **Mac checklist for ADR 0126–0133** (F8 → Showcase makes

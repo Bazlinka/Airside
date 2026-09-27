@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **The aircraft market warns you before you overspend.** If buying an aircraft would leave too
+  little money to fly it on its usual kind of route, the card tells you how much you'd have left
+  and what that flight costs.
+
 - **Sounds for the big moments.** The departures board rattles as its letters flip, money landing
   goes "ching", and a new tier or a finished contract gets its own short fanfare. Press M to mute.
 

@@ -6,15 +6,15 @@ Targets are ADR 0120's active-play checkpoints: Regional ≤ 8 h, Domestic 8–3
 
 | Difficulty | Style | Regional | Domestic | International | Established | Min cash | Final fleet | Stuck flags |
 |---|---|---|---|---|---|---|---|---|
-| Standard | Competent | 10.8 h (11–11) | 29.3 h (29–29) | 61.5 h (60–63) | 141.0 h (141–141) | $1 | 18/18/18/18/18 | 1 |
-| Standard | Casual | 11.5 h (11–12) | 34.7 h (34–38) | 74.3 h (74–78) | 170.7 h (167–175) | $872 | 18/18/18/18/18 | 0 |
+| Standard | Competent | 10.8 h (11–11) | 29.3 h (28–29) | 61.6 h (55–63) | 142.8 h (141–144) | $2,119 | 18/18/18/18/18 | 1 |
+| Standard | Casual | 11.5 h (11–12) | 34.0 h (33–37) | 74.4 h (69–77) | 174.7 h (167–177) | $2,590 | 18/18/18/18/18 | 0 |
 
 ## Contracts and challenges (ADR 0127, totals over all seeds)
 
 | Style | Contracts lapsed | Challenges paid | Daily reports |
 |---|---|---|---|
-| Competent | 3 | 20 | 39 |
-| Casual | 1 | 18 | 45 |
+| Competent | 1 | 18 | 40 |
+| Casual | 2 | 19 | 46 |
 
 ## Goal completion (median open hours, all seeds)
 
@@ -28,18 +28,18 @@ Targets are ADR 0120's active-play checkpoints: Regional ≤ 8 h, Domestic 8–3
 | first-rotations | 10.8 h (11–11) | 9.2 h (9–9) |
 | regional-base | 11.0 h (11–11) | 12.0 h (12–12) |
 | regional-network | 15.0 h (15–15) | 20.5 h (20–22) |
-| regional-fleet | 15.0 h (15–15) | 28.1 h (26–32) |
-| regional-service | 29.3 h (29–29) | 34.7 h (34–38) |
-| established-margin | 29.3 h (29–29) | 34.7 h (34–38) |
-| domestic-jet | 51.0 h (51–53) | 69.0 h (66–69) |
-| domestic-service | 51.0 h (51–51) | 69.0 h (69–69) |
-| domestic-network | 51.1 h (50–56) | 69.0 h (65–77) |
-| domestic-base | 61.5 h (60–63) | 74.3 h (74–78) |
-| established-network | 59.0 h (55–68) | 82.8 h (76–100) |
-| international-widebody | 87.0 h (87–88) | 106.4 h (105–112) |
-| international-network | 107.4 h (105–114) | 128.1 h (126–136) |
-| international-bases | 132.7 h (132–138) | 159.1 h (159–163) |
-| established-fleet | 141.0 h (141–141) | 170.7 h (167–175) |
+| regional-fleet | 15.0 h (15–15) | 24.0 h (22–28) |
+| regional-service | 29.3 h (28–29) | 34.0 h (33–37) |
+| established-margin | 29.3 h (28–29) | 34.0 h (33–37) |
+| domestic-network | 49.7 h (50–51) | 68.3 h (51–77) |
+| domestic-jet | 53.0 h (51–54) | 66.2 h (62–69) |
+| domestic-service | 51.0 h (51–51) | 69.0 h (67–69) |
+| domestic-base | 61.6 h (55–63) | 70.3 h (69–76) |
+| established-network | 58.6 h (58–66) | 86.7 h (69–87) |
+| international-widebody | 92.4 h (87–94) | 108.5 h (108–116) |
+| international-network | 114.5 h (105–115) | 138.5 h (135–141) |
+| international-bases | 140.4 h (135–141) | 162.7 h (159–169) |
+| established-fleet | 142.8 h (141–144) | 174.7 h (167–177) |
 
 ## Where runs ended short of the finale
 
@@ -50,4 +50,3 @@ Targets are ADR 0120's active-play checkpoints: Regional ≤ 8 h, Domestic 8–3
 
 ## Most common refusals (all runs)
 
-- 2587× This flight costs #. You have #.

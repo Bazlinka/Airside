@@ -319,12 +319,15 @@ namespace Airside.Tests
 
         // ---- Growth ----------------------------------------------------------------
 
-        /// <summary>Cash kept back after a purchase: enough to dispatch every aircraft once more.</summary>
+        /// <summary>
+        /// Cash kept back after a purchase: enough to dispatch every aircraft once more on the kind of route
+        /// it usually flies (ADR 0134: a widebody's is long-haul, not 1,500 km).
+        /// </summary>
         private long Reserve(int fleet)
         {
             var reserve = Competent ? 1_000L : 2_500L;
             foreach (var aircraft in _ops.Fleet.Where(a => a.Airline.IsPlayer))
-                reserve += _ops.DispatchCost(aircraft.Type, Math.Min(aircraft.Type.PracticalRangeKm, 1500));
+                reserve += _ops.DispatchCost(aircraft.Type, FlightEconomics.TypicalLegKm(aircraft.Type));
             foreach (var aircraft in _ops.OutstationFleet)
                 reserve += _ops.DispatchCost(aircraft.Type, Math.Min(aircraft.Type.PracticalRangeKm, 1500));
             return reserve;
@@ -366,7 +369,8 @@ namespace Airside.Tests
             }
 
             // Saving for an aircraft that is in reach of the goal: don't spend the money on a base.
-            if (Career.Funds < offer.Price + reserve)
+            // …and enough to fly the new aircraft once on its usual kind of route.
+            if (Career.Funds < offer.Price + reserve + _ops.DispatchCost(wantType, FlightEconomics.TypicalLegKm(wantType)))
                 return;
             if (adelaide < Career.Base.FleetCapacity && PlayerBase.Supports(Career.BaseLevel, wantType))
             {

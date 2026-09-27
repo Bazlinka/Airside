@@ -47,8 +47,10 @@ namespace Airside.Presentation
     public readonly struct FleetMarketOffer
     {
         public FleetMarketOffer(AircraftType type, string typeName, string bandLabel, long price,
-            string requirementLine, string standLine, bool affordable, bool unlocked, bool fleetFull)
+            string requirementLine, string standLine, bool affordable, bool unlocked, bool fleetFull,
+            string cashWarning = null)
         {
+            CashWarning = cashWarning ?? string.Empty;
             Type = type;
             TypeName = typeName ?? string.Empty;
             BandLabel = bandLabel ?? string.Empty;
@@ -67,6 +69,12 @@ namespace Airside.Presentation
 
         /// <summary>The first unmet purchase gate, or what it is cleared for when all are met.</summary>
         public string RequirementLine { get; }
+
+        /// <summary>
+        /// ADR 0134: set when buying would leave less than the aircraft's usual flight costs, so it would sit
+        /// until more money came in. Empty otherwise.
+        /// </summary>
+        public string CashWarning { get; }
 
         /// <summary>What happens to the airframe on delivery: a free stand, or a short ferry in.</summary>
         public string StandLine { get; }
@@ -285,9 +293,18 @@ namespace Airside.Presentation
                 else
                     standLine = "No bay free, so it is flown in";
 
+                var cashWarning = string.Empty;
+                if (affordable)
+                {
+                    var left = career.Funds - offer.Price;
+                    var usualFlight = operations.DispatchCost(offer.Type, FlightEconomics.TypicalLegKm(offer.Type));
+                    if (left < usualFlight)
+                        cashWarning = $"Leaves ${left:N0}. Its usual flight costs about ${usualFlight:N0}";
+                }
+
                 _market.Add(new FleetMarketOffer(offer.Type, spec.Name,
                     RouteMapWorkspaceModel.BandLabel(offer.Operates), offer.Price,
-                    requirement, standLine, affordable, unlocked, fleetFull || baseFull));
+                    requirement, standLine, affordable, unlocked, fleetFull || baseFull, cashWarning));
             }
 
             // ADR 0131: twelve types for sale, three cards at a time — what you can buy leads, then what
@@ -804,9 +821,12 @@ namespace Airside.Presentation
                 var textWidth = box.Width - 24f - picture;
                 into.Text(new HudBox(textX, box.Y + 8f, textWidth, 18f), offer.TypeName, 14f, HudTone.Default,
                     HudTextStyle.Bold);
-                var line = offer.CanBuy ? offer.StandLine : shared != null ? offer.BandLabel + " routes" : offer.RequirementLine;
+                var warn = offer.CanBuy && offer.CashWarning.Length > 0;
+                var line = warn ? offer.CashWarning
+                    : offer.CanBuy ? offer.StandLine : shared != null ? offer.BandLabel + " routes" : offer.RequirementLine;
                 into.Text(new HudBox(textX, box.Y + 29f, textWidth, 30f), line, 11f,
-                    offer.CanBuy || shared != null ? HudTone.Muted : HudTone.Caution, HudTextStyle.Wrap);
+                    warn ? HudTone.Caution : offer.CanBuy || shared != null ? HudTone.Muted : HudTone.Caution,
+                    HudTextStyle.Wrap);
                 into.Text(new HudBox(textX, box.Bottom - 25f, textWidth - 82f, 18f), $"${offer.Price:N0}", 14f,
                     offer.Affordable ? HudTone.Default : HudTone.Muted, HudTextStyle.Bold);
                 into.Button(new HudBox(box.Right - 76f, box.Bottom - 30f, 68f, 26f), "BUY",

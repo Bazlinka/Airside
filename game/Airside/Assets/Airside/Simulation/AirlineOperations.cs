@@ -888,6 +888,7 @@ namespace Airside.Simulation
                 throw new InvalidOperationException($"{Article.CapitalA(type.Name)} cannot park on {stand}.");
 
             var aircraft = new FleetAircraft(registration, airline, type, stand, _processedTo);
+            aircraft.Owner = this;
             _fleet.Add(aircraft);
             if (!airline.IsPlayer && !airline.IsEmergency)
                 ScheduleAiDeparture(aircraft, _processedTo);
@@ -905,6 +906,7 @@ namespace Airside.Simulation
             if (!_airlines.Contains(airline))
                 throw new InvalidOperationException("Add the airline before its aircraft.");
             var aircraft = new FleetAircraft(registration, airline, type, default, _processedTo);
+            aircraft.Owner = this;
             aircraft.CurrentDestination = AwayBaseFor(airline, type);
             var key = FirstWaveKey(aircraft);
             var local = Clock.LocalAt(_processedTo);
@@ -977,6 +979,7 @@ namespace Airside.Simulation
                 throw new FormatException($"Duplicate or missing registration '{registration}'.");
 
             var aircraft = new FleetAircraft(registration, airline, type, default, stateStartedAt);
+            aircraft.Owner = this;
             aircraft.Restore(state, stateStartedAt, stateEndsAt);
             if (RequiresTripDestination(state) && currentDestination == null)
                 throw new FormatException($"{registration} is {state} with no destination.");
@@ -2823,6 +2826,8 @@ namespace Airside.Simulation
                     aircraft.DelayLedger = null;
 
                     aircraft.CurrentDestination = aircraft.Scheduled.Value.Destination;
+                    aircraft.PublishedDepartureAt = aircraft.Scheduled.Value.PublishedAt;
+                    aircraft.PushedBackAt = now;
                     aircraft.Scheduled = null;
                     aircraft.PrepStartedAt = null;
                     aircraft.DepartureStand = aircraft.Stand;
@@ -3144,6 +3149,7 @@ namespace Airside.Simulation
 
             var from = DeliveryOrigin(type);
             var aircraft = new FleetAircraft(registration, airline, type, default, _processedTo);
+            aircraft.Owner = this;
             aircraft.CurrentDestination = from;
             aircraft.Restore(FleetState.Inbound, _processedTo, _processedTo.Advance(8 * 60));
             _fleet.Add(aircraft);
@@ -3860,28 +3866,49 @@ namespace Airside.Simulation
 
         private void BookAiDeparture(FleetAircraft aircraft, Destination destination, SimulationTime now)
         {
-            var departAt = AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft);
-            var disruption = FlightDisruption.For(
-                $"{aircraft.Registration}:{aircraft.CompletedTrips}:{destination.Code}",
-                departAt, Clock);
+            var planned = AiDepartureWithinHours(now.Advance(AiTurnaroundSeconds(aircraft)), aircraft);
+            var disruption = FlightDisruption.For(DisruptionKey(aircraft, destination), planned, Clock);
+            // The published time is the timetable slot; a delay moves pushback, never the slot, so
+            // the board reads "10:05 · Delayed +20" rather than a late time plus a second delay
+            // (ADR 0137).
+            var published = WholeMinute(PinLongHaulEvening(aircraft, SnapCommercialDeparture(aircraft, planned)));
             if (disruption.Cancelled)
             {
-                aircraft.Scheduled = new ScheduledDeparture(destination, departAt, 0, cancelled: true);
+                aircraft.Scheduled = new ScheduledDeparture(destination, published, cancelled: true);
                 return;
             }
 
-            if (disruption.Delayed)
-                departAt = AiDepartureWithinHours(departAt.Advance(disruption.DelayMinutes * 60L), aircraft);
-            departAt = SnapCommercialDeparture(aircraft, departAt);
-            departAt = PinLongHaulEvening(aircraft, departAt);
-            var delayMinutes = disruption.DelayMinutes;
-            if (ShouldNightStopHere(aircraft, destination, departAt))
+            if (ShouldNightStopHere(aircraft, destination, published))
             {
-                departAt = FirstWaveAfter(aircraft, departAt);
-                delayMinutes = 0;
+                published = WholeMinute(FirstWaveAfter(aircraft, published));
+                aircraft.Scheduled = new ScheduledDeparture(destination, published);
+                return;
             }
 
-            aircraft.Scheduled = new ScheduledDeparture(destination, departAt, delayMinutes);
+            var departAt = published;
+            if (disruption.Delayed)
+            {
+                departAt = WholeMinute(AiDepartureWithinHours(published.Advance(disruption.DelayMinutes * 60L), aircraft));
+                // A delay that runs into the curfew becomes tomorrow's flight, not a 9-hour delay.
+                if (departAt.ElapsedSeconds - published.ElapsedSeconds > (disruption.DelayMinutes + 1) * 60L)
+                    published = departAt;
+            }
+
+            aircraft.Scheduled = new ScheduledDeparture(destination, departAt, publishedAt: published);
+        }
+
+        /// <summary>
+        /// The key a flight's disruption is drawn from. The day plan uses the same one, so the plan's
+        /// "Delayed +N" is the delay the aircraft really flies (ADR 0137).
+        /// </summary>
+        internal static string DisruptionKey(FleetAircraft aircraft, Destination destination) =>
+            $"{aircraft.Registration}:{aircraft.CompletedTrips}:{destination.Code}";
+
+        /// <summary>Rounds up to the next whole minute, so HH:mm and "+N min" always agree (ADR 0137).</summary>
+        public static SimulationTime WholeMinute(SimulationTime at)
+        {
+            var rest = at.ElapsedSeconds % 60;
+            return rest == 0 ? at : new SimulationTime(at.ElapsedSeconds + 60 - rest);
         }
 
         /// <summary>

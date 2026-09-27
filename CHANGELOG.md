@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Pushback times you can trust.** A delayed flight now shows its original time with the new time
+  under EST, instead of counting the delay twice. A departure keeps its time on the board as it
+  taxis and takes off, and you can see when it actually left. Prep times match your base on every
+  screen, reopening the planner no longer makes a booked flight later, and bookings land on whole
+  minutes.
+
 - **Better sound.** Turboprops and jets are now evenly loud, and the jet no longer clicks as its
   sound loops. Each aircraft size has its own engine note: an E190 sounds lighter than a 737, and
   an A350 deeper and louder. Far-off aircraft sound muffled. The apron hums quietly, the terminal

@@ -1464,7 +1464,7 @@ namespace Airside.Presentation
             {
                 _mapSelection = aircraft.Scheduled.Value.Destination;
                 _departureDelaySeconds = FlightPlanner.ClampDelay(
-                    aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - _clock.Now.ElapsedSeconds, aircraft.Type);
+                    aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - _clock.Now.ElapsedSeconds, aircraft, _clock.Now);
             }
             else if (_mapSelection.HasValue && aircraft != null && !_operations.CanOperate(aircraft, _mapSelection.Value))
             {
@@ -3040,8 +3040,9 @@ namespace Airside.Presentation
         {
             if (_mapAircraft == null || !_mapSelection.HasValue)
                 return;
-            var departAt = _clock.Now.Advance(
-                FlightPlanner.ClampDelay(_departureDelaySeconds, _mapAircraft.Type));
+            // Booked on a whole minute, so the board's HH:mm and "LATE +N" agree (ADR 0137).
+            var departAt = AirlineOperations.WholeMinute(_clock.Now.Advance(
+                FlightPlanner.ClampDelay(_departureDelaySeconds, _mapAircraft, _clock.Now)));
             var result = _operations.ScheduleDeparture(_mapAircraft, _mapSelection.Value, departAt);
             if (result.Accepted)
             {
@@ -3211,7 +3212,10 @@ namespace Airside.Presentation
                 var pick = reachable[_devToolsRandom.NextInt(0, reachable.Count)];
                 var delay = DevTools.AutoScheduleDelaySeconds(aircraft.CompletedTrips,
                     _devToolsRandom.NextInt(0, DevTools.LaterAutoDepartureLeadMaxSeconds));
-                var result = _operations.ScheduleDeparture(aircraft, pick, _clock.Now.Advance(delay));
+                // Never inside the prep lead, or the flight is late before it is booked (ADR 0137).
+                delay = Math.Max(delay, DeparturePrep.LeadSeconds(aircraft.Type, aircraft.BaseLevel));
+                var result = _operations.ScheduleDeparture(aircraft, pick,
+                    AirlineOperations.WholeMinute(_clock.Now.Advance(delay)));
                 if (result.Accepted)
                     scheduled++;
             }

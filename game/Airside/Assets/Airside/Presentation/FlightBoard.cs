@@ -27,7 +27,7 @@ namespace Airside.Presentation
                 return long.MaxValue;
 
             if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
-                return aircraft.Scheduled.Value.DepartAt.ElapsedSeconds;
+                return aircraft.Scheduled.Value.PublishedAt.ElapsedSeconds;
 
             if (aircraft.StateEndsAt.HasValue)
                 return aircraft.StateEndsAt.Value.ElapsedSeconds;
@@ -161,7 +161,7 @@ namespace Airside.Presentation
                 return string.Empty;
 
             if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
-                return clockText(aircraft.Scheduled.Value.DepartAt);
+                return clockText(aircraft.Scheduled.Value.PublishedAt);
 
             if (aircraft.StateEndsAt.HasValue)
                 return clockText(aircraft.StateEndsAt.Value);
@@ -255,7 +255,7 @@ namespace Airside.Presentation
             if (aircraft == null || clockText == null)
                 return "—";
             if (aircraft.Scheduled.HasValue)
-                return clockText(aircraft.Scheduled.Value.DepartAt);
+                return clockText(aircraft.Scheduled.Value.PublishedAt);
             return clockText(aircraft.StateStartedAt);
         }
 
@@ -277,18 +277,14 @@ namespace Airside.Presentation
                 return aircraft.StateEndsAt?.ElapsedSeconds ?? aircraft.StateStartedAt.ElapsedSeconds;
             }
 
-            // Prefer the booked departure while it still exists; after pushback use the moment
-            // the aircraft left the stand (TaxiOut start) — DepartureStand is set then and
-            // StateStartedAt walks forward through Holding/Takeoff/Outbound.
+            // A departure keeps its published time from booking to climb-out: the board's TIME
+            // is the timetable slot, and when it actually left goes under EST (ADR 0137).
             if (aircraft.Scheduled.HasValue)
-                return aircraft.Scheduled.Value.DepartAt.ElapsedSeconds;
+                return aircraft.Scheduled.Value.PublishedAt.ElapsedSeconds;
             if (aircraft.State == FleetState.AtStand)
                 return long.MaxValue;
-            if (aircraft.State is FleetState.TaxiOut or FleetState.HoldingShort)
-                return aircraft.StateStartedAt.ElapsedSeconds;
-            // TakingOff / Outbound: StateStartedAt is the start of that phase, not pushback.
-            // PushbackLatenessSeconds + a recovered schedule is unavailable; use phase start for
-            // TakingOff (closer to wheels-up) and keep Outbound on StateStartedAt (climb-out).
+            if (aircraft.PublishedDepartureAt.HasValue)
+                return aircraft.PublishedDepartureAt.Value.ElapsedSeconds;
             return aircraft.StateStartedAt.ElapsedSeconds;
         }
 
@@ -301,17 +297,49 @@ namespace Airside.Presentation
             EstimatedTime(aircraft, arrivals: true, clockText);
 
         public static string EstimatedTime(FleetAircraft aircraft, bool arrivals,
+            Func<SimulationTime, string> clockText) =>
+            EstimatedTime(aircraft, arrivals, null, clockText);
+
+        public static string EstimatedTime(FleetAircraft aircraft, bool arrivals, SimulationTime? now,
             Func<SimulationTime, string> clockText)
         {
             if (aircraft == null || clockText == null)
                 return "—";
-            // Departures FIDS: TIME is STD / ATD. Destination airborne ETA is not an "est".
             if (!arrivals)
-                return "—";
+                return EstimatedDeparture(aircraft, now) is { } est ? clockText(est) : "—";
             // Arrivals still taxiing: show stand ETA under the touchdown time.
             if (aircraft.State == FleetState.TaxiIn && aircraft.StateEndsAt.HasValue)
                 return clockText(aircraft.StateEndsAt.Value);
             return aircraft.StateEndsAt.HasValue ? clockText(aircraft.StateEndsAt.Value) : "—";
+        }
+
+        /// <summary>
+        /// When a departure will (or did) really push back, if that is not its published time
+        /// (ADR 0137): the delayed time, when prep or a gate hold will finish, or the actual
+        /// pushback once it has left. Never the destination ETA. Null when on time.
+        /// </summary>
+        public static SimulationTime? EstimatedDeparture(FleetAircraft aircraft, SimulationTime? now)
+        {
+            if (aircraft == null)
+                return null;
+            if (aircraft.Scheduled is { Cancelled: false } booked && aircraft.State == FleetState.AtStand)
+            {
+                var est = booked.DepartAt.ElapsedSeconds;
+                if (aircraft.Airline.IsPlayer)
+                    est = Math.Max(est, DeparturePrep.ReadyAtSeconds(aircraft));
+                if (now.HasValue && now.Value.ElapsedSeconds >= est)
+                    // Held past its time: the next minute is the soonest it could still go.
+                    est = now.Value.ElapsedSeconds + 60;
+                est = AirlineOperations.WholeMinute(new SimulationTime(est)).ElapsedSeconds;
+                return est - booked.PublishedAt.ElapsedSeconds >= 60 ? new SimulationTime(est) : null;
+            }
+
+            if (aircraft.Scheduled == null && aircraft.State != FleetState.AtStand
+                && aircraft.PushedBackAt is { } left && aircraft.PublishedDepartureAt is { } published
+                && !IsArrival(aircraft)
+                && left.ElapsedSeconds - published.ElapsedSeconds >= 60)
+                return left;
+            return null;
         }
 
         public static string BoardTime(FleetAircraft aircraft, bool arrivals,

@@ -272,8 +272,8 @@ namespace Airside.Presentation
             if (OperatingNote.Length > 0)
                 AvailabilityLine = OperatingNote;
 
-            var delay = FlightPlanner.ClampDelay(departureDelaySeconds, type);
-            var departAt = now.Advance(delay);
+            var delay = FlightPlanner.ClampDelay(departureDelaySeconds, aircraft, now);
+            var departAt = AirlineOperations.WholeMinute(now.Advance(delay));
             DepartureLabel = clock.TimeText(departAt);
             DepartureDetail = $"in {Duration(delay)}  ·  "
                               + $"{Duration(operations.AirborneSeconds(aircraft, destination))} each way";

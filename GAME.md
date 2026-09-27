@@ -1,5 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — pushback times (ADR 0137).** `ScheduledDeparture.PublishedAt`:
+  an AI delay moves pushback, never the published slot, and `DelayMinutes` is derived (no more
+  double-counted "Delayed +N"). Departure TIME stays fixed through taxi/takeoff/climb
+  (`PublishedDepartureAt`/`PushedBackAt`); departures get EST (delay, prep, gate hold, actual);
+  board sorts by seconds (midnight-safe). Prep everywhere reads `FleetAircraft.BaseLevel`;
+  reopening the planner never pushes a booked flight later; planner/dev/AI times on whole minutes.
+  Tests **887/887**. **Mac checks:** a delayed Qantas row reads "10:05 · Delayed +20 · est 10:25";
+  a departing row keeps its time as it taxis; prep % matches the aircraft card after a base upgrade.
+
 - **2026-09-27 Claude (same branch) — sound pass (ADR 0136).** Engine beds level-matched to
   −20 dBFS with clean loops (`scripts/audio/process_beds.py`); coast rebuilt as a 16 s irregular
   bed. `EngineVoice` gives turboprop / regional jet / narrowbody / widebody their own pitch, level

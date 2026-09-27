@@ -611,18 +611,11 @@ namespace Airside.Simulation
         }
 
         /// <summary>Only destinations proven by the old contract ledger are credited during migration.</summary>
-        /// <summary>v14 difficulty; every earlier save plays as Standard, the only economy it knew.</summary>
-        private static CareerDifficulty ParseDifficulty(AirlineSaveData data)
-        {
-            if (data.Version < 14)
-                return CareerDifficulty.Standard;
-            if (string.IsNullOrWhiteSpace(data.Difficulty)
-                || !Enum.TryParse(data.Difficulty, out CareerDifficulty difficulty)
-                || !Enum.IsDefined(typeof(CareerDifficulty), difficulty)
-                || !string.Equals(difficulty.ToString(), data.Difficulty.Trim(), StringComparison.Ordinal))
-                throw new FormatException($"Unknown difficulty '{data.Difficulty}'.");
-            return difficulty;
-        }
+        /// <summary>
+        /// There is one career balance (ADR 0127): v14 saves founded on Relaxed or Demanding continue on
+        /// Standard. The field is still written so older builds can read newer saves.
+        /// </summary>
+        private static CareerDifficulty ParseDifficulty(AirlineSaveData data) => CareerDifficulty.Standard;
 
         private static IReadOnlyList<string> ProvenHistoricalDestinations(AirlineSaveData data,
             IReadOnlyList<CompletedContractRecord> history)

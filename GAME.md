@@ -1,5 +1,10 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — difficulty removed (ADR 0127).** `SetupStep` is
+  Identity/Livery/Briefing; `AirlineSave.ParseDifficulty` always returns Standard (field still
+  written); title summary, manual entry and HUD mockup page removed; balance sim is single
+  difficulty. Tests 835/835.
+
 - **2026-09-27 Claude (same branch) — taxiing (ADR 0126).** `GroundLeg.BrakedSeconds` replaces
   the queue clamp (sim + presentation); `QueueShuffle` accelerates/brakes; straight taxi 20 kt
   jets / 22 kt turboprops; `RunwayCrossings` + tower/ground gates (`CrossingDue`,
@@ -4821,9 +4826,8 @@ plays every difficulty with a simulated player and writes a report (ADR 0125).
 The game opens on the **title screen** (ADR 0122): the dawn illustration of the airport,
 the live Adelaide clock and one card — **Continue** your saved airline, **New airline**,
 **How to play**, Options or Quit. Enter continues; Esc steps back or opens the menu.
-New airline is a four-step setup (ADR 0123) with a live preview: name and flight code,
-livery (twelve colours or your own hue/shade), difficulty (Relaxed / Standard / Demanding)
-and a briefing with an optional first-flight coach. The **Flight Manual** (How to play, the
+New airline is a three-step setup (ADR 0123/0127) with a live preview: name and flight code,
+livery (twelve colours or your own hue/shade) and a briefing with an optional first-flight coach. The **Flight Manual** (How to play, the
 **?** on the rail, or F1; ←/→ to page) explains the rules and lists the controls.
 Choosing one dissolves the art into the live airport while the camera glides down (any
 key skips). Time is **live Adelaide time**: one second in the game is one real second.

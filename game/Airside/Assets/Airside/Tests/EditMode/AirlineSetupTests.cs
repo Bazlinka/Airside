@@ -8,13 +8,13 @@ using NUnit.Framework;
 namespace Airside.Tests
 {
     /// <summary>
-    /// ADR 0123 — first-time airline setup: the wizard's choices, difficulty in the economy, the
+    /// ADR 0123/0127 — first-time airline setup: the wizard's choices, one career balance, the
     /// airline flight code, save v14 and the Flight Manual's honesty about the rules.
     /// </summary>
     public sealed class AirlineSetupTests
     {
         [Test]
-        public void Wizard_WalksFourCardsAndOnlyAdvancesPastValidOnes()
+        public void Wizard_WalksThreeCardsAndOnlyAdvancesPastValidOnes()
         {
             var setup = new AirlineSetupModel { Name = "" };
             setup.Apply(AirlineSetupPainter.Next, out _);
@@ -25,13 +25,12 @@ namespace Airside.Tests
             Assert.That(setup.EffectiveCode, Is.EqualTo("GA"), "suggested from the name");
             setup.Apply(AirlineSetupPainter.Next, out _);
             setup.Apply(AirlineSetupPainter.Next, out _);
-            setup.Apply(AirlineSetupPainter.Next, out _);
             Assert.That(setup.Step, Is.EqualTo(SetupStep.Briefing));
             setup.Apply(AirlineSetupPainter.Start, out var outcome);
             Assert.That(outcome, Is.EqualTo(SetupOutcome.Start));
 
             setup.Apply(AirlineSetupPainter.Back, out _);
-            Assert.That(setup.Step, Is.EqualTo(SetupStep.Difficulty));
+            Assert.That(setup.Step, Is.EqualTo(SetupStep.Livery));
             setup.Step = SetupStep.Identity;
             setup.Apply(AirlineSetupPainter.Back, out outcome);
             Assert.That(outcome, Is.EqualTo(SetupOutcome.Leave), "Cancel on the first card leaves the wizard");
@@ -66,8 +65,6 @@ namespace Airside.Tests
                 Assert.That(setup.PaletteIndex, Is.EqualTo(-1));
                 Assert.DoesNotThrow(() => Airline.Player("Test", setup.LiveryHex), setup.LiveryHex);
             }
-            setup.Apply(AirlineSetupPainter.DifficultyPrefix + "Demanding", out _);
-            Assert.That(setup.Difficulty, Is.EqualTo(CareerDifficulty.Demanding));
             setup.Apply(AirlineSetupPainter.ToggleCoaching, out _);
             Assert.That(setup.Coaching, Is.False);
         }
@@ -91,38 +88,20 @@ namespace Airside.Tests
                 var card = layout.Setup.Card;
                 foreach (var c in draw.Commands.Where(c => c.ActionId.StartsWith(AirlineSetupPainter.Prefix)))
                     Assert.That(card.Contains(c.Box.X + 1f, c.Box.Y + 1f), Is.True, $"{step} control outside the card");
-                if (step == SetupStep.Difficulty)
-                    Assert.That(draw.Commands.Count(c => c.ActionId.StartsWith(AirlineSetupPainter.DifficultyPrefix)),
-                        Is.EqualTo(3));
             }
         }
 
         [Test]
-        public void Difficulty_SetsTheFloatAndScalesRevenueCostAndPenaltiesOnly()
+        public void EveryNewAirline_PlaysTheOneCareerBalance()
         {
+            // ADR 0127: no difficulty choice; the forecast the player sees is the plain route forecast.
             var clock = new ManualSimulationClock(new SimulationTime(0));
-            var relaxed = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(1),
-                Airline.Player("Easy", "#1F3A93"), difficulty: CareerDifficulty.Relaxed);
-            var demanding = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(1),
-                Airline.Player("Hard", "#1F3A93"), difficulty: CareerDifficulty.Demanding);
-            Assert.That(relaxed.CareerState.Funds, Is.EqualTo(Difficulty.Relaxed.StartingFunds));
-            Assert.That(demanding.CareerState.Funds, Is.EqualTo(Difficulty.Demanding.StartingFunds));
-
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(1), Airline.Player("Any", "#1F3A93"));
+            Assert.That(ops.CareerState.Difficulty, Is.EqualTo(CareerDifficulty.Standard));
+            Assert.That(ops.CareerState.Funds, Is.EqualTo(FlightEconomics.StartingFunds));
             var kgc = HudTestAirline.Code("KGC");
-            var plain = RouteForecast.For(DestinationCatalogue.Adelaide, kgc, AircraftType.Saab340);
-            var easy = relaxed.Forecast(DestinationCatalogue.Adelaide, kgc, AircraftType.Saab340);
-            var hard = demanding.Forecast(DestinationCatalogue.Adelaide, kgc, AircraftType.Saab340);
-            Assert.That(easy.Revenue, Is.GreaterThan(plain.Revenue));
-            Assert.That(easy.Cost, Is.LessThan(plain.Cost));
-            Assert.That(hard.Revenue, Is.LessThan(plain.Revenue));
-            Assert.That(hard.Cost, Is.GreaterThan(plain.Cost));
-            Assert.That(relaxed.DispatchCost(AircraftType.Saab340, 125), Is.EqualTo(easy.Cost));
-
-            Assert.That(Difficulty.Relaxed.ScalePenalty(-1), Is.EqualTo(0), "Relaxed forgives a small lateness");
-            Assert.That(Difficulty.Relaxed.ScalePenalty(-2), Is.EqualTo(-1));
-            Assert.That(Difficulty.Standard.ScalePenalty(-2), Is.EqualTo(-2));
-            Assert.That(Difficulty.Demanding.ScalePenalty(-1), Is.EqualTo(-2));
-            Assert.That(Difficulty.Demanding.ScalePenalty(1), Is.EqualTo(1), "gains are never scaled");
+            Assert.That(ops.Forecast(DestinationCatalogue.Adelaide, kgc, AircraftType.Saab340).Revenue,
+                Is.EqualTo(RouteForecast.For(DestinationCatalogue.Adelaide, kgc, AircraftType.Saab340).Revenue));
         }
 
         [Test]
@@ -137,7 +116,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Save_V14KeepsDifficultyCodeAndCoachingAndOlderSavesPlayStandard()
+        public void Save_V14KeepsCodeAndCoachingAndEverySavePlaysStandard()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(1),
@@ -146,7 +125,8 @@ namespace Airside.Tests
             var saved = AirlineSave.Capture(ops);
             Assert.That(saved.Version, Is.EqualTo(14));
             var restored = AirlineSave.Restore(saved, clock);
-            Assert.That(restored.CareerState.Difficulty, Is.EqualTo(CareerDifficulty.Demanding));
+            // A game founded on Demanding (ADR 0123) continues on the one balance (ADR 0127).
+            Assert.That(restored.CareerState.Difficulty, Is.EqualTo(CareerDifficulty.Standard));
             Assert.That(restored.PlayerAirline.Code, Is.EqualTo("GLK"));
             Assert.That(restored.FirstFlightCoaching, Is.False);
             Assert.That(FlightNumber.AirlineCode(restored.PlayerAirline), Is.EqualTo("GLK"));
@@ -159,7 +139,7 @@ namespace Airside.Tests
 
             saved.Version = 14;
             saved.Difficulty = "Nightmare";
-            Assert.Throws<FormatException>(() => AirlineSave.Restore(saved, clock));
+            Assert.That(AirlineSave.Restore(saved, clock).CareerState.Difficulty, Is.EqualTo(CareerDifficulty.Standard));
         }
 
         [Test]

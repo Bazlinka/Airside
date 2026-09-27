@@ -6,13 +6,12 @@ using Airside.Domain;
 using Airside.Simulation;
 using Airside.Tests;
 
-// Usage: CareerSim <out-dir> [seeds=5] [max-open-hours=180] [difficulty|all] [style|all]
+// Usage: CareerSim <out-dir> [seeds=5] [max-open-hours=180] [ignored] [style|all]
 var outDir = args.Length > 0 ? args[0] : "career-balance";
 var seeds = args.Length > 1 ? int.Parse(args[1], CultureInfo.InvariantCulture) : 5;
 var maxHours = args.Length > 2 ? double.Parse(args[2], CultureInfo.InvariantCulture) : 180;
-var difficulties = args.Length > 3 && args[3] != "all"
-    ? new[] { Enum.Parse<CareerDifficulty>(args[3], true) }
-    : new[] { CareerDifficulty.Relaxed, CareerDifficulty.Standard, CareerDifficulty.Demanding };
+// One career balance since ADR 0127; the difficulty column is kept for older reports' shape.
+var difficulties = new[] { CareerDifficulty.Standard };
 var styles = args.Length > 4 && args[4] != "all"
     ? new[] { Enum.Parse<CareerPlayStyle>(args[4], true) }
     : new[] { CareerPlayStyle.Competent, CareerPlayStyle.Casual };

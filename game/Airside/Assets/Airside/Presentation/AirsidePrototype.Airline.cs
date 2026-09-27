@@ -440,7 +440,7 @@ namespace Airside.Presentation
             var player = Airline.Player(name, setup.LiveryHex, setup.CodeEdited ? setup.EffectiveCode : null);
             // Live time: whatever the demo circuit's clock reads now is this real instant.
             _operations = AirlineOperations.StartAtAdelaide(_clock, new SeededRandomSource(20260913), player,
-                AirlineClock.Aligned(_clock.Now, DateTime.UtcNow), setup.Difficulty, setup.Coaching);
+                AirlineClock.Aligned(_clock.Now, DateTime.UtcNow), CareerDifficulty.Standard, setup.Coaching);
             _seenEvents = _operations.TotalEvents;
             _seenSettlements = _operations.TotalSettlements;
             RefreshFleetFlights();

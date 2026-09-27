@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **One career, no difficulty setting (ADR 0127).** New airline is now three cards: name and
+  code, livery, briefing. Every airline plays the one tuned balance; saved games founded on
+  Relaxed or Demanding carry on under it with their progress kept.
+
 - **Better taxiing (ADR 0126).** Aircraft brake smoothly into a queue instead of stopping dead
   (and stop weaving and rolling once stopped), move up the queue like aircraft, and taxi at
   the manuals' normal 20–22 kt instead of 25. The tower now respects runway crossings: no

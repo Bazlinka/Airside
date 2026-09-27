@@ -77,10 +77,7 @@ namespace Airside.Presentation
                         + "One at a time. ABANDON drops one for a small reliability cost if you can no longer fly it."),
                     ("Out of cash",
                         "If you cannot afford a flight, a recovery contract to Kingscote appears and pays for its own "
-                        + "first dispatch, so an airline is never stranded."),
-                    ("Difficulty",
-                        "Relaxed, Standard or Demanding is chosen when the airline is founded. It sets your float, fares, "
-                        + "flight costs and how hard lateness is punished. Contract terms are never scaled.")
+                        + "first dispatch, so an airline is never stranded.")
                 }),
             new FlightManualPage("reliability", "Reliability",
                 "Partners trust punctual airlines. Reliability starts at 100% — keep it there.",

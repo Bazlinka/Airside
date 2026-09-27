@@ -6,23 +6,23 @@ using Airside.Simulation;
 
 namespace Airside.Presentation
 {
-    /// <summary>The four cards of first-time airline setup (ADR 0123).</summary>
+    /// <summary>The three cards of first-time airline setup (ADR 0123; difficulty removed by ADR 0127).</summary>
     public enum SetupStep
     {
         Identity,
         Livery,
-        Difficulty,
         Briefing
     }
 
     /// <summary>
-    /// Everything the player chooses when founding an airline: name, flight code, livery,
-    /// difficulty and whether the first flight is coached. Pure state with its own validation, so
+    /// Everything the player chooses when founding an airline: name, flight code, livery and
+    /// whether the first flight is coached. There is one career balance (ADR 0127). Pure state with its own validation, so
     /// the runtime only forwards clicks and text into it.
     /// </summary>
     public sealed class AirlineSetupModel
     {
         public const int NameLimit = 24;
+        public const int StepCount = 3;
         public const int HueSteps = 36;
         public const int ShadeSteps = 8;
 
@@ -43,7 +43,6 @@ namespace Airside.Presentation
         public int PaletteIndex = 1;
         public int Hue = 22;
         public int Shade = 5;
-        public CareerDifficulty Difficulty = CareerDifficulty.Standard;
         public bool Coaching = true;
 
         public string TrimmedName => (Name ?? string.Empty).Trim();
@@ -63,8 +62,6 @@ namespace Airside.Presentation
             : FromHueShade(Hue / (float)HueSteps, Shade / (float)(ShadeSteps - 1));
 
         public string LiveryLabel => PaletteIndex >= 0 && PaletteIndex < Palette.Length ? Palette[PaletteIndex].Label : "Custom";
-
-        public DifficultyProfile DifficultyProfile => Simulation.Difficulty.For(Difficulty);
 
         public string StepError => Step switch
         {
@@ -148,11 +145,11 @@ namespace Airside.Presentation
                     return true;
             }
 
-            if (TryIndex(action, AirlineSetupPainter.StepPrefix, 4, out var step))
+            if (TryIndex(action, AirlineSetupPainter.StepPrefix, StepCount, out var step))
             {
                 // Jumping ahead is only allowed past valid cards.
                 if (step <= (int)Step || CanAdvance)
-                    Step = (SetupStep)Math.Min(step, CanAdvance ? 3 : (int)Step);
+                    Step = (SetupStep)Math.Min(step, CanAdvance ? StepCount - 1 : (int)Step);
                 return true;
             }
             if (TryIndex(action, AirlineSetupPainter.PalettePrefix, Palette.Length, out var palette))
@@ -170,12 +167,6 @@ namespace Airside.Presentation
             {
                 Shade = shade;
                 PaletteIndex = -1;
-                return true;
-            }
-            var difficulty = HudAction.Payload(action, AirlineSetupPainter.DifficultyPrefix);
-            if (difficulty.Length > 0 && Enum.TryParse(difficulty, out CareerDifficulty parsed))
-            {
-                Difficulty = parsed;
                 return true;
             }
             return true;
@@ -230,8 +221,8 @@ namespace Airside.Presentation
 
     /// <summary>
     /// Paints the setup card (ADR 0123): a four-step header, the current step's controls, a
-    /// Back / Next (or Start) footer, and a live preview of the airline's livery, flight code and
-    /// difficulty on the aircraft it will start with.
+    /// Back / Next (or Start) footer, and a live preview of the airline's livery and flight code on
+    /// the aircraft it will start with.
     /// </summary>
     public static class AirlineSetupPainter
     {
@@ -245,9 +236,7 @@ namespace Airside.Presentation
         public const string PalettePrefix = "setup:palette:";
         public const string HuePrefix = "setup:hue:";
         public const string ShadePrefix = "setup:shade:";
-        public const string DifficultyPrefix = "setup:difficulty:";
-
-        private static readonly string[] StepNames = { "IDENTITY", "LIVERY", "DIFFICULTY", "BRIEFING" };
+        private static readonly string[] StepNames = { "IDENTITY", "LIVERY", "BRIEFING" };
 
         public static void Paint(HudDrawList into, AirlineSetupLayout layout, AirlineSetupModel model, bool replacesSave)
         {
@@ -264,9 +253,6 @@ namespace Airside.Presentation
                     break;
                 case SetupStep.Livery:
                     PaintLivery(into, layout.Body, model);
-                    break;
-                case SetupStep.Difficulty:
-                    PaintDifficulty(into, layout.Body, model);
                     break;
                 default:
                     PaintBriefing(into, layout.Body, model, replacesSave);
@@ -293,7 +279,7 @@ namespace Airside.Presentation
         {
             into.Caption(new HudBox(card.X + 24f, card.Y + 20f, card.Width - 48f, 12f), "FOUND YOUR AIRLINE  ·  ADELAIDE",
                 HudTone.Accent, HudAlign.Left, 10f);
-            var width = (card.Width - 48f - 3f * 6f) / 4f;
+            var width = (card.Width - 48f - (StepNames.Length - 1) * 6f) / StepNames.Length;
             for (var i = 0; i < StepNames.Length; i++)
             {
                 var box = new HudBox(card.X + 24f + i * (width + 6f), card.Y + 42f, width, 34f);
@@ -376,30 +362,6 @@ namespace Airside.Presentation
                 HudTone.Default, HudTextStyle.Bold);
         }
 
-        private static void PaintDifficulty(HudDrawList into, HudBox body, AirlineSetupModel model)
-        {
-            into.Caption(body.WithHeight(12f), "HOW FORGIVING IS THE BUSINESS?", HudTone.Muted, HudAlign.Left, 10f);
-            var y = body.Y + 20f;
-            var height = Math.Min(92f, (body.Height - 20f - 2f * 8f) / 3f);
-            foreach (var profile in Difficulty.All)
-            {
-                var box = new HudBox(body.X, y, body.Width, height);
-                var chosen = profile.Difficulty == model.Difficulty;
-                into.Card(box, chosen ? 1f : 0.7f);
-                if (chosen)
-                    into.Outline(box, HudTone.Caution, 0.95f);
-                into.Dot(box.X + 18f, box.Y + 20f, 12f, chosen ? HudTone.Caution : HudTone.Muted);
-                into.Text(new HudBox(box.X + 34f, box.Y + 10f, box.Width - 48f, 20f), profile.Title, 15f,
-                    HudTone.Default, HudTextStyle.Bold);
-                into.Text(new HudBox(box.X + 34f, box.Y + 30f, box.Width - 48f, 16f), profile.Summary, 11f, HudTone.Muted);
-                var effects = profile.Effects;
-                into.Text(new HudBox(box.X + 34f, box.Y + 50f, box.Width - 48f, 32f),
-                    string.Join("  ·  ", effects), 10f, chosen ? HudTone.Caution : HudTone.Muted, HudTextStyle.Wrap);
-                into.Hotspot(box, DifficultyPrefix + profile.Difficulty);
-                y += height + 8f;
-            }
-        }
-
         private static void PaintBriefing(HudDrawList into, HudBox body, AirlineSetupModel model, bool replacesSave)
         {
             into.Caption(body.WithHeight(12f), "HOW AIRSIDE WORKS", HudTone.Muted, HudAlign.Left, 10f);
@@ -454,10 +416,8 @@ namespace Airside.Presentation
                 HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
             into.Pill(new HudBox(preview.X + 20f, stage.Bottom + 42f, 150f, 22f),
                 $"{model.EffectiveCode} 101  ADL › KGC", HudTone.Route, fontSize: 9f);
-            into.Pill(new HudBox(preview.Right - 20f - 110f, stage.Bottom + 42f, 110f, 22f),
-                model.DifficultyProfile.Title.ToUpperInvariant(), HudTone.Accent, filled: true, fontSize: 9f);
             into.Text(new HudBox(preview.X + 20f, stage.Bottom + 74f, preview.Width - 40f, 16f),
-                $"One Saab 340B  ·  ${model.DifficultyProfile.StartingFunds:N0} float  ·  Adelaide", 11f, HudTone.Muted);
+                $"One Saab 340B  ·  ${FlightEconomics.StartingFunds:N0} float  ·  Adelaide", 11f, HudTone.Muted);
         }
     }
 }

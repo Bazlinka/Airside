@@ -6,6 +6,11 @@
   assume bays 1 and 2 push first, because ground control rightly holds bay 2 behind bay 1.
   **Mac checks:** 23 pushbacks from gates 15, 16R and 21; three bay departures at once.
 
+- **2026-09-28 Cursor — Mac build fix.** #418/#419 broke the Unity compile: `PushbackTimeTests`
+  used `Does.Contain(FleetState…)`, which Unity's NUnit only accepts for strings (the headless
+  `dotnet` gate uses a newer NUnit and passed). Now `Has.Member`. Watch for this pattern — prefer
+  `Has.Member` / `Contains.Item` for non-string collections.
+
 - **2026-09-28 Claude (same branch) — propellers (ADR 0148).** Blur by per-frame blade step vs blade
   gap (no wagon-wheel), procedural blur disc (hub-clear, tip ring, faint ghosts, counter-rotated),
   spool capped +170/−75 rpm/s, props and fans stop when paused. **Mac checks:** Saab/ATR/Q400 start,

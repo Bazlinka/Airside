@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Arrivals come from further away.** Incoming aircraft now appear about 32 km out and descend on
+  their approach, curving in from the direction of the city they are flying from. Far-off aircraft
+  show their landing lights, so you can pick them out long before they land.
+
 - **Tidy gates.** Jets at the terminal now park in one straight row close to the building, instead
   of scattered up to 38 m out on the apron. Stand boxes fit the aircraft they are for, and paired
   gates share one box.

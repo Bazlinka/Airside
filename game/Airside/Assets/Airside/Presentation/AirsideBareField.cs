@@ -68,7 +68,8 @@ namespace Airside.Presentation
         public const float OverviewPitch = 50f;
         public const float OverviewYaw = 200f;
         public const float OverviewFov = 48f;
-        public const float CameraFarClip = 10000f;
+        /// <summary>ADR 0142: 30 km, so an arrival 32 km out on the joining curve is inside the view.</summary>
+        public const float CameraFarClip = 30000f;
         public const float MinOrbitDistance = 18f;
         public const float MaxOrbitDistance = 4500f;
         public const float OverviewPanMetresPerSecond = 650f;

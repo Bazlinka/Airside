@@ -1,5 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — arrivals from further out (ADR 0142).** `ArrivalApproach`:
+  arrivals drawn from 32 km (was 18) at up to 6,000 ft on the 3° path, curving in from their
+  origin's side beyond 12 km; far clip 30 km; aircraft LOD cull 0.4% (was 2%); distant light glow
+  beyond 6 km. Tests **922/922**. **Mac checks:** far arrivals visible and curving in, fps with 30 km
+  clip, apron paint depth fighting, distant lights at dusk.
+
 - **2026-09-27 Claude (same branch) — gates lined up (ADR 0141).** `AdelaideGateAlignment.Gates`
   (used by ground, bridges, paint, lights): contact gates stop 11 m (code C) / 14 m (code E) off
   the T1 wall, squared to it; 20R/22R keep place but squared; last 40 m of taxi-in and start of

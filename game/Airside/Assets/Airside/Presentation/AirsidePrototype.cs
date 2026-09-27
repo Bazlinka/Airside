@@ -1582,6 +1582,7 @@ namespace Airside.Presentation
                     : null;
                 UpdateAircraftLightsAndGear(viewParts.LightsAndGear, phase, PresentationDaylight, progress,
                     PresentationDeltaTime, PresentationClock, engines, groundPose);
+                UpdateDistantLight(view, AirsideReusableMotion.LandingLightsOn(phase, progress, engines.HasValue));
                 UpdateCabinDoor(viewParts.CabinDoors, phase, engines?.DoorsOpen);
                 var glowState = CabinWindowGlowState(phase, PresentationDaylight);
                 if (viewParts.CabinWindowGlowState != glowState)
@@ -11401,7 +11402,9 @@ namespace Airside.Presentation
             group.SetLODs(new[]
             {
                 new LOD(detailHeight, all.ToArray()),
-                new LOD(0.02f, far.ToArray())
+                // ADR 0142: 0.4 % (was 2 %), so a jet on a 10 km final is still drawn; beyond
+                // that its distant light (AirsidePrototype.DistantLights) carries it.
+                new LOD(0.004f, far.ToArray())
             });
             group.RecalculateBounds();
         }

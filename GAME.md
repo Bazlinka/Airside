@@ -1,5 +1,20 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — Showcase + moment sounds (ADR 0133).** Dev tools (F8)
+  Showcase row fires every new moment on demand; `HudSounds` synthesises a flap rattle, cash ching,
+  tier sting and contract chime (no files). **Mac checklist for ADR 0126–0133** (F8 → Showcase makes
+  most of it a ten-minute pass):
+  1. *Tier card / Contract card / Finale card*: card centred over the airport, picture loads,
+     CONTINUE closes it, sting/chime plays, nothing clipped.
+  2. *Funds count*: capsule counts up in green with a ching.
+  3. *Flip board* (Ops open): tiles spin and settle left to right with a rattle; frame time holds.
+  4. *Late toast*: amber pay message with the delay breakdown and tip.
+  5. *Add one of each new aircraft*: each shows your livery and airline title on the field; E190/A220
+     on terminal gates; Fleet shows pictures; market pages ‹ ›.
+  6. Hold line link: select a waiting aircraft, tap its hold line, camera follows the blocker, ‹ back.
+  7. Pushback tugs and turnaround vehicles appear; runway-crossing holds read "Holding short …".
+  8. Read the wording in play; check the Airline page at a small window.
+
 - **2026-09-27 Claude (same branch) — moments (ADR 0132).** `Presentation/HudMoments.cs`:
   funds count up/down in the capsule (green/red while moving); departures-board fields flip through
   letters when they change; celebration cards for a new tier, a finished contract and the finale

@@ -572,6 +572,7 @@ namespace Airside.Presentation
                 : _fundsTicker.Show(_operations.CareerState.Funds, Time.unscaledTime);
             HudShellPainter.CapsuleValues(_operations, StampText(_clock.Now), _capsuleValues, fundsShown,
                 _fundsTicker.Direction);
+            ChingIfFundsRising();
             HudShell.FillCapsule(Box(placement.Capsule), _capsuleValues, _capsuleSegments);
 
             _shellDrawList.Clear();
@@ -908,6 +909,48 @@ namespace Airside.Presentation
         /// <summary>A card nobody closes leaves on its own: the airport keeps running underneath.</summary>
         private const float CelebrationAutoCloseSeconds = 20f;
 
+        // ADR 0133 — moment sounds, synthesised once on first use (HudSounds).
+        private AudioClip _flapClip;
+        private AudioClip _chingClip;
+        private AudioClip _stingClip;
+        private AudioClip _chimeClip;
+        private float _lastRattleAt = float.NegativeInfinity;
+        private int _lastFundsDirection;
+
+        private void PlayMoment(ref AudioClip clip, Func<float[]> make, string name, float volume = 1f)
+        {
+            if (_audioMuted || _uiAudio == null)
+                return;
+            if (clip == null)
+            {
+                var samples = make();
+                clip = AudioClip.Create(name, samples.Length, 1, HudSounds.SampleRate, false);
+                clip.SetData(samples, 0);
+            }
+
+            _uiAudio.PlayOneShot(clip, volume);
+        }
+
+        /// <summary>The board rattles when its tiles flip, at most a few times a second.</summary>
+        private void RattleBoardIfFlipping()
+        {
+            var changed = _boardFlaps.LastChangeAt;
+            var now = Time.unscaledTime;
+            if (changed <= _lastRattleAt || now - changed > 0.1f || now - _lastRattleAt < 0.4f)
+                return;
+            _lastRattleAt = now;
+            PlayMoment(ref _flapClip, HudSounds.FlapRattle, "Flap rattle", 0.8f);
+        }
+
+        /// <summary>A till "ching" as money starts to count up.</summary>
+        private void ChingIfFundsRising()
+        {
+            var direction = _fundsTicker.Direction;
+            if (direction > 0 && _lastFundsDirection <= 0)
+                PlayMoment(ref _chingClip, HudSounds.CashChing, "Cash ching", 0.7f);
+            _lastFundsDirection = direction;
+        }
+
         private void Celebrate(CelebrationCard card)
         {
             if (card != null)
@@ -921,7 +964,13 @@ namespace Airside.Presentation
                 return false;
             var now = Time.unscaledTime;
             if (_celebrationShownAt < 0f)
+            {
                 _celebrationShownAt = now;
+                if (_celebrations.Peek().Kind == CelebrationKind.ContractDone)
+                    PlayMoment(ref _chimeClip, HudSounds.ContractChime, "Contract chime", 0.8f);
+                else
+                    PlayMoment(ref _stingClip, HudSounds.TierSting, "Tier sting", 0.8f);
+            }
             var panel = CelebrationPainter.Panel(layout.Viewport.x, layout.Viewport.y);
             _celebrationDrawList.Clear();
             CelebrationPainter.Paint(_celebrationDrawList, panel, _celebrations.Peek(), now - _celebrationShownAt);
@@ -2106,6 +2155,7 @@ namespace Airside.Presentation
                 _boardScrollFollowRow = -1;
             OperationsWorkspacePainter.Paint(_workspaceDrawList, _operationsWorkspace, layout,
                 _selectedAircraftId, _boardScrollRow, _operationsAllMovements, _boardFlaps, Time.unscaledTime);
+            RattleBoardIfFlipping();
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
         }
 
@@ -3017,7 +3067,32 @@ namespace Airside.Presentation
             if (GUI.Button(new Rect(x + 220f, buttonY, 180f, 28f), "Assign free stands", smallButton))
                 DevToolsAssignStands();
 
-            var view = new Rect(x, buttonY + 40f, inner, rect.height - (buttonY + 40f - rect.y) - 14f);
+            // ADR 0133 — Showcase: fire each new moment on demand, so a Mac check takes minutes.
+            var showY = buttonY + 36f;
+            GUI.Label(new Rect(x, showY + 5f, 80f, 18f), "Showcase", small);
+            var showX = x + 84f;
+            void ShowButton(string text, float width, Action action)
+            {
+                if (GUI.Button(new Rect(showX, showY, width, 26f), text, smallButton))
+                    action();
+                showX += width + 6f;
+            }
+            ShowButton("Tier card", 84f, () => Celebrate(CelebrationCard.ForTier(
+                _operations.CareerState?.Tier ?? OperatingTier.Regional, _operations.PlayerAirline?.Name ?? "Your airline")));
+            ShowButton("Contract card", 106f, () => Celebrate(CelebrationCard.ForContract("Kingscote charter", 4_200, 4,
+                FleetWorkspacePainter.Thumbnail(AircraftType.Saab340))));
+            ShowButton("Finale card", 92f, () => Celebrate(CelebrationCard.ForFinale(
+                _operations.PlayerAirline?.Name ?? "Your airline", _operations.PlayerFleetCount(),
+                _operations.CareerState?.ServedDestinations.Count ?? 0, (_operations.CareerState?.ActivePlaySeconds ?? 0) / 3600)));
+            ShowButton("Funds count", 96f, () => _fundsTicker.Replay(
+                (_operations.CareerState?.Funds ?? 0) - 4_200, Time.unscaledTime));
+            ShowButton("Flip board", 86f, () => _boardFlaps.ReplayAll(Time.unscaledTime));
+            ShowButton("Late toast", 86f, DevToolsLateToast);
+            showY += 32f;
+            showX = x + 84f;
+            ShowButton("Add one of each new aircraft (test)", 250f, DevToolsAddNewTypes);
+
+            var view = new Rect(x, showY + 36f, inner, rect.height - (showY + 36f - rect.y) - 14f);
             var contentHeight = 8f + _operations.Fleet.Count * 28f;
             _devToolsScroll = GUI.BeginScrollView(view, _devToolsScroll, new Rect(0f, 0f, inner - 18f, contentHeight));
             var y = 4f;
@@ -3037,6 +3112,56 @@ namespace Airside.Presentation
             }
 
             GUI.EndScrollView();
+        }
+
+        /// <summary>Showcase: the pay toast of a flight that left 7 minutes late behind a runway crossing.</summary>
+        private void DevToolsLateToast()
+        {
+            var registration = FirstPlayerAircraft()?.Registration ?? "VH-TST";
+            var settlement = new FlightSettlement(new SettlementId(registration, 0), null, 2_480, -1, 1, false,
+                DelayBreakdown.Parse(7 * 60, "RunwayCrossing:300;Turnaround:120"));
+            ShowToast(DelayText.SettlementToast(settlement, 0), DelayText.Tone(settlement));
+        }
+
+        /// <summary>
+        /// Showcase: adds one of each type ADR 0131 put on sale to the player's fleet, parked on a free stand
+        /// that fits, so their liveries, titles and gates can be checked on the field. Changes the save:
+        /// a dev tool for test airlines only.
+        /// </summary>
+        private void DevToolsAddNewTypes()
+        {
+            var player = _operations.PlayerAirline;
+            if (player == null)
+                return;
+            var types = new[]
+            {
+                AircraftType.EmbraerE190, AircraftType.AirbusA220300, AircraftType.Boeing737800,
+                AircraftType.AirbusA320200, AircraftType.AirbusA330900, AircraftType.Boeing7879
+            };
+            var added = 0;
+            var n = 1;
+            foreach (var type in types)
+            {
+                StableId? stand = null;
+                foreach (var free in _operations.FreeStandsFor(type))
+                {
+                    stand = free;
+                    break;
+                }
+                if (!stand.HasValue)
+                    continue;
+                string registration;
+                do
+                    registration = $"VH-TS{n++}";
+                while (_operations.Fleet.Any(a => a.Registration == registration));
+                _operations.AddAircraft(player, registration, type, stand.Value);
+                added++;
+            }
+
+            ShowToast(added == types.Length
+                ? "Added one of each new aircraft. Find them on the Fleet page."
+                : $"Added {added} of {types.Length}. The rest had no free stand.", HudTone.Caution);
+            SaveAirline();
         }
 
         private void DevToolsAutoSchedulePlayer()

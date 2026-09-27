@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Sounds for the big moments.** The departures board rattles as its letters flip, money landing
+  goes "ching", and a new tier or a finished contract gets its own short fanfare. Press M to mute.
+
 - **Big moments feel big.** Reaching a new tier, finishing a contract and becoming an established
   airline now bring up a card showing what you've unlocked. Your money counts up when you're
   paid, and the departures board flips its letters when a flight's status changes.

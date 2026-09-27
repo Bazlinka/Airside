@@ -66,6 +66,9 @@ Bailey chose tighter gates over adding new goals.
 | Standard Competent | 9.5 h | 27.5 h | 53.2 h | 140.9 h |
 | Before (lineup) | 10.8 h | 29.3 h | 61.6 h | 142.8 h |
 
+- Re-run on the final branch state, after the Pacific band (ADR 0140) and drifting weather
+  (ADR 0143): Standard Competent 9.5 / 27.5 / 55.2 / 144.6 h, Casual 11.6 / 33.4 / 78.2 / 176.7 h,
+  with no stuck runs.
 - Pacing stays inside ADR 0120's targets for Domestic, International and the finale. Regional was
   already just over 8 h.
 - The gates don't slow a competent airline: the bot keeps reliability high and has the flights.

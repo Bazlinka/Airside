@@ -6,15 +6,15 @@ Targets are ADR 0120's active-play checkpoints: Regional ≤ 8 h, Domestic 8–3
 
 | Difficulty | Style | Regional | Domestic | International | Established | Min cash | Final fleet | Stuck flags |
 |---|---|---|---|---|---|---|---|---|
-| Standard | Competent | 9.5 h (9–10) | 27.5 h (27–28) | 53.2 h (52–56) | 140.9 h (141–141) | $1,964 | 18/18/18/18/18 | 0 |
-| Standard | Casual | 11.6 h (11–12) | 34.3 h (33–35) | 70.2 h (69–76) | 176.6 h (173–179) | $2,590 | 18/18/18/18/18 | 0 |
+| Standard | Competent | 9.5 h (9–10) | 27.5 h (27–28) | 55.2 h (54–62) | 144.6 h (141–148) | $1,964 | 18/18/18/18/18 | 0 |
+| Standard | Casual | 11.6 h (11–12) | 33.4 h (33–34) | 78.2 h (69–80) | 176.7 h (165–177) | $2,590 | 18/18/18/18/18 | 0 |
 
 ## Contracts and challenges (ADR 0127, totals over all seeds)
 
 | Style | Contracts lapsed | Challenges paid | Daily reports |
 |---|---|---|---|
-| Competent | 1 | 20 | 37 |
-| Casual | 1 | 20 | 46 |
+| Competent | 1 | 20 | 40 |
+| Casual | 4 | 16 | 47 |
 
 ## Goal completion (median open hours, all seeds)
 
@@ -27,19 +27,19 @@ Targets are ADR 0120's active-play checkpoints: Regional ≤ 8 h, Domestic 8–3
 | domestic-reliability | 15.0 h (15–15) | 17.1 h (17–19) |
 | international-reliability | 15.0 h (15–15) | 17.1 h (17–19) |
 | established-reliability | 15.0 h (15–15) | 17.1 h (17–19) |
-| regional-network | 15.0 h (15–15) | 20.5 h (20–22) |
-| regional-fleet | 15.0 h (15–15) | 24.1 h (22–26) |
-| regional-service | 27.5 h (27–28) | 34.3 h (33–35) |
-| established-margin | 27.5 h (27–28) | 34.3 h (33–35) |
-| domestic-network | 49.7 h (48–51) | 65.6 h (51–70) |
-| domestic-jet | 50.5 h (48–51) | 66.2 h (62–69) |
-| domestic-service | 51.0 h (51–51) | 69.0 h (68–69) |
-| domestic-base | 53.2 h (52–56) | 70.2 h (69–76) |
-| established-network | 51.0 h (51–59) | 74.5 h (73–80) |
-| international-widebody | 87.0 h (87–90) | 108.5 h (106–116) |
-| international-network | 105.0 h (105–107) | 131.8 h (125–136) |
-| international-bases | 131.5 h (131–138) | 162.6 h (159–171) |
-| established-fleet | 140.9 h (141–141) | 176.6 h (173–179) |
+| regional-network | 15.0 h (15–15) | 21.1 h (20–22) |
+| regional-fleet | 15.0 h (15–15) | 22.1 h (22–26) |
+| regional-service | 27.5 h (27–28) | 33.4 h (33–34) |
+| established-margin | 27.5 h (27–28) | 33.4 h (33–34) |
+| domestic-network | 49.5 h (49–51) | 64.3 h (51–66) |
+| domestic-service | 51.0 h (51–51) | 69.0 h (65–69) |
+| domestic-jet | 51.0 h (51–53) | 69.0 h (60–72) |
+| established-network | 57.4 h (54–59) | 78.0 h (65–81) |
+| domestic-base | 55.2 h (54–62) | 78.2 h (69–80) |
+| international-widebody | 89.4 h (87–95) | 112.4 h (105–120) |
+| international-network | 107.3 h (105–113) | 141.1 h (123–143) |
+| international-bases | 139.0 h (136–141) | 168.7 h (159–175) |
+| established-fleet | 144.6 h (141–148) | 176.7 h (165–177) |
 
 ## Where runs ended short of the finale
 

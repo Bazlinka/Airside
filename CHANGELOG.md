@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Wording tidy-up.** The "while you were away" summary and the outstation page now use the
+  same plain words as the rest of the game, the Airline page's figures no longer run off their
+  cards in small windows, and a finished contract is announced at the end of the pay message.
+
 - **Clearer wording everywhere (ADR 0129).** Every message, card, goal and manual page was
   rewritten in one plain voice. The game now always says "flight" (not rotation, service or trip),
   messages say what's blocking you and how to fix it, and the pay message no longer shows internal

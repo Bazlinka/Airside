@@ -71,7 +71,7 @@ namespace Airside.Tests
             Assert.That(summary.Lines[0], Does.StartWith("VH-PAX"));
             Assert.That(summary.Lines[0], Does.Contain("taxiing to a stand").Or.Contain("parked").Or.Contain("no flight planned").Or.Contain("departing"),
                 "a Kingscote round trip is back well inside three hours and auto-parks");
-            Assert.That(summary.Lines.Any(l => (l.StartsWith("Rex flew") || l.StartsWith("QantasLink flew")) && l.Contains("trip")), Is.True);
+            Assert.That(summary.Lines.Any(l => (l.StartsWith("Rex flew") || l.StartsWith("QantasLink flew")) && l.Contains("flight")), Is.True);
         }
 
         [Test]

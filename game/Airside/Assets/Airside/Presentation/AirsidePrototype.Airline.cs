@@ -2193,7 +2193,7 @@ namespace Airside.Presentation
                 _workspaceDrawList.Hotspot(row, "network:select:" + aircraft.Registration);
             }
 
-            _workspaceDrawList.Caption(right.WithHeight(18f), "GROW AND OPERATE");
+            _workspaceDrawList.Caption(right.WithHeight(18f), "GROW THIS BASE");
             var offer = AircraftAcquisition.All[_networkBuyTypeIndex % AircraftAcquisition.All.Count];
             _workspaceDrawList.Text(new HudBox(right.X, right.Y + 29f, right.Width, 24f),
                 $"Next aircraft · {offer.Type.Name} · ${offer.Price:N0}", 14f, HudTone.Default,
@@ -2242,11 +2242,11 @@ namespace Airside.Presentation
                         var pay = forecast.Revenue;
                         var cost = forecast.Cost;
                         _workspaceDrawList.Text(new HudBox(right.X, right.Y + 220f, right.Width, 20f),
-                            $"{forecast.ExpectedPassengers}/{forecast.Seats} seats · return ${pay:N0} · margin ${pay - cost:N0}",
+                            $"{forecast.ExpectedPassengers}/{forecast.Seats} seats · pays about ${pay:N0} · profit ${pay - cost:N0}",
                             12f, pay >= cost ? HudTone.Positive : HudTone.Caution);
                     }
                     _workspaceDrawList.Button(new HudBox(right.X, right.Y + 256f, 150f, 32f),
-                        selected.CheckDue ? "START CHECK" : "PLAN SERVICE",
+                        selected.CheckDue ? "START CHECK" : "PLAN FLIGHT",
                         selected.CheckDue ? "network:check" : "network:plan",
                         HudButtonStyle.Primary, !selected.HasFlight
                         && !selected.InCheck(_clock.Now.ElapsedSeconds));
@@ -2259,7 +2259,7 @@ namespace Airside.Presentation
                     {
                         _workspaceDrawList.Text(new HudBox(right.X, right.Y + 300f, right.Width, 45f),
                             repeat.Exception.Length > 0 ? repeat.Exception :
-                            $"Delegated {repeat.DestinationCode} every {repeat.IntervalHours} h while playing",
+                            $"Repeats to {repeat.DestinationCode} every {repeat.IntervalHours} h while you play",
                             12f, repeat.Exception.Length > 0 ? HudTone.Caution : HudTone.Muted,
                             HudTextStyle.Wrap);
                         _workspaceDrawList.Button(new HudBox(right.X, right.Y + 349f, 155f, 28f),
@@ -2267,7 +2267,7 @@ namespace Airside.Presentation
                     }
                     else if (!_operations.DelegationUnlocked)
                         _workspaceDrawList.Text(new HudBox(right.X, right.Y + 300f, right.Width, 32f),
-                            $"Delegation unlocks after 12 manually planned services "
+                            $"Repeat schedules unlock after 12 flights you plan yourself "
                             + $"({_operations.CareerState.ManualRotations}/12).", 12f, HudTone.Muted);
                 }
             }

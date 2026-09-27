@@ -1,5 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — wording follow-up (ADR 0129 addendum).** Away summary,
+  Network page and base turnaround wording; Stats overview cards fit at every viewport (base name
+  only, "$X earned", shrink-to-fit, tested); "Contract done!" ends the pay toast; new
+  `HouseStyleTests` fails on em dashes, semicolons and rotation/service/dispatch/delegation in
+  player text.
+
 - **2026-09-27 Claude (same branch) — wording pass (ADR 0129).** House style in
   `docs/product/WRITING.md`: plain short sentences, no em dashes or semicolons in player text,
   "flight" for what code calls a rotation/service. Rewrote refusals, career events, goals,

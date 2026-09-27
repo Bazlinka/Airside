@@ -48,7 +48,7 @@ Use one word for one thing, everywhere.
 
 - **Refusal:** say what blocks it and how to fix it: "The Jet-gate base is needed for a 737-8. Expand
   your base in Career."
-- **Toast:** say what happened, then the number that matters: "VH-PAA paid $12,400 · on time,
+- **Toast:** say what happened, then the number that matters: "VH-PAA earned $12,400 · on time,
   7 in a row."
 - **Hold line:** "What it's doing: why." For example: "Waiting to push: QFA412 is on the taxi route."
 - **Goal:** start with a verb, and keep the count in the title: "Complete 30 flights", "Serve 4

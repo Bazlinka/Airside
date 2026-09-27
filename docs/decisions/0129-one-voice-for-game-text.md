@@ -57,3 +57,21 @@ Fixes found along the way:
 - Per-assembly type-check is clean.
 - The offline HUD renders of the setup wizard, manual, Map, Fleet, Contracts and Stats were checked
   by eye.
+
+## Addendum: the follow-up round
+
+- **Strings the first pass missed:**
+  - the "You were away" summary ("flights", and no semicolon);
+  - the outstation Network page (PLAN FLIGHT, repeat schedules, "pays about · profit");
+  - the base turnaround wording.
+- **Stats overview cards now fit.**
+  - The base card shows just the base's name. A fully grown base also shows its full description
+    where the EXPAND button would be.
+  - Lifetime revenue now reads "$X earned".
+  - Card text shrinks to fit a narrow window, down to 8 pt.
+  - `Stats_OverviewCardsFitTheirText` checks this at every supported window size.
+- **The pay message puts "Contract done!" last,** instead of in the middle of the line.
+- **`HouseStyleTests` guards the voice.** It gathers the manual, goals, milestones, challenges,
+  demand headlines, every hold line, pay messages, contract cards and sample refusals. It fails on an
+  em dash inside a sentence, a semicolon, or rotation, service, dispatch or delegation. Planting a
+  bad tip line was confirmed to fail it.

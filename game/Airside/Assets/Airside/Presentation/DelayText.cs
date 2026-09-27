@@ -37,19 +37,29 @@ namespace Airside.Presentation
         /// <summary>The settlement toast line (ADR 0053 + 0128).</summary>
         public static string SettlementToast(FlightSettlement settlement, int onTimeStreak)
         {
-            var reg = settlement.SettlementId.Registration;
-            var earned = settlement.ContractFulfilled
-                ? $"{reg} earned ${settlement.Payment:N0}. Contract done!"
-                : !string.IsNullOrEmpty(settlement.ContractDefinitionId)
-                    ? $"{reg} earned ${settlement.Payment:N0} · contract flight {settlement.RotationsCompleted}"
-                    : $"{reg} earned ${settlement.Payment:N0}";
-            if (!settlement.Delay.HasValue)
-                return settlement.ContractFulfilled ? earned : earned + ".";
-            var delay = settlement.Delay.Value;
-            if (!delay.IsLate)
-                return onTimeStreak > 1 ? $"{earned} · on time, {onTimeStreak} in a row." : $"{earned} · on time.";
-            var tip = Tip(delay);
-            return tip.Length > 0 ? $"{earned} · {Summary(delay)}. {tip}" : $"{earned} · {Summary(delay)}.";
+            // "VH-PAA earned $900 · contract flight 2 · on time, 7 in a row." with any tip, then
+            // "Contract done!" last so the good news is not buried mid-line.
+            var text = new StringBuilder($"{settlement.SettlementId.Registration} earned ${settlement.Payment:N0}");
+            if (!settlement.ContractFulfilled && !string.IsNullOrEmpty(settlement.ContractDefinitionId))
+                text.Append($" · contract flight {settlement.RotationsCompleted}");
+            var tip = string.Empty;
+            if (settlement.Delay is { } delay)
+            {
+                if (!delay.IsLate)
+                    text.Append(onTimeStreak > 1 ? $" · on time, {onTimeStreak} in a row" : " · on time");
+                else
+                {
+                    text.Append(" · ").Append(Summary(delay));
+                    tip = Tip(delay);
+                }
+            }
+
+            text.Append('.');
+            if (tip.Length > 0)
+                text.Append(' ').Append(tip);
+            if (settlement.ContractFulfilled)
+                text.Append(" Contract done!");
+            return text.ToString();
         }
 
         public static HudTone Tone(FlightSettlement settlement)

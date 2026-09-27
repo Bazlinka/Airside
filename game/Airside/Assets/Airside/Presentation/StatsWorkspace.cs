@@ -83,6 +83,9 @@ namespace Airside.Presentation
         public string TierLine { get; private set; } = string.Empty;
         public string FleetLine { get; private set; } = string.Empty;
         public string BaseCapabilityLine { get; private set; } = string.Empty;
+
+        /// <summary>The base's name, which fits the overview card; the roadmap below carries the detail (ADR 0129).</summary>
+        public string BaseSummaryLine { get; private set; } = string.Empty;
         public PlayerBaseLevel CurrentBaseLevel { get; private set; }
         public string NextMilestoneTitle { get; private set; } = string.Empty;
 
@@ -162,6 +165,7 @@ namespace Airside.Presentation
             TierLine = string.Empty;
             FleetLine = string.Empty;
             BaseCapabilityLine = string.Empty;
+            BaseSummaryLine = string.Empty;
             CurrentBaseLevel = PlayerBaseLevel.Starter;
             NextMilestoneTitle = string.Empty;
             HasNextTier = false;
@@ -187,10 +191,11 @@ namespace Airside.Presentation
             AirlineName = operations.PlayerAirline.Name;
             CurrentLiveryHex = operations.PlayerAirline.LiveryHex;
             FundsLine = $"${career.Funds:N0} on hand";
-            LifetimeRevenueLine = $"${career.LifetimeRevenue:N0} lifetime revenue";
+            LifetimeRevenueLine = $"${career.LifetimeRevenue:N0} earned";
             ReliabilityLine = $"{career.Reliability}% reliability";
             TierLine = $"{career.Tier} tier";
             FleetLine = $"{fleetSize} of {career.Base.FleetCapacity} aircraft";
+            BaseSummaryLine = career.Base.Title;
             BaseCapabilityLine = career.Base.Title
                                  + " · " + PlayerBase.MaintenanceCapabilityLine(career.BaseLevel)
                                  + " · " + PlayerBase.TurnaroundLine(career.BaseLevel)
@@ -545,7 +550,7 @@ namespace Airside.Presentation
             var stats = new[]
             {
                 model.FundsLine, model.LifetimeRevenueLine, model.ReliabilityLine, model.TierLine,
-                model.FleetLine, model.BaseCapabilityLine
+                model.FleetLine, model.BaseSummaryLine
             };
             var cardWidth = (layout.LeftColumn.Width - 8f) * 0.5f;
             for (var i = 0; i < stats.Length; i++)
@@ -554,7 +559,13 @@ namespace Airside.Presentation
                 var column = i % 2;
                 var card = new HudBox(layout.LeftColumn.X + column * (cardWidth + 8f),
                     layout.LeftColumn.Y + StatsWorkspaceLayout.CaptionHeight + 6f + row * 27f, cardWidth, 23f);
-                into.Text(card.Inset(8f, 4f, 6f, 0f), stats[i], i == 5 ? 10f : 12f,
+                var textBox = card.Inset(8f, 4f, 6f, 0f);
+                // Big numbers in a narrow window shrink to fit rather than run off the card (ADR 0129).
+                var size = i == 5 ? 10f : 12f;
+                var measured = HudShell.Measure(stats[i], size);
+                if (measured > textBox.Width && measured > 0f)
+                    size = Math.Max(8f, size * textBox.Width / measured);
+                into.Text(textBox, stats[i], size,
                     i == 5 ? HudTone.Muted : HudTone.Default,
                     i == 0 || i == 2 ? HudTextStyle.Bold : HudTextStyle.Regular);
             }
@@ -572,6 +583,10 @@ namespace Airside.Presentation
 
             into.Text(layout.NextTierRequirementBox.Offset(0f, 48f), model.NextTierRequirementLine, 11f,
                 HudTone.Muted, HudTextStyle.Wrap);
+            // A fully grown base has no EXPAND button; its full description takes that space instead.
+            if (!model.HasNextTier)
+                into.Text(layout.BaseUpgradeButton.Offset(0f, 48f).WithWidth(layout.LeftColumn.Width), "Now: " + model.BaseCapabilityLine,
+                    11f, HudTone.Muted, HudTextStyle.Wrap);
             if (model.HasNextTier)
                 into.Button(layout.BaseUpgradeButton.Offset(0f, 48f), "EXPAND BASE", HudAction.UpgradeBase,
                     HudButtonStyle.Primary, model.CanUpgradeBase);

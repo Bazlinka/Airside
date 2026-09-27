@@ -22,7 +22,7 @@ namespace Airside.Tests
 
             Assert.That(model.AirlineName, Is.EqualTo(ops.PlayerAirline.Name));
             Assert.That(model.FundsLine, Is.EqualTo($"${ops.CareerState.Funds:N0} on hand"));
-            Assert.That(model.LifetimeRevenueLine, Is.EqualTo("$0 lifetime revenue"));
+            Assert.That(model.LifetimeRevenueLine, Is.EqualTo("$0 earned"));
             Assert.That(model.ReliabilityLine, Is.EqualTo($"{ops.CareerState.Reliability}% reliability"));
             Assert.That(model.TierLine, Is.EqualTo("Provisional tier"));
             Assert.That(model.FleetLine, Is.EqualTo("1 of 1 aircraft"));
@@ -288,6 +288,33 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Stats_OverviewCardsFitTheirText()
+        {
+            // ADR 0129: the base card used to print ~110 characters into a half-column card.
+            foreach (var level in new[] { PlayerBaseLevel.Starter, PlayerBaseLevel.International })
+            {
+                var (clock, ops, _) = HudTestAirline.Create();
+                ops.RestoreCareerState(1_234_567, 100, nameof(OperatingTier.International), null, 0, 0,
+                    Array.Empty<string>(), Array.Empty<string>(), 40, null, 12_345_678, null, baseLevel: level);
+                var model = new StatsWorkspaceModel();
+                model.Rebuild(ops, clock.Now);
+                foreach (var (width, height) in HudTestAirline.Viewports)
+                {
+                    var layout = StatsWorkspaceLayout.Create(HudShell.WorkspaceSurface(width, height));
+                    var into = new HudDrawList();
+                    StatsWorkspacePainter.Paint(into, model, layout);
+                    foreach (var line in new[] { model.FundsLine, model.LifetimeRevenueLine, model.ReliabilityLine,
+                                 model.TierLine, model.FleetLine, model.BaseSummaryLine })
+                    {
+                        var command = into.Commands.First(c => c.Kind == HudDrawKind.Text && c.Text == line);
+                        Assert.That(HudShell.Measure(line, command.FontSize), Is.LessThanOrEqualTo(command.Box.Width + 0.5f),
+                            $"{width}x{height} {level}: '{line}'");
+                    }
+                }
+            }
+        }
+
+        [Test]
         public void Stats_PaintedMilestonesHistoryAndFulfilledLineNeverRunPastTheFooter()
         {
             // A fully populated model (all 11 milestones, a full history list) is the worst
@@ -349,14 +376,14 @@ namespace Airside.Tests
 
             model.Rebuild(ops, clock.Now);
             Assert.That(model.BaseCapabilityLine, Does.Contain("outsourced maintenance"));
-            Assert.That(model.BaseCapabilityLine, Does.Contain("baseline ground services"));
+            Assert.That(model.BaseCapabilityLine, Does.Contain("standard turnaround speed"));
 
             ops.RestoreCareerState(50_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 System.Array.Empty<string>(), completedPlayerRotations: 28,
                 baseLevel: PlayerBaseLevel.JetGate);
             model.Rebuild(ops, clock.Now);
             Assert.That(model.BaseCapabilityLine, Does.Contain("local jet maintenance"));
-            Assert.That(model.BaseCapabilityLine, Does.Contain("20% faster ground services"));
+            Assert.That(model.BaseCapabilityLine, Does.Contain("20% faster turnarounds"));
         }
 
         [Test]

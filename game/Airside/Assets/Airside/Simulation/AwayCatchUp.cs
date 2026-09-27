@@ -88,7 +88,7 @@ namespace Airside.Simulation
                 var flown = aircraft.CompletedTrips - was;
                 var status = Status(aircraft, after.Clock);
                 lines.Add(flown > 0
-                    ? $"{aircraft.Registration} completed {Plural(flown, "trip")} and {status}."
+                    ? $"{aircraft.Registration} flew {Plural(flown, "flight")} and {status}."
                     : $"{aircraft.Registration} {status}.");
             }
 
@@ -103,7 +103,7 @@ namespace Airside.Simulation
                     flown += Math.Max(0, aircraft.CompletedTrips - was);
                 }
 
-                lines.Add(flown > 0 ? $"{airline.Name} flew {Plural(flown, "trip")}." : $"{airline.Name} flew no trips.");
+                lines.Add(flown > 0 ? $"{airline.Name} flew {Plural(flown, "flight")}." : $"{airline.Name} flew nothing.");
             }
 
             // A pre-6 save has no career fields (they default to 0), but the career itself
@@ -123,7 +123,7 @@ namespace Airside.Simulation
                     : $"Reliability fell {-reliabilityChange} points to {after.CareerState.Reliability}%.");
 
             if (awaySeconds >= AwayCatchUp.MaxSeconds)
-                lines.Add("The airport caught up one week; longer absences are not simulated.");
+                lines.Add("The airport only catches up one week. Anything longer is skipped.");
 
             return new AwaySummary(awaySeconds, lines);
         }

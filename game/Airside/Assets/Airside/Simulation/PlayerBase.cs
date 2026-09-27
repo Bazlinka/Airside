@@ -192,7 +192,7 @@ namespace Airside.Simulation
         public static string TurnaroundLine(PlayerBaseLevel level)
         {
             var gain = TurnaroundSpeedGainPercent(level);
-            return gain <= 0 ? "baseline ground services" : gain + "% faster ground services";
+            return gain <= 0 ? "standard turnaround speed" : gain + "% faster turnarounds";
         }
 
         public static string MaintenanceCapabilityLine(PlayerBaseLevel level) => level switch

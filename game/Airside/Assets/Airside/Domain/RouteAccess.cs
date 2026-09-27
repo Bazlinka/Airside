@@ -61,11 +61,12 @@ namespace Airside.Domain
             if (type == null) throw new ArgumentNullException(nameof(type));
             if (type.Id == AircraftType.Atr42.Id || type.Id == AircraftType.Saab340.Id)
                 return RouteBand.Regional;
-            if (type.Id == AircraftType.Dash8Q400.Id)
+            if (type.Id == AircraftType.Dash8Q400.Id || type.Id == AircraftType.EmbraerE190.Id)
                 return RouteBand.Domestic;
-            if (type.Id == AircraftType.Boeing7378.Id)
+            if (type.Id == AircraftType.Boeing7378.Id || type.Id == AircraftType.Boeing737800.Id
+                || type.Id == AircraftType.AirbusA320200.Id)
                 return RouteBand.National;
-            if (type.Id == AircraftType.AirbusA321Neo.Id)
+            if (type.Id == AircraftType.AirbusA321Neo.Id || type.Id == AircraftType.AirbusA220300.Id)
                 return RouteBand.Tasman;
             return RouteBand.LongHaul;
         }

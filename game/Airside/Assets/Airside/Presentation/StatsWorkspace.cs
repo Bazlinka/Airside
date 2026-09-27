@@ -60,6 +60,25 @@ namespace Airside.Presentation
     /// elsewhere (Funds/Reliability on the objective card fallback line, Tier gating buys);
     /// this is the first place they are all shown together, accurately, without digging.
     /// </summary>
+    /// <summary>One paid flight on the Airline page (ADR 0130).</summary>
+    public readonly struct RecentFlightRow
+    {
+        public RecentFlightRow(string registration, string paidText, string punctuality, HudTone tone, bool contractDone)
+        {
+            Registration = registration ?? string.Empty;
+            PaidText = paidText ?? string.Empty;
+            Punctuality = punctuality ?? string.Empty;
+            Tone = tone;
+            ContractDone = contractDone;
+        }
+
+        public string Registration { get; }
+        public string PaidText { get; }
+        public string Punctuality { get; }
+        public HudTone Tone { get; }
+        public bool ContractDone { get; }
+    }
+
     public sealed class StatsWorkspaceModel
     {
         private readonly List<MilestoneRow> _milestones = new();
@@ -117,6 +136,33 @@ namespace Airside.Presentation
 
         /// <summary>ADR 0128: "Punctuality · 7 on time in a row · 2 of the last 6 late, mostly runway crossings".</summary>
         public string PunctualityLine { get; private set; } = string.Empty;
+
+        private readonly List<RecentFlightRow> _recentFlights = new();
+
+        /// <summary>ADR 0130: your latest paid flights, newest first: who, what it paid, how punctual.</summary>
+        public IReadOnlyList<RecentFlightRow> RecentFlights => _recentFlights;
+        public const int MaxRecentFlights = 6;
+
+        private void FillRecentFlights(AirlineOperations operations)
+        {
+            var settlements = operations.RecentSettlements;
+            for (var i = settlements.Count - 1; i >= 0 && _recentFlights.Count < MaxRecentFlights; i--)
+            {
+                var settlement = settlements[i];
+                var mine = false;
+                foreach (var aircraft in operations.Fleet)
+                    if (aircraft.Airline.IsPlayer && aircraft.Registration == settlement.SettlementId.Registration)
+                        mine = true;
+                if (!mine)
+                    continue;
+                var punctuality = settlement.Delay is { } delay ? DelayText.Summary(delay) : string.Empty;
+                var tone = settlement.Delay is { IsLate: true } late
+                    ? late.LatenessSeconds > FlightEconomics.HardLateSeconds ? HudTone.Negative : HudTone.Caution
+                    : HudTone.Positive;
+                _recentFlights.Add(new RecentFlightRow(settlement.SettlementId.Registration,
+                    $"${settlement.Payment:N0}", punctuality, tone, settlement.ContractFulfilled));
+            }
+        }
 
         private static string Punctuality(AirlineOperations operations)
         {
@@ -178,6 +224,7 @@ namespace Airside.Presentation
             AdelaideRankLine = string.Empty;
             CompetitiveTargetLine = string.Empty;
             PunctualityLine = string.Empty;
+            _recentFlights.Clear();
             if (operations?.PlayerAirline == null)
                 return;
 
@@ -207,6 +254,7 @@ namespace Airside.Presentation
 
             // ADR 0128: punctuality first — the streak, and what has been making recent flights late.
             PunctualityLine = Punctuality(operations);
+            FillRecentFlights(operations);
 
             // Open challenges head the list (ADR 0127): what they pay and how far along you are.
             foreach (var challenge in operations.CareerChallengeStatus())
@@ -544,6 +592,12 @@ namespace Airside.Presentation
                     .WithHeight(16f), model.AirlineName, 11f, HudTone.Muted);
         }
 
+        private static readonly (string Category, string Name)[] OverviewIcons =
+        {
+            ("economy", "cash"), ("economy", "income"), ("economy", "reputation"),
+            ("operation", "completed"), ("operation", "departure"), ("operation", "stand")
+        };
+
         private static void PaintOverview(HudDrawList into, StatsWorkspaceModel model, StatsWorkspaceLayout layout)
         {
             into.Caption(layout.OverviewCaption, "YOUR AIRLINE");
@@ -559,7 +613,16 @@ namespace Airside.Presentation
                 var column = i % 2;
                 var card = new HudBox(layout.LeftColumn.X + column * (cardWidth + 8f),
                     layout.LeftColumn.Y + StatsWorkspaceLayout.CaptionHeight + 6f + row * 27f, cardWidth, 23f);
-                var textBox = card.Inset(8f, 4f, 6f, 0f);
+                // ADR 0130: each figure leads with its icon.
+                // A narrow window drops the icons first, so the figures keep their room.
+                var withIcon = card.Width >= 190f;
+                if (withIcon)
+                {
+                    var icon = OverviewIcons[i];
+                    into.Icon(new HudBox(card.X + 6f, card.Y + 3f, 16f, 16f), icon.Category, icon.Name,
+                        i == 2 ? HudTone.Positive : HudTone.Accent);
+                }
+                var textBox = card.Inset(withIcon ? 28f : 8f, 4f, 6f, 0f);
                 // Big numbers in a narrow window shrink to fit rather than run off the card (ADR 0129).
                 var size = i == 5 ? 10f : 12f;
                 var measured = HudShell.Measure(stats[i], size);
@@ -741,6 +804,28 @@ namespace Airside.Presentation
             var punctualityBox = fulfilledBox.Offset(0f, 24f);
             if (model.PunctualityLine.Length > 0 && punctualityBox.Bottom <= floor)
                 into.Text(punctualityBox, model.PunctualityLine, 12f, HudTone.Muted);
+
+            // Recent paid flights fill the rest of the column (ADR 0130).
+            var flightsY = punctualityBox.Bottom + 22f;
+            if (model.RecentFlights.Count == 0 || flightsY + 44f > floor)
+                return;
+            into.Caption(new HudBox(layout.RightColumn.X, flightsY, layout.RightColumn.Width, 14f), "RECENT FLIGHTS");
+            flightsY += 22f;
+            foreach (var flight in model.RecentFlights)
+            {
+                var row = new HudBox(layout.RightColumn.X, flightsY, layout.RightColumn.Width, 26f);
+                if (row.Bottom > floor)
+                    break;
+                into.Fill(row, HudTone.Default, 0.035f);
+                into.Fill(new HudBox(row.X, row.Y, 3f, row.Height), flight.Tone, 1f);
+                into.Text(new HudBox(row.X + 12f, row.Y + 5f, 90f, 16f), flight.Registration, 12f, HudTone.Default,
+                    HudTextStyle.Bold);
+                into.Text(new HudBox(row.X + 104f, row.Y + 5f, 90f, 16f), flight.PaidText, 12f, HudTone.Positive,
+                    HudTextStyle.Bold);
+                var note = flight.ContractDone ? flight.Punctuality + "  ·  contract done" : flight.Punctuality;
+                into.Text(new HudBox(row.X + 196f, row.Y + 5f, row.Width - 204f, 16f), note, 11f, flight.Tone);
+                flightsY += 30f;
+            }
         }
     }
 }

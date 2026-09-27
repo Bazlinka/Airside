@@ -1,5 +1,20 @@
 ## Unreleased
 
+- **Big moments feel big.** Reaching a new tier, finishing a contract and becoming an established
+  airline now bring up a card showing what you've unlocked. Your money counts up when you're
+  paid, and the departures board flips its letters when a flight's status changes.
+
+- **Six more aircraft to buy.** The Embraer E190 is now the cheapest first jet, the A220-300 can
+  cross the Tasman, the older 737-800 and A320 are cheaper to buy but cost more to fly, and the
+  A330-900neo and 787-9 are cheaper ways into long-haul. The Fleet market shows what you can buy
+  first and pages through all twelve.
+
+- **The HUD looks more like a game.** The Ops page is now a split-flap departures board. Fleet
+  shows each aircraft in your colours with icons for its facts, and the market shows the aircraft
+  for sale. Contract offers are proper cards with a badge for the kind of job, the aircraft, the
+  deadline and the pay up front. The Airline page lists your recent flights with what they paid and
+  whether they left on time. Warnings that applied to every card are now said once.
+
 - **Wording tidy-up.** The "while you were away" summary and the outstation page now use the
   same plain words as the rest of the game, the Airline page's figures no longer run off their
   cards in small windows, and a finished contract is announced at the end of the pay message.

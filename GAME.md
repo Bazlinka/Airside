@@ -1,5 +1,28 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — moments (ADR 0132).** `Presentation/HudMoments.cs`:
+  funds count up/down in the capsule (green/red while moving); departures-board fields flip through
+  letters when they change; celebration cards for a new tier, a finished contract and the finale
+  (queued, CONTINUE or 20 s). Tests **866/866**, type-check clean. **Mac checks:** the card over
+  the airport, the funds count after a paid flight, board flips and frame time.
+
+- **2026-09-27 Claude (same branch) — every modelled aircraft for sale (ADR 0131).** E190,
+  A220-300, 737-800, A320-200, A330-900neo and 787-9 join the market (`AircraftAcquisition.All`, now
+  in career order); `RouteAccess.Ceiling` bands; `FlightEconomics.RunningCostFactor` (cost only);
+  `OwnsAnyJet` counts every terminal-gate type. Fleet market leads with what you can buy and pages
+  (‹ 1–3 of 12 ›). Balance (`docs/testing/career-balance-2026-09-27/lineup/`): competent International
+  61.5 h, finale 141 h; casual International 74.3 h. **Watch:** the bot runs cash lower (min $1).
+  Tests **863/863**. **Mac checks:** new types render in the player livery with titles; E190/A220
+  take terminal gates.
+
+- **2026-09-27 Claude (same branch) — HUD game feel, first pass (ADR 0130).** Ops board in
+  split-flap tiles; Fleet detail opens on the aircraft picture over its livery with icon facts,
+  market cards show aircraft; contract offers get kind badges, chips, aircraft picture and big pay;
+  shared lock reasons said once; Airline page figures get icons and a Recent flights list. Renders in
+  `docs/testing/hud-game-feel-2026-09-27/`. Tests **859/859**, type-check clean. **Mac checks:**
+  thumbnails load in Fleet/Contracts; flap board readability and frame time (~100 draw commands a
+  row); icons tint correctly. Next (needs Mac): side sheets over the airport, motion, reward moments.
+
 - **2026-09-27 Claude (same branch) — wording follow-up (ADR 0129 addendum).** Away summary,
   Network page and base turnaround wording; Stats overview cards fit at every viewport (base name
   only, "$X earned", shrink-to-fit, tested); "Contract done!" ends the pay toast; new

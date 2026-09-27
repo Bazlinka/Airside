@@ -61,6 +61,21 @@ namespace Airside.Tests
                 texts.Add(("milestone", milestone.Title));
             foreach (var challenge in CareerChallenges.All)
                 texts.Add(($"challenge {challenge.Id}", challenge.Title));
+            foreach (var card in new[]
+                     {
+                         CelebrationCard.ForTier(OperatingTier.Regional, "Soak Air"),
+                         CelebrationCard.ForTier(OperatingTier.Domestic, "Soak Air"),
+                         CelebrationCard.ForTier(OperatingTier.International, "Soak Air"),
+                         CelebrationCard.ForContract("Kingscote charter", 4_200, 4, null),
+                         CelebrationCard.ForFinale("Soak Air", 18, 12, 140)
+                     })
+            {
+                texts.Add(("celebration title", card.Title));
+                texts.Add(("celebration subtitle", card.Subtitle));
+                foreach (var line in card.Lines)
+                    texts.Add(("celebration line", line));
+            }
+
             for (var day = 0L; day < 400; day++)
                 if (DemandEvents.OnDay(day) is { } news)
                     texts.Add(("demand event", news.Headline));

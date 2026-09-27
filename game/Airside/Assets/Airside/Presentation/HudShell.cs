@@ -477,7 +477,8 @@ namespace Airside.Presentation
         public static string WorkspaceAction(HudWorkspace workspace) => WorkspacePrefix + workspace;
 
         /// <summary>The capsule's instruments for the live airline, shared by the runtime and the mockups.</summary>
-        public static void CapsuleValues(AirlineOperations operations, string adelaideTime, List<HudCapsuleValue> into)
+        public static void CapsuleValues(AirlineOperations operations, string adelaideTime, List<HudCapsuleValue> into,
+            long? fundsShown = null, int fundsDirection = 0)
         {
             into.Clear();
             var airline = operations?.PlayerAirline;
@@ -486,8 +487,11 @@ namespace Airside.Presentation
                 return;
             into.Add(new HudCapsuleValue("AIRLINE", airline.Name));
             into.Add(new HudCapsuleValue("ADELAIDE", adelaideTime));
-            into.Add(new HudCapsuleValue("FUNDS", "$" + career.Funds.ToString("N0"),
-                career.Funds < 0 ? HudTone.Negative : HudTone.Default));
+            // ADR 0132: money counts to its new value, green while rising and red while falling.
+            var funds = fundsShown ?? career.Funds;
+            into.Add(new HudCapsuleValue("FUNDS", "$" + funds.ToString("N0"),
+                fundsDirection > 0 ? HudTone.Positive
+                : fundsDirection < 0 || funds < 0 ? HudTone.Negative : HudTone.Default));
             into.Add(new HudCapsuleValue("RELIABILITY", career.Reliability + "%", HudTone.Default,
                 HudCapsuleKind.Gauge, career.Reliability / 100f));
             into.Add(new HudCapsuleValue("TIER", career.FinaleReached ? "ESTABLISHED" : career.Tier.ToString().ToUpperInvariant(),

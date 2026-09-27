@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Rounder aerobridges, proper stair trucks, a real-looking base (ADR 0124).** Aerobridge
+  tunnels have rounded profiles; stair trucks have wheels, handrails and posts; your
+  airline's base buildings are clad modules with your colours on a fascia band, windows and
+  hangar doors instead of solid livery blocks.
+
 - **Lights that behave like lights (ADR 0124).** Aircraft nav lights, strobes, beacons and
   landing lights now shine from their lamps instead of the belly, and the lenses glow —
   including the 787/A330/A350 belly beacon, which never flashed before. Runway and taxiway

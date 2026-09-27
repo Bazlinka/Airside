@@ -186,6 +186,16 @@ namespace Airside.Presentation
                     AirsideTheme.SafetyYellow);
                 BridgeBox(truck.Root, "Stair truck cab glass", new Vector3(0f, 1.75f, -5.78f), new Vector3(1.8f, 0.6f, 0.04f),
                     BridgeGlazing);
+                // Wheels and a bumper so the truck reads as a vehicle, not a box (ADR 0124).
+                foreach (var (wx, wz) in new[] { (-1.05f, -1.8f), (1.05f, -1.8f), (-1.05f, -6.3f), (1.05f, -6.3f) })
+                {
+                    var wheel = BridgeCylinder(truck.Root, "Stair truck wheel", new Vector3(wx, 0.42f, wz),
+                        new Vector3(0.84f, 0.16f, 0.84f), new Color(0.09f, 0.09f, 0.1f));
+                    wheel.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                }
+
+                BridgeBox(truck.Root, "Stair truck bumper", new Vector3(0f, 0.5f, -7.5f), new Vector3(2.3f, 0.3f, 0.25f),
+                    new Color(0.15f, 0.15f, 0.16f));
                 truck.Flight = new GameObject("Stair flight").transform;
                 truck.Flight.SetParent(truck.Root, false);
             }
@@ -227,6 +237,22 @@ namespace Airside.Presentation
                 var rail = BridgeBox(truck.Flight, "Stair side", new Vector3(edge, sill * 0.5f + 0.45f, -1.5f - run * 0.5f),
                     new Vector3(0.06f, 0.9f, length), AirsideTheme.SafetyYellow);
                 rail.localRotation = Quaternion.Euler(-slope, 0f, 0f);
+                // Handrail on posts, a metre above the treads, and a guard round the platform.
+                var handrail = BridgeBox(truck.Flight, "Stair handrail", new Vector3(edge, sill * 0.5f + 1.05f, -1.5f - run * 0.5f),
+                    new Vector3(0.07f, 0.07f, length), new Color(0.78f, 0.79f, 0.8f));
+                handrail.localRotation = Quaternion.Euler(-slope, 0f, 0f);
+                var posts = Mathf.Max(2, Mathf.RoundToInt(length / 1.3f));
+                for (var k = 0; k <= posts; k++)
+                {
+                    var t = k / (float)posts;
+                    BridgeBox(truck.Flight, "Stair post", new Vector3(edge, sill * (1f - t) + 0.5f, -1.5f - run * t),
+                        new Vector3(0.05f, 1.0f, 0.05f), new Color(0.78f, 0.79f, 0.8f));
+                }
+
+                BridgeBox(truck.Flight, "Stair platform rail", new Vector3(edge, sill + 1.0f, -0.75f),
+                    new Vector3(0.06f, 0.06f, 1.5f), new Color(0.78f, 0.79f, 0.8f));
+                BridgeBox(truck.Flight, "Stair platform post", new Vector3(edge, sill + 0.5f, -0.05f),
+                    new Vector3(0.05f, 1.0f, 0.05f), new Color(0.78f, 0.79f, 0.8f));
             }
         }
 

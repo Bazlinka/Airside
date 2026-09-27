@@ -315,7 +315,9 @@ namespace Airside.Presentation
             var colour = AirsideTheme.FromHex(livery);
             foreach (var renderer in _playerBaseVisualRoot.GetComponentsInChildren<Renderer>(true))
             {
-                if (renderer == null)
+                // Only the livery parts repaint; cladding, doors and glass keep their own colours.
+                if (renderer == null || !renderer.gameObject.name.EndsWith("livery", StringComparison.Ordinal)
+                    && !renderer.gameObject.name.EndsWith("livery band", StringComparison.Ordinal))
                     continue;
                 renderer.GetPropertyBlock(RendererTintBlock);
                 RendererTintBlock.SetColor(BaseColorId, colour);
@@ -368,28 +370,55 @@ namespace Airside.Presentation
                 _playerBaseStageRoots[stage] = stageRoot;
             }
 
-            AddPlayerBaseBlock("Starter ops module", new Vector3(x - 10f, groundY + 1.6f, yardZ),
-                new Vector3(8f, 3.2f, 5f), livery, PlayerBaseLevel.Starter);
-            AddPlayerBaseBlock("Starter base marker", new Vector3(x - 10f, groundY + 4.6f, yardZ),
-                new Vector3(8.4f, 0.45f, 5.4f), livery, PlayerBaseLevel.Starter);
-
-            AddPlayerBaseBlock("Regional maintenance module", new Vector3(x + 2f, groundY + 2.4f, yardZ),
-                new Vector3(15f, 4.8f, 8f), livery, PlayerBaseLevel.ExpandedRegional);
-            AddPlayerBaseBlock("Regional equipment store", new Vector3(x + 12f, groundY + 1.5f, yardZ + 1f),
-                new Vector3(4f, 3f, 5f), livery, PlayerBaseLevel.ExpandedRegional);
-
-            AddPlayerBaseBlock("Jet handling module", new Vector3(x + 24f, groundY + 2.7f, yardZ),
-                new Vector3(16f, 5.4f, 9f), livery, PlayerBaseLevel.JetGate);
-            AddPlayerBaseBlock("Jet base mast", new Vector3(x + 32f, groundY + 7f, yardZ - 3f),
+            // Grey clad modules carrying the livery on a fascia band (ADR 0124): the whole base
+            // used to be solid livery boxes. Each stage adds a building; the front faces the apron (−z).
+            AddPlayerBaseModule("Starter ops module", new Vector3(x - 10f, groundY, yardZ), new Vector3(8f, 3.2f, 5f),
+                PlayerBaseLevel.Starter, hangarDoor: false);
+            AddPlayerBaseModule("Regional maintenance module", new Vector3(x + 2f, groundY, yardZ), new Vector3(15f, 4.8f, 8f),
+                PlayerBaseLevel.ExpandedRegional, hangarDoor: true);
+            AddPlayerBaseModule("Regional equipment store", new Vector3(x + 12f, groundY, yardZ + 1f), new Vector3(4f, 3f, 5f),
+                PlayerBaseLevel.ExpandedRegional, hangarDoor: false);
+            AddPlayerBaseModule("Jet handling module", new Vector3(x + 24f, groundY, yardZ), new Vector3(16f, 5.4f, 9f),
+                PlayerBaseLevel.JetGate, hangarDoor: true);
+            AddPlayerBaseBlock("Jet base mast livery", new Vector3(x + 32f, groundY + 7f, yardZ - 3f),
                 new Vector3(1.2f, 8f, 1.2f), livery, PlayerBaseLevel.JetGate);
-
-            AddPlayerBaseBlock("International handling module", new Vector3(x + 44f, groundY + 3.2f, yardZ),
-                new Vector3(20f, 6.4f, 10f), livery, PlayerBaseLevel.International);
-            AddPlayerBaseBlock("International base crown", new Vector3(x + 44f, groundY + 6.65f, yardZ),
+            AddPlayerBaseModule("International handling module", new Vector3(x + 44f, groundY, yardZ), new Vector3(20f, 6.4f, 10f),
+                PlayerBaseLevel.International, hangarDoor: true);
+            AddPlayerBaseBlock("International base crown livery", new Vector3(x + 44f, groundY + 6.75f, yardZ),
                 new Vector3(20.5f, 0.5f, 10.5f), livery, PlayerBaseLevel.International);
 
             _playerBaseVisualLevel = null;
             _playerBaseVisualLivery = string.Empty;
+        }
+
+        private void AddPlayerBaseModule(string name, Vector3 ground, Vector3 size, PlayerBaseLevel stage, bool hangarDoor)
+        {
+            var cladding = new Color(0.74f, 0.76f, 0.77f);
+            var trim = new Color(0.24f, 0.25f, 0.26f);
+            var glass = new Color(0.12f, 0.16f, 0.19f);
+            var front = ground.z - size.z * 0.5f;
+            AddPlayerBaseBlock(name, ground + Vector3.up * (size.y * 0.5f), size, cladding, stage);
+            // Livery fascia round the roof line, proud of the walls.
+            AddPlayerBaseBlock(name + " livery band", ground + Vector3.up * (size.y - 0.35f),
+                new Vector3(size.x + 0.16f, 0.7f, size.z + 0.16f), AirsideTheme.FromHex(_operations.PlayerAirline.LiveryHex), stage);
+            if (hangarDoor)
+            {
+                var doorWidth = size.x * 0.62f;
+                var doorHeight = size.y * 0.72f;
+                AddPlayerBaseBlock(name + " door", new Vector3(ground.x - size.x * 0.12f, ground.y + doorHeight * 0.5f, front - 0.06f),
+                    new Vector3(doorWidth, doorHeight, 0.12f), new Color(0.84f, 0.85f, 0.85f), stage);
+                AddPlayerBaseBlock(name + " door header", new Vector3(ground.x - size.x * 0.12f, ground.y + doorHeight + 0.2f, front - 0.15f),
+                    new Vector3(doorWidth + 0.6f, 0.4f, 0.3f), trim, stage);
+                AddPlayerBaseBlock(name + " windows", new Vector3(ground.x + size.x * 0.34f, ground.y + size.y * 0.5f, front - 0.04f),
+                    new Vector3(size.x * 0.22f, 1.1f, 0.08f), glass, stage);
+            }
+            else
+            {
+                AddPlayerBaseBlock(name + " windows", new Vector3(ground.x + size.x * 0.1f, ground.y + Mathf.Min(2f, size.y * 0.55f), front - 0.04f),
+                    new Vector3(size.x * 0.55f, 1.0f, 0.08f), glass, stage);
+                AddPlayerBaseBlock(name + " entry", new Vector3(ground.x - size.x * 0.32f, ground.y + 1.1f, front - 0.04f),
+                    new Vector3(1.1f, 2.2f, 0.08f), trim, stage);
+            }
         }
 
         private void AddPlayerBaseBlock(string name, Vector3 position, Vector3 scale, Color colour, PlayerBaseLevel stage)

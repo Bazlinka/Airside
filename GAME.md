@@ -1,5 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — round 3 complete (ADR 0124).** Bailey asked for hold
+  reasons, building detail, less blocky objects and better lights; all four are in (commits
+  above/below this entry). This last step: rounded aerobridge tunnels (`BevelledBox.RoundedTube`,
+  profile-only so per-frame length changes are safe), cylinder drive column, stair trucks with
+  wheels/handrails/posts (the fixed-height stairs kit cannot match per-door sills, so it stays
+  unused), and player-base modules as clad buildings with a livery fascia (tint limited to
+  `… livery` parts). Evidence: `scripts/test-domain.sh` **821/821**, per-assembly type-check
+  clean (3 editor-only baseline errors). **Everything in round 3 still needs the Mac:**
+  `scripts/test-unity.sh`, `scripts/build-mac.sh`, the graphics-on 60 fps soak at 1280×720
+  (SetPass/batches vs the 453 baseline), and day/dusk/night captures of the terminal, tower,
+  hangar row, runway lights and a night taxi.
+
 - **2026-09-27 Claude (same branch) — lighting (ADR 0124).** Aircraft lights hang off a
   `Lamp pivot` at each lamp mesh's bounds centre; nav/beacon lenses glow via emission (strobe
   flash on the wingtip lens); `beacon_bottom` → "Beacon bottom". `PlaceYpadLens` now queues

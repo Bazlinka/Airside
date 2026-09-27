@@ -184,6 +184,43 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void TunnelTube_IsClosedRoundedAndOnlyRoundedInItsProfile()
+        {
+            var g = BevelledBox.RoundedTube(0.2f, 0.25f, 5);
+            string Key(int i) => $"{Math.Round(g.Positions[i * 3], 4)},{Math.Round(g.Positions[i * 3 + 1], 4)},{Math.Round(g.Positions[i * 3 + 2], 4)}";
+            var edges = new Dictionary<(string, string), int>();
+            for (var t = 0; t < g.Triangles.Count; t += 3)
+            {
+                for (var e = 0; e < 3; e++)
+                {
+                    var a = Key(g.Triangles[t + e]);
+                    var b = Key(g.Triangles[t + (e + 1) % 3]);
+                    edges[(a, b)] = edges.TryGetValue((a, b), out var n) ? n + 1 : 1;
+                }
+
+                float P(int v, int k) => g.Positions[g.Triangles[t + v] * 3 + k];
+                var e1 = new[] { P(1, 0) - P(0, 0), P(1, 1) - P(0, 1), P(1, 2) - P(0, 2) };
+                var e2 = new[] { P(2, 0) - P(0, 0), P(2, 1) - P(0, 1), P(2, 2) - P(0, 2) };
+                var cross = new[] { e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0] };
+                var centre = new[] { (P(0, 0) + P(1, 0) + P(2, 0)) / 3f, (P(0, 1) + P(1, 1) + P(2, 1)) / 3f, (P(0, 2) + P(1, 2) + P(2, 2)) / 3f };
+                Assert.That(cross[0] * centre[0] + cross[1] * centre[1] + cross[2] * centre[2], Is.GreaterThan(0f), "faces outward");
+            }
+
+            foreach (var ((a, b), count) in edges)
+            {
+                Assert.That(count, Is.EqualTo(1));
+                Assert.That(edges.ContainsKey((b, a)), Is.True, "an open edge");
+            }
+
+            // Every vertex sits on one of the two end planes: stretching along z never distorts it.
+            for (var i = 0; i < g.VertexCount; i++)
+                Assert.That(Math.Abs(g.Positions[i * 3 + 2]), Is.EqualTo(0.5f).Within(1e-5f));
+            // The corner is cut: no vertex reaches the box corner.
+            for (var i = 0; i < g.VertexCount; i++)
+                Assert.That(Math.Abs(g.Positions[i * 3]) + Math.Abs(g.Positions[i * 3 + 1]), Is.LessThan(0.99f));
+        }
+
+        [Test]
         public void BevelledCube_IsTheSameWorldSizeOnEveryAxis()
         {
             var local = BevelledBox.LocalBevelFor(4f, 1f, 10f);

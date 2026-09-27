@@ -117,6 +117,93 @@ namespace Airside.Presentation
             return g;
         }
 
+        /// <summary>
+        /// A unit tube along z (−0.5…0.5) whose cross-section is a rectangle with rounded
+        /// corners (radius <paramref name="rx"/>, <paramref name="ry"/> in local units per
+        /// axis), with flat end caps. For parts that stretch along z at runtime — aerobridge
+        /// tunnels — because the rounding lives only in the cross-section.
+        /// </summary>
+        public static Geometry RoundedTube(float rx, float ry, int segmentsPerCorner = 4)
+        {
+            rx = Math.Max(0.001f, Math.Min(0.5f, rx));
+            ry = Math.Max(0.001f, Math.Min(0.5f, ry));
+            var profile = new List<(float x, float y, float nx, float ny)>();
+            var corners = new[] { (1, 1, 0.0), (-1, 1, 90.0), (-1, -1, 180.0), (1, -1, 270.0) };
+            foreach (var (sx, sy, start) in corners)
+            {
+                var cx = sx * (0.5f - rx);
+                var cy = sy * (0.5f - ry);
+                for (var k = 0; k <= segmentsPerCorner; k++)
+                {
+                    var angle = (start + 90.0 * k / segmentsPerCorner) * Math.PI / 180.0;
+                    var cos = (float)Math.Cos(angle);
+                    var sin = (float)Math.Sin(angle);
+                    var nx = cos / rx;
+                    var ny = sin / ry;
+                    var length = (float)Math.Sqrt(nx * nx + ny * ny);
+                    profile.Add((cx + rx * cos, cy + ry * sin, nx / length, ny / length));
+                }
+            }
+
+            var g = new Geometry();
+            var count = profile.Count;
+            var perimeter = 0f;
+            var along = new float[count + 1];
+            for (var i = 0; i < count; i++)
+            {
+                var j = (i + 1) % count;
+                along[i + 1] = along[i] + (float)Math.Sqrt(Math.Pow(profile[j].x - profile[i].x, 2) + Math.Pow(profile[j].y - profile[i].y, 2));
+            }
+
+            perimeter = along[count];
+            // Side wall: a seam column is repeated so u runs 0…1 once round.
+            var back = new int[count + 1];
+            var front = new int[count + 1];
+            for (var i = 0; i <= count; i++)
+            {
+                var p = profile[i % count];
+                var normal = new[] { p.nx, p.ny, 0f };
+                back[i] = Vertex(g, new[] { p.x, p.y, -0.5f }, normal, along[i] / perimeter, 0f);
+                front[i] = Vertex(g, new[] { p.x, p.y, 0.5f }, normal, along[i] / perimeter, 1f);
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                var mid = profile[i];
+                var next = profile[(i + 1) % count];
+                var outward = new[] { mid.nx + next.nx, mid.ny + next.ny, 0f };
+                Triangle(g, back[i], back[i + 1], front[i + 1], outward);
+                Triangle(g, back[i], front[i + 1], front[i], outward);
+            }
+
+            // End caps.
+            for (var end = -1; end <= 1; end += 2)
+            {
+                var normal = new[] { 0f, 0f, (float)end };
+                var centre = Vertex(g, new[] { 0f, 0f, 0.5f * end }, normal, 0.5f, 0.5f);
+                var ring = new int[count];
+                for (var i = 0; i < count; i++)
+                    ring[i] = Vertex(g, new[] { profile[i].x, profile[i].y, 0.5f * end }, normal, profile[i].x + 0.5f, profile[i].y + 0.5f);
+                for (var i = 0; i < count; i++)
+                    Triangle(g, centre, ring[i], ring[(i + 1) % count], normal);
+            }
+
+            return g;
+        }
+
+        private static int Vertex(Geometry g, float[] p, float[] normal, float u, float v)
+        {
+            g.Positions.Add(p[0]);
+            g.Positions.Add(p[1]);
+            g.Positions.Add(p[2]);
+            g.Normals.Add(normal[0]);
+            g.Normals.Add(normal[1]);
+            g.Normals.Add(normal[2]);
+            g.Uvs.Add(u);
+            g.Uvs.Add(v);
+            return g.VertexCount - 1;
+        }
+
         private static float Clamp(float local) => Math.Max(0.001f, Math.Min(MaxLocalBevel, local));
 
         private static float[] Axis(int axis, int sign)

@@ -88,6 +88,23 @@ lights (off aprons and outside runway strips) and **red stop bars** across the t
 main-runway holding position. T1 streetlights get an arm and a lens that warms at night with a
 glow pool under it. No real lights were added.
 
+## Decision — rounder moving parts, a readable player base
+
+**Aerobridge tunnels** use a rounded-rectangle tube (`BevelledBox.RoundedTube`, 0.6 m corners)
+instead of a box. The rounding lives only in the cross-section because each section is
+restretched along its length every frame; a chamfered cube there would have grown metre-long
+end bevels. The drive column is a cylinder.
+
+**Stair trucks** gain wheels, a bumper, handrails on posts and a platform guard. The registered
+`mdl_passenger_stairs_v02` kit is **not** used: it is one fixed height, and the truck's flight is
+built to each aircraft's door sill, which the kit cannot match.
+
+**The player base** was solid livery boxes. Each module is now grey cladding with a livery fascia
+band, windows, an entry, and on the maintenance/handling modules a hangar door with a header.
+Only parts named `… livery` / `… livery band` take the livery tint. The authored hangar and shed
+kits stay on the legacy 1:20 field where they already are; the base modules keep their
+stage-specific sizes, which the fixed kits do not offer.
+
 ## Consequences
 
 - The player can see why their aircraft is not moving and who is in the way, which is the

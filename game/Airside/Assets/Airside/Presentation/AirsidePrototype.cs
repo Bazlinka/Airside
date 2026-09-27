@@ -14084,7 +14084,13 @@ namespace Airside.Presentation
                 BevelledBox.Quantise(local.Value.z));
             if (BevelledCubes.TryGetValue(key, out var cached) && cached != null)
                 return cached;
-            var g = BevelledBox.Build(key.Item1 / 1000f, key.Item2 / 1000f, key.Item3 / 1000f);
+            var mesh = GeometryMesh(BevelledBox.Build(key.Item1 / 1000f, key.Item2 / 1000f, key.Item3 / 1000f), "Bevelled cube");
+            BevelledCubes[key] = mesh;
+            return mesh;
+        }
+
+        private static Mesh GeometryMesh(BevelledBox.Geometry g, string name)
+        {
             var vertices = new Vector3[g.VertexCount];
             var normals = new Vector3[g.VertexCount];
             var uvs = new Vector2[g.VertexCount];
@@ -14095,14 +14101,13 @@ namespace Airside.Presentation
                 uvs[i] = new Vector2(g.Uvs[i * 2], g.Uvs[i * 2 + 1]);
             }
 
-            var mesh = new Mesh { name = "Bevelled cube" };
+            var mesh = new Mesh { name = name };
             mesh.vertices = vertices;
             mesh.normals = normals;
             mesh.uv = uvs;
             mesh.triangles = g.Triangles.ToArray();
             mesh.RecalculateBounds();
             mesh.RecalculateTangents();
-            BevelledCubes[key] = mesh;
             return mesh;
         }
 

@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Mac build compiles again.** A pushback test used `Does.Contain` on a set of flight states;
+  Unity's NUnit only accepts text there, so it now uses `Has.Member`.
+
 - **Better propellers.** Propellers no longer flicker or appear to spin backwards. You see the
   blades turn as an engine starts, then a soft blur disc at speed, and they wind down slowly at
   shutdown. Pausing the game now stops them.

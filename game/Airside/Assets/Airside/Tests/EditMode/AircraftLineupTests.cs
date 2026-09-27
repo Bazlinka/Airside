@@ -64,6 +64,29 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FleetMarket_WarnsWhenABuyLeavesTooLittleToFlyIt()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            var a330 = AircraftAcquisition.AirbusA330900;
+            // Just enough for the A330, and a little over: not enough for a long-haul flight.
+            ops.RestoreCareerState(a330.Price + 500, 100, nameof(OperatingTier.International), null, 0, 0,
+                System.Array.Empty<string>(), System.Array.Empty<string>(), 60, null, 0, null,
+                baseLevel: PlayerBaseLevel.International);
+            var model = new FleetWorkspaceModel();
+            model.Rebuild(ops, clock.Now, null);
+            var offer = model.Market.Single(o => o.Type == AircraftType.AirbusA330900);
+            Assert.That(offer.CashWarning, Does.StartWith("Leaves $500."));
+            Assert.That(FlightEconomics.TypicalLegKm(AircraftType.AirbusA330900), Is.EqualTo(6000.0));
+            Assert.That(FlightEconomics.TypicalLegKm(AircraftType.Saab340), Is.EqualTo(300.0));
+
+            ops.RestoreCareerState(a330.Price + 50_000, 100, nameof(OperatingTier.International), null, 0, 0,
+                System.Array.Empty<string>(), System.Array.Empty<string>(), 60, null, 0, null,
+                baseLevel: PlayerBaseLevel.International);
+            model.Rebuild(ops, clock.Now, null);
+            Assert.That(model.Market.Single(o => o.Type == AircraftType.AirbusA330900).CashWarning, Is.Empty);
+        }
+
+        [Test]
         public void FleetMarket_LeadsWithWhatYouCanBuyAndPages()
         {
             var (clock, ops, _) = HudTestAirline.Create();

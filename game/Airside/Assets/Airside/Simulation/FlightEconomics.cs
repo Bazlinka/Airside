@@ -51,6 +51,24 @@ namespace Airside.Simulation
             return 1.0;
         }
 
+        /// <summary>
+        /// ADR 0134: how far a type's usual flight is, by the routes it may fly: what a player should keep
+        /// cash for after buying it. Capped by the type's own range.
+        /// </summary>
+        public static double TypicalLegKm(AircraftType type)
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            var km = RouteAccess.Ceiling(type) switch
+            {
+                RouteBand.Regional => 300.0,
+                RouteBand.Domestic => 1000.0,
+                RouteBand.National => 2000.0,
+                RouteBand.Tasman => 3200.0,
+                _ => 6000.0
+            };
+            return Math.Min(km, type.PracticalRangeKm);
+        }
+
         public const double TurbopropCostPerKm = 1.12;
         public const double JetCostPerKm = 1.28;
 

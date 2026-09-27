@@ -471,8 +471,13 @@ namespace Airside.Presentation
             // ADR 0130: a reason every card shares (one contract at a time) is said once, by the caption.
             var shared = SharedLockReason(model.Offers, shown);
             if (shared != null)
-                into.Text(new HudBox(layout.OffersCaption.X + 170f, layout.OffersCaption.Y + 1f,
-                        layout.OffersColumn.Width - 170f, 16f), shared, 11f, HudTone.Caution, HudTextStyle.Bold);
+            {
+                var room = layout.OffersColumn.Width - 170f;
+                // A side sheet (ADR 0135) is narrower: the short form keeps the point.
+                var notice = HudShell.Measure(shared, 11f) <= room ? shared : shared.Split('.')[0];
+                into.Text(new HudBox(layout.OffersCaption.X + 170f, layout.OffersCaption.Y + 1f, room, 16f), notice, 11f,
+                    HudTone.Caution, HudTextStyle.Bold);
+            }
 
             // The offer market only ever runs three at a time (ADR 0056), so cards grow to use the
             // column (OfferCardHeight) and the content centres in whatever height each card gets.
@@ -495,27 +500,39 @@ namespace Airside.Presentation
                 into.Icon(new HudBox(card.X + 24f, contentY + 12f, 20f, 20f), kindIcon.Category, kindIcon.Name,
                     HudTone.Default);
 
-                const float rightWidth = 150f;
+                var rightWidth = card.Width < 640f ? 118f : 150f;
                 var picture = card.Width >= 560f && card.Height >= 96f ? 96f : 0f;
                 var textX = card.X + 64f;
                 var textWidth = card.Width - 64f - rightWidth - picture - 24f;
-                into.Text(new HudBox(textX, contentY, textWidth, 22f), offer.Title, 15f, HudTone.Default,
+                var titleSize = 15f;
+                var titleWidth = HudShell.Measure(offer.Title, titleSize);
+                if (titleWidth > textWidth && titleWidth > 0f)
+                    titleSize = Math.Max(12f, titleSize * textWidth / titleWidth);
+                into.Text(new HudBox(textX, contentY, textWidth, 22f), offer.Title, titleSize, HudTone.Default,
                     HudTextStyle.Bold);
 
                 // Chips: how many flights, which aircraft, how long you have.
                 var chipX = textX;
                 var chipY = contentY + 27f;
+                var rows = 1;
                 foreach (var chip in Chips(definition))
                 {
                     var chipWidth = HudShell.Measure(chip, 10f, 0.6f) + 22f;
                     if (chipX + chipWidth > textX + textWidth)
-                        break;
+                    {
+                        // A narrow card (side sheet, ADR 0135) takes a second row rather than drop a term.
+                        if (rows == 2 || chipX == textX || chipY + 48f > card.Bottom - 6f)
+                            break;
+                        rows++;
+                        chipX = textX;
+                        chipY += 24f;
+                    }
                     into.Pill(new HudBox(chipX, chipY, chipWidth, 20f), chip, HudTone.Muted);
                     chipX += chipWidth + 6f;
                 }
 
                 if (reason.Length > 0)
-                    into.Text(new HudBox(textX, contentY + 53f, textWidth, 16f), reason, 11f, HudTone.Caution);
+                    into.Text(new HudBox(textX, chipY + 26f, textWidth, 16f), reason, 11f, HudTone.Caution);
 
                 if (picture > 0f)
                 {

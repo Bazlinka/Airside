@@ -42,6 +42,15 @@ namespace Airside.Presentation
             return shown;
         }
 
+        /// <summary>Dev Showcase: count up to the current value again from <paramref name="from"/>.</summary>
+        public void Replay(long from, float now)
+        {
+            if (!_started)
+                return;
+            _from = from;
+            _startedAt = now;
+        }
+
         private long Current(float now)
         {
             var t = Seconds <= 0f ? 1f : Math.Clamp((now - _startedAt) / Seconds, 0f, 1f);
@@ -106,9 +115,22 @@ namespace Airside.Presentation
                 var shownNow = FlapAnimator.Frame(field.From, field.To, now - field.ChangedAt);
                 field = (shownNow, text, now);
                 _fields[key] = field;
+                LastChangeAt = now;
             }
 
             return FlapAnimator.Frame(field.From, field.To, now - field.ChangedAt);
+        }
+
+        /// <summary>When any field last changed (drives the board's flap rattle); −∞ before the first.</summary>
+        public float LastChangeAt { get; private set; } = float.NegativeInfinity;
+
+        /// <summary>Dev Showcase: every remembered field flips in from blank.</summary>
+        public void ReplayAll(float now)
+        {
+            var keys = new List<string>(_fields.Keys);
+            foreach (var key in keys)
+                _fields[key] = (string.Empty, _fields[key].To, now);
+            LastChangeAt = now;
         }
 
         /// <summary>Drops fields not shown for a while so the map does not grow forever.</summary>

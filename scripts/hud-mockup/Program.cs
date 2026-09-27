@@ -199,7 +199,7 @@ public static class Program
         PaintShell(list, scenario, HudWorkspace.Stats, width, height);
         var model = new CareerTrackModel();
         model.Rebuild(scenario.Operations);
-        var layout = CareerTrackLayout.Create(HudShell.WorkspaceSurface(width, height), model.CurrentGoals.Count);
+        var layout = CareerTrackLayout.Create(HudShell.SideSheet(HudShell.WorkspaceSurface(width, height)), model.CurrentGoals.Count);
         var page = new HudDrawList();
         CareerTrackPainter.Paint(page, model, layout);
         return new Page("career", Serialise(list, page));
@@ -259,7 +259,7 @@ public static class Program
 
         var model = new FleetWorkspaceModel();
         model.Rebuild(scenario.Operations, scenario.Now, scenario.SelectedRegistration);
-        var layout = FleetWorkspaceLayout.Create(HudShell.WorkspaceSurface(width, height), model.Market.Count);
+        var layout = FleetWorkspaceLayout.Create(HudShell.SideSheet(HudShell.WorkspaceSurface(width, height)), model.Market.Count);
 
         var page = new HudDrawList();
         FleetWorkspacePainter.Paint(page, model, layout, scenario.SelectedRegistration, 0);
@@ -273,7 +273,7 @@ public static class Program
 
         var model = new ContractsWorkspaceModel();
         model.Rebuild(scenario.Operations, scenario.Now);
-        var layout = ContractsWorkspaceLayout.Create(HudShell.WorkspaceSurface(width, height),
+        var layout = ContractsWorkspaceLayout.Create(HudShell.SideSheet(HudShell.WorkspaceSurface(width, height)),
             model.ActiveTerms.Count);
 
         var highlighted = string.Empty;
@@ -297,7 +297,7 @@ public static class Program
 
         var model = new StatsWorkspaceModel();
         model.Rebuild(scenario.Operations, scenario.Now);
-        var layout = StatsWorkspaceLayout.Create(HudShell.WorkspaceSurface(width, height));
+        var layout = StatsWorkspaceLayout.Create(HudShell.SideSheet(HudShell.WorkspaceSurface(width, height)));
 
         var page = new HudDrawList();
         StatsWorkspacePainter.Paint(page, model, layout);

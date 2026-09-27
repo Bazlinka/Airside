@@ -1,5 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — building detail + chamfered blocks (ADR 0124).**
+  `Presentation/BuildingDetail.cs` plans parapets, window bands (lit/dark panes), hangar
+  doors + roof monitors, fire bays, freight doors, rooftop plant, the tower cab/mast/red
+  light and the terminal kerb canopy; `YpadPavement.cs` merges them into one mesh per
+  material (`YPAD building windows lit` and `YPAD tower cab glass` join the night-glow pass
+  as kind 3). Wall UVs now run along/up walls. `CreateBlock` uses the cached chamfered
+  `BevelledBox` mesh for untextured blocks ≥ 5 cm. Evidence: `scripts/test-domain.sh`
+  **817/817**, type-check clean (3 editor-only baseline errors), geometry preview rendered
+  offline from the generator (`docs/testing/building-detail-2026-09-27/`). **Mac checks:**
+  day/night overview of the terminal, tower and hangar row; SetPass/batches in the 60 fps
+  soak must not regress; confirm corrugated texture direction on hangar walls.
+
 - **2026-09-27 Claude (follow-up, same branch) — hold reasons (ADR 0124).**
   `AirlineOperations.Why(aircraft)` (`Simulation/HoldReason.cs`) re-derives why an aircraft
   is held — queue position, arrival/departure first, runway occupied, wake, storm, curfew,

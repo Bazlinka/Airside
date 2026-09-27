@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Every building has a facade now (ADR 0124).** Parapets, storey window bands (most lit
+  at night, some dark), hangar doors and roof monitors, fire-station bays, freight doors,
+  rooftop plant, a terminal kerb canopy, and a proper control tower with a glass cab, mast
+  and red obstruction light. Wall textures run along the walls instead of streaking.
+- **Softer objects.** Every procedural block — vehicles, stands, signs, props — has
+  chamfered edges that catch the light instead of razor-sharp cube corners.
+
 - **Holds say why (ADR 0124).** An aircraft that is waiting now tells you what it is
   waiting for and who is in the way: "Number 2 for 23 — behind QFA412 (737-8)", "Holding
   short 23 — RXA201 (340B) landing, clear in 40 s", "Waiting to push back — apron busy with

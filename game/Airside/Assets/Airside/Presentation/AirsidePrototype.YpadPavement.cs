@@ -92,6 +92,7 @@ namespace Airside.Presentation
             if (AirsideFocusMode.ShowTerminal)
             {
                 var buildings = new SurfaceMesh();
+                var terminalDetail = new BuildingDetailMeshes();
                 var groundY = runwayTop;
                 foreach (var terminal in AdelaideLayout.Terminals)
                 {
@@ -103,17 +104,19 @@ namespace Airside.Presentation
                         groundY = sit;
                     AddPrism(buildings, terminal.Xz, sit, height,
                         cutUndercroftPortal: terminal.Name == "Domestic & International Terminal");
+                    AddDetail(terminalDetail, buildings, BuildingDetail.ForTerminal(terminal.Name, terminal.Xz, sit, height,
+                        rfds: height <= AdelaideTerminalArchitecture.RfdsHangarHeightMetres));
                 }
 
                 SpawnSurface(root, AirsideAdelaidePavement.TerminalsName, buildings, new Color(0.43f, 0.45f, 0.46f), null, castShadows: true);
-                BuildYpadOperationalBuildings(root, runwayTop);
+                BuildYpadOperationalBuildings(root, runwayTop, terminalDetail);
                 BuildAdelaideTerminalArchitecture(groundY);
                 // Aerobridges hang off this terminal; built once the world exists (ADR 0113).
                 _terminalGroundY = groundY;
             }
         }
 
-        private static void BuildYpadOperationalBuildings(Transform root, float fallbackGroundY)
+        private static void BuildYpadOperationalBuildings(Transform root, float fallbackGroundY, BuildingDetailMeshes detail)
         {
             var support = new SurfaceMesh();
             var hangars = new SurfaceMesh();
@@ -124,29 +127,19 @@ namespace Airside.Presentation
             foreach (var building in AdelaideBuildings.All)
             {
                 var sit = TerminalGroundY(building.Xz, fallbackGroundY);
-                switch (building.Kind)
+                var shell = building.Kind switch
                 {
-                    case AdelaideBuildingKind.ControlTower:
-                        // Preserve the surveyed footprint while giving the tower a recognisable
-                        // narrow shaft and broader glazed cab instead of one 44 m concrete block.
-                        var shaft = ScaleFootprint(building.Xz, 0.62f);
-                        var shaftHeight = building.HeightMetres * 0.78f;
-                        AddPrism(tower, shaft, sit, shaftHeight);
-                        AddPrism(tower, building.Xz, sit + shaftHeight, building.HeightMetres - shaftHeight);
-                        break;
-                    case AdelaideBuildingKind.FireStation:
-                        AddPrism(fireStation, building.Xz, sit, building.HeightMetres);
-                        break;
-                    case AdelaideBuildingKind.Hangar:
-                        AddPrism(hangars, building.Xz, sit, building.HeightMetres);
-                        break;
-                    case AdelaideBuildingKind.Freight:
-                        AddPrism(freight, building.Xz, sit, building.HeightMetres);
-                        break;
-                    default:
-                        AddPrism(support, building.Xz, sit, building.HeightMetres);
-                        break;
-                }
+                    AdelaideBuildingKind.ControlTower => tower,
+                    AdelaideBuildingKind.FireStation => fireStation,
+                    AdelaideBuildingKind.Hangar => hangars,
+                    AdelaideBuildingKind.Freight => freight,
+                    _ => support
+                };
+                // The tower's shaft, cab floor, glass ring and roof all come from BuildingDetail
+                // (ADR 0124); every other building is its surveyed prism plus facade detail.
+                if (building.Kind != AdelaideBuildingKind.ControlTower)
+                    AddPrism(shell, building.Xz, sit, building.HeightMetres);
+                AddDetail(detail, shell, BuildingDetail.For(building, sit));
             }
 
             var metalAlbedo = PreferSurfaceBasecolor("tx_corrugated_metal");
@@ -155,29 +148,100 @@ namespace Airside.Presentation
             SpawnSurface(root, "YPAD support buildings", support, new Color(0.51f, 0.52f, 0.50f), null, castShadows: true);
             SpawnSurface(root, "YPAD fire station", fireStation, new Color(0.48f, 0.24f, 0.20f), null, castShadows: true);
             SpawnSurface(root, "YPAD control tower", tower, new Color(0.24f, 0.30f, 0.32f), null, castShadows: true);
+            SpawnBuildingDetail(root, detail, metalAlbedo);
         }
 
-        private static float[] ScaleFootprint(float[] xz, float scale)
+        /// <summary>One merged mesh per detail material, shared by every building (ADR 0124).</summary>
+        private sealed class BuildingDetailMeshes
         {
-            var scaled = new float[xz.Length];
-            var centreX = 0f;
-            var centreZ = 0f;
-            var count = xz.Length / 2;
-            for (var i = 0; i < count; i++)
+            public readonly SurfaceMesh WindowsLit = new();
+            public readonly SurfaceMesh WindowsDark = new();
+            public readonly SurfaceMesh Doors = new();
+            public readonly SurfaceMesh Trim = new();
+            public readonly SurfaceMesh Plant = new();
+            public readonly SurfaceMesh CabGlass = new();
+            public readonly SurfaceMesh Canopy = new();
+            public readonly List<Vector3> ObstructionLights = new();
+        }
+
+        public const string BuildingWindowsLitName = "YPAD building windows lit";
+        public const string TowerCabGlassName = "YPAD tower cab glass";
+
+        private static void AddDetail(BuildingDetailMeshes meshes, SurfaceMesh shell, BuildingDetailSet set)
+        {
+            SurfaceMesh Target(BuildingPart part) => part switch
             {
-                centreX += xz[i * 2];
-                centreZ += xz[i * 2 + 1];
+                BuildingPart.WindowLit => meshes.WindowsLit,
+                BuildingPart.WindowDark => meshes.WindowsDark,
+                BuildingPart.Door => meshes.Doors,
+                BuildingPart.Trim => meshes.Trim,
+                BuildingPart.Plant => meshes.Plant,
+                BuildingPart.CabGlass => meshes.CabGlass,
+                BuildingPart.Canopy => meshes.Canopy,
+                _ => shell
+            };
+
+            foreach (var prism in set.Prisms)
+                AddPrism(Target(prism.Part), prism.Xz, prism.BaseY, prism.Height);
+            foreach (var box in set.Boxes)
+            {
+                if (box.Part == BuildingPart.ObstructionLight)
+                {
+                    meshes.ObstructionLights.Add(new Vector3(box.X, box.Y, box.Z));
+                    continue;
+                }
+
+                AddBox(Target(box.Part), box);
+            }
+        }
+
+        private static void SpawnBuildingDetail(Transform root, BuildingDetailMeshes detail, string metalAlbedo)
+        {
+            var glass = new Color(0.12f, 0.16f, 0.19f);
+            SpawnSurface(root, BuildingWindowsLitName, detail.WindowsLit, glass, null, castShadows: false, useTextures: false);
+            SpawnSurface(root, "YPAD building windows", detail.WindowsDark, glass, null, castShadows: false, useTextures: false);
+            SpawnSurface(root, TowerCabGlassName, detail.CabGlass, new Color(0.10f, 0.15f, 0.18f), null, castShadows: false,
+                useTextures: false);
+            SpawnSurface(root, "YPAD hangar and bay doors", detail.Doors, new Color(0.70f, 0.72f, 0.72f), metalAlbedo,
+                castShadows: false);
+            SpawnSurface(root, "YPAD building trim", detail.Trim, new Color(0.22f, 0.23f, 0.24f), null, castShadows: true,
+                useTextures: false);
+            SpawnSurface(root, "YPAD rooftop plant", detail.Plant, new Color(0.62f, 0.64f, 0.63f), metalAlbedo, castShadows: true);
+            SpawnSurface(root, "YPAD terminal kerb canopy", detail.Canopy, new Color(0.80f, 0.81f, 0.80f), null, castShadows: true,
+                useTextures: false);
+            foreach (var at in detail.ObstructionLights)
+            {
+                var lamp = CreateBlock("Tower obstruction light", at, new Vector3(0.45f, 0.4f, 0.45f), new Color(1f, 0.12f, 0.08f));
+                lamp.GetComponent<Renderer>().sharedMaterial = AirsideMaterialLibrary.CreateShared(
+                    new Color(1f, 0.12f, 0.08f), AirsideMaterialLibrary.SurfaceKind.UnlitSky, null, Vector2.one, useTextures: false);
+                lamp.transform.SetParent(root, true);
+            }
+        }
+
+        /// <summary>An oriented box with its own vertices per face, so flat faces light cleanly.</summary>
+        private static void AddBox(SurfaceMesh mesh, DetailBox box)
+        {
+            var along = new Vector3(box.DirX, 0f, box.DirZ) * (box.Length * 0.5f);
+            var across = new Vector3(-box.DirZ, 0f, box.DirX) * (box.Depth * 0.5f);
+            var up = Vector3.up * (box.Height * 0.5f);
+            var c = new Vector3(box.X, box.Y, box.Z);
+            void Face(Vector3 centre, Vector3 u, Vector3 v, float uMetres, float vMetres)
+            {
+                var a = mesh.Add(centre - u - v, new Vector2(0f, 0f));
+                var b = mesh.Add(centre + u - v, new Vector2(uMetres / 9f, 0f));
+                var d = mesh.Add(centre + u + v, new Vector2(uMetres / 9f, vMetres / 9f));
+                var e = mesh.Add(centre - u + v, new Vector2(0f, vMetres / 9f));
+                var outward = centre - c;
+                mesh.Triangle(a, b, d, outward);
+                mesh.Triangle(a, d, e, outward);
             }
 
-            centreX /= count;
-            centreZ /= count;
-            for (var i = 0; i < count; i++)
-            {
-                scaled[i * 2] = centreX + (xz[i * 2] - centreX) * scale;
-                scaled[i * 2 + 1] = centreZ + (xz[i * 2 + 1] - centreZ) * scale;
-            }
-
-            return scaled;
+            Face(c + across, along, up, box.Length, box.Height);
+            Face(c - across, along, up, box.Length, box.Height);
+            Face(c + along, across, up, box.Depth, box.Height);
+            Face(c - along, across, up, box.Depth, box.Height);
+            Face(c + up, along, across, box.Length, box.Depth);
+            Face(c - up, along, across, box.Length, box.Depth);
         }
 
         private static void BuildAdelaideTerminalArchitecture(float groundY)
@@ -340,6 +404,14 @@ namespace Airside.Presentation
                 Vertices.Add(v);
                 // World-metre UVs so surfaces tile continuously across pieces.
                 Uvs.Add(new Vector2(v.x / 9f, v.z / 9f));
+                return Vertices.Count - 1;
+            }
+
+            /// <summary>Adds a vertex with an explicit UV (walls: metres along, metres up).</summary>
+            public int Add(Vector3 v, Vector2 uv)
+            {
+                Vertices.Add(v);
+                Uvs.Add(uv);
                 return Vertices.Count - 1;
             }
 
@@ -540,10 +612,14 @@ namespace Airside.Presentation
             if ((b - a).sqrMagnitude < 0.0001f)
                 return;
             var up = Vector3.up * height;
-            var v0 = mesh.Add(a);
-            var v1 = mesh.Add(b);
-            var v2 = mesh.Add(b + up);
-            var v3 = mesh.Add(a + up);
+            // UVs run along the wall and up it (ADR 0124). World-XZ UVs smeared every wall
+            // texture into vertical streaks; now corrugation and panels read at real scale.
+            var start = (a.x + a.z) / 9f;
+            var length = Vector3.Distance(a, b) / 9f;
+            var v0 = mesh.Add(a, new Vector2(start, a.y / 9f));
+            var v1 = mesh.Add(b, new Vector2(start + length, b.y / 9f));
+            var v2 = mesh.Add(b + up, new Vector2(start + length, (b.y + height) / 9f));
+            var v3 = mesh.Add(a + up, new Vector2(start, (a.y + height) / 9f));
             mesh.Triangle(v0, v1, v2, outward);
             mesh.Triangle(v0, v2, v3, outward);
         }

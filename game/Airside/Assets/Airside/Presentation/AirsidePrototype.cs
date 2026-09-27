@@ -4732,6 +4732,15 @@ namespace Airside.Presentation
                 if (renderer == null || glowSet.Contains(renderer))
                     continue;
                 var n = renderer.gameObject.name;
+                // ADR 0124 merged facade glazing: one renderer each, no point lights (the
+                // mesh pivot is the world origin, not a window).
+                if (n is BuildingWindowsLitName or TowerCabGlassName)
+                {
+                    glowSet.Add(renderer);
+                    _nightGlowRenderers.Add(renderer);
+                    continue;
+                }
+
                 if (!(n.StartsWith("glass_pane", StringComparison.Ordinal)
                       || n.StartsWith("Terminal airside glazing", StringComparison.Ordinal)
                       || n.StartsWith("Terminal airside interior glow", StringComparison.Ordinal)
@@ -4773,6 +4782,7 @@ namespace Airside.Presentation
                 var n = renderer.gameObject.name;
                 _nightGlowKind.Add(n.StartsWith("Terminal airside glazing", StringComparison.Ordinal) ? (byte)1
                     : n.StartsWith("Terminal airside interior glow", StringComparison.Ordinal) ? (byte)2
+                    : n is BuildingWindowsLitName or TowerCabGlassName ? (byte)3
                     : (byte)0);
             }
 
@@ -4823,6 +4833,16 @@ namespace Airside.Presentation
                         night * night) * flicker;
                     interior.a = 1f;
                     SetRendererColor(renderer, interior, interior);
+                    continue;
+                }
+                if (kind == 3)
+                {
+                    // Facade glazing: dark tinted glass by day, warm offices at night. One
+                    // renderer covers a whole airport of panes, so no flicker.
+                    var lit = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.3f, 0.8f, night));
+                    var pane = Color.Lerp(new Color(0.12f, 0.16f, 0.19f), new Color(1f, 0.74f, 0.38f), lit);
+                    pane.a = 1f;
+                    SetRendererColor(renderer, pane, new Color(1f, 0.68f, 0.3f) * (lit * 1.8f));
                     continue;
                 }
                 var color = new Color(1f, 0.82f, 0.45f, 1f) * (0.28f + glow * 0.85f) * flicker;
@@ -13973,12 +13993,57 @@ namespace Airside.Presentation
             block.transform.position = position;
             block.transform.localScale = scale;
             AirsideRuntimeQuality.StripVisualCollider(block);
+            // Untextured blocks get chamfered edges (ADR 0124); art-textured ones keep the
+            // primitive's exact UV layout.
+            if (artTextureRelativePath == null)
+            {
+                var bevelled = BevelledCubeMesh(scale);
+                if (bevelled != null)
+                    block.GetComponent<MeshFilter>().sharedMesh = bevelled;
+            }
             var renderer = block.GetComponent<Renderer>();
             renderer.sharedMaterial = CreateSharedSurfaceMaterial(color, artTextureRelativePath, textureTiling);
             if (_airfieldRoot != null)
                 block.transform.SetParent(_airfieldRoot, true);
             AirsideSceneIndex.Remember(block);
             return block;
+        }
+
+        private static readonly Dictionary<(int, int, int), Mesh> BevelledCubes = new();
+
+        /// <summary>
+        /// A shared chamfered unit cube whose bevel is the same number of world metres on every
+        /// edge once scaled by <paramref name="scale"/>; null for blocks too thin to show one.
+        /// </summary>
+        private static Mesh BevelledCubeMesh(Vector3 scale)
+        {
+            var local = BevelledBox.LocalBevelFor(scale.x, scale.y, scale.z);
+            if (!local.HasValue)
+                return null;
+            var key = (BevelledBox.Quantise(local.Value.x), BevelledBox.Quantise(local.Value.y),
+                BevelledBox.Quantise(local.Value.z));
+            if (BevelledCubes.TryGetValue(key, out var cached) && cached != null)
+                return cached;
+            var g = BevelledBox.Build(key.Item1 / 1000f, key.Item2 / 1000f, key.Item3 / 1000f);
+            var vertices = new Vector3[g.VertexCount];
+            var normals = new Vector3[g.VertexCount];
+            var uvs = new Vector2[g.VertexCount];
+            for (var i = 0; i < g.VertexCount; i++)
+            {
+                vertices[i] = new Vector3(g.Positions[i * 3], g.Positions[i * 3 + 1], g.Positions[i * 3 + 2]);
+                normals[i] = new Vector3(g.Normals[i * 3], g.Normals[i * 3 + 1], g.Normals[i * 3 + 2]);
+                uvs[i] = new Vector2(g.Uvs[i * 2], g.Uvs[i * 2 + 1]);
+            }
+
+            var mesh = new Mesh { name = "Bevelled cube" };
+            mesh.vertices = vertices;
+            mesh.normals = normals;
+            mesh.uv = uvs;
+            mesh.triangles = g.Triangles.ToArray();
+            mesh.RecalculateBounds();
+            mesh.RecalculateTangents();
+            BevelledCubes[key] = mesh;
+            return mesh;
         }
 
         private static void DestroyPresentationObject(UnityEngine.Object target)

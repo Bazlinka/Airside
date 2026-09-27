@@ -1,0 +1,1436 @@
+[
+  {
+    "difficulty": "Relaxed",
+    "style": "Competent",
+    "Seed": 1,
+    "tiers": {
+      "Regional": 11.4,
+      "Domestic": 27.1,
+      "International": 70.6
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 9.5,
+      "first-rotations": 11.4,
+      "regional-base": 11.5,
+      "regional-network": 15,
+      "regional-fleet": 15,
+      "regional-service": 27.1,
+      "established-margin": 27.1,
+      "domestic-service": 54,
+      "domestic-jet": 59.9,
+      "domestic-network": 69,
+      "domestic-base": 70.6,
+      "established-network": 73.1,
+      "international-bases": 97.5,
+      "international-widebody": 118.4,
+      "established-fleet": 165.5
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 3550,
+    "FinalFunds": 609729,
+    "MinReliability": 100,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 25,
+    "FinalRotations": 359,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 2/3"
+    ],
+    "Flags": [],
+    "Refusals": {
+      "The airline fleet is full.": 31
+    }
+  },
+  {
+    "difficulty": "Relaxed",
+    "style": "Competent",
+    "Seed": 2,
+    "tiers": {
+      "Regional": 11.5,
+      "Domestic": 25.7,
+      "International": 72.3
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 9.6,
+      "first-rotations": 11.5,
+      "regional-base": 11.5,
+      "regional-network": 15,
+      "regional-fleet": 15,
+      "regional-service": 25.7,
+      "established-margin": 25.7,
+      "domestic-service": 53.8,
+      "domestic-jet": 60.7,
+      "domestic-network": 69,
+      "domestic-base": 72.3,
+      "established-network": 87,
+      "international-bases": 89.6,
+      "international-widebody": 117.2,
+      "established-fleet": 172.5
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 3550,
+    "FinalFunds": 196229,
+    "MinReliability": 100,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 25,
+    "FinalRotations": 340,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 2/3"
+    ],
+    "Flags": [
+      "124.0 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it"
+    ],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Relaxed",
+    "style": "Competent",
+    "Seed": 3,
+    "tiers": {
+      "Regional": 11.4,
+      "Domestic": 25.4,
+      "International": 79.5
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 9.5,
+      "first-rotations": 11.4,
+      "regional-base": 11.5,
+      "regional-network": 15,
+      "regional-fleet": 15,
+      "regional-service": 25.4,
+      "established-margin": 25.4,
+      "domestic-service": 53.9,
+      "domestic-jet": 60.1,
+      "domestic-network": 75,
+      "domestic-base": 79.5,
+      "established-network": 90,
+      "international-bases": 96.6,
+      "international-widebody": 123.1,
+      "established-fleet": 176.1
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 3550,
+    "FinalFunds": 147205,
+    "MinReliability": 99,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 22,
+    "FinalRotations": 323,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 2/3"
+    ],
+    "Flags": [
+      "69.3 h: VH-PAC (Boeing 737-8) waiting for a stand for 1.0 h \u2014 NoStandFree Jet-gate base has no free stand for it",
+      "136.2 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it"
+    ],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Relaxed",
+    "style": "Competent",
+    "Seed": 4,
+    "tiers": {
+      "Regional": 11.4,
+      "Domestic": 25.6,
+      "International": 75.3
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 9.5,
+      "first-rotations": 11.4,
+      "regional-base": 11.5,
+      "regional-network": 15,
+      "regional-fleet": 15,
+      "regional-service": 25.6,
+      "established-margin": 25.6,
+      "domestic-service": 54,
+      "domestic-jet": 61.9,
+      "domestic-network": 70.6,
+      "domestic-base": 75.3,
+      "established-network": 87,
+      "international-bases": 89.5,
+      "international-widebody": 116.8,
+      "established-fleet": 161.3
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 3550,
+    "FinalFunds": 817394,
+    "MinReliability": 100,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 25,
+    "FinalRotations": 371,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 2/3"
+    ],
+    "Flags": [
+      "178.1 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it"
+    ],
+    "Refusals": {
+      "The airline fleet is full.": 47
+    }
+  },
+  {
+    "difficulty": "Relaxed",
+    "style": "Competent",
+    "Seed": 5,
+    "tiers": {
+      "Regional": 11.4,
+      "Domestic": 25.5,
+      "International": 72
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 9.6,
+      "first-rotations": 11.4,
+      "regional-base": 11.5,
+      "regional-network": 15,
+      "regional-fleet": 15,
+      "regional-service": 25.5,
+      "established-margin": 25.5,
+      "domestic-service": 53.4,
+      "domestic-jet": 60.5,
+      "domestic-network": 69,
+      "domestic-base": 72,
+      "established-network": 87,
+      "international-bases": 89.4,
+      "international-widebody": 118.3,
+      "established-fleet": 171.7
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 3550,
+    "FinalFunds": 257625,
+    "MinReliability": 100,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 25,
+    "FinalRotations": 341,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 2/3"
+    ],
+    "Flags": [
+      "142.1 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it",
+      "159.4 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree every gate is in use"
+    ],
+    "Refusals": {
+      "The airline fleet is full.": 5
+    }
+  },
+  {
+    "difficulty": "Relaxed",
+    "style": "Casual",
+    "Seed": 1,
+    "tiers": {
+      "Regional": 11.7,
+      "Domestic": 37.9,
+      "International": 87
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 11.7,
+      "first-rotations": 11.7,
+      "regional-base": 12,
+      "regional-network": 15.6,
+      "regional-fleet": 33,
+      "regional-service": 37.9,
+      "established-margin": 37.9,
+      "domestic-network": 46.7,
+      "domestic-jet": 69,
+      "domestic-service": 74.5,
+      "established-network": 86.1,
+      "domestic-base": 87,
+      "international-bases": 106.5,
+      "international-widebody": 132.6
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 3497,
+    "FinalFunds": 40194,
+    "MinReliability": 99,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 11,
+    "FinalRotations": 232,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 2/3",
+      "Operate 18 aircraft 11/18"
+    ],
+    "Flags": [],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Relaxed",
+    "style": "Casual",
+    "Seed": 2,
+    "tiers": {
+      "Regional": 11.1,
+      "Domestic": 33,
+      "International": 78.3
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 11.1,
+      "first-rotations": 11.1,
+      "regional-base": 12,
+      "regional-network": 15,
+      "regional-fleet": 16.1,
+      "regional-service": 33,
+      "established-margin": 33,
+      "domestic-jet": 62.2,
+      "domestic-service": 69,
+      "domestic-network": 70,
+      "domestic-base": 78.3,
+      "established-network": 78.6,
+      "international-bases": 98.4,
+      "international-widebody": 126.5
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 3509,
+    "FinalFunds": 82098,
+    "MinReliability": 99,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 12,
+    "FinalRotations": 265,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 2/3",
+      "Operate 18 aircraft 12/18"
+    ],
+    "Flags": [],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Relaxed",
+    "style": "Casual",
+    "Seed": 3,
+    "tiers": {
+      "Regional": 12,
+      "Domestic": 33,
+      "International": 89.4
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 12,
+      "first-rotations": 12,
+      "regional-base": 12.1,
+      "regional-network": 15.9,
+      "regional-fleet": 18.1,
+      "regional-service": 33,
+      "established-margin": 33,
+      "domestic-jet": 68.3,
+      "domestic-service": 69,
+      "domestic-base": 84.4,
+      "domestic-network": 89.4,
+      "established-network": 100.8,
+      "international-bases": 108.5,
+      "international-widebody": 134.6
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 4460,
+    "FinalFunds": 80382,
+    "MinReliability": 99,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 10,
+    "FinalRotations": 253,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 1/3",
+      "Operate 18 aircraft 10/18"
+    ],
+    "Flags": [
+      "69.5 h: VH-PAC (Boeing 737-8) waiting for a stand for 1.0 h \u2014 NoStandFree Jet-gate base has no free stand for it"
+    ],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Relaxed",
+    "style": "Casual",
+    "Seed": 4,
+    "tiers": {
+      "Regional": 11.4,
+      "Domestic": 35.2,
+      "International": 87
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 11.4,
+      "first-rotations": 11.4,
+      "regional-base": 12,
+      "regional-network": 15,
+      "regional-fleet": 33,
+      "regional-service": 35.2,
+      "established-margin": 35.2,
+      "domestic-network": 44.3,
+      "domestic-jet": 69,
+      "domestic-service": 72.2,
+      "established-network": 80.8,
+      "domestic-base": 87,
+      "international-bases": 106.5,
+      "international-widebody": 134.6
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 4460,
+    "FinalFunds": 49133,
+    "MinReliability": 99,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 11,
+    "FinalRotations": 231,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 2/3",
+      "Operate 18 aircraft 11/18"
+    ],
+    "Flags": [
+      "156.6 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it",
+      "175.7 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it"
+    ],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Relaxed",
+    "style": "Casual",
+    "Seed": 5,
+    "tiers": {
+      "Regional": 11.5,
+      "Domestic": 33,
+      "International": 78.3
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 11.5,
+      "first-rotations": 11.5,
+      "regional-base": 12,
+      "regional-network": 15.7,
+      "regional-fleet": 18.1,
+      "regional-service": 33,
+      "established-margin": 33,
+      "domestic-jet": 62.2,
+      "domestic-service": 69,
+      "domestic-network": 70.7,
+      "domestic-base": 78.3,
+      "established-network": 87,
+      "international-bases": 105,
+      "international-widebody": 130.5
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 3582,
+    "FinalFunds": 89385,
+    "MinReliability": 99,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 14,
+    "FinalRotations": 270,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 2/3",
+      "Operate 18 aircraft 14/18"
+    ],
+    "Flags": [],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Standard",
+    "style": "Competent",
+    "Seed": 1,
+    "tiers": {
+      "Regional": 11.4,
+      "Domestic": 34.3,
+      "International": 94.2
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 9.5,
+      "first-rotations": 11.4,
+      "regional-base": 11.5,
+      "regional-network": 15,
+      "regional-service": 33,
+      "established-margin": 33,
+      "regional-fleet": 34.3,
+      "domestic-network": 46.7,
+      "domestic-service": 66,
+      "domestic-jet": 78.9,
+      "established-network": 85.8,
+      "domestic-base": 94.2,
+      "international-bases": 123.1,
+      "international-widebody": 153.2
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 300,
+    "FinalFunds": 60241,
+    "MinReliability": 100,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 7,
+    "FinalRotations": 239,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate 18 aircraft 7/18"
+    ],
+    "Flags": [
+      "106.1 h: VH-PAC (Boeing 737-8) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it",
+      "159.4 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it",
+      "178.1 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it"
+    ],
+    "Refusals": {
+      "This flight costs #; you have #.": 616
+    }
+  },
+  {
+    "difficulty": "Standard",
+    "style": "Competent",
+    "Seed": 2,
+    "tiers": {
+      "Regional": 11.5,
+      "Domestic": 35.3,
+      "International": 91.9
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 9.6,
+      "first-rotations": 11.5,
+      "regional-base": 11.5,
+      "regional-network": 15,
+      "regional-service": 33,
+      "established-margin": 33,
+      "regional-fleet": 35.3,
+      "domestic-network": 47.7,
+      "domestic-service": 66.1,
+      "domestic-jet": 77.6,
+      "established-network": 84.8,
+      "domestic-base": 91.9,
+      "international-bases": 113,
+      "international-widebody": 141.1
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 226,
+    "FinalFunds": 62631,
+    "MinReliability": 100,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 8,
+    "FinalRotations": 245,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 2/3",
+      "Operate 18 aircraft 8/18"
+    ],
+    "Flags": [
+      "142.1 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it",
+      "160.1 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it"
+    ],
+    "Refusals": {
+      "This flight costs #; you have #.": 165
+    }
+  },
+  {
+    "difficulty": "Standard",
+    "style": "Competent",
+    "Seed": 3,
+    "tiers": {
+      "Regional": 11.4,
+      "Domestic": 34.9,
+      "International": 92.7
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 9.5,
+      "first-rotations": 11.4,
+      "regional-base": 11.5,
+      "regional-network": 15,
+      "regional-service": 33,
+      "established-margin": 33,
+      "regional-fleet": 34.9,
+      "domestic-network": 47.4,
+      "domestic-service": 66.4,
+      "domestic-jet": 79.2,
+      "established-network": 85.9,
+      "domestic-base": 92.7,
+      "international-bases": 113.1,
+      "international-widebody": 136.8
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 559,
+    "FinalFunds": 53505,
+    "MinReliability": 99,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 10,
+    "FinalRotations": 247,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 2/3",
+      "Operate 18 aircraft 10/18"
+    ],
+    "Flags": [
+      "142.1 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it",
+      "153.8 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it"
+    ],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Standard",
+    "style": "Competent",
+    "Seed": 4,
+    "tiers": {
+      "Regional": 11.4,
+      "Domestic": 34.9,
+      "International": 92.3
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 9.5,
+      "first-rotations": 11.4,
+      "regional-base": 11.5,
+      "regional-network": 15,
+      "regional-service": 33,
+      "established-margin": 33,
+      "regional-fleet": 34.9,
+      "domestic-network": 47.5,
+      "domestic-service": 66.3,
+      "domestic-jet": 78.8,
+      "established-network": 85.2,
+      "domestic-base": 92.3,
+      "international-bases": 113.3,
+      "international-widebody": 141.1
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 226,
+    "FinalFunds": 36289,
+    "MinReliability": 99,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 10,
+    "FinalRotations": 252,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 2/3",
+      "Operate 18 aircraft 10/18"
+    ],
+    "Flags": [
+      "146.0 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it"
+    ],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Standard",
+    "style": "Competent",
+    "Seed": 5,
+    "tiers": {
+      "Regional": 11.4,
+      "Domestic": 35.1,
+      "International": 92.9
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 9.6,
+      "first-rotations": 11.4,
+      "regional-base": 11.5,
+      "regional-network": 15,
+      "regional-service": 33,
+      "established-margin": 33,
+      "regional-fleet": 35.1,
+      "domestic-network": 47.7,
+      "domestic-service": 66.7,
+      "domestic-jet": 75.2,
+      "established-network": 86,
+      "domestic-base": 92.9,
+      "international-bases": 109.6,
+      "international-widebody": 138
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 212,
+    "FinalFunds": 40557,
+    "MinReliability": 99,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 9,
+    "FinalRotations": 250,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 2/3",
+      "Operate 18 aircraft 9/18"
+    ],
+    "Flags": [
+      "139.1 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it",
+      "158.4 h: VH-PAD (Boeing 787-10) waiting for a stand for 1.0 h \u2014 NoStandFree International base has no free stand for it"
+    ],
+    "Refusals": {
+      "This flight costs #; you have #.": 855
+    }
+  },
+  {
+    "difficulty": "Standard",
+    "style": "Casual",
+    "Seed": 1,
+    "tiers": {
+      "Regional": 11.7,
+      "Domestic": 50.2,
+      "International": 132.5
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 11.7,
+      "first-rotations": 11.7,
+      "regional-base": 12,
+      "regional-network": 23.7,
+      "regional-service": 46.8,
+      "established-margin": 46.8,
+      "regional-fleet": 50.2,
+      "domestic-network": 70,
+      "domestic-service": 85.2,
+      "domestic-base": 104.4,
+      "domestic-jet": 132.5,
+      "established-network": 138.3,
+      "international-bases": 162.7
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 2570,
+    "FinalFunds": 73145,
+    "MinReliability": 98,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 4,
+    "FinalRotations": 186,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate a widebody 0/1",
+      "Operate 18 aircraft 4/18"
+    ],
+    "Flags": [],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Standard",
+    "style": "Casual",
+    "Seed": 2,
+    "tiers": {
+      "Regional": 11.1,
+      "Domestic": 43.9,
+      "International": 110.4
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 11.1,
+      "first-rotations": 11.1,
+      "regional-base": 12,
+      "regional-network": 20.8,
+      "regional-fleet": 42.2,
+      "regional-service": 43.9,
+      "established-margin": 43.9,
+      "domestic-network": 51,
+      "domestic-service": 80.8,
+      "domestic-jet": 96.4,
+      "established-network": 103.1,
+      "domestic-base": 110.4,
+      "international-bases": 141,
+      "international-widebody": 168.7
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 2570,
+    "FinalFunds": 58141,
+    "MinReliability": 98,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 5,
+    "FinalRotations": 203,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate 18 aircraft 5/18"
+    ],
+    "Flags": [
+      "115.4 h: VH-PAC (Boeing 737-8) waiting for a stand for 1.0 h \u2014 NoStandFree Jet-gate base has no free stand for it"
+    ],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Standard",
+    "style": "Casual",
+    "Seed": 3,
+    "tiers": {
+      "Regional": 12,
+      "Domestic": 48.2,
+      "International": 122.5
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 12,
+      "first-rotations": 12,
+      "regional-base": 12.1,
+      "regional-network": 22.3,
+      "regional-service": 46.5,
+      "established-margin": 46.5,
+      "regional-fleet": 48.2,
+      "domestic-network": 55.6,
+      "domestic-service": 85.2,
+      "domestic-jet": 102.4,
+      "established-network": 105,
+      "domestic-base": 122.5,
+      "international-bases": 152.6,
+      "international-widebody": 177
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 1476,
+    "FinalFunds": 13165,
+    "MinReliability": 98,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 5,
+    "FinalRotations": 195,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate 18 aircraft 5/18"
+    ],
+    "Flags": [
+      "123.8 h: VH-PAC (Boeing 737-8) waiting for a stand for 1.0 h \u2014 NoStandFree Jet-gate base has no free stand for it"
+    ],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Standard",
+    "style": "Casual",
+    "Seed": 4,
+    "tiers": {
+      "Regional": 11.4,
+      "Domestic": 50.2,
+      "International": 120.6
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 11.4,
+      "first-rotations": 11.4,
+      "regional-base": 12,
+      "regional-network": 20.9,
+      "regional-service": 44.3,
+      "established-margin": 44.3,
+      "regional-fleet": 50.2,
+      "domestic-network": 59.1,
+      "domestic-service": 85.6,
+      "established-network": 87,
+      "domestic-jet": 100.5,
+      "domestic-base": 120.6,
+      "international-bases": 141.1,
+      "international-widebody": 174.8
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 2570,
+    "FinalFunds": 43977,
+    "MinReliability": 98,
+    "FinalReliability": 99,
+    "finalTier": "International",
+    "FinalFleet": 5,
+    "FinalRotations": 194,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate 18 aircraft 5/18"
+    ],
+    "Flags": [],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Standard",
+    "style": "Casual",
+    "Seed": 5,
+    "tiers": {
+      "Regional": 11.5,
+      "Domestic": 50.2,
+      "International": 118.5
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 11.5,
+      "first-rotations": 11.5,
+      "regional-base": 12,
+      "regional-network": 23.9,
+      "regional-service": 46.7,
+      "established-margin": 46.7,
+      "regional-fleet": 50.2,
+      "domestic-network": 69,
+      "domestic-service": 84.8,
+      "domestic-jet": 104.5,
+      "established-network": 105,
+      "domestic-base": 118.5,
+      "international-bases": 146.7,
+      "international-widebody": 176.9
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 2570,
+    "FinalFunds": 38690,
+    "MinReliability": 98,
+    "FinalReliability": 99,
+    "finalTier": "International",
+    "FinalFleet": 5,
+    "FinalRotations": 197,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate 18 aircraft 5/18"
+    ],
+    "Flags": [],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Demanding",
+    "style": "Competent",
+    "Seed": 1,
+    "tiers": {
+      "Regional": 11.4,
+      "Domestic": 48.5,
+      "International": 120.9
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 9.5,
+      "first-rotations": 11.4,
+      "regional-base": 11.5,
+      "regional-network": 19.7,
+      "regional-service": 34.8,
+      "established-margin": 34.8,
+      "regional-fleet": 48.5,
+      "domestic-network": 54.8,
+      "domestic-service": 69.4,
+      "domestic-jet": 105.1,
+      "established-network": 112.5,
+      "domestic-base": 120.9,
+      "international-bases": 156
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 1415,
+    "FinalFunds": 96880,
+    "MinReliability": 98,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 4,
+    "FinalRotations": 220,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate a widebody 0/1",
+      "Operate 18 aircraft 4/18"
+    ],
+    "Flags": [
+      "124.1 h: VH-PAC (Boeing 737-8) waiting for a stand for 1.0 h \u2014 NoStandFree Jet-gate base has no free stand for it"
+    ],
+    "Refusals": {
+      "This flight costs #; you have #.": 64
+    }
+  },
+  {
+    "difficulty": "Demanding",
+    "style": "Competent",
+    "Seed": 2,
+    "tiers": {
+      "Regional": 11.5,
+      "Domestic": 49.1,
+      "International": 127.9
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 9.6,
+      "first-rotations": 11.5,
+      "regional-base": 11.5,
+      "regional-network": 19.8,
+      "regional-service": 35.5,
+      "established-margin": 35.5,
+      "regional-fleet": 49.1,
+      "domestic-network": 69,
+      "domestic-service": 69,
+      "domestic-base": 93.8,
+      "domestic-jet": 127.9,
+      "established-network": 132.3,
+      "international-bases": 153.9
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 564,
+    "FinalFunds": 87620,
+    "MinReliability": 98,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 4,
+    "FinalRotations": 212,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate a widebody 0/1",
+      "Operate 18 aircraft 4/18"
+    ],
+    "Flags": [],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Demanding",
+    "style": "Competent",
+    "Seed": 3,
+    "tiers": {
+      "Regional": 11.4,
+      "Domestic": 48.1,
+      "International": 126.4
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 9.5,
+      "first-rotations": 11.4,
+      "regional-base": 11.5,
+      "regional-network": 19.4,
+      "regional-service": 34.5,
+      "established-margin": 34.5,
+      "regional-fleet": 48.1,
+      "domestic-network": 69,
+      "domestic-service": 69,
+      "domestic-base": 94.7,
+      "domestic-jet": 126.4,
+      "established-network": 131,
+      "international-bases": 153.2,
+      "international-widebody": 177.1
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 564,
+    "FinalFunds": 12258,
+    "MinReliability": 98,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 5,
+    "FinalRotations": 212,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate 18 aircraft 5/18"
+    ],
+    "Flags": [],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Demanding",
+    "style": "Competent",
+    "Seed": 4,
+    "tiers": {
+      "Regional": 11.4,
+      "Domestic": 48.4,
+      "International": 121.1
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 9.5,
+      "first-rotations": 11.4,
+      "regional-base": 11.5,
+      "regional-network": 19.5,
+      "regional-service": 34.7,
+      "established-margin": 34.7,
+      "regional-fleet": 48.4,
+      "domestic-network": 54.8,
+      "domestic-service": 69.2,
+      "domestic-jet": 105.1,
+      "established-network": 112.5,
+      "domestic-base": 121.1,
+      "international-bases": 152.8,
+      "international-widebody": 177.1
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 1415,
+    "FinalFunds": 15462,
+    "MinReliability": 98,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 5,
+    "FinalRotations": 221,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate 18 aircraft 5/18"
+    ],
+    "Flags": [],
+    "Refusals": {
+      "This flight costs #; you have #.": 65
+    }
+  },
+  {
+    "difficulty": "Demanding",
+    "style": "Competent",
+    "Seed": 5,
+    "tiers": {
+      "Regional": 11.4,
+      "Domestic": 48.5,
+      "International": 121
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 9.6,
+      "first-rotations": 11.4,
+      "regional-base": 11.5,
+      "regional-network": 19.7,
+      "regional-service": 34.8,
+      "established-margin": 34.8,
+      "regional-fleet": 48.5,
+      "domestic-network": 55,
+      "domestic-service": 69.5,
+      "domestic-jet": 105,
+      "established-network": 112.7,
+      "domestic-base": 121,
+      "international-bases": 150.2
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 1415,
+    "FinalFunds": 97112,
+    "MinReliability": 96,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 4,
+    "FinalRotations": 218,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate a widebody 0/1",
+      "Operate 18 aircraft 4/18"
+    ],
+    "Flags": [],
+    "Refusals": {
+      "This flight costs #; you have #.": 51
+    }
+  },
+  {
+    "difficulty": "Demanding",
+    "style": "Casual",
+    "Seed": 1,
+    "tiers": {
+      "Regional": 11.7,
+      "Domestic": 54.2,
+      "International": 164.7
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 11.7,
+      "first-rotations": 11.7,
+      "regional-base": 12,
+      "regional-network": 25,
+      "regional-service": 49.2,
+      "established-margin": 49.2,
+      "regional-fleet": 54.2,
+      "domestic-network": 69,
+      "domestic-service": 87,
+      "domestic-base": 120.5,
+      "established-network": 133,
+      "domestic-jet": 164.7
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 1365,
+    "FinalFunds": 21071,
+    "MinReliability": 96,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 4,
+    "FinalRotations": 175,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate a widebody 0/1",
+      "Run three bases 2/3",
+      "Operate 18 aircraft 4/18"
+    ],
+    "Flags": [],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Demanding",
+    "style": "Casual",
+    "Seed": 2,
+    "tiers": {
+      "Regional": 11.1,
+      "Domestic": 54.2,
+      "International": 162.8
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 11.1,
+      "first-rotations": 11.1,
+      "regional-base": 14.1,
+      "regional-network": 27.2,
+      "regional-service": 49.4,
+      "established-margin": 49.4,
+      "regional-fleet": 54.2,
+      "domestic-network": 69,
+      "domestic-service": 87.1,
+      "domestic-base": 112.5,
+      "established-network": 123.1,
+      "domestic-jet": 162.8
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 1747,
+    "FinalFunds": 20864,
+    "MinReliability": 96,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 4,
+    "FinalRotations": 178,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate a widebody 0/1",
+      "Run three bases 2/3",
+      "Operate 18 aircraft 4/18"
+    ],
+    "Flags": [],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Demanding",
+    "style": "Casual",
+    "Seed": 3,
+    "tiers": {
+      "Regional": 12,
+      "Domestic": 54.2,
+      "International": 168.8
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 12,
+      "first-rotations": 12,
+      "regional-base": 12.1,
+      "regional-network": 29.3,
+      "regional-service": 50.9,
+      "established-margin": 50.9,
+      "regional-fleet": 54.2,
+      "domestic-network": 68.2,
+      "domestic-service": 87,
+      "domestic-base": 116.5,
+      "established-network": 123.1,
+      "domestic-jet": 168.8
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 61,
+    "FinalFunds": 13128,
+    "MinReliability": 97,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 4,
+    "FinalRotations": 171,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate a widebody 0/1",
+      "Run three bases 2/3",
+      "Operate 18 aircraft 4/18"
+    ],
+    "Flags": [],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Demanding",
+    "style": "Casual",
+    "Seed": 4,
+    "tiers": {
+      "Regional": 11.4,
+      "Domestic": 52.2,
+      "International": 160.8
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 11.4,
+      "first-rotations": 11.4,
+      "regional-base": 14.1,
+      "regional-network": 27.3,
+      "regional-service": 49,
+      "established-margin": 49,
+      "regional-fleet": 52.2,
+      "domestic-network": 66.2,
+      "domestic-service": 87.1,
+      "established-network": 104.1,
+      "domestic-base": 114.6,
+      "domestic-jet": 160.8
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 1747,
+    "FinalFunds": 30476,
+    "MinReliability": 95,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 4,
+    "FinalRotations": 175,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate a widebody 0/1",
+      "Run three bases 2/3",
+      "Operate 18 aircraft 4/18"
+    ],
+    "Flags": [],
+    "Refusals": {}
+  },
+  {
+    "difficulty": "Demanding",
+    "style": "Casual",
+    "Seed": 5,
+    "tiers": {
+      "Regional": 11.5,
+      "Domestic": 54.2,
+      "International": 160.7
+    },
+    "goals": {
+      "regional-reliability": 0,
+      "domestic-reliability": 0,
+      "international-reliability": 0,
+      "established-reliability": 0,
+      "prove-service": 11.5,
+      "first-rotations": 11.5,
+      "regional-base": 15,
+      "regional-network": 25.5,
+      "regional-service": 48.2,
+      "established-margin": 48.2,
+      "regional-fleet": 54.2,
+      "domestic-network": 67.8,
+      "domestic-service": 87,
+      "domestic-base": 112.5,
+      "established-network": 116.3,
+      "domestic-jet": 160.7
+    },
+    "finale": null,
+    "openHours": 180,
+    "MinFunds": 1747,
+    "FinalFunds": 23422,
+    "MinReliability": 95,
+    "FinalReliability": 100,
+    "finalTier": "International",
+    "FinalFleet": 4,
+    "FinalRotations": 178,
+    "RecoveryContracts": 0,
+    "OpenGoalsAtEnd": [
+      "Serve three international destinations 0/3",
+      "Operate a widebody 0/1",
+      "Run three bases 2/3",
+      "Operate 18 aircraft 4/18"
+    ],
+    "Flags": [],
+    "Refusals": {}
+  }
+]

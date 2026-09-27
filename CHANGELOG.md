@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Career balance simulator (ADR 0125).** `scripts/career-balance.sh` plays whole careers
+  headlessly — Relaxed/Standard/Demanding × a competent and a casual simulated player × five
+  seeds — and reports time to each tier in active-play hours, cash, fleet and stuck states.
+  The baseline (`docs/testing/career-balance-2026-09-27/baseline/`) shows no run reaching the
+  established-airline finale, International arriving ~93 h in on Standard against a 70 h
+  target, and Regional at ~11 h against 8 h.
+
 - **Rounder aerobridges, proper stair trucks, a real-looking base (ADR 0124).** Aerobridge
   tunnels have rounded profiles; stair trucks have wheels, handrails and posts; your
   airline's base buildings are clad modules with your colours on a fascia band, windows and

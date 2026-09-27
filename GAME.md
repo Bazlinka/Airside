@@ -1,5 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — career balance simulator, baseline (ADR 0125).**
+  `Tests/EditMode/CareerBot.cs` is a simulated player that uses only HUD commands and planner
+  destinations (competent and casual styles); `scripts/career-sim` + `scripts/career-balance.sh`
+  run the difficulty × style × seed matrix and write `report.md`/`runs.json`/`daily.csv`.
+  Baseline in `docs/testing/career-balance-2026-09-27/baseline/`. Findings, before any tuning:
+  no finale on any run (Adelaide aircraft cannot plan international routes — the planner lists
+  only `MapDestinations()`, Australia); International ~93 h Standard/competent vs ADR 0120's
+  70 h; Regional ~11 h vs 8 h; player narrowbodies take the only widebody line (28L) first, so
+  the 787 waits for a stand. **NEXT:** the tuning commit.
+
 - **2026-09-27 Claude (same branch) — round 3 complete (ADR 0124).** Bailey asked for hold
   reasons, building detail, less blocky objects and better lights; all four are in (commits
   above/below this entry). This last step: rounded aerobridge tunnels (`BevelledBox.RoundedTube`,

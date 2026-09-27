@@ -23,6 +23,7 @@ namespace Airside.Simulation
         private const float ExtraAlongTaxilane = 6f;
         private const float MinStraightBack = 4f;
         private const float MaxPushMetres = 180f;
+        private const float MaxRejoinOffset = 25f;
 
         /// <summary>
         /// As <see cref="TryBuild(float,float,float,float[],float,out float[],out float[])"/>, but when this
@@ -47,14 +48,10 @@ namespace Airside.Simulation
                 hz = -hz;
             }
 
-            // A synthetic start: the taxilane at the hint's start, heading that way, then the real route.
-            var seed = new float[taxiRoute.Length + 4];
-            seed[0] = taxilaneHint[0];
-            seed[1] = taxilaneHint[1];
-            seed[2] = taxilaneHint[0] + hx * 20f;
-            seed[3] = taxilaneHint[1] + hz * 20f;
-            Array.Copy(taxiRoute, 0, seed, 4, taxiRoute.Length);
-            return TryBuild(stopX, stopZ, headingDegrees, seed, radius, out push, out taxi);
+            // The taxilane's line and this route's direction along it; the rejoin search then runs over
+            // the real route, so a hook at its start is skipped rather than driven.
+            return Build(stopX, stopZ, headingDegrees, taxiRoute, taxilaneHint[0], taxilaneHint[1], hx, hz, radius,
+                out push, out taxi);
         }
 
         public static bool TryBuild(float stopX, float stopZ, float headingDegrees, float[] taxiRoute, float radius,
@@ -65,12 +62,21 @@ namespace Airside.Simulation
             if (taxiRoute == null || taxiRoute.Length < 8)
                 return false;
 
-            // Nose direction at the stop, and the taxilane's direction where the route begins.
-            var h = headingDegrees * Math.PI / 180.0;
-            float nx = (float)Math.Sin(h), nz = (float)Math.Cos(h);
-            float p0x = taxiRoute[0], p0z = taxiRoute[1];
+            // The taxilane's direction where the route begins.
             if (!DirectionAlong(taxiRoute, 15f, out var dx, out var dz))
                 return false;
+            return Build(stopX, stopZ, headingDegrees, taxiRoute, taxiRoute[0], taxiRoute[1], dx, dz, radius,
+                out push, out taxi);
+        }
+
+        /// <summary>The push onto the taxilane through (p0x, p0z) along (dx, dz), and the taxi that rejoins the route.</summary>
+        private static bool Build(float stopX, float stopZ, float headingDegrees, float[] taxiRoute, float p0x,
+            float p0z, float dx, float dz, float radius, out float[] push, out float[] taxi)
+        {
+            push = null;
+            taxi = null;
+            var h = headingDegrees * Math.PI / 180.0;
+            float nx = (float)Math.Sin(h), nz = (float)Math.Cos(h);
 
             // Push line: stop + s·(−n). Taxilane line: P0 + u·d. Corner C where they meet.
             float bx = -nx, bz = -nz;
@@ -107,16 +113,27 @@ namespace Airside.Simulation
             AddLine(path, ex, ez, fx, fz, includeStart: false);
             push = path.ToArray();
 
-            // Taxi forward from the push end along +d, rejoining the route past the corner.
+            // Taxi forward from the push end along +d, rejoining the route past the corner. The
+            // rejoin point must be near the taxilane and the route must carry on forward from it: a
+            // baked route that hooks back (west along the lane, then a U-turn east) would otherwise
+            // send the aircraft past the hook and make it reverse.
             var rejoin = -1;
             for (var i = 0; i + 1 < taxiRoute.Length; i += 2)
             {
-                var along = (taxiRoute[i] - fx) * dx + (taxiRoute[i + 1] - fz) * dz;
-                if (along >= tangent + ExtraAlongTaxilane + 30f)
+                float rx = taxiRoute[i] - fx, rz = taxiRoute[i + 1] - fz;
+                var along = rx * dx + rz * dz;
+                if (along < tangent + ExtraAlongTaxilane + 30f || Math.Abs(rx * dz - rz * dx) > MaxRejoinOffset)
+                    continue;
+                if (i + 3 < taxiRoute.Length)
                 {
-                    rejoin = i;
-                    break;
+                    float sx = taxiRoute[i + 2] - taxiRoute[i], sz = taxiRoute[i + 3] - taxiRoute[i + 1];
+                    var step = (float)Math.Sqrt(sx * sx + sz * sz);
+                    if (step > 1e-3f && (sx * dx + sz * dz) / step < 0.3f)
+                        continue;
                 }
+
+                rejoin = i;
+                break;
             }
 
             if (rejoin < 0)

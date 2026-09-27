@@ -130,14 +130,17 @@ namespace Airside.Tests
             foreach (var plane in planes)
                 ops.ScheduleDeparture(plane, Kgc(), new SimulationTime(600));
             RunTo(clock, ops, 600);
-            Assert.That(planes[2].State, Is.EqualTo(FleetState.AtStand));
-            var reason = ops.Why(planes[2]);
+            // Ground control picks which two push first (ADR 0146); the one left on its bay is held.
+            var waiting = planes.Single(p => p.State == FleetState.AtStand);
+            var taxiing = planes.Where(p => p.State == FleetState.TaxiOut).ToList();
+            Assert.That(taxiing.Count, Is.EqualTo(2));
+            var reason = ops.Why(waiting);
             Assert.That(reason.Kind, Is.EqualTo(HoldKind.ApronBusy));
             Assert.That(reason.Others.Count, Is.EqualTo(2));
             Assert.That(reason.Until.HasValue, Is.True);
-            var text = HoldReasonText.Long(planes[2], reason, new SimulationTime(600));
+            var text = HoldReasonText.Long(waiting, reason, new SimulationTime(600));
             Assert.That(text, Does.Contain("already taxiing out"));
-            Assert.That(text, Does.Contain("VH-PAA").Or.Contain(FlightNumber.OrRegistration(planes[0])));
+            Assert.That(text, Does.Contain(taxiing[0].Registration).Or.Contain(FlightNumber.OrRegistration(taxiing[0])));
         }
 
         [Test]

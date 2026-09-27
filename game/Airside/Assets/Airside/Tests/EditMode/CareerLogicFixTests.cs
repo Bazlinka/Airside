@@ -184,7 +184,7 @@ namespace Airside.Tests
             Assert.That(goals.First(g => g.Stage == OperatingTier.International).UnlocksLabel,
                 Is.EqualTo("Established airline"));
             Assert.That(goals.Where(g => g.Id.EndsWith("reliability", StringComparison.Ordinal))
-                .All(g => g.Title.StartsWith("Hold reliability", StringComparison.Ordinal)), Is.True,
+                .All(g => g.Title.StartsWith("Keep reliability", StringComparison.Ordinal)), Is.True,
                 "reliability starts at 100%, so the goal is to hold it, not to reach it");
         }
 
@@ -231,7 +231,7 @@ namespace Airside.Tests
             Assert.That(operations.HasOutstationRoute(AircraftType.Atr42, "PER"), Is.False);
             var refused = operations.BuyAircraftAtOutstation(AircraftType.Atr42, "PER");
             Assert.That(refused.Accepted, Is.False);
-            Assert.That(refused.Reason, Does.Contain("no route"));
+            Assert.That(refused.Reason, Does.Contain("nowhere in range"));
             Assert.That(operations.BuyAircraftAtOutstation(AircraftType.Boeing7378, "PER").Accepted, Is.True);
         }
 

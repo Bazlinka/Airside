@@ -184,7 +184,7 @@ namespace Airside.Tests
 
             var reports = events.Where(e => e.Kind == CareerEventKind.DailyReport).ToList();
             Assert.That(reports.Count, Is.InRange(2, 3), "one report per flown day");
-            Assert.That(reports[0].Text, Does.StartWith("Day's results:"));
+            Assert.That(reports[0].Text, Does.StartWith("Today:"));
             Assert.That(events.Any(e => e.Kind == CareerEventKind.News)
                         || Enumerable.Range(0, 3).All(d => DemandEvents.At(new SimulationTime(d * 86400L), ops.Clock) == null),
                 Is.True, "a demand day is announced");

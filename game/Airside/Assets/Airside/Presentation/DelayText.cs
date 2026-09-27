@@ -39,15 +39,15 @@ namespace Airside.Presentation
         {
             var reg = settlement.SettlementId.Registration;
             var earned = settlement.ContractFulfilled
-                ? $"{reg} earned ${settlement.Payment:N0} — {settlement.ContractDefinitionId} complete!"
+                ? $"{reg} earned ${settlement.Payment:N0}. Contract done!"
                 : !string.IsNullOrEmpty(settlement.ContractDefinitionId)
-                    ? $"{reg} earned ${settlement.Payment:N0} on {settlement.ContractDefinitionId} ({settlement.RotationsCompleted} rotations so far)"
-                    : $"{reg} earned ${settlement.Payment:N0} from that rotation";
+                    ? $"{reg} earned ${settlement.Payment:N0} · contract flight {settlement.RotationsCompleted}"
+                    : $"{reg} earned ${settlement.Payment:N0}";
             if (!settlement.Delay.HasValue)
                 return settlement.ContractFulfilled ? earned : earned + ".";
             var delay = settlement.Delay.Value;
             if (!delay.IsLate)
-                return onTimeStreak > 1 ? $"{earned} · on time (streak {onTimeStreak})." : $"{earned} · on time.";
+                return onTimeStreak > 1 ? $"{earned} · on time, {onTimeStreak} in a row." : $"{earned} · on time.";
             var tip = Tip(delay);
             return tip.Length > 0 ? $"{earned} · {Summary(delay)}. {tip}" : $"{earned} · {Summary(delay)}.";
         }
@@ -64,9 +64,9 @@ namespace Airside.Presentation
         {
             DelayCause.Turnaround => "Book further ahead so the turnaround finishes in time.",
             DelayCause.ApronBusy => "Stagger departures from the same apron.",
-            DelayCause.LeadIn => "Avoid pushing while a neighbour uses the gate lead-in.",
-            DelayCause.Taxiway => "Avoid pushing when arrivals are taxiing in past you.",
-            DelayCause.RunwayCrossing => "Book away from busy arrival times to avoid crossing holds.",
+            DelayCause.LeadIn => "A neighbour on the lead-in blocks your push.",
+            DelayCause.Taxiway => "Arrivals taxiing past you hold your push.",
+            DelayCause.RunwayCrossing => "Busy runways hold aircraft at the crossing.",
             _ => string.Empty
         };
 

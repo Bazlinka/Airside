@@ -50,7 +50,7 @@ namespace Airside.Presentation
         public string AirlineName { get; }
         public int CompletedRotations { get; }
         public bool IsPlayer { get; }
-        public string RotationsText => CompletedRotations == 1 ? "1 rotation" : $"{CompletedRotations} rotations";
+        public string RotationsText => CompletedRotations == 1 ? "1 flight" : $"{CompletedRotations} flights";
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ namespace Airside.Presentation
 
         public IReadOnlyList<MilestoneRow> Milestones => _milestones;
         public IReadOnlyList<ContractHistoryRow> ContractHistory => _history;
-        public string EmptyHistoryLine => "No contracts fulfilled yet — accept one from Contracts.";
+        public string EmptyHistoryLine => "No contracts finished yet. Take one in Contracts.";
 
         /// <summary>
         /// Lifetime count, not the length of <see cref="ContractHistory"/> — that list is
@@ -190,7 +190,7 @@ namespace Airside.Presentation
             LifetimeRevenueLine = $"${career.LifetimeRevenue:N0} lifetime revenue";
             ReliabilityLine = $"{career.Reliability}% reliability";
             TierLine = $"{career.Tier} tier";
-            FleetLine = $"{fleetSize} of {career.Base.FleetCapacity} base slots";
+            FleetLine = $"{fleetSize} of {career.Base.FleetCapacity} aircraft";
             BaseCapabilityLine = career.Base.Title
                                  + " · " + PlayerBase.MaintenanceCapabilityLine(career.BaseLevel)
                                  + " · " + PlayerBase.TurnaroundLine(career.BaseLevel)
@@ -202,8 +202,6 @@ namespace Airside.Presentation
 
             // ADR 0128: punctuality first — the streak, and what has been making recent flights late.
             PunctualityLine = Punctuality(operations);
-            if (PunctualityLine.Length > 0)
-                _milestones.Add(new MilestoneRow(PunctualityLine, false));
 
             // Open challenges head the list (ADR 0127): what they pay and how far along you are.
             foreach (var challenge in operations.CareerChallengeStatus())
@@ -224,7 +222,7 @@ namespace Airside.Presentation
             MilestonesReachedLine = $"{reachedCount} of {milestones.Count} milestones reached";
             NextMilestoneTitle = _milestones.FirstOrDefault(m => !m.Reached).Title;
             if (string.IsNullOrEmpty(NextMilestoneTitle))
-                NextMilestoneTitle = "All current milestones complete";
+                NextMilestoneTitle = "All milestones so far are done";
 
             foreach (var record in career.ContractHistory.Take(MaxHistoryShown))
                 _history.Add(new ContractHistoryRow(
@@ -232,7 +230,9 @@ namespace Airside.Presentation
                     $"${record.TotalPaid:N0}"));
             // Lifetime, not the capped list above — the real answer once a long career has
             // fulfilled more contracts than ContractHistory keeps.
-            ContractsFulfilledLine = $"{career.CompletedContractIds.Count} contracts fulfilled all-time";
+            ContractsFulfilledLine = career.CompletedContractIds.Count == 1
+                ? "1 contract finished"
+                : $"{career.CompletedContractIds.Count} contracts finished";
         }
 
         /// <summary>
@@ -291,14 +291,14 @@ namespace Airside.Presentation
             if (player.Rank == 1)
             {
                 CompetitiveTargetLine = tied
-                    ? "Complete the next rotation to take the outright lead."
-                    : "You lead Adelaide activity — keep the gap.";
+                    ? "Fly one more to take the lead on your own."
+                    : "You are the busiest airline at Adelaide.";
                 return;
             }
 
             var next = _standings.Take(playerIndex).Last(row => row.CompletedRotations > player.CompletedRotations);
             var needed = next.CompletedRotations - player.CompletedRotations + 1;
-            CompetitiveTargetLine = $"Pass {next.AirlineName}: {needed} more rotation" + (needed == 1 ? "." : "s.");
+            CompetitiveTargetLine = $"Pass {next.AirlineName}: {needed} more flight" + (needed == 1 ? "." : "s.");
         }
 
         private void FillBaseRoadmap(AirlineCareerState career)
@@ -307,7 +307,7 @@ namespace Airside.Presentation
             if (!PlayerBase.TryNext(career.BaseLevel, out var next))
             {
                 NextTierTitle = current.Title;
-                NextTierRequirementLine = "All Adelaide base capabilities unlocked.";
+                NextTierRequirementLine = "Your Adelaide base is at its largest.";
                 NextTierProgress01 = 1f;
                 CanUpgradeBase = false;
                 return;
@@ -320,8 +320,8 @@ namespace Airside.Presentation
             var funds = next.UpgradeCost <= 0 ? 1f : Clamp01(career.Funds / (float)next.UpgradeCost);
             NextTierProgress01 = Math.Min(rotations, funds);
             NextTierRequirementLine = PlayerBase.Requirement(next, career)
-                                      + " Upgrade cost $" + next.UpgradeCost.ToString("N0") + "."
-                                      + " Unlocks " + PlayerBase.UpgradeBenefitLine(next.Level) + ".";
+                                      + " Costs $" + next.UpgradeCost.ToString("N0") + "."
+                                      + " Adds " + PlayerBase.UpgradeBenefitLine(next.Level) + ".";
             CanUpgradeBase = career.Tier >= next.RequiredTier
                              && career.CompletedPlayerRotations >= next.RequiredRotations
                              && career.Funds >= next.UpgradeCost;
@@ -541,7 +541,7 @@ namespace Airside.Presentation
 
         private static void PaintOverview(HudDrawList into, StatsWorkspaceModel model, StatsWorkspaceLayout layout)
         {
-            into.Caption(layout.OverviewCaption, "CURRENT OPERATION");
+            into.Caption(layout.OverviewCaption, "YOUR AIRLINE");
             var stats = new[]
             {
                 model.FundsLine, model.LifetimeRevenueLine, model.ReliabilityLine, model.TierLine,
@@ -722,6 +722,10 @@ namespace Airside.Presentation
                 layout.RightColumn.Width, 18f);
             if (fulfilledBox.Bottom <= floor)
                 into.Text(fulfilledBox, model.ContractsFulfilledLine, 12f, HudTone.Muted);
+            // ADR 0128: how punctual recent flights were, under the contract record.
+            var punctualityBox = fulfilledBox.Offset(0f, 24f);
+            if (model.PunctualityLine.Length > 0 && punctualityBox.Bottom <= floor)
+                into.Text(punctualityBox, model.PunctualityLine, 12f, HudTone.Muted);
         }
     }
 }

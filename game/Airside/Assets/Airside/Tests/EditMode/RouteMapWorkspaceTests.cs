@@ -76,10 +76,10 @@ namespace Airside.Tests
             var dispatch = FlightEconomics.DispatchCost(plane.Type, km);
             var pay = RouteForecast.For(ops.Home, kingscote, plane.Type).Revenue;
             Assert.That(model.DispatchLine,
-                Is.EqualTo($"Dispatch  ${dispatch:N0}"));
-            Assert.That(model.ReturnLine, Is.EqualTo($"Est. return  ${pay:N0}  ·  net +${pay - dispatch:N0}"));
-            Assert.That(model.CompatibilityLine, Is.EqualTo("Saab 340B compatible"));
-            Assert.That(model.AvailabilityLine, Is.EqualTo("Available with Regional capability"));
+                Is.EqualTo($"Cost  ${dispatch:N0}"));
+            Assert.That(model.ReturnLine, Is.EqualTo($"Pays about  ${pay:N0}  ·  profit +${pay - dispatch:N0}"));
+            Assert.That(model.CompatibilityLine, Is.EqualTo("Saab 340B can fly this"));
+            Assert.That(model.AvailabilityLine, Is.EqualTo("Regional route. You can fly it"));
             Assert.That(model.CanPlan, Is.True);
         }
 
@@ -147,7 +147,7 @@ namespace Airside.Tests
             model.Rebuild(ops, plane, destination, 900, clock.Now, RouteMapFilter.Available);
             Assert.That(model.ReturnLine, Does.Contain($"${basePay + contract.PaymentPerRotation:N0}"));
             Assert.That(model.AvailabilityLine, Does.Contain("Contract +$420"));
-            Assert.That(model.AvailabilityLine, Does.Contain("cancel −3 reliability"));
+            Assert.That(model.AvailabilityLine, Does.Contain("abandoning costs 3 reliability"));
 
             var unrelated = HudTestAirline.Code("PLO");
             model.Rebuild(ops, plane, unrelated, 900, clock.Now, RouteMapFilter.Available);
@@ -168,9 +168,9 @@ namespace Airside.Tests
                 RouteMapFilter.Available);
 
             Assert.That(model.AvailabilityLine, Does.Contain("Contract +$420"));
-            Assert.That(model.AvailabilityLine, Does.Contain("cancel −3 reliability"));
+            Assert.That(model.AvailabilityLine, Does.Contain("abandoning costs 3 reliability"));
             Assert.That(model.AvailabilityLine, Does.Contain("Check overdue"));
-            Assert.That(model.AvailabilityLine, Does.Contain("−2 reliability"));
+            Assert.That(model.AvailabilityLine, Does.Contain("costs 2 reliability"));
             Assert.That(model.AvailabilityLine.Split('\n').Length, Is.EqualTo(2));
         }
 
@@ -199,8 +199,8 @@ namespace Airside.Tests
 
             model.Rebuild(ops, plane, HudTestAirline.Code("MEL"), 900, clock.Now, RouteMapFilter.Available);
             Assert.That(model.CanPlan, Is.False);
-            Assert.That(model.AvailabilityLine, Does.Contain("Domestic"));
-            Assert.That(model.AvailabilityLine, Does.StartWith("Locked"));
+            Assert.That(model.AvailabilityLine, Does.Contain("domestic"));
+            Assert.That(model.AvailabilityLine, Does.Contain("only flies regional routes"));
 
             model.Rebuild(ops, plane, HudTestAirline.Code("PER"), 900, clock.Now, RouteMapFilter.Available);
             Assert.That(model.CanPlan, Is.False);

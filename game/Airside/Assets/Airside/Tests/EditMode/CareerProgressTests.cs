@@ -25,7 +25,7 @@ namespace Airside.Tests
             Assert.That(next.RotationsShort, Is.EqualTo(AircraftAcquisition.Atr42.RequiredRotations));
             Assert.That(next.ReliabilityShort, Is.EqualTo(0));
             Assert.That(next.NeedsTier, Is.False);
-            Assert.That(next.BaseRequirementLine, Does.Contain("expand your Adelaide base"));
+            Assert.That(next.BaseRequirementLine, Does.Contain("Expand your Adelaide base"));
         }
 
         [Test]

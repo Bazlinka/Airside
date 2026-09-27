@@ -92,21 +92,21 @@ namespace Airside.Simulation
 
         public static readonly IReadOnlyList<CareerChallenge> All = new[]
         {
-            new CareerChallenge("on-time-10", "Ten on-time pushbacks in a row", 1_500, false,
+            new CareerChallenge("on-time-10", "Push back on time 10 times in a row", 1_500, false,
                 f => (Math.Min(f.OnTimeStreak, 10), 10)),
-            new CareerChallenge("profitable-day", "A profitable day of four or more flights", 1_000, false,
+            new CareerChallenge("profitable-day", "Make a profit on a day of 4 or more flights", 1_000, false,
                 f => (f.ProfitableDay ? 1 : 0, 1)),
-            new CareerChallenge("medical-2", "Answer two medical calls", 2_000, false,
+            new CareerChallenge("medical-2", "Fly 2 medical calls", 2_000, false,
                 f => (Math.Min(f.MedicalFlights, 2), 2)),
-            new CareerChallenge("charter-3", "Fly three charters", 2_500, false,
+            new CareerChallenge("charter-3", "Fly 3 charters", 2_500, false,
                 f => (Math.Min(f.Charters, 3), 3)),
-            new CareerChallenge("on-time-30", "Thirty on-time pushbacks in a row", 5_000, false,
+            new CareerChallenge("on-time-30", "Push back on time 30 times in a row", 5_000, false,
                 f => (Math.Min(f.OnTimeStreak, 30), 30)),
             new CareerChallenge("long-haul-all", "Serve every long-haul city", 25_000, true,
                 f => (f.LongHaulServed, LongHaulCities.Length)),
-            new CareerChallenge("fleet-25", "Operate 25 aircraft", 20_000, true,
+            new CareerChallenge("fleet-25", "Fly 25 aircraft", 20_000, true,
                 f => (Math.Min(f.FleetCount, AircraftAcquisition.MaxPlayerAircraft), AircraftAcquisition.MaxPlayerAircraft)),
-            new CareerChallenge("reliability-95", "Hold 95% reliability past 300 services", 15_000, true,
+            new CareerChallenge("reliability-95", "Keep 95% reliability to 300 flights", 15_000, true,
                 f => (f.Reliability >= 95 ? Math.Min(f.Rotations, 300) : 0, 300))
         };
 

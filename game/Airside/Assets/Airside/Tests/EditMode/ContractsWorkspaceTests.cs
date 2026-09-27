@@ -38,13 +38,13 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now);
 
             Assert.That(model.HasActive, Is.True);
-            Assert.That(model.ActiveTitle, Is.EqualTo("Prove the Kingscote service"));
+            Assert.That(model.ActiveTitle, Is.EqualTo("Fly the Kingscote contract"));
             Assert.That(model.ActiveRoute, Is.EqualTo("Adelaide ↔ Kingscote"));
             Assert.That(model.ActiveProgressText, Is.EqualTo(
-                $"0 of {RouteContractCatalogue.RegionalKingscoteIntro.RequiredRotations} rotations complete"));
-            Assert.That(model.ActiveTerms, Does.Contain("Eligible: Saab 340B"));
+                $"0 of {RouteContractCatalogue.RegionalKingscoteIntro.RequiredRotations} flights done"));
+            Assert.That(model.ActiveTerms, Does.Contain("Aircraft: Saab 340B"));
             Assert.That(model.ActiveTerms, Does.Contain(
-                $"Cancellation: −{RouteContractCatalogue.RegionalKingscoteIntro.ReliabilityLossOnCancel} reliability"));
+                $"Abandoning costs {RouteContractCatalogue.RegionalKingscoteIntro.ReliabilityLossOnCancel} reliability"));
             Assert.That(model.EligibleAircraftLine, Is.EqualTo("VH-PAX"));
             Assert.That(model.Offers.All(o => !o.CanAccept), Is.True,
                 "one contract at a time — every offer is explained, none is actionable");
@@ -98,7 +98,7 @@ namespace Airside.Tests
                 Assert.That(offer.Terms, Does.Contain($"${total:N0} total"));
                 Assert.That(offer.Terms, Does.StartWith(definition.RequiredRotations == 1
                     ? "1 flight"
-                    : $"{definition.RequiredRotations} rotations"));
+                    : $"{definition.RequiredRotations} flights"));
                 // ADR 0127: every market offer is a commitment with a deadline, shown on the card.
                 if (definition.HasDeadline)
                     Assert.That(offer.Terms, Does.Contain("within"));

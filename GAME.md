@@ -1,5 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-27 Claude (same branch) — wording pass (ADR 0129).** House style in
+  `docs/product/WRITING.md`: plain short sentences, no em dashes or semicolons in player text,
+  "flight" for what code calls a rotation/service. Rewrote refusals, career events, goals,
+  milestones, challenges, demand headlines, hold lines, toasts, every workspace, the setup wizard,
+  title card and the whole Flight Manual. Fixed contract ids leaking into the pay toast, "1
+  contracts", Punctuality stealing the Next milestone slot, and manual sections clipped at 800×600
+  (now tested). Tests **849/849**, type-check clean. **Needs humans:** read it in play; the Stats
+  base-capability card still truncates (layout, not wording).
+
 - **2026-09-27 Claude (same branch) — delay feedback (ADR 0128).** PR #414 merged first.
   `Simulation/DelayAttribution.cs` (`DelayCause`, `DelayBreakdown`, `DelayLedger`): a ready
   player departure's failed pushback gates are sampled at ready time and on the 5 s grid only

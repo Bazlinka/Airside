@@ -217,14 +217,14 @@ namespace Airside.Tests
 
             var id = new SettlementId("VH-PAA", 3);
             var onTime = new FlightSettlement(id, null, 12_400, 1, 1, false, DelayBreakdown.Parse(30, null));
-            Assert.That(DelayText.SettlementToast(onTime, 7), Is.EqualTo("VH-PAA earned $12,400 from that rotation · on time (streak 7)."));
+            Assert.That(DelayText.SettlementToast(onTime, 7), Is.EqualTo("VH-PAA earned $12,400 · on time, 7 in a row."));
             var lateSettlement = new FlightSettlement(id, null, 12_400, 0, 1, false, late);
-            Assert.That(DelayText.SettlementToast(lateSettlement, 0), Does.StartWith("VH-PAA earned $12,400 from that rotation · 4 min late: 3 min runway crossings"));
+            Assert.That(DelayText.SettlementToast(lateSettlement, 0), Does.StartWith("VH-PAA earned $12,400 · 4 min late: 3 min runway crossings"));
             Assert.That(DelayText.Tone(lateSettlement), Is.EqualTo(HudTone.Caution));
             var veryLate = new FlightSettlement(id, null, 1, -2, 1, false, DelayBreakdown.Parse(FlightEconomics.HardLateSeconds + 60, null));
             Assert.That(DelayText.Tone(veryLate), Is.EqualTo(HudTone.Negative));
             Assert.That(DelayText.SettlementToast(new FlightSettlement(id, null, 500, 0, 1, false), 0),
-                Is.EqualTo("VH-PAA earned $500 from that rotation."), "AI and old saves: no delay story");
+                Is.EqualTo("VH-PAA earned $500."), "AI and old saves: no delay story");
         }
         [Test]
         public void HoldLine_IsALinkOnlyWhenThereIsSomethingToFollow()

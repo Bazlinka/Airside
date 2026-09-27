@@ -32,7 +32,7 @@ namespace Airside.Tests
             Assert.That(model.Mine.Select(r => r.Registration), Is.EqualTo(new[] { "VH-PAX", "VH-SUN" }));
             Assert.That(model.Mine.All(r => r.IsPlayer), Is.True);
             Assert.That(model.Others.Select(r => r.Registration), Is.EqualTo(new[] { "VH-ZRC" }));
-            Assert.That(model.Subtitle, Does.StartWith("2 of 3 base slots"));
+            Assert.That(model.Subtitle, Does.StartWith("2 of 3 aircraft"));
             Assert.That(model.Subtitle, Does.Contain("Expanded regional base"));
         }
 
@@ -55,7 +55,7 @@ namespace Airside.Tests
             }
 
             var dash = model.Market.Single(o => o.Type.Id == AircraftType.Dash8Q400.Id);
-            Assert.That(dash.RequirementLine, Does.Contain("expand your base"));
+            Assert.That(dash.RequirementLine, Does.Contain("Expand your base"));
         }
 
         [Test]
@@ -90,8 +90,8 @@ namespace Airside.Tests
             // tier" and "flies Regional routes" used to share the word "Regional" for two
             // unrelated systems with nothing to tell them apart.
             Assert.That(model.SelectedCapability,
-                Does.Contain("Regional capability (Kingscote, Port Lincoln)"));
-            Assert.That(model.SelectedCapability, Does.Contain("0 completed rotations"));
+                Does.Contain("Flies regional routes (Kingscote, Port Lincoln)"));
+            Assert.That(model.SelectedCapability, Does.Contain("0 flights flown"));
             Assert.That(model.AssignmentLine, Is.EqualTo("Adelaide → Kingscote"));
             Assert.That(model.SelectedPrep.Select(p => p.Done), Is.EqualTo(new[] { true, false, false, false }));
             Assert.That(model.SelectedPrep[1].Active, Is.True);
@@ -126,12 +126,12 @@ namespace Airside.Tests
 
             var model = new FleetWorkspaceModel();
             model.Rebuild(ops, clock.Now, plane.Registration);
-            Assert.That(model.SelectedCapability.Any(line => line.StartsWith("Resale value")), Is.False,
+            Assert.That(model.SelectedCapability.Any(line => line.StartsWith("Sells for")), Is.False,
                 "the starter Saab was never bought, so it has no resale line");
 
             model.Rebuild(ops, clock.Now, bought.Registration);
             var expected = (long)Math.Round(AircraftAcquisition.Dash8Q400.Price * AirlineOperations.ResaleFraction);
-            Assert.That(model.SelectedCapability, Does.Contain($"Resale value ${expected:N0}"));
+            Assert.That(model.SelectedCapability, Does.Contain($"Sells for ${expected:N0}"));
         }
 
         [Test]

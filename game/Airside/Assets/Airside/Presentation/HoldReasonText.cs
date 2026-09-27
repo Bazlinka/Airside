@@ -23,55 +23,55 @@ namespace Airside.Presentation
             switch (reason.Kind)
             {
                 case HoldKind.Cancelled:
-                    return "Cancelled — the operator re-books it later";
+                    return "Cancelled. The airline will rebook it";
                 case HoldKind.Curfew:
-                    return $"Curfew — Adelaide reopens at {Time(reason.Until, clock)}";
+                    return $"Curfew: Adelaide opens again at {Time(reason.Until, clock)}";
                 case HoldKind.Turnaround:
-                    return $"Turnaround — {Lower(reason.Detail)}";
+                    return $"Turnaround: {Lower(reason.Detail)}";
                 case HoldKind.ApronBusy:
-                    return $"Waiting to push back — apron busy with {Names(reason.Others)}{soon}";
+                    return $"Waiting to push: {Names(reason.Others)} already taxiing out{soon}";
                 case HoldKind.LeadInBlocked:
                     return reason.Blocker != null
-                        ? $"Waiting to push back — {who} is on the gate lead-in"
-                        : "Waiting to push back — gate lead-in in use";
+                        ? $"Waiting to push: {who} is on the lead-in"
+                        : "Waiting to push: the lead-in is in use";
                 case HoldKind.TaxiwayBlocked:
                     if (aircraft?.State == FleetState.AtStand)
                         return reason.Blocker != null
-                            ? $"Waiting to push back — {who} is on the taxi route"
-                            : "Waiting to push back — taxi route busy";
+                            ? $"Waiting to push: {who} is on the taxi route"
+                            : "Waiting to push: traffic on the taxi route";
                     if (aircraft?.State == FleetState.AwaitingStand)
                         return reason.Blocker != null
-                            ? $"Holding at the exit — {who} is on the taxi route"
-                            : "Holding at the exit — taxi route busy";
-                    return "Holding — traffic at the runway exit";
+                            ? $"Holding at the exit: {who} is on the taxi route"
+                            : "Holding at the exit: traffic on the taxi route";
+                    return "Holding: traffic at the runway exit";
                 case HoldKind.RunwayOccupied:
-                    return $"{Where(departing, rwy)} — {who} {Movement(reason.Blocker)}{soon}";
+                    return $"{Where(departing, rwy)}: {who} {Movement(reason.Blocker)}{soon}";
                 case HoldKind.WakeSeparation:
                     return reason.Blocker != null
-                        ? $"{Where(departing, rwy)} — wake separation behind {who}{soon}"
-                        : $"{Where(departing, rwy)} — runway separation{soon}";
+                        ? $"{Where(departing, rwy)}: spacing behind {who}{soon}"
+                        : $"{Where(departing, rwy)}: runway spacing{soon}";
                 case HoldKind.GroundStop:
-                    return "Ground stop — storm over the field, no clearances";
+                    return "Ground stop: storm over the field";
                 case HoldKind.Queued:
                     return departing
-                        ? $"Number {reason.Position} for {rwy} — behind {who}"
-                        : $"Number {reason.Position} to land on {rwy} — behind {who}";
+                        ? $"Number {reason.Position} for {rwy}, behind {who}"
+                        : $"Number {reason.Position} to land on {rwy}, behind {who}";
                 case HoldKind.ArrivalFirst:
-                    return $"Holding short {rwy} — {who} lands first";
+                    return $"Holding short {rwy}: {who} lands first";
                 case HoldKind.DepartureFirst:
-                    return $"Holding for {rwy} — {who} departs first";
+                    return $"Holding for {rwy}: {who} goes first";
                 case HoldKind.NoStandFree:
-                    return $"Waiting for a stand — {reason.Detail}";
+                    return $"Waiting for a stand: {reason.Detail}";
                 case HoldKind.ChooseStand:
-                    return $"Choose a stand — the tower parks it at {Time(reason.Until, clock)}";
+                    return $"Choose a stand, or the tower picks one at {Time(reason.Until, clock)}";
                 case HoldKind.HeldAirborne:
-                    return $"Holding airborne — {reason.Detail} until {Time(reason.Until, clock)}";
+                    return $"Holding in the air: {reason.Detail} until {Time(reason.Until, clock)}";
                 case HoldKind.InCheck:
                     return $"In maintenance until {Time(reason.Until, clock)}";
                 case HoldKind.CrossingRunway:
                     return reason.Blocker != null
-                        ? $"{Where(departing, rwy)} — {who} is crossing the runway"
-                        : $"Waiting to taxi — runway {(string.IsNullOrEmpty(reason.Detail) ? "crossing" : reason.Detail)} busy at the crossing";
+                        ? $"{Where(departing, rwy)}: {who} is crossing"
+                        : $"Waiting to taxi: runway {(string.IsNullOrEmpty(reason.Detail) ? "crossing" : reason.Detail)} is busy where you cross";
                 default:
                     return string.Empty;
             }
@@ -83,20 +83,20 @@ namespace Airside.Presentation
             HoldKind.Cancelled => "cancelled",
             HoldKind.Curfew => "curfew",
             HoldKind.Turnaround => Lower(reason.Detail),
-            HoldKind.ApronBusy => "push wait · apron busy",
-            HoldKind.LeadInBlocked => "push wait · lead-in",
+            HoldKind.ApronBusy => "wait · apron busy",
+            HoldKind.LeadInBlocked => "wait · lead-in",
             HoldKind.TaxiwayBlocked => "wait · traffic",
             HoldKind.RunwayOccupied => $"hold · {ShortType(reason.Blocker)} {Movement(reason.Blocker)}",
-            HoldKind.WakeSeparation => "hold · wake",
+            HoldKind.WakeSeparation => "hold · spacing",
             HoldKind.GroundStop => "hold · storm",
             HoldKind.Queued => $"hold · no. {reason.Position}",
             HoldKind.ArrivalFirst => $"hold · {ShortType(reason.Blocker)} landing",
-            HoldKind.DepartureFirst => "hold · departure first",
+            HoldKind.DepartureFirst => "hold · departure",
             HoldKind.NoStandFree => "no stand free",
             HoldKind.ChooseStand => "choose stand",
-            HoldKind.HeldAirborne => "held airborne",
+            HoldKind.HeldAirborne => "holding in air",
             HoldKind.InCheck => "in check",
-            HoldKind.CrossingRunway => reason.Blocker != null ? "hold · crossing traffic" : "wait · runway crossing",
+            HoldKind.CrossingRunway => reason.Blocker != null ? "hold · crossing" : "wait · crossing",
             _ => string.Empty
         };
 

@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Clearer wording everywhere (ADR 0129).** Every message, card, goal and manual page was
+  rewritten in one plain voice. The game now always says "flight" (not rotation, service or trip),
+  messages say what's blocking you and how to fix it, and the pay message no longer shows internal
+  contract codes.
+
 - **Why was I late? (ADR 0128).** When a flight is paid, the message now says whether it
   pushed back on time (and your streak) or how late it was and why — a turnaround booked too
   tight, apron or taxiway traffic, a busy gate lead-in or a runway crossing — with a tip. The

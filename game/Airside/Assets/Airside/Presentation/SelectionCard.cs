@@ -180,7 +180,7 @@ namespace Airside.Presentation
             var width = (area.Width - gap) * 0.5f;
             if (data.Stands.Count == 0)
             {
-                into.Pill(new HudBox(area.X, y, area.Width, 28f), "ALL STANDS FULL — WAIT FOR ONE TO CLEAR",
+                into.Pill(new HudBox(area.X, y, area.Width, 28f), "EVERY STAND IS TAKEN. WAIT FOR ONE",
                     HudTone.Negative, fontSize: 9f);
                 return;
             }

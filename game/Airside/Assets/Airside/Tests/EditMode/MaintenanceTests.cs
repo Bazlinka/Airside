@@ -195,7 +195,7 @@ namespace Airside.Tests
                 "planning a departure after the check is still allowed");
             Assert.That(OperationsSummary.CompactState(plane, clock.Now, ops.Clock), Does.StartWith("In check until"));
             var next = OperationsSummary.Objective(new[] { plane }, clock.Now, ops.Clock, ops.CareerState).NextLine;
-            Assert.That(next.ToLowerInvariant(), Does.Contain("wait").And.Contain("check"));
+            Assert.That(next.ToLowerInvariant(), Does.Contain("in its check"));
         }
 
         [Test]
@@ -207,7 +207,7 @@ namespace Airside.Tests
 
             Assert.That(model.CanStartCheck, Is.True);
             Assert.That(model.StartCheckLabel, Does.Contain("$"));
-            Assert.That(model.SelectedCapability, Does.Contain("Check in 8 rotations"));
+            Assert.That(model.SelectedCapability, Does.Contain("Check in 8 flights"));
 
             var list = new HudDrawList();
             var surface = HudShell.WorkspaceSurface(1440f, 900f);

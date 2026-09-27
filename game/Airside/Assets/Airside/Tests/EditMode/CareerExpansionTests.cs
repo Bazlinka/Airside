@@ -333,7 +333,7 @@ namespace Airside.Tests
 
             var result = ops.AssignStand(jet, new StableId("GATE-25"));
             Assert.That(result.Accepted, Is.False);
-            Assert.That(result.Reason, Does.Contain("outside your"));
+            Assert.That(result.Reason, Does.Contain("isn't part of your"));
         }
 
         [Test]

@@ -25,7 +25,7 @@ namespace Airside.Tests
             Assert.That(model.LifetimeRevenueLine, Is.EqualTo("$0 lifetime revenue"));
             Assert.That(model.ReliabilityLine, Is.EqualTo($"{ops.CareerState.Reliability}% reliability"));
             Assert.That(model.TierLine, Is.EqualTo("Provisional tier"));
-            Assert.That(model.FleetLine, Is.EqualTo("1 of 1 base slots"));
+            Assert.That(model.FleetLine, Is.EqualTo("1 of 1 aircraft"));
             Assert.That(model.BaseCapabilityLine, Does.StartWith("Regional starter base"));
             Assert.That(model.BaseCapabilityLine, Does.Contain("outsourced maintenance"));
             Assert.That(model.BaseCapabilityLine, Does.Contain("Stands: 50D"));
@@ -73,7 +73,7 @@ namespace Airside.Tests
             Assert.That(model.AdelaideStandings.Select(row => row.CompletedRotations),
                 Is.EqualTo(new[] { 6, 3, 2 }));
             Assert.That(model.AdelaideRankLine, Is.EqualTo("#2 of 3 at Adelaide"));
-            Assert.That(model.CompetitiveTargetLine, Is.EqualTo("Pass Rex: 4 more rotations."));
+            Assert.That(model.CompetitiveTargetLine, Is.EqualTo("Pass Rex: 4 more flights."));
         }
 
         [Test]
@@ -86,7 +86,7 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now);
 
             Assert.That(model.AdelaideRankLine, Is.EqualTo("Tied #1 of 2 at Adelaide"));
-            Assert.That(model.CompetitiveTargetLine, Does.Contain("outright lead"));
+            Assert.That(model.CompetitiveTargetLine, Does.Contain("take the lead"));
         }
 
         [Test]
@@ -140,8 +140,8 @@ namespace Airside.Tests
 
             Assert.That(model.HasNextTier, Is.True);
             Assert.That(model.NextTierTitle, Is.EqualTo("Regional starter base → Expanded regional base"));
-            Assert.That(model.NextTierRequirementLine, Does.Contain("4 more rotations"));
-            Assert.That(model.NextTierRequirementLine, Does.Contain("Upgrade cost $1,500"));
+            Assert.That(model.NextTierRequirementLine, Does.Contain("4 more flights"));
+            Assert.That(model.NextTierRequirementLine, Does.Contain("Costs $1,500"));
             Assert.That(model.NextTierProgress01, Is.EqualTo(0f));
             Assert.That(model.CanUpgradeBase, Is.False);
         }
@@ -218,12 +218,12 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now);
 
             bool Reached(string title) => model.Milestones.Single(m => m.Title == title).Reached;
-            Assert.That(Reached("First service flown"), Is.True);
-            Assert.That(Reached("First contract fulfilled"), Is.True);
+            Assert.That(Reached("First flight flown"), Is.True);
+            Assert.That(Reached("First contract finished"), Is.True);
             Assert.That(Reached("First jet in the fleet"), Is.False);
             Assert.That(model.ContractHistory.Count, Is.EqualTo(1));
             Assert.That(model.ContractHistory[0].PaidText, Does.StartWith("$"));
-            Assert.That(model.ContractsFulfilledLine, Is.EqualTo("1 contracts fulfilled all-time"));
+            Assert.That(model.ContractsFulfilledLine, Is.EqualTo("1 contract finished"));
             Assert.That(model.MilestonesReachedLine, Does.Match(@"^\d+ of \d+ milestones reached$"));
         }
 
@@ -248,7 +248,7 @@ namespace Airside.Tests
             var model = new StatsWorkspaceModel();
             model.Rebuild(ops, clock.Now);
             Assert.That(model.ContractHistory.Count, Is.EqualTo(StatsWorkspaceModel.MaxHistoryShown));
-            Assert.That(model.ContractsFulfilledLine, Is.EqualTo($"{toFulfil} contracts fulfilled all-time"));
+            Assert.That(model.ContractsFulfilledLine, Is.EqualTo($"{toFulfil} contracts finished"));
         }
 
         [Test]
@@ -312,9 +312,8 @@ namespace Airside.Tests
             model.Rebuild(ops, clock.Now);
             var roadmapCount = ops.CareerGoals().Count(goal => goal.Stage <= ops.CareerState.Tier);
             var openChallenges = ops.CareerChallengeStatus().Count(c => c.Open && !c.Complete);
-            var punctuality = model.PunctualityLine.Length > 0 ? 1 : 0;
-            Assert.That(model.Milestones.Count, Is.EqualTo(11 + roadmapCount + openChallenges + punctuality),
-                "punctuality, open challenges, career goals and earned milestones share the stats list");
+            Assert.That(model.Milestones.Count, Is.EqualTo(11 + roadmapCount + openChallenges),
+                "open challenges, career goals and earned milestones share the stats list");
             Assert.That(model.ContractHistory.Count, Is.EqualTo(StatsWorkspaceModel.MaxHistoryShown));
 
             foreach (var (width, height) in HudTestAirline.Viewports)

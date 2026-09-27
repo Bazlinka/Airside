@@ -94,7 +94,7 @@ namespace Airside.Presentation
             AircraftRangeKm = aircraft?.Type?.PracticalRangeKm ?? 0.0;
             AircraftRangeLabel = aircraft == null
                 ? string.Empty
-                : $"{aircraft.Type.Name}  ·  {aircraft.Type.PracticalRangeKm:N0} km practical range";
+                : $"{aircraft.Type.Name}  ·  {aircraft.Type.PracticalRangeKm:N0} km range";
             HasDestination = false;
             HasBooking = false;
             BookingLine = string.Empty;
@@ -195,7 +195,7 @@ namespace Airside.Presentation
             if (aircraft == null)
             {
                 CompatibilityLine = "No aircraft selected";
-                AvailabilityLine = "Choose an aircraft to price this route";
+                AvailabilityLine = "Choose an aircraft to see what this route pays";
                 AvailabilityTone = HudTone.Muted;
                 PlanBlockedReason = AvailabilityLine;
                 return;
@@ -205,8 +205,8 @@ namespace Airside.Presentation
             var inRange = operations.CanReach(aircraft, destination);
             var inBand = RouteAccess.Allows(type, destination);
             CompatibilityLine = inRange && inBand
-                ? $"{type.Name} compatible"
-                : $"{type.Name} not cleared for this route";
+                ? $"{type.Name} can fly this"
+                : $"{type.Name} can't fly this route";
 
             var dispatch = operations.DispatchCost(type, km);
             var alreadyPaid = aircraft.Scheduled.HasValue
@@ -229,18 +229,18 @@ namespace Airside.Presentation
                     contractPay += contract.CompletionReward;
                 pay += contractPay;
                 OperatingNote = contract.ReliabilityLossOnCancel > 0
-                    ? $"Contract +${contractPay:N0} · cancel −{contract.ReliabilityLossOnCancel} reliability"
+                    ? $"Contract +${contractPay:N0} · abandoning costs {contract.ReliabilityLossOnCancel} reliability"
                     : $"Contract +${contractPay:N0} on return";
             }
             DispatchLine = alreadyPaid > 0
                 ? $"Change  {(changeCost >= 0 ? "+" : "−")}${Math.Abs(changeCost):N0}"
-                : $"Dispatch  ${dispatch:N0}";
-            ReturnLine = $"Est. return  ${pay:N0}  ·  net {(pay - dispatch >= 0 ? "+" : "−")}${Math.Abs(pay - dispatch):N0}";
+                : $"Cost  ${dispatch:N0}";
+            ReturnLine = $"Pays about  ${pay:N0}  ·  profit {(pay - dispatch >= 0 ? "+" : "−")}${Math.Abs(pay - dispatch):N0}";
             if (Maintenance.IsDueSoon(aircraft))
             {
                 var checkNote = Maintenance.IsOverdue(aircraft)
-                    ? $"Check overdue · next flight −{Maintenance.OverduePenalty} reliability"
-                    : "Check due after this rotation";
+                    ? $"Check overdue · this flight costs {Maintenance.OverduePenalty} reliability"
+                    : "Check due after this flight";
                 OperatingNote = OperatingNote.Length > 0
                     ? OperatingNote + "\n" + checkNote
                     : checkNote;
@@ -249,7 +249,7 @@ namespace Airside.Presentation
             if (!inRange)
             {
                 AvailabilityLine =
-                    $"Locked — beyond the {type.Name}'s {type.PracticalRangeKm:0} km range";
+                    $"Out of range. The {type.Name} reaches {type.PracticalRangeKm:N0} km";
                 AvailabilityTone = HudTone.Muted;
                 PlanBlockedReason = AvailabilityLine;
                 return;
@@ -258,8 +258,8 @@ namespace Airside.Presentation
             if (!inBand)
             {
                 AvailabilityLine =
-                    $"Locked — {Article.A(type.Name)} flies {BandLabel(RouteAccess.Ceiling(type))} routes; "
-                    + $"{destination.Name} is {BandLabel(band)}";
+                    $"{Article.CapitalA(type.Name)} only flies {RouteAccess.Label(RouteAccess.Ceiling(type))} routes. "
+                    + $"{destination.Name} is {RouteAccess.Label(band)}";
                 AvailabilityTone = HudTone.Muted;
                 PlanBlockedReason = AvailabilityLine;
                 return;
@@ -267,7 +267,7 @@ namespace Airside.Presentation
 
             // The band the route needs, not the ceiling of the aircraft looking at it: a
             // Dash 8 on a Kingscote hop is flying a Regional route, not a Domestic one.
-            AvailabilityLine = $"Available with {BandLabel(band)} capability";
+            AvailabilityLine = $"{BandLabel(band)} route. You can fly it";
             AvailabilityTone = HudTone.Caution;
             if (OperatingNote.Length > 0)
                 AvailabilityLine = OperatingNote;
@@ -280,7 +280,7 @@ namespace Airside.Presentation
 
             if (aircraft.State != FleetState.AtStand)
             {
-                PlanBlockedReason = $"{aircraft.Registration} must be parked at Adelaide to be planned";
+                PlanBlockedReason = $"{aircraft.Registration} has to be parked at Adelaide first";
                 return;
             }
             if (aircraft.CheckUntil is { } checkEnds && departAt.CompareTo(checkEnds) < 0)
@@ -292,7 +292,7 @@ namespace Airside.Presentation
             if (operations.CareerState.Funds + alreadyPaid < dispatch)
             {
                 PlanBlockedReason =
-                    $"{(alreadyPaid > 0 ? "Change" : "Dispatch")} costs ${changeCost:N0}; you have ${operations.CareerState.Funds:N0}";
+                    $"{(alreadyPaid > 0 ? "The change" : "This flight")} costs ${changeCost:N0}. You have ${operations.CareerState.Funds:N0}";
                 return;
             }
 
@@ -452,7 +452,7 @@ namespace Airside.Presentation
 
             into.Text(new HudBox(pane.X, pane.Y, pane.Width, 30f), model.DestinationTitle, 22f,
                 HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
-            into.Caption(new HudBox(pane.X, pane.Y + 27f, pane.Width, 14f), "DESTINATION DOSSIER",
+            into.Caption(new HudBox(pane.X, pane.Y + 27f, pane.Width, 14f), "DESTINATION",
                 model.CareerLine.Length > 0 ? HudTone.Caution : HudTone.Muted);
             into.Hairline(new HudBox(pane.X, pane.Y + 46f, pane.Width, 1f));
 

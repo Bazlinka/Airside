@@ -35,18 +35,18 @@ namespace Airside.Simulation
 
         private static readonly (string Headline, string[] Codes, double Multiplier)[] Templates =
         {
-            ("Adelaide Fringe — interstate visitors pour in", new[] { "MEL", "SYD", "BNE" }, 1.35),
-            ("School holidays — families head for the coast", new[] { "KGC", "PLO", "OOL" }, 1.5),
-            ("Mining boom — fly-in crews needed up north", new[] { "CPD", "WYA", "BHQ", "PER" }, 1.45),
-            ("AFL finals — footy fans on the move", new[] { "MEL", "PER" }, 1.5),
-            ("Kangaroo Island food and wine festival", new[] { "KGC" }, 1.9),
-            ("Mount Gambier show weekend", new[] { "MGB", "MQL" }, 1.7),
-            ("Tasman rugby tour", new[] { "AKL", "CHC" }, 1.45),
-            ("Singapore airshow week", new[] { "SIN", "KUL" }, 1.4),
-            ("Outback music festival", new[] { "CPD", "ASP", "CED" }, 1.6),
-            ("Canberra budget week", new[] { "CBR", "SYD" }, 1.4),
-            ("Bali school-holiday rush", new[] { "DPS", "PER" }, 1.45),
-            ("Tasmania winter feast", new[] { "HBA", "MEL" }, 1.45)
+            ("The Adelaide Fringe is on", new[] { "MEL", "SYD", "BNE" }, 1.35),
+            ("School holidays have started", new[] { "KGC", "PLO", "OOL" }, 1.5),
+            ("The mines up north need fly-in crews", new[] { "CPD", "WYA", "BHQ", "PER" }, 1.45),
+            ("It's AFL finals week", new[] { "MEL", "PER" }, 1.5),
+            ("Kangaroo Island has its food and wine festival", new[] { "KGC" }, 1.9),
+            ("It's show weekend in Mount Gambier", new[] { "MGB", "MQL" }, 1.7),
+            ("A rugby tour is crossing the Tasman", new[] { "AKL", "CHC" }, 1.45),
+            ("It's airshow week in Singapore", new[] { "SIN", "KUL" }, 1.4),
+            ("An outback music festival is on", new[] { "CPD", "ASP", "CED" }, 1.6),
+            ("It's budget week in Canberra", new[] { "CBR", "SYD" }, 1.4),
+            ("Families are heading to Bali", new[] { "DPS", "PER" }, 1.45),
+            ("Tasmania's winter feast is on", new[] { "HBA", "MEL" }, 1.45)
         };
 
         private static readonly DateTime Epoch = new(2020, 1, 1);

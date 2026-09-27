@@ -155,12 +155,12 @@ namespace Airside.Presentation
             }
             else
             {
-                into.Caption(new HudBox(x, y, inner, 12f), "ADELAIDE  ·  PROVISIONAL OPERATOR", HudTone.Accent, HudAlign.Left, 10f);
+                into.Caption(new HudBox(x, y, inner, 12f), "ADELAIDE AIRPORT", HudTone.Accent, HudAlign.Left, 10f);
                 y += 22f;
                 into.Text(new HudBox(x, y, inner, 26f), "Start small. Grow the airline.", 20f, HudTone.Default, HudTextStyle.Bold);
                 y += 32f;
                 var message = string.IsNullOrEmpty(model.SaveError)
-                    ? "One Saab on the regional bays. Fly contracts, earn the next aircraft, and grow from Provisional to an established international airline."
+                    ? "One Saab on the regional bays. Fly contracts, earn your next aircraft and grow into an international airline."
                     : model.SaveError;
                 into.Text(new HudBox(x, y, inner, 52f), message, 12f,
                     string.IsNullOrEmpty(model.SaveError) ? HudTone.Muted : HudTone.Negative, HudTextStyle.Wrap);

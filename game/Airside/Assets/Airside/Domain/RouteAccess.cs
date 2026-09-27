@@ -101,6 +101,16 @@ namespace Airside.Domain
         /// two names — a HUD line drawing this used to clip against its own box at the widest
         /// band (four names plus a suffix ran past a ~735px detail pane).
         /// </summary>
+        /// <summary>The band in a sentence: "regional", "long-haul", "Tasman".</summary>
+        public static string Label(RouteBand band) => band switch
+        {
+            RouteBand.Domestic => "domestic",
+            RouteBand.National => "national",
+            RouteBand.Tasman => "Tasman",
+            RouteBand.LongHaul => "long-haul",
+            _ => "regional"
+        };
+
         public static string ExampleDestinations(RouteBand band) => band switch
         {
             RouteBand.Domestic => "Melbourne, Sydney",

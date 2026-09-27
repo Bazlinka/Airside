@@ -67,7 +67,7 @@ namespace Airside.Presentation
         {
             SetupStep.Identity when !NameValid => $"Give your airline a name ({NameLimit} characters at most).",
             SetupStep.Identity when !CodeValid => IsTakenCode(EffectiveCode)
-                ? $"{EffectiveCode} belongs to a real airline at Adelaide — choose another code."
+                ? $"{EffectiveCode} belongs to a real airline at Adelaide. Choose another code."
                 : "The flight code is two or three letters.",
             _ => string.Empty
         };
@@ -308,11 +308,11 @@ namespace Airside.Presentation
             var example = new HudBox(layout.CodeField.Right + 14f, layout.CodeField.Y, body.Right - layout.CodeField.Right - 14f, 38f);
             into.Text(example.WithHeight(18f).Offset(0f, 2f), $"Flights read {model.EffectiveCode} 101, {model.EffectiveCode} 204 …",
                 12f, HudTone.Default, HudTextStyle.Bold);
-            into.Text(example.WithHeight(16f).Offset(0f, 21f), model.CodeEdited ? "Your own code" : "Suggested from the name — type to change it",
+            into.Text(example.WithHeight(16f).Offset(0f, 21f), model.CodeEdited ? "Your own code" : "Made from the name. Type to change it",
                 10f, HudTone.Muted);
             into.Text(new HudBox(body.X, layout.CodeField.Bottom + 22f, body.Width, 60f),
-                "Your airline is based at Adelaide Airport with one Saab 340B on the regional bays. The name is painted on "
-                + "every aircraft you fly; you can rename it later from the Career page.",
+                "You start at Adelaide Airport with one Saab 340B on the regional bays. The name goes on "
+                + "every aircraft you fly. You can change it later on the Career page.",
                 11f, HudTone.Muted, HudTextStyle.Wrap);
         }
 
@@ -369,9 +369,9 @@ namespace Airside.Presentation
             var points = new[]
             {
                 ("1", "Plan a flight", "Select your Saab, open Map (Tab) and pick a destination and time."),
-                ("2", "Every flight pays", "Revenue minus dispatch cost. Contracts add a bonus on top."),
-                ("3", "Stay on time", "Punctual pushbacks build reliability; late ones and overdue checks cost it."),
-                ("4", "Grow", "Finish each tier's goals on the Career ring to unlock bigger aircraft and routes.")
+                ("2", "Every flight pays", "You earn the fares minus the cost of the flight. Contracts add a bonus."),
+                ("3", "Stay on time", "Leaving on time builds reliability. Late flights and overdue checks cost it."),
+                ("4", "Grow", "Finish each tier's goals to unlock bigger aircraft and longer routes.")
             };
             foreach (var (number, title, text) in points)
             {
@@ -417,7 +417,7 @@ namespace Airside.Presentation
             into.Pill(new HudBox(preview.X + 20f, stage.Bottom + 42f, 150f, 22f),
                 $"{model.EffectiveCode} 101  ADL › KGC", HudTone.Route, fontSize: 9f);
             into.Text(new HudBox(preview.X + 20f, stage.Bottom + 74f, preview.Width - 40f, 16f),
-                $"One Saab 340B  ·  ${FlightEconomics.StartingFunds:N0} float  ·  Adelaide", 11f, HudTone.Muted);
+                $"One Saab 340B  ·  ${FlightEconomics.StartingFunds:N0}  ·  Adelaide", 11f, HudTone.Muted);
         }
     }
 }

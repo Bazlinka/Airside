@@ -92,38 +92,38 @@ namespace Airside.Simulation
                 : (career.RecentOperatingMargin >= 0 ? "+$" : "−$") + Math.Abs(career.RecentOperatingMargin).ToString("N0");
 
             // Provisional → Regional: prove the airline can keep a commitment.
-            goals.Add(new CareerGoalStatus("prove-service", "Fulfil a regional contract", OperatingTier.Provisional, regionalContracts, 1));
-            goals.Add(new CareerGoalStatus("first-rotations", "Fly four services", OperatingTier.Provisional, career.CompletedPlayerRotations, 4));
-            goals.Add(new CareerGoalStatus("regional-reliability", "Hold reliability at 70%+", OperatingTier.Provisional, rel, 70));
+            goals.Add(new CareerGoalStatus("prove-service", "Finish a regional contract", OperatingTier.Provisional, regionalContracts, 1));
+            goals.Add(new CareerGoalStatus("first-rotations", "Complete 4 flights", OperatingTier.Provisional, career.CompletedPlayerRotations, 4));
+            goals.Add(new CareerGoalStatus("regional-reliability", "Keep reliability at 70% or more", OperatingTier.Provisional, rel, 70));
             // Regional → Domestic: a small regional network with its own base.
-            goals.Add(new CareerGoalStatus("regional-network", "Serve four regional destinations", OperatingTier.Regional, regional, 4));
-            goals.Add(new CareerGoalStatus("regional-fleet", "Operate three aircraft", OperatingTier.Regional, fleetCount, 3));
+            goals.Add(new CareerGoalStatus("regional-network", "Serve 4 regional towns", OperatingTier.Regional, regional, 4));
+            goals.Add(new CareerGoalStatus("regional-fleet", "Fly 3 aircraft", OperatingTier.Regional, fleetCount, 3));
             goals.Add(new CareerGoalStatus("regional-base", "Expand the Adelaide base", OperatingTier.Regional,
                 career.BaseLevel >= PlayerBaseLevel.ExpandedRegional ? 1 : 0, 1));
-            goals.Add(new CareerGoalStatus("regional-service", "Fly 30 services", OperatingTier.Regional,
+            goals.Add(new CareerGoalStatus("regional-service", "Complete 30 flights", OperatingTier.Regional,
                 career.CompletedPlayerRotations, 30));
-            goals.Add(new CareerGoalStatus("domestic-reliability", "Hold reliability at 80%+", OperatingTier.Regional, rel, 80));
+            goals.Add(new CareerGoalStatus("domestic-reliability", "Keep reliability at 80% or more", OperatingTier.Regional, rel, 80));
             // Domestic → International: jets, interstate cities and a second base.
-            goals.Add(new CareerGoalStatus("domestic-network", "Serve three interstate destinations", OperatingTier.Domestic, domestic, 3));
-            goals.Add(new CareerGoalStatus("domestic-jet", "Operate a jet", OperatingTier.Domestic, hasJet, 1));
+            goals.Add(new CareerGoalStatus("domestic-network", "Serve 3 interstate cities", OperatingTier.Domestic, domestic, 3));
+            goals.Add(new CareerGoalStatus("domestic-jet", "Fly a jet", OperatingTier.Domestic, hasJet, 1));
             goals.Add(new CareerGoalStatus("domestic-base", "Open an outstation base", OperatingTier.Domestic,
                 career.OutstationBases.Count, 1));
-            goals.Add(new CareerGoalStatus("domestic-service", "Fly 75 services", OperatingTier.Domestic,
+            goals.Add(new CareerGoalStatus("domestic-service", "Complete 75 flights", OperatingTier.Domestic,
                 career.CompletedPlayerRotations, 75));
-            goals.Add(new CareerGoalStatus("international-reliability", "Hold reliability at 88%+", OperatingTier.Domestic, rel, 88));
+            goals.Add(new CareerGoalStatus("international-reliability", "Keep reliability at 88% or more", OperatingTier.Domestic, rel, 88));
             // International → established airline (the finale; see FinaleReady).
-            goals.Add(new CareerGoalStatus("international-network", "Serve three international destinations",
+            goals.Add(new CareerGoalStatus("international-network", "Serve 3 overseas cities",
                 OperatingTier.International, international, FinalInternationalDestinations));
-            goals.Add(new CareerGoalStatus("international-widebody", "Operate a widebody", OperatingTier.International, hasWidebody, 1));
-            goals.Add(new CareerGoalStatus("international-bases", "Run three bases", OperatingTier.International,
+            goals.Add(new CareerGoalStatus("international-widebody", "Fly a widebody", OperatingTier.International, hasWidebody, 1));
+            goals.Add(new CareerGoalStatus("international-bases", "Run 3 bases", OperatingTier.International,
                 career.BaseCount, FinalBases));
-            goals.Add(new CareerGoalStatus("established-fleet", "Operate 18 aircraft", OperatingTier.International,
+            goals.Add(new CareerGoalStatus("established-fleet", "Fly 18 aircraft", OperatingTier.International,
                 fleetCount, FinalFleet));
             goals.Add(new CareerGoalStatus("established-network", "Serve 12 destinations", OperatingTier.International,
                 career.ServedDestinations.Count, FinalDestinations));
-            goals.Add(new CareerGoalStatus("established-margin", "Stay profitable over 30 services",
+            goals.Add(new CareerGoalStatus("established-margin", "Make a profit over your last 30 flights",
                 OperatingTier.International, marginProgress, FinalMarginServices, marginDetail));
-            goals.Add(new CareerGoalStatus("established-reliability", "Hold reliability at 90%+", OperatingTier.International, rel, 90));
+            goals.Add(new CareerGoalStatus("established-reliability", "Keep reliability at 90% or more", OperatingTier.International, rel, 90));
             return goals;
         }
 
@@ -205,13 +205,13 @@ namespace Airside.Simulation
             return goal.Id switch
             {
                 "prove-service" when band == RouteBand.Regional =>
-                    "Career goal · a regional contract here can prove service",
+                    "Career goal · a regional contract here counts",
                 "regional-network" when band == RouteBand.Regional =>
-                    "Career goal · a new regional destination counts",
+                    "Career goal · a new regional town counts",
                 "domestic-network" when band is RouteBand.Domestic or RouteBand.National =>
-                    "Career goal · a new interstate destination counts",
+                    "Career goal · a new interstate city counts",
                 "international-network" when band >= RouteBand.Tasman =>
-                    "Career goal · a new international destination counts",
+                    "Career goal · a new overseas city counts",
                 "established-network" => "Career goal · a new destination counts",
                 _ => string.Empty
             };

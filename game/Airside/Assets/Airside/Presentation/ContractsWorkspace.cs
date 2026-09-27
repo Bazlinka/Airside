@@ -67,7 +67,7 @@ namespace Airside.Presentation
         public string EmptyOffersLine { get; private set; } = string.Empty;
 
         public string FooterLine =>
-            "Accepting a contract is a service commitment. Cancellation can reduce reliability.";
+            "A contract is a promise. Abandon it and your reliability drops.";
 
         public void Rebuild(AirlineOperations operations, SimulationTime now)
         {
@@ -107,23 +107,23 @@ namespace Airside.Presentation
 
             var done = career.ActiveContract.CompletedRotations;
             var required = definition.RequiredRotations;
-            ActiveProgressText = $"{done} of {required} rotations complete";
+            ActiveProgressText = $"{done} of {required} flights done";
             ActiveProgress01 = required <= 0 ? 0f : Clamp01(done / (float)required);
             ActiveProgressPercent = $"{(int)(ActiveProgress01 * 100f)}%";
 
-            _activeTerms.Add($"Eligible: {definition.EligibleType.Name}");
-            _activeTerms.Add($"${definition.PaymentPerRotation:N0} per rotation"
-                             + $"  ·  ${definition.CompletionReward:N0} completion bonus");
+            _activeTerms.Add($"Aircraft: {definition.EligibleType.Name}");
+            _activeTerms.Add($"${definition.PaymentPerRotation:N0} a flight"
+                             + $"  ·  ${definition.CompletionReward:N0} when done");
             _activeTerms.Add(definition.ReliabilityLossOnCancel > 0
-                ? $"Cancellation: −{definition.ReliabilityLossOnCancel} reliability"
-                : "Cancellation: no reliability penalty");
+                ? $"Abandoning costs {definition.ReliabilityLossOnCancel} reliability"
+                : "Abandoning costs no reliability");
             if (definition.ReliabilityGainPerRotation > 0)
-                _activeTerms.Add($"+{definition.ReliabilityGainPerRotation} reliability per rotation");
+                _activeTerms.Add($"+{definition.ReliabilityGainPerRotation} reliability a flight");
             // ADR 0127: a deadline turns the contract into a commitment with a clock on it.
             if (operations.ContractExpiresAt() is { } due)
             {
                 var left = Math.Max(0, due.ElapsedSeconds - now.ElapsedSeconds);
-                _activeTerms.Add($"Due in {RouteMapWorkspaceModel.Duration(left)} — lapses for −{definition.ReliabilityLossOnCancel} reliability");
+                _activeTerms.Add($"Due in {RouteMapWorkspaceModel.Duration(left)}. Miss it and lose {definition.ReliabilityLossOnCancel} reliability");
             }
 
 
@@ -144,18 +144,18 @@ namespace Airside.Presentation
                 var total = definition.PaymentPerRotation * definition.RequiredRotations
                             + definition.CompletionReward;
                 var title = OfferTitle(definition);
-                var terms = $"{definition.RequiredRotations} {(definition.RequiredRotations == 1 ? "flight" : "rotations")}"
+                var terms = $"{definition.RequiredRotations} {(definition.RequiredRotations == 1 ? "flight" : "flights")}"
                             + $"  ·  {definition.EligibleType.Name}"
                             + $"  ·  ${total:N0} total"
                             + (definition.HasDeadline ? $"  ·  within {RouteMapWorkspaceModel.Duration(definition.DeadlineSeconds)}" : string.Empty);
 
                 string lockReason;
                 if (career.ActiveContract != null)
-                    lockReason = "One contract at a time — finish or abandon the active one";
+                    lockReason = "One contract at a time. Finish or abandon yours first";
                 else if (career.Tier < definition.RequiredTier)
-                    lockReason = $"Requires {definition.RequiredTier} operating tier";
+                    lockReason = $"Needs the {definition.RequiredTier} tier";
                 else if (!OwnsType(operations, definition.EligibleType))
-                    lockReason = $"Requires {Article.A(definition.EligibleType.Name)} in your fleet";
+                    lockReason = $"Needs {Article.A(definition.EligibleType.Name)} in your fleet";
                 else
                     lockReason = string.Empty;
 
@@ -165,8 +165,8 @@ namespace Airside.Presentation
 
             if (_offers.Count == 0)
                 EmptyOffersLine = offers.Count == 0
-                    ? "No offers this window — fly, raise reliability, or buy a type that opens longer routes."
-                    : "Every offer this window is already complete. New offers are on the way.";
+                    ? "No offers right now. Fly more, raise your reliability or buy an aircraft that opens longer routes."
+                    : "You have done every offer on the board. New ones are coming.";
         }
 
         /// <summary>"Kingscote charter", "Ceduna medical flight", "Mildura freight run", "Melbourne domestic service".</summary>
@@ -178,7 +178,7 @@ namespace Airside.Presentation
                 ContractKind.Charter => $"{place} charter",
                 ContractKind.Medical => $"{place} medical flight",
                 ContractKind.Freight => $"{place} freight run",
-                _ => $"{place} {RouteMapWorkspaceModel.BandLabel(RouteAccess.BandOf(definition.DestinationCode)).ToLowerInvariant()} service"
+                _ => $"{place} {RouteMapWorkspaceModel.BandLabel(RouteAccess.BandOf(definition.DestinationCode)).ToLowerInvariant()} route"
             };
         }
 
@@ -369,8 +369,7 @@ namespace Airside.Presentation
             {
                 into.Fill(card.WithHeight(96f), HudTone.Default, 0.03f);
                 into.Text(card.Inset(16f, 18f, 16f, 0f).WithHeight(44f),
-                    "No contract accepted. Take one from the market to add a completion bonus on top of "
-                    + "the per-flight pay.", 13f, HudTone.Muted, HudTextStyle.Wrap);
+                    "No contract yet. Take one from the offers below. It pays a bonus on top of each flight's pay.", 13f, HudTone.Muted, HudTextStyle.Wrap);
                 return;
             }
 
@@ -408,7 +407,7 @@ namespace Airside.Presentation
             // Abandon is the only way out of a contract the airline can no longer fly (ADR 0121).
             const float abandonWidth = 112f;
             into.Button(new HudBox(x, y, width - abandonWidth - 8f, 30f),
-                model.HasEligibleAircraft ? $"ELIGIBLE: {model.EligibleAircraftLine}" : "NO ELIGIBLE AIRCRAFT",
+                model.HasEligibleAircraft ? $"FLY WITH {model.EligibleAircraftLine}" : "NO AIRCRAFT FOR THIS",
                 HudAction.ViewEligibleAircraft, HudButtonStyle.Secondary, model.HasEligibleAircraft);
             into.Button(new HudBox(x + width - abandonWidth, y, abandonWidth, 30f), "ABANDON",
                 HudAction.CancelContract, HudButtonStyle.Destructive);
@@ -462,7 +461,7 @@ namespace Airside.Presentation
 
             if (shown < model.Offers.Count)
                 into.Text(new HudBox(layout.OffersColumn.X, layout.OffersColumn.Bottom - 16f,
-                    layout.OffersColumn.Width, 16f), $"{model.Offers.Count - shown} more this window", 11f,
+                    layout.OffersColumn.Width, 16f), $"{model.Offers.Count - shown} more on offer", 11f,
                     HudTone.Muted, HudTextStyle.Caption);
         }
     }

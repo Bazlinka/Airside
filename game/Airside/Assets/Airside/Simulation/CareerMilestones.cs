@@ -35,23 +35,23 @@ namespace Airside.Simulation
             // Achievements are keepsakes, not requirements: none repeats a CareerRoadmap goal or a
             // tier (those have their own track), and fleet size is the whole airline, outstations
             // included, so "fleet at capacity" is reachable.
-            list.Add(new CareerMilestone("first-rotation", "First service flown",
+            list.Add(new CareerMilestone("first-rotation", "First flight flown",
                 career.CompletedPlayerRotations >= 1));
-            list.Add(new CareerMilestone("first-contract", "First contract fulfilled",
+            list.Add(new CareerMilestone("first-contract", "First contract finished",
                 career.CompletedContractIds.Count >= 1));
-            list.Add(new CareerMilestone("second-aircraft", "Fleet grown past the starter aircraft",
+            list.Add(new CareerMilestone("second-aircraft", "A second aircraft",
                 fleetSize >= 2));
-            list.Add(new CareerMilestone("ten-contracts", "10 contracts fulfilled",
+            list.Add(new CareerMilestone("ten-contracts", "10 contracts finished",
                 career.CompletedContractIds.Count >= 10));
             list.Add(new CareerMilestone("jet-operator", "First jet in the fleet",
                 AirlineCareerState.OwnsAnyJet(ownedTypes)));
             list.Add(new CareerMilestone("first-outstation", "First outstation base",
                 career.OutstationBases.Count >= 1));
-            list.Add(new CareerMilestone("century", "100 services flown",
+            list.Add(new CareerMilestone("century", "100 flights flown",
                 career.CompletedPlayerRotations >= 100));
             list.Add(new CareerMilestone("widebody-operator", "First widebody in the fleet",
                 OwnsWidebody(ownedTypes)));
-            list.Add(new CareerMilestone("elite-reliability", "Reliability at 95 or better",
+            list.Add(new CareerMilestone("elite-reliability", "Reliability at 95% or more",
                 career.Reliability >= 95 && career.CompletedPlayerRotations >= 50));
             list.Add(new CareerMilestone("full-fleet", $"Fleet at capacity ({AircraftAcquisition.MaxPlayerAircraft})",
                 fleetSize >= AircraftAcquisition.MaxPlayerAircraft));

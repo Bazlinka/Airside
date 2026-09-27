@@ -81,10 +81,10 @@ namespace Airside.Presentation
             NextCaption = _next.Count == 0 ? string.Empty
                 : $"THEN, TOWARD {(career.Tier + 1 == OperatingTier.International ? "ESTABLISHED AIRLINE" : (career.Tier + 2).ToString().ToUpperInvariant())}";
             Subtitle = FinaleReached
-                ? "Established airline — every career goal met. Keep flying."
-                : $"{career.Tier} operator · finish every step below to reach {stage.TargetLabel}. Pin one to lead the HUD.";
+                ? "You are an established airline. Every goal is done. Keep flying."
+                : $"{career.Tier} tier. Finish every step below to reach {stage.TargetLabel}. Pin one to show it on the HUD.";
             FooterLine = $"{career.BaseCount} base{(career.BaseCount == 1 ? "" : "s")} · {operations.PlayerFleetCount()} aircraft · "
-                         + $"{career.ServedDestinations.Count} destinations · {career.CompletedPlayerRotations} services · "
+                         + $"{career.ServedDestinations.Count} destinations · {career.CompletedPlayerRotations} flights · "
                          + $"{career.ActivePlaySeconds / 3600} h played";
         }
     }

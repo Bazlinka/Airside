@@ -649,7 +649,7 @@ namespace Airside.Presentation
             }
 
             if (aircraft.State == FleetState.AtStand)
-                return $"Available on {StandNames.Display(aircraft.Stand)} · no flight planned";
+                return $"Parked on {StandNames.Display(aircraft.Stand)}, no flight planned";
 
             var suffix = AircraftStatus.WaitSuffix(aircraft, now);
             var status = OperationsSummary.CompactState(aircraft, now);
@@ -1127,7 +1127,7 @@ namespace Airside.Presentation
 
             if (allMovements && last < relevant.Count)
                 into.Text(new HudBox(layout.Board.X, layout.Board.Bottom - 16f,
-                        layout.Board.Width, 16f), $"{relevant.Count - last} more below · scroll to browse",
+                        layout.Board.Width, 16f), $"{relevant.Count - last} more below. Scroll to see them.",
                     11f, HudTone.Muted, HudTextStyle.Caption);
 
         }
@@ -1201,7 +1201,7 @@ namespace Airside.Presentation
             if (!model.SelectedIsPlayer)
             {
                 into.Text(new HudBox(pane.X, y, pane.Width, 36f),
-                    "Another operator's flight — you can watch it, but not command it.", 12f, HudTone.Muted,
+                    "Another airline's flight. You can watch it but not give it orders.", 12f, HudTone.Muted,
                     HudTextStyle.Wrap);
                 return;
             }

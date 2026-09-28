@@ -69,7 +69,7 @@ namespace Airside.Tests
             try
             {
                 var wing = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Wing L");
-                Assert.That(wing.GetComponent<Renderer>().sharedMaterial.color.r, Is.EqualTo(0.58f).Within(0.01f),
+                Assert.That(wing.GetComponent<Renderer>().sharedMaterial.color.r, Is.InRange(0.70f, 0.85f),
                     "ATR high wing uses a restrained neutral finish");
                 var tail = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Tail");
                 Assert.That(tail.GetComponent<Renderer>().sharedMaterial.color, Is.EqualTo(Color.white),
@@ -100,7 +100,7 @@ namespace Airside.Tests
                 }
 
                 var wing = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Wing L");
-                Assert.That(wing.GetComponent<Renderer>().sharedMaterial.color.r, Is.EqualTo(0.56f).Within(0.01f),
+                Assert.That(wing.GetComponent<Renderer>().sharedMaterial.color.r, Is.InRange(0.70f, 0.85f),
                     "Q400 high wing uses a restrained neutral finish");
                 var winglet = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Winglet L");
                 Assert.That(winglet.GetComponent<Renderer>().sharedMaterial.color, Is.EqualTo(Color.white),
@@ -145,7 +145,7 @@ namespace Airside.Tests
 
                 var wing = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Wing L");
                 var wingColor = wing.GetComponent<Renderer>().sharedMaterial.color;
-                Assert.That(wingColor.r, Is.EqualTo(0.76f).Within(0.01f), "Saab wings use restrained painted aluminium");
+                Assert.That(wingColor.r, Is.InRange(0.70f, 0.85f), "Saab wings use restrained painted aluminium");
                 var window = root.GetComponentsInChildren<Transform>(true).First(t => t.name.StartsWith("Cabin window "));
                 var windowColor = window.GetComponent<Renderer>().sharedMaterial.color;
                 Assert.That(windowColor.r, Is.LessThan(0.1f), "Saab glazing remains readable at follow distance");
@@ -183,7 +183,7 @@ namespace Airside.Tests
 
                 var wing = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Wing L");
                 var wingColor = wing.GetComponent<Renderer>().sharedMaterial.color;
-                Assert.That(wingColor.r, Is.EqualTo(0.58f).Within(0.01f), "737 wings use a restrained neutral finish");
+                Assert.That(wingColor.r, Is.InRange(0.70f, 0.85f), "737 wings use a restrained neutral finish");
                 var winglet = root.GetComponentsInChildren<Transform>(true).Single(t => t.name == "Winglet L");
                 Assert.That(winglet.GetComponent<Renderer>().sharedMaterial.color, Is.EqualTo(Color.white),
                     "split winglets retain the airline accent");

@@ -31,15 +31,15 @@ LINE_PER_C = 6.4            # TextMesh line box metres per character size at fon
 CAP_OF_LINE = 0.716
 ADVANCE = 0.62              # AircraftTitlePaint.AverageAdvanceFraction
 
-# (airline title, accent hex, registration) per type — representative Adelaide operators.
+# (airline title, accent hex, registration) per type — original fictional colourways (runtime retains the live airline name and colour).
 OPERATORS = {
-    "ATR42": ("SOUTHERN CROSS", "#39708A", "VH-PAX"), "SF34": ("REX", "#D2491E", "VH-ZRC"),
-    "DH8D": ("QANTASLINK", "#D8141E", "VH-QOK"), "E190": ("AIRSIDE", "#1F3A93", "VH-PEA"),
-    "A223": ("AIRSIDE", "#1F3A93", "VH-PAB"), "A320": ("JETSTAR", "#F26623", "VH-VFH"),
-    "B738": ("QANTAS", "#E4002B", "VH-VZX"), "B38M": ("VIRGIN", "#D71920", "VH-8IA"),
-    "A21N": ("AIR NZ", "#111111", "ZK-NNA"), "A359": ("EMIRATES", "#D71921", "A6-EVA"),
-    "A339": ("MALAYSIA", "#ED1B2F", "9M-MAB"), "B789": ("QANTAS", "#E4002B", "VH-ZNA"),
-    "B78X": ("SINGAPORE", "#1B3F8B", "9V-SCA"),
+    "ATR42": ("COASTLINE", "#0F8B8D", "VH-CSR"), "SF34": ("EMU AIR", "#B8742A", "VH-EMU"),
+    "DH8D": ("COASTLINE", "#0F8B8D", "VH-CSQ"), "E190": ("SOUTHERN CROSS", "#1F3A93", "VH-SCE"),
+    "A223": ("EMU AIR", "#B8742A", "VH-EMA"), "A320": ("COASTLINE", "#0F8B8D", "VH-CSA"),
+    "B738": ("EMU AIR", "#B8742A", "VH-EMB"), "B38M": ("SOUTHERN CROSS", "#1F3A93", "VH-SCM"),
+    "A21N": ("COASTLINE", "#0F8B8D", "VH-CSN"), "A359": ("SOUTHERN CROSS", "#1F3A93", "VH-SCX"),
+    "A339": ("EMU AIR", "#B8742A", "VH-EMW"), "B789": ("COASTLINE", "#0F8B8D", "VH-CSW"),
+    "B78X": ("SOUTHERN CROSS", "#1F3A93", "VH-SCZ"),
 }
 INK = (41, 46, 51)
 VIEWS = {"side": (90.0, 0.0), "front_high": (38.0, 22.0), "rear_low": (140.0, -8.0),
@@ -103,6 +103,10 @@ def label_tris(text, c, pos, side, tilt, anchor_at_nose, offset):
 
 def paint_colour(accent):
     def colour(name):
+        if name == "livery_emblem":
+            return (41, 64, 79) if sum(c*w for c,w in zip(accent,(.2126,.7152,.0722))) > .62*255 else (245, 242, 230)
+        if name == "livery_secondary":
+            return (201, 166, 99) if accent[2] + accent[1] * 0.35 > accent[0] else (41, 64, 79)
         if name.startswith(("livery_", "tail_fin", "rudder", "winglet", "dorsal")):
             return accent
         if name.startswith(("engine_", "nacelle_", "pylon_", "intake_", "cowl_", "oil_cooler")):

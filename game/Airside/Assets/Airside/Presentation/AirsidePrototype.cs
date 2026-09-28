@@ -2142,7 +2142,7 @@ namespace Airside.Presentation
             var lamp = part.Transform;
             var kind = part.NavLight;
             if (part.Light == null)
-                part.Light = lamp.GetComponent<Light>();
+                part.Light = LampPivot(lamp).GetComponent<Light>() ?? lamp.GetComponent<Light>();
             var light = part.Light;
             if (light == null)
             {
@@ -2193,7 +2193,7 @@ namespace Airside.Presentation
         {
             var lamp = part.Transform;
             if (part.Light == null)
-                part.Light = lamp.GetComponent<Light>();
+                part.Light = LampPivot(lamp).GetComponent<Light>() ?? lamp.GetComponent<Light>();
             var light = part.Light;
             if (light == null)
             {
@@ -2216,7 +2216,7 @@ namespace Airside.Presentation
         {
             var lamp = part.Transform;
             if (part.Light == null)
-                part.Light = lamp.GetComponent<Light>();
+                part.Light = LampPivot(lamp).GetComponent<Light>() ?? lamp.GetComponent<Light>();
             var light = part.Light;
             if (light == null)
             {
@@ -2250,7 +2250,7 @@ namespace Airside.Presentation
         {
             var lamp = part.Transform;
             if (part.Light == null)
-                part.Light = lamp.GetComponent<Light>();
+                part.Light = LampPivot(lamp).GetComponent<Light>() ?? lamp.GetComponent<Light>();
             var light = part.Light;
             if (light == null)
             {
@@ -9968,7 +9968,6 @@ namespace Airside.Presentation
                 AirsideAircraftRenderBatcher.CombineStaticGlazing(root);
                 if (finalAtr42)
                 {
-                    PolishFinalAtrMaterials(root);
                     EnsureAircraftLod(root);
                 }
             }
@@ -10039,6 +10038,10 @@ namespace Airside.Presentation
 
         private static string RenameAircraftPart(string kitName)
         {
+            if (kitName.StartsWith("livery_cowl_", StringComparison.Ordinal))
+                return kitName.EndsWith("left", StringComparison.Ordinal) ? "Engine livery L" : "Engine livery R";
+            if (kitName is "livery_secondary" or "livery_emblem")
+                return "Livery " + kitName.Substring("livery_".Length);
             if (kitName.StartsWith("cabin_window_r", StringComparison.Ordinal))
                 return "Cabin window R" + kitName.Substring("cabin_window_r".Length);
             if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal))
@@ -10273,6 +10276,8 @@ namespace Airside.Presentation
 
         private static Color? AircraftPartColor(string kitName, Color accent)
         {
+            if (kitName.StartsWith("livery_", StringComparison.Ordinal))
+                return AircraftLiveryPaint.Colour(kitName, accent);
             if (kitName.StartsWith("glazing_", StringComparison.Ordinal))
             {
                 if (kitName.EndsWith("_trim", StringComparison.Ordinal))
@@ -11415,25 +11420,6 @@ namespace Airside.Presentation
             if (smoothness.HasValue)
                 RendererTintBlock.SetFloat("_Smoothness", smoothness.Value);
             renderer.SetPropertyBlock(RendererTintBlock);
-        }
-
-        /// <summary>
-        /// Restrained PBR response for the final ATR: skin, glass, rubber, metal and
-        /// lights without changing the fictional Airside livery.
-        /// </summary>
-        private static void PolishFinalAtrMaterials(Transform aircraft)
-        {
-            foreach (var renderer in aircraft.GetComponentsInChildren<Renderer>(true))
-            {
-                if (renderer == null || renderer.name is "GroundShadow" or "PropDisc")
-                    continue;
-                var kind = AirsideMaterialLibrary.InferFromMeshName(renderer.name);
-                var color = GetRendererColor(renderer);
-                // Skip near-black UV-failure patches — lift them to a usable panel grey.
-                if (color.r < 0.04f && color.g < 0.04f && color.b < 0.04f && color.a > 0.9f)
-                    color = new Color(0.55f, 0.58f, 0.62f, 1f);
-                renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(color, kind);
-            }
         }
 
         /// <summary>

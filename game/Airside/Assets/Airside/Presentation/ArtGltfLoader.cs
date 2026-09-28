@@ -47,7 +47,8 @@ namespace Airside.Presentation
             {
                 var name = rename != null ? rename(entry.Name) : entry.Name;
                 var color = colorFor?.Invoke(entry.Name) ?? new Color(0.61f, 0.64f, 0.63f);
-                CreateMeshObject(name, entry.Mesh, color, holder, Vector3.zero, Quaternion.identity);
+                CreateMeshObject(name, entry.Mesh, color, holder, Vector3.zero, Quaternion.identity,
+                    aircraft: IsAircraftKit(artRelativePath));
             }
 
             root = holder;
@@ -144,7 +145,8 @@ namespace Airside.Presentation
             Color color,
             Transform parent,
             Vector3 position,
-            Quaternion rotation)
+            Quaternion rotation,
+            bool aircraft = false)
         {
             var go = new GameObject(name);
             var transform = go.transform;
@@ -171,8 +173,9 @@ namespace Airside.Presentation
             // Shared: kits build one renderer per mesh, and identical (colour, kind)
             // pairs are overwhelmingly common. Runtime tinting clones via .material.
             var hasUsableUvs = AirsideMeshUtil.HasUsableUvs(mesh);
-            renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
-                color, kind, useTextures: hasUsableUvs);
+            renderer.sharedMaterial = aircraft
+                ? AircraftLiveryPaint.MaterialFor(name, color)
+                : AirsideMaterialLibrary.CreateShared(color, kind, useTextures: hasUsableUvs);
             AirsideSceneIndex.Remember(transform);
             return transform;
         }

@@ -52,6 +52,9 @@ METAL = (140, 143, 148)
 
 def colour(name):
     n = name
+    if n == "livery_emblem": return (245, 242, 230)
+    if n == "livery_secondary": return (201, 166, 99)
+    if n.startswith(("livery_", "tail_fin", "rudder", "dorsal", "winglet")): return SLATE
     if n.startswith(("tire_",)):
         return RUBBER
     if n.startswith(("wheel_", "rim_")):

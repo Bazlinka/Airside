@@ -1,0 +1,14 @@
+Unity 6000.3.23f1
+Baseline: 1228 total, 1223 passed, 4 failed, 1 skipped
+Revised: 1242 total, 1237 passed, 4 failed, 1 skipped
+No additional failures. All 14 new paint tests passed.
+
+Existing failures:
+Airside.Tests.AircraftCatalogueTests.FlightPlanning_UsesEachTypesOwnCruiseAndPracticalRange
+Airside.Tests.GroundSeparationTests.BusyDay_NoAircraftDriveThroughEachOther
+Airside.Tests.TerminalGateOperationsTests.Gate13_NeverResolvesAsARegionalBay
+Airside.Tests.TerminalGateOperationsTests.Gate13_NoseInToTheStop_TailFirstPushback_ThenForwardTurnout
+
+After packaged review found the lamp-cache issue:
+AircraftLiveryPaintTests: 18 passed, 0 failed (14 paint + 4 repeated lamp-cache cases).
+Full simulation suite was not repeated for the four-line lamp lookup correction.

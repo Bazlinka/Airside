@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Flights have numbers and city names.** A departure reads like a real board: ZL3482
+  Kingscote, QF680 Sydney, VA230 Melbourne. The aircraft type stays in the small print.
+  Extra flights, and the player's own, still get a number when no published service fits.
+
 - **A second Saab is for sale at the start.** The airline still begins with one Saab 340B. Another
   is $1,600 from the opening cash, and it parks on the other regional bay. A toast now says when
   a flight has landed at its destination, and when it has returned home and is awaiting dispatch.

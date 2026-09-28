@@ -225,6 +225,9 @@ namespace Airside.Presentation
         /// <summary>The registration the board and the detail pane agree on, or empty.</summary>
         public string SelectedRegistration { get; private set; } = string.Empty;
 
+        /// <summary>Flight number and city, or the registration when nothing is booked.</summary>
+        public string SelectedHeadline { get; private set; } = string.Empty;
+
         public bool HasSelection => SelectedRegistration.Length > 0;
         public string SelectedTypeName { get; private set; } = string.Empty;
         public string SelectedRouteLine { get; private set; } = string.Empty;
@@ -258,6 +261,7 @@ namespace Airside.Presentation
             _dayMarks.Clear();
             Tab = tab;
             SelectedRegistration = string.Empty;
+            SelectedHeadline = string.Empty;
             SelectedTypeName = string.Empty;
             SelectedRouteLine = string.Empty;
             SelectedStatusLine = string.Empty;
@@ -522,11 +526,14 @@ namespace Airside.Presentation
                     at = push;
                 var time = clock.TimeText(at);
                 var stand = string.IsNullOrEmpty(e.Stand.Value) ? "—" : StandNames.Short(e.Stand);
+                var historyFlight = string.IsNullOrEmpty(e.DestinationCode)
+                    ? e.Registration
+                    : FlightNumber.For(e.Aircraft.Airline, e.Registration, e.DestinationCode, arrivals);
                 _rows.Add(new OperationsFlightRow(
                     e.Registration,
                     time,
                     "—",
-                    e.Registration,
+                    historyFlight,
                     route,
                     stand,
                     status,
@@ -682,6 +689,7 @@ namespace Airside.Presentation
         {
             var baseLevel = operations.CareerState.BaseLevel;
             SelectedRegistration = aircraft.Registration;
+            SelectedHeadline = FlightNumber.Title(aircraft);
             // "Airbus A350-900 · Code E" so the gate it needs reads next to the type (ADR 0110).
             SelectedTypeName = $"{aircraft.Type.Name}  ·  Code {AircraftCatalogue.CodeLetter(aircraft.Type)}";
             SelectedIsPlayer = aircraft.Airline.IsPlayer;
@@ -709,8 +717,7 @@ namespace Airside.Presentation
                     $"Adelaide → {aircraft.Scheduled.Value.Destination.Name}"
                     + $"  ·  Departs {clock.TimeText(aircraft.Scheduled.Value.DepartAt)}";
             else if (aircraft.CurrentDestination.HasValue)
-                SelectedRouteLine = aircraft.State is FleetState.Inbound or FleetState.HoldingForLanding
-                    or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn
+                SelectedRouteLine = FlightNumber.IsReturning(aircraft)
                     ? $"{aircraft.CurrentDestination.Value.Name} → Adelaide"
                     : $"Adelaide → {aircraft.CurrentDestination.Value.Name}";
             else
@@ -1243,7 +1250,10 @@ namespace Airside.Presentation
             }
 
             into.Fill(new HudBox(pane.X, pane.Y + 4f, 3f, 28f), HudTone.Accent, 1f);
-            into.Text(new HudBox(pane.X + 12f, pane.Y + 4f, pane.Width - 12f, 26f), model.SelectedRegistration,
+            var headline = string.IsNullOrEmpty(model.SelectedHeadline)
+                ? model.SelectedRegistration
+                : model.SelectedHeadline;
+            into.Text(new HudBox(pane.X + 12f, pane.Y + 4f, pane.Width - 12f, 26f), headline,
                 20f, HudTone.Default, HudTextStyle.Bold);
             var typeLine = string.IsNullOrEmpty(model.SelectedTypeName)
                 ? model.SelectedRouteLine

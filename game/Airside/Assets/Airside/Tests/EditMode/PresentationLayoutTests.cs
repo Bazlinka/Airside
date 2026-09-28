@@ -37,13 +37,38 @@ namespace Airside.Tests
         public void FlightNumber_IsDeterministicAndVariesByRoute()
         {
             var rex = Airline.Rex();
-            var a = FlightNumber.For(rex, "VH-ABC", "MEL");
-            var b = FlightNumber.For(rex, "VH-ABC", "MEL");
-            var c = FlightNumber.For(rex, "VH-ABC", "SYD");
+            var a = FlightNumber.For(rex, "VH-ABC", "KGC");
+            var b = FlightNumber.For(rex, "VH-ABC", "KGC");
+            var home = FlightNumber.For(rex, "VH-ABC", "KGC", returningHome: true);
+            var other = FlightNumber.For(rex, "VH-ABC", "PLO");
             Assert.That(a, Is.EqualTo(b), "same aircraft and route must read the same every time");
-            Assert.That(a, Is.Not.EqualTo(c), "a different destination should usually read a different number");
-            Assert.That(a, Does.StartWith("REX"));
-            Assert.That(int.Parse(a.Substring(3)), Is.InRange(100, 999));
+            Assert.That(a, Does.StartWith("ZL"));
+            var number = int.Parse(a.Substring(2));
+            Assert.That(number, Is.InRange(3482, 3488));
+            Assert.That(number % 2, Is.EqualTo(0));
+            Assert.That(home, Is.EqualTo("ZL" + (number + 1)));
+            Assert.That(other, Is.Not.EqualTo(a));
+            Assert.That(other, Does.StartWith("ZL34"));
+        }
+
+        [Test]
+        public void FlightNumber_QantasSydneyUsesTheQfCallsign()
+        {
+            var sydney = FlightNumber.For(Airline.Qantas(), "VH-VXA", "SYD");
+            Assert.That(sydney, Does.StartWith("QF"));
+            var number = int.Parse(sydney.Substring(2));
+            Assert.That(number, Is.InRange(680, 686));
+            Assert.That(number % 2, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void FlightNumber_UnpublishedRouteStillHasANumber()
+        {
+            var filler = FlightNumber.For(Airline.Rex(), "VH-ABC", "MEL");
+            Assert.That(filler, Does.StartWith("ZL9"));
+            var player = FlightNumber.For(Airline.Player("Southern Cross Regional", "#1F3A93"), "VH-PAX", "KGC");
+            Assert.That(player, Does.StartWith("SC"));
+            Assert.That(int.Parse(player.Substring(2)), Is.InRange(900, 979));
         }
 
         [Test]

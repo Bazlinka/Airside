@@ -1,5 +1,51 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — findings on the last two items of Bailey's report (no code change).**
+  Both need a decision from Bailey before implementing, so they are written up rather than guessed at.
+
+  **Why you lose sight of an aircraft on approach.** It is *not* the approach length.
+  `ApproachStartX` is −4 200 m, but two things hide the aircraft long before that:
+  1. `AirsidePrototype.BuildLightingAndCamera` sets the main camera's `farClipPlane` to **1 200 m**
+     for the full airport (deliberately — the comment cites depth precision on apron paint and not
+     paying for a mostly empty 10 km view volume). An arrival beginning its approach at 4.2 km is
+     already outside the view volume.
+  2. Fog (ADR 0143) is `ExponentialSquared` at density ~0.0016–0.0036. Transmittance is
+     `exp(-(d·density)²)`, so at the clear-weather 0.0016 an object is half hidden by about **520 m**
+     and effectively gone by **1.5 km**. Raising the far plane alone would therefore show nothing.
+
+  So it needs both a larger far plane *and* a much thinner fog — and the fog is approved art
+  direction, so that is Bailey's call, not a change to make unilaterally. Note also the open render
+  performance work: a larger view volume submits more, and the field already sits near 29 fps.
+  `AdelaideLandCover.HalfExtentMetres` is 6 500 m, so the world itself already extends past the
+  approach; the terrain does not need rebuilding for a ~5 km view.
+  If a longer *final* is also wanted afterwards, `ApproachStartX` is the single knob and the phase
+  duration derives from it (`AircraftPerformanceProfile.ApproachExactSeconds`), but it also moves
+  `CircuitTraffic.WestX` (the holding racetrack) and `EnrouteProfile.EndFeet`, so expect the
+  approach, circuit and accuracy suites to need new expectations.
+
+  **Give way to the correct aircraft.** Both a pushback and a taxi-in clear their route through the
+  same `GroundTraffic.PathClear` gate on the same 5 s grid (`AirlineOperations` ~2957 and ~3077), so
+  when two want the same corridor the winner is simply whichever `Update` reaches first — there is no
+  priority rule at all. The real-world rule worth having is that **an arrival that has landed goes
+  before a departure pushes back**: a departure waiting on its stand costs nothing, while an arrival
+  in `AwaitingStand` is sitting on a runway exit. Implementing it means holding a pushback while any
+  `AwaitingStand` arrival with a stand available has a conflicting route, bounded by
+  `GroundTraffic.MaxWaitSeconds` so a stuck arrival cannot hold the apron, and guarded against the
+  deadlock where the arrival is waiting for the departure's own stand. It is a **balance** change —
+  it will delay departures at busy times — so it wants a playtest to tune rather than shipping blind.
+
+- **2026-09-28 Claude — open Gate 13 allocation question (see ADR 0153).** Two Unity failures remain
+  on `main`, both about which aircraft gets Gate 13 rather than about movement.
+  `FlightPlanning_UsesEachTypesOwnCruiseAndPracticalRange` ("a Boeing 787-10 cannot park on
+  GATE-13") is long-standing. `Reservations_GateLeadInAndRunwayHeldBeforeMovementAndReleased` was
+  caused by the taxi-conflict fix: new taxi timings let an AI 737 take Gate 13 while Virgin's is
+  away, so Virgin returns to Gate 23. Nothing is ever double-booked. **Question for Bailey:** should
+  a scheduled operator's gate be held while it is away? A ranking penalty in `SuggestStandFor` does
+  restore the test, but it shifted allocation enough to break
+  `ResumedGame_ContinuesExactlyLikeOneThatNeverStopped`, because `ReconcileRunwayFreeAt` recomputes
+  the runway free-at on restore instead of trusting the saved value — a separate, pre-existing
+  save-fidelity gap that should be fixed first.
+
 - **2026-09-28 Claude — taxi conflicts fixed (ADR 0153).** Branch
   `feature/taxi-conflicts-20260928`, based on `25326f42`. `GroundTraffic.PathClear` walked a
   candidate leg every 2 s — about 30 m at taxi speed, wider than the ~25 m clearance it tested — so

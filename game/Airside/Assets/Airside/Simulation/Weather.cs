@@ -162,7 +162,9 @@ namespace Airside.Simulation
         {
             var current = WeatherLook.For(At(now));
             var into = now.ElapsedSeconds - FloorDiv(now.ElapsedSeconds, BlockSeconds) * BlockSeconds;
-            if (into >= BlendSeconds)
+            // The first hour of a career has no hour before it to ease from (and time zero cannot
+            // step back a second), so a new game opens on its own sky.
+            if (into >= BlendSeconds || now.ElapsedSeconds < BlockSeconds)
                 return current;
             var previous = WeatherLook.For(At(new SimulationTime(now.ElapsedSeconds - into - 1)));
             var t = into / (float)BlendSeconds;

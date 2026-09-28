@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **You can actually see the people now.** Passengers and ramp crews were being drawn under 2 cm
+  tall, so all that showed was their wands, crates and suitcases floating on the apron. They now
+  stand at human height, in their own clothes and hi-vis instead of flat grey (ramp crews were
+  missing their colours entirely).
+
+- **No error spam at the start of a new game.** The weather tried to ease in from the hour before
+  the game began and threw an error every frame for the first quarter hour.
+
 - **Passengers and ground crews now work every kind of turnaround.** Turboprops keep their integral
   airstairs; remote jets now receive an apron bus as well as a stair truck; and passengers can be seen
   moving inside a docked aerobridge. Apron walkers spread across lanes instead of following one exact

@@ -118,6 +118,29 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// World y of the land at x, z, as the ground and surroundings meshes build it (without
+        /// the beach dip): the airfield mesh inside its rectangle, then the same ease from its edge
+        /// to the plain plus the real relief. Buildings stand on this (ADR 0159).
+        /// </summary>
+        public static float LandHeight(float x, float z)
+        {
+            var halfX = AirsideAdelaideGround.SizeX * 0.5f;
+            var halfZ = AirsideAdelaideGround.SizeZ * 0.5f;
+            var edgeX = Mathf.Clamp(x, -halfX, halfX);
+            var edgeZ = Mathf.Clamp(z, -halfZ, halfZ);
+            var edgeHeight = AirsideAdelaideGround.WorldHeight(edgeX, edgeZ);
+            var dx = Mathf.Max(0f, Mathf.Abs(x) - halfX);
+            var dz = Mathf.Max(0f, Mathf.Abs(z) - halfZ);
+            var outside = Mathf.Sqrt(dx * dx + dz * dz);
+            if (outside <= 0f)
+                return edgeHeight;
+            var height = Mathf.Lerp(edgeHeight, AirsideAdelaideGround.PavementWorldY - PlainBelowPavement,
+                Mathf.SmoothStep(0f, 1f, outside / EdgeBlendMetres));
+            var terrain = Terrain;
+            return terrain != null ? height + terrain.Relief(x, z, outside) : height;
+        }
+
+        /// <summary>
         /// With the far ring in place the land runs on to the far clip, so the surroundings fade
         /// to the fog colour just before it instead of at a fixed ~10 km wall; the weather's own
         /// fog now decides how far you can see (60 km on a clear day, a few hundred metres in fog).

@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Trees.** Gum trees now line the creeks, the airport's perimeter, the golf courses and the
+  streets around the field, each placed where the satellite actually sees tree canopy.
+
+- **Suburbs around the airport.** The houses, shops and sheds of West Beach, Glenelg North, Netley,
+  Brooklyn Park and the rest now stand around the field as buildings instead of a flat photo:
+  mapped buildings at their real size, and houses along every residential street where the map
+  had gaps. Roof colours come from the satellite image, so they match what is really there. A
+  graphics-test option can switch them off.
+
 - **The Adelaide Hills on the horizon.** The ground used to end in a wall of haze about 10 km out,
   even on a clear day. Now the land carries on to 30 km with its real shape: the plain rising gently
   towards the city and the Hills along the eastern skyline, under matching satellite imagery. How far

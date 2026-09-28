@@ -11,7 +11,10 @@
   random player commands (buy, schedule, cancel, contracts, checks, sell, stand assignment, base
   upgrade, repeat schedules) with a save/restore every 2 h — no throws, no invariant breaks. The
   2-hour holds seen on day 3 all follow the 06:00–08:00 storm (ADR 0058), as designed. **Checks:**
-  Roslyn parse of the three files; domain suite unchanged. **Not compiled in Unity here.**
+  Roslyn parse of the three files; domain suite 936/936. **Not compiled in Unity here.**
+  A text fuzz over the flight board, status tags, hold reasons and the Operations rows found no
+  throws, NaN or negative times; one fix: a long wait read "waiting 103 min", now "waiting 1 h 43 min"
+  (`AircraftStatus.WaitSuffix`, whole minutes, with a test).
 
 - **2026-09-28 Claude — bug fixes: widebody stand allocation, save/resume drift (ADR 0156).** Branch
   `claude/fervent-gates-1tzyhq`. (1) Code C jets took 20R/22R/28R, the pier halves that close code E

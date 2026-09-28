@@ -81,7 +81,10 @@ namespace Airside.Presentation
         public static string WaitSuffix(FleetAircraft aircraft, SimulationTime now)
         {
             var waited = WaitingSeconds(aircraft, now);
-            return waited < ShowWaitAfterSeconds ? string.Empty : $" · waiting {waited / 60} min";
+            // Whole minutes, in the game's usual form: a storm hold reads "1 h 43 min", not "103 min".
+            return waited < ShowWaitAfterSeconds
+                ? string.Empty
+                : $" · waiting {AirlineClock.DurationText(waited / 60 * 60)}";
         }
 
         /// <summary>0..1 towards the warning threshold, for the bar under a waiting row.</summary>

@@ -1,6 +1,6 @@
 # Human operations task packet
 
-Date: 28 September 2026  
+Date: 28 September 2026
 Branch: `feature/human-operations`
 
 ## Player-visible outcome
@@ -53,9 +53,9 @@ fuel, cater, handle bags, supervise boarding and support pushback.
 
 ## Verification record
 
-- Domain suite: 972/972 passed.
+- Domain suite: 973/973 passed after rebasing onto current `origin/main`.
 - Human Unity EditMode suites: `BoardingFlowTests` 7/7 and `RampCrewTests` 14/14 passed.
-- Full Unity EditMode: 1301 passed, 3 failed and 2 inconclusive. The three failures are outside this
+- Full Unity EditMode: 1307 passed, 3 failed and 2 inconclusive. The three failures are outside this
   slice: opening Q400 count, busy-day separation conflicts and a GATE-13/GATE-24 expectation.
 - Mac build: passed at `work/builds/Airside.app`.
 - Packaged graphics-on soak: six minutes, clean completion, latest windows at 60 fps / 16.7 ms p95.

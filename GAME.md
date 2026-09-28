@@ -6,8 +6,8 @@
   - Up to eight simultaneous aircraft have pooled animated teams for arrival/safety, fuel, catering,
     baggage, boarding and pushback, with task-readable wands, cones, hose, crate, suitcase and radio.
   - No autonomous NPC or save state was added; everything samples the existing simulation clock.
-  - **Checks:** domain 972/972; Unity compiles; Unity `BoardingFlowTests` 7/7 and `RampCrewTests`
-    14/14. Full Unity run: 1301 passed, with three unrelated existing failures
+  - **Checks:** domain 973/973; Unity compiles; Unity `BoardingFlowTests` 7/7 and `RampCrewTests`
+    14/14. Full Unity run: 1307 passed, with three unrelated existing failures
     (`AdelaidePavementTests` opening Q400 count, `GroundSeparationTests` two busy-day conflicts,
     `TerminalGateOperationsTests` GATE-13 vs GATE-24). The Mac build passed and a six-minute
     graphics-on soak completed without an exception or stall and recovered to 60 fps / 16.7 ms p95.

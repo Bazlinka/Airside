@@ -51,7 +51,7 @@ namespace Airside.Presentation
         /// <summary>Real-time nav, strobe, beacon, landing and taxi lights on every aircraft; the lamps still glow.</summary>
         public bool AircraftLights = true;
         /// <summary>
-        /// The extruded suburbs around the airfield (ADR 0159, ~9 k buildings). Built with the world,
+        /// The extruded suburbs and satellite-placed trees around the airfield (ADR 0159/0160). Built with the world,
         /// so a change applies from the next launch.
         /// </summary>
         public bool SuburbBuildings = true;

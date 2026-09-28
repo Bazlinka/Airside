@@ -17,6 +17,59 @@ namespace Airside.Presentation
     /// missing. Pure data and geometry, no UnityEngine, so the format and the shapes are tested
     /// headlessly; <see cref="AirsideAdelaideSuburbs"/> turns it into meshes.
     /// </summary>
+    /// <summary>
+    /// ADR 0160 — trees where Sentinel-2 sees tree canopy (<c>scripts/generate-adelaide-trees.py</c>,
+    /// "ATRE" v1): position in the runway frame, height, crown radius and a colour index.
+    /// </summary>
+    public sealed class AdelaideTreeData
+    {
+        public const string ArtPath = "Terrain/adelaide_trees_v01.bin";
+        public const int ColourCount = 4;
+
+        public readonly struct Tree
+        {
+            public Tree(float x, float z, float height, float crownRadius, byte colour)
+            {
+                X = x;
+                Z = z;
+                Height = height;
+                CrownRadius = crownRadius;
+                Colour = colour;
+            }
+
+            public float X { get; }
+            public float Z { get; }
+            public float Height { get; }
+            public float CrownRadius { get; }
+            public byte Colour { get; }
+        }
+
+        private AdelaideTreeData(Tree[] trees) => Trees = trees;
+
+        public IReadOnlyList<Tree> Trees { get; }
+
+        public static AdelaideTreeData Parse(byte[] bytes)
+        {
+            if (bytes == null || bytes.Length < 12 || bytes[0] != 'A' || bytes[1] != 'T' || bytes[2] != 'R' || bytes[3] != 'E')
+                return null;
+            if (BitConverter.ToInt32(bytes, 4) != 1)
+                return null;
+            var count = BitConverter.ToInt32(bytes, 8);
+            const int record = 17;
+            if (count < 0 || bytes.Length != 12 + (long)count * record)
+                return null;
+            var trees = new Tree[count];
+            for (var i = 0; i < count; i++)
+            {
+                var at = 12 + i * record;
+                trees[i] = new Tree(BitConverter.ToSingle(bytes, at), BitConverter.ToSingle(bytes, at + 4),
+                    BitConverter.ToSingle(bytes, at + 8), BitConverter.ToSingle(bytes, at + 12), bytes[at + 16]);
+            }
+
+            return new AdelaideTreeData(trees);
+        }
+    }
+
     public sealed class AdelaideSuburbData
     {
         public const string ArtPath = "Terrain/osm_adelaide_suburbs_v01.bin";

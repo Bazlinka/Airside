@@ -1,5 +1,12 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — trees where the satellite sees them (ADR 0160).** Branch
+  `claude/fervent-gates-1tzyhq`. 11 428 low-poly eucalypts (about 18 triangles each) placed on real
+  tree canopy measured from Sentinel-2 NDVI: the creek lines, the airport perimeter drain,
+  golf-course roughs and street trees. They avoid buildings, carriageways, water and the airside, and
+  share the suburbs' tiles, material and switch (now **Suburbs and trees**). **Checks:** tree data
+  tests, offline renders. **Not seen in Unity.**
+
 - **2026-09-28 Claude — the suburbs as buildings (ADR 0159, plan P5).** Branch
   `claude/fervent-gates-1tzyhq`. 14 992 buildings around the field: every OSM building within 2 km
   (houses as hipped boxes, the rest extruded to their tagged height) plus 8 875 street-front houses

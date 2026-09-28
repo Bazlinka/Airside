@@ -9,9 +9,11 @@ namespace Airside.Tests
     /// <summary>ADR 0159: the baked suburbs read back whole, clear of the airport and at house scale.</summary>
     public sealed class AdelaideSuburbDataTests
     {
-        private static AdelaideSuburbData Load()
+        private static AdelaideSuburbData Load() => AdelaideSuburbData.Parse(Find(AdelaideSuburbData.ArtPath));
+
+        private static byte[] Find(string artPath)
         {
-            var relative = Path.Combine("Assets", "Airside", "Art", AdelaideSuburbData.ArtPath);
+            var relative = Path.Combine("Assets", "Airside", "Art", artPath);
             foreach (var start in new[] { Directory.GetCurrentDirectory(), TestContext.CurrentContext.TestDirectory })
             {
                 for (var dir = new DirectoryInfo(start); dir != null; dir = dir.Parent)
@@ -23,13 +25,34 @@ namespace Airside.Tests
                              })
                     {
                         if (File.Exists(candidate))
-                            return AdelaideSuburbData.Parse(File.ReadAllBytes(candidate));
+                            return File.ReadAllBytes(candidate);
                     }
                 }
             }
 
-            Assert.Fail("osm_adelaide_suburbs_v01.bin not found");
+            Assert.Fail(artPath + " not found");
             return null;
+        }
+
+        [Test]
+        public void Trees_StandWhereTheSatelliteSeesCanopy()
+        {
+            var trees = AdelaideTreeData.Parse(Find(AdelaideTreeData.ArtPath));
+            Assert.That(trees, Is.Not.Null);
+            Assert.That(trees.Trees.Count, Is.InRange(3_000, 30_000));
+            foreach (var t in trees.Trees)
+            {
+                Assert.That(t.Height, Is.InRange(5f, 16f));
+                Assert.That(t.CrownRadius, Is.InRange(2f, 5f));
+                Assert.That(t.Colour, Is.LessThan(AdelaideTreeData.ColourCount));
+                var inPrecinct = t.X > 750f && t.X < 1750f && t.Z > 430f && t.Z < 920f;
+                Assert.That(inPrecinct, Is.False, $"tree at {t.X:0},{t.Z:0} in the landside precinct");
+            }
+
+            // No tree on the runway strip (the airside is excluded, and its dry grass is not canopy).
+            Assert.That(trees.Trees.Count(t => Math.Abs(t.X) < 1550f && Math.Abs(t.Z) < 150f), Is.EqualTo(0));
+            Assert.That(AdelaideTreeData.Parse(new byte[] { (byte)'A', (byte)'T', (byte)'R', (byte)'E', 1, 0, 0, 0, 2, 0, 0, 0 }),
+                Is.Null, "two trees promised, none present");
         }
 
         [Test]

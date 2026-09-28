@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Trees.** Gum trees now line the creeks, the airport's perimeter, the golf courses and the
+  streets around the field, each placed where the satellite actually sees tree canopy.
+
 - **Suburbs around the airport.** The houses, shops and sheds of West Beach, Glenelg North, Netley,
   Brooklyn Park and the rest now stand around the field as buildings instead of a flat photo:
   mapped buildings at their real size, and houses along every residential street where the map

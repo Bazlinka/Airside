@@ -1553,7 +1553,7 @@ namespace Airside.Presentation
             }
 
             row.y += 46f;
-            if (GUI.Button(row, settings.SuburbBuildings ? "Suburb buildings  ·  On" : "Suburb buildings  ·  Off (next launch)", button))
+            if (GUI.Button(row, settings.SuburbBuildings ? "Suburbs and trees  ·  On" : "Suburbs and trees  ·  Off (next launch)", button))
             {
                 settings.SuburbBuildings = !settings.SuburbBuildings;
                 settings.Save();

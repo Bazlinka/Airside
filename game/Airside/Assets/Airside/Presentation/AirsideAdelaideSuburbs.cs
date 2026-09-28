@@ -37,6 +37,17 @@ namespace Airside.Presentation
             new(0.55f, 0.60f, 0.64f)  // blue-grey
         };
 
+        /// <summary>Eucalypt and street-tree greens (ADR 0160); index order matches the tree generator.</summary>
+        public static readonly Color[] TreeColours =
+        {
+            new(0.29f, 0.35f, 0.22f),
+            new(0.33f, 0.38f, 0.24f),
+            new(0.25f, 0.32f, 0.22f),
+            new(0.36f, 0.37f, 0.26f)
+        };
+
+        private static readonly Color Bark = new(0.42f, 0.37f, 0.31f);
+
         public static readonly Color[] RoofColours =
         {
             new(0.62f, 0.33f, 0.24f), // terracotta tile
@@ -61,7 +72,9 @@ namespace Airside.Presentation
 
                 var path = ArtRuntimePaths.ResolveExisting(AdelaideSuburbData.ArtPath);
                 var data = path != null ? AdelaideSuburbData.Parse(System.IO.File.ReadAllBytes(path)) : null;
-                if (data == null || data.Buildings.Count == 0)
+                var treePath = ArtRuntimePaths.ResolveExisting(AdelaideTreeData.ArtPath);
+                var trees = treePath != null ? AdelaideTreeData.Parse(System.IO.File.ReadAllBytes(treePath)) : null;
+                if ((data == null || data.Buildings.Count == 0) && (trees == null || trees.Trees.Count == 0))
                     return false;
 
                 var material = new Material(shader) { name = "mat_adelaide_suburbs_v01", enableInstancing = true };
@@ -76,7 +89,7 @@ namespace Airside.Presentation
 
                 var parent = new GameObject(ObjectName).transform;
                 parent.SetParent(root, false);
-                foreach (var (tile, mesh) in BuildMeshes(data, AirsideAdelaideSurroundings.LandHeight))
+                foreach (var (tile, mesh) in BuildMeshes(data, trees, AirsideAdelaideSurroundings.LandHeight))
                 {
                     var go = new GameObject($"{ObjectName} {tile.x},{tile.y}");
                     go.transform.SetParent(parent, false);
@@ -98,11 +111,21 @@ namespace Airside.Presentation
 
         /// <summary>One mesh per <see cref="TileMetres"/> tile. <paramref name="groundHeight"/> is the world y of the land.</summary>
         public static List<(Vector2Int Tile, Mesh Mesh)> BuildMeshes(AdelaideSuburbData data,
-            Func<float, float, float> groundHeight)
+            AdelaideTreeData trees, Func<float, float, float> groundHeight)
         {
             var tiles = new Dictionary<Vector2Int, MeshParts>();
             var corners = new float[8];
-            foreach (var b in data.Buildings)
+            if (trees != null)
+                foreach (var tree in trees.Trees)
+                {
+                    var key = new Vector2Int(Mathf.FloorToInt(tree.X / TileMetres), Mathf.FloorToInt(tree.Z / TileMetres));
+                    if (!tiles.TryGetValue(key, out var parts))
+                        tiles[key] = parts = new MeshParts();
+                    AddTree(parts, tree, groundHeight(tree.X, tree.Z) - SinkMetres);
+                }
+
+            var buildings = data?.Buildings ?? Array.Empty<AdelaideSuburbData.Building>();
+            foreach (var b in buildings)
             {
                 var key = new Vector2Int(Mathf.FloorToInt(b.CentreX / TileMetres), Mathf.FloorToInt(b.CentreZ / TileMetres));
                 if (!tiles.TryGetValue(key, out var parts))
@@ -177,6 +200,50 @@ namespace Airside.Presentation
             foreach (var pair in tiles)
                 meshes.Add((pair.Key, pair.Value.ToMesh($"{ObjectName} {pair.Key.x},{pair.Key.y}")));
             return meshes;
+        }
+
+        /// <summary>
+        /// A low-poly eucalypt: a three-sided trunk and a six-sided faceted crown whose widest ring
+        /// sits a little above its middle. About 18 triangles.
+        /// </summary>
+        private static void AddTree(MeshParts parts, AdelaideTreeData.Tree tree, float baseY)
+        {
+            var crownBottom = baseY + tree.Height * 0.32f;
+            // A high widest ring keeps the top a low dome, like a eucalypt, not a conifer's spike.
+            var ring = baseY + tree.Height * 0.72f;
+            var apex = new Vector3(tree.X, baseY + tree.Height, tree.Z);
+            var low = new Vector3(tree.X, crownBottom, tree.Z);
+            var spin = (tree.X * 0.137f + tree.Z * 0.071f) % (Mathf.PI * 2f);
+            var leaf = TreeColours[Mathf.Clamp(tree.Colour, 0, TreeColours.Length - 1)].linear;
+            leaf.a = 0f;
+            var bark = Bark.linear;
+            bark.a = 0f;
+
+            var trunkR = Mathf.Max(0.18f, tree.CrownRadius * 0.08f);
+            for (var k = 0; k < 3; k++)
+            {
+                var a0 = spin + k * Mathf.PI * 2f / 3f;
+                var a1 = spin + (k + 1) * Mathf.PI * 2f / 3f;
+                var p = new Vector3(tree.X + Mathf.Cos(a0) * trunkR, baseY, tree.Z + Mathf.Sin(a0) * trunkR);
+                var q = new Vector3(tree.X + Mathf.Cos(a1) * trunkR, baseY, tree.Z + Mathf.Sin(a1) * trunkR);
+                var outward = new Vector3(Mathf.Cos((a0 + a1) * 0.5f), 0f, Mathf.Sin((a0 + a1) * 0.5f));
+                parts.Quad(p, q, new Vector3(q.x, crownBottom + 0.5f, q.z), new Vector3(p.x, crownBottom + 0.5f, p.z),
+                    outward, bark);
+            }
+
+            for (var k = 0; k < 6; k++)
+            {
+                var a0 = spin + k * Mathf.PI / 3f;
+                var a1 = spin + (k + 1) * Mathf.PI / 3f;
+                // Alternate ring radii break the regular hexagon into a looser crown.
+                var r0 = tree.CrownRadius * (k % 2 == 0 ? 1f : 0.82f);
+                var r1 = tree.CrownRadius * ((k + 1) % 2 == 0 ? 1f : 0.82f);
+                var p = new Vector3(tree.X + Mathf.Cos(a0) * r0, ring, tree.Z + Mathf.Sin(a0) * r0);
+                var q = new Vector3(tree.X + Mathf.Cos(a1) * r1, ring, tree.Z + Mathf.Sin(a1) * r1);
+                var side = new Vector3(Mathf.Cos((a0 + a1) * 0.5f), 0f, Mathf.Sin((a0 + a1) * 0.5f));
+                parts.Triangle(p, q, apex, side + Vector3.up * 0.8f, leaf);
+                parts.Triangle(p, q, low, side - Vector3.up * 0.5f, leaf * 0.85f);
+            }
         }
 
         /// <summary>Flat-shaded triangles, each wound to face <c>facing</c> (Unity: normal = (b-a)×(c-a)).</summary>

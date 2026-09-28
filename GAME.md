@@ -1,5 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Codex — Airside identity v03 (ADR 0172).** Branch `feature/brand-logo-redesign`.
+  - The old approach-runway A is replaced across the title wordmark, launch mark and Standalone
+    icon by an original AS control-vector identity in Glass Cockpit aqua, Cloud and amber.
+  - Editable SVG sources and a deterministic Pillow exporter are committed; runtime and
+    StreamingAssets PNGs are byte-identical.
+  - **Checks:** transparent/opaque modes, exact dimensions, small-size legibility, mirror hashes,
+    asset references, metadata GUID uniqueness, `git diff --check`, zero-warning domain-harness
+    compile and title preview. Unity imported all six runtime/packaged v03 files without an import
+    error; the bounded EditMode run ended during the full-project import, before test results.
+
 - **2026-09-28 Claude — realistic aircraft windows (ADR 0171).** Branch
   `feature/realistic-aircraft-glazing`. Cabin panes are rounded rectangles of neutral near-black
   glass with a dark seal: no blue tint, light trim ring or baked glint. Each flight deck has a dark

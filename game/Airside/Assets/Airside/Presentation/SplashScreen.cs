@@ -35,7 +35,7 @@ namespace Airside.Presentation
     public readonly struct SplashLayout
     {
         public const string SplashArt = "UI/Illustrations/ui_splash_airport_dawn_v01.png";
-        public const string WordmarkArt = "Brand/airside_wordmark_light_v01.png";
+        public const string WordmarkArt = "Brand/airside_wordmark_light_v03.png";
         public const float CardWidth = 420f;
 
         private SplashLayout(HudBox viewport, HudBox title, HudBox card, HudBox footer)

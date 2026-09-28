@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **A completely new Airside identity.** The generic runway-in-an-A logo is retired. The title,
+  launch sequence and app icon now use a bold AS control-vector mark: one rising route crosses the
+  monogram and resolves at an amber destination. A heavier AIR/SIDE wordmark matches the Glass
+  Cockpit HUD and stays readable from the title screen down to Dock size.
+
 - **Aircraft windows look real.** Cabin windows are now rounded rectangles of dark glass with a
   thin black seal. The blue tint, the light ring round each window and the painted-on shine are
   gone. Each flight deck's windscreen is now one dark band broken by thin posts, like a real

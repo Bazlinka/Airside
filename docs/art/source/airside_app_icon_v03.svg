@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- AIRSIDE v03 app icon with a Dock-safe rounded field. -->
+  <rect width="1024" height="1024" rx="190" fill="#17242A"/>
+<text x="170" y="700" font-family="Avenir Next" font-size="550" font-weight="700" fill="#3FD0C9">A</text>
+<text x="445" y="700" font-family="Avenir Next" font-size="550" font-weight="700" fill="#EEF1EC">S</text>
+<path d="M230 744C390 558 625 530 752 382" fill="none" stroke="#EEF1EC" stroke-width="24" stroke-linecap="round"/>
+<circle cx="752" cy="382" r="28" fill="#FFB547"/>
+</svg>

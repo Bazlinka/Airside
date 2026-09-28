@@ -1,5 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — airfield light points, night brightness (ADR 0162).** Branch
+  `claude/fervent-gates-1tzyhq`.
+  - Every runway, taxi, approach and stand lens also draws a light point
+    (`Airside/AirfieldLightPoint`, a new always-included shader). It never shrinks below 2–3.4 px,
+    dims gently with distance and cuts through haze about 1.7× further than surfaces, so the runway
+    reads as lines of lights from the overview at night.
+  - Runway guard lights now alternate.
+  - New option: Night brightness (Natural / Brighter / Brightest, default Brighter), night-only
+    exposure and ambient lift.
+
+  **Checks:** headless fixture and night tests. **Not seen in Unity; shader not compiled.**
+
 - **2026-09-28 Claude — departures turn, gear waits (ADR 0161).** Branch
   `claude/fervent-gates-1tzyhq`. Play-test fixes:
   - Departures now fly a banked constant-radius arc onto the full destination bearing. They used to

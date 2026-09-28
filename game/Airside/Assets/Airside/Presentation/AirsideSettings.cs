@@ -58,6 +58,15 @@ namespace Airside.Presentation
 
         public int CameraSpeedIndex = 1;
 
+        /// <summary>Night brightness level (ADR 0162), an index into <see cref="NightVisibility.Labels"/>.</summary>
+        public int NightBrightness = NightVisibility.DefaultLevel;
+
+        public AirsideSettings CycleNightBrightness()
+        {
+            NightBrightness = (NightVisibility.Clamp(NightBrightness) + 1) % NightVisibility.Labels.Length;
+            return this;
+        }
+
         public float CameraSpeed =>
             CameraSpeedIndex >= 0 && CameraSpeedIndex < CameraSpeedValues.Length
                 ? CameraSpeedValues[CameraSpeedIndex]
@@ -123,6 +132,7 @@ namespace Airside.Presentation
             settings.DistantGlows = Pref("gfx.distantglows", 1) != 0;
             settings.AircraftLights = Pref("gfx.aircraftlights", 1) != 0;
             settings.SuburbBuildings = Pref("gfx.suburbs", 1) != 0;
+            settings.NightBrightness = NightVisibility.Clamp(Pref("nightbrightness.v1", NightVisibility.DefaultLevel));
             settings.CameraSpeedIndex = Mathf.Clamp(Pref("camera", 1), 0, CameraSpeedValues.Length - 1);
             return settings;
         }
@@ -146,6 +156,7 @@ namespace Airside.Presentation
                 PlayerPrefs.SetInt(PrefPrefix + "gfx.suburbs", SuburbBuildings ? 1 : 0);
             }
             PlayerPrefs.SetInt(PrefPrefix + "camera", CameraSpeedIndex);
+            PlayerPrefs.SetInt(PrefPrefix + "nightbrightness.v1", NightBrightness);
             PlayerPrefs.Save();
             Current = this;
         }

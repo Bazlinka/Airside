@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Runway lights you can see at night.** Runway, taxiway, approach and stand lights now show as
+  sharp points of light from anywhere on the field and cut through haze, like a real airport at
+  night. The yellow runway guard lights now flash alternately. A new **Night brightness** option
+  (Natural, Brighter, Brightest) lets you see more of the field after dark.
+
 - **Departures really turn.** After take-off, aircraft now bank and fly a smooth turn onto the
   heading for their destination. They used to point their nose one way and drift another. The
   landing gear now comes up a few seconds after the wheels leave the runway, not while still

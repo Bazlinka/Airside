@@ -73,5 +73,59 @@ namespace Airside.Tests
             Assert.That(AirfieldFixture.ResponseFor("Stopbar 01 03"), Is.EqualTo(LensDayResponse.Guidance));
             Assert.That(AirfieldFixture.ResponseFor("Taxi edge blue 010 L"), Is.EqualTo(LensDayResponse.Guidance));
         }
+        [Test]
+        public void LightPoints_StayVisibleFarOutAndThroughHaze()
+        {
+            foreach (LensDayResponse response in Enum.GetValues(typeof(LensDayResponse)))
+            {
+                Assert.That(AirfieldFixture.PointMinPixels(response), Is.GreaterThanOrEqualTo(2f), response.ToString());
+                Assert.That(AirfieldFixture.PointStrength(response, 1f), Is.GreaterThan(1f), "HDR at night: " + response);
+            }
+
+            // Runway edge, taxi and stand points are dark by day; approach and guard lights still show.
+            Assert.That(AirfieldFixture.PointStrength(LensDayResponse.Edge, 0f), Is.Zero);
+            Assert.That(AirfieldFixture.PointStrength(LensDayResponse.Stand, 0f), Is.Zero);
+            Assert.That(AirfieldFixture.PointStrength(LensDayResponse.Approach, 0f), Is.GreaterThan(0f));
+            Assert.That(AirfieldFixture.PointMinPixels(LensDayResponse.Approach),
+                Is.GreaterThan(AirfieldFixture.PointMinPixels(LensDayResponse.Guidance)));
+
+            // Dims with distance but a far runway still reads, and never brighter far than near.
+            Assert.That(AirfieldFixture.PointDistanceFactor(0f), Is.EqualTo(1f));
+            Assert.That(AirfieldFixture.PointDistanceFactor(AirfieldFixture.PointHalfBrightnessMetres), Is.EqualTo(0.5f).Within(1e-4f));
+            Assert.That(AirfieldFixture.PointDistanceFactor(30000f), Is.EqualTo(AirfieldFixture.PointDistanceFloor));
+            Assert.That(AirfieldFixture.PointDistanceFactor(3000f), Is.LessThan(AirfieldFixture.PointDistanceFactor(1000f)));
+
+            // Where fog leaves a surface 10 % visible, a light is still about half as bright.
+            Assert.That(AirfieldFixture.PointHaze(0.1f), Is.GreaterThan(0.4f));
+            Assert.That(AirfieldFixture.PointHaze(1f), Is.EqualTo(1f));
+            Assert.That(AirfieldFixture.PointHaze(0f), Is.Zero);
+            Assert.That(AirfieldFixture.PointWorldSize(0.34f), Is.LessThan(1.5f), "a lamp close up, not a blob");
+        }
+
+        [Test]
+        public void GuardLights_AlternateTheirPair()
+        {
+            Assert.That(AirfieldFixture.FlashPhase("Runway edge 05/23 N 03"), Is.EqualTo(-1f));
+            var left = AirfieldFixture.FlashPhase("Runway guard 02 L");
+            var right = AirfieldFixture.FlashPhase("Runway guard 02 R");
+            Assert.That(left, Is.Not.EqualTo(right));
+            var together = 0;
+            var lit = 0;
+            for (var i = 0; i < 1000; i++)
+            {
+                var t = i * 0.01f;
+                var l = AirfieldFixture.FlashOn(left, t);
+                var r = AirfieldFixture.FlashOn(right, t);
+                if (l && r)
+                    together++;
+                if (l)
+                    lit++;
+            }
+
+            Assert.That(together, Is.Zero, "the pair never shows together");
+            Assert.That(lit, Is.InRange(450, 550), "each lamp lit half the time");
+            Assert.That(AirfieldFixture.GuardFlashHz * 60f, Is.InRange(30f, 60f), "ICAO 30-60 flashes a minute");
+            Assert.That(AirfieldFixture.FlashOn(-1f, 12.3f), Is.True);
+        }
     }
 }

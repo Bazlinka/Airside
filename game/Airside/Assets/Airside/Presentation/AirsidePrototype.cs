@@ -1490,6 +1490,13 @@ namespace Airside.Presentation
             }
 
             row.y += 46f;
+            if (GUI.Button(row, $"Night brightness  ·  {NightVisibility.Labels[NightVisibility.Clamp(settings.NightBrightness)]}", button))
+            {
+                settings.CycleNightBrightness().Save();
+                PlayUiClick();
+            }
+
+            row.y += 46f;
             if (GUI.Button(row, $"Live Adelaide sky traffic  ·  {LiveTrafficStatus}", button))
             {
                 settings.LiveTraffic = !settings.LiveTraffic;
@@ -4891,7 +4898,8 @@ namespace Airside.Presentation
             _weatherGloomReady = true;
             if (weatherGloom > 0f)
                 _sun.intensity *= Mathf.Lerp(1f, 0.72f, weatherGloom);
-            _dayVolume?.Apply(daylight, warm, weatherGloom);
+            var nightLevel = AirsideSettings.Current.NightBrightness;
+            _dayVolume?.Apply(daylight, warm, weatherGloom, NightVisibility.ExposureLift(nightLevel, daylight));
 
             if (_fillLight != null)
             {
@@ -4938,7 +4946,8 @@ namespace Airside.Presentation
             RenderSettings.ambientSkyColor = ambientSky;
             RenderSettings.ambientEquatorColor = ambientEquator;
             RenderSettings.ambientGroundColor = ambientGround;
-            RenderSettings.ambientIntensity = Mathf.Lerp(1.05f, 1.12f, daylight) + warm * 0.06f;
+            RenderSettings.ambientIntensity = (Mathf.Lerp(1.05f, 1.12f, daylight) + warm * 0.06f)
+                * NightVisibility.AmbientGain(nightLevel, daylight);
             if (weatherGloom > 0f)
             {
                 // Dim trilight under fog/rain/storm — ambientLight is ignored in Trilight mode.

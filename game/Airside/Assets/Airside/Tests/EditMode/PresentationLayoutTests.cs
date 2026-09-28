@@ -452,6 +452,9 @@ namespace Airside.Tests
                 var slab = new GameObject("Runway 05/23");
                 created.Add(slab);
                 Assert.That(AirsideStaticWorld.IsDynamic(slab), Is.False);
+                var suburbs = new GameObject(AirsideAdelaideSuburbs.ObjectName);
+                created.Add(suburbs);
+                Assert.That(AirsideStaticWorld.IsDynamic(suburbs), Is.True);
             }
             finally
             {

@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **The game no longer freezes and hitches on open.** Compressing the satellite image, building
+  every house and tree, and redrawing the ground through a full lit shader were all happening on
+  the first frames. The satellite stays uncompressed, the suburbs fill in over a short moment, and
+  the airfield, plain and houses draw their own cheap depth pass. Apron floods no longer cast
+  shadows, and a per-frame batching cost that fought the renderer is off.
+
 - **Turning onto the runway no longer looks like a drift.** The tail was sliding out
   because the fuselage cut across the corner. Aircraft now steer onto a proper arc
   with the main gear trailing behind the nose, and a long aircraft finishes that turn

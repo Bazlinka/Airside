@@ -1,5 +1,16 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Cursor — startup and frame stutter (ADR 0162).** The rebuilt game was hitching
+  because the 4096 satellite was block-compressed on the main thread, every house and tree was
+  meshed inside Awake, and SSAO was redrawing the airfield, plain and suburbs with the full Lit
+  shader. Those are fixed: no compress, suburbs spread across frames and kept out of the static
+  batch, cheap depth passes on the three world shaders, apron floods no longer cast shadows,
+  dynamic batching off under the SRP batcher. Full-resolution SSAO is unchanged (ADR 0101).
+  **Checks:** filtered Unity EditMode passed (`StaticWorld_MovingRootsStayOffTheStaticBatch`);
+  the project compiled. Full `scripts/test-unity.sh` not run. **Next:** play the Mac build —
+  open should reach the title without a long freeze, and the view should stay even once the
+  houses have filled in. Then the ADR 0161 playtest (737 and ATR on 05, Saab on 12).
+
 - **2026-09-28 Cursor — lineup steering and takeoff sound (ADR 0161).** The tail was
   sliding out on the turn onto the runway: the fuselage was the chord of a tight
   corner, so the rear wheels travelled sideways. Lineups are now a circular arc with

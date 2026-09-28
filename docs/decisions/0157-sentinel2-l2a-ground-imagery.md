@@ -37,9 +37,10 @@ is the processing.
 - **Frame.** The same ±12 km runway-local square and the same local↔lon/lat convention as v01, so
   every shader constant and UV is unchanged. Output is a 4096 px JPEG (5.9 m/px; bicubic from 10 m),
   7 MB against v01's 8 MB PNG.
-- **Memory.** `AirsideArtTextures.Load` reads the image size from the PNG/JPEG header. At 4096² or
-  larger (only this texture), it keeps the image readable just long enough to `Compress` it, then
-  releases it. Uncompressed with mips it would hold about 85 MB of VRAM.
+- **Memory.** `AirsideArtTextures.Load` reads the image size from the PNG/JPEG header so a 4096²
+  image can be recognised. ADR 0157 compressed that texture on load. ADR 0162 stops that: the
+  compress froze the game on open. The satellite now stays uncompressed (about 85 MB of VRAM
+  with mips).
 - **Credit.** `MapAttribution.Sentinel` ("Contains modified Copernicus Sentinel data 2024–2026") is
   added to the field credit line. `HudLayout.CreditWidth` is 470 → 760 so both credits fit.
 
@@ -55,5 +56,6 @@ Domain suite 936/936, including the extended attribution test. The header reader
 the shipped JPEG (4096², large) and PNGs (1254², 2048², not large). The asset audit output is
 unchanged from `main`.
 
-**Not seen in Unity.** A Mac overview and a close airfield view are needed to confirm the blend,
-the compressed texture and the colour on the live ground.
+**Not seen in Unity** when this record was written. A Mac overview and a close airfield view are
+needed to confirm the blend and the colour on the live ground. The on-load compress described
+above was later removed (ADR 0162) because it stalled the first frame.

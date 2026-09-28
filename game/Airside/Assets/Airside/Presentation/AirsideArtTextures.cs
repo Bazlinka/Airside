@@ -48,11 +48,11 @@ namespace Airside.Presentation
             {
                 var bytes = File.ReadAllBytes(fullPath);
                 var texture = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: true, linear: linear);
-                // A very large colour image (the 4096 px satellite) stays readable just long
-                // enough to block-compress it: uncompressed it would hold ~85 MB of VRAM with
-                // mips, compressed about a sixth of that.
-                var compress = !keepReadable && !linear && IsLargeImage(bytes);
-                if (!texture.LoadImage(bytes, markNonReadable: !keepReadable && !compress))
+                // Do not Texture2D.Compress here. The 4096 satellite is the only image that
+                // qualified, and encoding it to DXT on the main thread froze the game for
+                // several seconds during Awake (ADR 0162). Uncompressed with mips it holds
+                // about 85 MB of VRAM; that is the cheaper stall.
+                if (!texture.LoadImage(bytes, markNonReadable: !keepReadable))
                 {
                     // The 2x2 placeholder is already on the GPU; dropping the reference
                     // without destroying it leaked one texture per unreadable file.
@@ -62,12 +62,6 @@ namespace Airside.Presentation
                         Object.DestroyImmediate(texture);
                     Misses.Add(key);
                     return null;
-                }
-
-                if (compress)
-                {
-                    texture.Compress(highQuality: false);
-                    texture.Apply(updateMipmaps: false, makeNoLongerReadable: true);
                 }
 
                 texture.name = Path.GetFileNameWithoutExtension(artRelativePath);
@@ -83,7 +77,11 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>Images at or above this many pixels are block-compressed on load.</summary>
+        /// <summary>
+        /// Images at or above this many pixels used to be block-compressed on load.
+        /// That compress is no longer done (ADR 0162); the constant remains so tests
+        /// can still recognise the satellite as the one large map.
+        /// </summary>
         public const int CompressAtPixels = 4096 * 4096;
 
         /// <summary>

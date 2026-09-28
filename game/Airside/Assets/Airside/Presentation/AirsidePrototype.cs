@@ -5546,8 +5546,11 @@ namespace Airside.Presentation
                 light.spotAngle = 78f;
                 light.innerSpotAngle = 42f;
                 light.intensity = 0.05f;
-                // Soft shadows on the four corner mast floods (hero REF-002 pools).
-                light.shadows = i < 4 ? LightShadows.Soft : LightShadows.None;
+                // These floods are a warm fill. Soft shadows on the first four made extra
+                // punctual shadow maps every frame and pushed the shadow atlas over its
+                // budget (ADR 0162). The sun still shadows the apron; night landing lamps
+                // still shadow on their own.
+                light.shadows = LightShadows.None;
                 lights[i] = light;
             }
 
@@ -6073,8 +6076,10 @@ namespace Airside.Presentation
             if (AirsideAdelaideSurroundings.TryBuild(_airfieldRoot, out var surroundingsMaterial) && surroundingsMaterial != null)
             {
                 // The suburbs around the field (ADR 0159), fading with the land they stand on.
-                AirsideAdelaideSuburbs.TryBuild(_airfieldRoot, surroundingsMaterial.GetFloat("_HorizonFadeStart"),
-                    surroundingsMaterial.GetFloat("_HorizonFadeEnd"));
+                // Spread across frames so the mesh build does not freeze the first picture (ADR 0162).
+                StartCoroutine(AirsideAdelaideSuburbs.BuildGradually(_airfieldRoot,
+                    surroundingsMaterial.GetFloat("_HorizonFadeStart"),
+                    surroundingsMaterial.GetFloat("_HorizonFadeEnd")));
             }
 
             BuildBareAdelaidePavement();

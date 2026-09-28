@@ -16,18 +16,56 @@ namespace Airside.Simulation
         Marshalling
     }
 
+    /// <summary>The visible job a ramp worker performs. It selects animation and equipment only.</summary>
+    public enum RampTask
+    {
+        MarshalArrival,
+        PlaceSafetyEquipment,
+        FuelPanel,
+        FuelCoupling,
+        CateringLoader,
+        CateringDoor,
+        BaggageHold,
+        BaggageCart,
+        BoardingSupervision,
+        PushbackHeadset,
+        WingWalk
+    }
+
+    /// <summary>Whole-turn activities used for arrivals, ambient AI turns and pushback.</summary>
+    public enum RampActivity
+    {
+        None,
+        Arrival,
+        Fuel,
+        Catering,
+        Baggage,
+        Boarding,
+        Pushback
+    }
+
     /// <summary>One hi-vis worker to draw, in stand-local metres.</summary>
     public readonly struct RampCrewMember
     {
         public RampCrewMember(RampRole role, float alongMetres, float acrossMetres, float facingDegrees)
+            : this(role, RampTask.BoardingSupervision, alongMetres, acrossMetres, facingDegrees, 0f)
+        {
+        }
+
+        public RampCrewMember(RampRole role, RampTask task, float alongMetres, float acrossMetres,
+            float facingDegrees, float progress01)
         {
             Role = role;
+            Task = task;
             AlongMetres = alongMetres;
             AcrossMetres = acrossMetres;
             FacingDegrees = facingDegrees;
+            Progress01 = Math.Max(0f, Math.Min(1f, progress01));
         }
 
         public RampRole Role { get; }
+        public RampTask Task { get; }
+        public float Progress01 { get; }
 
         /// <summary>Metres ahead of the stand stop along the aircraft nose direction; negative is aft.</summary>
         public float AlongMetres { get; }
@@ -71,26 +109,19 @@ namespace Airside.Simulation
             switch (prep.Stage)
             {
                 case DeparturePrepStage.Fuel:
-                    // One at the truck's panel, one under the wing at the fuelling point.
-                    into.Add(new RampCrewMember(RampRole.Attending, -11.0f, 6.2f, 250f));
-                    into.Add(new RampCrewMember(RampRole.Receiving, -8.5f, 3.6f, 90f));
+                    ForActivity(RampActivity.Fuel, prep.StageProgress, into);
                     break;
 
                 case DeparturePrepStage.Catering:
-                    // One steadying the hi-loader, one at the forward galley door.
-                    into.Add(new RampCrewMember(RampRole.Attending, -6.0f, -6.2f, 110f));
-                    into.Add(new RampCrewMember(RampRole.Receiving, -3.2f, -3.4f, 270f));
+                    ForActivity(RampActivity.Catering, prep.StageProgress, into);
                     break;
 
                 case DeparturePrepStage.Baggage:
-                    // One at the hold, one on the cart.
-                    into.Add(new RampCrewMember(RampRole.Receiving, -14.0f, -3.8f, 270f));
-                    into.Add(new RampCrewMember(RampRole.Attending, -16.5f, -6.8f, 300f));
+                    ForActivity(RampActivity.Baggage, prep.StageProgress, into);
                     break;
 
                 case DeparturePrepStage.Boarding:
-                    // Boarding is the passengers' business; one marshaller stays clear ahead.
-                    into.Add(new RampCrewMember(RampRole.Marshalling, 9.0f, 7.5f, 200f));
+                    ForActivity(RampActivity.Boarding, prep.StageProgress, into);
                     break;
 
                 default:
@@ -99,6 +130,56 @@ namespace Airside.Simulation
 
             if (activeVehicle is null && into.Count > 1)
                 into.RemoveAt(0);
+        }
+
+        /// <summary>
+        /// Places a small, readable crew team for an operational activity. The positions are
+        /// stand-local and the progress is deterministic, so presentation can sample animation
+        /// directly from simulation time without autonomous NPC state.
+        /// </summary>
+        public static void ForActivity(RampActivity activity, double progress01, List<RampCrewMember> into)
+        {
+            if (into == null)
+                return;
+            into.Clear();
+            var progress = (float)Math.Max(0.0, Math.Min(1.0, progress01));
+            switch (activity)
+            {
+                case RampActivity.Arrival:
+                    into.Add(new RampCrewMember(RampRole.Marshalling, RampTask.MarshalArrival,
+                        10.0f, 7.5f, 200f, progress));
+                    into.Add(new RampCrewMember(RampRole.Receiving, RampTask.PlaceSafetyEquipment,
+                        3.2f, -3.4f, 175f, progress));
+                    break;
+                case RampActivity.Fuel:
+                    into.Add(new RampCrewMember(RampRole.Attending, RampTask.FuelPanel,
+                        -11.0f, 6.2f, 250f, progress));
+                    into.Add(new RampCrewMember(RampRole.Receiving, RampTask.FuelCoupling,
+                        -8.5f, 3.6f, 90f, progress));
+                    break;
+                case RampActivity.Catering:
+                    into.Add(new RampCrewMember(RampRole.Attending, RampTask.CateringLoader,
+                        -6.0f, -6.2f, 110f, progress));
+                    into.Add(new RampCrewMember(RampRole.Receiving, RampTask.CateringDoor,
+                        -3.2f, -3.4f, 270f, progress));
+                    break;
+                case RampActivity.Baggage:
+                    into.Add(new RampCrewMember(RampRole.Receiving, RampTask.BaggageHold,
+                        -14.0f, -3.8f, 270f, progress));
+                    into.Add(new RampCrewMember(RampRole.Attending, RampTask.BaggageCart,
+                        -16.5f, -6.8f, 300f, progress));
+                    break;
+                case RampActivity.Boarding:
+                    into.Add(new RampCrewMember(RampRole.Marshalling, RampTask.BoardingSupervision,
+                        9.0f, 7.5f, 200f, progress));
+                    break;
+                case RampActivity.Pushback:
+                    into.Add(new RampCrewMember(RampRole.Receiving, RampTask.PushbackHeadset,
+                        5.0f, 3.5f, 180f, progress));
+                    into.Add(new RampCrewMember(RampRole.Marshalling, RampTask.WingWalk,
+                        -8.0f, -9.0f, 210f, progress));
+                    break;
+            }
         }
 
         /// <summary>The vehicle working during a stage, or null when none is.</summary>

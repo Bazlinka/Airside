@@ -14,7 +14,12 @@ namespace Airside.Simulation
         /// <summary>Saab 340 / Dash 8 / ATR: the forward door folds down into its own airstair.</summary>
         IntegralAirstair,
         /// <summary>A jet on a stand without a bridge: a stair truck drives up to its L1 door.</summary>
-        StairTruck
+        StairTruck,
+        /// <summary>
+        /// A remote jet stand: passengers ride an apron bus, then use a stair truck at L1.
+        /// The distinct mode lets presentation draw the bus without changing turnaround timing.
+        /// </summary>
+        RemoteBus
     }
 
     /// <summary>One passenger walking between the terminal and the aircraft door.</summary>
@@ -60,6 +65,14 @@ namespace Airside.Simulation
         public const double StairTruckDoorsCloseBeforePushSeconds = 240;
         public const double StairTruckLeaveBeforePushSeconds = 230;
 
+        // Remote bus: one trip receives the arriving load, a second returns for departure.
+        // Both are pure timelines so loading a save or changing time scale recreates the same scene.
+        public const double RemoteBusArriveAfterParkSeconds = 25;
+        public const double RemoteBusMoveSeconds = 35;
+        public const double RemoteBusArrivalLeaveAfterParkSeconds = 10 * 60;
+        public const double RemoteBusDepartureArriveBeforePushSeconds = 25 * 60;
+        public const double RemoteBusDepartureLeaveBeforePushSeconds = 190;
+
         public static BoardingMode ModeFor(FleetAircraft aircraft)
         {
             if (aircraft == null || aircraft.State != FleetState.AtStand)
@@ -67,8 +80,37 @@ namespace Airside.Simulation
             if (AdelaideAerobridges.Serves(aircraft.Stand))
                 return BoardingMode.Aerobridge;
             return AirlineOperations.NeedsTerminalGate(aircraft.Type)
-                ? BoardingMode.StairTruck
+                ? BoardingMode.RemoteBus
                 : BoardingMode.IntegralAirstair;
+        }
+
+        public static bool UsesStairTruck(BoardingMode mode) =>
+            mode is BoardingMode.StairTruck or BoardingMode.RemoteBus;
+
+        public static bool UsesRemoteBus(BoardingMode mode) => mode == BoardingMode.RemoteBus;
+
+        /// <summary>
+        /// 0 = at the terminal/depot, 1 = alongside the remote aircraft. The arrival bus clears
+        /// after deplaning, then a departure bus returns before boarding and leaves before pushback.
+        /// </summary>
+        public static float RemoteBusFraction(FleetAircraft aircraft, double nowSeconds)
+        {
+            if (aircraft == null || !UsesRemoteBus(ModeFor(aircraft)))
+                return 0f;
+            var parked = nowSeconds - aircraft.StateStartedAt.ElapsedSeconds;
+            var arrival = Ramp((parked - RemoteBusArriveAfterParkSeconds) / RemoteBusMoveSeconds);
+            arrival = Math.Min(arrival, 1f - Ramp((parked - RemoteBusArrivalLeaveAfterParkSeconds) / RemoteBusMoveSeconds));
+
+            var departure = 0f;
+            if (aircraft.Scheduled is { Cancelled: false } booked)
+            {
+                var arrive = booked.DepartAt.ElapsedSeconds - RemoteBusDepartureArriveBeforePushSeconds;
+                var leave = booked.DepartAt.ElapsedSeconds - RemoteBusDepartureLeaveBeforePushSeconds;
+                departure = Ramp((nowSeconds - arrive) / RemoteBusMoveSeconds);
+                departure = Math.Min(departure, 1f - Ramp((nowSeconds - leave) / RemoteBusMoveSeconds));
+            }
+
+            return Math.Max(arrival, departure);
         }
 
         /// <summary>Passengers carried this rotation: seats × a stable 62–94 % load factor.</summary>
@@ -81,10 +123,10 @@ namespace Airside.Simulation
             return Math.Max(1, (int)Math.Round(seats * load));
         }
 
-        /// <summary>0 = stair truck away, 1 = at the L1 door. Only for <see cref="BoardingMode.StairTruck"/>.</summary>
+        /// <summary>0 = stair truck away, 1 = at the L1 door.</summary>
         public static float StairTruckFraction(FleetAircraft aircraft, double nowSeconds)
         {
-            if (ModeFor(aircraft) != BoardingMode.StairTruck)
+            if (!UsesStairTruck(ModeFor(aircraft)))
                 return 0f;
             var parked = nowSeconds - aircraft.StateStartedAt.ElapsedSeconds;
             var docked = Ramp((parked - StairTruckDockAfterParkSeconds) / StairTruckMoveSeconds);
@@ -103,7 +145,7 @@ namespace Airside.Simulation
         /// </summary>
         public static bool? StairTruckDoorsOpen(FleetAircraft aircraft, double nowSeconds)
         {
-            if (ModeFor(aircraft) != BoardingMode.StairTruck)
+            if (!UsesStairTruck(ModeFor(aircraft)))
                 return null;
             var parked = nowSeconds - aircraft.StateStartedAt.ElapsedSeconds;
             if (parked < EngineStartSequence.DoorsOpenAfterSeconds)
@@ -116,14 +158,15 @@ namespace Airside.Simulation
         /// <summary>
         /// Every passenger movement that has started within <paramref name="lookBackSeconds"/>
         /// of <paramref name="nowSeconds"/>. Presentation places each along its walk and drops it
-        /// once it has arrived. Empty on a bridged gate (boarding is inside the tunnel).
+        /// once it has arrived. At a bridged gate the same moves are drawn inside the tunnel; at
+        /// a remote stand their terminal end is the apron bus rather than the terminal wall.
         /// </summary>
         public static void Moves(FleetAircraft aircraft, double nowSeconds, List<PassengerMove> into,
             double lookBackSeconds = 180, PlayerBaseLevel baseLevel = PlayerBaseLevel.Starter)
         {
             into?.Clear();
             var mode = ModeFor(aircraft);
-            if (into == null || mode is BoardingMode.None or BoardingMode.Aerobridge)
+            if (into == null || mode == BoardingMode.None)
                 return;
 
             var w = WindowsFor(aircraft, mode, baseLevel);
@@ -203,7 +246,7 @@ namespace Airside.Simulation
             if (aircraft.Scheduled is not { Cancelled: false } departure)
                 return new Windows(interval, doorsOpen, arrived, deplaneStart, deplaneEnd, 0, 0, interval);
             var passengers = PassengerCount(aircraft);
-            var doorsClose = departure.DepartAt.ElapsedSeconds - (mode == BoardingMode.StairTruck
+            var doorsClose = departure.DepartAt.ElapsedSeconds - (UsesStairTruck(mode)
                 ? StairTruckDoorsCloseBeforePushSeconds
                 : EngineStartSequence.DoorsCloseBeforeSeconds);
             double boardStart;

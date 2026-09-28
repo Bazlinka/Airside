@@ -826,15 +826,9 @@ namespace Airside.Presentation
             var nose = new Vector3(pose.NoseX, 0f, pose.NoseZ);
             var side = new Vector3(-nose.z, 0f, nose.x);
             var stop = new Vector3(pose.X, AirsideFlightPath.GroundY, pose.Z);
-            var terminal = AdelaideGround.IsTerminalGate(aircraft.Stand);
-
             var fuelService = stop - nose * 12f + side * 7f;
             var cateringService = stop - nose * 7f - side * 7f;
             var baggageService = stop - nose * 15f - side * 7f;
-            var boardingService = stop + nose * 3f + side * 6f;
-            // Only the passenger bus still parks on the apron; the fuel, catering and baggage
-            // vehicles now come from their depots along the frontage road instead.
-            var parkA = stop - nose * 42f + side * 18f;
 
             // Vehicles drive the real airside frontage road in and out (ADR 0115) rather than
             // appearing beside the aircraft when their stage starts. GroundServiceRun owns the
@@ -843,28 +837,16 @@ namespace Airside.Presentation
             DriveServiceVehicle(_cateringTruck, GroundServiceKind.Catering, aircraft, prep, cateringService);
             DriveServiceVehicle(_baggageCart, GroundServiceKind.Baggage, aircraft, prep, baggageService);
 
-            // Hi-vis crew around whichever vehicle is working, so the apron has people on it
-            // through the whole turnaround and not only during a stairs boarding (ADR 0116).
-            UpdateRampCrew(aircraft, prep);
-
             // Chocks at the nose gear and the ground power cart by the nose for the whole turn
             // (ADR 0126); built since the first turnaround pass and never placed until now.
             var facing = Quaternion.LookRotation(nose.sqrMagnitude > 0.001f ? nose : Vector3.forward);
             PlaceBoardingStairs(_chocks, true, stop, facing);
             PlaceBoardingStairs(_gpuCart, true, stop - nose * 4f + side * 3.5f, facing);
 
-            if (terminal)
-            {
-                SetEquipmentVisible(_stairs, false);
-                UpdateTurnaroundVehicle(_passengerBus, prep.Stage == DeparturePrepStage.Boarding,
-                    boardingService + side * 4f, parkA + side * 5f);
-            }
-            else
-            {
-                SetEquipmentVisible(_passengerBus, false);
-                PlaceBoardingStairs(_stairs, prep.Stage == DeparturePrepStage.Boarding,
-                    boardingService, Quaternion.LookRotation(nose.sqrMagnitude > 0.001f ? nose : Vector3.forward));
-            }
+            // Fleet-specific stair trucks and remote buses are owned by Boarding.cs. The old
+            // shared views would overlap those when two aircraft board at once.
+            SetEquipmentVisible(_passengerBus, false);
+            SetEquipmentVisible(_stairs, false);
         }
 
         /// <summary>
@@ -941,7 +923,6 @@ namespace Airside.Presentation
             SetEquipmentVisible(_stairs, false);
             SetEquipmentVisible(_chocks, false);
             SetEquipmentVisible(_gpuCart, false);
-            HideRampCrew();
         }
 
         private static void SetEquipmentVisible(Transform equipment, bool visible)

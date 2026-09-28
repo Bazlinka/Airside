@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Airside.Simulation;
 using NUnit.Framework;
 
@@ -106,6 +107,31 @@ namespace Airside.Tests
             Assert.That(RampCrew.VehicleFor(DeparturePrepStage.Boarding), Is.Null,
                 "no service vehicle works the boarding stage");
             Assert.That(RampCrew.VehicleFor(DeparturePrepStage.Idle), Is.Null);
+        }
+
+        [Test]
+        public void EveryCrewMemberHasTheJobTheyAreVisiblyPerforming()
+        {
+            Crew(DeparturePrepStage.Fuel);
+            Assert.That(_crew[0].Task, Is.EqualTo(RampTask.FuelPanel));
+            Assert.That(_crew[1].Task, Is.EqualTo(RampTask.FuelCoupling));
+            Crew(DeparturePrepStage.Catering);
+            Assert.That(_crew[0].Task, Is.EqualTo(RampTask.CateringLoader));
+            Assert.That(_crew[1].Task, Is.EqualTo(RampTask.CateringDoor));
+            Crew(DeparturePrepStage.Baggage);
+            Assert.That(_crew[0].Task, Is.EqualTo(RampTask.BaggageHold));
+            Assert.That(_crew[1].Task, Is.EqualTo(RampTask.BaggageCart));
+        }
+
+        [TestCase(RampActivity.Arrival, RampTask.MarshalArrival, 2)]
+        [TestCase(RampActivity.Pushback, RampTask.PushbackHeadset, 2)]
+        [TestCase(RampActivity.Boarding, RampTask.BoardingSupervision, 1)]
+        public void WholeTurnActivitiesProduceAReadableTeam(RampActivity activity, RampTask firstTask, int count)
+        {
+            RampCrew.ForActivity(activity, 0.5, _crew);
+            Assert.That(_crew.Count, Is.EqualTo(count));
+            Assert.That(_crew[0].Task, Is.EqualTo(firstTask));
+            Assert.That(_crew.All(member => member.Progress01 == 0.5f), Is.True);
         }
     }
 }

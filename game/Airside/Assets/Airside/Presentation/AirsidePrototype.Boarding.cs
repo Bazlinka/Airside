@@ -156,6 +156,17 @@ namespace Airside.Presentation
         private readonly Dictionary<string, StairTruckView> _stairTrucks = new(StringComparer.Ordinal);
         private readonly List<StairTruckView> _stairTruckPool = new();
         private readonly HashSet<string> _stairTruckWanted = new(StringComparer.Ordinal);
+
+        private sealed class PassengerBusView
+        {
+            public Transform Root;
+            public string Registration;
+        }
+
+        private const int MaxRemoteBuses = 6;
+        private readonly Dictionary<string, PassengerBusView> _remoteBuses = new(StringComparer.Ordinal);
+        private readonly List<PassengerBusView> _remoteBusPool = new();
+        private readonly HashSet<string> _remoteBusWanted = new(StringComparer.Ordinal);
         private Transform _boardingRoot;
 
         private Transform BoardingRoot()
@@ -330,6 +341,8 @@ namespace Airside.Presentation
             public GameObject Prefab;
             public AnimationClip Walk;
             public AnimationClip Idle;
+            public AnimationClip Interact;
+            public AnimationClip Wave;
             public float ScaleToMetre = 1f;
         }
 
@@ -357,7 +370,25 @@ namespace Airside.Presentation
         private readonly List<CharacterKind> _characterKinds = new();
         private readonly List<CharacterKind> _rampKinds = new();
         private readonly List<RampCrewMember> _rampScratch = new();
-        private readonly List<Transform> _rampViews = new();
+        private sealed class RampCrewPerson
+        {
+            public GameObject Instance;
+            public Transform Root;
+            public CharacterKind Kind;
+            public Transform ToolRoot;
+            public RampTask? ToolTask;
+        }
+
+        private sealed class RampCrewSet
+        {
+            public string Registration;
+            public readonly List<RampCrewPerson> People = new();
+        }
+
+        private const int MaxRampCrewAircraft = 8;
+        private readonly Dictionary<string, RampCrewSet> _rampCrewByAircraft = new(StringComparer.Ordinal);
+        private readonly List<RampCrewSet> _rampCrewPool = new();
+        private readonly HashSet<string> _rampCrewWanted = new(StringComparer.Ordinal);
         private bool _charactersLoaded;
         private readonly Dictionary<long, PassengerView> _passengers = new();
         private readonly Dictionary<CharacterKind, List<PassengerView>> _passengerPool = new();
@@ -369,7 +400,78 @@ namespace Airside.Presentation
         private void UpdateBoardingPresentation()
         {
             UpdateStairTrucks();
+            UpdatePassengerBuses();
             UpdatePassengers();
+            UpdateAllRampCrew();
+        }
+
+        private void UpdatePassengerBuses()
+        {
+            _remoteBusWanted.Clear();
+            if (FleetMode && _operations != null && AirsideFocusMode.ShowTurnaroundVehicles)
+            {
+                foreach (var aircraft in _operations.Fleet)
+                {
+                    if (_remoteBusWanted.Count >= MaxRemoteBuses)
+                        break;
+                    var fraction = BoardingFlow.RemoteBusFraction(aircraft, _preciseTime);
+                    if (fraction <= 0.001f || !_fleetViewById.TryGetValue(aircraft.Registration, out var aircraftView)
+                        || aircraftView == null || !TryRemoteBusStop(aircraft, aircraftView, out var stop, out var park))
+                        continue;
+                    var bus = TakePassengerBus(aircraft.Registration);
+                    if (bus == null)
+                        continue;
+                    _remoteBusWanted.Add(aircraft.Registration);
+                    var eased = Mathf.SmoothStep(0f, 1f, fraction);
+                    var position = Vector3.Lerp(park, stop, eased);
+                    var direction = stop - park;
+                    bus.Root.gameObject.SetActive(true);
+                    bus.Root.position = position;
+                    if (direction.sqrMagnitude > 0.001f)
+                        bus.Root.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+                }
+            }
+
+            foreach (var bus in _remoteBusPool)
+            {
+                if (bus.Registration == null || _remoteBusWanted.Contains(bus.Registration))
+                    continue;
+                _remoteBuses.Remove(bus.Registration);
+                bus.Registration = null;
+                bus.Root.gameObject.SetActive(false);
+            }
+        }
+
+        private PassengerBusView TakePassengerBus(string registration)
+        {
+            if (_remoteBuses.TryGetValue(registration, out var owned))
+                return owned;
+            PassengerBusView bus = null;
+            foreach (var candidate in _remoteBusPool)
+            {
+                if (candidate.Registration == null)
+                {
+                    bus = candidate;
+                    break;
+                }
+            }
+            if (bus == null)
+            {
+                if (_remoteBusPool.Count >= MaxRemoteBuses)
+                    return null;
+                var root = BuildServiceVehicle("Passenger bus (remote)", new Color(0.22f, 0.44f, 0.55f),
+                    new Vector3(3.8f, 1.5f, 1.45f), PreferArtKit(
+                        "Models/Vehicles/mdl_passenger_bus_apron_v06.gltf",
+                        "Models/Vehicles/mdl_passenger_bus_apron_v05.gltf",
+                        "Models/Vehicles/mdl_passenger_bus_apron_authored_v01.gltf"));
+                OrientPlusXKitToForward(root);
+                root.SetParent(BoardingRoot(), true);
+                bus = new PassengerBusView { Root = root };
+                _remoteBusPool.Add(bus);
+            }
+            bus.Registration = registration;
+            _remoteBuses[registration] = bus;
+            return bus;
         }
 
         private void UpdatePassengers()
@@ -383,7 +485,7 @@ namespace Airside.Presentation
                     if (_passengersWanted.Count >= MaxVisiblePassengers)
                         break;
                     var mode = BoardingFlow.ModeFor(aircraft);
-                    if (mode is not (BoardingMode.IntegralAirstair or BoardingMode.StairTruck))
+                    if (mode == BoardingMode.None)
                         continue;
                     if (!_fleetViewById.TryGetValue(aircraft.Registration, out var view) || view == null
                         || !view.gameObject.activeInHierarchy)
@@ -421,8 +523,18 @@ namespace Airside.Presentation
             var elapsed = (float)(_preciseTime - move.StartSeconds);
             if (elapsed < 0f)
                 return false;
-            if (!Locate(path, elapsed, move.SpeedMetresPerSecond, move.Boarding, out var position, out var heading))
+            if (!Locate(path, elapsed, move.SpeedMetresPerSecond, move.Boarding,
+                    out var position, out var heading, out var narrow))
                 return false; // arrived: inside the cabin or the terminal
+
+            // Three walking lanes stop a full load from occupying the exact same line. Stairs
+            // remain single-file; their clear width is intentionally narrow.
+            if (!narrow && heading.sqrMagnitude > 0.0001f)
+            {
+                var lane = move.Look % 3 - 1;
+                var lateral = Vector3.Cross(Vector3.up, heading.normalized);
+                position += lateral * (lane * 0.48f);
+            }
 
             var key = ((long)aircraft.Registration.GetHashCode() << 20) ^ ((long)move.Index << 1) ^ (move.Boarding ? 1L : 0L);
             _passengersWanted.Add(key);
@@ -491,26 +603,127 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Draw the hi-vis ramp crew around the player's active turnaround.
-        ///
-        /// Positions come from <see cref="RampCrew"/> in stand-local metres and are rotated
-        /// onto the stand here. Idle poses only: these are people standing at a vehicle or a
-        /// door, not walking a path, so they need no gait. Presentation only.
+        /// Draws a small crew team at every active turnaround, not just the earliest player
+        /// departure. The activity is derived from fleet state and simulation time; characters
+        /// have no autonomous state to save and remain correct through pause, catch-up and reload.
         /// </summary>
-        private void UpdateRampCrew(FleetAircraft aircraft, DeparturePrepStatus prep)
+        private void UpdateAllRampCrew()
         {
-            if (aircraft == null || _rampKinds.Count == 0)
+            _rampCrewWanted.Clear();
+            if (FleetMode && _operations != null && EnsureCharacters() && _rampKinds.Count > 0)
             {
-                HideRampCrew();
-                return;
+                foreach (var aircraft in _operations.Fleet)
+                {
+                    if (_rampCrewWanted.Count >= MaxRampCrewAircraft)
+                        break;
+                    if (!TryRampActivity(aircraft, out var activity, out var progress))
+                        continue;
+                    UpdateRampCrew(aircraft, activity, progress);
+                }
             }
 
-            RampCrew.For(prep, RampCrew.VehicleFor(prep.Stage), _rampScratch);
-            if (_rampScratch.Count == 0)
+            foreach (var set in _rampCrewPool)
             {
-                HideRampCrew();
-                return;
+                if (set.Registration == null || _rampCrewWanted.Contains(set.Registration))
+                    continue;
+                _rampCrewByAircraft.Remove(set.Registration);
+                set.Registration = null;
+                foreach (var person in set.People)
+                {
+                    person.Instance.SetActive(false);
+                    if (person.ToolRoot != null)
+                        person.ToolRoot.gameObject.SetActive(false);
+                }
             }
+        }
+
+        private bool TryRampActivity(FleetAircraft aircraft, out RampActivity activity, out double progress)
+        {
+            activity = RampActivity.None;
+            progress = 0;
+            if (aircraft == null || aircraft.State != FleetState.AtStand || string.IsNullOrEmpty(aircraft.Stand.Value))
+                return false;
+            var onStand = Math.Max(0.0, _preciseTime - aircraft.StateStartedAt.ElapsedSeconds);
+            if (onStand < 90.0)
+            {
+                activity = RampActivity.Arrival;
+                progress = onStand / 90.0;
+                return true;
+            }
+
+            double? toDeparture = aircraft.Scheduled is { Cancelled: false } booked
+                ? booked.DepartAt.ElapsedSeconds - _preciseTime
+                : null;
+            if (aircraft.Airline.IsPlayer && aircraft.Scheduled.HasValue)
+            {
+                var prep = DeparturePrep.For(aircraft, _clock.Now, _operations.CareerState.BaseLevel);
+                if (!prep.Ready && prep.Stage is not (DeparturePrepStage.Idle or DeparturePrepStage.Ready))
+                {
+                    activity = prep.Stage switch
+                    {
+                        DeparturePrepStage.Fuel => RampActivity.Fuel,
+                        DeparturePrepStage.Catering => RampActivity.Catering,
+                        DeparturePrepStage.Baggage => RampActivity.Baggage,
+                        _ => RampActivity.Boarding
+                    };
+                    progress = prep.StageProgress;
+                    return true;
+                }
+            }
+
+            if (toDeparture is <= PushbackTugTimeline.ApproachLeadSeconds and > -30.0)
+            {
+                activity = RampActivity.Pushback;
+                progress = Math.Clamp((PushbackTugTimeline.ApproachLeadSeconds - toDeparture.Value)
+                    / PushbackTugTimeline.ApproachLeadSeconds, 0.0, 1.0);
+                return true;
+            }
+
+            if (aircraft.Airline.IsPlayer)
+                return false;
+            if (onStand is >= 7 * 60.0 and < 11 * 60.0 && (!toDeparture.HasValue || toDeparture > 10 * 60.0))
+            {
+                activity = RampActivity.Catering;
+                progress = (onStand - 7 * 60.0) / (4 * 60.0);
+                return true;
+            }
+            if (ApronServiceSchedule.BaggageAlongside(onStand, toDeparture) && onStand < 4 * 60.0)
+            {
+                activity = RampActivity.Baggage;
+                progress = (onStand - ApronServiceSchedule.BaggageArrivesAfterSeconds) / (8 * 60.0);
+                return true;
+            }
+            if (ApronServiceSchedule.FuelAlongside(onStand, toDeparture))
+            {
+                activity = RampActivity.Fuel;
+                progress = (onStand - ApronServiceSchedule.FuelArrivesAfterSeconds) / (8 * 60.0);
+                return true;
+            }
+            if (ApronServiceSchedule.BaggageAlongside(onStand, toDeparture))
+            {
+                activity = RampActivity.Baggage;
+                progress = (onStand - ApronServiceSchedule.BaggageArrivesAfterSeconds) / (8 * 60.0);
+                return true;
+            }
+            if (toDeparture is <= 14 * 60.0 and > PushbackTugTimeline.ApproachLeadSeconds)
+            {
+                activity = RampActivity.Boarding;
+                progress = 1.0 - (toDeparture.Value - PushbackTugTimeline.ApproachLeadSeconds)
+                    / (14 * 60.0 - PushbackTugTimeline.ApproachLeadSeconds);
+                return true;
+            }
+            return false;
+        }
+
+        private void UpdateRampCrew(FleetAircraft aircraft, RampActivity activity, double progress)
+        {
+            RampCrew.ForActivity(activity, progress, _rampScratch);
+            if (_rampScratch.Count == 0)
+                return;
+            var set = TakeRampCrewSet(aircraft.Registration);
+            if (set == null)
+                return;
+            _rampCrewWanted.Add(aircraft.Registration);
 
             var pose = AdelaideGround.StandPose(aircraft.Stand);
             var nose = new Vector3(pose.NoseX, 0f, pose.NoseZ);
@@ -519,56 +732,143 @@ namespace Airside.Presentation
             nose.Normalize();
             var right = new Vector3(-nose.z, 0f, nose.x);
             var ground = new Vector3(pose.X, AirsideFlightPath.GroundY, pose.Z);
-
             for (var i = 0; i < _rampScratch.Count; i++)
             {
                 var member = _rampScratch[i];
-                var view = EnsureRampWorker(i);
-                if (view == null)
+                var person = EnsureRampWorker(set, i);
+                if (person == null)
                     continue;
-                view.gameObject.SetActive(true);
-                view.position = ground + nose * member.AlongMetres + right * member.AcrossMetres;
-                view.rotation = Quaternion.LookRotation(
+                person.Instance.SetActive(true);
+                person.Root.position = ground + nose * member.AlongMetres + right * member.AcrossMetres;
+                person.Root.rotation = Quaternion.LookRotation(
                     Quaternion.AngleAxis(member.FacingDegrees, Vector3.up) * nose, Vector3.up);
+                var clip = member.Task is RampTask.MarshalArrival or RampTask.WingWalk
+                    ? person.Kind.Wave ?? person.Kind.Interact
+                    : person.Kind.Interact ?? person.Kind.Idle;
+                if (clip != null && clip.length > 0.01f)
+                {
+                    var phase = (float)(_preciseTime * (member.Task is RampTask.BaggageHold or RampTask.BaggageCart ? 1.2 : 0.75)
+                        + i * 0.37);
+                    clip.SampleAnimation(person.Instance, phase % clip.length);
+                }
+                PoseCrewTool(person, member.Task, i);
             }
-
-            for (var i = _rampScratch.Count; i < _rampViews.Count; i++)
-                if (_rampViews[i] != null)
-                    _rampViews[i].gameObject.SetActive(false);
+            for (var i = _rampScratch.Count; i < set.People.Count; i++)
+            {
+                set.People[i].Instance.SetActive(false);
+                if (set.People[i].ToolRoot != null)
+                    set.People[i].ToolRoot.gameObject.SetActive(false);
+            }
         }
 
-        private Transform EnsureRampWorker(int index)
+        private RampCrewSet TakeRampCrewSet(string registration)
         {
-            while (_rampViews.Count <= index)
-            {
-                var kind = _rampKinds[RampCrew.IsFemale(_rampViews.Count) && _rampKinds.Count > 1 ? 1 : 0];
-                var instance = Instantiate(kind.Prefab);
-                instance.name = $"Ramp worker {_rampViews.Count + 1}";
-                var t = instance.transform;
-                // Characters import at an arbitrary height; normalise then give a real one.
-                var height = 1.72f + (_rampViews.Count % 2 == 0 ? 0.06f : -0.05f);
-                t.localScale = Vector3.one * (kind.ScaleToMetre * height);
-                if (kind.Idle != null)
+            if (_rampCrewByAircraft.TryGetValue(registration, out var owned))
+                return owned;
+            RampCrewSet set = null;
+            foreach (var candidate in _rampCrewPool)
+                if (candidate.Registration == null)
                 {
-                    kind.Idle.SampleAnimation(instance, 0f);
-                    var animator = instance.GetComponent<Animator>();
-                    if (animator != null)
-                        animator.enabled = false;
+                    set = candidate;
+                    break;
                 }
+            if (set == null)
+            {
+                if (_rampCrewPool.Count >= MaxRampCrewAircraft)
+                    return null;
+                set = new RampCrewSet();
+                _rampCrewPool.Add(set);
+            }
+            set.Registration = registration;
+            _rampCrewByAircraft[registration] = set;
+            return set;
+        }
 
+        private RampCrewPerson EnsureRampWorker(RampCrewSet set, int index)
+        {
+            while (set.People.Count <= index)
+            {
+                var slot = set.People.Count;
+                var kind = _rampKinds[RampCrew.IsFemale(slot) && _rampKinds.Count > 1 ? 1 : 0];
+                var instance = Instantiate(kind.Prefab, BoardingRoot());
+                instance.name = $"Ramp worker {slot + 1}";
+                var height = 1.72f + (slot % 2 == 0 ? 0.06f : -0.05f);
+                instance.transform.localScale = Vector3.one * (kind.ScaleToMetre * height);
+                var animator = instance.GetComponent<Animator>();
+                if (animator != null)
+                    animator.enabled = false;
                 foreach (var renderer in instance.GetComponentsInChildren<Renderer>(true))
                     renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
-                _rampViews.Add(t);
+                set.People.Add(new RampCrewPerson { Instance = instance, Root = instance.transform, Kind = kind });
+            }
+            return set.People[index];
+        }
+
+        private void PoseCrewTool(RampCrewPerson person, RampTask task, int slot)
+        {
+            if (person.ToolTask != task || person.ToolRoot == null)
+            {
+                if (person.ToolRoot != null)
+                    Destroy(person.ToolRoot.gameObject);
+                person.ToolRoot = new GameObject($"{task} equipment").transform;
+                person.ToolRoot.SetParent(BoardingRoot(), true);
+                person.ToolTask = task;
+                switch (task)
+                {
+                    case RampTask.MarshalArrival:
+                    case RampTask.WingWalk:
+                        ParentBlock(person.ToolRoot, "Illuminated wand L", new Vector3(-0.28f, 1.25f, 0.12f),
+                            new Vector3(0.045f, 0.55f, 0.045f), new Color(1f, 0.32f, 0.08f));
+                        ParentBlock(person.ToolRoot, "Illuminated wand R", new Vector3(0.28f, 1.25f, 0.12f),
+                            new Vector3(0.045f, 0.55f, 0.045f), new Color(1f, 0.32f, 0.08f));
+                        break;
+                    case RampTask.PlaceSafetyEquipment:
+                        ParentBlock(person.ToolRoot, "Safety cone", new Vector3(0.55f, 0.22f, 0.3f),
+                            new Vector3(0.24f, 0.44f, 0.24f), new Color(0.95f, 0.35f, 0.08f));
+                        break;
+                    case RampTask.FuelPanel:
+                    case RampTask.FuelCoupling:
+                        ParentBlock(person.ToolRoot, "Fuel hose", new Vector3(0f, 0.65f, 0.34f),
+                            new Vector3(0.09f, 0.09f, 1.25f), new Color(0.12f, 0.12f, 0.13f));
+                        break;
+                    case RampTask.CateringLoader:
+                    case RampTask.CateringDoor:
+                        ParentBlock(person.ToolRoot, "Catering crate", new Vector3(0.45f, 0.55f, 0.35f),
+                            new Vector3(0.5f, 0.5f, 0.65f), new Color(0.76f, 0.78f, 0.8f));
+                        break;
+                    case RampTask.BaggageHold:
+                    case RampTask.BaggageCart:
+                        ParentBlock(person.ToolRoot, "Suitcase", new Vector3(0.45f, 0.45f, 0.4f),
+                            new Vector3(0.48f, 0.62f, 0.24f), new Color(0.18f, 0.32f, 0.46f));
+                        break;
+                    case RampTask.BoardingSupervision:
+                    case RampTask.PushbackHeadset:
+                        ParentBlock(person.ToolRoot, "Handheld radio", new Vector3(0.32f, 1.15f, 0.18f),
+                            new Vector3(0.12f, 0.28f, 0.08f), new Color(0.12f, 0.13f, 0.15f));
+                        break;
+                }
             }
 
-            return _rampViews[index];
+            person.ToolRoot.gameObject.SetActive(person.Instance.activeSelf);
+            person.ToolRoot.position = person.Root.position;
+            person.ToolRoot.rotation = person.Root.rotation;
+            if (task is RampTask.MarshalArrival or RampTask.WingWalk)
+                person.ToolRoot.localRotation *= Quaternion.Euler(0f, 0f,
+                    Mathf.Sin((float)_preciseTime * 3.2f + slot) * 22f);
+            else if (task is RampTask.BaggageHold or RampTask.BaggageCart)
+                person.ToolRoot.position += person.Root.forward *
+                    (Mathf.Sin((float)_preciseTime * 2.2f + slot) * 0.22f);
         }
 
         private void HideRampCrew()
         {
-            for (var i = 0; i < _rampViews.Count; i++)
-                if (_rampViews[i] != null)
-                    _rampViews[i].gameObject.SetActive(false);
+            foreach (var set in _rampCrewPool)
+                foreach (var person in set.People)
+                {
+                    person.Instance.SetActive(false);
+                    if (person.ToolRoot != null)
+                        person.ToolRoot.gameObject.SetActive(false);
+                }
         }
 
         private bool EnsureCharacters()
@@ -600,6 +900,10 @@ namespace Airside.Presentation
                         kind.Walk = clip;
                     else if (clip.name.EndsWith("Idle_Neutral", StringComparison.Ordinal))
                         kind.Idle = clip;
+                    else if (clip.name.EndsWith("Interact", StringComparison.Ordinal))
+                        kind.Interact = clip;
+                    else if (clip.name.EndsWith("Wave", StringComparison.Ordinal))
+                        kind.Wave = clip;
                 }
 
                 // Normalise to a 1 m tall figure; each passenger then gets their own height.
@@ -630,10 +934,27 @@ namespace Airside.Presentation
         {
             path = default;
             var ground = view.position.y;
+
+            if (mode == BoardingMode.Aerobridge)
+            {
+                foreach (var bridge in _aerobridges)
+                {
+                    if (!bridge.Site.Gate.Equals(aircraft.Stand) || !bridge.HasDocked || bridge.Shown < 0.92f)
+                        continue;
+                    var door = AircraftDoors.L1(aircraft.Type);
+                    var bridgeTop = view.TransformPoint(new Vector3(door.LocalX, door.SillY + 0.05f, door.LocalZ));
+                    var start = new Vector3(bridge.Site.RotundaX, bridge.Floor + 0.05f, bridge.Site.RotundaZ);
+                    var cab = bridge.Cab.position + Vector3.up * 0.05f;
+                    path = new WalkPath(new[] { start, Vector3.Lerp(start, cab, 0.5f), cab, bridgeTop }, int.MaxValue);
+                    return true;
+                }
+                return false;
+            }
+
             Vector3 top;
             Vector3 foot;
             Vector3 into;
-            if (mode == BoardingMode.StairTruck)
+            if (BoardingFlow.UsesStairTruck(mode))
             {
                 var (sill, inward) = JetDoorSill(aircraft, view);
                 into = inward;
@@ -654,8 +975,28 @@ namespace Airside.Presentation
 
             var forward = Flat(view.forward).normalized;
             var approach = foot - into * 4f + forward * 3f;
-            var terminal = NearestTerminalDoor(foot, ground);
-            path = new WalkPath(new[] { terminal, approach, foot, top }, 2);
+            var origin = mode == BoardingMode.RemoteBus && TryRemoteBusStop(aircraft, view, out var busStop, out _)
+                ? busStop + into * 2.0f
+                : NearestTerminalDoor(foot, ground);
+            path = new WalkPath(new[] { origin, approach, foot, top }, 2);
+            return true;
+        }
+
+        private static bool TryRemoteBusStop(FleetAircraft aircraft, Transform view,
+            out Vector3 stop, out Vector3 park)
+        {
+            stop = default;
+            park = default;
+            if (aircraft == null || view == null || !BoardingFlow.UsesRemoteBus(BoardingFlow.ModeFor(aircraft)))
+                return false;
+            var (sill, inward) = JetDoorSill(aircraft, view);
+            var into = inward.sqrMagnitude > 0.001f ? inward.normalized : Vector3.right;
+            var forward = Flat(view.forward).normalized;
+            var foot = new Vector3(sill.x, view.position.y, sill.z) - into *
+                (0.8f + StairRun(Mathf.Max(0.6f, sill.y - view.position.y)));
+            // The bus door faces the walking lane, outside the stair manoeuvring box.
+            stop = foot - into * 9.5f + forward * 2.5f;
+            park = stop - forward * 34f - into * 8f;
             return true;
         }
 
@@ -698,10 +1039,11 @@ namespace Airside.Presentation
 
         /// <summary>Where a walker is after <paramref name="elapsed"/> seconds; false once they have arrived.</summary>
         private static bool Locate(WalkPath path, float elapsed, float speed, bool boarding, out Vector3 position,
-            out Vector3 heading)
+            out Vector3 heading, out bool narrow)
         {
             position = default;
             heading = default;
+            narrow = false;
             var points = path.Points;
             var remaining = elapsed;
             // Boarding walks the path forwards; deplaning walks it back from the door.
@@ -721,6 +1063,7 @@ namespace Airside.Presentation
                     var f = duration > 0f ? remaining / duration : 1f;
                     position = Vector3.Lerp(a, b, f);
                     heading = Flat(b - a);
+                    narrow = onStairs;
                     return true;
                 }
 

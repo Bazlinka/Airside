@@ -114,7 +114,7 @@ namespace Airside.Tests
                 var progress = (float)Math.Max(0, Math.Min(1, (now - visual.PhaseStartedAt.ElapsedSeconds) / duration));
                 var v = phase == AircraftPhase.Landing
                     ? AirsideFlightPath.Landing(progress, 0f, aircraft.Type)
-                    : AirsideFlightPath.Takeoff(progress, 0f, aircraft.Type);
+                    : AirsideFlightPath.Takeoff(progress, 0f, aircraft.Type, aircraft.AssignedRunway);
                 if (v.y - AirsideFlightPath.GroundY > 3f)
                     return false;
                 RunwayFrame.ToWorld(aircraft.AssignedRunway, v.x, 0f, v.z, out var wx, out _, out var wz);

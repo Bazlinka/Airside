@@ -30,24 +30,30 @@ namespace Airside.Simulation
             out float[] path)
         {
             path = null;
-            var bestRadius = 0f;
-            foreach (var factor in new[] { 2.2f, 1.6f, 1.1f, 0.6f, 0f })
+            // The trailed main gear is still turning until it has had about two wheelbases
+            // of centreline. A wider arc that spends that straight on the corner leaves the
+            // nose cocked at the start of the roll. Take the longest straight that still
+            // turns on a radius the aircraft can drive; if none does, keep the widest.
+            float[] widest = null;
+            var widestRadius = 0f;
+            foreach (var factor in new[] { 2.6f, 2.2f, 1.9f, 1.6f, 1.3f, 1.0f, 0.6f, 0.3f, 0f })
             {
                 if (!TryBuild(baked, forwardX, forwardZ, radius, wheelbase * factor, out var candidate, out var achieved))
                     continue;
-                if (achieved >= radius * 0.75f)
+                if (achieved > widestRadius)
+                {
+                    widestRadius = achieved;
+                    widest = candidate;
+                }
+
+                if (factor >= 1.9f && achieved >= Math.Max(14f, radius * 0.55f))
                 {
                     path = candidate;
                     return true;
                 }
-
-                if (achieved > bestRadius)
-                {
-                    bestRadius = achieved;
-                    path = candidate;
-                }
             }
 
+            path = widest;
             return path != null;
         }
 
@@ -91,16 +97,32 @@ namespace Airside.Simulation
 
             float ax = cx - sx * tangent, az = cz - sz * tangent;
             float bx = cx + forwardX * tangent, bz = cz + forwardZ * tangent;
+            // A quadratic through the corner cuts inside a circular fillet, so the middle of
+            // the turn was tighter than the radius above and the tail had to slide to stay
+            // with it. This is the circular fillet of that same radius. `cross` is the
+            // turn sign already computed above.
+            var nx = cross >= 0f ? -sz : sz;
+            var nz = cross >= 0f ? sx : -sx;
+            float ox = ax + nx * achievedRadius, oz = az + nz * achievedRadius;
+            var a0 = Math.Atan2(ax - ox, az - oz);
+            var a1 = Math.Atan2(bx - ox, bz - oz);
+            var sweep = WrapPi(a1 - a0);
+            var arc = Math.Abs(sweep) * achievedRadius;
+            var steps = Math.Max(8, (int)Math.Ceiling(arc / Step));
             var points = new List<float>();
             Line(points, hx, hz, ax, az, true);
-            var length = 2f * tangent;
-            var steps = Math.Max(6, (int)Math.Ceiling(length / Step));
             for (var i = 1; i <= steps; i++)
             {
-                var t = i / (float)steps;
-                var u = 1f - t;
-                points.Add(u * u * ax + 2f * u * t * cx + t * t * bx);
-                points.Add(u * u * az + 2f * u * t * cz + t * t * bz);
+                if (i == steps)
+                {
+                    points.Add(bx);
+                    points.Add(bz);
+                    break;
+                }
+
+                var ang = a0 + sweep * (i / (double)steps);
+                points.Add(ox + (float)(Math.Sin(ang) * achievedRadius));
+                points.Add(oz + (float)(Math.Cos(ang) * achievedRadius));
             }
 
             Line(points, bx, bz, ex, ez, false);
@@ -128,6 +150,15 @@ namespace Airside.Simulation
             dx /= length;
             dz /= length;
             return true;
+        }
+
+        private static double WrapPi(double angle)
+        {
+            while (angle > Math.PI)
+                angle -= 2.0 * Math.PI;
+            while (angle < -Math.PI)
+                angle += 2.0 * Math.PI;
+            return angle;
         }
 
         private static void Line(List<float> points, float x0, float z0, float x1, float z1, bool includeStart)

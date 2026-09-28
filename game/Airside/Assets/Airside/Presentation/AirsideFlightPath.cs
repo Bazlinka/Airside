@@ -222,9 +222,13 @@ namespace Airside.Presentation
         public static Vector3 Takeoff(float t, float offsetX) => Takeoff(t, offsetX, AircraftType.Atr42);
 
         public static Vector3 Takeoff(float t, float offsetX, AircraftType type) =>
-            TakeoffAtThreshold(t, AircraftPerformance.For(type)) + new Vector3(offsetX, 0f, 0f);
+            Takeoff(t, offsetX, type, RunwayDirection.Runway05);
 
-        private static Vector3 TakeoffAtThreshold(float t, AircraftPerformanceProfile profile)
+        public static Vector3 Takeoff(float t, float offsetX, AircraftType type, RunwayDirection runway) =>
+            TakeoffAtThreshold(t, AircraftPerformance.For(type), AdelaideGround.TakeoffRollInMetres(type, runway))
+            + new Vector3(offsetX, 0f, 0f);
+
+        private static Vector3 TakeoffAtThreshold(float t, AircraftPerformanceProfile profile, float rollIn)
         {
             var u = Mathf.Clamp01(t);
             var vRotate = Mps(profile.RotateKnots);
@@ -233,12 +237,13 @@ namespace Airside.Presentation
             if (u < profile.RotateProgress)
             {
                 var f = Local(u, 0f, profile.RotateProgress);
-                var x = Mathf.Lerp(TakeoffStartX, profile.RotateX, DistanceFraction(f, 0f, vRotate));
+                var x = Mathf.Lerp(TakeoffStartX + rollIn, profile.RotateX + rollIn,
+                    AircraftPerformanceProfile.TakeoffRollDistance01(f));
                 return new Vector3(x, GroundY, 0f);
             }
 
             var c = Local(u, profile.RotateProgress, 1f);
-            var cx = Mathf.Lerp(profile.RotateX, profile.TakeoffEndX, DistanceFraction(c, vRotate, vClimb));
+            var cx = Mathf.Lerp(profile.RotateX + rollIn, profile.TakeoffEndX + rollIn, DistanceFraction(c, vRotate, vClimb));
             // Rotation takes a moment, so the climb eases in rather than snapping to
             // the full gradient the instant the nose comes up. The exponent sets how
             // hot the climb is by the end of the phase: 1.5 would finish at 1 790
@@ -269,16 +274,20 @@ namespace Airside.Presentation
         public static Vector3 Departed(float t, float offsetX) => DepartedAtThreshold(t) + new Vector3(offsetX, 0f, 0f);
 
         public static Vector3 Departed(float t, float offsetX, AircraftType type) =>
-            DepartedAtThreshold(t, AircraftPerformance.For(type)) + new Vector3(offsetX, 0f, 0f);
+            Departed(t, offsetX, type, RunwayDirection.Runway05);
+
+        public static Vector3 Departed(float t, float offsetX, AircraftType type, RunwayDirection runway) =>
+            DepartedAtThreshold(t, AircraftPerformance.For(type), AdelaideGround.TakeoffRollInMetres(type, runway))
+            + new Vector3(offsetX, 0f, 0f);
 
         private static Vector3 DepartedAtThreshold(float t)
-            => DepartedAtThreshold(t, AircraftPerformance.Atr42);
+            => DepartedAtThreshold(t, AircraftPerformance.Atr42, 0f);
 
-        private static Vector3 DepartedAtThreshold(float t, AircraftPerformanceProfile profile)
+        private static Vector3 DepartedAtThreshold(float t, AircraftPerformanceProfile profile, float rollIn)
         {
             var s = DistanceFraction(t, Mps(profile.InitialClimbKnots), Mps(profile.ClimbOutKnots));
             return new Vector3(
-                Mathf.Lerp(profile.TakeoffEndX, profile.DepartedEndX, s),
+                Mathf.Lerp(profile.TakeoffEndX + rollIn, profile.DepartedEndX + rollIn, s),
                 Mathf.Lerp(GroundY + profile.TakeoffEndHeight, GroundY + profile.DepartedEndHeight, s),
                 0f);
         }

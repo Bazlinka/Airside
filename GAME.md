@@ -1,5 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Cursor — lineup steering and takeoff sound (ADR 0161).** The tail was
+  sliding out on the turn onto the runway: the fuselage was the chord of a tight
+  corner, so the rear wheels travelled sideways. Lineups are now a circular arc with
+  the main gear trailing and no sideslip. A long aircraft keeps rolling straight
+  until that gear is lined up, and the takeoff roll starts from there. The roll
+  eases off the stop, and the engine note follows thrust plus airspeed instead of
+  jumping to full power. **Checks:** filtered Unity EditMode passed
+  (`LineupSteeringTests`, departure seams, takeoff path, roll noise). Full
+  `scripts/test-unity.sh` not run. **Next:** playtest a 737 and an ATR lining up
+  on 05 and a Saab on 12 — the tail should track inside the turn, and the roll
+  should sound like it is accelerating.
+
 - **2026-09-28 Claude — trees where the satellite sees them (ADR 0160).** Branch
   `claude/fervent-gates-1tzyhq`. 11 428 low-poly eucalypts (about 18 triangles each) placed on real
   tree canopy measured from Sentinel-2 NDVI: the creek lines, the airport perimeter drain,

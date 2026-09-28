@@ -42,6 +42,18 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void RollNoise_BuildsWithSpeedAndMatchesTaxiAtRest()
+        {
+            Assert.That(EngineVoice.HeardPower(0.14f, 0f), Is.EqualTo(0.14f).Within(1e-4f),
+                "standing still is just the thrust, so the lineup and the roll start on the same note");
+            Assert.That(EngineVoice.HeardPower(0.14f, 0.5f), Is.GreaterThan(0.14f));
+            Assert.That(EngineVoice.HeardPower(0.14f, 1f), Is.GreaterThan(EngineVoice.HeardPower(0.14f, 0.5f)));
+            Assert.That(EngineVoice.HeardPower(1f, 1f), Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(EngineVoice.RollPitch(0f), Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(EngineVoice.RollPitch(1f), Is.GreaterThan(1f));
+        }
+
+        [Test]
         public void DistantEnginesAreMuffled()
         {
             var near = EngineVoice.LowPassHz(10f, 400f, 1f);

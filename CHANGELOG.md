@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Turning onto the runway no longer looks like a drift.** The tail was sliding out
+  because the fuselage cut across the corner. Aircraft now steer onto a proper arc
+  with the main gear trailing behind the nose, and a long aircraft finishes that turn
+  on the centreline before the roll begins. The takeoff roll and its engine note
+  build up together instead of starting at full power.
+
 - **Trees.** Gum trees now line the creeks, the airport's perimeter, the golf courses and the
   streets around the field, each placed where the satellite actually sees tree canopy.
 

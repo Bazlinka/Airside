@@ -88,6 +88,23 @@ namespace Airside.Presentation
             RunningVolume * Gain(kind) * Lerp(0.35f, 1f, Clamp01(power)) * Lerp(0.35f, 1f, Clamp01(spool));
 
         /// <summary>
+        /// Thrust plus the noise of accelerating down the runway. <paramref name="speed01"/> is
+        /// 0 at a standstill and 1 at rotate. At rest this is just the thrust, so taxi and the
+        /// start of the roll match; the note then builds with speed instead of stepping to
+        /// full power when the phase changes.
+        /// </summary>
+        public static float HeardPower(float thrust, float speed01)
+        {
+            thrust = Clamp01(thrust);
+            speed01 = Clamp01(speed01);
+            var airflow = speed01 * speed01;
+            return Clamp01(thrust + (1f - thrust) * 0.65f * airflow);
+        }
+
+        /// <summary>Pitch rise from airflow as the roll accelerates. 1 at rest, a little sharper at Vr.</summary>
+        public static float RollPitch(float speed01) => Lerp(1f, 1.08f, Clamp01(speed01));
+
+        /// <summary>
         /// Low-pass cutoff (Hz): close and at power the engine is bright; far off only the rumble carries,
         /// the way a distant jet sounds.
         /// </summary>

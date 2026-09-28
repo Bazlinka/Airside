@@ -357,6 +357,103 @@ namespace Airside.Simulation
             return cross < 1e-4f ? float.MaxValue : ab * bc * ca / (2f * cross);
         }
 
+        private float _bicycleWheelbase = -1f;
+        private float _bicycleStep;
+        private float[] _bicycleX;
+        private float[] _bicycleZ;
+
+        /// <summary>
+        /// Nose direction when the nose rides this path and the main gear trails
+        /// <paramref name="wheelbase"/> behind without sideslip. Putting both axles on the
+        /// path makes the fuselage a chord of the turn, so the rear wheels travel sideways
+        /// — the tail looks like it is drifting. This keeps the rear rolling along the body.
+        /// </summary>
+        public void BicycleNose(float metres, float wheelbase, out float noseX, out float noseZ)
+        {
+            if (wheelbase < 0.05f || Length < 0.5f)
+            {
+                var sample = SampleAtDistance(metres);
+                noseX = sample.DirectionX;
+                noseZ = sample.DirectionZ;
+                return;
+            }
+
+            if (_bicycleX == null || Math.Abs(_bicycleWheelbase - wheelbase) > 0.01f)
+                BuildBicycle(wheelbase);
+
+            var index = metres / _bicycleStep;
+            if (index <= 0f)
+            {
+                noseX = _bicycleX[0];
+                noseZ = _bicycleZ[0];
+                return;
+            }
+
+            var last = _bicycleX.Length - 1;
+            if (index >= last)
+            {
+                noseX = _bicycleX[last];
+                noseZ = _bicycleZ[last];
+                return;
+            }
+
+            var i = (int)index;
+            var t = index - i;
+            noseX = _bicycleX[i] + (_bicycleX[i + 1] - _bicycleX[i]) * t;
+            noseZ = _bicycleZ[i] + (_bicycleZ[i + 1] - _bicycleZ[i]) * t;
+            var length = Hypot(noseX, noseZ);
+            if (length > 1e-4f)
+            {
+                noseX /= length;
+                noseZ /= length;
+            }
+        }
+
+        private void BuildBicycle(float wheelbase)
+        {
+            const float step = 0.5f;
+            var count = Math.Max(2, (int)Math.Ceiling(Length / step) + 1);
+            var xs = new float[count];
+            var zs = new float[count];
+            var start = SampleAtDistance(0f);
+            var noseX = start.X;
+            var noseZ = start.Z;
+            var mainsX = noseX - start.DirectionX * wheelbase;
+            var mainsZ = noseZ - start.DirectionZ * wheelbase;
+            xs[0] = start.DirectionX;
+            zs[0] = start.DirectionZ;
+            for (var i = 1; i < count; i++)
+            {
+                var along = Math.Min(Length, i * step);
+                var nose = PointAtDistance(along);
+                var dx = nose.x - mainsX;
+                var dz = nose.z - mainsZ;
+                var length = Hypot(dx, dz);
+                if (length > 1e-3f)
+                {
+                    var hx = dx / length;
+                    var hz = dz / length;
+                    mainsX = nose.x - hx * wheelbase;
+                    mainsZ = nose.z - hz * wheelbase;
+                    xs[i] = hx;
+                    zs[i] = hz;
+                }
+                else
+                {
+                    xs[i] = xs[i - 1];
+                    zs[i] = zs[i - 1];
+                }
+            }
+
+            // Heading stays the trailed-gear direction the whole way. Yawing the fuselage
+            // onto the runway while the nose is held on the centreline is what slid the tail
+            // out; a long aircraft instead gets more straight centreline before the roll.
+            _bicycleStep = step;
+            _bicycleX = xs;
+            _bicycleZ = zs;
+            _bicycleWheelbase = wheelbase;
+        }
+
         private static float Hypot(float x, float z) => (float)Math.Sqrt(x * x + z * z);
 
         private static float Max(float[] values)
@@ -393,12 +490,14 @@ namespace Airside.Simulation
     /// <summary>One piece of a ground leg: a path, driven nose-first or tail-first, after an optional pause.</summary>
     public readonly struct GroundLegPart
     {
-        public GroundLegPart(GroundPath path, bool tailFirst, double pauseBeforeSeconds = 0, float trackMetres = 0f)
+        public GroundLegPart(GroundPath path, bool tailFirst, double pauseBeforeSeconds = 0, float trackMetres = 0f,
+            bool slipFree = false)
         {
             Path = path;
             TailFirst = tailFirst;
             PauseBeforeSeconds = pauseBeforeSeconds;
             TrackMetres = trackMetres;
+            SlipFree = slipFree;
         }
 
         public GroundPath Path { get; }
@@ -410,9 +509,14 @@ namespace Airside.Simulation
         /// trails this far behind along the same path, so the body points from the mains to the
         /// nose instead of along the tangent at the nose. A 39 m jet steered off its nose tangent
         /// swings its tail across the grass in every turn; tracked like this it stays on the
-        /// taxiway. Zero is retained only for callers without authored gear geometry.
+        /// taxiway. The chord between those two path points still crabs in a tight turn —
+        /// the rear travels sideways — so <see cref="SlipFree"/> uses a trailing-gear
+        /// heading instead. Zero is retained only for callers without authored gear geometry.
         /// </summary>
         public float TrackMetres { get; }
+
+        /// <summary>Nose on the path, main gear trailing with no sideslip. Used on the lineup turn.</summary>
+        public bool SlipFree { get; }
         public double Seconds => PauseBeforeSeconds + Path.Seconds;
     }
 
@@ -764,7 +868,12 @@ namespace Airside.Simulation
             var sign = part.TailFirst ? -1f : 1f;
             var noseX = sample.DirectionX * sign;
             var noseZ = sample.DirectionZ * sign;
-            if (part.TrackMetres > 0f)
+            if (part.SlipFree && part.TrackMetres > 0f && !part.TailFirst)
+            {
+                var along = part.Path.DistanceAt(seconds);
+                part.Path.BicycleNose(along, part.TrackMetres, out noseX, out noseZ);
+            }
+            else if (part.TrackMetres > 0f)
             {
                 // Main gear on the path behind the nose: behind in travel when nose first,
                 // ahead in travel when the tail leads a pushback.

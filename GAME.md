@@ -1,5 +1,33 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — Emirates and Qatar land in the evening.** Branch `claude/fervent-gates-1tzyhq`.
+  - The ~27 h round trip brought them back just after 23:00 every night, held off-map until a 07:15
+    landing, then turned in the morning. The real 22:00 departure (`PinLongHaulEvening`) never
+    happened.
+  - `AwayTurnaroundSeconds` now waits at Dubai or Doha so they land at 20:30 Adelaide time, with room
+    for the ~80 min turn and a go-around before 22:00.
+
+  **Checks:** `AirportCurfewTests.EmiratesAndQatar_LandInTheEveningAndLeaveAtTen` (3 seeds, fails
+  on the old code with a 06:11 departure) and the curfew tests pass. The full harness was not re-run
+  after this change.
+
+- **2026-09-28 Claude — bug pass: curfew go-around, arrival queue, player flight numbers.**
+  Branch `claude/fervent-gates-1tzyhq`. Found by the player-action fuzzer, now with a "stuck in one
+  state for 3 h" check:
+  - **A go-around just before 23:00 circled Adelaide until 05:00.** The rejoin restarts the
+    hold, so `MayUseRunwayDuringCurfew` read it as a new night arrival. A go-around was already
+    cleared to land, so it may now land.
+  - **The tower only looked at the longest-waiting arrival.** One barred by the curfew blocked
+    every arrival behind it. It now clears the longest-waiting arrival that may land, and holds
+    barred ones for the opening.
+  - **Player flight numbers repeated.** They came from a 40-slot hash, so two of your aircraft
+    often showed the same flight. Each `VH-P??` mark now has its own number (VH-PAA 100, VH-PAB
+    102, …, return +1).
+
+  **Checks:** harness 964/964; the new `HoldReasonTests` case fails on the old code; 16 seeds × 5
+  days of the player fuzzer and a 30-day two-seed airport soak are clean (no stuck aircraft, no
+  stand conflicts, a stable fleet, about 110 take-offs a day). **Not seen in Unity.**
+
 - **2026-09-28 Claude — engine exhaust as haze, with a start puff (ADR 0170).** Branch
   `claude/fervent-gates-1tzyhq`. The exhaust plume is no longer an orange glow that brightened at
   takeoff. Running engines show a faint neutral haze, and light-off throws a short grey-white

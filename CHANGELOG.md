@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **Emirates and Qatar keep their evening timetable.** They now land around 8:30 pm and leave
+  at 10 pm, instead of being held until the next morning every night.
+
+- **No more all-night circling.** A jet that went around just before the 11 pm curfew used to
+  circle Adelaide until 5 am. It now lands. Arrivals held by the curfew also no longer block the
+  ones allowed to land behind them.
+
+- **Every one of your flights has its own number.** Two of your aircraft could show the same
+  flight number on the board; now each aircraft keeps its own.
+
 - **Engine starts puff smoke.** A turboprop lighting its engine now throws a short puff of
   grey-white smoke. The orange glow behind engines at take-off is gone: running engines leave only
   a faint haze, as real ones do.

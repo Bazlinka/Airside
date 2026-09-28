@@ -111,10 +111,16 @@ namespace Airside.Presentation
                 var slot = (int)(StableHash.Of(registration ?? string.Empty) % 4) * 2;
                 number = published.Value + slot;
             }
+            else if (airline != null && airline.IsPlayer && TryPlayerNumber(registration, out var own))
+            {
+                // Each player aircraft keeps its own number (ADR 0165 follow-up). The hashed spare
+                // band had 40 slots, so two of the player's aircraft often showed the same flight.
+                number = own;
+            }
             else
             {
-                // Spare band for routes that are not a published Adelaide service, including
-                // every player flight. Still stable for the same aircraft and city.
+                // Spare band for routes that are not a published Adelaide service. Still stable
+                // for the same aircraft and city.
                 var hash = StableHash.Of($"{registration}|{destinationCode}");
                 number = 900 + (int)(hash % 40) * 2;
             }
@@ -122,6 +128,26 @@ namespace Airside.Presentation
             if (returningHome)
                 number += 1;
             return $"{callsign}{number}";
+        }
+
+        /// <summary>
+        /// A player aircraft's own outbound number from its <c>VH-P??</c> mark: VH-PAA is 100,
+        /// VH-PAB 102 and so on, even so the return (+1) never meets another aircraft. Marks are
+        /// issued in order and never reissued, so every aircraft the player owns reads differently.
+        /// </summary>
+        public static bool TryPlayerNumber(string registration, out int number)
+        {
+            number = 0;
+            if (registration == null || registration.Length != 6
+                || !registration.StartsWith("VH-P", System.StringComparison.OrdinalIgnoreCase))
+                return false;
+            var a = char.ToUpperInvariant(registration[4]) - 'A';
+            var b = char.ToUpperInvariant(registration[5]) - 'A';
+            if (a < 0 || a > 25 || b < 0 || b > 25)
+                return false;
+            // 450 marks fit 100–998; a career that has retired more than that wraps.
+            number = 100 + (a * 26 + b) % 450 * 2;
+            return true;
         }
 
         /// <summary>City this aircraft is flying, or null when it has no route.</summary>

@@ -174,6 +174,35 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void GoAroundJustBeforeCurfew_LandsInsteadOfCirclingUntilMorning()
+        {
+            // A 737 went around at 22:56 and rejoined the sequence after 23:00. The rejoin restarts
+            // its hold, so the curfew rule read it as a new night arrival and held it airborne until
+            // the 05:00 opening. And the tower only looked at the longest-waiting arrival, so a
+            // barred one ahead in the queue blocked every arrival behind it.
+            var (clock, ops, _, other) = Empty();
+            var night = FirstTime(s => AirportCurfew.IsClosed(new SimulationTime(s - 120), ops.Clock)
+                                       && !AirportCurfew.IsClosed(new SimulationTime(s - 1800), ops.Clock)
+                                       && Enumerable.Range(0, 7).All(m =>
+                                           Weather.At(new SimulationTime(s + m * 600)) != WeatherKind.Storm));
+            RunTo(clock, ops, night - 60);
+            var barred = Restore(ops, "VH-NEW", other, FleetState.HoldingForLanding, night - 60,
+                AirlineOperations.AdelaideRegionalBays[2]);
+            ops.RestoreMovementData("VH-NEW", RunwayDirection.Runway05, wentAroundThisTrip: false);
+            var rejoined = Restore(ops, "VH-GAR", other, FleetState.HoldingForLanding, night,
+                AirlineOperations.AdelaideRegionalBays[1]);
+            ops.RestoreMovementData("VH-GAR", RunwayDirection.Runway05, wentAroundThisTrip: true);
+
+            for (var t = night; t <= night + 1800; t += 10)
+                RunTo(clock, ops, t);
+
+            Assert.That(rejoined.State, Is.Not.EqualTo(FleetState.HoldingForLanding),
+                "a go-around was already cleared to land: it lands, it does not circle until 05:00");
+            Assert.That(barred.State, Is.EqualTo(FleetState.HoldingForLanding), "a new night arrival still waits");
+            Assert.That(ops.Why(barred).Kind, Is.EqualTo(HoldKind.HeldAirborne));
+        }
+
+        [Test]
         public void CommercialDepartureDuringCurfew_WaitsForTheMorning()
         {
             var (clock, ops, _, other) = Empty();

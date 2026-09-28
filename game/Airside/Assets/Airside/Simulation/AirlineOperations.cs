@@ -3041,7 +3041,7 @@ namespace Airside.Simulation
                     return true;
 
                 case FleetState.Outbound:
-                    Transition(aircraft, FleetState.AtDestination, now, DestinationTurnaroundSeconds);
+                    Transition(aircraft, FleetState.AtDestination, now, AwayTurnaroundSeconds(aircraft, now));
                     return true;
 
                 case FleetState.AtDestination:
@@ -3449,14 +3449,24 @@ namespace Airside.Simulation
             if (Weather.At(now) == WeatherKind.Storm)
                 return false;
 
-            var arrival = LongestWaiting(FleetState.HoldingForLanding, mainStrip);
-            var departure = LongestWaiting(FleetState.HoldingShort, mainStrip);
-            if (arrival != null && !MayUseRunwayDuringCurfew(arrival, now))
+            // The longest-waiting arrival that may land now. One the curfew holds is sent to the
+            // opening; it used to block every arrival behind it, including ones allowed to land.
+            FleetAircraft arrival = null;
+            foreach (var waiting in _fleet)
             {
-                if (!ExemptFromCurfew(arrival))
-                    arrival.ExtendUntil(AirportCurfew.OpensAt(now, Clock));
-                arrival = null;
+                if (waiting.State != FleetState.HoldingForLanding
+                    || RunwayWeather.IsMainRunway(waiting.AssignedRunway) != mainStrip)
+                    continue;
+                if (!MayUseRunwayDuringCurfew(waiting, now))
+                {
+                    if (!ExemptFromCurfew(waiting))
+                        waiting.ExtendUntil(AirportCurfew.OpensAt(now, Clock));
+                    continue;
+                }
+                if (arrival == null || waiting.StateStartedAt.CompareTo(arrival.StateStartedAt) < 0)
+                    arrival = waiting;
             }
+            var departure = LongestWaiting(FleetState.HoldingShort, mainStrip);
             if (departure != null && !MayUseRunwayDuringCurfew(departure, now))
                 departure = null;
             var next = arrival ?? departure;
@@ -3734,8 +3744,11 @@ namespace Airside.Simulation
             // short final may land. New commercial inbounds wait until 05:00.
             if (aircraft.State is FleetState.HoldingShort or FleetState.TaxiOut or FleetState.TakingOff)
                 return true;
+            // A go-around was already cleared to land, so it was in the sequence before curfew.
+            // Its rejoin restarts StateStartedAt, and a missed approach just before 23:00 used to
+            // read as a new curfew arrival: a jet circled Adelaide until the 05:00 opening.
             return aircraft.State == FleetState.HoldingForLanding
-                && !AirportCurfew.IsClosed(aircraft.StateStartedAt, Clock);
+                && (aircraft.WentAroundThisTrip || !AirportCurfew.IsClosed(aircraft.StateStartedAt, Clock));
         }
 
         /// <summary>How long a departure keeps its strip from the tower: lineup, roll, wake.</summary>
@@ -4215,6 +4228,32 @@ namespace Airside.Simulation
                     hash = hash * 31 + ch;
                 return hash & int.MaxValue;
             }
+        }
+
+        /// <summary>
+        /// Local time (minutes after midnight) Emirates and Qatar land at Adelaide: 20:30, leaving
+        /// their ~80 min widebody turn plus a go-around or a wait for a gate before the 22:00 slot.
+        /// </summary>
+        public const int EveningLongHaulArrivalMinute = 20 * 60 + 30;
+
+        /// <summary>
+        /// Time on the ground at the far end. Emirates and Qatar wait at home long enough to land
+        /// back at 20:30 Adelaide time: their ~27 h round trip otherwise brought them back just
+        /// after the 23:00 curfew every night, held off-map until a 07:15 landing, so the real
+        /// evening departure (<see cref="PinLongHaulEvening"/>) never happened.
+        /// </summary>
+        private long AwayTurnaroundSeconds(FleetAircraft aircraft, SimulationTime now)
+        {
+            var turn = (long)DestinationTurnaroundSeconds;
+            var id = aircraft.Airline.Id.Value;
+            if (id != "UAE" && id != "QTR")
+                return turn;
+            var landsAt = now.Advance(turn + LegAirborne(aircraft));
+            var lands = Clock.LocalAt(landsAt);
+            var target = lands.Date.AddMinutes(EveningLongHaulArrivalMinute);
+            if (lands > target)
+                target = target.AddDays(1);
+            return turn + Math.Max(0L, Clock.AtLocal(target).ElapsedSeconds - landsAt.ElapsedSeconds);
         }
 
         /// <summary>

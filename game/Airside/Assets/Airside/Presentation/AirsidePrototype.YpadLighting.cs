@@ -421,6 +421,8 @@ namespace Airside.Presentation
             public Renderer Halo;
             public Renderer Points;
             public Material PointMaterial;
+            public Renderer Reflection;
+            public Material ReflectionMaterial;
             public float HaloGain = 0.55f;
         }
 
@@ -650,6 +652,37 @@ namespace Airside.Presentation
             AirsideSceneIndex.Remember(go);
             group.Points = renderer;
             group.PointMaterial = material;
+
+            // ADR 0169: the same points, drawn as streaks on wet pavement. Off until it rains at night.
+            var wetGo = new GameObject(ReflectionGroupPrefix + group.Name);
+            wetGo.transform.SetParent(root, false);
+            wetGo.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var wetRenderer = wetGo.AddComponent<MeshRenderer>();
+            var wetMaterial = new Material(material) { name = "mat_airfield_light_reflection " + group.Name };
+            wetMaterial.SetFloat("_Reflect", 1f);
+            wetMaterial.SetFloat("_ReflectStretch", AirfieldFixture.ReflectionStretch);
+            wetMaterial.renderQueue = material.renderQueue - 1;
+            wetRenderer.sharedMaterial = wetMaterial;
+            wetRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            wetRenderer.receiveShadows = false;
+            wetRenderer.enabled = false;
+            AirsideSceneIndex.Remember(wetGo);
+            group.Reflection = wetRenderer;
+            group.ReflectionMaterial = wetMaterial;
+        }
+
+        public const string ReflectionGroupPrefix = "Airfield light reflections ";
+
+        /// <summary>Rain wetness last applied to the lens groups (ADR 0169).</summary>
+        private static float _lensWetness;
+
+        /// <summary>Called when the weather's wetness moves: refreshes the wet-runway reflections.</summary>
+        private static void SetLensWetness(float wetness, float daylight)
+        {
+            if (Mathf.Approximately(_lensWetness, wetness))
+                return;
+            _lensWetness = wetness;
+            UpdateLensGroups(daylight);
         }
 
         /// <summary>URP Unlit, additive, depth-tested, no depth write, with a generated soft radial falloff.</summary>
@@ -720,6 +753,14 @@ namespace Airside.Presentation
                     group.Points.enabled = strength > 0.01f;
                     if (group.PointMaterial != null)
                         group.PointMaterial.SetColor(BaseColorId, group.Colour * strength);
+                    if (group.Reflection != null)
+                    {
+                        var wet = strength * AirfieldFixture.ReflectionGain
+                                  * AirfieldFixture.ReflectionStrength(_lensWetness, night);
+                        group.Reflection.enabled = wet > 0.01f;
+                        if (group.ReflectionMaterial != null)
+                            group.ReflectionMaterial.SetColor(BaseColorId, group.Colour * wet);
+                    }
                 }
 
                 if (group.Halo == null)

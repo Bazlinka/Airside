@@ -2464,21 +2464,20 @@ namespace Airside.Presentation
                 if (!lit)
                     continue;
 
-                // A start throws a short, dense bloom of exhaust before it settles to idle.
+                // A start throws a short puff of grey-white smoke before it settles to idle; running,
+                // the exhaust is a faint haze that thickens a little with power (ADR 0170).
                 var lightOff = 1f - Mathf.Clamp01(
                     Mathf.Abs(running - AirsidePropellerDynamics.LightOffFraction) / 0.14f);
-                var strength = Mathf.Max(power * Mathf.Clamp01(running), lightOff * 0.85f);
+                var strength = power * Mathf.Clamp01(running);
                 var shimmer = 0.88f + 0.12f * Mathf.Sin(
                     seconds * AirsideReusableMotion.HeatPulseHz * Mathf.PI * 2f + child.GetInstanceID() * 0.01f);
-                // The plume stretches aft with power far more than it widens.
-                var width = (0.26f + 0.2f * strength) * shimmer;
-                child.localScale = new Vector3(width, width, 0.5f + 2f * strength);
+                var size = AirsidePropellerDynamics.ExhaustScale(strength, lightOff);
+                child.localScale = new Vector3(size.x * shimmer, size.x * shimmer, size.y);
                 var renderer = vents[i].Renderer;
                 if (renderer == null)
                     continue;
-                // Cool and brown at idle, bright and orange at power.
-                var tint = Color.Lerp(new Color(0.7f, 0.45f, 0.3f), new Color(1f, 0.66f, 0.28f), strength);
-                tint.a = (0.05f + 0.16f * strength) * shimmer;
+                var tint = AirsidePropellerDynamics.ExhaustTint(strength, lightOff);
+                tint.a *= shimmer;
                 SetRendererColor(renderer, tint);
             }
         }
@@ -3731,6 +3730,7 @@ namespace Airside.Presentation
                 }
             }
 
+            SetLensWetness(rainWetness, CurrentDaylight);
             UpdateWetPuddles(rainWetness, storm);
             UpdateTaxiSpray(rainWetness, raining || storm);
 
@@ -10332,8 +10332,8 @@ namespace Airside.Presentation
                 }
                 else
                 {
-                    ParentBlock(root, "EngineHeat L", new Vector3(-1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
-                    ParentBlock(root, "EngineHeat R", new Vector3(1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.95f, 0.55f, 0.2f, 0.15f));
+                    ParentBlock(root, "EngineHeat L", new Vector3(-1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.78f, 0.76f, 0.72f, 0.1f));
+                    ParentBlock(root, "EngineHeat R", new Vector3(1.35f, -0.05f, 0.15f), new Vector3(0.35f, 0.35f, 0.7f), new Color(0.78f, 0.76f, 0.72f, 0.1f));
                 }
             }
 
@@ -10609,7 +10609,7 @@ namespace Airside.Presentation
                 || kitName.StartsWith("rim_", StringComparison.Ordinal))
                 return new Color(0.55f, 0.56f, 0.58f);
             if (kitName.StartsWith("engine_heat_", StringComparison.Ordinal))
-                return new Color(0.95f, 0.55f, 0.2f, 0.10f);
+                return new Color(0.78f, 0.76f, 0.72f, 0.10f); // neutral haze, not a glow (ADR 0170)
 
             return kitName switch
             {

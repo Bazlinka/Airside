@@ -374,6 +374,35 @@ namespace Airside.Presentation
         /// <summary>Unlit blur discs dim with the light so they do not glow on a dark apron.</summary>
         public static float DiscLightLevel(float daylight) => Mathf.Lerp(0.3f, 1f, Mathf.Clamp01(daylight));
 
+        // ---------------------------------------------------------------- exhaust (ADR 0170)
+
+        /// <summary>
+        /// The exhaust plume's colour and opacity. Turbine exhaust is not a glow: running, it is a
+        /// near-invisible haze that thickens a little with power (the old plume was orange and
+        /// bright at takeoff, like an afterburner). The one visible moment is the start: a turbine
+        /// lighting off throws a short puff of grey-white smoke from the unburnt fuel.
+        /// </summary>
+        /// <param name="power">Shaft power 0..1.</param>
+        /// <param name="lightOff">0..1, peaking as the engine lights.</param>
+        public static Color ExhaustTint(float power, float lightOff)
+        {
+            power = Mathf.Clamp01(power);
+            lightOff = Mathf.Clamp01(lightOff);
+            var haze = new Color(0.78f, 0.76f, 0.72f, 0.025f + 0.05f * power);
+            var smoke = new Color(0.86f, 0.86f, 0.84f, 0.34f);
+            return Color.Lerp(haze, smoke, lightOff * lightOff * (3f - 2f * lightOff));
+        }
+
+        /// <summary>Plume size (width, length) in the vent's local units: a puff is wide and short, power is long.</summary>
+        public static Vector2 ExhaustScale(float power, float lightOff)
+        {
+            power = Mathf.Clamp01(power);
+            lightOff = Mathf.Clamp01(lightOff);
+            var width = 0.26f + 0.16f * power + 0.3f * lightOff;
+            var length = 0.5f + 2f * power + 0.6f * lightOff;
+            return new Vector2(width, length);
+        }
+
         // ---------------------------------------------------------------- turbofan
 
         // N1 as a fraction. A jet idles far lower than people expect, and approach idle is lower

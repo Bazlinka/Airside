@@ -398,3 +398,18 @@ A first-playable visual asset is complete only when:
 7. no real brand, watermark, baked placeholder text or inconsistent art style is
    visible; and
 8. `GAME.md` and `CHANGELOG.md` record the integration and verification.
+
+## Fleet appearance revision — 28 September 2026 (ADR 0150)
+
+Bailey requested the whole fleet appearance and livery revision. All 13 current
+aircraft retain their asset IDs and model paths. `finish-aircraft-liveries.py`
+adds type-fitted original paint, fin symbols and independently attached cowl bands
+to the existing authored geometry. It also fits spoilers and pylon tops to the
+wings. The glazing generator calls this pass automatically.
+
+`AircraftLiveryPaint` supplies the same clean aircraft finish to glTF and prefab
+models. Aircraft do not use the coarse v01 skin or corrugated building textures.
+Original Coastline/Emu/Southern Cross colourways are review examples; runtime
+identity continues to come from each live airline, including player custom
+colours. Full compositions are in ADR 0150. Review evidence and limitations are
+in `docs/testing/aircraft-liveries-2026-09-28/README.md`.

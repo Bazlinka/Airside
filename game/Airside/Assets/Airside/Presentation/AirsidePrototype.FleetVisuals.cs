@@ -349,7 +349,7 @@ namespace Airside.Presentation
                     continue;
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer != null)
-                    SetRendererColor(renderer, accent);
+                    SetRendererColor(renderer, AircraftLiveryPaint.Colour(childName, accent));
             }
 
             EnsureAircraftIdentityMarkings(view, aircraft, accent);

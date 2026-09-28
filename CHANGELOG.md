@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Cleaner aircraft and original liveries.** All 13 aircraft have fitted two-tone paint,
+  original tail marks and matching engine bands. Aircraft no longer use noisy building-style
+  materials. Spoilers sit on the wing and engine pylons fit beneath it. Refreshing aircraft
+  light caches reuses existing lamps instead of throwing duplicate-component errors.
+
 - **Pushbacks towards runway 23 fixed.** Jets pushed back from gates 15, 16R and 21 for runway 23
   no longer stop and reverse on the taxiway after the tug lets go. They drive straight on.
 

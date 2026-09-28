@@ -357,6 +357,8 @@ def main():
         filename, function, basename = SOURCES[type_id]
         meshes = getattr(load_module(filename), function)()
         count = 0 if args.baseline else polish(meshes)
+        if not args.baseline:
+            load_module("finish-aircraft-liveries.py").finish(meshes, type_id)
         writer(args.output_dir, basename, meshes)
         print(f"{type_id}: {count} fitted panes, {len(meshes)} named meshes -> {args.output_dir / basename}")
 

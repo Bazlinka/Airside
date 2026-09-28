@@ -1,5 +1,23 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Codex — aircraft appearance and original liveries (ADR 0150).**
+  Branch `feature/aircraft-liveries-refinement-20260928`, based on `a30a3935`.
+  All 13 types now use clean enamel, pale grey wings, fitted two-tone sweeps,
+  original fin motifs and wing-attached engine bands; protruding pylons and raised
+  spoilers are corrected. Teal, ochre and navy examples for each type are in
+  `docs/testing/aircraft-liveries-2026-09-28/`. Existing airline names/custom colours
+  and asset GUIDs survive. Runtime mirrors and Hangar thumbnails are regenerated.
+  **Checks:** baseline domain 933/933; revised native Unity 1,237 passed, four
+  pre-existing failures, one skipped (all 14 new paint tests pass). Geometry,
+  glazing, paint fit and mirrored assets pass. Packaged review found and fixed a
+  duplicate lamp-component error; the final focused paint/lamp suite passes 18/18.
+  **Mac:** build succeeded; Saab/737 day, A350 dusk, 737 night and airport overview
+  captures passed with no logged exceptions after the lamp fix. Separate local app:
+  `work/builds/Airside-Livery-Review-20260928.app`.
+  **Next:** review the actual visual
+  evidence and resolve the existing Gate 13/ground-separation Unity failures before
+  merging. This is a feature-branch candidate, not a change already merged to main.
+
 - **2026-09-28 Claude — pushback rejoin fix (ADR 0149).** Running the suite on main after PR #419
   showed 3 failures, now fixed (933/933). The runway 23 pushes from gates 15, 16R and 21 were driving
   the route's opening hook and reversing. The rejoin now skips hooks. The two apron tests no longer

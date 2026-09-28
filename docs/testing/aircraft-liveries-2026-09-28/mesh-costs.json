@@ -1,0 +1,106 @@
+[
+  {
+    "type": "ATR42",
+    "design": "Saltwater",
+    "beforeTriangles": 43334,
+    "afterTriangles": 44951,
+    "beforeParts": 172,
+    "afterParts": 176
+  },
+  {
+    "type": "SF34",
+    "design": "Ochre Country",
+    "beforeTriangles": 50557,
+    "afterTriangles": 57333,
+    "beforeParts": 137,
+    "afterParts": 141
+  },
+  {
+    "type": "DH8D",
+    "design": "Coastal Current",
+    "beforeTriangles": 73685,
+    "afterTriangles": 75550,
+    "beforeParts": 204,
+    "afterParts": 207
+  },
+  {
+    "type": "E190",
+    "design": "Southern Star",
+    "beforeTriangles": 48003,
+    "afterTriangles": 49346,
+    "beforeParts": 175,
+    "afterParts": 178
+  },
+  {
+    "type": "A223",
+    "design": "Morning Light",
+    "beforeTriangles": 52500,
+    "afterTriangles": 55526,
+    "beforeParts": 183,
+    "afterParts": 186
+  },
+  {
+    "type": "A320",
+    "design": "Tidal Arc",
+    "beforeTriangles": 52847,
+    "afterTriangles": 57190,
+    "beforeParts": 182,
+    "afterParts": 185
+  },
+  {
+    "type": "B738",
+    "design": "Outback Horizon",
+    "beforeTriangles": 71456,
+    "afterTriangles": 73649,
+    "beforeParts": 199,
+    "afterParts": 202
+  },
+  {
+    "type": "B38M",
+    "design": "Crosswind",
+    "beforeTriangles": 72086,
+    "afterTriangles": 74202,
+    "beforeParts": 203,
+    "afterParts": 206
+  },
+  {
+    "type": "A21N",
+    "design": "Long Coast",
+    "beforeTriangles": 75284,
+    "afterTriangles": 77209,
+    "beforeParts": 201,
+    "afterParts": 204
+  },
+  {
+    "type": "A359",
+    "design": "Southern Aurora",
+    "beforeTriangles": 176006,
+    "afterTriangles": 181024,
+    "beforeParts": 244,
+    "afterParts": 248
+  },
+  {
+    "type": "A339",
+    "design": "Desert Dawn",
+    "beforeTriangles": 100350,
+    "afterTriangles": 106635,
+    "beforeParts": 239,
+    "afterParts": 243
+  },
+  {
+    "type": "B789",
+    "design": "Ocean Reach",
+    "beforeTriangles": 145274,
+    "afterTriangles": 149675,
+    "beforeParts": 241,
+    "afterParts": 245
+  },
+  {
+    "type": "B78X",
+    "design": "Southern Meridian",
+    "beforeTriangles": 168843,
+    "afterTriangles": 172902,
+    "beforeParts": 242,
+    "afterParts": 246
+  }
+]

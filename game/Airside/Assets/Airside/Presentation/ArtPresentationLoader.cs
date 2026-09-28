@@ -89,7 +89,8 @@ namespace Airside.Presentation
                     if (parent != null)
                         root.SetParent(parent, false);
                     root.localPosition = localPosition;
-                    ApplyPresentationMaterials(root, rename, colorFor);
+                    ApplyPresentationMaterials(root, rename, colorFor,
+                        artRelativePath.StartsWith("Models/Aircraft/", StringComparison.OrdinalIgnoreCase));
                     return true;
                 }
             }
@@ -107,7 +108,8 @@ namespace Airside.Presentation
         private static void ApplyPresentationMaterials(
             Transform root,
             Func<string, string> rename,
-            Func<string, Color?> colorFor)
+            Func<string, Color?> colorFor,
+            bool aircraft = false)
         {
             if (root == null)
                 return;
@@ -126,6 +128,13 @@ namespace Airside.Presentation
 
                 var mesh = renderer.GetComponent<MeshFilter>()?.sharedMesh;
                 var hasUsableUvs = AirsideMeshUtil.HasUsableUvs(mesh);
+
+                if (aircraft)
+                {
+                    renderer.sharedMaterial = AircraftLiveryPaint.MaterialFor(renderer.gameObject.name,
+                        colorFor?.Invoke(originalName) ?? AircraftLiveryPaint.AirframeWhite);
+                    continue;
+                }
 
                 // Preserve FBX/authored materials that already carry albedo maps — but only
                 // when the mesh can sample them. UV-less meshes must not keep a textured

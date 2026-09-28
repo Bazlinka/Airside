@@ -30,6 +30,7 @@ namespace Airside.Simulation
         private static readonly Dictionary<string, GroundPath> VacatePaths = new(StringComparer.Ordinal);
         private static readonly Dictionary<string, GroundLeg> VacateLegs = new(StringComparer.Ordinal);
         private static readonly Dictionary<string, GroundLeg> LineupLegs = new(StringComparer.Ordinal);
+        private static readonly Dictionary<string, float> TakeoffRollInByType = new(StringComparer.Ordinal);
 
         public static IReadOnlyList<AdelaideBay> Bays => AdelaideLayout.Bays;
 
@@ -148,6 +149,24 @@ namespace Airside.Simulation
 
         public static GroundLeg LineupFor(RunwayDirection runway) => LineupFor(runway, AircraftType.Atr42);
 
+        /// <summary>
+        /// Metres past the shared takeoff point where this type actually begins the roll
+        /// on <paramref name="runway"/>. A long wheelbase is still yawing when the nose
+        /// first reaches the centreline; the extra straight lets the main gear trail into
+        /// line before the brakes come off. The takeoff path starts at the same point.
+        /// </summary>
+        public static float TakeoffRollInMetres(AircraftType type, RunwayDirection runway = RunwayDirection.Runway05)
+        {
+            type ??= AircraftType.Atr42;
+            var key = type.Id + "/" + runway;
+            if (TakeoffRollInByType.TryGetValue(key, out var metres))
+                return metres;
+            var xz = NominalLineup(runway, type, out var fx, out var fz);
+            metres = MetresUntilAligned(xz, fx, fz, AircraftPerformance.For(type).NoseToMainGearMetres);
+            TakeoffRollInByType[key] = metres;
+            return metres;
+        }
+
         /// <summary>Holding point onto the runway, steering the visible main gear for this type.</summary>
         public static GroundLeg LineupFor(RunwayDirection runway, AircraftType type)
         {
@@ -155,6 +174,19 @@ namespace Airside.Simulation
             var key = type.Id + "/" + runway;
             if (LineupLegs.TryGetValue(key, out var leg))
                 return leg;
+            var xz = NominalLineup(runway, type, out var fx, out var fz);
+            var rollIn = TakeoffRollInMetres(type, runway);
+            if (rollIn > 0.5f)
+                xz = Extend(xz, fx, fz, rollIn);
+            leg = new GroundLeg(new GroundLegPart(new GroundPath(xz, GroundSpeedLimits.Lineup),
+                tailFirst: false, trackMetres: AircraftPerformance.For(type).NoseToMainGearMetres, slipFree: true));
+            LineupLegs[key] = leg;
+            return leg;
+        }
+
+        /// <summary>Hold to the shared takeoff point, on this type's arc, before the alignment run.</summary>
+        private static float[] NominalLineup(RunwayDirection runway, AircraftType type, out float fx, out float fz)
+        {
             var xz = runway switch
             {
                 RunwayDirection.Runway23 => AdelaideLayout.Lineup23,
@@ -162,16 +194,53 @@ namespace Airside.Simulation
                 RunwayDirection.Runway30 => AdelaideCrossRoutes.Lineup(RunwayDirection.Runway30),
                 _ => AdelaideLayout.Lineup
             };
-            // ADR 0147: one turn on the aircraft's own radius, finishing straight on the centreline.
             var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
-            RunwayFrame.Forward(runway, out var fx, out var fz);
-            var radius = Math.Max(18f, Math.Min(45f, wheelbase * 2f));
+            RunwayFrame.Forward(runway, out fx, out fz);
+            // Wide enough that the turn is not a hook, and small enough that centreline
+            // remains for the trailed gear to finish straight.
+            var radius = Math.Max(20f, Math.Min(42f, wheelbase * 2.2f));
             if (LineupGeometry.TryBest(xz, fx, fz, radius, wheelbase, out var steered))
                 xz = steered;
-            leg = new GroundLeg(new GroundLegPart(new GroundPath(xz, GroundSpeedLimits.Lineup),
-                tailFirst: false, trackMetres: wheelbase));
-            LineupLegs[key] = leg;
-            return leg;
+            return xz;
+        }
+
+        /// <summary>How much more centreline the trailed gear needs before it is within 2° of the runway.</summary>
+        private static float MetresUntilAligned(float[] xz, float fx, float fz, float wheelbase)
+        {
+            const double aligned = 0.9993908270190958; // cos(2°)
+            if (Aligned(xz, fx, fz, wheelbase, aligned))
+                return 0f;
+            var low = 0f;
+            var high = 8f;
+            while (high < 160f && !Aligned(Extend(xz, fx, fz, high), fx, fz, wheelbase, aligned))
+                high *= 2f;
+            for (var i = 0; i < 6; i++)
+            {
+                var mid = (low + high) * 0.5f;
+                if (Aligned(Extend(xz, fx, fz, mid), fx, fz, wheelbase, aligned))
+                    high = mid;
+                else
+                    low = mid;
+            }
+
+            return (float)Math.Ceiling(high);
+        }
+
+        private static bool Aligned(float[] xz, float fx, float fz, float wheelbase, double alignedDot)
+        {
+            var leg = new GroundLeg(new GroundLegPart(new GroundPath(xz, GroundSpeedLimits.Lineup),
+                tailFirst: false, trackMetres: wheelbase, slipFree: true));
+            var end = leg.PoseAt(leg.Seconds);
+            return end.NoseX * fx + end.NoseZ * fz >= alignedDot;
+        }
+
+        private static float[] Extend(float[] xz, float fx, float fz, float metres)
+        {
+            var copy = new float[xz.Length + 2];
+            Array.Copy(xz, copy, xz.Length);
+            copy[^2] = xz[^2] + fx * metres;
+            copy[^1] = xz[^1] + fz * metres;
+            return copy;
         }
 
         /// <summary>

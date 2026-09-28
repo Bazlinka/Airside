@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Turning onto the runway no longer looks like a drift.** The tail was sliding out
+  because the fuselage cut across the corner. Aircraft now steer onto a proper arc
+  with the main gear trailing behind the nose, and a long aircraft finishes that turn
+  on the centreline before the roll begins. The takeoff roll and its engine note
+  build up together instead of starting at full power.
+
 - **Less background work every frame.** Clouds, pushback tugs and propellers were each redoing a
   lookup every frame that only needs doing once, some of it creating garbage the game later had
   to pause and clean up. They now remember the answer.

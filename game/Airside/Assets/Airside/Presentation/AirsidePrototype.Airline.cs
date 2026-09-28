@@ -3324,6 +3324,9 @@ namespace Airside.Presentation
                     case FleetState.Outbound:
                         ShowToast($"{reg} departed for {dest}.");
                         break;
+                    case FleetState.AtDestination:
+                        ShowToast(FlightNotices.LandedAtDestination(reg, e.DestinationName));
+                        break;
                     case FleetState.HoldingForLanding:
                         ShowToast($"{reg} is on final at Adelaide.");
                         break;
@@ -3331,7 +3334,9 @@ namespace Airside.Presentation
                         ShowToast($"{reg} has landed. Choose a stand.");
                         break;
                     case FleetState.AtStand:
-                        ShowToast($"{reg} is parked on {StandNames.Display(e.Aircraft.Stand)}.");
+                        ShowToast(string.IsNullOrEmpty(e.DestinationName)
+                            ? $"{reg} is parked on {StandNames.Display(e.Aircraft.Stand)}."
+                            : FlightNotices.ReturnedHomeAwaitingDispatch(reg));
                         break;
                 }
             }

@@ -260,11 +260,7 @@ namespace Airside.Presentation
                         ? "Adelaide is full. Buy for an outstation in Network"
                         : $"The {career.Base.Title} holds {career.Base.FleetCapacity}. Expand your base";
                 else if (!baseSupports)
-                {
-                    var needed = AircraftCatalogue.IsWidebody(offer.Type)
-                        ? PlayerBaseLevel.International : PlayerBaseLevel.JetGate;
-                    requirement = $"Needs the {PlayerBase.For(needed).Title}";
-                }
+                    requirement = $"Needs the {PlayerBase.For(PlayerBase.RequiredLevel(offer.Type)).Title}. Expand your base";
                 else if (career.Tier < offer.RequiredTier)
                 {
                     var requiredBase = CareerProgress.BaseCapabilityFor(offer.RequiredTier);
@@ -360,7 +356,7 @@ namespace Airside.Presentation
             // The starter aircraft was never bought (AircraftAcquisition's own doc comment),
             // so it has no purchase price to base a resale figure on — line omitted for it
             // rather than showing a made-up number.
-            else if (AircraftAcquisition.TryFor(aircraft.Type, out var ownedOffer))
+            else if (operations.CanResell(aircraft) && AircraftAcquisition.TryFor(aircraft.Type, out var ownedOffer))
                 AddFact("economy/cash", $"Sells for ${(long)Math.Round(ownedOffer.Price * AirlineOperations.ResaleFraction):N0}");
 
             if (aircraft.Scheduled.HasValue)

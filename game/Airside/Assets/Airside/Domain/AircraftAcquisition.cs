@@ -24,12 +24,19 @@ namespace Airside.Domain
         public RouteBand Operates => RouteAccess.Ceiling(Type);
     }
 
-    /// <summary>Authored purchase list. The starter Saab is owned, not bought (ADR 0077).</summary>
+    /// <summary>
+    /// Authored purchase list. The first Saab is given at the start (ADR 0077). A second one
+    /// is for sale immediately, paid from the opening cash (ADR 0164).
+    /// </summary>
     public static class AircraftAcquisition
     {
         public const int MaxPlayerAircraft = 25;
 
-        /// <summary>First step up from the starter Saab — still Provisional, still bay-based.</summary>
+        /// <summary>A second Saab, bought from the opening float. No flights required.</summary>
+        public static readonly AircraftOffer Saab340 = new(
+            AircraftType.Saab340, 1_600, OperatingTier.Provisional, 70, 0);
+
+        /// <summary>First step up from the Saab — still Provisional, still bay-based, after the base expands.</summary>
         public static readonly AircraftOffer Atr42 = new(
             AircraftType.Atr42, 5_200, OperatingTier.Provisional, 70, 5);
 
@@ -77,7 +84,7 @@ namespace Airside.Domain
         /// <summary>Every offer, in the order a career meets them (tier, then price).</summary>
         public static readonly IReadOnlyList<AircraftOffer> All = new[]
         {
-            Atr42, Dash8Q400,
+            Saab340, Atr42, Dash8Q400,
             EmbraerE190, AirbusA220300, Boeing737800, AirbusA320200, Boeing7378, AirbusA321Neo,
             AirbusA330900, Boeing7879, Boeing78710, AirbusA350900
         };

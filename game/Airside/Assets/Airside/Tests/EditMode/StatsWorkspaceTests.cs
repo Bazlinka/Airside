@@ -25,10 +25,10 @@ namespace Airside.Tests
             Assert.That(model.LifetimeRevenueLine, Is.EqualTo("$0 earned"));
             Assert.That(model.ReliabilityLine, Is.EqualTo($"{ops.CareerState.Reliability}% reliability"));
             Assert.That(model.TierLine, Is.EqualTo("Provisional tier"));
-            Assert.That(model.FleetLine, Is.EqualTo("1 of 1 aircraft"));
+            Assert.That(model.FleetLine, Is.EqualTo("1 of 2 aircraft"));
             Assert.That(model.BaseCapabilityLine, Does.StartWith("Regional starter base"));
             Assert.That(model.BaseCapabilityLine, Does.Contain("outsourced maintenance"));
-            Assert.That(model.BaseCapabilityLine, Does.Contain("Stands: 50D"));
+            Assert.That(model.BaseCapabilityLine, Does.Contain("Stands: 50D · 50G"));
             Assert.That(model.AdelaideRankLine, Is.EqualTo("#1 of 1 at Adelaide"));
             Assert.That(model.ContractHistory, Is.Empty);
             Assert.That(model.EmptyHistoryLine, Is.Not.Empty);

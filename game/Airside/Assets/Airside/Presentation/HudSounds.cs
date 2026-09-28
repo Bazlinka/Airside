@@ -63,6 +63,30 @@ namespace Airside.Presentation
         /// <summary>A finished contract: a shorter two-note "done".</summary>
         public static float[] ContractChime() => Arpeggio(new[] { 783.99, 1046.5 }, 0.12, 0.9f, 0.55f);
 
+        /// <summary>
+        /// A button press: one short switch tick, noise plus a low thump, gone in a few dozen
+        /// milliseconds (ADR 0163).
+        /// </summary>
+        public static float[] UiClick()
+        {
+            var samples = new float[(int)(SampleRate * 0.12f)];
+            var noise = new Noise(19);
+            var low = 0f;
+            for (var i = 0; i < samples.Length; i++)
+            {
+                var time = i / (float)SampleRate;
+                low += 0.35f * (noise.Next() - low);
+                var tick = Math.Exp(-time * 90.0);
+                var thump = Math.Sin(2 * Math.PI * 140 * time) * Math.Exp(-time * 40.0);
+                samples[i] = (float)(low * tick * 0.8 + thump * 0.35);
+            }
+
+            var fade = (int)(SampleRate * 0.03f);
+            for (var i = 0; i < fade && i < samples.Length; i++)
+                samples[samples.Length - 1 - i] *= i / (float)fade;
+            return Normalise(samples, 0.5f);
+        }
+
         /// <summary>A panel opening: a short, soft rising air whoosh (ADR 0136).</summary>
         public static float[] PanelWhoosh()
         {
@@ -86,8 +110,9 @@ namespace Airside.Presentation
         public static float[] PaChime() => Arpeggio(new[] { 659.25, 523.25, 783.99 }, 0.42, 2.2f, 0.5f);
 
         /// <summary>
-        /// ADR 0136 — the working apron under everything: distant rumble, a faint mains hum from ground
-        /// power, and now and then a far-off reversing beep. A 12 s loop, level at both ends.
+        /// ADR 0136 — the working apron under everything: distant rumble and a faint mains hum from
+        /// ground power. A 12 s loop, level at both ends. The reversing beep that used to sit in
+        /// this loop is gone (ADR 0163).
         /// </summary>
         public static float[] ApronBed()
         {
@@ -106,19 +131,6 @@ namespace Airside.Presentation
                 var swell = 0.8 + 0.2 * Math.Sin(2 * Math.PI * time / 12.0);
                 samples[i] = (float)((rumble2 * 6.0 + hum * 0.25) * swell);
             }
-
-            // Reversing beeps from a distant tug: two bursts of three, well inside the loop.
-            foreach (var start in new[] { 3.2, 8.7 })
-                for (var b = 0; b < 3; b++)
-                {
-                    var from = (int)((start + b * 0.9) * SampleRate);
-                    for (var k = 0; k < SampleRate * 0.35 && from + k < length; k++)
-                    {
-                        var t = k / (double)SampleRate;
-                        var edge = Math.Min(1.0, Math.Min(t, 0.35 - t) / 0.01);
-                        samples[from + k] += (float)(0.06 * edge * Math.Sin(2 * Math.PI * 1150 * t));
-                    }
-                }
 
             // Crossfade the ends so the loop is seamless.
             var fade = SampleRate / 2;

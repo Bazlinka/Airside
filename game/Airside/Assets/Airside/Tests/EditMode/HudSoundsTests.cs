@@ -15,8 +15,28 @@ namespace Airside.Tests
             ("tier sting", HudSounds.TierSting, 1.5f),
             ("contract chime", HudSounds.ContractChime, 1.0f),
             ("panel whoosh", HudSounds.PanelWhoosh, 0.3f),
+            ("ui click", HudSounds.UiClick, 0.2f),
             ("PA chime", HudSounds.PaChime, 2.3f)
         };
+
+        [Test]
+        public void UiClick_IsATick()
+        {
+            var click = HudSounds.UiClick();
+            var early = (int)(HudSounds.SampleRate * 0.04f);
+            double earlyEnergy = 0;
+            double rest = 0;
+            for (var i = 0; i < click.Length; i++)
+            {
+                var e = click[i] * click[i];
+                if (i < early)
+                    earlyEnergy += e;
+                else
+                    rest += e;
+            }
+
+            Assert.That(earlyEnergy, Is.GreaterThan(rest * 3), "the tick is over before it can read as a tone");
+        }
 
         [Test]
         public void ApronBed_IsAQuietSeamlessLoop()

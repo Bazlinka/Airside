@@ -42,7 +42,7 @@ namespace Airside.Simulation
 
         private static readonly StableId[] StarterRegionalStands =
         {
-            new("BAY-1")
+            new("BAY-1"), new("BAY-7")
         };
 
         private static readonly StableId[] ExpandedRegionalStands =
@@ -80,8 +80,8 @@ namespace Airside.Simulation
                 "International base", "6 aircraft · widebody and long-haul handling",
                 6, 20_000, 50, OperatingTier.Domestic, true, true, requiredReliability: 88),
             _ => new PlayerBaseSpec(PlayerBaseLevel.Starter,
-                "Regional starter base", "1 aircraft · regional apron operation",
-                1, 0, 0, OperatingTier.Provisional, false, false)
+                "Regional starter base", "2 aircraft · a second Saab from the opening cash",
+                2, 0, 0, OperatingTier.Provisional, false, false)
         };
 
         public static bool TryNext(PlayerBaseLevel current, out PlayerBaseSpec next)
@@ -91,14 +91,25 @@ namespace Airside.Simulation
             return true;
         }
 
-        public static bool Supports(PlayerBaseLevel level, AircraftType type)
+        /// <summary>
+        /// The smallest Adelaide base that can operate this type. A second Saab fits the starter
+        /// base; anything larger waits for the expanded regional apron (ADR 0164).
+        /// </summary>
+        public static PlayerBaseLevel RequiredLevel(AircraftType type)
         {
-            if (type == null) return false;
-            var spec = For(level);
-            if (AircraftCatalogue.IsWidebody(type)) return spec.Widebodies;
-            if (AirlineOperations.NeedsTerminalGate(type)) return spec.TerminalJets;
-            return true;
+            if (type == null)
+                return PlayerBaseLevel.Starter;
+            if (AircraftCatalogue.IsWidebody(type))
+                return PlayerBaseLevel.International;
+            if (AirlineOperations.NeedsTerminalGate(type))
+                return PlayerBaseLevel.JetGate;
+            if (type.Id != AircraftType.Saab340.Id)
+                return PlayerBaseLevel.ExpandedRegional;
+            return PlayerBaseLevel.Starter;
         }
+
+        public static bool Supports(PlayerBaseLevel level, AircraftType type) =>
+            type != null && level >= RequiredLevel(type);
 
         /// <summary>
         /// Dedicated Adelaide positions leased with the base. Regional aircraft may still use
@@ -126,8 +137,10 @@ namespace Airside.Simulation
             foreach (var candidate in ExpandedRegionalStands)
                 if (level >= PlayerBaseLevel.ExpandedRegional && candidate.Equals(stand))
                     return true;
-            if (level == PlayerBaseLevel.Starter && StarterRegionalStands[0].Equals(stand))
-                return true;
+            if (level == PlayerBaseLevel.Starter)
+                foreach (var candidate in StarterRegionalStands)
+                    if (candidate.Equals(stand))
+                        return true;
             if (level >= PlayerBaseLevel.JetGate)
                 foreach (var candidate in JetGateStands)
                     if (candidate.Equals(stand))
@@ -147,7 +160,12 @@ namespace Airside.Simulation
             if (!AirlineOperations.NeedsTerminalGate(type))
             {
                 if (level == PlayerBaseLevel.Starter)
-                    return StarterRegionalStands[0].Equals(stand);
+                {
+                    foreach (var candidate in StarterRegionalStands)
+                        if (candidate.Equals(stand))
+                            return true;
+                    return false;
+                }
                 return !AdelaideGround.IsTerminalGate(stand);
             }
 
@@ -159,7 +177,7 @@ namespace Airside.Simulation
 
         public static string StandAccessLine(PlayerBaseLevel level)
         {
-            var regional = level >= PlayerBaseLevel.ExpandedRegional ? "50D · 50G · 10A + shared regional apron" : "50D";
+            var regional = level >= PlayerBaseLevel.ExpandedRegional ? "50D · 50G · 10A + shared regional apron" : "50D · 50G";
             return level switch
             {
                 PlayerBaseLevel.JetGate => regional + " · gates 27/29",
@@ -219,7 +237,7 @@ namespace Airside.Simulation
             PlayerBaseLevel.International => "pier 28 · local widebody maintenance · 30% faster turns",
             PlayerBaseLevel.JetGate => "gates 27/29 · local jet maintenance · 20% faster turns",
             PlayerBaseLevel.ExpandedRegional => "regional apron · local regional maintenance · 10% faster turns",
-            _ => "50D · outsourced maintenance · baseline turns"
+            _ => "50D · 50G · outsourced maintenance · baseline turns"
         };
 
         public static PlayerBaseLevel MinimumFor(IEnumerable<AircraftType> ownedTypes, int ownedCount)

@@ -1888,17 +1888,7 @@ namespace Airside.Presentation
             }
         }
 
-        private void PlayUiClick()
-        {
-            if (_audioMuted || _uiAudio == null)
-                return;
-            if (_uiClickClip == null)
-                _uiClickClip = Resources.Load<AudioClip>("Airside/Audio/ui_select_005");
-            if (_uiClickClip == null)
-                return;
-
-            _uiAudio.PlayOneShot(_uiClickClip);
-        }
+        private void PlayUiClick() => PlayMoment(ref _uiClickClip, HudSounds.UiClick, "UI click", 0.7f);
 
         /// <param name="spool">0..1 through an engine start or shutdown; bends the note down while spooling.</param>
         private void ApplyEngineAudio(Transform aircraft, bool enginesOn, float spool, AircraftType type,

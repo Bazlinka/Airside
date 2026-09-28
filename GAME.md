@@ -14,9 +14,22 @@
   **Mac:** build succeeded; Saab/737 day, A350 dusk, 737 night and airport overview
   captures passed with no logged exceptions after the lamp fix. Separate local app:
   `work/builds/Airside-Livery-Review-20260928.app`.
-  **Next:** review the actual visual
-  evidence and resolve the existing Gate 13/ground-separation Unity failures before
-  merging. This is a feature-branch candidate, not a change already merged to main.
+  Merged to `main` in PR #422. The four pre-existing Gate 13/ground-separation
+  failures remain separately owned; the livery work did not introduce them.
+
+- **2026-09-28 Codex — Blender AIR-007 pilot ready for visual decision (branch
+  `codex/blender-saab-pilot`).** Built a separate Saab 340B v02 candidate from the
+  project-owned, ADR 0150-finished v01 FBX in Blender 5.2.2 LTS. The candidate keeps the exact
+  19.73 × 21.44 × 6.97 m envelope and runtime-facing moving-part names, replaces
+  the flat propeller geometry with twisted/tapered four-blade props, adds subtle
+  intake and gear detail, and exports editable `.blend`, FBX, GLB and fixed-rig
+  comparison renders under `docs/art/candidates/air-007-saab-340b-v02/`.
+  Measured import growth is 57,333→60,445 triangles (+5.43%); that is evidence,
+  not an FPS claim. **Runtime v01, simulation, movement, livery and thumbnails are
+  unchanged. NEXT:** Bailey reviews the hero and prop close-up. Only if approved,
+  integrate on a separate narrow branch, set LOD/collider/import policy, exercise
+  every animation hook, and compare packaged overview/follow visuals and FPS with
+  multiple aircraft visible before promotion.
 
 - **2026-09-28 Claude — pushback rejoin fix (ADR 0149).** Running the suite on main after PR #419
   showed 3 failures, now fixed (933/933). The runway 23 pushes from gates 15, 16R and 21 were driving

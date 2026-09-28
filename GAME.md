@@ -1,5 +1,18 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — bug pass: per-frame waste, plus simulation fuzzing (no ADR).** Branch
+  `claude/fervent-gates-1tzyhq`. Fixed three per-frame costs: the cloud edge fade fetched each cloud's
+  renderers every frame (a fresh array per cloud per frame → GC hitches), now cached; the pushback-tug
+  nose-gear lookup re-walked every renderer on an aircraft every frame when the model has no nose gear
+  part, now retried every 5 s; and a propeller with no cached blade count was recounted every frame,
+  now stored. **Also checked, found clean (headless, not committed):** 6 seeds × 8 days of the full
+  airport with no stuck aircraft outside storm holds, no double-booked or unfit stands, no exceptions;
+  3 seeds × ~80 save/reload points each stayed identical to the live game for 2 h after reloading; 8 seeds × 5 days of
+  random player commands (buy, schedule, cancel, contracts, checks, sell, stand assignment, base
+  upgrade, repeat schedules) with a save/restore every 2 h — no throws, no invariant breaks. The
+  2-hour holds seen on day 3 all follow the 06:00–08:00 storm (ADR 0058), as designed. **Checks:**
+  Roslyn parse of the three files; domain suite unchanged. **Not compiled in Unity here.**
+
 - **2026-09-28 Claude — bug fixes: widebody stand allocation, save/resume drift (ADR 0156).** Branch
   `claude/fervent-gates-1tzyhq`. (1) Code C jets took 20R/22R/28R, the pier halves that close code E
   gates 20/22L/28L, while ten plain code C gates were free, so a 787-10 could find no stand; this was

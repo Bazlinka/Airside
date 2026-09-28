@@ -4,7 +4,7 @@ Status: in progress · 2026-09-14 · Bailey chose **overview only for now; attri
 P0 (on-screen OSM credit), P2 (coast + sea) and P3 (land cover + arterial roads) are done; P1's shared frame is done by
 importing `generate-ypad-layout.py` from `generate-ypad-coast.py` rather than a new module.
 2026-09-28: P7 imagery is in (v01, ADR 0074) and rebuilt from native Sentinel-2 L2A (v02, ADR 0157),
-now credited on screen. P6 terrain + Hills far ring is in (ADR 0158).
+now credited on screen. P6 terrain + Hills far ring is in (ADR 0158). P5 suburb buildings are in (ADR 0159).
 
 ## Where we are
 

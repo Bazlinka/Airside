@@ -1,5 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — the suburbs as buildings (ADR 0159, plan P5).** Branch
+  `claude/fervent-gates-1tzyhq`. 14 992 buildings around the field: every OSM building within 2 km
+  (houses as hipped boxes, the rest extruded to their tagged height) plus 8 875 street-front houses
+  along real residential streets where OSM's footprints run out. They avoid the airport's modelled
+  buildings, the landside precinct, roads and parks, and thin out 1.1–1.8 km out. The new
+  `Airside/SuburbBuildings` shader draws walls in an Adelaide palette and roofs half from the
+  satellite image beneath (it is in Always Included Shaders). About 212 k triangles in 1 km tiles;
+  Options › Graphics tests › Suburb buildings (next launch) and `-airsideGraphicsOff suburbs` turn it
+  off. **Checks:** domain suite, `AdelaideSuburbDataTests` (found a parser crash on truncated files,
+  fixed), offline renders (`docs/testing/surroundings-2026-09-28/suburbs-*.jpg`). **Not seen in
+  Unity:** check the shader compiles, the look and the frame time on the Mac.
+
 - **2026-09-28 Claude — real terrain and the Adelaide Hills skyline (ADR 0158, plan P6).** Branch
   `claude/fervent-gates-1tzyhq`. The surroundings faded to fog at a fixed ~10 km in every weather, and
   the plain was one flat sheet. Now Copernicus GLO-30 heights (±32 km, 125 m, roof-filtered) lift the

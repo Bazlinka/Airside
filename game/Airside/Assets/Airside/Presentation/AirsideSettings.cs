@@ -50,6 +50,11 @@ namespace Airside.Presentation
         public bool DistantGlows = true;
         /// <summary>Real-time nav, strobe, beacon, landing and taxi lights on every aircraft; the lamps still glow.</summary>
         public bool AircraftLights = true;
+        /// <summary>
+        /// The extruded suburbs around the airfield (ADR 0159, ~9 k buildings). Built with the world,
+        /// so a change applies from the next launch.
+        /// </summary>
+        public bool SuburbBuildings = true;
 
         public int CameraSpeedIndex = 1;
 
@@ -91,9 +96,11 @@ namespace Airside.Presentation
                         case "propblur": settings.PropellerBlur = false; break;
                         case "glows": settings.DistantGlows = false; break;
                         case "lights": settings.AircraftLights = false; break;
+                        case "suburbs": settings.SuburbBuildings = false; break;
                         case "all":
                             settings.WeatherLayers = settings.PropellerBlur = false;
                             settings.DistantGlows = settings.AircraftLights = false;
+                            settings.SuburbBuildings = false;
                             break;
                     }
                 }
@@ -115,6 +122,7 @@ namespace Airside.Presentation
             settings.PropellerBlur = Pref("gfx.propblur", 1) != 0;
             settings.DistantGlows = Pref("gfx.distantglows", 1) != 0;
             settings.AircraftLights = Pref("gfx.aircraftlights", 1) != 0;
+            settings.SuburbBuildings = Pref("gfx.suburbs", 1) != 0;
             settings.CameraSpeedIndex = Mathf.Clamp(Pref("camera", 1), 0, CameraSpeedValues.Length - 1);
             return settings;
         }
@@ -135,6 +143,7 @@ namespace Airside.Presentation
                 PlayerPrefs.SetInt(PrefPrefix + "gfx.propblur", PropellerBlur ? 1 : 0);
                 PlayerPrefs.SetInt(PrefPrefix + "gfx.distantglows", DistantGlows ? 1 : 0);
                 PlayerPrefs.SetInt(PrefPrefix + "gfx.aircraftlights", AircraftLights ? 1 : 0);
+                PlayerPrefs.SetInt(PrefPrefix + "gfx.suburbs", SuburbBuildings ? 1 : 0);
             }
             PlayerPrefs.SetInt(PrefPrefix + "camera", CameraSpeedIndex);
             PlayerPrefs.Save();

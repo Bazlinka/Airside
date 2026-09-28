@@ -1552,6 +1552,14 @@ namespace Airside.Presentation
                 PlayUiClick();
             }
 
+            row.y += 46f;
+            if (GUI.Button(row, settings.SuburbBuildings ? "Suburb buildings  ·  On" : "Suburb buildings  ·  Off (next launch)", button))
+            {
+                settings.SuburbBuildings = !settings.SuburbBuildings;
+                settings.Save();
+                PlayUiClick();
+            }
+
             row.y += 56f;
             if (GUI.Button(row, "Back", button))
             {
@@ -6045,7 +6053,12 @@ namespace Airside.Presentation
             }
 
             // The coastal plain and Gulf St Vincent past the airfield edge, from the real OSM coast.
-            AirsideAdelaideSurroundings.TryBuild(_airfieldRoot);
+            if (AirsideAdelaideSurroundings.TryBuild(_airfieldRoot, out var surroundingsMaterial) && surroundingsMaterial != null)
+            {
+                // The suburbs around the field (ADR 0159), fading with the land they stand on.
+                AirsideAdelaideSuburbs.TryBuild(_airfieldRoot, surroundingsMaterial.GetFloat("_HorizonFadeStart"),
+                    surroundingsMaterial.GetFloat("_HorizonFadeEnd"));
+            }
 
             BuildBareAdelaidePavement();
             var pavementY = AirsideAdelaideGround.PavementWorldY;

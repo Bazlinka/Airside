@@ -1093,8 +1093,10 @@ namespace Airside.Presentation
         private void FillSelectionCard(FleetAircraft aircraft)
         {
             var card = _selectionCard;
-            card.Registration = aircraft.Registration;
-            card.TypeName = aircraft.Type.Name;
+            var flightNumber = FlightNumber.ForAircraft(aircraft);
+            var place = FlightNumber.PlaceName(aircraft);
+            card.Registration = flightNumber ?? aircraft.Registration;
+            card.TypeName = string.IsNullOrEmpty(place) ? aircraft.Type.Name : place;
             card.LiveryHex = aircraft.Airline.LiveryHex;
             card.RouteLine = SelectionRouteLine(aircraft);
             card.LiveLine = SelectionLiveStats(aircraft);
@@ -1139,14 +1141,18 @@ namespace Airside.Presentation
 
         private string SelectionRouteLine(FleetAircraft aircraft)
         {
+            var who = $"{aircraft.Airline.Name} · {aircraft.Type.Name}";
+            var place = FlightNumber.PlaceName(aircraft);
             if (aircraft.Scheduled.HasValue)
             {
                 var booked = aircraft.Scheduled.Value;
-                return $"Adelaide → {booked.Destination.Name}  ·  Departs {ClockText(booked.DepartAt)}";
+                return $"{who}  ·  Departs {ClockText(booked.DepartAt)}";
             }
 
-            if (aircraft.CurrentDestination.HasValue)
-                return $"Adelaide → {aircraft.CurrentDestination.Value.Name}";
+            if (!string.IsNullOrEmpty(place))
+                return FlightNumber.IsReturning(aircraft)
+                    ? $"{who}  ·  {place} → Adelaide"
+                    : $"{who}  ·  Adelaide → {place}";
             return StandNames.Display(aircraft.Stand);
         }
 
@@ -1744,10 +1750,10 @@ namespace Airside.Presentation
                 if (detailed)
                     AirsideTheme.DrawRounded(labelRect, new Color(ink.r, ink.g, ink.b, 0.8f), 5f);
                 GUI.Label(new Rect(labelRect.x + 4f, labelRect.y + 1f, labelRect.width - 8f, 18f),
-                    $"{FlightNumber.OrRegistration(flight.Aircraft)} → {flight.To.Code}", small);
+                    $"{FlightNumber.OrRegistration(flight.Aircraft)} → {flight.To.Name}", small);
                 if (detailed)
                     GUI.Label(new Rect(labelRect.x + 4f, labelRect.y + 17f, labelRect.width - 8f, 18f),
-                        $"{MapFlightDetail(flight)} · {flight.Aircraft.Registration} {flight.Aircraft.Type.Name}", small);
+                        $"{MapFlightDetail(flight)} · {flight.Aircraft.Airline.Name} {flight.Aircraft.Type.Name}", small);
                 GUI.color = labelColour;
             }
 
@@ -3317,21 +3323,28 @@ namespace Airside.Presentation
                 if (!e.Aircraft.Airline.IsPlayer)
                     continue;
 
-                var reg = e.Aircraft.Registration;
-                var dest = e.Aircraft.CurrentDestination?.Name;
+                var flight = FlightNumber.For(e.Aircraft.Airline, e.Aircraft.Registration, e.DestinationCode,
+                    e.State is FleetState.AtDestination or FleetState.Inbound or FleetState.HoldingForLanding
+                        or FleetState.Landing or FleetState.GoAround or FleetState.AwaitingStand
+                        or FleetState.TaxiIn or FleetState.AtStand) ?? e.Aircraft.Registration;
                 switch (e.State)
                 {
                     case FleetState.Outbound:
-                        ShowToast($"{reg} departed for {dest}.");
+                        ShowToast($"{flight} departed for {e.DestinationName}.");
+                        break;
+                    case FleetState.AtDestination:
+                        ShowToast(FlightNotices.LandedAtDestination(flight, e.DestinationName));
                         break;
                     case FleetState.HoldingForLanding:
-                        ShowToast($"{reg} is on final at Adelaide.");
+                        ShowToast($"{flight} is on final at Adelaide.");
                         break;
                     case FleetState.AwaitingStand:
-                        ShowToast($"{reg} has landed. Choose a stand.");
+                        ShowToast($"{flight} has landed. Choose a stand.");
                         break;
                     case FleetState.AtStand:
-                        ShowToast($"{reg} is parked on {StandNames.Display(e.Aircraft.Stand)}.");
+                        ShowToast(string.IsNullOrEmpty(e.DestinationName)
+                            ? $"{e.Aircraft.Registration} is parked on {StandNames.Display(e.Aircraft.Stand)}."
+                            : FlightNotices.ReturnedHomeAwaitingDispatch(flight));
                         break;
                 }
             }

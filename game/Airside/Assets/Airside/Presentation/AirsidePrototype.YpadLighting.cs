@@ -457,7 +457,7 @@ namespace Airside.Presentation
                 AirfieldFixture.FlashPhase(name));
         }
 
-        /// <summary>Four vertices at the lens centre; Airside/AirfieldLightPoint opens them towards the camera (ADR 0162).</summary>
+        /// <summary>Four vertices at the lens centre; Airside/AirfieldLightPoint opens them towards the camera (ADR 0167).</summary>
         private static void AddLightPoint(LensGroup group, Vector3 centre, float worldSize, float flashPhase)
         {
             var first = group.PointVertices.Count;

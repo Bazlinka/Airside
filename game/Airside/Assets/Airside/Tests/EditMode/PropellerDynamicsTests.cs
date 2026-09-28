@@ -136,7 +136,7 @@ namespace Airside.Tests
         [Test]
         public void PropDisc_AllButDisappearsAtFullPower()
         {
-            // ADR 0163: the disc is the blades' real coverage. It painted blade ghosts at 30 %
+            // ADR 0168: the disc is the blades' real coverage. It painted blade ghosts at 30 %
             // before, so a propeller at full power never went away.
             foreach (var blades in new[] { 4, 6 })
             {

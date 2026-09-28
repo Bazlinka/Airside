@@ -146,7 +146,7 @@ namespace Airside.Tests
                 "Forward's sideways component must turn the same way LateralMetres does");
         }
 
-        // ADR 0161: the departure flies a real turn.
+        // ADR 0166: the departure flies a real turn.
 
         [Test]
         public void Arc_NoseAlwaysPointsAlongThePath()

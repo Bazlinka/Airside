@@ -1,4 +1,4 @@
-# 0161 — Departures turn properly, and the gear waits until the aircraft has climbed away
+# 0166 — Departures turn properly, and the gear waits until the aircraft has climbed away
 
 Date: 28 September 2026. Author: Claude, at Bailey's request (a play test: "as it turns to head
 its destination it doesn't turn — it more so drifts in the air? And landing gear goes up too soon?").

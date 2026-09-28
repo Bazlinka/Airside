@@ -1601,8 +1601,13 @@ namespace Airside.Presentation
                 }
                 var phase = flight.Operation.Phase;
                 var progress = VisualPhaseProgress(flight, 0f);
-                var aircraftType = FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var fleetAircraft)
-                    ? fleetAircraft.Type : AircraftType.Atr42;
+                var aircraftType = AircraftType.Atr42;
+                var runway = RunwayDirection.Runway05;
+                if (FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var fleetAircraft))
+                {
+                    aircraftType = fleetAircraft.Type;
+                    runway = fleetAircraft.AssignedRunway;
+                }
                 var lane = ApproachLaneOffset(flight);
                 var route = TaxiRouteFor(flight, phase);
                 var position = FleetGroundPosition(flight, 0f)
@@ -1611,7 +1616,7 @@ namespace Airside.Presentation
                     ?? FleetArrivalFinalPosition(flight, 0f)
                     ?? RunwayPosition(flight,
                     ApplyDepartureTurn(flight, phase, progress,
-                        PositionFor(phase, progress, route, lane, aircraftType)));
+                        PositionFor(phase, progress, route, lane, aircraftType, runway)));
                 // Keep look-ahead inside the current taxi segment so yaw does not cut corners.
                 var lookAhead = phase == AircraftPhase.Takeoff
                         && progress < AirsideFlightPath.LineupProgress ? 0.04f
@@ -1624,7 +1629,7 @@ namespace Airside.Presentation
                            ?? FleetArrivalFinalPosition(flight, lookAhead)
                            ?? RunwayPosition(flight,
                                ApplyDepartureTurn(flight, phase, lookAheadProgress,
-                                   PositionFor(phase, lookAheadProgress, route, lane, aircraftType)));
+                                   PositionFor(phase, lookAheadProgress, route, lane, aircraftType, runway)));
                 // An arrival cleared earlier than expected eases onto the landing path.
                 var handoff = ArrivalHandoffOffset(flight, position);
                 position += handoff;
@@ -1650,10 +1655,13 @@ namespace Airside.Presentation
                 // freezes attitude while paused instead of drifting on unscaled time.
                 var turningOff = TryDepartureArc(flight, phase, progress, out _, out var turnAlong, out _, out _)
                                  && turnAlong > 0f;
+                // Ground heading is already the trailed-gear direction. A slow follow left the
+                // fuselage pointing down the taxiway while the nose had entered the turn, so
+                // the tail swung out. Follow it closely; the airborne rates stay softer.
                 var turnRate = phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback
-                    ? 2.3f
+                    ? 28f
                     : turningOff ? 2.8f
-                    : phase == AircraftPhase.Takeoff && progress < AirsideFlightPath.RotateProgress * 0.4f ? 8f : 5f;
+                    : phase == AircraftPhase.Takeoff && progress < AirsideFlightPath.RotateProgress ? 14f : 5f;
                 view.rotation = Quaternion.Slerp(
                     view.rotation,
                     targetRotation,
@@ -1722,7 +1730,7 @@ namespace Airside.Presentation
         /// </summary>
         private float DepartureBankDegrees(CommercialFlight flight, AircraftPhase phase, float progress)
         {
-            // Rolled in, held at a normal 25° and rolled out with the arc itself (ADR 0161).
+            // Rolled in, held at a normal 25° and rolled out with the arc itself (ADR 0166).
             return TryDepartureArc(flight, phase, progress, out _, out var along, out var relative, out var radius)
                 ? DepartureTurn.ArcBank(relative, radius, along)
                 : 0f;
@@ -1874,25 +1882,16 @@ namespace Airside.Presentation
                 ApplyEngineAudio(_commercialAircraft[index],
                     engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase),
                     engines is { } e ? Mathf.Max(e.Left, e.Right) : 1f,
-                    type, phase, VisualFlights[index].AircraftId);
+                    type, phase, VisualFlights[index].AircraftId,
+                    VisualPhaseProgress(VisualFlights[index], 0f));
             }
         }
 
-        private void PlayUiClick()
-        {
-            if (_audioMuted || _uiAudio == null)
-                return;
-            if (_uiClickClip == null)
-                _uiClickClip = Resources.Load<AudioClip>("Airside/Audio/ui_select_005");
-            if (_uiClickClip == null)
-                return;
-
-            _uiAudio.PlayOneShot(_uiClickClip);
-        }
+        private void PlayUiClick() => PlayMoment(ref _uiClickClip, HudSounds.UiClick, "UI click", 0.7f);
 
         /// <param name="spool">0..1 through an engine start or shutdown; bends the note down while spooling.</param>
         private void ApplyEngineAudio(Transform aircraft, bool enginesOn, float spool, AircraftType type,
-            AircraftPhase phase, string aircraftId = null)
+            AircraftPhase phase, string aircraftId = null, float progress01 = 1f)
         {
             if (aircraft == null)
                 return;
@@ -1931,17 +1930,25 @@ namespace Airside.Presentation
             // parked Saab sound like a broken motor; keep pitch near native.
             // ADR 0151: read shaft power directly. A governed propeller holds its speed, so the
             // old inference from rpm made a taxiing turboprop sound like one at takeoff power.
-            var power = _propPower.TryGetValue(id, out var shaftPower) ? Mathf.Clamp01(shaftPower) : 0f;
-            if (phase is AircraftPhase.Takeoff)
-                power = 1f; // the takeoff roll swells to full power
-            else if (phase is AircraftPhase.Departed)
-                power = Mathf.Max(power, 0.85f);
+            // The roll used to force this to full power on the first frame of takeoff, so the
+            // note stepped instead of rising with the thrust and the acceleration.
+            var thrust = _propPower.TryGetValue(id, out var shaftPower) ? Mathf.Clamp01(shaftPower) : 0f;
+            if (phase is AircraftPhase.Departed)
+                thrust = Mathf.Max(thrust, 0.85f);
             else if (phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.GoAround)
-                power = Mathf.Max(power, 0.55f);
-            else if (phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback)
-                power = Mathf.Max(power, 0.25f);
+                thrust = Mathf.Max(thrust, 0.55f);
+            var speed01 = 0f;
+            if (phase == AircraftPhase.Takeoff)
+            {
+                var profile = AircraftPerformance.For(type);
+                var knots = profile.AirspeedKnots(phase, progress01);
+                speed01 = profile.RotateKnots > 1f ? Mathf.Clamp01(knots / profile.RotateKnots) : 0f;
+            }
+
+            var power = EngineVoice.HeardPower(thrust, speed01);
             var kind = EngineVoice.ClassOf(type);
-            source.pitch = EngineVoice.Pitch(kind, power, enginesOn ? spool : 0f, EngineVoice.Detune(aircraftId));
+            source.pitch = EngineVoice.Pitch(kind, power, enginesOn ? spool : 0f, EngineVoice.Detune(aircraftId))
+                * EngineVoice.RollPitch(speed01);
 
             // Distant engines are duller as well as quieter: only the rumble carries.
             var lowPass = source.GetComponent<AudioLowPassFilter>();
@@ -2685,7 +2692,7 @@ namespace Airside.Presentation
 
         /// <summary>
         /// ADR 0148: blades show only while the frame can draw them turning. Past a third of the gap
-        /// between blades per frame they wagon-wheel, so they fade into the blur disc. ADR 0163: the
+        /// between blades per frame they wagon-wheel, so they fade into the blur disc. ADR 0168: the
         /// disc is the blades' real time-averaged coverage, so at full power the propeller all but
         /// disappears, leaving the spinner and a faint haze with a tip ring.
         /// </summary>
@@ -2707,7 +2714,7 @@ namespace Airside.Presentation
             ApplyPropBlurToHub(propeller, blur, DiscViewFade(propeller) * density);
             if (step <= 0f)
                 return;
-            // The disc turns with the propeller: its texture is the same all the way round (ADR 0163).
+            // The disc turns with the propeller: its texture is the same all the way round (ADR 0168).
             propeller.Rotate(Vector3.forward, step, Space.Self);
         }
 
@@ -2852,7 +2859,7 @@ namespace Airside.Presentation
         private static readonly Dictionary<int, Material> JetFanBlurMaterials = new();
 
         /// <summary>
-        /// ADR 0163: a turbofan face at speed, a near-solid dark disc with a faint lighter band where
+        /// ADR 0168: a turbofan face at speed, a near-solid dark disc with a faint lighter band where
         /// the blades' twist catches the light, clear over the spinner.
         /// </summary>
         private static Material JetFanBlurMaterial() =>
@@ -2930,7 +2937,7 @@ namespace Airside.Presentation
                     continue;
                 }
 
-                // ADR 0163: the spinner, hub and stripe are solid and stay; only blades blur away.
+                // ADR 0168: the spinner, hub and stripe are solid and stay; only blades blur away.
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer != null)
                     renderer.enabled = showBlades || !AirsidePropellerDynamics.BlursAtSpeed(child.name);
@@ -5536,8 +5543,11 @@ namespace Airside.Presentation
                 light.spotAngle = 78f;
                 light.innerSpotAngle = 42f;
                 light.intensity = 0.05f;
-                // Soft shadows on the four corner mast floods (hero REF-002 pools).
-                light.shadows = i < 4 ? LightShadows.Soft : LightShadows.None;
+                // These floods are a warm fill. Soft shadows on the first four made extra
+                // punctual shadow maps every frame and pushed the shadow atlas over its
+                // budget (ADR 0162). The sun still shadows the apron; night landing lamps
+                // still shadow on their own.
+                light.shadows = LightShadows.None;
                 lights[i] = light;
             }
 
@@ -6063,8 +6073,10 @@ namespace Airside.Presentation
             if (AirsideAdelaideSurroundings.TryBuild(_airfieldRoot, out var surroundingsMaterial) && surroundingsMaterial != null)
             {
                 // The suburbs around the field (ADR 0159), fading with the land they stand on.
-                AirsideAdelaideSuburbs.TryBuild(_airfieldRoot, surroundingsMaterial.GetFloat("_HorizonFadeStart"),
-                    surroundingsMaterial.GetFloat("_HorizonFadeEnd"));
+                // Spread across frames so the mesh build does not freeze the first picture (ADR 0162).
+                StartCoroutine(AirsideAdelaideSuburbs.BuildGradually(_airfieldRoot,
+                    surroundingsMaterial.GetFloat("_HorizonFadeStart"),
+                    surroundingsMaterial.GetFloat("_HorizonFadeEnd")));
             }
 
             BuildBareAdelaidePavement();
@@ -11856,7 +11868,7 @@ namespace Airside.Presentation
                     radius = Mathf.Max(radius, Mathf.Max(blade.bounds.extents.x, blade.bounds.extents.y));
                 }
 
-                // ADR 0163: a double-sided quad in the fan plane (local XY, spin axis Z) with a near-solid
+                // ADR 0168: a double-sided quad in the fan plane (local XY, spin axis Z) with a near-solid
                 // dark fan-face texture, clear over the spinner. It was a 26 % glass cylinder, so the
                 // intake went see-through once the blades hid.
                 var disc = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -14351,7 +14363,7 @@ namespace Airside.Presentation
         }
 
         private Vector3 PositionFor(AircraftPhase phase, float progress, TaxiRoute taxiRoute, float laneOffset = 0f,
-            AircraftType type = null)
+            AircraftType type = null, RunwayDirection runway = RunwayDirection.Runway05)
         {
             // Every phase hands over where the previous one ended: landing rolls out to
             // the A1 entry TaxiIn starts from, taxi-out stops at the runway hold-short
@@ -14369,10 +14381,10 @@ namespace Airside.Presentation
                 AircraftPhase.AtStand => AirsideFlightPath.OnRunwayHold(),
                 AircraftPhase.Pushback => AirsideFlightPath.OnRunwayHold(),
                 AircraftPhase.TaxiOut => AirsideFlightPath.OnRunwayHold(),
-                AircraftPhase.Takeoff => AirsideFlightPath.Takeoff(t, TakeoffOffsetX, type),
+                AircraftPhase.Takeoff => AirsideFlightPath.Takeoff(t, TakeoffOffsetX, type, runway),
                 AircraftPhase.Circuit => AirsideFlightPath.Circuit(t),
                 AircraftPhase.GoAround => AirsideFlightPath.GoAround(t),
-                _ => AirsideFlightPath.Departed(t, TakeoffOffsetX, type)
+                _ => AirsideFlightPath.Departed(t, TakeoffOffsetX, type, runway)
             };
         }
 
@@ -14446,7 +14458,7 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// ADR 0161 — the departure's turn onto its destination, as one flown arc. Along-track
+        /// ADR 0166 — the departure's turn onto its destination, as one flown arc. Along-track
         /// metres past the turn start (the far threshold, <see cref="DepartureTurn.TurnStartProgress"/>
         /// of the climb-out), the bearing to the destination, and the type's own turn radius.
         /// False on the roll, the initial climb and anything without a destination.
@@ -14462,8 +14474,10 @@ namespace Airside.Presentation
             var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
             if (!dest.HasValue)
                 return false;
-            xStart = AirsideFlightPath.Departed(DepartureTurn.TurnStartProgress, TakeoffOffsetX, aircraft.Type).x;
-            along = AirsideFlightPath.Departed(progress, TakeoffOffsetX, aircraft.Type).x - xStart;
+            // Same path the climb-out is drawn on, including the runway's own roll-in.
+            var runway = aircraft.AssignedRunway;
+            xStart = AirsideFlightPath.Departed(DepartureTurn.TurnStartProgress, TakeoffOffsetX, aircraft.Type, runway).x;
+            along = AirsideFlightPath.Departed(progress, TakeoffOffsetX, aircraft.Type, runway).x - xStart;
             relative = DepartureTurn.RelativeRadiansFor(aircraft.AssignedRunway, _operations.Home, dest.Value);
             radius = DepartureTurn.TurnRadiusMetres(
                 AircraftPerformance.For(aircraft.Type).AirspeedKnots(AircraftPhase.Departed, DepartureTurn.TurnStartProgress));

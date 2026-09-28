@@ -225,7 +225,8 @@ namespace Airside.Simulation
                     return false;
                 var roll = DistanceFraction(Local(progress, 0.0, profile.RotateProgress), 0.0,
                     profile.RotateKnots);
-                localX = Lerp(CircuitProfile.TakeoffStartX, profile.RotateX, roll);
+                var rollIn = AdelaideGround.TakeoffRollInMetres(aircraft.Type, aircraft.AssignedRunway);
+                localX = Lerp(CircuitProfile.TakeoffStartX + rollIn, profile.RotateX + rollIn, roll);
             }
 
             RunwayFrame.ToWorld(aircraft.AssignedRunway, localX, 0f, 0f, out var x, out _, out var z);

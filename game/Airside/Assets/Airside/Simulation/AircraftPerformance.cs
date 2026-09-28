@@ -111,7 +111,7 @@ namespace Airside.Simulation
                     return Lerp(TouchdownKnots, RunwayExitKnots, Local(t, TouchdownProgress, 1f));
                 case AircraftPhase.Takeoff:
                     if (t < RotateProgress)
-                        return Lerp(0f, RotateKnots, Local(t, 0f, RotateProgress));
+                        return RotateKnots * TakeoffRollSpeed01(Local(t, 0f, RotateProgress));
                     return Lerp(RotateKnots, InitialClimbKnots, Local(t, RotateProgress, 1f));
                 case AircraftPhase.Departed:
                     return Lerp(InitialClimbKnots, ClimbOutKnots, t);
@@ -122,6 +122,29 @@ namespace Airside.Simulation
                 default:
                     return 0f;
             }
+        }
+
+        /// <summary>
+        /// 0 at the start of the roll, 1 at Vr. The first part of the acceleration is gentle
+        /// so the roll leaves the stopped lineup without a lurch, and the aircraft is still
+        /// accelerating at rotate. The average matches a straight ramp, so the rotate point
+        /// and the scheduled roll time do not move.
+        /// </summary>
+        public static float TakeoffRollSpeed01(float roll01)
+        {
+            var u = Clamp01(roll01);
+            const float gentle = 0.45f;
+            var smooth = u * u * (3f - 2f * u);
+            return gentle * smooth + (1f - gentle) * u;
+        }
+
+        /// <summary>Fraction of the ground-roll distance covered at <paramref name="roll01"/>.</summary>
+        public static float TakeoffRollDistance01(float roll01)
+        {
+            var u = Clamp01(roll01);
+            const float gentle = 0.45f;
+            var integrated = gentle * (u * u * u - 0.5f * u * u * u * u) + (1f - gentle) * (0.5f * u * u);
+            return integrated * 2f;
         }
 
         private static float Lerp(float a, float b, float t) => a + (b - a) * Clamp01(t);

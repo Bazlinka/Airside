@@ -1,4 +1,4 @@
-# 0162 — Airfield lights as light points, and a night brightness option
+# 0167 — Airfield lights as light points, and a night brightness option
 
 Date: 28 September 2026. Author: Claude, at Bailey's request (a play test: "improving visibility for
 the player at night time … correct light fixtures with realistic visibility … visibility on the

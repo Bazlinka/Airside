@@ -1,6 +1,6 @@
 Shader "Airside/AirfieldLightPoint"
 {
-    // ADR 0162: an airfield lamp as a point source. Every fixture is four vertices at the lens
+    // ADR 0167: an airfield lamp as a point source. Every fixture is four vertices at the lens
     // centre; the vertex shader opens them into a camera-facing quad that never shrinks below
     // _MinPixels on screen, dims softly with distance (never below a floor) and reaches through
     // haze further than surfaces do. Guard lights alternate their pair (uv1.y = flash phase).

@@ -15,6 +15,30 @@
   landing gear now comes up a few seconds after the wheels leave the runway, not while still
   rolling, and the landing lights stay on through the climb.
 
+- **Flights have numbers and city names.** A departure reads like a real board: ZL3482
+  Kingscote, QF680 Sydney, VA230 Melbourne. The aircraft type stays in the small print.
+  Extra flights, and the player's own, still get a number when no published service fits.
+
+- **A second Saab is for sale at the start.** The airline still begins with one Saab 340B. Another
+  is $1,600 from the opening cash, and it parks on the other regional bay. A toast now says when
+  a flight has landed at its destination, and when it has returned home and is awaiting dispatch.
+
+- **Buttons click instead of beeping.** The interface sound was a held electronic beep, and the
+  apron loop carried a reversing tone. A button is now a short switch tick, and the apron is
+  just the rumble and the ground-power hum.
+
+- **The game no longer freezes and hitches on open.** Compressing the satellite image, building
+  every house and tree, and redrawing the ground through a full lit shader were all happening on
+  the first frames. The satellite stays uncompressed, the suburbs fill in over a short moment, and
+  the airfield, plain and houses draw their own cheap depth pass. Apron floods no longer cast
+  shadows, and a per-frame batching cost that fought the renderer is off.
+
+- **Turning onto the runway no longer looks like a drift.** The tail was sliding out
+  because the fuselage cut across the corner. Aircraft now steer onto a proper arc
+  with the main gear trailing behind the nose, and a long aircraft finishes that turn
+  on the centreline before the roll begins. The takeoff roll and its engine note
+  build up together instead of starting at full power.
+
 - **Trees.** Gum trees now line the creeks, the airport's perimeter, the golf courses and the
   streets around the field, each placed where the satellite actually sees tree canopy.
 

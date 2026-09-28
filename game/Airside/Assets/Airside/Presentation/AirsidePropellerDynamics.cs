@@ -111,8 +111,10 @@ namespace Airside.Presentation
             switch (phase)
             {
                 case AircraftPhase.Takeoff:
-                    // Power comes up over the first part of the roll rather than arriving whole.
-                    return Mathf.Lerp(0.35f, 1f, Mathf.Clamp01(progress / 0.12f));
+                    // Same thrust the taxi was using, then a smooth rise through the ground
+                    // roll. A step here is what made the note jump the moment the aircraft
+                    // was cleared to go.
+                    return Mathf.Lerp(0.14f, 1f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress / 0.45f)));
                 case AircraftPhase.Departed:
                     return 0.88f;
                 case AircraftPhase.GoAround:
@@ -285,7 +287,7 @@ namespace Airside.Presentation
             return Mathf.Lerp(0.78f, 1.22f, coarse);
         }
 
-        // ---------------------------------------------------------------- the look at speed (ADR 0163)
+        // ---------------------------------------------------------------- the look at speed (ADR 0168)
 
         /// <summary>
         /// Blade chord as a fraction of the propeller radius at radius <paramref name="r"/> (0 hub,
@@ -389,7 +391,8 @@ namespace Airside.Presentation
             var progress = Mathf.Clamp01(progress01);
             return phase switch
             {
-                AircraftPhase.Takeoff => Mathf.Lerp(JetIdleN1, JetTakeoffN1, Mathf.Clamp01(progress / 0.14f)),
+                AircraftPhase.Takeoff => Mathf.Lerp(JetTaxiN1, JetTakeoffN1,
+                    Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress / 0.45f))),
                 AircraftPhase.Departed => JetClimbN1,
                 AircraftPhase.GoAround => JetTakeoffN1,
                 AircraftPhase.Approach => JetApproachN1,

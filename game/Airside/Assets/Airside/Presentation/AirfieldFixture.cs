@@ -157,7 +157,7 @@ namespace Airside.Presentation
             return day + (1.6f - day) * night;
         }
 
-        // Light points (ADR 0162). A real airfield lamp is a point source: from the tower or a
+        // Light points (ADR 0167). A real airfield lamp is a point source: from the tower or a
         // kilometre out it is a sharp bright dot, never smaller than the eye can resolve, and it
         // reaches further through haze than the ground it stands on. The true-size 0.34 m lens is
         // sub-pixel from the overview, so each fixture also draws a camera-facing point that never

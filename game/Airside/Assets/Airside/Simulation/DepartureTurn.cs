@@ -124,7 +124,7 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// The departure as a flown turn (ADR 0161): straight until <paramref name="alongMetres"/>
+        /// The departure as a flown turn (ADR 0166): straight until <paramref name="alongMetres"/>
         /// reaches 0 (the turn start past the far threshold), then a constant-radius arc onto the
         /// full bearing to the destination, then straight on it. Returns the offset from the turn
         /// start in the runway-local frame: forward along the takeoff direction, sideways with

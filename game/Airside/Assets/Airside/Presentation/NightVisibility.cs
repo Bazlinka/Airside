@@ -3,7 +3,7 @@ using System;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// The player's night brightness option (ADR 0162). Natural is the ADR 0063/0064 night; the
+    /// The player's night brightness option (ADR 0167). Natural is the ADR 0063/0064 night; the
     /// higher levels lift exposure and ambient light at night only, the way the eye adapts on a
     /// dark apron. Daylight is untouched at every level.
     /// </summary>

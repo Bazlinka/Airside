@@ -78,7 +78,8 @@ namespace Airside.Presentation
         public static bool IsTakenCode(string code) => code switch
         {
             "REX" or "QLK" or "VOZ" or "QFA" or "JST" or "ANZ" or "SIA" or "CPA" or "MAS" or "UAE" or "QTR"
-                or "FJI" or "RFDS" => true,
+                or "FJI" or "RFDS"
+                or "QF" or "VA" or "JQ" or "NZ" or "SQ" or "CX" or "MH" or "EK" or "QR" or "FJ" or "ZL" or "FD" => true,
             _ => false
         };
 
@@ -311,7 +312,9 @@ namespace Airside.Presentation
             into.Text(example.WithHeight(16f).Offset(0f, 21f), model.CodeEdited ? "Your own code" : "Made from the name. Type to change it",
                 10f, HudTone.Muted);
             into.Text(new HudBox(body.X, layout.CodeField.Bottom + 22f, body.Width, 60f),
-                "You start at Adelaide Airport with one Saab 340B on the regional bays. The name goes on "
+                "You start at Adelaide Airport with one Saab 340B on the regional bays, and $"
+                + FlightEconomics.StartingFunds.ToString("N0") + " in cash. A second Saab is $"
+                + AircraftAcquisition.Saab340.Price.ToString("N0") + " in Fleet. The name goes on "
                 + "every aircraft you fly. You can change it later on the Career page.",
                 11f, HudTone.Muted, HudTextStyle.Wrap);
         }

@@ -1,4 +1,4 @@
-# 0163 — Propellers that disappear at speed, and turbofans with a solid face
+# 0168 — Propellers that disappear at speed, and turbofans with a solid face
 
 Date: 28 September 2026. Author: Claude, at Bailey's request ("when propellers spin at full speed
 you can see [them] … they don't go invisible. So really fix that up. And for the jet engines as

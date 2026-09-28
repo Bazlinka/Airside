@@ -80,7 +80,7 @@ namespace Airside.Tests
         {
             // Nine 46-point rows from y=62, the graphics-tests note (50 + 28) and its four rows
             // (ADR 0155), then Back 56 below the last row, 38 tall.
-            // ADR 0159 adds a fifth graphics row (suburb buildings); ADR 0162 a tenth row (night brightness).
+            // ADR 0159 adds a fifth graphics row (suburb buildings); ADR 0167 a tenth row (night brightness).
             const float lastRowBottom = 62f + 9f * 46f + 50f + 28f + 4f * 46f + 56f + 38f;
             Assert.That(HudLayout.OptionsHeight, Is.GreaterThanOrEqualTo(lastRowBottom));
         }

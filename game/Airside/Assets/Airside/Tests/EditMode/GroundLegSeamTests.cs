@@ -105,13 +105,15 @@ namespace Airside.Tests
             var failures = new List<string>();
             foreach (var runway in Runways)
             {
-                RunwayFrame.ToWorld(runway, CircuitProfile.TakeoffStartX, 0f, 0f, out var rollX, out _, out var rollZ);
                 RunwayFrame.Forward(runway, out var fx, out var fz);
 
                 foreach (var type in Types())
                 {
                     if (!UsesRunway(type, runway))
                         continue;
+                    RunwayFrame.ToWorld(runway,
+                        CircuitProfile.TakeoffStartX + AdelaideGround.TakeoffRollInMetres(type, runway),
+                        0f, 0f, out var rollX, out _, out var rollZ);
                     var lineup = AdelaideGround.LineupFor(runway, type);
                     var lineupStart = lineup.PoseAt(0);
                     var lineupEnd = lineup.PoseAt(lineup.Seconds);

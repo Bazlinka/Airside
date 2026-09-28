@@ -58,7 +58,7 @@ namespace Airside.Presentation
 
         public int CameraSpeedIndex = 1;
 
-        /// <summary>Night brightness level (ADR 0162), an index into <see cref="NightVisibility.Labels"/>.</summary>
+        /// <summary>Night brightness level (ADR 0167), an index into <see cref="NightVisibility.Labels"/>.</summary>
         public int NightBrightness = NightVisibility.DefaultLevel;
 
         public AirsideSettings CycleNightBrightness()

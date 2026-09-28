@@ -1,6 +1,6 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-28 Claude — propellers and fans at speed (ADR 0163).** Branch
+- **2026-09-28 Claude — propellers and fans at speed (ADR 0168).** Branch
   `claude/fervent-gates-1tzyhq`.
   - The propeller blur disc is now the blades' real time-averaged coverage (5–20 % haze plus a faint
     tip ring). The old disc painted blade ghosts at 30 % and turned them slowly, so blades never
@@ -11,7 +11,7 @@
 
   **Checks:** propeller tests against shims, harness. **Not seen in Unity.**
 
-- **2026-09-28 Claude — airfield light points, night brightness (ADR 0162).** Branch
+- **2026-09-28 Claude — airfield light points, night brightness (ADR 0167).** Branch
   `claude/fervent-gates-1tzyhq`.
   - Every runway, taxi, approach and stand lens also draws a light point
     (`Airside/AirfieldLightPoint`, a new always-included shader). It never shrinks below 2–3.4 px,
@@ -23,7 +23,7 @@
 
   **Checks:** headless fixture and night tests. **Not seen in Unity; shader not compiled.**
 
-- **2026-09-28 Claude — departures turn, gear waits (ADR 0161).** Branch
+- **2026-09-28 Claude — departures turn, gear waits (ADR 0166).** Branch
   `claude/fervent-gates-1tzyhq`. Play-test fixes:
   - Departures now fly a banked constant-radius arc onto the full destination bearing. They used to
     yaw the nose while sliding sideways, which read as drifting.
@@ -31,6 +31,47 @@
   - Landing lights stay on through the climb.
 
   **Checks:** 950 headless tests, the gear test run against shims. **Not seen in Unity.**
+
+- **2026-09-28 Cursor — flight numbers and city names (ADR 0165).** Flights show a callsign
+  and number plus the city (ZL3482 Kingscote, QF680 Sydney) on the card, the tags, the
+  map, the board and the toasts. Published Adelaide routes use representative numbers;
+  other flights use a spare 900-series number. **Checks:** filtered Unity EditMode passed
+  (`FlightNumber`, 4/4).
+
+- **2026-09-28 Cursor — second Saab and flight toasts (ADR 0164).** A new airline can buy another
+  Saab 340B for $1,600 from the opening cash; it uses 50G beside the given aircraft on 50D.
+  Larger types still wait for the expanded base. Toasts: landed at the destination, and returned
+  home awaiting dispatch. **Checks:** filtered Unity EditMode passed (10 tests, including the
+  opening purchase and the toast wording).
+
+- **2026-09-28 Cursor — button click and apron bed (ADR 0163).** Bailey disliked the beep on
+  the sound controls. Buttons now play a short switch tick (`HudSounds.UiClick`) instead of the
+  Kenney select clip, and the apron loop no longer includes a reversing tone. **Checks:** filtered
+  Unity EditMode passed (`HudSoundsTests`, 4/4). **Next:** hear a menu click and the apron with
+  an aircraft running.
+
+- **2026-09-28 Cursor — startup and frame stutter (ADR 0162).** The rebuilt game was hitching
+  because the 4096 satellite was block-compressed on the main thread, every house and tree was
+  meshed inside Awake, and SSAO was redrawing the airfield, plain and suburbs with the full Lit
+  shader. Those are fixed: no compress, suburbs spread across frames and kept out of the static
+  batch, cheap depth passes on the three world shaders, apron floods no longer cast shadows,
+  dynamic batching off under the SRP batcher. Full-resolution SSAO is unchanged (ADR 0101).
+  **Checks:** filtered Unity EditMode passed (`StaticWorld_MovingRootsStayOffTheStaticBatch`);
+  the project compiled. Full `scripts/test-unity.sh` not run. **Next:** play the Mac build —
+  open should reach the title without a long freeze, and the view should stay even once the
+  houses have filled in. Then the ADR 0161 playtest (737 and ATR on 05, Saab on 12).
+
+- **2026-09-28 Cursor — lineup steering and takeoff sound (ADR 0161).** The tail was
+  sliding out on the turn onto the runway: the fuselage was the chord of a tight
+  corner, so the rear wheels travelled sideways. Lineups are now a circular arc with
+  the main gear trailing and no sideslip. A long aircraft keeps rolling straight
+  until that gear is lined up, and the takeoff roll starts from there. The roll
+  eases off the stop, and the engine note follows thrust plus airspeed instead of
+  jumping to full power. **Checks:** filtered Unity EditMode passed
+  (`LineupSteeringTests`, departure seams, takeoff path, roll noise). Full
+  `scripts/test-unity.sh` not run. **Next:** playtest a 737 and an ATR lining up
+  on 05 and a Saab on 12 — the tail should track inside the turn, and the roll
+  should sound like it is accelerating.
 
 - **2026-09-28 Claude — trees where the satellite sees them (ADR 0160).** Branch
   `claude/fervent-gates-1tzyhq`. 11 428 low-poly eucalypts (about 18 triangles each) placed on real

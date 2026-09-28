@@ -198,7 +198,7 @@ namespace Airside.Presentation
         /// <param name="daylight">0 night … 1 noon.</param>
         /// <param name="warm">Dawn/dusk warmth 0…1.</param>
         /// <param name="weatherGloom">Rain/fog/storm cool-down 0…1 (presentation only).</param>
-        /// <param name="nightExposureLift">Extra EV from the player's night brightness option (ADR 0162).</param>
+        /// <param name="nightExposureLift">Extra EV from the player's night brightness option (ADR 0167).</param>
         public void Apply(float daylight, float warm, float weatherGloom = 0f, float nightExposureLift = 0f)
         {
             weatherGloom = Mathf.Clamp01(weatherGloom);

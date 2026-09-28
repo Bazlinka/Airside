@@ -75,7 +75,7 @@ namespace Airside.Simulation
                 string.Empty),
             _ => new BaseCapability(OperatingTier.Provisional,
                 "Regional starter base",
-                "Regional apron · one-aircraft operation",
+                "Regional apron · two Saab 340s",
                 "Expanded regional base")
         };
 
@@ -108,11 +108,7 @@ namespace Airside.Simulation
                         ? "Adelaide is full. Add aircraft at an outstation in Fleet › Network"
                         : $"The {career.Base.Title} is full. Expand your Adelaide base";
                 else if (!PlayerBase.Supports(career.BaseLevel, offer.Type))
-                {
-                    var needed = AircraftCatalogue.IsWidebody(offer.Type)
-                        ? PlayerBaseLevel.International : PlayerBaseLevel.JetGate;
-                    baseRequirement = $"Needs the {PlayerBase.For(needed).Title}";
-                }
+                    baseRequirement = $"Needs the {PlayerBase.For(PlayerBase.RequiredLevel(offer.Type)).Title}";
                 var ready = fundsShort == 0 && rotationsShort == 0 && reliabilityShort == 0
                             && !needsTier && string.IsNullOrEmpty(baseRequirement);
                 if (!ready)

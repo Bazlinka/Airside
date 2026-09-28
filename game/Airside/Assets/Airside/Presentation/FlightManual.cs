@@ -42,7 +42,8 @@ namespace Airside.Presentation
                         + "speed up. The airport keeps going while the menu is open, and your booked flights still land "
                         + "and get paid while the game is closed."),
                     ("You start small",
-                        "You have one Saab 340B on the regional bays and a little cash. More aircraft, jets, interstate "
+                        "You have one Saab 340B on the regional bays and a little cash. A second Saab is for sale "
+                        + "in Fleet from that cash. More aircraft, jets, interstate "
                         + "and overseas routes and other bases all have to be earned."),
                     ("The screen",
                         "The rail on the left opens each page. Across the top: the time, your money, reliability and "

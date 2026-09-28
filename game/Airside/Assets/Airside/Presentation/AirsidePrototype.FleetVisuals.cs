@@ -219,7 +219,11 @@ namespace Airside.Presentation
             var offset = wave * (leg is FleetGroundLeg.Lineup or FleetGroundLeg.Vacate ? 0.06f : 0.18f) * fade;
             var normalX = -pose.NoseZ;
             var normalZ = pose.NoseX;
-            var headingBias = Mathf.Sin((float)_preciseTime * 0.07f + phase * 0.7f) * 0.9f * Mathf.Deg2Rad * fade;
+            // A heading wobble on the lineup swings the tail off the gear track — the same
+            // drift the turn itself used to show. Keep it for the long taxi only.
+            var headingBias = leg == FleetGroundLeg.Lineup
+                ? 0f
+                : Mathf.Sin((float)_preciseTime * 0.07f + phase * 0.7f) * 0.9f * Mathf.Deg2Rad * fade;
             var cos = Mathf.Cos(headingBias);
             var sin = Mathf.Sin(headingBias);
             var noseX = pose.NoseX * cos + pose.NoseZ * sin;

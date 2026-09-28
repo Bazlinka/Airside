@@ -544,12 +544,38 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void SellAircraft_RefusesTheStarterAircraftWithNoPurchasePrice()
+        public void OpeningCash_BuysASecondSaabOntoTheOtherStarterBay()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(8 * 3600));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(3), Player());
+            var before = ops.CareerState.Funds;
+
+            var result = ops.BuyAircraft(AircraftType.Saab340);
+
+            Assert.That(result.Accepted, Is.True, result.Reason);
+            Assert.That(ops.CareerState.Funds, Is.EqualTo(before - AircraftAcquisition.Saab340.Price));
+            Assert.That(before, Is.GreaterThan(AircraftAcquisition.Saab340.Price));
+            var bought = ops.Fleet.Single(a => a.Airline.IsPlayer && a.Registration != "VH-PAX");
+            Assert.That(bought.State, Is.EqualTo(FleetState.AtStand));
+            Assert.That(bought.Stand, Is.EqualTo(new StableId("BAY-7")));
+            Assert.That(ops.CanResell(bought), Is.True);
+        }
+
+        [Test]
+        public void FlightNotices_NameTheLandingAndTheReturn()
+        {
+            Assert.That(Airside.Presentation.FlightNotices.LandedAtDestination("VH-PAX", "Kingscote"),
+                Is.EqualTo("VH-PAX has landed at Kingscote."));
+            Assert.That(Airside.Presentation.FlightNotices.ReturnedHomeAwaitingDispatch("VH-PAX"),
+                Is.EqualTo("VH-PAX has returned home and is awaiting dispatch."));
+        }
+
+        [Test]
+        public void SellAircraft_RefusesTheOnlySaab()
         {
             var (_, ops, plane) = PlayerOnly();
-            // The starter Saab was never bought (AircraftAcquisition's own doc comment), so it
-            // has no listed price to base a resale fraction on — refused rather than inventing one.
-            Assert.That(AircraftAcquisition.TryFor(plane.Type, out _), Is.False);
+            // The opening Saab is a gift. It is not cashed out while it is the only one.
+            Assert.That(ops.CanResell(plane), Is.False);
             Assert.That(ops.SellAircraft(plane).Accepted, Is.False);
             Assert.That(ops.Fleet.Contains(plane), Is.True);
         }

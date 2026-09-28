@@ -27,8 +27,6 @@ Shader "Airside/SuburbBuildings"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
 
@@ -81,14 +79,16 @@ Shader "Airside/SuburbBuildings"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 float3 normalWS = normalize(input.normalWS);
-                Light mainLight = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
+                // Houses do not cast or receive shadows. Sampling the sun cascades here was an
+                // extra texture fetch on every suburb triangle, every frame (ADR 0162).
+                Light mainLight = GetMainLight();
                 float NdotL = saturate(dot(normalWS, mainLight.direction));
 
                 float2 satelliteUv = saturate(input.positionWS.xz / (2.0 * max(_SatelliteExtent, 1.0)) + 0.5);
                 float3 roof = SAMPLE_TEXTURE2D(_SatelliteAlbedo, sampler_SatelliteAlbedo, satelliteUv).rgb
                     * _SatelliteTint.rgb * _RoofGain;
                 float3 albedo = lerp(input.color.rgb, roof, saturate(input.color.a));
-                float3 color = albedo * (mainLight.color * (mainLight.shadowAttenuation * NdotL) + SampleSH(normalWS));
+                float3 color = albedo * (mainLight.color * NdotL + SampleSH(normalWS));
 
                 color = MixFog(color, input.fogFactor);
                 float distanceWS = length(input.positionWS - GetCameraPositionWS());
@@ -98,7 +98,89 @@ Shader "Airside/SuburbBuildings"
             }
             ENDHLSL
         }
+
+        // SSAO asks every opaque for a DepthNormals pass. Without one, URP falls back to
+        // the full Lit shader and redraws the suburb with it every frame (ADR 0162).
+        Pass
+        {
+            Name "DepthOnly"
+            Tags { "LightMode" = "DepthOnly" }
+            ZWrite On
+            ColorMask R
+
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+            };
+
+            Varyings vert(Attributes input)
+            {
+                Varyings output;
+                UNITY_SETUP_INSTANCE_ID(input);
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                return output;
+            }
+
+            half frag(Varyings input) : SV_Target
+            {
+                return input.positionCS.z;
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "DepthNormals"
+            Tags { "LightMode" = "DepthNormals" }
+            ZWrite On
+
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float3 normalWS : TEXCOORD0;
+            };
+
+            Varyings vert(Attributes input)
+            {
+                Varyings output;
+                UNITY_SETUP_INSTANCE_ID(input);
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                return output;
+            }
+
+            half4 frag(Varyings input) : SV_Target
+            {
+                return half4(normalize(input.normalWS), 0.0h);
+            }
+            ENDHLSL
+        }
     }
 
-    FallBack "Universal Render Pipeline/Lit"
+    FallBack Off
 }

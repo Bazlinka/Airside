@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Graphics test switches.** Options has a new "Graphics tests" group that can turn off the
+  weather layers, propeller blur, distant aircraft glow and aircraft lights one at a time, to find
+  out which, if any, is slowing the game down on your Mac. Everything is on by default, so the game
+  looks the same until you change one.
+
 - **Fewer freezes and stutters.** Working out where a taxiing aircraft is along its route quietly
   re-walked the whole rest of the route every time, and ground control asks that thousands of times
   a second when it checks whether a route is clear. The game could stall for up to a tenth of a

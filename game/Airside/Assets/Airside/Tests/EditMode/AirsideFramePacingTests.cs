@@ -78,8 +78,9 @@ namespace Airside.Tests
         [Test]
         public void OptionsMenu_FitsTheFrameRateRow()
         {
-            // Nine 46-point rows from y=62, then Back 56 below the last row, 38 tall.
-            const float lastRowBottom = 62f + 8f * 46f + 56f + 38f;
+            // Nine 46-point rows from y=62, the graphics-tests note (50 + 28) and its four rows
+            // (ADR 0155), then Back 56 below the last row, 38 tall.
+            const float lastRowBottom = 62f + 8f * 46f + 50f + 28f + 3f * 46f + 56f + 38f;
             Assert.That(HudLayout.OptionsHeight, Is.GreaterThanOrEqualTo(lastRowBottom));
         }
     }

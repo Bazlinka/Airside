@@ -25,7 +25,9 @@ namespace Airside.Presentation
             if (view == null || _mainCamera == null)
                 return;
             var distance = Vector3.Distance(_mainCamera.transform.position, view.position);
-            var strength = ArrivalApproach.BeaconStrength(distance) * (landingLights ? 1f : 0.45f);
+            var strength = AirsideSettings.Current.DistantGlows
+                ? ArrivalApproach.BeaconStrength(distance) * (landingLights ? 1f : 0.45f)
+                : 0f;
             _distantLights.TryGetValue(view.GetInstanceID(), out var glow);
             if (strength <= 0.01f)
             {

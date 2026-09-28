@@ -51,6 +51,11 @@ namespace Airside.Presentation
                 BuildAtmosphereLayers();
             if (_atmosphereRoot == null || _mainCamera == null)
                 return;
+            if (!AirsideSettings.Current.WeatherLayers)
+            {
+                HideAtmosphereLayers();
+                return;
+            }
 
             var sky = ToColor(_atmosphere.Sky);
             var daylight = PresentationDaylight;
@@ -92,6 +97,16 @@ namespace Airside.Presentation
                 layer.enabled = a > 0.01f;
                 SetLayerColour(layer, new Color(mistColour.r, mistColour.g, mistColour.b, a));
             }
+        }
+
+        private void HideAtmosphereLayers()
+        {
+            if (_stratusSheet != null)
+                _stratusSheet.enabled = false;
+            for (var i = 0; i < _horizonBand.Count; i++)
+                _horizonBand[i].enabled = false;
+            for (var i = 0; i < _mistLayers.Count; i++)
+                _mistLayers[i].enabled = false;
         }
 
         private void SetLayerColour(Renderer renderer, Color colour)

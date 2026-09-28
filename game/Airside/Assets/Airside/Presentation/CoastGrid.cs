@@ -221,14 +221,22 @@ namespace Airside.Presentation
         public const string OpenStreetMap = "Map data © OpenStreetMap contributors";
 
         /// <summary>
+        /// The ground imagery (tx_adelaide_sentinel2_l2a_v02): the Copernicus data terms ask for
+        /// this wording, with the years of the scenes used.
+        /// </summary>
+        public const string Sentinel = "Contains modified Copernicus Sentinel data 2024–2026";
+
+        /// <summary>
         /// The single credit line shown over the field: OSM drives the layout and the coast,
         /// and adsb.lol (also ODbL) is credited while its live aircraft are on screen.
         /// </summary>
         public static string FieldCredit(bool usesOsmLayout, bool usesOsmCoast,
-            bool usesLiveTraffic = false, bool usesLiveWeather = false)
+            bool usesLiveTraffic = false, bool usesLiveWeather = false, bool usesSatellite = false)
         {
             var map = usesOsmLayout || usesOsmCoast ? OpenStreetMap : string.Empty;
             var credit = map;
+            if (usesSatellite)
+                credit = string.IsNullOrEmpty(credit) ? Sentinel : credit + "  ·  " + Sentinel;
             if (usesLiveTraffic)
                 credit = string.IsNullOrEmpty(credit) ? Airside.Simulation.LiveTraffic.Credit
                     : credit + "  ·  " + Airside.Simulation.LiveTraffic.Credit;

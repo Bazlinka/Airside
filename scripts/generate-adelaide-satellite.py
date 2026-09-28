@@ -20,7 +20,9 @@ from PIL import Image, ImageEnhance
 
 ROOT = Path(__file__).resolve().parents[1]
 LAYOUT_PATH = ROOT / "scripts/generate-ypad-layout.py"
-OUTPUT = ROOT / "game/Airside/Assets/Airside/Art/Textures/Environment/tx_adelaide_sentinel2_2021_v01.png"
+# Superseded in the game by generate-adelaide-satellite-s2.py (v02). v01 is kept only as the
+# tone reference that script matches, outside the shipped art.
+OUTPUT = ROOT / "docs/data/esa-worldcover/tx_adelaide_sentinel2_2021_v01.png"
 
 EXTENT_METRES = 12_000.0
 SIZE = 2048

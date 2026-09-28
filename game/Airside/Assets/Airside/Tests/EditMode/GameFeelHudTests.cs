@@ -65,11 +65,13 @@ namespace Airside.Tests
         public void FleetMarket_SaysASharedLockOnce()
         {
             var (clock, ops, _) = HudTestAirline.Create();
+            Assert.That(ops.BuyAircraft(AircraftType.Saab340).Accepted, Is.True,
+                "the second Saab fills the starter base before shared-lock presentation is tested");
             var model = new FleetWorkspaceModel();
             model.Rebuild(ops, clock.Now, null);
             var layout = FleetWorkspaceLayout.Create(HudShell.WorkspaceSurface(1440f, 900f), model.Market.Count);
             var shared = FleetWorkspacePainter.SharedLockReason(model.Market, layout.MarketRows);
-            Assume.That(shared, Is.Not.Null, "a fresh airline's starter base is full, so every offer shares that lock");
+            Assert.That(shared, Is.Not.Null, "a full starter base gives every remaining offer the same lock");
             var draw = new HudDrawList();
             FleetWorkspacePainter.Paint(draw, model, layout, null, 0);
             Assert.That(draw.Commands.Count(c => c.Kind == HudDrawKind.Text && c.Text == shared), Is.EqualTo(1));

@@ -74,7 +74,7 @@ namespace Airside.Tests
                     episodes[pair] = t;
                     counts[key] = counts.TryGetValue(key, out var n) ? n + 1 : 1;
                     if (!examples.ContainsKey(key))
-                        examples[key] = $"t={t:0} {a.Aircraft.Registration}({a.Aircraft.Type.Id} {a.Aircraft.State} {a.Aircraft.AssignedRunway}) @({a.X:0},{a.Z:0}) vs {b.Aircraft.Registration}({b.Aircraft.Type.Id} {b.Aircraft.State} {b.Aircraft.AssignedRunway}) @({b.X:0},{b.Z:0}) d={d:0}";
+                        examples[key] = $"t={t:0} {a.Aircraft.Registration}({a.Aircraft.Type.Id} {a.Aircraft.State} {a.Aircraft.AssignedRunway} start={a.Aircraft.StateStartedAt.ElapsedSeconds} end={a.Aircraft.StateEndsAt?.ElapsedSeconds} slot={FleetVisual.QueueSlot(ops.Fleet, a.Aircraft, clock.Now)}) @({a.X:0},{a.Z:0}) vs {b.Aircraft.Registration}({b.Aircraft.Type.Id} {b.Aircraft.State} {b.Aircraft.AssignedRunway} start={b.Aircraft.StateStartedAt.ElapsedSeconds} end={b.Aircraft.StateEndsAt?.ElapsedSeconds} slot={FleetVisual.QueueSlot(ops.Fleet, b.Aircraft, clock.Now)}) @({b.X:0},{b.Z:0}) d={d:0}";
                 }
             }
 

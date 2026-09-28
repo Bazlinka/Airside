@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Airside.Domain;
 
 namespace Airside.Simulation
@@ -33,6 +34,77 @@ namespace Airside.Simulation
         AwaitingStand,
         /// <summary>Taxiing to the assigned stand.</summary>
         TaxiIn
+    }
+
+    /// <summary>A destination and the number of completed return flights an aircraft has made there.</summary>
+    public readonly struct AircraftRouteTally
+    {
+        public AircraftRouteTally(string destinationCode, int flights)
+        {
+            DestinationCode = destinationCode ?? string.Empty;
+            Flights = Math.Max(0, flights);
+        }
+
+        public string DestinationCode { get; }
+        public int Flights { get; }
+    }
+
+    /// <summary>Named distinctions that turn an aircraft's flight count into a small personal story.</summary>
+    public readonly struct AircraftDistinction
+    {
+        public AircraftDistinction(int flights, string title)
+        {
+            Flights = flights;
+            Title = title ?? string.Empty;
+        }
+
+        public int Flights { get; }
+        public string Title { get; }
+    }
+
+    public static class AircraftDistinctions
+    {
+        public static readonly IReadOnlyList<AircraftDistinction> All = new[]
+        {
+            new AircraftDistinction(1, "First flight"),
+            new AircraftDistinction(10, "Familiar face"),
+            new AircraftDistinction(25, "Route regular"),
+            new AircraftDistinction(50, "Workhorse"),
+            new AircraftDistinction(100, "Veteran"),
+            new AircraftDistinction(250, "Airline icon")
+        };
+
+        public static bool TryReached(int completedFlights, out AircraftDistinction distinction)
+        {
+            foreach (var candidate in All)
+                if (candidate.Flights == completedFlights)
+                {
+                    distinction = candidate;
+                    return true;
+                }
+            distinction = default;
+            return false;
+        }
+
+        public static AircraftDistinction Current(int completedFlights)
+        {
+            var current = default(AircraftDistinction);
+            foreach (var candidate in All)
+            {
+                if (candidate.Flights > completedFlights)
+                    break;
+                current = candidate;
+            }
+            return current;
+        }
+
+        public static AircraftDistinction Next(int completedFlights)
+        {
+            foreach (var candidate in All)
+                if (candidate.Flights > completedFlights)
+                    return candidate;
+            return default;
+        }
     }
 
     /// <summary>A departure the owner has asked for but that has not started yet.</summary>
@@ -90,6 +162,7 @@ namespace Airside.Simulation
             State = FleetState.AtStand;
             StateStartedAt = now;
             StateEndsAt = null;
+            JoinedAirlineAt = now;
         }
 
         public string Registration { get; }
@@ -137,6 +210,69 @@ namespace Airside.Simulation
         public StableId DepartureStand { get; internal set; }
 
         public int CompletedTrips { get; internal set; }
+
+        /// <summary>When this individual airframe joined its operator. Persisted from save v18.</summary>
+        public SimulationTime JoinedAirlineAt { get; internal set; }
+
+        /// <summary>The original player aircraft, kept distinct from later Saabs with the same type.</summary>
+        public bool IsFoundingAircraft { get; internal set; }
+
+        /// <summary>Revenue credited to this airframe since its logbook began (save v18).</summary>
+        public long LifetimeRevenue { get; internal set; }
+
+        /// <summary>Flights with route and revenue entries in the v18 logbook.</summary>
+        public int HistoryFlights { get; internal set; }
+
+        private readonly Dictionary<string, int> _routeFlights = new(StringComparer.Ordinal);
+
+        public IEnumerable<AircraftRouteTally> RouteHistory
+        {
+            get
+            {
+                foreach (var pair in _routeFlights)
+                    yield return new AircraftRouteTally(pair.Key, pair.Value);
+            }
+        }
+
+        public AircraftRouteTally FavouriteRoute
+        {
+            get
+            {
+                var bestCode = string.Empty;
+                var bestFlights = 0;
+                foreach (var pair in _routeFlights)
+                    if (pair.Value > bestFlights || pair.Value == bestFlights
+                        && string.CompareOrdinal(pair.Key, bestCode) < 0)
+                    {
+                        bestCode = pair.Key;
+                        bestFlights = pair.Value;
+                    }
+                return new AircraftRouteTally(bestCode, bestFlights);
+            }
+        }
+
+        internal void RecordHistory(Destination destination, long revenue)
+        {
+            HistoryFlights++;
+            LifetimeRevenue += Math.Max(0, revenue);
+            _routeFlights.TryGetValue(destination.Code, out var flights);
+            _routeFlights[destination.Code] = flights + 1;
+        }
+
+        internal void RestoreHistory(SimulationTime joinedAt, bool founding, long lifetimeRevenue,
+            int historyFlights, IEnumerable<AircraftRouteTally> routes)
+        {
+            JoinedAirlineAt = joinedAt;
+            IsFoundingAircraft = founding;
+            LifetimeRevenue = Math.Max(0, lifetimeRevenue);
+            HistoryFlights = Math.Max(0, historyFlights);
+            _routeFlights.Clear();
+            if (routes == null)
+                return;
+            foreach (var route in routes)
+                if (!string.IsNullOrWhiteSpace(route.DestinationCode) && route.Flights > 0)
+                    _routeFlights[route.DestinationCode] = route.Flights;
+        }
 
         /// <summary>Current trip was booked by an earned repeat schedule.</summary>
         public bool AutomatedTrip { get; internal set; }

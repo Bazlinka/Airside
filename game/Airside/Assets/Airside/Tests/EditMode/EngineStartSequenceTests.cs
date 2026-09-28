@@ -13,7 +13,7 @@ namespace Airside.Tests
             var ops = new AirlineOperations(clock, new SeededRandomSource(2), DestinationCatalogue.Adelaide, AirlineOperations.AdelaideRegionalBays);
             var player = Airline.Player("Start Air", "#C8102E");
             ops.AddAirline(player);
-            return (clock, ops, ops.AddAircraft(player, "VH-STA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]));
+            return (clock, ops, ops.AddAircraft(player, "VH-STA", AircraftType.Saab340, AirlineOperations.AdelaideRegionalBays[0]));
         }
 
         [Test]

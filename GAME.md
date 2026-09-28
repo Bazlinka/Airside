@@ -1,5 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Codex — aircraft ownership and ground-flow refinement (ADRs 0166–0167).**
+  Every player aircraft now keeps a persistent individual logbook: joined date, recorded
+  revenue, route counts, favourite destination and named distinctions at 1/10/25/50/100/250
+  flights. VH-PAX is the protected founding aircraft. Distinctions get a full-screen aircraft
+  moment and are visible in Fleet. Save format is v18; older saves retain completed-flight totals
+  and begin detailed records honestly from migration. The second Saab no longer cuts Saab check
+  cost from $400 to $300. Ground planning now follows the same braking used on screen, keeps moving
+  taxi-outs in conflict checks until they join the queue, and holds mixed widebody queues whose
+  offset 23 paths would overlap. The full-day separation regression is green. **Checks:** targeted
+  Unity EditMode 144/144 passed (1 existing inconclusive); full `scripts/test-unity.sh` and Mac build
+  are the next gate before merge. **Branch:** `codex/ownership-and-mechanics-refinement`.
+
 - **2026-09-28 Cursor — flight numbers and city names (ADR 0165).** Flights show a callsign
   and number plus the city (ZL3482 Kingscote, QF680 Sydney) on the card, the tags, the
   map, the board and the toasts. Published Adelaide routes use representative numbers;

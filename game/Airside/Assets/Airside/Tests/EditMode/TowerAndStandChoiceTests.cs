@@ -118,9 +118,13 @@ namespace Airside.Tests
             Assert.That(suggested.HasValue, Is.True);
             Assert.That(suggested.Value, Is.Not.EqualTo(Bay50E));
 
-            // Among the rest it is still the shortest taxi in.
+            // Among equally suitable stands it is still the shortest taxi in. A Saab walk-out
+            // is deliberately preferred over wasting a 50-series stand that a Q400 may need.
+            var suggestedWastes = AirlineOperations.WastesStand(AircraftType.Atr42, suggested.Value);
             foreach (var stand in ops.FreeStandsFor(AircraftType.Atr42))
-                if (!ops.CrowdsNeighbour(AircraftType.Atr42, stand))
+                if (!ops.CrowdsNeighbour(AircraftType.Atr42, stand)
+                    && !PlayerBase.IsDedicatedStand(ops.CareerState.BaseLevel, stand)
+                    && AirlineOperations.WastesStand(AircraftType.Atr42, stand) == suggestedWastes)
                     Assert.That(AirlineOperations.TaxiInSecondsTo(suggested.Value),
                         Is.LessThanOrEqualTo(AirlineOperations.TaxiInSecondsTo(stand)));
         }

@@ -223,6 +223,37 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void AircraftLogbook_RoundTripsAndV17StartsAnHonestFreshRecord()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(12_345));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(73),
+                Airline.Player("Logbook Air", "#2E7D32"));
+            var plane = ops.FleetOf(ops.PlayerAirline).Single();
+            plane.CompletedTrips = 3;
+            plane.RecordHistory(Code("KGC"), 900);
+            plane.RecordHistory(Code("KGC"), 1_100);
+            plane.RecordHistory(Code("PLO"), 1_400);
+
+            var data = AirlineSave.Capture(ops);
+            var restored = AirlineSave.Restore(data, new ManualSimulationClock(clock.Now));
+            var copy = restored.FleetOf(restored.PlayerAirline).Single();
+            Assert.That(copy.IsFoundingAircraft, Is.True);
+            Assert.That(copy.JoinedAirlineAt.ElapsedSeconds, Is.EqualTo(12_345));
+            Assert.That(copy.HistoryFlights, Is.EqualTo(3));
+            Assert.That(copy.LifetimeRevenue, Is.EqualTo(3_400));
+            Assert.That(copy.FavouriteRoute.DestinationCode, Is.EqualTo("KGC"));
+            Assert.That(copy.FavouriteRoute.Flights, Is.EqualTo(2));
+
+            data.Version = 17;
+            var migrated = AirlineSave.Restore(data, new ManualSimulationClock(clock.Now));
+            var old = migrated.FleetOf(migrated.PlayerAirline).Single();
+            Assert.That(old.CompletedTrips, Is.EqualTo(3), "the established flight count is preserved");
+            Assert.That(old.IsFoundingAircraft, Is.True);
+            Assert.That(old.HistoryFlights, Is.Zero, "detailed history is not invented for an old save");
+            Assert.That(old.LifetimeRevenue, Is.Zero);
+        }
+
+        [Test]
         public void VersionFiveSave_MigratesSingaporePlaceholderTo787WithoutLosingRotation()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));

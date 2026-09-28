@@ -107,18 +107,19 @@ namespace Airside.Tests
         [Test]
         public void Storm_IsAGroundStop()
         {
-            var (clock, ops, player, _) = Empty();
-            var departure = Restore(ops, "VH-DEP", player, FleetState.HoldingShort, 0);
             var storm = FirstTime(s => Weather.At(new SimulationTime(s)) == WeatherKind.Storm);
-            RunTo(clock, ops, storm);
-            if (departure.State != FleetState.HoldingShort)
-                Assert.Inconclusive("cleared before the storm");
+            var clock = new ManualSimulationClock(new SimulationTime(storm));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(7), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideRegionalBays);
+            var player = Airline.Player("Test Air", "#39708A");
+            ops.AddAirline(player);
+            var departure = Restore(ops, "VH-DEP", player, FleetState.HoldingShort, storm);
             Assert.That(ops.Why(departure).Kind, Is.EqualTo(HoldKind.GroundStop));
             Assert.That(HoldReasonText.Long(departure, ops.Why(departure), new SimulationTime(storm)), Does.Contain("storm"));
         }
 
         [Test]
-        public void ThirdPushbackOnABusyApron_NamesTheTwoTaxiingOut()
+        public void HeldPushbackOnABusyApron_NamesTheTaxiingAircraft()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = new AirlineOperations(clock, new SeededRandomSource(7), DestinationCatalogue.Adelaide,
@@ -130,16 +131,16 @@ namespace Airside.Tests
             foreach (var plane in planes)
                 ops.ScheduleDeparture(plane, Kgc(), new SimulationTime(600));
             RunTo(clock, ops, 600);
-            // Ground control picks which two push first (ADR 0146); the one left on its bay is held.
-            var waiting = planes.Single(p => p.State == FleetState.AtStand);
+            // Swept-path control releases the safe first push and explains the holds behind it.
+            var waiting = planes.First(p => p.State == FleetState.AtStand);
             var taxiing = planes.Where(p => p.State == FleetState.TaxiOut).ToList();
-            Assert.That(taxiing.Count, Is.EqualTo(2));
+            Assert.That(taxiing.Count, Is.EqualTo(1));
             var reason = ops.Why(waiting);
-            Assert.That(reason.Kind, Is.EqualTo(HoldKind.ApronBusy));
-            Assert.That(reason.Others.Count, Is.EqualTo(2));
-            Assert.That(reason.Until.HasValue, Is.True);
+            Assert.That(reason.Kind, Is.EqualTo(HoldKind.TaxiwayBlocked));
+            Assert.That(reason.Blocker, Is.SameAs(taxiing[0]));
+            Assert.That(reason.Until.HasValue, Is.False, "swept-path holds clear when the blocker moves");
             var text = HoldReasonText.Long(waiting, reason, new SimulationTime(600));
-            Assert.That(text, Does.Contain("already taxiing out"));
+            Assert.That(text, Does.Contain("taxi"));
             Assert.That(text, Does.Contain(taxiing[0].Registration).Or.Contain(FlightNumber.OrRegistration(taxiing[0])));
         }
 
@@ -164,6 +165,9 @@ namespace Airside.Tests
         public void LandedPlayerAircraft_IsWaitingForThePlayersStandChoice()
         {
             var (_, ops, player, _) = Empty();
+            ops.RestoreCareerState(20_000, 100, nameof(OperatingTier.Provisional), null, 0, 0,
+                System.Array.Empty<string>(), System.Array.Empty<string>(), 0,
+                baseLevel: PlayerBaseLevel.ExpandedRegional);
             var landed = Restore(ops, "VH-LND", player, FleetState.AwaitingStand, 0);
             var reason = ops.Why(landed);
             Assert.That(reason.Kind, Is.EqualTo(HoldKind.ChooseStand));

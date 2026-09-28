@@ -17,8 +17,11 @@ namespace Airside.Simulation
         /// <summary>Tug disconnect and taxi clearance between the pushback and moving off.</summary>
         public const double TugDisconnectSeconds = 25;
 
-        /// <summary>Queue spacing back along the exit when more than one arrival waits for a stand.</summary>
-        public const float AwaitingSpacingMetres = 60f;
+        /// <summary>
+        /// Nose-to-tail queue spacing at runway holds and on the exit. Eighty metres keeps
+        /// Adelaide's longest supported widebodies clear through the curved holding geometry.
+        /// </summary>
+        public const float AwaitingSpacingMetres = 80f;
 
         private static readonly Dictionary<string, AdelaideBay> BaysById = new(StringComparer.Ordinal);
         private static readonly Dictionary<string, GroundLeg> TaxiOutLegs = new(StringComparer.Ordinal);

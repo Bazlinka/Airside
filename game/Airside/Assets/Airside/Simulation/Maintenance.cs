@@ -49,10 +49,19 @@ namespace Airside.Simulation
                 ? 4 * 3600L
                 : 2 * 3600L;
 
-        public static long CheckCost(AircraftType type) =>
-            AircraftAcquisition.TryFor(type, out var offer)
+        public static long CheckCost(AircraftType type)
+        {
+            // The first Saab is given to the player, so its established $400 check was
+            // historically the fallback price. ADR 0164 added a deliberately cheap second
+            // Saab to the purchase market; deriving maintenance from that promotional price
+            // silently cut every Saab check to $300. Keep operating cost independent from the
+            // acquisition offer so the new purchase does not rebalance the existing fleet.
+            if (type?.Id == AircraftType.Saab340.Id)
+                return 400L;
+            return AircraftAcquisition.TryFor(type, out var offer)
                 ? Math.Max(300L, (long)Math.Round(offer.Price * CostFraction))
                 : 400L;
+        }
 
         public static long CheckCost(AircraftType type, PlayerBaseLevel baseLevel)
         {

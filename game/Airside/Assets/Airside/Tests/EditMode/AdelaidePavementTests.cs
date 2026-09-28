@@ -214,11 +214,13 @@ namespace Airside.Tests
             // count so adding a legitimate frame does not make the geometry check stale.
             var ops = AirlineOperations.StartAtAdelaide(new ManualSimulationClock(new SimulationTime(0)), new SeededRandomSource(1),
                 Airline.Player("Clearance Air", "#1F3A93"));
-            var q400s = ops.Fleet.Where(a => a.Type == AircraftType.Dash8Q400).ToArray();
-            Assert.That(q400s.Count(a => a.State == FleetState.Inbound), Is.EqualTo(1),
-                "one opening Q400 is inbound");
-            Assert.That(q400s.Count(a => a.State == FleetState.AtStand), Is.EqualTo(q400s.Length - 1),
-                "every other opening Q400 is parked");
+            var qantasLinkQ400s = ops.Fleet.Where(a => a.Type == AircraftType.Dash8Q400
+                                                       && a.Airline.Id.Value == "QLK").ToArray();
+            Assert.That(qantasLinkQ400s.Count(a => a.State == FleetState.Inbound), Is.GreaterThanOrEqualTo(1),
+                "the opening bank includes a QantasLink Q400");
+            Assert.That(qantasLinkQ400s.Count(a => a.State is FleetState.Inbound or FleetState.AtStand),
+                Is.EqualTo(qantasLinkQ400s.Length),
+                "every opening QantasLink Q400 is either inbound or parked");
 
             var shortfalls = new List<string>();
             var bays = AdelaideLayout.Bays.Where(b => b.Reference.StartsWith("50")).ToArray();

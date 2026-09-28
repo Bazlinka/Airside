@@ -59,7 +59,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Objective_WithoutOffersShowsHangarSaveGoal()
+        public void Objective_WithoutOffersShowsTheAvailableSecondSaab()
         {
             var (clock, ops, _) = PlayerOnly();
             // Empty market + every authored intro already completed → hangar owns the title.
@@ -82,7 +82,7 @@ namespace Airside.Tests
             Assert.That(objective.Caption, Is.EqualTo("TOWARD REGIONAL"));
             Assert.That(objective.ProgressText, Does.Contain("0/4"));
             Assert.That(objective.Progress01, Is.EqualTo(0f));
-            Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("expand"));
+            Assert.That(objective.NextLine.ToLowerInvariant(), Does.Contain("buy a saab 340b"));
         }
 
         [Test]

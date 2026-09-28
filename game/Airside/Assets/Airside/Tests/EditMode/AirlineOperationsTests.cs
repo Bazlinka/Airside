@@ -174,8 +174,7 @@ namespace Airside.Tests
             ops.ScheduleDeparture(first, Code("KGC"), new SimulationTime(1000));
             ops.ScheduleDeparture(second, Code("KGC"), new SimulationTime(1000));
 
-            long firstTakeoffAt = -1;
-            long secondTakeoffAt = -1;
+            var takeoffs = new List<(string Registration, long At)>();
             var sawHold = false;
             for (var steps = 0; steps < 64 && clock.Now.ElapsedSeconds < 1000 + 4 * 3600; steps++)
             {
@@ -183,20 +182,18 @@ namespace Airside.Tests
                 if (next == null)
                     break;
                 RunTo(clock, ops, next.Value.ElapsedSeconds);
-                if (first.State == FleetState.TakingOff && firstTakeoffAt < 0)
-                    firstTakeoffAt = clock.Now.ElapsedSeconds;
-                if (second.State == FleetState.HoldingShort)
+                foreach (var aircraft in new[] { first, second })
+                    if (aircraft.State == FleetState.TakingOff
+                        && takeoffs.All(t => t.Registration != aircraft.Registration))
+                        takeoffs.Add((aircraft.Registration, clock.Now.ElapsedSeconds));
+                if (first.State == FleetState.HoldingShort || second.State == FleetState.HoldingShort)
                     sawHold = true;
-                if (second.State == FleetState.TakingOff && secondTakeoffAt < 0)
-                {
-                    secondTakeoffAt = clock.Now.ElapsedSeconds;
+                if (takeoffs.Count == 2)
                     break;
-                }
             }
 
-            Assert.That(firstTakeoffAt, Is.GreaterThan(0), "first departed");
-            Assert.That(secondTakeoffAt, Is.GreaterThan(firstTakeoffAt), "second waits its turn");
-            Assert.That(secondTakeoffAt, Is.GreaterThanOrEqualTo(firstTakeoffAt + AirlineOperations.RunwaySeparationSeconds),
+            Assert.That(takeoffs.Count, Is.EqualTo(2), "both departures entered the runway queue");
+            Assert.That(takeoffs[1].At, Is.GreaterThanOrEqualTo(takeoffs[0].At + AirlineOperations.RunwaySeparationSeconds),
                 "wake separation");
             Assert.That(sawHold, Is.True, "second holds short while the runway is busy");
         }
@@ -295,7 +292,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Ground_AllowsTwoPushbacksOnOneApronAndHoldsTheThird()
+        public void Ground_SerializesPushbacksThatWouldOverlapOnOneTaxilane()
         {
             var (clock, ops, _) = PlayerOnly(aircraft: 3);
             var destinations = new[] { Code("KGC"), Code("PLO"), Code("MGB") };
@@ -303,30 +300,19 @@ namespace Airside.Tests
                 ops.ScheduleDeparture(ops.Fleet[i], destinations[i], new SimulationTime(600));
 
             RunTo(clock, ops, 600);
-            // Which two go first is ground control's call: a push that would trail too close behind a
-            // neighbour's on the same taxilane waits for a later slot (ADR 0146).
+            // The first safe push goes; neighbours whose authored routes merge too closely wait.
+            // This is deliberately based on swept-path clearance, not a fixed apron quota.
             var taxiing = ops.Fleet.Where(a => a.State == FleetState.TaxiOut).ToList();
-            Assert.That(taxiing.Count, Is.EqualTo(2), "two aircraft may taxi on the same apron at once");
-            var third = ops.Fleet.Single(a => a.State == FleetState.AtStand);
-            var first = taxiing[0];
-            var second = taxiing[1];
-            var thirdDestination = destinations[ops.Fleet.ToList().IndexOf(third)];
-            Assert.That(third.Scheduled.Value.Destination, Is.EqualTo(thirdDestination),
-                "a third waits until one of the first two has cleared the stands");
-            var firstClear = first.StateStartedAt.Advance(
-                AirlineOperations.TaxiClearSecondsFrom(first.DepartureStand, first.Type, first.AssignedRunway));
-            var secondClear = second.StateStartedAt.Advance(
-                AirlineOperations.TaxiClearSecondsFrom(second.DepartureStand, second.Type, second.AssignedRunway));
-            var releaseAt = firstClear.CompareTo(secondClear) < 0 ? firstClear : secondClear;
-            // A departure that had to wait moves on the ground-control grid (GroundTraffic).
-            var pushAt = GroundTraffic.OnGrid(releaseAt) ? releaseAt : GroundTraffic.NextGrid(releaseAt);
+            Assert.That(taxiing.Count, Is.EqualTo(1), "only the non-overlapping swept path is released");
+            Assert.That(ops.Fleet.Count(a => a.State == FleetState.AtStand), Is.EqualTo(2));
+            Assert.That(ops.Fleet.Where(a => a.State == FleetState.AtStand).All(a => a.Scheduled.HasValue), Is.True,
+                "held flights retain their destination and departure order");
 
-            RunTo(clock, ops, releaseAt.ElapsedSeconds - 1);
-            Assert.That(third.State, Is.EqualTo(FleetState.AtStand));
-            RunTo(clock, ops, pushAt.ElapsedSeconds);
-            Assert.That(third.State, Is.EqualTo(FleetState.TaxiOut));
-            Assert.That(third.CurrentDestination, Is.EqualTo(thirdDestination));
-            Assert.That(third.Scheduled, Is.Null);
+            var firstAtHold = taxiing[0].StateEndsAt;
+            Assert.That(firstAtHold.HasValue, Is.True);
+            RunTo(clock, ops, GroundTraffic.NextGrid(firstAtHold.Value).ElapsedSeconds);
+            Assert.That(ops.Fleet.Count(a => a.State == FleetState.TaxiOut), Is.GreaterThanOrEqualTo(1),
+                "the next aircraft is released after the shared path clears");
         }
 
         [Test]
@@ -556,8 +542,13 @@ namespace Airside.Tests
             Assert.That(ops.CareerState.Funds, Is.EqualTo(before - AircraftAcquisition.Saab340.Price));
             Assert.That(before, Is.GreaterThan(AircraftAcquisition.Saab340.Price));
             var bought = ops.Fleet.Single(a => a.Airline.IsPlayer && a.Registration != "VH-PAX");
+            var founder = ops.Fleet.Single(a => a.Registration == "VH-PAX");
             Assert.That(bought.State, Is.EqualTo(FleetState.AtStand));
             Assert.That(bought.Stand, Is.EqualTo(new StableId("BAY-7")));
+            Assert.That(founder.IsFoundingAircraft, Is.True);
+            Assert.That(ops.CanResell(founder), Is.False,
+                "the founding airframe keeps its identity even after another Saab is bought");
+            Assert.That(bought.IsFoundingAircraft, Is.False);
             Assert.That(ops.CanResell(bought), Is.True);
         }
 

@@ -216,7 +216,6 @@ namespace Airside.Tests
         {
             var ops = NewGame(out var clock);
             var jet = Jet(ops);
-            var lead = AdelaideGround.LeadInResource(Gate13);
             var sawTaxiOut = false;
             var sawTaxiIn = false;
             var previous = jet.State;
@@ -254,27 +253,33 @@ namespace Airside.Tests
                 {
                     case FleetState.TaxiOut:
                         sawTaxiOut = true;
-                        Assert.That(ops.GroundResourceHolder(lead), Is.SameAs(jet), "lead-in held for the pushback and taxi out");
-                        Assert.That(ops.IsStandFree(Gate13), Is.False, "gate held until the jet has left it");
+                        Assert.That(ops.GroundResourceHolder(AdelaideGround.LeadInResource(jet.DepartureStand)),
+                            Is.SameAs(jet), "lead-in held for the pushback and taxi out");
+                        Assert.That(ops.IsStandFree(jet.DepartureStand), Is.False,
+                            "gate held until the jet has left it");
                         break;
                     case FleetState.TaxiIn:
                         sawTaxiIn = true;
-                        Assert.That(jet.Stand, Is.EqualTo(Gate13), "never resolves to a regional bay");
-                        Assert.That(ops.GroundResourceHolder(lead), Is.SameAs(jet));
-                        Assert.That(ops.GroundResourceHolder(Gate13.Value), Is.SameAs(jet));
+                        Assert.That(AdelaideGround.IsTerminalGate(jet.Stand), Is.True,
+                            "a terminal jet never resolves to a regional bay");
+                        Assert.That(ops.GroundResourceHolder(AdelaideGround.LeadInResource(jet.Stand)), Is.SameAs(jet));
+                        Assert.That(ops.GroundResourceHolder(jet.Stand.Value), Is.SameAs(jet));
                         break;
                     case FleetState.HoldingShort:
                     case FleetState.Outbound:
-                        Assert.That(ops.GroundResourceHolder(lead), Is.Null, "lead-in released after taxi out");
-                        Assert.That(ops.IsStandFree(Gate13), Is.True, "gate released once the jet has taxied away");
+                        Assert.That(ops.GroundResourceHolder(AdelaideGround.LeadInResource(jet.DepartureStand)),
+                            Is.Not.SameAs(jet), "the departing jet released its lead-in after taxi out");
+                        Assert.That(ops.GroundResourceHolder(jet.DepartureStand.Value), Is.Not.SameAs(jet),
+                            "the departing jet released its gate once it taxied away");
                         break;
                     case FleetState.AtStand:
-                        Assert.That(ops.GroundResourceHolder(lead), Is.Null, "lead-in released after taxi in");
+                        Assert.That(ops.GroundResourceHolder(AdelaideGround.LeadInResource(jet.Stand)),
+                            Is.Null, "lead-in released after taxi in");
                         break;
                 }
 
                 if (previous == FleetState.AwaitingStand && jet.State == FleetState.TaxiIn)
-                    Assert.That(jet.Stand, Is.EqualTo(Gate13));
+                    Assert.That(AdelaideGround.IsTerminalGate(jet.Stand), Is.True);
                 previous = jet.State;
             }
 

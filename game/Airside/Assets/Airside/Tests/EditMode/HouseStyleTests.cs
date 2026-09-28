@@ -67,7 +67,10 @@ namespace Airside.Tests
                          CelebrationCard.ForTier(OperatingTier.Domestic, "Soak Air"),
                          CelebrationCard.ForTier(OperatingTier.International, "Soak Air"),
                          CelebrationCard.ForContract("Kingscote charter", 4_200, 4, null),
-                         CelebrationCard.ForFinale("Soak Air", 18, 12, 140)
+                         CelebrationCard.ForFinale("Soak Air", 18, 12, 140),
+                         CelebrationCard.ForAircraftMilestone(new CareerEvent(
+                             CareerEventKind.AircraftMilestone, OperatingTier.Provisional,
+                             "VH-PAX: first flight reached.", "VH-PAX", AircraftType.Saab340.Id, 1, "First flight"))
                      })
             {
                 texts.Add(("celebration title", card.Title));

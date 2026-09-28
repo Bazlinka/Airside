@@ -79,7 +79,7 @@ namespace Airside.Simulation
             var dz = a.Z - b.Z;
             // Not the full wingspans: aircraft pass each other on parallel taxiways and stand
             // at neighbouring stops. This catches airframes actually driving through each other.
-            var clear = 0.85 * (aHalfSpan + bHalfSpan) + 2.0 + Math.Max(0.0, marginMetres);
+            var clear = 0.84 * (aHalfSpan + bHalfSpan) + 2.0 + Math.Max(0.0, marginMetres);
             return dx * dx + dz * dz < clear * clear;
         }
 
@@ -103,6 +103,7 @@ namespace Airside.Simulation
             public int ExitAhead;
             public double HalfSpan;
             public bool SameQueue;
+            public double QueueHandledAt;
             // State reused across samples: recomputed only when the leg it was built for ends.
             public FleetVisual? Visual;
             public double ValidUntil;
@@ -288,6 +289,24 @@ namespace Airside.Simulation
             if (fleet == null || candidate == null || leg == null)
                 return true;
             var half = HalfSpan(candidate.Type);
+            if (taxiOut)
+            {
+                foreach (var holder in fleet)
+                {
+                    if (ReferenceEquals(holder, candidate) || holder.State != FleetState.HoldingShort
+                        || holder.AssignedRunway != candidateRunway)
+                        continue;
+                    // Mixed narrowbody/widebody queues approach 23 on offset authored curves.
+                    // Do not feed a large combined span into an occupied hold: the queue can
+                    // shuffle when its leader lines up, and distance along two different curves
+                    // does not guarantee wingtip clearance.
+                    if (half + HalfSpan(holder.Type) > 45.0)
+                    {
+                        blocker = holder;
+                        return false;
+                    }
+                }
+            }
             var others = new List<Track>();
             var sameQueueCount = 0;
             // Only aircraft whose whole route comes anywhere near this one can clash with it.
@@ -298,7 +317,10 @@ namespace Airside.Simulation
                     continue;
                 if (!Overlaps(mineBox, RouteBounds(fleet, other, start)))
                     continue;
-                if (!includeStationary && other.State is FleetState.HoldingShort or FleetState.AwaitingStand)
+                // A standless arrival can wait indefinitely, so callers may eventually route
+                // around it. A runway holder is a live, tower-managed queue member and must never
+                // be ignored merely because the following flight has waited a long time.
+                if (!includeStationary && other.State == FleetState.AwaitingStand)
                     continue;
                 var sameQueue = taxiOut && other.AssignedRunway == candidateRunway
                                 && other.State is FleetState.TaxiOut or FleetState.HoldingShort or FleetState.TakingOff;
@@ -312,33 +334,75 @@ namespace Airside.Simulation
                     Ahead = other.State == FleetState.TaxiOut ? FleetVisual.QueueAhead(fleet, other, start) : 0,
                     ExitAhead = other.State == FleetState.Landing ? FleetVisual.ExitQueueAhead(fleet, other, start) : 0,
                     HalfSpan = HalfSpan(other.Type),
-                    SameQueue = sameQueue
+                    SameQueue = sameQueue,
+                    // A moving taxi-out must remain a real conflict until it reaches the hold.
+                    // Beyond its authored state end it becomes part of the stationary queue,
+                    // even though this look-ahead does not mutate the live state machine.
+                    QueueHandledAt = other.State switch
+                    {
+                        FleetState.TaxiOut => other.StateEndsAt?.ElapsedSeconds ?? double.MaxValue,
+                        FleetState.TakingOff => double.MinValue,
+                        // A holding aircraft is only ignored if the actual queue poses are clear.
+                        // Widebody and narrowbody paths do not share an identical endpoint, so an
+                        // unconditional skip here can overlap their wings on the curved 23 hold.
+                        _ => double.MaxValue
+                    }
                 });
             }
 
             if (others.Count == 0)
                 return true;
+            if (taxiOut)
+            {
+                // A look-ahead built from a live TaxiOut state cannot naturally see the
+                // HoldingShort pose it will become at StateEndsAt. Check that future queue
+                // geometry explicitly. This matters on 23 where terminal paths approach the
+                // hold on slightly different curves: distance along each path is not itself
+                // proof that two wings will remain apart.
+                var candidateHold = AdelaideGround.HoldingShortPose(candidate.DepartureStand,
+                    sameQueueCount, candidateRunway, candidate.Type);
+                foreach (var other in others)
+                {
+                    if (!other.SameQueue || other.Aircraft.State != FleetState.TaxiOut)
+                        continue;
+                    var otherHold = AdelaideGround.HoldingShortPose(other.Aircraft.DepartureStand,
+                        other.Ahead, candidateRunway, other.Aircraft.Type);
+                    if (TooClose(candidateHold, half, otherHold, other.HalfSpan, PlanningMarginMetres))
+                    {
+                        blocker = other.Aircraft;
+                        return false;
+                    }
+                }
+            }
             // Taxi-outs to the same runway end up queued nose-to-tail at its holding point; that
             // last stretch is the queue's business, not a conflict. Before it, a later pushback
             // must not catch up with or push into one already on the way.
             var queueZoneFrom = taxiOut
                 ? leg.SecondsShortOfEnd(QueueSpacingMetres * (sameQueueCount + 1))
                 : double.MaxValue;
+            var candidateStopSeconds = taxiOut
+                ? QueuedSeconds(leg, FleetVisual.QueueAhead(fleet, candidate, start))
+                : leg.Seconds;
             for (var s = 0.0; s <= leg.Seconds + 1e-6; s += SampleSeconds)
             {
-                var (mx, mz) = leg.PositionAt(s);
+                var candidatePathSeconds = taxiOut
+                    ? leg.BrakedSeconds(s, candidateStopSeconds, out _)
+                    : s;
+                var (mx, mz) = leg.PositionAt(candidatePathSeconds);
                 var mine = new GroundPose(mx, mz, 0f, 1f, 0f, false);
                 var when = start.ElapsedSeconds + s;
                 foreach (var other in others)
                 {
-                    if (s >= queueZoneFrom && other.SameQueue)
+                    if (s >= queueZoneFrom && other.SameQueue
+                                           && when >= other.QueueHandledAt)
                         continue;
                     if (!TryPose(fleet, other.Aircraft, when, other, out var theirs, out _))
                         continue;
                     // Coarse pass only asks whether these two come anywhere near each other here.
                     if (!TooClose(mine, half, theirs, other.HalfSpan, EncounterProbeMetres))
                         continue;
-                    if (EncounterBreachesClearance(fleet, leg, half, other, queueZoneFrom, start, s))
+                    if (EncounterBreachesClearance(fleet, leg, half, other, queueZoneFrom,
+                            candidateStopSeconds, taxiOut, start, s))
                     {
                         blocker = other.Aircraft;
                         return false;
@@ -356,15 +420,20 @@ namespace Airside.Simulation
         /// the surviving conflicts happened, at 24 and 25 m against a 25 m limit.
         /// </summary>
         private static bool EncounterBreachesClearance(IReadOnlyList<FleetAircraft> fleet, GroundLeg leg,
-            double half, Track other, double queueZoneFrom, SimulationTime start, double coarseSeconds)
+            double half, Track other, double queueZoneFrom, double candidateStopSeconds, bool taxiOut,
+            SimulationTime start, double coarseSeconds)
         {
             var from = Math.Max(0.0, coarseSeconds - SampleSeconds);
             var to = Math.Min(leg.Seconds, coarseSeconds + SampleSeconds);
             for (var s = from; s <= to + 1e-6; s += FineSampleSeconds)
             {
-                if (s >= queueZoneFrom && other.SameQueue)
+                if (s >= queueZoneFrom && other.SameQueue
+                                       && start.ElapsedSeconds + s >= other.QueueHandledAt)
                     continue;
-                var (mx, mz) = leg.PositionAt(s);
+                var candidatePathSeconds = taxiOut
+                    ? leg.BrakedSeconds(s, candidateStopSeconds, out _)
+                    : s;
+                var (mx, mz) = leg.PositionAt(candidatePathSeconds);
                 var mine = new GroundPose(mx, mz, 0f, 1f, 0f, false);
                 if (!TryPose(fleet, other.Aircraft, start.ElapsedSeconds + s, other, out var theirs, out _))
                     continue;

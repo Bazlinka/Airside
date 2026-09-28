@@ -1,5 +1,16 @@
 ## Unreleased
 
+- **Your aircraft now build a history.** Fleet shows when each aircraft joined, the money and
+  routes recorded in its logbook, its favourite destination and distinctions from first flight
+  through airline icon. VH-PAX is permanently marked as the founding aircraft, and cannot be sold.
+  Reaching a distinction gets a proper aircraft moment instead of disappearing into a number.
+
+- **Safer ground queues and steadier operating costs.** Taxi planning now predicts the same braking
+  seen on screen, moving aircraft stay in the conflict check until they have actually joined the
+  runway queue, and mixed narrowbody/widebody traffic waits where Adelaide's offset 23 paths would
+  overlap. The promotional second Saab no longer reduces every Saab's maintenance check below the
+  established $400.
+
 - **Flights have numbers and city names.** A departure reads like a real board: ZL3482
   Kingscote, QF680 Sydney, VA230 Melbourne. The aircraft type stays in the small print.
   Extra flights, and the player's own, still get a number when no published service fits.

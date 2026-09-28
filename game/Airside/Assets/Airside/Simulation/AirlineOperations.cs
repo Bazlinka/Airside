@@ -35,22 +35,33 @@ namespace Airside.Simulation
         /// <summary>A challenge completed and paid.</summary>
         Challenge,
         /// <summary>A milestone (achievement) unlocked.</summary>
-        Milestone
+        Milestone,
+        /// <summary>An individual player aircraft reached a logbook distinction (ADR 0167).</summary>
+        AircraftMilestone
     }
 
     /// <summary>Career news for the HUD: announced once, never stored in the save.</summary>
     public readonly struct CareerEvent
     {
-        public CareerEvent(CareerEventKind kind, OperatingTier tier, string text)
+        public CareerEvent(CareerEventKind kind, OperatingTier tier, string text,
+            string registration = null, string aircraftTypeId = null, int flights = 0, string title = null)
         {
             Kind = kind;
             Tier = tier;
             Text = text ?? string.Empty;
+            Registration = registration ?? string.Empty;
+            AircraftTypeId = aircraftTypeId ?? string.Empty;
+            Flights = Math.Max(0, flights);
+            Title = title ?? string.Empty;
         }
 
         public CareerEventKind Kind { get; }
         public OperatingTier Tier { get; }
         public string Text { get; }
+        public string Registration { get; }
+        public string AircraftTypeId { get; }
+        public int Flights { get; }
+        public string Title { get; }
     }
 
     public readonly struct FleetEvent
@@ -493,7 +504,8 @@ namespace Airside.Simulation
             operations.CareerState = new AirlineCareerState(difficulty: difficulty);
             operations.FirstFlightCoaching = firstFlightCoaching;
             operations.AddAirline(player);
-            operations.AddAircraft(player, "VH-PAX", AircraftType.Saab340, AdelaideRegionalBays[0]);
+            var foundingAircraft = operations.AddAircraft(player, "VH-PAX", AircraftType.Saab340, AdelaideRegionalBays[0]);
+            foundingAircraft.IsFoundingAircraft = true;
             var aiFleet = new List<FleetAircraft>();
             // RFDS first so the emergency aircraft always has a bay; the larger regional
             // fleets overflow to night-stops away rather than squeezing it out (ADR 0111).
@@ -2750,6 +2762,15 @@ namespace Airside.Simulation
             aircraft.CheckUntil = checkUntilSeconds > 0 ? new SimulationTime(checkUntilSeconds) : null;
         }
 
+        internal void RestoreAircraftHistory(string registration, SimulationTime joinedAt, bool founding,
+            long lifetimeRevenue, int historyFlights, IEnumerable<AircraftRouteTally> routes)
+        {
+            var aircraft = _fleet.Find(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase));
+            if (aircraft == null)
+                throw new FormatException($"{registration}: history has no aircraft.");
+            aircraft.RestoreHistory(joinedAt, founding, lifetimeRevenue, historyFlights, routes);
+        }
+
         /// <summary>
         /// True when this aircraft has a list price the player may sell against. The airline's
         /// only Saab is the one they were given, so it is not cashed out (ADR 0164).
@@ -2759,6 +2780,8 @@ namespace Airside.Simulation
             if (aircraft == null || !aircraft.Airline.IsPlayer)
                 return false;
             if (!AircraftAcquisition.TryFor(aircraft.Type, out _))
+                return false;
+            if (aircraft.IsFoundingAircraft)
                 return false;
             if (aircraft.Type.Id != AircraftType.Saab340.Id)
                 return true;
@@ -2853,6 +2876,11 @@ namespace Airside.Simulation
                     settlement.Value.Payment - completionBonus - dispatchCost,
                     manual: !aircraft.AutomatedTrip);
                 _today.Record(justFlown.Value, settlement.Value.Payment, dispatchCost);
+                aircraft.RecordHistory(justFlown.Value, settlement.Value.Payment);
+                if (AircraftDistinctions.TryReached(aircraft.CompletedTrips, out var distinction))
+                    _careerEvents.Add(new CareerEvent(CareerEventKind.AircraftMilestone, CareerState.Tier,
+                        $"{aircraft.Registration}: {distinction.Title.ToLowerInvariant()} reached.",
+                        aircraft.Registration, aircraft.Type.Id, distinction.Flights, distinction.Title));
                 if (delay.HasValue)
                     _today.RecordDelay(delay.Value);
                 aircraft.AutomatedTrip = false;

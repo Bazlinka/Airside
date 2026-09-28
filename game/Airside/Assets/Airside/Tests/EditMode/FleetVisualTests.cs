@@ -16,7 +16,7 @@ namespace Airside.Tests
                 AirlineOperations.AdelaideRegionalBays);
             var player = Airline.Player("Test Air", "#123456");
             ops.AddAirline(player);
-            var plane = ops.AddAircraft(player, "VH-TST", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
+            var plane = ops.AddAircraft(player, "VH-TST", AircraftType.Saab340, AirlineOperations.AdelaideRegionalBays[0]);
             DestinationCatalogue.TryFind("KGC", out var kingscote);
             ops.ScheduleDeparture(plane, kingscote, new SimulationTime(10));
 
@@ -79,22 +79,11 @@ namespace Airside.Tests
                 AirlineOperations.AdelaideRegionalBays);
             var player = Airline.Player("Test Air", "#123456");
             ops.AddAirline(player);
-            var first = ops.AddAircraft(player, "VH-TSA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
-            var second = ops.AddAircraft(player, "VH-TSB", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[1]);
+            var stand = AirlineOperations.AdelaideRegionalBays[1];
             DestinationCatalogue.TryFind("KGC", out var kingscote);
-            ops.ScheduleDeparture(first, kingscote, new SimulationTime(600));
-            ops.ScheduleDeparture(second, kingscote, new SimulationTime(600));
-
-            // Ground releases the neighbour once the first has cleared the stands.
-            clock.Set(new SimulationTime(600));
-            ops.Update();
-            var secondStart = 600 + AirlineOperations.TaxiClearSecondsFrom(
-                first.DepartureStand, first.Type, first.AssignedRunway);
-            clock.Set(new SimulationTime(secondStart));
-            ops.Update();
-            var secondAtHold = second.StateEndsAt.Value.ElapsedSeconds;
-            clock.Set(new SimulationTime(secondAtHold + 5));
-            ops.Update();
+            ops.RestoreAircraft("VH-TSB", player, AircraftType.Atr42, FleetState.HoldingShort,
+                new SimulationTime(0), null, stand, stand, kingscote, null, 0);
+            var second = ops.Fleet[0];
 
             var waiting = FleetVisual.For(second, clock.Now);
             Assert.That(waiting.Leg, Is.EqualTo(FleetGroundLeg.HoldingShort));

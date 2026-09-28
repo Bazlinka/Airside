@@ -33,7 +33,8 @@ namespace Airside.Tests
         {
             var career = new AirlineCareerState(funds: 20_000, reliability: 80, tier: OperatingTier.Provisional,
                 completedPlayerRotations: 6, baseLevel: PlayerBaseLevel.ExpandedRegional);
-            var next = CareerProgress.NextAircraft(career, ownedCount: 1);
+            // Owns the starter Saab, so the second-Saab offer (ADR 0164) is not the next step.
+            var next = CareerProgress.NextAircraft(career, ownedCount: 1, new[] { AircraftType.Saab340 });
             Assert.That(next.ReadyToBuy, Is.True);
             Assert.That(next.Offer.Type.Id, Is.EqualTo(AircraftType.Atr42.Id));
         }

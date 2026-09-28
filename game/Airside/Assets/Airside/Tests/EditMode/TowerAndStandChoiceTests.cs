@@ -118,9 +118,11 @@ namespace Airside.Tests
             Assert.That(suggested.HasValue, Is.True);
             Assert.That(suggested.Value, Is.Not.EqualTo(Bay50E));
 
-            // Among the rest it is still the shortest taxi in.
+            // Among the rest it is still the shortest taxi in. The player's leased bays are not
+            // offered to other airlines (50G joined 50D at the starter base, ADR 0164).
             foreach (var stand in ops.FreeStandsFor(AircraftType.Atr42))
-                if (!ops.CrowdsNeighbour(AircraftType.Atr42, stand))
+                if (!ops.CrowdsNeighbour(AircraftType.Atr42, stand)
+                    && !PlayerBase.IsDedicatedStand(ops.CareerState.BaseLevel, stand))
                     Assert.That(AirlineOperations.TaxiInSecondsTo(suggested.Value),
                         Is.LessThanOrEqualTo(AirlineOperations.TaxiInSecondsTo(stand)));
         }

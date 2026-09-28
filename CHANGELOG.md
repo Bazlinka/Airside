@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Saab checks cost $400 again.** Putting a second Saab on sale had quietly made every Saab
+  maintenance check cheaper.
+
 - **Propellers vanish at full power.** A turboprop at speed now shows what your eye really sees:
   the spinner, a faint haze and a thin ring from the painted tips. The ghostly grey blades that
   stayed visible are gone. Jet engines at power now show a solid dark fan face instead of a

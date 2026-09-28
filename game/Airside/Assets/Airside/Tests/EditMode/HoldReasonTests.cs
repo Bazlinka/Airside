@@ -164,6 +164,9 @@ namespace Airside.Tests
         public void LandedPlayerAircraft_IsWaitingForThePlayersStandChoice()
         {
             var (_, ops, player, _) = Empty();
+            // ADR 0164: the starter base operates Saabs only; an ATR needs the expanded regional apron.
+            ops.RestoreCareerState(ops.CareerState.Funds, ops.CareerState.Reliability, nameof(OperatingTier.Provisional),
+                null, 0, 0, System.Array.Empty<string>(), baseLevel: PlayerBaseLevel.ExpandedRegional);
             var landed = Restore(ops, "VH-LND", player, FleetState.AwaitingStand, 0);
             var reason = ops.Why(landed);
             Assert.That(reason.Kind, Is.EqualTo(HoldKind.ChooseStand));

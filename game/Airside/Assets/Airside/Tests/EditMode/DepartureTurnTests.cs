@@ -145,5 +145,58 @@ namespace Airside.Tests
             Assert.That(System.Math.Sign(across), Is.EqualTo(System.Math.Sign(lateral)),
                 "Forward's sideways component must turn the same way LateralMetres does");
         }
+
+        // ADR 0161: the departure flies a real turn.
+
+        [Test]
+        public void Arc_NoseAlwaysPointsAlongThePath()
+        {
+            var relative = 70.0 * System.Math.PI / 180.0;
+            var radius = DepartureTurn.TurnRadiusMetres(190f);
+            for (var along = 10f; along < 4000f; along += 97f)
+            {
+                var a = DepartureTurn.Arc(relative, radius, along);
+                var b = DepartureTurn.Arc(relative, radius, along + 1f);
+                var trackYaw = System.Math.Atan2(-(b.sideways - a.sideways), b.forward - a.forward) * 180.0 / System.Math.PI;
+                Assert.That(trackYaw, Is.EqualTo(a.yawDegrees).Within(0.6), $"at {along:0} m the nose and the track agree");
+            }
+        }
+
+        [Test]
+        public void Arc_TurnsTheWholeWayOntoTheDestinationBearing()
+        {
+            Assert.That(DestinationCatalogue.TryFind("MEL", out var melbourne), Is.True);
+            var home = DestinationCatalogue.Adelaide;
+            var relative = DepartureTurn.RelativeRadiansFor(RunwayDirection.Runway05, home, melbourne);
+            var radius = DepartureTurn.TurnRadiusMetres(185f);
+            var far = DepartureTurn.Arc(relative, radius, 20_000f);
+            Assert.That(far.yawDegrees, Is.EqualTo(relative * 180.0 / System.Math.PI).Within(0.01),
+                "the full bearing, not 72 % of it");
+            Assert.That(far.sideways, Is.LessThan(-1000f), "Melbourne is right of 05, −Z");
+            Assert.That(DepartureTurn.Arc(relative, radius, 0f).yawDegrees, Is.EqualTo(0f), "straight until the turn starts");
+            Assert.That(DepartureTurn.Arc(relative, radius, -300f).sideways, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void TurnRadius_FollowsSpeedLikeARealTurn()
+        {
+            Assert.That(DepartureTurn.TurnRadiusMetres(140f), Is.InRange(900f, 1300f), "a turboprop at 140 kt");
+            Assert.That(DepartureTurn.TurnRadiusMetres(190f), Is.InRange(1800f, 2400f), "a jet at 190 kt");
+        }
+
+        [Test]
+        public void ArcBank_RollsInHoldsAndRollsOut()
+        {
+            var relative = 60.0 * System.Math.PI / 180.0;
+            var radius = 1000f;
+            var arc = (float)(relative * radius);
+            Assert.That(DepartureTurn.ArcBank(relative, radius, 0f), Is.EqualTo(0f));
+            Assert.That(DepartureTurn.ArcBank(relative, radius, 20f), Is.GreaterThan(-DepartureTurn.ArcBankDegrees * 0.5f)
+                .And.LessThan(0f), "rolling in");
+            Assert.That(DepartureTurn.ArcBank(relative, radius, arc * 0.5f), Is.EqualTo(-DepartureTurn.ArcBankDegrees).Within(0.01f),
+                "a right turn banks right at 25°");
+            Assert.That(DepartureTurn.ArcBank(relative, radius, arc + 50f), Is.EqualTo(0f), "wings level on the new heading");
+            Assert.That(DepartureTurn.ArcBank(-relative, radius, arc * 0.5f), Is.EqualTo(DepartureTurn.ArcBankDegrees).Within(0.01f));
+        }
     }
 }

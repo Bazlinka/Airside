@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Departures really turn.** After take-off, aircraft now bank and fly a smooth turn onto the
+  heading for their destination. They used to point their nose one way and drift another. The
+  landing gear now comes up a few seconds after the wheels leave the runway, not while still
+  rolling, and the landing lights stay on through the climb.
+
 - **Trees.** Gum trees now line the creeks, the airport's perimeter, the golf courses and the
   streets around the field, each placed where the satellite actually sees tree canopy.
 

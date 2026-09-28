@@ -106,6 +106,93 @@ namespace Airside.Simulation
             return (extraAlongMetres * (float)Math.Cos(yawRadians), -extraAlongMetres * (float)Math.Sin(yawRadians));
         }
 
+        /// <summary>Bank of a normal airline departure turn.</summary>
+        public const float ArcBankDegrees = 25f;
+
+        /// <summary>Metres over which the wings roll into, and out of, the turn.</summary>
+        public const float RollMetres = 180f;
+
+        /// <summary>
+        /// Radius of a coordinated turn at <paramref name="knots"/> and <see cref="ArcBankDegrees"/>:
+        /// r = v² / (g·tan φ). About 1 km for a turboprop at 140 kt, 2 km for a jet at 190 kt.
+        /// </summary>
+        public static float TurnRadiusMetres(float knots)
+        {
+            var v = Math.Max(40.0, knots) * 0.514444;
+            var r = v * v / (9.80665 * Math.Tan(ArcBankDegrees * Math.PI / 180.0));
+            return (float)Math.Max(500.0, Math.Min(4000.0, r));
+        }
+
+        /// <summary>
+        /// The departure as a flown turn (ADR 0161): straight until <paramref name="alongMetres"/>
+        /// reaches 0 (the turn start past the far threshold), then a constant-radius arc onto the
+        /// full bearing to the destination, then straight on it. Returns the offset from the turn
+        /// start in the runway-local frame: forward along the takeoff direction, sideways with
+        /// <see cref="LateralMetres"/>'s sign (a right turn is −Z), and the yaw off the runway
+        /// heading (positive = right). Position and yaw come from one curve, so the nose always
+        /// points along the path.
+        ///
+        /// It replaces a turn that yawed the nose (to 72 % of the bearing) while the position only
+        /// slid up to 380 m sideways and kept flying down the extended runway line: the aircraft
+        /// pointed one way and moved another, which read as drifting rather than turning.
+        /// </summary>
+        public static (float forward, float sideways, float yawDegrees) Arc(double relativeRadians, float radius,
+            float alongMetres)
+        {
+            if (alongMetres <= 0f)
+                return (alongMetres, 0f, 0f);
+            var sign = relativeRadians < 0 ? -1.0 : 1.0;
+            var total = Math.Min(Math.Abs(relativeRadians), Math.PI * 0.95);
+            var arc = total * radius;
+            double forward, side, turned;
+            if (alongMetres <= arc)
+            {
+                turned = alongMetres / radius;
+                forward = radius * Math.Sin(turned);
+                side = radius * (1.0 - Math.Cos(turned));
+            }
+            else
+            {
+                turned = total;
+                var beyond = alongMetres - arc;
+                forward = radius * Math.Sin(total) + beyond * Math.Cos(total);
+                side = radius * (1.0 - Math.Cos(total)) + beyond * Math.Sin(total);
+            }
+
+            return ((float)forward, (float)(-sign * side), (float)(sign * turned * 180.0 / Math.PI));
+        }
+
+        public static (float forward, float sideways, float yawDegrees) Arc(RunwayDirection runway, Destination home,
+            Destination destination, float radius, float alongMetres) =>
+            Arc(RelativeRadians(runway, home, destination), radius, alongMetres);
+
+        /// <summary>
+        /// Bank through the arc: rolled in over <see cref="RollMetres"/>, held at
+        /// <see cref="ArcBankDegrees"/>, rolled out as the heading arrives. Negative for a right turn
+        /// (the sign the presentation's bank has always used).
+        /// </summary>
+        public static float ArcBank(double relativeRadians, float radius, float alongMetres)
+        {
+            if (alongMetres <= 0f)
+                return 0f;
+            var total = Math.Min(Math.Abs(relativeRadians), Math.PI * 0.95);
+            var arc = (float)(total * radius);
+            if (arc < 1f)
+                return 0f;
+            var roll = Math.Min(RollMetres, arc * 0.5f);
+            var rollIn = Smooth01(alongMetres / roll);
+            var rollOut = Smooth01((arc - alongMetres) / roll + 0.0f);
+            var amount = Math.Min(rollIn, alongMetres >= arc ? 0f : rollOut);
+            return (float)(-(relativeRadians < 0 ? -1.0 : 1.0) * ArcBankDegrees * amount);
+        }
+
+        public static float ArcBank(RunwayDirection runway, Destination home, Destination destination, float radius,
+            float alongMetres) => ArcBank(RelativeRadians(runway, home, destination), radius, alongMetres);
+
+        /// <summary>Bearing to the destination relative to the runway heading, radians (positive right).</summary>
+        public static double RelativeRadiansFor(RunwayDirection runway, Destination home, Destination destination) =>
+            RelativeRadians(runway, home, destination);
+
         internal static double RelativeRadians(RunwayDirection runway, Destination home, Destination destination)
         {
             var heading = HeadingRadians(home.Latitude, home.Longitude, destination.Latitude, destination.Longitude);

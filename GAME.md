@@ -1,5 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — departures turn, gear waits (ADR 0161).** Branch
+  `claude/fervent-gates-1tzyhq`. Play-test fixes:
+  - Departures now fly a banked constant-radius arc onto the full destination bearing. They used to
+    yaw the nose while sliding sideways, which read as drifting.
+  - Gear retracts 3 s after each type's own lift-off. Jets used to raise it on the runway.
+  - Landing lights stay on through the climb.
+
+  **Checks:** 950 headless tests, the gear test run against shims. **Not seen in Unity.**
+
 - **2026-09-28 Claude — trees where the satellite sees them (ADR 0160).** Branch
   `claude/fervent-gates-1tzyhq`. 11 428 low-poly eucalypts (about 18 triangles each) placed on real
   tree canopy measured from Sentinel-2 NDVI: the creek lines, the airport perimeter drain,

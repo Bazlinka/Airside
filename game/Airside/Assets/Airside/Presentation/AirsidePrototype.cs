@@ -1641,7 +1641,8 @@ namespace Airside.Presentation
                 var targetRotation = heading * Quaternion.Euler(pitch, 0f, bank);
                 // Exponential damping keeps the turn rate identical at 30 and 144 fps, and
                 // freezes attitude while paused instead of drifting on unscaled time.
-                var turningOff = DepartureTurn.Blend(phase, progress) > 0.02f;
+                var turningOff = TryDepartureArc(flight, phase, progress, out _, out var turnAlong, out _, out _)
+                                 && turnAlong > 0f;
                 var turnRate = phase is AircraftPhase.TaxiOut or AircraftPhase.TaxiIn or AircraftPhase.Pushback
                     ? 2.3f
                     : turningOff ? 2.8f
@@ -1673,7 +1674,7 @@ namespace Airside.Presentation
                     ? FleetGroundPose(groundAircraft, groundVisual, 0f)
                     : null;
                 UpdateAircraftLightsAndGear(viewParts.LightsAndGear, phase, PresentationDaylight, progress,
-                    PresentationDeltaTime, PresentationClock, engines, groundPose);
+                    PresentationDeltaTime, PresentationClock, engines, groundPose, aircraftType);
                 UpdateDistantLight(view, AirsideReusableMotion.LandingLightsOn(phase, progress, engines.HasValue));
                 UpdateCabinDoor(viewParts.CabinDoors, phase, engines?.DoorsOpen);
                 var glowState = CabinWindowGlowState(phase, PresentationDaylight);
@@ -1714,19 +1715,10 @@ namespace Airside.Presentation
         /// </summary>
         private float DepartureBankDegrees(CommercialFlight flight, AircraftPhase phase, float progress)
         {
-            if (phase is not (AircraftPhase.Takeoff or AircraftPhase.Departed))
-                return 0f;
-            if (!FleetMode || _operations == null
-                || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
-                return 0f;
-            var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
-            if (!dest.HasValue)
-                return 0f;
-            var now = DepartureTurn.YawDegrees(aircraft.AssignedRunway, _operations.Home, dest.Value,
-                phase, progress);
-            var ahead = DepartureTurn.YawDegrees(aircraft.AssignedRunway, _operations.Home, dest.Value,
-                phase, Mathf.Min(1f, progress + 0.1f));
-            return Mathf.Clamp(-(ahead - now) * 1.15f, -24f, 24f);
+            // Rolled in, held at a normal 25° and rolled out with the arc itself (ADR 0161).
+            return TryDepartureArc(flight, phase, progress, out _, out var along, out var relative, out var radius)
+                ? DepartureTurn.ArcBank(relative, radius, along)
+                : 0f;
         }
 
         /// <summary>
@@ -2057,17 +2049,21 @@ namespace Airside.Presentation
 
         private static void UpdateAircraftLightsAndGear(
             LightGearPart[] parts, AircraftPhase phase, float daylight, float progress01 = 1f, float deltaTime = -1f,
-            float presentationTime = 0f, EngineState? engines = null, GroundPose? groundPose = null)
+            float presentationTime = 0f, EngineState? engines = null, GroundPose? groundPose = null,
+            AircraftType aircraftType = null)
         {
             if (deltaTime < 0f)
                 deltaTime = Time.unscaledDeltaTime;
             // Pause freezes strut/door motion with the presentation clock.
             if (deltaTime <= 0f)
                 deltaTime = 0f;
-            var gearBias = AirsideReusableMotion.GearBias(phase, progress01);
+            var gearBias = aircraftType != null
+                ? AirsideReusableMotion.GearBias(phase, progress01, aircraftType)
+                : AirsideReusableMotion.GearBias(phase, progress01);
             var airborne = phase is AircraftPhase.Departed or AircraftPhase.Approach
                 or AircraftPhase.Circuit or AircraftPhase.GoAround
-                || (phase == AircraftPhase.Takeoff && gearBias < 0.5f);
+                || (phase == AircraftPhase.Takeoff
+                    && AirsideReusableMotion.SecondsSinceLiftoff(phase, progress01, aircraftType) > 0f);
             var enginesOn = engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase);
             var night = daylight < 0.35f;
             var landingLights = AirsideReusableMotion.LandingLightsOn(phase, progress01, drawnOnGround: engines.HasValue);
@@ -2098,7 +2094,7 @@ namespace Airside.Presentation
                         child.gameObject.SetActive(true);
                         var euler = child.localEulerAngles;
                         var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                        var doorOpen = AirsideReusableMotion.GearDoorOpenBias(phase, progress01);
+                        var doorOpen = AirsideReusableMotion.GearDoorOpenBias(phase, progress01, aircraftType);
                         var target = Mathf.Lerp(0f, 78f, doorOpen);
                         euler.x = Mathf.MoveTowards(current, target, deltaTime * 90f);
                         child.localEulerAngles = euler;
@@ -14437,81 +14433,60 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// After rotate, displace the climb-out toward the booked destination so the
-        /// aircraft yaws onto its departure track instead of climbing forever along +X.
+        /// ADR 0161 — the departure's turn onto its destination, as one flown arc. Along-track
+        /// metres past the turn start (the far threshold, <see cref="DepartureTurn.TurnStartProgress"/>
+        /// of the climb-out), the bearing to the destination, and the type's own turn radius.
+        /// False on the roll, the initial climb and anything without a destination.
+        /// </summary>
+        private bool TryDepartureArc(CommercialFlight flight, AircraftPhase phase, float progress,
+            out float xStart, out float along, out double relative, out float radius)
+        {
+            xStart = along = radius = 0f;
+            relative = 0.0;
+            if (phase != AircraftPhase.Departed || !FleetMode || _operations == null
+                || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
+                return false;
+            var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
+            if (!dest.HasValue)
+                return false;
+            xStart = AirsideFlightPath.Departed(DepartureTurn.TurnStartProgress, TakeoffOffsetX, aircraft.Type).x;
+            along = AirsideFlightPath.Departed(progress, TakeoffOffsetX, aircraft.Type).x - xStart;
+            relative = DepartureTurn.RelativeRadiansFor(aircraft.AssignedRunway, _operations.Home, dest.Value);
+            radius = DepartureTurn.TurnRadiusMetres(
+                AircraftPerformance.For(aircraft.Type).AirspeedKnots(AircraftPhase.Departed, DepartureTurn.TurnStartProgress));
+            return true;
+        }
+
+        /// <summary>
+        /// Past the far threshold the climb-out flies a real turn: the position follows the arc,
+        /// so the aircraft goes where its nose points (it used to yaw while sliding sideways and
+        /// carrying on down the runway line, which read as drifting).
         /// </summary>
         private Vector3 ApplyDepartureTurn(CommercialFlight flight, AircraftPhase phase, float progress,
             Vector3 position)
         {
-            if (phase is not (AircraftPhase.Takeoff or AircraftPhase.Departed))
+            if (!TryDepartureArc(flight, phase, progress, out var xStart, out var along, out var relative, out var radius)
+                || along <= 0f)
                 return position;
-            if (!FleetMode || _operations == null
-                || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
-                return position;
-            var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
-            if (!dest.HasValue)
-                return position;
-            var runway = aircraft.AssignedRunway;
-            var home = _operations.Home;
-            var lateral = DepartureTurn.LateralMetres(runway, home, dest.Value, phase, progress);
-            // TurnEstablishedProgress (0.88) is a threshold on DEPARTED's own progress scale —
-            // it means nothing for Takeoff's progress, which runs over a completely different
-            // phase duration (ground roll + initial climb). Comparing them directly used to let
-            // Takeoff's progress cross 0.88 near the end of a long climb-out, at which point the
-            // aircraft fell into the "extra along-track distance past establishment" branch below
-            // using Departed's own along-track reference point (xAtEstablished) — a position far
-            // outside Takeoff's actual range, since Blend() is (correctly) 0 throughout Takeoff.
-            // That snapped the aircraft sideways/forward mid-climb, then "backed up" the instant
-            // the phase actually became Departed and progress reset to 0 — the takeoff-then-jump-
-            // then-back-up a real play session reported. Only Departed's own progress may ever
-            // take the established-track branch.
-            if (phase != AircraftPhase.Departed || progress <= DepartureTurn.TurnEstablishedProgress)
-                return new Vector3(position.x, position.y, position.z + lateral);
-
-            // DepartureTurn.Blend (and so LateralMetres/YawDegrees) locks at its established
-            // value past this progress — by design, the SID turn itself is done. But `position`
-            // (from AirsideFlightPath.Departed) keeps growing along the ORIGINAL runway
-            // heading forever, x only, no matter how much further the climb-out runs. Left
-            // alone, that meant the frozen sideways kick above was the aircraft's ONLY turn:
-            // for the rest of the departure — most of it, since the turn establishes well
-            // before the flight leaves visual range — the nose held the new heading while the
-            // aircraft actually kept flying dead straight down the extended runway line, the
-            // classic crabbing/drifting look instead of a real turn. DepartureTurn.
-            // EstablishedTrackMetres (Simulation, pure and unit-tested) supplies the fix:
-            // however much further along-track distance is covered past establishment gets
-            // decomposed onto the established heading instead of staying pure +X.
-            var xAtEstablished = AirsideFlightPath.Departed(
-                DepartureTurn.TurnEstablishedProgress, TakeoffOffsetX, aircraft.Type).x;
-            var extraAlong = position.x - xAtEstablished;
-            var (forward, sideways) = DepartureTurn.EstablishedTrackMetres(runway, home, dest.Value, extraAlong);
-            return new Vector3(xAtEstablished + forward, position.y, position.z + lateral + sideways);
+            var (forward, sideways, _) = DepartureTurn.Arc(relative, radius, along);
+            return new Vector3(xStart + forward, position.y, position.z + sideways);
         }
 
-        /// <summary>
-        /// After rotate, point the nose at the departure track. Position look-ahead
-        /// only yaws a couple of degrees (along-track motion dwarfs the lateral),
-        /// so the published destination yaw is applied as heading.
-        /// </summary>
+        /// <summary>The nose along the arc: the runway heading turned by the arc's own yaw.</summary>
         private Quaternion DepartureLookRotation(CommercialFlight flight, AircraftPhase phase, float progress,
             Quaternion fallback)
         {
-            if (phase is not (AircraftPhase.Takeoff or AircraftPhase.Departed))
+            if (!TryDepartureArc(flight, phase, progress, out _, out var along, out var relative, out var radius)
+                || along <= 0f)
                 return fallback;
-            if (!FleetMode || _operations == null
-                || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
-                return fallback;
-            var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
-            if (!dest.HasValue)
-                return fallback;
-            var yaw = DepartureTurn.YawDegrees(aircraft.AssignedRunway, _operations.Home, dest.Value,
-                phase, progress);
-            if (Mathf.Abs(yaw) < 0.05f)
+            var yaw = DepartureTurn.Arc(relative, radius, along).yawDegrees;
+            if (Mathf.Abs(yaw) < 0.05f || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
                 return fallback;
             RunwayFrame.Forward(aircraft.AssignedRunway, out var fx, out var fz);
-            var along = new Vector3(fx, 0f, fz);
-            if (along.sqrMagnitude < 0.001f)
+            var runwayAlong = new Vector3(fx, 0f, fz);
+            if (runwayAlong.sqrMagnitude < 0.001f)
                 return fallback;
-            return Quaternion.LookRotation(along) * Quaternion.Euler(0f, yaw, 0f);
+            return Quaternion.LookRotation(runwayAlong) * Quaternion.Euler(0f, yaw, 0f);
         }
 
         private float ApproachLaneOffset(CommercialFlight flight)

@@ -942,13 +942,32 @@ namespace Airside.Tests
                     AircraftPhase.Takeoff,
                     retract + AirsideReusableMotion.GearTransitionProgress),
                 Is.EqualTo(AirsideReusableMotion.GearRetracted));
-            Assert.That(AirsideReusableMotion.LandingLightsOn(AircraftPhase.Takeoff, retract), Is.False);
+            Assert.That(AirsideReusableMotion.LandingLightsOn(AircraftPhase.Takeoff, retract), Is.True,
+                "landing lights stay on through the climb, not off with the gear");
             Assert.That(AirsideReusableMotion.GearBias(AircraftPhase.Departed, 0.5f),
                 Is.EqualTo(AirsideReusableMotion.GearRetracted));
-            Assert.That(AirsideReusableMotion.LandingLightsOn(AircraftPhase.Departed, 0.5f), Is.False);
+            Assert.That(AirsideReusableMotion.LandingLightsOn(AircraftPhase.Departed, 0.5f), Is.True);
             Assert.That(AirsideReusableMotion.PropellersSpinning(AircraftPhase.Departed), Is.True);
             Assert.That(AirsideReusableMotion.FlapDegrees(AircraftPhase.Takeoff, 1f),
                 Is.LessThan(AirsideReusableMotion.FlapDegrees(AircraftPhase.Takeoff, 0f)));
+        }
+
+        [Test]
+        public void Gear_StaysDownUntilEveryTypeHasClimbedAway()
+        {
+            // Every jet used to start raising its gear 2-7 s before lift-off, on the runway.
+            foreach (var spec in AircraftCatalogue.All)
+            {
+                var p = AircraftPerformance.For(spec.Type);
+                var liftoff = p.TakeoffRollExactSeconds / p.TakeoffExactSeconds;
+                var twoSecondsUp = (p.TakeoffRollExactSeconds + 2f) / p.TakeoffExactSeconds;
+                Assert.That(AirsideReusableMotion.GearBias(AircraftPhase.Takeoff, liftoff * 0.98f, spec.Type),
+                    Is.EqualTo(AirsideReusableMotion.GearDeployed), spec.Name + " on the roll");
+                Assert.That(AirsideReusableMotion.GearBias(AircraftPhase.Takeoff, twoSecondsUp, spec.Type),
+                    Is.EqualTo(AirsideReusableMotion.GearDeployed), spec.Name + " two seconds after lift-off");
+                Assert.That(AirsideReusableMotion.GearBias(AircraftPhase.Departed, 0.5f, spec.Type),
+                    Is.EqualTo(AirsideReusableMotion.GearRetracted).Within(1e-4f), spec.Name + " on the climb-out");
+            }
         }
 
         [Test]

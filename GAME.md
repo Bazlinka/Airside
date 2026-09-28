@@ -53,7 +53,6 @@
   on load; the Copernicus credit is now on screen. **Checks:** domain 936/936; offline previews
   inspected. **Not seen in Unity.** **Next (plan P5/P6):** DEM-driven Adelaide Hills and CBD
   backdrop, then OSM buildings and trees near the field.
->>>>>>> origin/main
 
 - **2026-09-28 Claude — bug pass: per-frame waste, plus simulation fuzzing (no ADR).** Branch
   `claude/fervent-gates-1tzyhq`. Fixed three per-frame costs: the cloud edge fade fetched each cloud's

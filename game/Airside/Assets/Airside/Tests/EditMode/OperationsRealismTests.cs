@@ -177,6 +177,32 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void CodeCJets_KeepOffThePierHalfThatClosesACodeEGate()
+        {
+            // 20R, 22R and 28R share a pier with code E gates 20, 22L and 28L: a 737 there closes
+            // the widebody gate as surely as parking on it (ADR 0156).
+            Assert.That(AirlineOperations.WastesStand(AircraftType.Boeing7378, new StableId("GATE-20R")), Is.True);
+            Assert.That(AirlineOperations.WastesStand(AircraftType.Boeing7378, new StableId("GATE-16R")), Is.False,
+                "16L is code C too, so 16R closes nothing a widebody needs");
+            Assert.That(AirlineOperations.WastesStand(AircraftType.Boeing7378, new StableId("GATE-13")), Is.False);
+            Assert.That(AirlineOperations.WastesStand(AircraftType.Boeing78710, new StableId("GATE-20")), Is.False);
+
+            // One of every type in catalogue order: the last widebody used to find no stand because
+            // the code C jets had taken 20R, 22R and 28R with ten plain code C gates still free.
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(5), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideStands);
+            var airline = Airline.Rex();
+            ops.AddAirline(airline);
+            foreach (var spec in AircraftCatalogue.All)
+            {
+                var stand = ops.SuggestStandFor(spec.Type);
+                Assert.That(stand.HasValue, Is.True, $"{spec.Name} finds a stand");
+                ops.AddAircraft(airline, "VH-S" + spec.Id, spec.Type, stand.Value);
+            }
+        }
+
+        [Test]
         public void NewGameAndADay_EveryParkedAircraftFitsItsGate()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));

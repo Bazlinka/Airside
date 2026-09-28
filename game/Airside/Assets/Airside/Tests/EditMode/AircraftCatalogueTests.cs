@@ -113,13 +113,14 @@ namespace Airside.Tests
             // CanReach, not career funds. A non-player airline is not charged.
             var airline = Airline.Rex();
             ops.AddAirline(airline);
-            var bays = new Queue<StableId>(AirlineOperations.AdelaideRegionalBays);
-            var terminalGates = new Queue<StableId>(AirlineOperations.AdelaideTerminalGates);
             foreach (var spec in AircraftCatalogue.All)
             {
-                // A free stand that fits: 16L/16R and 18/18R share one pier, so list order can collide.
+                // A free stand that fits. The fallback used to take the next gate in list order
+                // whatever its code, and handed the 787-10 GATE-13 (code C) once SuggestStandFor had
+                // nothing left for it (ADR 0156).
                 var stand = ops.SuggestStandFor(spec.Type)
-                            ?? (spec.StandClass == StandClass.TerminalGate ? terminalGates.Dequeue() : bays.Dequeue());
+                            ?? AirlineOperations.AdelaideStands.First(s =>
+                                AirlineOperations.StandFits(spec.Type, s) && ops.IsStandFree(s));
                 // Full type id: A223 and A21N share their first two letters.
                 var aircraft = ops.AddAircraft(airline, "VH-C" + spec.Id, spec.Type, stand);
                 foreach (var row in FlightPlanner.DestinationsFor(ops, aircraft))

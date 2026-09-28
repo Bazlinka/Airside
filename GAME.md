@@ -1,5 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — bug fixes: widebody stand allocation, save/resume drift (ADR 0156).** Branch
+  `claude/fervent-gates-1tzyhq`. (1) Code C jets took 20R/22R/28R, the pier halves that close code E
+  gates 20/22L/28L, while ten plain code C gates were free, so a 787-10 could find no stand; this was
+  the real cause of the long-failing `FlightPlanning_UsesEachTypesOwnCruiseAndPracticalRange`.
+  `WastesStand` now ranks those halves as wasteful. (2) The save-fidelity gap noted under ADR 0153:
+  restoring mid-takeoff held the strip through the climb-out, where the live tower frees it after the
+  roll, so the free time moved (10 974 → 10 986 s) and a resumed game diverged. `StripBusyUntil` now
+  uses the tower's rule. **Checks:** domain **936/936** with two new tests that fail on the old code.
+  Unity-only save/gate/separation suites were run headlessly with local UnityEngine stand-ins (not
+  committed): all pass except `Reservations_GateLeadIn...`, which is still the open Gate 13 hold question
+  for Bailey. **Not run in Unity** — `scripts/test-unity.sh` still owed.
+
 - **2026-09-28 Claude — graphics test switches (ADR 0155).** Branch `claude/fervent-gates-1tzyhq`.
   The "29 fps" quoted in ADR 0152/0154 is stale: the last graphics-on run (2026-09-26, PR #409) was
   60 fps. Nothing has been measured since, and heavier effects have landed. Options now has a

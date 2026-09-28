@@ -124,6 +124,35 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void ReconcileRunwayFreeAt_KeepsTheTowersOwnFreeTimeMidTakeoff()
+        {
+            // The tower frees a strip after lineup + ground roll + wake. Reconcile used to hold it
+            // for the whole TakingOff state (climb-out included), so loading a save mid-takeoff
+            // moved the free time later and the resumed game drifted (ADR 0156).
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(2026),
+                Airline.Player("Reconcile Air", "#123456"));
+            var reconcile = typeof(AirlineOperations).GetMethod("ReconcileRunwayFreeAt",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            var checkedTakeoffs = 0;
+            for (var t = 1L; t < 6 * 3600 && checkedTakeoffs < 5; t++)
+            {
+                clock.Set(new SimulationTime(t));
+                ops.Update();
+                if (!ops.Fleet.Any(a => a.State == FleetState.TakingOff && a.StateStartedAt.ElapsedSeconds == t))
+                    continue;
+                var main = ops.RunwayFreeAt;
+                var cross = ops.CrossRunwayFreeAt;
+                reconcile.Invoke(ops, null);
+                Assert.That(ops.RunwayFreeAt, Is.EqualTo(main), $"main strip free time at t={t}");
+                Assert.That(ops.CrossRunwayFreeAt, Is.EqualTo(cross), $"cross strip free time at t={t}");
+                checkedTakeoffs++;
+            }
+
+            Assert.That(checkedTakeoffs, Is.GreaterThan(0), "the morning has takeoffs to check");
+        }
+
+        [Test]
         public void ReconcileRunwayFreeAt_HoldsBothStripsThroughAnInProgressMovement()
         {
             var clock = new ManualSimulationClock(new SimulationTime(100));

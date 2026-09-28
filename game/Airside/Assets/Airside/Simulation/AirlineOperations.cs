@@ -372,12 +372,25 @@ namespace Airside.Simulation
 
         /// <summary>
         /// True when parking here would take a position another type needs more: a code C jet
-        /// on a code E gate, or a Saab on a 50-series bay while a walk-out could take it.
+        /// on a code E gate or on the half of a shared pier that blocks one, or a Saab on a
+        /// 50-series bay while a walk-out could take it.
         /// </summary>
         public static bool WastesStand(AircraftType type, StableId stand) =>
             IsOversized(type, stand)
+            || BlocksLargerSibling(type, stand)
             || ReferenceEquals(type, AircraftType.Saab340) && !AdelaideGround.IsTerminalGate(stand)
                && !IsWalkOutStand(stand);
+
+        /// <summary>
+        /// A code C jet on 20R, 22R or 28R closes the code E gate it shares a pier with just as
+        /// surely as parking on it. Ranking only the E gate itself as wasteful sent jets to those
+        /// halves while plain code C gates stood empty, and a 787-10 then had nowhere to park.
+        /// </summary>
+        private static bool BlocksLargerSibling(AircraftType type, StableId stand)
+        {
+            var sibling = PierSibling(stand);
+            return !string.IsNullOrEmpty(sibling.Value) && IsOversized(type, sibling);
+        }
 
         /// <summary>True when a smaller aircraft would take a gate a bigger one needs.</summary>
         public static bool IsOversized(AircraftType type, StableId stand) =>
@@ -1104,6 +1117,18 @@ namespace Airside.Simulation
         /// </summary>
         private static SimulationTime? StripBusyUntil(FleetAircraft aircraft)
         {
+            if (aircraft.State == FleetState.TakingOff && aircraft.StateEndsAt.HasValue)
+            {
+                // Same rule the tower uses when it clears the takeoff (RunTowerOnStrip): the strip
+                // is held through lineup and the ground roll, not the climb-out. Using the whole
+                // TakingOff state here pushed the free time back by the climb whenever a save was
+                // loaded mid-takeoff, so a resumed game drifted from one that never stopped.
+                var lineup = AdelaideGround.LineupFor(aircraft.AssignedRunway, aircraft.Type).WholeSeconds;
+                var roll = (long)Math.Round(AircraftPerformance.For(aircraft.Type).TakeoffRollExactSeconds);
+                var rolled = aircraft.StateStartedAt.Advance(lineup + roll);
+                return rolled.CompareTo(aircraft.StateEndsAt.Value) < 0 ? rolled : aircraft.StateEndsAt;
+            }
+
             if (aircraft.State != FleetState.Landing || !aircraft.StateEndsAt.HasValue)
                 return aircraft.StateEndsAt;
 

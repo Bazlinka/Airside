@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Big jets can always find a gate.** Smaller jets were parking on stands that share a pier
+  with the widebody gates, closing them, while ordinary gates sat empty. A 787 could end up with
+  nowhere to park. Smaller jets now leave those stands alone unless nothing else is free.
+
+- **Loading a save carries on exactly where you left off.** Saving while an aircraft was taking off
+  made the runway look busy a few seconds longer after loading, which could change everything the
+  tower did afterwards.
+
 - **Graphics test switches.** Options has a new "Graphics tests" group that can turn off the
   weather layers, propeller blur, distant aircraft glow and aircraft lights one at a time, to find
   out which, if any, is slowing the game down on your Mac. Everything is on by default, so the game

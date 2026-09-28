@@ -1,5 +1,19 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — final-approach slowdown, line-up entry, parked aircraft (ADR 0173).** Branch
+  `feature/parked-aircraft-and-motion`.
+  - The drawn final re-ran the tower's landing estimate every frame for every inbound aircraft
+    (measured 3 ms a call, 34 ms a sweep, 613 ms at worst). It now skips arrivals too far out to be
+    drawn, refreshes every 5 simulated seconds, and runs the ground check 4 steps per frame. Speed
+    along the final eases rather than lurches.
+  - Line-ups leave the hold point on the taxi heading; they used to kink 8° on 05 and the cross
+    runway. The ground-flow pace no longer double-ramps from a stop.
+  - Parked propellers and fans stop. Doors open only while passengers are moving.
+
+  **Checks:** Unity EditMode 1302/1307. The 3 failures are the ones already on `origin/main`
+  a4b7be62 (pavement clearance, ground separation, gate reservation). **Not seen in the running
+  game.** If the line-up turn still looks wrong, try the 10 kt line-up cap (40–70 s line-ups).
+
 - **2026-09-28 Codex — Airside identity v03 (ADR 0172).** Branch `feature/brand-logo-redesign`.
   - The old approach-runway A is replaced across the title wordmark, launch mark and Standalone
     icon by an original AS control-vector identity in Glass Cockpit aqua, Cloud and amber.

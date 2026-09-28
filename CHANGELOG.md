@@ -1,5 +1,17 @@
 ## Unreleased
 
+- **No more slowdown when planes are on final.** Placing each arriving aircraft on its final used
+  to cost up to a tenth of a second per aircraft, every frame, so the whole game crawled while
+  arrivals were inbound and taxiing aircraft hitched. It now costs a few milliseconds spread over
+  frames. Arrivals also change speed gradually along the final instead of lurching (ADR 0173).
+
+- **A smoother turn onto the runway.** Departures no longer swivel on the spot as they're cleared,
+  and the drawn aircraft no longer lags through the turn and then gets pulled onto the runway.
+
+- **Parked aircraft look parked.** Propellers and fans stop when the engines are off. The
+  passenger door opens only while people are getting off or boarding, and is shut the rest of the
+  time, including overnight.
+
 - **A completely new Airside identity.** The generic runway-in-an-A logo is retired. The title,
   launch sequence and app icon now use a bold AS control-vector mark: one rising route crosses the
   monogram and resolves at an amber destination. A heavier AIR/SIDE wordmark matches the Glass

@@ -100,6 +100,7 @@ namespace Airside.Tests
         public void StairTruck_OnBeforeTheDoorOpens_DoorShutBeforeItLeaves_GoneBeforeTheBeacon()
         {
             var (_, jet) = Parked(AircraftType.Boeing737800, "GATE-27", Airline.Qantas());
+            jet.CompletedTrips = 1; // just flown in: passengers get off down the stairs
             DestinationCatalogue.TryFind("SYD", out var sydney);
             var parkedAt = jet.StateStartedAt.ElapsedSeconds;
             var push = jet.StateStartedAt.Advance(3600);

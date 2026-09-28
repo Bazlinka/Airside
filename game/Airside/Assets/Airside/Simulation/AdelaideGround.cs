@@ -201,7 +201,47 @@ namespace Airside.Simulation
             var radius = Math.Max(20f, Math.Min(42f, wheelbase * 2.2f));
             if (LineupGeometry.TryBest(xz, fx, fz, radius, wheelbase, out var steered))
                 xz = steered;
+            // Leave the holding point the way the taxi route arrived at it. The authored 05 and cross-
+            // runway lineups set off about 8° to one side, so every departure swivelled on the spot as
+            // it was cleared. Only the first metres bend; the turn and the takeoff point are unchanged.
+            if (TryHoldApproachDirection(runway, out var inX, out var inZ))
+                xz = LineupGeometry.AlignEntry(xz, inX, inZ, LineupEntryBlendMetres);
             return xz;
+        }
+
+        /// <summary>Distance over which a lineup blends from the taxi heading into its authored line.</summary>
+        public const float LineupEntryBlendMetres = 45f;
+
+        /// <summary>
+        /// Unit direction the taxi-out routes arrive at <paramref name="runway"/>'s holding point:
+        /// the last dozen metres of the first bay's route, which every stand's route shares.
+        /// </summary>
+        public static bool TryHoldApproachDirection(RunwayDirection runway, out float dx, out float dz)
+        {
+            dx = dz = 0f;
+            var bays = AdelaideLayout.Bays;
+            if (bays == null || bays.Length == 0)
+                return false;
+            var path = TaxiOutPath(bays[0], runway);
+            if (path == null || path.Length < 4)
+                return false;
+            var n = path.Length;
+            float ex = path[n - 2], ez = path[n - 1];
+            for (var i = n - 4; i >= 0; i -= 2)
+            {
+                var x = ex - path[i];
+                var z = ez - path[i + 1];
+                var length = (float)Math.Sqrt(x * x + z * z);
+                if (length < 12f && i > 0)
+                    continue;
+                if (length < 1e-3f)
+                    return false;
+                dx = x / length;
+                dz = z / length;
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>How much more centreline the trailed gear needs before it is within 2° of the runway.</summary>

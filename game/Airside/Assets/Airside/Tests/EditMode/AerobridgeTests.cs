@@ -144,6 +144,7 @@ namespace Airside.Tests
             ops.AddAirline(qantas);
             var jet = ops.AddAircraft(qantas, "VH-VZX", AircraftType.Boeing737800, new StableId("GATE-21"));
             jet.Scheduled = null;
+            jet.CompletedTrips = 1; // it has just flown in, so there are passengers to get off
             return (ops, jet);
         }
     }

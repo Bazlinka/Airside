@@ -35,6 +35,8 @@ namespace Airside.Presentation
             public double Tau;
             public float Rate;
             public double LastTime;
+            /// <summary>The target last frame; the drawn aircraft was exactly on plan if Tau equals it.</summary>
+            public double LastTarget = double.NaN;
         }
 
         private readonly Dictionary<string, GroundFlowState> _groundFlow = new();
@@ -149,7 +151,7 @@ namespace Airside.Presentation
             if (!_groundFlow.TryGetValue(aircraft.Registration, out var state)
                 || !ChainContinues(state.Chain, chain.Key))
             {
-                state = new GroundFlowState { Chain = chain.Key, Tau = target, Rate = 1f, LastTime = _preciseTime };
+                state = new GroundFlowState { Chain = chain.Key, Tau = target, Rate = 1f, LastTime = _preciseTime, LastTarget = target };
                 _groundFlow[aircraft.Registration] = state;
             }
 
@@ -177,8 +179,15 @@ namespace Airside.Presentation
             if (dt <= 0f)
                 return;
             var gap = target - state.Tau;
+            // Exactly on plan last frame (standing at the holding point, say): the plan's own speed
+            // profile already accelerates from rest, so keep following it rather than ramping the pace up
+            // a second time. That double ramp left a lineup two seconds behind through the turn and
+            // pulled it onto the runway when the takeoff began.
+            var wasOnPlan = Math.Abs(state.Tau - state.LastTarget) < 1e-3;
+            state.LastTarget = target;
             // In step: the target moved about as far as the plan allows this frame. Follow it exactly.
-            if (gap >= 0.0 && gap <= dt * (state.Rate + GroundFlowRateUp * dt) * 1.02 + 1e-4)
+            if (gap >= 0.0 && (gap <= dt * (state.Rate + GroundFlowRateUp * dt) * 1.02 + 1e-4
+                               || wasOnPlan && gap <= dt * GroundFlowMaxRate + 1e-4))
             {
                 state.Rate = Mathf.Clamp(Mathf.MoveTowards(state.Rate, (float)(gap / dt), GroundFlowRateDown * dt), 0f,
                     GroundFlowMaxRate);

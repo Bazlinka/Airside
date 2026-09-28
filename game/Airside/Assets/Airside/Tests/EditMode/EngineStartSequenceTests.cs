@@ -20,15 +20,37 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void NewAircraft_IsColdWithDoorsOpenUntilADepartureIsNear()
+        public void NewAircraft_IsColdAndShutUntilBoarding()
         {
             var (_, ops, plane) = Parked();
             Assert.That(EngineStartSequence.For(plane, 0).AnyRunning, Is.False);
-            Assert.That(EngineStartSequence.For(plane, 0).DoorsOpen, Is.True);
+            Assert.That(EngineStartSequence.For(plane, 0).DoorsOpen, Is.False,
+                "nobody to board: a parked aircraft is shut, not left open on the apron");
 
             DestinationCatalogue.TryFind("KGC", out var kgc);
             ops.ScheduleDeparture(plane, kgc, new SimulationTime(3600));
             Assert.That(EngineStartSequence.For(plane, 3600 - 200).AnyRunning, Is.False, "an hour out, still cold");
+            Assert.That(EngineStartSequence.For(plane, 60).DoorsOpen, Is.False, "an hour before boarding, still shut");
+        }
+
+        [Test]
+        public void ArrivedAircraft_ShutsItsDoorOnceEveryoneIsOff_AndStaysShutOvernight()
+        {
+            var (clock, ops, plane) = Parked();
+            DestinationCatalogue.TryFind("KGC", out var kgc);
+            ops.ScheduleDeparture(plane, kgc, new SimulationTime(400));
+            for (var t = 0L; t < 3 * 3600 && plane.CompletedTrips == 0; t += 5)
+            {
+                clock.Set(new SimulationTime(t));
+                ops.Update();
+            }
+
+            Assert.That(plane.State, Is.EqualTo(FleetState.AtStand));
+            plane.Scheduled = null; // no onward flight booked
+            var parkedAt = plane.StateStartedAt.ElapsedSeconds;
+            Assert.That(EngineStartSequence.For(plane, parkedAt + 120).DoorsOpen, Is.True, "passengers getting off");
+            Assert.That(EngineStartSequence.For(plane, parkedAt + 3600).DoorsOpen, Is.False, "an hour later, shut");
+            Assert.That(EngineStartSequence.For(plane, parkedAt + 10 * 3600).DoorsOpen, Is.False, "overnight, shut");
         }
 
         [Test]
@@ -42,7 +64,9 @@ namespace Airside.Tests
             EngineState At(double before) => EngineStartSequence.For(plane, depart - before);
 
             Assert.That(At(170).Beacon, Is.True);
-            Assert.That(At(170).DoorsOpen, Is.True, "doors stay open through boarding");
+            // The door opens for boarding, not before: the player's Boarding stage ends at pushback.
+            var boarding = DeparturePrep.BoardingSecondsFor(plane.Type, PlayerBaseLevel.Starter);
+            Assert.That(At(boarding - 10).DoorsOpen, Is.True, "doors stay open through boarding");
             Assert.That(At(20).DoorsOpen, Is.True, "boarding still open twenty seconds out");
             Assert.That(At(0).DoorsOpen, Is.False, "doors close when ready for pushback");
             Assert.That(At(110).Right, Is.GreaterThan(0f));

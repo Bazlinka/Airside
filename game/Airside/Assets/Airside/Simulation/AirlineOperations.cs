@@ -3598,6 +3598,17 @@ namespace Airside.Simulation
 
         public SimulationTime? ExpectedLandingClearance(FleetAircraft aircraft, out RunwayDirection runway)
         {
+            var queued = ExpectedLandingQueueTime(aircraft, out runway);
+            return queued.HasValue ? GroundClearanceAt(aircraft, queued.Value) : null;
+        }
+
+        /// <summary>
+        /// The runway-queue part of <see cref="ExpectedLandingClearance"/>, before the tower's ground
+        /// check. Cheap; the ground check is the expensive part (up to 144 path tests), so the
+        /// presentation runs it a few steps per frame with <see cref="LandingGroundClear"/>.
+        /// </summary>
+        public SimulationTime? ExpectedLandingQueueTime(FleetAircraft aircraft, out RunwayDirection runway)
+        {
             runway = RunwayDirection.Runway05;
             if (aircraft == null)
                 return null;
@@ -3664,7 +3675,7 @@ namespace Airside.Simulation
                 }
 
                 if (arrivals.Count == 0)
-                    return GroundClearanceAt(aircraft, at);
+                    return at;
 
                 var ahead = arrivals[0];
                 arrivals.RemoveAt(0);
@@ -3675,20 +3686,34 @@ namespace Airside.Simulation
                                 + WakeSeparationSeconds(ahead.Type));
             }
 
-            return GroundClearanceAt(aircraft, at);
+            return at;
         }
+
+        /// <summary>
+        /// One step of the tower's ground check on a displayed landing estimate: true when an
+        /// arrival cleared at <paramref name="at"/> would vacate clear of taxiing traffic and of
+        /// any crossing. <see cref="ExpectedLandingClearance"/> walks this over the five-second grid.
+        /// </summary>
+        public bool LandingGroundClear(FleetAircraft aircraft, SimulationTime at)
+        {
+            var main = RunwayWeather.IsMainRunway(aircraft.AssignedRunway);
+            var busy = RunwayBusySeconds(aircraft, landing: true);
+            return VacateClearOfTaxiing(aircraft, at)
+                   && CrossingDue(main, at, at.Advance(busy)) == null
+                   && (GroundTraffic.OnGrid(at) || CrossingDue(main, GridBefore(at), at) == null);
+        }
+
+        /// <summary>Steps allowed by <see cref="ExpectedLandingClearance"/>'s ground check.</summary>
+        public const int LandingGroundCheckSteps = 144;
 
         /// <summary>Apply the tower's taxi/vacate check to a displayed landing estimate.</summary>
         private SimulationTime GroundClearanceAt(FleetAircraft aircraft, SimulationTime at)
         {
-            // Ground releases are checked on the five-second grid. Taxi legs are short, so
-            // twelve minutes is a generous bounded horizon while keeping this HUD estimate cheap.
-            var main = RunwayWeather.IsMainRunway(aircraft.AssignedRunway);
-            var busy = RunwayBusySeconds(aircraft, landing: true);
-            // …and, like the tower, wait out taxiing traffic due across the strip (ADR 0126).
-            for (var i = 0; i < 144 && (!VacateClearOfTaxiing(aircraft, at)
-                                        || CrossingDue(main, at, at.Advance(busy)) != null
-                                        || (!GroundTraffic.OnGrid(at) && CrossingDue(main, GridBefore(at), at) != null)); i++)
+            // Ground releases are checked on the five-second grid; twelve minutes is a generous
+            // bounded horizon. Each step tests paths against the whole fleet, so the drawn final
+            // spreads these steps across frames (ADR 0173). Like the tower, wait out taxiing
+            // traffic due across the strip (ADR 0126).
+            for (var i = 0; i < LandingGroundCheckSteps && !LandingGroundClear(aircraft, at); i++)
                 at = GroundTraffic.NextGrid(at);
             return at;
         }

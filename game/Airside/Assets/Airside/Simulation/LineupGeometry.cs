@@ -16,6 +16,35 @@ namespace Airside.Simulation
         private const float MinCentreline = 8f;
         private const float MinLeadOut = 2f;
 
+        /// <summary>
+        /// Bend the first <paramref name="blendMetres"/> of <paramref name="baked"/> so it leaves its
+        /// first point heading along (<paramref name="inX"/>, <paramref name="inZ"/>) and rejoins the
+        /// authored line with the same tangent: each point is eased from the straight continuation of
+        /// the arrival heading onto the authored point by smoothstep of the distance travelled. The
+        /// start point and everything past the blend are unchanged.
+        /// </summary>
+        public static float[] AlignEntry(float[] baked, float inX, float inZ, float blendMetres)
+        {
+            if (baked == null || baked.Length < 4 || blendMetres <= 0f)
+                return baked;
+            float hx = baked[0], hz = baked[1];
+            var result = (float[])baked.Clone();
+            var along = 0f;
+            for (var i = 2; i < baked.Length; i += 2)
+            {
+                along += (float)Math.Sqrt((baked[i] - baked[i - 2]) * (baked[i] - baked[i - 2])
+                                          + (baked[i + 1] - baked[i - 1]) * (baked[i + 1] - baked[i - 1]));
+                if (along >= blendMetres)
+                    break;
+                var u = along / blendMetres;
+                var w = u * u * (3f - 2f * u);
+                result[i] = hx + inX * along + (baked[i] - hx - inX * along) * w;
+                result[i + 1] = hz + inZ * along + (baked[i + 1] - hz - inZ * along) * w;
+            }
+
+            return result;
+        }
+
         /// <param name="baked">Holding point to takeoff position, as authored.</param>
         /// <param name="forwardX">Runway takeoff direction (unit, world XZ).</param>
         public static bool TryBuild(float[] baked, float forwardX, float forwardZ, float radius, out float[] path) =>

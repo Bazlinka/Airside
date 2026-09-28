@@ -40,12 +40,14 @@ import rasterio
 from PIL import Image
 from scipy.ndimage import gaussian_filter
 from pyproj import Transformer
+from rasterio.enums import Resampling
 from rasterio.windows import from_bounds
 
 ROOT = Path(__file__).resolve().parents[1]
 LAYOUT_PATH = ROOT / "scripts/generate-ypad-layout.py"
 ENV = ROOT / "game/Airside/Assets/Airside/Art/Textures/Environment"
 OUTPUT = ENV / "tx_adelaide_sentinel2_l2a_v02.jpg"
+FAR_OUTPUT = ENV / "tx_adelaide_sentinel2_l2a_far_v01.jpg"
 # v01, kept out of the build as the tone reference the shaders were tuned against.
 PREVIOUS = ROOT / "docs/data/esa-worldcover/tx_adelaide_sentinel2_2021_v01.png"
 MANIFEST = ROOT / "docs/data/sentinel-2/adelaide-l2a-v02-scenes.json"
@@ -53,6 +55,8 @@ CACHE = ROOT / "work/cache/sentinel-2"
 
 EXTENT_METRES = 12_000.0      # half size, same square as CoastGrid and the v01 texture
 SIZE = 4096
+FAR_EXTENT_METRES = 30_500.0  # the far terrain ring is a 30 km disc (the camera far clip)
+FAR_SIZE = 2048
 TILE = "54HTG"
 UTM = "EPSG:32754"
 STAC = "https://earth-search.aws.element84.com/v1/search"
@@ -126,32 +130,151 @@ def fetch_scene(scene_id):
         return json.load(response)
 
 
-def utm_bounds(layout, to_utm, margin=400.0):
+def utm_bounds(layout, to_utm, extent, margin=400.0):
     xs, ys = [], []
-    for x in (-EXTENT_METRES, EXTENT_METRES):
-        for z in (-EXTENT_METRES, EXTENT_METRES):
+    for x in (-extent, extent):
+        for z in (-extent, extent):
             lon, lat = local_to_lonlat(layout, x, z)
             e, n = to_utm.transform(lon, lat)
             xs.append(e)
             ys.append(n)
-    # Snap to the 20 m grid so the 10 m and 20 m windows line up exactly.
-    left = math.floor((min(xs) - margin) / 20) * 20
-    bottom = math.floor((min(ys) - margin) / 20) * 20
-    right = math.ceil((max(xs) + margin) / 20) * 20
-    top = math.ceil((max(ys) + margin) / 20) * 20
+    # Snap to an 80 m grid so the 10/20/40 m windows line up exactly.
+    left = math.floor((min(xs) - margin) / 80) * 80
+    bottom = math.floor((min(ys) - margin) / 80) * 80
+    right = math.ceil((max(xs) + margin) / 80) * 80
+    top = math.ceil((max(ys) + margin) / 80) * 80
     return left, bottom, right, top
 
 
-def read_band(href, bounds, cache_name):
+def read_band(href, bounds, cache_name, pixel_metres, nearest=False):
+    """A band over bounds at pixel_metres (10 = native; coarser reads the COG overviews)."""
     cached = CACHE / cache_name
     if cached.exists():
         return np.load(cached)
+    width = int(round((bounds[2] - bounds[0]) / pixel_metres))
+    height = int(round((bounds[3] - bounds[1]) / pixel_metres))
     with rasterio.open(href) as src:
         window = from_bounds(*bounds, transform=src.transform)
-        data = src.read(1, window=window, boundless=True, fill_value=0)
+        data = src.read(1, window=window, boundless=True, fill_value=0, out_shape=(height, width),
+                        resampling=Resampling.nearest if nearest else Resampling.average)
     CACHE.mkdir(parents=True, exist_ok=True)
     np.save(cached, data)
     return data
+
+
+def bake(layout, to_utm, scenes, extent, size, pixel_metres):
+    """Cloud-masked median of the scenes, rotated into the runway square: (rgb, water)."""
+    bounds = utm_bounds(layout, to_utm, extent)
+    width = int(round((bounds[2] - bounds[0]) / pixel_metres))
+    height = int(round((bounds[3] - bounds[1]) / pixel_metres))
+    print(f"UTM window {bounds} -> {width}x{height} px at {pixel_metres:.0f} m")
+    tag = "" if pixel_metres == 10 else f"_{pixel_metres:.0f}m_{bounds[0]}_{bounds[3]}"
+    stack = np.full((len(scenes), 3, height, width), np.nan, dtype=np.float32)
+    water = np.zeros((height, width), dtype=np.float32)
+    for i, scene in enumerate(scenes):
+        assets = scene["assets"]
+        scl = read_band(assets["scl"]["href"], bounds, f"{scene['id']}_SCL{tag}.npy", pixel_metres, nearest=True)
+        scl = scl[:height, :width]
+        bad = np.isin(scl, list(BAD_SCL))
+        water += (scl == WATER_SCL).astype(np.float32) / len(scenes)
+        for c, band in enumerate(("red", "green", "blue")):
+            dn = read_band(assets[band]["href"], bounds, f"{scene['id']}_{band}{tag}.npy", pixel_metres)
+            dn = dn[:height, :width]
+            refl = dn.astype(np.float32) * REFLECTANCE_SCALE + REFLECTANCE_OFFSET
+            refl[bad | (dn == 0)] = np.nan
+            stack[i, c] = refl
+        print(f"  {scene['id']}: {100.0 * bad.mean():.2f}% masked")
+
+    median = np.empty((3, height, width), dtype=np.float32)
+    for row in range(0, height, 256):
+        median[:, row:row + 256] = np.nanmedian(stack[:, :, row:row + 256], axis=0)
+    del stack
+    # A pixel no clear scene saw (should be none): fill with the overall median.
+    missing = np.isnan(median)
+    if missing.any():
+        median[missing] = np.nanmedian(median)
+        print(f"  filled {missing.sum()} unobserved samples")
+    display = np.concatenate([np.clip(median * GAIN, 0.0, 1.0), water[None]], axis=0)
+
+    # Resample into the runway-local square. Local -> UTM is affine to well under a pixel
+    # across the square (the v01 bake made the same approximation), so one affine transform.
+    metres_per_pixel = 2.0 * extent / size
+
+    def utm_pixel(px, py):
+        x = -extent + px * metres_per_pixel
+        z = extent - py * metres_per_pixel
+        lon, lat = local_to_lonlat(layout, x, z)
+        e, n = to_utm.transform(lon, lat)
+        return (e - bounds[0]) / pixel_metres, (bounds[3] - n) / pixel_metres
+
+    p00, p10, p01 = utm_pixel(0, 0), utm_pixel(1, 0), utm_pixel(0, 1)
+    affine = (p10[0] - p00[0], p01[0] - p00[0], p00[0], p10[1] - p00[1], p01[1] - p00[1], p00[1])
+    channels = []
+    for c in range(4):
+        band = Image.fromarray(display[c].astype(np.float32), mode="F")
+        channels.append(np.asarray(band.transform((size, size), Image.Transform.AFFINE, affine,
+                                                  resample=Image.Resampling.BICUBIC)))
+    return np.clip(np.stack(channels[:3], axis=-1), 0.0, 1.0), channels[3]
+
+
+def saturate(img, factor):
+    grey = (img @ LUMA)[..., None]
+    return grey + (img - grey) * factor
+
+
+def mean_saturation(img, mask):
+    grey = (img @ LUMA)[..., None]
+    return float(np.abs(img - grey)[mask].mean())
+
+
+def fit_tone(rgb, water, previous):
+    """Tone fitted on the near square against v01; returned as parameters so the far ring
+    image gets exactly the same mapping and the two meet without a colour step.
+
+    Keep the look the ground/surroundings shaders were tuned against without bending hues: one
+    brightness curve for land and a plain exposure scale for water, applied equally to all three
+    channels; saturation set to v01's plus a little. v01's own Gulf held the smeared tile gap, so
+    its water reference is only the near-shore band that the game actually shows.
+    """
+    is_water = water > 0.5
+    land = ~is_water
+    luma = rgb @ LUMA
+    previous_luma = previous @ LUMA
+    reach = int(500 / (2 * EXTENT_METRES / SIZE))
+    grown = land.copy()
+    for _ in range(reach):
+        grown[1:, :] |= grown[:-1, :]; grown[:-1, :] |= grown[1:, :]
+        grown[:, 1:] |= grown[:, :-1]; grown[:, :-1] |= grown[:, 1:]
+    near_shore = grown & is_water
+    quantiles = np.linspace(0.0, 1.0, 513)
+    src_q = np.quantile(luma[land][::7], quantiles)
+    ref_q = np.quantile(previous_luma[land][::7], quantiles)
+    src_q = np.maximum.accumulate(src_q + np.arange(src_q.size) * 1e-9)
+    curved = rgb * (np.interp(luma, src_q, ref_q) / np.maximum(luma, 1e-4))[..., None]
+    target = mean_saturation(previous, land) * SATURATION
+    saturation = target / max(mean_saturation(curved, land), 1e-4)
+    mean = float((saturate(curved, saturation) @ LUMA)[land].mean())
+    scale = WATER_EXPOSURE * float(previous_luma[near_shore].mean()) / max(float(luma[is_water].mean()), 1e-4)
+    print(f"  tone fitted to v01 (land saturation x{saturation:.2f}, water x{scale:.2f})")
+    return {"src_q": src_q, "ref_q": ref_q, "saturation": saturation, "mean": mean, "water_scale": scale}
+
+
+def apply_tone(rgb, water, tone, blur_px):
+    luma = rgb @ LUMA
+    land_rgb = rgb * (np.interp(luma, tone["src_q"], tone["ref_q"]) / np.maximum(luma, 1e-4))[..., None]
+    land_rgb = saturate(land_rgb, tone["saturation"])
+    land_rgb = tone["mean"] + (land_rgb - tone["mean"]) * CONTRAST
+    # Water: a plain exposure scale so the shallows keep their real variation.
+    water_rgb = saturate(rgb * tone["water_scale"], WATER_SATURATION)
+    # Blend on a softened water fraction, so the beach and river banks have no seam.
+    weight = gaussian_filter((water > 0.5).astype(np.float32), blur_px)[..., None]
+    return land_rgb * (1.0 - weight) + water_rgb * weight
+
+
+def save(rgb, path, quality):
+    out = Image.fromarray(np.clip(rgb * 255.0 + 0.5, 0, 255).astype(np.uint8), mode="RGB")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    out.save(path, quality=quality, subsampling=0, optimize=True)
 
 
 def main():
@@ -166,122 +289,33 @@ def main():
 
     layout = load_layout()
     to_utm = Transformer.from_crs("EPSG:4326", UTM, always_xy=True)
-    bounds = utm_bounds(layout, to_utm)
-    width = int((bounds[2] - bounds[0]) / 10)
-    height = int((bounds[3] - bounds[1]) / 10)
-    print(f"UTM window {bounds} -> {width}x{height} px at 10 m")
-
     scenes = [fetch_scene(s) for s in args.scenes] if args.scenes else search_scenes()
     if not scenes:
         sys.exit("No scenes found")
     print("Scenes:", ", ".join(s["id"] for s in scenes))
 
-    stack = np.full((len(scenes), 3, height, width), np.nan, dtype=np.float32)
-    water = np.zeros((height, width), dtype=np.float32)
-    for i, scene in enumerate(scenes):
-        assets = scene["assets"]
-        scl = read_band(assets["scl"]["href"], bounds, f"{scene['id']}_SCL.npy")
-        scl = np.repeat(np.repeat(scl, 2, axis=0), 2, axis=1)[:height, :width]
-        bad = np.isin(scl, list(BAD_SCL))
-        water += (scl == WATER_SCL).astype(np.float32) / len(scenes)
-        for c, band in enumerate(("red", "green", "blue")):
-            dn = read_band(assets[band]["href"], bounds, f"{scene['id']}_{band}.npy")[:height, :width]
-            refl = dn.astype(np.float32) * REFLECTANCE_SCALE + REFLECTANCE_OFFSET
-            refl[bad | (dn == 0)] = np.nan
-            stack[i, c] = refl
-        print(f"  {scene['id']}: {100.0 * bad.mean():.2f}% masked")
+    near, near_water = bake(layout, to_utm, scenes, EXTENT_METRES, SIZE, 10.0)
+    previous = np.asarray(Image.open(PREVIOUS).convert("RGB").resize((SIZE, SIZE), Image.Resampling.BILINEAR),
+                          dtype=np.float32) / 255.0
+    tone = fit_tone(near, near_water, previous)
+    save(apply_tone(near, near_water, tone, 2.0), OUTPUT, 90)
+    print(f"Wrote {OUTPUT} ({SIZE}x{SIZE}, runway-local +/-{EXTENT_METRES:.0f} m)")
+    del near, near_water
 
-    median = np.empty((3, height, width), dtype=np.float32)
-    for row in range(0, height, 256):
-        median[:, row:row + 256] = np.nanmedian(stack[:, :, row:row + 256], axis=0)
-    del stack
-    # A pixel no clear scene saw (should be none): fill from its neighbours' median.
-    missing = np.isnan(median)
-    if missing.any():
-        median[missing] = np.nanmedian(median)
-        print(f"  filled {missing.sum()} unobserved samples")
+    # The far ring (plan P6): the same scenes and tone, 40 m source over the 30 km disc.
+    far, far_water = bake(layout, to_utm, scenes, FAR_EXTENT_METRES, FAR_SIZE, 40.0)
+    save(apply_tone(far, far_water, tone, 1.0), FAR_OUTPUT, 88)
+    print(f"Wrote {FAR_OUTPUT} ({FAR_SIZE}x{FAR_SIZE}, runway-local +/-{FAR_EXTENT_METRES:.0f} m)")
 
-    display = np.concatenate([np.clip(median * GAIN, 0.0, 1.0), water[None]], axis=0)
-
-    # Resample into the runway-local square. Local -> UTM is affine to well under a pixel
-    # across 24 km (the v01 bake made the same approximation), so one affine transform.
-    metres_per_pixel = 2.0 * EXTENT_METRES / SIZE
-
-    def utm_pixel(px, py):
-        x = -EXTENT_METRES + px * metres_per_pixel
-        z = EXTENT_METRES - py * metres_per_pixel
-        lon, lat = local_to_lonlat(layout, x, z)
-        e, n = to_utm.transform(lon, lat)
-        return (e - bounds[0]) / 10.0, (bounds[3] - n) / 10.0
-
-    p00, p10, p01 = utm_pixel(0, 0), utm_pixel(1, 0), utm_pixel(0, 1)
-    affine = (p10[0] - p00[0], p01[0] - p00[0], p00[0], p10[1] - p00[1], p01[1] - p00[1], p00[1])
-    channels = []
-    for c in range(4):
-        band = Image.fromarray(display[c].astype(np.float32), mode="F")
-        channels.append(np.asarray(band.transform((SIZE, SIZE), Image.Transform.AFFINE, affine,
-                                                  resample=Image.Resampling.BICUBIC)))
-    rgb = np.clip(np.stack(channels[:3], axis=-1), 0.0, 1.0)
-    is_water = channels[3] > 0.5
-
-    # Tone. Keep the look the ground/surroundings shaders were tuned against without bending
-    # hues: one brightness curve per surface (land, water), applied equally to all three
-    # channels, maps the new luminance distribution onto the v01 texture's; then saturation is
-    # set to v01's plus a little. v01's own Gulf held the smeared tile gap, so its water
-    # reference is only the near-shore band that the game actually shows.
-    if PREVIOUS.exists():
-        previous = np.asarray(Image.open(PREVIOUS).convert("RGB").resize((SIZE, SIZE), Image.Resampling.BILINEAR),
-                              dtype=np.float32) / 255.0
-        luma = rgb @ LUMA
-        previous_luma = previous @ LUMA
-        # Water within ~500 m of land: dilate the land mask.
-        land = ~is_water
-        reach = int(500 / (2 * EXTENT_METRES / SIZE))
-        grown = land.copy()
-        for _ in range(reach):
-            grown[1:, :] |= grown[:-1, :]; grown[:-1, :] |= grown[1:, :]
-            grown[:, 1:] |= grown[:, :-1]; grown[:, :-1] |= grown[:, 1:]
-        near_shore = grown & is_water
-        # Land: the new luminance distribution mapped onto v01's land (one curve, all channels).
-        quantiles = np.linspace(0.0, 1.0, 513)
-        src_q = np.quantile(luma[land][::7], quantiles)
-        ref_q = np.quantile(previous_luma[land][::7], quantiles)
-        src_q = np.maximum.accumulate(src_q + np.arange(src_q.size) * 1e-9)
-        land_rgb = rgb * (np.interp(luma, src_q, ref_q) / np.maximum(luma, 1e-4))[..., None]
-
-        def saturate(img, factor):
-            grey = (img @ LUMA)[..., None]
-            return grey + (img - grey) * factor
-
-        def mean_saturation(img, mask):
-            grey = (img @ LUMA)[..., None]
-            return float(np.abs(img - grey)[mask].mean())
-
-        target = mean_saturation(previous, land) * SATURATION
-        current = mean_saturation(land_rgb, land)
-        land_rgb = saturate(land_rgb, target / max(current, 1e-4))
-        mean = float((land_rgb @ LUMA)[land].mean())
-        land_rgb = mean + (land_rgb - mean) * CONTRAST
-
-        # Water: a plain exposure scale so the shallows keep their real variation, brought to
-        # v01's near-shore brightness and a little calmer in colour.
-        scale = WATER_EXPOSURE * float(previous_luma[near_shore].mean()) / max(float(luma[is_water].mean()), 1e-4)
-        water_rgb = saturate(rgb * scale, WATER_SATURATION)
-
-        # Blend on a softened water fraction, so the beach and river banks have no seam.
-        weight = gaussian_filter((channels[3] > 0.5).astype(np.float32), 2.0)[..., None]
-        rgb = land_rgb * (1.0 - weight) + water_rgb * weight
-        print(f"  tone matched to v01 (land saturation {current:.3f} -> {target:.3f}, water x{scale:.2f})")
-
-    out = Image.fromarray(np.clip(rgb * 255.0 + 0.5, 0, 255).astype(np.uint8), mode="RGB")
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    out.save(OUTPUT, quality=90, subsampling=0, optimize=True)
     years = sorted({s["properties"]["datetime"][:4] for s in scenes})
     MANIFEST.parent.mkdir(parents=True, exist_ok=True)
     MANIFEST.write_text(json.dumps({
-        "output": str(OUTPUT.relative_to(ROOT)),
-        "size": SIZE,
-        "half_extent_metres": EXTENT_METRES,
+        "outputs": [
+            {"path": str(OUTPUT.relative_to(ROOT)), "size": SIZE, "half_extent_metres": EXTENT_METRES,
+             "source_metres": 10},
+            {"path": str(FAR_OUTPUT.relative_to(ROOT)), "size": FAR_SIZE,
+             "half_extent_metres": FAR_EXTENT_METRES, "source_metres": 40},
+        ],
         "tile": TILE,
         "gain": GAIN,
         "contrast": CONTRAST,
@@ -290,7 +324,6 @@ def main():
                     "cloud_cover": s["properties"]["eo:cloud_cover"]} for s in scenes],
         "attribution": f"Contains modified Copernicus Sentinel data {years[0]}-{years[-1]}",
     }, indent=2) + "\n")
-    print(f"Wrote {OUTPUT} ({SIZE}x{SIZE}, runway-local +/-{EXTENT_METRES:.0f} m)")
 
 
 if __name__ == "__main__":

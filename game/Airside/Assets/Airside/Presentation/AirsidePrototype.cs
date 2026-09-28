@@ -6049,7 +6049,8 @@ namespace Airside.Presentation
 
             BuildBareAdelaidePavement();
             var pavementY = AirsideAdelaideGround.PavementWorldY;
-            AirsideAdelaideRoads.TryBuild(_airfieldRoot, pavementY);
+            // Roads ride the same real relief the surroundings now have (ADR 0158).
+            AirsideAdelaideRoads.TryBuild(_airfieldRoot, pavementY, AirsideAdelaideSurroundings.RoadHeight(pavementY));
             AirsideAdelaideLandside.TryBuild(_airfieldRoot, pavementY);
             BuildYpadLandsideLife();
             BuildCloudBands();

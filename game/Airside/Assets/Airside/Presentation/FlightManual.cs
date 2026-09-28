@@ -148,8 +148,23 @@ namespace Airside.Presentation
                 }),
             new FlightManualPage(ControlsPageId, "Controls",
                 "The mouse does everything. The keys are shortcuts.",
-                Controls())
+                Controls()),
+            new FlightManualPage(CreditsPageId, "Map and data credits",
+                "Adelaide is built from open data. These are its sources.",
+                new[]
+                {
+                    ("Map", MapAttribution.OpenStreetMap + " (ODbL). The airport layout, coast, land use, "
+                            + "roads and buildings."),
+                    ("Satellite imagery", MapAttribution.Sentinel + ". Nine clear summer passes, 2024 to 2026."),
+                    ("Terrain", "Copernicus DEM GLO-30. © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH "
+                                + "2014-2018 provided under COPERNICUS by the European Union and ESA. All rights "
+                                + "reserved."),
+                    ("Weather and live traffic", "Open-Meteo (CC BY 4.0) and adsb.lol (ODbL), credited on screen "
+                                                 + "while they are in use.")
+                })
         };
+
+        public const string CreditsPageId = "credits";
 
         public static int IndexOf(string id)
         {

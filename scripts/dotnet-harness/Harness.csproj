@@ -33,6 +33,7 @@
       run without an editor.
     -->
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideTerrainField.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideTerrainHeights.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideBareField.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideCameraFeel.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideRunwayMarkings.cs" />

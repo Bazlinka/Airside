@@ -1,5 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — real terrain and the Adelaide Hills skyline (ADR 0158, plan P6).** Branch
+  `claude/fervent-gates-1tzyhq`. The surroundings faded to fog at a fixed ~10 km in every weather, and
+  the plain was one flat sheet. Now Copernicus GLO-30 heights (±32 km, 125 m, roof-filtered) lift the
+  plain inland (CBD ~50 m), and a 30 km far ring (250 m cells, 72 k tris, one draw) carries the rest of
+  the plain, the Gulf and the Hills (Mount Lofty ~680 m) under a matching far Sentinel-2 image. The
+  horizon fade moves out to 25.5–29.5 km, so weather visibility decides the view. Roads follow the same
+  relief. Airfield edge, coast and beach are unchanged, and everything falls back to the old flat look
+  if the data is missing. New Flight Manual page: Map and data credits. **Checks:** domain 941/941,
+  terrain tests, offline before/after render
+  (`docs/testing/surroundings-2026-09-28/hills-before-after.jpg`). **Not seen in Unity:** check the
+  12 km join, the Hills at dusk, inland road heights and frame time on the Mac.
+
 - **2026-09-28 Claude — sharper, cleaner Adelaide ground imagery (ADR 0157).** Branch
   `claude/fervent-gates-1tzyhq`. Bailey asked to improve the surroundings, satellite imagery first.
   No sharper imagery is open-licensed for Adelaide (data.sa.gov.au has only 1949 photos), so v02

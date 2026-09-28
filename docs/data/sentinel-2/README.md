@@ -31,3 +31,10 @@ Regenerate with `python3 scripts/generate-adelaide-satellite-s2.py` (downloads t
 into `work/cache/sentinel-2/`, about 2 minutes). `--scenes ID ...` pins the scene list.
 
 Shipped JPEG SHA-256: `d80280f594df5a257f659b0d090dcce8ced0b63099b08111b3b53ae44ac127bd`; the authored and StreamingAssets copies match.
+
+## Far ring (ADR 0158)
+
+`tx_adelaide_sentinel2_l2a_far_v01.jpg` is the same median, read from the COG overviews at 40 m,
+over a ±30.5 km square at 2048 px. It uses exactly the tone fitted on the near image, so the far
+terrain ring meets the surroundings without a colour step. Two corners fall outside tile 54HTG and
+are filled flat; both lie outside the 30 km disc the ring draws.

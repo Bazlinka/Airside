@@ -1,7 +1,18 @@
 {
-  "output": "game/Airside/Assets/Airside/Art/Textures/Environment/tx_adelaide_sentinel2_l2a_v02.jpg",
-  "size": 4096,
-  "half_extent_metres": 12000.0,
+  "outputs": [
+    {
+      "path": "game/Airside/Assets/Airside/Art/Textures/Environment/tx_adelaide_sentinel2_l2a_v02.jpg",
+      "size": 4096,
+      "half_extent_metres": 12000.0,
+      "source_metres": 10
+    },
+    {
+      "path": "game/Airside/Assets/Airside/Art/Textures/Environment/tx_adelaide_sentinel2_l2a_far_v01.jpg",
+      "size": 2048,
+      "half_extent_metres": 30500.0,
+      "source_metres": 40
+    }
+  ],
   "tile": "54HTG",
   "gain": 3.0,
   "contrast": 1.05,

@@ -5,6 +5,8 @@ Shader "Airside/AirfieldLightPoint"
     // _MinPixels on screen, dims softly with distance (never below a floor) and reaches through
     // haze further than surfaces do. Guard lights alternate their pair (uv1.y = flash phase).
     // Constants mirror AirfieldFixture's PointDistanceFactor, PointHaze and FlashOn.
+    // ADR 0169: with _Reflect set, the same mesh draws each light's streak on wet pavement
+    // instead, a quad lying on the ground from the fixture towards the camera.
     Properties
     {
         [HDR] _BaseColor ("Light colour x strength", Color) = (1, 1, 1, 1)
@@ -13,6 +15,8 @@ Shader "Airside/AirfieldLightPoint"
         _DistanceFloor ("Dimmest with distance", Float) = 0.3
         _HazeExponent ("Haze transmission exponent", Float) = 0.35
         _FlashHz ("Guard flash rate", Float) = 0.8
+        _Reflect ("Draw the wet-pavement streak", Float) = 0
+        _ReflectStretch ("Streak length / point size", Float) = 9
     }
 
     SubShader
@@ -47,6 +51,8 @@ Shader "Airside/AirfieldLightPoint"
                 float _DistanceFloor;
                 float _HazeExponent;
                 float _FlashHz;
+                float _Reflect;
+                float _ReflectStretch;
             CBUFFER_END
 
             struct Attributes
@@ -74,13 +80,31 @@ Shader "Airside/AirfieldLightPoint"
                 float metresPerPixel = 2.0 * dist / max(1.0, _ScreenParams.y * abs(UNITY_MATRIX_P._m11));
                 float size = max(input.sizePhase.x, _MinPixels * metresPerPixel);
 
-                // Pull the quad towards the camera by its own size so the ground does not clip its
-                // lower half at a grazing angle, then rescale so the on-screen size is unchanged.
-                float pull = min(size, dist * 0.5);
-                float scale = (dist - pull) / dist;
-                float3 posVS = centreVS * scale;
-                posVS.xy += input.corner * (size * 0.5 * scale);
-                output.positionCS = TransformWViewToHClip(posVS);
+                if (_Reflect > 0.5)
+                {
+                    // The ground under the lens (object y is height above the airfield), then along
+                    // the ground towards the camera: where a wet surface mirrors the light.
+                    float3 groundWS = TransformObjectToWorld(float3(input.positionOS.x, 0.06, input.positionOS.z));
+                    float3 toCamera = _WorldSpaceCameraPos - groundWS;
+                    toCamera.y = 0.0;
+                    float3 along = normalize(toCamera + float3(1e-4, 0.0, 0.0));
+                    float3 across = float3(-along.z, 0.0, along.x);
+                    float t = input.corner.y * 0.5 + 0.5;
+                    float3 p = groundWS + along * (t * size * _ReflectStretch) + across * (input.corner.x * size * 0.35);
+                    // A little towards the camera so the pavement never hides it.
+                    p += normalize(_WorldSpaceCameraPos - p) * 0.35;
+                    output.positionCS = TransformWorldToHClip(p);
+                }
+                else
+                {
+                    // Pull the quad towards the camera by its own size so the ground does not clip its
+                    // lower half at a grazing angle, then rescale so the on-screen size is unchanged.
+                    float pull = min(size, dist * 0.5);
+                    float scale = (dist - pull) / dist;
+                    float3 posVS = centreVS * scale;
+                    posVS.xy += input.corner * (size * 0.5 * scale);
+                    output.positionCS = TransformWViewToHClip(posVS);
+                }
                 output.corner = input.corner;
 
                 float q = dist / _HalfMetres;
@@ -97,6 +121,15 @@ Shader "Airside/AirfieldLightPoint"
 
             half4 frag(Varyings input) : SV_Target
             {
+                if (_Reflect > 0.5)
+                {
+                    // Brightest under the light, narrowing and fading towards the viewer.
+                    half t = input.corner.y * 0.5h + 0.5h;
+                    half fade = (1.0h - t) * (1.0h - t);
+                    half width = exp(-input.corner.x * input.corner.x * (3.0h + 5.0h * t));
+                    return half4(_BaseColor.rgb * (fade * width * input.brightness), 0);
+                }
+
                 half r2 = dot(input.corner, input.corner);
                 clip(1.0 - r2);
                 // Hot core and a short soft skirt: a lamp, not a blob.

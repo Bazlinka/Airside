@@ -239,6 +239,27 @@ namespace Airside.Presentation
             return t - Math.Floor(t) < 0.5;
         }
 
+        // Wet-runway reflections (ADR 0169). On wet pavement at night every airfield light lays a
+        // long streak across the surface towards the viewer. Drawn as a quad on the ground running
+        // from the fixture towards the camera, from the same light-point mesh.
+
+        /// <summary>Streak length as a multiple of the light point's size.</summary>
+        public const float ReflectionStretch = 9f;
+        /// <summary>A reflection is fainter than its light.</summary>
+        public const float ReflectionGain = 0.45f;
+
+        /// <summary>
+        /// Reflection strength (0..1) from rain wetness and night. Nothing on damp or dry pavement
+        /// (below 0.1 wetness, which covers the clear-weather residual damp); full on a soaked runway.
+        /// Only at night and dusk: by day the sky swamps it.
+        /// </summary>
+        public static float ReflectionStrength(float wetness, float night)
+        {
+            var wet = Smooth01((wetness - 0.1f) / 0.5f);
+            var dark = Smooth01((night - 0.25f) / 0.45f);
+            return wet * dark;
+        }
+
         private static float Smooth01(float x)
         {
             x = Math.Max(0f, Math.Min(1f, x));

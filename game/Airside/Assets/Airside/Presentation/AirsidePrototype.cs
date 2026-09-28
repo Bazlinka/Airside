@@ -3731,6 +3731,7 @@ namespace Airside.Presentation
                 }
             }
 
+            SetLensWetness(rainWetness, CurrentDaylight);
             UpdateWetPuddles(rainWetness, storm);
             UpdateTaxiSpray(rainWetness, raining || storm);
 

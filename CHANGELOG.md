@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Wet runways shine at night.** When it rains after dark, the runway and taxiway lights now
+  reflect in the wet pavement as long streaks of light, like a real airport in the rain.
+
 - **Saab checks cost $400 again.** Putting a second Saab on sale had quietly made every Saab
   maintenance check cheaper.
 

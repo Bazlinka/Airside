@@ -127,5 +127,19 @@ namespace Airside.Tests
             Assert.That(AirfieldFixture.GuardFlashHz * 60f, Is.InRange(30f, 60f), "ICAO 30-60 flashes a minute");
             Assert.That(AirfieldFixture.FlashOn(-1f, 12.3f), Is.True);
         }
+        [Test]
+        public void WetRunway_ReflectsTheLightsOnlyWhenItIsWetAndDark()
+        {
+            // ADR 0169: soaked at night, a long streak; damp, dry or daytime, none.
+            Assert.That(AirfieldFixture.ReflectionStrength(1f, 1f), Is.EqualTo(1f));
+            Assert.That(AirfieldFixture.ReflectionStrength(0.14f, 1f), Is.LessThan(0.05f),
+                "clear-weather residual damp does not mirror the runway");
+            Assert.That(AirfieldFixture.ReflectionStrength(0f, 1f), Is.Zero);
+            Assert.That(AirfieldFixture.ReflectionStrength(1f, 0f), Is.Zero, "not by day");
+            Assert.That(AirfieldFixture.ReflectionStrength(0.4f, 1f),
+                Is.InRange(0.05f, AirfieldFixture.ReflectionStrength(0.8f, 1f)), "grows with the rain");
+            Assert.That(AirfieldFixture.ReflectionGain, Is.LessThan(1f), "fainter than the light itself");
+            Assert.That(AirfieldFixture.ReflectionStretch, Is.GreaterThan(4f), "a streak, not a second dot");
+        }
     }
 }

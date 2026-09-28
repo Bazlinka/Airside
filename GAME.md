@@ -1,5 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — wet-runway light reflections (ADR 0169).** Branch
+  `claude/fervent-gates-1tzyhq`. In rain at night every airfield light lays a streak on the wet
+  pavement towards the camera: the light-point mesh drawn again in the shader's reflection mode,
+  off when dry, damp or by day. **Checks:** fixture tests, harness. **Not seen in Unity; shader not
+  compiled.**
+
 - **2026-09-28 Claude — tests after the second Saab (ADR 0164 follow-up).** Branch
   `claude/fervent-gates-1tzyhq`.
   - Seven EditMode tests had been red on main since the second Saab.

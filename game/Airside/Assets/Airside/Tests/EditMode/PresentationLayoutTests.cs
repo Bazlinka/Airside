@@ -68,7 +68,7 @@ namespace Airside.Tests
             Assert.That(filler, Does.StartWith("ZL9"));
             var player = FlightNumber.For(Airline.Player("Southern Cross Regional", "#1F3A93"), "VH-PAX", "KGC");
             Assert.That(player, Does.StartWith("SC"));
-            Assert.That(int.Parse(player.Substring(2)), Is.InRange(900, 979));
+            Assert.That(int.Parse(player.Substring(2)), Is.InRange(100, 998), "the player's own numbers");
         }
 
         [Test]

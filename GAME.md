@@ -1,5 +1,16 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — sharper, cleaner Adelaide ground imagery (ADR 0157).** Branch
+  `claude/fervent-gates-1tzyhq`. Bailey asked to improve the surroundings, satellite imagery first.
+  No sharper imagery is open-licensed for Adelaide (data.sa.gov.au has only 1949 photos), so v02
+  rebuilds from native Sentinel-2 L2A. It is a cloud-masked median of nine clear 2024–26 summer
+  scenes, 4096 px over the same ±12 km square, with hue-true tone fitted to v01 so the shaders' look
+  holds. The Gulf tile-gap smear is gone; the airport, suburbs and coast are far crisper
+  (`docs/testing/surroundings-2026-09-28/satellite-v01-v02.jpg`). Large textures are block-compressed
+  on load; the Copernicus credit is now on screen. **Checks:** domain 936/936; offline previews
+  inspected. **Not seen in Unity.** **Next (plan P5/P6):** DEM-driven Adelaide Hills and CBD
+  backdrop, then OSM buildings and trees near the field.
+
 - **2026-09-28 Claude — bug pass: per-frame waste, plus simulation fuzzing (no ADR).** Branch
   `claude/fervent-gates-1tzyhq`. Fixed three per-frame costs: the cloud edge fade fetched each cloud's
   renderers every frame (a fresh array per cloud per frame → GC hitches), now cached; the pushback-tug

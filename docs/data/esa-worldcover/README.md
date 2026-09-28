@@ -19,3 +19,7 @@ download can be supplied using `--source path/to/image.png`.
 
 Current shipped PNG SHA-256:
 `500166901613b1cf7b9049e6df5e65e45988b9e1e0b13c2b0bc112473f0657f3`.
+
+**Superseded (2026-09-28, ADR 0157).** The game now uses `tx_adelaide_sentinel2_l2a_v02.jpg`
+(`docs/data/sentinel-2/README.md`). This v01 PNG was moved here, out of the shipped art, and is
+kept only as the tone reference the v02 generator matches.

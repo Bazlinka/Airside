@@ -1207,7 +1207,8 @@ namespace Airside.Presentation
         private void DrawMapCredit(HudLayout layout)
         {
             var text = MapAttribution.FieldCredit(usesOsmLayout: true, usesOsmCoast: true,
-                usesLiveTraffic: LiveTrafficHealthy, usesLiveWeather: LiveWeatherHealthy);
+                usesLiveTraffic: LiveTrafficHealthy, usesLiveWeather: LiveWeatherHealthy,
+                usesSatellite: AirsideBareField.Enabled);
             if (string.IsNullOrEmpty(text))
                 return;
             _creditStyle ??= new GUIStyle(GUI.skin.label)

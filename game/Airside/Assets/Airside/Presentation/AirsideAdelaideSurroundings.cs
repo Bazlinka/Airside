@@ -44,8 +44,13 @@ namespace Airside.Presentation
         public const float SatelliteFarBlendEndMetres = 5200f;
         private const float BeachWidthMetres = 55f;
         public const float SatelliteExtentMetres = 12000f;
+        /// <summary>
+        /// A median of nine cloud-free summer Sentinel-2 L2A scenes (2024-2026) at native 10 m,
+        /// 4096 px over the ±12 km square (<c>scripts/generate-adelaide-satellite-s2.py</c>).
+        /// Replaced the 2021 WorldCover WMS bake, whose Gulf carried a smeared tile gap.
+        /// </summary>
         public const string SatelliteTexturePath =
-            "Textures/Environment/tx_adelaide_sentinel2_2021_v01.png";
+            "Textures/Environment/tx_adelaide_sentinel2_l2a_v02.jpg";
 
         // Tuned against the airfield ground as rendered in a packaged build (measured pixel
         // values; the tonemapper makes these sensitive), so the field edge disappears.

@@ -1,0 +1,57 @@
+{
+  "output": "game/Airside/Assets/Airside/Art/Textures/Environment/tx_adelaide_sentinel2_l2a_v02.jpg",
+  "size": 4096,
+  "half_extent_metres": 12000.0,
+  "tile": "54HTG",
+  "gain": 3.0,
+  "contrast": 1.05,
+  "saturation": 1.12,
+  "scenes": [
+    {
+      "id": "S2A_54HTG_20240203_0_L2A",
+      "datetime": "2024-02-03T00:56:40.918000Z",
+      "cloud_cover": 0.005349
+    },
+    {
+      "id": "S2B_54HTG_20240208_0_L2A",
+      "datetime": "2024-02-08T00:56:44.859000Z",
+      "cloud_cover": 0.008094
+    },
+    {
+      "id": "S2A_54HTG_20250118_0_L2A",
+      "datetime": "2025-01-18T00:56:43.774000Z",
+      "cloud_cover": 0.009772
+    },
+    {
+      "id": "S2C_54HTG_20260314_0_L2A",
+      "datetime": "2026-03-14T00:56:47.209000Z",
+      "cloud_cover": 0.010417
+    },
+    {
+      "id": "S2B_54HTG_20250304_0_L2A",
+      "datetime": "2025-03-04T00:56:48.309000Z",
+      "cloud_cover": 0.010944
+    },
+    {
+      "id": "S2C_54HTG_20260123_0_L2A",
+      "datetime": "2026-01-23T00:56:44.615000Z",
+      "cloud_cover": 0.014807
+    },
+    {
+      "id": "S2B_54HTG_20241224_0_L2A",
+      "datetime": "2024-12-24T00:56:46.691000Z",
+      "cloud_cover": 0.01637
+    },
+    {
+      "id": "S2B_54HTG_20240309_0_L2A",
+      "datetime": "2024-03-09T00:56:40.071000Z",
+      "cloud_cover": 0.017268
+    },
+    {
+      "id": "S2B_54HTG_20250324_0_L2A",
+      "datetime": "2025-03-24T00:56:48.132000Z",
+      "cloud_cover": 0.017306
+    }
+  ],
+  "attribution": "Contains modified Copernicus Sentinel data 2024-2026"
+}

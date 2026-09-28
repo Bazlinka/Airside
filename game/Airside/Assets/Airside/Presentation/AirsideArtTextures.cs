@@ -48,7 +48,11 @@ namespace Airside.Presentation
             {
                 var bytes = File.ReadAllBytes(fullPath);
                 var texture = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: true, linear: linear);
-                if (!texture.LoadImage(bytes, markNonReadable: !keepReadable))
+                // A very large colour image (the 4096 px satellite) stays readable just long
+                // enough to block-compress it: uncompressed it would hold ~85 MB of VRAM with
+                // mips, compressed about a sixth of that.
+                var compress = !keepReadable && !linear && IsLargeImage(bytes);
+                if (!texture.LoadImage(bytes, markNonReadable: !keepReadable && !compress))
                 {
                     // The 2x2 placeholder is already on the GPU; dropping the reference
                     // without destroying it leaked one texture per unreadable file.
@@ -58,6 +62,12 @@ namespace Airside.Presentation
                         Object.DestroyImmediate(texture);
                     Misses.Add(key);
                     return null;
+                }
+
+                if (compress)
+                {
+                    texture.Compress(highQuality: false);
+                    texture.Apply(updateMipmaps: false, makeNoLongerReadable: true);
                 }
 
                 texture.name = Path.GetFileNameWithoutExtension(artRelativePath);
@@ -72,6 +82,59 @@ namespace Airside.Presentation
                 return null;
             }
         }
+
+        /// <summary>Images at or above this many pixels are block-compressed on load.</summary>
+        public const int CompressAtPixels = 4096 * 4096;
+
+        /// <summary>
+        /// True for a PNG or JPEG whose header says it is at least <see cref="CompressAtPixels"/>.
+        /// Read from the header so the decision is made before decoding.
+        /// </summary>
+        public static bool IsLargeImage(byte[] bytes)
+        {
+            return TryReadImageSize(bytes, out var width, out var height)
+                   && (long)width * height >= CompressAtPixels;
+        }
+
+        public static bool TryReadImageSize(byte[] bytes, out int width, out int height)
+        {
+            width = height = 0;
+            if (bytes == null || bytes.Length < 24)
+                return false;
+            // PNG: signature, then the IHDR chunk's big-endian width and height.
+            if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47)
+            {
+                width = BigEndian(bytes, 16);
+                height = BigEndian(bytes, 20);
+                return width > 0 && height > 0;
+            }
+
+            // JPEG: walk the markers to the first start-of-frame.
+            if (bytes[0] != 0xFF || bytes[1] != 0xD8)
+                return false;
+            var i = 2;
+            while (i + 9 < bytes.Length)
+            {
+                if (bytes[i] != 0xFF)
+                    return false;
+                var marker = bytes[i + 1];
+                var length = (bytes[i + 2] << 8) | bytes[i + 3];
+                var isFrame = marker >= 0xC0 && marker <= 0xCF && marker != 0xC4 && marker != 0xC8 && marker != 0xCC;
+                if (isFrame)
+                {
+                    height = (bytes[i + 5] << 8) | bytes[i + 6];
+                    width = (bytes[i + 7] << 8) | bytes[i + 8];
+                    return width > 0 && height > 0;
+                }
+
+                i += 2 + length;
+            }
+
+            return false;
+        }
+
+        private static int BigEndian(byte[] bytes, int at) =>
+            (bytes[at] << 24) | (bytes[at + 1] << 16) | (bytes[at + 2] << 8) | bytes[at + 3];
 
         /// <summary>Test seam: how many paths are remembered as unavailable.</summary>
         public static int MissCount => Misses.Count;

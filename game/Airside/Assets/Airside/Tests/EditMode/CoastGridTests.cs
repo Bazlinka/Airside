@@ -79,6 +79,10 @@ namespace Airside.Tests
         public void Credit_NamesOpenStreetMap()
         {
             Assert.That(MapAttribution.FieldCredit(true, true), Does.Contain("OpenStreetMap"));
+            Assert.That(MapAttribution.FieldCredit(true, true), Does.Not.Contain("Copernicus"));
+            // CC BY 4.0 / Copernicus terms: the ground imagery is credited while it is drawn.
+            Assert.That(MapAttribution.FieldCredit(true, true, usesSatellite: true),
+                Does.Contain("OpenStreetMap").And.Contain("Contains modified Copernicus Sentinel data"));
         }
     }
 }

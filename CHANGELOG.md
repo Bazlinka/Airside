@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Sharper, cleaner satellite ground.** The imagery under and around the airport is rebuilt from
+  nine cloud-free summer satellite passes (2024–2026) at their full resolution. Taxiways, aprons,
+  rooftops, golf courses and streets are much crisper, the colours are truer, and the streaky patch
+  across the Gulf is gone. The imagery is now credited on screen.
+
 - **Less background work every frame.** Clouds, pushback tugs and propellers were each redoing a
   lookup every frame that only needs doing once, some of it creating garbage the game later had
   to pause and clean up. They now remember the answer.

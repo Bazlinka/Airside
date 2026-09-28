@@ -158,6 +158,17 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void TheLook_InTheFirstHour_IsThatHoursWeather()
+        {
+            // A new career starts at time zero, where the ease reached back to second -1 and
+            // threw every frame for the first quarter hour.
+            var first = WeatherLook.For(Weather.At(new SimulationTime(0)));
+            for (long t = 0; t <= Weather.BlendSeconds; t += 30)
+                Assert.That(Weather.LookAt(new SimulationTime(t)).CloudCover,
+                    Is.EqualTo(first.CloudCover).Within(1e-4f));
+        }
+
+        [Test]
         public void FogDensity_FollowsVisibility()
         {
             var clear = WeatherLook.For(WeatherKind.Clear);

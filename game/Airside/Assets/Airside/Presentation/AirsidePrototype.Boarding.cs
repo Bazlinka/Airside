@@ -908,21 +908,43 @@ namespace Airside.Presentation
 
                 // Normalise to a 1 m tall figure; each passenger then gets their own height.
                 var probe = Instantiate(prefab);
-                var bounds = new Bounds(probe.transform.position, Vector3.zero);
-                var any = false;
-                foreach (var renderer in probe.GetComponentsInChildren<Renderer>(true))
-                {
-                    if (!any)
-                        bounds = renderer.bounds;
-                    else
-                        bounds.Encapsulate(renderer.bounds);
-                    any = true;
-                }
-
-                kind.ScaleToMetre = any && bounds.size.y > 0.1f ? 1f / bounds.size.y : 1f / 1.8f;
+                var measured = MeasureFigureHeight(probe);
+                kind.ScaleToMetre = measured > 0.1f ? 1f / measured : 1f / 1.8f;
                 Destroy(probe);
                 into.Add(kind);
             }
+        }
+
+        /// <summary>
+        /// World height of a skinned figure, from its posed vertices. The Blender FBX puts the rig
+        /// under a ×100 node, so an unscaled person is ~182 m tall — and a fresh skinned
+        /// renderer's bounds read ~18.8 km, which shrank every person to under 2 cm.
+        /// </summary>
+        public static float MeasureFigureHeight(GameObject figure)
+        {
+            var low = float.MaxValue;
+            var high = float.MinValue;
+            var baked = new Mesh();
+            var vertices = new List<Vector3>();
+            foreach (var skinned in figure.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                // Baked with its renderer's scale, the mesh is in that renderer's local space.
+                skinned.BakeMesh(baked, true);
+                baked.GetVertices(vertices);
+                var place = skinned.transform.localToWorldMatrix;
+                foreach (var vertex in vertices)
+                {
+                    var y = place.MultiplyPoint3x4(vertex).y;
+                    low = Mathf.Min(low, y);
+                    high = Mathf.Max(high, y);
+                }
+            }
+
+            if (Application.isPlaying)
+                Destroy(baked);
+            else
+                DestroyImmediate(baked);
+            return high > low ? high - low : 0f;
         }
 
         /// <summary>

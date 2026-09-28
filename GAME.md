@@ -1,5 +1,21 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — visible people + first-hour weather (branch `feature/visible-people`).**
+  - Bailey reported no people on main. A graphics-on capture of 741839b2 showed marshalling wands
+    and crates floating with nobody holding them. Two import bugs:
+    - **Scale:** Unity builds the Quaternius rigs under a ×100 node (an unscaled person is ~182 m
+      tall), and `LoadCharacterKinds` normalised with fresh `SkinnedMeshRenderer.bounds` (~18.8 km),
+      so every figure was under 2 cm. `MeasureFigureHeight` now bakes the posed mesh instead.
+    - **Materials:** the nine `.fbx.meta` files were bare, so no slot found the committed
+      `Characters/Materials/*.mat`. Passengers fell back to grey; ramp crews drew nothing. The metas
+      now remap every slot (`SearchAndRemapMaterials`, model+material name, local folder).
+  - `Weather.LookAt` threw `ArgumentOutOfRangeException` every frame in a career's first 15 minutes
+    (blend reached back to second -1). The first hour now shows its own look.
+  - **Checks:** new `CharacterFigureTests` (18: head height while walking, posed mesh height, no
+    null materials) and a first-hour `WeatherTests` case pass. Full Unity EditMode 1326/1331: the 3 failures are the known `origin/main` ones (pavement clearance, busy-day separation, GATE-13/24). `test-domain.sh` not run: no dotnet SDK on this Mac. **Not seen in a rebuilt game.**
+  - **NEXT:** rebuild and look at a turnaround close-up and at play zoom; then decide whether people
+    need to be larger or brighter to read at overview distance.
+
 - **2026-09-28 Codex — all-aircraft human operations (branch `feature/human-operations`, ADR 0174).**
   - Passengers now cover integral airstairs, remote bus + stair truck and docked aerobridges.
   - Remote buses are pooled per aircraft; apron paths have three lanes while stairs stay single-file.

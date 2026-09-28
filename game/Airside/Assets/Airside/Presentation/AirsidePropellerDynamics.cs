@@ -1,3 +1,4 @@
+using System;
 using Airside.Simulation;
 using UnityEngine;
 
@@ -285,6 +286,93 @@ namespace Airside.Presentation
                 / (CruiseDegrees - GroundIdleDegrees));
             return Mathf.Lerp(0.78f, 1.22f, coarse);
         }
+
+        // ---------------------------------------------------------------- the look at speed (ADR 0168)
+
+        /// <summary>
+        /// Blade chord as a fraction of the propeller radius at radius <paramref name="r"/> (0 hub,
+        /// 1 tip): nothing inside the spinner, widest just out from the root, tapering to the tip.
+        /// </summary>
+        public static float BladeChordFraction(float r)
+        {
+            if (r <= 0.14f || r >= 1f)
+                return 0f;
+            var root = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.14f, 0.3f, r));
+            return 0.095f * root * (1f - 0.42f * r);
+        }
+
+        /// <summary>
+        /// What a spinning propeller really shows: the fraction of each ring the blades cover
+        /// over one turn (the blade solidity, blades × chord ÷ circumference). It is the same at
+        /// any speed. For a four- or six-blade propeller it is a faint haze of 5–20 %, densest near
+        /// the root and almost clear at the tips, which is why a propeller at full power all but
+        /// disappears.
+        /// </summary>
+        public static float DiscCoverage(float r, int blades)
+        {
+            if (r <= 0f || r >= 1f)
+                return 0f;
+            return Mathf.Clamp01(Mathf.Max(2, blades) * BladeChordFraction(r) / (2f * Mathf.PI * r));
+        }
+
+        /// <summary>How dark a blade reads against what is behind it (grey blades, bright sky or apron).</summary>
+        public const float BladeContrast = 0.8f;
+        /// <summary>Painted blade tips trace a faint ring, the one thing the eye still catches at full power.</summary>
+        public const float TipRingAlpha = 0.07f;
+
+        /// <summary>
+        /// Blur-texture opacity at radius <paramref name="r"/>: the blade coverage (no blade ghosts;
+        /// the old disc painted them in and turned them slowly, so the blades never went away)
+        /// plus the faint tip ring, clear over the spinner and beyond the tips.
+        /// </summary>
+        public static float PropDiscAlpha(float r, int blades)
+        {
+            if (r >= 1f)
+                return 0f;
+            var ring = TipRingAlpha * Mathf.Exp(-Mathf.Pow((r - 0.955f) / 0.022f, 2f));
+            var edge = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.975f, 1f, r));
+            return Mathf.Clamp01((DiscCoverage(r, blades) * BladeContrast + ring) * edge);
+        }
+
+        /// <summary>
+        /// A turbofan at speed is the opposite of a propeller: its wide, overlapping blades cover the
+        /// whole annulus, so the face reads as a solid dark disc (the old disc was 26 % glass, so the
+        /// intake turned see-through). Clear over the spinner so the nose cone still shows.
+        /// </summary>
+        public static float JetFanDiscAlpha(float r)
+        {
+            if (r >= 1f)
+                return 0f;
+            var hub = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.22f, 0.3f, r));
+            var edge = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.96f, 1f, r));
+            return 0.94f * hub * edge;
+        }
+
+        /// <summary>
+        /// Blade travel per frame for judging blur, never less than a 60 Hz frame. A real propeller
+        /// is invisible to the eye whatever the display does; judging it on the frame's own time let
+        /// a short frame (120 Hz, or one where the clock did not move) pop the solid blades back.
+        /// </summary>
+        public static float BlurStepDegrees(float rpm, float deltaSeconds) =>
+            Mathf.Max(0f, rpm) * 6f * Mathf.Max(deltaSeconds, 1f / 60f);
+
+        /// <summary>
+        /// Parts of a propeller assembly that blur away at speed. The spinner, hub, hub cap and
+        /// spinner stripe are solid and stay visible, as they do on a real aircraft; hiding them
+        /// with the blades left an empty nacelle nose.
+        /// </summary>
+        public static bool BlursAtSpeed(string partName)
+        {
+            if (string.IsNullOrEmpty(partName))
+                return true;
+            return !(partName.StartsWith("Spinner", StringComparison.Ordinal)
+                     || partName.StartsWith("Hub", StringComparison.Ordinal)
+                     || partName.StartsWith("Prop hub", StringComparison.Ordinal)
+                     || partName.StartsWith("Stripe", StringComparison.Ordinal));
+        }
+
+        /// <summary>Unlit blur discs dim with the light so they do not glow on a dark apron.</summary>
+        public static float DiscLightLevel(float daylight) => Mathf.Lerp(0.3f, 1f, Mathf.Clamp01(daylight));
 
         // ---------------------------------------------------------------- turbofan
 

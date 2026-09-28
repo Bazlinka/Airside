@@ -1,3 +1,4 @@
+using Airside.Domain;
 using Airside.Simulation;
 using UnityEngine;
 
@@ -49,14 +50,12 @@ namespace Airside.Presentation
         public const float JetFanBlurFadeEndRpm = 1800f;
 
         /// <summary>
-        /// Peak opacity of the propeller and turbofan blur discs. The blades are switched off
-        /// once the blur is established, so the disc is the whole propeller at takeoff power —
-        /// at the old 0.11 it was so close to invisible that a turboprop at full power read as
-        /// having no propellers at all. Still translucent: the nacelle and the far wing stay
-        /// visible through it.
+        /// Opacity multipliers on the propeller and turbofan blur discs. ADR 0168: the disc textures
+        /// now carry the real coverage (a propeller's 5–20 % haze, a fan's near-solid face), so the
+        /// multiplier is 1. The old 0.30 disc painted blade ghosts that stayed visible at full power.
         /// </summary>
-        public const float PropDiscPeakAlpha = 0.30f;
-        public const float JetFanDiscPeakAlpha = 0.26f;
+        public const float PropDiscPeakAlpha = 1f;
+        public const float JetFanDiscPeakAlpha = 1f;
 
         /// <summary>True when individual blades should hide behind the translucent disc.</summary>
         public static bool PropBlurActive(float rpm) => rpm >= PropHighRpmThreshold;
@@ -103,8 +102,16 @@ namespace Airside.Presentation
         // ANM-AIR-002 gear (visual bias only)
         public const float GearDeployed = 1f;
         public const float GearRetracted = 0f;
-        /// <summary>Seconds of phase progress over which gear eases after rotate.</summary>
-        public const float GearTransitionProgress = 0.12f;
+        /// <summary>
+        /// Gear up is called on a positive rate of climb, a few seconds after the wheels leave
+        /// the runway, and the cycle takes about seven seconds (real 737/A320/turboprop figures).
+        /// </summary>
+        public const float GearUpDelaySeconds = 3f;
+        public const float GearCycleSeconds = 7f;
+
+        /// <summary>The gear cycle in Takeoff progress for the circuit's own type (the ATR 42).</summary>
+        public static float GearTransitionProgress =>
+            GearCycleSeconds / AircraftPerformance.For(AircraftType.Atr42).TakeoffExactSeconds;
 
         // ANM-AIR-003 cabin/cargo door
         public const float DoorOpenAtStand = 1f;
@@ -237,8 +244,41 @@ namespace Airside.Presentation
         /// Gear bias 0..1. Takeoff keeps gear down through the ground roll and eases
         /// retract after the wheels leave <see cref="AirsideFlightPath"/>.
         /// </summary>
-        public static float GearRetractProgress =>
-            Mathf.Min(0.97f, AirsideFlightPath.RotateProgress + 0.05f);
+        public static float GearRetractProgress => GearRetractProgressFor(AircraftType.Atr42);
+
+        /// <summary>
+        /// Takeoff progress at which this type's gear starts up. It used to be the circuit's
+        /// rotate point plus a little, for every type — but a jet's ground roll is a larger share
+        /// of its takeoff, so every jet raised its gear 2–7 s before it had left the runway.
+        /// </summary>
+        public static float GearRetractProgressFor(AircraftType type)
+        {
+            var p = AircraftPerformance.For(type ?? AircraftType.Atr42);
+            return Mathf.Min(0.99f, (p.TakeoffRollExactSeconds + GearUpDelaySeconds) / p.TakeoffExactSeconds);
+        }
+
+        /// <summary>Seconds since the wheels left the runway; negative on the roll, NaN outside takeoff/climb-out.</summary>
+        public static float SecondsSinceLiftoff(AircraftPhase phase, float progress01, AircraftType type)
+        {
+            var p = AircraftPerformance.For(type ?? AircraftType.Atr42);
+            var t = Mathf.Clamp01(progress01);
+            return phase switch
+            {
+                AircraftPhase.Takeoff => t * p.TakeoffExactSeconds - p.TakeoffRollExactSeconds,
+                AircraftPhase.Departed => p.InitialClimbExactSeconds + t * p.DepartedExactSeconds,
+                _ => float.NaN
+            };
+        }
+
+        /// <summary>Gear for a known type: down through the roll, up from a positive climb.</summary>
+        public static float GearBias(AircraftPhase phase, float progress01, AircraftType type)
+        {
+            if (phase is not (AircraftPhase.Takeoff or AircraftPhase.Departed))
+                return GearBias(phase, progress01);
+            var since = SecondsSinceLiftoff(phase, progress01, type);
+            var t = Mathf.Clamp01((since - GearUpDelaySeconds) / GearCycleSeconds);
+            return Mathf.Lerp(GearDeployed, GearRetracted, Mathf.SmoothStep(0f, 1f, t));
+        }
 
         public static float GearBias(AircraftPhase phase, float progress01 = 1f)
         {
@@ -246,16 +286,7 @@ namespace Airside.Presentation
             switch (phase)
             {
                 case AircraftPhase.Takeoff:
-                {
-                    var start = GearRetractProgress;
-                    var end = Mathf.Min(1f, start + GearTransitionProgress);
-                    if (t <= start)
-                        return GearDeployed;
-                    if (t >= end)
-                        return GearRetracted;
-                    return Mathf.Lerp(GearDeployed, GearRetracted,
-                        Mathf.SmoothStep(0f, 1f, (t - start) / (end - start)));
-                }
+                    return GearBias(phase, t, AircraftType.Atr42);
                 case AircraftPhase.Approach:
                     // Ease down over the first part of final rather than popping at phase entry.
                     return Mathf.Lerp(0.15f, GearDeployed, Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, t / 0.22f)));
@@ -279,9 +310,12 @@ namespace Airside.Presentation
         /// Gear-door open amount 0..1. Doors open while the gear is in transit and
         /// close when the gear is locked up or locked down (presentation only).
         /// </summary>
-        public static float GearDoorOpenBias(AircraftPhase phase, float progress01 = 1f)
+        public static float GearDoorOpenBias(AircraftPhase phase, float progress01 = 1f) =>
+            GearDoorOpenBias(phase, progress01, null);
+
+        public static float GearDoorOpenBias(AircraftPhase phase, float progress01, AircraftType type)
         {
-            var gear = GearBias(phase, progress01);
+            var gear = type != null ? GearBias(phase, progress01, type) : GearBias(phase, progress01);
             // Fully retracted or fully deployed → closed over the wells.
             if (gear <= 0.02f || gear >= 0.98f)
                 return 0f;
@@ -345,9 +379,10 @@ namespace Airside.Presentation
                 return true;
             if (phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback or AircraftPhase.AtStand)
                 return !drawnOnGround && AirportCircuit.IsSkippedGroundPhase(phase);
-            if (phase == AircraftPhase.Takeoff)
-                return progress01 < GearRetractProgress;
-            return false;
+            // Landing lights stay on through the takeoff and the climb (they go off passing
+            // 10 000 ft, long after the aircraft has left the field). They used to switch off
+            // with the gear, a few seconds after lift-off.
+            return phase is AircraftPhase.Takeoff or AircraftPhase.Departed;
         }
 
         /// <param name="drawnOnGround">True for fleet aircraft: flaps are up on the stand and after landing, set for taxi-out.</param>

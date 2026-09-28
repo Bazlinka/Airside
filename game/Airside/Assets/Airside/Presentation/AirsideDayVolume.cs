@@ -198,7 +198,8 @@ namespace Airside.Presentation
         /// <param name="daylight">0 night … 1 noon.</param>
         /// <param name="warm">Dawn/dusk warmth 0…1.</param>
         /// <param name="weatherGloom">Rain/fog/storm cool-down 0…1 (presentation only).</param>
-        public void Apply(float daylight, float warm, float weatherGloom = 0f)
+        /// <param name="nightExposureLift">Extra EV from the player's night brightness option (ADR 0167).</param>
+        public void Apply(float daylight, float warm, float weatherGloom = 0f, float nightExposureLift = 0f)
         {
             weatherGloom = Mathf.Clamp01(weatherGloom);
 
@@ -211,7 +212,8 @@ namespace Airside.Presentation
             // (see the matching ambient-floor comment in AirsidePrototype.ApplyDayCycle) — a
             // real player reported "can't see anything" at night. Raised toward a small
             // positive EV instead; day's own exposure is unchanged.
-            var exposure = Mathf.Lerp(0.06f, 0.22f, daylight) + warm * 0.12f - weatherGloom * 0.28f;
+            var exposure = Mathf.Lerp(0.06f, 0.22f, daylight) + warm * 0.12f - weatherGloom * 0.28f
+                + nightExposureLift;
             var contrast = Mathf.Lerp(6f, 8.5f, daylight) + weatherGloom * 3.5f;
             var dayFilter = Color.Lerp(Color.white, new Color(1f, 0.82f, 0.68f), warm * 0.65f);
             var nightFilter = new Color(0.86f, 0.9f, 1f); // soft cool, not heavy blue cast

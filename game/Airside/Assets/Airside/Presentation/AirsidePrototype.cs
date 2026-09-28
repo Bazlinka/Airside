@@ -1490,6 +1490,13 @@ namespace Airside.Presentation
             }
 
             row.y += 46f;
+            if (GUI.Button(row, $"Night brightness  ·  {NightVisibility.Labels[NightVisibility.Clamp(settings.NightBrightness)]}", button))
+            {
+                settings.CycleNightBrightness().Save();
+                PlayUiClick();
+            }
+
+            row.y += 46f;
             if (GUI.Button(row, $"Live Adelaide sky traffic  ·  {LiveTrafficStatus}", button))
             {
                 settings.LiveTraffic = !settings.LiveTraffic;
@@ -1646,7 +1653,8 @@ namespace Airside.Presentation
                 var targetRotation = heading * Quaternion.Euler(pitch, 0f, bank);
                 // Exponential damping keeps the turn rate identical at 30 and 144 fps, and
                 // freezes attitude while paused instead of drifting on unscaled time.
-                var turningOff = DepartureTurn.Blend(phase, progress) > 0.02f;
+                var turningOff = TryDepartureArc(flight, phase, progress, out _, out var turnAlong, out _, out _)
+                                 && turnAlong > 0f;
                 // Ground heading is already the trailed-gear direction. A slow follow left the
                 // fuselage pointing down the taxiway while the nose had entered the turn, so
                 // the tail swung out. Follow it closely; the airborne rates stay softer.
@@ -1681,7 +1689,7 @@ namespace Airside.Presentation
                     ? FleetGroundPose(groundAircraft, groundVisual, 0f)
                     : null;
                 UpdateAircraftLightsAndGear(viewParts.LightsAndGear, phase, PresentationDaylight, progress,
-                    PresentationDeltaTime, PresentationClock, engines, groundPose);
+                    PresentationDeltaTime, PresentationClock, engines, groundPose, aircraftType);
                 UpdateDistantLight(view, AirsideReusableMotion.LandingLightsOn(phase, progress, engines.HasValue));
                 UpdateCabinDoor(viewParts.CabinDoors, phase, engines?.DoorsOpen);
                 var glowState = CabinWindowGlowState(phase, PresentationDaylight);
@@ -1722,19 +1730,10 @@ namespace Airside.Presentation
         /// </summary>
         private float DepartureBankDegrees(CommercialFlight flight, AircraftPhase phase, float progress)
         {
-            if (phase is not (AircraftPhase.Takeoff or AircraftPhase.Departed))
-                return 0f;
-            if (!FleetMode || _operations == null
-                || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
-                return 0f;
-            var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
-            if (!dest.HasValue)
-                return 0f;
-            var now = DepartureTurn.YawDegrees(aircraft.AssignedRunway, _operations.Home, dest.Value,
-                phase, progress);
-            var ahead = DepartureTurn.YawDegrees(aircraft.AssignedRunway, _operations.Home, dest.Value,
-                phase, Mathf.Min(1f, progress + 0.1f));
-            return Mathf.Clamp(-(ahead - now) * 1.15f, -24f, 24f);
+            // Rolled in, held at a normal 25° and rolled out with the arc itself (ADR 0166).
+            return TryDepartureArc(flight, phase, progress, out _, out var along, out var relative, out var radius)
+                ? DepartureTurn.ArcBank(relative, radius, along)
+                : 0f;
         }
 
         /// <summary>
@@ -2064,17 +2063,21 @@ namespace Airside.Presentation
 
         private static void UpdateAircraftLightsAndGear(
             LightGearPart[] parts, AircraftPhase phase, float daylight, float progress01 = 1f, float deltaTime = -1f,
-            float presentationTime = 0f, EngineState? engines = null, GroundPose? groundPose = null)
+            float presentationTime = 0f, EngineState? engines = null, GroundPose? groundPose = null,
+            AircraftType aircraftType = null)
         {
             if (deltaTime < 0f)
                 deltaTime = Time.unscaledDeltaTime;
             // Pause freezes strut/door motion with the presentation clock.
             if (deltaTime <= 0f)
                 deltaTime = 0f;
-            var gearBias = AirsideReusableMotion.GearBias(phase, progress01);
+            var gearBias = aircraftType != null
+                ? AirsideReusableMotion.GearBias(phase, progress01, aircraftType)
+                : AirsideReusableMotion.GearBias(phase, progress01);
             var airborne = phase is AircraftPhase.Departed or AircraftPhase.Approach
                 or AircraftPhase.Circuit or AircraftPhase.GoAround
-                || (phase == AircraftPhase.Takeoff && gearBias < 0.5f);
+                || (phase == AircraftPhase.Takeoff
+                    && AirsideReusableMotion.SecondsSinceLiftoff(phase, progress01, aircraftType) > 0f);
             var enginesOn = engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase);
             var night = daylight < 0.35f;
             var landingLights = AirsideReusableMotion.LandingLightsOn(phase, progress01, drawnOnGround: engines.HasValue);
@@ -2105,7 +2108,7 @@ namespace Airside.Presentation
                         child.gameObject.SetActive(true);
                         var euler = child.localEulerAngles;
                         var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                        var doorOpen = AirsideReusableMotion.GearDoorOpenBias(phase, progress01);
+                        var doorOpen = AirsideReusableMotion.GearDoorOpenBias(phase, progress01, aircraftType);
                         var target = Mathf.Lerp(0f, 78f, doorOpen);
                         euler.x = Mathf.MoveTowards(current, target, deltaTime * 90f);
                         child.localEulerAngles = euler;
@@ -2576,7 +2579,7 @@ namespace Airside.Presentation
             // Fan blades wagon-wheel at a far lower speed than propeller blades because there are
             // so many of them; judge the blur the same way, by what one frame can draw.
             var blades = JetFanBladeCount(fan);
-            var blur = AirsideReusableMotion.PropBlurForStep(step, blades);
+            var blur = AirsideReusableMotion.PropBlurForStep(AirsidePropellerDynamics.BlurStepDegrees(rpm, dt), blades);
             ApplyJetFanBlurToHub(fan, blur, DiscViewFade(fan));
             if (step <= 0f)
                 return;
@@ -2665,9 +2668,6 @@ namespace Airside.Presentation
         /// <summary>Blade counts per propeller, read from the model when its disc is built.</summary>
         private static readonly Dictionary<int, int> PropBladeCounts = new();
 
-        /// <summary>How far each propeller has turned, so its blur disc can be held nearly still.</summary>
-        private readonly Dictionary<int, float> _propSpinDegrees = new();
-
         private double _propClockSeen = double.NaN;
         private int _propClockFrame = -1;
         private float _propDelta;
@@ -2692,8 +2692,9 @@ namespace Airside.Presentation
 
         /// <summary>
         /// ADR 0148: blades show only while the frame can draw them turning. Past a third of the gap
-        /// between blades per frame they wagon-wheel, so they fade into the blur disc, which is held
-        /// nearly still against the spin so its faint blade ghosts drift slowly instead of strobing.
+        /// between blades per frame they wagon-wheel, so they fade into the blur disc. ADR 0168: the
+        /// disc is the blades' real time-averaged coverage, so at full power the propeller all but
+        /// disappears, leaving the spinner and a faint haze with a tip ring.
         /// </summary>
         private void SpinOnePropeller(Transform propeller, float rpm, float bladePitchOffsetDegrees)
         {
@@ -2703,7 +2704,8 @@ namespace Airside.Presentation
             if (!PropBladeCounts.TryGetValue(id, out var blades))
                 PropBladeCounts[id] = blades = CountBlades(propeller);
             ApplyBladePitch(propeller, bladePitchOffsetDegrees);
-            var blur = rpm < 1f ? 0f : AirsideReusableMotion.PropBlurForStep(step, blades);
+            var blur = rpm < 1f ? 0f : AirsideReusableMotion.PropBlurForStep(
+                AirsidePropellerDynamics.BlurStepDegrees(rpm, dt), blades);
             // A coarse blade puts more of itself in the line of sight than a fine one, and a disc
             // seen edge-on all but disappears. Both are what makes takeoff power read differently
             // from taxi, and the edge-on case costs nothing to draw.
@@ -2712,13 +2714,8 @@ namespace Airside.Presentation
             ApplyPropBlurToHub(propeller, blur, DiscViewFade(propeller) * density);
             if (step <= 0f)
                 return;
+            // The disc turns with the propeller: its texture is the same all the way round (ADR 0168).
             propeller.Rotate(Vector3.forward, step, Space.Self);
-            _propSpinDegrees.TryGetValue(id, out var spun);
-            spun = (spun + step) % 360f;
-            _propSpinDegrees[id] = spun;
-            var disc = propeller.Find("PropDisc");
-            if (disc != null && disc.gameObject.activeSelf)
-                disc.localRotation = Quaternion.Euler(0f, 0f, -spun * 0.97f);
         }
 
         /// <summary>
@@ -2854,18 +2851,35 @@ namespace Airside.Presentation
         private static readonly Dictionary<int, Material> PropBlurMaterials = new();
 
         /// <summary>URP Unlit, alpha blended, double-sided, over a procedural propeller-blur texture.</summary>
-        private static Material PropBlurMaterial(int blades)
+        private static Material PropBlurMaterial(int blades) =>
+            BlurDiscMaterial(PropBlurMaterials, blades, $"airside_prop_blur_{blades}", "mat_prop_blur",
+                new Color(0.72f, 0.74f, 0.78f, 0.3f), r => AirsidePropellerDynamics.PropDiscAlpha(r, blades),
+                _ => Color.white);
+
+        private static readonly Dictionary<int, Material> JetFanBlurMaterials = new();
+
+        /// <summary>
+        /// ADR 0168: a turbofan face at speed, a near-solid dark disc with a faint lighter band where
+        /// the blades' twist catches the light, clear over the spinner.
+        /// </summary>
+        private static Material JetFanBlurMaterial() =>
+            BlurDiscMaterial(JetFanBlurMaterials, 0, "airside_fan_blur", "mat_fan_blur",
+                new Color(0.2f, 0.23f, 0.26f, 0.9f), AirsidePropellerDynamics.JetFanDiscAlpha,
+                r => Color.Lerp(new Color(0.55f, 0.58f, 0.62f), Color.white,
+                    Mathf.Exp(-Mathf.Pow((r - 0.62f) / 0.16f, 2f))));
+
+        private static Material BlurDiscMaterial(Dictionary<int, Material> cache, int key, string textureName,
+            string materialName, Color fallback, Func<float, float> alphaAt, Func<float, Color> tintAt)
         {
-            if (PropBlurMaterials.TryGetValue(blades, out var cached) && cached != null)
+            if (cache.TryGetValue(key, out var cached) && cached != null)
                 return cached;
             var shader = Shader.Find("Universal Render Pipeline/Unlit");
             if (shader == null)
-                return AirsideMaterialLibrary.CreateShared(new Color(0.72f, 0.74f, 0.78f, 0.3f),
-                    AirsideMaterialLibrary.SurfaceKind.Glass);
+                return AirsideMaterialLibrary.CreateShared(fallback, AirsideMaterialLibrary.SurfaceKind.Glass);
             const int size = 128;
             var texture = new Texture2D(size, size, TextureFormat.RGBA32, true)
             {
-                name = $"airside_prop_blur_{blades}", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear
+                name = textureName, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear
             };
             var pixels = new Color32[size * size];
             for (var y = 0; y < size; y++)
@@ -2874,28 +2888,16 @@ namespace Airside.Presentation
                 var dx = (x + 0.5f) / size * 2f - 1f;
                 var dy = (y + 0.5f) / size * 2f - 1f;
                 var r = Mathf.Sqrt(dx * dx + dy * dy);
-                var a = Mathf.Atan2(dy, dx);
-                var alpha = 0f;
-                if (r < 1f)
-                {
-                    // Blades sweep more area near the tips, so the blur thickens outward, clear at the hub.
-                    var body = Mathf.SmoothStep(0.12f, 0.45f, r) * (0.55f + 0.35f * r);
-                    // Faint ghosts of the blades.
-                    var ghost = 0.18f * Mathf.Pow(0.5f + 0.5f * Mathf.Cos(a * blades), 6f) * Mathf.SmoothStep(0.2f, 0.7f, r);
-                    // The painted tips read as a thin bright ring.
-                    var ring = 0.35f * Mathf.Exp(-Mathf.Pow((r - 0.95f) / 0.025f, 2f));
-                    var edge = 1f - Mathf.SmoothStep(0.97f, 1f, r);
-                    alpha = Mathf.Clamp01((body + ghost + ring) * edge);
-                }
-
-                pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
+                var alpha = alphaAt(r);
+                Color32 tint = tintAt(r);
+                pixels[y * size + x] = new Color32(tint.r, tint.g, tint.b, (byte)Mathf.RoundToInt(Mathf.Clamp01(alpha) * 255f));
             }
 
             texture.SetPixels32(pixels);
             texture.Apply(true, true);
-            var material = new Material(shader) { name = "mat_prop_blur" };
+            var material = new Material(shader) { name = materialName };
             material.SetTexture("_BaseMap", texture);
-            material.SetColor("_BaseColor", new Color(0.72f, 0.74f, 0.78f, AirsideReusableMotion.PropDiscPeakAlpha));
+            material.SetColor("_BaseColor", fallback);
             material.SetFloat("_Surface", 1f);
             material.SetFloat("_Blend", 0f);
             material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
@@ -2905,7 +2907,7 @@ namespace Airside.Presentation
             material.SetOverrideTag("RenderType", "Transparent");
             material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-            PropBlurMaterials[blades] = material;
+            cache[key] = material;
             return material;
         }
 
@@ -2921,6 +2923,7 @@ namespace Airside.Presentation
                 selfRenderer.enabled = showBlades;
 
             var alpha = AirsideReusableMotion.PropDiscPeakAlpha * blend * Mathf.Max(0f, discDensity);
+            var light = AirsidePropellerDynamics.DiscLightLevel(CurrentDaylight);
             for (var i = 0; i < propeller.childCount; i++)
             {
                 var child = propeller.GetChild(i);
@@ -2930,13 +2933,14 @@ namespace Airside.Presentation
                     child.gameObject.SetActive(alpha > 0.006f);
                     var discRenderer = child.GetComponent<Renderer>();
                     if (discRenderer != null)
-                        SetRendererColor(discRenderer, new Color(0.72f, 0.74f, 0.78f, alpha));
+                        SetRendererColor(discRenderer, new Color(0.72f * light, 0.74f * light, 0.78f * light, alpha));
                     continue;
                 }
 
+                // ADR 0168: the spinner, hub and stripe are solid and stay; only blades blur away.
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer != null)
-                    renderer.enabled = showBlades;
+                    renderer.enabled = showBlades || !AirsidePropellerDynamics.BlursAtSpeed(child.name);
             }
         }
 
@@ -2947,6 +2951,7 @@ namespace Airside.Presentation
             blend = Mathf.Clamp01(blend);
             var showBlades = blend < 0.92f;
             var alpha = AirsideReusableMotion.JetFanDiscPeakAlpha * blend * Mathf.Max(0f, discDensity);
+            var light = AirsidePropellerDynamics.DiscLightLevel(CurrentDaylight);
             for (var i = 0; i < fan.childCount; i++)
             {
                 var child = fan.GetChild(i);
@@ -2955,7 +2960,7 @@ namespace Airside.Presentation
                     child.gameObject.SetActive(alpha > 0.006f);
                     var discRenderer = child.GetComponent<Renderer>();
                     if (discRenderer != null)
-                        SetRendererColor(discRenderer, new Color(0.26f, 0.34f, 0.39f, alpha));
+                        SetRendererColor(discRenderer, new Color(0.2f * light, 0.23f * light, 0.26f * light, alpha));
                     continue;
                 }
 
@@ -4902,7 +4907,8 @@ namespace Airside.Presentation
             _weatherGloomReady = true;
             if (weatherGloom > 0f)
                 _sun.intensity *= Mathf.Lerp(1f, 0.72f, weatherGloom);
-            _dayVolume?.Apply(daylight, warm, weatherGloom);
+            var nightLevel = AirsideSettings.Current.NightBrightness;
+            _dayVolume?.Apply(daylight, warm, weatherGloom, NightVisibility.ExposureLift(nightLevel, daylight));
 
             if (_fillLight != null)
             {
@@ -4949,7 +4955,8 @@ namespace Airside.Presentation
             RenderSettings.ambientSkyColor = ambientSky;
             RenderSettings.ambientEquatorColor = ambientEquator;
             RenderSettings.ambientGroundColor = ambientGround;
-            RenderSettings.ambientIntensity = Mathf.Lerp(1.05f, 1.12f, daylight) + warm * 0.06f;
+            RenderSettings.ambientIntensity = (Mathf.Lerp(1.05f, 1.12f, daylight) + warm * 0.06f)
+                * NightVisibility.AmbientGain(nightLevel, daylight);
             if (weatherGloom > 0f)
             {
                 // Dim trilight under fog/rain/storm — ambientLight is ignored in Trilight mode.
@@ -11861,18 +11868,20 @@ namespace Airside.Presentation
                     radius = Mathf.Max(radius, Mathf.Max(blade.bounds.extents.x, blade.bounds.extents.y));
                 }
 
-                var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                // ADR 0168: a double-sided quad in the fan plane (local XY, spin axis Z) with a near-solid
+                // dark fan-face texture, clear over the spinner. It was a 26 % glass cylinder, so the
+                // intake went see-through once the blades hid.
+                var disc = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 disc.name = "FanDisc";
                 DestroyPresentationObject(disc.GetComponent<Collider>());
                 disc.transform.SetParent(fan, false);
                 disc.transform.localPosition = new Vector3(0f, 0f, 0.035f);
-                disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                disc.transform.localRotation = Quaternion.identity;
                 var diameter = Mathf.Clamp(radius * 2.05f, 0.8f, 2.7f);
-                disc.transform.localScale = new Vector3(diameter, 0.003f, diameter);
-                var colour = new Color(0.26f, 0.34f, 0.39f, AirsideReusableMotion.JetFanDiscPeakAlpha);
+                disc.transform.localScale = new Vector3(diameter, diameter, 1f);
+                var colour = new Color(0.2f, 0.23f, 0.26f, AirsideReusableMotion.JetFanDiscPeakAlpha);
                 var renderer = disc.GetComponent<Renderer>();
-                renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(colour,
-                    AirsideMaterialLibrary.SurfaceKind.Glass);
+                renderer.sharedMaterial = JetFanBlurMaterial();
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
                 SetRendererColor(renderer, colour);
@@ -14449,81 +14458,62 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// After rotate, displace the climb-out toward the booked destination so the
-        /// aircraft yaws onto its departure track instead of climbing forever along +X.
+        /// ADR 0166 — the departure's turn onto its destination, as one flown arc. Along-track
+        /// metres past the turn start (the far threshold, <see cref="DepartureTurn.TurnStartProgress"/>
+        /// of the climb-out), the bearing to the destination, and the type's own turn radius.
+        /// False on the roll, the initial climb and anything without a destination.
+        /// </summary>
+        private bool TryDepartureArc(CommercialFlight flight, AircraftPhase phase, float progress,
+            out float xStart, out float along, out double relative, out float radius)
+        {
+            xStart = along = radius = 0f;
+            relative = 0.0;
+            if (phase != AircraftPhase.Departed || !FleetMode || _operations == null
+                || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
+                return false;
+            var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
+            if (!dest.HasValue)
+                return false;
+            // Same path the climb-out is drawn on, including the runway's own roll-in.
+            var runway = aircraft.AssignedRunway;
+            xStart = AirsideFlightPath.Departed(DepartureTurn.TurnStartProgress, TakeoffOffsetX, aircraft.Type, runway).x;
+            along = AirsideFlightPath.Departed(progress, TakeoffOffsetX, aircraft.Type, runway).x - xStart;
+            relative = DepartureTurn.RelativeRadiansFor(aircraft.AssignedRunway, _operations.Home, dest.Value);
+            radius = DepartureTurn.TurnRadiusMetres(
+                AircraftPerformance.For(aircraft.Type).AirspeedKnots(AircraftPhase.Departed, DepartureTurn.TurnStartProgress));
+            return true;
+        }
+
+        /// <summary>
+        /// Past the far threshold the climb-out flies a real turn: the position follows the arc,
+        /// so the aircraft goes where its nose points (it used to yaw while sliding sideways and
+        /// carrying on down the runway line, which read as drifting).
         /// </summary>
         private Vector3 ApplyDepartureTurn(CommercialFlight flight, AircraftPhase phase, float progress,
             Vector3 position)
         {
-            if (phase is not (AircraftPhase.Takeoff or AircraftPhase.Departed))
+            if (!TryDepartureArc(flight, phase, progress, out var xStart, out var along, out var relative, out var radius)
+                || along <= 0f)
                 return position;
-            if (!FleetMode || _operations == null
-                || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
-                return position;
-            var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
-            if (!dest.HasValue)
-                return position;
-            var runway = aircraft.AssignedRunway;
-            var home = _operations.Home;
-            var lateral = DepartureTurn.LateralMetres(runway, home, dest.Value, phase, progress);
-            // TurnEstablishedProgress (0.88) is a threshold on DEPARTED's own progress scale —
-            // it means nothing for Takeoff's progress, which runs over a completely different
-            // phase duration (ground roll + initial climb). Comparing them directly used to let
-            // Takeoff's progress cross 0.88 near the end of a long climb-out, at which point the
-            // aircraft fell into the "extra along-track distance past establishment" branch below
-            // using Departed's own along-track reference point (xAtEstablished) — a position far
-            // outside Takeoff's actual range, since Blend() is (correctly) 0 throughout Takeoff.
-            // That snapped the aircraft sideways/forward mid-climb, then "backed up" the instant
-            // the phase actually became Departed and progress reset to 0 — the takeoff-then-jump-
-            // then-back-up a real play session reported. Only Departed's own progress may ever
-            // take the established-track branch.
-            if (phase != AircraftPhase.Departed || progress <= DepartureTurn.TurnEstablishedProgress)
-                return new Vector3(position.x, position.y, position.z + lateral);
-
-            // DepartureTurn.Blend (and so LateralMetres/YawDegrees) locks at its established
-            // value past this progress — by design, the SID turn itself is done. But `position`
-            // (from AirsideFlightPath.Departed) keeps growing along the ORIGINAL runway
-            // heading forever, x only, no matter how much further the climb-out runs. Left
-            // alone, that meant the frozen sideways kick above was the aircraft's ONLY turn:
-            // for the rest of the departure — most of it, since the turn establishes well
-            // before the flight leaves visual range — the nose held the new heading while the
-            // aircraft actually kept flying dead straight down the extended runway line, the
-            // classic crabbing/drifting look instead of a real turn. DepartureTurn.
-            // EstablishedTrackMetres (Simulation, pure and unit-tested) supplies the fix:
-            // however much further along-track distance is covered past establishment gets
-            // decomposed onto the established heading instead of staying pure +X.
-            var xAtEstablished = AirsideFlightPath.Departed(
-                DepartureTurn.TurnEstablishedProgress, TakeoffOffsetX, aircraft.Type, runway).x;
-            var extraAlong = position.x - xAtEstablished;
-            var (forward, sideways) = DepartureTurn.EstablishedTrackMetres(runway, home, dest.Value, extraAlong);
-            return new Vector3(xAtEstablished + forward, position.y, position.z + lateral + sideways);
+            var (forward, sideways, _) = DepartureTurn.Arc(relative, radius, along);
+            return new Vector3(xStart + forward, position.y, position.z + sideways);
         }
 
-        /// <summary>
-        /// After rotate, point the nose at the departure track. Position look-ahead
-        /// only yaws a couple of degrees (along-track motion dwarfs the lateral),
-        /// so the published destination yaw is applied as heading.
-        /// </summary>
+        /// <summary>The nose along the arc: the runway heading turned by the arc's own yaw.</summary>
         private Quaternion DepartureLookRotation(CommercialFlight flight, AircraftPhase phase, float progress,
             Quaternion fallback)
         {
-            if (phase is not (AircraftPhase.Takeoff or AircraftPhase.Departed))
+            if (!TryDepartureArc(flight, phase, progress, out _, out var along, out var relative, out var radius)
+                || along <= 0f)
                 return fallback;
-            if (!FleetMode || _operations == null
-                || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
-                return fallback;
-            var dest = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
-            if (!dest.HasValue)
-                return fallback;
-            var yaw = DepartureTurn.YawDegrees(aircraft.AssignedRunway, _operations.Home, dest.Value,
-                phase, progress);
-            if (Mathf.Abs(yaw) < 0.05f)
+            var yaw = DepartureTurn.Arc(relative, radius, along).yawDegrees;
+            if (Mathf.Abs(yaw) < 0.05f || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft))
                 return fallback;
             RunwayFrame.Forward(aircraft.AssignedRunway, out var fx, out var fz);
-            var along = new Vector3(fx, 0f, fz);
-            if (along.sqrMagnitude < 0.001f)
+            var runwayAlong = new Vector3(fx, 0f, fz);
+            if (runwayAlong.sqrMagnitude < 0.001f)
                 return fallback;
-            return Quaternion.LookRotation(along) * Quaternion.Euler(0f, yaw, 0f);
+            return Quaternion.LookRotation(runwayAlong) * Quaternion.Euler(0f, yaw, 0f);
         }
 
         private float ApproachLaneOffset(CommercialFlight flight)

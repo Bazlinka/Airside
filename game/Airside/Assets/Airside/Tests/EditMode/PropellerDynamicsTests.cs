@@ -133,5 +133,66 @@ namespace Airside.Tests
             AirsidePropellerDynamics.BladePitchDegrees(1f,
                 AirsideReusableMotion.PropPowerForPhase(phase, progress01),
                 AirsidePropellerDynamics.Advance01ForPhase(phase, progress01), 0f);
+        [Test]
+        public void PropDisc_AllButDisappearsAtFullPower()
+        {
+            // ADR 0168: the disc is the blades' real coverage. It painted blade ghosts at 30 %
+            // before, so a propeller at full power never went away.
+            foreach (var blades in new[] { 4, 6 })
+            {
+                var peak = 0f;
+                var weighted = 0f;
+                var area = 0f;
+                for (var i = 0; i < 200; i++)
+                {
+                    var r = (i + 0.5f) / 200f;
+                    var alpha = AirsidePropellerDynamics.PropDiscAlpha(r, blades);
+                    peak = Mathf.Max(peak, alpha);
+                    weighted += alpha * r;
+                    area += r;
+                }
+
+                Assert.That(peak, Is.LessThan(0.25f), $"{blades} blades: a haze, not a solid disc");
+                Assert.That(weighted / area, Is.InRange(0.03f, 0.12f), $"{blades} blades: faint but there");
+                Assert.That(AirsidePropellerDynamics.PropDiscAlpha(0.1f, blades), Is.Zero, "clear over the spinner");
+                Assert.That(AirsidePropellerDynamics.PropDiscAlpha(1f, blades), Is.Zero);
+                Assert.That(AirsidePropellerDynamics.PropDiscAlpha(0.955f, blades),
+                    Is.GreaterThan(AirsidePropellerDynamics.PropDiscAlpha(0.9f, blades)), "painted tips trace a ring");
+            }
+
+            Assert.That(AirsidePropellerDynamics.PropDiscAlpha(0.5f, 6),
+                Is.GreaterThan(AirsidePropellerDynamics.PropDiscAlpha(0.5f, 4)), "more blades, denser haze");
+        }
+
+        [Test]
+        public void JetFanDisc_IsASolidFaceWithTheSpinnerShowing()
+        {
+            Assert.That(AirsidePropellerDynamics.JetFanDiscAlpha(0.6f), Is.GreaterThan(0.9f), "no see-through intake");
+            Assert.That(AirsidePropellerDynamics.JetFanDiscAlpha(0.1f), Is.Zero);
+            Assert.That(AirsidePropellerDynamics.JetFanDiscAlpha(1f), Is.Zero);
+        }
+
+        [Test]
+        public void Blur_DoesNotPopBackOnAShortFrame()
+        {
+            var at60 = AirsidePropellerDynamics.BlurStepDegrees(1200f, 1f / 60f);
+            Assert.That(AirsidePropellerDynamics.BlurStepDegrees(1200f, 1f / 120f), Is.EqualTo(at60).Within(1e-3f));
+            Assert.That(AirsidePropellerDynamics.BlurStepDegrees(1200f, 0f), Is.EqualTo(at60).Within(1e-3f),
+                "a frame where the clock did not move still reads as spinning");
+            Assert.That(AirsideReusableMotion.PropBlurForStep(
+                AirsidePropellerDynamics.BlurStepDegrees(AirsideReusableMotion.PropRpmGroundIdle, 0f), 4), Is.EqualTo(1f));
+            Assert.That(AirsideReusableMotion.PropBlurForStep(
+                AirsidePropellerDynamics.BlurStepDegrees(AirsidePropellerDynamics.MotoringRpm, 1f / 60f), 4), Is.LessThan(1f),
+                "a starting propeller still shows its blades");
+        }
+
+        [Test]
+        public void Spinner_StaysWhenTheBladesBlur()
+        {
+            foreach (var solid in new[] { "Spinner", "Hub", "Hub cap", "Stripe", "Prop hub L" })
+                Assert.That(AirsidePropellerDynamics.BlursAtSpeed(solid), Is.False, solid);
+            foreach (var blade in new[] { "Blade", "Blade 3", "Tip", "Tip 2" })
+                Assert.That(AirsidePropellerDynamics.BlursAtSpeed(blade), Is.True, blade);
+        }
     }
 }

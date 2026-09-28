@@ -157,6 +157,94 @@ namespace Airside.Presentation
             return day + (1.6f - day) * night;
         }
 
+        // Light points (ADR 0167). A real airfield lamp is a point source: from the tower or a
+        // kilometre out it is a sharp bright dot, never smaller than the eye can resolve, and it
+        // reaches further through haze than the ground it stands on. The true-size 0.34 m lens is
+        // sub-pixel from the overview, so each fixture also draws a camera-facing point that never
+        // shrinks below a few pixels (Airside/AirfieldLightPoint).
+
+        /// <summary>Smallest on-screen diameter, in pixels, of a fixture's light point.</summary>
+        public static float PointMinPixels(LensDayResponse response) => response switch
+        {
+            LensDayResponse.Approach => 3.4f,
+            LensDayResponse.Guard => 3.2f,
+            LensDayResponse.Edge => 2.8f,
+            LensDayResponse.Stand => 2f,
+            _ => 2.3f
+        };
+
+        /// <summary>World diameter of the point close up: a small glare round the lens, not a disc.</summary>
+        public static float PointWorldSize(float lensDiameter) => Math.Max(0.5f, lensDiameter * 2.4f);
+
+        /// <summary>
+        /// Point brightness (HDR multiplier on the lens colour) at this much night. Edge, taxi and
+        /// stand points only come up through dusk; thresholds, PAPI, approach and guard lights are
+        /// high-intensity and still show by day, as they do at a real field.
+        /// </summary>
+        public static float PointStrength(LensDayResponse response, float night)
+        {
+            night = Math.Max(0f, Math.Min(1f, night));
+            var dusk = Smooth01((night - 0.12f) / 0.45f);
+            var (gain, day) = response switch
+            {
+                LensDayResponse.Approach => (2.6f, 0.3f),
+                LensDayResponse.Guard => (2.4f, 0.35f),
+                LensDayResponse.Edge => (2.1f, 0f),
+                LensDayResponse.Stand => (1.2f, 0f),
+                _ => (1.5f, 0f)
+            };
+            return gain * Math.Max(day, dusk);
+        }
+
+        /// <summary>Distance, in metres, at which a point has dimmed to half (inverse-square, softened).</summary>
+        public const float PointHalfBrightnessMetres = 2200f;
+        /// <summary>The dimmest a point gets with distance, so a far runway still reads as a line of lights.</summary>
+        public const float PointDistanceFloor = 0.3f;
+        /// <summary>
+        /// Lights see through haze further than surfaces: fog transmission is raised to this power
+        /// (0.35 ≈ 1.7× the visual range, in line with runway visual range over meteorological visibility).
+        /// </summary>
+        public const float PointHazeExponent = 0.35f;
+
+        /// <summary>Distance dimming, mirrored by the shader.</summary>
+        public static float PointDistanceFactor(float metres)
+        {
+            var q = Math.Max(0f, metres) / PointHalfBrightnessMetres;
+            return Math.Max(PointDistanceFloor, 1f / (1f + q * q));
+        }
+
+        /// <summary>Haze transmission for a light, from the transmission a surface at that distance gets.</summary>
+        public static float PointHaze(float surfaceTransmission) =>
+            (float)Math.Pow(Math.Max(0f, Math.Min(1f, surfaceTransmission)), PointHazeExponent);
+
+        /// <summary>
+        /// Runway guard lights ("wig-wags") alternate their pair at 48 flashes a minute (ICAO Annex 14,
+        /// 30–60). Returns the flash phase (0 or 0.5) for a guard lens, or −1 for a steady light.
+        /// </summary>
+        public static float FlashPhase(string name)
+        {
+            if (name == null || !name.StartsWith("Runway guard", StringComparison.Ordinal))
+                return -1f;
+            return name.EndsWith(" R", StringComparison.Ordinal) ? 0.5f : 0f;
+        }
+
+        public const float GuardFlashHz = 0.8f;
+
+        /// <summary>Whether a light with this phase is lit at <paramref name="seconds"/>, mirrored by the shader.</summary>
+        public static bool FlashOn(float phase, float seconds)
+        {
+            if (phase < 0f)
+                return true;
+            var t = seconds * GuardFlashHz + phase;
+            return t - Math.Floor(t) < 0.5;
+        }
+
+        private static float Smooth01(float x)
+        {
+            x = Math.Max(0f, Math.Min(1f, x));
+            return x * x * (3f - 2f * x);
+        }
+
         /// <summary>Which response a lens gets, from the name the lighting builders give it.</summary>
         public static LensDayResponse ResponseFor(string name)
         {

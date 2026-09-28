@@ -413,8 +413,14 @@ namespace Airside.Presentation
             public readonly List<Vector3> HaloVertices = new();
             public readonly List<Vector2> HaloUvs = new();
             public readonly List<int> HaloTriangles = new();
+            public readonly List<Vector3> PointVertices = new();
+            public readonly List<Vector2> PointCorners = new();
+            public readonly List<Vector2> PointSizePhase = new();
+            public readonly List<int> PointTriangles = new();
             public Renderer Lens;
             public Renderer Halo;
+            public Renderer Points;
+            public Material PointMaterial;
             public float HaloGain = 0.55f;
         }
 
@@ -447,6 +453,25 @@ namespace Airside.Presentation
             AppendFixture(_fixtureLens, origin, scale, group.Vertices, group.Normals, group.Triangles);
             AppendFixture(_fixtureBase, origin, scale, FixtureBaseVertices, FixtureBaseNormals, FixtureBaseTriangles);
             AddHalo(group, position, AirfieldFixture.HaloSize(diameter, response));
+            AddLightPoint(group, position + Vector3.up * 0.06f, AirfieldFixture.PointWorldSize(diameter),
+                AirfieldFixture.FlashPhase(name));
+        }
+
+        /// <summary>Four vertices at the lens centre; Airside/AirfieldLightPoint opens them towards the camera (ADR 0167).</summary>
+        private static void AddLightPoint(LensGroup group, Vector3 centre, float worldSize, float flashPhase)
+        {
+            var first = group.PointVertices.Count;
+            for (var i = 0; i < 4; i++)
+            {
+                group.PointVertices.Add(centre);
+                group.PointSizePhase.Add(new Vector2(worldSize, flashPhase));
+            }
+
+            group.PointCorners.Add(new Vector2(-1f, -1f));
+            group.PointCorners.Add(new Vector2(1f, -1f));
+            group.PointCorners.Add(new Vector2(1f, 1f));
+            group.PointCorners.Add(new Vector2(-1f, 1f));
+            group.PointTriangles.AddRange(new[] { first, first + 2, first + 1, first, first + 3, first + 2 });
         }
 
         private static void AppendFixture(AirfieldFixture.Geometry g, Vector3 origin, Vector3 scale,
@@ -529,6 +554,7 @@ namespace Airside.Presentation
                     group.Triangles, AirsideMaterialLibrary.CreateShared(group.Colour,
                         AirsideMaterialLibrary.SurfaceKind.Default, null, Vector2.one, useTextures: false));
                 group.Halo = SpawnHaloMesh(root, HaloGroupPrefix + group.Name, group);
+                SpawnLightPoints(root, group);
                 BuiltLensGroups.Add(group);
             }
 
@@ -582,6 +608,48 @@ namespace Airside.Presentation
             renderer.enabled = false;
             AirsideSceneIndex.Remember(go);
             return renderer;
+        }
+
+        public const string PointGroupPrefix = "Airfield light points ";
+        private static Shader _lightPointShader;
+
+        private static void SpawnLightPoints(Transform root, LensGroup group)
+        {
+            if (group.PointTriangles.Count == 0)
+                return;
+            _lightPointShader ??= Shader.Find("Airside/AirfieldLightPoint");
+            if (_lightPointShader == null)
+                return;
+            var mesh = new Mesh { name = PointGroupPrefix + group.Name, indexFormat = IndexFormat.UInt32 };
+            mesh.SetVertices(group.PointVertices);
+            mesh.SetUVs(0, group.PointCorners);
+            mesh.SetUVs(1, group.PointSizePhase);
+            mesh.SetTriangles(group.PointTriangles, 0);
+            mesh.RecalculateBounds();
+            // Every vertex sits at a lens centre; the quads open in the shader, so pad the bounds
+            // or a group along one runway edge would be culled while its points are on screen.
+            var bounds = mesh.bounds;
+            bounds.Expand(new Vector3(60f, 60f, 60f));
+            mesh.bounds = bounds;
+            AirsideMeshUtil.UploadStatic(mesh);
+            var go = new GameObject(PointGroupPrefix + group.Name);
+            go.transform.SetParent(root, false);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            var material = new Material(_lightPointShader) { name = "mat_airfield_light_point " + group.Name };
+            material.SetFloat("_MinPixels", AirfieldFixture.PointMinPixels(group.Response));
+            material.SetFloat("_HalfMetres", AirfieldFixture.PointHalfBrightnessMetres);
+            material.SetFloat("_DistanceFloor", AirfieldFixture.PointDistanceFloor);
+            material.SetFloat("_HazeExponent", AirfieldFixture.PointHazeExponent);
+            material.SetFloat("_FlashHz", AirfieldFixture.GuardFlashHz);
+            material.SetColor("_BaseColor", Color.black);
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.enabled = false;
+            AirsideSceneIndex.Remember(go);
+            group.Points = renderer;
+            group.PointMaterial = material;
         }
 
         /// <summary>URP Unlit, additive, depth-tested, no depth write, with a generated soft radial falloff.</summary>
@@ -644,6 +712,14 @@ namespace Airside.Presentation
                     var body = Color.Lerp(group.Colour * 0.5f, group.Colour, Mathf.Clamp01(glow));
                     body.a = 1f;
                     SetRendererColor(group.Lens, body, group.Colour * glow);
+                }
+
+                if (group.Points != null)
+                {
+                    var strength = AirfieldFixture.PointStrength(group.Response, night);
+                    group.Points.enabled = strength > 0.01f;
+                    if (group.PointMaterial != null)
+                        group.PointMaterial.SetColor(BaseColorId, group.Colour * strength);
                 }
 
                 if (group.Halo == null)

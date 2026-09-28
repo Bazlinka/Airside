@@ -1,5 +1,20 @@
 ## Unreleased
 
+- **Propellers vanish at full power.** A turboprop at speed now shows what your eye really sees:
+  the spinner, a faint haze and a thin ring from the painted tips. The ghostly grey blades that
+  stayed visible are gone. Jet engines at power now show a solid dark fan face instead of a
+  see-through intake.
+
+- **Runway lights you can see at night.** Runway, taxiway, approach and stand lights now show as
+  sharp points of light from anywhere on the field and cut through haze, like a real airport at
+  night. The yellow runway guard lights now flash alternately. A new **Night brightness** option
+  (Natural, Brighter, Brightest) lets you see more of the field after dark.
+
+- **Departures really turn.** After take-off, aircraft now bank and fly a smooth turn onto the
+  heading for their destination. They used to point their nose one way and drift another. The
+  landing gear now comes up a few seconds after the wheels leave the runway, not while still
+  rolling, and the landing lights stay on through the climb.
+
 - **Flights have numbers and city names.** A departure reads like a real board: ZL3482
   Kingscote, QF680 Sydney, VA230 Melbourne. The aircraft type stays in the small print.
   Extra flights, and the player's own, still get a number when no published service fits.

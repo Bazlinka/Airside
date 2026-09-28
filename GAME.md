@@ -1,5 +1,37 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — propellers and fans at speed (ADR 0168).** Branch
+  `claude/fervent-gates-1tzyhq`.
+  - The propeller blur disc is now the blades' real time-averaged coverage (5–20 % haze plus a faint
+    tip ring). The old disc painted blade ghosts at 30 % and turned them slowly, so blades never
+    vanished.
+  - Spinners and hubs stay visible.
+  - The turbofan face is a near-solid dark disc, where it was 26 % glass and see-through.
+  - Blur is judged on at least a 60 Hz frame, and both discs dim at night.
+
+  **Checks:** propeller tests against shims, harness. **Not seen in Unity.**
+
+- **2026-09-28 Claude — airfield light points, night brightness (ADR 0167).** Branch
+  `claude/fervent-gates-1tzyhq`.
+  - Every runway, taxi, approach and stand lens also draws a light point
+    (`Airside/AirfieldLightPoint`, a new always-included shader). It never shrinks below 2–3.4 px,
+    dims gently with distance and cuts through haze about 1.7× further than surfaces, so the runway
+    reads as lines of lights from the overview at night.
+  - Runway guard lights now alternate.
+  - New option: Night brightness (Natural / Brighter / Brightest, default Brighter), night-only
+    exposure and ambient lift.
+
+  **Checks:** headless fixture and night tests. **Not seen in Unity; shader not compiled.**
+
+- **2026-09-28 Claude — departures turn, gear waits (ADR 0166).** Branch
+  `claude/fervent-gates-1tzyhq`. Play-test fixes:
+  - Departures now fly a banked constant-radius arc onto the full destination bearing. They used to
+    yaw the nose while sliding sideways, which read as drifting.
+  - Gear retracts 3 s after each type's own lift-off. Jets used to raise it on the runway.
+  - Landing lights stay on through the climb.
+
+  **Checks:** 950 headless tests, the gear test run against shims. **Not seen in Unity.**
+
 - **2026-09-28 Cursor — flight numbers and city names (ADR 0165).** Flights show a callsign
   and number plus the city (ZL3482 Kingscote, QF680 Sydney) on the card, the tags, the
   map, the board and the toasts. Published Adelaide routes use representative numbers;

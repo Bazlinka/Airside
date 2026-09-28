@@ -44,7 +44,8 @@ LIGHT = np.array([-0.45, 0.8, 0.4])
 WHITE = (236, 239, 242)
 LIGHT_GREY = (205, 210, 216)
 SLATE = (96, 110, 122)          # neutral accent: no airline colour
-GLASS = (40, 70, 92)
+GLASS = (38, 44, 50)            # neutral dark glazing, not a blue decal
+MASK = (26, 28, 31)             # painted flight-deck surround, posts and seals
 DARK = (48, 50, 54)
 RUBBER = (30, 30, 33)
 METAL = (140, 143, 148)
@@ -59,20 +60,22 @@ def colour(name):
         return RUBBER
     if n.startswith(("wheel_", "rim_")):
         return METAL
-    # Pillars / brow must win before the broad windscreen/cockpit glass match,
-    # otherwise the flight deck collapses into one dark mask in the Hangar thumb.
+    # Seals, the painted flight-deck surround and its posts are one dark band, as on the
+    # real aircraft; the glass stays a shade lighter so the panes still read.
     if n.startswith("glazing_"):
-        if n.endswith("_trim"):
-            return (191, 201, 209)
-        if n.endswith("_gasket"):
-            return (31, 46, 56)
-        if n.endswith("_reflection"):
-            return (118, 167, 185)
+        if n.endswith(("_gasket", "_mask")):
+            return MASK
         if n.endswith("_interior"):
-            return (24, 37, 48)
+            return (18, 20, 23)
     if n.startswith("pilot_"):
         return (128, 94, 76) if n.endswith("_head") else (33, 45, 60)
-    if n.startswith(("cabin_window_frame", "cockpit_frame", "windscreen_pillar", "cockpit_glare", "cockpit_sill")):
+    # The Q400's centre sill is part of the band (its glare panel is glass, below); the
+    # ATR's paired _l/_r pieces are skin fairings below it.
+    if n.startswith(("cockpit_frame", "windscreen_pillar", "cockpit_mask")) or n == "cockpit_sill":
+        return MASK
+    if n.startswith(("cockpit_sill_", "cockpit_glare_")):
+        return WHITE
+    if n.startswith("cabin_window_frame"):
         return LIGHT_GREY
     if n.startswith(("cabin_window", "cockpit", "windscreen")):
         return GLASS

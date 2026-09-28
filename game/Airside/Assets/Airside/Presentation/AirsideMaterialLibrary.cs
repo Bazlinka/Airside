@@ -165,12 +165,10 @@ namespace Airside.Presentation
             var n = meshName.ToLowerInvariant();
             if (n.StartsWith("glazing_", StringComparison.Ordinal))
             {
-                if (n.EndsWith("_trim", StringComparison.Ordinal))
+                if (n.EndsWith("_mask", StringComparison.Ordinal))
                     return SurfaceKind.PaintedMetal;
                 if (n.EndsWith("_gasket", StringComparison.Ordinal))
                     return SurfaceKind.Rubber;
-                if (n.EndsWith("_reflection", StringComparison.Ordinal))
-                    return SurfaceKind.Glass;
                 if (n.EndsWith("_interior", StringComparison.Ordinal))
                     return SurfaceKind.Default;
             }

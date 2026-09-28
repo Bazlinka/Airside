@@ -1,5 +1,21 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — realistic aircraft windows (ADR 0171).** Branch
+  `feature/realistic-aircraft-glazing`. Cabin panes are rounded rectangles of neutral near-black
+  glass with a dark seal: no blue tint, light trim ring or baked glint. Each flight deck has a dark
+  painted surround (`glazing_flightdeck_*_mask`), so the windscreen reads as one band with posts.
+  All 13 runtime aircraft, the thumbnails and the StreamingAssets mirror were regenerated.
+
+  **Checks:** Unity EditMode 1296/1301, including the new
+  `AircraftDispatchTests.EveryModel_HasNeutralDarkGlassInsideADarkFlightDeckSurround`. The 3
+  failures (`AdelaidePavementTests.Layout_ParkedRegionalAircraftKeepCodeCClearance`,
+  `GroundSeparationTests.BusyDay_NoAircraftDriveThroughEachOther` and
+  `TerminalGateOperationsTests.Reservations_GateLeadInAndRunwayHeldBeforeMovementAndReleased`) also
+  fail on untouched `origin/main` a4b7be62: they are simulation tests and need their own fix. Also
+  passing: `test-aircraft-paint.py`, `test-aircraft-connectivity.py`, the title-layout check, and
+  false-colour close-ups of every nose. **Not seen in the running game.** Check follow zoom by day
+  and night.
+
 - **2026-09-28 Claude — Emirates and Qatar land in the evening.** Branch `claude/fervent-gates-1tzyhq`.
   - The ~27 h round trip brought them back just after 23:00 every night, held off-map until a 07:15
     landing, then turned in the morning. The real 22:00 departure (`PinLongHaulEvening`) never

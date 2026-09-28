@@ -165,7 +165,7 @@ namespace Airside.Presentation
             if (Is(type, AircraftType.EmbraerE190))
                 return new AircraftIdentityMarkingLayout(1.21f, 3.80f, -4.39f, 1.31f, 3.66f, -27.69f, 0.113f, 0.053f, 36.79f, 30.64f, 12.32f);
             if (Is(type, AircraftType.AirbusA220300))
-                return new AircraftIdentityMarkingLayout(1.41f, 3.75f, -5.85f, 1.52f, 3.59f, -28.15f, 0.132f, 0.061f, 36.72f, 30.48f, 13.16f);
+                return new AircraftIdentityMarkingLayout(1.41f, 3.75f, -5.85f, 1.52f, 3.59f, -28.15f, 0.132f, 0.061f, 36.73f, 30.48f, 13.16f);
             if (Is(type, AircraftType.AirbusA320200))
                 return new AircraftIdentityMarkingLayout(1.63f, 4.62f, -4.72f, 1.75f, 4.42f, -27.52f, 0.155f, 0.069f, 35.47f, 28.73f, 12.77f);
             if (Is(type, AircraftType.Boeing737800))

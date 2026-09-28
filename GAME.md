@@ -1,5 +1,31 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — taxi conflicts fixed (ADR 0153).** Branch
+  `feature/taxi-conflicts-20260928`, based on `25326f42`. `GroundTraffic.PathClear` walked a
+  candidate leg every 2 s — about 30 m at taxi speed, wider than the ~25 m clearance it tested — so
+  two aircraft crossing could pass between samples. Both surviving conflicts were marginal (24 m and
+  25 m) mid-taxiway crossings. Now a coarse 2 s scan with a 70 m probe, refined at 0.25 s only in the
+  window around a near miss, plus a 3 m planning margin. Sampling finely everywhere cost ~3x and
+  timed a test out, hence the two-pass form. Also fixed two stale Gate 13 tests that compared
+  `AdelaideGround` (aligned, ADR 0141) poses against raw `AdelaideLayout` coordinates.
+  **Checks:** Unity EditMode **1254/1257**, against 1241/1246 with four failures on clean `main` at
+  `a98d0359`. `BusyDay_NoAircraftDriveThroughEachOther` and both `Gate13_*` now pass.
+  **Two remain, both Gate 13 allocation, not movement:**
+  `FlightPlanning_UsesEachTypesOwnCruiseAndPracticalRange` ("a Boeing 787-10 cannot park on
+  GATE-13") is pre-existing and untouched. `Reservations_GateLeadInAndRunwayHeldBeforeMovement...`
+  **is caused by this change**: new taxi timings let an AI 737 take Gate 13 while Virgin's is away,
+  so it returns to Gate 23. Nothing is ever double-booked (`gateHolders <= 1` still passes).
+  **Open question for Bailey:** should a scheduled operator's gate be held while it is away?
+  `SuggestStand` already sends it home when free. A ranking penalty in `SuggestStandFor` avoiding
+  another away operator's home gate restores the test, but shifted allocation enough to break
+  `ResumedGame_ContinuesExactlyLikeOneThatNeverStopped` (resumed runway free-at differed by 12 s,
+  because `ReconcileRunwayFreeAt` recomputes on restore instead of trusting the save) — a separate
+  pre-existing save-fidelity gap. That change was reverted rather than destabilise saves.
+  **Next, from the same report:** give-way priority, and a longer visible approach
+  (`ApproachStartX` = −4 200 m, ~38 s of final; lengthening it changes derived approach timing and
+  needs the terrain extent and camera far plane checked). Human playtest still owed on ADR 0151
+  (propellers) and ADR 0152 (jitter).
+
 - **2026-09-28 Claude — honest en-route speeds and smooth motion (ADR 0152).**
   Branch `feature/ground-motion-and-speed-fixes-20260928`, based on `cf37be0b`. First two items of
   Bailey's follow-up list. **1 700 kt:** `EnrouteProfile` solves cruise speed from the leg and

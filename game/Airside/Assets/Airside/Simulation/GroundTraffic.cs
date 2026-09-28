@@ -21,7 +21,39 @@ namespace Airside.Simulation
         /// <summary>After this long, stop waiting for aircraft that are standing still (see <see cref="PathClear"/>).</summary>
         public const long MaxWaitSeconds = 180;
 
+        /// <summary>
+        /// ADR 0153: how often a candidate leg is compared against other traffic. At taxi speed
+        /// 2 s leaves about 30 m between samples — further apart than the clearance being tested —
+        /// so two aircraft crossing could pass between two samples and never be noticed. Sampling
+        /// fine enough to close that everywhere cost nearly three times as much, which this
+        /// simulation cannot afford, so the scan stays coarse and refines around an encounter.
+        /// </summary>
         private const double SampleSeconds = 2.0;
+
+        /// <summary>Step used inside an encounter window, fine enough to find the closest approach.</summary>
+        private const double FineSampleSeconds = 0.25;
+
+        /// <summary>
+        /// How near two aircraft must come on the coarse scan for the window around it to be
+        /// re-walked finely. Wide enough to bracket any real conflict: at taxi speed two aircraft
+        /// closing head-on cover about 60 m between coarse samples, so a pair that is ever going to
+        /// breach clearance is already inside this on the sample before or after.
+        /// </summary>
+        private const double EncounterProbeMetres = 70.0;
+
+        /// <summary>
+        /// ADR 0153: extra clearance the ground controller plans with, over and above the distance
+        /// at which airframes would actually be drawn overlapping. Planning to the same figure the
+        /// violation is measured at left no room at all: a leg cleared with a metre to spare became
+        /// a conflict as soon as anything drifted — a queue moving back a place, a leg scaled to a
+        /// slightly different duration — and the surviving conflicts were all marginal, 24 m and
+        /// 25 m against a 25 m limit. A controller leaves a gap; so does this.
+        ///
+        /// Kept small deliberately. The aliasing above is what actually caused the conflicts, and
+        /// aircraft legitimately pass close on the apron — at 12 m only one aircraft could taxi on
+        /// an apron at a time, which is not how the apron works.
+        /// </summary>
+        private const double PlanningMarginMetres = 3.0;
 
         /// <summary>The same metres the queue positions step back by.</summary>
         public static float QueueSpacingMetres => AdelaideGround.AwaitingSpacingMetres;
@@ -32,13 +64,22 @@ namespace Airside.Simulation
             new((now.ElapsedSeconds / GridSeconds + 1) * GridSeconds);
 
         /// <summary>Two aircraft this close would be drawn with overlapping airframes.</summary>
-        public static bool TooClose(GroundPose a, double aHalfSpan, GroundPose b, double bHalfSpan)
+        public static bool TooClose(GroundPose a, double aHalfSpan, GroundPose b, double bHalfSpan) =>
+            TooClose(a, aHalfSpan, b, bHalfSpan, 0.0);
+
+        /// <summary>
+        /// As above, with <paramref name="marginMetres"/> of extra room. The ground controller plans
+        /// with a margin so a cleared route is not one drift away from a conflict; the check for
+        /// whether airframes actually overlap uses none.
+        /// </summary>
+        public static bool TooClose(GroundPose a, double aHalfSpan, GroundPose b, double bHalfSpan,
+            double marginMetres)
         {
             var dx = a.X - b.X;
             var dz = a.Z - b.Z;
             // Not the full wingspans: aircraft pass each other on parallel taxiways and stand
             // at neighbouring stops. This catches airframes actually driving through each other.
-            var clear = 0.85 * (aHalfSpan + bHalfSpan) + 2.0;
+            var clear = 0.85 * (aHalfSpan + bHalfSpan) + 2.0 + Math.Max(0.0, marginMetres);
             return dx * dx + dz * dz < clear * clear;
         }
 
@@ -291,10 +332,12 @@ namespace Airside.Simulation
                 {
                     if (s >= queueZoneFrom && other.SameQueue)
                         continue;
-                    var got = TryPose(fleet, other.Aircraft, when, other, out var theirs, out _);
-                    if (!got)
+                    if (!TryPose(fleet, other.Aircraft, when, other, out var theirs, out _))
                         continue;
-                    if (TooClose(mine, half, theirs, other.HalfSpan))
+                    // Coarse pass only asks whether these two come anywhere near each other here.
+                    if (!TooClose(mine, half, theirs, other.HalfSpan, EncounterProbeMetres))
+                        continue;
+                    if (EncounterBreachesClearance(fleet, leg, half, other, queueZoneFrom, start, s))
                     {
                         blocker = other.Aircraft;
                         return false;
@@ -303,6 +346,32 @@ namespace Airside.Simulation
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// ADR 0153: re-walk the window around a near miss found by the coarse scan, finely enough
+        /// to catch the closest approach. The coarse scan steps further than the clearance it is
+        /// testing, so two aircraft crossing could pass between two samples — which is exactly how
+        /// the surviving conflicts happened, at 24 and 25 m against a 25 m limit.
+        /// </summary>
+        private static bool EncounterBreachesClearance(IReadOnlyList<FleetAircraft> fleet, GroundLeg leg,
+            double half, Track other, double queueZoneFrom, SimulationTime start, double coarseSeconds)
+        {
+            var from = Math.Max(0.0, coarseSeconds - SampleSeconds);
+            var to = Math.Min(leg.Seconds, coarseSeconds + SampleSeconds);
+            for (var s = from; s <= to + 1e-6; s += FineSampleSeconds)
+            {
+                if (s >= queueZoneFrom && other.SameQueue)
+                    continue;
+                var (mx, mz) = leg.PositionAt(s);
+                var mine = new GroundPose(mx, mz, 0f, 1f, 0f, false);
+                if (!TryPose(fleet, other.Aircraft, start.ElapsedSeconds + s, other, out var theirs, out _))
+                    continue;
+                if (TooClose(mine, half, theirs, other.HalfSpan, PlanningMarginMetres))
+                    return true;
+            }
+
+            return false;
         }
 
         /// <summary>Box around everywhere <paramref name="aircraft"/> can be on the ground in its current state.</summary>

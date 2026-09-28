@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Aircraft no longer taxi through each other.** Ground control checked a route for conflicts
+  every two seconds, which at taxi speed is further apart than the clearance it was testing, so two
+  aircraft crossing could slip past each other between checks. It now scans coarsely and looks
+  closely wherever two aircraft come near, and leaves a small margin instead of clearing a route
+  with a metre to spare. The whole-day ground separation check passes for the first time.
+
 - **Aircraft report speeds they can actually fly.** An arrival could show an impossible figure —
   1 700 kt for one coming in from Melbourne. Flights that start part way home, and aircraft being
   delivered, are now drawn at the right point of a properly shaped leg, so speed, height and

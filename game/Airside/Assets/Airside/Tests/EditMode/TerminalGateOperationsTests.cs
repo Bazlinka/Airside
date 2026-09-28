@@ -67,7 +67,10 @@ namespace Airside.Tests
             Assert.Throws<InvalidOperationException>(() => AdelaideGround.Bay(Gate13));
             Assert.That(AirlineOperations.AdelaideRegionalBays, Has.No.Member(Gate13));
 
-            var gate = AdelaideLayout.TerminalGates.Single(g => g.Id == "GATE-13");
+            // ADR 0141 moved every contact gate's stop to a common setback from the T1 wall, and
+            // the game reads the aligned gates everywhere. Comparing a pose against the raw
+            // pre-alignment layout was measuring the alignment, not the gate.
+            var gate = AdelaideGround.TerminalGates.Single(g => g.Id == "GATE-13");
             var parked = AdelaideGround.StandPose(Gate13);
             Assert.That(parked.X, Is.EqualTo(gate.NoseX).Within(0.01f));
             Assert.That(parked.Z, Is.EqualTo(gate.NoseZ).Within(0.01f));
@@ -162,7 +165,8 @@ namespace Airside.Tests
         [Test]
         public void Gate13_NoseInToTheStop_TailFirstPushback_ThenForwardTurnout()
         {
-            var gate = AdelaideLayout.TerminalGates.Single(g => g.Id == "GATE-13");
+            // Aligned gate (ADR 0141): the taxi-in and pushback below are rebuilt to the aligned stop.
+            var gate = AdelaideGround.TerminalGates.Single(g => g.Id == "GATE-13");
             var hx = Mathf.Sin(gate.HeadingDegrees * Mathf.Deg2Rad);
             var hz = Mathf.Cos(gate.HeadingDegrees * Mathf.Deg2Rad);
 
@@ -238,8 +242,13 @@ namespace Airside.Tests
                     (a.State is FleetState.AtStand or FleetState.TaxiIn && a.Stand.Equals(Gate13))
                     || (a.State == FleetState.TaxiOut && a.DepartureStand.Equals(Gate13)));
                 Assert.That(gateHolders, Is.LessThanOrEqualTo(1), "gate double-booked");
-                Assert.That(ops.Fleet.Where(a => a != jet).All(a => !a.Stand.Equals(Gate13) && !a.DepartureStand.Equals(Gate13)), Is.True,
-                    "only the jet ever uses Gate 13");
+                // The gateHolders check above is the one that matters: never two aircraft on the
+                // gate at once. This used to also assert that only the Virgin jet ever used Gate 13
+                // at all, which was an accident of the taxi timings — Gate 13 is a code C contact
+                // gate and the field carries several 737s (Virgin plus Qantas), so another one
+                // taking it once the Virgin jet has gone is correct behaviour, not a fault. Asking
+                // instead that no other aircraft merely *names* Gate 13 does not work either:
+                // DepartureStand stays set on an aircraft long after it has flown away.
 
                 switch (jet.State)
                 {

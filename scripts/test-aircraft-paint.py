@@ -88,6 +88,12 @@ def main():
             if f"glazing_{group}_interior" not in parts:
                 failures.append(f"{cid}: no recessed {group} interior")
         for side in ("left", "right"):
+            if f"glazing_flightdeck_{side}_mask" not in parts:
+                failures.append(f"{cid}: no dark {side} flight-deck surround")
+        for name in parts:
+            if name.startswith("glazing_") and name.endswith(("_trim", "_reflection")):
+                failures.append(f"{cid}/{name}: light trim ring or baked glint is back")
+        for side in ("left", "right"):
             for role in ("head", "uniform"):
                 if f"pilot_{side}_{role}" not in parts:
                     failures.append(f"{cid}: no {side} pilot {role}")

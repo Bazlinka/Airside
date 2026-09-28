@@ -63,6 +63,47 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void EveryModel_HasNeutralDarkGlassInsideADarkFlightDeckSurround()
+        {
+            // Real aircraft glass reads near-black from outside, not blue-teal, and the flight
+            // deck is one dark band broken by posts rather than separate panes in white skin.
+            foreach (var spec in AircraftCatalogue.All.Where(s => s.ModelStatus == ModelStatus.Genuine))
+            {
+                var root = Build(spec.Type);
+                try
+                {
+                    var parts = root.GetComponentsInChildren<Transform>(true);
+                    var glass = parts.Where(t => t.name.StartsWith("Cabin window ")
+                                                 || (t.name.StartsWith("Windscreen", System.StringComparison.OrdinalIgnoreCase)
+                                                     && t.name.IndexOf("pillar", System.StringComparison.OrdinalIgnoreCase) < 0))
+                        .Select(t => t.GetComponent<Renderer>())
+                        .Where(r => r != null)
+                        .ToArray();
+                    Assert.That(glass, Is.Not.Empty, $"{spec.Name} glazing");
+                    foreach (var pane in glass)
+                    {
+                        var c = pane.sharedMaterial.color;
+                        Assert.That(Mathf.Max(c.r, c.g, c.b), Is.LessThan(0.12f), $"{spec.Name} {pane.name} is dark");
+                        Assert.That(c.b - c.r, Is.LessThan(0.04f), $"{spec.Name} {pane.name} is neutral, not tinted blue");
+                    }
+
+                    var surrounds = parts.Where(t => t.name.StartsWith("glazing_flightdeck_")
+                                                     && t.name.EndsWith("_mask")).ToArray();
+                    Assert.That(surrounds.Length, Is.GreaterThanOrEqualTo(2), $"{spec.Name} flight-deck surround");
+                    foreach (var surround in surrounds)
+                    {
+                        var c = surround.GetComponent<Renderer>().sharedMaterial.color;
+                        Assert.That(Mathf.Max(c.r, c.g, c.b), Is.LessThan(0.06f), $"{spec.Name} {surround.name} is dark");
+                    }
+                }
+                finally
+                {
+                    Object.DestroyImmediate(root.gameObject);
+                }
+            }
+        }
+
+        [Test]
         public void Atr42_UsesNeutralLiftingSurfacesAndReadableGlazing()
         {
             var root = Build(AircraftType.Atr42);

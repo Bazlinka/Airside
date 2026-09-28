@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Aircraft windows look real.** Cabin windows are now rounded rectangles of dark glass with a
+  thin black seal. The blue tint, the light ring round each window and the painted-on shine are
+  gone. Each flight deck's windscreen is now one dark band broken by thin posts, like a real
+  airliner's, instead of separate windows set in white paint (ADR 0171).
+
 - **Emirates and Qatar keep their evening timetable.** They now land around 8:30 pm and leave
   at 10 pm, instead of being held until the next morning every night.
 

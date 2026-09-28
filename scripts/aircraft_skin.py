@@ -162,9 +162,13 @@ def skin_patch(
 
 
 def window(surface, z, angle, *, width=0.24, height=0.34, front=0.007, back=-0.004):
-    """One airliner passenger window: a tall rounded rectangle, flush with the skin."""
+    """One airliner passenger window: a tall rounded rectangle, flush with the skin.
+
+    Five segments per corner keep the straight sides and smooth corners of a real
+    cabin window; two made an octagon that showed its facets at follow zoom.
+    """
     return skin_patch(surface, z, angle, width / 2, height / 2, front=front, back=back,
-                      radius=width * 0.42, rings=1, corner_segments=2)
+                      radius=width * 0.40, rings=1, corner_segments=5)
 
 
 def door_set(surface, z, angle, half_len, half_arc, *, base=0.004):

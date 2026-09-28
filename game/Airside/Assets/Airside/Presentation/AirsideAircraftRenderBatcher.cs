@@ -64,9 +64,7 @@ namespace Airside.Presentation
                 || name.StartsWith("cabin_window", StringComparison.OrdinalIgnoreCase)
                 || name.StartsWith("Windscreen", StringComparison.OrdinalIgnoreCase)
                 || name.StartsWith("Cockpit side", StringComparison.OrdinalIgnoreCase)
-                || name.StartsWith("cockpit_side", StringComparison.OrdinalIgnoreCase)
-                || (name.StartsWith("glazing_", StringComparison.OrdinalIgnoreCase)
-                    && name.EndsWith("_reflection", StringComparison.OrdinalIgnoreCase));
+                || name.StartsWith("cockpit_side", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool TryBuildBatch(

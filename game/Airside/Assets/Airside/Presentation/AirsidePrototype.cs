@@ -10579,30 +10579,56 @@ namespace Airside.Presentation
         private static string FriendlyPartSuffix(string suffix) =>
             suffix.Replace('_', ' ');
 
+        /// <summary>
+        /// Aircraft glass seen from outside by day: near-black and neutral, with the smooth
+        /// glazing material supplying the sky reflection. A blue-teal tint read as a toy.
+        /// </summary>
+        private static readonly Color AircraftGlass = new(0.06f, 0.07f, 0.08f, 0.72f);
+
+        /// <summary>Seals, the painted flight-deck surround and windscreen posts.</summary>
+        private static readonly Color AircraftGlazingSurround = new(0.035f, 0.037f, 0.04f);
+
+        private static bool IsAircraftGlass(string kitName) =>
+            (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)
+             && !kitName.StartsWith("cabin_window_frame", StringComparison.Ordinal))
+            || kitName.StartsWith("cockpit_side_", StringComparison.Ordinal)
+            || (kitName.StartsWith("windscreen_", StringComparison.Ordinal)
+                && !kitName.StartsWith("windscreen_pillar", StringComparison.Ordinal));
+
         private static Color? AircraftPartColor(string kitName, Color accent)
         {
             if (kitName.StartsWith("livery_", StringComparison.Ordinal))
                 return AircraftLiveryPaint.Colour(kitName, accent);
             if (kitName.StartsWith("glazing_", StringComparison.Ordinal))
             {
-                if (kitName.EndsWith("_trim", StringComparison.Ordinal))
-                    return new Color(0.79f, 0.82f, 0.84f);
-                if (kitName.EndsWith("_gasket", StringComparison.Ordinal))
-                    return new Color(0.025f, 0.035f, 0.045f);
-                if (kitName.EndsWith("_reflection", StringComparison.Ordinal))
-                    return new Color(0.67f, 0.79f, 0.84f, 0.16f);
+                if (kitName.EndsWith("_gasket", StringComparison.Ordinal)
+                    || kitName.EndsWith("_mask", StringComparison.Ordinal))
+                    return AircraftGlazingSurround;
                 if (kitName.EndsWith("_interior", StringComparison.Ordinal))
-                    return new Color(0.028f, 0.043f, 0.057f);
+                    return new Color(0.02f, 0.022f, 0.025f);
             }
+            if (IsAircraftGlass(kitName))
+                return AircraftGlass;
+            // Real windscreen posts and frames are part of the dark flight-deck band, as is the
+            // Q400's centre sill; its centre glare panel glows with the windscreen at night, so
+            // it is glass. The ATR's paired _l/_r sill and glare pieces are skin fairings below
+            // the band and stay fuselage white.
+            if (kitName.StartsWith("windscreen_pillar", StringComparison.Ordinal)
+                || kitName.StartsWith("cockpit_frame", StringComparison.Ordinal)
+                || kitName.StartsWith("cockpit_mask_", StringComparison.Ordinal)
+                || kitName == "cockpit_sill")
+                return AircraftGlazingSurround;
+            if (kitName == "cockpit_glare")
+                return AircraftGlass;
+            if (kitName.StartsWith("cockpit_sill_", StringComparison.Ordinal)
+                || kitName.StartsWith("cockpit_glare_", StringComparison.Ordinal))
+                return new Color(0.93f, 0.95f, 0.97f);
             if (kitName.StartsWith("pilot_", StringComparison.Ordinal))
                 return kitName.EndsWith("_head", StringComparison.Ordinal)
                     ? new Color(0.53f, 0.40f, 0.33f)
                     : new Color(0.075f, 0.105f, 0.15f);
             if (kitName.StartsWith("fan_", StringComparison.Ordinal))
                 return new Color(0.16f, 0.18f, 0.21f);
-            if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)
-                || kitName.StartsWith("cockpit_side_", StringComparison.Ordinal))
-                return new Color(0.12f, 0.26f, 0.34f, 0.72f);
             if (kitName.StartsWith("tire_", StringComparison.Ordinal))
                 return new Color(0.12f, 0.12f, 0.13f);
             if (kitName.StartsWith("wheel_", StringComparison.Ordinal)
@@ -10618,17 +10644,10 @@ namespace Airside.Presentation
                 or "nose" or "nose_tip" or "nose_ring_a" or "nose_ring_b" or "radome"
                 or "belly_fairing" or "cargo_door" or "door_frame_fwd"
                 or "gear_fairing_left" or "gear_fairing_right" => new Color(0.93f, 0.95f, 0.97f),
-            "cockpit" or "cockpit_loft" or "cabin_windows" or "cabin_window_band"
-                or "cabin_window_1" or "cabin_window_2" or "cabin_window_3" or "cabin_window_4" or "cabin_window_5"
-                or "cabin_window_6" or "cabin_window_7"
-                or "cabin_window_r1" or "cabin_window_r2" or "cabin_window_r3" or "cabin_window_r4" or "cabin_window_r5"
-                or "cabin_window_r6" or "cabin_window_r7" or "cockpit_glare"
-                or "windscreen_c" or "windscreen_l" or "windscreen_r"
-                => new Color(0.18f, 0.35f, 0.48f, 0.42f),
+            "cockpit" or "cockpit_loft" or "cabin_windows" => AircraftGlass,
             "cabin_window_frame_1" or "cabin_window_frame_3" or "cabin_window_frame_5" or "cabin_window_frame_7"
                 or "cabin_window_frame_r1" or "cabin_window_frame_r2" or "cabin_window_frame_r3"
                 or "cabin_window_frame_r4" or "cabin_window_frame_r5" or "cabin_window_frame_r7"
-                or "cockpit_frame" or "cockpit_sill" or "windscreen_pillar_l" or "windscreen_pillar_r" or "windscreen_pillar_c"
                 => new Color(0.75f, 0.78f, 0.82f),
             "livery_stripe" or "livery_stripe_lower" or "livery_tail_sweep" => accent,
             "door_handle_fwd" or "cargo_door_latch" or "cargo_sill"
@@ -10746,11 +10765,6 @@ namespace Airside.Presentation
                     return new Color(0.76f, 0.79f, 0.82f);
             }
 
-            if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)
-                || kitName.StartsWith("cockpit_side_", StringComparison.Ordinal)
-                || kitName.StartsWith("windscreen_", StringComparison.Ordinal))
-                return new Color(0.055f, 0.14f, 0.20f);
-
             return AircraftPartColor(kitName, accent);
         }
 
@@ -10785,11 +10799,6 @@ namespace Airside.Presentation
                     return new Color(0.58f, 0.62f, 0.67f);
             }
 
-            if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)
-                || kitName.StartsWith("cockpit_side_", StringComparison.Ordinal)
-                || kitName.StartsWith("windscreen_", StringComparison.Ordinal))
-                return new Color(0.045f, 0.12f, 0.18f);
-
             return AircraftPartColor(kitName, accent);
         }
 
@@ -10798,11 +10807,6 @@ namespace Airside.Presentation
             // The A350's identity comes from its dark wraparound flight-deck mask,
             // long pale composite wing and raked tips. Keep airline colour on the
             // fin/rudder instead of reusing the narrowbody colour hierarchy.
-            if (kitName.StartsWith("cockpit_mask_", StringComparison.Ordinal))
-                return new Color(0.025f, 0.065f, 0.09f);
-            if (kitName.StartsWith("windscreen_", StringComparison.Ordinal)
-                || kitName.StartsWith("cabin_window_", StringComparison.Ordinal))
-                return new Color(0.035f, 0.10f, 0.15f);
             if (kitName.StartsWith("door_", StringComparison.Ordinal))
                 return new Color(0.89f, 0.92f, 0.94f);
 
@@ -10842,9 +10846,6 @@ namespace Airside.Presentation
 
         private static Color? Boeing78710PartColor(string kitName, Color accent)
         {
-            if (kitName.StartsWith("windscreen_", StringComparison.Ordinal)
-                || kitName.StartsWith("cabin_window_", StringComparison.Ordinal))
-                return new Color(0.035f, 0.10f, 0.15f);
             if (kitName.StartsWith("door_", StringComparison.Ordinal))
                 return new Color(0.89f, 0.92f, 0.94f);
 
@@ -10915,11 +10916,6 @@ namespace Airside.Presentation
                     return new Color(0.56f, 0.60f, 0.65f);
             }
 
-            if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)
-                || kitName.StartsWith("cockpit_side_", StringComparison.Ordinal)
-                || kitName.StartsWith("windscreen_", StringComparison.Ordinal))
-                return new Color(0.045f, 0.12f, 0.18f);
-
             return AircraftPartColor(kitName, accent);
         }
 
@@ -10953,11 +10949,6 @@ namespace Airside.Presentation
                 case "elevator_right":
                     return new Color(0.58f, 0.62f, 0.67f);
             }
-
-            if (kitName.StartsWith("cabin_window_", StringComparison.Ordinal)
-                || kitName.StartsWith("cockpit_side_", StringComparison.Ordinal)
-                || kitName.StartsWith("windscreen_", StringComparison.Ordinal))
-                return new Color(0.045f, 0.12f, 0.18f);
 
             return AircraftPartColor(kitName, accent);
         }

@@ -27,8 +27,8 @@ size. Between flights the airport itself made no sound.
   - Distance muffles the sound through a low-pass filter, so a far jet is just a rumble. Rolloff is
     logarithmic, and doppler is set to 0.35.
 - **Apron soundscape (`AirsidePrototype.Soundscape`).**
-  - A quiet 12 s procedural apron bed plays: ground-power hum, a low rumble and distant reversing
-    beeps. It drops to 35% during curfew.
+  - A quiet 12 s procedural apron bed plays: ground-power hum and a low rumble. It drops to 35%
+    during curfew. ADR 0163 removes the reversing beep that was first mixed in here.
   - A terminal PA chime sounds every 4 to 8 minutes during opening hours.
   - The coast drops to 0.016, down from 0.035.
 - **HUD sounds.**

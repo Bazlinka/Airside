@@ -1,5 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Cursor — second Saab and flight toasts (ADR 0164).** A new airline can buy another
+  Saab 340B for $1,600 from the opening cash; it uses 50G beside the given aircraft on 50D.
+  Larger types still wait for the expanded base. Toasts: landed at the destination, and returned
+  home awaiting dispatch. **Checks:** filtered Unity EditMode passed (10 tests, including the
+  opening purchase and the toast wording).
+
+- **2026-09-28 Cursor — button click and apron bed (ADR 0163).** Bailey disliked the beep on
+  the sound controls. Buttons now play a short switch tick (`HudSounds.UiClick`) instead of the
+  Kenney select clip, and the apron loop no longer includes a reversing tone. **Checks:** filtered
+  Unity EditMode passed (`HudSoundsTests`, 4/4). **Next:** hear a menu click and the apron with
+  an aircraft running.
+
 - **2026-09-28 Cursor — startup and frame stutter (ADR 0162).** The rebuilt game was hitching
   because the 4096 satellite was block-compressed on the main thread, every house and tree was
   meshed inside Awake, and SSAO was redrawing the airfield, plain and suburbs with the full Lit

@@ -49,8 +49,9 @@ namespace Airside.Tests
             {
                 Assert.That(AircraftAcquisition.TryFor(offer.Type, out var authored), Is.True);
                 Assert.That(offer.Price, Is.EqualTo(authored.Price));
-                // A brand new Provisional airline has flown nothing, so nothing is buyable yet.
-                Assert.That(offer.CanBuy, Is.False, offer.TypeName);
+                // The second Saab is the only type a new airline can buy from its opening cash.
+                var openingPurchase = offer.Type.Id == AircraftType.Saab340.Id;
+                Assert.That(offer.CanBuy, Is.EqualTo(openingPurchase), offer.TypeName);
                 Assert.That(offer.RequirementLine, Is.Not.Empty, offer.TypeName);
             }
 

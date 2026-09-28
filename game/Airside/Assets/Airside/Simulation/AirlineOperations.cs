@@ -1930,8 +1930,8 @@ namespace Airside.Simulation
                 return CommandResult.Refused($"The {CareerState.Base.Title} holds {CareerState.Base.FleetCapacity} aircraft. Expand your Adelaide base first.");
             if (!PlayerBase.Supports(CareerState.BaseLevel, type))
             {
-                var needed = AircraftCatalogue.IsWidebody(type) ? PlayerBaseLevel.International : PlayerBaseLevel.JetGate;
-                return CommandResult.Refused($"{Article.CapitalA(type.Name)} needs the {PlayerBase.For(needed).Title}. Expand your base in Career.");
+                var needed = PlayerBase.For(PlayerBase.RequiredLevel(type));
+                return CommandResult.Refused($"{Article.CapitalA(type.Name)} needs the {needed.Title}. Expand your Adelaide base first.");
             }
             if (CareerState.Tier < offer.RequiredTier)
                 return CommandResult.Refused($"{Article.CapitalA(type.Name)} needs the {offer.RequiredTier} tier.");
@@ -2751,6 +2751,25 @@ namespace Airside.Simulation
         }
 
         /// <summary>
+        /// True when this aircraft has a list price the player may sell against. The airline's
+        /// only Saab is the one they were given, so it is not cashed out (ADR 0164).
+        /// </summary>
+        public bool CanResell(FleetAircraft aircraft)
+        {
+            if (aircraft == null || !aircraft.Airline.IsPlayer)
+                return false;
+            if (!AircraftAcquisition.TryFor(aircraft.Type, out _))
+                return false;
+            if (aircraft.Type.Id != AircraftType.Saab340.Id)
+                return true;
+            var saabs = 0;
+            foreach (var other in _fleet)
+                if (other.Airline.IsPlayer && other.Type.Id == AircraftType.Saab340.Id)
+                    saabs++;
+            return saabs > 1;
+        }
+
+        /// <summary>
         /// Sells a player aircraft back for a fraction of its purchase price — the market side
         /// of a fleet the player over-committed to, or wants to specialise out of a type.
         /// Refuses a mid-rotation aircraft: only one <see cref="FleetState.AtStand"/> is safe to
@@ -2767,9 +2786,12 @@ namespace Airside.Simulation
                 return CommandResult.Refused($"{aircraft.Registration} has to be parked to sell.");
             if (Maintenance.InCheck(aircraft, _processedTo))
                 return CommandResult.Refused($"{aircraft.Registration} is in its check until {Clock.TimeText(aircraft.CheckUntil.Value)}.");
-            if (!AircraftAcquisition.TryFor(aircraft.Type, out var offer))
-                return CommandResult.Refused($"Nobody is buying {aircraft.Type.Name}s.");
+            if (!CanResell(aircraft))
+                return CommandResult.Refused(aircraft.Type.Id == AircraftType.Saab340.Id
+                    ? "Your first Saab stays with the airline."
+                    : $"Nobody is buying {aircraft.Type.Name}s.");
 
+            AircraftAcquisition.TryFor(aircraft.Type, out var offer);
             var refund = (long)Math.Round(offer.Price * ResaleFraction);
             CareerState.RefundDispatch(refund);
             _fleet.Remove(aircraft);

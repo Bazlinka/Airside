@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Passengers and ground crews now work every kind of turnaround.** Turboprops keep their integral
+  airstairs; remote jets now receive an apron bus as well as a stair truck; and passengers can be seen
+  moving inside a docked aerobridge. Apron walkers spread across lanes instead of following one exact
+  line. Up to eight aircraft can show their own animated teams marshalling, placing safety equipment,
+  fuelling, catering, handling bags, supervising boarding and supporting pushback, with visible tools
+  for each job. All activity is reconstructed from simulation time and does not alter flight timing.
+
 - **No more slowdown when planes are on final.** Placing each arriving aircraft on its final used
   to cost up to a tenth of a second per aircraft, every frame, so the whole game crawled while
   arrivals were inbound and taxiing aircraft hitched. It now costs a few milliseconds spread over
@@ -21,7 +28,6 @@
   thin black seal. The blue tint, the light ring round each window and the painted-on shine are
   gone. Each flight deck's windscreen is now one dark band broken by thin posts, like a real
   airliner's, instead of separate windows set in white paint (ADR 0171).
-
 - **Emirates and Qatar keep their evening timetable.** They now land around 8:30 pm and leave
   at 10 pm, instead of being held until the next morning every night.
 

@@ -1,5 +1,19 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Codex — all-aircraft human operations (branch `feature/human-operations`, ADR 0174).**
+  - Passengers now cover integral airstairs, remote bus + stair truck and docked aerobridges.
+  - Remote buses are pooled per aircraft; apron paths have three lanes while stairs stay single-file.
+  - Up to eight simultaneous aircraft have pooled animated teams for arrival/safety, fuel, catering,
+    baggage, boarding and pushback, with task-readable wands, cones, hose, crate, suitcase and radio.
+  - No autonomous NPC or save state was added; everything samples the existing simulation clock.
+  - **Checks:** domain 973/973; Unity compiles; Unity `BoardingFlowTests` 7/7 and `RampCrewTests`
+    14/14. Full Unity run: 1307 passed, with three unrelated existing failures
+    (`AdelaidePavementTests` opening Q400 count, `GroundSeparationTests` two busy-day conflicts,
+    `TerminalGateOperationsTests` GATE-13 vs GATE-24). The Mac build passed and a six-minute
+    graphics-on soak completed without an exception or stall and recovered to 60 fps / 16.7 ms p95.
+    The automated close-up capture missed the active turnaround and its retry stalled, so clipping,
+    bridge visibility and human scale still need the manual matrix in `docs/plans/human-operations-plan.md`.
+
 - **2026-09-28 Claude — final-approach slowdown, line-up entry, parked aircraft (ADR 0173).** Branch
   `feature/parked-aircraft-and-motion`.
   - The drawn final re-ran the tower's landing estimate every frame for every inbound aircraft
@@ -39,7 +53,6 @@
   passing: `test-aircraft-paint.py`, `test-aircraft-connectivity.py`, the title-layout check, and
   false-colour close-ups of every nose. **Not seen in the running game.** Check follow zoom by day
   and night.
-
 - **2026-09-28 Claude — Emirates and Qatar land in the evening.** Branch `claude/fervent-gates-1tzyhq`.
   - The ~27 h round trip brought them back just after 23:00 every night, held off-map until a 07:15
     landing, then turned in the morning. The real 22:00 departure (`PinLongHaulEvening`) never

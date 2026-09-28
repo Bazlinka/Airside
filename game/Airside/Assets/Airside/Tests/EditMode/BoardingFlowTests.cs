@@ -30,7 +30,7 @@ namespace Airside.Tests
             Assert.That(BoardingFlow.ModeFor(Parked(AircraftType.Boeing737800, "GATE-21", Airline.Qantas()).Aircraft),
                 Is.EqualTo(BoardingMode.Aerobridge));
             Assert.That(BoardingFlow.ModeFor(Parked(AircraftType.Boeing737800, "GATE-27", Airline.Qantas()).Aircraft),
-                Is.EqualTo(BoardingMode.StairTruck), "a jet off the terminal face gets a stair truck");
+                Is.EqualTo(BoardingMode.RemoteBus), "a remote jet gets a bus and a stair truck");
         }
 
         [Test]
@@ -76,7 +76,7 @@ namespace Airside.Tests
                 BoardingFlow.Moves(aircraft, push.ElapsedSeconds, moves, lookBackSeconds: 3 * 3600);
                 var boarding = moves.Where(m => m.Boarding).ToList();
                 Assert.That(boarding.Count, Is.EqualTo(BoardingFlow.PassengerCount(aircraft)), type.Name);
-                var closeBefore = BoardingFlow.ModeFor(aircraft) == BoardingMode.StairTruck
+                var closeBefore = BoardingFlow.UsesStairTruck(BoardingFlow.ModeFor(aircraft))
                     ? BoardingFlow.StairTruckDoorsCloseBeforePushSeconds
                     : EngineStartSequence.DoorsCloseBeforeSeconds;
                 var doorsClose = push.ElapsedSeconds - closeBefore;
@@ -87,13 +87,36 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void BridgedGatePassengersStayInsideTheTunnel()
+        public void BridgedGatePassengersAreGeneratedForTheTunnel()
         {
             var (_, jet) = Parked(AircraftType.Boeing737800, "GATE-21", Airline.Qantas());
             jet.CompletedTrips = 2;
             var moves = new List<PassengerMove>();
             BoardingFlow.Moves(jet, jet.StateStartedAt.ElapsedSeconds + 600, moves, lookBackSeconds: 1000);
-            Assert.That(moves, Is.Empty);
+            Assert.That(moves, Is.Not.Empty);
+            Assert.That(moves.All(m => !m.Boarding), Is.True);
+        }
+
+        [Test]
+        public void RemoteBusReceivesArrivalAndReturnsForDeparture()
+        {
+            var (_, jet) = Parked(AircraftType.Boeing737800, "GATE-27", Airline.Qantas());
+            var parkedAt = jet.StateStartedAt.ElapsedSeconds;
+            Assert.That(BoardingFlow.RemoteBusFraction(jet, parkedAt), Is.EqualTo(0f));
+            Assert.That(BoardingFlow.RemoteBusFraction(jet,
+                parkedAt + BoardingFlow.RemoteBusArriveAfterParkSeconds + BoardingFlow.RemoteBusMoveSeconds), Is.EqualTo(1f));
+            Assert.That(BoardingFlow.RemoteBusFraction(jet,
+                parkedAt + BoardingFlow.RemoteBusArrivalLeaveAfterParkSeconds + BoardingFlow.RemoteBusMoveSeconds), Is.EqualTo(0f));
+
+            DestinationCatalogue.TryFind("SYD", out var sydney);
+            var push = jet.StateStartedAt.Advance(3600);
+            jet.Scheduled = new ScheduledDeparture(sydney, push);
+            Assert.That(BoardingFlow.RemoteBusFraction(jet,
+                push.ElapsedSeconds - BoardingFlow.RemoteBusDepartureArriveBeforePushSeconds + BoardingFlow.RemoteBusMoveSeconds),
+                Is.EqualTo(1f));
+            Assert.That(BoardingFlow.RemoteBusFraction(jet,
+                push.ElapsedSeconds - BoardingFlow.RemoteBusDepartureLeaveBeforePushSeconds + BoardingFlow.RemoteBusMoveSeconds),
+                Is.EqualTo(0f));
         }
 
         [Test]

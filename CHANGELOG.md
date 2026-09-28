@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Engine starts puff smoke.** A turboprop lighting its engine now throws a short puff of
+  grey-white smoke. The orange glow behind engines at take-off is gone: running engines leave only
+  a faint haze, as real ones do.
+
 - **Wet runways shine at night.** When it rains after dark, the runway and taxiway lights now
   reflect in the wet pavement as long streaks of light, like a real airport in the rain.
 

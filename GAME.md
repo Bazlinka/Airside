@@ -1,5 +1,12 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — engine exhaust as haze, with a start puff (ADR 0170).** Branch
+  `claude/fervent-gates-1tzyhq`. The exhaust plume is no longer an orange glow that brightened at
+  takeoff. Running engines show a faint neutral haze, and light-off throws a short grey-white
+  puff. A real heat-distortion shader is deferred: it needs URP's opaque texture, a per-frame
+  full-screen copy that should be measured on the Mac first. **Checks:** shim tests, harness.
+  **Not seen in Unity.**
+
 - **2026-09-28 Claude — wet-runway light reflections (ADR 0169).** Branch
   `claude/fervent-gates-1tzyhq`. In rain at night every airfield light lays a streak on the wet
   pavement towards the camera: the light-point mesh drawn again in the shader's reflection mode,

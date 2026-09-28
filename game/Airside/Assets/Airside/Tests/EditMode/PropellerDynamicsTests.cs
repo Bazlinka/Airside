@@ -194,5 +194,25 @@ namespace Airside.Tests
             foreach (var blade in new[] { "Blade", "Blade 3", "Tip", "Tip 2" })
                 Assert.That(AirsidePropellerDynamics.BlursAtSpeed(blade), Is.True, blade);
         }
+        [Test]
+        public void Exhaust_IsAHazeNotAGlow_AndAStartThrowsAPuff()
+        {
+            // ADR 0170: the plume was orange and brightest at takeoff, like an afterburner.
+            foreach (var power in new[] { 0f, 0.5f, 1f })
+            {
+                var tint = AirsidePropellerDynamics.ExhaustTint(power, 0f);
+                Assert.That(tint.r - tint.b, Is.LessThan(0.12f), "neutral, not orange");
+                Assert.That(tint.a, Is.LessThan(0.1f), "running exhaust is barely visible");
+            }
+
+            Assert.That(AirsidePropellerDynamics.ExhaustTint(1f, 0f).a,
+                Is.GreaterThan(AirsidePropellerDynamics.ExhaustTint(0f, 0f).a), "thickens a little with power");
+            var puff = AirsidePropellerDynamics.ExhaustTint(0f, 1f);
+            Assert.That(puff.a, Is.GreaterThan(0.25f), "the light-off puff is the visible moment");
+            var puffSize = AirsidePropellerDynamics.ExhaustScale(0f, 1f);
+            var takeoffSize = AirsidePropellerDynamics.ExhaustScale(1f, 0f);
+            Assert.That(puffSize.x, Is.GreaterThan(takeoffSize.x), "a puff billows wide");
+            Assert.That(takeoffSize.y, Is.GreaterThan(puffSize.y), "power stretches the plume aft");
+        }
     }
 }

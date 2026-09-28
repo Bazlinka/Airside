@@ -53,6 +53,9 @@ Previously reviewed here:
 |---|---|---|---|
 | BRD-001 | `docs/art/candidates/airside_wordmark_light_v01.png` | `Art/Brand/airside_wordmark_light_v01.png` | Approved · Integrated |
 | BRD-002 | `docs/art/candidates/airside_app_icon_v01.png` | `Art/Brand/airside_app_icon_v01.png` | Approved · Integrated (Player default icon; Mac Dock verify pending) |
+| BRD-004 | `docs/art/candidates/airside_wordmark_light_v03.png` | `Art/Brand/airside_wordmark_light_v03.png` | Integrated · replaces BRD-001 at runtime |
+| BRD-005 | `docs/art/candidates/airside_app_icon_v03.png` | `Art/Brand/airside_app_icon_v03.png` | Integrated · Player default icon |
+| BRD-006 | `docs/art/candidates/airside_brand_mark_v03.png` | `Art/Brand/airside_brand_mark_v03.png` | Integrated · launch mark |
 | UI-ILL-001 | `docs/art/candidates/ui_splash_airport_dawn_v01.png` | `Art/UI/Illustrations/ui_splash_airport_dawn_v01.png` | Approved · Integrated |
 
 ## Existing production assets

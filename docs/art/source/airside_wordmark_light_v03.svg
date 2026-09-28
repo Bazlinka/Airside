@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="512" viewBox="0 0 2048 512">
+  <!-- Editable wordmark source. Runtime PNG text is rasterised with Avenir Next Bold. -->
+  <g transform="translate(18 -22) scale(.50)">
+    <text x="170" y="700" font-family="Avenir Next" font-size="550" font-weight="700" fill="#3FD0C9">A</text>
+    <text x="445" y="700" font-family="Avenir Next" font-size="550" font-weight="700" fill="#EEF1EC">S</text>
+    <path d="M230 744C390 558 625 530 752 382" fill="none" stroke="#EEF1EC" stroke-width="24" stroke-linecap="round"/>
+    <circle cx="752" cy="382" r="28" fill="#FFB547"/>
+  </g>
+  <text x="548" y="330" font-family="Avenir Next" font-size="206" font-weight="700" letter-spacing="8" fill="#EEF1EC">AIR</text>
+  <text x="910" y="330" font-family="Avenir Next" font-size="206" font-weight="700" letter-spacing="8" fill="#3FD0C9">SIDE</text>
+</svg>

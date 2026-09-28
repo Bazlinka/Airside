@@ -160,7 +160,7 @@ namespace Airside.Presentation
                 return null;
             if (artRelativePath == "UI/Illustrations/ui_splash_airport_dawn_v01.png")
                 return SplashDawn;
-            if (artRelativePath == "Brand/airside_wordmark_light_v01.png")
+            if (artRelativePath == "Brand/airside_wordmark_light_v03.png")
                 return WordmarkLight;
             if (ArtTextures.TryGetValue(artRelativePath, out var cached))
                 return cached;
@@ -222,7 +222,7 @@ namespace Airside.Presentation
         private static bool _appMarkResolved;
         private static bool _splashResolved;
 
-        /// <summary>BRD-001 light wordmark (transparent). Null when the art file is missing.</summary>
+        /// <summary>BRD-004 v03 light wordmark (transparent). Null when the art file is missing.</summary>
         public static Texture2D WordmarkLight
         {
             get
@@ -230,14 +230,14 @@ namespace Airside.Presentation
                 if (!_wordmarkResolved)
                 {
                     _wordmarkResolved = true;
-                    _wordmarkLight = LoadArtTexture("Brand/airside_wordmark_light_v01.png");
+                    _wordmarkLight = LoadArtTexture("Brand/airside_wordmark_light_v03.png");
                 }
 
                 return _wordmarkLight;
             }
         }
 
-        /// <summary>BRD-003 transparent approach-runway mark for the launch sequence.</summary>
+        /// <summary>BRD-006 transparent AS control-vector mark for the launch sequence.</summary>
         public static Texture2D AppMarkLight
         {
             get
@@ -245,7 +245,7 @@ namespace Airside.Presentation
                 if (!_appMarkResolved)
                 {
                     _appMarkResolved = true;
-                    _appMarkLight = LoadArtTexture("Brand/airside_brand_mark_v02.png");
+                    _appMarkLight = LoadArtTexture("Brand/airside_brand_mark_v03.png");
                 }
 
                 return _appMarkLight;

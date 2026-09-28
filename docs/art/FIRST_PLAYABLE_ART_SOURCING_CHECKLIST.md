@@ -173,7 +173,7 @@ animation clips → P3 audio.
 
 | ID | Item | In git? | Quality | Source from | Target path |
 |---|---|---|---|---|---|
-| BRD-001 | Airside wordmark | Yes | OK | Keep | `Brand/airside_wordmark_light_v01.png` |
+| BRD-004…006 | Airside v03 wordmark, app icon and launch mark | Yes | Integrated | Keep; verify Dock/Finder in next Mac build | `Brand/airside_{wordmark_light,app_icon,brand_mark}_v03.png` |
 | UI-ILL-001 | Dawn splash | Yes | OK | Keep | `UI/Illustrations/ui_splash_airport_dawn_v01.png` |
 | UI-ICO-001 | Weather icons (7) | Yes | OK | Keep / light cleanup | `UI/Icons/ui_weather_*_v01.png` |
 | UI-ICO-002 | Operation icons (7) | Yes | OK | Keep | `UI/Icons/ui_operation_*_v01.png` |

@@ -41,6 +41,9 @@ namespace Airside.Tests
             Assert.That(AircraftStatus.Severity(aircraft, new SimulationTime(1_000 + AircraftStatus.HoldWarningSeconds)),
                 Is.EqualTo(StatusSeverity.Warning));
             Assert.That(AircraftStatus.WaitSuffix(aircraft, new SimulationTime(1_000 + 4 * 60 + 20)), Is.EqualTo(" · waiting 4 min"));
+            Assert.That(AircraftStatus.WaitSuffix(aircraft, new SimulationTime(1_000 + 4 * 60 + 50)), Is.EqualTo(" · waiting 4 min"),
+                "whole minutes waited, never rounded up");
+            Assert.That(AircraftStatus.WaitSuffix(aircraft, new SimulationTime(1_000 + 103 * 60 + 10)), Is.EqualTo(" · waiting 1 h 43 min"));
             Assert.That(AircraftStatus.WaitProgress(aircraft, new SimulationTime(1_000 + AircraftStatus.HoldWarningSeconds * 2)),
                 Is.EqualTo(1f));
         }

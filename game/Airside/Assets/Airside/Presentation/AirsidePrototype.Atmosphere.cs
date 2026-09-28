@@ -23,6 +23,7 @@ namespace Airside.Presentation
         private readonly List<Renderer> _horizonBand = new();
         private readonly List<Renderer> _mistLayers = new();
         private readonly Dictionary<int, Color> _cloudTints = new();
+        private readonly Dictionary<int, Renderer[]> _cloudRenderers = new();
         private MaterialPropertyBlock _atmosphereBlock;
         private static Texture2D _softNoise;
 
@@ -35,7 +36,10 @@ namespace Airside.Presentation
                 return;
             var faded = tint;
             faded.a *= edge;
-            var renderers = cloud.GetComponentsInChildren<Renderer>();
+            // Runs for every cloud every frame: fetching the renderers each time allocated a new
+            // array per cloud per frame, garbage that later lands as a collection hitch.
+            if (!_cloudRenderers.TryGetValue(index, out var renderers) || renderers.Length == 0 || renderers[0] == null)
+                _cloudRenderers[index] = renderers = cloud.GetComponentsInChildren<Renderer>();
             for (var r = 0; r < renderers.Length; r++)
             {
                 renderers[r].enabled = faded.a > 0.01f;

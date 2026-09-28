@@ -2685,7 +2685,7 @@ namespace Airside.Presentation
             var id = propeller.GetInstanceID();
             var step = rpm * 6f * dt;
             if (!PropBladeCounts.TryGetValue(id, out var blades))
-                blades = CountBlades(propeller);
+                PropBladeCounts[id] = blades = CountBlades(propeller);
             ApplyBladePitch(propeller, bladePitchOffsetDegrees);
             var blur = rpm < 1f ? 0f : AirsideReusableMotion.PropBlurForStep(step, blades);
             // A coarse blade puts more of itself in the line of sight than a fine one, and a disc

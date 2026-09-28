@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Less background work every frame.** Clouds, pushback tugs and propellers were each redoing a
+  lookup every frame that only needs doing once, some of it creating garbage the game later had
+  to pause and clean up. They now remember the answer.
+
+- **Long waits read properly.** An aircraft held for a long time showed "waiting 103 min"; it now
+  says "waiting 1 h 43 min", like the rest of the game.
+
 - **Big jets can always find a gate.** Smaller jets were parking on stands that share a pier
   with the widebody gates, closing them, while ordinary gates sat empty. A 787 could end up with
   nowhere to park. Smaller jets now leave those stands alone unless nothing else is free.

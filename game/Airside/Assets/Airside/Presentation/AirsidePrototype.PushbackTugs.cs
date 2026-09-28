@@ -31,6 +31,7 @@ namespace Airside.Presentation
         private readonly Dictionary<string, Transform> _viewByRegistration = new(StringComparer.Ordinal);
         /// <summary>Nose gear ahead of the drawn model's root, measured once per type.</summary>
         private readonly Dictionary<string, float> _noseGearAhead = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, float> _noseGearRetryAt = new(StringComparer.Ordinal);
 
         private void UpdatePushbackTugs()
         {
@@ -199,6 +200,10 @@ namespace Airside.Presentation
             var key = aircraft.Type.Id;
             if (_noseGearAhead.TryGetValue(key, out var ahead))
                 return ahead;
+            // A model with no nose gear part used to be searched again every frame, walking every
+            // renderer on the aircraft; look again only every few seconds.
+            if (_noseGearRetryAt.TryGetValue(key, out var retryAt) && Time.unscaledTime < retryAt)
+                return 0f;
             if (!_viewByRegistration.TryGetValue(aircraft.Registration, out var view) || view == null
                 || !view.gameObject.activeInHierarchy)
                 return 0f;
@@ -215,7 +220,10 @@ namespace Airside.Presentation
             }
 
             if (gear == null)
+            {
+                _noseGearRetryAt[key] = Time.unscaledTime + 5f;
                 return 0f;
+            }
             var forward = view.forward;
             forward.y = 0f;
             if (forward.sqrMagnitude < 1e-4f)

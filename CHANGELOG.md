@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Propellers vanish at full power.** A turboprop at speed now shows what your eye really sees:
+  the spinner, a faint haze and a thin ring from the painted tips. The ghostly grey blades that
+  stayed visible are gone. Jet engines at power now show a solid dark fan face instead of a
+  see-through intake.
+
 - **Runway lights you can see at night.** Runway, taxiway, approach and stand lights now show as
   sharp points of light from anywhere on the field and cut through haze, like a real airport at
   night. The yellow runway guard lights now flash alternately. A new **Night brightness** option

@@ -1,5 +1,16 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — propellers and fans at speed (ADR 0163).** Branch
+  `claude/fervent-gates-1tzyhq`.
+  - The propeller blur disc is now the blades' real time-averaged coverage (5–20 % haze plus a faint
+    tip ring). The old disc painted blade ghosts at 30 % and turned them slowly, so blades never
+    vanished.
+  - Spinners and hubs stay visible.
+  - The turbofan face is a near-solid dark disc, where it was 26 % glass and see-through.
+  - Blur is judged on at least a 60 Hz frame, and both discs dim at night.
+
+  **Checks:** propeller tests against shims, harness. **Not seen in Unity.**
+
 - **2026-09-28 Claude — airfield light points, night brightness (ADR 0162).** Branch
   `claude/fervent-gates-1tzyhq`.
   - Every runway, taxi, approach and stand lens also draws a light point

@@ -2572,7 +2572,7 @@ namespace Airside.Presentation
             // Fan blades wagon-wheel at a far lower speed than propeller blades because there are
             // so many of them; judge the blur the same way, by what one frame can draw.
             var blades = JetFanBladeCount(fan);
-            var blur = AirsideReusableMotion.PropBlurForStep(step, blades);
+            var blur = AirsideReusableMotion.PropBlurForStep(AirsidePropellerDynamics.BlurStepDegrees(rpm, dt), blades);
             ApplyJetFanBlurToHub(fan, blur, DiscViewFade(fan));
             if (step <= 0f)
                 return;
@@ -2661,9 +2661,6 @@ namespace Airside.Presentation
         /// <summary>Blade counts per propeller, read from the model when its disc is built.</summary>
         private static readonly Dictionary<int, int> PropBladeCounts = new();
 
-        /// <summary>How far each propeller has turned, so its blur disc can be held nearly still.</summary>
-        private readonly Dictionary<int, float> _propSpinDegrees = new();
-
         private double _propClockSeen = double.NaN;
         private int _propClockFrame = -1;
         private float _propDelta;
@@ -2688,8 +2685,9 @@ namespace Airside.Presentation
 
         /// <summary>
         /// ADR 0148: blades show only while the frame can draw them turning. Past a third of the gap
-        /// between blades per frame they wagon-wheel, so they fade into the blur disc, which is held
-        /// nearly still against the spin so its faint blade ghosts drift slowly instead of strobing.
+        /// between blades per frame they wagon-wheel, so they fade into the blur disc. ADR 0163: the
+        /// disc is the blades' real time-averaged coverage, so at full power the propeller all but
+        /// disappears, leaving the spinner and a faint haze with a tip ring.
         /// </summary>
         private void SpinOnePropeller(Transform propeller, float rpm, float bladePitchOffsetDegrees)
         {
@@ -2699,7 +2697,8 @@ namespace Airside.Presentation
             if (!PropBladeCounts.TryGetValue(id, out var blades))
                 PropBladeCounts[id] = blades = CountBlades(propeller);
             ApplyBladePitch(propeller, bladePitchOffsetDegrees);
-            var blur = rpm < 1f ? 0f : AirsideReusableMotion.PropBlurForStep(step, blades);
+            var blur = rpm < 1f ? 0f : AirsideReusableMotion.PropBlurForStep(
+                AirsidePropellerDynamics.BlurStepDegrees(rpm, dt), blades);
             // A coarse blade puts more of itself in the line of sight than a fine one, and a disc
             // seen edge-on all but disappears. Both are what makes takeoff power read differently
             // from taxi, and the edge-on case costs nothing to draw.
@@ -2708,13 +2707,8 @@ namespace Airside.Presentation
             ApplyPropBlurToHub(propeller, blur, DiscViewFade(propeller) * density);
             if (step <= 0f)
                 return;
+            // The disc turns with the propeller: its texture is the same all the way round (ADR 0163).
             propeller.Rotate(Vector3.forward, step, Space.Self);
-            _propSpinDegrees.TryGetValue(id, out var spun);
-            spun = (spun + step) % 360f;
-            _propSpinDegrees[id] = spun;
-            var disc = propeller.Find("PropDisc");
-            if (disc != null && disc.gameObject.activeSelf)
-                disc.localRotation = Quaternion.Euler(0f, 0f, -spun * 0.97f);
         }
 
         /// <summary>
@@ -2850,18 +2844,35 @@ namespace Airside.Presentation
         private static readonly Dictionary<int, Material> PropBlurMaterials = new();
 
         /// <summary>URP Unlit, alpha blended, double-sided, over a procedural propeller-blur texture.</summary>
-        private static Material PropBlurMaterial(int blades)
+        private static Material PropBlurMaterial(int blades) =>
+            BlurDiscMaterial(PropBlurMaterials, blades, $"airside_prop_blur_{blades}", "mat_prop_blur",
+                new Color(0.72f, 0.74f, 0.78f, 0.3f), r => AirsidePropellerDynamics.PropDiscAlpha(r, blades),
+                _ => Color.white);
+
+        private static readonly Dictionary<int, Material> JetFanBlurMaterials = new();
+
+        /// <summary>
+        /// ADR 0163: a turbofan face at speed, a near-solid dark disc with a faint lighter band where
+        /// the blades' twist catches the light, clear over the spinner.
+        /// </summary>
+        private static Material JetFanBlurMaterial() =>
+            BlurDiscMaterial(JetFanBlurMaterials, 0, "airside_fan_blur", "mat_fan_blur",
+                new Color(0.2f, 0.23f, 0.26f, 0.9f), AirsidePropellerDynamics.JetFanDiscAlpha,
+                r => Color.Lerp(new Color(0.55f, 0.58f, 0.62f), Color.white,
+                    Mathf.Exp(-Mathf.Pow((r - 0.62f) / 0.16f, 2f))));
+
+        private static Material BlurDiscMaterial(Dictionary<int, Material> cache, int key, string textureName,
+            string materialName, Color fallback, Func<float, float> alphaAt, Func<float, Color> tintAt)
         {
-            if (PropBlurMaterials.TryGetValue(blades, out var cached) && cached != null)
+            if (cache.TryGetValue(key, out var cached) && cached != null)
                 return cached;
             var shader = Shader.Find("Universal Render Pipeline/Unlit");
             if (shader == null)
-                return AirsideMaterialLibrary.CreateShared(new Color(0.72f, 0.74f, 0.78f, 0.3f),
-                    AirsideMaterialLibrary.SurfaceKind.Glass);
+                return AirsideMaterialLibrary.CreateShared(fallback, AirsideMaterialLibrary.SurfaceKind.Glass);
             const int size = 128;
             var texture = new Texture2D(size, size, TextureFormat.RGBA32, true)
             {
-                name = $"airside_prop_blur_{blades}", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear
+                name = textureName, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear
             };
             var pixels = new Color32[size * size];
             for (var y = 0; y < size; y++)
@@ -2870,28 +2881,16 @@ namespace Airside.Presentation
                 var dx = (x + 0.5f) / size * 2f - 1f;
                 var dy = (y + 0.5f) / size * 2f - 1f;
                 var r = Mathf.Sqrt(dx * dx + dy * dy);
-                var a = Mathf.Atan2(dy, dx);
-                var alpha = 0f;
-                if (r < 1f)
-                {
-                    // Blades sweep more area near the tips, so the blur thickens outward, clear at the hub.
-                    var body = Mathf.SmoothStep(0.12f, 0.45f, r) * (0.55f + 0.35f * r);
-                    // Faint ghosts of the blades.
-                    var ghost = 0.18f * Mathf.Pow(0.5f + 0.5f * Mathf.Cos(a * blades), 6f) * Mathf.SmoothStep(0.2f, 0.7f, r);
-                    // The painted tips read as a thin bright ring.
-                    var ring = 0.35f * Mathf.Exp(-Mathf.Pow((r - 0.95f) / 0.025f, 2f));
-                    var edge = 1f - Mathf.SmoothStep(0.97f, 1f, r);
-                    alpha = Mathf.Clamp01((body + ghost + ring) * edge);
-                }
-
-                pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
+                var alpha = alphaAt(r);
+                Color32 tint = tintAt(r);
+                pixels[y * size + x] = new Color32(tint.r, tint.g, tint.b, (byte)Mathf.RoundToInt(Mathf.Clamp01(alpha) * 255f));
             }
 
             texture.SetPixels32(pixels);
             texture.Apply(true, true);
-            var material = new Material(shader) { name = "mat_prop_blur" };
+            var material = new Material(shader) { name = materialName };
             material.SetTexture("_BaseMap", texture);
-            material.SetColor("_BaseColor", new Color(0.72f, 0.74f, 0.78f, AirsideReusableMotion.PropDiscPeakAlpha));
+            material.SetColor("_BaseColor", fallback);
             material.SetFloat("_Surface", 1f);
             material.SetFloat("_Blend", 0f);
             material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
@@ -2901,7 +2900,7 @@ namespace Airside.Presentation
             material.SetOverrideTag("RenderType", "Transparent");
             material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-            PropBlurMaterials[blades] = material;
+            cache[key] = material;
             return material;
         }
 
@@ -2917,6 +2916,7 @@ namespace Airside.Presentation
                 selfRenderer.enabled = showBlades;
 
             var alpha = AirsideReusableMotion.PropDiscPeakAlpha * blend * Mathf.Max(0f, discDensity);
+            var light = AirsidePropellerDynamics.DiscLightLevel(CurrentDaylight);
             for (var i = 0; i < propeller.childCount; i++)
             {
                 var child = propeller.GetChild(i);
@@ -2926,13 +2926,14 @@ namespace Airside.Presentation
                     child.gameObject.SetActive(alpha > 0.006f);
                     var discRenderer = child.GetComponent<Renderer>();
                     if (discRenderer != null)
-                        SetRendererColor(discRenderer, new Color(0.72f, 0.74f, 0.78f, alpha));
+                        SetRendererColor(discRenderer, new Color(0.72f * light, 0.74f * light, 0.78f * light, alpha));
                     continue;
                 }
 
+                // ADR 0163: the spinner, hub and stripe are solid and stay; only blades blur away.
                 var renderer = child.GetComponent<Renderer>();
                 if (renderer != null)
-                    renderer.enabled = showBlades;
+                    renderer.enabled = showBlades || !AirsidePropellerDynamics.BlursAtSpeed(child.name);
             }
         }
 
@@ -2943,6 +2944,7 @@ namespace Airside.Presentation
             blend = Mathf.Clamp01(blend);
             var showBlades = blend < 0.92f;
             var alpha = AirsideReusableMotion.JetFanDiscPeakAlpha * blend * Mathf.Max(0f, discDensity);
+            var light = AirsidePropellerDynamics.DiscLightLevel(CurrentDaylight);
             for (var i = 0; i < fan.childCount; i++)
             {
                 var child = fan.GetChild(i);
@@ -2951,7 +2953,7 @@ namespace Airside.Presentation
                     child.gameObject.SetActive(alpha > 0.006f);
                     var discRenderer = child.GetComponent<Renderer>();
                     if (discRenderer != null)
-                        SetRendererColor(discRenderer, new Color(0.26f, 0.34f, 0.39f, alpha));
+                        SetRendererColor(discRenderer, new Color(0.2f * light, 0.23f * light, 0.26f * light, alpha));
                     continue;
                 }
 
@@ -11854,18 +11856,20 @@ namespace Airside.Presentation
                     radius = Mathf.Max(radius, Mathf.Max(blade.bounds.extents.x, blade.bounds.extents.y));
                 }
 
-                var disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                // ADR 0163: a double-sided quad in the fan plane (local XY, spin axis Z) with a near-solid
+                // dark fan-face texture, clear over the spinner. It was a 26 % glass cylinder, so the
+                // intake went see-through once the blades hid.
+                var disc = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 disc.name = "FanDisc";
                 DestroyPresentationObject(disc.GetComponent<Collider>());
                 disc.transform.SetParent(fan, false);
                 disc.transform.localPosition = new Vector3(0f, 0f, 0.035f);
-                disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                disc.transform.localRotation = Quaternion.identity;
                 var diameter = Mathf.Clamp(radius * 2.05f, 0.8f, 2.7f);
-                disc.transform.localScale = new Vector3(diameter, 0.003f, diameter);
-                var colour = new Color(0.26f, 0.34f, 0.39f, AirsideReusableMotion.JetFanDiscPeakAlpha);
+                disc.transform.localScale = new Vector3(diameter, diameter, 1f);
+                var colour = new Color(0.2f, 0.23f, 0.26f, AirsideReusableMotion.JetFanDiscPeakAlpha);
                 var renderer = disc.GetComponent<Renderer>();
-                renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(colour,
-                    AirsideMaterialLibrary.SurfaceKind.Glass);
+                renderer.sharedMaterial = JetFanBlurMaterial();
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
                 SetRendererColor(renderer, colour);

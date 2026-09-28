@@ -1,5 +1,27 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — honest en-route speeds and smooth motion (ADR 0152).**
+  Branch `feature/ground-motion-and-speed-fixes-20260928`, based on `cf37be0b`. First two items of
+  Bailey's follow-up list. **1 700 kt:** `EnrouteProfile` solves cruise speed from the leg and
+  nothing capped it, while `TryEnroute` passed the length of the aircraft's current *state* as the
+  whole leg — the opening arrival bank seeds aircraft 3–40 minutes from home and a delivery gets a
+  flat 8 minutes, so Melbourne in 12 minutes solved to 1 730 kt. Legs are now shaped by
+  `LegTiming.AirborneSeconds` and placed by time remaining, and the solved speed is clamped to the
+  type's published maximum cruise. **Jitter:** `_preciseTime` was read straight off
+  `DateTime.UtcNow` each frame with no smoothing after it, so a 60 ms frame moved a departing
+  aircraft the whole 60 ms at once — four metres at 70 m/s, and p95 frame time is over 33 ms.
+  `LivePresentationTime` now advances by the frame delta and slews onto the wall clock, snapping
+  only past 0.75 s. Position and attitude share one time base again. Simulation timing unchanged.
+  **Checks:** Unity EditMode 1252/1257, 3 new `EnrouteProfileTests`. Same four pre-existing
+  failures as clean `main` at `a98d0359` (baseline worktree run).
+  **Next (same report, not started):** taxi conflicts and aircraft passing through each other,
+  aircraft impeding each other, give-way priority, and a longer visible approach.
+  `BusyDay_NoAircraftDriveThroughEachOther` is the same fault as the taxi conflicts — both
+  surviving episodes are runway 12 traffic crossing the 05/23 flow, which points at ground control
+  not sequencing the cross runway against the main flow. `ApproachStartX` is −4 200 m (about 38 s
+  of visible final); lengthening it changes derived approach timing and needs the terrain and
+  camera far plane checked. The propeller jitter fix and ADR 0151 both still owe a human playtest.
+
 - **2026-09-28 Claude — constant-speed propellers and power-driven engines (ADR 0151).**
   Branch `feature/propeller-and-engine-realism-20260928`, based on `a98d0359`. Bailey asked to
   improve the propeller and engine animation drastically, for all aircraft, with realism the

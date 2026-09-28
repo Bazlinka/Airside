@@ -1861,10 +1861,19 @@ namespace Airside.Presentation
             if (aircraft.State is not (FleetState.Outbound or FleetState.Inbound)
                 || !aircraft.StateEndsAt.HasValue || !aircraft.CurrentDestination.HasValue)
                 return false;
-            var started = aircraft.StateStartedAt.ElapsedSeconds;
-            profile = new EnrouteProfile(_operations.DistanceKm(aircraft.CurrentDestination.Value),
-                aircraft.StateEndsAt.Value.ElapsedSeconds - started, aircraft.Type);
-            elapsedSeconds = Math.Max(0.0, _preciseTime - started);
+            // ADR 0152: shape the leg by how long the aeroplane actually needs to fly it, and
+            // place it by the time it has left, rather than treating the remainder of its state
+            // as the whole leg. The opening arrival bank seeds aircraft already most of the way
+            // home (Singapore with forty minutes to run) and a delivery flight is given a flat
+            // eight minutes, so the old reading solved a cruise speed out of that remainder:
+            // Melbourne in twelve minutes came out at about 1 730 kt.
+            var legKm = _operations.DistanceKm(aircraft.CurrentDestination.Value);
+            var legSeconds = (double)LegTiming.AirborneSeconds(legKm, aircraft.Type);
+            profile = new EnrouteProfile(legKm, legSeconds, aircraft.Type);
+            // A delayed flight has longer left than the leg takes: hold it at the far end until
+            // it is genuinely within flying time of home, instead of dragging it along too slowly.
+            var remaining = Math.Clamp(aircraft.StateEndsAt.Value.ElapsedSeconds - _preciseTime, 0.0, legSeconds);
+            elapsedSeconds = legSeconds - remaining;
             return true;
         }
 

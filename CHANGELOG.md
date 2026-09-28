@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Aircraft report speeds they can actually fly.** An arrival could show an impossible figure —
+  1 700 kt for one coming in from Melbourne. Flights that start part way home, and aircraft being
+  delivered, are now drawn at the right point of a properly shaped leg, so speed, height and
+  distance to go all read correctly. No flight can report a speed faster than its type can fly.
+
+- **Smoother takeoffs and taxiing.** Aircraft motion is now paced by the frames that draw it
+  instead of jumping by however long each frame happened to take, so a slow frame no longer snaps
+  a departing aircraft forward several metres. Most visible on the takeoff roll and while taxiing.
+
 - **Propellers that behave like propellers.** Parked turboprops now stand with their blades
   feathered, and unfeather as the engine starts. A start motors slowly on the starter, lights,
   accelerates and settles at idle instead of ramping between two speeds. The blades themselves

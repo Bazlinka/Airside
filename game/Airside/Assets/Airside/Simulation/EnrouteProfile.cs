@@ -64,7 +64,13 @@ namespace Airside.Simulation
             CruiseSeconds = Math.Max(0.0, LegSeconds - ClimbSeconds - DescentSeconds);
 
             var weighted = ClimbSpeedFraction * ClimbSeconds + CruiseSeconds + DescentSpeedFraction * DescentSeconds;
-            CruiseMetresPerSecond = weighted > 1e-6 ? LegMetres / weighted : 0.0;
+            var solved = weighted > 1e-6 ? LegMetres / weighted : 0.0;
+            // ADR 0152: the solved speed keeps the map position honest, but it must still be a
+            // speed this aeroplane could fly. Handed a leg time shorter than the aircraft needs,
+            // the solution used to run away — an inbound seeded forty minutes from Singapore
+            // reported several thousand knots. Cap it at what the airframe can actually do; the
+            // position is then allowed to lag rather than the aeroplane reporting a fiction.
+            CruiseMetresPerSecond = Math.Min(solved, MaxCruiseMetresPerSecond(type));
             ClimbRateFeetPerMinute = performance.ClimbFeetPerMinute;
             DescentRateFeetPerMinute = performance.DescentFeetPerMinute;
         }
@@ -80,6 +86,21 @@ namespace Airside.Simulation
         public double CruiseMetresPerSecond { get; }
         public double ClimbRateFeetPerMinute { get; }
         public double DescentRateFeetPerMinute { get; }
+
+        /// <summary>
+        /// The fastest this type can cruise, in m/s: the published maximum where there is one,
+        /// otherwise the planning cruise with a small allowance for a tailwind.
+        /// </summary>
+        public static double MaxCruiseMetresPerSecond(AircraftType type)
+        {
+            if (type == null)
+                return 0.0;
+            var planningKmh = type.CruiseKmh;
+            var maxKmh = AircraftCatalogue.TryFor(type, out var spec) && spec.ManufacturerMaxCruiseKmh > 0
+                ? spec.ManufacturerMaxCruiseKmh
+                : planningKmh;
+            return Math.Max(maxKmh, planningKmh * 1.1) / 3.6;
+        }
 
         /// <summary>Cruise level an ATR 42 would plan for a leg: ~6 000 ft + 25 ft/km, to the nearest 1 000 ft.</summary>
         public static double PlannedCruiseFeet(double legKm)

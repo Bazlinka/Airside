@@ -1,5 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — graphics test switches (ADR 0155).** Branch `claude/fervent-gates-1tzyhq`.
+  The "29 fps" quoted in ADR 0152/0154 is stale: the last graphics-on run (2026-09-26, PR #409) was
+  60 fps. Nothing has been measured since, and heavier effects have landed. Options now has a
+  "Graphics tests" group — **Weather layers**, **Propeller blur**, **Distant aircraft glow**,
+  **Aircraft lights** — all on by default; launch flag `-airsideGraphicsOff weather,propblur,glows,lights|all`
+  switches them off for one run without saving. **Checks:** Roslyn parse of changed files; new
+  `AirsideSettingsTests` cases. **Not compiled in Unity here** — run `scripts/test-unity.sh`.
+  **Next:** on the Mac, `-airsideSoak -airsideSoakMinutes 5` with and without `-airsideGraphicsOff all`;
+  if fps moves, bisect one effect at a time and fix that effect; if not, the cause is elsewhere.
+
 - **2026-09-28 Claude — random stutters: simulation stalls fixed (ADR 0154).** Branch
   `claude/fervent-gates-1tzyhq`. Bailey: "it gets stuck and starts stuttering". Timing
   `AirlineOperations.Update` headlessly over 36 simulated hours found **37 ticks over 16 ms** (worst
@@ -10,8 +20,8 @@
   first hour. Also speeds every frame's ground-pose draw. `scripts/test-domain.sh` was not compiling
   (`PropellerDynamicsTests` imports UnityEngine and was not excluded) — fixed in `Harness.csproj`.
   **Checks:** domain **934/934** with a new `GroundMotionTests` regression (fails on the old code).
-  Unity EditMode not run here (no Mac editor). **Not covered:** the render-side ~29 fps / p95 33 ms
-  problem is separate and still open. **Next:** Unity run + Mac playtest to confirm the stalls are gone;
+  Unity EditMode not run here (no Mac editor). **Not covered:** render cost. (The "~29 fps" first
+  written here was stale: the last graphics-on run, 2026-09-26, measured 60 fps — see ADR 0155.) **Next:** Unity run + Mac playtest to confirm the stalls are gone;
   if first-use hitches remain, pre-warm the route caches during loading.
 
 - **2026-09-28 Claude — findings on the last two items of Bailey's report (no code change).**

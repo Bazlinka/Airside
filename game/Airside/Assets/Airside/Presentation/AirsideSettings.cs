@@ -37,6 +37,20 @@ namespace Airside.Presentation
         /// the display's own rate. Background windows throttle either way (ADR 0101).
         /// </summary>
         public bool UncappedFrameRate = false;
+
+        // Graphics tests (ADR 0155): each switches off one of the heavier effects added since the
+        // 60 fps measurement of 2026-09-26, so a slowdown can be traced on the Mac that has it.
+        // All on by default; turning one off changes only how the game looks.
+
+        /// <summary>Overcast sheet, horizon band and low mist (ADR 0143): full-screen transparent layers.</summary>
+        public bool WeatherLayers = true;
+        /// <summary>Propeller and fan blur discs (ADR 0148/0151); off shows the blades turning instead.</summary>
+        public bool PropellerBlur = true;
+        /// <summary>Camera-facing glow on aircraft far out (ADR 0142).</summary>
+        public bool DistantGlows = true;
+        /// <summary>Real-time nav, strobe, beacon, landing and taxi lights on every aircraft; the lamps still glow.</summary>
+        public bool AircraftLights = true;
+
         public int CameraSpeedIndex = 1;
 
         public float CameraSpeed =>
@@ -44,10 +58,46 @@ namespace Airside.Presentation
                 ? CameraSpeedValues[CameraSpeedIndex]
                 : 1f;
 
+        /// <summary>
+        /// <c>-airsideGraphicsOff weather,propblur,glows,lights</c> switches graphics tests off for
+        /// this launch only, so a soak can A/B them without touching saved options (ADR 0155).
+        /// </summary>
+        public const string GraphicsOffFlag = "-airsideGraphicsOff";
+
         public static AirsideSettings Load()
         {
             Current = FromPrefs();
+            ApplyGraphicsOff(Current, System.Environment.GetCommandLineArgs());
             return Current;
+        }
+
+        /// <summary>True when a launch flag set the graphics tests; they are then not saved over the player's choice.</summary>
+        public bool GraphicsFromLaunchFlag { get; private set; }
+
+        public static void ApplyGraphicsOff(AirsideSettings settings, string[] args)
+        {
+            if (settings == null || args == null)
+                return;
+            for (var i = 0; i < args.Length - 1; i++)
+            {
+                if (args[i] != GraphicsOffFlag)
+                    continue;
+                settings.GraphicsFromLaunchFlag = true;
+                foreach (var raw in args[i + 1].Split(','))
+                {
+                    switch (raw.Trim().ToLowerInvariant())
+                    {
+                        case "weather": settings.WeatherLayers = false; break;
+                        case "propblur": settings.PropellerBlur = false; break;
+                        case "glows": settings.DistantGlows = false; break;
+                        case "lights": settings.AircraftLights = false; break;
+                        case "all":
+                            settings.WeatherLayers = settings.PropellerBlur = false;
+                            settings.DistantGlows = settings.AircraftLights = false;
+                            break;
+                    }
+                }
+            }
         }
 
         public static AirsideSettings FromPrefs()
@@ -61,6 +111,10 @@ namespace Airside.Presentation
             settings.LiveTraffic = Pref("livetraffic.v2", 0) != 0;
             settings.LiveWeather = Pref("liveweather.v1", 1) != 0;
             settings.UncappedFrameRate = Pref("uncappedfps", 0) != 0;
+            settings.WeatherLayers = Pref("gfx.weatherlayers", 1) != 0;
+            settings.PropellerBlur = Pref("gfx.propblur", 1) != 0;
+            settings.DistantGlows = Pref("gfx.distantglows", 1) != 0;
+            settings.AircraftLights = Pref("gfx.aircraftlights", 1) != 0;
             settings.CameraSpeedIndex = Mathf.Clamp(Pref("camera", 1), 0, CameraSpeedValues.Length - 1);
             return settings;
         }
@@ -75,6 +129,13 @@ namespace Airside.Presentation
             PlayerPrefs.SetInt(PrefPrefix + "livetraffic.v2", LiveTraffic ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "liveweather.v1", LiveWeather ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "uncappedfps", UncappedFrameRate ? 1 : 0);
+            if (!GraphicsFromLaunchFlag)
+            {
+                PlayerPrefs.SetInt(PrefPrefix + "gfx.weatherlayers", WeatherLayers ? 1 : 0);
+                PlayerPrefs.SetInt(PrefPrefix + "gfx.propblur", PropellerBlur ? 1 : 0);
+                PlayerPrefs.SetInt(PrefPrefix + "gfx.distantglows", DistantGlows ? 1 : 0);
+                PlayerPrefs.SetInt(PrefPrefix + "gfx.aircraftlights", AircraftLights ? 1 : 0);
+            }
             PlayerPrefs.SetInt(PrefPrefix + "camera", CameraSpeedIndex);
             PlayerPrefs.Save();
             Current = this;

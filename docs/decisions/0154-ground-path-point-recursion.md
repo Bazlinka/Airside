@@ -44,8 +44,9 @@ old code (≈ 870 ms) and passes on the new. Domain suite 934/934.
 
 ## Not covered
 
-The render-side frame pacing problem (≈ 29 fps, p95 over 33 ms on the normal map, GAME.md
-2026-09-25) is separate and still open. This fixes CPU stalls in the simulation and ground-pose code,
+Render cost is separate. (An earlier version of this line called a ≈ 29 fps render problem still
+open; that figure predates the 2026-09-26 glazing fix, which measured 60 fps — see ADR 0155.) This
+fixes CPU stalls in the simulation and ground-pose code,
 not GPU cost. A Unity run and a human playtest on the Mac are still needed to confirm the felt
 difference. The one-off first-use route builds could be pre-warmed during loading if they are still
 noticeable.

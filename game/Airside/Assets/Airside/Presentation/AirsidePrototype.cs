@@ -1431,6 +1431,7 @@ namespace Airside.Presentation
         }
 
         private GUIStyle _pauseStampStyle;
+        private GUIStyle _optionsNoteStyle;
 
         private void DrawOptionsMenu(HudLayout layout, GUIStyle panel, GUIStyle title, GUIStyle button)
         {
@@ -1511,6 +1512,42 @@ namespace Airside.Presentation
                 settings.UncappedFrameRate = !settings.UncappedFrameRate;
                 settings.Save();
                 AirsideFramePacing.Apply(settings.UncappedFrameRate, SoakMode);
+                PlayUiClick();
+            }
+
+            // Graphics tests (ADR 0155): each switches one heavier effect off to find a slowdown.
+            row.y += 50f;
+            GUI.Label(new Rect(row.x, row.y, row.width, 24f), "Graphics tests  ·  turn one off to compare", _optionsNoteStyle ??=
+                AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 13 }));
+            row.y += 28f;
+            if (GUI.Button(row, settings.WeatherLayers ? "Weather layers  ·  On" : "Weather layers  ·  Off", button))
+            {
+                settings.WeatherLayers = !settings.WeatherLayers;
+                settings.Save();
+                PlayUiClick();
+            }
+
+            row.y += 46f;
+            if (GUI.Button(row, settings.PropellerBlur ? "Propeller blur  ·  On" : "Propeller blur  ·  Off", button))
+            {
+                settings.PropellerBlur = !settings.PropellerBlur;
+                settings.Save();
+                PlayUiClick();
+            }
+
+            row.y += 46f;
+            if (GUI.Button(row, settings.DistantGlows ? "Distant aircraft glow  ·  On" : "Distant aircraft glow  ·  Off", button))
+            {
+                settings.DistantGlows = !settings.DistantGlows;
+                settings.Save();
+                PlayUiClick();
+            }
+
+            row.y += 46f;
+            if (GUI.Button(row, settings.AircraftLights ? "Aircraft lights  ·  On" : "Aircraft lights  ·  Off", button))
+            {
+                settings.AircraftLights = !settings.AircraftLights;
+                settings.Save();
                 PlayUiClick();
             }
 
@@ -2197,7 +2234,7 @@ namespace Airside.Presentation
                 part.Light = light;
             }
 
-            light.enabled = on;
+            light.enabled = on && AirsideSettings.Current.AircraftLights;
             if (on)
                 light.intensity = 1.8f * AirsideReusableMotion.NavSteady;
         }
@@ -2223,7 +2260,7 @@ namespace Airside.Presentation
                 point = part.Strobe = strobe.GetComponent<Light>();
             }
 
-            point.enabled = intensity > 0.01f;
+            point.enabled = intensity > 0.01f && AirsideSettings.Current.AircraftLights;
             point.intensity = 12f * intensity;
         }
 
@@ -2242,7 +2279,7 @@ namespace Airside.Presentation
                 light.shadows = LightShadows.None;
             }
 
-            light.enabled = intensity > 0.01f;
+            light.enabled = intensity > 0.01f && AirsideSettings.Current.AircraftLights;
             light.intensity = 2.6f * intensity;
         }
 
@@ -2266,8 +2303,8 @@ namespace Airside.Presentation
                 light.innerSpotAngle = 22f;
             }
 
-            light.enabled = on;
-            if (!on)
+            light.enabled = on && AirsideSettings.Current.AircraftLights;
+            if (!light.enabled)
                 return;
             // ADR 0101: every shadowed spot re-renders the shadow casters into the additional-
             // light atlas each frame. In daylight the sun's key shadow swamps a landing lamp's,
@@ -2302,7 +2339,7 @@ namespace Airside.Presentation
                 light.intensity = 2.4f;
             }
 
-            light.enabled = on;
+            light.enabled = on && AirsideSettings.Current.AircraftLights;
         }
 
         private static void UpdateCabinDoor(CabinDoorPart[] parts, AircraftPhase phase, bool? doorsOpen = null)
@@ -2858,6 +2895,9 @@ namespace Airside.Presentation
 
         private static void ApplyPropBlurToHub(Transform propeller, float blend, float discDensity = 1f)
         {
+            // Graphics test (ADR 0155): with blur off the blades carry the rotation on their own.
+            if (!AirsideSettings.Current.PropellerBlur)
+                blend = 0f;
             blend = Mathf.Clamp01(blend);
             var showBlades = blend < 0.92f;
             var selfRenderer = propeller.GetComponent<Renderer>();
@@ -2886,6 +2926,8 @@ namespace Airside.Presentation
 
         private static void ApplyJetFanBlurToHub(Transform fan, float blend, float discDensity = 1f)
         {
+            if (!AirsideSettings.Current.PropellerBlur)
+                blend = 0f;
             blend = Mathf.Clamp01(blend);
             var showBlades = blend < 0.92f;
             var alpha = AirsideReusableMotion.JetFanDiscPeakAlpha * blend * Mathf.Max(0f, discDensity);

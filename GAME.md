@@ -1,5 +1,19 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — random stutters: simulation stalls fixed (ADR 0154).** Branch
+  `claude/fervent-gates-1tzyhq`. Bailey: "it gets stuck and starts stuttering". Timing
+  `AirlineOperations.Update` headlessly over 36 simulated hours found **37 ticks over 16 ms** (worst
+  98 ms) spread through the day; 63% of simulation time was `GroundPath.PointAtDistance`, which
+  recursed down the rest of the path (its heading look-ahead called itself again every 16 m — about
+  125 nested samples per point on a 2 km taxi). Now a direct position lookup, bit-identical results.
+  After: **4 ticks over 16 ms** (worst 61 ms, one-off cached route builds), none over 8 ms after the
+  first hour. Also speeds every frame's ground-pose draw. `scripts/test-domain.sh` was not compiling
+  (`PropellerDynamicsTests` imports UnityEngine and was not excluded) — fixed in `Harness.csproj`.
+  **Checks:** domain **934/934** with a new `GroundMotionTests` regression (fails on the old code).
+  Unity EditMode not run here (no Mac editor). **Not covered:** the render-side ~29 fps / p95 33 ms
+  problem is separate and still open. **Next:** Unity run + Mac playtest to confirm the stalls are gone;
+  if first-use hitches remain, pre-warm the route caches during loading.
+
 - **2026-09-28 Claude — findings on the last two items of Bailey's report (no code change).**
   Both need a decision from Bailey before implementing, so they are written up rather than guessed at.
 

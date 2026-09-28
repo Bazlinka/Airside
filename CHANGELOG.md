@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Fewer freezes and stutters.** Working out where a taxiing aircraft is along its route quietly
+  re-walked the whole rest of the route every time, and ground control asks that thousands of times
+  a second when it checks whether a route is clear. The game could stall for up to a tenth of a
+  second at a time, again and again through the day. It now looks the point up directly. Aircraft
+  follow exactly the same paths and timings as before.
+
 - **Aircraft no longer taxi through each other.** Ground control checked a route for conflicts
   every two seconds, which at taxi speed is further apart than the clearance it was testing, so two
   aircraft crossing could slip past each other between checks. It now scans coarsely and looks

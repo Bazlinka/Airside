@@ -118,6 +118,30 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void PointAtDistance_IsTheSamplesPositionWithoutRecursingDownThePath()
+        {
+            // ADR 0154: PointAtDistance used to go through the full sample, whose heading looks
+            // 16 m ahead through PointAtDistance again, so one point recursed to the end of the path.
+            var path = new GroundPath(AdelaideLayout.Bays[1].TaxiOut, GroundSpeedLimits.TaxiTurboprop);
+            for (var metres = 0f; metres <= path.Length; metres += 3.7f)
+            {
+                var sample = path.SampleAtDistance(metres);
+                var point = path.PointAtDistance(metres);
+                Assert.That(point.x, Is.EqualTo(sample.X), $"x at {metres:0.0} m");
+                Assert.That(point.z, Is.EqualTo(sample.Z), $"z at {metres:0.0} m");
+            }
+
+            var end = path.SampleAtDistance(path.Length);
+            Assert.That(path.PointAtDistance(path.Length), Is.EqualTo((end.X, end.Z)));
+
+            // A long route must cost about the same per point as a short one.
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            for (var i = 0; i < 20000; i++)
+                path.PointAtDistance(i % 50);
+            Assert.That(watch.ElapsedMilliseconds, Is.LessThan(250), "PointAtDistance is walking the path");
+        }
+
+        [Test]
         public void Pushback_IsTailFirstThenNoseFirst()
         {
             var leg = AdelaideGround.TaxiOut(new StableId("BAY-1"));

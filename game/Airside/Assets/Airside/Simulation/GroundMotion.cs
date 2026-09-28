@@ -187,8 +187,27 @@ namespace Airside.Simulation
                 return (_x[last] + d.x * (metres - Length), _z[last] + d.z * (metres - Length));
             }
 
-            var sample = SampleAtDistance(metres);
-            return (sample.X, sample.Z);
+            // Position only. Going through SampleAtDistance also worked out a heading, and the
+            // heading looks 16 m ahead through this method, so every call recursed down the
+            // rest of the path — a 2 km taxi route was ~125 nested samples for one point. The
+            // ground-traffic checks call this thousands of times in one simulated second, which
+            // froze the game for 50–200 ms at a time (ADR 0154).
+            if (metres >= Length)
+                return Position(last - 1, 1f);
+            var i = Array.BinarySearch(_distance, metres);
+            if (i < 0)
+                i = ~i;
+            var segment = Math.Max(0, i - 1);
+            var span = _distance[segment + 1] - _distance[segment];
+            return Position(segment, span > 1e-6f ? (metres - _distance[segment]) / span : 1f);
+        }
+
+        /// <summary>The point <paramref name="fraction"/> of the way along <paramref name="segment"/>.</summary>
+        private (float x, float z) Position(int segment, float fraction)
+        {
+            var next = Math.Min(segment + 1, _x.Length - 1);
+            return (_x[segment] + (_x[next] - _x[segment]) * fraction,
+                _z[segment] + (_z[next] - _z[segment]) * fraction);
         }
 
         private (float x, float z) Direction(int segment)

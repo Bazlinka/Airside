@@ -49,10 +49,20 @@ namespace Airside.Simulation
                 ? 4 * 3600L
                 : 2 * 3600L;
 
-        public static long CheckCost(AircraftType type) =>
-            AircraftAcquisition.TryFor(type, out var offer)
+        /// <summary>
+        /// A Saab 340's check. Fixed rather than taken from its list price: the Saab went on sale
+        /// at a discounted $1,600 (ADR 0164), which would otherwise have cut its check to $300.
+        /// </summary>
+        public const long SaabCheckCost = 400L;
+
+        public static long CheckCost(AircraftType type)
+        {
+            if (type != null && type.Id == AircraftType.Saab340.Id)
+                return SaabCheckCost;
+            return AircraftAcquisition.TryFor(type, out var offer)
                 ? Math.Max(300L, (long)Math.Round(offer.Price * CostFraction))
                 : 400L;
+        }
 
         public static long CheckCost(AircraftType type, PlayerBaseLevel baseLevel)
         {

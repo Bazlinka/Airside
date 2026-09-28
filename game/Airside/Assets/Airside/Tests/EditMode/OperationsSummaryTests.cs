@@ -74,8 +74,12 @@ namespace Airside.Tests
                     RouteContractCatalogue.DomesticMelbourneIntro.Id
                 },
                 0);
-            // Drain market by advancing? MarketOffers still draws from owned Saab.
-            // Pass null market and rely on completed intros.
+            // With one Saab the next step is the second Saab the starter base holds (ADR 0164).
+            var oneSaab = OperationsSummary.Objective(ops.FleetOf(ops.PlayerAirline), clock.Now, ops.Clock,
+                ops.CareerState, Array.Empty<RouteContractDefinition>());
+            Assert.That(oneSaab.NextLine.ToLowerInvariant(), Does.Contain("saab"));
+            // Both Saabs owned: the starter base is full, so the way on is expanding it.
+            ops.AddAircraft(ops.PlayerAirline, "VH-PAY", AircraftType.Saab340, new StableId("BAY-7"));
             var objective = OperationsSummary.Objective(ops.FleetOf(ops.PlayerAirline), clock.Now, ops.Clock,
                 ops.CareerState, Array.Empty<RouteContractDefinition>());
             Assert.That(objective.Title, Is.EqualTo("Complete 4 flights"));

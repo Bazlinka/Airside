@@ -13,6 +13,9 @@ namespace Airside.Tests
             var ops = new AirlineOperations(clock, new SeededRandomSource(2), DestinationCatalogue.Adelaide, AirlineOperations.AdelaideRegionalBays);
             var player = Airline.Player("Start Air", "#C8102E");
             ops.AddAirline(player);
+            // ADR 0164: the starter base operates Saabs only; an ATR needs the expanded regional apron.
+            ops.RestoreCareerState(ops.CareerState.Funds, ops.CareerState.Reliability, nameof(OperatingTier.Provisional),
+                null, 0, 0, System.Array.Empty<string>(), baseLevel: PlayerBaseLevel.ExpandedRegional);
             return (clock, ops, ops.AddAircraft(player, "VH-STA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]));
         }
 

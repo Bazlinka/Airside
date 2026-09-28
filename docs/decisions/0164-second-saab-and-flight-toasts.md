@@ -25,3 +25,18 @@ change: the gift is recognised as the player's only Saab, not as a stored flag.
 
 Existing careers keep their base level and fleet. A save that already expanded is unchanged. New
 games can buy the second Saab before the first flight.
+
+## Follow-up (28 September 2026, Claude)
+
+Seven EditMode tests failed after this change: six were stale fixtures, one was a real regression.
+
+- **Saab check price (regression).** `Maintenance.CheckCost` prices a check from the list price.
+  The Saab used to have no offer and cost a flat $400. Its $1,600 sale price cut that to $300.
+  The Saab check is now fixed at `Maintenance.SaabCheckCost` ($400).
+- **Stale fixtures.** Several tests parked a player ATR 42 at the starter base. That base now
+  operates Saabs only, so the ATR was never offered a stand. A new airline can't reach that state,
+  so those fixtures now use the expanded regional base.
+- **Stand suggestion.** 50G is now the player's second leased bay, so other airlines rightly skip
+  it. The shortest-taxi test no longer compares against the player's bays.
+- **Next aircraft and objective.** These tests now say the player owns a Saab, or both Saabs, so
+  the second-Saab step is accounted for.

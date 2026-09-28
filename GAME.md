@@ -1,5 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — tests after the second Saab (ADR 0164 follow-up).** Branch
+  `claude/fervent-gates-1tzyhq`.
+  - Seven EditMode tests had been red on main since the second Saab.
+  - Real fix: the Saab's check is back to $400; its $1,600 sale price had cut it to $300.
+  - The rest were fixtures that parked a player ATR at the Saab-only starter base, or didn't account
+    for the new 50G bay and second-Saab offer.
+  - The headless harness now compiles `FlightNotices`.
+
+  **Checks:** headless harness 960/960.
+
 - **2026-09-28 Claude — propellers and fans at speed (ADR 0168).** Branch
   `claude/fervent-gates-1tzyhq`.
   - The propeller blur disc is now the blades' real time-averaged coverage (5–20 % haze plus a faint

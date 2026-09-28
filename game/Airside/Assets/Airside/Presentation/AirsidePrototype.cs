@@ -28,6 +28,10 @@ namespace Airside.Presentation
         // every frame, and a per-engine key could land on another aircraft's audio key.
         private readonly Dictionary<int, float> _enginePropRpm = new();
         private readonly Dictionary<int, float> _jetFanRpm = new();
+        // ADR 0151: shaft power / N1 as a 0..1 fraction. A governed propeller barely changes
+        // speed between taxi and takeoff, so the engine note, the exhaust and the heat haze read
+        // power from here rather than trying to infer it from the spool.
+        private readonly Dictionary<int, float> _propPower = new();
 
         private Light _sun;
         private Light _fillLight;
@@ -1575,8 +1579,8 @@ namespace Airside.Presentation
 
                 var engines = FleetEngines(flight);
                 var viewParts = PartsFor(view);
-                SpinPropellers(view, viewParts.Propellers, phase, engines);
-                SpinJetFans(view, viewParts.FanLeft, viewParts.FanRight, phase, engines);
+                SpinPropellers(view, viewParts.Propellers, phase, engines, progress);
+                SpinJetFans(view, viewParts.FanLeft, viewParts.FanRight, phase, engines, progress);
                 UpdateNoseWheelSteering(viewParts.GearNose,
                     FleetNoseWheelSteering(flight, viewParts.WheelbaseMetres), PresentationDeltaTime);
                 RollLandingGearTires(view, FleetTireRollSpeed(flight, phase, progress, aircraftType));
@@ -1599,7 +1603,8 @@ namespace Airside.Presentation
                     viewParts.CabinWindowGlowState = glowState;
                     _aircraftViewParts[view.GetInstanceID()] = viewParts;
                 }
-                UpdateEngineHeat(viewParts.EngineHeatVents, phase, engines?.AnyRunning);
+                UpdateEngineHeat(viewParts.EngineHeatVents, phase, engines,
+                    EnginePower(view), PresentationClock);
 
                 if (_cameraController != null
                     && _cameraController.IsFollowing
@@ -1845,10 +1850,9 @@ namespace Airside.Presentation
 
             // Recorded beds are already takeoff/cruise. Pitching them to 0.47 made a
             // parked Saab sound like a broken motor; keep pitch near native.
-            var power = _propRpm.TryGetValue(id, out var rpm)
-                ? Mathf.InverseLerp(AirsideReusableMotion.PropRpmTaxi,
-                    AirsideReusableMotion.PropRpmTakeoff, rpm)
-                : 0f;
+            // ADR 0151: read shaft power directly. A governed propeller holds its speed, so the
+            // old inference from rpm made a taxiing turboprop sound like one at takeoff power.
+            var power = _propPower.TryGetValue(id, out var shaftPower) ? Mathf.Clamp01(shaftPower) : 0f;
             if (phase is AircraftPhase.Takeoff)
                 power = 1f; // the takeoff roll swells to full power
             else if (phase is AircraftPhase.Departed)
@@ -2342,90 +2346,102 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>
+        /// ADR 0151 — the exhaust behind a running engine, driven by shaft power rather than by a
+        /// phase flag. It grows and brightens with power, blooms once at light-off (the puff every
+        /// turbine makes when it starts), and cools toward a dull haze at idle. Presentation only.
+        /// </summary>
         private static void UpdateEngineHeat(
-            (Transform Transform, Renderer Renderer)[] vents, AircraftPhase phase, bool? running = null)
+            (Transform Transform, Renderer Renderer)[] vents, AircraftPhase phase, EngineState? engines,
+            float powerFraction, float seconds)
         {
-            // Presentation-only: subtle heat shimmer behind running engines.
-            var enginesOn = running ?? (phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed);
-            var intensity = phase is AircraftPhase.Takeoff or AircraftPhase.Approach ? 1.25f : 1f;
+            var anyRunning = engines?.AnyRunning
+                ?? (phase != AircraftPhase.AtStand && phase != AircraftPhase.Departed);
+            var power = Mathf.Clamp01(powerFraction);
             for (var i = 0; i < vents.Length; i++)
             {
                 var child = vents[i].Transform;
                 if (child == null)
                     continue;
 
-                child.gameObject.SetActive(enginesOn);
-                if (!enginesOn)
+                // "EngineHeat L" / "EngineHeat R" — each stack follows its own engine.
+                var isLeft = child.name.EndsWith("L", StringComparison.Ordinal);
+                var running = engines.HasValue
+                    ? (isLeft ? engines.Value.Left : engines.Value.Right)
+                    : anyRunning ? 1f : 0f;
+                var lit = running > AirsidePropellerDynamics.LightOffFraction * 0.92f;
+                child.gameObject.SetActive(lit);
+                if (!lit)
                     continue;
 
-                var pulse = 0.85f + 0.15f * Mathf.Sin(
-                    Time.unscaledTime * AirsideReusableMotion.HeatPulseHz * Mathf.PI * 2f
-                    + child.GetInstanceID() * 0.01f);
-                child.localScale = new Vector3(0.35f * pulse * intensity, 0.35f * pulse * intensity, 0.7f);
+                // A start throws a short, dense bloom of exhaust before it settles to idle.
+                var lightOff = 1f - Mathf.Clamp01(
+                    Mathf.Abs(running - AirsidePropellerDynamics.LightOffFraction) / 0.14f);
+                var strength = Mathf.Max(power * Mathf.Clamp01(running), lightOff * 0.85f);
+                var shimmer = 0.88f + 0.12f * Mathf.Sin(
+                    seconds * AirsideReusableMotion.HeatPulseHz * Mathf.PI * 2f + child.GetInstanceID() * 0.01f);
+                // The plume stretches aft with power far more than it widens.
+                var width = (0.26f + 0.2f * strength) * shimmer;
+                child.localScale = new Vector3(width, width, 0.5f + 2f * strength);
                 var renderer = vents[i].Renderer;
-                if (renderer != null)
-                {
-                    var color = GetRendererColor(renderer);
-                    color.a = (0.12f + 0.1f * pulse) * intensity;
-                    SetRendererColor(renderer, color);
-                }
+                if (renderer == null)
+                    continue;
+                // Cool and brown at idle, bright and orange at power.
+                var tint = Color.Lerp(new Color(0.7f, 0.45f, 0.3f), new Color(1f, 0.66f, 0.28f), strength);
+                tint.a = (0.05f + 0.16f * strength) * shimmer;
+                SetRendererColor(renderer, tint);
             }
         }
 
         /// <summary>Sim-rate presentation dt — freezes when paused, scales with the selected rate.</summary>
         private float PresentationDeltaTime => Time.unscaledDeltaTime;
 
-        private void SpinPropellers(Transform aircraft, PropellerPart[] propellers, AircraftPhase phase, EngineState? engines = null)
-        {
-            if (engines is { } perEngine)
-            {
-                SpinPropellersPerEngine(aircraft, propellers, phase, perEngine);
-                return;
-            }
-
-            // Presentation-only: RPM follows phase (Batch F4 ANM-AIR-001 via AirsideReusableMotion).
-            // RPM used to jump straight to the new phase value, so takeoff power arrived
-            // in one frame and engines stopped dead at shutdown. Spool between them
-            // instead — up faster than down, the way an engine accepts throttle.
-            var targetRpm = AirsideReusableMotion.PropellersSpinning(phase)
-                ? AirsideReusableMotion.PropRpmForPhase(phase)
-                : 0f;
-            var rpm = SpooledPropRpm(aircraft, targetRpm);
-            if (rpm < 1f)
-            {
-                ApplyPropBlur(propellers, 0f);
-                return;
-            }
-
-            for (var i = 0; i < propellers.Length; i++)
-            {
-                var child = propellers[i].Transform;
-                if (child != null)
-                    SpinOnePropeller(child, rpm);
-            }
-        }
+        /// <summary>Shaft power 0..1 last written for this aircraft by the propeller or fan pass.</summary>
+        private float EnginePower(Transform aircraft) =>
+            _propPower.TryGetValue(aircraft.GetInstanceID(), out var power) ? Mathf.Clamp01(power) : 0f;
 
         /// <summary>
-        /// Fleet aircraft: each propeller follows its own engine through the start and
-        /// shutdown sequence, at ground idle while parked and at phase RPM otherwise.
+        /// ADR 0151 — a constant-speed propeller. The governor holds the shaft speed and the
+        /// power goes into blade pitch, so the difference between taxi and takeoff is the angle
+        /// of the blades and the density of the disc rather than how fast it turns. A shut-down
+        /// engine is feathered; a start unfeathers, motors on the starter, lights and is caught
+        /// by the governor; a landing rollout goes into reverse.
         /// </summary>
-        private void SpinPropellersPerEngine(Transform aircraft, PropellerPart[] propellers, AircraftPhase phase, EngineState engines)
+        private void SpinPropellers(Transform aircraft, PropellerPart[] propellers, AircraftPhase phase,
+            EngineState? engines = null, float progress01 = 1f)
         {
-            var phaseRpm = phase == AircraftPhase.AtStand
-                ? AirsideReusableMotion.PropRpmTaxi
-                : AirsideReusableMotion.PropRpmForPhase(phase);
+            if (propellers.Length == 0)
+                return;
+
             var id = aircraft.GetInstanceID();
-            var left = SpooledPropRpm(_enginePropRpm, id * 2 + 1, phaseRpm * engines.Left);
-            var right = SpooledPropRpm(_enginePropRpm, id * 2 + 2, phaseRpm * engines.Right);
-            // Engine audio reads the aircraft's own key; give it the stronger engine.
+            var np = AirsidePropellerDynamics.NpFractionForPhase(phase);
+            var power = AirsidePropellerDynamics.PowerFractionForPhase(phase, progress01);
+            var reverse = phase == AircraftPhase.Landing
+                ? AirsidePropellerDynamics.ReverseBlend(progress01)
+                : 0f;
+            // Fleet aircraft carry a modelled start sequence per engine. Everything else (sky and
+            // live traffic) is simply running whenever its phase says the propellers turn.
+            var idling = AirsideReusableMotion.PropellersSpinning(phase) ? 1f : 0f;
+            var leftRunning = engines?.Left ?? idling;
+            var rightRunning = engines?.Right ?? idling;
+
+            var left = SpooledPropRpm(_enginePropRpm, id * 2 + 1, leftRunning, np);
+            var right = SpooledPropRpm(_enginePropRpm, id * 2 + 2, rightRunning, np);
+            var advance = AirsidePropellerDynamics.Advance01ForPhase(phase, progress01);
+            var leftPitch = AirsidePropellerDynamics.BladePitchOffsetDegrees(leftRunning, power, advance, reverse);
+            var rightPitch = AirsidePropellerDynamics.BladePitchOffsetDegrees(rightRunning, power, advance, reverse);
+            // Audio, exhaust and heat follow power, not shaft speed: under a governor the speed
+            // barely moves between taxi and takeoff, so reading power off it would be silent.
             _propRpm[id] = Mathf.Max(left, right);
+            _propPower[id] = power * Mathf.Clamp01(Mathf.Max(leftRunning, rightRunning));
 
             for (var i = 0; i < propellers.Length; i++)
             {
                 var child = propellers[i].Transform;
                 if (child == null)
                     continue;
-                SpinOnePropeller(child, propellers[i].IsLeft ? left : right);
+                var isLeft = propellers[i].IsLeft;
+                SpinOnePropeller(child, isLeft ? left : right, isLeft ? leftPitch : rightPitch);
             }
         }
 
@@ -2435,62 +2451,126 @@ namespace Airside.Presentation
         /// own, blades become a restrained intake blur at high power, and the stronger
         /// spool also drives the existing generic engine audio response.
         /// </summary>
-        private void SpinJetFans(Transform aircraft, Transform fanLeft, Transform fanRight, AircraftPhase phase, EngineState? engines = null)
+        private void SpinJetFans(Transform aircraft, Transform fanLeft, Transform fanRight, AircraftPhase phase,
+            EngineState? engines = null, float progress01 = 1f)
         {
             if (fanLeft == null && fanRight == null)
                 return;
 
-            var target = AirsideReusableMotion.JetFanRpmForPhase(phase);
+            // ADR 0151: N1, not an invented fan rpm. A jet idles far lower than people expect and
+            // approach idle is lower still, which is why a go-around takes so long to spool up —
+            // the lag below is a function of where the spool is starting from.
+            var target = AirsidePropellerDynamics.JetN1ForPhase(phase, progress01);
             var id = aircraft.GetInstanceID();
-            var left = SpooledJetFanRpm(id * 2 + 1, target * (engines?.Left ?? 1f));
-            var right = SpooledJetFanRpm(id * 2 + 2, target * (engines?.Right ?? 1f));
-            // Audio expects the established prop-scale band. Convert fan spool rather
-            // than treating its larger physical RPM as permanently full takeoff thrust.
+            var leftN1 = SpooledJetN1(id * 2 + 1, target * (engines?.Left ?? 1f));
+            var rightN1 = SpooledJetN1(id * 2 + 2, target * (engines?.Right ?? 1f));
             _propRpm[id] = Mathf.Lerp(AirsideReusableMotion.PropRpmTaxi,
-                AirsideReusableMotion.PropRpmTakeoff,
-                Mathf.Clamp01(Mathf.Max(left, right) / AirsideReusableMotion.JetFanRpmTakeoff));
+                AirsideReusableMotion.PropRpmTakeoff, Mathf.Max(leftN1, rightN1));
+            _propPower[id] = Mathf.Max(leftN1, rightN1);
 
-            if (fanLeft != null)
-            {
-                ApplyJetFanBlurToHub(fanLeft, AirsideReusableMotion.JetFanBlurBlend(left));
-                if (left >= 1f && PropDeltaTime > 0f)
-                    fanLeft.Rotate(Vector3.forward, PropDeltaTime * left * 6f, Space.Self);
-            }
-            if (fanRight != null)
-            {
-                ApplyJetFanBlurToHub(fanRight, AirsideReusableMotion.JetFanBlurBlend(right));
-                if (right >= 1f && PropDeltaTime > 0f)
-                    fanRight.Rotate(Vector3.forward, PropDeltaTime * right * 6f, Space.Self);
-            }
+            SpinOneJetFan(fanLeft, leftN1);
+            SpinOneJetFan(fanRight, rightN1);
         }
 
-        private float SpooledJetFanRpm(int key, float targetRpm)
+        /// <summary>
+        /// One turbofan. Below the windmilling floor the fan still turns in the wind rather than
+        /// standing still, which is what a parked jet's intake actually does.
+        /// </summary>
+        private void SpinOneJetFan(Transform fan, float n1)
         {
+            if (fan == null)
+                return;
+
+            var rpm = n1 > 0.01f
+                ? Mathf.Lerp(0f, AirsideReusableMotion.JetFanRpmTakeoff, n1)
+                : AirsidePropellerDynamics.FanWindmillRpm;
+            var dt = PropDeltaTime;
+            var step = rpm * 6f * dt;
+            // Fan blades wagon-wheel at a far lower speed than propeller blades because there are
+            // so many of them; judge the blur the same way, by what one frame can draw.
+            var blades = JetFanBladeCount(fan);
+            var blur = AirsideReusableMotion.PropBlurForStep(step, blades);
+            ApplyJetFanBlurToHub(fan, blur, DiscViewFade(fan));
+            if (step <= 0f)
+                return;
+            fan.Rotate(Vector3.forward, step, Space.Self);
+        }
+
+        private int JetFanBladeCount(Transform fan)
+        {
+            var id = fan.GetInstanceID();
+            if (JetFanBladeCounts.TryGetValue(id, out var cached))
+                return cached;
+            var count = 0;
+            for (var i = 0; i < fan.childCount; i++)
+                if (fan.GetChild(i).name.StartsWith("Fan blade", StringComparison.Ordinal))
+                    count++;
+            cached = Mathf.Clamp(count, 8, 26);
+            JetFanBladeCounts[id] = cached;
+            return cached;
+        }
+
+        private static readonly Dictionary<int, int> JetFanBladeCounts = new();
+
+        /// <summary>
+        /// Spool one fan toward its commanded N1 with the lag that spool actually has: slow out of
+        /// the idle range, quick at high power, and slower still coming back.
+        /// </summary>
+        private float SpooledJetN1(int key, float targetN1)
+        {
+            targetN1 = Mathf.Clamp01(targetN1);
             if (!_jetFanRpm.TryGetValue(key, out var current))
-                current = targetRpm;
-            // Fan spool is intentionally quicker than a prop governor but still smooth
-            // enough that engine start and shutdown read as machinery, not a toggle.
-            var rate = targetRpm > current ? 2.3f : 1.1f;
-            current = Mathf.Lerp(current, targetRpm, AirsideFlightPath.DampFactor(rate, PropDeltaTime));
+                current = targetN1;
+            var seconds = Mathf.Max(0.2f, AirsidePropellerDynamics.JetSpoolSeconds(current, targetN1));
+            current = Mathf.Lerp(current, targetN1, AirsideFlightPath.DampFactor(1f / seconds * 2.4f, PropDeltaTime));
             _jetFanRpm[key] = current;
             return current;
         }
 
-        private float SpooledPropRpm(Transform aircraft, float targetRpm) =>
-            SpooledPropRpm(_propRpm, aircraft.GetInstanceID(), targetRpm);
-
-        private float SpooledPropRpm(Dictionary<int, float> spools, int key, float targetRpm)
+        /// <summary>
+        /// ADR 0151: shaft speed for one engine, rate limited by the stage it is in. A starter
+        /// turns the propeller slowly; light-off accelerates it hard; the governor then holds it
+        /// and only trims; a run-down coasts, and feathering the blades brakes it to a stop.
+        /// </summary>
+        private float SpooledPropRpm(Dictionary<int, float> spools, int key, float engineFraction,
+            float operatingNpFraction)
         {
+            var target = AirsidePropellerDynamics.EngineRpm(engineFraction, operatingNpFraction);
+            if (target > 0f)
+                target *= AirsidePropellerDynamics.GovernorHunt(PresentationClock, key * 0.37f);
+            else if (engineFraction <= 0.001f)
+                // Stopped and feathered: the blades still drift on the breeze rather than freezing.
+                target = AirsidePropellerDynamics.FeatheredDriftRpm;
+
             if (!spools.TryGetValue(key, out var current))
-                current = targetRpm;
+                current = target;
             var dt = PropDeltaTime;
-            var rate = targetRpm > current ? 1.6f : 0.8f;
-            var eased = Mathf.Lerp(current, targetRpm, AirsideFlightPath.DampFactor(rate, dt));
-            // ADR 0148: a turbine accepts throttle over seconds and a propeller runs down slowly, so
-            // the change per second is capped too: a start turns the blades visibly before light-off.
-            var up = AirsideReusableMotion.PropSpoolUpRpmPerSecond * dt;
-            var down = AirsideReusableMotion.PropSpoolDownRpmPerSecond * dt;
-            current = Mathf.Clamp(eased, current - down, current + up);
+            float upPerSecond, downPerSecond;
+            if (AirsidePropellerDynamics.Motoring(engineFraction))
+            {
+                upPerSecond = AirsideReusableMotion.PropMotoringRpmPerSecond;
+                downPerSecond = AirsideReusableMotion.PropMotoringRpmPerSecond;
+            }
+            else if (engineFraction <= 0.001f)
+            {
+                upPerSecond = AirsideReusableMotion.PropMotoringRpmPerSecond;
+                // A feathered propeller stops far sooner than a windmilling one: the blades brake it.
+                downPerSecond = AirsideReusableMotion.PropSpoolDownRpmPerSecond
+                    * (current < AirsideReusableMotion.PropRpmGroundIdle * 0.4f ? 3.2f : 1f);
+            }
+            else if (engineFraction < AirsidePropellerDynamics.GovernorCaptureFraction)
+            {
+                upPerSecond = AirsideReusableMotion.PropLightOffRpmPerSecond;
+                downPerSecond = AirsideReusableMotion.PropSpoolDownRpmPerSecond;
+            }
+            else
+            {
+                upPerSecond = AirsideReusableMotion.PropSpoolUpRpmPerSecond;
+                downPerSecond = AirsideReusableMotion.PropSpoolDownRpmPerSecond;
+            }
+
+            var eased = Mathf.Lerp(current, target, AirsideFlightPath.DampFactor(1.6f, dt));
+            current = Mathf.Clamp(eased, current - downPerSecond * dt, current + upPerSecond * dt);
             spools[key] = current;
             return current;
         }
@@ -2528,15 +2608,21 @@ namespace Airside.Presentation
         /// between blades per frame they wagon-wheel, so they fade into the blur disc, which is held
         /// nearly still against the spin so its faint blade ghosts drift slowly instead of strobing.
         /// </summary>
-        private void SpinOnePropeller(Transform propeller, float rpm)
+        private void SpinOnePropeller(Transform propeller, float rpm, float bladePitchOffsetDegrees)
         {
             var dt = PropDeltaTime;
             var id = propeller.GetInstanceID();
             var step = rpm * 6f * dt;
             if (!PropBladeCounts.TryGetValue(id, out var blades))
-                blades = 4;
+                blades = CountBlades(propeller);
+            ApplyBladePitch(propeller, bladePitchOffsetDegrees);
             var blur = rpm < 1f ? 0f : AirsideReusableMotion.PropBlurForStep(step, blades);
-            ApplyPropBlurToHub(propeller, blur);
+            // A coarse blade puts more of itself in the line of sight than a fine one, and a disc
+            // seen edge-on all but disappears. Both are what makes takeoff power read differently
+            // from taxi, and the edge-on case costs nothing to draw.
+            var density = AirsidePropellerDynamics.DiscPitchDensity(
+                bladePitchOffsetDegrees + AirsidePropellerDynamics.AuthoredPitchDegrees);
+            ApplyPropBlurToHub(propeller, blur, DiscViewFade(propeller) * density);
             if (step <= 0f)
                 return;
             propeller.Rotate(Vector3.forward, step, Space.Self);
@@ -2547,6 +2633,127 @@ namespace Airside.Presentation
             if (disc != null && disc.gameObject.activeSelf)
                 disc.localRotation = Quaternion.Euler(0f, 0f, -spun * 0.97f);
         }
+
+        /// <summary>
+        /// How much of a blur disc the camera can see. Face-on it is the whole propeller; edge-on
+        /// there is almost nothing in the line of sight, so a real disc nearly vanishes.
+        /// </summary>
+        private float DiscViewFade(Transform hub)
+        {
+            if (_mainCamera == null)
+                return 1f;
+            var toCamera = _mainCamera.transform.position - hub.position;
+            var distanceSquared = toCamera.sqrMagnitude;
+            if (distanceSquared < 0.0001f)
+                return 1f;
+            return AirsidePropellerDynamics.DiscViewFade(
+                Vector3.Dot(hub.forward, toCamera / Mathf.Sqrt(distanceSquared)));
+        }
+
+        /// <summary>
+        /// Rotate each blade about its own radial axis. ADR 0151: the blade meshes are lofted with
+        /// their twist already in them, so this applies the difference from that authored pitch —
+        /// feathered when the engine is stopped, flat for a start, coarsening with power, negative
+        /// in reverse. The radial axis of each blade is resolved once per model.
+        /// </summary>
+        private void ApplyBladePitch(Transform propeller, float offsetDegrees)
+        {
+            var id = propeller.GetInstanceID();
+            if (!_propBladeRigs.TryGetValue(id, out var rig))
+            {
+                rig = BuildBladeRig(propeller);
+                _propBladeRigs[id] = rig;
+            }
+
+            if (rig.Length == 0)
+                return;
+            if (_propBladePitch.TryGetValue(id, out var applied)
+                && Mathf.Abs(applied - offsetDegrees) < 0.05f)
+                return;
+            _propBladePitch[id] = offsetDegrees;
+
+            for (var i = 0; i < rig.Length; i++)
+            {
+                var blade = rig[i].Transform;
+                if (blade == null)
+                    continue;
+                blade.localRotation = Quaternion.AngleAxis(offsetDegrees, rig[i].RadialAxis) * rig[i].BaseRotation;
+            }
+        }
+
+        private static PropBladePart[] BuildBladeRig(Transform propeller)
+        {
+            var parts = new List<PropBladePart>();
+            for (var i = 0; i < propeller.childCount; i++)
+            {
+                var child = propeller.GetChild(i);
+                var name = child.name;
+                // The nested rig names blades "Blade"/"Blade 2"… and their painted ends "Tip"/"Tip 2"…
+                if (!name.StartsWith("Blade", StringComparison.Ordinal)
+                    && !name.StartsWith("Tip", StringComparison.Ordinal))
+                    continue;
+                if (TryBladeRadialAxis(child, out var radial))
+                    parts.Add(new PropBladePart(child, child.localRotation, radial));
+            }
+
+            return parts.Count == 0 ? Array.Empty<PropBladePart>() : parts.ToArray();
+        }
+
+        /// <summary>
+        /// The radial axis a blade pitches about, in the propeller's own space. The authored
+        /// aircraft bake each blade's vertices out along the blade, so the mesh centre gives the
+        /// direction; the primitive fallback kit centres its box on the hub, so there the longest
+        /// scaled axis of the box is the blade. Anything that resolves along the spin axis is not
+        /// a blade and is left alone.
+        /// </summary>
+        private static bool TryBladeRadialAxis(Transform blade, out Vector3 radial)
+        {
+            radial = Vector3.right;
+            var filter = blade.GetComponent<MeshFilter>();
+            if (filter == null || filter.sharedMesh == null)
+                return false;
+
+            var bounds = filter.sharedMesh.bounds;
+            var scale = blade.localScale;
+            var candidate = blade.localRotation * Vector3.Scale(bounds.center, scale);
+            if (candidate.sqrMagnitude < 0.0225f)
+            {
+                var extents = Vector3.Scale(bounds.extents, scale);
+                if (extents.magnitude < 0.02f)
+                    return false;
+                var axis = extents.x >= extents.y && extents.x >= extents.z ? Vector3.right
+                    : extents.y >= extents.z ? Vector3.up
+                    : Vector3.forward;
+                candidate = blade.localRotation * axis;
+            }
+
+            // Pitch is about the radius, so drop any component along the spin axis (local Z).
+            candidate.z = 0f;
+            if (candidate.sqrMagnitude < 1e-4f)
+                return false;
+            radial = candidate.normalized;
+            return true;
+        }
+
+        private readonly struct PropBladePart
+        {
+            public readonly Transform Transform;
+            public readonly Quaternion BaseRotation;
+            public readonly Vector3 RadialAxis;
+
+            public PropBladePart(Transform transform, Quaternion baseRotation, Vector3 radialAxis)
+            {
+                Transform = transform;
+                BaseRotation = baseRotation;
+                RadialAxis = radialAxis;
+            }
+        }
+
+        /// <summary>Blades and their pitch axes per propeller, resolved once per model.</summary>
+        private readonly Dictionary<int, PropBladePart[]> _propBladeRigs = new();
+
+        /// <summary>The pitch already written to each propeller, so a held angle costs nothing.</summary>
+        private readonly Dictionary<int, float> _propBladePitch = new();
 
         private static int CountBlades(Transform propeller)
         {
@@ -2615,20 +2822,7 @@ namespace Airside.Presentation
             return material;
         }
 
-        /// <summary>
-        /// At high RPM hide individual blades and show a translucent disc (Batch D life).
-        /// </summary>
-        private static void ApplyPropBlur(PropellerPart[] propellers, float blend)
-        {
-            for (var i = 0; i < propellers.Length; i++)
-            {
-                var child = propellers[i].Transform;
-                if (child != null)
-                    ApplyPropBlurToHub(child, blend);
-            }
-        }
-
-        private static void ApplyPropBlurToHub(Transform propeller, float blend)
+        private static void ApplyPropBlurToHub(Transform propeller, float blend, float discDensity = 1f)
         {
             blend = Mathf.Clamp01(blend);
             var showBlades = blend < 0.92f;
@@ -2636,16 +2830,17 @@ namespace Airside.Presentation
             if (selfRenderer != null)
                 selfRenderer.enabled = showBlades;
 
+            var alpha = AirsideReusableMotion.PropDiscPeakAlpha * blend * Mathf.Max(0f, discDensity);
             for (var i = 0; i < propeller.childCount; i++)
             {
                 var child = propeller.GetChild(i);
                 if (child.name == "PropDisc")
                 {
-                    child.gameObject.SetActive(blend > 0.01f);
+                    // Below a visible alpha the disc is a transparent draw for nothing: drop it.
+                    child.gameObject.SetActive(alpha > 0.006f);
                     var discRenderer = child.GetComponent<Renderer>();
                     if (discRenderer != null)
-                        SetRendererColor(discRenderer, new Color(0.72f, 0.74f, 0.78f,
-                            AirsideReusableMotion.PropDiscPeakAlpha * blend));
+                        SetRendererColor(discRenderer, new Color(0.72f, 0.74f, 0.78f, alpha));
                     continue;
                 }
 
@@ -2655,20 +2850,20 @@ namespace Airside.Presentation
             }
         }
 
-        private static void ApplyJetFanBlurToHub(Transform fan, float blend)
+        private static void ApplyJetFanBlurToHub(Transform fan, float blend, float discDensity = 1f)
         {
             blend = Mathf.Clamp01(blend);
             var showBlades = blend < 0.92f;
+            var alpha = AirsideReusableMotion.JetFanDiscPeakAlpha * blend * Mathf.Max(0f, discDensity);
             for (var i = 0; i < fan.childCount; i++)
             {
                 var child = fan.GetChild(i);
                 if (child.name == "FanDisc")
                 {
-                    child.gameObject.SetActive(blend > 0.01f);
+                    child.gameObject.SetActive(alpha > 0.006f);
                     var discRenderer = child.GetComponent<Renderer>();
                     if (discRenderer != null)
-                        SetRendererColor(discRenderer, new Color(0.26f, 0.34f, 0.39f,
-                            AirsideReusableMotion.JetFanDiscPeakAlpha * blend));
+                        SetRendererColor(discRenderer, new Color(0.26f, 0.34f, 0.39f, alpha));
                     continue;
                 }
 

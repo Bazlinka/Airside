@@ -1,5 +1,28 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — constant-speed propellers and power-driven engines (ADR 0151).**
+  Branch `feature/propeller-and-engine-realism-20260928`, based on `a98d0359`. Bailey asked to
+  improve the propeller and engine animation drastically, for all aircraft, with realism the
+  priority. ADR 0148 had left shaft speed doing the throttle's job. It now models a real
+  constant-speed propeller: the governor holds the speed and the **blades** carry the power.
+  Parked aircraft are feathered; a start unfeathers, motors on the starter, lights and settles at
+  idle; the blades coarsen through the takeoff roll with the speed and are coarsest in the cruise;
+  reverse is selected on the landing rollout. The blur disc fades edge-on (which also removes
+  transparent fill, wanted by the open render-performance work). Exhaust follows shaft power with a
+  light-off bloom, jets use N1 with the real spool lag from idle, and engine audio reads power
+  instead of inferring it from rpm. New `AirsidePropellerDynamics` holds the model as pure
+  functions; the blade pitch axis is resolved per model, so the primitive fallback kit is covered
+  as well as the three authored turboprops.
+  **Checks:** Unity EditMode 1249/1254 with 8 new `PropellerDynamicsTests`. The four failures are
+  present unchanged on clean `main` at `a98d0359`, confirmed by a baseline worktree run —
+  `FlightPlanning_UsesEachTypesOwnCruiseAndPracticalRange`, both `Gate13_*` and
+  `BusyDay_NoAircraftDriveThroughEachOther`. Not caused by this change; still open.
+  **Next:** Bailey's follow-up list, being worked now — takeoff and taxi jitter, an aircraft seen
+  at 1700 kt, taxi collisions and aircraft passing through each other (the failing
+  `BusyDay_NoAircraftDriveThroughEachOther` is the same fault), give-way priority, and a larger
+  trackable area so arrivals are visible further out. Human playtest of a start, taxi, takeoff roll
+  and landing rollout at both cameras still owed on the propeller work.
+
 - **2026-09-28 Codex — aircraft appearance and original liveries (ADR 0150).**
   Branch `feature/aircraft-liveries-refinement-20260928`, based on `a30a3935`.
   All 13 types now use clean enamel, pale grey wings, fitted two-tone sweeps,

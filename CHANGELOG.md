@@ -1,5 +1,18 @@
 ## Unreleased
 
+- **Propellers that behave like propellers.** Parked turboprops now stand with their blades
+  feathered, and unfeather as the engine starts. A start motors slowly on the starter, lights,
+  accelerates and settles at idle instead of ramping between two speeds. The blades themselves
+  carry the power: they coarsen through the takeoff roll as the speed builds, sit coarsest in the
+  cruise, and swing into reverse on the landing rollout. The blur disc fades away when you see the
+  propeller edge-on, as a real one does. Every aircraft in the game is covered, not just the
+  authored turboprops.
+
+- **Engines you can read.** Exhaust now grows and brightens with engine power rather than switching
+  on with the phase, puffs once as each engine lights, and cools to a haze at idle. Jets use N1, so
+  the long spool up from idle is there — a go-around takes its time. Parked jet fans turn in the
+  wind. The engine note follows shaft power instead of guessing it from the propeller speed.
+
 - **Cleaner aircraft and original liveries.** All 13 aircraft have fitted two-tone paint,
   original tail marks and matching engine bands. Aircraft no longer use noisy building-style
   materials. Spoilers sit on the wing and engine pylons fit beneath it. Refreshing aircraft

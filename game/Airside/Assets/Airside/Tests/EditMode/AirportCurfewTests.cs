@@ -121,5 +121,47 @@ namespace Airside.Tests
                 }
             }
         }
+        [Test]
+        public void EmiratesAndQatar_LandInTheEveningAndLeaveAtTen([Values(3u, 7u, 11u)] uint seed)
+        {
+            // Their ~27 h round trip used to bring them back just after 23:00 every night: held
+            // off-map until a 07:15 landing, then turned in the morning, never on the real evening.
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(seed),
+                Airline.Player("Evening Air", "#1F3A93"));
+            var longHaul = ops.Fleet.Where(a => a.Airline.Id.Value is "UAE" or "QTR").ToList();
+            Assume.That(longHaul, Is.Not.Empty, "the default field has an Emirates or Qatar service");
+            var was = longHaul.ToDictionary(a => a.Registration, a => a.State);
+            var landings = 0;
+            var departures = 0;
+            for (long t = 60; t < 10 * 86400; t += 60)
+            {
+                clock.Set(new SimulationTime(t));
+                ops.Update();
+                foreach (var a in longHaul)
+                {
+                    if (a.State == was[a.Registration])
+                        continue;
+                    was[a.Registration] = a.State;
+                    if (t < 2 * 86400)
+                        continue; // the opening day starts wherever the new game put them
+                    var local = ops.Clock.LocalAt(clock.Now);
+                    if (a.State == FleetState.Landing)
+                    {
+                        landings++;
+                        Assert.That(local.Hour, Is.InRange(20, 22), $"{a.Registration} landed at {local:HH:mm}");
+                    }
+                    else if (a.State == FleetState.TakingOff)
+                    {
+                        departures++;
+                        Assert.That(local.Hour * 60 + local.Minute, Is.InRange(21 * 60 + 30, 23 * 60),
+                            $"{a.Registration} left at {local:HH:mm}");
+                    }
+                }
+            }
+
+            Assert.That(landings, Is.GreaterThanOrEqualTo(3));
+            Assert.That(departures, Is.GreaterThanOrEqualTo(3));
+        }
     }
 }

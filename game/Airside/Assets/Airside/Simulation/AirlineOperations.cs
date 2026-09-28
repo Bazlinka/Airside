@@ -3041,7 +3041,7 @@ namespace Airside.Simulation
                     return true;
 
                 case FleetState.Outbound:
-                    Transition(aircraft, FleetState.AtDestination, now, DestinationTurnaroundSeconds);
+                    Transition(aircraft, FleetState.AtDestination, now, AwayTurnaroundSeconds(aircraft, now));
                     return true;
 
                 case FleetState.AtDestination:
@@ -4228,6 +4228,32 @@ namespace Airside.Simulation
                     hash = hash * 31 + ch;
                 return hash & int.MaxValue;
             }
+        }
+
+        /// <summary>
+        /// Local time (minutes after midnight) Emirates and Qatar land at Adelaide: 20:30, leaving
+        /// their ~80 min widebody turn plus a go-around or a wait for a gate before the 22:00 slot.
+        /// </summary>
+        public const int EveningLongHaulArrivalMinute = 20 * 60 + 30;
+
+        /// <summary>
+        /// Time on the ground at the far end. Emirates and Qatar wait at home long enough to land
+        /// back at 20:30 Adelaide time: their ~27 h round trip otherwise brought them back just
+        /// after the 23:00 curfew every night, held off-map until a 07:15 landing, so the real
+        /// evening departure (<see cref="PinLongHaulEvening"/>) never happened.
+        /// </summary>
+        private long AwayTurnaroundSeconds(FleetAircraft aircraft, SimulationTime now)
+        {
+            var turn = (long)DestinationTurnaroundSeconds;
+            var id = aircraft.Airline.Id.Value;
+            if (id != "UAE" && id != "QTR")
+                return turn;
+            var landsAt = now.Advance(turn + LegAirborne(aircraft));
+            var lands = Clock.LocalAt(landsAt);
+            var target = lands.Date.AddMinutes(EveningLongHaulArrivalMinute);
+            if (lands > target)
+                target = target.AddDays(1);
+            return turn + Math.Max(0L, Clock.AtLocal(target).ElapsedSeconds - landsAt.ElapsedSeconds);
         }
 
         /// <summary>

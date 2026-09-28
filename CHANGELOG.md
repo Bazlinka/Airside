@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Emirates and Qatar keep their evening timetable.** They now land around 8:30 pm and leave
+  at 10 pm, instead of being held until the next morning every night.
+
 - **No more all-night circling.** A jet that went around just before the 11 pm curfew used to
   circle Adelaide until 5 am. It now lands. Arrivals held by the curfew also no longer block the
   ones allowed to land behind them.

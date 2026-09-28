@@ -1,5 +1,16 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Claude — Emirates and Qatar land in the evening.** Branch `claude/fervent-gates-1tzyhq`.
+  - The ~27 h round trip brought them back just after 23:00 every night, held off-map until a 07:15
+    landing, then turned in the morning. The real 22:00 departure (`PinLongHaulEvening`) never
+    happened.
+  - `AwayTurnaroundSeconds` now waits at Dubai or Doha so they land at 20:30 Adelaide time, with room
+    for the ~80 min turn and a go-around before 22:00.
+
+  **Checks:** `AirportCurfewTests.EmiratesAndQatar_LandInTheEveningAndLeaveAtTen` (3 seeds, fails
+  on the old code with a 06:11 departure) and the curfew tests pass. The full harness was not re-run
+  after this change.
+
 - **2026-09-28 Claude — bug pass: curfew go-around, arrival queue, player flight numbers.**
   Branch `claude/fervent-gates-1tzyhq`. Found by the player-action fuzzer, now with a "stuck in one
   state for 3 h" check:

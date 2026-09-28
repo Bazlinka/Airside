@@ -143,7 +143,9 @@ namespace Airside.Presentation
             if (WritesPipelineAsset && GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset urp)
             {
                 urp.msaaSampleCount = MsaaSamples;
-                urp.supportsDynamicBatching = true;
+                // The SRP batcher is already on. Dynamic batching then walks every renderer
+                // on the CPU each frame and breaks those batches apart (ADR 0162).
+                urp.supportsDynamicBatching = false;
                 urp.shadowDistance = Current == Ladder.High ? HighShadowDistance : MediumShadowDistance;
                 urp.shadowCascadeCount = Current == Ladder.High ? HighShadowCascades : MediumShadowCascades;
                 urp.maxAdditionalLightsCount = Current == Ladder.High

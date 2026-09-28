@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -63,43 +64,10 @@ namespace Airside.Presentation
                 return false;
             try
             {
-                var shader = Shader.Find(ShaderName);
-                if (shader == null)
-                {
-                    Debug.LogWarning($"[Airside] {ShaderName} not in build; suburbs skipped.");
+                if (!TryPrepare(root, horizonFadeStart, horizonFadeEnd, out var parent, out var material, out var data, out var trees))
                     return false;
-                }
-
-                var path = ArtRuntimePaths.ResolveExisting(AdelaideSuburbData.ArtPath);
-                var data = path != null ? AdelaideSuburbData.Parse(System.IO.File.ReadAllBytes(path)) : null;
-                var treePath = ArtRuntimePaths.ResolveExisting(AdelaideTreeData.ArtPath);
-                var trees = treePath != null ? AdelaideTreeData.Parse(System.IO.File.ReadAllBytes(treePath)) : null;
-                if ((data == null || data.Buildings.Count == 0) && (trees == null || trees.Trees.Count == 0))
-                    return false;
-
-                var material = new Material(shader) { name = "mat_adelaide_suburbs_v01", enableInstancing = true };
-                var satellite = AirsideArtTextures.Load(AirsideAdelaideSurroundings.SatelliteTexturePath,
-                    wrap: TextureWrapMode.Clamp);
-                if (satellite != null)
-                    material.SetTexture("_SatelliteAlbedo", satellite);
-                material.SetFloat("_SatelliteExtent", AirsideAdelaideSurroundings.SatelliteExtentMetres);
-                material.SetColor("_SatelliteTint", new Color(0.56f, 0.58f, 0.56f, 1f));
-                material.SetFloat("_HorizonFadeStart", horizonFadeStart);
-                material.SetFloat("_HorizonFadeEnd", horizonFadeEnd);
-
-                var parent = new GameObject(ObjectName).transform;
-                parent.SetParent(root, false);
                 foreach (var (tile, mesh) in BuildMeshes(data, trees, AirsideAdelaideSurroundings.LandHeight))
-                {
-                    var go = new GameObject($"{ObjectName} {tile.x},{tile.y}");
-                    go.transform.SetParent(parent, false);
-                    go.AddComponent<MeshFilter>().sharedMesh = mesh;
-                    var renderer = go.AddComponent<MeshRenderer>();
-                    renderer.sharedMaterial = material;
-                    renderer.shadowCastingMode = ShadowCastingMode.Off;
-                    renderer.receiveShadows = true;
-                }
-
+                    AttachTile(parent, material, tile, mesh);
                 return true;
             }
             catch (Exception e)
@@ -109,6 +77,118 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>
+        /// Same suburbs as <see cref="TryBuild"/>, spread across frames. Building every house
+        /// and tree inside Awake froze the first picture (ADR 0162). Each slice stays under
+        /// a few milliseconds, then one tile mesh is uploaded per frame.
+        /// </summary>
+        public static IEnumerator BuildGradually(Transform root, float horizonFadeStart, float horizonFadeEnd)
+        {
+            if (root == null || !AirsideSettings.Current.SuburbBuildings)
+                yield break;
+
+            Transform parent = null;
+            Material material = null;
+            AdelaideSuburbData data = null;
+            AdelaideTreeData trees = null;
+            var prepared = false;
+            try
+            {
+                prepared = TryPrepare(root, horizonFadeStart, horizonFadeEnd, out parent, out material, out data, out trees);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[Airside] Suburbs failed to build: {e.Message}");
+            }
+
+            if (!prepared)
+                yield break;
+
+            var tiles = new Dictionary<Vector2Int, MeshParts>();
+            Func<float, float, float> ground = AirsideAdelaideSurroundings.LandHeight;
+            var corners = new float[8];
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            const double budgetMs = 2.5;
+
+            var treeList = trees?.Trees;
+            var treeCount = treeList?.Count ?? 0;
+            for (var i = 0; i < treeCount; i++)
+            {
+                AppendTree(tiles, treeList[i], ground);
+                if (clock.Elapsed.TotalMilliseconds < budgetMs)
+                    continue;
+                yield return null;
+                clock.Restart();
+            }
+
+            var buildings = data?.Buildings;
+            var buildingCount = buildings?.Count ?? 0;
+            for (var i = 0; i < buildingCount; i++)
+            {
+                AppendBuilding(tiles, buildings[i], ground, corners);
+                if (clock.Elapsed.TotalMilliseconds < budgetMs)
+                    continue;
+                yield return null;
+                clock.Restart();
+            }
+
+            foreach (var pair in tiles)
+            {
+                AttachTile(parent, material, pair.Key, pair.Value);
+                yield return null;
+            }
+        }
+
+        private static bool TryPrepare(Transform root, float horizonFadeStart, float horizonFadeEnd,
+            out Transform parent, out Material material, out AdelaideSuburbData data, out AdelaideTreeData trees)
+        {
+            parent = null;
+            material = null;
+            data = null;
+            trees = null;
+            var shader = Shader.Find(ShaderName);
+            if (shader == null)
+            {
+                Debug.LogWarning($"[Airside] {ShaderName} not in build; suburbs skipped.");
+                return false;
+            }
+
+            var path = ArtRuntimePaths.ResolveExisting(AdelaideSuburbData.ArtPath);
+            data = path != null ? AdelaideSuburbData.Parse(System.IO.File.ReadAllBytes(path)) : null;
+            var treePath = ArtRuntimePaths.ResolveExisting(AdelaideTreeData.ArtPath);
+            trees = treePath != null ? AdelaideTreeData.Parse(System.IO.File.ReadAllBytes(treePath)) : null;
+            if ((data == null || data.Buildings.Count == 0) && (trees == null || trees.Trees.Count == 0))
+                return false;
+
+            material = new Material(shader) { name = "mat_adelaide_suburbs_v01", enableInstancing = true };
+            var satellite = AirsideArtTextures.Load(AirsideAdelaideSurroundings.SatelliteTexturePath,
+                wrap: TextureWrapMode.Clamp);
+            if (satellite != null)
+                material.SetTexture("_SatelliteAlbedo", satellite);
+            material.SetFloat("_SatelliteExtent", AirsideAdelaideSurroundings.SatelliteExtentMetres);
+            material.SetColor("_SatelliteTint", new Color(0.56f, 0.58f, 0.56f, 1f));
+            material.SetFloat("_HorizonFadeStart", horizonFadeStart);
+            material.SetFloat("_HorizonFadeEnd", horizonFadeEnd);
+
+            parent = new GameObject(ObjectName).transform;
+            parent.SetParent(root, false);
+            return true;
+        }
+
+        private static void AttachTile(Transform parent, Material material, Vector2Int tile, Mesh mesh)
+        {
+            var go = new GameObject($"{ObjectName} {tile.x},{tile.y}");
+            go.transform.SetParent(parent, false);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+        }
+
+        private static void AttachTile(Transform parent, Material material, Vector2Int tile, MeshParts parts) =>
+            AttachTile(parent, material, tile, parts.ToMesh($"{ObjectName} {tile.x},{tile.y}"));
+
         /// <summary>One mesh per <see cref="TileMetres"/> tile. <paramref name="groundHeight"/> is the world y of the land.</summary>
         public static List<(Vector2Int Tile, Mesh Mesh)> BuildMeshes(AdelaideSuburbData data,
             AdelaideTreeData trees, Func<float, float, float> groundHeight)
@@ -117,89 +197,97 @@ namespace Airside.Presentation
             var corners = new float[8];
             if (trees != null)
                 foreach (var tree in trees.Trees)
-                {
-                    var key = new Vector2Int(Mathf.FloorToInt(tree.X / TileMetres), Mathf.FloorToInt(tree.Z / TileMetres));
-                    if (!tiles.TryGetValue(key, out var parts))
-                        tiles[key] = parts = new MeshParts();
-                    AddTree(parts, tree, groundHeight(tree.X, tree.Z) - SinkMetres);
-                }
+                    AppendTree(tiles, tree, groundHeight);
 
             var buildings = data?.Buildings ?? Array.Empty<AdelaideSuburbData.Building>();
             foreach (var b in buildings)
-            {
-                var key = new Vector2Int(Mathf.FloorToInt(b.CentreX / TileMetres), Mathf.FloorToInt(b.CentreZ / TileMetres));
-                if (!tiles.TryGetValue(key, out var parts))
-                    tiles[key] = parts = new MeshParts();
-
-                float[] footprint;
-                if (b.IsHipped)
-                {
-                    AdelaideSuburbData.HouseCorners(b, corners);
-                    footprint = corners;
-                }
-                else
-                {
-                    footprint = b.Footprint;
-                }
-
-                var n = footprint.Length / 2;
-                var baseY = float.MaxValue;
-                for (var i = 0; i < n; i++)
-                    baseY = Mathf.Min(baseY, groundHeight(footprint[i * 2], footprint[i * 2 + 1]));
-                baseY -= SinkMetres;
-                var eaves = baseY + SinkMetres + b.WallHeight;
-                var wall = WallColours[Mathf.Clamp(b.Wall, 0, WallColours.Length - 1)].linear;
-                wall.a = 0f;
-                var roof = RoofColours[Mathf.Clamp(b.Roof, 0, RoofColours.Length - 1)].linear;
-                roof.a = RoofSatelliteShare;
-                var centre = new Vector3(b.CentreX, 0f, b.CentreZ);
-
-                for (var i = 0; i < n; i++)
-                {
-                    var j = (i + 1) % n;
-                    var p = new Vector3(footprint[i * 2], 0f, footprint[i * 2 + 1]);
-                    var q = new Vector3(footprint[j * 2], 0f, footprint[j * 2 + 1]);
-                    var mid = (p + q) * 0.5f;
-                    var outward = new Vector3(q.z - p.z, 0f, p.x - q.x);
-                    if (Vector3.Dot(outward, mid - centre) < 0f)
-                        outward = -outward;
-                    parts.Quad(new Vector3(p.x, baseY, p.z), new Vector3(q.x, baseY, q.z),
-                        new Vector3(q.x, eaves, q.z), new Vector3(p.x, eaves, p.z), outward, wall);
-                }
-
-                if (b.IsHipped)
-                {
-                    // Ridge along the long axis, hips at both ends (a pyramid when square).
-                    var ux = Mathf.Cos(b.Angle);
-                    var uz = Mathf.Sin(b.Angle);
-                    var ridgeHalf = Mathf.Max(0f, b.HalfLength - b.HalfWidth);
-                    var top = eaves + b.RoofRise;
-                    var r0 = new Vector3(b.CentreX - ux * ridgeHalf, top, b.CentreZ - uz * ridgeHalf);
-                    var r1 = new Vector3(b.CentreX + ux * ridgeHalf, top, b.CentreZ + uz * ridgeHalf);
-                    var c0 = new Vector3(corners[0], eaves, corners[1]);
-                    var c1 = new Vector3(corners[2], eaves, corners[3]);
-                    var c2 = new Vector3(corners[4], eaves, corners[5]);
-                    var c3 = new Vector3(corners[6], eaves, corners[7]);
-                    parts.Quad(c0, c1, r1, r0, Vector3.up, roof);
-                    parts.Quad(c2, c3, r0, r1, Vector3.up, roof);
-                    parts.Triangle(c1, c2, r1, Vector3.up, roof);
-                    parts.Triangle(c3, c0, r0, Vector3.up, roof);
-                }
-                else
-                {
-                    var tris = b.RoofTriangles;
-                    for (var t = 0; t + 2 < tris.Length; t += 3)
-                    {
-                        Vector3 At(int k) => new(footprint[k * 2], eaves, footprint[k * 2 + 1]);
-                        parts.Triangle(At(tris[t]), At(tris[t + 1]), At(tris[t + 2]), Vector3.up, roof);
-                    }
-                }
-            }
+                AppendBuilding(tiles, b, groundHeight, corners);
 
             var meshes = new List<(Vector2Int, Mesh)>(tiles.Count);
             foreach (var pair in tiles)
                 meshes.Add((pair.Key, pair.Value.ToMesh($"{ObjectName} {pair.Key.x},{pair.Key.y}")));
             return meshes;
+        }
+
+        private static void AppendTree(Dictionary<Vector2Int, MeshParts> tiles, AdelaideTreeData.Tree tree,
+            Func<float, float, float> groundHeight)
+        {
+            var key = new Vector2Int(Mathf.FloorToInt(tree.X / TileMetres), Mathf.FloorToInt(tree.Z / TileMetres));
+            if (!tiles.TryGetValue(key, out var parts))
+                tiles[key] = parts = new MeshParts();
+            AddTree(parts, tree, groundHeight(tree.X, tree.Z) - SinkMetres);
+        }
+
+        private static void AppendBuilding(Dictionary<Vector2Int, MeshParts> tiles, AdelaideSuburbData.Building b,
+            Func<float, float, float> groundHeight, float[] corners)
+        {
+            var key = new Vector2Int(Mathf.FloorToInt(b.CentreX / TileMetres), Mathf.FloorToInt(b.CentreZ / TileMetres));
+            if (!tiles.TryGetValue(key, out var parts))
+                tiles[key] = parts = new MeshParts();
+
+            float[] footprint;
+            if (b.IsHipped)
+            {
+                AdelaideSuburbData.HouseCorners(b, corners);
+                footprint = corners;
+            }
+            else
+            {
+                footprint = b.Footprint;
+            }
+
+            var n = footprint.Length / 2;
+            var baseY = float.MaxValue;
+            for (var i = 0; i < n; i++)
+                baseY = Mathf.Min(baseY, groundHeight(footprint[i * 2], footprint[i * 2 + 1]));
+            baseY -= SinkMetres;
+            var eaves = baseY + SinkMetres + b.WallHeight;
+            var wall = WallColours[Mathf.Clamp(b.Wall, 0, WallColours.Length - 1)].linear;
+            wall.a = 0f;
+            var roof = RoofColours[Mathf.Clamp(b.Roof, 0, RoofColours.Length - 1)].linear;
+            roof.a = RoofSatelliteShare;
+            var centre = new Vector3(b.CentreX, 0f, b.CentreZ);
+
+            for (var i = 0; i < n; i++)
+            {
+                var j = (i + 1) % n;
+                var p = new Vector3(footprint[i * 2], 0f, footprint[i * 2 + 1]);
+                var q = new Vector3(footprint[j * 2], 0f, footprint[j * 2 + 1]);
+                var mid = (p + q) * 0.5f;
+                var outward = new Vector3(q.z - p.z, 0f, p.x - q.x);
+                if (Vector3.Dot(outward, mid - centre) < 0f)
+                    outward = -outward;
+                parts.Quad(new Vector3(p.x, baseY, p.z), new Vector3(q.x, baseY, q.z),
+                    new Vector3(q.x, eaves, q.z), new Vector3(p.x, eaves, p.z), outward, wall);
+            }
+
+            if (b.IsHipped)
+            {
+                // Ridge along the long axis, hips at both ends (a pyramid when square).
+                var ux = Mathf.Cos(b.Angle);
+                var uz = Mathf.Sin(b.Angle);
+                var ridgeHalf = Mathf.Max(0f, b.HalfLength - b.HalfWidth);
+                var top = eaves + b.RoofRise;
+                var r0 = new Vector3(b.CentreX - ux * ridgeHalf, top, b.CentreZ - uz * ridgeHalf);
+                var r1 = new Vector3(b.CentreX + ux * ridgeHalf, top, b.CentreZ + uz * ridgeHalf);
+                var c0 = new Vector3(corners[0], eaves, corners[1]);
+                var c1 = new Vector3(corners[2], eaves, corners[3]);
+                var c2 = new Vector3(corners[4], eaves, corners[5]);
+                var c3 = new Vector3(corners[6], eaves, corners[7]);
+                parts.Quad(c0, c1, r1, r0, Vector3.up, roof);
+                parts.Quad(c2, c3, r0, r1, Vector3.up, roof);
+                parts.Triangle(c1, c2, r1, Vector3.up, roof);
+                parts.Triangle(c3, c0, r0, Vector3.up, roof);
+            }
+            else
+            {
+                var tris = b.RoofTriangles;
+                for (var t = 0; t + 2 < tris.Length; t += 3)
+                {
+                    Vector3 At(int k) => new(footprint[k * 2], eaves, footprint[k * 2 + 1]);
+                    parts.Triangle(At(tris[t]), At(tris[t + 1]), At(tris[t + 2]), Vector3.up, roof);
+                }
+            }
         }
 
         /// <summary>

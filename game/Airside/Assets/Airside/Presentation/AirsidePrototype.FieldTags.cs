@@ -64,7 +64,7 @@ namespace Airside.Presentation
                 var livery = AirsideTheme.FromHex(aircraft.Airline.LiveryHex);
                 var ink = AirsideTheme.RunwayInk;
 
-                var identity = FlightNumber.OrRegistration(aircraft);
+                var identity = FlightNumber.Title(aircraft);
                 // A held aircraft says why in two words (ADR 0124): "hold · 737-8 landing".
                 var holdTag = mine || selected ? HoldReasonText.Short(_operations.Why(aircraft)) : string.Empty;
                 var phase = holdTag.Length > 0 ? holdTag : AircraftStatus.TagPhase(aircraft, _clock.Now);

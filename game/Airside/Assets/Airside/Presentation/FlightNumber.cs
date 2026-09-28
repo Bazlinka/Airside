@@ -4,18 +4,19 @@ using Airside.Simulation;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// A short, human-looking flight number (e.g. "QLK404") shown instead of a bare
-    /// registration. Presentation only: deterministic from the airline, aircraft and
-    /// route, never stored, never decides anything. Airside has no authored per-route
-    /// flight numbers yet, so this is a stable stand-in — the same aircraft flying the
-    /// same route always reads the same number.
+    /// The flight a board would print: a callsign and number (ZL3482, QF680) and the
+    /// city it is flying. Presentation only — deterministic from the airline, aircraft
+    /// and route, never stored, never decides a schedule.
+    /// Published Adelaide services use a representative number for that airline and city.
+    /// Extra aircraft on the same city, and any route that is not a published service,
+    /// take a spare number so the airport still looks busy.
     /// </summary>
     public static class FlightNumber
     {
         /// <summary>
-        /// The 2-3 letter code shown before the number: the airline's own id for an AI
-        /// operator (already short — REX, QLK, SIA…), or initials drawn from the
-        /// player's chosen airline name.
+        /// The 2-3 letter code stored for the airline: the operator id for AI (REX, QFA…),
+        /// or the player's chosen code. This is the code setup refuses, not the callsign
+        /// printed on a board.
         /// </summary>
         public static string AirlineCode(Airline airline)
         {
@@ -24,6 +25,34 @@ namespace Airside.Presentation
             if (!airline.IsPlayer)
                 return airline.Id.Value;
             return string.IsNullOrEmpty(airline.Code) ? CodeFromName(airline.Name) : airline.Code;
+        }
+
+        /// <summary>
+        /// The letters a departures board prints in front of the number. Qantas and
+        /// QantasLink are both QF, Rex is ZL, Virgin is VA.
+        /// </summary>
+        public static string Callsign(Airline airline)
+        {
+            if (airline == null)
+                return "XX";
+            if (airline.IsPlayer)
+                return AirlineCode(airline);
+            return airline.Id.Value switch
+            {
+                "QFA" or "QLK" => "QF",
+                "VOZ" => "VA",
+                "JST" => "JQ",
+                "ANZ" => "NZ",
+                "SIA" => "SQ",
+                "CPA" => "CX",
+                "MAS" => "MH",
+                "UAE" => "EK",
+                "QTR" => "QR",
+                "FJI" => "FJ",
+                "REX" => "ZL",
+                "RFDS" => "FD",
+                _ => airline.Id.Value
+            };
         }
 
         /// <summary>The code a new airline is offered before the player types their own.</summary>
@@ -53,7 +82,6 @@ namespace Airside.Presentation
 
             if (letters.Length == 1)
             {
-                // A one-word name: fall back to its second letter instead of stopping at one.
                 foreach (var c in name.Trim())
                 {
                     if (!char.IsLetter(c) || char.ToUpperInvariant(c) == letters[0])
@@ -66,32 +94,126 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Deterministic flight number for an airline flying a registration on a route to
-        /// <paramref name="destinationCode"/> — the same inputs always give the same number.
+        /// Flight number for an airline, registration and destination. The same inputs
+        /// always give the same number. A return to Adelaide is the next number.
         /// </summary>
-        public static string For(Airline airline, string registration, string destinationCode)
+        public static string For(Airline airline, string registration, string destinationCode, bool returningHome = false)
         {
-            // "|" keeps a registration/destination pair from hashing the same as a different
-            // split of the same characters (e.g. "AB"+"C" vs "A"+"BC").
-            var hash = StableHash.Of($"{registration}|{destinationCode}");
-            var number = 100 + (int)(hash % 900);
-            return $"{AirlineCode(airline)}{number}";
+            if (string.IsNullOrEmpty(destinationCode))
+                return null;
+            var callsign = Callsign(airline);
+            var published = PublishedDeparture(airline != null && !airline.IsPlayer ? airline.Id.Value : null, destinationCode);
+            int number;
+            if (published.HasValue)
+            {
+                // Four slots on the city (3482, 3484, 3486, 3488) so two Rex Saabs to
+                // Kingscote are not the same flight. Cities are ten apart, so they do not meet.
+                var slot = (int)(StableHash.Of(registration ?? string.Empty) % 4) * 2;
+                number = published.Value + slot;
+            }
+            else
+            {
+                // Spare band for routes that are not a published Adelaide service, including
+                // every player flight. Still stable for the same aircraft and city.
+                var hash = StableHash.Of($"{registration}|{destinationCode}");
+                number = 900 + (int)(hash % 40) * 2;
+            }
+
+            if (returningHome)
+                number += 1;
+            return $"{callsign}{number}";
         }
+
+        /// <summary>City this aircraft is flying, or null when it has no route.</summary>
+        public static string PlaceName(FleetAircraft aircraft)
+        {
+            var destination = aircraft?.CurrentDestination ?? aircraft?.Scheduled?.Destination;
+            return destination?.Name;
+        }
+
+        /// <summary>The aircraft is on the leg back to Adelaide, including the turn at the outstation.</summary>
+        public static bool IsReturning(FleetAircraft aircraft) =>
+            aircraft != null && aircraft.State is FleetState.AtDestination
+                or FleetState.Inbound or FleetState.HoldingForLanding or FleetState.Landing
+                or FleetState.GoAround or FleetState.AwaitingStand or FleetState.TaxiIn;
 
         /// <summary>
         /// The flight number for an aircraft's current or scheduled route, or null when it
-        /// has neither (parked with nothing planned) — callers fall back to the registration.
+        /// has neither — callers fall back to the registration.
         /// </summary>
         public static string ForAircraft(FleetAircraft aircraft)
         {
             if (aircraft == null)
                 return null;
             var code = aircraft.CurrentDestination?.Code ?? aircraft.Scheduled?.Destination.Code;
-            return code == null ? null : For(aircraft.Airline, aircraft.Registration, code);
+            return code == null ? null : For(aircraft.Airline, aircraft.Registration, code, IsReturning(aircraft));
         }
 
         /// <summary>The flight number for an aircraft, or its registration when it has no route yet.</summary>
         public static string OrRegistration(FleetAircraft aircraft) =>
             ForAircraft(aircraft) ?? aircraft?.Registration;
+
+        /// <summary>"ZL3482 Kingscote", or the registration when nothing is booked.</summary>
+        public static string Title(FleetAircraft aircraft)
+        {
+            var number = ForAircraft(aircraft);
+            if (number == null)
+                return aircraft?.Registration ?? string.Empty;
+            var place = PlaceName(aircraft);
+            return string.IsNullOrEmpty(place) ? number : $"{number} {place}";
+        }
+
+        /// <summary>
+        /// Representative Adelaide departure numbers. Not a copy of today's timetable:
+        /// each pair is a real city that operator flies, in the number band it actually uses.
+        /// The return is this number plus one.
+        /// </summary>
+        private static int? PublishedDeparture(string airlineId, string destinationCode) =>
+            (airlineId, destinationCode) switch
+            {
+                ("REX", "KGC") => 3482,
+                ("REX", "PLO") => 3472,
+                ("REX", "WYA") => 3462,
+                ("REX", "MGB") => 3492,
+                ("REX", "CED") => 3452,
+                ("REX", "BHQ") => 3432,
+                ("REX", "CPD") => 3442,
+                ("REX", "MQL") => 3422,
+                ("QLK", "PLO") => 2262,
+                ("QLK", "ASP") => 2282,
+                ("QFA", "MEL") => 670,
+                ("QFA", "SYD") => 680,
+                ("QFA", "BNE") => 710,
+                ("QFA", "PER") => 880,
+                ("QFA", "CBR") => 690,
+                ("QFA", "AKL") => 170,
+                ("VOZ", "MEL") => 230,
+                ("VOZ", "SYD") => 410,
+                ("VOZ", "BNE") => 440,
+                ("VOZ", "PER") => 720,
+                ("VOZ", "CBR") => 250,
+                ("JST", "MEL") => 770,
+                ("JST", "SYD") => 780,
+                ("JST", "BNE") => 790,
+                ("JST", "OOL") => 760,
+                ("JST", "PER") => 820,
+                ("JST", "DPS") => 110,
+                ("ANZ", "AKL") => 120,
+                ("ANZ", "CHC") => 140,
+                ("SIA", "SIN") => 270,
+                ("CPA", "HKG") => 170,
+                ("MAS", "KUL") => 130,
+                ("UAE", "DXB") => 440,
+                ("QTR", "DOH") => 840,
+                ("FJI", "NAN") => 350,
+                ("RFDS", "PLO") => 200,
+                ("RFDS", "MGB") => 210,
+                ("RFDS", "CED") => 220,
+                ("RFDS", "CPD") => 230,
+                ("RFDS", "WYA") => 240,
+                ("RFDS", "KGC") => 250,
+                ("RFDS", "BHQ") => 260,
+                _ => null
+            };
     }
 }

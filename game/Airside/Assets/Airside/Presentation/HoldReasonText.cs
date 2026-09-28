@@ -109,7 +109,7 @@ namespace Airside.Presentation
             _ => "on the runway"
         };
 
-        /// <summary>"QFA412 (737-8)": the flight number the boards show, plus the type.</summary>
+        /// <summary>"QF680 (737-8)": the flight number the boards show, plus the type.</summary>
         public static string Name(FleetAircraft aircraft) =>
             aircraft == null ? "traffic" : $"{FlightNumber.OrRegistration(aircraft)} ({ShortType(aircraft)})";
 

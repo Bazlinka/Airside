@@ -154,7 +154,9 @@ namespace Airside.Presentation
 
             AircraftLabel = aircraft == null
                 ? "No aircraft"
-                : $"{aircraft.Registration}  ·  {aircraft.Type.Name}";
+                : FlightNumber.ForAircraft(aircraft) is { } flight
+                    ? $"{flight}  ·  {FlightNumber.PlaceName(aircraft)}"
+                    : $"{aircraft.Registration}  ·  {aircraft.Type.Name}";
 
             if (aircraft != null)
             {

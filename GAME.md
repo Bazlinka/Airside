@@ -1,5 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-28 Cursor — flight numbers and city names (ADR 0165).** Flights show a callsign
+  and number plus the city (ZL3482 Kingscote, QF680 Sydney) on the card, the tags, the
+  map, the board and the toasts. Published Adelaide routes use representative numbers;
+  other flights use a spare 900-series number. **Checks:** filtered Unity EditMode passed
+  (`FlightNumber`, 4/4).
+
 - **2026-09-28 Cursor — second Saab and flight toasts (ADR 0164).** A new airline can buy another
   Saab 340B for $1,600 from the opening cash; it uses 50G beside the given aircraft on 50D.
   Larger types still wait for the expanded base. Toasts: landed at the destination, and returned

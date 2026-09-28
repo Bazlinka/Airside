@@ -126,23 +126,82 @@ namespace Airside.Simulation
             if (into == null || mode is BoardingMode.None or BoardingMode.Aerobridge)
                 return;
 
+            var w = WindowsFor(aircraft, mode, baseLevel);
+            if (w.Arrived > 0)
+                AddWindow(aircraft, into, false, w.DeplaneStart, w.Interval, w.Arrived, nowSeconds, lookBackSeconds);
+            if (w.Boarding > 0)
+                AddWindow(aircraft, into, true, w.BoardStart, w.BoardInterval, w.Boarding, nowSeconds, lookBackSeconds);
+        }
+
+        /// <summary>Extra time the door stays open after the last passenger off, for cleaning crew.</summary>
+        public const double DoorOpenAfterDeplaningSeconds = 60;
+        /// <summary>The crew opens the door a little before the first boarder reaches it.</summary>
+        public const double DoorOpenBeforeBoardingSeconds = 30;
+
+        /// <summary>
+        /// Whether a parked aircraft's passenger door is open because people are using it: from
+        /// the door opening until shortly after the last arrival is off, and from shortly before
+        /// boarding until the door closes for the push. Between rotations, overnight, and on an
+        /// aircraft with no passengers to move, the door stays shut, as on a real apron.
+        /// </summary>
+        public static bool PassengersAtDoor(FleetAircraft aircraft, double nowSeconds,
+            PlayerBaseLevel baseLevel = PlayerBaseLevel.Starter)
+        {
+            if (aircraft == null || aircraft.State != FleetState.AtStand)
+                return false;
+            var w = WindowsFor(aircraft, ModeFor(aircraft), baseLevel);
+            if (w.Arrived > 0 && nowSeconds >= w.DoorsOpen
+                              && nowSeconds < w.DeplaneEnd + DoorOpenAfterDeplaningSeconds)
+                return true;
+            return w.Boarding > 0 && nowSeconds >= w.BoardStart - DoorOpenBeforeBoardingSeconds;
+        }
+
+        private readonly struct Windows
+        {
+            public Windows(double interval, double doorsOpen, int arrived, double deplaneStart, double deplaneEnd,
+                int boarding, double boardStart, double boardInterval)
+            {
+                Interval = interval;
+                DoorsOpen = doorsOpen;
+                Arrived = arrived;
+                DeplaneStart = deplaneStart;
+                DeplaneEnd = deplaneEnd;
+                Boarding = boarding;
+                BoardStart = boardStart;
+                BoardInterval = boardInterval;
+            }
+
+            public double Interval { get; }
+            public double DoorsOpen { get; }
+            public int Arrived { get; }
+            public double DeplaneStart { get; }
+            public double DeplaneEnd { get; }
+            public int Boarding { get; }
+            public double BoardStart { get; }
+            public double BoardInterval { get; }
+        }
+
+        private static Windows WindowsFor(FleetAircraft aircraft, BoardingMode mode, PlayerBaseLevel baseLevel)
+        {
             var interval = AirlineOperations.NeedsTerminalGate(aircraft.Type) ? JetIntervalSeconds : TurbopropIntervalSeconds;
             var parkedAt = aircraft.StateStartedAt.ElapsedSeconds;
-            var doorsOpen = parkedAt + EngineStartSequence.DoorsOpenAfterSeconds;
+            var doorsOpen = parkedAt + (mode == BoardingMode.Aerobridge
+                ? AerobridgeTimeline.DoorsOpenAfterParkSeconds
+                : EngineStartSequence.DoorsOpenAfterSeconds);
 
             // Deplaning: everyone who flew in, once the door is open.
+            var deplaneStart = doorsOpen + DeplaneAfterDoorsSeconds;
             var deplaneEnd = doorsOpen;
+            var arrived = 0;
             if (aircraft.CompletedTrips > 0)
             {
-                var arrived = PassengerCount(aircraft.CompletedTrips - 1, aircraft);
-                var start = doorsOpen + DeplaneAfterDoorsSeconds;
-                deplaneEnd = start + arrived * interval;
-                AddWindow(aircraft, into, false, start, interval, arrived, nowSeconds, lookBackSeconds);
+                arrived = PassengerCount(aircraft.CompletedTrips - 1, aircraft);
+                deplaneEnd = deplaneStart + arrived * interval;
             }
 
             // Boarding: finish before the door closes for the push.
             if (aircraft.Scheduled is not { Cancelled: false } departure)
-                return;
+                return new Windows(interval, doorsOpen, arrived, deplaneStart, deplaneEnd, 0, 0, interval);
             var passengers = PassengerCount(aircraft);
             var doorsClose = departure.DepartAt.ElapsedSeconds - (mode == BoardingMode.StairTruck
                 ? StairTruckDoorsCloseBeforePushSeconds
@@ -164,7 +223,7 @@ namespace Airside.Simulation
             }
 
             boardStart = Math.Max(boardStart, deplaneEnd + 20);
-            AddWindow(aircraft, into, true, boardStart, boardInterval, passengers, nowSeconds, lookBackSeconds);
+            return new Windows(interval, doorsOpen, arrived, deplaneStart, deplaneEnd, passengers, boardStart, boardInterval);
         }
 
         private static int PassengerCount(int trips, FleetAircraft aircraft)

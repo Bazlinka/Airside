@@ -446,13 +446,11 @@ namespace Airside.Presentation
             return Mathf.Lerp(1.6f, 7.5f, lowEnd);
         }
 
-        /// <summary>A parked fan turns in the wind rather than standing still.</summary>
-        public const float FanWindmillRpm = 45f;
-
         /// <summary>
-        /// A shut-down, feathered propeller is not locked: it drifts on the breeze. A handful of
-        /// rpm, but a parked turboprop with dead-still blades reads as a photograph.
+        /// A shut-down engine on the ground stands still. A feathered propeller barely catches the
+        /// wind and is held by its brake or gust lock; the slow drift this used to give parked
+        /// propellers and fans read as engines left running at the stand.
         /// </summary>
-        public const float FeatheredDriftRpm = 6f;
+        public const float ParkedRpm = 0f;
     }
 }

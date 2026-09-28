@@ -2561,10 +2561,7 @@ namespace Airside.Presentation
             SpinOneJetFan(fanRight, rightN1);
         }
 
-        /// <summary>
-        /// One turbofan. Below the windmilling floor the fan still turns in the wind rather than
-        /// standing still, which is what a parked jet's intake actually does.
-        /// </summary>
+        /// <summary>One turbofan. A shut-down fan stands still.</summary>
         private void SpinOneJetFan(Transform fan, float n1)
         {
             if (fan == null)
@@ -2572,7 +2569,7 @@ namespace Airside.Presentation
 
             var rpm = n1 > 0.01f
                 ? Mathf.Lerp(0f, AirsideReusableMotion.JetFanRpmTakeoff, n1)
-                : AirsidePropellerDynamics.FanWindmillRpm;
+                : AirsidePropellerDynamics.ParkedRpm;
             var dt = PropDeltaTime;
             var step = rpm * 6f * dt;
             // Fan blades wagon-wheel at a far lower speed than propeller blades because there are
@@ -2628,8 +2625,8 @@ namespace Airside.Presentation
             if (target > 0f)
                 target *= AirsidePropellerDynamics.GovernorHunt(PresentationClock, key * 0.37f);
             else if (engineFraction <= 0.001f)
-                // Stopped and feathered: the blades still drift on the breeze rather than freezing.
-                target = AirsidePropellerDynamics.FeatheredDriftRpm;
+                // Stopped and feathered: the blades run down and stay still.
+                target = AirsidePropellerDynamics.ParkedRpm;
 
             if (!spools.TryGetValue(key, out var current))
                 current = target;
@@ -2660,6 +2657,9 @@ namespace Airside.Presentation
 
             var eased = Mathf.Lerp(current, target, AirsideFlightPath.DampFactor(1.6f, dt));
             current = Mathf.Clamp(eased, current - downPerSecond * dt, current + upPerSecond * dt);
+            // The easing only approaches zero; snap the last crawl so a parked propeller really stops.
+            if (target <= 0f && current < 0.5f)
+                current = 0f;
             spools[key] = current;
             return current;
         }

@@ -27,6 +27,36 @@ namespace Airside.Presentation
         /// <summary>Beyond this distance from the camera an aircraft also shows a light (its landing lights).</summary>
         public const float BeaconFromMetres = 6_000f;
 
+        /// <summary>Slowest and fastest an unreleased arrival flies its final, as a share of approach speed.</summary>
+        public const float MinSpeedFactor = 0.55f;
+        public const float MaxSpeedFactor = 1.6f;
+
+        /// <summary>Seconds over which a gap to the estimate is closed.</summary>
+        public const float CatchUpSeconds = 25f;
+
+        /// <summary>How quickly the speed along the final may change, as a share of approach speed per second.</summary>
+        public const float SpeedChangePerSecond = 0.04f;
+
+        /// <summary>
+        /// ADR 0173: one step along the extended final toward the tower's estimate. The arrival
+        /// should be <paramref name="targetMetres"/> out now (approach speed × time to clearance).
+        /// It used to be snapped to that each frame within 55–160 % of approach speed, so every
+        /// change in the estimate showed as a lurch. Now the speed eases toward the pace that closes
+        /// the gap over <see cref="CatchUpSeconds"/>, and only the speed changes gradually. Returns
+        /// the new distance out; it never passes the hold point (0).
+        /// </summary>
+        public static float FlyFinal(float metres, ref float speed, float targetMetres, float approachSpeed,
+            float dtSeconds)
+        {
+            if (dtSeconds <= 0f || metres <= 0f)
+                return Math.Max(0f, metres);
+            var wanted = approachSpeed + (metres - targetMetres) / CatchUpSeconds;
+            wanted = Math.Max(approachSpeed * MinSpeedFactor, Math.Min(approachSpeed * MaxSpeedFactor, wanted));
+            var change = approachSpeed * SpeedChangePerSecond * dtSeconds;
+            speed = Math.Max(speed - change, Math.Min(speed + change, wanted));
+            return Math.Max(0f, metres - speed * dtSeconds);
+        }
+
         /// <summary>Height above the ground: the glideslope, capped at 6,000 ft.</summary>
         public static float Height(float glideslopeHeight) => Math.Min(glideslopeHeight, CapMetres);
 

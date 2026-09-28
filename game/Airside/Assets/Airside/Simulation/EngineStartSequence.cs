@@ -66,9 +66,12 @@ namespace Airside.Simulation
             // A jet on a stand without a bridge follows its stair truck (ADR 0114).
             var bridged = AerobridgeTimeline.DoorsOpen(aircraft, nowSeconds)
                           ?? BoardingFlow.StairTruckDoorsOpen(aircraft, nowSeconds);
-            return bridged.HasValue
-                ? new EngineState(state.Left, state.Right, state.Beacon, bridged.Value)
-                : state;
+            var doors = bridged ?? state.DoorsOpen;
+            // Whatever the stand, the door is only open while passengers are using it: a parked
+            // aircraft between rotations or overnight is shut, not left open on the apron.
+            if (aircraft != null && aircraft.State == FleetState.AtStand)
+                doors &= BoardingFlow.PassengersAtDoor(aircraft, nowSeconds);
+            return new EngineState(state.Left, state.Right, state.Beacon, doors);
         }
 
         private static EngineState ForStairs(FleetAircraft aircraft, double nowSeconds)

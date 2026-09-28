@@ -580,7 +580,7 @@ namespace Airside.Presentation
             // Live time: once an airline runs, simulation time is read off the real clock.
             // Before that the demo circuit simply runs at 1x.
             _preciseTime = FleetMode
-                ? Math.Max(_preciseTime, _operations.Clock.SecondsAt(DateTime.UtcNow))
+                ? LivePresentationTime(_operations.Clock.SecondsAt(DateTime.UtcNow))
                 : _preciseTime + Time.unscaledDeltaTime;
 
             var wholeSeconds = (long)Math.Floor(_preciseTime);
@@ -956,6 +956,40 @@ namespace Airside.Presentation
         /// zoom, height) is read by AirsideCameraController; follow and reset live
         /// here so there is exactly one owner of each.
         /// </summary>
+        /// <summary>
+        /// ADR 0152 — the visual clock, advanced by the frame and slewed onto the wall clock
+        /// rather than snapped to it.
+        ///
+        /// Aircraft positions are a direct function of this time with no smoothing anywhere
+        /// after it, so every irregularity in it is drawn. Reading <see cref="DateTime.UtcNow"/>
+        /// straight into it meant a frame that took 60 ms moved a departing aircraft the whole
+        /// 60 ms in one step — at 70 m/s, a four-metre snap — and the field currently runs with
+        /// p95 frame times over 33 ms, so that happened constantly. It was worst on the takeoff
+        /// roll, where the aircraft is fastest, and plainly visible on a taxi.
+        ///
+        /// Advancing by <see cref="Time.unscaledDeltaTime"/> instead paces the motion with the
+        /// frames that draw it, and a bounded slew keeps it honest against real time: drift is
+        /// eased out over about a second, and anything past <see cref="LiveClockResyncSeconds"/>
+        /// — a sleep, a load, a long stall — snaps, because that is a real jump in time and not
+        /// a pacing wobble. Never runs backwards: simulated seconds are derived from it.
+        /// </summary>
+        private double LivePresentationTime(double wallClockSeconds)
+        {
+            if (_preciseTime <= 0.0 || Math.Abs(wallClockSeconds - _preciseTime) > LiveClockResyncSeconds)
+                return wallClockSeconds;
+
+            var advanced = _preciseTime + Time.unscaledDeltaTime;
+            var drift = wallClockSeconds - advanced;
+            advanced += drift * Math.Min(1.0, Time.unscaledDeltaTime * LiveClockSlewRate);
+            return Math.Max(_preciseTime, advanced);
+        }
+
+        /// <summary>Beyond this much difference the wall clock has genuinely jumped: snap to it.</summary>
+        private const double LiveClockResyncSeconds = 0.75;
+
+        /// <summary>How quickly accumulated drift is eased out (per second).</summary>
+        private const double LiveClockSlewRate = 1.5;
+
         private void ReadSimulationControls()
         {
             var keyboard = Keyboard.current;

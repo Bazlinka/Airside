@@ -1,3 +1,4 @@
+using System;
 using Airside.Domain;
 using Airside.Presentation;
 using Airside.Simulation;
@@ -91,6 +92,64 @@ namespace Airside.Tests
                     mid = System.Math.Max(mid, CircuitProfile.ToKnots(s.Speed));
             }
             Assert.That(mid, Is.LessThanOrEqualTo(GroundSpeedLimits.TurbopropStraightKnots + 0.01f));
+        }
+
+        /// <summary>
+        /// ADR 0152. The opening arrival bank seeds aircraft already most of the way home — Air NZ
+        /// thirty minutes from Auckland, Singapore forty from Changi — and a delivery flight is
+        /// given a flat eight minutes. Handed that remainder as though it were the whole leg, the
+        /// profile used to solve a cruise speed out of it: Melbourne in twelve minutes reported
+        /// about 1 730 kt. No leg time may produce a speed the aeroplane cannot fly.
+        /// </summary>
+        [Test]
+        public void ShortLegTime_NeverReportsASpeedTheAircraftCannotFly()
+        {
+            foreach (var code in new[] { "MEL", "SYD", "AKL", "SIN", "PLO" })
+            {
+                Assert.That(DestinationCatalogue.TryFind(code, out var destination), Is.True, code);
+                var legKm = DestinationCatalogue.Adelaide.DistanceKmTo(destination);
+                foreach (var type in new[] { AircraftType.Atr42, AircraftCatalogue.Boeing737800.Type })
+                {
+                    var ceiling = EnrouteProfile.MaxCruiseMetresPerSecond(type)
+                                  / CircuitProfile.KnotsToMetresPerSecond;
+                    foreach (var seconds in new[] { 1.0, 8 * 60.0, 12 * 60.0, 40 * 60.0 })
+                    {
+                        var profile = new EnrouteProfile(legKm, seconds, type);
+                        for (var t = 0.0; t <= seconds; t += Math.Max(1.0, seconds / 10.0))
+                            Assert.That(profile.GroundSpeedKnotsAt(t), Is.LessThanOrEqualTo(ceiling + 0.01),
+                                $"{type.Id} {code} over {seconds:0} s");
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void MaxCruise_IsThePublishedFigureWhereThereIsOne()
+        {
+            var spec = AircraftCatalogue.Boeing737800;
+            var ceiling = EnrouteProfile.MaxCruiseMetresPerSecond(spec.Type) * 3.6;
+            Assert.That(ceiling, Is.GreaterThanOrEqualTo(spec.PlanningCruiseKmh));
+            if (spec.ManufacturerMaxCruiseKmh > 0)
+                Assert.That(ceiling, Is.GreaterThanOrEqualTo(spec.ManufacturerMaxCruiseKmh - 0.01));
+            // Not an open-ended allowance: a jet does not cruise at twice its planning speed.
+            Assert.That(ceiling, Is.LessThan(spec.PlanningCruiseKmh * 1.35));
+        }
+
+        /// <summary>
+        /// A leg flown in the time it is planned for still cruises at about the planning speed —
+        /// the clamp must not have flattened the normal case.
+        /// </summary>
+        [Test]
+        public void PlannedLegTime_StillCruisesNearThePlanningSpeed()
+        {
+            Assert.That(DestinationCatalogue.TryFind("SYD", out var sydney), Is.True);
+            var legKm = DestinationCatalogue.Adelaide.DistanceKmTo(sydney);
+            var type = AircraftCatalogue.Boeing737800.Type;
+            var seconds = LegTiming.AirborneSeconds(legKm, type);
+            var profile = new EnrouteProfile(legKm, seconds, type);
+            var cruiseKnots = profile.GroundSpeedKnotsAt(seconds * 0.5);
+            var planningKnots = type.CruiseKmh / 3.6 / CircuitProfile.KnotsToMetresPerSecond;
+            Assert.That(cruiseKnots, Is.EqualTo(planningKnots).Within(planningKnots * 0.3));
         }
     }
 }

@@ -23,9 +23,9 @@ namespace Airside.Presentation
         public const string ShaderName = "Airside/Surroundings";
 
         // Heights relative to the pavement: the airport sits ~5 m above the gulf.
-        private const float PlainBelowPavement = 1.6f;
+        internal const float PlainBelowPavement = 1.6f;
         private const float BeachBelowPavement = 4.2f;
-        private const float SeaBelowPavement = 5.2f;
+        internal const float SeaBelowPavement = 5.2f;
         private const float InlandWaterBelowPavement = 4.8f;
         private const float TuckUnderMetres = 4f;
         private const float EdgeBlendMetres = 700f;
@@ -44,13 +44,18 @@ namespace Airside.Presentation
         public const float SatelliteFarBlendEndMetres = 5200f;
         private const float BeachWidthMetres = 55f;
         public const float SatelliteExtentMetres = 12000f;
+        /// <summary>
+        /// A median of nine cloud-free summer Sentinel-2 L2A scenes (2024-2026) at native 10 m,
+        /// 4096 px over the ±12 km square (<c>scripts/generate-adelaide-satellite-s2.py</c>).
+        /// Replaced the 2021 WorldCover WMS bake, whose Gulf carried a smeared tile gap.
+        /// </summary>
         public const string SatelliteTexturePath =
-            "Textures/Environment/tx_adelaide_sentinel2_2021_v01.png";
+            "Textures/Environment/tx_adelaide_sentinel2_l2a_v02.jpg";
 
         // Tuned against the airfield ground as rendered in a packaged build (measured pixel
         // values; the tonemapper makes these sensitive), so the field edge disappears.
         private static readonly Color AirfieldEdge = new(0.575f, 0.595f, 0.43f);
-        private static readonly Color Plain = new(0.555f, 0.57f, 0.42f);
+        internal static readonly Color Plain = new(0.555f, 0.57f, 0.42f);
         private static readonly Color Suburb = new(0.585f, 0.575f, 0.53f);
         private static readonly Color Park = new(0.46f, 0.53f, 0.39f);
         private static readonly Color Commercial = new(0.62f, 0.60f, 0.56f);
@@ -59,11 +64,93 @@ namespace Airside.Presentation
         private static readonly Color Beach = new(0.74f, 0.69f, 0.55f);
         // Slightly greener shallows / deeper gulf blue — closer to WLD-004 / Coastal Blue.
         private static readonly Color Shallows = new(0.28f, 0.55f, 0.58f);
-        private static readonly Color DeepWater = new(0.12f, 0.30f, 0.42f);
+        internal static readonly Color DeepWater = new(0.12f, 0.30f, 0.42f);
         private static readonly Color InlandWater = new(0.26f, 0.50f, 0.54f);
 
-        public static bool TryBuild(Transform root)
+        public static bool TryBuild(Transform root) => TryBuild(root, out _);
+
+        /// <summary>
+        /// Real ground heights (ADR 0158), loaded once. Null when the baked DEM is missing: the
+        /// surroundings then stay the flat plain they were, and no far ring is built.
+        /// </summary>
+        public static AdelaideTerrainHeights Terrain
         {
+            get
+            {
+                if (_terrainLoaded)
+                    return _terrain;
+                _terrainLoaded = true;
+                try
+                {
+                    var path = ArtRuntimePaths.ResolveExisting(AdelaideTerrainHeights.ArtPath);
+                    _terrain = path != null ? AdelaideTerrainHeights.Parse(System.IO.File.ReadAllBytes(path)) : null;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[Airside] Adelaide terrain unreadable: {e.Message}");
+                    _terrain = null;
+                }
+
+                return _terrain;
+            }
+        }
+
+        private static AdelaideTerrainHeights _terrain;
+        private static bool _terrainLoaded;
+
+        /// <summary>
+        /// Height the landside roads should follow: the pavement plane they have always used,
+        /// raised by the same relief the surroundings get, so an arterial never sinks into a rise.
+        /// </summary>
+        public static Func<float, float, float> RoadHeight(float pavementWorldY)
+        {
+            var terrain = Terrain;
+            if (terrain == null)
+                return null;
+            var halfX = AirsideAdelaideGround.SizeX * 0.5f;
+            var halfZ = AirsideAdelaideGround.SizeZ * 0.5f;
+            return (x, z) =>
+            {
+                var dx = Mathf.Max(0f, Mathf.Abs(x) - halfX);
+                var dz = Mathf.Max(0f, Mathf.Abs(z) - halfZ);
+                return pavementWorldY + terrain.Relief(x, z, Mathf.Sqrt(dx * dx + dz * dz));
+            };
+        }
+
+        /// <summary>
+        /// World y of the land at x, z, as the ground and surroundings meshes build it (without
+        /// the beach dip): the airfield mesh inside its rectangle, then the same ease from its edge
+        /// to the plain plus the real relief. Buildings stand on this (ADR 0159).
+        /// </summary>
+        public static float LandHeight(float x, float z)
+        {
+            var halfX = AirsideAdelaideGround.SizeX * 0.5f;
+            var halfZ = AirsideAdelaideGround.SizeZ * 0.5f;
+            var edgeX = Mathf.Clamp(x, -halfX, halfX);
+            var edgeZ = Mathf.Clamp(z, -halfZ, halfZ);
+            var edgeHeight = AirsideAdelaideGround.WorldHeight(edgeX, edgeZ);
+            var dx = Mathf.Max(0f, Mathf.Abs(x) - halfX);
+            var dz = Mathf.Max(0f, Mathf.Abs(z) - halfZ);
+            var outside = Mathf.Sqrt(dx * dx + dz * dz);
+            if (outside <= 0f)
+                return edgeHeight;
+            var height = Mathf.Lerp(edgeHeight, AirsideAdelaideGround.PavementWorldY - PlainBelowPavement,
+                Mathf.SmoothStep(0f, 1f, outside / EdgeBlendMetres));
+            var terrain = Terrain;
+            return terrain != null ? height + terrain.Relief(x, z, outside) : height;
+        }
+
+        /// <summary>
+        /// With the far ring in place the land runs on to the far clip, so the surroundings fade
+        /// to the fog colour just before it instead of at a fixed ~10 km wall; the weather's own
+        /// fog now decides how far you can see (60 km on a clear day, a few hundred metres in fog).
+        /// </summary>
+        public const float FarHorizonFadeStartMetres = 25500f;
+        public const float FarHorizonFadeEndMetres = 29500f;
+
+        public static bool TryBuild(Transform root, out Material material)
+        {
+            material = null;
             try
             {
                 var shader = Shader.Find(ShaderName);
@@ -75,15 +162,24 @@ namespace Airside.Presentation
 
                 var grid = new CoastGrid(AdelaideCoast.SeaPolygon, AdelaideCoast.Coastline,
                     AirsideAdelaideGround.SizeX * 0.5f, AirsideAdelaideGround.SizeZ * 0.5f);
-                var mesh = BuildMesh(grid, out var heights);
+                var mesh = BuildMesh(grid, out var heights, Terrain);
 
                 var go = new GameObject(ObjectName);
                 go.transform.SetParent(root, false);
                 go.AddComponent<MeshFilter>().sharedMesh = mesh;
                 var renderer = go.AddComponent<MeshRenderer>();
-                renderer.sharedMaterial = BuildMaterial(shader);
+                material = BuildMaterial(shader);
+                renderer.sharedMaterial = material;
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
+
+                // The Hills and the rest of the plain out to the far clip (plan P6).
+                if (Terrain != null && material != null && AirsideAdelaideFarTerrain.TryBuild(root, Terrain, shader))
+                {
+                    material.SetFloat("_HorizonFadeStart", FarHorizonFadeStartMetres);
+                    material.SetFloat("_HorizonFadeEnd", FarHorizonFadeEndMetres);
+                }
+
                 return true;
             }
             catch (Exception e)
@@ -93,21 +189,24 @@ namespace Airside.Presentation
             }
         }
 
-        public static Material BuildMaterial(Shader shader = null)
+        public static Material BuildMaterial(Shader shader = null) =>
+            BuildMaterial(shader, SatelliteTexturePath, SatelliteExtentMetres, "mat_adelaide_surroundings_v01");
+
+        public static Material BuildMaterial(Shader shader, string satellitePath, float satelliteExtent, string name)
         {
             shader ??= Shader.Find(ShaderName);
             if (shader == null)
                 return null;
 
-            var material = new Material(shader) { name = "mat_adelaide_surroundings_v01", enableInstancing = true };
+            var material = new Material(shader) { name = name, enableInstancing = true };
             var dry = AirsideArtTextures.Load(
                 AirsideAdelaideGround.LayerBasecolorPath(AirsideAdelaideGround.LayerDryGrass));
             if (dry != null)
                 material.SetTexture("_AirfieldAlbedo", dry);
-            var satellite = AirsideArtTextures.Load(SatelliteTexturePath, wrap: TextureWrapMode.Clamp);
+            var satellite = AirsideArtTextures.Load(satellitePath, wrap: TextureWrapMode.Clamp);
             if (satellite != null)
                 material.SetTexture("_SatelliteAlbedo", satellite);
-            material.SetFloat("_SatelliteExtent", SatelliteExtentMetres);
+            material.SetFloat("_SatelliteExtent", satelliteExtent);
             material.SetFloat("_SatelliteNearStrength", satellite != null ? SatelliteNearStrength : 0f);
             material.SetFloat("_SatelliteFarStrength", satellite != null ? SatelliteFarStrength : 0f);
             material.SetFloat("_SatelliteFarBlendStart", SatelliteFarBlendStartMetres);
@@ -168,7 +267,13 @@ namespace Airside.Presentation
             };
         }
 
-        public static Mesh BuildMesh(CoastGrid grid, out Vector3[] vertices)
+        public static Mesh BuildMesh(CoastGrid grid, out Vector3[] vertices) => BuildMesh(grid, out vertices, null);
+
+        /// <param name="terrain">
+        /// Real heights (ADR 0158): land higher than the plain rises by that much, eased in from
+        /// 700 m outside the airfield so its edge, the coast and the beach keep their shape.
+        /// </param>
+        public static Mesh BuildMesh(CoastGrid grid, out Vector3[] vertices, AdelaideTerrainHeights terrain)
         {
             var nx = grid.CountX;
             var nz = grid.CountZ;
@@ -214,6 +319,8 @@ namespace Airside.Presentation
                 var outside = grid.DistanceOutsideHole(x, z);
                 var height = Mathf.Lerp(edgeHeight, pavement - PlainBelowPavement,
                     Mathf.SmoothStep(0f, 1f, outside / EdgeBlendMetres));
+                if (terrain != null)
+                    height += terrain.Relief(x, z, outside);
                 var beach = 1f - Mathf.SmoothStep(0f, 1f, coast / BeachWidthMetres);
                 height = Mathf.Lerp(height, pavement - BeachBelowPavement, beach);
                 if (grid.IsTuckedUnder(xi, zi))

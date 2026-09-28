@@ -28,6 +28,7 @@ namespace Airside.Tests
             Assert.That(settings.PropellerBlur, Is.True);
             Assert.That(settings.DistantGlows, Is.True);
             Assert.That(settings.AircraftLights, Is.True);
+            Assert.That(settings.SuburbBuildings, Is.True, "ADR 0159: the suburbs are on unless switched off");
         }
 
         [Test]
@@ -39,10 +40,16 @@ namespace Airside.Tests
             Assert.That(settings.AircraftLights, Is.False);
             Assert.That(settings.PropellerBlur, Is.True);
             Assert.That(settings.DistantGlows, Is.True);
+            Assert.That(settings.SuburbBuildings, Is.True);
+
+            var suburbs = new AirsideSettings();
+            AirsideSettings.ApplyGraphicsOff(suburbs, new[] { "-airsideGraphicsOff", "suburbs" });
+            Assert.That(suburbs.SuburbBuildings, Is.False);
+            Assert.That(suburbs.WeatherLayers, Is.True);
 
             var all = new AirsideSettings();
             AirsideSettings.ApplyGraphicsOff(all, new[] { "-airsideGraphicsOff", "all" });
-            Assert.That(all.WeatherLayers || all.PropellerBlur || all.DistantGlows || all.AircraftLights, Is.False);
+            Assert.That(all.WeatherLayers || all.PropellerBlur || all.DistantGlows || all.AircraftLights || all.SuburbBuildings, Is.False);
 
             var none = new AirsideSettings();
             AirsideSettings.ApplyGraphicsOff(none, new[] { "-airsideGraphicsOff" });

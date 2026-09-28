@@ -1,6 +1,6 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-28 Cursor — lineup steering and takeoff sound (ADR 0157).** The tail was
+- **2026-09-28 Cursor — lineup steering and takeoff sound (ADR 0161).** The tail was
   sliding out on the turn onto the runway: the fuselage was the chord of a tight
   corner, so the rear wheels travelled sideways. Lineups are now a circular arc with
   the main gear trailing and no sideslip. A long aircraft keeps rolling straight
@@ -12,7 +12,48 @@
   on 05 and a Saab on 12 — the tail should track inside the turn, and the roll
   should sound like it is accelerating.
 
+- **2026-09-28 Claude — trees where the satellite sees them (ADR 0160).** Branch
+  `claude/fervent-gates-1tzyhq`. 11 428 low-poly eucalypts (about 18 triangles each) placed on real
+  tree canopy measured from Sentinel-2 NDVI: the creek lines, the airport perimeter drain,
+  golf-course roughs and street trees. They avoid buildings, carriageways, water and the airside, and
+  share the suburbs' tiles, material and switch (now **Suburbs and trees**). **Checks:** tree data
+  tests, offline renders. **Not seen in Unity.**
 
+- **2026-09-28 Claude — the suburbs as buildings (ADR 0159, plan P5).** Branch
+  `claude/fervent-gates-1tzyhq`. 14 992 buildings around the field: every OSM building within 2 km
+  (houses as hipped boxes, the rest extruded to their tagged height) plus 8 875 street-front houses
+  along real residential streets where OSM's footprints run out. They avoid the airport's modelled
+  buildings, the landside precinct, roads and parks, and thin out 1.1–1.8 km out. The new
+  `Airside/SuburbBuildings` shader draws walls in an Adelaide palette and roofs half from the
+  satellite image beneath (it is in Always Included Shaders). About 212 k triangles in 1 km tiles;
+  Options › Graphics tests › Suburb buildings (next launch) and `-airsideGraphicsOff suburbs` turn it
+  off. **Checks:** domain suite, `AdelaideSuburbDataTests` (found a parser crash on truncated files,
+  fixed), offline renders (`docs/testing/surroundings-2026-09-28/suburbs-*.jpg`). **Not seen in
+  Unity:** check the shader compiles, the look and the frame time on the Mac.
+
+- **2026-09-28 Claude — real terrain and the Adelaide Hills skyline (ADR 0158, plan P6).** Branch
+  `claude/fervent-gates-1tzyhq`. The surroundings faded to fog at a fixed ~10 km in every weather, and
+  the plain was one flat sheet. Now Copernicus GLO-30 heights (±32 km, 125 m, roof-filtered) lift the
+  plain inland (CBD ~50 m), and a 30 km far ring (250 m cells, 72 k tris, one draw) carries the rest of
+  the plain, the Gulf and the Hills (Mount Lofty ~680 m) under a matching far Sentinel-2 image. The
+  horizon fade moves out to 25.5–29.5 km, so weather visibility decides the view. Roads follow the same
+  relief. Airfield edge, coast and beach are unchanged, and everything falls back to the old flat look
+  if the data is missing. New Flight Manual page: Map and data credits. **Checks:** domain 941/941,
+  terrain tests, offline before/after render
+  (`docs/testing/surroundings-2026-09-28/hills-before-after.jpg`). **Not seen in Unity:** check the
+  12 km join, the Hills at dusk, inland road heights and frame time on the Mac.
+
+- **2026-09-28 Claude — sharper, cleaner Adelaide ground imagery (ADR 0157).** Branch
+  `claude/fervent-gates-1tzyhq`. Bailey asked to improve the surroundings, satellite imagery first.
+  No sharper imagery is open-licensed for Adelaide (data.sa.gov.au has only 1949 photos), so v02
+  rebuilds from native Sentinel-2 L2A. It is a cloud-masked median of nine clear 2024–26 summer
+  scenes, 4096 px over the same ±12 km square, with hue-true tone fitted to v01 so the shaders' look
+  holds. The Gulf tile-gap smear is gone; the airport, suburbs and coast are far crisper
+  (`docs/testing/surroundings-2026-09-28/satellite-v01-v02.jpg`). Large textures are block-compressed
+  on load; the Copernicus credit is now on screen. **Checks:** domain 936/936; offline previews
+  inspected. **Not seen in Unity.** **Next (plan P5/P6):** DEM-driven Adelaide Hills and CBD
+  backdrop, then OSM buildings and trees near the field.
+>>>>>>> origin/main
 
 - **2026-09-28 Claude — bug pass: per-frame waste, plus simulation fuzzing (no ADR).** Branch
   `claude/fervent-gates-1tzyhq`. Fixed three per-frame costs: the cloud edge fade fetched each cloud's

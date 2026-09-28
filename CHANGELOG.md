@@ -6,6 +6,26 @@
   on the centreline before the roll begins. The takeoff roll and its engine note
   build up together instead of starting at full power.
 
+- **Trees.** Gum trees now line the creeks, the airport's perimeter, the golf courses and the
+  streets around the field, each placed where the satellite actually sees tree canopy.
+
+- **Suburbs around the airport.** The houses, shops and sheds of West Beach, Glenelg North, Netley,
+  Brooklyn Park and the rest now stand around the field as buildings instead of a flat photo:
+  mapped buildings at their real size, and houses along every residential street where the map
+  had gaps. Roof colours come from the satellite image, so they match what is really there. A
+  graphics-test option can switch them off.
+
+- **The Adelaide Hills on the horizon.** The ground used to end in a wall of haze about 10 km out,
+  even on a clear day. Now the land carries on to 30 km with its real shape: the plain rising gently
+  towards the city and the Hills along the eastern skyline, under matching satellite imagery. How far
+  you can see now depends on the weather. A new Flight Manual page credits the map, imagery and
+  terrain sources.
+
+- **Sharper, cleaner satellite ground.** The imagery under and around the airport is rebuilt from
+  nine cloud-free summer satellite passes (2024–2026) at their full resolution. Taxiways, aprons,
+  rooftops, golf courses and streets are much crisper, the colours are truer, and the streaky patch
+  across the Gulf is gone. The imagery is now credited on screen.
+
 - **Less background work every frame.** Clouds, pushback tugs and propellers were each redoing a
   lookup every frame that only needs doing once, some of it creating garbage the game later had
   to pause and clean up. They now remember the answer.

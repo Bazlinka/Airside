@@ -28,7 +28,7 @@ namespace Airside.Presentation
         /// <summary>Taller than the four buttons so the build-identity line fits under Quit.</summary>
         public const float MenuHeight = 360f;
         public const float OptionsWidth = 420f;
-        public const float OptionsHeight = 760f;
+        public const float OptionsHeight = 800f;
 
         /// <summary>Live speed / altitude / heading, centred just above the control bar.</summary>
         public const float ReadoutWidth = 420f;
@@ -41,7 +41,8 @@ namespace Airside.Presentation
         /// </summary>
         public const float FooterHeight = 15f;
         /// <summary>Wide enough for the OSM credit plus the live-traffic (adsb.lol) credit.</summary>
-        public const float CreditWidth = 470f;
+        // Room for the OSM and Copernicus imagery credits together at 11 pt (plus a live source).
+        public const float CreditWidth = 760f;
         public const float StampMaxWidth = 420f;
         private const float FooterInset = 8f;
 

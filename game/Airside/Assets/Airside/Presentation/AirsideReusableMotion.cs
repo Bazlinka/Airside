@@ -12,11 +12,22 @@ namespace Airside.Presentation
     /// </summary>
     public static class AirsideReusableMotion
     {
-        // ANM-AIR-001 propeller
-        public const float PropRpmTakeoff = 1400f;
-        public const float PropRpmApproach = 1100f;
-        public const float PropRpmTaxi = 420f;
-        public const float PropRpmCruise = 720f;
+        // ANM-AIR-001 propeller. ADR 0151: these are governed shaft speeds, derived from
+        // AirsidePropellerDynamics rather than treated as a throttle. A constant-speed
+        // propeller holds its speed and carries power on blade pitch, so the spread between
+        // taxi and takeoff here is small on purpose — the visible difference is the blade
+        // angle and the density of the disc, which the pitch schedule drives.
+        public const float PropRpmTakeoff =
+            AirsidePropellerDynamics.GovernedRpm * AirsidePropellerDynamics.TakeoffNp;
+        public const float PropRpmApproach =
+            AirsidePropellerDynamics.GovernedRpm * AirsidePropellerDynamics.ApproachNp;
+        public const float PropRpmTaxi =
+            AirsidePropellerDynamics.GovernedRpm * AirsidePropellerDynamics.TaxiNp;
+        public const float PropRpmCruise =
+            AirsidePropellerDynamics.GovernedRpm * AirsidePropellerDynamics.CruiseNp;
+        /// <summary>Ground idle, where an engine sits between start and taxi.</summary>
+        public const float PropRpmGroundIdle =
+            AirsidePropellerDynamics.GovernedRpm * AirsidePropellerDynamics.GroundIdleNp;
         // Blur the disc at taxi RPM and above. Discrete blades at 420 RPM strobe
         // against a 60 Hz frame (wagon-wheel), which read as broken rather than idle.
         // Slow spool / shutdown still shows the blades.
@@ -56,6 +67,16 @@ namespace Airside.Presentation
         /// <summary>ADR 0148: how fast a propeller can gain and lose speed (rpm per second).</summary>
         public const float PropSpoolUpRpmPerSecond = 170f;
         public const float PropSpoolDownRpmPerSecond = 75f;
+        /// <summary>
+        /// ADR 0151: a starter turns a cold propeller slowly — slowly enough to count the blades,
+        /// which is half of what makes an engine start read as a start.
+        /// </summary>
+        public const float PropMotoringRpmPerSecond = 55f;
+        /// <summary>
+        /// ADR 0151: once the turbine lights it accelerates the propeller far harder than the
+        /// governor ever trims it afterwards.
+        /// </summary>
+        public const float PropLightOffRpmPerSecond = 340f;
 
         /// <summary>
         /// ADR 0148: 0..1 blur from how far a blade moves in one frame against the gap between blades.
@@ -195,6 +216,13 @@ namespace Airside.Presentation
 
         public static bool PropellersSpinning(AircraftPhase phase) =>
             PropRpmForPhase(phase) > 0f;
+
+        /// <summary>
+        /// ADR 0151: shaft power 0..1, which is what blade pitch, exhaust and the engine note
+        /// follow. Under a governor this cannot be read back off the shaft speed.
+        /// </summary>
+        public static float PropPowerForPhase(AircraftPhase phase, float progress01 = 1f) =>
+            AirsidePropellerDynamics.PowerFractionForPhase(phase, progress01);
 
         public static float JetFanRpmForPhase(AircraftPhase phase) => phase switch
         {

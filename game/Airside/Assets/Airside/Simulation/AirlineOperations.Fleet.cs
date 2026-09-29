@@ -397,6 +397,12 @@ namespace Airside.Simulation
                 return CommandResult.Refused($"{aircraft.Registration} is already in its check.");
             if (CareerState == null)
                 return CommandResult.Refused("No career to charge the check against.");
+            var seconds = Maintenance.CheckSeconds(aircraft.Type, CareerState.BaseLevel);
+            var berth = HangarBays.Assign(_fleet, aircraft, _processedTo.ElapsedSeconds, _processedTo.ElapsedSeconds + seconds,
+                CareerState.BaseLevel);
+            if (berth.Full)
+                return CommandResult.Refused($"Every hangar that fits {aircraft.Registration} is full until "
+                    + $"{Clock.TimeText(new SimulationTime(berth.FreeAtSeconds))}.");
             var cost = Maintenance.CheckCost(aircraft.Type, CareerState.BaseLevel);
             if (!CareerState.TryChargePurchase(cost))
                 return CommandResult.Refused($"A check costs ${cost:N0}. You have ${CareerState.Funds:N0}.");

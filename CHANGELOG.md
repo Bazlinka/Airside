@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Hangars have limited space.** A hangar holds one to three aircraft side by side. If every hangar that fits an
+  aircraft is full, the check is refused and you are told when one frees. Aircraft in the same hangar stand in their
+  own spots. Not yet seen in a rebuilt game.
 - **Barrier tape along the passenger walkways.** Passengers walking out to a regional bay now follow a marked corridor
   from the terminal, edged with posts and red-and-white tape, until they reach the aircraft. Not yet seen in a
   rebuilt game.

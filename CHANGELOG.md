@@ -1,5 +1,7 @@
 ## Unreleased
 
+- **Bridges look like bridges.** Roads over creeks and rivers rise gently onto a deck with low concrete parapets, and
+  their lane paint rises with them. Not yet seen in a rebuilt game.
 - **Lighter roads, same picture.** The road network needs about two thirds fewer road pieces on flat ground and
   half the memory per mesh, with the roads, paint, cars and signs drawn exactly as before. Not yet measured in a
   rebuilt game.

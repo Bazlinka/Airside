@@ -84,3 +84,8 @@ None: new data file and scripts only; no persisted schema changes.
   without colour, against 40) and `UploadMeshData(true)` frees the CPU copy: about half the memory and bandwidth. If a
   platform rejects the layout the tile falls back to the plain one. Still to measure in Unity: frame time with
   `-airsideSoak`.
+- **Bridges and packed layout.** Drivable bridges (the `bridge` tag above layer 0) now rise from the ground at both ends to
+  a smooth peak (0.035 x length, 0.6 to 3 m) with a 1 m concrete parapet along both edges; the paint follows the same
+  profile (`BridgeProfile`, one lifted options object for ribbon and paint). Footpath bridges are not lifted.
+  `AdelaideLayout.cs` shrank from 1.09 MB to 195 KB: every one of its 240 route arrays is stored as 0.1 m zigzag-varint
+  deltas in base64 (`LayoutPack.Xz`), verified identical to the old arrays value by value.

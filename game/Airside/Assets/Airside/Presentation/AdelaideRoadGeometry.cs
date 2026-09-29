@@ -243,6 +243,16 @@ namespace Airside.Presentation
 
         internal float Height(float x, float z) => GroundHeight != null ? GroundHeight(x, z) : BaseY;
 
+        /// <summary>The same options with <paramref name="lift"/> metres added to the ground everywhere (a bridge deck).</summary>
+        internal RoadBuildOptions WithLift(Func<float, float, float> lift) => new RoadBuildOptions
+        {
+            GroundHeight = (x, z) => Height(x, z) + lift(x, z),
+            BaseY = BaseY,
+            YOffset = YOffset,
+            AirsideRule = AirsideRule,
+            MaxSegmentMetres = MaxSegmentMetres
+        };
+
         internal RoadSurfaceUse Rule(float x, float z) =>
             AirsideRule != null ? AirsideRule(x, z) : RoadSurfaceUse.Asphalt;
     }
@@ -283,8 +293,14 @@ namespace Airside.Presentation
                 var road = roads[r];
                 if (road.Layer < 0 || (road.Flags & AdelaideRoadNetwork.RoadFlags.Tunnel) != 0)
                     continue;
-                if (BuildRibbon(sink, o, road))
+                var opts = o;
+                var bridge = BridgeProfile.For(road);
+                if (bridge != null)
+                    opts = o.WithLift(bridge.Lift);
+                if (BuildRibbon(sink, opts, road))
                     drawn++;
+                if (bridge != null)
+                    BuildParapets(sink, opts, road);
             }
 
             BuildJunctionDiscs(sink, o);
@@ -546,7 +562,8 @@ namespace Airside.Presentation
                 var lines = RoadMarkingPlan.ForRoad(road.Width, road.Lanes, road.IsOneWay, road.IsAirside);
                 if (lines.Length == 0)
                     continue;
-                if (PaintRoad(sink, o, road, lines, junctions))
+                var bridge = BridgeProfile.For(road);
+                if (PaintRoad(sink, bridge != null ? o.WithLift(bridge.Lift) : o, road, lines, junctions))
                     painted++;
             }
 
@@ -741,6 +758,96 @@ namespace Airside.Presentation
             }
 
             return count;
+        }
+
+        // --- bridges ---
+
+        private static readonly RoadColor Parapet = RoadColor.Srgb(0.62f, 0.62f, 0.60f, 1f);
+        public const float ParapetHeightMetres = 1.0f;
+        public const float ParapetThicknessMetres = 0.24f;
+
+        /// <summary>
+        /// A bridge's deck profile: it rises from the ground at both ends to a peak (0.035 x its length, at most 3 m,
+        /// at least 0.6 m) in a smooth sine, so the approaches meet it without a step.
+        /// </summary>
+        public sealed class BridgeProfile
+        {
+            private readonly float[] _xz;
+            private readonly float[] _along;
+            private readonly float _total;
+            private readonly float _peak;
+
+            private BridgeProfile(float[] xz)
+            {
+                _xz = xz;
+                _along = new float[xz.Length / 2];
+                for (var i = 1; i < _along.Length; i++)
+                    _along[i] = _along[i - 1] + Dist(xz[i * 2 - 2], xz[i * 2 - 1], xz[i * 2], xz[i * 2 + 1]);
+                _total = Math.Max(1f, _along[_along.Length - 1]);
+                _peak = Math.Max(0.6f, Math.Min(3f, 0.035f * _total));
+            }
+
+            /// <summary>The profile for a road that is a bridge (bridge tag, above layer 0), or null.</summary>
+            public static BridgeProfile For(AdelaideRoadNetwork.Road road)
+            {
+                if ((road.Flags & AdelaideRoadNetwork.RoadFlags.Bridge) == 0 || road.Layer <= 0 || road.PointCount < 2)
+                    return null;
+                var xz = new float[road.PointCount * 2];
+                Array.Copy(AdelaideRoadNetwork.Points, road.PointStart * 2, xz, 0, xz.Length);
+                return new BridgeProfile(xz);
+            }
+
+            public float Peak => _peak;
+
+            /// <summary>Metres the deck stands above the ground at x, z (projected onto the bridge axis).</summary>
+            public float Lift(float x, float z)
+            {
+                var best = float.MaxValue;
+                var along = 0f;
+                for (var i = 0; i + 1 < _along.Length; i++)
+                {
+                    float ax = _xz[i * 2], az = _xz[i * 2 + 1], bx = _xz[i * 2 + 2], bz = _xz[i * 2 + 3];
+                    var vx = bx - ax;
+                    var vz = bz - az;
+                    var l2 = vx * vx + vz * vz;
+                    var t = l2 <= 0f ? 0f : Math.Max(0f, Math.Min(1f, ((x - ax) * vx + (z - az) * vz) / l2));
+                    var dx = x - (ax + vx * t);
+                    var dz = z - (az + vz * t);
+                    var d = dx * dx + dz * dz;
+                    if (d >= best)
+                        continue;
+                    best = d;
+                    along = _along[i] + t * (_along[i + 1] - _along[i]);
+                }
+
+                return _peak * (float)Math.Sin(Math.PI * Math.Max(0f, Math.Min(1f, along / _total)));
+            }
+        }
+
+        /// <summary>A low concrete parapet along both edges of a raised deck, in pieces that follow the road.</summary>
+        private static void BuildParapets(RoadMeshSink sink, RoadBuildOptions o, AdelaideRoadNetwork.Road road)
+        {
+            var pts = DropTiny(AdaptiveDensify(road.PointStart, road.PointCount, o), MinSegmentMetres);
+            var n = pts.Count / 2;
+            var reach = road.Width * 0.5f + ParapetThicknessMetres * 0.5f;
+            for (var i = 0; i + 1 < n; i++)
+            {
+                float ax = pts[i * 2], az = pts[i * 2 + 1], bx = pts[i * 2 + 2], bz = pts[i * 2 + 3];
+                var len = Dist(ax, az, bx, bz);
+                if (len < 0.5f)
+                    continue;
+                var ux = (bx - ax) / len;
+                var uz = (bz - az) / len;
+                var mx = (ax + bx) * 0.5f;
+                var mz = (az + bz) * 0.5f;
+                foreach (var side in new[] { -1f, 1f })
+                {
+                    var cx = mx - uz * reach * side;
+                    var cz = mz + ux * reach * side;
+                    sink.Box(cx, o.Height(cx, cz) + o.YOffset, cz, ux, uz, len * 0.5f + 0.05f, ParapetThicknessMetres * 0.5f,
+                        ParapetHeightMetres, Parapet);
+                }
+            }
         }
 
         // --- helpers (public where the tests check them) ---

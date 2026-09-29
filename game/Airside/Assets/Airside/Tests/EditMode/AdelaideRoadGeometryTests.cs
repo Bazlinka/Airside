@@ -43,23 +43,67 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void EveryTriangle_FacesUp_AndStaysInsideTheMap()
+        public void EveryTriangle_IsWoundTheWayItsNormalSays_AndStaysInsideTheMap()
         {
             var sink = Asphalt(null, out _);
             var bad = 0;
-            var total = 0;
-            foreach (var (ax, ay, az, bx, by, bz, cx, cy, cz) in Triangles(sink))
+            var upFacingRibbons = 0;
+            foreach (var tile in sink.Tiles)
             {
-                total++;
-                if ((bz - az) * (cx - ax) - (bx - ax) * (cz - az) < -1e-3f && bad++ < 8)
-                    TestContext.Out.WriteLine($"DOWN a=({ax:F1},{az:F1}) b=({bx:F1},{bz:F1}) c=({cx:F1},{cz:F1})");
-                Assert.That(Math.Abs(ax), Is.LessThan(20000f));
-                Assert.That(float.IsNaN(ay) || float.IsNaN(bx) || float.IsNaN(cz), Is.False);
-                // Cross product y of (b-a) x (c-a) = (b.z-a.z)*(c.x-a.x) - (b.x-a.x)*(c.z-a.z) is Unity's up-facing sign.
+                var p = tile.Value.Positions;
+                var n = tile.Value.Normals;
+                var t = tile.Value.Triangles;
+                Assert.That(n.Count, Is.EqualTo(p.Count));
+                for (var i = 0; i < t.Count; i += 3)
+                {
+                    int a = t[i], b = t[i + 1], c = t[i + 2];
+                    Assert.That(Math.Abs(p[a * 3]), Is.LessThan(20000f));
+                    Assert.That(float.IsNaN(p[a * 3 + 1]) || float.IsNaN(p[b * 3]) || float.IsNaN(p[c * 3 + 2]), Is.False);
+                    var e1 = (p[b * 3] - p[a * 3], p[b * 3 + 1] - p[a * 3 + 1], p[b * 3 + 2] - p[a * 3 + 2]);
+                    var e2 = (p[c * 3] - p[a * 3], p[c * 3 + 1] - p[a * 3 + 1], p[c * 3 + 2] - p[a * 3 + 2]);
+                    var gx = e1.Item2 * e2.Item3 - e1.Item3 * e2.Item2;
+                    var gy = e1.Item3 * e2.Item1 - e1.Item1 * e2.Item3;
+                    var gz = e1.Item1 * e2.Item2 - e1.Item2 * e2.Item1;
+                    // geometric normal (b-a)x(c-a) against the vertex normal: flat ribbons face up, parapets face out
+                    if (gx * n[a * 3] + gy * n[a * 3 + 1] + gz * n[a * 3 + 2] < -1e-3f)
+                        bad++;
+                    if (n[a * 3 + 1] > 0.99f)
+                        upFacingRibbons++;
+                }
             }
 
-            TestContext.Out.WriteLine($"DOWN total {bad} of {total}");
-            Assert.That(bad, Is.EqualTo(0), "downward-facing road triangles");
+            Assert.That(bad, Is.EqualTo(0), "downward or inside-out road triangles");
+            Assert.That(upFacingRibbons, Is.GreaterThan(30000));
+        }
+
+        [Test]
+        public void Bridges_RiseFromTheGroundAtBothEnds_AndHaveParapets()
+        {
+            var bridges = 0;
+            foreach (var road in AdelaideRoadNetwork.Roads)
+            {
+                var profile = AdelaideRoadGeometry.BridgeProfile.For(road);
+                if (profile == null)
+                    continue;
+                bridges++;
+                var p = AdelaideRoadNetwork.Points;
+                var first = road.PointStart * 2;
+                var last = (road.PointStart + road.PointCount - 1) * 2;
+                Assert.That(profile.Lift(p[first], p[first + 1]), Is.LessThan(0.05f), $"way {road.OsmId} starts on the ground");
+                Assert.That(profile.Lift(p[last], p[last + 1]), Is.LessThan(0.05f), $"way {road.OsmId} ends on the ground");
+                Assert.That(profile.Peak, Is.InRange(0.6f, 3f));
+                var mid = (road.PointStart + road.PointCount / 2) * 2;
+                Assert.That(profile.Lift(p[mid], p[mid + 1]), Is.GreaterThan(0f).And.LessThanOrEqualTo(profile.Peak + 1e-3f));
+            }
+
+            Assert.That(bridges, Is.GreaterThan(10), "the drivable bridges in the data");
+            var sink = Asphalt(null, out _);
+            var high = 0;
+            foreach (var tile in sink.Tiles)
+                for (var i = 1; i < tile.Value.Positions.Count; i += 3)
+                    if (tile.Value.Positions[i] > 0.6f)
+                        high++;
+            Assert.That(high, Is.GreaterThan(300), "raised decks and parapets exist");
         }
 
         [Test]

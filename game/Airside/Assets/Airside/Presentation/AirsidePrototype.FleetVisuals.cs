@@ -155,6 +155,16 @@ namespace Airside.Presentation
             switch (visual.Leg)
             {
                 case FleetGroundLeg.Parked:
+                    // In a check the aircraft is towed to a hangar and back (ADR 0186); the stand stays held.
+                    if (aircraft.Airline.IsPlayer && aircraft.CheckUntil is { } checkEnds
+                        && _preciseTime < checkEnds.ElapsedSeconds)
+                    {
+                        var checkSeconds = Maintenance.CheckSeconds(aircraft.Type, _operations.CareerState.BaseLevel);
+                        if (HangarTow.TryPose(aircraft.Type, aircraft.Stand, _preciseTime - (checkEnds.ElapsedSeconds - checkSeconds),
+                                checkSeconds, out var towed))
+                            return towed;
+                    }
+
                     // Bay stop or terminal-gate nose stop — never a gate resolved as a bay.
                     return AdelaideGround.StandPose(aircraft.Stand);
                 // Queue slots: two aircraft holding short, or two arrivals waiting for a stand,

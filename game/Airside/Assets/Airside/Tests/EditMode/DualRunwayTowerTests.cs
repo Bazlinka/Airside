@@ -172,9 +172,15 @@ namespace Airside.Tests
                 "12/30 must free for the next movement before the long taxi to E2 finishes");
             Assert.That(clear, Is.GreaterThan(vacate * 0.25),
                 "clear-of-runway must leave enough exit before the next landing joins");
-            Assert.That(AdelaideGround.ClearOfRunwaySeconds(AircraftType.Boeing7378, RunwayDirection.Runway05),
-                Is.EqualTo(AdelaideGround.VacateFor(AircraftType.Boeing7378, RunwayDirection.Runway05).WholeSeconds),
-                "05/23 still frees at E2");
+            // ADR 0183: 05/23 frees once the aircraft is off the pavement, not when it reaches E2.
+            foreach (var runway in new[] { RunwayDirection.Runway05, RunwayDirection.Runway23 })
+            foreach (var type in new[] { AircraftType.Boeing7378, AircraftType.Atr42 })
+            {
+                var mainClear = AdelaideGround.ClearOfRunwaySeconds(type, runway);
+                var mainVacate = AdelaideGround.VacateFor(type, runway).WholeSeconds;
+                Assert.That(mainClear, Is.LessThan(mainVacate * 0.7), $"{type.Id} {runway} frees before E2");
+                Assert.That(mainClear, Is.GreaterThanOrEqualTo(30), $"{type.Id} {runway} still leaves time to leave the pavement");
+            }
         }
 
         [Test]

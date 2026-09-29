@@ -122,15 +122,47 @@ namespace Airside.Simulation
         }
 
         /// <summary>
+        /// ADR 0183: how far from the 05/23 centreline the vacating aircraft must be for the strip to be free.
+        /// The 45 m runway is 22.5 m either side; this is a holding position clear of the pavement and the
+        /// wing.
+        /// </summary>
+        public const float MainStripClearMetres = 50f;
+
+        /// <summary>
+        /// The main strip is free once the vacating aircraft is off the pavement, about 230 of its 510 m
+        /// vacate leg, not when it reaches the waiting point at the end. The tower used to hold the next
+        /// landing (and takeoff) for the whole leg, roughly 90 s longer than the runway was in use; the next
+        /// arrival's own vacate is still checked against the one ahead of it.
+        /// </summary>
+        public static long MainClearOfRunwaySeconds(GroundLeg vacate)
+        {
+            if (vacate.Parts.Count == 0)
+                return vacate.WholeSeconds;
+            var path = vacate.Parts[0].Path;
+            var metres = path.Length;
+            for (var d = 0f; d <= path.Length; d += 2f)
+            {
+                var (_, z) = path.PointAtDistance(d);
+                if (Math.Abs(z) >= MainStripClearMetres)
+                {
+                    metres = d;
+                    break;
+                }
+            }
+
+            return Math.Min(vacate.WholeSeconds, Math.Max(30L, (long)Math.Ceiling(path.SecondsAtDistance(metres))));
+        }
+
+        /// <summary>
         /// Seconds until the aircraft is clear of the strip during vacate — when the
-        /// tower may clear the next movement. For 05/23 that is the full E2 vacate.
+        /// tower may clear the next movement. For 05/23 that is off the pavement (ADR 0183).
         /// For 12/30 the long taxi toward E2 continues after the strip is free.
         /// </summary>
         public static long ClearOfRunwaySeconds(AircraftType type, RunwayDirection runway)
         {
             var vacate = VacateFor(type, runway);
             if (RunwayWeather.IsMainRunway(runway))
-                return vacate.WholeSeconds;
+                return MainClearOfRunwaySeconds(vacate);
 
             // Cross strip: free once well clear of the pavement and past the shared
             // exit conflict zone — not after the full kilometre to E2, but later than

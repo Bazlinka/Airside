@@ -150,13 +150,16 @@ namespace Airside.Presentation
                     continue;
 
                 var point = FieldMiniMap.WorldToMap(map, view.position.x, view.position.z);
-                if (!map.Contains(point))
-                    continue;
+                // Arrivals on the extended final are drawn 32 km out, well beyond the field: pin them
+                // to the edge they are approaching from, smaller, rather than dropping them.
+                var offMap = !map.Contains(point);
+                if (offMap)
+                    point = FieldMiniMap.EdgePoint(map, point, 5f);
                 _miniMapDots.Add(point);
                 _miniMapDotIds.Add(pair.Key);
 
                 var livery = AirsideTheme.FromHex(aircraft.Airline.LiveryHex);
-                var size = mine || selected ? 8f : 6f;
+                var size = (mine || selected ? 8f : 6f) * (offMap ? 0.75f : 1f);
                 var severity = AircraftStatus.Severity(aircraft, _clock.Now);
                 var ring = selected
                     ? AirsideTheme.Amber

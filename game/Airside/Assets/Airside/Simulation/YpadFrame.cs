@@ -45,6 +45,15 @@ namespace Airside.Simulation
             FromEastNorth(east - MidEast, north - MidNorth, out x, out z);
         }
 
+        /// <summary>The real position of a world x/z point: the inverse of <see cref="ToWorld"/>.</summary>
+        public static void ToLatLon(double x, double z, out double latitude, out double longitude)
+        {
+            var east = x * AlongEast - z * AlongNorth;
+            var north = x * AlongNorth + z * AlongEast;
+            latitude = Lat0 + (MidNorth + north) / MetresPerDegreeLat;
+            longitude = Lon0 + (MidEast + east) / MetresPerDegreeLon;
+        }
+
         /// <summary>Rotates a true east/north vector into world x/z (left normal is +z).</summary>
         public static void FromEastNorth(double east, double north, out double x, out double z)
         {

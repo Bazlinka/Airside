@@ -1,5 +1,18 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — approach vs map mismatch (branch `feature/approach-map-match`, ADR 0179).**
+  Bailey: approaching planes do not match the map and stutter across the screen before final.
+  - Cause: the field flies the last 32 km at approach speed, the route map ran it at descent-profile
+    speed on the great circle (tens of km and a different bearing apart); the field mini-map dropped
+    anything outside its window. `ArrivalMapTrack` now shares one distance-out and ground-track
+    function between the map and `ArrivalFinalWorld`; the drawn arrival is slew-limited (2.5× approach
+    speed); off-map mini-map dots pin to the edge.
+  - Ruled out by probe: tower landing check cost (0.07 ms avg) and a wind-driven runway flip on final.
+    The "stutter" itself is not reproduced in code, only guarded (slew limit). If it persists, capture it
+    with `scripts/capture-game.sh --follow <REG>` on an inbound and note the distance out.
+  - **Checks:** `scripts/test-unity.sh` 1390/1392 passed, 0 failed, 2 known inconclusive. Not yet seen
+    in a rebuilt game.
+
 - **2026-09-29 Claude — taxiway designators (branch `feature/airport-realism`).** Bailey's realism
   list: prop disc shape, buildings, airport layout/taxi names, boundary, roads. Started with taxi names.
   - `Presentation/AdelaideTaxiwayLabels` places one stroke-painted designator at the middle of each

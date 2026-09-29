@@ -1,0 +1,32 @@
+Unity Editor version:    6000.3.23f1 (09d2ecc7fb28)
+Branch:                  6000.3/staging
+Build type:              Release
+Batch mode:              YES
+macOS version:           Version 27.0 (Build 26A428)
+Darwin version:          27.0.0
+Architecture:            arm64
+Running under Rosetta:   NO
+Available memory:        16384 MB
+Date:                    2026-09-29T05:47:36Z
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Channel LicenseClient-baileyfleming doesn't exist
+Launching external process: /Applications/Unity/Hub/Editor/6000.3.23f1/Unity.app/Contents/Helpers/UnityLicensingClient.app/Contents/MacOS/Unity.Licensing.Client
+[Licensing::Module] Successfully launched the LicensingClient (PId: 23440)
+Launching external process: /Applications/Unity/Hub/Editor/6000.3.23f1/Unity.app/Contents/Resources/PackageManager/Server/UnityPackageManager
+
+COMMAND LINE ARGUMENTS:
+/Applications/Unity/Hub/Editor/6000.3.23f1/Unity.app/Contents/MacOS/Unity
+-batchmode
+-nographics
+-projectPath
+/Users/baileyfleming/Code/Airside-realism/game/Airside/Assets/Airside/game/Airside
+-runTests
+-testPlatform
+editmode
+-testFilter
+ArrivalMapTrackTests
+-testResults
+-logFile
+/Users/baileyfleming/Code/Airside-realism/game/Airside/Assets/Airside/work/probe.log
+Couldn't set project path to: 
+[Package Manager] Server process was shutdown

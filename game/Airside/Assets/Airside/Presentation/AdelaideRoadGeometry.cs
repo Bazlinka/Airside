@@ -151,6 +151,30 @@ namespace Airside.Presentation
                 Px(halfLength, -halfWidth), y1, Pz(halfLength, -halfWidth), Px(-halfLength, -halfWidth), y1, Pz(-halfLength, -halfWidth));
         }
 
+        /// <summary>A flat-shaded cylinder standing on y0 with a top cap (no bottom): <paramref name="sides"/> faces.</summary>
+        public void Cylinder(float cx, float y0, float cz, float radius, float height, int sides, RoadColor color)
+        {
+            var t = TileAt(cx, cz);
+            var y1 = y0 + height;
+            var ring = new float[sides * 3];
+            for (var k = 0; k < sides; k++)
+            {
+                var a0 = k * 2f * (float)Math.PI / sides;
+                var a1 = (k + 1) * 2f * (float)Math.PI / sides;
+                var mid = (a0 + a1) * 0.5f;
+                var nx = (float)Math.Cos(mid);
+                var nz = (float)Math.Sin(mid);
+                float x0 = cx + (float)Math.Cos(a0) * radius, z0 = cz + (float)Math.Sin(a0) * radius;
+                float x1 = cx + (float)Math.Cos(a1) * radius, z1 = cz + (float)Math.Sin(a1) * radius;
+                Face(t, color, nx, 0f, nz, x0, y0, z0, x1, y0, z1, x1, y1, z1, x0, y1, z0);
+                ring[k * 3] = x0;
+                ring[k * 3 + 1] = y1;
+                ring[k * 3 + 2] = z0;
+            }
+
+            Fan(cx, y1, cz, ring, color);
+        }
+
         /// <summary>A quad q0..q3 in cyclic order, wound so its geometric normal agrees with (nx, ny, nz).</summary>
         private void Face(RoadMeshTile t, RoadColor color, float nx, float ny, float nz,
             float x0, float y0, float z0, float x1, float y1, float z1,
@@ -301,10 +325,21 @@ namespace Airside.Presentation
             if (n < 2)
                 return false;
 
-            var half = road.Width * 0.5f;
             var alpha = AlphaAt(pts[(n / 2) * 2], pts[(n / 2) * 2 + 1]);
-            var color = AsphaltFor(road, alpha);
-            var airside = road.IsAirside;
+            return RibbonFromPoints(sink, o, pts, road.Width, AsphaltFor(road, alpha), road.IsAirside);
+        }
+
+        /// <summary>
+        /// A ribbon of the given width along x, z pairs (already densified): mitred bends, round joints at sharp ones,
+        /// a disc for a run no bigger than two widths. Used for roads and for the precinct's footpaths.
+        /// </summary>
+        public static bool RibbonFromPoints(RoadMeshSink sink, RoadBuildOptions o, List<float> pts, float width,
+            RoadColor color, bool airside)
+        {
+            var n = pts.Count / 2;
+            if (n < 2)
+                return false;
+            var half = width * 0.5f;
 
             // A road no bigger than a couple of its own widths (a cul-de-sac loop, a turning bay) is a disc: a ribbon
             // around it would be narrower than it is wide and fold inside out.
@@ -318,7 +353,7 @@ namespace Airside.Presentation
             }
 
             var extent = Math.Max(maxX - minX, maxZ - minZ);
-            if (extent < road.Width * 2f)
+            if (extent < width * 2f)
             {
                 var cx = (minX + maxX) * 0.5f;
                 var cz = (minZ + maxZ) * 0.5f;

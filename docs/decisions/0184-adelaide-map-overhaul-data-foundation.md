@@ -54,3 +54,10 @@ None: new data file and scripts only; no persisted schema changes.
   lines, up to 4,200 parked cars within 2.3 km of the T1 forecourt (62 % occupancy and colour by hash, so identical every
   run; body + glass + roof, flat-shaded) and lamp posts. Night glows for lamps within 2.2 km join the shared
   "Streetlights" lens group. This replaces the authored T1 car pad, cars, lamps, zebras and bay lines.
+- **P2/P3 (precinct).** `scripts/generate-ypad-precinct.py` → `Simulation/AdelaidePrecinct.cs`; `AdelaidePrecinctGeometry`
+  (pure): open canopies on posts (the taxi rank and bus/car-park entrance roofs used to draw as solid 2.6 m blocks from the
+  suburb extract, burying the road and cars; `AirsideAdelaideSuburbs.AppendBuilding` now skips a prism that is a canopy),
+  107 solar arrays (blue panels; on the canopy roof where the roof is mapped), 41 fuel tanks, 70 masts (the T1 apron
+  floodlights, VOR/DME, localizer, comms), 130 bus stops (shelter or pole and sign, turned to the road), 773 footpaths.
+  Gates and jet bridges were cross-checked against OSM: the game's gate noses agree within the deliberate ADR 0141 setback
+  (0–20 m), so they are left as they are.

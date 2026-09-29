@@ -5,6 +5,9 @@
   junctions, roundabouts, lane and edge lines that stop at side roads, and zebra crossings. The old cap that
   dropped most roads and the gap at the airfield edge are gone. The authored T1 drop-off, car pad and props are
   off until real ones return (next). Not yet seen in a rebuilt game; `-airsideLegacyRoads` restores the old roads.
+- **Terminal precinct furniture from the real map.** The taxi-rank and car-park roofs are open canopies on posts
+  instead of solid blocks; the airport's solar panels, fuel tanks, apron floodlight masts and navaid masts, bus stops
+  and footpaths appear where they really are. Not yet seen in a rebuilt game.
 - **The real car parks, with cars.** Every Adelaide Airport car park is drawn from OpenStreetMap — surfaces, white
   bay lines and up to about 4,000 parked cars (mostly white, silver and dark, as in a real car park) — plus the
   street lamps, which glow at night. Replaces the hand-placed T1 car pad. Not yet seen in a rebuilt game.

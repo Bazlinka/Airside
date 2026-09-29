@@ -17,9 +17,11 @@
   - **P1c done:** `generate-ypad-carparks.py` -> `AdelaideCarParks.cs` (592 car parks, 12,959 bays, 471 lamps),
     `AdelaideCarParkGeometry` (surfaces, bay lines, <= 4,200 cars, lamp posts), lamp night glows
     (`BuildYpadRoadLampGlows`). Headless harness 1,040 passed, 0 failed.
-  - **NEXT (P2):** Terminal 1 precinct — real terminal footprint/levels, forecourt kerb/bus/taxi bays, the multi-level
-    car park building (`building:levels` 6), jet-bridge/gate cross-check, bus stops (315 nodes), footways (2,311 ways)
-    near the terminal. Then P3 airside detail (masts, signs, fuel, precincts), P4 credits/perf.
+  - **P2/P3 (part) done:** `generate-ypad-precinct.py` -> `AdelaidePrecinct.cs` (7 canopies, 107 solar arrays, 41 tanks,
+    70 masts, 130 bus stops, 773 footpaths) + `AdelaidePrecinctGeometry`; suburb prisms that are really canopies are
+    skipped. Gates/jet bridges checked against OSM: fine (ADR 0141 setback). Headless harness 1,046 passed.
+  - **NEXT:** field mini-map with roads/car parks/buildings; hangar roof shapes; taxiway/holding signs; T1 detail
+    (OSM has one 2-level polygon only); offline render with the new layers; P4 credits screen + perf capture.
   - **Look at first in a rebuilt game:** road gaps, car-park cars, startup time (the mesh build is one synchronous pass —
     if it stalls, spread it across frames like the suburbs, ADR 0162).
   - **Watch:** no Unity/dotnet in the cloud container — C# must be verified on a Mac (`scripts/test-unity.sh`).

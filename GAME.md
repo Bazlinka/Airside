@@ -1,5 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — map overhaul P0: data foundation (branch `claude/adelaide-airport-map-overhaul-beuaca`, ADR 0184).**
+  Bailey asked for a complete, accurate top-down Adelaide Airport (all roads, terminal detail). Decided:
+  vector-first from OpenStreetMap, whole airport + landside. New `scripts/fetch-ypad-osm.py` (OSM map API,
+  since Overpass is blocked in the cloud sandbox) and `scripts/ypad_osm.py` (frame helpers);
+  snapshot `docs/data/osm/ypad-map-2026-09-29.json` (DAT-YPAD-MAP). No runtime change yet.
+  - **Why roads are partial:** `AirsideAdelaideRoads` caps at 720 ribbons, drops < 9 m, skips the whole
+    operational core; airside service roads are never drawn; suburb streets are satellite pixels only.
+  - **NEXT (P1):** `generate-ypad-roads.py` -> `Simulation/AdelaideRoadNetwork.cs`, then rewrite the road
+    mesher (junctions, no cap, airside roads, landside, car parks). Then P2 terminal, P3 airside detail,
+    P4 verification/credits. Plan: `/root/.claude/plans/ok-now-for-delightful-robin.md` (summarised in ADR 0184).
+  - **Watch:** no Unity/dotnet in the cloud container — C# must be verified on a Mac (`scripts/test-unity.sh`).
+
 - **2026-09-29 Claude — main strip frees when off the pavement (branch `fix/landing-runway-occupancy`, ADR 0183).**
   Bailey: aircraft still stuck on landing behind aircraft that have landed or are taxiing. The main strip was
   locked for the whole 511 m vacate leg (150–200 s); the aircraft is off the pavement at ~232 m. Now frees at

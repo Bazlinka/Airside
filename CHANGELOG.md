@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Groundwork for a complete, accurate Adelaide Airport map.** A fresh, much richer OpenStreetMap snapshot of
+  the airport, terminal precinct and approach roads (every road, car park, lamp, gate and jet bridge) is
+  in the repository, with the tools to refresh it. No visible change yet; roads, terminal and airside
+  detail follow in phases (ADR 0184).
 - **Much less waiting behind aircraft that have just landed.** The tower now frees the main runway once
   the landing aircraft is off the pavement instead of when it reaches the end of its taxi, so the next
   landing or takeoff goes sooner. Over a simulated day, time spent holding in the air fell about 40 %

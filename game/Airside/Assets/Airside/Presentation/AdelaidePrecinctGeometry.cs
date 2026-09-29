@@ -273,6 +273,73 @@ namespace Airside.Presentation
             }
         }
 
+        // --- holding-position signs ---
+
+        private static readonly RoadColor MandatoryRed = RoadColor.Srgb(0.72f, 0.07f, 0.07f, 1f);
+        private static readonly RoadColor SignWhite = RoadColor.Srgb(0.93f, 0.93f, 0.9f, 1f);
+        public const float HoldSignSetbackMetres = 4f;
+
+        /// <summary>
+        /// A mandatory red sign each side of every holding position, facing along the taxiway: what a pilot reads
+        /// at the hold bars. Returns signs placed.
+        /// </summary>
+        public static int BuildHoldSigns(RoadMeshSink sink, RoadBuildOptions o)
+        {
+            var h = AdelaideLayout.HoldingPositions;
+            var placed = 0;
+            for (var i = 0; i + 1 < h.Length; i += 2)
+            {
+                NearestTaxiway(h[i], h[i + 1], out var dx, out var dz, out var width);
+                var ax = -dz;
+                var az = dx;
+                foreach (var side in new[] { -1f, 1f })
+                {
+                    var reach = width * 0.5f + HoldSignSetbackMetres;
+                    var x = h[i] + ax * reach * side;
+                    var z = h[i + 1] + az * reach * side;
+                    var y = o.Height(x, z) + o.YOffset;
+                    sink.Box(x, y, z, ax, az, 0.05f, 0.05f, 1.0f, Post);
+                    sink.Box(x, y + 1.0f, z, ax, az, 1.2f, 0.05f, 0.9f, SignWhite);
+                    sink.Box(x, y + 1.05f, z, ax, az, 1.1f, 0.06f, 0.8f, MandatoryRed);
+                    placed++;
+                }
+            }
+
+            return placed;
+        }
+
+        /// <summary>Direction (unit) and width of the taxiway segment nearest (x, z).</summary>
+        public static void NearestTaxiway(float x, float z, out float dx, out float dz, out float width)
+        {
+            dx = 1f;
+            dz = 0f;
+            width = 23f;
+            var best = float.MaxValue;
+            foreach (var taxiway in AdelaideLayout.Taxiways)
+            {
+                var xz = taxiway.Xz;
+                for (var i = 0; i + 3 < xz.Length; i += 2)
+                {
+                    var vx = xz[i + 2] - xz[i];
+                    var vz = xz[i + 3] - xz[i + 1];
+                    var l2 = vx * vx + vz * vz;
+                    if (l2 < 1e-4f)
+                        continue;
+                    var t = Math.Max(0f, Math.Min(1f, ((x - xz[i]) * vx + (z - xz[i + 1]) * vz) / l2));
+                    var ex = x - (xz[i] + vx * t);
+                    var ez = z - (xz[i + 1] + vz * t);
+                    var d = ex * ex + ez * ez;
+                    if (d >= best)
+                        continue;
+                    best = d;
+                    var l = (float)Math.Sqrt(l2);
+                    dx = vx / l;
+                    dz = vz / l;
+                    width = taxiway.Width;
+                }
+            }
+        }
+
         // --- helpers ---
 
         public static List<float> Polygon(int[] starts, float[] points, int index)

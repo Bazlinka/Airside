@@ -23,7 +23,7 @@ namespace Airside.Presentation
             switch (reason.Kind)
             {
                 case HoldKind.Cancelled:
-                    return "Cancelled. The airline will rebook it";
+                    return "Cancelled: the airline will rebook it";
                 case HoldKind.Curfew:
                     return $"Curfew: Adelaide opens again at {Time(reason.Until, clock)}";
                 case HoldKind.Turnaround:

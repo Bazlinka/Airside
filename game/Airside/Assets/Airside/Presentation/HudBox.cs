@@ -60,13 +60,6 @@ namespace Airside.Presentation
         /// <summary>The left <paramref name="width"/> points of this box.</summary>
         public HudBox SliceLeft(float width) => new(X, Y, Math.Min(width, Width), Height);
 
-        /// <summary>The right <paramref name="width"/> points of this box.</summary>
-        public HudBox SliceRight(float width)
-        {
-            var w = Math.Min(width, Width);
-            return new HudBox(Right - w, Y, w, Height);
-        }
-
         /// <summary>The top <paramref name="height"/> points of this box.</summary>
         public HudBox SliceTop(float height) => new(X, Y, Width, Math.Min(height, Height));
 

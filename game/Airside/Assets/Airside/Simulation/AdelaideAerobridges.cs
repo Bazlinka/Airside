@@ -268,11 +268,6 @@ namespace Airside.Simulation
         public const double RetractSeconds = 60;
         public const double DoorsCloseBeforePushSeconds = DepartureCountdown.DoorsClosedBeforeSeconds;
 
-        /// <summary>True when this aircraft is parked (or taxiing in) on a bridged gate.</summary>
-        public static bool AtBridgedGate(FleetAircraft aircraft) =>
-            aircraft != null && aircraft.State is FleetState.AtStand or FleetState.TaxiIn
-            && AdelaideAerobridges.Serves(aircraft.Stand);
-
         /// <summary>0 = parked clear of the stand, 1 = docked at the aircraft's L1 door.</summary>
         public static float DockedFraction(FleetAircraft aircraft, double nowSeconds,
             PlayerBaseLevel baseLevel = PlayerBaseLevel.Starter)

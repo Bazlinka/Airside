@@ -242,14 +242,6 @@ namespace Airside.Presentation
                 or FleetState.Outbound
             || aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue);
 
-        public static string GateText(FleetAircraft aircraft)
-        {
-            if (aircraft == null)
-                return "—";
-            var stand = !string.IsNullOrEmpty(aircraft.Stand.Value) ? aircraft.Stand : aircraft.DepartureStand;
-            return string.IsNullOrEmpty(stand.Value) ? "—" : AdelaideGround.StandLabel(stand).Replace("Gate ", "");
-        }
-
         public static string ScheduledTime(FleetAircraft aircraft, Func<SimulationTime, string> clockText)
         {
             if (aircraft == null || clockText == null)

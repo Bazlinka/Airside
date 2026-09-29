@@ -106,6 +106,20 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void HoldSigns_StandBesideEveryHoldingPosition_OffThePavement()
+        {
+            var sink = new RoadMeshSink();
+            var placed = AdelaidePrecinctGeometry.BuildHoldSigns(sink, new RoadBuildOptions());
+            Assert.That(placed, Is.EqualTo(AdelaideLayout.HoldingPositions.Length / 2 * 2), "one each side of every hold");
+            Assert.That(sink.TriangleCount, Is.EqualTo(placed * 30), "post, plate and red face per sign");
+            // the sign is set back from the taxiway edge: at the first hold it is farther than half a width from the centreline
+            AdelaidePrecinctGeometry.NearestTaxiway(AdelaideLayout.HoldingPositions[0], AdelaideLayout.HoldingPositions[1],
+                out var dx, out var dz, out var width);
+            Assert.That(dx * dx + dz * dz, Is.EqualTo(1f).Within(1e-3));
+            Assert.That(width, Is.GreaterThan(10f));
+        }
+
+        [Test]
         public void Contains_HandlesConcaveOutlines()
         {
             var l = new List<float> { 0, 0, 2, 0, 2, 1, 1, 1, 1, 2, 0, 2 };

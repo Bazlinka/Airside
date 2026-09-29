@@ -357,12 +357,6 @@ namespace Airside.Presentation
                 DistanceToAxisAlignedStrip(worldX, worldZ, 0f, 0f, MainHalfLength, MainHalfWidth),
                 DistanceToOrientedStrip(worldX, worldZ, CrossCenterX, CrossCenterZ, CrossHalfLength, CrossHalfWidth, CrossYawRadians));
 
-        /// <summary>Distance to the nearest runway strip (the protected graded band), 0 inside one.</summary>
-        public static float DistanceToRunwayStrip(float worldX, float worldZ) =>
-            Math.Min(
-                DistanceToAxisAlignedStrip(worldX, worldZ, 0f, 0f, MainHalfLength, RunwayStripHalfWidthMetres),
-                DistanceToOrientedStrip(worldX, worldZ, CrossCenterX, CrossCenterZ, CrossHalfLength, RunwayStripHalfWidthMetres, CrossYawRadians));
-
         /// <summary>Distance to the nearest taxiway pavement edge, including sealed shoulders; 0 on it.</summary>
         public static float DistanceToTaxiway(float worldX, float worldZ)
         {
@@ -399,15 +393,9 @@ namespace Airside.Presentation
             Math.Min(DistanceToRunwayPavement(worldX, worldZ),
                 Math.Min(DistanceToTaxiway(worldX, worldZ), DistanceToApron(worldX, worldZ)));
 
-        public static bool ContainsMainRunway(float worldX, float worldZ) =>
-            AirsideBareField.ContainsRunway(worldX, worldZ);
-
         public static bool ContainsCrossRunway(float worldX, float worldZ) =>
             DistanceToOrientedStrip(worldX, worldZ, CrossCenterX, CrossCenterZ, CrossHalfLength + 1e-3f,
                 CrossHalfWidth + 1e-3f, CrossYawRadians) <= 0f;
-
-        public static bool ContainsAnyRunway(float worldX, float worldZ) =>
-            ContainsMainRunway(worldX, worldZ) || ContainsCrossRunway(worldX, worldZ);
 
         public static bool ContainsApron(float worldX, float worldZ)
         {

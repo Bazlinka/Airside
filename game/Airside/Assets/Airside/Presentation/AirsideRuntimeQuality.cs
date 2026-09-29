@@ -204,10 +204,5 @@ namespace Airside.Presentation
                 Object.DestroyImmediate(collider);
         }
 
-        public static void EnableInstancing(Material material)
-        {
-            if (material != null)
-                material.enableInstancing = true;
-        }
     }
 }

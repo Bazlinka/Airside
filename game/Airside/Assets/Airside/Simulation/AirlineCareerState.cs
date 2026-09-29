@@ -387,10 +387,6 @@ namespace Airside.Simulation
             return false;
         }
 
-        /// <summary>True if any listed type is the Dash 8 (Domestic's other qualifying type).</summary>
-        internal static bool OwnsDash8(IReadOnlyList<AircraftType> ownedTypes) =>
-            Owns(ownedTypes, AircraftType.Dash8Q400);
-
         /// <summary>
         /// Applies a settlement exactly once: a repeat <paramref name="id"/> is refused rather
         /// than paid twice — the "safe to apply exactly once" guarantee this whole feature

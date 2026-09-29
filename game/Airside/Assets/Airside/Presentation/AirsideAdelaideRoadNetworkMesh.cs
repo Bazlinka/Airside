@@ -127,6 +127,7 @@ namespace Airside.Presentation
             AdelaidePrecinctGeometry.BuildTanks(props, options);
             AdelaidePrecinctGeometry.BuildMasts(props, options);
             AdelaidePrecinctGeometry.BuildBusStops(props, options);
+            AdelaidePrecinctGeometry.BuildHoldSigns(props, options);
             return new Sinks { Asphalt = asphalt, Paint = paint, Props = props };
         }
 

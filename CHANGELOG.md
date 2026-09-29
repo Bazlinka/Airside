@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Clearer wording in the controls help and delay tips.** The camera keys say what they move, the delay tips read
+  as full sentences, and a cancelled flight's line follows the "what: why" pattern in the writing guide.
+- **Holding-position signs.** A red mandatory sign stands each side of every holding position, facing along the
+  taxiway, set back from the pavement edge. Not yet seen in a rebuilt game.
 - **Every road around Adelaide Airport is drawn.** The whole road network from OpenStreetMap — 3,849 roads, 511
   km: motorways to residential streets, the airside service roads and the terminal forecourt — at real widths with
   junctions, roundabouts, lane and edge lines that stop at side roads, and zebra crossings. The old cap that

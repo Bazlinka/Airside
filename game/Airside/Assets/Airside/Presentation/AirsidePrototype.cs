@@ -187,7 +187,6 @@ namespace Airside.Presentation
         private Transform _jettyDeck;
         private Transform _opsAntennaDish;
         private Transform _starFieldRoot;
-        private bool _standThreeVisualBuilt;
         private Camera _mainCamera;
         private AirsideCameraController _cameraController;
         private double _preciseTime;
@@ -920,19 +919,6 @@ namespace Airside.Presentation
             // has to get back to it from the aircraft is routed round what is in the way.
             var offRoad = Flat(vehicle.position - here).sqrMagnitude > 12f * 12f;
             UpdateVehicle(vehicle, true, here, target, routed: offRoad);
-        }
-
-        private void UpdateTurnaroundVehicle(Transform vehicle, bool active, Vector3 servicePosition, Vector3 parkPosition)
-        {
-            if (vehicle == null)
-                return;
-            if (!active)
-            {
-                vehicle.gameObject.SetActive(false);
-                return;
-            }
-            vehicle.gameObject.SetActive(true);
-            UpdateVehicle(vehicle, true, servicePosition, parkPosition);
         }
 
         private static void PlaceBoardingStairs(Transform stairs, bool active, Vector3 position, Quaternion rotation)
@@ -3288,17 +3274,6 @@ namespace Airside.Presentation
                 _preciseTime, operation.PhaseStartedAt.ElapsedSeconds, duration);
         }
 
-        private static void PlaceProp(Transform prop, bool active, Vector3 position, Quaternion rotation)
-        {
-            if (prop == null)
-                return;
-            prop.gameObject.SetActive(active);
-            if (!active)
-                return;
-            prop.position = position;
-            prop.rotation = rotation;
-        }
-
         private void UpdateWindsock()
         {
             if (_windsockSock == null)
@@ -3456,127 +3431,6 @@ namespace Airside.Presentation
                     && childName.IndexOf("hub", StringComparison.OrdinalIgnoreCase) < 0)
                     child.Rotate(Vector3.right, degrees, Space.Self);
             }
-        }
-
-        private static void PulseServiceBeacon(Transform vehicle, bool active)
-        {
-            if (vehicle == null)
-                return;
-            var namedChildren10 = AirsideNamedChildren.Get(vehicle);
-            var childNames10 = AirsideNamedChildren.Names(vehicle);
-            for (var childIndex10 = 0; childIndex10 < namedChildren10.Length; childIndex10++)
-            {
-                var child = namedChildren10[childIndex10];
-                var childName = childNames10[childIndex10];
-                if (child == vehicle)
-                    continue;
-                if (childName.IndexOf("beacon", StringComparison.OrdinalIgnoreCase) < 0)
-                    continue;
-                child.gameObject.SetActive(active);
-                if (!active)
-                    continue;
-                var on = Mathf.FloorToInt(Time.unscaledTime * AirsideReusableMotion.BeaconHz * 2f) % 2 == 0;
-                var renderer = child.GetComponent<Renderer>();
-                if (renderer != null)
-                {
-                    var color = on ? new Color(1f, 0.35f, 0.08f) : new Color(0.35f, 0.12f, 0.05f);
-                    SetRendererColor(renderer, color, color * (on ? 2.2f : 0.2f));
-                }
-            }
-        }
-
-        /// <summary>
-        /// Decision 0025 items 5+7 — GSE headlamp SpotLights so night apron servicing reads lit.
-        /// </summary>
-        private static void SyncVehicleHeadlights(Transform vehicle, bool on, float daylight)
-        {
-            if (vehicle == null || !vehicle.gameObject.activeInHierarchy)
-                return;
-
-            EnsureVehicleHeadlightMeshes(vehicle);
-            var night = daylight < 0.4f;
-            var namedChildren11 = AirsideNamedChildren.Get(vehicle);
-            var childNames11 = AirsideNamedChildren.Names(vehicle);
-            for (var childIndex11 = 0; childIndex11 < namedChildren11.Length; childIndex11++)
-            {
-                var child = namedChildren11[childIndex11];
-                var childName = childNames11[childIndex11];
-                if (child == vehicle)
-                    continue;
-                if (childName.IndexOf("Headlight", StringComparison.OrdinalIgnoreCase) < 0)
-                    continue;
-
-                child.gameObject.SetActive(on);
-                var light = child.GetComponent<Light>();
-                if (light == null)
-                {
-                    light = child.gameObject.AddComponent<Light>();
-                    light.type = LightType.Spot;
-                    light.color = new Color(1f, 0.95f, 0.8f);
-                    light.range = 14f;
-                    light.spotAngle = 58f;
-                    light.innerSpotAngle = 28f;
-                    light.shadows = LightShadows.None;
-                }
-
-                // Authored GSE kits are oriented at build (OrientPlusXKitToForward) so
-                // SpotLights aim along vehicle +Z with the travel LookRotation — do not
-                // re-force a +X kit offset every frame.
-                light.transform.localRotation = Quaternion.identity;
-                light.enabled = on;
-                if (on)
-                    light.intensity = night ? 2.8f : 1.1f;
-            }
-        }
-
-        private static void EnsureVehicleHeadlightMeshes(Transform vehicle)
-        {
-            var has = false;
-            var namedChildren12 = AirsideNamedChildren.Get(vehicle);
-            var childNames12 = AirsideNamedChildren.Names(vehicle);
-            for (var childIndex12 = 0; childIndex12 < namedChildren12.Length; childIndex12++)
-            {
-                var child = namedChildren12[childIndex12];
-                var childName = childNames12[childIndex12];
-                if (child != vehicle && childName.IndexOf("Headlight", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    has = true;
-                    break;
-                }
-            }
-
-            if (has)
-                return;
-
-            // Fallback lamps sit on the forward bumper (+Z after OrientPlusXKitToForward).
-            ParentBlock(vehicle, "Headlight L", new Vector3(-0.4f, 0.55f, 1.85f),
-                new Vector3(0.12f, 0.1f, 0.12f), new Color(0.95f, 0.92f, 0.75f));
-            ParentBlock(vehicle, "Headlight R", new Vector3(0.4f, 0.55f, 1.85f),
-                new Vector3(0.12f, 0.1f, 0.12f), new Color(0.95f, 0.92f, 0.75f));
-        }
-
-        private static void PulseGpuCart(Transform gpu, bool active)
-        {
-            if (gpu == null)
-                return;
-            var light = gpu.GetComponentInChildren<Light>();
-            if (light == null && active)
-            {
-                var go = new GameObject("GPU glow");
-                go.transform.SetParent(gpu, false);
-                go.transform.localPosition = new Vector3(0f, 0.6f, 0f);
-                light = go.AddComponent<Light>();
-                light.type = LightType.Point;
-                light.range = 4.5f;
-                light.color = new Color(0.55f, 0.85f, 1f);
-            }
-
-            if (light == null)
-                return;
-            light.enabled = active;
-            if (active)
-                light.intensity = 0.35f + 0.2f * (0.5f + 0.5f * Mathf.Sin(
-                    Time.unscaledTime * AirsideReusableMotion.ServicePulseHz * Mathf.PI * 2f));
         }
 
         private static void ResetServiceLoopParts(Transform vehicle)
@@ -4776,12 +4630,6 @@ namespace Airside.Presentation
 
                 _wheelPuffs[i] = puff;
             }
-        }
-
-        private static Transform BuildSkidMarkRoot()
-        {
-            var root = new GameObject("Skid marks").transform;
-            return root;
         }
 
         private static Transform BuildTaxiSprayRoot()
@@ -6033,25 +5881,6 @@ namespace Airside.Presentation
             strip.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
         }
 
-        /// <summary>
-        /// Paved lead-in along the taxi chord from the parallel taxiways to the stand bay.
-        /// </summary>
-        private static void CreateTaxiLeadPad(string name, float standZ)
-        {
-            // Dogleg matching AirportTaxiNetwork: apron throat → stand.
-            var alpha = new Vector3(AirportLayout.TaxiwayEastX, 0.01f, AirportLayout.TaxiwayAlphaZ);
-            var throat = new Vector3(AirportLayout.ApronThroatX, 0.01f, standZ);
-            var stand = new Vector3(AirportLayout.StandX, 0.01f, standZ);
-            CreateTaxiChordPad($"{name} throat leg", alpha, throat, 3.2f,
-                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1.2f, 1.4f));
-            CreateTaxiChordPad($"{name} stand leg", throat, stand, 3.4f,
-                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1.2f, 1.4f));
-            CreateTaxiChordPad($"{name} throat", alpha, new Vector3(10f, 0.01f, AirportLayout.TaxiwayAlphaZ + (standZ - AirportLayout.TaxiwayAlphaZ) * 0.25f), 2.8f,
-                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1f, 1f));
-            CreateTaxiChordPad($"{name} mouth", new Vector3(stand.x - 2f, 0.01f, standZ), stand, 3.2f,
-                PreferSurfaceBasecolor("tx_asphalt_runway"), new Vector2(1f, 1f));
-        }
-
         private void BuildAirfield()
         {
             var root = new GameObject("Airfield");
@@ -6427,223 +6256,6 @@ namespace Airside.Presentation
             var asphalt = PreferSurfaceBasecolor("tx_asphalt_runway");
             SpawnSurface(root, "Rubber (old)", light, new Color(0.17f, 0.17f, 0.18f), asphalt, castShadows: false);
             SpawnSurface(root, "Rubber (fresh)", heavy, new Color(0.09f, 0.09f, 0.10f), asphalt, castShadows: false);
-        }
-
-        /// <summary>
-        /// Adelaide-scale airside security fence on the 785 ha site boundary —
-        /// chain-link height + vehicle gates. No buildings.
-        /// </summary>
-        /// <summary>
-        /// Airside security fence on the published site rectangle.
-        ///
-        /// Every panel, post, guard rail and gate leaf is seated on
-        /// <see cref="AirsideAdelaidePerimeter.FenceBaseY"/> rather than world Y = 0:
-        /// the authored ground drops roughly 2.4 m into its boundary lip exactly
-        /// where the fence runs, so a fixed height leaves the whole ~11 km ribbon
-        /// hanging in mid-air by about its own height.
-        ///
-        /// Panels are combined into one mesh per side, which turns ~900 renderers
-        /// into a handful — at overview range the individual pickets are well under
-        /// a pixel.
-        /// </summary>
-        private static void BuildBareAdelaidePerimeterFence()
-        {
-            var meshColor = new Color(0.42f, 0.44f, 0.46f);
-            var postColor = new Color(0.32f, 0.33f, 0.35f);
-            var guardColor = new Color(0.55f, 0.56f, 0.58f);
-            var gateYellow = new Color(0.90f, 0.75f, 0.10f);
-            var hx = AirsideAdelaidePerimeter.FenceHalfX;
-            var hz = AirsideAdelaidePerimeter.FenceHalfZ;
-            var h = AirsideAdelaidePerimeter.FenceHeightMetres;
-            var guard = AirsideAdelaidePerimeter.TopGuardHeightMetres;
-            var thick = AirsideAdelaidePerimeter.PanelThicknessMetres;
-            var post = AirsideAdelaidePerimeter.PostSizeMetres;
-            var spacing = AirsideAdelaidePerimeter.PostSpacingMetres;
-            var root = new GameObject("Adelaide perimeter fence").transform;
-            if (_airfieldRoot != null)
-                root.SetParent(_airfieldRoot, false);
-
-            // On the authored ground mesh the fence follows the landform. If that
-            // mesh could not be built we are standing on the flat fallback slab, so
-            // the fence seats on the slab top instead.
-            float BaseY(float x, float z) =>
-                _bareGroundFollowsLandform
-                    ? AirsideAdelaidePerimeter.FenceBaseY(x, z)
-                    : AirsideAdelaideGround.PavementWorldY - AirsideAdelaidePerimeter.FenceEmbedMetres;
-
-            float BaseYRun(float x0, float z0, float x1, float z1)
-            {
-                if (!_bareGroundFollowsLandform)
-                    return BaseY(x0, z0);
-                return AirsideAdelaidePerimeter.FenceBaseYAlongSegment(x0, z0, x1, z1);
-            }
-
-            void Panel(string name, Vector3 pos, Vector3 scale, Color color)
-            {
-                var block = CreateBlock(name, pos, scale, color);
-                block.transform.SetParent(root, true);
-            }
-
-            void SpawnBatch(string name, List<Matrix4x4> locals, Color color)
-            {
-                if (locals.Count == 0)
-                    return;
-                var mesh = AirsideMeshUtil.CombineTransformed(BuiltinCube(), locals.ToArray());
-                if (mesh == null)
-                {
-                    // Same fallback the strip paint uses: one block per instance.
-                    for (var i = 0; i < locals.Count; i++)
-                    {
-                        var m = locals[i];
-                        Panel($"{name} {i}", m.GetColumn(3), m.lossyScale, color);
-                    }
-
-                    return;
-                }
-
-                var go = new GameObject(name);
-                go.AddComponent<MeshFilter>().sharedMesh = mesh;
-                var renderer = go.AddComponent<MeshRenderer>();
-                renderer.sharedMaterial = CreateSharedSurfaceMaterial(color);
-                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                renderer.receiveShadows = false;
-                go.transform.SetParent(root, false);
-                AirsideSceneIndex.Remember(go);
-            }
-
-            void BuildSide(string side, bool alongX)
-            {
-                var panels = new List<Matrix4x4>(128);
-                var guards = new List<Matrix4x4>(128);
-                var posts = new List<Matrix4x4>(128);
-
-                var length = alongX ? hx * 2f : hz * 2f;
-                var cursor = -length * 0.5f;
-                while (cursor < length * 0.5f - 0.01f)
-                {
-                    var remaining = length * 0.5f - cursor;
-                    var seg = Mathf.Min(spacing, remaining);
-
-                    // Leave a clear opening where a vehicle gate stands: stop the panel at the
-                    // opening, then resume past it.
-                    if (AirsideAdelaidePerimeter.TryGateGapOverlapping(side, cursor, cursor + seg,
-                            out var gapStart, out var gapEnd))
-                    {
-                        if (gapStart <= cursor + 0.01f)
-                        {
-                            cursor = gapEnd;
-                            continue;
-                        }
-
-                        seg = gapStart - cursor;
-                    }
-
-                    var segMid = cursor + seg * 0.5f;
-
-                    float x0, z0, x1, z1, midX, midZ;
-                    if (alongX)
-                    {
-                        var z = side == "N" ? hz : -hz;
-                        x0 = cursor; z0 = z;
-                        x1 = cursor + seg; z1 = z;
-                        midX = segMid; midZ = z;
-                    }
-                    else
-                    {
-                        var x = side == "E" ? hx : -hx;
-                        x0 = x; z0 = cursor;
-                        x1 = x; z1 = cursor + seg;
-                        midX = x; midZ = segMid;
-                    }
-
-                    var baseY = BaseYRun(x0, z0, x1, z1);
-                    var panelScale = alongX
-                        ? new Vector3(seg, h, thick)
-                        : new Vector3(thick, h, seg);
-                    var guardScale = alongX
-                        ? new Vector3(seg, guard, thick * 0.7f)
-                        : new Vector3(thick * 0.7f, guard, seg);
-
-                    panels.Add(Matrix4x4.TRS(
-                        new Vector3(midX, baseY + h * 0.5f, midZ), Quaternion.identity, panelScale));
-                    guards.Add(Matrix4x4.TRS(
-                        new Vector3(midX, baseY + h + guard * 0.5f, midZ), Quaternion.identity, guardScale));
-
-                    var postBase = BaseY(x0, z0);
-                    posts.Add(Matrix4x4.TRS(
-                        new Vector3(x0, postBase + (h + guard) * 0.5f, z0),
-                        Quaternion.identity,
-                        new Vector3(post, h + guard, post)));
-
-                    cursor += seg;
-                }
-
-                SpawnBatch($"Fence {side}", panels, meshColor);
-                SpawnBatch($"Fence guard {side}", guards, guardColor);
-                SpawnBatch($"Fence post {side}", posts, postColor);
-            }
-
-            BuildSide("N", alongX: true);
-            BuildSide("S", alongX: true);
-            BuildSide("E", alongX: false);
-            BuildSide("W", alongX: false);
-
-            // Corner posts.
-            float[] cxs = { -hx, hx };
-            float[] czs = { -hz, hz };
-            for (var ix = 0; ix < cxs.Length; ix++)
-            for (var iz = 0; iz < czs.Length; iz++)
-            {
-                var cornerBase = BaseY(cxs[ix], czs[iz]);
-                Panel(
-                    $"Fence corner {ix}{iz}",
-                    new Vector3(cxs[ix], cornerBase + (h + guard) * 0.5f, czs[iz]),
-                    new Vector3(post * 1.4f, h + guard, post * 1.4f),
-                    postColor);
-            }
-
-            // Vehicle gates.
-            for (var g = 0; g < AirsideAdelaidePerimeter.VehicleGates.Length; g++)
-            {
-                var gate = AirsideAdelaidePerimeter.VehicleGates[g];
-                var gw = AirsideAdelaidePerimeter.VehicleGateWidthMetres;
-                var gh = AirsideAdelaidePerimeter.GateLeafHeightMetres;
-                float gx, gz;
-                Vector3 leafScale;
-                Vector3 postOffset;
-                if (gate.Side == "N" || gate.Side == "S")
-                {
-                    gx = gate.StationAlongSide;
-                    gz = gate.Side == "N" ? hz : -hz;
-                    leafScale = new Vector3(gw * 0.48f, gh, thick * 1.2f);
-                    postOffset = new Vector3(gw * 0.5f, 0f, 0f);
-                }
-                else
-                {
-                    gx = gate.Side == "E" ? hx : -hx;
-                    gz = gate.StationAlongSide;
-                    leafScale = new Vector3(thick * 1.2f, gh, gw * 0.48f);
-                    postOffset = new Vector3(0f, 0f, gw * 0.5f);
-                }
-
-                var gateBase = BaseY(gx, gz);
-                var groundPos = new Vector3(gx, gateBase, gz);
-                var postCentre = Vector3.up * ((h + guard) * 0.5f);
-                var postScale = new Vector3(post * 1.6f, h + guard, post * 1.6f);
-                Panel($"{gate.Name} post L", groundPos - postOffset + postCentre, postScale, postColor);
-                Panel($"{gate.Name} post R", groundPos + postOffset + postCentre, postScale, postColor);
-
-                // Leaves ajar slightly toward landside.
-                var open = gate.Side == "N" || gate.Side == "E" ? 1.2f : -1.2f;
-                var leafShift = gate.Side == "N" || gate.Side == "S"
-                    ? new Vector3(0f, 0f, open)
-                    : new Vector3(open, 0f, 0f);
-                var leafCentre = Vector3.up * (gh * 0.5f);
-                Panel($"{gate.Name} leaf L",
-                    groundPos - postOffset * 0.5f + leafShift + leafCentre, leafScale, gateYellow);
-                Panel($"{gate.Name} leaf R",
-                    groundPos + postOffset * 0.5f + leafShift + leafCentre, leafScale, gateYellow);
-            }
         }
 
         /// <summary>
@@ -14612,11 +14224,6 @@ namespace Airside.Presentation
             return TaxiVisualPath.TaxiOutPosition(route, t);
         }
 
-        private Vector3 PositionAlongTaxiRoute(TaxiRoute route, float progress, bool reverse)
-        {
-            return TaxiVisualPath.PositionAt(route, progress, reverse);
-        }
-
         private static TaxiRoute TaxiRouteFor(CommercialFlight flight, AircraftPhase phase) =>
             phase is AircraftPhase.TaxiOut or AircraftPhase.Pushback or AircraftPhase.AtStand
                 ? flight.DepartureRoute
@@ -14781,21 +14388,6 @@ namespace Airside.Presentation
         }
 
 
-
-        private static string FormatPhase(AircraftPhase phase) => phase switch
-        {
-            AircraftPhase.Approach => "On approach",
-            AircraftPhase.Landing => "Cleared to land",
-            AircraftPhase.TaxiIn => "Taxi via Alpha",
-            AircraftPhase.AtStand => "Turnaround at stand",
-            AircraftPhase.Pushback => "Pushback approved",
-            AircraftPhase.TaxiOut => "Taxi to hold short 05",
-            AircraftPhase.Takeoff => "Cleared for takeoff",
-            AircraftPhase.Departed => "Departed",
-            AircraftPhase.Circuit => "In the circuit",
-            AircraftPhase.GoAround => "Going around",
-            _ => phase.ToString()
-        };
 
     }
 }

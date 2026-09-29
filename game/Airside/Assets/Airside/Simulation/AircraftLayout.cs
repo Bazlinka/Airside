@@ -240,10 +240,6 @@ namespace Airside.Simulation
         /// <summary>+1 for a door ahead of the wing, -1 behind it: the direction with room to work.</summary>
         public float AwayFromWing(float z) => z >= WingMidZ ? 1f : -1f;
 
-        /// <summary>Where the remote-stand stair truck or a passenger walks up to the passenger door.</summary>
-        public (float X, float Z) PassengerDoorFoot(float outMetres) =>
-            (PassengerDoor.X + SideOf(PassengerDoor) * outMetres, PassengerDoor.Z);
-
         // ---- Table ----------------------------------------------------------------------------
 
         private static readonly float[] Sides = { -1f, 1f };

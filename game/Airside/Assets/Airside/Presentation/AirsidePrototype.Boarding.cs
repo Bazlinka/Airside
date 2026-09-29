@@ -969,17 +969,6 @@ namespace Airside.Presentation
             HandTools.Pose(person.Kit, person.Rig);
         }
 
-        private void HideRampCrew()
-        {
-            foreach (var set in _rampCrewPool)
-                foreach (var person in set.People)
-                {
-                    person.Instance.SetActive(false);
-                    if (person.Kit != null)
-                        person.Kit.Root.gameObject.SetActive(false);
-                }
-        }
-
         private bool EnsureCharacters()
         {
             if (_charactersLoaded)

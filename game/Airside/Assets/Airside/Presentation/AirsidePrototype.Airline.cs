@@ -671,15 +671,6 @@ namespace Airside.Presentation
             return new Rect(area.x, area.y, area.width, Mathf.Min(area.height, height));
         }
 
-        /// <summary>A gentle yellow pulse around the control the guide is pointing at.</summary>
-        private static void DrawGuideHighlight(Rect rect)
-        {
-            var pulse = 0.45f + 0.55f * Mathf.PingPong(Time.unscaledTime * 1.6f, 1f);
-            var colour = AirsideTheme.Amber;
-            colour.a = pulse;
-            AirsideTheme.DrawPanelFrame(new Rect(rect.x - 3f, rect.y - 3f, rect.width + 6f, rect.height + 6f), colour);
-        }
-
         private (string heading, string hint) GuideText(GuideStep step, FleetAircraft aircraft)
         {
             var reg = aircraft?.Registration ?? "Your aircraft";
@@ -3540,14 +3531,6 @@ namespace Airside.Presentation
                 return null;
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
                 return aircraft;
-            return null;
-        }
-
-        private string PlayerNeedsStand()
-        {
-            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
-                if (aircraft.State == FleetState.AwaitingStand)
-                    return $"{aircraft.Registration} is waiting for you to choose a stand.";
             return null;
         }
 

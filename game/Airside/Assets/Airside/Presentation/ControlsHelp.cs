@@ -37,12 +37,12 @@ namespace Airside.Presentation
         {
             new Section("Camera", new[]
             {
-                new Binding("WASD", "Pan the overview"),
+                new Binding("WASD", "Pan the camera"),
                 new Binding("Q / E", "Orbit"),
-                new Binding("Z / X", "Lower / raise"),
+                new Binding("Z / X", "Lower / raise the camera"),
                 new Binding("F", "Follow selected aircraft"),
-                new Binding("R", "Overview"),
-                new Binding("Mouse", "Orbit, pan, zoom, pick aircraft"),
+                new Binding("R", "Back to the overview"),
+                new Binding("Mouse", "Right-drag orbits, drag pans, scroll zooms, click picks an aircraft"),
             }),
             new Section("Airline", new[]
             {

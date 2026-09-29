@@ -226,47 +226,6 @@ namespace Airside.Presentation
 
         public static Mesh BuildMesh(CoastGrid grid) => BuildMesh(grid, out _);
 
-        /// <summary>
-        /// Bilinear height of the surroundings surface at a world x,z, from the vertices
-        /// <see cref="BuildMesh(CoastGrid, out Vector3[])"/> produced. Roads sit on this so they
-        /// follow the beach and the airfield lip instead of floating on a fixed plane.
-        /// </summary>
-        public static Func<float, float, float> HeightSampler(CoastGrid grid, Vector3[] vertices)
-        {
-            if (grid == null || vertices == null || vertices.Length != grid.CountX * grid.CountZ)
-                return null;
-
-            int Cell(int count, Func<int, float> axis, float value)
-            {
-                var lo = 0;
-                var hi = count - 2;
-                while (lo < hi)
-                {
-                    var mid = (lo + hi + 1) / 2;
-                    if (axis(mid) <= value)
-                        lo = mid;
-                    else
-                        hi = mid - 1;
-                }
-
-                return Mathf.Clamp(lo, 0, count - 2);
-            }
-
-            return (x, z) =>
-            {
-                var nx = grid.CountX;
-                var xi = Cell(nx, grid.X, x);
-                var zi = Cell(grid.CountZ, grid.Z, z);
-                var tx = Mathf.InverseLerp(grid.X(xi), grid.X(xi + 1), x);
-                var tz = Mathf.InverseLerp(grid.Z(zi), grid.Z(zi + 1), z);
-                var h00 = vertices[zi * nx + xi].y;
-                var h10 = vertices[zi * nx + xi + 1].y;
-                var h01 = vertices[(zi + 1) * nx + xi].y;
-                var h11 = vertices[(zi + 1) * nx + xi + 1].y;
-                return Mathf.Lerp(Mathf.Lerp(h00, h10, tx), Mathf.Lerp(h01, h11, tx), tz);
-            };
-        }
-
         public static Mesh BuildMesh(CoastGrid grid, out Vector3[] vertices) => BuildMesh(grid, out vertices, null);
 
         /// <param name="terrain">

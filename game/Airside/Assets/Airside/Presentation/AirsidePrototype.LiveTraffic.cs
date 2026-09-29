@@ -26,12 +26,6 @@ namespace Airside.Presentation
         private readonly Dictionary<string, Transform> _liveViews = new();
         private readonly HashSet<string> _liveShown = new();
         private readonly List<string> _liveGone = new();
-        private readonly List<GroundObstacle> _liveObstacles = new();
-        private readonly Dictionary<string, float> _liveStandAsideUntil = new();
-
-        /// <summary>A real aircraft that clashed stays hidden this long, so it does not flicker.</summary>
-        private const float LiveStandAsideSeconds = 10f;
-
         /// <summary>Live aircraft drawn this frame, for tags and the mini-map.</summary>
         private readonly List<(LiveAircraft Aircraft, Transform View)> _liveDrawn = new();
 
@@ -178,59 +172,6 @@ namespace Airside.Presentation
                     _liveViews.Remove(id);
                 }
             }
-        }
-
-        /// <summary>The game's own aircraft on the field, and which strips it is using.</summary>
-        private void CollectLiveObstacles(out bool mainStripInUse, out bool crossStripInUse)
-        {
-            _liveObstacles.Clear();
-            mainStripInUse = false;
-            crossStripInUse = false;
-            foreach (var pair in _fleetViewById)
-            {
-                var view = pair.Value;
-                if (view == null || !view.gameObject.activeInHierarchy
-                    || !_fleetAircraftById.TryGetValue(pair.Key, out var aircraft))
-                    continue;
-                _liveObstacles.Add(new GroundObstacle(view.position.x, view.position.z,
-                    LiveGroundClearance.HalfSpan(aircraft.Type)));
-            }
-
-            if (_operations == null)
-                return;
-            foreach (var aircraft in _operations.Fleet)
-            {
-                var usingStrip = aircraft.State is FleetState.TakingOff or FleetState.HoldingForLanding
-                                 || aircraft.State == FleetState.Landing && _operations.IsOccupyingRunway(aircraft);
-                if (!usingStrip)
-                    continue;
-                if (RunwayWeather.IsMainRunway(aircraft.AssignedRunway))
-                    mainStripInUse = true;
-                else
-                    crossStripInUse = true;
-            }
-        }
-
-        /// <summary>True while a real aircraft on the field must stay hidden for the game's traffic.</summary>
-        private bool StandsAside(string hex, LiveTrafficPose pose, AircraftType type, bool mainStripInUse,
-            bool crossStripInUse)
-        {
-            var now = Time.realtimeSinceStartup;
-            if (LiveGroundClearance.Clashes(pose.X, pose.Z, LiveGroundClearance.HalfSpan(type), _liveObstacles,
-                    mainStripInUse, crossStripInUse))
-            {
-                _liveStandAsideUntil[hex] = now + LiveStandAsideSeconds;
-                return true;
-            }
-
-            if (_liveStandAsideUntil.TryGetValue(hex, out var until))
-            {
-                if (now < until)
-                    return true;
-                _liveStandAsideUntil.Remove(hex);
-            }
-
-            return false;
         }
 
         private void HideLiveTraffic()

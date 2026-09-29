@@ -1,5 +1,27 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — the three long-standing test failures fixed (branch
+  `fix/long-standing-test-failures`).** `scripts/test-unity.sh` is green again: 1374 passed,
+  0 failed, 2 inconclusive (now listed by the script instead of turning the run red).
+  - `GroundSeparationTests.BusyDay_NoAircraftDriveThroughEachOther` — two real ground bugs:
+    - `FleetVisual.QueueSlot` queued holding-short aircraft per runway *strip*, so one holding for 05
+      pushed a 23 departure a slot back from an empty hold; a taxi-out braking for the 23 queue
+      stopped in that space (A339 41 m behind an A320). Now per runway direction (holding point).
+    - `FleetVisual.QueueAhead` counted only aircraft holding or lining up, while the ground
+      controller clears a taxi-out assuming it stops behind every same-runway taxi-out too; followers
+      braked for the leader's queue place (two 737s 30 m apart). It now counts taxi-outs that will
+      reach the hold first (by scheduled taxi end, not push order — push order put two Saabs 8 m
+      apart on 12).
+  - `AdelaidePavementTests.Layout_ParkedRegionalAircraftKeepCodeCClearance` — the clearance geometry
+    was fine; its precondition assumed every Q400 but one parked. VH-QON night-stops away by design
+    (ADR 0111, no free bay). The precondition now states that rule.
+  - `TerminalGateOperationsTests.Reservations_GateLeadInAndRunwayHeldBeforeMovementAndReleased` —
+    the Virgin 737 correctly takes another terminal gate when a Virgin MAX is on Gate 13 (the test's
+    own comment said so); assertions now follow the gate it actually uses, still never a regional bay.
+  - `scripts/test-unity.sh`: Unity exits 2 for inconclusive tests too; with 0 failures that is now a
+    pass, and inconclusive tests are listed (`FleetMarket_SaysASharedLockOnce`, `Storm_IsAGroundStop`).
+  - **NEXT:** look at the two inconclusive tests' preconditions.
+
 - **2026-09-29 Claude — departure countdown and door timing (branch `feature/departure-countdown`,
   ADR 0177).**
   - `Simulation/DepartureCountdown`: one T-minus timeline for every stand (hold T-5:00, player prep

@@ -209,16 +209,20 @@ namespace Airside.Tests
                 ("Dash 8-400", dash8)
             };
 
-            // The opening bank sends one of the four Q400s inbound and leaves the others
-            // parked. Keep this tied to the authored fleet instead of the old three-aircraft
-            // count so adding a legitimate frame does not make the geometry check stale.
+            // The opening bank sends one of the four Q400s inbound. Every other one is parked on
+            // a bay or, when the regional apron is full, night-stopped at the far end and flying
+            // back later (ADR 0111). Keep this tied to that rule rather than to a count of parked
+            // aircraft, which changes whenever the opening fleet legitimately grows.
             var ops = AirlineOperations.StartAtAdelaide(new ManualSimulationClock(new SimulationTime(0)), new SeededRandomSource(1),
                 Airline.Player("Clearance Air", "#1F3A93"));
             var q400s = ops.Fleet.Where(a => a.Type == AircraftType.Dash8Q400).ToArray();
-            Assert.That(q400s.Count(a => a.State == FleetState.Inbound), Is.EqualTo(1),
-                "one opening Q400 is inbound");
-            Assert.That(q400s.Count(a => a.State == FleetState.AtStand), Is.EqualTo(q400s.Length - 1),
-                "every other opening Q400 is parked");
+            bool InOpeningBank(FleetAircraft a) =>
+                a.State == FleetState.Inbound && a.StateEndsAt is { } lands && lands.ElapsedSeconds <= 3600;
+            Assert.That(q400s.Count(InOpeningBank), Is.EqualTo(1), "one opening Q400 is inbound");
+            Assert.That(q400s.Where(a => !InOpeningBank(a)).All(a => a.State is FleetState.AtStand or FleetState.Inbound),
+                Is.True, "every other Q400 is parked or night-stopped away");
+            Assert.That(q400s.Count(a => a.State == FleetState.AtStand), Is.GreaterThanOrEqualTo(2),
+                "enough Q400s parked on the 50-series to matter");
 
             var shortfalls = new List<string>();
             var bays = AdelaideLayout.Bays.Where(b => b.Reference.StartsWith("50")).ToArray();

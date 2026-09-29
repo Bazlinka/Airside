@@ -163,11 +163,13 @@ namespace Airside.Simulation
 
                 if (ReferenceEquals(other, aircraft) || other.State != aircraft.State)
                     continue;
-                // Holding short queues per runway strip, in the order the tower clears them (ADR 0144):
-                // it takes the longest-waiting departure per strip, so the aircraft it clears is always
-                // the one drawn at the front. Waiting for a stand queues per runway exit: 05 and 23
-                // both vacate to E2, while 12 and 30 each join the bay corridor.
-                if (shareStrip ? RunwayWeather.IsMainRunway(other.AssignedRunway) != RunwayWeather.IsMainRunway(aircraft.AssignedRunway)
+                // Holding short queues at each runway's own holding point, in the order the tower clears
+                // them (ADR 0144): it takes the longest-waiting departure per strip, which is always the
+                // front of its own runway's queue. 05 and 23 share a strip but hold at opposite ends, so
+                // counting one end's queue in the other's pushed an aircraft a slot back from an empty
+                // hold, into the place a taxi-out behind it was braking for. Waiting for a stand queues
+                // per runway exit: 05 and 23 both vacate to E2, while 12 and 30 each join the bay corridor.
+                if (shareStrip ? other.AssignedRunway != aircraft.AssignedRunway
                                : !AdelaideGround.SameArrivalExit(other.AssignedRunway, aircraft.AssignedRunway))
                     continue;
                 var order = other.StateStartedAt.CompareTo(aircraft.StateStartedAt);
@@ -181,7 +183,14 @@ namespace Airside.Simulation
 
         /// <summary>
         /// Aircraft ahead of <paramref name="aircraft"/> at its runway's holding point: those holding
-        /// short and one still lining up. A taxi-out stops that many queue places back.
+        /// short, one still lining up, and — for a taxi-out — every taxi-out to the same runway that
+        /// set off before it. A taxi-out stops that many queue places back.
+        ///
+        /// The ground controller clears a taxi-out on the assumption that it will stop behind all
+        /// of those (<see cref="GroundTraffic.PathClear(IReadOnlyList{FleetAircraft}, FleetAircraft, GroundLeg, RunwayDirection, bool, SimulationTime, bool)"/>
+        /// counts them), so the braking must count them too. Counting only the aircraft already
+        /// holding let a follower brake for the same queue place as a leader still taxiing to it,
+        /// and two taxi-outs converging from different gates closed to 30–40 m.
         /// </summary>
         public static int QueueAhead(IReadOnlyList<FleetAircraft> fleet, FleetAircraft aircraft, SimulationTime now)
         {
@@ -194,9 +203,31 @@ namespace Airside.Simulation
                     continue;
                 if (other.State == FleetState.HoldingShort || IsLiningUp(other, aircraft.AssignedRunway, now))
                     ahead++;
+                else if (aircraft.State == FleetState.TaxiOut && other.State == FleetState.TaxiOut
+                         && ReachesHoldFirst(other, aircraft, now))
+                    ahead++;
             }
 
             return ahead;
+        }
+
+        /// <summary>
+        /// Queue order between two taxi-outs: whose taxi is due to end at the holding point first
+        /// (a later pushback with a shorter route can get there first), then registration for a tie.
+        /// </summary>
+        private static bool ReachesHoldFirst(FleetAircraft a, FleetAircraft b, SimulationTime now)
+        {
+            var aEnds = TaxiEnds(a, now);
+            var bEnds = TaxiEnds(b, now);
+            return aEnds < bEnds || (aEnds == bEnds && string.CompareOrdinal(a.Registration, b.Registration) < 0);
+        }
+
+        private static long TaxiEnds(FleetAircraft aircraft, SimulationTime now)
+        {
+            var visual = For(aircraft, now);
+            return visual.Leg == FleetGroundLeg.TaxiOut
+                ? visual.LegStartedAt.ElapsedSeconds + visual.LegSeconds
+                : aircraft.StateStartedAt.ElapsedSeconds;
         }
 
         /// <summary>

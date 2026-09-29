@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **No more aircraft queuing on top of each other.** An aircraft holding short for one end of the
+  main runway was drawn a queue place back because something was waiting at the other end, and a
+  taxiing aircraft behind it pulled into that space. Taxiing aircraft now also leave room for the
+  ones still taxiing ahead of them to the same runway, in the order they will reach it.
+
 - **Departures run in the right order.** Every stand now follows one countdown: bags in and the
   hold shut, boarding finished, the last passengers aboard and a headcount, the door shut, the
   aerobridge or stairs pulled back, then the beacon — and only then engines. Turboprops start on

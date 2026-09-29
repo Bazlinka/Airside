@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Every road around Adelaide Airport is drawn.** The whole road network from OpenStreetMap — 3,849 roads, 511
+  km: motorways to residential streets, the airside service roads and the terminal forecourt — at real widths with
+  junctions, roundabouts, lane and edge lines that stop at side roads, and zebra crossings. The old cap that
+  dropped most roads and the gap at the airfield edge are gone. The authored T1 drop-off, car pad and props are
+  off until real ones return (next). Not yet seen in a rebuilt game; `-airsideLegacyRoads` restores the old roads.
 - **Groundwork for a complete, accurate Adelaide Airport map.** A fresh, much richer OpenStreetMap snapshot of
   the airport, terminal precinct and approach roads (every road, car park, lamp, gate and jet bridge) is
   in the repository, with the tools to refresh it. No visible change yet; roads, terminal and airside

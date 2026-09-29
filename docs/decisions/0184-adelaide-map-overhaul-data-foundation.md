@@ -29,3 +29,22 @@ satellite pixels. The new snapshot carries 260 km of residential, 140 km of serv
 ## Migration
 
 None: new data file and scripts only; no persisted schema changes.
+
+## Phase log
+
+- **P1a (data).** `scripts/generate-ypad-roads.py` → `Simulation/AdelaideRoadNetwork.cs`: 3,849 roads (511 km, 97
+  airside inside the aerodrome outline), 4,487 junctions, 2,162 furniture points (crossings with the width of the
+  road they sit on, signals, give-way, bus stops, gates, turning circles). Junction vertices survive simplification
+  so roads meet exactly; the existing service-road data is reproduced to ~2 m.
+- **P1b (mesh).** `Presentation/AdelaideRoadGeometry` (pure, headless-tested) builds ribbons at real width that follow the
+  ground, with mitred bends; a bend sharper than 60° — or one where the inside edge would slide past the shorter
+  segment — cuts the ribbon and joins it with a disc, and a road no bigger than two of its widths is a disc (cul-de-sac
+  loops), so no triangle faces down (checked over 118k). Junction discs, turning circles, dashed/solid lane and edge
+  paint cut back from side roads (`RoadMarkingPlan.ForRoad`: uses tagged lanes and one-way), zebra crossings (1,069).
+  Airside roads are dark asphalt off the pavement, paint-only on apron concrete, and skipped on runways/taxiways.
+  `AirsideAdelaideRoadNetworkMesh` copies 1.5 km tiles into meshes. The old arterial ribbons now only draw beyond the
+  network's OSM window (cap 2,400); while the network draws, the authored T1 ribbons/car pad/props are off (they no
+  longer match the real roads) until P1c replaces them with data-driven cars and lamps. `-airsideLegacyRoads` restores
+  the old roads.
+- **Test harness.** `scripts/dotnet-harness` had drifted (three tests needed excludes/includes). Fixed; the .NET 8 SDK
+  installs with `dotnet-install.sh --channel 8.0` even where apt is unavailable. Headless: 1,033 passed, 0 failed.

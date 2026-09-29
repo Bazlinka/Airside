@@ -103,8 +103,8 @@ namespace Airside.Tests
             var crossings = 0;
             for (var i = 0; i < AdelaideRoadNetwork.FurnitureCount; i++)
             {
-                var kind = (int)AdelaideRoadNetwork.Furniture[i * 4];
-                var yaw = AdelaideRoadNetwork.Furniture[i * 4 + 3];
+                var kind = (int)AdelaideRoadNetwork.Furniture[i * AdelaideRoadNetwork.FurnitureStride];
+                var yaw = AdelaideRoadNetwork.Furniture[i * AdelaideRoadNetwork.FurnitureStride + 3];
                 Assert.That(kind, Is.InRange(0, 6));
                 Assert.That(yaw, Is.InRange(0f, 180f));
                 if (kind == (int)AdelaideRoadNetwork.FurnitureKind.Crossing)

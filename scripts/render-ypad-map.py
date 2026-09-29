@@ -77,7 +77,7 @@ def main():
         cx, cy = px((x, z))
         rr = max(1.0, hw * s)
         d.ellipse([cx - rr, cy - rr, cx + rr, cy + rr], fill=(200, 200, 205) if deg > 2 else None)
-    for kind, x, z, yaw in furniture:
+    for kind, x, z, yaw, _w in furniture:
         cx, cy = px((x, z))
         col = {0: (255, 255, 255), 1: (255, 60, 60), 4: (60, 200, 255), 5: (255, 230, 0)}.get(kind)
         if col:

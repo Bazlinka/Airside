@@ -6115,9 +6115,16 @@ namespace Airside.Presentation
             BuildBareAdelaidePavement();
             var pavementY = AirsideAdelaideGround.PavementWorldY;
             // Roads ride the same real relief the surroundings now have (ADR 0158).
-            AirsideAdelaideRoads.TryBuild(_airfieldRoot, pavementY, AirsideAdelaideSurroundings.RoadHeight(pavementY));
-            AirsideAdelaideLandside.TryBuild(_airfieldRoot, pavementY);
-            BuildYpadLandsideLife();
+            // ADR 0184: the complete OSM road network draws the near field; the arterial ribbons only fill in
+            // beyond its window. If it cannot build, the old ribbons and the authored T1 traffic side return.
+            var roadHeight = AirsideAdelaideSurroundings.RoadHeight(pavementY);
+            var roadNetworkBuilt = AirsideAdelaideRoadNetworkMesh.TryBuild(_airfieldRoot, pavementY, roadHeight);
+            AirsideAdelaideRoads.TryBuild(_airfieldRoot, pavementY, roadHeight, skipWhereNetworkCovers: roadNetworkBuilt);
+            if (!roadNetworkBuilt)
+            {
+                AirsideAdelaideLandside.TryBuild(_airfieldRoot, pavementY);
+                BuildYpadLandsideLife();
+            }
             BuildCloudBands();
             // Real Adelaide used to omit these entirely because only the legacy compact
             // environment called BuildHorizonDome. Keep the real-scale clear-colour sky,

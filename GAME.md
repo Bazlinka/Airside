@@ -7,11 +7,16 @@
   snapshot `docs/data/osm/ypad-map-2026-09-29.json` (DAT-YPAD-MAP). No runtime change yet.
   - **Why roads are partial:** `AirsideAdelaideRoads` caps at 720 ribbons, drops < 9 m, skips the whole
     operational core; airside service roads are never drawn; suburb streets are satellite pixels only.
-  - **P1a done:** `generate-ypad-roads.py` -> `Simulation/AdelaideRoadNetwork.cs` (3,849 roads, 511 km, 97
-    airside; covers the old service roads to ~2 m), `AdelaideRoadNetworkTests`, `scripts/render-ypad-map.py`
-    (Pillow PNG of the data: `docs/testing/map-2026-09-29/`). Tests not yet run (no dotnet/Unity here).
-  - **NEXT (P1b):** rewrite the road mesher (junctions, no cap, airside roads, landside, car parks). Then P2 terminal, P3 airside detail,
-    P4 verification/credits. Plan: `/root/.claude/plans/ok-now-for-delightful-robin.md` (summarised in ADR 0184).
+  - **P1a + P1b done:** road data (`AdelaideRoadNetwork.cs`: 3,849 roads, 511 km, 97 airside) and the mesher
+    (`AdelaideRoadGeometry` pure + `AirsideAdelaideRoadNetworkMesh`), hooked in `BuildBareAdelaideField`. Legacy
+    arterial ribbons now only draw beyond the network window; authored T1 ribbons/car pad/props are off while it
+    draws. `-airsideLegacyRoads` restores the old roads. Offline render: `scripts/render-ypad-map.py`
+    (`docs/testing/map-2026-09-29/`). **Headless harness: 1,033 passed, 0 failed** (fixed its drift; .NET 8 via
+    `dotnet-install.sh`). The Unity-only files (`AirsideAdelaideRoadNetworkMesh`, `AirsidePrototype` hook, legacy
+    `AirsideAdelaideRoads` clip) have NOT been compiled — run `scripts/test-unity.sh` and look at the game.
+  - **NEXT (P1c):** data-driven landside life — parked cars in the real car parks (parking aisles + 819 car-park
+    polygons, `parking_space`), 471 street lamps, bus stops, from the snapshot; car-park surfaces. Then P2 terminal,
+    P3 airside detail, P4 credits/perf capture.
   - **Watch:** no Unity/dotnet in the cloud container — C# must be verified on a Mac (`scripts/test-unity.sh`).
 
 - **2026-09-29 Claude — main strip frees when off the pavement (branch `fix/landing-runway-occupancy`, ADR 0183).**

@@ -161,6 +161,8 @@ namespace Airside.Presentation
                     ("Terrain", "Copernicus DEM GLO-30. © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH "
                                 + "2014-2018 provided under COPERNICUS by the European Union and ESA. All rights "
                                 + "reserved."),
+                    ("Land cover", "ESA WorldCover 2021 (CC BY 4.0). © ESA WorldCover project 2021 / Contains modified "
+                                   + "Copernicus Sentinel data (2021) processed by the ESA WorldCover consortium."),
                     ("Weather and live traffic", "Open-Meteo (CC BY 4.0) and adsb.lol (ODbL), credited on screen "
                                                  + "while they are in use.")
                 })

@@ -283,6 +283,95 @@ namespace Airside.Presentation
             clampedZ = overviewZ + dz * scale;
         }
 
+        // --- Follow camera (ADR 0189) ---------------------------------------------------------------
+        //
+        // The follow camera used to low-pass its centre with Lerp(centre, target, 1 - exp(-dt * rate)). A first-order
+        // filter always trails a moving target by speed / rate, so the aircraft slid across the frame at speed, and a
+        // sudden turn of the look-ahead point swung the view. It now follows with a critically damped spring that is
+        // handed the target's velocity: no lag once settled, no overshoot, and the same result at any frame rate.
+
+        /// <summary>
+        /// One step of a critically damped spring tracking a moving target. <paramref name="smoothTime"/> is roughly the
+        /// time to settle; <paramref name="targetVelocity"/> is fed forward so a target moving steadily is followed with
+        /// no lag. <paramref name="velocity"/> is the follower's own velocity, kept between calls.
+        /// </summary>
+        public static float SmoothFollow(float position, float target, float targetVelocity, ref float velocity,
+            float smoothTime, float deltaTime)
+        {
+            if (deltaTime <= 0f)
+                return position;
+            smoothTime = Math.Max(0.0001f, smoothTime);
+            var omega = 2f / smoothTime;
+            var x = omega * deltaTime;
+            var damp = 1f / (1f + x + 0.48f * x * x + 0.235f * x * x * x);
+
+            // Solve in the target's frame, where a steadily moving target is at rest.
+            var relative = position - target;
+            var relativeVelocity = velocity - targetVelocity;
+            var temp = (relativeVelocity + omega * relative) * deltaTime;
+            velocity = targetVelocity + (relativeVelocity - omega * temp) * damp;
+            return target + targetVelocity * deltaTime + (relative + temp) * damp;
+        }
+
+        /// <summary>
+        /// Turn an angle (degrees) toward another along the short way: an exponential ease with a ceiling on the turn
+        /// rate, so a sharp change of heading swings the view at a natural pace instead of whipping it.
+        /// </summary>
+        public static float TurnToward(float currentDegrees, float targetDegrees, float rate, float maxDegreesPerSecond,
+            float deltaTime)
+        {
+            if (deltaTime <= 0f)
+                return currentDegrees;
+            var delta = DeltaAngle(currentDegrees, targetDegrees);
+            var step = delta * (1f - (float)Math.Exp(-deltaTime * rate));
+            var cap = maxDegreesPerSecond * deltaTime;
+            step = Clamp(step, -cap, cap);
+            return currentDegrees + step;
+        }
+
+        /// <summary>The signed short way from one angle to another, in (-180, 180].</summary>
+        public static float DeltaAngle(float fromDegrees, float toDegrees)
+        {
+            var d = (toDegrees - fromDegrees) % 360f;
+            if (d > 180f)
+                d -= 360f;
+            else if (d <= -180f)
+                d += 360f;
+            return d;
+        }
+
+        /// <summary>
+        /// How much of the phase's look-ahead to use at this ground speed: a parked or crawling aircraft is framed about
+        /// where it is, a moving one is led. 0.35 at rest, full from 8 m/s.
+        /// </summary>
+        public static float LookAheadSpeedFactor(float speedMetresPerSecond) =>
+            0.35f + 0.65f * SmoothStep(Clamp(speedMetresPerSecond / 8f, 0f, 1f));
+
+        /// <summary>A little extra field of view (degrees) at speed: takeoff roll and climb-out feel faster.</summary>
+        public static float SpeedFovBoost(float speedMetresPerSecond) =>
+            3f * SmoothStep(Clamp((speedMetresPerSecond - 25f) / 55f, 0f, 1f));
+
+        /// <summary>
+        /// Scale on the follow smoothing time just after follow starts, easing from <see cref="FollowStartSlowdown"/> times
+        /// slower to 1 over <see cref="FollowStartSeconds"/>, so pressing Follow glides in instead of snapping.
+        /// </summary>
+        public static float FollowStartSmoothScale(float secondsSinceFollowStarted)
+        {
+            var t = Clamp(secondsSinceFollowStarted / FollowStartSeconds, 0f, 1f);
+            return 1f + (FollowStartSlowdown - 1f) * (1f - SmoothStep(t));
+        }
+
+        public const float FollowStartSeconds = 1.4f;
+        public const float FollowStartSlowdown = 3f;
+
+        /// <summary>Follow smoothing time (seconds) for a phase of flight, by whether it is fast, cruising or ground handling.</summary>
+        public static float FollowSmoothTime(bool fast, bool onGround) => fast ? 0.34f : onGround ? 0.55f : 0.42f;
+
+        /// <summary>Vertical follow is slower still: a climb-out or flare should not bob the frame.</summary>
+        public const float VerticalSmoothScale = 2.2f;
+
+        private static float SmoothStep(float t) => t * t * (3f - 2f * t);
+
         private static float Clamp(float value, float min, float max) =>
             value < min ? min : value > max ? max : value;
     }

@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **A real-looking map when zoomed out.** Beyond the satellite image, the far land is now coloured from real land cover:
+  suburbs, crop paddocks, woodland, and the Gulfs and rivers, rather than one plain colour. Credits added to the Flight
+  Manual. Not yet seen in a rebuilt game.
+- **Smoother aircraft tracking.** The follow camera now keeps pace with an aircraft without trailing behind it, glides
+  in when you press Follow, doesn't swing when the aircraft turns, and doesn't bob on climb-out or landing. The view
+  widens slightly at speed. Not yet felt in a rebuilt game.
 - **Fleet status names the hangar.** An aircraft in its check now reads "In Regional Express hangar · In check until
   14:20" instead of just its stand. Not yet seen in a rebuilt game.
 - **Hangars have limited space.** A hangar holds one to three aircraft side by side. If every hangar that fits an

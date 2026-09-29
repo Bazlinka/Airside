@@ -64,6 +64,8 @@ Airside/
     audit-unity-assets.py    Check Unity metadata GUIDs and byte-identical packaged art mirrors
     dotnet-harness/          Hand-authored csproj backing test-domain.sh
     build-mac.sh             Local macOS application build
+    capture-game.sh          Screenshot from the built game, unattended (--follow REG, --delay s);
+                             keeps the display awake — an asleep display freezes the Unity player
   work/                      Local scratch, downloads, builds — git-ignored, never committed
 ```
 

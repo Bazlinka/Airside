@@ -1,5 +1,16 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — frozen game captures explained and fixed (branch `fix/reliable-game-captures`).**
+  - Cause: the Unity player waits for the display to show each frame. With the display asleep the
+    first frame never appears and the game hangs with every thread idle (sampled). `pmset` shows the
+    display off 09:37–09:42; both frozen captures launched in that window; seven with it on worked.
+    Not game code, and not something a player at the screen can hit.
+  - `scripts/capture-game.sh [--follow REG] [--delay s] [--out path]`: wakes the display and holds
+    it and the system awake (`caffeinate`) for the run; on a hang it stops the game, saves a stack
+    sample and prints the display events. `AIRSIDE_APP` overrides the build path. Listed in AGENTS.md.
+  - **Checks:** two scripted captures of the ceb4b275 build (following VH-PAX) succeeded and left
+    no stray processes.
+
 - **2026-09-29 Claude — the three long-standing test failures fixed (branch
   `fix/long-standing-test-failures`).** `scripts/test-unity.sh` is green again: 1374 passed,
   0 failed, 2 inconclusive (now listed by the script instead of turning the run red).

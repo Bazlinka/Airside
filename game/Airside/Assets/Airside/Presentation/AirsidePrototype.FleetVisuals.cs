@@ -160,8 +160,9 @@ namespace Airside.Presentation
                         && _preciseTime < checkEnds.ElapsedSeconds)
                     {
                         var checkSeconds = Maintenance.CheckSeconds(aircraft.Type, _operations.CareerState.BaseLevel);
-                        if (HangarTow.TryPose(aircraft.Type, aircraft.Stand, _preciseTime - (checkEnds.ElapsedSeconds - checkSeconds),
-                                checkSeconds, out var towed))
+                        var berth = HangarBays.Of(_operations.Fleet, aircraft, _operations.CareerState.BaseLevel);
+                        if (berth.HasHangar && HangarTow.TryPose(aircraft.Type, aircraft.Stand, berth.Hangar, berth.Slot,
+                                _preciseTime - (checkEnds.ElapsedSeconds - checkSeconds), checkSeconds, out var towed))
                             return towed;
                     }
 

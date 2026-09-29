@@ -39,26 +39,76 @@ namespace Airside.Simulation
             public float InsideX, InsideZ, InsideNoseX, InsideNoseZ;
             public float LeaveX, LeaveZ;
             public float StandNoseX, StandNoseZ;
+            /// <summary>Sideways positions (metres across the door, slot 0 first) where an aircraft of this type fits.</summary>
+            public float[] Offsets;
+            public int Slot;
+            public string TypeId;
+            public float Length, Span;
+            public StableId Stand;
+            public float SideX, SideZ;
             public double TowSeconds => Math.Max(Out.Seconds, Back.Seconds);
+
+            /// <summary>How many aircraft of this type the hangar holds at once.</summary>
+            public int Capacity => Offsets.Length;
         }
 
-        private static readonly Dictionary<string, Plan> Cache = new(StringComparer.Ordinal);
+        private static readonly Dictionary<string, Plan[]> Cache = new(StringComparer.Ordinal);
+        private static readonly Dictionary<string, Plan> SlotCache = new(StringComparer.Ordinal);
         private static readonly object Gate = new();
 
-        /// <summary>The tow for this aircraft type from this stand, or false when no hangar can hold it.</summary>
-        public static bool TryPlan(AircraftType type, StableId stand, out Plan plan)
+        /// <summary>
+        /// Every hangar that can hold this type, best first (slot 0 of each). Empty when none can. Jets prefer Cobham,
+        /// turboprops Regional Express, then the nearest.
+        /// </summary>
+        public static IReadOnlyList<Plan> Options(AircraftType type, StableId stand)
         {
-            plan = null;
             if (type == null || string.IsNullOrEmpty(stand.Value) || !AircraftCatalogue.TryFor(type, out var spec))
-                return false;
+                return Array.Empty<Plan>();
             var key = type.Id + "|" + stand.Value;
             lock (Gate)
             {
-                if (Cache.TryGetValue(key, out plan))
-                    return plan != null;
-                plan = Build(spec, stand);
-                Cache[key] = plan;
-                return plan != null;
+                if (!Cache.TryGetValue(key, out var options))
+                    Cache[key] = options = BuildOptions(spec, stand);
+                return options;
+            }
+        }
+
+        /// <summary>The preferred tow for this aircraft type from this stand, or false when no hangar can hold it.</summary>
+        public static bool TryPlan(AircraftType type, StableId stand, out Plan plan)
+        {
+            var options = Options(type, stand);
+            plan = options.Count > 0 ? options[0] : null;
+            return plan != null;
+        }
+
+        /// <summary>The same tow for another berth of the same hangar (slot 0 is the door centre).</summary>
+        public static Plan ForSlot(Plan option, int slot)
+        {
+            slot = Math.Max(0, Math.Min(slot, option.Capacity - 1));
+            if (slot == 0)
+                return option;
+            var key = option.HangarId + "|" + option.TypeId + "|" + option.Stand.Value + "|" + slot;
+            lock (Gate)
+            {
+                if (SlotCache.TryGetValue(key, out var found))
+                    return found;
+                foreach (var building in AdelaideBuildings.All)
+                {
+                    if (building.Id != option.HangarId)
+                        continue;
+                    TryDoor(building.Xz, option.Length, option.Span, out var door);
+                    found = MakePlan(building, door, AdelaideGround.StandPose(option.Stand), option.TypeId, option.Stand, slot);
+                    if (found != null)
+                    {
+                        found.Length = option.Length;
+                        found.Span = option.Span;
+                    }
+
+                    break;
+                }
+
+                SlotCache[key] = found ?? option;
+                return found ?? option;
             }
         }
 
@@ -66,11 +116,18 @@ namespace Airside.Simulation
         /// The pose <paramref name="secondsIn"/> seconds into a check that lasts <paramref name="checkSeconds"/>.
         /// False when the aircraft simply stays on its stand (no hangar fits, or the check is too short to tow).
         /// </summary>
-        public static bool TryPose(AircraftType type, StableId stand, double secondsIn, double checkSeconds, out GroundPose pose)
+        public static bool TryPose(AircraftType type, StableId stand, double secondsIn, double checkSeconds, out GroundPose pose) =>
+            TryPose(type, stand, 0, 0, secondsIn, checkSeconds, out pose);
+
+        /// <summary>As above, into hangar option <paramref name="hangar"/> and its berth <paramref name="slot"/>.</summary>
+        public static bool TryPose(AircraftType type, StableId stand, int hangar, int slot, double secondsIn, double checkSeconds,
+            out GroundPose pose)
         {
             pose = default;
-            if (!TryPlan(type, stand, out var plan))
+            var options = Options(type, stand);
+            if (options.Count == 0)
                 return false;
+            var plan = ForSlot(options[Math.Max(0, Math.Min(hangar, options.Count - 1))], slot);
             var tow = plan.TowSeconds;
             if (checkSeconds < 2 * tow + MinimumInsideSeconds)
                 return false;
@@ -128,15 +185,14 @@ namespace Airside.Simulation
             return new GroundPose(here.X, here.Z, nx, nz, speed, false);
         }
 
-        private static Plan Build(AircraftSpec spec, StableId stand)
+        private static Plan[] BuildOptions(AircraftSpec spec, StableId stand)
         {
             var pose = AdelaideGround.StandPose(stand);
             var length = (float)spec.LengthMetres;
             var span = (float)spec.WingspanMetres;
             var wants = spec.WingspanMetres > 30.0 ? "Cobham" : "Regional Express";
 
-            Plan best = null;
-            var bestScore = float.MaxValue;
+            var scored = new List<(float Score, AdelaideBuilding Building, Door Door)>();
             foreach (var building in AdelaideBuildings.All)
             {
                 if (building.Kind != AdelaideBuildingKind.Hangar || building.Xz == null || building.Xz.Length < 6)
@@ -148,16 +204,26 @@ namespace Airside.Simulation
                 var score = (float)Math.Sqrt(dx * dx + dz * dz);
                 if (building.Name.StartsWith(wants, StringComparison.Ordinal))
                     score -= 100000f;
-                if (score >= bestScore)
-                    continue;
-                var candidate = MakePlan(building, door, pose, length);
-                if (candidate == null)
-                    continue;
-                best = candidate;
-                bestScore = score;
+                scored.Add((score, building, door));
             }
 
-            return best;
+            scored.Sort((a, b) =>
+            {
+                var c = a.Score.CompareTo(b.Score);
+                return c != 0 ? c : string.CompareOrdinal(a.Building.Id, b.Building.Id);
+            });
+            var plans = new List<Plan>();
+            foreach (var (_, building, door) in scored)
+            {
+                var plan = MakePlan(building, door, pose, spec.Id, stand, 0);
+                if (plan == null)
+                    continue;
+                plan.Length = length;
+                plan.Span = span;
+                plans.Add(plan);
+            }
+
+            return plans.ToArray();
         }
 
         private struct Door
@@ -165,12 +231,13 @@ namespace Airside.Simulation
             public float CentreX, CentreZ;
             public float DirX, DirZ;
             public float HalfDepth;
-            public float TailInsideX, TailInsideZ;
+            public float[] Offsets;
         }
 
         /// <summary>
         /// The best side of a hangar to bring an aircraft in by: the side nearest a taxiway from which the aircraft (nose in,
-        /// tail toward the door) and its wing tips lie inside the outline with room to spare.
+        /// tail toward the door) and its wing tips lie inside the outline with room to spare. Also lists the extra berths
+        /// (side by side across the door) that fit.
         /// </summary>
         private static bool TryDoor(float[] xz, float length, float span, out Door door)
         {
@@ -195,18 +262,7 @@ namespace Airside.Simulation
                 var halfDepth = dirX != 0f ? (maxX - minX) * 0.5f : (maxZ - minZ) * 0.5f;
                 if (halfDepth * 2f < length + 2f * ClearanceMetres)
                     continue;
-                // Nose datum deep in the hangar, tail toward the door, centred across the door.
-                var noseX = cx - dirX * (halfDepth - ClearanceMetres);
-                var noseZ = cz - dirZ * (halfDepth - ClearanceMetres);
-                var tailX = noseX + dirX * length;
-                var tailZ = noseZ + dirZ * length;
-                var sideX = -dirZ;
-                var sideZ = dirX;
-                var half = span * 0.5f + ClearanceMetres;
-                var mx = (noseX + tailX) * 0.5f;
-                var mz = (noseZ + tailZ) * 0.5f;
-                if (!Inside(xz, noseX, noseZ) || !Inside(xz, tailX, tailZ)
-                    || !Inside(xz, mx + sideX * half, mz + sideZ * half) || !Inside(xz, mx - sideX * half, mz - sideZ * half))
+                if (!Fits(xz, cx, cz, dirX, dirZ, halfDepth, length, span, 0f))
                     continue;
                 var frontX = cx + dirX * (halfDepth + ApronMetres);
                 var frontZ = cz + dirZ * (halfDepth + ApronMetres);
@@ -214,25 +270,53 @@ namespace Airside.Simulation
                 if (distance >= bestDistance)
                     continue;
                 bestDistance = distance;
-                door = new Door { CentreX = cx, CentreZ = cz, DirX = dirX, DirZ = dirZ, HalfDepth = halfDepth, TailInsideX = tailX, TailInsideZ = tailZ };
+                var offsets = new List<float> { 0f };
+                var pitch = span + 3f;
+                foreach (var candidate in new[] { pitch, -pitch, 2f * pitch, -2f * pitch })
+                    if (offsets.Count < MaxBerths && Fits(xz, cx, cz, dirX, dirZ, halfDepth, length, span, candidate))
+                        offsets.Add(candidate);
+                door = new Door { CentreX = cx, CentreZ = cz, DirX = dirX, DirZ = dirZ, HalfDepth = halfDepth, Offsets = offsets.ToArray() };
                 found = true;
             }
 
             return found;
         }
 
-        private static Plan MakePlan(AdelaideBuilding building, Door door, GroundPose stand, float length)
+        /// <summary>The most aircraft a hangar holds side by side.</summary>
+        public const int MaxBerths = 3;
+
+        private static bool Fits(float[] xz, float cx, float cz, float dirX, float dirZ, float halfDepth, float length, float span,
+            float offset)
         {
-            var frontX = door.CentreX + door.DirX * (door.HalfDepth + ApronMetres);
-            var frontZ = door.CentreZ + door.DirZ * (door.HalfDepth + ApronMetres);
+            var sideX = -dirZ;
+            var sideZ = dirX;
+            // Nose datum deep in the hangar, tail toward the door, offset across the door.
+            var noseX = cx - dirX * (halfDepth - ClearanceMetres) + sideX * offset;
+            var noseZ = cz - dirZ * (halfDepth - ClearanceMetres) + sideZ * offset;
+            var tailX = noseX + dirX * length;
+            var tailZ = noseZ + dirZ * length;
+            var half = span * 0.5f + ClearanceMetres;
+            var mx = (noseX + tailX) * 0.5f;
+            var mz = (noseZ + tailZ) * 0.5f;
+            return Inside(xz, noseX, noseZ) && Inside(xz, tailX, tailZ)
+                && Inside(xz, mx + sideX * half, mz + sideZ * half) && Inside(xz, mx - sideX * half, mz - sideZ * half);
+        }
+
+        private static Plan MakePlan(AdelaideBuilding building, Door door, GroundPose stand, string typeId, StableId standId, int slot)
+        {
+            var offset = door.Offsets[Math.Min(slot, door.Offsets.Length - 1)];
+            var sideX = -door.DirZ;
+            var sideZ = door.DirX;
+            var frontX = door.CentreX + door.DirX * (door.HalfDepth + ApronMetres) + sideX * offset;
+            var frontZ = door.CentreZ + door.DirZ * (door.HalfDepth + ApronMetres) + sideZ * offset;
             var route = AdelaideTaxiRouter.Route(stand.X, stand.Z, frontX, frontZ);
             if (route == null || route.Length < 4)
                 return null;
 
-            var noseX = door.CentreX - door.DirX * (door.HalfDepth - ClearanceMetres);
-            var noseZ = door.CentreZ - door.DirZ * (door.HalfDepth - ClearanceMetres);
-            var leaveX = door.CentreX + door.DirX * (door.HalfDepth - ClearanceMetres);
-            var leaveZ = door.CentreZ + door.DirZ * (door.HalfDepth - ClearanceMetres);
+            var noseX = door.CentreX - door.DirX * (door.HalfDepth - ClearanceMetres) + sideX * offset;
+            var noseZ = door.CentreZ - door.DirZ * (door.HalfDepth - ClearanceMetres) + sideZ * offset;
+            var leaveX = door.CentreX + door.DirX * (door.HalfDepth - ClearanceMetres) + sideX * offset;
+            var leaveZ = door.CentreZ + door.DirZ * (door.HalfDepth - ClearanceMetres) + sideZ * offset;
 
             var outbound = new List<float>(route) { noseX, noseZ };
             var back = new List<float> { leaveX, leaveZ };
@@ -255,7 +339,13 @@ namespace Airside.Simulation
                 LeaveX = leaveX,
                 LeaveZ = leaveZ,
                 StandNoseX = stand.NoseX,
-                StandNoseZ = stand.NoseZ
+                StandNoseZ = stand.NoseZ,
+                Offsets = door.Offsets,
+                Slot = slot,
+                TypeId = typeId,
+                Stand = standId,
+                SideX = sideX,
+                SideZ = sideZ
             };
         }
 

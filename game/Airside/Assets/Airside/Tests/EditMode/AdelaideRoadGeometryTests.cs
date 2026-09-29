@@ -53,7 +53,7 @@ namespace Airside.Tests
                 total++;
                 if ((bz - az) * (cx - ax) - (bx - ax) * (cz - az) < -1e-3f && bad++ < 8)
                     TestContext.Out.WriteLine($"DOWN a=({ax:F1},{az:F1}) b=({bx:F1},{bz:F1}) c=({cx:F1},{cz:F1})");
-                Assert.That(Math.Abs(ax), Is.LessThan(8000f));
+                Assert.That(Math.Abs(ax), Is.LessThan(20000f));
                 Assert.That(float.IsNaN(ay) || float.IsNaN(bx) || float.IsNaN(cz), Is.False);
                 // Cross product y of (b-a) x (c-a) = (b.z-a.z)*(c.x-a.x) - (b.x-a.x)*(c.z-a.z) is Unity's up-facing sign.
             }

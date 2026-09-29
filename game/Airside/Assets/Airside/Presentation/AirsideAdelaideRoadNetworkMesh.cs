@@ -17,7 +17,7 @@ namespace Airside.Presentation
     public static class AirsideAdelaideRoadNetworkMesh
     {
         public const string ObjectName = "Adelaide Road Network";
-        public const string LegacyFlag = "-airsideLegacyRoads";
+        public const string ShaderName = "Airside/Surroundings";
         private static readonly Color PaintColour = new Color(0.88f, 0.88f, 0.85f);
 
         // The pavement rule is asked about the same spots by ribbons, paint, junctions and crossings; cache it.
@@ -27,9 +27,8 @@ namespace Airside.Presentation
 
         /// <summary>True when the network can be drawn: data present, the shader available, not switched off.</summary>
         public static bool CanBuild() =>
-            !AirsideBareField.HasLaunchFlag(LegacyFlag)
-            && AdelaideRoadNetwork.Roads.Length > 0
-            && Shader.Find(AirsideAdelaideRoads.ShaderName) != null;
+            AdelaideRoadNetwork.Roads.Length > 0
+            && Shader.Find(ShaderName) != null;
 
         private sealed class Sinks
         {
@@ -38,18 +37,13 @@ namespace Airside.Presentation
 
         /// <summary>
         /// Builds the network's geometry on a worker thread (it is pure maths over static data), then copies it into
-        /// meshes a few milliseconds a frame, so the first picture does not wait for it. Calls
-        /// <paramref name="onFailed"/> if the geometry cannot be built, so the caller can fall back to the old roads.
+        /// meshes a few milliseconds a frame, so the first picture does not wait for it. Logs a warning if the geometry cannot be built.
         /// </summary>
-        public static IEnumerator BuildAsync(Transform root, float pavementWorldY, Func<float, float, float> groundHeight,
-            Action onFailed)
+        public static IEnumerator BuildAsync(Transform root, float pavementWorldY, Func<float, float, float> groundHeight)
         {
-            var shader = Shader.Find(AirsideAdelaideRoads.ShaderName);
+            var shader = Shader.Find(ShaderName);
             if (shader == null)
-            {
-                onFailed?.Invoke();
                 yield break;
-            }
 
             RuleCache.Clear();
             var options = new RoadBuildOptions
@@ -65,7 +59,6 @@ namespace Airside.Presentation
             if (task.IsFaulted || task.Result == null || task.Result.Asphalt.VertexCount < 3)
             {
                 Debug.LogWarning($"[Airside] Road network failed to build: {task.Exception?.GetBaseException().Message}");
-                onFailed?.Invoke();
                 yield break;
             }
 

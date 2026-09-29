@@ -5944,23 +5944,15 @@ namespace Airside.Presentation
             BuildBareAdelaidePavement();
             var pavementY = AirsideAdelaideGround.PavementWorldY;
             // Roads ride the same real relief the surroundings now have (ADR 0158).
-            // ADR 0184: the complete OSM road network draws the near field; the arterial ribbons only fill in
-            // beyond its window. The network builds on a worker thread and lands a few milliseconds a frame; if it
-            // cannot build, the old ribbons and the authored T1 traffic side return (FallBackToLegacyRoads).
+            // ADR 0184: one road network draws every road, from the runway aprons to the far suburbs. It builds on a
+            // worker thread and lands a few milliseconds a frame.
             var roadHeight = AirsideAdelaideSurroundings.RoadHeight(pavementY);
-            var roadNetworkPlanned = AirsideAdelaideRoadNetworkMesh.CanBuild();
-            AirsideAdelaideRoads.TryBuild(_airfieldRoot, pavementY, roadHeight, skipWhereNetworkCovers: roadNetworkPlanned);
-            if (roadNetworkPlanned)
+            if (AirsideAdelaideRoadNetworkMesh.CanBuild())
             {
                 BuildYpadRoadLampGlows(roadHeight);
-                StartCoroutine(AirsideAdelaideRoadNetworkMesh.BuildAsync(_airfieldRoot, pavementY, roadHeight,
-                    () => FallBackToLegacyRoads(pavementY, roadHeight)));
+                StartCoroutine(AirsideAdelaideRoadNetworkMesh.BuildAsync(_airfieldRoot, pavementY, roadHeight));
             }
-            else
-            {
-                AirsideAdelaideLandside.TryBuild(_airfieldRoot, pavementY);
-                BuildYpadLandsideLife();
-            }
+
             BuildCloudBands();
             // Real Adelaide used to omit these entirely because only the legacy compact
             // environment called BuildHorizonDome. Keep the real-scale clear-colour sky,
@@ -5971,23 +5963,6 @@ namespace Airside.Presentation
             // was opt-in because it caged the field; the real fence is a kilometre and more out).
             if (!AirsideBareField.HasLaunchFlag(NoBoundaryFenceFlag))
                 BuildAdelaideBoundaryFence();
-        }
-
-        /// <summary>The road network could not build: draw the old arterial ribbons in full and the authored T1 side.</summary>
-        private void FallBackToLegacyRoads(float pavementY, System.Func<float, float, float> roadHeight)
-        {
-            if (_airfieldRoot == null)
-                return;
-            foreach (var name in new[] { AirsideAdelaideRoads.ObjectName, AirsideAdelaideRoads.ObjectName + " Lane Markings" })
-            {
-                var old = _airfieldRoot.Find(name);
-                if (old != null)
-                    Destroy(old.gameObject);
-            }
-
-            AirsideAdelaideRoads.TryBuild(_airfieldRoot, pavementY, roadHeight, skipWhereNetworkCovers: false);
-            AirsideAdelaideLandside.TryBuild(_airfieldRoot, pavementY);
-            BuildYpadLandsideLife();
         }
 
         /// <summary>
@@ -7235,59 +7210,6 @@ namespace Airside.Presentation
 
             root.position = position;
             root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
-        }
-
-        /// <summary>
-        /// Real-metre T1 traffic side: parked cars, drop-off, and lamp posts on
-        /// <see cref="AdelaideLandside"/>. The Kingscote greybox sat at (26, 38).
-        /// </summary>
-        private static void BuildYpadLandsideLife()
-        {
-            var carColors = new[]
-            {
-                new Color(0.75f, 0.22f, 0.18f),
-                new Color(0.92f, 0.92f, 0.9f),
-                new Color(0.15f, 0.18f, 0.22f),
-                new Color(0.2f, 0.35f, 0.55f),
-                new Color(0.85f, 0.7f, 0.25f),
-                new Color(0.35f, 0.4f, 0.38f),
-                new Color(0.55f, 0.55f, 0.58f),
-                new Color(0.12f, 0.45f, 0.35f)
-            };
-
-            var slots = AdelaideLandside.CarParkSlots();
-            for (var i = 0; i < slots.Length; i++)
-            {
-                var slot = slots[i];
-                PlaceParkedCar($"T1 car {i}", new Vector3(slot.X, 0f, slot.Z), slot.YawDegrees,
-                    carColors[i % carColors.Length]);
-            }
-
-            var steel = new Color(0.35f, 0.36f, 0.38f);
-            var head = new Color(0.25f, 0.26f, 0.28f);
-            var lamp = new Color(1f, 0.92f, 0.7f);
-            var lamps = AdelaideLandside.Streetlights();
-            for (var i = 0; i < lamps.Length; i++)
-            {
-                var p = new Vector3(lamps[i].X, 0f, lamps[i].Z);
-                CreateBlock($"T1 streetlight pole {i}", p + new Vector3(0f, 4.4f, 0f), new Vector3(0.22f, 8.8f, 0.22f), steel);
-                CreateBlock($"T1 streetlight head {i}", p + new Vector3(0.85f, 8.66f, 0f), new Vector3(0.9f, 0.24f, 0.45f), head);
-                // A slim outreach arm and a lens under the head instead of a cube (ADR 0124).
-                CreateBlock($"T1 streetlight arm {i}", p + new Vector3(0.3f, 8.5f, 0f), new Vector3(0.6f, 0.1f, 0.1f), steel);
-                CreateBlock($"T1 streetlight lamp {i}", p + new Vector3(0.85f, 8.5f, 0f), new Vector3(0.5f, 0.08f, 0.3f), lamp);
-                AddStreetlightGlow(p + new Vector3(0.85f, 8.4f, 0f), AirsideAdelaideGround.WorldHeight(p.x + 0.85f, p.z) + 0.05f);
-            }
-
-            var bayPaint = new Color(0.92f, 0.92f, 0.88f);
-            CreateBlock("T1 drop-off zebra W", new Vector3(1020f, 0.12f, 508f), new Vector3(8f, 0.04f, 0.45f), Color.white);
-            CreateBlock("T1 drop-off zebra C", new Vector3(1275f, 0.12f, 508f), new Vector3(8f, 0.04f, 0.45f), Color.white);
-            CreateBlock("T1 drop-off zebra E", new Vector3(1520f, 0.12f, 508f), new Vector3(8f, 0.04f, 0.45f), Color.white);
-            CreateBlock("T1 drop-off dash", new Vector3(1275f, 0.11f, 508f), new Vector3(720f, 0.03f, 0.28f),
-                new Color(0.95f, 0.9f, 0.35f));
-            CreateBlock("T1 bay line W", new Vector3(AdelaideLandside.CarParkCentreX - 160f, 0.11f, AdelaideLandside.CarParkCentreZ),
-                new Vector3(0.12f, 0.03f, 70f), bayPaint);
-            CreateBlock("T1 bay line E", new Vector3(AdelaideLandside.CarParkCentreX + 160f, 0.11f, AdelaideLandside.CarParkCentreZ),
-                new Vector3(0.12f, 0.03f, 70f), bayPaint);
         }
 
         /// <summary>

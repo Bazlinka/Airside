@@ -45,17 +45,6 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Roads_ContainArterialsWithPositiveWidth()
-        {
-            Assert.That(AdelaideLandCover.Roads, Is.Not.Null);
-            Assert.That(AdelaideLandCover.Roads.Length, Is.GreaterThan(100));
-            var width = AdelaideLandCover.Roads[0];
-            Assert.That(width, Is.InRange(7f, 20f));
-            var points = (int)AdelaideLandCover.Roads[1];
-            Assert.That(points, Is.GreaterThanOrEqualTo(2));
-        }
-
-        [Test]
         public void Attribution_NamesOpenStreetMap()
         {
             Assert.That(AdelaideLandCover.Attribution, Does.Contain("OpenStreetMap"));

@@ -109,6 +109,55 @@ namespace Airside.Presentation
             AirsideNamedChildren.Forget(aircraft);
         }
 
+        private static readonly HashSet<string> AtrPassengerDoorParts = new(StringComparer.Ordinal)
+        {
+            "CabinDoor", "Cabin door frame", "Door frame", "Door handle", "door_fwd", "door_outline_fwd", "door_handle_fwd"
+        };
+
+        private static readonly HashSet<string> AtrCargoDoorParts = new(StringComparer.Ordinal)
+        {
+            "Cargo door", "Cargo door frame", "Cargo door latch", "cargo_door", "cargo_door_outline", "cargo_door_latch"
+        };
+
+        /// <summary>
+        /// The ATR 42 mesh puts its passenger door forward left and its hold door aft right; the
+        /// real aircraft boards through an aft-left airstair door and loads bags through a
+        /// forward-left hold door. Move the parts to match (<see cref="AircraftLayout"/> holds
+        /// the result), before the passenger door becomes the airstair.
+        /// </summary>
+        private static void RelocateAtrDoors(Transform aircraft)
+        {
+            var children = AirsideNamedChildren.Get(aircraft);
+            var names = AirsideNamedChildren.Names(aircraft);
+            var aft = aircraft.rotation * new Vector3(0f, 0f, AircraftLayout.AtrDoorShiftMetres);
+            var forward = aircraft.rotation * new Vector3(0f, 0f, AircraftLayout.AtrCargoDoorShiftMetres);
+            for (var i = 0; i < children.Length; i++)
+            {
+                var part = children[i];
+                if (part == aircraft)
+                    continue;
+                // A part nested under another moved part goes with its parent.
+                if (NestedIn(part, aircraft))
+                    continue;
+                if (AtrPassengerDoorParts.Contains(names[i]))
+                    part.position += aft;
+                else if (AtrCargoDoorParts.Contains(names[i]))
+                {
+                    // Half a turn about the aircraft's own vertical axis takes it to the left side.
+                    part.RotateAround(aircraft.position, aircraft.up, 180f);
+                    part.position += forward;
+                }
+            }
+        }
+
+        private static bool NestedIn(Transform part, Transform aircraft)
+        {
+            for (var p = part.parent; p != null && p != aircraft; p = p.parent)
+                if (AtrPassengerDoorParts.Contains(p.name) || AtrCargoDoorParts.Contains(p.name))
+                    return true;
+            return false;
+        }
+
         private static void AirstairPart(Transform aircraft, Transform door, string name, Vector3 aircraftLocal,
             Vector3 size, Color colour)
         {
@@ -161,6 +210,10 @@ namespace Airside.Presentation
         {
             public Transform Root;
             public string Registration;
+            /// <summary>Planned park→stand route (x, z pairs) and the ends it was planned for.</summary>
+            public readonly List<float> Route = new();
+            public Vector3 RoutedFrom;
+            public Vector3 RoutedTo;
         }
 
         private const int MaxRemoteBuses = 6;
@@ -427,10 +480,20 @@ namespace Airside.Presentation
                         continue;
                     _remoteBusWanted.Add(aircraft.Registration);
                     var eased = Mathf.SmoothStep(0f, 1f, fraction);
-                    var position = Vector3.Lerp(park, stop, eased);
-                    var direction = stop - park;
+                    // The trip is a function of simulation time, so it follows one route planned
+                    // round the parked aircraft and buildings between its park bay and the stand.
+                    if (bus.Route.Count < 4 || Flat(bus.RoutedFrom - park).sqrMagnitude > 1f
+                        || Flat(bus.RoutedTo - stop).sqrMagnitude > 1f)
+                    {
+                        PlanFixedRoute(park, stop, VehicleClearanceMetres, true, bus.Route);
+                        bus.RoutedFrom = park;
+                        bus.RoutedTo = stop;
+                    }
+
+                    var along = GroundRouter.Along(bus.Route, eased * GroundRouter.Length(bus.Route));
                     bus.Root.gameObject.SetActive(true);
-                    bus.Root.position = position;
+                    bus.Root.position = new Vector3(along.X, stop.y, along.Z);
+                    var direction = new Vector3(along.DirX, 0f, along.DirZ);
                     if (direction.sqrMagnitude > 0.001f)
                         bus.Root.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
                 }
@@ -442,6 +505,7 @@ namespace Airside.Presentation
                     continue;
                 _remoteBuses.Remove(bus.Registration);
                 bus.Registration = null;
+                bus.Route.Clear();
                 bus.Root.gameObject.SetActive(false);
             }
         }
@@ -744,7 +808,7 @@ namespace Airside.Presentation
 
         private void UpdateRampCrew(FleetAircraft aircraft, RampActivity activity, double progress)
         {
-            RampCrew.ForActivity(activity, progress, _rampScratch);
+            RampCrew.ForActivity(activity, progress, AircraftLayout.For(aircraft.Type), _rampScratch);
             if (_rampScratch.Count == 0)
                 return;
             var set = TakeRampCrewSet(aircraft.Registration);
@@ -757,7 +821,9 @@ namespace Airside.Presentation
             if (nose.sqrMagnitude < 0.001f)
                 nose = Vector3.forward;
             nose.Normalize();
-            var right = new Vector3(-nose.z, 0f, nose.x);
+            // AcrossMetres is to the aircraft's right (+X in its own frame). This used to be
+            // turned the wrong way, so every crew member stood on the opposite side.
+            var right = new Vector3(nose.z, 0f, -nose.x);
             var ground = new Vector3(pose.X, AirsideFlightPath.GroundY, pose.Z);
             for (var i = 0; i < _rampScratch.Count; i++)
             {
@@ -1001,8 +1067,32 @@ namespace Airside.Presentation
             var origin = mode == BoardingMode.RemoteBus && TryRemoteBusStop(aircraft, view, out var busStop, out _)
                 ? busStop + into * 2.0f
                 : NearestTerminalDoor(foot, ground);
-            path = new WalkPath(new[] { origin, approach, foot, top }, 2);
+            path = RoutedWalk(aircraft.Registration, origin, approach, foot, top);
             return true;
+        }
+
+        private readonly Dictionary<string, (Vector3 Origin, Vector3 Approach, WalkPath Path)> _walkRoutes =
+            new(System.StringComparer.Ordinal);
+
+        /// <summary>
+        /// Terminal (or bus) → round the aircraft → stair foot → door. The apron leg is planned
+        /// round every parked airframe, its propeller arcs and low wings, and the buildings, so
+        /// nobody walks through a wing or a turning propeller. Cached: this runs every frame.
+        /// </summary>
+        private WalkPath RoutedWalk(string registration, Vector3 origin, Vector3 approach, Vector3 foot, Vector3 top)
+        {
+            if (_walkRoutes.TryGetValue(registration, out var cached)
+                && (cached.Origin - origin).sqrMagnitude < 0.25f && (cached.Approach - approach).sqrMagnitude < 0.25f)
+                return cached.Path;
+            var route = PlanFixedRoute(origin, approach, PersonClearanceMetres, false, new List<float>());
+            var points = new List<Vector3>();
+            for (var i = 0; i + 1 < route.Count; i += 2)
+                points.Add(new Vector3(route[i], origin.y, route[i + 1]));
+            points.Add(foot);
+            points.Add(top);
+            var path = new WalkPath(points.ToArray(), points.Count - 2);
+            _walkRoutes[registration] = (origin, approach, path);
+            return path;
         }
 
         private static bool TryRemoteBusStop(FleetAircraft aircraft, Transform view,

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Airside.Domain;
 
 namespace Airside.Simulation
 {
@@ -100,6 +101,11 @@ namespace Airside.Simulation
         /// Idle and Ready produce none: the aircraft is not being worked.
         /// </summary>
         public static void For(DeparturePrepStatus prep, GroundServiceKind? activeVehicle,
+            List<RampCrewMember> into) =>
+            For(prep, activeVehicle, AircraftLayout.For(AircraftType.Boeing7378), into);
+
+        /// <summary>As above, placed round <paramref name="layout"/>.</summary>
+        public static void For(DeparturePrepStatus prep, GroundServiceKind? activeVehicle, AircraftLayout layout,
             List<RampCrewMember> into)
         {
             if (into == null)
@@ -109,19 +115,19 @@ namespace Airside.Simulation
             switch (prep.Stage)
             {
                 case DeparturePrepStage.Fuel:
-                    ForActivity(RampActivity.Fuel, prep.StageProgress, into);
+                    ForActivity(RampActivity.Fuel, prep.StageProgress, layout, into);
                     break;
 
                 case DeparturePrepStage.Catering:
-                    ForActivity(RampActivity.Catering, prep.StageProgress, into);
+                    ForActivity(RampActivity.Catering, prep.StageProgress, layout, into);
                     break;
 
                 case DeparturePrepStage.Baggage:
-                    ForActivity(RampActivity.Baggage, prep.StageProgress, into);
+                    ForActivity(RampActivity.Baggage, prep.StageProgress, layout, into);
                     break;
 
                 case DeparturePrepStage.Boarding:
-                    ForActivity(RampActivity.Boarding, prep.StageProgress, into);
+                    ForActivity(RampActivity.Boarding, prep.StageProgress, layout, into);
                     break;
 
                 default:
@@ -133,52 +139,92 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Places a small, readable crew team for an operational activity. The positions are
-        /// stand-local and the progress is deterministic, so presentation can sample animation
-        /// directly from simulation time without autonomous NPC state.
+        /// Places a small, readable crew team for an operational activity round a 737-sized
+        /// aircraft. Presentation uses the overload that takes the aircraft's own layout.
         /// </summary>
-        public static void ForActivity(RampActivity activity, double progress01, List<RampCrewMember> into)
+        public static void ForActivity(RampActivity activity, double progress01, List<RampCrewMember> into) =>
+            ForActivity(activity, progress01, AircraftLayout.For(AircraftType.Boeing7378), into);
+
+        /// <summary>
+        /// Places a small, readable crew team for an operational activity, from where the parts
+        /// they work on actually are on this type (<see cref="AircraftLayout"/>): fuel at the
+        /// right-wing coupling, bags at the hold door, catering at the service door — or by hand
+        /// at the passenger door of a turboprop, which has no hi-loader — and the marshaller
+        /// ahead of the nose. Every position is kept out of the fuselage, the nacelles and the
+        /// propeller arcs. Deterministic, so presentation samples it straight from sim time.
+        /// </summary>
+        public static void ForActivity(RampActivity activity, double progress01, AircraftLayout layout,
+            List<RampCrewMember> into)
         {
             if (into == null)
                 return;
             into.Clear();
+            layout ??= AircraftLayout.For(AircraftType.Boeing7378);
             var progress = (float)Math.Max(0.0, Math.Min(1.0, progress01));
+            var nose = layout.NoseZ;
+            var width = layout.HalfWidth;
             switch (activity)
             {
                 case RampActivity.Arrival:
-                    into.Add(new RampCrewMember(RampRole.Marshalling, RampTask.MarshalArrival,
-                        10.0f, 7.5f, 200f, progress));
-                    into.Add(new RampCrewMember(RampRole.Receiving, RampTask.PlaceSafetyEquipment,
-                        3.2f, -3.4f, 175f, progress));
+                    // Marshaller on the centreline ahead of the nose, facing the aircraft; the
+                    // wing-side worker waits at the nose gear with the chocks and cones.
+                    Add(RampRole.Marshalling, RampTask.MarshalArrival, 0f, nose + (layout.IsTurboprop ? 8f : 12f), 0f, nose);
+                    Add(RampRole.Receiving, RampTask.PlaceSafetyEquipment, -(width + 1.2f), nose - 2.2f, 0f, nose - 2.2f);
                     break;
                 case RampActivity.Fuel:
-                    into.Add(new RampCrewMember(RampRole.Attending, RampTask.FuelPanel,
-                        -11.0f, 6.2f, 250f, progress));
-                    into.Add(new RampCrewMember(RampRole.Receiving, RampTask.FuelCoupling,
-                        -8.5f, 3.6f, 90f, progress));
+                {
+                    var truck = layout.FuelTruck;
+                    var coupling = layout.FuelCoupling;
+                    Add(RampRole.Attending, RampTask.FuelPanel, truck.X - 1.8f, truck.Z + 1.2f, truck.X, truck.Z);
+                    Add(RampRole.Receiving, RampTask.FuelCoupling, coupling.X, coupling.Z, coupling.X - 1f, coupling.Z + 0.5f);
                     break;
+                }
                 case RampActivity.Catering:
-                    into.Add(new RampCrewMember(RampRole.Attending, RampTask.CateringLoader,
-                        -6.0f, -6.2f, 110f, progress));
-                    into.Add(new RampCrewMember(RampRole.Receiving, RampTask.CateringDoor,
-                        -3.2f, -3.4f, 270f, progress));
+                    if (layout.CateringTruck is { } hiLoader && layout.CateringDoor is { } service)
+                    {
+                        var side = AircraftLayout.SideOf(service);
+                        Add(RampRole.Attending, RampTask.CateringLoader, hiLoader.X + side * 2.2f, hiLoader.Z - 2.6f,
+                            hiLoader.X, hiLoader.Z);
+                        Add(RampRole.Receiving, RampTask.CateringDoor, service.X + side * 1.6f, service.Z + 2.0f,
+                            service.X, service.Z);
+                    }
+                    else
+                    {
+                        // A turboprop is catered by hand: a trolley pushed to the airstair.
+                        var door = layout.PassengerDoor;
+                        var side = AircraftLayout.SideOf(door);
+                        Add(RampRole.Attending, RampTask.CateringLoader, door.X + side * 2.6f, door.Z + 2.2f, door.X, door.Z);
+                        Add(RampRole.Receiving, RampTask.CateringDoor, door.X + side * 1.5f, door.Z - 1.8f, door.X, door.Z);
+                    }
                     break;
                 case RampActivity.Baggage:
-                    into.Add(new RampCrewMember(RampRole.Receiving, RampTask.BaggageHold,
-                        -14.0f, -3.8f, 270f, progress));
-                    into.Add(new RampCrewMember(RampRole.Attending, RampTask.BaggageCart,
-                        -16.5f, -6.8f, 300f, progress));
+                {
+                    var hold = layout.CargoDoor;
+                    var side = AircraftLayout.SideOf(hold);
+                    Add(RampRole.Receiving, RampTask.BaggageHold, hold.X + side * 1.3f, hold.Z, hold.X, hold.Z);
+                    Add(RampRole.Attending, RampTask.BaggageCart, hold.X + side * 4.0f,
+                        hold.Z + layout.AwayFromWing(hold.Z) * 2.0f, hold.X, hold.Z);
                     break;
+                }
                 case RampActivity.Boarding:
-                    into.Add(new RampCrewMember(RampRole.Marshalling, RampTask.BoardingSupervision,
-                        9.0f, 7.5f, 200f, progress));
+                {
+                    var door = layout.PassengerDoor;
+                    var side = AircraftLayout.SideOf(door);
+                    Add(RampRole.Marshalling, RampTask.BoardingSupervision, door.X + side * 3.4f, door.Z + 2.6f, door.X, door.Z);
                     break;
+                }
                 case RampActivity.Pushback:
-                    into.Add(new RampCrewMember(RampRole.Receiving, RampTask.PushbackHeadset,
-                        5.0f, 3.5f, 180f, progress));
-                    into.Add(new RampCrewMember(RampRole.Marshalling, RampTask.WingWalk,
-                        -8.0f, -9.0f, 210f, progress));
+                    Add(RampRole.Receiving, RampTask.PushbackHeadset, -(width + 1.6f), nose - 1.5f, 0f, nose - 1.5f);
+                    Add(RampRole.Marshalling, RampTask.WingWalk, -(layout.HalfSpan + 1.5f), layout.WingMidZ,
+                        -(layout.HalfSpan + 1.5f), layout.WingMidZ - 10f);
                     break;
+            }
+
+            void Add(RampRole role, RampTask task, float x, float z, float lookX, float lookZ)
+            {
+                var (cx, cz) = layout.Clear(x, z, 0.7f, forVehicles: false);
+                var facing = (float)(Math.Atan2(lookX - cx, lookZ - cz) * 180.0 / Math.PI);
+                into.Add(new RampCrewMember(role, task, cz, cx, facing, progress));
             }
         }
 

@@ -700,15 +700,21 @@ namespace Airside.Presentation
             var side = new Vector3(-nose.z, 0f, nose.x);
             var stop = new Vector3(pose.X, AirsideFlightPath.GroundY, pose.Z);
             var cycle = (float)(_preciseTime % 120.0);
+            var layout = AircraftLayout.For(parked.Type);
+            var ground = AirsideFlightPath.GroundY;
+            var fuel = layout.FuelTruck;
+            var bags = layout.BaggageTrain;
+            var bagSide = AircraftLayout.SideOf(layout.CargoDoor);
 
             SetEquipmentVisible(_cateringTruck, false);
             SetEquipmentVisible(_stairs, false);
-            UpdateVehicle(_fuelTruck, cycle < 72f, stop - nose * 24f + side * 8f,
-                stop - nose * 42f + side * 18f);
-            UpdateVehicle(_baggageCart, cycle >= 18f && cycle < 96f,
-                stop - nose * 31f - side * 8f, stop - nose * 45f - side * 14f);
+            UpdateVehicle(_fuelTruck, cycle < 72f, LayoutToWorld(pose, fuel, ground),
+                LayoutToWorld(pose, (layout.HalfSpan + 14f, fuel.Z - 16f), ground));
+            UpdateVehicle(_baggageCart, cycle >= 18f && cycle < 96f, LayoutToWorld(pose, bags, ground),
+                LayoutToWorld(pose, (bagSide * (layout.HalfSpan + 12f), bags.Z - 14f), ground));
             UpdateVehicle(_passengerBus, cycle >= 48f,
-                stop - nose * 16f + side * 14f, stop - nose * 48f + side * 22f);
+                LayoutToWorld(pose, (-(layout.HalfSpan + 6f), layout.PassengerDoor.Z - 8f), ground),
+                LayoutToWorld(pose, (-(layout.HalfSpan + 16f), layout.TailZ - 10f), ground));
             UpdateAmbientServicing(null, parked);
         }
 
@@ -774,11 +780,15 @@ namespace Airside.Presentation
                 double? toDeparture = aircraft.Scheduled.HasValue
                     ? aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - _preciseTime
                     : null;
-                var span = GroundTraffic.HalfSpan(aircraft.Type);
+                var layout = AircraftLayout.For(aircraft.Type);
+                var fuel = layout.FuelTruck;
+                var bags = layout.BaggageTrain;
+                var bagSide = AircraftLayout.SideOf(layout.CargoDoor);
                 ServeOrPark(set.Fuel, ApronServiceSchedule.FuelAlongside(onStand, toDeparture),
-                    stop - nose * 12f + side * 7f, stop - nose * 30f + side * (float)(span + 14));
+                    LayoutToWorld(pose, fuel, stop.y), LayoutToWorld(pose, (layout.HalfSpan + 14f, fuel.Z - 16f), stop.y));
                 ServeOrPark(set.Bags, ApronServiceSchedule.BaggageAlongside(onStand, toDeparture),
-                    stop - nose * 15f - side * 7f, stop - nose * 30f - side * (float)(span + 14));
+                    LayoutToWorld(pose, bags, stop.y),
+                    LayoutToWorld(pose, (bagSide * (layout.HalfSpan + 12f), bags.Z - 14f), stop.y));
             }
         }
 
@@ -826,15 +836,22 @@ namespace Airside.Presentation
             var nose = new Vector3(pose.NoseX, 0f, pose.NoseZ);
             var side = new Vector3(-nose.z, 0f, nose.x);
             var stop = new Vector3(pose.X, AirsideFlightPath.GroundY, pose.Z);
-            var fuelService = stop - nose * 12f + side * 7f;
-            var cateringService = stop - nose * 7f - side * 7f;
-            var baggageService = stop - nose * 15f - side * 7f;
+            // Where each vehicle works comes from this type's own layout (ADR 0175): the fuel
+            // truck beside the right wing, the hi-loader at the service door, the bag train at
+            // the hold. A turboprop is catered by hand, so its catering truck stays at the depot.
+            var layout = AircraftLayout.For(aircraft.Type);
+            var fuelService = LayoutToWorld(pose, layout.FuelTruck, stop.y);
+            var cateringService = layout.CateringTruck is { } hiLoader ? LayoutToWorld(pose, hiLoader, stop.y) : stop;
+            var baggageService = LayoutToWorld(pose, layout.BaggageTrain, stop.y);
 
             // Vehicles drive the real airside frontage road in and out (ADR 0115) rather than
             // appearing beside the aircraft when their stage starts. GroundServiceRun owns the
             // trip; this only draws it.
             DriveServiceVehicle(_fuelTruck, GroundServiceKind.Fuel, aircraft, prep, fuelService);
-            DriveServiceVehicle(_cateringTruck, GroundServiceKind.Catering, aircraft, prep, cateringService);
+            if (layout.CateredByTruck)
+                DriveServiceVehicle(_cateringTruck, GroundServiceKind.Catering, aircraft, prep, cateringService);
+            else
+                SetEquipmentVisible(_cateringTruck, false);
             DriveServiceVehicle(_baggageCart, GroundServiceKind.Baggage, aircraft, prep, baggageService);
 
             // Chocks at the nose gear and the ground power cart by the nose for the whole turn
@@ -887,7 +904,10 @@ namespace Airside.Presentation
             // way it is going through the frontage's bends instead of snapping at each point.
             var here = new Vector3(run.RoadX, AirsideFlightPath.GroundY, run.RoadZ);
             var target = run.Phase == GroundServicePhase.Outbound ? servicePosition : here;
-            UpdateVehicle(vehicle, true, here, target);
+            // On the road the road is the route (it runs under the terminal); only a vehicle that
+            // has to get back to it from the aircraft is routed round what is in the way.
+            var offRoad = Flat(vehicle.position - here).sqrMagnitude > 12f * 12f;
+            UpdateVehicle(vehicle, true, here, target, routed: offRoad);
         }
 
         private void UpdateTurnaroundVehicle(Transform vehicle, bool active, Vector3 servicePosition, Vector3 parkPosition)
@@ -3355,7 +3375,8 @@ namespace Airside.Presentation
                 child.SetParent(offset, false);
         }
 
-        private void UpdateVehicle(Transform vehicle, bool active, Vector3 servicePosition, Vector3 parkPosition)
+        private void UpdateVehicle(Transform vehicle, bool active, Vector3 servicePosition, Vector3 parkPosition,
+            bool routed = true)
         {
             if (vehicle == null)
                 return;
@@ -3368,11 +3389,17 @@ namespace Airside.Presentation
 
             var previous = vehicle.position;
             var speed = (active ? 7.5f : 5.5f) * 1f;
-            vehicle.position = Vector3.MoveTowards(previous, target, Time.unscaledDeltaTime * speed);
+            // Round parked aircraft, buildings and the terminal, not through them; and never
+            // into the path of an aircraft that is taxiing or being pushed back.
+            var steer = routed ? RouteWaypoint(vehicle, target, VehicleClearanceMetres) : target;
+            var next = Vector3.MoveTowards(previous, steer, Time.unscaledDeltaTime * speed);
+            if (routed && !InMovingAircraftPath(previous) && InMovingAircraftPath(next + (next - previous).normalized * 4f))
+                next = previous;
+            vehicle.position = next;
             var travel = Vector3.Distance(previous, vehicle.position);
             if (travel > 0.001f)
             {
-                var flat = target - previous;
+                var flat = steer - previous;
                 flat.y = 0f;
                 if (flat.sqrMagnitude > 0.0001f)
                 {
@@ -10247,6 +10274,8 @@ namespace Airside.Presentation
                 // fuselage centreline. Rebake each to its axle so the ground roll turns
                 // them in place — the landing-gear mirror of RebakePropellerPivots.
                 RebakeWheelPivots(root);
+                if (finalAtr42)
+                    RelocateAtrDoors(root);
                 NestCabinDoorParts(root);
                 ConvertToAirstairDoor(root);
                 NestFlapParts(root);

@@ -1,5 +1,26 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — prop turnarounds and vehicle routing (branch
+  `feature/prop-turnarounds-and-vehicle-avoidance`, ADR 0175).**
+  - `Simulation/AircraftLayout`: per-type ground geometry measured from the glTF meshes (fuselage,
+    nacelles, propeller discs, low wings/tailplanes, doors) and the vehicle stops derived from it.
+    Crew positions were fixed metres from the stand stop — wrong on centre-rooted turboprops (Saab
+    marshaller at the nose, cone placer 2 m from a propeller) and turned to the wrong side on all.
+  - ATR 42 door parts relocated at load: airstair aft left, hold forward left. Turboprops are
+    catered by hand; the catering truck is jets-only.
+  - `Simulation/GroundRouter`: grid A* round aircraft footprints, buildings, terminal outlines and
+    aerobridge rotundas. Service trucks, AI sets, showcase vehicles, remote buses and passenger walk
+    paths are routed; vehicles hold rather than enter a taxiing aircraft's path. Frontage-road legs
+    (terminal undercroft) are unchanged. Tugs and stair trucks are not routed.
+  - `scripts/review-turnaround.sh` renders ATR/Saab/Q400/A320 with every job's crew, vehicle stops
+    and routes (checked: all crew at their doors, none in a propeller arc).
+  - **Checks:** new `AircraftLayoutTests`, `GroundRouterTests`, `PropTurnaroundTests` (ATR doors and
+    propeller positions on the built models) and updated `RampCrewTests` pass. Full Unity EditMode
+    1352/1357: only the 3 known `origin/main` failures. `test-domain.sh` not run (no dotnet SDK).
+    **Not seen in a rebuilt game.**
+  - **NEXT:** rebuild and watch a Saab and an ATR turnaround and a remote bus; check trucks at
+    busy gates for jams between vehicles (they yield to aircraft only).
+
 - **2026-09-29 Claude — hand-held equipment (branch `feature/hand-held-tools`).**
   - Bailey asked for the wands in the marshallers' hands and a better look overall. The old tools
     were blocks at fixed offsets from each worker's feet.

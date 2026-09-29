@@ -1,5 +1,21 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — hand-held equipment (branch `feature/hand-held-tools`).**
+  - Bailey asked for the wands in the marshallers' hands and a better look overall. The old tools
+    were blocks at fixed offsets from each worker's feet.
+  - New `Presentation/HandTools.cs`: `FigureRig` finds each fist from the Wrist/Middle/Thumb bones
+    after the clip is sampled; `HandTools` builds the equipment and poses it in world space
+    (fist, hanging, upright, pushed, head). Wands continue the forearm; cone, suitcase and fuel
+    nozzle with a sagging hose; galley trolley; radio; ear defenders for all crew. Carry,
+    radio and headset jobs now use Idle_Neutral so held items hang naturally.
+  - Passengers: ~3 in 5 carry a roller bag (towed on the apron, lifted on stairs) or a holdall.
+  - `scripts/review-people.sh` renders the whole lineup in batch Unity (`CharacterEquipmentReview`)
+    — close-ups, rear and play distance — using the game's own rig code.
+  - **Checks:** `CharacterFigureTests` now 24 (fist follows the wrist through Wave/Interact/Idle,
+    every job equipped, hose reaches the apron, roller wheels on the ground and lifted on stairs) —
+    all pass. Full Unity EditMode 1332/1337: only the 3 known `origin/main` failures. `test-domain.sh` not run (no dotnet SDK). **Not seen in a rebuilt game.**
+  - **NEXT:** rebuild and watch a marshal-in and a stairs boarding in game.
+
 - **2026-09-29 Claude — visible people + first-hour weather (branch `feature/visible-people`).**
   - Bailey reported no people on main. A graphics-on capture of 741839b2 showed marshalling wands
     and crates floating with nobody holding them. Two import bugs:

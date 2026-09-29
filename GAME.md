@@ -8,8 +8,11 @@
   - `-airsideFullAirport` legacy path: sized, not deleted (`docs/architecture/LEGACY_FULL_AIRPORT_PATH.md`).
   - `AirsidePrototype.cs` 14.3k -> 5.1k lines by moving 188 methods, unchanged, into themed partial files (`.Lights`,
     `.Sky`, `.AircraftVisuals`, `.GroundService`, `.FieldBuild`); a line-multiset check shows nothing lost. Not compiled here.
-  - **NEXT:** static-state cleanup, compact binary data for the big generated tables, splitting `AirlineOperations` /
-    `AdelaideGround`. Run `scripts/test-unity.sh` before merging.
+  - Road network tables packed (1.36 MB -> 318 KB); the road build's pavement rule is per-build, not static.
+  - `AirlineOperations.cs` 4.4k -> 1.5k lines: 164 methods moved unchanged into `.Runway`, `.Stands`, `.AiTraffic`, `.Fleet`,
+    `.Restore`, `.Career` partials. Compiled and tested headlessly (1,057 passed).
+  - **NEXT:** decouple the `AirsidePrototype` partials into builder classes and remove its statics (needs a Unity
+    build to verify); pack `AdelaideLayout` (1.1 MB); retire `-airsideFullAirport`. Run `scripts/test-unity.sh` before merging.
 
 - **2026-09-29 Claude — dead-code tidy (branch `claude/adelaide-airport-map-overhaul-beuaca`).** Removed 56 members that
   nothing referenced anywhere (name appears once in the whole code base): 22 private ones (incl. the unused

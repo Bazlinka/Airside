@@ -155,7 +155,8 @@ namespace Airside.Presentation
                 new[]
                 {
                     ("Map", MapAttribution.OpenStreetMap + " (ODbL). The airport layout, coast, land use, "
-                            + "roads and buildings."),
+                            + "every road and footpath, car parks and bays, buildings, masts, tanks, solar arrays "
+                            + "and bus stops."),
                     ("Satellite imagery", MapAttribution.Sentinel + ". Nine clear summer passes, 2024 to 2026."),
                     ("Terrain", "Copernicus DEM GLO-30. © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH "
                                 + "2014-2018 provided under COPERNICUS by the European Union and ESA. All rights "

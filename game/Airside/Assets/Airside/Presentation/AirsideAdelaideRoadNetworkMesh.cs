@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Airside.Simulation;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -23,68 +25,112 @@ namespace Airside.Presentation
         private static float _minX, _maxX, _minZ, _maxZ;
         private static bool _boundsReady;
 
-        public static bool TryBuild(Transform root, float pavementWorldY, Func<float, float, float> groundHeight)
+        /// <summary>True when the network can be drawn: data present, the shader available, not switched off.</summary>
+        public static bool CanBuild() =>
+            !AirsideBareField.HasLaunchFlag(LegacyFlag)
+            && AdelaideRoadNetwork.Roads.Length > 0
+            && Shader.Find(AirsideAdelaideRoads.ShaderName) != null;
+
+        private sealed class Sinks
         {
-            try
+            public RoadMeshSink Asphalt, Paint, Props;
+        }
+
+        /// <summary>
+        /// Builds the network's geometry on a worker thread (it is pure maths over static data), then copies it into
+        /// meshes a few milliseconds a frame, so the first picture does not wait for it. Calls
+        /// <paramref name="onFailed"/> if the geometry cannot be built, so the caller can fall back to the old roads.
+        /// </summary>
+        public static IEnumerator BuildAsync(Transform root, float pavementWorldY, Func<float, float, float> groundHeight,
+            Action onFailed)
+        {
+            var shader = Shader.Find(AirsideAdelaideRoads.ShaderName);
+            if (shader == null)
             {
-                if (AirsideBareField.HasLaunchFlag(LegacyFlag) || AdelaideRoadNetwork.Roads.Length == 0)
-                    return false;
-                var shader = Shader.Find(AirsideAdelaideRoads.ShaderName);
-                if (shader == null)
-                    return false;
-
-                RuleCache.Clear();
-                var options = new RoadBuildOptions
-                {
-                    GroundHeight = groundHeight,
-                    BaseY = pavementWorldY,
-                    AirsideRule = PavementRule
-                };
-                var asphalt = new RoadMeshSink();
-                AdelaideRoadGeometry.BuildAsphalt(asphalt, options);
-                AdelaideCarParkGeometry.BuildSurfaces(asphalt, options);
-                AdelaidePrecinctGeometry.BuildPaths(asphalt, options);
-                var paint = new RoadMeshSink();
-                AdelaideRoadGeometry.BuildMarkings(paint, options);
-                AdelaideCarParkGeometry.BuildBayLines(paint, options);
-                // Parked cars, street lamps, canopies, solar arrays, tanks, masts and bus stops: solid, lit, vertex-coloured (alpha 1 keeps the satellite out of them).
-                var props = new RoadMeshSink();
-                AdelaideCarParkGeometry.BuildCars(props, options);
-                AdelaideCarParkGeometry.BuildLamps(props, options);
-                AdelaidePrecinctGeometry.BuildCanopies(props, options);
-                AdelaidePrecinctGeometry.BuildSolar(props, options);
-                AdelaidePrecinctGeometry.BuildTanks(props, options);
-                AdelaidePrecinctGeometry.BuildMasts(props, options);
-                AdelaidePrecinctGeometry.BuildBusStops(props, options);
-                RuleCache.Clear();
-                if (asphalt.VertexCount < 3)
-                    return false;
-
-                var parent = new GameObject(ObjectName);
-                parent.transform.SetParent(root, false);
-                var asphaltMaterial = new Material(shader)
-                {
-                    name = "mat_adelaide_road_network_v01",
-                    enableInstancing = true
-                };
-                var paintMaterial = AirsideMaterialLibrary.CreateShared(PaintColour, AirsideMaterialLibrary.SurfaceKind.PaintedLine);
-                foreach (var tile in asphalt.Tiles)
-                    AddTile(parent.transform, $"Roads {tile.Key}", tile.Value, asphaltMaterial, true);
-                foreach (var tile in paint.Tiles)
-                    AddTile(parent.transform, $"Road paint {tile.Key}", tile.Value, paintMaterial, false);
-                foreach (var tile in props.Tiles)
-                    AddTile(parent.transform, $"Car parks {tile.Key}", tile.Value, asphaltMaterial, true);
-                return true;
+                onFailed?.Invoke();
+                yield break;
             }
-            catch (Exception e)
+
+            RuleCache.Clear();
+            var options = new RoadBuildOptions
             {
-                Debug.LogWarning($"[Airside] Road network failed to build: {e.Message}");
-                return false;
+                GroundHeight = groundHeight,
+                BaseY = pavementWorldY,
+                AirsideRule = PavementRule
+            };
+            var task = Task.Run(() => BuildSinks(options));
+            while (!task.IsCompleted)
+                yield return null;
+            RuleCache.Clear();
+            if (task.IsFaulted || task.Result == null || task.Result.Asphalt.VertexCount < 3)
+            {
+                Debug.LogWarning($"[Airside] Road network failed to build: {task.Exception?.GetBaseException().Message}");
+                onFailed?.Invoke();
+                yield break;
+            }
+
+            if (root == null)
+                yield break;
+            var sinks = task.Result;
+            var parent = new GameObject(ObjectName);
+            parent.transform.SetParent(root, false);
+            var asphaltMaterial = new Material(shader)
+            {
+                name = "mat_adelaide_road_network_v01",
+                enableInstancing = true
+            };
+            var paintMaterial = AirsideMaterialLibrary.CreateShared(PaintColour, AirsideMaterialLibrary.SurfaceKind.PaintedLine);
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            const double budgetMs = 3.0;
+            foreach (var (sink, material, colours, label) in new[]
+            {
+                (sinks.Asphalt, asphaltMaterial, true, "Roads"),
+                (sinks.Paint, paintMaterial, false, "Road paint"),
+                (sinks.Props, asphaltMaterial, true, "Car parks")
+            })
+            {
+                foreach (var tile in sink.Tiles)
+                {
+                    try
+                    {
+                        AddTile(parent.transform, $"{label} {tile.Key}", tile.Value, material, colours);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogWarning($"[Airside] Road tile {label} {tile.Key} failed: {e.Message}");
+                    }
+
+                    if (clock.Elapsed.TotalMilliseconds < budgetMs)
+                        continue;
+                    yield return null;
+                    clock.Restart();
+                }
             }
         }
 
-        private static void AddTile(Transform parent, string name, RoadMeshTile tile, Material material, bool withColours,
-            bool castShadows = false)
+        private static Sinks BuildSinks(RoadBuildOptions options)
+        {
+            var asphalt = new RoadMeshSink();
+            AdelaideRoadGeometry.BuildAsphalt(asphalt, options);
+            AdelaideCarParkGeometry.BuildSurfaces(asphalt, options);
+            AdelaidePrecinctGeometry.BuildPaths(asphalt, options);
+            var paint = new RoadMeshSink();
+            AdelaideRoadGeometry.BuildMarkings(paint, options);
+            AdelaideCarParkGeometry.BuildBayLines(paint, options);
+            // Parked cars, street lamps, canopies, solar arrays, tanks, masts and bus stops: solid, lit,
+            // vertex-coloured (alpha 1 keeps the satellite out of them).
+            var props = new RoadMeshSink();
+            AdelaideCarParkGeometry.BuildCars(props, options);
+            AdelaideCarParkGeometry.BuildLamps(props, options);
+            AdelaidePrecinctGeometry.BuildCanopies(props, options);
+            AdelaidePrecinctGeometry.BuildSolar(props, options);
+            AdelaidePrecinctGeometry.BuildTanks(props, options);
+            AdelaidePrecinctGeometry.BuildMasts(props, options);
+            AdelaidePrecinctGeometry.BuildBusStops(props, options);
+            return new Sinks { Asphalt = asphalt, Paint = paint, Props = props };
+        }
+
+        private static void AddTile(Transform parent, string name, RoadMeshTile tile, Material material, bool withColours)
         {
             var count = tile.VertexCount;
             if (count < 3)
@@ -119,7 +165,7 @@ namespace Airside.Presentation
             go.AddComponent<MeshFilter>().sharedMesh = mesh;
             var renderer = go.AddComponent<MeshRenderer>();
             renderer.sharedMaterial = material;
-            renderer.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
             renderer.receiveShadows = false;
         }
 

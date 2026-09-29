@@ -6116,13 +6116,16 @@ namespace Airside.Presentation
             var pavementY = AirsideAdelaideGround.PavementWorldY;
             // Roads ride the same real relief the surroundings now have (ADR 0158).
             // ADR 0184: the complete OSM road network draws the near field; the arterial ribbons only fill in
-            // beyond its window. If it cannot build, the old ribbons and the authored T1 traffic side return.
+            // beyond its window. The network builds on a worker thread and lands a few milliseconds a frame; if it
+            // cannot build, the old ribbons and the authored T1 traffic side return (FallBackToLegacyRoads).
             var roadHeight = AirsideAdelaideSurroundings.RoadHeight(pavementY);
-            var roadNetworkBuilt = AirsideAdelaideRoadNetworkMesh.TryBuild(_airfieldRoot, pavementY, roadHeight);
-            AirsideAdelaideRoads.TryBuild(_airfieldRoot, pavementY, roadHeight, skipWhereNetworkCovers: roadNetworkBuilt);
-            if (roadNetworkBuilt)
+            var roadNetworkPlanned = AirsideAdelaideRoadNetworkMesh.CanBuild();
+            AirsideAdelaideRoads.TryBuild(_airfieldRoot, pavementY, roadHeight, skipWhereNetworkCovers: roadNetworkPlanned);
+            if (roadNetworkPlanned)
             {
                 BuildYpadRoadLampGlows(roadHeight);
+                StartCoroutine(AirsideAdelaideRoadNetworkMesh.BuildAsync(_airfieldRoot, pavementY, roadHeight,
+                    () => FallBackToLegacyRoads(pavementY, roadHeight)));
             }
             else
             {
@@ -6139,6 +6142,23 @@ namespace Airside.Presentation
             // was opt-in because it caged the field; the real fence is a kilometre and more out).
             if (!AirsideBareField.HasLaunchFlag(NoBoundaryFenceFlag))
                 BuildAdelaideBoundaryFence();
+        }
+
+        /// <summary>The road network could not build: draw the old arterial ribbons in full and the authored T1 side.</summary>
+        private void FallBackToLegacyRoads(float pavementY, System.Func<float, float, float> roadHeight)
+        {
+            if (_airfieldRoot == null)
+                return;
+            foreach (var name in new[] { AirsideAdelaideRoads.ObjectName, AirsideAdelaideRoads.ObjectName + " Lane Markings" })
+            {
+                var old = _airfieldRoot.Find(name);
+                if (old != null)
+                    Destroy(old.gameObject);
+            }
+
+            AirsideAdelaideRoads.TryBuild(_airfieldRoot, pavementY, roadHeight, skipWhereNetworkCovers: false);
+            AirsideAdelaideLandside.TryBuild(_airfieldRoot, pavementY);
+            BuildYpadLandsideLife();
         }
 
         /// <summary>

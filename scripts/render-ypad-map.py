@@ -63,6 +63,26 @@ def main():
         elif "building" in t and pts[0] == pts[-1]:
             d.polygon(pts, fill=(196, 182, 160), outline=(120, 108, 92))
     for e in data["elements"]:
+        t = e["tags"]
+        if e["type"] == "way" and t.get("amenity") == "parking_space":
+            pts = [px(p) for p in way_points(e)]
+            if len(pts) > 2:
+                d.polygon(pts, outline=(230, 230, 200))
+        if e["type"] == "way" and t.get("highway") in ("footway", "cycleway", "path", "pedestrian") and t.get("footway") != "crossing":
+            d.line([px(p) for p in way_points(e)], fill=(200, 196, 180), width=max(1, int(1.6 * s)))
+        if e["type"] == "way" and t.get("building") in ("roof", "carport"):
+            pts = [px(p) for p in way_points(e)]
+            if len(pts) > 2:
+                d.polygon(pts, fill=(150, 160, 170))
+        if e["type"] == "way" and t.get("power") == "generator":
+            pts = [px(p) for p in way_points(e)]
+            if len(pts) > 2:
+                d.polygon(pts, fill=(30, 45, 100))
+        if e["type"] == "way" and t.get("man_made") == "storage_tank":
+            pts = [px(p) for p in way_points(e)]
+            if len(pts) > 2:
+                d.polygon(pts, fill=(225, 226, 222))
+    for e in data["elements"]:
         if e["type"] == "way" and e["tags"].get("aeroway") in ("runway", "taxiway", "taxilane"):
             w = 45 if e["tags"]["aeroway"] == "runway" else 23
             d.line([px(p) for p in way_points(e)], fill=(70, 70, 74), width=max(1, int(w * s)))

@@ -61,3 +61,8 @@ None: new data file and scripts only; no persisted schema changes.
   floodlights, VOR/DME, localizer, comms), 130 bus stops (shelter or pole and sign, turned to the road), 773 footpaths.
   Gates and jet bridges were cross-checked against OSM: the game's gate noses agree within the deliberate ADR 0141 setback
   (0–20 m), so they are left as they are.
+- **Mini-map, credits, load cost.** `FieldMiniMap.Bake` paints car parks and every road (three passes: minor, major,
+  airside) under the pavement. The Flight Manual credits line names the new data. The geometry measured 295 ms and 367k
+  triangles on .NET, so `AirsideAdelaideRoadNetworkMesh.BuildAsync` builds it on a worker thread (pure maths over static
+  data) and copies tiles into meshes 3 ms a frame; cars are two boxes each (about 168k vertices). If the build fails,
+  `FallBackToLegacyRoads` restores the old ribbons and the authored T1 side.

@@ -20,10 +20,13 @@
   - **P2/P3 (part) done:** `generate-ypad-precinct.py` -> `AdelaidePrecinct.cs` (7 canopies, 107 solar arrays, 41 tanks,
     70 masts, 130 bus stops, 773 footpaths) + `AdelaidePrecinctGeometry`; suburb prisms that are really canopies are
     skipped. Gates/jet bridges checked against OSM: fine (ADR 0141 setback). Headless harness 1,046 passed.
-  - **NEXT:** field mini-map with roads/car parks/buildings; hangar roof shapes; taxiway/holding signs; T1 detail
-    (OSM has one 2-level polygon only); offline render with the new layers; P4 credits screen + perf capture.
-  - **Look at first in a rebuilt game:** road gaps, car-park cars, startup time (the mesh build is one synchronous pass —
-    if it stalls, spread it across frames like the suburbs, ADR 0162).
+  - **Also done:** mini-map paints roads and car parks; credits line updated; the network builds on a worker thread and
+    lands a few ms a frame (`AirsideAdelaideRoadNetworkMesh.BuildAsync`), with `FallBackToLegacyRoads` if it fails;
+    `scripts/render-ypad-map.py` draws bays/canopies/solar/tanks/paths (`docs/testing/map-2026-09-29/`).
+  - **NEXT:** hangar roof shapes; taxiway/holding-position signs; more of T1 (OSM has one 2-level polygon only); tune
+    from a real screenshot (`scripts/capture-game.sh`); perf capture with `-airsideSoak`.
+  - **Look at first in a rebuilt game:** road gaps, car-park cars, canopies, the worker-thread build landing without a
+    stall, and that nothing in `AirsideAdelaideRoadNetworkMesh` touches a Unity API off the main thread.
   - **Watch:** no Unity/dotnet in the cloud container — C# must be verified on a Mac (`scripts/test-unity.sh`).
 
 - **2026-09-29 Claude — main strip frees when off the pavement (branch `fix/landing-runway-occupancy`, ADR 0183).**

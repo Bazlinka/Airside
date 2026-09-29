@@ -256,14 +256,14 @@ namespace Airside.Presentation
             var y = o.Height(x, z) + o.YOffset;
             var bodyHeight = tall ? 1.05f : 0.75f;
             sink.Box(x, y + 0.22f, z, ux, uz, length * 0.5f, 0.9f, bodyHeight, colour);
-            // cabin, set back from the middle; dark glass band under a body-coloured roof reads as windows
+            // cabin, set back from the middle: a body-coloured roof over a darker glass band, one box, to keep the count down
             var back = length * -0.05f;
             var cx = x + ux * back;
             var cz = z + uz * back;
             var cabinLength = length * (tall ? 0.72f : 0.5f);
-            var cabinBase = y + 0.22f + bodyHeight;
-            sink.Box(cx, cabinBase, cz, ux, uz, cabinLength * 0.5f, 0.8f, 0.22f, Glass);
-            sink.Box(cx, cabinBase + 0.22f, cz, ux, uz, cabinLength * 0.5f - 0.05f, 0.76f, 0.1f, colour);
+            var cabin = new RoadColor((colour.R + Glass.R * 2f) / 3f, (colour.G + Glass.G * 2f) / 3f,
+                (colour.B + Glass.B * 2f) / 3f, colour.A);
+            sink.Box(cx, y + 0.22f + bodyHeight, cz, ux, uz, cabinLength * 0.5f, 0.8f, 0.3f, cabin);
         }
 
         // --- lamps ---

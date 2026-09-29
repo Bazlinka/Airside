@@ -116,7 +116,7 @@ namespace Airside.Tests
             var sink = new RoadMeshSink();
             var cars = AdelaideCarParkGeometry.BuildCars(sink, new RoadBuildOptions());
             Assert.That(cars, Is.InRange(1500, AdelaideCarParkGeometry.MaxCars));
-            Assert.That(sink.TriangleCount, Is.EqualTo(cars * 30), "three boxes of five faces per car");
+            Assert.That(sink.TriangleCount, Is.EqualTo(cars * 20), "two boxes of five faces per car");
             foreach (var tile in sink.Tiles)
             {
                 var p = tile.Value.Positions;

@@ -1,5 +1,7 @@
 ## Unreleased
 
+- **Holding-position signs.** A red mandatory sign stands each side of every holding position, facing along the
+  taxiway, set back from the pavement edge. Not yet seen in a rebuilt game.
 - **Every road around Adelaide Airport is drawn.** The whole road network from OpenStreetMap — 3,849 roads, 511
   km: motorways to residential streets, the airside service roads and the terminal forecourt — at real widths with
   junctions, roundabouts, lane and edge lines that stop at side roads, and zebra crossings. The old cap that

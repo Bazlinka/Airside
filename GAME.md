@@ -1,5 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — map overhaul merged (PR #459) and holding-position signs (branch `claude/adelaide-airport-map-overhaul-beuaca`, ADR 0184).**
+  The overhaul is on `main`. This branch adds `AdelaidePrecinctGeometry.BuildHoldSigns` (two red mandatory signs per hold,
+  `AdelaideLayout.HoldingPositions`). Headless harness passes; Unity not run here.
+  - **NEXT:** rebuild and look (roads, cars, canopies, signs, load stall); then hangar roof shapes, more T1 detail, bridges
+    lifted over roads (`layer`/`bridge` are drawn at ground level today), screenshot-driven tuning.
+
 - **2026-09-29 Claude — map overhaul P0: data foundation (branch `claude/adelaide-airport-map-overhaul-beuaca`, ADR 0184).**
   Bailey asked for a complete, accurate top-down Adelaide Airport (all roads, terminal detail). Decided:
   vector-first from OpenStreetMap, whole airport + landside. New `scripts/fetch-ypad-osm.py` (OSM map API,

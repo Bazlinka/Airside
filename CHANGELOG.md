@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Aircraft in a check are towed to a hangar.** When you send an aircraft for its check it is towed along the
+  taxiways to a hangar that fits it (Regional Express for turboprops, Cobham for jets), waits inside, and is towed
+  back before the check ends. The stand stays held, so nothing else can take it. Not yet seen in a rebuilt game.
 - **Zoom out a lot further.** The camera now pulls back to 45 km (it was 4.5 km) so inbound aircraft can be watched
   from far out on the approach. The pan range, clip planes, fog and horizon fade scale with the zoom, and real
   terrain from a new 96 km height map fills the land beyond the old 30 km ring. The normal close zoom is unchanged.

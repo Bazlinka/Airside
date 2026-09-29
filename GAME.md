@@ -7,8 +7,10 @@
   snapshot `docs/data/osm/ypad-map-2026-09-29.json` (DAT-YPAD-MAP). No runtime change yet.
   - **Why roads are partial:** `AirsideAdelaideRoads` caps at 720 ribbons, drops < 9 m, skips the whole
     operational core; airside service roads are never drawn; suburb streets are satellite pixels only.
-  - **NEXT (P1):** `generate-ypad-roads.py` -> `Simulation/AdelaideRoadNetwork.cs`, then rewrite the road
-    mesher (junctions, no cap, airside roads, landside, car parks). Then P2 terminal, P3 airside detail,
+  - **P1a done:** `generate-ypad-roads.py` -> `Simulation/AdelaideRoadNetwork.cs` (3,849 roads, 511 km, 97
+    airside; covers the old service roads to ~2 m), `AdelaideRoadNetworkTests`, `scripts/render-ypad-map.py`
+    (Pillow PNG of the data: `docs/testing/map-2026-09-29/`). Tests not yet run (no dotnet/Unity here).
+  - **NEXT (P1b):** rewrite the road mesher (junctions, no cap, airside roads, landside, car parks). Then P2 terminal, P3 airside detail,
     P4 verification/credits. Plan: `/root/.claude/plans/ok-now-for-delightful-robin.md` (summarised in ADR 0184).
   - **Watch:** no Unity/dotnet in the cloud container — C# must be verified on a Mac (`scripts/test-unity.sh`).
 

@@ -440,6 +440,9 @@ namespace Airside.Presentation
         {
             public string Registration;
             public readonly List<RampCrewPerson> People = new();
+            public ServiceProps Props;
+            public readonly ServiceScene Scene = new();
+            public readonly List<CrewAction> Actions = new();
         }
 
         private const int MaxRampCrewAircraft = 8;
@@ -631,8 +634,11 @@ namespace Airside.Presentation
                 GiveHandLuggage(person, move.Look);
             if (person.Bag != null)
             {
-                person.Bag.Root.gameObject.SetActive(true);
-                HandTools.Pose(person.Bag, person.Rig, lifted: narrow);
+                // On a turboprop the roller bag is left planeside at the stairs (ADR 0176).
+                var keeps = !LeftBagPlaneside(aircraft, move, path, elapsed);
+                person.Bag.Root.gameObject.SetActive(keeps);
+                if (keeps)
+                    HandTools.Pose(person.Bag, person.Rig, lifted: narrow);
             }
 
             return true;
@@ -707,11 +713,13 @@ namespace Airside.Presentation
                 {
                     if (_rampCrewWanted.Count >= MaxRampCrewAircraft)
                         break;
-                    if (!TryRampActivity(aircraft, out var activity, out var progress))
+                    if (!TryRampActivity(aircraft, out var activity, out var progress, out var seconds))
                         continue;
-                    UpdateRampCrew(aircraft, activity, progress);
+                    UpdateRampCrew(aircraft, activity, progress, seconds);
                 }
             }
+
+            RestUntouchedServiceVehicles();
 
             foreach (var set in _rampCrewPool)
             {
@@ -719,6 +727,7 @@ namespace Airside.Presentation
                     continue;
                 _rampCrewByAircraft.Remove(set.Registration);
                 set.Registration = null;
+                HideServiceProps(set);
                 foreach (var person in set.People)
                 {
                     person.Instance.SetActive(false);
@@ -728,10 +737,12 @@ namespace Airside.Presentation
             }
         }
 
-        private bool TryRampActivity(FleetAircraft aircraft, out RampActivity activity, out double progress)
+        private bool TryRampActivity(FleetAircraft aircraft, out RampActivity activity, out double progress,
+            out double seconds)
         {
             activity = RampActivity.None;
             progress = 0;
+            seconds = 1;
             if (aircraft == null || aircraft.State != FleetState.AtStand || string.IsNullOrEmpty(aircraft.Stand.Value))
                 return false;
             var onStand = Math.Max(0.0, _preciseTime - aircraft.StateStartedAt.ElapsedSeconds);
@@ -739,6 +750,7 @@ namespace Airside.Presentation
             {
                 activity = RampActivity.Arrival;
                 progress = onStand / 90.0;
+                seconds = 90.0;
                 return true;
             }
 
@@ -758,6 +770,7 @@ namespace Airside.Presentation
                         _ => RampActivity.Boarding
                     };
                     progress = prep.StageProgress;
+                    seconds = DeparturePrep.StageSecondsFor(aircraft.Type, prep.Stage, _operations.CareerState.BaseLevel);
                     return true;
                 }
             }
@@ -767,6 +780,7 @@ namespace Airside.Presentation
                 activity = RampActivity.Pushback;
                 progress = Math.Clamp((PushbackTugTimeline.ApproachLeadSeconds - toDeparture.Value)
                     / PushbackTugTimeline.ApproachLeadSeconds, 0.0, 1.0);
+                seconds = PushbackTugTimeline.ApproachLeadSeconds;
                 return true;
             }
 
@@ -776,24 +790,28 @@ namespace Airside.Presentation
             {
                 activity = RampActivity.Catering;
                 progress = (onStand - 7 * 60.0) / (4 * 60.0);
+                seconds = 4 * 60.0;
                 return true;
             }
             if (ApronServiceSchedule.BaggageAlongside(onStand, toDeparture) && onStand < 4 * 60.0)
             {
                 activity = RampActivity.Baggage;
                 progress = (onStand - ApronServiceSchedule.BaggageArrivesAfterSeconds) / (8 * 60.0);
+                seconds = 8 * 60.0;
                 return true;
             }
             if (ApronServiceSchedule.FuelAlongside(onStand, toDeparture))
             {
                 activity = RampActivity.Fuel;
                 progress = (onStand - ApronServiceSchedule.FuelArrivesAfterSeconds) / (8 * 60.0);
+                seconds = 8 * 60.0;
                 return true;
             }
             if (ApronServiceSchedule.BaggageAlongside(onStand, toDeparture))
             {
                 activity = RampActivity.Baggage;
                 progress = (onStand - ApronServiceSchedule.BaggageArrivesAfterSeconds) / (8 * 60.0);
+                seconds = 8 * 60.0;
                 return true;
             }
             if (toDeparture is <= 14 * 60.0 and > PushbackTugTimeline.ApproachLeadSeconds)
@@ -801,14 +819,16 @@ namespace Airside.Presentation
                 activity = RampActivity.Boarding;
                 progress = 1.0 - (toDeparture.Value - PushbackTugTimeline.ApproachLeadSeconds)
                     / (14 * 60.0 - PushbackTugTimeline.ApproachLeadSeconds);
+                seconds = 14 * 60.0 - PushbackTugTimeline.ApproachLeadSeconds;
                 return true;
             }
             return false;
         }
 
-        private void UpdateRampCrew(FleetAircraft aircraft, RampActivity activity, double progress)
+        private void UpdateRampCrew(FleetAircraft aircraft, RampActivity activity, double progress, double seconds)
         {
-            RampCrew.ForActivity(activity, progress, AircraftLayout.For(aircraft.Type), _rampScratch);
+            var layout = AircraftLayout.For(aircraft.Type);
+            RampCrew.ForActivity(activity, progress, layout, _rampScratch);
             if (_rampScratch.Count == 0)
                 return;
             var set = TakeRampCrewSet(aircraft.Registration);
@@ -821,28 +841,48 @@ namespace Airside.Presentation
             if (nose.sqrMagnitude < 0.001f)
                 nose = Vector3.forward;
             nose.Normalize();
-            // AcrossMetres is to the aircraft's right (+X in its own frame). This used to be
-            // turned the wrong way, so every crew member stood on the opposite side.
-            var right = new Vector3(nose.z, 0f, -nose.x);
-            var ground = new Vector3(pose.X, AirsideFlightPath.GroundY, pose.Z);
+            var ground = AirsideFlightPath.GroundY;
+
+            // What each worker is doing right now, item by item (ADR 0176).
+            var elapsed = Math.Clamp(progress, 0.0, 1.0) * seconds;
+            IReadOnlyList<double> drops = null;
+            (float X, float Z)? cart = null;
+            if (activity == RampActivity.Boarding && layout.IsTurboprop
+                && TryPlanesideDrops(aircraft, pose, _preciseTime - elapsed, out var at))
+            {
+                drops = _planesideDrops;
+                cart = at;
+            }
+
+            var hiLoader = activity == RampActivity.Catering && layout.CateringTruck is { } dock
+                && NearestServiceVehicle(LayoutToWorld(pose, dock, ground), 10f, _cateringTruck) != null;
+            ServiceChoreography.Act(activity, aircraft.Type, elapsed, seconds, _rampScratch, set.Actions, set.Scene, drops, cart,
+                hiLoader);
+            DrawServiceScene(set, pose, ground, set.Scene);
+            DriveServiceVehicleParts(activity, pose, layout, ground, set.Scene);
+
             for (var i = 0; i < _rampScratch.Count; i++)
             {
                 var member = _rampScratch[i];
+                var action = set.Actions[i];
                 var person = EnsureRampWorker(set, i);
                 if (person == null)
                     continue;
                 person.Instance.SetActive(true);
-                person.Root.position = ground + nose * member.AlongMetres + right * member.AcrossMetres;
+                person.Root.position = LayoutToWorld(pose, (action.X, action.Z), ground + action.Height);
                 person.Root.rotation = Quaternion.LookRotation(
-                    Quaternion.AngleAxis(member.FacingDegrees, Vector3.up) * nose, Vector3.up);
-                var clip = RampClip(person.Kind, member.Task);
+                    Quaternion.AngleAxis(action.FacingDegrees, Vector3.up) * nose, Vector3.up);
+                var clip = action.Walking && person.Kind.Walk != null ? person.Kind.Walk : RampClip(person.Kind, member.Task);
                 if (clip != null && clip.length > 0.01f)
                 {
-                    var phase = (float)(_preciseTime * (member.Task is RampTask.BaggageHold or RampTask.BaggageCart ? 1.2 : 0.75)
-                        + i * 0.37);
-                    clip.SampleAnimation(person.Instance, phase % clip.length);
+                    var rate = action.Walking ? ServiceChoreography.CarryPace / 1.3 : 0.75;
+                    clip.SampleAnimation(person.Instance, (float)((_preciseTime * rate + i * 0.37) % clip.length));
                 }
-                PoseCrewTool(person, member.Task);
+
+                PoseCrewTool(person, member.Task, action.Item,
+                    set.Scene.NozzleOut && member.Task == RampTask.FuelCoupling
+                        ? LayoutToWorld(pose, set.Scene.HoseReel, ground + 1.0f)
+                        : null);
             }
             for (var i = _rampScratch.Count; i < set.People.Count; i++)
             {
@@ -911,7 +951,7 @@ namespace Airside.Presentation
         }
 
         /// <summary>Equipment in the worker's hands (and ear defenders), posed from this frame's clip sample.</summary>
-        private void PoseCrewTool(RampCrewPerson person, RampTask task)
+        private void PoseCrewTool(RampCrewPerson person, RampTask task, CarriedItem carrying, Vector3? hoseReel)
         {
             if (person.Rig == null)
                 return;
@@ -924,6 +964,8 @@ namespace Airside.Presentation
             }
 
             person.Kit.Root.gameObject.SetActive(person.Instance.activeSelf);
+            HandTools.SetCarried(person.Kit, carrying);
+            person.Kit.HoseAnchor = hoseReel;
             HandTools.Pose(person.Kit, person.Rig);
         }
 

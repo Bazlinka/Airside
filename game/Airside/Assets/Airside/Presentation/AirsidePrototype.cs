@@ -849,7 +849,19 @@ namespace Airside.Presentation
             // trip; this only draws it.
             DriveServiceVehicle(_fuelTruck, GroundServiceKind.Fuel, aircraft, prep, fuelService);
             if (layout.CateredByTruck)
+            {
                 DriveServiceVehicle(_cateringTruck, GroundServiceKind.Catering, aircraft, prep, cateringService);
+                // Once alongside, the hi-loader squares up to the service door cab-first: its
+                // platform is over the cab and bridges to the door (ADR 0176).
+                if (_cateringTruck != null && _cateringTruck.gameObject.activeSelf
+                    && Flat(_cateringTruck.position - cateringService).sqrMagnitude < 0.36f
+                    && layout.CateringDoor is { } serviceDoor)
+                {
+                    var inward = new Vector3(nose.z, 0f, -nose.x) * -AircraftLayout.SideOf(serviceDoor);
+                    _cateringTruck.rotation = Quaternion.Slerp(_cateringTruck.rotation,
+                        Quaternion.LookRotation(inward, Vector3.up), Time.unscaledDeltaTime * 3f);
+                }
+            }
             else
                 SetEquipmentVisible(_cateringTruck, false);
             DriveServiceVehicle(_baggageCart, GroundServiceKind.Baggage, aircraft, prep, baggageService);

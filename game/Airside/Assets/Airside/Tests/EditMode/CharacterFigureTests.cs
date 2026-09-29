@@ -87,7 +87,17 @@ namespace Airside.Tests
                            + kit.RightUpright.GetComponentsInChildren<Renderer>().Length;
                 Assert.That(held, Is.GreaterThan(0), $"{task} puts something in the right hand");
                 if (kit.Hose != null)
-                    Assert.That(kit.Hose[^1].position.y, Is.LessThan(0.2f), "fuel hose runs down to the apron");
+                {
+                    // The hose runs from the nozzle down to the apron and back up to the truck's reel.
+                    kit.HoseAnchor = figure.transform.position + figure.transform.forward * -6f + Vector3.up;
+                    HandTools.Pose(kit, rig);
+                    Assert.That(kit.Hose.Min(h => h.position.y), Is.LessThan(0.4f), "the hose lies on the apron");
+                    Assert.That(Vector3.Distance(kit.Hose[^1].position, kit.HoseAnchor.Value), Is.LessThan(1.5f),
+                        "the hose ends at the reel");
+                    kit.HoseAnchor = null;
+                    HandTools.Pose(kit, rig);
+                    Assert.That(kit.Hose.All(h => !h.gameObject.activeSelf), Is.True, "no hose while the nozzle is stowed");
+                }
             }
             finally
             {
@@ -106,7 +116,9 @@ namespace Airside.Tests
                 {
                     var kit = HandTools.BuildRampKit(task, parent);
                     Assert.That(kit.Headset.GetComponentsInChildren<Renderer>().Length, Is.EqualTo(2), task.ToString());
-                    Assert.That(kit.Root.GetComponentsInChildren<Renderer>().Length, Is.GreaterThan(2), task.ToString());
+                    // The fuel panel operator works the truck's controls: ear defenders only.
+                    if (task != RampTask.FuelPanel)
+                        Assert.That(kit.Root.GetComponentsInChildren<Renderer>().Length, Is.GreaterThan(2), task.ToString());
                 }
             }
             finally

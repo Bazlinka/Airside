@@ -229,12 +229,13 @@ namespace Airside.Simulation
 
         /// <summary>Where the catering hi-loader docks, beside its service door. Null without a truck.</summary>
         public (float X, float Z)? CateringTruck => CateringDoor is { } door
-            ? Clear(door.X + SideOf(door) * 4.2f, door.Z, 2.2f, true)
+            ? Clear(door.X + SideOf(door) * 3.0f, door.Z, 2.2f, true)
             : null;
 
         /// <summary>Where the baggage train stops: beside the hold door, staged away from the wing.</summary>
         public (float X, float Z) BaggageTrain =>
-            Clear(CargoDoor.X + SideOf(CargoDoor) * 6.5f, CargoDoor.Z + AwayFromWing(CargoDoor.Z) * 3.0f, 2.2f, true);
+            Clear(CargoDoor.X + SideOf(CargoDoor) * 6.5f,
+                CargoDoor.Z + AwayFromWing(CargoDoor.Z) * (IsTurboprop ? 3.0f : 5.5f), 2.2f, true);
 
         /// <summary>+1 for a door ahead of the wing, -1 behind it: the direction with room to work.</summary>
         public float AwayFromWing(float z) => z >= WingMidZ ? 1f : -1f;

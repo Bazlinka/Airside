@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Turnarounds are worked item by item.** Bag handlers carry bags one at a time from the train
+  and put them in the hold — by hand on a turboprop, up a belt loader on a jet — and the train
+  empties as they go; how many bags depends on how long the baggage stage takes. The fuel worker
+  walks the nozzle out from the truck on its hose, fuels, and brings it back. A jet's catering
+  truck raises its box to the service door and trolleys are pushed across; on a turboprop,
+  galley boxes are carried up the airstair. Turboprop passengers leave their roller bags on a
+  cart by the stairs and a handler loads them into the hold.
+
 - **Vehicles drive round things instead of through them.** Fuel trucks, catering trucks, baggage
   trains, remote buses and the AI turnaround sets now plan a route round parked aircraft (fuselage,
   engines, propellers and low wings), buildings, the terminal and the aerobridges, and wait rather

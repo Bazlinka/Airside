@@ -5611,22 +5611,18 @@
 
 ## Current milestone
 
-A bare circuit sandbox. One ATR-class aircraft flies a continuous circuit at
-Adelaide (YPAD) — approach, landing, rollout to rest, takeoff, fly-out — and
-recycles onto a fresh approach. The airport sits at a named location (Kingscote
-by default; Port Lincoln and Coober Pedy also available) and runs a day/night
-cycle, a real 24-hour day, driving the sun and ambient
-light. Deterministic weather changes through the day and drives the wet-surface,
-rain and spray presentation.
+Airside is a live-time airline management game set inside an autonomous Adelaide Airport (YPAD) — see
+`docs/product/PROJECT_PLAN.md` (v4.0). The player owns and grows an airline from a Saab 340 starter fleet; Adelaide
+keeps running around them with its real runways, taxiways, stands, roads, car parks and terminal, a real 24-hour day,
+live weather and a curfew. There is a title screen, first-time airline setup, a Glass Cockpit HUD and a saved career
+(a self-led 100–150 hour path, ADR 0120).
 
-The aircraft is flown to ATR 42 reference speeds — Vr 100 kt, Vapp 110,
-touchdown 95, climb-out 170 — on a true 3° glideslope with a real flare
-(ADR 0044). Phase durations are derived from those speeds, never picked.
+The ground and surroundings are built from open data (OpenStreetMap, Sentinel-2, Copernicus DEM); the map overhaul
+(ADR 0184, PR #459) completed the road network, car parks and precinct furniture. The newest work is listed in the
+"Where to resume" log at the top of this file.
 
-There are no objectives, no economy, no scoring and no progression, and nothing
-is saved between runs (ADR 0041). The player has exactly five controls — pause,
-follow, and 1×/2×/4× time — plus a pause menu, and free camera orbit, zoom and
-pan. What is on screen is the aeroplane, the runway and the ground.
+The aircraft are flown to real reference speeds on a true 3° glideslope with a flare (ADR 0044); phase durations are
+derived from those speeds, never picked. The camera orbits, zooms and pans freely, with follow and reset shortcuts.
 
 ## Visual asset contract
 
@@ -5649,7 +5645,7 @@ true 3D assets; animation and VFX mirror simulation state and never drive it.
 ## Invariants
 
 - Domain and simulation rules remain independent of Unity scenes.
-- Nothing persists between runs; there is no save file and no schema to migrate.
+- Career progress persists in a versioned save; any schema change needs an explicit version and a migration.
 - Time comes from an injected clock.
 - Runways, taxiways and stands must be reserved before use, and a lone aircraft
   must never block itself (`AirportSimulation.ReservationConflicts` stays zero).

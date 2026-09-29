@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **The airport has its real boundary.** A chain-link security fence follows the real Adelaide Airport
+  boundary (about 15 km, from OpenStreetMap), with vehicle gates where the airside roads leave it. It
+  replaces the plain rectangle that was off by default. Not yet seen in a rebuilt game.
 - **Propeller blur is round again in the built game.** The blur discs on every propeller aircraft
   (and jet fan discs and painted stand labels) fell back to a flat translucent square because the
   build had stripped a shader; it is now included.

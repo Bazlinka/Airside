@@ -6124,8 +6124,10 @@ namespace Airside.Presentation
             // but give it the same astronomical bodies and a camera-centred star shell.
             BuildSunAndMoonDiscs();
             BuildStarField();
-            if (AirsideBareField.HasLaunchFlag("-airsidePerimeterFence"))
-                BuildBareAdelaidePerimeterFence();
+            // ADR 0181: the real aerodrome boundary, on by default (the old 3.4 × 2.3 km rectangle it replaces
+            // was opt-in because it caged the field; the real fence is a kilometre and more out).
+            if (!AirsideBareField.HasLaunchFlag(NoBoundaryFenceFlag))
+                BuildAdelaideBoundaryFence();
         }
 
         /// <summary>

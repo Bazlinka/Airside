@@ -220,13 +220,13 @@ namespace Airside.Presentation
             var vertices = new List<Vector3>(4096);
             var triangles = new List<int>(8192);
             var y = pavementWorldY + LaneMarkingYOffsetMetres;
-            var half = LaneMarkingWidthMetres * 0.5f;
             var period = LaneMarkingDashLength + LaneMarkingGapLength;
+            var half = LaneMarkingWidthMetres * 0.5f;
 
             float HeightAt(float x, float z) =>
                 groundHeight != null ? groundHeight(x, z) + LaneMarkingYOffsetMetres : y;
 
-            void EmitDash(Vector2 from, Vector2 to)
+            void EmitDash(Vector2 from, Vector2 to, float halfWidth)
             {
                 var dx = to.x - from.x;
                 var dz = to.y - from.y;
@@ -235,8 +235,8 @@ namespace Airside.Presentation
                     return;
                 dx /= len;
                 dz /= len;
-                var px = -dz * half;
-                var pz = dx * half;
+                var px = -dz * halfWidth;
+                var pz = dx * halfWidth;
                 var a = vertices.Count;
                 vertices.Add(new Vector3(from.x + px, HeightAt(from.x + px, from.y + pz), from.y + pz));
                 vertices.Add(new Vector3(from.x - px, HeightAt(from.x - px, from.y - pz), from.y - pz));
@@ -249,7 +249,7 @@ namespace Airside.Presentation
             // Walks one unbroken run of points, laying dashes end to end so the on/off phase
             // stays continuous across the run's original OSM vertices instead of resetting
             // (and so looking inconsistent) at each one.
-            void WalkRun(List<Vector2> run)
+            void WalkRun(List<Vector2> run, bool dashed, float halfWidth)
             {
                 if (run.Count < 2)
                     return;
@@ -261,6 +261,12 @@ namespace Airside.Presentation
                     var segment = Vector2.Distance(from, to);
                     if (segment < 1e-3f)
                         continue;
+                    if (!dashed)
+                    {
+                        EmitDash(from, to, halfWidth);
+                        continue;
+                    }
+
                     var walked = 0f;
                     while (walked < segment)
                     {
@@ -270,7 +276,7 @@ namespace Airside.Presentation
                         {
                             var step = Mathf.Min(onRemaining, segment - walked);
                             EmitDash(Vector2.Lerp(from, to, walked / segment),
-                                Vector2.Lerp(from, to, (walked + step) / segment));
+                                Vector2.Lerp(from, to, (walked + step) / segment), halfWidth);
                             walked += step;
                             traveled += step;
                         }
@@ -302,19 +308,27 @@ namespace Airside.Presentation
                 if (width >= minWidth && drawn < MaxRoads)
                 {
                     var run = new List<Vector2>(count);
+                    var lines = RoadMarkingPlan.For(width);
+                    // Landside laneways keep only the centre line (the plan drops edge lines below 8 m).
+                    void Flush()
+                    {
+                        foreach (var line in lines)
+                            WalkRun(OffsetRun(run, line.Offset), line.Dashed, line.Width * 0.5f);
+                        run.Clear();
+                    }
+
                     for (var p = 0; p < count; p++)
                     {
                         var x = roads[i + p * 2];
                         var z = roads[i + p * 2 + 1];
                         if (AdelaideLandCover.InOperationalCore(x, z) && !AdelaideLandside.Contains(x, z))
                         {
-                            WalkRun(run);
-                            run.Clear();
+                            Flush();
                             continue;
                         }
                         run.Add(new Vector2(x, z));
                     }
-                    WalkRun(run);
+                    Flush();
                     if (vertices.Count > 0)
                         drawn++;
                 }
@@ -335,6 +349,31 @@ namespace Airside.Presentation
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
             return mesh;
+        }
+
+        /// <summary>
+        /// The run moved <paramref name="offset"/> metres to its left, each point along the average of its
+        /// two segment normals so a bend does not pinch the line.
+        /// </summary>
+        public static List<Vector2> OffsetRun(List<Vector2> run, float offset)
+        {
+            if (Mathf.Abs(offset) < 1e-4f || run.Count < 2)
+                return new List<Vector2>(run);
+            var result = new List<Vector2>(run.Count);
+            for (var p = 0; p < run.Count; p++)
+            {
+                var before = p > 0 ? (run[p] - run[p - 1]).normalized : (run[p + 1] - run[p]).normalized;
+                var after = p + 1 < run.Count ? (run[p + 1] - run[p]).normalized : before;
+                var direction = (before + after);
+                direction = direction.sqrMagnitude < 1e-6f ? after : direction.normalized;
+                // Left of travel in x,z (matches the ribbon's own perpendicular).
+                var normal = new Vector2(-direction.y, direction.x);
+                // Keep the line a true offset around a bend.
+                var cos = Mathf.Max(0.5f, Vector2.Dot(direction, after));
+                result.Add(run[p] + normal * (offset / cos));
+            }
+
+            return result;
         }
 
         private static bool RoadTouchesLandside(float[] roads, int pointStart, int count)

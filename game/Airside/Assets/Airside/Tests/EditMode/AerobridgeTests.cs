@@ -100,8 +100,8 @@ namespace Airside.Tests
                 Is.InRange(0.1f, 0.9f), "driving out");
             Assert.That(AerobridgeTimeline.DockedFraction(jet, parkedAt + 400), Is.EqualTo(1f));
             Assert.That(EngineStartSequence.For(jet, parkedAt + 100).DoorsOpen, Is.False, "door stays shut until docked");
-            Assert.That(EngineStartSequence.For(jet, parkedAt + AerobridgeTimeline.DoorsOpenAfterParkSeconds + 1).DoorsOpen,
-                Is.True);
+            Assert.That(EngineStartSequence.For(jet, parkedAt + AerobridgeTimeline.DoorsOpenAfterParkSeconds
+                + DepartureCountdown.PassengerDoorSeconds + 1).DoorsOpen, Is.True, "open once the door has swung");
         }
 
         [Test]
@@ -116,7 +116,7 @@ namespace Airside.Tests
             Assert.That(AerobridgeTimeline.DockedFraction(jet, at - 600), Is.EqualTo(1f));
             Assert.That(EngineStartSequence.For(jet, at - AerobridgeTimeline.RetractBeforePushSeconds - 5).DoorsOpen,
                 Is.False, "door shut before the bridge moves");
-            Assert.That(AerobridgeTimeline.DockedFraction(jet, at - EngineStartSequence.BeaconOnBeforeSeconds), Is.EqualTo(0f),
+            Assert.That(AerobridgeTimeline.DockedFraction(jet, at - DepartureCountdown.JetBeaconBeforeSeconds), Is.EqualTo(0f),
                 "clear of the aircraft before the beacon comes on");
             Assert.That(AerobridgeTimeline.DockedFraction(jet, at + 10), Is.EqualTo(0f));
         }

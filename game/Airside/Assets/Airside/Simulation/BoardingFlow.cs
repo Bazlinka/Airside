@@ -57,13 +57,15 @@ namespace Airside.Simulation
         public const double JetIntervalSeconds = 2.0;
         /// <summary>Allowance for the longest apron walk, so the last boarder makes the door.</summary>
         public const double WalkBudgetSeconds = 110;
-        public const double DeplaneAfterDoorsSeconds = 5;
+        /// <summary>First passenger steps out once the door (or airstair) has finished opening.</summary>
+        public const double DeplaneAfterDoorsSeconds = 12;
 
         // Stair truck: drives up after the engines are off, leaves before the push (ADR 0114).
         public const double StairTruckDockAfterParkSeconds = 40;
         public const double StairTruckMoveSeconds = 40;
-        public const double StairTruckDoorsCloseBeforePushSeconds = 240;
-        public const double StairTruckLeaveBeforePushSeconds = 230;
+        // Door shut, then the truck pulls back, on the departure countdown (ADR 0177).
+        public const double StairTruckDoorsCloseBeforePushSeconds = DepartureCountdown.DoorsClosedBeforeSeconds;
+        public const double StairTruckLeaveBeforePushSeconds = DepartureCountdown.EquipmentAwayBeforeSeconds;
 
         // Remote bus: one trip receives the arriving load, a second returns for departure.
         // Both are pure timelines so loading a save or changing time scale recreates the same scene.
@@ -130,11 +132,8 @@ namespace Airside.Simulation
                 return 0f;
             var parked = nowSeconds - aircraft.StateStartedAt.ElapsedSeconds;
             var docked = Ramp((parked - StairTruckDockAfterParkSeconds) / StairTruckMoveSeconds);
-            if (aircraft.Scheduled is { Cancelled: false } departure)
-            {
-                var leave = departure.DepartAt.ElapsedSeconds - StairTruckLeaveBeforePushSeconds;
-                docked = Math.Min(docked, 1f - Ramp((nowSeconds - leave) / StairTruckMoveSeconds));
-            }
+            if (DepartureCountdown.For(aircraft) is { } countdown)
+                docked = Math.Min(docked, 1f - Ramp((nowSeconds - countdown.EquipmentAway) / StairTruckMoveSeconds));
 
             return docked;
         }
@@ -150,8 +149,8 @@ namespace Airside.Simulation
             var parked = nowSeconds - aircraft.StateStartedAt.ElapsedSeconds;
             if (parked < EngineStartSequence.DoorsOpenAfterSeconds)
                 return false;
-            if (aircraft.Scheduled is { Cancelled: false } departure)
-                return nowSeconds < departure.DepartAt.ElapsedSeconds - StairTruckDoorsCloseBeforePushSeconds;
+            if (DepartureCountdown.For(aircraft) is { } countdown)
+                return nowSeconds < countdown.DoorsClosed;
             return true;
         }
 
@@ -188,16 +187,64 @@ namespace Airside.Simulation
         /// aircraft with no passengers to move, the door stays shut, as on a real apron.
         /// </summary>
         public static bool PassengersAtDoor(FleetAircraft aircraft, double nowSeconds,
+            PlayerBaseLevel baseLevel = PlayerBaseLevel.Starter) =>
+            PassengerDoorOpen(aircraft, nowSeconds, baseLevel) > 0.5f;
+
+        /// <summary>
+        /// How far open (0 shut … 1 open) the passenger door is, moving over the type's door
+        /// time: it opens once the aircraft is ready to deplane, shuts once the cleaners are done,
+        /// reopens shortly before boarding and is shut on the departure countdown (ADR 0177).
+        /// </summary>
+        public static float PassengerDoorOpen(FleetAircraft aircraft, double nowSeconds,
             PlayerBaseLevel baseLevel = PlayerBaseLevel.Starter)
         {
             if (aircraft == null || aircraft.State != FleetState.AtStand)
-                return false;
-            var w = WindowsFor(aircraft, ModeFor(aircraft), baseLevel);
-            if (w.Arrived > 0 && nowSeconds >= w.DoorsOpen
-                              && nowSeconds < w.DeplaneEnd + DoorOpenAfterDeplaningSeconds)
-                return true;
-            return w.Boarding > 0 && nowSeconds >= w.BoardStart - DoorOpenBeforeBoardingSeconds;
+                return 0f;
+            var mode = ModeFor(aircraft);
+            if (mode == BoardingMode.None)
+                return 0f;
+            var w = WindowsFor(aircraft, mode, baseLevel);
+            var seconds = DepartureCountdown.DoorSeconds(aircraft);
+            var open = 0f;
+            if (w.Arrived > 0)
+                open = DepartureCountdown.Open(nowSeconds, w.DoorsOpen,
+                    w.DeplaneEnd + DoorOpenAfterDeplaningSeconds + seconds, seconds);
+            if (w.Boarding > 0 && DepartureCountdown.For(aircraft) is { } countdown)
+                open = Math.Max(open, DepartureCountdown.Open(nowSeconds, w.BoardStart - DoorOpenBeforeBoardingSeconds,
+                    countdown.DoorsClosed, seconds));
+            return open;
         }
+
+        /// <summary>
+        /// How far open the hold doors are: for unloading after arrival, and for loading until
+        /// the hold is shut on the departure countdown (after the player's Baggage stage).
+        /// </summary>
+        public static float CargoDoorOpen(FleetAircraft aircraft, double nowSeconds)
+        {
+            if (aircraft == null || aircraft.State != FleetState.AtStand)
+                return 0f;
+            var parked = (double)aircraft.StateStartedAt.ElapsedSeconds;
+            var seconds = DepartureCountdown.CargoDoorSeconds;
+            var open = 0f;
+            if (aircraft.CompletedTrips > 0)
+                open = DepartureCountdown.Open(nowSeconds, parked + CargoOpenAfterParkSeconds,
+                    parked + CargoOpenAfterParkSeconds + UnloadSeconds, seconds);
+            if (DepartureCountdown.For(aircraft) is { } countdown)
+            {
+                var loadFrom = aircraft.Airline.IsPlayer
+                    ? DepartureCountdown.BaggageStageStart(aircraft) - 20
+                    : countdown.CargoClosed - LoadSeconds;
+                open = Math.Max(open, DepartureCountdown.Open(nowSeconds, loadFrom, countdown.CargoClosed, seconds));
+            }
+
+            return open;
+        }
+
+        /// <summary>Hold doors open once the engines are off, for this long to unload.</summary>
+        public const double CargoOpenAfterParkSeconds = 60;
+        public const double UnloadSeconds = 6 * 60;
+        /// <summary>An AI aircraft's hold is open this long for loading before it is shut.</summary>
+        public const double LoadSeconds = 9 * 60;
 
         private readonly struct Windows
         {
@@ -246,18 +293,16 @@ namespace Airside.Simulation
             if (aircraft.Scheduled is not { Cancelled: false } departure)
                 return new Windows(interval, doorsOpen, arrived, deplaneStart, deplaneEnd, 0, 0, interval);
             var passengers = PassengerCount(aircraft);
-            var doorsClose = departure.DepartAt.ElapsedSeconds - (UsesStairTruck(mode)
-                ? StairTruckDoorsCloseBeforePushSeconds
-                : EngineStartSequence.DoorsCloseBeforeSeconds);
+            // The last boarder is aboard before the headcount and the door starting to close.
+            var countdown = DepartureCountdown.For(aircraft).Value;
+            var doorsClose = countdown.DoorsClosed - DepartureCountdown.DoorSeconds(aircraft) - DepartureCountdown.HeadcountSeconds;
             double boardStart;
             var boardInterval = interval;
             if (aircraft.Airline.IsPlayer)
             {
                 // The player's Boarding prep stage is the window.
-                var total = DeparturePrep.TotalSeconds(aircraft.Type, baseLevel);
-                var prepStart = aircraft.PrepStartedAt?.ElapsedSeconds ?? departure.DepartAt.ElapsedSeconds - total;
                 var boardingSeconds = DeparturePrep.BoardingSecondsFor(aircraft.Type, baseLevel);
-                boardStart = prepStart + total - boardingSeconds;
+                boardStart = DeparturePrep.ReadyAtSeconds(aircraft) - boardingSeconds;
                 boardInterval = Math.Max(0.6, (boardingSeconds - WalkBudgetSeconds * 0.5) / Math.Max(1, passengers));
             }
             else

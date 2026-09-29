@@ -264,9 +264,9 @@ namespace Airside.Simulation
         public const double DockSeconds = 60;
         public const double DoorsOpenAfterParkSeconds = DockAfterParkSeconds + DockSeconds + 10;
         /// <summary>Retracting starts this long before the push and ends before the beacon comes on.</summary>
-        public const double RetractBeforePushSeconds = EngineStartSequence.BeaconOnBeforeSeconds + RetractSeconds + 10;
+        public const double RetractBeforePushSeconds = DepartureCountdown.EquipmentAwayBeforeSeconds;
         public const double RetractSeconds = 60;
-        public const double DoorsCloseBeforePushSeconds = RetractBeforePushSeconds + 10;
+        public const double DoorsCloseBeforePushSeconds = DepartureCountdown.DoorsClosedBeforeSeconds;
 
         /// <summary>True when this aircraft is parked (or taxiing in) on a bridged gate.</summary>
         public static bool AtBridgedGate(FleetAircraft aircraft) =>
@@ -301,25 +301,12 @@ namespace Airside.Simulation
             var parked = nowSeconds - aircraft.StateStartedAt.ElapsedSeconds;
             if (parked < DoorsOpenAfterParkSeconds)
                 return false;
-            var retractStart = RetractStartSeconds(aircraft, baseLevel);
-            return !retractStart.HasValue || nowSeconds < retractStart.Value - 10;
+            return DepartureCountdown.For(aircraft) is not { } countdown || nowSeconds < countdown.DoorsClosed;
         }
 
-        private static double? RetractStartSeconds(FleetAircraft aircraft, PlayerBaseLevel baseLevel)
-        {
-            if (aircraft.Scheduled is not { Cancelled: false } departure)
-                return null;
-            var start = departure.DepartAt.ElapsedSeconds - RetractBeforePushSeconds;
-            if (aircraft.Airline.IsPlayer)
-            {
-                // Boarding holds the bridge: pull back only once prep is complete.
-                var total = DeparturePrep.TotalSeconds(aircraft.Type, baseLevel);
-                var prepStart = aircraft.PrepStartedAt?.ElapsedSeconds ?? departure.DepartAt.ElapsedSeconds - total;
-                start = Math.Max(start, prepStart + total);
-            }
-
-            return start;
-        }
+        /// <summary>The bridge pulls back on the departure countdown, once the door is shut (ADR 0177).</summary>
+        private static double? RetractStartSeconds(FleetAircraft aircraft, PlayerBaseLevel baseLevel) =>
+            DepartureCountdown.For(aircraft)?.EquipmentAway;
 
         private static float Ramp(double t)
         {

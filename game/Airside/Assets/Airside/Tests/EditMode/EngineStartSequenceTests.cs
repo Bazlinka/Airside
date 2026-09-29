@@ -63,17 +63,25 @@ namespace Airside.Tests
 
             EngineState At(double before) => EngineStartSequence.For(plane, depart - before);
 
-            Assert.That(At(170).Beacon, Is.True);
-            // The door opens for boarding, not before: the player's Boarding stage ends at pushback.
+            // The departure countdown (ADR 0177): boarding done at T-3:00, door shut by T-2:30,
+            // beacon at T-1:50, then No.2 and No.1 — never an engine with the door open.
             var boarding = DeparturePrep.BoardingSecondsFor(plane.Type, PlayerBaseLevel.Starter);
-            Assert.That(At(boarding - 10).DoorsOpen, Is.True, "doors stay open through boarding");
-            Assert.That(At(20).DoorsOpen, Is.True, "boarding still open twenty seconds out");
-            Assert.That(At(0).DoorsOpen, Is.False, "doors close when ready for pushback");
-            Assert.That(At(110).Right, Is.GreaterThan(0f));
-            Assert.That(At(110).Left, Is.Zero, "No.2 first");
-            Assert.That(At(60).Left, Is.GreaterThan(0f));
-            Assert.That(At(30).Right, Is.EqualTo(1f));
+            Assert.That(At(DepartureCountdown.PrepEndsBeforeSeconds + boarding - 10).DoorsOpen, Is.True,
+                "doors open through boarding");
+            Assert.That(At(DepartureCountdown.DoorsClosedBeforeSeconds).PassengerDoor, Is.EqualTo(0f),
+                "door shut two and a half minutes out");
+            Assert.That(At(DepartureCountdown.DoorsClosedBeforeSeconds + 4).PassengerDoor, Is.InRange(0.01f, 0.99f),
+                "the door is seen closing, not snapping");
+            Assert.That(At(DepartureCountdown.TurbopropBeaconBeforeSeconds + 1).Beacon, Is.False);
+            Assert.That(At(DepartureCountdown.TurbopropBeaconBeforeSeconds - 1).Beacon, Is.True);
+            Assert.That(At(80).Right, Is.GreaterThan(0f));
+            Assert.That(At(80).Left, Is.Zero, "No.2 first");
+            Assert.That(At(40).Left, Is.GreaterThan(0f));
+            Assert.That(At(20).Right, Is.EqualTo(1f));
             Assert.That(At(0).Left, Is.EqualTo(1f).Within(0.001f), "both running by pushback");
+            for (var before = 600.0; before >= 0; before -= 1)
+                if (At(before).AnyRunning)
+                    Assert.That(At(before).PassengerDoor, Is.EqualTo(0f), $"engine running with the door open at T-{before}");
 
             // Spool is monotonic through the start.
             var last = 0f;
@@ -107,7 +115,8 @@ namespace Airside.Tests
             Assert.That(After(80).AnyRunning, Is.False);
             Assert.That(After(80).Beacon, Is.False);
             Assert.That(After(80).DoorsOpen, Is.False);
-            Assert.That(After(95).DoorsOpen, Is.True);
+            Assert.That(After(EngineStartSequence.DoorsOpenAfterSeconds + DepartureCountdown.AirstairSeconds).DoorsOpen,
+                Is.True, "the airstair has finished unfolding");
         }
 
         [Test]

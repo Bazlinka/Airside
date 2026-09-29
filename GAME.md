@@ -1,5 +1,22 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — departure countdown and door timing (branch `feature/departure-countdown`,
+  ADR 0177).**
+  - `Simulation/DepartureCountdown`: one T-minus timeline for every stand (hold T-5:00, player prep
+    T-4:00, door T-2:30 after last walkers + headcount, bridge/stairs away T-2:10, beacon once
+    clear, turboprop engines on stand, jet engines during the push). Found: turboprop No.2 started
+    120 s out with the door open and passengers boarding; stand types shut doors 25–260 s out.
+  - Player prep ends 240 s before push (planner lead includes it). `EngineState` now carries eased
+    passenger/hold door positions from game time; presentation sets door angles from them (no
+    unscaled-time `MoveTowards`). Hold doors open for unloading and loading only.
+  - **Checks:** new `DepartureCountdownTests` (every stand, AI and player, second by second: no
+    beacon/engine with a door open or bridge/stairs on, no door shut on a boarder, order of events,
+    late prep closes up) and updated Engine/Aerobridge/Boarding/Career/Delay/Pushback tests pass.
+    Full Unity EditMode 1371/1376: only the 3 known `origin/main` failures. `test-domain.sh` not
+    run (no dotnet SDK). **Not seen in a rebuilt game.**
+  - **NEXT:** rebuild and watch a Saab departure (door up, beacon, No.2, No.1) and a jet at a
+    bridge (door, bridge back, beacon, tug, engines on the push).
+
 - **2026-09-29 Claude — hands-on turnaround work (branch `feature/service-choreography`, ADR 0176).**
   - `Simulation/ServiceChoreography`: bags walked train→hold one at a time (hand-loaded on props,
     belt loader on jets; count = what fits the stage at a realistic trip time, capped at seats),

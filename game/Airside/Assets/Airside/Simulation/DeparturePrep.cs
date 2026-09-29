@@ -90,10 +90,12 @@ namespace Airside.Simulation
 
         /// <summary>Planner lead: prep plus the engine-start window, whichever is longer.</summary>
         public static long LeadSeconds(AircraftType type) =>
-            Math.Max(EngineStartSequence.MinimumDepartureLeadSeconds, TotalSeconds(type));
+            Math.Max(EngineStartSequence.MinimumDepartureLeadSeconds,
+                TotalSeconds(type) + (long)DepartureCountdown.PrepEndsBeforeSeconds);
 
         public static long LeadSeconds(AircraftType type, PlayerBaseLevel baseLevel) =>
-            Math.Max(EngineStartSequence.MinimumDepartureLeadSeconds, TotalSeconds(type, baseLevel));
+            Math.Max(EngineStartSequence.MinimumDepartureLeadSeconds,
+                TotalSeconds(type, baseLevel) + (long)DepartureCountdown.PrepEndsBeforeSeconds);
 
         public static bool IsReady(FleetAircraft aircraft, SimulationTime now) =>
             IsReady(aircraft, now, aircraft?.BaseLevel ?? PlayerBaseLevel.Starter);
@@ -223,7 +225,8 @@ namespace Airside.Simulation
             if (aircraft.PrepStartedAt.HasValue)
                 return aircraft.PrepStartedAt.Value.ElapsedSeconds;
             var total = TotalSeconds(aircraft.Type, baseLevel);
-            var inferred = aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - total;
+            // Prep is done in time for the departure countdown: doors, bridge, beacon, engines (ADR 0177).
+            var inferred = aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - total - (long)DepartureCountdown.PrepEndsBeforeSeconds;
             return inferred < 0 ? 0 : inferred;
         }
 

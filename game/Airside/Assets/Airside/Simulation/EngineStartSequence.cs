@@ -7,11 +7,17 @@ namespace Airside.Simulation
     public readonly struct EngineState
     {
         public EngineState(float left, float right, bool beacon, bool doorsOpen)
+            : this(left, right, beacon, doorsOpen ? 1f : 0f, 0f)
+        {
+        }
+
+        public EngineState(float left, float right, bool beacon, float passengerDoor, float cargoDoor)
         {
             Left = left;
             Right = right;
             Beacon = beacon;
-            DoorsOpen = doorsOpen;
+            PassengerDoor = Math.Max(0f, Math.Min(1f, passengerDoor));
+            CargoDoor = Math.Max(0f, Math.Min(1f, cargoDoor));
         }
 
         /// <summary>0 stopped … 1 running, for engine No.1 (left).</summary>
@@ -21,7 +27,14 @@ namespace Airside.Simulation
         public float Right { get; }
 
         public bool Beacon { get; }
-        public bool DoorsOpen { get; }
+
+        /// <summary>0 shut … 1 open: the passenger door (or airstair), part-way while it moves.</summary>
+        public float PassengerDoor { get; }
+
+        /// <summary>0 shut … 1 open: the hold doors.</summary>
+        public float CargoDoor { get; }
+
+        public bool DoorsOpen => PassengerDoor > 0.5f;
 
         public bool AnyRunning => Left > 0.02f || Right > 0.02f;
 
@@ -30,24 +43,21 @@ namespace Airside.Simulation
     }
 
     /// <summary>
-    /// Turboprop start before departure and shutdown after parking, as a pure function of
-    /// fleet state and time (presentation only; it never changes when anything happens).
+    /// Engine start before departure and shutdown after parking, as a pure function of fleet
+    /// state and time (presentation only; it never changes when anything happens).
     ///
-    /// Before pushback: beacon on, doors close, No.2 (right) starts, then No.1 (left) —
-    /// the usual ATR order — each spooling up over <see cref="SpoolSeconds"/>. After
-    /// parking: No.1 then No.2 wind down, the beacon goes off, then the doors open.
+    /// Before pushback everything follows <see cref="DepartureCountdown"/>: doors shut, the
+    /// bridge or stairs clear, beacon on; a turboprop then starts No.2 (right) and No.1 (left)
+    /// on the stand — the usual ATR order — and a jet starts them during the push. Each spools
+    /// over <see cref="SpoolSeconds"/>. After parking: No.1 then No.2 wind down, the beacon
+    /// goes off, then the doors open.
     /// </summary>
     public static class EngineStartSequence
     {
-        public const double BeaconOnBeforeSeconds = 180;
-        /// <summary>
-        /// Close doors after boarding would finish for a jet (180 s) and shortly
-        /// before the right engine start. Kept below <see cref="RightStartBeforeSeconds"/>.
-        /// Player prep still forces doors open through Boarding (see <see cref="For"/>).
-        /// </summary>
-        public const double DoorsCloseBeforeSeconds = 25;
-        public const double RightStartBeforeSeconds = 120;
-        public const double LeftStartBeforeSeconds = 70;
+        public const double BeaconOnBeforeSeconds = DepartureCountdown.TurbopropBeaconBeforeSeconds;
+        public const double DoorsCloseBeforeSeconds = DepartureCountdown.DoorsClosedBeforeSeconds;
+        public const double RightStartBeforeSeconds = DepartureCountdown.TurbopropRightStartBeforeSeconds;
+        public const double LeftStartBeforeSeconds = DepartureCountdown.TurbopropLeftStartBeforeSeconds;
         public const double SpoolSeconds = 30;
 
         public const double LeftStopAfterSeconds = 15;
@@ -60,19 +70,34 @@ namespace Airside.Simulation
 
         public static EngineState For(FleetAircraft aircraft, double nowSeconds)
         {
+            // A jet starts its engines during the push (ADR 0177): No.2, then No.1.
+            if (aircraft != null && aircraft.State == FleetState.TaxiOut && AirlineOperations.NeedsTerminalGate(aircraft.Type))
+            {
+                var pushing = nowSeconds - aircraft.StateStartedAt.ElapsedSeconds;
+                return new EngineState(Ramp(pushing - DepartureCountdown.JetLeftStartAfterPushSeconds),
+                    Ramp(pushing - DepartureCountdown.JetRightStartAfterPushSeconds), beacon: true, 0f, 0f);
+            }
+
             var state = ForStairs(aircraft, nowSeconds);
-            // On a bridged Terminal 1 gate the L1 door follows the aerobridge instead: it opens
-            // once the cab is docked and closes before the bridge pulls back (ADR 0113).
-            // A jet on a stand without a bridge follows its stair truck (ADR 0114).
-            var bridged = AerobridgeTimeline.DoorsOpen(aircraft, nowSeconds)
-                          ?? BoardingFlow.StairTruckDoorsOpen(aircraft, nowSeconds);
-            var doors = bridged ?? state.DoorsOpen;
-            // Whatever the stand, the door is only open while passengers are using it: a parked
-            // aircraft between rotations or overnight is shut, not left open on the apron.
-            if (aircraft != null && aircraft.State == FleetState.AtStand)
-                doors &= BoardingFlow.PassengersAtDoor(aircraft, nowSeconds);
-            return new EngineState(state.Left, state.Right, state.Beacon, doors);
+            if (aircraft == null || aircraft.State != FleetState.AtStand)
+                return state;
+            // The doors follow the people and bags using them, on every kind of stand: open to
+            // deplane and to board, shut between rotations and overnight, and shut on the
+            // departure countdown before the bridge or stairs move and any engine starts.
+            var passengerDoor = BoardingFlow.PassengerDoorOpen(aircraft, nowSeconds);
+            if (AerobridgeTimeline.DoorsOpen(aircraft, nowSeconds) == false
+                || BoardingFlow.StairTruckDoorsOpen(aircraft, nowSeconds) == false)
+                passengerDoor = Math.Min(passengerDoor, ClosingTail(aircraft, nowSeconds));
+            return new EngineState(state.Left, state.Right, state.Beacon, passengerDoor,
+                BoardingFlow.CargoDoorOpen(aircraft, nowSeconds));
         }
+
+        /// <summary>A door already moving shut when the bridge or truck says shut finishes its swing.</summary>
+        private static float ClosingTail(FleetAircraft aircraft, double nowSeconds) =>
+            DepartureCountdown.For(aircraft) is { } countdown
+                ? DepartureCountdown.Open(nowSeconds, double.MinValue / 4, countdown.DoorsClosed,
+                    DepartureCountdown.DoorSeconds(aircraft))
+                : 0f;
 
         private static EngineState ForStairs(FleetAircraft aircraft, double nowSeconds)
         {
@@ -92,26 +117,15 @@ namespace Airside.Simulation
                     doorsOpen: parkedCancelled >= DoorsOpenAfterSeconds);
             }
 
-            if (aircraft.Scheduled is { } departure)
+            if (DepartureCountdown.For(aircraft) is { } countdown && nowSeconds >= countdown.BeaconOn)
             {
-                var until = departure.DepartAt.ElapsedSeconds - nowSeconds;
-                // Keep doors open while the player is still fueling / catering / boarding.
-                var boardingOpen = false;
-                if (aircraft.Airline.IsPlayer)
-                {
-                    var prep = DeparturePrep.For(aircraft, new SimulationTime((long)Math.Max(0, nowSeconds)));
-                    boardingOpen = prep.Stage is DeparturePrepStage.Fuel
-                        or DeparturePrepStage.Catering or DeparturePrepStage.Boarding;
-                }
-
-                if (until <= BeaconOnBeforeSeconds)
-                {
-                    return new EngineState(
-                        Ramp(LeftStartBeforeSeconds - until),
-                        Ramp(RightStartBeforeSeconds - until),
-                        beacon: true,
-                        doorsOpen: boardingOpen || until > DoorsCloseBeforeSeconds);
-                }
+                // A jet's engines wait for the push; a turboprop starts on the stand.
+                var jet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
+                return new EngineState(
+                    jet ? 0f : Ramp(nowSeconds - countdown.LeftStart),
+                    jet ? 0f : Ramp(nowSeconds - countdown.RightStart),
+                    beacon: true,
+                    doorsOpen: false);
             }
 
             // A brand-new aircraft has never arrived, so it has nothing to shut down.

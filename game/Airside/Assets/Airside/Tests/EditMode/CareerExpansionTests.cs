@@ -168,7 +168,8 @@ namespace Airside.Tests
             var (_, ops, plane) = PlayerOnly();
             var departAt = new SimulationTime(4 * 3600);
             Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), departAt).Accepted, Is.True);
-            var expectedStart = departAt.ElapsedSeconds - DeparturePrep.TotalSeconds(plane.Type);
+            var expectedStart = departAt.ElapsedSeconds - DeparturePrep.TotalSeconds(plane.Type)
+                - (long)DepartureCountdown.PrepEndsBeforeSeconds;
             Assert.That(plane.PrepStartedAt!.Value.ElapsedSeconds, Is.EqualTo(expectedStart));
             Assert.That(DeparturePrep.For(plane, new SimulationTime(0)).Stage, Is.EqualTo(DeparturePrepStage.Fuel));
             Assert.That(DeparturePrep.For(plane, new SimulationTime(0)).FuelProgress, Is.EqualTo(0),

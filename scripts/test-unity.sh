@@ -30,8 +30,17 @@ if [ ! -s "$results" ]; then
   exit 1
 fi
 
-summary="$(grep -o 'total="[0-9]*" passed="[0-9]*" failed="[0-9]*"' "$results" | head -1 || true)"
+summary="$(grep -o 'total="[0-9]*" passed="[0-9]*" failed="[0-9]*" inconclusive="[0-9]*"' "$results" | head -1 || true)"
 failed="$(grep -o 'failed="[0-9]*"' "$results" | head -1 | grep -o '[0-9]*' || true)"
+inconclusive="$(grep -o 'inconclusive="[0-9]*"' "$results" | head -1 | grep -o '[0-9]*' || true)"
+
+# Unity exits 2 when any test is not a pass, inconclusive ones included, so the exit code
+# alone reported a clean run as failed. Judge by failures; list inconclusive tests (an
+# Assume() precondition not met) so they are seen rather than hidden. Any other non-zero
+# exit is still a failure.
+if [ "$status" -eq 2 ] && [ "${failed:-0}" = "0" ]; then
+  status=0
+fi
 
 # A failing run aborted with no output at all: the names live in the results XML and
 # everything else is in the log, so neither was ever shown.
@@ -43,3 +52,7 @@ if [ "$status" -ne 0 ] || [ "${failed:-0}" != "0" ]; then
 fi
 
 echo "Unity tests passed. ${summary:+$summary. }Results: $results"
+if [ "${inconclusive:-0}" != "0" ]; then
+  echo "Inconclusive (precondition not met, not a failure):"
+  grep -o 'name="[^"]*" [^>]*result="Inconclusive"' "$results" | grep -o '^name="[^"]*"' | sed 's/^/  /' | head -20 || true
+fi

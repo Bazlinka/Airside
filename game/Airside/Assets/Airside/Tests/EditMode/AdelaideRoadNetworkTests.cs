@@ -23,6 +23,17 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void PackedTables_DecodeWhole()
+        {
+            long sum = 0;
+            for (var i = 0; i < AdelaideRoadNetwork.Points.Length / 2; i++)
+                sum += (long)System.Math.Round(X(i) * 10.0) + 3L * (long)System.Math.Round(Z(i) * 10.0);
+            Assert.That(sum, Is.EqualTo(AdelaideRoadNetwork.PointChecksum), "the packed points decoded exactly");
+            Assert.That(AdelaideRoadNetwork.Furniture.Length % AdelaideRoadNetwork.FurnitureStride, Is.EqualTo(0));
+            Assert.That(AdelaideRoadNetwork.Junctions.Length % 4, Is.EqualTo(0));
+        }
+
+        [Test]
         public void Roads_OwnValidPointRanges_AndSaneWidths()
         {
             var pointCount = AdelaideRoadNetwork.Points.Length / 2;

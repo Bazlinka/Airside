@@ -69,6 +69,16 @@ def main():
     presentation = candidates("Presentation")
     tests = [t for t in candidates("Tests/EditMode") if t not in NEVER]
     original = open(PROPS, encoding="utf-8").read() if os.path.exists(PROPS) else ""
+    try:
+        run(args, presentation, tests, original)
+    except BaseException:
+        # never leave a half-derived list behind, whatever went wrong
+        with open(PROPS, "w", encoding="utf-8", newline="\n") as f:
+            f.write(original)
+        raise
+
+
+def run(args, presentation, tests, original):
     for attempt in range(1, 30):
         with open(PROPS, "w", encoding="utf-8", newline="\n") as f:
             f.write(write_props(presentation, tests))

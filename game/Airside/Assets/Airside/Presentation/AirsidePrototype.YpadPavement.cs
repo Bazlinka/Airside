@@ -162,6 +162,7 @@ namespace Airside.Presentation
             public readonly SurfaceMesh Plant = new();
             public readonly SurfaceMesh CabGlass = new();
             public readonly SurfaceMesh Canopy = new();
+            public readonly SurfaceMesh HangarRoofs = new();
             public readonly List<Vector3> ObstructionLights = new();
         }
 
@@ -184,6 +185,8 @@ namespace Airside.Presentation
 
             foreach (var prism in set.Prisms)
                 AddPrism(Target(prism.Part), prism.Xz, prism.BaseY, prism.Height);
+            foreach (var roof in set.Roofs)
+                AddHangarRoof(meshes.HangarRoofs, roof);
             foreach (var box in set.Boxes)
             {
                 if (box.Part == BuildingPart.ObstructionLight)
@@ -210,6 +213,8 @@ namespace Airside.Presentation
             SpawnSurface(root, "YPAD rooftop plant", detail.Plant, new Color(0.62f, 0.64f, 0.63f), metalAlbedo, castShadows: true);
             SpawnSurface(root, "YPAD terminal kerb canopy", detail.Canopy, new Color(0.80f, 0.81f, 0.80f), null, castShadows: true,
                 useTextures: false);
+            SpawnSurface(root, "YPAD hangar roof silhouettes", detail.HangarRoofs, new Color(0.56f, 0.58f, 0.58f),
+                metalAlbedo, castShadows: true);
             foreach (var at in detail.ObstructionLights)
             {
                 var lamp = CreateBlock("Tower obstruction light", at, new Vector3(0.45f, 0.4f, 0.45f), new Color(1f, 0.12f, 0.08f));
@@ -245,6 +250,77 @@ namespace Airside.Presentation
             Face(c - up, along, across, box.Length, box.Depth);
         }
 
+        /// <summary>
+        /// Extrude one lightweight hangar roof along its longest surveyed axis. The supporting
+        /// shell remains the original OSM prism, so these profiles cannot affect routing or
+        /// collision and can be removed without exposing the building interior.
+        /// </summary>
+        private static void AddHangarRoof(SurfaceMesh mesh, DetailRoof roof)
+        {
+            var along = new Vector3(roof.DirX, 0f, roof.DirZ);
+            var across = new Vector3(-roof.DirZ, 0f, roof.DirX);
+            var centre = new Vector3(roof.X, roof.EaveY, roof.Z);
+            var halfLength = roof.Length * 0.5f;
+            var profile = new List<Vector2>();
+            switch (roof.Profile)
+            {
+                case HangarRoofProfile.Gable:
+                    profile.Add(new Vector2(-roof.Width * 0.5f, 0f));
+                    profile.Add(new Vector2(0f, roof.Rise));
+                    profile.Add(new Vector2(roof.Width * 0.5f, 0f));
+                    break;
+                case HangarRoofProfile.Barrel:
+                    const int barrelSegments = 10;
+                    for (var i = 0; i <= barrelSegments; i++)
+                    {
+                        var t = i / (float)barrelSegments;
+                        profile.Add(new Vector2((t - 0.5f) * roof.Width, Mathf.Sin(t * Mathf.PI) * roof.Rise));
+                    }
+                    break;
+                default:
+                    const int teeth = 5;
+                    for (var i = 0; i < teeth; i++)
+                    {
+                        var start = -roof.Width * 0.5f + roof.Width * i / teeth;
+                        var end = -roof.Width * 0.5f + roof.Width * (i + 1f) / teeth;
+                        profile.Add(new Vector2(start, roof.Rise * 0.12f));
+                        profile.Add(new Vector2(end - roof.Width / teeth * 0.18f, roof.Rise));
+                        profile.Add(new Vector2(end, roof.Rise * 0.12f));
+                    }
+                    break;
+            }
+
+            var left = new int[profile.Count];
+            var right = new int[profile.Count];
+            for (var i = 0; i < profile.Count; i++)
+            {
+                var point = centre + across * profile[i].x + Vector3.up * profile[i].y;
+                left[i] = mesh.Add(point - along * halfLength, new Vector2(0f, i));
+                right[i] = mesh.Add(point + along * halfLength, new Vector2(roof.Length / 9f, i));
+            }
+
+            for (var i = 0; i + 1 < profile.Count; i++)
+            {
+                var slope = across * (profile[i + 1].x - profile[i].x)
+                            + Vector3.up * (profile[i + 1].y - profile[i].y);
+                var outward = Vector3.Cross(along, slope);
+                if (outward.y < 0f)
+                    outward = -outward;
+                mesh.Triangle(left[i], right[i], right[i + 1], outward);
+                mesh.Triangle(left[i], right[i + 1], left[i + 1], outward);
+            }
+
+            // Close the two visible ends. A simple fan works because every profile is monotonic
+            // across its width; its baseline sits inside the already closed flat shell roof.
+            var leftCentre = mesh.Add(centre - along * halfLength + Vector3.up * roof.Rise * 0.25f);
+            var rightCentre = mesh.Add(centre + along * halfLength + Vector3.up * roof.Rise * 0.25f);
+            for (var i = 0; i + 1 < profile.Count; i++)
+            {
+                mesh.Triangle(leftCentre, left[i + 1], left[i], -along);
+                mesh.Triangle(rightCentre, right[i], right[i + 1], along);
+            }
+        }
+
         private static void BuildAdelaideTerminalArchitecture(float groundY)
         {
             var glass = new Color(0.10f, 0.18f, 0.22f, 0.90f);
@@ -277,6 +353,13 @@ namespace Airside.Presentation
             foreach (var detail in AdelaideTerminalArchitecture.GlazingMullions())
                 CreateBlock(detail.Name, new Vector3(detail.X, groundY + detail.Y, detail.Z),
                     new Vector3(detail.Width, detail.Height, detail.Depth), mullion);
+            foreach (var detail in AdelaideTerminalArchitecture.AirsidePylons())
+            {
+                var pylon = CreateBlock(detail.Name, new Vector3(detail.X, groundY + detail.Y, detail.Z),
+                    new Vector3(detail.Width, detail.Height, detail.Depth), brow);
+                pylon.GetComponent<Renderer>().sharedMaterial =
+                    CreateSharedSurfaceMaterial(brow, metalAlbedo, new Vector2(1f, 3f));
+            }
             foreach (var detail in AdelaideTerminalArchitecture.RoofBrow())
             {
                 var canopy = CreateBlock(detail.Name, new Vector3(detail.X, groundY + detail.Y, detail.Z),

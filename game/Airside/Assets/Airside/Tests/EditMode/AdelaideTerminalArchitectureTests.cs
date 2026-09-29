@@ -103,6 +103,21 @@ namespace Airside.Tests
             Assert.That(details.All(d => d.Y - d.Height * 0.5f >= AdelaideTerminalArchitecture.ShellHeightMetres), Is.True);
             Assert.That(details.All(d => d.X - d.Width * 0.5f > 975f && d.X + d.Width * 0.5f < 1616f), Is.True);
             Assert.That(details.All(d => d.Z - d.Depth * 0.5f >= 436f && d.Z + d.Depth * 0.5f < 474f), Is.True);
+            Assert.That(details.Count(d => d.Name.Contains("skylight hall")), Is.EqualTo(3));
+            Assert.That(details.Where(d => d.Name.Contains("skylight")).All(d => d.Height >= 0.9f), Is.True,
+                "roof glazing must be a visible lantern, not a painted strip");
+        }
+
+        [Test]
+        public void AirsidePylons_FollowTheRealWallAndStayInsideTheTerminalEnds()
+        {
+            var pylons = AdelaideTerminalArchitecture.AirsidePylons();
+
+            Assert.That(pylons.Length, Is.EqualTo(8));
+            Assert.That(pylons.All(p => p.X - p.Width * 0.5f >= 986f && p.X + p.Width * 0.5f < 1616f), Is.True);
+            Assert.That(pylons.All(p => p.Height > AdelaideTerminalArchitecture.ShellHeightMetres), Is.True);
+            foreach (var pylon in pylons)
+                Assert.That(pylon.Z, Is.EqualTo(AdelaideTerminalArchitecture.AirsideWallZAt(pylon.X) - 0.38f).Within(0.01f));
         }
 
         [Test]

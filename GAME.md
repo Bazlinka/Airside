@@ -1,5 +1,18 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Codex — Adelaide hero architecture (branch `codex/adelaide-hero-architecture`, ADR 0185).**
+  - Terminal 1 now has raised roof lanterns and eight airside structural piers tied to the real curved facade.
+  - Every surveyed operational hangar has a fitted gable, barrel or sawtooth roof; the original OSM prism remains
+    underneath as the fallback and routing/collision are untouched.
+  - Every working aerobridge keeps its existing site, door target and timeline, but now has rotunda glazing and cap,
+    six tunnel portal frames, three-sided cab glazing/roof/hazard rail and a four-wheel drive bogie.
+  - **Checks:** Unity EditMode 1426/1428, zero failures (the usual two `Assume` inconclusives); asset audit passed
+    (1,449 GUIDs, 343 mirrored files, 70 character materials); Mac build passed. Packaged overview at 12:00 and
+    23:30 plus terminal and airside close views were inspected; no exception/error match in the four Player logs.
+    `.NET` is absent, so the supplementary `test-domain.sh`/`update-harness.py --check` could not run.
+  - **NEXT:** retain this as the visual baseline and move to the authored GSE/material-atlas pass. If further terminal
+    work is requested, tune from the repeatable airside camera rather than changing footprints or gate positions.
+
 - **2026-09-29 Claude — code-quality pass (branch `claude/code-quality-pass`).**
   - CI (`.github/workflows/headless.yml`) runs the generators' `--check`, `update-harness.py --check` and `dotnet test`.
     The harness file list is now derived (`scripts/update-harness.py` -> `Harness.Generated.props`): 1,056 tests run.

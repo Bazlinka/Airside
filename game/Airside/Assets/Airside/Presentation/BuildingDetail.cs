@@ -76,10 +76,51 @@ namespace Airside.Presentation
         public float Top => BaseY + Height;
     }
 
+    /// <summary>The visible roof silhouette added above an existing surveyed hangar shell.</summary>
+    public enum HangarRoofProfile
+    {
+        Gable,
+        Barrel,
+        Sawtooth
+    }
+
+    /// <summary>
+    /// An oriented roof in world metres. The existing footprint prism remains the watertight
+    /// building; this is its light, presentation-only cap.
+    /// </summary>
+    public readonly struct DetailRoof
+    {
+        public DetailRoof(HangarRoofProfile profile, float x, float z, float length, float width,
+            float eaveY, float rise, float dirX, float dirZ)
+        {
+            Profile = profile;
+            X = x;
+            Z = z;
+            Length = length;
+            Width = width;
+            EaveY = eaveY;
+            Rise = rise;
+            DirX = dirX;
+            DirZ = dirZ;
+        }
+
+        public HangarRoofProfile Profile { get; }
+        public float X { get; }
+        public float Z { get; }
+        public float Length { get; }
+        public float Width { get; }
+        public float EaveY { get; }
+        public float Rise { get; }
+        public float DirX { get; }
+        public float DirZ { get; }
+        public float RidgeY => EaveY + Rise;
+    }
+
     public sealed class BuildingDetailSet
     {
         public readonly List<DetailBox> Boxes = new();
         public readonly List<DetailPrism> Prisms = new();
+        public readonly List<DetailRoof> Roofs = new();
     }
 
     /// <summary>
@@ -133,7 +174,7 @@ namespace Airside.Presentation
             {
                 case AdelaideBuildingKind.Hangar:
                     AddHangarDoor(set, xz, front, baseY, height);
-                    AddRoofMonitor(set, xz, baseY + height);
+                    AddHangarRoof(set, xz, baseY + height, building.Id);
                     AddWindowBands(set, xz, baseY, 1, random, skipEdge: front);
                     break;
                 case AdelaideBuildingKind.FireStation:
@@ -338,19 +379,95 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>A raised clerestory strip along the hangar's long axis, when it fits inside.</summary>
-        private static void AddRoofMonitor(BuildingDetailSet set, float[] xz, float roofY)
+        /// <summary>
+        /// Give every sufficiently regular hangar a recognisable roof rather than another flat
+        /// OSM prism. The profile is stable per building, while the cap is progressively inset
+        /// until all four corners are supported by the surveyed footprint.
+        /// </summary>
+        private static void AddHangarRoof(BuildingDetailSet set, float[] xz, float roofY, string id)
         {
             var box = OrientedBounds(xz);
-            var length = box.Length * 0.7f;
-            var width = Math.Min(10f, box.Width * 0.24f);
-            if (length < 8f || width < 2f)
-                return;
-            if (!BoxInside(xz, box.X, box.Z, box.DirX, box.DirZ, length, width, 0.5f))
-                return;
-            set.Boxes.Add(new DetailBox(BuildingPart.Shell, box.X, roofY + 0.7f, box.Z, length, 1.4f, width, box.DirX, box.DirZ));
-            set.Boxes.Add(new DetailBox(BuildingPart.WindowDark, box.X, roofY + 0.75f, box.Z, length - 1f, 0.7f, width + 0.08f,
-                box.DirX, box.DirZ));
+            var length = box.Length * 0.94f;
+            var width = box.Width * 0.90f;
+            for (var attempt = 0; attempt < 8 && !BoxInside(xz, box.X, box.Z, box.DirX, box.DirZ, length, width, 0.2f); attempt++)
+            {
+                length *= 0.92f;
+                width *= 0.90f;
+            }
+            var roofX = box.X;
+            var roofZ = box.Z;
+            var roofDirX = box.DirX;
+            var roofDirZ = box.DirZ;
+            if (length < 8f || width < 5f
+                || !BoxInside(xz, roofX, roofZ, roofDirX, roofDirZ, length, width, 0.2f))
+            {
+                // Concave/L-shaped sheds cannot support a rectangle centred on their overall
+                // bounds. Fit the roof to the longest facade wing instead: its midpoint moved
+                // inward by half the roof width is guaranteed to describe the occupied arm.
+                var edge = Edge(xz, FrontEdge(xz), Winding(xz));
+                length = edge.Length * 0.78f;
+                width = Math.Min(8f, Math.Max(5f, box.Width * 0.22f));
+                roofDirX = edge.DirX;
+                roofDirZ = edge.DirZ;
+                roofX = (edge.AX + edge.BX) * 0.5f - edge.OutX * (width * 0.58f);
+                roofZ = (edge.AZ + edge.BZ) * 0.5f - edge.OutZ * (width * 0.58f);
+                for (var attempt = 0; attempt < 8
+                     && !BoxInside(xz, roofX, roofZ, roofDirX, roofDirZ, length, width, 0.1f); attempt++)
+                {
+                    length *= 0.90f;
+                    width *= 0.88f;
+                    roofX += -edge.OutX * 0.25f;
+                    roofZ += -edge.OutZ * 0.25f;
+                }
+                if (length < 6f || width < 3.2f
+                    || !BoxInside(xz, roofX, roofZ, roofDirX, roofDirZ, length, width, 0.1f))
+                    return;
+            }
+
+            var selector = StableSelector(id);
+            var profile = (selector % 3) switch
+            {
+                0 => HangarRoofProfile.Gable,
+                1 => HangarRoofProfile.Barrel,
+                _ => HangarRoofProfile.Sawtooth
+            };
+            var rise = profile switch
+            {
+                HangarRoofProfile.Gable => Math.Min(4.2f, width * 0.18f),
+                HangarRoofProfile.Barrel => Math.Min(3.4f, width * 0.15f),
+                _ => Math.Min(2.8f, width * 0.12f)
+            };
+            set.Roofs.Add(new DetailRoof(profile, roofX, roofZ, length, width, roofY + 0.08f, rise,
+                roofDirX, roofDirZ));
+
+            // A dark ridge/clerestory keeps the roof readable at overview distance and breaks
+            // up the otherwise long unlit sheets. Sawtooth roofs get repeated north-light bands.
+            if (profile == HangarRoofProfile.Sawtooth)
+            {
+                for (var i = -2; i <= 2; i++)
+                {
+                    var across = i * width / 5f;
+                    set.Boxes.Add(new DetailBox(BuildingPart.WindowDark,
+                        roofX - roofDirZ * across, roofY + rise * 0.62f, roofZ + roofDirX * across,
+                        length * 0.94f, rise * 0.55f, 0.18f, roofDirX, roofDirZ));
+                }
+            }
+            else
+            {
+                set.Boxes.Add(new DetailBox(BuildingPart.WindowDark, roofX, roofY + rise * 0.72f, roofZ,
+                    length * 0.82f, Math.Max(0.55f, rise * 0.32f), 0.24f, roofDirX, roofDirZ));
+            }
+        }
+
+        private static int StableSelector(string value)
+        {
+            unchecked
+            {
+                var hash = 17;
+                foreach (var c in value ?? string.Empty)
+                    hash = hash * 31 + c;
+                return hash & int.MaxValue;
+            }
         }
 
         private static void AddRoofPlant(BuildingDetailSet set, float[] xz, float roofY, Hash random, int maxUnits = 14,

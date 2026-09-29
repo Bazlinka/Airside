@@ -240,8 +240,12 @@ red obstruction light, and a terminal kerb canopy (`Presentation/BuildingDetail.
 one mesh per material); chamfered edges on every procedural block (`BevelledBox`) and
 rounded aerobridge tunnels; domed airfield light fixtures merged per colour with additive
 night halos (`AirfieldFixture`), blue taxiway edges and red stop bars. Offline geometry
-previews are in `docs/testing/building-detail-2026-09-27/`; packaged Mac day/dusk/night
-captures are still owed.
+previews are in `docs/testing/building-detail-2026-09-27/`. ADR 0185 completes the first
+hero-silhouette pass without changing those surveyed shells: Terminal 1 has raised glass
+lanterns and full-height airside piers, operational hangars receive fitted gable/barrel/sawtooth
+caps, and the moving aerobridges add glazed rotundas, portal frames, detailed cabs and wheeled
+bogies. Packaged Mac day/night overview and airside-facing close captures passed on 30 September
+2026; future imported replacements must preserve the same footprints, sites and fallbacks.
 
 Paths in this and later tables are relative to
 `game/Airside/Assets/Airside/Art/`.

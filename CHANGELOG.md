@@ -4,6 +4,11 @@
   with no road), and intersections have traffic signals on the kerb with their lit lamp glowing at night, stop lines,
   give-way marks and stop and give-way signs. The suburb buildings were refreshed from the latest map data. Not yet
   seen in a rebuilt game.
+- **Adelaide's terminal district has a real silhouette.** Terminal 1 now has raised glass roof lanterns and full-height
+  airside piers; every surveyed operational hangar receives one of three fitted roof profiles; and the moving
+  aerobridges have glazed rotundas, framed telescoping tunnels, three-sided cabs and four-wheel drive bogies. The
+  airport coordinates, gate positions and bridge timing are unchanged. Unity EditMode 1426/1428 (zero failures,
+  two precondition-based inconclusives), Mac build and packaged day/night/airside visual review passed.
 - **Bridges look like bridges.** Roads over creeks and rivers rise gently onto a deck with low concrete parapets, and
   their lane paint rises with them. Not yet seen in a rebuilt game.
 - **Lighter roads, same picture.** The road network needs about two thirds fewer road pieces on flat ground and

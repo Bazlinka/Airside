@@ -94,6 +94,28 @@ namespace Airside.Presentation
                 map.yMax - (z - minZ) / (maxZ - minZ) * map.height);
         }
 
+        /// <summary>
+        /// Where an off-map point shows on the map: on its edge (inset by <paramref name="inset"/>),
+        /// along the line from the map's centre to the point, so an arrival 20 km out on the final
+        /// sits on the side it is coming from instead of vanishing until it is inside the window.
+        /// A point already inside is returned unchanged.
+        /// </summary>
+        public static Vector2 EdgePoint(Rect map, Vector2 point, float inset)
+        {
+            var inner = new Rect(map.x + inset, map.y + inset, Mathf.Max(0f, map.width - 2f * inset),
+                Mathf.Max(0f, map.height - 2f * inset));
+            if (inner.Contains(point))
+                return point;
+            var centre = inner.center;
+            var d = point - centre;
+            if (d.sqrMagnitude < 1e-6f)
+                return centre;
+            var scale = Mathf.Min(
+                Mathf.Abs(d.x) > 1e-6f ? inner.width * 0.5f / Mathf.Abs(d.x) : float.MaxValue,
+                Mathf.Abs(d.y) > 1e-6f ? inner.height * 0.5f / Mathf.Abs(d.y) : float.MaxValue);
+            return centre + d * scale;
+        }
+
         /// <summary>A point in <paramref name="map"/> back to world x,z, clamped to the field.</summary>
         public static Vector2 MapToWorld(Rect map, Vector2 point)
         {

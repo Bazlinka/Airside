@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Approaching aircraft now match the map.** The route map and the field agree on where an
+  arrival is over its last 32 km (they used to disagree by tens of kilometres and a different
+  direction). The field mini-map pins aircraft still beyond its window to the edge they are coming
+  from, and an approaching aircraft can no longer leap across the sky when its path changes.
+  Not yet seen in a rebuilt game.
 - **Taxiways carry their real names.** Yellow designators (A6, D2, F3, T4 …) are painted beside the
   centreline of every named taxiway, repeated along the long ones, from the real airport data.
   Not yet seen in a rebuilt game.

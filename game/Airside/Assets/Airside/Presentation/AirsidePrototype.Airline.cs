@@ -1534,6 +1534,12 @@ namespace Airside.Presentation
             public float HeadingDegrees;
             public EnrouteProfile Profile;
             public double ElapsedSeconds;
+            /// <summary>Inbound only: the field's own final, so the map agrees with the 3D view.</summary>
+            public bool OnFinalTrack;
+            public double LegMetres;
+            public double MetresOut;
+            public RunwayDirection Runway;
+            public float Lateral;
         }
 
         private readonly List<MapFlight> _mapFlights = new();
@@ -1565,8 +1571,26 @@ namespace Airside.Presentation
                 else
                     // Distance flown, not time elapsed: slower in the climb and descent.
                     flight.Progress = flight.Profile.DistanceFractionAt(flight.ElapsedSeconds);
-                RouteMap.FlightPoint(flight.From.Latitude, flight.From.Longitude, flight.To.Latitude, flight.To.Longitude,
-                    flight.Progress, flight.Aircraft.Registration, out flight.Latitude, out flight.Longitude);
+                flight.LegMetres = flight.From.DistanceKmTo(flight.To) * 1000.0;
+                if (inbound && flight.LegMetres > 0.0 && flight.Progress < 1.0)
+                {
+                    // The last stretch is the field's own extended final, at approach speed, so the
+                    // map and the 3D view show one aircraft in one place.
+                    flight.Runway = _operations.RunwayFor(flying);
+                    flight.Lateral = ArrivalApproach.LateralFactor(flying, flight.Runway);
+                    flight.MetresOut = ArrivalMapTrack.DistanceOutMetres(flight.LegMetres / 1000.0,
+                        flight.Profile.LegSeconds, flight.Profile.LegSeconds - flight.ElapsedSeconds, flying.Type);
+                    flight.OnFinalTrack = true;
+                    flight.Progress = 1.0 - flight.MetresOut / flight.LegMetres;
+                    ArrivalMapTrack.LatLon(flight.From, flight.To, flight.Aircraft.Registration, flight.LegMetres,
+                        flight.MetresOut, flight.Runway, flying.Type, flight.Lateral,
+                        out flight.Latitude, out flight.Longitude);
+                }
+                else
+                {
+                    RouteMap.FlightPoint(flight.From.Latitude, flight.From.Longitude, flight.To.Latitude, flight.To.Longitude,
+                        flight.Progress, flight.Aircraft.Registration, out flight.Latitude, out flight.Longitude);
+                }
                 _mapFlights.Add(flight);
             }
         }
@@ -1617,9 +1641,22 @@ namespace Airside.Presentation
                 flight.Point = Project(mapRect, flight.Longitude, flight.Latitude);
                 // Heading from a point a little further along (or behind, at the very end).
                 var step = flight.Progress < 0.995 ? 0.004 : -0.004;
-                RouteMap.FlightPoint(flight.From.Latitude, flight.From.Longitude, flight.To.Latitude, flight.To.Longitude,
-                    Math.Max(0.0, Math.Min(1.0, flight.Progress + step)), flight.Aircraft.Registration,
-                    out var aheadLat, out var aheadLon);
+                double aheadLat, aheadLon;
+                if (flight.OnFinalTrack)
+                {
+                    // Along the drawn track: a little nearer the field (or, at the very end, behind).
+                    var nearer = flight.MetresOut > 1500.0;
+                    step = nearer ? 0.004 : -0.004;
+                    ArrivalMapTrack.LatLon(flight.From, flight.To, flight.Aircraft.Registration, flight.LegMetres,
+                        nearer ? flight.MetresOut - 1000.0 : flight.MetresOut + 1000.0, flight.Runway,
+                        flight.Aircraft.Type, flight.Lateral, out aheadLat, out aheadLon);
+                }
+                else
+                {
+                    RouteMap.FlightPoint(flight.From.Latitude, flight.From.Longitude, flight.To.Latitude, flight.To.Longitude,
+                        Math.Max(0.0, Math.Min(1.0, flight.Progress + step)), flight.Aircraft.Registration,
+                        out aheadLat, out aheadLon);
+                }
                 var ahead = Project(mapRect, aheadLon, aheadLat);
                 var delta = step > 0 ? ahead - flight.Point : flight.Point - ahead;
                 if (flight.Aircraft.State == FleetState.AtDestination)

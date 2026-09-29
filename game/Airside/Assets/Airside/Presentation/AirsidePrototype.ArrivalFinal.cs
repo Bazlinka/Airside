@@ -34,6 +34,9 @@ namespace Airside.Presentation
             public float HandoffAt = -1f;
             public Vector3 HandoffOffset;
             public Vector3 World;
+            /// <summary>Where the drawn pose is against the flown path: it may lag a jump, never leap.</summary>
+            public Vector3 Offset;
+            public bool HasShown;
             public RunwayDirection Runway;
             public AircraftType Type;
             /// <summary>Which side the arrival joins the final from (ADR 0142), fixed when first drawn.</summary>
@@ -210,7 +213,16 @@ namespace Airside.Presentation
             state.Active = true;
             state.Runway = runway;
             state.Type = aircraft.Type;
-            state.World = ArrivalFinalWorld(state, 0f);
+            // ADR 0179: whatever moves the path (a runway change, a new estimate, a fallback), the
+            // drawn aircraft covers at most a few times its approach speed, so it never leaps.
+            var flown = ArrivalFinalWorld(state, 0f);
+            var shown = state.HasShown
+                ? Vector3.MoveTowards(state.World, flown,
+                    speed * ArrivalApproach.PoseSlewFactor * step + 1f)
+                : flown;
+            state.HasShown = true;
+            state.Offset = shown - flown;
+            state.World = shown;
             return true;
         }
 
@@ -226,9 +238,9 @@ namespace Airside.Presentation
             // ADR 0147: a gentle drift rather than a 16 m S-turn at 130 ft.
             var weave = metres < 40f ? Mathf.Sin((float)(state.LastTime + lookAheadSeconds) * 0.22f) * 5f : 0f;
             // ADR 0142: beyond 12 km the arrival curves in from its origin's side of the final.
-            var join = ArrivalApproach.LateralOffset(metres, state.Lateral);
-            RunwayFrame.ToWorld(state.Runway, x, y, hold.z + weave + join, out var wx, out var wy, out var wz);
-            return new Vector3(wx, wy, wz);
+            // The route map uses the same function, so the two agree on where it is.
+            ArrivalMapTrack.FinalWorldXZ(state.Runway, state.Type, metres, state.Lateral, weave, out var wx, out var wz);
+            return new Vector3(wx, y, wz);
         }
 
         /// <summary>Extended-final position for an inbound or holding arrival; null otherwise.</summary>
@@ -237,7 +249,7 @@ namespace Airside.Presentation
             if (!FleetMode || !_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft)
                 || !TryArrivalFinal(aircraft, out var state))
                 return null;
-            return lookAheadSeconds == 0f ? state.World : ArrivalFinalWorld(state, lookAheadSeconds);
+            return lookAheadSeconds == 0f ? state.World : ArrivalFinalWorld(state, lookAheadSeconds) + state.Offset;
         }
 
         /// <summary>An inbound close enough to be on the drawn extended final.</summary>

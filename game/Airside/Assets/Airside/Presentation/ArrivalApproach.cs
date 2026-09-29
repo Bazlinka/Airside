@@ -31,6 +31,13 @@ namespace Airside.Presentation
         public const float MinSpeedFactor = 0.55f;
         public const float MaxSpeedFactor = 1.6f;
 
+        /// <summary>
+        /// ADR 0179: the most a drawn arrival may move in a step, as a multiple of its approach speed.
+        /// The flown path is already eased; this is the last guard against a leap when something
+        /// under it changes at once (the runway, the estimate, a fallback position).
+        /// </summary>
+        public const float PoseSlewFactor = 2.5f;
+
         /// <summary>Seconds over which a gap to the estimate is closed.</summary>
         public const float CatchUpSeconds = 25f;
 

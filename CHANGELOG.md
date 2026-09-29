@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Development: reliable unattended screenshots.** `scripts/capture-game.sh` captures the built
+  game without anyone at the Mac. Captures used to freeze when the display had gone to sleep; the
+  script now keeps it awake and reports a hang instead of hanging.
+
 - **No more aircraft queuing on top of each other.** An aircraft holding short for one end of the
   main runway was drawn a queue place back because something was waiting at the other end, and a
   taxiing aircraft behind it pulled into that space. Taxiing aircraft now also leave room for the

@@ -74,9 +74,9 @@ namespace Airside.Presentation
         {
             DelayCause.Turnaround => "Book further ahead so the turnaround finishes in time.",
             DelayCause.ApronBusy => "Stagger departures from the same apron.",
-            DelayCause.LeadIn => "A neighbour on the lead-in blocks your push.",
-            DelayCause.Taxiway => "Arrivals taxiing past you hold your push.",
-            DelayCause.RunwayCrossing => "Busy runways hold aircraft at the crossing.",
+            DelayCause.LeadIn => "Another aircraft on the lead-in is blocking your push.",
+            DelayCause.Taxiway => "Arrivals taxiing in are holding your push.",
+            DelayCause.RunwayCrossing => "A busy runway holds aircraft at the crossing.",
             _ => string.Empty
         };
 

@@ -62,7 +62,9 @@ Airside/
     sync-art-streaming-assets.sh
                              Copy runtime glTF/PNG art into StreamingAssets for packaged builds
     audit-unity-assets.py    Check Unity metadata GUIDs and byte-identical packaged art mirrors
-    dotnet-harness/          Hand-authored csproj backing test-domain.sh
+    update-harness.py        Derives which Presentation files/tests the headless harness compiles
+                             (Harness.Generated.props); CI fails if it is stale
+    dotnet-harness/          csproj backing test-domain.sh; the file list is generated
     build-mac.sh             Local macOS application build
     capture-game.sh          Screenshot from the built game, unattended (--follow REG, --delay s);
                              keeps the display awake — an asleep display freezes the Unity player

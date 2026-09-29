@@ -18,21 +18,9 @@ fi
 
 cd "$root/scripts/dotnet-harness"
 
-# Harness.csproj excludes UnityEngine-importing EditMode tests by name. A new one that is
-# not listed there fails the whole compile, which hides every other test result — that has
-# already happened twice (MapLabelLayout/GroundSeparation, then AirsideFramePacing). Name the
-# offending files instead of leaving a bare CS0246 to be interpreted.
-unlisted=()
-for test in "$root"/game/Airside/Assets/Airside/Tests/EditMode/*.cs; do
-  grep -qE '^using Unity(Engine|Editor)' "$test" || continue
-  grep -q "EditMode/$(basename "$test")" Harness.csproj || unlisted+=("$(basename "$test")")
-done
-
-if [ ${#unlisted[@]} -gt 0 ]; then
-  echo "These EditMode tests import UnityEngine/UnityEditor but are not excluded in Harness.csproj:" >&2
-  printf '  %s\n' "${unlisted[@]}" >&2
-  echo "Add them to the Exclude list (they belong to scripts/test-unity.sh) and retry." >&2
-  exit 1
-fi
+# Which Presentation files and tests compile without UnityEngine is derived by scripts/update-harness.py
+# (Harness.Generated.props). If you added a Presentation file or a test, regenerate it first:
+#   python3 scripts/update-harness.py
+python3 "$root/scripts/update-harness.py" --check
 
 dotnet test

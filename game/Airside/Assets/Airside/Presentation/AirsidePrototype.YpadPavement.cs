@@ -86,6 +86,7 @@ namespace Airside.Presentation
             SpawnSurface(root, "Taxiway centrelines", centrelines, taxiYellow, null, castShadows: false);
             SpawnSurface(root, "Runway holding positions", holdBars, taxiYellow, null, castShadows: false);
             BuildYpadStandMarkings(root, paintY, taxiYellow);
+            BuildYpadTaxiwayLabels(root, paintY, taxiYellow);
 
             // Sit the terminal on the landform, not runway Y — that was why the
             // OSM prisms floated over the dropped plateau on the default field.
@@ -323,6 +324,21 @@ namespace Airside.Presentation
             }
 
             SpawnSurface(root, "Aircraft stand lead-ins and stop bars", geometry, paint, null, castShadows: false);
+        }
+
+        /// <summary>Taxiway designators (A2, F3, T4 …) in the same stroke paint as the stand labels.</summary>
+        private static void BuildYpadTaxiwayLabels(Transform root, float paintY, Color paint)
+        {
+            var geometry = new SurfaceMesh();
+            foreach (var label in AdelaideTaxiwayLabels.All())
+            {
+                var marks = AirsideStripMarkings.Label(
+                    label.Reference, -AirsideStripMarkings.DesignationDigitHeight * 0.5f, 1f, 0f);
+                AddStandLabel(geometry, marks, label.X, label.Z, label.YawDegrees,
+                    AdelaideTaxiwayLabels.GlyphScale, paintY + 0.002f);
+            }
+
+            SpawnSurface(root, "Taxiway designators", geometry, paint, null, castShadows: false);
         }
 
         private static void AddStandLabel(SurfaceMesh mesh, AirsideStripMarkings.Mark[] marks,

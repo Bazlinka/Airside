@@ -1,5 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — taxiway designators (branch `feature/airport-realism`).** Bailey's realism
+  list: prop disc shape, buildings, airport layout/taxi names, boundary, roads. Started with taxi names.
+  - `Presentation/AdelaideTaxiwayLabels` places one stroke-painted designator at the middle of each
+    named OSM taxiway piece (≥ 60 m), every ~450 m on long ones, 5 m beside the centreline; drawn by
+    `BuildYpadTaxiwayLabels` in the same yellow paint as stand labels. Stroke alphabet gained H, J, K, T.
+  - **Checks:** `scripts/test-unity.sh` 1382/1384 passed, 0 failed, 2 inconclusive (the known two).
+    Not yet seen in a rebuilt game.
+  - **NEXT (Bailey's list):** airport boundary following the real OSM aerodrome outline (fence is
+    opt-in `-airsidePerimeterFence`, plain rectangle); building realism near the airport; road detail;
+    prop disc — the blur quad's texture is already circular (r ≥ 1 alpha 0), so the square look
+    (all prop aircraft, daytime) needs a capture to diagnose.
+
 - **2026-09-29 Claude — leftover sessions and branches integrated and cleaned up (branch
   `feature/integrate-leftover-work`).** Bailey asked for every leftover session and branch to be
   checked, what is worth keeping integrated, and the rest removed.

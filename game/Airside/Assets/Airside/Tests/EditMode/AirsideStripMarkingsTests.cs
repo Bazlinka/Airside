@@ -13,7 +13,7 @@ namespace Airside.Tests
     /// </summary>
     public sealed class AirsideStripMarkingsTests
     {
-        private const string SupportedGlyphs = "0123456789ABCDEFGLR";
+        private const string SupportedGlyphs = "0123456789ABCDEFGHJKLRT";
 
         private static int GlyphMask(char glyph)
         {

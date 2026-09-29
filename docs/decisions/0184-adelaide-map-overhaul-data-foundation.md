@@ -77,3 +77,10 @@ None: new data file and scripts only; no persisted schema changes.
   `AdelaideRoadNetwork.cs` is 318 KB instead of 1.36 MB: the tables are delta-encoded 0.1 m integers, raw-deflated and
   base64'd, decoded once at start-up (`PointChecksum` and a test prove it decodes whole).
   `AirsidePrototype._airfieldRoot` and the other statics of the prototype are left for the Unity-verified split.
+- **Performance pass (no visual change).** Measured on the real DEM: cutting public roads every 12 m made 71,897 ribbon
+  segments; splitting only where the ground bends more than 1.5 cm off the chord (`AdaptiveDensify`) makes 23,683 (33 %),
+  with the ribbon within 1.5 cm of the 12 m version. Paint lift rose from 2 to 3 cm so paint always clears the ribbon.
+  Road/car/prop meshes use a compact vertex layout (position floats, normal 4 x sbyte, colour 4 x unorm16: 24 bytes, or 16
+  without colour, against 40) and `UploadMeshData(true)` frees the CPU copy: about half the memory and bandwidth. If a
+  platform rejects the layout the tile falls back to the plain one. Still to measure in Unity: frame time with
+  `-airsideSoak`.

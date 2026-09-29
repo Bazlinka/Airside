@@ -1,5 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — real aerodrome boundary fence (branch `feature/airport-boundary`, ADR 0181).**
+  Overpass access was allowed by Bailey; fetched way 146489105 (YPAD aerodrome) and the area's fences.
+  `scripts/generate-ypad-boundary.py` → `Simulation/AdelaideBoundary.cs` (155 points, 15.2 km, 2 gates at
+  airside-road crossings); `AdelaideBoundaryFence` + `AirsidePrototype.BoundaryFence` build it, on by default
+  (`-airsideNoBoundaryFence` off). Registered as DAT-YPAD-BOUNDARY.
+  - **Checks:** `scripts/test-unity.sh` 1394/1396, 0 failed, 2 known inconclusive. Not yet seen in a rebuilt
+    game — look at fence height/visibility from the runway ends and the gates.
+  - **NEXT:** building realism (roof/height/facade from OSM tags), then road detail; both need new extracts
+    with richer tags (`building:levels`, `roof:shape`, `lanes`, `surface`, `kerb`).
+
 - **2026-09-29 Claude — square prop blur and air-holds on final (branch `fix/prop-blur-unlit-shader`, ADR 0180).**
   - **Prop blur:** Bailey's screenshot showed translucent squares. Cause: `Shader.Find("Universal Render
     Pipeline/Unlit")` returned null in the built game (its shader list holds URP/Lit and Unlit/Color

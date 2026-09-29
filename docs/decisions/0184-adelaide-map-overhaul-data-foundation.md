@@ -89,3 +89,15 @@ None: new data file and scripts only; no persisted schema changes.
   profile (`BridgeProfile`, one lifted options object for ribbon and paint). Footpath bridges are not lifted.
   `AdelaideLayout.cs` shrank from 1.09 MB to 195 KB: every one of its 240 route arrays is stored as 0.1 m zigzag-varint
   deltas in base64 (`LayoutPack.Xz`), verified identical to the old arrays value by value.
+- **Accuracy pass: streets, buildings, intersections.** Audit (`scripts/audit-ypad-map.py`, `AdelaideMapCoverageTests`): before,
+  345 of 8,786 houses stood more than 60 m from any road, at the outer edge of the suburb band; the map-window snapshot
+  also lacked 121 buildings the suburb data had missed. `fetch-ypad-osm.py --band` now fetches the whole band
+  (39,254 buildings, 30,017 highways) and `AdelaideRoadNetwork` includes every drivable street in it: 15,981 roads, 1,974 km.
+  Measured from building edges, 35 of 10,826 buildings (0.32 %, remote sheds and park buildings) are still more than 60 m
+  from a road; the audit and test allow 0.5 %. The suburb `.bin` was regenerated from the fresh
+  snapshot (15,000 buildings after the triangle-budget thinning, 105 airport-owned excluded).
+  Intersections: `AdelaideRoadFurnitureGeometry` draws signal poles with three-lamp heads on the left kerb of every approach
+  (89 signals, one axis green while the cross axis is red), stop lines at signals and stop signs, give-way shark teeth
+  (436) and stop/give-way signs; the lit lamp of each head glows at night in two shared lens groups. Furniture now carries
+  the direction of travel and a one-way flag (stride 7). Cost measured on the real DEM: about 1.1 M vertices and 590 k
+  triangles for all road, paint, car and prop geometry, built in about 1 s on the worker thread.

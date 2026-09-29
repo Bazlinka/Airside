@@ -365,6 +365,7 @@ namespace Airside.Presentation
             if (AirsideAdelaideRoadNetworkMesh.CanBuild())
             {
                 BuildYpadRoadLampGlows(roadHeight);
+                BuildYpadSignalGlows(roadHeight);
                 StartCoroutine(AirsideAdelaideRoadNetworkMesh.BuildAsync(_airfieldRoot, pavementY, roadHeight));
             }
 

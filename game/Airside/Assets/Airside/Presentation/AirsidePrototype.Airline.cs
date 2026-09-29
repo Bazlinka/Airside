@@ -3416,9 +3416,12 @@ namespace Airside.Presentation
                     Celebrate(CelebrationCard.ForFinale(_operations.PlayerAirline?.Name ?? "Your airline",
                         _operations.PlayerFleetCount(), _operations.CareerState.ServedDestinations.Count,
                         _operations.CareerState.ActivePlaySeconds / 3600));
+                else if (careerEvent.Kind == CareerEventKind.AircraftMilestone)
+                    Celebrate(CelebrationCard.ForAircraftMilestone(careerEvent));
                 ShowToast(careerEvent.Text, careerEvent.Kind switch
                 {
-                    CareerEventKind.GoalComplete or CareerEventKind.Challenge or CareerEventKind.Milestone => HudTone.Positive,
+                    CareerEventKind.GoalComplete or CareerEventKind.Challenge or CareerEventKind.Milestone
+                        or CareerEventKind.AircraftMilestone => HudTone.Positive,
                     CareerEventKind.ContractExpired => HudTone.Negative,
                     CareerEventKind.News or CareerEventKind.DailyReport => HudTone.Accent,
                     _ => HudTone.Caution

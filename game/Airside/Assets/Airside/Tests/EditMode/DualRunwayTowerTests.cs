@@ -80,9 +80,63 @@ namespace Airside.Tests
                 "alone on 12 — the jet on 05 is not ahead in this queue");
         }
 
+        [Test]
+        public void QueueSlot_EachEndOfTheMainRunwayHasItsOwnHoldingQueue()
+        {
+            // The 05 and 23 holds are at opposite ends of the strip. A jet alone at the 23 hold
+            // used to be drawn a place back because another held for 05, while a taxi-out behind
+            // it counted only 23 and stopped on top of it (BusyDay_NoAircraftDriveThroughEachOther).
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(3), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideStands);
+            var player = Airline.Player("Queue Air", "#123456");
+            ops.AddAirline(player);
+            DestinationCatalogue.TryFind("MEL", out var melbourne);
+
+            RestoreHolding(ops, player, "VH-JTA", AircraftType.Boeing7378, FleetState.HoldingShort,
+                RunwayDirection.Runway05, melbourne, startedAt: new SimulationTime(0));
+            RestoreHolding(ops, player, "VH-JTB", AircraftType.Boeing7378, FleetState.HoldingShort,
+                RunwayDirection.Runway23, melbourne, startedAt: new SimulationTime(10));
+            RestoreHolding(ops, player, "VH-JTC", AircraftType.Boeing7378, FleetState.HoldingShort,
+                RunwayDirection.Runway05, melbourne, startedAt: new SimulationTime(20));
+
+            var fleet = ops.Fleet;
+            Assert.That(FleetVisual.QueueSlot(fleet, fleet.Single(a => a.Registration == "VH-JTB")), Is.EqualTo(0),
+                "alone at the 23 hold");
+            Assert.That(FleetVisual.QueueSlot(fleet, fleet.Single(a => a.Registration == "VH-JTC")), Is.EqualTo(1),
+                "behind the earlier 05 holder");
+        }
+
+        [Test]
+        public void QueueAhead_CountsATaxiOutThatReachesTheHoldFirst()
+        {
+            // Two jets pushed together both aimed at the hold itself, and the one arriving second
+            // drove into the first in the last seconds of its taxi.
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(3), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideStands);
+            var player = Airline.Player("Queue Air", "#123456");
+            ops.AddAirline(player);
+            DestinationCatalogue.TryFind("MEL", out var melbourne);
+
+            RestoreHolding(ops, player, "VH-TXA", AircraftType.Boeing7378, FleetState.TaxiOut,
+                RunwayDirection.Runway05, melbourne, new SimulationTime(0), new SimulationTime(500));
+            RestoreHolding(ops, player, "VH-TXB", AircraftType.Boeing7378, FleetState.TaxiOut,
+                RunwayDirection.Runway05, melbourne, new SimulationTime(0), new SimulationTime(508));
+            RestoreHolding(ops, player, "VH-TXC", AircraftType.Boeing7378, FleetState.TaxiOut,
+                RunwayDirection.Runway23, melbourne, new SimulationTime(0), new SimulationTime(400));
+
+            var fleet = ops.Fleet;
+            var now = new SimulationTime(100);
+            Assert.That(FleetVisual.QueueAhead(fleet, fleet.Single(a => a.Registration == "VH-TXA"), now), Is.EqualTo(0),
+                "first to the 05 hold; the 23 taxi-out goes to the other end");
+            Assert.That(FleetVisual.QueueAhead(fleet, fleet.Single(a => a.Registration == "VH-TXB"), now), Is.EqualTo(1),
+                "stops a place back from the jet that gets there first");
+        }
+
         private static void RestoreHolding(AirlineOperations ops, Airline airline, string registration,
             AircraftType type, FleetState state, RunwayDirection runway, Destination destination,
-            SimulationTime? startedAt = null)
+            SimulationTime? startedAt = null, SimulationTime? endsAt = null)
         {
             var restore = typeof(AirlineOperations).GetMethod("RestoreAircraft",
                 BindingFlags.Instance | BindingFlags.NonPublic);
@@ -103,7 +157,7 @@ namespace Airside.Tests
 
             restore.Invoke(ops, new object[]
             {
-                registration, airline, type, state, at, null, default(StableId), stand,
+                registration, airline, type, state, at, endsAt, default(StableId), stand,
                 destination, null, 0
             });
             ops.RestoreMovementData(registration, runway, wentAroundThisTrip: false);

@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Your aircraft keep a logbook.** Each aircraft in Fleet shows when it joined, its flights,
+  what it has earned, its most-flown destination and its next distinction — First flight, Familiar
+  face, Route regular, Workhorse, Veteran, Airline icon — with a celebration when it gets there.
+  VH-PAX is marked as your founding aircraft and can't be sold. Older saves load with their flight
+  count kept and route/earnings history starting from now.
+- **Saab propellers look right.** Slim, tapered blades replace the broad paddle shapes.
+
 - **Development: reliable unattended screenshots.** `scripts/capture-game.sh` captures the built
   game without anyone at the Mac. Captures used to freeze when the display had gone to sleep; the
   script now keeps it awake and reports a hang instead of hanging.

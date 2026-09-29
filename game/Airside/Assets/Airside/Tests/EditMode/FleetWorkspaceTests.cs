@@ -92,10 +92,29 @@ namespace Airside.Tests
             // unrelated systems with nothing to tell them apart.
             Assert.That(model.SelectedCapability,
                 Does.Contain("Flies regional routes (Kingscote, Port Lincoln)"));
-            Assert.That(model.SelectedCapability, Does.Contain("0 flights flown"));
+            Assert.That(model.SelectedCapability.Any(line => line.Contains("0 flights flown")), Is.True);
             Assert.That(model.AssignmentLine, Is.EqualTo("Adelaide → Kingscote"));
             Assert.That(model.SelectedPrep.Select(p => p.Done), Is.EqualTo(new[] { true, false, false, false }));
             Assert.That(model.SelectedPrep[1].Active, Is.True);
+        }
+
+        [Test]
+        public void Fleet_SelectionTurnsAnAircraftsRecordIntoAStory()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            plane.IsFoundingAircraft = true;
+            plane.CompletedTrips = 10;
+            plane.RecordHistory(HudTestAirline.Code("KGC"), 900);
+            plane.RecordHistory(HudTestAirline.Code("KGC"), 1_100);
+            plane.RecordHistory(HudTestAirline.Code("PLO"), 1_400);
+
+            var model = new FleetWorkspaceModel();
+            model.Rebuild(ops, clock.Now, plane.Registration);
+
+            Assert.That(model.SelectedCapability.Any(line => line.Contains("Familiar face") && line.Contains("10 flights")), Is.True);
+            Assert.That(model.SelectedCapability.Any(line => line.Contains("Founding aircraft")), Is.True);
+            Assert.That(model.SelectedCapability.Any(line => line.Contains("$3,400") && line.Contains("Kingscote 2×")), Is.True);
+            Assert.That(model.SelectedCapability.Any(line => line.Contains("Route regular") && line.Contains("15 flights to go")), Is.True);
         }
 
         [Test]

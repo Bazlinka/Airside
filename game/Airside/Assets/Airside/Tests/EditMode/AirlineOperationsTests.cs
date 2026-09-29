@@ -556,8 +556,13 @@ namespace Airside.Tests
             Assert.That(ops.CareerState.Funds, Is.EqualTo(before - AircraftAcquisition.Saab340.Price));
             Assert.That(before, Is.GreaterThan(AircraftAcquisition.Saab340.Price));
             var bought = ops.Fleet.Single(a => a.Airline.IsPlayer && a.Registration != "VH-PAX");
+            var founder = ops.Fleet.Single(a => a.Registration == "VH-PAX");
             Assert.That(bought.State, Is.EqualTo(FleetState.AtStand));
             Assert.That(bought.Stand, Is.EqualTo(new StableId("BAY-7")));
+            Assert.That(founder.IsFoundingAircraft, Is.True);
+            Assert.That(ops.CanResell(founder), Is.False,
+                "the founding airframe keeps its identity even after another Saab is bought");
+            Assert.That(bought.IsFoundingAircraft, Is.False);
             Assert.That(ops.CanResell(bought), Is.True);
         }
 

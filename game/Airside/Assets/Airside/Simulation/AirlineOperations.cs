@@ -3760,12 +3760,14 @@ namespace Airside.Simulation
 
             // A reserved stand lets the tower validate the route beyond the runway exit too.
             // Checking only the vacate allowed an outbound aircraft to cross that waiting point
-            // a few seconds after the arrival stopped there.
+            // a few seconds after the arrival stopped there. Only the first stretch though (ADR 0180):
+            // the rest is checked by ground control before the taxi-in starts.
             if (string.IsNullOrEmpty(arrival.Stand.Value))
                 return true;
             var taxiIn = AdelaideGround.TaxiIn(arrival.Stand, arrival.Type, arrival.AssignedRunway);
             return GroundTraffic.PathClear(_fleet, arrival, taxiIn, arrival.AssignedRunway, taxiOut: false,
-                now.Advance(touchdownIn + vacate.WholeSeconds), includeStationary: false);
+                now.Advance(touchdownIn + vacate.WholeSeconds), includeStationary: false, out _,
+                GroundTraffic.LandingTaxiInHorizonSeconds);
         }
 
         private bool VacateCrossesHolder(FleetAircraft arrival, bool mainStrip)

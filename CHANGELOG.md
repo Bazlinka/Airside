@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Propeller blur is round again in the built game.** The blur discs on every propeller aircraft
+  (and jet fan discs and painted stand labels) fell back to a flat translucent square because the
+  build had stripped a shader; it is now included.
+- **Arrivals hover short of the runway much less.** The tower no longer holds a landing for a
+  conflict on the taxiway minutes after the runway exit; ground control still holds the aircraft at
+  the exit if the way to the stand is busy. Over a simulated day, landings held with the runway free
+  fell by about 80 %. Not yet seen in a rebuilt game.
 - **Approaching aircraft now match the map.** The route map and the field agree on where an
   arrival is over its last 32 km (they used to disagree by tens of kilometres and a different
   direction). The field mini-map pins aircraft still beyond its window to the edge they are coming

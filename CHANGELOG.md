@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Zoom out a lot further.** The camera now pulls back to 45 km (it was 4.5 km) so inbound aircraft can be watched
+  from far out on the approach. The pan range, clip planes, fog and horizon fade scale with the zoom, and real
+  terrain from a new 96 km height map fills the land beyond the old 30 km ring. The normal close zoom is unchanged.
+  Not yet seen in a rebuilt game; aircraft and labels beyond about 30 km still need checking.
 - **Every street, and traffic lights.** All of the suburb streets around the airport are now drawn (the outer edges had houses
   with no road), and intersections have traffic signals on the kerb with their lit lamp glowing at night, stop lines,
   give-way marks and stop and give-way signs. The suburb buildings were refreshed from the latest map data. Not yet

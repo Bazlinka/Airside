@@ -765,7 +765,8 @@ namespace Airside.Presentation
                 RenderSettings.fogMode = FogMode.ExponentialSquared;
                 RenderSettings.fogColor = ToColor(_atmosphere.Fog);
                 RenderSettings.fogDensity = AirsideBareField.Enabled
-                    ? _atmosphere.FogDensity
+                    ? _atmosphere.FogDensity * AirsideCameraFeel.FogScale(AirsideCameraController.CurrentDistance,
+                        AirsideBareField.ClassicMaxOrbitDistance)
                     : Mathf.Lerp(0.0036f, 0.0016f, daylight) + (1f - look.Visibility) * 0.012f + warm * 0.00035f;
             }
 

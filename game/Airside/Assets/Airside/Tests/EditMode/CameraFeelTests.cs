@@ -265,5 +265,53 @@ namespace Airside.Tests
             Assert.That(centerZ, Is.EqualTo(0f).Within(0.0001f));
             Assert.That(beforeX - centerX, Is.EqualTo(afterX - 0f).Within(0.0001f));
         }
+
+        [Test]
+        public void ZoomOut_ChangesNothingUpToTheClassicLimit()
+        {
+            foreach (var distance in new[] { 18f, 200f, 2400f, 4500f })
+            {
+                Assert.That(AirsideCameraFeel.NearClip(distance), Is.LessThanOrEqualTo(9.1f).And.GreaterThanOrEqualTo(0.3f));
+                Assert.That(AirsideCameraFeel.FarClip(distance, 30000f), Is.EqualTo(30000f), $"far clip at {distance}");
+                Assert.That(AirsideCameraFeel.HorizonScale(distance, 30000f), Is.EqualTo(1f));
+                Assert.That(AirsideCameraFeel.PanRadius(distance), Is.EqualTo(AirsideCameraFeel.MaxPanRadiusMetres).Within(1f).Or.GreaterThan(AirsideCameraFeel.MaxPanRadiusMetres));
+            }
+
+            Assert.That(AirsideCameraFeel.NearClip(2400f), Is.EqualTo(0.3f), "0.3 m as always inside 3 km");
+            Assert.That(AirsideCameraFeel.FogScale(4500f, 4500f), Is.EqualTo(1f));
+            Assert.That(AirsideCameraFeel.PanRadius(4000f), Is.EqualTo(AirsideCameraFeel.MaxPanRadiusMetres));
+        }
+
+        [Test]
+        public void ZoomedFarOut_ClipPlanesHazeAndPanReachGrowTogether()
+        {
+            var d = AirsideBareField.MaxOrbitDistance;
+            Assert.That(d, Is.GreaterThanOrEqualTo(40000f), "you can see an arrival join from 30 km and more");
+            Assert.That(AirsideCameraFeel.FarClip(d, 30000f), Is.GreaterThan(d * 2f), "the far clip clears the whole view");
+            Assert.That(AirsideCameraFeel.NearClip(d), Is.InRange(100f, 300f), "depth precision holds");
+            Assert.That(AirsideCameraFeel.HorizonScale(d, 30000f), Is.GreaterThan(3f));
+            Assert.That(AirsideCameraFeel.FogScale(d, AirsideBareField.ClassicMaxOrbitDistance), Is.LessThan(0.2f));
+            Assert.That(AirsideCameraFeel.PanRadius(d), Is.GreaterThan(35000f));
+            // grows monotonically with distance
+            float pn = 0f, pf = 0f, pr = 0f;
+            for (var x = 3000f; x <= d; x *= 1.4f)
+            {
+                Assert.That(AirsideCameraFeel.NearClip(x), Is.GreaterThanOrEqualTo(pn));
+                Assert.That(AirsideCameraFeel.FarClip(x, 30000f), Is.GreaterThanOrEqualTo(pf));
+                Assert.That(AirsideCameraFeel.PanRadius(x), Is.GreaterThanOrEqualTo(pr));
+                pn = AirsideCameraFeel.NearClip(x);
+                pf = AirsideCameraFeel.FarClip(x, 30000f);
+                pr = AirsideCameraFeel.PanRadius(x);
+            }
+        }
+
+        [Test]
+        public void PanClamp_UsesTheRadiusItIsGiven()
+        {
+            AirsideCameraFeel.ClampPanCentre(0f, 0f, 30000f, 0f, out var x, out var z, 40000f);
+            Assert.That(x, Is.EqualTo(30000f));
+            AirsideCameraFeel.ClampPanCentre(0f, 0f, 30000f, 0f, out x, out z);
+            Assert.That(x, Is.EqualTo(AirsideCameraFeel.MaxPanRadiusMetres).Within(1f), "the classic radius by default");
+        }
     }
 }

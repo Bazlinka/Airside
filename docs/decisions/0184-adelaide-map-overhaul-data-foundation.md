@@ -101,3 +101,8 @@ None: new data file and scripts only; no persisted schema changes.
   (436) and stop/give-way signs; the lit lamp of each head glows at night in two shared lens groups. Furniture now carries
   the direction of travel and a one-way flag (stride 7). Cost measured on the real DEM: about 1.1 M vertices and 590 k
   triangles for all road, paint, car and prop geometry, built in about 1 s on the worker thread.
+
+- **Far zoom-out (ADR 0185).** Orbit distance goes to 45 km (`AirsideBareField.MaxOrbitDistance`; classic 4.5 km), with
+  pure `AirsideCameraFeel` functions for pan radius, near/far clip, fog and horizon scale. Copernicus far DEM (±96 km at
+  250 m) feeds `AdelaideOuterTerrainGeometry` / `AirsideAdelaideOuterTerrain` beyond the 30 km ring. Known: hard edge at
+  96 km, possible colour seam near 30 km, aircraft LOD/tags beyond about 30 km unchecked.

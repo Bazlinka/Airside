@@ -178,6 +178,8 @@ namespace Airside.Presentation
                 {
                     material.SetFloat("_HorizonFadeStart", FarHorizonFadeStartMetres);
                     material.SetFloat("_HorizonFadeEnd", FarHorizonFadeEndMetres);
+                    // ADR 0185: past the 30 km ring, out to ~96 km, for the zoomed-out camera.
+                    AirsideAdelaideOuterTerrain.TryBuild(root, shader);
                 }
 
                 return true;

@@ -35,6 +35,9 @@ Shader "Airside/SuburbBuildings"
 
             TEXTURE2D(_SatelliteAlbedo); SAMPLER(sampler_SatelliteAlbedo);
 
+            // Global (not per material): the camera's haze scale, see AirsideCameraController.
+            float _AirsideHorizonScale;
+
             CBUFFER_START(UnityPerMaterial)
                 float4 _SatelliteTint;
                 float _SatelliteExtent;
@@ -92,7 +95,9 @@ Shader "Airside/SuburbBuildings"
 
                 color = MixFog(color, input.fogFactor);
                 float distanceWS = length(input.positionWS - GetCameraPositionWS());
-                float fade = smoothstep(_HorizonFadeStart, _HorizonFadeEnd, distanceWS);
+                // _AirsideHorizonScale is set per frame by the camera (1 unless zoomed far out); unset reads as 0, so floor it.
+                float horizonScale = max(_AirsideHorizonScale, 1.0);
+                float fade = smoothstep(_HorizonFadeStart * horizonScale, _HorizonFadeEnd * horizonScale, distanceWS);
                 color = lerp(color, unity_FogColor.rgb, fade);
                 return half4(color, 1);
             }

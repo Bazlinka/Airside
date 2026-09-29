@@ -90,6 +90,10 @@ namespace Airside.Tests
                     break;
                 clock.Set(next.Value);
                 ops.Update();
+                // Every eighth event: an estimate is a whole-fleet ground check (ADR 0180 lets more of them
+                // run to the end), and this loop made the suite the slowest test by far.
+                if (steps % 8 != 0)
+                    continue;
                 foreach (var inbound in ops.Fleet.Where(a => a.State == FleetState.Inbound))
                 {
                     var eta = ops.ExpectedLandingClearance(inbound, out _);

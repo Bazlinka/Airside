@@ -1,5 +1,18 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — square prop blur and air-holds on final (branch `fix/prop-blur-unlit-shader`, ADR 0180).**
+  - **Prop blur:** Bailey's screenshot showed translucent squares. Cause: `Shader.Find("Universal Render
+    Pipeline/Unlit")` returned null in the built game (its shader list holds URP/Lit and Unlit/Color
+    only), so `BlurDiscMaterial` fell back to the flat glass quad. Added to Always Included Shaders;
+    `ShaderInclusionTests`. Same fix covers jet fan discs and painted stand labels.
+  - **Landing holds:** probe over a simulated day showed 3,733 s of arrivals held with the runway free,
+    59 % for taxi-in conflicts more than a minute past the exit. The landing check now covers the vacate
+    plus 30 s of taxi-in (`GroundTraffic.LandingTaxiInHorizonSeconds`); ground control re-checks the
+    rest before the taxi-in moves. Result: 745 s. Remaining: runway crossings (~590 s/day).
+  - **Checks:** `scripts/test-unity.sh` (see CHANGELOG). Not yet seen in a rebuilt game — a rebuild is
+    needed for the prop fix (it is a build-time shader inclusion).
+  - **NEXT:** boundary / building / road detail still need the Overpass fetch Bailey has to allow.
+
 - **2026-09-29 Claude — approach vs map mismatch (branch `feature/approach-map-match`, ADR 0179).**
   Bailey: approaching planes do not match the map and stutter across the screen before final.
   - Cause: the field flies the last 32 km at approach speed, the route map ran it at descent-profile

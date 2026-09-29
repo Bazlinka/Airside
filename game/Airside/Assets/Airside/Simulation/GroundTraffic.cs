@@ -282,7 +282,7 @@ namespace Airside.Simulation
         /// </summary>
         public static bool PathClear(IReadOnlyList<FleetAircraft> fleet, FleetAircraft candidate, GroundLeg leg,
             RunwayDirection candidateRunway, bool taxiOut, SimulationTime start, bool includeStationary,
-            out FleetAircraft blocker)
+            out FleetAircraft blocker, double horizonSeconds = double.MaxValue)
         {
             blocker = null;
             if (fleet == null || candidate == null || leg == null)
@@ -324,7 +324,8 @@ namespace Airside.Simulation
             var queueZoneFrom = taxiOut
                 ? leg.SecondsShortOfEnd(QueueSpacingMetres * (sameQueueCount + 1))
                 : double.MaxValue;
-            for (var s = 0.0; s <= leg.Seconds + 1e-6; s += SampleSeconds)
+            var checkedSeconds = Math.Min(leg.Seconds, horizonSeconds);
+            for (var s = 0.0; s <= checkedSeconds + 1e-6; s += SampleSeconds)
             {
                 var (mx, mz) = leg.PositionAt(s);
                 var mine = new GroundPose(mx, mz, 0f, 1f, 0f, false);
@@ -348,6 +349,14 @@ namespace Airside.Simulation
 
             return true;
         }
+
+        /// <summary>
+        /// ADR 0180: how much of the taxi-in the tower checks before it clears a landing. Beyond this the
+        /// arrival is already off the runway and waiting at the exit, and ground control clears its
+        /// taxi-in over the whole route before it moves (<c>AwaitingStand</c>), so a conflict minutes
+        /// down the taxiway no longer keeps an aircraft hovering short of the runway.
+        /// </summary>
+        public const double LandingTaxiInHorizonSeconds = 30.0;
 
         /// <summary>
         /// ADR 0153: re-walk the window around a near miss found by the coarse scan, finely enough

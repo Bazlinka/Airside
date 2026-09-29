@@ -591,18 +591,6 @@ namespace Airside.Presentation
             }
         }
 
-        private static int BoardClockMinutes(string time)
-        {
-            if (string.IsNullOrEmpty(time) || time == "—")
-                return int.MaxValue;
-            if (time.Length < 5 || time[2] != ':')
-                return int.MaxValue;
-            if (!int.TryParse(time.Substring(0, 2), out var hours)
-                || !int.TryParse(time.Substring(3, 2), out var minutes))
-                return int.MaxValue;
-            return hours * 60 + minutes;
-        }
-
         /// <summary>
         /// Player exceptions first, worst severity first; when nothing is wrong, the one
         /// commitment coming up next so the band is never an empty promise.
@@ -867,9 +855,6 @@ namespace Airside.Presentation
         /// <summary>Left edge of board column <paramref name="index"/>, relative to the surface.</summary>
         public float ColumnX(int index) => _columns[index < 0 ? 0 : index >= _columns.Length ? _columns.Length - 1 : index];
 
-
-        public float ColumnWidth(int index) =>
-            index + 1 < _columns.Length ? _columns[index + 1] - _columns[index] - 8f : Board.Right - _columns[index];
 
         public static readonly string[] ColumnLabels = { "TIME", "FLIGHT", "ROUTE", "STAND", "STATUS" };
 

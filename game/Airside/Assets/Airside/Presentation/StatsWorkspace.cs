@@ -431,9 +431,6 @@ namespace Airside.Presentation
 
         public HudBox OverviewCaption => LeftColumn.WithHeight(CaptionHeight);
 
-        public HudBox StatRow(int index) =>
-            new(LeftColumn.X, LeftColumn.Y + CaptionHeight + 8f + index * StatRowHeight, LeftColumn.Width, StatRowHeight);
-
         /// <summary>Where the visual base roadmap starts, below the compact operation summary.</summary>
         public float NextTierY => LeftColumn.Y + 112f;
 
@@ -521,13 +518,6 @@ namespace Airside.Presentation
 
         private float HistoryY(int shownMilestones) =>
             MilestonesListY + shownMilestones * MilestoneRowHeight + 12f;
-
-        public HudBox HistoryCaption(int shownMilestones) =>
-            new(RightColumn.X, HistoryY(shownMilestones), RightColumn.Width, CaptionHeight);
-
-        public HudBox HistoryRow(int shownMilestones, int index) =>
-            new(RightColumn.X, HistoryY(shownMilestones) + CaptionHeight + 6f + index * HistoryRowHeight,
-                RightColumn.Width, HistoryRowHeight);
 
         /// <summary>
         /// The lifetime "N contracts fulfilled all-time" line, below whatever the history

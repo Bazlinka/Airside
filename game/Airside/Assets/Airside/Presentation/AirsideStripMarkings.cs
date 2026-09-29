@@ -152,20 +152,6 @@ namespace Airside.Presentation
             return list.ToArray();
         }
 
-        /// <summary>Full paint set for the main 05/23 strip (local = world for that strip).</summary>
-        public static Mark[] MainRunwayAll()
-        {
-            var length = AirsideAdelaidePavement.MainLengthMetres;
-            var width = AirsideAdelaidePavement.MainWidthMetres;
-            return Combine(
-                Edges(length, width),
-                CentrelineDashes(length),
-                ThresholdStripes(length),
-                DesignationNumerals(length, "05", "23"),
-                AimingPoints(length, LongStripAimingFromThreshold),
-                TouchdownZones(length, LongStripTouchdownDistances));
-        }
-
         /// <summary>Full paint set for 12/30 in local strip coordinates.</summary>
         public static Mark[] CrossRunwayAll()
         {

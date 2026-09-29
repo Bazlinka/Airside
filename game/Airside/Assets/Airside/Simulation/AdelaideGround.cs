@@ -690,9 +690,6 @@ namespace Airside.Simulation
             _ => AdelaideLayout.Vacate
         };
 
-        /// <summary>Entered rolling at the runway exit speed the landing ends at, not from a stop.</summary>
-        private static GroundPath VacatePath => VacatePathFor(AircraftType.Atr42, RunwayDirection.Runway05);
-
         private static GroundPath VacatePathFor(AircraftType type)
             => VacatePathFor(type, RunwayDirection.Runway05);
 

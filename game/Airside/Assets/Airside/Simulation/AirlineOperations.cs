@@ -183,8 +183,6 @@ namespace Airside.Simulation
 
         /// <summary>Rollout end, along the runway to exit E2 and clear to its holding point.</summary>
         public static long VacateSeconds => AdelaideGround.Vacate.WholeSeconds;
-        public static long VacateSecondsFor(AircraftType type) => AdelaideGround.VacateFor(type).WholeSeconds;
-
         /// <summary>Runway time for lineup, the takeoff roll and initial climb, from the flown circuit.</summary>
         public static long TakeoffRunwaySeconds => LineupSeconds + CircuitProfile.TakeoffSeconds;
         public static long TakeoffRunwaySecondsFor(AircraftType type) =>
@@ -1072,12 +1070,6 @@ namespace Airside.Simulation
             ReconcileStripFreeAt(mainStrip: true);
             ReconcileStripFreeAt(mainStrip: false);
         }
-
-        /// <summary>
-        /// Pre-dual-strip saves leave <see cref="CrossRunwayFreeAt"/> at 0. Prefer
-        /// <see cref="ReconcileRunwayFreeAt"/>; this entry keeps older call sites working.
-        /// </summary>
-        internal void ReconcileCrossRunwayFreeAt() => ReconcileStripFreeAt(mainStrip: false);
 
         private void ReconcileStripFreeAt(bool mainStrip)
         {

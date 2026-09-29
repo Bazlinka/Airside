@@ -80,9 +80,6 @@ namespace Airside.Simulation
                 : (long)Math.Round(normal * OutsourcedTimeMultiplier);
         }
 
-        public static string ServiceMode(PlayerBaseLevel baseLevel, AircraftType type) =>
-            PlayerBase.HasLocalMaintenance(baseLevel, type) ? "Local base check" : "Outsourced check";
-
         /// <summary>A short status for cards and lists, or empty when nothing is worth saying.</summary>
         public static string Status(FleetAircraft aircraft, SimulationTime now, AirlineClock clock)
         {

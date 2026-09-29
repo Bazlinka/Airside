@@ -91,8 +91,6 @@ namespace Airside.Presentation
         /// <summary>0..1 overlap between visible blades and the motion-blur disc.</summary>
         public static float PropBlurBlend(float rpm) => SmoothBand(rpm, PropBlurFadeStartRpm, PropBlurFadeEndRpm);
 
-        public static float JetFanBlurBlend(float rpm) => SmoothBand(rpm, JetFanBlurFadeStartRpm, JetFanBlurFadeEndRpm);
-
         private static float SmoothBand(float value, float from, float to)
         {
             var t = Mathf.Clamp01((value - from) / (to - from));
@@ -350,15 +348,6 @@ namespace Airside.Presentation
                 default:
                     return 0f;
             }
-        }
-
-        public static float TireRadiusMetres(string tireName)
-        {
-            if (string.IsNullOrEmpty(tireName))
-                return MainTireRadiusMetres;
-            return tireName.IndexOf("nose", System.StringComparison.OrdinalIgnoreCase) >= 0
-                ? NoseTireRadiusMetres
-                : MainTireRadiusMetres;
         }
 
         /// <summary>

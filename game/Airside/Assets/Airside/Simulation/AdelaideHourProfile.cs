@@ -30,12 +30,6 @@ namespace Airside.Simulation
             _ => 0.06f
         };
 
-        public static float DensityAt(AirlineClock clock, SimulationTime now)
-        {
-            clock ??= AirlineClock.Default;
-            return Density(clock.LocalAt(now).Hour);
-        }
-
         /// <summary>
         /// Minutes past midnight for <paramref name="count"/> movements, clustered on
         /// the busy banks instead of being spaced evenly through the day.

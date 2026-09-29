@@ -52,25 +52,6 @@ namespace Airside.Presentation
             return AirportTaxiNetwork.RunwayHoldingProgress(route);
         }
 
-        /// <summary>
-        /// Pushback runs from the stand box back onto the apron throat, easing to a stop
-        /// before the tug disconnects. Both endpoints come from the taxi path itself so
-        /// the handover into taxi-out cannot open a gap: the throat is a route corner,
-        /// and the filleted path rounds it a little short of the raw waypoint.
-        /// </summary>
-        public static Vector3 PushbackPosition(TaxiRoute route, float phaseProgress, float height = 0.7f)
-        {
-            var from = PositionAtForward(route, 1f, height);
-            var to = PositionAtForward(route, TaxiOutStartProgress(route), height);
-            return Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(phaseProgress)));
-        }
-
-        /// <summary>Where an aircraft sits parked on stand, on the taxi path.</summary>
-        public static Vector3 StandPosition(TaxiRoute route, float height = 0.7f)
-        {
-            return PositionAtForward(route, 1f, height);
-        }
-
         /// <summary>Taxi-out runs from the throat back to the runway hold-short point.</summary>
         public static Vector3 TaxiOutPosition(TaxiRoute route, float phaseProgress, float height = 0.7f)
         {

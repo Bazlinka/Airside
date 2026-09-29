@@ -1,5 +1,13 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — dead-code tidy (branch `claude/adelaide-airport-map-overhaul-beuaca`).** Removed 56 members that
+  nothing referenced anywhere (name appears once in the whole code base): 22 private ones (incl. the unused
+  `BuildBareAdelaidePerimeterFence`, headlight/beacon pulse helpers, live-traffic obstacle code) and 34 public methods
+  (unused theme icon helpers, stats-row helpers, legacy taxi-network bits and similar); about 820 lines. No behaviour or
+  look changes. Kept on purpose: Unity entry points (`StartPrototype`, `Bootstrap`, menu items) and unreferenced
+  constants/properties (tuning values, palette colours), which read as reserved design values. Headless 1,047 passed;
+  `AirsidePrototype*.cs` is not compiled here, so run `scripts/test-unity.sh` before merging.
+
 - **2026-09-29 Claude — map overhaul merged (PR #459) and holding-position signs (branch `claude/adelaide-airport-map-overhaul-beuaca`, ADR 0184).**
   The overhaul is on `main`. This branch adds `AdelaidePrecinctGeometry.BuildHoldSigns` (two red mandatory signs per hold,
   `AdelaideLayout.HoldingPositions`). Headless harness passes; Unity not run here.

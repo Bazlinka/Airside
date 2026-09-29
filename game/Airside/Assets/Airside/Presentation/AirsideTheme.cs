@@ -447,9 +447,6 @@ namespace Airside.Presentation
             return style;
         }
 
-        /// <summary>A graphite-glass panel behind raw-IMGUI content, so runway markings never wash out text.</summary>
-        public static void DrawOpaquePanel(Rect rect, float alpha = 0.94f) => DrawGlass(rect, alpha);
-
         private static Texture2D Solid(Color colour)
         {
             var texture = new Texture2D(1, 1, TextureFormat.RGBA32, mipChain: false);
@@ -492,57 +489,8 @@ namespace Airside.Presentation
             return texture;
         }
 
-        /// <summary>The weather icon for this condition, or null (no "cloudy" candidate; falls back to "overcast").</summary>
-        public static Texture2D WeatherIcon(WeatherKind kind) => kind switch
-        {
-            WeatherKind.Clear => Icon("weather", "clear"),
-            WeatherKind.Cloudy => Icon("weather", "overcast"),
-            WeatherKind.Overcast => Icon("weather", "overcast"),
-            WeatherKind.Rain => Icon("weather", "rain"),
-            WeatherKind.Fog => Icon("weather", "fog"),
-            WeatherKind.Storm => Icon("weather", "storm"),
-            _ => null
-        };
-
-        /// <summary>Operation-phase icon for the HUD, or null.</summary>
-        public static Texture2D OperationIcon(AircraftPhase phase) => phase switch
-        {
-            AircraftPhase.Approach or AircraftPhase.Landing => Icon("operation", "arrival"),
-            AircraftPhase.TaxiIn or AircraftPhase.TaxiOut => Icon("operation", "taxi"),
-            AircraftPhase.AtStand => Icon("operation", "turnaround"),
-            AircraftPhase.Pushback => Icon("operation", "hold"),
-            AircraftPhase.Takeoff => Icon("operation", "departure"),
-            AircraftPhase.Departed => Icon("operation", "completed"),
-            AircraftPhase.Circuit => Icon("operation", "hold"),
-            AircraftPhase.GoAround => Icon("operation", "departure"),
-            _ => Icon("operation", "stand")
-        };
-
         /// <summary>Batch F4 UI-ICO-005 system-control icon, or null.</summary>
         public static Texture2D SystemIcon(string name) => Icon("system", name);
-
-        /// <summary>Maps a turnaround task name to a service icon when available.</summary>
-        public static Texture2D ServiceIconForTask(string taskName)
-        {
-            if (string.IsNullOrEmpty(taskName))
-                return null;
-            var key = taskName.ToLowerInvariant();
-            if (key.Contains("fuel"))
-                return Icon("service", "fuel");
-            if (key.Contains("bag"))
-                return Icon("service", "baggage");
-            if (key.Contains("pass") || key.Contains("board"))
-                return Icon("service", "passengers");
-            if (key.Contains("clean"))
-                return Icon("service", "cleaning");
-            if (key.Contains("cater"))
-                return Icon("service", "catering");
-            if (key.Contains("inspect") || key.Contains("tech"))
-                return Icon("service", "inspection");
-            if (key.Contains("priority"))
-                return Icon("service", "priority");
-            return null;
-        }
 
         /// <summary>
         /// UI-PNL-003 caution stripe, or null.
@@ -555,15 +503,6 @@ namespace Airside.Presentation
                     _alertStripe = LoadArtTexture("UI/Panels/ui_alert_stripe_v01.png");
                 return _alertStripe;
             }
-        }
-
-        /// <summary>A caution-style label with the alert stripe behind Safety Yellow text, or a flat fallback.</summary>
-        public static GUIStyle CautionStyle(GUIStyle basis)
-        {
-            var style = TextStyle(basis, Amber);
-            if (AlertStripeBackground != null)
-                style.normal.background = AlertStripeBackground;
-            return style;
         }
 
         private static float MeanAlpha(Texture2D texture)

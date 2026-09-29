@@ -181,16 +181,6 @@ namespace Airside.Simulation
         public const double DoorOpenBeforeBoardingSeconds = 30;
 
         /// <summary>
-        /// Whether a parked aircraft's passenger door is open because people are using it: from
-        /// the door opening until shortly after the last arrival is off, and from shortly before
-        /// boarding until the door closes for the push. Between rotations, overnight, and on an
-        /// aircraft with no passengers to move, the door stays shut, as on a real apron.
-        /// </summary>
-        public static bool PassengersAtDoor(FleetAircraft aircraft, double nowSeconds,
-            PlayerBaseLevel baseLevel = PlayerBaseLevel.Starter) =>
-            PassengerDoorOpen(aircraft, nowSeconds, baseLevel) > 0.5f;
-
-        /// <summary>
         /// How far open (0 shut … 1 open) the passenger door is, moving over the type's door
         /// time: it opens once the aircraft is ready to deplane, shuts once the cleaners are done,
         /// reopens shortly before boarding and is shut on the departure countdown (ADR 0177).

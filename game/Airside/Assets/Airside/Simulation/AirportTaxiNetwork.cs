@@ -78,24 +78,6 @@ namespace Airside.Simulation
             return count - 1;
         }
 
-        /// <summary>0..1 progress within the current forward distance window.</summary>
-        public float LocalT(double progress)
-        {
-            var count = SegmentIds.Count;
-            var clamped = Math.Max(0d, Math.Min(0.999999d, progress));
-            var distance = (float)(clamped * TotalLength);
-            var accrued = 0f;
-            for (var forward = 0; forward < count; forward++)
-            {
-                var next = accrued + SegmentLengths[forward];
-                if (distance < next || forward == count - 1)
-                    return Math.Max(0f, Math.Min(1f, (distance - accrued) / SegmentLengths[forward]));
-
-                accrued = next;
-            }
-
-            return 1f;
-        }
     }
 
     public sealed class AirportTaxiNetwork
@@ -198,8 +180,6 @@ namespace Airside.Simulation
         }
 
         public static TaxiPoint StandPoint(StableId stand) => new(AirportLayout.StandX, StandZ(stand));
-
-        public static TaxiPoint ThroatPoint(StableId stand) => new(AirportLayout.ApronThroatX, StandZ(stand));
 
         private static StandTaxiRoutes CreateRoutes(string label, StableId leadIn, float standZ)
         {

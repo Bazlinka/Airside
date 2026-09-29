@@ -238,6 +238,16 @@ namespace Airside.Simulation
             return (long)Math.Ceiling(left);
         }
 
+        /// <summary>How long <paramref name="stage"/> takes for this type at this base level (0 for Idle/Ready).</summary>
+        public static long StageSecondsFor(AircraftType type, DeparturePrepStage stage, PlayerBaseLevel baseLevel) => stage switch
+        {
+            DeparturePrepStage.Fuel => Scale(type, FuelSeconds, baseLevel),
+            DeparturePrepStage.Catering => Scale(type, CateringSeconds, baseLevel),
+            DeparturePrepStage.Baggage => Scale(type, BaggageSeconds, baseLevel),
+            DeparturePrepStage.Boarding => Scale(type, BoardingSeconds, baseLevel),
+            _ => 0
+        };
+
         /// <summary>How long the Boarding stage takes for this type at this base level.</summary>
         public static long BoardingSecondsFor(AircraftType type, PlayerBaseLevel baseLevel) =>
             Scale(type, BoardingSeconds, baseLevel);

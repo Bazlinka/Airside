@@ -1,5 +1,23 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — hands-on turnaround work (branch `feature/service-choreography`, ADR 0176).**
+  - `Simulation/ServiceChoreography`: bags walked train→hold one at a time (hand-loaded on props,
+    belt loader on jets; count = what fits the stage at a realistic trip time, capped at seats),
+    fuel nozzle walked out on its hose/connected/stowed, jet hi-loader raised with trolleys pushed
+    across, prop galley boxes carried up the airstair, prop passengers' roller bags left planeside
+    and loaded by a handler. Pure function of stage elapsed/length; `DoorSills` per type.
+  - Presentation: walk clip while moving, carried items per worker, loose items in transit, belt
+    loader, planeside cart; the train empties, the fuel truck's nozzle leaves it, the hi-loader
+    box/platform/scissor rise and the truck squares up cab-first to the door.
+  - `scripts/review-service-work.sh` renders mid-job frames (Saab/A320 bags, ATR fuel/catering/
+    planeside, A320 hi-loader) — all checked.
+  - **Checks:** new `ServiceChoreographyTests` (bag count vs stage time and seats, train empties,
+    bags reach the hold sill, nozzle out/in, hi-loader to sill and down, galley boxes up the stairs,
+    planeside queue order, no worker inside an airframe) and updated equipment tests pass. Full
+    Unity EditMode 1364/1369: only the 3 known `origin/main` failures. `test-domain.sh` not run (no
+    dotnet SDK). **Not seen in a rebuilt game.**
+  - **NEXT:** rebuild; watch a Saab baggage stage and an ATR boarding with planeside bags.
+
 - **2026-09-29 Claude — prop turnarounds and vehicle routing (branch
   `feature/prop-turnarounds-and-vehicle-avoidance`, ADR 0175).**
   - `Simulation/AircraftLayout`: per-type ground geometry measured from the glTF meshes (fuselage,

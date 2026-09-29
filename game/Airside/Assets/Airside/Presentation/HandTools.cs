@@ -118,6 +118,12 @@ namespace Airside.Presentation
             /// <summary>Passenger roller bag: wheels on the ground, handle up to the right fist.</summary>
             public Transform Roller;
             public Transform RollerHandle;
+            /// <summary>Held in front in both hands, level (a galley box).</summary>
+            public Transform Front;
+            /// <summary>Items shown only while the worker is carrying them (<see cref="SetCarried"/>).</summary>
+            public readonly Dictionary<CarriedItem, Transform> Items = new();
+            /// <summary>Where the fuel hose comes from (the truck's reel); the hose shows only while set.</summary>
+            public Vector3? HoseAnchor;
         }
 
         private static readonly Color WandGlow = new(1f, 0.26f, 0.04f);
@@ -163,9 +169,8 @@ namespace Airside.Presentation
                     // Carried by its tip, the way cones are picked up.
                     Cone(kit.RightHanging);
                     break;
-                case RampTask.FuelPanel:
                 case RampTask.FuelCoupling:
-                    Nozzle(kit.Right);
+                    Nozzle(kit.Items[CarriedItem.Nozzle] = Child(kit.Right, "Nozzle"));
                     kit.Hose = new Transform[HoseSegments];
                     for (var i = 0; i < HoseSegments; i++)
                         kit.Hose[i] = Part(kit.Root, "Fuel hose", PrimitiveType.Cylinder, Vector3.zero,
@@ -173,11 +178,13 @@ namespace Airside.Presentation
                     break;
                 case RampTask.CateringLoader:
                 case RampTask.CateringDoor:
-                    GalleyTrolley(kit.Ground);
+                    GalleyTrolley(kit.Items[CarriedItem.Trolley] = Child(kit.Ground, "Trolley"));
+                    GalleyBox(kit.Items[CarriedItem.Canister] = Child(kit.Front, "Galley box"));
                     break;
                 case RampTask.BaggageHold:
                 case RampTask.BaggageCart:
-                    Suitcase(kit.RightHanging, BagColours[(int)task % BagColours.Length], 0.56f);
+                    Suitcase(kit.Items[CarriedItem.Bag] = Child(kit.RightHanging, "Bag"),
+                        BagColours[(int)task % BagColours.Length], 0.56f);
                     break;
                 case RampTask.BoardingSupervision:
                 case RampTask.PushbackHeadset:
@@ -192,6 +199,9 @@ namespace Airside.Presentation
         /// Hand luggage for about three passengers in five, fixed by their look: a roller bag
         /// (carried up and down stairs) or a holdall. Null for empty-handed passengers.
         /// </summary>
+        /// <summary>True for a passenger whose look gives them a roller bag.</summary>
+        public static bool TowsRollerBag(int look) => look % 5 is 0 or 2;
+
         public static Kit BuildPassengerBag(int look, Transform parent)
         {
             var style = look % 5;
@@ -225,6 +235,7 @@ namespace Airside.Presentation
                 Right = Child(root, "Right fist"),
                 RightHanging = Child(root, "Right hand (hanging)"),
                 RightUpright = Child(root, "Right hand (upright)"),
+                Front = Child(root, "Both hands (front)"),
                 Ground = Child(root, "Pushed")
             };
         }
@@ -303,11 +314,50 @@ namespace Airside.Presentation
                     wheel, Quaternion.Euler(0f, 0f, 90f));
         }
 
+        private static void GalleyBox(Transform front)
+        {
+            // Standard galley container, carried in front in both hands.
+            Part(front, "Galley box", PrimitiveType.Cube, new Vector3(0f, 0f, 0.14f), new Vector3(0.3f, 0.26f, 0.4f),
+                Mat(Aluminium, AirsideMaterialLibrary.SurfaceKind.Metal));
+            Part(front, "Galley box latch", PrimitiveType.Cube, new Vector3(0f, 0.02f, 0.345f), new Vector3(0.12f, 0.05f, 0.012f),
+                Mat(Handle));
+        }
+
         private static void Radio(Transform upright)
         {
             var body = Mat(RadioBody, AirsideMaterialLibrary.SurfaceKind.Plastic);
             Part(upright, "Radio", PrimitiveType.Cube, new Vector3(0f, 0.02f, 0.02f), new Vector3(0.055f, 0.13f, 0.035f), body);
             Part(upright, "Antenna", PrimitiveType.Cylinder, new Vector3(0.012f, 0.13f, 0.02f), new Vector3(0.013f, 0.045f, 0.013f), body);
+        }
+
+        /// <summary>Show only the item the worker has in hand now (tools that are always held stay).</summary>
+        public static void SetCarried(Kit kit, CarriedItem item)
+        {
+            if (kit == null)
+                return;
+            foreach (var pair in kit.Items)
+                if (pair.Value.gameObject.activeSelf != (pair.Key == item))
+                    pair.Value.gameObject.SetActive(pair.Key == item);
+        }
+
+        /// <summary>A loose bag, galley box or trolley (one on its way into the aircraft), origin at its base.</summary>
+        public static Transform BuildItem(CarriedItem kind, Transform parent, int variant = 0)
+        {
+            var root = Child(parent, $"{kind} (loose)");
+            switch (kind)
+            {
+                case CarriedItem.Bag:
+                    Suitcase(Child(root, "Bag", new Vector3(0f, 0.6f, 0f)), BagColours[variant % BagColours.Length], 0.56f);
+                    break;
+                case CarriedItem.Canister:
+                    GalleyBox(Child(root, "Box", new Vector3(0f, 0.15f, 0f)));
+                    break;
+                case CarriedItem.Trolley:
+                    GalleyTrolley(Child(root, "Trolley", new Vector3(0f, 0f, -0.72f)));
+                    break;
+            }
+
+            return root;
         }
 
         // ---- Pose ------------------------------------------------------------------------------
@@ -329,6 +379,7 @@ namespace Airside.Presentation
             kit.Right.SetPositionAndRotation(rightPosition, rightRotation);
             kit.RightHanging.SetPositionAndRotation(rightPosition, level);
             kit.RightUpright.SetPositionAndRotation(rightPosition, level);
+            kit.Front.SetPositionAndRotation((leftPosition + rightPosition) * 0.5f + forward.normalized * 0.12f, level);
             kit.Ground.SetPositionAndRotation(body.position, level);
 
             if (kit.Headset != null && rig.Head(out var neck, out var headUp, out var scale))
@@ -339,8 +390,15 @@ namespace Airside.Presentation
             }
 
             if (kit.Hose != null)
-                PoseHose(kit.Hose, rightPosition + rightRotation * new Vector3(0f, -0.07f, -0.04f),
-                    body.position - forward * 2.4f + Vector3.Cross(Vector3.up, forward) * 0.5f + Vector3.up * 0.04f);
+            {
+                var showHose = kit.HoseAnchor.HasValue;
+                foreach (var segment in kit.Hose)
+                    if (segment.gameObject.activeSelf != showHose)
+                        segment.gameObject.SetActive(showHose);
+                if (showHose)
+                    PoseHose(kit.Hose, rightPosition + rightRotation * new Vector3(0f, -0.07f, -0.04f), kit.HoseAnchor.Value,
+                        body.position.y);
+            }
 
             if (kit.Roller != null)
             {
@@ -366,10 +424,10 @@ namespace Airside.Presentation
             Stretch(kit.RollerHandle, origin + rotation * new Vector3(0f, 0f, RollerWheels.z), grip, 0.018f);
         }
 
-        private static void PoseHose(Transform[] segments, Vector3 from, Vector3 to)
+        private static void PoseHose(Transform[] segments, Vector3 from, Vector3 to, float groundY)
         {
-            // Sags from the nozzle to the apron, then lies along it back towards the truck.
-            var bend = new Vector3(Mathf.Lerp(from.x, to.x, 0.25f), to.y, Mathf.Lerp(from.z, to.z, 0.25f));
+            // Drops from the nozzle to the apron, lies along it, and rises to the truck's reel.
+            var bend = new Vector3(Mathf.Lerp(from.x, to.x, 0.5f), groundY - 0.35f, Mathf.Lerp(from.z, to.z, 0.5f));
             var previous = from;
             for (var i = 0; i < segments.Length; i++)
             {

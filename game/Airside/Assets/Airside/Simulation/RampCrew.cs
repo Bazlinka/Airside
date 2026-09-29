@@ -211,6 +211,13 @@ namespace Airside.Simulation
                     var door = layout.PassengerDoor;
                     var side = AircraftLayout.SideOf(door);
                     Add(RampRole.Marshalling, RampTask.BoardingSupervision, door.X + side * 3.4f, door.Z + 2.6f, door.X, door.Z);
+                    if (layout.IsTurboprop)
+                    {
+                        // Roller bags are left planeside at the stairs; a handler puts them in the hold.
+                        var hold = layout.CargoDoor;
+                        var holdSide = AircraftLayout.SideOf(hold);
+                        Add(RampRole.Receiving, RampTask.BaggageHold, hold.X + holdSide * 1.3f, hold.Z, hold.X, hold.Z);
+                    }
                     break;
                 }
                 case RampActivity.Pushback:

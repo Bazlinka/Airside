@@ -37,6 +37,7 @@ namespace Airside.Presentation
     {
         public readonly List<float> Positions = new List<float>(4096);
         public readonly List<float> Colors = new List<float>(4096);
+        public readonly List<float> Normals = new List<float>(4096);
         public readonly List<int> Triangles = new List<int>(8192);
         public int VertexCount => Positions.Count / 3;
     }
@@ -66,8 +67,12 @@ namespace Airside.Presentation
             return tile;
         }
 
-        private static void AddVertex(RoadMeshTile t, float x, float y, float z, RoadColor c)
+        private static void AddVertex(RoadMeshTile t, float x, float y, float z, RoadColor c,
+            float nx = 0f, float ny = 1f, float nz = 0f)
         {
+            t.Normals.Add(nx);
+            t.Normals.Add(ny);
+            t.Normals.Add(nz);
             t.Positions.Add(x);
             t.Positions.Add(y);
             t.Positions.Add(z);
@@ -93,6 +98,90 @@ namespace Airside.Presentation
             t.Triangles.Add(i + 1);
             t.Triangles.Add(i + 2);
             t.Triangles.Add(i + 3);
+            VertexCount += 4;
+            TriangleCount += 2;
+        }
+
+        /// <summary>One up-facing triangle (a, b, c in any winding; it is flipped to face up).</summary>
+        public void Tri(float ax, float ay, float az, float bx, float by, float bz, float cx, float cy, float cz,
+            RoadColor color)
+        {
+            var t = TileAt((ax + bx + cx) / 3f, (az + bz + cz) / 3f);
+            var i = t.VertexCount;
+            var up = (bz - az) * (cx - ax) - (bx - ax) * (cz - az) >= 0f;
+            AddVertex(t, ax, ay, az, color);
+            AddVertex(t, up ? bx : cx, up ? by : cy, up ? bz : cz, color);
+            AddVertex(t, up ? cx : bx, up ? cy : by, up ? cz : bz, color);
+            t.Triangles.Add(i);
+            t.Triangles.Add(i + 1);
+            t.Triangles.Add(i + 2);
+            VertexCount += 3;
+            TriangleCount += 1;
+        }
+
+        /// <summary>
+        /// A closed-topped box without a bottom, standing on y0: centre (cx, cz), long axis (ux, uz) (unit), half sizes
+        /// along and across it, and a height. Flat-shaded: each face has its own vertices and outward normal.
+        /// </summary>
+        public void Box(float cx, float y0, float cz, float ux, float uz, float halfLength, float halfWidth,
+            float height, RoadColor color)
+        {
+            var vx = -uz;
+            var vz = ux;
+            float Px(float a, float b) => cx + ux * a + vx * b;
+            float Pz(float a, float b) => cz + uz * a + vz * b;
+            var y1 = y0 + height;
+            var t = TileAt(cx, cz);
+            // top
+            Face(t, color, 0f, 1f, 0f,
+                Px(-halfLength, -halfWidth), y1, Pz(-halfLength, -halfWidth), Px(halfLength, -halfWidth), y1, Pz(halfLength, -halfWidth),
+                Px(halfLength, halfWidth), y1, Pz(halfLength, halfWidth), Px(-halfLength, halfWidth), y1, Pz(-halfLength, halfWidth));
+            // four sides
+            Face(t, color, ux, 0f, uz,
+                Px(halfLength, -halfWidth), y0, Pz(halfLength, -halfWidth), Px(halfLength, halfWidth), y0, Pz(halfLength, halfWidth),
+                Px(halfLength, halfWidth), y1, Pz(halfLength, halfWidth), Px(halfLength, -halfWidth), y1, Pz(halfLength, -halfWidth));
+            Face(t, color, -ux, 0f, -uz,
+                Px(-halfLength, halfWidth), y0, Pz(-halfLength, halfWidth), Px(-halfLength, -halfWidth), y0, Pz(-halfLength, -halfWidth),
+                Px(-halfLength, -halfWidth), y1, Pz(-halfLength, -halfWidth), Px(-halfLength, halfWidth), y1, Pz(-halfLength, halfWidth));
+            Face(t, color, vx, 0f, vz,
+                Px(halfLength, halfWidth), y0, Pz(halfLength, halfWidth), Px(-halfLength, halfWidth), y0, Pz(-halfLength, halfWidth),
+                Px(-halfLength, halfWidth), y1, Pz(-halfLength, halfWidth), Px(halfLength, halfWidth), y1, Pz(halfLength, halfWidth));
+            Face(t, color, -vx, 0f, -vz,
+                Px(-halfLength, -halfWidth), y0, Pz(-halfLength, -halfWidth), Px(halfLength, -halfWidth), y0, Pz(halfLength, -halfWidth),
+                Px(halfLength, -halfWidth), y1, Pz(halfLength, -halfWidth), Px(-halfLength, -halfWidth), y1, Pz(-halfLength, -halfWidth));
+        }
+
+        /// <summary>A quad q0..q3 in cyclic order, wound so its geometric normal agrees with (nx, ny, nz).</summary>
+        private void Face(RoadMeshTile t, RoadColor color, float nx, float ny, float nz,
+            float x0, float y0, float z0, float x1, float y1, float z1,
+            float x2, float y2, float z2, float x3, float y3, float z3)
+        {
+            var e1x = x1 - x0;
+            var e1y = y1 - y0;
+            var e1z = z1 - z0;
+            var e2x = x2 - x0;
+            var e2y = y2 - y0;
+            var e2z = z2 - z0;
+            var gx = e1y * e2z - e1z * e2y;
+            var gy = e1z * e2x - e1x * e2z;
+            var gz = e1x * e2y - e1y * e2x;
+            var agrees = gx * nx + gy * ny + gz * nz > 0f;
+            var i = t.VertexCount;
+            AddVertex(t, x0, y0, z0, color, nx, ny, nz);
+            AddVertex(t, x1, y1, z1, color, nx, ny, nz);
+            AddVertex(t, x2, y2, z2, color, nx, ny, nz);
+            AddVertex(t, x3, y3, z3, color, nx, ny, nz);
+            if (agrees)
+            {
+                t.Triangles.Add(i); t.Triangles.Add(i + 1); t.Triangles.Add(i + 2);
+                t.Triangles.Add(i); t.Triangles.Add(i + 2); t.Triangles.Add(i + 3);
+            }
+            else
+            {
+                t.Triangles.Add(i); t.Triangles.Add(i + 2); t.Triangles.Add(i + 1);
+                t.Triangles.Add(i); t.Triangles.Add(i + 3); t.Triangles.Add(i + 2);
+            }
+
             VertexCount += 4;
             TriangleCount += 2;
         }

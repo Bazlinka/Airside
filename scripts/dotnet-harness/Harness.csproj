@@ -113,6 +113,7 @@
     <!-- UnityEngine-free; the road network's mesh geometry and marking plan (ADR 0184) are checked headlessly. -->
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideRoadGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RoadMarkingPlan.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideCarParkGeometry.cs" />
     <!-- UnityEngine-free; the boundary fence's pure runs are checked headlessly (ADR 0181). -->
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideBoundaryFence.cs" />
     <!-- UnityEngine-free; taxiway designator placement is checked headlessly (feature/airport-realism). -->

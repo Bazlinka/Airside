@@ -42,8 +42,14 @@ namespace Airside.Presentation
                 };
                 var asphalt = new RoadMeshSink();
                 AdelaideRoadGeometry.BuildAsphalt(asphalt, options);
+                AdelaideCarParkGeometry.BuildSurfaces(asphalt, options);
                 var paint = new RoadMeshSink();
                 AdelaideRoadGeometry.BuildMarkings(paint, options);
+                AdelaideCarParkGeometry.BuildBayLines(paint, options);
+                // Parked cars and street lamps: solid, lit, vertex-coloured (alpha 1 keeps the satellite out of them).
+                var props = new RoadMeshSink();
+                AdelaideCarParkGeometry.BuildCars(props, options);
+                AdelaideCarParkGeometry.BuildLamps(props, options);
                 RuleCache.Clear();
                 if (asphalt.VertexCount < 3)
                     return false;
@@ -60,6 +66,8 @@ namespace Airside.Presentation
                     AddTile(parent.transform, $"Roads {tile.Key}", tile.Value, asphaltMaterial, true);
                 foreach (var tile in paint.Tiles)
                     AddTile(parent.transform, $"Road paint {tile.Key}", tile.Value, paintMaterial, false);
+                foreach (var tile in props.Tiles)
+                    AddTile(parent.transform, $"Car parks {tile.Key}", tile.Value, asphaltMaterial, true);
                 return true;
             }
             catch (Exception e)
@@ -69,7 +77,8 @@ namespace Airside.Presentation
             }
         }
 
-        private static void AddTile(Transform parent, string name, RoadMeshTile tile, Material material, bool withColours)
+        private static void AddTile(Transform parent, string name, RoadMeshTile tile, Material material, bool withColours,
+            bool castShadows = false)
         {
             var count = tile.VertexCount;
             if (count < 3)
@@ -77,10 +86,11 @@ namespace Airside.Presentation
             var vertices = new Vector3[count];
             var normals = new Vector3[count];
             var p = tile.Positions;
+            var nrm = tile.Normals;
             for (var i = 0; i < count; i++)
             {
                 vertices[i] = new Vector3(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]);
-                normals[i] = Vector3.up;
+                normals[i] = new Vector3(nrm[i * 3], nrm[i * 3 + 1], nrm[i * 3 + 2]);
             }
 
             var mesh = new Mesh { name = name, indexFormat = IndexFormat.UInt32 };
@@ -103,7 +113,7 @@ namespace Airside.Presentation
             go.AddComponent<MeshFilter>().sharedMesh = mesh;
             var renderer = go.AddComponent<MeshRenderer>();
             renderer.sharedMaterial = material;
-            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
             renderer.receiveShadows = false;
         }
 

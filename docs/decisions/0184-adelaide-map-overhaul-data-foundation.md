@@ -48,3 +48,9 @@ None: new data file and scripts only; no persisted schema changes.
   the old roads.
 - **Test harness.** `scripts/dotnet-harness` had drifted (three tests needed excludes/includes). Fixed; the .NET 8 SDK
   installs with `dotnet-install.sh --channel 8.0` even where apt is unavailable. Headless: 1,033 passed, 0 failed.
+- **P1c (landside life).** `scripts/generate-ypad-carparks.py` → `Simulation/AdelaideCarParks.cs`: 592 car-park outlines,
+  12,959 bays (rows either side of each `parking_aisle`, inside the outline, clear of other roads and buildings, plus every
+  mapped `parking_space`), 471 street lamps. `AdelaideCarParkGeometry` (pure): ear-clipped dark surfaces, white bay
+  lines, up to 4,200 parked cars within 2.3 km of the T1 forecourt (62 % occupancy and colour by hash, so identical every
+  run; body + glass + roof, flat-shaded) and lamp posts. Night glows for lamps within 2.2 km join the shared
+  "Streetlights" lens group. This replaces the authored T1 car pad, cars, lamps, zebras and bay lines.

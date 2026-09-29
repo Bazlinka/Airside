@@ -14,9 +14,14 @@
     (`docs/testing/map-2026-09-29/`). **Headless harness: 1,033 passed, 0 failed** (fixed its drift; .NET 8 via
     `dotnet-install.sh`). The Unity-only files (`AirsideAdelaideRoadNetworkMesh`, `AirsidePrototype` hook, legacy
     `AirsideAdelaideRoads` clip) have NOT been compiled — run `scripts/test-unity.sh` and look at the game.
-  - **NEXT (P1c):** data-driven landside life — parked cars in the real car parks (parking aisles + 819 car-park
-    polygons, `parking_space`), 471 street lamps, bus stops, from the snapshot; car-park surfaces. Then P2 terminal,
-    P3 airside detail, P4 credits/perf capture.
+  - **P1c done:** `generate-ypad-carparks.py` -> `AdelaideCarParks.cs` (592 car parks, 12,959 bays, 471 lamps),
+    `AdelaideCarParkGeometry` (surfaces, bay lines, <= 4,200 cars, lamp posts), lamp night glows
+    (`BuildYpadRoadLampGlows`). Headless harness 1,040 passed, 0 failed.
+  - **NEXT (P2):** Terminal 1 precinct — real terminal footprint/levels, forecourt kerb/bus/taxi bays, the multi-level
+    car park building (`building:levels` 6), jet-bridge/gate cross-check, bus stops (315 nodes), footways (2,311 ways)
+    near the terminal. Then P3 airside detail (masts, signs, fuel, precincts), P4 credits/perf.
+  - **Look at first in a rebuilt game:** road gaps, car-park cars, startup time (the mesh build is one synchronous pass —
+    if it stalls, spread it across frames like the suburbs, ADR 0162).
   - **Watch:** no Unity/dotnet in the cloud container — C# must be verified on a Mac (`scripts/test-unity.sh`).
 
 - **2026-09-29 Claude — main strip frees when off the pavement (branch `fix/landing-runway-occupancy`, ADR 0183).**

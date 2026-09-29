@@ -536,6 +536,26 @@ namespace Airside.Presentation
             AddHalo(group, new Vector3(lamp.x, groundY, lamp.z), 13f, cardCentre: lamp, cardSize: 1.8f);
         }
 
+        /// <summary>
+        /// A night glow at each street lamp the road network draws (ADR 0184), for the lamps near the terminal and
+        /// car parks. They join the shared "Streetlights" lens group, so they cost one merged mesh.
+        /// </summary>
+        private static void BuildYpadRoadLampGlows(System.Func<float, float, float> groundHeight)
+        {
+            const float radius = 2200f;
+            var lamps = AdelaideCarParks.Lamps;
+            for (var i = 0; i + 1 < lamps.Length; i += 2)
+            {
+                var dx = lamps[i] - AdelaideCarParkGeometry.CentreX;
+                var dz = lamps[i + 1] - AdelaideCarParkGeometry.CentreZ;
+                if (dx * dx + dz * dz > radius * radius)
+                    continue;
+                var ground = groundHeight != null ? groundHeight(lamps[i], lamps[i + 1]) : AirsideAdelaideGround.PavementWorldY;
+                AddStreetlightGlow(new Vector3(lamps[i] + 0.5f, ground + AdelaideCarParkGeometry.LampHeight, lamps[i + 1]),
+                    ground + 0.05f);
+            }
+        }
+
         /// <summary>Builds the merged fixture, lens and halo meshes queued by <see cref="PlaceYpadLens"/>.</summary>
         private static void FlushYpadLenses()
         {

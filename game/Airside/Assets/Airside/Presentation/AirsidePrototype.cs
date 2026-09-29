@@ -6120,7 +6120,11 @@ namespace Airside.Presentation
             var roadHeight = AirsideAdelaideSurroundings.RoadHeight(pavementY);
             var roadNetworkBuilt = AirsideAdelaideRoadNetworkMesh.TryBuild(_airfieldRoot, pavementY, roadHeight);
             AirsideAdelaideRoads.TryBuild(_airfieldRoot, pavementY, roadHeight, skipWhereNetworkCovers: roadNetworkBuilt);
-            if (!roadNetworkBuilt)
+            if (roadNetworkBuilt)
+            {
+                BuildYpadRoadLampGlows(roadHeight);
+            }
+            else
             {
                 AirsideAdelaideLandside.TryBuild(_airfieldRoot, pavementY);
                 BuildYpadLandsideLife();

@@ -192,17 +192,39 @@ namespace Airside.Presentation
 
         public static AdelaideTerminalDetail[] RoofDetails() => new[]
         {
-            new AdelaideTerminalDetail("Terminal skylight W", 1045f, 14.14f, 444.5f, 32f, 0.22f, 5f),
-            new AdelaideTerminalDetail("Terminal skylight WC", 1130f, 14.14f, 444.5f, 32f, 0.22f, 5f),
-            new AdelaideTerminalDetail("Terminal skylight C", 1215f, 14.14f, 444.5f, 32f, 0.22f, 5f),
-            new AdelaideTerminalDetail("Terminal skylight EC", 1300f, 14.14f, 444.5f, 32f, 0.22f, 5f),
-            new AdelaideTerminalDetail("Terminal skylight E", 1385f, 14.14f, 444.5f, 32f, 0.22f, 5f),
-            new AdelaideTerminalDetail("Terminal skylight far E", 1470f, 14.14f, 444.5f, 32f, 0.22f, 5f),
-            new AdelaideTerminalDetail("Terminal skylight end", 1555f, 14.14f, 444.5f, 32f, 0.22f, 5f),
+            // Raised lanterns, not painted strips: their height catches daylight and gives the
+            // 630 m terminal bar a visible roof rhythm at the normal overview camera.
+            new AdelaideTerminalDetail("Terminal skylight W", 1045f, 14.50f, 444.5f, 32f, 0.90f, 5f),
+            new AdelaideTerminalDetail("Terminal skylight WC", 1130f, 14.50f, 444.5f, 32f, 0.90f, 5f),
+            new AdelaideTerminalDetail("Terminal skylight C", 1215f, 14.50f, 444.5f, 32f, 0.90f, 5f),
+            new AdelaideTerminalDetail("Terminal skylight EC", 1300f, 14.50f, 444.5f, 32f, 0.90f, 5f),
+            new AdelaideTerminalDetail("Terminal skylight E", 1385f, 14.50f, 444.5f, 32f, 0.90f, 5f),
+            new AdelaideTerminalDetail("Terminal skylight far E", 1470f, 14.50f, 444.5f, 32f, 0.90f, 5f),
+            new AdelaideTerminalDetail("Terminal skylight end", 1555f, 14.50f, 444.5f, 32f, 0.90f, 5f),
+            new AdelaideTerminalDetail("Terminal skylight hall W", 1090f, 15.30f, 455f, 48f, 2.5f, 8f),
+            new AdelaideTerminalDetail("Terminal skylight hall C", 1300f, 15.30f, 455f, 52f, 2.5f, 8f),
+            new AdelaideTerminalDetail("Terminal skylight hall E", 1510f, 15.30f, 455f, 48f, 2.5f, 8f),
             new AdelaideTerminalDetail("Terminal roof plant W", 1110f, 15.1f, 463f, 24f, 2.2f, 10f),
             new AdelaideTerminalDetail("Terminal roof plant C", 1270f, 15.1f, 463f, 28f, 2.2f, 10f),
             new AdelaideTerminalDetail("Terminal roof plant E", 1450f, 15.1f, 468f, 26f, 2.2f, 10f)
         };
+
+        /// <summary>
+        /// Full-height piers at a restrained eight-bay rhythm. These are presentation-only and
+        /// sit just proud of the real curved airside wall, tying glazing, brow and roof together.
+        /// </summary>
+        public static AdelaideTerminalDetail[] AirsidePylons()
+        {
+            var xs = new[] { 1000f, 1088f, 1176f, 1264f, 1352f, 1440f, 1528f, 1604f };
+            var result = new AdelaideTerminalDetail[xs.Length];
+            for (var i = 0; i < xs.Length; i++)
+            {
+                var x = xs[i];
+                result[i] = new AdelaideTerminalDetail($"Terminal airside pylon {i + 1:00}", x, 8.1f,
+                    AirsideWallZAt(x) - 0.38f, 1.15f, 16.2f, 1.05f);
+            }
+            return result;
+        }
 
         public static AdelaideTerminalFlood[] ApronFloods() => new[]
         {

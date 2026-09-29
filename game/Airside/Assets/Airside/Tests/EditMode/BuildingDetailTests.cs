@@ -75,11 +75,24 @@ namespace Airside.Tests
         {
             foreach (var hangar in AdelaideBuildings.All.Where(b => b.Kind == AdelaideBuildingKind.Hangar))
             {
-                var doors = BuildingDetail.For(hangar, 0f).Boxes.Where(b => b.Part == BuildingPart.Door).ToList();
+                var detail = BuildingDetail.For(hangar, 0f);
+                var doors = detail.Boxes.Where(b => b.Part == BuildingPart.Door).ToList();
                 Assert.That(doors.Count, Is.EqualTo(1), hangar.Id);
                 Assert.That(doors[0].Top, Is.LessThan(hangar.HeightMetres), hangar.Id);
                 Assert.That(doors[0].Length, Is.GreaterThan(6f), hangar.Id);
+                Assert.That(detail.Roofs.Count, Is.EqualTo(1), $"{hangar.Id} has no shaped roof");
+                var roof = detail.Roofs[0];
+                Assert.That(roof.EaveY, Is.GreaterThan(hangar.HeightMetres), hangar.Id);
+                Assert.That(roof.RidgeY, Is.GreaterThan(roof.EaveY + 0.5f), hangar.Id);
+                Assert.That(BuildingDetail.Contains(hangar.Xz, roof.X, roof.Z), Is.True, hangar.Id);
             }
+
+            var profiles = AdelaideBuildings.All.Where(b => b.Kind == AdelaideBuildingKind.Hangar)
+                .SelectMany(b => BuildingDetail.For(b, 0f).Roofs)
+                .Select(r => r.Profile)
+                .Distinct()
+                .ToList();
+            Assert.That(profiles.Count, Is.GreaterThanOrEqualTo(2), "the hangar district still has one repeated roof silhouette");
 
             var station = BuildingDetail.For(Of(AdelaideBuildingKind.FireStation), 0f);
             Assert.That(station.Boxes.Count(b => b.Part == BuildingPart.Door), Is.InRange(1, 5));

@@ -37,9 +37,11 @@ namespace Airside.Presentation
             public Transform Pivot;
             public readonly Transform[] Sections = new Transform[3];
             public readonly Transform[] SectionGlazing = new Transform[6];
+            /// <summary>Two three-piece portal frames per telescoping section.</summary>
+            public readonly Transform[] SectionFrames = new Transform[18];
             public Transform Cab;
             public Transform DriveColumn;
-            public Transform DriveBogie;
+            public Transform DriveAssembly;
             public float Floor;
             public float Shown;
             public Vector3 DockedCab;
@@ -74,6 +76,11 @@ namespace Airside.Presentation
                     new Vector3(1.6f, columnHeight / 2f, 1.6f), BridgeStructure);
                 BridgeCylinder(view.Root, "Rotunda", new Vector3(0f, floor + BridgeCabHeight / 2f, 0f),
                     new Vector3(BridgeRotundaRadius * 2f, BridgeCabHeight / 2f + 0.1f, BridgeRotundaRadius * 2f), BridgeSkin);
+                BridgeCylinder(view.Root, "Rotunda glazing band", new Vector3(0f, floor + BridgeCabHeight * 0.64f, 0f),
+                    new Vector3(BridgeRotundaRadius * 2f + 0.10f, BridgeCabHeight * 0.22f, BridgeRotundaRadius * 2f + 0.10f),
+                    BridgeGlazing);
+                BridgeCylinder(view.Root, "Rotunda roof cap", new Vector3(0f, floor + BridgeCabHeight + 0.18f, 0f),
+                    new Vector3(BridgeRotundaRadius * 2f + 0.42f, 0.16f, BridgeRotundaRadius * 2f + 0.42f), BridgeStructure);
 
                 view.Pivot = new GameObject("Tunnel pivot").transform;
                 view.Pivot.SetParent(view.Root, false);
@@ -92,6 +99,16 @@ namespace Airside.Presentation
                         new Vector3(0.04f, height * 0.34f, 1f), BridgeGlazing);
                     view.SectionGlazing[i * 2 + 1] = BridgeBox(view.Pivot, $"Tunnel {i + 1} glazing R", Vector3.zero,
                         new Vector3(0.04f, height * 0.34f, 1f), BridgeGlazing);
+                    for (var end = 0; end < 2; end++)
+                    {
+                        var frame = (i * 2 + end) * 3;
+                        view.SectionFrames[frame] = BridgeBox(view.Pivot, $"Tunnel {i + 1} frame {end + 1} roof", Vector3.zero,
+                            new Vector3(width + 0.18f, 0.12f, 0.12f), BridgeStructure);
+                        view.SectionFrames[frame + 1] = BridgeBox(view.Pivot, $"Tunnel {i + 1} frame {end + 1} L", Vector3.zero,
+                            new Vector3(0.12f, height, 0.12f), BridgeStructure);
+                        view.SectionFrames[frame + 2] = BridgeBox(view.Pivot, $"Tunnel {i + 1} frame {end + 1} R", Vector3.zero,
+                            new Vector3(0.12f, height, 0.12f), BridgeStructure);
+                    }
                 }
 
                 view.Cab = new GameObject("Cab").transform;
@@ -100,12 +117,30 @@ namespace Airside.Presentation
                     new Vector3(BridgeCabWidth, BridgeCabHeight, BridgeCabDepth), BridgeSkin);
                 BridgeBox(view.Cab, "Cab window", new Vector3(0f, BridgeCabHeight * 0.66f, BridgeCabDepth / 2f + 0.01f),
                     new Vector3(BridgeCabWidth * 0.7f, BridgeCabHeight * 0.3f, 0.04f), BridgeGlazing);
+                BridgeBox(view.Cab, "Cab window L", new Vector3(-BridgeCabWidth / 2f - 0.01f, BridgeCabHeight * 0.66f, 0f),
+                    new Vector3(0.04f, BridgeCabHeight * 0.30f, BridgeCabDepth * 0.58f), BridgeGlazing);
+                BridgeBox(view.Cab, "Cab window R", new Vector3(BridgeCabWidth / 2f + 0.01f, BridgeCabHeight * 0.66f, 0f),
+                    new Vector3(0.04f, BridgeCabHeight * 0.30f, BridgeCabDepth * 0.58f), BridgeGlazing);
+                BridgeBox(view.Cab, "Cab roof", new Vector3(0f, BridgeCabHeight + 0.12f, 0f),
+                    new Vector3(BridgeCabWidth + 0.28f, 0.20f, BridgeCabDepth + 0.24f), BridgeStructure);
                 // The bellows canopy that closes round the door — the part that meets the aircraft.
                 BridgeBox(view.Cab, "Cab bellows", new Vector3(0f, BridgeCabHeight / 2f, BridgeCabDepth / 2f + 0.25f),
                     new Vector3(BridgeCabWidth + 0.2f, BridgeCabHeight + 0.2f, 0.5f), BridgeRubber);
+                BridgeBox(view.Cab, "Cab hazard rail", new Vector3(0f, 0.38f, -BridgeCabDepth / 2f - 0.08f),
+                    new Vector3(BridgeCabWidth * 0.74f, 0.18f, 0.18f), BridgeHazard);
 
                 view.DriveColumn = BridgeCylinder(view.Root, "Drive column", Vector3.zero, new Vector3(0.7f, 0.5f, 0.7f), BridgeHazard);
-                view.DriveBogie = BridgeBox(view.Root, "Drive bogie", Vector3.zero, new Vector3(3.0f, 0.9f, 1.3f), BridgeRubber);
+                view.DriveAssembly = new GameObject("Drive assembly").transform;
+                view.DriveAssembly.SetParent(view.Root, false);
+                BridgeBox(view.DriveAssembly, "Drive bogie", new Vector3(0f, 0.68f, 0f),
+                    new Vector3(3.0f, 0.72f, 1.3f), BridgeStructure);
+                for (var axle = -1; axle <= 1; axle += 2)
+                for (var side = -1; side <= 1; side += 2)
+                {
+                    var wheel = BridgeCylinder(view.DriveAssembly, $"Drive wheel {(axle < 0 ? "L" : "R")}{(side < 0 ? "A" : "B")}",
+                        new Vector3(axle * 1.12f, 0.36f, side * 0.42f), new Vector3(0.38f, 0.16f, 0.38f), BridgeRubber);
+                    wheel.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                }
                 PoseAerobridge(view, ParkedCab(view), ParkedYaw(view));
                 _aerobridges.Add(view);
             }
@@ -248,6 +283,14 @@ namespace Airside.Presentation
                     glazing.localScale = new Vector3(glazing.localScale.x, glazing.localScale.y, length * 0.92f);
                     glazing.localPosition = new Vector3(sign * (scale.x / 2f + 0.02f), scale.y * 0.62f, centre);
                 }
+                for (var end = 0; end < 2; end++)
+                {
+                    var frameZ = start + length * (end == 0 ? 0.08f : 0.92f);
+                    var frame = (i * 2 + end) * 3;
+                    view.SectionFrames[frame].localPosition = new Vector3(0f, scale.y + 0.03f, frameZ);
+                    view.SectionFrames[frame + 1].localPosition = new Vector3(-scale.x / 2f, scale.y / 2f, frameZ);
+                    view.SectionFrames[frame + 2].localPosition = new Vector3(scale.x / 2f, scale.y / 2f, frameZ);
+                }
             }
 
             view.Cab.position = cabFloor;
@@ -261,8 +304,8 @@ namespace Airside.Presentation
             // Unity's cylinder is 2 m tall at unit scale.
             view.DriveColumn.localScale = new Vector3(0.7f, columnHeight / 2f, 0.7f);
             view.DriveColumn.rotation = Quaternion.Euler(0f, yaw, 0f);
-            view.DriveBogie.position = new Vector3(drive.x, ground + 0.45f, drive.z);
-            view.DriveBogie.rotation = Quaternion.Euler(0f, yaw, 0f);
+            view.DriveAssembly.position = new Vector3(drive.x, ground, drive.z);
+            view.DriveAssembly.rotation = Quaternion.Euler(0f, yaw, 0f);
         }
 
         private static Vector3 Flat(Vector3 v) => new(v.x, 0f, v.z);

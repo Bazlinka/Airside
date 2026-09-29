@@ -60,6 +60,25 @@ namespace Airside.Presentation
         private Vector3 _lastTargetPosition;
         private bool _hasLastTargetPosition;
 
+        // Follow smoothing state (ADR 0189): a spring on the centre with the target's velocity fed forward, and a filtered
+        // heading so the look-ahead point does not swing when the aircraft turns.
+        private Vector3 _centreVelocity;
+        private Vector3 _targetVelocity;
+        private float _aheadYaw;
+        private bool _hasAheadYaw;
+        private float _followStartedAt;
+
+        /// <summary>Forget the follow filters; restart the glide-in when <paramref name="glideIn"/>.</summary>
+        private void ResetFollowFilters(bool glideIn)
+        {
+            _hasLastTargetPosition = false;
+            _centreVelocity = Vector3.zero;
+            _targetVelocity = Vector3.zero;
+            _hasAheadYaw = false;
+            if (glideIn)
+                _followStartedAt = Time.unscaledTime;
+        }
+
         /// <summary>
         /// When true (sim pause), follow easing and touchdown shake freeze. Player orbit
         /// and overview pan still work so the field can be inspected while paused.
@@ -253,16 +272,6 @@ namespace Airside.Presentation
 
             if (_following && _followTarget != null)
             {
-                // Look a little ahead of the aircraft so taxi/takeoff reads forward motion.
-                var ahead = _followTarget.forward;
-                if (ahead.sqrMagnitude < 0.0001f)
-                    ahead = Vector3.forward;
-                ahead.y = 0f;
-                if (ahead.sqrMagnitude > 0.0001f)
-                    ahead.Normalize();
-                else
-                    ahead = Vector3.forward;
-
                 if (_profileOwner != _followTarget)
                 {
                     // Cached per target: a GetComponent every frame of every follow is waste.
@@ -275,9 +284,7 @@ namespace Airside.Presentation
                     ? _followTarget.TransformPoint(visualProfile.VisualCentreOffsetMetres)
                     : _followTarget.position;
                 var altitude = Mathf.Max(0f, _followTarget.position.y);
-                var lookAhead = LookAheadMetres(_followPhase, _followProgress, altitude);
-                var lookHeight = LookHeightMetres(_followPhase, altitude);
-                var lookPoint = visualCentre + ahead * lookAhead + Vector3.up * lookHeight;
+                var dt = FreezePresentation ? 0f : Time.unscaledDeltaTime;
 
                 // A recycled slot puts the new arrival hundreds of metres away in one
                 // frame. Easing to it dragged the camera the length of the field, so cut
@@ -285,8 +292,36 @@ namespace Airside.Presentation
                 var recycled = _hasLastTargetPosition
                     && Vector3.Distance(_lastTargetPosition, visualCentre)
                     > RespawnJumpMetres + MaxAircraftSpeedMetresPerSecond * Time.unscaledDeltaTime;
+                if (recycled)
+                    ResetFollowFilters(glideIn: false);
+                else if (_hasLastTargetPosition && dt > 0f)
+                {
+                    // The aircraft's own velocity, lightly filtered, is what lets the spring follow it with no lag.
+                    var raw = (visualCentre - _lastTargetPosition) / dt;
+                    if (raw.magnitude > MaxAircraftSpeedMetresPerSecond)
+                        raw = raw.normalized * MaxAircraftSpeedMetresPerSecond;
+                    _targetVelocity = Vector3.Lerp(_targetVelocity, raw, 1f - Mathf.Exp(-dt * 10f));
+                }
+
                 _lastTargetPosition = visualCentre;
                 _hasLastTargetPosition = true;
+                var groundSpeed = new Vector2(_targetVelocity.x, _targetVelocity.z).magnitude;
+
+                // Look a little ahead of the aircraft so taxi/takeoff reads forward motion. The heading is filtered so a
+                // turn (or the nose rotating at lift-off) does not swing the look point.
+                var facing = _followTarget.forward;
+                facing.y = 0f;
+                var rawYaw = facing.sqrMagnitude > 0.0001f ? Mathf.Atan2(facing.x, facing.z) * Mathf.Rad2Deg : _aheadYaw;
+                _aheadYaw = !_hasAheadYaw || recycled
+                    ? rawYaw
+                    : AirsideCameraFeel.TurnToward(_aheadYaw, rawYaw, 5f, 110f, dt);
+                _hasAheadYaw = true;
+                var ahead = new Vector3(Mathf.Sin(_aheadYaw * Mathf.Deg2Rad), 0f, Mathf.Cos(_aheadYaw * Mathf.Deg2Rad));
+
+                var lookAhead = LookAheadMetres(_followPhase, _followProgress, altitude)
+                                * AirsideCameraFeel.LookAheadSpeedFactor(groundSpeed);
+                var lookHeight = LookHeightMetres(_followPhase, altitude);
+                var lookPoint = visualCentre + ahead * lookAhead + Vector3.up * lookHeight;
 
                 // Follow curves are calibrated to AIR-001's ATR footprint. A type-aware
                 // profile keeps a true-size narrowbody in frame without altering the
@@ -308,20 +343,22 @@ namespace Airside.Presentation
                     return;
                 }
 
-                // Track harder on the fast phases. At one fixed rate the camera trails a
-                // departure by speed/rate metres, which at 4x let the aircraft run off
-                // the edge of frame during climb-out.
-                var dt = FreezePresentation ? 0f : Time.unscaledDeltaTime;
-                var centreRate = _followPhase switch
-                {
-                    AircraftPhase.Takeoff or AircraftPhase.Departed => 8f,
-                    AircraftPhase.Approach or AircraftPhase.Landing => 6f,
-                    AircraftPhase.Circuit or AircraftPhase.GoAround => 7f,
-                    _ => 4.2f
-                };
+                // Spring-follow the look point with the aircraft's velocity fed forward. Fast phases follow a little
+                // tighter, ground handling a little softer; the first moment of a follow is slowed so it glides in.
+                var fast = _followPhase is AircraftPhase.Takeoff or AircraftPhase.Departed or AircraftPhase.Approach
+                    or AircraftPhase.Landing or AircraftPhase.Circuit or AircraftPhase.GoAround;
+                var onGround = _followPhase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback
+                    or AircraftPhase.AtStand;
+                var smoothTime = AirsideCameraFeel.FollowSmoothTime(fast, onGround)
+                                 * AirsideCameraFeel.FollowStartSmoothScale(Time.unscaledTime - _followStartedAt);
                 if (dt > 0f)
                 {
-                    _center = Vector3.Lerp(_center, lookPoint, 1f - Mathf.Exp(-dt * centreRate));
+                    _center.x = AirsideCameraFeel.SmoothFollow(_center.x, lookPoint.x, _targetVelocity.x, ref _centreVelocity.x,
+                        smoothTime, dt);
+                    _center.z = AirsideCameraFeel.SmoothFollow(_center.z, lookPoint.z, _targetVelocity.z, ref _centreVelocity.z,
+                        smoothTime, dt);
+                    _center.y = AirsideCameraFeel.SmoothFollow(_center.y, lookPoint.y, _targetVelocity.y, ref _centreVelocity.y,
+                        smoothTime * AirsideCameraFeel.VerticalSmoothScale, dt);
                     _distance = Mathf.Lerp(_distance, followDistance, 1f - Mathf.Exp(-dt * 2.4f));
 
                     // Ease yaw toward the aircraft heading without fighting player orbit.
@@ -329,14 +366,14 @@ namespace Airside.Presentation
                     {
                         var yawBias = YawBiasDegrees(_followPhase);
                         var desiredYaw = Quaternion.LookRotation(ahead).eulerAngles.y + yawBias;
-                        _yaw = Mathf.LerpAngle(_yaw, desiredYaw, 1f - Mathf.Exp(-dt * 0.7f));
+                        _yaw = AirsideCameraFeel.TurnToward(_yaw, desiredYaw, 0.9f, 45f, dt);
                         // Pitch too: a right-drag while following used to be pulled back
                         // against the player's hand every frame.
                         var desiredPitch = FollowPitch(_followPhase, altitude, _followProgress);
                         _pitch = Mathf.Lerp(_pitch, desiredPitch, 1f - Mathf.Exp(-dt * 0.85f));
                     }
 
-                    var targetFov = FollowFov(_followPhase, _followProgress);
+                    var targetFov = FollowFov(_followPhase, _followProgress) + AirsideCameraFeel.SpeedFovBoost(groundSpeed);
                     _fov = Mathf.Lerp(_fov, targetFov, 1f - Mathf.Exp(-dt * 1.6f));
                 }
             }
@@ -855,7 +892,7 @@ namespace Airside.Presentation
         {
             _following = false;
             _easingOverview = false;
-            _hasLastTargetPosition = false;
+            ResetFollowFilters(glideIn: false);
         }
 
         /// <summary>
@@ -882,7 +919,7 @@ namespace Airside.Presentation
                 _following = true;
                 _followIndex = i;
                 _followTarget = target;
-                _hasLastTargetPosition = false;
+                ResetFollowFilters(glideIn: true);
                 return;
             }
         }
@@ -900,7 +937,7 @@ namespace Airside.Presentation
             _following = true;
             _followIndex = index;
             _followTarget = target;
-            _hasLastTargetPosition = false;
+            ResetFollowFilters(glideIn: true);
             return true;
         }
 

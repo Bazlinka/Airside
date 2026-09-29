@@ -313,5 +313,102 @@ namespace Airside.Tests
             AirsideCameraFeel.ClampPanCentre(0f, 0f, 30000f, 0f, out x, out z);
             Assert.That(x, Is.EqualTo(AirsideCameraFeel.MaxPanRadiusMetres).Within(1f), "the classic radius by default");
         }
+
+        // --- Follow camera (ADR 0189) ---
+
+        private static (float Position, float Velocity) Track(float startPosition, float target, float targetVelocity,
+            float seconds, float hz, float smoothTime = 0.34f)
+        {
+            var position = startPosition;
+            var velocity = 0f;
+            var dt = 1f / hz;
+            var t = 0f;
+            while (t < seconds - 1e-4f)
+            {
+                position = AirsideCameraFeel.SmoothFollow(position, target + targetVelocity * t, targetVelocity, ref velocity, smoothTime, dt);
+                t += dt;
+            }
+
+            return (position, velocity);
+        }
+
+        [Test]
+        public void FollowSpring_HasNoLagOnASteadilyMovingTarget()
+        {
+            // A first-order ease trails a 70 m/s aircraft by 70 / rate metres; the spring with the target's velocity fed
+            // forward settles onto it.
+            const float speed = 70f;
+            var (position, _) = Track(0f, 0f, speed, 6f, 60f);
+            Assert.That(position, Is.EqualTo(speed * 6f).Within(0.05f));
+        }
+
+        [Test]
+        public void FollowSpring_DoesNotOvershootAStep()
+        {
+            var position = -10f;
+            var velocity = 0f;
+            var furthest = position;
+            for (var i = 0; i < 600; i++)
+            {
+                position = AirsideCameraFeel.SmoothFollow(position, 0f, 0f, ref velocity, 0.34f, 1f / 60f);
+                furthest = Math.Max(furthest, position);
+            }
+
+            Assert.That(furthest, Is.LessThanOrEqualTo(0.001f), "critically damped: it arrives from one side");
+            Assert.That(position, Is.EqualTo(0f).Within(0.001f));
+        }
+
+        [Test]
+        public void FollowSpring_GivesTheSameResultAtAnyFrameRate()
+        {
+            var at60 = Track(-30f, 0f, 40f, 1.5f, 60f).Position;
+            var at144 = Track(-30f, 0f, 40f, 1.5f, 144f).Position;
+            var at30 = Track(-30f, 0f, 40f, 1.5f, 30f).Position;
+            Assert.That(at144, Is.EqualTo(at60).Within(0.35f));
+            Assert.That(at30, Is.EqualTo(at60).Within(0.6f));
+        }
+
+        [Test]
+        public void FollowSpring_HoldsStillWhenPaused()
+        {
+            var velocity = 3f;
+            Assert.That(AirsideCameraFeel.SmoothFollow(5f, 20f, 1f, ref velocity, 0.3f, 0f), Is.EqualTo(5f));
+            Assert.That(velocity, Is.EqualTo(3f));
+        }
+
+        [Test]
+        public void TurnToward_TakesTheShortWay_AndCapsTheRate()
+        {
+            Assert.That(AirsideCameraFeel.DeltaAngle(350f, 10f), Is.EqualTo(20f).Within(0.001f));
+            Assert.That(AirsideCameraFeel.DeltaAngle(10f, 350f), Is.EqualTo(-20f).Within(0.001f));
+            var turned = AirsideCameraFeel.TurnToward(0f, 170f, 5f, 110f, 1f / 60f);
+            Assert.That(turned, Is.InRange(0f, 110f / 60f + 0.001f), "no faster than the ceiling");
+            var across = AirsideCameraFeel.TurnToward(355f, 5f, 5f, 110f, 0.1f);
+            Assert.That(across, Is.GreaterThan(355f), "355 to 5 turns through north, not the long way round");
+        }
+
+        [Test]
+        public void LookAheadAndFov_GrowWithSpeed()
+        {
+            Assert.That(AirsideCameraFeel.LookAheadSpeedFactor(0f), Is.EqualTo(0.35f).Within(0.001f));
+            Assert.That(AirsideCameraFeel.LookAheadSpeedFactor(8f), Is.EqualTo(1f).Within(0.001f));
+            Assert.That(AirsideCameraFeel.LookAheadSpeedFactor(4f), Is.InRange(0.35f, 1f));
+            Assert.That(AirsideCameraFeel.SpeedFovBoost(10f), Is.Zero);
+            Assert.That(AirsideCameraFeel.SpeedFovBoost(80f), Is.EqualTo(3f).Within(0.001f));
+        }
+
+        [Test]
+        public void FollowStart_GlidesInAndSettlesToNormal()
+        {
+            Assert.That(AirsideCameraFeel.FollowStartSmoothScale(0f), Is.EqualTo(AirsideCameraFeel.FollowStartSlowdown).Within(0.001f));
+            Assert.That(AirsideCameraFeel.FollowStartSmoothScale(AirsideCameraFeel.FollowStartSeconds), Is.EqualTo(1f).Within(0.001f));
+            var last = float.MaxValue;
+            for (var t = 0f; t <= 2f; t += 0.1f)
+            {
+                var scale = AirsideCameraFeel.FollowStartSmoothScale(t);
+                Assert.That(scale, Is.LessThanOrEqualTo(last + 1e-5f), "only ever speeds up");
+                last = scale;
+            }
+        }
     }
 }

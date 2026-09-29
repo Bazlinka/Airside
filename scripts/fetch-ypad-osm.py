@@ -130,13 +130,57 @@ def fetch_overpass(url, bbox):
         return json.load(r)["elements"]
 
 
+BAND_BBOX = (138.462, -35.005, 138.598, -34.894)   # W,S,E,N: the whole suburb band the game draws
+BUILDING_TAGS = {"building", "building:levels", "height", "min_height", "roof:shape", "roof:levels", "roof:height",
+                 "roof:colour", "building:colour", "building:part", "name", "amenity", "shop", "tourism", "layer",
+                 "aeroway", "man_made", "operator"}
+STREET_TAGS = {"highway", "name", "oneway", "lanes", "width", "surface", "service", "junction", "bridge", "tunnel",
+               "layer", "access", "maxspeed", "ref"}
+
+
+def fetch_band(out_dir, keep_xml):
+    """Every building and every highway over the suburb band, in the formats generate-adelaide-suburbs.py reads."""
+    w0, s0, e0, n0 = BAND_BBOX
+    nodes, ways = {}, {}
+    lon, tiles = w0, 0
+    while lon < e0:
+        lat = s0
+        while lat < n0:
+            fetch_tile(lon, lat, min(lon + TILE_LON, e0), min(lat + TILE_LAT, n0), nodes, ways, keep_xml)
+            tiles += 1
+            lat += TILE_LAT
+        lon += TILE_LON
+        print(f"band: {tiles} tiles, {len(ways)} ways so far", file=sys.stderr)
+    today = datetime.date.today().isoformat()
+    buildings, streets = [], []
+    for wid, w in sorted(ways.items(), key=lambda kv: int(kv[0])):
+        geom = [[nodes[r]["lon"], nodes[r]["lat"]] for r in w["nds"] if r in nodes]
+        if len(geom) < 2:
+            continue
+        t = w["tags"]
+        if t.get("building") and t["building"] != "no" and len(geom) >= 4:
+            buildings.append({"id": int(wid), "tags": {k: v for k, v in t.items() if k in BUILDING_TAGS}, "geometry": geom})
+        elif "highway" in t:
+            streets.append({"id": int(wid), "tags": {k: v for k, v in t.items() if k in STREET_TAGS}, "geometry": geom})
+    head = {"source": "OSM API 0.6 /map, tiled", "osm_base": today, "query": "bbox {:.3f},{:.3f},{:.3f},{:.3f}".format(*BAND_BBOX)}
+    for name, key, rows in (("adelaide-suburb-buildings", "buildings", buildings), ("adelaide-suburb-streets", "streets", streets)):
+        path = os.path.join(out_dir, f"{name}-{today}.json")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(json.dumps({**head, key: rows}, separators=(",", ":"), ensure_ascii=False) + "\n")
+        print(f"wrote {os.path.relpath(path, ROOT)}: {len(rows)} {key}")
+
+
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--band", action="store_true", help="fetch the whole suburb band (buildings + streets) instead")
     ap.add_argument("--bbox", help="W,S,E,N in degrees")
     ap.add_argument("--out")
     ap.add_argument("--overpass", help="Overpass interpreter URL (e.g. https://overpass-api.de/api/interpreter)")
     ap.add_argument("--keep-xml", help="also keep each raw API tile here (not committed)")
     args = ap.parse_args()
+    if args.band:
+        fetch_band(os.path.join(ROOT, "docs/data/osm"), args.keep_xml)
+        return
     bbox = tuple(float(v) for v in args.bbox.split(",")) if args.bbox else DEFAULT_BBOX
     today = datetime.date.today().isoformat()
     out = args.out or os.path.join(ROOT, f"docs/data/osm/ypad-map-{today}.json")

@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Every street, and traffic lights.** All of the suburb streets around the airport are now drawn (the outer edges had houses
+  with no road), and intersections have traffic signals on the kerb with their lit lamp glowing at night, stop lines,
+  give-way marks and stop and give-way signs. The suburb buildings were refreshed from the latest map data. Not yet
+  seen in a rebuilt game.
 - **Bridges look like bridges.** Roads over creeks and rivers rise gently onto a deck with low concrete parapets, and
   their lane paint rises with them. Not yet seen in a rebuilt game.
 - **Lighter roads, same picture.** The road network needs about two thirds fewer road pieces on flat ground and

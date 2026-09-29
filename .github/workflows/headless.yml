@@ -21,6 +21,8 @@ jobs:
           python3 scripts/generate-ypad-roads.py --check
           python3 scripts/generate-ypad-carparks.py --check
           python3 scripts/generate-ypad-precinct.py --check
+      - name: No buildings without a street
+        run: python3 scripts/audit-ypad-map.py --max-percent 0.5
       - name: Harness list is current
         run: python3 scripts/update-harness.py --check
       - name: Domain, Simulation and Unity-free Presentation tests

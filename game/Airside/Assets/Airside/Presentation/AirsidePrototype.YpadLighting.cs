@@ -556,6 +556,39 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>
+        /// Night glows for the traffic-signal heads (ADR 0184): the lit lamp of each head, red or green, in two shared lens
+        /// groups near the terminal, so they cost two merged meshes.
+        /// </summary>
+        private static void BuildYpadSignalGlows(System.Func<float, float, float> groundHeight)
+        {
+            const float radius = 2200f;
+            foreach (var head in AdelaideRoadFurnitureGeometry.SignalHeads())
+            {
+                var dx = head.X - AdelaideCarParkGeometry.CentreX;
+                var dz = head.Z - AdelaideCarParkGeometry.CentreZ;
+                if (dx * dx + dz * dz > radius * radius)
+                    continue;
+                var key = head.RedLit ? "Signals red" : "Signals green";
+                if (!LensGroups.TryGetValue(key, out var group))
+                {
+                    group = new LensGroup
+                    {
+                        Name = key,
+                        Colour = head.RedLit ? new Color(1f, 0.16f, 0.08f) : new Color(0.14f, 1f, 0.4f),
+                        Response = LensDayResponse.Guidance,
+                        HaloGain = 0.4f
+                    };
+                    LensGroups[key] = group;
+                }
+
+                var ground = groundHeight != null ? groundHeight(head.X, head.Z) : AirsideAdelaideGround.PavementWorldY;
+                var lamp = new Vector3(head.X + head.FaceX * 0.2f, ground + AdelaideRoadFurnitureGeometry.PoleHeightMetres - 0.35f
+                    - (head.RedLit ? 0f : 0.66f), head.Z + head.FaceZ * 0.2f);
+                AddHalo(group, new Vector3(head.X, ground, head.Z), 5f, cardCentre: lamp, cardSize: 0.9f);
+            }
+        }
+
         /// <summary>Builds the merged fixture, lens and halo meshes queued by <see cref="PlaceYpadLens"/>.</summary>
         private static void FlushYpadLenses()
         {

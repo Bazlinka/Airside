@@ -63,6 +63,18 @@ SIMPLIFY_TOL = 0.35
 OUT_PREC = 1
 
 
+def band_streets():
+    """Streets of the suburb band (adelaide-suburb-streets-<date>.json), in the snapshot's way shape."""
+    files = sorted(glob.glob(os.path.join(OSM_DIR, "adelaide-suburb-streets-*.json")))
+    if not files:
+        return []
+    out = []
+    for e in load_snapshot(os.path.basename(files[-1]))["streets"]:
+        out.append({"type": "way", "id": e["id"], "tags": e["tags"],
+                    "geometry": [{"lat": p[1], "lon": p[0]} for p in e["geometry"]]})
+    return out
+
+
 def latest_snapshot():
     files = sorted(glob.glob(os.path.join(OSM_DIR, "ypad-map-*.json")))
     if not files:
@@ -165,9 +177,15 @@ def build(snapshot):
     # Beyond the full-detail window only the arterials are mapped: the wider land-cover extract
     # (motorway .. secondary) fills the far field, so one network draws every road.
     near_ids = {w["id"] for w in ways}
-    far = [e for e in load_snapshot(FAR_SNAPSHOT)["elements"]
-           if e["type"] == "way" and "highway" in e.get("tags", {}) and e["id"] not in near_ids]
-    ways = ways + far
+    far = {}
+    for e in load_snapshot(FAR_SNAPSHOT)["elements"]:
+        if e["type"] == "way" and "highway" in e.get("tags", {}) and e["id"] not in near_ids:
+            far[e["id"]] = e
+    # The suburb band (every street out to about 4 km) has the local streets the arterial extract lacks, and its tags win.
+    for e in band_streets():
+        if e["id"] not in near_ids:
+            far[e["id"]] = e
+    ways = ways + list(far.values())
     ways = [w for w in ways if classify(w["tags"])[0] is not None and len(w["geometry"]) >= 2]
     ways.sort(key=lambda w: w["id"])
 
@@ -228,7 +246,7 @@ def build(snapshot):
         })
         points.extend(clean)
         for a, b in zip(clean, clean[1:]):
-            grid.add(a, b, (width, cls, airside))
+            grid.add(a, b, (width, cls, airside, oneway))
         # junction bookkeeping on the simplified geometry (raw junction vertices are kept)
         for i in forced:
             p = raw[i]
@@ -253,14 +271,18 @@ def build(snapshot):
         if kind is None:
             continue
         p = to_local(e["lat"], e["lon"])
-        yaw, width = 0.0, 0.0
+        yaw, width, heading, flags = 0.0, 0.0, 0.0, 0
         if kind in HEADING_KINDS:
             seg, d = grid.nearest(p, 4.0)
             if seg:
-                yaw = math.degrees(math.atan2(seg[1][1] - seg[0][1], seg[1][0] - seg[0][0]))
-                yaw = round(yaw % 180.0, 0)
+                heading = math.degrees(math.atan2(seg[1][1] - seg[0][1], seg[1][0] - seg[0][0])) % 360.0
+                if e["tags"].get("direction") in ("backward", "reverse"):
+                    heading = (heading + 180.0) % 360.0
+                yaw = round(heading % 180.0, 0)
+                heading = round(heading, 0)
                 width = seg[2][0]
-        furniture.append((kind, p[0], p[1], yaw, width))
+                flags = 1 if seg[2][3] else 0
+        furniture.append((kind, p[0], p[1], yaw, width, heading, flags))
     furniture.sort()
 
     return data, roads, points, sorted(names, key=names.get), junctions, furniture
@@ -299,8 +321,8 @@ def pack(roads, points, junctions, furniture):
         ix, iz = dm(x), dm(z)
         buf += struct.pack("<iiBB", ix - px, iz - pz, dm(hw), deg)
         px, pz = ix, iz
-    for kind, x, z, yaw, width in furniture:
-        buf += struct.pack("<BiiHH", kind, dm(x), dm(z), int(yaw), dm(width))
+    for kind, x, z, yaw, width, heading, flags in furniture:
+        buf += struct.pack("<BiiHHHB", kind, dm(x), dm(z), int(yaw), dm(width), int(heading), flags)
     checksum = sum(dm(x) + 3 * dm(z) for x, z in points)
     comp = zlib.compressobj(9, zlib.DEFLATED, -15)
     packed = comp.compress(bytes(buf)) + comp.flush()
@@ -428,7 +450,9 @@ namespace Airside.Simulation
 
         /// <summary>
         /// Street furniture, <see cref="FurnitureStride"/> floats each: kind, x, z, heading of the road it sits on
-        /// (degrees, 0..180, x-axis = 0) and that road's width (0 when no road lies within 4 m).
+        /// (degrees, 0..180, x-axis = 0), that road's width (0 when no road lies within 4 m), the direction of travel
+        /// the node applies to (degrees, 0..360, x-axis = 0; the way's own direction unless the node says backward)
+        /// and flags (1 = the road is one-way).
         /// </summary>
         public static readonly float[] Furniture = Data.Furniture;
 
@@ -496,13 +520,15 @@ namespace Airside.Simulation
                 tables.Furniture[o + 2] = r.ReadInt32() / 10f;
                 tables.Furniture[o + 3] = r.ReadUInt16();
                 tables.Furniture[o + 4] = r.ReadUInt16() / 10f;
+                tables.Furniture[o + 5] = r.ReadUInt16();
+                tables.Furniture[o + 6] = r.ReadByte();
             }}
 
             return tables;
         }}
 
         public static int JunctionCount => Junctions.Length / 4;
-        public const int FurnitureStride = 5;
+        public const int FurnitureStride = 7;
         public static int FurnitureCount => Furniture.Length / FurnitureStride;
 
     }}

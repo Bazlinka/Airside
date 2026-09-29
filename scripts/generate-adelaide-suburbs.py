@@ -45,10 +45,10 @@ from shapely.geometry.polygon import orient
 
 ROOT = Path(__file__).resolve().parents[1]
 LAYOUT_PATH = ROOT / "scripts/generate-ypad-layout.py"
-SNAPSHOT = ROOT / "docs/data/osm/adelaide-suburb-buildings-2026-09-28.json"
+SNAPSHOT = sorted((ROOT / "docs/data/osm").glob("adelaide-suburb-buildings-*.json"))[-1]   # newest fetch (fetch-ypad-osm.py --band)
 RAW = ROOT / "work/cache/osm/buildings-raw.json"
 STREETS_RAW = ROOT / "work/cache/osm/streets-raw.json"
-STREETS_SNAPSHOT = ROOT / "docs/data/osm/adelaide-suburb-streets-2026-09-28.json"
+STREETS_SNAPSHOT = sorted((ROOT / "docs/data/osm").glob("adelaide-suburb-streets-*.json"))[-1]
 LANDCOVER_CS = ROOT / "game/Airside/Assets/Airside/Simulation/AdelaideLandCover.cs"
 AERODROME_RAW = ROOT / "work/cache/osm/aerodrome.json"
 OUTPUT = ROOT / "game/Airside/Assets/Airside/Art/Terrain/osm_adelaide_suburbs_v01.bin"
@@ -373,7 +373,10 @@ def main():
         }, separators=(",", ":")))
 
     snapshot = json.loads(SNAPSHOT.read_text())
-    streets = json.loads(STREETS_SNAPSHOT.read_text())["streets"]
+    # the band fetch keeps every highway; the house filler only wants streets a house can face
+    footpaths = {"footway", "cycleway", "path", "steps", "pedestrian", "corridor", "platform", "construction", "track", "bridleway"}
+    streets = [st for st in json.loads(STREETS_SNAPSHOT.read_text())["streets"]
+               if st["tags"].get("highway") not in footpaths]
     aerodrome = json.loads(AERODROME_RAW.read_text())["elements"][0] if AERODROME_RAW.exists() else None
     osm_polys = []
     keep_out = airport_keep_out()

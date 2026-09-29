@@ -376,6 +376,11 @@ namespace Airside.Presentation
             'E' => 1 | 8 | 16 | 32 | 64,
             'F' => 1 | 16 | 32 | 64,
             'G' => 1 | 4 | 8 | 16 | 32,
+            // Taxiway designators also use H, J, K and T (real YPAD refs such as H, J1, K, T4).
+            'H' => 2 | 4 | 16 | 32 | 64,
+            'J' => 2 | 4 | 8 | 16,
+            'K' => 2 | 16 | 32 | 64,
+            'T' => 8 | 16 | 32 | 64,
             'L' => 8 | 16 | 32,
             'R' => 16 | 64,
             _ => 0

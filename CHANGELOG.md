@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Taxiways carry their real names.** Yellow designators (A6, D2, F3, T4 …) are painted beside the
+  centreline of every named taxiway, repeated along the long ones, from the real airport data.
+  Not yet seen in a rebuilt game.
 - **Your aircraft keep a logbook.** Each aircraft in Fleet shows when it joined, its flights,
   what it has earned, its most-flown destination and its next distinction — First flight, Familiar
   face, Route regular, Workhorse, Veteran, Airline icon — with a celebration when it gets there.

@@ -11,6 +11,8 @@ namespace Airside.Presentation
     public sealed class AdelaideTerrainHeights
     {
         public const string ArtPath = "Terrain/dem_adelaide_runway_v01.bin";
+        /// <summary>The ±96 km, 250 m companion for the zoomed-out view (ADR 0185).</summary>
+        public const string FarArtPath = "Terrain/dem_adelaide_runway_far_v01.bin";
         public const string Attribution =
             "Elevation: Copernicus DEM GLO-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA";
 

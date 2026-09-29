@@ -371,10 +371,27 @@ namespace Airside.Presentation
             ApplyTransform();
         }
 
+        /// <summary>The free camera's orbit distance this frame, for the fog and haze that follow the zoom.</summary>
+        public static float CurrentDistance { get; private set; } = AirsideBareField.OverviewDistance;
+
+        private static readonly int HorizonScaleId = Shader.PropertyToID("_AirsideHorizonScale");
+
         private void ApplyTransform()
         {
             if (_camera != null)
+            {
                 _camera.fieldOfView = _fov;
+                if (AirsideBareField.Enabled)
+                {
+                    // Zoomed far out: push the clip planes and the terrain haze out with the camera (ADR 0185).
+                    var far = AirsideCameraFeel.FarClip(_distance, AirsideBareField.CameraFarClip);
+                    _camera.nearClipPlane = AirsideCameraFeel.NearClip(_distance);
+                    _camera.farClipPlane = far;
+                    Shader.SetGlobalFloat(HorizonScaleId, AirsideCameraFeel.HorizonScale(_distance, AirsideBareField.CameraFarClip));
+                }
+            }
+
+            CurrentDistance = _distance;
 
             var rotation = Quaternion.Euler(_pitch, _yaw, 0f);
             var shakeOffset = Vector3.zero;
@@ -486,7 +503,7 @@ namespace Airside.Presentation
         /// </summary>
         public static float KeyboardPanMetresPerSecond(float distance) =>
             AirsideBareField.OverviewPanMetresPerSecond
-            * Mathf.Clamp(distance / Mathf.Max(1f, OverviewDistance), 0.08f, 4f);
+            * Mathf.Clamp(distance / Mathf.Max(1f, OverviewDistance), 0.08f, 24f);
 
         /// <summary>Z/X lift had no bounds: the orbit centre could sink under the field or climb out of sight.</summary>
         public const float MinCentreHeightMetres = -20f;
@@ -807,7 +824,7 @@ namespace Airside.Presentation
         {
             AirsideCameraFeel.ClampPanCentre(
                 _overviewCenter.x, _overviewCenter.z, _center.x, _center.z,
-                out var cx, out var cz);
+                out var cx, out var cz, AirsideCameraFeel.PanRadius(_distance));
             _center.x = cx;
             _center.z = cz;
         }

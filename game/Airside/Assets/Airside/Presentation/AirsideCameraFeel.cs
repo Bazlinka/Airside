@@ -46,6 +46,32 @@ namespace Airside.Presentation
         /// </summary>
         public const float MaxPanRadiusMetres = 3800f;
 
+        /// <summary>Beyond the classic zoom limit the free camera may pan this fraction of its distance from the overview.</summary>
+        public const float FarPanFractionOfDistance = 0.9f;
+
+        /// <summary>The pan reach for a camera <paramref name="distance"/> metres out: the classic radius until the view is wide enough to need more.</summary>
+        public static float PanRadius(float distance) =>
+            Math.Max(MaxPanRadiusMetres, distance * FarPanFractionOfDistance);
+
+        /// <summary>
+        /// Near clip plane: 0.3 m as always up to 3 km out, then growing with distance so depth precision holds when
+        /// zoomed far out (nothing is nearer than the ground and sky the camera sits above).
+        /// </summary>
+        public static float NearClip(float distance) =>
+            Math.Min(300f, Math.Max(0.3f, (distance - 3000f) * 0.006f));
+
+        /// <summary>Far clip plane: the 30 km the game has always drawn, or 2.6 x the camera distance when that is more.</summary>
+        public static float FarClip(float distance, float baseFarClip) =>
+            Math.Max(baseFarClip, distance * 2.6f);
+
+        /// <summary>How far the horizon haze (fixed distances in the terrain shaders) is pushed out with the far clip.</summary>
+        public static float HorizonScale(float distance, float baseFarClip) =>
+            FarClip(distance, baseFarClip) / Math.Max(1f, baseFarClip);
+
+        /// <summary>Fog thins past the classic zoom limit so the far view is hazy, not white: density x classic / distance.</summary>
+        public static float FogScale(float distance, float classicMaxDistance) =>
+            Math.Min(1f, classicMaxDistance / Math.Max(1f, distance));
+
         /// <summary>
         /// One scroll sample as wheel notches, whatever units the platform reports.
         /// Large samples are the normalised 120-per-notch convention; small ones are
@@ -239,12 +265,12 @@ namespace Airside.Presentation
         public static void ClampPanCentre(
             float overviewX, float overviewZ,
             float centerX, float centerZ,
-            out float clampedX, out float clampedZ)
+            out float clampedX, out float clampedZ, float radiusMetres = MaxPanRadiusMetres)
         {
             var dx = centerX - overviewX;
             var dz = centerZ - overviewZ;
             var radiusSq = dx * dx + dz * dz;
-            var maxSq = MaxPanRadiusMetres * MaxPanRadiusMetres;
+            var maxSq = radiusMetres * radiusMetres;
             if (radiusSq <= maxSq || radiusSq < 0.0001f)
             {
                 clampedX = centerX;
@@ -252,7 +278,7 @@ namespace Airside.Presentation
                 return;
             }
 
-            var scale = MaxPanRadiusMetres / (float)Math.Sqrt(radiusSq);
+            var scale = radiusMetres / (float)Math.Sqrt(radiusSq);
             clampedX = overviewX + dx * scale;
             clampedZ = overviewZ + dz * scale;
         }

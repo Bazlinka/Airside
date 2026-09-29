@@ -21,7 +21,9 @@ Output: game/Airside/Assets/Airside/Art/Terrain/dem_adelaide_runway_v01.bin, lit
   int16[count * count]  heights above sea level, row-major, z rows from -extent up
 Sea and anything below 0 m are stored as 0.
 
-Run: python3 scripts/generate-adelaide-terrain.py
+Run: python3 scripts/generate-adelaide-terrain.py          the ±32 km near file (125 m)
+     python3 scripts/generate-adelaide-terrain.py --far    the ±96 km far file (250 m), dem_adelaide_runway_far_v01.bin,
+                                                           for the zoomed-out view (ADR 0185)
 Needs numpy, scipy, rasterio, pyproj, pillow.
 """
 from __future__ import annotations
@@ -30,6 +32,7 @@ import importlib.util
 import math
 import os
 import struct
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -40,16 +43,18 @@ from scipy.ndimage import gaussian_filter
 
 ROOT = Path(__file__).resolve().parents[1]
 LAYOUT_PATH = ROOT / "scripts/generate-ypad-layout.py"
-OUTPUT = ROOT / "game/Airside/Assets/Airside/Art/Terrain/dem_adelaide_runway_v01.bin"
-PREVIEW = ROOT / "docs/testing/surroundings-2026-09-28/terrain-hillshade.jpg"
+OUTPUT = ROOT / ("game/Airside/Assets/Airside/Art/Terrain/dem_adelaide_runway_far_v01.bin" if "--far" in sys.argv
+                 else "game/Airside/Assets/Airside/Art/Terrain/dem_adelaide_runway_v01.bin")
+PREVIEW = ROOT / ("docs/testing/map-2026-09-29/terrain-far-hillshade.jpg" if "--far" in sys.argv
+                  else "docs/testing/surroundings-2026-09-28/terrain-hillshade.jpg")
 CACHE = ROOT / "work/cache/copernicus-dem"
 
-EXTENT_METRES = 32_000.0
-SPACING = 125.0
-COUNT = int(round(2 * EXTENT_METRES / SPACING)) + 1   # 513
+FAR = "--far" in sys.argv
+EXTENT_METRES = 96_000.0 if FAR else 32_000.0
+SPACING = 250.0 if FAR else 125.0
+COUNT = int(round(2 * EXTENT_METRES / SPACING)) + 1   # 513 near, 769 far
 HEIGHT_SCALE = 0.05                                     # 5 cm steps, int16 covers 1.6 km
 GROUND_PERCENTILE = 20
-TILES = ["S35_00_E138_00", "S36_00_E138_00"]
 URL = "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_{0}_DEM/Copernicus_DSM_COG_10_{0}_DEM.tif"
 
 
@@ -77,11 +82,19 @@ def read_mosaic(lon_min, lat_min, lon_max, lat_max):
         data = np.load(cached)
         return data["heights"], tuple(data["box"])
     step = 1.0 / 3600.0
+    tiles = [f"S{abs(lat):02d}_00_E{lon:03d}_00"
+             for lat in range(math.floor(lat_min), math.floor(lat_max) + 1)
+             for lon in range(math.floor(lon_min), math.floor(lon_max) + 1)]
     width = int(math.ceil((lon_max - lon_min) / step))
     height = int(math.ceil((lat_max - lat_min) / step))
     mosaic = np.full((height, width), np.nan, dtype=np.float32)
-    for tile in TILES:
-        with rasterio.open(URL.format(tile)) as src:
+    for tile in tiles:
+        try:
+            src = rasterio.open(URL.format(tile))
+        except rasterio.errors.RasterioIOError:
+            print(f"  no DEM tile {tile} (open sea): left at 0 m")
+            continue
+        with src:
             b = src.bounds
             left, right = max(lon_min, b.left), min(lon_max, b.right)
             bottom, top = max(lat_min, b.bottom), min(lat_max, b.top)

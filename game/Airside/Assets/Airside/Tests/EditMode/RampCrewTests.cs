@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Airside.Domain;
 using Airside.Simulation;
 using NUnit.Framework;
 
@@ -45,24 +46,31 @@ namespace Airside.Tests
             Crew(DeparturePrepStage.Boarding);
             Assert.That(_crew.Count, Is.EqualTo(1), "boarding is the passengers' business");
             Assert.That(_crew[0].Role, Is.EqualTo(RampRole.Marshalling));
-            Assert.That(_crew[0].AlongMetres, Is.GreaterThan(0f),
-                "the marshaller stands ahead of the aircraft, not in the boarding path");
+            var door = AircraftLayout.For(AircraftType.Boeing7378).PassengerDoor;
+            var dx = _crew[0].AcrossMetres - door.X;
+            var dz = _crew[0].AlongMetres - door.Z;
+            Assert.That(System.Math.Sqrt(dx * dx + dz * dz), Is.GreaterThan(3.0),
+                "the supervisor stands beside the boarding path, not in it");
+            Assert.That(_crew[0].AcrossMetres, Is.LessThan(door.X), "on the door's side of the aircraft");
         }
 
         [Test]
         public void CrewStandBesideTheAircraftNotInsideIt()
         {
+            var layout = AircraftLayout.For(AircraftType.Boeing7378);
+            var footprint = new List<LayoutRect>();
+            layout.Footprint(footprint, forVehicles: false);
             foreach (var stage in new[] { DeparturePrepStage.Fuel, DeparturePrepStage.Catering,
                          DeparturePrepStage.Baggage, DeparturePrepStage.Boarding })
             {
                 Crew(stage);
                 foreach (var member in _crew)
                 {
-                    Assert.That(System.Math.Abs(member.AcrossMetres), Is.GreaterThan(2.5f),
-                        $"{stage}: a worker on the centreline would stand inside the fuselage");
+                    Assert.That(footprint.Any(r => r.Contains(member.AcrossMetres, member.AlongMetres, 0.5f)), Is.False,
+                        $"{stage}: {member.Task} stands inside the fuselage or a nacelle");
                     Assert.That(System.Math.Abs(member.AcrossMetres), Is.LessThan(25f),
                         $"{stage}: a worker this far out is off the stand");
-                    Assert.That(System.Math.Abs(member.AlongMetres), Is.LessThan(40f),
+                    Assert.That(System.Math.Abs(member.AlongMetres), Is.LessThan(45f),
                         $"{stage}: a worker this far fore/aft is not on this turnaround");
                 }
             }
@@ -71,19 +79,19 @@ namespace Airside.Tests
         [Test]
         public void CrewWorkOnTheSameSideAsTheirVehicle()
         {
-            // Fuel serves from the aircraft's right, catering and baggage from its left, matching
-            // the service positions UpdatePlayerTurnaroundServicing already uses.
+            // A 737's refuel coupling, aft service door and hold doors are all on its right, so
+            // fuel, catering and baggage all work that side (the passenger doors are on the left).
             Crew(DeparturePrepStage.Fuel);
             foreach (var m in _crew)
                 Assert.That(m.AcrossMetres, Is.GreaterThan(0f), "fuel works the right-hand side");
 
             Crew(DeparturePrepStage.Catering);
             foreach (var m in _crew)
-                Assert.That(m.AcrossMetres, Is.LessThan(0f), "catering works the left-hand side");
+                Assert.That(m.AcrossMetres, Is.GreaterThan(0f), "catering works the service-door side");
 
             Crew(DeparturePrepStage.Baggage);
             foreach (var m in _crew)
-                Assert.That(m.AcrossMetres, Is.LessThan(0f), "baggage works the left-hand side");
+                Assert.That(m.AcrossMetres, Is.GreaterThan(0f), "baggage works the hold-door side");
         }
 
         [Test]

@@ -1,5 +1,16 @@
 ## Unreleased
 
+- **Vehicles drive round things instead of through them.** Fuel trucks, catering trucks, baggage
+  trains, remote buses and the AI turnaround sets now plan a route round parked aircraft (fuselage,
+  engines, propellers and low wings), buildings, the terminal and the aerobridges, and wait rather
+  than drive into the path of a taxiing aircraft. Passengers walking to the stairs go round the
+  wing and the propellers too.
+- **Prop turnarounds look right.** Crew stand where the work is on each type — marshaller ahead of
+  the nose, fuel at the right-wing coupling, bags at the hold door — and nobody stands near a
+  propeller. The ATR 42 boards through its rear left door and loads bags at the front, like the
+  real aircraft. Turboprops are catered by hand at the stairs; the catering truck now only serves
+  jets.
+
 - **Ramp crews hold their equipment, and it looks the part.** Marshalling wands glow orange in the
   marshaller's hands and follow the waving arm, instead of floating beside them. Cones are carried by
   the tip, the fuel nozzle has a hose running back across the apron, baggage handlers carry cases,

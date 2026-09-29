@@ -352,6 +352,9 @@ namespace Airside.Presentation
             public CharacterKind Kind;
             public float Height;
             public float Phase;
+            public FigureRig Rig;
+            public HandTools.Kit Bag;
+            public int BagLook = -1;
         }
 
         private readonly struct WalkPath
@@ -375,8 +378,9 @@ namespace Airside.Presentation
             public GameObject Instance;
             public Transform Root;
             public CharacterKind Kind;
-            public Transform ToolRoot;
-            public RampTask? ToolTask;
+            public FigureRig Rig;
+            public HandTools.Kit Kit;
+            public RampTask? KitTask;
         }
 
         private sealed class RampCrewSet
@@ -511,6 +515,8 @@ namespace Airside.Presentation
             {
                 var person = _passengers[key];
                 person.Instance.SetActive(false);
+                if (person.Bag != null)
+                    person.Bag.Root.gameObject.SetActive(false);
                 _passengers.Remove(key);
                 if (!_passengerPool.TryGetValue(person.Kind, out var pool))
                     _passengerPool[person.Kind] = pool = new List<PassengerView>();
@@ -557,7 +563,24 @@ namespace Airside.Presentation
                 clip.SampleAnimation(person.Instance, cycle % clip.length);
             }
 
+            if (person.BagLook != move.Look)
+                GiveHandLuggage(person, move.Look);
+            if (person.Bag != null)
+            {
+                person.Bag.Root.gameObject.SetActive(true);
+                HandTools.Pose(person.Bag, person.Rig, lifted: narrow);
+            }
+
             return true;
+        }
+
+        /// <summary>Pooled passengers change look; their luggage follows the new one.</summary>
+        private void GiveHandLuggage(PassengerView person, int look)
+        {
+            if (person.Bag != null)
+                Destroy(person.Bag.Root.gameObject);
+            person.BagLook = look;
+            person.Bag = person.Rig != null ? HandTools.BuildPassengerBag(look, BoardingRoot()) : null;
         }
 
         private PassengerView TakePassenger(CharacterKind kind, int look)
@@ -599,7 +622,11 @@ namespace Airside.Presentation
                     skinned.updateWhenOffscreen = false;
             }
 
-            return new PassengerView { Instance = instance, Kind = kind, Height = height, Phase = look % 97 / 97f };
+            return new PassengerView
+            {
+                Instance = instance, Kind = kind, Height = height, Phase = look % 97 / 97f,
+                Rig = FigureRig.Find(instance)
+            };
         }
 
         /// <summary>
@@ -631,8 +658,8 @@ namespace Airside.Presentation
                 foreach (var person in set.People)
                 {
                     person.Instance.SetActive(false);
-                    if (person.ToolRoot != null)
-                        person.ToolRoot.gameObject.SetActive(false);
+                    if (person.Kit != null)
+                        person.Kit.Root.gameObject.SetActive(false);
                 }
             }
         }
@@ -742,24 +769,34 @@ namespace Airside.Presentation
                 person.Root.position = ground + nose * member.AlongMetres + right * member.AcrossMetres;
                 person.Root.rotation = Quaternion.LookRotation(
                     Quaternion.AngleAxis(member.FacingDegrees, Vector3.up) * nose, Vector3.up);
-                var clip = member.Task is RampTask.MarshalArrival or RampTask.WingWalk
-                    ? person.Kind.Wave ?? person.Kind.Interact
-                    : person.Kind.Interact ?? person.Kind.Idle;
+                var clip = RampClip(person.Kind, member.Task);
                 if (clip != null && clip.length > 0.01f)
                 {
                     var phase = (float)(_preciseTime * (member.Task is RampTask.BaggageHold or RampTask.BaggageCart ? 1.2 : 0.75)
                         + i * 0.37);
                     clip.SampleAnimation(person.Instance, phase % clip.length);
                 }
-                PoseCrewTool(person, member.Task, i);
+                PoseCrewTool(person, member.Task);
             }
             for (var i = _rampScratch.Count; i < set.People.Count; i++)
             {
                 set.People[i].Instance.SetActive(false);
-                if (set.People[i].ToolRoot != null)
-                    set.People[i].ToolRoot.gameObject.SetActive(false);
+                if (set.People[i].Kit != null)
+                    set.People[i].Kit.Root.gameObject.SetActive(false);
             }
         }
+
+        /// <summary>
+        /// Marshals wave their wands; carrying, radio and headset jobs stand with the arm down so
+        /// a cone or radio hangs naturally; hands-on jobs (fuel, catering, bags) reach and work.
+        /// </summary>
+        private static AnimationClip RampClip(CharacterKind kind, RampTask task) => task switch
+        {
+            RampTask.MarshalArrival or RampTask.WingWalk => kind.Wave ?? kind.Interact,
+            RampTask.PlaceSafetyEquipment or RampTask.BoardingSupervision or RampTask.PushbackHeadset
+                => kind.Idle ?? kind.Interact,
+            _ => kind.Interact ?? kind.Idle
+        };
 
         private RampCrewSet TakeRampCrewSet(string registration)
         {
@@ -799,65 +836,29 @@ namespace Airside.Presentation
                     animator.enabled = false;
                 foreach (var renderer in instance.GetComponentsInChildren<Renderer>(true))
                     renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
-                set.People.Add(new RampCrewPerson { Instance = instance, Root = instance.transform, Kind = kind });
+                set.People.Add(new RampCrewPerson
+                {
+                    Instance = instance, Root = instance.transform, Kind = kind, Rig = FigureRig.Find(instance)
+                });
             }
             return set.People[index];
         }
 
-        private void PoseCrewTool(RampCrewPerson person, RampTask task, int slot)
+        /// <summary>Equipment in the worker's hands (and ear defenders), posed from this frame's clip sample.</summary>
+        private void PoseCrewTool(RampCrewPerson person, RampTask task)
         {
-            if (person.ToolTask != task || person.ToolRoot == null)
+            if (person.Rig == null)
+                return;
+            if (person.KitTask != task || person.Kit == null)
             {
-                if (person.ToolRoot != null)
-                    Destroy(person.ToolRoot.gameObject);
-                person.ToolRoot = new GameObject($"{task} equipment").transform;
-                person.ToolRoot.SetParent(BoardingRoot(), true);
-                person.ToolTask = task;
-                switch (task)
-                {
-                    case RampTask.MarshalArrival:
-                    case RampTask.WingWalk:
-                        ParentBlock(person.ToolRoot, "Illuminated wand L", new Vector3(-0.28f, 1.25f, 0.12f),
-                            new Vector3(0.045f, 0.55f, 0.045f), new Color(1f, 0.32f, 0.08f));
-                        ParentBlock(person.ToolRoot, "Illuminated wand R", new Vector3(0.28f, 1.25f, 0.12f),
-                            new Vector3(0.045f, 0.55f, 0.045f), new Color(1f, 0.32f, 0.08f));
-                        break;
-                    case RampTask.PlaceSafetyEquipment:
-                        ParentBlock(person.ToolRoot, "Safety cone", new Vector3(0.55f, 0.22f, 0.3f),
-                            new Vector3(0.24f, 0.44f, 0.24f), new Color(0.95f, 0.35f, 0.08f));
-                        break;
-                    case RampTask.FuelPanel:
-                    case RampTask.FuelCoupling:
-                        ParentBlock(person.ToolRoot, "Fuel hose", new Vector3(0f, 0.65f, 0.34f),
-                            new Vector3(0.09f, 0.09f, 1.25f), new Color(0.12f, 0.12f, 0.13f));
-                        break;
-                    case RampTask.CateringLoader:
-                    case RampTask.CateringDoor:
-                        ParentBlock(person.ToolRoot, "Catering crate", new Vector3(0.45f, 0.55f, 0.35f),
-                            new Vector3(0.5f, 0.5f, 0.65f), new Color(0.76f, 0.78f, 0.8f));
-                        break;
-                    case RampTask.BaggageHold:
-                    case RampTask.BaggageCart:
-                        ParentBlock(person.ToolRoot, "Suitcase", new Vector3(0.45f, 0.45f, 0.4f),
-                            new Vector3(0.48f, 0.62f, 0.24f), new Color(0.18f, 0.32f, 0.46f));
-                        break;
-                    case RampTask.BoardingSupervision:
-                    case RampTask.PushbackHeadset:
-                        ParentBlock(person.ToolRoot, "Handheld radio", new Vector3(0.32f, 1.15f, 0.18f),
-                            new Vector3(0.12f, 0.28f, 0.08f), new Color(0.12f, 0.13f, 0.15f));
-                        break;
-                }
+                if (person.Kit != null)
+                    Destroy(person.Kit.Root.gameObject);
+                person.Kit = HandTools.BuildRampKit(task, BoardingRoot());
+                person.KitTask = task;
             }
 
-            person.ToolRoot.gameObject.SetActive(person.Instance.activeSelf);
-            person.ToolRoot.position = person.Root.position;
-            person.ToolRoot.rotation = person.Root.rotation;
-            if (task is RampTask.MarshalArrival or RampTask.WingWalk)
-                person.ToolRoot.localRotation *= Quaternion.Euler(0f, 0f,
-                    Mathf.Sin((float)_preciseTime * 3.2f + slot) * 22f);
-            else if (task is RampTask.BaggageHold or RampTask.BaggageCart)
-                person.ToolRoot.position += person.Root.forward *
-                    (Mathf.Sin((float)_preciseTime * 2.2f + slot) * 0.22f);
+            person.Kit.Root.gameObject.SetActive(person.Instance.activeSelf);
+            HandTools.Pose(person.Kit, person.Rig);
         }
 
         private void HideRampCrew()
@@ -866,8 +867,8 @@ namespace Airside.Presentation
                 foreach (var person in set.People)
                 {
                     person.Instance.SetActive(false);
-                    if (person.ToolRoot != null)
-                        person.ToolRoot.gameObject.SetActive(false);
+                    if (person.Kit != null)
+                        person.Kit.Root.gameObject.SetActive(false);
                 }
         }
 

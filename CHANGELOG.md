@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Ramp crews hold their equipment, and it looks the part.** Marshalling wands glow orange in the
+  marshaller's hands and follow the waving arm, instead of floating beside them. Cones are carried by
+  the tip, the fuel nozzle has a hose running back across the apron, baggage handlers carry cases,
+  caterers push a galley trolley and supervisors hold a radio. Every ramp worker now wears red ear
+  defenders.
+- **Passengers carry hand luggage.** About three in five tow a roller bag, which they lift on the
+  stairs, or carry a holdall.
+
 - **You can actually see the people now.** Passengers and ramp crews were being drawn under 2 cm
   tall, so all that showed was their wands, crates and suitcases floating on the apron. They now
   stand at human height, in their own clothes and hi-vis instead of flat grey (ramp crews were

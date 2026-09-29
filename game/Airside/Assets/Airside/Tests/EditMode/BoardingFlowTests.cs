@@ -130,10 +130,11 @@ namespace Airside.Tests
             jet.Scheduled = new ScheduledDeparture(sydney, push);
             Assert.That(BoardingFlow.StairTruckFraction(jet, parkedAt + EngineStartSequence.DoorsOpenAfterSeconds), Is.EqualTo(1f),
                 "stairs in place before the door opens");
-            Assert.That(EngineStartSequence.For(jet, parkedAt + EngineStartSequence.DoorsOpenAfterSeconds + 1).DoorsOpen, Is.True);
+            Assert.That(EngineStartSequence.For(jet, parkedAt + EngineStartSequence.DoorsOpenAfterSeconds
+                + DepartureCountdown.PassengerDoorSeconds + 1).DoorsOpen, Is.True, "open once the door has swung");
             var leave = push.ElapsedSeconds - BoardingFlow.StairTruckLeaveBeforePushSeconds;
             Assert.That(EngineStartSequence.For(jet, leave - 1).DoorsOpen, Is.False, "door shut before the stairs pull away");
-            Assert.That(BoardingFlow.StairTruckFraction(jet, push.ElapsedSeconds - EngineStartSequence.BeaconOnBeforeSeconds),
+            Assert.That(BoardingFlow.StairTruckFraction(jet, push.ElapsedSeconds - DepartureCountdown.JetBeaconBeforeSeconds),
                 Is.EqualTo(0f), "clear before the beacon");
             var (_, saab) = Parked(AircraftType.Saab340, "BAY-10A", Airline.Rex());
             Assert.That(BoardingFlow.StairTruckFraction(saab, 500), Is.EqualTo(0f), "a Saab uses its own airstair");

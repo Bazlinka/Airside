@@ -84,8 +84,9 @@ namespace Airside.Tests
             var departAt = DeparturePrep.LeadSeconds(plane.Type) + 600;
             Assert.That(DestinationCatalogue.TryFind("KGC", out var kingscote), Is.True);
             Assert.That(ops.ScheduleDeparture(plane, kingscote, new SimulationTime(departAt)).Accepted, Is.True);
-            // The turnaround started 200 s later than planned, so it finishes 200 s after the booked time.
-            plane.PrepStartedAt = plane.PrepStartedAt.Value.Advance(200);
+            // The turnaround started 200 s later than the departure countdown can absorb, so it
+            // finishes 200 s after the booked time.
+            plane.PrepStartedAt = plane.PrepStartedAt.Value.Advance(200 + (long)DepartureCountdown.PrepEndsBeforeSeconds);
             for (var t = departAt - 5; t <= departAt + 400 && plane.State == FleetState.AtStand; t++)
                 RunTo(clock, ops, t);
 

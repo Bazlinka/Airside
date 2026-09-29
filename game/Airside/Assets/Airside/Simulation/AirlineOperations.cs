@@ -1812,11 +1812,11 @@ namespace Airside.Simulation
                     if (alreadyPaid > 0) CareerState.RefundDispatch(alreadyPaid);
                     CareerState.TryChargeDispatch(cost);
                 }
-                // Align prep with the booked pushback: start TotalSeconds before depart
-                // (or now if that is already later). Recompute on every book so an earlier
-                // rebook cannot leave a future PrepStartedAt that blocks pushback forever.
+                // Align prep with the booked pushback: done in time for the departure countdown
+                // (ADR 0177), or starting now if that is already later. Recompute on every book so
+                // an earlier rebook cannot leave a future PrepStartedAt that blocks pushback forever.
                 var total = DeparturePrep.TotalSeconds(aircraft.Type, CareerState.BaseLevel);
-                var start = departAt.ElapsedSeconds - total;
+                var start = departAt.ElapsedSeconds - total - (long)DepartureCountdown.PrepEndsBeforeSeconds;
                 if (start < _processedTo.ElapsedSeconds)
                     start = _processedTo.ElapsedSeconds;
                 if (start < 0)
@@ -2981,7 +2981,8 @@ namespace Airside.Simulation
                     if (aircraft.Airline.IsPlayer && !aircraft.PrepStartedAt.HasValue)
                     {
                         var inferred = aircraft.Scheduled.Value.DepartAt.ElapsedSeconds
-                            - DeparturePrep.TotalSeconds(aircraft.Type, CareerState.BaseLevel);
+                            - DeparturePrep.TotalSeconds(aircraft.Type, CareerState.BaseLevel)
+                            - (long)DepartureCountdown.PrepEndsBeforeSeconds;
                         aircraft.PrepStartedAt = new SimulationTime(inferred < 0 ? 0 : inferred);
                     }
                     if (!DeparturePrep.IsReady(aircraft, now, CareerState.BaseLevel))

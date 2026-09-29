@@ -123,12 +123,13 @@ namespace Airside.Tests
             Assert.That(plane.BaseLevel, Is.EqualTo(PlayerBaseLevel.JetGate));
 
             Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(3_600)).Accepted, Is.True);
-            var now = new SimulationTime(3_600 - faster / 2);
+            var ready = 3_600 - (long)DepartureCountdown.PrepEndsBeforeSeconds;
+            var now = new SimulationTime(ready - faster / 2);
             var simulation = DeparturePrep.For(plane, now, ops.CareerState.BaseLevel);
             Assert.That(DeparturePrep.For(plane, now).Label, Is.EqualTo(simulation.Label));
             Assert.That(FlightBoard.PhaseLabel(plane, now), Is.EqualTo(simulation.Label));
             Assert.That(OperationsSummary.CompactState(plane, now), Is.EqualTo(simulation.Label));
-            Assert.That(DeparturePrep.ReadyAtSeconds(plane), Is.EqualTo(3_600));
+            Assert.That(DeparturePrep.ReadyAtSeconds(plane), Is.EqualTo(ready), "prep is done in time for the countdown");
         }
 
         [Test]

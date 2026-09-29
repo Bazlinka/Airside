@@ -1704,7 +1704,7 @@ namespace Airside.Presentation
                 UpdateAircraftLightsAndGear(viewParts.LightsAndGear, phase, PresentationDaylight, progress,
                     PresentationDeltaTime, PresentationClock, engines, groundPose, aircraftType);
                 UpdateDistantLight(view, AirsideReusableMotion.LandingLightsOn(phase, progress, engines.HasValue));
-                UpdateCabinDoor(viewParts.CabinDoors, phase, engines?.DoorsOpen);
+                UpdateCabinDoor(viewParts.CabinDoors, phase, engines);
                 var glowState = CabinWindowGlowState(phase, PresentationDaylight);
                 if (viewParts.CabinWindowGlowState != glowState)
                 {
@@ -2374,46 +2374,59 @@ namespace Airside.Presentation
             light.enabled = on && AirsideSettings.Current.AircraftLights;
         }
 
-        private static void UpdateCabinDoor(CabinDoorPart[] parts, AircraftPhase phase, bool? doorsOpen = null)
+        private static void UpdateCabinDoor(CabinDoorPart[] parts, AircraftPhase phase, EngineState? engines = null)
         {
-            // Presentation-only: cabin + cargo doors swing open at stand, close before pushback.
-            // ANM-AIR-003 — open bias from AirsideReusableMotion; fleet aircraft follow their
-            // engine start and shutdown sequence instead.
-            var doorBias = doorsOpen.HasValue
-                ? (doorsOpen.Value ? AirsideReusableMotion.DoorOpenAtStand : AirsideReusableMotion.DoorClosed)
-                : AirsideReusableMotion.CabinDoorBias(phase);
-            var cabinTargetY = Mathf.Lerp(0f, -85f, doorBias);
-            var cargoTargetY = Mathf.Lerp(0f, 70f, doorBias);
+            // Fleet aircraft: the door positions come straight from the departure countdown and
+            // the deplaning/boarding windows (ADR 0177) — a deterministic 0..1 per door that
+            // already eases over the door's own time, so they are right at any game speed and
+            // hold still when paused. The demo circuit keeps the old open-at-stand swing.
+            float passenger, cargo;
+            var timed = engines.HasValue;
+            if (timed)
+            {
+                passenger = engines.Value.PassengerDoor;
+                cargo = engines.Value.CargoDoor;
+            }
+            else
+            {
+                passenger = cargo = AirsideReusableMotion.CabinDoorBias(phase);
+            }
+
             for (var i = 0; i < parts.Length; i++)
             {
                 var child = parts[i].Transform;
                 if (child == null)
                     continue;
-                if (parts[i].Kind == CabinDoorKind.Airstair)
+                var euler = child.localEulerAngles;
+                switch (parts[i].Kind)
                 {
-                    // Saab / Dash 8 / ATR airstair door (ADR 0114): hinged at the sill, it folds
-                    // down and out until its steps rest on the apron.
-                    var euler = child.localEulerAngles;
-                    var current = euler.z > 180f ? euler.z - 360f : euler.z;
-                    var target = Mathf.Lerp(0f, parts[i].OpenDegrees, doorBias);
-                    euler.z = Mathf.MoveTowards(current, target, Time.unscaledDeltaTime * 55f);
-                    child.localEulerAngles = euler;
+                    case CabinDoorKind.Airstair:
+                    {
+                        // Saab / Dash 8 / ATR airstair door (ADR 0114): hinged at the sill, it
+                        // folds down and out until its steps rest on the apron.
+                        var target = Mathf.Lerp(0f, parts[i].OpenDegrees, passenger);
+                        euler.z = timed ? target : Mathf.MoveTowards(Signed(euler.z), target, Time.unscaledDeltaTime * 55f);
+                        break;
+                    }
+                    case CabinDoorKind.Cabin:
+                    {
+                        // A jet's plug door swings out and round against the fuselage.
+                        var target = Mathf.Lerp(0f, -85f, passenger);
+                        euler.y = timed ? target : Mathf.MoveTowards(Signed(euler.y), target, Time.unscaledDeltaTime * 120f);
+                        break;
+                    }
+                    default:
+                    {
+                        var target = Mathf.Lerp(0f, 70f, cargo);
+                        euler.y = timed ? target : Mathf.MoveTowards(Signed(euler.y), target, Time.unscaledDeltaTime * 100f);
+                        break;
+                    }
                 }
-                else if (parts[i].Kind == CabinDoorKind.Cabin)
-                {
-                    var euler = child.localEulerAngles;
-                    var current = euler.y > 180f ? euler.y - 360f : euler.y;
-                    euler.y = Mathf.MoveTowards(current, cabinTargetY, Time.unscaledDeltaTime * 120f);
-                    child.localEulerAngles = euler;
-                }
-                else
-                {
-                    var euler = child.localEulerAngles;
-                    var current = euler.y > 180f ? euler.y - 360f : euler.y;
-                    euler.y = Mathf.MoveTowards(current, cargoTargetY, Time.unscaledDeltaTime * 100f);
-                    child.localEulerAngles = euler;
-                }
+
+                child.localEulerAngles = euler;
             }
+
+            static float Signed(float degrees) => degrees > 180f ? degrees - 360f : degrees;
         }
 
         /// <summary>Glow has only six distinct outputs; do not rewrite every pane each frame.</summary>

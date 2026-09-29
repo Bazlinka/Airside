@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **Departures run in the right order.** Every stand now follows one countdown: bags in and the
+  hold shut, boarding finished, the last passengers aboard and a headcount, the door shut, the
+  aerobridge or stairs pulled back, then the beacon — and only then engines. Turboprops start on
+  the stand once everyone is aboard (they used to start with the door open and people walking
+  past); jets start during the pushback. Your turnaround now finishes four minutes before the
+  push to leave room for it.
+- **Doors move properly.** Passenger doors, airstairs and hold doors open and close over their own
+  few seconds in game time, so they keep pace at any game speed and stop when paused. The hold
+  opens for unloading and loading, not whenever the passenger door does.
+
 - **Turnarounds are worked item by item.** Bag handlers carry bags one at a time from the train
   and put them in the hold — by hand on a turboprop, up a belt loader on a jet — and the train
   empties as they go; how many bags depends on how long the baggage stage takes. The fuel worker

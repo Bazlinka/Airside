@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Barrier tape along the passenger walkways.** Passengers walking out to a regional bay now follow a marked corridor
+  from the terminal, edged with posts and red-and-white tape, until they reach the aircraft. Not yet seen in a
+  rebuilt game.
 - **Aircraft in a check are towed to a hangar.** When you send an aircraft for its check it is towed along the
   taxiways to a hangar that fits it (Regional Express for turboprops, Cobham for jets), waits inside, and is towed
   back before the check ends. The stand stays held, so nothing else can take it. Not yet seen in a rebuilt game.

@@ -1095,10 +1095,18 @@ namespace Airside.Presentation
 
             var forward = Flat(view.forward).normalized;
             var approach = foot - into * 4f + forward * 3f;
+            // ADR 0187: a fenced walkway leads from the terminal wall; people stay inside the tape until its end.
+            Vector3? leadIn = null;
             var origin = mode == BoardingMode.RemoteBus && TryRemoteBusStop(aircraft, view, out var busStop, out _)
                 ? busStop + into * 2.0f
                 : NearestTerminalDoor(foot, ground);
-            path = RoutedWalk(aircraft.Registration, origin, approach, foot, top);
+            if (mode != BoardingMode.RemoteBus && AdelaideWalkwayGeometry.TryCorridor(aircraft.Stand, out var corridor))
+            {
+                leadIn = new Vector3(corridor[0], ground, corridor[1]);
+                origin = new Vector3(corridor[2], ground, corridor[3]);
+            }
+
+            path = RoutedWalk(aircraft.Registration, origin, approach, foot, top, leadIn);
             return true;
         }
 
@@ -1110,13 +1118,16 @@ namespace Airside.Presentation
         /// round every parked airframe, its propeller arcs and low wings, and the buildings, so
         /// nobody walks through a wing or a turning propeller. Cached: this runs every frame.
         /// </summary>
-        private WalkPath RoutedWalk(string registration, Vector3 origin, Vector3 approach, Vector3 foot, Vector3 top)
+        private WalkPath RoutedWalk(string registration, Vector3 origin, Vector3 approach, Vector3 foot, Vector3 top,
+            Vector3? leadIn = null)
         {
             if (_walkRoutes.TryGetValue(registration, out var cached)
                 && (cached.Origin - origin).sqrMagnitude < 0.25f && (cached.Approach - approach).sqrMagnitude < 0.25f)
                 return cached.Path;
             var route = PlanFixedRoute(origin, approach, PersonClearanceMetres, false, new List<float>());
             var points = new List<Vector3>();
+            if (leadIn.HasValue)
+                points.Add(leadIn.Value);
             for (var i = 0; i + 1 < route.Count; i += 2)
                 points.Add(new Vector3(route[i], origin.y, route[i + 1]));
             points.Add(foot);

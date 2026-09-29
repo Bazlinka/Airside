@@ -1,5 +1,7 @@
 ## Unreleased
 
+- **Roads around the airport are marked like real roads.** Solid white edge lines, and on wide roads a
+  double centre line with dashed lane lines each side. Not yet seen in a rebuilt game.
 - **The airport has its real boundary.** A chain-link security fence follows the real Adelaide Airport
   boundary (about 15 km, from OpenStreetMap), with vehicle gates where the airside roads leave it. It
   replaces the plain rectangle that was off by default. Not yet seen in a rebuilt game.

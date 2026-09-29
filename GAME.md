@@ -1,5 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — road markings, and a correction on buildings (branch `feature/building-realism`, ADR 0182).**
+  - Roads: `RoadMarkingPlan` + `AirsideAdelaideRoads.BuildLaneMarkingMesh` now paint edge lines and multi-lane
+    dividers from road width (lanes derived; the data has no lane count).
+  - **Correction to my earlier audit:** airport buildings already have facade/roof detail (ADR 0124) and the
+    suburbs hipped roofs + palette (ADR 0159); the OSM building extract has almost no roof/material tags. Further
+    building realism is new art (gabled/barrel hangar roofs, house windows), best chosen after seeing the game.
+  - **Checks:** `scripts/test-unity.sh` 1400/1402, 0 failed, 2 known inconclusive. Not yet seen in a rebuilt game.
+  - **NEXT:** rebuild and look at: taxiway labels (#453), boundary fence (#456), road markings, prop blur (#455),
+    arrival/map agreement (#454), landing holds (#455).
+
 - **2026-09-29 Claude — real aerodrome boundary fence (branch `feature/airport-boundary`, ADR 0181).**
   Overpass access was allowed by Bailey; fetched way 146489105 (YPAD aerodrome) and the area's fences.
   `scripts/generate-ypad-boundary.py` → `Simulation/AdelaideBoundary.cs` (155 points, 15.2 km, 2 gates at

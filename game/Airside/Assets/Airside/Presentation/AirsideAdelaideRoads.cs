@@ -16,6 +16,16 @@ namespace Airside.Presentation
         public const string ShaderName = "Airside/Surroundings";
 
         private const int MaxRoads = 720;
+        // Once the complete OSM network draws the near field (ADR 0184), these arterial ribbons only fill in beyond
+        // its window, so more of them fit and none is drawn twice.
+        private const int MaxRoadsBeyondNetwork = 2400;
+        private static bool _skipWhereNetworkCovers;
+
+        private static int RoadCap => _skipWhereNetworkCovers ? MaxRoadsBeyondNetwork : MaxRoads;
+
+        private static bool SkipPoint(float x, float z) =>
+            (_skipWhereNetworkCovers && AdelaideRoadNetwork.Covers(x, z))
+            || (AdelaideLandCover.InOperationalCore(x, z) && !AdelaideLandside.Contains(x, z));
         private const float MinWidthMetres = 9f;
         private const float LandsideMinWidthMetres = 6f;
         private const float YOffsetMetres = 0.08f;
@@ -37,10 +47,12 @@ namespace Airside.Presentation
         // edge-line/no-stopping colour, not a centreline one).
         private static readonly Color LaneMarkingPaint = new(0.88f, 0.88f, 0.85f);
 
-        public static bool TryBuild(Transform root, float pavementWorldY, System.Func<float, float, float> groundHeight = null)
+        public static bool TryBuild(Transform root, float pavementWorldY, System.Func<float, float, float> groundHeight = null,
+            bool skipWhereNetworkCovers = false)
         {
             try
             {
+                _skipWhereNetworkCovers = skipWhereNetworkCovers;
                 var shader = Shader.Find(ShaderName);
                 if (shader == null || AdelaideLandCover.Roads == null || AdelaideLandCover.Roads.Length < 3)
                     return false;
@@ -112,7 +124,7 @@ namespace Airside.Presentation
 
                 var landside = RoadTouchesLandside(roads, i, count);
                 var minWidth = landside ? LandsideMinWidthMetres : MinWidthMetres;
-                if (width >= minWidth && drawn < MaxRoads)
+                if (width >= minWidth && drawn < RoadCap)
                 {
                     var half = width * 0.5f;
                     var start = vertices.Count;
@@ -125,7 +137,7 @@ namespace Airside.Presentation
                         // Skip the operational core — pavement owns the strips and
                         // aprons — but keep the T1 traffic-side notch (drop-off /
                         // Sir Richard Williams) so aerial landside is not a blank lawn.
-                        if (AdelaideLandCover.InOperationalCore(x, z) && !AdelaideLandside.Contains(x, z))
+                        if (SkipPoint(x, z))
                         {
                             prevLeft = prevRight = null;
                             continue;
@@ -305,7 +317,7 @@ namespace Airside.Presentation
 
                 var landside = RoadTouchesLandside(roads, i, count);
                 var minWidth = landside ? LandsideMinWidthMetres : LaneMarkingMinWidthMetres;
-                if (width >= minWidth && drawn < MaxRoads)
+                if (width >= minWidth && drawn < RoadCap)
                 {
                     var run = new List<Vector2>(count);
                     var lines = RoadMarkingPlan.For(width);
@@ -321,7 +333,7 @@ namespace Airside.Presentation
                     {
                         var x = roads[i + p * 2];
                         var z = roads[i + p * 2 + 1];
-                        if (AdelaideLandCover.InOperationalCore(x, z) && !AdelaideLandside.Contains(x, z))
+                        if (SkipPoint(x, z))
                         {
                             Flush();
                             continue;

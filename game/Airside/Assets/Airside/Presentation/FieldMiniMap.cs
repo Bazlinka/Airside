@@ -29,6 +29,11 @@ namespace Airside.Presentation
         public static readonly Color32 Taxiway = new(78, 92, 98, 255);
         public static readonly Color32 Runway = new(196, 214, 218, 255);
         public static readonly Color32 Building = new(96, 104, 110, 255);
+        // ADR 0184: the complete road network and the car parks, kept dim so the pavement still reads first.
+        public static readonly Color32 RoadMinor = new(34, 44, 50, 255);
+        public static readonly Color32 RoadMajor = new(52, 64, 70, 255);
+        public static readonly Color32 RoadAirside = new(66, 82, 88, 255);
+        public static readonly Color32 CarPark = new(26, 35, 40, 255);
 
         /// <summary>How far west of the 05 threshold the map keeps so a 23 climb-out stays over the gulf.</summary>
         public const float WestDepartureMetres = 1200f;
@@ -214,6 +219,7 @@ namespace Airside.Presentation
             var pixelsPerMetre = width / (maxX - minX);
 
             FillPolygon(pixels, width, height, ToPixels(map, AdelaideCoast.SeaPolygon), Water);
+            PaintLandside(pixels, width, height, map, pixelsPerMetre);
 
             foreach (var apron in AdelaideLayout.Aprons)
                 FillPolygon(pixels, width, height, ToPixels(map, apron.Xz), Apron);
@@ -226,6 +232,48 @@ namespace Airside.Presentation
             foreach (var terminal in AdelaideLayout.Terminals)
                 FillPolygon(pixels, width, height, ToPixels(map, terminal.Xz), Building);
             return pixels;
+        }
+
+        /// <summary>Car parks, then minor roads, then major and airside roads, under the pavement (ADR 0184).</summary>
+        private static void PaintLandside(Color32[] pixels, int width, int height, Rect map, float pixelsPerMetre)
+        {
+            WorldBounds(out var minX, out var maxX, out var minZ, out var maxZ);
+            for (var p = 0; p < AdelaideCarParks.PolygonCount; p++)
+            {
+                var xz = AdelaidePrecinctGeometry.Polygon(AdelaideCarParks.PolygonStarts, AdelaideCarParks.Points, p).ToArray();
+                if (Overlaps(xz, minX, maxX, minZ, maxZ))
+                    FillPolygon(pixels, width, height, ToPixels(map, xz), CarPark);
+            }
+
+            // three passes so a major road is never hidden by a minor one it crosses
+            for (var pass = 0; pass < 3; pass++)
+            {
+                foreach (var road in AdelaideRoadNetwork.Roads)
+                {
+                    if (road.Class == AdelaideRoadNetwork.RoadClass.Track || road.Layer < 0)
+                        continue;
+                    var airside = road.IsAirside;
+                    var major = road.Class <= AdelaideRoadNetwork.RoadClass.Tertiary;
+                    var thisPass = airside ? 2 : major ? 1 : 0;
+                    if (thisPass != pass)
+                        continue;
+                    var xz = new float[road.PointCount * 2];
+                    Array.Copy(AdelaideRoadNetwork.Points, road.PointStart * 2, xz, 0, xz.Length);
+                    if (!Overlaps(xz, minX, maxX, minZ, maxZ))
+                        continue;
+                    StrokePolyline(pixels, width, height, ToPixels(map, xz),
+                        Mathf.Max(0.55f, road.Width * 0.5f * pixelsPerMetre),
+                        airside ? RoadAirside : major ? RoadMajor : RoadMinor);
+                }
+            }
+        }
+
+        private static bool Overlaps(float[] xz, float minX, float maxX, float minZ, float maxZ)
+        {
+            for (var i = 0; i + 1 < xz.Length; i += 2)
+                if (xz[i] >= minX && xz[i] <= maxX && xz[i + 1] >= minZ && xz[i + 1] <= maxZ)
+                    return true;
+            return false;
         }
 
         /// <summary>Threshold labels in world x,z: 05, 23, 12, 30.</summary>

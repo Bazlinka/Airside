@@ -221,6 +221,10 @@ namespace Airside.Presentation
         private static void AppendBuilding(Dictionary<Vector2Int, MeshParts> tiles, AdelaideSuburbData.Building b,
             Func<float, float, float> groundHeight, float[] corners)
         {
+            // Open canopies (taxi and bus ranks, car-park entrances) are drawn on posts by the precinct (ADR 0184),
+            // not as a solid block that would bury the road and cars under them.
+            if (!b.IsHipped && AdelaidePrecinctGeometry.IsCanopyFootprint(b.Footprint))
+                return;
             var key = new Vector2Int(Mathf.FloorToInt(b.CentreX / TileMetres), Mathf.FloorToInt(b.CentreZ / TileMetres));
             if (!tiles.TryGetValue(key, out var parts))
                 tiles[key] = parts = new MeshParts();

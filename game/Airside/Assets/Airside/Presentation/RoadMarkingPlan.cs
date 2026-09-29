@@ -67,5 +67,60 @@ namespace Airside.Presentation
 
             return lines.ToArray();
         }
+
+        /// <summary>
+        /// Lines for a mapped road, using what OSM knows (ADR 0184): its lane count when tagged and whether it is
+        /// one-way. A one-way road with several lanes gets a dashed line between each pair; a tagged two- or
+        /// three-lane road keeps a dashed centre line however wide it is (parking lanes); untagged wide roads
+        /// fall back to <see cref="For"/>. Airside service roads get edge lines and, if two-way, a dashed centre.
+        /// </summary>
+        public static MarkingLine[] ForRoad(float roadWidth, int lanes, bool oneWay, bool airside)
+        {
+            var lines = new System.Collections.Generic.List<MarkingLine>(8);
+            if (airside)
+            {
+                if (roadWidth >= 5f)
+                {
+                    var edge = roadWidth * 0.5f - 0.3f;
+                    lines.Add(new MarkingLine(edge, false, 0.15f));
+                    lines.Add(new MarkingLine(-edge, false, 0.15f));
+                }
+
+                if (!oneWay && roadWidth >= 6.5f)
+                    lines.Add(new MarkingLine(0f, true, CentreLineWidthMetres));
+                return lines.ToArray();
+            }
+
+            if (oneWay)
+            {
+                var n = Math.Max(1, Math.Min(10, lanes > 0 ? lanes : Lanes(roadWidth)));
+                for (var k = 1; k < n; k++)
+                    lines.Add(new MarkingLine(-roadWidth * 0.5f + k * roadWidth / n, true, CentreLineWidthMetres));
+                if (roadWidth >= 6f)
+                {
+                    var edge = roadWidth * 0.5f - EdgeInsetMetres;
+                    lines.Add(new MarkingLine(edge, false, EdgeLineWidthMetres));
+                    lines.Add(new MarkingLine(-edge, false, EdgeLineWidthMetres));
+                }
+
+                return lines.ToArray();
+            }
+
+            if (lanes >= 1 && lanes <= 3)
+            {
+                if (roadWidth >= 5.5f)
+                    lines.Add(new MarkingLine(0f, true, CentreLineWidthMetres));
+                if (roadWidth >= 6.5f)
+                {
+                    var edge = roadWidth * 0.5f - EdgeInsetMetres;
+                    lines.Add(new MarkingLine(edge, false, EdgeLineWidthMetres));
+                    lines.Add(new MarkingLine(-edge, false, EdgeLineWidthMetres));
+                }
+
+                return lines.ToArray();
+            }
+
+            return For(roadWidth);
+        }
     }
 }

@@ -1,5 +1,20 @@
 ## Unreleased
 
+- **Every road around Adelaide Airport is drawn.** The whole road network from OpenStreetMap — 3,849 roads, 511
+  km: motorways to residential streets, the airside service roads and the terminal forecourt — at real widths with
+  junctions, roundabouts, lane and edge lines that stop at side roads, and zebra crossings. The old cap that
+  dropped most roads and the gap at the airfield edge are gone. The authored T1 drop-off, car pad and props are
+  off until real ones return (next). Not yet seen in a rebuilt game; `-airsideLegacyRoads` restores the old roads.
+- **Terminal precinct furniture from the real map.** The taxi-rank and car-park roofs are open canopies on posts
+  instead of solid blocks; the airport's solar panels, fuel tanks, apron floodlight masts and navaid masts, bus stops
+  and footpaths appear where they really are. Not yet seen in a rebuilt game.
+- **The real car parks, with cars.** Every Adelaide Airport car park is drawn from OpenStreetMap — surfaces, white
+  bay lines and up to about 4,000 parked cars (mostly white, silver and dark, as in a real car park) — plus the
+  street lamps, which glow at night. Replaces the hand-placed T1 car pad. Not yet seen in a rebuilt game.
+- **Groundwork for a complete, accurate Adelaide Airport map.** A fresh, much richer OpenStreetMap snapshot of
+  the airport, terminal precinct and approach roads (every road, car park, lamp, gate and jet bridge) is
+  in the repository, with the tools to refresh it. No visible change yet; roads, terminal and airside
+  detail follow in phases (ADR 0184).
 - **Much less waiting behind aircraft that have just landed.** The tower now frees the main runway once
   the landing aircraft is off the pavement instead of when it reaches the end of its taxi, so the next
   landing or takeoff goes sooner. Over a simulated day, time spent holding in the air fell about 40 %

@@ -1,5 +1,34 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — map overhaul P0: data foundation (branch `claude/adelaide-airport-map-overhaul-beuaca`, ADR 0184).**
+  Bailey asked for a complete, accurate top-down Adelaide Airport (all roads, terminal detail). Decided:
+  vector-first from OpenStreetMap, whole airport + landside. New `scripts/fetch-ypad-osm.py` (OSM map API,
+  since Overpass is blocked in the cloud sandbox) and `scripts/ypad_osm.py` (frame helpers);
+  snapshot `docs/data/osm/ypad-map-2026-09-29.json` (DAT-YPAD-MAP). No runtime change yet.
+  - **Why roads are partial:** `AirsideAdelaideRoads` caps at 720 ribbons, drops < 9 m, skips the whole
+    operational core; airside service roads are never drawn; suburb streets are satellite pixels only.
+  - **P1a + P1b done:** road data (`AdelaideRoadNetwork.cs`: 3,849 roads, 511 km, 97 airside) and the mesher
+    (`AdelaideRoadGeometry` pure + `AirsideAdelaideRoadNetworkMesh`), hooked in `BuildBareAdelaideField`. Legacy
+    arterial ribbons now only draw beyond the network window; authored T1 ribbons/car pad/props are off while it
+    draws. `-airsideLegacyRoads` restores the old roads. Offline render: `scripts/render-ypad-map.py`
+    (`docs/testing/map-2026-09-29/`). **Headless harness: 1,033 passed, 0 failed** (fixed its drift; .NET 8 via
+    `dotnet-install.sh`). The Unity-only files (`AirsideAdelaideRoadNetworkMesh`, `AirsidePrototype` hook, legacy
+    `AirsideAdelaideRoads` clip) have NOT been compiled — run `scripts/test-unity.sh` and look at the game.
+  - **P1c done:** `generate-ypad-carparks.py` -> `AdelaideCarParks.cs` (592 car parks, 12,959 bays, 471 lamps),
+    `AdelaideCarParkGeometry` (surfaces, bay lines, <= 4,200 cars, lamp posts), lamp night glows
+    (`BuildYpadRoadLampGlows`). Headless harness 1,040 passed, 0 failed.
+  - **P2/P3 (part) done:** `generate-ypad-precinct.py` -> `AdelaidePrecinct.cs` (7 canopies, 107 solar arrays, 41 tanks,
+    70 masts, 130 bus stops, 773 footpaths) + `AdelaidePrecinctGeometry`; suburb prisms that are really canopies are
+    skipped. Gates/jet bridges checked against OSM: fine (ADR 0141 setback). Headless harness 1,046 passed.
+  - **Also done:** mini-map paints roads and car parks; credits line updated; the network builds on a worker thread and
+    lands a few ms a frame (`AirsideAdelaideRoadNetworkMesh.BuildAsync`), with `FallBackToLegacyRoads` if it fails;
+    `scripts/render-ypad-map.py` draws bays/canopies/solar/tanks/paths (`docs/testing/map-2026-09-29/`).
+  - **NEXT:** hangar roof shapes; taxiway/holding-position signs; more of T1 (OSM has one 2-level polygon only); tune
+    from a real screenshot (`scripts/capture-game.sh`); perf capture with `-airsideSoak`.
+  - **Look at first in a rebuilt game:** road gaps, car-park cars, canopies, the worker-thread build landing without a
+    stall, and that nothing in `AirsideAdelaideRoadNetworkMesh` touches a Unity API off the main thread.
+  - **Watch:** no Unity/dotnet in the cloud container — C# must be verified on a Mac (`scripts/test-unity.sh`).
+
 - **2026-09-29 Claude — main strip frees when off the pavement (branch `fix/landing-runway-occupancy`, ADR 0183).**
   Bailey: aircraft still stuck on landing behind aircraft that have landed or are taxiing. The main strip was
   locked for the whole 511 m vacate leg (150–200 s); the aircraft is off the pavement at ~232 m. Now frees at

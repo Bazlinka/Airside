@@ -103,11 +103,13 @@ namespace Airside.Presentation
             var asphalt = new RoadMeshSink();
             AdelaideRoadGeometry.BuildAsphalt(asphalt, options);
             AdelaideCarParkGeometry.BuildSurfaces(asphalt, options);
+            AdelaideEmergencyAviationGeometry.BuildSurface(asphalt, options);
             AdelaidePrecinctGeometry.BuildPaths(asphalt, options);
             var paint = new RoadMeshSink();
             AdelaideRoadGeometry.BuildMarkings(paint, options);
             AdelaideCarParkGeometry.BuildBayLines(paint, options);
             AdelaideRoadFurnitureGeometry.BuildRoadPaint(paint, options);
+            AdelaideEmergencyAviationGeometry.BuildPaint(paint, options);
             // Parked cars, street lamps, canopies, solar arrays, tanks, masts and bus stops: solid, lit,
             // vertex-coloured (alpha 1 keeps the satellite out of them).
             var props = new RoadMeshSink();
@@ -122,6 +124,7 @@ namespace Airside.Presentation
             AdelaideRoadFurnitureGeometry.BuildSignals(props, options);
             AdelaideRoadFurnitureGeometry.BuildSigns(props, options);
             AdelaideWalkwayGeometry.Build(props, options);
+            AdelaideEmergencyAviationGeometry.BuildFixtures(props, options);
             return new Sinks { Asphalt = asphalt, Paint = paint, Props = props };
         }
 

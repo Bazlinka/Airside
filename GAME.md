@@ -1,5 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Codex — Adelaide emergency aviation and road assets (branch
+  `codex/adelaide-helicopter-road-assets`, ADR 0186).**
+  - AIR-017 is a project-authored, unbranded Bell 412EP-class rescue helicopter at the OSM Helipad West beside the
+    SA Ambulance rescue/retrieval base. The 37.9 m mapped pad has its perimeter, touchdown ring, H and 12 edge lamps.
+  - The helicopter is static presentation with a procedural fallback; schedules, reservations, missions and saves
+    are untouched. Current contract/type timing is recorded in ADR 0186 and the asset register.
+  - **Checks:** AIR-017 generator check passed at 43 parts / 1,324 triangles / 13.90 × 16.97 × 4.45 m; Unity EditMode
+    1440/1442, zero failures, two known `Assume` inconclusives. A stale Unity Bee cache was preserved under ignored
+    `work/bee-hung-20260930-0843`; a clean cache rebuild passed.
+  - **NEXT:** complete the same task packet's deterministic five-class parked-car silhouettes and signal/road-
+    furniture hardware pass, rerun Unity/audit/build and inspect packaged day/night captures before PR/merge.
+
 - **2026-09-30 Codex — Adelaide hero architecture (branch `codex/adelaide-hero-architecture`, ADR 0185).**
   - Terminal 1 now has raised roof lanterns and eight airside structural piers tied to the real curved facade.
   - Every surveyed operational hangar has a fitted gable, barrel or sawtooth roof; the original OSM prism remains

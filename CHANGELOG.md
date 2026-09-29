@@ -1,5 +1,7 @@
 ## Unreleased
 
+- **Fleet status names the hangar.** An aircraft in its check now reads "In Regional Express hangar · In check until
+  14:20" instead of just its stand. Not yet seen in a rebuilt game.
 - **Hangars have limited space.** A hangar holds one to three aircraft side by side. If every hangar that fits an
   aircraft is full, the check is refused and you are told when one frees. Aircraft in the same hangar stand in their
   own spots. Not yet seen in a rebuilt game.

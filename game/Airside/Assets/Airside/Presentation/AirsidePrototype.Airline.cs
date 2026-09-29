@@ -1349,6 +1349,16 @@ namespace Airside.Presentation
             return true;
         }
 
+        /// <summary>Where an aircraft in its check is: the hangar it is berthed in, or its stand when none fits (ADR 0188).</summary>
+        private string CheckPlace(FleetAircraft aircraft)
+        {
+            var berth = HangarBays.Of(_operations.Fleet, aircraft, _operations.CareerState.BaseLevel);
+            var options = berth.HasHangar ? HangarTow.Options(aircraft.Type, aircraft.Stand) : null;
+            return options != null && berth.Hangar < options.Count
+                ? $"In {options[berth.Hangar].HangarName} hangar"
+                : StandNames.Display(aircraft.Stand);
+        }
+
         private string StatusText(FleetAircraft aircraft)
         {
             var to = aircraft.CurrentDestination;
@@ -1360,7 +1370,7 @@ namespace Airside.Presentation
                 FleetState.AtStand => aircraft.Scheduled.HasValue
                     ? StandDepartureStatus(aircraft)
                     : Maintenance.InCheck(aircraft, _clock.Now)
-                        ? $"{StandNames.Display(aircraft.Stand)} · {Maintenance.Status(aircraft, _clock.Now, _operations.Clock)}"
+                        ? $"{CheckPlace(aircraft)} · {Maintenance.Status(aircraft, _clock.Now, _operations.Clock)}"
                         : $"On {StandNames.Display(aircraft.Stand)} · no flight planned",
                 FleetState.TaxiOut => $"Taxiing to runway {RunwayWeather.Label(aircraft.AssignedRunway)} · {dest}",
                 FleetState.HoldingShort => $"Holding {RunwayWeather.Label(aircraft.AssignedRunway)} · {dest}{wait}",

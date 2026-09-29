@@ -149,7 +149,8 @@ namespace Airside.Presentation
     {
         TierReached,
         ContractDone,
-        Finale
+        Finale,
+        AircraftMilestone
     }
 
     /// <summary>A big moment worth stopping for: a new tier, a finished contract, the finale (ADR 0132).</summary>
@@ -240,6 +241,21 @@ namespace Airside.Presentation
                     "The airport is yours. Keep flying."
                 });
         }
+
+        public static CelebrationCard ForAircraftMilestone(CareerEvent careerEvent)
+        {
+            AircraftType.TryFromId(careerEvent.AircraftTypeId, out var type);
+            var typeName = type?.Name ?? "Aircraft";
+            var image = type == null ? string.Empty : FleetWorkspacePainter.Thumbnail(type);
+            return new CelebrationCard(CelebrationKind.AircraftMilestone,
+                careerEvent.Title,
+                $"{careerEvent.Registration} · {typeName}",
+                new[]
+                {
+                    careerEvent.Flights == 1 ? "Its first flight is in the logbook." : $"{careerEvent.Flights} flights completed.",
+                    "Open Fleet to see its history."
+                }, image);
+        }
     }
 
     /// <summary>The celebration card: a centred glass panel over the airport (ADR 0132).</summary>
@@ -259,12 +275,15 @@ namespace Airside.Presentation
             var t = Math.Clamp(shownFor / 0.25f, 0f, 1f);
             var box = panel.Offset(0f, (1f - t) * 16f);
             into.Surface(box, 0.96f * t);
-            var accent = card.Kind == CelebrationKind.ContractDone ? HudTone.Positive : HudTone.Caution;
+            var accent = card.Kind is CelebrationKind.ContractDone or CelebrationKind.AircraftMilestone
+                ? HudTone.Positive : HudTone.Caution;
             into.Fill(new HudBox(box.X, box.Y, box.Width, 4f), accent, t);
 
             var y = box.Y + 26f;
             into.Caption(new HudBox(box.X, y, box.Width, 12f),
-                card.Kind == CelebrationKind.ContractDone ? "CONTRACT" : "CAREER", accent, HudAlign.Center, 10f);
+                card.Kind == CelebrationKind.ContractDone ? "CONTRACT"
+                : card.Kind == CelebrationKind.AircraftMilestone ? "AIRCRAFT"
+                : "CAREER", accent, HudAlign.Center, 10f);
             y += 20f;
             into.Text(new HudBox(box.X + 24f, y, box.Width - 48f, 36f), card.Title, 28f, HudTone.Default,
                 HudTextStyle.Bold, HudAlign.Center, alpha: t);

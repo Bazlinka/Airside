@@ -1,5 +1,27 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — leftover sessions and branches integrated and cleaned up (branch
+  `feature/integrate-leftover-work`).** Bailey asked for every leftover session and branch to be
+  checked, what is worth keeping integrated, and the rest removed.
+  - **Aircraft logbooks (ADR 0178, save v18)** from Codex's unmerged WIP
+    `codex/ownership-and-mechanics-refinement`: per-aircraft join time, flights, revenue, route
+    counts, distinctions with a celebration, founding VH-PAX not resellable. Logbook files only; the
+    branch's ground-queue changes were superseded by #450.
+  - **Saab propellers** from `codex/blender-saab-pilot`: the candidate model predates the ADR 0171
+    glazing, so only its 16 blade meshes were transplanted into the runtime v01 glTF
+    (`scripts/transplant-saab-v02-propellers.py`, candidate GLB kept under `docs/art/candidates/`).
+    The editable FBX is unchanged.
+  - **Queue regression tests** from the `serene-snyder` Claude session (same fixes as #450):
+    `DualRunwayTowerTests` per-runway-end queue and hold-order tests, and the gate test now checks
+    every stand for double-booking.
+  - **Archived, not merged:** `feature/atr-cockpit-authenticity-20260924` (superseded — the ATR on
+    main already has the cockpit and pilots, and its reflective glazing is what ADR 0171 replaced)
+    and `feature/live-only-ground` (unwired stub; live traffic is sky-only since ADR 0086).
+    Both kept as `archive/*` tags.
+  - **Checks:** `scripts/test-unity.sh` passed (1378/1380, 0 failed, 2 inconclusive); Saab geometry,
+    fleet connectivity and Unity asset audits pass; Saab blades checked in a Unity render. Not yet seen
+    in a rebuilt game.
+
 - **2026-09-29 Claude — frozen game captures explained and fixed (branch `fix/reliable-game-captures`).**
   - Cause: the Unity player waits for the display to show each frame. With the display asleep the
     first frame never appears and the game hangs with every thread idle (sampled). `pmset` shows the

@@ -61,6 +61,12 @@ namespace Airside.Tests
 
             AssertFits(CelebrationCard.ForContract("Kingscote charter", 4_200, 4, "UI/Aircraft/thb_air_sf34_v01.png"));
             AssertFits(CelebrationCard.ForFinale("Southern Cross Regional", 18, 12, 140));
+            var aircraft = CelebrationCard.ForAircraftMilestone(new CareerEvent(
+                CareerEventKind.AircraftMilestone, OperatingTier.Provisional,
+                "VH-PAX: first service reached.", "VH-PAX", AircraftType.Saab340.Id, 1, "First service"));
+            Assert.That(aircraft.Kind, Is.EqualTo(CelebrationKind.AircraftMilestone));
+            Assert.That(aircraft.Subtitle, Does.Contain("VH-PAX").And.Contain("Saab 340B"));
+            AssertFits(aircraft);
         }
 
         private static void AssertFits(CelebrationCard card)

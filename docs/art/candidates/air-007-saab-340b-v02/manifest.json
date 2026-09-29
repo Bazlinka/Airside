@@ -1,0 +1,53 @@
+{
+  "asset_id": "AIR-007",
+  "candidate_version": "v02",
+  "status": "candidate-not-runtime",
+  "source": "game/Airside/Assets/Airside/Art/Models/Aircraft/mdl_saab_340b_v01.fbx",
+  "generator": "Blender 5.2.2 LTS + scripts/build-air-007-blender-v02.py",
+  "dimensions_m": {
+    "length": 19.73,
+    "span": 21.44,
+    "height": 6.97
+  },
+  "validation": {
+    "mesh_objects": 149,
+    "triangles": 60445,
+    "source_triangles": 57333,
+    "added_triangles": 3112,
+    "triangle_increase_percent": 5.43,
+    "bounds_min_blender_xyz": [
+      -10.72,
+      -9.865,
+      -0.0
+    ],
+    "bounds_max_blender_xyz": [
+      10.72,
+      9.865,
+      6.97
+    ],
+    "dimensions_blender_xyz_m": [
+      21.44,
+      19.73,
+      6.97
+    ]
+  },
+  "outputs": {
+    "blend": "docs/art/candidates/air-007-saab-340b-v02/mdl_saab_340b_v02_candidate.blend",
+    "fbx": "docs/art/candidates/air-007-saab-340b-v02/mdl_saab_340b_v02_candidate.fbx",
+    "glb": "docs/art/candidates/air-007-saab-340b-v02/mdl_saab_340b_v02_candidate.glb",
+    "renders": [
+      "docs/art/candidates/air-007-saab-340b-v02/renders/candidate_front_left_high.png",
+      "docs/art/candidates/air-007-saab-340b-v02/renders/candidate_side_left.png",
+      "docs/art/candidates/air-007-saab-340b-v02/renders/candidate_front.png",
+      "docs/art/candidates/air-007-saab-340b-v02/renders/candidate_top.png",
+      "docs/art/candidates/air-007-saab-340b-v02/renders/candidate_prop_close.png",
+      "docs/art/candidates/air-007-saab-340b-v02/renders/candidate_gear_close.png"
+    ]
+  },
+  "sha256": {
+    "fbx": "addb7f837618e3c49b466921c9b6fd9658ca4a8f53d28ddda331bb5db9aa3418",
+    "glb": "76d12fc1e6dca96317ded1b623952f8cf897f35988d89abf623ac636dbd01878"
+  },
+  "runtime_replacement": false,
+  "fallback": "game/Airside/Assets/Airside/Art/Models/Aircraft/mdl_saab_340b_v01.fbx"
+}

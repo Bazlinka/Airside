@@ -216,6 +216,8 @@ namespace Airside.Tests
         {
             var ops = NewGame(out var clock);
             var jet = Jet(ops);
+            Assert.That(jet.Stand, Is.EqualTo(Gate13), "the Virgin jet starts on Gate 13");
+            var holders = new Dictionary<string, int>();
             var sawTaxiOut = false;
             var sawTaxiIn = false;
             var previous = jet.State;
@@ -237,10 +239,17 @@ namespace Airside.Tests
                     && !RunwayWeather.IsMainRunway(a.AssignedRunway));
                 Assert.That(mainOnRunway, Is.LessThanOrEqualTo(1), "05/23");
                 Assert.That(crossOnRunway, Is.LessThanOrEqualTo(1), "12/30");
-                var gateHolders = ops.Fleet.Count(a =>
-                    (a.State is FleetState.AtStand or FleetState.TaxiIn && a.Stand.Equals(Gate13))
-                    || (a.State == FleetState.TaxiOut && a.DepartureStand.Equals(Gate13)));
-                Assert.That(gateHolders, Is.LessThanOrEqualTo(1), "gate double-booked");
+                // Never two aircraft on (or taxiing to or from) any one stand at once.
+                holders.Clear();
+                foreach (var a in ops.Fleet)
+                {
+                    var stand = a.State is FleetState.AtStand or FleetState.TaxiIn ? a.Stand
+                        : a.State == FleetState.TaxiOut ? a.DepartureStand : default;
+                    if (string.IsNullOrEmpty(stand.Value))
+                        continue;
+                    holders[stand.Value] = holders.TryGetValue(stand.Value, out var held) ? held + 1 : 1;
+                    Assert.That(holders[stand.Value], Is.LessThanOrEqualTo(1), $"{stand.Value} double-booked");
+                }
                 // The gateHolders check above is the one that matters: never two aircraft on the
                 // gate at once. This used to also assert that only the Virgin jet ever used Gate 13
                 // at all, which was an accident of the taxi timings — Gate 13 is a code C contact

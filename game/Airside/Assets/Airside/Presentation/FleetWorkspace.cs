@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Airside.Domain;
 using Airside.Simulation;
 
@@ -339,10 +340,32 @@ namespace Airside.Presentation
             var ceilingSuffix = ceiling == RouteBand.Regional ? "" : ", +closer";
             AddFact("operation/departure", $"Flies {RouteMapWorkspaceModel.BandLabel(ceiling).ToLowerInvariant()} routes "
                                            + $"({RouteAccess.ExampleDestinations(ceiling)}{ceilingSuffix})");
-            AddFact("operation/completed", Plural(aircraft.CompletedTrips, "flight") + " flown");
+            var distinction = AircraftDistinctions.Current(aircraft.CompletedTrips);
+            var historyTitle = distinction.Flights > 0 ? distinction.Title : "New to the fleet";
+            AddFact("operation/completed", $"{historyTitle} · {Plural(aircraft.CompletedTrips, "flight")} flown");
             AddFact("economy/route", $"{aircraft.Type.PracticalRangeKm:#,0} km range");
             if (aircraft.Airline.IsPlayer)
             {
+                var joined = clock.LocalAt(aircraft.JoinedAirlineAt)
+                    .ToString("d MMM yyyy", CultureInfo.InvariantCulture);
+                AddFact("economy/reputation", aircraft.IsFoundingAircraft
+                    ? $"Founding aircraft · with the airline since {joined}"
+                    : $"Joined the airline {joined}");
+                if (aircraft.HistoryFlights > 0)
+                {
+                    var recorded = aircraft.HistoryFlights == aircraft.CompletedTrips
+                        ? $"${aircraft.LifetimeRevenue:N0} earned"
+                        : $"${aircraft.LifetimeRevenue:N0} recorded since the logbook began";
+                    var favourite = aircraft.FavouriteRoute;
+                    if (!string.IsNullOrEmpty(favourite.DestinationCode)
+                        && DestinationCatalogue.TryFind(favourite.DestinationCode, out var destination))
+                        recorded += $" · {destination.Name} {favourite.Flights}×";
+                    AddFact("economy/cash", recorded);
+                }
+                var next = AircraftDistinctions.Next(aircraft.CompletedTrips);
+                if (next.Flights > 0)
+                    AddFact("operation/completed",
+                        $"Next distinction: {next.Title} · {next.Flights - aircraft.CompletedTrips} flights to go");
                 var baseLevel = operations.CareerState.BaseLevel;
                 AddFact("service/inspection", PlayerBase.MaintenanceLine(baseLevel, aircraft.Type)
                                               + " · $" + Maintenance.CheckCost(aircraft.Type, baseLevel).ToString("N0")

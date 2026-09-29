@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Airside.Domain;
 
 namespace Airside.Simulation
@@ -39,8 +40,11 @@ namespace Airside.Simulation
         /// 17 (ADR 0138) adds the day so far (so a reload keeps the day's report and the
         /// profitable-day challenge), the 95% reliability streak and the recent post-flight
         /// reliability readings. Older saves start a fresh day and an empty streak.
+        /// 18 (ADR 0178) gives each local aircraft a persistent logbook: join time,
+        /// founding-aircraft identity, recorded revenue and routes. Older aircraft keep
+        /// their completed-flight count and begin the detailed logbook on migration.
         /// </summary>
-        public const int CurrentVersion = 17;
+        public const int CurrentVersion = 18;
 
         public int Version = CurrentVersion;
 
@@ -219,6 +223,20 @@ namespace Airside.Simulation
         /// <summary>v11 (ADR 0085). Older saves load as 0: every aircraft starts fresh.</summary>
         public int RotationsSinceCheck;
         public long CheckUntilSeconds;
+
+        /// <summary>v18 (ADR 0178): persistent identity and individual-aircraft logbook.</summary>
+        public long JoinedAirlineAtSeconds;
+        public bool IsFoundingAircraft;
+        public long LifetimeRevenue;
+        public int HistoryFlights;
+        public List<AircraftRouteSaveRecord> RouteHistory = new();
+    }
+
+    [Serializable]
+    public sealed class AircraftRouteSaveRecord
+    {
+        public string DestinationCode;
+        public int Flights;
     }
 
     public static class AirlineSave
@@ -342,7 +360,7 @@ namespace Airside.Simulation
 
             foreach (var a in operations.Fleet)
             {
-                data.Fleet.Add(new AircraftRecord
+                var record = new AircraftRecord
                 {
                     Registration = a.Registration,
                     AirlineId = a.Airline.Id.Value,
@@ -369,8 +387,19 @@ namespace Airside.Simulation
                     PushbackLatenessSeconds = a.PushbackLatenessSeconds ?? 0,
                     PushbackDelay = a.PushbackDelay?.Serialize() ?? string.Empty,
                     RotationsSinceCheck = a.RotationsSinceCheck,
-                    CheckUntilSeconds = a.CheckUntil?.ElapsedSeconds ?? 0
-                });
+                    CheckUntilSeconds = a.CheckUntil?.ElapsedSeconds ?? 0,
+                    JoinedAirlineAtSeconds = a.JoinedAirlineAt.ElapsedSeconds,
+                    IsFoundingAircraft = a.IsFoundingAircraft,
+                    LifetimeRevenue = a.LifetimeRevenue,
+                    HistoryFlights = a.HistoryFlights
+                };
+                foreach (var route in a.RouteHistory.OrderBy(r => r.DestinationCode, StringComparer.Ordinal))
+                    record.RouteHistory.Add(new AircraftRouteSaveRecord
+                    {
+                        DestinationCode = route.DestinationCode,
+                        Flights = route.Flights
+                    });
+                data.Fleet.Add(record);
             }
 
             return data;
@@ -438,6 +467,9 @@ namespace Airside.Simulation
                     && record.TypeId == "A359";
                 var registration = migrateSingapore787 ? "9V-SCA" : record.Registration;
                 var typeId = migrateSingapore787 ? "B78X" : record.TypeId;
+                var restoredRegistration = data.Version <= 3 && record.AirlineId == "WTB"
+                    ? "VH-8IA"
+                    : registration;
                 if (!AircraftType.TryFromId(typeId, out var type))
                     throw new FormatException($"{record.Registration} has unknown aircraft type '{record.TypeId}'.");
                 // Enum.TryParse also accepts numbers ("99") and comma lists, which yield values
@@ -449,7 +481,7 @@ namespace Airside.Simulation
                     throw new FormatException($"{record.Registration} has unknown state '{record.State}'.");
 
                 operations.RestoreAircraft(
-                    data.Version <= 3 && record.AirlineId == "WTB" ? "VH-8IA" : registration,
+                    restoredRegistration,
                     airline,
                     type,
                     state,
@@ -470,17 +502,47 @@ namespace Airside.Simulation
                         || !Enum.TryParse(record.AssignedRunway, out RunwayDirection runway))
                         throw new FormatException(
                             $"Unknown assigned runway '{record.AssignedRunway}' for {registration}.");
-                    operations.RestoreMovementData(registration, runway, record.WentAroundThisTrip);
+                    operations.RestoreMovementData(restoredRegistration, runway, record.WentAroundThisTrip);
                 }
                 if (data.Version >= 8 && record.HasPrepStart)
-                    operations.RestorePrepData(registration, new SimulationTime(record.PrepStartedAt));
+                    operations.RestorePrepData(restoredRegistration, new SimulationTime(record.PrepStartedAt));
                 if (data.Version >= 10 && record.HasPushbackLateness)
-                    operations.RestorePushbackLateness(registration, record.PushbackLatenessSeconds,
+                    operations.RestorePushbackLateness(restoredRegistration, record.PushbackLatenessSeconds,
                         data.Version >= 16 ? record.PushbackDelay : null);
                 if (data.Version >= 11)
-                    operations.RestoreMaintenance(registration, record.RotationsSinceCheck, record.CheckUntilSeconds);
+                    operations.RestoreMaintenance(restoredRegistration, record.RotationsSinceCheck, record.CheckUntilSeconds);
+                if (data.Version >= 18)
+                {
+                    if (record.JoinedAirlineAtSeconds < 0 || record.JoinedAirlineAtSeconds > data.ClockSeconds
+                        || record.LifetimeRevenue < 0 || record.HistoryFlights < 0)
+                        throw new FormatException($"Invalid aircraft logbook for {registration}.");
+                    var routes = new List<AircraftRouteTally>();
+                    var routeTotal = 0;
+                    var seenRoutes = new HashSet<string>(StringComparer.Ordinal);
+                    foreach (var route in record.RouteHistory ?? new List<AircraftRouteSaveRecord>())
+                    {
+                        if (route == null || route.Flights <= 0
+                            || !seenRoutes.Add(route.DestinationCode ?? string.Empty)
+                            || !DestinationCatalogue.TryFind(route.DestinationCode, out _))
+                            throw new FormatException($"Invalid route history for {registration}.");
+                        routeTotal += route.Flights;
+                        routes.Add(new AircraftRouteTally(route.DestinationCode, route.Flights));
+                    }
+                    if (routeTotal != record.HistoryFlights || record.HistoryFlights > record.CompletedTrips)
+                        throw new FormatException($"Aircraft logbook totals do not match for {registration}.");
+                    operations.RestoreAircraftHistory(restoredRegistration,
+                        new SimulationTime(record.JoinedAirlineAtSeconds), record.IsFoundingAircraft,
+                        record.LifetimeRevenue, record.HistoryFlights, routes);
+                }
+                else
+                {
+                    // VH-PAX is the authored founding airframe in every pre-v18 player save.
+                    operations.RestoreAircraftHistory(restoredRegistration, new SimulationTime(0),
+                        airline.IsPlayer && string.Equals(restoredRegistration, "VH-PAX", StringComparison.OrdinalIgnoreCase),
+                        0, 0, Array.Empty<AircraftRouteTally>());
+                }
                 if (data.Version >= 13 && airline.IsPlayer)
-                    operations.RestoreAutomatedTrip(registration, record.AutomatedTrip);
+                    operations.RestoreAutomatedTrip(restoredRegistration, record.AutomatedTrip);
             }
 
             operations.RestoreTower(

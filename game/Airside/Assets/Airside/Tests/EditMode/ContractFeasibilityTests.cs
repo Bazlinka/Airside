@@ -164,7 +164,7 @@ namespace Airside.Tests
 
             Assert.That(ops.TodaySoFar.Flights, Is.EqualTo(1));
             var data = AirlineSave.Capture(ops);
-            Assert.That(data.Version, Is.EqualTo(17));
+            Assert.That(data.Version, Is.EqualTo(AirlineSaveData.CurrentVersion));
             var restored = AirlineSave.Restore(data, new ManualSimulationClock(clock.Now));
             Assert.That(restored.TodaySoFar, Is.EqualTo(ops.TodaySoFar));
             Assert.That(restored.CareerState.HighReliabilityStreak, Is.EqualTo(ops.CareerState.HighReliabilityStreak));

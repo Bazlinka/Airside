@@ -4,6 +4,15 @@ using Airside.Simulation;
 
 namespace Airside.Presentation
 {
+    public enum ParkedVehicleClass
+    {
+        Sedan,
+        Hatchback,
+        Suv,
+        Ute,
+        Van
+    }
+
     /// <summary>
     /// ADR 0184 — Adelaide Airport's car parks as flat geometry from <see cref="AdelaideCarParks"/>: dark surfaces
     /// (ear-clipped outlines), white bay lines, parked cars (a body and a cabin, occupancy and colour by hash so
@@ -193,7 +202,7 @@ namespace Airside.Presentation
         // --- cars ---
 
         /// <summary>Parked cars in the bays. Returns cars placed.</summary>
-        public static int BuildCars(RoadMeshSink sink, RoadBuildOptions o)
+        public static int BuildCars(RoadMeshSink sink, RoadBuildOptions o, int[] classCounts = null)
         {
             var cars = 0;
             var r = AdelaideCarParks.Runs;
@@ -239,9 +248,10 @@ namespace Airside.Presentation
                         rz = -rz;
                     }
 
-                    var length = 4.1f + ((h >> 8) & 0xF) / 15f * 0.9f;
-                    var tall = ((h >> 12) & 0x7) == 0;
-                    Car(sink, o, x + ((h >> 5) & 0x7) / 7f * 0.2f - 0.1f, z, rx, rz, length, tall,
+                    var vehicleClass = VehicleClassForHash(h);
+                    if (classCounts != null && classCounts.Length > (int)vehicleClass)
+                        classCounts[(int)vehicleClass]++;
+                    Car(sink, o, x + ((h >> 5) & 0x7) / 7f * 0.2f - 0.1f, z, rx, rz, vehicleClass,
                         CarColours[(int)((h >> 20) % (uint)CarColours.Length)]);
                     cars++;
                 }
@@ -250,20 +260,60 @@ namespace Airside.Presentation
             return cars;
         }
 
-        private static void Car(RoadMeshSink sink, RoadBuildOptions o, float x, float z, float ux, float uz, float length,
-            bool tall, RoadColor colour)
+        /// <summary>The stable five-way body-class choice for a mapped parking bay.</summary>
+        public static ParkedVehicleClass VehicleClassFor(int runOffset, int bayIndex)
+        {
+            return VehicleClassForHash(Hash((uint)runOffset, (uint)bayIndex));
+        }
+
+        private static ParkedVehicleClass VehicleClassForHash(uint hash)
+        {
+            return (ParkedVehicleClass)((hash >> 12) % 5u);
+        }
+
+        private static void Car(RoadMeshSink sink, RoadBuildOptions o, float x, float z, float ux, float uz,
+            ParkedVehicleClass vehicleClass, RoadColor colour)
         {
             var y = o.Height(x, z) + o.YOffset;
-            var bodyHeight = tall ? 1.05f : 0.75f;
-            sink.Box(x, y + 0.22f, z, ux, uz, length * 0.5f, 0.9f, bodyHeight, colour);
-            // cabin, set back from the middle: a body-coloured roof over a darker glass band, one box, to keep the count down
-            var back = length * -0.05f;
-            var cx = x + ux * back;
-            var cz = z + uz * back;
-            var cabinLength = length * (tall ? 0.72f : 0.5f);
             var cabin = new RoadColor((colour.R + Glass.R * 2f) / 3f, (colour.G + Glass.G * 2f) / 3f,
                 (colour.B + Glass.B * 2f) / 3f, colour.A);
-            sink.Box(cx, y + 0.22f + bodyHeight, cz, ux, uz, cabinLength * 0.5f, 0.8f, 0.3f, cabin);
+
+            // Three boxes per vehicle keep the whole mapped car park inexpensive while the roofline, glasshouse
+            // and rear treatment make each Australian road-vehicle class readable at overview scale.
+            switch (vehicleClass)
+            {
+                case ParkedVehicleClass.Hatchback:
+                    BoxAlong(sink, x, y + 0.18f, z, ux, uz, 0f, 2.12f, 0.86f, 0.64f, colour);
+                    BoxAlong(sink, x, y + 0.82f, z, ux, uz, -0.30f, 1.38f, 0.76f, 0.58f, cabin);
+                    BoxAlong(sink, x, y + 1.40f, z, ux, uz, -1.38f, 0.13f, 0.78f, 0.08f, colour);
+                    break;
+                case ParkedVehicleClass.Suv:
+                    BoxAlong(sink, x, y + 0.20f, z, ux, uz, 0f, 2.38f, 0.94f, 0.82f, colour);
+                    BoxAlong(sink, x, y + 1.02f, z, ux, uz, -0.12f, 1.64f, 0.84f, 0.70f, cabin);
+                    BoxAlong(sink, x, y + 1.72f, z, ux, uz, -0.12f, 1.50f, 0.05f, 0.08f, Steel);
+                    break;
+                case ParkedVehicleClass.Ute:
+                    BoxAlong(sink, x, y + 0.20f, z, ux, uz, 0f, 2.48f, 0.93f, 0.76f, colour);
+                    BoxAlong(sink, x, y + 0.96f, z, ux, uz, 1.05f, 0.92f, 0.82f, 0.68f, cabin);
+                    BoxAlong(sink, x, y + 0.98f, z, ux, uz, -1.28f, 1.02f, 0.77f, 0.10f, Glass);
+                    break;
+                case ParkedVehicleClass.Van:
+                    BoxAlong(sink, x, y + 0.20f, z, ux, uz, 0f, 2.46f, 0.96f, 0.82f, colour);
+                    BoxAlong(sink, x, y + 1.02f, z, ux, uz, -0.20f, 2.05f, 0.91f, 1.18f, colour);
+                    BoxAlong(sink, x, y + 1.20f, z, ux, uz, 1.88f, 0.12f, 0.83f, 0.73f, cabin);
+                    break;
+                default: // sedan
+                    BoxAlong(sink, x, y + 0.18f, z, ux, uz, 0f, 2.28f, 0.88f, 0.64f, colour);
+                    BoxAlong(sink, x, y + 0.82f, z, ux, uz, -0.10f, 1.22f, 0.77f, 0.52f, cabin);
+                    BoxAlong(sink, x, y + 0.82f, z, ux, uz, -1.72f, 0.42f, 0.82f, 0.20f, colour);
+                    break;
+            }
+        }
+
+        private static void BoxAlong(RoadMeshSink sink, float x, float y, float z, float ux, float uz,
+            float offset, float halfLength, float halfWidth, float height, RoadColor colour)
+        {
+            sink.Box(x + ux * offset, y, z + uz * offset, ux, uz, halfLength, halfWidth, height, colour);
         }
 
         // --- lamps ---

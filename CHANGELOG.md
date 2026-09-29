@@ -17,6 +17,10 @@
 - **Aircraft in a check are towed to a hangar.** When you send an aircraft for its check it is towed along the
   taxiways to a hangar that fits it (Regional Express for turboprops, Cobham for jets), waits inside, and is towed
   back before the check ends. The stand stays held, so nothing else can take it. Not yet seen in a rebuilt game.
+- **Parked cars now look like a real mixed car park.** Adelaide's existing deterministic bay layout now draws five
+  distinct low-poly silhouettes — sedan, hatchback, SUV, ute and van — with class-specific rooflines, glasshouses,
+  proportions and rear treatments. Occupancy, colours, positions and parking direction are unchanged, and the mesh
+  remains capped at 30 triangles per vehicle. Unity EditMode 1441/1443, zero failures and two known inconclusives.
 - **Adelaide's rescue helicopter has its real home.** The mapped 37.9 m Helipad West now appears beside the SA
   Ambulance rescue/retrieval base with its perimeter, touchdown ring, H and edge lamps. A project-authored,
   unbranded Bell 412EP-class helicopter sits on it at published scale, with four main-rotor blades, twin engines,

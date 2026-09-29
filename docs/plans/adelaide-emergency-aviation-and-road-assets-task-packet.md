@@ -85,3 +85,21 @@
   weather, economy, progression and saves.
 - Existing turnaround GSE assets and their task choreography.
 - Existing OSM snapshot and attribution; no live network dependency at runtime.
+
+## Verification evidence — 30 September 2026
+
+- AIR-017 generator check: 43 named parts, 1,324 triangles and a measured
+  13.90 × 16.97 × 4.45 m envelope.
+- Unity EditMode: 1,443 total, 1,441 passed, zero failed and the two existing
+  precondition-based inconclusives.
+- Unity asset audit: 1,465 unique GUIDs, 346 mirrored runtime art files and 70
+  committed character materials.
+- Clean Mac build `3294ed54` completed with `dirty=false`.
+- Packaged captures inspected: `adelaide-helicopter-pad-day.png`,
+  `adelaide-helicopter-pad-night.png`, `adelaide-vehicle-classes-close-day.png`
+  and `adelaide-signal-hardware-close-day.png` under ignored `work/captures/`.
+  The pad/rotor fit, helicopter day/night silhouette, five car classes and
+  signal footing/arm/back/head/visors are visible. Six capture logs contain no
+  exception or error match.
+- The supplementary .NET harness was unavailable because this host has no
+  system `dotnet`; the required Unity suite, asset audit and packaged build ran.

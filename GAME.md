@@ -13,8 +13,13 @@
     are untouched. Current contract/type timing is recorded in ADR 0186 and the asset register.
   - **Checks:** AIR-017 generator check passed at 43 parts / 1,324 triangles / 13.90 × 16.97 × 4.45 m; latest Unity
     EditMode 1441/1443, zero failures, two known `Assume` inconclusives. A stale Unity Bee cache was preserved under
-    ignored `work/bee-hung-20260930-0843`; a clean cache rebuild passed.
-  - **NEXT:** rerun audit/build and inspect packaged day/night overview plus western-precinct captures before PR/merge.
+    ignored `work/bee-hung-20260930-0843`; a clean cache rebuild passed. Asset audit passed (1,465 GUIDs, 346 mirrored
+    runtime art files, 70 character materials). Clean Mac build `3294ed54` passed with `dirty=false`.
+  - **Packaged review:** inspected `work/captures/adelaide-helicopter-pad-{day,night}.png`,
+    `adelaide-vehicle-classes-close-day.png` and `adelaide-signal-hardware-close-day.png`. Pad/rotor fit, day/night
+    helicopter silhouette, five car classes and signal footing/arm/head/visors are visible; no exception/error match
+    in the six captured Player logs. `.NET` is absent, so the supplementary harness update/check could not run.
+  - **NEXT:** open the PR, wait for GitHub CI, merge when green, then return to clean `main`.
 
 - **2026-09-30 Codex — Adelaide hero architecture (branch `codex/adelaide-hero-architecture`, ADR 0185).**
   - Terminal 1 now has raised roof lanterns and eight airside structural piers tied to the real curved facade.

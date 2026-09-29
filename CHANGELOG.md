@@ -17,6 +17,11 @@
 - **Aircraft in a check are towed to a hangar.** When you send an aircraft for its check it is towed along the
   taxiways to a hangar that fits it (Regional Express for turboprops, Cobham for jets), waits inside, and is towed
   back before the check ends. The stand stays held, so nothing else can take it. Not yet seen in a rebuilt game.
+- **Roadside hardware is now built, not implied.** Every mapped Adelaide signal approach now has a concrete footing,
+  kerbside pole, mast arm, backing board, three distinct lamps and individual visors, with its night glow moved to
+  the hanging head. Stop/give-way posts gained footings and backing plates, while sheltered bus stops gained end
+  glazing and a supported bench. Road coordinates, markings and deterministic signal state are unchanged. Unity
+  EditMode 1441/1443, zero failures and two known inconclusives.
 - **Parked cars now look like a real mixed car park.** Adelaide's existing deterministic bay layout now draws five
   distinct low-poly silhouettes — sedan, hatchback, SUV, ute and van — with class-specific rooflines, glasshouses,
   proportions and rear treatments. Occupancy, colours, positions and parking direction are unchanged, and the mesh

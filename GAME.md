@@ -6,13 +6,15 @@
     SA Ambulance rescue/retrieval base. The 37.9 m mapped pad has its perimeter, touchdown ring, H and 12 edge lamps.
   - Adelaide's parked-car pass now uses deterministic sedan, hatchback, SUV, ute and van silhouettes without
     changing mapped bays, occupancy, positions, colours or parking direction; the cap is 30 triangles per vehicle.
+  - Every mapped signal approach now has a footed left-kerb pole, 1.6 m mast arm, backing board, three lamps and
+    visors; stop/give-way posts have footings/backs and sheltered bus stops have end glazing plus a supported bench.
+    Existing road coordinates, markings and deterministic red/green split remain unchanged.
   - The helicopter is static presentation with a procedural fallback; schedules, reservations, missions and saves
     are untouched. Current contract/type timing is recorded in ADR 0186 and the asset register.
   - **Checks:** AIR-017 generator check passed at 43 parts / 1,324 triangles / 13.90 × 16.97 × 4.45 m; latest Unity
     EditMode 1441/1443, zero failures, two known `Assume` inconclusives. A stale Unity Bee cache was preserved under
     ignored `work/bee-hung-20260930-0843`; a clean cache rebuild passed.
-  - **NEXT:** complete the same task packet's signal/road-furniture hardware pass, rerun Unity/audit/build and inspect
-    packaged day/night captures before PR/merge.
+  - **NEXT:** rerun audit/build and inspect packaged day/night overview plus western-precinct captures before PR/merge.
 
 - **2026-09-30 Codex — Adelaide hero architecture (branch `codex/adelaide-hero-architecture`, ADR 0185).**
   - Terminal 1 now has raised roof lanterns and eight airside structural piers tied to the real curved facade.

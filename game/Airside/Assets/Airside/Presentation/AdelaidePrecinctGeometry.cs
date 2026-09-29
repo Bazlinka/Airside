@@ -204,13 +204,20 @@ namespace Airside.Presentation
                 var y = o.Height(x, z) + o.YOffset;
                 if (b[i + 3] > 0.5f)
                 {
-                    // a shelter: two posts, a roof, a glass back panel on the far side from the road
+                    // A shelter: roof, posts, glazed back/ends and a simple raised bench.
                     var nx = -uz;
                     var nz = ux;
                     sink.Box(x, y + 2.4f, z, ux, uz, 1.6f, 0.75f, 0.12f, Shelter);
                     sink.Box(x - ux * 1.4f, y, z - uz * 1.4f, ux, uz, 0.06f, 0.06f, 2.4f, Post);
                     sink.Box(x + ux * 1.4f, y, z + uz * 1.4f, ux, uz, 0.06f, 0.06f, 2.4f, Post);
                     sink.Box(x + nx * 0.7f, y + 0.1f, z + nz * 0.7f, ux, uz, 1.5f, 0.03f, 1.9f, ShelterGlass);
+                    sink.Box(x - ux * 1.45f, y + 0.1f, z - uz * 1.45f, nx, nz, 0.66f, 0.03f, 1.9f, ShelterGlass);
+                    sink.Box(x + ux * 1.45f, y + 0.1f, z + uz * 1.45f, nx, nz, 0.66f, 0.03f, 1.9f, ShelterGlass);
+                    sink.Box(x + nx * 0.42f, y + 0.52f, z + nz * 0.42f, ux, uz, 1.05f, 0.22f, 0.10f, Shelter);
+                    sink.Box(x + nx * 0.42f - ux * 0.82f, y + 0.1f, z + nz * 0.42f - uz * 0.82f,
+                        ux, uz, 0.07f, 0.07f, 0.42f, Post);
+                    sink.Box(x + nx * 0.42f + ux * 0.82f, y + 0.1f, z + nz * 0.42f + uz * 0.82f,
+                        ux, uz, 0.07f, 0.07f, 0.42f, Post);
                 }
                 else
                 {

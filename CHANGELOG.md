@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Lighter roads, same picture.** The road network needs about two thirds fewer road pieces on flat ground and
+  half the memory per mesh, with the roads, paint, cars and signs drawn exactly as before. Not yet measured in a
+  rebuilt game.
 - **One road network everywhere.** The arterial roads out to the suburbs now come from the same complete road
   network as the airport's own roads, so they share widths, junctions and paint. The old separate road layer and the
   hand-placed terminal drop-off are gone. Not yet seen in a rebuilt game.

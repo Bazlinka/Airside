@@ -262,7 +262,7 @@ namespace Airside.Presentation
         public const float TurningCircleRadius = 6f;
         public const float NearAlpha = 0.5f;
         public const float FarAlpha = 0.1f;
-        public const float PaintLift = 0.02f;
+        public const float PaintLift = 0.03f;
         public const float DashMetres = 5f;
         public const float GapMetres = 5f;
         private const int DiscSides = 12;
@@ -320,7 +320,12 @@ namespace Airside.Presentation
 
         private static bool BuildRibbon(RoadMeshSink sink, RoadBuildOptions o, AdelaideRoadNetwork.Road road)
         {
-            var pts = DropTiny(Densify(road.PointStart, road.PointCount, o.MaxSegmentMetres), MinSegmentMetres);
+            // Airside roads are cut finely because the pavement rule decides per piece; public roads only where the
+            // ground actually bends, so the flat plain costs a quad per OSM segment, not one per 12 m.
+            var dense = road.IsAirside
+                ? Densify(road.PointStart, road.PointCount, o.MaxSegmentMetres)
+                : AdaptiveDensify(road.PointStart, road.PointCount, o);
+            var pts = DropTiny(dense, MinSegmentMetres);
             var n = pts.Count / 2;
             if (n < 2)
                 return false;
@@ -834,6 +839,58 @@ namespace Airside.Presentation
             }
 
             return result;
+        }
+
+        /// <summary>Ground bend, in metres, that a straight ribbon segment may hide (about the depth of a paint stripe).</summary>
+        public const float FlatToleranceMetres = 0.015f;
+        /// <summary>The longest a ribbon segment gets even on dead-flat ground: keeps mitres and tiles sensible.</summary>
+        public const float MaxFlatSegmentMetres = 150f;
+        private const float MinSubdivideMetres = 8f;
+
+        /// <summary>
+        /// A road's own vertices, with a segment split at its middle only when the ground under it is not a straight
+        /// line (three interior samples off the chord by more than <see cref="FlatToleranceMetres"/>), or it is longer
+        /// than <see cref="MaxFlatSegmentMetres"/>. The ribbon follows the same ground as the 12 m version, with far
+        /// fewer quads on flat land.
+        /// </summary>
+        public static List<float> AdaptiveDensify(int pointStart, int pointCount, RoadBuildOptions o)
+        {
+            var src = Densify(pointStart, pointCount, float.MaxValue);
+            if (o.GroundHeight == null)
+                return src;
+            var result = new List<float>(src.Count) { src[0], src[1] };
+            for (var i = 1; i < src.Count / 2; i++)
+            {
+                SplitWhereBent(result, src[i * 2 - 2], src[i * 2 - 1], src[i * 2], src[i * 2 + 1], o, 0);
+                result.Add(src[i * 2]);
+                result.Add(src[i * 2 + 1]);
+            }
+
+            return result;
+        }
+
+        private static void SplitWhereBent(List<float> result, float ax, float az, float bx, float bz, RoadBuildOptions o, int depth)
+        {
+            var len = Dist(ax, az, bx, bz);
+            if (len <= MinSubdivideMetres || depth >= 7)
+                return;
+            var ha = o.Height(ax, az);
+            var hb = o.Height(bx, bz);
+            var bent = len > MaxFlatSegmentMetres;
+            for (var k = 1; k <= 3 && !bent; k++)
+            {
+                var t = k * 0.25f;
+                bent = Math.Abs(o.Height(ax + (bx - ax) * t, az + (bz - az) * t) - (ha + (hb - ha) * t)) > FlatToleranceMetres;
+            }
+
+            if (!bent)
+                return;
+            var mx = (ax + bx) * 0.5f;
+            var mz = (az + bz) * 0.5f;
+            SplitWhereBent(result, ax, az, mx, mz, o, depth + 1);
+            result.Add(mx);
+            result.Add(mz);
+            SplitWhereBent(result, mx, mz, bx, bz, o, depth + 1);
         }
 
         /// <summary>A road's vertices as x, z pairs with no segment longer than <paramref name="maxSegment"/>.</summary>

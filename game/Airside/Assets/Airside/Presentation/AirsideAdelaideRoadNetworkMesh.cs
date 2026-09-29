@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Airside.Simulation;
 using UnityEngine;
@@ -120,11 +121,90 @@ namespace Airside.Presentation
             return new Sinks { Asphalt = asphalt, Paint = paint, Props = props };
         }
 
-        private static void AddTile(Transform parent, string name, RoadMeshTile tile, Material material, bool withColours)
+        // Compact vertices: position as floats, the normal as four signed bytes (unit axes map to exactly +-127), the
+        // colour as four 16-bit unorm channels (no visible banding on dark asphalt). 24 bytes, or 16 without a colour,
+        // against 40 for the plain Vector3 + Vector3 + Color layout: half the memory and bandwidth for the same picture.
+        [StructLayout(LayoutKind.Sequential)]
+        private struct ColouredVertex
+        {
+            public Vector3 Position;
+            public sbyte Nx, Ny, Nz, Nw;
+            public ushort R, G, B, A;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct PlainVertex
+        {
+            public Vector3 Position;
+            public sbyte Nx, Ny, Nz, Nw;
+        }
+
+        private static sbyte Snorm(float v) => (sbyte)Mathf.Clamp(Mathf.RoundToInt(v * 127f), -127, 127);
+
+        private static ushort Unorm16(float v) => (ushort)Mathf.Clamp(Mathf.RoundToInt(v * 65535f), 0, 65535);
+
+        private static Mesh BuildMesh(string name, RoadMeshTile tile, bool withColours)
         {
             var count = tile.VertexCount;
-            if (count < 3)
-                return;
+            var p = tile.Positions;
+            var n = tile.Normals;
+            var c = tile.Colors;
+            var mesh = new Mesh { name = name, indexFormat = IndexFormat.UInt32 };
+            var min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+            var max = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+            for (var i = 0; i < count; i++)
+            {
+                var v = new Vector3(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]);
+                min = Vector3.Min(min, v);
+                max = Vector3.Max(max, v);
+            }
+
+            if (withColours)
+            {
+                var vertices = new ColouredVertex[count];
+                for (var i = 0; i < count; i++)
+                    vertices[i] = new ColouredVertex
+                    {
+                        Position = new Vector3(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]),
+                        Nx = Snorm(n[i * 3]), Ny = Snorm(n[i * 3 + 1]), Nz = Snorm(n[i * 3 + 2]),
+                        R = Unorm16(c[i * 4]), G = Unorm16(c[i * 4 + 1]), B = Unorm16(c[i * 4 + 2]), A = Unorm16(c[i * 4 + 3])
+                    };
+                mesh.SetVertexBufferParams(count,
+                    new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3),
+                    new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.SNorm8, 4),
+                    new VertexAttributeDescriptor(VertexAttribute.Color, VertexAttributeFormat.UNorm16, 4));
+                mesh.SetVertexBufferData(vertices, 0, 0, count);
+            }
+            else
+            {
+                var vertices = new PlainVertex[count];
+                for (var i = 0; i < count; i++)
+                    vertices[i] = new PlainVertex
+                    {
+                        Position = new Vector3(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]),
+                        Nx = Snorm(n[i * 3]), Ny = Snorm(n[i * 3 + 1]), Nz = Snorm(n[i * 3 + 2])
+                    };
+                mesh.SetVertexBufferParams(count,
+                    new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3),
+                    new VertexAttributeDescriptor(VertexAttribute.Normal, VertexAttributeFormat.SNorm8, 4));
+                mesh.SetVertexBufferData(vertices, 0, 0, count);
+            }
+
+            var indices = tile.Triangles.ToArray();
+            mesh.SetIndexBufferParams(indices.Length, IndexFormat.UInt32);
+            mesh.SetIndexBufferData(indices, 0, 0, indices.Length);
+            mesh.subMeshCount = 1;
+            mesh.SetSubMesh(0, new SubMeshDescriptor(0, indices.Length, MeshTopology.Triangles),
+                MeshUpdateFlags.DontRecalculateBounds | MeshUpdateFlags.DontValidateIndices);
+            mesh.bounds = new Bounds((min + max) * 0.5f, max - min);
+            // Nothing reads these meshes on the CPU again, so let Unity drop its copy.
+            mesh.UploadMeshData(true);
+            return mesh;
+        }
+
+        private static Mesh BuildMeshPlain(string name, RoadMeshTile tile, bool withColours)
+        {
+            var count = tile.VertexCount;
             var vertices = new Vector3[count];
             var normals = new Vector3[count];
             var p = tile.Positions;
@@ -149,6 +229,25 @@ namespace Airside.Presentation
 
             mesh.triangles = tile.Triangles.ToArray();
             mesh.RecalculateBounds();
+            mesh.UploadMeshData(true);
+            return mesh;
+        }
+
+        private static void AddTile(Transform parent, string name, RoadMeshTile tile, Material material, bool withColours)
+        {
+            if (tile.VertexCount < 3)
+                return;
+            Mesh mesh;
+            try
+            {
+                mesh = BuildMesh(name, tile, withColours);
+            }
+            catch (Exception e)
+            {
+                // A platform without these vertex formats still draws the same picture from the plain layout.
+                Debug.LogWarning($"[Airside] Compact road mesh unavailable ({e.Message}); using the plain layout.");
+                mesh = BuildMeshPlain(name, tile, withColours);
+            }
 
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);

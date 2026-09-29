@@ -63,6 +63,29 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void AdaptiveDensify_SplitsOnlyWhereTheGroundBends()
+        {
+            // the longest road in the network, so there is something to split
+            var road = AdelaideRoadNetwork.Roads[0];
+            foreach (var r in AdelaideRoadNetwork.Roads)
+                if (r.PointCount > road.PointCount)
+                    road = r;
+            var original = road.PointCount;
+            var flat = AdelaideRoadGeometry.AdaptiveDensify(road.PointStart, road.PointCount,
+                new RoadBuildOptions { GroundHeight = (x, z) => 3f });
+            var slope = AdelaideRoadGeometry.AdaptiveDensify(road.PointStart, road.PointCount,
+                new RoadBuildOptions { GroundHeight = (x, z) => 0.05f * x - 0.02f * z });
+            var hills = AdelaideRoadGeometry.AdaptiveDensify(road.PointStart, road.PointCount,
+                new RoadBuildOptions { GroundHeight = (x, z) => 3f * (float)Math.Sin(x / 30f) });
+            Assert.That(slope.Count / 2, Is.EqualTo(flat.Count / 2), "a straight slope is not a bend");
+            Assert.That(flat.Count / 2, Is.LessThanOrEqualTo(original + original / 2 + 4),
+                "flat ground adds few points (only over-long segments split)");
+            Assert.That(hills.Count, Is.GreaterThan(flat.Count), "hills add points");
+            var uniform = AdelaideRoadGeometry.Densify(road.PointStart, road.PointCount, 12f);
+            Assert.That(flat.Count, Is.LessThan(uniform.Count), "far fewer than a 12 m cut");
+        }
+
+        [Test]
         public void SkippingAirsideRoads_RemovesGeometry()
         {
             var all = Asphalt(null, out _);

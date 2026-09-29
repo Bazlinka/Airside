@@ -27,10 +27,11 @@ namespace Airside.Presentation
         }
 
         /// <param name="heightAt">Height above sea level of DEM sample (xi, zi); 0 is sea.</param>
+        /// <param name="landCover">Optional class map on the same grid (ADR 0190); land is coloured by class when given, by height alone when null.</param>
         /// <param name="reliefAbovePlain">Metres of relief above the plain for a DEM height (AdelaideTerrainHeights.ReliefAbovePlain).</param>
         public static Result Build(int count, float spacing, float origin, Func<int, int, float> heightAt,
             Func<float, float> reliefAbovePlain, float plainY, float seaY,
-            float[] plainLinear, float[] hillLinear, float[] seaLinear)
+            float[] plainLinear, float[] hillLinear, float[] seaLinear, AdelaideFarLandCover landCover = null)
         {
             var n = (count - 1) / Stride + 1;
             var positions = new float[n * n * 3];
@@ -65,6 +66,19 @@ namespace Airside.Presentation
                         plainLinear[2] + (hillLinear[2] - plainLinear[2]) * t
                     };
                     a = 0f;
+                    if (landCover != null)
+                    {
+                        var cls = landCover.ClassAt(xi * Stride, zi * Stride);
+                        var slope = Slope(heightAt, xi * Stride, zi * Stride, count, spacing);
+                        c = new float[3];
+                        AdelaideFarLandCover.Colour(cls, xi * Stride, zi * Stride, slope, c);
+                        if (cls == AdelaideFarLandCover.Water)
+                        {
+                            // A lake or reservoir: lit like the sea, a little lighter.
+                            c[0] = seaLinear[0] * 1.3f; c[1] = seaLinear[1] * 1.3f; c[2] = seaLinear[2] * 1.3f;
+                            a = 0.7f;
+                        }
+                    }
                 }
 
                 positions[i * 3] = x;
@@ -96,6 +110,19 @@ namespace Airside.Presentation
         public static bool WhollyInside(float x0, float z0, float x1, float z1, float radiusSq) =>
             x0 * x0 + z0 * z0 <= radiusSq && x1 * x1 + z0 * z0 <= radiusSq
             && x0 * x0 + z1 * z1 <= radiusSq && x1 * x1 + z1 * z1 <= radiusSq;
+
+        /// <summary>0 (flat) to 1 (about 25 degrees or steeper) from the height differences around a DEM sample.</summary>
+        public static float Slope(Func<int, int, float> heightAt, int xi, int zi, int count, float spacing)
+        {
+            var xa = Math.Max(0, xi - 1);
+            var xb = Math.Min(count - 1, xi + 1);
+            var za = Math.Max(0, zi - 1);
+            var zb = Math.Min(count - 1, zi + 1);
+            var dx = (heightAt(xb, zi) - heightAt(xa, zi)) / Math.Max(1f, (xb - xa) * spacing);
+            var dz = (heightAt(xi, zb) - heightAt(xi, za)) / Math.Max(1f, (zb - za) * spacing);
+            var tan = (float)Math.Sqrt(dx * dx + dz * dz);
+            return Math.Max(0f, Math.Min(1f, tan / 0.47f));
+        }
 
         private static float Smooth(float t)
         {

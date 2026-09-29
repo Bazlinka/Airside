@@ -100,5 +100,109 @@ namespace Airside.Tests
 
             Assert.That(found, Is.GreaterThan(10));
         }
+
+        private static AdelaideFarLandCover LoadCover()
+        {
+            var relative = Path.Combine("Assets", "Airside", "Art", AdelaideFarLandCover.ArtPath);
+            foreach (var start in new[] { Directory.GetCurrentDirectory(), TestContext.CurrentContext.TestDirectory })
+                for (var dir = new DirectoryInfo(start); dir != null; dir = dir.Parent)
+                    foreach (var candidate in new[] { Path.Combine(dir.FullName, relative), Path.Combine(dir.FullName, "game", "Airside", relative) })
+                        if (File.Exists(candidate))
+                            return AdelaideFarLandCover.Parse(File.ReadAllBytes(candidate));
+            Assert.Fail("far land cover not found");
+            return null;
+        }
+
+        [Test]
+        public void LandCover_CoversTheFarGridWithRealVariety()
+        {
+            var cover = LoadCover();
+            var dem = LoadFar();
+            Assert.That(cover, Is.Not.Null);
+            Assert.That(cover.Count, Is.EqualTo(dem.Count), "the same grid as the far DEM");
+            Assert.That(cover.Spacing, Is.EqualTo(dem.Spacing));
+            var counts = new int[AdelaideFarLandCover.ClassCount];
+            for (var zi = 0; zi < cover.Count; zi++)
+            for (var xi = 0; xi < cover.Count; xi++)
+                counts[cover.ClassAt(xi, zi)]++;
+            var total = (double)cover.Count * cover.Count;
+            Assert.That(counts[AdelaideFarLandCover.Water] / total, Is.InRange(0.2, 0.6), "Gulf St Vincent and Spencer Gulf");
+            Assert.That(counts[AdelaideFarLandCover.Built] / total, Is.InRange(0.005, 0.05), "greater Adelaide and the towns");
+            Assert.That(counts[AdelaideFarLandCover.Crop] / total, Is.GreaterThan(0.1), "the Mid North and Yorke Peninsula");
+            Assert.That(counts[AdelaideFarLandCover.Tree] / total, Is.GreaterThan(0.02), "the Hills");
+            Assert.That(counts[AdelaideFarLandCover.Grass] / total, Is.GreaterThan(0.05));
+        }
+
+        [Test]
+        public void LandCover_AgreesWithTheDem_OnTheSea()
+        {
+            var cover = LoadCover();
+            var dem = LoadFar();
+            var seaCells = 0;
+            var seaAsWater = 0;
+            for (var zi = 0; zi < cover.Count; zi += 4)
+            for (var xi = 0; xi < cover.Count; xi += 4)
+            {
+                if (dem.Sample(xi, zi) > 0.01f)
+                    continue;
+                seaCells++;
+                if (cover.ClassAt(xi, zi) == AdelaideFarLandCover.Water)
+                    seaAsWater++;
+            }
+
+            Assert.That(seaCells, Is.GreaterThan(1000));
+            Assert.That(seaAsWater / (double)seaCells, Is.GreaterThan(0.9), "two independent sources agree where the coast is");
+        }
+
+        [Test]
+        public void LandCoverColours_AreDistinctPerClass_AndPatchworkedInCropLand()
+        {
+            var colour = new float[3];
+            var seen = new System.Collections.Generic.HashSet<string>();
+            for (var cls = 0; cls < AdelaideFarLandCover.ClassCount; cls++)
+            {
+                AdelaideFarLandCover.Colour(cls, 10, 10, 0f, colour);
+                foreach (var c in colour)
+                    Assert.That(c, Is.InRange(0f, 0.6f), $"class {cls} is a plain colour, never white");
+                seen.Add($"{colour[0]:F2},{colour[1]:F2},{colour[2]:F2}");
+            }
+
+            Assert.That(seen.Count, Is.GreaterThanOrEqualTo(7));
+            var paddocks = new System.Collections.Generic.HashSet<string>();
+            for (var i = 0; i < 40; i++)
+            {
+                AdelaideFarLandCover.Colour(AdelaideFarLandCover.Crop, i * 4, 8, 0f, colour);
+                paddocks.Add($"{Math.Round(colour[1] * 20)}");
+            }
+
+            Assert.That(paddocks.Count, Is.GreaterThan(2), "crop land is a patchwork, not one tone");
+            var flat = new float[3];
+            var steep = new float[3];
+            AdelaideFarLandCover.Colour(AdelaideFarLandCover.Tree, 3, 3, 0f, flat);
+            AdelaideFarLandCover.Colour(AdelaideFarLandCover.Tree, 3, 3, 1f, steep);
+            Assert.That(steep[1], Is.LessThan(flat[1]), "hillsides are darker");
+        }
+
+        [Test]
+        public void MeshWithLandCover_ColoursByClass_AndStaysTheSameShape()
+        {
+            var dem = LoadFar();
+            var cover = LoadCover();
+            var plain = Build(dem);
+            var coloured = AdelaideOuterTerrainGeometry.Build(dem.Count, dem.Spacing, dem.Origin, (xi, zi) => dem.Sample(xi, zi),
+                AdelaideTerrainHeights.ReliefAbovePlain, 3f, -1f, new[] { 0.3f, 0.3f, 0.2f }, new[] { 0.2f, 0.2f, 0.1f },
+                new[] { 0.01f, 0.05f, 0.1f }, cover);
+            Assert.That(coloured.VertexCount, Is.EqualTo(plain.VertexCount));
+            Assert.That(coloured.Triangles.Length, Is.EqualTo(plain.Triangles.Length));
+            var different = 0;
+            for (var i = 0; i < coloured.Colours.Length; i++)
+            {
+                Assert.That(float.IsNaN(coloured.Colours[i]) || coloured.Colours[i] < 0f || coloured.Colours[i] > 1f, Is.False, $"colour {i}");
+                if (Math.Abs(coloured.Colours[i] - plain.Colours[i]) > 0.02f)
+                    different++;
+            }
+
+            Assert.That(different, Is.GreaterThan(coloured.Colours.Length / 10), "the land is no longer one blend of two colours");
+        }
     }
 }

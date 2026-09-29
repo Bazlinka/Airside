@@ -26,12 +26,20 @@ namespace Airside.Presentation
                 if (terrain == null)
                     return false;
 
+                // The land-cover map is optional: without it the ring is coloured by height alone, as in ADR 0185.
+                AdelaideFarLandCover landCover = null;
+                var coverPath = ArtRuntimePaths.ResolveExisting(AdelaideFarLandCover.ArtPath);
+                if (coverPath != null)
+                    landCover = AdelaideFarLandCover.Parse(System.IO.File.ReadAllBytes(coverPath));
+                if (landCover != null && landCover.Count != terrain.Count)
+                    landCover = null;
+
                 var pavementY = AirsideAdelaideGround.PavementWorldY;
                 var result = AdelaideOuterTerrainGeometry.Build(terrain.Count, terrain.Spacing, terrain.Origin,
                     (xi, zi) => terrain.Sample(xi, zi), AdelaideTerrainHeights.ReliefAbovePlain,
                     pavementY - AirsideAdelaideSurroundings.PlainBelowPavement,
                     pavementY - AirsideAdelaideSurroundings.SeaBelowPavement,
-                    Linear(AirsideAdelaideSurroundings.Plain), Linear(Hills), Linear(AirsideAdelaideSurroundings.DeepWater));
+                    Linear(AirsideAdelaideSurroundings.Plain), Linear(Hills), Linear(AirsideAdelaideSurroundings.DeepWater), landCover);
                 if (result.Triangles.Length == 0)
                     return false;
 

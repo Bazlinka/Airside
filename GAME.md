@@ -1,5 +1,12 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — main strip frees when off the pavement (branch `fix/landing-runway-occupancy`, ADR 0183).**
+  Bailey: aircraft still stuck on landing behind aircraft that have landed or are taxiing. The main strip was
+  locked for the whole 511 m vacate leg (150–200 s); the aircraft is off the pavement at ~232 m. Now frees at
+  |z| ≥ 50 m. Day probe: air holds −40 %, departure holds −27 %, same movements. Ground-separation test passes.
+  - Remaining holds are demand queues and runway crossings (~590 s/day).
+  - **Checks:** `scripts/test-unity.sh` (see CHANGELOG). Not yet seen in a rebuilt game.
+
 - **2026-09-29 Claude — road markings, and a correction on buildings (branch `feature/building-realism`, ADR 0182).**
   - Roads: `RoadMarkingPlan` + `AirsideAdelaideRoads.BuildLaneMarkingMesh` now paint edge lines and multi-lane
     dividers from road width (lanes derived; the data has no lane count).

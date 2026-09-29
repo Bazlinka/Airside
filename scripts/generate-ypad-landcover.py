@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Adelaide Airport (YPAD) land-cover + arterial roads for Airside.
+"""Generate Adelaide Airport (YPAD) land cover for Airside.
 
 Reads docs/data/osm/ypad-landcover-2026-09-15.json (© OpenStreetMap contributors, ODbL)
 and writes game/Airside/Assets/Airside/Simulation/AdelaideLandCover.cs.
@@ -42,16 +42,6 @@ PRIORITY = {
 CLASS_NAME = {
     NONE: "None", RESIDENTIAL: "Residential", COMMERCIAL: "Commercial",
     PARK: "Park", PARKING: "Parking", WATER: "Water", SAND: "Sand", SCRUB: "Scrub",
-}
-KEEP_HIGHWAY = {
-    "motorway", "trunk", "primary", "secondary",
-    "motorway_link", "trunk_link", "primary_link", "secondary_link",
-}
-ROAD_WIDTH = {
-    "motorway": 18.0, "motorway_link": 10.0,
-    "trunk": 14.0, "trunk_link": 9.0,
-    "primary": 12.0, "primary_link": 8.0,
-    "secondary": 10.0, "secondary_link": 7.0,
 }
 
 
@@ -185,39 +175,6 @@ def polygon_rings(e):
     return []
 
 
-def road_points(e):
-    tags = e.get("tags") or {}
-    hw = tags.get("highway")
-    if hw not in KEEP_HIGHWAY:
-        return None
-    geom = e.get("geometry") or []
-    if len(geom) < 2:
-        return None
-    pts = simplify(to_local(geom), 12.0)
-    if not any(ORIGIN <= x <= ORIGIN + SIZE * CELL and ORIGIN <= z <= ORIGIN + SIZE * CELL for x, z in pts):
-        return None
-    return ROAD_WIDTH[hw], pts
-
-
-def format_roads(roads):
-    parts = []
-    for width, pts in roads:
-        parts.append(f"{width:.1f}f")
-        parts.append(f"{len(pts)}")
-        for x, z in pts:
-            parts.append(f"{x:.1f}f")
-            parts.append(f"{z:.1f}f")
-    parts.append("0f")
-    lines = []
-    row = []
-    for p in parts:
-        row.append(p)
-        if len(row) >= 10:
-            lines.append("            " + ", ".join(row) + ",")
-            row = []
-    if row:
-        lines.append("            " + ", ".join(row) + ",")
-    return "\n".join(lines)
 
 
 def sample_kind(grid, x, z):
@@ -254,16 +211,6 @@ def main():
         if n:
             painted[kind] += n
 
-    roads = []
-    for e in data["elements"]:
-        road = road_points(e)
-        if road:
-            roads.append(road)
-    roads.sort(
-        key=lambda r: -sum(math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip(r[1], r[1][1:]))
-    )
-    total_road_pts = sum(len(p) for _, p in roads)
-
     cells_b64 = base64.b64encode(bytes(grid)).decode("ascii")
     chunks = [cells_b64[i:i + 100] for i in range(0, len(cells_b64), 100)]
     b64_lines = "\n".join(
@@ -294,7 +241,7 @@ using System;
 namespace Airside.Simulation
 {{
     /// <summary>
-    /// Stylised land cover and arterial roads around Adelaide Airport in the runway
+    /// Stylised land cover around Adelaide Airport in the runway
     /// frame (metres): a {SIZE}×{SIZE} class grid at {CELL:g} m, covering ±{HALF_EXTENT:g} m,
     /// painted from real OSM landuse / leisure / natural / parking polygons, plus
     /// motorway–secondary centreline ribbons. Presentation tints the surroundings
@@ -330,15 +277,6 @@ namespace Airside.Simulation
 
         private static readonly byte[] Cells = Convert.FromBase64String(CellsBase64);
 
-        /// <summary>
-        /// Arterial roads packed as: width, pointCount, x,z,… repeated; terminated by a 0 width.
-        /// {len(roads)} roads, {total_road_pts} points.
-        /// </summary>
-        public static readonly float[] Roads =
-        {{
-{format_roads(roads)}
-        }};
-
         public const float CoverageResidentialPercent = {coverage['Residential']}f;
         public const float CoverageCommercialPercent = {coverage['Commercial']}f;
         public const float CoverageParkPercent = {coverage['Park']}f;
@@ -370,7 +308,6 @@ namespace Airside.Simulation
     print(
         f"landcover: {SIZE}x{SIZE} @ {CELL:g}m; "
         + ", ".join(f"{CLASS_NAME[k]}={painted[k]}" for k in range(1, 8))
-        + f"; roads={len(roads)} ({total_road_pts} pts)"
     )
     print("landmarks:", landmark_kinds)
     print("coverage%:", coverage)

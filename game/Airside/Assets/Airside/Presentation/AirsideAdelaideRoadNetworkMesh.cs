@@ -17,19 +17,13 @@ namespace Airside.Presentation
     public static class AirsideAdelaideRoadNetworkMesh
     {
         public const string ObjectName = "Adelaide Road Network";
-        public const string LegacyFlag = "-airsideLegacyRoads";
+        public const string ShaderName = "Airside/Surroundings";
         private static readonly Color PaintColour = new Color(0.88f, 0.88f, 0.85f);
-
-        // The pavement rule is asked about the same spots by ribbons, paint, junctions and crossings; cache it.
-        private static readonly Dictionary<long, RoadSurfaceUse> RuleCache = new Dictionary<long, RoadSurfaceUse>();
-        private static float _minX, _maxX, _minZ, _maxZ;
-        private static bool _boundsReady;
 
         /// <summary>True when the network can be drawn: data present, the shader available, not switched off.</summary>
         public static bool CanBuild() =>
-            !AirsideBareField.HasLaunchFlag(LegacyFlag)
-            && AdelaideRoadNetwork.Roads.Length > 0
-            && Shader.Find(AirsideAdelaideRoads.ShaderName) != null;
+            AdelaideRoadNetwork.Roads.Length > 0
+            && Shader.Find(ShaderName) != null;
 
         private sealed class Sinks
         {
@@ -38,34 +32,29 @@ namespace Airside.Presentation
 
         /// <summary>
         /// Builds the network's geometry on a worker thread (it is pure maths over static data), then copies it into
-        /// meshes a few milliseconds a frame, so the first picture does not wait for it. Calls
-        /// <paramref name="onFailed"/> if the geometry cannot be built, so the caller can fall back to the old roads.
+        /// meshes a few milliseconds a frame, so the first picture does not wait for it. Logs a warning if the geometry cannot be built.
         /// </summary>
-        public static IEnumerator BuildAsync(Transform root, float pavementWorldY, Func<float, float, float> groundHeight,
-            Action onFailed)
+        public static IEnumerator BuildAsync(Transform root, float pavementWorldY, Func<float, float, float> groundHeight)
         {
-            var shader = Shader.Find(AirsideAdelaideRoads.ShaderName);
+            var shader = Shader.Find(ShaderName);
             if (shader == null)
-            {
-                onFailed?.Invoke();
                 yield break;
-            }
 
-            RuleCache.Clear();
+            // Anything lazily loaded on the main thread is touched here, before the worker starts.
+            _ = AdelaideLayout.Taxiways.Length;
+            _ = AirsideAdelaideSurroundings.Terrain;
             var options = new RoadBuildOptions
             {
                 GroundHeight = groundHeight,
                 BaseY = pavementWorldY,
-                AirsideRule = PavementRule
+                AirsideRule = new PavementRule().Evaluate
             };
             var task = Task.Run(() => BuildSinks(options));
             while (!task.IsCompleted)
                 yield return null;
-            RuleCache.Clear();
             if (task.IsFaulted || task.Result == null || task.Result.Asphalt.VertexCount < 3)
             {
                 Debug.LogWarning($"[Airside] Road network failed to build: {task.Exception?.GetBaseException().Message}");
-                onFailed?.Invoke();
                 yield break;
             }
 
@@ -172,58 +161,60 @@ namespace Airside.Presentation
 
         /// <summary>
         /// What an airside road does at a point: nothing on a runway or taxiway, paint only on apron concrete,
-        /// asphalt elsewhere. Cached on a 3 m grid and skipped outside the pavement's bounding box, because the
-        /// distance queries walk every taxiway.
+        /// asphalt elsewhere. One instance per build, so nothing is shared between builds or threads: it caches on a
+        /// 3 m grid and skips the pavement's bounding box test, because the distance queries walk every taxiway.
         /// </summary>
-        public static RoadSurfaceUse PavementRule(float x, float z)
+        private sealed class PavementRule
         {
-            EnsureBounds();
-            if (x < _minX || x > _maxX || z < _minZ || z > _maxZ)
-                return RoadSurfaceUse.Asphalt;
-            var key = (long)Mathf.Round(x / 3f) * 100003L + (long)Mathf.Round(z / 3f);
-            if (RuleCache.TryGetValue(key, out var cached))
-                return cached;
+            private readonly Dictionary<long, RoadSurfaceUse> _cache = new Dictionary<long, RoadSurfaceUse>();
+            private readonly float _minX, _maxX, _minZ, _maxZ;
 
-            RoadSurfaceUse use;
-            if (AirsideAdelaidePavement.DistanceToRunwayPavement(x, z) < 1f || AirsideAdelaidePavement.DistanceToTaxiway(x, z) <= 0f)
-                use = RoadSurfaceUse.Skip;
-            else if (AirsideAdelaidePavement.ContainsApron(x, z))
-                use = RoadSurfaceUse.PaintOnly;
-            else
-                use = RoadSurfaceUse.Asphalt;
-            RuleCache[key] = use;
-            return use;
-        }
-
-        private static void EnsureBounds()
-        {
-            if (_boundsReady)
-                return;
-            _minX = _minZ = float.MaxValue;
-            _maxX = _maxZ = float.MinValue;
-            void Grow(float[] xz)
+            public PavementRule()
             {
-                for (var i = 0; i + 1 < xz.Length; i += 2)
+                float minX = float.MaxValue, minZ = float.MaxValue, maxX = float.MinValue, maxZ = float.MinValue;
+                void Grow(float[] xz)
                 {
-                    _minX = Mathf.Min(_minX, xz[i]);
-                    _maxX = Mathf.Max(_maxX, xz[i]);
-                    _minZ = Mathf.Min(_minZ, xz[i + 1]);
-                    _maxZ = Mathf.Max(_maxZ, xz[i + 1]);
+                    for (var i = 0; i + 1 < xz.Length; i += 2)
+                    {
+                        minX = Mathf.Min(minX, xz[i]);
+                        maxX = Mathf.Max(maxX, xz[i]);
+                        minZ = Mathf.Min(minZ, xz[i + 1]);
+                        maxZ = Mathf.Max(maxZ, xz[i + 1]);
+                    }
                 }
+
+                foreach (var taxiway in AdelaideLayout.Taxiways)
+                    Grow(taxiway.Xz);
+                foreach (var apron in AdelaideLayout.Aprons)
+                    Grow(apron.Xz);
+                // The main runway and the cross runway, plus room for shoulders.
+                minX = Mathf.Min(minX, -AirsideAdelaidePavement.MainHalfLength) - 40f;
+                maxX = Mathf.Max(maxX, AirsideAdelaidePavement.MainHalfLength) + 40f;
+                _minX = minX;
+                _maxX = maxX;
+                _minZ = minZ - 40f;
+                _maxZ = maxZ + 40f;
             }
 
-            foreach (var taxiway in AdelaideLayout.Taxiways)
-                Grow(taxiway.Xz);
-            foreach (var apron in AdelaideLayout.Aprons)
-                Grow(apron.Xz);
-            // The main runway and the cross runway, plus room for shoulders.
-            _minX = Mathf.Min(_minX, -AirsideAdelaidePavement.MainHalfLength);
-            _maxX = Mathf.Max(_maxX, AirsideAdelaidePavement.MainHalfLength);
-            _minX -= 40f;
-            _maxX += 40f;
-            _minZ -= 40f;
-            _maxZ += 40f;
-            _boundsReady = true;
+            public RoadSurfaceUse Evaluate(float x, float z)
+            {
+                if (x < _minX || x > _maxX || z < _minZ || z > _maxZ)
+                    return RoadSurfaceUse.Asphalt;
+                var key = (long)Mathf.Round(x / 3f) * 100003L + (long)Mathf.Round(z / 3f);
+                if (_cache.TryGetValue(key, out var cached))
+                    return cached;
+
+                RoadSurfaceUse use;
+                if (AirsideAdelaidePavement.DistanceToRunwayPavement(x, z) < 1f
+                    || AirsideAdelaidePavement.DistanceToTaxiway(x, z) <= 0f)
+                    use = RoadSurfaceUse.Skip;
+                else if (AirsideAdelaidePavement.ContainsApron(x, z))
+                    use = RoadSurfaceUse.PaintOnly;
+                else
+                    use = RoadSurfaceUse.Asphalt;
+                _cache[key] = use;
+                return use;
+            }
         }
     }
 }

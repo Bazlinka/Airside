@@ -1,0 +1,27 @@
+name: Headless checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  headless:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Generated data files are current
+        run: |
+          python3 scripts/generate-ypad-roads.py --check
+          python3 scripts/generate-ypad-carparks.py --check
+          python3 scripts/generate-ypad-precinct.py --check
+      - name: Harness list is current
+        run: python3 scripts/update-harness.py --check
+      - name: Domain, Simulation and Unity-free Presentation tests
+        run: dotnet test scripts/dotnet-harness/Harness.csproj --nologo

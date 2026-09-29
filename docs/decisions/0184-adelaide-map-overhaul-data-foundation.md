@@ -66,3 +66,14 @@ None: new data file and scripts only; no persisted schema changes.
   triangles on .NET, so `AirsideAdelaideRoadNetworkMesh.BuildAsync` builds it on a worker thread (pure maths over static
   data) and copies tiles into meshes 3 ms a frame; cars are two boxes each (about 168k vertices). If the build fails,
   `FallBackToLegacyRoads` restores the old ribbons and the authored T1 side.
+- **One road system (code-quality pass).** `generate-ypad-roads.py` also takes the arterials beyond the full-detail window from
+  the land-cover snapshot (motorway to secondary, 3,601 ways, ids already in the map snapshot skipped), so
+  `AdelaideRoadNetwork` holds 6,735 roads (781 km) out to about 6.5 km. The old capped arterial ribbons
+  (`AirsideAdelaideRoads`), the authored T1 traffic side (`AdelaideLandside`, `AirsideAdelaideLandside`,
+  `BuildYpadLandsideLife`), `AdelaideLandCover.Roads` (1,680 lines of packed data) and the `-airsideLegacyRoads` flag and
+  fallback are gone.
+- **State and size (code-quality pass).** The pavement rule the road build asks about is now one instance per build (no shared
+  static cache or bounds), and lazily loaded data is touched on the main thread before the worker starts.
+  `AdelaideRoadNetwork.cs` is 318 KB instead of 1.36 MB: the tables are delta-encoded 0.1 m integers, raw-deflated and
+  base64'd, decoded once at start-up (`PointChecksum` and a test prove it decodes whole).
+  `AirsidePrototype._airfieldRoot` and the other statics of the prototype are left for the Unity-verified split.

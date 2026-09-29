@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **One road network everywhere.** The arterial roads out to the suburbs now come from the same complete road
+  network as the airport's own roads, so they share widths, junctions and paint. The old separate road layer and the
+  hand-placed terminal drop-off are gone. Not yet seen in a rebuilt game.
 - **Clearer wording in the controls help and delay tips.** The camera keys say what they move, the delay tips read
   as full sentences, and a cancelled flight's line follows the "what: why" pattern in the writing guide.
 - **Holding-position signs.** A red mandatory sign stands each side of every holding position, facing along the

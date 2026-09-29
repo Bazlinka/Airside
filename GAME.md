@@ -1,5 +1,16 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-29 Claude — code-quality pass (branch `claude/code-quality-pass`).**
+  - CI (`.github/workflows/headless.yml`) runs the generators' `--check`, `update-harness.py --check` and `dotnet test`.
+    The harness file list is now derived (`scripts/update-harness.py` -> `Harness.Generated.props`): 1,056 tests run.
+  - One road system: `AdelaideRoadNetwork` (6,735 roads, 781 km) draws everything; the old arterial ribbons, the authored
+    T1 landside and `AdelaideLandCover.Roads` are deleted.
+  - `-airsideFullAirport` legacy path: sized, not deleted (`docs/architecture/LEGACY_FULL_AIRPORT_PATH.md`).
+  - `AirsidePrototype.cs` 14.3k -> 5.1k lines by moving 188 methods, unchanged, into themed partial files (`.Lights`,
+    `.Sky`, `.AircraftVisuals`, `.GroundService`, `.FieldBuild`); a line-multiset check shows nothing lost. Not compiled here.
+  - **NEXT:** static-state cleanup, compact binary data for the big generated tables, splitting `AirlineOperations` /
+    `AdelaideGround`. Run `scripts/test-unity.sh` before merging.
+
 - **2026-09-29 Claude — dead-code tidy (branch `claude/adelaide-airport-map-overhaul-beuaca`).** Removed 56 members that
   nothing referenced anywhere (name appears once in the whole code base): 22 private ones (incl. the unused
   `BuildBareAdelaidePerimeterFence`, headlight/beacon pulse helpers, live-traffic obstacle code) and 34 public methods

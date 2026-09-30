@@ -1,5 +1,212 @@
 ## Unreleased
 
+- **P0 tip `b67a32a1` CI CLEAN.** Headless green on #491 with Stage A caffeinate +
+  osascript notify, fail-closed framing/follow, and CreateAgent Stage A path.
+  Mac workers online; `CURSOR_API_KEY` still blocks CreateAgent. No simulation
+  or save changes.
+- **P0 Stage A notifies when remaining PNGs land.** `run-post-audit-p0-remaining.sh`
+  posts an osascript notification (same message as stages.sh) so an unattended
+  Finder/CreateAgent Stage A run surfaces "fill RESULTS" when captures finish.
+  Locked by `test-p0-stages-chain.sh`. No simulation or save changes.
+- **P0 Stage A caffeinates pull/build/captures.** `run-post-audit-p0-remaining.sh`
+  wraps with `caffeinate -d -i` (same nest guard as stages.sh) so Finder Stage A
+  / CreateAgent Stage A cannot freeze on a sleeping display during a cold build.
+  Locked by `test-p0-stages-chain.sh`. No simulation or save changes.
+- **P0 plan/docs: CreateAgent `worker_id` + Stage A default.** Plan and Mac
+  agent prompt match the launcher (pin `~/Code/Airside` worker; Stage A by
+  default). No simulation or save changes.
+- **P0 tip `f6cad1be` CI CLEAN.** Headless green on #491 with overview framing
+  fail-closed, Awake pose seed, and CreateAgent `worker_id`/Stage A launcher.
+  Mac workers online; `CURSOR_API_KEY` still blocks CreateAgent. No simulation
+  or save changes.
+- **P0 Mac CreateAgent launcher pins `worker_id` + Stage A default.** Prefers
+  `~/Code/Airside` worker id; Stage A `.command` by default (full A→B→C via
+  `AIRSIDE_P0_LAUNCH_FULL=1`). Still needs `CURSOR_API_KEY`. No simulation or
+  save changes.
+- **P0 camera pose published in Awake for framing checks.** Overview
+  pitch/yaw/distance statics seed before the first LateUpdate so soak
+  `DriveReviewShot` cannot read zeros. No simulation or save changes.
+- **P0 fail-closed overview framing for night-sky stills.** Packaged overview
+  shots that set `-airsideOverviewPitch`/`Yaw`/`Distance` abort when the live
+  camera never reaches that pose (no nose-down default PNG). Review logs include
+  `pose pitch=/yaw=/dist=`; inventory hard-fails night-sky pitch outside ~3–13°.
+  Locked by `ReviewOverviewFramingTests`. No save-schema changes.
+- **P0 tip `45e5eb10` CI CLEAN.** Headless green on #491 with jet-takeoff
+  1330s, fail-closed review/follow, capture resume, Finder tip checkout, and
+  fail-closed player preflight. Mac eyes/ears still required. No simulation or
+  save changes.
+- **P0 Mac runner preflights fail-closed player.** `run-post-audit-p0-remaining.sh`
+  refuses an old `Airside.app` missing review abort strings so SKIP_BUILD cannot
+  write blind overview stills. No simulation or save changes.
+- **P0 fail-closed review flags + Finder tip checkout.** Freighter / hangar /
+  boarding stills abort without a successful apply (no blind overview PNG);
+  inventory hard-fails missing review log lines. Finder `.command` wrappers use
+  `p0-checkout-mac-tip.sh` (tip branch, else `main`). No simulation or save changes.
+- **P0 capture resume keeps good Stage C PNGs.** `AIRSIDE_CAPTURE_RESUME=1`
+  (default in `review-post-audit-p0-remaining.sh`) skips non-empty stills so a
+  mid-batch timeout can retry only the missing shots. Locked by
+  `test-capture-game-resume.sh`. No simulation or save changes.
+- **P0 jet takeoff delay + fail-closed follow.** Packaged `follow-jet-takeoff`
+  waits **1330s** (mid first jet TakingOff on soak seed 20260913; 830s was
+  turboprop). Auto-landing/takeoff stills abort without a follow pick (no blind
+  overview PNG). Inventory hard-fails missing `following auto-*` log lines.
+  Checklist night-sky delay matches packaged 45s. No simulation or save changes.
+- **P0 tip `cfa1fc4b` CI CLEAN.** Headless green on #491 with Stage A Finder
+  shortcut, Mac CreateAgent launcher lock, and night-sky frustum test. Mac
+  eyes/ears still required. No simulation or save changes.
+- **P0 night-sky frustum EditMode lock.** `NightSkyReviewFraming_PutsDrawableCruiseInUpperHalfOfFrame`
+  asserts the 11 km / pitch 8 / yaw 270 re-run pose puts a drawable cruise in
+  the upper half of the 1600×900 frame at T+45s. No simulation or save changes.
+- **P0 Stage A Finder shortcut.** `scripts/run-post-audit-p0-stage-a.command`
+  double-click runs night-sky + freighter only (~minutes) when a full A→B→C
+  soak is too long. No simulation or save changes.
+- **P0 Mac CreateAgent launcher.** `scripts/launch-p0-mac-agent.sh` posts
+  `env.type=machine` / `Bailey's MacBook Pro` to `api.cursor.com` when
+  `CURSOR_API_KEY` is set (Task still cannot pin). No simulation or save changes.
+- **P0 Stage A→B→C holds the Mac awake.** `run-post-audit-p0-stages.sh`
+  re-execs under `caffeinate -d -i` for builds and gaps between soaks, and
+  posts a macOS notification when finished. No simulation or save changes.
+- **P0 handoff tip SHA → `b201556a`.** Confirms #491 tip, 21 unverified
+  RESULTS, nose-down night-sky still, idle Mac workers, and re-passed Stage
+  A–C script locks. No simulation or save changes.
+- **P0 CODE_EVIDENCE maps tip #491 locks.** Night-sky yaw/window, packaged
+  follow delays, multi-shot schedule, boarding 320/323s, and Stage A–C script
+  locks are listed; Mac eyes/ears still required. No simulation or save changes.
+
+- **P0 Mac runner preflights multi-shot player.** `run-post-audit-p0-remaining.sh`
+  refuses an old `Airside.app` missing `ReviewShotSchedule` so Stage C cannot
+  burn a timeout on a single-shot build. Boarding batch 320/323s EditMode-locked.
+  No simulation or save changes.
+
+- **P0 landing-batch delays locked at 780/783/786s.** EditMode confirms jet
+  Landing at each staggered multi-shot offset on soak seed 20260913.
+  No simulation or save changes.
+
+- **P0 multi-shot soak batches cut Stage C wall-clock.** One soak writes
+  jet day/close/storm (~780–786s) and boarding/human-ops (~320–323s) via
+  repeated `-airsideReviewShot` groups; `ReviewShotSchedule` + capture-game
+  `--shot` locked in CI. Rebuild required. No simulation or save changes.
+
+- **P0 takeoff/landing capture delays hit the right states.** Packaged
+  `auto-takeoff` waits **830s** (TakingOff mid-roll; 900s overshot to
+  HoldingShort) and `auto-landing` **780s** (jet Landing; 360s was turboprop).
+  Locked by `ReviewAircraftFollowTests` + `test-p0-remaining-delays.sh`.
+  No simulation or save changes.
+
+- **P0: `cursor[bot]` cannot claim My Machines via GitHub.** A cloud-agent
+  `@cursoragent worker=Bailey's MacBook Pro` comment on #491 left workers idle;
+  docs now say only Bailey's trusted GitHub account (or Terminal/Finder) works.
+  No simulation or save changes.
+
+- **P0 Finder double-click Stage A→B→C.** `scripts/run-post-audit-p0-stages.command`
+  checks out the tip in `~/Code/Airside` and runs the stages chain; CI-locked with
+  the stages wrapper. No simulation or save changes.
+
+- **P0 Mac trigger docs: GitHub `worker=`.** Playtest + Terminal docs note
+  `@cursoragent worker=Bailey's MacBook Pro` on #491 as an optional My Machines
+  path alongside Terminal one-paste. No simulation or save changes.
+
+- **P0 one-paste Stage A→B→C runner.** `scripts/run-post-audit-p0-stages.sh` chains
+  night-sky+freighter → takeoff → hangar/boarding/landings with SKIP_BUILD/PULL after
+  Stage A; CI-locked by `test-p0-stages-chain.sh`. No simulation or save changes.
+
+- **P0 Mac Terminal path (no agent pin).** `docs/testing/post-audit-p0-mac-terminal.md`
+  gives Stage A→B→C copy-paste for Terminal.app when the Mac is awake — Cloud Task
+  cannot pin My Machines. No simulation or save changes.
+
+- **P0 docs: stop retrying Task Mac pins.** Playtest + plan record that Cloud
+  `Task` rejects `machine.type=machine` (`same_machine`|`new_cloud_vm` only); UI-pin
+  or CreateAgent remains the path. No simulation or save changes.
+
+- **P0 Stage A/B/C ONLY filter CI-locked.** Headless stub run asserts Stage A
+  (night-sky+freighter), Stage B (takeoff), and Stage C (hangar/boarding/landings)
+  select the right shots and pass auto-landing / auto-takeoff follow tokens. No
+  simulation or save changes.
+
+- **P0 Mac path docs match tip `e45eb5ee`.** Plan + checklist document Stage A→B→C,
+  CI-green #491 tip, and `cursor worker start` when workers are offline. No simulation
+  or save changes.
+
+- **P0 inventory log scan uses grep.** Remaining / full P0 runners mark log
+  errors without ripgrep, so CI and Mac agents fail closed. Mac prompt adds Stage C
+  for hangar/boarding/landings and notes `cursor worker start` when workers are offline.
+  No simulation or save changes.
+
+- **P0 Stage B dirty allowlist CI-locked.** Shared `p0-remaining-check-dirty.sh`
+  accepts only `docs/testing/post-audit-p0-*` dirt between stages; headless tests
+  reject GAME.md dirtiness. Night-sky framing (11 km / pitch 8 / yaw 270) also
+  locked in the delay guard. No simulation or save changes.
+
+- **P0 Stage B tolerates dirty RESULTS from Stage A.** The remaining runner
+  allows dirty paths only under `docs/testing/post-audit-p0-*/` so inventory /
+  PNG copies do not block the takeoff stage. Remaining delays stay CI-locked.
+  No simulation or save changes.
+
+- **P0 remaining delay CI lock uses grep.** `scripts/test-p0-remaining-delays.sh`
+  checks freighter presence with `grep` so GitHub-hosted Ubuntu runners (no
+  ripgrep) stay green. No simulation or save changes.
+
+- **P0 remaining delays locked in CI.** `scripts/test-p0-remaining-delays.sh`
+  asserts night-sky/hangar/takeoff/landing/boarding delays and soak-outlives
+  each window. Stage B can skip rebuild via `AIRSIDE_P0_SKIP_BUILD=1`. No
+  simulation or save changes.
+
+- **P0 hangar still timing locked at 90s.** `HangarTowTests` confirms Saab
+  outbound tows still outlast the packaged 90s still and are off-stand mid-tow.
+  Mac fast-pass split: night-sky+freighter first; takeoff (~17 min) second.
+  No simulation or save changes.
+
+- **P0 auto-takeoff still waits for TakingOff (~900s).** Opening-bank roll /
+  tyre rotation lands around 13 minutes live; the previous 360s delay only
+  caught TaxiOut/HoldingShort. Locked by
+  `ReviewAircraftFollowTests.NewGame_OpeningDepartureReachesTakingOffWithinAutoTakeoffCaptureWindow`.
+  No simulation or save changes.
+
+- **P0 capture soak outlives long review delays.** `scripts/capture-game.sh`
+  raises `-airsideSoakMinutes` (and the shell timeout) when `--delay` would
+  otherwise let soak COMPLETE quit before auto-landing / boarding stills
+  (~320–360s). `--print-plan` + `scripts/test-capture-game-soak-window.sh`
+  lock this in headless CI. No simulation or save changes.
+
+- **P0 remaining runner stamps capture inventory.** After Mac stills land,
+  `scripts/run-post-audit-p0-remaining.sh` appends PNG/log inventory to RESULTS
+  without filling keep/fix/revert. No simulation or save changes.
+
+- **P0 Mac agent prompt tip SHA refresh.** Paste prompt pins `#491` tip `6965106c`
+  (auto-landing + night-sky framing + remaining runner). Handoff notes Mac workers
+  idle and UI-pin as the placement path. No simulation or save changes.
+
+- **P0 remaining captures prioritize freighter evidence.** Night-sky, freighter and
+  hangar run before the multi-minute landing/boarding waits so an interrupted Mac
+  run can still clear the P2 freighter gate. No simulation or save changes.
+
+- **P0 Mac pin docs: Remote Control toggle.** Playtest Option B records that API /
+  CreateAgent machine pin needs team **Enable Remote Control for Team**; cloud Task
+  still cannot pin. No simulation or save changes.
+
+- **P0 night-sky framing aims at cruise corridors.** Remaining captures use 11 km /
+  pitch 8 / yaw 270 with a 45s delay; `SkyTrafficTests` locks drawable traffic in
+  that early-soak window. No simulation or save changes.
+
+- **P0 remaining one-command Mac runner.** `scripts/run-post-audit-p0-remaining.sh`
+  pulls the tip, builds, runs remaining stills, and copies PNGs into the RESULTS
+  folder for verdict fill-in. No simulation or save changes.
+
+- **P0 auto-landing upgrades to Landing before the still.** Soak review follow
+  re-ranks `auto-landing` / `auto-takeoff` every frame so HoldingForLanding /
+  TaxiOut can upgrade to Landing / TakingOff. Landing capture delay ~360s.
+  Timing locked by `ReviewAircraftFollowTests`. No simulation or save changes.
+
+- **P0 remaining capture inventory + subset filter.** RESULTS lists the #491
+  re-capture shots as unverified placeholders. `AIRSIDE_P0_ONLY=shot,shot` skips
+  the rest of `scripts/review-post-audit-p0-remaining.sh`. No simulation or save changes.
+
+- **P0 review follow helpers.** `-airsideReviewAircraft auto-landing|auto-takeoff`,
+  `-airsideReviewFreighter`, `-airsideReviewHangarCheck` and `-airsideReviewBoarding`
+  drive arrival, departure, cargo-livery, hangar-tow and walkway-tape stills.
+  `scripts/review-post-audit-p0-remaining.sh` re-captures the open P0 stills.
+  Ranking/timing locked by `ReviewAircraftFollowTests`. No simulation or save changes.
+
 - **Consolidate Airside onto main.** Retain the post-audit backlog, Mac review helpers and actual #490
   capture results; retire stale branch-switching instructions and fix three malformed Unity metadata GUIDs.
   Post-audit backlog ADR 0205; manual P0 playtest checks remain open. No simulation or save changes.

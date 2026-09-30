@@ -39,7 +39,7 @@ Frame times are the settled soak sample (the `1 min` line), after the first-fram
 |---|---|---|---|---|
 | `overview-day-clear.png` | Readable field, buildings, traffic | baseline | keep | Terminal, runways, taxiways and parked traffic read. HUD is the current Glass Cockpit. |
 | `overview-far-land-cover.png` | Suburbs/crops/water beyond satellite; no haze ring | 0185, 0190, 0191 | keep | City, river, coast and hills are in frame. Rim darkening is the coast and the hills: the north rim matches the centre (luminance ratio 0.99) and the south/west rim is ocean and ranges. Not a symmetric camera ring. |
-| `overview-night-sky-traffic.png` | Overflights cruise; no double inbound | 0195 | unverified | Night field, edge lights and clouds read. This still is pitched down at the airport, so it does not show a cruising overflight and cannot prove an inbound is drawn once. Re-run with `scripts/review-post-audit-p0.sh` after the 9 km / pitch-12 / yaw-210 framing fix. |
+| `overview-night-sky-traffic.png` | Overflights cruise; no double inbound | 0195 | unverified | Night field, edge lights and clouds read. This still is pitched down at the airport, so it does not show a cruising overflight and cannot prove an inbound is drawn once. Re-run via `scripts/review-post-audit-p0-remaining.sh` (11 km / pitch-8 / yaw-270) after rebuilding with that framing. |
 | `terminal-airside-day.png` | T1 doors, piers, aerobridges | 0185, 0197 | keep | Terminal mass, aerobridge run and parked aircraft read at 420 m. Individual door leaves are not resolved at this distance. |
 | `terminal-airside-night.png` | Night glow, door packs | 0197, 0199 | keep | Apron and airfield lights read. Door-pack glow is not separable at 420 m. |
 | `terminal-kerb-day.png` | Landside entrances, kerb detail | 0197 | keep | Landside roads and the forecourt sit beside the terminal. Entrance door banks are not readable at 380 m. |
@@ -51,6 +51,24 @@ Frame times are the settled soak sample (the `1 min` line), after the first-fram
 | `weather-fog-overview.png` | Height fog; close aircraft clear | 0193 | keep | Fog is on (mist 1.00). From ~1.8 km up the shallow layer does not white-out the field (mid luminance 156 vs 196). Settled 40 fps. No close aircraft in this overview, so "close stays clear" is not shown here. |
 | `follow-jet-day.png` | Follow framing | 0189 | keep | Follow locks onto VH-PAX. In this soak that aircraft is a parked Saab 340B at the stand, not a jet airborne. Crew stand on the apron with contact shadows. |
 | `follow-jet-close.png` | Close glazing / gear | 0194 | keep | Close view shows cabin glazing, registration and titles. The aircraft is parked, so main-gear rotation and flare are not in this shot. |
+
+## Remaining captures (after #491 helpers — not taken yet)
+
+Run on Mac after rebuild: `scripts/review-post-audit-p0-remaining.sh`
+(or `AIRSIDE_P0_ONLY=<shot,shot>` for a subset). Copy keep PNGs into this folder
+and fill Verdict. Do **not** invent keep/fix/revert without the still or play.
+
+| Shot | Checks | ADR | Verdict | Notes |
+|---|---|---|---|---|
+| `overview-night-sky-traffic.png` (re-run) | Overflights cruise; no double inbound | 0195 | unverified | Framing: 11 km / pitch 8 / yaw 270 (early-soak corridor), ~45s. Prior still was nose-down. |
+| `follow-jet-day.png` (re-run) | Follow framing on live arrival | 0189, 0194 | unverified | Needs `auto-landing` batch (~780s jet; 360s is turboprop). Prior still was parked Saab. |
+| `follow-jet-close.png` (re-run) | Close glazing / gear on arrival | 0194 | unverified | Same soak as day (~783s, zoom 0.35). |
+| `follow-jet-takeoff.png` | Tyres at rotation | 0194 | unverified | Needs `auto-takeoff` (~1330s mid *jet* TakingOff; 830s is turboprop; 900s → HoldingShort). Not in the #490 matrix. |
+| `follow-storm-landing.png` | Arrival on final lands in storm | 0190 | unverified | Same landing soak (~786s, weather storm). Code green in `RunwayWeatherTests`. |
+| `follow-freighter.png` | Cargo shade + "... CARGO" title | 0194 | unverified | Needs `-airsideReviewFreighter`. |
+| `follow-hangar-tow.png` | Tow mid-move | 0186–0188 | unverified | Needs `-airsideReviewHangarCheck` (~90s). |
+| `follow-boarding-tape.png` | Walkway tape mid-board | 0187, 0196 | unverified | Needs `-airsideReviewBoarding` (~320s). |
+| `follow-human-ops-close.png` | Airstair / tape scale | 0174 | unverified | Boarding + zoom 0.35. Bridge glass still needs a jet-gate follow by hand. |
 
 ## Manual checks
 

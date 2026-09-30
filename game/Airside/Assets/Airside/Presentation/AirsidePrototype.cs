@@ -207,7 +207,17 @@ namespace Airside.Presentation
             AirsideBareField.HasLaunchFlag("-airsidePinDaylight");
         private static readonly TimeSpan? ReviewLocalTime =
             DaylightPresentation.ReviewLocalTime(Environment.GetCommandLineArgs());
-        private static readonly WeatherKind? ReviewWeather = ReviewWeatherOverride(Environment.GetCommandLineArgs());
+        // Mutable so multi-shot review soaks can switch clear→storm between PNGs.
+        private static WeatherKind? ReviewWeather = ReviewWeatherOverride(Environment.GetCommandLineArgs());
+
+        /// <summary>Override review weather mid-soak (presentation QA only; not sim weather).</summary>
+        private static void SetReviewWeatherToken(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+                return;
+            if (Enum.TryParse(token, true, out WeatherKind weather))
+                ReviewWeather = weather;
+        }
 
         /// <summary>Sky over the field: the demo circuit's weather, or the airline clock's in airline mode.</summary>
         private WeatherKind CurrentWeather => ReviewWeather

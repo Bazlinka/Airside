@@ -20,14 +20,26 @@ concentration / performance**, then finishing half-done product slices (freight)
 
 ### P0 — Mac packaged playtest of unverified merges (do first)
 
-**Status:** automated Mac captures recorded in #490; manual listening/play checks remain open. See
-`docs/testing/post-audit-p0-2026-09-30/RESULTS.md`. A Unity player and awake display are required. Cloud
-Linux cannot mark this complete. Self-hosted Mac workers are often online and may
-show `eligibleForSubagent: true`, but `Task` only accepts `same_machine` |
-`new_cloud_vm` — it cannot take `machine.worker_id`. Pin the Mac with **CreateAgent**
-(`machine: { "type": "self_hosted_worker", "worker_id": "…" }`, team Remote Control
-on), the agents UI environment picker, or API v1 `env.type: "machine"`. One-paste
-prompt: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
+**Status:** automated Mac captures recorded in #490; manual listening/play checks remain open
+(21 unverified rows). See `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`. Night-sky
+framing + review follow helpers (`auto-landing` ~780s jet / `auto-takeoff` ~1330s jet /
+freighter / hangar / boarding; multi-shot landing+boarding batches) are in #491
+(headless CI green, mergeable). Mac path: one-paste
+`scripts/run-post-audit-p0-stages.sh` (~45+ min after rebuild; wraps
+`caffeinate -d -i` for the full run), or
+`scripts/run-post-audit-p0-remaining.sh` Stage A (night-sky+freighter) → B (jet takeoff
+`SKIP_BUILD`/`SKIP_PULL`) → C (hangar + batched landings/boarding). A Unity player and awake display
+are required. Cloud Linux cannot mark this complete. If no workers show in
+`list-self-hosted-workers`, run `cursor worker start` on the Mac first (prefer
+`~/Code/Airside`). Cloud `Task` cannot pin My Machines — do not retry Task pins.
+Pin via agents UI (**Bailey's MacBook Pro**) or
+`scripts/launch-p0-mac-agent.sh` (`CURSOR_API_KEY` → API v1 CreateAgent;
+defaults Stage A; pins `env.worker_id` for the `~/Code/Airside` worker when known,
+plus machine name). Tip #491 also fail-closes overview framing mismatches so a
+nose-down night-sky PNG cannot look like success. Prefer Terminal/Finder (no pin):
+`docs/testing/post-audit-p0-mac-terminal.md`. GitHub `@cursoragent worker=` only
+works from Bailey's trusted account — `cursor[bot]` cloud comments do not claim
+the machine. Optional agent paste: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
 
 Many ADRs merged green on EditMode / headless but were never seen or heard in a
 rebuilt game. Attribute bugs before adding content.
@@ -44,9 +56,11 @@ rebuilt game. Attribute bugs before adding content.
 | Terminal doors / facade detail (airside + kerb) | 0197 |
 | Human-ops close matrix (clipping, scale, bridge glass) | 0174 |
 
-**Run on Mac:** `scripts/build-mac.sh` then `scripts/review-post-audit-p0.sh`. Checklist
-and keep/fix/revert rows: `docs/testing/post-audit-p0-playtest.md`. Captures go to
-`work/captures/post-audit-p0-<date>/`.
+**Run on Mac:** `scripts/run-post-audit-p0-remaining.sh` (pull + build + remaining
+stills; optional `AIRSIDE_P0_ONLY=shot,shot`; Stage B/C may set `AIRSIDE_P0_SKIP_BUILD=1`
+`AIRSIDE_P0_SKIP_PULL=1`) or the full `scripts/run-post-audit-p0.sh`. Checklist:
+`docs/testing/post-audit-p0-manual-checklist.md`. Captures go to
+`work/captures/post-audit-p0-<date>/` and the RESULTS docs folder.
 
 Exit: Bailey marks each keep / fix / revert. Close or amend ADR “Unity look not
 verified” lines when eyes-on is done.

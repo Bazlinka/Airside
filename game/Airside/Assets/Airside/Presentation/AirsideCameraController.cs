@@ -156,6 +156,10 @@ namespace Airside.Presentation
         private const float MinFollowZoom = 0.35f;
         private const float MaxFollowZoom = 3.5f;
 
+        /// <summary>Packaged multi-shot reviews switch zoom between PNGs in one soak.</summary>
+        public void SetFollowZoom(float zoom) =>
+            _followZoom = Mathf.Clamp(zoom, MinFollowZoom, MaxFollowZoom);
+
         /// <summary>
         /// Free-camera scroll zooms toward the ground under the pointer, the same way the
         /// destinations map's <c>ZoomAtGui</c> keeps its pivot. The pivot is latched when
@@ -211,6 +215,12 @@ namespace Airside.Presentation
             _camera = GetComponent<Camera>();
             if (_camera != null)
                 _fov = _camera.fieldOfView;
+            // Publish CLI/default pose before the first LateUpdate so soak review framing
+            // checks (Update → DriveReviewShot) never see zero pitch/yaw/distance.
+            CurrentDistance = _distance;
+            CurrentPitch = _pitch;
+            CurrentYaw = _yaw;
+            ApplyTransform();
         }
 
         // Launch intro: a close, oblique reveal into the working overview. Keeping the
@@ -419,6 +429,12 @@ namespace Airside.Presentation
         /// <summary>The free camera's orbit distance this frame, for the fog and haze that follow the zoom.</summary>
         public static float CurrentDistance { get; private set; } = AirsideBareField.OverviewDistance;
 
+        /// <summary>Live overview/follow pitch (degrees) this frame — soak review framing checks.</summary>
+        public static float CurrentPitch { get; private set; }
+
+        /// <summary>Live overview/follow yaw (degrees) this frame — soak review framing checks.</summary>
+        public static float CurrentYaw { get; private set; }
+
         private static readonly int HorizonScaleId = Shader.PropertyToID("_AirsideHorizonScale");
 
         private void ApplyTransform()
@@ -437,6 +453,8 @@ namespace Airside.Presentation
             }
 
             CurrentDistance = _distance;
+            CurrentPitch = _pitch;
+            CurrentYaw = _yaw;
 
             var rotation = Quaternion.Euler(_pitch, _yaw, 0f);
             var shakeOffset = Vector3.zero;

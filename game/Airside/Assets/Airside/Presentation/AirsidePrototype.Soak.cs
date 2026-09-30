@@ -76,19 +76,35 @@ namespace Airside.Presentation
 
         // Review shots for packaged-build checks (HUD fit at several window sizes, panels):
         //   -airsideReviewPanel plan|operations|map|fleet|contracts|stats|devtools|help
-        //   -airsideReviewShot <path.png> [-airsideReviewDelay seconds]   capture, then quit
-        //   -airsideReviewAircraft <registration>   follow a live 3D aircraft in the shot
+        //   -airsideReviewShot <path.png> [-airsideReviewDelay seconds]
+        //       capture then quit; repeat the flag group for multi-shot one-soak batches
+        //   -airsideReviewAircraft <registration|auto-landing|auto-takeoff>
+        //       follow a live 3D aircraft; auto-landing / auto-takeoff pick the best
+        //       on-field arrival or departure that already has a field view
+        //   -airsideReviewFreighter   refit a parked player aircraft to freighter and follow it
+        //   -airsideReviewHangarCheck start a hangar check on a parked player aircraft and follow the tow
+        //   -airsideReviewBoarding     book a near departure so walkway tape / boarding is active
         //   -airsideReviewFollowZoom 0.35   bounded close-up of the followed aircraft
         //   -airsideReviewTime HH:mm   override local lighting time only (not the sim clock)
         //   -airsideReviewWeather cloudy|overcast|rain|storm|...   deterministic visual QA
         private const string ReviewPanelFlag = "-airsideReviewPanel";
-        private const string ReviewShotFlag = "-airsideReviewShot";
-        private const string ReviewDelayFlag = "-airsideReviewDelay";
         private const string ReviewAircraftFlag = "-airsideReviewAircraft";
-        private float _reviewShotAt = -1f;
-        private bool _reviewShotTaken;
+        private const string ReviewFreighterFlag = "-airsideReviewFreighter";
+        private const string ReviewHangarCheckFlag = "-airsideReviewHangarCheck";
+        private const string ReviewBoardingFlag = "-airsideReviewBoarding";
+        private ReviewShotSchedule _reviewShotSchedule;
+        private int _reviewShotIndex;
+        private bool _reviewCaptureInFlight;
+        private float _reviewLastCaptureAt = -1f;
         private bool _reviewFollowStarted;
         private string _reviewAircraftId;
+        private string _reviewAutoFollowId;
+        private bool _reviewFreighterRequired;
+        private bool _reviewHangarRequired;
+        private bool _reviewBoardingRequired;
+        private bool _reviewFreighterHold;
+        private bool _reviewHangarHold;
+        private bool _reviewBoardingApplied;
 
         private void OpenReviewPanel(string[] args)
         {
@@ -117,41 +133,305 @@ namespace Airside.Presentation
         /// <summary>Read the finished frame (3D and HUD) back and write it as PNG. The ScreenCapture module is not in this project.</summary>
         private System.Collections.IEnumerator CaptureReviewShot(string path)
         {
+            // One frame so mid-soak zoom/weather overrides reach the rendered image.
+            yield return null;
             yield return new WaitForEndOfFrame();
             var texture = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
             texture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
             texture.Apply();
             File.WriteAllBytes(path, texture.EncodeToPNG());
             Destroy(texture);
-            Debug.Log($"{SoakLogTag} review shot {path} at {Screen.width}x{Screen.height}");
+            Debug.Log(
+                $"{SoakLogTag} review shot {path} at {Screen.width}x{Screen.height} "
+                + $"pose pitch={AirsideCameraController.CurrentPitch:0.#} "
+                + $"yaw={AirsideCameraController.CurrentYaw:0.#} "
+                + $"dist={AirsideCameraController.CurrentDistance:0} "
+                + $"following={(_cameraController != null && _cameraController.IsFollowing)}");
+            _reviewLastCaptureAt = Time.unscaledTime;
+            _reviewShotIndex++;
+            _reviewCaptureInFlight = false;
+        }
+
+        private void ApplyReviewShotPresentation(ReviewShotSchedule.Entry entry)
+        {
+            if (entry.FollowZoom.HasValue && _cameraController != null)
+                _cameraController.SetFollowZoom(entry.FollowZoom.Value);
+            if (!string.IsNullOrEmpty(entry.WeatherToken))
+                SetReviewWeatherToken(entry.WeatherToken);
+        }
+
+        /// <summary>
+        /// Refit one parked player aircraft to a freighter for ADR 0194 cargo-livery stills.
+        /// Prefers a jet; holds it on stand so soak does not book it out from under the shot.
+        /// </summary>
+        private void TryApplyReviewFreighter()
+        {
+            if (!FleetMode || _operations?.PlayerAirline == null)
+                return;
+
+            FleetAircraft best = null;
+            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
+            {
+                if (aircraft.State != FleetState.AtStand || aircraft.Scheduled.HasValue || aircraft.IsFreighter)
+                    continue;
+                if (best == null)
+                {
+                    best = aircraft;
+                    continue;
+                }
+
+                var jet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
+                var bestJet = AirlineOperations.NeedsTerminalGate(best.Type);
+                if (jet && !bestJet)
+                    best = aircraft;
+            }
+
+            if (best == null)
+            {
+                Debug.LogWarning($"{SoakLogTag} review freighter: no parked player aircraft to refit");
+                return;
+            }
+
+            var result = _operations.SetFreighter(best, true);
+            if (!result.Accepted)
+            {
+                Debug.LogWarning($"{SoakLogTag} review freighter refused: {result.Reason}");
+                return;
+            }
+
+            _reviewFreighterHold = true;
+            // Do not steal an auto-landing / auto-takeoff follow target.
+            if (string.IsNullOrEmpty(_reviewAircraftId))
+                _reviewAircraftId = best.Registration;
+            Debug.Log($"{SoakLogTag} review freighter {best.Registration}");
+        }
+
+        /// <summary>
+        /// Start a hangar check on a parked player aircraft for ADR 0186–0188 tow stills.
+        /// Prefer a non-founding regional type so the founding Saab stays available for soak.
+        /// </summary>
+        private void TryApplyReviewHangarCheck()
+        {
+            if (!FleetMode || _operations?.PlayerAirline == null)
+                return;
+
+            FleetAircraft best = null;
+            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
+            {
+                if (aircraft.State != FleetState.AtStand || aircraft.Scheduled.HasValue
+                    || aircraft.IsFreighter || Maintenance.InCheck(aircraft, _clock.Now))
+                    continue;
+                if (best == null || (!aircraft.IsFoundingAircraft && best.IsFoundingAircraft))
+                    best = aircraft;
+            }
+
+            if (best == null)
+            {
+                Debug.LogWarning($"{SoakLogTag} review hangar check: no parked player aircraft");
+                return;
+            }
+
+            var result = _operations.StartCheck(best);
+            if (!result.Accepted)
+            {
+                Debug.LogWarning($"{SoakLogTag} review hangar check refused: {result.Reason}");
+                return;
+            }
+
+            _reviewHangarHold = true;
+            if (string.IsNullOrEmpty(_reviewAircraftId))
+                _reviewAircraftId = best.Registration;
+            Debug.Log($"{SoakLogTag} review hangar check {best.Registration}");
+        }
+
+        /// <summary>
+        /// Book a minimum-lead departure on a parked regional so boarding / walkway tape runs
+        /// (ADR 0187). Capture around mid-boarding (~5 min live for a starter Saab).
+        /// </summary>
+        private void TryApplyReviewBoarding()
+        {
+            if (!FleetMode || _operations?.PlayerAirline == null)
+                return;
+
+            FleetAircraft best = null;
+            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
+            {
+                if (aircraft.State != FleetState.AtStand || aircraft.IsFreighter
+                    || Maintenance.InCheck(aircraft, _clock.Now)
+                    || AirlineOperations.NeedsTerminalGate(aircraft.Type))
+                    continue;
+                if (aircraft.Scheduled.HasValue)
+                    _operations.CancelDeparture(aircraft);
+                best = aircraft;
+                break;
+            }
+
+            if (best == null)
+            {
+                Debug.LogWarning($"{SoakLogTag} review boarding: no parked regional to book");
+                return;
+            }
+
+            var reachable = _operations.MapDestinations().Where(d => _operations.CanOperate(best, d)
+                && _operations.CareerState.CanAfford(
+                    _operations.DispatchCost(best.Type, _operations.DistanceKm(d)))).ToList();
+            if (reachable.Count == 0)
+            {
+                Debug.LogWarning($"{SoakLogTag} review boarding: no reachable destination");
+                return;
+            }
+
+            var lead = DeparturePrep.LeadSeconds(best.Type, best.BaseLevel);
+            var departAt = _clock.Now.Advance(lead);
+            var result = _operations.ScheduleDeparture(best, reachable[0], departAt);
+            if (!result.Accepted)
+            {
+                Debug.LogWarning($"{SoakLogTag} review boarding refused: {result.Reason}");
+                return;
+            }
+
+            // Fuel+catering+baggage before boarding (starter regional ≈ 255s); mid-boarding ≈ +60s.
+            var preBoard = DeparturePrep.StageSecondsFor(best.Type, DeparturePrepStage.Fuel, best.BaseLevel)
+                + DeparturePrep.StageSecondsFor(best.Type, DeparturePrepStage.Catering, best.BaseLevel)
+                + DeparturePrep.StageSecondsFor(best.Type, DeparturePrepStage.Baggage, best.BaseLevel);
+            var suggestDelay = preBoard + DeparturePrep.BoardingSecondsFor(best.Type, best.BaseLevel) / 2;
+            if (string.IsNullOrEmpty(_reviewAircraftId))
+                _reviewAircraftId = best.Registration;
+            _reviewBoardingApplied = true;
+            Debug.Log($"{SoakLogTag} review boarding {best.Registration} departs in {lead}s; " +
+                      $"suggest -airsideReviewDelay {suggestDelay}");
+        }
+
+        /// <summary>
+        /// Pick the best on-field arrival or departure for tyre / audio review stills.
+        /// Retries each soak frame until a matching field view appears.
+        /// </summary>
+        private bool TryFollowAutoReviewAircraft(bool takeoff)
+        {
+            string bestId = null;
+            var bestRank = int.MaxValue;
+            var label = takeoff ? ReviewAircraftFollow.AutoTakeoffToken : ReviewAircraftFollow.AutoLandingToken;
+            foreach (var pair in _fleetAircraftById)
+            {
+                var aircraft = pair.Value;
+                if (aircraft == null)
+                    continue;
+                var hasView = _fleetViewById.ContainsKey(pair.Key);
+                var preferJet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
+                var rank = takeoff
+                    ? ReviewAircraftFollow.AutoTakeoffRank(aircraft.State, hasView, preferJet)
+                    : ReviewAircraftFollow.AutoLandingRank(aircraft.State, hasView, preferJet);
+                if (rank < 0 || rank > bestRank)
+                    continue;
+                bestRank = rank;
+                bestId = pair.Key;
+                if (rank == 0)
+                    break;
+            }
+
+            if (string.IsNullOrEmpty(bestId))
+                return false;
+
+            // Already on the best candidate — keep following without re-StartFollow churn.
+            if (_reviewFollowStarted && bestId == _reviewAutoFollowId)
+                return true;
+
+            if (!TryFollowFleetAircraft(bestId))
+                return false;
+
+            _selectedAircraftId = bestId;
+            _reviewAutoFollowId = bestId;
+            if (_fleetAircraftById.TryGetValue(bestId, out var followed))
+                Debug.Log($"{SoakLogTag} following {label} {bestId} ({followed.State})");
+            else
+                Debug.Log($"{SoakLogTag} following {label} {bestId}");
+            return true;
         }
 
         private void DriveReviewShot()
         {
-            var args = Environment.GetCommandLineArgs();
-            var index = Array.IndexOf(args, ReviewShotFlag);
-            if (index < 0 || index + 1 >= args.Length)
-                return;
-            if (_reviewShotAt < 0f)
+            if (_reviewShotSchedule == null)
             {
-                var delayIndex = Array.IndexOf(args, ReviewDelayFlag);
-                var delay = delayIndex >= 0 && delayIndex + 1 < args.Length
-                            && float.TryParse(args[delayIndex + 1], System.Globalization.NumberStyles.Float,
-                                System.Globalization.CultureInfo.InvariantCulture, out var d)
-                    ? d
-                    : 20f;
-                _reviewShotAt = Time.unscaledTime + delay;
+                if (!ReviewShotSchedule.TryParse(Environment.GetCommandLineArgs(), out _reviewShotSchedule))
+                    return;
             }
 
-            if (!_reviewShotTaken && Time.unscaledTime >= _reviewShotAt)
+            if (_reviewShotSchedule.Count == 0 || _reviewCaptureInFlight)
+                return;
+
+            if (_reviewShotIndex >= _reviewShotSchedule.Count)
             {
-                _reviewShotTaken = true;
-                StartCoroutine(CaptureReviewShot(args[index + 1]));
+                if (_reviewLastCaptureAt >= 0f && Time.unscaledTime >= _reviewLastCaptureAt + 3f)
+                    Application.Quit();
+                return;
             }
-            else if (_reviewShotTaken && Time.unscaledTime >= _reviewShotAt + 3f)
+
+            var entry = _reviewShotSchedule[_reviewShotIndex];
+            var dueAt = _soakStartedAt >= 0f
+                ? _soakStartedAt + entry.DelaySeconds
+                : Time.unscaledTime + entry.DelaySeconds;
+            if (Time.unscaledTime < dueAt)
+                return;
+
+            // Fail closed: auto-landing / auto-takeoff stills must follow a drawn candidate.
+            // Writing a blind overview PNG would look like success and invent tyre evidence.
+            if (!string.IsNullOrEmpty(_reviewAircraftId)
+                && ReviewAircraftFollow.IsAutoFollowToken(_reviewAircraftId)
+                && !_reviewFollowStarted)
             {
+                Debug.LogError(
+                    $"{SoakLogTag} review shot aborted — {_reviewAircraftId} follow never started before delay {entry.DelaySeconds:0}s (no PNG)");
                 Application.Quit();
+                return;
             }
+
+            if (_reviewFreighterRequired && !_reviewFreighterHold)
+            {
+                Debug.LogError($"{SoakLogTag} review shot aborted — freighter refit never applied (no PNG)");
+                Application.Quit();
+                return;
+            }
+
+            if (_reviewHangarRequired && !_reviewHangarHold)
+            {
+                Debug.LogError($"{SoakLogTag} review shot aborted — hangar check never started (no PNG)");
+                Application.Quit();
+                return;
+            }
+
+            if (_reviewBoardingRequired && !_reviewBoardingApplied)
+            {
+                Debug.LogError($"{SoakLogTag} review shot aborted — boarding booking never applied (no PNG)");
+                Application.Quit();
+                return;
+            }
+
+            // Fail closed: overview stills that name CLI pitch/yaw/distance must actually
+            // reach that pose. A nose-down default overview PNG must not look like success
+            // for night-sky cruise-corridor captures (ADR 0195 / P0 remaining).
+            if (_cameraController != null
+                && !_cameraController.IsFollowing
+                && ReviewOverviewFraming.TryReadExpected(Environment.GetCommandLineArgs(), out var expected))
+            {
+                var actual = new ReviewOverviewFraming.Pose(
+                    AirsideCameraController.CurrentPitch,
+                    AirsideCameraController.CurrentYaw,
+                    AirsideCameraController.CurrentDistance);
+                if (!ReviewOverviewFraming.Matches(expected, actual))
+                {
+                    Debug.LogError(
+                        $"{SoakLogTag} review shot aborted — overview framing mismatch "
+                        + $"(want pitch={expected.PitchDegrees:0.#} yaw={expected.YawDegrees:0.#} "
+                        + $"dist={expected.DistanceMetres:0} got pitch={actual.PitchDegrees:0.#} "
+                        + $"yaw={actual.YawDegrees:0.#} dist={actual.DistanceMetres:0}; no PNG)");
+                    Application.Quit();
+                    return;
+                }
+            }
+
+            ApplyReviewShotPresentation(entry);
+            _reviewCaptureInFlight = true;
+            StartCoroutine(CaptureReviewShot(entry.Path));
         }
 
         private void DriveSoak()
@@ -202,6 +482,21 @@ namespace Airside.Presentation
                 var followIndex = Array.IndexOf(args, ReviewAircraftFlag);
                 _reviewAircraftId = followIndex >= 0 && followIndex + 1 < args.Length
                     ? args[followIndex + 1] : null;
+                if (Array.IndexOf(args, ReviewFreighterFlag) >= 0)
+                {
+                    _reviewFreighterRequired = true;
+                    TryApplyReviewFreighter();
+                }
+                if (Array.IndexOf(args, ReviewHangarCheckFlag) >= 0)
+                {
+                    _reviewHangarRequired = true;
+                    TryApplyReviewHangarCheck();
+                }
+                if (Array.IndexOf(args, ReviewBoardingFlag) >= 0)
+                {
+                    _reviewBoardingRequired = true;
+                    TryApplyReviewBoarding();
+                }
                 OpenReviewPanel(args);
             }
             if (_soakMainThreadRecorder.Valid && _soakRenderThreadRecorder.Valid)
@@ -223,11 +518,26 @@ namespace Airside.Presentation
                 _soakRenderSetDescribed = true;
                 DescribeSoakRenderSet();
             }
-            if (!_reviewFollowStarted && !string.IsNullOrEmpty(_reviewAircraftId))
+            if (!string.IsNullOrEmpty(_reviewAircraftId))
             {
-                _reviewFollowStarted = TryFollowFleetAircraft(_reviewAircraftId);
-                if (_reviewFollowStarted)
-                    Debug.Log($"{SoakLogTag} following {_reviewAircraftId}");
+                // Auto tokens re-rank every frame so HoldingForLanding / TaxiOut can upgrade
+                // to Landing / TakingOff before the still (tyre pivot evidence).
+                if (ReviewAircraftFollow.IsAutoLandingToken(_reviewAircraftId))
+                {
+                    if (TryFollowAutoReviewAircraft(takeoff: false))
+                        _reviewFollowStarted = true;
+                }
+                else if (ReviewAircraftFollow.IsAutoTakeoffToken(_reviewAircraftId))
+                {
+                    if (TryFollowAutoReviewAircraft(takeoff: true))
+                        _reviewFollowStarted = true;
+                }
+                else if (!_reviewFollowStarted)
+                {
+                    _reviewFollowStarted = TryFollowFleetAircraft(_reviewAircraftId);
+                    if (_reviewFollowStarted)
+                        Debug.Log($"{SoakLogTag} following {_reviewAircraftId}");
+                }
             }
 
             if (_awaySummary != null)
@@ -237,6 +547,11 @@ namespace Airside.Presentation
 
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
             {
+                // Keep the review freighter / hangar subject free of soak auto-dispatch.
+                if (_reviewFreighterHold && aircraft.IsFreighter)
+                    continue;
+                if (_reviewHangarHold && aircraft.CheckUntil.HasValue)
+                    continue;
                 if (aircraft.State == FleetState.AtStand && !aircraft.Scheduled.HasValue)
                 {
                     // An aircraft type that cannot reach anything in the catalogue would have

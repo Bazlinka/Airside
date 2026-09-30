@@ -6,29 +6,37 @@ Date: 2026-09-30 · Plan ADR **0205** · Evidence so far:
 Automated stills are mostly **keep**. These rows are still **unverified** and block
 P0 sign-off (and keep freight AI parked).
 
-Canonical Mac checkout: `~/Code/Airside` on `main` (or the plan tip until #484 merges).
-Keep the display awake. Prefer a **fresh** `scripts/build-mac.sh` so the night-sky
-framing fix is in the player.
+Canonical Mac checkout: `~/Code/Airside` on `cursor/p0-auto-landing-follow-709e`
+(#491) until that merges, then `main`. Keep the display awake. Prefer a **fresh**
+`scripts/build-mac.sh` so night-sky framing and review follow helpers are in the player.
+**Fastest path (no Cursor agent):** `docs/testing/post-audit-p0-mac-terminal.md`
+— one paste `scripts/run-post-audit-p0-stages.sh` (A→B→C). Subset:
+`AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/review-post-audit-p0-remaining.sh`.
 
 ## 1. Re-capture night sky traffic (ADR 0195)
 
 ```bash
-cd ~/Code/Airside && git pull
-scripts/build-mac.sh
-# just the improved shot (or full scripts/review-post-audit-p0.sh)
-AIRSIDE_P0_OUT=work/captures/post-audit-p0-nightsky \
-  bash -c 'source scripts/review-post-audit-p0.sh'  # or run the one capture via capture-game
+cd ~/Code/Airside
+# Prefer Stage A → B → C (dirty RESULTS/PNGs between stages are OK):
+# Stage A (minutes — night-sky + freighter; unblocks P2 freighter evidence):
+AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh
+# Stage B (jet tyre rotation — ~25 min soak; jet TakingOff ~1330s mid-roll; reuse Stage A player):
+AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh
+# Stage C (hangar / boarding / landings):
+AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-hangar-tow,follow-boarding-tape,follow-human-ops-close,follow-jet-day,follow-jet-close,follow-storm-landing scripts/run-post-audit-p0-remaining.sh
+# Or all remaining in one go:
+# scripts/run-post-audit-p0-remaining.sh
 ```
 
-Or single shot:
+Or single night-sky shot:
 
 ```bash
 scripts/capture-game.sh \
   --out docs/testing/post-audit-p0-2026-09-30/overview-night-sky-traffic.png \
-  --delay 35 --timeout 120 -- \
+  --delay 45 --timeout 300 -- \
   -airsideReviewView overview \
   -airsideReviewWeather clear -airsideReviewTime 23:30 \
-  -airsideOverviewDistance 9000 -airsideOverviewPitch 12 -airsideOverviewYaw 210
+  -airsideOverviewDistance 11000 -airsideOverviewPitch 8 -airsideOverviewYaw 270
 ```
 
 Judge: do overflights **cruise** (not crawl)? Is a fleet inbound drawn once on final?
@@ -45,18 +53,31 @@ Judge: do overflights **cruise** (not crawl)? Is a fleet inbound drawn once on f
 ## 3. Freighter + tyres (ADR 0194) — unblocks P2
 
 1. Fleet card → refit a parked aircraft to freighter → Follow: cargo shade + "... CARGO" title.
+   Packaged still helper: `follow-freighter` in `scripts/review-post-audit-p0-remaining.sh`
+   (`-airsideReviewFreighter`). Still needs a person to mark keep/fix.
 2. Follow a **jet** (not the soak Saab at stand) from the side on takeoff rotation and on flare:
    main tyres on the runway.
+   Packaged still helpers in `scripts/review-post-audit-p0-remaining.sh`:
+   `-airsideReviewAircraft auto-landing` (batched ~780/783/786s day/close/storm — 360s
+   is turboprop) and `auto-takeoff` (~1330s mid *jet* TakingOff; 830s is turboprop
+   TakingOff; 900s overshoots the prop roll to HoldingShort on soak seed 20260913).
+   Landing/boarding batches share one soak. Soak is live wall-clock; opening AI
+   inbound #1 reaches the circuit at ~3 min.
 
 ## 4. Storm final (ADR 0190)
 
 Force or wait for storm; confirm an aircraft **already on final** continues to land while
 departures stay held. Code already covers this (`RunwayWeatherTests`); eyes-on still owed.
+Packaged still helper: `follow-storm-landing` in `scripts/review-post-audit-p0-remaining.sh`
+(`auto-landing` + storm). Still needs a person to confirm it keeps landing.
 
 ## 5. Hangar tow + boarding tape (ADR 0186–0188 / 0196)
 
 1. Send an aircraft to hangar check; watch tow in/out; engines quiet while towed.
+   Packaged still helper: `follow-hangar-tow` in `scripts/review-post-audit-p0-remaining.sh`
+   (`-airsideReviewHangarCheck`, ~90s delay). Still needs listening for quiet engines.
 2. Board/deplane a regional bay; temporary tape only while passengers walk.
+   Packaged still helper: `follow-boarding-tape` (`-airsideReviewBoarding`, ~320s delay).
 
 ## 6. Camera feel (ADR 0189 / 0191)
 
@@ -66,6 +87,8 @@ departures stay held. Code already covers this (`RunwayWeatherTests`); eyes-on s
 ## 7. Human-ops close (ADR 0174)
 
 Airstair / bus+stairs / bridge glass at follow distance — clipping, scale, glass.
+Packaged still helper: `follow-human-ops-close` (boarding + zoom 0.35). Bridge glass still
+needs a jet-gate follow by hand.
 
 ## Exit
 

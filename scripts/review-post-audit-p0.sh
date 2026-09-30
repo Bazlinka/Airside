@@ -50,10 +50,10 @@ capture overview-far-land-cover \
 # Pitch low and pull back so authored sky corridors cross the frame (ADR 0195).
 # The 2026-09-30 matrix used pitch 28 / 3.2 km and only showed the field, so
 # overflights / double-inbound could not be judged from that still.
-capture overview-night-sky-traffic \
+CAPTURE_DELAY=45 CAPTURE_TIMEOUT=120 capture overview-night-sky-traffic \
   -airsideReviewView overview \
   -airsideReviewWeather clear -airsideReviewTime 23:30 \
-  -airsideOverviewDistance 9000 -airsideOverviewPitch 12 -airsideOverviewYaw 210
+  -airsideOverviewDistance 11000 -airsideOverviewPitch 8 -airsideOverviewYaw 270
 
 # --- Terminal / hangar bookmarks (ADR 0185–0188, 0197) ---
 capture terminal-airside-day \
@@ -100,23 +100,27 @@ capture weather-fog-overview \
   -airsideReviewView overview \
   -airsideReviewWeather fog -airsideReviewTime 12:00
 
-# --- Follow a soak aircraft (tyres / audio / boarding tape when present) ---
-FOLLOW=VH-PAX
-capture follow-jet-day \
+# --- Follow an arrival (tyres / audio). auto-landing re-ranks to Landing (~360s live). ---
+# Live-time soak: opening AI inbound #1 joins the circuit at ~3 min (ADR 0100); 90s/280s
+# were too early for FleetState.Landing (flare / tyre contact).
+FOLLOW=auto-landing
+CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-jet-day \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
-FOLLOW=VH-PAX
-capture follow-jet-close \
+FOLLOW=auto-landing
+CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-jet-close \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.35
 
-# Log sweep — same spirit as review-weather.sh
-if command -v rg >/dev/null 2>&1; then
-  if rg -n 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL' "$shots"/*.log 2>/dev/null; then
-    echo "P0 review found an error; inspect the logs above." >&2
-    exit 1
-  fi
+# Log sweep — grep so CI / Mac agents without ripgrep still fail closed.
+shopt -s nullglob
+err_logs=("$shots"/*.log)
+shopt -u nullglob
+if [ "${#err_logs[@]}" -gt 0 ] && grep -En 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL' "${err_logs[@]}" >/dev/null; then
+  grep -En 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL' "${err_logs[@]}" || true
+  echo "P0 review found an error; inspect the logs above." >&2
+  exit 1
 fi
 
 results="$shots/RESULTS.md"
@@ -153,7 +157,7 @@ fi
     bytes="$(wc -c < "$png" | tr -d ' ')"
     logf="$shots/$base.log"
     if [ -f "$logf" ]; then
-      if command -v rg >/dev/null 2>&1 && rg -q 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL' "$logf"; then
+      if grep -Eq 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL' "$logf"; then
         log_status="errors"
       else
         log_status="clean"

@@ -75,6 +75,8 @@ Packaged still helper: `follow-storm-landing` in `scripts/review-post-audit-p0-r
 ## 7. Human-ops close (ADR 0174)
 
 Airstair / bus+stairs / bridge glass at follow distance — clipping, scale, glass.
+Packaged still helper: `follow-human-ops-close` (boarding + zoom 0.35). Bridge glass still
+needs a jet-gate follow by hand.
 
 ## Exit
 

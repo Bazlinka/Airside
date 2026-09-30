@@ -79,6 +79,12 @@ CAPTURE_DELAY=320 CAPTURE_TIMEOUT=420 capture follow-boarding-tape \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
+# Human-ops close (ADR 0174): airstair / tape scale at follow distance — same boarding window.
+CAPTURE_DELAY=320 CAPTURE_TIMEOUT=420 capture follow-human-ops-close \
+  -airsideReviewBoarding \
+  -airsideReviewWeather clear -airsideReviewTime 12:00 \
+  -airsideReviewFollowZoom 0.35
+
 echo "Remaining P0 stills written under $shots"
 echo "Copy keep PNGs into docs/testing/post-audit-p0-<date>/ and update RESULTS.md verdicts."
 echo "Manual listening/play rows still need a person — see docs/testing/post-audit-p0-manual-checklist.md"

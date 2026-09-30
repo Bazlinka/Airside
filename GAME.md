@@ -1,10 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **`b67a32a1`** #491 headless **CLEAN** (Stage A caffeinate + osascript notify,
-  fail-closed framing/follow, CreateAgent `worker_id` + Stage A default). Rebuild
-  required. 20 RESULTS unverified. Mac workers often online (`~/Code/Airside`);
-  `CURSOR_API_KEY` still required for CreateAgent (Task cannot pin).
+  Tip **#491** (this commit). Stage A freighter pick locked in Simulation
+  (`ReviewFreighterPick` + soak seed T+28 refit), plus prior caffeinate/notify /
+  fail-closed framing. Rebuild required. 20 RESULTS unverified. Mac workers often
+  online (`~/Code/Airside`); `CURSOR_API_KEY` still required for CreateAgent
+  (Task cannot pin).
   **NEXT:** Mac Terminal/Finder Stage A, or API key →
   `scripts/launch-p0-mac-agent.sh`. Fill RESULTS by eye/ear. Freight parked.
 

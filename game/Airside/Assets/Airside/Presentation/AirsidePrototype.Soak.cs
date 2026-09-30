@@ -169,23 +169,7 @@ namespace Airside.Presentation
             if (!FleetMode || _operations?.PlayerAirline == null)
                 return;
 
-            FleetAircraft best = null;
-            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
-            {
-                if (aircraft.State != FleetState.AtStand || aircraft.Scheduled.HasValue || aircraft.IsFreighter)
-                    continue;
-                if (best == null)
-                {
-                    best = aircraft;
-                    continue;
-                }
-
-                var jet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
-                var bestJet = AirlineOperations.NeedsTerminalGate(best.Type);
-                if (jet && !bestJet)
-                    best = aircraft;
-            }
-
+            var best = ReviewFreighterPick.PickBest(_operations.FleetOf(_operations.PlayerAirline));
             if (best == null)
             {
                 Debug.LogWarning($"{SoakLogTag} review freighter: no parked player aircraft to refit");

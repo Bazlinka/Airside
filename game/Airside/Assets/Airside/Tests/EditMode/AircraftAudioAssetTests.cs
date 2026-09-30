@@ -57,16 +57,16 @@ namespace Airside.Tests
                     Assert.That(source.volume, Is.Zero, "spawn is quiet");
                     source.volume = 0.4f;
                 }
-                emitter.Apply("test", 1f, 1f, 1f, 1f, 1f, 65f, true, true, Vector3.zero, true, 0.1f);
+                emitter.Apply("test", 1f, 1f, 1f, 1f, 1f, 65f, true, true, Vector3.zero, 1f, true, 0.1f);
                 foreach (var source in sources) Assert.That(source.volume, Is.Zero, "muted");
                 foreach (var source in sources) source.volume = 0.4f;
-                emitter.Apply("test", 1f, 1f, 1f, 1f, 1f, 65f, true, true, new Vector3(10000f, 0f, 0f), false, 0.1f);
+                emitter.Apply("test", 1f, 1f, 1f, 1f, 1f, 65f, true, true, new Vector3(10000f, 0f, 0f), 1f, false, 0.1f);
                 foreach (var source in sources) Assert.That(source.volume, Is.Zero, "beyond hearing range");
                 foreach (var source in sources) source.volume = 0.4f;
                 go.SetActive(false);
                 // EditMode does not run ordinary MonoBehaviour lifecycle callbacks;
                 // exercise the inactive update guard here, and player capture covers OnDisable.
-                emitter.Apply("test", 1f, 1f, 1f, 1f, 1f, 65f, true, true, Vector3.zero, false, 0.1f);
+                emitter.Apply("test", 1f, 1f, 1f, 1f, 1f, 65f, true, true, Vector3.zero, 1f, false, 0.1f);
                 foreach (var source in sources) Assert.That(source.volume, Is.Zero, "hidden aircraft");
             }
             finally { Object.DestroyImmediate(go); }

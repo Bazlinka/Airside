@@ -393,8 +393,7 @@ namespace Airside.Presentation
             if (_cameraController == null)
                 _cameraController = camera.gameObject.AddComponent<AirsideCameraController>();
 
-            if (camera.GetComponent<AudioListener>() == null)
-                camera.gameObject.AddComponent<AudioListener>();
+            EnsureFocusAudioListener(camera);
 
             _sun = FindPreferredSunLight();
             if (_sun == null)

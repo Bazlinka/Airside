@@ -85,6 +85,14 @@ namespace Airside.Presentation
             _ => 1700f
         };
 
+        /// <summary>Full level up to 300 m of zoom, easing to ~30% at the 2.4 km overview.</summary>
+        public static float ZoomGain(float cameraDistance) =>
+            cameraDistance <= 300f ? 1f : (float)Math.Pow(300f / cameraDistance, 0.58);
+
+        /// <summary>Height of the focus listener: near the ground when close, never inside a fuselage.</summary>
+        public static float ListenerLift(float cameraDistance) =>
+            Math.Max(6f, Math.Min(cameraDistance * 0.25f, 60f));
+
         public static float ReverseForRollout(float rollout01)
         {
             if (rollout01 <= 0f || rollout01 >= 0.55f) return 0f;

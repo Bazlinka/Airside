@@ -163,7 +163,7 @@ namespace Airside.Presentation
             }
             if (t >= 27f) _voice.gameObject.SetActive(false);
             _voice.Apply("REVIEW-" + type.Id, power, rotation, left, right, reverse, speed,
-                grounded, landing, _recorder.transform.position, t >= 27.5f, Time.unscaledDeltaTime);
+                grounded, landing, _recorder.transform.position, 1f, t >= 27.5f, Time.unscaledDeltaTime);
         }
 
         private void OnGUI()

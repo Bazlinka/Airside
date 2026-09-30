@@ -595,6 +595,7 @@ namespace Airside.Presentation
             UpdateAerobridges();
             UpdateBoardingPresentation();
             soakStageStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+            UpdateFocusAudioListener();
             UpdateLiveTraffic();
             UpdateSkyTraffic();
             if (SoakMode)

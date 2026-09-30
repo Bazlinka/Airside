@@ -1,5 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Cursor — aircraft heard from the camera focus (branch `cursor/aircraft-audio-focus-listener`, ADR 0196).**
+  Bailey could not hear the ADR 0192 aircraft sound. The listener sat on the camera, which orbits 2.4 km out at
+  overview — past every type's hearing range (1.0–2.2 km) — so all aircraft were culled. A dedicated focus
+  listener now sits 6–60 m above the camera's ground orbit point (camera yaw for panning); zoom distance fades
+  aircraft (full to 300 m, ~30% at overview) instead of culling them. Camera `AudioListener` disabled; the
+  audio review harness is unchanged.
+  - **NEXT:** Bailey listens at overview near the apron and in follow; tune `AircraftAudioMix.ZoomGain` if too
+    loud/quiet.
+
 - **2026-09-30 Cursor — sky traffic readable speed (branch `cursor/sky-traffic-world-scale-4f81`, ADR 0195).**
   Bailey: aircraft flying past / to other airports crawled in tiny steps. Cause was a 260 km → 7.5 km
   sky projection plus fleet sky legs stepped once per second. Now 1:1 to 12 km, eased to 70 km / 26 km

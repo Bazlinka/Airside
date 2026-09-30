@@ -88,6 +88,21 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void OverviewZoomStillHearsAircraftNearTheFocusPoint()
+        {
+            Assert.That(AircraftAudioMix.ZoomGain(36f), Is.EqualTo(1f));
+            Assert.That(AircraftAudioMix.ZoomGain(300f), Is.EqualTo(1f));
+            Assert.That(AircraftAudioMix.ZoomGain(2400f), Is.InRange(0.25f, 0.35f));
+            Assert.That(AircraftAudioMix.ZoomGain(45000f), Is.GreaterThan(0f).And.LessThan(0.1f));
+            Assert.That(AircraftAudioMix.ZoomGain(1200f), Is.LessThan(AircraftAudioMix.ZoomGain(600f)));
+            // At the overview the listener hangs just above the ground focus, well inside
+            // every type's hearing range, so an aircraft at the focus is not culled.
+            var lift = AircraftAudioMix.ListenerLift(2400f);
+            Assert.That(lift, Is.LessThan(AircraftAudioMix.AudibleDistance(EngineClass.Turboprop) / 10f));
+            Assert.That(AircraftAudioMix.ListenerLift(20f), Is.GreaterThanOrEqualTo(6f));
+        }
+
+        [Test]
         public void ThrottleSmoothingMatchesAtThirtyAndOneHundredTwentyFps()
         {
             float thirty = 0f, fast = 0f;

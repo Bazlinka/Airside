@@ -1,7 +1,8 @@
 # Mac agent prompt — post-audit P0 playtest
 
 **Prefer Terminal (no agent pin):** see `docs/testing/post-audit-p0-mac-terminal.md`
-when the Mac is awake — paste Stage A→B→C into Terminal.app at `~/Code/Airside`.
+when the Mac is awake — one paste `scripts/run-post-audit-p0-stages.sh` at
+`~/Code/Airside` (or Stage A→B→C separately).
 
 Optional Cursor path: paste the block below into a Cursor agent started **on**
 Bailey's MacBook Pro (environment dropdown → **Bailey's MacBook Pro**, not a cloud VM).

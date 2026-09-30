@@ -1,12 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **`b5808c5e`+** — #491 CI green; Stage A→B→C + CI locks ready. Mac workers ONLINE.
-  Cloud `Task` cannot pin My Machines. **Prefer Terminal on the Mac** (no agent pin):
+  Tip **`6c1a2658`+** — #491 CI green / MERGEABLE; one-paste
+  `scripts/run-post-audit-p0-stages.sh` (A→B→C). Mac workers ONLINE idle
+  (`~/Code/Airside`). Cloud `Task` cannot pin My Machines. **Prefer Terminal:**
   `docs/testing/post-audit-p0-mac-terminal.md`. Optional agent paste:
-  `docs/testing/post-audit-p0-mac-agent-prompt.md`. 21 RESULTS rows unverified.
-  **NEXT:** Mac Terminal Stage A→B→C → fill RESULTS by eye/ear. Freight AI parked.
-  Do not invent RESULTS.
+  `docs/testing/post-audit-p0-mac-agent-prompt.md`. 21 RESULTS rows unverified
+  (night-sky still nose-down; remaining stills + all manual rows open).
+  **NEXT:** Mac Terminal `scripts/run-post-audit-p0-stages.sh` → fill RESULTS by
+  eye/ear. Freight AI parked. Do not invent RESULTS.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

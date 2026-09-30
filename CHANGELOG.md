@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 one-paste Stage A→B→C runner.** `scripts/run-post-audit-p0-stages.sh` chains
+  night-sky+freighter → takeoff → hangar/boarding/landings with SKIP_BUILD/PULL after
+  Stage A; CI-locked by `test-p0-stages-chain.sh`. No simulation or save changes.
+
 - **P0 Mac Terminal path (no agent pin).** `docs/testing/post-audit-p0-mac-terminal.md`
   gives Stage A→B→C copy-paste for Terminal.app when the Mac is awake — Cloud Task
   cannot pin My Machines. No simulation or save changes.

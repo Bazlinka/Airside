@@ -1,14 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **`e45eb5ee`+** — headless CI green; Stage A/B/C ONLY filter CI-locked. Soak-window + auto-takeoff **900s** +
-  Stage B dirty-RESULTS allowlist + delay/`grep` + night-sky framing (11 km / pitch 8 /
-  yaw 270) + fail-closed inventory log scan. Packaged Stage A→B→C via
-  `scripts/run-post-audit-p0-remaining.sh` (PNGs + inventory; no verdicts). **Mac workers
-  offline** (0 connected; 0 self-hosted agents) — Bailey: `cursor worker start` → UI-pin
-  **Bailey's MacBook Pro** (`~/Code/Airside`). Paste:
+  Tip **`54689c0b`** — headless CI green; Stage A/B/C ONLY filter CI-locked. Packaged Stage A→B→C
+  via `scripts/run-post-audit-p0-remaining.sh` (PNGs + inventory; no verdicts).
+  **Mac workers ONLINE + idle** (prefer `~/Code/Airside @ Bailey's MacBook Pro`,
+  `eligibleForSubagent: true`). Cloud `Task` still cannot pin My Machines
+  (`privateWorkerId: null`). Bailey must UI-pin **Bailey's MacBook Pro** and paste
   `docs/testing/post-audit-p0-mac-agent-prompt.md`. 21 RESULTS rows unverified.
-  **NEXT:** Mac Stage A→B→C → fill RESULTS by eye/ear. Freight AI parked. Do not invent RESULTS.
+  **NEXT:** UI-pin Mac → Stage A→B→C → fill RESULTS by eye/ear. Freight AI parked.
+  Do not invent RESULTS.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

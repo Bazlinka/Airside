@@ -1,11 +1,12 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **#491** — jet takeoff **1330s**, fail-closed auto-follow + review
-  flags (player preflight), Stage C **capture resume**, Finder tip→main
-  checkout. Finder Stage A: `scripts/run-post-audit-p0-stage-a.command`. Full
-  A→B→C (~45+ min): `scripts/run-post-audit-p0-stages.sh` / `.command`.
-  Rebuild required before SKIP_BUILD stages. 21 RESULTS unverified.
+  Tip **#491** `45e5eb10` MERGEABLE/CLEAN (headless green). Jet takeoff
+  **1330s**, fail-closed auto-follow + review flags (player preflight), Stage C
+  **capture resume**, Finder tip→main checkout. Stage A:
+  `scripts/run-post-audit-p0-stage-a.command`. Full A→B→C (~45+ min):
+  `scripts/run-post-audit-p0-stages.sh`. Rebuild required. 21 RESULTS
+  unverified; Mac workers idle; `CURSOR_API_KEY` unset.
   **NEXT:** Mac Stage A (rebuild) → fill night-sky + freighter by eye; then
   B/C + listening. Freight AI parked. Do not invent RESULTS.
 

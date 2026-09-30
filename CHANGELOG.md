@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 tip `45e5eb10` CI CLEAN.** Headless green on #491 with jet-takeoff
+  1330s, fail-closed review/follow, capture resume, Finder tip checkout, and
+  fail-closed player preflight. Mac eyes/ears still required. No simulation or
+  save changes.
 - **P0 Mac runner preflights fail-closed player.** `run-post-audit-p0-remaining.sh`
   refuses an old `Airside.app` missing review abort strings so SKIP_BUILD cannot
   write blind overview stills. No simulation or save changes.

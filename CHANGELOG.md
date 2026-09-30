@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 remaining one-command Mac runner.** `scripts/run-post-audit-p0-remaining.sh`
+  pulls the tip, builds, runs remaining stills, and copies PNGs into the RESULTS
+  folder for verdict fill-in. No simulation or save changes.
+
 - **P0 auto-landing upgrades to Landing before the still.** Soak review follow
   re-ranks `auto-landing` / `auto-takeoff` every frame so HoldingForLanding /
   TaxiOut can upgrade to Landing / TakingOff. Landing capture delay ~360s.

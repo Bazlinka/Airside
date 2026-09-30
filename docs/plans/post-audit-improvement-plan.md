@@ -44,11 +44,10 @@ rebuilt game. Attribute bugs before adding content.
 | Terminal doors / facade detail (airside + kerb) | 0197 |
 | Human-ops close matrix (clipping, scale, bridge glass) | 0174 |
 
-**Run on Mac:** `scripts/build-mac.sh`, then
-`scripts/review-post-audit-p0-remaining.sh` (night-sky + follow stills; optional
-`AIRSIDE_P0_ONLY=shot,shot`) or the full `scripts/review-post-audit-p0.sh`.
-Checklist: `docs/testing/post-audit-p0-manual-checklist.md`.
-Captures go to `work/captures/post-audit-p0-<date>/`.
+**Run on Mac:** `scripts/run-post-audit-p0-remaining.sh` (pull + build + remaining
+stills; optional `AIRSIDE_P0_ONLY=shot,shot`) or the full
+`scripts/run-post-audit-p0.sh`. Checklist: `docs/testing/post-audit-p0-manual-checklist.md`.
+Captures go to `work/captures/post-audit-p0-<date>/` and the RESULTS docs folder.
 
 Exit: Bailey marks each keep / fix / revert. Close or amend ADR “Unity look not
 verified” lines when eyes-on is done.

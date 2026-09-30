@@ -7,7 +7,7 @@
   **Mac worker ONLINE now** (`Bailey's MacBook Pro`, eligibleForSubagent, idle). Cloud Task cannot pin it —
   start from agents UI environment dropdown → that machine name. Checkout this branch (not stale main helpers).
   Remaining RESULTS inventory + all manual rows still unverified.
-  **NEXT:** UI-pin Mac → `scripts/build-mac.sh` → `scripts/review-post-audit-p0-remaining.sh` → fill RESULTS.
+  **NEXT:** UI-pin Mac → `scripts/run-post-audit-p0-remaining.sh` → fill RESULTS.
   Freight AI stays parked. Do not invent RESULTS.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**

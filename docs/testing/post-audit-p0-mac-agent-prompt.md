@@ -23,13 +23,14 @@ Automated stills already recorded in docs/testing/post-audit-p0-2026-09-30/RESUL
 (mostly keep). Do not re-run the full matrix unless re-capturing night sky traffic.
 
 Follow docs/testing/post-audit-p0-manual-checklist.md in order:
-1. git pull; scripts/build-mac.sh (need night-sky framing + auto-landing follow)
-2. scripts/review-post-audit-p0-remaining.sh (or AIRSIDE_P0_ONLY=… for a subset)
-3. Verdict those PNGs in RESULTS.md (do not invent; if still unverified say why)
-4. Listen: overview audio, follow, touchdown chirp/reverse/rollout
-5. Freighter refit livery + jet tyres on rotation/flare (unblocks P2)
-6. Storm final lands; hangar tow; boarding tape; follow feel; zoom-under-cursor; human-ops
-7. Fill remaining Verdicts; update GAME.md; push via protected-main PR workflow
+1. Prefer one command: scripts/run-post-audit-p0-remaining.sh
+   (pull + build + remaining captures + copy PNGs into docs/testing/post-audit-p0-2026-09-30/)
+   Subset: AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh
+2. Verdict those PNGs in RESULTS.md (do not invent; if still unverified say why)
+3. Listen: overview audio, follow, touchdown chirp/reverse/rollout
+4. Freighter refit livery + jet tyres on rotation/flare (unblocks P2)
+5. Storm final lands; hangar tow; boarding tape; follow feel; zoom-under-cursor; human-ops
+6. Fill remaining Verdicts; update GAME.md; push via protected-main PR workflow
 
 Do not invent verdicts. Do not start freight AI / P2–P4. Do not mark the cloud goal complete.
 Return: uname, cwd, which rows keep/fix/revert, commit SHA, push status.

@@ -14,10 +14,10 @@ Subset: `AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/rev
 ## 1. Re-capture night sky traffic (ADR 0195)
 
 ```bash
-cd ~/Code/Airside && git pull
-scripts/build-mac.sh
-# night-sky + auto-landing follow stills only (preferred):
-scripts/review-post-audit-p0-remaining.sh
+cd ~/Code/Airside
+# pull + build + remaining stills + copy into docs/testing/post-audit-p0-2026-09-30/
+scripts/run-post-audit-p0-remaining.sh
+# subset: AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh
 ```
 
 Or single night-sky shot:

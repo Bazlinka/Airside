@@ -97,6 +97,7 @@ namespace Airside.Presentation
         private bool _reviewShotTaken;
         private bool _reviewFollowStarted;
         private string _reviewAircraftId;
+        private string _reviewAutoFollowId;
         private bool _reviewFreighterHold;
         private bool _reviewHangarHold;
 
@@ -304,10 +305,18 @@ namespace Airside.Presentation
                     break;
             }
 
-            if (string.IsNullOrEmpty(bestId) || !TryFollowFleetAircraft(bestId))
+            if (string.IsNullOrEmpty(bestId))
+                return false;
+
+            // Already on the best candidate — keep following without re-StartFollow churn.
+            if (_reviewFollowStarted && bestId == _reviewAutoFollowId)
+                return true;
+
+            if (!TryFollowFleetAircraft(bestId))
                 return false;
 
             _selectedAircraftId = bestId;
+            _reviewAutoFollowId = bestId;
             if (_fleetAircraftById.TryGetValue(bestId, out var followed))
                 Debug.Log($"{SoakLogTag} following {label} {bestId} ({followed.State})");
             else
@@ -418,16 +427,26 @@ namespace Airside.Presentation
                 _soakRenderSetDescribed = true;
                 DescribeSoakRenderSet();
             }
-            if (!_reviewFollowStarted && !string.IsNullOrEmpty(_reviewAircraftId))
+            if (!string.IsNullOrEmpty(_reviewAircraftId))
             {
+                // Auto tokens re-rank every frame so HoldingForLanding / TaxiOut can upgrade
+                // to Landing / TakingOff before the still (tyre pivot evidence).
                 if (ReviewAircraftFollow.IsAutoLandingToken(_reviewAircraftId))
-                    _reviewFollowStarted = TryFollowAutoReviewAircraft(takeoff: false);
+                {
+                    if (TryFollowAutoReviewAircraft(takeoff: false))
+                        _reviewFollowStarted = true;
+                }
                 else if (ReviewAircraftFollow.IsAutoTakeoffToken(_reviewAircraftId))
-                    _reviewFollowStarted = TryFollowAutoReviewAircraft(takeoff: true);
-                else
+                {
+                    if (TryFollowAutoReviewAircraft(takeoff: true))
+                        _reviewFollowStarted = true;
+                }
+                else if (!_reviewFollowStarted)
+                {
                     _reviewFollowStarted = TryFollowFleetAircraft(_reviewAircraftId);
-                if (_reviewFollowStarted && !ReviewAircraftFollow.IsAutoFollowToken(_reviewAircraftId))
-                    Debug.Log($"{SoakLogTag} following {_reviewAircraftId}");
+                    if (_reviewFollowStarted)
+                        Debug.Log($"{SoakLogTag} following {_reviewAircraftId}");
+                }
             }
 
             if (_awaySummary != null)

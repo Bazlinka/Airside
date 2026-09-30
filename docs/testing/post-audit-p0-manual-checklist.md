@@ -50,8 +50,8 @@ Judge: do overflights **cruise** (not crawl)? Is a fleet inbound drawn once on f
 2. Follow a **jet** (not the soak Saab at stand) from the side on takeoff rotation and on flare:
    main tyres on the runway.
    Packaged still helpers in `scripts/review-post-audit-p0-remaining.sh`:
-   `-airsideReviewAircraft auto-landing` (~280s) and `auto-takeoff` (~360s). Soak is live
-   wall-clock; opening AI inbound #1 reaches the circuit at ~3 min.
+   `-airsideReviewAircraft auto-landing` (~360s, re-ranks to Landing) and `auto-takeoff`
+   (~360s). Soak is live wall-clock; opening AI inbound #1 reaches the circuit at ~3 min.
 
 ## 4. Storm final (ADR 0190)
 

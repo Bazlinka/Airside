@@ -93,6 +93,39 @@ namespace Airside.Tests.EditMode
                 Is.True);
         }
 
+        [Test]
+        public void NewGame_OpeningArrivalReachesLandingWithinAutoLandingCaptureWindow()
+        {
+            // Auto-landing re-ranks every frame; the still delay must reach FleetState.Landing
+            // (flare / tyre contact), not stop at the first drawn HoldingForLanding/Inbound.
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(20260913),
+                Airline.Player("Soak Air", "#6A3FA0"));
+
+            var drawnAt = -1L;
+            var landingAt = -1L;
+            for (var t = 180L; t <= 15 * 60; t += 15)
+            {
+                clock.Set(new SimulationTime(t));
+                ops.Update();
+                if (drawnAt < 0 && BestDrawnAutoLandingRank(ops, clock.Now) >= 0)
+                    drawnAt = t;
+                if (landingAt < 0 && ops.Fleet.Any(a => a.State == FleetState.Landing))
+                {
+                    landingAt = t;
+                    break;
+                }
+            }
+
+            Assert.That(drawnAt, Is.GreaterThan(0), "opening arrival should become followable");
+            Assert.That(landingAt, Is.GreaterThan(0), "opening arrival should enter Landing");
+            Assert.That(landingAt, Is.GreaterThanOrEqualTo(drawnAt),
+                "Landing is at or after the first drawn auto-landing candidate");
+            // Packaged remaining.sh landing stills wait ~360s live so the upgrade can land.
+            Assert.That(landingAt, Is.LessThanOrEqualTo(8 * 60),
+                "first Landing should arrive within the remaining.sh auto-landing capture window");
+        }
+
         /// <summary>
         /// Presentation only follows aircraft with a field view. <see cref="FleetVisual.Visible"/>
         /// is true for HoldingForLanding / Landing; bare Inbound is Hidden until arrival-final.

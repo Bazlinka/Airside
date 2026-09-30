@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **P0 auto-landing upgrades to Landing before the still.** Soak review follow
+  re-ranks `auto-landing` / `auto-takeoff` every frame so HoldingForLanding /
+  TaxiOut can upgrade to Landing / TakingOff. Landing capture delay ~360s.
+  Timing locked by `ReviewAircraftFollowTests`. No simulation or save changes.
+
 - **P0 remaining capture inventory + subset filter.** RESULTS lists the #491
   re-capture shots as unverified placeholders. `AIRSIDE_P0_ONLY=shot,shot` skips
   the rest of `scripts/review-post-audit-p0-remaining.sh`. No simulation or save changes.

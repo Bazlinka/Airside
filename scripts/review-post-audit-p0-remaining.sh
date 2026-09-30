@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Re-capture only the stills that still block P0 sign-off after #490:
 #   - overview-night-sky-traffic (framing fix: 9 km / pitch 12 / yaw 210)
-#   - follow-jet-day / follow-jet-close (auto-landing, ~280s live delay)
+#   - follow-jet-day / follow-jet-close (auto-landing, ~360s live — reach Landing)
 #   - follow-jet-takeoff (auto-takeoff for tyre rotation)
 #   - follow-storm-landing (auto-landing under storm — ADR 0190 still evidence)
 #   - follow-freighter / follow-hangar-tow / follow-boarding-tape / follow-human-ops-close
@@ -68,13 +68,14 @@ capture overview-night-sky-traffic \
   -airsideReviewWeather clear -airsideReviewTime 23:30 \
   -airsideOverviewDistance 9000 -airsideOverviewPitch 12 -airsideOverviewYaw 210
 
+# Opening inbound holds ~3 min then lands; wait for FleetState.Landing (tyre/flare).
 FOLLOW=auto-landing
-CAPTURE_DELAY=280 CAPTURE_TIMEOUT=360 capture follow-jet-day \
+CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-jet-day \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
 FOLLOW=auto-landing
-CAPTURE_DELAY=280 CAPTURE_TIMEOUT=360 capture follow-jet-close \
+CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-jet-close \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.35
 
@@ -85,7 +86,7 @@ CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-jet-takeoff \
   -airsideReviewFollowZoom 0.45
 
 FOLLOW=auto-landing
-CAPTURE_DELAY=280 CAPTURE_TIMEOUT=360 capture follow-storm-landing \
+CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-storm-landing \
   -airsideReviewWeather storm -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 

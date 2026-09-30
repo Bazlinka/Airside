@@ -100,16 +100,16 @@ capture weather-fog-overview \
   -airsideReviewView overview \
   -airsideReviewWeather fog -airsideReviewTime 12:00
 
-# --- Follow an arrival (tyres / audio). auto-landing waits for HoldingForLanding/Landing. ---
-# Live-time soak: opening AI inbound #1 joins the circuit at ~3 min (ADR 0100), so the
-# still delay must clear that bank — 90s is too early and falls back to no follow.
+# --- Follow an arrival (tyres / audio). auto-landing re-ranks to Landing (~360s live). ---
+# Live-time soak: opening AI inbound #1 joins the circuit at ~3 min (ADR 0100); 90s/280s
+# were too early for FleetState.Landing (flare / tyre contact).
 FOLLOW=auto-landing
-CAPTURE_DELAY=280 CAPTURE_TIMEOUT=360 capture follow-jet-day \
+CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-jet-day \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
 FOLLOW=auto-landing
-CAPTURE_DELAY=280 CAPTURE_TIMEOUT=360 capture follow-jet-close \
+CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-jet-close \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.35
 

@@ -1,9 +1,9 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **#491** — jet takeoff delay locked at **1330s** (830s was turboprop),
-  auto-follow stills fail closed without a follow pick, checklist night-sky
-  delay matches packaged 45s. Finder Stage A (minutes):
+  Tip **#491** `95cc7a75` — jet takeoff delay locked at **1330s** (830s was
+  turboprop), auto-follow stills fail closed without a follow pick, checklist
+  night-sky delay matches packaged 45s. Finder Stage A (minutes):
   `scripts/run-post-audit-p0-stage-a.command`. Full A→B→C (~45+ min,
   caffeinate): `scripts/run-post-audit-p0-stages.sh` / `.command`. Optional
   API pin: `CURSOR_API_KEY` + `scripts/launch-p0-mac-agent.sh`. Cloud Task /

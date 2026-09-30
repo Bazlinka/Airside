@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 Mac trigger docs: GitHub `worker=`.** Playtest + Terminal docs note
+  `@cursoragent worker=Bailey's MacBook Pro` on #491 as an optional My Machines
+  path alongside Terminal one-paste. No simulation or save changes.
+
 - **P0 one-paste Stage A→B→C runner.** `scripts/run-post-audit-p0-stages.sh` chains
   night-sky+freighter → takeoff → hangar/boarding/landings with SKIP_BUILD/PULL after
   Stage A; CI-locked by `test-p0-stages-chain.sh`. No simulation or save changes.

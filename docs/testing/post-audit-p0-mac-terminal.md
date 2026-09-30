@@ -30,3 +30,12 @@ Then fill Verdict columns in `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`
 the protected-main PR workflow.
 
 Cursor-agent paste path (optional): `docs/testing/post-audit-p0-mac-agent-prompt.md`.
+
+GitHub trigger (optional, if Terminal is inconvenient): with the worker running as
+`--name "Bailey's MacBook Pro"`, a trusted commenter can post on #491:
+
+```
+@cursoragent worker=Bailey's MacBook Pro
+Confirm Darwin. cd ~/Code/Airside; checkout tip cursor/p0-auto-landing-follow-709e;
+scripts/run-post-audit-p0-stages.sh; do not invent RESULTS verdicts; push PNGs/inventory.
+```

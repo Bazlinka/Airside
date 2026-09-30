@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **P0: `cursor[bot]` cannot claim My Machines via GitHub.** A cloud-agent
+  `@cursoragent worker=Bailey's MacBook Pro` comment on #491 left workers idle;
+  docs now say only Bailey's trusted GitHub account (or Terminal/Finder) works.
+  No simulation or save changes.
+
 - **P0 Finder double-click Stage A→B→C.** `scripts/run-post-audit-p0-stages.command`
   checks out the tip in `~/Code/Airside` and runs the stages chain; CI-locked with
   the stages wrapper. No simulation or save changes.

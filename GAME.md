@@ -1,14 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **`155d62ea`+** — #491 MERGEABLE; one-paste
+  Tip **`de30becd`+** — #491 MERGEABLE; one-paste
   `scripts/run-post-audit-p0-stages.sh` or Finder
   `scripts/run-post-audit-p0-stages.command`. Mac workers ONLINE idle
-  (`~/Code/Airside`). Cloud `Task` cannot pin My Machines. **Prefer Terminal /
-  Finder:** `docs/testing/post-audit-p0-mac-terminal.md`. Optional: GitHub
-  `@cursoragent worker=Bailey's MacBook Pro` on #491, or agents UI pin +
-  `docs/testing/post-audit-p0-mac-agent-prompt.md`. 21 RESULTS rows unverified
-  (night-sky still nose-down; remaining stills + all manual rows open).
+  (`~/Code/Airside`). Cloud `Task` / `cursor[bot]` `@cursoragent worker=` on #491
+  do **not** claim My Machines (bot comment left workers idle). **Prefer Terminal /
+  Finder:** `docs/testing/post-audit-p0-mac-terminal.md`. Optional: Bailey posts
+  `@cursoragent` himself, or agents UI pin +
+  `docs/testing/post-audit-p0-mac-agent-prompt.md`. 21 RESULTS rows unverified.
   **NEXT:** Mac run stages → fill RESULTS by eye/ear. Freight AI parked.
   Do not invent RESULTS.
 

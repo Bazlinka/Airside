@@ -33,11 +33,12 @@ Do not keep retrying Task pins. Placement that works:
 - **Terminal (no agent):** `docs/testing/post-audit-p0-mac-terminal.md` —
   one paste `scripts/run-post-audit-p0-stages.sh` (recommended when the Mac is awake)
 - UI: environment dropdown → **Bailey's MacBook Pro**
-- GitHub trigger (trusted commenter on this repo, Mac worker running):
-  comment on #491 `@cursoragent worker=Bailey's MacBook Pro` plus the Stage A
-  prompt from `post-audit-p0-mac-agent-prompt.md`. Requires the worker
-  `--name` to match (`Bailey's MacBook Pro`) and the checkout remote to be
-  `Bazlinka/Airside`. See Cursor My Machines docs (`worker=` / `machine=`).
+- GitHub trigger (**Bailey's own GitHub account** as trusted commenter, Mac
+  worker running): comment on #491 `@cursoragent worker=Bailey's MacBook Pro`
+  plus the Stage A prompt. Requires the worker `--name` to match and the
+  checkout remote to be `Bazlinka/Airside`. A `cursor[bot]` cloud-agent comment
+  does **not** claim the machine (confirmed 2026-09-30: workers stayed idle,
+  no child `privateWorkerId`). Prefer Terminal / Finder instead.
 - API v1 CreateAgent: `env: { "type": "machine", "name": "Bailey's MacBook Pro" }`
   — requires team toggle **Enable Remote Control for Team**
   (dashboard → Cloud Agents → Self-hosted Machines). Without it, create fails or

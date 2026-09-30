@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 fail-closed review flags + Finder tip checkout.** Freighter / hangar /
+  boarding stills abort without a successful apply (no blind overview PNG);
+  inventory hard-fails missing review log lines. Finder `.command` wrappers use
+  `p0-checkout-mac-tip.sh` (tip branch, else `main`). No simulation or save changes.
 - **P0 capture resume keeps good Stage C PNGs.** `AIRSIDE_CAPTURE_RESUME=1`
   (default in `review-post-audit-p0-remaining.sh`) skips non-empty stills so a
   mid-batch timeout can retry only the missing shots. Locked by

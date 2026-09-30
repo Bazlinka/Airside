@@ -1,13 +1,13 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **#491** — jet takeoff **1330s**, fail-closed auto-follow, Stage C
-  **capture resume** (keeps good PNGs on retry). Finder Stage A (minutes):
-  `scripts/run-post-audit-p0-stage-a.command`. Full A→B→C (~45+ min,
-  caffeinate): `scripts/run-post-audit-p0-stages.sh` / `.command`. Optional
-  API pin: `CURSOR_API_KEY` + `scripts/launch-p0-mac-agent.sh`. Cloud Task /
-  computerUse cannot claim My Machines from Linux. 21 RESULTS unverified; no
-  new remaining PNGs.
+  Tip **#491** — jet takeoff **1330s**, fail-closed auto-follow + review
+  flags, Stage C **capture resume**, Finder tip→main checkout helper. Finder
+  Stage A (minutes): `scripts/run-post-audit-p0-stage-a.command`. Full A→B→C
+  (~45+ min, caffeinate): `scripts/run-post-audit-p0-stages.sh` / `.command`.
+  Optional API pin: `CURSOR_API_KEY` + `scripts/launch-p0-mac-agent.sh`. Cloud
+  Task / computerUse cannot claim My Machines from Linux. 21 RESULTS
+  unverified; no new remaining PNGs.
   **NEXT:** Mac Stage A → fill night-sky + freighter by eye; then B (jet
   takeoff) / C + listening rows. Freight AI parked. Do not invent RESULTS.
 

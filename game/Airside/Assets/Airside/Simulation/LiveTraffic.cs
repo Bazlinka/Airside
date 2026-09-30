@@ -74,8 +74,8 @@ namespace Airside.Simulation
     {
         public const string Credit = "Live traffic: adsb.lol (ODbL)";
 
-        /// <summary>Drawn in the 3D sky out to here.</summary>
-        public const double RadiusNauticalMiles = 60.0;
+        /// <summary>Drawn in the 3D sky out to here (true kilometres). Matches authored sky traffic.</summary>
+        public const double DrawnRadiusKm = 70.0;
 
         /// <summary>Fetched out to here (adsb.lol's maximum) so the Route Map shows the region.</summary>
         public const double FeedRadiusNauticalMiles = 250.0;
@@ -91,10 +91,10 @@ namespace Airside.Simulation
         public const double StaleSeconds = 45.0;
 
         /// <summary>Real distances inside this are drawn 1:1, so a real final lines up with the runway.</summary>
-        public const double NearFieldMetres = 5_000.0;
+        public const double NearFieldMetres = 12_000.0;
 
-        /// <summary>Everything out to the feed radius is squeezed into the rest of the draw distance.</summary>
-        public const double DrawRadiusMetres = 7_500.0;
+        /// <summary>Everything out to <see cref="DrawnRadiusKm"/> is eased into the rest of the draw distance.</summary>
+        public const double DrawRadiusMetres = 26_000.0;
 
         /// <summary>Below this over the field a real aircraft is landing, rolling or taxiing — not drawn.</summary>
         public const double FieldFloorFeet = 500.0;
@@ -200,7 +200,7 @@ namespace Airside.Simulation
             var range = Math.Sqrt(x * x + z * z);
             if (range < FieldRadiusMetres && feet < FieldFloorFeet)
                 return false;
-            if (range > RadiusNauticalMiles * 1852.0)
+            if (range > DrawnRadiusKm * 1000.0)
                 return false;
 
             Display(x, z, feet, out var dx, out var dy, out var dz);
@@ -281,30 +281,27 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// 1:1 inside the near field so approaches meet the runway; beyond it the rest of the
-        /// feed radius is squeezed into the last few kilometres of draw distance, and height
-        /// is squeezed with it so a cruising jet does not tower over a model-scale horizon.
+        /// 1:1 inside the near field so approaches meet the runway; beyond it the rest of
+        /// <see cref="DrawnRadiusKm"/> is eased into the remaining draw distance. Height stays
+        /// true so a cruising jet does not crawl under a compressed ceiling (ADR 0195).
         /// </summary>
         public static void Display(double x, double z, double feet, out double dx, out double dy, out double dz)
         {
             var range = Math.Sqrt(x * x + z * z);
-            var metresUp = feet / FeetPerMetre;
+            dy = feet / FeetPerMetre;
             if (range <= NearFieldMetres || range < 1e-6)
             {
                 dx = x;
                 dz = z;
-                dy = metresUp;
                 return;
             }
 
-            var outer = RadiusNauticalMiles * 1852.0;
+            var outer = DrawnRadiusKm * 1000.0;
             var t = Math.Min(1.0, (range - NearFieldMetres) / (outer - NearFieldMetres));
             var drawn = NearFieldMetres + t * (DrawRadiusMetres - NearFieldMetres);
             var scale = drawn / range;
             dx = x * scale;
             dz = z * scale;
-            var squeeze = Math.Min(1.0, (range - NearFieldMetres) / 20_000.0);
-            dy = metresUp * (1.0 - squeeze * 0.72);
         }
 
         /// <summary>

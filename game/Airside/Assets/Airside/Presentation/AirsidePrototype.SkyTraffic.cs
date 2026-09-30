@@ -35,7 +35,10 @@ namespace Airside.Presentation
             SkyTraffic.FillAt(_preciseTime, _operations.Clock, _skyCorridorFlights);
             foreach (var flight in _skyCorridorFlights)
                 ShowSkyFlight(flight, new Color(0.82f, 0.84f, 0.88f), live);
-            AdelaideDayPlan.FillAirborneAt(_operations, new SimulationTime((long)_preciseTime), _skyFleetFlights);
+            // Precise clock so sky fleet legs move every frame, not once a second.
+            // Skip arrivals already on extended final — that draw owns them (ADR 0142).
+            AdelaideDayPlan.FillAirborneAt(_operations, _preciseTime, _skyFleetFlights,
+                ArrivalApproach.ShowMetres);
             foreach (var flight in _skyFleetFlights)
                 ShowSkyFlight(flight, ColorForSkyAirline(flight.Callsign), live);
 

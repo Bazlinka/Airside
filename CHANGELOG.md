@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Sky traffic no longer crawls.** Overflights and fleet sky legs were squeezed from hundreds of kilometres into a few
+  kilometres of world, and fleet sky positions stepped once a second — so aircraft flying past looked almost still.
+  Authored corridors now stay 1:1 to 12 km and ease out to 70 km; live sky matches; fleet sky uses the precise clock;
+  arrivals already on extended final are not drawn twice. ADR 0195.
+
 - **Freight flights: a second way to earn.** Refit a parked aircraft to a freighter from its Fleet card (turboprop $400,
   jets $2,400, widebodies $9,000; refit back for the same fee). A freighter carries no passengers, is paid from the tonnes
   its destination offers against its payload (thin passenger routes like Coober Pedy can pay better by freight), and wears a

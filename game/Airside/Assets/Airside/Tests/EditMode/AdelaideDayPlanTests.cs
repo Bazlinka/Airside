@@ -83,6 +83,63 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FillAirborneAt_PreciseClockAdvancesBetweenWholeSeconds()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(3 * 3600));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(5),
+                Airline.Player("Day Air", "#1F3A93"));
+            var a = new List<SkyFlight>();
+            var b = new List<SkyFlight>();
+            AdelaideDayPlan.FillAirborneAt(ops, 3 * 3600 + 0.0, a, 0.0);
+            AdelaideDayPlan.FillAirborneAt(ops, 3 * 3600 + 0.25, b, 0.0);
+            Assert.That(a.Count, Is.GreaterThan(0));
+            Assert.That(b.Count, Is.EqualTo(a.Count));
+            var moved = false;
+            for (var i = 0; i < a.Count; i++)
+            {
+                if (a[i].Callsign != b[i].Callsign)
+                    continue;
+                if (Math.Abs(a[i].Latitude - b[i].Latitude) > 1e-9
+                    || Math.Abs(a[i].Longitude - b[i].Longitude) > 1e-9)
+                {
+                    moved = true;
+                    break;
+                }
+            }
+
+            Assert.That(moved, Is.True, "sub-second clock must move sky fleet legs");
+        }
+
+        [Test]
+        public void FillAirborneAt_SkipsArrivalsAlreadyOnExtendedFinal()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(5),
+                Airline.Player("Day Air", "#1F3A93"));
+            var rex = ops.Airlines.First(a => a.Id.Value == "REX");
+            DestinationCatalogue.TryFind("PLO", out var portLincoln);
+
+            var restore = typeof(AirlineOperations).GetMethod("RestoreAircraft",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            // Two minutes from landing at approach speed is well inside 32 km extended final.
+            var eta = new SimulationTime(2 * 60);
+            restore.Invoke(ops, new object[]
+            {
+                "VH-FIN", rex, AircraftType.Saab340, FleetState.Inbound, new SimulationTime(0),
+                eta, default(StableId), default(StableId), portLincoln, null, 0
+            });
+
+            var withHandover = new List<SkyFlight>();
+            var without = new List<SkyFlight>();
+            AdelaideDayPlan.FillAirborneAt(ops, 30.0, withHandover, ArrivalApproach.ShowMetres);
+            AdelaideDayPlan.FillAirborneAt(ops, 30.0, without, 0.0);
+            Assert.That(without.Exists(f => f.Callsign.Contains("VH-FIN")), Is.True,
+                "without a handover window the inbound still fills the sky");
+            Assert.That(withHandover.Exists(f => f.Callsign.Contains("VH-FIN")), Is.False,
+                "extended final owns the last kilometres");
+        }
+
+        [Test]
         public void Plan_IsDeterministicForTheSameClock()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));

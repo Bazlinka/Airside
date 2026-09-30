@@ -1,0 +1,109 @@
+{
+  "note": "Representative sound-design tuning, not measured engine specifications. Frequencies shape derived CC0 family beds; no exact engine-variant claim. ADR 0192.",
+  "profiles": [
+    {
+      "id": "ATR42",
+      "family": "twin",
+      "pitch": 1.0,
+      "gain": 0.86,
+      "brightness_hz": 1250,
+      "body_hz": 120
+    },
+    {
+      "id": "SF34",
+      "family": "twin",
+      "pitch": 0.94,
+      "gain": 0.78,
+      "brightness_hz": 1100,
+      "body_hz": 92
+    },
+    {
+      "id": "DH8D",
+      "family": "q400",
+      "pitch": 1.03,
+      "gain": 1.0,
+      "brightness_hz": 1550,
+      "body_hz": 102
+    },
+    {
+      "id": "E190",
+      "family": "jet",
+      "pitch": 1.13,
+      "gain": 0.87,
+      "brightness_hz": 3200,
+      "body_hz": 185
+    },
+    {
+      "id": "A223",
+      "family": "jet",
+      "pitch": 0.98,
+      "gain": 0.84,
+      "brightness_hz": 2600,
+      "body_hz": 132
+    },
+    {
+      "id": "A320",
+      "family": "jet",
+      "pitch": 1.04,
+      "gain": 1.0,
+      "brightness_hz": 3100,
+      "body_hz": 155
+    },
+    {
+      "id": "B738",
+      "family": "jet",
+      "pitch": 1.08,
+      "gain": 1.02,
+      "brightness_hz": 3600,
+      "body_hz": 175
+    },
+    {
+      "id": "B38M",
+      "family": "jet",
+      "pitch": 0.99,
+      "gain": 0.96,
+      "brightness_hz": 2850,
+      "body_hz": 145
+    },
+    {
+      "id": "A21N",
+      "family": "jet",
+      "pitch": 0.95,
+      "gain": 1.03,
+      "brightness_hz": 2750,
+      "body_hz": 138
+    },
+    {
+      "id": "A339",
+      "family": "jet",
+      "pitch": 0.86,
+      "gain": 1.12,
+      "brightness_hz": 2300,
+      "body_hz": 112
+    },
+    {
+      "id": "A359",
+      "family": "jet",
+      "pitch": 0.8,
+      "gain": 1.17,
+      "brightness_hz": 2200,
+      "body_hz": 100
+    },
+    {
+      "id": "B789",
+      "family": "jet",
+      "pitch": 0.88,
+      "gain": 1.1,
+      "brightness_hz": 2450,
+      "body_hz": 117
+    },
+    {
+      "id": "B78X",
+      "family": "jet",
+      "pitch": 0.85,
+      "gain": 1.14,
+      "brightness_hz": 2350,
+      "body_hz": 114
+    }
+  ]
+}

@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Aircraft sound builds with power and lands on its tyres.** All 13 flying types now have distinct representative
+  idle, loaded and reverse engine layers, with continuous revs, both-engine startup/shutdown and spatial distance
+  filtering. Touchdown brings a recorded tyre chirp and gear thump, then speed-driven rolling noise; reverse starts
+  after ground contact and fades before taxi-in. Mute/hidden/distant aircraft stop cleanly. Existing engine sources,
+  simulation, schedules and saves are unchanged. Unity 1476/1478, zero failures and two known inconclusives;
+  headless 1105/1105. ADR 0192 and `docs/testing/audio-2026-09-30/README.md` record evidence.
+
 - **Arrivals already on final land through a storm.** A ground stop was holding every landing, so an aircraft on final sat over the field until the storm hour ended. It now lands. Departures still wait, and an arrival that has not reached final does not join the approach until the storm clears. Not yet seen in a rebuilt game.
 - **Far zoom no longer hazes in a circle or snaps back to the airport.** Zoomed out, the horizon fade was a ring around the camera cutting through the city. It now sits past the far clip. Zooming in stays on the point under the cursor instead of being pulled back as the pan leash shrinks. Not yet seen in a rebuilt game.
 - **A real-looking map when zoomed out.** Beyond the satellite image, the far land is now coloured from real land cover:

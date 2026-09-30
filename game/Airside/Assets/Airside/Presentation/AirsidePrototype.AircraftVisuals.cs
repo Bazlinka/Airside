@@ -145,113 +145,6 @@ namespace Airside.Presentation
             }
         }
 
-        private void UpdateEngineAudio()
-        {
-            if (_audioMuted)
-            {
-                ApplyMasterMute();
-                return;
-            }
-
-            AudioListener.pause = false;
-            AudioListener.volume = 1f;
-            for (var index = 0; index < VisualFlights.Count && index < _commercialAircraft.Length; index++)
-            {
-                var phase = VisualFlights[index].Operation.Phase;
-                var engines = FleetEngines(VisualFlights[index]);
-                var type = FleetMode && _fleetAircraftById.TryGetValue(VisualFlights[index].AircraftId, out var fleet)
-                    ? fleet.Type : AircraftType.Atr42;
-                ApplyEngineAudio(_commercialAircraft[index],
-                    engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase),
-                    engines is { } e ? Mathf.Max(e.Left, e.Right) : 1f,
-                    type, phase, VisualFlights[index].AircraftId,
-                    VisualPhaseProgress(VisualFlights[index], 0f));
-            }
-        }
-
-        /// <param name="spool">0..1 through an engine start or shutdown; bends the note down while spooling.</param>
-        private void ApplyEngineAudio(Transform aircraft, bool enginesOn, float spool, AircraftType type,
-            AircraftPhase phase, string aircraftId = null, float progress01 = 1f)
-        {
-            if (aircraft == null)
-                return;
-
-            var id = aircraft.GetInstanceID();
-            if (!_engineAudio.TryGetValue(id, out var source) || source == null)
-            {
-                source = aircraft.GetComponent<AudioSource>();
-                if (source == null)
-                    return;
-                source.playOnAwake = false;
-                // ADR 0136: a touch of doppler for flybys, and a range that matches the aircraft's size.
-                source.dopplerLevel = 0.35f;
-                source.spatialBlend = 1f;
-                var range = EngineVoice.Range(EngineVoice.ClassOf(type));
-                source.minDistance = range.Min;
-                source.maxDistance = range.Max;
-                source.rolloffMode = AudioRolloffMode.Logarithmic;
-                _engineAudio[id] = source;
-            }
-
-            source.mute = false;
-            var clip = LoadEngineClip(type);
-            if (source.clip != clip)
-                source.clip = clip;
-
-            // Fleet views deliberately stay alive while their aircraft are away, but are
-            // hidden outside the currently visible operating set.  AudioSource.Play logs an
-            // error every frame for those inactive roots, which both obscures real faults and
-            // burns time writing the player log.  Do not start a voice until its aircraft is
-            // active again; the next active-frame update restores the correct engine state.
-            if (!CanStartAudio(source))
-                return;
-
-            // Recorded beds are already takeoff/cruise. Pitching them to 0.47 made a
-            // parked Saab sound like a broken motor; keep pitch near native.
-            // ADR 0151: read shaft power directly. A governed propeller holds its speed, so the
-            // old inference from rpm made a taxiing turboprop sound like one at takeoff power.
-            // The roll used to force this to full power on the first frame of takeoff, so the
-            // note stepped instead of rising with the thrust and the acceleration.
-            var thrust = _propPower.TryGetValue(id, out var shaftPower) ? Mathf.Clamp01(shaftPower) : 0f;
-            if (phase is AircraftPhase.Departed)
-                thrust = Mathf.Max(thrust, 0.85f);
-            else if (phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.GoAround)
-                thrust = Mathf.Max(thrust, 0.55f);
-            var speed01 = 0f;
-            if (phase == AircraftPhase.Takeoff)
-            {
-                var profile = AircraftPerformance.For(type);
-                var knots = profile.AirspeedKnots(phase, progress01);
-                speed01 = profile.RotateKnots > 1f ? Mathf.Clamp01(knots / profile.RotateKnots) : 0f;
-            }
-
-            var power = EngineVoice.HeardPower(thrust, speed01);
-            var kind = EngineVoice.ClassOf(type);
-            source.pitch = EngineVoice.Pitch(kind, power, enginesOn ? spool : 0f, EngineVoice.Detune(aircraftId))
-                * EngineVoice.RollPitch(speed01);
-
-            // Distant engines are duller as well as quieter: only the rumble carries.
-            var lowPass = source.GetComponent<AudioLowPassFilter>();
-            if (lowPass == null)
-                lowPass = source.gameObject.AddComponent<AudioLowPassFilter>();
-            var listener = _mainCamera != null ? _mainCamera.transform.position : aircraft.position;
-            lowPass.cutoffFrequency = EngineVoice.LowPassHz(Vector3.Distance(listener, aircraft.position),
-                source.maxDistance, power);
-
-            if (!enginesOn)
-            {
-                source.volume = Mathf.MoveTowards(source.volume, EngineVolumeIdle, Time.unscaledDeltaTime * 1.5f);
-                if (source.volume <= 0.004f && source.isPlaying)
-                    source.Stop();
-                return;
-            }
-
-            var target = EngineVoice.Volume(kind, power, spool);
-            source.volume = Mathf.MoveTowards(source.volume, target, Time.unscaledDeltaTime * 0.8f);
-            if (!source.isPlaying)
-                source.Play();
-        }
-
         /// <summary>
         /// ADR 0151 — the exhaust behind a running engine, driven by shaft power rather than by a
         /// phase flag. It grows and brightens with power, blooms once at light-off (the puff every
@@ -800,11 +693,6 @@ namespace Airside.Presentation
                     _touchdownSmokeRemaining = 1.35f;
                     SpawnSkidMarks(_commercialAircraft[index]);
                     EmitTouchdownWheelSmoke(_commercialAircraft[index], flight, phase);
-                    if (_touchdownAudio != null && _touchdownClip != null && !_audioMuted)
-                    {
-                        _touchdownAudio.transform.position = _touchdownSmoke.position;
-                        _touchdownAudio.PlayOneShot(_touchdownClip, 0.35f);
-                    }
 
                     if (_cameraController != null)
                         _cameraController.PulseTouchdown();
@@ -830,11 +718,6 @@ namespace Airside.Presentation
                     && VisualPhaseProgress(flight, 0f) >= AirsideFlightPath.RotateProgress)
                 {
                     _rotateFired.Add(id);
-                    if (_touchdownAudio != null && _rotateClip != null && !_audioMuted)
-                    {
-                        _touchdownAudio.transform.position = _commercialAircraft[index].position;
-                        _touchdownAudio.PlayOneShot(_rotateClip, 0.22f);
-                    }
                 }
                 else if (phase != AircraftPhase.Takeoff)
                 {
@@ -2599,16 +2482,11 @@ namespace Airside.Presentation
         private static void AttachEngineAudio(Transform root, AircraftType type,
             float minDistance, float maxDistance, float volume)
         {
-            var source = root.gameObject.AddComponent<AudioSource>();
-            source.playOnAwake = false;
-            source.dopplerLevel = 0f;
-            source.clip = LoadEngineClip(type);
-            source.loop = true;
-            source.volume = 0f;
-            source.spatialBlend = 1f;
-            source.minDistance = minDistance;
-            source.maxDistance = maxDistance;
-            source.rolloffMode = AudioRolloffMode.Linear;
+            var emitter = root.gameObject.GetComponent<AircraftSoundEmitter>()
+                          ?? root.gameObject.AddComponent<AircraftSoundEmitter>();
+            emitter.Configure(type, LoadEngineClip(type), CreateTouchdownClip());
+            _ = minDistance;
+            _ = maxDistance;
             _ = volume;
         }
 
@@ -2638,6 +2516,8 @@ namespace Airside.Presentation
 
         private static AudioClip CreateTouchdownClip()
         {
+            if (_fallbackTouchdownClip != null)
+                return _fallbackTouchdownClip;
             const int sampleRate = 22050;
             var samples = new float[sampleRate / 4];
             for (var i = 0; i < samples.Length; i++)
@@ -2651,6 +2531,7 @@ namespace Airside.Presentation
 
             var clip = AudioClip.Create("Touchdown chirp", samples.Length, 1, sampleRate, false);
             clip.SetData(samples, 0);
+            _fallbackTouchdownClip = clip;
             return clip;
         }
     }

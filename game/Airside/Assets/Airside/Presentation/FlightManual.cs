@@ -150,13 +150,15 @@ namespace Airside.Presentation
             new FlightManualPage(ControlsPageId, "Controls",
                 "The mouse does everything. The keys are shortcuts.",
                 Controls()),
-            new FlightManualPage(CreditsPageId, "Map and data credits",
-                "Adelaide is built from open data. These are its sources.",
+            new FlightManualPage(CreditsPageId, "Map, data and sound credits",
+                "Adelaide is built from open data and licensed sound. These are its sources.",
                 new[]
                 {
                     ("Map", MapAttribution.OpenStreetMap + " (ODbL). The airport layout, coast, land use, "
                             + "every road and footpath, car parks and bays, buildings, masts, tanks, solar arrays "
                             + "and bus stops."),
+                    ("Aircraft sound", "Engine recordings by Pack489, mycompasstv and qubodup. Tyre contact by craigsmith "
+                                        + "on Freesound (CC0 / public domain). Adapted for Airside."),
                     ("Satellite imagery", MapAttribution.Sentinel + ". Nine clear summer passes, 2024 to 2026."),
                     ("Terrain", "Copernicus DEM GLO-30. © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH "
                                 + "2014-2018 provided under COPERNICUS by the European Union and ESA. All rights "

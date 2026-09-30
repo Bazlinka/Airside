@@ -83,7 +83,7 @@ namespace Airside.Presentation
         private Renderer _coastFoamRenderer;
         private Renderer[] _taxiSprayRenderers;
         private Renderer[] _puddleRenderers;
-        private readonly Dictionary<int, AudioSource> _engineAudio = new Dictionary<int, AudioSource>();
+        private readonly Dictionary<int, AircraftSoundEmitter> _engineAudio = new();
         private Transform _cloudRoot;
         private Transform _cloudUmbraRoot;
         private int _cloudTintKey = int.MinValue;
@@ -102,8 +102,6 @@ namespace Airside.Presentation
         private Light _hangarBayLight;
         private AirsideDayVolume _dayVolume;
         private float _touchdownSmokeRemaining;
-        private AudioSource _touchdownAudio;
-        private AudioClip _touchdownClip;
         private AudioSource _ambientWindAudio;
         private AudioSource _ambientRainAudio;
         private AudioSource _ambientCoastAudio;
@@ -120,7 +118,6 @@ namespace Airside.Presentation
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
         private readonly HashSet<string> _touchdownFired = new HashSet<string>();
         private readonly HashSet<string> _rotateFired = new HashSet<string>();
-        private AudioClip _rotateClip;
         private readonly List<(Material Material, Color DryColor, float DrySmoothness, float DryMetallic, float DryBumpScale, bool Paved, Texture DryAlbedo)> _wetSurfaces =
             new List<(Material, Color, float, float, float, bool, Texture)>();
         private static readonly MaterialPropertyBlock RendererTintBlock = new();
@@ -200,7 +197,6 @@ namespace Airside.Presentation
         private bool _menuOpen;
         private bool _optionsOpen;
         private const float EngineVolumeRunning = 0.06f;
-        private const float EngineVolumeIdle = 0f;
         private const float AmbientWindVolume = 0.045f;
         private const float AmbientRainVolume = 0.07f;
         private const float AmbientStormVolume = 0.11f;
@@ -315,6 +311,11 @@ namespace Airside.Presentation
             }
 
             _active = this;
+            if (AircraftAudioReview.TryStart(gameObject))
+            {
+                enabled = false;
+                return;
+            }
             // Automated packaged review/soak runs may not own foreground focus. Keep their
             // clock and capture coroutine moving; ordinary player launches retain Unity's
             // normal pause-when-backgrounded behaviour.
@@ -387,17 +388,6 @@ namespace Airside.Presentation
             _taxiSprayRoot = AirsideFocusMode.ShowEnvironment || AirsideBareField.Enabled
                 ? BuildTaxiSprayRoot()
                 : null;
-            _touchdownClip = CreateTouchdownClip();
-            _rotateClip = CreateRotateClip();
-            // Its own child: the touchdown and rotate cues move this source to the aircraft,
-            // and on the prototype's own object that dragged the prototype transform — and
-            // the tyre-smoke pool parented to it — across the field on every landing.
-            var touchdownAudioHost = new GameObject("Touchdown audio");
-            touchdownAudioHost.transform.SetParent(transform, false);
-            _touchdownAudio = touchdownAudioHost.AddComponent<AudioSource>();
-            _touchdownAudio.playOnAwake = false;
-            _touchdownAudio.spatialBlend = 0.55f;
-            _touchdownAudio.volume = 0.22f;
             _ambientWindAudio = gameObject.AddComponent<AudioSource>();
             _ambientWindAudio.loop = true;
             _ambientWindAudio.playOnAwake = false;
@@ -1485,18 +1475,10 @@ namespace Airside.Presentation
         {
             AudioListener.volume = _audioMuted ? 0f : 1f;
             AudioListener.pause = _audioMuted;
-            foreach (var source in _engineAudio.Values)
-            {
-                if (source == null)
-                    continue;
-                source.mute = _audioMuted;
-                if (_audioMuted)
-                {
-                    source.volume = 0f;
-                    if (source.isPlaying)
-                        source.Pause();
-                }
-            }
+            if (_audioMuted)
+                foreach (var emitter in _engineAudio.Values)
+                    if (emitter != null)
+                        emitter.StopVoices();
         }
 
         private void PlayUiClick() => PlayMoment(ref _uiClickClip, HudSounds.UiClick, "UI click", 0.7f);
@@ -4687,6 +4669,7 @@ namespace Airside.Presentation
 
 
         private static AudioClip _engineClip;
+        private static AudioClip _fallbackTouchdownClip;
         private static readonly Dictionary<string, AudioClip> _engineClipByResource = new();
 
         /// <summary>
@@ -4776,27 +4759,6 @@ namespace Airside.Presentation
 
             CrossfadeLoop(samples, sampleRate / 8);
             var clip = AudioClip.Create("Ambient coast", samples.Length, 1, sampleRate, false);
-            clip.SetData(samples, 0);
-            return clip;
-        }
-
-        /// <summary>Soft low whoosh at rotate — quieter than touchdown (presentation only).</summary>
-        private static AudioClip CreateRotateClip()
-        {
-            const int sampleRate = 22050;
-            var samples = new float[sampleRate / 3];
-            for (var i = 0; i < samples.Length; i++)
-            {
-                var time = i / (float)sampleRate;
-                var envelope = Mathf.Exp(-time * 9f) * (1f - time * 2.2f);
-                if (envelope < 0f)
-                    envelope = 0f;
-                var rumble = Mathf.Sin(time * 2f * Mathf.PI * 70f) * 0.45f;
-                var air = Mathf.Sin(time * 2f * Mathf.PI * (180f + time * 220f)) * 0.12f;
-                samples[i] = (rumble + air) * envelope;
-            }
-
-            var clip = AudioClip.Create("Rotate whoosh", samples.Length, 1, sampleRate, false);
             clip.SetData(samples, 0);
             return clip;
         }

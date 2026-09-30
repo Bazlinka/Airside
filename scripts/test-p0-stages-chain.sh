@@ -80,6 +80,18 @@ grep -Fq 'p0-checkout-mac-tip.sh' "$stage_a_wrapper" || {
   exit 1
 }
 
+# Stage A .command calls remaining.sh directly — remaining must caffeinate so a
+# cold Unity build cannot let the display sleep before the first soak.
+remaining="$root/scripts/run-post-audit-p0-remaining.sh"
+grep -Fq 'caffeinate -d -i' "$remaining" || {
+  echo "remaining runner must caffeinate pull/build/captures for Stage A" >&2
+  exit 1
+}
+grep -Fq 'AIRSIDE_P0_CAFFEINATED' "$remaining" || {
+  echo "remaining runner must guard against nested caffeinate re-exec" >&2
+  exit 1
+}
+
 checkout="$root/scripts/p0-checkout-mac-tip.sh"
 test -x "$checkout" || { echo "missing executable $checkout" >&2; exit 1; }
 grep -Fq 'AIRSIDE_P0_BRANCH' "$checkout" || {

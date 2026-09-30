@@ -20,6 +20,16 @@ if [ "$uname_s" != "Darwin" ]; then
   exit 1
 fi
 
+# Stage A Finder `.command` and CreateAgent Stage A call this script directly.
+# capture-game caffeinates each soak, but a cold Unity build can outlast the
+# display sleep timer and freeze the first player launch. Outer stages.sh already
+# wraps A→B→C; skip a second nest when AIRSIDE_P0_CAFFEINATED=1.
+if [ "${AIRSIDE_P0_CAFFEINATED:-}" != "1" ] && command -v caffeinate >/dev/null 2>&1; then
+  echo "==> Holding display + system awake for pull/build/captures (caffeinate -d -i)"
+  export AIRSIDE_P0_CAFFEINATED=1
+  exec caffeinate -d -i -- "$0" "$@"
+fi
+
 branch="$(git branch --show-current)"
 case "$branch" in
   main|cursor/p0-auto-landing-follow-709e) ;;

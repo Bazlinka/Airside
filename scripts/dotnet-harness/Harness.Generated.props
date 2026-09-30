@@ -38,6 +38,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideVisualBaselineViews.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronServiceSchedule.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronSlabJoints.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronSurfaceWear.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ArrivalApproach.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AtmosphereLook.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AustraliaMapLens.cs" />
@@ -80,6 +81,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/SplashScreen.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/StableHash.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/StandNames.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/StandOilStains.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/StatsWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/TaxiwayEdgeWear.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ToastQueue.cs" />
@@ -126,6 +128,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirsideStripMarkingsTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ApproachHoldTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ApronSlabJointsTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ApronSurfaceWearTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ArrivalApproachTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ArrivalClearanceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ArticleTests.cs" />
@@ -221,6 +224,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/SkyTrafficTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/StandChoiceAndBoardHistoryTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/StandNamesTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/StandOilStainsTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/StatsWorkspaceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TaxiCrossingAndQueueTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TaxiLoopFixture.cs" />

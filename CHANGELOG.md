@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Apron patch repairs and drainage pits.** Seeded concrete patches and grate pits inside every real apron
+  outline (inset from the edge), two combined meshes. Presentation only. ADR 0202.
+
+- **Stand oil stains and softer ground edges.** Seeded oil/fuel blotches under every bay and gate (two combined
+  meshes), slightly stronger grass macro/mow detail, and a softer paved-to-grass shoulder. Presentation only. ADR 0201.
+
 - **Visual overhaul Phase 0 baseline bookmarks.** Six named review cameras (`overview`,
   `terminal-airside`, `terminal-kerb`, `hangar-row`, `suburb-edge`, `coast`) via
   `-airsideReviewView`, plus `scripts/capture-visual-baseline.sh` for day/dusk/night

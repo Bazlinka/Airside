@@ -80,6 +80,8 @@ namespace Airside.Presentation
             SpawnSurface(root, AirsideAdelaidePavement.ApronsName, aprons, apronConcrete, concreteAlbedo, castShadows: false);
             SpawnSurface(root, "Apron slab joints", apronJoints, new Color(0.27f, 0.28f, 0.28f), null,
                 castShadows: false, useTextures: false);
+            BuildYpadStandOilStains(root, apronY + 0.005f);
+            BuildYpadApronSurfaceWear(root, apronY + 0.0035f);
             SpawnSurface(root, AirsideAdelaidePavement.TaxiwaysName, taxi, taxiAsphalt, asphaltAlbedo, castShadows: false);
             SpawnSurface(root, "Taxi edge wear", edgeWear, new Color(0.30f, 0.265f, 0.21f), null,
                 castShadows: false, useTextures: false);
@@ -115,6 +117,42 @@ namespace Airside.Presentation
                 // Aerobridges hang off this terminal; built once the world exists (ADR 0113).
                 _terminalGroundY = groundY;
             }
+        }
+
+        /// <summary>
+        /// Seeded oil / fuel stains under every bay and gate (Phase 1 airside ground truth).
+        /// Two combined meshes so hundreds of blotches stay one draw each for old vs fresh.
+        /// </summary>
+        private static void BuildYpadStandOilStains(Transform root, float y)
+        {
+            var heavy = new SurfaceMesh();
+            var light = new SurfaceMesh();
+            foreach (var stain in StandOilStains.All())
+                AddPolygon(stain.Heavy ? heavy : light, StandOilStains.EllipseCorners(stain), y);
+
+            // Untextured dark blotches — concrete albedo would wash them out at overview.
+            SpawnSurface(root, "Stand oil (old)", light, new Color(0.30f, 0.27f, 0.22f), null,
+                castShadows: false, useTextures: false);
+            SpawnSurface(root, "Stand oil (fresh)", heavy, new Color(0.14f, 0.12f, 0.11f), null,
+                castShadows: false, useTextures: false);
+        }
+
+        /// <summary>
+        /// Patch repairs and drainage pits on the real apron outlines (Phase 1).
+        /// Combined into two meshes so draw cost stays fixed regardless of mark count.
+        /// </summary>
+        private static void BuildYpadApronSurfaceWear(Transform root, float y)
+        {
+            var patches = new SurfaceMesh();
+            var pits = new SurfaceMesh();
+            foreach (var mark in ApronSurfaceWear.All())
+                AddPolygon(mark.Drainage ? pits : patches, ApronSurfaceWear.Corners(mark),
+                    mark.Drainage ? y + 0.0015f : y);
+
+            SpawnSurface(root, "Apron patch repairs", patches, new Color(0.40f, 0.41f, 0.42f), null,
+                castShadows: false, useTextures: false);
+            SpawnSurface(root, "Apron drainage pits", pits, new Color(0.16f, 0.16f, 0.17f), null,
+                castShadows: false, useTextures: false);
         }
 
         private static void BuildYpadOperationalBuildings(Transform root, float fallbackGroundY, BuildingDetailMeshes detail)

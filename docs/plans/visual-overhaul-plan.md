@@ -122,7 +122,9 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
 - Phase 0 (bookmarks + capture script): done in code — `AirsideVisualBaselineViews`,
   `-airsideReviewView`, `scripts/capture-visual-baseline.sh`, ADR 0200. Packaged PNG/metrics
   evidence still needs a Mac run of that script (`docs/testing/visual-baseline-2026-09-30/`).
-- Phases 1, 2, 3b–f, 4, 5 still need Mac captures and frame-time numbers before/after each change.
+- Phase 1 slices done: stand oil stains + softer ground edges (ADR 0201); apron patch
+  repairs + drainage pits (ADR 0202). Remaining Phase 1: landform/coast, land cover polish, far ring.
+- Phases 0 (packaged captures), 2, 3b–f, 4, 5 still benefit from Mac Unity captures and frame-time numbers.
 
 ## Risks
 - Performance (already tight) → per-phase budgets, LOD, tiers.

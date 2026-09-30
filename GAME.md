@@ -1,10 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 RESULTS branch staged (branch `cursor/post-audit-p0-results-709e`, ADR 0203).**
-  Draft RESULTS exist with **blank verdicts**. **NEXT on Mac:**
-  `scripts/run-post-audit-p0.sh` (build + captures + inventory stamp), fill keep/fix/revert, push.
-  Linux cannot pin My Machines (`CreateAgent` missing; computerUse quota blocked). One-paste:
-  `docs/testing/post-audit-p0-mac-agent-prompt.md`.
+  Draft RESULTS exist with **blank verdicts**. Bailey **skipped** the cloud “run P0 on Mac” CTA from this
+  iOS run — do not re-prompt that setup action. Mac path still ready when wanted:
+  `scripts/run-post-audit-p0.sh` on `cursor/post-audit-p0-results-709e`, fill keep/fix/revert, push.
+  Linux still cannot pin My Machines. One-paste: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
+  Watching PR #488 + timer; no invented RESULTS.
 
 - **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0203).**
   Standing backlog: `docs/plans/post-audit-improvement-plan.md`. Cloud goal executes P0→P1→P2→P3→P4.

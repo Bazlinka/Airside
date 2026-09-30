@@ -1,5 +1,6 @@
 ## Unreleased
 
+- **Arrivals already on final land through a storm.** A ground stop was holding every landing, so an aircraft on final sat over the field until the storm hour ended. It now lands. Departures still wait, and an arrival that has not reached final does not join the approach until the storm clears. Not yet seen in a rebuilt game.
 - **A real-looking map when zoomed out.** Beyond the satellite image, the far land is now coloured from real land cover:
   suburbs, crop paddocks, woodland, and the Gulfs and rivers, rather than one plain colour. Credits added to the Flight
   Manual. Not yet seen in a rebuilt game.

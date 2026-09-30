@@ -1,5 +1,16 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Cursor — arrivals already on final land through a storm (ADR 0190).**
+  A ground stop was withholding the landing clearance for every aircraft in
+  `HoldingForLanding`, so a plane already on final sat over the field for the
+  rest of the storm hour (`HOLD · STORM`). The tower now lands that arrival.
+  Departures stay held, and an inbound that has not reached final does not join
+  the approach until the storm block ends.
+  - **NEXT:** confirm in a running game: an arrival already on final during a storm
+    (the CA103 case) lands; a departure at the hold still waits. Unity EditMode
+    was not confirmed green (the script compile stalled).
+
+
 - **2026-09-30 Codex — Adelaide emergency aviation and road assets (branch
   `codex/adelaide-helicopter-road-assets`, ADR 0186).**
   - AIR-017 is a project-authored, unbranded Bell 412EP-class rescue helicopter at the OSM Helipad West beside the

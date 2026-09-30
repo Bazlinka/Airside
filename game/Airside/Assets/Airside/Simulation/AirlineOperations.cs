@@ -693,7 +693,7 @@ namespace Airside.Simulation
                 // wanted and it is currently storm-closed, so catch-up revisits the check
                 // at the same granularity live play would.
                 if (Weather.At(now) == WeatherKind.Storm)
-                    Consider(new SimulationTime((now.ElapsedSeconds / Weather.BlockSeconds + 1) * Weather.BlockSeconds));
+                    Consider(Weather.NextBlock(now));
                 // A departure held short for crossing traffic (ADR 0126) is re-checked on the grid.
                 foreach (var aircraft in _fleet)
                 {
@@ -1171,6 +1171,12 @@ namespace Airside.Simulation
                     {
                         // Kept out overnight: fly in with the morning arrivals, not all at 05:00.
                         aircraft.ExtendUntil(MorningArrivalAt(aircraft, now));
+                        return false;
+                    }
+                    // Not on final yet. A storm holds it here; one already on final lands (ADR 0190).
+                    if (Weather.At(now) == WeatherKind.Storm)
+                    {
+                        aircraft.ExtendUntil(Weather.NextBlock(now));
                         return false;
                     }
                     // Do not land an aircraft that has nowhere to park. Before this guard a

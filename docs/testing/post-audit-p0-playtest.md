@@ -87,4 +87,6 @@ Player logs next to each PNG must stay free of exceptions / soak STALL (the scri
 ## Blocked without a Mac
 
 Cloud Linux agents cannot run this script (no Unity player / display). They prepare
-the checklist and must not mark P0 complete from headless tests alone.
+the checklist and must not mark P0 complete from headless tests alone. Do not use
+Task + `privateWorkerId` from a managed cloud VM — use Option B’s UI picker (or
+CreateAgent with `machine.worker_id`) instead.

@@ -2,6 +2,7 @@
 
 - **2026-09-30 Cursor — Phase 1 apron surface wear (branch `cursor/phase1-stand-oil-stains-5ea8`, ADR 0202).**
   Seeded concrete patch repairs and drainage pits inside every apron outline. Presentation only.
+  - **Checks:** `scripts/test-domain.sh` **1138/1138** (incl. ApronSurfaceWearTests).
   - **NEXT:** landform & coast (Phase 1), or land-cover polish.
 
 - **2026-09-30 Cursor — Phase 1 stand oil stains + ground soft edges (branch `cursor/phase1-stand-oil-stains-5ea8`, ADR 0201).**

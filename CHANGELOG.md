@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 CODE_EVIDENCE maps tip #491 locks.** Night-sky yaw/window, packaged
+  follow delays, multi-shot schedule, boarding 320/323s, and Stage A–C script
+  locks are listed; Mac eyes/ears still required. No simulation or save changes.
+
 - **P0 Mac runner preflights multi-shot player.** `run-post-audit-p0-remaining.sh`
   refuses an old `Airside.app` missing `ReviewShotSchedule` so Stage C cannot
   burn a timeout on a single-shot build. Boarding batch 320/323s EditMode-locked.

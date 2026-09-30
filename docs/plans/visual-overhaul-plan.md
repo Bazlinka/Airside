@@ -119,8 +119,10 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
 ## Status
 - Phase 3a (building audit): done — `scripts/audit-ypad-buildings.py`, `docs/data/ypad-buildings-audit.md`.
   Finding: only 7 of 78 heights are sourced; 71 are rule defaults and 60 buildings are unnamed.
-- Phases 0, 1, 2, 3b–f, 4, 5 need a Mac Unity editor for captures and frame-time numbers (the cloud session has
-  neither), so they are queued for a session that has one.
+- Phase 0 (bookmarks + capture script): done in code — `AirsideVisualBaselineViews`,
+  `-airsideReviewView`, `scripts/capture-visual-baseline.sh`, ADR 0200. Packaged PNG/metrics
+  evidence still needs a Mac run of that script (`docs/testing/visual-baseline-2026-09-30/`).
+- Phases 1, 2, 3b–f, 4, 5 still need Mac captures and frame-time numbers before/after each change.
 
 ## Risks
 - Performance (already tight) → per-phase budgets, LOD, tiers.

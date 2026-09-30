@@ -35,6 +35,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideRunwayMarkings.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideStripMarkings.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideTerrainField.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideVisualBaselineViews.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronServiceSchedule.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronSlabJoints.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ArrivalApproach.cs" />
@@ -227,6 +228,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TaxiwayEdgeWearTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TerrainFieldTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TowerAndStandChoiceTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/VisualBaselineViewsTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/WeatherTests.cs" />
   </ItemGroup>
 </Project>

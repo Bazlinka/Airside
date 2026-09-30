@@ -1,12 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
+- **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491 tip `687f3ec6`).**
   Packaged: `auto-landing` / `auto-takeoff` / freighter / hangar / boarding / human-ops close.
   Auto-landing/takeoff **re-rank every frame** to Landing/TakingOff; capture delay ~360s.
   `scripts/review-post-audit-p0-remaining.sh` + `AIRSIDE_P0_ONLY=shot,shot`. Tip CI green; PR mergeable.
-  Self-hosted Mac workers were **offline** at last check. Remaining RESULTS inventory unverified.
-  **NEXT:** Mac agents UI → Bailey's MacBook Pro → rebuild → remaining script → fill RESULTS.
-  Freight AI stays parked. Do not invent RESULTS. Pin by machine **name** (not worker_id).
+  **Mac worker ONLINE now** (`Bailey's MacBook Pro`, eligibleForSubagent, idle). Cloud Task cannot pin it —
+  start from agents UI environment dropdown → that machine name. Checkout this branch (not stale main helpers).
+  Remaining RESULTS inventory + all manual rows still unverified.
+  **NEXT:** UI-pin Mac → `scripts/build-mac.sh` → `scripts/review-post-audit-p0-remaining.sh` → fill RESULTS.
+  Freight AI stays parked. Do not invent RESULTS.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

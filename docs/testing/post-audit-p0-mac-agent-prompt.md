@@ -2,8 +2,9 @@
 
 Paste this into a Cursor agent started **on** Bailey's MacBook Pro
 (environment dropdown → **Bailey's MacBook Pro**, not a cloud VM).
-Checkout `cursor/p0-auto-landing-follow-709e` (or `main` after #491 merges) so the
-review helpers and `scripts/review-post-audit-p0-remaining.sh` are present.
+Checkout `cursor/p0-auto-landing-follow-709e` at tip `687f3ec6` or newer (or `main`
+after #491 merges) so auto-landing upgrade + `scripts/review-post-audit-p0-remaining.sh`
+are present. Canonical path: `~/Code/Airside` (Codex symlink is fine if it tracks that).
 
 A Linux cloud parent cannot pin this machine via `Task`. Use this UI picker, or
 API / SDK `env: { "type": "machine", "name": "Bailey's MacBook Pro" }` (machine

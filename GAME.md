@@ -7,7 +7,7 @@
   callsigns step by two, and arrivals on extended final are not double-drawn.
   - **NEXT:** rebuild, turn live traffic off, watch night overview — overflights should cruise. Then
     confirm a fleet inbound does not appear twice on final.
-  - **Checks:** `scripts/test-domain.sh` (this cloud run). Unity EditMode still needed on a Mac.
+  - **Checks:** `scripts/test-domain.sh` **1123/1123** on this branch. Unity EditMode still needed on a Mac.
 
 - **2026-09-30 Claude — freight flights and the tyre fix (branch `worktree-cargo-freight`, ADR 0194).**
   - **Freight:** a parked player aircraft can be refitted to a freighter (Fleet card, fixed fee). No passengers walk to

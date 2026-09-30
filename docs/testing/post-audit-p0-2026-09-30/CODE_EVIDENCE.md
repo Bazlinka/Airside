@@ -39,8 +39,20 @@ Headless suite after Phase 0 merge: **1136/1136** (`scripts/test-domain.sh`).
 | Follow camera feel | Feel |
 | Human-ops close matrix | Visual |
 
+## Prior packaged evidence (not a substitute for tip re-check)
+
+Committed Mac player captures that already speak to some P0 rows. Use as Notes;
+still fill Verdict on the **current** tip (now includes #485/#486 ground).
+
+| Topic | Evidence | What it supports | Gap |
+|---|---|---|---|
+| Weather depth (ADR 0193) | `docs/testing/weather-2026-09-30/` README + PNGs | Prior Mac acceptance of cloud bodies, fog with close aircraft clear, storm/rain; fps table (storm ~32–37) | Tip has Phase 1 ground since; re-capture weather rows on P0 script |
+| Far land-cover data | `docs/testing/map-2026-09-29/landcover-far.png` | Land-cover **dataset** viz only | **Not** a gameplay far-zoom shot — does not close P0 |
+| Phase 0 baseline | `docs/testing/visual-baseline-2026-09-30/README.md` | Bookmark table locked | **No PNGs / metrics.md yet** |
+| Aircraft audio listen | `docs/testing/audio-2026-09-30/README.md` | Packaging/tests green | Explicitly **no** listening sign-off (0192/0196 still owed) |
+
 ## Next action
 
-Run `scripts/review-post-audit-p0.sh` on the Mac and fill
-`docs/testing/post-audit-p0-playtest.md` keep/fix/revert. Pre-fill code rows
-from this file where helpful; leave visual rows blank until seen.
+On Mac: `scripts/run-post-audit-p0.sh`, then fill keep/fix/revert in
+`docs/testing/post-audit-p0-<date>/RESULTS.md`. Pre-fill Notes from this file;
+do not treat prior weather acceptance as automatic keep on the new tip.

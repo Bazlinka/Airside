@@ -35,6 +35,15 @@
   - **NEXT:** on a Mac, `scripts/build-mac.sh` then `scripts/capture-visual-baseline.sh`, commit PNGs + `metrics.md`
     under `docs/testing/visual-baseline-2026-09-30/`; Phase 1 airside ground slices already on this branch.
 
+- **2026-09-30 Cursor — post-audit P0 automated captures (branch `cursor/post-audit-p0-playtest-e5cd`).**
+  Ran `scripts/review-post-audit-p0.sh` on this Mac against the packaged player of `56cb46a3` (dirty=false).
+  Fourteen shots are in `docs/testing/post-audit-p0-2026-09-30/` with keep / unverified notes in `RESULTS.md`.
+  Player logs had no exceptions or soak stalls. Storm settled at 39 fps and fog at 40 fps (1600×900); clear
+  overview stayed near 60. Far-zoom darkening matches the coast and hills, not a symmetric haze ring.
+  **Not done:** the manual rows (audio, freighter refit, tyre pivot in the flare, storm landing, hangar tow,
+  boarding tape, follow feel, zoom-under-cursor). **NEXT:** Bailey marks those rows. Do not start freight AI
+  or call P0 complete until then.
+
 - **2026-09-30 Claude — airside building detail, Phase 3d slice (branch `visual-overhaul-ground`, ADR 0199).**
   Shaped roofs on freight/fire station, plinths, lit wall packs, dock bumpers. Headless suite run here with a local
   .NET 8 (`/opt/dotnet`). **Not verified:** how it renders — needs a Mac capture. **NEXT:** Phase 0 baseline, Phase 1 ground.

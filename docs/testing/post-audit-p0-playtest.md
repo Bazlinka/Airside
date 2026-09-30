@@ -8,13 +8,30 @@ adding more content (freight AI, visual overhaul Phase 1, expansion).
 
 ## How to run
 
-On a Mac with Unity 6.3 LTS and a display that stays awake:
+On a Mac with Unity 6.3 LTS and a display that stays awake. Prefer branch
+`cursor/post-audit-improvement-plan-709e` (or `main` once merged).
+
+### Option A — shell (you on the Mac)
 
 ```bash
-git pull --rebase origin main
+cd ~/Code/Airside   # or ~/Documents/Codex/Airside
+git fetch && git checkout cursor/post-audit-improvement-plan-709e && git pull
 scripts/build-mac.sh
 scripts/review-post-audit-p0.sh
 ```
+
+### Option B — Cursor agent *on* the Mac worker (recommended)
+
+Cloud Task subagents from a Linux cloud run **cannot** target My Machines
+(`privateWorkerId` is ignored; use `CreateAgent`/`machine.worker_id` or the UI).
+Start the run on the Mac:
+
+1. Keep `agent worker start --name "Bailey's MacBook Pro"` running in `~/Code/Airside`.
+2. Open [cursor.com/agents](https://cursor.com/agents) → environment dropdown →
+   **Bailey's MacBook Pro** (not the default cloud VM).
+3. Prompt: run this checklist — build, `scripts/review-post-audit-p0.sh`, fill
+   keep/fix/revert, commit `docs/testing/post-audit-p0-2026-09-30/RESULTS.md` +
+   GAME.md handoff, push `cursor/post-audit-p0-results-709e`.
 
 Captures land in `work/captures/post-audit-p0-<date>/` with a copy of this checklist
 as `RESULTS.md`. Also useful:

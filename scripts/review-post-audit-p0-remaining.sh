@@ -73,6 +73,12 @@ CAPTURE_DELAY=90 CAPTURE_TIMEOUT=180 capture follow-hangar-tow \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
+# Walkway tape mid-boarding (ADR 0187). Starter Saab: fuel+catering+baggage ≈ 255s, then board.
+CAPTURE_DELAY=320 CAPTURE_TIMEOUT=420 capture follow-boarding-tape \
+  -airsideReviewBoarding \
+  -airsideReviewWeather clear -airsideReviewTime 12:00 \
+  -airsideReviewFollowZoom 0.55
+
 echo "Remaining P0 stills written under $shots"
 echo "Copy keep PNGs into docs/testing/post-audit-p0-<date>/ and update RESULTS.md verdicts."
 echo "Manual listening/play rows still need a person — see docs/testing/post-audit-p0-manual-checklist.md"

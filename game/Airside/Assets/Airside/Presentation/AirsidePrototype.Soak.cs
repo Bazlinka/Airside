@@ -82,6 +82,7 @@ namespace Airside.Presentation
         //       on-field arrival or departure that already has a field view
         //   -airsideReviewFreighter   refit a parked player aircraft to freighter and follow it
         //   -airsideReviewHangarCheck start a hangar check on a parked player aircraft and follow the tow
+        //   -airsideReviewBoarding     book a near departure so walkway tape / boarding is active
         //   -airsideReviewFollowZoom 0.35   bounded close-up of the followed aircraft
         //   -airsideReviewTime HH:mm   override local lighting time only (not the sim clock)
         //   -airsideReviewWeather cloudy|overcast|rain|storm|...   deterministic visual QA
@@ -91,6 +92,7 @@ namespace Airside.Presentation
         private const string ReviewAircraftFlag = "-airsideReviewAircraft";
         private const string ReviewFreighterFlag = "-airsideReviewFreighter";
         private const string ReviewHangarCheckFlag = "-airsideReviewHangarCheck";
+        private const string ReviewBoardingFlag = "-airsideReviewBoarding";
         private float _reviewShotAt = -1f;
         private bool _reviewShotTaken;
         private bool _reviewFollowStarted;
@@ -219,6 +221,63 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// Book a minimum-lead departure on a parked regional so boarding / walkway tape runs
+        /// (ADR 0187). Capture around mid-boarding (~5 min live for a starter Saab).
+        /// </summary>
+        private void TryApplyReviewBoarding()
+        {
+            if (!FleetMode || _operations?.PlayerAirline == null)
+                return;
+
+            FleetAircraft best = null;
+            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
+            {
+                if (aircraft.State != FleetState.AtStand || aircraft.IsFreighter
+                    || Maintenance.InCheck(aircraft, _clock.Now)
+                    || AirlineOperations.NeedsTerminalGate(aircraft.Type))
+                    continue;
+                if (aircraft.Scheduled.HasValue)
+                    _operations.CancelDeparture(aircraft);
+                best = aircraft;
+                break;
+            }
+
+            if (best == null)
+            {
+                Debug.LogWarning($"{SoakLogTag} review boarding: no parked regional to book");
+                return;
+            }
+
+            var reachable = _operations.MapDestinations().Where(d => _operations.CanOperate(best, d)
+                && _operations.CareerState.CanAfford(
+                    _operations.DispatchCost(best.Type, _operations.DistanceKm(d)))).ToList();
+            if (reachable.Count == 0)
+            {
+                Debug.LogWarning($"{SoakLogTag} review boarding: no reachable destination");
+                return;
+            }
+
+            var lead = DeparturePrep.LeadSeconds(best.Type, best.BaseLevel);
+            var departAt = _clock.Now.Advance(lead);
+            var result = _operations.ScheduleDeparture(best, reachable[0], departAt);
+            if (!result.Accepted)
+            {
+                Debug.LogWarning($"{SoakLogTag} review boarding refused: {result.Reason}");
+                return;
+            }
+
+            // Fuel+catering+baggage before boarding (starter regional ≈ 255s); mid-boarding ≈ +60s.
+            var preBoard = DeparturePrep.StageSecondsFor(best.Type, DeparturePrepStage.Fuel, best.BaseLevel)
+                + DeparturePrep.StageSecondsFor(best.Type, DeparturePrepStage.Catering, best.BaseLevel)
+                + DeparturePrep.StageSecondsFor(best.Type, DeparturePrepStage.Baggage, best.BaseLevel);
+            var suggestDelay = preBoard + DeparturePrep.BoardingSecondsFor(best.Type, best.BaseLevel) / 2;
+            if (string.IsNullOrEmpty(_reviewAircraftId))
+                _reviewAircraftId = best.Registration;
+            Debug.Log($"{SoakLogTag} review boarding {best.Registration} departs in {lead}s; " +
+                      $"suggest -airsideReviewDelay {suggestDelay}");
+        }
+
+        /// <summary>
         /// Pick the best on-field arrival or departure for tyre / audio review stills.
         /// Retries each soak frame until a matching field view appears.
         /// </summary>
@@ -336,6 +395,8 @@ namespace Airside.Presentation
                     TryApplyReviewFreighter();
                 if (Array.IndexOf(args, ReviewHangarCheckFlag) >= 0)
                     TryApplyReviewHangarCheck();
+                if (Array.IndexOf(args, ReviewBoardingFlag) >= 0)
+                    TryApplyReviewBoarding();
                 OpenReviewPanel(args);
             }
             if (_soakMainThreadRecorder.Valid && _soakRenderThreadRecorder.Valid)

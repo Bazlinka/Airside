@@ -1,10 +1,10 @@
 ## Unreleased
 
 - **P0 review follow helpers.** `-airsideReviewAircraft auto-landing|auto-takeoff`,
-  `-airsideReviewFreighter` and `-airsideReviewHangarCheck` drive arrival, departure,
-  cargo-livery and hangar-tow stills. `scripts/review-post-audit-p0-remaining.sh`
-  re-captures the open P0 stills. Ranking/timing locked by `ReviewAircraftFollowTests`.
-  No simulation or save changes.
+  `-airsideReviewFreighter`, `-airsideReviewHangarCheck` and `-airsideReviewBoarding`
+  drive arrival, departure, cargo-livery, hangar-tow and walkway-tape stills.
+  `scripts/review-post-audit-p0-remaining.sh` re-captures the open P0 stills.
+  Ranking/timing locked by `ReviewAircraftFollowTests`. No simulation or save changes.
 
 - **Consolidate Airside onto main.** Retain the post-audit backlog, Mac review helpers and actual #490
   capture results; retire stale branch-switching instructions and fix three malformed Unity metadata GUIDs.

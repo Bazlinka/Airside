@@ -4,8 +4,8 @@
   Tip **`54689c0b`** — headless CI green; Stage A/B/C ONLY filter CI-locked. Packaged Stage A→B→C
   via `scripts/run-post-audit-p0-remaining.sh` (PNGs + inventory; no verdicts).
   **Mac workers ONLINE + idle** (prefer `~/Code/Airside @ Bailey's MacBook Pro`,
-  `eligibleForSubagent: true`). Cloud `Task` still cannot pin My Machines
-  (`privateWorkerId: null`). Bailey must UI-pin **Bailey's MacBook Pro** and paste
+  `eligibleForSubagent: true`). Cloud `Task` rejects `machine.type=machine` (hard
+  discriminator — do not retry). Bailey must UI-pin **Bailey's MacBook Pro** and paste
   `docs/testing/post-audit-p0-mac-agent-prompt.md`. 21 RESULTS rows unverified.
   **NEXT:** UI-pin Mac → Stage A→B→C → fill RESULTS by eye/ear. Freight AI parked.
   Do not invent RESULTS.

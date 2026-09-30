@@ -9,7 +9,8 @@ namespace Airside.Presentation
     /// ADR 0187 — marked passenger walkways across the apron, edged with posts and red-and-white barrier tape, as at a
     /// real airport: people walking to an aircraft are fenced in and cannot wander onto a taxiway or the runway. One
     /// straight corridor runs from the terminal wall to a point short of each regional bay's aircraft; the boarding
-    /// walk follows it (<see cref="TryCorridor"/>) and the tape is drawn along both edges. Pure (no UnityEngine).
+    /// walk follows it (<see cref="TryCorridor"/>). The tape itself is temporary: it is put up along the walk while
+    /// passengers are using it (<see cref="BuildAlong"/>), not left standing. Pure (no UnityEngine).
     /// </summary>
     public static class AdelaideWalkwayGeometry
     {
@@ -104,48 +105,79 @@ namespace Airside.Presentation
         {
             var drawn = 0;
             foreach (var corridor in Corridors.Values)
+                if (Fence(sink, corridor[0], corridor[1], corridor[2], corridor[3],
+                        (x, z) => o.Height(x, z) + o.YOffset))
+                    drawn++;
+            return drawn;
+        }
+
+        /// <summary>
+        /// Posts and tape along both sides of a walk drawn as a polyline of x, y, z triples (world metres, y the ground):
+        /// the route passengers actually take, so the tape goes up with them and follows them round the aircraft rather
+        /// than standing on the apron all day. Returns the number of segments fenced.
+        /// </summary>
+        public static int BuildAlong(RoadMeshSink sink, IReadOnlyList<float> xyz)
+        {
+            var fenced = 0;
+            var n = xyz.Count / 3;
+            for (var i = 0; i + 1 < n; i++)
             {
-                var ax = corridor[0];
-                var az = corridor[1];
-                var dx = corridor[2] - ax;
-                var dz = corridor[3] - az;
-                var length = (float)Math.Sqrt(dx * dx + dz * dz);
-                if (length < 1f)
-                    continue;
-                var ux = dx / length;
-                var uz = dz / length;
-                var nx = -uz;
-                var nz = ux;
-                foreach (var side in new[] { -1f, 1f })
-                {
-                    var ex = ax + nx * HalfWidthMetres * side;
-                    var ez = az + nz * HalfWidthMetres * side;
-                    var posts = (int)Math.Ceiling(length / PostSpacingMetres);
-                    for (var i = 0; i <= posts; i++)
+                var y0 = xyz[i * 3 + 1];
+                var y1 = xyz[i * 3 + 4];
+                var ax = xyz[i * 3];
+                var az = xyz[i * 3 + 2];
+                var bx = xyz[i * 3 + 3];
+                var bz = xyz[i * 3 + 5];
+                var span = (float)Math.Sqrt((bx - ax) * (bx - ax) + (bz - az) * (bz - az));
+                if (Fence(sink, ax, az, bx, bz, (x, z) =>
                     {
-                        var t = Math.Min(length, i * PostSpacingMetres);
-                        var x = ex + ux * t;
-                        var z = ez + uz * t;
-                        sink.Cylinder(x, o.Height(x, z) + o.YOffset, z, 0.05f, PostHeightMetres, 6, PostGrey);
-                    }
-
-                    var stripes = (int)Math.Ceiling(length / StripeMetres);
-                    for (var i = 0; i < stripes; i++)
-                    {
-                        var from = i * StripeMetres;
-                        var to = Math.Min(length, from + StripeMetres);
-                        var mid = (from + to) * 0.5f;
-                        var x = ex + ux * mid;
-                        var z = ez + uz * mid;
-                        sink.Box(x, o.Height(x, z) + o.YOffset + TapeHeightMetres, z, ux, uz, (to - from) * 0.5f, 0.012f, 0.08f,
-                            i % 2 == 0 ? TapeRed : TapeWhite);
-                    }
-                }
-
-                drawn++;
+                        var t = span < 1e-3f ? 0f : (float)Math.Sqrt((x - ax) * (x - ax) + (z - az) * (z - az)) / span;
+                        return y0 + (y1 - y0) * Math.Min(1f, t);
+                    }))
+                    fenced++;
             }
 
-            return drawn;
+            return fenced;
+        }
+
+        private static bool Fence(RoadMeshSink sink, float ax, float az, float bx, float bz, Func<float, float, float> groundY)
+        {
+            var dx = bx - ax;
+            var dz = bz - az;
+            var length = (float)Math.Sqrt(dx * dx + dz * dz);
+            if (length < 1f)
+                return false;
+            var ux = dx / length;
+            var uz = dz / length;
+            var nx = -uz;
+            var nz = ux;
+            foreach (var side in new[] { -1f, 1f })
+            {
+                var ex = ax + nx * HalfWidthMetres * side;
+                var ez = az + nz * HalfWidthMetres * side;
+                var posts = (int)Math.Ceiling(length / PostSpacingMetres);
+                for (var i = 0; i <= posts; i++)
+                {
+                    var t = Math.Min(length, i * PostSpacingMetres);
+                    var x = ex + ux * t;
+                    var z = ez + uz * t;
+                    sink.Cylinder(x, groundY(x, z), z, 0.05f, PostHeightMetres, 6, PostGrey);
+                }
+
+                var stripes = (int)Math.Ceiling(length / StripeMetres);
+                for (var i = 0; i < stripes; i++)
+                {
+                    var from = i * StripeMetres;
+                    var to = Math.Min(length, from + StripeMetres);
+                    var mid = (from + to) * 0.5f;
+                    var x = ex + ux * mid;
+                    var z = ez + uz * mid;
+                    sink.Box(x, groundY(x, z) + TapeHeightMetres, z, ux, uz, (to - from) * 0.5f, 0.012f, 0.08f,
+                        i % 2 == 0 ? TapeRed : TapeWhite);
+                }
+            }
+
+            return true;
         }
     }
 }

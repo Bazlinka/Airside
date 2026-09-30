@@ -48,6 +48,19 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void TheTapeIsTemporary_DrawnAlongTheRouteItIsGiven()
+        {
+            var sink = new RoadMeshSink();
+            var fenced = AdelaideWalkwayGeometry.BuildAlong(sink, new float[] { 0, 0, 0, 30, 0, 0, 30, 0, 40 });
+            Assert.That(fenced, Is.EqualTo(2));
+            Assert.That(sink.VertexCount, Is.GreaterThan(0));
+
+            var none = new RoadMeshSink();
+            Assert.That(AdelaideWalkwayGeometry.BuildAlong(none, new float[] { 0, 0, 0 }), Is.EqualTo(0));
+            Assert.That(none.VertexCount, Is.EqualTo(0));
+        }
+
+        [Test]
         public void ACorridorIsFoundByStandId()
         {
             foreach (var pair in AdelaideWalkwayGeometry.Corridors)

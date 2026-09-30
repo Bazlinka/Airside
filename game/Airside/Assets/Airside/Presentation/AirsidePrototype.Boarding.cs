@@ -564,6 +564,7 @@ namespace Airside.Presentation
                     BoardingFlow.Moves(aircraft, _preciseTime, _moveScratch, 240, level);
                     if (_moveScratch.Count == 0 || !TryWalkPath(aircraft, view, mode, out var path))
                         continue;
+                    var walking = _passengersWanted.Count;
                     foreach (var move in _moveScratch)
                     {
                         if (_passengersWanted.Count >= MaxVisiblePassengers)
@@ -571,8 +572,13 @@ namespace Airside.Presentation
                         if (!PlacePassenger(aircraft, move, path))
                             continue;
                     }
+
+                    if (_passengersWanted.Count > walking && mode != BoardingMode.Aerobridge)
+                        KeepWalkwayTape(aircraft.Registration, path);
                 }
             }
+
+            UpdateWalkwayTape();
 
             _passengerScratch.Clear();
             foreach (var pair in _passengers)
@@ -743,7 +749,8 @@ namespace Airside.Presentation
             activity = RampActivity.None;
             progress = 0;
             seconds = 1;
-            if (aircraft == null || aircraft.State != FleetState.AtStand || string.IsNullOrEmpty(aircraft.Stand.Value))
+            if (aircraft == null || aircraft.State != FleetState.AtStand || string.IsNullOrEmpty(aircraft.Stand.Value)
+                || BoardingFlow.InCheck(aircraft, _preciseTime))
                 return false;
             var onStand = Math.Max(0.0, _preciseTime - aircraft.StateStartedAt.ElapsedSeconds);
             if (onStand < 90.0)

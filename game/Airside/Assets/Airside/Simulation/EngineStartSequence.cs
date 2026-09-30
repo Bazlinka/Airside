@@ -78,6 +78,10 @@ namespace Airside.Simulation
                     Ramp(pushing - DepartureCountdown.JetRightStartAfterPushSeconds), beacon: true, 0f, 0f);
             }
 
+            // In a check the aircraft is towed to a hangar (ADR 0186): engines off, beacon off, doors shut.
+            if (aircraft != null && aircraft.State == FleetState.AtStand && BoardingFlow.InCheck(aircraft, nowSeconds))
+                return new EngineState(0f, 0f, beacon: false, 0f, 0f);
+
             var state = ForStairs(aircraft, nowSeconds);
             if (aircraft == null || aircraft.State != FleetState.AtStand)
                 return state;

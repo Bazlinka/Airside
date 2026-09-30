@@ -454,8 +454,8 @@ namespace Airside.Presentation
 
             if (AirsideFocusMode.ShowEnvironment || AirsideBareField.Enabled)
             {
-                if (AirsideFocusMode.ShowEnvironment)
-                    CollectCoastalMotionTargets();
+                // Bare Adelaide also builds YPAD shore foam; collect it so the pulse runs.
+                CollectCoastalMotionTargets();
                 _horizonDome = AirsideSceneIndex.Find("Horizon dome");
                 _cloudRoot = AirsideSceneIndex.Find("Cloud bands");
                 _cloudUmbraRoot = AirsideSceneIndex.Find("Cloud umbras");

@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 Mac path docs match tip `e45eb5ee`.** Plan + checklist document Stage A→B→C,
+  CI-green #491 tip, and `cursor worker start` when workers are offline. No simulation
+  or save changes.
+
 - **P0 inventory log scan uses grep.** Remaining / full P0 runners mark log
   errors without ripgrep, so CI and Mac agents fail closed. Mac prompt adds Stage C
   for hangar/boarding/landings and notes `cursor worker start` when workers are offline.

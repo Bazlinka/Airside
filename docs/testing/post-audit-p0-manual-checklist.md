@@ -15,12 +15,15 @@ Subset: `AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/rev
 
 ```bash
 cd ~/Code/Airside
-# pull + build + remaining stills + copy into docs/testing/post-audit-p0-2026-09-30/
-scripts/run-post-audit-p0-remaining.sh
+# Prefer Stage A → B → C (dirty RESULTS/PNGs between stages are OK):
 # Stage A (minutes — night-sky + freighter; unblocks P2 freighter evidence):
-# AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh
+AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh
 # Stage B (tyre rotation — ~17 min soak; TakingOff ~13 min; reuse Stage A player):
-# AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh
+AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh
+# Stage C (hangar / boarding / landings):
+AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-hangar-tow,follow-boarding-tape,follow-human-ops-close,follow-jet-day,follow-jet-close,follow-storm-landing scripts/run-post-audit-p0-remaining.sh
+# Or all remaining in one go:
+# scripts/run-post-audit-p0-remaining.sh
 ```
 
 Or single night-sky shot:

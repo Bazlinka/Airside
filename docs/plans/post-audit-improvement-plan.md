@@ -20,14 +20,17 @@ concentration / performance**, then finishing half-done product slices (freight)
 
 ### P0 — Mac packaged playtest of unverified merges (do first)
 
-**Status:** automated Mac captures recorded in #490; manual listening/play checks remain open. See
-`docs/testing/post-audit-p0-2026-09-30/RESULTS.md`. Night-sky framing + review follow helpers
-(`auto-landing` / `auto-takeoff` / freighter / hangar check) are in #491; Mac re-run:
-`scripts/review-post-audit-p0-remaining.sh` after rebuild. A Unity player and awake display
-are required. Cloud Linux cannot mark this complete. Self-hosted Mac workers may show
-`eligibleForSubagent: true`, but `Task` cannot pin them. Pin via agents UI environment
-picker or API v1 `env: { "type": "machine", "name": "Bailey's MacBook Pro" }` (machine
-**name**, not `worker_id`). One-paste prompt: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
+**Status:** automated Mac captures recorded in #490; manual listening/play checks remain open
+(21 unverified rows). See `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`. Night-sky
+framing + review follow helpers (`auto-landing` / `auto-takeoff` ~900s / freighter / hangar /
+boarding) are in #491 tip `e45eb5ee` (headless CI green, mergeable). Mac path:
+`scripts/run-post-audit-p0-remaining.sh` Stage A (night-sky+freighter) → B (takeoff
+`SKIP_BUILD`/`SKIP_PULL`) → C (hangar/boarding/landings). A Unity player and awake display
+are required. Cloud Linux cannot mark this complete. If no workers show in
+`list-self-hosted-workers`, run `cursor worker start` on the Mac first. `Task` cannot pin My
+Machines — pin via agents UI environment picker (**Bailey's MacBook Pro**) or API v1
+`env: { "type": "machine", "name": "Bailey's MacBook Pro" }` (machine **name**, not
+`worker_id`). One-paste prompt: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
 
 Many ADRs merged green on EditMode / headless but were never seen or heard in a
 rebuilt game. Attribute bugs before adding content.
@@ -45,9 +48,10 @@ rebuilt game. Attribute bugs before adding content.
 | Human-ops close matrix (clipping, scale, bridge glass) | 0174 |
 
 **Run on Mac:** `scripts/run-post-audit-p0-remaining.sh` (pull + build + remaining
-stills; optional `AIRSIDE_P0_ONLY=shot,shot`) or the full
-`scripts/run-post-audit-p0.sh`. Checklist: `docs/testing/post-audit-p0-manual-checklist.md`.
-Captures go to `work/captures/post-audit-p0-<date>/` and the RESULTS docs folder.
+stills; optional `AIRSIDE_P0_ONLY=shot,shot`; Stage B/C may set `AIRSIDE_P0_SKIP_BUILD=1`
+`AIRSIDE_P0_SKIP_PULL=1`) or the full `scripts/run-post-audit-p0.sh`. Checklist:
+`docs/testing/post-audit-p0-manual-checklist.md`. Captures go to
+`work/captures/post-audit-p0-<date>/` and the RESULTS docs folder.
 
 Exit: Bailey marks each keep / fix / revert. Close or amend ADR “Unity look not
 verified” lines when eyes-on is done.

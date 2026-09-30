@@ -82,8 +82,12 @@ def main():
             if not np.all(np.isfinite(offsets)) or offsets.min() < 0.003 or offsets.max() > 0.025:
                 failures.append(f"{cid}/{name}: paint must be 3-25 mm outside actual skin ({offsets.min():.4f}-{offsets.max():.4f} m)")
         for role in ("livery_secondary", "livery_emblem", "livery_cowl_left", "livery_cowl_right"):
-            if role not in parts or not np.isfinite(parts[role]).all():
+            if role not in parts or not len(parts[role]) or not np.isfinite(parts[role]).all():
                 failures.append(f"{cid}: missing or invalid {role}")
+        if "livery_emblem" in parts:
+            mark = parts["livery_emblem"].reshape(-1, 3)
+            if not ((mark[:, 0] < -0.001).any() and (mark[:, 0] > 0.001).any()):
+                failures.append(f"{cid}: tail mark must be visible on both sides")
         for group in ("cabin_left", "cabin_right", "flightdeck_left", "flightdeck_right"):
             if f"glazing_{group}_interior" not in parts:
                 failures.append(f"{cid}: no recessed {group} interior")

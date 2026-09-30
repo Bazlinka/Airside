@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Unique aircraft liveries and five player presets.** All thirteen flying types have distinct fin
+  symbols and fitted fuselage ribbons. Choose Coastline, Southern Cross, Outback, Gulf or Redgum
+  during setup or repaint from the Airline page; coordinated accent paint matches the swatches.
+  Existing saves/custom colours and non-paint aircraft geometry are preserved. ADR 0200.
+
 - **Airside buildings look finished.** Freight sheds and the fire station get a shallow shaped roof (instead of a flat
   box with plant), every support/freight/fire building gets a base plinth, and doors get lit wall packs so they read at
   night; freight docks gain bumpers and bollards. Presentation only. ADR 0199.

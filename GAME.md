@@ -1,5 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Codex — unique aircraft liveries + five player presets (branch `feature/aircraft-livery-overhaul`, ADR 0200).**
+  Thirteen flying types have individual fin symbols and fitted ribbons. Setup and Airline repaint
+  offer Coastline, Southern Cross, Outback, Gulf and Redgum with coordinated accent colours.
+  Existing custom saves and cargo shading remain supported. Non-paint model geometry is unchanged.
+  - **Checks:** fitted-paint audit passed all 13; setup/Airline tests 28/28; headless 1,131/1,131.
+    Connectivity passed all 13; 347 packaged art files match. The global asset audit has four
+    pre-existing checkout metadata findings; see `docs/testing/aircraft-liveries-2026-09-30/README.md`.
+  - **NEXT:** run Unity EditMode on the Mac and review all types/presets at follow/overview and
+    day/dusk/night before merging. Offline proof sheets are geometry evidence, not Unity captures.
+
 - **2026-09-30 Claude — airside building detail, Phase 3d slice (branch `visual-overhaul-ground`, ADR 0199).**
   Shaped roofs on freight/fire station, plinths, lit wall packs, dock bumpers. Headless suite run here with a local
   .NET 8 (`/opt/dotnet`). **Not verified:** how it renders — needs a Mac capture. **NEXT:** Phase 0 baseline, Phase 1 ground.

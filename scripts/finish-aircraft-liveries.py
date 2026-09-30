@@ -19,20 +19,93 @@ ART = ROOT / 'game/Airside/Assets/Airside/Art/Models/Aircraft'
 
 # name, ribbon family, sweep begins (fraction nose -> tail), lower belt, belt width
 PROFILES = {
-    'ATR42': ('Saltwater', 'coast', .63, -.38, .17),
-    'SF34': ('Ochre Country', 'sun', .69, -.31, .14),
-    'DH8D': ('Coastal Current', 'coast', .70, -.40, .17),
-    'E190': ('Southern Star', 'star', .67, -.34, .18),
-    'A223': ('Morning Light', 'sun', .66, -.39, .20),
-    'A320': ('Tidal Arc', 'coast', .66, -.37, .22),
-    'B738': ('Outback Horizon', 'sun', .71, -.34, .18),
-    'B38M': ('Crosswind', 'star', .68, -.40, .22),
+    'ATR42': ('Saltwater', 'feather', .63, -.38, .17),
+    'SF34': ('Ochre Country', 'sunrise', .69, -.31, .14),
+    'DH8D': ('Coastal Current', 'current', .70, -.40, .17),
+    'E190': ('Southern Star', 'compass', .67, -.34, .18),
+    'A223': ('Morning Light', 'rays', .66, -.39, .20),
+    'A320': ('Tidal Arc', 'tide', .66, -.37, .22),
+    'B738': ('Outback Horizon', 'horizon', .71, -.34, .18),
+    'B38M': ('Crosswind', 'crosswind', .68, -.40, .22),
     'A21N': ('Long Coast', 'coast', .73, -.36, .19),
-    'A359': ('Southern Aurora', 'star', .68, -.40, .23),
-    'A339': ('Desert Dawn', 'sun', .71, -.38, .24),
-    'B789': ('Ocean Reach', 'coast', .69, -.42, .23),
-    'B78X': ('Southern Meridian', 'star', .73, -.38, .23),
+    'A359': ('Southern Aurora', 'aurora', .68, -.40, .23),
+    'A339': ('Desert Dawn', 'dawn', .71, -.38, .24),
+    'B789': ('Ocean Reach', 'ocean', .69, -.42, .23),
+    'B78X': ('Southern Meridian', 'meridian', .73, -.38, .23),
 }
+
+
+# Each convex polygon is clipped independently to both sides of the real fin.
+# Thirteen silhouettes: no logo is reused across catalogue types.
+MOTIFS = {
+    'feather': [[(.17,.43),(.73,.64),(.58,.68),(.15,.50)],
+               [(.18,.60),(.62,.77),(.49,.81),(.16,.66)]],
+    'current': [[(.15,.39),(.55,.51),(.69,.65),(.50,.58),(.15,.46)],
+                [(.19,.61),(.58,.72),(.63,.82),(.43,.75),(.18,.67)]],
+    'rays': [[(.17,.46),(.65,.46),(.61,.51),(.17,.51)],
+             [(.31,.55),(.26,.74),(.32,.77),(.37,.55)],
+             [(.41,.55),(.44,.83),(.50,.81),(.47,.55)],
+             [(.51,.55),(.64,.72),(.68,.68),(.57,.54)]],
+    'tide': [[(.15,.43),(.55,.43),(.70,.58),(.35,.55)],
+             [(.19,.65),(.52,.58),(.66,.67),(.36,.75)]],
+    'horizon': [[(.14,.43),(.68,.43),(.64,.49),(.14,.49)],
+                [(.18,.54),(.42,.73),(.50,.62),(.33,.54)],
+                [(.43,.54),(.52,.66),(.65,.54)]],
+    'crosswind': [[(.17,.41),(.28,.42),(.56,.80),(.47,.82)],
+                  [(.17,.68),(.23,.76),(.65,.50),(.63,.43)]],
+    'coast': [[(.15,.42),(.29,.45),(.58,.77),(.53,.83)],
+              [(.35,.46),(.43,.48),(.66,.69),(.65,.77)]],
+    'aurora': [[(.17,.40),(.29,.43),(.47,.79),(.40,.82)],
+               [(.32,.43),(.43,.46),(.62,.73),(.57,.80)],
+               [(.49,.46),(.58,.47),(.72,.62),(.70,.70)]],
+    'dawn': [[(.15,.43),(.67,.43),(.64,.48),(.15,.48)],
+             [(.23,.57),(.40,.79),(.59,.57),(.41,.62)]],
+    'ocean': [[(.15,.46),(.48,.57),(.68,.55),(.53,.66),(.28,.58)],
+              [(.20,.67),(.50,.74),(.60,.70),(.47,.81),(.25,.75)]],
+    'meridian': [[(.35,.41),(.42,.41),(.48,.82),(.41,.84)],
+                 [(.17,.59),(.34,.72),(.32,.63)],
+                 [(.50,.64),(.66,.54),(.53,.54)]]
+}
+
+
+def emblem_polygons(family):
+    if family == 'sunrise':
+        angles = np.linspace(0, np.pi, 20)
+        return [[(.38,.52), (.38+.19*np.cos(a),.52+.19*np.sin(a)),
+                 (.38+.19*np.cos(b),.52+.19*np.sin(b))]
+                for a,b in zip(angles[:-1],angles[1:])] + [
+                    [(.14,.46),(.65,.46),(.60,.50),(.14,.50)]]
+    if family == 'compass':
+        tips = [(.38,.86),(.43,.66),(.65,.61),(.43,.56),
+                (.38,.39),(.33,.56),(.15,.61),(.33,.66)]
+        return [[(.38,.61),a,b] for a,b in zip(tips,tips[1:]+tips[:1])]
+    return MOTIFS[family]
+
+
+def triangulate_polygon(polygon):
+    """Ear-clip concave marks so the convex surface clip never bridges a notch."""
+    points = [np.array(p, float) for p in polygon]
+    def cross(a, b, c):
+        u, v = b-a, c-a
+        return u[0]*v[1]-u[1]*v[0]
+    if sum(cross(np.zeros(2),a,b) for a,b in zip(points,points[1:]+points[:1])) < 0:
+        points.reverse()
+    triangles = []
+    while len(points) > 3:
+        for i in range(len(points)):
+            a,b,c = points[i-1],points[i],points[(i+1)%len(points)]
+            if cross(a,b,c) <= 1e-9:
+                continue
+            others = [p for j,p in enumerate(points) if j not in ((i-1)%len(points),i,(i+1)%len(points))]
+            if any(min(cross(a,b,p),cross(b,c,p),cross(c,a,p)) >= -1e-9 for p in others):
+                continue
+            triangles.append([a,b,c])
+            del points[i]
+            break
+        else:
+            raise ValueError('invalid emblem polygon')
+    triangles.append(points)
+    return triangles
 
 
 def module(filename):
@@ -167,7 +240,13 @@ def finish(meshes, type_id):
     ts=np.linspace(.15,.935,30)
     def height(t):
         q=max(0.,(t-sweep)/(.935-sweep))
-        return belt+1.34*q*q*(3-2*q)
+        if family in ('horizon', 'meridian', 'crosswind'):
+            rise = q*q  # a crisp, late ascending ribbon
+        elif family in ('current', 'tide', 'ocean'):
+            rise = np.sin(q*np.pi*.5)**2  # a broad wave sweep
+        else:
+            rise = q*q*(3-2*q)
+        return belt+1.34*rise
     secondary=[]
     for side,key in ((-1,'livery_stripe'),(1,'livery_stripe_lower')):
         primary=[]
@@ -182,24 +261,25 @@ def finish(meshes, type_id):
     tail=merge([mesh for name,mesh in meshes.items() if name in ('tail_fin','tail_fin_tip')])
     tv,_=tail; ymin,ymax=tv[:,1].min(),tv[:,1].max(); tzmin,tzmax=tv[:,2].min(),tv[:,2].max()
     # Work in the fin's projected silhouette; clipping fits even swept and T-tail fins.
-    def tailpoint(u,h): return (tzmin+(tzmax-tzmin)*u,ymin+(ymax-ymin)*h)
+    tail_vertices, tail_indices = tail
+    tail_edges = tail_vertices[tail_indices.reshape(-1,3)][:,((0,1),(1,2),(2,0)),:].reshape(-1,2,3)
+    def tailpoint(u,h):
+        # A swept fin's bounding rectangle contains empty space. Fit each symbol row
+        # into the actual projected silhouette so rays/pointers cannot be cut away.
+        y = ymin+(ymax-ymin)*h
+        a,b = tail_edges[:,0,:],tail_edges[:,1,:]
+        dy = b[:,1]-a[:,1]
+        crosses = (np.minimum(a[:,1],b[:,1]) <= y) & (np.maximum(a[:,1],b[:,1]) >= y) & (np.abs(dy)>1e-8)
+        hits = a[crosses,2]+(b[crosses,2]-a[crosses,2])*(y-a[crosses,1])/dy[crosses]
+        if not len(hits): raise ValueError('fin silhouette has no span')
+        return (hits.min()+(hits.max()-hits.min())*u,y)
     emblems=[]
     for side in (-1,1):
         # Contrasting lower diagonal echo under the white symbol.
         secondary.append(clip(tail,[tailpoint(.05,.16),tailpoint(.92,.39),tailpoint(.88,.48),tailpoint(.03,.25)],side=side,offset=.018))
-        if family=='coast':
-            for j in range(3):
-                h=.42+j*.105
-                emblems.append(clip(tail,[tailpoint(.20,h),tailpoint(.72-j*.055,h+.15),tailpoint(.59-j*.035,h+.18),tailpoint(.16,h+.065)],side=side,offset=.022))
-        elif family=='sun':
-            for a,b in zip(np.linspace(0,np.pi,20)[:-1],np.linspace(0,np.pi,20)[1:]):
-                poly=[tailpoint(.38,.52),tailpoint(.38+.19*np.cos(a),.52+.19*np.sin(a)),tailpoint(.38+.19*np.cos(b),.52+.19*np.sin(b))]
-                emblems.append(clip(tail,poly,side=side,offset=.022))
-            emblems.append(clip(tail,[tailpoint(.14,.46),tailpoint(.65,.46),tailpoint(.60,.50),tailpoint(.14,.50)],side=side,offset=.022))
-        else:
-            centre=np.array([.38,.61]); tips=[(.38,.86),(.43,.66),(.65,.61),(.43,.56),(.38,.39),(.33,.56),(.15,.61),(.33,.66)]
-            for a,b in zip(tips,tips[1:]+tips[:1]):
-                emblems.append(clip(tail,[tailpoint(*centre),tailpoint(*a),tailpoint(*b)],side=side,offset=.022))
+        for polygon in emblem_polygons(family):
+            for triangle in triangulate_polygon(polygon):
+                emblems.append(clip(tail,[tailpoint(*p) for p in triangle],side=side,offset=.022))
     meshes['livery_secondary']=merge(secondary)
     meshes['livery_emblem']=merge(emblems)
     # Cowl accents are painted shells. Leave intake lips, exhausts and pylons metal/grey.

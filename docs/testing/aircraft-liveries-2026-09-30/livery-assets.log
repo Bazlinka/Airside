@@ -1,0 +1,9 @@
+Unity asset audit FAILED
+
+Assets missing .meta files:
+  game/Airside/Assets/Resources
+
+Orphan .meta files:
+  game/Airside/Assets/Airside/Art/Animation/Aircraft.meta
+  game/Airside/Assets/Airside/Art/Animation/Vehicles.meta
+  game/Airside/Assets/Airside/Art/Animation/World.meta

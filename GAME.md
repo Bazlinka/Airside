@@ -1,6 +1,6 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Codex — fleet aircraft sound pass (branch `codex/aircraft-audio`, ADR 0192).**
+- **2026-09-30 Codex — fleet aircraft sound pass (merged to `main` as PR #474, `362a2cc0`, ADR 0192).**
   - All 13 flying catalogue types now have representative idle/power/reverse layers. Revs and engine energy
     follow the existing fan/propeller and two-engine start state. Governed props build in load; jets spool in pitch.
   - Each aircraft has spatial tyre contact/gear thump, speed-driven rolling noise and reverse after the type's
@@ -10,10 +10,13 @@
     regenerate with a byte check. Existing recordings stay unchanged. Simulation, saves and schedules are unchanged.
   - **Checks:** Unity 1476/1478, zero failures and two known inconclusives; headless 1105/1105. Generator,
     harness and Unity asset audits pass. Final packaged evidence is recorded in `docs/testing/audio-2026-09-30/README.md`.
-  - **NEXT:** rebuild this tested branch after the capture warm-up/device-change guard, then capture all 13 types with `scripts/audio/capture_aircraft_audio.sh`, run
-    the numerical listening audit and a normal game smoke check, then push the evidence and open the PR.
-    Bailey's listening judgement establishes perceived realism; these remain family-derived voices rather than
-    exact recordings of each engine variant. Other tools' storm-landing work is excluded in a separate worktree.
+  - **Build:** clean Mac player `9c839ac6` passed. Its aircraft code is the merged source. The developer mixer
+    capture starts after device initialisation and rejects audio-device changes and missing/silent running samples.
+  - **NEXT:** Bailey can play the rebuilt app and judge the revs, touchdown and reverse sound. The exhaustive
+    all-type listening capture and normal-game smoke check remain pending after prioritising the immediate merge.
+    These are family-derived voices rather than exact recordings of each engine variant. Preserve other tools'
+    checkout work; the audio worktree and its app remain available for listening.
+
 
 - **2026-09-30 Cursor — far zoom stays where you look (ADR 0191).**
   Zoomed out, the horizon fade was a ring around the camera through the city.

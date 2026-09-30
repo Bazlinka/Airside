@@ -199,16 +199,7 @@ namespace Airside.Presentation
             if (!FleetMode || _operations?.PlayerAirline == null)
                 return;
 
-            FleetAircraft best = null;
-            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
-            {
-                if (aircraft.State != FleetState.AtStand || aircraft.Scheduled.HasValue
-                    || aircraft.IsFreighter || Maintenance.InCheck(aircraft, _clock.Now))
-                    continue;
-                if (best == null || (!aircraft.IsFoundingAircraft && best.IsFoundingAircraft))
-                    best = aircraft;
-            }
-
+            var best = ReviewHangarPick.PickBest(_operations.FleetOf(_operations.PlayerAirline), _clock.Now);
             if (best == null)
             {
                 Debug.LogWarning($"{SoakLogTag} review hangar check: no parked player aircraft");
@@ -237,24 +228,15 @@ namespace Airside.Presentation
             if (!FleetMode || _operations?.PlayerAirline == null)
                 return;
 
-            FleetAircraft best = null;
-            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
-            {
-                if (aircraft.State != FleetState.AtStand || aircraft.IsFreighter
-                    || Maintenance.InCheck(aircraft, _clock.Now)
-                    || AirlineOperations.NeedsTerminalGate(aircraft.Type))
-                    continue;
-                if (aircraft.Scheduled.HasValue)
-                    _operations.CancelDeparture(aircraft);
-                best = aircraft;
-                break;
-            }
-
+            var best = ReviewBoardingPick.PickBest(_operations.FleetOf(_operations.PlayerAirline), _clock.Now);
             if (best == null)
             {
                 Debug.LogWarning($"{SoakLogTag} review boarding: no parked regional to book");
                 return;
             }
+
+            if (best.Scheduled.HasValue)
+                _operations.CancelDeparture(best);
 
             var reachable = _operations.MapDestinations().Where(d => _operations.CanOperate(best, d)
                 && _operations.CareerState.CanAfford(

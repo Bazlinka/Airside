@@ -5,12 +5,13 @@
   `docs/plans/post-audit-improvement-plan.md`. **Cloud goal is set to execute that plan** (P0→P1→P2→P3→P4).
   Phase 0 bookmarks (ADR 0200) are merged onto this branch for shared Mac captures. Headless after merge:
   **1136/1136**. This cloud run is **iOS-started** and cannot pin My Machines via Task.
-  - **P0 (NEXT — Mac shell or Mac-picked agent):** On the Mac in `~/Documents/Codex/Airside` (worker online)
-    or `~/Code/Airside`: checkout this branch, `scripts/build-mac.sh`, `scripts/review-post-audit-p0.sh`,
-    fill keep/fix/revert. Or open [cursor.com/agents](https://cursor.com/agents) on a desktop and pick
-    **Bailey's MacBook Pro** as the environment. Push RESULTS to `cursor/post-audit-p0-results-709e`.
-    Code-only row map (not a substitute for eyes/ears):
-    `docs/testing/post-audit-p0-2026-09-30/CODE_EVIDENCE.md`.
+  - **P0 (NEXT — Mac shell or Mac-picked agent):** Workers online but Linux `Task` cannot pin them —
+    use UI picker / CreateAgent `machine.worker_id` / API v1 machine name. One-paste prompt:
+    `docs/testing/post-audit-p0-mac-agent-prompt.md`. On Mac: checkout this branch,
+    `scripts/build-mac.sh`, `scripts/review-post-audit-p0.sh` (writes RESULTS under
+    `work/captures/` and `docs/testing/post-audit-p0-<date>/`), fill keep/fix/revert, push
+    `cursor/post-audit-p0-results-709e`. Code-only row map:
+    `docs/testing/post-audit-p0-2026-09-30/CODE_EVIDENCE.md` (storm-on-final logic is covered).
   - **P1:** Bailey sign-off on visual overhaul. Phase 0 bookmarks on this branch; Mac metrics still owed.
     Note: PR #486 already started Phase 1 oil stains (ADR 0201) ahead of P0 — do not treat that as P0 done.
   - **P2:** Freight AI / cargo apron / freighter contracts **parked until P0** clears freighter+tyre rows.

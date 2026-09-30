@@ -90,46 +90,96 @@ namespace Airside.Tests
             return ops;
         }
 
+        private static FleetAircraft RestoreHoldingShort(AirlineOperations ops, string registration, long stateStartedAt)
+        {
+            var player = ops.Fleet[0].Airline;
+            Assert.That(DestinationCatalogue.TryFind("PLO", out var portLincoln), Is.True);
+            ops.RestoreAircraft(
+                registration, player, AircraftType.Atr42, FleetState.HoldingShort,
+                new SimulationTime(stateStartedAt), null, default,
+                AirlineOperations.AdelaideRegionalBays[0], portLincoln, null, 0);
+            return ops.Fleet[ops.Fleet.Count - 1];
+        }
+
         [Test]
-        public void Storm_HoldsTheClearanceUntilWeatherClears()
+        public void Storm_LetsAnArrivalAlreadyOnFinalLandAndHoldsTheDeparture()
         {
             Assert.That(Weather.At(new SimulationTime(897000)), Is.EqualTo(WeatherKind.Storm));
             Assert.That(Weather.At(new SimulationTime(900000)), Is.Not.EqualTo(WeatherKind.Storm));
 
             var clock = new ManualSimulationClock(new SimulationTime(897000));
             var ops = HoldingForLandingDuringStorm(clock, 894000);
-            var holder = ops.Fleet[0];
+            var arrival = ops.Fleet[0];
+            var departure = RestoreHoldingShort(ops, "VH-DEP", 894000);
+            var queued = ops.ExpectedLandingQueueTime(arrival, out _);
+
+            Assert.That(queued.HasValue, Is.True);
+            Assert.That(queued.Value.ElapsedSeconds, Is.LessThan(900000),
+                "an aircraft already on final is not parked until the storm ends");
 
             ops.Update();
-            Assert.That(holder.State, Is.EqualTo(FleetState.HoldingForLanding),
-                "a storm withholds a new landing clearance even though the strip is free");
+            Assert.That(arrival.State, Is.EqualTo(FleetState.Landing),
+                "a storm does not withhold a landing that is already on final");
+            Assert.That(departure.State, Is.EqualTo(FleetState.HoldingShort),
+                "a departure still waits out the ground stop");
+            Assert.That(ops.Why(departure).Kind, Is.EqualTo(HoldKind.GroundStop));
             Assert.That(ops.IsGroundStopped, Is.True);
 
             clock.Set(new SimulationTime(900000));
             ops.Update();
-            Assert.That(holder.State, Is.EqualTo(FleetState.Landing),
-                "the held aircraft lands as soon as the storm block ends");
             Assert.That(ops.IsGroundStopped, Is.False);
+            Assert.That(departure.State, Is.Not.EqualTo(FleetState.HoldingShort),
+                "the held departure is released once the storm block ends");
+        }
+
+        [Test]
+        public void Storm_HoldsAnArrivalThatHasNotReachedFinal()
+        {
+            Assert.That(Weather.At(new SimulationTime(897000)), Is.EqualTo(WeatherKind.Storm));
+            var clock = new ManualSimulationClock(new SimulationTime(897000));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(7), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideRegionalBays);
+            var player = Airline.Player("Storm Air", "#445566");
+            ops.AddAirline(player);
+            Assert.That(DestinationCatalogue.TryFind("PLO", out var portLincoln), Is.True);
+            ops.RestoreAircraft(
+                "VH-INB", player, AircraftType.Atr42, FleetState.Inbound,
+                new SimulationTime(890000), new SimulationTime(897000),
+                default, default, portLincoln, null, 0);
+            var inbound = ops.Fleet[0];
+
+            ops.Update();
+            Assert.That(inbound.State, Is.EqualTo(FleetState.Inbound),
+                "an arrival that has not reached final does not join the approach during a storm");
+            Assert.That(inbound.StateEndsAt, Is.EqualTo(new SimulationTime(900000)));
+            Assert.That(ops.Why(inbound).Kind, Is.EqualTo(HoldKind.GroundStop));
+
+            clock.Set(new SimulationTime(900000));
+            ops.Update();
+            Assert.That(inbound.State, Is.Not.EqualTo(FleetState.Inbound),
+                "it joins final once the storm block ends");
         }
 
         [Test]
         public void Storm_ReleaseIsIdenticalWhetherSteppedBySecondOrSkippedToTheNextEvent()
         {
-            const long start = 894000;
+            const long start = 897000;
             const long horizon = 904000;
 
             string Run(Func<ManualSimulationClock, AirlineOperations, bool> step)
             {
                 var clock = new ManualSimulationClock(new SimulationTime(start));
-                var ops = HoldingForLandingDuringStorm(clock, start);
+                var ops = HoldingForLandingDuringStorm(clock, 894000);
+                RestoreHoldingShort(ops, "VH-DEP", 894000);
                 while (clock.Now.ElapsedSeconds < horizon && step(clock, ops))
                 {
                 }
 
                 clock.Set(new SimulationTime(horizon));
                 ops.Update();
-                var holder = ops.Fleet[0];
-                return $"{holder.State}@{holder.StateStartedAt.ElapsedSeconds}";
+                var arrival = ops.Fleet[0];
+                var departure = ops.Fleet[1];
+                return $"{arrival.State}@{arrival.StateStartedAt.ElapsedSeconds}|{departure.State}@{departure.StateStartedAt.ElapsedSeconds}";
             }
 
             var bySecond = Run((c, o) => { c.Advance(1); o.Update(); return true; });

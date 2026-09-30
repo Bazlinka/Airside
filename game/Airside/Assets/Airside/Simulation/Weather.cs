@@ -35,6 +35,14 @@ namespace Airside.Simulation
         // real 24-hour day at 60x it flickered rain on and off every five seconds.
         public const long BlockSeconds = 3600;
 
+        /// <summary>Start of the hour-long block that contains <paramref name="now"/>.</summary>
+        public static SimulationTime BlockStart(SimulationTime now) =>
+            new SimulationTime(FloorDiv(now.ElapsedSeconds, BlockSeconds) * BlockSeconds);
+
+        /// <summary>First instant of the weather block after the one containing <paramref name="now"/>.</summary>
+        public static SimulationTime NextBlock(SimulationTime now) =>
+            BlockStart(now).Advance(BlockSeconds);
+
         /// <summary>Hours a chain runs before the day it answers for, so days join up.</summary>
         public const int LeadInBlocks = 48;
 

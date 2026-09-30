@@ -123,6 +123,8 @@ namespace Airside.Simulation
                     return WhyAwaitingStand(aircraft, now);
                 case FleetState.Inbound when aircraft.StateEndsAt.HasValue
                                              && aircraft.StateEndsAt.Value.CompareTo(now) > 0:
+                    if (Weather.At(now) == WeatherKind.Storm)
+                        return new HoldReason(HoldKind.GroundStop, until: aircraft.StateEndsAt, detail: "storm");
                     if (!ExemptFromCurfew(aircraft) && AirportCurfew.IsClosed(now, Clock))
                         return new HoldReason(HoldKind.HeldAirborne, until: aircraft.StateEndsAt, detail: "curfew");
                     return HoldReason.Nothing;
@@ -225,7 +227,9 @@ namespace Airside.Simulation
         {
             var runway = aircraft.AssignedRunway;
             var main = RunwayWeather.IsMainRunway(runway);
-            if (Weather.At(now) == WeatherKind.Storm)
+            // Departures stay on the ground stop. An arrival already on final is cleared
+            // through the storm (ADR 0190), so its card names whatever else is in the way.
+            if (departure && Weather.At(now) == WeatherKind.Storm)
                 return new HoldReason(HoldKind.GroundStop, runway: runway);
             if (!departure && aircraft.StateEndsAt.HasValue && aircraft.StateEndsAt.Value.CompareTo(now) > 0)
                 return new HoldReason(HoldKind.HeldAirborne, runway: runway, until: aircraft.StateEndsAt, detail: "curfew");

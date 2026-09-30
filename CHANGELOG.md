@@ -1,5 +1,7 @@
 ## Unreleased
 
+- **Arrivals already on final land through a storm.** A ground stop was holding every landing, so an aircraft on final sat over the field until the storm hour ended. It now lands. Departures still wait, and an arrival that has not reached final does not join the approach until the storm clears. Not yet seen in a rebuilt game.
+- **Far zoom no longer hazes in a circle or snaps back to the airport.** Zoomed out, the horizon fade was a ring around the camera cutting through the city. It now sits past the far clip. Zooming in stays on the point under the cursor instead of being pulled back as the pan leash shrinks. Not yet seen in a rebuilt game.
 - **A real-looking map when zoomed out.** Beyond the satellite image, the far land is now coloured from real land cover:
   suburbs, crop paddocks, woodland, and the Gulfs and rivers, rather than one plain colour. Credits added to the Flight
   Manual. Not yet seen in a rebuilt game.

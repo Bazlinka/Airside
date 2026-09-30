@@ -1,5 +1,20 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Cursor — far zoom stays where you look (ADR 0191).**
+  Zoomed out, the horizon fade was a ring around the camera through the city.
+  It now sits past the far clip. Scrolling in stays on the point under the
+  cursor instead of being pulled back to the airport as the pan leash shrinks.
+  - **NEXT:** confirm both in a running game: an arrival already on final during
+    a storm lands, and zooming out over the city then scrolling in on a suburb
+    stays there. Unity EditMode was not confirmed green (the script compile stalled).
+
+- **2026-09-30 Cursor — arrivals already on final land through a storm (ADR 0190).**
+  A ground stop was withholding the landing clearance for every aircraft in
+  `HoldingForLanding`, so a plane already on final sat over the field for the
+  rest of the storm hour (`HOLD · STORM`). The tower now lands that arrival.
+  Departures stay held, and an inbound that has not reached final does not join
+  the approach until the storm block ends.
+
 - **2026-09-30 Codex — Adelaide emergency aviation and road assets (branch
   `codex/adelaide-helicopter-road-assets`, ADR 0186).**
   - AIR-017 is a project-authored, unbranded Bell 412EP-class rescue helicopter at the OSM Helipad West beside the

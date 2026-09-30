@@ -292,6 +292,10 @@ namespace Airside.Tests
             Assert.That(AirsideCameraFeel.HorizonScale(d, 30000f), Is.GreaterThan(3f));
             Assert.That(AirsideCameraFeel.FogScale(d, AirsideBareField.ClassicMaxOrbitDistance), Is.LessThan(0.2f));
             Assert.That(AirsideCameraFeel.PanRadius(d), Is.GreaterThan(35000f));
+            Assert.That(
+                AirsideCameraFeel.HorizonFadeStartMetres * AirsideCameraFeel.HorizonScale(d, 30000f),
+                Is.GreaterThan(AirsideCameraFeel.FarClip(d, 30000f)),
+                "zoomed out, the camera-centred haze ring sits past the far clip");
             // grows monotonically with distance
             float pn = 0f, pf = 0f, pr = 0f;
             for (var x = 3000f; x <= d; x *= 1.4f)
@@ -312,6 +316,29 @@ namespace Airside.Tests
             Assert.That(x, Is.EqualTo(30000f));
             AirsideCameraFeel.ClampPanCentre(0f, 0f, 30000f, 0f, out x, out z);
             Assert.That(x, Is.EqualTo(AirsideCameraFeel.MaxPanRadiusMetres).Within(1f), "the classic radius by default");
+        }
+
+        [Test]
+        public void ClampPanCentre_KeepsAPointYouZoomedInOn()
+        {
+            AirsideCameraFeel.ClampPanCentre(
+                0f, 0f, 12000f, 4000f, out var x, out var z, radiusMetres: 3800f, keepMetres: 13000f);
+            Assert.That(x, Is.EqualTo(12000f).Within(0.01f));
+            Assert.That(z, Is.EqualTo(4000f).Within(0.01f));
+        }
+
+        [Test]
+        public void GroundHit_ReachesAFarCityPointTheFallbackWouldMiss()
+        {
+            var dirY = -40000f;
+            var dirZ = 40000f;
+            var len = Math.Sqrt(dirY * dirY + dirZ * dirZ);
+            AirsideCameraFeel.GroundHit(
+                0f, 40000f, 0f, 0f, (float)(dirY / len), (float)(dirZ / len),
+                groundY: 0f, farMetres: 45000f, out var hitX, out var hitZ, maxRayMetres: 400000f);
+            Assert.That(hitX, Is.EqualTo(0f).Within(1f));
+            Assert.That(hitZ, Is.EqualTo(40000f).Within(1f),
+                "a cursor on the far side of the city is the zoom target, not the ground under the camera");
         }
 
         // --- Follow camera (ADR 0189) ---

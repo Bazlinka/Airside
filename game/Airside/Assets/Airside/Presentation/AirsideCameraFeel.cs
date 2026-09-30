@@ -64,9 +64,30 @@ namespace Airside.Presentation
         public static float FarClip(float distance, float baseFarClip) =>
             Math.Max(baseFarClip, distance * 2.6f);
 
-        /// <summary>How far the horizon haze (fixed distances in the terrain shaders) is pushed out with the far clip.</summary>
-        public static float HorizonScale(float distance, float baseFarClip) =>
-            FarClip(distance, baseFarClip) / Math.Max(1f, baseFarClip);
+        /// <summary>
+        /// The surroundings fade starts at this many metres when <see cref="HorizonScale"/> is 1
+        /// (the same value as the far surroundings material). Kept here so the scale can hold that
+        /// ring outside the view without pulling in the shader types.
+        /// </summary>
+        public const float HorizonFadeStartMetres = 25500f;
+
+        /// <summary>Orbit distance at which the classic horizon fade would start cutting a ring through the view.</summary>
+        public const float ClassicZoomForHorizonMetres = 4500f;
+
+        /// <summary>
+        /// How far the camera-centred horizon haze is pushed. Up to the classic zoom it stays just
+        /// inside the 30 km clip. Further out that sphere crosses the city as a ring, so the fade
+        /// is held past the far clip and the thinned weather fog is the only haze.
+        /// </summary>
+        public static float HorizonScale(float distance, float baseFarClip)
+        {
+            var far = FarClip(distance, baseFarClip);
+            var withClip = far / Math.Max(1f, baseFarClip);
+            if (distance <= ClassicZoomForHorizonMetres)
+                return withClip;
+            var clearOfView = far / HorizonFadeStartMetres * 1.05f;
+            return Math.Max(withClip, clearOfView);
+        }
 
         /// <summary>Fog thins past the classic zoom limit so the far view is hazy, not white: density x classic / distance.</summary>
         public static float FogScale(float distance, float classicMaxDistance) =>
@@ -202,20 +223,22 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Where a ray meets a horizontal ground plane. Rays that miss (sky / horizon)
-        /// fall back to <paramref name="farMetres"/> along the flattened direction, matching
-        /// <see cref="FieldMiniMap.GroundPoint"/>.
+        /// Where a ray meets a horizontal ground plane. A hit further than
+        /// <paramref name="maxRayMetres"/> (default <paramref name="farMetres"/>) is treated as a
+        /// miss. Rays that miss (sky / horizon) fall back to <paramref name="farMetres"/> along
+        /// the flattened direction, matching <see cref="FieldMiniMap.GroundPoint"/>.
         /// </summary>
         public static void GroundHit(
             float originX, float originY, float originZ,
             float dirX, float dirY, float dirZ,
             float groundY, float farMetres,
-            out float hitX, out float hitZ)
+            out float hitX, out float hitZ, float maxRayMetres = 0f)
         {
+            var rayLimit = maxRayMetres > 0f ? maxRayMetres : farMetres;
             if (dirY < -0.0001f)
             {
                 var distance = (groundY - originY) / dirY;
-                if (distance >= 0f && distance <= farMetres)
+                if (distance >= 0f && distance <= rayLimit)
                 {
                     hitX = originX + dirX * distance;
                     hitZ = originZ + dirZ * distance;
@@ -265,12 +288,16 @@ namespace Airside.Presentation
         public static void ClampPanCentre(
             float overviewX, float overviewZ,
             float centerX, float centerZ,
-            out float clampedX, out float clampedZ, float radiusMetres = MaxPanRadiusMetres)
+            out float clampedX, out float clampedZ, float radiusMetres = MaxPanRadiusMetres,
+            float keepMetres = 0f)
         {
             var dx = centerX - overviewX;
             var dz = centerZ - overviewZ;
             var radiusSq = dx * dx + dz * dz;
-            var maxSq = radiusMetres * radiusMetres;
+            // keepMetres lets a view that zoomed in on a far point stay there. The leash still
+            // stops a pan or a zoom-out from walking further from the overview than allowed.
+            var allowed = radiusMetres > keepMetres ? radiusMetres : keepMetres;
+            var maxSq = allowed * allowed;
             if (radiusSq <= maxSq || radiusSq < 0.0001f)
             {
                 clampedX = centerX;
@@ -278,7 +305,7 @@ namespace Airside.Presentation
                 return;
             }
 
-            var scale = radiusMetres / (float)Math.Sqrt(radiusSq);
+            var scale = allowed / (float)Math.Sqrt(radiusSq);
             clampedX = overviewX + dx * scale;
             clampedZ = overviewZ + dz * scale;
         }

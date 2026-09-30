@@ -594,11 +594,12 @@ namespace Airside.Presentation
                     // follow, so WASD is read as "hand the camera back and move".
                     if (_following)
                         ReleaseFollow();
+                    var keep = PlanarOffsetFromOverview(_center.x, _center.z);
                     var planarForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
                     var planarRight = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
                     _center += (planarForward * move.y + planarRight * move.x)
                         * (KeyboardPanMetresPerSecond(_distance) * AirsideSettings.Current.CameraSpeed * dt);
-                    ClampPanCentre();
+                    ClampPanCentre(keep);
                     _easingOverview = false;
                 }
             }
@@ -754,9 +755,15 @@ namespace Airside.Presentation
                     AirsideCameraFeel.ZoomTowardPivot(
                         _center.x, _center.z, _zoomPivotX, _zoomPivotZ, applied,
                         out var cx, out var cz);
+                    var before = PlanarOffsetFromOverview(_center.x, _center.z);
                     _center.x = cx;
                     _center.z = cz;
-                    ClampPanCentre();
+                    // The pan leash shrinks as the camera comes in. That must not drag a view
+                    // you aimed at the city back to the airport. Zooming out may not walk
+                    // further from the overview than you already are, or than the leash allows.
+                    var after = PlanarOffsetFromOverview(_center.x, _center.z);
+                    var keep = applied < 1f ? Mathf.Max(before, after) : before;
+                    ClampPanCentre(keep);
                 }
             }
         }
@@ -786,8 +793,10 @@ namespace Airside.Presentation
                     beforeX - afterX, beforeZ - afterZ,
                     AirsideCameraFeel.MaxPanStepMetres(_distance),
                     out var stepX, out var stepZ);
+                var keep = PlanarOffsetFromOverview(_center.x, _center.z);
                 _center.x += stepX;
                 _center.z += stepZ;
+                ClampPanCentre(keep);
             }
             else
             {
@@ -797,10 +806,11 @@ namespace Airside.Presentation
                 AirsideCameraFeel.ClampPanStep(
                     raw.x, raw.z, AirsideCameraFeel.MaxPanStepMetres(_distance),
                     out var stepX, out var stepZ);
+                var keep = PlanarOffsetFromOverview(_center.x, _center.z);
                 _center -= new Vector3(stepX, 0f, stepZ);
+                ClampPanCentre(keep);
             }
 
-            ClampPanCentre();
             _easingOverview = false;
         }
 
@@ -853,17 +863,32 @@ namespace Airside.Presentation
 
             AirsideCameraFeel.GroundHit(
                 origin.x, origin.y, origin.z, direction.x, direction.y, direction.z,
-                _center.y, AirsideBareField.MaxOrbitDistance, out x, out z);
+                _center.y, AirsideBareField.MaxOrbitDistance, out x, out z,
+                maxRayMetres: GroundRayReachMetres);
             return true;
         }
 
-        private void ClampPanCentre()
+        /// <summary>
+        /// How far a pointer ray may travel to meet the ground. The sky fallback stays at the
+        /// orbit limit; a real hit further out (zoomed out, cursor on the far side of the city)
+        /// must still count or zoom aims at the ground under the camera instead.
+        /// </summary>
+        private const float GroundRayReachMetres = 400_000f;
+
+        private void ClampPanCentre(float keepMetres = 0f)
         {
             AirsideCameraFeel.ClampPanCentre(
                 _overviewCenter.x, _overviewCenter.z, _center.x, _center.z,
-                out var cx, out var cz, AirsideCameraFeel.PanRadius(_distance));
+                out var cx, out var cz, AirsideCameraFeel.PanRadius(_distance), keepMetres);
             _center.x = cx;
             _center.z = cz;
+        }
+
+        private float PlanarOffsetFromOverview(float x, float z)
+        {
+            var dx = x - _overviewCenter.x;
+            var dz = z - _overviewCenter.z;
+            return Mathf.Sqrt(dx * dx + dz * dz);
         }
 
         /// <summary>The ground point the camera orbits, for the mini-map's view marker.</summary>

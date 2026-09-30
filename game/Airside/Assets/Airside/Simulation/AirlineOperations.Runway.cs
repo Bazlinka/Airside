@@ -322,10 +322,6 @@ namespace Airside.Simulation
             var freeAt = mainStrip ? _mainRunwayFreeAt : _crossRunwayFreeAt;
             if (freeAt.CompareTo(now) > 0)
                 return false;
-            // ADR 0058: a storm holds every new clearance. An aircraft already landing
-            // or taking off keeps going — this only stops the tower starting the next one.
-            if (Weather.At(now) == WeatherKind.Storm)
-                return false;
 
             // The longest-waiting arrival that may land now. One the curfew holds is sent to the
             // opening; it used to block every arrival behind it, including ones allowed to land.
@@ -347,23 +343,34 @@ namespace Airside.Simulation
             var departure = LongestWaiting(FleetState.HoldingShort, mainStrip);
             if (departure != null && !MayUseRunwayDuringCurfew(departure, now))
                 departure = null;
-            var next = arrival ?? departure;
-            if (arrival != null && departure != null
-                && now.ElapsedSeconds - departure.StateStartedAt.ElapsedSeconds >= DepartureMaxHoldSeconds
-                && departure.StateStartedAt.CompareTo(arrival.StateStartedAt) < 0)
-                next = departure;
+            // ADR 0058 / 0190: a storm holds every new clearance. An aircraft already on
+            // final is a movement underway and lands; departures stay at the hold.
+            var storm = Weather.At(now) == WeatherKind.Storm;
+            var launch = storm ? null : departure;
+            if (storm && arrival == null)
+                return false;
+            var next = arrival ?? launch;
+            if (arrival != null && launch != null
+                && now.ElapsedSeconds - launch.StateStartedAt.ElapsedSeconds >= DepartureMaxHoldSeconds
+                && launch.StateStartedAt.CompareTo(arrival.StateStartedAt) < 0)
+                next = launch;
             // An arrival whose vacate runs through an aircraft holding short (12's exit passes the
             // 30 hold) would drive through it: send the holder first, then land the arrival.
+            // During a storm the holder cannot be sent, so the arrival waits rather than driving through.
             if (next == null)
                 return false;
             if (next == arrival && departure != null && VacateCrossesHolder(arrival, mainStrip))
+            {
+                if (launch == null)
+                    return false;
                 next = departure;
+            }
             // Nor may its vacate run into traffic already taxiing. If it would, a waiting
             // departure goes first; otherwise the arrival holds a little longer, re-checked on
             // the ground-control grid so the result does not depend on how the clock steps.
             if (next == arrival && !VacateClearOfTaxiing(arrival, now))
             {
-                if (departure != null)
+                if (launch != null)
                     next = departure;
                 else
                     return false;
@@ -477,6 +484,9 @@ namespace Airside.Simulation
             }
 
             var mainStrip = RunwayWeather.IsMainRunway(runway);
+            // Already on final: the tower will land it through a storm (ADR 0190), so the
+            // estimate must not park it until the weather block ends.
+            var established = aircraft.State == FleetState.HoldingForLanding;
             var arrivals = new List<FleetAircraft>();
             var departures = new List<FleetAircraft>();
             foreach (var other in _fleet)
@@ -491,6 +501,8 @@ namespace Airside.Simulation
 
             arrivals.Sort((a, b) => Before(a, a.StateStartedAt, b, b.StateStartedAt) ? -1 : 1);
             departures.Sort((a, b) => a.StateStartedAt.CompareTo(b.StateStartedAt));
+            if (established && Weather.At(_clock.Now) == WeatherKind.Storm)
+                departures.Clear();
 
             var at = mainStrip ? _mainRunwayFreeAt : _crossRunwayFreeAt;
             if (at.CompareTo(_clock.Now) < 0)
@@ -510,7 +522,8 @@ namespace Airside.Simulation
 
             for (var guard = 0; guard < 256; guard++)
             {
-                at = AfterStorms(at);
+                if (!established)
+                    at = AfterStorms(at);
                 var nextArrivalJoined = arrivals.Count > 0 ? arrivals[0].StateStartedAt : joins;
                 if (departures.Count > 0
                     && departures[0].StateStartedAt.CompareTo(nextArrivalJoined) < 0
@@ -632,7 +645,7 @@ namespace Airside.Simulation
         private static SimulationTime AfterStorms(SimulationTime at)
         {
             for (var i = 0; i < 48 && Weather.At(at) == WeatherKind.Storm; i++)
-                at = new SimulationTime((at.ElapsedSeconds / Weather.BlockSeconds + 1) * Weather.BlockSeconds);
+                at = Weather.NextBlock(at);
             return at;
         }
 

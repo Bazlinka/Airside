@@ -1,5 +1,10 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Claude — Terminal 1 doors and detail (branch `claude/terminal-doors-detail`, ADR 0197).**
+  Gate-lounge doors per aerobridge, apron staff doors, landside entrance banks, joints/downpipes (presentation only).
+  Tests added in `AdelaideTerminalArchitectureTests`; **not run** (no Unity/.NET here) — run `scripts/test-unity.sh`,
+  then eyeball the airside and kerb cameras. Door placement other than gate doors is approximate, not surveyed.
+
 - **2026-09-30 Cursor — aircraft heard from the camera focus (branch `cursor/aircraft-audio-focus-listener`, ADR 0196).**
   Bailey could not hear the ADR 0192 aircraft sound. The listener sat on the camera, which orbits 2.4 km out at
   overview — past every type's hearing range (1.0–2.2 km) — so all aircraft were culled. A dedicated focus

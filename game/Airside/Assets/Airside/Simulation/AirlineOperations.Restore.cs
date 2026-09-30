@@ -206,6 +206,14 @@ namespace Airside.Simulation
             aircraft.CheckUntil = checkUntilSeconds > 0 ? new SimulationTime(checkUntilSeconds) : null;
         }
 
+        internal void RestoreFreighter(string registration)
+        {
+            var aircraft = _fleet.Find(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase));
+            if (aircraft == null)
+                throw new FormatException($"{registration}: freighter role has no aircraft.");
+            aircraft.IsFreighter = true;
+        }
+
         internal void RestoreAircraftHistory(string registration, SimulationTime joinedAt, bool founding,
             long lifetimeRevenue, int historyFlights, IEnumerable<AircraftRouteTally> routes)
         {

@@ -1,5 +1,14 @@
 ## Unreleased
 
+- **Freight flights: a second way to earn.** Refit a parked aircraft to a freighter from its Fleet card (turboprop $400,
+  jets $2,400, widebodies $9,000; refit back for the same fee). A freighter carries no passengers, is paid from the tonnes
+  its destination offers against its payload (thin passenger routes like Coober Pedy can pay better by freight), and wears a
+  cargo livery: your colour in a deep working shade and a "... CARGO" title, repainted in place. The planner and route map
+  show tonnes instead of seats. Save v19. AI freight carriers and freight-only contracts are next. ADR 0194.
+- **Tyres stay on the ground on rotation and in the flare.** Aircraft pitched about the nose stop, so the main tyres dropped
+  up to about 2.7 m below the runway. They now pivot on the main gear; skid marks and the touchdown puff sit at the tyres.
+  ADR 0194. Not yet seen in a rebuilt game.
+
 - **Weather has depth.** Clouds now have rounded, irregular 3D bodies and shaded bases, overcast
   has a rolling ceiling, and fog drifts through a shallow layer over the airport. Rain uses one
   mesh of soft wind-driven streaks that stays visible from follow and overview views. Cloud

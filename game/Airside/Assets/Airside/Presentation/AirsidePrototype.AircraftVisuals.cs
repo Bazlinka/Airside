@@ -111,6 +111,9 @@ namespace Airside.Presentation
 
                 var engines = FleetEngines(flight);
                 var viewParts = PartsFor(view);
+                if (viewParts.Profile != null)
+                    view.position += Vector3.up * AircraftGearPivot.LiftMetres(view.rotation,
+                        new Vector3(0f, viewParts.Profile.ModelGroundOffsetMetres, viewParts.MainGearZMetres));
                 SpinPropellers(view, viewParts.Propellers, phase, engines, progress);
                 SpinJetFans(view, viewParts.FanLeft, viewParts.FanRight, phase, engines, progress);
                 UpdateNoseWheelSteering(viewParts.GearNose,
@@ -573,6 +576,8 @@ namespace Airside.Presentation
                 nextIds[index] = flight.AircraftId;
                 if (byId.TryGetValue(flight.AircraftId, out var existing))
                 {
+                    if (FleetMode)
+                        RefreshFreighterLivery(existing, flight.AircraftId);
                     next[index] = existing;
                     kept.Add(existing);
                     existing.gameObject.SetActive(visible);
@@ -676,7 +681,10 @@ namespace Airside.Presentation
                     && VisualPhaseProgress(flight, 0f) >= AirsideFlightPath.TouchdownProgress)
                 {
                     _touchdownFired.Add(id);
-                    _touchdownSmoke.position = _commercialAircraft[index].position + Vector3.up * 0.15f;
+                    TryGetMainGearContacts(_commercialAircraft[index], out var smokeLeft, out var smokeRight);
+                    var smokeAt = (smokeLeft + smokeRight) * 0.5f;
+                    smokeAt.y = AirsideFlightPath.GroundY;
+                    _touchdownSmoke.position = smokeAt + Vector3.up * 0.15f;
                     _touchdownSmoke.rotation = _commercialAircraft[index].rotation;
                     _touchdownSmoke.localScale = Vector3.one * 1.35f;
                     for (var p = 0; p < _touchdownSmoke.childCount; p++)
@@ -767,15 +775,17 @@ namespace Airside.Presentation
                 return;
 
             // Two dark rubber streaks under main gear — fade over ~22s (presentation only).
+            TryGetMainGearContacts(aircraft, out var leftContact, out var rightContact);
             for (var i = 0; i < 2; i++)
             {
                 var mark = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 mark.name = "Skid mark";
                 DestroyPresentationObject(mark.GetComponent<Collider>());
                 mark.transform.SetParent(_skidMarkRoot, false);
-                var side = i == 0 ? -2.05f : 2.05f;
-                mark.transform.position = aircraft.position
-                    + aircraft.right * side
+                // Under the real tyres (the root is the nose datum on the jets), on the tarmac.
+                var contact = i == 0 ? leftContact : rightContact;
+                contact.y = AirsideFlightPath.GroundY;
+                mark.transform.position = contact
                     + aircraft.forward * -0.4f
                     + Vector3.up * 0.04f;
                 var fwd = Vector3.ProjectOnPlane(aircraft.forward, Vector3.up);

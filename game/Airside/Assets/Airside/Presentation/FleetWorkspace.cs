@@ -133,6 +133,11 @@ namespace Airside.Presentation
         public bool CanStartCheck { get; private set; }
         public string StartCheckLabel { get; private set; } = string.Empty;
 
+        /// <summary>ADR 0194: the aircraft's role, and the refit that changes it.</summary>
+        public string RoleLine { get; private set; } = string.Empty;
+        public bool CanChangeRole { get; private set; }
+        public string ChangeRoleLabel { get; private set; } = string.Empty;
+
         public void Rebuild(AirlineOperations operations, SimulationTime now, string selectedRegistration)
         {
             _mine.Clear();
@@ -154,6 +159,9 @@ namespace Airside.Presentation
             CanTrack = false;
             CanStartCheck = false;
             StartCheckLabel = string.Empty;
+            RoleLine = string.Empty;
+            CanChangeRole = false;
+            ChangeRoleLabel = string.Empty;
             if (operations == null)
                 return;
 
@@ -431,6 +439,18 @@ namespace Airside.Presentation
                 : string.Empty;
             CanTrack = PrimaryAction != AircraftHudAction.TrackFlight && !CanStartCheck
                        && !Maintenance.InCheck(aircraft, now);
+
+            if (aircraft.Airline.IsPlayer)
+            {
+                var refit = FreightRates.ConversionCost(aircraft.Type);
+                RoleLine = aircraft.IsFreighter
+                    ? $"Freighter · {FreightRates.CapacityTonnes(aircraft.Type):0.#} t payload, paid on the freight a route offers"
+                    : $"Passengers · a freighter would carry {FreightRates.CapacityTonnes(aircraft.Type):0.#} t";
+                CanChangeRole = aircraft.State == FleetState.AtStand && !aircraft.Scheduled.HasValue
+                                && !Maintenance.InCheck(aircraft, now);
+                ChangeRoleLabel = (aircraft.IsFreighter ? "TO PASSENGERS $" : "TO FREIGHTER $")
+                                  + refit.ToString("N0");
+            }
         }
 
         private static OperationsPrepCheck PrepCheck(string name, double progress, bool active)
@@ -734,9 +754,16 @@ namespace Airside.Presentation
                 return;
             }
 
+            if (model.RoleLine.Length > 0)
+            {
+                into.Text(new HudBox(pane.X, y - 6f, pane.Width, 18f), model.RoleLine, 12f, HudTone.Muted);
+                y += 20f;
+            }
+
             var buttonY = y + 8f;
-            if (buttonY + 34f > pane.Bottom)
-                buttonY = pane.Bottom - 38f;
+            var roleRow = model.RoleLine.Length > 0 ? 40f : 0f;
+            if (buttonY + 34f + roleRow > pane.Bottom)
+                buttonY = pane.Bottom - 38f - roleRow;
             var half = (pane.Width - 10f) * 0.5f;
             if (model.PrimaryAction != AircraftHudAction.None)
                 into.Button(new HudBox(pane.X, buttonY, half, 34f), model.PrimaryActionLabel,
@@ -747,6 +774,9 @@ namespace Airside.Presentation
             else if (model.CanTrack)
                 into.Button(new HudBox(pane.X + half + 10f, buttonY, half, 34f), "TRACK", HudAction.Track,
                     HudButtonStyle.Secondary);
+            if (model.RoleLine.Length > 0)
+                into.Button(new HudBox(pane.X, buttonY + 40f, pane.Width, 30f), model.ChangeRoleLabel,
+                    HudAction.ToggleFreighter, HudButtonStyle.Secondary, model.CanChangeRole);
         }
 
         /// <summary>

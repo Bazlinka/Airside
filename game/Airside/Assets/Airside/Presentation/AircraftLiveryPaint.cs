@@ -25,6 +25,19 @@ namespace Airside.Presentation
                 : new Color(0.16f, 0.25f, 0.31f);
         }
 
+        /// <summary>
+        /// The cargo variant of an operator colour (ADR 0194): the same hue, deep and desaturated, so a
+        /// freighter reads as the same airline in its working paint. A near-grey colour keeps a slate
+        /// hue rather than going black.
+        /// </summary>
+        public static Color FreightPrimary(Color primary)
+        {
+            Color.RGBToHSV(primary, out var hue, out var saturation, out _);
+            if (saturation < 0.12f)
+                return new Color(0.20f, 0.24f, 0.29f);
+            return Color.HSVToRGB(hue, Mathf.Clamp(saturation, 0.40f, 0.80f), 0.34f);
+        }
+
         public static Color Colour(string part, Color primary)
         {
             var key = part.Replace('_', ' ').ToLowerInvariant();

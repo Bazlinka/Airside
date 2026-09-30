@@ -1,5 +1,18 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Claude — freight flights and the tyre fix (branch `worktree-cargo-freight`, ADR 0194).**
+  - **Freight:** a parked player aircraft can be refitted to a freighter (Fleet card, fixed fee). No passengers walk to
+    it, its forecast and pay are in tonnes (`FreightRates`, `RouteForecast.ForFreight`), its livery is a deep cargo shade
+    of the airline colour with a "... CARGO" title (`AircraftLiveryPaint.FreightPrimary`, `Airline.FreightTitle`),
+    repainted in place (`RefreshFreighterLivery`). Save v19 (`IsFreighter`).
+  - **Tyres:** pitch pivots on the main gear (`AircraftGearPivot`); skid marks and touchdown smoke use the real tyre
+    contacts. The path height is the wheels' height, so the jets' nose datum is lifted by up to ~2.7 m at rotation.
+  - **NEXT:** look at a jet rotating and flaring from the side, and a freighter at follow distance. Then AI freight
+    carriers (DHL, Qantas Freight and the like, night bank, own liveries), freight contracts that need a freighter, and a
+    cargo apron.
+  - **Checks:** see CHANGELOG. Headless harness not run (no .NET here); `FreightTests.cs` was added to
+    `Harness.Generated.props` by hand, so run `scripts/update-harness.py --check` on a machine with .NET.
+
 - **2026-09-30 Codex — weather depth (PR #476, ADR 0193).**
   - Clouds now have rounded 3D density bodies, sun-shaded bases and storm towers. The original atlas
     remains a fallback; the existing sixteen-cluster count, weather reveal and wind drift remain.

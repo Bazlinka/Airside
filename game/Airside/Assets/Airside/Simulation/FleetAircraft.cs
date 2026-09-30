@@ -214,6 +214,12 @@ namespace Airside.Simulation
         /// <summary>When this individual airframe joined its operator. Persisted from save v18.</summary>
         public SimulationTime JoinedAirlineAt { get; internal set; }
 
+        /// <summary>
+        /// Converted to a package freighter (ADR 0194): flies with no passengers, is paid from freight demand
+        /// and wears a cargo livery. Player aircraft only; persisted from save v19.
+        /// </summary>
+        public bool IsFreighter { get; internal set; }
+
         /// <summary>The original player aircraft, kept distinct from later Saabs with the same type.</summary>
         public bool IsFoundingAircraft { get; internal set; }
 

@@ -6,12 +6,16 @@ namespace Airside.Simulation
     /// <summary>Plain-language route forecast and the exact base revenue used at settlement.</summary>
     public readonly struct RouteForecast
     {
-        private RouteForecast(int passengers, int seats, long cost, long revenue)
+        private RouteForecast(int passengers, int seats, long cost, long revenue,
+            bool freight = false, double tonnes = 0, double capacityTonnes = 0)
         {
             ExpectedPassengers = passengers;
             Seats = seats;
             Cost = cost;
             Revenue = revenue;
+            IsFreight = freight;
+            FreightTonnes = tonnes;
+            FreightCapacityTonnes = capacityTonnes;
         }
 
         public int ExpectedPassengers { get; }
@@ -20,9 +24,36 @@ namespace Airside.Simulation
         public long Revenue { get; }
         public long Margin => Revenue - Cost;
 
+        /// <summary>A freighter's forecast (ADR 0194): tonnes, not seats.</summary>
+        public bool IsFreight { get; }
+        public double FreightTonnes { get; }
+        public double FreightCapacityTonnes { get; }
+
+        /// <summary>"25/34 seats" for a passenger flight, "2.4/3.5 t freight" for a freighter.</summary>
+        public string LoadText => IsFreight
+            ? $"{FreightTonnes:0.#}/{FreightCapacityTonnes:0.#} t freight"
+            : $"{ExpectedPassengers}/{Seats} seats";
+
         /// <summary>The same forecast under a difficulty's revenue and cost dials (ADR 0123).</summary>
         public RouteForecast Under(DifficultyProfile difficulty) =>
-            new(ExpectedPassengers, Seats, difficulty.ScaleCost(Cost), difficulty.ScaleRevenue(Revenue));
+            new(ExpectedPassengers, Seats, difficulty.ScaleCost(Cost), difficulty.ScaleRevenue(Revenue),
+                IsFreight, FreightTonnes, FreightCapacityTonnes);
+
+        /// <summary>
+        /// A freighter's forecast: tonnes offered against its payload, paid on the same base as a passenger
+        /// flight with a higher floor. It costs the same to dispatch, so the refund on a cancel still matches.
+        /// </summary>
+        public static RouteForecast ForFreight(Destination origin, Destination destination, AircraftType type)
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            var km = origin.DistanceKmTo(destination);
+            var capacity = FreightRates.CapacityTonnes(type);
+            var tonnes = Math.Min(capacity, FreightRates.DemandTonnes(destination.Code));
+            var filled = tonnes / capacity;
+            var basePay = FlightEconomics.FlightPay(type, km, RouteAccess.BandOf(destination));
+            var revenue = Math.Max(0, (long)Math.Round(basePay * (FreightRates.BasePayFloor + FreightRates.FillGain * filled)));
+            return new RouteForecast(0, 0, FlightEconomics.DispatchCost(type, km), revenue, true, tonnes, capacity);
+        }
 
         public static RouteForecast For(Destination origin, Destination destination, AircraftType type) =>
             For(origin, destination, type, 1.0);

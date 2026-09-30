@@ -215,9 +215,9 @@ namespace Airside.Presentation
                 ? operations.DispatchCost(type, operations.DistanceKm(aircraft.Scheduled.Value.Destination))
                 : 0;
             var changeCost = dispatch - alreadyPaid;
-            var forecast = operations.Forecast(operations.Home, destination, type);
+            var forecast = operations.Forecast(operations.Home, destination, aircraft);
             var basePay = forecast.Revenue;
-            BandAndDistance += $" · {forecast.ExpectedPassengers}/{forecast.Seats} seats";
+            BandAndDistance += $" · {forecast.LoadText}";
             var pay = (long)Math.Round(basePay *
                 FlightEconomics.ReliabilityMultiplier(operations.CareerState.Reliability));
             var active = operations.CareerState.ActiveContract;

@@ -2430,7 +2430,7 @@ namespace Airside.Presentation
                         var pay = forecast.Revenue;
                         var cost = forecast.Cost;
                         _workspaceDrawList.Text(new HudBox(right.X, right.Y + 220f, right.Width, 20f),
-                            $"{forecast.ExpectedPassengers}/{forecast.Seats} seats · pays about ${pay:N0} · profit ${pay - cost:N0}",
+                            $"{forecast.LoadText} · pays about ${pay:N0} · profit ${pay - cost:N0}",
                             12f, pay >= cost ? HudTone.Positive : HudTone.Caution);
                     }
                     _workspaceDrawList.Button(new HudBox(right.X, right.Y + 256f, 150f, 32f),
@@ -2810,6 +2810,10 @@ namespace Airside.Presentation
                     if (TryFindFleetAircraft(_selectedAircraftId, out var checking))
                         StartCheckFromHud(checking);
                     return;
+                case HudAction.ToggleFreighter:
+                    if (TryFindFleetAircraft(_selectedAircraftId, out var refitting))
+                        ToggleFreighterFromHud(refitting);
+                    return;
                 case HudAction.ViewEligibleAircraft:
                     ShowEligibleContractAircraft();
                     return;
@@ -3053,6 +3057,26 @@ namespace Airside.Presentation
             if (result.Accepted)
             {
                 ShowToast($"{aircraft.Registration} is in its check until {ClockText(aircraft.CheckUntil.Value)}. It cost ${cost:N0}.");
+                SaveAirline();
+            }
+            else
+            {
+                ShowToast(result.Reason);
+            }
+
+            PlayUiClick();
+        }
+
+        private void ToggleFreighterFromHud(FleetAircraft aircraft)
+        {
+            var becomesFreighter = !aircraft.IsFreighter;
+            var cost = FreightRates.ConversionCost(aircraft.Type);
+            var result = _operations.SetFreighter(aircraft, becomesFreighter);
+            if (result.Accepted)
+            {
+                ShowToast(becomesFreighter
+                    ? $"{aircraft.Registration} is now a freighter. The refit cost ${cost:N0}."
+                    : $"{aircraft.Registration} carries passengers again. The refit cost ${cost:N0}.");
                 SaveAirline();
             }
             else

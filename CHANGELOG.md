@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 docs: stop retrying Task Mac pins.** Playtest + plan record that Cloud
+  `Task` rejects `machine.type=machine` (`same_machine`|`new_cloud_vm` only); UI-pin
+  or CreateAgent remains the path. No simulation or save changes.
+
 - **P0 Stage A/B/C ONLY filter CI-locked.** Headless stub run asserts Stage A
   (night-sky+freighter), Stage B (takeoff), and Stage C (hangar/boarding/landings)
   select the right shots and pass auto-landing / auto-takeoff follow tokens. No

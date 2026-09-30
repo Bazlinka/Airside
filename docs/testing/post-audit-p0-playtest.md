@@ -22,10 +22,13 @@ scripts/run-post-audit-p0.sh   # build + capture matrix + RESULTS inventory stam
 
 ### Option B — Cursor agent *on* the Mac worker (recommended)
 
-Cloud `Task` from a Linux cloud run **cannot** pin My Machines. The Task `machine.type`
-discriminator only accepts `same_machine` | `new_cloud_vm` (self-hosted values are
-rejected). Extra `env.machine` / `privateWorkerId` fields are ignored — children stay
-on Linux with `privateWorkerId: null`. Placement that works:
+Cloud `Task` from a Linux cloud run **cannot** pin My Machines. Passing
+`machine: { "type": "machine", ... }` fails hard with
+`Invalid discriminator value. Expected 'same_machine' | 'new_cloud_vm'`.
+Extra `env` / `privateWorkerId` / `workerId` / `usePrivateWorker` fields are ignored —
+children stay on Linux with `privateWorkerId: null` (confirmed 2026-09-30:
+[Mac Stage A P0 capture](https://cursor.com/agents/bc-404d3c20-1dfd-58f5-af3e-6db54bf96e4f)).
+Do not keep retrying Task pins. Placement that works:
 
 - UI: environment dropdown → **Bailey's MacBook Pro** (recommended)
 - API v1 CreateAgent: `env: { "type": "machine", "name": "Bailey's MacBook Pro" }`

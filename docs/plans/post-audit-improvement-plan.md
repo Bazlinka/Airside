@@ -27,8 +27,9 @@ boarding) are in #491 tip `e45eb5ee` (headless CI green, mergeable). Mac path:
 `scripts/run-post-audit-p0-remaining.sh` Stage A (night-sky+freighter) → B (takeoff
 `SKIP_BUILD`/`SKIP_PULL`) → C (hangar/boarding/landings). A Unity player and awake display
 are required. Cloud Linux cannot mark this complete. If no workers show in
-`list-self-hosted-workers`, run `cursor worker start` on the Mac first. `Task` cannot pin My
-Machines — pin via agents UI environment picker (**Bailey's MacBook Pro**) or API v1
+`list-self-hosted-workers`, run `cursor worker start` on the Mac first. Cloud `Task`
+rejects `machine.type=machine` (`same_machine`|`new_cloud_vm` only) — do not retry Task
+pins. Pin via agents UI environment picker (**Bailey's MacBook Pro**) or API v1
 `env: { "type": "machine", "name": "Bailey's MacBook Pro" }` (machine **name**, not
 `worker_id`). One-paste prompt: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
 

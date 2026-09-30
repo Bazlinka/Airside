@@ -1,6 +1,6 @@
 # Post-audit P0 playtest checklist
 
-Date: 2026-09-30 · Plan: `docs/plans/post-audit-improvement-plan.md` (ADR 0202)
+Date: 2026-09-30 · Plan: `docs/plans/post-audit-improvement-plan.md` (ADR 0203)
 
 **Goal:** eyes and ears on recent merges that are green in tests but “not yet seen /
 listened / felt” in a rebuilt game. Mark each row **keep / fix / revert** before
@@ -63,6 +63,7 @@ as `RESULTS.md`. Also useful:
 | `coast-day.png` | Coast / West Beach | 0190 | | |
 | `freight-qantas-day.png` | Freight shed roof, plinth, dock | 0199 | | |
 | `fire-station-night.png` | Fire station roof + lit packs | 0199 | | |
+| (any apron/stand overview or follow) | Oil stains under bays/gates; apron patches/pits | 0201, 0202 | | Phase 1 merged ahead of P0 |
 | `weather-storm-overview.png` | Storm depth; note fps feel | 0193 | | |
 | `weather-fog-overview.png` | Height fog; close aircraft clear | 0193 | | |
 | `follow-jet-day.png` | Follow framing | 0189 | | |

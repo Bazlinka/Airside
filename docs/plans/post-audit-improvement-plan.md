@@ -1,6 +1,6 @@
 # Post-audit improvement plan
 
-Status: **active** · 2026-09-30 · Author: Cursor (comprehensive code audit) · Branch `cursor/post-audit-improvement-plan-709e` · ADR **0202**
+Status: **active** · 2026-09-30 · Author: Cursor (comprehensive code audit) · Branch `cursor/post-audit-improvement-plan-709e` · ADR **0203**
 
 This is the standing backlog for what to improve next before a major expansion.
 It comes from a full Domain / Simulation / Presentation / tests / product-plan audit
@@ -58,11 +58,11 @@ verified” lines when eyes-on is done.
 3. Building audit: 71/78 heights are still rule defaults (`docs/data/ypad-buildings-audit.md`).
 
 **In flight / ahead of gate:**
-- Phase 0 bookmarks (ADR 0200) are **merged onto this plan branch**; Mac
-  `capture-visual-baseline.sh` metrics still owed.
-- PR #486 (`cursor/phase1-stand-oil-stains-5ea8`, ADR 0201) started Phase 1 ground
-  detail **before P0 / Bailey sign-off**. Treat as parallel visual work; it does
-  **not** clear P0 keep/fix/revert.
+- Phase 0 bookmarks (ADR 0200) are **merged to `main` via #485** and on this branch;
+  Mac `capture-visual-baseline.sh` metrics still owed.
+- Phase 1 oil stains (ADR 0201) + apron wear (ADR 0202) **merged to `main` via #486**
+  before P0 / Bailey sign-off. Treat as parallel visual work already on the Mac P0
+  tip; it does **not** clear P0 keep/fix/revert. Eyeball those ground slices during P0.
 
 ### P2 — Finish freight as a mode (parked until P0)
 

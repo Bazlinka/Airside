@@ -1,25 +1,37 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0202).**
+- **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0203).**
   Full Domain / Simulation / Presentation / tests / product-plan audit. Standing backlog:
   `docs/plans/post-audit-improvement-plan.md`. **Cloud goal is set to execute that plan** (P0→P1→P2→P3→P4).
-  Phase 0 bookmarks (ADR 0200) are merged onto this branch for shared Mac captures. Headless after merge:
-  **1136/1136**. This cloud run is **iOS-started** and cannot pin My Machines via Task.
-  - **P0 (NEXT — Mac shell or Mac-picked agent):** Workers online but Linux `Task` cannot pin them —
-    use UI picker / CreateAgent `machine.worker_id` / API v1 machine name. One-paste prompt:
-    `docs/testing/post-audit-p0-mac-agent-prompt.md`. On Mac: checkout this branch,
-    `scripts/build-mac.sh`, `scripts/review-post-audit-p0.sh` (writes RESULTS under
-    `work/captures/` and `docs/testing/post-audit-p0-<date>/`), fill keep/fix/revert, push
-    `cursor/post-audit-p0-results-709e`. Code-only row map:
-    `docs/testing/post-audit-p0-2026-09-30/CODE_EVIDENCE.md` (storm-on-final logic is covered).
-  - **P1:** Bailey sign-off on visual overhaul. Phase 0 bookmarks on this branch; Mac metrics still owed.
-    Note: PR #486 already started Phase 1 oil stains (ADR 0201) ahead of P0 — do not treat that as P0 done.
+  Branch includes merged `main` (**#485** Phase 0 bookmarks ADR 0200; **#486** Phase 1 oil stains ADR 0201 +
+  apron wear ADR 0202). Headless on plan tip before this merge: **1136/1136**; re-run after merge.
+  This cloud run is **iOS-started** and cannot pin My Machines (`CreateAgent` tool absent; `Task` only
+  `same_machine` | `new_cloud_vm`).
+  - **P0 (NEXT — Mac shell or Mac-picked agent):** Use UI picker / CreateAgent `machine.worker_id` /
+    API v1 machine name. One-paste prompt: `docs/testing/post-audit-p0-mac-agent-prompt.md`. On Mac:
+    checkout this branch, `scripts/build-mac.sh`, `scripts/review-post-audit-p0.sh`, fill keep/fix/revert,
+    push `cursor/post-audit-p0-results-709e`. Code-only map:
+    `docs/testing/post-audit-p0-2026-09-30/CODE_EVIDENCE.md`.
+  - **P1:** Bailey sign-off on visual overhaul still owed. Phase 0 Mac metrics still owed. Phase 1 oil
+    stains + apron wear **merged to main ahead of P0** — do not treat as P0 done; Mac P0 should now
+    eyeball those ground slices too.
   - **P2:** Freight AI / cargo apron / freighter contracts **parked until P0** clears freighter+tyre rows.
   - **P3:** `AirsidePrototype` builders/statics; lock weather/large-fleet fps; retire legacy full-airport when ready.
   - **P4 only then:** second airport, companion, denser world. Do not start Companion/CloudKit or wages/fuel/loans yet.
   - **Watch:** restore still hard-requires Adelaide; stale GAME.md footer / early PROJECT_PLAN “gaps” are not truth.
+  - **ADR numbering:** post-audit plan is **0203** (main took 0202 for apron surface wear).
 
-- **2026-09-30 Cursor — visual overhaul Phase 0 baseline bookmarks (merged from `cursor/visual-baseline-phase0-5ea8`, ADR 0200).**
+- **2026-09-30 Cursor — Phase 1 apron surface wear (merged via #486, ADR 0202).**
+  Seeded concrete patch repairs and drainage pits inside every apron outline. Presentation only.
+  - **Checks:** `scripts/test-domain.sh` **1138/1138** (incl. ApronSurfaceWearTests).
+  - **NEXT:** landform & coast (Phase 1), or land-cover polish — after P0 keep/fix/revert where possible.
+
+- **2026-09-30 Cursor — Phase 1 stand oil stains + ground soft edges (merged via #486, ADR 0201).**
+  Seeded oil/fuel blotches under every regional bay and terminal gate; slightly stronger ground macro/mow stripes;
+  softer paved→grass shoulder. Presentation only.
+  - **Checks:** `scripts/test-domain.sh` **1134/1134** (incl. StandOilStainsTests).
+
+- **2026-09-30 Cursor — visual overhaul Phase 0 baseline bookmarks (merged via #485, ADR 0200).**
   Six named review cameras in `AirsideVisualBaselineViews` (`-airsideReviewView`), wired into the overview
   camera, with `scripts/capture-visual-baseline.sh` for day/dusk/night 1600×900 shots and scraped soak metrics.
   Headless locks in `VisualBaselineViewsTests`. Packaged PNG/`metrics.md` still need a Mac run.

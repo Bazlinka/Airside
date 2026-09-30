@@ -1,6 +1,6 @@
 # P0 code evidence (no Mac player)
 
-Date: 2026-09-30 · Plan ADR 0202 · Branch `cursor/post-audit-improvement-plan-709e`
+Date: 2026-09-30 · Plan ADR 0203 · Branch `cursor/post-audit-improvement-plan-709e`
 
 This maps each post-audit P0 row to **existing EditMode / headless proof**. It does
 **not** replace Bailey’s packaged keep/fix/revert in `post-audit-p0-playtest.md`.
@@ -20,6 +20,8 @@ Headless suite after Phase 0 merge: **1136/1136** (`scripts/test-domain.sh`).
 | Arrival already on final lands in storm; inbound held until storm ends | `RunwayWeatherTests.Storm_LetsAnArrivalAlreadyOnFinalLandAndHoldsTheDeparture`, `Storm_HoldsAnArrivalThatHasNotReachedFinal` | **keep** (logic); Bailey must still *see* a storm final |
 | Arrival clearance / holding-for-landing → landing | `ArrivalClearanceTests`, `TowerAndStandChoiceTests` | **keep** (clearance timing) |
 | Phase 0 camera bookmarks | `VisualBaselineViewsTests` | **keep** (table locked) |
+| Stand oil stains + soft ground edges | `StandOilStainsTests` | **keep** (logic); Bailey must still *see* stains |
+| Apron patches + drainage pits | `ApronSurfaceWearTests` | **keep** (logic); Bailey must still *see* patches |
 
 ## Needs Mac eyes / ears (cannot close from code)
 

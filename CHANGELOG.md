@@ -5,8 +5,14 @@
   `docs/plans/post-audit-improvement-plan.md`. Mac P0 matrix: `scripts/review-post-audit-p0.sh` and
   `docs/testing/post-audit-p0-playtest.md`. One-paste Mac agent prompt:
   `docs/testing/post-audit-p0-mac-agent-prompt.md`. Code-only P0 evidence map:
-  `docs/testing/post-audit-p0-2026-09-30/CODE_EVIDENCE.md`. ADR 0202 (renumbered past Phase 0/1 ADRs).
-  No game behaviour changed.
+  `docs/testing/post-audit-p0-2026-09-30/CODE_EVIDENCE.md`. ADR **0203** (renumbered past Phase 0/1 ADRs
+  0200–0202). No game behaviour changed.
+
+- **Apron patch repairs and drainage pits.** Seeded concrete patches and grate pits inside every real apron
+  outline (inset from the edge), two combined meshes. Presentation only. ADR 0202.
+
+- **Stand oil stains and softer ground edges.** Seeded oil/fuel blotches under every bay and gate (two combined
+  meshes), slightly stronger grass macro/mow detail, and a softer paved-to-grass shoulder. Presentation only. ADR 0201.
 
 - **Visual overhaul Phase 0 baseline bookmarks.** Six named review cameras (`overview`,
   `terminal-airside`, `terminal-kerb`, `hangar-row`, `suburb-edge`, `coast`) via

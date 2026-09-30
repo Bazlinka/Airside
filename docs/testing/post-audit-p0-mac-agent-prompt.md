@@ -16,7 +16,7 @@ Workers (when online): `list-self-hosted-workers` — prefer
 You are on Bailey's MacBook Pro. Confirm with `uname -s` → Darwin. If not Darwin, stop.
 
 Repo: prefer ~/Documents/Codex/Airside, else ~/Code/Airside.
-Plan: docs/plans/post-audit-improvement-plan.md (ADR 0202). P0 only.
+Plan: docs/plans/post-audit-improvement-plan.md (ADR 0203). P0 only.
 
 1. git fetch origin && git checkout cursor/post-audit-improvement-plan-709e && git pull --rebase origin cursor/post-audit-improvement-plan-709e
 2. Keep the display awake. scripts/build-mac.sh

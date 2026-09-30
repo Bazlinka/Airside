@@ -47,7 +47,7 @@ namespace Airside.Presentation
 
         public void Apply(string aircraftId, float power, float rotation, float left, float right,
             float reverse, float groundSpeed, bool grounded, bool landing, Vector3 listener,
-            bool muted, float deltaSeconds)
+            float zoomGain, bool muted, float deltaSeconds)
         {
             // Consume contact even while muted, so unmute cannot produce an old chirp.
             var touchdown = _contact.Observe(landing, grounded);
@@ -64,15 +64,15 @@ namespace Airside.Presentation
             var cutoff = EngineVoice.LowPassHz(distance, _range, power);
             for (var i = 0; i < _filters.Length; i++)
                 _filters[i].cutoffFrequency = cutoff;
-            ApplyLoop(_idle, mix.Idle, mix.Pitch, deltaSeconds);
-            ApplyLoop(_power, mix.Power, mix.Pitch, deltaSeconds);
-            ApplyLoop(_reverse, mix.Reverse, mix.Pitch * 0.96f, deltaSeconds);
-            ApplyLoop(_wheels, mix.Wheels, mix.WheelPitch, deltaSeconds);
+            ApplyLoop(_idle, mix.Idle * zoomGain, mix.Pitch, deltaSeconds);
+            ApplyLoop(_power, mix.Power * zoomGain, mix.Pitch, deltaSeconds);
+            ApplyLoop(_reverse, mix.Reverse * zoomGain, mix.Pitch * 0.96f, deltaSeconds);
+            ApplyLoop(_wheels, mix.Wheels * zoomGain, mix.WheelPitch, deltaSeconds);
             if (touchdown && _touchdown.clip != null)
             {
                 var profile = AircraftAudioProfiles.For(_type);
                 _touchdown.pitch = Mathf.Clamp(profile.Pitch, 0.8f, 1.15f);
-                _touchdown.volume = 0.36f * profile.Gain;
+                _touchdown.volume = 0.36f * profile.Gain * zoomGain;
                 _touchdown.PlayOneShot(_touchdown.clip);
             }
         }

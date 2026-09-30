@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Aircraft sound is audible from the overview.** The new aircraft audio was heard from the camera, which sits 2.4 km
+  out at overview — beyond every aircraft's hearing range — so the default view was silent. Aircraft are now heard from
+  the ground point the camera looks at, fading with zoom instead of cutting out. ADR 0196.
+
 - **Sky traffic no longer crawls.** Overflights and fleet sky legs were squeezed from hundreds of kilometres into a few
   kilometres of world, and fleet sky positions stepped once a second — so aircraft flying past looked almost still.
   Authored corridors now stay 1:1 to 12 km and ease out to 70 km; live sky matches; fleet sky uses the precise clock;

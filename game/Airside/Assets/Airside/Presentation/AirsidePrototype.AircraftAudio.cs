@@ -6,6 +6,38 @@ namespace Airside.Presentation
 {
     public sealed partial class AirsidePrototype
     {
+        private Transform _audioListener;
+        private float _aircraftZoomGain = 1f;
+
+        /// <summary>
+        /// Aircraft are heard from the ground point the camera looks at (ADR 0196), so the
+        /// 2.4 km overview still hears what is near its focus; zoom distance only fades them.
+        /// </summary>
+        private void EnsureFocusAudioListener(Camera camera)
+        {
+            foreach (var existing in camera.GetComponents<AudioListener>())
+                existing.enabled = false;
+            if (_audioListener != null)
+                return;
+            var host = new GameObject("Focus audio listener");
+            host.AddComponent<AudioListener>();
+            _audioListener = host.transform;
+            UpdateFocusAudioListener();
+        }
+
+        private void UpdateFocusAudioListener()
+        {
+            if (_audioListener == null || _mainCamera == null)
+                return;
+            var cameraTransform = _mainCamera.transform;
+            var distance = AirsideCameraController.CurrentDistance;
+            var focus = _cameraController != null ? _cameraController.FocusPoint : cameraTransform.position;
+            _audioListener.SetPositionAndRotation(
+                focus + Vector3.up * AircraftAudioMix.ListenerLift(distance),
+                Quaternion.Euler(0f, cameraTransform.eulerAngles.y, 0f));
+            _aircraftZoomGain = AircraftAudioMix.ZoomGain(distance);
+        }
+
         private void UpdateEngineAudio()
         {
             for (var i = 0; i < VisualFlights.Count && i < _commercialAircraft.Length; i++)
@@ -51,8 +83,8 @@ namespace Airside.Presentation
             var reverse = AircraftAudioMix.ReverseDemand(type, phase, progress);
             emitter.Apply(aircraftId, power, rotation, engines.Left, engines.Right, reverse, groundSpeed,
                 grounded, phase == AircraftPhase.Landing,
-                _mainCamera != null ? _mainCamera.transform.position : view.position,
-                _audioMuted, Time.unscaledDeltaTime);
+                _audioListener != null ? _audioListener.position : view.position,
+                _aircraftZoomGain, _audioMuted, Time.unscaledDeltaTime);
         }
     }
 }

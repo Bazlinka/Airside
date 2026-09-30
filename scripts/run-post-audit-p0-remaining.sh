@@ -76,7 +76,11 @@ if [ -x "$app" ]; then
     exit 1
   fi
   if ! strings "$app" 2>/dev/null | grep -Fq 'follow never started before delay'; then
-    echo "Player at $app lacks auto-follow fail-closed. Rebuild without SKIP_BUILD." >&2
+    echo "Player at $app lacks review-follow fail-closed. Rebuild without SKIP_BUILD." >&2
+    exit 1
+  fi
+  if ! strings "$app" 2>/dev/null | grep -Fq 'follow lost before delay'; then
+    echo "Player at $app lacks follow-lost fail-closed. Rebuild without SKIP_BUILD." >&2
     exit 1
   fi
   if ! strings "$app" 2>/dev/null | grep -Fq 'overview framing mismatch'; then
@@ -171,30 +175,38 @@ follow_fail=0
           fi
           ;;
         overview-night-sky-traffic)
-          # Pose log + pitch band (~8° ±5). Nose-down default (~50°) must fail.
+          # Pose log + pitch/yaw/dist bands (ReviewOverviewFraming tolerances).
+          # Nose-down default (~50°) or wrong corridor must fail.
           if ! grep -Eq '\[Airside soak\] review shot .* pose pitch=' "$logf"; then
             log_status="errors"
             follow_fail=1
           else
-            pitch="$(grep -Eo 'pose pitch=[0-9.]+' "$logf" | tail -1 | sed -E 's/pose pitch=//')"
-            if ! awk -v p="$pitch" 'BEGIN { exit !(p+0 <= 13 && p+0 >= 3) }'; then
-              echo "overview-night-sky-traffic pose pitch=$pitch (want ~8); treating as failed capture." >&2
+            pose_line="$(grep -E '\[Airside soak\] review shot .* pose pitch=' "$logf" | tail -1)"
+            pitch="$(printf '%s\n' "$pose_line" | grep -Eo 'pose pitch=[0-9.]+' | sed -E 's/pose pitch=//')"
+            yaw="$(printf '%s\n' "$pose_line" | grep -Eo 'yaw=[0-9.]+' | sed -E 's/yaw=//')"
+            dist="$(printf '%s\n' "$pose_line" | grep -Eo 'dist=[0-9.]+' | sed -E 's/dist=//')"
+            if ! awk -v p="$pitch" -v y="$yaw" -v d="$dist" 'BEGIN {
+              # pitch 8±5, yaw 270±8, dist 11000 ±20%
+              ok = (p+0 >= 3 && p+0 <= 13) && (y+0 >= 262 && y+0 <= 278) && (d+0 >= 8800 && d+0 <= 13200)
+              exit !ok
+            }'; then
+              echo "overview-night-sky-traffic pose pitch=$pitch yaw=$yaw dist=$dist (want ~8/270/11000); treating as failed capture." >&2
               log_status="errors"
               follow_fail=1
             fi
           fi
           ;;
         follow-freighter)
-          # Refit alone is not enough — camera must follow the freighter (not overview).
+          # Refit + live follow at capture (following=True on pose log — not overview).
           if ! grep -Eq '\[Airside soak\] review freighter ' "$logf" \
-            || ! grep -Eq '\[Airside soak\] following ' "$logf"; then
+            || ! grep -Eq 'following=True' "$logf"; then
             log_status="errors"
             follow_fail=1
           fi
           ;;
         follow-hangar-tow)
           if ! grep -Eq '\[Airside soak\] review hangar check ' "$logf" \
-            || ! grep -Eq '\[Airside soak\] following ' "$logf"; then
+            || ! grep -Eq 'following=True' "$logf"; then
             log_status="errors"
             follow_fail=1
           fi
@@ -207,7 +219,7 @@ follow_fail=0
               if grep -Eq '\[Airside soak\] review boarding ' "$capture_out/$alt.log"; then
                 found_board=1
               fi
-              if grep -Eq '\[Airside soak\] following ' "$capture_out/$alt.log"; then
+              if grep -Eq 'following=True' "$capture_out/$alt.log"; then
                 found_follow=1
               fi
             fi
@@ -220,6 +232,12 @@ follow_fail=0
       esac
     else
       log_status="missing"
+      # Resume/stale PNG without a log must not stamp Stage A/C as inventory-OK.
+      case "$base" in
+        overview-night-sky-traffic|follow-freighter|follow-hangar-tow|follow-boarding-tape|follow-human-ops-close|follow-jet-takeoff|follow-jet-day|follow-jet-close|follow-storm-landing)
+          follow_fail=1
+          ;;
+      esac
     fi
     echo "| \`$base.png\` | $bytes | $log_status |"
   done

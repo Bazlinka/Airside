@@ -358,12 +358,24 @@ namespace Airside.Presentation
                 return;
 
             // Fail closed: any review follow subject (auto-* or a freighter/hangar/boarding
-            // registration) must be on camera before the still. A blind overview PNG would
-            // look like success and invent tyre / cargo / tow / tape evidence.
-            if (!string.IsNullOrEmpty(_reviewAircraftId) && !_reviewFollowStarted)
+            // registration) must still be on camera at capture. Sticky _reviewFollowStarted
+            // alone is not enough — ReleaseFollow after an early start would write an
+            // overview PNG that invents tyre / cargo / tow / tape evidence.
+            // Keep both abort phrases as contiguous string literals for Mac player preflight
+            // (`strings` on Airside.app).
+            if (!string.IsNullOrEmpty(_reviewAircraftId)
+                && (_cameraController == null || !_cameraController.IsFollowing))
             {
-                Debug.LogError(
-                    $"{SoakLogTag} review shot aborted — {_reviewAircraftId} follow never started before delay {entry.DelaySeconds:0}s (no PNG)");
+                if (!_reviewFollowStarted)
+                {
+                    Debug.LogError(
+                        $"{SoakLogTag} review shot aborted — {_reviewAircraftId} follow never started before delay {entry.DelaySeconds:0}s (no PNG)");
+                }
+                else
+                {
+                    Debug.LogError(
+                        $"{SoakLogTag} review shot aborted — {_reviewAircraftId} follow lost before delay {entry.DelaySeconds:0}s (no PNG)");
+                }
                 Application.Quit();
                 return;
             }

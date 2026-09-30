@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **P0 Stage A follow-active + night-sky inventory harden.** Soak aborts when
+  review follow is lost before capture (not only never started); inventory requires
+  `following=True` and night-sky pose yaw≈270 / dist≈11000 (not pitch alone).
+  Missing logs fail Stage A/C stamp. Locked by `test-p0-remaining-delays.sh`.
+  No save-schema changes.
 - **P0 review follow fail-closed for freighter/hangar/boarding.** Soak aborts
   before writing a PNG when any review aircraft id (auto-* or registration) never
   starts follow; remaining inventory requires a `following` log for those stills.

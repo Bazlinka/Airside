@@ -1,9 +1,8 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — P0 Stage A follow fail-closed + tip docs (#492).**
-  Tip **#492** (this commit). Registration follow (freighter/hangar/boarding) now
-  aborts before PNG if camera never follows; inventory requires a `following` log.
-  `CODE_EVIDENCE` / Mac docs retargeted from #491 tip to this branch.
+- **2026-09-30 Cursor — P0 Stage A follow-active + night-sky inventory (#492).**
+  Tip **#492** (this commit). Capture aborts if follow is lost (not only never started);
+  inventory requires `following=True` and night-sky yaw≈270 / dist≈11000.
   Rebuild on tip. 20 RESULTS unverified. `CURSOR_API_KEY` unset; no Mac workers.
   **NEXT:** Mac Terminal/Finder Stage A on tip, or API key →
   `scripts/launch-p0-mac-agent.sh`. Fill RESULTS by eye/ear. Freight parked.

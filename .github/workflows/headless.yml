@@ -31,5 +31,7 @@ jobs:
         run: bash scripts/test-p0-remaining-delays.sh
       - name: P0 Stage B dirty RESULTS allowlist
         run: bash scripts/test-p0-remaining-dirty-allowlist.sh
+      - name: P0 Stage A/B/C ONLY filter
+        run: bash scripts/test-p0-remaining-only-filter.sh
       - name: Domain, Simulation and Unity-free Presentation tests
         run: dotnet test scripts/dotnet-harness/Harness.csproj --nologo

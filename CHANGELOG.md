@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **P0 Stage A/B/C ONLY filter CI-locked.** Headless stub run asserts Stage A
+  (night-sky+freighter), Stage B (takeoff), and Stage C (hangar/boarding/landings)
+  select the right shots and pass auto-landing / auto-takeoff follow tokens. No
+  simulation or save changes.
+
 - **P0 Mac path docs match tip `e45eb5ee`.** Plan + checklist document Stage A→B→C,
   CI-green #491 tip, and `cursor worker start` when workers are offline. No simulation
   or save changes.

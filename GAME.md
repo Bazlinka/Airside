@@ -1,7 +1,7 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **`e45eb5ee`** — headless CI green / PR CLEAN. Soak-window + auto-takeoff **900s** +
+  Tip **`e45eb5ee`+** — headless CI green; Stage A/B/C ONLY filter CI-locked. Soak-window + auto-takeoff **900s** +
   Stage B dirty-RESULTS allowlist + delay/`grep` + night-sky framing (11 km / pitch 8 /
   yaw 270) + fail-closed inventory log scan. Packaged Stage A→B→C via
   `scripts/run-post-audit-p0-remaining.sh` (PNGs + inventory; no verdicts). **Mac workers

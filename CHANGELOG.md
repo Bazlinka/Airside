@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **P0 Stage A Finder shortcut.** `scripts/run-post-audit-p0-stage-a.command`
+  double-click runs night-sky + freighter only (~minutes) when a full A→B→C
+  soak is too long. No simulation or save changes.
 - **P0 Mac CreateAgent launcher.** `scripts/launch-p0-mac-agent.sh` posts
   `env.type=machine` / `Bailey's MacBook Pro` to `api.cursor.com` when
   `CURSOR_API_KEY` is set (Task still cannot pin). No simulation or save changes.

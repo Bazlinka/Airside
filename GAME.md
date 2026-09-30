@@ -4,14 +4,16 @@
   Tip **#491** — headless CI green, MERGEABLE. One-paste
   `scripts/run-post-audit-p0-stages.sh` (caffeinate -d -i for the full A→B→C
   run + done notification) or Finder `scripts/run-post-audit-p0-stages.command`.
-  Delays: takeoff **830s**; landing **780/783/786s**; boarding **320/323s**.
-  Multi-shot + player preflight. ~35+ min A→B→C. Cloud Task cannot claim My
-  Machines — Terminal/Finder or `scripts/launch-p0-mac-agent.sh` + API key:
+  Short Stage A only (minutes — night-sky + freighter):
+  `scripts/run-post-audit-p0-stage-a.command`. Delays: takeoff **830s**;
+  landing **780/783/786s**; boarding **320/323s**. Multi-shot + player
+  preflight. Cloud Task cannot claim My Machines — Terminal/Finder or
+  `scripts/launch-p0-mac-agent.sh` + API key:
   `docs/testing/post-audit-p0-mac-terminal.md`. 21 RESULTS unverified;
   night-sky PNG still nose-down (no cruise). Workers ONLINE idle; no new
   remaining PNGs.
-  **NEXT:** Mac run stages → fill RESULTS by eye/ear. Freight AI parked.
-  Do not invent RESULTS.
+  **NEXT:** Mac Stage A (or full A→B→C) → fill RESULTS by eye/ear. Freight AI
+  parked. Do not invent RESULTS.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

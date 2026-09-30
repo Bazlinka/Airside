@@ -56,4 +56,20 @@ grep -Fq 'Code/Airside' "$command_wrapper" || {
   exit 1
 }
 
+# Short Stage A Finder path (night-sky + freighter) for when ~35 min is too much.
+stage_a_wrapper="$root/scripts/run-post-audit-p0-stage-a.command"
+test -x "$stage_a_wrapper" || { echo "missing executable $stage_a_wrapper" >&2; exit 1; }
+grep -Fq 'run-post-audit-p0-remaining.sh' "$stage_a_wrapper" || {
+  echo "Stage A .command must call run-post-audit-p0-remaining.sh" >&2
+  exit 1
+}
+grep -Fq 'overview-night-sky-traffic,follow-freighter' "$stage_a_wrapper" || {
+  echo "Stage A .command must set Stage A ONLY list" >&2
+  exit 1
+}
+grep -Fq 'Code/Airside' "$stage_a_wrapper" || {
+  echo "Stage A .command must target ~/Code/Airside" >&2
+  exit 1
+}
+
 echo "P0 stages chain lock passed"

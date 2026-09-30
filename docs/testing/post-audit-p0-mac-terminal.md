@@ -17,6 +17,7 @@ git pull --ff-only origin cursor/p0-auto-landing-follow-709e
 # rebuild so multi-shot review lands; macOS notification when finished)
 scripts/run-post-audit-p0-stages.sh
 # Or double-click in Finder: scripts/run-post-audit-p0-stages.command
+# Short path (minutes only — night-sky + freighter): scripts/run-post-audit-p0-stage-a.command
 
 # Or run stages separately:
 # Stage A (minutes — night-sky + freighter; unblocks P2 freighter evidence)

@@ -14,22 +14,30 @@ namespace Airside.Presentation
         // The release circuit is authored at real YPAD metres. The explicit full-airport
         // QA route retains the older architectural-miniature scene, so it needs its own
         // framing instead of inheriting a 3.1 km overview and appearing almost empty.
+        // Named Phase 0 bookmarks (-airsideReviewView) select a table pose; individual
+        // -airsideOverview* flags still override any single axis for one-off shots.
+        private static readonly AirsideVisualBaselineViews.View ReviewView =
+            AirsideVisualBaselineViews.FromCommandLine(System.Environment.GetCommandLineArgs());
+
         private readonly Vector3 _overviewCenter = AirsideBareField.Enabled
             ? new Vector3(
-                CommandLineFloat("-airsideOverviewCenterX", 150f),
+                CommandLineFloat("-airsideOverviewCenterX", ReviewView.CenterX),
                 0f,
-                CommandLineFloat("-airsideOverviewCenterZ", 350f))
+                CommandLineFloat("-airsideOverviewCenterZ", ReviewView.CenterZ))
             : new Vector3(12f, 0f, 16f);
         // Review shots: -airsideOverviewCenterX / -airsideOverviewCenterZ plus yaw, pitch and
         // distance re-aim the overview from the command line, so packaged-build screenshots of
         // a specific part of the real airport can be repeated from the same place.
         private static float OverviewDistance => CommandLineFloat(
-            "-airsideOverviewDistance", AirsideBareField.Enabled ? AirsideBareField.OverviewDistance : 155f);
+            "-airsideOverviewDistance",
+            AirsideBareField.Enabled ? ReviewView.Distance : 155f);
         private static float OverviewFov => AirsideBareField.Enabled ? AirsideBareField.OverviewFov : 50f;
         private static float OverviewPitch => CommandLineFloat(
-            "-airsideOverviewPitch", AirsideBareField.Enabled ? AirsideBareField.OverviewPitch : 38f);
+            "-airsideOverviewPitch",
+            AirsideBareField.Enabled ? ReviewView.Pitch : 38f);
         private static float OverviewYaw => CommandLineFloat(
-            "-airsideOverviewYaw", AirsideBareField.Enabled ? AirsideBareField.OverviewYaw : 138f);
+            "-airsideOverviewYaw",
+            AirsideBareField.Enabled ? ReviewView.Yaw : 138f);
         private static string[] _commandLine;
 
         private static float CommandLineFloat(string flag, float fallback)

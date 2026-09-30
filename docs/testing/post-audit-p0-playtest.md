@@ -50,8 +50,9 @@ as `RESULTS.md`. Also useful:
 | `terminal-airside-day.png` | T1 doors, piers, aerobridges | 0185, 0197 | | |
 | `terminal-airside-night.png` | Night glow, door packs | 0197, 0199 | | |
 | `terminal-kerb-day.png` | Landside entrances, kerb detail | 0197 | | |
-| `hangar-rex-day.png` | Rex hangar roof / berth read | 0186–0188 | | |
-| `hangar-cobham-day.png` | Cobham hangar row | 0186–0188 | | |
+| `hangar-row-day.png` | Eastern hangar row (Rex/Cobham) | 0186–0188 | | |
+| `suburb-edge-day.png` | Suburb edge framing | 0190 | | |
+| `coast-day.png` | Coast / West Beach | 0190 | | |
 | `freight-qantas-day.png` | Freight shed roof, plinth, dock | 0199 | | |
 | `fire-station-night.png` | Fire station roof + lit packs | 0199 | | |
 | `weather-storm-overview.png` | Storm depth; note fps feel | 0193 | | |

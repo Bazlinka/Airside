@@ -2,6 +2,9 @@
 # Packaged Mac capture matrix for the post-audit P0 playtest
 # (docs/plans/post-audit-improvement-plan.md, docs/testing/post-audit-p0-playtest.md).
 #
+# Uses ADR 0200 named bookmarks (`-airsideReviewView`) where they match, plus
+# extra P0-only shots (far zoom, freight, fire station, weather, follow).
+#
 # Requires a built player (scripts/build-mac.sh) and a Mac with the display awake.
 # Writes PNGs + Player logs under work/captures/post-audit-p0-<date>/ and a RESULTS.md
 # stub for Bailey to fill keep / fix / revert.
@@ -34,48 +37,47 @@ capture() {
   FOLLOW=""
 }
 
-# --- Overview baseline + far zoom / land cover (ADR 0185, 0190, 0191) ---
+# --- Overview + far zoom / land cover (ADR 0185, 0190, 0191) ---
 capture overview-day-clear \
-  -airsideReviewWeather clear -airsideReviewTime 12:00 \
-  -airsideOverviewDistance 2400 -airsideOverviewPitch 50 -airsideOverviewYaw 200
+  -airsideReviewView overview \
+  -airsideReviewWeather clear -airsideReviewTime 12:00
 
 capture overview-far-land-cover \
+  -airsideReviewView overview \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
-  -airsideOverviewDistance 28000 -airsideOverviewPitch 35 -airsideOverviewYaw 200 \
-  -airsideOverviewCenterX 150 -airsideOverviewCenterZ 350
+  -airsideOverviewDistance 28000 -airsideOverviewPitch 35
 
 capture overview-night-sky-traffic \
+  -airsideReviewView overview \
   -airsideReviewWeather clear -airsideReviewTime 23:30 \
-  -airsideOverviewDistance 3200 -airsideOverviewPitch 28 -airsideOverviewYaw 180
+  -airsideOverviewDistance 3200 -airsideOverviewPitch 28
 
-# --- Terminal airside / doors / aerobridges (ADR 0185, 0197) ---
+# --- Terminal / hangar bookmarks (ADR 0185–0188, 0197) ---
 capture terminal-airside-day \
-  -airsideReviewWeather clear -airsideReviewTime 12:00 \
-  -airsideOverviewCenterX 1450 -airsideOverviewCenterZ 420 \
-  -airsideOverviewDistance 420 -airsideOverviewPitch 28 -airsideOverviewYaw 110
+  -airsideReviewView terminal-airside \
+  -airsideReviewWeather clear -airsideReviewTime 12:00
 
 capture terminal-airside-night \
-  -airsideReviewWeather clear -airsideReviewTime 23:30 \
-  -airsideOverviewCenterX 1450 -airsideOverviewCenterZ 420 \
-  -airsideOverviewDistance 420 -airsideOverviewPitch 28 -airsideOverviewYaw 110
+  -airsideReviewView terminal-airside \
+  -airsideReviewWeather clear -airsideReviewTime 23:30
 
 capture terminal-kerb-day \
-  -airsideReviewWeather clear -airsideReviewTime 12:00 \
-  -airsideOverviewCenterX 1450 -airsideOverviewCenterZ 620 \
-  -airsideOverviewDistance 380 -airsideOverviewPitch 32 -airsideOverviewYaw 290
+  -airsideReviewView terminal-kerb \
+  -airsideReviewWeather clear -airsideReviewTime 12:00
 
-# --- Hangar row (ADR 0186–0188) ---
-capture hangar-rex-day \
-  -airsideReviewWeather clear -airsideReviewTime 12:00 \
-  -airsideOverviewCenterX 1035 -airsideOverviewCenterZ 938 \
-  -airsideOverviewDistance 280 -airsideOverviewPitch 30 -airsideOverviewYaw 200
+capture hangar-row-day \
+  -airsideReviewView hangar-row \
+  -airsideReviewWeather clear -airsideReviewTime 12:00
 
-capture hangar-cobham-day \
-  -airsideReviewWeather clear -airsideReviewTime 12:00 \
-  -airsideOverviewCenterX 960 -airsideOverviewCenterZ 1150 \
-  -airsideOverviewDistance 320 -airsideOverviewPitch 30 -airsideOverviewYaw 200
+capture suburb-edge-day \
+  -airsideReviewView suburb-edge \
+  -airsideReviewWeather clear -airsideReviewTime 12:00
 
-# --- Freight sheds / fire station detail (ADR 0199) ---
+capture coast-day \
+  -airsideReviewView coast \
+  -airsideReviewWeather clear -airsideReviewTime 12:00
+
+# --- Freight sheds / fire station detail (ADR 0199) — not in Phase 0 table ---
 capture freight-qantas-day \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideOverviewCenterX 740 -airsideOverviewCenterZ 340 \
@@ -88,12 +90,12 @@ capture fire-station-night \
 
 # --- Weather depth sample (ADR 0193); full matrix remains scripts/review-weather.sh ---
 capture weather-storm-overview \
-  -airsideReviewWeather storm -airsideReviewTime 12:00 \
-  -airsideOverviewDistance 2400 -airsideOverviewPitch 50 -airsideOverviewYaw 200
+  -airsideReviewView overview \
+  -airsideReviewWeather storm -airsideReviewTime 12:00
 
 capture weather-fog-overview \
-  -airsideReviewWeather fog -airsideReviewTime 12:00 \
-  -airsideOverviewDistance 2400 -airsideOverviewPitch 50 -airsideOverviewYaw 200
+  -airsideReviewView overview \
+  -airsideReviewWeather fog -airsideReviewTime 12:00
 
 # --- Follow a soak aircraft (tyres / audio / boarding tape when present) ---
 FOLLOW=VH-PAX
@@ -117,7 +119,6 @@ fi
 results="$shots/RESULTS.md"
 if [ ! -f "$results" ]; then
   cp "$root/docs/testing/post-audit-p0-playtest.md" "$results"
-  # Point the working copy at this shot directory.
   if command -v sed >/dev/null 2>&1; then
     sed -i.bak "s|work/captures/post-audit-p0-<date>|$shots|" "$results" 2>/dev/null \
       || sed -i '' "s|work/captures/post-audit-p0-<date>|$shots|" "$results"

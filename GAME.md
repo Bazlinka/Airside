@@ -2,7 +2,8 @@
 
 - **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0201).**
   Full Domain / Simulation / Presentation / tests / product-plan audit. Headless **1129/1129**. Standing backlog:
-  `docs/plans/post-audit-improvement-plan.md`. Cloud goal set to follow that order.
+  `docs/plans/post-audit-improvement-plan.md`. Cloud goal set to follow that order. Phase 0 bookmarks (ADR 0200)
+  are merged onto this branch for shared Mac captures.
   - **P0 (NEXT — start on Mac worker UI, not cloud Task):** Task cannot pin My Machines. At
     [cursor.com/agents](https://cursor.com/agents) pick **Bailey's MacBook Pro**, or shell in
     `~/Code/Airside` on `cursor/post-audit-improvement-plan-709e`: `scripts/build-mac.sh` then
@@ -10,12 +11,17 @@
     (`docs/testing/post-audit-p0-playtest.md` Option A/B). Push RESULTS to
     `cursor/post-audit-p0-results-709e` when done. Audio / freighter / storm-on-final / hangar tow /
     follow feel need human judgment.
-  - **P1:** Bailey sign-off on `docs/plans/visual-overhaul-plan.md`. Phase 0 bookmarks in PR #485
-    (ADR 0200); still needs Mac `scripts/capture-visual-baseline.sh` metrics.
+  - **P1:** Bailey sign-off on `docs/plans/visual-overhaul-plan.md`. Phase 0 bookmarks +
+    `scripts/capture-visual-baseline.sh` on this branch (ADR 0200); still needs Mac metrics PNGs.
   - **P2:** Freight AI / cargo apron / freighter contracts **parked until P0** clears freighter+tyre rows.
   - **P3:** `AirsidePrototype` builders/statics; lock weather/large-fleet fps; retire legacy full-airport when ready.
   - **P4 only then:** second airport, companion, denser world. Do not start Companion/CloudKit or wages/fuel/loans yet.
   - **Watch:** restore still hard-requires Adelaide; stale GAME.md footer / early PROJECT_PLAN “gaps” are not truth.
+
+- **2026-09-30 Cursor — visual overhaul Phase 0 baseline bookmarks (merged from `cursor/visual-baseline-phase0-5ea8`, ADR 0200).**
+  Six named review cameras in `AirsideVisualBaselineViews` (`-airsideReviewView`), wired into the overview
+  camera, with `scripts/capture-visual-baseline.sh` for day/dusk/night 1600×900 shots and scraped soak metrics.
+  Headless locks in `VisualBaselineViewsTests`. Packaged PNG/`metrics.md` still need a Mac run.
 
 - **2026-09-30 Claude — airside building detail, Phase 3d slice (branch `visual-overhaul-ground`, ADR 0199).**
   Shaped roofs on freight/fire station, plinths, lit wall packs, dock bumpers. Headless suite run here with a local

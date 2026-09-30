@@ -5,6 +5,11 @@
   `docs/plans/post-audit-improvement-plan.md`. Mac P0 matrix: `scripts/review-post-audit-p0.sh` and
   `docs/testing/post-audit-p0-playtest.md`. ADR 0201 (renumbered; ADR 0200 is visual Phase 0). No game behaviour changed.
 
+- **Visual overhaul Phase 0 baseline bookmarks.** Six named review cameras (`overview`,
+  `terminal-airside`, `terminal-kerb`, `hangar-row`, `suburb-edge`, `coast`) via
+  `-airsideReviewView`, plus `scripts/capture-visual-baseline.sh` for day/dusk/night
+  1600×900 captures and scraped fps metrics. ADR 0200. Packaged PNG evidence still needs a Mac run.
+
 - **Airside buildings look finished.** Freight sheds and the fire station get a shallow shaped roof (instead of a flat
   box with plant), every support/freight/fire building gets a base plinth, and doors get lit wall packs so they read at
   night; freight docks gain bumpers and bollards. Presentation only. ADR 0199.

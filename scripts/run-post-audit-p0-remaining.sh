@@ -47,7 +47,7 @@ if [ "${AIRSIDE_P0_SKIP_BUILD:-}" = "1" ]; then
   fi
   echo "==> Skipping Mac build (AIRSIDE_P0_SKIP_BUILD=1); using $app"
 else
-  echo "==> Building Mac player (need auto-landing upgrade + review helpers)"
+  echo "==> Building Mac player (need multi-shot review + auto-landing/takeoff helpers)"
   bash "$root/scripts/build-mac.sh"
 fi
 

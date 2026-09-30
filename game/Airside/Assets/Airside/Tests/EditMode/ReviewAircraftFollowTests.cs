@@ -179,11 +179,12 @@ namespace Airside.Tests.EditMode
                 $"packaged delay {delaySeconds}s must follow TakingOff (tyre roll), not {pick.State}");
         }
 
-        [Test]
-        public void PackagedAutoLandingDelay_SelectsJetLanding()
+        [TestCase(780)]
+        [TestCase(783)]
+        [TestCase(786)]
+        public void PackagedAutoLandingDelay_SelectsJetLanding(long delaySeconds)
         {
-            // remaining.sh follow-jet-* CAPTURE_DELAY — 360s was turboprop Landing; jet arrives later.
-            const long delaySeconds = 780;
+            // remaining.sh landing batch: day@780 / close@783 / storm@786 — 360s was turboprop.
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(20260913),
                 Airline.Player("Soak Air", "#6A3FA0"));

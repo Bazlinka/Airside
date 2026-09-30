@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **P0 fail-closed overview framing for night-sky stills.** Packaged overview
+  shots that set `-airsideOverviewPitch`/`Yaw`/`Distance` abort when the live
+  camera never reaches that pose (no nose-down default PNG). Review logs include
+  `pose pitch=/yaw=/dist=`; inventory hard-fails night-sky pitch outside ~3–13°.
+  Locked by `ReviewOverviewFramingTests`. No save-schema changes.
 - **P0 tip `45e5eb10` CI CLEAN.** Headless green on #491 with jet-takeoff
   1330s, fail-closed review/follow, capture resume, Finder tip checkout, and
   fail-closed player preflight. Mac eyes/ears still required. No simulation or

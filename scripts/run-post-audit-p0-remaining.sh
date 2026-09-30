@@ -69,6 +69,10 @@ if [ -x "$app" ]; then
     echo "Player at $app lacks auto-follow fail-closed. Rebuild without SKIP_BUILD." >&2
     exit 1
   fi
+  if ! strings "$app" 2>/dev/null | grep -Fq 'overview framing mismatch'; then
+    echo "Player at $app lacks overview-framing fail-closed. Rebuild without SKIP_BUILD." >&2
+    exit 1
+  fi
   echo "==> Player has review fail-closed aborts"
 fi
 
@@ -154,6 +158,20 @@ follow_fail=0
           if [ "$found_follow" -eq 0 ]; then
             log_status="errors"
             follow_fail=1
+          fi
+          ;;
+        overview-night-sky-traffic)
+          # Pose log + pitch band (~8° ±5). Nose-down default (~50°) must fail.
+          if ! grep -Eq '\[Airside soak\] review shot .* pose pitch=' "$logf"; then
+            log_status="errors"
+            follow_fail=1
+          else
+            pitch="$(grep -Eo 'pose pitch=[0-9.]+' "$logf" | tail -1 | sed -E 's/pose pitch=//')"
+            if ! awk -v p="$pitch" 'BEGIN { exit !(p+0 <= 13 && p+0 >= 3) }'; then
+              echo "overview-night-sky-traffic pose pitch=$pitch (want ~8); treating as failed capture." >&2
+              log_status="errors"
+              follow_fail=1
+            fi
           fi
           ;;
         follow-freighter)

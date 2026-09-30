@@ -23,6 +23,7 @@ Headless suite on tip: **1168+** (`scripts/test-domain.sh`); #491 tip CI green.
 | Stand oil stains + soft ground edges | `StandOilStainsTests` | **keep** (logic); Bailey must still *see* stains |
 | Apron patches + drainage pits | `ApronSurfaceWearTests` | **keep** (logic); Bailey must still *see* patches |
 | Night-sky drawable cruise early in soak + yaw 270 sector + upper-half frustum | `SkyTrafficTests.NightSkyReviewWindow_HasDrawableCruiseTrafficEarlyInSoak`, `NightSkyReviewYaw_FacesADrawableOverflightSector`, `NightSkyReviewFraming_PutsDrawableCruiseInUpperHalfOfFrame` | **keep** (timing/aim/frustum); Bailey must still *see* cruise in the still |
+| Night-sky CLI pose fail-closed (reject nose-down default) | `ReviewOverviewFramingTests` + soak abort `overview framing mismatch` + inventory pitch band | **keep** (no false-success PNG); Bailey must still *see* cruise after Mac Stage A |
 | Auto-landing / auto-takeoff pick Landing / TakingOff (not parked Saab) | `ReviewAircraftFollowTests` (incl. packaged jet takeoff 1330 / landing 780/783/786) | **keep** (follow pick); Bailey must still *see* tyres |
 | Boarding mid-window @ 320/323s | `EngineStartSequenceTests.PackagedBoardingStill_IsMidBoardingForStarterRegional` | **keep** (timing); Bailey must still *see* tape |
 | Multi-shot soak CLI schedule | `ReviewShotScheduleTests` | **keep** (parser); rebuild player required |

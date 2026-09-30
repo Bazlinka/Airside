@@ -141,7 +141,12 @@ namespace Airside.Presentation
             texture.Apply();
             File.WriteAllBytes(path, texture.EncodeToPNG());
             Destroy(texture);
-            Debug.Log($"{SoakLogTag} review shot {path} at {Screen.width}x{Screen.height}");
+            Debug.Log(
+                $"{SoakLogTag} review shot {path} at {Screen.width}x{Screen.height} "
+                + $"pose pitch={AirsideCameraController.CurrentPitch:0.#} "
+                + $"yaw={AirsideCameraController.CurrentYaw:0.#} "
+                + $"dist={AirsideCameraController.CurrentDistance:0} "
+                + $"following={(_cameraController != null && _cameraController.IsFollowing)}");
             _reviewLastCaptureAt = Time.unscaledTime;
             _reviewShotIndex++;
             _reviewCaptureInFlight = false;
@@ -399,6 +404,29 @@ namespace Airside.Presentation
                 Debug.LogError($"{SoakLogTag} review shot aborted — boarding booking never applied (no PNG)");
                 Application.Quit();
                 return;
+            }
+
+            // Fail closed: overview stills that name CLI pitch/yaw/distance must actually
+            // reach that pose. A nose-down default overview PNG must not look like success
+            // for night-sky cruise-corridor captures (ADR 0195 / P0 remaining).
+            if (_cameraController != null
+                && !_cameraController.IsFollowing
+                && ReviewOverviewFraming.TryReadExpected(Environment.GetCommandLineArgs(), out var expected))
+            {
+                var actual = new ReviewOverviewFraming.Pose(
+                    AirsideCameraController.CurrentPitch,
+                    AirsideCameraController.CurrentYaw,
+                    AirsideCameraController.CurrentDistance);
+                if (!ReviewOverviewFraming.Matches(expected, actual))
+                {
+                    Debug.LogError(
+                        $"{SoakLogTag} review shot aborted — overview framing mismatch "
+                        + $"(want pitch={expected.PitchDegrees:0.#} yaw={expected.YawDegrees:0.#} "
+                        + $"dist={expected.DistanceMetres:0} got pitch={actual.PitchDegrees:0.#} "
+                        + $"yaw={actual.YawDegrees:0.#} dist={actual.DistanceMetres:0}; no PNG)");
+                    Application.Quit();
+                    return;
+                }
             }
 
             ApplyReviewShotPresentation(entry);

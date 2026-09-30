@@ -1,9 +1,9 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **#491** `45e5eb10` MERGEABLE/CLEAN (headless green). Jet takeoff
-  **1330s**, fail-closed auto-follow + review flags (player preflight), Stage C
-  **capture resume**, Finder tip→main checkout. Stage A:
+  Tip **#491** (this commit). Jet takeoff **1330s**, fail-closed auto-follow +
+  review flags + **overview framing mismatch** (night-sky CLI pose), Stage C
+  **capture resume**, Finder tip→main checkout, player preflight. Stage A:
   `scripts/run-post-audit-p0-stage-a.command`. Full A→B→C (~45+ min):
   `scripts/run-post-audit-p0-stages.sh`. Rebuild required. 21 RESULTS
   unverified; Mac workers idle; `CURSOR_API_KEY` unset.

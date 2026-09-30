@@ -423,6 +423,12 @@ namespace Airside.Presentation
         /// <summary>The free camera's orbit distance this frame, for the fog and haze that follow the zoom.</summary>
         public static float CurrentDistance { get; private set; } = AirsideBareField.OverviewDistance;
 
+        /// <summary>Live overview/follow pitch (degrees) this frame — soak review framing checks.</summary>
+        public static float CurrentPitch { get; private set; }
+
+        /// <summary>Live overview/follow yaw (degrees) this frame — soak review framing checks.</summary>
+        public static float CurrentYaw { get; private set; }
+
         private static readonly int HorizonScaleId = Shader.PropertyToID("_AirsideHorizonScale");
 
         private void ApplyTransform()
@@ -441,6 +447,8 @@ namespace Airside.Presentation
             }
 
             CurrentDistance = _distance;
+            CurrentPitch = _pitch;
+            CurrentYaw = _yaw;
 
             var rotation = Quaternion.Euler(_pitch, _yaw, 0f);
             var shakeOffset = Vector3.zero;

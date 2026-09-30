@@ -3,7 +3,18 @@
 - **Unique aircraft liveries and five player presets.** All thirteen flying types have distinct fin
   symbols and fitted fuselage ribbons. Choose Coastline, Southern Cross, Outback, Gulf or Redgum
   during setup or repaint from the Airline page; coordinated accent paint matches the swatches.
-  Existing saves/custom colours and non-paint aircraft geometry are preserved. ADR 0200.
+  Existing saves/custom colours and non-paint aircraft geometry are preserved. ADR 0203.
+
+- **Apron patch repairs and drainage pits.** Seeded concrete patches and grate pits inside every real apron
+  outline (inset from the edge), two combined meshes. Presentation only. ADR 0202.
+
+- **Stand oil stains and softer ground edges.** Seeded oil/fuel blotches under every bay and gate (two combined
+  meshes), slightly stronger grass macro/mow detail, and a softer paved-to-grass shoulder. Presentation only. ADR 0201.
+
+- **Visual overhaul Phase 0 baseline bookmarks.** Six named review cameras (`overview`,
+  `terminal-airside`, `terminal-kerb`, `hangar-row`, `suburb-edge`, `coast`) via
+  `-airsideReviewView`, plus `scripts/capture-visual-baseline.sh` for day/dusk/night
+  1600×900 captures and scraped fps metrics. ADR 0200. Packaged PNG evidence still needs a Mac run.
 
 - **Airside buildings look finished.** Freight sheds and the fire station get a shallow shaped roof (instead of a flat
   box with plant), every support/freight/fire building gets a base plinth, and doors get lit wall packs so they read at

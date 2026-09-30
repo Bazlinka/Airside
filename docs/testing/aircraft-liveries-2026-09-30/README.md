@@ -1,6 +1,6 @@
 # Unique aircraft liveries and five presets — 30 September 2026
 
-ADR 0200 implements thirteen individual fin symbols/fitted ribbon compositions and
+ADR 0203 implements thirteen individual fin symbols/fitted ribbon compositions and
 exactly five player paint presets. The setup wizard has named two-tone rows;
 the Airline page offers the same five repaints. The airline's own name and old
 custom colours are preserved. No save migration is required.
@@ -45,6 +45,14 @@ clipped rays/pointers. Native Unity review remains required before merge.
   inspection confirms the same missing root meta/empty folders. No missing,
   stale or mismatched runtime art, duplicate/malformed GUIDs or new metadata
   problem was reported. The global audit is not claimed green.
+
+## Main integration
+
+PR #487's merge conflicts with current `main` were limited to the status-board
+and changelog entries. Both contributors' entries are retained. The livery
+record is renumbered ADR 0203 because ADR 0200 is now used by the visual baseline.
+The combined branch's headless suite passes **1,145 tests**, zero failures.
+Native Unity verification remains pending as described above.
 
 ## Reproduce
 

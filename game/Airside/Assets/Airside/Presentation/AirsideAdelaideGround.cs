@@ -134,9 +134,9 @@ namespace Airside.Presentation
                 throw new ArgumentException("need " + LayerCount + " weights", nameof(weights));
 
             var d = DistanceToPavement(worldX, worldZ);
-            // 4–12 m shoulder, irregular along the edge so it is not a constant stripe.
-            var shoulder = 6.5f + 5.5f * WarpedFbm(worldX, worldZ, 55f, 3307, 3);
-            var dirt = 1f - SmoothStep(0.8f, shoulder, d);
+            // Soft 2–14 m shoulder, irregular along the edge so paved/grass doesn't hard-cut.
+            var shoulder = 8f + 6f * WarpedFbm(worldX, worldZ, 55f, 3307, 3);
+            var dirt = 1f - SmoothStep(0.4f, shoulder, d);
 
             // Irregular worn patches away from the strip — large and soft from overview.
             var wear = WarpedFbm(worldX, worldZ, 180f, 4409, 3);

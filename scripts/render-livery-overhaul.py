@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline geometry proof sheet, not a Unity gameplay capture (ADR 0200)."""
+"""Offline geometry proof sheet, not a Unity gameplay capture (ADR 0203)."""
 import argparse
 import importlib.util
 from pathlib import Path

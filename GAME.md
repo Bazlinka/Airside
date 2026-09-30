@@ -1,14 +1,33 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Codex — unique aircraft liveries + five player presets (branch `feature/aircraft-livery-overhaul`, ADR 0200).**
+- **2026-09-30 Codex — unique aircraft liveries + five player presets (branch `feature/aircraft-livery-overhaul`, ADR 0203).**
   Thirteen flying types have individual fin symbols and fitted ribbons. Setup and Airline repaint
   offer Coastline, Southern Cross, Outback, Gulf and Redgum with coordinated accent colours.
   Existing custom saves and cargo shading remain supported. Non-paint model geometry is unchanged.
-  - **Checks:** fitted-paint audit passed all 13; setup/Airline tests 28/28; headless 1,131/1,131.
+  - **Checks:** fitted-paint audit passed all 13; setup/Airline tests 28/28; headless 1,145/1,145 after merging current `main`.
     Connectivity passed all 13; 347 packaged art files match. The global asset audit has four
     pre-existing checkout metadata findings; see `docs/testing/aircraft-liveries-2026-09-30/README.md`.
   - **NEXT:** run Unity EditMode on the Mac and review all types/presets at follow/overview and
     day/dusk/night before merging. Offline proof sheets are geometry evidence, not Unity captures.
+
+- **2026-09-30 Cursor — Phase 1 apron surface wear (branch `cursor/phase1-stand-oil-stains-5ea8`, ADR 0202).**
+  Seeded concrete patch repairs and drainage pits inside every apron outline. Presentation only.
+  - **Checks:** `scripts/test-domain.sh` **1138/1138** (incl. ApronSurfaceWearTests).
+  - **NEXT:** landform & coast (Phase 1), or land-cover polish.
+
+- **2026-09-30 Cursor — Phase 1 stand oil stains + ground soft edges (branch `cursor/phase1-stand-oil-stains-5ea8`, ADR 0201).**
+  Seeded oil/fuel blotches under every regional bay and terminal gate; slightly stronger ground macro/mow stripes;
+  softer paved→grass shoulder. Presentation only.
+  - **Checks:** `scripts/test-domain.sh` **1134/1134** (incl. StandOilStainsTests).
+  - **NEXT:** apron patch repairs / drainage pits (done in ADR 0202).
+
+- **2026-09-30 Cursor — visual overhaul Phase 0 baseline bookmarks (branch `cursor/visual-baseline-phase0-5ea8`, ADR 0200).**
+  Six named review cameras in `AirsideVisualBaselineViews` (`-airsideReviewView`), wired into the overview
+  camera, with `scripts/capture-visual-baseline.sh` for day/dusk/night 1600×900 shots and scraped soak metrics.
+  Headless locks in `VisualBaselineViewsTests`.
+  - **Checks:** `scripts/test-domain.sh` **1136/1136** (incl. new VisualBaselineViewsTests); harness props updated.
+  - **NEXT:** on a Mac, `scripts/build-mac.sh` then `scripts/capture-visual-baseline.sh`, commit PNGs + `metrics.md`
+    under `docs/testing/visual-baseline-2026-09-30/`; Phase 1 airside ground slices already on this branch.
 
 - **2026-09-30 Claude — airside building detail, Phase 3d slice (branch `visual-overhaul-ground`, ADR 0199).**
   Shaped roofs on freight/fire station, plinths, lit wall packs, dock bumpers. Headless suite run here with a local

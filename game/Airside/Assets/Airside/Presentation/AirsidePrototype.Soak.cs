@@ -80,6 +80,7 @@ namespace Airside.Presentation
         //   -airsideReviewAircraft <registration|auto-landing|auto-takeoff>
         //       follow a live 3D aircraft; auto-landing / auto-takeoff pick the best
         //       on-field arrival or departure that already has a field view
+        //   -airsideReviewFreighter   refit a parked player aircraft to freighter and follow it
         //   -airsideReviewFollowZoom 0.35   bounded close-up of the followed aircraft
         //   -airsideReviewTime HH:mm   override local lighting time only (not the sim clock)
         //   -airsideReviewWeather cloudy|overcast|rain|storm|...   deterministic visual QA
@@ -87,10 +88,12 @@ namespace Airside.Presentation
         private const string ReviewShotFlag = "-airsideReviewShot";
         private const string ReviewDelayFlag = "-airsideReviewDelay";
         private const string ReviewAircraftFlag = "-airsideReviewAircraft";
+        private const string ReviewFreighterFlag = "-airsideReviewFreighter";
         private float _reviewShotAt = -1f;
         private bool _reviewShotTaken;
         private bool _reviewFollowStarted;
         private string _reviewAircraftId;
+        private bool _reviewFreighterHold;
 
         private void OpenReviewPanel(string[] args)
         {
@@ -126,6 +129,52 @@ namespace Airside.Presentation
             File.WriteAllBytes(path, texture.EncodeToPNG());
             Destroy(texture);
             Debug.Log($"{SoakLogTag} review shot {path} at {Screen.width}x{Screen.height}");
+        }
+
+        /// <summary>
+        /// Refit one parked player aircraft to a freighter for ADR 0194 cargo-livery stills.
+        /// Prefers a jet; holds it on stand so soak does not book it out from under the shot.
+        /// </summary>
+        private void TryApplyReviewFreighter()
+        {
+            if (!FleetMode || _operations?.PlayerAirline == null)
+                return;
+
+            FleetAircraft best = null;
+            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
+            {
+                if (aircraft.State != FleetState.AtStand || aircraft.Scheduled.HasValue || aircraft.IsFreighter)
+                    continue;
+                if (best == null)
+                {
+                    best = aircraft;
+                    continue;
+                }
+
+                var jet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
+                var bestJet = AirlineOperations.NeedsTerminalGate(best.Type);
+                if (jet && !bestJet)
+                    best = aircraft;
+            }
+
+            if (best == null)
+            {
+                Debug.LogWarning($"{SoakLogTag} review freighter: no parked player aircraft to refit");
+                return;
+            }
+
+            var result = _operations.SetFreighter(best, true);
+            if (!result.Accepted)
+            {
+                Debug.LogWarning($"{SoakLogTag} review freighter refused: {result.Reason}");
+                return;
+            }
+
+            _reviewFreighterHold = true;
+            // Do not steal an auto-landing / auto-takeoff follow target.
+            if (string.IsNullOrEmpty(_reviewAircraftId))
+                _reviewAircraftId = best.Registration;
+            Debug.Log($"{SoakLogTag} review freighter {best.Registration}");
         }
 
         /// <summary>
@@ -242,6 +291,8 @@ namespace Airside.Presentation
                 var followIndex = Array.IndexOf(args, ReviewAircraftFlag);
                 _reviewAircraftId = followIndex >= 0 && followIndex + 1 < args.Length
                     ? args[followIndex + 1] : null;
+                if (Array.IndexOf(args, ReviewFreighterFlag) >= 0)
+                    TryApplyReviewFreighter();
                 OpenReviewPanel(args);
             }
             if (_soakMainThreadRecorder.Valid && _soakRenderThreadRecorder.Valid)
@@ -282,6 +333,9 @@ namespace Airside.Presentation
 
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
             {
+                // Keep the review freighter parked so the still shows cargo paint, not pushback.
+                if (_reviewFreighterHold && aircraft.IsFreighter)
+                    continue;
                 if (aircraft.State == FleetState.AtStand && !aircraft.Scheduled.HasValue)
                 {
                     // An aircraft type that cannot reach anything in the catalogue would have

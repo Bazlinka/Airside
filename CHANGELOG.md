@@ -1,10 +1,10 @@
 ## Unreleased
 
-- **P0 review follow auto-landing / auto-takeoff.** `-airsideReviewAircraft auto-landing`
-  or `auto-takeoff` picks the best on-field arrival or departure for tyre stills.
-  `scripts/review-post-audit-p0-remaining.sh` re-captures night-sky, follow, takeoff and
-  storm-landing stills (~280–360s live delays for the opening AI bank). Ranking/timing
-  locked by `ReviewAircraftFollowTests`. No simulation or save changes.
+- **P0 review follow helpers.** `-airsideReviewAircraft auto-landing|auto-takeoff` and
+  `-airsideReviewFreighter` drive arrival, departure and cargo-livery stills.
+  `scripts/review-post-audit-p0-remaining.sh` re-captures night-sky, follow, takeoff,
+  storm-landing and freighter stills. Ranking/timing locked by
+  `ReviewAircraftFollowTests`. No simulation or save changes.
 
 - **Consolidate Airside onto main.** Retain the post-audit backlog, Mac review helpers and actual #490
   capture results; retire stale branch-switching instructions and fix three malformed Unity metadata GUIDs.

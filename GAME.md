@@ -1,9 +1,9 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — P0 auto-landing / auto-takeoff review follow (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Packaged captures: `-airsideReviewAircraft auto-landing|auto-takeoff` (jets preferred).
-  `scripts/review-post-audit-p0-remaining.sh` re-runs night-sky, landing follow, takeoff follow
-  and storm-landing stills (~280–360s live). Headless green on this branch.
+- **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
+  Packaged: `auto-landing` / `auto-takeoff` / `-airsideReviewFreighter`.
+  `scripts/review-post-audit-p0-remaining.sh` re-runs night-sky, landing, takeoff, storm and
+  freighter stills. Headless green on this branch.
   **NEXT:** Mac rebuild → that script → finish `docs/testing/post-audit-p0-manual-checklist.md`.
   Freight AI stays parked. Do not invent RESULTS. Pin Mac via agents UI (Task cannot take worker_id).
 

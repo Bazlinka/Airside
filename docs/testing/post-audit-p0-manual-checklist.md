@@ -44,6 +44,8 @@ Judge: do overflights **cruise** (not crawl)? Is a fleet inbound drawn once on f
 ## 3. Freighter + tyres (ADR 0194) — unblocks P2
 
 1. Fleet card → refit a parked aircraft to freighter → Follow: cargo shade + "... CARGO" title.
+   Packaged still helper: `follow-freighter` in `scripts/review-post-audit-p0-remaining.sh`
+   (`-airsideReviewFreighter`). Still needs a person to mark keep/fix.
 2. Follow a **jet** (not the soak Saab at stand) from the side on takeoff rotation and on flare:
    main tyres on the runway.
    Packaged still helpers in `scripts/review-post-audit-p0-remaining.sh`:

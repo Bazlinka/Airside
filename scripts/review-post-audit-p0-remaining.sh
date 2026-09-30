@@ -61,6 +61,12 @@ CAPTURE_DELAY=280 CAPTURE_TIMEOUT=360 capture follow-storm-landing \
   -airsideReviewWeather storm -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
+# Parked freighter cargo shade + "... CARGO" title (ADR 0194). Short delay — no bank wait.
+capture follow-freighter \
+  -airsideReviewFreighter \
+  -airsideReviewWeather clear -airsideReviewTime 12:00 \
+  -airsideReviewFollowZoom 0.55
+
 echo "Remaining P0 stills written under $shots"
 echo "Copy keep PNGs into docs/testing/post-audit-p0-<date>/ and update RESULTS.md verdicts."
 echo "Manual listening/play rows still need a person — see docs/testing/post-audit-p0-manual-checklist.md"

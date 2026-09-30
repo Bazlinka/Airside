@@ -17,7 +17,8 @@ Subset: `AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/rev
 cd ~/Code/Airside
 # pull + build + remaining stills + copy into docs/testing/post-audit-p0-2026-09-30/
 scripts/run-post-audit-p0-remaining.sh
-# subset: AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh
+# fast first pass (night-sky + freighter + takeoff tyres — unblocks P2 evidence):
+# AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter,follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh
 ```
 
 Or single night-sky shot:

@@ -63,12 +63,33 @@ capture() {
   FOLLOW=""
 }
 
+# Order: short/high-priority first so an interrupted Mac run still lands night-sky +
+# freighter (P2 gate) before the multi-minute landing/boarding waits.
+
 # Shallow pitch + longer range so cruise corridors fill the upper frame (ADR 0195).
 # Lighting is 23:30; SkyTraffic still follows soak sim time (drawable from ~T+30s).
 CAPTURE_DELAY=45 CAPTURE_TIMEOUT=120 capture overview-night-sky-traffic \
   -airsideReviewView overview \
   -airsideReviewWeather clear -airsideReviewTime 23:30 \
   -airsideOverviewDistance 11000 -airsideOverviewPitch 8 -airsideOverviewYaw 270
+
+# Parked freighter cargo shade + "... CARGO" title (ADR 0194). Short delay — no bank wait.
+capture follow-freighter \
+  -airsideReviewFreighter \
+  -airsideReviewWeather clear -airsideReviewTime 12:00 \
+  -airsideReviewFollowZoom 0.55
+
+# Hangar tow mid-move (ADR 0186–0188). Tow takes minutes; 90s usually catches outbound.
+CAPTURE_DELAY=90 CAPTURE_TIMEOUT=180 capture follow-hangar-tow \
+  -airsideReviewHangarCheck \
+  -airsideReviewWeather clear -airsideReviewTime 12:00 \
+  -airsideReviewFollowZoom 0.55
+
+# Opening AI departures publish from ~2 min (ADR 0110); allow lineup/roll (tyre rotation).
+FOLLOW=auto-takeoff
+CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-jet-takeoff \
+  -airsideReviewWeather clear -airsideReviewTime 12:00 \
+  -airsideReviewFollowZoom 0.45
 
 # Opening inbound holds ~3 min then lands; wait for FleetState.Landing (tyre/flare).
 FOLLOW=auto-landing
@@ -81,27 +102,9 @@ CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-jet-close \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.35
 
-# Opening AI departures publish from ~2 min (ADR 0110); allow lineup/roll before the still.
-FOLLOW=auto-takeoff
-CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-jet-takeoff \
-  -airsideReviewWeather clear -airsideReviewTime 12:00 \
-  -airsideReviewFollowZoom 0.45
-
 FOLLOW=auto-landing
 CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-storm-landing \
   -airsideReviewWeather storm -airsideReviewTime 12:00 \
-  -airsideReviewFollowZoom 0.55
-
-# Parked freighter cargo shade + "... CARGO" title (ADR 0194). Short delay — no bank wait.
-capture follow-freighter \
-  -airsideReviewFreighter \
-  -airsideReviewWeather clear -airsideReviewTime 12:00 \
-  -airsideReviewFollowZoom 0.55
-
-# Hangar tow mid-move (ADR 0186–0188). Tow takes minutes; 90s usually catches outbound.
-CAPTURE_DELAY=90 CAPTURE_TIMEOUT=180 capture follow-hangar-tow \
-  -airsideReviewHangarCheck \
-  -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
 # Walkway tape mid-boarding (ADR 0187). Starter Saab: fuel+catering+baggage ≈ 255s, then board.

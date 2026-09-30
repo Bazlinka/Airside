@@ -8,8 +8,9 @@
   Cloud Task cannot pin (machine.type only `same_machine`|`new_cloud_vm`). API pin needs team
   **Enable Remote Control for Team**; until then use agents UI machine name.
   Remaining RESULTS + manual rows unverified.
-  **NEXT:** UI-pin Mac → `scripts/run-post-audit-p0-remaining.sh` → fill RESULTS.
-  Freight AI stays parked. Do not invent RESULTS.
+  **NEXT:** UI-pin Mac → prefer fast pass
+  `AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter,follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh`
+  then full remaining / manual rows → fill RESULTS. Freight AI stays parked. Do not invent RESULTS.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

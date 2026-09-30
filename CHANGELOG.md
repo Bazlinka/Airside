@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 remaining captures prioritize freighter evidence.** Night-sky, freighter and
+  hangar run before the multi-minute landing/boarding waits so an interrupted Mac
+  run can still clear the P2 freighter gate. No simulation or save changes.
+
 - **P0 Mac pin docs: Remote Control toggle.** Playtest Option B records that API /
   CreateAgent machine pin needs team **Enable Remote Control for Team**; cloud Task
   still cannot pin. No simulation or save changes.

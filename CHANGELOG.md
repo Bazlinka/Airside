@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 remaining delay CI lock uses grep.** `scripts/test-p0-remaining-delays.sh`
+  checks freighter presence with `grep` so GitHub-hosted Ubuntu runners (no
+  ripgrep) stay green. No simulation or save changes.
+
 - **P0 remaining delays locked in CI.** `scripts/test-p0-remaining-delays.sh`
   asserts night-sky/hangar/takeoff/landing/boarding delays and soak-outlives
   each window. Stage B can skip rebuild via `AIRSIDE_P0_SKIP_BUILD=1`. No

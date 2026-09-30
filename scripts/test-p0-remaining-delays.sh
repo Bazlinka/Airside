@@ -32,7 +32,7 @@ require_delay follow-storm-landing 360
 require_delay follow-boarding-tape 320
 require_delay follow-human-ops-close 320
 
-rg -q 'capture follow-freighter' "$remaining" || { echo "missing follow-freighter" >&2; exit 1; }
+grep -q 'capture follow-freighter' "$remaining" || { echo "missing follow-freighter" >&2; exit 1; }
 echo "ok follow-freighter present"
 
 for delay in 45 90 320 360 900; do

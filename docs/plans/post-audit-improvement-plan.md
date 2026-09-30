@@ -1,6 +1,6 @@
 # Post-audit improvement plan
 
-Status: **active** · 2026-09-30 · Author: Cursor (comprehensive code audit) · Branch `cursor/post-audit-improvement-plan-709e`
+Status: **active** · 2026-09-30 · Author: Cursor (comprehensive code audit) · Branch `cursor/post-audit-improvement-plan-709e` · ADR **0201**
 
 This is the standing backlog for what to improve next before a major expansion.
 It comes from a full Domain / Simulation / Presentation / tests / product-plan audit
@@ -53,6 +53,11 @@ verified” lines when eyes-on is done.
 2. If yes: **Phase 0 baseline** (named captures + fps / p95 / SetPass / batches)
    before Phase 1 ground/land. No visual phase lands without a before/after number.
 3. Building audit: 71/78 heights are still rule defaults (`docs/data/ypad-buildings-audit.md`).
+
+**In flight:** PR #485 (`cursor/visual-baseline-phase0-5ea8`, ADR 0200) adds
+`-airsideReviewView` bookmarks and `scripts/capture-visual-baseline.sh`. Headless
+green; packaged PNG/`metrics.md` still need a Mac run. After #485 merges, P0 and
+Phase 0 can share those bookmarks.
 
 ### P2 — Finish freight as a mode (parked until P0)
 

@@ -1,4 +1,4 @@
-# 0200 — Post-audit improvement plan is the standing backlog
+# 0201 — Post-audit improvement plan is the standing backlog
 
 Date: 2026-09-30. Owner: Cursor. Requested by Bailey after a comprehensive code audit
 (“find what is missing / good / not good before expanding”).
@@ -33,3 +33,6 @@ None.
 Mac P0 tooling added without changing game behaviour: `scripts/review-post-audit-p0.sh`
 and `docs/testing/post-audit-p0-playtest.md`. Freight AI / cargo apron / freighter-gated
 contracts stay parked until P0 signs off the player freighter and tyre rows.
+
+Renumbered from 0200 → **0201** so it does not collide with
+`0200-visual-baseline-phase0.md` (PR #485).

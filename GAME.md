@@ -1,6 +1,6 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0200).**
+- **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0201).**
   Full Domain / Simulation / Presentation / tests / product-plan audit. Headless **1129/1129**. Standing backlog:
   `docs/plans/post-audit-improvement-plan.md`. Cloud goal set to follow that order.
   - **P0 (NEXT — start on Mac worker UI, not cloud Task):** Task cannot pin My Machines. At
@@ -10,7 +10,8 @@
     (`docs/testing/post-audit-p0-playtest.md` Option A/B). Push RESULTS to
     `cursor/post-audit-p0-results-709e` when done. Audio / freighter / storm-on-final / hangar tow /
     follow feel need human judgment.
-  - **P1:** Bailey sign-off on `docs/plans/visual-overhaul-plan.md`, then Phase 0 FPS baseline.
+  - **P1:** Bailey sign-off on `docs/plans/visual-overhaul-plan.md`. Phase 0 bookmarks in PR #485
+    (ADR 0200); still needs Mac `scripts/capture-visual-baseline.sh` metrics.
   - **P2:** Freight AI / cargo apron / freighter contracts **parked until P0** clears freighter+tyre rows.
   - **P3:** `AirsidePrototype` builders/statics; lock weather/large-fleet fps; retire legacy full-airport when ready.
   - **P4 only then:** second airport, companion, denser world. Do not start Companion/CloudKit or wages/fuel/loans yet.

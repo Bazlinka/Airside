@@ -1,6 +1,6 @@
 # Post-audit P0 playtest checklist
 
-Date: 2026-09-30 · Plan: `docs/plans/post-audit-improvement-plan.md` (ADR 0200)
+Date: 2026-09-30 · Plan: `docs/plans/post-audit-improvement-plan.md` (ADR 0201)
 
 **Goal:** eyes and ears on recent merges that are green in tests but “not yet seen /
 listened / felt” in a rebuilt game. Mark each row **keep / fix / revert** before

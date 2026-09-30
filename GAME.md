@@ -1,11 +1,12 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — P0 RESULTS branch staged (branch `cursor/post-audit-p0-results-709e`, ADR 0203).**
-  Draft RESULTS exist with **blank verdicts**. Bailey **skipped** the cloud “run P0 on Mac” CTA from this
-  iOS run — do not re-prompt that setup action. Mac path still ready when wanted:
-  `scripts/run-post-audit-p0.sh` on `cursor/post-audit-p0-results-709e`, fill keep/fix/revert, push.
-  Linux still cannot pin My Machines. One-paste: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
-  Watching PR #488 + timer; no invented RESULTS.
+- **2026-09-30 Cursor — P0 RESULTS draft merged into plan branch (#488 → plan tip, ADR 0203).**
+  Bailey merged the **blank-verdict** RESULTS draft into `cursor/post-audit-improvement-plan-709e`.
+  That is staging consolidation — **not** Mac playtest completion (no keep/fix/revert filled).
+  Bailey also skipped the cloud Mac CTA; do not re-prompt it. When Mac is available:
+  checkout this plan branch, `scripts/run-post-audit-p0.sh`, fill
+  `docs/testing/post-audit-p0-<date>/RESULTS.md`, push. One-paste:
+  `docs/testing/post-audit-p0-mac-agent-prompt.md`. Timer still watching; no invented RESULTS.
 
 - **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0203).**
   Standing backlog: `docs/plans/post-audit-improvement-plan.md`. Cloud goal executes P0→P1→P2→P3→P4.

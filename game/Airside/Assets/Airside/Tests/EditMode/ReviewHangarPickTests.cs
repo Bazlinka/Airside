@@ -1,3 +1,4 @@
+using System;
 using Airside.Domain;
 using Airside.Simulation;
 using NUnit.Framework;
@@ -60,7 +61,10 @@ namespace Airside.Tests
         public void SoakSeed_HasCheckableParkedPlayerAtHangarStillDelay()
         {
             // remaining.sh follow-hangar-tow CAPTURE_DELAY=90 — must have a candidate
-            // at T+0 (apply) that StartCheck accepts on the packaged soak seed.
+            // at T+0 (apply) that StartCheck accepts on the packaged soak seed, and the
+            // assigned berth must be mid-outbound tow (off stand) at the still instant —
+            // InCheck alone could still look parked if tow seconds were shorter than 90.
+            const double captureDelay = 90;
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(20260913),
                 Airline.Player("Soak Air", "#6A3FA0"));
@@ -71,10 +75,32 @@ namespace Airside.Tests
             Assert.That(ops.StartCheck(atStart).Accepted, Is.True,
                 "StartCheck must accept the Stage C hangar pick");
 
-            clock.Set(new SimulationTime(90));
+            var level = ops.CareerState.BaseLevel;
+            var checkSeconds = Maintenance.CheckSeconds(atStart.Type, level);
+            Assert.That(HangarTow.TryPlan(atStart.Type, atStart.Stand, out var plan), Is.True,
+                $"{atStart.Registration} stand must have a hangar tow plan");
+            Assert.That(plan.TowSeconds, Is.GreaterThan(captureDelay),
+                $"{atStart.Registration}: outbound tow {plan.TowSeconds:0}s must outlast the {captureDelay}s still");
+
+            var berth = HangarBays.Of(ops.Fleet, atStart, level);
+            Assert.That(berth.HasHangar, Is.True, "StartCheck must assign a hangar berth");
+            Assert.That(
+                HangarTow.TryPose(atStart.Type, atStart.Stand, berth.Hangar, berth.Slot,
+                    captureDelay, checkSeconds, out var pose),
+                Is.True,
+                $"{atStart.Registration}: tow pose at {captureDelay}s");
+            var stand = AdelaideGround.StandPose(atStart.Stand);
+            var metres = Distance(pose.X, pose.Z, stand.X, stand.Z);
+            Assert.That(metres, Is.GreaterThan(15f),
+                $"{atStart.Registration} must be clearly off-stand at {captureDelay}s (mid-outbound), was {metres:0.0}m");
+
+            clock.Set(new SimulationTime((long)captureDelay));
             ops.Update();
             Assert.That(Maintenance.InCheck(atStart, clock.Now), Is.True,
                 "hangar subject must still be in check through the 90s still delay");
         }
+
+        private static float Distance(float ax, float az, float bx, float bz) =>
+            (float)Math.Sqrt((ax - bx) * (ax - bx) + (az - bz) * (az - bz));
     }
 }

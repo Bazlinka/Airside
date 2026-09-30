@@ -16,7 +16,7 @@ Headless suite on tip: **1180+** (`scripts/test-domain.sh`); #492 tip CI green.
 | Audio zoom gain curve (overview quieter, not silent) | `AircraftAudioMixTests` (`ZoomGain` 36–45000 m) | **keep** (levels); Bailey must still *listen* |
 | Freight refit / pay / boarding skip / save v19 / CARGO titles | `FreightTests`, `FreightPaintTests` | **keep** (logic); Bailey must still *see* livery + tyres |
 | Stage A freighter pick on soak seed (jet preferred, T+0/T+28 stand) | `ReviewFreighterPickTests` + soak `PickBest` | **keep** (pick); Bailey must still *see* cargo shade |
-| Stage C hangar pick on soak seed (non-founding preferred, StartCheck @ T+0/T+90) | `ReviewHangarPickTests` + soak `PickBest` | **keep** (pick); Bailey must still *see* tow |
+| Stage C hangar pick on soak seed (non-founding preferred, StartCheck @ T+0; mid-outbound off-stand @ 90s) | `ReviewHangarPickTests` + soak `PickBest` + `HangarTow.TryPose` | **keep** (pick+tow); Bailey must still *see* tow |
 | Stage C boarding pick on soak seed (regional bookable @ T+0/T+320) | `ReviewBoardingPickTests` + soak `PickBest` | **keep** (pick); Bailey must still *see* tape |
 | Hangar bay capacity / tow path / mid-tow @ 90s | `HangarBaysTests`, `HangarTowTests` | **keep** (logic); Bailey must still *see* tow |
 | Far zoom fog scale / max orbit | `CameraFeelTests` (`MaxOrbitDistance`, fog scale) | **keep** (math); Bailey must still *see* land cover |

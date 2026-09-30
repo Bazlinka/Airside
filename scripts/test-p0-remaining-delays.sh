@@ -139,8 +139,25 @@ grep -A6 'follow-jet-takeoff)' "$runner" | grep -Fq 'following=True' || {
   echo "inventory must hard-fail jet-takeoff stills without following=True" >&2
   exit 1
 }
-grep -A25 'follow-jet-day|follow-jet-close|follow-storm-landing)' "$runner" | grep -Fq 'found_live' || {
-  echo "inventory must hard-fail landing batch without following=True" >&2
+grep -A20 'follow-jet-day|follow-jet-close|follow-storm-landing)' "$runner" | grep -Fq 'review shot .*${base}' || {
+  echo "inventory must require per-shot pose following=True in landing batch log" >&2
+  exit 1
+}
+grep -A15 'follow-boarding-tape|follow-human-ops-close)' "$runner" | grep -Fq 'review shot .*${base}' || {
+  echo "inventory must require per-shot pose following=True in boarding batch log" >&2
+  exit 1
+}
+grep -Fq 'follow-jet-day.log' "$runner" || {
+  echo "inventory must fall back to landing-batch primary log for siblings" >&2
+  exit 1
+}
+cap="$root/scripts/capture-game.sh"
+grep -Fq 'Mirror it onto sibling' "$cap" || grep -Fq 'LOGS[0]' "$cap" || {
+  echo "capture-game must mirror multi-shot Unity log onto sibling .log paths" >&2
+  exit 1
+}
+grep -Fq 'cp -f "${LOGS[0]}"' "$cap" || {
+  echo "capture-game must cp primary log to sibling multi-shot logs" >&2
   exit 1
 }
 # Night-sky inventory must lock yaw/dist corridor, not pitch alone.

@@ -35,6 +35,7 @@ Headless suite on tip: **1180+** (`scripts/test-domain.sh`); #492 tip CI green.
 | Multi-shot soak CLI schedule | `ReviewShotScheduleTests` | **keep** (parser); rebuild player required |
 | Packaged remaining delays / Stage A–C ONLY / soak window / capture resume | `scripts/test-p0-remaining-delays.sh`, `test-p0-remaining-only-filter.sh`, `test-p0-stages-chain.sh`, `test-capture-game-soak-window.sh`, `test-capture-game-resume.sh`, `test-p0-mac-agent-launch.sh` | **keep** (script locks) |
 | Stage C SKIP_BUILD player preflight (hangar/boarding abort strings) | `run-post-audit-p0-remaining.sh` strings checks + `test-p0-remaining-delays.sh` | **keep** (no stale player); rebuild required |
+| Multi-shot batch log mirror + per-shot pose `following=True` | `capture-game.sh` sibling log copy; inventory batch primary fallback | **keep** (no Stage C false-fail); Bailey must still *see* stills |
 | Wheel spin on ground roll / stop airborne | `PresentationLayoutTests.FlightPath_WheelsStopOnceTheAircraftIsAirborne` | **keep** (math); Bailey must still *see* tyres |
 
 ## Needs Mac eyes / ears (cannot close from code)

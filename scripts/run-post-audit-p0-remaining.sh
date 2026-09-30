@@ -153,10 +153,21 @@ follow_fail=0
     base="$(basename "$png" .png)"
     bytes="$(wc -c < "$png" | tr -d ' ')"
     logf="$capture_out/$base.log"
+    # Multi-shot batches share one Unity -logFile (first shot). Fall back to the
+    # batch primary when capture-game has not mirrored sibling .log paths yet.
+    case "$base" in
+      follow-jet-close|follow-storm-landing)
+        [ -f "$logf" ] || logf="$capture_out/follow-jet-day.log"
+        ;;
+      follow-human-ops-close)
+        [ -f "$logf" ] || logf="$capture_out/follow-boarding-tape.log"
+        ;;
+    esac
     if [ -f "$logf" ]; then
       # Prefer grep — ripgrep is often missing on CI / fresh Mac agents.
       if grep -Eq 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL|review shot aborted' "$logf"; then
         log_status="errors"
+        follow_fail=1
       else
         log_status="clean"
       fi
@@ -172,19 +183,9 @@ follow_fail=0
           fi
           ;;
         follow-jet-day|follow-jet-close|follow-storm-landing)
-          found_follow=0
-          found_live=0
-          for alt in follow-jet-day follow-jet-close follow-storm-landing; do
-            if [ -f "$capture_out/$alt.log" ]; then
-              if grep -Eq '\[Airside soak\] following auto-landing ' "$capture_out/$alt.log"; then
-                found_follow=1
-              fi
-              if grep -Eq 'following=True' "$capture_out/$alt.log"; then
-                found_live=1
-              fi
-            fi
-          done
-          if [ "$found_follow" -eq 0 ] || [ "$found_live" -eq 0 ]; then
+          # Shared batch log: require auto-landing follow + this shot's pose following=True.
+          if ! grep -Eq '\[Airside soak\] following auto-landing ' "$logf" \
+            || ! grep -Eq "review shot .*${base}\\.png .*following=True" "$logf"; then
             log_status="errors"
             follow_fail=1
           fi
@@ -227,19 +228,9 @@ follow_fail=0
           fi
           ;;
         follow-boarding-tape|follow-human-ops-close)
-          found_board=0
-          found_follow=0
-          for alt in follow-boarding-tape follow-human-ops-close; do
-            if [ -f "$capture_out/$alt.log" ]; then
-              if grep -Eq '\[Airside soak\] review boarding ' "$capture_out/$alt.log"; then
-                found_board=1
-              fi
-              if grep -Eq 'following=True' "$capture_out/$alt.log"; then
-                found_follow=1
-              fi
-            fi
-          done
-          if [ "$found_board" -eq 0 ] || [ "$found_follow" -eq 0 ]; then
+          # Shared batch log: require boarding apply + this shot's pose following=True.
+          if ! grep -Eq '\[Airside soak\] review boarding ' "$logf" \
+            || ! grep -Eq "review shot .*${base}\\.png .*following=True" "$logf"; then
             log_status="errors"
             follow_fail=1
           fi

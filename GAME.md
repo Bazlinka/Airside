@@ -2,10 +2,11 @@
 
 - **2026-09-30 Cursor — P0 auto-landing review follow (branch `cursor/p0-auto-landing-follow-709e`).**
   Packaged captures can pass `-airsideReviewAircraft auto-landing` to follow the best on-field
-  inbound / holding / landing aircraft (jets preferred). `scripts/review-post-audit-p0.sh` follow
-  shots use it with a 90s delay. Headless **1155/1155**. Unity EditMode still needed on a Mac.
-  **NEXT:** Mac rebuild, re-run follow + night-sky shots, then finish
-  `docs/testing/post-audit-p0-manual-checklist.md`. Freight AI stays parked.
+  holding / landing aircraft (jets preferred). Follow stills use ~280s live delay (opening AI
+  bank joins at ~3 min). `scripts/review-post-audit-p0-remaining.sh` re-runs night-sky + follow
+  only. Headless green on this branch. Unity EditMode still needed on a Mac.
+  **NEXT:** on Mac, rebuild → `scripts/review-post-audit-p0-remaining.sh` → finish
+  `docs/testing/post-audit-p0-manual-checklist.md`. Freight AI stays parked. Do not invent RESULTS.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

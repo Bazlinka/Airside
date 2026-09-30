@@ -15,12 +15,11 @@ framing fix is in the player.
 ```bash
 cd ~/Code/Airside && git pull
 scripts/build-mac.sh
-# just the improved shot (or full scripts/review-post-audit-p0.sh)
-AIRSIDE_P0_OUT=work/captures/post-audit-p0-nightsky \
-  bash -c 'source scripts/review-post-audit-p0.sh'  # or run the one capture via capture-game
+# night-sky + auto-landing follow stills only (preferred):
+scripts/review-post-audit-p0-remaining.sh
 ```
 
-Or single shot:
+Or single night-sky shot:
 
 ```bash
 scripts/capture-game.sh \
@@ -47,9 +46,10 @@ Judge: do overflights **cruise** (not crawl)? Is a fleet inbound drawn once on f
 1. Fleet card → refit a parked aircraft to freighter → Follow: cargo shade + "... CARGO" title.
 2. Follow a **jet** (not the soak Saab at stand) from the side on takeoff rotation and on flare:
    main tyres on the runway.
-   Packaged still helper: `-airsideReviewAircraft auto-landing` (or `FOLLOW=auto-landing` in
-   `scripts/review-post-audit-p0.sh`) picks the best on-field inbound / holding / landing
-   aircraft — prefer a 90s capture delay so soak has time to put one on final.
+   Packaged still helper: `-airsideReviewAircraft auto-landing` (or
+   `scripts/review-post-audit-p0-remaining.sh`) picks the best on-field holding / landing
+   aircraft. Soak is live wall-clock; opening AI inbound #1 reaches the circuit at ~3 min,
+   so use a **~280s** capture delay (90s is too early).
 
 ## 4. Storm final (ADR 0190)
 

@@ -47,6 +47,9 @@ Judge: do overflights **cruise** (not crawl)? Is a fleet inbound drawn once on f
 1. Fleet card → refit a parked aircraft to freighter → Follow: cargo shade + "... CARGO" title.
 2. Follow a **jet** (not the soak Saab at stand) from the side on takeoff rotation and on flare:
    main tyres on the runway.
+   Packaged still helper: `-airsideReviewAircraft auto-landing` (or `FOLLOW=auto-landing` in
+   `scripts/review-post-audit-p0.sh`) picks the best on-field inbound / holding / landing
+   aircraft — prefer a 90s capture delay so soak has time to put one on final.
 
 ## 4. Storm final (ADR 0190)
 

@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **P0 review follow auto-landing.** `-airsideReviewAircraft auto-landing` (and
+  `FOLLOW=auto-landing` in `scripts/review-post-audit-p0.sh`) picks the best on-field
+  inbound / holding / landing aircraft for tyre and arrival stills, with a longer capture
+  delay. Ranking is locked by `ReviewAircraftFollowTests`. No simulation or save changes.
+
 - **Consolidate Airside onto main.** Retain the post-audit backlog, Mac review helpers and actual #490
   capture results; retire stale branch-switching instructions and fix three malformed Unity metadata GUIDs.
   Post-audit backlog ADR 0205; manual P0 playtest checks remain open. No simulation or save changes.

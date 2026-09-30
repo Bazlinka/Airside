@@ -77,7 +77,9 @@ namespace Airside.Presentation
         // Review shots for packaged-build checks (HUD fit at several window sizes, panels):
         //   -airsideReviewPanel plan|operations|map|fleet|contracts|stats|devtools|help
         //   -airsideReviewShot <path.png> [-airsideReviewDelay seconds]   capture, then quit
-        //   -airsideReviewAircraft <registration>   follow a live 3D aircraft in the shot
+        //   -airsideReviewAircraft <registration|auto-landing>
+        //       follow a live 3D aircraft in the shot; auto-landing picks the best
+        //       inbound / holding / landing aircraft that already has a field view
         //   -airsideReviewFollowZoom 0.35   bounded close-up of the followed aircraft
         //   -airsideReviewTime HH:mm   override local lighting time only (not the sim clock)
         //   -airsideReviewWeather cloudy|overcast|rain|storm|...   deterministic visual QA
@@ -124,6 +126,41 @@ namespace Airside.Presentation
             File.WriteAllBytes(path, texture.EncodeToPNG());
             Destroy(texture);
             Debug.Log($"{SoakLogTag} review shot {path} at {Screen.width}x{Screen.height}");
+        }
+
+        /// <summary>
+        /// Pick the best on-field arrival for tyre / audio review stills and start follow.
+        /// Retries each soak frame until an inbound / holding / landing view appears.
+        /// </summary>
+        private bool TryFollowAutoLandingAircraft()
+        {
+            string bestId = null;
+            var bestRank = int.MaxValue;
+            foreach (var pair in _fleetAircraftById)
+            {
+                var aircraft = pair.Value;
+                if (aircraft == null)
+                    continue;
+                var hasView = _fleetViewById.ContainsKey(pair.Key);
+                var preferJet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
+                var rank = ReviewAircraftFollow.AutoLandingRank(aircraft.State, hasView, preferJet);
+                if (rank < 0 || rank > bestRank)
+                    continue;
+                bestRank = rank;
+                bestId = pair.Key;
+                if (rank == 0)
+                    break;
+            }
+
+            if (string.IsNullOrEmpty(bestId) || !TryFollowFleetAircraft(bestId))
+                return false;
+
+            _selectedAircraftId = bestId;
+            if (_fleetAircraftById.TryGetValue(bestId, out var followed))
+                Debug.Log($"{SoakLogTag} following auto-landing {bestId} ({followed.State})");
+            else
+                Debug.Log($"{SoakLogTag} following auto-landing {bestId}");
+            return true;
         }
 
         private void DriveReviewShot()
@@ -225,8 +262,10 @@ namespace Airside.Presentation
             }
             if (!_reviewFollowStarted && !string.IsNullOrEmpty(_reviewAircraftId))
             {
-                _reviewFollowStarted = TryFollowFleetAircraft(_reviewAircraftId);
-                if (_reviewFollowStarted)
+                _reviewFollowStarted = ReviewAircraftFollow.IsAutoLandingToken(_reviewAircraftId)
+                    ? TryFollowAutoLandingAircraft()
+                    : TryFollowFleetAircraft(_reviewAircraftId);
+                if (_reviewFollowStarted && !ReviewAircraftFollow.IsAutoLandingToken(_reviewAircraftId))
                     Debug.Log($"{SoakLogTag} following {_reviewAircraftId}");
             }
 

@@ -100,14 +100,15 @@ capture weather-fog-overview \
   -airsideReviewView overview \
   -airsideReviewWeather fog -airsideReviewTime 12:00
 
-# --- Follow a soak aircraft (tyres / audio / boarding tape when present) ---
-FOLLOW=VH-PAX
-capture follow-jet-day \
+# --- Follow an arrival (tyres / audio). auto-landing waits for HoldingForLanding/Landing. ---
+# Longer delay: soak's first return may not be on final at the default 28s still.
+FOLLOW=auto-landing
+CAPTURE_DELAY=90 CAPTURE_TIMEOUT=180 capture follow-jet-day \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
-FOLLOW=VH-PAX
-capture follow-jet-close \
+FOLLOW=auto-landing
+CAPTURE_DELAY=90 CAPTURE_TIMEOUT=180 capture follow-jet-close \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.35
 

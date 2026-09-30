@@ -1,14 +1,13 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip with remaining-runner inventory stamp; PR mergeable pending tip CI. Packaged:
-  `auto-landing` / `auto-takeoff` / freighter / hangar / boarding / human-ops close.
-  Night-sky: 11 km / pitch 8 / yaw 270 (~45s). One-command:
-  `scripts/run-post-audit-p0-remaining.sh` (copies PNGs + stamps inventory; no verdicts).
-  Two Mac workers ONLINE + idle (`~/Code/Airside` preferred). Cloud `Task` still only accepts
-  `machine.type` `same_machine`|`new_cloud_vm` (self-hosted rejected). Bailey UI-pins
-  **Bailey's MacBook Pro**. Paste: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
-  Remaining RESULTS + manual rows unverified.
+  Tip fixes `capture-game.sh` soak minutes so 320–360s review delays are not killed by the
+  default 3-minute soak COMPLETE. Packaged: `auto-landing` / `auto-takeoff` / freighter /
+  hangar / boarding / human-ops close. Night-sky: 11 km / pitch 8 / yaw 270 (~45s).
+  One-command: `scripts/run-post-audit-p0-remaining.sh` (PNGs + inventory; no verdicts).
+  Two Mac workers ONLINE + idle (`~/Code/Airside` preferred). Cloud `Task` cannot pin My
+  Machines — Bailey UI-pins **Bailey's MacBook Pro**. Paste:
+  `docs/testing/post-audit-p0-mac-agent-prompt.md`. Remaining RESULTS + manual rows unverified.
   **NEXT:** UI-pin Mac → prefer fast pass
   `AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter,follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh`
   then full remaining / manual rows → fill RESULTS. Freight AI stays parked. Do not invent RESULTS.

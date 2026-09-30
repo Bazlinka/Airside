@@ -7,6 +7,8 @@
 #
 # Runs a soak session (a fresh "Soak Air" career), optionally follows one aircraft, writes a PNG
 # after --delay seconds and quits. Prints the PNG path on success.
+# When --delay outlives the default 3-minute soak, minutes/timeout are raised automatically
+# so soak COMPLETE cannot quit before the review shot.
 #
 # Why this script exists: the Unity player on macOS waits for the display to show each frame.
 # With the display asleep (an unattended Mac, a long build) the first frame never appears and
@@ -40,6 +42,26 @@ if [ ! -x "$app" ]; then
   echo "No build at $app — run scripts/build-mac.sh first." >&2
   exit 1
 fi
+
+# Soak COMPLETE calls QuitGame when -airsideSoakMinutes elapses. A review delay
+# longer than that (auto-landing / boarding stills at ~320–360s) never writes a PNG
+# if we leave the default 3-minute soak. Keep soak alive past delay + quit buffer.
+need_minutes=$(( (delay + 120 + 59) / 60 ))
+raised_minutes=0
+if [ "$minutes" -lt "$need_minutes" ]; then
+  echo "Raising soak minutes $minutes → $need_minutes so soak outlives review delay ${delay}s" >&2
+  minutes=$need_minutes
+  raised_minutes=1
+fi
+# When soak minutes grow for a long delay, the shell watchdog must cover that window too.
+if [ "$raised_minutes" -eq 1 ]; then
+  need_timeout=$((minutes * 60 + 60))
+  if [ "$timeout" -lt "$need_timeout" ]; then
+    echo "Raising capture timeout ${timeout}s → ${need_timeout}s for ${minutes}m soak" >&2
+    timeout=$need_timeout
+  fi
+fi
+
 mkdir -p "$(dirname "$out")"
 log="${out%.png}.log"
 rm -f "$out" "$log"

@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 Mac CreateAgent launcher pins `worker_id` + Stage A default.** Prefers
+  `~/Code/Airside` worker id; Stage A `.command` by default (full A→B→C via
+  `AIRSIDE_P0_LAUNCH_FULL=1`). Still needs `CURSOR_API_KEY`. No simulation or
+  save changes.
 - **P0 camera pose published in Awake for framing checks.** Overview
   pitch/yaw/distance statics seed before the first LateUpdate so soak
   `DriveReviewShot` cannot read zeros. No simulation or save changes.

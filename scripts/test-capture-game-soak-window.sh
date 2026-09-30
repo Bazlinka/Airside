@@ -24,8 +24,8 @@ expect_plan 45 120 3 120
 # Hangar / boarding / auto-landing / auto-takeoff must raise soak past the review delay.
 expect_plan 90 180 4 300
 expect_plan 320 420 8 540
-expect_plan 360 450 8 540
-# Auto-takeoff waits ~900s for FleetState.TakingOff (~13 min opening bank).
-expect_plan 900 1020 17 1080
+# Jet Landing (~780s) and TakingOff mid-roll (~830s) — remaining.sh packaged delays.
+expect_plan 780 960 15 960
+expect_plan 830 980 16 1020
 
 echo "capture-game soak window checks passed"

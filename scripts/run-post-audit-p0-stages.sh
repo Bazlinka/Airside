@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-paste Mac path: Stage A → B → C for remaining P0 stills (ADR 0205).
-# Prefer this when the display will stay awake for the full soak (~25+ min).
+# Prefer this when the display will stay awake for the full soak (~60+ min).
 # Stage A lands night-sky + freighter first so an interrupted run still unblocks
 # those rows. Does not invent keep/fix/revert — fill Verdicts by eye afterward.
 #
@@ -31,7 +31,7 @@ run "Stage A (night-sky + freighter)" \
   bash "$root/scripts/run-post-audit-p0-remaining.sh"
 
 # Stage B / C: reuse the player; tolerate dirty RESULTS/PNGs from Stage A
-run "Stage B (takeoff / tyre rotation — ~17 min soak)" \
+run "Stage B (takeoff / tyre rotation — ~16 min soak)" \
   env AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 \
       AIRSIDE_P0_ONLY=follow-jet-takeoff \
   bash "$root/scripts/run-post-audit-p0-remaining.sh"

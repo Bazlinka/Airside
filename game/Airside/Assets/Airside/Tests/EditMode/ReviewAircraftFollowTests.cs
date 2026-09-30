@@ -155,11 +155,46 @@ namespace Airside.Tests.EditMode
             Assert.That(takingOffAt, Is.GreaterThanOrEqualTo(drawnAt),
                 "TakingOff is at or after the first drawn auto-takeoff candidate");
             // Opening departures reach TaxiOut/HoldingShort early, but TakingOff (roll / tyre
-            // rotation) is much later — remaining.sh waits ~900s live for that upgrade.
+            // rotation) is much later — remaining.sh waits ~830s live (mid first TakingOff window).
             Assert.That(takingOffAt, Is.LessThanOrEqualTo(15 * 60),
                 "first TakingOff should arrive within the remaining.sh auto-takeoff capture window");
             Assert.That(takingOffAt, Is.GreaterThan(8 * 60),
-                "TakingOff is after the 360s landing window — do not reuse auto-landing delay");
+                "TakingOff is after the early landing window — do not reuse auto-landing delay");
+        }
+
+        [Test]
+        public void PackagedAutoTakeoffDelay_SelectsTakingOffNotHoldingShort()
+        {
+            // remaining.sh follow-jet-takeoff CAPTURE_DELAY — must land mid TakingOff, not after
+            // the first roll ends (900s was HoldingShort on soak seed 20260913).
+            const long delaySeconds = 830;
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(20260913),
+                Airline.Player("Soak Air", "#6A3FA0"));
+            clock.Set(new SimulationTime(delaySeconds));
+            ops.Update();
+            var pick = BestAutoTakeoff(ops, clock.Now);
+            Assert.That(pick, Is.Not.Null, "auto-takeoff should have a drawn candidate at capture delay");
+            Assert.That(pick.State, Is.EqualTo(FleetState.TakingOff),
+                $"packaged delay {delaySeconds}s must follow TakingOff (tyre roll), not {pick.State}");
+        }
+
+        [Test]
+        public void PackagedAutoLandingDelay_SelectsJetLanding()
+        {
+            // remaining.sh follow-jet-* CAPTURE_DELAY — 360s was turboprop Landing; jet arrives later.
+            const long delaySeconds = 780;
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(20260913),
+                Airline.Player("Soak Air", "#6A3FA0"));
+            clock.Set(new SimulationTime(delaySeconds));
+            ops.Update();
+            var pick = BestAutoLanding(ops, clock.Now);
+            Assert.That(pick, Is.Not.Null, "auto-landing should have a drawn candidate at capture delay");
+            Assert.That(pick.State, Is.EqualTo(FleetState.Landing),
+                $"packaged delay {delaySeconds}s must follow Landing, not {pick.State}");
+            Assert.That(AirlineOperations.NeedsTerminalGate(pick.Type), Is.True,
+                $"follow-jet stills need a jet at delay {delaySeconds}s (got {pick.Registration} {pick.Type.Id})");
         }
 
         /// <summary>
@@ -191,6 +226,44 @@ namespace Airside.Tests.EditMode
                 var rank = ReviewAircraftFollow.AutoTakeoffRank(aircraft.State, hasView, preferJet);
                 if (rank >= 0 && (best < 0 || rank < best))
                     best = rank;
+            }
+
+            return best;
+        }
+
+        private static FleetAircraft BestAutoTakeoff(AirlineOperations ops, SimulationTime now)
+        {
+            FleetAircraft best = null;
+            var bestRank = int.MaxValue;
+            foreach (var aircraft in ops.Fleet)
+            {
+                var hasView = FleetVisual.For(aircraft, now).Visible;
+                var preferJet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
+                var rank = ReviewAircraftFollow.AutoTakeoffRank(aircraft.State, hasView, preferJet);
+                if (rank >= 0 && rank < bestRank)
+                {
+                    bestRank = rank;
+                    best = aircraft;
+                }
+            }
+
+            return best;
+        }
+
+        private static FleetAircraft BestAutoLanding(AirlineOperations ops, SimulationTime now)
+        {
+            FleetAircraft best = null;
+            var bestRank = int.MaxValue;
+            foreach (var aircraft in ops.Fleet)
+            {
+                var hasView = FleetVisual.For(aircraft, now).Visible;
+                var preferJet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
+                var rank = ReviewAircraftFollow.AutoLandingRank(aircraft.State, hasView, preferJet);
+                if (rank >= 0 && rank < bestRank)
+                {
+                    bestRank = rank;
+                    best = aircraft;
+                }
             }
 
             return best;

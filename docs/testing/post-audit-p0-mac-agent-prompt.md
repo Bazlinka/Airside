@@ -6,10 +6,11 @@ when the Mac is awake — one paste `scripts/run-post-audit-p0-stages.sh` at
 
 Optional Cursor path: paste the block below into a Cursor agent started **on**
 Bailey's MacBook Pro (environment dropdown → **Bailey's MacBook Pro**, not a cloud VM).
-Checkout `cursor/p0-auto-landing-follow-709e` at tip with auto-takeoff ~900s delay
-(or `main` after #491 merges) so night-sky yaw 270 + auto-landing upgrade + soak-window
-fix + takeoff TakingOff wait + `scripts/run-post-audit-p0-remaining.sh` are present.
-Canonical path: `~/Code/Airside`. Fast pass takeoff alone needs ~17 min soak.
+Checkout `cursor/p0-auto-landing-follow-709e` at tip with auto-takeoff ~830s /
+auto-landing ~780s delays (or `main` after #491 merges) so night-sky yaw 270 +
+jet Landing wait + soak-window fix + TakingOff mid-roll wait +
+`scripts/run-post-audit-p0-remaining.sh` are present.
+Canonical path: `~/Code/Airside`. Fast pass takeoff alone needs ~16 min soak.
 
 A Linux cloud parent cannot pin this machine via `Task` / `env.machine` (children
 land on Linux with `privateWorkerId: null`). Use the agents UI environment picker.
@@ -35,7 +36,7 @@ Follow docs/testing/post-audit-p0-manual-checklist.md in order:
    inventory is not a verdict)
    Stage A (minutes — night-sky + freighter, unblocks P2 freighter evidence):
    AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh
-   Stage B (tyre rotation — ~17 min soak for TakingOff ~13 min; reuse Stage A player;
+   Stage B (tyre rotation — ~16 min soak for TakingOff ~830s mid-roll; reuse Stage A player;
    OK if Stage A left RESULTS/PNGs dirty — do not commit between stages unless you want to):
    AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh
    Stage C (rest of remaining stills — hangar/boarding/landings; same SKIP_*):

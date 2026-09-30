@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **P0 takeoff/landing capture delays hit the right states.** Packaged
+  `auto-takeoff` waits **830s** (TakingOff mid-roll; 900s overshot to
+  HoldingShort) and `auto-landing` **780s** (jet Landing; 360s was turboprop).
+  Locked by `ReviewAircraftFollowTests` + `test-p0-remaining-delays.sh`.
+  No simulation or save changes.
+
 - **P0: `cursor[bot]` cannot claim My Machines via GitHub.** A cloud-agent
   `@cursoragent worker=Bailey's MacBook Pro` comment on #491 left workers idle;
   docs now say only Bailey's trusted GitHub account (or Terminal/Finder) works.

@@ -20,7 +20,7 @@ cd ~/Code/Airside
 # Prefer Stage A → B → C (dirty RESULTS/PNGs between stages are OK):
 # Stage A (minutes — night-sky + freighter; unblocks P2 freighter evidence):
 AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh
-# Stage B (tyre rotation — ~17 min soak; TakingOff ~13 min; reuse Stage A player):
+# Stage B (tyre rotation — ~16 min soak; TakingOff ~830s mid-roll; reuse Stage A player):
 AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh
 # Stage C (hangar / boarding / landings):
 AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-hangar-tow,follow-boarding-tape,follow-human-ops-close,follow-jet-day,follow-jet-close,follow-storm-landing scripts/run-post-audit-p0-remaining.sh
@@ -58,9 +58,9 @@ Judge: do overflights **cruise** (not crawl)? Is a fleet inbound drawn once on f
 2. Follow a **jet** (not the soak Saab at stand) from the side on takeoff rotation and on flare:
    main tyres on the runway.
    Packaged still helpers in `scripts/review-post-audit-p0-remaining.sh`:
-   `-airsideReviewAircraft auto-landing` (~360s, re-ranks to Landing) and `auto-takeoff`
-   (~900s — TakingOff ~13 min on the opening bank). Soak is live wall-clock; opening AI
-   inbound #1 reaches the circuit at ~3 min.
+   `-airsideReviewAircraft auto-landing` (~780s, jet Landing — 360s is turboprop) and
+   `auto-takeoff` (~830s mid TakingOff; 900s overshoots to HoldingShort on soak seed
+   20260913). Soak is live wall-clock; opening AI inbound #1 reaches the circuit at ~3 min.
 
 ## 4. Storm final (ADR 0190)
 

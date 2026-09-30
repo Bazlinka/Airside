@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Re-capture only the stills that still block P0 sign-off after #490:
 #   - overview-night-sky-traffic (framing: 11 km / pitch 8 / yaw 270 — early-soak corridor)
-#   - follow-jet-day / follow-jet-close (auto-landing, ~360s live — reach Landing)
-#   - follow-jet-takeoff (auto-takeoff for tyre rotation)
+#   - follow-jet-day / follow-jet-close (auto-landing, ~780s live — jet Landing)
+#   - follow-jet-takeoff (auto-takeoff, ~830s live — TakingOff tyre roll)
 #   - follow-storm-landing (auto-landing under storm — ADR 0190 still evidence)
 #   - follow-freighter / follow-hangar-tow / follow-boarding-tape / follow-human-ops-close
 #
@@ -68,54 +68,55 @@ capture() {
 
 # Shallow pitch + longer range so cruise corridors fill the upper frame (ADR 0195).
 # Lighting is 23:30; SkyTraffic still follows soak sim time (drawable from ~T+30s).
-CAPTURE_DELAY=45 CAPTURE_TIMEOUT=120 capture overview-night-sky-traffic \
+# Timeouts include Unity boot + cold shader compile after a fresh build.
+CAPTURE_DELAY=45 CAPTURE_TIMEOUT=300 capture overview-night-sky-traffic \
   -airsideReviewView overview \
   -airsideReviewWeather clear -airsideReviewTime 23:30 \
   -airsideOverviewDistance 11000 -airsideOverviewPitch 8 -airsideOverviewYaw 270
 
 # Parked freighter cargo shade + "... CARGO" title (ADR 0194). Short delay — no bank wait.
-capture follow-freighter \
+CAPTURE_DELAY=28 CAPTURE_TIMEOUT=240 capture follow-freighter \
   -airsideReviewFreighter \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
 # Hangar tow mid-move (ADR 0186–0188). Tow takes minutes; 90s usually catches outbound.
-CAPTURE_DELAY=90 CAPTURE_TIMEOUT=180 capture follow-hangar-tow \
+CAPTURE_DELAY=90 CAPTURE_TIMEOUT=300 capture follow-hangar-tow \
   -airsideReviewHangarCheck \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
-# Opening AI departures become followable early (TaxiOut/HoldingShort), but TakingOff
-# (lineup/roll — tyre rotation) is ~13 min live on the opening bank. Wait past that.
+# TakingOff (lineup/roll — tyre rotation). Mid first TakingOff window on soak seed
+# 20260913 (~790–880s). 900s overshoots into HoldingShort — locked by EditMode.
 FOLLOW=auto-takeoff
-CAPTURE_DELAY=900 CAPTURE_TIMEOUT=1020 capture follow-jet-takeoff \
+CAPTURE_DELAY=830 CAPTURE_TIMEOUT=980 capture follow-jet-takeoff \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.45
 
-# Opening inbound holds ~3 min then lands; wait for FleetState.Landing (tyre/flare).
+# Jet Landing (flare / tyre). 360s is turboprop Landing; first jet Landing ~720–840s.
 FOLLOW=auto-landing
-CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-jet-day \
+CAPTURE_DELAY=780 CAPTURE_TIMEOUT=960 capture follow-jet-day \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
 FOLLOW=auto-landing
-CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-jet-close \
+CAPTURE_DELAY=780 CAPTURE_TIMEOUT=960 capture follow-jet-close \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.35
 
 FOLLOW=auto-landing
-CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-storm-landing \
+CAPTURE_DELAY=780 CAPTURE_TIMEOUT=960 capture follow-storm-landing \
   -airsideReviewWeather storm -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
 # Walkway tape mid-boarding (ADR 0187). Starter Saab: fuel+catering+baggage ≈ 255s, then board.
-CAPTURE_DELAY=320 CAPTURE_TIMEOUT=420 capture follow-boarding-tape \
+CAPTURE_DELAY=320 CAPTURE_TIMEOUT=480 capture follow-boarding-tape \
   -airsideReviewBoarding \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
 # Human-ops close (ADR 0174): airstair / tape scale at follow distance — same boarding window.
-CAPTURE_DELAY=320 CAPTURE_TIMEOUT=420 capture follow-human-ops-close \
+CAPTURE_DELAY=320 CAPTURE_TIMEOUT=480 capture follow-human-ops-close \
   -airsideReviewBoarding \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.35

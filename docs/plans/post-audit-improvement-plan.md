@@ -22,8 +22,8 @@ concentration / performance**, then finishing half-done product slices (freight)
 
 **Status:** automated Mac captures recorded in #490; manual listening/play checks remain open
 (21 unverified rows). See `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`. Night-sky
-framing + review follow helpers (`auto-landing` / `auto-takeoff` ~900s / freighter / hangar /
-boarding) are in #491 tip `6c1a2658`+ (headless CI green, mergeable). Mac path:
+framing + review follow helpers (`auto-landing` ~780s jet / `auto-takeoff` ~830s /
+freighter / hangar / boarding) are in #491 (headless CI green, mergeable). Mac path:
 one-paste `scripts/run-post-audit-p0-stages.sh`, or
 `scripts/run-post-audit-p0-remaining.sh` Stage A (night-sky+freighter) → B (takeoff
 `SKIP_BUILD`/`SKIP_PULL`) → C (hangar/boarding/landings). A Unity player and awake display

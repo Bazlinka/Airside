@@ -1,5 +1,16 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`).**
+  Full Domain / Simulation / Presentation / tests / product-plan audit. Headless **1129/1129**. Standing backlog:
+  `docs/plans/post-audit-improvement-plan.md`. Cloud goal set to follow that order.
+  - **P0:** Mac packaged playtest of unverified merges (audio, sky traffic, freight/tyres, weather, hangars,
+    far zoom/land cover/follow, storm-on-final, terminal doors, human-ops matrix).
+  - **P1:** Bailey sign-off on `docs/plans/visual-overhaul-plan.md`, then Phase 0 FPS baseline.
+  - **P2:** Finish freight as a mode (AI freighters / cargo apron / freighter contracts) or park it.
+  - **P3:** `AirsidePrototype` builders/statics; lock weather/large-fleet fps; retire legacy full-airport when ready.
+  - **P4 only then:** second airport, companion, denser world. Do not start Companion/CloudKit or wages/fuel/loans yet.
+  - **Watch:** restore still hard-requires Adelaide; stale GAME.md footer / early PROJECT_PLAN “gaps” are not truth.
+
 - **2026-09-30 Claude — airside building detail, Phase 3d slice (branch `visual-overhaul-ground`, ADR 0199).**
   Shaped roofs on freight/fire station, plinths, lit wall packs, dock bumpers. Headless suite run here with a local
   .NET 8 (`/opt/dotnet`). **Not verified:** how it renders — needs a Mac capture. **NEXT:** Phase 0 baseline, Phase 1 ground.

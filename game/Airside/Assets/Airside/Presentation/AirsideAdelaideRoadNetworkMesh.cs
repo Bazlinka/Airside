@@ -123,7 +123,6 @@ namespace Airside.Presentation
             AdelaidePrecinctGeometry.BuildHoldSigns(props, options);
             AdelaideRoadFurnitureGeometry.BuildSignals(props, options);
             AdelaideRoadFurnitureGeometry.BuildSigns(props, options);
-            AdelaideWalkwayGeometry.Build(props, options);
             AdelaideEmergencyAviationGeometry.BuildFixtures(props, options);
             return new Sinks { Asphalt = asphalt, Paint = paint, Props = props };
         }
@@ -238,6 +237,31 @@ namespace Airside.Presentation
             mesh.RecalculateBounds();
             mesh.UploadMeshData(true);
             return mesh;
+        }
+
+        private static Material _propMaterial;
+
+        /// <summary>
+        /// A solid, vertex-coloured prop mesh built at run time (the temporary boarding tape). Null when the road shader
+        /// is unavailable, in which case nothing is drawn.
+        /// </summary>
+        internal static GameObject BuildProps(Transform parent, string name, RoadMeshSink sink)
+        {
+            if (sink == null || sink.VertexCount < 3)
+                return null;
+            if (_propMaterial == null)
+            {
+                var shader = Shader.Find(ShaderName);
+                if (shader == null)
+                    return null;
+                _propMaterial = new Material(shader) { name = "mat_boarding_tape_v01", enableInstancing = true };
+            }
+
+            var root = new GameObject(name);
+            root.transform.SetParent(parent, false);
+            foreach (var tile in sink.Tiles)
+                AddTile(root.transform, $"{name} {tile.Key}", tile.Value, _propMaterial, true);
+            return root;
         }
 
         private static void AddTile(Transform parent, string name, RoadMeshTile tile, Material material, bool withColours)

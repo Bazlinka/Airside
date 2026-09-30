@@ -54,6 +54,40 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void AircraftInACheck_IsTowedColdWithNobodyBoarding()
+        {
+            var (clock, ops, plane) = Parked();
+            DestinationCatalogue.TryFind("KGC", out var kgc);
+            ops.ScheduleDeparture(plane, kgc, new SimulationTime(400));
+            for (var t = 0L; t < 3 * 3600 && plane.CompletedTrips == 0; t += 5)
+            {
+                clock.Set(new SimulationTime(t));
+                ops.Update();
+            }
+
+            plane.Scheduled = null;
+            var parkedAt = plane.StateStartedAt.ElapsedSeconds;
+            // Sent for its check while the engines are still winding down and the passengers are still getting off.
+            clock.Set(new SimulationTime(parkedAt + 20));
+            ops.Update();
+            Assert.That(EngineStartSequence.For(plane, parkedAt + 20).AnyRunning, Is.True);
+            Assert.That(ops.StartCheck(plane).Accepted, Is.True);
+
+            var now = parkedAt + 25;
+            var state = EngineStartSequence.For(plane, now);
+            Assert.That(state.AnyRunning, Is.False, "towed with the engines off");
+            Assert.That(state.DoorsOpen, Is.False);
+            Assert.That(state.Beacon, Is.False);
+            var moves = new System.Collections.Generic.List<PassengerMove>();
+            BoardingFlow.Moves(plane, now, moves, 900);
+            Assert.That(moves, Is.Empty, "nobody deplanes or boards an aircraft on its way to the hangar");
+            Assert.That(BoardingFlow.CargoDoorOpen(plane, now), Is.EqualTo(0f));
+
+            var after = plane.CheckUntil.Value.ElapsedSeconds + 1;
+            Assert.That(BoardingFlow.InCheck(plane, after), Is.False);
+        }
+
+        [Test]
         public void Start_BeaconDoorsThenRightEngineThenLeft()
         {
             var (_, ops, plane) = Parked();

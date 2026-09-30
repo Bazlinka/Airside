@@ -86,6 +86,13 @@ namespace Airside.Simulation
                 : BoardingMode.IntegralAirstair;
         }
 
+        /// <summary>
+        /// True while the aircraft is in its check (ADR 0186): it is towed to a hangar with its engines off, so no
+        /// passengers, stair truck, bus or open doors belong to it until the check ends.
+        /// </summary>
+        public static bool InCheck(FleetAircraft aircraft, double nowSeconds) =>
+            aircraft?.CheckUntil is { } until && until.ElapsedSeconds > nowSeconds;
+
         public static bool UsesStairTruck(BoardingMode mode) =>
             mode is BoardingMode.StairTruck or BoardingMode.RemoteBus;
 
@@ -97,7 +104,7 @@ namespace Airside.Simulation
         /// </summary>
         public static float RemoteBusFraction(FleetAircraft aircraft, double nowSeconds)
         {
-            if (aircraft == null || !UsesRemoteBus(ModeFor(aircraft)))
+            if (aircraft == null || InCheck(aircraft, nowSeconds) || !UsesRemoteBus(ModeFor(aircraft)))
                 return 0f;
             var parked = nowSeconds - aircraft.StateStartedAt.ElapsedSeconds;
             var arrival = Ramp((parked - RemoteBusArriveAfterParkSeconds) / RemoteBusMoveSeconds);
@@ -129,7 +136,7 @@ namespace Airside.Simulation
         /// <summary>0 = stair truck away, 1 = at the L1 door.</summary>
         public static float StairTruckFraction(FleetAircraft aircraft, double nowSeconds)
         {
-            if (!UsesStairTruck(ModeFor(aircraft)))
+            if (InCheck(aircraft, nowSeconds) || !UsesStairTruck(ModeFor(aircraft)))
                 return 0f;
             var parked = nowSeconds - aircraft.StateStartedAt.ElapsedSeconds;
             var docked = Ramp((parked - StairTruckDockAfterParkSeconds) / StairTruckMoveSeconds);
@@ -145,6 +152,8 @@ namespace Airside.Simulation
         /// </summary>
         public static bool? StairTruckDoorsOpen(FleetAircraft aircraft, double nowSeconds)
         {
+            if (InCheck(aircraft, nowSeconds))
+                return false;
             if (!UsesStairTruck(ModeFor(aircraft)))
                 return null;
             var parked = nowSeconds - aircraft.StateStartedAt.ElapsedSeconds;
@@ -166,7 +175,7 @@ namespace Airside.Simulation
         {
             into?.Clear();
             var mode = ModeFor(aircraft);
-            if (into == null || mode == BoardingMode.None)
+            if (into == null || mode == BoardingMode.None || InCheck(aircraft, nowSeconds))
                 return;
 
             var w = WindowsFor(aircraft, mode, baseLevel);
@@ -189,7 +198,7 @@ namespace Airside.Simulation
         public static float PassengerDoorOpen(FleetAircraft aircraft, double nowSeconds,
             PlayerBaseLevel baseLevel = PlayerBaseLevel.Starter)
         {
-            if (aircraft == null || aircraft.State != FleetState.AtStand)
+            if (aircraft == null || aircraft.State != FleetState.AtStand || InCheck(aircraft, nowSeconds))
                 return 0f;
             var mode = ModeFor(aircraft);
             if (mode == BoardingMode.None)
@@ -212,7 +221,7 @@ namespace Airside.Simulation
         /// </summary>
         public static float CargoDoorOpen(FleetAircraft aircraft, double nowSeconds)
         {
-            if (aircraft == null || aircraft.State != FleetState.AtStand)
+            if (aircraft == null || aircraft.State != FleetState.AtStand || InCheck(aircraft, nowSeconds))
                 return 0f;
             var parked = (double)aircraft.StateStartedAt.ElapsedSeconds;
             var seconds = DepartureCountdown.CargoDoorSeconds;

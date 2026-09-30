@@ -1,10 +1,10 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — P0 Stage A follow-active + night-sky inventory (#492).**
-  Tip **#492** (this commit). Capture aborts if follow is lost (not only never started);
-  inventory requires `following=True` and night-sky yaw≈270 / dist≈11000.
+- **2026-09-30 Cursor — P0 Stage C hangar/boarding picks (#492).**
+  Tip **#492** (this commit). `ReviewHangarPick` + `ReviewBoardingPick` (Simulation)
+  with soak-seed EditMode locks; soak uses the shared picks (same pattern as freighter).
   Rebuild on tip. 20 RESULTS unverified. `CURSOR_API_KEY` unset; no Mac workers.
-  **NEXT:** Mac Terminal/Finder Stage A on tip, or API key →
+  **NEXT:** Mac Terminal/Finder Stage A→C on tip, or API key →
   `scripts/launch-p0-mac-agent.sh`. Fill RESULTS by eye/ear. Freight parked.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**

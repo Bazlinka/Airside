@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 Stage A caffeinates pull/build/captures.** `run-post-audit-p0-remaining.sh`
+  wraps with `caffeinate -d -i` (same nest guard as stages.sh) so Finder Stage A
+  / CreateAgent Stage A cannot freeze on a sleeping display during a cold build.
+  Locked by `test-p0-stages-chain.sh`. No simulation or save changes.
 - **P0 plan/docs: CreateAgent `worker_id` + Stage A default.** Plan and Mac
   agent prompt match the launcher (pin `~/Code/Airside` worker; Stage A by
   default). No simulation or save changes.

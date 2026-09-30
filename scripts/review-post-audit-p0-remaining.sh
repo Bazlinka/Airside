@@ -4,17 +4,40 @@
 #   - follow-jet-day / follow-jet-close (auto-landing, ~280s live delay)
 #   - follow-jet-takeoff (auto-takeoff for tyre rotation)
 #   - follow-storm-landing (auto-landing under storm — ADR 0190 still evidence)
+#   - follow-freighter / follow-hangar-tow / follow-boarding-tape / follow-human-ops-close
 #
 # Requires a rebuilt player that includes those fixes. Does not invent RESULTS.
 # Usage:
 #   scripts/build-mac.sh
 #   scripts/review-post-audit-p0-remaining.sh
 #   AIRSIDE_P0_OUT=work/captures/post-audit-p0-remaining scripts/review-post-audit-p0-remaining.sh
+#   AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/review-post-audit-p0-remaining.sh
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." && pwd)"
 stamp="$(date +%Y%m%d)"
 shots="${AIRSIDE_P0_OUT:-$root/work/captures/post-audit-p0-remaining-$stamp}"
 mkdir -p "$shots"
+
+# Optional comma/space list of shot names. Empty = run every remaining capture.
+only_raw="${AIRSIDE_P0_ONLY:-}"
+only_raw="${only_raw//,/ }"
+declare -a ONLY_SHOTS=()
+if [[ -n "$only_raw" ]]; then
+  # shellcheck disable=SC2206
+  ONLY_SHOTS=($only_raw)
+fi
+
+want_shot() {
+  local name="$1"
+  if ((${#ONLY_SHOTS[@]} == 0)); then
+    return 0
+  fi
+  local s
+  for s in "${ONLY_SHOTS[@]}"; do
+    [[ "$s" == "$name" ]] && return 0
+  done
+  return 1
+}
 
 common=(
   -airsideSoakHeartbeatSeconds 10
@@ -25,6 +48,11 @@ common=(
 
 capture() {
   local name="$1"; shift
+  if ! want_shot "$name"; then
+    echo "-- skip $name (not in AIRSIDE_P0_ONLY)"
+    FOLLOW=""
+    return 0
+  fi
   echo "==> $name"
   bash "$root/scripts/capture-game.sh" \
     --out "$shots/$name.png" \

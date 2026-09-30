@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 remaining capture inventory + subset filter.** RESULTS lists the #491
+  re-capture shots as unverified placeholders. `AIRSIDE_P0_ONLY=shot,shot` skips
+  the rest of `scripts/review-post-audit-p0-remaining.sh`. No simulation or save changes.
+
 - **P0 review follow helpers.** `-airsideReviewAircraft auto-landing|auto-takeoff`,
   `-airsideReviewFreighter`, `-airsideReviewHangarCheck` and `-airsideReviewBoarding`
   drive arrival, departure, cargo-livery, hangar-tow and walkway-tape stills.

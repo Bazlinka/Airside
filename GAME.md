@@ -1,9 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
+- **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491 tip `b093d32a`+).**
   Packaged: `auto-landing` / `auto-takeoff` / freighter / hangar / boarding / human-ops close.
-  `scripts/review-post-audit-p0-remaining.sh` re-runs the open stills. Headless CI green; PR ready.
-  **NEXT:** Mac agents UI → Bailey's MacBook Pro → rebuild → that script → fill RESULTS.
+  `scripts/review-post-audit-p0-remaining.sh` re-runs open stills; optional `AIRSIDE_P0_ONLY=shot,shot`.
+  Tip headless CI green; PR mergeable. Self-hosted Mac workers were **offline** at last check.
+  RESULTS has a remaining-capture inventory (all unverified) ready for Mac fill-in.
+  **NEXT:** Mac agents UI → Bailey's MacBook Pro → rebuild → remaining script → fill RESULTS.
   Freight AI stays parked. Do not invent RESULTS. Pin by machine **name** (not worker_id).
 
 - **2026-09-30 Codex — local consolidation onto `main`.**

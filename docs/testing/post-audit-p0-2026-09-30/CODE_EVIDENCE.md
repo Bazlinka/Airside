@@ -53,6 +53,7 @@ still fill Verdict on the **current** tip (now includes #485/#486 ground).
 
 ## Next action
 
-On Mac: `scripts/run-post-audit-p0.sh`, then fill keep/fix/revert in
-`docs/testing/post-audit-p0-<date>/RESULTS.md`. Pre-fill Notes from this file;
-do not treat prior weather acceptance as automatic keep on the new tip.
+On Mac (checkout #491 tip until merged): `scripts/build-mac.sh`, then
+`scripts/review-post-audit-p0-remaining.sh` (optional `AIRSIDE_P0_ONLY=`), fill
+keep/fix/revert in `docs/testing/post-audit-p0-2026-09-30/RESULTS.md` remaining
+inventory + manual rows. Pre-fill Notes from this file; do not invent verdicts.

@@ -6,9 +6,10 @@ Date: 2026-09-30 · Plan ADR **0205** · Evidence so far:
 Automated stills are mostly **keep**. These rows are still **unverified** and block
 P0 sign-off (and keep freight AI parked).
 
-Canonical Mac checkout: `~/Code/Airside` on `main` (or the plan tip until #484 merges).
-Keep the display awake. Prefer a **fresh** `scripts/build-mac.sh` so the night-sky
-framing fix is in the player.
+Canonical Mac checkout: `~/Code/Airside` on `cursor/p0-auto-landing-follow-709e`
+(#491) until that merges, then `main`. Keep the display awake. Prefer a **fresh**
+`scripts/build-mac.sh` so night-sky framing and review follow helpers are in the player.
+Subset: `AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/review-post-audit-p0-remaining.sh`.
 
 ## 1. Re-capture night sky traffic (ADR 0195)
 

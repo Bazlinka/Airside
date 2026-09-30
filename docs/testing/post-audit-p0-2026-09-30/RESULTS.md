@@ -52,6 +52,24 @@ Frame times are the settled soak sample (the `1 min` line), after the first-fram
 | `follow-jet-day.png` | Follow framing | 0189 | keep | Follow locks onto VH-PAX. In this soak that aircraft is a parked Saab 340B at the stand, not a jet airborne. Crew stand on the apron with contact shadows. |
 | `follow-jet-close.png` | Close glazing / gear | 0194 | keep | Close view shows cabin glazing, registration and titles. The aircraft is parked, so main-gear rotation and flare are not in this shot. |
 
+## Remaining captures (after #491 helpers — not taken yet)
+
+Run on Mac after rebuild: `scripts/review-post-audit-p0-remaining.sh`
+(or `AIRSIDE_P0_ONLY=<shot,shot>` for a subset). Copy keep PNGs into this folder
+and fill Verdict. Do **not** invent keep/fix/revert without the still or play.
+
+| Shot | Checks | ADR | Verdict | Notes |
+|---|---|---|---|---|
+| `overview-night-sky-traffic.png` (re-run) | Overflights cruise; no double inbound | 0195 | unverified | Framing fix ready (9 km / pitch 12 / yaw 210). Prior still was nose-down. |
+| `follow-jet-day.png` (re-run) | Follow framing on live arrival | 0189, 0194 | unverified | Needs `auto-landing` (~280s). Prior still was parked Saab. |
+| `follow-jet-close.png` (re-run) | Close glazing / gear on arrival | 0194 | unverified | Needs `auto-landing` close zoom. |
+| `follow-jet-takeoff.png` | Tyres at rotation | 0194 | unverified | Needs `auto-takeoff` (~360s). Not in the #490 matrix. |
+| `follow-storm-landing.png` | Arrival on final lands in storm | 0190 | unverified | Needs `auto-landing` + storm. Code green in `RunwayWeatherTests`. |
+| `follow-freighter.png` | Cargo shade + "... CARGO" title | 0194 | unverified | Needs `-airsideReviewFreighter`. |
+| `follow-hangar-tow.png` | Tow mid-move | 0186–0188 | unverified | Needs `-airsideReviewHangarCheck` (~90s). |
+| `follow-boarding-tape.png` | Walkway tape mid-board | 0187, 0196 | unverified | Needs `-airsideReviewBoarding` (~320s). |
+| `follow-human-ops-close.png` | Airstair / tape scale | 0174 | unverified | Boarding + zoom 0.35. Bridge glass still needs a jet-gate follow by hand. |
+
 ## Manual checks
 
 These cannot be closed from a PNG. Left open for Bailey.

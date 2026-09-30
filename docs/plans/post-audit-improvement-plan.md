@@ -45,8 +45,9 @@ rebuilt game. Attribute bugs before adding content.
 | Human-ops close matrix (clipping, scale, bridge glass) | 0174 |
 
 **Run on Mac:** `scripts/build-mac.sh`, then
-`scripts/review-post-audit-p0-remaining.sh` (night-sky + follow stills) or the full
-`scripts/review-post-audit-p0.sh`. Checklist: `docs/testing/post-audit-p0-manual-checklist.md`.
+`scripts/review-post-audit-p0-remaining.sh` (night-sky + follow stills; optional
+`AIRSIDE_P0_ONLY=shot,shot`) or the full `scripts/review-post-audit-p0.sh`.
+Checklist: `docs/testing/post-audit-p0-manual-checklist.md`.
 Captures go to `work/captures/post-audit-p0-<date>/`.
 
 Exit: Bailey marks each keep / fix / revert. Close or amend ADR “Unity look not

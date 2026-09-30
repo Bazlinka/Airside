@@ -142,6 +142,16 @@ namespace Airside.Simulation
 
         /// <summary>Refill a caller-owned buffer without allocating a new flight list each frame.</summary>
         public static void FillAirborneAt(AirlineOperations operations, SimulationTime now, List<SkyFlight> flights)
+            => FillAirborneAt(operations, now.ElapsedSeconds, flights, 0.0);
+
+        /// <summary>
+        /// Refill fleet airborne sky traffic at a precise clock so motion is not stepped once
+        /// per simulated second. Arrivals already inside
+        /// <paramref name="finalHandoverMetres"/> of the field are skipped — extended final
+        /// owns that leg (ADR 0142).
+        /// </summary>
+        public static void FillAirborneAt(AirlineOperations operations, double elapsedSeconds,
+            List<SkyFlight> flights, double finalHandoverMetres)
         {
             if (flights == null)
                 throw new ArgumentNullException(nameof(flights));
@@ -163,7 +173,7 @@ namespace Airside.Simulation
                 {
                     // The fleet draws the climb-out itself for DepartedSeconds; hand over after.
                     var departed = AircraftPerformance.For(aircraft.Type).DepartedSeconds;
-                    if (now.ElapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds < departed)
+                    if (elapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds < departed)
                         continue;
                     start = aircraft.StateStartedAt.ElapsedSeconds;
                     from = home;
@@ -173,6 +183,10 @@ namespace Airside.Simulation
                 {
                     // Inbound may include a ground delay at the outstation: fly the last
                     // leg-length of it, arriving as the aircraft joins the circuit.
+                    var remaining = aircraft.StateEndsAt.Value.ElapsedSeconds - elapsedSeconds;
+                    var approach = CircuitProfile.Knots(AircraftPerformance.For(aircraft.Type).ApproachKnots);
+                    if (finalHandoverMetres > 0 && approach * remaining <= finalHandoverMetres)
+                        continue;
                     start = aircraft.StateEndsAt.Value.ElapsedSeconds - duration;
                     from = away;
                     to = home;
@@ -183,7 +197,7 @@ namespace Airside.Simulation
                 }
 
                 var callsign = aircraft.Airline.Id.Value + aircraft.Registration;
-                if (SkyTraffic.TryEnroute(callsign, aircraft.Type, from, to, now.ElapsedSeconds, start,
+                if (SkyTraffic.TryEnroute(callsign, aircraft.Type, from, to, elapsedSeconds, start,
                         out var flight))
                     flights.Add(flight);
             }

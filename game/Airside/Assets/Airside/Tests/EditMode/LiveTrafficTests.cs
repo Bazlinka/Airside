@@ -100,10 +100,18 @@ namespace Airside.Tests
             Assert.That(z, Is.EqualTo(-1500).Within(1e-6));
             Assert.That(y, Is.EqualTo(2000 / 3.28084).Within(0.01));
 
-            LiveTraffic.Display(100_000, 0, 35_000, out var fx, out var fy, out _);
+            LiveTraffic.Display(50_000, 0, 35_000, out var fx, out var fy, out _);
             Assert.That(fx, Is.LessThanOrEqualTo(LiveTraffic.DrawRadiusMetres + 0.01));
             Assert.That(fx, Is.GreaterThan(LiveTraffic.NearFieldMetres));
-            Assert.That(fy, Is.LessThan(35_000 / 3.28084 * 0.5), "cruise height is squeezed with distance");
+            Assert.That(fy, Is.EqualTo(35_000 / 3.28084).Within(0.01), "cruise height stays true");
+        }
+
+        [Test]
+        public void BeyondDrawnRadius_IsCulledFromTheSky()
+        {
+            // 100 km out is past DrawnRadiusKm (70): TryPose must drop it.
+            var far = new LiveAircraft("f", "QFA1", "VH-Z", "B738", -35.85, 138.53, 35000, false, 450, 180, 0, 0);
+            Assert.That(LiveTraffic.TryPose(far, 0, out _), Is.False);
         }
 
         [Test]

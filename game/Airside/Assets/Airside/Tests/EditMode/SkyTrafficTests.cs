@@ -55,26 +55,54 @@ namespace Airside.Tests
             Assert.That(first, Is.EqualTo(route.Airline + route.FlightNumber));
             Assert.That(ReferenceEquals(first, route.CallsignForStart(0)), Is.True);
             Assert.That(route.CallsignForStart(route.IntervalSeconds),
-                Is.EqualTo(route.Airline + (route.FlightNumber + 1)));
+                Is.EqualTo(route.Airline + (route.FlightNumber + 2)));
             Assert.That(ReferenceEquals(first, route.CallsignForStart(route.IntervalSeconds * 40)), Is.True,
                 "the numbered service repeats without allocating another callsign");
         }
 
         [Test]
-        public void PerthMelbourne_PassesCloseEnoughToDrawOverAdelaide()
+        public void CorridorCallsigns_DoNotCollideAcrossOppositeDirections()
+        {
+            var used = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var route in SkyTraffic.Routes)
+            {
+                for (var slot = 0; slot < 40; slot++)
+                {
+                    var callsign = route.CallsignForStart(slot * route.IntervalSeconds);
+                    Assert.That(used.Add(callsign), Is.True,
+                        $"{callsign} must stay unique across corridor pairs");
+                }
+            }
+        }
+
+        [Test]
+        public void EveryCorridorCrossesTheRegion()
+        {
+            foreach (var route in SkyTraffic.Routes)
+            {
+                Assert.That(DestinationCatalogue.TryFind(route.FromCode, out var from), Is.True);
+                Assert.That(DestinationCatalogue.TryFind(route.ToCode, out var to), Is.True);
+                var closest = SkyTraffic.ClosestApproachKm(from, to);
+                Assert.That(closest, Is.LessThanOrEqualTo(SkyTraffic.VisibleRadiusKm),
+                    $"{route.FromCode}–{route.ToCode} must cross the visible Adelaide sky");
+            }
+        }
+
+        [Test]
+        public void PerthSydney_PassesCloseEnoughToDrawOverAdelaide()
         {
             Assert.That(DestinationCatalogue.TryFind("PER", out var perth), Is.True);
-            Assert.That(DestinationCatalogue.TryFind("MEL", out var melbourne), Is.True);
-            var closest = SkyTraffic.ClosestApproachKm(perth, melbourne);
+            Assert.That(DestinationCatalogue.TryFind("SYD", out var sydney), Is.True);
+            var closest = SkyTraffic.ClosestApproachKm(perth, sydney);
             Assert.That(closest, Is.LessThanOrEqualTo(SkyTraffic.VisibleRadiusKm),
-                "PER–MEL is the corridor that should actually overfly the field");
+                "PER–SYD is a corridor that should overfly the Adelaide region");
 
             var seen = false;
-            for (var t = 0L; t < 6 * 3600 && !seen; t += 30)
+            for (var t = 0L; t < 12 * 3600 && !seen; t += 30)
             {
                 foreach (var flight in SkyTraffic.At(new SimulationTime(t)))
                 {
-                    if (flight.From.Code != "PER" || flight.To.Code != "MEL")
+                    if (flight.From.Code != "PER" || flight.To.Code != "SYD")
                         continue;
                     if (SkyTraffic.TryWorldPosition(flight, out var x, out var y, out var z))
                     {
@@ -86,7 +114,7 @@ namespace Airside.Tests
                 }
             }
 
-            Assert.That(seen, Is.True, "a PER–MEL flight must enter the 3D draw radius within six hours");
+            Assert.That(seen, Is.True, "a PER–SYD flight must enter the 3D draw radius within twelve hours");
         }
 
         [Test]
@@ -143,15 +171,50 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void NearField_IsAlmostOneToOneSoArrivalsMoveAtReadableSpeed()
+        public void NearField_IsOneToOneSoArrivalsMoveAtReadableSpeed()
         {
             SkyTraffic.ToLocalMetres(-34.95, 138.53, out var east, out var north);
             var trueRange = Math.Sqrt(east * east + north * north);
             SkyTraffic.ProjectLocal(east, north, out var x, out var z);
             var display = Math.Sqrt(x * x + z * z);
             Assert.That(trueRange / 1000.0, Is.LessThan(SkyTraffic.NearFieldKm));
-            Assert.That(display / trueRange, Is.EqualTo(SkyTraffic.NearFieldMetres / (SkyTraffic.NearFieldKm * 1000.0))
-                .Within(0.01));
+            Assert.That(display / trueRange, Is.EqualTo(1.0).Within(0.01));
+        }
+
+        [Test]
+        public void DrawnClosingSpeed_AtCruiseIsNotACrawl()
+        {
+            // Bailey: overflights moved in tiny steps. A drawn closing speed under ~30 m/s
+            // at cruise means the projection is still compressing motion into a crawl.
+            const double stepSeconds = 10.0;
+            var best = 0.0;
+            for (var t = 0.0; t < 12 * 3600; t += 60)
+            {
+                foreach (var flight in SkyTraffic.At(t))
+                {
+                    if (!SkyTraffic.TryWorldPosition(flight, out var x0, out var y0, out var z0))
+                        continue;
+                    SkyFlight? later = null;
+                    foreach (var candidate in SkyTraffic.At(t + stepSeconds))
+                    {
+                        if (candidate.Callsign != flight.Callsign)
+                            continue;
+                        later = candidate;
+                        break;
+                    }
+
+                    if (!later.HasValue
+                        || !SkyTraffic.TryWorldPosition(later.Value, out var x1, out var y1, out var z1))
+                        continue;
+                    var speed = Math.Sqrt(
+                        (x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0) + (z1 - z0) * (z1 - z0)) / stepSeconds;
+                    if (speed > best)
+                        best = speed;
+                }
+            }
+
+            Assert.That(best, Is.GreaterThanOrEqualTo(30.0),
+                $"drawn corridor cruise must not crawl; best seen was {best:0.0} m/s");
         }
 
         [Test]

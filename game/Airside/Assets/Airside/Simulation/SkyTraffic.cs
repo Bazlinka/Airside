@@ -36,30 +36,32 @@ namespace Airside.Simulation
     }
 
     /// <summary>
-    /// Authored corridors that never land at Adelaide (ADR 0055). Snapshot is a pure
+    /// Authored corridors that never land at Adelaide (ADR 0055, ADR 0195). Snapshot is a pure
     /// function of simulation time, so frame rate and reload cannot change who is where.
     /// </summary>
     public static class SkyTraffic
     {
         /// <summary>
         /// How close to Adelaide (km, true) a corridor must pass before it is drawn in 3D.
-        /// PER–MEL's great circle bottoms out ~230 km from the field, so this has to be
-        /// that wide or the one corridor that actually overflies South Australia never appears.
+        /// Kept inside the camera far clip so the sky is not a 260 km disc squeezed onto a
+        /// few kilometres of world — that crawl is what Bailey saw.
         /// </summary>
-        public const double VisibleRadiusKm = 260.0;
-
-        /// <summary>True kilometres are compressed into this radius so cruise traffic fits the 10 km camera far clip.</summary>
-        public const double DrawRadiusMetres = 7_500.0;
+        public const double VisibleRadiusKm = 70.0;
 
         /// <summary>
-        /// Traffic inside this true range is drawn almost 1:1 so inbound and
-        /// outbound legs move at a readable speed instead of the 35× crawl of a
-        /// flat 260 km → 7.5 km map.
+        /// True kilometres are eased into this radius past the near field. Stays inside the
+        /// bare-field camera far clip (30 km) when the camera is panned a little.
         /// </summary>
-        public const double NearFieldKm = 8.0;
+        public const double DrawRadiusMetres = 26_000.0;
 
-        /// <summary>Display metres used for <see cref="NearFieldKm"/>.</summary>
-        public const double NearFieldMetres = 6_000.0;
+        /// <summary>
+        /// Traffic inside this true range is drawn 1:1 so inbound, outbound and nearby
+        /// overflights move at a readable cruise speed.
+        /// </summary>
+        public const double NearFieldKm = 12.0;
+
+        /// <summary>Display metres used for <see cref="NearFieldKm"/> — true 1:1.</summary>
+        public const double NearFieldMetres = 12_000.0;
 
         /// <summary>
         /// Planned Adelaide arrivals/departures closer than this are hidden so
@@ -70,33 +72,20 @@ namespace Airside.Simulation
         /// <summary>Display height is compressed so cruise traffic reads from the airfield camera.</summary>
         public const double DisplayAltitudeScale = 0.28;
 
+        /// <summary>
+        /// Corridors that actually cross the Adelaide region (closest approach ≤
+        /// <see cref="VisibleRadiusKm"/>). Far pairs like MEL–SYD never appear here.
+        /// </summary>
         public static readonly SkyRoute[] Routes =
         {
-            new("QF", 400, 8 * 60, "MEL", "SYD", AircraftType.Boeing7378),
-            new("QF", 401, 8 * 60, "SYD", "MEL", AircraftType.Boeing7378),
-            new("VA", 210, 12 * 60, "BNE", "MEL", AircraftType.Boeing7378),
-            new("VA", 211, 12 * 60, "MEL", "BNE", AircraftType.Boeing7378),
-            new("QF", 9, 24 * 60, "PER", "MEL", AircraftType.Boeing78710),
-            new("QF", 10, 24 * 60, "MEL", "PER", AircraftType.Boeing78710),
             new("QF", 7, 26 * 60, "PER", "SYD", AircraftType.Boeing78710),
             new("QF", 8, 26 * 60, "SYD", "PER", AircraftType.Boeing78710),
-            new("JQ", 960, 22 * 60, "DRW", "MEL", AircraftType.Boeing7378),
-            new("JQ", 961, 22 * 60, "MEL", "DRW", AircraftType.Boeing7378),
-            new("NZ", 176, 20 * 60, "AKL", "MEL", AircraftType.AirbusA321Neo),
-            new("NZ", 175, 20 * 60, "MEL", "AKL", AircraftType.AirbusA321Neo),
-            new("VA", 860, 14 * 60, "BNE", "SYD", AircraftType.Boeing7378),
-            new("JQ", 704, 14 * 60, "HBA", "MEL", AircraftType.Boeing7378),
-            new("QF", 754, 14 * 60, "MEL", "HBA", AircraftType.Boeing7378),
-            new("VA", 140, 16 * 60, "PER", "BNE", AircraftType.Boeing7378),
-            new("VA", 141, 16 * 60, "BNE", "PER", AircraftType.Boeing7378),
-            new("QF", 20, 22 * 60, "DRW", "SYD", AircraftType.Boeing78710),
-            new("QF", 21, 22 * 60, "SYD", "DRW", AircraftType.Boeing78710),
-            new("NZ", 104, 18 * 60, "AKL", "SYD", AircraftType.AirbusA321Neo),
-            new("NZ", 103, 18 * 60, "SYD", "AKL", AircraftType.AirbusA321Neo),
-            new("QF", 612, 14 * 60, "MEL", "CBR", AircraftType.Boeing7378),
-            new("QF", 613, 14 * 60, "CBR", "MEL", AircraftType.Boeing7378),
-            new("JQ", 770, 18 * 60, "OOL", "MEL", AircraftType.Boeing7378),
-            new("JQ", 771, 18 * 60, "MEL", "OOL", AircraftType.Boeing7378),
+            new("VA", 570, 18 * 60, "PER", "SYD", AircraftType.Boeing7378),
+            new("VA", 571, 18 * 60, "SYD", "PER", AircraftType.Boeing7378),
+            new("QF", 1517, 22 * 60, "PER", "CBR", AircraftType.Boeing737800),
+            new("QF", 1518, 22 * 60, "CBR", "PER", AircraftType.Boeing737800),
+            new("EK", 408, 30 * 60, "MEL", "DXB", AircraftType.AirbusA350900),
+            new("EK", 409, 30 * 60, "DXB", "MEL", AircraftType.AirbusA350900),
         };
 
         /// <summary>
@@ -109,19 +98,22 @@ namespace Airside.Simulation
             flight = default;
             if (type == null || from.Code == null || to.Code == null)
                 return false;
-            var duration = LegTiming.AirborneSeconds(from.DistanceKmTo(to), type);
+            var legKm = from.DistanceKmTo(to);
+            var duration = LegTiming.AirborneSeconds(legKm, type);
             if (duration <= 0)
                 return false;
-            var progress = (elapsedSeconds - startSeconds) / duration;
-            if (progress < 0 || progress > 1)
+            var elapsedOnLeg = elapsedSeconds - startSeconds;
+            if (elapsedOnLeg < 0 || elapsedOnLeg > duration)
                 return false;
+            // Where the aeroplane has actually flown to, not a flat share of the leg time.
+            var profile = new EnrouteProfile(legKm, duration, type);
+            var progress = profile.DistanceFractionAt(elapsedOnLeg);
             FlightRoute.Point(from.Latitude, from.Longitude, to.Latitude, to.Longitude, progress,
                 callsign, out var lat, out var lon);
             FlightRoute.Point(from.Latitude, from.Longitude, to.Latitude, to.Longitude,
                 Math.Min(1.0, progress + 0.004), callsign, out var latAhead, out var lonAhead);
             var heading = FlightRoute.HeadingDegrees(lat, lon, latAhead, lonAhead);
-            var profile = new EnrouteProfile(from.DistanceKmTo(to), duration, type);
-            var altitude = profile.AltitudeFeetAt(elapsedSeconds - startSeconds);
+            var altitude = profile.AltitudeFeetAt(elapsedOnLeg);
             flight = new SkyFlight(callsign, type, from, to, progress, lat, lon, altitude, heading);
             return true;
         }
@@ -221,9 +213,9 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Unity yaw that faces the compressed on-screen path, not the true
-        /// heading. A flat 260 km disc squeezed into 7.5 km makes true heading
-        /// crab against the drawn motion.
+        /// Unity yaw that faces the drawn on-screen path, not the true heading. Past the
+        /// near field the outer ease bends straight lines, and a true heading would crab
+        /// against the motion.
         /// </summary>
         public static float DisplayUnityYaw(SkyFlight flight)
         {
@@ -249,8 +241,8 @@ namespace Airside.Simulation
         }
 
         /// <summary>
-        /// Near-field almost 1:1, then the remaining 8–260 km true squeezed onto
-        /// the last 1.5 km of draw radius so distant overflights stay in clip.
+        /// Near-field 1:1, then the remaining 12–70 km true eased onto the last 14 km of
+        /// draw radius so distant overflights stay in clip without the old crawl.
         /// </summary>
         public static void ProjectLocal(double eastMetres, double northMetres, out double x, out double z)
         {
@@ -428,7 +420,9 @@ namespace Airside.Simulation
         public string CallsignForStart(long startSeconds)
         {
             var slot = (int)(Math.Abs(startSeconds / IntervalSeconds) % _callsigns.Length);
-            return _callsigns[slot] ??= Airline + (FlightNumber + slot);
+            // Numbers step by two so outbound/inbound pairs (QF7 / QF8) never mint the
+            // same callsign — the sky keys models and engine sound on callsign alone.
+            return _callsigns[slot] ??= Airline + (FlightNumber + slot * 2);
         }
     }
 }

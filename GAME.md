@@ -1,5 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Cursor — sky traffic readable speed (branch `cursor/sky-traffic-world-scale-4f81`, ADR 0195).**
+  Bailey: aircraft flying past / to other airports crawled in tiny steps. Cause was a 260 km → 7.5 km
+  sky projection plus fleet sky legs stepped once per second. Now 1:1 to 12 km, eased to 70 km / 26 km
+  draw, corridors that actually cross Adelaide, precise-time fleet sky fill, no live height squeeze,
+  callsigns step by two, and arrivals on extended final are not double-drawn.
+  - **NEXT:** rebuild, turn live traffic off, watch night overview — overflights should cruise. Then
+    confirm a fleet inbound does not appear twice on final.
+  - **Checks:** `scripts/test-domain.sh` (this cloud run). Unity EditMode still needed on a Mac.
+
 - **2026-09-30 Claude — freight flights and the tyre fix (branch `worktree-cargo-freight`, ADR 0194).**
   - **Freight:** a parked player aircraft can be refitted to a freighter (Fleet card, fixed fee). No passengers walk to
     it, its forecast and pay are in tonnes (`FreightRates`, `RouteForecast.ForFreight`), its livery is a deep cargo shade

@@ -32,9 +32,9 @@ fi
 
 branch="$(git branch --show-current)"
 case "$branch" in
-  main|cursor/p0-auto-landing-follow-709e) ;;
+  main|cursor/p0-freighter-pick-lock-709e|cursor/p0-auto-landing-follow-709e) ;;
   *)
-    echo "Run from main or cursor/p0-auto-landing-follow-709e (got $branch)." >&2
+    echo "Run from main or cursor/p0-freighter-pick-lock-709e (got $branch)." >&2
     exit 1
     ;;
 esac

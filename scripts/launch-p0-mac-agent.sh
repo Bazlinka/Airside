@@ -21,7 +21,7 @@ api_base="${CURSOR_API_BASE:-https://api.cursor.com}"
 machine_name=${AIRSIDE_P0_MACHINE_NAME:-"Bailey's MacBook Pro"}
 # Default to the ~/Code/Airside worker when last listed online (override if stale).
 worker_id="${AIRSIDE_P0_WORKER_ID:-122eb692-14f4-5844-a844-517776b831ca}"
-branch="${AIRSIDE_P0_BRANCH:-cursor/p0-auto-landing-follow-709e}"
+branch="${AIRSIDE_P0_BRANCH:-cursor/p0-freighter-pick-lock-709e}"
 repo_url="${AIRSIDE_P0_REPO_URL:-https://github.com/Bazlinka/Airside}"
 # Stage A only by default (minutes). Set AIRSIDE_P0_LAUNCH_FULL=1 for A→B→C (~45+ min).
 full="${AIRSIDE_P0_LAUNCH_FULL:-0}"

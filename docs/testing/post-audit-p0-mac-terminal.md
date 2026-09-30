@@ -10,7 +10,7 @@ Verdicts (keep/fix/revert) still need your eyes/ears afterward — inventory is 
 cd ~/Code/Airside
 # Tip branch while #491 is open; falls back to main after merge:
 bash scripts/p0-checkout-mac-tip.sh
-# Or: git fetch && git checkout cursor/p0-auto-landing-follow-709e && git pull --ff-only
+# Or: git fetch && git checkout cursor/p0-freighter-pick-lock-709e && git pull --ff-only
 
 # One paste — Stage A → B → C (~45+ min with jet takeoff ~1330s + landing/boarding batches;
 # caffeinate -d -i wraps the whole run so builds/gaps cannot sleep the display;

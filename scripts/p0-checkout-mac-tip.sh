@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Checkout the P0 Mac tip in the current repo (Finder wrappers source this).
-# Prefers AIRSIDE_P0_BRANCH (default cursor/p0-auto-landing-follow-709e); falls
+# Prefers AIRSIDE_P0_BRANCH (default cursor/p0-freighter-pick-lock-709e); falls
 # back to main when that remote branch is gone after merge.
 set -euo pipefail
-branch="${AIRSIDE_P0_BRANCH:-cursor/p0-auto-landing-follow-709e}"
+branch="${AIRSIDE_P0_BRANCH:-cursor/p0-freighter-pick-lock-709e}"
 git fetch origin
 if git rev-parse --verify --quiet "refs/remotes/origin/${branch}" >/dev/null; then
   git checkout "$branch"

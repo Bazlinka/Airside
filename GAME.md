@@ -1,12 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **#491** (this commit). Stage A freighter pick locked in Simulation
-  (`ReviewFreighterPick` + soak seed T+28 refit), plus prior caffeinate/notify /
-  fail-closed framing. Rebuild required. 20 RESULTS unverified. Mac workers often
-  online (`~/Code/Airside`); `CURSOR_API_KEY` still required for CreateAgent
-  (Task cannot pin).
-  **NEXT:** Mac Terminal/Finder Stage A, or API key →
+- **2026-09-30 Cursor — P0 Stage A freighter pick (branch `cursor/p0-freighter-pick-lock-709e`).**
+  #491 merged to `main`. This tip adds `ReviewFreighterPick` (soak seed T+28
+  refit lock). Rebuild on tip (or main after merge). 20 RESULTS unverified. Mac
+  workers often online (`~/Code/Airside`); `CURSOR_API_KEY` still required for
+  CreateAgent (Task cannot pin).
+  **NEXT:** Mac Terminal/Finder Stage A on tip/`main`, or API key →
   `scripts/launch-p0-mac-agent.sh`. Fill RESULTS by eye/ear. Freight parked.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**

@@ -6,7 +6,7 @@ when the Mac is awake — one paste `scripts/run-post-audit-p0-stages.sh` at
 
 Optional Cursor path: paste the block below into a Cursor agent started **on**
 Bailey's MacBook Pro (environment dropdown → **Bailey's MacBook Pro**, not a cloud VM).
-Checkout `cursor/p0-auto-landing-follow-709e` at tip with auto-takeoff ~1330s /
+Checkout `cursor/p0-freighter-pick-lock-709e` (or `main` after merge) with auto-takeoff ~1330s /
 landing batch ~780–786s / boarding batch ~320–323s (or `main` after #491 merges)
 so night-sky yaw 270 + multi-shot review + jet TakingOff mid-roll wait +
 `scripts/run-post-audit-p0-remaining.sh` are present. Rebuild required for

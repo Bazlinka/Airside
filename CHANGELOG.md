@@ -3,7 +3,9 @@
 - **P0 Stage A freighter pick locked on soak seed.** `ReviewFreighterPick` (Simulation)
   prefers a parked unbooked jet for `-airsideReviewFreighter`; EditMode proves
   seed `20260913` can refit at T+0 and stay AtStand through the 28s still.
-  Soak uses the shared pick. No save-schema changes.
+  Soak uses the shared pick. Mac tip defaults follow
+  `cursor/p0-freighter-pick-lock-709e` after #491 merged to `main`. No save-schema
+  changes.
 - **P0 tip `b67a32a1` CI CLEAN.** Headless green on #491 with Stage A caffeinate +
   osascript notify, fail-closed framing/follow, and CreateAgent Stage A path.
   Mac workers online; `CURSOR_API_KEY` still blocks CreateAgent. No simulation

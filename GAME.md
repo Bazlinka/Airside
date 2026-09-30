@@ -1,10 +1,9 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 RESULTS branch staged (branch `cursor/post-audit-p0-results-709e`, ADR 0203).**
-  Draft `docs/testing/post-audit-p0-2026-09-30/RESULTS.md` exists with **blank verdicts** + attached
-  CODE_EVIDENCE. Not Mac playtest completion. **NEXT:** on Mac, checkout this branch (or the plan
-  branch), build, `scripts/review-post-audit-p0.sh`, fill verdicts, push. Linux cannot pin My Machines
-  (`CreateAgent` missing; computerUse quota blocked). One-paste:
+  Draft RESULTS exist with **blank verdicts**. **NEXT on Mac:**
+  `scripts/run-post-audit-p0.sh` (build + captures + inventory stamp), fill keep/fix/revert, push.
+  Linux cannot pin My Machines (`CreateAgent` missing; computerUse quota blocked). One-paste:
   `docs/testing/post-audit-p0-mac-agent-prompt.md`.
 
 - **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0203).**

@@ -1,5 +1,9 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Claude — visual overhaul plan + building audit (branch `plan-visual-overhaul`, ADR 0198).**
+  Plan in `docs/plans/visual-overhaul-plan.md` with Bailey-delegated decisions. **NEXT:** on a Mac, run Phase 0
+  (captures + frame-time baseline), then Phase 1 (ground/land). Audit shows 71/78 building heights are defaults.
+
 - **2026-09-30 Cursor — aircraft heard from the camera focus (branch `cursor/aircraft-audio-focus-listener`, ADR 0196).**
   Bailey could not hear the ADR 0192 aircraft sound. The listener sat on the camera, which orbits 2.4 km out at
   overview — past every type's hearing range (1.0–2.2 km) — so all aircraft were culled. A dedicated focus

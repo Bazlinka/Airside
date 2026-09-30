@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Visual overhaul plan and building audit.** `docs/plans/visual-overhaul-plan.md` sets the phases and decisions;
+  `scripts/audit-ypad-buildings.py` writes `docs/data/ypad-buildings-audit.md` (7 of 78 heights sourced, 71 defaults).
+  ADR 0198. No game behaviour changed.
+
 - **Aircraft sound is audible from the overview.** The new aircraft audio was heard from the camera, which sits 2.4 km
   out at overview — beyond every aircraft's hearing range — so the default view was silent. Aircraft are now heard from
   the ground point the camera looks at, fading with zoom instead of cutting out. ADR 0196.

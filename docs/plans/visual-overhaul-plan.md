@@ -104,14 +104,23 @@ routes, reservations or saves.
 
 Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
 
-## Open decisions for Bailey
-1. **Style target:** stylised-clean (current art direction) or push toward semi-realistic? This drives every material.
-2. **Priority:** which of ground / trees / buildings first? (I recommend ground, then trees, then buildings.)
-3. **Performance floor:** is 60 fps at overview the hard requirement, and which Mac is the reference?
-4. **Assets:** OK to use CC0 packs (Quaternius/Kenney/Poly Haven) for trees and textures, or author everything here?
-5. **Reference material:** any photos or drawings of Terminal 1 (landside and airside) you want treated as ground truth?
-   Public sources gave only the level layout, not door/facade measurements.
-6. **Imagery:** stay with Sentinel-2 tint only, or request licensed SA Government (Mapland) ortho for close ground?
+## Decisions (delegated to Claude by Bailey, 2026-09-30)
+1. **Style:** stay stylised-clean per the art direction, but richer — more material variation, detail and lighting,
+   not photoreal. Consistency with the existing aircraft and UI matters more than realism.
+2. **Order:** baseline, then ground and land, then trees, then buildings (audit first, since it needs no renderer).
+3. **Performance:** 60 fps at the overview camera at 1600×900 on the dev Mac is the High-tier requirement. A Low tier
+   must stay fully playable. No effect lands without a before/after frame-time number.
+4. **Assets:** CC0 packs (Quaternius, Kenney, Poly Haven) are allowed when registered with source, licence and
+   fallback; otherwise author procedurally. No non-CC0 or online-only assets.
+5. **Terminal reference:** none supplied, so Terminal 1 detail stays approximate and is labelled as such. Bailey's
+   photos or plans would upgrade it; this does not block other work.
+6. **Imagery:** Sentinel-2 tint only. Licensed SA Government imagery is not requested for now.
+
+## Status
+- Phase 3a (building audit): done — `scripts/audit-ypad-buildings.py`, `docs/data/ypad-buildings-audit.md`.
+  Finding: only 7 of 78 heights are sourced; 71 are rule defaults and 60 buildings are unnamed.
+- Phases 0, 1, 2, 3b–f, 4, 5 need a Mac Unity editor for captures and frame-time numbers (the cloud session has
+  neither), so they are queued for a session that has one.
 
 ## Risks
 - Performance (already tight) → per-phase budgets, LOD, tiers.

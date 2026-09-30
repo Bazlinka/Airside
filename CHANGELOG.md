@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 tip `f6cad1be` CI CLEAN.** Headless green on #491 with overview framing
+  fail-closed, Awake pose seed, and CreateAgent `worker_id`/Stage A launcher.
+  Mac workers online; `CURSOR_API_KEY` still blocks CreateAgent. No simulation
+  or save changes.
 - **P0 Mac CreateAgent launcher pins `worker_id` + Stage A default.** Prefers
   `~/Code/Airside` worker id; Stage A `.command` by default (full A→B→C via
   `AIRSIDE_P0_LAUNCH_FULL=1`). Still needs `CURSOR_API_KEY`. No simulation or

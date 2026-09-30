@@ -1,14 +1,12 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **#491** (this commit). Jet takeoff **1330s**, fail-closed auto-follow +
-  review flags + **overview framing mismatch** (night-sky CLI pose), Stage C
-  **capture resume**, Finder tip→main checkout, player preflight. Stage A:
-  `scripts/run-post-audit-p0-stage-a.command`. Full A→B→C (~45+ min):
-  `scripts/run-post-audit-p0-stages.sh`. Rebuild required. 21 RESULTS
-  unverified. Mac workers **online** (`~/Code/Airside` worker
-  `122eb692-…`; Codex checkout also). Launcher defaults Stage A + `worker_id`.
-  `CURSOR_API_KEY` still required for CreateAgent (Task cannot pin).
+  Tip **#491** `f6cad1be` MERGEABLE/CLEAN (headless green). Jet takeoff **1330s**,
+  fail-closed auto-follow + review flags + **overview framing mismatch**,
+  Stage C capture resume, Finder tip→main, CreateAgent `worker_id` + Stage A
+  default. Rebuild required. 21 RESULTS unverified. Mac workers **online**
+  (`~/Code/Airside` `122eb692-…`). `CURSOR_API_KEY` still required for
+  CreateAgent (Task cannot pin).
   **NEXT:** add API key → `scripts/launch-p0-mac-agent.sh`, or Mac Terminal/
   Finder Stage A. Then fill RESULTS by eye/ear. Freight AI parked.
 

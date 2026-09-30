@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 tip `b67a32a1` CI CLEAN.** Headless green on #491 with Stage A caffeinate +
+  osascript notify, fail-closed framing/follow, and CreateAgent Stage A path.
+  Mac workers online; `CURSOR_API_KEY` still blocks CreateAgent. No simulation
+  or save changes.
 - **P0 Stage A notifies when remaining PNGs land.** `run-post-audit-p0-remaining.sh`
   posts an osascript notification (same message as stages.sh) so an unattended
   Finder/CreateAgent Stage A run surfaces "fill RESULTS" when captures finish.

@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 Stage C SKIP_BUILD fail-closed preflight.** Mac remaining runner requires
+  hangar/boarding abort strings in the player and `following=True` on jet
+  landing/takeoff inventory. Locked by `test-p0-remaining-delays.sh`. No save-schema
+  changes.
 - **P0 Stage C hangar pick mid-outbound at 90s.** `ReviewHangarPickTests` proves the
   soak-seed pick's assigned berth is off-stand (>15 m) at the packaged 90s still,
   not merely InCheck. No save-schema changes.

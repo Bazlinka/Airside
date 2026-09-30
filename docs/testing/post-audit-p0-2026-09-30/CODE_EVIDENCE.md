@@ -34,6 +34,7 @@ Headless suite on tip: **1180+** (`scripts/test-domain.sh`); #492 tip CI green.
 | Boarding mid-window @ 320/323s | `EngineStartSequenceTests.PackagedBoardingStill_IsMidBoardingForStarterRegional` | **keep** (timing); Bailey must still *see* tape |
 | Multi-shot soak CLI schedule | `ReviewShotScheduleTests` | **keep** (parser); rebuild player required |
 | Packaged remaining delays / Stage A–C ONLY / soak window / capture resume | `scripts/test-p0-remaining-delays.sh`, `test-p0-remaining-only-filter.sh`, `test-p0-stages-chain.sh`, `test-capture-game-soak-window.sh`, `test-capture-game-resume.sh`, `test-p0-mac-agent-launch.sh` | **keep** (script locks) |
+| Stage C SKIP_BUILD player preflight (hangar/boarding abort strings) | `run-post-audit-p0-remaining.sh` strings checks + `test-p0-remaining-delays.sh` | **keep** (no stale player); rebuild required |
 | Wheel spin on ground roll / stop airborne | `PresentationLayoutTests.FlightPath_WheelsStopOnceTheAircraftIsAirborne` | **keep** (math); Bailey must still *see* tyres |
 
 ## Needs Mac eyes / ears (cannot close from code)

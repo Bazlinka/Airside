@@ -100,6 +100,14 @@ grep -Fq 'follow lost before delay' "$runner" || {
   echo "Mac runner must preflight follow-lost fail-closed in the player" >&2
   exit 1
 }
+grep -Fq 'hangar check never started' "$runner" || {
+  echo "Mac runner must preflight hangar-check fail-closed in the player" >&2
+  exit 1
+}
+grep -Fq 'boarding booking never applied' "$runner" || {
+  echo "Mac runner must preflight boarding fail-closed in the player" >&2
+  exit 1
+}
 echo "ok multi-shot + fail-closed player preflight"
 
 grep -Fq 'review freighter ' "$runner" || {
@@ -114,7 +122,7 @@ grep -Fq 'review boarding ' "$runner" || {
   echo "inventory must hard-fail missing review boarding log" >&2
   exit 1
 }
-# Freighter/hangar/boarding inventory must require live follow at capture.
+# Freighter/hangar/boarding/jet inventory must require live follow at capture.
 grep -A6 'follow-freighter)' "$runner" | grep -Fq 'following=True' || {
   echo "inventory must hard-fail freighter stills without following=True" >&2
   exit 1
@@ -125,6 +133,14 @@ grep -A4 'follow-hangar-tow)' "$runner" | grep -Fq 'following=True' || {
 }
 grep -A20 'follow-boarding-tape|follow-human-ops-close)' "$runner" | grep -Fq 'following=True' || {
   echo "inventory must hard-fail boarding stills without following=True" >&2
+  exit 1
+}
+grep -A6 'follow-jet-takeoff)' "$runner" | grep -Fq 'following=True' || {
+  echo "inventory must hard-fail jet-takeoff stills without following=True" >&2
+  exit 1
+}
+grep -A25 'follow-jet-day|follow-jet-close|follow-storm-landing)' "$runner" | grep -Fq 'found_live' || {
+  echo "inventory must hard-fail landing batch without following=True" >&2
   exit 1
 }
 # Night-sky inventory must lock yaw/dist corridor, not pitch alone.

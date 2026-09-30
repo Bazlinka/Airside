@@ -87,6 +87,15 @@ if [ -x "$app" ]; then
     echo "Player at $app lacks overview-framing fail-closed. Rebuild without SKIP_BUILD." >&2
     exit 1
   fi
+  # Stage C SKIP_BUILD reuses the Stage A player — hangar/boarding apply aborts must be present.
+  if ! strings "$app" 2>/dev/null | grep -Fq 'hangar check never started'; then
+    echo "Player at $app lacks hangar-check fail-closed. Rebuild without SKIP_BUILD." >&2
+    exit 1
+  fi
+  if ! strings "$app" 2>/dev/null | grep -Fq 'boarding booking never applied'; then
+    echo "Player at $app lacks boarding fail-closed. Rebuild without SKIP_BUILD." >&2
+    exit 1
+  fi
   echo "==> Player has review fail-closed aborts"
 fi
 
@@ -155,21 +164,27 @@ follow_fail=0
       # Multi-shot batches share capture-game's first --shot logFile, so scan siblings too.
       case "$base" in
         follow-jet-takeoff)
-          if ! grep -Eq '\[Airside soak\] following auto-takeoff ' "$logf"; then
+          # Start log + live follow at capture (following=True on pose line).
+          if ! grep -Eq '\[Airside soak\] following auto-takeoff ' "$logf" \
+            || ! grep -Eq 'following=True' "$logf"; then
             log_status="errors"
             follow_fail=1
           fi
           ;;
         follow-jet-day|follow-jet-close|follow-storm-landing)
           found_follow=0
+          found_live=0
           for alt in follow-jet-day follow-jet-close follow-storm-landing; do
-            if [ -f "$capture_out/$alt.log" ] \
-              && grep -Eq '\[Airside soak\] following auto-landing ' "$capture_out/$alt.log"; then
-              found_follow=1
-              break
+            if [ -f "$capture_out/$alt.log" ]; then
+              if grep -Eq '\[Airside soak\] following auto-landing ' "$capture_out/$alt.log"; then
+                found_follow=1
+              fi
+              if grep -Eq 'following=True' "$capture_out/$alt.log"; then
+                found_live=1
+              fi
             fi
           done
-          if [ "$found_follow" -eq 0 ]; then
+          if [ "$found_follow" -eq 0 ] || [ "$found_live" -eq 0 ]; then
             log_status="errors"
             follow_fail=1
           fi

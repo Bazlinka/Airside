@@ -5,7 +5,9 @@ Branch: `cursor/post-audit-p0-results-709e` · Plan ADR **0203** · Tip includes
 **Status:** staged from Linux cloud. Automated capture PNGs and keep/fix/revert
 verdicts are **not** filled. Do not treat blank verdicts as keep.
 
-Code-only evidence (for Notes, not Verdict): see CODE_EVIDENCE.md in this folder.
+Code-only + prior-capture Notes: see CODE_EVIDENCE.md in this folder.
+Prior weather Mac acceptance lives under `docs/testing/weather-2026-09-30/` —
+re-capture on this tip before marking weather rows keep.
 
 When Mac finishes `scripts/review-post-audit-p0.sh`, overwrite this file with the
 script’s RESULTS (or fill the tables below), then push.

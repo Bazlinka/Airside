@@ -36,7 +36,7 @@ rebuilt game. Attribute bugs before adding content.
 | Aircraft audio at overview + follow; tune `AircraftAudioMix.ZoomGain` | 0192, 0196 |
 | Sky traffic cruises at night overview; no double inbound on final | 0195 |
 | Freighter livery at follow; jet rotation/flare tyres on the ground | 0194 |
-| Weather clear/cloudy/overcast/rain/storm/fog from overview + follow | 0193 |
+| Weather clear/cloudy/overcast/rain/storm/fog from overview + follow | 0193 (prior Mac pack in `docs/testing/weather-2026-09-30/`; re-check tip) |
 | Hangar tow / berths / quiet tow; temporary boarding tape | 0186–0188, 0196 |
 | Far zoom, far land cover, follow-camera feel, zoom-in stays under cursor | 0185, 0189–0191 |
 | Arrivals already on final land through a storm | 0190 |

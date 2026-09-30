@@ -1,15 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **`3bd6311c`** — #491 headless CI green, MERGEABLE/CLEAN (`cfa1fc4b`
-  suite). Finder Stage A
-  (minutes): `scripts/run-post-audit-p0-stage-a.command`. Full A→B→C (~35+ min,
-  caffeinate): `scripts/run-post-audit-p0-stages.sh` / `.command`. Optional API
-  pin: `CURSOR_API_KEY` + `scripts/launch-p0-mac-agent.sh`. Cloud Task /
+  Tip **#491** — headless CI green, MERGEABLE/CLEAN on `cfa1fc4b` (frustum +
+  Stage A locks). Finder Stage A (minutes):
+  `scripts/run-post-audit-p0-stage-a.command`. Full A→B→C (~35+ min,
+  caffeinate): `scripts/run-post-audit-p0-stages.sh` / `.command`. Optional
+  API pin: `CURSOR_API_KEY` + `scripts/launch-p0-mac-agent.sh`. Cloud Task /
   computerUse cannot claim My Machines from Linux. 21 RESULTS unverified; no
-  new remaining PNGs; night-sky re-run frustum EditMode-locked.
-  **NEXT:** Mac Stage A → fill night-sky + freighter by eye; then B/C + listening
-  rows. Freight AI parked. Do not invent RESULTS.
+  new remaining PNGs.
+  **NEXT:** Mac Stage A → fill night-sky + freighter by eye; then B/C +
+  listening rows. Freight AI parked. Do not invent RESULTS.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

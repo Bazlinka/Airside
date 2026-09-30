@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **P0 tip `cfa1fc4b` CI CLEAN.** Headless green on #491 with Stage A Finder
+  shortcut, Mac CreateAgent launcher lock, and night-sky frustum test. Mac
+  eyes/ears still required. No simulation or save changes.
 - **P0 night-sky frustum EditMode lock.** `NightSkyReviewFraming_PutsDrawableCruiseInUpperHalfOfFrame`
   asserts the 11 km / pitch 8 / yaw 270 re-run pose puts a drawable cruise in
   the upper half of the 1600×900 frame at T+45s. No simulation or save changes.

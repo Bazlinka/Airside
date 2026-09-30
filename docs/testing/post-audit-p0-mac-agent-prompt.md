@@ -25,7 +25,8 @@ Automated stills already recorded in docs/testing/post-audit-p0-2026-09-30/RESUL
 
 Follow docs/testing/post-audit-p0-manual-checklist.md in order:
 1. Prefer one command: scripts/run-post-audit-p0-remaining.sh
-   (pull + build + remaining captures + copy PNGs into docs/testing/post-audit-p0-2026-09-30/)
+   (pull + build + remaining captures + copy PNGs + stamp inventory into RESULTS —
+   inventory is not a verdict)
    Fast first pass (night-sky + freighter + takeoff tyres): 
    AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter,follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh
 2. Verdict those PNGs in RESULTS.md (do not invent; if still unverified say why)

@@ -47,17 +47,71 @@ AIRSIDE_P0_OUT="$capture_out" bash "$root/scripts/review-post-audit-p0-remaining
 
 echo "==> Copying new PNGs into $docs_dir (overwrites prior stills of the same name)"
 copied=0
+shopt -s nullglob
 for png in "$capture_out"/*.png; do
-  [ -f "$png" ] || continue
   cp -f "$png" "$docs_dir/$(basename "$png")"
   copied=$((copied + 1))
 done
+shopt -u nullglob
+
+results="$docs_dir/RESULTS.md"
+if [ ! -f "$results" ]; then
+  echo "Missing $results — cannot stamp inventory." >&2
+  exit 1
+fi
+
+# Drop a prior auto-inventory block so re-runs stay idempotent.
+if grep -q '^<!-- AIRSIDE_P0_REMAINING_INVENTORY_BEGIN -->$' "$results"; then
+  tmp="$(mktemp)"
+  awk '
+    /^<!-- AIRSIDE_P0_REMAINING_INVENTORY_BEGIN -->$/ { skip=1; next }
+    /^<!-- AIRSIDE_P0_REMAINING_INVENTORY_END -->$/ { skip=0; next }
+    !skip { print }
+  ' "$results" > "$tmp"
+  mv "$tmp" "$results"
+fi
+
+{
+  echo
+  echo "<!-- AIRSIDE_P0_REMAINING_INVENTORY_BEGIN -->"
+  echo "## Remaining capture inventory (auto — not a verdict)"
+  echo
+  echo "- Captured at: \`$(date -u +%Y-%m-%dT%H:%MZ)\`"
+  echo "- Branch tip: \`$(git -C "$root" rev-parse --short HEAD)\`"
+  echo "- Host: \`$uname_s\` / \`$(hostname 2>/dev/null || echo unknown)\`"
+  echo "- Shots directory: \`$capture_out\`"
+  echo "- AIRSIDE_P0_ONLY: \`${AIRSIDE_P0_ONLY:-<all remaining>}\`"
+  echo "- PNGs copied into docs folder: \`$copied\`"
+  echo
+  echo "| File | PNG bytes | Log |"
+  echo "|---|---:|---|"
+  shopt -s nullglob
+  for png in "$capture_out"/*.png; do
+    base="$(basename "$png" .png)"
+    bytes="$(wc -c < "$png" | tr -d ' ')"
+    logf="$capture_out/$base.log"
+    if [ -f "$logf" ]; then
+      if command -v rg >/dev/null 2>&1 && rg -q 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL' "$logf"; then
+        log_status="errors"
+      else
+        log_status="clean"
+      fi
+    else
+      log_status="missing"
+    fi
+    echo "| \`$base.png\` | $bytes | $log_status |"
+  done
+  shopt -u nullglob
+  echo
+  echo "PNG presence / log clean is **not** keep. Fill Verdict columns by eye/ear."
+  echo "<!-- AIRSIDE_P0_REMAINING_INVENTORY_END -->"
+} >> "$results"
 
 echo
 echo "Copied $copied PNG(s) into $docs_dir"
-echo "Fill Verdict columns in:"
-echo "  $docs_dir/RESULTS.md"
-echo "  (remaining-capture inventory + manual rows — do not invent)"
+echo "Stamped capture inventory (not verdicts) into:"
+echo "  $results"
+echo "Fill Verdict columns for remaining + manual rows — do not invent."
 echo "Then update GAME.md and push via the protected-main PR workflow."
 echo
 echo "Optional subset next time: AIRSIDE_P0_ONLY=shot,shot $0"

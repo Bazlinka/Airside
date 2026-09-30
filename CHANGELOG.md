@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 remaining runner stamps capture inventory.** After Mac stills land,
+  `scripts/run-post-audit-p0-remaining.sh` appends PNG/log inventory to RESULTS
+  without filling keep/fix/revert. No simulation or save changes.
+
 - **P0 Mac agent prompt tip SHA refresh.** Paste prompt pins `#491` tip `6965106c`
   (auto-landing + night-sky framing + remaining runner). Handoff notes Mac workers
   idle and UI-pin as the placement path. No simulation or save changes.

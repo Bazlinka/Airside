@@ -118,7 +118,8 @@ namespace Airside.Simulation
         /// <summary>Passengers carried this rotation: seats × a stable 62–94 % load factor.</summary>
         public static int PassengerCount(FleetAircraft aircraft)
         {
-            if (aircraft == null)
+            // A freighter carries cargo, not people (ADR 0194).
+            if (aircraft == null || aircraft.IsFreighter)
                 return 0;
             var seats = AircraftCatalogue.TypicalSeats(aircraft.Type);
             var load = 0.62 + Hash(aircraft.Registration, aircraft.CompletedTrips, 7) % 33 / 100.0;
@@ -306,6 +307,8 @@ namespace Airside.Simulation
 
         private static int PassengerCount(int trips, FleetAircraft aircraft)
         {
+            if (aircraft.IsFreighter)
+                return 0;
             var seats = AircraftCatalogue.TypicalSeats(aircraft.Type);
             var load = 0.62 + Hash(aircraft.Registration, trips, 7) % 33 / 100.0;
             return Math.Max(1, (int)Math.Round(seats * load));

@@ -254,6 +254,10 @@ namespace Airside.Presentation
         [SerializeField] private float _followDistanceMultiplier = 1f;
         [SerializeField] private float _mainTireRadiusMetres = AirsideReusableMotion.MainTireRadiusMetres;
         [SerializeField] private float _noseTireRadiusMetres = AirsideReusableMotion.NoseTireRadiusMetres;
+        [SerializeField] private float _modelGroundOffsetMetres;
+
+        /// <summary>Local Y of the tyre bottoms: the model's ground offset.</summary>
+        public float ModelGroundOffsetMetres => _modelGroundOffsetMetres;
 
         public Vector3 PickSizeMetres => _pickSizeMetres;
         public Vector3 VisualCentreOffsetMetres => _visualCentreOffsetMetres;
@@ -288,6 +292,7 @@ namespace Airside.Presentation
             _followDistanceMultiplier = profile.FollowDistanceMultiplier;
             _mainTireRadiusMetres = profile.MainTireRadiusMetres;
             _noseTireRadiusMetres = profile.NoseTireRadiusMetres;
+            _modelGroundOffsetMetres = profile.ModelGroundOffsetMetres;
         }
     }
 }

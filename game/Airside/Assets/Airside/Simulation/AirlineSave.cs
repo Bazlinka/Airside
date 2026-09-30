@@ -43,8 +43,9 @@ namespace Airside.Simulation
         /// 18 (ADR 0178) gives each local aircraft a persistent logbook: join time,
         /// founding-aircraft identity, recorded revenue and routes. Older aircraft keep
         /// their completed-flight count and begin the detailed logbook on migration.
+        /// 19 (ADR 0194) records which player aircraft are freighters. Older saves are all passenger.
         /// </summary>
-        public const int CurrentVersion = 18;
+        public const int CurrentVersion = 19;
 
         public int Version = CurrentVersion;
 
@@ -230,6 +231,9 @@ namespace Airside.Simulation
         public long LifetimeRevenue;
         public int HistoryFlights;
         public List<AircraftRouteSaveRecord> RouteHistory = new();
+
+        /// <summary>v19 (ADR 0194): converted to a package freighter.</summary>
+        public bool IsFreighter;
     }
 
     [Serializable]
@@ -391,7 +395,8 @@ namespace Airside.Simulation
                     JoinedAirlineAtSeconds = a.JoinedAirlineAt.ElapsedSeconds,
                     IsFoundingAircraft = a.IsFoundingAircraft,
                     LifetimeRevenue = a.LifetimeRevenue,
-                    HistoryFlights = a.HistoryFlights
+                    HistoryFlights = a.HistoryFlights,
+                    IsFreighter = a.IsFreighter
                 };
                 foreach (var route in a.RouteHistory.OrderBy(r => r.DestinationCode, StringComparer.Ordinal))
                     record.RouteHistory.Add(new AircraftRouteSaveRecord
@@ -541,6 +546,8 @@ namespace Airside.Simulation
                         airline.IsPlayer && string.Equals(restoredRegistration, "VH-PAX", StringComparison.OrdinalIgnoreCase),
                         0, 0, Array.Empty<AircraftRouteTally>());
                 }
+                if (data.Version >= 19 && record.IsFreighter && airline.IsPlayer)
+                    operations.RestoreFreighter(restoredRegistration);
                 if (data.Version >= 13 && airline.IsPlayer)
                     operations.RestoreAutomatedTrip(restoredRegistration, record.AutomatedTrip);
             }

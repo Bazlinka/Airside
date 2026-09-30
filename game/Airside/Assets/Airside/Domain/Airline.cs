@@ -78,6 +78,22 @@ namespace Airside.Domain
             }
         }
 
+        /// <summary>The fuselage title on a freighter (ADR 0194): the wordmark plus CARGO, shortened to fit.</summary>
+        public string FreightTitle
+        {
+            get
+            {
+                var title = FuselageTitle;
+                if (title.EndsWith("CARGO", StringComparison.Ordinal))
+                    return title;
+                var full = title + " CARGO";
+                if (full.Length <= 18)
+                    return full;
+                var first = title.Split(' ')[0];
+                return first + " CARGO";
+            }
+        }
+
         /// <summary>Primary livery colour as #RRGGBB, kept UnityEngine-free.</summary>
         public string LiveryHex { get; private set; }
 

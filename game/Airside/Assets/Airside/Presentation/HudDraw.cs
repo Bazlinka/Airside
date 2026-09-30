@@ -249,6 +249,7 @@ namespace Airside.Presentation
         public const string ViewContracts = "contract:view";
         public const string CancelContract = "contract:cancel";
         public const string StartCheck = "check";
+        public const string ToggleFreighter = "freighter";
         public const string UpgradeBase = "base:upgrade";
         public const string CareerRoadmap = "career:roadmap";
         public const string ContractMarket = "career:offers";

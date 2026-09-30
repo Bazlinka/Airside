@@ -336,9 +336,40 @@ namespace Airside.Presentation
             if (!_fleetAircraftById.TryGetValue(aircraftId, out var aircraft))
                 return BuildAircraft($"Commercial {aircraftId}", AirsideTheme.CoastalBlue);
 
-            var airline = aircraft.Airline;
-            var accent = AirsideTheme.FromHex(airline.LiveryHex);
+            var accent = FleetLiveryColour(aircraft);
             var view = BuildAircraftForType($"Commercial {aircraftId}", aircraft.Type, accent, null);
+            PaintFleetLivery(view, aircraft, accent);
+            _viewFreighterState[view.GetInstanceID()] = aircraft.IsFreighter;
+            return view;
+        }
+
+        /// <summary>The operator colour, or its dark cargo variant once the aircraft is a freighter (ADR 0194).</summary>
+        private static Color FleetLiveryColour(FleetAircraft aircraft)
+        {
+            var accent = AirsideTheme.FromHex(aircraft.Airline.LiveryHex);
+            return aircraft.IsFreighter ? AircraftLiveryPaint.FreightPrimary(accent) : accent;
+        }
+
+        // Per view: was it last painted as a freighter? A refit repaints in place, no rebuild.
+        private readonly Dictionary<int, bool> _viewFreighterState = new();
+
+        /// <summary>Repaints a fleet view when its aircraft has been refitted to or from a freighter.</summary>
+        private void RefreshFreighterLivery(Transform view, string aircraftId)
+        {
+            if (view == null || !_fleetAircraftById.TryGetValue(aircraftId, out var aircraft))
+                return;
+            var id = view.GetInstanceID();
+            _viewFreighterState.TryGetValue(id, out var painted);
+            if (painted == aircraft.IsFreighter)
+                return;
+            _viewFreighterState[id] = aircraft.IsFreighter;
+            ClearAircraftIdentityMarkings(view);
+            PaintFleetLivery(view, aircraft, FleetLiveryColour(aircraft));
+        }
+
+        private void PaintFleetLivery(Transform view, FleetAircraft aircraft, Color accent)
+        {
+            var airline = aircraft.Airline;
 
             // The same neutral skin sheet works across every authored type. Repainting
             // it here gives AI traffic a coherent operator colour instead of leaving
@@ -350,7 +381,8 @@ namespace Airside.Presentation
             // E190, A220, A321neo, A350 and 787s joined the A320/A330/737/turboprops), so the
             // decal is kept only for the primitive fallback, which has no sash of its own.
             var hasFittedLivery = HasNamedChild(view, "Livery stripe lower");
-            var decal = hasFittedLivery ? null : TintedLiveryDecal(airline.LiveryHex, accent);
+            var decalHex = aircraft.IsFreighter ? "#" + ColorUtility.ToHtmlStringRGB(accent) : airline.LiveryHex;
+            var decal = hasFittedLivery ? null : TintedLiveryDecal(decalHex, accent);
             if (decal != null)
                 ApplyLiveryTexture(view, decal);
 
@@ -368,8 +400,27 @@ namespace Airside.Presentation
             }
 
             EnsureAircraftIdentityMarkings(view, aircraft, accent);
+        }
 
-            return view;
+        /// <summary>Removes the painted title and registration so a refit can paint them again.</summary>
+        private static void ClearAircraftIdentityMarkings(Transform view)
+        {
+            for (var i = view.childCount - 1; i >= 0; i--)
+            {
+                var child = view.GetChild(i);
+                if (child.name.StartsWith("Operator title", StringComparison.Ordinal)
+                    || child.name.StartsWith("Registration", StringComparison.Ordinal))
+                {
+                    // Leave the hierarchy now: Destroy only takes effect at the end of the frame.
+                    child.SetParent(null, false);
+                    Destroy(child.gameObject);
+                }
+            }
+
+            var tracker = view.GetComponent<AircraftIdentitySideVisibility>();
+            if (tracker != null)
+                Destroy(tracker);
+            AirsideNamedChildren.Forget(view);
         }
 
         /// <summary>
@@ -430,7 +481,7 @@ namespace Airside.Presentation
                 return;
 
             var layout = AircraftIdentityMarkings.For(aircraft.Type);
-            var operatorText = aircraft.Airline.FuselageTitle;
+            var operatorText = aircraft.IsFreighter ? aircraft.Airline.FreightTitle : aircraft.Airline.FuselageTitle;
             // A long airline name is painted smaller rather than off the end of the fuselage.
             var operatorSize = AircraftTitlePaint.OperatorCharacterSize(
                 aircraft.Type, operatorText, layout.OperatorCharacterSize);

@@ -946,7 +946,7 @@ namespace Airside.Simulation
                 matching = definition;
 
             var settlementId = new SettlementId(aircraft.Registration, aircraft.CompletedTrips);
-            var forecast = Forecast(Home, justFlown.Value, aircraft.Type);
+            var forecast = Forecast(Home, justFlown.Value, aircraft);
             var pay = forecast.Revenue;
             DelayBreakdown? delay = null;
             if (aircraft.Airline.IsPlayer && aircraft.PushbackLatenessSeconds.HasValue)

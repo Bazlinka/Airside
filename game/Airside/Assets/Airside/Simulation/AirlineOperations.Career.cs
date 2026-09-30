@@ -15,6 +15,42 @@ namespace Airside.Simulation
             return CareerState == null ? forecast : forecast.Under(CareerState.DifficultyProfile);
         }
 
+        /// <summary>The forecast for this aircraft: tonnes if it is a freighter (ADR 0194), else seats.</summary>
+        public RouteForecast Forecast(Destination origin, Destination destination, FleetAircraft aircraft)
+        {
+            if (aircraft == null || !aircraft.IsFreighter)
+                return Forecast(origin, destination, aircraft?.Type);
+            var forecast = RouteForecast.ForFreight(origin, destination, aircraft.Type);
+            return CareerState == null ? forecast : forecast.Under(CareerState.DifficultyProfile);
+        }
+
+        /// <summary>
+        /// Converts a parked player aircraft to a freighter, or back to passengers (ADR 0194). A fixed refit
+        /// fee; the aircraft must be on its stand with no flight booked.
+        /// </summary>
+        public CommandResult SetFreighter(FleetAircraft aircraft, bool freighter)
+        {
+            if (aircraft == null || !_fleet.Contains(aircraft))
+                return CommandResult.Refused("Unknown aircraft.");
+            if (!aircraft.Airline.IsPlayer || CareerState == null)
+                return CommandResult.Refused("Only your own aircraft can change role.");
+            if (aircraft.IsFreighter == freighter)
+                return CommandResult.Refused(freighter
+                    ? $"{aircraft.Registration} is already a freighter."
+                    : $"{aircraft.Registration} already carries passengers.");
+            if (aircraft.State != FleetState.AtStand)
+                return CommandResult.Refused($"{aircraft.Registration} must be parked on a stand to be refitted.");
+            if (aircraft.Scheduled.HasValue)
+                return CommandResult.Refused($"Cancel {aircraft.Registration}'s booked flight before the refit.");
+            if (aircraft.CheckUntil is { } checkEnds && checkEnds.CompareTo(_processedTo) > 0)
+                return CommandResult.Refused($"{aircraft.Registration} is in its check until {Clock.TimeText(checkEnds)}.");
+            var cost = FreightRates.ConversionCost(aircraft.Type);
+            if (!CareerState.TryChargeDispatch(cost))
+                return CommandResult.Refused($"The refit costs ${cost:N0}. You have ${CareerState.Funds:N0}.");
+            aircraft.IsFreighter = freighter;
+            return CommandResult.Ok;
+        }
+
         /// <summary>
         /// The contracts on offer: the next authored career contracts the airline's tier allows
         /// and it has not yet fulfilled (ADR 0084), then the rotating market. The authored ones used

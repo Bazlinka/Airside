@@ -4224,6 +4224,8 @@ namespace Airside.Presentation
             public Renderer MarkerRenderer;
             public Transform GearNose;
             public float WheelbaseMetres;
+            /// <summary>Main-gear centre along the fuselage (root local Z); pitch pivots here.</summary>
+            public float MainGearZMetres;
             /// <summary>Carries "Fan L"/"Fan R" turbofan assemblies (the 737).</summary>
             public bool HasFans;
             public Transform FanLeft;
@@ -4276,6 +4278,13 @@ namespace Airside.Presentation
                     mainLeft = children[i];
                 else if (names[i] == "Gear R")
                     mainRight = children[i];
+            }
+            if (mainLeft != null || mainRight != null)
+            {
+                var mainCentre = mainLeft != null && mainRight != null
+                    ? (mainLeft.position + mainRight.position) * 0.5f
+                    : (mainLeft != null ? mainLeft.position : mainRight.position);
+                parts.MainGearZMetres = aircraft.InverseTransformPoint(mainCentre).z;
             }
             if (parts.GearNose != null && (mainLeft != null || mainRight != null))
             {

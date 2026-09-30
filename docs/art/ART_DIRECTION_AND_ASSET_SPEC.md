@@ -423,3 +423,18 @@ Original Coastline/Emu/Southern Cross colourways are review examples; runtime
 identity continues to come from each live airline, including player custom
 colours. Full compositions are in ADR 0150. Review evidence and limitations are
 in `docs/testing/aircraft-liveries-2026-09-28/README.md`.
+
+
+## Aircraft audio revision — 30 September 2026 (ADR 0192)
+
+| ID | Exact runtime paths (under `Assets/Resources/Airside/Audio/`) | Required behaviour | Status |
+|---|---|---|---|
+| AUD-010 | `eng_{atr42,sf34,dh8d,e190,a223,a320,b738,b38m,a21n,a339,a359,b789,b78x}_{idle,power,reverse}_v01.wav` | 39 representative family-derived loops; engine start, governed prop load / jet N1 and reverse after each type's visual contact | Integrated; generator/manifest in `docs/data/audio/`; original recorded beds retained fallback |
+| AUD-011 | `aircraft_touchdown_v01.wav` | Registered CC0 tyre contact + original oleo thump; one spatial event per aircraft per landing | Integrated; source and processing in asset register |
+| AUD-012 | `aircraft_tyre_roll_v01.wav` | Original rolling noise follows actual tyre speed; absent airborne or standing still | Integrated; silence fallback |
+
+Profile tuning lives in `docs/data/AIRCRAFT_AUDIO_PROFILES.json`. These are
+representative sound-design voices, not exact recordings of each engine variant.
+The static AIR-017 rescue helicopter remains parked and engine-off. No sound
+controls simulation timing. Built-player DSP captures and final verification
+are recorded in `docs/testing/audio-2026-09-30/README.md`.

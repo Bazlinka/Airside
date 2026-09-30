@@ -1,0 +1,371 @@
+[
+  {
+    "file": "eng_atr42_idle_v01.wav",
+    "sha256": "0040d32a11722ee42fce6d19328c39f1dc2fdc29992b3090b8b5b57317482427",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.39998,
+    "seam": 0.009613,
+    "looping": true
+  },
+  {
+    "file": "eng_atr42_power_v01.wav",
+    "sha256": "4f8d27c5c73ce69744b1ff4b442a6c5149280dfbfb5dad99f5d9d483987ef7c0",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.50527,
+    "seam": 0.014893,
+    "looping": true
+  },
+  {
+    "file": "eng_atr42_reverse_v01.wav",
+    "sha256": "578fcdf6382247745ad85dac52b5f396b1d7284d7442a36d4b802ad9adec96ed",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.47586,
+    "seam": 0.081024,
+    "looping": true
+  },
+  {
+    "file": "eng_sf34_idle_v01.wav",
+    "sha256": "76cfcaeada743d91a3245aeb063e537d4754c29cc2c3c382e8840fa2cf3035fe",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.39278,
+    "seam": 0.009186,
+    "looping": true
+  },
+  {
+    "file": "eng_sf34_power_v01.wav",
+    "sha256": "96c4fa4e8ff3770f7cbace91d1aae08773a1ce7acb3879c318514745821e4a71",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.51946,
+    "seam": 0.014496,
+    "looping": true
+  },
+  {
+    "file": "eng_sf34_reverse_v01.wav",
+    "sha256": "dc28ef8ba2cd554b624c103592ae18a58c10843689e1a9c8e1c2756db0a54160",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.48756,
+    "seam": 0.025482,
+    "looping": true
+  },
+  {
+    "file": "eng_dh8d_idle_v01.wav",
+    "sha256": "f953414bd23a475b3e1922ee1f43234630e31f1e3e68fe476fe301582c8cf9e7",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.40736,
+    "seam": 0.001129,
+    "looping": true
+  },
+  {
+    "file": "eng_dh8d_power_v01.wav",
+    "sha256": "5e9d78f8ef5ae73785fbde69ded8f072d63ead5ae6682a1688a4241173e08d58",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.51671,
+    "seam": 0.012299,
+    "looping": true
+  },
+  {
+    "file": "eng_dh8d_reverse_v01.wav",
+    "sha256": "3616d59fad0b31c58f3f567df63c8474c3d93433e00a871c0d58530fb561da46",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.51975,
+    "seam": 0.029297,
+    "looping": true
+  },
+  {
+    "file": "eng_e190_idle_v01.wav",
+    "sha256": "fb73800bad74694b586dff51c70c73b6a65c80463f81df1291219da2ebb3e68a",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.36292,
+    "seam": 0.014709,
+    "looping": true
+  },
+  {
+    "file": "eng_e190_power_v01.wav",
+    "sha256": "e7822a18130e4494f298b1369f7665041fee0105abf6b7a60bfffb4885a3ba38",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.37631,
+    "seam": 0.03479,
+    "looping": true
+  },
+  {
+    "file": "eng_e190_reverse_v01.wav",
+    "sha256": "b3670f97c6dc73100fdeca4d269301e8ec8bfbdde23457c12f015ff3366fb54c",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.45237,
+    "seam": 0.059418,
+    "looping": true
+  },
+  {
+    "file": "eng_a223_idle_v01.wav",
+    "sha256": "be43839fcc963c944bd3e395c8f84ba3681604ff1b593c3ba969b4be2d79a0be",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.36833,
+    "seam": 0.012421,
+    "looping": true
+  },
+  {
+    "file": "eng_a223_power_v01.wav",
+    "sha256": "323f118b4d80315a166bd3ac767511b3b328a368e459db070963a96c6b65b4e7",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.37313,
+    "seam": 0.054993,
+    "looping": true
+  },
+  {
+    "file": "eng_a223_reverse_v01.wav",
+    "sha256": "842630aaa80c801316ea39e8fd0ef97637db5b7e75610c72b5f42cb1ba6eecb3",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.45225,
+    "seam": 0.042358,
+    "looping": true
+  },
+  {
+    "file": "eng_a320_idle_v01.wav",
+    "sha256": "ffb25208b697c235287ba949980adde79a1847929183a490d874c1989fcf971e",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.36184,
+    "seam": 0.014343,
+    "looping": true
+  },
+  {
+    "file": "eng_a320_power_v01.wav",
+    "sha256": "0b819ad56bc0f48481740a02e221d2bf519f17e9cb87dc18af361450b241c5ae",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.39685,
+    "seam": 0.038116,
+    "looping": true
+  },
+  {
+    "file": "eng_a320_reverse_v01.wav",
+    "sha256": "2653a10417be67dda90bd22070ae68bdd3263d0fe826c96d22919b4b353bbb98",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.46629,
+    "seam": 0.089417,
+    "looping": true
+  },
+  {
+    "file": "eng_b738_idle_v01.wav",
+    "sha256": "5bb608ec8cc45069249dd0489b1c19b68c73d3c2da907424d5e459de4602da3f",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.34709,
+    "seam": 0.01886,
+    "looping": true
+  },
+  {
+    "file": "eng_b738_power_v01.wav",
+    "sha256": "d34c767fd1343db819177c51ddc7331a24d328c7102339287e564882075f9101",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.38434,
+    "seam": 0.023895,
+    "looping": true
+  },
+  {
+    "file": "eng_b738_reverse_v01.wav",
+    "sha256": "ff8c23cb1569034e98cae14ef2675af29c43095d2347d8607bd8404572973e7f",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.46754,
+    "seam": 0.011078,
+    "looping": true
+  },
+  {
+    "file": "eng_b38m_idle_v01.wav",
+    "sha256": "34a69c71dd62ea60a7a4059dfe7183152228fa826d80e58600b2f204669bf05e",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.36656,
+    "seam": 0.013,
+    "looping": true
+  },
+  {
+    "file": "eng_b38m_power_v01.wav",
+    "sha256": "75905e069ef2d0afefbb740945caeafbc91ae0f3b8aac13c87c6f8de3ce3c2ef",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.40212,
+    "seam": 0.046417,
+    "looping": true
+  },
+  {
+    "file": "eng_b38m_reverse_v01.wav",
+    "sha256": "9af78a857a845bd580191df70e5dd51826135e2b5e75f39682b01c3a5f58358d",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.4589,
+    "seam": 0.109863,
+    "looping": true
+  },
+  {
+    "file": "eng_a21n_idle_v01.wav",
+    "sha256": "839ab701496bf70f41f90d0aafb650c93a1ef175d7ac5398459e75acd6796f38",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.37833,
+    "seam": 0.012726,
+    "looping": true
+  },
+  {
+    "file": "eng_a21n_power_v01.wav",
+    "sha256": "6b4a56ed62d01cd807c9973416a40103ebd7fc9f0917dd6f98e7df5cfddb7a73",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.39733,
+    "seam": 0.049835,
+    "looping": true
+  },
+  {
+    "file": "eng_a21n_reverse_v01.wav",
+    "sha256": "9d873434cea09d0cbd974ddf34705cd734fd7d869a685cdae4b082bcb7cd745c",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.47906,
+    "seam": 0.03595,
+    "looping": true
+  },
+  {
+    "file": "eng_a339_idle_v01.wav",
+    "sha256": "5668afad719a1fd3d9fa08be6ea5de4aac878ae86b980fbd460a331dd2c481f1",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.39428,
+    "seam": 0.012817,
+    "looping": true
+  },
+  {
+    "file": "eng_a339_power_v01.wav",
+    "sha256": "00315ec9562e72bc4cf4a764e6ee6a88467550a0c7318d1106152638cde118f0",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.38703,
+    "seam": 0.064392,
+    "looping": true
+  },
+  {
+    "file": "eng_a339_reverse_v01.wav",
+    "sha256": "84823b680304c1e66204812789e10e5392cb3902ff2c3ac75cbee99e313b9a0c",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.44562,
+    "seam": 0.138702,
+    "looping": true
+  },
+  {
+    "file": "eng_a359_idle_v01.wav",
+    "sha256": "12c0e8fa91be65ecba25b86b6c43f87f951f82c6bd22a5d3b2b362f0d0a9ed33",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.38895,
+    "seam": 0.013245,
+    "looping": true
+  },
+  {
+    "file": "eng_a359_power_v01.wav",
+    "sha256": "f838dd64e3c5346ca18eb9a370a8ff969c07e1b4022e45c7613f554851571b64",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.38534,
+    "seam": 0.067017,
+    "looping": true
+  },
+  {
+    "file": "eng_a359_reverse_v01.wav",
+    "sha256": "3322b2a2f3f5ac8b604d3e9437f6ef8709e13da62e18baa447b19ce1d4472b58",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.463,
+    "seam": 0.076508,
+    "looping": true
+  },
+  {
+    "file": "eng_b789_idle_v01.wav",
+    "sha256": "db88e2c58240b687f4be97727b0a164c46b2ea955daf10142d557946d7a5a6df",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.38758,
+    "seam": 0.012573,
+    "looping": true
+  },
+  {
+    "file": "eng_b789_power_v01.wav",
+    "sha256": "6f1b0799fff71edce31862542d3eb7f02828030b9fc3cbd02c827067dee4e8f3",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.38236,
+    "seam": 0.059967,
+    "looping": true
+  },
+  {
+    "file": "eng_b789_reverse_v01.wav",
+    "sha256": "6d12465ce78941a678aad2f7bd87a94f8101878095a0f40409f65584384d2cb2",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.50816,
+    "seam": 0.13501,
+    "looping": true
+  },
+  {
+    "file": "eng_b78x_idle_v01.wav",
+    "sha256": "44a4f4c355011ce5675d180e824deb6f5616de80f9062dc6d4c93362fd9ceb75",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.39402,
+    "seam": 0.012695,
+    "looping": true
+  },
+  {
+    "file": "eng_b78x_power_v01.wav",
+    "sha256": "504c973ff0dc4b43ed17f5853beb474608d86427d8207c03d9165e5ec10159f6",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.39504,
+    "seam": 0.062988,
+    "looping": true
+  },
+  {
+    "file": "eng_b78x_reverse_v01.wav",
+    "sha256": "32a9d52ed66e28e98fcab1a1277c4c3f2258948a6df9f2442ab30f97f4d834fa",
+    "seconds": 8.0,
+    "rms_db": -18.0,
+    "peak": 0.46851,
+    "seam": 0.133698,
+    "looping": true
+  },
+  {
+    "file": "aircraft_tyre_roll_v01.wav",
+    "sha256": "78b32a91becd8004165f549de7f6b790d02ef050c81555315edf09339af93d27",
+    "seconds": 8.0,
+    "rms_db": -22.0,
+    "peak": 0.29528,
+    "seam": 0.022705,
+    "looping": true
+  },
+  {
+    "file": "aircraft_touchdown_v01.wav",
+    "sha256": "d545070ebcc4a56832c505fcda10c87d312bd5261f3be41e3a9e39a583887145",
+    "seconds": 0.95,
+    "rms_db": -21.92,
+    "peak": 0.46637,
+    "seam": 0.0,
+    "looping": false
+  }
+]

@@ -1,5 +1,20 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Codex — fleet aircraft sound pass (branch `codex/aircraft-audio`, ADR 0192).**
+  - All 13 flying catalogue types now have representative idle/power/reverse layers. Revs and engine energy
+    follow the existing fan/propeller and two-engine start state. Governed props build in load; jets spool in pitch.
+  - Each aircraft has spatial tyre contact/gear thump, speed-driven rolling noise and reverse after the type's
+    touchdown. Hidden/muted/distant sources stop, and restored or muted contacts cannot replay on unmute.
+    Authored/live sky traffic shares the same engine presentation. The parked Bell 412 remains silent.
+  - The new tyre source is CC0 and registered with retained source evidence; 41 derived clips and 13 profiles
+    regenerate with a byte check. Existing recordings stay unchanged. Simulation, saves and schedules are unchanged.
+  - **Checks:** generator and Unity asset audits pass. Final Unity/headless results and packaged evidence are
+    recorded in `docs/testing/audio-2026-09-30/README.md`.
+  - **NEXT:** build this tested branch, capture all 13 types with `scripts/audio/capture_aircraft_audio.sh`, run
+    the numerical listening audit and a normal game smoke check, then push the evidence and open the PR.
+    Bailey's listening judgement establishes perceived realism; these remain family-derived voices rather than
+    exact recordings of each engine variant. Other tools' storm-landing work is excluded in a separate worktree.
+
 - **2026-09-30 Cursor — far zoom stays where you look (ADR 0191).**
   Zoomed out, the horizon fade was a ring around the camera through the city.
   It now sits past the far clip. Scrolling in stays on the point under the

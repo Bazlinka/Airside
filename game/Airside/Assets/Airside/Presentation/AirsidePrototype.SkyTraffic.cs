@@ -100,6 +100,7 @@ namespace Airside.Presentation
                 PresentationDeltaTime, PresentationClock, null);
             SpinJetFans(view, parts.FanLeft, parts.FanRight, AircraftPhase.Circuit, null);
             SpinPropellers(view, parts.Propellers, AircraftPhase.Circuit, null);
+            UpdateAircraftSound(view, flight.Type, AircraftPhase.Circuit, flight.Callsign, 0.5f, EngineState.Running, 0f);
         }
 
         private static Color ColorForSkyAirline(string callsign)

@@ -3,7 +3,8 @@
 - **P0 capture soak outlives long review delays.** `scripts/capture-game.sh`
   raises `-airsideSoakMinutes` (and the shell timeout) when `--delay` would
   otherwise let soak COMPLETE quit before auto-landing / boarding stills
-  (~320–360s). No simulation or save changes.
+  (~320–360s). `--print-plan` + `scripts/test-capture-game-soak-window.sh`
+  lock this in headless CI. No simulation or save changes.
 
 - **P0 remaining runner stamps capture inventory.** After Mac stills land,
   `scripts/run-post-audit-p0-remaining.sh` appends PNG/log inventory to RESULTS

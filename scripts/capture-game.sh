@@ -3,12 +3,14 @@
 # person present.
 #
 #   scripts/capture-game.sh [--out PATH] [--delay SECONDS] [--follow REGISTRATION]
-#                           [--minutes N] [--timeout SECONDS] [-- EXTRA GAME ARGS...]
+#                           [--minutes N] [--timeout SECONDS] [--print-plan]
+#                           [-- EXTRA GAME ARGS...]
 #
 # Runs a soak session (a fresh "Soak Air" career), optionally follows one aircraft, writes a PNG
 # after --delay seconds and quits. Prints the PNG path on success.
 # When --delay outlives the default 3-minute soak, minutes/timeout are raised automatically
 # so soak COMPLETE cannot quit before the review shot.
+# --print-plan prints delay/minutes/timeout (and soak>delay) then exits without launching the app.
 #
 # Why this script exists: the Unity player on macOS waits for the display to show each frame.
 # With the display asleep (an unattended Mac, a long build) the first frame never appears and
@@ -24,6 +26,7 @@ delay=40
 follow=""
 minutes=3
 timeout=""
+print_plan=0
 extra=()
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -32,16 +35,12 @@ while [ $# -gt 0 ]; do
     --follow) follow="$2"; shift 2 ;;
     --minutes) minutes="$2"; shift 2 ;;
     --timeout) timeout="$2"; shift 2 ;;
+    --print-plan) print_plan=1; shift ;;
     --) shift; extra=("$@"); break ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
 done
 timeout="${timeout:-$((delay + 60))}"
-
-if [ ! -x "$app" ]; then
-  echo "No build at $app — run scripts/build-mac.sh first." >&2
-  exit 1
-fi
 
 # Soak COMPLETE calls QuitGame when -airsideSoakMinutes elapses. A review delay
 # longer than that (auto-landing / boarding stills at ~320–360s) never writes a PNG
@@ -49,7 +48,9 @@ fi
 need_minutes=$(( (delay + 120 + 59) / 60 ))
 raised_minutes=0
 if [ "$minutes" -lt "$need_minutes" ]; then
-  echo "Raising soak minutes $minutes → $need_minutes so soak outlives review delay ${delay}s" >&2
+  if [ "$print_plan" -eq 0 ]; then
+    echo "Raising soak minutes $minutes → $need_minutes so soak outlives review delay ${delay}s" >&2
+  fi
   minutes=$need_minutes
   raised_minutes=1
 fi
@@ -57,9 +58,25 @@ fi
 if [ "$raised_minutes" -eq 1 ]; then
   need_timeout=$((minutes * 60 + 60))
   if [ "$timeout" -lt "$need_timeout" ]; then
-    echo "Raising capture timeout ${timeout}s → ${need_timeout}s for ${minutes}m soak" >&2
+    if [ "$print_plan" -eq 0 ]; then
+      echo "Raising capture timeout ${timeout}s → ${need_timeout}s for ${minutes}m soak" >&2
+    fi
     timeout=$need_timeout
   fi
+fi
+
+if [ "$print_plan" -eq 1 ]; then
+  soak_seconds=$((minutes * 60))
+  ok=0
+  [ "$soak_seconds" -gt "$delay" ] && ok=1
+  printf 'delay=%s minutes=%s timeout=%s soak_seconds=%s soak_outlives_delay=%s\n' \
+    "$delay" "$minutes" "$timeout" "$soak_seconds" "$ok"
+  exit 0
+fi
+
+if [ ! -x "$app" ]; then
+  echo "No build at $app — run scripts/build-mac.sh first." >&2
+  exit 1
 fi
 
 mkdir -p "$(dirname "$out")"

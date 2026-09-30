@@ -25,5 +25,7 @@ jobs:
         run: python3 scripts/audit-ypad-map.py --max-percent 0.5
       - name: Harness list is current
         run: python3 scripts/update-harness.py --check
+      - name: Capture soak outlives long review delays
+        run: bash scripts/test-capture-game-soak-window.sh
       - name: Domain, Simulation and Unity-free Presentation tests
         run: dotnet test scripts/dotnet-harness/Harness.csproj --nologo

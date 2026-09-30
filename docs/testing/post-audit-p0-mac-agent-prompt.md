@@ -2,8 +2,8 @@
 
 Paste this into a Cursor agent started **on** Bailey's MacBook Pro
 (environment dropdown → **Bailey's MacBook Pro**, not a cloud VM).
-Checkout `cursor/p0-auto-landing-follow-709e` at tip `6965106c` or newer (or `main`
-after #491 merges) so night-sky yaw 270 + auto-landing upgrade +
+Checkout `cursor/p0-auto-landing-follow-709e` at tip `e1218095` or newer (or `main`
+after #491 merges) so night-sky yaw 270 + auto-landing upgrade + soak-window fix +
 `scripts/run-post-audit-p0-remaining.sh` are present. Canonical path: `~/Code/Airside`.
 
 A Linux cloud parent cannot pin this machine via `Task` / `env.machine` (children

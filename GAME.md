@@ -3,12 +3,13 @@
 - **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0200).**
   Full Domain / Simulation / Presentation / tests / product-plan audit. Headless **1129/1129**. Standing backlog:
   `docs/plans/post-audit-improvement-plan.md`. Cloud goal set to follow that order.
-  - **P0 (NEXT on Mac — blocked from this cloud run):** Mac workers are online but Task subagents stay on
-    Linux (`usePrivateWorker=false`). On the Mac in `~/Code/Airside`: checkout
-    `cursor/post-audit-improvement-plan-709e`, then `scripts/build-mac.sh` and
-    `scripts/review-post-audit-p0.sh`; fill keep/fix/revert in
-    `docs/testing/post-audit-p0-playtest.md` (or commit `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`).
-    Audio / freighter / storm-on-final / hangar tow / follow feel need human judgment.
+  - **P0 (NEXT — start on Mac worker UI, not cloud Task):** Task cannot pin My Machines. At
+    [cursor.com/agents](https://cursor.com/agents) pick **Bailey's MacBook Pro**, or shell in
+    `~/Code/Airside` on `cursor/post-audit-improvement-plan-709e`: `scripts/build-mac.sh` then
+    `scripts/review-post-audit-p0.sh`. Fill keep/fix/revert
+    (`docs/testing/post-audit-p0-playtest.md` Option A/B). Push RESULTS to
+    `cursor/post-audit-p0-results-709e` when done. Audio / freighter / storm-on-final / hangar tow /
+    follow feel need human judgment.
   - **P1:** Bailey sign-off on `docs/plans/visual-overhaul-plan.md`, then Phase 0 FPS baseline.
   - **P2:** Freight AI / cargo apron / freighter contracts **parked until P0** clears freighter+tyre rows.
   - **P3:** `AirsidePrototype` builders/statics; lock weather/large-fleet fps; retire legacy full-airport when ready.

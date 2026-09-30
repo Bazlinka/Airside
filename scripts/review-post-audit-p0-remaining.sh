@@ -67,6 +67,12 @@ capture follow-freighter \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
+# Hangar tow mid-move (ADR 0186–0188). Tow takes minutes; 90s usually catches outbound.
+CAPTURE_DELAY=90 CAPTURE_TIMEOUT=180 capture follow-hangar-tow \
+  -airsideReviewHangarCheck \
+  -airsideReviewWeather clear -airsideReviewTime 12:00 \
+  -airsideReviewFollowZoom 0.55
+
 echo "Remaining P0 stills written under $shots"
 echo "Copy keep PNGs into docs/testing/post-audit-p0-<date>/ and update RESULTS.md verdicts."
 echo "Manual listening/play rows still need a person — see docs/testing/post-audit-p0-manual-checklist.md"

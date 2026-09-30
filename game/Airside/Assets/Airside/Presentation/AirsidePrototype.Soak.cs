@@ -81,6 +81,7 @@ namespace Airside.Presentation
         //       follow a live 3D aircraft; auto-landing / auto-takeoff pick the best
         //       on-field arrival or departure that already has a field view
         //   -airsideReviewFreighter   refit a parked player aircraft to freighter and follow it
+        //   -airsideReviewHangarCheck start a hangar check on a parked player aircraft and follow the tow
         //   -airsideReviewFollowZoom 0.35   bounded close-up of the followed aircraft
         //   -airsideReviewTime HH:mm   override local lighting time only (not the sim clock)
         //   -airsideReviewWeather cloudy|overcast|rain|storm|...   deterministic visual QA
@@ -89,11 +90,13 @@ namespace Airside.Presentation
         private const string ReviewDelayFlag = "-airsideReviewDelay";
         private const string ReviewAircraftFlag = "-airsideReviewAircraft";
         private const string ReviewFreighterFlag = "-airsideReviewFreighter";
+        private const string ReviewHangarCheckFlag = "-airsideReviewHangarCheck";
         private float _reviewShotAt = -1f;
         private bool _reviewShotTaken;
         private bool _reviewFollowStarted;
         private string _reviewAircraftId;
         private bool _reviewFreighterHold;
+        private bool _reviewHangarHold;
 
         private void OpenReviewPanel(string[] args)
         {
@@ -175,6 +178,44 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(_reviewAircraftId))
                 _reviewAircraftId = best.Registration;
             Debug.Log($"{SoakLogTag} review freighter {best.Registration}");
+        }
+
+        /// <summary>
+        /// Start a hangar check on a parked player aircraft for ADR 0186–0188 tow stills.
+        /// Prefer a non-founding regional type so the founding Saab stays available for soak.
+        /// </summary>
+        private void TryApplyReviewHangarCheck()
+        {
+            if (!FleetMode || _operations?.PlayerAirline == null)
+                return;
+
+            FleetAircraft best = null;
+            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
+            {
+                if (aircraft.State != FleetState.AtStand || aircraft.Scheduled.HasValue
+                    || aircraft.IsFreighter || Maintenance.InCheck(aircraft, _clock.Now))
+                    continue;
+                if (best == null || (!aircraft.IsFoundingAircraft && best.IsFoundingAircraft))
+                    best = aircraft;
+            }
+
+            if (best == null)
+            {
+                Debug.LogWarning($"{SoakLogTag} review hangar check: no parked player aircraft");
+                return;
+            }
+
+            var result = _operations.StartCheck(best);
+            if (!result.Accepted)
+            {
+                Debug.LogWarning($"{SoakLogTag} review hangar check refused: {result.Reason}");
+                return;
+            }
+
+            _reviewHangarHold = true;
+            if (string.IsNullOrEmpty(_reviewAircraftId))
+                _reviewAircraftId = best.Registration;
+            Debug.Log($"{SoakLogTag} review hangar check {best.Registration}");
         }
 
         /// <summary>
@@ -293,6 +334,8 @@ namespace Airside.Presentation
                     ? args[followIndex + 1] : null;
                 if (Array.IndexOf(args, ReviewFreighterFlag) >= 0)
                     TryApplyReviewFreighter();
+                if (Array.IndexOf(args, ReviewHangarCheckFlag) >= 0)
+                    TryApplyReviewHangarCheck();
                 OpenReviewPanel(args);
             }
             if (_soakMainThreadRecorder.Valid && _soakRenderThreadRecorder.Valid)
@@ -333,8 +376,10 @@ namespace Airside.Presentation
 
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
             {
-                // Keep the review freighter parked so the still shows cargo paint, not pushback.
+                // Keep the review freighter / hangar subject free of soak auto-dispatch.
                 if (_reviewFreighterHold && aircraft.IsFreighter)
+                    continue;
+                if (_reviewHangarHold && aircraft.CheckUntil.HasValue)
                     continue;
                 if (aircraft.State == FleetState.AtStand && !aircraft.Scheduled.HasValue)
                 {

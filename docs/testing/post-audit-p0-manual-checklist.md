@@ -62,6 +62,8 @@ Packaged still helper: `follow-storm-landing` in `scripts/review-post-audit-p0-r
 ## 5. Hangar tow + boarding tape (ADR 0186–0188 / 0196)
 
 1. Send an aircraft to hangar check; watch tow in/out; engines quiet while towed.
+   Packaged still helper: `follow-hangar-tow` in `scripts/review-post-audit-p0-remaining.sh`
+   (`-airsideReviewHangarCheck`, ~90s delay). Still needs listening for quiet engines.
 2. Board/deplane a regional bay; temporary tape only while passengers walk.
 
 ## 6. Camera feel (ADR 0189 / 0191)

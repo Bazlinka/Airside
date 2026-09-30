@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **P0 inventory log scan uses grep.** Remaining / full P0 runners mark log
+  errors without ripgrep, so CI and Mac agents fail closed. Mac prompt adds Stage C
+  for hangar/boarding/landings and notes `cursor worker start` when workers are offline.
+  No simulation or save changes.
+
 - **P0 Stage B dirty allowlist CI-locked.** Shared `p0-remaining-check-dirty.sh`
   accepts only `docs/testing/post-audit-p0-*` dirt between stages; headless tests
   reject GAME.md dirtiness. Night-sky framing (11 km / pitch 8 / yaw 270) also

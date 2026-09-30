@@ -9,6 +9,10 @@ grep -q 'p0-remaining-check-dirty.sh' "$runner" || {
   echo "runner must call p0-remaining-check-dirty.sh" >&2
   exit 1
 }
+grep -q 'grep -Eq' "$runner" || {
+  echo "runner inventory must scan logs with grep -Eq (not rg-only)" >&2
+  exit 1
+}
 
 # Empty tree OK
 printf '' | bash "$check"

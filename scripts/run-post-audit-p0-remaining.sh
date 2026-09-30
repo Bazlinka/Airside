@@ -105,7 +105,8 @@ fi
     bytes="$(wc -c < "$png" | tr -d ' ')"
     logf="$capture_out/$base.log"
     if [ -f "$logf" ]; then
-      if command -v rg >/dev/null 2>&1 && rg -q 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL' "$logf"; then
+      # Prefer grep — ripgrep is often missing on CI / fresh Mac agents.
+      if grep -Eq 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL' "$logf"; then
         log_status="errors"
       else
         log_status="clean"

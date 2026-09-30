@@ -13,7 +13,8 @@ API CreateAgent also needs team **Enable Remote Control for Team** on
 (dashboard → Cloud Agents → Self-hosted Machines).
 
 Workers (when online): prefer displayName `~/Code/Airside @ Bailey's MacBook Pro`,
-`eligibleForSubagent: true`, idle.
+`eligibleForSubagent: true`, idle. If `list-self-hosted-workers` is empty, run
+`cursor worker start` on the Mac first, then pin via the agents UI.
 
 ---
 
@@ -33,6 +34,8 @@ Follow docs/testing/post-audit-p0-manual-checklist.md in order:
    Stage B (tyre rotation — ~17 min soak for TakingOff ~13 min; reuse Stage A player;
    OK if Stage A left RESULTS/PNGs dirty — do not commit between stages unless you want to):
    AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh
+   Stage C (rest of remaining stills — hangar/boarding/landings; same SKIP_*):
+   AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-hangar-tow,follow-boarding-tape,follow-human-ops-close,follow-jet-day,follow-jet-close,follow-storm-landing scripts/run-post-audit-p0-remaining.sh
 2. Verdict those PNGs in RESULTS.md (do not invent; if still unverified say why)
 3. Listen: overview audio, follow, touchdown chirp/reverse/rollout
 4. Freighter refit livery + jet tyres on rotation/flare (unblocks P2)

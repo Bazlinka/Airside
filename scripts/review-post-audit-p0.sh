@@ -113,12 +113,14 @@ CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-jet-close \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.35
 
-# Log sweep — same spirit as review-weather.sh
-if command -v rg >/dev/null 2>&1; then
-  if rg -n 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL' "$shots"/*.log 2>/dev/null; then
-    echo "P0 review found an error; inspect the logs above." >&2
-    exit 1
-  fi
+# Log sweep — grep so CI / Mac agents without ripgrep still fail closed.
+shopt -s nullglob
+err_logs=("$shots"/*.log)
+shopt -u nullglob
+if [ "${#err_logs[@]}" -gt 0 ] && grep -En 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL' "${err_logs[@]}" >/dev/null; then
+  grep -En 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL' "${err_logs[@]}" || true
+  echo "P0 review found an error; inspect the logs above." >&2
+  exit 1
 fi
 
 results="$shots/RESULTS.md"
@@ -155,7 +157,7 @@ fi
     bytes="$(wc -c < "$png" | tr -d ' ')"
     logf="$shots/$base.log"
     if [ -f "$logf" ]; then
-      if command -v rg >/dev/null 2>&1 && rg -q 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL' "$logf"; then
+      if grep -Eq 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL' "$logf"; then
         log_status="errors"
       else
         log_status="clean"

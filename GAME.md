@@ -9,7 +9,7 @@
   `cursor worker start` then UI-pin **Bailey's MacBook Pro** (`~/Code/Airside` preferred).
   Cloud `Task` cannot pin My Machines. Paste: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
   Remaining RESULTS + manual rows unverified (21 unverified).
-  **NEXT:** start Mac worker → UI-pin → Stage A then B
+  **NEXT:** start Mac worker → UI-pin → Stage A then B then C
   `AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh`
   then `AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-jet-takeoff …`
   (~17 min, no rebuild; dirty RESULTS/PNGs from Stage A are OK). Then full remaining /

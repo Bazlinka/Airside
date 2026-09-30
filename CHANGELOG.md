@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **P0 handoff tip SHA → `b201556a`.** Confirms #491 tip, 21 unverified
+  RESULTS, nose-down night-sky still, idle Mac workers, and re-passed Stage
+  A–C script locks. No simulation or save changes.
 - **P0 CODE_EVIDENCE maps tip #491 locks.** Night-sky yaw/window, packaged
   follow delays, multi-shot schedule, boarding 320/323s, and Stage A–C script
   locks are listed; Mac eyes/ears still required. No simulation or save changes.

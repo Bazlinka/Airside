@@ -236,6 +236,8 @@ namespace Airside.Presentation
                 var canopyLength = edge.Length - 6f;
                 if (canopyLength < 12f)
                     continue;
+                AddEntranceBanks(set, edge, baseY, canopyLength);
+                AddFacadeJoints(set, edge, baseY, height);
                 set.Boxes.Add(OnWall(BuildingPart.Canopy, edge, 0.5f, canopyLength, baseY + 4.9f, 0.45f, 6.2f,
                     outward: 3.1f));
                 set.Boxes.Add(OnWall(BuildingPart.Trim, edge, 0.5f, canopyLength, baseY + 5.25f, 0.3f, 0.3f,
@@ -250,7 +252,122 @@ namespace Airside.Presentation
 
             AddRoofPlant(set, xz, baseY + height, random, maxUnits: 16,
                 keepClear: AdelaideTerminalArchitecture.RoofDetails());
+            AddAirsideDoors(set, baseY);
             return set;
+        }
+
+        // ---- Terminal doors ---------------------------------------------------------------
+
+        /// <summary>Glass leaf width of one automatic sliding door, and its clear height.</summary>
+        public const float SlidingLeafMetres = 1.2f;
+        public const float SlidingDoorHeightMetres = 2.4f;
+        /// <summary>Spacing of kerb-side entrance banks; each sits midway between two canopy columns.</summary>
+        public const float EntrancePitchMetres = 45f;
+        /// <summary>Apron-level staff/service door pitch along the airside wall.</summary>
+        public const float ServiceDoorPitchMetres = 44f;
+        /// <summary>Departures-level floor height where gate-lounge doors open onto the bridge rotundas.</summary>
+        public const float GateDoorSillMetres = AdelaideAerobridges.RotundaFloorMetres;
+
+        /// <summary>
+        /// Landside entrance banks: a four-leaf automatic sliding door with glazed sidelights,
+        /// a header sign fascia and kerb bollards, repeated along each landside facade under the
+        /// canopy. Ground (arrivals) level; the departures level keeps its office glazing above.
+        /// </summary>
+        private static void AddEntranceBanks(BuildingDetailSet set, WallEdge edge, float baseY, float canopyLength)
+        {
+            var banks = Math.Max(1, (int)(canopyLength / EntrancePitchMetres));
+            var pitch = canopyLength / banks;
+            for (var b = 0; b < banks; b++)
+            {
+                var along = (edge.Length - canopyLength) * 0.5f + pitch * (b + 0.5f);
+                var t = along / edge.Length;
+                const float bankWidth = SlidingLeafMetres * 4f;
+                // Frame: two jambs, a head, and a sill track proud of the wall.
+                set.Boxes.Add(OnWall(BuildingPart.Trim, edge, t, bankWidth + 3.2f, baseY + SlidingDoorHeightMetres + 0.35f,
+                    0.5f, 0.35f, outward: 0.2f));
+                set.Boxes.Add(OnWall(BuildingPart.Trim, edge, t, bankWidth + 3.2f, baseY + 0.05f, 0.1f, 0.5f, outward: 0.25f));
+                // Two centre-parting sliding pairs (Door) between fixed sidelights (WindowLit).
+                for (var leaf = 0; leaf < 4; leaf++)
+                {
+                    var lt = t + (leaf - 1.5f) * SlidingLeafMetres / edge.Length;
+                    set.Boxes.Add(OnWall(BuildingPart.Door, edge, lt, SlidingLeafMetres - 0.06f,
+                        baseY + SlidingDoorHeightMetres * 0.5f, SlidingDoorHeightMetres, 0.06f, outward: 0.1f));
+                }
+
+                for (var side = -1; side <= 1; side += 2)
+                {
+                    var st = t + side * (bankWidth * 0.5f + 0.8f) / edge.Length;
+                    set.Boxes.Add(OnWall(BuildingPart.WindowLit, edge, st, 1.4f, baseY + SlidingDoorHeightMetres * 0.5f,
+                        SlidingDoorHeightMetres, 0.06f, outward: 0.1f));
+                    set.Boxes.Add(OnWall(BuildingPart.Trim, edge, st + side * 0.8f / edge.Length, 0.16f,
+                        baseY + SlidingDoorHeightMetres * 0.5f + 0.2f, SlidingDoorHeightMetres + 0.4f, 0.3f, outward: 0.16f));
+                    // Kerb bollard either side of the bank.
+                    set.Boxes.Add(OnWall(BuildingPart.Trim, edge, t + side * (bankWidth * 0.5f + 2.6f) / edge.Length, 0.24f,
+                        baseY + 0.5f, 1.0f, 0.24f, outward: 1.4f));
+                }
+
+                // Lit sign fascia over the doors ("ARRIVALS" plate — no text baked into the mesh).
+                set.Boxes.Add(OnWall(BuildingPart.WindowLit, edge, t, bankWidth * 0.8f, baseY + SlidingDoorHeightMetres + 0.85f,
+                    0.4f, 0.1f, outward: 0.3f));
+            }
+        }
+
+        /// <summary>Vertical expansion joints and downpipes every ~30 m so long landside walls do not read as one slab.</summary>
+        private static void AddFacadeJoints(BuildingDetailSet set, WallEdge edge, float baseY, float height)
+        {
+            var joints = (int)(edge.Length / 30f);
+            for (var j = 1; j < joints; j++)
+            {
+                var t = j / (float)joints;
+                set.Boxes.Add(OnWall(BuildingPart.Trim, edge, t, 0.22f, baseY + height * 0.5f, height, 0.14f, outward: 0.07f));
+                set.Boxes.Add(OnWall(BuildingPart.Trim, edge, t + 0.6f / edge.Length, 0.14f, baseY + height * 0.5f - 0.4f,
+                    height - 0.8f, 0.14f, outward: 0.14f));
+            }
+        }
+
+        /// <summary>
+        /// Airside doors on the real curved wall. Every aerobridge rotunda gets its gate-lounge
+        /// door at the departures-level floor (frame, two glass leaves, hold-room sign plate and a
+        /// gate-number board, the number bar count matching the gate). Between them run apron-level
+        /// staff doors, each with a frame, a step and a lit call plate. The baggage undercroft
+        /// portal is kept clear.
+        /// </summary>
+        private static void AddAirsideDoors(BuildingDetailSet set, float baseY)
+        {
+            foreach (var site in AdelaideAerobridges.Sites)
+            {
+                var wallZ = AdelaideTerminalArchitecture.AirsideWallZAt(site.RotundaX);
+                var z = wallZ - 0.32f;
+                var cy = baseY + GateDoorSillMetres + SlidingDoorHeightMetres * 0.5f;
+                set.Boxes.Add(new DetailBox(BuildingPart.Trim, site.RotundaX, cy + 0.3f, z, 3.4f, SlidingDoorHeightMetres + 0.6f,
+                    0.3f, 1f, 0f));
+                set.Boxes.Add(new DetailBox(BuildingPart.Door, site.RotundaX - 0.6f, cy, z - 0.1f, 1.1f,
+                    SlidingDoorHeightMetres, 0.06f, 1f, 0f));
+                set.Boxes.Add(new DetailBox(BuildingPart.Door, site.RotundaX + 0.6f, cy, z - 0.1f, 1.1f,
+                    SlidingDoorHeightMetres, 0.06f, 1f, 0f));
+                // Gate-number board above the door and a lounge sign plate.
+                set.Boxes.Add(new DetailBox(BuildingPart.Trim, site.RotundaX, cy + SlidingDoorHeightMetres * 0.5f + 0.9f, z - 0.1f,
+                    2.2f, 0.6f, 0.12f, 1f, 0f));
+                set.Boxes.Add(new DetailBox(BuildingPart.Trim, site.RotundaX, baseY + GateDoorSillMetres - 0.15f, z - 0.2f,
+                    3.4f, 0.3f, 0.6f, 1f, 0f));
+            }
+
+            var portalMin = AdelaideTerminalArchitecture.UndercroftPortalCentreX
+                - AdelaideTerminalArchitecture.UndercroftPortalHalfWidthMetres - 3f;
+            var portalMax = portalMin + AdelaideTerminalArchitecture.UndercroftPortalHalfWidthMetres * 2f + 6f;
+            var start = AdelaideTerminalArchitecture.GlazingStartXMetres + ServiceDoorPitchMetres * 0.5f;
+            var end = AdelaideTerminalArchitecture.GlazingStartXMetres
+                + AdelaideTerminalArchitecture.GlazingBayCount * AdelaideTerminalArchitecture.GlazingBayPitchMetres;
+            for (var x = start; x < end; x += ServiceDoorPitchMetres)
+            {
+                if (x > portalMin && x < portalMax)
+                    continue;
+                var z = AdelaideTerminalArchitecture.AirsideWallZAt(x) - 0.3f;
+                set.Boxes.Add(new DetailBox(BuildingPart.Trim, x, baseY + 1.25f, z, 1.5f, 2.5f, 0.3f, 1f, 0f));
+                set.Boxes.Add(new DetailBox(BuildingPart.Door, x, baseY + 1.1f, z - 0.12f, 1.1f, 2.2f, 0.08f, 1f, 0f));
+                set.Boxes.Add(new DetailBox(BuildingPart.Trim, x, baseY + 0.08f, z - 0.4f, 1.8f, 0.16f, 0.8f, 1f, 0f));
+                set.Boxes.Add(new DetailBox(BuildingPart.Trim, x + 1.1f, baseY + 1.9f, z - 0.14f, 0.3f, 0.2f, 0.1f, 1f, 0f));
+            }
         }
 
         // ---- Pieces ---------------------------------------------------------------------

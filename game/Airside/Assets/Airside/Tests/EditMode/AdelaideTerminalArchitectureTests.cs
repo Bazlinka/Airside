@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Airside.Presentation;
 using Airside.Simulation;
@@ -118,6 +119,50 @@ namespace Airside.Tests
             Assert.That(pylons.All(p => p.Height > AdelaideTerminalArchitecture.ShellHeightMetres), Is.True);
             foreach (var pylon in pylons)
                 Assert.That(pylon.Z, Is.EqualTo(AdelaideTerminalArchitecture.AirsideWallZAt(pylon.X) - 0.38f).Within(0.01f));
+        }
+
+        [Test]
+        public void TerminalDoors_GateLoungeDoorsMatchEveryAerobridgeAndStaffDoorsAvoidThePortal()
+        {
+            var terminal = AdelaideLayout.Terminals.First(t => t.Name == "Domestic & International Terminal");
+            var set = BuildingDetail.ForTerminal(terminal.Name, terminal.Xz, 0f,
+                AdelaideTerminalArchitecture.ShellHeightMetres, rfds: false);
+            var doors = set.Boxes.Where(b => b.Part == BuildingPart.Door).ToList();
+
+            foreach (var site in AdelaideAerobridges.Sites)
+                Assert.That(doors.Count(d => Math.Abs(d.X - site.RotundaX) < 1f
+                                             && Math.Abs(d.Bottom - BuildingDetail.GateDoorSillMetres) < 0.01f),
+                    Is.EqualTo(2), $"{site.Gate.Value} gate-lounge door leaves");
+
+            var portalX = AdelaideTerminalArchitecture.UndercroftPortalCentreX;
+            var apron = doors.Where(d => d.Bottom < 0.5f && d.Z < AdelaideTerminalArchitecture.AirsideWallZAt(d.X)).ToList();
+            Assert.That(apron, Is.Not.Empty);
+            Assert.That(apron.All(d => Math.Abs(d.X - portalX) > AdelaideTerminalArchitecture.UndercroftPortalHalfWidthMetres),
+                Is.True, "staff doors keep clear of the baggage portal");
+        }
+
+        [Test]
+        public void TerminalDoors_LandsideEntranceBanksSitOnLandsideWallsOnly()
+        {
+            var terminal = AdelaideLayout.Terminals.First(t => t.Name == "Domestic & International Terminal");
+            var set = BuildingDetail.ForTerminal(terminal.Name, terminal.Xz, 0f,
+                AdelaideTerminalArchitecture.ShellHeightMetres, rfds: false);
+            var landside = set.Boxes.Where(b => b.Part == BuildingPart.Door && b.Z > 440f).ToList();
+
+            Assert.That(landside.Count, Is.GreaterThanOrEqualTo(4), "at least one four-leaf bank");
+            Assert.That(landside.Count % 4, Is.EqualTo(0));
+            Assert.That(landside.All(d => Math.Abs(d.Height - BuildingDetail.SlidingDoorHeightMetres) < 0.01f
+                                          && d.Length < BuildingDetail.SlidingLeafMetres), Is.True);
+        }
+
+        [Test]
+        public void TerminalDoors_AreDeterministic()
+        {
+            var terminal = AdelaideLayout.Terminals.First(t => t.Name == "Domestic & International Terminal");
+            var a = BuildingDetail.ForTerminal(terminal.Name, terminal.Xz, 0f, 14f, rfds: false);
+            var b = BuildingDetail.ForTerminal(terminal.Name, terminal.Xz, 0f, 14f, rfds: false);
+            Assert.That(a.Boxes.Count, Is.EqualTo(b.Boxes.Count));
+            Assert.That(a.Boxes.Count(x => x.Part == BuildingPart.Door), Is.EqualTo(b.Boxes.Count(x => x.Part == BuildingPart.Door)));
         }
 
         [Test]

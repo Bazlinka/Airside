@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Post-audit P0 captures.** Fourteen packaged screenshots of the current Adelaide field (overview, far land,
+  night, terminal, hangars, freight shed, fire station, storm, fog, follow) are in
+  `docs/testing/post-audit-p0-2026-09-30/`, with keep / unverified notes. No simulation change. Manual listening
+  and play checks are still open, so P0 is not signed off.
+
 - **Airside buildings look finished.** Freight sheds and the fire station get a shallow shaped roof (instead of a flat
   box with plant), every support/freight/fire building gets a base plinth, and doors get lit wall packs so they read at
   night; freight docks gain bumpers and bollards. Presentation only. ADR 0199.

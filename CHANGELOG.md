@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **P0 tip `67050b65` CI CLEAN (#492).** Headless green with `ReviewFreighterPick`
+  + tip retarget after #491 merge. Mac Stage A / `CURSOR_API_KEY` still required.
+  No simulation or save changes.
 - **P0 Stage A freighter pick locked on soak seed.** `ReviewFreighterPick` (Simulation)
   prefers a parked unbooked jet for `-airsideReviewFreighter`; EditMode proves
   seed `20260913` can refit at T+0 and stay AtStand through the 28s still.

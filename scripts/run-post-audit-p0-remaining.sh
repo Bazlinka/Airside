@@ -67,7 +67,7 @@ capture_out="${AIRSIDE_P0_OUT:-$root/work/captures/post-audit-p0-remaining-$stam
 docs_dir="$root/docs/testing/post-audit-p0-2026-09-30"
 mkdir -p "$capture_out" "$docs_dir"
 
-echo "==> Remaining P0 captures (display must stay awake; ~35+ min for full A→B→C)"
+echo "==> Remaining P0 captures (display must stay awake; ~45+ min for full A→B→C)"
 AIRSIDE_P0_OUT="$capture_out" bash "$root/scripts/review-post-audit-p0-remaining.sh"
 
 echo "==> Copying new PNGs into $docs_dir (overwrites prior stills of the same name)"
@@ -96,6 +96,7 @@ if grep -q '^<!-- AIRSIDE_P0_REMAINING_INVENTORY_BEGIN -->$' "$results"; then
   mv "$tmp" "$results"
 fi
 
+follow_fail=0
 {
   echo
   echo "<!-- AIRSIDE_P0_REMAINING_INVENTORY_BEGIN -->"
@@ -117,11 +118,35 @@ fi
     logf="$capture_out/$base.log"
     if [ -f "$logf" ]; then
       # Prefer grep — ripgrep is often missing on CI / fresh Mac agents.
-      if grep -Eq 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL' "$logf"; then
+      if grep -Eq 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL|review shot aborted' "$logf"; then
         log_status="errors"
       else
         log_status="clean"
       fi
+      # Auto follow stills must log a successful follow pick (fail closed vs blind overview).
+      # Multi-shot batches share capture-game's first --shot logFile, so scan siblings too.
+      case "$base" in
+        follow-jet-takeoff)
+          if ! grep -Eq '\[Airside soak\] following auto-takeoff ' "$logf"; then
+            log_status="errors"
+            follow_fail=1
+          fi
+          ;;
+        follow-jet-day|follow-jet-close|follow-storm-landing)
+          found_follow=0
+          for alt in follow-jet-day follow-jet-close follow-storm-landing; do
+            if [ -f "$capture_out/$alt.log" ] \
+              && grep -Eq '\[Airside soak\] following auto-landing ' "$capture_out/$alt.log"; then
+              found_follow=1
+              break
+            fi
+          done
+          if [ "$found_follow" -eq 0 ]; then
+            log_status="errors"
+            follow_fail=1
+          fi
+          ;;
+      esac
     else
       log_status="missing"
     fi
@@ -132,6 +157,11 @@ fi
   echo "PNG presence / log clean is **not** keep. Fill Verdict columns by eye/ear."
   echo "<!-- AIRSIDE_P0_REMAINING_INVENTORY_END -->"
 } >> "$results"
+
+if [ "$follow_fail" -ne 0 ]; then
+  echo "Auto-landing/auto-takeoff still(s) missing 'following auto-*' log line — treat as failed capture." >&2
+  exit 1
+fi
 
 echo
 echo "Copied $copied PNG(s) into $docs_dir"

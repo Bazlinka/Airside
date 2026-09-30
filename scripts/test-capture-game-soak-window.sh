@@ -24,8 +24,8 @@ expect_plan 45 120 3 120
 # Hangar / boarding / auto-landing / auto-takeoff must raise soak past the review delay.
 expect_plan 90 180 4 300
 expect_plan 320 420 8 540
-# Jet Landing (~780s) and TakingOff mid-roll (~830s) — remaining.sh packaged delays.
+# Jet Landing (~780s) and jet TakingOff mid-roll (~1330s) — remaining.sh packaged delays.
 expect_plan 780 960 15 960
-expect_plan 830 980 16 1020
+expect_plan 1330 1500 25 1560
 
 echo "capture-game soak window checks passed"

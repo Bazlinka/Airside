@@ -20,7 +20,7 @@ cd ~/Code/Airside
 # Prefer Stage A → B → C (dirty RESULTS/PNGs between stages are OK):
 # Stage A (minutes — night-sky + freighter; unblocks P2 freighter evidence):
 AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh
-# Stage B (tyre rotation — ~16 min soak; TakingOff ~830s mid-roll; reuse Stage A player):
+# Stage B (jet tyre rotation — ~25 min soak; jet TakingOff ~1330s mid-roll; reuse Stage A player):
 AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh
 # Stage C (hangar / boarding / landings):
 AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-hangar-tow,follow-boarding-tape,follow-human-ops-close,follow-jet-day,follow-jet-close,follow-storm-landing scripts/run-post-audit-p0-remaining.sh
@@ -33,7 +33,7 @@ Or single night-sky shot:
 ```bash
 scripts/capture-game.sh \
   --out docs/testing/post-audit-p0-2026-09-30/overview-night-sky-traffic.png \
-  --delay 35 --timeout 120 -- \
+  --delay 45 --timeout 300 -- \
   -airsideReviewView overview \
   -airsideReviewWeather clear -airsideReviewTime 23:30 \
   -airsideOverviewDistance 11000 -airsideOverviewPitch 8 -airsideOverviewYaw 270
@@ -59,9 +59,10 @@ Judge: do overflights **cruise** (not crawl)? Is a fleet inbound drawn once on f
    main tyres on the runway.
    Packaged still helpers in `scripts/review-post-audit-p0-remaining.sh`:
    `-airsideReviewAircraft auto-landing` (batched ~780/783/786s day/close/storm — 360s
-   is turboprop) and `auto-takeoff` (~830s mid TakingOff; 900s overshoots to
-   HoldingShort on soak seed 20260913). Landing/boarding batches share one soak.
-   Soak is live wall-clock; opening AI inbound #1 reaches the circuit at ~3 min.
+   is turboprop) and `auto-takeoff` (~1330s mid *jet* TakingOff; 830s is turboprop
+   TakingOff; 900s overshoots the prop roll to HoldingShort on soak seed 20260913).
+   Landing/boarding batches share one soak. Soak is live wall-clock; opening AI
+   inbound #1 reaches the circuit at ~3 min.
 
 ## 4. Storm final (ADR 0190)
 

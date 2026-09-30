@@ -2,7 +2,7 @@
 # Re-capture only the stills that still block P0 sign-off after #490:
 #   - overview-night-sky-traffic (framing: 11 km / pitch 8 / yaw 270 — early-soak corridor)
 #   - follow-jet-day / follow-jet-close / follow-storm-landing (one soak, ~780–786s)
-#   - follow-jet-takeoff (auto-takeoff, ~830s live — TakingOff tyre roll)
+#   - follow-jet-takeoff (auto-takeoff, ~1330s live — jet TakingOff tyre roll)
 #   - follow-freighter / follow-hangar-tow
 #   - follow-boarding-tape / follow-human-ops-close (one soak, ~320–323s)
 #
@@ -132,10 +132,11 @@ CAPTURE_DELAY=90 CAPTURE_TIMEOUT=300 capture follow-hangar-tow \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
-# TakingOff (lineup/roll — tyre rotation). Mid first TakingOff window on soak seed
-# 20260913 (~790–880s). 900s overshoots into HoldingShort — locked by EditMode.
+# Jet TakingOff (lineup/roll — tyre rotation). Mid first *jet* TakingOff window on
+# soak seed 20260913 (VH-8IB B38M ~1280–1385s). 830s is turboprop TakingOff; 900s
+# overshot the prop roll into HoldingShort — locked by EditMode.
 FOLLOW=auto-takeoff
-CAPTURE_DELAY=830 CAPTURE_TIMEOUT=980 capture follow-jet-takeoff \
+CAPTURE_DELAY=1330 CAPTURE_TIMEOUT=1500 capture follow-jet-takeoff \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.45
 

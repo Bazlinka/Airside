@@ -35,7 +35,7 @@ Do not invent RESULTS keep/fix/revert.
 2. git fetch origin && git checkout cursor/p0-auto-landing-follow-709e
 3. git pull --ff-only origin cursor/p0-auto-landing-follow-709e
 4. Keep the display awake. Run: scripts/run-post-audit-p0-stages.sh
-   (caffeinate wraps A→B→C; rebuild required for multi-shot; ~35+ min)
+   (caffeinate wraps A→B→C; rebuild required for multi-shot; ~45+ min)
 5. After PNGs land under docs/testing/post-audit-p0-2026-09-30/, fill Verdict
    columns in RESULTS.md by eye/ear only. Leave unverified if unsure.
 6. Do not start freight AI / P2–P4. Do not mark the cloud goal complete.

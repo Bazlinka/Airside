@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **P0 jet takeoff delay + fail-closed follow.** Packaged `follow-jet-takeoff`
+  waits **1330s** (mid first jet TakingOff on soak seed 20260913; 830s was
+  turboprop). Auto-landing/takeoff stills abort without a follow pick (no blind
+  overview PNG). Inventory hard-fails missing `following auto-*` log lines.
+  Checklist night-sky delay matches packaged 45s. No simulation or save changes.
 - **P0 tip `cfa1fc4b` CI CLEAN.** Headless green on #491 with Stage A Finder
   shortcut, Mac CreateAgent launcher lock, and night-sky frustum test. Mac
   eyes/ears still required. No simulation or save changes.

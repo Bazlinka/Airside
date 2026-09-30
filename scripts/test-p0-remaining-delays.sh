@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Headless guard: packaged remaining P0 still delays match the locked capture windows
-# (TakingOff ~830s, jet Landing ~780s batch, boarding mid ~320s batch, hangar mid-tow ~90s,
+# (jet TakingOff ~1330s, jet Landing ~780s batch, boarding mid ~320s batch, hangar mid-tow ~90s,
 # night-sky ~45s) and capture-game soak always outlives each delay.
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." && pwd)"
@@ -34,7 +34,7 @@ require_shot_spec() {
 
 require_delay overview-night-sky-traffic 45
 require_delay follow-hangar-tow 90
-require_delay follow-jet-takeoff 830
+require_delay follow-jet-takeoff 1330
 require_shot_spec follow-jet-day 780
 require_shot_spec follow-jet-close 783
 require_shot_spec follow-storm-landing 786
@@ -64,7 +64,7 @@ grep -Eq 'CAPTURE_TIMEOUT=240 capture follow-freighter' "$remaining" || {
 }
 echo "ok Stage A cold-boot timeouts"
 
-for delay in 45 90 320 780 830; do
+for delay in 45 90 320 780 1330; do
   plan="$(bash "$cap" --delay "$delay" --timeout $((delay + 180)) --print-plan)"
   echo "plan $plan"
   [[ "$plan" == *"delay=${delay}"* ]] || { echo "plan delay must be $delay: $plan" >&2; exit 1; }

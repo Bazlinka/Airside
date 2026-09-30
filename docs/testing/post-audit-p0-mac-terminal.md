@@ -12,7 +12,7 @@ git fetch origin
 git checkout cursor/p0-auto-landing-follow-709e
 git pull --ff-only origin cursor/p0-auto-landing-follow-709e
 
-# One paste — Stage A → B → C (~35+ min with multi-shot landing/boarding batches;
+# One paste — Stage A → B → C (~45+ min with jet takeoff ~1330s + landing/boarding batches;
 # caffeinate -d -i wraps the whole run so builds/gaps cannot sleep the display;
 # rebuild so multi-shot review lands; macOS notification when finished)
 scripts/run-post-audit-p0-stages.sh
@@ -22,7 +22,7 @@ scripts/run-post-audit-p0-stages.sh
 # Or run stages separately:
 # Stage A (minutes — night-sky + freighter; unblocks P2 freighter evidence)
 # AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh
-# Stage B (~16 min soak — TakingOff ~830s mid-roll; reuse player; dirty RESULTS OK)
+# Stage B (~25 min soak — jet TakingOff ~1330s mid-roll; reuse player; dirty RESULTS OK)
 # AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh
 # Stage C (hangar / boarding / landings)
 # AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-hangar-tow,follow-boarding-tape,follow-human-ops-close,follow-jet-day,follow-jet-close,follow-storm-landing scripts/run-post-audit-p0-remaining.sh

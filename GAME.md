@@ -1,19 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **#491** — headless CI green, MERGEABLE. One-paste
-  `scripts/run-post-audit-p0-stages.sh` (caffeinate -d -i for the full A→B→C
-  run + done notification) or Finder `scripts/run-post-audit-p0-stages.command`.
-  Short Stage A only (minutes — night-sky + freighter):
-  `scripts/run-post-audit-p0-stage-a.command`. Delays: takeoff **830s**;
-  landing **780/783/786s**; boarding **320/323s**. Multi-shot + player
-  preflight. Cloud Task cannot claim My Machines — Terminal/Finder or
-  `scripts/launch-p0-mac-agent.sh` + API key:
-  `docs/testing/post-audit-p0-mac-terminal.md`.   21 RESULTS unverified;
-  night-sky PNG still nose-down (no cruise); re-run frustum locked in EditMode.
-  Workers ONLINE idle; no new remaining PNGs.
-  **NEXT:** Mac Stage A (or full A→B→C) → fill RESULTS by eye/ear. Freight AI
-  parked. Do not invent RESULTS.
+  Tip **`3bd6311c`** — #491 headless CI green, MERGEABLE/CLEAN (`cfa1fc4b`
+  suite). Finder Stage A
+  (minutes): `scripts/run-post-audit-p0-stage-a.command`. Full A→B→C (~35+ min,
+  caffeinate): `scripts/run-post-audit-p0-stages.sh` / `.command`. Optional API
+  pin: `CURSOR_API_KEY` + `scripts/launch-p0-mac-agent.sh`. Cloud Task /
+  computerUse cannot claim My Machines from Linux. 21 RESULTS unverified; no
+  new remaining PNGs; night-sky re-run frustum EditMode-locked.
+  **NEXT:** Mac Stage A → fill night-sky + freighter by eye; then B/C + listening
+  rows. Freight AI parked. Do not invent RESULTS.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

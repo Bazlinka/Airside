@@ -1,18 +1,16 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0201).**
+- **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0202).**
   Full Domain / Simulation / Presentation / tests / product-plan audit. Standing backlog:
   `docs/plans/post-audit-improvement-plan.md`. Cloud goal set to follow that order. Phase 0 bookmarks (ADR 0200)
   are merged onto this branch for shared Mac captures. Headless after merge: **1136/1136**.
-  - **P0 (NEXT — start on Mac worker UI, not cloud Task):** Task cannot pin My Machines. At
-    [cursor.com/agents](https://cursor.com/agents) pick **Bailey's MacBook Pro**, or shell in
-    `~/Code/Airside` on `cursor/post-audit-improvement-plan-709e`: `scripts/build-mac.sh` then
-    `scripts/review-post-audit-p0.sh`. Fill keep/fix/revert
-    (`docs/testing/post-audit-p0-playtest.md` Option A/B). Push RESULTS to
-    `cursor/post-audit-p0-results-709e` when done. Audio / freighter / storm-on-final / hangar tow /
-    follow feel need human judgment.
-  - **P1:** Bailey sign-off on `docs/plans/visual-overhaul-plan.md`. Phase 0 bookmarks +
-    `scripts/capture-visual-baseline.sh` on this branch (ADR 0200); still needs Mac metrics PNGs.
+  This cloud run is **iOS-started** and cannot pin My Machines via Task.
+  - **P0 (NEXT — Mac shell or Mac-picked agent):** On the Mac in `~/Documents/Codex/Airside` (worker online)
+    or `~/Code/Airside`: checkout this branch, `scripts/build-mac.sh`, `scripts/review-post-audit-p0.sh`,
+    fill keep/fix/revert. Or open [cursor.com/agents](https://cursor.com/agents) on a desktop and pick
+    **Bailey's MacBook Pro** as the environment. Push RESULTS to `cursor/post-audit-p0-results-709e`.
+  - **P1:** Bailey sign-off on visual overhaul. Phase 0 bookmarks on this branch; Mac metrics still owed.
+    Note: PR #486 already started Phase 1 oil stains (ADR 0201) ahead of P0 — do not treat that as P0 done.
   - **P2:** Freight AI / cargo apron / freighter contracts **parked until P0** clears freighter+tyre rows.
   - **P3:** `AirsidePrototype` builders/statics; lock weather/large-fleet fps; retire legacy full-airport when ready.
   - **P4 only then:** second airport, companion, denser world. Do not start Companion/CloudKit or wages/fuel/loans yet.

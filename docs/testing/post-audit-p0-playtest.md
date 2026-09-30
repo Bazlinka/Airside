@@ -22,22 +22,23 @@ scripts/run-post-audit-p0.sh   # build + capture matrix + RESULTS inventory stam
 
 ### Option B — Cursor agent *on* the Mac worker (recommended)
 
-Cloud `Task` subagents from a Linux cloud run **cannot** pin My Machines
-(schema only allows `same_machine` | `new_cloud_vm`). Placement that works:
+Cloud `Task` / `env.machine` from a Linux cloud run **cannot** pin My Machines
+(children stay on Linux with `privateWorkerId: null`). Placement that works:
 
-- UI: environment dropdown → **Bailey's MacBook Pro**
-- `CreateAgent` with `machine: { "type": "self_hosted_worker", "worker_id": "<id>" }`
-  (team **Remote Control** must be on; list ids via `list-self-hosted-workers`)
-- API v1: `env: { "type": "machine", "name": "Bailey's MacBook Pro" }`
+- UI: environment dropdown → **Bailey's MacBook Pro** (recommended)
+- API v1 CreateAgent: `env: { "type": "machine", "name": "Bailey's MacBook Pro" }`
+  — requires team toggle **Enable Remote Control for Team**
+  (dashboard → Cloud Agents → Self-hosted Machines). Without it, create fails or
+  ignores the machine target.
+- List workers: `list-self-hosted-workers` (prefer `~/Code/Airside @ …`)
 
 One-paste prompt: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
 
-1. Keep `agent worker start --name "Bailey's MacBook Pro"` running in `~/Code/Airside`
-   (or the Codex checkout).
+1. Keep `agent worker start --name "Bailey's MacBook Pro"` running in `~/Code/Airside`.
 2. Open [cursor.com/agents](https://cursor.com/agents) → environment dropdown →
    **Bailey's MacBook Pro** (not the default cloud VM).
-3. Paste the prompt from `post-audit-p0-mac-agent-prompt.md` — build,
-   `scripts/review-post-audit-p0.sh`, fill keep/fix/revert, commit
+3. Paste the prompt from `post-audit-p0-mac-agent-prompt.md` — prefer
+   `scripts/run-post-audit-p0-remaining.sh`, fill keep/fix/revert in
    `docs/testing/post-audit-p0-2026-09-30/RESULTS.md` + GAME.md handoff, and publish
    through the protected-main PR workflow in AGENTS.md.
 

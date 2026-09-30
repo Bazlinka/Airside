@@ -2,16 +2,17 @@
 
 Paste this into a Cursor agent started **on** Bailey's MacBook Pro
 (environment dropdown → **Bailey's MacBook Pro**, not a cloud VM).
-Checkout `cursor/p0-auto-landing-follow-709e` at tip `687f3ec6` or newer (or `main`
-after #491 merges) so auto-landing upgrade + `scripts/review-post-audit-p0-remaining.sh`
-are present. Canonical path: `~/Code/Airside` (Codex symlink is fine if it tracks that).
+Checkout `cursor/p0-auto-landing-follow-709e` at tip `af4026a8` or newer (or `main`
+after #491 merges) so night-sky yaw 270 + auto-landing upgrade +
+`scripts/run-post-audit-p0-remaining.sh` are present. Canonical path: `~/Code/Airside`.
 
-A Linux cloud parent cannot pin this machine via `Task`. Use this UI picker, or
-API / SDK `env: { "type": "machine", "name": "Bailey's MacBook Pro" }` (machine
-**name**, not `worker_id`).
+A Linux cloud parent cannot pin this machine via `Task` / `env.machine` (children
+land on Linux with `privateWorkerId: null`). Use the agents UI environment picker.
+API CreateAgent also needs team **Enable Remote Control for Team** on
+(dashboard → Cloud Agents → Self-hosted Machines).
 
-Workers (when online): `list-self-hosted-workers` — prefer
-`~/Code/Airside`, `eligibleForSubagent: true`, idle.
+Workers (when online): prefer displayName `~/Code/Airside @ Bailey's MacBook Pro`,
+`eligibleForSubagent: true`, idle.
 
 ---
 

@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Terminal 1 doors and facade detail.** Gate-lounge doors at every aerobridge rotunda, apron-level staff doors along
+  the airside wall, landside sliding-door entrance banks with sidelights, bollards and sign fascia, plus expansion joints
+  and downpipes. Gate doors follow the surveyed gate data; landside/staff door placement is approximate. ADR 0197.
+
 - **Aircraft sound is audible from the overview.** The new aircraft audio was heard from the camera, which sits 2.4 km
   out at overview — beyond every aircraft's hearing range — so the default view was silent. Aircraft are now heard from
   the ground point the camera looks at, fading with zoom instead of cutting out. ADR 0196.

@@ -114,9 +114,12 @@ namespace Airside.Tests
         public void Cars_ArePlacedWithinBudgetAndNormalsAgreeWithWinding()
         {
             var sink = new RoadMeshSink();
-            var cars = AdelaideCarParkGeometry.BuildCars(sink, new RoadBuildOptions());
+            var classes = new int[5];
+            var cars = AdelaideCarParkGeometry.BuildCars(sink, new RoadBuildOptions(), classes);
             Assert.That(cars, Is.InRange(1500, AdelaideCarParkGeometry.MaxCars));
-            Assert.That(sink.TriangleCount, Is.EqualTo(cars * 20), "two boxes of five faces per car");
+            Assert.That(sink.TriangleCount, Is.EqualTo(cars * 30), "three five-face boxes per car");
+            Assert.That(sink.TriangleCount, Is.LessThanOrEqualTo(AdelaideCarParkGeometry.MaxCars * 30));
+            Assert.That(classes, Has.All.GreaterThan(200), "all five body classes appear throughout Adelaide's built car parks");
             foreach (var tile in sink.Tiles)
             {
                 var p = tile.Value.Positions;
@@ -149,6 +152,26 @@ namespace Airside.Tests
             Assert.That(AdelaideCarParkGeometry.BuildCars(a, new RoadBuildOptions()),
                 Is.EqualTo(AdelaideCarParkGeometry.BuildCars(b, new RoadBuildOptions())));
             Assert.That(a.VertexCount, Is.EqualTo(b.VertexCount));
+        }
+
+        [Test]
+        public void VehicleClasses_AreStableAndDistinct()
+        {
+            var seen = new HashSet<ParkedVehicleClass>();
+            for (var run = 0; run < 70; run += AdelaideCarParks.RunStride)
+            for (var bay = 0; bay < 40; bay++)
+                seen.Add(AdelaideCarParkGeometry.VehicleClassFor(run, bay));
+
+            Assert.That(seen, Is.EquivalentTo(new[]
+            {
+                ParkedVehicleClass.Sedan,
+                ParkedVehicleClass.Hatchback,
+                ParkedVehicleClass.Suv,
+                ParkedVehicleClass.Ute,
+                ParkedVehicleClass.Van
+            }));
+            Assert.That(AdelaideCarParkGeometry.VehicleClassFor(21, 9), Is.EqualTo(ParkedVehicleClass.Van),
+                "the class hash remains stable across builds");
         }
 
         [Test]

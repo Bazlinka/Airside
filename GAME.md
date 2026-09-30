@@ -1,5 +1,27 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Codex — Adelaide emergency aviation and road assets (branch
+  `codex/adelaide-helicopter-road-assets`, ADR 0186).**
+  - AIR-017 is a project-authored, unbranded Bell 412EP-class rescue helicopter at the OSM Helipad West beside the
+    SA Ambulance rescue/retrieval base. The 37.9 m mapped pad has its perimeter, touchdown ring, H and 12 edge lamps.
+  - Adelaide's parked-car pass now uses deterministic sedan, hatchback, SUV, ute and van silhouettes without
+    changing mapped bays, occupancy, positions, colours or parking direction; the cap is 30 triangles per vehicle.
+  - Every mapped signal approach now has a footed left-kerb pole, 1.6 m mast arm, backing board, three lamps and
+    visors; stop/give-way posts have footings/backs and sheltered bus stops have end glazing plus a supported bench.
+    Existing road coordinates, markings and deterministic red/green split remain unchanged.
+  - The helicopter is static presentation with a procedural fallback; schedules, reservations, missions and saves
+    are untouched. Current contract/type timing is recorded in ADR 0186 and the asset register.
+  - **Checks:** AIR-017 generator check passed at 43 parts / 1,324 triangles / 13.90 × 16.97 × 4.45 m; latest Unity
+    EditMode 1454/1456 after rebasing onto current `main`, zero failures, two known `Assume` inconclusives. A stale
+    Unity Bee cache was preserved under ignored `work/bee-hung-rebase-20260930`; the clean-cache rerun passed. Asset
+    audit passed (1,471 GUIDs, 346 mirrored runtime art files, 70 character materials). The pre-rebase feature build
+    `3294ed54` passed with `dirty=false`; the rebased source passed the full Unity suite.
+  - **Packaged review:** inspected `work/captures/adelaide-helicopter-pad-{day,night}.png`,
+    `adelaide-vehicle-classes-close-day.png` and `adelaide-signal-hardware-close-day.png`. Pad/rotor fit, day/night
+    helicopter silhouette, five car classes and signal footing/arm/head/visors are visible; no exception/error match
+    in the six captured Player logs. `.NET` is absent, so the supplementary harness update/check could not run.
+  - **NEXT:** open the PR, wait for GitHub CI, merge when green, then return to clean `main`.
+
 - **2026-09-30 Codex — Adelaide hero architecture (branch `codex/adelaide-hero-architecture`, ADR 0185).**
   - Terminal 1 now has raised roof lanterns and eight airside structural piers tied to the real curved facade.
   - Every surveyed operational hangar has a fitted gable, barrel or sawtooth roof; the original OSM prism remains

@@ -3,6 +3,7 @@
   <ItemGroup>
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideBoundaryFence.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideCarParkGeometry.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideEmergencyAviationGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideFarLandCover.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideOuterTerrainGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaidePrecinctGeometry.cs" />

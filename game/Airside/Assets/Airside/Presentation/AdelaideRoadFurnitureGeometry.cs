@@ -5,10 +5,11 @@ using Airside.Simulation;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// ADR 0184 — intersection furniture from <see cref="AdelaideRoadNetwork.Furniture"/>: traffic signals (a pole and a
-    /// three-lamp head for each approach, on the left kerb as Australian traffic keeps left), stop lines at signals and
-    /// stop signs, give-way "shark teeth", and stop and give-way signs. Pure (no UnityEngine), so the headless harness
-    /// checks it. A road's heading is the direction of travel the node applies to (<c>direction=backward</c> flips it).
+    /// ADR 0184/0186 — intersection furniture from <see cref="AdelaideRoadNetwork.Furniture"/>: traffic signals (a
+    /// footed pole, mast arm, backed three-lamp head and visors for each approach, with the pole on the left kerb as
+    /// Australian traffic keeps left), stop lines at signals and stop signs, give-way "shark teeth", and stop and
+    /// give-way signs. Pure (no UnityEngine), so the headless harness checks it. A road's heading is the direction of
+    /// travel the node applies to (<c>direction=backward</c> flips it).
     /// </summary>
     public static class AdelaideRoadFurnitureGeometry
     {
@@ -16,8 +17,10 @@ namespace Airside.Presentation
         public const float PoleHeightMetres = 3.4f;
         public const float SignalSetbackMetres = 3.0f;
         public const float KerbOffsetMetres = 0.9f;
+        public const float MastReachMetres = 1.6f;
 
         private static readonly RoadColor Pole = RoadColor.Srgb(0.30f, 0.31f, 0.33f, 1f);
+        private static readonly RoadColor Concrete = RoadColor.Srgb(0.54f, 0.55f, 0.55f, 1f);
         private static readonly RoadColor HeadBody = RoadColor.Srgb(0.10f, 0.10f, 0.11f, 1f);
         private static readonly RoadColor RedLit = RoadColor.Srgb(1.00f, 0.12f, 0.06f, 1f);
         private static readonly RoadColor RedDim = RoadColor.Srgb(0.30f, 0.05f, 0.04f, 1f);
@@ -27,11 +30,13 @@ namespace Airside.Presentation
         private static readonly RoadColor White = RoadColor.Srgb(0.92f, 0.92f, 0.90f, 1f);
         private static readonly RoadColor SignRed = RoadColor.Srgb(0.72f, 0.06f, 0.06f, 1f);
 
-        /// <summary>One signal head: where it hangs, which way it faces, and whether red is the lit lamp.</summary>
+        /// <summary>One signal assembly: kerbside pole, hanging head, facing direction and lit state.</summary>
         public readonly struct Head
         {
-            public Head(float x, float z, float faceX, float faceZ, bool redLit)
+            public Head(float poleX, float poleZ, float x, float z, float faceX, float faceZ, bool redLit)
             {
+                PoleX = poleX;
+                PoleZ = poleZ;
                 X = x;
                 Z = z;
                 FaceX = faceX;
@@ -39,6 +44,8 @@ namespace Airside.Presentation
                 RedLit = redLit;
             }
 
+            public float PoleX { get; }
+            public float PoleZ { get; }
             public float X { get; }
             public float Z { get; }
             public float FaceX { get; }
@@ -85,33 +92,56 @@ namespace Airside.Presentation
                     var az = tz * d;
                     var lx = -az;
                     var lz = ax;
-                    heads.Add(new Head(x - ax * SignalSetbackMetres + lx * (width * 0.5f + KerbOffsetMetres),
-                        z - az * SignalSetbackMetres + lz * (width * 0.5f + KerbOffsetMetres), -ax, -az, red));
+                    var poleX = x - ax * SignalSetbackMetres + lx * (width * 0.5f + KerbOffsetMetres);
+                    var poleZ = z - az * SignalSetbackMetres + lz * (width * 0.5f + KerbOffsetMetres);
+                    // From the left kerb, the arm reaches right toward the approach lane. The head coordinates are
+                    // also consumed by the night-glow builder, keeping the emissive glow on the physical lamps.
+                    var faceX = -ax;
+                    var faceZ = -az;
+                    var armX = -faceZ;
+                    var armZ = faceX;
+                    heads.Add(new Head(poleX, poleZ, poleX + armX * MastReachMetres,
+                        poleZ + armZ * MastReachMetres, faceX, faceZ, red));
                 }
             }
 
             return heads;
         }
 
-        /// <summary>A pole with a head and three lamps per approach. Returns signal nodes drawn.</summary>
+        /// <summary>A footed pole, mast arm, backed head, three lamps and visors per approach.</summary>
         public static int BuildSignals(RoadMeshSink sink, RoadBuildOptions o)
         {
             var heads = SignalHeads();
             foreach (var h in heads)
             {
-                var y = o.Height(h.X, h.Z) + o.YOffset;
-                sink.Box(h.X, y, h.Z, 1f, 0f, 0.07f, 0.07f, PoleHeightMetres, Pole);
+                var y = o.Height(h.PoleX, h.PoleZ) + o.YOffset;
+                sink.Cylinder(h.PoleX, y, h.PoleZ, 0.22f, 0.16f, 8, Concrete);
+                sink.Box(h.PoleX, y + 0.16f, h.PoleZ, 1f, 0f, 0.07f, 0.07f, PoleHeightMetres - 0.16f, Pole);
+                sink.Box(h.PoleX, y + 0.55f, h.PoleZ, h.FaceX, h.FaceZ, 0.12f, 0.18f, 0.42f, HeadBody);
+                var armX = -h.FaceZ;
+                var armZ = h.FaceX;
+                sink.Box((h.PoleX + h.X) * 0.5f, y + PoleHeightMetres - 0.12f,
+                    (h.PoleZ + h.Z) * 0.5f, armX, armZ, MastReachMetres * 0.5f, 0.065f, 0.12f, Pole);
                 var headBase = y + PoleHeightMetres - 1.05f;
-                // the head is a box facing the traffic; three lamps stand out of its face
+                // A slightly oversized backing board makes the head readable against road and foliage.
+                sink.Box(h.X - h.FaceX * 0.08f, headBase - 0.08f, h.Z - h.FaceZ * 0.08f,
+                    h.FaceX, h.FaceZ, 0.08f, 0.27f, 1.16f, Pole);
                 sink.Box(h.X, headBase, h.Z, h.FaceX, h.FaceZ, 0.16f, 0.2f, 1.0f, HeadBody);
                 var lx = h.X + h.FaceX * 0.17f;
                 var lz = h.Z + h.FaceZ * 0.17f;
-                sink.Box(lx, headBase + 0.06f, lz, h.FaceX, h.FaceZ, 0.03f, 0.09f, 0.22f, h.RedLit ? GreenDim : GreenLit);
-                sink.Box(lx, headBase + 0.39f, lz, h.FaceX, h.FaceZ, 0.03f, 0.09f, 0.22f, AmberDim);
-                sink.Box(lx, headBase + 0.72f, lz, h.FaceX, h.FaceZ, 0.03f, 0.09f, 0.22f, h.RedLit ? RedLit : RedDim);
+                SignalLamp(sink, lx, headBase + 0.06f, lz, h, h.RedLit ? GreenDim : GreenLit);
+                SignalLamp(sink, lx, headBase + 0.39f, lz, h, AmberDim);
+                SignalLamp(sink, lx, headBase + 0.72f, lz, h, h.RedLit ? RedLit : RedDim);
             }
 
             return heads.Count;
+        }
+
+        private static void SignalLamp(RoadMeshSink sink, float x, float y, float z, Head h, RoadColor colour)
+        {
+            sink.Box(x, y, z, h.FaceX, h.FaceZ, 0.03f, 0.09f, 0.22f, colour);
+            sink.Box(x + h.FaceX * 0.08f, y + 0.22f, z + h.FaceZ * 0.08f,
+                h.FaceX, h.FaceZ, 0.12f, 0.11f, 0.05f, HeadBody);
         }
 
         /// <summary>Stop lines at signals (each direction) and stop signs, and give-way teeth. Returns marks drawn.</summary>
@@ -215,8 +245,10 @@ namespace Airside.Presentation
             var px = x - tx * 0.6f + lx * (width * 0.5f + KerbOffsetMetres);
             var pz = z - tz * 0.6f + lz * (width * 0.5f + KerbOffsetMetres);
             var y = o.Height(px, pz) + o.YOffset;
-            sink.Box(px, y, pz, 1f, 0f, 0.04f, 0.04f, 2.3f, Pole);
+            sink.Cylinder(px, y, pz, 0.15f, 0.12f, 8, Concrete);
+            sink.Box(px, y + 0.12f, pz, 1f, 0f, 0.04f, 0.04f, 2.18f, Pole);
             // the plate faces the approaching traffic: its long axis lies across the road
+            sink.Box(px + tx * 0.025f, y + 1.65f, pz + tz * 0.025f, lx, lz, 0.40f, 0.025f, 0.80f, HeadBody);
             sink.Box(px, y + 1.7f, pz, lx, lz, 0.36f, 0.02f, 0.72f, stop ? SignRed : White);
             if (!stop)
                 sink.Box(px - tx * 0.021f, y + 1.79f, pz - tz * 0.021f, lx, lz, 0.28f, 0.02f, 0.5f, SignRed);

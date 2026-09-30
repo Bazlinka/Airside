@@ -33,7 +33,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void SignalHeads_StandOnTheLeftKerb_OfEachApproach()
+        public void SignalPoles_StandOnTheLeftKerb_AndHeadsReachOverEachApproach()
         {
             var heads = AdelaideRoadFurnitureGeometry.SignalHeads();
             Assert.That(heads.Count, Is.GreaterThan(100), "a head per approach");
@@ -42,6 +42,9 @@ namespace Airside.Tests
             foreach (var h in heads)
             {
                 Assert.That(Math.Sqrt(h.FaceX * h.FaceX + h.FaceZ * h.FaceZ), Is.EqualTo(1.0).Within(1e-3));
+                Assert.That(Math.Sqrt(Math.Pow(h.X - h.PoleX, 2) + Math.Pow(h.Z - h.PoleZ, 2)),
+                    Is.EqualTo(AdelaideRoadFurnitureGeometry.MastReachMetres).Within(1e-3),
+                    "every head hangs at the end of its mast arm");
                 if (h.RedLit)
                     red++;
                 else
@@ -57,7 +60,10 @@ namespace Airside.Tests
         {
             var o = new RoadBuildOptions();
             var props = new RoadMeshSink();
-            Assert.That(AdelaideRoadFurnitureGeometry.BuildSignals(props, o), Is.GreaterThan(100));
+            var signals = AdelaideRoadFurnitureGeometry.BuildSignals(props, o);
+            Assert.That(signals, Is.GreaterThan(100));
+            Assert.That(props.TriangleCount, Is.EqualTo(signals * 134),
+                "footing, pole, cabinet, mast arm, backing board, head, three lamps and three visors");
             Assert.That(AdelaideRoadFurnitureGeometry.BuildSigns(props, o), Is.GreaterThan(200));
             var paint = new RoadMeshSink();
             Assert.That(AdelaideRoadFurnitureGeometry.BuildRoadPaint(paint, o), Is.GreaterThan(400));

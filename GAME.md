@@ -6,6 +6,8 @@
   listener now sits 6–60 m above the camera's ground orbit point (camera yaw for panning); zoom distance fades
   aircraft (full to 300 m, ~30% at overview) instead of culling them. Camera `AudioListener` disabled; the
   audio review harness is unchanged.
+  - **Checks:** Unity EditMode 1505/1507, zero failures, two existing inconclusives (incl. new
+    `OverviewZoomStillHearsAircraftNearTheFocusPoint`); Mac build clean; asset audit passes. Not yet listened to.
   - **NEXT:** Bailey listens at overview near the apron and in follow; tune `AircraftAudioMix.ZoomGain` if too
     loud/quiet.
 

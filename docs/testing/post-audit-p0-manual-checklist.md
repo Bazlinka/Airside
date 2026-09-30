@@ -46,15 +46,16 @@ Judge: do overflights **cruise** (not crawl)? Is a fleet inbound drawn once on f
 1. Fleet card → refit a parked aircraft to freighter → Follow: cargo shade + "... CARGO" title.
 2. Follow a **jet** (not the soak Saab at stand) from the side on takeoff rotation and on flare:
    main tyres on the runway.
-   Packaged still helper: `-airsideReviewAircraft auto-landing` (or
-   `scripts/review-post-audit-p0-remaining.sh`) picks the best on-field holding / landing
-   aircraft. Soak is live wall-clock; opening AI inbound #1 reaches the circuit at ~3 min,
-   so use a **~280s** capture delay (90s is too early).
+   Packaged still helpers in `scripts/review-post-audit-p0-remaining.sh`:
+   `-airsideReviewAircraft auto-landing` (~280s) and `auto-takeoff` (~360s). Soak is live
+   wall-clock; opening AI inbound #1 reaches the circuit at ~3 min.
 
 ## 4. Storm final (ADR 0190)
 
 Force or wait for storm; confirm an aircraft **already on final** continues to land while
 departures stay held. Code already covers this (`RunwayWeatherTests`); eyes-on still owed.
+Packaged still helper: `follow-storm-landing` in `scripts/review-post-audit-p0-remaining.sh`
+(`auto-landing` + storm). Still needs a person to confirm it keeps landing.
 
 ## 5. Hangar tow + boarding tape (ADR 0186–0188 / 0196)
 

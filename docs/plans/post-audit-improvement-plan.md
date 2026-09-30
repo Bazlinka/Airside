@@ -21,10 +21,12 @@ concentration / performance**, then finishing half-done product slices (freight)
 ### P0 — Mac packaged playtest of unverified merges (do first)
 
 **Status:** automated Mac captures recorded in #490; manual listening/play checks remain open. See
-`docs/testing/post-audit-p0-2026-09-30/RESULTS.md`. A Unity player and awake display are required. Cloud
-Linux cannot mark this complete. Self-hosted Mac workers are often online and may
-show `eligibleForSubagent: true`, but `Task` only accepts `same_machine` |
-`new_cloud_vm` — it cannot take `machine.worker_id`. Pin the Mac with **CreateAgent**
+`docs/testing/post-audit-p0-2026-09-30/RESULTS.md`. Night-sky framing + `auto-landing` /
+`auto-takeoff` follow helpers land via #491; Mac re-run:
+`scripts/review-post-audit-p0-remaining.sh` after rebuild. A Unity player and awake display
+are required. Cloud Linux cannot mark this complete. Self-hosted Mac workers are often
+online and may show `eligibleForSubagent: true`, but `Task` cannot take
+`machine.worker_id`. Pin the Mac with **CreateAgent**
 (`machine: { "type": "self_hosted_worker", "worker_id": "…" }`, team Remote Control
 on), the agents UI environment picker, or API v1 `env.type: "machine"`. One-paste
 prompt: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
@@ -44,9 +46,10 @@ rebuilt game. Attribute bugs before adding content.
 | Terminal doors / facade detail (airside + kerb) | 0197 |
 | Human-ops close matrix (clipping, scale, bridge glass) | 0174 |
 
-**Run on Mac:** `scripts/build-mac.sh` then `scripts/review-post-audit-p0.sh`. Checklist
-and keep/fix/revert rows: `docs/testing/post-audit-p0-playtest.md`. Captures go to
-`work/captures/post-audit-p0-<date>/`.
+**Run on Mac:** `scripts/build-mac.sh`, then
+`scripts/review-post-audit-p0-remaining.sh` (night-sky + follow stills) or the full
+`scripts/review-post-audit-p0.sh`. Checklist: `docs/testing/post-audit-p0-manual-checklist.md`.
+Captures go to `work/captures/post-audit-p0-<date>/`.
 
 Exit: Bailey marks each keep / fix / revert. Close or amend ADR “Unity look not
 verified” lines when eyes-on is done.

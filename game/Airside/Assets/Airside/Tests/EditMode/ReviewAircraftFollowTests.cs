@@ -43,6 +43,19 @@ namespace Airside.Tests.EditMode
         }
 
         [Test]
+        public void AutoTakeoffToken_AndRank_PreferTakingOffJet()
+        {
+            Assert.That(ReviewAircraftFollow.IsAutoTakeoffToken("auto-takeoff"), Is.True);
+            Assert.That(ReviewAircraftFollow.IsAutoFollowToken("auto-takeoff"), Is.True);
+            var takingOffJet = ReviewAircraftFollow.AutoTakeoffRank(FleetState.TakingOff, hasView: true, preferJet: true);
+            var holdingProp = ReviewAircraftFollow.AutoTakeoffRank(FleetState.HoldingShort, hasView: true, preferJet: false);
+            Assert.That(takingOffJet, Is.LessThan(holdingProp));
+            Assert.That(
+                ReviewAircraftFollow.AutoTakeoffRank(FleetState.AtStand, hasView: true, preferJet: true),
+                Is.LessThan(0));
+        }
+
+        [Test]
         public void NewGame_OpeningBankNeedsAFewMinutesBeforeAutoLandingHasADrawnCandidate()
         {
             // Soak / capture-game run live wall-clock. Opening AI inbound #1 joins the circuit

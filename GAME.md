@@ -1,12 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — P0 auto-landing review follow (branch `cursor/p0-auto-landing-follow-709e`).**
-  Packaged captures can pass `-airsideReviewAircraft auto-landing` to follow the best on-field
-  holding / landing aircraft (jets preferred). Follow stills use ~280s live delay (opening AI
-  bank joins at ~3 min). `scripts/review-post-audit-p0-remaining.sh` re-runs night-sky + follow
-  only. Headless green on this branch. Unity EditMode still needed on a Mac.
-  **NEXT:** on Mac, rebuild → `scripts/review-post-audit-p0-remaining.sh` → finish
-  `docs/testing/post-audit-p0-manual-checklist.md`. Freight AI stays parked. Do not invent RESULTS.
+- **2026-09-30 Cursor — P0 auto-landing / auto-takeoff review follow (branch `cursor/p0-auto-landing-follow-709e`, #491).**
+  Packaged captures: `-airsideReviewAircraft auto-landing|auto-takeoff` (jets preferred).
+  `scripts/review-post-audit-p0-remaining.sh` re-runs night-sky, landing follow, takeoff follow
+  and storm-landing stills (~280–360s live). Headless green on this branch.
+  **NEXT:** Mac rebuild → that script → finish `docs/testing/post-audit-p0-manual-checklist.md`.
+  Freight AI stays parked. Do not invent RESULTS. Pin Mac via agents UI (Task cannot take worker_id).
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

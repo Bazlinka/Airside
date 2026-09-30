@@ -2,6 +2,8 @@
 # Re-capture only the stills that still block P0 sign-off after #490:
 #   - overview-night-sky-traffic (framing fix: 9 km / pitch 12 / yaw 210)
 #   - follow-jet-day / follow-jet-close (auto-landing, ~280s live delay)
+#   - follow-jet-takeoff (auto-takeoff for tyre rotation)
+#   - follow-storm-landing (auto-landing under storm — ADR 0190 still evidence)
 #
 # Requires a rebuilt player that includes those fixes. Does not invent RESULTS.
 # Usage:
@@ -47,6 +49,17 @@ FOLLOW=auto-landing
 CAPTURE_DELAY=280 CAPTURE_TIMEOUT=360 capture follow-jet-close \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.35
+
+# Opening AI departures publish from ~2 min (ADR 0110); allow lineup/roll before the still.
+FOLLOW=auto-takeoff
+CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-jet-takeoff \
+  -airsideReviewWeather clear -airsideReviewTime 12:00 \
+  -airsideReviewFollowZoom 0.45
+
+FOLLOW=auto-landing
+CAPTURE_DELAY=280 CAPTURE_TIMEOUT=360 capture follow-storm-landing \
+  -airsideReviewWeather storm -airsideReviewTime 12:00 \
+  -airsideReviewFollowZoom 0.55
 
 echo "Remaining P0 stills written under $shots"
 echo "Copy keep PNGs into docs/testing/post-audit-p0-<date>/ and update RESULTS.md verdicts."

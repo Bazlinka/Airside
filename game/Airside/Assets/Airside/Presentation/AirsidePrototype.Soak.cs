@@ -77,9 +77,9 @@ namespace Airside.Presentation
         // Review shots for packaged-build checks (HUD fit at several window sizes, panels):
         //   -airsideReviewPanel plan|operations|map|fleet|contracts|stats|devtools|help
         //   -airsideReviewShot <path.png> [-airsideReviewDelay seconds]   capture, then quit
-        //   -airsideReviewAircraft <registration|auto-landing>
-        //       follow a live 3D aircraft in the shot; auto-landing picks the best
-        //       inbound / holding / landing aircraft that already has a field view
+        //   -airsideReviewAircraft <registration|auto-landing|auto-takeoff>
+        //       follow a live 3D aircraft; auto-landing / auto-takeoff pick the best
+        //       on-field arrival or departure that already has a field view
         //   -airsideReviewFollowZoom 0.35   bounded close-up of the followed aircraft
         //   -airsideReviewTime HH:mm   override local lighting time only (not the sim clock)
         //   -airsideReviewWeather cloudy|overcast|rain|storm|...   deterministic visual QA
@@ -129,13 +129,14 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Pick the best on-field arrival for tyre / audio review stills and start follow.
-        /// Retries each soak frame until an inbound / holding / landing view appears.
+        /// Pick the best on-field arrival or departure for tyre / audio review stills.
+        /// Retries each soak frame until a matching field view appears.
         /// </summary>
-        private bool TryFollowAutoLandingAircraft()
+        private bool TryFollowAutoReviewAircraft(bool takeoff)
         {
             string bestId = null;
             var bestRank = int.MaxValue;
+            var label = takeoff ? ReviewAircraftFollow.AutoTakeoffToken : ReviewAircraftFollow.AutoLandingToken;
             foreach (var pair in _fleetAircraftById)
             {
                 var aircraft = pair.Value;
@@ -143,7 +144,9 @@ namespace Airside.Presentation
                     continue;
                 var hasView = _fleetViewById.ContainsKey(pair.Key);
                 var preferJet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
-                var rank = ReviewAircraftFollow.AutoLandingRank(aircraft.State, hasView, preferJet);
+                var rank = takeoff
+                    ? ReviewAircraftFollow.AutoTakeoffRank(aircraft.State, hasView, preferJet)
+                    : ReviewAircraftFollow.AutoLandingRank(aircraft.State, hasView, preferJet);
                 if (rank < 0 || rank > bestRank)
                     continue;
                 bestRank = rank;
@@ -157,9 +160,9 @@ namespace Airside.Presentation
 
             _selectedAircraftId = bestId;
             if (_fleetAircraftById.TryGetValue(bestId, out var followed))
-                Debug.Log($"{SoakLogTag} following auto-landing {bestId} ({followed.State})");
+                Debug.Log($"{SoakLogTag} following {label} {bestId} ({followed.State})");
             else
-                Debug.Log($"{SoakLogTag} following auto-landing {bestId}");
+                Debug.Log($"{SoakLogTag} following {label} {bestId}");
             return true;
         }
 
@@ -262,10 +265,13 @@ namespace Airside.Presentation
             }
             if (!_reviewFollowStarted && !string.IsNullOrEmpty(_reviewAircraftId))
             {
-                _reviewFollowStarted = ReviewAircraftFollow.IsAutoLandingToken(_reviewAircraftId)
-                    ? TryFollowAutoLandingAircraft()
-                    : TryFollowFleetAircraft(_reviewAircraftId);
-                if (_reviewFollowStarted && !ReviewAircraftFollow.IsAutoLandingToken(_reviewAircraftId))
+                if (ReviewAircraftFollow.IsAutoLandingToken(_reviewAircraftId))
+                    _reviewFollowStarted = TryFollowAutoReviewAircraft(takeoff: false);
+                else if (ReviewAircraftFollow.IsAutoTakeoffToken(_reviewAircraftId))
+                    _reviewFollowStarted = TryFollowAutoReviewAircraft(takeoff: true);
+                else
+                    _reviewFollowStarted = TryFollowFleetAircraft(_reviewAircraftId);
+                if (_reviewFollowStarted && !ReviewAircraftFollow.IsAutoFollowToken(_reviewAircraftId))
                     Debug.Log($"{SoakLogTag} following {_reviewAircraftId}");
             }
 

@@ -6,6 +6,11 @@
 - **Stand oil stains and softer ground edges.** Seeded oil/fuel blotches under every bay and gate (two combined
   meshes), slightly stronger grass macro/mow detail, and a softer paved-to-grass shoulder. Presentation only. ADR 0201.
 
+- **Visual overhaul Phase 0 baseline bookmarks.** Six named review cameras (`overview`,
+  `terminal-airside`, `terminal-kerb`, `hangar-row`, `suburb-edge`, `coast`) via
+  `-airsideReviewView`, plus `scripts/capture-visual-baseline.sh` for day/dusk/night
+  1600×900 captures and scraped fps metrics. ADR 0200. Packaged PNG evidence still needs a Mac run.
+
 - **Airside buildings look finished.** Freight sheds and the fire station get a shallow shaped roof (instead of a flat
   box with plant), every support/freight/fire building gets a base plinth, and doors get lit wall packs so they read at
   night; freight docks gain bumpers and bollards. Presentation only. ADR 0199.

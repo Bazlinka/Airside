@@ -119,6 +119,9 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
 ## Status
 - Phase 3a (building audit): done — `scripts/audit-ypad-buildings.py`, `docs/data/ypad-buildings-audit.md`.
   Finding: only 7 of 78 heights are sourced; 71 are rule defaults and 60 buildings are unnamed.
+- Phase 0 (bookmarks + capture script): done in code — `AirsideVisualBaselineViews`,
+  `-airsideReviewView`, `scripts/capture-visual-baseline.sh`, ADR 0200. Packaged PNG/metrics
+  evidence still needs a Mac run of that script (`docs/testing/visual-baseline-2026-09-30/`).
 - Phase 1 slices done: stand oil stains + softer ground edges (ADR 0201); apron patch
   repairs + drainage pits (ADR 0202). Remaining Phase 1: landform/coast, land cover polish, far ring.
 - Phases 0 (packaged captures), 2, 3b–f, 4, 5 still benefit from Mac Unity captures and frame-time numbers.

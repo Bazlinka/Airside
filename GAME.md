@@ -11,6 +11,14 @@
   - **Checks:** `scripts/test-domain.sh` **1134/1134** (incl. StandOilStainsTests).
   - **NEXT:** apron patch repairs / drainage pits (done in ADR 0202).
 
+- **2026-09-30 Cursor — visual overhaul Phase 0 baseline bookmarks (branch `cursor/visual-baseline-phase0-5ea8`, ADR 0200).**
+  Six named review cameras in `AirsideVisualBaselineViews` (`-airsideReviewView`), wired into the overview
+  camera, with `scripts/capture-visual-baseline.sh` for day/dusk/night 1600×900 shots and scraped soak metrics.
+  Headless locks in `VisualBaselineViewsTests`.
+  - **Checks:** `scripts/test-domain.sh` **1136/1136** (incl. new VisualBaselineViewsTests); harness props updated.
+  - **NEXT:** on a Mac, `scripts/build-mac.sh` then `scripts/capture-visual-baseline.sh`, commit PNGs + `metrics.md`
+    under `docs/testing/visual-baseline-2026-09-30/`; Phase 1 airside ground slices already on this branch.
+
 - **2026-09-30 Claude — airside building detail, Phase 3d slice (branch `visual-overhaul-ground`, ADR 0199).**
   Shaped roofs on freight/fire station, plinths, lit wall packs, dock bumpers. Headless suite run here with a local
   .NET 8 (`/opt/dotnet`). **Not verified:** how it renders — needs a Mac capture. **NEXT:** Phase 0 baseline, Phase 1 ground.

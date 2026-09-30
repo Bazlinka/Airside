@@ -54,10 +54,12 @@ verified” lines when eyes-on is done.
    before Phase 1 ground/land. No visual phase lands without a before/after number.
 3. Building audit: 71/78 heights are still rule defaults (`docs/data/ypad-buildings-audit.md`).
 
-**In flight:** PR #485 (`cursor/visual-baseline-phase0-5ea8`, ADR 0200) adds
-`-airsideReviewView` bookmarks and `scripts/capture-visual-baseline.sh`. Headless
-green; packaged PNG/`metrics.md` still need a Mac run. After #485 merges, P0 and
-Phase 0 can share those bookmarks.
+**In flight / ahead of gate:**
+- Phase 0 bookmarks (ADR 0200) are **merged onto this plan branch**; Mac
+  `capture-visual-baseline.sh` metrics still owed.
+- PR #486 (`cursor/phase1-stand-oil-stains-5ea8`, ADR 0201) started Phase 1 ground
+  detail **before P0 / Bailey sign-off**. Treat as parallel visual work; it does
+  **not** clear P0 keep/fix/revert.
 
 ### P2 — Finish freight as a mode (parked until P0)
 

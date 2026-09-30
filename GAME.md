@@ -1,12 +1,13 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`).**
+- **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0200).**
   Full Domain / Simulation / Presentation / tests / product-plan audit. Headless **1129/1129**. Standing backlog:
   `docs/plans/post-audit-improvement-plan.md`. Cloud goal set to follow that order.
-  - **P0:** Mac packaged playtest of unverified merges (audio, sky traffic, freight/tyres, weather, hangars,
-    far zoom/land cover/follow, storm-on-final, terminal doors, human-ops matrix).
+  - **P0 (NEXT on Mac):** `scripts/build-mac.sh` then `scripts/review-post-audit-p0.sh`; fill keep/fix/revert in
+    `docs/testing/post-audit-p0-playtest.md` (audio, sky traffic, freight/tyres, weather, hangars, far zoom,
+    storm-on-final, terminal doors, human-ops). Cloud Linux cannot complete P0.
   - **P1:** Bailey sign-off on `docs/plans/visual-overhaul-plan.md`, then Phase 0 FPS baseline.
-  - **P2:** Finish freight as a mode (AI freighters / cargo apron / freighter contracts) or park it.
+  - **P2:** Freight AI / cargo apron / freighter contracts **parked until P0** clears freighter+tyre rows.
   - **P3:** `AirsidePrototype` builders/statics; lock weather/large-fleet fps; retire legacy full-airport when ready.
   - **P4 only then:** second airport, companion, denser world. Do not start Companion/CloudKit or wages/fuel/loans yet.
   - **Watch:** restore still hard-requires Adelaide; stale GAME.md footer / early PROJECT_PLAN “gaps” are not truth.

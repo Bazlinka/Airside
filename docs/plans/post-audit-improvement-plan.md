@@ -20,6 +20,9 @@ concentration / performance**, then finishing half-done product slices (freight)
 
 ### P0 — Mac packaged playtest of unverified merges (do first)
 
+**Status:** tooling ready; **blocked on a Mac** (Unity player + awake display). Cloud
+Linux cannot mark this complete.
+
 Many ADRs merged green on EditMode / headless but were never seen or heard in a
 rebuilt game. Attribute bugs before adding content.
 
@@ -35,6 +38,10 @@ rebuilt game. Attribute bugs before adding content.
 | Terminal doors / facade detail (airside + kerb) | 0197 |
 | Human-ops close matrix (clipping, scale, bridge glass) | 0174 |
 
+**Run on Mac:** `scripts/build-mac.sh` then `scripts/review-post-audit-p0.sh`. Checklist
+and keep/fix/revert rows: `docs/testing/post-audit-p0-playtest.md`. Captures go to
+`work/captures/post-audit-p0-<date>/`.
+
 Exit: Bailey marks each keep / fix / revert. Close or amend ADR “Unity look not
 verified” lines when eyes-on is done.
 
@@ -45,16 +52,21 @@ verified” lines when eyes-on is done.
    before Phase 1 ground/land. No visual phase lands without a before/after number.
 3. Building audit: 71/78 heights are still rule defaults (`docs/data/ypad-buildings-audit.md`).
 
-### P2 — Finish freight as a mode, or park it
+### P2 — Finish freight as a mode (parked until P0)
 
-Player freighter refit exists (save v19). Still missing:
+**Parked until P0 is signed off.** Player freighter refit exists (save v19) but has
+not been seen in a rebuilt game. Do not add AI freighters or a cargo apron on top of
+unverified player freight.
+
+When P0 clears the freighter/tyre rows, finish as one narrow ADR slice:
 
 - AI freight carriers (DHL / Qantas Freight–style, night bank, own liveries)
 - Cargo apron / stands
 - Contracts that require a freighter (`ContractKind.Freight` today does not)
 - Outstation settle using freighter forecast overload
 
-Do this as one narrow product slice with an ADR, or explicitly defer in GAME.md.
+Until then: leave player freight as-is; no freight AI / apron / freighter-gated
+contracts.
 
 ### P3 — Pay down structure and performance debt
 

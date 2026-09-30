@@ -1,8 +1,9 @@
 ## Unreleased
 
 - **Post-audit improvement plan.** Standing backlog after a full code audit: Mac playtest of recent unverified work,
-  visual-overhaul gate, finish or park freight, Presentation/performance debt, then expansion. Plan:
-  `docs/plans/post-audit-improvement-plan.md`. ADR 0200. No game behaviour changed.
+  visual-overhaul gate, freight parked until that playtest, Presentation/performance debt, then expansion. Plan:
+  `docs/plans/post-audit-improvement-plan.md`. Mac P0 matrix: `scripts/review-post-audit-p0.sh` and
+  `docs/testing/post-audit-p0-playtest.md`. ADR 0200. No game behaviour changed.
 
 - **Airside buildings look finished.** Freight sheds and the fire station get a shallow shaped roof (instead of a flat
   box with plant), every support/freight/fire building gets a base plinth, and doors get lit wall packs so they read at

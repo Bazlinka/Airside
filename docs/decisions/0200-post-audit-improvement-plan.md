@@ -27,3 +27,9 @@ Docs and agent handoff only. No simulation, presentation, or save behaviour chan
 ## Migration
 
 None.
+
+## Follow-up (same day)
+
+Mac P0 tooling added without changing game behaviour: `scripts/review-post-audit-p0.sh`
+and `docs/testing/post-audit-p0-playtest.md`. Freight AI / cargo apron / freighter-gated
+contracts stay parked until P0 signs off the player freighter and tyre rows.

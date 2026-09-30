@@ -79,6 +79,37 @@ namespace Airside.Tests
             Assert.That(HangarTow.TryPose(AircraftCatalogue.Saab340.Type, bay, 100, 600, out _), Is.False);
         }
 
+        [Test]
+        public void PackagedHangarStill_AtNinetySeconds_IsMidOutboundTowNotStillOnStand()
+        {
+            // remaining.sh follow-hangar-tow uses CAPTURE_DELAY=90. The outbound tow must
+            // still be under way (or at least clearly off the stand) at that instant.
+            const double captureDelay = 90;
+            var type = AircraftCatalogue.Saab340.Type;
+            var offStand = 0;
+            var midTow = 0;
+            foreach (var bayLayout in AdelaideLayout.Bays)
+            {
+                var bay = new StableId(bayLayout.Id);
+                if (!HangarTow.TryPlan(type, bay, out var plan))
+                    continue;
+                Assert.That(plan.TowSeconds, Is.GreaterThan(captureDelay),
+                    $"{bay.Value}: outbound tow {plan.TowSeconds:0}s must outlast the 90s still");
+                Assert.That(HangarTow.TryPose(type, bay, captureDelay, Check, out var pose), Is.True,
+                    $"{bay.Value}: tow pose at {captureDelay}s");
+                var stand = AdelaideGround.StandPose(bay);
+                var metres = Distance(pose.X, pose.Z, stand.X, stand.Z);
+                if (metres > 15f)
+                    offStand++;
+                if (captureDelay < plan.TowSeconds && metres > 15f)
+                    midTow++;
+                TestContext.WriteLine($"{bay.Value}: TowSeconds={plan.TowSeconds:0} at90m={metres:0.0}");
+            }
+
+            Assert.That(offStand, Is.GreaterThan(0), "at least one bay is clearly off-stand at 90s");
+            Assert.That(midTow, Is.GreaterThan(0), "at least one bay is mid-outbound at 90s");
+        }
+
         private static float Distance(float ax, float az, float bx, float bz) =>
             (float)Math.Sqrt((ax - bx) * (ax - bx) + (az - bz) * (az - bz));
 

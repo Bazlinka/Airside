@@ -28,8 +28,10 @@ Follow docs/testing/post-audit-p0-manual-checklist.md in order:
 1. Prefer one command: scripts/run-post-audit-p0-remaining.sh
    (pull + build + remaining captures + copy PNGs + stamp inventory into RESULTS —
    inventory is not a verdict)
-   Fast first pass (night-sky + freighter + takeoff tyres): 
-   AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter,follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh
+   Stage A (minutes — night-sky + freighter, unblocks P2 freighter evidence):
+   AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh
+   Stage B (tyre rotation — ~17 min soak for TakingOff ~13 min):
+   AIRSIDE_P0_ONLY=follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh
 2. Verdict those PNGs in RESULTS.md (do not invent; if still unverified say why)
 3. Listen: overview audio, follow, touchdown chirp/reverse/rollout
 4. Freighter refit livery + jet tyres on rotation/flare (unblocks P2)

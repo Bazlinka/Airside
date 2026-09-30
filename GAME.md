@@ -4,8 +4,9 @@
   Packaged: `auto-landing` / `auto-takeoff` / freighter / hangar / boarding / human-ops close.
   Auto-landing re-ranks to Landing (~360s). Night-sky: 11 km / pitch 8 / yaw 270 (~45s).
   One-command: `scripts/run-post-audit-p0-remaining.sh`. Tip CI green; PR mergeable.
-  **Two Mac workers ONLINE** on Bailey's MacBook Pro — prefer `~/Code/Airside` checkout.
-  Cloud Task/`env.machine` still cannot pin (`privateWorkerId` null) — use agents UI machine name.
+  Tip `af4026a8` headless CI green; PR #491 mergeable. Two Mac workers ONLINE — prefer `~/Code/Airside`.
+  Cloud Task/`env.machine` cannot pin (`privateWorkerId` null). API pin needs team
+  **Enable Remote Control for Team**; until then use agents UI machine name.
   Remaining RESULTS + manual rows unverified.
   **NEXT:** UI-pin Mac → `scripts/run-post-audit-p0-remaining.sh` → fill RESULTS.
   Freight AI stays parked. Do not invent RESULTS.

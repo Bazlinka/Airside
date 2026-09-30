@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 Mac pin docs: Remote Control toggle.** Playtest Option B records that API /
+  CreateAgent machine pin needs team **Enable Remote Control for Team**; cloud Task
+  still cannot pin. No simulation or save changes.
+
 - **P0 night-sky framing aims at cruise corridors.** Remaining captures use 11 km /
   pitch 8 / yaw 270 with a 45s delay; `SkyTrafficTests` locks drawable traffic in
   that early-soak window. No simulation or save changes.

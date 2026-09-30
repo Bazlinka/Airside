@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 CreateAgent pin follows online Codex-path worker.** Launcher default
+  `worker_id` is `4566aff1…` (`~/Documents/Codex/Airside`, symlink to Code);
+  prompt accepts either checkout. Locked by `test-p0-mac-agent-launch.sh`. No
+  simulation or save changes.
 - **P0 tip `67050b65` CI CLEAN (#492).** Headless green with `ReviewFreighterPick`
   + tip retarget after #491 merge. Mac Stage A / `CURSOR_API_KEY` still required.
   No simulation or save changes.

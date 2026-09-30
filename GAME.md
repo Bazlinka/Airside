@@ -9,8 +9,9 @@
   **Checks:** Unity EditMode 1,533/1,535 passed, zero failures, two unmet-precondition inconclusives;
   Unity asset audit passes (1,543 GUIDs, 347 art mirrors). Existing Mac build at `22abb8a1` reports success.
   **NEXT:** complete the manual P0 listening/play checks in `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`.
-  Automated captures are evidence for their recorded build; P0 remains unsigned until the manual rows pass.
-  Historical branch names below describe completed work; resume from `main`, not those old branches.
+  Automated captures are mostly **keep**; `overview-night-sky-traffic` stays **unverified** (re-run with the
+  updated low-pitch / far framing in `scripts/review-post-audit-p0.sh`). P0 remains unsigned until manual rows
+  pass. Freight AI stays parked. Historical branch names below describe completed work; resume from `main`.
 
 
 - **2026-09-30 Codex — unique aircraft liveries + five player presets (branch `feature/aircraft-livery-overhaul`, ADR 0204).**

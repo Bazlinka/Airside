@@ -47,10 +47,13 @@ capture overview-far-land-cover \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideOverviewDistance 28000 -airsideOverviewPitch 35
 
+# Pitch low and pull back so authored sky corridors cross the frame (ADR 0195).
+# The 2026-09-30 matrix used pitch 28 / 3.2 km and only showed the field, so
+# overflights / double-inbound could not be judged from that still.
 capture overview-night-sky-traffic \
   -airsideReviewView overview \
   -airsideReviewWeather clear -airsideReviewTime 23:30 \
-  -airsideOverviewDistance 3200 -airsideOverviewPitch 28
+  -airsideOverviewDistance 9000 -airsideOverviewPitch 12 -airsideOverviewYaw 210
 
 # --- Terminal / hangar bookmarks (ADR 0185–0188, 0197) ---
 capture terminal-airside-day \

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Re-capture only the stills that still block P0 sign-off after #490:
-#   - overview-night-sky-traffic (framing fix: 9 km / pitch 12 / yaw 210)
+#   - overview-night-sky-traffic (framing: 11 km / pitch 8 / yaw 270 — early-soak corridor)
 #   - follow-jet-day / follow-jet-close (auto-landing, ~360s live — reach Landing)
 #   - follow-jet-takeoff (auto-takeoff for tyre rotation)
 #   - follow-storm-landing (auto-landing under storm — ADR 0190 still evidence)
@@ -63,10 +63,12 @@ capture() {
   FOLLOW=""
 }
 
-capture overview-night-sky-traffic \
+# Shallow pitch + longer range so cruise corridors fill the upper frame (ADR 0195).
+# Lighting is 23:30; SkyTraffic still follows soak sim time (drawable from ~T+30s).
+CAPTURE_DELAY=45 CAPTURE_TIMEOUT=120 capture overview-night-sky-traffic \
   -airsideReviewView overview \
   -airsideReviewWeather clear -airsideReviewTime 23:30 \
-  -airsideOverviewDistance 9000 -airsideOverviewPitch 12 -airsideOverviewYaw 210
+  -airsideOverviewDistance 11000 -airsideOverviewPitch 8 -airsideOverviewYaw 270
 
 # Opening inbound holds ~3 min then lands; wait for FleetState.Landing (tyre/flare).
 FOLLOW=auto-landing

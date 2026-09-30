@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 night-sky framing aims at cruise corridors.** Remaining captures use 11 km /
+  pitch 8 / yaw 270 with a 45s delay; `SkyTrafficTests` locks drawable traffic in
+  that early-soak window. No simulation or save changes.
+
 - **P0 remaining one-command Mac runner.** `scripts/run-post-audit-p0-remaining.sh`
   pulls the tip, builds, runs remaining stills, and copies PNGs into the RESULTS
   folder for verdict fill-in. No simulation or save changes.

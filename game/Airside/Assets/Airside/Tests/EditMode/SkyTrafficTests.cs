@@ -233,5 +233,47 @@ namespace Airside.Tests
             Assert.That(jetY, Is.GreaterThan(rexY + 40));
             Assert.That(heavyY, Is.GreaterThan(jetY + 40));
         }
+
+        [Test]
+        public void NightSkyReviewWindow_HasDrawableCruiseTrafficEarlyInSoak()
+        {
+            // Packaged night-sky stills use -airsideReviewTime for lighting only; SkyTraffic
+            // follows the soak sim clock from T+0. Capture delay is ~45s live — there must
+            // already be drawable cruise traffic, not an empty sky waiting for a bank hour.
+            foreach (var t in new[] { 30.0, 120.0, 300.0 })
+            {
+                var drawn = 0;
+                foreach (var flight in SkyTraffic.At(t))
+                {
+                    if (SkyTraffic.TryWorldPosition(flight, out _, out var y, out _) && y > 80.0)
+                        drawn++;
+                }
+
+                Assert.That(drawn, Is.GreaterThan(0),
+                    $"t={t:0}s should already show drawable cruise overflights for the night-sky still");
+            }
+        }
+
+        [Test]
+        public void NightSkyReviewYaw_FacesADrawableOverflightSector()
+        {
+            // scripts/review-post-audit-p0*.sh use yaw 270 / pitch 8 / 11 km. Early soak
+            // has QF1531 west of the field (~bearing 270 at T+45s).
+            const double reviewYaw = 270.0;
+            var t = 45.0;
+            var bestDelta = 180.0;
+            foreach (var flight in SkyTraffic.At(t))
+            {
+                if (!SkyTraffic.TryWorldPosition(flight, out var x, out var y, out var z) || y <= 80.0)
+                    continue;
+                var bearing = (Math.Atan2(x, z) * 180.0 / Math.PI + 360.0) % 360.0;
+                var delta = Math.Abs(((bearing - reviewYaw + 540.0) % 360.0) - 180.0);
+                if (delta < bestDelta)
+                    bestDelta = delta;
+            }
+
+            Assert.That(bestDelta, Is.LessThanOrEqualTo(20.0),
+                "review yaw 270 should face the early-soak drawable overflight");
+        }
     }
 }

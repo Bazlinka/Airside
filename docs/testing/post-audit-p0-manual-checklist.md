@@ -28,7 +28,7 @@ scripts/capture-game.sh \
   --delay 35 --timeout 120 -- \
   -airsideReviewView overview \
   -airsideReviewWeather clear -airsideReviewTime 23:30 \
-  -airsideOverviewDistance 9000 -airsideOverviewPitch 12 -airsideOverviewYaw 210
+  -airsideOverviewDistance 11000 -airsideOverviewPitch 8 -airsideOverviewYaw 270
 ```
 
 Judge: do overflights **cruise** (not crawl)? Is a fleet inbound drawn once on final?

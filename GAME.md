@@ -1,12 +1,12 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491 tip `0ce66379`).**
+- **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
   Packaged: `auto-landing` / `auto-takeoff` / freighter / hangar / boarding / human-ops close.
-  Auto-landing/takeoff **re-rank every frame** to Landing/TakingOff; capture delay ~360s.
-  One-command: `scripts/run-post-audit-p0-remaining.sh` (+ `AIRSIDE_P0_ONLY=`). Tip headless CI green; PR mergeable.
-  **Mac worker ONLINE** (`Bailey's MacBook Pro`, idle). Cloud Task / computerUse cannot pin from this VM —
-  agents UI → environment → that machine name → checkout this tip.
-  Remaining RESULTS inventory + all manual rows still unverified.
+  Auto-landing re-ranks to Landing (~360s). Night-sky: 11 km / pitch 8 / yaw 270 (~45s).
+  One-command: `scripts/run-post-audit-p0-remaining.sh`. Tip CI green; PR mergeable.
+  **Two Mac workers ONLINE** on Bailey's MacBook Pro — prefer `~/Code/Airside` checkout.
+  Cloud Task/`env.machine` still cannot pin (`privateWorkerId` null) — use agents UI machine name.
+  Remaining RESULTS + manual rows unverified.
   **NEXT:** UI-pin Mac → `scripts/run-post-audit-p0-remaining.sh` → fill RESULTS.
   Freight AI stays parked. Do not invent RESULTS.
 

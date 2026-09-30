@@ -14,6 +14,14 @@ namespace Airside.Presentation
         private int _channels;
         private int _rate;
         private volatile bool _recording;
+        private volatile bool _deviceChanged;
+
+        private void OnEnable() => AudioSettings.OnAudioConfigurationChanged += DeviceChanged;
+        private void OnDisable() => AudioSettings.OnAudioConfigurationChanged -= DeviceChanged;
+        private void DeviceChanged(bool changed)
+        {
+            if (_recording) _deviceChanged = true;
+        }
 
         public void Begin(float seconds)
         {
@@ -23,6 +31,7 @@ namespace Airside.Presentation
                 _rate = AudioSettings.outputSampleRate;
                 _samples = new float[(int)(seconds * _rate) * 8];
                 _count = 0;
+                _deviceChanged = false;
                 _channels = 0;
                 _recording = true;
             }
@@ -46,6 +55,11 @@ namespace Airside.Presentation
             _recording = false;
             lock (_gate)
             {
+                if (_deviceChanged)
+                {
+                    Debug.LogError("[Aircraft audio] rejected capture: audio device changed during " + path);
+                    return false;
+                }
                 if (_count == 0 || _channels == 0)
                 {
                     Debug.LogError("[Aircraft audio] no listener samples captured: " + path);

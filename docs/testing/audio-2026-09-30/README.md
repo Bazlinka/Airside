@@ -56,3 +56,14 @@ two known Assume inconclusives. Headless 1102 passed, zero failures.
 Generator byte check (41 clips / 13 profiles), generated harness check and
 Unity asset audit (1522 GUIDs, 347 mirrors, 70 character materials) passed.
 The final combined main-plus-audio branch is checked again before packaging.
+
+Integrated main-plus-audio checks: Unity 1476 passed / 1478 total, zero failures,
+two known Assume inconclusives. Headless 1105 passed, zero failures. GitHub CI
+passed. Clean source build 03b2db6a succeeded.
+
+The first mixer attempt was rejected: capture in Awake missed the first 2.10 s
+of player initialisation, and macOS changed audio devices mid-run. The review
+now starts on its first Update and rejects an audio-configuration change during
+capture. The audit rejects duration loss and silent 100 ms gaps during running
+engines. The same full Unity result passed again after these diagnostic fixes.
+Final rebuilt-player recordings follow below.

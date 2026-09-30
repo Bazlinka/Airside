@@ -60,7 +60,8 @@ namespace Airside.Presentation
             cameraHost.AddComponent<AudioListener>();
             review._recorder = cameraHost.AddComponent<AircraftAudioRecorder>();
             Debug.Log("[Aircraft audio] packaged review " + BuildIdentityReader.Current.FullLabel);
-            review.BeginType();
+            // The first Update follows graphics/audio device initialisation. Starting
+            // in Awake loses the first seconds from the listener capture.
             return true;
         }
 
@@ -79,6 +80,7 @@ namespace Airside.Presentation
 
         private void Update()
         {
+            if (_voice == null) BeginType();
             var t = Time.unscaledTime - _started;
             if (t >= SecondsPerType)
             {

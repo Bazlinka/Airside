@@ -8,9 +8,9 @@
     Authored/live sky traffic shares the same engine presentation. The parked Bell 412 remains silent.
   - The new tyre source is CC0 and registered with retained source evidence; 41 derived clips and 13 profiles
     regenerate with a byte check. Existing recordings stay unchanged. Simulation, saves and schedules are unchanged.
-  - **Checks:** generator and Unity asset audits pass. Final Unity/headless results and packaged evidence are
-    recorded in `docs/testing/audio-2026-09-30/README.md`.
-  - **NEXT:** build this tested branch, capture all 13 types with `scripts/audio/capture_aircraft_audio.sh`, run
+  - **Checks:** Unity 1476/1478, zero failures and two known inconclusives; headless 1105/1105. Generator,
+    harness and Unity asset audits pass. Final packaged evidence is recorded in `docs/testing/audio-2026-09-30/README.md`.
+  - **NEXT:** rebuild this tested branch after the capture warm-up/device-change guard, then capture all 13 types with `scripts/audio/capture_aircraft_audio.sh`, run
     the numerical listening audit and a normal game smoke check, then push the evidence and open the PR.
     Bailey's listening judgement establishes perceived realism; these remain family-derived voices rather than
     exact recordings of each engine variant. Other tools' storm-landing work is excluded in a separate worktree.

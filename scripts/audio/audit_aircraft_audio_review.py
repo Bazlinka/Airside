@@ -34,17 +34,22 @@ def main():
         peak = float(np.max(abs(samples)))
         seconds = len(samples) / rate
         idle, takeoff, flare, reverse = rms(4.5, 5.8), rms(10.7, 12.2), rms(17, 17.4), rms(19, 20.5)
+        assert 27.8 < seconds < 28.3, (ident, 'duration or DSP dropout', seconds)
         quiet = float(np.max(abs(samples[int(27.4 * rate):])))
-        assert 27.5 < seconds < 29.5, (ident, 'duration', seconds)
         assert 0.005 < peak < 0.98, (ident, 'silent or clipped', peak)
         assert takeoff > idle * 1.8, (ident, 'no convincing takeoff rise', idle, takeoff)
         assert reverse > flare * 1.25, (ident, 'no reverse build', flare, reverse)
         assert quiet < 0.0005, (ident, 'mute leak', quiet)
+        block = rate // 10
+        continuous = samples[rate:24 * rate]
+        continuous = continuous[:len(continuous) // block * block].reshape(-1, block, channels)
+        minimum_rms = float(np.min(np.sqrt(np.mean(continuous * continuous, axis=(1, 2)))))
+        assert minimum_rms > 0.0001, (ident, 'silent DSP dropout during running engines', minimum_rms)
         report.append(dict(type=ident, seconds=round(seconds, 3), channels=channels,
                            peak=round(peak, 5), idle_rms=round(idle, 6),
                            takeoff_rms=round(takeoff, 6), reverse_rms=round(reverse, 6),
                            takeoff_over_idle=round(takeoff / idle, 2),
-                           mute_peak=round(quiet, 6), sha256=hashlib.sha256(path.read_bytes()).hexdigest()))
+                           mute_peak=round(quiet, 6), minimum_running_rms=round(minimum_rms, 6), sha256=hashlib.sha256(path.read_bytes()).hexdigest()))
     assert len({r['sha256'] for r in report}) == len(ids), 'identical voices'
     text = json.dumps(report, indent=2) + '\n'
     (args.directory / 'measurements.json').write_text(text)

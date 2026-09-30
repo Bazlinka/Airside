@@ -99,8 +99,12 @@ namespace Airside.Presentation
         private bool _reviewFollowStarted;
         private string _reviewAircraftId;
         private string _reviewAutoFollowId;
+        private bool _reviewFreighterRequired;
+        private bool _reviewHangarRequired;
+        private bool _reviewBoardingRequired;
         private bool _reviewFreighterHold;
         private bool _reviewHangarHold;
+        private bool _reviewBoardingApplied;
 
         private void OpenReviewPanel(string[] args)
         {
@@ -288,6 +292,7 @@ namespace Airside.Presentation
             var suggestDelay = preBoard + DeparturePrep.BoardingSecondsFor(best.Type, best.BaseLevel) / 2;
             if (string.IsNullOrEmpty(_reviewAircraftId))
                 _reviewAircraftId = best.Registration;
+            _reviewBoardingApplied = true;
             Debug.Log($"{SoakLogTag} review boarding {best.Registration} departs in {lead}s; " +
                       $"suggest -airsideReviewDelay {suggestDelay}");
         }
@@ -375,6 +380,27 @@ namespace Airside.Presentation
                 return;
             }
 
+            if (_reviewFreighterRequired && !_reviewFreighterHold)
+            {
+                Debug.LogError($"{SoakLogTag} review shot aborted — freighter refit never applied (no PNG)");
+                Application.Quit();
+                return;
+            }
+
+            if (_reviewHangarRequired && !_reviewHangarHold)
+            {
+                Debug.LogError($"{SoakLogTag} review shot aborted — hangar check never started (no PNG)");
+                Application.Quit();
+                return;
+            }
+
+            if (_reviewBoardingRequired && !_reviewBoardingApplied)
+            {
+                Debug.LogError($"{SoakLogTag} review shot aborted — boarding booking never applied (no PNG)");
+                Application.Quit();
+                return;
+            }
+
             ApplyReviewShotPresentation(entry);
             _reviewCaptureInFlight = true;
             StartCoroutine(CaptureReviewShot(entry.Path));
@@ -429,11 +455,20 @@ namespace Airside.Presentation
                 _reviewAircraftId = followIndex >= 0 && followIndex + 1 < args.Length
                     ? args[followIndex + 1] : null;
                 if (Array.IndexOf(args, ReviewFreighterFlag) >= 0)
+                {
+                    _reviewFreighterRequired = true;
                     TryApplyReviewFreighter();
+                }
                 if (Array.IndexOf(args, ReviewHangarCheckFlag) >= 0)
+                {
+                    _reviewHangarRequired = true;
                     TryApplyReviewHangarCheck();
+                }
                 if (Array.IndexOf(args, ReviewBoardingFlag) >= 0)
+                {
+                    _reviewBoardingRequired = true;
                     TryApplyReviewBoarding();
+                }
                 OpenReviewPanel(args);
             }
             if (_soakMainThreadRecorder.Valid && _soakRenderThreadRecorder.Valid)

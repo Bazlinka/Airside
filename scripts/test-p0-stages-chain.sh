@@ -55,8 +55,12 @@ grep -Fq 'Code/Airside' "$command_wrapper" || {
   echo ".command wrapper must target ~/Code/Airside" >&2
   exit 1
 }
+grep -Fq 'p0-checkout-mac-tip.sh' "$command_wrapper" || {
+  echo ".command wrapper must checkout via p0-checkout-mac-tip.sh" >&2
+  exit 1
+}
 
-# Short Stage A Finder path (night-sky + freighter) for when ~35 min is too much.
+# Short Stage A Finder path (night-sky + freighter) for when ~45 min is too much.
 stage_a_wrapper="$root/scripts/run-post-audit-p0-stage-a.command"
 test -x "$stage_a_wrapper" || { echo "missing executable $stage_a_wrapper" >&2; exit 1; }
 grep -Fq 'run-post-audit-p0-remaining.sh' "$stage_a_wrapper" || {
@@ -69,6 +73,25 @@ grep -Fq 'overview-night-sky-traffic,follow-freighter' "$stage_a_wrapper" || {
 }
 grep -Fq 'Code/Airside' "$stage_a_wrapper" || {
   echo "Stage A .command must target ~/Code/Airside" >&2
+  exit 1
+}
+grep -Fq 'p0-checkout-mac-tip.sh' "$stage_a_wrapper" || {
+  echo "Stage A .command must checkout via p0-checkout-mac-tip.sh" >&2
+  exit 1
+}
+
+checkout="$root/scripts/p0-checkout-mac-tip.sh"
+test -x "$checkout" || { echo "missing executable $checkout" >&2; exit 1; }
+grep -Fq 'AIRSIDE_P0_BRANCH' "$checkout" || {
+  echo "checkout helper must honour AIRSIDE_P0_BRANCH" >&2
+  exit 1
+}
+grep -Fq 'cursor/p0-auto-landing-follow-709e' "$checkout" || {
+  echo "checkout helper must default to #491 tip branch" >&2
+  exit 1
+}
+grep -Fq 'origin main' "$checkout" || {
+  echo "checkout helper must fall back to main after tip merge" >&2
   exit 1
 }
 

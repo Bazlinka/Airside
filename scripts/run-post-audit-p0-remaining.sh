@@ -123,7 +123,7 @@ follow_fail=0
       else
         log_status="clean"
       fi
-      # Auto follow stills must log a successful follow pick (fail closed vs blind overview).
+      # Review stills must log a successful apply/follow (fail closed vs blind overview).
       # Multi-shot batches share capture-game's first --shot logFile, so scan siblings too.
       case "$base" in
         follow-jet-takeoff)
@@ -142,6 +142,32 @@ follow_fail=0
             fi
           done
           if [ "$found_follow" -eq 0 ]; then
+            log_status="errors"
+            follow_fail=1
+          fi
+          ;;
+        follow-freighter)
+          if ! grep -Eq '\[Airside soak\] review freighter ' "$logf"; then
+            log_status="errors"
+            follow_fail=1
+          fi
+          ;;
+        follow-hangar-tow)
+          if ! grep -Eq '\[Airside soak\] review hangar check ' "$logf"; then
+            log_status="errors"
+            follow_fail=1
+          fi
+          ;;
+        follow-boarding-tape|follow-human-ops-close)
+          found_board=0
+          for alt in follow-boarding-tape follow-human-ops-close; do
+            if [ -f "$capture_out/$alt.log" ] \
+              && grep -Eq '\[Airside soak\] review boarding ' "$capture_out/$alt.log"; then
+              found_board=1
+              break
+            fi
+          done
+          if [ "$found_board" -eq 0 ]; then
             log_status="errors"
             follow_fail=1
           fi

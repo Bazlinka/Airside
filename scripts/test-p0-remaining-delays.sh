@@ -90,4 +90,18 @@ grep -Fq 'strings' "$runner" || {
 }
 echo "ok multi-shot player preflight"
 
+grep -Fq 'review freighter ' "$runner" || {
+  echo "inventory must hard-fail missing review freighter log" >&2
+  exit 1
+}
+grep -Fq 'review hangar check ' "$runner" || {
+  echo "inventory must hard-fail missing review hangar check log" >&2
+  exit 1
+}
+grep -Fq 'review boarding ' "$runner" || {
+  echo "inventory must hard-fail missing review boarding log" >&2
+  exit 1
+}
+echo "ok review-flag inventory fail-closed"
+
 echo "P0 remaining delay locks passed"

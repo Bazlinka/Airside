@@ -99,6 +99,29 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FreightAndFireStation_GetLowRoofsPlinthsAndLitWallPacks()
+        {
+            foreach (var building in AdelaideBuildings.All.Where(b => b.Kind is AdelaideBuildingKind.Freight or AdelaideBuildingKind.FireStation))
+            {
+                var set = BuildingDetail.For(building, 0f);
+                var (minX, maxX, minZ, maxZ) = Extent(building.Xz);
+                foreach (var roof in set.Roofs)
+                {
+                    Assert.That(roof.EaveY, Is.GreaterThan(building.HeightMetres), building.Id);
+                    Assert.That(roof.Rise, Is.LessThanOrEqualTo(4.2f * BuildingDetail.RoofRiseScale + 1e-3f), building.Id);
+                    Assert.That(BuildingDetail.Contains(building.Xz, roof.X, roof.Z), Is.True, building.Id);
+                    Assert.That(set.Boxes.Count(b => b.Part == BuildingPart.Plant), Is.Zero,
+                        $"{building.Id} has plant poking through its roof");
+                }
+
+                var plinths = set.Boxes.Where(b => b.Part == BuildingPart.Trim && Math.Abs(b.Height - 0.5f) < 1e-4f
+                                                                          && Math.Abs(b.Y - 0.25f) < 1e-4f).ToList();
+                Assert.That(plinths.Count, Is.GreaterThanOrEqualTo(building.Xz.Length / 2 - 2), building.Id);
+                Assert.That(set.Boxes.Count(b => b.Part == BuildingPart.WindowLit && b.Length < 0.6f), Is.GreaterThan(0), building.Id);
+            }
+        }
+
+        [Test]
         public void Tower_HasAGlassCabAboveItsShaftAndALitMast()
         {
             var tower = Of(AdelaideBuildingKind.ControlTower);

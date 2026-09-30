@@ -174,21 +174,27 @@ namespace Airside.Presentation
             {
                 case AdelaideBuildingKind.Hangar:
                     AddHangarDoor(set, xz, front, baseY, height);
-                    AddHangarRoof(set, xz, baseY + height, building.Id);
+                    AddHangarRoof(set, xz, baseY + height, building.Id, 1f);
                     AddWindowBands(set, xz, baseY, 1, random, skipEdge: front);
                     break;
                 case AdelaideBuildingKind.FireStation:
                     AddApplianceBays(set, xz, front, baseY, height);
                     AddWindowBands(set, xz, baseY, Storeys(height), random, skipEdge: front);
-                    AddRoofPlant(set, xz, baseY + height, random);
+                    AddPlinth(set, xz, baseY);
+                    // A low-pitched roof cap; plant only when the footprint cannot carry one.
+                    if (!AddHangarRoof(set, xz, baseY + height, building.Id, RoofRiseScale))
+                        AddRoofPlant(set, xz, baseY + height, random);
                     break;
                 case AdelaideBuildingKind.Freight:
                     AddLoadingDoors(set, xz, front, baseY, height);
                     AddWindowBands(set, xz, baseY, 1, random, skipEdge: front);
-                    AddRoofPlant(set, xz, baseY + height, random);
+                    AddPlinth(set, xz, baseY);
+                    if (!AddHangarRoof(set, xz, baseY + height, building.Id, RoofRiseScale))
+                        AddRoofPlant(set, xz, baseY + height, random);
                     break;
                 default:
                     AddWindowBands(set, xz, baseY, Storeys(height), random, skipEdge: -1);
+                    AddPlinth(set, xz, baseY);
                     AddRoofPlant(set, xz, baseY + height, random);
                     break;
             }
@@ -452,6 +458,8 @@ namespace Airside.Presentation
             set.Boxes.Add(OnWall(BuildingPart.Trim, edge, 0.5f, width + 1.2f, baseY + doorHeight + 0.4f, 0.8f, 0.5f,
                 outward: 0.25f));
             set.Boxes.Add(OnWall(BuildingPart.Trim, edge, 0.5f, width + 1.2f, baseY + 0.06f, 0.12f, 0.8f, outward: 0.4f));
+            for (var side = -1; side <= 1; side += 2)
+                AddWallPack(set, edge, 0.5f + side * (width * 0.5f + 0.9f) / edge.Length, doorHeight, baseY);
         }
 
         private static void AddApplianceBays(BuildingDetailSet set, float[] xz, int front, float baseY, float height)
@@ -473,6 +481,7 @@ namespace Airside.Presentation
                 for (var s = 1; s <= 3; s++)
                     set.Boxes.Add(OnWall(BuildingPart.Trim, edge, t, Math.Min(4.6f, pitch - 1.2f), baseY + doorHeight * s / 4f,
                         0.08f, 0.22f, outward: 0.12f));
+                AddWallPack(set, edge, t, doorHeight, baseY);
             }
 
             set.Boxes.Add(OnWall(BuildingPart.Trim, edge, 0.5f, edge.Length * 0.9f, baseY + doorHeight + 0.35f, 0.5f, 0.4f,
@@ -493,6 +502,12 @@ namespace Airside.Presentation
                     outward: 0.07f));
                 set.Boxes.Add(OnWall(BuildingPart.Trim, edge, t, 4.2f, baseY + doorHeight + 0.25f, 0.35f, 0.9f,
                     outward: 0.45f));
+                AddWallPack(set, edge, t, doorHeight - 0.3f, baseY);
+                // Dock bumpers either side of the leaf and a kerb bollard in front.
+                for (var side = -1; side <= 1; side += 2)
+                    set.Boxes.Add(OnWall(BuildingPart.Trim, edge, t + side * 2.0f / edge.Length, 0.3f, baseY + 1.1f, 0.5f, 0.3f,
+                        outward: 0.2f));
+                set.Boxes.Add(OnWall(BuildingPart.Trim, edge, t, 0.24f, baseY + 0.55f, 1.1f, 0.24f, outward: 2.4f));
             }
         }
 
@@ -501,7 +516,7 @@ namespace Airside.Presentation
         /// OSM prism. The profile is stable per building, while the cap is progressively inset
         /// until all four corners are supported by the surveyed footprint.
         /// </summary>
-        private static void AddHangarRoof(BuildingDetailSet set, float[] xz, float roofY, string id)
+        private static bool AddHangarRoof(BuildingDetailSet set, float[] xz, float roofY, string id, float riseScale)
         {
             var box = OrientedBounds(xz);
             var length = box.Length * 0.94f;
@@ -538,7 +553,7 @@ namespace Airside.Presentation
                 }
                 if (length < 6f || width < 3.2f
                     || !BoxInside(xz, roofX, roofZ, roofDirX, roofDirZ, length, width, 0.1f))
-                    return;
+                    return false;
             }
 
             var selector = StableSelector(id);
@@ -548,12 +563,12 @@ namespace Airside.Presentation
                 1 => HangarRoofProfile.Barrel,
                 _ => HangarRoofProfile.Sawtooth
             };
-            var rise = profile switch
+            var rise = riseScale * (profile switch
             {
                 HangarRoofProfile.Gable => Math.Min(4.2f, width * 0.18f),
                 HangarRoofProfile.Barrel => Math.Min(3.4f, width * 0.15f),
                 _ => Math.Min(2.8f, width * 0.12f)
-            };
+            });
             set.Roofs.Add(new DetailRoof(profile, roofX, roofZ, length, width, roofY + 0.08f, rise,
                 roofDirX, roofDirZ));
 
@@ -574,6 +589,30 @@ namespace Airside.Presentation
                 set.Boxes.Add(new DetailBox(BuildingPart.WindowDark, roofX, roofY + rise * 0.72f, roofZ,
                     length * 0.82f, Math.Max(0.55f, rise * 0.32f), 0.24f, roofDirX, roofDirZ));
             }
+            return true;
+        }
+
+        /// <summary>Freight sheds and the fire station take a shallower roof than a hangar.</summary>
+        public const float RoofRiseScale = 0.55f;
+
+        /// <summary>A low concrete plinth round the base of a wall so blocks do not meet the apron in a hard line.</summary>
+        private static void AddPlinth(BuildingDetailSet set, float[] xz, float baseY)
+        {
+            var count = xz.Length / 2;
+            var winding = Winding(xz);
+            for (var i = 0; i < count; i++)
+            {
+                var edge = Edge(xz, i, winding);
+                if (edge.Length < 3f)
+                    continue;
+                set.Boxes.Add(OnWall(BuildingPart.Trim, edge, 0.5f, edge.Length, baseY + 0.25f, 0.5f, 0.14f, outward: 0.05f));
+            }
+        }
+
+        /// <summary>A lit wall pack over a door, so doors read at night as well as by day.</summary>
+        private static void AddWallPack(BuildingDetailSet set, WallEdge edge, float t, float doorTop, float baseY)
+        {
+            set.Boxes.Add(OnWall(BuildingPart.WindowLit, edge, t, 0.55f, baseY + doorTop + 1.15f, 0.22f, 0.2f, outward: 0.3f));
         }
 
         private static int StableSelector(string value)

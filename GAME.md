@@ -1,5 +1,13 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Claude — airside building detail, Phase 3d slice (branch `visual-overhaul-ground`, ADR 0199).**
+  Shaped roofs on freight/fire station, plinths, lit wall packs, dock bumpers. Headless suite run here with a local
+  .NET 8 (`/opt/dotnet`). **Not verified:** how it renders — needs a Mac capture. **NEXT:** Phase 0 baseline, Phase 1 ground.
+
+- **2026-09-30 Claude — visual overhaul plan + building audit (branch `plan-visual-overhaul`, ADR 0198).**
+  Plan in `docs/plans/visual-overhaul-plan.md` with Bailey-delegated decisions. **NEXT:** on a Mac, run Phase 0
+  (captures + frame-time baseline), then Phase 1 (ground/land). Audit shows 71/78 building heights are defaults.
+
 - **2026-09-30 Claude — Terminal 1 doors and detail (branch `claude/terminal-doors-detail`, ADR 0197).**
   Gate-lounge doors per aerobridge, apron staff doors, landside entrance banks, joints/downpipes (presentation only).
   Tests added in `AdelaideTerminalArchitectureTests`; **not run** (no Unity/.NET here) — run `scripts/test-unity.sh`,

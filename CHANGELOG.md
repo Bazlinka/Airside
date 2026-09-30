@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Airside buildings look finished.** Freight sheds and the fire station get a shallow shaped roof (instead of a flat
+  box with plant), every support/freight/fire building gets a base plinth, and doors get lit wall packs so they read at
+  night; freight docks gain bumpers and bollards. Presentation only. ADR 0199.
+
+- **Visual overhaul plan and building audit.** `docs/plans/visual-overhaul-plan.md` sets the phases and decisions;
+  `scripts/audit-ypad-buildings.py` writes `docs/data/ypad-buildings-audit.md` (7 of 78 heights sourced, 71 defaults).
+  ADR 0198. No game behaviour changed.
+
 - **Terminal 1 doors and facade detail.** Gate-lounge doors at every aerobridge rotunda, apron-level staff doors along
   the airside wall, landside sliding-door entrance banks with sidelights, bollards and sign fascia, plus expansion joints
   and downpipes. Gate doors follow the surveyed gate data; landside/staff door placement is approximate. ADR 0197.

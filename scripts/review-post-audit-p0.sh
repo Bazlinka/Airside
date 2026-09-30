@@ -117,6 +117,8 @@ if command -v rg >/dev/null 2>&1; then
 fi
 
 results="$shots/RESULTS.md"
+docs_stamp="$root/docs/testing/post-audit-p0-$stamp"
+mkdir -p "$docs_stamp"
 if [ ! -f "$results" ]; then
   cp "$root/docs/testing/post-audit-p0-playtest.md" "$results"
   if command -v sed >/dev/null 2>&1; then
@@ -124,14 +126,28 @@ if [ ! -f "$results" ]; then
       || sed -i '' "s|work/captures/post-audit-p0-<date>|$shots|" "$results"
     rm -f "$results.bak"
   fi
+  {
+    echo
+    echo "## Capture run"
+    echo
+    echo "- Date stamp: \`$stamp\`"
+    echo "- Shots directory: \`$shots\`"
+    echo "- Branch tip: \`$(git -C "$root" rev-parse --short HEAD 2>/dev/null || echo unknown)\`"
+    echo "- Code-only evidence (do not treat as visual keep): \`docs/testing/post-audit-p0-2026-09-30/CODE_EVIDENCE.md\`"
+    echo
+    echo "Copy this file to \`$docs_stamp/RESULTS.md\` after filling verdicts, then push"
+    echo "branch \`cursor/post-audit-p0-results-709e\`."
+  } >> "$results"
 fi
+cp "$results" "$docs_stamp/RESULTS.md"
 
 echo "P0 captures and logs: $shots"
 echo "Fill keep/fix/revert in: $results"
+echo "Docs copy (for git): $docs_stamp/RESULTS.md"
 echo
 echo "Still manual (not automated by this script):"
 echo "  - Listen to aircraft audio at overview + follow (ADR 0192/0196)"
 echo "  - Refit a freighter and check cargo livery + tyre pivot (ADR 0194)"
-echo "  - Arrival already on final during a storm lands (ADR 0190)"
+echo "  - Arrival already on final during a storm lands (ADR 0190) — code covered; still see it"
 echo "  - Hangar tow / boarding tape during a live check (ADR 0186–0188, 0196)"
 echo "  - Follow-camera feel while turning / climbing (ADR 0189)"

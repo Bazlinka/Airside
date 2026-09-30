@@ -22,16 +22,24 @@ scripts/review-post-audit-p0.sh
 
 ### Option B — Cursor agent *on* the Mac worker (recommended)
 
-Cloud Task subagents from a Linux cloud run **cannot** target My Machines
-(`privateWorkerId` is ignored; use `CreateAgent`/`machine.worker_id` or the UI).
-Start the run on the Mac:
+Cloud `Task` subagents from a Linux cloud run **cannot** pin My Machines
+(schema only allows `same_machine` | `new_cloud_vm`). Placement that works:
 
-1. Keep `agent worker start --name "Bailey's MacBook Pro"` running in `~/Code/Airside`.
+- UI: environment dropdown → **Bailey's MacBook Pro**
+- `CreateAgent` with `machine: { "type": "self_hosted_worker", "worker_id": "<id>" }`
+  (team **Remote Control** must be on; list ids via `list-self-hosted-workers`)
+- API v1: `env: { "type": "machine", "name": "Bailey's MacBook Pro" }`
+
+One-paste prompt: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
+
+1. Keep `agent worker start --name "Bailey's MacBook Pro"` running in `~/Code/Airside`
+   (or the Codex checkout).
 2. Open [cursor.com/agents](https://cursor.com/agents) → environment dropdown →
    **Bailey's MacBook Pro** (not the default cloud VM).
-3. Prompt: run this checklist — build, `scripts/review-post-audit-p0.sh`, fill
-   keep/fix/revert, commit `docs/testing/post-audit-p0-2026-09-30/RESULTS.md` +
-   GAME.md handoff, push `cursor/post-audit-p0-results-709e`.
+3. Paste the prompt from `post-audit-p0-mac-agent-prompt.md` — build,
+   `scripts/review-post-audit-p0.sh`, fill keep/fix/revert, commit
+   `docs/testing/post-audit-p0-2026-09-30/RESULTS.md` + GAME.md handoff, push
+   `cursor/post-audit-p0-results-709e`.
 
 Captures land in `work/captures/post-audit-p0-<date>/` with a copy of this checklist
 as `RESULTS.md`. Also useful:

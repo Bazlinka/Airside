@@ -17,7 +17,8 @@ Headless suite after Phase 0 merge: **1136/1136** (`scripts/test-domain.sh`).
 | Hangar bay capacity / tow path | `HangarBaysTests`, `HangarTowTests` | **keep** (logic); Bailey must still *see* tow |
 | Far zoom fog scale / max orbit | `CameraFeelTests` (`MaxOrbitDistance`, fog scale) | **keep** (math); Bailey must still *see* land cover |
 | Storm ground-stop for departures | `HoldReasonTests.Storm_IsAGroundStop` | **keep** (departures held) |
-| Arrival clearance / holding-for-landing → landing | `ArrivalClearanceTests`, `TowerAndStandChoiceTests` | **partial** — confirm ADR 0190 “already on final lands in storm” with a dedicated case if missing |
+| Arrival already on final lands in storm; inbound held until storm ends | `RunwayWeatherTests.Storm_LetsAnArrivalAlreadyOnFinalLandAndHoldsTheDeparture`, `Storm_HoldsAnArrivalThatHasNotReachedFinal` | **keep** (logic); Bailey must still *see* a storm final |
+| Arrival clearance / holding-for-landing → landing | `ArrivalClearanceTests`, `TowerAndStandChoiceTests` | **keep** (clearance timing) |
 | Phase 0 camera bookmarks | `VisualBaselineViewsTests` | **keep** (table locked) |
 
 ## Needs Mac eyes / ears (cannot close from code)

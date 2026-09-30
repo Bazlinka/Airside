@@ -21,9 +21,12 @@ concentration / performance**, then finishing half-done product slices (freight)
 ### P0 — Mac packaged playtest of unverified merges (do first)
 
 **Status:** tooling ready; **blocked on a Mac** (Unity player + awake display). Cloud
-Linux cannot mark this complete. Self-hosted Mac workers are often online, but this
-cloud run’s Task tool does **not** place subagents on them (`privateWorkerId` stays
-null) — Bailey (or an agent started *on* the Mac worker) must run the script.
+Linux cannot mark this complete. Self-hosted Mac workers are often online and may
+show `eligibleForSubagent: true`, but `Task` only accepts `same_machine` |
+`new_cloud_vm` — it cannot take `machine.worker_id`. Pin the Mac with **CreateAgent**
+(`machine: { "type": "self_hosted_worker", "worker_id": "…" }`, team Remote Control
+on), the agents UI environment picker, or API v1 `env.type: "machine"`. One-paste
+prompt: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
 
 Many ADRs merged green on EditMode / headless but were never seen or heard in a
 rebuilt game. Attribute bugs before adding content.

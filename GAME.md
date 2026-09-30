@@ -1,25 +1,20 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Cursor — P0 RESULTS branch staged (branch `cursor/post-audit-p0-results-709e`, ADR 0203).**
+  Draft `docs/testing/post-audit-p0-2026-09-30/RESULTS.md` exists with **blank verdicts** + attached
+  CODE_EVIDENCE. Not Mac playtest completion. **NEXT:** on Mac, checkout this branch (or the plan
+  branch), build, `scripts/review-post-audit-p0.sh`, fill verdicts, push. Linux cannot pin My Machines
+  (`CreateAgent` missing; computerUse quota blocked). One-paste:
+  `docs/testing/post-audit-p0-mac-agent-prompt.md`.
+
 - **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0203).**
-  Full Domain / Simulation / Presentation / tests / product-plan audit. Standing backlog:
-  `docs/plans/post-audit-improvement-plan.md`. **Cloud goal is set to execute that plan** (P0→P1→P2→P3→P4).
-  Branch includes merged `main` (**#485** Phase 0 bookmarks ADR 0200; **#486** Phase 1 oil stains ADR 0201 +
-  apron wear ADR 0202). Headless after merge: **1144/1144**.
-  This cloud run is **iOS-started** and cannot pin My Machines (`CreateAgent` tool absent; `Task` only
-  `same_machine` | `new_cloud_vm`).
-  - **P0 (NEXT — Mac shell or Mac-picked agent):** Use UI picker / CreateAgent `machine.worker_id` /
-    API v1 machine name. One-paste prompt: `docs/testing/post-audit-p0-mac-agent-prompt.md`. On Mac:
-    checkout this branch, `scripts/build-mac.sh`, `scripts/review-post-audit-p0.sh`, fill keep/fix/revert,
-    push `cursor/post-audit-p0-results-709e`. Code-only map:
-    `docs/testing/post-audit-p0-2026-09-30/CODE_EVIDENCE.md`.
-  - **P1:** Bailey sign-off on visual overhaul still owed. Phase 0 Mac metrics still owed. Phase 1 oil
-    stains + apron wear **merged to main ahead of P0** — do not treat as P0 done; Mac P0 should now
-    eyeball those ground slices too.
-  - **P2:** Freight AI / cargo apron / freighter contracts **parked until P0** clears freighter+tyre rows.
-  - **P3:** `AirsidePrototype` builders/statics; lock weather/large-fleet fps; retire legacy full-airport when ready.
-  - **P4 only then:** second airport, companion, denser world. Do not start Companion/CloudKit or wages/fuel/loans yet.
-  - **Watch:** restore still hard-requires Adelaide; stale GAME.md footer / early PROJECT_PLAN “gaps” are not truth.
-  - **ADR numbering:** post-audit plan is **0203** (main took 0202 for apron surface wear).
+  Standing backlog: `docs/plans/post-audit-improvement-plan.md`. Cloud goal executes P0→P1→P2→P3→P4.
+  Includes merged `main` (#485 Phase 0, #486 Phase 1). Headless: **1144/1144**.
+  - **P0 (NEXT):** Mac fill of `cursor/post-audit-p0-results-709e` RESULTS (verdicts blank until then).
+  - **P1:** Bailey visual-overhaul sign-off + Phase 0 Mac metrics; Phase 1 ground already on tip — eyeball in P0.
+  - **P2:** Freight AI parked until P0 clears freighter+tyre rows.
+  - **P3 / P4:** after that; no Companion/CloudKit / wages/fuel/loans yet.
+  - **Watch:** Adelaide hard-require on restore; ADR post-audit is **0203**.
 
 - **2026-09-30 Cursor — Phase 1 apron surface wear (merged via #486, ADR 0202).**
   Seeded concrete patch repairs and drainage pits inside every apron outline. Presentation only.

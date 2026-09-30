@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Consolidate Airside onto main.** Retain the post-audit backlog, Mac review helpers and actual #490
+  capture results; retire stale branch-switching instructions and fix three malformed Unity metadata GUIDs.
+  Post-audit backlog ADR 0205; manual P0 playtest checks remain open. No simulation or save changes.
+
 - **Unique aircraft liveries and five player presets.** All thirteen flying types have distinct fin
   symbols and fitted fuselage ribbons. Choose Coastline, Southern Cross, Outback, Gulf or Redgum
   during setup or repaint from the Airline page; coordinated accent paint matches the swatches.

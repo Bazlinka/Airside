@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **P0 Stage B tolerates dirty RESULTS from Stage A.** The remaining runner
+  allows dirty paths only under `docs/testing/post-audit-p0-*/` so inventory /
+  PNG copies do not block the takeoff stage. Remaining delays stay CI-locked.
+  No simulation or save changes.
+
 - **P0 remaining delay CI lock uses grep.** `scripts/test-p0-remaining-delays.sh`
   checks freighter presence with `grep` so GitHub-hosted Ubuntu runners (no
   ripgrep) stay green. No simulation or save changes.

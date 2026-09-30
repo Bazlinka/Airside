@@ -76,9 +76,9 @@ Full Unity 1476/1478 passed again (zero failures, two known inconclusives).
 Integrated headless 1105/1105, generator byte check and asset/harness audits passed.
 
 The remaining exhaustive listening capture was deferred while completing
-Bailey's immediate merge instruction. Valid completed samples from the rebuilt
-player are measured in `partial-mixer-measurements.json`; this is partial audio
-evidence, not an all-13 listening sign-off. A normal-game smoke check and
+Bailey's immediate merge instruction. No rebuilt-player recording had been accepted at handoff. The initial
+recordings were rejected for warm-up/device continuity, so there is no all-13
+listening sign-off. A normal-game smoke check and
 Bailey's assessment of perceived realism remain pending. Raw captures and the
 app are retained in the audio worktree's ignored `work/audio-review/` and
 `work/builds/Airside.app`.

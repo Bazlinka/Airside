@@ -11,7 +11,7 @@
 - **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0203).**
   Standing backlog: `docs/plans/post-audit-improvement-plan.md`. Cloud goal executes P0→P1→P2→P3→P4.
   Includes merged `main` (#485 Phase 0, #486 Phase 1). Headless: **1144/1144**.
-  - **P0 (NEXT):** Mac fill of `cursor/post-audit-p0-results-709e` RESULTS (verdicts blank until then).
+  - **P0 (NEXT):** Mac fill of RESULTS on this plan tip (draft from #488 still blank).
   - **P1:** Bailey visual-overhaul sign-off + Phase 0 Mac metrics; Phase 1 ground already on tip — eyeball in P0.
   - **P2:** Freight AI parked until P0 clears freighter+tyre rows.
   - **P3 / P4:** after that; no Companion/CloudKit / wages/fuel/loans yet.

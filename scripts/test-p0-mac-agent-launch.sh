@@ -21,8 +21,16 @@ grep -Fq 'workOnCurrentBranch' "$launch" || {
   echo "launcher must set workOnCurrentBranch" >&2
   exit 1
 }
+grep -Fq 'run-post-audit-p0-stage-a.command' "$launch" || {
+  echo "launcher prompt must default to Stage A .command" >&2
+  exit 1
+}
 grep -Fq 'run-post-audit-p0-stages.sh' "$launch" || {
-  echo "launcher prompt must run stages wrapper" >&2
+  echo "launcher must still offer full stages via AIRSIDE_P0_LAUNCH_FULL" >&2
+  exit 1
+}
+grep -Fq 'worker_id' "$launch" || {
+  echo "launcher must support env.worker_id pin" >&2
   exit 1
 }
 grep -Fq 'CURSOR_API_KEY' "$launch" || {

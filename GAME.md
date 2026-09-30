@@ -12,9 +12,10 @@
   - The helicopter is static presentation with a procedural fallback; schedules, reservations, missions and saves
     are untouched. Current contract/type timing is recorded in ADR 0186 and the asset register.
   - **Checks:** AIR-017 generator check passed at 43 parts / 1,324 triangles / 13.90 × 16.97 × 4.45 m; latest Unity
-    EditMode 1441/1443, zero failures, two known `Assume` inconclusives. A stale Unity Bee cache was preserved under
-    ignored `work/bee-hung-20260930-0843`; a clean cache rebuild passed. Asset audit passed (1,465 GUIDs, 346 mirrored
-    runtime art files, 70 character materials). Clean Mac build `3294ed54` passed with `dirty=false`.
+    EditMode 1454/1456 after rebasing onto current `main`, zero failures, two known `Assume` inconclusives. A stale
+    Unity Bee cache was preserved under ignored `work/bee-hung-rebase-20260930`; the clean-cache rerun passed. Asset
+    audit passed (1,471 GUIDs, 346 mirrored runtime art files, 70 character materials). The pre-rebase feature build
+    `3294ed54` passed with `dirty=false`; the rebased source passed the full Unity suite.
   - **Packaged review:** inspected `work/captures/adelaide-helicopter-pad-{day,night}.png`,
     `adelaide-vehicle-classes-close-day.png` and `adelaide-signal-hardware-close-day.png`. Pad/rotor fit, day/night
     helicopter silhouette, five car classes and signal footing/arm/head/visors are visible; no exception/error match

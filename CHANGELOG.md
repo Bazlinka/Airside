@@ -21,17 +21,17 @@
   kerbside pole, mast arm, backing board, three distinct lamps and individual visors, with its night glow moved to
   the hanging head. Stop/give-way posts gained footings and backing plates, while sheltered bus stops gained end
   glazing and a supported bench. Road coordinates, markings and deterministic signal state are unchanged. Unity
-  EditMode 1441/1443, zero failures and two known inconclusives; packaged close visual review passed.
+  EditMode 1454/1456, zero failures and two known inconclusives; packaged close visual review passed.
 - **Parked cars now look like a real mixed car park.** Adelaide's existing deterministic bay layout now draws five
   distinct low-poly silhouettes — sedan, hatchback, SUV, ute and van — with class-specific rooflines, glasshouses,
   proportions and rear treatments. Occupancy, colours, positions and parking direction are unchanged, and the mesh
-  remains capped at 30 triangles per vehicle. Unity EditMode 1441/1443, zero failures and two known inconclusives;
+  remains capped at 30 triangles per vehicle. Unity EditMode 1454/1456, zero failures and two known inconclusives;
   packaged close visual review passed.
 - **Adelaide's rescue helicopter has its real home.** The mapped 37.9 m Helipad West now appears beside the SA
   Ambulance rescue/retrieval base with its perimeter, touchdown ring, H and edge lamps. A project-authored,
   unbranded Bell 412EP-class helicopter sits on it at published scale, with four main-rotor blades, twin engines,
   skids, glazing and rescue colour blocking; a procedural fallback preserves the silhouette if the asset is missing.
-  This is static presentation only and does not change fleet traffic, missions or saves. Unity EditMode 1441/1443,
+  This is static presentation only and does not change fleet traffic, missions or saves. Unity EditMode 1454/1456,
   zero failures and two precondition-based inconclusives; packaged day/night close visual review passed.
 - **Zoom out a lot further.** The camera now pulls back to 45 km (it was 4.5 km) so inbound aircraft can be watched
   from far out on the approach. The pan range, clip planes, fog and horizon fade scale with the zoom, and real

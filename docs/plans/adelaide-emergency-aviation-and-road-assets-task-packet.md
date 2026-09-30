@@ -90,11 +90,12 @@
 
 - AIR-017 generator check: 43 named parts, 1,324 triangles and a measured
   13.90 × 16.97 × 4.45 m envelope.
-- Unity EditMode: 1,443 total, 1,441 passed, zero failed and the two existing
-  precondition-based inconclusives.
-- Unity asset audit: 1,465 unique GUIDs, 346 mirrored runtime art files and 70
+- Unity EditMode after rebasing onto current `main`: 1,456 total, 1,454 passed,
+  zero failed and the two existing precondition-based inconclusives.
+- Unity asset audit: 1,471 unique GUIDs, 346 mirrored runtime art files and 70
   committed character materials.
-- Clean Mac build `3294ed54` completed with `dirty=false`.
+- Clean pre-rebase feature build `3294ed54` completed with `dirty=false`; the
+  rebased source passed the full Unity suite.
 - Packaged captures inspected: `adelaide-helicopter-pad-day.png`,
   `adelaide-helicopter-pad-night.png`, `adelaide-vehicle-classes-close-day.png`
   and `adelaide-signal-hardware-close-day.png` under ignored `work/captures/`.

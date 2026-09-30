@@ -21,7 +21,9 @@ concentration / performance**, then finishing half-done product slices (freight)
 ### P0 — Mac packaged playtest of unverified merges (do first)
 
 **Status:** tooling ready; **blocked on a Mac** (Unity player + awake display). Cloud
-Linux cannot mark this complete.
+Linux cannot mark this complete. Self-hosted Mac workers are often online, but this
+cloud run’s Task tool does **not** place subagents on them (`privateWorkerId` stays
+null) — Bailey (or an agent started *on* the Mac worker) must run the script.
 
 Many ADRs merged green on EditMode / headless but were never seen or heard in a
 rebuilt game. Attribute bugs before adding content.

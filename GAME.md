@@ -4,11 +4,10 @@
   Tip after multi-shot soak batching — #491; one-paste
   `scripts/run-post-audit-p0-stages.sh` or Finder
   `scripts/run-post-audit-p0-stages.command`. Packaged delays: auto-takeoff
-  **830s**; landing batch **780/783/786s** (day/close/storm one soak);
+  **830s**; landing batch **780/783/786s** (EditMode-locked jet Landing);
   boarding batch **320/323s**. Rebuild required for multi-shot. ~35+ min
-  A→B→C wall-clock. Cloud Task / `cursor[bot]` cannot claim My Machines.
-  **Prefer Terminal / Finder:** `docs/testing/post-audit-p0-mac-terminal.md`.
-  21 RESULTS rows unverified.
+  A→B→C. Cloud Task / `cursor[bot]` cannot claim My Machines — Terminal/Finder
+  only: `docs/testing/post-audit-p0-mac-terminal.md`. 21 RESULTS unverified.
   **NEXT:** Mac run stages → fill RESULTS by eye/ear. Freight AI parked.
   Do not invent RESULTS.
 

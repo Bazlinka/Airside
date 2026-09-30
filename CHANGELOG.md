@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 landing-batch delays locked at 780/783/786s.** EditMode confirms jet
+  Landing at each staggered multi-shot offset on soak seed 20260913.
+  No simulation or save changes.
+
 - **P0 multi-shot soak batches cut Stage C wall-clock.** One soak writes
   jet day/close/storm (~780–786s) and boarding/human-ops (~320–323s) via
   repeated `-airsideReviewShot` groups; `ReviewShotSchedule` + capture-game

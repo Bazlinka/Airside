@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 Stage A notifies when remaining PNGs land.** `run-post-audit-p0-remaining.sh`
+  posts an osascript notification (same message as stages.sh) so an unattended
+  Finder/CreateAgent Stage A run surfaces "fill RESULTS" when captures finish.
+  Locked by `test-p0-stages-chain.sh`. No simulation or save changes.
 - **P0 Stage A caffeinates pull/build/captures.** `run-post-audit-p0-remaining.sh`
   wraps with `caffeinate -d -i` (same nest guard as stages.sh) so Finder Stage A
   / CreateAgent Stage A cannot freeze on a sleeping display during a cold build.

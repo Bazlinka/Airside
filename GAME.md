@@ -2,10 +2,10 @@
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
   Tip **#491** (this commit). Jet takeoff **1330s**, fail-closed overview
-  framing + review flags, Stage A **caffeinate** on remaining runner, CreateAgent
-  `worker_id` + Stage A default. Rebuild required. 21 RESULTS unverified. Mac
-  workers often online (`~/Code/Airside`); `CURSOR_API_KEY` still required for
-  CreateAgent (Task cannot pin).
+  framing + review flags, Stage A **caffeinate** + **osascript notify** on
+  remaining runner, CreateAgent `worker_id` + Stage A default. Rebuild required.
+  20 RESULTS unverified. Mac workers often online (`~/Code/Airside`);
+  `CURSOR_API_KEY` still required for CreateAgent (Task cannot pin).
   **NEXT:** Mac Terminal/Finder Stage A, or API key →
   `scripts/launch-p0-mac-agent.sh`. Fill RESULTS by eye/ear. Freight parked.
 

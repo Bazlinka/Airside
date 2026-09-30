@@ -91,6 +91,10 @@ grep -Fq 'AIRSIDE_P0_CAFFEINATED' "$remaining" || {
   echo "remaining runner must guard against nested caffeinate re-exec" >&2
   exit 1
 }
+grep -Fq 'display notification' "$remaining" || {
+  echo "remaining runner must notify when Stage A/B/C PNGs are ready" >&2
+  exit 1
+}
 
 checkout="$root/scripts/p0-checkout-mac-tip.sh"
 test -x "$checkout" || { echo "missing executable $checkout" >&2; exit 1; }

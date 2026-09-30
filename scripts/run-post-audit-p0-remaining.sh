@@ -235,3 +235,9 @@ echo "Fill Verdict columns for remaining + manual rows — do not invent."
 echo "Then update GAME.md and push via the protected-main PR workflow."
 echo
 echo "Optional subset next time: AIRSIDE_P0_ONLY=shot,shot $0"
+
+# Stage A Finder/CreateAgent often leaves the Mac unattended — ping when PNGs land.
+if command -v osascript >/dev/null 2>&1; then
+  osascript -e 'display notification "PNGs ready — fill RESULTS.md by eye/ear (do not invent)." with title "Airside P0 remaining done"' \
+    >/dev/null 2>&1 || true
+fi

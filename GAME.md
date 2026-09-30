@@ -1,14 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **#491** `f6cad1be` MERGEABLE/CLEAN (headless green). Jet takeoff **1330s**,
+  Tip **#491** `549972c0` MERGEABLE/CLEAN (headless green). Jet takeoff **1330s**,
   fail-closed auto-follow + review flags + **overview framing mismatch**,
   Stage C capture resume, Finder tip→main, CreateAgent `worker_id` + Stage A
-  default. Rebuild required. 21 RESULTS unverified. Mac workers **online**
-  (`~/Code/Airside` `122eb692-…`). `CURSOR_API_KEY` still required for
-  CreateAgent (Task cannot pin).
-  **NEXT:** add API key → `scripts/launch-p0-mac-agent.sh`, or Mac Terminal/
-  Finder Stage A. Then fill RESULTS by eye/ear. Freight AI parked.
+  default. Rebuild required. 21 RESULTS unverified. Mac workers **offline**
+  (need `cursor worker start` in `~/Code/Airside`). `CURSOR_API_KEY` still
+  required for CreateAgent (Task cannot pin).
+  **NEXT:** Mac Terminal/Finder Stage A, or worker + API key →
+  `scripts/launch-p0-mac-agent.sh`. Fill RESULTS by eye/ear. Freight parked.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

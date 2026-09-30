@@ -30,12 +30,13 @@ freighter / hangar / boarding; multi-shot landing+boarding batches) are in #491
 `scripts/run-post-audit-p0-remaining.sh` Stage A (night-sky+freighter) → B (jet takeoff
 `SKIP_BUILD`/`SKIP_PULL`) → C (hangar + batched landings/boarding). A Unity player and awake display
 are required. Cloud Linux cannot mark this complete. If no workers show in
-`list-self-hosted-workers`, run `cursor worker start` on the Mac first. Cloud `Task`
-rejects `machine.type=machine` (`same_machine`|`new_cloud_vm` only) — do not retry Task
-pins. Pin via agents UI environment picker (**Bailey's MacBook Pro**) or
-`scripts/launch-p0-mac-agent.sh` (`CURSOR_API_KEY` → API v1
-`env: { "type": "machine", "name": "Bailey's MacBook Pro" }`, machine **name**,
-not `worker_id`). Prefer Terminal/Finder (no pin):
+`list-self-hosted-workers`, run `cursor worker start` on the Mac first (prefer
+`~/Code/Airside`). Cloud `Task` cannot pin My Machines — do not retry Task pins.
+Pin via agents UI (**Bailey's MacBook Pro**) or
+`scripts/launch-p0-mac-agent.sh` (`CURSOR_API_KEY` → API v1 CreateAgent;
+defaults Stage A; pins `env.worker_id` for the `~/Code/Airside` worker when known,
+plus machine name). Tip #491 also fail-closes overview framing mismatches so a
+nose-down night-sky PNG cannot look like success. Prefer Terminal/Finder (no pin):
 `docs/testing/post-audit-p0-mac-terminal.md`. GitHub `@cursoragent worker=` only
 works from Bailey's trusted account — `cursor[bot]` cloud comments do not claim
 the machine. Optional agent paste: `docs/testing/post-audit-p0-mac-agent-prompt.md`.

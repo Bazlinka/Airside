@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **P0 plan/docs: CreateAgent `worker_id` + Stage A default.** Plan and Mac
+  agent prompt match the launcher (pin `~/Code/Airside` worker; Stage A by
+  default). No simulation or save changes.
 - **P0 tip `f6cad1be` CI CLEAN.** Headless green on #491 with overview framing
   fail-closed, Awake pose seed, and CreateAgent `worker_id`/Stage A launcher.
   Mac workers online; `CURSOR_API_KEY` still blocks CreateAgent. No simulation

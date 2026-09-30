@@ -16,9 +16,10 @@ A Linux cloud parent cannot pin this machine via `Task` (no `workerId` /
 `privateWorkerId` on Task; children land on Linux with `privateWorkerId: null`).
 Use the agents UI environment picker, or from any machine with an API key:
 `export CURSOR_API_KEY=…` then `scripts/launch-p0-mac-agent.sh`
-(`POST /v1/agents` with `env.type=machine`, name `Bailey's MacBook Pro`).
-API CreateAgent also needs team **Enable Remote Control for Team** on
-(dashboard → Cloud Agents → Self-hosted Machines).
+(`POST /v1/agents` with `env.type=machine`, name `Bailey's MacBook Pro`, and
+`env.worker_id` for the `~/Code/Airside` worker). Defaults to Stage A; set
+`AIRSIDE_P0_LAUNCH_FULL=1` for A→B→C. API CreateAgent also needs team
+**Enable Remote Control for Team** (dashboard → Cloud Agents → Self-hosted).
 
 Workers (when online): prefer displayName `~/Code/Airside @ Bailey's MacBook Pro`,
 `eligibleForSubagent: true`, idle. If `list-self-hosted-workers` is empty, run

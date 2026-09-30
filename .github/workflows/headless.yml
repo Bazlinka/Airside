@@ -27,5 +27,7 @@ jobs:
         run: python3 scripts/update-harness.py --check
       - name: Capture soak outlives long review delays
         run: bash scripts/test-capture-game-soak-window.sh
+      - name: P0 remaining capture delays stay locked
+        run: bash scripts/test-p0-remaining-delays.sh
       - name: Domain, Simulation and Unity-free Presentation tests
         run: dotnet test scripts/dotnet-harness/Harness.csproj --nologo

@@ -6,9 +6,10 @@
   **capture resume**, Finder tip→main checkout, player preflight. Stage A:
   `scripts/run-post-audit-p0-stage-a.command`. Full A→B→C (~45+ min):
   `scripts/run-post-audit-p0-stages.sh`. Rebuild required. 21 RESULTS
-  unverified; Mac workers idle; `CURSOR_API_KEY` unset.
-  **NEXT:** Mac Stage A (rebuild) → fill night-sky + freighter by eye; then
-  B/C + listening. Freight AI parked. Do not invent RESULTS.
+  unverified. Mac workers **online** (`~/Code/Airside` + Codex checkout);
+  `CURSOR_API_KEY` requested for CreateAgent pin (Task cannot pin).
+  **NEXT:** add API key → `scripts/launch-p0-mac-agent.sh`, or Mac Terminal/
+  Finder Stage A. Then fill RESULTS by eye/ear. Freight AI parked.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

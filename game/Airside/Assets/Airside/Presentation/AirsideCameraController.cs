@@ -215,6 +215,12 @@ namespace Airside.Presentation
             _camera = GetComponent<Camera>();
             if (_camera != null)
                 _fov = _camera.fieldOfView;
+            // Publish CLI/default pose before the first LateUpdate so soak review framing
+            // checks (Update → DriveReviewShot) never see zero pitch/yaw/distance.
+            CurrentDistance = _distance;
+            CurrentPitch = _pitch;
+            CurrentYaw = _yaw;
+            ApplyTransform();
         }
 
         // Launch intro: a close, oblique reveal into the working overview. Keeping the

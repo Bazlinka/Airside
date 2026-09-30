@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **P0 camera pose published in Awake for framing checks.** Overview
+  pitch/yaw/distance statics seed before the first LateUpdate so soak
+  `DriveReviewShot` cannot read zeros. No simulation or save changes.
 - **P0 fail-closed overview framing for night-sky stills.** Packaged overview
   shots that set `-airsideOverviewPitch`/`Yaw`/`Distance` abort when the live
   camera never reaches that pose (no nose-down default PNG). Review logs include

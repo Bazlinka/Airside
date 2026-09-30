@@ -119,8 +119,9 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
 ## Status
 - Phase 3a (building audit): done — `scripts/audit-ypad-buildings.py`, `docs/data/ypad-buildings-audit.md`.
   Finding: only 7 of 78 heights are sourced; 71 are rule defaults and 60 buildings are unnamed.
-- Phases 0, 1, 2, 3b–f, 4, 5 need a Mac Unity editor for captures and frame-time numbers (the cloud session has
-  neither), so they are queued for a session that has one.
+- Phase 1 first slice: stand oil stains + softer ground edges / stronger macro+mow — ADR 0201.
+  Remaining Phase 1: apron patch repairs, drainage pits, landform/coast, land cover polish, far ring.
+- Phases 0 (packaged captures), 2, 3b–f, 4, 5 still benefit from Mac Unity captures and frame-time numbers.
 
 ## Risks
 - Performance (already tight) → per-phase budgets, LOD, tiers.

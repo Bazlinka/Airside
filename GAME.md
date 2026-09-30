@@ -1,5 +1,10 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Cursor — Phase 1 stand oil stains + ground soft edges (branch `cursor/phase1-stand-oil-stains-5ea8`, ADR 0201).**
+  Seeded oil/fuel blotches under every regional bay and terminal gate; slightly stronger ground macro/mow stripes;
+  softer paved→grass shoulder. Presentation only.
+  - **NEXT:** continue Phase 1 (apron patch repairs / drainage pits, then landform & coast).
+
 - **2026-09-30 Claude — airside building detail, Phase 3d slice (branch `visual-overhaul-ground`, ADR 0199).**
   Shaped roofs on freight/fire station, plinths, lit wall packs, dock bumpers. Headless suite run here with a local
   .NET 8 (`/opt/dotnet`). **Not verified:** how it renders — needs a Mac capture. **NEXT:** Phase 0 baseline, Phase 1 ground.

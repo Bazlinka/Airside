@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Stand oil stains and softer ground edges.** Seeded oil/fuel blotches under every bay and gate (two combined
+  meshes), slightly stronger grass macro/mow detail, and a softer paved-to-grass shoulder. Presentation only. ADR 0201.
+
 - **Airside buildings look finished.** Freight sheds and the fire station get a shallow shaped roof (instead of a flat
   box with plant), every support/freight/fire building gets a base plinth, and doors get lit wall packs so they read at
   night; freight docks gain bumpers and bollards. Presentation only. ADR 0199.

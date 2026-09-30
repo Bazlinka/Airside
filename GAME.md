@@ -1,13 +1,13 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Packaged: `auto-landing` / `auto-takeoff` / freighter / hangar / boarding / human-ops close.
-  Auto-landing re-ranks to Landing (~360s). Night-sky: 11 km / pitch 8 / yaw 270 (~45s).
-  One-command: `scripts/run-post-audit-p0-remaining.sh`. Tip CI green; PR mergeable.
-  Tip headless CI green; PR #491 mergeable. Two Mac workers ONLINE — prefer `~/Code/Airside`.
-  Cloud Task cannot pin (machine.type only `same_machine`|`new_cloud_vm`). API pin needs team
-  **Enable Remote Control for Team**; until then use agents UI machine name.
-  Remaining RESULTS + manual rows unverified.
+  Tip `6965106c`; headless CI green; PR mergeable. Packaged: `auto-landing` / `auto-takeoff` /
+  freighter / hangar / boarding / human-ops close. Auto-landing re-ranks to Landing (~360s).
+  Night-sky: 11 km / pitch 8 / yaw 270 (~45s). One-command: `scripts/run-post-audit-p0-remaining.sh`.
+  Two Mac workers ONLINE + idle (`~/Code/Airside` preferred). Cloud `Task` cannot pin My Machines;
+  computerUse agents-UI pin is quota-blocked from this Linux run. API pin needs team
+  **Enable Remote Control for Team**; until then Bailey UI-pins **Bailey's MacBook Pro**.
+  Paste: `docs/testing/post-audit-p0-mac-agent-prompt.md`. Remaining RESULTS + manual rows unverified.
   **NEXT:** UI-pin Mac → prefer fast pass
   `AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter,follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh`
   then full remaining / manual rows → fill RESULTS. Freight AI stays parked. Do not invent RESULTS.

@@ -2,7 +2,7 @@
 
 Paste this into a Cursor agent started **on** Bailey's MacBook Pro
 (environment dropdown → **Bailey's MacBook Pro**, not a cloud VM).
-Checkout `cursor/p0-auto-landing-follow-709e` at tip `af4026a8` or newer (or `main`
+Checkout `cursor/p0-auto-landing-follow-709e` at tip `6965106c` or newer (or `main`
 after #491 merges) so night-sky yaw 270 + auto-landing upgrade +
 `scripts/run-post-audit-p0-remaining.sh` are present. Canonical path: `~/Code/Airside`.
 

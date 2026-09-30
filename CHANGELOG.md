@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 Mac agent prompt tip SHA refresh.** Paste prompt pins `#491` tip `6965106c`
+  (auto-landing + night-sky framing + remaining runner). Handoff notes Mac workers
+  idle and UI-pin as the placement path. No simulation or save changes.
+
 - **P0 remaining captures prioritize freighter evidence.** Night-sky, freighter and
   hangar run before the multi-minute landing/boarding waits so an interrupted Mac
   run can still clear the P2 freighter gate. No simulation or save changes.

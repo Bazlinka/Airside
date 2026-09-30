@@ -81,6 +81,7 @@ namespace Airside.Presentation
             SpawnSurface(root, "Apron slab joints", apronJoints, new Color(0.27f, 0.28f, 0.28f), null,
                 castShadows: false, useTextures: false);
             BuildYpadStandOilStains(root, apronY + 0.005f);
+            BuildYpadApronSurfaceWear(root, apronY + 0.0035f);
             SpawnSurface(root, AirsideAdelaidePavement.TaxiwaysName, taxi, taxiAsphalt, asphaltAlbedo, castShadows: false);
             SpawnSurface(root, "Taxi edge wear", edgeWear, new Color(0.30f, 0.265f, 0.21f), null,
                 castShadows: false, useTextures: false);
@@ -133,6 +134,24 @@ namespace Airside.Presentation
             SpawnSurface(root, "Stand oil (old)", light, new Color(0.30f, 0.27f, 0.22f), null,
                 castShadows: false, useTextures: false);
             SpawnSurface(root, "Stand oil (fresh)", heavy, new Color(0.14f, 0.12f, 0.11f), null,
+                castShadows: false, useTextures: false);
+        }
+
+        /// <summary>
+        /// Patch repairs and drainage pits on the real apron outlines (Phase 1).
+        /// Combined into two meshes so draw cost stays fixed regardless of mark count.
+        /// </summary>
+        private static void BuildYpadApronSurfaceWear(Transform root, float y)
+        {
+            var patches = new SurfaceMesh();
+            var pits = new SurfaceMesh();
+            foreach (var mark in ApronSurfaceWear.All())
+                AddPolygon(mark.Drainage ? pits : patches, ApronSurfaceWear.Corners(mark),
+                    mark.Drainage ? y + 0.0015f : y);
+
+            SpawnSurface(root, "Apron patch repairs", patches, new Color(0.40f, 0.41f, 0.42f), null,
+                castShadows: false, useTextures: false);
+            SpawnSurface(root, "Apron drainage pits", pits, new Color(0.16f, 0.16f, 0.17f), null,
                 castShadows: false, useTextures: false);
         }
 

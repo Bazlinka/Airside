@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Apron patch repairs and drainage pits.** Seeded concrete patches and grate pits inside every real apron
+  outline (inset from the edge), two combined meshes. Presentation only. ADR 0202.
+
 - **Stand oil stains and softer ground edges.** Seeded oil/fuel blotches under every bay and gate (two combined
   meshes), slightly stronger grass macro/mow detail, and a softer paved-to-grass shoulder. Presentation only. ADR 0201.
 

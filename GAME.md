@@ -1,9 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Cursor — Phase 1 apron surface wear (branch `cursor/phase1-stand-oil-stains-5ea8`, ADR 0202).**
+  Seeded concrete patch repairs and drainage pits inside every apron outline. Presentation only.
+  - **NEXT:** landform & coast (Phase 1), or land-cover polish.
+
 - **2026-09-30 Cursor — Phase 1 stand oil stains + ground soft edges (branch `cursor/phase1-stand-oil-stains-5ea8`, ADR 0201).**
   Seeded oil/fuel blotches under every regional bay and terminal gate; slightly stronger ground macro/mow stripes;
   softer paved→grass shoulder. Presentation only.
-  - **NEXT:** continue Phase 1 (apron patch repairs / drainage pits, then landform & coast).
+  - **Checks:** `scripts/test-domain.sh` **1134/1134** (incl. StandOilStainsTests).
+  - **NEXT:** apron patch repairs / drainage pits (done in ADR 0202).
 
 - **2026-09-30 Claude — airside building detail, Phase 3d slice (branch `visual-overhaul-ground`, ADR 0199).**
   Shaped roofs on freight/fire station, plinths, lit wall packs, dock bumpers. Headless suite run here with a local

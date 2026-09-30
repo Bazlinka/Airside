@@ -37,6 +37,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideTerrainField.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronServiceSchedule.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronSlabJoints.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronSurfaceWear.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ArrivalApproach.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AtmosphereLook.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AustraliaMapLens.cs" />
@@ -126,6 +127,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirsideStripMarkingsTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ApproachHoldTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ApronSlabJointsTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ApronSurfaceWearTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ArrivalApproachTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ArrivalClearanceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ArticleTests.cs" />

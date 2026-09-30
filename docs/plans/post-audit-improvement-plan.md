@@ -32,9 +32,10 @@ freighter / hangar / boarding; multi-shot landing+boarding batches) are in #491
 are required. Cloud Linux cannot mark this complete. If no workers show in
 `list-self-hosted-workers`, run `cursor worker start` on the Mac first. Cloud `Task`
 rejects `machine.type=machine` (`same_machine`|`new_cloud_vm` only) — do not retry Task
-pins. Pin via agents UI environment picker (**Bailey's MacBook Pro**) or API v1
-`env: { "type": "machine", "name": "Bailey's MacBook Pro" }` (machine **name**, not
-`worker_id`). Prefer Terminal/Finder (no pin):
+pins. Pin via agents UI environment picker (**Bailey's MacBook Pro**) or
+`scripts/launch-p0-mac-agent.sh` (`CURSOR_API_KEY` → API v1
+`env: { "type": "machine", "name": "Bailey's MacBook Pro" }`, machine **name**,
+not `worker_id`). Prefer Terminal/Finder (no pin):
 `docs/testing/post-audit-p0-mac-terminal.md`. GitHub `@cursoragent worker=` only
 works from Bailey's trusted account — `cursor[bot]` cloud comments do not claim
 the machine. Optional agent paste: `docs/testing/post-audit-p0-mac-agent-prompt.md`.

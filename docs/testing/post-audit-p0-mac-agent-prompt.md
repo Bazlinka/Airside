@@ -12,8 +12,11 @@ so night-sky yaw 270 + multi-shot review + TakingOff mid-roll wait +
 `scripts/run-post-audit-p0-remaining.sh` are present. Rebuild required for
 multi-shot. Canonical path: `~/Code/Airside`. Fast pass takeoff alone ~16 min.
 
-A Linux cloud parent cannot pin this machine via `Task` / `env.machine` (children
-land on Linux with `privateWorkerId: null`). Use the agents UI environment picker.
+A Linux cloud parent cannot pin this machine via `Task` (no `workerId` /
+`privateWorkerId` on Task; children land on Linux with `privateWorkerId: null`).
+Use the agents UI environment picker, or from any machine with an API key:
+`export CURSOR_API_KEY=…` then `scripts/launch-p0-mac-agent.sh`
+(`POST /v1/agents` with `env.type=machine`, name `Bailey's MacBook Pro`).
 API CreateAgent also needs team **Enable Remote Control for Team** on
 (dashboard → Cloud Agents → Self-hosted Machines).
 

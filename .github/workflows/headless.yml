@@ -35,5 +35,7 @@ jobs:
         run: bash scripts/test-p0-remaining-only-filter.sh
       - name: P0 one-paste Stage A→B→C chain
         run: bash scripts/test-p0-stages-chain.sh
+      - name: P0 Mac CreateAgent launcher lock
+        run: bash scripts/test-p0-mac-agent-launch.sh
       - name: Domain, Simulation and Unity-free Presentation tests
         run: dotnet test scripts/dotnet-harness/Harness.csproj --nologo

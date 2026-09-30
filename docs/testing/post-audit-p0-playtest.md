@@ -39,10 +39,11 @@ Do not keep retrying Task pins. Placement that works:
   checkout remote to be `Bazlinka/Airside`. A `cursor[bot]` cloud-agent comment
   does **not** claim the machine (confirmed 2026-09-30: workers stayed idle,
   no child `privateWorkerId`). Prefer Terminal / Finder instead.
-- API v1 CreateAgent: `env: { "type": "machine", "name": "Bailey's MacBook Pro" }`
-  — requires team toggle **Enable Remote Control for Team**
-  (dashboard → Cloud Agents → Self-hosted Machines). Without it, create fails or
-  ignores the machine target.
+- API v1 CreateAgent: `scripts/launch-p0-mac-agent.sh` (needs `CURSOR_API_KEY`)
+  posts `env: { "type": "machine", "name": "Bailey's MacBook Pro" }` to
+  `https://api.cursor.com/v1/agents` — requires team toggle **Enable Remote
+  Control for Team** (dashboard → Cloud Agents → Self-hosted Machines). Without
+  it, create fails or ignores the machine target.
 - List workers: `list-self-hosted-workers` (prefer `~/Code/Airside @ …`)
 
 One-paste prompt: `docs/testing/post-audit-p0-mac-agent-prompt.md`.

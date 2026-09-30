@@ -6,9 +6,10 @@
   run + done notification) or Finder `scripts/run-post-audit-p0-stages.command`.
   Delays: takeoff **830s**; landing **780/783/786s**; boarding **320/323s**.
   Multi-shot + player preflight. ~35+ min A→B→C. Cloud Task cannot claim My
-  Machines — Terminal/Finder: `docs/testing/post-audit-p0-mac-terminal.md`.
-  21 RESULTS unverified; night-sky PNG still nose-down (no cruise). Workers
-  ONLINE idle; no new remaining PNGs.
+  Machines — Terminal/Finder or `scripts/launch-p0-mac-agent.sh` + API key:
+  `docs/testing/post-audit-p0-mac-terminal.md`. 21 RESULTS unverified;
+  night-sky PNG still nose-down (no cruise). Workers ONLINE idle; no new
+  remaining PNGs.
   **NEXT:** Mac run stages → fill RESULTS by eye/ear. Freight AI parked.
   Do not invent RESULTS.
 

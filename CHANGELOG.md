@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **P0 Mac CreateAgent launcher.** `scripts/launch-p0-mac-agent.sh` posts
+  `env.type=machine` / `Bailey's MacBook Pro` to `api.cursor.com` when
+  `CURSOR_API_KEY` is set (Task still cannot pin). No simulation or save changes.
 - **P0 Stage A→B→C holds the Mac awake.** `run-post-audit-p0-stages.sh`
   re-execs under `caffeinate -d -i` for builds and gaps between soaks, and
   posts a macOS notification when finished. No simulation or save changes.

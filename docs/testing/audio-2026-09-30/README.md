@@ -67,3 +67,18 @@ now starts on its first Update and rejects an audio-configuration change during
 capture. The audit rejects duration loss and silent 100 ms gaps during running
 engines. The same full Unity result passed again after these diagnostic fixes.
 Final rebuilt-player recordings follow below.
+
+## Merge and final handoff
+
+Merged to main as PR #474 at `362a2cc0526b304a097e4aead6dd974b14abef4c`.
+The final clean Mac build is source `9c839ac6`, with the capture fixes included.
+Full Unity 1476/1478 passed again (zero failures, two known inconclusives).
+Integrated headless 1105/1105, generator byte check and asset/harness audits passed.
+
+The remaining exhaustive listening capture was deferred while completing
+Bailey's immediate merge instruction. No rebuilt-player recording had been accepted at handoff. The initial
+recordings were rejected for warm-up/device continuity, so there is no all-13
+listening sign-off. A normal-game smoke check and
+Bailey's assessment of perceived realism remain pending. Raw captures and the
+app are retained in the audio worktree's ignored `work/audio-review/` and
+`work/builds/Airside.app`.

@@ -126,6 +126,42 @@ namespace Airside.Tests.EditMode
                 "first Landing should arrive within the remaining.sh auto-landing capture window");
         }
 
+        [Test]
+        public void NewGame_OpeningDepartureReachesTakingOffWithinAutoTakeoffCaptureWindow()
+        {
+            // Auto-takeoff re-ranks every frame; the still delay must reach FleetState.TakingOff
+            // (lineup / roll — tyre rotation), not stop at the first TaxiOut/HoldingShort view.
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(20260913),
+                Airline.Player("Soak Air", "#6A3FA0"));
+
+            var drawnAt = -1L;
+            var takingOffAt = -1L;
+            for (var t = 60L; t <= 15 * 60; t += 15)
+            {
+                clock.Set(new SimulationTime(t));
+                ops.Update();
+                if (drawnAt < 0 && BestDrawnAutoTakeoffRank(ops, clock.Now) >= 0)
+                    drawnAt = t;
+                if (takingOffAt < 0 && ops.Fleet.Any(a => a.State == FleetState.TakingOff))
+                {
+                    takingOffAt = t;
+                    break;
+                }
+            }
+
+            Assert.That(drawnAt, Is.GreaterThan(0), "opening departure should become followable");
+            Assert.That(takingOffAt, Is.GreaterThan(0), "opening departure should enter TakingOff");
+            Assert.That(takingOffAt, Is.GreaterThanOrEqualTo(drawnAt),
+                "TakingOff is at or after the first drawn auto-takeoff candidate");
+            // Opening departures reach TaxiOut/HoldingShort early, but TakingOff (roll / tyre
+            // rotation) is much later — remaining.sh waits ~900s live for that upgrade.
+            Assert.That(takingOffAt, Is.LessThanOrEqualTo(15 * 60),
+                "first TakingOff should arrive within the remaining.sh auto-takeoff capture window");
+            Assert.That(takingOffAt, Is.GreaterThan(8 * 60),
+                "TakingOff is after the 360s landing window — do not reuse auto-landing delay");
+        }
+
         /// <summary>
         /// Presentation only follows aircraft with a field view. <see cref="FleetVisual.Visible"/>
         /// is true for HoldingForLanding / Landing; bare Inbound is Hidden until arrival-final.
@@ -138,6 +174,21 @@ namespace Airside.Tests.EditMode
                 var hasView = FleetVisual.For(aircraft, now).Visible;
                 var preferJet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
                 var rank = ReviewAircraftFollow.AutoLandingRank(aircraft.State, hasView, preferJet);
+                if (rank >= 0 && (best < 0 || rank < best))
+                    best = rank;
+            }
+
+            return best;
+        }
+
+        private static int BestDrawnAutoTakeoffRank(AirlineOperations ops, SimulationTime now)
+        {
+            var best = -1;
+            foreach (var aircraft in ops.Fleet)
+            {
+                var hasView = FleetVisual.For(aircraft, now).Visible;
+                var preferJet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
+                var rank = ReviewAircraftFollow.AutoTakeoffRank(aircraft.State, hasView, preferJet);
                 if (rank >= 0 && (best < 0 || rank < best))
                     best = rank;
             }

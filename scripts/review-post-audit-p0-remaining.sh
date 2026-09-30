@@ -85,9 +85,10 @@ CAPTURE_DELAY=90 CAPTURE_TIMEOUT=180 capture follow-hangar-tow \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.55
 
-# Opening AI departures publish from ~2 min (ADR 0110); allow lineup/roll (tyre rotation).
+# Opening AI departures become followable early (TaxiOut/HoldingShort), but TakingOff
+# (lineup/roll — tyre rotation) is ~13 min live on the opening bank. Wait past that.
 FOLLOW=auto-takeoff
-CAPTURE_DELAY=360 CAPTURE_TIMEOUT=450 capture follow-jet-takeoff \
+CAPTURE_DELAY=900 CAPTURE_TIMEOUT=1020 capture follow-jet-takeoff \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.45
 

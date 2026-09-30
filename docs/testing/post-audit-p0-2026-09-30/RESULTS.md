@@ -63,7 +63,7 @@ and fill Verdict. Do **not** invent keep/fix/revert without the still or play.
 | `overview-night-sky-traffic.png` (re-run) | Overflights cruise; no double inbound | 0195 | unverified | Framing: 11 km / pitch 8 / yaw 270 (early-soak corridor), ~45s. Prior still was nose-down. |
 | `follow-jet-day.png` (re-run) | Follow framing on live arrival | 0189, 0194 | unverified | Needs `auto-landing` (~360s, upgrades to Landing). Prior still was parked Saab. |
 | `follow-jet-close.png` (re-run) | Close glazing / gear on arrival | 0194 | unverified | Needs `auto-landing` close zoom (~360s). |
-| `follow-jet-takeoff.png` | Tyres at rotation | 0194 | unverified | Needs `auto-takeoff` (~360s). Not in the #490 matrix. |
+| `follow-jet-takeoff.png` | Tyres at rotation | 0194 | unverified | Needs `auto-takeoff` (~900s — TakingOff ~13 min). Not in the #490 matrix. |
 | `follow-storm-landing.png` | Arrival on final lands in storm | 0190 | unverified | Needs `auto-landing` + storm (~360s). Code green in `RunwayWeatherTests`. |
 | `follow-freighter.png` | Cargo shade + "... CARGO" title | 0194 | unverified | Needs `-airsideReviewFreighter`. |
 | `follow-hangar-tow.png` | Tow mid-move | 0186–0188 | unverified | Needs `-airsideReviewHangarCheck` (~90s). |

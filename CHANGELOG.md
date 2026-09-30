@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **P0 auto-takeoff still waits for TakingOff (~900s).** Opening-bank roll /
+  tyre rotation lands around 13 minutes live; the previous 360s delay only
+  caught TaxiOut/HoldingShort. Locked by
+  `ReviewAircraftFollowTests.NewGame_OpeningDepartureReachesTakingOffWithinAutoTakeoffCaptureWindow`.
+  No simulation or save changes.
+
 - **P0 capture soak outlives long review delays.** `scripts/capture-game.sh`
   raises `-airsideSoakMinutes` (and the shell timeout) when `--delay` would
   otherwise let soak COMPLETE quit before auto-landing / boarding stills

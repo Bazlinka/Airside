@@ -2,9 +2,10 @@
 
 Paste this into a Cursor agent started **on** Bailey's MacBook Pro
 (environment dropdown → **Bailey's MacBook Pro**, not a cloud VM).
-Checkout `cursor/p0-auto-landing-follow-709e` at tip `e1218095` or newer (or `main`
-after #491 merges) so night-sky yaw 270 + auto-landing upgrade + soak-window fix +
-`scripts/run-post-audit-p0-remaining.sh` are present. Canonical path: `~/Code/Airside`.
+Checkout `cursor/p0-auto-landing-follow-709e` at tip with auto-takeoff ~900s delay
+(or `main` after #491 merges) so night-sky yaw 270 + auto-landing upgrade + soak-window
+fix + takeoff TakingOff wait + `scripts/run-post-audit-p0-remaining.sh` are present.
+Canonical path: `~/Code/Airside`. Fast pass takeoff alone needs ~17 min soak.
 
 A Linux cloud parent cannot pin this machine via `Task` / `env.machine` (children
 land on Linux with `privateWorkerId: null`). Use the agents UI environment picker.

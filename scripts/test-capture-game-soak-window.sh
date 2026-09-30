@@ -21,9 +21,11 @@ expect_plan() {
 expect_plan 28 88 3 88
 expect_plan 45 120 3 120
 
-# Hangar / boarding / auto-landing must raise soak past the review delay.
+# Hangar / boarding / auto-landing / auto-takeoff must raise soak past the review delay.
 expect_plan 90 180 4 300
 expect_plan 320 420 8 540
 expect_plan 360 450 8 540
+# Auto-takeoff waits ~900s for FleetState.TakingOff (~13 min opening bank).
+expect_plan 900 1020 17 1080
 
 echo "capture-game soak window checks passed"

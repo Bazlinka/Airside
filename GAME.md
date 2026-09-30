@@ -1,14 +1,20 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Codex — unique aircraft liveries + five player presets (branch `feature/aircraft-livery-overhaul`, ADR 0203).**
+- **2026-09-30 Codex — unique aircraft liveries + five player presets (branch `feature/aircraft-livery-overhaul`, ADR 0204).**
   Thirteen flying types have individual fin symbols and fitted ribbons. Setup and Airline repaint
   offer Coastline, Southern Cross, Outback, Gulf and Redgum with coordinated accent colours.
   Existing custom saves and cargo shading remain supported. Non-paint model geometry is unchanged.
-  - **Checks:** fitted-paint audit passed all 13; setup/Airline tests 28/28; headless 1,145/1,145 after merging current `main`.
+  - **Checks:** fitted-paint audit passed all 13; setup/Airline tests 28/28; headless 1,145/1,145 after integrating `main` at `623a5a87`.
     Connectivity passed all 13; 347 packaged art files match. The global asset audit has four
     pre-existing checkout metadata findings; see `docs/testing/aircraft-liveries-2026-09-30/README.md`.
   - **NEXT:** run Unity EditMode on the Mac and review all types/presets at follow/overview and
     day/dusk/night before merging. Offline proof sheets are geometry evidence, not Unity captures.
+
+- **2026-09-30 Cursor — Phase 1 West Beach dunes/foam/outlet (branch `cursor/phase1-landform-coast-5ea8`, ADR 0203).**
+  Seeded dune berms inland of the OSM coast, two `Coast foam` ribbons (pulse on bare field), Patawalonga
+  water deepens toward the gulf. Presentation only.
+  - **Checks:** `scripts/test-domain.sh` **1150/1150** (incl. AdelaideCoastLandformTests).
+  - **NEXT:** land-cover polish (golf/parks/scrub) or far-ring skyline (still Phase 1).
 
 - **2026-09-30 Cursor — Phase 1 apron surface wear (branch `cursor/phase1-stand-oil-stains-5ea8`, ADR 0202).**
   Seeded concrete patch repairs and drainage pits inside every apron outline. Presentation only.

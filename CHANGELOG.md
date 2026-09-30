@@ -3,7 +3,11 @@
 - **Unique aircraft liveries and five player presets.** All thirteen flying types have distinct fin
   symbols and fitted fuselage ribbons. Choose Coastline, Southern Cross, Outback, Gulf or Redgum
   during setup or repaint from the Airline page; coordinated accent paint matches the swatches.
-  Existing saves/custom colours and non-paint aircraft geometry are preserved. ADR 0203.
+  Existing saves/custom colours and non-paint aircraft geometry are preserved. ADR 0204.
+
+- **West Beach dunes, shore foam and Patawalonga outlet.** Seeded dune berms just inland of the
+  OSM coast, two pulsing foam ribbons on the bare field, and inland water that deepens toward the
+  gulf so the Barcoo/Patawalonga reads as a channel. Presentation only. ADR 0203.
 
 - **Apron patch repairs and drainage pits.** Seeded concrete patches and grate pits inside every real apron
   outline (inset from the edge), two combined meshes. Presentation only. ADR 0202.

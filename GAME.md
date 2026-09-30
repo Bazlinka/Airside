@@ -1,9 +1,9 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0201).**
-  Full Domain / Simulation / Presentation / tests / product-plan audit. Headless **1129/1129**. Standing backlog:
+  Full Domain / Simulation / Presentation / tests / product-plan audit. Standing backlog:
   `docs/plans/post-audit-improvement-plan.md`. Cloud goal set to follow that order. Phase 0 bookmarks (ADR 0200)
-  are merged onto this branch for shared Mac captures.
+  are merged onto this branch for shared Mac captures. Headless after merge: **1136/1136**.
   - **P0 (NEXT — start on Mac worker UI, not cloud Task):** Task cannot pin My Machines. At
     [cursor.com/agents](https://cursor.com/agents) pick **Bailey's MacBook Pro**, or shell in
     `~/Code/Airside` on `cursor/post-audit-improvement-plan-709e`: `scripts/build-mac.sh` then

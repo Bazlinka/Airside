@@ -18,6 +18,18 @@ namespace Airside.Presentation
 
         public static Color Secondary(Color primary)
         {
+            // Match the five authored presets. Legacy/custom operator colours retain the fallback.
+            for (var i = 0; i < AirlineSetupModel.Palette.Length; i++)
+            {
+                ColorUtility.TryParseHtmlString(AirlineSetupModel.Palette[i].Hex, out var preset);
+                if (Mathf.Abs(primary.r - preset.r) < 0.001f
+                    && Mathf.Abs(primary.g - preset.g) < 0.001f
+                    && Mathf.Abs(primary.b - preset.b) < 0.001f)
+                {
+                    ColorUtility.TryParseHtmlString(AirlineSetupModel.PaletteAccents[i], out var accent);
+                    return accent;
+                }
+            }
             // Cool liveries carry a warm sand pinstripe; warm liveries get slate ink.
             // The contrast survives a yellow, white or nearly black player colour.
             return primary.b + primary.g * 0.35f > primary.r

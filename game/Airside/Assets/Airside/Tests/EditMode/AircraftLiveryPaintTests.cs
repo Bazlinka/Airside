@@ -90,6 +90,19 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void PresetSecondaryPaintMatchesThePlayersTwoToneSwatch()
+        {
+            for (var i = 0; i < AirlineSetupModel.Palette.Length; i++)
+            {
+                Assert.That(ColorUtility.TryParseHtmlString(AirlineSetupModel.Palette[i].Hex, out var primary), Is.True);
+                Assert.That(ColorUtility.TryParseHtmlString(AirlineSetupModel.PaletteAccents[i], out var accent), Is.True);
+                Assert.That(AircraftLiveryPaint.Colour("Livery secondary", primary), Is.EqualTo(accent));
+                Assert.That(AircraftLiveryPaint.Colour("Livery stripe", primary), Is.EqualTo(primary));
+                Assert.That(AircraftLiveryPaint.Emblem(primary), Is.Not.EqualTo(primary));
+            }
+        }
+
+        [Test]
         public void WarmAndCoolAirlinesKeepContrastingSecondaryAndIvoryMark()
         {
             var cool = new Color(0.10f, 0.38f, 0.55f);

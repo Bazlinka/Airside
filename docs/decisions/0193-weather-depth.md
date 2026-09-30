@@ -9,11 +9,13 @@ up when orbiting or flying through them; overcast has a rolling ceiling; rain fa
 wind at follow and overview distances. Existing sky colours, thunder, lightning flash, wetness
 and runway-light reflections stay connected to the same weather sample.
 
-Scope: `AirsidePrototype.Sky`, `.Atmosphere`, `.WeatherEffects`, three URP weather shaders,
+Scope: `AirsidePrototype.Sky`, `.Atmosphere`, `.WeatherEffects`, four URP weather shaders,
 GraphicsSettings inclusion, Unity integration tests and handoff documentation.
 
 Decision: use sixteen-step bounded cloud density integration inside each of the existing sixteen cloud
-clusters and twelve steps through one 120 m ground fog volume. Sample scene depth to stop fog at buildings/terrain.
+clusters and an exact exponential height integral through a 120 m fog interval, with three advected noise samples. A camera proxy integrates the world-space
+fog interval from scene depth, so it works inside the bank without relying on the far faces of
+an enormous box mesh. Sample scene depth to stop fog at buildings/terrain.
 Shade clouds by height and sun-facing density. The authored cloud atlas remains a shader fallback.
 Use one dynamic mesh for 768 seeded, soft, depth-faded rain streaks near the camera rather than
 hundreds of scaled cube objects. Soft shadow masks drift with clouds along the sun direction.

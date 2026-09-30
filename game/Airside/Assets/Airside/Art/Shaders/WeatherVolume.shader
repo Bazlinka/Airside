@@ -3,7 +3,6 @@ Shader "Airside/WeatherVolume"
     Properties
     {
         _BaseColor ("Weather tint and visibility", Color) = (1,1,1,1)
-        _FogVolume ("Ground fog", Float) = 0
         _Seed ("Cloud shape seed", Float) = 0
     }
     SubShader
@@ -25,10 +24,8 @@ Shader "Airside/WeatherVolume"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
-                float _FogVolume;
                 float _Seed;
             CBUFFER_END
-            float4 _AirsideWeatherWind;
             float _AirsideWeatherTime;
             struct Attributes { float4 positionOS : POSITION; };
             struct Varyings { float4 positionCS : SV_POSITION; float3 positionWS : TEXCOORD0; };
@@ -85,7 +82,7 @@ Shader "Airside/WeatherVolume"
                 float3 sceneWS=ComputeWorldSpacePosition(screenUV,depth,UNITY_MATRIX_I_VP);
                 end=min(end,distance(originWS,sceneWS));
                 clip(end-start-0.001);
-                int steps=_FogVolume>0.5 ? 12 : 16;
+                const int steps=16;
                 float stepLength=(end-start)/steps;
                 float transmittance=1;
                 float3 colour=0;
@@ -98,22 +95,11 @@ Shader "Airside/WeatherVolume"
                     float3 p=origin+direction*t;
                     float density;
                     float3 sampleColour=_BaseColor.rgb;
-                    if(_FogVolume>0.5)
-                    {
-                        float3 world=originWS+directionWS*t;
-                        float h=saturate(p.y+0.5);
-                        float edge=1-smoothstep(0.30,0.5,max(abs(p.x),abs(p.z)));
-                        float n=noise(world*0.008+float3(_AirsideWeatherWind.x,0,_AirsideWeatherWind.z)*_AirsideWeatherTime*0.001);
-                        density=exp(-h*4)*edge*lerp(0.55,1.4,n)*0.004*_BaseColor.a;
-                    }
-                    else
-                    {
-                        density=cloudDensity(p);
-                        // Shade the lower body and the side hidden from the sun, keeping silver tops.
-                        float shade=exp(-cloudDensity(p+lightOS*0.09)*1.7);
-                        sampleColour*=lerp(0.48,1.10,saturate(shade*0.65+(p.y+0.5)*0.55));
-                        density*=length(direction)*13;
-                    }
+                    density=cloudDensity(p);
+                    // Shade the lower body and the side hidden from the sun, keeping silver tops.
+                    float shade=exp(-cloudDensity(p+lightOS*0.09)*1.7);
+                    sampleColour*=lerp(0.48,1.10,saturate(shade*0.65+(p.y+0.5)*0.55));
+                    density*=length(direction)*13;
                     float opacity=1-exp(-density*stepLength);
                     colour+=transmittance*opacity*sampleColour;
                     transmittance*=1-opacity;
@@ -121,7 +107,7 @@ Shader "Airside/WeatherVolume"
                 }
                 float alpha=1-transmittance;
                 clip(alpha-0.002);
-                return half4(colour/max(alpha,0.001),alpha*(_FogVolume>0.5 ? 1 : _BaseColor.a));
+                return half4(colour/max(alpha,0.001),alpha*_BaseColor.a);
             }
             ENDHLSL
         }

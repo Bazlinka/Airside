@@ -34,6 +34,7 @@ namespace Airside.Tests
             }
         }
 
+        [TestCase("Airside/HeightFog")]
         [TestCase("Airside/WeatherVolume")]
         [TestCase("Airside/WeatherCeiling")]
         [TestCase("Airside/WeatherRain")]

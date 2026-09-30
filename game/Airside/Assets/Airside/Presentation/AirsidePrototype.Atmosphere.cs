@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Airside.Simulation;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace Airside.Presentation
 {
@@ -15,6 +16,7 @@ namespace Airside.Presentation
         private const float HorizonBandRadius = 14_000f;
         private const int HorizonBandSegments = 24;
         private Renderer _groundFog;
+        private bool _weatherVolumeReported;
 
         private Transform _atmosphereRoot;
         private Renderer _stratusSheet;
@@ -95,10 +97,23 @@ namespace Airside.Presentation
             // above it settles into a shallow bank; a follow camera actually moves through it.
             if (_groundFog != null)
             {
+                var planeDistance = _mainCamera.nearClipPlane + 0.1f;
+                var planeHeight = 2f * planeDistance * Mathf.Tan(_mainCamera.fieldOfView * Mathf.Deg2Rad * 0.5f);
+                _groundFog.transform.SetPositionAndRotation(camera + _mainCamera.transform.forward * planeDistance,
+                    _mainCamera.transform.rotation);
+                _groundFog.transform.localScale = new Vector3(planeHeight * _mainCamera.aspect * 1.01f,
+                    planeHeight * 1.01f, 1f);
                 var strength = _atmosphere.Mist;
                 _groundFog.enabled = strength > 0.01f;
                 var fogColour = ToColor(_atmosphere.Fog);
                 SetLayerColour(_groundFog, new Color(fogColour.r, fogColour.g, fogColour.b, strength));
+                if (SoakMode && !_weatherVolumeReported && Time.unscaledTime > 8f)
+                {
+                    _weatherVolumeReported = true;
+                    Debug.Log($"[Airside weather] {CurrentWeather} mist {strength:0.00} fog enabled {_groundFog.enabled} " +
+                        $"shader {_groundFog.sharedMaterial.shader.name} camera {camera} " +
+                        $"tint {fogColour} layers {AirsideSettings.Current.WeatherLayers}");
+                }
             }
 
         }
@@ -137,18 +152,17 @@ namespace Airside.Presentation
             for (var i = 0; i < HorizonBandSegments; i++)
                 _horizonBand.Add(LayerQuad($"Horizon band {i}", material, new Vector3(width, 1_100f, 1f)));
 
-            var volumeShader = Shader.Find("Airside/WeatherVolume");
+            var volumeShader = Shader.Find("Airside/HeightFog");
             if (volumeShader != null)
             {
-                var fog = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                var fog = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 fog.name = "Drifting ground fog";
                 DestroyPresentationObject(fog.GetComponent<Collider>());
                 fog.transform.SetParent(_atmosphereRoot, false);
-                fog.transform.position = new Vector3(300f, 54f, 150f);
-                fog.transform.localScale = new Vector3(16_000f, 120f, 14_000f);
                 _groundFog = fog.GetComponent<Renderer>();
                 var fogMaterial = new Material(volumeShader) { name = "Airside ground fog volume" };
-                fogMaterial.SetFloat("_FogVolume", 1f);
+                if (_mainCamera != null)
+                    _mainCamera.GetUniversalAdditionalCameraData().requiresDepthTexture = true;
                 _groundFog.sharedMaterial = fogMaterial;
                 _groundFog.shadowCastingMode = ShadowCastingMode.Off;
                 _groundFog.receiveShadows = false;

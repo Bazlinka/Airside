@@ -1,17 +1,23 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Codex — weather depth (branch `feature/weather-depth`, ADR 0193).**
-  - Rounded 3D cloud density volumes replace camera-facing atlas cards; storm towers, weather tint,
-    wind drift and cloud-count reveal stay tied to the existing weather. The atlas remains a fallback.
-  - Ground fog integrates through scene depth in one shallow, drifting bank; the overcast ceiling
-    rolls in world space. Cloud umbras now have soft edges.
-  - Rain is one seeded mesh of 768 soft, wind-driven streaks near the camera instead of hundreds
-    of scaled cube objects. Wet surfaces, existing lightning/thunder and runway reflections remain.
-  - **Checks:** domain baseline 1105/1105; final Unity 1480/1482, zero failures, two existing
-    inconclusives. Unity asset audit passes. The initial Mac build and player captures passed;
-    visual review prompted denser billowing cloud cores and stronger overview rain.
-  - **NEXT:** finish the final rebuilt player matrix with `scripts/review-weather.sh`, record
-    captures/frame statistics in `docs/testing/weather-2026-09-30/README.md`, then land the PR.
+- **2026-09-30 Codex — weather depth (PR #476, ADR 0193).**
+  - Clouds now have rounded 3D density bodies, sun-shaded bases and storm towers. The original atlas
+    remains a fallback; the existing sixteen-cluster count, weather reveal and wind drift remain.
+  - Fog integrates the world's shallow height bank from scene depth, fading distant aircraft and
+    buildings while close aircraft stay clear. Overcast has a rolling world-space ceiling and
+    cloud umbras have soft edges. Fog height is integrated analytically with three drifting samples.
+  - Rain uses one mesh of 768 soft, wind-driven streaks near the camera. Operational weather,
+    schedules, reservations and saves are unchanged.
+  - **Checks:** headless baseline 1105/1105; Unity 1481/1483, zero failures, two existing
+    inconclusives; four shaders compile in the Mac build; metadata/harness audits pass. Actual
+    clear/cloudy/overcast/rain/storm/fog, low cloud/ceiling, close fog and night fog captures were
+    inspected. Four representative PNGs are committed under `docs/testing/weather-2026-09-30`.
+  - **Performance:** early short views recovered to 59–60 fps at 1600×900. Later 60-second fog/storm
+    runs varied (fog ended at 57 fps; storm at 37). A weather-layers-off storm control also ended
+    at 40 fps while Chrome/WindowServer were busy. These runs do not establish a locked 60 fps
+    or isolate GPU cost. Complete evidence/limits are in the weather validation README.
+  - **NEXT:** Bailey can play the rebuilt Mac app and judge the weather from overview and follow.
+
 
 
 - **2026-09-30 Codex — fleet aircraft sound pass (merged to `main` as PR #474, `362a2cc0`, ADR 0192).**

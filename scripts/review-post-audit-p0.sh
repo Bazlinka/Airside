@@ -120,26 +120,55 @@ results="$shots/RESULTS.md"
 docs_stamp="$root/docs/testing/post-audit-p0-$stamp"
 mkdir -p "$docs_stamp"
 if [ ! -f "$results" ]; then
-  cp "$root/docs/testing/post-audit-p0-playtest.md" "$results"
+  if [ -f "$docs_stamp/RESULTS.md" ]; then
+    cp "$docs_stamp/RESULTS.md" "$results"
+  else
+    cp "$root/docs/testing/post-audit-p0-playtest.md" "$results"
+  fi
   if command -v sed >/dev/null 2>&1; then
     sed -i.bak "s|work/captures/post-audit-p0-<date>|$shots|" "$results" 2>/dev/null \
       || sed -i '' "s|work/captures/post-audit-p0-<date>|$shots|" "$results"
     rm -f "$results.bak"
   fi
-  {
-    echo
-    echo "## Capture run"
-    echo
-    echo "- Date stamp: \`$stamp\`"
-    echo "- Shots directory: \`$shots\`"
-    echo "- Branch tip: \`$(git -C "$root" rev-parse --short HEAD 2>/dev/null || echo unknown)\`"
-    echo "- Code-only evidence (do not treat as visual keep): \`docs/testing/post-audit-p0-2026-09-30/CODE_EVIDENCE.md\`"
-    echo
-    echo "Copy this file to \`$docs_stamp/RESULTS.md\` after filling verdicts, then push"
-    echo "branch \`cursor/post-audit-p0-results-709e\`."
-  } >> "$results"
 fi
+
+# Stamp capture inventory (PNG present + log clean). Never fills keep/fix/revert.
+{
+  echo
+  echo "## Capture inventory (auto — not a verdict)"
+  echo
+  echo "- Date stamp: \`$stamp\`"
+  echo "- Shots directory: \`$shots\`"
+  echo "- Branch tip: \`$(git -C "$root" rev-parse --short HEAD 2>/dev/null || echo unknown)\`"
+  echo "- Host: \`$(uname -s)\` / \`$(hostname 2>/dev/null || echo unknown)\`"
+  echo
+  echo "| File | PNG bytes | Log |"
+  echo "|---|---:|---|"
+  shopt -s nullglob
+  for png in "$shots"/*.png; do
+    base="$(basename "$png" .png)"
+    bytes="$(wc -c < "$png" | tr -d ' ')"
+    logf="$shots/$base.log"
+    if [ -f "$logf" ]; then
+      if command -v rg >/dev/null 2>&1 && rg -q 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL' "$logf"; then
+        log_status="errors"
+      else
+        log_status="clean"
+      fi
+    else
+      log_status="missing"
+    fi
+    echo "| \`$base.png\` | $bytes | $log_status |"
+  done
+  shopt -u nullglob
+  echo
+  echo "Fill the Verdict columns above. PNG presence / log clean is **not** keep."
+} >> "$results"
+
 cp "$results" "$docs_stamp/RESULTS.md"
+if [ -f "$root/docs/testing/post-audit-p0-2026-09-30/CODE_EVIDENCE.md" ]; then
+  cp "$root/docs/testing/post-audit-p0-2026-09-30/CODE_EVIDENCE.md" "$docs_stamp/CODE_EVIDENCE.md"
+fi
 
 echo "P0 captures and logs: $shots"
 echo "Fill keep/fix/revert in: $results"

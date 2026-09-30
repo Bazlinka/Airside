@@ -15,9 +15,9 @@ On a Mac with Unity 6.3 LTS and a display that stays awake. Prefer branch
 
 ```bash
 cd ~/Code/Airside   # or ~/Documents/Codex/Airside
-git fetch && git checkout cursor/post-audit-improvement-plan-709e && git pull
-scripts/build-mac.sh
-scripts/review-post-audit-p0.sh
+git fetch && git checkout cursor/post-audit-p0-results-709e && git pull
+scripts/run-post-audit-p0.sh   # build + capture matrix + RESULTS inventory stamp
+# then fill keep/fix/revert in docs/testing/post-audit-p0-<date>/RESULTS.md and push
 ```
 
 ### Option B — Cursor agent *on* the Mac worker (recommended)

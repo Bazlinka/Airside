@@ -18,15 +18,15 @@ You are on Bailey's MacBook Pro. Confirm with `uname -s` → Darwin. If not Darw
 Repo: prefer ~/Documents/Codex/Airside, else ~/Code/Airside.
 Plan: docs/plans/post-audit-improvement-plan.md (ADR 0203). P0 only.
 
-1. git fetch origin && git checkout cursor/post-audit-p0-results-709e && git pull --rebase origin cursor/post-audit-p0-results-709e
-   (fallback: checkout cursor/post-audit-improvement-plan-709e if the results branch is missing)
-2. Keep the display awake. scripts/build-mac.sh
-3. scripts/review-post-audit-p0.sh
-4. Fill keep/fix/revert in docs/testing/post-audit-p0-2026-09-30/RESULTS.md (draft already there with blank
-   verdicts — overwrite from the script’s work/captures copy). Use CODE_EVIDENCE.md for Notes only;
-   do not mark visual/audio rows keep without eyes/ears.
-5. Complete the manual rows (audio, freighter livery, tyres, hangar tow, follow feel, etc.) from packaged play + captures.
-6. Update GAME.md handoff (P0 done or remaining fixes) and CHANGELOG Unreleased. Commit. git push -u origin cursor/post-audit-p0-results-709e
+1. Prefer one command (keeps display awake yourself): `scripts/run-post-audit-p0.sh`
+   Or manually: checkout `cursor/post-audit-p0-results-709e`, `scripts/build-mac.sh`,
+   `scripts/review-post-audit-p0.sh`.
+2. Fill keep/fix/revert in the RESULTS.md under `docs/testing/post-audit-p0-<date>/`
+   (capture inventory is auto-stamped — PNG/log status is not a verdict). Use CODE_EVIDENCE.md
+   for Notes only; do not mark visual/audio rows keep without eyes/ears.
+3. Complete the manual rows (audio, freighter livery, tyres, hangar tow, follow feel, etc.).
+4. Update GAME.md handoff (P0 done or remaining fixes) and CHANGELOG Unreleased. Commit.
+   `git push -u origin cursor/post-audit-p0-results-709e`
 
 Do not invent verdicts. Do not start P1/P2/P3/P4. Do not mark the post-audit cloud goal complete.
 Return: uname, cwd, build exit, review exit, RESULTS path, commit SHA, push status, any fix/revert rows.

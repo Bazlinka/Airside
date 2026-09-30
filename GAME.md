@@ -1,12 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip after multi-shot soak batching — #491; one-paste
+  Tip **`89a9c138`** — #491 headless CI green, MERGEABLE/CLEAN. One-paste
   `scripts/run-post-audit-p0-stages.sh` or Finder
-  `scripts/run-post-audit-p0-stages.command`. Packaged delays: auto-takeoff
-  **830s**; landing **780/783/786s**; boarding **320/323s** (EditMode-locked).
-  Runner preflights `ReviewShotSchedule` in the player. ~35+ min A→B→C.
-  Cloud Task cannot claim My Machines — Terminal/Finder only:
+  `scripts/run-post-audit-p0-stages.command`. Delays: takeoff **830s**; landing
+  **780/783/786s**; boarding **320/323s**. Multi-shot + player preflight.
+  ~35+ min A→B→C. Cloud Task cannot claim My Machines — Terminal/Finder:
   `docs/testing/post-audit-p0-mac-terminal.md`. 21 RESULTS unverified.
   **NEXT:** Mac run stages → fill RESULTS by eye/ear. Freight AI parked.
   Do not invent RESULTS.

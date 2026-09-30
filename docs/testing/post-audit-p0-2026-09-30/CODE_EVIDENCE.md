@@ -1,6 +1,6 @@
 # P0 code evidence (no Mac player)
 
-Date: 2026-09-30 · Plan ADR 0203 · Branch `cursor/post-audit-improvement-plan-709e`
+Date: 2026-09-30 · Plan ADR 0205 · Branch `main`
 
 This maps each post-audit P0 row to **existing EditMode / headless proof**. It does
 **not** replace Bailey’s packaged keep/fix/revert in `post-audit-p0-playtest.md`.

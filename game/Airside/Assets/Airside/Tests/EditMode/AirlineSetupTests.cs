@@ -70,6 +70,31 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FiveFleetPresets_AreSelectableInSetupAndAirlinePage()
+        {
+            Assert.That(AirlineSetupModel.Palette.Length, Is.EqualTo(5));
+            Assert.That(AirlineSetupModel.Palette.Select(p => p.Hex).Distinct().Count(), Is.EqualTo(5));
+            var setup = new AirlineSetupModel { Step = SetupStep.Livery };
+            var draw = new HudDrawList();
+            var layout = SplashLayout.Create(1280f, 800f, SplashStep.NewAirline, false);
+            AirlineSetupPainter.Paint(draw, layout.Setup, setup, false);
+            var choices = draw.Commands.Where(c => c.ActionId.StartsWith(AirlineSetupPainter.PalettePrefix)).ToArray();
+            Assert.That(choices.Length, Is.EqualTo(5));
+            Assert.That(draw.Commands.Any(c => c.ActionId.StartsWith(AirlineSetupPainter.HuePrefix)), Is.False);
+            Assert.That(draw.Commands.Any(c => c.ActionId.StartsWith(AirlineSetupPainter.ShadePrefix)), Is.False);
+            foreach (var choice in choices)
+            {
+                setup.Apply(choice.ActionId, out _);
+                var clock = new ManualSimulationClock(new SimulationTime(0));
+                var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(1),
+                    Airline.Player("Livery Test", "#123456"));
+                Assert.That(ops.SetLivery(setup.LiveryHex).Accepted, Is.True);
+                Assert.That(ops.PlayerAirline.LiveryHex, Is.EqualTo(setup.LiveryHex));
+                Assert.That(StatsWorkspaceModel.LiveryPalette.Any(p => p.Hex == setup.LiveryHex), Is.True);
+            }
+        }
+
+        [Test]
         public void SetupCard_FitsEveryWindowOnEveryStep()
         {
             foreach (var (width, height) in HudTestAirline.Viewports)

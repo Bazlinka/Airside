@@ -1,4 +1,4 @@
-# 0203 — Post-audit improvement plan is the standing backlog
+# 0205 — Post-audit improvement plan is the standing backlog
 
 Date: 2026-09-30. Owner: Cursor. Requested by Bailey after a comprehensive code audit
 (“find what is missing / good / not good before expanding”).
@@ -34,5 +34,6 @@ Mac P0 tooling added without changing game behaviour: `scripts/review-post-audit
 and `docs/testing/post-audit-p0-playtest.md`. Freight AI / cargo apron / freighter-gated
 contracts stay parked until P0 signs off the player freighter and tyre rows.
 
-Renumbered to **0203** so it does not collide with ADR 0200 (visual Phase 0),
-ADR 0201 (stand oil stains), or ADR 0202 (apron surface wear — both Phase 1 via #486).
+Renumbered to **0205** during consolidation so it does not collide with ADRs 0200–0204.
+The Mac P0 runner now requires a clean, current `main` checkout and never creates or checks out a retired branch.
+Actual capture verdicts from #490 supersede the earlier blank RESULTS draft; manual checks remain open.

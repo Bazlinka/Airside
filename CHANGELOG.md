@@ -1,12 +1,17 @@
 ## Unreleased
 
-- **Post-audit improvement plan.** Standing backlog after a full code audit: Mac playtest of recent unverified work,
-  visual-overhaul gate, freight parked until that playtest, Presentation/performance debt, then expansion. Plan:
-  `docs/plans/post-audit-improvement-plan.md`. Mac P0 matrix: `scripts/review-post-audit-p0.sh` and
-  `docs/testing/post-audit-p0-playtest.md`. One-paste Mac agent prompt:
-  `docs/testing/post-audit-p0-mac-agent-prompt.md`. Code-only P0 evidence map:
-  `docs/testing/post-audit-p0-2026-09-30/CODE_EVIDENCE.md`.   Draft RESULTS (blank verdicts) on `cursor/post-audit-p0-results-709e`. One-command Mac path:
-  `scripts/run-post-audit-p0.sh`. ADR **0203**. No game behaviour changed.
+- **Consolidate Airside onto main.** Retain the post-audit backlog, Mac review helpers and actual #490
+  capture results; retire stale branch-switching instructions and fix three malformed Unity metadata GUIDs.
+  Post-audit backlog ADR 0205; manual P0 playtest checks remain open. No simulation or save changes.
+
+- **Unique aircraft liveries and five player presets.** All thirteen flying types have distinct fin
+  symbols and fitted fuselage ribbons. Choose Coastline, Southern Cross, Outback, Gulf or Redgum
+  during setup or repaint from the Airline page; coordinated accent paint matches the swatches.
+  Existing saves/custom colours and non-paint aircraft geometry are preserved. ADR 0204.
+
+- **West Beach dunes, shore foam and Patawalonga outlet.** Seeded dune berms just inland of the
+  OSM coast, two pulsing foam ribbons on the bare field, and inland water that deepens toward the
+  gulf so the Barcoo/Patawalonga reads as a channel. Presentation only. ADR 0203.
 
 - **Apron patch repairs and drainage pits.** Seeded concrete patches and grate pits inside every real apron
   outline (inset from the edge), two combined meshes. Presentation only. ADR 0202.
@@ -18,6 +23,11 @@
   `terminal-airside`, `terminal-kerb`, `hangar-row`, `suburb-edge`, `coast`) via
   `-airsideReviewView`, plus `scripts/capture-visual-baseline.sh` for day/dusk/night
   1600×900 captures and scraped fps metrics. ADR 0200. Packaged PNG evidence still needs a Mac run.
+
+- **Post-audit P0 captures.** Fourteen packaged screenshots of the current Adelaide field (overview, far land,
+  night, terminal, hangars, freight shed, fire station, storm, fog, follow) are in
+  `docs/testing/post-audit-p0-2026-09-30/`, with keep / unverified notes. No simulation change. Manual listening
+  and play checks are still open, so P0 is not signed off.
 
 - **Airside buildings look finished.** Freight sheds and the fire station get a shallow shaped roof (instead of a flat
   box with plant), every support/freight/fire building gets a base plinth, and doors get lit wall packs so they read at

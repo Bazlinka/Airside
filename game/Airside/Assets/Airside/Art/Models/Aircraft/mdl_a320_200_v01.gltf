@@ -6,7 +6,7 @@
   "buffers": [
     {
       "uri": "mdl_a320_200_v01.bin",
-      "byteLength": 1628332
+      "byteLength": 1620632
     }
   ],
   "bufferViews": [
@@ -2101,72 +2101,72 @@
     {
       "buffer": 0,
       "byteOffset": 1444148,
-      "byteLength": 40692,
+      "byteLength": 40752,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 1484840,
-      "byteLength": 8334,
+      "byteOffset": 1484900,
+      "byteLength": 8352,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 1493176,
-      "byteLength": 39624,
+      "byteOffset": 1493252,
+      "byteLength": 39504,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 1532800,
-      "byteLength": 8064,
+      "byteOffset": 1532756,
+      "byteLength": 8040,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 1540864,
-      "byteLength": 43920,
+      "byteOffset": 1540796,
+      "byteLength": 42816,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 1584784,
-      "byteLength": 9672,
+      "byteOffset": 1583612,
+      "byteLength": 9468,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 1594456,
-      "byteLength": 8856,
+      "byteOffset": 1593080,
+      "byteLength": 3792,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 1603312,
-      "byteLength": 2172,
+      "byteOffset": 1596872,
+      "byteLength": 912,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 1605484,
+      "byteOffset": 1597784,
       "byteLength": 9408,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 1614892,
+      "byteOffset": 1607192,
       "byteLength": 2016,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 1616908,
+      "byteOffset": 1609208,
       "byteLength": 9408,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 1626316,
+      "byteOffset": 1618616,
       "byteLength": 2016,
       "target": 34963
     }
@@ -6003,89 +6003,89 @@
     {
       "bufferView": 348,
       "componentType": 5126,
-      "count": 3391,
+      "count": 3396,
       "type": "VEC3",
       "max": [
         -0.012000000104308128,
-        5.794826507568359,
+        5.802620887756348,
         -5.635499954223633
       ],
       "min": [
-        -1.9668322801589966,
+        -1.9649291038513184,
         2.9618000984191895,
-        -34.46434783935547
+        -34.44629669189453
       ]
     },
     {
       "bufferView": 349,
       "componentType": 5123,
-      "count": 4167,
+      "count": 4176,
       "type": "SCALAR"
     },
     {
       "bufferView": 350,
       "componentType": 5126,
-      "count": 3302,
+      "count": 3292,
       "type": "VEC3",
       "max": [
-        1.9668322801589966,
-        5.794826507568359,
+        1.9649291038513184,
+        5.802620887756348,
         -5.635499954223633
       ],
       "min": [
         0.012000000104308128,
         2.9618000984191895,
-        -34.46434783935547
+        -34.44629669189453
       ]
     },
     {
       "bufferView": 351,
       "componentType": 5123,
-      "count": 4032,
+      "count": 4020,
       "type": "SCALAR"
     },
     {
       "bufferView": 352,
       "componentType": 5126,
-      "count": 3660,
+      "count": 3568,
       "type": "VEC3",
       "max": [
-        1.9805574417114258,
-        8.203033447265625,
+        1.9793487787246704,
+        8.4512939453125,
         -5.635499954223633
       ],
       "min": [
-        -1.9805574417114258,
+        -1.9793487787246704,
         3.4667000770568848,
-        -36.59921646118164
+        -36.37053298950195
       ]
     },
     {
       "bufferView": 353,
       "componentType": 5123,
-      "count": 4836,
+      "count": 4734,
       "type": "SCALAR"
     },
     {
       "bufferView": 354,
       "componentType": 5126,
-      "count": 738,
+      "count": 316,
       "type": "VEC3",
       "max": [
-        0.12113627046346664,
-        10.55105209350586,
-        -32.64952850341797
+        0.12148895859718323,
+        10.169278144836426,
+        -33.77169418334961
       ],
       "min": [
-        -0.12114112079143524,
-        8.06951904296875,
-        -35.86521530151367
+        -0.12150702625513077,
+        8.133149147033691,
+        -35.67185592651367
       ]
     },
     {
       "bufferView": 355,
       "componentType": 5123,
-      "count": 1086,
+      "count": 456,
       "type": "SCALAR"
     },
     {

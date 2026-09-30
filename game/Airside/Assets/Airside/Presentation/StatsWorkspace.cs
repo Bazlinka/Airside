@@ -88,7 +88,7 @@ namespace Airside.Presentation
         /// <summary>
         /// The livery choices offered at airline creation (ADR 0045), reused here so a player
         /// who wants to repaint later picks from the same authored set rather than a free
-        /// colour picker — one shared source of truth with <c>AirsidePrototype.LiveryChoices</c>.
+        /// colour picker — one shared source of truth with <c>AirlineSetupModel.Palette</c>.
         /// </summary>
         public static readonly (string Label, string Hex)[] LiveryPalette = AirlineSetupModel.Palette;
 
@@ -454,13 +454,13 @@ namespace Airside.Presentation
 
         public HudBox LiverySwatch(int index)
         {
-            // Twelve colours share the column; they shrink rather than run past it.
+            // Five presets share the column; they shrink rather than run past it.
             var count = StatsWorkspaceModel.LiveryPalette.Length;
             var size = Math.Min(SwatchSize, (LeftColumn.Width - (count - 1) * SwatchGap) / count);
             return new HudBox(LeftColumn.X + index * (size + SwatchGap), ProfileY + CaptionHeight + 8f, size, size);
         }
 
-        public float CompetitionY => ProfileY + CaptionHeight + 8f + SwatchSize + 18f;
+        public float CompetitionY => ProfileY + CaptionHeight + 8f + SwatchSize + 34f;
         public HudBox CompetitionCaption => new(LeftColumn.X, CompetitionY, LeftColumn.Width, CaptionHeight);
         public HudBox CompetitionSummary =>
             new(LeftColumn.X, CompetitionY + CaptionHeight + 2f, LeftColumn.Width, SummaryRowHeight);
@@ -678,15 +678,20 @@ namespace Airside.Presentation
         /// </summary>
         private static void PaintProfile(HudDrawList into, StatsWorkspaceModel model, StatsWorkspaceLayout layout)
         {
-            into.Caption(layout.ProfileCaption, "LIVERY");
+            into.Caption(layout.ProfileCaption, "FLEET LIVERY · 5 PRESETS");
             for (var i = 0; i < StatsWorkspaceModel.LiveryPalette.Length; i++)
             {
-                var (_, hex) = StatsWorkspaceModel.LiveryPalette[i];
+                var (label, hex) = StatsWorkspaceModel.LiveryPalette[i];
                 var swatch = layout.LiverySwatch(i);
                 var current = string.Equals(hex, model.CurrentLiveryHex, StringComparison.OrdinalIgnoreCase);
                 into.Fill(swatch, HudTone.Default, 1f, hex);
+                into.Fill(new HudBox(swatch.X, swatch.Bottom - 5f, swatch.Width, 5f), HudTone.Default, 1f,
+                    AirlineSetupModel.PaletteAccents[i]);
                 into.Outline(swatch, current ? HudTone.Default : HudTone.Muted, current ? 1f : 0.4f);
                 into.Hotspot(swatch, HudAction.Livery(hex));
+                if (current)
+                    into.Text(new HudBox(layout.LeftColumn.X, swatch.Bottom + 5f, layout.LeftColumn.Width, 16f),
+                        label, 11f, HudTone.Muted);
             }
         }
 

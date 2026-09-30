@@ -26,12 +26,16 @@ namespace Airside.Presentation
         public const int HueSteps = 36;
         public const int ShadeSteps = 8;
 
-        /// <summary>Curated livery colours; the hue and shade strips make any other.</summary>
+        /// <summary>Five fleet paint presets, shared with the in-game Airline page.</summary>
         public static readonly (string Label, string Hex)[] Palette =
         {
-            ("Crimson", "#C8102E"), ("Navy", "#1F3A93"), ("Forest", "#2E7D32"), ("Sunset", "#E8772E"),
-            ("Violet", "#6A3FA0"), ("Gold", "#D4A017"), ("Teal", "#0F8B8D"), ("Sky", "#3A8DDE"),
-            ("Magenta", "#B5267A"), ("Charcoal", "#33393F"), ("Ochre", "#B8742A"), ("Eucalypt", "#4F7F68")
+            ("Coastline", "#0F8B8D"), ("Southern Cross", "#1F3A93"),
+            ("Outback", "#B8742A"), ("Gulf", "#3A8DDE"), ("Redgum", "#70415C")
+        };
+
+        public static readonly string[] PaletteAccents =
+        {
+            "#C8B286", "#A7C9D9", "#293F4F", "#17242A", "#B7C9AD"
         };
 
         public SetupStep Step = SetupStep.Identity;
@@ -321,48 +325,24 @@ namespace Airside.Presentation
 
         private static void PaintLivery(HudDrawList into, HudBox body, AirlineSetupModel model)
         {
-            into.Caption(body.WithHeight(12f), "LIVERY COLOUR", HudTone.Muted, HudAlign.Left, 10f);
-            var y = body.Y + 22f;
-            const int columns = 6;
-            var cell = Math.Min(46f, (body.Width - (columns - 1) * 12f) / columns);
+            into.Caption(body.WithHeight(12f), "CHOOSE YOUR FLEET LIVERY", HudTone.Muted, HudAlign.Left, 10f);
+            var y = body.Y + 24f;
             for (var i = 0; i < AirlineSetupModel.Palette.Length; i++)
             {
-                var cx = body.X + (i % columns) * (cell + 12f) + cell * 0.5f;
-                var cy = y + (i / columns) * (cell + 12f) + cell * 0.5f;
+                var (label, hex) = AirlineSetupModel.Palette[i];
+                var row = new HudBox(body.X, y + i * 42f, body.Width, 36f);
+                into.Fill(row, HudTone.Default, 0.65f, AirsidePalette.GlassHex);
+                into.Fill(new HudBox(row.X + 8f, row.Y + 7f, 30f, 22f), HudTone.Default, 1f, hex);
+                into.Fill(new HudBox(row.X + 8f, row.Y + 23f, 30f, 4f), HudTone.Default, 1f,
+                    AirlineSetupModel.PaletteAccents[i]);
+                into.Text(new HudBox(row.X + 50f, row.Y + 9f, row.Width - 60f, 18f), label, 13f,
+                    HudTone.Default, HudTextStyle.Bold);
                 if (i == model.PaletteIndex)
-                    into.Ring(cx, cy, cell + 8f, 1f, HudTone.Caution, 3f);
-                into.Dot(cx, cy, cell - 4f, HudTone.Default, AirlineSetupModel.Palette[i].Hex);
-                into.Hotspot(new HudBox(cx - cell * 0.5f, cy - cell * 0.5f, cell, cell), PalettePrefix + i);
+                    into.Outline(row, HudTone.Caution, 1f);
+                into.Hotspot(row, PalettePrefix + i);
             }
-            y += 2f * (cell + 12f) + 8f;
-
-            into.Caption(new HudBox(body.X, y, body.Width, 12f), "OR MIX YOUR OWN", HudTone.Muted, HudAlign.Left, 10f);
-            y += 20f;
-            var hueWidth = body.Width / AirlineSetupModel.HueSteps;
-            for (var i = 0; i < AirlineSetupModel.HueSteps; i++)
-            {
-                var segment = new HudBox(body.X + i * hueWidth, y, hueWidth + 0.5f, 22f);
-                into.Hairline(segment, HudTone.Default, 1f,
-                    AirlineSetupModel.FromHueShade(i / (float)AirlineSetupModel.HueSteps, 0.8f));
-                into.Hotspot(segment, HuePrefix + i);
-            }
-            if (model.PaletteIndex < 0)
-                into.Outline(new HudBox(body.X + model.Hue * hueWidth - 2f, y - 3f, hueWidth + 4f, 28f), HudTone.Default, 1f);
-            y += 32f;
-            var shadeWidth = body.Width / AirlineSetupModel.ShadeSteps;
-            for (var i = 0; i < AirlineSetupModel.ShadeSteps; i++)
-            {
-                var segment = new HudBox(body.X + i * shadeWidth + 2f, y, shadeWidth - 4f, 22f);
-                into.Fill(segment, HudTone.Default, 1f,
-                    AirlineSetupModel.FromHueShade(model.Hue / (float)AirlineSetupModel.HueSteps,
-                        i / (float)(AirlineSetupModel.ShadeSteps - 1)));
-                if (model.PaletteIndex < 0 && i == model.Shade)
-                    into.Outline(segment.Inset(-3f), HudTone.Default, 1f);
-                into.Hotspot(segment, ShadePrefix + i);
-            }
-            y += 34f;
-            into.Text(new HudBox(body.X, y, body.Width, 16f), $"{model.LiveryLabel}  ·  {model.LiveryHex}", 12f,
-                HudTone.Default, HudTextStyle.Bold);
+            into.Text(new HudBox(body.X, y + 216f, body.Width, 32f),
+                "Each aircraft wears its own fitted design in your fleet colours.", 12f, HudTone.Muted);
         }
 
         private static void PaintBriefing(HudDrawList into, HudBox body, AirlineSetupModel model, bool replacesSave)

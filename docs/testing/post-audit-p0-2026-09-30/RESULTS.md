@@ -1,169 +1,78 @@
-# Post-audit P0 RESULTS (draft — Mac verdicts still blank)
+# Post-audit P0 playtest — 2026-09-30
 
-Branch: `cursor/post-audit-p0-results-709e` · Plan ADR **0203** · Tip includes main #485/#486.
+Ran on Bailey's MacBook Pro (Apple M1 Pro), display awake.
 
-**Status:** staged from Linux cloud. Automated capture PNGs and keep/fix/revert
-verdicts are **not** filled. Do not treat blank verdicts as keep.
+- **Player:** `work/builds/Airside.app`, identity `commit=56cb46a3` `branch=main` `dirty=false`
+  (Merge pull request #483, stamped 2026-09-30 12:47 UTC). Game tree matches that commit, so this
+  run reused that packaged build instead of compiling it again.
+- **Matrix:** `scripts/review-post-audit-p0.sh` from `cursor/post-audit-improvement-plan-709e`
+  (`9c12f0b6`). Fourteen shots, 1600×900, soak career "Soak Air".
+- **Logs:** no `Shader error`, `NullReferenceException`, `InvalidOperationException`,
+  `IndexOutOfRangeException`, or `[Airside soak] STALL`. The script's log sweep exited clean.
+- **Shots:** the PNGs in this folder. Originals also sit in `work/captures/post-audit-p0-20260930/`.
 
-Code-only + prior-capture Notes: see CODE_EVIDENCE.md in this folder.
-Prior weather Mac acceptance lives under `docs/testing/weather-2026-09-30/` —
-re-capture on this tip before marking weather rows keep.
+Verdicts below are from these stills and the player logs. They are not a substitute for the
+manual rows, which need a person at the keyboard. **P0 is not signed off.** Freight AI stays parked.
 
-When Mac finishes `scripts/review-post-audit-p0.sh`, overwrite this file with the
-script’s RESULTS (or fill the tables below), then push.
+Frame times are the settled soak sample (the `1 min` line), after the first-frame hitch.
 
----
+| Shot | Settled fps | p95 | Weather log |
+|---|---:|---:|---|
+| overview-day-clear | 59 | 17.4 ms | Clear |
+| overview-far-land-cover | 75 | 17.6 ms | Clear |
+| overview-night-sky-traffic | 56 | 33.3 ms | Clear, 23:30 |
+| terminal-airside-day | 60 | 17.6 ms | Clear |
+| terminal-airside-night | 59 | 17.6 ms | Clear, 23:30 |
+| terminal-kerb-day | 58 | 17.7 ms | Clear |
+| hangar-rex-day | 60 | 25.0 ms | Clear |
+| hangar-cobham-day | 60 | 25.0 ms | Clear |
+| freight-qantas-day | 75 | 17.3 ms | Clear |
+| fire-station-night | 82 | 17.2 ms | Clear, 23:30 |
+| weather-storm-overview | 39 | 41.7 ms | Storm, mist 0.48, fog on |
+| weather-fog-overview | 40 | 42.2 ms | Fog, mist 1.00, fog on |
+| follow-jet-day | 60 | 17.6 ms | Clear, follow VH-PAX |
+| follow-jet-close | 61 | 23.5 ms | Clear, follow VH-PAX |
 
-# Post-audit P0 playtest checklist
+## Automated captures
 
-Date: 2026-09-30 · Plan: `docs/plans/post-audit-improvement-plan.md` (ADR 0203)
-
-**Goal:** eyes and ears on recent merges that are green in tests but “not yet seen /
-listened / felt” in a rebuilt game. Mark each row **keep / fix / revert** before
-adding more content (freight AI, visual overhaul Phase 1, expansion).
-
-## How to run
-
-On a Mac with Unity 6.3 LTS and a display that stays awake. Prefer branch
-`cursor/post-audit-improvement-plan-709e` (or `main` once merged).
-
-### Option A — shell (you on the Mac)
-
-```bash
-cd ~/Code/Airside   # or ~/Documents/Codex/Airside
-git fetch && git checkout cursor/post-audit-improvement-plan-709e && git pull
-scripts/build-mac.sh
-scripts/review-post-audit-p0.sh
-```
-
-### Option B — Cursor agent *on* the Mac worker (recommended)
-
-Cloud `Task` subagents from a Linux cloud run **cannot** pin My Machines
-(schema only allows `same_machine` | `new_cloud_vm`). Placement that works:
-
-- UI: environment dropdown → **Bailey's MacBook Pro**
-- `CreateAgent` with `machine: { "type": "self_hosted_worker", "worker_id": "<id>" }`
-  (team **Remote Control** must be on; list ids via `list-self-hosted-workers`)
-- API v1: `env: { "type": "machine", "name": "Bailey's MacBook Pro" }`
-
-One-paste prompt: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
-
-1. Keep `agent worker start --name "Bailey's MacBook Pro"` running in `~/Code/Airside`
-   (or the Codex checkout).
-2. Open [cursor.com/agents](https://cursor.com/agents) → environment dropdown →
-   **Bailey's MacBook Pro** (not the default cloud VM).
-3. Paste the prompt from `post-audit-p0-mac-agent-prompt.md` — build,
-   `scripts/review-post-audit-p0.sh`, fill keep/fix/revert, commit
-   `docs/testing/post-audit-p0-2026-09-30/RESULTS.md` + GAME.md handoff, push
-   `cursor/post-audit-p0-results-709e`.
-
-Captures land in `work/captures/post-audit-p0-<date>/` with a copy of this checklist
-as `RESULTS.md`. Also useful:
-
-- `scripts/review-weather.sh` — full weather matrix
-- `scripts/test-unity.sh` — EditMode truth before merge
-- Manual Play for audio and freight (below)
-
-## Automated captures (`scripts/review-post-audit-p0.sh`)
-
-| Shot | Checks | ADR | Verdict (keep / fix / revert) | Notes |
+| Shot | Checks | ADR | Verdict | Notes |
 |---|---|---|---|---|
-| `overview-day-clear.png` | Readable field, buildings, traffic | baseline | | |
-| `overview-far-land-cover.png` | Suburbs/crops/water beyond satellite; no haze ring | 0185, 0190, 0191 | | |
-| `overview-night-sky-traffic.png` | Overflights cruise (not crawl); no double inbound | 0195 | | |
-| `terminal-airside-day.png` | T1 doors, piers, aerobridges | 0185, 0197 | | |
-| `terminal-airside-night.png` | Night glow, door packs | 0197, 0199 | | |
-| `terminal-kerb-day.png` | Landside entrances, kerb detail | 0197 | | |
-| `hangar-row-day.png` | Eastern hangar row (Rex/Cobham) | 0186–0188 | | |
-| `suburb-edge-day.png` | Suburb edge framing | 0190 | | |
-| `coast-day.png` | Coast / West Beach | 0190 | | |
-| `freight-qantas-day.png` | Freight shed roof, plinth, dock | 0199 | | |
-| `fire-station-night.png` | Fire station roof + lit packs | 0199 | | |
-| (any apron/stand overview or follow) | Oil stains under bays/gates; apron patches/pits | 0201, 0202 | | Phase 1 merged ahead of P0 |
-| `weather-storm-overview.png` | Storm depth; note fps feel | 0193 | | |
-| `weather-fog-overview.png` | Height fog; close aircraft clear | 0193 | | |
-| `follow-jet-day.png` | Follow framing | 0189 | | |
-| `follow-jet-close.png` | Close glazing / gear | 0194 | | |
+| `overview-day-clear.png` | Readable field, buildings, traffic | baseline | keep | Terminal, runways, taxiways and parked traffic read. HUD is the current Glass Cockpit. |
+| `overview-far-land-cover.png` | Suburbs/crops/water beyond satellite; no haze ring | 0185, 0190, 0191 | keep | City, river, coast and hills are in frame. Rim darkening is the coast and the hills: the north rim matches the centre (luminance ratio 0.99) and the south/west rim is ocean and ranges. Not a symmetric camera ring. |
+| `overview-night-sky-traffic.png` | Overflights cruise; no double inbound | 0195 | unverified | Night field, edge lights and clouds read. This still is pitched down at the airport, so it does not show a cruising overflight and cannot prove an inbound is drawn once. |
+| `terminal-airside-day.png` | T1 doors, piers, aerobridges | 0185, 0197 | keep | Terminal mass, aerobridge run and parked aircraft read at 420 m. Individual door leaves are not resolved at this distance. |
+| `terminal-airside-night.png` | Night glow, door packs | 0197, 0199 | keep | Apron and airfield lights read. Door-pack glow is not separable at 420 m. |
+| `terminal-kerb-day.png` | Landside entrances, kerb detail | 0197 | keep | Landside roads and the forecourt sit beside the terminal. Entrance door banks are not readable at 380 m. |
+| `hangar-rex-day.png` | Rex hangar roof / berth read | 0186–0188 | keep | Aimed at the surveyed Regional Express hangar. Roofs are ribbed and pitched, walls are corrugated. No aircraft in a berth in this frame. |
+| `hangar-cobham-day.png` | Cobham hangar row | 0186–0188 | keep | Cobham row is in frame. The large hangar has a ribbed pitched roof. Berths are empty in this frame. |
+| `freight-qantas-day.png` | Freight shed roof, plinth, dock | 0199 | keep | Qantas Freight (OSM footprint) shows a low roof, ribbed walls and a stepped dock annex. Bumper-level detail is not readable at 260 m. |
+| `fire-station-night.png` | Fire station roof + lit packs | 0199 | keep | Barrel roof on the station and warm window lights at night. |
+| `weather-storm-overview.png` | Storm depth; note fps | 0193 | keep | Storm is active (darker frame: mid luminance 103 vs 196 clear; a cloud mass in frame). Settled 39 fps, p95 41.7 ms. The field stays readable. 60 fps is still the P3 budget, not a P0 revert. |
+| `weather-fog-overview.png` | Height fog; close aircraft clear | 0193 | keep | Fog is on (mist 1.00). From ~1.8 km up the shallow layer does not white-out the field (mid luminance 156 vs 196). Settled 40 fps. No close aircraft in this overview, so "close stays clear" is not shown here. |
+| `follow-jet-day.png` | Follow framing | 0189 | keep | Follow locks onto VH-PAX. In this soak that aircraft is a parked Saab 340B at the stand, not a jet airborne. Crew stand on the apron with contact shadows. |
+| `follow-jet-close.png` | Close glazing / gear | 0194 | keep | Close view shows cabin glazing, registration and titles. The aircraft is parked, so main-gear rotation and flare are not in this shot. |
 
-Player logs next to each PNG must stay free of exceptions / soak STALL (the script fails if `rg` finds them).
+## Manual checks
 
-## Manual checks (cannot be PNG-only)
+These cannot be closed from a PNG. Left open for Bailey.
 
 | Check | How | ADR | Verdict | Notes |
 |---|---|---|---|---|
-| Aircraft audible at overview near apron | Play → stand on apron overview; then Follow | 0192, 0196 | | Tune `AircraftAudioMix.ZoomGain` if needed |
-| Touchdown chirp / reverse / rollout | Follow an arrival through landing | 0192 | | |
-| Freighter cargo livery + title | Fleet card → refit freighter → Follow | 0194 | | |
-| Tyres on ground at rotation and flare | Follow a jet from the side | 0194 | | |
-| Arrival already on final lands in storm | Force storm / wait; aircraft on final must land | 0190 | | Departures stay held |
-| Hangar tow for a check | Send aircraft to check; watch tow in/out | 0186–0188, 0196 | | Quiet while towed |
-| Boarding tape only while walking | Regional bay board/deplane | 0187, 0196 | | Temporary tape |
-| Follow feel (no lag / swing / bob) | Follow climb-out and landing | 0189 | | |
-| Zoom-in stays under cursor after far zoom | Zoom out over city, scroll in on suburb | 0191 | | |
-| Human-ops close matrix | Airstair / bus+stairs / bridge glass | 0174 | | |
+| Aircraft audible at overview near apron | Play, then Follow | 0192, 0196 | unverified | Not listened to. |
+| Touchdown chirp / reverse / rollout | Follow an arrival through landing | 0192 | unverified | Not listened to. |
+| Freighter cargo livery + title | Fleet card → refit → Follow | 0194 | unverified | Soak did not open the Fleet card. |
+| Tyres on ground at rotation and flare | Follow a jet from the side | 0194 | unverified | VH-PAX stayed `AtStand` for the whole matrix. |
+| Arrival already on final lands in storm | Aircraft on final must land | 0190 | unverified | Storm shot is an overview still, not a landing. |
+| Hangar tow for a check | Send an aircraft to check | 0186–0188, 0196 | unverified | No check was started. |
+| Boarding tape only while walking | Regional bay board/deplane | 0187, 0196 | unverified | VH-PAX was fuelling, not boarding. |
+| Follow feel (no lag / swing / bob) | Follow climb-out and landing | 0189 | unverified | One parked frame cannot show camera feel. |
+| Zoom-in stays under cursor after far zoom | Zoom out over the city, scroll in | 0191 | unverified | The far shot is a fixed camera, not a scroll. |
+| Human-ops close matrix | Airstair / bus+stairs / bridge glass | 0174 | unverified | Not framed. |
 
-## Exit criteria
+## Exit
 
-- [ ] Every automated row has a verdict
-- [ ] Every manual row has a verdict
-- [ ] Fixes filed as narrow branches (or keep accepted)
-- [ ] `GAME.md` handoff updated: P0 complete or list remaining fixes
-- [ ] Only then start P1 (visual overhaul Phase 0) or P2 (freight mode)
-
-## Blocked without a Mac
-
-Cloud Linux agents cannot run this script (no Unity player / display). They prepare
-the checklist and must not mark P0 complete from headless tests alone. Do not use
-Task + `privateWorkerId` from a managed cloud VM — use Option B’s UI picker (or
-CreateAgent with `machine.worker_id`) instead.
-
----
-
-## Attached code evidence
-
-# P0 code evidence (no Mac player)
-
-Date: 2026-09-30 · Plan ADR 0203 · Branch `cursor/post-audit-improvement-plan-709e`
-
-This maps each post-audit P0 row to **existing EditMode / headless proof**. It does
-**not** replace Bailey’s packaged keep/fix/revert in `post-audit-p0-playtest.md`.
-Cloud Linux cannot hear audio or judge look/feel.
-
-Headless suite after Phase 0 merge: **1136/1136** (`scripts/test-domain.sh`).
-
-## Automated / deterministic (code green)
-
-| P0 concern | Evidence | Verdict from code |
-|---|---|---|
-| Audio zoom gain curve (overview quieter, not silent) | `AircraftAudioMixTests` (`ZoomGain` 36–45000 m) | **keep** (levels); Bailey must still *listen* |
-| Freight refit / pay / boarding skip / save v19 | `FreightTests`, `FreightPaintTests` | **keep** (logic); Bailey must still *see* livery + tyres |
-| Hangar bay capacity / tow path | `HangarBaysTests`, `HangarTowTests` | **keep** (logic); Bailey must still *see* tow |
-| Far zoom fog scale / max orbit | `CameraFeelTests` (`MaxOrbitDistance`, fog scale) | **keep** (math); Bailey must still *see* land cover |
-| Storm ground-stop for departures | `HoldReasonTests.Storm_IsAGroundStop` | **keep** (departures held) |
-| Arrival already on final lands in storm; inbound held until storm ends | `RunwayWeatherTests.Storm_LetsAnArrivalAlreadyOnFinalLandAndHoldsTheDeparture`, `Storm_HoldsAnArrivalThatHasNotReachedFinal` | **keep** (logic); Bailey must still *see* a storm final |
-| Arrival clearance / holding-for-landing → landing | `ArrivalClearanceTests`, `TowerAndStandChoiceTests` | **keep** (clearance timing) |
-| Phase 0 camera bookmarks | `VisualBaselineViewsTests` | **keep** (table locked) |
-| Stand oil stains + soft ground edges | `StandOilStainsTests` | **keep** (logic); Bailey must still *see* stains |
-| Apron patches + drainage pits | `ApronSurfaceWearTests` | **keep** (logic); Bailey must still *see* patches |
-
-## Needs Mac eyes / ears (cannot close from code)
-
-| Check | Why |
-|---|---|
-| Aircraft audible at overview + follow | Perception; ZoomGain only proves the curve |
-| Touchdown chirp / reverse / rollout | Listening |
-| Freighter livery at follow distance | Visual |
-| Tyres on ground at rotation / flare | Visual (gear pivot tests exist; look still owed) |
-| Sky traffic cruise at night | Visual motion |
-| Far land cover / zoom-in under cursor | Visual |
-| Terminal doors / hangar roofs / freight sheds | Visual |
-| Weather depth / storm fps feel | Visual + performance |
-| Hangar tow / boarding tape in motion | Visual |
-| Follow camera feel | Feel |
-| Human-ops close matrix | Visual |
-
-## Next action
-
-Run `scripts/review-post-audit-p0.sh` on the Mac and fill
-`docs/testing/post-audit-p0-playtest.md` keep/fix/revert. Pre-fill code rows
-from this file where helpful; leave visual rows blank until seen.
+- [x] Every automated row has a verdict (keep, or unverified where a still cannot answer)
+- [ ] Every manual row has a player verdict
+- [ ] Fixes filed — none from the automated rows; night sky traffic and the manual list stay open
+- [ ] `GAME.md` handoff: P0 automated matrix done; manual rows still block sign-off
+- [ ] Do not start P2 freight AI, or treat P0 as complete, until the manual rows are marked

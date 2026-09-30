@@ -1,6 +1,6 @@
 # Post-audit improvement plan
 
-Status: **active** · 2026-09-30 · Author: Cursor (comprehensive code audit) · Branch `cursor/post-audit-improvement-plan-709e` · ADR **0203**
+Status: **active** · 2026-09-30 · Author: Cursor (comprehensive code audit) · Branch `main` · ADR **0205**
 
 This is the standing backlog for what to improve next before a major expansion.
 It comes from a full Domain / Simulation / Presentation / tests / product-plan audit
@@ -20,7 +20,8 @@ concentration / performance**, then finishing half-done product slices (freight)
 
 ### P0 — Mac packaged playtest of unverified merges (do first)
 
-**Status:** tooling ready; **blocked on a Mac** (Unity player + awake display). Cloud
+**Status:** automated Mac captures recorded in #490; manual listening/play checks remain open. See
+`docs/testing/post-audit-p0-2026-09-30/RESULTS.md`. A Unity player and awake display are required. Cloud
 Linux cannot mark this complete. Self-hosted Mac workers are often online and may
 show `eligibleForSubagent: true`, but `Task` only accepts `same_machine` |
 `new_cloud_vm` — it cannot take `machine.worker_id`. Pin the Mac with **CreateAgent**
@@ -58,7 +59,7 @@ verified” lines when eyes-on is done.
 3. Building audit: 71/78 heights are still rule defaults (`docs/data/ypad-buildings-audit.md`).
 
 **In flight / ahead of gate:**
-- Phase 0 bookmarks (ADR 0200) are **merged to `main` via #485** and on this branch;
+- Phase 0 bookmarks (ADR 0200) are **merged to `main` via #485** and in the canonical checkout;
   Mac `capture-visual-baseline.sh` metrics still owed.
 - Phase 1 oil stains (ADR 0201) + apron wear (ADR 0202) **merged to `main` via #486**
   before P0 / Bailey sign-off. Treat as parallel visual work already on the Mac P0

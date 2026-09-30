@@ -1,6 +1,6 @@
 # Post-audit P0 playtest checklist
 
-Date: 2026-09-30 · Plan: `docs/plans/post-audit-improvement-plan.md` (ADR 0203)
+Date: 2026-09-30 · Plan: `docs/plans/post-audit-improvement-plan.md` (ADR 0205)
 
 **Goal:** eyes and ears on recent merges that are green in tests but “not yet seen /
 listened / felt” in a rebuilt game. Mark each row **keep / fix / revert** before
@@ -9,13 +9,13 @@ adding more content (freight AI, visual overhaul Phase 1, expansion).
 ## How to run
 
 On a Mac with Unity 6.3 LTS and a display that stays awake. Prefer branch
-`cursor/post-audit-improvement-plan-709e` (or `main` once merged).
+`main` in the canonical checkout.
 
 ### Option A — shell (you on the Mac)
 
 ```bash
 cd ~/Code/Airside   # or ~/Documents/Codex/Airside
-git fetch && git checkout cursor/post-audit-p0-results-709e && git pull
+git pull --ff-only origin main
 scripts/run-post-audit-p0.sh   # build + capture matrix + RESULTS inventory stamp
 # then fill keep/fix/revert in docs/testing/post-audit-p0-<date>/RESULTS.md and push
 ```
@@ -38,8 +38,8 @@ One-paste prompt: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
    **Bailey's MacBook Pro** (not the default cloud VM).
 3. Paste the prompt from `post-audit-p0-mac-agent-prompt.md` — build,
    `scripts/review-post-audit-p0.sh`, fill keep/fix/revert, commit
-   `docs/testing/post-audit-p0-2026-09-30/RESULTS.md` + GAME.md handoff, push
-   `cursor/post-audit-p0-results-709e`.
+   `docs/testing/post-audit-p0-2026-09-30/RESULTS.md` + GAME.md handoff, and publish
+   through the protected-main PR workflow in AGENTS.md.
 
 Captures land in `work/captures/post-audit-p0-<date>/` with a copy of this checklist
 as `RESULTS.md`. Also useful:

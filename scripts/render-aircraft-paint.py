@@ -102,10 +102,17 @@ def label_tris(text, c, pos, side, tilt, anchor_at_nose, offset):
 
 
 def paint_colour(accent):
+    # Read the runtime preset palette rather than maintaining a second colour contract.
+    setup = open(os.path.join(thumbs.ROOT, "game/Airside/Assets/Airside/Presentation/AirlineSetup.cs")).read()
+    palette_block = setup.split('[] Palette =', 1)[1].split('};', 1)[0]
+    accent_block = setup.split('[] PaletteAccents =', 1)[1].split('};', 1)[0]
+    presets = dict(zip(re.findall(r'#[0-9A-F]{6}', palette_block), re.findall(r'#[0-9A-F]{6}', accent_block)))
+    secondary = next((hex_rgb(value) for key, value in presets.items() if hex_rgb(key) == accent), None)
     def colour(name):
         if name == "livery_emblem":
             return (41, 64, 79) if sum(c*w for c,w in zip(accent,(.2126,.7152,.0722))) > .62*255 else (245, 242, 230)
         if name == "livery_secondary":
+            if secondary is not None: return secondary
             return (201, 166, 99) if accent[2] + accent[1] * 0.35 > accent[0] else (41, 64, 79)
         if name.startswith(("livery_", "tail_fin", "rudder", "winglet", "dorsal")):
             return accent

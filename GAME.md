@@ -1,10 +1,10 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — P0 Stage A freighter pick (branch `cursor/p0-freighter-pick-lock-709e`, #492).**
-  Tip **#492** (this commit). `ReviewFreighterPick` + CreateAgent default pin to
-  the online Codex-path worker (`4566aff1…`; same tree as `~/Code/Airside`).
-  Rebuild on tip. 20 RESULTS unverified. `CURSOR_API_KEY` still required for
-  CreateAgent (Task cannot pin).
+- **2026-09-30 Cursor — P0 Stage A follow fail-closed + tip docs (#492).**
+  Tip **#492** (this commit). Registration follow (freighter/hangar/boarding) now
+  aborts before PNG if camera never follows; inventory requires a `following` log.
+  `CODE_EVIDENCE` / Mac docs retargeted from #491 tip to this branch.
+  Rebuild on tip. 20 RESULTS unverified. `CURSOR_API_KEY` unset; no Mac workers.
   **NEXT:** Mac Terminal/Finder Stage A on tip, or API key →
   `scripts/launch-p0-mac-agent.sh`. Fill RESULTS by eye/ear. Freight parked.
 

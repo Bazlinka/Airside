@@ -8,7 +8,7 @@ Verdicts (keep/fix/revert) still need your eyes/ears afterward — inventory is 
 
 ```bash
 cd ~/Code/Airside
-# Tip branch while #491 is open; falls back to main after merge:
+# Tip branch while #492 is open; falls back to main after merge:
 bash scripts/p0-checkout-mac-tip.sh
 # Or: git fetch && git checkout cursor/p0-freighter-pick-lock-709e && git pull --ff-only
 
@@ -45,5 +45,5 @@ cannot do this pin (confirmed; no `workerId` on Task).
 
 GitHub trigger (optional): only works when **Bailey** posts as a trusted
 commenter linked to the Mac's Cursor account. A `cursor[bot]` cloud comment on
-#491 does not claim My Machines (tried 2026-09-30; workers stayed idle). Prefer
-Terminal / Finder above.
+#492 (or any cloud bot comment) does not claim My Machines (tried 2026-09-30 on
+#491; workers stayed idle). Prefer Terminal / Finder above.

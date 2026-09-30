@@ -185,27 +185,34 @@ follow_fail=0
           fi
           ;;
         follow-freighter)
-          if ! grep -Eq '\[Airside soak\] review freighter ' "$logf"; then
+          # Refit alone is not enough — camera must follow the freighter (not overview).
+          if ! grep -Eq '\[Airside soak\] review freighter ' "$logf" \
+            || ! grep -Eq '\[Airside soak\] following ' "$logf"; then
             log_status="errors"
             follow_fail=1
           fi
           ;;
         follow-hangar-tow)
-          if ! grep -Eq '\[Airside soak\] review hangar check ' "$logf"; then
+          if ! grep -Eq '\[Airside soak\] review hangar check ' "$logf" \
+            || ! grep -Eq '\[Airside soak\] following ' "$logf"; then
             log_status="errors"
             follow_fail=1
           fi
           ;;
         follow-boarding-tape|follow-human-ops-close)
           found_board=0
+          found_follow=0
           for alt in follow-boarding-tape follow-human-ops-close; do
-            if [ -f "$capture_out/$alt.log" ] \
-              && grep -Eq '\[Airside soak\] review boarding ' "$capture_out/$alt.log"; then
-              found_board=1
-              break
+            if [ -f "$capture_out/$alt.log" ]; then
+              if grep -Eq '\[Airside soak\] review boarding ' "$capture_out/$alt.log"; then
+                found_board=1
+              fi
+              if grep -Eq '\[Airside soak\] following ' "$capture_out/$alt.log"; then
+                found_follow=1
+              fi
             fi
           done
-          if [ "$found_board" -eq 0 ]; then
+          if [ "$found_board" -eq 0 ] || [ "$found_follow" -eq 0 ]; then
             log_status="errors"
             follow_fail=1
           fi

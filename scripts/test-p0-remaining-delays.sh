@@ -110,6 +110,19 @@ grep -Fq 'review boarding ' "$runner" || {
   echo "inventory must hard-fail missing review boarding log" >&2
   exit 1
 }
+# Freighter/hangar/boarding inventory must also require a follow log (not overview).
+grep -A6 'follow-freighter)' "$runner" | grep -Fq 'following ' || {
+  echo "inventory must hard-fail freighter stills without follow log" >&2
+  exit 1
+}
+grep -A4 'follow-hangar-tow)' "$runner" | grep -Fq 'following ' || {
+  echo "inventory must hard-fail hangar stills without follow log" >&2
+  exit 1
+}
+grep -A20 'follow-boarding-tape|follow-human-ops-close)' "$runner" | grep -Fq 'found_follow' || {
+  echo "inventory must hard-fail boarding stills without follow log" >&2
+  exit 1
+}
 echo "ok review-flag inventory fail-closed"
 
 echo "P0 remaining delay locks passed"

@@ -7,9 +7,9 @@ Automated stills are mostly **keep**. These rows are still **unverified** and bl
 P0 sign-off (and keep freight AI parked).
 
 Canonical Mac checkout: `~/Code/Airside` on `cursor/p0-freighter-pick-lock-709e`
-(or `main` after that tip merges; #491 helpers are already on `main`)
-(#491) until that merges, then `main`. Keep the display awake. Prefer a **fresh**
-`scripts/build-mac.sh` so night-sky framing and review follow helpers are in the player.
+(or `main` after #492 merges; #491 helpers are already on `main`). Keep the display
+awake. Prefer a **fresh** `scripts/build-mac.sh` so night-sky framing, freighter pick,
+and review follow fail-closed land in the player.
 **Fastest path (no Cursor agent):** `docs/testing/post-audit-p0-mac-terminal.md`
 — one paste `scripts/run-post-audit-p0-stages.sh` (A→B→C). Subset:
 `AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/review-post-audit-p0-remaining.sh`.

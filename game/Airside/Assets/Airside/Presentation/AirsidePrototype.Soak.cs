@@ -357,11 +357,10 @@ namespace Airside.Presentation
             if (Time.unscaledTime < dueAt)
                 return;
 
-            // Fail closed: auto-landing / auto-takeoff stills must follow a drawn candidate.
-            // Writing a blind overview PNG would look like success and invent tyre evidence.
-            if (!string.IsNullOrEmpty(_reviewAircraftId)
-                && ReviewAircraftFollow.IsAutoFollowToken(_reviewAircraftId)
-                && !_reviewFollowStarted)
+            // Fail closed: any review follow subject (auto-* or a freighter/hangar/boarding
+            // registration) must be on camera before the still. A blind overview PNG would
+            // look like success and invent tyre / cargo / tow / tape evidence.
+            if (!string.IsNullOrEmpty(_reviewAircraftId) && !_reviewFollowStarted)
             {
                 Debug.LogError(
                     $"{SoakLogTag} review shot aborted — {_reviewAircraftId} follow never started before delay {entry.DelaySeconds:0}s (no PNG)");

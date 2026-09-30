@@ -21,11 +21,12 @@ concentration / performance**, then finishing half-done product slices (freight)
 ### P0 — Mac packaged playtest of unverified merges (do first)
 
 **Status:** automated Mac captures recorded in #490; manual listening/play checks remain open
-(21 unverified rows). See `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`. Night-sky
+(20 unverified rows). See `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`. Night-sky
 framing + review follow helpers (`auto-landing` ~780s jet / `auto-takeoff` ~1330s jet /
-freighter / hangar / boarding; multi-shot landing+boarding batches) are in #491
-(headless CI green, mergeable). Mac path: one-paste
-`scripts/run-post-audit-p0-stages.sh` (~45+ min after rebuild; wraps
+freighter / hangar / boarding; multi-shot landing+boarding batches) are on `main` via #491.
+Tip #492 adds soak-seed `ReviewFreighterPick` and fail-closes registration follow
+(freighter/hangar/boarding) so a blind overview PNG cannot look like success. Mac path:
+one-paste `scripts/run-post-audit-p0-stages.sh` (~45+ min after rebuild; wraps
 `caffeinate -d -i` for the full run), or
 `scripts/run-post-audit-p0-remaining.sh` Stage A (night-sky+freighter) → B (jet takeoff
 `SKIP_BUILD`/`SKIP_PULL`) → C (hangar + batched landings/boarding). A Unity player and awake display
@@ -34,9 +35,9 @@ are required. Cloud Linux cannot mark this complete. If no workers show in
 `~/Code/Airside`). Cloud `Task` cannot pin My Machines — do not retry Task pins.
 Pin via agents UI (**Bailey's MacBook Pro**) or
 `scripts/launch-p0-mac-agent.sh` (`CURSOR_API_KEY` → API v1 CreateAgent;
-defaults Stage A; pins `env.worker_id` for the `~/Code/Airside` worker when known,
-plus machine name). Tip #491 also fail-closes overview framing mismatches so a
-nose-down night-sky PNG cannot look like success. Prefer Terminal/Finder (no pin):
+defaults Stage A; pins `env.worker_id` when known, plus machine name). Tip also
+fail-closes overview framing mismatches so a nose-down night-sky PNG cannot look like
+success. Prefer Terminal/Finder (no pin):
 `docs/testing/post-audit-p0-mac-terminal.md`. GitHub `@cursoragent worker=` only
 works from Bailey's trusted account — `cursor[bot]` cloud comments do not claim
 the machine. Optional agent paste: `docs/testing/post-audit-p0-mac-agent-prompt.md`.

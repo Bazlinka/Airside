@@ -1,12 +1,13 @@
 # P0 code evidence (no Mac player)
 
-Date: 2026-09-30 · Plan ADR 0205 · Tip `cursor/p0-auto-landing-follow-709e` (#491)
+Date: 2026-09-30 · Plan ADR 0205 · Tip `cursor/p0-freighter-pick-lock-709e` (#492)
 
 This maps each post-audit P0 row to **existing EditMode / headless proof**. It does
 **not** replace Bailey’s packaged keep/fix/revert in `RESULTS.md`.
 Cloud Linux cannot hear audio or judge look/feel.
 
-Headless suite on tip: **1168+** (`scripts/test-domain.sh`); #491 tip CI green.
+Headless suite on tip: **1180+** (`scripts/test-domain.sh`); #492 tip CI green.
+#491 helpers (`auto-landing` / `auto-takeoff` / framing fail-closed) are already on `main`.
 
 ## Automated / deterministic (code green)
 
@@ -14,6 +15,7 @@ Headless suite on tip: **1168+** (`scripts/test-domain.sh`); #491 tip CI green.
 |---|---|---|
 | Audio zoom gain curve (overview quieter, not silent) | `AircraftAudioMixTests` (`ZoomGain` 36–45000 m) | **keep** (levels); Bailey must still *listen* |
 | Freight refit / pay / boarding skip / save v19 / CARGO titles | `FreightTests`, `FreightPaintTests` | **keep** (logic); Bailey must still *see* livery + tyres |
+| Stage A freighter pick on soak seed (jet preferred, T+0/T+28 stand) | `ReviewFreighterPickTests` + soak `PickBest` | **keep** (pick); Bailey must still *see* cargo shade |
 | Hangar bay capacity / tow path / mid-tow @ 90s | `HangarBaysTests`, `HangarTowTests` | **keep** (logic); Bailey must still *see* tow |
 | Far zoom fog scale / max orbit | `CameraFeelTests` (`MaxOrbitDistance`, fog scale) | **keep** (math); Bailey must still *see* land cover |
 | Storm ground-stop for departures | `HoldReasonTests.Storm_IsAGroundStop` | **keep** (departures held) |
@@ -25,6 +27,7 @@ Headless suite on tip: **1168+** (`scripts/test-domain.sh`); #491 tip CI green.
 | Night-sky drawable cruise early in soak + yaw 270 sector + upper-half frustum | `SkyTrafficTests.NightSkyReviewWindow_HasDrawableCruiseTrafficEarlyInSoak`, `NightSkyReviewYaw_FacesADrawableOverflightSector`, `NightSkyReviewFraming_PutsDrawableCruiseInUpperHalfOfFrame` | **keep** (timing/aim/frustum); Bailey must still *see* cruise in the still |
 | Night-sky CLI pose fail-closed (reject nose-down default) | `ReviewOverviewFramingTests` + soak abort `overview framing mismatch` + inventory pitch band | **keep** (no false-success PNG); Bailey must still *see* cruise after Mac Stage A |
 | Auto-landing / auto-takeoff pick Landing / TakingOff (not parked Saab) | `ReviewAircraftFollowTests` (incl. packaged jet takeoff 1330 / landing 780/783/786) | **keep** (follow pick); Bailey must still *see* tyres |
+| Review follow fail-closed (auto-* **and** freighter/hangar/boarding registration) | Soak abort `follow never started before delay`; inventory requires `following` log | **keep** (no blind overview); Bailey must still *see* the subject |
 | Boarding mid-window @ 320/323s | `EngineStartSequenceTests.PackagedBoardingStill_IsMidBoardingForStarterRegional` | **keep** (timing); Bailey must still *see* tape |
 | Multi-shot soak CLI schedule | `ReviewShotScheduleTests` | **keep** (parser); rebuild player required |
 | Packaged remaining delays / Stage A–C ONLY / soak window / capture resume | `scripts/test-p0-remaining-delays.sh`, `test-p0-remaining-only-filter.sh`, `test-p0-stages-chain.sh`, `test-capture-game-soak-window.sh`, `test-capture-game-resume.sh`, `test-p0-mac-agent-launch.sh` | **keep** (script locks) |
@@ -61,15 +64,16 @@ still fill Verdict on the **current** tip (multi-shot + framing helpers).
 
 ## Next action
 
-On Mac (`~/Code/Airside`, tip #491 until merged), display awake:
+On Mac (`~/Code/Airside`, tip #492 until merged), display awake:
 
 ```bash
-git fetch origin && git checkout cursor/p0-auto-landing-follow-709e
-git pull --ff-only origin cursor/p0-auto-landing-follow-709e
+git fetch origin && bash scripts/p0-checkout-mac-tip.sh
+# defaults to cursor/p0-freighter-pick-lock-709e; falls back to main after merge
 scripts/run-post-audit-p0-stages.sh
 # or Finder: scripts/run-post-audit-p0-stages.command
+# Stage A only: scripts/run-post-audit-p0-stage-a.command
 ```
 
-Rebuild is required (multi-shot). Fill keep/fix/revert in
+Rebuild is required (multi-shot + follow fail-closed). Fill keep/fix/revert in
 `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`. Pre-fill Notes from this file;
 do not invent verdicts. See `docs/testing/post-audit-p0-mac-terminal.md`.

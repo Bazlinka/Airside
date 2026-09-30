@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 review follow fail-closed for freighter/hangar/boarding.** Soak aborts
+  before writing a PNG when any review aircraft id (auto-* or registration) never
+  starts follow; remaining inventory requires a `following` log for those stills.
+  CODE_EVIDENCE / Mac tip docs retargeted to #492. No save-schema changes.
 - **P0 CreateAgent pin follows online Codex-path worker.** Launcher default
   `worker_id` is `4566aff1…` (`~/Documents/Codex/Airside`, symlink to Code);
   prompt accepts either checkout. Locked by `test-p0-mac-agent-launch.sh`. No

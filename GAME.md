@@ -1,5 +1,10 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Cursor — Phase 1 West Beach dunes/foam/outlet (branch `cursor/phase1-landform-coast-5ea8`, ADR 0203).**
+  Seeded dune berms inland of the OSM coast, two `Coast foam` ribbons (pulse on bare field), Patawalonga
+  water deepens toward the gulf. Presentation only.
+  - **NEXT:** land-cover polish (golf/parks/scrub) or far-ring skyline (still Phase 1).
+
 - **2026-09-30 Cursor — Phase 1 apron surface wear (branch `cursor/phase1-stand-oil-stains-5ea8`, ADR 0202).**
   Seeded concrete patch repairs and drainage pits inside every apron outline. Presentation only.
   - **Checks:** `scripts/test-domain.sh` **1138/1138** (incl. ApronSurfaceWearTests).

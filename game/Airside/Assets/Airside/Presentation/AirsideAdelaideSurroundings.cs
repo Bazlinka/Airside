@@ -182,6 +182,7 @@ namespace Airside.Presentation
                     AirsideAdelaideOuterTerrain.TryBuild(root, shader);
                 }
 
+                BuildShoreFoam(root, AirsideAdelaideGround.PavementWorldY - SeaBelowPavement + 0.04f);
                 return true;
             }
             catch (Exception e)
@@ -265,9 +266,13 @@ namespace Airside.Presentation
                 var cover = AdelaideLandCover.Sample(x, z);
                 if (cover == AdelaideLandCover.Kind.Water)
                 {
-                    // Patawalonga / West Lakes — real inland water, not the gulf.
-                    vertices[i] = new Vector3(x, pavement - InlandWaterBelowPavement, z);
-                    var c = InlandWater.linear;
+                    // Patawalonga / West Lakes — deepen toward the gulf so the Barcoo
+                    // outlet reads as a channel into the shallows (Phase 1 landform).
+                    var outlet = AdelaideCoastLandform.OutletBlend(coast);
+                    var inlandY = pavement - InlandWaterBelowPavement;
+                    var seaY = pavement - SeaBelowPavement;
+                    vertices[i] = new Vector3(x, Mathf.Lerp(inlandY, seaY, outlet * 0.85f), z);
+                    var c = Color.Lerp(InlandWater, Shallows, outlet).linear;
                     c.a = 1f;
                     colors[i] = c;
                     continue;
@@ -284,6 +289,13 @@ namespace Airside.Presentation
                     height += terrain.Relief(x, z, outside);
                 var beach = 1f - Mathf.SmoothStep(0f, 1f, coast / BeachWidthMetres);
                 height = Mathf.Lerp(height, pavement - BeachBelowPavement, beach);
+                // West Beach dune berms — raised sand/scrub just inland of the waterline.
+                if (!grid.IsTuckedUnder(xi, zi))
+                {
+                    var sandOrScrub = cover == AdelaideLandCover.Kind.Sand
+                        || cover == AdelaideLandCover.Kind.Scrub;
+                    height += AdelaideCoastLandform.DuneBoostMetres(coast, x, z, sandOrScrub);
+                }
                 if (grid.IsTuckedUnder(xi, zi))
                     height = edgeHeight - TuckUnderMetres;
 
@@ -382,6 +394,62 @@ namespace Airside.Presentation
             var onZ = Mathf.Abs(Mathf.Abs(grid.Z(zi)) - grid.HoleHalfZ) < 0.05f
                       && Mathf.Abs(grid.X(xi)) <= grid.HoleHalfX + 0.05f;
             return onX || onZ;
+        }
+
+        /// <summary>
+        /// Soft foam ribbons along the OSM coastline. Named <c>Coast foam …</c> so
+        /// <see cref="AirsidePrototype"/>'s coastal motion pulse finds them on the bare field.
+        /// </summary>
+        public static void BuildShoreFoam(Transform root, float foamY)
+        {
+            var segments = AdelaideCoastLandform.FoamSegments();
+            if (segments.Count == 0)
+                return;
+
+            SpawnFoamLayer(root, "Coast foam near", segments, foamY, landward: 3f, seaward: 7f,
+                new Color(0.92f, 0.95f, 0.97f, 0.55f));
+            SpawnFoamLayer(root, "Coast foam outer", segments, foamY - 0.01f, landward: 1f, seaward: 16f,
+                new Color(0.85f, 0.90f, 0.94f, 0.35f));
+        }
+
+        private static void SpawnFoamLayer(Transform root, string name,
+            System.Collections.Generic.IReadOnlyList<CoastFoamSegment> segments,
+            float y, float landward, float seaward, Color colour)
+        {
+            var verts = new System.Collections.Generic.List<Vector3>(segments.Count * 4);
+            var tris = new System.Collections.Generic.List<int>(segments.Count * 6);
+            foreach (var segment in segments)
+            {
+                var xz = AdelaideCoastLandform.FoamQuad(segment, landward, seaward);
+                var baseIndex = verts.Count;
+                for (var i = 0; i < 4; i++)
+                    verts.Add(new Vector3(xz[i * 2], y, xz[i * 2 + 1]));
+                tris.Add(baseIndex);
+                tris.Add(baseIndex + 1);
+                tris.Add(baseIndex + 2);
+                tris.Add(baseIndex);
+                tris.Add(baseIndex + 2);
+                tris.Add(baseIndex + 3);
+            }
+
+            var mesh = new Mesh
+            {
+                name = name,
+                indexFormat = verts.Count > 65000 ? IndexFormat.UInt32 : IndexFormat.UInt16
+            };
+            mesh.SetVertices(verts);
+            mesh.SetTriangles(tris, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+
+            var go = new GameObject(name);
+            go.transform.SetParent(root, false);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
+                colour, AirsideMaterialLibrary.SurfaceKind.Glass);
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
         }
 
         /// <summary>

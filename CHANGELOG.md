@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 capture resume keeps good Stage C PNGs.** `AIRSIDE_CAPTURE_RESUME=1`
+  (default in `review-post-audit-p0-remaining.sh`) skips non-empty stills so a
+  mid-batch timeout can retry only the missing shots. Locked by
+  `test-capture-game-resume.sh`. No simulation or save changes.
 - **P0 jet takeoff delay + fail-closed follow.** Packaged `follow-jet-takeoff`
   waits **1330s** (mid first jet TakingOff on soak seed 20260913; 830s was
   turboprop). Auto-landing/takeoff stills abort without a follow pick (no blind

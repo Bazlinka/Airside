@@ -26,7 +26,7 @@ Headless suite on tip: **1168+** (`scripts/test-domain.sh`); #491 tip CI green.
 | Auto-landing / auto-takeoff pick Landing / TakingOff (not parked Saab) | `ReviewAircraftFollowTests` (incl. packaged jet takeoff 1330 / landing 780/783/786) | **keep** (follow pick); Bailey must still *see* tyres |
 | Boarding mid-window @ 320/323s | `EngineStartSequenceTests.PackagedBoardingStill_IsMidBoardingForStarterRegional` | **keep** (timing); Bailey must still *see* tape |
 | Multi-shot soak CLI schedule | `ReviewShotScheduleTests` | **keep** (parser); rebuild player required |
-| Packaged remaining delays / Stage A–C ONLY / soak window | `scripts/test-p0-remaining-delays.sh`, `test-p0-remaining-only-filter.sh`, `test-p0-stages-chain.sh`, `test-capture-game-soak-window.sh`, `test-p0-mac-agent-launch.sh` | **keep** (script locks) |
+| Packaged remaining delays / Stage A–C ONLY / soak window / capture resume | `scripts/test-p0-remaining-delays.sh`, `test-p0-remaining-only-filter.sh`, `test-p0-stages-chain.sh`, `test-capture-game-soak-window.sh`, `test-capture-game-resume.sh`, `test-p0-mac-agent-launch.sh` | **keep** (script locks) |
 | Wheel spin on ground roll / stop airborne | `PresentationLayoutTests.FlightPath_WheelsStopOnceTheAircraftIsAirborne` | **keep** (math); Bailey must still *see* tyres |
 
 ## Needs Mac eyes / ears (cannot close from code)

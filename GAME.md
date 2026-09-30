@@ -1,5 +1,19 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Codex — weather depth (branch `feature/weather-depth`, ADR 0193).**
+  - Rounded 3D cloud density volumes replace camera-facing atlas cards; storm towers, weather tint,
+    wind drift and cloud-count reveal stay tied to the existing weather. The atlas remains a fallback.
+  - Ground fog integrates through scene depth in one shallow, drifting bank; the overcast ceiling
+    rolls in world space. Cloud umbras now have soft edges.
+  - Rain is one seeded mesh of 768 soft, wind-driven streaks near the camera instead of hundreds
+    of scaled cube objects. Wet surfaces, existing lightning/thunder and runway reflections remain.
+  - **Checks:** domain baseline 1105/1105; final Unity 1480/1482, zero failures, two existing
+    inconclusives. Unity asset audit passes. The initial Mac build and player captures passed;
+    visual review prompted denser billowing cloud cores and stronger overview rain.
+  - **NEXT:** finish the final rebuilt player matrix with `scripts/review-weather.sh`, record
+    captures/frame statistics in `docs/testing/weather-2026-09-30/README.md`, then land the PR.
+
+
 - **2026-09-30 Codex — fleet aircraft sound pass (merged to `main` as PR #474, `362a2cc0`, ADR 0192).**
   - All 13 flying catalogue types now have representative idle/power/reverse layers. Revs and engine energy
     follow the existing fan/propeller and two-engine start state. Governed props build in load; jets spool in pitch.

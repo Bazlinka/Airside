@@ -77,77 +77,7 @@ namespace Airside.Presentation
                 _rainRoot.gameObject.SetActive(raining);
 
             if (raining && _rainRoot != null)
-            {
-                // The drop box is 80 x 50 m. Built once at the origin, it only ever rained
-                // where the world origin happened to be on screen, never round a followed
-                // aircraft; it now travels with what the camera is looking at.
-                // The same authored rain box serves a close follow and the 3.9 km overview.
-                // Scale the whole volume with camera range so rain still reads across the
-                // screen instead of becoming an invisible 80 m postage stamp from overview.
-                var cameraRange = _mainCamera != null && _cameraController != null
-                    ? Vector3.Distance(_mainCamera.transform.position, _cameraController.FocusPoint)
-                    : 100f;
-                var coverageScale = Mathf.Clamp(cameraRange / 100f, 1f, 30f);
-                _rainRoot.localScale = Vector3.one * coverageScale;
-                if (_cameraController != null)
-                {
-                    var focusPosition = RainRootPosition(_cameraController.FocusPoint);
-                    if (_mainCamera != null)
-                    {
-                        // Bring the enlarged volume partway toward a distant overview camera
-                        // and keep its top near the lens. Otherwise every streak is kilometres
-                        // below the camera and visually collapses into the ground texture.
-                        var cameraWeight = Mathf.InverseLerp(120f, 1200f, cameraRange) * 0.55f;
-                        var cameraPosition = _mainCamera.transform.position;
-                        focusPosition.x = Mathf.Lerp(focusPosition.x, cameraPosition.x, cameraWeight);
-                        focusPosition.z = Mathf.Lerp(focusPosition.z, cameraPosition.z, cameraWeight);
-                        focusPosition.y = Mathf.Max(focusPosition.y,
-                            cameraPosition.y - 17f * coverageScale);
-                    }
-                    _rainRoot.position = focusPosition;
-                }
-                var rainStrength = Mathf.Clamp01(look.Precipitation);
-                var fallBase = Mathf.Lerp(10f, 22f, rainStrength);
-                // Drifts with the real surface wind (ADR 0068), not a fixed -X slide — the rain
-                // root carries no rotation of its own, so local axes already line up with world.
-                var wind = PresentationWind;
-                var windYawRad = RunwayWeather.UnityYawFromTrue(wind.DirectionDegrees) * Mathf.Deg2Rad;
-                var driftMagnitude = storm ? 3.2f : 1.5f;
-                var driftX = Mathf.Sin(windYawRad) * driftMagnitude;
-                var driftZ = Mathf.Cos(windYawRad) * driftMagnitude;
-                // Same authored lean as before, just carried round to face the actual drift
-                // direction instead of always leaning toward -X.
-                var windTilt = Quaternion.Euler(0f, windYawRad * Mathf.Rad2Deg, 0f) * Quaternion.Euler(12f, 0f, 8f);
-                var activeDrops = Mathf.CeilToInt(_rainRoot.childCount * Mathf.Lerp(0.28f, 1f, rainStrength));
-                for (var i = 0; i < _rainRoot.childCount; i++)
-                {
-                    var drop = _rainRoot.GetChild(i);
-                    var active = i < activeDrops;
-                    if (drop.gameObject.activeSelf != active)
-                        drop.gameObject.SetActive(active);
-                    if (!active)
-                        continue;
-                    var pos = drop.localPosition;
-                    pos.y -= Time.unscaledDeltaTime * (fallBase + (i % 5));
-                    if (pos.y < 0.5f)
-                        pos.y = 18f + (i % 7);
-                    pos.x += Time.unscaledDeltaTime * driftX;
-                    if (pos.x < -40f)
-                        pos.x += 80f;
-                    else if (pos.x > 40f)
-                        pos.x -= 80f;
-                    pos.z += Time.unscaledDeltaTime * driftZ;
-                    if (pos.z < -10f)
-                        pos.z += 50f;
-                    else if (pos.z > 40f)
-                        pos.z -= 50f;
-                    drop.localPosition = pos;
-                    drop.localRotation = windTilt;
-                    var thickness = Mathf.Lerp(0.025f, 0.075f, rainStrength);
-                    var length = Mathf.Lerp(0.38f, 0.95f, rainStrength);
-                    drop.localScale = new Vector3(thickness, length, thickness);
-                }
-            }
+                UpdateRainMesh(look.Precipitation, storm);
 
             // Fog colour and density are set once, in ApplyDayCycle, from AtmosphereLook (ADR 0143);
             // this used to set a second, competing fog here for wet or gloomy weather.
@@ -538,62 +468,6 @@ namespace Airside.Presentation
         /// <summary>Drops span local z −10…40, so the box is centred on the camera focus at ground level.</summary>
         public static Vector3 RainRootPosition(Vector3 focus) =>
             new(focus.x, AirsideAdelaideGround.WorldHeight(focus.x, focus.z), focus.z - 15f);
-
-        private static Transform BuildRainRoot()
-        {
-            var root = new GameObject("Rain").transform;
-            root.position = new Vector3(0f, 0f, 8f);
-
-            // Batch F4 VFX-003 — seed from reusable kit when present, then stamp a dense field.
-            Transform seed = null;
-            if (ArtPresentationLoader.TryInstantiatePrefab("vfx_rain_airfield_v01", out var kit))
-            {
-                kit.SetParent(root, false);
-                kit.localPosition = Vector3.zero;
-                kit.name = "Rain kit seed";
-                seed = kit;
-            }
-
-            var rng = new System.Random(42);
-            var dropCount = AirsideRuntimeQuality.RainDropCount(seed != null);
-            for (var i = 0; i < dropCount; i++)
-            {
-                GameObject drop;
-                if (seed != null && seed.childCount > 0)
-                {
-                    var src = seed.GetChild(i % seed.childCount);
-                    drop = Object.Instantiate(src.gameObject);
-                    drop.name = $"Rain {i}";
-                    drop.transform.SetParent(root, false);
-                }
-                else
-                {
-                    drop = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    drop.name = $"Rain {i}";
-                    drop.transform.SetParent(root, false);
-                    drop.transform.localScale = new Vector3(0.04f, 0.55f, 0.04f);
-                    drop.transform.localRotation = Quaternion.Euler(12f, 0f, 8f);
-                    drop.GetComponent<Renderer>().sharedMaterial = AirsideMaterialLibrary.CreateShared(
-                        new Color(0.7f, 0.78f, 0.88f, 0.35f),
-                        AirsideMaterialLibrary.SurfaceKind.Default);
-                    var collider = drop.GetComponent<Collider>();
-                    if (collider != null)
-                        DestroyPresentationObject(collider);
-                }
-
-                drop.transform.localPosition = new Vector3(
-                    (float)(rng.NextDouble() * 80f - 40f),
-                    (float)(rng.NextDouble() * 16f + 2f),
-                    (float)(rng.NextDouble() * 50f - 10f));
-                drop.transform.localRotation = Quaternion.Euler(12f, 0f, 8f);
-            }
-
-            if (seed != null)
-                DestroyPresentationObject(seed.gameObject);
-
-            root.gameObject.SetActive(false);
-            return root;
-        }
 
         private static Transform BuildTaxiSprayRoot()
         {
@@ -1226,21 +1100,23 @@ namespace Airside.Presentation
 
         private static void BuildCloudBands()
         {
-            // Authored atlas cards replace the previous combined-sphere clouds. One renderer per
-            // cluster gives a soft, irregular silhouette without exposed sphere intersections;
-            // billboard facing keeps it useful through the overview camera's pitch/yaw range.
+            // One bounded 3D density volume per cluster. The authored atlas remains a fallback.
+            // Cloud count stays fixed; weather reveals more bodies and grows storm towers.
             var cloudRoot = new GameObject("Cloud bands").transform;
             var umbraRoot = new GameObject("Cloud umbras").transform;
             var atlas = AirsideArtTextures.Load(
                 "Textures/Environment/tx_cloud_atlas_cumulus_v01.png",
                 wrap: TextureWrapMode.Clamp);
-            var shader = Shader.Find("Airside/CloudAtlas");
-            if (atlas == null || shader == null)
+            var volumeShader = Shader.Find("Airside/WeatherVolume");
+            var shader = volumeShader ?? Shader.Find("Airside/CloudAtlas");
+            if (shader == null || (volumeShader == null && atlas == null))
                 return;
-            var cloudMaterial = new Material(shader) { name = "Airside cloud atlas" };
-            cloudMaterial.SetTexture("_BaseMap", atlas);
+            var cloudMaterial = new Material(shader) { name = "Airside cloud bodies" };
+            if (volumeShader == null)
+                cloudMaterial.SetTexture("_BaseMap", atlas);
             cloudMaterial.SetColor("_BaseColor", Color.white);
-            cloudMaterial.SetFloat("_AlphaFloor", 0.10f);
+            if (volumeShader == null)
+                cloudMaterial.SetFloat("_AlphaFloor", 0.10f);
 
             var rng = new System.Random(90210);
             var adelaide = AirsideBareField.Enabled;
@@ -1267,11 +1143,13 @@ namespace Airside.Presentation
                 var yaw = (float)rng.NextDouble() * 360f;
                 cluster.rotation = Quaternion.Euler(0f, yaw, 0f);
 
-                var card = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                card.name = "Cloud card";
+                var card = GameObject.CreatePrimitive(volumeShader != null ? PrimitiveType.Cube : PrimitiveType.Quad);
+                card.name = volumeShader != null ? "Cloud volume" : "Cloud card fallback";
                 DestroyPresentationObject(card.GetComponent<Collider>());
                 card.transform.SetParent(cluster, false);
-                card.transform.localScale = new Vector3(sx, sy, 1f);
+                card.transform.localScale = volumeShader != null
+                    ? new Vector3(sx * 2.6f, sy * 2.5f, sz * 3f)
+                    : new Vector3(sx, sy, 1f);
                 var renderer = card.GetComponent<Renderer>();
                 renderer.sharedMaterial = cloudMaterial;
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -1281,20 +1159,19 @@ namespace Airside.Presentation
                 var cellY = (i / 4) % 4;
                 RendererTintBlock.SetVector(CloudAtlasRectId,
                     new Vector4(0.25f, 0.25f, cellX * 0.25f, cellY * 0.25f));
+                RendererTintBlock.SetFloat("_Seed", i * 13.71f);
                 renderer.SetPropertyBlock(RendererTintBlock);
                 SetRendererColor(renderer, Color.white);
 
                 // Soft ground umbra under each cloud cluster — drifts with UpdateCloudDrift.
-                var umbra = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                var umbra = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 umbra.name = $"Cloud umbra {i}";
                 DestroyPresentationObject(umbra.GetComponent<Collider>());
                 umbra.transform.SetParent(umbraRoot, false);
                 umbra.transform.position = new Vector3(x, 0.06f, z);
-                umbra.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
-                umbra.transform.localScale = new Vector3(sx * 0.9f, 0.02f, sz * 0.9f);
-                var umbraMat = AirsideMaterialLibrary.CreateShared(
-                    new Color(0.05f, 0.07f, 0.1f, 0.18f),
-                    AirsideMaterialLibrary.SurfaceKind.Default);
+                umbra.transform.rotation = Quaternion.Euler(90f, yaw, 0f);
+                umbra.transform.localScale = new Vector3(sx * 2.6f, sz * 3f, 1f);
+                var umbraMat = SoftLayerMaterial();
                 var umbraRenderer = umbra.GetComponent<Renderer>();
                 umbraRenderer.sharedMaterial = umbraMat;
                 SetRendererColor(umbraRenderer, new Color(0.05f, 0.07f, 0.1f, 0.18f));
@@ -1363,7 +1240,7 @@ namespace Airside.Presentation
                     p.z = wrapZ;
                 cloud.position = p;
 
-                if (_mainCamera != null)
+                if (_mainCamera != null && cloud.GetChild(0).name != "Cloud volume")
                 {
                     // ADR 0143: turn about the vertical, tipping only part-way toward a high camera,
                     // so a card reads as a body of cloud rather than a cut-out held up to the lens.
@@ -1404,7 +1281,9 @@ namespace Airside.Presentation
                 // ADR 0143: rain and storm clouds are darker bodies, and storm clusters tower.
                 tint = new Color(tint.r * cloudShade, tint.g * cloudShade, tint.b * cloudShade, tint.a);
                 var baseAlpha = CloudCardAlpha(look.CloudCover);
-                tint.a = Mathf.Lerp(baseAlpha * 0.85f, baseAlpha, daylight);
+                tint.a = cloud.GetChild(0).name == "Cloud volume"
+                    ? Mathf.Lerp(0.94f, 1f, daylight)
+                    : Mathf.Lerp(baseAlpha * 0.85f, baseAlpha, daylight);
 
                 // One authored atlas card per cluster, updated only when the weather band changes.
                 // More cover shows more clusters, not just denser-looking ones (ADR 0068):
@@ -1426,7 +1305,7 @@ namespace Airside.Presentation
                 if (_cloudUmbraRoot == null || i >= _cloudUmbraRoot.childCount)
                     continue;
                 var umbra = _cloudUmbraRoot.GetChild(i);
-                // Keep authored umbra footprint; only the alpha follows the day/weather band.
+                // Soft umbras match the broader density volumes; night does not paint black discs.
                 var umbraRenderer = umbra.GetComponent<Renderer>();
                 if (umbraRenderer == null)
                     continue;

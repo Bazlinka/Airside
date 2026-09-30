@@ -14,6 +14,7 @@ git pull --ff-only origin cursor/p0-auto-landing-follow-709e
 
 # One paste — Stage A → B → C (~25+ min; keep display awake)
 scripts/run-post-audit-p0-stages.sh
+# Or double-click in Finder: scripts/run-post-audit-p0-stages.command
 
 # Or run stages separately:
 # Stage A (minutes — night-sky + freighter; unblocks P2 freighter evidence)

@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 Finder double-click Stage A→B→C.** `scripts/run-post-audit-p0-stages.command`
+  checks out the tip in `~/Code/Airside` and runs the stages chain; CI-locked with
+  the stages wrapper. No simulation or save changes.
+
 - **P0 Mac trigger docs: GitHub `worker=`.** Playtest + Terminal docs note
   `@cursoragent worker=Bailey's MacBook Pro` on #491 as an optional My Machines
   path alongside Terminal one-paste. No simulation or save changes.

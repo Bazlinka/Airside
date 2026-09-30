@@ -32,4 +32,16 @@ grep -Fq 'run-post-audit-p0-remaining.sh' "$stages" || {
   exit 1
 }
 
+# Finder double-click wrapper must stay executable and call the stages runner.
+command_wrapper="$root/scripts/run-post-audit-p0-stages.command"
+test -x "$command_wrapper" || { echo "missing executable $command_wrapper" >&2; exit 1; }
+grep -Fq 'run-post-audit-p0-stages.sh' "$command_wrapper" || {
+  echo ".command wrapper must exec run-post-audit-p0-stages.sh" >&2
+  exit 1
+}
+grep -Fq 'Code/Airside' "$command_wrapper" || {
+  echo ".command wrapper must target ~/Code/Airside" >&2
+  exit 1
+}
+
 echo "P0 stages chain lock passed"

@@ -1,7 +1,10 @@
 # Mac agent prompt — post-audit P0 playtest
 
-Paste this into a Cursor agent started **on** Bailey's MacBook Pro
-(environment dropdown → **Bailey's MacBook Pro**, not a cloud VM).
+**Prefer Terminal (no agent pin):** see `docs/testing/post-audit-p0-mac-terminal.md`
+when the Mac is awake — paste Stage A→B→C into Terminal.app at `~/Code/Airside`.
+
+Optional Cursor path: paste the block below into a Cursor agent started **on**
+Bailey's MacBook Pro (environment dropdown → **Bailey's MacBook Pro**, not a cloud VM).
 Checkout `cursor/p0-auto-landing-follow-709e` at tip with auto-takeoff ~900s delay
 (or `main` after #491 merges) so night-sky yaw 270 + auto-landing upgrade + soak-window
 fix + takeoff TakingOff wait + `scripts/run-post-audit-p0-remaining.sh` are present.

@@ -1,12 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **`b5808c5e`** — #491 headless CI CLEAN / mergeable. Stage A→B→C path + CI locks ready.
-  **Mac workers ONLINE + idle** (`~/Code/Airside @ Bailey's MacBook Pro`). Cloud `Task`
-  cannot pin My Machines (hard discriminator). computerUse Mac UI pin blocked (claude
-  quota). **Bailey must UI-pin** at cursor.com/agents → paste
+  Tip **`b5808c5e`+** — #491 CI green; Stage A→B→C + CI locks ready. Mac workers ONLINE.
+  Cloud `Task` cannot pin My Machines. **Prefer Terminal on the Mac** (no agent pin):
+  `docs/testing/post-audit-p0-mac-terminal.md`. Optional agent paste:
   `docs/testing/post-audit-p0-mac-agent-prompt.md`. 21 RESULTS rows unverified.
-  **NEXT:** UI-pin Mac → Stage A→B→C → fill RESULTS by eye/ear. Freight AI parked.
+  **NEXT:** Mac Terminal Stage A→B→C → fill RESULTS by eye/ear. Freight AI parked.
   Do not invent RESULTS.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**

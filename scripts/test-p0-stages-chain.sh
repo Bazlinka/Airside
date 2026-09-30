@@ -31,6 +31,18 @@ grep -Fq 'run-post-audit-p0-remaining.sh' "$stages" || {
   echo "stages wrapper must call run-post-audit-p0-remaining.sh" >&2
   exit 1
 }
+grep -Fq 'caffeinate -d -i' "$stages" || {
+  echo "stages wrapper must caffeinate the full A→B→C run" >&2
+  exit 1
+}
+grep -Fq 'AIRSIDE_P0_CAFFEINATED' "$stages" || {
+  echo "stages wrapper must guard against nested caffeinate re-exec" >&2
+  exit 1
+}
+grep -Fq 'display notification' "$stages" || {
+  echo "stages wrapper should notify when A→B→C finishes" >&2
+  exit 1
+}
 
 # Finder double-click wrapper must stay executable and call the stages runner.
 command_wrapper="$root/scripts/run-post-audit-p0-stages.command"

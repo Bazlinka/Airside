@@ -18,6 +18,14 @@ if [ "$uname_s" != "Darwin" ]; then
   exit 1
 fi
 
+# Capture-game already caffeinates each soak, but builds and the gaps between
+# Stage A/B/C can still let the display sleep and freeze the next player launch.
+if [ "${AIRSIDE_P0_CAFFEINATED:-}" != "1" ] && command -v caffeinate >/dev/null 2>&1; then
+  echo "==> Holding display + system awake for the full Stage A→B→C run (caffeinate -d -i)"
+  export AIRSIDE_P0_CAFFEINATED=1
+  exec caffeinate -d -i -- "$0" "$@"
+fi
+
 run() {
   local label="$1"
   shift
@@ -47,3 +55,8 @@ echo "All stages finished. PNGs are under docs/testing/post-audit-p0-2026-09-30/
 echo "and work/captures/post-audit-p0-remaining-*. Fill Verdicts in RESULTS.md by eye/ear"
 echo "(do not invent). Then listening/play rows in"
 echo "docs/testing/post-audit-p0-manual-checklist.md, update GAME.md, and push."
+
+if command -v osascript >/dev/null 2>&1; then
+  osascript -e 'display notification "PNGs ready — fill RESULTS.md by eye/ear (do not invent)." with title "Airside P0 stages done"' \
+    >/dev/null 2>&1 || true
+fi

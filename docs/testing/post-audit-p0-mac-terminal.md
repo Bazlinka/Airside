@@ -13,7 +13,8 @@ git checkout cursor/p0-auto-landing-follow-709e
 git pull --ff-only origin cursor/p0-auto-landing-follow-709e
 
 # One paste — Stage A → B → C (~35+ min with multi-shot landing/boarding batches;
-# keep display awake; rebuild so multi-shot review lands)
+# caffeinate -d -i wraps the whole run so builds/gaps cannot sleep the display;
+# rebuild so multi-shot review lands; macOS notification when finished)
 scripts/run-post-audit-p0-stages.sh
 # Or double-click in Finder: scripts/run-post-audit-p0-stages.command
 

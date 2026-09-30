@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **P0 Stage A→B→C holds the Mac awake.** `run-post-audit-p0-stages.sh`
+  re-execs under `caffeinate -d -i` for builds and gaps between soaks, and
+  posts a macOS notification when finished. No simulation or save changes.
 - **P0 handoff tip SHA → `b201556a`.** Confirms #491 tip, 21 unverified
   RESULTS, nose-down night-sky still, idle Mac workers, and re-passed Stage
   A–C script locks. No simulation or save changes.

@@ -25,7 +25,8 @@ concentration / performance**, then finishing half-done product slices (freight)
 framing + review follow helpers (`auto-landing` ~780s jet / `auto-takeoff` ~830s /
 freighter / hangar / boarding; multi-shot landing+boarding batches) are in #491
 (headless CI green, mergeable). Mac path: one-paste
-`scripts/run-post-audit-p0-stages.sh` (~35+ min after rebuild), or
+`scripts/run-post-audit-p0-stages.sh` (~35+ min after rebuild; wraps
+`caffeinate -d -i` for the full run), or
 `scripts/run-post-audit-p0-remaining.sh` Stage A (night-sky+freighter) → B (takeoff
 `SKIP_BUILD`/`SKIP_PULL`) → C (hangar + batched landings/boarding). A Unity player and awake display
 are required. Cloud Linux cannot mark this complete. If no workers show in

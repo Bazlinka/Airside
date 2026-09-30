@@ -9,6 +9,7 @@ P0 sign-off (and keep freight AI parked).
 Canonical Mac checkout: `~/Code/Airside` on `cursor/p0-auto-landing-follow-709e`
 (#491) until that merges, then `main`. Keep the display awake. Prefer a **fresh**
 `scripts/build-mac.sh` so night-sky framing and review follow helpers are in the player.
+**Fastest path (no Cursor agent):** `docs/testing/post-audit-p0-mac-terminal.md`.
 Subset: `AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/review-post-audit-p0-remaining.sh`.
 
 ## 1. Re-capture night sky traffic (ADR 0195)

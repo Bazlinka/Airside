@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **P0 Stage C hangar pick mid-outbound at 90s.** `ReviewHangarPickTests` proves the
+  soak-seed pick's assigned berth is off-stand (>15 m) at the packaged 90s still,
+  not merely InCheck. No save-schema changes.
 - **P0 Stage C hangar/boarding picks locked on soak seed.** `ReviewHangarPick` and
   `ReviewBoardingPick` (Simulation) mirror freighter pick; EditMode proves seed
   `20260913` can StartCheck / ScheduleDeparture at T+0 through the packaged delays.

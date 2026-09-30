@@ -1,8 +1,8 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — P0 Stage C hangar/boarding picks (#492).**
-  Tip **#492** (this commit). `ReviewHangarPick` + `ReviewBoardingPick` (Simulation)
-  with soak-seed EditMode locks; soak uses the shared picks (same pattern as freighter).
+- **2026-09-30 Cursor — P0 Stage C hangar mid-tow lock (#492).**
+  Tip **#492** (this commit). Soak-seed hangar pick must be mid-outbound (off-stand)
+  at the 90s still, not only InCheck. Boarding/hangar/freighter picks shared.
   Rebuild on tip. 20 RESULTS unverified. `CURSOR_API_KEY` unset; no Mac workers.
   **NEXT:** Mac Terminal/Finder Stage A→C on tip, or API key →
   `scripts/launch-p0-mac-agent.sh`. Fill RESULTS by eye/ear. Freight parked.

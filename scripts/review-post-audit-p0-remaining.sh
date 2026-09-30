@@ -16,6 +16,8 @@
 #   AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/review-post-audit-p0-remaining.sh
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." && pwd)"
+# Keep non-empty PNGs across retries so a mid-batch timeout does not wipe Stage C work.
+export AIRSIDE_CAPTURE_RESUME="${AIRSIDE_CAPTURE_RESUME:-1}"
 stamp="$(date +%Y%m%d)"
 shots="${AIRSIDE_P0_OUT:-$root/work/captures/post-audit-p0-remaining-$stamp}"
 mkdir -p "$shots"

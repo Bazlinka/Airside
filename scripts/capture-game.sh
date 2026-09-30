@@ -13,7 +13,9 @@
 # batches (Stage C landings/boarding). When --delay / max shot delay outlives the
 # default 3-minute soak, minutes/timeout are raised automatically so soak COMPLETE
 # cannot quit before the last review shot.
-# --print-plan prints delay/minutes/timeout (and soak>delay) then exits without launching.
+# AIRSIDE_CAPTURE_RESUME=1 keeps non-empty existing PNGs and only schedules missing
+# shots (mid-batch timeout retry). --print-plan prints delay/minutes/timeout
+# (and soak>delay) then exits without launching.
 #
 # Why this script exists: the Unity player on macOS waits for the display to show each frame.
 # With the display asleep (an unattended Mac, a long build) the first frame never appears and
@@ -55,8 +57,11 @@ elif [ ${#SHOTS[@]} -eq 0 ]; then
   SHOTS=("${out}:40")
 fi
 
+resume="${AIRSIDE_CAPTURE_RESUME:-0}"
 max_delay=0
-declare -a OUTS=()
+resume_skipped=0
+declare -a ALL_OUTS=()
+declare -a KEPT_OUTS=()
 declare -a REVIEW_ARGS=()
 for spec in "${SHOTS[@]}"; do
   IFS=':' read -r shot_path shot_delay shot_zoom shot_weather <<<"$spec"
@@ -64,7 +69,15 @@ for spec in "${SHOTS[@]}"; do
     echo "Bad --shot spec '$spec' (need PATH:DELAY[:ZOOM[:WEATHER]])" >&2
     exit 2
   fi
-  OUTS+=("$shot_path")
+  ALL_OUTS+=("$shot_path")
+  if [ "$resume" = "1" ] && [ -s "$shot_path" ]; then
+    resume_skipped=$((resume_skipped + 1))
+    if [ "$print_plan" -eq 0 ]; then
+      echo "Resume: keeping existing $shot_path" >&2
+    fi
+    continue
+  fi
+  KEPT_OUTS+=("$shot_path")
   if [ "$shot_delay" -gt "$max_delay" ]; then
     max_delay=$shot_delay
   fi
@@ -78,14 +91,16 @@ timeout="${timeout:-$((delay + 60))}"
 
 # Soak COMPLETE calls QuitGame when -airsideSoakMinutes elapses. A review delay
 # longer than that never writes a PNG if we leave the default 3-minute soak.
-need_minutes=$(( (delay + 120 + 59) / 60 ))
 raised_minutes=0
-if [ "$minutes" -lt "$need_minutes" ]; then
-  if [ "$print_plan" -eq 0 ]; then
-    echo "Raising soak minutes $minutes → $need_minutes so soak outlives review delay ${delay}s" >&2
+if [ "$delay" -gt 0 ]; then
+  need_minutes=$(( (delay + 120 + 59) / 60 ))
+  if [ "$minutes" -lt "$need_minutes" ]; then
+    if [ "$print_plan" -eq 0 ]; then
+      echo "Raising soak minutes $minutes → $need_minutes so soak outlives review delay ${delay}s" >&2
+    fi
+    minutes=$need_minutes
+    raised_minutes=1
   fi
-  minutes=$need_minutes
-  raised_minutes=1
 fi
 if [ "$raised_minutes" -eq 1 ]; then
   need_timeout=$((minutes * 60 + 60))
@@ -100,9 +115,19 @@ fi
 if [ "$print_plan" -eq 1 ]; then
   soak_seconds=$((minutes * 60))
   ok=0
-  [ "$soak_seconds" -gt "$delay" ] && ok=1
-  printf 'delay=%s minutes=%s timeout=%s soak_seconds=%s soak_outlives_delay=%s shots=%s\n' \
-    "$delay" "$minutes" "$timeout" "$soak_seconds" "$ok" "${#OUTS[@]}"
+  if [ "$delay" -eq 0 ] || [ "$soak_seconds" -gt "$delay" ]; then
+    ok=1
+  fi
+  printf 'delay=%s minutes=%s timeout=%s soak_seconds=%s soak_outlives_delay=%s shots=%s resume_skipped=%s\n' \
+    "$delay" "$minutes" "$timeout" "$soak_seconds" "$ok" "${#KEPT_OUTS[@]}" "$resume_skipped"
+  exit 0
+fi
+
+if [ ${#KEPT_OUTS[@]} -eq 0 ]; then
+  echo "Resume: every requested capture already exists; skipping launch." >&2
+  for shot_path in "${ALL_OUTS[@]}"; do
+    echo "$shot_path"
+  done
   exit 0
 fi
 
@@ -112,7 +137,7 @@ if [ ! -x "$app" ]; then
 fi
 
 declare -a LOGS=()
-for shot_path in "${OUTS[@]}"; do
+for shot_path in "${KEPT_OUTS[@]}"; do
   mkdir -p "$(dirname "$shot_path")"
   log="${shot_path%.png}.log"
   LOGS+=("$log")
@@ -129,9 +154,9 @@ args+=("${REVIEW_ARGS[@]}")
 pid=$!
 caffeinate -d -i -w "$pid" &
 
-all_outs_ready() {
+all_kept_ready() {
   local p
-  for p in "${OUTS[@]}"; do
+  for p in "${KEPT_OUTS[@]}"; do
     [ -s "$p" ] || return 1
   done
   return 0
@@ -139,15 +164,15 @@ all_outs_ready() {
 
 started=$(date +%s)
 while kill -0 "$pid" 2>/dev/null; do
-  all_outs_ready && break
+  all_kept_ready && break
   if [ $(( $(date +%s) - started )) -ge "$timeout" ]; then
-    sample "$pid" 2 -file "${OUTS[0]%.png}.sample.txt" >/dev/null 2>&1 || true
+    sample "$pid" 2 -file "${KEPT_OUTS[0]%.png}.sample.txt" >/dev/null 2>&1 || true
     kill "$pid" 2>/dev/null || true
     sleep 1
     kill -9 "$pid" 2>/dev/null || true
     echo "The game did not write all captures within ${timeout}s; stopped it." >&2
     echo "  Log:    $log" >&2
-    echo "  Sample: ${OUTS[0]%.png}.sample.txt" >&2
+    echo "  Sample: ${KEPT_OUTS[0]%.png}.sample.txt" >&2
     echo "  Display events during the run:" >&2
     pmset -g log 2>/dev/null | grep "Display is turned" | tail -3 | sed 's/^/    /' >&2 || true
     exit 1
@@ -155,13 +180,13 @@ while kill -0 "$pid" 2>/dev/null; do
   sleep 2
 done
 
-for _ in 1 2 3 4 5; do all_outs_ready && break; sleep 1; done
-if ! all_outs_ready; then
+for _ in 1 2 3 4 5; do all_kept_ready && break; sleep 1; done
+if ! all_kept_ready; then
   echo "The game exited without writing every capture. Log: $log" >&2
   exit 1
 fi
 sleep 4
 kill "$pid" 2>/dev/null || true
-for shot_path in "${OUTS[@]}"; do
+for shot_path in "${ALL_OUTS[@]}"; do
   echo "$shot_path"
 done

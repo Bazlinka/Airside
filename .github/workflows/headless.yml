@@ -27,6 +27,8 @@ jobs:
         run: python3 scripts/update-harness.py --check
       - name: Capture soak outlives long review delays
         run: bash scripts/test-capture-game-soak-window.sh
+      - name: Capture resume keeps good PNGs
+        run: bash scripts/test-capture-game-resume.sh
       - name: P0 remaining capture delays stay locked
         run: bash scripts/test-p0-remaining-delays.sh
       - name: P0 Stage B dirty RESULTS allowlist

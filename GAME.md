@@ -8,9 +8,10 @@
   Two Mac workers ONLINE + idle (`~/Code/Airside` preferred). Cloud `Task` cannot pin My
   Machines — Bailey UI-pins **Bailey's MacBook Pro**. Paste:
   `docs/testing/post-audit-p0-mac-agent-prompt.md`. Remaining RESULTS + manual rows unverified.
-  **NEXT:** UI-pin Mac → prefer fast pass
-  `AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter,follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh`
-  then full remaining / manual rows → fill RESULTS. Freight AI stays parked. Do not invent RESULTS.
+  **NEXT:** UI-pin Mac → Stage A then B
+  `AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh`
+  then `AIRSIDE_P0_ONLY=follow-jet-takeoff …` (~17 min). Then full remaining / manual rows →
+  fill RESULTS. Freight AI stays parked. Do not invent RESULTS.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

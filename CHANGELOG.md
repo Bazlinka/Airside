@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **P0 hangar still timing locked at 90s.** `HangarTowTests` confirms Saab
+  outbound tows still outlast the packaged 90s still and are off-stand mid-tow.
+  Mac fast-pass split: night-sky+freighter first; takeoff (~17 min) second.
+  No simulation or save changes.
+
 - **P0 auto-takeoff still waits for TakingOff (~900s).** Opening-bank roll /
   tyre rotation lands around 13 minutes live; the previous 360s delay only
   caught TaxiOut/HoldingShort. Locked by

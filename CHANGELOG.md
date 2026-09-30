@@ -3,7 +3,9 @@
 - **Post-audit improvement plan.** Standing backlog after a full code audit: Mac playtest of recent unverified work,
   visual-overhaul gate, freight parked until that playtest, Presentation/performance debt, then expansion. Plan:
   `docs/plans/post-audit-improvement-plan.md`. Mac P0 matrix: `scripts/review-post-audit-p0.sh` and
-  `docs/testing/post-audit-p0-playtest.md`. ADR 0202 (renumbered past Phase 0/1 ADRs). No game behaviour changed.
+  `docs/testing/post-audit-p0-playtest.md`. Code-only P0 evidence map:
+  `docs/testing/post-audit-p0-2026-09-30/CODE_EVIDENCE.md`. ADR 0202 (renumbered past Phase 0/1 ADRs).
+  No game behaviour changed.
 
 - **Visual overhaul Phase 0 baseline bookmarks.** Six named review cameras (`overview`,
   `terminal-airside`, `terminal-kerb`, `hangar-row`, `suburb-edge`, `coast`) via

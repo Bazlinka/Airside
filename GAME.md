@@ -2,13 +2,15 @@
 
 - **2026-09-30 Cursor — post-audit improvement plan (branch `cursor/post-audit-improvement-plan-709e`, ADR 0202).**
   Full Domain / Simulation / Presentation / tests / product-plan audit. Standing backlog:
-  `docs/plans/post-audit-improvement-plan.md`. Cloud goal set to follow that order. Phase 0 bookmarks (ADR 0200)
-  are merged onto this branch for shared Mac captures. Headless after merge: **1136/1136**.
-  This cloud run is **iOS-started** and cannot pin My Machines via Task.
+  `docs/plans/post-audit-improvement-plan.md`. **Cloud goal is set to execute that plan** (P0→P1→P2→P3→P4).
+  Phase 0 bookmarks (ADR 0200) are merged onto this branch for shared Mac captures. Headless after merge:
+  **1136/1136**. This cloud run is **iOS-started** and cannot pin My Machines via Task.
   - **P0 (NEXT — Mac shell or Mac-picked agent):** On the Mac in `~/Documents/Codex/Airside` (worker online)
     or `~/Code/Airside`: checkout this branch, `scripts/build-mac.sh`, `scripts/review-post-audit-p0.sh`,
     fill keep/fix/revert. Or open [cursor.com/agents](https://cursor.com/agents) on a desktop and pick
     **Bailey's MacBook Pro** as the environment. Push RESULTS to `cursor/post-audit-p0-results-709e`.
+    Code-only row map (not a substitute for eyes/ears):
+    `docs/testing/post-audit-p0-2026-09-30/CODE_EVIDENCE.md`.
   - **P1:** Bailey sign-off on visual overhaul. Phase 0 bookmarks on this branch; Mac metrics still owed.
     Note: PR #486 already started Phase 1 oil stains (ADR 0201) ahead of P0 — do not treat that as P0 done.
   - **P2:** Freight AI / cargo apron / freighter contracts **parked until P0** clears freighter+tyre rows.

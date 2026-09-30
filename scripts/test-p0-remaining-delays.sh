@@ -88,7 +88,15 @@ grep -Fq 'strings' "$runner" || {
   echo "Mac runner multi-shot preflight must use strings on the player" >&2
   exit 1
 }
-echo "ok multi-shot player preflight"
+grep -Fq 'freighter refit never applied' "$runner" || {
+  echo "Mac runner must preflight review-flag fail-closed in the player" >&2
+  exit 1
+}
+grep -Fq 'follow never started before delay' "$runner" || {
+  echo "Mac runner must preflight auto-follow fail-closed in the player" >&2
+  exit 1
+}
+echo "ok multi-shot + fail-closed player preflight"
 
 grep -Fq 'review freighter ' "$runner" || {
   echo "inventory must hard-fail missing review freighter log" >&2

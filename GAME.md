@@ -2,14 +2,12 @@
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
   Tip **#491** — jet takeoff **1330s**, fail-closed auto-follow + review
-  flags, Stage C **capture resume**, Finder tip→main checkout helper. Finder
-  Stage A (minutes): `scripts/run-post-audit-p0-stage-a.command`. Full A→B→C
-  (~45+ min, caffeinate): `scripts/run-post-audit-p0-stages.sh` / `.command`.
-  Optional API pin: `CURSOR_API_KEY` + `scripts/launch-p0-mac-agent.sh`. Cloud
-  Task / computerUse cannot claim My Machines from Linux. 21 RESULTS
-  unverified; no new remaining PNGs.
-  **NEXT:** Mac Stage A → fill night-sky + freighter by eye; then B (jet
-  takeoff) / C + listening rows. Freight AI parked. Do not invent RESULTS.
+  flags (player preflight), Stage C **capture resume**, Finder tip→main
+  checkout. Finder Stage A: `scripts/run-post-audit-p0-stage-a.command`. Full
+  A→B→C (~45+ min): `scripts/run-post-audit-p0-stages.sh` / `.command`.
+  Rebuild required before SKIP_BUILD stages. 21 RESULTS unverified.
+  **NEXT:** Mac Stage A (rebuild) → fill night-sky + freighter by eye; then
+  B/C + listening. Freight AI parked. Do not invent RESULTS.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

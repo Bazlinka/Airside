@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **P0 Mac runner preflights fail-closed player.** `run-post-audit-p0-remaining.sh`
+  refuses an old `Airside.app` missing review abort strings so SKIP_BUILD cannot
+  write blind overview stills. No simulation or save changes.
 - **P0 fail-closed review flags + Finder tip checkout.** Freighter / hangar /
   boarding stills abort without a successful apply (no blind overview PNG);
   inventory hard-fails missing review log lines. Finder `.command` wrappers use

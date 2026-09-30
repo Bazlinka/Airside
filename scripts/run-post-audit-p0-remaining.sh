@@ -53,13 +53,23 @@ fi
 
 # Stage C landing/boarding batches need ReviewShotSchedule in the player. An older
 # build only honours the first -airsideReviewShot and then quits — capture-game
-# would wait out the full timeout for the missing PNGs.
+# would wait out the full timeout for the missing PNGs. Fail-closed review aborts
+# must also be present or SKIP_BUILD can write blind overview stills that look OK.
 if [ -x "$app" ]; then
   if ! strings "$app" 2>/dev/null | grep -Fq 'ReviewShotSchedule'; then
     echo "Player at $app lacks multi-shot review (ReviewShotSchedule). Rebuild without SKIP_BUILD." >&2
     exit 1
   fi
   echo "==> Player has multi-shot review (ReviewShotSchedule)"
+  if ! strings "$app" 2>/dev/null | grep -Fq 'freighter refit never applied'; then
+    echo "Player at $app lacks review-flag fail-closed. Rebuild without SKIP_BUILD." >&2
+    exit 1
+  fi
+  if ! strings "$app" 2>/dev/null | grep -Fq 'follow never started before delay'; then
+    echo "Player at $app lacks auto-follow fail-closed. Rebuild without SKIP_BUILD." >&2
+    exit 1
+  fi
+  echo "==> Player has review fail-closed aborts"
 fi
 
 stamp="$(date +%Y%m%d)"

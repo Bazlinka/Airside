@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # One-paste Mac path: Stage A → B → C for remaining P0 stills (ADR 0205).
-# Prefer this when the display will stay awake for the full soak (~60+ min).
+# Prefer this when the display will stay awake for the full soak (~35+ min with
+# multi-shot landing/boarding batches; rebuild required for multi-shot support).
 # Stage A lands night-sky + freighter first so an interrupted run still unblocks
 # those rows. Does not invent keep/fix/revert — fill Verdicts by eye afterward.
 #

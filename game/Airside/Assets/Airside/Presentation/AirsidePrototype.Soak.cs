@@ -76,7 +76,8 @@ namespace Airside.Presentation
 
         // Review shots for packaged-build checks (HUD fit at several window sizes, panels):
         //   -airsideReviewPanel plan|operations|map|fleet|contracts|stats|devtools|help
-        //   -airsideReviewShot <path.png> [-airsideReviewDelay seconds]   capture, then quit
+        //   -airsideReviewShot <path.png> [-airsideReviewDelay seconds]
+        //       capture then quit; repeat the flag group for multi-shot one-soak batches
         //   -airsideReviewAircraft <registration|auto-landing|auto-takeoff>
         //       follow a live 3D aircraft; auto-landing / auto-takeoff pick the best
         //       on-field arrival or departure that already has a field view
@@ -87,14 +88,14 @@ namespace Airside.Presentation
         //   -airsideReviewTime HH:mm   override local lighting time only (not the sim clock)
         //   -airsideReviewWeather cloudy|overcast|rain|storm|...   deterministic visual QA
         private const string ReviewPanelFlag = "-airsideReviewPanel";
-        private const string ReviewShotFlag = "-airsideReviewShot";
-        private const string ReviewDelayFlag = "-airsideReviewDelay";
         private const string ReviewAircraftFlag = "-airsideReviewAircraft";
         private const string ReviewFreighterFlag = "-airsideReviewFreighter";
         private const string ReviewHangarCheckFlag = "-airsideReviewHangarCheck";
         private const string ReviewBoardingFlag = "-airsideReviewBoarding";
-        private float _reviewShotAt = -1f;
-        private bool _reviewShotTaken;
+        private ReviewShotSchedule _reviewShotSchedule;
+        private int _reviewShotIndex;
+        private bool _reviewCaptureInFlight;
+        private float _reviewLastCaptureAt = -1f;
         private bool _reviewFollowStarted;
         private string _reviewAircraftId;
         private string _reviewAutoFollowId;
@@ -128,6 +129,8 @@ namespace Airside.Presentation
         /// <summary>Read the finished frame (3D and HUD) back and write it as PNG. The ScreenCapture module is not in this project.</summary>
         private System.Collections.IEnumerator CaptureReviewShot(string path)
         {
+            // One frame so mid-soak zoom/weather overrides reach the rendered image.
+            yield return null;
             yield return new WaitForEndOfFrame();
             var texture = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
             texture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
@@ -135,6 +138,17 @@ namespace Airside.Presentation
             File.WriteAllBytes(path, texture.EncodeToPNG());
             Destroy(texture);
             Debug.Log($"{SoakLogTag} review shot {path} at {Screen.width}x{Screen.height}");
+            _reviewLastCaptureAt = Time.unscaledTime;
+            _reviewShotIndex++;
+            _reviewCaptureInFlight = false;
+        }
+
+        private void ApplyReviewShotPresentation(ReviewShotSchedule.Entry entry)
+        {
+            if (entry.FollowZoom.HasValue && _cameraController != null)
+                _cameraController.SetFollowZoom(entry.FollowZoom.Value);
+            if (!string.IsNullOrEmpty(entry.WeatherToken))
+                SetReviewWeatherToken(entry.WeatherToken);
         }
 
         /// <summary>
@@ -326,30 +340,32 @@ namespace Airside.Presentation
 
         private void DriveReviewShot()
         {
-            var args = Environment.GetCommandLineArgs();
-            var index = Array.IndexOf(args, ReviewShotFlag);
-            if (index < 0 || index + 1 >= args.Length)
-                return;
-            if (_reviewShotAt < 0f)
+            if (_reviewShotSchedule == null)
             {
-                var delayIndex = Array.IndexOf(args, ReviewDelayFlag);
-                var delay = delayIndex >= 0 && delayIndex + 1 < args.Length
-                            && float.TryParse(args[delayIndex + 1], System.Globalization.NumberStyles.Float,
-                                System.Globalization.CultureInfo.InvariantCulture, out var d)
-                    ? d
-                    : 20f;
-                _reviewShotAt = Time.unscaledTime + delay;
+                if (!ReviewShotSchedule.TryParse(Environment.GetCommandLineArgs(), out _reviewShotSchedule))
+                    return;
             }
 
-            if (!_reviewShotTaken && Time.unscaledTime >= _reviewShotAt)
+            if (_reviewShotSchedule.Count == 0 || _reviewCaptureInFlight)
+                return;
+
+            if (_reviewShotIndex >= _reviewShotSchedule.Count)
             {
-                _reviewShotTaken = true;
-                StartCoroutine(CaptureReviewShot(args[index + 1]));
+                if (_reviewLastCaptureAt >= 0f && Time.unscaledTime >= _reviewLastCaptureAt + 3f)
+                    Application.Quit();
+                return;
             }
-            else if (_reviewShotTaken && Time.unscaledTime >= _reviewShotAt + 3f)
-            {
-                Application.Quit();
-            }
+
+            var entry = _reviewShotSchedule[_reviewShotIndex];
+            var dueAt = _soakStartedAt >= 0f
+                ? _soakStartedAt + entry.DelaySeconds
+                : Time.unscaledTime + entry.DelaySeconds;
+            if (Time.unscaledTime < dueAt)
+                return;
+
+            ApplyReviewShotPresentation(entry);
+            _reviewCaptureInFlight = true;
+            StartCoroutine(CaptureReviewShot(entry.Path));
         }
 
         private void DriveSoak()

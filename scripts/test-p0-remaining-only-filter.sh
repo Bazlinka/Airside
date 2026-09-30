@@ -16,19 +16,32 @@ cat >"$tmpdir/bin/capture-game.sh" <<'EOF'
 set -euo pipefail
 out=""
 follow=""
+declare -a outs=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --out) out="$2"; shift 2 ;;
+    --out) out="$2"; outs+=("$2"); shift 2 ;;
+    --shot)
+      spec="$2"
+      path="${spec%%:*}"
+      outs+=("$path")
+      shift 2
+      ;;
     --follow) follow="$2"; shift 2 ;;
-    --delay|--timeout) shift 2 ;;
+    --delay|--timeout|--minutes) shift 2 ;;
+    --print-plan) shift ;;
     --) shift; break ;;
     *) shift ;;
   esac
 done
-base="$(basename "${out%.png}")"
-echo "${base}|follow=${follow:-}" >>"${AIRSIDE_P0_RAN_FILE:?}"
-# Touch a tiny PNG so the remaining script's later steps (if any) see a file.
-printf 'PNG' >"$out"
+if [[ ${#outs[@]} -eq 0 && -n "$out" ]]; then
+  outs+=("$out")
+fi
+for path in "${outs[@]}"; do
+  base="$(basename "${path%.png}")"
+  echo "${base}|follow=${follow:-}" >>"${AIRSIDE_P0_RAN_FILE:?}"
+  mkdir -p "$(dirname "$path")"
+  printf 'PNG' >"$path"
+done
 EOF
 chmod +x "$tmpdir/bin/capture-game.sh"
 

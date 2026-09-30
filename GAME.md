@@ -1,16 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip after takeoff/landing delay fix — #491; one-paste
+  Tip after multi-shot soak batching — #491; one-paste
   `scripts/run-post-audit-p0-stages.sh` or Finder
   `scripts/run-post-audit-p0-stages.command`. Packaged delays: auto-takeoff
-  **830s** (TakingOff mid-roll; 900s was HoldingShort), auto-landing **780s**
-  (jet Landing; 360s was turboprop). EditMode locks
-  `PackagedAutoTakeoffDelay_SelectsTakingOffNotHoldingShort` /
-  `PackagedAutoLandingDelay_SelectsJetLanding` + delay CI script green.
-  Cloud `Task` / `cursor[bot]` `@cursoragent worker=` do **not** claim My Machines.
-  **Prefer Terminal / Finder:** `docs/testing/post-audit-p0-mac-terminal.md`
-  (~60+ min wall-clock for A→B→C). 21 RESULTS rows unverified.
+  **830s**; landing batch **780/783/786s** (day/close/storm one soak);
+  boarding batch **320/323s**. Rebuild required for multi-shot. ~35+ min
+  A→B→C wall-clock. Cloud Task / `cursor[bot]` cannot claim My Machines.
+  **Prefer Terminal / Finder:** `docs/testing/post-audit-p0-mac-terminal.md`.
+  21 RESULTS rows unverified.
   **NEXT:** Mac run stages → fill RESULTS by eye/ear. Freight AI parked.
   Do not invent RESULTS.
 

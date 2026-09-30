@@ -7,10 +7,10 @@ when the Mac is awake — one paste `scripts/run-post-audit-p0-stages.sh` at
 Optional Cursor path: paste the block below into a Cursor agent started **on**
 Bailey's MacBook Pro (environment dropdown → **Bailey's MacBook Pro**, not a cloud VM).
 Checkout `cursor/p0-auto-landing-follow-709e` at tip with auto-takeoff ~830s /
-auto-landing ~780s delays (or `main` after #491 merges) so night-sky yaw 270 +
-jet Landing wait + soak-window fix + TakingOff mid-roll wait +
-`scripts/run-post-audit-p0-remaining.sh` are present.
-Canonical path: `~/Code/Airside`. Fast pass takeoff alone needs ~16 min soak.
+landing batch ~780–786s / boarding batch ~320–323s (or `main` after #491 merges)
+so night-sky yaw 270 + multi-shot review + TakingOff mid-roll wait +
+`scripts/run-post-audit-p0-remaining.sh` are present. Rebuild required for
+multi-shot. Canonical path: `~/Code/Airside`. Fast pass takeoff alone ~16 min.
 
 A Linux cloud parent cannot pin this machine via `Task` / `env.machine` (children
 land on Linux with `privateWorkerId: null`). Use the agents UI environment picker.

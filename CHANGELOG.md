@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **P0 multi-shot soak batches cut Stage C wall-clock.** One soak writes
+  jet day/close/storm (~780–786s) and boarding/human-ops (~320–323s) via
+  repeated `-airsideReviewShot` groups; `ReviewShotSchedule` + capture-game
+  `--shot` locked in CI. Rebuild required. No simulation or save changes.
+
 - **P0 takeoff/landing capture delays hit the right states.** Packaged
   `auto-takeoff` waits **830s** (TakingOff mid-roll; 900s overshot to
   HoldingShort) and `auto-landing` **780s** (jet Landing; 360s was turboprop).

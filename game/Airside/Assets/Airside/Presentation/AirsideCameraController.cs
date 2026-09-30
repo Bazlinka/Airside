@@ -156,6 +156,10 @@ namespace Airside.Presentation
         private const float MinFollowZoom = 0.35f;
         private const float MaxFollowZoom = 3.5f;
 
+        /// <summary>Packaged multi-shot reviews switch zoom between PNGs in one soak.</summary>
+        public void SetFollowZoom(float zoom) =>
+            _followZoom = Mathf.Clamp(zoom, MinFollowZoom, MaxFollowZoom);
+
         /// <summary>
         /// Free-camera scroll zooms toward the ground under the pointer, the same way the
         /// destinations map's <c>ZoomAtGui</c> keeps its pivot. The pivot is latched when

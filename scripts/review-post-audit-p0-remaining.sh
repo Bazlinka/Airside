@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # Re-capture only the stills that still block P0 sign-off after #490:
 #   - overview-night-sky-traffic (framing: 11 km / pitch 8 / yaw 270 — early-soak corridor)
-#   - follow-jet-day / follow-jet-close (auto-landing, ~780s live — jet Landing)
+#   - follow-jet-day / follow-jet-close / follow-storm-landing (one soak, ~780–786s)
 #   - follow-jet-takeoff (auto-takeoff, ~830s live — TakingOff tyre roll)
-#   - follow-storm-landing (auto-landing under storm — ADR 0190 still evidence)
-#   - follow-freighter / follow-hangar-tow / follow-boarding-tape / follow-human-ops-close
+#   - follow-freighter / follow-hangar-tow
+#   - follow-boarding-tape / follow-human-ops-close (one soak, ~320–323s)
 #
-# Requires a rebuilt player that includes those fixes. Does not invent RESULTS.
+# Landing and boarding batches share one soak so Stage C does not pay 780s / 320s
+# three and two times. Requires a rebuilt player with multi-shot review support.
+# Does not invent RESULTS.
 # Usage:
 #   scripts/build-mac.sh
 #   scripts/review-post-audit-p0-remaining.sh
@@ -63,6 +65,50 @@ capture() {
   FOLLOW=""
 }
 
+# Multi-PNG one soak. Specs: name:delay[:zoom[:weather]]
+capture_shots() {
+  local timeout="$1"; shift
+  local specs=()
+  while [[ $# -gt 0 && "$1" != "--" ]]; do
+    specs+=("$1")
+    shift
+  done
+  if [[ "${1:-}" == "--" ]]; then
+    shift
+  fi
+
+  local wanted=()
+  local spec name
+  for spec in "${specs[@]}"; do
+    name="${spec%%:*}"
+    if want_shot "$name"; then
+      wanted+=("$spec")
+    else
+      echo "-- skip $name (not in AIRSIDE_P0_ONLY)"
+    fi
+  done
+  if ((${#wanted[@]} == 0)); then
+    FOLLOW=""
+    return 0
+  fi
+
+  local shot_args=()
+  local labels=()
+  for spec in "${wanted[@]}"; do
+    name="${spec%%:*}"
+    local rest="${spec#*:}"
+    labels+=("$name")
+    shot_args+=(--shot "$shots/${name}.png:${rest}")
+  done
+  echo "==> ${labels[*]} (one soak)"
+  bash "$root/scripts/capture-game.sh" \
+    --timeout "$timeout" \
+    ${FOLLOW:+--follow "$FOLLOW"} \
+    "${shot_args[@]}" \
+    -- "$@" "${common[@]}"
+  FOLLOW=""
+}
+
 # Order: short/high-priority first so an interrupted Mac run still lands night-sky +
 # freighter (P2 gate) before the multi-minute landing/boarding waits.
 
@@ -93,33 +139,20 @@ CAPTURE_DELAY=830 CAPTURE_TIMEOUT=980 capture follow-jet-takeoff \
   -airsideReviewWeather clear -airsideReviewTime 12:00 \
   -airsideReviewFollowZoom 0.45
 
-# Jet Landing (flare / tyre). 360s is turboprop Landing; first jet Landing ~720–840s.
+# Jet Landing batch (flare / tyre + storm). One soak: day → close → storm.
+# 360s is turboprop Landing; first jet Landing ~720–840s. Stagger ~3s for zoom/weather.
 FOLLOW=auto-landing
-CAPTURE_DELAY=780 CAPTURE_TIMEOUT=960 capture follow-jet-day \
-  -airsideReviewWeather clear -airsideReviewTime 12:00 \
-  -airsideReviewFollowZoom 0.55
+capture_shots 1000 \
+  follow-jet-day:780:0.55:clear \
+  follow-jet-close:783:0.35 \
+  follow-storm-landing:786:0.55:storm \
+  -- -airsideReviewTime 12:00
 
-FOLLOW=auto-landing
-CAPTURE_DELAY=780 CAPTURE_TIMEOUT=960 capture follow-jet-close \
-  -airsideReviewWeather clear -airsideReviewTime 12:00 \
-  -airsideReviewFollowZoom 0.35
-
-FOLLOW=auto-landing
-CAPTURE_DELAY=780 CAPTURE_TIMEOUT=960 capture follow-storm-landing \
-  -airsideReviewWeather storm -airsideReviewTime 12:00 \
-  -airsideReviewFollowZoom 0.55
-
-# Walkway tape mid-boarding (ADR 0187). Starter Saab: fuel+catering+baggage ≈ 255s, then board.
-CAPTURE_DELAY=320 CAPTURE_TIMEOUT=480 capture follow-boarding-tape \
-  -airsideReviewBoarding \
-  -airsideReviewWeather clear -airsideReviewTime 12:00 \
-  -airsideReviewFollowZoom 0.55
-
-# Human-ops close (ADR 0174): airstair / tape scale at follow distance — same boarding window.
-CAPTURE_DELAY=320 CAPTURE_TIMEOUT=480 capture follow-human-ops-close \
-  -airsideReviewBoarding \
-  -airsideReviewWeather clear -airsideReviewTime 12:00 \
-  -airsideReviewFollowZoom 0.35
+# Boarding tape + human-ops close share one soak (same -airsideReviewBoarding window).
+capture_shots 480 \
+  follow-boarding-tape:320:0.55:clear \
+  follow-human-ops-close:323:0.35 \
+  -- -airsideReviewBoarding -airsideReviewTime 12:00
 
 echo "Remaining P0 stills written under $shots"
 echo "Copy keep PNGs into docs/testing/post-audit-p0-<date>/ and update RESULTS.md verdicts."

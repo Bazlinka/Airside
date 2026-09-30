@@ -39,7 +39,7 @@ API pin (optional, when not at the Mac): Dashboard → API Keys, then
 `export CURSOR_API_KEY=…` and `scripts/launch-p0-mac-agent.sh`. Posts
 `POST https://api.cursor.com/v1/agents` with
 `env: { type: machine, name: "Bailey's MacBook Pro" }` on tip
-`cursor/p0-auto-landing-follow-709e`. Needs team **Enable Remote Control for
+`cursor/p0-freighter-pick-lock-709e` (or `main` after merge). Needs team **Enable Remote Control for
 Team** and an awake worker named exactly `Bailey's MacBook Pro`. Cloud `Task`
 cannot do this pin (confirmed; no `workerId` on Task).
 

@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **P0 Stage B dirty allowlist CI-locked.** Shared `p0-remaining-check-dirty.sh`
+  accepts only `docs/testing/post-audit-p0-*` dirt between stages; headless tests
+  reject GAME.md dirtiness. Night-sky framing (11 km / pitch 8 / yaw 270) also
+  locked in the delay guard. No simulation or save changes.
+
 - **P0 Stage B tolerates dirty RESULTS from Stage A.** The remaining runner
   allows dirty paths only under `docs/testing/post-audit-p0-*/` so inventory /
   PNG copies do not block the takeoff stage. Remaining delays stay CI-locked.

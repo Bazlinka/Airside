@@ -1,14 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip: soak-window fix + auto-takeoff delay **900s** (TakingOff ~13 min; 360s was too early).
+  Tip: soak-window + auto-takeoff **900s** + Stage B dirty-RESULTS allowlist (CI-locked) +
+  delay/`grep` CI lock + night-sky framing lock (11 km / pitch 8 / yaw 270).
   Packaged: `auto-landing` (~360s) / `auto-takeoff` (~900s) / freighter / hangar / boarding /
-  human-ops close. Night-sky: 11 km / pitch 8 / yaw 270 (~45s). One-command:
-  `scripts/run-post-audit-p0-remaining.sh` (PNGs + inventory; no verdicts).
-  Two Mac workers ONLINE + idle (`~/Code/Airside` preferred). Cloud `Task` cannot pin My
-  Machines — Bailey UI-pins **Bailey's MacBook Pro**. Paste:
-  `docs/testing/post-audit-p0-mac-agent-prompt.md`. Remaining RESULTS + manual rows unverified.
-  **NEXT:** UI-pin Mac → Stage A then B
+  human-ops close. One-command: `scripts/run-post-audit-p0-remaining.sh` (PNGs + inventory;
+  no verdicts). **Mac workers currently offline** (0 connected) — Bailey must
+  `cursor worker start` then UI-pin **Bailey's MacBook Pro** (`~/Code/Airside` preferred).
+  Cloud `Task` cannot pin My Machines. Paste: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
+  Remaining RESULTS + manual rows unverified (21 unverified).
+  **NEXT:** start Mac worker → UI-pin → Stage A then B
   `AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh`
   then `AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-jet-takeoff …`
   (~17 min, no rebuild; dirty RESULTS/PNGs from Stage A are OK). Then full remaining /

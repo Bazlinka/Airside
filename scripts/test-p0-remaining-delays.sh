@@ -35,6 +35,12 @@ require_delay follow-human-ops-close 320
 grep -q 'capture follow-freighter' "$remaining" || { echo "missing follow-freighter" >&2; exit 1; }
 echo "ok follow-freighter present"
 
+# Night-sky re-run framing (ADR 0195) — prior still was nose-down.
+grep -q 'airsideOverviewDistance 11000' "$remaining" || { echo "missing night-sky distance 11000" >&2; exit 1; }
+grep -q 'airsideOverviewPitch 8' "$remaining" || { echo "missing night-sky pitch 8" >&2; exit 1; }
+grep -q 'airsideOverviewYaw 270' "$remaining" || { echo "missing night-sky yaw 270" >&2; exit 1; }
+echo "ok night-sky framing 11km / pitch 8 / yaw 270"
+
 for delay in 45 90 320 360 900; do
   plan="$(bash "$cap" --delay "$delay" --timeout $((delay + 120)) --print-plan)"
   echo "plan $plan"

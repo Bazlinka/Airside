@@ -30,32 +30,7 @@ case "$branch" in
 esac
 # Stage A stamps RESULTS / copies PNGs, so Stage B must tolerate those dirty paths.
 # Any other dirty path still blocks (do not mix unrelated edits into a capture run).
-dirty="$(git status --porcelain)"
-if [ -n "$dirty" ]; then
-  bad=0
-  while IFS= read -r line; do
-    [ -z "$line" ] && continue
-    path="${line:3}"
-    path="${path#\"}"
-    path="${path%\"}"
-    # git status --porcelain renames: "R  old -> new"
-    case "$path" in
-      *' -> '*) path="${path##* -> }" ;;
-    esac
-    case "$path" in
-      docs/testing/post-audit-p0-*/*|docs/testing/post-audit-p0-*/) ;;
-      *)
-        echo "Unexpected dirty path before remaining P0: $path" >&2
-        bad=1
-        ;;
-    esac
-  done <<< "$dirty"
-  if [ "$bad" -ne 0 ]; then
-    echo "Save or commit non-RESULTS changes before running remaining P0." >&2
-    exit 1
-  fi
-  echo "==> Allowing dirty P0 RESULTS/PNG paths from a prior stage"
-fi
+git status --porcelain | bash "$root/scripts/p0-remaining-check-dirty.sh"
 
 if [ "${AIRSIDE_P0_SKIP_PULL:-}" = "1" ]; then
   echo "==> Skipping git pull (AIRSIDE_P0_SKIP_PULL=1)"

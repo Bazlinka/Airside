@@ -29,5 +29,7 @@ jobs:
         run: bash scripts/test-capture-game-soak-window.sh
       - name: P0 remaining capture delays stay locked
         run: bash scripts/test-p0-remaining-delays.sh
+      - name: P0 Stage B dirty RESULTS allowlist
+        run: bash scripts/test-p0-remaining-dirty-allowlist.sh
       - name: Domain, Simulation and Unity-free Presentation tests
         run: dotnet test scripts/dotnet-harness/Harness.csproj --nologo

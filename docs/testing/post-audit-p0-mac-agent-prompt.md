@@ -2,13 +2,15 @@
 
 Paste this into a Cursor agent started **on** Bailey's MacBook Pro
 (environment dropdown → **Bailey's MacBook Pro**, not a cloud VM).
+Checkout `cursor/p0-auto-landing-follow-709e` (or `main` after #491 merges) so the
+review helpers and `scripts/review-post-audit-p0-remaining.sh` are present.
 
-A Linux cloud parent cannot pin this machine via `Task`. Placement needs
-`CreateAgent` with `machine: { "type": "self_hosted_worker", "worker_id": "…" }`
-(requires team Remote Control) or this UI picker / API v1 `env.type: "machine"`.
+A Linux cloud parent cannot pin this machine via `Task`. Use this UI picker, or
+API / SDK `env: { "type": "machine", "name": "Bailey's MacBook Pro" }` (machine
+**name**, not `worker_id`).
 
 Workers (when online): `list-self-hosted-workers` — prefer
-`~/Documents/Codex/Airside` or `~/Code/Airside`, `eligibleForSubagent: true`, idle.
+`~/Code/Airside`, `eligibleForSubagent: true`, idle.
 
 ---
 

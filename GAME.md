@@ -1,11 +1,10 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Packaged: `auto-landing` / `auto-takeoff` / freighter / hangar check / boarding tape.
-  `scripts/review-post-audit-p0-remaining.sh` re-runs the open stills. PR ready for review.
-  **NEXT:** Mac rebuild → that script → finish `docs/testing/post-audit-p0-manual-checklist.md`.
-  Freight AI stays parked. Do not invent RESULTS. Pin Mac via agents UI (`env.type: machine`).
-  Workers were offline at last check — need `cursor worker start` on the Mac.
+  Packaged: `auto-landing` / `auto-takeoff` / freighter / hangar / boarding / human-ops close.
+  `scripts/review-post-audit-p0-remaining.sh` re-runs the open stills. Headless CI green; PR ready.
+  **NEXT:** Mac agents UI → Bailey's MacBook Pro → rebuild → that script → fill RESULTS.
+  Freight AI stays parked. Do not invent RESULTS. Pin by machine **name** (not worker_id).
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

@@ -1,5 +1,20 @@
 ## Unreleased
 
+- **West Beach dunes, shore foam and Patawalonga outlet.** Seeded dune berms just inland of the
+  OSM coast, two pulsing foam ribbons on the bare field, and inland water that deepens toward the
+  gulf so the Barcoo/Patawalonga reads as a channel. Presentation only. ADR 0203.
+
+- **Apron patch repairs and drainage pits.** Seeded concrete patches and grate pits inside every real apron
+  outline (inset from the edge), two combined meshes. Presentation only. ADR 0202.
+
+- **Stand oil stains and softer ground edges.** Seeded oil/fuel blotches under every bay and gate (two combined
+  meshes), slightly stronger grass macro/mow detail, and a softer paved-to-grass shoulder. Presentation only. ADR 0201.
+
+- **Visual overhaul Phase 0 baseline bookmarks.** Six named review cameras (`overview`,
+  `terminal-airside`, `terminal-kerb`, `hangar-row`, `suburb-edge`, `coast`) via
+  `-airsideReviewView`, plus `scripts/capture-visual-baseline.sh` for day/dusk/night
+  1600×900 captures and scraped fps metrics. ADR 0200. Packaged PNG evidence still needs a Mac run.
+
 - **Post-audit P0 captures.** Fourteen packaged screenshots of the current Adelaide field (overview, far land,
   night, terminal, hangars, freight shed, fire station, storm, fog, follow) are in
   `docs/testing/post-audit-p0-2026-09-30/`, with keep / unverified notes. No simulation change. Manual listening

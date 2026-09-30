@@ -1,5 +1,30 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-09-30 Cursor — Phase 1 West Beach dunes/foam/outlet (branch `cursor/phase1-landform-coast-5ea8`, ADR 0203).**
+  Seeded dune berms inland of the OSM coast, two `Coast foam` ribbons (pulse on bare field), Patawalonga
+  water deepens toward the gulf. Presentation only.
+  - **Checks:** `scripts/test-domain.sh` **1150/1150** (incl. AdelaideCoastLandformTests).
+  - **NEXT:** land-cover polish (golf/parks/scrub) or far-ring skyline (still Phase 1).
+
+- **2026-09-30 Cursor — Phase 1 apron surface wear (branch `cursor/phase1-stand-oil-stains-5ea8`, ADR 0202).**
+  Seeded concrete patch repairs and drainage pits inside every apron outline. Presentation only.
+  - **Checks:** `scripts/test-domain.sh` **1138/1138** (incl. ApronSurfaceWearTests).
+  - **NEXT:** landform & coast (Phase 1), or land-cover polish.
+
+- **2026-09-30 Cursor — Phase 1 stand oil stains + ground soft edges (branch `cursor/phase1-stand-oil-stains-5ea8`, ADR 0201).**
+  Seeded oil/fuel blotches under every regional bay and terminal gate; slightly stronger ground macro/mow stripes;
+  softer paved→grass shoulder. Presentation only.
+  - **Checks:** `scripts/test-domain.sh` **1134/1134** (incl. StandOilStainsTests).
+  - **NEXT:** apron patch repairs / drainage pits (done in ADR 0202).
+
+- **2026-09-30 Cursor — visual overhaul Phase 0 baseline bookmarks (branch `cursor/visual-baseline-phase0-5ea8`, ADR 0200).**
+  Six named review cameras in `AirsideVisualBaselineViews` (`-airsideReviewView`), wired into the overview
+  camera, with `scripts/capture-visual-baseline.sh` for day/dusk/night 1600×900 shots and scraped soak metrics.
+  Headless locks in `VisualBaselineViewsTests`.
+  - **Checks:** `scripts/test-domain.sh` **1136/1136** (incl. new VisualBaselineViewsTests); harness props updated.
+  - **NEXT:** on a Mac, `scripts/build-mac.sh` then `scripts/capture-visual-baseline.sh`, commit PNGs + `metrics.md`
+    under `docs/testing/visual-baseline-2026-09-30/`; Phase 1 airside ground slices already on this branch.
+
 - **2026-09-30 Cursor — post-audit P0 automated captures (branch `cursor/post-audit-p0-playtest-e5cd`).**
   Ran `scripts/review-post-audit-p0.sh` on this Mac against the packaged player of `56cb46a3` (dirty=false).
   Fourteen shots are in `docs/testing/post-audit-p0-2026-09-30/` with keep / unverified notes in `RESULTS.md`.

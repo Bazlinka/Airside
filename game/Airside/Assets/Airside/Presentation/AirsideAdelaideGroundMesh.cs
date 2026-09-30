@@ -15,11 +15,12 @@ namespace Airside.Presentation
         public const string ObjectName = AirsideBareField.GroundObjectName;
         public const string FarDetailKeyword = "_GROUND_FAR_DETAIL";
         public const float MacroScaleMetres = 240f;
-        public const float MacroStrength = 0.08f;
+        /// <summary>Phase 1: a touch more large-scale colour noise so the field reads less flat from overview.</summary>
+        public const float MacroStrength = 0.11f;
         public const float MownStripeWidthMetres = 34f;
-        public const float MownStripeStrength = 0.035f;
-        public const float FarBlendStartMetres = 120f;
-        public const float FarBlendEndMetres = 900f;
+        public const float MownStripeStrength = 0.045f;
+        public const float FarBlendStartMetres = 100f;
+        public const float FarBlendEndMetres = 850f;
 
         public static bool TryBuild(Transform root)
         {

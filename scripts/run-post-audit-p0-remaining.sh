@@ -7,6 +7,8 @@
 # Usage (Darwin, awake display):
 #   scripts/run-post-audit-p0-remaining.sh
 #   AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh
+#   AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_ONLY=follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh
+#     (Stage B after Stage A — reuse the player just built; still pulls unless SKIP_PULL=1)
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." && pwd)"
@@ -31,11 +33,24 @@ if [ -n "$(git status --porcelain)" ]; then
   exit 1
 fi
 
-git fetch origin "$branch"
-git pull --ff-only origin "$branch"
+if [ "${AIRSIDE_P0_SKIP_PULL:-}" = "1" ]; then
+  echo "==> Skipping git pull (AIRSIDE_P0_SKIP_PULL=1)"
+else
+  git fetch origin "$branch"
+  git pull --ff-only origin "$branch"
+fi
 
-echo "==> Building Mac player (need auto-landing upgrade + review helpers)"
-bash "$root/scripts/build-mac.sh"
+app="${AIRSIDE_APP:-$root/work/builds/Airside.app}/Contents/MacOS/Airside"
+if [ "${AIRSIDE_P0_SKIP_BUILD:-}" = "1" ]; then
+  if [ ! -x "$app" ]; then
+    echo "AIRSIDE_P0_SKIP_BUILD=1 but no player at $app — run a full build first." >&2
+    exit 1
+  fi
+  echo "==> Skipping Mac build (AIRSIDE_P0_SKIP_BUILD=1); using $app"
+else
+  echo "==> Building Mac player (need auto-landing upgrade + review helpers)"
+  bash "$root/scripts/build-mac.sh"
+fi
 
 stamp="$(date +%Y%m%d)"
 capture_out="${AIRSIDE_P0_OUT:-$root/work/captures/post-audit-p0-remaining-$stamp}"

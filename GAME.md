@@ -10,8 +10,9 @@
   `docs/testing/post-audit-p0-mac-agent-prompt.md`. Remaining RESULTS + manual rows unverified.
   **NEXT:** UI-pin Mac → Stage A then B
   `AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh`
-  then `AIRSIDE_P0_ONLY=follow-jet-takeoff …` (~17 min). Then full remaining / manual rows →
-  fill RESULTS. Freight AI stays parked. Do not invent RESULTS.
+  then `AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-jet-takeoff …`
+  (~17 min, no rebuild). Then full remaining / manual rows → fill RESULTS. Freight AI stays
+  parked. Do not invent RESULTS.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **P0 Stage B can skip rebuild.** `AIRSIDE_P0_SKIP_BUILD=1` /
+  `AIRSIDE_P0_SKIP_PULL=1` reuse the Stage A player for the long takeoff still.
+  Boarding 320s delay locked mid-boarding for starter Saab. No simulation or
+  save changes.
+
 - **P0 hangar still timing locked at 90s.** `HangarTowTests` confirms Saab
   outbound tows still outlast the packaged 90s still and are off-stand mid-tow.
   Mac fast-pass split: night-sky+freighter first; takeoff (~17 min) second.

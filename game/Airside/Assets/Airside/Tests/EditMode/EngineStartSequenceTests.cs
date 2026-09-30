@@ -166,5 +166,21 @@ namespace Airside.Tests
             Assert.That(state.AnyRunning, Is.False, "cancelled bookings stay cold");
             Assert.That(state.Beacon, Is.False);
         }
+
+        [Test]
+        public void PackagedBoardingStill_At320Seconds_IsMidBoardingForStarterRegional()
+        {
+            // remaining.sh follow-boarding-tape / human-ops-close use CAPTURE_DELAY=320 —
+            // fuel+catering+baggage then mid-boarding for a starter Saab (Soak review boarding).
+            var type = AircraftCatalogue.Saab340.Type;
+            const PlayerBaseLevel level = PlayerBaseLevel.Starter;
+            var preBoard = DeparturePrep.StageSecondsFor(type, DeparturePrepStage.Fuel, level)
+                + DeparturePrep.StageSecondsFor(type, DeparturePrepStage.Catering, level)
+                + DeparturePrep.StageSecondsFor(type, DeparturePrepStage.Baggage, level);
+            var midBoard = preBoard + DeparturePrep.BoardingSecondsFor(type, level) / 2;
+            Assert.That(midBoard, Is.EqualTo(315));
+            Assert.That(320, Is.InRange(midBoard - 15, midBoard + 15),
+                "packaged 320s delay should land in mid-boarding for starter regional");
+        }
     }
 }

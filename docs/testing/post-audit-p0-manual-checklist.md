@@ -19,8 +19,8 @@ cd ~/Code/Airside
 scripts/run-post-audit-p0-remaining.sh
 # Stage A (minutes — night-sky + freighter; unblocks P2 freighter evidence):
 # AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter scripts/run-post-audit-p0-remaining.sh
-# Stage B (tyre rotation — ~17 min soak; TakingOff ~13 min):
-# AIRSIDE_P0_ONLY=follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh
+# Stage B (tyre rotation — ~17 min soak; TakingOff ~13 min; reuse Stage A player):
+# AIRSIDE_P0_SKIP_BUILD=1 AIRSIDE_P0_SKIP_PULL=1 AIRSIDE_P0_ONLY=follow-jet-takeoff scripts/run-post-audit-p0-remaining.sh
 ```
 
 Or single night-sky shot:

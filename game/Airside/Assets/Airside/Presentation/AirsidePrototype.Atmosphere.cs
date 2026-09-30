@@ -2,26 +2,25 @@ using System.Collections.Generic;
 using Airside.Simulation;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace Airside.Presentation
 {
     /// <summary>
-    /// ADR 0143 — the layers that make weather feel like weather: an overcast sheet over the field
-    /// (only while the camera is below it), a band of cloud round the horizon, and low mist
-    /// hanging over the grass in fog, rain and at dawn. Their strength comes from
-    /// <see cref="AtmosphereLook"/>; all are soft procedural textures on unlit transparent quads.
+    /// ADR 0193 — rolling cloud ceiling, distant horizon banks and depth-integrated ground fog.
+    /// Their strength comes from AtmosphereLook; presentation never alters operational weather.
     /// </summary>
     public sealed partial class AirsidePrototype
     {
         private const string AtmosphereRootName = "Atmosphere layers";
         private const float HorizonBandRadius = 14_000f;
         private const int HorizonBandSegments = 24;
-        private static readonly float[] MistHeights = { 12f, 26f, 42f };
+        private Renderer _groundFog;
+        private bool _weatherVolumeReported;
 
         private Transform _atmosphereRoot;
         private Renderer _stratusSheet;
         private readonly List<Renderer> _horizonBand = new();
-        private readonly List<Renderer> _mistLayers = new();
         private readonly Dictionary<int, Color> _cloudTints = new();
         private readonly Dictionary<int, Renderer[]> _cloudRenderers = new();
         private MaterialPropertyBlock _atmosphereBlock;
@@ -61,6 +60,9 @@ namespace Airside.Presentation
                 return;
             }
 
+            var windYaw = RunwayWeather.UnityYawFromTrue(PresentationWind.DirectionDegrees) * Mathf.Deg2Rad;
+            Shader.SetGlobalVector("_AirsideWeatherWind", new Vector4(Mathf.Sin(windYaw) * 7f, 0f, Mathf.Cos(windYaw) * 7f, 0f));
+            Shader.SetGlobalFloat("_AirsideWeatherTime", Time.unscaledTime);
             var sky = ToColor(_atmosphere.Sky);
             var daylight = PresentationDaylight;
             var camera = _mainCamera.transform.position;
@@ -91,26 +93,39 @@ namespace Airside.Presentation
                 SetLayerColour(segment, bandTint);
             }
 
-            // Low mist: pale sheets over the field, thinner for a high camera so the field still reads.
-            var fromAbove = Mathf.InverseLerp(300f, 2_000f, camera.y);
-            var mistColour = Color.Lerp(ToColor(_atmosphere.Fog), Color.white, 0.25f * daylight);
-            for (var i = 0; i < _mistLayers.Count; i++)
+            // Integrate ground fog through scene depth rather than stacking flat sheets. From
+            // above it settles into a shallow bank; a follow camera actually moves through it.
+            if (_groundFog != null)
             {
-                var layer = _mistLayers[i];
-                var a = _atmosphere.Mist * Mathf.Lerp(0.34f, 0.16f, fromAbove) * (1f - i * 0.22f);
-                layer.enabled = a > 0.01f;
-                SetLayerColour(layer, new Color(mistColour.r, mistColour.g, mistColour.b, a));
+                var planeDistance = _mainCamera.nearClipPlane + 0.1f;
+                var planeHeight = 2f * planeDistance * Mathf.Tan(_mainCamera.fieldOfView * Mathf.Deg2Rad * 0.5f);
+                _groundFog.transform.SetPositionAndRotation(camera + _mainCamera.transform.forward * planeDistance,
+                    _mainCamera.transform.rotation);
+                _groundFog.transform.localScale = new Vector3(planeHeight * _mainCamera.aspect * 1.01f,
+                    planeHeight * 1.01f, 1f);
+                var strength = _atmosphere.Mist;
+                _groundFog.enabled = strength > 0.01f;
+                var fogColour = ToColor(_atmosphere.Fog);
+                SetLayerColour(_groundFog, new Color(fogColour.r, fogColour.g, fogColour.b, strength));
+                if (SoakMode && !_weatherVolumeReported && Time.unscaledTime > 8f)
+                {
+                    _weatherVolumeReported = true;
+                    Debug.Log($"[Airside weather] {CurrentWeather} mist {strength:0.00} fog enabled {_groundFog.enabled} " +
+                        $"shader {_groundFog.sharedMaterial.shader.name} camera {camera} " +
+                        $"tint {fogColour} layers {AirsideSettings.Current.WeatherLayers}");
+                }
             }
+
         }
 
         private void HideAtmosphereLayers()
         {
+            if (_groundFog != null)
+                _groundFog.enabled = false;
             if (_stratusSheet != null)
                 _stratusSheet.enabled = false;
             for (var i = 0; i < _horizonBand.Count; i++)
                 _horizonBand[i].enabled = false;
-            for (var i = 0; i < _mistLayers.Count; i++)
-                _mistLayers[i].enabled = false;
         }
 
         private void SetLayerColour(Renderer renderer, Color colour)
@@ -127,19 +142,33 @@ namespace Airside.Presentation
                 return;
             _atmosphereRoot = new GameObject(AtmosphereRootName).transform;
 
-            _stratusSheet = LayerQuad("Overcast sheet", material, new Vector3(18_000f, 18_000f, 1f));
+            var ceilingShader = Shader.Find("Airside/WeatherCeiling");
+            var ceilingMaterial = ceilingShader != null
+                ? new Material(ceilingShader) { name = "Airside rolling cloud ceiling" } : material;
+            _stratusSheet = LayerQuad("Overcast sheet", ceilingMaterial, new Vector3(18_000f, 18_000f, 1f));
             _stratusSheet.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
             var width = 2f * Mathf.PI * HorizonBandRadius / HorizonBandSegments * 1.08f;
             for (var i = 0; i < HorizonBandSegments; i++)
                 _horizonBand.Add(LayerQuad($"Horizon band {i}", material, new Vector3(width, 1_100f, 1f)));
 
-            foreach (var height in MistHeights)
+            var volumeShader = Shader.Find("Airside/HeightFog");
+            if (volumeShader != null)
             {
-                var mist = LayerQuad($"Low mist {height:0}m", material, new Vector3(6_500f, 5_000f, 1f));
-                mist.transform.SetPositionAndRotation(new Vector3(300f, height, 150f), Quaternion.Euler(90f, 0f, 0f));
-                _mistLayers.Add(mist);
+                var fog = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                fog.name = "Drifting ground fog";
+                DestroyPresentationObject(fog.GetComponent<Collider>());
+                fog.transform.SetParent(_atmosphereRoot, false);
+                _groundFog = fog.GetComponent<Renderer>();
+                var fogMaterial = new Material(volumeShader) { name = "Airside ground fog volume" };
+                if (_mainCamera != null)
+                    _mainCamera.GetUniversalAdditionalCameraData().requiresDepthTexture = true;
+                _groundFog.sharedMaterial = fogMaterial;
+                _groundFog.shadowCastingMode = ShadowCastingMode.Off;
+                _groundFog.receiveShadows = false;
+                _groundFog.enabled = false;
             }
+
         }
 
         private Renderer LayerQuad(string name, Material material, Vector3 scale)

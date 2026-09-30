@@ -151,3 +151,13 @@ NumPy 2.0.2 (https://numpy.org/, BSD 3-Clause) is used only by the offline FFT
 audio generator/check and review audit. Cost $0; no runtime distribution of NumPy.
 Its licence remains with the installed build dependency. Committed PCM AudioClips
 and the original family/procedural fallbacks do not require NumPy at runtime.
+
+## Procedural weather depth — 2026-09-30
+
+Project-authored `WeatherVolume`, `HeightFog`, `WeatherCeiling`, `WeatherRain` URP shaders and the seeded
+rain mesh in `AirsidePrototype.WeatherEffects` (ADR 0193). Original source authored by Codex
+for Bailey's fog/cloud/weather request; no third-party texture, model, recording, generation
+service, licence attribution or purchase. Cost: $0 external asset cost. Sixteen-step cloud integration / analytic height fog with three drifting noise
+samples, world-space ceiling noise, soft noise cloud umbras and 768 rain streaks. Existing
+registered cloud atlas remains the cloud shader fallback. Editable runtime source is committed
+under `Assets/Airside/Art/Shaders` and `Assets/Airside/Presentation`; each has a Unity meta file.

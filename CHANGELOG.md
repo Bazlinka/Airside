@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **P0 Stage C multi-shot log inventory fix.** `capture-game` mirrors Unity's one
+  `-logFile` onto sibling `.log` paths; remaining inventory falls back to the batch
+  primary and requires per-shot `following=True` pose lines so landing/boarding
+  secondaries are not false-failed. Locked by `test-p0-remaining-delays.sh`. No
+  save-schema changes.
 - **P0 Stage C SKIP_BUILD fail-closed preflight.** Mac remaining runner requires
   hangar/boarding abort strings in the player and `following=True` on jet
   landing/takeoff inventory. Locked by `test-p0-remaining-delays.sh`. No save-schema

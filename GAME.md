@@ -1,8 +1,9 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — P0 Stage C SKIP_BUILD fail-closed preflight (#492).**
-  Tip **#492** (this commit). Mac runner preflights hangar/boarding abort strings and
-  requires `following=True` on jet landing/takeoff inventory (not start log alone).
+- **2026-09-30 Cursor — P0 Stage C multi-shot log inventory fix (#492).**
+  Tip **#492** (this commit). `capture-game` mirrors Unity's single `-logFile` onto
+  sibling shot logs; inventory falls back to batch primary and requires per-shot
+  `following=True` pose lines (no false-fail on Stage C secondaries).
   Rebuild on tip. 20 RESULTS unverified. `CURSOR_API_KEY` unset; no Mac workers.
   **NEXT:** Mac Terminal/Finder Stage A→C on tip, or API key →
   `scripts/launch-p0-mac-agent.sh`. Fill RESULTS by eye/ear. Freight parked.

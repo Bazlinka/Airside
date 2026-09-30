@@ -1,6 +1,6 @@
 # Post-audit improvement plan
 
-Status: **active** · 2026-09-30 · Author: Cursor (comprehensive code audit) · Branch `cursor/post-audit-improvement-plan-709e` · ADR **0201**
+Status: **active** · 2026-09-30 · Author: Cursor (comprehensive code audit) · Branch `cursor/post-audit-improvement-plan-709e` · ADR **0202**
 
 This is the standing backlog for what to improve next before a major expansion.
 It comes from a full Domain / Simulation / Presentation / tests / product-plan audit

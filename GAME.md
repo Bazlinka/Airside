@@ -4,7 +4,7 @@
   Packaged: `auto-landing` / `auto-takeoff` / freighter / hangar / boarding / human-ops close.
   Auto-landing re-ranks to Landing (~360s). Night-sky: 11 km / pitch 8 / yaw 270 (~45s).
   One-command: `scripts/run-post-audit-p0-remaining.sh`. Tip CI green; PR mergeable.
-  Tip `21dca2d4` headless CI green; PR #491 mergeable. Two Mac workers ONLINE — prefer `~/Code/Airside`.
+  Tip headless CI green; PR #491 mergeable. Two Mac workers ONLINE — prefer `~/Code/Airside`.
   Cloud Task cannot pin (machine.type only `same_machine`|`new_cloud_vm`). API pin needs team
   **Enable Remote Control for Team**; until then use agents UI machine name.
   Remaining RESULTS + manual rows unverified.

@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **P0 night-sky frustum EditMode lock.** `NightSkyReviewFraming_PutsDrawableCruiseInUpperHalfOfFrame`
+  asserts the 11 km / pitch 8 / yaw 270 re-run pose puts a drawable cruise in
+  the upper half of the 1600×900 frame at T+45s. No simulation or save changes.
 - **P0 Stage A Finder shortcut.** `scripts/run-post-audit-p0-stage-a.command`
   double-click runs night-sky + freighter only (~minutes) when a full A→B→C
   soak is too long. No simulation or save changes.

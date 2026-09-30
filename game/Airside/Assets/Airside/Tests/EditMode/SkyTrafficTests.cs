@@ -275,5 +275,65 @@ namespace Airside.Tests
             Assert.That(bestDelta, Is.LessThanOrEqualTo(20.0),
                 "review yaw 270 should face the early-soak drawable overflight");
         }
+
+        [Test]
+        public void NightSkyReviewFraming_PutsDrawableCruiseInUpperHalfOfFrame()
+        {
+            // Pose matches scripts/review-post-audit-p0-remaining.sh night-sky still:
+            // overview bookmark centre + CLI pitch/yaw/distance + BareField FOV.
+            // #490's keep PNG was nose-down (default pitch 50); this locks the re-run
+            // framing so a cruise is actually on-screen in the upper half before Mac eyes.
+            const double centerX = 150.0;
+            const double centerZ = 350.0;
+            const double pitchDeg = 8.0;
+            const double yawDeg = 270.0;
+            const double distance = 11000.0;
+            const double fovDeg = 48.0;
+            const double aspect = 1600.0 / 900.0;
+            const double t = 45.0;
+
+            var pitch = pitchDeg * Math.PI / 180.0;
+            var yaw = yawDeg * Math.PI / 180.0;
+            var cp = Math.Cos(pitch);
+            var sp = Math.Sin(pitch);
+            var cy = Math.Cos(yaw);
+            var sy = Math.Sin(yaw);
+            // Unity Quaternion.Euler(pitch, yaw, 0) ≈ Ry(yaw) * Rx(pitch).
+            var rightX = cy;
+            var rightY = 0.0;
+            var rightZ = -sy;
+            var upX = sy * sp;
+            var upY = cp;
+            var upZ = cy * sp;
+            var fwdX = sy * cp;
+            var fwdY = -sp;
+            var fwdZ = cy * cp;
+            var camX = centerX - fwdX * distance;
+            var camY = 0.0 - fwdY * distance;
+            var camZ = centerZ - fwdZ * distance;
+
+            var inUpperHalf = 0;
+            foreach (var flight in SkyTraffic.At(t))
+            {
+                if (!SkyTraffic.TryWorldPosition(flight, out var x, out var y, out var z) || y <= 80.0)
+                    continue;
+                var vx = x - camX;
+                var vy = y - camY;
+                var vz = z - camZ;
+                var viewX = vx * rightX + vy * rightY + vz * rightZ;
+                var viewY = vx * upX + vy * upY + vz * upZ;
+                var viewZ = vx * fwdX + vy * fwdY + vz * fwdZ;
+                if (viewZ <= 1.0)
+                    continue;
+                var tanHalf = Math.Tan(fovDeg * Math.PI / 360.0);
+                var ndcX = viewX / (viewZ * tanHalf * aspect);
+                var ndcY = viewY / (viewZ * tanHalf);
+                if (Math.Abs(ndcX) <= 1.0 && Math.Abs(ndcY) <= 1.0 && ndcY > 0.0)
+                    inUpperHalf++;
+            }
+
+            Assert.That(inUpperHalf, Is.GreaterThan(0),
+                "night-sky re-run pose (11 km / pitch 8 / yaw 270) must put at least one drawable cruise in the upper half of a 1600×900 / FOV 48 frame at T+45s");
+        }
     }
 }

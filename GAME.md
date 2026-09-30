@@ -9,9 +9,9 @@
   landing **780/783/786s**; boarding **320/323s**. Multi-shot + player
   preflight. Cloud Task cannot claim My Machines — Terminal/Finder or
   `scripts/launch-p0-mac-agent.sh` + API key:
-  `docs/testing/post-audit-p0-mac-terminal.md`. 21 RESULTS unverified;
-  night-sky PNG still nose-down (no cruise). Workers ONLINE idle; no new
-  remaining PNGs.
+  `docs/testing/post-audit-p0-mac-terminal.md`.   21 RESULTS unverified;
+  night-sky PNG still nose-down (no cruise); re-run frustum locked in EditMode.
+  Workers ONLINE idle; no new remaining PNGs.
   **NEXT:** Mac Stage A (or full A→B→C) → fill RESULTS by eye/ear. Freight AI
   parked. Do not invent RESULTS.
 

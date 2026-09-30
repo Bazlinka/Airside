@@ -79,4 +79,15 @@ echo "multi $plan"
 [[ "$plan" == *"soak_outlives_delay=1"* ]] || { echo "multi-shot soak must outlive max delay: $plan" >&2; exit 1; }
 echo "ok multi-shot soak plan"
 
+runner="$root/scripts/run-post-audit-p0-remaining.sh"
+grep -Fq 'ReviewShotSchedule' "$runner" || {
+  echo "Mac runner must preflight ReviewShotSchedule in the player binary" >&2
+  exit 1
+}
+grep -Fq 'strings' "$runner" || {
+  echo "Mac runner multi-shot preflight must use strings on the player" >&2
+  exit 1
+}
+echo "ok multi-shot player preflight"
+
 echo "P0 remaining delay locks passed"

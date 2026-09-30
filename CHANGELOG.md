@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **P0 Mac runner preflights multi-shot player.** `run-post-audit-p0-remaining.sh`
+  refuses an old `Airside.app` missing `ReviewShotSchedule` so Stage C cannot
+  burn a timeout on a single-shot build. Boarding batch 320/323s EditMode-locked.
+  No simulation or save changes.
+
 - **P0 landing-batch delays locked at 780/783/786s.** EditMode confirms jet
   Landing at each staggered multi-shot offset on soak seed 20260913.
   No simulation or save changes.

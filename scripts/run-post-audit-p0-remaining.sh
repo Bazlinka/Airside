@@ -51,12 +51,23 @@ else
   bash "$root/scripts/build-mac.sh"
 fi
 
+# Stage C landing/boarding batches need ReviewShotSchedule in the player. An older
+# build only honours the first -airsideReviewShot and then quits — capture-game
+# would wait out the full timeout for the missing PNGs.
+if [ -x "$app" ]; then
+  if ! strings "$app" 2>/dev/null | grep -Fq 'ReviewShotSchedule'; then
+    echo "Player at $app lacks multi-shot review (ReviewShotSchedule). Rebuild without SKIP_BUILD." >&2
+    exit 1
+  fi
+  echo "==> Player has multi-shot review (ReviewShotSchedule)"
+fi
+
 stamp="$(date +%Y%m%d)"
 capture_out="${AIRSIDE_P0_OUT:-$root/work/captures/post-audit-p0-remaining-$stamp}"
 docs_dir="$root/docs/testing/post-audit-p0-2026-09-30"
 mkdir -p "$capture_out" "$docs_dir"
 
-echo "==> Remaining P0 captures (display must stay awake)"
+echo "==> Remaining P0 captures (display must stay awake; ~35+ min for full A→B→C)"
 AIRSIDE_P0_OUT="$capture_out" bash "$root/scripts/review-post-audit-p0-remaining.sh"
 
 echo "==> Copying new PNGs into $docs_dir (overwrites prior stills of the same name)"

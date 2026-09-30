@@ -4,7 +4,7 @@
   Full Domain / Simulation / Presentation / tests / product-plan audit. Standing backlog:
   `docs/plans/post-audit-improvement-plan.md`. **Cloud goal is set to execute that plan** (P0→P1→P2→P3→P4).
   Branch includes merged `main` (**#485** Phase 0 bookmarks ADR 0200; **#486** Phase 1 oil stains ADR 0201 +
-  apron wear ADR 0202). Headless on plan tip before this merge: **1136/1136**; re-run after merge.
+  apron wear ADR 0202). Headless after merge: **1144/1144**.
   This cloud run is **iOS-started** and cannot pin My Machines (`CreateAgent` tool absent; `Task` only
   `same_machine` | `new_cloud_vm`).
   - **P0 (NEXT — Mac shell or Mac-picked agent):** Use UI picker / CreateAgent `machine.worker_id` /

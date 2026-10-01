@@ -1,5 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Cursor — arrivals bunched on final (`main`).** Bailey saw three
+  arrivals flying nose to tail over the coast. `ExpectedLandingQueueTime` gave an
+  Inbound aircraft only the HoldingForLanding traffic ahead, never other inbounds
+  joining first, so close-scheduled arrivals shared one estimate and were drawn
+  together. It now queues behind earlier-joining inbounds (same strip, `RunwayFor`).
+  Presentation-only consumer; tower, saves and random draws unchanged.
+  **Evidence:** new `DrawnFinal_KeepsConsecutiveArrivalsKilometresApart` (one day,
+  seed 2026: under-3 km pairs 389 → 0, p5 gap 221 m → 9.4 km). On top of PR #510,
+  Unity EditMode **1737 passed / 0 failed / 2 inconclusive** (after the separate
+  `ClearCache` compile fix below). Clean Mac build follows.
+  **NEXT:** watch a busy arrival bank in the packaged game.
+
 - **2026-10-01 Cursor — main did not compile in Unity after PR #510.** Five
   vegetation placement tests call `ClearCache()`, which was `internal` in
   Presentation (no `InternalsVisibleTo` there). The dotnet harness compiles one

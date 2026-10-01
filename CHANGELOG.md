@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Arrivals no longer bunch up nose to tail on final.** An inbound's drawn position on the
+  extended final only counted aircraft already holding, so arrivals due close together got the
+  same landing estimate and flew in a line a few hundred metres apart (some on the same spot).
+  Each now queues behind the inbounds that join first. Over a simulated day, drawn pairs under
+  3 km fell from 389 to 0; the closest 5 % are now about 9 km apart. Presentation only: tower
+  sequencing, saves and simulation outcomes are unchanged.
+
 - **Unity compiles again after the vegetation merge.** Five placement tests called an
   `internal` cache reset the Unity test assembly cannot see; it is now public.
 

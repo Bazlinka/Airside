@@ -102,5 +102,57 @@ namespace Airside.Tests
                 }
             }
         }
+
+        /// <summary>
+        /// Arrivals due to join the queue close together each got the same estimate, because an
+        /// inbound only counted aircraft already holding: Bailey saw them drawn nose to tail on
+        /// final, some on the same spot. Each now queues behind the inbounds that join first.
+        /// </summary>
+        [Test]
+        public void DrawnFinal_KeepsConsecutiveArrivalsKilometresApart()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(2026),
+                Airline.Player("Arrival Test Air", "#1F3A93"));
+            var pairs = 0;
+            var closest = double.MaxValue;
+            var worst = "";
+            for (var t = 0L; t < 24 * 3600; t += 15)
+            {
+                clock.Set(new SimulationTime(t));
+                ops.Update();
+                var drawn = new List<(string Registration, double Metres, bool Main)>();
+                foreach (var aircraft in ops.Fleet)
+                {
+                    if (aircraft.State is not (FleetState.Inbound or FleetState.HoldingForLanding))
+                        continue;
+                    var eta = ops.ExpectedLandingQueueTime(aircraft, out var runway);
+                    if (!eta.HasValue)
+                        continue;
+                    var speed = CircuitProfile.Knots(AircraftPerformance.For(aircraft.Type).ApproachKnots);
+                    var metres = speed * Math.Max(0, eta.Value.ElapsedSeconds - t);
+                    if (metres <= 32_000)
+                        drawn.Add((aircraft.Registration, metres, RunwayWeather.IsMainRunway(runway)));
+                }
+
+                foreach (var strip in drawn.GroupBy(d => d.Main))
+                {
+                    var queue = strip.OrderBy(d => d.Metres).ToList();
+                    for (var i = 1; i < queue.Count; i++)
+                    {
+                        pairs++;
+                        var gap = queue[i].Metres - queue[i - 1].Metres;
+                        if (gap < closest)
+                        {
+                            closest = gap;
+                            worst = $"{queue[i - 1].Registration}/{queue[i].Registration} at {t} s";
+                        }
+                    }
+                }
+            }
+
+            Assert.That(pairs, Is.GreaterThan(100), "the day should put plenty of arrivals on final together");
+            Assert.That(closest, Is.GreaterThanOrEqualTo(3_000), $"closest pair {closest:0} m ({worst})");
+        }
     }
 }

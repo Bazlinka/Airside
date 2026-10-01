@@ -204,6 +204,17 @@ research scratch; photos are not redistributed or used as textures. Cost: none.
 Existing built-in Unity font and shaders retained. Fallback: disabled cockpit
 action for unsupported aircraft; normal external view remains available.
 
+
+### Jet cockpit procedural candidates — 1 October 2026
+
+Ten original code-authored spectator decks: B738, B38M, A320, A21N, E190, A223,
+A359, A339, B789, B78X. Source/editable generator: `JetCockpitInterior.cs` and
+`JetCockpitProfile.cs`; shared builder/lifecycle `CockpitInterior.cs`. No external
+models, images, textures or audio imported; project-owned procedural geometry and
+runtime text, zero purchase cost, no third-party runtime attribution. Manufacturer
+reference links and evidence limits: `docs/plans/jet-cockpits.md`. Fallback: unsupported
+types retain external view with Cockpit disabled; no generic/Saab jet fallback.
+Status: branch candidate; visual and packaged acceptance tracked separately.
 ## ATR42 / DH8D cockpit interior candidates — 2026-10-01
 
 Original project-owned procedural geometry and three 192px code-drawn display
@@ -220,3 +231,15 @@ Prompt/source evidence: Bailey's turboprop-only request, ADR 0215 and
 in `docs/art/reference/turboprop-cockpits/README.md`; research pixels do not ship.
 Fallback: external view for unsupported types or failed factory creation.
 Status: source implemented; native visual/build acceptance pending licensing recovery.
+
+## Regional weather coverage revision — 2026-10-01
+
+Original project source changes to existing HeightFog/WeatherCeiling shaders and
+procedural cloud placement/recycling. No external assets, images, models, new
+shader lookup names or new runtime textures. Sixteen cloud volumes and their
+existing procedural noise/shadow assets retained. Author: Codex for Airside;
+prompt: Bailey's clouds/fog beyond-airport request and explicit visible-landscape
+coverage choice. ADR 0225 / `docs/plans/weather-coverage.md`. Cost: zero acquisition
+or image-generation cost. Existing licences retained; no new attribution required.
+Fallback: existing cloud atlas when the volume shader is unavailable; weather layers
+can be disabled. Rendered verification status is in the weather coverage test record.

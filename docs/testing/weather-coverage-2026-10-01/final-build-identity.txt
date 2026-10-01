@@ -1,0 +1,7 @@
+commit=409b9349
+commitFull=409b934944def296753128d69b79a6db3131a908
+branch=fix/regional-weather-coverage
+subject=Integrate merged jet cockpits and preserve verified weather coverage
+committedAt=2026-10-01T15:15:52+09:30
+dirty=false
+stampedAt=2026-10-01T05:46:58Z

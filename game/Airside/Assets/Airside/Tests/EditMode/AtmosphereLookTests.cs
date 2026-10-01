@@ -58,7 +58,8 @@ namespace Airside.Tests
         {
             Assert.That(Day(WeatherKind.Clear).Stratus, Is.Zero);
             Assert.That(Day(WeatherKind.Overcast).Stratus, Is.GreaterThan(0.3f));
-            Assert.That(Day(WeatherKind.Overcast, 1_840f).Stratus, Is.Zero, "no sheet over the overview camera");
+            Assert.That(Day(WeatherKind.Overcast, 1_840f).Stratus, Is.EqualTo(Day(WeatherKind.Overcast).Stratus),
+                "the deck must remain visible beneath a camera above cloud height");
             Assert.That(Day(WeatherKind.Fog).Mist, Is.GreaterThan(0.6f));
             Assert.That(Day(WeatherKind.Clear).Mist, Is.Zero);
             var dawn = AtmosphereLook.For(WeatherLook.For(WeatherKind.Clear), 0.5f, 1f, true, 50f);
@@ -68,6 +69,14 @@ namespace Airside.Tests
             Assert.That(Day(WeatherKind.Storm).CloudShade, Is.LessThan(0.6f));
             Assert.That(Day(WeatherKind.Clear).CloudShade, Is.EqualTo(1f));
             Assert.That(Day(WeatherKind.Overcast).HorizonBand, Is.GreaterThan(Day(WeatherKind.Clear).HorizonBand));
+        }
+
+        [Test] public void ClimbingThroughCloudHeightDoesNotClearTheEntireOvercastDeck()
+        {
+            var deck = Day(WeatherKind.Overcast).Stratus;
+            for (var height = 650f; height <= 1800f; height += 25f)
+                Assert.That(Day(WeatherKind.Overcast, height).Stratus, Is.EqualTo(deck));
+            Assert.That(Day(WeatherKind.Clear, 1800f).Stratus, Is.Zero);
         }
 
         [Test]

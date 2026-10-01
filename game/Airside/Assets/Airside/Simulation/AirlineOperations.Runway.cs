@@ -490,44 +490,61 @@ namespace Airside.Simulation
             // Already on final: the tower will land it through a storm (ADR 0190), so the
             // estimate must not park it until the weather block ends.
             var established = aircraft.State == FleetState.HoldingForLanding;
-            var arrivals = new List<FleetAircraft>();
+            var arrivals = new List<(FleetAircraft Aircraft, SimulationTime Joined)>();
             var departures = new List<FleetAircraft>();
             foreach (var other in _fleet)
             {
-                if (ReferenceEquals(other, aircraft) || RunwayWeather.IsMainRunway(other.AssignedRunway) != mainStrip)
+                if (ReferenceEquals(other, aircraft))
+                    continue;
+                // Another inbound that joins first lands first. Leaving those out gave arrivals
+                // due close together the same estimate, drawn nose to tail on the final.
+                if (!established && other.State == FleetState.Inbound && other.StateEndsAt.HasValue)
+                {
+                    if (RunwayWeather.IsMainRunway(RunwayFor(other)) == mainStrip
+                        && Before(other, other.StateEndsAt.Value, aircraft, joins))
+                        arrivals.Add((other, other.StateEndsAt.Value));
+                    continue;
+                }
+
+                if (RunwayWeather.IsMainRunway(other.AssignedRunway) != mainStrip)
                     continue;
                 if (other.State == FleetState.HoldingForLanding && Before(other, other.StateStartedAt, aircraft, joins))
-                    arrivals.Add(other);
+                    arrivals.Add((other, other.StateStartedAt));
                 else if (other.State == FleetState.HoldingShort)
                     departures.Add(other);
             }
 
-            arrivals.Sort((a, b) => Before(a, a.StateStartedAt, b, b.StateStartedAt) ? -1 : 1);
+            arrivals.Sort((a, b) => Before(a.Aircraft, a.Joined, b.Aircraft, b.Joined) ? -1 : 1);
             departures.Sort((a, b) => a.StateStartedAt.CompareTo(b.StateStartedAt));
             if (established && Weather.At(_clock.Now) == WeatherKind.Storm)
                 departures.Clear();
 
+            var firstJoins = joins;
+            foreach (var arrival in arrivals)
+                if (arrival.Aircraft.State == FleetState.Inbound && arrival.Joined.CompareTo(firstJoins) < 0)
+                    firstJoins = arrival.Joined;
+
             var at = mainStrip ? _mainRunwayFreeAt : _crossRunwayFreeAt;
             if (at.CompareTo(_clock.Now) < 0)
                 at = _clock.Now;
-            // Until it joins the queue nothing is waiting to land, so holders depart freely.
-            while (aircraft.State == FleetState.Inbound && departures.Count > 0 && at.CompareTo(joins) < 0)
+            // Until an inbound joins the queue nothing is waiting to land, so holders depart freely.
+            while (aircraft.State == FleetState.Inbound && departures.Count > 0 && at.CompareTo(firstJoins) < 0)
             {
                 at = AfterStorms(at);
-                if (at.CompareTo(joins) >= 0)
+                if (at.CompareTo(firstJoins) >= 0)
                     break;
                 at = at.Advance(DepartureRunwaySeconds(departures[0]));
                 departures.RemoveAt(0);
             }
 
-            if (at.CompareTo(joins) < 0 && aircraft.State == FleetState.Inbound)
-                at = joins;
+            if (at.CompareTo(firstJoins) < 0 && aircraft.State == FleetState.Inbound)
+                at = firstJoins;
 
             for (var guard = 0; guard < 256; guard++)
             {
                 if (!established)
                     at = AfterStorms(at);
-                var nextArrivalJoined = arrivals.Count > 0 ? arrivals[0].StateStartedAt : joins;
+                var nextArrivalJoined = arrivals.Count > 0 ? arrivals[0].Joined : joins;
                 if (departures.Count > 0
                     && departures[0].StateStartedAt.CompareTo(nextArrivalJoined) < 0
                     && at.ElapsedSeconds - departures[0].StateStartedAt.ElapsedSeconds >= DepartureMaxHoldSeconds)
@@ -538,10 +555,12 @@ namespace Airside.Simulation
                 }
 
                 if (arrivals.Count == 0)
-                    return at;
+                    return at.CompareTo(joins) < 0 && aircraft.State == FleetState.Inbound ? joins : at;
 
-                var ahead = arrivals[0];
+                var (ahead, aheadJoined) = arrivals[0];
                 arrivals.RemoveAt(0);
+                if (at.CompareTo(aheadJoined) < 0)
+                    at = aheadJoined;
                 var landing = AircraftPerformance.For(ahead.Type);
                 at = at.Advance(ApproachHold.RemainingFinalSeconds(landing.ApproachSeconds, ahead.Registration)
                                 + landing.LandingSeconds

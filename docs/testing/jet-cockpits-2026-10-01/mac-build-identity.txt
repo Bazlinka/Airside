@@ -1,0 +1,7 @@
+commit=57d14e09
+commitFull=57d14e09d447712affad72c434ccf8b8ddca7906
+branch=feature/all-jet-cockpits
+subject=Allow packaged cockpit review of actual running arrivals
+committedAt=2026-10-01T14:33:26+09:30
+dirty=false
+stampedAt=2026-10-01T05:03:38Z

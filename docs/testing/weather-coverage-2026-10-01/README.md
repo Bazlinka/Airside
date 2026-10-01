@@ -50,7 +50,7 @@ and representative remote/airport captures will be recorded separately.
 
 Main advanced to `f1044eea` with new scenery and a correction to the audio ratio
 expectation. Weather source merged without conflicts; both handoffs/changelogs
-are retained. Weather ADR is now 0225 (0216 is occupied and 0224 reserved in main's
+are retained. Weather ADR is now 0226 (0216 is occupied and 0224 reserved in main's
 handoff). The first integrated native attempt failed compilation because new
 placement tests call internal `ClearCache` hooks across assemblies. Added
 `Presentation/AssemblyInfo.cs` with the same EditMode friend assembly declaration
@@ -60,3 +60,16 @@ Integrated full native: **1744 passed / zero failures / two existing inconclusiv
 1746 total**. Metadata audit: 1614 GUIDs, 347 mirrors, 70 materials. Weather diff
 whitespace checks pass against main; incoming Unity metas retain their existing
 blank-value trailing spaces. Integration rebuild/captures follow.
+
+Clean scenery-integrated build **94346c2f**, `dirty=false`, passed. Three inspected
+player images/logs are under `scenery-integration/`: distant fog, airport overcast
+above, and the same distant view with weather layers disabled. Disabling hides
+clouds/shadows/fog layers; the terrain artifacts remain. No managed exception,
+shader error or logged stall appeared in these completed captures.
+
+Main then advanced to **b9ec2250** (jet cockpits PR #514). Weather rendering files
+are unchanged by that update. Both branches added the same friend-assembly
+declaration; retain main's version/meta. Weather ADR moves to **0226**, because
+main's jet cockpit ADR uses 0225. Focused native integration checks and a clean
+combined Mac build are being completed; previous full counts above apply to
+94346c2f, not the newer cockpit integration.

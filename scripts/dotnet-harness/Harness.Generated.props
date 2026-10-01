@@ -89,6 +89,8 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudShell.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudSounds.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudWorkspace.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/JetCockpitProfile.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/JetCockpitShellGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/MapGeography.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/MapGeographyData.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/MapLabelLayout.cs" />
@@ -240,6 +242,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HudSoundsTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HudTestAirline.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HudWorkspacePainterTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/JetCockpitShellGeometryTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/LightningTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/LineupSteeringTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/LiveClockTests.cs" />

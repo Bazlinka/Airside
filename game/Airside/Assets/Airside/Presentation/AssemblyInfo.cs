@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
 
-// Keep placement cache reset hooks internal while allowing the separate Unity test assembly.
+// Native EditMode tests use internal cache-reset hooks; the headless harness
+// compiles these tests into the same assembly and already has access.
 [assembly: InternalsVisibleTo("Airside.Tests.EditMode")]

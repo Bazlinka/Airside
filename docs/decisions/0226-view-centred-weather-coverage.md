@@ -1,4 +1,4 @@
-# 0225 — View-centred weather coverage
+# 0226 — View-centred weather coverage
 
 Date: 2026-10-01. Status: approved scope; rendering acceptance in progress.
 

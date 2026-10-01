@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Lock jet pitch sweep to the #507 modest range.** `PropGovernorHoldsTheNoteWhileJetRevsRise`
+  still required a >1.30 jet taxi→takeoff pitch ratio after #507 narrowed the bed
+  sweep to stop spool-up chirps; update the lock to >1.15 / <1.28 and still above
+  the governed prop. Presentation test only.
+
 - **Phase 2d approach avenue trees (ADR 0217).** Eucalypt avenues on both
   landside verges of Sir Donald Bradman Drive, Burbridge Road and Sir Richard
   Williams Avenue. Cap 220; soft-deduped vs Tapleys windbreak. Locked by

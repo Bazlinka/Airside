@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **P0 closed by Bailey (move to P1).** Owner waived remaining unverified
+  stills/listening rows in `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`.
+  Plan + ADR 0205 + `GAME.md` handoff point at the visual overhaul gate. No
+  simulation or save changes.
 - **P0 tip `b67a32a1` CI CLEAN.** Headless green on #491 with Stage A caffeinate +
   osascript notify, fail-closed framing/follow, and CreateAgent Stage A path.
   Mac workers online; `CURSOR_API_KEY` still blocks CreateAgent. No simulation

@@ -18,82 +18,47 @@ concentration / performance**, then finishing half-done product slices (freight)
 
 ## Priority order
 
-### P0 — Mac packaged playtest of unverified merges (do first)
+### P0 — Mac packaged playtest of unverified merges
 
-**Status:** automated Mac captures recorded in #490; manual listening/play checks remain open
-(21 unverified rows). See `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`. Night-sky
-framing + review follow helpers (`auto-landing` ~780s jet / `auto-takeoff` ~1330s jet /
-freighter / hangar / boarding; multi-shot landing+boarding batches) are in #491
-(headless CI green, mergeable). Mac path: one-paste
-`scripts/run-post-audit-p0-stages.sh` (~45+ min after rebuild; wraps
-`caffeinate -d -i` for the full run), or
-`scripts/run-post-audit-p0-remaining.sh` Stage A (night-sky+freighter) → B (jet takeoff
-`SKIP_BUILD`/`SKIP_PULL`) → C (hangar + batched landings/boarding). A Unity player and awake display
-are required. Cloud Linux cannot mark this complete. If no workers show in
-`list-self-hosted-workers`, run `cursor worker start` on the Mac first (prefer
-`~/Code/Airside`). Cloud `Task` cannot pin My Machines — do not retry Task pins.
-Pin via agents UI (**Bailey's MacBook Pro**) or
-`scripts/launch-p0-mac-agent.sh` (`CURSOR_API_KEY` → API v1 CreateAgent;
-defaults Stage A; pins `env.worker_id` for the `~/Code/Airside` worker when known,
-plus machine name). Tip #491 also fail-closes overview framing mismatches so a
-nose-down night-sky PNG cannot look like success. Prefer Terminal/Finder (no pin):
-`docs/testing/post-audit-p0-mac-terminal.md`. GitHub `@cursoragent worker=` only
-works from Bailey's trusted account — `cursor[bot]` cloud comments do not claim
-the machine. Optional agent paste: `docs/testing/post-audit-p0-mac-agent-prompt.md`.
+**Status: done (2026-10-01) — Bailey closed P0 and asked agents to move on.**
 
-Many ADRs merged green on EditMode / headless but were never seen or heard in a
-rebuilt game. Attribute bugs before adding content.
+Automated Mac captures from #490 are in `docs/testing/post-audit-p0-2026-09-30/`
+(most automated rows **keep**). Remaining stills and manual listening/play rows stay
+`unverified` in RESULTS — accepted as waived, not as eyes-on keep. Review/capture
+helpers from #491 remain on `main` for optional later use. Open tip #492
+(freighter/hangar/boarding pick locks) is optional tooling, not a P0 blocker.
 
-| Check | ADR / notes |
-|---|---|
-| Aircraft audio at overview + follow; tune `AircraftAudioMix.ZoomGain` | 0192, 0196 |
-| Sky traffic cruises at night overview; no double inbound on final | 0195 |
-| Freighter livery at follow; jet rotation/flare tyres on the ground | 0194 |
-| Weather clear/cloudy/overcast/rain/storm/fog from overview + follow | 0193 (prior Mac pack in `docs/testing/weather-2026-09-30/`; re-check tip) |
-| Hangar tow / berths / quiet tow; temporary boarding tape | 0186–0188, 0196 |
-| Far zoom, far land cover, follow-camera feel, zoom-in stays under cursor | 0185, 0189–0191 |
-| Arrivals already on final land through a storm | 0190 |
-| Terminal doors / facade detail (airside + kerb) | 0197 |
-| Human-ops close matrix (clipping, scale, bridge glass) | 0174 |
+Do not reopen P0 unless Bailey asks. Next priority is **P1**.
 
-**Run on Mac:** `scripts/run-post-audit-p0-remaining.sh` (pull + build + remaining
-stills; optional `AIRSIDE_P0_ONLY=shot,shot`; Stage B/C may set `AIRSIDE_P0_SKIP_BUILD=1`
-`AIRSIDE_P0_SKIP_PULL=1`) or the full `scripts/run-post-audit-p0.sh`. Checklist:
-`docs/testing/post-audit-p0-manual-checklist.md`. Captures go to
-`work/captures/post-audit-p0-<date>/` and the RESULTS docs folder.
-
-Exit: Bailey marks each keep / fix / revert. Close or amend ADR “Unity look not
-verified” lines when eyes-on is done.
-
-### P1 — Visual overhaul gate
+### P1 — Visual overhaul gate (do next)
 
 1. Bailey signs off (or rejects) `docs/plans/visual-overhaul-plan.md`.
-2. If yes: **Phase 0 baseline** (named captures + fps / p95 / SetPass / batches)
-   before Phase 1 ground/land. No visual phase lands without a before/after number.
+2. If yes: finish **Phase 0 baseline** (named captures + fps / p95 / SetPass / batches)
+   before more Phase 1 ground/land. No new visual phase lands without a before/after number.
 3. Building audit: 71/78 heights are still rule defaults (`docs/data/ypad-buildings-audit.md`).
 
-**In flight / ahead of gate:**
-- Phase 0 bookmarks (ADR 0200) are **merged to `main` via #485** and in the canonical checkout;
-  Mac `capture-visual-baseline.sh` metrics still owed.
-- Phase 1 oil stains (ADR 0201) + apron wear (ADR 0202) **merged to `main` via #486**
-  before P0 / Bailey sign-off. Treat as parallel visual work already on the Mac P0
-  tip; it does **not** clear P0 keep/fix/revert. Eyeball those ground slices during P0.
+**Already on `main` (ahead of / parallel to the gate — does not mean P1 is done):**
+- Phase 0 bookmarks (ADR 0200) via #485; Mac `capture-visual-baseline.sh` metrics
+  still owed under `docs/testing/visual-baseline-2026-09-30/`.
+- Phase 1 oil stains (ADR 0201) + apron wear (ADR 0202) via #486.
+- Phase 1 West Beach dunes / shore foam / Patawalonga outlet (ADR 0203) via #489.
 
-### P2 — Finish freight as a mode (parked until P0)
+Still open for P1: plan sign-off, committed baseline metrics PNGs, remaining Phase 1
+items in the visual plan (land-cover polish, far-ring skyline, etc.), then later
+visual phases only after Bailey clears the gate.
 
-**Parked until P0 is signed off.** Player freighter refit exists (save v19) but has
-not been seen in a rebuilt game. Do not add AI freighters or a cargo apron on top of
-unverified player freight.
+### P2 — Finish freight as a mode
 
-When P0 clears the freighter/tyre rows, finish as one narrow ADR slice:
+P0 no longer blocks this. Player freighter refit exists (save v19). Prefer a Mac look
+at freighter livery + tyre rotation when convenient, then finish as one narrow ADR slice:
 
 - AI freight carriers (DHL / Qantas Freight–style, night bank, own liveries)
 - Cargo apron / stands
 - Contracts that require a freighter (`ContractKind.Freight` today does not)
 - Outstation settle using freighter forecast overload
 
-Until then: leave player freight as-is; no freight AI / apron / freighter-gated
-contracts.
+Until that slice: leave player freight as-is; no freight AI / apron / freighter-gated
+contracts unless Bailey prioritises P2 over P1.
 
 ### P3 — Pay down structure and performance debt
 

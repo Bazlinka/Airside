@@ -12,7 +12,8 @@ Ran on Bailey's MacBook Pro (Apple M1 Pro), display awake.
 - **Shots:** the PNGs in this folder. Originals also sit in `work/captures/post-audit-p0-20260930/`.
 
 Verdicts below are from these stills and the player logs. They are not a substitute for the
-manual rows, which need a person at the keyboard. **P0 is not signed off.** Freight AI stays parked.
+manual rows. **2026-10-01 — Bailey closed P0 and waived the remaining unverified
+rows** (move on to P1). Freight is no longer parked behind P0.
 
 Frame times are the settled soak sample (the `1 min` line), after the first-frame hitch.
 
@@ -90,7 +91,7 @@ These cannot be closed from a PNG. Left open for Bailey.
 ## Exit
 
 - [x] Every automated row has a verdict (keep, or unverified where a still cannot answer)
-- [ ] Every manual row has a player verdict
-- [ ] Fixes filed — none from the automated rows; night sky traffic and the manual list stay open
-- [ ] `GAME.md` handoff: P0 automated matrix done; manual rows still block sign-off
-- [ ] Do not start P2 freight AI, or treat P0 as complete, until the manual rows are marked
+- [x] Remaining manual / remaining-capture rows **waived** by Bailey (2026-10-01) — not eyes-on keep
+- [x] Fixes filed — none from the automated keep rows; waived rows stay `unverified` on purpose
+- [x] `GAME.md` handoff: P0 closed; next is P1 visual overhaul gate
+- [x] P0 complete by owner override; P2 freight no longer blocked by P0

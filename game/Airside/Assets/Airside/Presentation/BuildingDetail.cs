@@ -177,6 +177,12 @@ namespace Airside.Presentation
         public const float MullionWidthMetres = 0.14f;
         public const float TowerShaftFraction = 0.78f;
         public const float TowerShaftScale = 0.62f;
+        public const float TowerCabFloorMetres = 1.2f;
+        /// <summary>Lower glass ring scale — inset so the cab cants outward (ADR 0221).</summary>
+        public const float TowerCabGlassBottomScale = 0.88f;
+        /// <summary>Upper glass ring scale — wider than the floor ring.</summary>
+        public const float TowerCabGlassTopScale = 1.08f;
+        public const float TowerRoofOverhangScale = 1.18f;
         public const float TowerMastMetres = 5.5f;
 
         public static float ParapetHeight(AdelaideBuildingKind kind) => kind switch
@@ -668,28 +674,33 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// Tower: tapered shaft to 78 % of its height, a cab floor, an inset glass ring with a
-        /// mullion at every corner, an overhanging roof, a plant cap and a mast with a red light.
+        /// Tower (ADR 0221): tapered shaft, cab floor slab, outward-canted glass
+        /// (stacked rings — wider on top), overhanging roof, plant cap, mast + light.
         /// </summary>
         private static void AddTower(BuildingDetailSet set, float[] xz, float baseY, float height)
         {
             var shaftTop = baseY + height * TowerShaftFraction;
             set.Prisms.Add(new DetailPrism(BuildingPart.Shell, Scale(xz, TowerShaftScale), baseY, shaftTop - baseY));
-            var floor = 1.2f;
-            var cabTop = baseY + height - 3.5f;
-            set.Prisms.Add(new DetailPrism(BuildingPart.Shell, Scale(xz, 1.0f), shaftTop, floor));
-            var glass = Scale(xz, 0.95f);
-            var glassBase = shaftTop + floor;
+            var cabTop = baseY + height - 3.2f;
+            // Cab floor wider than the shaft so the glass sits on a clear slab.
+            set.Prisms.Add(new DetailPrism(BuildingPart.Shell, Scale(xz, 1.02f), shaftTop, TowerCabFloorMetres));
+            var glassBase = shaftTop + TowerCabFloorMetres;
             var glassHeight = cabTop - glassBase;
-            set.Prisms.Add(new DetailPrism(BuildingPart.CabGlass, glass, glassBase, glassHeight));
-            var count = glass.Length / 2;
+            var lowerH = glassHeight * 0.45f;
+            var upperH = glassHeight - lowerH;
+            var glassLow = Scale(xz, TowerCabGlassBottomScale);
+            var glassHigh = Scale(xz, TowerCabGlassTopScale);
+            set.Prisms.Add(new DetailPrism(BuildingPart.CabGlass, glassLow, glassBase, lowerH));
+            set.Prisms.Add(new DetailPrism(BuildingPart.CabGlass, glassHigh, glassBase + lowerH, upperH));
+            // Mullions follow the outer (wider) cab corners for the full glazed height.
+            var count = glassHigh.Length / 2;
             for (var i = 0; i < count; i++)
-                set.Boxes.Add(new DetailBox(BuildingPart.Trim, glass[i * 2], glassBase + glassHeight * 0.5f, glass[i * 2 + 1],
-                    0.28f, glassHeight, 0.28f, 1f, 0f));
-            set.Prisms.Add(new DetailPrism(BuildingPart.Shell, Scale(xz, 1.1f), cabTop, 0.8f));
-            set.Prisms.Add(new DetailPrism(BuildingPart.Trim, Scale(xz, 0.5f), cabTop + 0.8f, 1.6f));
+                set.Boxes.Add(new DetailBox(BuildingPart.Trim, glassHigh[i * 2], glassBase + glassHeight * 0.5f,
+                    glassHigh[i * 2 + 1], 0.28f, glassHeight, 0.28f, 1f, 0f));
+            set.Prisms.Add(new DetailPrism(BuildingPart.Shell, Scale(xz, TowerRoofOverhangScale), cabTop, 0.85f));
+            set.Prisms.Add(new DetailPrism(BuildingPart.Trim, Scale(xz, 0.5f), cabTop + 0.85f, 1.6f));
             var (cx, cz) = Centroid(xz);
-            var mastBase = cabTop + 2.4f;
+            var mastBase = cabTop + 2.45f;
             set.Boxes.Add(new DetailBox(BuildingPart.Trim, cx, mastBase + TowerMastMetres * 0.5f, cz, 0.22f, TowerMastMetres, 0.22f, 1f, 0f));
             set.Boxes.Add(new DetailBox(BuildingPart.ObstructionLight, cx, mastBase + TowerMastMetres + 0.2f, cz, 0.45f, 0.4f, 0.45f, 1f, 0f));
             // A radar/antenna cross-arm.

@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Phase 3 control tower canted cab (ADR 0221).** Outward-canted glazed cab
+  (stacked lower/upper rings) with overhanging roof on the surveyed 44 m tower.
+  Locked by `BuildingDetailTests.Tower_HasAGlassCabAboveItsShaftAndALitMast`.
+  No save-schema changes.
+
 - **Phase 2g NDVI tree bake LOD (ADR 0220).** Suburb trees use Full / Medium /
   Billboard crowns by distance from ARP (1.4 km / 2.8 km), cutting far-ring
   triangles. Locked by `AdelaideTreeLodTests`. No new assets or save-schema

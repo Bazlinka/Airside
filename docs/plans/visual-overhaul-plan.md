@@ -140,8 +140,9 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
   (`AdelaideNorfolkPinePlacement`) — no new assets.
 - Phase 2g (ADR 0220): NDVI tree bake LOD (Full / Medium / Billboard by
   distance) — no new assets.
-  **Next:** Phase 2 wind / ground-cover tufts / runtime impostors, or Phase 3
-  building accuracy.
+- Phase 3 tower (ADR 0221): outward-canted control-tower cab geometry.
+  **Next:** Phase 2 wind / ground-cover tufts, or Phase 3 hangar/terminal
+  accuracy.
 - Phases 2 (remainder), 3b–f, 4, 5 remain.
 
 ## Risks

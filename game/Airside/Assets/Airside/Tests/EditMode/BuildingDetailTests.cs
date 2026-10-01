@@ -211,17 +211,42 @@ namespace Airside.Tests
         public void Tower_HasAGlassCabAboveItsShaftAndALitMast()
         {
             var tower = Of(AdelaideBuildingKind.ControlTower);
+            Assert.That(tower.HeightMetres, Is.EqualTo(44f));
             var set = BuildingDetail.For(tower, 2f);
             var shaft = set.Prisms.First();
-            var glass = set.Prisms.Single(p => p.Part == BuildingPart.CabGlass);
-            Assert.That(glass.BaseY, Is.GreaterThan(shaft.Top));
-            Assert.That(glass.Height, Is.GreaterThan(3f));
-            Assert.That(glass.Top, Is.LessThanOrEqualTo(2f + tower.HeightMetres));
+            var glass = set.Prisms.Where(p => p.Part == BuildingPart.CabGlass).OrderBy(p => p.BaseY).ToList();
+            Assert.That(glass.Count, Is.EqualTo(2), "canted cab is two stacked glass rings");
+            Assert.That(glass[0].BaseY, Is.GreaterThan(shaft.Top));
+            Assert.That(glass[0].Height + glass[1].Height, Is.GreaterThan(3f));
+            Assert.That(glass[1].Top, Is.LessThanOrEqualTo(2f + tower.HeightMetres));
+            // Outward cant: upper ring footprint is larger than the lower ring.
+            Assert.That(BuildingDetail.TowerCabGlassTopScale,
+                Is.GreaterThan(BuildingDetail.TowerCabGlassBottomScale));
+            Assert.That(MaxRadius(glass[1].Xz), Is.GreaterThan(MaxRadius(glass[0].Xz)));
+            // Roof overhangs the outer glass.
+            var roof = set.Prisms.First(p => p.Part == BuildingPart.Shell && p.BaseY >= glass[1].Top - 1e-3f);
+            Assert.That(MaxRadius(roof.Xz), Is.GreaterThan(MaxRadius(glass[1].Xz)));
             var light = set.Boxes.Single(b => b.Part == BuildingPart.ObstructionLight);
             Assert.That(light.Bottom, Is.GreaterThan(2f + tower.HeightMetres));
-            // One mullion per cab corner.
-            Assert.That(set.Boxes.Count(b => b.Part == BuildingPart.Trim && Math.Abs(b.Height - glass.Height) < 1e-4f),
+            var glassHeight = glass[0].Height + glass[1].Height;
+            Assert.That(set.Boxes.Count(b => b.Part == BuildingPart.Trim && Math.Abs(b.Height - glassHeight) < 1e-4f),
                 Is.EqualTo(tower.Xz.Length / 2));
+        }
+
+        private static float MaxRadius(float[] xz)
+        {
+            var (cx, cz) = BuildingDetail.Centroid(xz);
+            var best = 0f;
+            for (var i = 0; i < xz.Length / 2; i++)
+            {
+                var dx = xz[i * 2] - cx;
+                var dz = xz[i * 2 + 1] - cz;
+                var r = (float)Math.Sqrt(dx * dx + dz * dz);
+                if (r > best)
+                    best = r;
+            }
+
+            return best;
         }
 
         [Test]

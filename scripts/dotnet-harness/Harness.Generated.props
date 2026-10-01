@@ -51,6 +51,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AtmosphereLook.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AustraliaMapLens.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BevelledBox.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/BuildingDetail.Interiors.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BuildingDetail.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CareerTrackWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CoastGrid.cs" />

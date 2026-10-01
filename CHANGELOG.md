@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Phase 2c Tapleys Hill Road windbreak (ADR 0216).** Deterministic eucalypt
+  row along the Tapleys landside verge (airport frontage, outside the aerodrome
+  fence). Reuses `AdelaideTreeGeometry` lobes; drawn into the road props mesh.
+  Cap 180. Locked by `AdelaideWindbreakPlacementTests`. No new assets or
+  save-schema changes.
+
 - **Phase 2b terminal car-park date-palm rows (ADR 0215).** Procedural Canary
   Island date palms along OSM car-park edges in the Terminal 1 landside ring
   (cap 180), drawn into the road props mesh. Layout in `AdelaidePalmPlacement` /

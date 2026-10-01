@@ -1,5 +1,12 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Cursor — Phase 2c Tapleys Hill Road windbreak (ADR 0216).**
+  Deterministic eucalypt row on the Tapleys landside verge (outside the
+  aerodrome fence, airport frontage), lobes from `AdelaideTreeGeometry`, drawn
+  into the road props sink. Cap 180. Stacked on Phase 2b branch
+  `cursor/phase2b-carpark-palms-709e` (PR #510).
+  **NEXT:** Phase 2d residential avenues / dune scrub, or Phase 3 building accuracy.
+
 - **2026-10-01 Cursor — Phase 2b terminal car-park date palms (ADR 0215); goal resumed.**
   Procedural Canary Island date-palm rows along OSM car-park edges in the
   Terminal 1 landside ring (`AdelaidePalmPlacement` / `AdelaidePalmGeometry`),
@@ -7,7 +14,7 @@
   Branch `cursor/phase2b-carpark-palms-709e` (rebased on main after #509).
   **Checks:** palm suites **10/10**; full headless otherwise green except pre-existing
   `PropGovernorHoldsTheNoteWhileJetRevsRise` flake also failing on `main`.
-  **NEXT:** Phase 2c avenues / Tapleys windbreak, or Phase 3 building accuracy.
+  **NEXT:** Phase 2c done on same tip.
 
 - **2026-10-01 Codex — Saab cockpit opaque shell fix.**
   The revision-2 startup image exposed apron through gaps beside/below the panel.

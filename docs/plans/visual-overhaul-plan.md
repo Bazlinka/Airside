@@ -130,8 +130,10 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
   (`AdelaideTreeGeometry`) — no new assets.
 - Phase 2b (ADR 0215): date-palm rows on terminal/car-park edges
   (`AdelaidePalmPlacement`) — no new assets.
-  **Next:** Phase 2c avenues / Tapleys windbreak / dune scrub, or Phase 3
-  building accuracy.
+- Phase 2c (ADR 0216): Tapleys Hill Road landside windbreak eucalypts
+  (`AdelaideWindbreakPlacement`) — no new assets.
+  **Next:** Phase 2d residential avenues / dune scrub, or Phase 3 building
+  accuracy.
 - Phases 2 (remainder), 3b–f, 4, 5 remain.
 
 ## Risks

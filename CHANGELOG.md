@@ -43,6 +43,14 @@
   stills/listening rows in `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`.
   Plan + ADR 0205 + `GAME.md` handoff point at the visual overhaul gate. No
   simulation or save changes.
+- **Hollow hangars, open bays and stored equipment; more wall detail.** Hangars now have a real doorway cut
+  through the front wall with a lined room behind it (floor, ceiling, trusses, strip lights), door leaves stacked
+  beside it, and tugs, power carts, stairs and tool chests along the side walls. The hangar tow uses that same door
+  and only takes aircraft that fit it (`HangarFront`). Fire-station bays that fit open onto a crash tender; every
+  other freight dock opens onto a raised floor with pallets and sometimes a van. Hangars and sheds gain ribs, girts,
+  gutters, downpipes, louvres and a personnel door; the terminal landside gains fins and a spandrel band. Cobham's
+  hangar is 17 m so jets fit. ADR 0213.
+
 - **Runway edge lines and centreline no longer shimmer into dashes.** A 0.9 m line is under a pixel wide
   from about a kilometre out, so it broke up and crawled as the camera moved. The 05/23 and 12/30 edge and
   centre lines are now flat ribbons (`DistanceWidenedPaint`) whose width follows distance node by node to

@@ -43,7 +43,7 @@ namespace Airside.Simulation
             public float[] Offsets;
             public int Slot;
             public string TypeId;
-            public float Length, Span;
+            public float Length, Span, TailHeight;
             public StableId Stand;
             public float SideX, SideZ;
             public double TowSeconds => Math.Max(Out.Seconds, Back.Seconds);
@@ -96,12 +96,13 @@ namespace Airside.Simulation
                 {
                     if (building.Id != option.HangarId)
                         continue;
-                    TryDoor(building.Xz, option.Length, option.Span, out var door);
+                    TryDoor(building.Xz, building.HeightMetres, option.Length, option.Span, option.TailHeight, out var door);
                     found = MakePlan(building, door, AdelaideGround.StandPose(option.Stand), option.TypeId, option.Stand, slot);
                     if (found != null)
                     {
                         found.Length = option.Length;
                         found.Span = option.Span;
+                        found.TailHeight = option.TailHeight;
                     }
 
                     break;
@@ -190,6 +191,7 @@ namespace Airside.Simulation
             var pose = AdelaideGround.StandPose(stand);
             var length = (float)spec.LengthMetres;
             var span = (float)spec.WingspanMetres;
+            var tail = (float)spec.HeightMetres;
             var wants = spec.WingspanMetres > 30.0 ? "Cobham" : "Regional Express";
 
             var scored = new List<(float Score, AdelaideBuilding Building, Door Door)>();
@@ -197,7 +199,7 @@ namespace Airside.Simulation
             {
                 if (building.Kind != AdelaideBuildingKind.Hangar || building.Xz == null || building.Xz.Length < 6)
                     continue;
-                if (!TryDoor(building.Xz, length, span, out var door))
+                if (!TryDoor(building.Xz, building.HeightMetres, length, span, tail, out var door))
                     continue;
                 var dx = door.CentreX - pose.X;
                 var dz = door.CentreZ - pose.Z;
@@ -220,6 +222,7 @@ namespace Airside.Simulation
                     continue;
                 plan.Length = length;
                 plan.Span = span;
+                plan.TailHeight = tail;
                 plans.Add(plan);
             }
 
@@ -239,9 +242,14 @@ namespace Airside.Simulation
         /// tail toward the door) and its wing tips lie inside the outline with room to spare. Also lists the extra berths
         /// (side by side across the door) that fit.
         /// </summary>
-        private static bool TryDoor(float[] xz, float length, float span, out Door door)
+        private static bool TryDoor(float[] xz, float buildingHeight, float length, float span, float tailHeight, out Door door)
         {
             door = default;
+            // A hangar drawn open (ADR 0213) has one real doorway: use that side, and only if the aircraft goes through it
+            // (tail under the header, wings inside the opening) so nothing is seen driving through a wall.
+            var open = HangarFront.TryFor(xz, buildingHeight, out var frontage);
+            if (open && tailHeight + 0.4f > frontage.DoorHeight)
+                return false;
             float minX = float.MaxValue, minZ = float.MaxValue, maxX = float.MinValue, maxZ = float.MinValue;
             for (var i = 0; i < xz.Length; i += 2)
             {
@@ -259,10 +267,14 @@ namespace Airside.Simulation
             {
                 float dirX = side == 0 ? 1f : side == 1 ? -1f : 0f;
                 float dirZ = side == 2 ? 1f : side == 3 ? -1f : 0f;
+                if (open && (dirX != frontage.OutX || dirZ != frontage.OutZ))
+                    continue;
                 var halfDepth = dirX != 0f ? (maxX - minX) * 0.5f : (maxZ - minZ) * 0.5f;
                 if (halfDepth * 2f < length + 2f * ClearanceMetres)
                     continue;
                 if (!Fits(xz, cx, cz, dirX, dirZ, halfDepth, length, span, 0f))
+                    continue;
+                if (open && span + 2f > frontage.DoorWidth)
                     continue;
                 var frontX = cx + dirX * (halfDepth + ApronMetres);
                 var frontZ = cz + dirZ * (halfDepth + ApronMetres);
@@ -273,7 +285,8 @@ namespace Airside.Simulation
                 var offsets = new List<float> { 0f };
                 var pitch = span + 3f;
                 foreach (var candidate in new[] { pitch, -pitch, 2f * pitch, -2f * pitch })
-                    if (offsets.Count < MaxBerths && Fits(xz, cx, cz, dirX, dirZ, halfDepth, length, span, candidate))
+                    if (offsets.Count < MaxBerths && Fits(xz, cx, cz, dirX, dirZ, halfDepth, length, span, candidate)
+                        && (!open || Math.Abs(candidate) + span * 0.5f + 1f <= frontage.DoorWidth * 0.5f))
                         offsets.Add(candidate);
                 door = new Door { CentreX = cx, CentreZ = cz, DirX = dirX, DirZ = dirZ, HalfDepth = halfDepth, Offsets = offsets.ToArray() };
                 found = true;

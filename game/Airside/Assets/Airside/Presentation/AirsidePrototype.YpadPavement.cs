@@ -176,9 +176,13 @@ namespace Airside.Presentation
                 };
                 // The tower's shaft, cab floor, glass ring and roof all come from BuildingDetail
                 // (ADR 0124); every other building is its surveyed prism plus facade detail.
+                var set = BuildingDetail.For(building, sit);
                 if (building.Kind != AdelaideBuildingKind.ControlTower)
-                    AddPrism(shell, building.Xz, sit, building.HeightMetres);
-                AddDetail(detail, shell, BuildingDetail.For(building, sit));
+                    AddOpenPrism(shell, building.Xz, sit, building.HeightMetres, set.Openings);
+                // ADR 0213: a doorway through the wall needs a room behind it, or you would see through to the sky.
+                if (set.IsHollow)
+                    AddHollowInterior(detail, building.Xz, sit, building.HeightMetres, set);
+                AddDetail(detail, shell, set);
             }
 
             var metalAlbedo = PreferSurfaceBasecolor("tx_corrugated_metal");
@@ -201,6 +205,11 @@ namespace Airside.Presentation
             public readonly SurfaceMesh CabGlass = new();
             public readonly SurfaceMesh Canopy = new();
             public readonly SurfaceMesh HangarRoofs = new();
+            public readonly SurfaceMesh InteriorWalls = new();
+            public readonly SurfaceMesh InteriorFloor = new();
+            public readonly SurfaceMesh Equipment = new();
+            public readonly SurfaceMesh EquipmentDark = new();
+            public readonly SurfaceMesh EquipmentRed = new();
             public readonly List<Vector3> ObstructionLights = new();
         }
 
@@ -218,6 +227,9 @@ namespace Airside.Presentation
                 BuildingPart.Plant => meshes.Plant,
                 BuildingPart.CabGlass => meshes.CabGlass,
                 BuildingPart.Canopy => meshes.Canopy,
+                BuildingPart.Equipment => meshes.Equipment,
+                BuildingPart.EquipmentDark => meshes.EquipmentDark,
+                BuildingPart.EquipmentRed => meshes.EquipmentRed,
                 _ => shell
             };
 
@@ -253,6 +265,17 @@ namespace Airside.Presentation
                 useTextures: false);
             SpawnSurface(root, "YPAD hangar roof silhouettes", detail.HangarRoofs, new Color(0.56f, 0.58f, 0.58f),
                 metalAlbedo, castShadows: true);
+            // ADR 0213: the rooms behind the open doorways, and what is kept in them.
+            SpawnSurface(root, "YPAD building interior walls", detail.InteriorWalls, new Color(0.30f, 0.32f, 0.34f), null,
+                castShadows: false, useTextures: false);
+            SpawnSurface(root, "YPAD building interior floors", detail.InteriorFloor, new Color(0.17f, 0.18f, 0.19f), null,
+                castShadows: false, useTextures: false);
+            SpawnSurface(root, "YPAD stored equipment", detail.Equipment, new Color(0.93f, 0.60f, 0.12f), null, castShadows: true,
+                useTextures: false);
+            SpawnSurface(root, "YPAD stored equipment (dark)", detail.EquipmentDark, new Color(0.09f, 0.09f, 0.10f), null,
+                castShadows: true, useTextures: false);
+            SpawnSurface(root, "YPAD fire appliances and tool chests", detail.EquipmentRed, new Color(0.72f, 0.09f, 0.07f), null,
+                castShadows: true, useTextures: false);
             foreach (var at in detail.ObstructionLights)
             {
                 var lamp = CreateBlock("Tower obstruction light", at, new Vector3(0.45f, 0.4f, 0.45f), new Color(1f, 0.12f, 0.08f));
@@ -709,7 +732,15 @@ namespace Airside.Presentation
             return AirsideAdelaideGround.WorldHeight(sumX / n, sumZ / n);
         }
 
-        private static void AddPrism(SurfaceMesh mesh, float[] xz, float baseY, float height, bool cutUndercroftPortal = false)
+        private static void AddPrism(SurfaceMesh mesh, float[] xz, float baseY, float height, bool cutUndercroftPortal = false) =>
+            AddPrismCore(mesh, xz, baseY, height, cutUndercroftPortal, null);
+
+        /// <summary>A prism with doorways cut through its walls (ADR 0213). Kept apart from AddPrism: a test calls that by reflection.</summary>
+        private static void AddOpenPrism(SurfaceMesh mesh, float[] xz, float baseY, float height, IReadOnlyList<DetailOpening> openings) =>
+            AddPrismCore(mesh, xz, baseY, height, false, openings);
+
+        private static void AddPrismCore(SurfaceMesh mesh, float[] xz, float baseY, float height, bool cutUndercroftPortal,
+            IReadOnlyList<DetailOpening> openings)
         {
             var count = xz.Length / 2;
             if (count < 3)
@@ -752,8 +783,108 @@ namespace Airside.Presentation
                         height - AdelaideTerminalArchitecture.UndercroftPortalHeightMetres, outward);
                     AddPrismWall(mesh, openingEnd, b, height, outward);
                 }
+                else if (HasOpening(openings, i))
+                    AddOpenWall(mesh, a, b, height, 0f, height, outward, openings, i);
                 else
                     AddPrismWall(mesh, a, b, height, outward);
+            }
+        }
+
+        private static bool HasOpening(IReadOnlyList<DetailOpening> openings, int edge)
+        {
+            if (openings == null)
+                return false;
+            for (var i = 0; i < openings.Count; i++)
+                if (openings[i].EdgeIndex == edge)
+                    return true;
+            return false;
+        }
+
+        /// <summary>
+        /// A wall from a to b with its doorways cut out: full-height piles between them, the lintel over each, and a
+        /// sill under any raised one. <paramref name="from"/> and <paramref name="to"/> bound the wall vertically (above
+        /// a.y), so the inside face can stop at the floor and the ceiling.
+        /// </summary>
+        private static void AddOpenWall(SurfaceMesh mesh, Vector3 a, Vector3 b, float height, float from, float to,
+            Vector3 outward, IReadOnlyList<DetailOpening> openings, int edge)
+        {
+            var length = Vector3.Distance(a, b);
+            if (length < 0.001f)
+                return;
+            var cuts = new List<DetailOpening>();
+            for (var i = 0; i < openings.Count; i++)
+                if (openings[i].EdgeIndex == edge)
+                    cuts.Add(openings[i]);
+            cuts.Sort((x, y) => x.FromMetres.CompareTo(y.FromMetres));
+            var cursor = 0f;
+            Vector3 At(float d) => Vector3.Lerp(a, b, Mathf.Clamp01(d / length));
+            void Piece(float d0, float d1, float y0, float y1)
+            {
+                if (d1 - d0 < 0.001f || y1 - y0 < 0.001f)
+                    return;
+                AddPrismWall(mesh, At(d0) + Vector3.up * y0, At(d1) + Vector3.up * y0, y1 - y0, outward);
+            }
+
+            foreach (var cut in cuts)
+            {
+                var d0 = Mathf.Clamp(cut.FromMetres, cursor, length);
+                var d1 = Mathf.Clamp(cut.ToMetres, d0, length);
+                Piece(cursor, d0, from, to);
+                Piece(d0, d1, from, Mathf.Min(to, cut.BottomMetres));
+                Piece(d0, d1, Mathf.Max(from, cut.TopMetres), to);
+                cursor = d1;
+            }
+
+            Piece(cursor, length, from, to);
+        }
+
+        /// <summary>
+        /// The room behind an open doorway: the walls' inside faces, a concrete floor and a ceiling hung just under the
+        /// roof. Faces point inward (the outside faces are the shell), so the two never fight where they share a plane.
+        /// </summary>
+        private static void AddHollowInterior(BuildingDetailMeshes meshes, float[] xz, float baseY, float height,
+            BuildingDetailSet set)
+        {
+            var count = xz.Length / 2;
+            if (count < 3)
+                return;
+            var floor = set.InteriorFloorMetres;
+            var ceiling = height - HangarFront.CeilingDropMetres;
+            var signedArea = 0f;
+            for (var i = 0; i < count; i++)
+            {
+                var j = (i + 1) % count;
+                signedArea += xz[i * 2] * xz[j * 2 + 1] - xz[j * 2] * xz[i * 2 + 1];
+            }
+
+            var winding = signedArea >= 0f ? 1f : -1f;
+            for (var i = 0; i < count; i++)
+            {
+                var j = (i + 1) % count;
+                var a = new Vector3(xz[i * 2], baseY, xz[i * 2 + 1]);
+                var b = new Vector3(xz[j * 2], baseY, xz[j * 2 + 1]);
+                var edge = b - a;
+                var inward = -new Vector3(edge.z, 0f, -edge.x) * winding;
+                if (HasOpening(set.Openings, i))
+                    AddOpenWall(meshes.InteriorWalls, a, b, height, floor, ceiling, inward, set.Openings, i);
+                else
+                    AddPrismWall(meshes.InteriorWalls, a + Vector3.up * floor, b + Vector3.up * floor, ceiling - floor, inward);
+            }
+
+            var floorY = baseY + floor + 0.04f;
+            var ceilingY = baseY + ceiling;
+            var low = new int[count];
+            var high = new int[count];
+            for (var i = 0; i < count; i++)
+            {
+                low[i] = meshes.InteriorFloor.Add(new Vector3(xz[i * 2], floorY, xz[i * 2 + 1]));
+                high[i] = meshes.InteriorWalls.Add(new Vector3(xz[i * 2], ceilingY, xz[i * 2 + 1]));
+            }
+
+            foreach (var (a, b, c) in EarClip(xz))
+            {
+                meshes.InteriorFloor.Triangle(low[a], low[b], low[c], Vector3.up);
+                meshes.InteriorWalls.Triangle(high[a], high[b], high[c], Vector3.down);
             }
         }
 

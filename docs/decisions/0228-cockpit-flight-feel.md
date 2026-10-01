@@ -17,5 +17,10 @@ real type from the left seat. Presentation only; no simulation, save or path cha
 - **Live attitude indicator**: PFDs on all ten jets and the ATR/Dash show real pitch and bank
   (sky/ground/ladder texture, UV driven) instead of bank only. Telemetry adds vertical speed and
   uses wheel height (gear-pivot lift removed) so a pitched rotation still reads on the ground.
-- Not done: crosswind crab/decrab (no wind model), Saab live ADI, interactive flying.
+- **Crew callouts** (`CockpitCallouts`, text on the cockpit HUD): 80 knots, V1, rotate, positive
+  rate, gear up; 1,000 / 500 / 100 above / 50-40-30-20 (retard on jets) -10; spoilers and reverse
+  green on jet rollouts; 80 knots on the rollout. Fires once per takeoff or landing.
+- **Night and rain:** a dim warm panel glow after dusk, and windscreen wipers that sweep with
+  rain intensity (intermittent in light rain). **Saab 340** now has a live attitude display too.
+- Not done: crosswind crab/decrab (no wind model), interactive flying.
 - Native Unity review of ground roll, rotation, descent, flare and touchdown is still required.

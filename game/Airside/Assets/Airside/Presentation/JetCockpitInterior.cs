@@ -127,7 +127,7 @@ namespace Airside.Presentation
                 Beam("Front windscreen outer pillar", new Vector3(side * w * 0.84f, SillY, 1.30f), new Vector3(side * w * 0.73f, FrontTopY, 1.05f), 0.065f, lining);
                 if (Profile.Deck != JetFlightDeck.Boeing787)
                     Beam("Side quarterlight pillar", new Vector3(side * w, JetCockpitShellGeometry.SillY, 0.41f), new Vector3(side * w, JetCockpitShellGeometry.SideTopY, 0.41f), 0.045f, lining);
-                Beam("Parked windscreen wiper", new Vector3(side * 0.12f, SillY + 0.035f, 1.31f), new Vector3(side * w * 0.64f, SillY + 0.055f, 1.28f), 0.013f, _trim);
+                Wiper(new Vector3(side * 0.12f, SillY + 0.035f, 1.31f), new Vector3(side * w * 0.64f, SillY + 0.055f, 1.28f), 0.013f, _trim, side);
             }
             Beam("Windscreen centre post", new Vector3(0f, SillY, 1.30f), new Vector3(0f, FrontTopY, 1.05f), 0.047f, lining);
             Beam("Windscreen brow", new Vector3(-w * 0.73f, FrontTopY, 1.05f), new Vector3(w * 0.73f, FrontTopY, 1.05f), 0.075f, lining);

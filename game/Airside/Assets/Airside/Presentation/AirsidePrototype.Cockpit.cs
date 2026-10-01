@@ -15,6 +15,10 @@ namespace Airside.Presentation
         private double _cockpitPreviousTime;
         private float _cockpitGroundKnots;
         private readonly CockpitMotion _cockpitMotion = new();
+        private readonly CockpitCallouts _cockpitCallouts = new();
+        private string _cockpitCallText;
+        private float _cockpitCallUntil;
+        private GUIStyle _calloutStyle;
         private float _cockpitGearHeight, _cockpitVerticalSpeed;
         private static int StableHash(string text)
         {
@@ -74,6 +78,8 @@ namespace Airside.Presentation
             _cockpitGroundKnots = 0f;
             _cockpitNextReadout = 0;
             _cockpitMotion.Reset(StableHash(_cockpitAircraftId));
+            _cockpitCallouts.Reset();
+            _cockpitCallText = null;
             _cockpitGearHeight = Mathf.Max(0f, view.position.y - AirsideFlightPath.GroundY);
             _cockpitVerticalSpeed = 0f;
         }
@@ -157,6 +163,15 @@ namespace Airside.Presentation
             _cameraController.SetCockpitMotion(new Vector3(motion.Right, motion.Up, motion.Forward),
                 new Vector3(motion.PitchDownDegrees, motion.YawDegrees, motion.RollDegrees));
             _cockpitInterior.SetAttitude(pitchUp, bankLeft);
+            _cockpitInterior.SetEnvironment(PresentationDaylight, CurrentWeatherLook.Precipitation, Time.unscaledTime);
+            _cockpitCallouts.DeltaSeconds = (float)Math.Max(0.0, elapsed);
+            var call = _cockpitCallouts.Step(new CockpitCallouts.Sample
+            {
+                GroundKnots = _cockpitGroundKnots, RotateKnots = AircraftPerformance.For(aircraft.Type).RotateKnots,
+                HeightFeet = gearHeight * 3.28084f, VerticalFeetPerMinute = _cockpitVerticalSpeed * 196.85f,
+                Jet = JetCockpitProfile.TryFor(aircraft.Type.Id, out _),
+            });
+            if (call != null) { _cockpitCallText = call; _cockpitCallUntil = Time.unscaledTime + 2.2f; }
             if (_preciseTime < _cockpitNextReadout) return;
             _cockpitNextReadout = _preciseTime + 0.1;
             if (_cockpitInterior is JetCockpitInterior jet)
@@ -180,6 +195,18 @@ namespace Airside.Presentation
                 _cameraController.RecenterCockpit();
             if (GUI.Button(new Rect(strip.xMax - 124f, strip.y + 10f, 112f, 36f), "Exit (Esc)", button))
                 ExitCockpit(false);
+            if (!string.IsNullOrEmpty(_cockpitCallText) && Time.unscaledTime < _cockpitCallUntil)
+            {
+                _calloutStyle ??= new GUIStyle(GUI.skin.label)
+                { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
+                _calloutStyle.fontSize = Mathf.RoundToInt(Mathf.Clamp(layout.Viewport.y * 0.045f, 22f, 44f));
+                var area = new Rect(0f, layout.Viewport.y * 0.62f, layout.Viewport.x, 60f);
+                var fade = Mathf.Clamp01((_cockpitCallUntil - Time.unscaledTime) / 0.6f);
+                _calloutStyle.normal.textColor = new Color(0f, 0f, 0f, 0.7f * fade);
+                GUI.Label(new Rect(area.x + 2f, area.y + 2f, area.width, area.height), _cockpitCallText, _calloutStyle);
+                _calloutStyle.normal.textColor = new Color(0.92f, 0.96f, 0.9f, fade);
+                GUI.Label(area, _cockpitCallText, _calloutStyle);
+            }
             var placement = AirlineHudLayout.Create(layout, false);
             DrawToast(placement.Toast);
         }

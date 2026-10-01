@@ -16,6 +16,13 @@ namespace Airside.Presentation
             return rig;
         }
 
+        private readonly System.Collections.Generic.List<AttitudeDisc> _attitude = new();
+
+        public override void SetAttitude(float pitchUpDegrees, float bankLeftDegrees)
+        {
+            foreach (var disc in _attitude) disc.Set(pitchUpDegrees, bankLeftDegrees);
+        }
+
         private void Dial(string name, float x, float y, float radius, float needleDegrees = 30f)
         {
             var z = 7.985f;
@@ -29,8 +36,6 @@ namespace Airside.Presentation
 
         private void FlightDisplays(float x)
         {
-            var sky = Surface("EFIS sky", new Color(0.18f, 0.36f, 0.46f), false);
-            var earth = Surface("EFIS earth", new Color(0.39f, 0.27f, 0.15f), false);
             foreach (var y in new[] { 1.91f, 1.665f })
             {
                 Box("CRT bezel", new Vector3(x, y, 8.0f), new Vector3(0.23f, 0.215f, 0.055f), _black);
@@ -38,11 +43,7 @@ namespace Airside.Presentation
                 for (var side = -1; side <= 1; side += 2)
                     Disc("CRT adjustment knob", new Vector3(x + side * 0.094f, y - 0.087f, 7.96f), 0.012f, _metal);
             }
-            Box("EFIS blue sky", new Vector3(x, 1.945f, 7.958f), new Vector3(0.145f, 0.07f, 0.003f), sky);
-            Box("EFIS brown ground", new Vector3(x, 1.875f, 7.957f), new Vector3(0.145f, 0.07f, 0.003f), earth);
-            Box("EFIS horizon", new Vector3(x, 1.91f, 7.953f), new Vector3(0.145f, 0.002f, 0.002f), _white);
-            for (var row = -2; row <= 2; row++)
-                Box("Pitch ladder", new Vector3(x, 1.91f + row * 0.02f, 7.95f), new Vector3(row == 0 ? 0.09f : 0.035f, 0.0018f, 0.002f), _white);
+            _attitude.Add(MakeAttitudeDisc("Live EFIS attitude", new Vector3(x, 1.91f, 7.957f), 0.068f));
             Box("Flight director", new Vector3(x, 1.91f, 7.947f), new Vector3(0.07f, 0.004f, 0.002f), _green);
             Disc("Navigation compass", new Vector3(x, 1.665f, 7.955f), 0.072f, _metal);
             Disc("Navigation background", new Vector3(x, 1.665f, 7.953f), 0.066f, _compassMarks);

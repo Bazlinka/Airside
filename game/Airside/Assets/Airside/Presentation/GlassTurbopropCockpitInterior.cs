@@ -144,8 +144,8 @@ namespace Airside.Presentation
                     P(side * _width, _roof, rear), P(side * _width, sill, rear) }, _lining);
                 Beam("Window latch", P(side * (_width - 0.025f), sill + 0.045f, -0.06f),
                     P(side * (_width - 0.025f), sill + 0.045f, 0.09f), 0.02f, _metal);
-                Beam("Parked windscreen wiper", P(side * 0.09f, sill + 0.16f, _front - 0.03f),
-                    P(side * 0.52f, sill + 0.10f, _front - 0.13f), 0.011f, _trim);
+                Wiper(P(side * 0.09f, sill + 0.16f - PanelDrop, _front - 0.03f),
+                    P(side * 0.52f, sill + 0.10f - PanelDrop, _front - 0.13f), 0.011f, _trim, side);
             }
         }
 

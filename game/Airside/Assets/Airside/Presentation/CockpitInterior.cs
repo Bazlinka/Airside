@@ -85,10 +85,56 @@ namespace Airside.Presentation
             return part.transform;
         }
 
-        protected void Beam(string name, Vector3 a, Vector3 b, float width, Material material)
+        protected Transform Beam(string name, Vector3 a, Vector3 b, float width, Material material)
         {
             var beam = Box(name, (a + b) * 0.5f, new Vector3(width, width, Vector3.Distance(a, b)), material);
             beam.localRotation = Quaternion.LookRotation(b - a);
+            return beam;
+        }
+
+        private readonly List<(Transform part, Vector3 pivot, Vector3 mid, Quaternion rest, float side)> _wipers = new();
+        private Light _panelLight;
+
+        /// <summary>A windscreen wiper that is parked until it rains, then sweeps up about its inner pivot.</summary>
+        protected void Wiper(Vector3 inner, Vector3 outer, float width, Material material, float side)
+        {
+            var part = Beam("Windscreen wiper", inner, outer, width, material);
+            _wipers.Add((part, inner, (inner + outer) * 0.5f, part.localRotation, side));
+        }
+
+        /// <summary>Night panel glow and rain wipers. Presentation only; called every frame by the runtime.</summary>
+        public void SetEnvironment(float daylight, float precipitation, float seconds)
+        {
+            var night = 1f - Mathf.SmoothStep(0.15f, 0.55f, daylight);
+            if (night > 0.02f && _panelLight == null && Seat != null)
+            {
+                var host = new GameObject("Panel glow");
+                host.transform.SetParent(transform, false);
+                host.transform.localPosition = Seat.localPosition + new Vector3(0.25f, 0.35f, 0.45f);
+                _panelLight = host.AddComponent<Light>();
+                _panelLight.type = LightType.Point; _panelLight.range = 3.4f;
+                _panelLight.color = new Color(1f, 0.80f, 0.58f); _panelLight.shadows = LightShadows.None;
+            }
+            if (_panelLight != null)
+            {
+                _panelLight.intensity = 1.1f * night;
+                _panelLight.enabled = night > 0.02f;
+            }
+            var sweep = 0f;
+            if (precipitation > 0.04f)
+            {
+                var period = Mathf.Lerp(3.2f, 1.1f, Mathf.Clamp01(precipitation));
+                var phase = seconds / period % 1f;
+                var active = Mathf.Lerp(0.45f, 1f, Mathf.Clamp01(precipitation));   // light rain wipes intermittently
+                sweep = phase < active ? Mathf.Sin(Mathf.PI * phase / active) : 0f;
+            }
+            foreach (var wiper in _wipers)
+            {
+                if (wiper.part == null) continue;
+                var turn = Quaternion.AngleAxis(wiper.side * 72f * sweep, Vector3.forward);
+                wiper.part.localRotation = turn * wiper.rest;
+                wiper.part.localPosition = wiper.pivot + turn * (wiper.mid - wiper.pivot);
+            }
         }
 
         protected readonly List<Mesh> _meshes = new();

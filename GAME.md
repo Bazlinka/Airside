@@ -1,5 +1,51 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Codex — SF34 cockpit spectator candidate (`feature/saab-cockpit-mode`, ADR 0214).**
+  Isolated checkout: `/private/tmp/airside-cockpit`; original dirty checkout untouched.
+  Select a local aircraft → Cockpit. SF34 availability follows first engine spool,
+  local visibility and shutdown; other types are disabled. Left-seat 3D interior,
+  bounded head look, zoom, recenter, Esc to external follow, R to overview, stable
+  registration resolution, restored shell/glazing state and interior listener/mix.
+  Live panel values: horizontal ground speed, height above runway datum, heading.
+  Plan/task packet: `docs/plans/cockpit-mode.md`. No simulation or save changes.
+  The temporary orphan-doorway-call removal is superseded: current main implements
+  `AttachDoorways`, so its runtime-kit call is restored for the integration.
+  **Checks:** baseline headless 1194/1194; changed headless 1198/1198 and final focused
+  eligibility/card tests 5/5; Unity EditMode 1585/1587, zero failures, two existing
+  inconclusives. Native cockpit renders exposed/fixed a roof gap and text sizing.
+  Mac player build passed from clean `3e377fe7`; focused camera tests 2/2.
+  Packaged startup screenshots/log are committed under `docs/testing/cockpit-mode-2026-10-01/`.
+  Both captures show VH-ZRC at stand, engines running; they do not prove taxi or flight.
+  Review recorded a 196-second frame stall of unknown cause; performance is not accepted.
+  PR #503 approved for merge. **NEXT:** complete local movement/journey and investigate the stall,
+  then entry/exit, day/night/weather, manual audio and comparative performance acceptance.
+  **Revision 2:** rebuilt the interior from inspected C&L Saab 340B panel/overhead
+  photos at Bailey's request: raked windscreens, grey panel, stacked CRT pairs,
+  round central gauges, squared yokes, radio/lever pedestal and overhead.
+  Reference notes: `docs/art/reference/saab340-cockpit/README.md`.
+  V2 checks: headless 1199 passed; native 1585 passed/0 failed/2 inconclusive;
+  asset audit passed; seven native angles inspected and committed. First V2 Mac
+  build passed at `047a296f`; player review exposed disappearing fine tick marks.
+  Thicker separate geometry did not fix the player discrepancy. Dial markings now
+  use two original code-drawn textures on the dial faces; full native suite passed
+  again. Final clean Mac build passed at `4c153d46`; actual airport startup image
+  `v2-game-startup.png` confirms the markings are visible. No managed exception.
+  Visual rebuild complete; broader cockpit journey/audio/performance gates remain
+  open as above. See `docs/testing/cockpit-mode-2026-10-01/revision-2.md`.
+  Bailey authorised merging this simplified SF34 candidate on 1 October. The
+  remaining acceptance rows stay open; do not claim a completed fleet rollout.
+  Integration retains current main's aircraft articulation, doorways and hangars.
+  ADR renumbered 0214 because main assigned 0207 to golf bunkers.
+  Integration checks: headless 1275 passed; native Unity 1672 passed, zero failures,
+  two existing inconclusives (1674 total); asset audit passed. Shared compiler
+  stalled; removing `/shared` only in this worktree's ignored Bee cache unblocked
+  the completed native run. No compiler/install configuration changes shipped.
+  Final integration also includes main `245e7b53` selection-card redesign. Its
+  Follow/Following toggle, close, telemetry and journey remain; Cockpit occupies
+  a separate bottom row. Native Unity: 1675 passed/0 failed/2 inconclusive (1677).
+  Final headless: 1278 passed/0 failed. Final clean Mac build passed at
+  `a99a0390`, including the selection-card integration.
+
 - **2026-10-01 Claude — My Flights tiles, hollow aircraft doorways, A320 door fit (ADR 0206).**
   Each My Flights tile now shows flight number, airframe, route, registration, state, the time to watch
   (departs / ETA / check ends) and a progress bar. Every passenger and cargo door of all 13 flying types

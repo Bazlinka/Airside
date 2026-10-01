@@ -336,6 +336,20 @@ namespace Airside.Presentation
             var dueAt = _soakStartedAt >= 0f
                 ? _soakStartedAt + entry.DelaySeconds
                 : Time.unscaledTime + entry.DelaySeconds;
+            if (CockpitReview)
+            {
+                if (_cockpitReviewEnteredAt < 0f)
+                {
+                    if (_soakStartedAt >= 0f && Time.unscaledTime - _soakStartedAt > 600f)
+                    {
+                        Debug.LogError("[Airside cockpit] review aborted: no eligible departure after 600s (no PNG)");
+                        Application.Quit();
+                    }
+                    return;
+                }
+                // Cockpit shot delays are relative to real eligible entry, not launch.
+                dueAt = _cockpitReviewEnteredAt + entry.DelaySeconds;
+            }
             if (Time.unscaledTime < dueAt)
                 return;
 
@@ -345,7 +359,7 @@ namespace Airside.Presentation
             // overview PNG that invents tyre / cargo / tow / tape evidence.
             // Keep both abort phrases as contiguous string literals for Mac player preflight
             // (`strings` on Airside.app).
-            if (!string.IsNullOrEmpty(_reviewAircraftId)
+            if (!CockpitReview && !string.IsNullOrEmpty(_reviewAircraftId)
                 && (_cameraController == null || !_cameraController.IsFollowing))
             {
                 if (!_reviewFollowStarted)
@@ -358,6 +372,13 @@ namespace Airside.Presentation
                     Debug.LogError(
                         $"{SoakLogTag} review shot aborted — {_reviewAircraftId} follow lost before delay {entry.DelaySeconds:0}s (no PNG)");
                 }
+                Application.Quit();
+                return;
+            }
+
+            if (CockpitReview && (!InCockpit || _cameraController == null || !_cameraController.IsCockpit))
+            {
+                Debug.LogError("[Airside cockpit] review aborted: no eligible SF34 cockpit (no PNG)");
                 Application.Quit();
                 return;
             }
@@ -386,7 +407,7 @@ namespace Airside.Presentation
             // Fail closed: overview stills that name CLI pitch/yaw/distance must actually
             // reach that pose. A nose-down default overview PNG must not look like success
             // for night-sky cruise-corridor captures (ADR 0195 / P0 remaining).
-            if (_cameraController != null
+            if (!CockpitReview && _cameraController != null
                 && !_cameraController.IsFollowing
                 && ReviewOverviewFraming.TryReadExpected(Environment.GetCommandLineArgs(), out var expected))
             {

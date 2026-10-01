@@ -55,6 +55,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BuildingDetail.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CareerTrackWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CoastGrid.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitAvailability.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ContractsWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ControlsHelp.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/DaylightPresentation.cs" />
@@ -171,6 +172,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CircuitProfileTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CircuitTrafficTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CoastGridTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CockpitAvailabilityTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CollisionPass100Tests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ContractFeasibilityTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ContractsWorkspaceTests.cs" />

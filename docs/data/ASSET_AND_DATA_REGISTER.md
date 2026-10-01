@@ -178,3 +178,28 @@ under `Assets/Airside/Art/Shaders` and `Assets/Airside/Presentation`; each has a
   Generation cost: $0; no image model/prompt or external service used.
 - Fallback: parent git revision retains every previous model and thumbnail;
   runtime primitive fallback and legacy custom colours remain supported.
+
+## SF34 cockpit spectator interior candidate — 2026-10-01
+
+Original Airside procedural 3D geometry; editable source: `SaabCockpitInterior.cs`
+in Presentation. No external model, image, texture or new sound recording.
+Source dimensions use the existing SF34 kit coordinates; seat/windows/panel are
+representative and require visual acceptance, not surveyed aircraft geometry.
+Cost: zero asset acquisition. Attribution: Airside project. Licence: project-owned
+original code/geometry; existing font, shaders and aircraft audio retain their
+registered licences. Prompt/source evidence: approved cockpit spectator plan in
+`docs/plans/cockpit-mode.md`, ADR 0207. Fallback: external follow; unsupported
+aircraft types cannot enter. Status: candidate, not fleet-wide production.
+
+### 2026-10-01 SF34 cockpit revision 2
+
+Original procedural geometry, vector instrument needles and two code-drawn
+128px dial-marking textures in `SaabCockpitInterior.cs`. The artwork is generated
+from geometric tick positions at runtime; no photographic pixels are used.
+Authored by Codex for Airside; no external runtime artwork, fonts or audio added.
+Visual layout references: C&L Aerospace Saab 340B-447 and 340B-331 specification
+photographs, inspected locally on page 3. URLs, limitations and source handling:
+`docs/art/reference/saab340-cockpit/README.md`. Reference PDFs remain ignored
+research scratch; photos are not redistributed or used as textures. Cost: none.
+Existing built-in Unity font and shaders retained. Fallback: disabled cockpit
+action for unsupported aircraft; normal external view remains available.

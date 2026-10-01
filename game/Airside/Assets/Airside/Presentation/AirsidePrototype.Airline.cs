@@ -1021,6 +1021,7 @@ namespace Airside.Presentation
             var clicked = _hudPainter.Draw(_selectionDrawList);
             if (clicked == null)
                 return;
+            if (clicked == "camera-cockpit") { EnterCockpit(aircraft); return; }
             // Close and Follow belong to every card, the player's or an AI's.
             if (clicked == HudAction.CardClose)
             {
@@ -1133,6 +1134,9 @@ namespace Airside.Presentation
             card.PhaseTone = severity == StatusSeverity.Warning ? HudTone.Negative
                 : severity == StatusSeverity.Attention ? HudTone.Caution : HudTone.Accent;
             card.IsPlayer = aircraft.Airline.IsPlayer;
+            card.ShowCameraActions = true;
+            card.CockpitHint = CockpitReason(aircraft);
+            card.CanCockpit = card.CockpitHint.Length == 0;
             card.AwaitingStand = aircraft.State == FleetState.AwaitingStand;
             var action = OperationsSummary.PrimaryAction(aircraft, _clock.Now);
             card.PrimaryLabel = OperationsSummary.ActionLabel(action);
@@ -1306,7 +1310,10 @@ namespace Airside.Presentation
             if (_activeWorkspace != HudWorkspace.None || _devToolsOpen)
                 return false;
             FillSelectionCard(aircraft);
-            var height = Mathf.Min(SelectionCardPainter.HeightFor(_selectionCard), placement.SelectedCard.height);
+            // Camera actions add a separate 38px row. Preserve the existing stand/prep
+            // area rather than stealing its height and overlapping its buttons.
+            var cameraHeight = _selectionCard.ShowCameraActions ? 38f : 0f;
+            var height = Mathf.Min(SelectionCardPainter.HeightFor(_selectionCard), placement.SelectedCard.height + cameraHeight);
             var bottom = placement.SelectedCard.yMax;
             rect = new Rect(placement.SelectedCard.x, bottom - height,
                 placement.SelectedCard.width, height);

@@ -63,6 +63,9 @@ namespace Airside.Presentation
         public bool CanFollow;
         /// <summary>The camera is following it now.</summary>
         public bool Following;
+        public bool ShowCameraActions;
+        public bool CanCockpit;
+        public string CockpitHint = string.Empty;
 
         /// <summary>Live readout columns (empty when the aircraft is not drawn on the field).</summary>
         public string Speed = string.Empty;
@@ -172,6 +175,7 @@ namespace Airside.Presentation
                 l.Bottom = l.BodyY + 18f + ((System.Math.Max(1, data.Stands.Count) + 1) / 2) * StandRowHeight + 14f;
             else
                 l.Bottom = l.BodyY + 54f;
+            if (data.ShowCameraActions) l.Bottom += 38f;
             return l;
         }
 
@@ -184,6 +188,13 @@ namespace Airside.Presentation
                 return;
             var layout = Measure(data);
             into.Surface(box, 0.9f);
+            if (data.ShowCameraActions)
+            {
+                into.Button(new HudBox(box.X + 20f, box.Bottom - 34f, box.Width - 40f, 26f),
+                    data.CanCockpit ? "COCKPIT" : data.CockpitHint.ToUpperInvariant(), "camera-cockpit",
+                    HudButtonStyle.Secondary, data.CanCockpit);
+                box = new HudBox(box.X, box.Y, box.Width, box.Height - 38f);
+            }
             var x = box.X + 20f;
             var inner = box.Width - 40f;
             into.Fill(new HudBox(box.X + 8f, box.Y + 16f, 4f, 30f), HudTone.Default, 1f, data.LiveryHex);

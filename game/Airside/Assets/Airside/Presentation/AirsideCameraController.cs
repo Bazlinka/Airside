@@ -9,7 +9,7 @@ namespace Airside.Presentation
     /// Overview orbit + follow camera. Decision 0025 first-playable: phase-aware
     /// follow framing so taxi, approach, landing and takeoff each read differently.
     /// </summary>
-    public sealed class AirsideCameraController : MonoBehaviour
+    public sealed partial class AirsideCameraController : MonoBehaviour
     {
         // The release circuit is authored at real YPAD metres. The explicit full-airport
         // QA route retains the older architectural-miniature scene, so it needs its own
@@ -271,6 +271,11 @@ namespace Airside.Presentation
 
         private void LateUpdate()
         {
+            if (IsCockpit)
+            {
+                UpdateCockpitCamera();
+                return;
+            }
             if (IsPlayingIntro)
             {
                 // Capped step: the first frames after launch take seconds while the world
@@ -941,6 +946,7 @@ namespace Airside.Presentation
         /// </summary>
         public void ReleaseFollow()
         {
+            EndCockpit();
             _following = false;
             _easingOverview = false;
             ResetFollowFilters(glideIn: false);
@@ -953,6 +959,7 @@ namespace Airside.Presentation
         /// </summary>
         public void ReturnToOverview()
         {
+            EndCockpit();
             _following = false;
             _easingOverview = true;
         }
@@ -960,6 +967,7 @@ namespace Airside.Presentation
         /// <summary>Presentation helper for first-session: frame the lead commercial.</summary>
         public void StartFollowFirst()
         {
+            EndCockpit();
             // Target arrays can hold null slots (flights past the visible limit) or views
             // hidden while away; following one of those framed nothing.
             for (var i = 0; i < _followTargets.Length; i++)
@@ -985,6 +993,7 @@ namespace Airside.Presentation
             if (index < 0)
                 return false;
 
+            EndCockpit();
             _following = true;
             _followIndex = index;
             _followTarget = target;

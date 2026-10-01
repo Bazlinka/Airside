@@ -29,6 +29,12 @@ namespace Airside.Presentation
         {
             if (_audioListener == null || _mainCamera == null)
                 return;
+            if (InCockpit && _cameraController != null && _cameraController.IsCockpit)
+            {
+                _audioListener.SetPositionAndRotation(_cameraController.CockpitPosition, _cameraController.CockpitRotation);
+                _aircraftZoomGain = 0.32f;
+                return;
+            }
             var cameraTransform = _mainCamera.transform;
             var distance = AirsideCameraController.CurrentDistance;
             var focus = _cameraController != null ? _cameraController.FocusPoint : cameraTransform.position;
@@ -66,6 +72,7 @@ namespace Airside.Presentation
                 _engineAudio[id] = emitter;
             }
             emitter.Configure(type, LoadEngineClip(type), CreateTouchdownClip());
+            emitter.InteriorListening = InCockpit;
             var power = EnginePower(view);
             var prop = EngineVoice.ClassOf(type) == EngineClass.Turboprop;
             var rotation = prop

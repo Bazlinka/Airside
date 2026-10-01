@@ -1,5 +1,22 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Codex — all-jet cockpit candidate (`feature/all-jet-cockpits`, ADR 0215).**
+  Isolated checkout: `/private/tmp/airside-jet-cockpits`; unrelated primary-checkout
+  audio work retained. All ten jets have explicit fitted left-seat decks with
+  family-specific displays, yokes/sidesticks, windows, guidance rail, overhead and
+  pedestal. Lower/front shell, floor, roof and rear bulkhead close non-window gaps.
+  SF34 uses its existing geometry through a shared interior lifecycle. Cockpit
+  remains spectator mode; first spool/local visibility/shutdown rules unchanged.
+  Plan and task packet: `docs/plans/jet-cockpits.md`. Validation and open acceptance:
+  `docs/testing/jet-cockpits-2026-10-01/README.md`. **NEXT:** review native all-type
+  renders and packaged journeys/entry/exit/weather/night/audio/performance before
+  merging; do not call type coverage completed visual acceptance.
+  **Checks:** focused cockpit 16/16; full headless 1,288 passed/1 inherited audio
+  failure. Presentation/Editor/EditMode test sources compile against cached Unity
+  references; native Unity tests/renders/build blocked by LicensingClient IPC.
+  No rendered jet visual acceptance yet. All changes committed/pushed on this branch.
+
+
 - **2026-10-01 Codex — Saab cockpit opaque shell fix.**
   The revision-2 startup image exposed apron through gaps beside/below the panel.
   Hiding the exterior fuselage requires a complete interior shell. Continuous

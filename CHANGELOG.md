@@ -1,5 +1,10 @@
 ## Unreleased
 
+- All ten catalogue jets gain fitted cockpit spectator interiors with family-specific
+  controls, display arrangements, windows, overheads and pedestals; shared shell
+  restoration preserves the existing SF34 cockpit. Live local telemetry and engine
+  spool labels; autonomous flight and saves unchanged. Unmerged candidate, ADR 0215.
+
 - Close the Saab cockpit shell beneath the windows, including the gaps beside the
   panel and under the footwell, so apron/terrain cannot show through the body.
 - **Weather no longer drops out while you drag the camera.** The ground-fog/mist layer was placed in

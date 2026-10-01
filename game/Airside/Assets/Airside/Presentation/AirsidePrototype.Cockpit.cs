@@ -9,7 +9,7 @@ namespace Airside.Presentation
     {
         internal static Mesh CockpitBoxMesh(Vector3 size) => BevelledCubeMesh(size);
         private string _cockpitAircraftId;
-        private SaabCockpitInterior _cockpitInterior;
+        private CockpitInterior _cockpitInterior;
         private Transform _cockpitView;
         private Vector3 _cockpitPreviousPosition;
         private double _cockpitPreviousTime;
@@ -52,7 +52,10 @@ namespace Airside.Presentation
                 Destroy(_cockpitInterior.gameObject);
             }
             _cockpitView = view;
-            _cockpitInterior = SaabCockpitInterior.Build(view);
+            var type = _fleetAircraftById[_cockpitAircraftId].Type;
+            _cockpitInterior = type.Id == AircraftType.Saab340.Id
+                ? SaabCockpitInterior.Build(view)
+                : JetCockpitInterior.Build(view, type);
             _cockpitInterior.Enter();
             _cockpitPreviousPosition = view.position;
             _cockpitPreviousTime = _preciseTime;
@@ -113,6 +116,8 @@ namespace Airside.Presentation
             if (_preciseTime < _cockpitNextReadout) return;
             _cockpitNextReadout = _preciseTime + 0.1;
             var height = Mathf.Max(0f, view.position.y - AirsideFlightPath.GroundY) * 3.28084f;
+            if (_cockpitInterior is JetCockpitInterior jet)
+                jet.SetFlightState(view, EngineStartSequence.For(aircraft, _preciseTime), AircraftStatus.TagPhase(aircraft, _clock.Now));
             _cockpitInterior.SetReadout($"GS {_cockpitGroundKnots:0} kt\nHEIGHT {height:0} ft\nHDG {view.eulerAngles.y:000}°");
         }
 
@@ -134,8 +139,15 @@ namespace Airside.Presentation
             DrawToast(placement.Toast);
         }
 
-        // Reproducible packaged review: only a real eligible SF34, never force-start engines.
+        // Reproducible packaged review: only a real eligible aircraft, never force-start engines.
         private static readonly bool CockpitReview = Array.IndexOf(Environment.GetCommandLineArgs(), "-airsideReviewCockpit") >= 0;
+        private static readonly string CockpitReviewType = ReadCockpitReviewType();
+        private static string ReadCockpitReviewType()
+        {
+            var args = Environment.GetCommandLineArgs();
+            var index = Array.IndexOf(args, "-airsideReviewCockpitType");
+            return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
+        }
         private bool _cockpitReviewStarted;
         private float _cockpitReviewEnteredAt = -1f;
         private void TryStartCockpitReview()
@@ -146,6 +158,7 @@ namespace Airside.Presentation
             {
                 // Prefer an actual departure so the first still covers engine startup,
                 // rather than jumping into an inbound already at full power.
+                if (CockpitReviewType != null && aircraft.Type.Id != CockpitReviewType) continue;
                 if (aircraft.State is not (FleetState.AtStand or FleetState.TaxiOut)
                     || !CockpitAvailability.Supported(aircraft.Type) || CockpitReason(aircraft).Length != 0) continue;
                 if (best == null || (aircraft.Airline.IsPlayer && !best.Airline.IsPlayer)

@@ -203,3 +203,15 @@ photographs, inspected locally on page 3. URLs, limitations and source handling:
 research scratch; photos are not redistributed or used as textures. Cost: none.
 Existing built-in Unity font and shaders retained. Fallback: disabled cockpit
 action for unsupported aircraft; normal external view remains available.
+
+
+### Jet cockpit procedural candidates — 1 October 2026
+
+Ten original code-authored spectator decks: B738, B38M, A320, A21N, E190, A223,
+A359, A339, B789, B78X. Source/editable generator: `JetCockpitInterior.cs` and
+`JetCockpitProfile.cs`; shared builder/lifecycle `CockpitInterior.cs`. No external
+models, images, textures or audio imported; project-owned procedural geometry and
+runtime text, zero purchase cost, no third-party runtime attribution. Manufacturer
+reference links and evidence limits: `docs/plans/jet-cockpits.md`. Fallback: unsupported
+types retain external view with Cockpit disabled; no generic/Saab jet fallback.
+Status: branch candidate; visual and packaged acceptance tracked separately.

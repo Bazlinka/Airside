@@ -2,8 +2,8 @@
 
 - **2026-10-01 Cursor — Phase 1 CBD skyline boxes (ADR 0208).**
   42 sourced-height OSM towers near Victoria Square (~7 km ENE) as one grey mesh
-  on DEM relief. Generator `--check`; `AdelaideCbdSkylineTests`. Hills haze /
-  seasonal tint still open Phase 1.
+  on DEM relief. Generator `--check`; `AdelaideCbdSkylineTests`.
+  **Checks:** `scripts/test-domain.sh` **1184/1184**.
   **NEXT:** seasonal dry-grass tint or Hills haze.
 
 - **2026-10-01 Cursor — Phase 1 Golf + bunker discs (ADR 0206/0207); P0 closed / plan approved.**

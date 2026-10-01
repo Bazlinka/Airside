@@ -440,11 +440,13 @@ namespace Airside.Presentation
             if (_airfieldRoot != null)
                 markings.SetParent(_airfieldRoot, false);
 
-            CreateCombinedStripPaint(markings, "Runway 05/23 edge left",
+            // The long thin lines widen with distance so they stay continuous instead of shimmering (no UnityEngine
+            // types in the marking maths, so the same marks feed both).
+            CreateWidenedStripPaint(markings, "Runway 05/23 edge left",
                 new[] { AirsideRunwayMarkings.EdgeLeft }, paint);
-            CreateCombinedStripPaint(markings, "Runway 05/23 edge right",
+            CreateWidenedStripPaint(markings, "Runway 05/23 edge right",
                 new[] { AirsideRunwayMarkings.EdgeRight }, paint);
-            CreateCombinedStripPaint(markings, "Runway 05/23 centre",
+            CreateWidenedStripPaint(markings, "Runway 05/23 centre",
                 AirsideRunwayMarkings.CentrelineDashes(), paint);
             CreateCombinedStripPaint(markings, "Runway 05/23 threshold",
                 AirsideRunwayMarkings.ThresholdStripes(), paint);
@@ -510,15 +512,15 @@ namespace Airside.Presentation
             // Strip marks are local to the rotated root so paint follows 12/30.
             var y = AirsideRunwayMarkings.PaintLiftMetres
                     + AirsideBareField.RunwayHeightMetres * 0.5f;
-            SpawnLocalStripPaint(markings, "Runway 12/30 edge left",
+            SpawnLocalWidenedStripPaint(markings, "Runway 12/30 edge left",
                 AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(new[] { AirsideStripMarkings.EdgeLeft(
                     AirsideAdelaidePavement.CrossLengthMetres,
                     AirsideAdelaidePavement.CrossWidthMetres) }), paint, y);
-            SpawnLocalStripPaint(markings, "Runway 12/30 edge right",
+            SpawnLocalWidenedStripPaint(markings, "Runway 12/30 edge right",
                 AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(new[] { AirsideStripMarkings.EdgeRight(
                     AirsideAdelaidePavement.CrossLengthMetres,
                     AirsideAdelaidePavement.CrossWidthMetres) }), paint, y);
-            SpawnLocalStripPaint(markings, "Runway 12/30 centre",
+            SpawnLocalWidenedStripPaint(markings, "Runway 12/30 centre",
                 AirsideAdelaidePavement.ClipCrossRunwayPaintToMain(
                     AirsideStripMarkings.CentrelineDashes(AirsideAdelaidePavement.CrossLengthMetres)),
                 paint, y);
@@ -610,6 +612,31 @@ namespace Airside.Presentation
                     material.SetTextureScale("_DetailNormalMap", new Vector2(3.7f, 1.9f));
                 }
             }
+        }
+
+        private static void CreateWidenedStripPaint(
+            Transform parent, string name, AirsideRunwayMarkings.RunwayMark[] marks, Color color)
+        {
+            if (marks == null || marks.Length == 0)
+                return;
+            var list = new List<(float, float, float, float)>(marks.Length);
+            foreach (var m in marks)
+                list.Add((m.CenterX, m.CenterZ, m.LengthX, m.WidthZ));
+            // Top face of the old paint cube, so the flat ribbon sits where the paint always did.
+            var top = AirsideRunwayMarkings.PaintCenterY + AirsideRunwayMarkings.PaintHeight * 0.5f;
+            DistanceWidenedPaint.Create(parent, name, list, top, CreateSharedSurfaceMaterial(color));
+        }
+
+        private static void SpawnLocalWidenedStripPaint(
+            Transform parent, string name, AirsideStripMarkings.Mark[] marks, Color color, float localY)
+        {
+            if (marks == null || marks.Length == 0)
+                return;
+            var list = new List<(float, float, float, float)>(marks.Length);
+            foreach (var m in marks)
+                list.Add((m.CenterX, m.CenterZ, m.LengthX, m.WidthZ));
+            DistanceWidenedPaint.Create(parent, name, list, localY + AirsideRunwayMarkings.PaintHeight * 0.5f,
+                CreateSharedSurfaceMaterial(color));
         }
 
         /// <summary>

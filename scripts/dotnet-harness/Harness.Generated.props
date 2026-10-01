@@ -32,6 +32,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideCameraFeel.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideCombinedSurfaces.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideFocusMode.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsidePaintWidening.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsidePalette.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideRunwayMarkings.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirsideStripMarkings.cs" />
@@ -127,6 +128,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirlineSoakTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirportCurfewTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirportSimulationTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirsidePaintWideningTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirsideStripMarkingsTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ApproachHoldTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ApronSlabJointsTests.cs" />

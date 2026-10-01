@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Runway edge lines and centreline no longer shimmer into dashes.** A 0.9 m line is under a pixel wide
+  from about a kilometre out, so it broke up and crawled as the camera moved. The 05/23 and 12/30 edge and
+  centre lines are now flat ribbons (`DistanceWidenedPaint`) whose width follows distance node by node to
+  about 1.6 px (`AirsidePaintWidening`, capped at 9x), so they stay continuous at every zoom and are exact
+  when near. Presentation only. Checked in a Mac build at 250 m, 1 km and 3 km; ADR 0206.
+
 - **Smoother propeller spool-up and a clearly visible blur at speed.** Shaft speed is now
   jerk-limited (the acceleration itself eases in and out) so starts and run-downs no longer step;
   the blur disc is ~2.6x denser with a brighter tip ring, grows with rpm all the way to governed

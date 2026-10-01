@@ -44,9 +44,10 @@ namespace Airside.Presentation
             Seat = new GameObject("Left pilot eye").transform;
             Seat.SetParent(transform, false);
             Seat.localPosition = P(_dash ? -0.47f : -0.48f, 0f, 0f);
-            Seat.localRotation = Quaternion.Euler(_dash ? 14f : 15f, 0f, 0f);
+            Seat.localRotation = Quaternion.Euler(_dash ? 8f : 9f, 0f, 0f);
             MakeShell();
             var panelZ = _dash ? 0.84f : 0.89f;
+            var panelStart = transform.childCount;
             Face("Instrument panel face", new[] { P(-0.97f, -0.96f, panelZ), P(0.97f, -0.96f, panelZ),
                 P(0.97f, -0.49f, panelZ), P(0.85f, -0.23f, panelZ),
                 P(-0.85f, -0.23f, panelZ), P(-0.97f, -0.49f, panelZ) }, _panel);
@@ -56,6 +57,7 @@ namespace Airside.Presentation
                 Box("Guidance control", P(-0.31f + i * 0.069f, -0.29f, panelZ - 0.05f), new Vector3(0.035f, 0.025f, 0.02f), _trim);
             Label("Guidance legends", "HDG   NAV   ALT   VS", P(0f, -0.245f, panelZ - 0.057f), 0.0035f, Color.white);
             MakeDisplays(panelZ);
+            DropPanelParts(panelStart);
             foreach (var side in new[] { -1f, 1f })
             {
                 var x = side * 0.47f;
@@ -75,10 +77,22 @@ namespace Airside.Presentation
             }
             MakePedestal();
             MakeOverhead();
+            var telemetryStart = transform.childCount;
             Box("Local telemetry inset", P(0f, -0.85f, panelZ - 0.028f), new Vector3(0.27f, 0.11f, 0.026f), _black);
             _readout = Label("Local telemetry", "", P(0f, -0.85f, panelZ - 0.045f), 0.0038f, new Color(0.65f, 0.85f, 0.69f));
             Label("Panel identity", type.Id + " • LOCAL VIEW", P(-0.46f, -0.91f, panelZ - 0.045f), 0.0036f, Color.white);
+            DropPanelParts(telemetryStart);
             SetReadout("GS 0 kt\nHEIGHT 0 ft\nHDG 000°");
+        }
+
+        /// <summary>The panel was authored with its glareshield about 11 degrees below the eye. Real
+        /// ATR and Dash 8 decks give a pilot roughly 15 degrees over the nose, so the whole panel group
+        /// sits PanelDrop lower and the runway stays in view past the nose.</summary>
+        private const float PanelDrop = 0.06f;
+        private void DropPanelParts(int first)
+        {
+            for (var i = first; i < transform.childCount; i++)
+                transform.GetChild(i).localPosition += new Vector3(0f, -PanelDrop, 0f);
         }
 
         private void MakeShell()
@@ -87,7 +101,7 @@ namespace Airside.Presentation
             var sill = _dash ? -0.36f : -0.40f;
             var frontWidth = _dash ? 0.72f : 0.77f;
             var cornerZ = _dash ? 0.50f : 0.48f;
-            var centreLow = P(0f, _dash ? -0.25f : -0.22f, _front);
+            var centreLow = P(0f, (_dash ? -0.25f : -0.22f) - PanelDrop, _front);
             var centreHigh = P(0f, _roof - 0.08f, _front - 0.24f);
             Face("Flight deck floor", new[] { P(-_width, floor, rear), P(-_width, floor, cornerZ),
                 P(-frontWidth, floor, _front - 0.18f), P(0f, floor, _front),

@@ -52,6 +52,24 @@ namespace Airside.Tests
                 Assert.That(seen, Is.EquivalentTo(geometry.WindowBoundary), "The window band must be one continuous loop");
             }
         }
+        [Test] public void GlareshieldGivesARealisticOverTheNoseAngleAndWindowsReachUp()
+        {
+            Assert.That(JetCockpitShellGeometry.OverNoseDownDegrees, Is.InRange(15f, 20f));
+            // Windscreen head at the brow is at least ~28 degrees above the eye.
+            var up = Math.Atan2(JetCockpitShellGeometry.FrontTopY, 1.05) * 180.0 / Math.PI;
+            Assert.That(up, Is.GreaterThan(28.0));
+            Assert.That(JetCockpitShellGeometry.SillY, Is.LessThanOrEqualTo(JetCockpitShellGeometry.GlareTopY + 0.01f));
+        }
+        [TestCase("Flap L")] [TestCase("Aileron R")] [TestCase("Spoiler L")] [TestCase("Winglet L")]
+        [TestCase("Wing fairing L")] [TestCase("Fan R")] [TestCase("Intake L")] [TestCase("Pylon L")]
+        [TestCase("Exhaust R")] [TestCase("Nacelle fillet L")] [TestCase("PropBlade L2")] [TestCase("Spinner R")]
+        [TestCase("Cowl flap L")] [TestCase("Nav light L")] [TestCase("Wing L")] [TestCase("Engine R")]
+        public void WindowViewKeepsWingAndEngineParts(string name) =>
+            Assert.That(CockpitExteriorVisibility.KeepsDuringCockpit(name), Is.True);
+        [TestCase("Fuselage")] [TestCase("Radome")] [TestCase("Windscreen L")] [TestCase("Cabin window 3")]
+        [TestCase("Belly fairing")] [TestCase("Door fwd")] [TestCase("Tailplane")] [TestCase("")]
+        public void WindowViewHidesFuselageParts(string name) =>
+            Assert.That(CockpitExteriorVisibility.KeepsDuringCockpit(name), Is.False);
         [TestCase(0f)] [TestCase(-1f)] [TestCase(float.NaN)] [TestCase(float.PositiveInfinity)]
         public void InvalidWidthsFail(float width) => Assert.Throws<ArgumentOutOfRangeException>(() => JetCockpitShellGeometry.Build(width));
     }

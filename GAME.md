@@ -43,6 +43,14 @@ merge authorisation does not turn those into passing checks. Jet ADR is now 0225
   - **NEXT:** open the PR, wait for CI, merge when green. Backlog: civil medevac contracts, rotor-wash/dust on the pad,
     a helicopter cockpit, AW139 (SA's 2027 replacement) and a light single (both need authored models).
 
+- **2026-10-01 Claude — cockpit window view fit (`main`, ADR 0227).** Jets: glareshield
+  cut raised from ~4 to ~16 degrees over the nose, sills/windscreen heights shared as
+  `JetCockpitShellGeometry` constants. ATR/Dash: panel dropped 6 cm, gaze 8-9 degrees.
+  Cockpit keep-list now includes flaps/ailerons/spoilers/fans/intakes/pylons/exhausts/nav lights
+  (`CockpitExteriorVisibility`). Headless jet-cockpit filter 30/30; no Unity editor available,
+  so **NEXT:** native cockpit review sheets for all 13 types (check panel readability after the
+  drop, no lining strip below windscreens, wing/engine through side windows) and Mac build.
+
 - **2026-10-01 Cursor — arrivals bunched on final (`main`).** Bailey saw three
   arrivals flying nose to tail over the coast. `ExpectedLandingQueueTime` gave an
   Inbound aircraft only the HoldingForLanding traffic ahead, never other inbounds

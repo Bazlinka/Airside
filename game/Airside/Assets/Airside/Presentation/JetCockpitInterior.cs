@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Airside.Domain;
 using Airside.Simulation;
 using UnityEngine;
+using static Airside.Presentation.JetCockpitShellGeometry;
 
 namespace Airside.Presentation
 {
@@ -118,22 +119,36 @@ namespace Airside.Presentation
             Box("Flight deck door", new Vector3(0f, -0.40f, -1.665f), new Vector3(0.56f, 1.90f, 0.035f), _panel);
             foreach (var side in new[] { -1f, 1f })
             {
-                Beam("Side window upper rail", new Vector3(side * w, 0.67f, -0.61f), new Vector3(side * w, 0.67f, 0.72f), 0.07f, lining);
-                Beam("Side window sill", new Vector3(side * w, -0.05f, -0.61f), new Vector3(side * w, -0.05f, 0.72f), 0.07f, _panel);
-                Beam("Forward side window upper rail", new Vector3(side * w, 0.67f, 0.72f), new Vector3(side * w * 0.73f, 0.51f, 1.05f), 0.07f, lining);
-                Beam("Forward side window sill", new Vector3(side * w, -0.05f, 0.72f), new Vector3(side * w * 0.84f, -0.05f, 1.30f), 0.07f, _panel);
-                Beam("Rear window pillar", new Vector3(side * w, -0.05f, -0.61f), new Vector3(side * w, 0.67f, -0.61f), 0.06f, lining);
-                Beam("Front windscreen outer pillar", new Vector3(side * w * 0.84f, -0.05f, 1.30f), new Vector3(side * w * 0.73f, 0.51f, 1.05f), 0.065f, lining);
+                Beam("Side window upper rail", new Vector3(side * w, JetCockpitShellGeometry.SideTopY, -0.61f), new Vector3(side * w, JetCockpitShellGeometry.SideTopY, 0.72f), 0.07f, lining);
+                Beam("Side window sill", new Vector3(side * w, JetCockpitShellGeometry.SillY, -0.61f), new Vector3(side * w, JetCockpitShellGeometry.SillY, 0.72f), 0.07f, _panel);
+                Beam("Forward side window upper rail", new Vector3(side * w, JetCockpitShellGeometry.SideTopY, 0.72f), new Vector3(side * w * 0.73f, FrontTopY, 1.05f), 0.07f, lining);
+                Beam("Forward side window sill", new Vector3(side * w, JetCockpitShellGeometry.SillY, 0.72f), new Vector3(side * w * 0.84f, SillY, 1.30f), 0.07f, _panel);
+                Beam("Rear window pillar", new Vector3(side * w, JetCockpitShellGeometry.SillY, -0.61f), new Vector3(side * w, JetCockpitShellGeometry.SideTopY, -0.61f), 0.06f, lining);
+                Beam("Front windscreen outer pillar", new Vector3(side * w * 0.84f, SillY, 1.30f), new Vector3(side * w * 0.73f, FrontTopY, 1.05f), 0.065f, lining);
                 if (Profile.Deck != JetFlightDeck.Boeing787)
-                    Beam("Side quarterlight pillar", new Vector3(side * w, -0.05f, 0.41f), new Vector3(side * w, 0.67f, 0.41f), 0.045f, lining);
-                Beam("Parked windscreen wiper", new Vector3(side * 0.12f, -0.015f, 1.31f), new Vector3(side * w * 0.64f, 0.005f, 1.28f), 0.013f, _trim);
+                    Beam("Side quarterlight pillar", new Vector3(side * w, JetCockpitShellGeometry.SillY, 0.41f), new Vector3(side * w, JetCockpitShellGeometry.SideTopY, 0.41f), 0.045f, lining);
+                Beam("Parked windscreen wiper", new Vector3(side * 0.12f, SillY + 0.035f, 1.31f), new Vector3(side * w * 0.64f, SillY + 0.055f, 1.28f), 0.013f, _trim);
             }
-            Beam("Windscreen centre post", new Vector3(0f, -0.05f, 1.30f), new Vector3(0f, 0.51f, 1.05f), 0.047f, lining);
-            Beam("Windscreen brow", new Vector3(-w * 0.73f, 0.51f, 1.05f), new Vector3(w * 0.73f, 0.51f, 1.05f), 0.075f, lining);
+            Beam("Windscreen centre post", new Vector3(0f, SillY, 1.30f), new Vector3(0f, FrontTopY, 1.05f), 0.047f, lining);
+            Beam("Windscreen brow", new Vector3(-w * 0.73f, FrontTopY, 1.05f), new Vector3(w * 0.73f, FrontTopY, 1.05f), 0.075f, lining);
 
         }
 
         private void MakePanel()
+        {
+            var first = transform.childCount;
+            BuildPanel();
+            // Authored with the glareshield 0.0575 below the eye; drop the whole panel so its leading
+            // edge sits at the real over-the-nose angle and the runway stays visible past the nose.
+            var drop = GlareTopY - 0.0325f - (-0.09f);
+            for (var i = first; i < transform.childCount; i++)
+            {
+                var child = transform.GetChild(i);
+                child.localPosition += new Vector3(0f, drop, 0f);
+            }
+        }
+
+        private void BuildPanel()
         {
             var w = Profile.HalfWidth;
             Box("Main instrument panel", new Vector3(0f, -0.51f, 1.13f), new Vector3(w * 1.75f, 0.79f, 0.20f), _panel);

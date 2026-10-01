@@ -19,6 +19,17 @@ namespace Airside.Presentation
             public readonly HashSet<int> WindowBoundary = new();
         }
 
+        // Eye-relative sightline datums shared by the shell, window frames and instrument panel.
+        // Transport flight decks give about 15-20 degrees of over-the-nose view (FAA AC 25.773-1
+        // pilot compartment view): the glareshield's near top edge cuts the sight line there.
+        public const float SillY = -0.24f;          // every window sill, front and side
+        public const float SideTopY = 0.72f;        // side window head / roof line
+        public const float FrontTopY = 0.62f;       // windscreen head (~30 degrees up at the brow)
+        public const float GlareNearZ = 0.85f;      // glareshield leading edge, aft of the panel
+        public const float GlareTopY = -0.2475f;    // glareshield top surface
+        public static float OverNoseDownDegrees =>
+            (float)(Math.Atan2(-GlareTopY, GlareNearZ) * 180.0 / Math.PI);
+
         public static Geometry Build(float halfWidth)
         {
             if (halfWidth <= 0f || float.IsNaN(halfWidth) || float.IsInfinity(halfWidth))
@@ -62,8 +73,8 @@ namespace Airside.Presentation
                 {
                     var front = station == 3;
                     bottom[side, station] = Vertex(sign * halfWidth * (front ? 0.84f : 1f), -1.40f, zs[station]);
-                    sill[side, station] = Vertex(sign * halfWidth * (front ? 0.84f : 1f), -0.05f, zs[station]);
-                    top[side, station] = Vertex(sign * halfWidth * (front ? 0.73f : 1f), front ? 0.51f : 0.67f, front ? 1.05f : zs[station]);
+                    sill[side, station] = Vertex(sign * halfWidth * (front ? 0.84f : 1f), SillY, zs[station]);
+                    top[side, station] = Vertex(sign * halfWidth * (front ? 0.73f : 1f), front ? FrontTopY : SideTopY, front ? 1.05f : zs[station]);
                     if (station > 0) { g.WindowBoundary.Add(sill[side, station]); g.WindowBoundary.Add(top[side, station]); }
                 }
                 for (var station = 0; station < 3; station++)

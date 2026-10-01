@@ -27,7 +27,7 @@ namespace Airside.Presentation
             foreach (var renderer in transform.parent.GetComponentsInChildren<Renderer>(true))
             {
                 if (renderer.transform.IsChildOf(transform)) continue;
-                // Keep wings, nacelles and animated propellers visible through side windows.
+                // Keep the whole wing, engines and animated propellers visible through the windows.
                 if (KeepExteriorPart(renderer.transform)) continue;
                 _exterior.Add((renderer, renderer.forceRenderingOff));
                 renderer.forceRenderingOff = true;
@@ -39,9 +39,7 @@ namespace Airside.Presentation
         {
             while (part != null && part != transform.parent)
             {
-                var name = part.name;
-                if (name.StartsWith("Wing") || name.StartsWith("Engine") || name.StartsWith("Nacelle")
-                    || name.StartsWith("Prop") || name.StartsWith("Spinner")) return true;
+                if (CockpitExteriorVisibility.KeepsDuringCockpit(part.name)) return true;
                 part = part.parent;
             }
             return false;

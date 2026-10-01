@@ -9,6 +9,14 @@
   less per flight than a turboprop (13 seats), preps faster, is checked on the pad and cannot be based at an outstation.
   Sound: a synthesised rotor loop (22 Hz blade slap, tail-rotor buzz, turbine whine) that carries over the field and
   changes pitch as the rotor spools. Details and limits in ADR 0227.
+
+- **Cockpit window views fitted to real aircraft.** Jet decks now give about 16 degrees of
+  over-the-nose view (the glareshield used to hide everything below 4 degrees, so the runway
+  ahead was blocked), with lower sills and taller windscreens; ATR 42 / Dash 8 panels sit lower
+  with a more level default gaze. Out of the windows the wings now keep their flaps, ailerons,
+  spoilers and winglets, and engines keep fans, intakes, pylons and exhausts. Presentation only
+  (ADR 0227). Headless checks 30/30; native render review still to do.
+
 - Stream a bounded South Australia terrain window for SF34 regional cockpit journeys, with real Copernicus elevation, mapped regional strips and a moving render origin (ADR 0215; native path checks and Kingscote landing verified; long-trip performance remains open). Ease inbound cruise height onto the local approach and hide airport actors around a distant render origin. Keep the coarse terrain cells around each mapped strip at runway elevation; regional poses omit local departure bank commands. Add a fresh-airline packaged journey review driver with required phase captures and stall diagnostics.
 
 - **Arrivals no longer bunch up nose to tail on final.** An inbound's drawn position on the

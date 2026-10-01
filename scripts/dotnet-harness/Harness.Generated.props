@@ -68,6 +68,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CareerTrackWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CoastGrid.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitAvailability.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitExteriorVisibility.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ContractsWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ControlsHelp.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/DaylightPresentation.cs" />

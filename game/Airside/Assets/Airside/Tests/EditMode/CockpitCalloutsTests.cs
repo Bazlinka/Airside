@@ -66,3 +66,32 @@ namespace Airside.Tests
         }
     }
 }
+namespace Airside.Tests
+{
+    public sealed class CockpitLookPresetsTests
+    {
+        [Test] public void EveryGlanceIsInsideTheLookLimits()
+        {
+            foreach (var (name, yaw, pitch) in CockpitLookPresets.All)
+            {
+                Assert.That(System.Math.Abs(yaw), Is.LessThanOrEqualTo(CockpitLookPresets.MaxYaw), name);
+                Assert.That(pitch, Is.InRange(CockpitLookPresets.MinPitch, CockpitLookPresets.MaxPitch), name);
+            }
+            Assert.That(CockpitLookPresets.All.Length, Is.EqualTo(5));
+        }
+
+        [Test] public void EaseApproachesTheTargetWithoutOvershootAtAnyFrameRate()
+        {
+            foreach (var dt in new[] { 1f / 30f, 1f / 60f, 1f / 144f })
+            {
+                var value = 0f;
+                for (var i = 0; i < (int)(1.5f / dt); i++)
+                {
+                    value = CockpitLookPresets.Ease(value, 78f, 7f, dt);
+                    Assert.That(value, Is.LessThanOrEqualTo(78f));
+                }
+                Assert.That(value, Is.EqualTo(78f).Within(0.5f));
+            }
+        }
+    }
+}

@@ -165,6 +165,9 @@ namespace Airside.Presentation
             var rollShake = (rumble * 20f * Noise(t + 6.4f, 3.9f, 7.3f, 11.7f) + turbulence * 90f * Noise(t + 9f, 0.31f, 0.67f, 1.07f)) * amp;
             var swayShake = (rumble * 0.6f * Noise(t + 8.2f, 4.1f, 6.8f, 10.3f) + turbulence * 0.8f * Noise(t + 2f, 0.29f, 0.59f, 0.97f)) * amp;
 
+            // Rudder work on the roll and weather-vaning in rough air: a slow yaw wander.
+            var yawShake = ((onGround ? 0.35f * speed01 : turbulence * 60f) * Noise(t + 11f, 0.21f, 0.47f, 0.83f)) * amp;
+
             var sub = Math.Max(1, (int)Math.Ceiling(dt / (1f / 120f)));
             var h = dt / sub;
             for (var i = 0; i < sub; i++) { _heave.Step(h); _pitch.Step(h); _roll.Step(h); _sway.Step(h); }
@@ -191,7 +194,7 @@ namespace Airside.Presentation
                 Clamp(up + _heave.X + heaveShake, -0.14f, 0.14f),
                 forward,
                 Clamp(surgePitch + _pitch.X + pitchShake, -4f, 4f),
-                _lookYaw,
+                Clamp(_lookYaw + yawShake, -10f, 10f),
                 Clamp(counterRoll + _roll.X + rollShake, -3f, 3f));
         }
 

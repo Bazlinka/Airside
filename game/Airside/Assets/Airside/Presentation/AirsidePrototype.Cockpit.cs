@@ -190,7 +190,7 @@ namespace Airside.Presentation
             GUI.Box(strip, GUIContent.none, panel);
             if (_fleetAircraftById.TryGetValue(_cockpitAircraftId, out var aircraft))
                 GUI.Label(new Rect(strip.x + 12f, strip.y + 8f, strip.width - 270f, 42f),
-                    $"{aircraft.Registration} · {AircraftStatus.TagPhase(aircraft, _clock.Now)}\nRight-drag to look · scroll to zoom");
+                    $"{aircraft.Registration} · {AircraftStatus.TagPhase(aircraft, _clock.Now)}\nDrag or arrows to look · 1-5 glance · scroll zoom");
             if (GUI.Button(new Rect(strip.xMax - 246f, strip.y + 10f, 112f, 36f), "Recenter", button))
                 _cameraController.RecenterCockpit();
             if (GUI.Button(new Rect(strip.xMax - 124f, strip.y + 10f, 112f, 36f), "Exit (Esc)", button))

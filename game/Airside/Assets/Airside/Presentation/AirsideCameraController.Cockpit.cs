@@ -10,6 +10,7 @@ namespace Airside.Presentation
         private float _cockpitYaw, _cockpitPitch;
         private float _savedNear, _savedFar, _savedFov;
         private bool _cockpitRightDrag;
+        private int _cockpitPreset = -1;
         public bool IsCockpit => _cockpitActive;
         // Head and body motion layered on the rigid seat (CockpitMotion): offset in seat space, degrees.
         private Vector3 _cockpitMotionOffset, _cockpitMotionEuler;
@@ -46,7 +47,7 @@ namespace Airside.Presentation
             return true;
         }
 
-        public void RecenterCockpit() { _cockpitYaw = _cockpitPitch = 0f; }
+        public void RecenterCockpit() { _cockpitYaw = _cockpitPitch = 0f; _cockpitPreset = -1; }
 
         public void EndCockpit()
         {
@@ -85,6 +86,30 @@ namespace Airside.Presentation
                     _camera.fieldOfView = Mathf.Clamp(_camera.fieldOfView - mouse.scroll.ReadValue().y * 0.025f, 48f, 75f);
             }
             else _cockpitRightDrag = false;
+            if (_cockpitRightDrag) _cockpitPreset = -1;
+            var keyboard = Keyboard.current;
+            if (keyboard != null && !KeyboardCaptured)
+            {
+                var keys = new[] { keyboard.digit1Key, keyboard.digit2Key, keyboard.digit3Key, keyboard.digit4Key, keyboard.digit5Key };
+                for (var i = 0; i < keys.Length; i++)
+                    if (keys[i].wasPressedThisFrame) _cockpitPreset = i;
+                var yawInput = (keyboard.rightArrowKey.isPressed ? 1f : 0f) - (keyboard.leftArrowKey.isPressed ? 1f : 0f);
+                var pitchInput = (keyboard.downArrowKey.isPressed ? 1f : 0f) - (keyboard.upArrowKey.isPressed ? 1f : 0f);
+                if (yawInput != 0f || pitchInput != 0f)
+                {
+                    _cockpitPreset = -1;
+                    _cockpitYaw = Mathf.Clamp(_cockpitYaw + yawInput * 90f * Time.unscaledDeltaTime,
+                        -CockpitLookPresets.MaxYaw, CockpitLookPresets.MaxYaw);
+                    _cockpitPitch = Mathf.Clamp(_cockpitPitch + pitchInput * 60f * Time.unscaledDeltaTime,
+                        CockpitLookPresets.MinPitch, CockpitLookPresets.MaxPitch);
+                }
+            }
+            if (_cockpitPreset >= 0)
+            {
+                var glance = CockpitLookPresets.All[_cockpitPreset];
+                _cockpitYaw = CockpitLookPresets.Ease(_cockpitYaw, glance.Yaw, 7f, Time.unscaledDeltaTime);
+                _cockpitPitch = CockpitLookPresets.Ease(_cockpitPitch, glance.Pitch, 7f, Time.unscaledDeltaTime);
+            }
             ApplyCockpitPose();
         }
 

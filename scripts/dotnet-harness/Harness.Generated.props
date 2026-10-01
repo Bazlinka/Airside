@@ -71,6 +71,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitAvailability.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitCallouts.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitExteriorVisibility.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitLookPresets.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitMotion.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ContractsWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ControlsHelp.cs" />

@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Phase 2f Norfolk Island pines on Henley Beach Road (ADR 0219).** Tiered
+  conical araucaria silhouette along both landside verges. Cap 120. Locked by
+  `AdelaideNorfolkPinePlacementTests`. No new assets or save-schema changes.
+
 - **Phase 2e West Beach dune scrub (ADR 0218).** Low multi-lobe coastal scrub
   on OSM Sand cells in the dune band (28–150 m inland). Cap 250, ≤16 tris each.
   Locked by `AdelaideDuneScrubPlacementTests`. No new assets or save-schema

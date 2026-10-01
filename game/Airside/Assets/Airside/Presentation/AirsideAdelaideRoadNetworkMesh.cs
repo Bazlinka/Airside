@@ -117,6 +117,7 @@ namespace Airside.Presentation
             AdelaideCarParkGeometry.BuildLamps(props, options);
             AdelaideCarParkGeometry.BuildPalms(props, options);
             AdelaideWindbreakGeometry.Build(props, options);
+            AdelaideAvenueGeometry.Build(props, options);
             AdelaidePrecinctGeometry.BuildCanopies(props, options);
             AdelaidePrecinctGeometry.BuildSolar(props, options);
             AdelaidePrecinctGeometry.BuildTanks(props, options);

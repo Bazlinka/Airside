@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Phase 2d approach avenue trees (ADR 0217).** Eucalypt avenues on both
+  landside verges of Sir Donald Bradman Drive, Burbridge Road and Sir Richard
+  Williams Avenue. Cap 220; soft-deduped vs Tapleys windbreak. Locked by
+  `AdelaideAvenuePlacementTests`. No new assets or save-schema changes.
+
 - **Phase 2c Tapleys Hill Road windbreak (ADR 0216).** Deterministic eucalypt
   row along the Tapleys landside verge (airport frontage, outside the aerodrome
   fence). Reuses `AdelaideTreeGeometry` lobes; drawn into the road props mesh.

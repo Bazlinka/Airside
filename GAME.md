@@ -1,11 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Cursor — Phase 2d approach avenue trees (ADR 0217).**
+  Bradman Drive, Burbridge Road and Sir Richard Williams Avenue get landside
+  verge eucalypts (both sides, outside the fence). Cap 220. Soft-deduped vs
+  Tapleys windbreak. Same tip / PR #510.
+  **NEXT:** Phase 2 dune scrub / LOD, or Phase 3 building accuracy.
+
 - **2026-10-01 Cursor — Phase 2c Tapleys Hill Road windbreak (ADR 0216).**
   Deterministic eucalypt row on the Tapleys landside verge (outside the
   aerodrome fence, airport frontage), lobes from `AdelaideTreeGeometry`, drawn
   into the road props sink. Cap 180. Stacked on Phase 2b branch
   `cursor/phase2b-carpark-palms-709e` (PR #510).
-  **NEXT:** Phase 2d residential avenues / dune scrub, or Phase 3 building accuracy.
+  **NEXT:** Phase 2d done on same tip.
 
 - **2026-10-01 Cursor — Phase 2b terminal car-park date palms (ADR 0215); goal resumed.**
   Procedural Canary Island date-palm rows along OSM car-park edges in the

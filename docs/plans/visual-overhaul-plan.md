@@ -132,8 +132,9 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
   (`AdelaidePalmPlacement`) — no new assets.
 - Phase 2c (ADR 0216): Tapleys Hill Road landside windbreak eucalypts
   (`AdelaideWindbreakPlacement`) — no new assets.
-  **Next:** Phase 2d residential avenues / dune scrub, or Phase 3 building
-  accuracy.
+- Phase 2d (ADR 0217): Bradman / Burbridge / Williams avenue eucalypts
+  (`AdelaideAvenuePlacement`) — no new assets.
+  **Next:** Phase 2 dune scrub / LOD / wind, or Phase 3 building accuracy.
 - Phases 2 (remainder), 3b–f, 4, 5 remain.
 
 ## Risks

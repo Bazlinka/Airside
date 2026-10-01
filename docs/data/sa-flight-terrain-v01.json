@@ -1,0 +1,16 @@
+{
+  "source": "https://copernicus-dem-90m.s3.amazonaws.com/{0}/{0}.tif",
+  "dataset": "Copernicus DEM GLO-90",
+  "bounds": [
+    128.0,
+    -39.0,
+    142.0,
+    -25.0
+  ],
+  "step_degrees": 0.02,
+  "sha256": "5ca87f68ebf5391f937837caca482fb7127924680368616cfab28aa91da1c5b9",
+  "bytes": 982842,
+  "fallback": "Natural Earth land/sea; no invented elevation",
+  "missing_tiles": "HTTP 404 only",
+  "processing": "64x64 average COG overview per degree, nearest samples to 0.02 degree grid"
+}

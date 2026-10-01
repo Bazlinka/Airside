@@ -1,3 +1,21 @@
+## South Australia flight-world candidate — 2026-10-01 Codex
+
+- Branch `feature/south-australia-flight-world`, isolated `/private/tmp/airside-sa-world`,
+  based on main `f15aac12`; unrelated audio and cockpit branches preserved.
+- Beyond the existing ±96 km Adelaide terrain: compact real Copernicus heights,
+  Natural Earth coastline, fixed 49-tile window, one tile built per frame, moving
+  render origin; supported SF34 stays visible across regional journeys. Distant
+  selection card enables cockpit. Regional approaches/rollouts and return departure
+  use sourced primary runways; simplified remote airport presentation only.
+- Packet: `docs/plans/south-australia-flight-world.md`; ADR 0215. Interstate later.
+- Checks: changed domain 1289 pass / one existing audio failure (baseline 1277 / same
+  failure). All 12 new tests pass. Full presentation source compilation: zero errors.
+  Native EditMode blocked by missing LicensingClient channel; no player FPS, shader,
+  full-journey or appearance acceptance. Existing asset metadata audit issues remain.
+- NEXT: restore normal native Unity licensing; run EditMode/build and the packet's
+  SF34 KGC/CPD round-trip, origin/actor/weather checks and comparative frame-time test.
+  Candidate branch only; do not mark this ready to merge from source checks alone.
+
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-10-01 Codex — Saab cockpit opaque shell fix.**

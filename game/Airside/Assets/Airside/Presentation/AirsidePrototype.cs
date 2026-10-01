@@ -556,6 +556,8 @@ namespace Airside.Presentation
                 Destroy(_cockpitInterior.gameObject);
             }
             _cameraController?.EndCockpit();
+            ResetFlightWorld();
+            if (_flightTerrain != null) Destroy(_flightTerrain.gameObject);
             DisposeSoakRecorders();
             if (_active == this)
                 _active = null;
@@ -603,6 +605,7 @@ namespace Airside.Presentation
                 }
             }
 
+            UpdateFlightWorld();
             UpdateLiveWeather();
             ApplyDayCycle();
             AdvancePresentationClock();

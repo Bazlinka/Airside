@@ -81,7 +81,7 @@ namespace Airside.Presentation
 
         private bool IsFleetFlightVisible(string aircraftId) =>
             _fleetAircraftById.TryGetValue(aircraftId, out var aircraft)
-            && (FleetVisual.For(aircraft, _clock.Now).Visible || IsArrivingOnFinal(aircraft));
+            && (FleetVisual.For(aircraft, _clock.Now).Visible || IsArrivingOnFinal(aircraft) || WatchingJourney(aircraftId));
 
         /// <summary>
         /// Last-line visibility guard immediately before a fleet view receives a world pose.
@@ -759,6 +759,7 @@ namespace Airside.Presentation
                 // instant an inbound aircraft you were following entered its Approach phase,
                 // well before it was anywhere near the runway, reading as a stutter/glitch.
                 if (view != followed
+                    && (i >= VisualFlights.Count || VisualFlights[i].AircraftId != _cockpitAircraftId)
                     && i < VisualFlights.Count
                     && VisualFlights[i].Operation.Phase == AircraftPhase.Approach
                     && !ApproachCloseEnough(VisualFlights[i], view.position))

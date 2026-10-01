@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Candidate: stream a bounded South Australia terrain window for SF34 regional cockpit journeys, with real Copernicus elevation, mapped regional strips and a moving render origin (ADR 0215; native/player acceptance pending).
+
 - Close the Saab cockpit shell beneath the windows, including the gaps beside the
   panel and under the footwell, so apron/terrain cannot show through the body.
 - **Weather no longer drops out while you drag the camera.** The ground-fog/mist layer was placed in

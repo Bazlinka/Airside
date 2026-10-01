@@ -1,9 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Cursor — Phase 3 ARFF/fire-station silhouette (ADR 0223).**
+  Taller/wider appliance bays, hose tower + obstruction light, Canopy
+  parking pads + yellow bay cues, Equipment sign fascia. Same tip / PR #510.
+  **NEXT:** Phase 2 wind / ground tufts, or Phase 3 Terminal 1 accuracy.
+
 - **2026-10-01 Cursor — Phase 3 hangar tenant colours (ADR 0222).**
   Named hangars + RFDS get stylised shell/door/roof bands via
   `HangarTenantPalette`; unnamed keep grey. Same tip / PR #510.
-  **NEXT:** Phase 2 wind / ground tufts, or more Phase 3 (Terminal 1 / fire).
+  **NEXT:** fire-station silhouette done on same tip.
 
 - **2026-10-01 Cursor — Phase 3 control tower canted cab (ADR 0221).**
   Outward-canted glazed cab (stacked rings) + overhanging roof on the surveyed

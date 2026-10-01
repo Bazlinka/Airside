@@ -185,6 +185,28 @@ namespace Airside.Presentation
         public const float TowerRoofOverhangScale = 1.18f;
         public const float TowerMastMetres = 5.5f;
 
+        // ---- Fire station / ARFF silhouette (ADR 0223) -----------------------------------
+        public const float ApplianceLengthMetres = 8.2f;
+        public const float ApplianceWidthMetres = 2.6f;
+        public const float ApplianceBayPitchDivisorMetres = 5.5f;
+        public const int ApplianceBayMaxCount = 4;
+        public const float ApplianceBayDoorHeightMaxMetres = 6.2f;
+        public const float ApplianceBayDoorWidthMaxMetres = 5.2f;
+        public const float ApplianceBaySideClearanceMetres = 0.9f;
+        public const float ApplianceBayHeaderClearanceMetres = 0.85f;
+        public const float HoseTowerShaftWidthMetres = 1.8f;
+        public const float HoseTowerShaftHeightMetres = 12.0f;
+        public const float HoseTowerCabinHeightMetres = 1.6f;
+        public const float HoseTowerCabinScale = 1.35f;
+        public const float HoseTowerMastMetres = 2.4f;
+        public const float AppliancePadThicknessMetres = 0.08f;
+        public const float AppliancePadLengthMetres = 9.0f;
+        public const float AppliancePadWidthExtraMetres = 0.6f;
+        public const float AppliancePadOutsetMetres = 0.35f;
+        public const float FireStationFasciaHeightMetres = 0.55f;
+        public const float FireStationFasciaLengthFraction = 0.38f;
+        public const float FireStationFasciaDepthMetres = 0.12f;
+
         public static float ParapetHeight(AdelaideBuildingKind kind) => kind switch
         {
             AdelaideBuildingKind.Hangar => 0.45f,
@@ -226,6 +248,7 @@ namespace Airside.Presentation
                     break;
                 case AdelaideBuildingKind.FireStation:
                     AddApplianceBays(set, xz, front, baseY, height, random);
+                    AddFireStationHoseTower(set, xz, front, baseY);
                     AddWindowBands(set, xz, baseY, Storeys(height), random, skipEdge: front);
                     AddPlinth(set, xz, baseY);
                     // A low-pitched roof cap; plant only when the footprint cannot carry one.

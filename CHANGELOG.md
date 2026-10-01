@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Phase 3 ARFF/fire-station silhouette (ADR 0223).** Taller/wider appliance
+  bay doors, hose-drying tower with obstruction light, concrete parking pads
+  with yellow bay cues, and a yellow sign fascia — pure-math `BuildingDetail`.
+  Locked by `BuildingDetailTests` FireStation cases. No new assets or
+  save-schema changes.
+
 - **Phase 3 hangar tenant colours (ADR 0222).** Named hangars (Cobham, Rex,
   Sharp, Pilatus, Pulse, Aerobond, SAPOL) and RFDS get stylised shell / door /
   roof cladding bands; unnamed hangars keep the previous grey. Locked by

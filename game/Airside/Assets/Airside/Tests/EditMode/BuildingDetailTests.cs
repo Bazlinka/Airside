@@ -380,5 +380,78 @@ namespace Airside.Tests
             var thin = BevelledBox.LocalBevelFor(0.1f, 0.1f, 0.1f).Value;
             Assert.That(thin.x, Is.EqualTo(BevelledBox.WorldBevelFraction).Within(1e-5f));
         }
+
+        [Test]
+        public void FireStation_HasTallerWiderApplianceBayDoors()
+        {
+            var building = Of(AdelaideBuildingKind.FireStation);
+            var set = BuildingDetail.For(building, 0f);
+            var openingTop = set.Openings.Count == 0 ? 0f : set.Openings.Max(o => o.TopMetres);
+            var doorHeight = set.Boxes.Where(b => b.Part == BuildingPart.Door).Select(b => b.Height).DefaultIfEmpty(0f).Max();
+            var maxHeight = Math.Max(openingTop, doorHeight);
+            Assert.That(maxHeight, Is.GreaterThanOrEqualTo(BuildingDetail.ApplianceBayDoorHeightMaxMetres - 0.05f));
+            Assert.That(maxHeight, Is.LessThan(building.HeightMetres));
+
+            var openingWidth = set.Openings.Count == 0
+                ? 0f
+                : set.Openings.Max(o => o.ToMetres - o.FromMetres);
+            var doorWidth = set.Boxes.Where(b => b.Part == BuildingPart.Door).Select(b => b.Length).DefaultIfEmpty(0f).Max();
+            Assert.That(Math.Max(openingWidth, doorWidth),
+                Is.GreaterThanOrEqualTo(BuildingDetail.ApplianceBayDoorWidthMaxMetres - 0.05f));
+        }
+
+        [Test]
+        public void FireStation_HasHoseTowerAboveTheRoof()
+        {
+            var building = Of(AdelaideBuildingKind.FireStation);
+            var set = BuildingDetail.For(building, 0f);
+            var tallTrim = set.Boxes.Where(b => b.Part == BuildingPart.Trim && b.Top > building.HeightMetres + 3f).ToList();
+            Assert.That(tallTrim, Is.Not.Empty, "hose tower shaft/cabin/mast");
+            Assert.That(set.Boxes.Count(b => b.Part == BuildingPart.ObstructionLight), Is.GreaterThanOrEqualTo(1));
+            var shaft = tallTrim.OrderByDescending(b => b.Height).First();
+            Assert.That(BuildingDetail.Contains(building.Xz, shaft.X, shaft.Z), Is.True);
+        }
+
+        [Test]
+        public void FireStation_HasApplianceParkingPadsAndYellowBayCues()
+        {
+            var building = Of(AdelaideBuildingKind.FireStation);
+            var set = BuildingDetail.For(building, 0f);
+            var front = BuildingDetail.FrontEdge(building.Xz);
+            var edge = BuildingDetail.Edge(building.Xz, front, BuildingDetail.Winding(building.Xz));
+            var pads = set.Boxes.Where(b =>
+                b.Part == BuildingPart.Canopy &&
+                Math.Abs(b.Height - BuildingDetail.AppliancePadThicknessMetres) < 0.02f).ToList();
+            Assert.That(pads, Is.Not.Empty);
+            Assert.That(pads.Any(p =>
+            {
+                var midX = (edge.AX + edge.BX) * 0.5f;
+                var midZ = (edge.AZ + edge.BZ) * 0.5f;
+                var dx = p.X - midX;
+                var dz = p.Z - midZ;
+                return dx * edge.OutX + dz * edge.OutZ > 0f;
+            }), Is.True, "pad sits outside the bay wall");
+
+            var cues = set.Boxes.Where(b =>
+                b.Part == BuildingPart.Equipment &&
+                b.Height < 0.15f &&
+                b.Depth > BuildingDetail.AppliancePadLengthMetres * 0.5f).ToList();
+            Assert.That(cues.Count, Is.GreaterThanOrEqualTo(2));
+        }
+
+        [Test]
+        public void FireStation_HasYellowSignFasciaAboveTheBays()
+        {
+            var building = Of(AdelaideBuildingKind.FireStation);
+            var set = BuildingDetail.For(building, 0f);
+            var doorTop = set.Openings.Count == 0
+                ? set.Boxes.Where(b => b.Part == BuildingPart.Door).Select(b => b.Top).DefaultIfEmpty(0f).Max()
+                : set.Openings.Max(o => o.TopMetres);
+            var fascia = set.Boxes.Where(b =>
+                b.Part == BuildingPart.Equipment &&
+                Math.Abs(b.Height - BuildingDetail.FireStationFasciaHeightMetres) < 0.05f &&
+                b.Y > doorTop).ToList();
+            Assert.That(fascia, Is.Not.Empty);
+        }
     }
 }

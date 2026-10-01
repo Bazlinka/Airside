@@ -143,8 +143,10 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
 - Phase 3 tower (ADR 0221): outward-canted control-tower cab geometry.
 - Phase 3 hangars (ADR 0222): per-tenant shell/door/roof cladding bands
   (`HangarTenantPalette`) including RFDS split from Terminal 1 grey.
-  **Next:** Phase 2 wind / ground-cover tufts, or Phase 3 Terminal 1 /
-  fire-station accuracy.
+- Phase 3 fire station (ADR 0223): ARFF silhouette — wider bays, hose tower,
+  parking pads, yellow fascia via `BuildingDetail`.
+  **Next:** Phase 2 wind / ground-cover tufts, or Phase 3 Terminal 1
+  accuracy.
 - Phases 2 (remainder), 3b–f, 4, 5 remain.
 
 ## Risks

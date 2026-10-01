@@ -19,6 +19,7 @@ namespace Airside.Presentation
         private string _cockpitCallText;
         private float _cockpitCallUntil;
         private GUIStyle _calloutStyle;
+        private bool _cockpitIsJet;
         private float _cockpitGearHeight, _cockpitVerticalSpeed;
         private static int StableHash(string text)
         {
@@ -79,6 +80,7 @@ namespace Airside.Presentation
             _cockpitNextReadout = 0;
             _cockpitMotion.Reset(StableHash(_cockpitAircraftId));
             _cockpitCallouts.Reset();
+            _cockpitIsJet = JetCockpitProfile.TryFor(_fleetAircraftById[_cockpitAircraftId].Type.Id, out _);
             _cockpitCallText = null;
             _cockpitGearHeight = Mathf.Max(0f, view.position.y - AirsideFlightPath.GroundY);
             _cockpitVerticalSpeed = 0f;
@@ -158,7 +160,7 @@ namespace Airside.Presentation
                 GroundSpeed = _cockpitGroundKnots / 1.943844f, VerticalSpeed = _cockpitVerticalSpeed,
                 HeightAgl = gearHeight, PitchUpDegrees = pitchUp, BankLeftDegrees = bankLeft,
                 Spool = (spool.Left + spool.Right) * 0.5f,
-                Turboprop = !JetCockpitProfile.TryFor(aircraft.Type.Id, out _),
+                Turboprop = !_cockpitIsJet,
             });
             _cameraController.SetCockpitMotion(new Vector3(motion.Right, motion.Up, motion.Forward),
                 new Vector3(motion.PitchDownDegrees, motion.YawDegrees, motion.RollDegrees));
@@ -169,7 +171,7 @@ namespace Airside.Presentation
             {
                 GroundKnots = _cockpitGroundKnots, RotateKnots = AircraftPerformance.For(aircraft.Type).RotateKnots,
                 HeightFeet = gearHeight * 3.28084f, VerticalFeetPerMinute = _cockpitVerticalSpeed * 196.85f,
-                Jet = JetCockpitProfile.TryFor(aircraft.Type.Id, out _),
+                Jet = _cockpitIsJet,
             });
             if (call != null) { _cockpitCallText = call; _cockpitCallUntil = Time.unscaledTime + 2.2f; }
             if (_preciseTime < _cockpitNextReadout) return;

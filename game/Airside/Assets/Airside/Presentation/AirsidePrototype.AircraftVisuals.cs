@@ -157,7 +157,7 @@ namespace Airside.Presentation
                 RollLandingGearTires(view, FleetTireRollSpeed(flight, phase, progress, aircraftType));
                 ApplyOleoSettling(view, phase, progress);
                 UpdateControlSurfaces(viewParts.ControlSurfaces, viewParts.Articulation, phase, progress, bank,
-                    PresentationDeltaTime, engines, engines.HasValue);
+                    PresentationDeltaTime, engines, engines.HasValue, aircraftType);
                 UpdateGroundShadow(view);
                 UpdateSelectionMarker(view, flight.AircraftId);
                 GroundPose? groundPose = TryFleetGround(flight, out var groundAircraft, out var groundVisual)

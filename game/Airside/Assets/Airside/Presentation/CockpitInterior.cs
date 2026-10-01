@@ -190,8 +190,12 @@ namespace Airside.Presentation
             private readonly Vector2[] _uv;
             public AttitudeDisc(Mesh mesh, Vector2[] local) { _mesh = mesh; _local = local; _uv = new Vector2[local.Length]; Set(0f, 0f); }
 
+            private float _lastPitch = float.NaN, _lastBank = float.NaN;
+
             public void Set(float pitchUpDegrees, float bankLeftDegrees)
             {
+                if (pitchUpDegrees == _lastPitch && bankLeftDegrees == _lastBank) return;
+                _lastPitch = pitchUpDegrees; _lastBank = bankLeftDegrees;
                 var angle = bankLeftDegrees * Mathf.Deg2Rad;
                 var cos = Mathf.Cos(angle); var sin = Mathf.Sin(angle);
                 var pitch = Mathf.Clamp(pitchUpDegrees, -30f, 30f);

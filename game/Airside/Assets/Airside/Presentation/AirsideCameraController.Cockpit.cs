@@ -11,6 +11,7 @@ namespace Airside.Presentation
         private float _savedNear, _savedFar, _savedFov;
         private bool _cockpitRightDrag;
         private int _cockpitPreset = -1;
+        private readonly UnityEngine.InputSystem.Controls.KeyControl[] _glanceKeys = new UnityEngine.InputSystem.Controls.KeyControl[5];
         public bool IsCockpit => _cockpitActive;
         // Head and body motion layered on the rigid seat (CockpitMotion): offset in seat space, degrees.
         private Vector3 _cockpitMotionOffset, _cockpitMotionEuler;
@@ -90,7 +91,9 @@ namespace Airside.Presentation
             var keyboard = Keyboard.current;
             if (keyboard != null && !KeyboardCaptured)
             {
-                var keys = new[] { keyboard.digit1Key, keyboard.digit2Key, keyboard.digit3Key, keyboard.digit4Key, keyboard.digit5Key };
+                _glanceKeys[0] = keyboard.digit1Key; _glanceKeys[1] = keyboard.digit2Key; _glanceKeys[2] = keyboard.digit3Key;
+                _glanceKeys[3] = keyboard.digit4Key; _glanceKeys[4] = keyboard.digit5Key;
+                var keys = _glanceKeys;
                 for (var i = 0; i < keys.Length; i++)
                     if (keys[i].wasPressedThisFrame) _cockpitPreset = i;
                 var yawInput = (keyboard.rightArrowKey.isPressed ? 1f : 0f) - (keyboard.leftArrowKey.isPressed ? 1f : 0f);

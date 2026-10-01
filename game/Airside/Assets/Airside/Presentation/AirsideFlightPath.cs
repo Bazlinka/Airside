@@ -379,55 +379,7 @@ namespace Airside.Presentation
         public static float PitchDegrees(AircraftPhase phase, float progress, AircraftType type) =>
             AircraftAttitude.For(type).PitchDegrees(phase, progress, AircraftPerformance.For(type));
 
-        public static float PitchDegrees(AircraftPhase phase, float progress)
-        {
-            var t = Mathf.Clamp01(progress);
-            switch (phase)
-            {
-                case AircraftPhase.Takeoff:
-                {
-                    if (t <= RotateProgress)
-                        return 0f;
-                    var climb = Local(t, RotateProgress, 1f);
-                    // Ease into rotation rather than a sharp pitch snap at Vr.
-                    var ease = Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, climb * 2.4f));
-                    var rotation = Mathf.Lerp(0f, RotatePitchDegrees, ease);
-                    // Settle into climb attitude before crossing into Departed.
-                    return Mathf.Lerp(rotation, ClimbPitchDegrees,
-                        Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.65f, 1f, climb)));
-                }
-                case AircraftPhase.Approach:
-                    return Mathf.Lerp(ApproachPitchStartDegrees, ApproachPitchEndDegrees, t);
-                case AircraftPhase.Landing:
-                {
-                    if (t < FlareProgress)
-                        return ApproachPitchEndDegrees;
-                    if (t < TouchdownProgress)
-                    {
-                        // Progressive round-out: the nose comes up as the sink is arrested.
-                        var flare = Local(t, FlareProgress, TouchdownProgress);
-                        return Mathf.Lerp(ApproachPitchEndDegrees, FlarePitchDegrees,
-                            Mathf.SmoothStep(0f, 1f, flare));
-                    }
-
-                    var since = Local(t, TouchdownProgress, 1f);
-                    // Main-gear-first: hold a little nose-up, then let the nose down.
-                    if (since < 0.08f)
-                        return Mathf.Lerp(FlarePitchDegrees, TouchdownHoldPitchDegrees, since / 0.08f);
-                    return Mathf.Lerp(TouchdownHoldPitchDegrees, 0f, Mathf.SmoothStep(0f, 1f,
-                        Mathf.Min(1f, (since - 0.08f) / 0.2f)));
-                }
-                case AircraftPhase.Departed:
-                    return Mathf.Lerp(ClimbPitchDegrees, DepartedPitchEndDegrees, t);
-                case AircraftPhase.Circuit:
-                    return ClimbPitchDegrees * 0.45f;
-                case AircraftPhase.GoAround:
-                    return t < 0.28f
-                        ? Mathf.Lerp(ApproachPitchEndDegrees, ClimbPitchDegrees, Mathf.SmoothStep(0f, 1f, t / 0.28f))
-                        : ClimbPitchDegrees * 0.45f;
-                default:
-                    return 0f;
-            }
-        }
+        public static float PitchDegrees(AircraftPhase phase, float progress) =>
+            AircraftAttitude.Atr42.PitchDegrees(phase, progress, AircraftPerformance.Atr42);
     }
 }

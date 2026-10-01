@@ -1,4 +1,4 @@
-# 0227 — Cockpit window view fitted to real over-the-nose vision
+# 0229 — Cockpit window view fitted to real over-the-nose vision
 
 Date: 2026-10-01. Decision: the jet and glass-turboprop cockpits are fitted to a realistic
 sight-line, and the exterior kit parts a pilot truly sees are kept.

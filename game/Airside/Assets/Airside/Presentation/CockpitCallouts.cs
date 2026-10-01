@@ -29,6 +29,15 @@ namespace Airside.Presentation
             _highestFeet = _sinceTouchdown = _previousKnots = 0f;
         }
 
+        private static (string Key, float Height, string Text)[] Heights(bool jet) => new[]
+        {
+            ("A-1000", 1000f, "1,000"), ("A-500", 500f, "500"), ("A-100", 100f, "100 ABOVE"),
+            ("L-50", 50f, "50"), ("L-40", 40f, "40"), ("L-30", 30f, "30"),
+            ("L-20", 20f, jet ? "20 RETARD" : "20"), ("L-10", 10f, "10"),
+        };
+
+        private float _lowestSinceTouchdown;
+
         /// <summary>Returns a callout that has just become due, or null.</summary>
         public string Step(Sample s)
         {
@@ -39,7 +48,7 @@ namespace Airside.Presentation
 
             if (_airborne && onGround)
             {                                  // touchdown: forget takeoff calls and the approach
-                _airborne = false; _landed = true; _sinceTouchdown = 0f; _fired.Clear(); _highestFeet = 0f;
+                _airborne = false; _landed = true; _sinceTouchdown = 0f; _lowestSinceTouchdown = s.GroundKnots; _fired.Clear(); _highestFeet = 0f;
             }
             else if (!_airborne && !onGround)
             {                                  // lift-off: forget landing calls
@@ -49,22 +58,24 @@ namespace Airside.Presentation
             if (_airborne)
             {
                 if (s.HeightFeet > _highestFeet) _highestFeet = s.HeightFeet;
-                if (s.VerticalFeetPerMinute > 200f && _highestFeet < 1500f && _fired.Contains("T-ROT"))
-                {
-                    if (s.HeightFeet >= 12f) Once("T-PR", "POSITIVE RATE");
-                    if (s.HeightFeet >= 60f && _fired.Contains("T-PR")) Once("T-GU", "GEAR UP");
+                if (s.VerticalFeetPerMinute > 300f)
+                {                              // climbing: a go-around (or lift-off) resets the approach calls
+                    _fired.RemoveWhere(k => k.StartsWith("A-") || k.StartsWith("L-"));
+                    if (_highestFeet < 1500f && _fired.Contains("T-ROT"))
+                    {
+                        if (s.HeightFeet >= 12f) Once("T-PR", "POSITIVE RATE");
+                        if (s.HeightFeet >= 60f && _fired.Contains("T-PR")) Once("T-GU", "GEAR UP");
+                    }
                 }
-                if (s.VerticalFeetPerMinute < -200f && _highestFeet > 1100f)
+                else if (s.VerticalFeetPerMinute < 100f && _highestFeet > 1100f)
                 {
-                    var h = s.HeightFeet;
-                    if (h <= 1000f) Once("A-1000", "1,000");
-                    if (h <= 500f && _fired.Contains("A-1000")) Once("A-500", "500");
-                    if (h <= 100f && _fired.Contains("A-500")) Once("A-100", "100 ABOVE");
-                    if (h <= 50f) Once("L-50", "50");
-                    if (h <= 40f && _fired.Contains("L-50")) Once("L-40", "40");
-                    if (h <= 30f && _fired.Contains("L-40")) Once("L-30", "30");
-                    if (h <= 20f && _fired.Contains("L-30")) Once("L-20", s.Jet ? "20 RETARD" : "20");
-                    if (h <= 10f && _fired.Contains("L-20")) Once("L-10", "10");
+                    // Descending (a flare can slow the sink below 100 ft/min, so no sink-rate floor).
+                    // Everything already passed is marked; only the lowest newly crossed height is called.
+                    foreach (var (key, height, text) in Heights(s.Jet))
+                    {
+                        if (s.HeightFeet > height || !_fired.Add(key)) continue;
+                        call = text;
+                    }
                 }
             }
             else
@@ -81,6 +92,11 @@ namespace Airside.Presentation
                 }
                 else
                 {
+                    if (s.GroundKnots < _lowestSinceTouchdown) _lowestSinceTouchdown = s.GroundKnots;
+                    if (s.GroundKnots > _lowestSinceTouchdown + 10f && s.GroundKnots > 40f)
+                    {                              // accelerating again: a touch-and-go, so this is a takeoff roll
+                        _landed = false; _fired.Clear();
+                    }
                     if (s.Jet && _sinceTouchdown > 0.4f) Once("R-SPOILERS", "SPOILERS");
                     if (s.Jet && _sinceTouchdown > 1.2f && _fired.Contains("R-SPOILERS")) Once("R-REVERSE", "REVERSE GREEN");
                     if (s.GroundKnots <= 80f && _previousKnots > 80f) Once("R-80", "80 KNOTS");

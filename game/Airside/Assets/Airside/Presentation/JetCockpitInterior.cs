@@ -12,7 +12,7 @@ namespace Airside.Presentation
     public sealed class JetCockpitInterior : CockpitInterior
     {
         public JetCockpitProfile Profile { get; private set; }
-        private Material _panel, _trim, _black, _white, _cyan, _green, _sky, _earth;
+        private Material _panel, _trim, _black, _white, _cyan, _green;
         private readonly AttitudeDisc[] _horizons = new AttitudeDisc[2];
         private readonly List<(Transform bar, float bottom, bool left)> _engineBars = new();
         private TextMesh _engineReadout;
@@ -42,8 +42,6 @@ namespace Airside.Presentation
             _white = Surface("markings", new Color(0.82f, 0.85f, 0.82f), false);
             _cyan = Surface("display cyan", new Color(0.12f, 0.70f, 0.83f), false);
             _green = Surface("display green", new Color(0.30f, 0.87f, 0.43f), false);
-            _sky = Surface("attitude sky", new Color(0.12f, 0.33f, 0.53f), false);
-            _earth = Surface("attitude earth", new Color(0.38f, 0.23f, 0.10f), false);
             var lining = Surface("lining", new Color(0.48f, 0.49f, 0.47f));
             var seat = new GameObject("Left pilot eye").transform;
             seat.SetParent(transform, false);

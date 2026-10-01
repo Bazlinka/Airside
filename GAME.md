@@ -50,7 +50,7 @@ merge authorisation does not turn those into passing checks. Jet ADR is now 0225
   - **NEXT:** open the PR, wait for CI, merge when green. Backlog: civil medevac contracts, rotor-wash/dust on the pad,
     a helicopter cockpit, AW139 (SA's 2027 replacement) and a light single (both need authored models).
 
-- **2026-10-01 Claude — cockpit window view fit (`main`, ADR 0227).** Jets: glareshield
+- **2026-10-01 Claude — cockpit window view fit (`feature/cockpit-window-view`, ADR 0229).** Jets: glareshield
   cut raised from ~4 to ~16 degrees over the nose, sills/windscreen heights shared as
   `JetCockpitShellGeometry` constants. ATR/Dash: panel dropped 6 cm, gaze 8-9 degrees.
   Cockpit keep-list now includes flaps/ailerons/spoilers/fans/intakes/pylons/exhausts/nav lights

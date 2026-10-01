@@ -22,5 +22,8 @@ real type from the left seat. Presentation only; no simulation, save or path cha
   green on jet rollouts; 80 knots on the rollout. Fires once per takeoff or landing.
 - **Night and rain:** a dim warm panel glow after dusk, and windscreen wipers that sweep with
   rain intensity (intermittent in light rain). **Saab 340** now has a live attitude display too.
+- **Touchdown detail:** ground spoilers thump about 0.4 s after the wheels touch, firm landings
+  can skip once, and reverse thrust (stronger for turboprop beta) roars through the seat while
+  braking hard.
 - Not done: crosswind crab/decrab (no wind model), interactive flying.
 - Native Unity review of ground roll, rotation, descent, flare and touchdown is still required.

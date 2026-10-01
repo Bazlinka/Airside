@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Phase 1 CBD skyline design lock (ADR 0208).** Far-ring city silhouette will be
+  low-poly OSM-height boxes (~42 towers ≥30 m near Victoria Square, ~7 km ENE)
+  from the existing suburb-buildings snapshot — not billboards; no new licence.
+  Behaviour unchanged until the implement PR. No save-schema changes.
 - **Phase 1 golf bunker discs (ADR 0207).** 213 OSM `golf=bunker` discs draw as
   sand discs on the surroundings mesh (Glenelg and nearby courses). Land-cover
   Golf tint unchanged. Locked by `GolfBunkerMarksTests`. No save-schema changes.

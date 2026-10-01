@@ -13,8 +13,9 @@ Related: `docs/plans/visual-overhaul-plan.md` (ADR 0198, awaiting Bailey sign-of
 
 Airside is already a production-grade Adelaide airline game, not a prototype.
 Career, saves (v19), tower, AI traffic, Glass Cockpit and the map stack are solid.
-The main risk before going bigger is **verification debt**, then **Presentation
-concentration / performance**, then finishing half-done product slices (freight).
+P0 verification debt is closed by Bailey (2026-10-01). Next risks before going
+bigger are the **visual overhaul gate**, then **Presentation concentration /
+performance**, then finishing half-done product slices (freight).
 
 ## Priority order
 

@@ -3,6 +3,7 @@
 Candidate branch `feature/cockpit-immersion`, based on main `2d97ab24`.
 
 - Focused .NET 8 NUnit cloud envelope: 7 passed, 0 failed (`cloud-tests.trx`).
+- Full `scripts/test-domain.sh`: 1,424 passed, 0 failed (2 m 58 s; `domain-result.txt`).
 - Generated headless harness includes the new pure model and its tests.
 - `git diff --check`: clean.
 - Native `scripts/test-unity.sh`: unavailable; no Unity editor at the configured

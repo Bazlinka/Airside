@@ -9,7 +9,8 @@
   reverse, wheel and contact sounds reused; no recorded cockpit-audio claim.
   **NEXT:** native Unity compile/EditMode and packaged all-type cockpit input,
   zoom/window, cloud/storm journey, listening and performance acceptance before
-  merging. Linux has no Mac Unity editor. Seven pure envelope tests pass.
+  merging. Linux has no Mac Unity editor. Seven pure envelope tests and full headless suite (1,424/1,424) pass.
+  Draft PR #517: https://github.com/Bazlinka/Airside/pull/517.
   Evidence: `docs/testing/cockpit-immersion-2026-10-01/README.md`.
   Existing asset audit issues: Resources directory missing metadata; three empty
   Animation folders have orphan metadata. No new asset audit issue identified.

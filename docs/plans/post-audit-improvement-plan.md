@@ -36,11 +36,10 @@ Do not reopen P0 unless Bailey asks. Next priority is **P1**.
 **Status: approved (Bailey 2026-10-01).** Continue Phase 1+ code; do **not** ask Bailey to
 verify each slice — he rebuilds when he wants. Optional Mac baseline captures are never a merge gate.
 
-1. Land-cover polish (Golf + bunkers done) → far-ring CBD skyline (ADR 0208 design
-   locked; implement next) → seasonal tint / haze (remaining Phase 1 in
-   `docs/plans/visual-overhaul-plan.md`).
-2. Then Phase 2 trees, Phase 3 buildings (audit already done), Phase 4 lighting, as narrow ADRs.
-3. Building heights: 71/78 still rule defaults (`docs/data/ypad-buildings-audit.md`) — later Phase 3.
+1. Phase 1 ground/land checklist complete on tip (ADRs 0206–0210: Golf, bunkers,
+   CBD skyline, seasonal tint, Hills haze). Continue Phase 2 trees or Phase 3
+   building accuracy as narrow ADRs.
+2. Building heights: 71/78 still rule defaults (`docs/data/ypad-buildings-audit.md`) — Phase 3.
 
 **Already on `main`:**
 - Phase 0 bookmarks (ADR 0200) via #485.

@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Phase 1 Hills aerial haze (ADR 0210).** Outer-terrain land vertex colours
+  cool toward blue-grey with distance and height so the Hills dissolve instead
+  of reading as a hard brown rim. Locked by `AdelaideAerialPerspectiveTests`.
+  No save-schema changes.
 - **Phase 1 seasonal dry-grass tint (ADR 0209).** Surroundings Park/Scrub/plain
   bake strawier mid-January and greener mid-July from the Adelaide calendar day.
   Golf irrigated green unchanged. Locked by `AdelaideSeasonGrassTintTests`. No

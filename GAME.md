@@ -1,10 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Cursor — Phase 1 Hills aerial haze (ADR 0210).**
+  Outer-terrain land colours cool toward blue-grey with distance/height.
+  `AdelaideAerialPerspective`. Phase 1 ground/land checklist complete on tip.
+  **Checks:** `scripts/test-domain.sh` **1193/1193**.
+  **NEXT:** Phase 2 trees, or Phase 3 building heights.
+
 - **2026-10-01 Cursor — Phase 1 seasonal dry-grass tint (ADR 0209).**
   Surroundings Park/Scrub/plain straw mid-Jan / greener mid-Jul from Adelaide
   calendar day at field build. Golf stays irrigated. `AdelaideSeasonGrassTint`.
   **Checks:** `scripts/test-domain.sh` **1189/1189**.
-  **NEXT:** Hills haze / aerial perspective (still Phase 1).
 
 - **2026-10-01 Cursor — Phase 1 CBD skyline boxes (ADR 0208).**
   42 sourced-height OSM towers near Victoria Square (~7 km ENE) as one grey mesh

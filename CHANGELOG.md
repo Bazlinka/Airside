@@ -1,5 +1,16 @@
 ## Unreleased
 
+- **SF34 cockpit spectator candidate.** Selected local aircraft offer Follow and Cockpit.
+  The Saab cockpit opens at first engine spool, follows final aircraft poses through
+  the local flight, and exits at local view loss or engine shutdown. Right-drag looks,
+  scroll zooms, Recenter faces forward, Esc returns to external follow and R resets
+  overview. An original metre-authored interior shows live ground speed, height above
+  the runway datum and heading; the listener uses an interior engine mix. Other types
+  remain disabled pending fitted interiors. No flight-control, simulation or save changes.
+  ADR 0207 and `docs/plans/cockpit-mode.md`; visual/journey acceptance is tracked separately.
+- **Restore native compilation after orphan doorway call.** Remove the remote-main
+  call to missing `AttachDoorways` until its actual implementation is committed.
+
 - **Runway edge lines and centreline no longer shimmer into dashes.** A 0.9 m line is under a pixel wide
   from about a kilometre out, so it broke up and crawled as the camera moved. The 05/23 and 12/30 edge and
   centre lines are now flat ribbons (`DistanceWidenedPaint`) whose width follows distance node by node to

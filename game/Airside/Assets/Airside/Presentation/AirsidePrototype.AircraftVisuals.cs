@@ -1221,7 +1221,6 @@ namespace Airside.Presentation
                 if (finalAtr42)
                     RelocateAtrDoors(root);
                 NestCabinDoorParts(root);
-                AttachDoorways(root);
                 ConvertToAirstairDoor(root);
                 NestFlapParts(root);
                 NestWingMountedParts(root);

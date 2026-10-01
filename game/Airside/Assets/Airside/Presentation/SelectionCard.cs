@@ -58,6 +58,10 @@ namespace Airside.Presentation
         public bool CanCancel;
         public bool GuidePrimary;
         public bool GuideBestStand;
+        public bool ShowCameraActions;
+        public bool CanFollow;
+        public bool CanCockpit;
+        public string CockpitHint = string.Empty;
         public readonly List<SelectionPrepStage> Prep = new();
         public readonly List<SelectionStandChoice> Stands = new();
     }
@@ -76,11 +80,12 @@ namespace Airside.Presentation
         public static float HeightFor(SelectionCardData data)
         {
             if (data == null) return 0f;
+            var cameras = data.ShowCameraActions ? 38f : 0f;
             if (data.AwaitingStand && data.IsPlayer)
-                return 96f + ((System.Math.Max(1, data.Stands.Count) + 1) / 2) * StandRowHeight + 14f;
+                return cameras + (96f + ((System.Math.Max(1, data.Stands.Count) + 1) / 2) * StandRowHeight + 14f);
             if (data.Prep.Count > 0)
-                return 186f;
-            return data.IsPlayer ? 142f : 92f;
+                return cameras + (186f);
+            return cameras + (data.IsPlayer ? 142f : 92f);
         }
 
         public static void Paint(HudDrawList into, HudBox box, SelectionCardData data)
@@ -88,6 +93,16 @@ namespace Airside.Presentation
             if (into == null || data == null || box.IsEmpty)
                 return;
             into.Surface(box, 0.9f);
+            if (data.ShowCameraActions)
+            {
+                var row = new HudBox(box.X + 20f, box.Bottom - 36f, box.Width - 40f, 26f);
+                into.Button(new HudBox(row.X, row.Y, 80f, row.Height), "FOLLOW", "camera-follow",
+                    HudButtonStyle.Secondary, data.CanFollow);
+                into.Button(new HudBox(row.X + 90f, row.Y, row.Width - 90f, row.Height),
+                    data.CanCockpit ? "COCKPIT" : data.CockpitHint.ToUpperInvariant(), "camera-cockpit",
+                    HudButtonStyle.Secondary, data.CanCockpit);
+                box = new HudBox(box.X, box.Y, box.Width, box.Height - 38f);
+            }
             var x = box.X + 20f;
             var inner = box.Width - 40f;
             into.Fill(new HudBox(box.X + 8f, box.Y + 16f, 4f, 30f), HudTone.Default, 1f, data.LiveryHex);

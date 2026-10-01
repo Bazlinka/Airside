@@ -176,3 +176,15 @@ under `Assets/Airside/Art/Shaders` and `Assets/Airside/Presentation`; each has a
   Generation cost: $0; no image model/prompt or external service used.
 - Fallback: parent git revision retains every previous model and thumbnail;
   runtime primitive fallback and legacy custom colours remain supported.
+
+## SF34 cockpit spectator interior candidate — 2026-10-01
+
+Original Airside procedural 3D geometry; editable source: `SaabCockpitInterior.cs`
+in Presentation. No external model, image, texture or new sound recording.
+Source dimensions use the existing SF34 kit coordinates; seat/windows/panel are
+representative and require visual acceptance, not surveyed aircraft geometry.
+Cost: zero asset acquisition. Attribution: Airside project. Licence: project-owned
+original code/geometry; existing font, shaders and aircraft audio retain their
+registered licences. Prompt/source evidence: approved cockpit spectator plan in
+`docs/plans/cockpit-mode.md`, ADR 0207. Fallback: external follow; unsupported
+aircraft types cannot enter. Status: candidate, not fleet-wide production.

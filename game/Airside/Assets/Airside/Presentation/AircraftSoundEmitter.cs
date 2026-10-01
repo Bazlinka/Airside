@@ -19,6 +19,7 @@ namespace Airside.Presentation
         private AudioLowPassFilter[] _filters;
         private AircraftType _type;
         private float _range;
+        public bool InteriorListening { get; set; }
 
         public void Configure(AircraftType type, AudioClip fallbackEngine, AudioClip fallbackTouchdown)
         {
@@ -62,6 +63,7 @@ namespace Airside.Presentation
             var mix = AircraftAudioMix.For(_type, aircraftId, power, rotation, left, right,
                 reverse, groundSpeed, grounded);
             var cutoff = EngineVoice.LowPassHz(distance, _range, power);
+            if (InteriorListening) cutoff = Mathf.Min(cutoff, 1800f);
             for (var i = 0; i < _filters.Length; i++)
                 _filters[i].cutoffFrequency = cutoff;
             ApplyLoop(_idle, mix.Idle * zoomGain, mix.Pitch, deltaSeconds);

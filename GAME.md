@@ -1,5 +1,23 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Codex — SF34 cockpit spectator candidate (`feature/saab-cockpit-mode`, ADR 0207).**
+  Isolated checkout: `/private/tmp/airside-cockpit`; original dirty checkout untouched.
+  Select a local aircraft → Cockpit. SF34 availability follows first engine spool,
+  local visibility and shutdown; other types are disabled. Left-seat 3D interior,
+  bounded head look, zoom, recenter, Esc to external follow, R to overview, stable
+  registration resolution, restored shell/glazing state and interior listener/mix.
+  Live panel values: horizontal ground speed, height above runway datum, heading.
+  Plan/task packet: `docs/plans/cockpit-mode.md`. No simulation or save changes.
+  Removed one orphan `AttachDoorways` call already present on remote main so Unity compiles.
+  **Checks:** baseline headless 1194/1194; changed headless 1198/1198 and final focused
+  eligibility/card tests 5/5; Unity EditMode 1585/1587, zero failures, two existing
+  inconclusives. Native cockpit renders exposed/fixed a roof gap and text sizing.
+  **NEXT:** verify Mac build and packaged cockpit captures, then finish complete-local-
+  journey, entry/exit, day/night/weather, manual audio and performance acceptance.
+  Interior is a simplified candidate. Do not claim a completed fleet cockpit rollout
+  or merge until those acceptance rows have actual evidence.
+
+
 - **2026-10-01 Cursor — P0 waiting on Stage A evidence push (#492).**
   Tip **#492** `dc546ac1` (CI green, MERGEABLE). Stage A fail-closed locks are on tip;
   headless env Save proposed (`bld-20260930-f5f76b1e`). Bailey marked Mac Stage A

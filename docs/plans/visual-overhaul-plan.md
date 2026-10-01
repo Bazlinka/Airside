@@ -125,8 +125,9 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
 - Phase 1 slices done: stand oil stains + softer ground edges (ADR 0201); apron patch
   repairs + drainage pits (ADR 0202); West Beach dunes/foam/Patawalonga outlet (ADR 0203).
   Phase 1 Golf kind + tint (ADR 0206), bunker discs (ADR 0207), and CBD skyline
-  boxes (ADR 0208, 42 towers ~7 km ENE) on tip. Hills haze / seasonal tint still open.
-  **Next Phase 1:** seasonal tint / Hills haze.
+  boxes (ADR 0208, 42 towers ~7 km ENE) on tip. Seasonal tint **designed** (ADR 0209);
+  Hills haze still open.
+  **Next Phase 1:** implement ADR 0209 seasonal tint, or Hills haze.
 - Phases 2, 3b–f, 4, 5 remain after Phase 1.
 
 ## Risks

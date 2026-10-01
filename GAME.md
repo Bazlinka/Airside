@@ -7,7 +7,7 @@ new ATR42/DH8D/SF34 cockpits alongside all ten jets. Both families share the tes
 contains the separate audio assertion fix. Combined full checks pass: headless 1,345/1,345; native 1,765 passed,
 zero failures, two existing inconclusives. The new native result is retained in
 `docs/testing/jet-cockpits-2026-10-01/merge-native-tests.xml`. Asset audit and
-generated harness checks pass. Combined Mac build is next. Packaged flight/night/weather/performance remain unverified;
+generated harness checks pass. Clean combined Mac build passes at `6f1d6ddd`; PR #514 is the authorised merge. Packaged flight/night/weather/performance remain unverified;
 merge authorisation does not turn those into passing checks. Jet ADR is now 0225.
 
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup

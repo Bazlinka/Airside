@@ -18,8 +18,9 @@ renumbered to 0225 to avoid main's existing 0215 decisions.
   full native checks pass after this repair.
 - Asset audit: **1,618 unique GUIDs, 347 packaged mirrors, 70 character materials**.
 - Generated headless harness check passes. PR diff whitespace check passes.
-- Combined Mac build is next. Previously recorded all-ten native geometry stills
-  remain applicable: jet layout/profile/shell geometry has not changed during merge.
+- Clean combined Mac build passes at `6f1d6ddd`, dirty=false. Identity retained
+  as `merge-mac-build-identity.txt`. PR #514 carries the authorised merge.
+  Previously recorded all-ten native geometry stills remain applicable: jet layout/profile/shell geometry has not changed during merge.
 - Packaged flight/night/weather/audio/performance acceptance remains open after the
   authorised merge. Prior failed captures below remain disclosed.
 

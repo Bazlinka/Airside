@@ -34,6 +34,9 @@ namespace Airside.Presentation
         private static readonly RoadColor Steel = RoadColor.Srgb(0.42f, 0.43f, 0.45f, 1f);
         private static readonly RoadColor LampHead = RoadColor.Srgb(0.30f, 0.31f, 0.33f, 1f);
         private static readonly RoadColor Glass = RoadColor.Srgb(0.12f, 0.15f, 0.18f, 1f);
+        private static readonly RoadColor PalmTrunk = RoadColor.Srgb(0.55f, 0.48f, 0.36f, 1f);
+        private static readonly RoadColor PalmFrond = RoadColor.Srgb(0.30f, 0.42f, 0.24f, 1f);
+        private static readonly RoadColor PalmFrondShade = RoadColor.Srgb(0.24f, 0.34f, 0.20f, 1f);
 
         // Australian carpark palette: lots of white, silver, grey and black.
         private static readonly RoadColor[] CarColours =
@@ -332,6 +335,52 @@ namespace Airside.Presentation
             }
 
             return l.Length / 2;
+        }
+
+        /// <summary>
+        /// Date-palm rows along landside car-park edges (ADR 0215). Merges into the props sink.
+        /// Returns palms drawn.
+        /// </summary>
+        public static int BuildPalms(RoadMeshSink sink, RoadBuildOptions o)
+        {
+            var sites = AdelaidePalmPlacement.Sites();
+            for (var i = 0; i < sites.Length; i++)
+            {
+                var site = sites[i];
+                var y0 = o.Height(site.X, site.Z) + o.YOffset;
+                var h = site.HeightMetres;
+                var trunkH = h * AdelaidePalmGeometry.TrunkHeightFrac;
+                var trunkR = h * AdelaidePalmGeometry.TrunkRadiusOverHeight;
+                var ux = (float)Math.Cos(site.YawRad);
+                var uz = (float)Math.Sin(site.YawRad);
+                sink.Box(site.X, y0, site.Z, ux, uz, trunkR, trunkR, trunkH, PalmTrunk);
+
+                var crownY = y0 + trunkH;
+                var reach = h * AdelaidePalmGeometry.CrownRadiusOverHeight;
+                var fronds = AdelaidePalmGeometry.FrondsForSeed(site.X, site.Z);
+                for (var f = 0; f < fronds.Length; f++)
+                {
+                    var frond = fronds[f];
+                    var length = reach * frond.LengthFrac;
+                    var width = reach * frond.WidthFrac;
+                    var cy = (float)Math.Cos(frond.PitchRad);
+                    var sy = (float)Math.Sin(frond.PitchRad);
+                    var tipX = site.X + (float)Math.Cos(frond.YawRad) * cy * length;
+                    var tipY = crownY + sy * length;
+                    var tipZ = site.Z + (float)Math.Sin(frond.YawRad) * cy * length;
+                    // Perpendicular in the horizontal plane for blade width.
+                    var px = -(float)Math.Sin(frond.YawRad) * width;
+                    var pz = (float)Math.Cos(frond.YawRad) * width;
+                    var midX = (site.X + tipX) * 0.5f;
+                    var midY = (crownY + tipY) * 0.5f + width * 0.15f;
+                    var midZ = (site.Z + tipZ) * 0.5f;
+                    var colour = f % 2 == 0 ? PalmFrond : PalmFrondShade;
+                    sink.Tri(site.X, crownY, site.Z, midX + px, midY, midZ + pz, tipX, tipY, tipZ, colour);
+                    sink.Tri(site.X, crownY, site.Z, tipX, tipY, tipZ, midX - px, midY, midZ - pz, colour);
+                }
+            }
+
+            return sites.Length;
         }
 
         private static bool Far(float x, float z, float radius)

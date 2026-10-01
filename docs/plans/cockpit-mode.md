@@ -69,3 +69,32 @@ remains separate from code evidence.
 Manual flying, interactive avionics, complete overhead panels, model-specific
 recorded interior audio, opening cold cockpits, remote destination/cruise scenes,
 VR and fleet-wide cockpit production are separate work.
+
+## 2026-10-01 approved scope: turboprops only
+
+Bailey requested implementation for turboprops only. This supersedes the earlier
+737 proof/jet rollout order. Explicitly support the current SF34, ATR42 and DH8D
+catalogue entries; new types require an intentional fitted interior and validation.
+Do not infer eligibility from stand size or audio engine class.
+
+Task packet: preserve the SF34 layout; add original ATR 42-600 and Dash 8-400
+panel/window/pedestal/overhead layouts with type-specific eye stations. Extract
+shared geometry, exterior restoration and resource cleanup into a transient
+interior base. Select the builder from the clicked aircraft's actual type, including
+rebound fleet views. Preserve all existing spectator controls, first-spool access,
+shutdown/local-loss exits, audio behavior, simulation pacing and save compatibility.
+
+Acceptance: all three types follow the same availability rules; jets stay disabled;
+factory allocation/restoration and camera lifecycle pass native tests; opaque lower
+shells occlude lower sightlines in level and banked poses while windows stay open.
+Visually inspect forward, side, overhead, panel, footwell and banked views in each
+runtime kit. Complete native EditMode, clean Mac build and packaged flight review.
+The editor review supports `-cockpitReviewType all`; packaged review can filter
+`-airsideReviewCockpitType SF34|ATR42|DH8D` and optionally select an already running
+arrival with `-airsideReviewCockpitArrivals`. These flags require existing soak review
+mode and do not change simulation state or normal player saves.
+
+The five LCD faces are decorative original artwork. Ground speed, height above
+runway datum and heading retain the separate live local telemetry readout.
+No claim of functional or surveyed avionics. Manufacturer reference notes and
+handling are in `docs/art/reference/turboprop-cockpits/README.md`.

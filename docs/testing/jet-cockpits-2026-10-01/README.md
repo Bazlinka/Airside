@@ -1,3 +1,30 @@
+## Authorised merge verification — 1 October 2026
+
+Bailey requested merging after disclosure of the candidate limits. Combined with
+main `f1044eea`, preserving the SF34/ATR42/DH8D rollout and all ten jet interiors.
+Turboprop layout helpers now inherit the same `CockpitInterior` lifetime; native
+cases cover all three turboprops' repeated entry, leave and direct destruction.
+Both any-phase and arrivals-only packaged review flags are retained. Jet ADR was
+renumbered to 0225 to avoid main's existing 0215 decisions.
+
+- Full headless: **1,345 passed, 0 failed**. Main's separate audio fix resolves the
+  original candidate failure; no audio thresholds changed by the jet work.
+- Full native Unity: **1,765 passed, 0 failed, 2 inconclusive (1,767 total)**.
+  Fresh result: `merge-native-tests.xml`. The existing `FleetMarket_SaysASharedLockOnce`
+  and `Storm_IsAGroundStop` preconditions remain inconclusive.
+- Native compilation initially exposed main's internal vegetation cache-reset hooks
+  being inaccessible to the separate test assembly. `AssemblyInfo.cs` grants
+  `Airside.Tests.EditMode` friend access, matching the existing headless harness;
+  full native checks pass after this repair.
+- Asset audit: **1,618 unique GUIDs, 347 packaged mirrors, 70 character materials**.
+- Generated headless harness check passes. PR diff whitespace check passes.
+- Combined Mac build is next. Previously recorded all-ten native geometry stills
+  remain applicable: jet layout/profile/shell geometry has not changed during merge.
+- Packaged flight/night/weather/audio/performance acceptance remains open after the
+  authorised merge. Prior failed captures below remain disclosed.
+
+---
+
 # Jet cockpit candidate validation — 1 October 2026
 
 Branch: `feature/all-jet-cockpits`; baseline `f15aac12` (`origin/main` at creation).

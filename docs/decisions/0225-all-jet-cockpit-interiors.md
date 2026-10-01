@@ -1,6 +1,6 @@
-# ADR 0215 — All-jet spectator cockpit interiors
+# ADR 0225 — All-jet spectator cockpit interiors
 
-Date: 2026-10-01. Status: implemented on `feature/all-jet-cockpits`, unmerged candidate.
+Date: 2026-10-01. Status: implemented on `feature/all-jet-cockpits`, merge authorised by Bailey after disclosure of packaged acceptance limits.
 
 Bailey requested immersive cockpit preparation covering every jet on a separate
 branch. Extend ADR 0214's spectator mode to the ten flying catalogue jets. Explicit
@@ -19,3 +19,7 @@ Affected systems: cockpit availability, presentation lifecycle and native review
 Acceptance/evidence: `docs/plans/jet-cockpits.md` and
 `docs/testing/jet-cockpits-2026-10-01/README.md`. Broad visual, audio and journey
 acceptance cannot be inferred from profile coverage or compilation alone.
+
+Merge integration: preserve main's three turboprop decks through a thin
+`TurbopropCockpitInterior : CockpitInterior` layout helper. Geometry remains unchanged;
+all thirteen interiors share renderer restoration and owned-resource disposal.

@@ -55,7 +55,9 @@ namespace Airside.Presentation
             var type = _fleetAircraftById[_cockpitAircraftId].Type;
             _cockpitInterior = type.Id == AircraftType.Saab340.Id
                 ? SaabCockpitInterior.Build(view)
-                : JetCockpitInterior.Build(view, type);
+                : JetCockpitProfile.TryFor(type.Id, out _) ? JetCockpitInterior.Build(view, type)
+                : TurbopropCockpitInterior.Create(view, type);
+            if (_cockpitInterior == null) return;
             _cockpitInterior.Enter();
             _cockpitPreviousPosition = view.position;
             _cockpitPreviousTime = _preciseTime;
@@ -142,6 +144,7 @@ namespace Airside.Presentation
         // Reproducible packaged review: only a real eligible aircraft, never force-start engines.
         private static readonly bool CockpitReview = Array.IndexOf(Environment.GetCommandLineArgs(), "-airsideReviewCockpit") >= 0;
         private static readonly string CockpitReviewType = ReadCockpitReviewType();
+        private static readonly bool CockpitReviewArrivals = Array.IndexOf(Environment.GetCommandLineArgs(), "-airsideReviewCockpitArrivals") >= 0;
         private static readonly bool CockpitReviewAnyPhase = Array.IndexOf(Environment.GetCommandLineArgs(), "-airsideReviewCockpitAnyPhase") >= 0;
         private static string ReadCockpitReviewType()
         {
@@ -160,7 +163,10 @@ namespace Airside.Presentation
                 // Prefer an actual departure so the first still covers engine startup,
                 // rather than jumping into an inbound already at full power.
                 if (CockpitReviewType != null && aircraft.Type.Id != CockpitReviewType) continue;
-                if ((!CockpitReviewAnyPhase && aircraft.State is not (FleetState.AtStand or FleetState.TaxiOut))
+                var phase = CockpitReviewAnyPhase || (CockpitReviewArrivals
+                    ? aircraft.State is FleetState.Inbound or FleetState.Landing or FleetState.TaxiIn
+                    : aircraft.State is FleetState.AtStand or FleetState.TaxiOut);
+                if (!phase
                     || !CockpitAvailability.Supported(aircraft.Type) || CockpitReason(aircraft).Length != 0) continue;
                 if (best == null || (aircraft.Airline.IsPlayer && !best.Airline.IsPlayer)
                     || (aircraft.Airline.IsPlayer == best.Airline.IsPlayer

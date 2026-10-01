@@ -215,3 +215,19 @@ runtime text, zero purchase cost, no third-party runtime attribution. Manufactur
 reference links and evidence limits: `docs/plans/jet-cockpits.md`. Fallback: unsupported
 types retain external view with Cockpit disabled; no generic/Saab jet fallback.
 Status: branch candidate; visual and packaged acceptance tracked separately.
+## ATR42 / DH8D cockpit interior candidates — 2026-10-01
+
+Original project-owned procedural geometry and three 192px code-drawn display
+textures, authored by Codex for Airside. Editable runtime source:
+`GlassTurbopropCockpitInterior.cs`; shared helpers/lifetime:
+`TurbopropCockpitInterior.cs`. Saab geometry remains in `SaabCockpitInterior.cs`.
+ATR and Dash layouts have distinct fitted eye/window/panel/overhead dimensions;
+textures are original illustrative flight, navigation and engine markings.
+No external image, model, font or audio is added. Existing Unity font/shaders
+retain their registered terms. Acquisition/generation service cost: zero.
+Attribution: Airside project; no third-party runtime attribution required.
+Prompt/source evidence: Bailey's turboprop-only request, ADR 0215 and
+`docs/plans/cockpit-mode.md`. Manufacturer-reference URLs and handling are recorded
+in `docs/art/reference/turboprop-cockpits/README.md`; research pixels do not ship.
+Fallback: external view for unsupported types or failed factory creation.
+Status: source implemented; native visual/build acceptance pending licensing recovery.

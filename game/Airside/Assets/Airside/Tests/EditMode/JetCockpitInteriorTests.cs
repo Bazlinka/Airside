@@ -10,6 +10,33 @@ namespace Airside.Tests
 {
     public sealed class JetCockpitInteriorTests
     {
+        [TestCase("SF34")]
+        [TestCase("ATR42")]
+        [TestCase("DH8D")]
+        public void CombinedLifetimePreservesEveryTurboprop(string id)
+        {
+            Assert.That(AircraftType.TryFromId(id, out var type), Is.True);
+            var root = new GameObject("Aircraft");
+            var shell = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            shell.transform.SetParent(root.transform, false);
+            var renderer = shell.GetComponent<Renderer>();
+            try
+            {
+                var rig = TurbopropCockpitInterior.Create(root.transform, type);
+                Assert.That(rig, Is.Not.Null);
+                Assert.That(rig.Seat.IsChildOf(rig.transform), Is.True);
+                rig.Enter();
+                rig.Enter();
+                Assert.That(renderer.forceRenderingOff, Is.True);
+                rig.Leave();
+                Assert.That(renderer.forceRenderingOff, Is.False);
+                rig.Enter();
+                Object.DestroyImmediate(rig.gameObject);
+                Assert.That(renderer.forceRenderingOff, Is.False);
+            }
+            finally { Object.DestroyImmediate(root); }
+        }
+
         [TestCase("B738")]
         [TestCase("B38M")]
         [TestCase("A320")]

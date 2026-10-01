@@ -74,9 +74,20 @@ namespace Airside.Tests
             Assert.That(profile.DisplayCount, Is.EqualTo(displays));
         }
 
-        [Test] public void UnsupportedTypeNeverUsesSaabSeat()
+        [TestCase("SF34")]
+        [TestCase("ATR42")]
+        [TestCase("DH8D")]
+        public void EveryCurrentTurbopropUsesTheSameEngineAndVisibilityRules(string id)
         {
-            Assert.That(CockpitAvailability.Reason(AircraftType.Atr42, true, EngineState.Running), Is.Not.Empty);
+            Assert.That(AircraftType.TryFromId(id, out var type), Is.True);
+            Assert.That(CockpitAvailability.Supported(type), Is.True);
+            Assert.That(CockpitAvailability.Reason(type, true, new EngineState(0f, 0.001f, true, false)), Is.Empty);
+            Assert.That(CockpitAvailability.Reason(type, true, EngineState.ColdAndOpen), Is.EqualTo("Available after engine start"));
+            Assert.That(CockpitAvailability.Reason(type, false, EngineState.Running), Is.EqualTo("Aircraft outside the local area"));
+        }
+
+        [Test] public void NullTypeRemainsUnavailable()
+        {
             Assert.That(CockpitAvailability.Supported(null), Is.False);
         }
     }

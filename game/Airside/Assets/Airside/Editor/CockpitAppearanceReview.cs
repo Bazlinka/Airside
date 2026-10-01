@@ -59,7 +59,19 @@ public static class CockpitAppearanceReview
             line.transform.localScale = new Vector3(0.2f, 0.02f, 20f);
         }
         var typeIndex = Array.IndexOf(args, "-cockpitReviewType");
-        var typeId = _typeOverride ?? (typeIndex >= 0 ? args[typeIndex + 1] : "SF34");
+        var typeId = _typeOverride ?? (typeIndex >= 0 && typeIndex + 1 < args.Length ? args[typeIndex + 1] : "SF34");
+        if (typeId == "all")
+        {
+            try
+            {
+                foreach (var id in new[] { "SF34", "ATR42", "DH8D" })
+                { _typeOverride = id; Run(); }
+            }
+            finally { _typeOverride = null; }
+            Object.DestroyImmediate(material);
+            Object.DestroyImmediate(asphalt);
+            return;
+        }
         if (!AircraftType.TryFromId(typeId, out var type) || !CockpitAvailability.Supported(type))
             throw new ArgumentException("Unsupported cockpit review type: " + typeId);
         var root = (Transform)typeof(AirsidePrototype).GetMethod("BuildAircraftForType", BindingFlags.Static | BindingFlags.NonPublic)
@@ -67,7 +79,8 @@ public static class CockpitAppearanceReview
         root.position = new Vector3(0f, 0.7f, 0f);
         foreach (var lod in root.GetComponentsInChildren<LODGroup>()) lod.ForceLOD(0);
         CockpitInterior rig = type.Id == AircraftType.Saab340.Id
-            ? SaabCockpitInterior.Build(root) : JetCockpitInterior.Build(root, type);
+            ? SaabCockpitInterior.Build(root) : JetCockpitProfile.TryFor(type.Id, out _)
+                ? JetCockpitInterior.Build(root, type) : TurbopropCockpitInterior.Create(root, type);
         rig.Enter();
         rig.SetReadout("GS 12 kt\nHEIGHT 0 ft\nHDG 050°");
         if (rig is JetCockpitInterior jet) jet.SetFlightState(root, Airside.Simulation.EngineState.Running, "REVIEW");
@@ -99,6 +112,7 @@ public static class CockpitAppearanceReview
         RenderTexture.active = null;
         camera.targetTexture = null;
         Object.DestroyImmediate(target);
+        Object.DestroyImmediate(camera.gameObject);
         rig.Leave();
         Object.DestroyImmediate(root.gameObject);
         Object.DestroyImmediate(material);

@@ -25,6 +25,8 @@ namespace Airside.Simulation
         /// Gap between a rescue crew's call-outs, in seconds. Deterministic per airframe and trip so a saved game
         /// and a game that never stopped fly the same day, and it never touches the gameplay random source.
         /// </summary>
+        public const long RescueFirstCalloutSeconds = 4 * 60;
+        public const long RescueFirstCalloutSpreadSeconds = 4 * 60;
         public const long RescueMinimumGapSeconds = 35 * 60;
         public const long RescueGapSpreadSeconds = 80 * 60;
 
@@ -175,7 +177,11 @@ namespace Airside.Simulation
 
             if (pick.Code == null || !CanReach(aircraft, pick))
                 return;
-            var gap = RescueMinimumGapSeconds + Math.Abs((seed / 7) % RescueGapSpreadSeconds);
+            // The first call-out of a new game (or of a save that has just gained the helicopter) comes soon, so
+            // the crew is seen working rather than sitting for the better part of an hour.
+            var gap = aircraft.CompletedTrips == 0
+                ? RescueFirstCalloutSeconds + Math.Abs((seed / 7) % RescueFirstCalloutSpreadSeconds)
+                : RescueMinimumGapSeconds + Math.Abs((seed / 7) % RescueGapSpreadSeconds);
             var at = now.Advance(gap - gap % 60);
             aircraft.Scheduled = new ScheduledDeparture(pick, at);
         }

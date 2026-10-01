@@ -244,6 +244,10 @@ namespace Airside.Tests
             Assert.That(AirlineOperations.AdelaideHelipadStands, Does.Contain(heli.Stand));
             Assert.That(heli.State, Is.EqualTo(FleetState.AtStand));
             Assert.That(heli.Scheduled.HasValue, Is.True, "the crew has a call-out booked");
+            Assert.That(heli.Scheduled.Value.DepartAt.ElapsedSeconds,
+                Is.InRange(AirlineOperations.RescueFirstCalloutSeconds,
+                    AirlineOperations.RescueFirstCalloutSeconds + AirlineOperations.RescueFirstCalloutSpreadSeconds),
+                "the first call-out comes soon");
             Assert.That(DestinationCatalogue.IsRescueSite(heli.Scheduled.Value.Destination), Is.True);
         }
 

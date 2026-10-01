@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Phase 1 golf bunker discs (ADR 0207).** 213 OSM `golf=bunker` discs draw as
+  sand discs on the surroundings mesh (Glenelg and nearby courses). Land-cover
+  Golf tint unchanged. Locked by `GolfBunkerMarksTests`. No save-schema changes.
 - **Phase 1 land cover: Golf distinct from Park (ADR 0206).** OSM golf courses
   paint `Kind.Golf` with a richer irrigated green tint at overview (Royal
   Adelaide, Glenelg, …). Parks stay olive. Regenerated `AdelaideLandCover`;

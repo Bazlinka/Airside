@@ -59,6 +59,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightNotices.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightNumber.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightPlanner.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/GolfBunkerMarks.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HoldReasonText.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudBox.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudDraw.cs" />
@@ -185,6 +186,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GateAlignmentTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GlassCockpitPainterTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GoAroundRejoinTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GolfBunkerMarksTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundLegSeamTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundMotionSmoothnessTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundMotionTests.cs" />

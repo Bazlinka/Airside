@@ -184,7 +184,9 @@ namespace Airside.Presentation
                     AirsideAdelaideOuterTerrain.TryBuild(root, shader);
                 }
 
-                BuildShoreFoam(root, AirsideAdelaideGround.PavementWorldY - SeaBelowPavement + 0.04f);
+                var coastY = AirsideAdelaideGround.PavementWorldY - SeaBelowPavement + 0.04f;
+                BuildShoreFoam(root, coastY);
+                BuildGolfBunkers(root, AirsideAdelaideGround.PavementWorldY + 0.02f);
                 return true;
             }
             catch (Exception e)
@@ -412,6 +414,54 @@ namespace Airside.Presentation
                 new Color(0.92f, 0.95f, 0.97f, 0.55f));
             SpawnFoamLayer(root, "Coast foam outer", segments, foamY - 0.01f, landward: 1f, seaward: 16f,
                 new Color(0.85f, 0.90f, 0.94f, 0.35f));
+        }
+
+        /// <summary>
+        /// OSM golf bunker discs (ADR 0207) as one sand-coloured child mesh so courses
+        /// show traps at overview without painting over the Golf land-cover tint.
+        /// </summary>
+        public static void BuildGolfBunkers(Transform root, float bunkerY)
+        {
+            if (AdelaideGolfBunkers.Count == 0)
+                return;
+
+            var verts = new System.Collections.Generic.List<Vector3>(AdelaideGolfBunkers.Count * GolfBunkerMarks.DiscSides);
+            var tris = new System.Collections.Generic.List<int>(AdelaideGolfBunkers.Count * (GolfBunkerMarks.DiscSides - 2) * 3);
+            for (var i = 0; i < AdelaideGolfBunkers.Count; i++)
+            {
+                AdelaideGolfBunkers.Get(i, out var cx, out var cz, out var radius);
+                var xz = GolfBunkerMarks.DiscCorners(cx, cz, radius);
+                var baseIndex = verts.Count;
+                var sides = xz.Length / 2;
+                for (var s = 0; s < sides; s++)
+                    verts.Add(new Vector3(xz[s * 2], bunkerY, xz[s * 2 + 1]));
+                for (var s = 1; s < sides - 1; s++)
+                {
+                    tris.Add(baseIndex);
+                    tris.Add(baseIndex + s);
+                    tris.Add(baseIndex + s + 1);
+                }
+            }
+
+            const string name = "Golf bunkers";
+            var mesh = new Mesh
+            {
+                name = name,
+                indexFormat = verts.Count > 65000 ? IndexFormat.UInt32 : IndexFormat.UInt16
+            };
+            mesh.SetVertices(verts);
+            mesh.SetTriangles(tris, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+
+            var go = new GameObject(name);
+            go.transform.SetParent(root, false);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
+                Beach, AirsideMaterialLibrary.SurfaceKind.Sand);
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
         }
 
         private static void SpawnFoamLayer(Transform root, string name,

@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Phase 2a multi-lobe eucalypt crowns (ADR 0212).** NDVI suburb trees use a
+  3-lobe faceted canopy (primary dome + two side clusters, 28 crown tris) so
+  they read as eucalypts instead of one hex blob. Layout in
+  `AdelaideTreeGeometry`; drawn by `AirsideAdelaideSuburbs.AddTree`. No new
+  assets or licences. Locked by `AdelaideTreeGeometryTests`. No save-schema
+  changes.
 - **Phase 1 Hills aerial haze (ADR 0210).** Outer-terrain land vertex colours
   cool toward blue-grey with distance and height so the Hills dissolve instead
   of reading as a hard brown rim. Locked by `AdelaideAerialPerspectiveTests`.

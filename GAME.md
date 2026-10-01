@@ -1,11 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Cursor — Phase 2a multi-lobe eucalypt crowns (ADR 0212).**
+  NDVI suburb trees draw a 3-lobe faceted canopy (primary + two sides, 28 crown
+  tris) via `AdelaideTreeGeometry` instead of one hex blob. No new assets.
+  Branch `cursor/phase2a-eucalypt-crowns-709e` off the Phase 1 tip.
+  **NEXT:** Phase 2 species/LOD/placement, or Phase 3 building accuracy.
+
 - **2026-10-01 Cursor — Phase 1 Hills aerial haze (ADR 0210); tip rebased after #492.**
   Outer-terrain land colours cool toward blue-grey with distance/height.
   `AdelaideAerialPerspective`. Phase 1 ground/land checklist complete on tip.
   Golf land-cover ADR renumbered **0211** (main took 0206 for runway paint).
   **Checks:** `scripts/test-domain.sh` **1210/1210** after merging `main` (#492 + paint/prop).
-  **NEXT:** Phase 2 trees, or Phase 3 building heights.
+  **NEXT:** Phase 2 trees (2a started).
 
 - **2026-10-01 Cursor — Phase 1 seasonal dry-grass tint (ADR 0209).**
   Surroundings Park/Scrub/plain straw mid-Jan / greener mid-Jul from Adelaide

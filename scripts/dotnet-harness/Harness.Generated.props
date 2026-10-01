@@ -17,6 +17,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideSuburbData.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideTaxiwayLabels.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideTerrainHeights.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideTreeGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideWalkwayGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftAudioMix.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftAudioProfiles.Generated.cs" />
@@ -115,6 +116,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideTaxiwayLabelsTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideTerminalArchitectureTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideTerrainHeightsTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideTreeGeometryTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideWalkwayTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AerobridgeTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AiTimetableTests.cs" />

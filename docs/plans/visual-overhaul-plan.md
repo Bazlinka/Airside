@@ -126,8 +126,10 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
   repairs + drainage pits (ADR 0202); West Beach dunes/foam/Patawalonga outlet (ADR 0203).
   Phase 1 Golf (0211), bunkers (0207), CBD skyline (0208), seasonal tint (0209),
   Hills aerial haze (0210) on tip — Phase 1 ground/land checklist complete.
-  **Next:** Phase 2 trees, or Phase 3 building accuracy.
-- Phases 2, 3b–f, 4, 5 remain after Phase 1.
+- Phase 2a (ADR 0212): multi-lobe eucalypt crowns on NDVI suburb trees
+  (`AdelaideTreeGeometry`) — no new assets.
+  **Next:** Phase 2 species/LOD/placement, or Phase 3 building accuracy.
+- Phases 2 (remainder), 3b–f, 4, 5 remain.
 
 ## Risks
 - Performance (already tight) → per-phase budgets, LOD, tiers.

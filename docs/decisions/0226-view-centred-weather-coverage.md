@@ -1,6 +1,7 @@
 # 0226 — View-centred weather coverage
 
-Date: 2026-10-01. Status: approved scope; rendering acceptance in progress.
+Date: 2026-10-01. Status: implemented; representative player views verified.
+Continuous movement and comparative frame-time acceptance remain manual QA.
 
 Bailey requested clouds/fog/weather beyond the airport and selected coverage of
 all visible landscape, with fade only at rendering limits. Remove airport-relative

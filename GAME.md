@@ -23,8 +23,8 @@ merge authorisation does not turn those into passing checks. Jet ADR is now 0225
   Integrated full domain: 1337/1337. Full native: 1744 passed / zero failures /
   two existing inconclusives. Latest-main scenery tests compile with explicit
   EditMode friend-assembly access.
-  Task packet: `docs/plans/weather-coverage.md`. Six distant/above/below player views inspected; integration Mac rebuild
-  and representative captures are in progress; evidence/result record:
+  Task packet: `docs/plans/weather-coverage.md`. Final combined Mac build 409b9349 clean; 67/67 focused native and 37/37
+  focused headless after jet cockpit integration. Eleven player views inspected; evidence/result record:
   `docs/testing/weather-coverage-2026-10-01/README.md`.
 
 

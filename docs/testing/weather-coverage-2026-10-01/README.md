@@ -50,8 +50,8 @@ and representative remote/airport captures will be recorded separately.
 
 Main advanced to `f1044eea` with new scenery and a correction to the audio ratio
 expectation. Weather source merged without conflicts; both handoffs/changelogs
-are retained. Weather ADR is now 0226 (0216 is occupied and 0224 reserved in main's
-handoff). The first integrated native attempt failed compilation because new
+are retained. Weather ADR was first moved to 0225 (0216 occupied and 0224 reserved in
+main's handoff), then to 0226 after the jet merge below. The first integrated native attempt failed compilation because new
 placement tests call internal `ClearCache` hooks across assemblies. Added
 `Presentation/AssemblyInfo.cs` with the same EditMode friend assembly declaration
 already used in Simulation. Runtime methods remain internal; no scenery behavior
@@ -71,5 +71,17 @@ Main then advanced to **b9ec2250** (jet cockpits PR #514). Weather rendering fil
 are unchanged by that update. Both branches added the same friend-assembly
 declaration; retain main's version/meta. Weather ADR moves to **0226**, because
 main's jet cockpit ADR uses 0225. Focused native integration checks and a clean
-combined Mac build are being completed; previous full counts above apply to
+combined Mac build are complete; previous full counts above apply to
 94346c2f, not the newer cockpit integration.
+
+Final combined source **409b9349**: focused native **67/67**, focused headless
+**37/37**, zero failures. Asset audit: 1620 GUIDs / 347 mirrors / 70 materials.
+Diff check against main passes. Clean Mac build (`dirty=false`) passed; identity
+and focused native XML are committed beside this record. Two final-build images
+and logs under `final-integration/` were inspected: remote storm and airport
+overcast above. Distant rain/clouds remain; overview/runways remain readable.
+No shader error, managed exception or logged stall in the two completed captures.
+The final evidence commit only changes documentation/images, not compiled code.
+Full-suite results apply to the scenery integration described above; final jet
+integration was checked with the focused suite and clean player build. Manual
+continuous camera movement and comparative performance remain unverified.

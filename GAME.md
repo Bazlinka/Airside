@@ -10,16 +10,16 @@
   SF34 uses its existing geometry through a shared interior lifecycle. Cockpit
   remains spectator mode; first spool/local visibility/shutdown rules unchanged.
   Plan and task packet: `docs/plans/jet-cockpits.md`. Validation and open acceptance:
-  `docs/testing/jet-cockpits-2026-10-01/README.md`. **NEXT:** review native all-type
-  renders and packaged journeys/entry/exit/weather/night/audio/performance before
-  merging; do not call type coverage completed visual acceptance.
+  `docs/testing/jet-cockpits-2026-10-01/README.md`. **NEXT:** complete packaged journeys/entry/exit/weather/night/audio/performance
+  acceptance before merging. Native all-type geometry review is complete.
   **Checks:** focused headless cockpit 27/27; focused native Unity 35/35.
   Licensing recovered by stopping the stale helper from the initial sandbox run.
   All ten types' ten-angle native sheets inspected (100 stills): no unintended shell
   gaps seen; overhead visibility corrected. Evidence under `docs/testing/jet-cockpits-2026-10-01/native/`.
   Full native: 1,702 passed, one inherited audio failure, two existing inconclusives.
-  Unity asset audit passes. Mac player build passed at dc2041f3; packaged cockpit capture is next; packaged
-  journey/night/weather/audio/performance acceptance remains open.
+  Unity asset audit passes. Mac player builds passed from clean dc2041f3 and 57d14e09. Packaged capture
+  attempts did not reach an eligible local jet within their bounded waits; no cockpit
+  PNGs accepted. Journey/night/weather/audio/performance acceptance remains open.
 
 
 - **2026-10-01 Codex — Saab cockpit opaque shell fix.**

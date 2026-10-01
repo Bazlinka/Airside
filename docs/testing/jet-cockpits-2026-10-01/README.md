@@ -42,8 +42,13 @@ Packaged flight and wider runtime acceptance remain separate.
   licensing helper still held the global mutex, preventing replacement helpers.
   Terminating only that task-created stale helper restored normal native import,
   compilation, tests and graphics rendering. No licence configuration was changed.
-- Mac player build and packaged journey/day/night/weather/audio/performance are
-  still pending; native geometry review does not establish those gates.
+- Mac player builds passed at clean `dc2041f3` and `57d14e09`; build identity
+  retained as `mac-build-identity.txt`. Packaged cockpit captures remain unverified:
+  B738 departure (6-minute soak), B738 any-phase (150-second timeout), and B38M
+  any-phase (10-minute soak) did not enter an eligible local jet or produce PNGs.
+  These runs establish player startup, not cockpit rendering or flight acceptance.
+  Day/night/weather/audio/performance gates remain open. No overview image has
+  been accepted as cockpit evidence.
 
 ## Native geometry review
 
@@ -75,11 +80,12 @@ Findings fixed from the actual renders:
 These are geometry fixtures with synthetic labelled review readouts and a simple
 runway background. They do not establish genuine gameplay journeys or audio.
 
-## Remaining runtime validation
+## Checks before merging
 
 1. `bash scripts/test-domain.sh` (resolve/integrate the independently owned audio
    fix before merging; do not silently weaken its test).
-2. `bash scripts/test-unity.sh`, including all ten `JetCockpitInteriorTests` cases.
+2. Full native suite has run; cockpit cases pass. Rerun after integrating the
+   separate audio fix or changing source.
 3. `bash scripts/review-jet-cockpits.sh`; generates a fresh directory with 100 native
    stills, ten angles per jet. Final native review above is complete; if changed, inspect
    every angle for shell gaps, seat/window fit, legible displays and family identity.
@@ -93,3 +99,7 @@ runway background. They do not establish genuine gameplay journeys or audio.
 6. Record evidence, fix any gaps and merge only after branch review.
 
 Packaged Mac build passed at clean commit `dc2041f3`. The first B738 departure capture completed its six-minute soak without an eligible departure, so no cockpit images were produced. The review helper now offers `-airsideReviewCockpitAnyPhase` to enter an actual eligible running arrival; the default still waits for departure startup. This flag does not modify aircraft or engine state.
+
+The requested initial implementation is committed and pushed; the branch remains
+unmerged. All ten native decks were inspected. The broader packaged acceptance
+above is required for later merge review and has not been claimed complete.

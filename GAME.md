@@ -4,7 +4,7 @@
   Outer-terrain land colours cool toward blue-grey with distance/height.
   `AdelaideAerialPerspective`. Phase 1 ground/land checklist complete on tip.
   Golf land-cover ADR renumbered **0211** (main took 0206 for runway paint).
-  **Checks:** `scripts/test-domain.sh` after rebase.
+  **Checks:** `scripts/test-domain.sh` **1210/1210** after merging `main` (#492 + paint/prop).
   **NEXT:** Phase 2 trees, or Phase 3 building heights.
 
 - **2026-10-01 Cursor — Phase 1 seasonal dry-grass tint (ADR 0209).**

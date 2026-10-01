@@ -1,5 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Codex — Saab cockpit opaque shell fix.**
+  The revision-2 startup image exposed apron through gaps beside/below the panel.
+  Hiding the exterior fuselage requires a complete interior shell. Continuous
+  floor, lower side lining, forward footwell and rear side lining now meet beneath
+  the window sills. Actual windows remain open. Native pilot-seat forward and
+  downward renders were inspected; level/banked sightline regression covers the
+  missing areas. Native tests: 1677 passed/0 failed/2 existing inconclusives
+  (1679 total); headless 1278 passed/0 failed.
+  Evidence: `docs/testing/cockpit-shell-2026-10-01/`.
+
 - **2026-10-01 Codex — SF34 cockpit spectator candidate (`feature/saab-cockpit-mode`, ADR 0214).**
   Isolated checkout: `/private/tmp/airside-cockpit`; original dirty checkout untouched.
   Select a local aircraft → Cockpit. SF34 availability follows first engine spool,

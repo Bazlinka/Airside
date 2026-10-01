@@ -1,5 +1,8 @@
 ## Unreleased
 
+- Close the Saab cockpit shell beneath the windows, including the gaps beside the
+  panel and under the footwell, so apron/terrain cannot show through the body.
+
 - Rebuild the SF34 cockpit around referenced Saab 340B windows, grey instrument panel, stacked displays, central gauges, squared yokes, overhead and turboprop pedestal; keep the game view simplified and instrument markings readable in the player.
 
 - **SF34 cockpit spectator candidate.** Selected local aircraft offer Follow and Cockpit.

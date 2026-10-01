@@ -75,7 +75,7 @@ namespace Airside.Presentation
                 _engineAudio[id] = emitter;
             }
             emitter.Configure(type, LoadEngineClip(type), CreateTouchdownClip());
-            emitter.InteriorListening = InCockpit;
+            emitter.InteriorListening = InCockpit && aircraftId == _cockpitAircraftId;
             var power = EnginePower(view);
             var prop = EngineVoice.ClassOf(type) == EngineClass.Turboprop;
             var rotation = prop

@@ -62,7 +62,9 @@ namespace Airside.Simulation
         /// </summary>
         public static IReadOnlyList<Plan> Options(AircraftType type, StableId stand)
         {
-            if (type == null || string.IsNullOrEmpty(stand.Value) || !AircraftCatalogue.TryFor(type, out var spec))
+            // A helicopter on skids is not towed: its check is done on the pad (ADR 0207).
+            if (type == null || type.IsRotorcraft || string.IsNullOrEmpty(stand.Value)
+                || !AircraftCatalogue.TryFor(type, out var spec))
                 return Array.Empty<Plan>();
             var key = type.Id + "|" + stand.Value;
             lock (Gate)

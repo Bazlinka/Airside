@@ -660,7 +660,8 @@ namespace Airside.Presentation
             FleetAircraft playerTurn = null;
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
             {
-                if (aircraft.State != FleetState.AtStand || !aircraft.Scheduled.HasValue)
+                // A helicopter is fuelled and briefed at its pad with no vehicles to draw (ADR 0207).
+                if (aircraft.State != FleetState.AtStand || !aircraft.Scheduled.HasValue || aircraft.Type.IsRotorcraft)
                     continue;
                 var prep = DeparturePrep.For(aircraft, _clock.Now, _operations.CareerState.BaseLevel);
                 if (prep.Ready)

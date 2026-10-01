@@ -280,7 +280,7 @@ namespace Airside.Presentation
             foreach (var pair in _fleetAircraftById)
             {
                 var aircraft = pair.Value;
-                if (aircraft == null)
+                if (aircraft == null || aircraft.Type.IsRotorcraft)
                     continue;
                 var hasView = _fleetViewById.ContainsKey(pair.Key);
                 var preferJet = AirlineOperations.NeedsTerminalGate(aircraft.Type);

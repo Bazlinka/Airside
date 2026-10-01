@@ -392,7 +392,7 @@ namespace Airside.Simulation
             // if the authored dedicated bay does not fit (e.g. ATR/Dash on walk-out 10A),
             // use another free regional bay. Existing away-aircraft reservation logic still
             // keeps enough shared capacity available for the player's fleet.
-            if (!NeedsTerminalGate(type) && CareerState.BaseLevel >= PlayerBaseLevel.ExpandedRegional)
+            if (!NeedsTerminalGate(type) && !type.IsRotorcraft && CareerState.BaseLevel >= PlayerBaseLevel.ExpandedRegional)
                 return SuggestStandFor(type, except, allowPlayerDedicated: true);
 
             return null;

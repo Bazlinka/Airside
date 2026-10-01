@@ -59,6 +59,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronSlabJoints.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronSurfaceWear.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ArrivalApproach.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AssemblyInfo.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AtmosphereLook.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AustraliaMapLens.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BevelledBox.cs" />
@@ -251,6 +252,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/OperationsRealismTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/OperationsSummaryTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/OperationsWorkspaceTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/PlayerHelicopterTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ProgressGateTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/PushbackTimeTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/PushbackTugTests.cs" />

@@ -9,9 +9,20 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 
-/// <summary>Native SF34 interior stills. Geometry evidence only, not a packaged journey.</summary>
+/// <summary>Native type-specific interior stills. Geometry evidence only, not a packaged journey.</summary>
 public static class CockpitAppearanceReview
 {
+    private static string _typeOverride;
+    public static void RunAllJets()
+    {
+        try
+        {
+            foreach (var profile in JetCockpitProfile.All)
+            { _typeOverride = profile.TypeId; Run(); }
+        }
+        finally { _typeOverride = null; }
+    }
+
     public static void Run()
     {
         var args = Environment.GetCommandLineArgs();
@@ -47,13 +58,32 @@ public static class CockpitAppearanceReview
             line.transform.position = new Vector3(0f, 0f, z);
             line.transform.localScale = new Vector3(0.2f, 0.02f, 20f);
         }
+        var typeIndex = Array.IndexOf(args, "-cockpitReviewType");
+        var typeId = _typeOverride ?? (typeIndex >= 0 && typeIndex + 1 < args.Length ? args[typeIndex + 1] : "SF34");
+        if (typeId == "all")
+        {
+            try
+            {
+                foreach (var id in new[] { "SF34", "ATR42", "DH8D" })
+                { _typeOverride = id; Run(); }
+            }
+            finally { _typeOverride = null; }
+            Object.DestroyImmediate(material);
+            Object.DestroyImmediate(asphalt);
+            return;
+        }
+        if (!AircraftType.TryFromId(typeId, out var type) || !CockpitAvailability.Supported(type))
+            throw new ArgumentException("Unsupported cockpit review type: " + typeId);
         var root = (Transform)typeof(AirsidePrototype).GetMethod("BuildAircraftForType", BindingFlags.Static | BindingFlags.NonPublic)
-            .Invoke(null, new object[] { "SF34 review", AircraftType.Saab340, Color.blue, null });
+            .Invoke(null, new object[] { typeId + " review", type, Color.blue, null });
         root.position = new Vector3(0f, 0.7f, 0f);
         foreach (var lod in root.GetComponentsInChildren<LODGroup>()) lod.ForceLOD(0);
-        var rig = SaabCockpitInterior.Build(root);
+        CockpitInterior rig = type.Id == AircraftType.Saab340.Id
+            ? SaabCockpitInterior.Build(root) : JetCockpitProfile.TryFor(type.Id, out _)
+                ? JetCockpitInterior.Build(root, type) : TurbopropCockpitInterior.Create(root, type);
         rig.Enter();
         rig.SetReadout("GS 12 kt\nHEIGHT 0 ft\nHDG 050°");
+        if (rig is JetCockpitInterior jet) jet.SetFlightState(root, Airside.Simulation.EngineState.Running, "REVIEW");
         var camera = new GameObject("Review camera").AddComponent<Camera>();
         camera.tag = "MainCamera";
         camera.clearFlags = CameraClearFlags.SolidColor;
@@ -63,9 +93,11 @@ public static class CockpitAppearanceReview
         camera.farClipPlane = 5000f;
         var target = new RenderTexture(1440, 900, 24) { antiAliasing = 4 };
         camera.targetTexture = target;
-        foreach (var shot in new[] { ("forward", 0f, 0f), ("left", 0f, -65f), ("panel", 25f, 0f), ("right", 0f, 65f), ("overhead", -65f, 0f), ("layout", 5f, 0f), ("bank", 0f, 0f), ("footwell", 48f, 0f), ("left-down", 35f, -80f), ("right-down", 35f, 80f) })
+        foreach (var shot in new[] { ("forward", 0f, 0f), ("left", 0f, -65f), ("panel", 25f, 0f), ("right", 0f, 65f), ("overhead", -35f, 65f), ("layout", 5f, 0f), ("bank", 0f, 0f), ("footwell", 45f, 0f), ("left-down", 35f, -80f), ("right-down", 35f, 80f) })
         {
             root.rotation = shot.Item1 == "bank" ? Quaternion.Euler(-8f, 0f, 15f) : Quaternion.identity;
+            if (rig is JetCockpitInterior shotJet)
+                shotJet.SetFlightState(root, Airside.Simulation.EngineState.Running, "REVIEW");
             camera.transform.SetPositionAndRotation(rig.Seat.position, rig.Seat.rotation * Quaternion.Euler(shot.Item2, shot.Item3, 0f));
             if (shot.Item1 == "layout")
                 camera.transform.position = root.TransformPoint(rig.Seat.localPosition + rig.transform.localPosition + new Vector3(0.43f, 0f, -0.50f));
@@ -74,12 +106,13 @@ public static class CockpitAppearanceReview
             var image = new Texture2D(target.width, target.height, TextureFormat.RGB24, false);
             image.ReadPixels(new Rect(0, 0, target.width, target.height), 0, 0);
             image.Apply();
-            File.WriteAllBytes(Path.Combine(output, "SF34_" + shot.Item1 + ".png"), image.EncodeToPNG());
+            File.WriteAllBytes(Path.Combine(output, typeId + "_" + shot.Item1 + ".png"), image.EncodeToPNG());
             Object.DestroyImmediate(image);
         }
         RenderTexture.active = null;
         camera.targetTexture = null;
         Object.DestroyImmediate(target);
+        Object.DestroyImmediate(camera.gameObject);
         rig.Leave();
         Object.DestroyImmediate(root.gameObject);
         Object.DestroyImmediate(material);

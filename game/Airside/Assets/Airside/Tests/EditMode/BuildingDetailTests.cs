@@ -211,17 +211,42 @@ namespace Airside.Tests
         public void Tower_HasAGlassCabAboveItsShaftAndALitMast()
         {
             var tower = Of(AdelaideBuildingKind.ControlTower);
+            Assert.That(tower.HeightMetres, Is.EqualTo(44f));
             var set = BuildingDetail.For(tower, 2f);
             var shaft = set.Prisms.First();
-            var glass = set.Prisms.Single(p => p.Part == BuildingPart.CabGlass);
-            Assert.That(glass.BaseY, Is.GreaterThan(shaft.Top));
-            Assert.That(glass.Height, Is.GreaterThan(3f));
-            Assert.That(glass.Top, Is.LessThanOrEqualTo(2f + tower.HeightMetres));
+            var glass = set.Prisms.Where(p => p.Part == BuildingPart.CabGlass).OrderBy(p => p.BaseY).ToList();
+            Assert.That(glass.Count, Is.EqualTo(2), "canted cab is two stacked glass rings");
+            Assert.That(glass[0].BaseY, Is.GreaterThan(shaft.Top));
+            Assert.That(glass[0].Height + glass[1].Height, Is.GreaterThan(3f));
+            Assert.That(glass[1].Top, Is.LessThanOrEqualTo(2f + tower.HeightMetres));
+            // Outward cant: upper ring footprint is larger than the lower ring.
+            Assert.That(BuildingDetail.TowerCabGlassTopScale,
+                Is.GreaterThan(BuildingDetail.TowerCabGlassBottomScale));
+            Assert.That(MaxRadius(glass[1].Xz), Is.GreaterThan(MaxRadius(glass[0].Xz)));
+            // Roof overhangs the outer glass.
+            var roof = set.Prisms.First(p => p.Part == BuildingPart.Shell && p.BaseY >= glass[1].Top - 1e-3f);
+            Assert.That(MaxRadius(roof.Xz), Is.GreaterThan(MaxRadius(glass[1].Xz)));
             var light = set.Boxes.Single(b => b.Part == BuildingPart.ObstructionLight);
             Assert.That(light.Bottom, Is.GreaterThan(2f + tower.HeightMetres));
-            // One mullion per cab corner.
-            Assert.That(set.Boxes.Count(b => b.Part == BuildingPart.Trim && Math.Abs(b.Height - glass.Height) < 1e-4f),
+            var glassHeight = glass[0].Height + glass[1].Height;
+            Assert.That(set.Boxes.Count(b => b.Part == BuildingPart.Trim && Math.Abs(b.Height - glassHeight) < 1e-4f),
                 Is.EqualTo(tower.Xz.Length / 2));
+        }
+
+        private static float MaxRadius(float[] xz)
+        {
+            var (cx, cz) = BuildingDetail.Centroid(xz);
+            var best = 0f;
+            for (var i = 0; i < xz.Length / 2; i++)
+            {
+                var dx = xz[i * 2] - cx;
+                var dz = xz[i * 2 + 1] - cz;
+                var r = (float)Math.Sqrt(dx * dx + dz * dz);
+                if (r > best)
+                    best = r;
+            }
+
+            return best;
         }
 
         [Test]
@@ -354,6 +379,79 @@ namespace Airside.Tests
             Assert.That(BevelledBox.LocalBevelFor(10f, 0.02f, 10f).HasValue, Is.False, "paint stays a plain cube");
             var thin = BevelledBox.LocalBevelFor(0.1f, 0.1f, 0.1f).Value;
             Assert.That(thin.x, Is.EqualTo(BevelledBox.WorldBevelFraction).Within(1e-5f));
+        }
+
+        [Test]
+        public void FireStation_HasTallerWiderApplianceBayDoors()
+        {
+            var building = Of(AdelaideBuildingKind.FireStation);
+            var set = BuildingDetail.For(building, 0f);
+            var openingTop = set.Openings.Count == 0 ? 0f : set.Openings.Max(o => o.TopMetres);
+            var doorHeight = set.Boxes.Where(b => b.Part == BuildingPart.Door).Select(b => b.Height).DefaultIfEmpty(0f).Max();
+            var maxHeight = Math.Max(openingTop, doorHeight);
+            Assert.That(maxHeight, Is.GreaterThanOrEqualTo(BuildingDetail.ApplianceBayDoorHeightMaxMetres - 0.05f));
+            Assert.That(maxHeight, Is.LessThan(building.HeightMetres));
+
+            var openingWidth = set.Openings.Count == 0
+                ? 0f
+                : set.Openings.Max(o => o.ToMetres - o.FromMetres);
+            var doorWidth = set.Boxes.Where(b => b.Part == BuildingPart.Door).Select(b => b.Length).DefaultIfEmpty(0f).Max();
+            Assert.That(Math.Max(openingWidth, doorWidth),
+                Is.GreaterThanOrEqualTo(BuildingDetail.ApplianceBayDoorWidthMaxMetres - 0.05f));
+        }
+
+        [Test]
+        public void FireStation_HasHoseTowerAboveTheRoof()
+        {
+            var building = Of(AdelaideBuildingKind.FireStation);
+            var set = BuildingDetail.For(building, 0f);
+            var tallTrim = set.Boxes.Where(b => b.Part == BuildingPart.Trim && b.Top > building.HeightMetres + 3f).ToList();
+            Assert.That(tallTrim, Is.Not.Empty, "hose tower shaft/cabin/mast");
+            Assert.That(set.Boxes.Count(b => b.Part == BuildingPart.ObstructionLight), Is.GreaterThanOrEqualTo(1));
+            var shaft = tallTrim.OrderByDescending(b => b.Height).First();
+            Assert.That(BuildingDetail.Contains(building.Xz, shaft.X, shaft.Z), Is.True);
+        }
+
+        [Test]
+        public void FireStation_HasApplianceParkingPadsAndYellowBayCues()
+        {
+            var building = Of(AdelaideBuildingKind.FireStation);
+            var set = BuildingDetail.For(building, 0f);
+            var front = BuildingDetail.FrontEdge(building.Xz);
+            var edge = BuildingDetail.Edge(building.Xz, front, BuildingDetail.Winding(building.Xz));
+            var pads = set.Boxes.Where(b =>
+                b.Part == BuildingPart.Canopy &&
+                Math.Abs(b.Height - BuildingDetail.AppliancePadThicknessMetres) < 0.02f).ToList();
+            Assert.That(pads, Is.Not.Empty);
+            Assert.That(pads.Any(p =>
+            {
+                var midX = (edge.AX + edge.BX) * 0.5f;
+                var midZ = (edge.AZ + edge.BZ) * 0.5f;
+                var dx = p.X - midX;
+                var dz = p.Z - midZ;
+                return dx * edge.OutX + dz * edge.OutZ > 0f;
+            }), Is.True, "pad sits outside the bay wall");
+
+            var cues = set.Boxes.Where(b =>
+                b.Part == BuildingPart.Equipment &&
+                b.Height < 0.15f &&
+                b.Depth > BuildingDetail.AppliancePadLengthMetres * 0.5f).ToList();
+            Assert.That(cues.Count, Is.GreaterThanOrEqualTo(2));
+        }
+
+        [Test]
+        public void FireStation_HasYellowSignFasciaAboveTheBays()
+        {
+            var building = Of(AdelaideBuildingKind.FireStation);
+            var set = BuildingDetail.For(building, 0f);
+            var doorTop = set.Openings.Count == 0
+                ? set.Boxes.Where(b => b.Part == BuildingPart.Door).Select(b => b.Top).DefaultIfEmpty(0f).Max()
+                : set.Openings.Max(o => o.TopMetres);
+            var fascia = set.Boxes.Where(b =>
+                b.Part == BuildingPart.Equipment &&
+                Math.Abs(b.Height - BuildingDetail.FireStationFasciaHeightMetres) < 0.05f &&
+                b.Y > doorTop).ToList();
+            Assert.That(fascia, Is.Not.Empty);
         }
     }
 }

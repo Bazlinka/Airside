@@ -23,6 +23,8 @@ namespace Airside.Presentation
         private readonly List<Renderer> _horizonBand = new();
         private readonly Dictionary<int, Color> _cloudTints = new();
         private readonly Dictionary<int, Renderer[]> _cloudRenderers = new();
+        private readonly Dictionary<int, Renderer> _cloudUmbraRenderers = new();
+        private readonly Dictionary<int, Color> _cloudUmbraTints = new();
         private MaterialPropertyBlock _atmosphereBlock;
         private static Texture2D _softNoise;
 
@@ -44,6 +46,18 @@ namespace Airside.Presentation
                 renderers[r].enabled = faded.a > 0.01f;
                 SetRendererColor(renderers[r], faded);
             }
+            if (_cloudUmbraRoot != null && index < _cloudUmbraRoot.childCount
+                && _cloudUmbraTints.TryGetValue(index, out var umbraTint))
+            {
+                if (!_cloudUmbraRenderers.TryGetValue(index, out var umbra) || umbra == null)
+                    _cloudUmbraRenderers[index] = umbra = _cloudUmbraRoot.GetChild(index).GetComponent<Renderer>();
+                if (umbra != null)
+                {
+                    umbraTint.a *= edge;
+                    umbra.enabled = umbraTint.a > 0.001f;
+                    SetRendererColor(umbra, umbraTint);
+                }
+            }
         }
 
         private void UpdateAtmosphereLayers()
@@ -63,12 +77,14 @@ namespace Airside.Presentation
             var windYaw = RunwayWeather.UnityYawFromTrue(PresentationWind.DirectionDegrees) * Mathf.Deg2Rad;
             Shader.SetGlobalVector("_AirsideWeatherWind", new Vector4(Mathf.Sin(windYaw) * 7f, 0f, Mathf.Cos(windYaw) * 7f, 0f));
             Shader.SetGlobalFloat("_AirsideWeatherTime", Time.unscaledTime);
+            Shader.SetGlobalVector("_AirsideWeatherRange", new Vector4(
+                WeatherCoverage.AtmosphereFadeStart, WeatherCoverage.AtmosphereDistance, 0f, 0f));
             var sky = ToColor(_atmosphere.Sky);
             var daylight = PresentationDaylight;
             var camera = _mainCamera.transform.position;
             _atmosphereBlock ??= new MaterialPropertyBlock();
 
-            // Overcast sheet: follows the camera across, fades out as the camera climbs to it.
+            // The deck follows horizontal travel; height stays in world space, visible from either side.
             if (_stratusSheet != null)
             {
                 var alpha = _atmosphere.Stratus;
@@ -151,7 +167,7 @@ namespace Airside.Presentation
             var ceilingShader = Shader.Find("Airside/WeatherCeiling");
             var ceilingMaterial = ceilingShader != null
                 ? new Material(ceilingShader) { name = "Airside rolling cloud ceiling" } : material;
-            _stratusSheet = LayerQuad("Overcast sheet", ceilingMaterial, new Vector3(18_000f, 18_000f, 1f));
+            _stratusSheet = LayerQuad("Overcast sheet", ceilingMaterial, new Vector3(WeatherCoverage.AtmosphereDistance * 2f, WeatherCoverage.AtmosphereDistance * 2f, 1f));
             _stratusSheet.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
             var width = 2f * Mathf.PI * HorizonBandRadius / HorizonBandSegments * 1.08f;

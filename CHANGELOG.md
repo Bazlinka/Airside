@@ -1,9 +1,97 @@
 ## Unreleased
 
-- Candidate: stream a bounded South Australia terrain window for SF34 regional cockpit journeys, with real Copernicus elevation, mapped regional strips and a moving render origin (ADR 0215; native path checks pass, player acceptance pending). Ease inbound cruise height onto the local approach and hide airport actors around a distant render origin. Keep the coarse terrain cells around each mapped strip at runway elevation; regional poses omit local departure bank commands. Add a fresh-airline packaged journey review driver with required phase captures and stall diagnostics.
+- Stream a bounded South Australia terrain window for SF34 regional cockpit journeys, with real Copernicus elevation, mapped regional strips and a moving render origin (ADR 0215; native path checks and Kingscote landing verified; long-trip performance remains open). Ease inbound cruise height onto the local approach and hide airport actors around a distant render origin. Keep the coarse terrain cells around each mapped strip at runway elevation; regional poses omit local departure bank commands. Add a fresh-airline packaged journey review driver with required phase captures and stall diagnostics.
+
+- **Arrivals no longer bunch up nose to tail on final.** An inbound's drawn position on the
+  extended final only counted aircraft already holding, so arrivals due close together got the
+  same landing estimate and flew in a line a few hundred metres apart (some on the same spot).
+  Each now queues behind the inbounds that join first. Over a simulated day, drawn pairs under
+  3 km fell from 389 to 0; the closest 5 % are now about 9 km apart. Presentation only: tower
+  sequencing, saves and simulation outcomes are unchanged.
+
+- **Weather across the landscape:** cloud bodies recycle around the moving view
+  rather than the airport, with matched shadow fades. Ground fog no longer ends
+  at the airport rectangle; fog and the broader overcast deck fade over 20–30 km.
+  The deck remains visible from above. Existing cloud/rain object budgets retained.
+
+- Allow the native EditMode test assembly to use presentation cache-reset hooks,
+  matching the existing headless harness access for vegetation placement tests.
+
+- Combine all ten jet cockpits with main's three turboprop cockpits through one
+  renderer-restoration/resource lifetime. Preserve arrival-review and all-type native
+  review commands from both branches. Jet rollout decision: ADR 0225.
+
+- Replace separate jet cockpit shell pieces with a continuous welded shell and
+  exactly fitted window frames. All-type topology tests reject unintended wall,
+  floor or roof openings and inconsistent surface winding.
+
+- All ten catalogue jets gain fitted cockpit spectator interiors with family-specific
+  controls, display arrangements, windows, overheads and pedestals; shared shell
+  restoration preserves the existing SF34 cockpit. Live local telemetry and engine
+  spool labels; autonomous flight and saves unchanged. Jet rollout, ADR 0225.
+
+- **Phase 3 ARFF/fire-station silhouette (ADR 0223).** Taller/wider appliance
+  bay doors, hose-drying tower with obstruction light, concrete parking pads
+  with yellow bay cues, and a yellow sign fascia — pure-math `BuildingDetail`.
+  Locked by `BuildingDetailTests` FireStation cases. No new assets or
+  save-schema changes.
+
+- **Phase 3 hangar tenant colours (ADR 0222).** Named hangars (Cobham, Rex,
+  Sharp, Pilatus, Pulse, Aerobond, SAPOL) and RFDS get stylised shell / door /
+  roof cladding bands; unnamed hangars keep the previous grey. Locked by
+  `HangarTenantPaletteTests`. No new assets or save-schema changes.
+
+- **Phase 3 control tower canted cab (ADR 0221).** Outward-canted glazed cab
+  (stacked lower/upper rings) with overhanging roof on the surveyed 44 m tower.
+  Locked by `BuildingDetailTests.Tower_HasAGlassCabAboveItsShaftAndALitMast`.
+  No save-schema changes.
+
+- **Phase 2g NDVI tree bake LOD (ADR 0220).** Suburb trees use Full / Medium /
+  Billboard crowns by distance from ARP (1.4 km / 2.8 km), cutting far-ring
+  triangles. Locked by `AdelaideTreeLodTests`. No new assets or save-schema
+  changes.
+
+- **Phase 2f Norfolk Island pines on Henley Beach Road (ADR 0219).** Tiered
+  conical araucaria silhouette along both landside verges. Cap 120. Locked by
+  `AdelaideNorfolkPinePlacementTests`. No new assets or save-schema changes.
+
+- **Phase 2e West Beach dune scrub (ADR 0218).** Low multi-lobe coastal scrub
+  on OSM Sand cells in the dune band (28–150 m inland). Cap 250, ≤16 tris each.
+  Locked by `AdelaideDuneScrubPlacementTests`. No new assets or save-schema
+  changes.
+
+- **Lock jet pitch sweep to the #507 modest range.** `PropGovernorHoldsTheNoteWhileJetRevsRise`
+  still required a >1.30 jet taxi→takeoff pitch ratio after #507 narrowed the bed
+  sweep to stop spool-up chirps; update the lock to >1.15 / <1.28 and still above
+  the governed prop. Presentation test only.
+
+- **Phase 2d approach avenue trees (ADR 0217).** Eucalypt avenues on both
+  landside verges of Sir Donald Bradman Drive, Burbridge Road and Sir Richard
+  Williams Avenue. Cap 220; soft-deduped vs Tapleys windbreak. Locked by
+  `AdelaideAvenuePlacementTests`. No new assets or save-schema changes.
+
+- **Phase 2c Tapleys Hill Road windbreak (ADR 0216).** Deterministic eucalypt
+  row along the Tapleys landside verge (airport frontage, outside the aerodrome
+  fence). Reuses `AdelaideTreeGeometry` lobes; drawn into the road props mesh.
+  Cap 180. Locked by `AdelaideWindbreakPlacementTests`. No new assets or
+  save-schema changes.
+
+- **Phase 2b terminal car-park date-palm rows (file ADR 0215 palm).** Procedural
+  Canary Island date palms along OSM car-park edges in the Terminal 1 landside
+  ring (cap 180), drawn into the road props mesh. Layout in
+  `AdelaidePalmPlacement` / `AdelaidePalmGeometry`. No new assets or licences.
+  Locked by `AdelaidePalmGeometryTests` and `AdelaidePalmPlacementTests`. No
+  save-schema changes. (ADR number collides with turboprop 0215 — separate files.)
+
+- **Turboprop cockpit rollout:** cockpit view now selects a fitted Saab
+  340B, ATR 42-600 or Dash 8-400 interior. ATR and Dash have their own seat,
+  window and five-display layouts; opaque lower shells cover the footwells.
+  Jets remain disabled. Native test, rendered review and Mac build gates are
+  pending because Unity licensing IPC is unavailable.
 
 - Close the Saab cockpit shell beneath the windows, including the gaps beside the
   panel and under the footwell, so apron/terrain cannot show through the body.
+
 - **Weather no longer drops out while you drag the camera.** The ground-fog/mist layer was placed in
   `Update` from the camera's position, but the camera moves in `LateUpdate`, so while panning or orbiting
   it trailed a frame behind and left the view, and the foggy weather vanished until you let go. It is now

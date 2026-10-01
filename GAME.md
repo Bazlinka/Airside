@@ -1,37 +1,150 @@
-## South Australia flight-world candidate — 2026-10-01 Codex
+## South Australia flight world — authorised merge, 2026-10-01
 
-- Branch `feature/south-australia-flight-world`, isolated `/private/tmp/airside-sa-world`,
-  based on main `f15aac12`; unrelated audio and cockpit branches preserved.
-- Beyond the existing ±96 km Adelaide terrain: compact real Copernicus heights,
-  Natural Earth coastline, fixed 49-tile window, one tile built per frame, moving
-  render origin; supported SF34 stays visible across regional journeys. Distant
-  selection card enables cockpit. Regional approaches/rollouts and return departure
-  use sourced primary runways; simplified remote airport presentation only.
-- Packet: `docs/plans/south-australia-flight-world.md`; ADR 0215. Interstate later.
-- Checks: changed domain 1289 pass / one existing audio failure (baseline 1277 / same
-  failure). All 12 new tests pass. Full presentation source compilation: zero errors.
-  Native EditMode: 1688 pass / same audio failure / two inconclusive. Five added
-  actual journey/actor native cases pass after fixing inbound altitude discontinuity.
-  Licensing restored through installed Unity Hub. Player/FPS acceptance remains open.
-- Packaged QA driver: fresh soak airline, selected KGC/CPD scheduling, optional
-  accelerated review clock, phase/periodic captures, complete-trip restoration log.
-  See packet flags; accelerated evidence is separate from live-time FPS.
-- Latest native focused world/journey cases: 18/18 passed (1.956 s); QA driver
-  imports/compiles in Unity. First Mac build succeeded (`40caaf9d-dirty`), without
-  the later review driver. NEXT build current clean HEAD using the populated cache.
-- KGC r3 (`d3a951f5`) captures the player departure, streamed origin, approach,
-  rollout and destination. Return is unaccepted: a 172 s render stall skipped it
-  in accelerated time. Next review caps accelerated frame advances, requires all
-  rendered phases and samples stalled player threads. Rate-1 telemetry remains
-  wall-clock based. Geographic journeys now exclude local departure bank commands.
-- Baseline clean Mac player exists at `/private/tmp/airside-sa-baseline` (f15aac12).
-  Rebuild current branch; rerun KGC and CPD with the watchdog and CPD's optional
-  600 s rate-1 performance window. Compare baseline/local 10-minute runs separately.
-- NEXT: finish Mac build and the packet's
-  SF34 KGC/CPD round-trip, origin/actor/weather checks and comparative frame-time test.
-  Candidate branch only; do not mark this ready to merge from source checks alone.
+Bailey authorised merging `feature/south-australia-flight-world` into main.
+The bounded terrain window uses real Copernicus elevations, Natural Earth coastline,
+mapped regional runways and a moving render origin. No loading screen is required.
+Regional cockpit journeys retain the watched aircraft through approach and rollout.
+Existing cockpit types and regional weather changes from current main are preserved.
+
+Branch verification: 18/18 focused native world/journey tests and a clean Mac build
+at `ac7de3c9`. Packaged Kingscote departure, cruise, approach, rollout and destination
+were captured; the retry also captured the return cruise and Adelaide origin reset.
+Long-trip performance remains unresolved: an earlier run stalled for 172 seconds;
+the retry exited before landing back at Adelaide. Coober Pedy paths pass native
+continuity tests but have not completed a packaged flight. These limits are retained
+for follow-up, not reported as seamless-performance acceptance. See
+`docs/testing/sa-flight-world-2026-10-01/RESULTS.md` and ADR 0215.
+
+## Merge handoff — 1 October 2026
+
+Bailey authorised merging `feature/all-jet-cockpits` after reviewing its evidence
+and remaining packaged acceptance limits. Integrating current main preserves the
+new ATR42/DH8D/SF34 cockpits alongside all ten jets. Both families share the tested
+`CockpitInterior` lifetime; turboprop geometry stays unchanged. Current main also
+contains the separate audio assertion fix. Combined full checks pass: headless 1,345/1,345; native 1,765 passed,
+zero failures, two existing inconclusives. The new native result is retained in
+`docs/testing/jet-cockpits-2026-10-01/merge-native-tests.xml`. Asset audit and
+generated harness checks pass. Clean combined Mac build passes at `6f1d6ddd`; PR #514 is the authorised merge. Packaged flight/night/weather/performance remain unverified;
+merge authorisation does not turn those into passing checks. Jet ADR is now 0225.
 
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
+
+- **2026-10-01 Cursor — arrivals bunched on final (`main`).** Bailey saw three
+  arrivals flying nose to tail over the coast. `ExpectedLandingQueueTime` gave an
+  Inbound aircraft only the HoldingForLanding traffic ahead, never other inbounds
+  joining first, so close-scheduled arrivals shared one estimate and were drawn
+  together. It now queues behind earlier-joining inbounds (same strip, `RunwayFor`).
+  Presentation-only consumer; tower, saves and random draws unchanged.
+  **Evidence:** new `DrawnFinal_KeepsConsecutiveArrivalsKilometresApart` (one day,
+  seed 2026: under-3 km pairs 389 → 0, p5 gap 221 m → 9.4 km). On top of PR #510,
+  Unity EditMode **1737 passed / 0 failed / 2 inconclusive**. Clean Mac build passed.
+  **NEXT:** watch a busy arrival bank in the packaged game.
+
+- **2026-10-01 Codex — weather coverage (`fix/regional-weather-coverage`, ADR 0226).**
+  Bailey selected whole-visible-landscape weather with fade only at render limits.
+  Cloud recycling now surrounds the viewer; world positions/wind remain stable
+  until soft-edge reuse. Sixteen jittered bodies and matched fading shadows.
+  Ground fog's airport mask removed; 30 km ray/deck coverage, 20–30 km radial fade;
+  overcast stays visible from above. Simulation, operations and saves unchanged.
+  Focused headless weather checks: 13/13. Focused native weather/cockpit checks:
+  30/30, including all three turboprop lower shells; licensing has recovered.
+  Integrated full domain: 1337/1337. Full native: 1744 passed / zero failures /
+  two existing inconclusives. Latest-main scenery tests compile with explicit
+  EditMode friend-assembly access.
+  Task packet: `docs/plans/weather-coverage.md`. Final combined Mac build 409b9349 clean; 67/67 focused native and 37/37
+  focused headless after jet cockpit integration. Eleven player views inspected; evidence/result record:
+  `docs/testing/weather-coverage-2026-10-01/README.md`.
+
+- **2026-10-01 Codex — all-jet cockpit candidate (`feature/all-jet-cockpits`, ADR 0225).**
+  Isolated checkout: `/private/tmp/airside-jet-cockpits`; unrelated primary-checkout
+  audio work retained. All ten jets have explicit fitted left-seat decks with
+  family-specific displays, yokes/sidesticks, windows, guidance rail, overhead and
+  pedestal. Lower/front shell, floor, roof and rear bulkhead close non-window gaps.
+  A continuous welded jet shell now has a checked window boundary: no unintended
+  mesh seams; rails/pillars fit its exact edges. Focused cockpit checks: 27/27.
+  SF34 uses its existing geometry through a shared interior lifecycle. Cockpit
+  remains spectator mode; first spool/local visibility/shutdown rules unchanged.
+  Plan and task packet: `docs/plans/jet-cockpits.md`. Validation and open acceptance:
+  `docs/testing/jet-cockpits-2026-10-01/README.md`. **NEXT:** complete packaged journeys/entry/exit/weather/night/audio/performance
+  acceptance remains open after the authorised merge. Native all-type geometry review is complete.
+  **Checks:** focused headless cockpit 27/27; focused native Unity 35/35.
+  Licensing recovered by stopping the stale helper from the initial sandbox run.
+  All ten types' ten-angle native sheets inspected (100 stills): no unintended shell
+  gaps seen; overhead visibility corrected. Evidence under `docs/testing/jet-cockpits-2026-10-01/native/`.
+  Full native: 1,702 passed, one inherited audio failure, two existing inconclusives.
+  Unity asset audit passes. Mac player builds passed from clean dc2041f3 and 57d14e09. Packaged capture
+  attempts did not reach an eligible local jet within their bounded waits; no cockpit
+  PNGs accepted. Journey/night/weather/audio/performance acceptance remains open.
+
+
+- **2026-10-01 Cursor — merge PR #510 visual overhaul tip onto main (goal stopped).**
+  Merges Phase 2b–2g vegetation + Phase 3 tower/hangars/ARFF onto main that
+  already has the turboprop cockpit rollout. Note: two files share ADR number
+  0215 (`0215-turboprop-cockpit-rollout.md` on main and
+  `0215-terminal-carpark-date-palm-rows.md` from #510) — filenames differ;
+  renumber later if desired. Grass-tuft WIP (0224) stashed, not merged.
+  **NEXT:** Bailey rebuilds when he wants; visual overhaul goal stopped.
+
+- **2026-10-01 Cursor — Phase 3 ARFF/fire-station silhouette (ADR 0223).**
+  Taller/wider appliance bays, hose tower + obstruction light, Canopy
+  parking pads + yellow bay cues, Equipment sign fascia. PR #510 tip.
+  **NEXT:** goal stopped — merge to main.
+
+- **2026-10-01 Cursor — Phase 3 hangar tenant colours (ADR 0222).**
+  Named hangars + RFDS get stylised shell/door/roof bands via
+  `HangarTenantPalette`; unnamed keep grey. PR #510 tip.
+
+- **2026-10-01 Cursor — Phase 3 control tower canted cab (ADR 0221).**
+  Outward-canted glazed cab (stacked rings) + overhanging roof on the surveyed
+  44 m tower. PR #510 tip.
+
+- **2026-10-01 Cursor — Phase 2g NDVI tree bake LOD (ADR 0220).**
+  Suburb trees: Full 3-lobe ≤1.4 km, Medium primary ≤2.8 km, Billboard cards
+  beyond. `AdelaideTreeLod` + `AirsideAdelaideSuburbs.AddTree`. PR #510 tip.
+
+- **2026-10-01 Cursor — Phase 2f Norfolk Island pines on Henley Beach Road (ADR 0219).**
+  Tiered conical pines along Henley Beach Road verges. Cap 120. PR #510 tip.
+
+- **2026-10-01 Cursor — Phase 2e West Beach dune scrub (ADR 0218).**
+  Low multi-lobe tea-tree/scrub on OSM Sand cells in the coast dune band
+  (28–150 m inland). Cap 250. PR #510 tip.
+
+- **2026-10-01 Cursor — Phase 2d approach avenue trees (ADR 0217).**
+  Bradman Drive, Burbridge Road and Sir Richard Williams Avenue get landside
+  verge eucalypts (both sides, outside the fence). Cap 220. Soft-deduped vs
+  Tapleys windbreak. PR #510 tip.
+  Also retargeted `PropGovernorHoldsTheNoteWhileJetRevsRise` to #507's modest
+  jet pitch sweep.
+
+- **2026-10-01 Cursor — Phase 2c Tapleys Hill Road windbreak (ADR 0216).**
+  Deterministic eucalypt row on the Tapleys landside verge (outside the
+  aerodrome fence, airport frontage), lobes from `AdelaideTreeGeometry`, drawn
+  into the road props sink. Cap 180. PR #510 tip.
+
+- **2026-10-01 Cursor — Phase 2b terminal car-park date palms (file ADR 0215 palm).**
+  Procedural Canary Island date-palm rows along OSM car-park edges in the
+  Terminal 1 landside ring (`AdelaidePalmPlacement` / `AdelaidePalmGeometry`),
+  drawn into the road props sink. Cap hit: **180** palms. No new assets.
+  PR #510 tip. (Number collides with turboprop ADR 0215 — see merge note.)
+
+- **2026-10-01 Codex — turboprop cockpit rollout (`feature/turboprop-cockpits`, ADR 0215).**
+  Bailey requested cockpit view for turboprops only. Supported: SF34 Saab 340B,
+  ATR42 ATR 42-600 and DH8D Dash 8-400. The ATR and Dash have original fitted
+  glass-cockpit layouts; Saab retains its existing layout. All share exterior
+  restoration, opaque lower shells and existing camera/engine/visibility rules.
+  Jets show a disabled action with "Turboprop cockpits only". No save/simulation changes.
+  **Verification:** availability/card tests 8/8 pass. Native EditMode and visual
+  review are blocked by Unity licensing IPC before test execution; no completed
+  native result, new Mac build or new runtime screenshot is claimed. Offline
+  Unity-reference compilation passed for presentation, editor and test assemblies.
+  Full domain: 1280 pass / 1 existing audio failure; metadata audit passed.
+  Full domain status and exact continuation commands:
+  `docs/testing/turboprop-cockpits-2026-10-01/README.md`.
+  **NEXT:** once Unity licensing is healthy, run native cockpit/full EditMode checks,
+  inspect all three interiors and lower sightlines, build a clean Mac player,
+  then capture real eligible flight phases. Bailey explicitly requested merging
+  this implementation on 1 October despite the recorded native licensing blocker;
+  the remaining verification gates stay open after merge.
 
 - **2026-10-01 Codex — Saab cockpit opaque shell fix.**
   The revision-2 startup image exposed apron through gaps beside/below the panel.
@@ -122,8 +235,7 @@
   `main`. Phase 1 ground/land (Golf/bunkers/CBD/seasonal/haze) + Phase 2a
   multi-lobe eucalypt crowns (ADR 0212) are on `main`. Superseded draft PRs
   closed. **Checks:** `scripts/test-domain.sh` **1215/1215**.
-  **NEXT (when resumed):** Phase 2 species/LOD/placement, or Phase 3 building
-  accuracy — do not continue autonomously until Bailey unpauses.
+  **Resumed 2026-10-01** — Phase 2b palms in progress.
 
 - **2026-10-01 Cursor — Phase 2a multi-lobe eucalypt crowns (ADR 0212).**
   NDVI suburb trees draw a 3-lobe faceted canopy (primary + two sides, 28 crown

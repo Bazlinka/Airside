@@ -212,3 +212,42 @@ action for unsupported aircraft; normal external view remains available.
 | DAT-SA-DEM-001 | [Copernicus GLO-90](https://registry.opendata.aws/copernicus-dem/), public COG tiles; 128–142 E, 39–25 S; 0.02-degree averaged height derivative `Terrain/dem_south_australia_v01.bin` | Copernicus GLO-90 free/open licence; Elevation: © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018 provided under COPERNICUS by the European Union and ESA. Retain this credit alongside existing Copernicus attribution before distribution. | Free data, no runtime service; `scripts/generate-sa-flight-terrain.py`, checksum and source bounds in `docs/data/sa-flight-terrain-v01.json`; 982,842 bytes, mirrored in StreamingAssets. | Existing Natural Earth land/sea palette if unavailable; no invented hills. Candidate, native/visual verification pending. |
 | DAT-SA-RUNWAY-001 | [OurAirports](https://davidmegginson.github.io/ourairports-data/) airport/runway CSVs; KGC/PLO/WYA/MGB/CED/CPD/BHQ primary strip geometry and airport elevation | Public domain (same approved source family as MAP-002); voluntary OurAirports credit | Free. Selected raw rows in `docs/data/sa-flight-runways-v01.json`, generation script `scripts/generate-sa-flight-runways.py`. MGB thresholds estimated from sourced centre/heading/length because endpoint fields are absent. | Regional route remains airborne without a known strip; source metadata retained. Candidate simplified airport geometry; not a navigation product. |
 | MAP-001-SA-REUSE | Existing approved Natural Earth coastline, `MapGeographyData`, reused for streamed 3D land/sea classification | Public domain; voluntary Natural Earth credit | Existing project data, no new download/runtime service | Coarse coloured land/sea; shore mesh cells 1 km. |
+
+### Jet cockpit procedural candidates — 1 October 2026
+
+Ten original code-authored spectator decks: B738, B38M, A320, A21N, E190, A223,
+A359, A339, B789, B78X. Source/editable generator: `JetCockpitInterior.cs` and
+`JetCockpitProfile.cs`; shared builder/lifecycle `CockpitInterior.cs`. No external
+models, images, textures or audio imported; project-owned procedural geometry and
+runtime text, zero purchase cost, no third-party runtime attribution. Manufacturer
+reference links and evidence limits: `docs/plans/jet-cockpits.md`. Fallback: unsupported
+types retain external view with Cockpit disabled; no generic/Saab jet fallback.
+Status: branch candidate; visual and packaged acceptance tracked separately.
+## ATR42 / DH8D cockpit interior candidates — 2026-10-01
+
+Original project-owned procedural geometry and three 192px code-drawn display
+textures, authored by Codex for Airside. Editable runtime source:
+`GlassTurbopropCockpitInterior.cs`; shared helpers/lifetime:
+`TurbopropCockpitInterior.cs`. Saab geometry remains in `SaabCockpitInterior.cs`.
+ATR and Dash layouts have distinct fitted eye/window/panel/overhead dimensions;
+textures are original illustrative flight, navigation and engine markings.
+No external image, model, font or audio is added. Existing Unity font/shaders
+retain their registered terms. Acquisition/generation service cost: zero.
+Attribution: Airside project; no third-party runtime attribution required.
+Prompt/source evidence: Bailey's turboprop-only request, ADR 0215 and
+`docs/plans/cockpit-mode.md`. Manufacturer-reference URLs and handling are recorded
+in `docs/art/reference/turboprop-cockpits/README.md`; research pixels do not ship.
+Fallback: external view for unsupported types or failed factory creation.
+Status: source implemented; native visual/build acceptance pending licensing recovery.
+
+## Regional weather coverage revision — 2026-10-01
+
+Original project source changes to existing HeightFog/WeatherCeiling shaders and
+procedural cloud placement/recycling. No external assets, images, models, new
+shader lookup names or new runtime textures. Sixteen cloud volumes and their
+existing procedural noise/shadow assets retained. Author: Codex for Airside;
+prompt: Bailey's clouds/fog beyond-airport request and explicit visible-landscape
+coverage choice. ADR 0225 / `docs/plans/weather-coverage.md`. Cost: zero acquisition
+or image-generation cost. Existing licences retained; no new attribution required.
+Fallback: existing cloud atlas when the volume shader is unavailable; weather layers
+can be disabled. Rendered verification status is in the weather coverage test record.

@@ -1,0 +1,51 @@
+Mono path[0] = '/private/tmp/airside-cockpit/work/builds/Airside.app/Contents/Resources/Data/Managed'
+Mono config path = '/private/tmp/airside-cockpit/work/builds/Airside.app/Contents/MonoBleedingEdge/etc'
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+Initialize engine version: 6000.3.23f1 (09d2ecc7fb28)
+[Subsystems] Discovering subsystems at path /private/tmp/airside-cockpit/work/builds/Airside.app/Contents/Resources/Data/UnitySubsystems
+GfxDevice: creating device client; kGfxThreadingModeThreaded
+ preferred device: Apple M2 (high power)
+Metal devices available: 1
+0: Apple M2 (high power)
+Using device Apple M2 (high power)
+Initializing Metal device caps: Apple M2
+Mac GPU Family: 2
+Apple GPU Family: 8
+MSL Version: 3.0
+Has Float MSAA: 1
+Has Float Filtering: 1
+ReadWrite Texture Tier: 2
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.075 seconds
+- Finished resetting the current domain, in  0.001 seconds
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+UnloadTime: 0.594083 ms
+Airside 409b9349 · fix/regional-weather-coverage · committed 2026-10-01 05:45 UTC · built 2026-10-01 05:46 UTC
+[Airside soak] largest world renderer groups: Terminal 111, Airfield 52, Adelaide 47, YPAD 43, Cloud 32, Tyre 24, Runway 19, Spray 4, Boundary 4, Smoke 4, Apron 3, Tower 2, Rubber 2, Coast 2, Stand 2, Sun 2, Taxiways 2, Taxiway 2, Aprons 1, Golf 1
+[Airside soak] render set: world 367 (visible), aircraft 198 (visible), world prefix none
+[Airside soak] started for 3 min in live time
+[Airside soak] active renderers 4456; transparent material slots 390; transparent triangles 176318
+[Airside soak] largest transparent groups: Universal Render Pipeline/Lit / Universal Render Pipeline/Lit / Tunnel 102/1224, Universal Render Pipeline/Lit / Universal Render Pipeline/Lit / Cab 51/612, Universal Render Pipeline/Lit / Universal Render Pipeline/Lit / Puddle 35/2800, Universal Render Pipeline/Lit / Universal Render Pipeline/Lit / Terminal 28/1232, mat_corrugated_metal_v01 / Universal Render Pipeline/Lit / Fuel 22/464, Aircraft finish AircraftGlazing / Universal Render Pipeline/Lit / Cabin 21/157686, Universal Render Pipeline/Lit / Universal Render Pipeline/Lit / GroundShadow 21/1680, mat_airfield_halo_additive / Universal Render Pipeline/Unlit / Distant 20/40, Aircraft finish PaintedMetal / Universal Render Pipeline/Lit / Cabin 18/6412, Universal Render Pipeline/Lit / Universal Render Pipeline/Lit / Rotunda 17/1360, mat_glass_v01 / Universal Render Pipeline/Lit / Fuel 13/156, Universal Render Pipeline/Lit / Universal Render Pipeline/Lit / Fuel 13/156, mat_glass_v01 / Universal Render Pipeline/Lit / Tug 6/72, mat_aircraft_v01 / Universal Render Pipeline/Lit / Fuel 4/100, Aircraft finish Glass / Universal Render Pipeline/Lit / Adelaide 4/48, mat_glass_v01 / Universal Render Pipeline/Lit / Coast 2/352, mat_painted_line_v01 / Universal Render Pipeline/Lit / Fuel 2/24, mat_glass_v01 / Universal Render Pipeline/Lit / Door 2/24, mat_fan_blur / Universal Render Pipeline/Unlit / FanDisc 2/4, Airside rain streaks / Airside/WeatherRain / Rain 1/1536, mat_airfield_light_point Approach FFF5D6 / Airside/AirfieldLightPoint / Airfield 1/116, mat_airfield_light_point Approach FF291F / Airside/AirfieldLightPoint / Airfield 1/72, mat_airfield_light_point Approach 33FF73 / Airside/AirfieldLightPoint / Airfield 1/56, Universal Render Pipeline/Lit / Universal Render Pipeline/Lit / Starter 1/44, mat_airfield_light_point Guard FFB814 / Airside/AirfieldLightPoint / Airfield 1/32, mat_airfield_light_point Approach FFF5D1 / Airside/AirfieldLightPoint / Airfield 1/16
+Default audio device was changed, but the audio system failed to initialize it. Attempting to reset sound system.
+[Airside weather] Storm mist 0.48 fog enabled True shader Airside/HeightFog camera (10917.48, 665.32, 8543.53) tint RGBA(0.308, 0.339, 0.378, 1.000) layers True
+[Airside soak] review shot /private/tmp/airside-cockpit/work/captures/weather-coverage-final/remote-storm.png at 1440x900 pose pitch=12 yaw=100 dist=3200 following=False
+Thread 0x171257000 may have been prematurely finalized
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+Thread 0x17008b000 may have been prematurely finalized
+Thread 0x170117000 may have been prematurely finalized
+Thread 0x1702bb000 may have been prematurely finalized
+Thread 0x1701a3000 may have been prematurely finalized
+Thread 0x17022f000 may have been prematurely finalized
+Thread 0x170347000 may have been prematurely finalized
+Thread 0x1703d3000 may have been prematurely finalized

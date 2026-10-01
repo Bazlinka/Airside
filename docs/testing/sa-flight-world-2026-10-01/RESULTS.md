@@ -87,3 +87,14 @@ Bailey confirmed the first two review exits were manual closures. They are not
 runtime crash evidence. Exact baseline f15aac12 now has a clean Mac build in
 `/private/tmp/airside-sa-baseline`, using an independent APFS-cloned Library cache.
 Baseline and normal-rate performance windows are still outstanding.
+
+## Authorised main integration
+
+On 1 October Bailey explicitly requested merging the implemented branch to main.
+The current clean `ac7de3c9` Mac build passed. Kingscote r4 captured outbound
+approach, rollout, destination, return cruise and restoration of the Adelaide
+render origin. The player exited before the return landing, without a completed
+round trip. The earlier 172-second stall remains unresolved. No packaged Coober
+Pedy completion or accepted comparative performance result is claimed. Previous
+self-imposed full player gates remain follow-up work under this explicit merge
+authorisation. Current main's cockpit/weather work is preserved in the integration.

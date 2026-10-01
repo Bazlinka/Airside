@@ -295,8 +295,8 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// A low-poly eucalypt: three-sided trunk plus multi-lobe faceted crown (ADR 0212).
-        /// Primary dome + two side clusters (~28 crown tris); widest ring in the upper half.
+        /// A low-poly eucalypt with bake-time LOD (ADR 0212 + 0220): Full 3-lobe near
+        /// the field, primary lobe mid-range, crossed billboard cards far out.
         /// </summary>
         private static void AddTree(MeshParts parts, AdelaideTreeData.Tree tree, float baseY)
         {
@@ -305,9 +305,10 @@ namespace Airside.Presentation
             leaf.a = 0f;
             var bark = Bark.linear;
             bark.a = 0f;
+            var detail = AdelaideTreeLod.ForPosition(tree.X, tree.Z);
 
-            var lobes = AdelaideTreeGeometry.LobesForSeed(tree.X, tree.Z);
-            var trunkTop = baseY + tree.Height * lobes[0].BottomHeightFrac;
+            var trunkTopFrac = 0.32f;
+            var trunkTop = baseY + tree.Height * trunkTopFrac;
             var trunkR = Mathf.Max(0.18f, tree.CrownRadius * 0.08f);
             for (var k = 0; k < 3; k++)
             {
@@ -320,6 +321,31 @@ namespace Airside.Presentation
                     outward, bark);
             }
 
+            if (detail == AdelaideTreeLod.Detail.Billboard)
+            {
+                // Two crossed vertical cards — 4 tris — readable as canopy from overview.
+                var halfW = tree.CrownRadius;
+                var top = baseY + tree.Height;
+                var mid = baseY + tree.Height * 0.55f;
+                var shade = leaf * 0.9f;
+                for (var c = 0; c < 2; c++)
+                {
+                    var yaw = spin + c * Mathf.PI * 0.5f;
+                    var dx = Mathf.Cos(yaw) * halfW;
+                    var dz = Mathf.Sin(yaw) * halfW;
+                    var a = new Vector3(tree.X - dx, mid, tree.Z - dz);
+                    var b = new Vector3(tree.X + dx, mid, tree.Z + dz);
+                    var apex = new Vector3(tree.X, top, tree.Z);
+                    var low = new Vector3(tree.X, trunkTop, tree.Z);
+                    var side = new Vector3(-Mathf.Sin(yaw), 0f, Mathf.Cos(yaw));
+                    parts.Triangle(a, b, apex, side + Vector3.up * 0.5f, leaf);
+                    parts.Triangle(a, b, low, side - Vector3.up * 0.3f, shade);
+                }
+
+                return;
+            }
+
+            var lobes = AdelaideTreeLod.LobesForDetail(tree.X, tree.Z, detail);
             for (var i = 0; i < lobes.Length; i++)
             {
                 var lobe = lobes[i];

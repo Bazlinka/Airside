@@ -1,17 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-10-01 Cursor — Phase 1 seasonal dry-grass tint design (ADR 0209).**
-  Branch `cursor/phase1-seasonal-tint-design-0e39`. Design lock only — no code yet.
-  Tint Park/Scrub/Plain+AirfieldEdge from `AirlineClock.LocalAt` day-of-year at
-  surroundings bake; leave Golf irrigated; pure `AdelaideSeasonGrassTint` maths;
-  no new textures; mid-session freeze OK.
-  **NEXT:** implement ADR 0209 on a follow-up branch, or Hills haze.
+- **2026-10-01 Cursor — Phase 1 seasonal dry-grass tint (ADR 0209).**
+  Surroundings Park/Scrub/plain straw mid-Jan / greener mid-Jul from Adelaide
+  calendar day at field build. Golf stays irrigated. `AdelaideSeasonGrassTint`.
+  **Checks:** `scripts/test-domain.sh` **1189/1189**.
+  **NEXT:** Hills haze / aerial perspective (still Phase 1).
 
 - **2026-10-01 Cursor — Phase 1 CBD skyline boxes (ADR 0208).**
   42 sourced-height OSM towers near Victoria Square (~7 km ENE) as one grey mesh
   on DEM relief. Generator `--check`; `AdelaideCbdSkylineTests`.
   **Checks:** `scripts/test-domain.sh` **1184/1184**.
-  **NEXT:** seasonal dry-grass tint (ADR 0209 design locked) or Hills haze.
 
 - **2026-10-01 Cursor — Phase 1 Golf + bunker discs (ADR 0206/0207); P0 closed / plan approved.**
   Golf courses tint irrigated green; 213 OSM bunker discs as sand marks on surroundings.

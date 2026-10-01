@@ -1,8 +1,9 @@
 ## Unreleased
 
-- **Phase 1 seasonal dry-grass tint design (ADR 0209).** Design lock: bake
-  Park/Scrub/Plain+AirfieldEdge from Adelaide `DayOfYear` at surroundings build;
-  Golf stays irrigated; pure maths, no new textures. Implement next.
+- **Phase 1 seasonal dry-grass tint (ADR 0209).** Surroundings Park/Scrub/plain
+  bake strawier mid-January and greener mid-July from the Adelaide calendar day.
+  Golf irrigated green unchanged. Locked by `AdelaideSeasonGrassTintTests`. No
+  save-schema changes.
 - **Phase 1 CBD skyline boxes (ADR 0208).** 42 OSM-height towers near Victoria
   Square (~7 km ENE) draw as one grey low-poly mesh on DEM relief. From existing
   suburb-buildings snapshot — not billboards; no new licence. Locked by

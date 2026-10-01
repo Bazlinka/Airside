@@ -41,6 +41,39 @@ namespace Airside.Tests
             Assert.That(camera.Bottom, Is.LessThanOrEqualTo(height));
         }
 
+        [Test] public void EveryCatalogueJetHasAnExplicitUniqueProfileAndAccess()
+        {
+            var jets = AircraftCatalogue.All.Where(s => s.Id != "SF34" && s.Id != AircraftType.Atr42.Id && s.Id != "DH8D").ToArray();
+            Assert.That(jets.Length, Is.EqualTo(10));
+            Assert.That(JetCockpitProfile.All.Select(p => p.TypeId), Is.EquivalentTo(jets.Select(s => s.Id)));
+            foreach (var spec in jets)
+            {
+                Assert.That(JetCockpitProfile.TryFor(spec.Id, out var profile), Is.True, spec.Id);
+                Assert.That(profile.EyeY, Is.GreaterThan(4f));
+                Assert.That(profile.EyeZ, Is.LessThan(-2f));
+                Assert.That(CockpitAvailability.Reason(spec.Type, true, EngineState.Running), Is.Empty);
+                Assert.That(CockpitAvailability.Reason(spec.Type, false, EngineState.Running), Is.Not.Empty);
+                Assert.That(CockpitAvailability.Reason(spec.Type, true, EngineState.ColdAndOpen), Is.Not.Empty);
+            }
+        }
+
+        [TestCase("B738", false, 6)]
+        [TestCase("B38M", false, 4)]
+        [TestCase("E190", false, 5)]
+        [TestCase("A223", true, 5)]
+        [TestCase("A320", true, 6)]
+        [TestCase("A21N", true, 6)]
+        [TestCase("A339", true, 6)]
+        [TestCase("A359", true, 6)]
+        [TestCase("B789", false, 5)]
+        [TestCase("B78X", false, 5)]
+        public void FamilyControlsAndDisplayCounts(string id, bool sidestick, int displays)
+        {
+            Assert.That(JetCockpitProfile.TryFor(id, out var profile), Is.True);
+            Assert.That(profile.Sidestick, Is.EqualTo(sidestick));
+            Assert.That(profile.DisplayCount, Is.EqualTo(displays));
+        }
+
         [TestCase("SF34")]
         [TestCase("ATR42")]
         [TestCase("DH8D")]
@@ -53,13 +86,8 @@ namespace Airside.Tests
             Assert.That(CockpitAvailability.Reason(type, false, EngineState.Running), Is.EqualTo("Aircraft outside the local area"));
         }
 
-        [Test] public void JetsAndUnknownTypesRemainUnavailable()
+        [Test] public void NullTypeRemainsUnavailable()
         {
-            foreach (var spec in AircraftCatalogue.All)
-                if (spec.Type.Id != AircraftType.Saab340.Id && spec.Type.Id != AircraftType.Atr42.Id
-                    && spec.Type.Id != AircraftType.Dash8Q400.Id)
-                    Assert.That(CockpitAvailability.Reason(spec.Type, true, EngineState.Running),
-                        Is.EqualTo("Turboprop cockpits only"), spec.Id);
             Assert.That(CockpitAvailability.Supported(null), Is.False);
         }
     }

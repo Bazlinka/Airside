@@ -4,6 +4,7 @@ using UnityEngine;
 namespace Airside.Presentation
 {
     /// <summary>Original ATR 42-600 and Dash 8-400 layouts, fitted to their own aircraft kits.</summary>
+    [ExecuteAlways]
     public sealed class GlassTurbopropCockpitInterior : TurbopropCockpitInterior
     {
         private bool _dash;

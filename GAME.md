@@ -3,8 +3,10 @@
 - **2026-10-01 Cursor — Phase 2b terminal car-park date palms (ADR 0215); goal resumed.**
   Procedural Canary Island date-palm rows along OSM car-park edges in the
   Terminal 1 landside ring (`AdelaidePalmPlacement` / `AdelaidePalmGeometry`),
-  drawn into the road props sink. Cap 180 palms. No new assets.
+  drawn into the road props sink. Cap hit: **180** palms. No new assets.
   Branch `cursor/phase2b-carpark-palms-709e`.
+  **Checks:** palm suites **10/10**; full headless otherwise green except pre-existing
+  `PropGovernorHoldsTheNoteWhileJetRevsRise` flake also failing on `main`.
   **NEXT:** Phase 2c avenues / Tapleys windbreak, or Phase 3 building accuracy.
 
 - **2026-10-01 Codex — SF34 cockpit spectator candidate (`feature/saab-cockpit-mode`, ADR 0214).**

@@ -50,6 +50,8 @@ Airside/
                              tests, for machines without Unity — supplementary, not a replacement
     aircraft_skin.py         Shared skin-conforming doors/windows/panels and gear pods for the aircraft
                              generators (curved shells that hug the fuselage, a few mm proud)
+    fit-aircraft-doors.py  Audits that every door sits ~1 cm proud of its real hull (CI runs `audit`) and
+                             refits a type's door parts to its hull (`fit A320`); stdlib only
     audit-aircraft-geometry.py
                              Floating-part / door-flush audit and multi-view z-buffered renders of the
                              runtime aircraft glTFs; test-aircraft-connectivity.py runs it as a check

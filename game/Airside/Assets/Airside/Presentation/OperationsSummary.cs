@@ -46,13 +46,21 @@ namespace Airside.Presentation
     /// <summary>One player aircraft in the compact Operations list.</summary>
     public readonly struct OperationsRow
     {
-        public OperationsRow(string registration, string route, string state, StatusSeverity severity, bool isPriority)
+        public OperationsRow(string registration, string route, string state, StatusSeverity severity, bool isPriority,
+            string flightLabel = null, string typeName = null, string routeText = null, string timeText = null,
+            float progress01 = -1f, string progressText = null)
         {
             Registration = registration ?? string.Empty;
             Route = route ?? string.Empty;
             State = state ?? string.Empty;
             Severity = severity;
             IsPriority = isPriority;
+            FlightLabel = string.IsNullOrEmpty(flightLabel) ? Registration : flightLabel;
+            TypeName = typeName ?? string.Empty;
+            RouteText = routeText ?? string.Empty;
+            TimeText = timeText ?? string.Empty;
+            Progress01 = progress01 < 0f ? -1f : progress01 > 1f ? 1f : progress01;
+            ProgressText = progressText ?? string.Empty;
         }
 
         public string Registration { get; }
@@ -60,6 +68,26 @@ namespace Airside.Presentation
         public string State { get; }
         public StatusSeverity Severity { get; }
         public bool IsPriority { get; }
+
+        /// <summary>The board's flight number (ZL3482-style), or the registration when nothing is booked.</summary>
+        public string FlightLabel { get; }
+
+        /// <summary>"ATR 42", "Boeing 737"… the airframe, so the tile says what is flying.</summary>
+        public string TypeName { get; }
+
+        /// <summary>"Adelaide → Kingscote", or the stand while parked with nothing booked.</summary>
+        public string RouteText { get; }
+
+        /// <summary>The time that matters now: "Departs 14:05", "ETA 15:20", "Check ends 18:00". Empty if none.</summary>
+        public string TimeText { get; }
+
+        /// <summary>How far through the current step (turnaround, flight leg, check); negative for none.</summary>
+        public float Progress01 { get; }
+
+        /// <summary>The progress bar's word, e.g. "Fuel 40%" or "62% of flight".</summary>
+        public string ProgressText { get; }
+
+        public bool HasProgress => Progress01 >= 0f;
     }
 
     /// <summary>
@@ -143,13 +171,78 @@ namespace Airside.Presentation
                     if (reason.IsHolding && reason.Kind != HoldKind.Turnaround)
                         state = HoldReasonText.Long(aircraft, reason, now, operations.Clock);
                 }
+                var detail = Detail(aircraft, now, operations?.Clock ?? AirlineClock.Default,
+                    operations?.CareerState?.BaseLevel);
                 into.Add(new OperationsRow(
                     aircraft.Registration,
                     RouteLabel(aircraft),
                     state,
                     AircraftStatus.Severity(aircraft, now),
-                    priority != null && ReferenceEquals(priority, aircraft)));
+                    priority != null && ReferenceEquals(priority, aircraft),
+                    FlightNumber.ForAircraft(aircraft),
+                    aircraft.Type.Name,
+                    detail.Route, detail.Time, detail.Progress, detail.ProgressText));
             }
+        }
+
+        /// <summary>
+        /// The extra lines on a flight tile: where it is going, the time to watch, and a progress bar
+        /// for whatever it is doing now (turnaround, flight leg or check). Read-only.
+        /// </summary>
+        private static (string Route, string Time, float Progress, string ProgressText) Detail(
+            FleetAircraft aircraft, SimulationTime now, AirlineClock clock, PlayerBaseLevel? baseLevel)
+        {
+            var place = FlightNumber.PlaceName(aircraft);
+            var route = string.IsNullOrEmpty(place)
+                ? StandNames.Display(aircraft.Stand)
+                : FlightNumber.IsReturning(aircraft) ? place + " → Adelaide" : "Adelaide → " + place;
+
+            var time = string.Empty;
+            var progress = -1f;
+            var progressText = string.Empty;
+
+            if (aircraft.Airline.IsPlayer && Maintenance.InCheck(aircraft, now) && aircraft.CheckUntil.HasValue)
+            {
+                time = "Check ends " + clock.TimeText(aircraft.CheckUntil.Value);
+                return (route, time, progress, progressText);
+            }
+
+            switch (aircraft.State)
+            {
+                case FleetState.AtStand when aircraft.Scheduled.HasValue:
+                    var booked = aircraft.Scheduled.Value;
+                    time = (booked.Cancelled ? "Cancelled " : "Departs ") + clock.TimeText(booked.DepartAt);
+                    if (!booked.Cancelled && aircraft.Airline.IsPlayer)
+                    {
+                        var prep = DeparturePrep.For(aircraft, now, baseLevel ?? PlayerBaseLevel.Starter);
+                        progress = prep.Ready ? 1f : (float)(prep.FuelProgress + prep.CateringProgress
+                            + prep.BaggageProgress + prep.BoardingProgress) / 4f;
+                        progressText = prep.Ready ? "Ready to push" : prep.Label;
+                    }
+                    break;
+                case FleetState.Outbound:
+                case FleetState.Inbound:
+                    if (aircraft.StateEndsAt.HasValue)
+                    {
+                        time = "ETA " + clock.TimeText(aircraft.StateEndsAt.Value);
+                        progress = (float)aircraft.StateProgress(now);
+                        progressText = (int)(progress * 100f) + "% of flight";
+                    }
+                    break;
+                case FleetState.AtDestination:
+                    if (aircraft.StateEndsAt.HasValue)
+                    {
+                        time = "Leaves " + clock.TimeText(aircraft.StateEndsAt.Value);
+                        progress = (float)aircraft.StateProgress(now);
+                        progressText = "Turnaround";
+                    }
+                    break;
+                case FleetState.AwaitingStand:
+                    time = "Needs a stand";
+                    break;
+            }
+
+            return (route, time, progress, progressText);
         }
 
         public static int AvailableCount(IEnumerable<FleetAircraft> playerFleet, SimulationTime now = default)

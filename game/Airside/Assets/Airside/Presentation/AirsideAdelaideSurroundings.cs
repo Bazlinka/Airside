@@ -58,6 +58,8 @@ namespace Airside.Presentation
         internal static readonly Color Plain = new(0.555f, 0.57f, 0.42f);
         private static readonly Color Suburb = new(0.585f, 0.575f, 0.53f);
         private static readonly Color Park = new(0.46f, 0.53f, 0.39f);
+        // Irrigated fairway green — richer than park olive so courses read at overview.
+        private static readonly Color Golf = new(0.34f, 0.52f, 0.33f);
         private static readonly Color Commercial = new(0.62f, 0.60f, 0.56f);
         private static readonly Color Parking = new(0.42f, 0.43f, 0.41f);
         private static readonly Color Scrub = new(0.52f, 0.55f, 0.40f);
@@ -482,6 +484,7 @@ namespace Airside.Presentation
             AdelaideLandCover.Kind.Residential => Suburb,
             AdelaideLandCover.Kind.Commercial => Commercial,
             AdelaideLandCover.Kind.Park => Park,
+            AdelaideLandCover.Kind.Golf => Golf,
             AdelaideLandCover.Kind.Parking => Parking,
             AdelaideLandCover.Kind.Sand => Beach,
             AdelaideLandCover.Kind.Scrub => Scrub,

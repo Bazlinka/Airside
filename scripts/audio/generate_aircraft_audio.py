@@ -17,7 +17,10 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 AUDIO = ROOT / 'game/Airside/Assets/Resources/Airside/Audio'
 RATE = 22050
-PROFILES = json.loads((ROOT / 'docs/data/AIRCRAFT_AUDIO_PROFILES.json').read_text())['profiles']
+_PROFILE_DATA = json.loads((ROOT / 'docs/data/AIRCRAFT_AUDIO_PROFILES.json').read_text())
+PROFILES = _PROFILE_DATA['profiles']
+# ADR 0207: helicopter profiles are listed beside the fleet but their loops are synthesised by generate_rotorcraft_audio.py.
+ROTORCRAFT_PROFILES = _PROFILE_DATA.get('rotorcraft', [])
 SOURCES = {'twin': 'eng_dash8_300_twin.wav', 'q400': 'eng_dash8_q400_pw100.wav',
            'jet': 'eng_jet_turbine.wav'}
 
@@ -183,6 +186,9 @@ def generated_profiles():
              '        public static AircraftAudioProfile For(AircraftType type)', '        {',
              '            return (type?.Id ?? "ATR42") switch', '            {']
     for p in PROFILES:
+        lines.append(f'                "{p["id"]}" => new("{p["id"].lower()}", '
+                     f'{p["pitch"]:.3f}f, {p["gain"]:.3f}f),')
+    for p in ROTORCRAFT_PROFILES:
         lines.append(f'                "{p["id"]}" => new("{p["id"].lower()}", '
                      f'{p["pitch"]:.3f}f, {p["gain"]:.3f}f),')
     lines += ['                _ => new("atr42", 1f, 0.86f)', '            };',

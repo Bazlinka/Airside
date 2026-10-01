@@ -220,7 +220,7 @@ namespace Airside.Domain
         /// A helicopter's climb-out and arrival are drawn and timed by its own take-off and landing states, so
         /// the en-route leg carries only a short allowance for the turn onto and off its flight line.
         /// </summary>
-        public const long RotorcraftLegAllowanceSeconds = 90;
+        public const long RotorcraftLegAllowanceSeconds = 40;
 
         public static long AirborneSeconds(double distanceKm, AircraftType type)
         {

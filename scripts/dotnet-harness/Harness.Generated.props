@@ -231,6 +231,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HangarBaysTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HangarTenantPaletteTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HangarTowTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HelicopterTrackTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HoldReasonTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HouseStyleTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HudMomentsTests.cs" />

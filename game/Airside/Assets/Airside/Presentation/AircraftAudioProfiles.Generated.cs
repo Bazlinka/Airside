@@ -22,6 +22,7 @@ namespace Airside.Presentation
                 "A359" => new("a359", 0.800f, 1.170f),
                 "B789" => new("b789", 0.880f, 1.100f),
                 "B78X" => new("b78x", 0.850f, 1.140f),
+                "B412" => new("b412", 1.000f, 0.950f),
                 _ => new("atr42", 1f, 0.86f)
             };
         }

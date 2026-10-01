@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Airside.Domain;
+using Airside.Presentation;
 using Airside.Simulation;
 using NUnit.Framework;
 
@@ -445,6 +446,52 @@ namespace Airside.Tests
             data.Fleet.RemoveAll(r => r.Registration == "VH-SAR");
             var restored = AirlineSave.Restore(data, new ManualSimulationClock(clock.Now));
             Assert.That(restored.Fleet.Any(a => a.Registration == "VH-SAR" && a.Type.IsRotorcraft), Is.True);
+        }
+
+        // ---- Sound ----------------------------------------------------------------------------
+
+        [Test]
+        public void TheHelicopterHasItsOwnEngineClass_AndAnAudioProfile()
+        {
+            Assert.That(EngineVoice.ClassOf(AircraftType.Bell412), Is.EqualTo(EngineClass.Rotorcraft));
+            Assert.That(EngineVoice.ClassOf(AircraftType.Atr42), Is.EqualTo(EngineClass.Turboprop));
+            var profile = AircraftAudioProfiles.For(AircraftType.Bell412);
+            Assert.That(profile.Key, Is.EqualTo("b412"));
+            Assert.That(profile.Resource("idle"), Is.EqualTo("Airside/Audio/eng_b412_idle_v01"));
+            Assert.That(profile.Resource("power"), Is.EqualTo("Airside/Audio/eng_b412_power_v01"));
+            Assert.That(AircraftAudioMix.AudibleDistance(EngineClass.Rotorcraft),
+                Is.GreaterThan(AircraftAudioMix.AudibleDistance(EngineClass.Turboprop)),
+                "blade slap carries further than a turboprop");
+        }
+
+        [Test]
+        public void RotorSound_IsSilentWhenStopped_BuildsWithLoad_AndFallsInPitchAsTheRotorSpoolsDown()
+        {
+            var type = AircraftType.Bell412;
+            var stopped = AircraftAudioMix.For(type, "VH-SAR", 0f, 0f, 0f, 0f, 0f, 0f, true);
+            Assert.That(stopped.Idle, Is.EqualTo(0f));
+            Assert.That(stopped.Power, Is.EqualTo(0f));
+
+            var idling = AircraftAudioMix.For(type, "VH-SAR", 0.15f, 1f, 1f, 1f, 0f, 0f, true);
+            var hovering = AircraftAudioMix.For(type, "VH-SAR", 0.85f, 1f, 1f, 1f, 0f, 0f, false);
+            var climbing = AircraftAudioMix.For(type, "VH-SAR", 1f, 1f, 1f, 1f, 0f, 0f, false);
+            Assert.That(idling.Idle, Is.GreaterThan(idling.Power), "a turbine whine on the pad");
+            Assert.That(hovering.Power, Is.GreaterThan(hovering.Idle), "blade slap takes over under load");
+            Assert.That(climbing.Power, Is.GreaterThan(hovering.Power));
+            Assert.That(climbing.Reverse, Is.EqualTo(0f));
+            Assert.That(climbing.Wheels, Is.EqualTo(0f));
+
+            var spooling = AircraftAudioMix.For(type, "VH-SAR", 0.3f, 0.5f, 0.5f, 0.5f, 0f, 0f, true);
+            Assert.That(spooling.Pitch, Is.LessThan(idling.Pitch), "the chop slows as the rotor spools down");
+            Assert.That(spooling.Pitch, Is.GreaterThan(0.4f));
+        }
+
+        [Test]
+        public void RotorSound_DoesNotChangeTheFixedWingMix()
+        {
+            var atr = AircraftAudioMix.For(AircraftType.Atr42, "VH-X", 0.7f, 0.9f, 1f, 1f, 0f, 30f, true);
+            Assert.That(atr.Power, Is.GreaterThan(0f));
+            Assert.That(atr.Wheels, Is.GreaterThan(0f), "tyres still roll for a landplane");
         }
     }
 }

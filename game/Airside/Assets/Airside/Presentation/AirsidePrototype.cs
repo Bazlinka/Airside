@@ -1141,7 +1141,9 @@ namespace Airside.Presentation
             // Taxiing fleet aircraft move along the Adelaide ground routes, which the
             // circuit speed schedule knows nothing about, so measure them directly.
             var type = FleetMode && fleetAircraft != null ? fleetAircraft.Type : AircraftType.Atr42;
-            var knots = flight != null && FleetGroundSpeed(flight) is { } groundSpeed
+            var knots = type.IsRotorcraft
+                ? CircuitProfile.ToKnots(HelicopterTrack.For(fleetAircraft, _preciseTime).SpeedMetresPerSecond)
+                : flight != null && FleetGroundSpeed(flight) is { } groundSpeed
                 ? CircuitProfile.ToKnots(groundSpeed)
                 : flight != null
                     ? AirsideFlightPath.AirspeedKnots(flight.Operation.Phase, VisualPhaseProgress(flight, 0f), type)

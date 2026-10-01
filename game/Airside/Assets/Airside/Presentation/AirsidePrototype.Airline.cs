@@ -1337,7 +1337,9 @@ namespace Airside.Presentation
             }
 
             var type = aircraft.Type;
-            var knots = flight != null && FleetGroundSpeed(flight) is { } groundSpeed
+            var knots = type.IsRotorcraft
+                ? CircuitProfile.ToKnots(HelicopterTrack.For(aircraft, _preciseTime).SpeedMetresPerSecond)
+                : flight != null && FleetGroundSpeed(flight) is { } groundSpeed
                 ? CircuitProfile.ToKnots(groundSpeed)
                 : flight != null
                     ? AirsideFlightPath.AirspeedKnots(flight.Operation.Phase, VisualPhaseProgress(flight, 0f), type)

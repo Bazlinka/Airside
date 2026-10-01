@@ -23,5 +23,8 @@ Verification: full headless regression 1,199 passed, zero failures; native Unity
 EditMode 1,585 passed, zero failures, the same two unmet-precondition inconclusives
 (1,587 total). Unity asset audit and diff whitespace checks pass. Seven final
 native render angles are committed as `v2-native-*.png` and visually inspected.
-Mac build and actual airport capture are the next verification step. Broader cockpit-mode journey/audio/performance
+First V2 Mac build passed at `047a296f` and rendered the interior in the airport.
+Its small cube tick marks disappeared in the player, despite appearing in native
+stills. They were replaced by thicker flat geometry. The final native suite passed
+again with the same counts. Final Mac rebuild and airport capture are next. Broader cockpit-mode journey/audio/performance
 acceptance remains in the parent README and is not claimed by this visual revision.

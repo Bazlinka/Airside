@@ -23,8 +23,10 @@
   round central gauges, squared yokes, radio/lever pedestal and overhead.
   Reference notes: `docs/art/reference/saab340-cockpit/README.md`.
   V2 checks: headless 1199 passed; native 1585 passed/0 failed/2 inconclusive;
-  asset audit passed; seven native angles inspected and committed. Next: Mac build
-  and packaged startup evidence for the rebuilt interior.
+  asset audit passed; seven native angles inspected and committed. First V2 Mac
+  build passed at `047a296f`; player review exposed disappearing fine tick marks.
+  Replaced those with thicker flat geometry; full native suite passed again.
+  Next: final Mac rebuild and packaged startup evidence with visible markings.
   Interior is a simplified candidate. Do not claim a completed fleet cockpit rollout
   or merge until those acceptance rows have actual evidence.
 

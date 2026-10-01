@@ -1,6 +1,6 @@
 ## Unreleased
 
-- Rebuild the SF34 cockpit around referenced Saab 340B windows, grey instrument panel, stacked displays, central gauges, squared yokes, overhead and turboprop pedestal; keep the game view simplified.
+- Rebuild the SF34 cockpit around referenced Saab 340B windows, grey instrument panel, stacked displays, central gauges, squared yokes, overhead and turboprop pedestal; keep the game view simplified and instrument markings readable in the player.
 
 - **SF34 cockpit spectator candidate.** Selected local aircraft offer Follow and Cockpit.
   The Saab cockpit opens at first engine spool, follows final aircraft poses through

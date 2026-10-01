@@ -147,6 +147,13 @@ namespace Airside.Presentation
             return label;
         }
 
+        private void Stroke(string name, Vector3 a, Vector3 b, float width, Material material)
+        {
+            var delta = b - a;
+            var cross = new Vector3(-delta.y, delta.x, 0f).normalized * (width * 0.5f);
+            Face(name, new[] { a - cross, b - cross, b + cross, a + cross }, material);
+        }
+
         private void Dial(string name, float x, float y, float radius, float needleDegrees = 30f)
         {
             var z = 7.985f;
@@ -156,12 +163,12 @@ namespace Airside.Presentation
             {
                 var angle = (tick * 27f + 150f) * Mathf.Deg2Rad;
                 var direction = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f);
-                Beam(name + " tick", new Vector3(x, y, z - 0.004f) + direction * radius * 0.68f,
-                    new Vector3(x, y, z - 0.004f) + direction * radius * 0.79f, radius * 0.045f, _white);
+                Stroke(name + " tick", new Vector3(x, y, z - 0.004f) + direction * radius * 0.68f,
+                    new Vector3(x, y, z - 0.004f) + direction * radius * 0.84f, Mathf.Max(0.0035f, radius * 0.075f), _white);
             }
             var needle = new Vector3(Mathf.Sin(needleDegrees * Mathf.Deg2Rad), Mathf.Cos(needleDegrees * Mathf.Deg2Rad), 0f);
-            Beam(name + " needle", new Vector3(x, y, z - 0.006f),
-                new Vector3(x, y, z - 0.006f) + needle * radius * 0.65f, radius * 0.048f, _white);
+            Stroke(name + " needle", new Vector3(x, y, z - 0.006f),
+                new Vector3(x, y, z - 0.006f) + needle * radius * 0.65f, Mathf.Max(0.003f, radius * 0.05f), _white);
             Disc(name + " hub", new Vector3(x, y, z - 0.007f), radius * 0.1f, _metal);
         }
 
@@ -188,8 +195,8 @@ namespace Airside.Presentation
             {
                 var angle = tick * Mathf.PI / 6f;
                 var d = new Vector3(Mathf.Sin(angle), Mathf.Cos(angle), 0f);
-                Beam("Compass tick", new Vector3(x, 1.665f, 7.95f) + d * 0.053f,
-                    new Vector3(x, 1.665f, 7.95f) + d * 0.061f, 0.002f, _white);
+                Stroke("Compass tick", new Vector3(x, 1.665f, 7.95f) + d * 0.053f,
+                    new Vector3(x, 1.665f, 7.95f) + d * 0.062f, 0.0035f, _white);
             }
             Beam("Course pointer", new Vector3(x, 1.615f, 7.945f), new Vector3(x, 1.715f, 7.945f), 0.003f, _green);
             Label("Compass north", "N", new Vector3(x, 1.712f, 7.94f), 0.0028f, Color.white);

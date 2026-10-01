@@ -10,16 +10,23 @@ namespace Airside.Tests
         {
             Assert.That(AdelaideLandCover.CoverageResidentialPercent, Is.InRange(15f, 45f));
             Assert.That(AdelaideLandCover.CoverageParkPercent, Is.InRange(3f, 20f));
+            Assert.That(AdelaideLandCover.CoverageGolfPercent, Is.InRange(0.5f, 5f));
             Assert.That(AdelaideLandCover.CoverageWaterPercent, Is.InRange(0.2f, 5f));
             Assert.That(AdelaideLandCover.CoverageParkingPercent, Is.InRange(0.5f, 8f));
             Assert.That(AdelaideLandCover.CoverageCommercialPercent, Is.InRange(1f, 12f));
         }
 
         [Test]
-        public void Sample_RoyalAdelaideGolf_IsPark()
+        public void Sample_RoyalAdelaideGolf_IsGolf()
         {
             // Centroid of the Royal Adelaide Golf Course polygon in the runway frame.
-            Assert.That(AdelaideLandCover.Sample(2433.2f, 5789.2f), Is.EqualTo(AdelaideLandCover.Kind.Park));
+            Assert.That(AdelaideLandCover.Sample(2433.2f, 5789.2f), Is.EqualTo(AdelaideLandCover.Kind.Golf));
+        }
+
+        [Test]
+        public void Sample_GlenelgGolf_IsGolf()
+        {
+            Assert.That(AdelaideLandCover.Sample(-839.0f, -924.0f), Is.EqualTo(AdelaideLandCover.Kind.Golf));
         }
 
         [Test]

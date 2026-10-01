@@ -1,6 +1,6 @@
 # Visual overhaul plan — buildings, ground, trees, land
 
-Status: **proposed, awaiting Bailey's sign-off** · 2026-09-30 · Author: Claude · Branch `plan-visual-overhaul`
+Status: **approved (Bailey 2026-10-01)** · continue Phase 1+ without ask-to-verify · Author: Claude · ADR 0198
 
 ## Goal
 The overview and follow cameras should look attractive *and* read as Adelaide Airport (YPAD): accurate footprints and
@@ -14,24 +14,25 @@ routes, reservations or saves.
   Hills far ring (ADR 0158), road network (6,735 roads), car parks, boundary fence.
 - Trees: `adelaide_trees_v01.bin`, placed from Sentinel-2 NDVI canopy (ADR 0160).
 - URP 17.3, procedural materials via `AirsideMaterialLibrary`; art rules in `docs/art/ART_DIRECTION_AND_ASSET_SPEC.md`.
-- **Constraint:** graphics-on performance is unresolved (57 fps fog, 37 fps storm in the last weather run). Every phase
-  is gated on a measured frame-time budget; no effect lands without a before/after number.
+- **Constraint:** target 60 fps overview at 1600×900 on the dev Mac. Agents land narrow Presentation
+  slices with headless locks; Bailey rebuilds when he wants — do **not** block on Mac captures or
+  ask him to verify each slice.
 
 ## Principles
-1. **Look first, measure always.** Each phase starts with a fixed set of reference captures (overview, terminal
-   airside, terminal kerb, hangar row, suburb edge, coast; day/dusk/night) and ends with the same set.
+1. **Ship narrow slices; Bailey looks when ready.** Prefer headless-locked Presentation changes.
+   Optional baseline captures stay available (`scripts/capture-visual-baseline.sh`) but do not gate merges.
 2. **Accuracy is sourced.** Real footprints/heights from OSM and AIP data already in `docs/data/`; anything not
    sourced is marked approximate in the ADR (as done for ADR 0197).
 3. **Licences first.** No external asset enters without a register entry (`docs/data/ASSET_AND_DATA_REGISTER.md`).
    Google/Bing/Esri imagery and Google 3D Tiles are rejected (see `ypad-surroundings-plan.md`).
-4. **Procedural fallback stays** until each replacement is verified at overview/follow, day/dusk/night.
-5. One phase = one branch/PR, narrow and reviewable.
+4. **Procedural fallback stays** until a replacement is integrated.
+5. One slice = one branch/PR, narrow and reviewable.
 
 ## Phase 0 — Baseline and budget (do first, ~1 session)
 - Add a repeatable capture script set (extend `scripts/capture-game.sh`) with named camera bookmarks.
 - Record fps / frame p95 / SetPass / batches per bookmark in `docs/testing/visual-baseline-<date>/`.
 - Set budgets: 60 fps at 1600×900 at overview on the dev Mac; triangles and batches ceilings per phase.
-- **Exit:** committed baseline captures + numbers. Bailey marks the 3–5 things that bother him most.
+- **Exit (code):** bookmarks + capture script on `main` (ADR 0200). Packaged PNG/metrics optional whenever Bailey runs the Mac script.
 
 ## Phase 1 — Ground and land (biggest visual return)
 1. **Ground albedo and detail:** macro-variation (large-scale colour noise), triplanar detail texture, distance
@@ -46,7 +47,7 @@ routes, reservations or saves.
    billboards or low-poly blocks from OSM heights.
 - **Files:** `AirsideAdelaideGround*.cs`, `AirsideTerrainField.cs`, `AirsideAdelaideOuterTerrain.cs`,
   `AirsideMaterialLibrary.cs`, generators under `scripts/`.
-- **Exit:** before/after captures approved by Bailey; overview ≥ 60 fps; new textures registered (CC0 or generated).
+- **Exit:** headless locks green; new textures registered (CC0 or generated). Bailey rebuilds when he wants.
 
 ## Phase 2 — Trees and vegetation
 1. **Species set:** replace generic crowns with a small, licensed set matching Adelaide: river red gum /
@@ -108,8 +109,8 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
 1. **Style:** stay stylised-clean per the art direction, but richer — more material variation, detail and lighting,
    not photoreal. Consistency with the existing aircraft and UI matters more than realism.
 2. **Order:** baseline, then ground and land, then trees, then buildings (audit first, since it needs no renderer).
-3. **Performance:** 60 fps at the overview camera at 1600×900 on the dev Mac is the High-tier requirement. A Low tier
-   must stay fully playable. No effect lands without a before/after frame-time number.
+3. **Performance:** 60 fps at the overview camera at 1600×900 on the dev Mac is the High-tier target. A Low tier
+   must stay fully playable. Do not block slices waiting for Bailey to measure.
 4. **Assets:** CC0 packs (Quaternius, Kenney, Poly Haven) are allowed when registered with source, licence and
    fallback; otherwise author procedurally. No non-CC0 or online-only assets.
 5. **Terminal reference:** none supplied, so Terminal 1 detail stays approximate and is labelled as such. Bailey's
@@ -117,15 +118,18 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
 6. **Imagery:** Sentinel-2 tint only. Licensed SA Government imagery is not requested for now.
 
 ## Status
+- **Bailey (2026-10-01):** plan approved; P0 closed; agents continue without ask-to-verify.
 - Phase 3a (building audit): done — `scripts/audit-ypad-buildings.py`, `docs/data/ypad-buildings-audit.md`.
   Finding: only 7 of 78 heights are sourced; 71 are rule defaults and 60 buildings are unnamed.
-- Phase 0 (bookmarks + capture script): done in code — `AirsideVisualBaselineViews`,
-  `-airsideReviewView`, `scripts/capture-visual-baseline.sh`, ADR 0200. Packaged PNG/metrics
-  evidence still needs a Mac run of that script (`docs/testing/visual-baseline-2026-09-30/`).
+- Phase 0 (bookmarks + capture script): done in code — ADR 0200. Optional Mac PNG/metrics whenever convenient.
 - Phase 1 slices done: stand oil stains + softer ground edges (ADR 0201); apron patch
   repairs + drainage pits (ADR 0202); West Beach dunes/foam/Patawalonga outlet (ADR 0203).
-  Remaining Phase 1: land cover polish, far ring.
-- Phases 0 (packaged captures), 2, 3b–f, 4, 5 still benefit from Mac Unity captures and frame-time numbers.
+  Phase 1 Golf (0211), bunkers (0207), CBD skyline (0208), seasonal tint (0209),
+  Hills aerial haze (0210) on tip — Phase 1 ground/land checklist complete.
+- Phase 2a (ADR 0212): multi-lobe eucalypt crowns on NDVI suburb trees
+  (`AdelaideTreeGeometry`) — no new assets.
+  **Next:** Phase 2 species/LOD/placement, or Phase 3 building accuracy.
+- Phases 2 (remainder), 3b–f, 4, 5 remain.
 
 ## Risks
 - Performance (already tight) → per-phase budgets, LOD, tiers.

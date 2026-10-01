@@ -7,3 +7,6 @@ buildings; 60 fps overview on the dev Mac; CC0/procedural assets only; Sentinel-
 **Reason:** Bailey asked for a big visual overhaul of buildings, ground, trees and land, and delegated the choices.
 **Affected systems:** presentation only. **Migration impact:** none.
 **Also:** `scripts/audit-ypad-buildings.py` records that 71 of 78 building heights are rule defaults.
+
+**2026-10-01 — Bailey approved the plan** and asked agents to continue Phase 1+ without
+ask-to-verify; he rebuilds when he wants. Mac baseline PNG/metrics are optional, not a gate.

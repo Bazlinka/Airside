@@ -58,6 +58,8 @@ namespace Airside.Presentation
         internal static readonly Color Plain = new(0.555f, 0.57f, 0.42f);
         private static readonly Color Suburb = new(0.585f, 0.575f, 0.53f);
         private static readonly Color Park = new(0.46f, 0.53f, 0.39f);
+        // Irrigated fairway green — richer than park olive so courses read at overview.
+        private static readonly Color Golf = new(0.34f, 0.52f, 0.33f);
         private static readonly Color Commercial = new(0.62f, 0.60f, 0.56f);
         private static readonly Color Parking = new(0.42f, 0.43f, 0.41f);
         private static readonly Color Scrub = new(0.52f, 0.55f, 0.40f);
@@ -67,7 +69,13 @@ namespace Airside.Presentation
         internal static readonly Color DeepWater = new(0.12f, 0.30f, 0.42f);
         private static readonly Color InlandWater = new(0.26f, 0.50f, 0.54f);
 
-        public static bool TryBuild(Transform root) => TryBuild(root, out _);
+        /// <summary>Peak-green day — seasonal tint is identity (ADR 0209).</summary>
+        public const int DefaultSeasonDayOfYear = AdelaideSeasonGrassTint.PeakGreenDayOfYear;
+
+        public static bool TryBuild(Transform root) => TryBuild(root, DefaultSeasonDayOfYear, out _);
+
+        public static bool TryBuild(Transform root, out Material material) =>
+            TryBuild(root, DefaultSeasonDayOfYear, out material);
 
         /// <summary>
         /// Real ground heights (ADR 0158), loaded once. Null when the baked DEM is missing: the
@@ -148,7 +156,7 @@ namespace Airside.Presentation
         public const float FarHorizonFadeStartMetres = 25500f;
         public const float FarHorizonFadeEndMetres = 29500f;
 
-        public static bool TryBuild(Transform root, out Material material)
+        public static bool TryBuild(Transform root, int adelaideDayOfYear, out Material material)
         {
             material = null;
             try
@@ -162,7 +170,7 @@ namespace Airside.Presentation
 
                 var grid = new CoastGrid(AdelaideCoast.SeaPolygon, AdelaideCoast.Coastline,
                     AirsideAdelaideGround.SizeX * 0.5f, AirsideAdelaideGround.SizeZ * 0.5f);
-                var mesh = BuildMesh(grid, out var heights, Terrain);
+                var mesh = BuildMesh(grid, out var heights, Terrain, adelaideDayOfYear);
 
                 var go = new GameObject(ObjectName);
                 go.transform.SetParent(root, false);
@@ -182,7 +190,12 @@ namespace Airside.Presentation
                     AirsideAdelaideOuterTerrain.TryBuild(root, shader);
                 }
 
-                BuildShoreFoam(root, AirsideAdelaideGround.PavementWorldY - SeaBelowPavement + 0.04f);
+                // ADR 0208: CBD silhouette ~7 km ENE — after far ring so it sits on DEM relief.
+                AirsideAdelaideCbdSkyline.TryBuild(root, Terrain);
+
+                var coastY = AirsideAdelaideGround.PavementWorldY - SeaBelowPavement + 0.04f;
+                BuildShoreFoam(root, coastY);
+                BuildGolfBunkers(root, AirsideAdelaideGround.PavementWorldY + 0.02f);
                 return true;
             }
             catch (Exception e)
@@ -227,15 +240,20 @@ namespace Airside.Presentation
             return material;
         }
 
-        public static Mesh BuildMesh(CoastGrid grid) => BuildMesh(grid, out _);
+        public static Mesh BuildMesh(CoastGrid grid) => BuildMesh(grid, out _, null, DefaultSeasonDayOfYear);
 
-        public static Mesh BuildMesh(CoastGrid grid, out Vector3[] vertices) => BuildMesh(grid, out vertices, null);
+        public static Mesh BuildMesh(CoastGrid grid, out Vector3[] vertices) =>
+            BuildMesh(grid, out vertices, null, DefaultSeasonDayOfYear);
 
         /// <param name="terrain">
         /// Real heights (ADR 0158): land higher than the plain rises by that much, eased in from
         /// 700 m outside the airfield so its edge, the coast and the beach keep their shape.
         /// </param>
-        public static Mesh BuildMesh(CoastGrid grid, out Vector3[] vertices, AdelaideTerrainHeights terrain)
+        public static Mesh BuildMesh(CoastGrid grid, out Vector3[] vertices, AdelaideTerrainHeights terrain) =>
+            BuildMesh(grid, out vertices, terrain, DefaultSeasonDayOfYear);
+
+        public static Mesh BuildMesh(CoastGrid grid, out Vector3[] vertices, AdelaideTerrainHeights terrain,
+            int adelaideDayOfYear)
         {
             var nx = grid.CountX;
             var nz = grid.CountZ;
@@ -300,7 +318,7 @@ namespace Airside.Presentation
                     height = edgeHeight - TuckUnderMetres;
 
                 vertices[i] = new Vector3(x, height, z);
-                colors[i] = LandColour(x, z, beach, outside, cover);
+                colors[i] = LandColour(x, z, beach, outside, cover, adelaideDayOfYear);
             }
 
             var triangles = new System.Collections.Generic.List<int>((nx - 1) * (nz - 1) * 6);
@@ -412,6 +430,54 @@ namespace Airside.Presentation
                 new Color(0.85f, 0.90f, 0.94f, 0.35f));
         }
 
+        /// <summary>
+        /// OSM golf bunker discs (ADR 0207) as one sand-coloured child mesh so courses
+        /// show traps at overview without painting over the Golf land-cover tint.
+        /// </summary>
+        public static void BuildGolfBunkers(Transform root, float bunkerY)
+        {
+            if (AdelaideGolfBunkers.Count == 0)
+                return;
+
+            var verts = new System.Collections.Generic.List<Vector3>(AdelaideGolfBunkers.Count * GolfBunkerMarks.DiscSides);
+            var tris = new System.Collections.Generic.List<int>(AdelaideGolfBunkers.Count * (GolfBunkerMarks.DiscSides - 2) * 3);
+            for (var i = 0; i < AdelaideGolfBunkers.Count; i++)
+            {
+                AdelaideGolfBunkers.Get(i, out var cx, out var cz, out var radius);
+                var xz = GolfBunkerMarks.DiscCorners(cx, cz, radius);
+                var baseIndex = verts.Count;
+                var sides = xz.Length / 2;
+                for (var s = 0; s < sides; s++)
+                    verts.Add(new Vector3(xz[s * 2], bunkerY, xz[s * 2 + 1]));
+                for (var s = 1; s < sides - 1; s++)
+                {
+                    tris.Add(baseIndex);
+                    tris.Add(baseIndex + s);
+                    tris.Add(baseIndex + s + 1);
+                }
+            }
+
+            const string name = "Golf bunkers";
+            var mesh = new Mesh
+            {
+                name = name,
+                indexFormat = verts.Count > 65000 ? IndexFormat.UInt32 : IndexFormat.UInt16
+            };
+            mesh.SetVertices(verts);
+            mesh.SetTriangles(tris, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+
+            var go = new GameObject(name);
+            go.transform.SetParent(root, false);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = AirsideMaterialLibrary.CreateShared(
+                Beach, AirsideMaterialLibrary.SurfaceKind.Sand);
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+        }
+
         private static void SpawnFoamLayer(Transform root, string name,
             System.Collections.Generic.IReadOnlyList<CoastFoamSegment> segments,
             float y, float landward, float seaward, Color colour)
@@ -457,7 +523,7 @@ namespace Airside.Presentation
         /// one flat card from the overview, then sand along the beach.
         /// </summary>
         private static Color LandColour(float x, float z, float beach, float outsideAirfield,
-            AdelaideLandCover.Kind cover)
+            AdelaideLandCover.Kind cover, int adelaideDayOfYear)
         {
             // Soft noise plain as the fallback / blend base.
             var patches = Noise(x / 900f, z / 900f) * 0.65f + Noise(x / 260f + 11.3f, z / 260f - 4.1f) * 0.35f;
@@ -471,6 +537,17 @@ namespace Airside.Presentation
 
             // Match the airfield's dry grass for the first few hundred metres out.
             land = Color.Lerp(AirfieldEdge, land, Mathf.SmoothStep(0f, 1f, outsideAirfield / 900f));
+
+            // ADR 0209: seasonal straw on plain/park/scrub only — Golf stays irrigated.
+            if (AdelaideSeasonGrassTint.AppliesTo(cover))
+            {
+                var r = land.r;
+                var g = land.g;
+                var b = land.b;
+                AdelaideSeasonGrassTint.ApplyRgb(ref r, ref g, ref b, adelaideDayOfYear);
+                land = new Color(r, g, b, land.a);
+            }
+
             // Palette is authored in sRGB; vertex colours are read as linear in this project.
             var colour = Color.Lerp(land, Beach, Mathf.SmoothStep(0f, 1f, beach)).linear;
             colour.a = 0f;
@@ -482,6 +559,7 @@ namespace Airside.Presentation
             AdelaideLandCover.Kind.Residential => Suburb,
             AdelaideLandCover.Kind.Commercial => Commercial,
             AdelaideLandCover.Kind.Park => Park,
+            AdelaideLandCover.Kind.Golf => Golf,
             AdelaideLandCover.Kind.Parking => Parking,
             AdelaideLandCover.Kind.Sand => Beach,
             AdelaideLandCover.Kind.Scrub => Scrub,

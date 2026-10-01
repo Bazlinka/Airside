@@ -1,17 +1,48 @@
 ## Unreleased
 
+- **Phase 2a multi-lobe eucalypt crowns (ADR 0212).** NDVI suburb trees use a
+  3-lobe faceted canopy (primary dome + two side clusters, 28 crown tris) so
+  they read as eucalypts instead of one hex blob. Layout in
+  `AdelaideTreeGeometry`; drawn by `AirsideAdelaideSuburbs.AddTree`. No new
+  assets or licences. Locked by `AdelaideTreeGeometryTests`. No save-schema
+  changes.
+- **Phase 1 Hills aerial haze (ADR 0210).** Outer-terrain land vertex colours
+  cool toward blue-grey with distance and height so the Hills dissolve instead
+  of reading as a hard brown rim. Locked by `AdelaideAerialPerspectiveTests`.
+  No save-schema changes.
+- **Phase 1 seasonal dry-grass tint (ADR 0209).** Surroundings Park/Scrub/plain
+  bake strawier mid-January and greener mid-July from the Adelaide calendar day.
+  Golf irrigated green unchanged. Locked by `AdelaideSeasonGrassTintTests`. No
+  save-schema changes.
+- **Phase 1 CBD skyline boxes (ADR 0208).** 42 OSM-height towers near Victoria
+  Square (~7 km ENE) draw as one grey low-poly mesh on DEM relief. From existing
+  suburb-buildings snapshot — not billboards; no new licence. Locked by
+  `AdelaideCbdSkylineTests`. No save-schema changes.
+- **Phase 1 golf bunker discs (ADR 0207).** 213 OSM `golf=bunker` discs draw as
+  sand discs on the surroundings mesh (Glenelg and nearby courses). Land-cover
+  Golf tint unchanged. Locked by `GolfBunkerMarksTests`. No save-schema changes.
+- **Phase 1 land cover: Golf distinct from Park (ADR 0211).** OSM golf courses
+  paint `Kind.Golf` with a richer irrigated green tint at overview (Royal
+  Adelaide, Glenelg, …). Parks stay olive. Regenerated `AdelaideLandCover`;
+  locked by `AdelaideLandCoverTests`. Renumbered from draft 0206 after runway
+  paint claimed 0206 on `main`. No save-schema changes.
+- **Visual overhaul plan approved; continue without ask-to-verify.** Bailey
+  closed P0 and approved the visual plan; agents ship Phase 1+ code; he rebuilds
+  when he wants. Mac baseline PNG/metrics optional, not a gate.
+- **P0 closed by Bailey (move to P1).** Owner waived remaining unverified
+  stills/listening rows in `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`.
+  Plan + ADR 0205 + `GAME.md` handoff point at the visual overhaul gate. No
+  simulation or save changes.
 - **Runway edge lines and centreline no longer shimmer into dashes.** A 0.9 m line is under a pixel wide
   from about a kilometre out, so it broke up and crawled as the camera moved. The 05/23 and 12/30 edge and
   centre lines are now flat ribbons (`DistanceWidenedPaint`) whose width follows distance node by node to
   about 1.6 px (`AirsidePaintWidening`, capped at 9x), so they stay continuous at every zoom and are exact
   when near. Presentation only. Checked in a Mac build at 250 m, 1 km and 3 km; ADR 0206.
-
 - **Smoother propeller spool-up and a clearly visible blur at speed.** Shaft speed is now
   jerk-limited (the acceleration itself eases in and out) so starts and run-downs no longer step;
   the blur disc is ~2.6x denser with a brighter tip ring, grows with rpm all the way to governed
   speed (`DiscSpeedLook`) so you can see when a prop is up to speed, and blades now hide at 60%
   blur instead of 92% so there is no pop. Presentation only.
-
 - **P0 Stage C multi-shot log inventory fix.** `capture-game` mirrors Unity's one
   `-logFile` onto sibling `.log` paths; remaining inventory falls back to the batch
   primary and requires per-shot `following=True` pose lines so landing/boarding
@@ -42,14 +73,11 @@
   prompt accepts either checkout. Locked by `test-p0-mac-agent-launch.sh`. No
   simulation or save changes.
 - **P0 tip `67050b65` CI CLEAN (#492).** Headless green with `ReviewFreighterPick`
-  + tip retarget after #491 merge. Mac Stage A / `CURSOR_API_KEY` still required.
-  No simulation or save changes.
+  + tip retarget after #491 merge. Merged to `main`. No simulation or save changes.
 - **P0 Stage A freighter pick locked on soak seed.** `ReviewFreighterPick` (Simulation)
   prefers a parked unbooked jet for `-airsideReviewFreighter`; EditMode proves
   seed `20260913` can refit at T+0 and stay AtStand through the 28s still.
-  Soak uses the shared pick. Mac tip defaults follow
-  `cursor/p0-freighter-pick-lock-709e` after #491 merged to `main`. No save-schema
-  changes.
+  Soak uses the shared pick. No save-schema changes.
 - **P0 tip `b67a32a1` CI CLEAN.** Headless green on #491 with Stage A caffeinate +
   osascript notify, fail-closed framing/follow, and CreateAgent Stage A path.
   Mac workers online; `CURSOR_API_KEY` still blocks CreateAgent. No simulation

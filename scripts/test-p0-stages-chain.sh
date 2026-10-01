@@ -102,8 +102,8 @@ grep -Fq 'AIRSIDE_P0_BRANCH' "$checkout" || {
   echo "checkout helper must honour AIRSIDE_P0_BRANCH" >&2
   exit 1
 }
-grep -Fq 'cursor/p0-auto-landing-follow-709e' "$checkout" || {
-  echo "checkout helper must default to #491 tip branch" >&2
+grep -Fq 'cursor/p0-freighter-pick-lock-709e' "$checkout" || {
+  echo "checkout helper must default to freighter-pick tip branch" >&2
   exit 1
 }
 grep -Fq 'origin main' "$checkout" || {

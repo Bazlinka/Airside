@@ -7,7 +7,7 @@ It comes from a full Domain / Simulation / Presentation / tests / product-plan a
 on `main` (headless `scripts/test-domain.sh` **1129/1129** at audit time). Cloud agents
 and other tools should follow this order unless Bailey overrides it.
 
-Related: `docs/plans/visual-overhaul-plan.md` (ADR 0198, awaiting Bailey sign-off).
+Related: `docs/plans/visual-overhaul-plan.md` (ADR 0198, Bailey-approved 2026-10-01).
 
 ## Verdict (do not re-litigate)
 
@@ -26,8 +26,8 @@ performance**, then finishing half-done product slices (freight).
 Automated Mac captures from #490 are in `docs/testing/post-audit-p0-2026-09-30/`
 (most automated rows **keep**). Remaining stills and manual listening/play rows stay
 `unverified` in RESULTS — accepted as waived, not as eyes-on keep. Review/capture
-helpers from #491 remain on `main` for optional later use. Open tip #492
-(freighter/hangar/boarding pick locks) is optional tooling, not a P0 blocker.
+helpers from #491 and freighter/hangar/boarding pick locks from **#492** are on
+`main` for optional later use.
 
 Do not reopen P0 unless Bailey asks. Next priority is **P1**.
 
@@ -36,9 +36,9 @@ Do not reopen P0 unless Bailey asks. Next priority is **P1**.
 **Status: approved (Bailey 2026-10-01).** Continue Phase 1+ code; do **not** ask Bailey to
 verify each slice — he rebuilds when he wants. Optional Mac baseline captures are never a merge gate.
 
-1. Phase 1 ground/land checklist complete on tip (ADRs 0206–0210: Golf, bunkers,
-   CBD skyline, seasonal tint, Hills haze). Continue Phase 2 trees or Phase 3
-   building accuracy as narrow ADRs.
+1. Phase 1 ground/land checklist complete on tip (ADRs 0211 Golf, 0207 bunkers,
+   0208 CBD, 0209 seasonal tint, 0210 Hills haze). Continue Phase 2 trees or
+   Phase 3 building accuracy as narrow ADRs.
 2. Building heights: 71/78 still rule defaults (`docs/data/ypad-buildings-audit.md`) — Phase 3.
 
 **Already on `main`:**

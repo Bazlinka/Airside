@@ -1,4 +1,4 @@
-# 0206 — Distinct Golf land-cover kind
+# 0211 — Distinct Golf land-cover kind
 
 Date: 2026-10-01 · Owner: Cursor
 
@@ -14,3 +14,6 @@ vertex tint. Simulation gameplay, routes and saves unchanged.
 
 **Migration impact:** none. New enum value appended (`Golf = 8`); existing class
 bytes 0–7 keep their meaning.
+
+**Numbering note:** originally drafted as 0206; renumbered to **0211** when
+`0206-distance-widened-runway-lines` landed on `main` via parallel work.

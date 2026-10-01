@@ -9,7 +9,7 @@ built/sand/water) year-round. Presentation only; bake once at surroundings build
 
 ## Why this slice
 
-Visual overhaul Phase 1 item 4 still open after Golf (0206), bunkers (0207), and
+Visual overhaul Phase 1 item 4 still open after Golf (0211), bunkers (0207), and
 CBD boxes (0208): *“seasonal/dry-grass tint by date.”* Adelaide plains go straw in
 late summer and greener in winter. Overview already has fixed sRGB palette colours
 in `AirsideAdelaideSurroundings` (`Plain` / `Park` / `Scrub` / `AirfieldEdge`); they
@@ -20,7 +20,7 @@ never see the calendar today.
 | Path | Role |
 |---|---|
 | `AirsideAdelaideSurroundings.LandColour` | Noise plain → optional OSM `CoverColour` → lerp to `AirfieldEdge` near the field → beach |
-| `CoverColour` | Fixed palette: Park olive, Golf irrigated green (0206), Scrub, Suburb, … |
+| `CoverColour` | Fixed palette: Park olive, Golf irrigated green (0211), Scrub, Suburb, … |
 | `AdelaideLandCover.Kind` | No `Plain` kind — `None` (and unmapped cells) keep the noise `Plain`/`Suburb`/`Park` blend |
 | Vertex bake | Once in `TryBuild` (`AirsidePrototype.FieldBuild`); no date argument |
 | `Surroundings.shader` | Multiplies `_AirfieldTint` / `_SatelliteTint`; RGB from vertices; land `a = 0` |
@@ -65,7 +65,7 @@ overview does not drift silently.
 | Noise **Plain** base (+ `AirfieldEdge`) | **Yes** | Open dry grass / airfield seat |
 | **Park** | **Yes** | City parks brown off-irrigation in summer |
 | **Scrub** | **Yes** | Coastal/dune scrub already dry; strengthen summer |
-| **Golf** | **No** | ADR 0206 irrigated fairway must stay readable year-round |
+| **Golf** | **No** | ADR 0211 irrigated fairway must stay readable year-round |
 | Residential / Commercial / Parking / Sand / Water | **No** | Not grass |
 | `AirsideAdelaideGround` dry layer / `_Tint` | **No (this PR)** | Sentinel summer bake already dominates; separate follow-up if Bailey wants field grass to track winter |
 | Far land-cover / Hills haze | **No** | Far ring already late-summer; haze is its own Phase 1 item |

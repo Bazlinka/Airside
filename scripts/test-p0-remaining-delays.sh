@@ -96,6 +96,18 @@ grep -Fq 'follow never started before delay' "$runner" || {
   echo "Mac runner must preflight auto-follow fail-closed in the player" >&2
   exit 1
 }
+grep -Fq 'follow lost before delay' "$runner" || {
+  echo "Mac runner must preflight follow-lost fail-closed in the player" >&2
+  exit 1
+}
+grep -Fq 'hangar check never started' "$runner" || {
+  echo "Mac runner must preflight hangar-check fail-closed in the player" >&2
+  exit 1
+}
+grep -Fq 'boarding booking never applied' "$runner" || {
+  echo "Mac runner must preflight boarding fail-closed in the player" >&2
+  exit 1
+}
 echo "ok multi-shot + fail-closed player preflight"
 
 grep -Fq 'review freighter ' "$runner" || {
@@ -108,6 +120,53 @@ grep -Fq 'review hangar check ' "$runner" || {
 }
 grep -Fq 'review boarding ' "$runner" || {
   echo "inventory must hard-fail missing review boarding log" >&2
+  exit 1
+}
+# Freighter/hangar/boarding/jet inventory must require live follow at capture.
+grep -A6 'follow-freighter)' "$runner" | grep -Fq 'following=True' || {
+  echo "inventory must hard-fail freighter stills without following=True" >&2
+  exit 1
+}
+grep -A4 'follow-hangar-tow)' "$runner" | grep -Fq 'following=True' || {
+  echo "inventory must hard-fail hangar stills without following=True" >&2
+  exit 1
+}
+grep -A20 'follow-boarding-tape|follow-human-ops-close)' "$runner" | grep -Fq 'following=True' || {
+  echo "inventory must hard-fail boarding stills without following=True" >&2
+  exit 1
+}
+grep -A6 'follow-jet-takeoff)' "$runner" | grep -Fq 'following=True' || {
+  echo "inventory must hard-fail jet-takeoff stills without following=True" >&2
+  exit 1
+}
+grep -A20 'follow-jet-day|follow-jet-close|follow-storm-landing)' "$runner" | grep -Fq 'review shot .*${base}' || {
+  echo "inventory must require per-shot pose following=True in landing batch log" >&2
+  exit 1
+}
+grep -A15 'follow-boarding-tape|follow-human-ops-close)' "$runner" | grep -Fq 'review shot .*${base}' || {
+  echo "inventory must require per-shot pose following=True in boarding batch log" >&2
+  exit 1
+}
+grep -Fq 'follow-jet-day.log' "$runner" || {
+  echo "inventory must fall back to landing-batch primary log for siblings" >&2
+  exit 1
+}
+cap="$root/scripts/capture-game.sh"
+grep -Fq 'Mirror it onto sibling' "$cap" || grep -Fq 'LOGS[0]' "$cap" || {
+  echo "capture-game must mirror multi-shot Unity log onto sibling .log paths" >&2
+  exit 1
+}
+grep -Fq 'cp -f "${LOGS[0]}"' "$cap" || {
+  echo "capture-game must cp primary log to sibling multi-shot logs" >&2
+  exit 1
+}
+# Night-sky inventory must lock yaw/dist corridor, not pitch alone.
+grep -A25 'overview-night-sky-traffic)' "$runner" | grep -Fq 'yaw=' || {
+  echo "inventory must parse night-sky yaw from pose log" >&2
+  exit 1
+}
+grep -A25 'overview-night-sky-traffic)' "$runner" | grep -Fq '11000' || {
+  echo "inventory must lock night-sky dist ~11000" >&2
   exit 1
 }
 echo "ok review-flag inventory fail-closed"

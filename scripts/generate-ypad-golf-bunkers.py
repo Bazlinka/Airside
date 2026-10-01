@@ -6,7 +6,7 @@ game/Airside/Assets/Airside/Simulation/AdelaideGolfBunkers.cs — packed runway-
 centres and radii for every closed OSM golf=bunker way.
 
 Presentation draws sand-coloured discs on the surroundings mesh; the 50 m land-cover
-grid is unchanged (Golf tint from ADR 0206 stays).
+grid is unchanged (Golf tint from ADR 0211 stays).
 
 Run: python3 scripts/generate-ypad-golf-bunkers.py
      python3 scripts/generate-ypad-golf-bunkers.py --check

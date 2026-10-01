@@ -362,11 +362,21 @@ namespace Airside.Presentation
                 downPerSecond = AirsideReusableMotion.PropSpoolDownRpmPerSecond;
             }
 
-            var eased = Mathf.Lerp(current, target, AirsideFlightPath.DampFactor(1.6f, dt));
-            current = Mathf.Clamp(eased, current - downPerSecond * dt, current + upPerSecond * dt);
+            // Jerk-limited: the speed chases the target at a rate that is itself eased toward the
+            // wanted rate, so the propeller builds into the acceleration and settles out of it
+            // instead of starting and stopping at a constant rate (which read as stepping).
+            _enginePropRpmRate.TryGetValue(key, out var rate);
+            var wanted = Mathf.Clamp((target - current) * AirsidePropellerDynamics.SpoolGain, -downPerSecond, upPerSecond);
+            rate = Mathf.Lerp(rate, wanted, AirsideFlightPath.DampFactor(1f / AirsidePropellerDynamics.SpoolRateLagSeconds, dt));
+            current = Mathf.Max(0f, current + rate * dt);
             // The easing only approaches zero; snap the last crawl so a parked propeller really stops.
             if (target <= 0f && current < 0.5f)
+            {
                 current = 0f;
+                rate = 0f;
+            }
+
+            _enginePropRpmRate[key] = rate;
             spools[key] = current;
             return current;
         }
@@ -391,7 +401,8 @@ namespace Airside.Presentation
             // seen edge-on all but disappears. Both are what makes takeoff power read differently
             // from taxi, and the edge-on case costs nothing to draw.
             var density = AirsidePropellerDynamics.DiscPitchDensity(
-                bladePitchOffsetDegrees + AirsidePropellerDynamics.AuthoredPitchDegrees);
+                bladePitchOffsetDegrees + AirsidePropellerDynamics.AuthoredPitchDegrees)
+                * AirsidePropellerDynamics.DiscSpeedLook(rpm);
             ApplyPropBlurToHub(propeller, blur, DiscViewFade(propeller) * density);
             if (step <= 0f)
                 return;
@@ -421,7 +432,7 @@ namespace Airside.Presentation
             if (!AirsideSettings.Current.PropellerBlur)
                 blend = 0f;
             blend = Mathf.Clamp01(blend);
-            var showBlades = blend < 0.92f;
+            var showBlades = blend < AirsidePropellerDynamics.BladesHideBlend;
             var selfRenderer = propeller.GetComponent<Renderer>();
             if (selfRenderer != null)
                 selfRenderer.enabled = showBlades;
@@ -1210,6 +1221,7 @@ namespace Airside.Presentation
                 if (finalAtr42)
                     RelocateAtrDoors(root);
                 NestCabinDoorParts(root);
+                AttachDoorways(root);
                 ConvertToAirstairDoor(root);
                 NestFlapParts(root);
                 NestWingMountedParts(root);

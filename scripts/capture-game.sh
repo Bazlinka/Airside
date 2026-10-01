@@ -187,6 +187,13 @@ if ! all_kept_ready; then
 fi
 sleep 4
 kill "$pid" 2>/dev/null || true
+# Multi-shot: Unity only accepts one -logFile (first shot). Mirror it onto sibling
+# .log paths so Stage C inventory can open per-shot logs without false-failing.
+if [ ${#LOGS[@]} -gt 1 ] && [ -f "${LOGS[0]}" ]; then
+  for ((i = 1; i < ${#LOGS[@]}; i++)); do
+    cp -f "${LOGS[0]}" "${LOGS[i]}"
+  done
+fi
 for shot_path in "${ALL_OUTS[@]}"; do
   echo "$shot_path"
 done

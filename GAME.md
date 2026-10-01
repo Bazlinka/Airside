@@ -1,26 +1,23 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-10-01 Cursor — Phase 1 Hills aerial haze (ADR 0210).**
+- **2026-10-01 Cursor — Phase 1 Hills aerial haze (ADR 0210); tip rebased after #492.**
   Outer-terrain land colours cool toward blue-grey with distance/height.
   `AdelaideAerialPerspective`. Phase 1 ground/land checklist complete on tip.
-  **Checks:** `scripts/test-domain.sh` **1193/1193**.
+  Golf land-cover ADR renumbered **0211** (main took 0206 for runway paint).
+  **Checks:** `scripts/test-domain.sh` after rebase.
   **NEXT:** Phase 2 trees, or Phase 3 building heights.
 
 - **2026-10-01 Cursor — Phase 1 seasonal dry-grass tint (ADR 0209).**
   Surroundings Park/Scrub/plain straw mid-Jan / greener mid-Jul from Adelaide
   calendar day at field build. Golf stays irrigated. `AdelaideSeasonGrassTint`.
-  **Checks:** `scripts/test-domain.sh` **1189/1189**.
 
 - **2026-10-01 Cursor — Phase 1 CBD skyline boxes (ADR 0208).**
   42 sourced-height OSM towers near Victoria Square (~7 km ENE) as one grey mesh
-  on DEM relief. Generator `--check`; `AdelaideCbdSkylineTests`.
-  **Checks:** `scripts/test-domain.sh` **1184/1184**.
+  on DEM relief.
 
-- **2026-10-01 Cursor — Phase 1 Golf + bunker discs (ADR 0206/0207); P0 closed / plan approved.**
-  Golf courses tint irrigated green; 213 OSM bunker discs as sand marks on surroundings.
-  Bailey closed P0, approved the visual plan, keep shipping — no ask-to-verify.
-  **Checks:** `scripts/test-domain.sh` **1182/1182**.
-  **NEXT:** Phase 1 far-ring skyline / seasonal tint.
+- **2026-10-01 Cursor — Phase 1 Golf + bunker discs (ADR 0211/0207); P0 closed / #492 merged.**
+  Golf courses tint irrigated green; 213 OSM bunker discs as sand marks.
+  Bailey closed P0; #492 freighter/hangar/boarding pick locks are on `main`.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

@@ -4,7 +4,8 @@
 # Needs:
 #   - CURSOR_API_KEY from https://cursor.com/dashboard → API Keys
 #   - Team toggle "Enable Remote Control for Team" (Cloud Agents → Self-hosted)
-#   - Mac awake with: cursor worker start --name "Bailey's MacBook Pro" in ~/Code/Airside
+#   - Mac awake with: cursor worker start --name "Bailey's MacBook Pro"
+#     (either ~/Code/Airside or ~/Documents/Codex/Airside — same checkout)
 #
 # Usage:
 #   export CURSOR_API_KEY=…
@@ -19,9 +20,10 @@ set -euo pipefail
 
 api_base="${CURSOR_API_BASE:-https://api.cursor.com}"
 machine_name=${AIRSIDE_P0_MACHINE_NAME:-"Bailey's MacBook Pro"}
-# Default to the ~/Code/Airside worker when last listed online (override if stale).
-worker_id="${AIRSIDE_P0_WORKER_ID:-122eb692-14f4-5844-a844-517776b831ca}"
-branch="${AIRSIDE_P0_BRANCH:-cursor/p0-auto-landing-follow-709e}"
+# Default to whichever Airside worker was last listed online (override if stale).
+# 4566aff1 = ~/Documents/Codex/Airside (symlink to Code); 122eb692 = ~/Code/Airside.
+worker_id="${AIRSIDE_P0_WORKER_ID:-4566aff1-0678-5a57-9d15-895db6b35c1c}"
+branch="${AIRSIDE_P0_BRANCH:-cursor/p0-freighter-pick-lock-709e}"
 repo_url="${AIRSIDE_P0_REPO_URL:-https://github.com/Bazlinka/Airside}"
 # Stage A only by default (minutes). Set AIRSIDE_P0_LAUNCH_FULL=1 for A→B→C (~45+ min).
 full="${AIRSIDE_P0_LAUNCH_FULL:-0}"
@@ -43,14 +45,17 @@ fi
 prompt_text="$(cat <<EOF
 You are pinned to Bailey's MacBook Pro. Confirm \`uname -s\` → Darwin; stop if not.
 
-Canonical checkout: ~/Code/Airside. ADR 0205 P0 remaining captures only.
-Do not invent RESULTS keep/fix/revert.
+Canonical checkout: ~/Code/Airside (~/Documents/Codex/Airside is the same tree).
+ADR 0205 P0 remaining captures only. Do not invent RESULTS keep/fix/revert.
 
-1. cd ~/Code/Airside
+1. Prefer cd ~/Code/Airside; if missing, use ~/Documents/Codex/Airside or \$PWD
+   when it is already an Airside checkout (worker cwd).
 2. git fetch origin && git checkout ${branch}
 3. git pull --ff-only origin ${branch}
 4. Keep the display awake. Run: ${run_cmd}
    (${run_note})
+   If .command is awkward from this shell, run the same body:
+   bash scripts/p0-checkout-mac-tip.sh && export AIRSIDE_P0_ONLY=overview-night-sky-traffic,follow-freighter && bash scripts/run-post-audit-p0-remaining.sh
 5. After PNGs land under docs/testing/post-audit-p0-2026-09-30/, fill Verdict
    columns in RESULTS.md by eye/ear only. Leave unverified if unsure.
    Night-sky log must show pose pitch≈8 (fail-closed overview framing on tip).
@@ -59,7 +64,6 @@ Do not invent RESULTS keep/fix/revert.
 Return: uname, tip SHA, which PNGs were written, which verdicts you filled (if any).
 EOF
 )"
-
 payload="$(CURSOR_PROMPT_TEXT="$prompt_text" \
   AIRSIDE_P0_MACHINE_NAME="$machine_name" \
   AIRSIDE_P0_WORKER_ID="$worker_id" \

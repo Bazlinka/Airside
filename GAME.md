@@ -1,6 +1,6 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-10-01 Codex — weather coverage (`fix/regional-weather-coverage`, ADR 0216).**
+- **2026-10-01 Codex — weather coverage (`fix/regional-weather-coverage`, ADR 0225).**
   Bailey selected whole-visible-landscape weather with fade only at render limits.
   Cloud recycling now surrounds the viewer; world positions/wind remain stable
   until soft-edge reuse. Sixteen jittered bodies and matched fading shadows.
@@ -8,11 +8,63 @@
   overcast stays visible from above. Simulation, operations and saves unchanged.
   Focused headless weather checks: 13/13. Focused native weather/cockpit checks:
   30/30, including all three turboprop lower shells; licensing has recovered.
-  Full native: 1695 passed / 1 existing audio failure / 2 existing inconclusives.
-  Task packet: `docs/plans/weather-coverage.md`. Clean Mac build and
-  real distant/above/below captures are in progress; evidence/result record:
+  Integrated full domain: 1337/1337. Full native: 1744 passed / zero failures /
+  two existing inconclusives. Latest-main scenery tests compile with explicit
+  EditMode friend-assembly access.
+  Task packet: `docs/plans/weather-coverage.md`. Six distant/above/below player views inspected; integration Mac rebuild
+  and representative captures are in progress; evidence/result record:
   `docs/testing/weather-coverage-2026-10-01/README.md`.
 
+
+- **2026-10-01 Cursor — merge PR #510 visual overhaul tip onto main (goal stopped).**
+  Merges Phase 2b–2g vegetation + Phase 3 tower/hangars/ARFF onto main that
+  already has the turboprop cockpit rollout. Note: two files share ADR number
+  0215 (`0215-turboprop-cockpit-rollout.md` on main and
+  `0215-terminal-carpark-date-palm-rows.md` from #510) — filenames differ;
+  renumber later if desired. Grass-tuft WIP (0224) stashed, not merged.
+  **NEXT:** Bailey rebuilds when he wants; visual overhaul goal stopped.
+
+- **2026-10-01 Cursor — Phase 3 ARFF/fire-station silhouette (ADR 0223).**
+  Taller/wider appliance bays, hose tower + obstruction light, Canopy
+  parking pads + yellow bay cues, Equipment sign fascia. PR #510 tip.
+  **NEXT:** goal stopped — merge to main.
+
+- **2026-10-01 Cursor — Phase 3 hangar tenant colours (ADR 0222).**
+  Named hangars + RFDS get stylised shell/door/roof bands via
+  `HangarTenantPalette`; unnamed keep grey. PR #510 tip.
+
+- **2026-10-01 Cursor — Phase 3 control tower canted cab (ADR 0221).**
+  Outward-canted glazed cab (stacked rings) + overhanging roof on the surveyed
+  44 m tower. PR #510 tip.
+
+- **2026-10-01 Cursor — Phase 2g NDVI tree bake LOD (ADR 0220).**
+  Suburb trees: Full 3-lobe ≤1.4 km, Medium primary ≤2.8 km, Billboard cards
+  beyond. `AdelaideTreeLod` + `AirsideAdelaideSuburbs.AddTree`. PR #510 tip.
+
+- **2026-10-01 Cursor — Phase 2f Norfolk Island pines on Henley Beach Road (ADR 0219).**
+  Tiered conical pines along Henley Beach Road verges. Cap 120. PR #510 tip.
+
+- **2026-10-01 Cursor — Phase 2e West Beach dune scrub (ADR 0218).**
+  Low multi-lobe tea-tree/scrub on OSM Sand cells in the coast dune band
+  (28–150 m inland). Cap 250. PR #510 tip.
+
+- **2026-10-01 Cursor — Phase 2d approach avenue trees (ADR 0217).**
+  Bradman Drive, Burbridge Road and Sir Richard Williams Avenue get landside
+  verge eucalypts (both sides, outside the fence). Cap 220. Soft-deduped vs
+  Tapleys windbreak. PR #510 tip.
+  Also retargeted `PropGovernorHoldsTheNoteWhileJetRevsRise` to #507's modest
+  jet pitch sweep.
+
+- **2026-10-01 Cursor — Phase 2c Tapleys Hill Road windbreak (ADR 0216).**
+  Deterministic eucalypt row on the Tapleys landside verge (outside the
+  aerodrome fence, airport frontage), lobes from `AdelaideTreeGeometry`, drawn
+  into the road props sink. Cap 180. PR #510 tip.
+
+- **2026-10-01 Cursor — Phase 2b terminal car-park date palms (file ADR 0215 palm).**
+  Procedural Canary Island date-palm rows along OSM car-park edges in the
+  Terminal 1 landside ring (`AdelaidePalmPlacement` / `AdelaidePalmGeometry`),
+  drawn into the road props sink. Cap hit: **180** palms. No new assets.
+  PR #510 tip. (Number collides with turboprop ADR 0215 — see merge note.)
 
 - **2026-10-01 Codex — turboprop cockpit rollout (`feature/turboprop-cockpits`, ADR 0215).**
   Bailey requested cockpit view for turboprops only. Supported: SF34 Saab 340B,
@@ -32,7 +84,6 @@
   then capture real eligible flight phases. Bailey explicitly requested merging
   this implementation on 1 October despite the recorded native licensing blocker;
   the remaining verification gates stay open after merge.
-
 
 - **2026-10-01 Codex — Saab cockpit opaque shell fix.**
   The revision-2 startup image exposed apron through gaps beside/below the panel.
@@ -123,8 +174,7 @@
   `main`. Phase 1 ground/land (Golf/bunkers/CBD/seasonal/haze) + Phase 2a
   multi-lobe eucalypt crowns (ADR 0212) are on `main`. Superseded draft PRs
   closed. **Checks:** `scripts/test-domain.sh` **1215/1215**.
-  **NEXT (when resumed):** Phase 2 species/LOD/placement, or Phase 3 building
-  accuracy — do not continue autonomously until Bailey unpauses.
+  **Resumed 2026-10-01** — Phase 2b palms in progress.
 
 - **2026-10-01 Cursor — Phase 2a multi-lobe eucalypt crowns (ADR 0212).**
   NDVI suburb trees draw a 3-lobe faceted canopy (primary + two sides, 28 crown

@@ -292,20 +292,17 @@ namespace Airside.Presentation
 
         // ---- Fire station -----------------------------------------------------------------------
 
-        private const float ApplianceLengthMetres = 8.2f;
-        private const float ApplianceWidthMetres = 2.6f;
-
         private static void AddApplianceBays(BuildingDetailSet set, float[] xz, int front, float baseY, float height, Hash random)
         {
             if (front < 0)
                 return;
             var edge = Edge(xz, front, Winding(xz));
-            var bays = Math.Min(5, (int)(edge.Length * 0.85f / 6f));
+            var bays = Math.Min(ApplianceBayMaxCount, (int)(edge.Length * 0.85f / ApplianceBayPitchDivisorMetres));
             if (bays < 1)
                 return;
-            var doorHeight = Math.Min(5.2f, height - 1.5f);
+            var doorHeight = Math.Min(ApplianceBayDoorHeightMaxMetres, height - ApplianceBayHeaderClearanceMetres);
             var pitch = edge.Length * 0.85f / bays;
-            var doorWidth = Math.Min(4.6f, pitch - 1.2f);
+            var doorWidth = Math.Min(ApplianceBayDoorWidthMaxMetres, pitch - ApplianceBaySideClearanceMetres);
             for (var b = 0; b < bays; b++)
             {
                 var t = 0.5f + ((b + 0.5f) / bays - 0.5f) * edge.Length * 0.85f / edge.Length;
@@ -337,10 +334,62 @@ namespace Airside.Presentation
                     set.Boxes.Add(OnWall(BuildingPart.Trim, edge, t + side * (doorWidth * 0.5f + 0.2f) / edge.Length, 0.4f,
                         baseY + doorHeight * 0.5f, doorHeight, 0.3f, outward: 0.15f));
                 AddWallPack(set, edge, t, doorHeight, baseY);
+                AddAppliancePad(set, edge, t, baseY, doorWidth);
             }
 
             set.Boxes.Add(OnWall(BuildingPart.Trim, edge, 0.5f, edge.Length * 0.9f, baseY + doorHeight + 0.35f, 0.5f, 0.4f,
                 outward: 0.2f));
+            // Safety-yellow sign fascia over the bay header — no baked glyphs (ADR 0223).
+            set.Boxes.Add(OnWall(BuildingPart.Equipment, edge, 0.5f, edge.Length * FireStationFasciaLengthFraction,
+                baseY + doorHeight + 0.95f, FireStationFasciaHeightMetres, FireStationFasciaDepthMetres, outward: 0.28f));
+        }
+
+        /// <summary>Concrete forecourt pad with yellow bay-edge cues outside each appliance door (ADR 0223).</summary>
+        private static void AddAppliancePad(BuildingDetailSet set, WallEdge edge, float t, float baseY, float doorWidth)
+        {
+            var padWidth = doorWidth + AppliancePadWidthExtraMetres;
+            var outward = AppliancePadOutsetMetres + AppliancePadLengthMetres * 0.5f;
+            set.Boxes.Add(OnWall(BuildingPart.Canopy, edge, t, padWidth, baseY + AppliancePadThicknessMetres * 0.5f,
+                AppliancePadThicknessMetres, AppliancePadLengthMetres, outward: outward));
+            for (var side = -1; side <= 1; side += 2)
+            {
+                var cueT = t + side * (padWidth * 0.5f - 0.08f) / edge.Length;
+                set.Boxes.Add(OnWall(BuildingPart.Equipment, edge, cueT, 0.16f, baseY + 0.06f, 0.08f,
+                    AppliancePadLengthMetres * 0.92f, outward: outward));
+            }
+        }
+
+        /// <summary>Hose-drying / observation tower with mast and obstruction light (ADR 0223).</summary>
+        private static void AddFireStationHoseTower(BuildingDetailSet set, float[] xz, int front, float baseY)
+        {
+            if (front < 0)
+                return;
+            var edge = Edge(xz, front, Winding(xz));
+            var (cx, cz) = Centroid(xz);
+            // Bias toward the back of the footprint so the tower sits clear of the bay wall.
+            var x = cx - edge.OutX * 2.8f;
+            var z = cz - edge.OutZ * 2.8f;
+            if (!Contains(xz, x, z))
+            {
+                x = cx;
+                z = cz;
+            }
+
+            if (!Contains(xz, x, z))
+                return;
+
+            var shaftW = HoseTowerShaftWidthMetres;
+            var shaftH = HoseTowerShaftHeightMetres;
+            set.Boxes.Add(new DetailBox(BuildingPart.Trim, x, baseY + shaftH * 0.5f, z, shaftW, shaftH, shaftW, 1f, 0f));
+            var cabinW = shaftW * HoseTowerCabinScale;
+            var cabinH = HoseTowerCabinHeightMetres;
+            var cabinCentreY = baseY + shaftH + cabinH * 0.5f;
+            set.Boxes.Add(new DetailBox(BuildingPart.Trim, x, cabinCentreY, z, cabinW, cabinH, cabinW, 1f, 0f));
+            var mastH = HoseTowerMastMetres;
+            var mastCentreY = baseY + shaftH + cabinH + mastH * 0.5f;
+            set.Boxes.Add(new DetailBox(BuildingPart.Trim, x, mastCentreY, z, 0.22f, mastH, 0.22f, 1f, 0f));
+            set.Boxes.Add(new DetailBox(BuildingPart.ObstructionLight, x, baseY + shaftH + cabinH + mastH + 0.2f, z,
+                0.45f, 0.4f, 0.45f, 1f, 0f));
         }
 
         /// <summary>A crash tender: red body and cab, a ladder rack, a roof monitor, wheels and a light bar.</summary>

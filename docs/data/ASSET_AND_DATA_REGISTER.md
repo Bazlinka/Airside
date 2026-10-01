@@ -228,7 +228,7 @@ procedural cloud placement/recycling. No external assets, images, models, new
 shader lookup names or new runtime textures. Sixteen cloud volumes and their
 existing procedural noise/shadow assets retained. Author: Codex for Airside;
 prompt: Bailey's clouds/fog beyond-airport request and explicit visible-landscape
-coverage choice. ADR 0216 / `docs/plans/weather-coverage.md`. Cost: zero acquisition
+coverage choice. ADR 0225 / `docs/plans/weather-coverage.md`. Cost: zero acquisition
 or image-generation cost. Existing licences retained; no new attribution required.
 Fallback: existing cloud atlas when the volume shader is unavailable; weather layers
 can be disabled. Rendered verification status is in the weather coverage test record.

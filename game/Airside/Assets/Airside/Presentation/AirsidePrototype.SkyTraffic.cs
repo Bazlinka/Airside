@@ -89,7 +89,7 @@ namespace Airside.Presentation
 
             if (!view.gameObject.activeSelf)
                 view.gameObject.SetActive(true);
-            view.position = new Vector3((float)x, AirsideFlightPath.GroundY + (float)y, (float)z);
+            view.position = new Vector3((float)(x-_flightOriginX), AirsideFlightPath.GroundY + (float)y, (float)(z-_flightOriginZ));
             // Negative X is nose up, the same as the fleet's ClimbPitchDegrees. These were
             // the wrong way round: departures climbed away nose-down, arrivals sank nose-up.
             var pitch = flight.To.Code == "ADL" ? -2.5f

@@ -205,6 +205,14 @@ Existing built-in Unity font and shaders retained. Fallback: disabled cockpit
 action for unsupported aircraft; normal external view remains available.
 
 
+## South Australia cockpit world — 1 October 2026 (ADR 0215)
+
+| ID | Source and use | Licence / attribution | Cost and reproducibility | Fallback / status |
+|---|---|---|---|---|
+| DAT-SA-DEM-001 | [Copernicus GLO-90](https://registry.opendata.aws/copernicus-dem/), public COG tiles; 128–142 E, 39–25 S; 0.02-degree averaged height derivative `Terrain/dem_south_australia_v01.bin` | Copernicus GLO-90 free/open licence; Elevation: © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018 provided under COPERNICUS by the European Union and ESA. Retain this credit alongside existing Copernicus attribution before distribution. | Free data, no runtime service; `scripts/generate-sa-flight-terrain.py`, checksum and source bounds in `docs/data/sa-flight-terrain-v01.json`; 982,842 bytes, mirrored in StreamingAssets. | Existing Natural Earth land/sea palette if unavailable; no invented hills. Candidate, native/visual verification pending. |
+| DAT-SA-RUNWAY-001 | [OurAirports](https://davidmegginson.github.io/ourairports-data/) airport/runway CSVs; KGC/PLO/WYA/MGB/CED/CPD/BHQ primary strip geometry and airport elevation | Public domain (same approved source family as MAP-002); voluntary OurAirports credit | Free. Selected raw rows in `docs/data/sa-flight-runways-v01.json`, generation script `scripts/generate-sa-flight-runways.py`. MGB thresholds estimated from sourced centre/heading/length because endpoint fields are absent. | Regional route remains airborne without a known strip; source metadata retained. Candidate simplified airport geometry; not a navigation product. |
+| MAP-001-SA-REUSE | Existing approved Natural Earth coastline, `MapGeographyData`, reused for streamed 3D land/sea classification | Public domain; voluntary Natural Earth credit | Existing project data, no new download/runtime service | Coarse coloured land/sea; shore mesh cells 1 km. |
+
 ### Jet cockpit procedural candidates — 1 October 2026
 
 Ten original code-authored spectator decks: B738, B38M, A320, A21N, E190, A223,

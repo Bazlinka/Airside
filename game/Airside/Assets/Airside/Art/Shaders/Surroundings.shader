@@ -133,13 +133,15 @@ Shader "Airside/Surroundings"
                 return output;
             }
 
+            float4 _AirsideFlightOrigin;
+
             half4 frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 float3 normalWS = normalize(input.normalWS);
                 Light mainLight = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
                 float NdotL = saturate(dot(normalWS, mainLight.direction));
-                float2 xz = input.positionWS.xz;
+                float2 xz = input.positionWS.xz + _AirsideFlightOrigin.xz;
                 float2 outsideAxis = max(abs(xz) - float2(_AirfieldHalfX, _AirfieldHalfZ), 0.0);
                 float outside = length(outsideAxis);
                 float edgeBlend = 1.0 - smoothstep(0.0, max(_EdgeTextureBlend, 1.0), outside);

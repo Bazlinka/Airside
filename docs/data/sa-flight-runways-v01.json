@@ -1,0 +1,224 @@
+{
+  "source": "https://davidmegginson.github.io/ourairports-data/",
+  "licence": "Public domain",
+  "accessed": "2026-10-01",
+  "selected": [
+    {
+      "airport": {
+        "iata_code": "BHQ",
+        "ident": "YBHI",
+        "latitude_deg": "-32.0013999939",
+        "longitude_deg": "141.472000122",
+        "elevation_ft": "958"
+      },
+      "runway": {
+        "id": "233391",
+        "airport_ref": "26908",
+        "airport_ident": "YBHI",
+        "length_ft": "8251",
+        "width_ft": "98",
+        "surface": "ASP",
+        "lighted": "1",
+        "closed": "0",
+        "le_ident": "05",
+        "le_latitude_deg": "-32.00899887084961",
+        "le_longitude_deg": "141.46099853515625",
+        "le_elevation_ft": "907",
+        "le_heading_degT": "56",
+        "le_displaced_threshold_ft": "",
+        "he_ident": "23",
+        "he_latitude_deg": "-31.996299743652344",
+        "he_longitude_deg": "141.48300170898438",
+        "he_elevation_ft": "958",
+        "he_heading_degT": "236",
+        "he_displaced_threshold_ft": ""
+      }
+    },
+    {
+      "airport": {
+        "iata_code": "CPD",
+        "ident": "YCBP",
+        "latitude_deg": "-29.038312",
+        "longitude_deg": "134.722166",
+        "elevation_ft": "740"
+      },
+      "runway": {
+        "id": "233207",
+        "airport_ref": "26946",
+        "airport_ident": "YCBP",
+        "length_ft": "4685",
+        "width_ft": "98",
+        "surface": "PER",
+        "lighted": "1",
+        "closed": "0",
+        "le_ident": "04",
+        "le_latitude_deg": "-29.044300079345703",
+        "le_longitude_deg": "134.71400451660156",
+        "le_elevation_ft": "729",
+        "le_heading_degT": "48",
+        "le_displaced_threshold_ft": "",
+        "he_ident": "22",
+        "he_latitude_deg": "-29.035900115966797",
+        "he_longitude_deg": "134.72500610351562",
+        "he_elevation_ft": "740",
+        "he_heading_degT": "228",
+        "he_displaced_threshold_ft": ""
+      }
+    },
+    {
+      "airport": {
+        "iata_code": "CED",
+        "ident": "YCDU",
+        "latitude_deg": "-32.13059997558594",
+        "longitude_deg": "133.7100067138672",
+        "elevation_ft": "77"
+      },
+      "runway": {
+        "id": "233553",
+        "airport_ref": "26950",
+        "airport_ident": "YCDU",
+        "length_ft": "5709",
+        "width_ft": "98",
+        "surface": "ASP",
+        "lighted": "1",
+        "closed": "0",
+        "le_ident": "11",
+        "le_latitude_deg": "-32.12779998779297",
+        "le_longitude_deg": "133.697998046875",
+        "le_elevation_ft": "57",
+        "le_heading_degT": "111",
+        "le_displaced_threshold_ft": "",
+        "he_ident": "29",
+        "he_latitude_deg": "-32.133399963378906",
+        "he_longitude_deg": "133.71499633789062",
+        "he_elevation_ft": "74",
+        "he_heading_degT": "291",
+        "he_displaced_threshold_ft": ""
+      }
+    },
+    {
+      "airport": {
+        "iata_code": "KGC",
+        "ident": "YKSC",
+        "latitude_deg": "-35.71390151977539",
+        "longitude_deg": "137.52099609375",
+        "elevation_ft": "24"
+      },
+      "runway": {
+        "id": "233506",
+        "airport_ref": "27028",
+        "airport_ident": "YKSC",
+        "length_ft": "4600",
+        "width_ft": "98",
+        "surface": "ASP",
+        "lighted": "1",
+        "closed": "0",
+        "le_ident": "01",
+        "le_latitude_deg": "-35.723622",
+        "le_longitude_deg": "137.521743",
+        "le_elevation_ft": "22",
+        "le_heading_degT": "22",
+        "le_displaced_threshold_ft": "",
+        "he_ident": "19",
+        "he_latitude_deg": "-35.708409",
+        "he_longitude_deg": "137.529049",
+        "he_elevation_ft": "21",
+        "he_heading_degT": "202",
+        "he_displaced_threshold_ft": ""
+      }
+    },
+    {
+      "airport": {
+        "iata_code": "MGB",
+        "ident": "YMTG",
+        "latitude_deg": "-37.744382",
+        "longitude_deg": "140.780561",
+        "elevation_ft": ""
+      },
+      "runway": {
+        "id": "536342",
+        "airport_ref": "507498",
+        "airport_ident": "YMTG",
+        "length_ft": "5394",
+        "width_ft": "",
+        "surface": "ASP",
+        "lighted": "0",
+        "closed": "0",
+        "le_ident": "18",
+        "le_latitude_deg": "",
+        "le_longitude_deg": "",
+        "le_elevation_ft": "",
+        "le_heading_degT": "",
+        "le_displaced_threshold_ft": "",
+        "he_ident": "36",
+        "he_latitude_deg": "",
+        "he_longitude_deg": "",
+        "he_elevation_ft": "",
+        "he_heading_degT": "",
+        "he_displaced_threshold_ft": ""
+      }
+    },
+    {
+      "airport": {
+        "iata_code": "PLO",
+        "ident": "YPLC",
+        "latitude_deg": "-34.6053009033",
+        "longitude_deg": "135.880004883",
+        "elevation_ft": "36"
+      },
+      "runway": {
+        "id": "233429",
+        "airport_ref": "27112",
+        "airport_ident": "YPLC",
+        "length_ft": "4918",
+        "width_ft": "98",
+        "surface": "ASP",
+        "lighted": "1",
+        "closed": "0",
+        "le_ident": "01",
+        "le_latitude_deg": "-34.61259841918945",
+        "le_longitude_deg": "135.8769989013672",
+        "le_elevation_ft": "9",
+        "le_heading_degT": "17",
+        "le_displaced_threshold_ft": "",
+        "he_ident": "19",
+        "he_latitude_deg": "-34.599700927734375",
+        "he_longitude_deg": "135.88099670410156",
+        "he_elevation_ft": "21",
+        "he_heading_degT": "197",
+        "he_displaced_threshold_ft": ""
+      }
+    },
+    {
+      "airport": {
+        "iata_code": "WYA",
+        "ident": "YWHA",
+        "latitude_deg": "-33.05889892578125",
+        "longitude_deg": "137.51400756835938",
+        "elevation_ft": "41"
+      },
+      "runway": {
+        "id": "233265",
+        "airport_ref": "27170",
+        "airport_ident": "YWHA",
+        "length_ft": "5531",
+        "width_ft": "148",
+        "surface": "ASP",
+        "lighted": "1",
+        "closed": "0",
+        "le_ident": "17",
+        "le_latitude_deg": "-33.05110168457031",
+        "le_longitude_deg": "137.51800537109375",
+        "le_elevation_ft": "35",
+        "le_heading_degT": "175",
+        "le_displaced_threshold_ft": "",
+        "he_ident": "35",
+        "he_latitude_deg": "-33.06629943847656",
+        "he_longitude_deg": "137.52000427246094",
+        "he_elevation_ft": "26",
+        "he_heading_degT": "355",
+        "he_displaced_threshold_ft": ""
+      }
+    }
+  ]
+}

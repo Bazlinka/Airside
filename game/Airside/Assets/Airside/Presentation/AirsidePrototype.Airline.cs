@@ -1624,6 +1624,7 @@ namespace Airside.Presentation
             public double ElapsedSeconds;
             /// <summary>Inbound only: the field's own final, so the map agrees with the 3D view.</summary>
             public bool OnFinalTrack;
+            public bool OnRegionalTrack;
             public double LegMetres;
             public double MetresOut;
             public RunwayDirection Runway;
@@ -1679,6 +1680,12 @@ namespace Airside.Presentation
                     RouteMap.FlightPoint(flight.From.Latitude, flight.From.Longitude, flight.To.Latitude, flight.To.Longitude,
                         flight.Progress, flight.Aircraft.Registration, out flight.Latitude, out flight.Longitude);
                 }
+                if (CanWatchJourney(flying) && _fleetFlightById.TryGetValue(flying.Registration,out var regionalFlight))
+                {
+                    JourneyWorld(regionalFlight,0,out var regionalX,out _,out var regionalZ);
+                    YpadFrame.ToLatLon(regionalX,regionalZ,out flight.Latitude,out flight.Longitude);
+                    flight.OnRegionalTrack=true;
+                }
                 _mapFlights.Add(flight);
             }
         }
@@ -1730,7 +1737,13 @@ namespace Airside.Presentation
                 // Heading from a point a little further along (or behind, at the very end).
                 var step = flight.Progress < 0.995 ? 0.004 : -0.004;
                 double aheadLat, aheadLon;
-                if (flight.OnFinalTrack)
+                if (flight.OnRegionalTrack && _fleetFlightById.TryGetValue(flight.Aircraft.Registration,out var regionalFlight))
+                {
+                    JourneyWorld(regionalFlight,1,out var rx,out _,out var rz);
+                    YpadFrame.ToLatLon(rx,rz,out aheadLat,out aheadLon);
+                    step=0.004;
+                }
+                else if (flight.OnFinalTrack)
                 {
                     // Along the drawn track: a little nearer the field (or, at the very end, behind).
                     var nearer = flight.MetresOut > 1500.0;

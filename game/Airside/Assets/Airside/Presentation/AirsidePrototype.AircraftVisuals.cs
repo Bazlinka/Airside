@@ -53,6 +53,8 @@ namespace Airside.Presentation
                     ?? RunwayPosition(flight,
                     ApplyDepartureTurn(flight, phase, progress,
                         PositionFor(phase, progress, route, lane, aircraftType, runway)));
+                var journey = FleetJourneyPosition(flight, 0f);
+                if (journey.HasValue) position = journey.Value;
                 // Keep look-ahead inside the current taxi segment so yaw does not cut corners.
                 var lookAhead = phase == AircraftPhase.Takeoff
                         && progress < AirsideFlightPath.LineupProgress ? 0.04f
@@ -66,10 +68,14 @@ namespace Airside.Presentation
                            ?? RunwayPosition(flight,
                                ApplyDepartureTurn(flight, phase, lookAheadProgress,
                                    PositionFor(phase, lookAheadProgress, route, lane, aircraftType, runway)));
+                if (journey.HasValue) next = FleetJourneyPosition(flight, lookAhead).Value;
                 // An arrival cleared earlier than expected eases onto the landing path.
                 var handoff = ArrivalHandoffOffset(flight, position);
-                position += handoff;
-                next += handoff;
+                if (!journey.HasValue)
+                {
+                    position += handoff - FlightOrigin;
+                    next += handoff - FlightOrigin;
+                }
                 // Fractional phase progress is exact — catch-up lag made some phases slide
                 // while airborne phases snapped, which read as inconsistent smoothness.
                 view.position = position;
@@ -81,15 +87,38 @@ namespace Airside.Presentation
                     FleetGroundFacing(flight, next - position));
                 var heading = direction.sqrMagnitude > 0.001f
                     ? Quaternion.LookRotation(direction)
-                    : view.rotation;
-                heading = DepartureLookRotation(flight, phase, progress, heading);
-                var pitch = PhasePitchDegrees(phase, progress);
+                    : journey.HasValue ? Quaternion.Euler(0f,view.eulerAngles.y,0f) : view.rotation;
+                if (!journey.HasValue) heading = DepartureLookRotation(flight, phase, progress, heading);
+                if (journey.HasValue && _fleetAircraftById.TryGetValue(flight.AircraftId,out var watched))
+                {
+                    if(watched.State==FleetState.AtDestination) {phase=AircraftPhase.AtStand;progress=1;}
+                    else if(watched.State==FleetState.Inbound && TryEnroute(watched,out var inboundProfile,out var inboundElapsed)
+                        && inboundElapsed<RegionalFlightPath.DepartureSeconds)
+                    {
+                        phase=inboundElapsed<40 ? AircraftPhase.Takeoff : AircraftPhase.Departed;
+                        progress=inboundElapsed<40 ? (float)(inboundElapsed/40)*AirsideFlightPath.RotateProgress
+                            : (float)((inboundElapsed-40)/80);
+                    }
+                    else if(watched.State==FleetState.Outbound && TryEnroute(watched,out var profile,out var elapsed))
+                    {
+                        var remaining=profile.LegSeconds-elapsed;
+                        if(remaining<=RegionalFlightPath.RolloutSeconds)
+                        {
+                            phase=AircraftPhase.Landing;
+                            progress=Mathf.Lerp(AirsideFlightPath.TouchdownProgress,1,1-(float)(remaining/RegionalFlightPath.RolloutSeconds));
+                        }
+                        else if(remaining<=RegionalFlightPath.TerminalSeconds) {phase=AircraftPhase.Approach;progress=1;}
+                    }
+                }
+                var pitch = journey.HasValue ? -Mathf.Atan2(next.y-position.y,
+                    new Vector2(next.x-position.x,next.z-position.z).magnitude)*Mathf.Rad2Deg
+                    : PhasePitchDegrees(phase, progress);
                 var bank = SmoothedBankDegrees(flight.AircraftId, view, heading, phase,
-                    DepartureBankDegrees(flight, phase, progress));
+                    journey.HasValue ? 0f : DepartureBankDegrees(flight, phase, progress));
                 var targetRotation = heading * Quaternion.Euler(pitch, 0f, bank);
                 // Exponential damping keeps the turn rate identical at 30 and 144 fps, and
                 // freezes attitude while paused instead of drifting on unscaled time.
-                var turningOff = TryDepartureArc(flight, phase, progress, out _, out var turnAlong, out _, out _)
+                var turningOff = !journey.HasValue && TryDepartureArc(flight, phase, progress, out _, out var turnAlong, out _, out _)
                                  && turnAlong > 0f;
                 // Ground heading is already the trailed-gear direction. A slow follow left the
                 // fuselage pointing down the taxiway while the nose had entered the turn, so

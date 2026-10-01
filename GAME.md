@@ -1,3 +1,20 @@
+## South Australia flight world — authorised merge, 2026-10-01
+
+Bailey authorised merging `feature/south-australia-flight-world` into main.
+The bounded terrain window uses real Copernicus elevations, Natural Earth coastline,
+mapped regional runways and a moving render origin. No loading screen is required.
+Regional cockpit journeys retain the watched aircraft through approach and rollout.
+Existing cockpit types and regional weather changes from current main are preserved.
+
+Branch verification: 18/18 focused native world/journey tests and a clean Mac build
+at `ac7de3c9`. Packaged Kingscote departure, cruise, approach, rollout and destination
+were captured; the retry also captured the return cruise and Adelaide origin reset.
+Long-trip performance remains unresolved: an earlier run stalled for 172 seconds;
+the retry exited before landing back at Adelaide. Coober Pedy paths pass native
+continuity tests but have not completed a packaged flight. These limits are retained
+for follow-up, not reported as seamless-performance acceptance. See
+`docs/testing/sa-flight-world-2026-10-01/RESULTS.md` and ADR 0215.
+
 ## Merge handoff — 1 October 2026
 
 Bailey authorised merging `feature/all-jet-cockpits` after reviewing its evidence

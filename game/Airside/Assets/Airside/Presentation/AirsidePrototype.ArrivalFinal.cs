@@ -196,6 +196,15 @@ namespace Airside.Presentation
                     Metres = target, LastTime = _preciseTime, Speed = speed,
                     Lateral = ArrivalApproach.LateralFactor(aircraft, runway)
                 };
+                // A watched regional arrival already has a real 3D pose. Seed the local
+                // approach with that pose rather than snapping to a new tower ETA.
+                if (WatchingJourney(aircraft.Registration)
+                    && _fleetViewById.TryGetValue(aircraft.Registration, out var watchedView)
+                    && watchedView != null && watchedView.gameObject.activeInHierarchy)
+                {
+                    state.World = watchedView.position + FlightOrigin;
+                    state.HasShown = true;
+                }
                 _arrivalFinal[aircraft.Registration] = state;
             }
 

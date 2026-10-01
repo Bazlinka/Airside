@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using Airside.Domain;
 using Airside.Simulation;
 using UnityEngine;
@@ -11,7 +12,7 @@ namespace Airside.Presentation
     {
         // Packaged QA only. Real schedules, reservations and aircraft transitions still run.
         // Accelerated runs verify the journey; use rate 1 separately for performance evidence.
-        private string _reviewJourneyCode;
+        private string _reviewJourneyCode, _reviewJourneyAircraftId;
         private double _reviewJourneyRate = 1, _reviewJourneyEpoch;
         private float _reviewJourneyStart, _reviewJourneyNextTrace;
         private FleetState? _reviewJourneyLastState;
@@ -46,6 +47,10 @@ namespace Airside.Presentation
         private void BeginFlightJourneyReviewClock()
         {
             if (!FlightJourneyReviewActive) return;
+            var subject = _operations.FleetOf(_operations.PlayerAirline)
+                .FirstOrDefault(a => CockpitAvailability.Supported(a.Type));
+            if (subject == null) throw new InvalidOperationException("Journey review needs a supported player aircraft.");
+            _reviewJourneyAircraftId = subject.Registration;
             _reviewJourneyEpoch = _operations.Clock.SecondsAt(DateTime.UtcNow);
             _reviewJourneyStart = Time.unscaledTime;
             Debug.Log($"[Airside journey] started ADL-{_reviewJourneyCode} rate {_reviewJourneyRate:0.##}; fresh soak save only");
@@ -58,7 +63,8 @@ namespace Airside.Presentation
         private void TraceFlightJourneyReview()
         {
             if (!FlightJourneyReviewActive || !FleetMode) return;
-            var aircraft = FirstPlayerAircraft();
+            var aircraft = _operations.FleetOf(_operations.PlayerAirline)
+                .FirstOrDefault(a => a.Registration == _reviewJourneyAircraftId);
             if (aircraft == null) return;
             CaptureFlightJourneyPhase(aircraft);
             if (_reviewJourneyLastState == aircraft.State && Time.unscaledTime < _reviewJourneyNextTrace) return;

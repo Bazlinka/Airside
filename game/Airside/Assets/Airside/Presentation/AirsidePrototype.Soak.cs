@@ -547,6 +547,8 @@ namespace Airside.Presentation
 
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
             {
+                // Regional review schedules exactly the supported cockpit subject.
+                if (FlightJourneyReviewActive && aircraft.Registration != _reviewJourneyAircraftId) continue;
                 // Keep the review freighter / hangar subject free of soak auto-dispatch.
                 if (_reviewFreighterHold && aircraft.IsFreighter)
                     continue;

@@ -51,3 +51,14 @@ In particular, dynamic airport actors and weather/origin changes still need actu
 player inspection. Do not claim seamless journeys or accepted performance based on
 source compilation or the fixed terrain budget. Do not merge until the native and
 player gates have been completed.
+
+## Packaged review, first attempt
+
+Clean Mac build `158b4ac5` succeeded and included the journey-review CLI. Graphics-on
+KGC captures show the SF34 at stand, taxiing and outbound. This run is not accepted:
+the driver logged/completed against the first player aircraft (VH-PAX), while the
+cockpit followed VH-ZRC. It exited before a round trip without a COMPLETE marker;
+the available log gives no exit cause. Bind scheduling, cockpit selection, phase
+capture and trace to the same supported player registration. Native focused checks
+still pass after that correction. Rebuild before retrying in a distinct output
+folder; first-attempt records remain in `work/sa-flight-kgc/`.

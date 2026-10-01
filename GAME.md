@@ -19,6 +19,9 @@
 - Latest native focused world/journey cases: 18/18 passed (1.956 s); QA driver
   imports/compiles in Unity. First Mac build succeeded (`40caaf9d-dirty`), without
   the later review driver. NEXT build current clean HEAD using the populated cache.
+- First graphics-on KGC review failed QA: tracker used VH-PAX while cockpit used
+  VH-ZRC. Current correction binds all review steps to one supported player SF34;
+  native focused checks pass. Rebuild and retry into a distinct output folder.
 - NEXT: finish Mac build and the packet's
   SF34 KGC/CPD round-trip, origin/actor/weather checks and comparative frame-time test.
   Candidate branch only; do not mark this ready to merge from source checks alone.

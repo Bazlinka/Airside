@@ -149,6 +149,7 @@ namespace Airside.Presentation
             FleetAircraft best = null;
             foreach (var aircraft in _fleetAircraftById.Values)
             {
+                if (FlightJourneyReviewActive && aircraft.Registration != _reviewJourneyAircraftId) continue;
                 // Prefer an actual departure so the first still covers engine startup,
                 // rather than jumping into an inbound already at full power.
                 if (aircraft.State is not (FleetState.AtStand or FleetState.TaxiOut)

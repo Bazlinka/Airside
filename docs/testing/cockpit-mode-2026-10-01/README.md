@@ -1,5 +1,8 @@
 # SF34 cockpit candidate evidence
 
+**Latest visual rebuild:** see [revision 2](revision-2.md). Files without a `v2-`
+prefix below are the superseded first blockout, retained as historical evidence.
+
 Branch: `feature/saab-cockpit-mode`; starting point `e55e3c30` (remote main).
 
 - Baseline headless suite: 1194 passed.

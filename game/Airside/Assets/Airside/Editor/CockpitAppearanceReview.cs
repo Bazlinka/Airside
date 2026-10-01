@@ -63,10 +63,12 @@ public static class CockpitAppearanceReview
         camera.farClipPlane = 5000f;
         var target = new RenderTexture(1440, 900, 24) { antiAliasing = 4 };
         camera.targetTexture = target;
-        foreach (var shot in new[] { ("forward", 0f, 0f), ("left", 0f, -65f), ("panel", 25f, 0f), ("bank", 0f, 0f) })
+        foreach (var shot in new[] { ("forward", 0f, 0f), ("left", 0f, -65f), ("panel", 25f, 0f), ("right", 0f, 65f), ("overhead", -65f, 0f), ("layout", 5f, 0f), ("bank", 0f, 0f) })
         {
             root.rotation = shot.Item1 == "bank" ? Quaternion.Euler(-8f, 0f, 15f) : Quaternion.identity;
             camera.transform.SetPositionAndRotation(rig.Seat.position, rig.Seat.rotation * Quaternion.Euler(shot.Item2, shot.Item3, 0f));
+            if (shot.Item1 == "layout")
+                camera.transform.position = root.TransformPoint(rig.Seat.localPosition + rig.transform.localPosition + new Vector3(0.43f, 0f, -0.50f));
             camera.Render(); camera.Render();
             RenderTexture.active = target;
             var image = new Texture2D(target.width, target.height, TextureFormat.RGB24, false);

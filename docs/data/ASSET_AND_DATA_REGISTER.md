@@ -188,3 +188,14 @@ original code/geometry; existing font, shaders and aircraft audio retain their
 registered licences. Prompt/source evidence: approved cockpit spectator plan in
 `docs/plans/cockpit-mode.md`, ADR 0207. Fallback: external follow; unsupported
 aircraft types cannot enter. Status: candidate, not fleet-wide production.
+
+### 2026-10-01 SF34 cockpit revision 2
+
+Original procedural geometry and vector instrument marks in `SaabCockpitInterior.cs`.
+Authored by Codex for Airside; no external runtime artwork, fonts or audio added.
+Visual layout references: C&L Aerospace Saab 340B-447 and 340B-331 specification
+photographs, inspected locally on page 3. URLs, limitations and source handling:
+`docs/art/reference/saab340-cockpit/README.md`. Reference PDFs remain ignored
+research scratch; photos are not redistributed or used as textures. Cost: none.
+Existing built-in Unity font and shaders retained. Fallback: disabled cockpit
+action for unsupported aircraft; normal external view remains available.

@@ -18,6 +18,13 @@
   Review recorded a 196-second frame stall of unknown cause; performance is not accepted.
   Draft PR #503. **NEXT:** complete local movement/journey and investigate the stall,
   then entry/exit, day/night/weather, manual audio and comparative performance acceptance.
+  **Revision 2:** rebuilt the interior from inspected C&L Saab 340B panel/overhead
+  photos at Bailey's request: raked windscreens, grey panel, stacked CRT pairs,
+  round central gauges, squared yokes, radio/lever pedestal and overhead.
+  Reference notes: `docs/art/reference/saab340-cockpit/README.md`.
+  V2 checks: headless 1199 passed; native 1585 passed/0 failed/2 inconclusive;
+  asset audit passed; seven native angles inspected and committed. Next: Mac build
+  and packaged startup evidence for the rebuilt interior.
   Interior is a simplified candidate. Do not claim a completed fleet cockpit rollout
   or merge until those acceptance rows have actual evidence.
 

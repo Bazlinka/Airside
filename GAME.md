@@ -19,9 +19,14 @@
 - Latest native focused world/journey cases: 18/18 passed (1.956 s); QA driver
   imports/compiles in Unity. First Mac build succeeded (`40caaf9d-dirty`), without
   the later review driver. NEXT build current clean HEAD using the populated cache.
-- First graphics-on KGC review failed QA: tracker used VH-PAX while cockpit used
-  VH-ZRC. Current correction binds all review steps to one supported player SF34;
-  native focused checks pass. Rebuild and retry into a distinct output folder.
+- KGC r3 (`d3a951f5`) captures the player departure, streamed origin, approach,
+  rollout and destination. Return is unaccepted: a 172 s render stall skipped it
+  in accelerated time. Next review caps accelerated frame advances, requires all
+  rendered phases and samples stalled player threads. Rate-1 telemetry remains
+  wall-clock based. Geographic journeys now exclude local departure bank commands.
+- Baseline clean Mac player exists at `/private/tmp/airside-sa-baseline` (f15aac12).
+  Rebuild current branch; rerun KGC and CPD with the watchdog and CPD's optional
+  600 s rate-1 performance window. Compare baseline/local 10-minute runs separately.
 - NEXT: finish Mac build and the packet's
   SF34 KGC/CPD round-trip, origin/actor/weather checks and comparative frame-time test.
   Candidate branch only; do not mark this ready to merge from source checks alone.

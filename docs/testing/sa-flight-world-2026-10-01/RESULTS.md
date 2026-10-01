@@ -62,3 +62,28 @@ the available log gives no exit cause. Bind scheduling, cockpit selection, phase
 capture and trace to the same supported player registration. Native focused checks
 still pass after that correction. Rebuild before retrying in a distinct output
 folder; first-attempt records remain in `work/sa-flight-kgc/`.
+
+## Graphics-on KGC review, revision 3
+
+Clean player `d3a951f5`: captured player VH-PAX taxi, takeoff, outbound cruise,
+origin changes, Kingscote approach, rollout and destination stand. Resident terrain
+never exceeded 49 tiles in the trace; elevations loaded. Runway is visible at its
+sourced height. Departure-bank commands from the local climb-out incorrectly
+persisted into regional cruise; suppress those commands on the geographic track.
+Native focused paths/import still pass after that correction.
+
+Do not accept this as a complete rendered round trip: after real 252.8 s the next
+journey trace was 428.7 s, already back at Adelaide. The heartbeat reports a
+172,182.1 ms frame. No inbound, home landing or taxi-in captures exist. The old
+script returned success on a COMPLETE marker alone; now require the essential
+rendered phase files too. Accelerated QA now caps each frame's simulated advance
+so a blocked frame cannot skip the return. Rate-1 measurements keep wall time and
+record stalls. An external watchdog samples the owning player if its log stops for
+20 s. Display power logs show no display-off or sleep event during this run.
+Before the stall, stationary regional minutes recorded 120 fps / 8.3 ms p95;
+these accelerated values are not live-time acceptance or a baseline comparison.
+
+Bailey confirmed the first two review exits were manual closures. They are not
+runtime crash evidence. Exact baseline f15aac12 now has a clean Mac build in
+`/private/tmp/airside-sa-baseline`, using an independent APFS-cloned Library cache.
+Baseline and normal-rate performance windows are still outstanding.

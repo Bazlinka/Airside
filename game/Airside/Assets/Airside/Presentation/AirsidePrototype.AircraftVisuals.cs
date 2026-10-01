@@ -87,7 +87,7 @@ namespace Airside.Presentation
                     FleetGroundFacing(flight, next - position));
                 var heading = direction.sqrMagnitude > 0.001f
                     ? Quaternion.LookRotation(direction)
-                    : view.rotation;
+                    : journey.HasValue ? Quaternion.Euler(0f,view.eulerAngles.y,0f) : view.rotation;
                 if (!journey.HasValue) heading = DepartureLookRotation(flight, phase, progress, heading);
                 if (journey.HasValue && _fleetAircraftById.TryGetValue(flight.AircraftId,out var watched))
                 {
@@ -114,11 +114,11 @@ namespace Airside.Presentation
                     new Vector2(next.x-position.x,next.z-position.z).magnitude)*Mathf.Rad2Deg
                     : PhasePitchDegrees(phase, progress);
                 var bank = SmoothedBankDegrees(flight.AircraftId, view, heading, phase,
-                    DepartureBankDegrees(flight, phase, progress));
+                    journey.HasValue ? 0f : DepartureBankDegrees(flight, phase, progress));
                 var targetRotation = heading * Quaternion.Euler(pitch, 0f, bank);
                 // Exponential damping keeps the turn rate identical at 30 and 144 fps, and
                 // freezes attitude while paused instead of drifting on unscaled time.
-                var turningOff = TryDepartureArc(flight, phase, progress, out _, out var turnAlong, out _, out _)
+                var turningOff = !journey.HasValue && TryDepartureArc(flight, phase, progress, out _, out var turnAlong, out _, out _)
                                  && turnAlong > 0f;
                 // Ground heading is already the trailed-gear direction. A slow follow left the
                 // fuselage pointing down the taxiway while the nose had entered the turn, so

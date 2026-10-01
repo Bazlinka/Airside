@@ -84,3 +84,11 @@ Run both packaged journeys with `bash scripts/review-sa-flight.sh KGC 20` and
 `bash scripts/review-sa-flight.sh CPD 20`; inspect frames/logs, not merely the script
 exit status. The default timeout is 30 real minutes. Rate 1 performance runs use
 a separate bounded soak; a real full CPD round trip will exceed this timeout.
+
+`AIRSIDE_JOURNEY_PERF_SECONDS=600 bash scripts/review-sa-flight.sh CPD 20`
+advances quickly to the first distant outbound origin, then switches to 1x for
+600 real seconds before resuming accelerated coverage. Start/end markers delimit
+normal-rate heartbeat evidence. Accelerated advances cap a blocked frame at 0.1
+real seconds, so render stalls do not omit whole legs; the 1x window keeps wall
+clock time and reports stalls. The script requires phase PNGs in addition to the
+COMPLETE marker and samples the player when the trace stalls for 20 seconds.

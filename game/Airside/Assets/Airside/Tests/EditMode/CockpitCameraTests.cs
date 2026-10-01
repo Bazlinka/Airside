@@ -32,6 +32,8 @@ namespace Airside.Tests
                 Assert.That(Vector3.Distance(host.transform.position, seat.position), Is.LessThan(0.001f));
                 Assert.That(Quaternion.Angle(host.transform.rotation, seat.rotation), Is.LessThan(0.01f));
                 Assert.That(camera.nearClipPlane, Is.EqualTo(0.035f).Within(0.001f));
+                Assert.That(AirsideCameraController.CurrentDistance, Is.EqualTo(0f),
+                    "Cockpit fog must not inherit a far overview's thinned weather");
                 controller.EndCockpit();
                 Assert.That(controller.IsCockpit, Is.False);
                 Assert.That(camera.nearClipPlane, Is.EqualTo(0.6f).Within(0.001f));

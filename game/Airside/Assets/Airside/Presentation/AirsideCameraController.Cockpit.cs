@@ -79,6 +79,9 @@ namespace Airside.Presentation
         private void ApplyCockpitPose()
         {
             transform.SetPositionAndRotation(CockpitPosition, CockpitRotation);
+            CurrentDistance = 0f;
+            CurrentPitch = transform.eulerAngles.x;
+            CurrentYaw = transform.eulerAngles.y;
             _camera.nearClipPlane = 0.035f;
             _camera.farClipPlane = Mathf.Max(_savedFar, 30000f);
             // Never use the overview distance's horizon compression from inside an aircraft.

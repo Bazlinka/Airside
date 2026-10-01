@@ -116,12 +116,12 @@ namespace Airside.Presentation
                         new Vector3(0f, viewParts.Profile.ModelGroundOffsetMetres, viewParts.MainGearZMetres));
                 SpinPropellers(view, viewParts.Propellers, phase, engines, progress);
                 SpinJetFans(view, viewParts.FanLeft, viewParts.FanRight, phase, engines, progress);
-                UpdateNoseWheelSteering(viewParts.GearNose,
+                UpdateNoseWheelSteering(viewParts.GearNosePart,
                     FleetNoseWheelSteering(flight, viewParts.WheelbaseMetres), PresentationDeltaTime);
                 RollLandingGearTires(view, FleetTireRollSpeed(flight, phase, progress, aircraftType));
                 ApplyOleoSettling(view, phase, progress);
-                UpdateControlSurfaces(viewParts.ControlSurfaces, phase, progress, bank, PresentationDeltaTime,
-                    engines.HasValue);
+                UpdateControlSurfaces(viewParts.ControlSurfaces, viewParts.Articulation, phase, progress, bank,
+                    PresentationDeltaTime, engines, engines.HasValue);
                 UpdateGroundShadow(view);
                 UpdateSelectionMarker(view, flight.AircraftId);
                 GroundPose? groundPose = TryFleetGround(flight, out var groundAircraft, out var groundVisual)
@@ -490,29 +490,30 @@ namespace Airside.Presentation
 
         private void RollLandingGearTires(Transform aircraft, float rollSpeedMetresPerSecond)
         {
-            // Distance travelled / radius — stops naturally when ground speed is zero, and
-            // turns the other way on the tail-first pushback.
-            if (PresentationDeltaTime <= 0f || Mathf.Abs(rollSpeedMetresPerSecond) <= 0.001f)
+            // Distance travelled / radius. The tyres spin up hard at touchdown and spin down gently once
+            // the aircraft is airborne rather than snapping between zero and ground speed; they stop
+            // naturally when ground speed is zero and turn the other way on the tail-first pushback.
+            var parts = PartsFor(aircraft);
+            var state = parts.Articulation;
+            state.WheelSpinMetresPerSecond = AircraftArticulation.WheelSpinStep(
+                state.WheelSpinMetresPerSecond, rollSpeedMetresPerSecond, PresentationDeltaTime);
+            var spin = state.WheelSpinMetresPerSecond;
+            if (PresentationDeltaTime <= 0f || Mathf.Abs(spin) <= 0.001f || parts.Wheels == null)
                 return;
-            var direction = rollSpeedMetresPerSecond < 0f ? -1f : 1f;
-            var groundSpeed = Mathf.Abs(rollSpeedMetresPerSecond);
+            var direction = spin < 0f ? -1f : 1f;
+            var groundSpeed = Mathf.Abs(spin);
 
-            var profile = PartsFor(aircraft).Profile;
-            var namedChildren8 = AirsideNamedChildren.Get(aircraft);
-            var childNames8 = AirsideNamedChildren.Names(aircraft);
-            for (var childIndex8 = 0; childIndex8 < namedChildren8.Length; childIndex8++)
+            var profile = parts.Profile;
+            var noseRadius = profile?.NoseTireRadiusMetres ?? AirsideReusableMotion.NoseTireRadiusMetres;
+            var mainRadius = profile?.MainTireRadiusMetres ?? AirsideReusableMotion.MainTireRadiusMetres;
+            foreach (var wheel in parts.Wheels)
             {
-                var child = namedChildren8[childIndex8];
-                var childName = childNames8[childIndex8];
-                if (child == aircraft || !AirsideAircraftParts.RollsInPlace(childName))
+                if (wheel.Transform == null)
                     continue;
-                var radius = childName.IndexOf("nose", StringComparison.OrdinalIgnoreCase) >= 0
-                    ? profile?.NoseTireRadiusMetres ?? AirsideReusableMotion.NoseTireRadiusMetres
-                    : profile?.MainTireRadiusMetres ?? AirsideReusableMotion.MainTireRadiusMetres;
-                var degrees = PresentationDeltaTime
-                    * AirsideFlightPath.TireAngularDegreesPerSecond(groundSpeed, radius);
+                var degrees = PresentationDeltaTime * AirsideFlightPath.TireAngularDegreesPerSecond(
+                    groundSpeed, wheel.IsNose ? noseRadius : mainRadius);
                 if (degrees > 0f)
-                    child.Rotate(Vector3.right, degrees * direction, Space.Self);
+                    wheel.Transform.Rotate(Vector3.right, degrees * direction, Space.Self);
             }
         }
 
@@ -1218,6 +1219,7 @@ namespace Airside.Presentation
                 // fuselage centreline. Rebake each to its axle so the ground roll turns
                 // them in place — the landing-gear mirror of RebakePropellerPivots.
                 RebakeWheelPivots(root);
+                RigLandingGearArticulation(root);
                 if (finalAtr42)
                     RelocateAtrDoors(root);
                 NestCabinDoorParts(root);
@@ -1948,23 +1950,33 @@ namespace Airside.Presentation
                 var bounds = renderer.bounds;
                 var pivot = bounds.center;
                 var articulated = true;
-                if (childName is "Gear nose" or "Gear L" or "Gear R")
+                if (AirsideAircraftParts.IsGearStrut(childName))
                 {
                     pivot.y = bounds.max.y;
                 }
-                else if (childName.StartsWith("Gear door", StringComparison.Ordinal))
+                else if (AirsideAircraftParts.IsGearDoor(childName))
                 {
-                    pivot.y = bounds.max.y;
+                    // A plate beside a leg is carried by it and keeps its node; a belly panel hinges on its
+                    // outer longitudinal edge and swings open as the gear passes.
+                    if (AircraftArticulation.ClassifyGearDoor(bounds.size.x, bounds.size.y, bounds.size.z)
+                        == GearDoorKind.LegMounted)
+                        articulated = false;
+                    else
+                        pivot = BellyDoorHingePivot(bounds, aircraft.TransformPoint(Vector3.zero).x);
                 }
                 else if (childName is "Flap L" or "Flap R"
                          || childName.StartsWith("Aileron", StringComparison.Ordinal)
                          || childName.StartsWith("Elevator", StringComparison.Ordinal)
                          || childName.StartsWith("Spoiler", StringComparison.Ordinal))
                 {
-                    pivot.z = bounds.max.z;
+                    // Hinged along the front edge of the surface, which a swept wing slants.
+                    pivot = ControlSurfaceHingePivot(aircraft, child, bounds, rudder: false);
                 }
-                else if (childName.StartsWith("Rudder", StringComparison.Ordinal)
-                         || childName.StartsWith("CabinDoor", StringComparison.Ordinal)
+                else if (childName.StartsWith("Rudder", StringComparison.Ordinal))
+                {
+                    pivot = ControlSurfaceHingePivot(aircraft, child, bounds, rudder: true);
+                }
+                else if (childName.StartsWith("CabinDoor", StringComparison.Ordinal)
                          || childName.StartsWith("Cargo door", StringComparison.OrdinalIgnoreCase))
                 {
                     pivot.z = bounds.max.z;
@@ -2042,6 +2054,11 @@ namespace Airside.Presentation
                     wingR = child;
                     continue;
                 }
+
+                // A door plate already carried by its leg folds away with it: it must not be pulled off.
+                if (AirsideAircraftParts.IsGearDoor(childName) && child.parent != null
+                    && AirsideAircraftParts.IsGearStrut(child.parent.name))
+                    continue;
 
                 var side = WingMountedSide(childName);
                 if (side != 0)

@@ -48,11 +48,30 @@
   centre lines are now flat ribbons (`DistanceWidenedPaint`) whose width follows distance node by node to
   about 1.6 px (`AirsidePaintWidening`, capped at 9x), so they stay continuous at every zoom and are exact
   when near. Presentation only. Checked in a Mac build at 250 m, 1 km and 3 km; ADR 0206.
+
+- **Aircraft physical-animation pass: control surfaces, gear, wheels.** Every fixed-wing type now moves
+  like the real thing. Flaps, ailerons, elevators and the rudder hinge on their real swept hinge lines
+  (fitted from each mesh) instead of the bare lateral axis, and several signs that were backwards are
+  fixed: flaps deployed trailing-edge-up, spoilers sank into the wing and the rudder swung against the turn.
+  Ailerons and rudder now command roll *rate* (they deflect to roll in or out and neutralise on a steady
+  bank), the elevator follows nose-up attitude and pitch rate, flaps run aft on their tracks and move at
+  actuator speed, the wing going down raises a roll spoiler, and a shut-down aircraft parked on the stand
+  droops its ailerons and elevators. The gear folds the way its airframe's does: nose legs forward, jet
+  mains (and the ATR's) inboard into the belly, Dash 8 mains aft into the nacelle, Saab mains forward.
+  Leg-mounted door plates fold away with the leg, belly doors hinge on their outer edge and open before the
+  leg moves, the 787/A330/A350 trucks tip as the leg swings, and nose-wheel steering composes inside the
+  fold. Tyres spin up hard at touchdown and spin down gently after lift-off instead of snapping. Presentation
+  only: no simulation, save or model-file change. New `AircraftArticulation` (pure rules, headless-tested),
+  `AirsidePrototype.Articulation.cs`, and an `AircraftArticulationReview` editor tool
+  (`-executeMethod AircraftArticulationReview.Render -articulationPose geardown|gearup|gearmid|roll|landing`).
+
 - **Smoother propeller spool-up and a clearly visible blur at speed.** Shaft speed is now
   jerk-limited (the acceleration itself eases in and out) so starts and run-downs no longer step;
   the blur disc is ~2.6x denser with a brighter tip ring, grows with rpm all the way to governed
   speed (`DiscSpeedLook`) so you can see when a prop is up to speed, and blades now hide at 60%
   blur instead of 92% so there is no pop. Presentation only.
+
+
 - **P0 Stage C multi-shot log inventory fix.** `capture-game` mirrors Unity's one
   `-logFile` onto sibling `.log` paths; remaining inventory falls back to the batch
   primary and requires per-shot `following=True` pose lines so landing/boarding

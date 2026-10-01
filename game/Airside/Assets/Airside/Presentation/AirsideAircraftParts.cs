@@ -77,6 +77,22 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// The three struts the articulation pass folds, steers and carries wheels on, by their
+        /// presentation names ("Gear nose", "Gear L", "Gear R").
+        /// </summary>
+        public static bool IsGearStrut(string partName) =>
+            partName is "Gear nose" or "Gear L" or "Gear R";
+
+        /// <summary>
+        /// A gear door under either its presentation name ("Gear door L") or the kit name some doors keep
+        /// ("gear_door_inner_l", "gear_door_nose_r"), so no door is left outside the gear rig.
+        /// </summary>
+        public static bool IsGearDoor(string partName) =>
+            !string.IsNullOrEmpty(partName)
+            && (partName.StartsWith("Gear door", StringComparison.OrdinalIgnoreCase)
+                || partName.StartsWith("gear_door", StringComparison.OrdinalIgnoreCase));
+
+        /// <summary>
         /// Metres per second the tyres roll at, signed for direction of travel.
         ///
         /// <paramref name="groundLegSpeed"/> is the authored Adelaide taxi/pushback pose speed,

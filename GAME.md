@@ -1,5 +1,11 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Cursor — main did not compile in Unity after PR #510.** Five
+  vegetation placement tests call `ClearCache()`, which was `internal` in
+  Presentation (no `InternalsVisibleTo` there). The dotnet harness compiles one
+  assembly so it never saw this. Made the five `ClearCache` methods public.
+  **Watch:** headless green is not Unity green for Presentation internals.
+
 - **2026-10-01 Cursor — merge PR #510 visual overhaul tip onto main (goal stopped).**
   Merges Phase 2b–2g vegetation + Phase 3 tower/hangars/ARFF onto main that
   already has the turboprop cockpit rollout. Note: two files share ADR number

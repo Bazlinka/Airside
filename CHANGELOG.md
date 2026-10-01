@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Unity compiles again after the vegetation merge.** Five placement tests called an
+  `internal` cache reset the Unity test assembly cannot see; it is now public.
+
 - **Phase 3 ARFF/fire-station silhouette (ADR 0223).** Taller/wider appliance
   bay doors, hose-drying tower with obstruction light, concrete parking pads
   with yellow bay cues, and a yellow sign fascia — pure-math `BuildingDetail`.

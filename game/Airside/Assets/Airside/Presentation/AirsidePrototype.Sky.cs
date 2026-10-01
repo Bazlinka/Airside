@@ -1124,16 +1124,20 @@ namespace Airside.Presentation
             // to 24, then cover scaling grew individual cards past a kilometre wide, so the
             // airport was hidden behind low photo cut-outs in the normal overview.
             var clusterCount = adelaide ? AdelaideCloudClusterCount : 9;
-            var spreadX = adelaide ? 4200f : 110f;
-            var spreadZ = adelaide ? 2800f : 100f;
+            var spreadX = adelaide ? WeatherCoverage.CloudHalfWidth : 110f;
+            var spreadZ = adelaide ? WeatherCoverage.CloudHalfDepth : 100f;
             var yBase = adelaide ? 650f : 24f;
             var ySpan = adelaide ? 300f : 26f;
             for (var i = 0; i < clusterCount; i++)
             {
                 var cluster = new GameObject($"Cloud {i}").transform;
                 cluster.SetParent(cloudRoot, false);
-                var x = (float)(rng.NextDouble() * spreadX * 2f - spreadX);
-                var z = (float)(rng.NextDouble() * spreadZ * 2f - spreadZ);
+                // One jittered cluster per cell avoids an airport-only concentration and
+                // large empty quarters; the same sixteen bodies cover each moving view.
+                var x = adelaide ? ((i % 4 + 0.2f + (float)rng.NextDouble() * 0.6f) / 4f * 2f - 1f) * spreadX
+                    : (float)(rng.NextDouble() * spreadX * 2f - spreadX);
+                var z = adelaide ? ((i / 4 + 0.2f + (float)rng.NextDouble() * 0.6f) / 4f * 2f - 1f) * spreadZ
+                    : (float)(rng.NextDouble() * spreadZ * 2f - spreadZ);
                 var y = yBase + (float)rng.NextDouble() * ySpan;
                 cluster.position = new Vector3(x, y, z);
 
@@ -1195,6 +1199,12 @@ namespace Airside.Presentation
             if (_cloudRoot == null)
                 return;
 
+            var layers = AirsideSettings.Current.WeatherLayers;
+            _cloudRoot.gameObject.SetActive(layers);
+            if (_cloudUmbraRoot != null) _cloudUmbraRoot.gameObject.SetActive(layers);
+            if (!layers) return;
+            var camera = _mainCamera != null ? _mainCamera.transform.position : Vector3.zero;
+
             // Drift with the real surface wind (ADR 0068) rather than a fixed eastward slide —
             // clouds and rain used to move the same direction regardless of what the windsock
             // (the only other wind-reactive visual) was pointing.
@@ -1228,16 +1238,12 @@ namespace Airside.Presentation
                 var p = cloud.position;
                 p.x += driftX;
                 p.z += driftZ;
-                var wrapX = AirsideBareField.Enabled ? 4500f : 100f;
-                var wrapZ = AirsideBareField.Enabled ? 2800f : 100f;
-                if (p.x > wrapX)
-                    p.x = -wrapX;
-                else if (p.x < -wrapX)
-                    p.x = wrapX;
-                if (p.z > wrapZ)
-                    p.z = -wrapZ;
-                else if (p.z < -wrapZ)
-                    p.z = wrapZ;
+                var wrapX = AirsideBareField.Enabled ? WeatherCoverage.CloudHalfWidth : 100f;
+                var wrapZ = AirsideBareField.Enabled ? WeatherCoverage.CloudHalfDepth : 100f;
+                var anchorX = AirsideBareField.Enabled ? camera.x : 0f;
+                var anchorZ = AirsideBareField.Enabled ? camera.z : 0f;
+                p.x = WeatherCoverage.WrapNearView(p.x, anchorX, wrapX);
+                p.z = WeatherCoverage.WrapNearView(p.z, anchorZ, wrapZ);
                 cloud.position = p;
 
                 if (_mainCamera != null && cloud.GetChild(0).name != "Cloud volume")
@@ -1264,9 +1270,10 @@ namespace Airside.Presentation
                 }
 
                 // ADR 0143: fade out near the wrap edges and back in on the far side, instead of popping.
-                var edge = Mathf.Min(
-                    Mathf.InverseLerp(wrapX, wrapX - 700f, Mathf.Abs(p.x)),
-                    Mathf.InverseLerp(wrapZ, wrapZ - 500f, Mathf.Abs(p.z)));
+                var edge = AirsideBareField.Enabled
+                    ? WeatherCoverage.CloudEdge(p.x, p.z, camera.x, camera.z)
+                    : Mathf.Min(Mathf.InverseLerp(wrapX, 0f, Mathf.Abs(p.x)),
+                        Mathf.InverseLerp(wrapZ, 0f, Mathf.Abs(p.z)));
                 if (!tintChanged)
                 {
                     ApplyCloudEdgeFade(cloud, i, edge);
@@ -1300,18 +1307,17 @@ namespace Airside.Presentation
                 var cardTint = tint;
                 cardTint.a *= visibility;
                 StoreCloudTint(i, cardTint);
+                if (_cloudUmbraRoot != null && i < _cloudUmbraRoot.childCount)
+                {
+                    var umbraRenderer = _cloudUmbraRoot.GetChild(i).GetComponent<Renderer>();
+                    if (umbraRenderer != null)
+                    {
+                        var umbraColor = GetRendererColor(umbraRenderer);
+                        umbraColor.a = umbraAlpha * visibility;
+                        _cloudUmbraTints[i] = umbraColor;
+                    }
+                }
                 ApplyCloudEdgeFade(cloud, i, edge);
-
-                if (_cloudUmbraRoot == null || i >= _cloudUmbraRoot.childCount)
-                    continue;
-                var umbra = _cloudUmbraRoot.GetChild(i);
-                // Soft umbras match the broader density volumes; night does not paint black discs.
-                var umbraRenderer = umbra.GetComponent<Renderer>();
-                if (umbraRenderer == null)
-                    continue;
-                var umbraColor = GetRendererColor(umbraRenderer);
-                umbraColor.a = umbraAlpha * visibility;
-                SetRendererColor(umbraRenderer, umbraColor);
             }
         }
 

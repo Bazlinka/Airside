@@ -22,6 +22,7 @@ Shader "Airside/HeightFog"
             CBUFFER_END
             float4 _AirsideWeatherWind;
             float _AirsideWeatherTime;
+            float4 _AirsideWeatherRange;
             struct Attributes { float4 positionOS : POSITION; };
             struct Varyings { float4 positionCS : SV_POSITION; };
             Varyings vert(Attributes i) { Varyings o; o.positionCS=TransformObjectToHClip(i.positionOS.xyz);return o; }
@@ -47,7 +48,7 @@ Shader "Airside/HeightFog"
                 float invY=rcp(abs(ray.y)<0.00001 ? 0.00001 : ray.y);
                 float a=(-6-origin.y)*invY,b=(114-origin.y)*invY;
                 float start=max(0,min(a,b));
-                float end=min(min(distanceToSurface,18000),max(a,b));
+                float end=min(min(distanceToSurface,_AirsideWeatherRange.y),max(a,b));
                 if(end<=start) return 0;
                 const float falloff=4.0/120.0;
                 float startHeight=origin.y+ray.y*start+6;
@@ -62,8 +63,10 @@ Shader "Airside/HeightFog"
                 {
                     float3 world=origin+ray*lerp(start,end,(s+0.5)/3.0);
                     float weight=exp(-max(0,world.y+6)*falloff);
-                    float2 fromField=abs((world.xz-float2(300,150))/float2(8000,7000));
-                    float edge=1-smoothstep(0.6,1,max(fromField.x,fromField.y));
+                    // No airport rectangle: the same shallow fog covers the landscape
+                    // under every view. Only distant ray samples fade out of the budget.
+                    float edge=1-smoothstep(_AirsideWeatherRange.x,_AirsideWeatherRange.y,
+                        distance(world,origin));
                     float n=noise((world.xz-_AirsideWeatherWind.xz*_AirsideWeatherTime*0.13)*0.008);
                     variation+=weight*edge*lerp(0.55,1.4,n);
                     weights+=weight;

@@ -32,9 +32,9 @@ fi
 
 branch="$(git branch --show-current)"
 case "$branch" in
-  main|cursor/p0-auto-landing-follow-709e) ;;
+  main|cursor/p0-freighter-pick-lock-709e|cursor/p0-auto-landing-follow-709e) ;;
   *)
-    echo "Run from main or cursor/p0-auto-landing-follow-709e (got $branch)." >&2
+    echo "Run from main or cursor/p0-freighter-pick-lock-709e (got $branch)." >&2
     exit 1
     ;;
 esac
@@ -76,11 +76,24 @@ if [ -x "$app" ]; then
     exit 1
   fi
   if ! strings "$app" 2>/dev/null | grep -Fq 'follow never started before delay'; then
-    echo "Player at $app lacks auto-follow fail-closed. Rebuild without SKIP_BUILD." >&2
+    echo "Player at $app lacks review-follow fail-closed. Rebuild without SKIP_BUILD." >&2
+    exit 1
+  fi
+  if ! strings "$app" 2>/dev/null | grep -Fq 'follow lost before delay'; then
+    echo "Player at $app lacks follow-lost fail-closed. Rebuild without SKIP_BUILD." >&2
     exit 1
   fi
   if ! strings "$app" 2>/dev/null | grep -Fq 'overview framing mismatch'; then
     echo "Player at $app lacks overview-framing fail-closed. Rebuild without SKIP_BUILD." >&2
+    exit 1
+  fi
+  # Stage C SKIP_BUILD reuses the Stage A player — hangar/boarding apply aborts must be present.
+  if ! strings "$app" 2>/dev/null | grep -Fq 'hangar check never started'; then
+    echo "Player at $app lacks hangar-check fail-closed. Rebuild without SKIP_BUILD." >&2
+    exit 1
+  fi
+  if ! strings "$app" 2>/dev/null | grep -Fq 'boarding booking never applied'; then
+    echo "Player at $app lacks boarding fail-closed. Rebuild without SKIP_BUILD." >&2
     exit 1
   fi
   echo "==> Player has review fail-closed aborts"
@@ -140,10 +153,21 @@ follow_fail=0
     base="$(basename "$png" .png)"
     bytes="$(wc -c < "$png" | tr -d ' ')"
     logf="$capture_out/$base.log"
+    # Multi-shot batches share one Unity -logFile (first shot). Fall back to the
+    # batch primary when capture-game has not mirrored sibling .log paths yet.
+    case "$base" in
+      follow-jet-close|follow-storm-landing)
+        [ -f "$logf" ] || logf="$capture_out/follow-jet-day.log"
+        ;;
+      follow-human-ops-close)
+        [ -f "$logf" ] || logf="$capture_out/follow-boarding-tape.log"
+        ;;
+    esac
     if [ -f "$logf" ]; then
       # Prefer grep — ripgrep is often missing on CI / fresh Mac agents.
       if grep -Eq 'Shader error|NullReferenceException|InvalidOperationException|IndexOutOfRangeException|\[Airside soak\] STALL|review shot aborted' "$logf"; then
         log_status="errors"
+        follow_fail=1
       else
         log_status="clean"
       fi
@@ -151,61 +175,62 @@ follow_fail=0
       # Multi-shot batches share capture-game's first --shot logFile, so scan siblings too.
       case "$base" in
         follow-jet-takeoff)
-          if ! grep -Eq '\[Airside soak\] following auto-takeoff ' "$logf"; then
+          # Start log + live follow at capture (following=True on pose line).
+          if ! grep -Eq '\[Airside soak\] following auto-takeoff ' "$logf" \
+            || ! grep -Eq 'following=True' "$logf"; then
             log_status="errors"
             follow_fail=1
           fi
           ;;
         follow-jet-day|follow-jet-close|follow-storm-landing)
-          found_follow=0
-          for alt in follow-jet-day follow-jet-close follow-storm-landing; do
-            if [ -f "$capture_out/$alt.log" ] \
-              && grep -Eq '\[Airside soak\] following auto-landing ' "$capture_out/$alt.log"; then
-              found_follow=1
-              break
-            fi
-          done
-          if [ "$found_follow" -eq 0 ]; then
+          # Shared batch log: require auto-landing follow + this shot's pose following=True.
+          if ! grep -Eq '\[Airside soak\] following auto-landing ' "$logf" \
+            || ! grep -Eq "review shot .*${base}\\.png .*following=True" "$logf"; then
             log_status="errors"
             follow_fail=1
           fi
           ;;
         overview-night-sky-traffic)
-          # Pose log + pitch band (~8° ±5). Nose-down default (~50°) must fail.
+          # Pose log + pitch/yaw/dist bands (ReviewOverviewFraming tolerances).
+          # Nose-down default (~50°) or wrong corridor must fail.
           if ! grep -Eq '\[Airside soak\] review shot .* pose pitch=' "$logf"; then
             log_status="errors"
             follow_fail=1
           else
-            pitch="$(grep -Eo 'pose pitch=[0-9.]+' "$logf" | tail -1 | sed -E 's/pose pitch=//')"
-            if ! awk -v p="$pitch" 'BEGIN { exit !(p+0 <= 13 && p+0 >= 3) }'; then
-              echo "overview-night-sky-traffic pose pitch=$pitch (want ~8); treating as failed capture." >&2
+            pose_line="$(grep -E '\[Airside soak\] review shot .* pose pitch=' "$logf" | tail -1)"
+            pitch="$(printf '%s\n' "$pose_line" | grep -Eo 'pose pitch=[0-9.]+' | sed -E 's/pose pitch=//')"
+            yaw="$(printf '%s\n' "$pose_line" | grep -Eo 'yaw=[0-9.]+' | sed -E 's/yaw=//')"
+            dist="$(printf '%s\n' "$pose_line" | grep -Eo 'dist=[0-9.]+' | sed -E 's/dist=//')"
+            if ! awk -v p="$pitch" -v y="$yaw" -v d="$dist" 'BEGIN {
+              # pitch 8±5, yaw 270±8, dist 11000 ±20%
+              ok = (p+0 >= 3 && p+0 <= 13) && (y+0 >= 262 && y+0 <= 278) && (d+0 >= 8800 && d+0 <= 13200)
+              exit !ok
+            }'; then
+              echo "overview-night-sky-traffic pose pitch=$pitch yaw=$yaw dist=$dist (want ~8/270/11000); treating as failed capture." >&2
               log_status="errors"
               follow_fail=1
             fi
           fi
           ;;
         follow-freighter)
-          if ! grep -Eq '\[Airside soak\] review freighter ' "$logf"; then
+          # Refit + live follow at capture (following=True on pose log — not overview).
+          if ! grep -Eq '\[Airside soak\] review freighter ' "$logf" \
+            || ! grep -Eq 'following=True' "$logf"; then
             log_status="errors"
             follow_fail=1
           fi
           ;;
         follow-hangar-tow)
-          if ! grep -Eq '\[Airside soak\] review hangar check ' "$logf"; then
+          if ! grep -Eq '\[Airside soak\] review hangar check ' "$logf" \
+            || ! grep -Eq 'following=True' "$logf"; then
             log_status="errors"
             follow_fail=1
           fi
           ;;
         follow-boarding-tape|follow-human-ops-close)
-          found_board=0
-          for alt in follow-boarding-tape follow-human-ops-close; do
-            if [ -f "$capture_out/$alt.log" ] \
-              && grep -Eq '\[Airside soak\] review boarding ' "$capture_out/$alt.log"; then
-              found_board=1
-              break
-            fi
-          done
-          if [ "$found_board" -eq 0 ]; then
+          # Shared batch log: require boarding apply + this shot's pose following=True.
+          if ! grep -Eq '\[Airside soak\] review boarding ' "$logf" \
+            || ! grep -Eq "review shot .*${base}\\.png .*following=True" "$logf"; then
             log_status="errors"
             follow_fail=1
           fi
@@ -213,6 +238,12 @@ follow_fail=0
       esac
     else
       log_status="missing"
+      # Resume/stale PNG without a log must not stamp Stage A/C as inventory-OK.
+      case "$base" in
+        overview-night-sky-traffic|follow-freighter|follow-hangar-tow|follow-boarding-tape|follow-human-ops-close|follow-jet-takeoff|follow-jet-day|follow-jet-close|follow-storm-landing)
+          follow_fail=1
+          ;;
+      esac
     fi
     echo "| \`$base.png\` | $bytes | $log_status |"
   done

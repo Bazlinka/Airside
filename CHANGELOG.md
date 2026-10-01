@@ -1,5 +1,43 @@
 ## Unreleased
 
+- **P0 Stage C multi-shot log inventory fix.** `capture-game` mirrors Unity's one
+  `-logFile` onto sibling `.log` paths; remaining inventory falls back to the batch
+  primary and requires per-shot `following=True` pose lines so landing/boarding
+  secondaries are not false-failed. Locked by `test-p0-remaining-delays.sh`. No
+  save-schema changes.
+- **P0 Stage C SKIP_BUILD fail-closed preflight.** Mac remaining runner requires
+  hangar/boarding abort strings in the player and `following=True` on jet
+  landing/takeoff inventory. Locked by `test-p0-remaining-delays.sh`. No save-schema
+  changes.
+- **P0 Stage C hangar pick mid-outbound at 90s.** `ReviewHangarPickTests` proves the
+  soak-seed pick's assigned berth is off-stand (>15 m) at the packaged 90s still,
+  not merely InCheck. No save-schema changes.
+- **P0 Stage C hangar/boarding picks locked on soak seed.** `ReviewHangarPick` and
+  `ReviewBoardingPick` (Simulation) mirror freighter pick; EditMode proves seed
+  `20260913` can StartCheck / ScheduleDeparture at T+0 through the packaged delays.
+  Soak uses the shared picks. No save-schema changes.
+- **P0 Stage A follow-active + night-sky inventory harden.** Soak aborts when
+  review follow is lost before capture (not only never started); inventory requires
+  `following=True` and night-sky pose yaw≈270 / dist≈11000 (not pitch alone).
+  Missing logs fail Stage A/C stamp. Locked by `test-p0-remaining-delays.sh`.
+  No save-schema changes.
+- **P0 review follow fail-closed for freighter/hangar/boarding.** Soak aborts
+  before writing a PNG when any review aircraft id (auto-* or registration) never
+  starts follow; remaining inventory requires a `following` log for those stills.
+  CODE_EVIDENCE / Mac tip docs retargeted to #492. No save-schema changes.
+- **P0 CreateAgent pin follows online Codex-path worker.** Launcher default
+  `worker_id` is `4566aff1…` (`~/Documents/Codex/Airside`, symlink to Code);
+  prompt accepts either checkout. Locked by `test-p0-mac-agent-launch.sh`. No
+  simulation or save changes.
+- **P0 tip `67050b65` CI CLEAN (#492).** Headless green with `ReviewFreighterPick`
+  + tip retarget after #491 merge. Mac Stage A / `CURSOR_API_KEY` still required.
+  No simulation or save changes.
+- **P0 Stage A freighter pick locked on soak seed.** `ReviewFreighterPick` (Simulation)
+  prefers a parked unbooked jet for `-airsideReviewFreighter`; EditMode proves
+  seed `20260913` can refit at T+0 and stay AtStand through the 28s still.
+  Soak uses the shared pick. Mac tip defaults follow
+  `cursor/p0-freighter-pick-lock-709e` after #491 merged to `main`. No save-schema
+  changes.
 - **P0 tip `b67a32a1` CI CLEAN.** Headless green on #491 with Stage A caffeinate +
   osascript notify, fail-closed framing/follow, and CreateAgent Stage A path.
   Mac workers online; `CURSOR_API_KEY` still blocks CreateAgent. No simulation

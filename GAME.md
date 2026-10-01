@@ -1,12 +1,15 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-09-30 Cursor — P0 review follow helpers (branch `cursor/p0-auto-landing-follow-709e`, #491).**
-  Tip **`b67a32a1`** #491 headless **CLEAN** (Stage A caffeinate + osascript notify,
-  fail-closed framing/follow, CreateAgent `worker_id` + Stage A default). Rebuild
-  required. 20 RESULTS unverified. Mac workers often online (`~/Code/Airside`);
-  `CURSOR_API_KEY` still required for CreateAgent (Task cannot pin).
-  **NEXT:** Mac Terminal/Finder Stage A, or API key →
-  `scripts/launch-p0-mac-agent.sh`. Fill RESULTS by eye/ear. Freight parked.
+- **2026-10-01 Cursor — P0 waiting on Stage A evidence push (#492).**
+  Tip **#492** `dc546ac1` (CI green, MERGEABLE). Stage A fail-closed locks are on tip;
+  headless env Save proposed (`bld-20260930-f5f76b1e`). Bailey marked Mac Stage A
+  CTA done and skipped `CURSOR_API_KEY`, but tip still has **no** `follow-freighter.png`
+  and night-sky is still the nose-down #490 still. Mac workers often online.
+  20 RESULTS unverified. Freight parked.
+  **NEXT:** On Mac, push Stage A PNGs + eye verdicts into
+  `docs/testing/post-audit-p0-2026-09-30/` on this tip (or re-run
+  `scripts/run-post-audit-p0-stage-a.command` if none exist), then continue B/C
+  + manual listening. Do not invent RESULTS.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

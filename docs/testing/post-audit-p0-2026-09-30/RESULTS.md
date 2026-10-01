@@ -52,7 +52,7 @@ Frame times are the settled soak sample (the `1 min` line), after the first-fram
 | `follow-jet-day.png` | Follow framing | 0189 | keep | Follow locks onto VH-PAX. In this soak that aircraft is a parked Saab 340B at the stand, not a jet airborne. Crew stand on the apron with contact shadows. |
 | `follow-jet-close.png` | Close glazing / gear | 0194 | keep | Close view shows cabin glazing, registration and titles. The aircraft is parked, so main-gear rotation and flare are not in this shot. |
 
-## Remaining captures (after #491 helpers — not taken yet)
+## Remaining captures (after #491/#492 helpers — not taken yet)
 
 Run on Mac after rebuild: `scripts/review-post-audit-p0-remaining.sh`
 (or `AIRSIDE_P0_ONLY=<shot,shot>` for a subset). Copy keep PNGs into this folder

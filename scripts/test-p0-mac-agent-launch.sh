@@ -33,6 +33,14 @@ grep -Fq 'worker_id' "$launch" || {
   echo "launcher must support env.worker_id pin" >&2
   exit 1
 }
+grep -Fq '4566aff1-0678-5a57-9d15-895db6b35c1c' "$launch" || {
+  echo "launcher must default worker_id to the online Codex-path Airside worker" >&2
+  exit 1
+}
+grep -Fq 'Documents/Codex/Airside' "$launch" || {
+  echo "launcher prompt must accept Codex symlink checkout" >&2
+  exit 1
+}
 grep -Fq 'CURSOR_API_KEY' "$launch" || {
   echo "launcher must require CURSOR_API_KEY" >&2
   exit 1

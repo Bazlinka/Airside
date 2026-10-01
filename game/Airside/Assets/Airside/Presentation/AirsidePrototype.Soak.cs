@@ -169,23 +169,7 @@ namespace Airside.Presentation
             if (!FleetMode || _operations?.PlayerAirline == null)
                 return;
 
-            FleetAircraft best = null;
-            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
-            {
-                if (aircraft.State != FleetState.AtStand || aircraft.Scheduled.HasValue || aircraft.IsFreighter)
-                    continue;
-                if (best == null)
-                {
-                    best = aircraft;
-                    continue;
-                }
-
-                var jet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
-                var bestJet = AirlineOperations.NeedsTerminalGate(best.Type);
-                if (jet && !bestJet)
-                    best = aircraft;
-            }
-
+            var best = ReviewFreighterPick.PickBest(_operations.FleetOf(_operations.PlayerAirline));
             if (best == null)
             {
                 Debug.LogWarning($"{SoakLogTag} review freighter: no parked player aircraft to refit");
@@ -215,16 +199,7 @@ namespace Airside.Presentation
             if (!FleetMode || _operations?.PlayerAirline == null)
                 return;
 
-            FleetAircraft best = null;
-            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
-            {
-                if (aircraft.State != FleetState.AtStand || aircraft.Scheduled.HasValue
-                    || aircraft.IsFreighter || Maintenance.InCheck(aircraft, _clock.Now))
-                    continue;
-                if (best == null || (!aircraft.IsFoundingAircraft && best.IsFoundingAircraft))
-                    best = aircraft;
-            }
-
+            var best = ReviewHangarPick.PickBest(_operations.FleetOf(_operations.PlayerAirline), _clock.Now);
             if (best == null)
             {
                 Debug.LogWarning($"{SoakLogTag} review hangar check: no parked player aircraft");
@@ -253,24 +228,15 @@ namespace Airside.Presentation
             if (!FleetMode || _operations?.PlayerAirline == null)
                 return;
 
-            FleetAircraft best = null;
-            foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
-            {
-                if (aircraft.State != FleetState.AtStand || aircraft.IsFreighter
-                    || Maintenance.InCheck(aircraft, _clock.Now)
-                    || AirlineOperations.NeedsTerminalGate(aircraft.Type))
-                    continue;
-                if (aircraft.Scheduled.HasValue)
-                    _operations.CancelDeparture(aircraft);
-                best = aircraft;
-                break;
-            }
-
+            var best = ReviewBoardingPick.PickBest(_operations.FleetOf(_operations.PlayerAirline), _clock.Now);
             if (best == null)
             {
                 Debug.LogWarning($"{SoakLogTag} review boarding: no parked regional to book");
                 return;
             }
+
+            if (best.Scheduled.HasValue)
+                _operations.CancelDeparture(best);
 
             var reachable = _operations.MapDestinations().Where(d => _operations.CanOperate(best, d)
                 && _operations.CareerState.CanAfford(
@@ -373,14 +339,25 @@ namespace Airside.Presentation
             if (Time.unscaledTime < dueAt)
                 return;
 
-            // Fail closed: auto-landing / auto-takeoff stills must follow a drawn candidate.
-            // Writing a blind overview PNG would look like success and invent tyre evidence.
+            // Fail closed: any review follow subject (auto-* or a freighter/hangar/boarding
+            // registration) must still be on camera at capture. Sticky _reviewFollowStarted
+            // alone is not enough — ReleaseFollow after an early start would write an
+            // overview PNG that invents tyre / cargo / tow / tape evidence.
+            // Keep both abort phrases as contiguous string literals for Mac player preflight
+            // (`strings` on Airside.app).
             if (!string.IsNullOrEmpty(_reviewAircraftId)
-                && ReviewAircraftFollow.IsAutoFollowToken(_reviewAircraftId)
-                && !_reviewFollowStarted)
+                && (_cameraController == null || !_cameraController.IsFollowing))
             {
-                Debug.LogError(
-                    $"{SoakLogTag} review shot aborted — {_reviewAircraftId} follow never started before delay {entry.DelaySeconds:0}s (no PNG)");
+                if (!_reviewFollowStarted)
+                {
+                    Debug.LogError(
+                        $"{SoakLogTag} review shot aborted — {_reviewAircraftId} follow never started before delay {entry.DelaySeconds:0}s (no PNG)");
+                }
+                else
+                {
+                    Debug.LogError(
+                        $"{SoakLogTag} review shot aborted — {_reviewAircraftId} follow lost before delay {entry.DelaySeconds:0}s (no PNG)");
+                }
                 Application.Quit();
                 return;
             }

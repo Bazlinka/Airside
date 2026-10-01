@@ -1,3 +1,16 @@
+## Passenger/exterior flight views — 2026-10-01 Codex
+
+Branch `feature/passenger-and-exterior-flight-views`, isolated `/private/tmp/airside-sa-world`.
+Bailey requested authentic passenger views for all jets/turboprops and a flying
+exterior view. Left/right fitted window seats and exterior orbit share the watched
+registration and streamed terrain. Overview/Esc leaves the journey. Original
+simplified cabin sections use type-specific representative economy layouts.
+Task packet `docs/plans/passenger-flight-views.md`, ADR 0227. Focused native 35/35,
+headless 35/35, asset audit passed. All 13 types rendered in left/right/cabin/outside
+views; 52 native stills inspected. Packaged build/view cycle pending. Evidence:
+`docs/testing/passenger-flight-views-2026-10-01/README.md`.
+No new full-flight performance claim; the existing long-trip stall remains open.
+
 ## South Australia flight world — authorised merge, 2026-10-01
 
 Bailey authorised merging `feature/south-australia-flight-world` into main.

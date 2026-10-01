@@ -612,6 +612,7 @@ namespace Airside.Presentation
             var soakStageStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             UpdateAircraftVisual();
             UpdateCockpitView();
+            UpdateFlightViewReview();
             TraceFlightJourneyReview();
             if (SoakMode)
                 _soakFleetTicks += System.Diagnostics.Stopwatch.GetTimestamp() - soakStageStarted;
@@ -896,7 +897,7 @@ namespace Airside.Presentation
 
                 if (InCockpit)
                 {
-                    ExitCockpit(false);
+                    ExitCockpit(true);
                     return;
                 }
                 if (TryCloseControlsHelp())

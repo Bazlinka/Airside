@@ -100,6 +100,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/OperationsSummary.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/OperationsWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/Ownership.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/PassengerCabinProfile.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/PushbackTugTimeline.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RegionalFlightPath.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RegionalRunways.cs" />

@@ -251,3 +251,24 @@ coverage choice. ADR 0225 / `docs/plans/weather-coverage.md`. Cost: zero acquisi
 or image-generation cost. Existing licences retained; no new attribution required.
 Fallback: existing cloud atlas when the volume shader is unavailable; weather layers
 can be disabled. Rendered verification status is in the weather coverage test record.
+
+## Passenger cabin procedural geometry — 1 October 2026
+
+Original code-authored five-row cabin sections in PassengerCabinInterior.cs, with
+fitted stations in PassengerCabinProfile.cs derived from existing project glTF
+window accessor bounds. No downloaded geometry, imagery, textures or logos.
+Project-owned, zero cost. Existing aircraft sources and licences retained.
+Representative economy layouts informed by primary documentation:
+[Saab/Rex seating](https://www.rex.com.au/FlightInfo/pdf/REX%20DAFP.pdf),
+[ATR42 cabin](https://www.atr-aircraft.com/wp-content/uploads/2020/07/2018_06_atr_42_marketing_booklet_152.pdf),
+[Dash8 cabin](https://dehavilland.com/wp-content/uploads/2024/10/DHC_Dash-8_Cabin_Enhancements_v12.pdf),
+[B737 cross-section](https://www.boeing.com/content/dam/boeing/boeingdotcom/commercial/airports/acaps/737NG_REV_B.pdf),
+[A320 characteristics](https://www.airbus.com/sites/g/files/jlcbta136/files/2023-05/Airbus-techdata-AC-A320_0523.pdf),
+[E190](https://www.embraer.com/e-jets/e190/en/),
+[A220](https://www.airbus.com/sites/g/files/jlcbta136/files/2025-11/EN-Airbus-A220-Facts-and-Figures-November-2025.pdf),
+[A330](https://www.airbus.com/en/products-services/commercial-aircraft/passenger-aircraft/a330-family),
+[A350](https://aircraft.airbus.com/sites/g/files/jlcbta126/files/2022-04/FAST_specialA350.pdf).
+These are configuration references, not redistributed source assets. Pitch and
+lining are representative, not airline-certified dimensions. Fallback is external
+view when an aircraft has no fitted passenger profile. Native visual review and
+packaged acceptance recorded separately in the testing handoff.

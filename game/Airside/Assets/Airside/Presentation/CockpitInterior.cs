@@ -68,14 +68,14 @@ namespace Airside.Presentation
             return mat;
         }
 
-        protected Transform Box(string name, Vector3 pos, Vector3 size, Material mat)
+        protected Transform Box(string name, Vector3 pos, Vector3 size, Material mat, bool bevelled = true)
         {
             var part = GameObject.CreatePrimitive(PrimitiveType.Cube);
             part.name = name;
             part.transform.SetParent(transform, false);
             part.transform.localPosition = pos;
             part.transform.localScale = size;
-            var bevel = AirsidePrototype.CockpitBoxMesh(size);
+            var bevel = bevelled ? AirsidePrototype.CockpitBoxMesh(size) : null;
             if (bevel != null) part.GetComponent<MeshFilter>().sharedMesh = bevel;
             var collider = part.GetComponent<Collider>();
             collider.enabled = false;

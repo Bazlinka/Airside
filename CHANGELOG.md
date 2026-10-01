@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Add left/right passenger window views for all 13 passenger aircraft and an orbiting exterior flight view. Switch between cockpit, window seats and outside while retaining regional terrain; Overview/Esc returns to the airport. Fitted simplified cabin layouts, batched surfaces and separate interior/exterior audio (ADR 0227).
+
 - Stream a bounded South Australia terrain window for SF34 regional cockpit journeys, with real Copernicus elevation, mapped regional strips and a moving render origin (ADR 0215; native path checks and Kingscote landing verified; long-trip performance remains open). Ease inbound cruise height onto the local approach and hide airport actors around a distant render origin. Keep the coarse terrain cells around each mapped strip at runway elevation; regional poses omit local departure bank commands. Add a fresh-airline packaged journey review driver with required phase captures and stall diagnostics.
 
 - **Arrivals no longer bunch up nose to tail on final.** An inbound's drawn position on the

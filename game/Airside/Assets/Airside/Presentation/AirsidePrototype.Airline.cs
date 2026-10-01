@@ -1022,6 +1022,8 @@ namespace Airside.Presentation
             if (clicked == null)
                 return;
             if (clicked == "camera-cockpit") { EnterCockpit(aircraft); return; }
+            if (clicked == "camera-passenger") { EnterFlightView(aircraft,AircraftViewMode.LeftWindow); return; }
+            if (clicked == "camera-exterior") { EnterFlightView(aircraft,AircraftViewMode.Exterior); return; }
             // Close and Follow belong to every card, the player's or an AI's.
             if (clicked == HudAction.CardClose)
             {
@@ -1137,6 +1139,8 @@ namespace Airside.Presentation
             card.ShowCameraActions = true;
             card.CockpitHint = CockpitReason(aircraft);
             card.CanCockpit = card.CockpitHint.Length == 0;
+            card.CanPassenger = FlightViewReason(aircraft,AircraftViewMode.LeftWindow).Length == 0;
+            card.CanExterior = FlightViewReason(aircraft,AircraftViewMode.Exterior).Length == 0;
             card.AwaitingStand = aircraft.State == FleetState.AwaitingStand;
             var action = OperationsSummary.PrimaryAction(aircraft, _clock.Now);
             card.PrimaryLabel = OperationsSummary.ActionLabel(action);

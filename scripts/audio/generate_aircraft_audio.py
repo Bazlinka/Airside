@@ -52,6 +52,62 @@ def filter_band(x, lo, hi):
     return np.fft.irfft(np.fft.rfft(x) * gain, n=len(x))
 
 
+def suppress_whine(x, n=2048, hop=512, window=63, ceiling=1.6, floor_hz=500):
+    """Clip narrowband peaks to the local noise floor, per STFT frame.
+
+    The recorded jet bed carries a gliding ~2 kHz turbine whine, 20+ dB over its own noise;
+    looped every 8 s it reads as an engine repeatedly spooling up. Phase is kept, so the
+    broadband rumble and hiss are untouched.
+    """
+    win = np.hanning(n + 1)[:-1]
+    pad = np.pad(x, (n, n + hop))
+    out = np.zeros_like(pad)
+    norm = np.zeros_like(pad)
+    start = int(floor_hz / (RATE / n))
+    half = window // 2
+    for i in range(0, len(pad) - n, hop):
+        spec = np.fft.rfft(pad[i:i + n] * win)
+        mag = np.abs(spec)
+        padded = np.pad(mag, half, mode='edge')
+        floor = np.median(np.lib.stride_tricks.sliding_window_view(padded, window), axis=1)
+        gain = np.ones_like(mag)
+        gain[start:] = np.minimum(1, ceiling * floor[start:] / np.maximum(mag[start:], 1e-12))
+        out[i:i + n] += np.fft.irfft(spec * gain, n=n) * win
+        norm[i:i + n] += win * win
+    return (out / np.maximum(norm, 1e-9))[n:n + len(x)]
+
+
+def flatten_surges(x, n=2048, hop=512, smooth_s=0.6, max_db=12):
+    """Hold each frequency band at its long-term level, removing slow swells.
+
+    The jet bed's 150-2000 Hz rumble swings ~8 dB over a few seconds; on an 8 s loop
+    that is a repeating spool-up. Only changes slower than smooth_s are flattened, so
+    fast turbulence stays.
+    """
+    win = np.hanning(n + 1)[:-1]
+    pad = np.pad(x, (n, n + hop))
+    starts = range(0, len(pad) - n, hop)
+    specs = np.array([np.fft.rfft(pad[i:i + n] * win) for i in starts])
+    freqs = np.fft.rfftfreq(n, 1 / RATE)
+    edges = [0, 150, 300, 600, 1000, 2000, 4000, RATE / 2 + 1]
+    k = max(1, int(smooth_s * RATE / hop))
+    kernel = np.ones(k) / k
+    lim = 10 ** (max_db / 20)
+    for lo, hi in zip(edges[:-1], edges[1:]):
+        band = (freqs >= lo) & (freqs < hi)
+        energy = np.sqrt(np.mean(np.abs(specs[:, band]) ** 2, axis=1))
+        padded = np.pad(energy, (k, k), mode='reflect')
+        local = np.convolve(padded, kernel, mode='same')[k:-k]
+        gain = np.clip(np.mean(energy) / np.maximum(local, 1e-9), 1 / lim, lim)
+        specs[:, band] *= gain[:, None]
+    out = np.zeros_like(pad)
+    norm = np.zeros_like(pad)
+    for row, i in zip(specs, starts):
+        out[i:i + n] += np.fft.irfft(row, n=n) * win
+        norm[i:i + n] += win * win
+    return (out / np.maximum(norm, 1e-9))[n:n + len(x)]
+
+
 def loop(x, seconds=8):
     count, fade = int(seconds * RATE), int(0.65 * RATE)
     x = np.resize(x, count + fade).copy()
@@ -72,6 +128,7 @@ def periodic_noise(count, seed):
 
 def outputs():
     bases = {key: read(AUDIO / name) for key, name in SOURCES.items()}
+    bases['jet'] = flatten_surges(suppress_whine(bases['jet']))
     result = {}
     count = RATE * 8
     t = np.arange(count) / RATE

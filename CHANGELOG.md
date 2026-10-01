@@ -2,6 +2,10 @@
 
 - Close the Saab cockpit shell beneath the windows, including the gaps beside the
   panel and under the footwell, so apron/terrain cannot show through the body.
+- **Weather no longer drops out while you drag the camera.** The ground-fog/mist layer was placed in
+  `Update` from the camera's position, but the camera moves in `LateUpdate`, so while panning or orbiting
+  it trailed a frame behind and left the view, and the foggy weather vanished until you let go. It is now
+  parented to the camera. Presentation only.
 
 - Rebuild the SF34 cockpit around referenced Saab 340B windows, grey instrument panel, stacked displays, central gauges, squared yokes, overhead and turboprop pedestal; keep the game view simplified and instrument markings readable in the player.
 

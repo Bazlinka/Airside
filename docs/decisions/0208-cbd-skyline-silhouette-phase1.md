@@ -1,6 +1,6 @@
 # 0208 — Phase 1 CBD skyline silhouette (far ring)
 
-Date: 2026-10-01 · Owner: Cursor · Status: **accepted (design lock; implement in the next narrow PR)**
+Date: 2026-10-01 · Owner: Cursor · Status: **implemented** (`AdelaideCbdSkyline` + geometry + Surroundings build)
 
 **Decision:** draw the Adelaide CBD skyline as a **small cluster of low-poly grey boxes**
 from OSM heights already in the repo — **not** billboards. Presentation only; stand the

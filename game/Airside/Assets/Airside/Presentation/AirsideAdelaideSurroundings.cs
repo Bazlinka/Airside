@@ -184,6 +184,9 @@ namespace Airside.Presentation
                     AirsideAdelaideOuterTerrain.TryBuild(root, shader);
                 }
 
+                // ADR 0208: CBD silhouette ~7 km ENE — after far ring so it sits on DEM relief.
+                AirsideAdelaideCbdSkyline.TryBuild(root, Terrain);
+
                 var coastY = AirsideAdelaideGround.PavementWorldY - SeaBelowPavement + 0.04f;
                 BuildShoreFoam(root, coastY);
                 BuildGolfBunkers(root, AirsideAdelaideGround.PavementWorldY + 0.02f);

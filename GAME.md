@@ -1,12 +1,10 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-10-01 Cursor — Phase 1 CBD skyline design lock (ADR 0208).**
-  Far-ring CBD silhouette: **low-poly grey boxes** from OSM heights already in
-  `adelaide-suburb-buildings-2026-09-29.json` (42 towers ≥30 m near Victoria Square,
-  ~6.8 km ENE) — not billboards; no new licence. Implement PR next (generator +
-  pure geometry + one mesh). Hills haze / seasonal tint still open Phase 1.
-  **Checks:** docs only (no behaviour change).
-  **NEXT:** implement ADR 0208 skyline slice (`cursor/phase1-cbd-skyline-*-1804`).
+- **2026-10-01 Cursor — Phase 1 CBD skyline boxes (ADR 0208).**
+  42 sourced-height OSM towers near Victoria Square (~7 km ENE) as one grey mesh
+  on DEM relief. Generator `--check`; `AdelaideCbdSkylineTests`. Hills haze /
+  seasonal tint still open Phase 1.
+  **NEXT:** seasonal dry-grass tint or Hills haze.
 
 - **2026-10-01 Cursor — Phase 1 Golf + bunker discs (ADR 0206/0207); P0 closed / plan approved.**
   Golf courses tint irrigated green; 213 OSM bunker discs as sand marks on surroundings.

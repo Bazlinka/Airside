@@ -124,11 +124,9 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
 - Phase 0 (bookmarks + capture script): done in code — ADR 0200. Optional Mac PNG/metrics whenever convenient.
 - Phase 1 slices done: stand oil stains + softer ground edges (ADR 0201); apron patch
   repairs + drainage pits (ADR 0202); West Beach dunes/foam/Patawalonga outlet (ADR 0203).
-  Phase 1 Golf kind + tint (ADR 0206) and bunker discs (ADR 0207) on tip.
-  Phase 1 CBD skyline **design locked** (ADR 0208): low-poly OSM boxes from the
-  existing suburb-buildings snapshot (~42 towers, ~7 km ENE) — implement next;
-  not billboards; no new licence. Hills haze / seasonal tint still open.
-  **Next Phase 1:** implement CBD skyline (0208), then seasonal tint / haze.
+  Phase 1 Golf kind + tint (ADR 0206), bunker discs (ADR 0207), and CBD skyline
+  boxes (ADR 0208, 42 towers ~7 km ENE) on tip. Hills haze / seasonal tint still open.
+  **Next Phase 1:** seasonal tint / Hills haze.
 - Phases 2, 3b–f, 4, 5 remain after Phase 1.
 
 ## Risks

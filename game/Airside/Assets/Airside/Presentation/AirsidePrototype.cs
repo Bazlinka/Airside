@@ -27,6 +27,8 @@ namespace Airside.Presentation
         // sharing one made the 737's fans damp toward prop RPM and fan RPM alternately
         // every frame, and a per-engine key could land on another aircraft's audio key.
         private readonly Dictionary<int, float> _enginePropRpm = new();
+        /// <summary>Spool acceleration (rpm per second) per engine, so the propeller speeds up and settles smoothly.</summary>
+        private readonly Dictionary<int, float> _enginePropRpmRate = new();
         private readonly Dictionary<int, float> _jetFanRpm = new();
         // ADR 0151: shaft power / N1 as a 0..1 fraction. A governed propeller barely changes
         // speed between taxi and takeoff, so the engine note, the exhaust and the heat haze read

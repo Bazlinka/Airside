@@ -1,5 +1,11 @@
 ## Unreleased
 
+- **Smoother propeller spool-up and a clearly visible blur at speed.** Shaft speed is now
+  jerk-limited (the acceleration itself eases in and out) so starts and run-downs no longer step;
+  the blur disc is ~2.6x denser with a brighter tip ring, grows with rpm all the way to governed
+  speed (`DiscSpeedLook`) so you can see when a prop is up to speed, and blades now hide at 60%
+  blur instead of 92% so there is no pop. Presentation only.
+
 - **P0 Stage C multi-shot log inventory fix.** `capture-game` mirrors Unity's one
   `-logFile` onto sibling `.log` paths; remaining inventory falls back to the batch
   primary and requires per-shot `following=True` pose lines so landing/boarding

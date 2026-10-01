@@ -1,5 +1,6 @@
 ## Unreleased
 
+<<<<<<< HEAD
 - **Cockpit flight feel for takeoff, approach and landing.** Jets now rotate and climb at their own
   attitudes (about 15 degrees for narrowbodies instead of the ATR's 7.5) and flare to about 5;
   the pilot's head and body feel runway thumps that grow with speed, engine vibration, unstick,
@@ -10,6 +11,12 @@
   positive rate, 1,000/500/50-10 ft, retard, spoilers, reverse green), a warm panel glow at night,
   rain-driven windscreen wipers, and a live attitude display on the Saab 340. Cockpit look: arrow keys
   and 1-5 glances (forward, left window, right window, panel, overhead) ease the head smoothly.
+=======
+- Cockpit immersion candidate: eased wider zoom, five seat view shortcuts,
+  optional engine/rolling/cloud vibration, destination/distance/vertical-speed
+  HUD, cloud-deck fog and rain/sky transitions above the deck. Select interior
+  sound filtering by watched aircraft. Native visual/audio acceptance pending.
+>>>>>>> origin/main
 
 - **Helicopters: the Bell 412 flies, and you can own one.** SA Ambulance Rescue's Bell 412EP now works from
   Helipad West: it spools its rotor, lifts to a hover, turns, climbs away and flies to Adelaide hospitals (Royal

@@ -621,6 +621,13 @@ namespace Airside.Presentation
             var cameraHeight = _mainCamera != null ? Mathf.Max(0f, _mainCamera.transform.position.y) : 0f;
             _atmosphere = AtmosphereLook.For(CurrentWeatherLook, daylight, warm, sunAzimuth < 180.0, cameraHeight);
             var sky = ToColor(_atmosphere.Sky);
+            if (InCockpit && AirsideSettings.Current.WeatherLayers && _cockpitView != null)
+            {
+                var aboveDeck = 1f - CockpitWeatherEnvelope.RainAtHeight(_cockpitView.position.y);
+                var clearSky = AtmosphereLook.For(WeatherLook.For(WeatherKind.Clear), daylight,
+                    warm, sunAzimuth < 180.0, cameraHeight);
+                sky = Color.Lerp(sky, ToColor(clearSky.Sky), aboveDeck);
+            }
             if (_mainCamera != null)
                 _mainCamera.backgroundColor = sky;
             if (_horizonDome != null)
@@ -644,6 +651,13 @@ namespace Airside.Presentation
                     ? _atmosphere.FogDensity * AirsideCameraFeel.FogScale(AirsideCameraController.CurrentDistance,
                         AirsideBareField.ClassicMaxOrbitDistance)
                     : Mathf.Lerp(0.0036f, 0.0016f, daylight) + (1f - look.Visibility) * 0.012f + warm * 0.00035f;
+            }
+
+            if (InCockpit && AirsideSettings.Current.WeatherLayers && _cockpitView != null)
+            {
+                var cloud = CockpitWeatherEnvelope.InCloud(_cockpitView.position.y, CurrentWeatherLook.CloudCover);
+                RenderSettings.fogDensity = Mathf.Lerp(RenderSettings.fogDensity, 0.018f, cloud);
+                RenderSettings.fogColor = Color.Lerp(RenderSettings.fogColor, ToColor(_atmosphere.Sky), cloud);
             }
 
             // ADR 0059: a storm strike briefly overrides the sky/ambient/sun with a white

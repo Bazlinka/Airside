@@ -8,6 +8,10 @@ namespace Airside.Presentation
         private Transform _cockpitSeat;
         private bool _cockpitActive;
         private float _cockpitYaw, _cockpitPitch;
+        private float _cockpitTargetFov = 65f;
+        private float _cockpitRumble;
+        public bool CockpitMotionEnabled { get; set; } = true;
+        public void SetCockpitRumble(float strength) => _cockpitRumble = Mathf.Clamp01(strength);
         private float _savedNear, _savedFar, _savedFov;
         private bool _cockpitRightDrag;
         private int _cockpitPreset = -1;
@@ -43,12 +47,21 @@ namespace Airside.Presentation
             _easingOverview = false;
             _cockpitRightDrag = false;
             RecenterCockpit();
+            _cockpitRumble = 0f;
             _camera.fieldOfView = 65f;
             ApplyCockpitPose();
             return true;
         }
 
+<<<<<<< HEAD
         public void RecenterCockpit() { _cockpitYaw = _cockpitPitch = 0f; _cockpitPreset = -1; }
+=======
+        public void RecenterCockpit()
+        {
+            _cockpitYaw = _cockpitPitch = 0f;
+            _cockpitTargetFov = 65f;
+        }
+>>>>>>> origin/main
 
         public void EndCockpit()
         {
@@ -84,9 +97,10 @@ namespace Airside.Presentation
                     _cockpitPitch = Mathf.Clamp(_cockpitPitch - delta.y * 0.15f, -35f, 45f);
                 }
                 if (!overHud)
-                    _camera.fieldOfView = Mathf.Clamp(_camera.fieldOfView - mouse.scroll.ReadValue().y * 0.025f, 48f, 75f);
+                    _cockpitTargetFov = Mathf.Clamp(_cockpitTargetFov - mouse.scroll.ReadValue().y * 0.025f, 35f, 85f);
             }
             else _cockpitRightDrag = false;
+<<<<<<< HEAD
             if (_cockpitRightDrag) _cockpitPreset = -1;
             var keyboard = Keyboard.current;
             if (keyboard != null && !KeyboardCaptured)
@@ -113,12 +127,34 @@ namespace Airside.Presentation
                 _cockpitYaw = CockpitLookPresets.Ease(_cockpitYaw, glance.Yaw, 7f, Time.unscaledDeltaTime);
                 _cockpitPitch = CockpitLookPresets.Ease(_cockpitPitch, glance.Pitch, 7f, Time.unscaledDeltaTime);
             }
+=======
+            var keys = Keyboard.current;
+            if (keys != null && !KeyboardCaptured)
+            {
+                if (keys.digit1Key.wasPressedThisFrame) RecenterCockpit();
+                if (keys.digit2Key.wasPressedThisFrame) { _cockpitYaw = -70f; _cockpitPitch = 0f; }
+                if (keys.digit3Key.wasPressedThisFrame) { _cockpitYaw = 0f; _cockpitPitch = 32f; }
+                if (keys.digit4Key.wasPressedThisFrame) { _cockpitYaw = 70f; _cockpitPitch = 0f; }
+                if (keys.digit5Key.wasPressedThisFrame) { _cockpitYaw = 0f; _cockpitPitch = -30f; }
+            }
+            _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, _cockpitTargetFov,
+                1f - Mathf.Exp(-12f * Time.unscaledDeltaTime));
+>>>>>>> origin/main
             ApplyCockpitPose();
         }
 
         private void ApplyCockpitPose()
         {
             transform.SetPositionAndRotation(CockpitPosition, CockpitRotation);
+            if (CockpitMotionEnabled && _cockpitRumble > 0f)
+            {
+                // Small angular motion only: never move the eye through the fitted shell.
+                var t = Time.unscaledTime;
+                transform.rotation *= Quaternion.Euler(
+                    Mathf.Sin(t * 37f) * 0.10f * _cockpitRumble,
+                    Mathf.Sin(t * 29f) * 0.06f * _cockpitRumble,
+                    Mathf.Sin(t * 43f) * 0.08f * _cockpitRumble);
+            }
             CurrentDistance = 0f;
             CurrentPitch = transform.eulerAngles.x;
             CurrentYaw = transform.eulerAngles.y;

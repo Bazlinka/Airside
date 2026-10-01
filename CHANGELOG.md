@@ -12,6 +12,12 @@
   ADR 0214 and `docs/plans/cockpit-mode.md`; visual/journey acceptance is tracked separately.
 - **Cockpit integration:** retain current main's doorway attachment now that its
   implementation is committed; preserve the aircraft articulation and hangar changes.
+- **Aircraft selection card redesign.** The card now has a close button and a Follow/Following
+  toggle (any aircraft on the field), speed/altitude/heading as labelled columns, and a "Lands 14:32 ·
+  12 min" journey line with a progress bar. Selecting forgives near misses (nearest aircraft within
+  44 px when the ray hits nothing), and clicking open ground now also releases the camera follow so
+  the card can always be dismissed. Presentation only.
+
 - **My Flights panel shows the whole story; aircraft doors open onto a real doorway.**
   Each flight tile is now taller and carries the flight number and airframe, the route
   ("Adelaide → Kingscote") with the registration, a state line, the time that matters

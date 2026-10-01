@@ -139,6 +139,34 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void SelectionCard_FitsItsSlotWithTelemetryJourneyAndHold_AndOffersCloseAndFollow()
+        {
+            var card = new SelectionCardData
+            {
+                Registration = "QF123", TypeName = "Sydney", RouteLine = "Qantas · 737-800 · Adelaide → Sydney",
+                PhaseLabel = "hold · 737 landing", IsPlayer = true, PrimaryLabel = "View plan",
+                HoldLine = "Holding short: waiting for a 737 landing", HoldAction = HudAction.SelectPrefix + "VH-ABC",
+                Speed = "142 kt", Altitude = "1,200 ft ▲", Heading = "230°",
+                JourneyLeft = "Lands 14:32", JourneyRight = "12 min", JourneyProgress = 0.4f,
+                CanFollow = true, Following = true
+            };
+            var slot = HudShell.Layout(1440f, 900f).SelectedCard;
+            Assert.That(SelectionCardPainter.HeightFor(card), Is.LessThanOrEqualTo(slot.Height));
+            var box = slot.SliceBottom(SelectionCardPainter.HeightFor(card));
+            var draw = new HudDrawList();
+            SelectionCardPainter.Paint(draw, box, card);
+            AssertInside(draw, box, "tracking");
+            Assert.That(draw.Commands.Count(c => c.ActionId == HudAction.CardClose), Is.EqualTo(1));
+            Assert.That(draw.Commands.Count(c => c.ActionId == HudAction.CardFollow), Is.EqualTo(1));
+
+            card.CanFollow = false;
+            draw.Clear();
+            SelectionCardPainter.Paint(draw, box, card);
+            Assert.That(draw.Commands.Any(c => c.ActionId == HudAction.CardFollow), Is.False,
+                "an aircraft away from the field cannot be followed");
+        }
+
+        [Test]
         public void ToastQueue_KeepsEachMessagesTone()
         {
             var queue = new ToastQueue();

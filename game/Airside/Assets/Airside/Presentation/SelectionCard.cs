@@ -58,12 +58,65 @@ namespace Airside.Presentation
         public bool CanCancel;
         public bool GuidePrimary;
         public bool GuideBestStand;
-        public bool ShowCameraActions;
+
+        /// <summary>The camera can follow this aircraft (it is drawn on the field).</summary>
         public bool CanFollow;
+        /// <summary>The camera is following it now.</summary>
+        public bool Following;
+        public bool ShowCameraActions;
         public bool CanCockpit;
         public string CockpitHint = string.Empty;
+
+        /// <summary>Live readout columns (empty when the aircraft is not drawn on the field).</summary>
+        public string Speed = string.Empty;
+        public string Altitude = string.Empty;
+        public string Heading = string.Empty;
+
+        /// <summary>Where it is in its current leg: "Lands 14:32" left, "12 min" right, bar 0..1 (-1 for no bar).</summary>
+        public string JourneyLeft = string.Empty;
+        public string JourneyRight = string.Empty;
+        public float JourneyProgress = -1f;
+
+        public bool HasTelemetry => !string.IsNullOrEmpty(Speed);
+        public bool HasJourney => !string.IsNullOrEmpty(JourneyLeft);
         public readonly List<SelectionPrepStage> Prep = new();
         public readonly List<SelectionStandChoice> Stands = new();
+    }
+
+    /// <summary>Wording helpers for the selected-aircraft card, kept pure so they are tested.</summary>
+    public static class SelectionCardText
+    {
+        /// <summary>"under a minute", "12 min", "1 h 05 min" for a countdown in seconds.</summary>
+        public static string Remaining(double seconds)
+        {
+            if (seconds < 0) seconds = 0;
+            var minutes = (int)System.Math.Ceiling(seconds / 60.0);
+            if (minutes <= 0) return "now";
+            if (seconds < 60) return "under a minute";
+            if (minutes < 60) return minutes + " min";
+            return $"{minutes / 60} h {minutes % 60:00} min";
+        }
+
+        /// <summary>
+        /// Splits the field readout ("142 kt  ·  1,200 ft ▲  ·  HDG 230") into the card's columns.
+        /// Missing parts come back empty rather than throwing.
+        /// </summary>
+        public static void SplitReadout(string readout, out string speed, out string altitude, out string heading)
+        {
+            speed = altitude = heading = string.Empty;
+            if (string.IsNullOrWhiteSpace(readout))
+                return;
+            foreach (var raw in readout.Split(new[] { "·" }, System.StringSplitOptions.RemoveEmptyEntries))
+            {
+                var part = raw.Trim();
+                if (part.StartsWith("HDG ", System.StringComparison.Ordinal))
+                    heading = part.Substring(4).Trim() + "°";
+                else if (part.Contains(" ft"))
+                    altitude = part;
+                else if (part.Contains(" kt"))
+                    speed = part;
+            }
+        }
     }
 
     /// <summary>
@@ -76,29 +129,68 @@ namespace Airside.Presentation
         public const string GuideHighlight = "guide";
         public const float StandRowHeight = 34f;
 
-        /// <summary>Preferred card height for this state.</summary>
-        public static float HeightFor(SelectionCardData data)
+        /// <summary>Vertical positions of each section, shared by sizing and painting so they cannot drift.</summary>
+        private struct Layout
         {
-            if (data == null) return 0f;
-            var cameras = data.ShowCameraActions ? 38f : 0f;
-            if (data.AwaitingStand && data.IsPlayer)
-                return cameras + (96f + ((System.Math.Max(1, data.Stands.Count) + 1) / 2) * StandRowHeight + 14f);
-            if (data.Prep.Count > 0)
-                return cameras + (186f);
-            return cameras + (data.IsPlayer ? 142f : 92f);
+            public float HoldY, LiveY, TelemetryY, JourneyY, PrepY, BodyY, Bottom;
         }
+
+        private static Layout Measure(SelectionCardData data)
+        {
+            var l = new Layout { HoldY = -1f, LiveY = -1f, TelemetryY = -1f, JourneyY = -1f, PrepY = -1f };
+            var y = 58f;
+            if (!string.IsNullOrEmpty(data.HoldLine))
+            {
+                l.HoldY = y;
+                y += 20f;
+            }
+
+            if (data.HasTelemetry)
+            {
+                l.TelemetryY = y + 2f;
+                y += 38f;
+            }
+            else if (string.IsNullOrEmpty(data.HoldLine))
+            {
+                l.LiveY = y;
+                y += 20f;
+            }
+
+            if (data.HasJourney)
+            {
+                l.JourneyY = y + 2f;
+                y += 30f;
+            }
+
+            if (data.Prep.Count > 0)
+            {
+                l.PrepY = y + 2f;
+                y += 50f;
+            }
+
+            l.BodyY = y + 4f;
+            if (!data.IsPlayer)
+                l.Bottom = y + 12f;
+            else if (data.AwaitingStand)
+                l.Bottom = l.BodyY + 18f + ((System.Math.Max(1, data.Stands.Count) + 1) / 2) * StandRowHeight + 14f;
+            else
+                l.Bottom = l.BodyY + 54f;
+            if (data.ShowCameraActions) l.Bottom += 38f;
+            return l;
+        }
+
+        /// <summary>Preferred card height for this state.</summary>
+        public static float HeightFor(SelectionCardData data) => data == null ? 0f : Measure(data).Bottom;
 
         public static void Paint(HudDrawList into, HudBox box, SelectionCardData data)
         {
             if (into == null || data == null || box.IsEmpty)
                 return;
+            var layout = Measure(data);
             into.Surface(box, 0.9f);
             if (data.ShowCameraActions)
             {
-                var row = new HudBox(box.X + 20f, box.Bottom - 36f, box.Width - 40f, 26f);
-                into.Button(new HudBox(row.X, row.Y, 80f, row.Height), "FOLLOW", "camera-follow",
-                    HudButtonStyle.Secondary, data.CanFollow);
-                into.Button(new HudBox(row.X + 90f, row.Y, row.Width - 90f, row.Height),
+                into.Button(new HudBox(box.X + 20f, box.Bottom - 34f, box.Width - 40f, 26f),
                     data.CanCockpit ? "COCKPIT" : data.CockpitHint.ToUpperInvariant(), "camera-cockpit",
                     HudButtonStyle.Secondary, data.CanCockpit);
                 box = new HudBox(box.X, box.Y, box.Width, box.Height - 38f);
@@ -106,43 +198,63 @@ namespace Airside.Presentation
             var x = box.X + 20f;
             var inner = box.Width - 40f;
             into.Fill(new HudBox(box.X + 8f, box.Y + 16f, 4f, 30f), HudTone.Default, 1f, data.LiveryHex);
-            into.Text(new HudBox(x, box.Y + 12f, inner - 120f, 22f), data.Registration, 18f, HudTone.Default,
+            into.Text(new HudBox(x, box.Y + 12f, inner - 150f, 22f), data.Registration, 18f, HudTone.Default,
                 HudTextStyle.Bold);
             into.Text(new HudBox(x + HudShell.Measure(data.Registration, 18f) + 6f, box.Y + 17f,
-                inner - 200f, 18f), data.TypeName, 12f, HudTone.Muted);
+                inner - 230f, 18f), data.TypeName, 12f, HudTone.Muted);
+
+            // Close: lets go of the aircraft and, with it, the camera follow.
+            into.Button(new HudBox(box.Right - 20f - 22f, box.Y + 13f, 22f, 22f), "×", HudAction.CardClose,
+                HudButtonStyle.Secondary);
+            var pillRight = box.Right - 20f - 22f - 6f;
             if (!string.IsNullOrEmpty(data.PhaseLabel))
-                into.Pill(new HudBox(box.Right - 20f - 108f, box.Y + 14f, 108f, 20f), data.PhaseLabel.ToUpperInvariant(),
+                into.Pill(new HudBox(pillRight - 108f, box.Y + 14f, 108f, 20f), data.PhaseLabel.ToUpperInvariant(),
                     data.PhaseTone, fontSize: 9f);
-            into.Text(new HudBox(x, box.Y + 40f, inner, 16f), data.RouteLine, 12f, HudTone.Default);
-            if (string.IsNullOrEmpty(data.HoldLine))
-                into.Text(new HudBox(x, box.Y + 58f, inner, 16f), data.LiveLine, 11f, HudTone.Muted);
-            else
+
+            var followWidth = data.CanFollow ? 98f : 0f;
+            into.Text(new HudBox(x, box.Y + 40f, inner - followWidth - 6f, 16f), data.RouteLine, 12f, HudTone.Default);
+            if (data.CanFollow)
+                into.Button(new HudBox(box.Right - 20f - 92f, box.Y + 38f, 92f, 20f),
+                    data.Following ? "FOLLOWING" : "FOLLOW", HudAction.CardFollow,
+                    data.Following ? HudButtonStyle.Primary : HudButtonStyle.Secondary);
+
+            if (layout.HoldY >= 0f)
             {
-                into.Dot(x + 4f, box.Y + 66f, 7f, HudTone.Caution);
+                var hy = box.Y + layout.HoldY;
+                into.Dot(x + 4f, hy + 8f, 7f, HudTone.Caution);
                 var linked = !string.IsNullOrEmpty(data.HoldAction);
-                into.Text(new HudBox(x + 14f, box.Y + 58f, inner - (linked ? 28f : 14f), 16f), data.HoldLine, 11f,
+                into.Text(new HudBox(x + 14f, hy, inner - (linked ? 28f : 14f), 16f), data.HoldLine, 11f,
                     HudTone.Caution, HudTextStyle.Bold);
                 if (linked)
                 {
                     // ADR 0128: the hold line is a link to what is holding it.
-                    into.Text(new HudBox(x + inner - 12f, box.Y + 57f, 12f, 16f), "›", 14f, HudTone.Caution, HudTextStyle.Bold);
-                    into.Hotspot(new HudBox(x, box.Y + 55f, inner, 22f), data.HoldAction);
+                    into.Text(new HudBox(x + inner - 12f, hy - 1f, 12f, 16f), "›", 14f, HudTone.Caution, HudTextStyle.Bold);
+                    into.Hotspot(new HudBox(x, hy - 3f, inner, 22f), data.HoldAction);
                 }
             }
 
+            if (layout.LiveY >= 0f)
+                into.Text(new HudBox(x, box.Y + layout.LiveY, inner, 16f), data.LiveLine, 11f, HudTone.Muted);
+
+            if (layout.TelemetryY >= 0f)
+                PaintTelemetry(into, new HudBox(x, box.Y + layout.TelemetryY, inner, 32f), data);
+
+            if (layout.JourneyY >= 0f)
+                PaintJourney(into, new HudBox(x, box.Y + layout.JourneyY, inner, 26f), data);
+
             if (!string.IsNullOrEmpty(data.BackRegistration))
-                into.Button(new HudBox(box.Right - 20f - 108f - 86f, box.Y + 14f, 78f, 20f), "‹ " + data.BackRegistration,
+                into.Button(new HudBox(pillRight - 108f - 86f, box.Y + 14f, 78f, 20f), "‹ " + data.BackRegistration,
                     HudAction.SelectPrefix + data.BackRegistration, HudButtonStyle.Secondary);
 
-            if (data.Prep.Count > 0)
-                PaintPrep(into, new HudBox(x, box.Y + 86f, inner, 44f), data.Prep);
+            if (layout.PrepY >= 0f)
+                PaintPrep(into, new HudBox(x, box.Y + layout.PrepY, inner, 44f), data.Prep);
 
             if (!data.IsPlayer)
                 return;
 
             if (data.AwaitingStand)
             {
-                PaintStands(into, new HudBox(x, box.Y + 84f, inner, box.Bottom - box.Y - 96f), data);
+                PaintStands(into, new HudBox(x, box.Y + layout.BodyY, inner, box.Bottom - box.Y - layout.BodyY - 12f), data);
                 return;
             }
 
@@ -155,6 +267,33 @@ namespace Airside.Presentation
             if (data.CanCancel)
                 into.Button(new HudBox(primary.Right + 10f, primary.Y, cancelWidth, 36f), "CANCEL",
                     HudAction.Cancel, HudButtonStyle.Destructive);
+        }
+
+        /// <summary>Speed, altitude and heading as three labelled columns instead of one dotted string.</summary>
+        private static void PaintTelemetry(HudDrawList into, HudBox area, SelectionCardData data)
+        {
+            var column = area.Width / 3f;
+            var values = new[] { data.Speed, string.IsNullOrEmpty(data.Altitude) ? "On ground" : data.Altitude, data.Heading };
+            var captions = new[] { "SPEED", "ALTITUDE", "HEADING" };
+            for (var i = 0; i < 3; i++)
+            {
+                var cell = new HudBox(area.X + column * i, area.Y, column - 6f, area.Height);
+                into.Caption(new HudBox(cell.X, cell.Y, cell.Width, 12f), captions[i], HudTone.Muted, HudAlign.Left, 9f);
+                into.Text(new HudBox(cell.X, cell.Y + 12f, cell.Width, 20f), values[i], 15f, HudTone.Default,
+                    HudTextStyle.Bold);
+            }
+        }
+
+        /// <summary>Where the aircraft is in its leg: what happens next and when, over a progress bar.</summary>
+        private static void PaintJourney(HudDrawList into, HudBox area, SelectionCardData data)
+        {
+            into.Text(new HudBox(area.X, area.Y, area.Width * 0.62f, 16f), data.JourneyLeft, 11f, HudTone.Default,
+                HudTextStyle.Bold);
+            if (!string.IsNullOrEmpty(data.JourneyRight))
+                into.Text(new HudBox(area.X + area.Width * 0.62f, area.Y, area.Width * 0.38f, 16f), data.JourneyRight,
+                    11f, HudTone.Accent, HudTextStyle.Bold, HudAlign.Right);
+            if (data.JourneyProgress >= 0f)
+                into.Bar(new HudBox(area.X, area.Y + 19f, area.Width, 4f), data.JourneyProgress, HudTone.Accent);
         }
 
         private static void PaintPrep(HudDrawList into, HudBox area, IReadOnlyList<SelectionPrepStage> prep)

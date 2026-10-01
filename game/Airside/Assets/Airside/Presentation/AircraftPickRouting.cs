@@ -73,6 +73,39 @@ namespace Airside.Presentation
         }
 
         /// <summary>
+        /// How far from an aircraft's screen position (pixels) a click that missed every pick volume
+        /// still counts as aiming at it. Distant aircraft are a few pixels across; making the player
+        /// land the click on them was the main reason selecting felt fiddly.
+        /// </summary>
+        public const float ScreenPickRadiusPixels = 44f;
+
+        /// <summary>
+        /// The aircraft whose screen position is nearest the click and within
+        /// <paramref name="radiusPixels"/>, or null. Used when the ray hit nothing.
+        /// </summary>
+        public static string ResolveNearestOnScreen(IReadOnlyList<AircraftScreenPoint> points, float clickX, float clickY,
+            float radiusPixels = ScreenPickRadiusPixels)
+        {
+            string best = null;
+            var bestSquared = radiusPixels * radiusPixels;
+            for (var i = 0; i < points.Count; i++)
+            {
+                var point = points[i];
+                if (string.IsNullOrEmpty(point.AircraftId))
+                    continue;
+                var dx = point.X - clickX;
+                var dy = point.Y - clickY;
+                var squared = dx * dx + dy * dy;
+                if (squared > bestSquared)
+                    continue;
+                bestSquared = squared;
+                best = point.AircraftId;
+            }
+
+            return best;
+        }
+
+        /// <summary>
         /// After the on-field set is rebuilt: index of <paramref name="current"/> in
         /// <paramref name="next"/>, or -1 if that aircraft left. Follow should release at -1
         /// rather than clamping onto a different aircraft.
@@ -113,6 +146,21 @@ namespace Airside.Presentation
             return dx * dx + dz * dz
                    <= ApproachSelectableDistanceFromThresholdMetres * ApproachSelectableDistanceFromThresholdMetres;
         }
+    }
+
+    /// <summary>An on-field aircraft's position on screen, for the near-miss pick.</summary>
+    public readonly struct AircraftScreenPoint
+    {
+        public AircraftScreenPoint(string aircraftId, float x, float y)
+        {
+            AircraftId = aircraftId;
+            X = x;
+            Y = y;
+        }
+
+        public string AircraftId { get; }
+        public float X { get; }
+        public float Y { get; }
     }
 
     /// <summary>One raycast candidate for <see cref="AircraftPickRouting.ResolveNearest"/>.</summary>

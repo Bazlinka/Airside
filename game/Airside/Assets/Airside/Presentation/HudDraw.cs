@@ -228,6 +228,10 @@ namespace Airside.Presentation
         public const string LiveryPrefix = "livery:";
 
         public const string Close = "close";
+        /// <summary>Selected-aircraft card: let go of the aircraft (and the follow).</summary>
+        public const string CardClose = "card:close";
+        /// <summary>Selected-aircraft card: toggle the camera follow.</summary>
+        public const string CardFollow = "card:follow";
         public const string TabDepartures = "tab:departures";
         public const string TabArrivals = "tab:arrivals";
         public const string ToggleMovements = "operations:all-movements";

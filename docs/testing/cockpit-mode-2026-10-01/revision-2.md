@@ -60,3 +60,9 @@ materials. Diff whitespace check against main passed. Unity's shared compiler
 stalled; the same assembly compiled successfully without `/shared`. Removing
 that flag from this worktree's ignored Bee cache allowed the actual Unity test
 runner to complete. This local workaround changes no shipped source or install.
+
+A clean Mac build passed at `bc20661f`. Main then advanced to `245e7b53` with the
+selection-card redesign. Final integration keeps its Follow/Following toggle,
+close button, telemetry and journey, with Cockpit in a separate bottom row.
+Native Unity regression passed again: 1677 total, 1675 passed, zero failures,
+the same two existing inconclusives.

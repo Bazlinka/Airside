@@ -12,6 +12,20 @@ merge authorisation does not turn those into passing checks. Jet ADR is now 0225
 
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Claude — helicopter operations (branch `feature/helicopter-operations`, ADR 0227).**
+  - **Player-visible outcome:** the SA Ambulance Bell 412 (VH-SAR) flies rescue call-outs from Helipad West to
+    Adelaide hospitals (first one within ~8 min of a new game) with a spinning rotor and a rotor sound; the player can
+    buy a Bell 412 for the regional band once the Expanded regional base is open (pad spots HELI-2/3).
+  - **Where it lives:** `Simulation/AirlineOperations.Rotorcraft.cs` (pad, weather, rescue call-outs, arrival),
+    `RotorcraftPerformance.cs` (VTOL shape), `HelicopterTrack.cs` (world pose), `AdelaideHelipad.cs` (stands),
+    `Presentation/AirsidePrototype.Helicopter.cs` (rig and per-frame pose), `scripts/audio/generate_rotorcraft_audio.py`.
+    Helicopters are in `AircraftCatalogue.Rotorcraft`, deliberately not `All`.
+  - **Checks:** headless 1,379 pass; Unity EditMode for touched suites; packaged captures `work/captures/heli-*.png`.
+  - **Not verified:** nobody has listened to the rotor loops; the player's own helicopter has been exercised in
+    simulation tests but not yet in a packaged run; no hospital-end ground handling or medevac contract exists.
+  - **NEXT:** open the PR, wait for CI, merge when green. Backlog: civil medevac contracts, rotor-wash/dust on the pad,
+    a helicopter cockpit, AW139 (SA's 2027 replacement) and a light single (both need authored models).
+
 - **2026-10-01 Cursor — arrivals bunched on final (`main`).** Bailey saw three
   arrivals flying nose to tail over the coast. `ExpectedLandingQueueTime` gave an
   Inbound aircraft only the HoldingForLanding traffic ahead, never other inbounds

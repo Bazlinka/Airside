@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **Helicopters: the Bell 412 flies, and you can own one.** SA Ambulance Rescue's Bell 412EP now works from
+  Helipad West: it spools its rotor, lifts to a hover, turns, climbs away and flies to Adelaide hospitals (Royal
+  Adelaide, Flinders, Lyell McEwin, Mount Barker, Gawler, Victor Harbor), then returns and lands on its spot, on call-outs
+  through the day and night (rescue flights are curfew-exempt; a storm grounds it, hard wind and, for civil flying, fog
+  hold it). No runway, taxiway or tower slot is used: the pad is the only shared resource. Pad spots 2 and 3 are yours:
+  buy a Bell 412 ($6,800, Provisional, 8 flights, Expanded regional base) and fly it on the regional band; it pays
+  less per flight than a turboprop (13 seats), preps faster, is checked on the pad and cannot be based at an outstation.
+  Sound: a synthesised rotor loop (22 Hz blade slap, tail-rotor buzz, turbine whine) that carries over the field and
+  changes pitch as the rotor spools. Details and limits in ADR 0227.
+
 - **Arrivals no longer bunch up nose to tail on final.** An inbound's drawn position on the
   extended final only counted aircraft already holding, so arrivals due close together got the
   same landing estimate and flew in a line a few hundred metres apart (some on the same spot).

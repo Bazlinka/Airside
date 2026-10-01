@@ -152,7 +152,6 @@ namespace Airside.Presentation
             }
             _cockpitPreviousTime = _preciseTime;
             _cockpitPreviousPosition = view.position;
-<<<<<<< HEAD
             _cockpitGearHeight = gearHeight;
             var spool = EngineStartSequence.For(aircraft, _preciseTime);
             var pitchUp = -Mathf.DeltaAngle(0f, view.eulerAngles.x);
@@ -178,14 +177,10 @@ namespace Airside.Presentation
                 Jet = _cockpitIsJet,
             });
             if (call != null) { _cockpitCallText = call; _cockpitCallUntil = Time.unscaledTime + 2.2f; }
-=======
-            var engine = EngineStartSequence.For(aircraft, _preciseTime);
+            // Cloud/storm buffet from the shared weather envelope; engine and runway feel come from CockpitMotion.
             var cloud = CockpitWeatherEnvelope.InCloud(view.position.y, CurrentWeatherLook.CloudCover);
-            var airborne = view.position.y > AirsideFlightPath.GroundY + 5f;
-            _cameraController.SetCockpitRumble(Mathf.Max(engine.Left, engine.Right) * 0.20f
-                + (airborne ? cloud * (CurrentWeather == WeatherKind.Storm ? 0.65f : 0.25f)
-                    : Mathf.Clamp01(_cockpitGroundKnots / 90f) * 0.55f));
->>>>>>> origin/main
+            var inAir = gearHeight > 5f;
+            _cameraController.SetCockpitRumble(inAir ? cloud * (CurrentWeather == WeatherKind.Storm ? 0.65f : 0.25f) : 0f);
             if (_preciseTime < _cockpitNextReadout) return;
             _cockpitNextReadout = _preciseTime + 0.1;
             if (_cockpitInterior is JetCockpitInterior jet)
@@ -206,18 +201,12 @@ namespace Airside.Presentation
             var worldZ = (_cockpitView != null ? _cockpitView.position.z : 0f) + _flightOriginZ;
             var fromAdelaideKm = Math.Sqrt(worldX * worldX + worldZ * worldZ) / 1000.0;
             if (_fleetAircraftById.TryGetValue(_cockpitAircraftId, out var aircraft))
-<<<<<<< HEAD
-                GUI.Label(new Rect(strip.x + 12f, strip.y + 8f, strip.width - 270f, 42f),
-                    $"{aircraft.Registration} · {AircraftStatus.TagPhase(aircraft, _clock.Now)}\nDrag or arrows to look · 1-5 glance · scroll zoom");
-=======
                 GUI.Label(new Rect(strip.x + 12f, strip.y + 8f, strip.width - 270f, 96f),
-                    $"{aircraft.Registration} · {AircraftStatus.TagPhase(aircraft, _clock.Now)}\n{aircraft.CurrentDestination?.Code ?? "Local flight"} · GS {_cockpitGroundKnots:0} kt · V/S {_cockpitVerticalFeet:+0;-0;0} ft/min\n{fromAdelaideKm:0.0} km from Adelaide · Right-drag / scroll zoom\n1 forward · 2 left · 3 panel · 4 right · 5 overhead");
->>>>>>> origin/main
+                    $"{aircraft.Registration} · {AircraftStatus.TagPhase(aircraft, _clock.Now)}\n{aircraft.CurrentDestination?.Code ?? "Local flight"} · GS {_cockpitGroundKnots:0} kt · V/S {_cockpitVerticalSpeed * 196.85f:+0;-0;0} ft/min\n{fromAdelaideKm:0.0} km from Adelaide · Drag/arrows look · scroll zoom\n1 forward · 2 left · 3 panel · 4 right · 5 overhead");
             if (GUI.Button(new Rect(strip.xMax - 246f, strip.y + 10f, 112f, 36f), "Recenter", button))
                 _cameraController.RecenterCockpit();
             if (GUI.Button(new Rect(strip.xMax - 124f, strip.y + 10f, 112f, 36f), "Exit (Esc)", button))
                 ExitCockpit(false);
-<<<<<<< HEAD
             if (!string.IsNullOrEmpty(_cockpitCallText) && Time.unscaledTime < _cockpitCallUntil)
             {
                 _calloutStyle ??= new GUIStyle(GUI.skin.label)
@@ -230,11 +219,9 @@ namespace Airside.Presentation
                 _calloutStyle.normal.textColor = new Color(0.92f, 0.96f, 0.9f, fade);
                 GUI.Label(area, _cockpitCallText, _calloutStyle);
             }
-=======
             _cameraController.CockpitMotionEnabled = GUI.Toggle(
                 new Rect(strip.xMax - 246f, strip.y + 54f, 234f, 24f),
                 _cameraController.CockpitMotionEnabled, "Cockpit vibration");
->>>>>>> origin/main
             var placement = AirlineHudLayout.Create(layout, false);
             DrawToast(placement.Toast);
         }

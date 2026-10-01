@@ -1,7 +1,7 @@
 namespace Airside.Presentation
 {
     /// <summary>Glance targets for the cockpit camera: forward, left window (wing and engine),
-    /// right window, instrument panel, overhead. Degrees of head yaw (right positive) and pitch
+    /// instrument panel, right window, overhead (keys 1-5). Degrees of head yaw (right positive) and pitch
     /// (down positive), inside the camera's look limits. Independent of Unity.</summary>
     public static class CockpitLookPresets
     {
@@ -9,10 +9,10 @@ namespace Airside.Presentation
         public static readonly (string Name, float Yaw, float Pitch)[] All =
         {
             ("Forward", 0f, 0f),
-            ("Left window", -78f, -3f),
-            ("Right window", 78f, -3f),
-            ("Instrument panel", 0f, 30f),
-            ("Overhead", 0f, -34f),
+            ("Left window", -70f, 0f),
+            ("Instrument panel", 0f, 32f),
+            ("Right window", 70f, 0f),
+            ("Overhead", 0f, -30f),
         };
 
         /// <summary>Moves toward a target without overshoot; <paramref name="rate"/> is 1/seconds.</summary>

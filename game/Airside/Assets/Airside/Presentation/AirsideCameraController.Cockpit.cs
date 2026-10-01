@@ -20,10 +20,12 @@ namespace Airside.Presentation
         // Head and body motion layered on the rigid seat (CockpitMotion): offset in seat space, degrees.
         private Vector3 _cockpitMotionOffset, _cockpitMotionEuler;
         public Vector3 CockpitPosition => _cockpitSeat != null
-            ? _cockpitSeat.position + _cockpitSeat.rotation * _cockpitMotionOffset : transform.position;
+            ? _cockpitSeat.position + _cockpitSeat.rotation * (CockpitMotionEnabled ? _cockpitMotionOffset : Vector3.zero) : transform.position;
         public Quaternion CockpitRotation => _cockpitSeat != null
-            ? _cockpitSeat.rotation * Quaternion.Euler(_cockpitPitch + _cockpitMotionEuler.x,
-                _cockpitYaw + _cockpitMotionEuler.y, _cockpitMotionEuler.z) : transform.rotation;
+            ? _cockpitSeat.rotation * Quaternion.Euler(
+                _cockpitPitch + (CockpitMotionEnabled ? _cockpitMotionEuler.x : 0f),
+                _cockpitYaw + (CockpitMotionEnabled ? _cockpitMotionEuler.y : 0f),
+                CockpitMotionEnabled ? _cockpitMotionEuler.z : 0f) : transform.rotation;
 
         public void SetCockpitMotion(Vector3 offset, Vector3 euler)
         {
@@ -53,15 +55,12 @@ namespace Airside.Presentation
             return true;
         }
 
-<<<<<<< HEAD
-        public void RecenterCockpit() { _cockpitYaw = _cockpitPitch = 0f; _cockpitPreset = -1; }
-=======
         public void RecenterCockpit()
         {
             _cockpitYaw = _cockpitPitch = 0f;
             _cockpitTargetFov = 65f;
+            _cockpitPreset = -1;
         }
->>>>>>> origin/main
 
         public void EndCockpit()
         {
@@ -100,7 +99,6 @@ namespace Airside.Presentation
                     _cockpitTargetFov = Mathf.Clamp(_cockpitTargetFov - mouse.scroll.ReadValue().y * 0.025f, 35f, 85f);
             }
             else _cockpitRightDrag = false;
-<<<<<<< HEAD
             if (_cockpitRightDrag) _cockpitPreset = -1;
             var keyboard = Keyboard.current;
             if (keyboard != null && !KeyboardCaptured)
@@ -127,19 +125,8 @@ namespace Airside.Presentation
                 _cockpitYaw = CockpitLookPresets.Ease(_cockpitYaw, glance.Yaw, 7f, Time.unscaledDeltaTime);
                 _cockpitPitch = CockpitLookPresets.Ease(_cockpitPitch, glance.Pitch, 7f, Time.unscaledDeltaTime);
             }
-=======
-            var keys = Keyboard.current;
-            if (keys != null && !KeyboardCaptured)
-            {
-                if (keys.digit1Key.wasPressedThisFrame) RecenterCockpit();
-                if (keys.digit2Key.wasPressedThisFrame) { _cockpitYaw = -70f; _cockpitPitch = 0f; }
-                if (keys.digit3Key.wasPressedThisFrame) { _cockpitYaw = 0f; _cockpitPitch = 32f; }
-                if (keys.digit4Key.wasPressedThisFrame) { _cockpitYaw = 70f; _cockpitPitch = 0f; }
-                if (keys.digit5Key.wasPressedThisFrame) { _cockpitYaw = 0f; _cockpitPitch = -30f; }
-            }
             _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, _cockpitTargetFov,
                 1f - Mathf.Exp(-12f * Time.unscaledDeltaTime));
->>>>>>> origin/main
             ApplyCockpitPose();
         }
 

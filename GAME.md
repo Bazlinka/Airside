@@ -3,7 +3,7 @@
 - **2026-10-01 Cursor — Phase 1 Golf land cover (ADR 0206) + P0 closed / plan approved.**
   OSM `leisure=golf_course` → `AdelaideLandCover.Kind.Golf` with irrigated green tint;
   parks stay olive. Bailey closed P0, approved the visual plan, and said keep shipping —
-  no ask-to-verify. **Checks:** `scripts/test-domain.sh` after this tip.
+  no ask-to-verify. **Checks:** `scripts/test-domain.sh` **1178/1178**.
   **NEXT:** Phase 1 bunkers / far-ring skyline (still land-cover polish).
 
 - **2026-09-30 Codex — local consolidation onto `main`.**

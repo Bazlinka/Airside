@@ -1,5 +1,13 @@
 ## Unreleased
 
+- **Cockpit flight feel for takeoff, approach and landing.** Jets now rotate and climb at their own
+  attitudes (about 15 degrees for narrowbodies instead of the ATR's 7.5) and flare to about 5;
+  the pilot's head and body feel runway thumps that grow with speed, engine vibration, unstick,
+  a touchdown jolt that varies from smooth to firm with a nose-wheel slam, gear thumps, bumpier
+  low-level air, thrust and braking lean, and the gaze leading into turns. Jet and ATR/Dash
+  flight displays show live pitch as well as bank, and the readout adds vertical speed
+  (ADR 0228, presentation only; native review pending).
+
 - **Helicopters: the Bell 412 flies, and you can own one.** SA Ambulance Rescue's Bell 412EP now works from
   Helipad West: it spools its rotor, lifts to a hover, turns, climbs away and flies to Adelaide hospitals (Royal
   Adelaide, Flinders, Lyell McEwin, Mount Barker, Gawler, Victor Harbor), then returns and lands on its spot, on call-outs

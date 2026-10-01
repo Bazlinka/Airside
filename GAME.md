@@ -29,6 +29,13 @@ merge authorisation does not turn those into passing checks. Jet ADR is now 0225
 
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Claude — cockpit flight feel (`feature/cockpit-window-view`, ADR 0228).**
+  Per-type pitch (`AircraftAttitude`), head/body motion (`CockpitMotion`, fed from
+  `UpdateCockpitView`, applied by `SetCockpitMotion`), live pitch/bank ADI on jets and ATR/Dash.
+  Headless: motion/attitude/jet-cockpit checks pass. No Unity editor here, so **NEXT:** compile in
+  Unity, run native review of takeoff roll, rotation, climb, descent, flare and touchdown for a jet
+  and a turboprop; tune amplitudes if too strong/weak; Saab live ADI; crosswind crab needs a wind model.
+
 - **2026-10-01 Claude — helicopter operations (branch `feature/helicopter-operations`, ADR 0227).**
   - **Player-visible outcome:** the SA Ambulance Bell 412 (VH-SAR) flies rescue call-outs from Helipad West to
     Adelaide hospitals (first one within ~8 min of a new game) with a spinning rotor and a rotor sound; the player can

@@ -375,6 +375,10 @@ namespace Airside.Presentation
         /// <summary>Lowered as the climb-out accelerates toward 170 kt.</summary>
         public const float DepartedPitchEndDegrees = -4f;
 
+        /// <summary>Per-type body pitch (jets rotate to ~15 degrees, turboprops stay flatter).</summary>
+        public static float PitchDegrees(AircraftPhase phase, float progress, AircraftType type) =>
+            AircraftAttitude.For(type).PitchDegrees(phase, progress, AircraftPerformance.For(type));
+
         public static float PitchDegrees(AircraftPhase phase, float progress)
         {
             var t = Mathf.Clamp01(progress);

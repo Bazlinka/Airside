@@ -11,9 +11,19 @@ namespace Airside.Presentation
         private float _savedNear, _savedFar, _savedFov;
         private bool _cockpitRightDrag;
         public bool IsCockpit => _cockpitActive;
-        public Vector3 CockpitPosition => _cockpitSeat != null ? _cockpitSeat.position : transform.position;
+        // Head and body motion layered on the rigid seat (CockpitMotion): offset in seat space, degrees.
+        private Vector3 _cockpitMotionOffset, _cockpitMotionEuler;
+        public Vector3 CockpitPosition => _cockpitSeat != null
+            ? _cockpitSeat.position + _cockpitSeat.rotation * _cockpitMotionOffset : transform.position;
         public Quaternion CockpitRotation => _cockpitSeat != null
-            ? _cockpitSeat.rotation * Quaternion.Euler(_cockpitPitch, _cockpitYaw, 0f) : transform.rotation;
+            ? _cockpitSeat.rotation * Quaternion.Euler(_cockpitPitch + _cockpitMotionEuler.x,
+                _cockpitYaw + _cockpitMotionEuler.y, _cockpitMotionEuler.z) : transform.rotation;
+
+        public void SetCockpitMotion(Vector3 offset, Vector3 euler)
+        {
+            _cockpitMotionOffset = offset;
+            _cockpitMotionEuler = euler;
+        }
 
         public bool StartCockpit(Transform seat)
         {
@@ -26,6 +36,7 @@ namespace Airside.Presentation
             }
             _cockpitActive = true;
             _cockpitSeat = seat;
+            _cockpitMotionOffset = _cockpitMotionEuler = Vector3.zero;
             _following = false;
             _easingOverview = false;
             _cockpitRightDrag = false;
@@ -42,6 +53,7 @@ namespace Airside.Presentation
             if (!_cockpitActive) return;
             _cockpitActive = false;
             _cockpitSeat = null;
+            _cockpitMotionOffset = _cockpitMotionEuler = Vector3.zero;
             if (_camera != null)
             {
                 _camera.nearClipPlane = _savedNear;

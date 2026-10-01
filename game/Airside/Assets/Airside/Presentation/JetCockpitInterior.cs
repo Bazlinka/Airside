@@ -13,7 +13,7 @@ namespace Airside.Presentation
     {
         public JetCockpitProfile Profile { get; private set; }
         private Material _panel, _trim, _black, _white, _cyan, _green, _sky, _earth;
-        private readonly Transform[] _horizons = new Transform[2];
+        private readonly AttitudeDisc[] _horizons = new AttitudeDisc[2];
         private readonly List<(Transform bar, float bottom, bool left)> _engineBars = new();
         private TextMesh _engineReadout;
         private TextMesh _phaseReadout;
@@ -204,12 +204,7 @@ namespace Airside.Presentation
             Label(title + " title", title, new Vector3(x, y + height * 0.39f, z - 0.01f), 0.0038f, Color.white);
             if (pilot >= 0)
             {
-                var horizon = new GameObject("Live local attitude").transform;
-                horizon.SetParent(transform, false); horizon.localPosition = new Vector3(x, y, z - 0.012f);
-                var sky = Box("Attitude sky", new Vector3(x, y + 0.043f, z - 0.013f), new Vector3(width * 0.48f, 0.086f, 0.002f), _sky);
-                var earth = Box("Attitude ground", new Vector3(x, y - 0.043f, z - 0.013f), new Vector3(width * 0.48f, 0.086f, 0.002f), _earth);
-                sky.SetParent(horizon, true); earth.SetParent(horizon, true);
-                _horizons[pilot] = horizon;
+                _horizons[pilot] = MakeAttitudeDisc("Live local attitude", new Vector3(x, y, z - 0.013f), Mathf.Min(width, height) * 0.36f);
                 Box("Fixed attitude reference", new Vector3(x, y, z - 0.024f), new Vector3(width * 0.22f, 0.005f, 0.002f), _white);
                 for (var tick = -2; tick <= 2; tick++)
                 {
@@ -295,12 +290,13 @@ namespace Airside.Presentation
             }
         }
 
+                public override void SetAttitude(float pitchUpDegrees, float bankLeftDegrees)
+        {
+            foreach (var horizon in _horizons) horizon?.Set(pitchUpDegrees, bankLeftDegrees);
+        }
+
         public void SetFlightState(Transform aircraft, EngineState engines, string phase)
         {
-            // Attitude follows the already-rendered aircraft, not a second flight model.
-            foreach (var horizon in _horizons)
-                if (horizon != null)
-                    horizon.localRotation = Quaternion.Euler(0f, 0f, -Mathf.DeltaAngle(0f, aircraft.eulerAngles.z));
             foreach (var (bar, height, left) in _engineBars)
             {
                 var fill = Mathf.Clamp01(left ? engines.Left : engines.Right);

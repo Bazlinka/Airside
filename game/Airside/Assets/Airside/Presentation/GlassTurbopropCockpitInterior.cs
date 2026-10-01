@@ -11,6 +11,12 @@ namespace Airside.Presentation
         private Vector3 _origin;
         private Material _lining, _trim;
         private float _width, _front, _roof;
+        private readonly AttitudeDisc[] _attitude = new AttitudeDisc[2];
+
+        public override void SetAttitude(float pitchUpDegrees, float bankLeftDegrees)
+        {
+            foreach (var disc in _attitude) disc?.Set(pitchUpDegrees, bankLeftDegrees);
+        }
 
         public static GlassTurbopropCockpitInterior Build(Transform aircraft, AircraftType type)
         {
@@ -161,6 +167,8 @@ namespace Airside.Presentation
                 Face("LCD face " + i, new[] { P(x - width * 0.5f, y - height * 0.5f, front),
                     P(x + width * 0.5f, y - height * 0.5f, front), P(x + width * 0.5f, y + height * 0.5f, front),
                     P(x - width * 0.5f, y + height * 0.5f, front) }, i == 2 ? engines : i == 0 || i == 4 ? pfd : nav);
+                if (i == 0 || i == 4)
+                    _attitude[i == 0 ? 0 : 1] = MakeAttitudeDisc("Live attitude " + i, P(x, y + height * 0.04f, front - 0.004f), height * 0.34f);
                 Box("Display selector", P(x + width * 0.43f, y - height * 0.54f, front - 0.008f), new Vector3(0.020f, 0.020f, 0.016f), _metal);
             }
         }

@@ -31,6 +31,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideWindbreakGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideWindbreakPlacement.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftArticulation.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftAttitude.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftAudioMix.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftAudioProfiles.Generated.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftDoorwayGeometry.cs" />
@@ -69,6 +70,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CoastGrid.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitAvailability.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitExteriorVisibility.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitMotion.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ContractsWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ControlsHelp.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/DaylightPresentation.cs" />
@@ -201,6 +203,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CircuitTrafficTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CoastGridTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CockpitAvailabilityTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CockpitMotionTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CollisionPass100Tests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ContractFeasibilityTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ContractsWorkspaceTests.cs" />

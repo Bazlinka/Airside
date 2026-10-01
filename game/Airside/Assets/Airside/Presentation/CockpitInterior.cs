@@ -19,6 +19,9 @@ namespace Airside.Presentation
             _readout.text = value;
         }
 
+        /// <summary>Live pitch/bank for the primary flight displays. Types without a live ADI ignore it.</summary>
+        public virtual void SetAttitude(float pitchUpDegrees, float bankLeftDegrees) { }
+
         public void Enter()
         {
             if (_entered) return;
@@ -128,6 +131,105 @@ namespace Airside.Presentation
             var renderer = host.GetComponent<MeshRenderer>();
             renderer.sharedMaterial = label.font.material; renderer.shadowCastingMode = ShadowCastingMode.Off;
             return label;
+        }
+
+        /// <summary>A round attitude indicator: a sky/ground/pitch-ladder texture whose UVs are driven by
+        /// the aircraft's real pitch and bank, clipped by a fixed disc like a real PFD ADI.</summary>
+        protected sealed class AttitudeDisc
+        {
+            private const float DegreesPerRadius = 18f;   // vertical field: +/-18 degrees at the rim
+            private const float TextureDegrees = 90f;     // texture spans +/-45 degrees of pitch
+            private readonly Mesh _mesh;
+            private readonly Vector2[] _local;
+            private readonly Vector2[] _uv;
+            public AttitudeDisc(Mesh mesh, Vector2[] local) { _mesh = mesh; _local = local; _uv = new Vector2[local.Length]; Set(0f, 0f); }
+
+            public void Set(float pitchUpDegrees, float bankLeftDegrees)
+            {
+                var angle = bankLeftDegrees * Mathf.Deg2Rad;
+                var cos = Mathf.Cos(angle); var sin = Mathf.Sin(angle);
+                var pitch = Mathf.Clamp(pitchUpDegrees, -30f, 30f);
+                for (var i = 0; i < _local.Length; i++)
+                {
+                    var p = _local[i];
+                    var x = p.x * cos - p.y * sin;
+                    var y = p.x * sin + p.y * cos;
+                    _uv[i] = new Vector2(0.5f + x * 0.5f, 0.5f + (pitch + y * DegreesPerRadius) / TextureDegrees);
+                }
+                _mesh.uv = _uv;
+            }
+        }
+
+        private Texture2D _attitudeTexture;
+        protected AttitudeDisc MakeAttitudeDisc(string name, Vector3 centre, float radius)
+        {
+            if (_attitudeTexture == null) _attitudeTexture = MakeAttitudeTexture();
+            var material = Surface(name, Color.white, false);
+            material.SetTexture("_BaseMap", _attitudeTexture);
+            const int rim = 40;
+            var local = new Vector2[(rim + 1) * 2];
+            var vertices = new Vector3[local.Length];
+            for (var side = 0; side < 2; side++)
+            {
+                var offset = side * (rim + 1);
+                local[offset] = Vector2.zero; vertices[offset] = Vector3.zero;
+                for (var i = 0; i < rim; i++)
+                {
+                    var a = i * Mathf.PI * 2f / rim;
+                    local[offset + 1 + i] = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                    vertices[offset + 1 + i] = new Vector3(Mathf.Cos(a) * radius, Mathf.Sin(a) * radius, 0f);
+                }
+            }
+            var triangles = new int[rim * 6];
+            for (var i = 0; i < rim; i++)
+            {
+                var a = 1 + i; var b = 1 + (i + 1) % rim;
+                triangles[i * 6] = 0; triangles[i * 6 + 1] = b; triangles[i * 6 + 2] = a;
+                triangles[i * 6 + 3] = rim + 1; triangles[i * 6 + 4] = rim + 1 + a; triangles[i * 6 + 5] = rim + 1 + b;
+            }
+            var mesh = new Mesh { name = name, vertices = vertices, triangles = triangles };
+            mesh.RecalculateBounds(); _meshes.Add(mesh);
+            var host = new GameObject(name);
+            host.transform.SetParent(transform, false); host.transform.localPosition = centre;
+            host.AddComponent<MeshFilter>().sharedMesh = mesh;
+            host.AddComponent<MeshRenderer>().sharedMaterial = material;
+            return new AttitudeDisc(mesh, local);
+        }
+
+        private Texture2D MakeAttitudeTexture()
+        {
+            const int width = 128, height = 512;           // 512 rows = 90 degrees of pitch
+            var pixels = new Color32[width * height];
+            var skyTop = new Color32(22, 78, 150, 255); var skyHorizon = new Color32(70, 140, 205, 255);
+            var groundHorizon = new Color32(150, 98, 52, 255); var groundBottom = new Color32(88, 54, 26, 255);
+            var white = new Color32(235, 240, 235, 255);
+            for (var y = 0; y < height; y++)
+            {
+                var degrees = (y + 0.5f) / height * 90f - 45f;
+                Color32 c = degrees >= 0f
+                    ? Color32.Lerp(skyHorizon, skyTop, Mathf.Clamp01(degrees / 45f))
+                    : Color32.Lerp(groundHorizon, groundBottom, Mathf.Clamp01(-degrees / 45f));
+                for (var x = 0; x < width; x++) pixels[y * width + x] = c;
+            }
+            void Line(float degrees, int halfWidth, int thickness)
+            {
+                var row = Mathf.RoundToInt((degrees + 45f) / 90f * height);
+                for (var y = row - thickness / 2; y <= row + thickness / 2; y++)
+                {
+                    if (y < 0 || y >= height) continue;
+                    for (var x = width / 2 - halfWidth; x <= width / 2 + halfWidth; x++) pixels[y * width + x] = white;
+                }
+            }
+            Line(0f, width / 2, 3);                          // horizon
+            for (var d = -40; d <= 40; d += 5)
+            {
+                if (d == 0) continue;
+                Line(d, d % 10 == 0 ? 22 : 11, 2);          // 10 degree bars long, 5 degree bars short
+            }
+            var texture = new Texture2D(width, height, TextureFormat.RGBA32, true)
+            { name = "Attitude indicator", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            texture.SetPixels32(pixels); texture.Apply(true, true); _textures.Add(texture);
+            return texture;
         }
 
         protected static void Dispose(Object item)

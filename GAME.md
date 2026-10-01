@@ -1,5 +1,19 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Codex — weather coverage (`fix/regional-weather-coverage`, ADR 0216).**
+  Bailey selected whole-visible-landscape weather with fade only at render limits.
+  Cloud recycling now surrounds the viewer; world positions/wind remain stable
+  until soft-edge reuse. Sixteen jittered bodies and matched fading shadows.
+  Ground fog's airport mask removed; 30 km ray/deck coverage, 20–30 km radial fade;
+  overcast stays visible from above. Simulation, operations and saves unchanged.
+  Focused headless weather checks: 13/13. Focused native weather/cockpit checks:
+  30/30, including all three turboprop lower shells; licensing has recovered.
+  Full native: 1695 passed / 1 existing audio failure / 2 existing inconclusives.
+  Task packet: `docs/plans/weather-coverage.md`. Clean Mac build and
+  real distant/above/below captures are in progress; evidence/result record:
+  `docs/testing/weather-coverage-2026-10-01/README.md`.
+
+
 - **2026-10-01 Codex — turboprop cockpit rollout (`feature/turboprop-cockpits`, ADR 0215).**
   Bailey requested cockpit view for turboprops only. Supported: SF34 Saab 340B,
   ATR42 ATR 42-600 and DH8D Dash 8-400. The ATR and Dash have original fitted

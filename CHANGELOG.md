@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Weather across the landscape:** cloud bodies recycle around the moving view
+  rather than the airport, with matched shadow fades. Ground fog no longer ends
+  at the airport rectangle; fog and the broader overcast deck fade over 20–30 km.
+  The deck remains visible from above. Existing cloud/rain object budgets retained.
+
 - **Turboprop cockpit rollout:** cockpit view now selects a fitted Saab
   340B, ATR 42-600 or Dash 8-400 interior. ATR and Dash have their own seat,
   window and five-display layouts; opaque lower shells cover the footwells.

@@ -31,7 +31,7 @@ namespace Airside.Tests
             Assert.That(AircraftCatalogue.Bell412.StandClassLabel, Is.EqualTo("Helipad"));
             Assert.That(AircraftCatalogue.All.Any(s => s.Id == "B412"), Is.False,
                 "every runway and taxi rule iterates All; a helicopter must not appear there");
-            Assert.That(AircraftCatalogue.Rotorcraft, Has.Count.EqualTo(1));
+            Assert.That(AircraftCatalogue.Rotorcraft.Count, Is.EqualTo(1));
             Assert.That(AircraftCatalogue.TryFor(AircraftType.Bell412, out var spec), Is.True);
             Assert.That(spec.Id, Is.EqualTo("B412"));
             Assert.That(AircraftType.TryFromId("B412", out var found), Is.True);
@@ -282,10 +282,10 @@ namespace Airside.Tests
             Assert.That(seen, Does.Contain(FleetState.AtDestination));
             Assert.That(seen, Does.Contain(FleetState.Inbound));
             Assert.That(seen, Does.Contain(FleetState.Landing));
-            Assert.That(seen, Does.Not.Contain(FleetState.TaxiOut), "a helicopter never taxis");
-            Assert.That(seen, Does.Not.Contain(FleetState.HoldingShort));
-            Assert.That(seen, Does.Not.Contain(FleetState.HoldingForLanding));
-            Assert.That(seen, Does.Not.Contain(FleetState.TaxiIn));
+            Assert.That(seen, Has.No.Member(FleetState.TaxiOut), "a helicopter never taxis");
+            Assert.That(seen, Has.No.Member(FleetState.HoldingShort));
+            Assert.That(seen, Has.No.Member(FleetState.HoldingForLanding));
+            Assert.That(seen, Has.No.Member(FleetState.TaxiIn));
             Assert.That(heli.CompletedTrips, Is.GreaterThanOrEqualTo(3), "a rescue helicopter flies several call-outs a day");
             Assert.That(seenSites.Count, Is.GreaterThanOrEqualTo(2), "to more than one hospital");
             Assert.That(seenSites.All(DestinationCatalogue.RescueSites.Select(s => s.Code).Contains), Is.True);

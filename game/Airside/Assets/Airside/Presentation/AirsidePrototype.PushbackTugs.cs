@@ -89,6 +89,8 @@ namespace Airside.Presentation
             side = 1f;
             lateral = PushbackTugTimeline.StandLateralMetres;
             pull = PushbackTugTimeline.StandPullForwardMetres;
+            if (aircraft.Type.IsRotorcraft)
+                return false;
             GroundLeg leg;
             if (aircraft.State == FleetState.AtStand && aircraft.Scheduled is { Cancelled: false } booked)
             {

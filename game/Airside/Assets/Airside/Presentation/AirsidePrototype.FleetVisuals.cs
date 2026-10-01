@@ -369,6 +369,10 @@ namespace Airside.Presentation
 
         private void PaintFleetLivery(Transform view, FleetAircraft aircraft, Color accent)
         {
+            // A helicopter carries its own authored paint; the fuselage decal, sash and title tables are
+            // fixed-wing (ADR 0207).
+            if (aircraft.Type.IsRotorcraft)
+                return;
             var airline = aircraft.Airline;
 
             // The same neutral skin sheet works across every authored type. Repainting

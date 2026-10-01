@@ -750,7 +750,7 @@ namespace Airside.Presentation
             progress = 0;
             seconds = 1;
             if (aircraft == null || aircraft.State != FleetState.AtStand || string.IsNullOrEmpty(aircraft.Stand.Value)
-                || BoardingFlow.InCheck(aircraft, _preciseTime))
+                || aircraft.Type.IsRotorcraft || BoardingFlow.InCheck(aircraft, _preciseTime))
                 return false;
             var onStand = Math.Max(0.0, _preciseTime - aircraft.StateStartedAt.ElapsedSeconds);
             if (onStand < 90.0)

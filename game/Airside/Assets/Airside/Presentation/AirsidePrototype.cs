@@ -737,7 +737,7 @@ namespace Airside.Presentation
             {
                 if (wanted.Count >= AmbientServiceSets)
                     break;
-                if (aircraft.Airline.IsPlayer || aircraft.State != FleetState.AtStand
+                if (aircraft.Airline.IsPlayer || aircraft.State != FleetState.AtStand || aircraft.Type.IsRotorcraft
                     || aircraft == skipA || aircraft == skipB || string.IsNullOrEmpty(aircraft.Stand.Value))
                     continue;
                 var onStand = _preciseTime - aircraft.StateStartedAt.ElapsedSeconds;

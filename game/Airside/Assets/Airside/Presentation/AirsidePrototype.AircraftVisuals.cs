@@ -14,6 +14,7 @@ namespace Airside.Presentation
         private void UpdateAircraftVisual()
         {
             SyncCommercialAircraftViews();
+            UpdateStaticRescueHelicopter();
             for (var index = 0; index < VisualFlights.Count; index++)
             {
                 if (index >= _commercialAircraft.Length)
@@ -43,6 +44,12 @@ namespace Airside.Presentation
                 {
                     aircraftType = fleetAircraft.Type;
                     runway = fleetAircraft.AssignedRunway;
+                    // A helicopter is drawn from its own track, not the runway circuit (ADR 0207).
+                    if (fleetAircraft.Type.IsRotorcraft)
+                    {
+                        UpdateHelicopterView(view, flight, fleetAircraft);
+                        continue;
+                    }
                 }
                 var lane = ApproachLaneOffset(flight);
                 var route = TaxiRouteFor(flight, phase);
@@ -1178,6 +1185,8 @@ namespace Airside.Presentation
                 return BuildDash8Q400(name, accent, liveryDecalRelativePath);
             if (AircraftVisualProfiles.IsSaab340(type))
                 return BuildSaab340(name, accent, liveryDecalRelativePath);
+            if (AircraftVisualProfiles.IsBell412(type))
+                return BuildBell412(name, accent);
 
             var regional = BuildAircraft(name, accent, liveryDecalRelativePath);
             AircraftVisualProfileComponent.Ensure(regional, AircraftVisualProfiles.RegionalTurboprop);

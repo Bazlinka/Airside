@@ -9,6 +9,15 @@ namespace Airside.Presentation
         public const string ArtPath = "Models/Aircraft/mdl_bell_412_rescue_v01.gltf";
         public const string ObjectName = "Adelaide Rescue Helicopter";
 
+        /// <summary>
+        /// The parked rescue helicopter drawn for the demo circuit. In an airline game the fleet's own helicopter
+        /// (ADR 0207) stands on the pad instead, so presentation hides this one.
+        /// </summary>
+        public static Transform StaticHelicopter { get; private set; }
+
+        /// <summary>World Y of the pad surface, where a helicopter's skids rest.</summary>
+        public static float PadGroundY { get; private set; } = AirsideAdelaideGround.PavementWorldY;
+
         public static bool TryBuild(Transform parent, Func<float, float, float> groundHeight)
         {
             if (parent == null)
@@ -22,7 +31,7 @@ namespace Airside.Presentation
                 parent,
                 out helicopter,
                 part => $"{ObjectName} {part}",
-                PartColour);
+                part => PartColour(part));
             if (!loaded)
                 helicopter = BuildFallback(parent);
             if (helicopter == null)
@@ -35,16 +44,19 @@ namespace Airside.Presentation
                 AdelaideEmergencyAviationGeometry.PadCentreZ);
             helicopter.localRotation = Quaternion.Euler(0f, AdelaideEmergencyAviationGeometry.HelicopterYawDegrees, 0f);
             AirsideSceneIndex.Remember(helicopter);
+            StaticHelicopter = helicopter;
+            PadGroundY = groundY;
             return true;
         }
 
-        private static Color? PartColour(string part)
+        /// <summary>Part colours for the Bell 412 kit; <paramref name="rescueRed"/> repaints the rescue-red parts.</summary>
+        internal static Color? PartColour(string part, Color? rescueRed = null)
         {
             var key = part.ToLowerInvariant();
             if (key.Contains("glass") || key.Contains("window"))
                 return new Color(0.08f, 0.16f, 0.22f, 0.68f);
             if (key.Contains("rescue_red"))
-                return new Color(0.68f, 0.07f, 0.055f);
+                return rescueRed ?? new Color(0.68f, 0.07f, 0.055f);
             if (key.Contains("rotor_blade") || key.Contains("landing_skid") || key.Contains("skid_strut")
                 || key.Contains("step") || key.Contains("wire_strike"))
                 return new Color(0.12f, 0.14f, 0.15f);
@@ -65,7 +77,7 @@ namespace Airside.Presentation
             return new Color(0.94f, 0.94f, 0.90f);
         }
 
-        private static Transform BuildFallback(Transform parent)
+        internal static Transform BuildFallback(Transform parent)
         {
             var root = new GameObject(ObjectName + " fallback").transform;
             root.SetParent(parent, false);

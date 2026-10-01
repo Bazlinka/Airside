@@ -91,7 +91,8 @@ namespace Airside.Presentation
                 return _routeObstacles;
             foreach (var aircraft in _operations.Fleet)
             {
-                if (aircraft.State != FleetState.AtStand || !TryGroundView(aircraft, out var view))
+                if (aircraft.Type.IsRotorcraft || aircraft.State != FleetState.AtStand
+                    || !TryGroundView(aircraft, out var view))
                     continue;
                 AddAircraftObstacles(view, AircraftLayout.For(aircraft.Type), forVehicles, _routeObstacles);
             }
@@ -138,7 +139,8 @@ namespace Airside.Presentation
             if (!FleetMode || _operations == null)
                 return;
             foreach (var aircraft in _operations.Fleet)
-                if (aircraft.State != FleetState.AtStand && TryGroundView(aircraft, out var view))
+                if (!aircraft.Type.IsRotorcraft && aircraft.State != FleetState.AtStand
+                    && TryGroundView(aircraft, out var view))
                     _movingAircraft.Add((view, AircraftLayout.For(aircraft.Type)));
         }
 

@@ -9,7 +9,7 @@ namespace Airside.Presentation
     {
         internal static Mesh CockpitBoxMesh(Vector3 size) => BevelledCubeMesh(size);
         private string _cockpitAircraftId;
-        private SaabCockpitInterior _cockpitInterior;
+        private TurbopropCockpitInterior _cockpitInterior;
         private Transform _cockpitView;
         private Vector3 _cockpitPreviousPosition;
         private double _cockpitPreviousTime;
@@ -34,7 +34,7 @@ namespace Airside.Presentation
             _selectedAircraftId = aircraft.Registration;
             _activeWorkspace = HudWorkspace.None;
             _devToolsOpen = _controlsHelpOpen = false;
-            BindCockpitView(_fleetViewById[aircraft.Registration]);
+            BindCockpitView(_fleetViewById[aircraft.Registration], aircraft.Type);
             if (_cockpitInterior == null || !_cameraController.StartCockpit(_cockpitInterior.Seat))
             {
                 ExitCockpit(false);
@@ -44,7 +44,7 @@ namespace Airside.Presentation
             return true;
         }
 
-        private void BindCockpitView(Transform view)
+        private void BindCockpitView(Transform view, AircraftType type)
         {
             if (_cockpitInterior != null)
             {
@@ -52,7 +52,8 @@ namespace Airside.Presentation
                 Destroy(_cockpitInterior.gameObject);
             }
             _cockpitView = view;
-            _cockpitInterior = SaabCockpitInterior.Build(view);
+            _cockpitInterior = TurbopropCockpitInterior.Create(view, type);
+            if (_cockpitInterior == null) return;
             _cockpitInterior.Enter();
             _cockpitPreviousPosition = view.position;
             _cockpitPreviousTime = _preciseTime;
@@ -97,8 +98,12 @@ namespace Airside.Presentation
             }
             if (view != _cockpitView || _cockpitInterior == null)
             {
-                BindCockpitView(view);
-                _cameraController.StartCockpit(_cockpitInterior.Seat);
+                BindCockpitView(view, aircraft.Type);
+                if (_cockpitInterior == null || !_cameraController.StartCockpit(_cockpitInterior.Seat))
+                {
+                    ExitCockpit(true);
+                    return;
+                }
             }
             var elapsed = _preciseTime - _cockpitPreviousTime;
             if (elapsed > 0 && elapsed < 0.75)
@@ -134,8 +139,16 @@ namespace Airside.Presentation
             DrawToast(placement.Toast);
         }
 
-        // Reproducible packaged review: only a real eligible SF34, never force-start engines.
+        // Reproducible packaged review: only a real eligible turboprop, never force-start engines.
         private static readonly bool CockpitReview = Array.IndexOf(Environment.GetCommandLineArgs(), "-airsideReviewCockpit") >= 0;
+        private static readonly string CockpitReviewType = ReviewCockpitType();
+        private static readonly bool CockpitReviewArrivals = Array.IndexOf(Environment.GetCommandLineArgs(), "-airsideReviewCockpitArrivals") >= 0;
+        private static string ReviewCockpitType()
+        {
+            var args = Environment.GetCommandLineArgs();
+            var index = Array.IndexOf(args, "-airsideReviewCockpitType");
+            return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
+        }
         private bool _cockpitReviewStarted;
         private float _cockpitReviewEnteredAt = -1f;
         private void TryStartCockpitReview()
@@ -144,9 +157,10 @@ namespace Airside.Presentation
             FleetAircraft best = null;
             foreach (var aircraft in _fleetAircraftById.Values)
             {
-                // Prefer an actual departure so the first still covers engine startup,
-                // rather than jumping into an inbound already at full power.
-                if (aircraft.State is not (FleetState.AtStand or FleetState.TaxiOut)
+                var phase = CockpitReviewArrivals
+                    ? aircraft.State is FleetState.Inbound or FleetState.Landing or FleetState.TaxiIn
+                    : aircraft.State is FleetState.AtStand or FleetState.TaxiOut;
+                if (!phase || (CockpitReviewType != null && aircraft.Type.Id != CockpitReviewType)
                     || !CockpitAvailability.Supported(aircraft.Type) || CockpitReason(aircraft).Length != 0) continue;
                 if (best == null || (aircraft.Airline.IsPlayer && !best.Airline.IsPlayer)
                     || (aircraft.Airline.IsPlayer == best.Airline.IsPlayer

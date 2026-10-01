@@ -9,14 +9,14 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 
-/// <summary>Native SF34 interior stills. Geometry evidence only, not a packaged journey.</summary>
+/// <summary>Native turboprop interior stills. Geometry evidence only, not a packaged journey.</summary>
 public static class CockpitAppearanceReview
 {
     public static void Run()
     {
         var args = Environment.GetCommandLineArgs();
         var index = Array.IndexOf(args, "-cockpitReviewOutput");
-        var output = Path.GetFullPath(index >= 0 ? args[index + 1] : "../../work/cockpit-review");
+        var output = Path.GetFullPath(index >= 0 && index + 1 < args.Length ? args[index + 1] : "../../work/cockpit-review");
         Directory.CreateDirectory(output);
         ShaderUtil.allowAsyncCompilation = false;
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -47,41 +47,49 @@ public static class CockpitAppearanceReview
             line.transform.position = new Vector3(0f, 0f, z);
             line.transform.localScale = new Vector3(0.2f, 0.02f, 20f);
         }
-        var root = (Transform)typeof(AirsidePrototype).GetMethod("BuildAircraftForType", BindingFlags.Static | BindingFlags.NonPublic)
-            .Invoke(null, new object[] { "SF34 review", AircraftType.Saab340, Color.blue, null });
-        root.position = new Vector3(0f, 0.7f, 0f);
-        foreach (var lod in root.GetComponentsInChildren<LODGroup>()) lod.ForceLOD(0);
-        var rig = SaabCockpitInterior.Build(root);
-        rig.Enter();
-        rig.SetReadout("GS 12 kt\nHEIGHT 0 ft\nHDG 050°");
-        var camera = new GameObject("Review camera").AddComponent<Camera>();
-        camera.tag = "MainCamera";
-        camera.clearFlags = CameraClearFlags.SolidColor;
-        camera.backgroundColor = new Color(0.57f, 0.74f, 0.85f);
-        camera.fieldOfView = 65f;
-        camera.nearClipPlane = 0.035f;
-        camera.farClipPlane = 5000f;
-        var target = new RenderTexture(1440, 900, 24) { antiAliasing = 4 };
-        camera.targetTexture = target;
-        foreach (var shot in new[] { ("forward", 0f, 0f), ("left", 0f, -65f), ("panel", 25f, 0f), ("right", 0f, 65f), ("overhead", -65f, 0f), ("layout", 5f, 0f), ("bank", 0f, 0f), ("footwell", 48f, 0f), ("left-down", 35f, -80f), ("right-down", 35f, 80f) })
+        var typeIndex = Array.IndexOf(args, "-cockpitReviewType");
+        var typeId = typeIndex >= 0 && typeIndex + 1 < args.Length ? args[typeIndex + 1] : "SF34";
+        var types = new[] { AircraftType.Saab340, AircraftType.Atr42, AircraftType.Dash8Q400 };
+        foreach (var type in types)
         {
-            root.rotation = shot.Item1 == "bank" ? Quaternion.Euler(-8f, 0f, 15f) : Quaternion.identity;
-            camera.transform.SetPositionAndRotation(rig.Seat.position, rig.Seat.rotation * Quaternion.Euler(shot.Item2, shot.Item3, 0f));
-            if (shot.Item1 == "layout")
-                camera.transform.position = root.TransformPoint(rig.Seat.localPosition + rig.transform.localPosition + new Vector3(0.43f, 0f, -0.50f));
-            camera.Render(); camera.Render();
-            RenderTexture.active = target;
-            var image = new Texture2D(target.width, target.height, TextureFormat.RGB24, false);
-            image.ReadPixels(new Rect(0, 0, target.width, target.height), 0, 0);
-            image.Apply();
-            File.WriteAllBytes(Path.Combine(output, "SF34_" + shot.Item1 + ".png"), image.EncodeToPNG());
-            Object.DestroyImmediate(image);
+            if (typeId != "all" && type.Id != typeId) continue;
+            var root = (Transform)typeof(AirsidePrototype).GetMethod("BuildAircraftForType", BindingFlags.Static | BindingFlags.NonPublic)
+                .Invoke(null, new object[] { type.Id + " review", type, Color.blue, null });
+            root.position = new Vector3(0f, 0.7f, 0f);
+            foreach (var lod in root.GetComponentsInChildren<LODGroup>()) lod.ForceLOD(0);
+            var rig = TurbopropCockpitInterior.Create(root, type);
+            rig.Enter();
+            rig.SetReadout("GS 12 kt\nHEIGHT 0 ft\nHDG 050°");
+            var camera = new GameObject("Review camera").AddComponent<Camera>();
+            camera.tag = "MainCamera";
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(0.57f, 0.74f, 0.85f);
+            camera.fieldOfView = 65f;
+            camera.nearClipPlane = 0.035f;
+            camera.farClipPlane = 5000f;
+            var target = new RenderTexture(1440, 900, 24) { antiAliasing = 4 };
+            camera.targetTexture = target;
+            foreach (var shot in new[] { ("forward", 0f, 0f), ("left", 0f, -65f), ("panel", 25f, 0f), ("right", 0f, 65f), ("overhead", -65f, 0f), ("layout", 5f, 0f), ("bank", 0f, 0f), ("footwell", 48f, 0f), ("left-down", 35f, -80f), ("right-down", 35f, 80f) })
+            {
+                root.rotation = shot.Item1 == "bank" ? Quaternion.Euler(-8f, 0f, 15f) : Quaternion.identity;
+                camera.transform.SetPositionAndRotation(rig.Seat.position, rig.Seat.rotation * Quaternion.Euler(shot.Item2, shot.Item3, 0f));
+                if (shot.Item1 == "layout")
+                    camera.transform.position = root.TransformPoint(rig.Seat.localPosition + rig.transform.localPosition + new Vector3(0.43f, 0f, -0.50f));
+                camera.Render(); camera.Render();
+                RenderTexture.active = target;
+                var image = new Texture2D(target.width, target.height, TextureFormat.RGB24, false);
+                image.ReadPixels(new Rect(0, 0, target.width, target.height), 0, 0);
+                image.Apply();
+                File.WriteAllBytes(Path.Combine(output, type.Id + "_" + shot.Item1 + ".png"), image.EncodeToPNG());
+                Object.DestroyImmediate(image);
+            }
+            RenderTexture.active = null;
+            camera.targetTexture = null;
+            Object.DestroyImmediate(target);
+            Object.DestroyImmediate(camera.gameObject);
+            rig.Leave();
+            Object.DestroyImmediate(root.gameObject);
         }
-        RenderTexture.active = null;
-        camera.targetTexture = null;
-        Object.DestroyImmediate(target);
-        rig.Leave();
-        Object.DestroyImmediate(root.gameObject);
         Object.DestroyImmediate(material);
         Object.DestroyImmediate(asphalt);
         Debug.Log("Cockpit native review: " + output);

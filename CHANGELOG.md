@@ -46,12 +46,18 @@
   Cap 180. Locked by `AdelaideWindbreakPlacementTests`. No new assets or
   save-schema changes.
 
-- **Phase 2b terminal car-park date-palm rows (ADR 0215).** Procedural Canary
-  Island date palms along OSM car-park edges in the Terminal 1 landside ring
-  (cap 180), drawn into the road props mesh. Layout in `AdelaidePalmPlacement` /
-  `AdelaidePalmGeometry`. No new assets or licences. Locked by
-  `AdelaidePalmGeometryTests` and `AdelaidePalmPlacementTests`. No save-schema
-  changes.
+- **Phase 2b terminal car-park date-palm rows (file ADR 0215 palm).** Procedural
+  Canary Island date palms along OSM car-park edges in the Terminal 1 landside
+  ring (cap 180), drawn into the road props mesh. Layout in
+  `AdelaidePalmPlacement` / `AdelaidePalmGeometry`. No new assets or licences.
+  Locked by `AdelaidePalmGeometryTests` and `AdelaidePalmPlacementTests`. No
+  save-schema changes. (ADR number collides with turboprop 0215 — separate files.)
+
+- **Turboprop cockpit rollout:** cockpit view now selects a fitted Saab
+  340B, ATR 42-600 or Dash 8-400 interior. ATR and Dash have their own seat,
+  window and five-display layouts; opaque lower shells cover the footwells.
+  Jets remain disabled. Native test, rendered review and Mac build gates are
+  pending because Unity licensing IPC is unavailable.
 
 - Close the Saab cockpit shell beneath the windows, including the gaps beside the
   panel and under the footwell, so apron/terrain cannot show through the body.

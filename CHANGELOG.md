@@ -1,6 +1,6 @@
 ## Unreleased
 
-- **Turboprop cockpit rollout candidate:** cockpit view now selects a fitted Saab
+- **Turboprop cockpit rollout:** cockpit view now selects a fitted Saab
   340B, ATR 42-600 or Dash 8-400 interior. ATR and Dash have their own seat,
   window and five-display layouts; opaque lower shells cover the footwells.
   Jets remain disabled. Native test, rendered review and Mac build gates are

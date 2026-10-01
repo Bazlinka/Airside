@@ -15,7 +15,9 @@
   `docs/testing/turboprop-cockpits-2026-10-01/README.md`.
   **NEXT:** once Unity licensing is healthy, run native cockpit/full EditMode checks,
   inspect all three interiors and lower sightlines, build a clean Mac player,
-  then capture real eligible flight phases before merging this draft.
+  then capture real eligible flight phases. Bailey explicitly requested merging
+  this implementation on 1 October despite the recorded native licensing blocker;
+  the remaining verification gates stay open after merge.
 
 
 - **2026-10-01 Codex — Saab cockpit opaque shell fix.**

@@ -39,7 +39,9 @@ cockpit cases cover eligibility plus camera restoration, all-type factory fit an
 exterior restoration, rejection without allocation, and lower-shell occlusion versus
 open windows in level/banked headings. Actual geometry, shadows, display readability,
 kit alignment, head-look clipping, live movement and runtime audio still need review.
-Do not merge the candidate until native checks and rendered review are complete.
+Bailey explicitly requested merging this implementation on 1 October after being
+informed of the licensing blocker. This merge authorization does not establish
+native test, visual or build acceptance; those checks remain pending.
 Existing broader journey/weather/performance gates in the original cockpit plan
 remain open; a still or offline compile does not close them.
 

@@ -24,4 +24,5 @@ no reference photographs or manufacturer diagrams ship.
 
 Validation and the licensing blocker are tracked in
 `docs/testing/turboprop-cockpits-2026-10-01/README.md`; native compilation/tests,
-rendered review and clean Mac build are required before merging the candidate.
+rendered review and clean Mac build remain unverified. Bailey explicitly requested
+merging the implementation on 1 October with that limitation recorded.

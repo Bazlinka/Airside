@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Collections.Generic;
 using Airside.Presentation;
 using NUnit.Framework;
 using UnityEngine;
@@ -64,6 +65,51 @@ namespace Airside.Tests
                 Assert.That(glazing.GetComponent<Renderer>().forceRenderingOff, Is.True);
             }
             finally { Object.DestroyImmediate(aircraft); }
+        }
+        [TestCase(0f, 0f)]
+        [TestCase(15f, 140f)]
+        public void OpaqueShellBlocksLowerSightlinesWhileWindowsStayOpen(float bank, float heading)
+        {
+            var aircraft = new GameObject("Shell test aircraft");
+            try
+            {
+                aircraft.transform.SetPositionAndRotation(new Vector3(12f, 60f, 40f),
+                    Quaternion.Euler(-8f, heading, bank));
+                var rig = SaabCockpitInterior.Build(aircraft.transform);
+                var shell = new List<MeshCollider>();
+                foreach (var filter in rig.GetComponentsInChildren<MeshFilter>())
+                {
+                    var name = filter.name;
+                    if (name != "Flight deck floor" && name != "Lower side lining"
+                        && name != "Forward footwell shell" && name != "Rear side lining") continue;
+                    var collider = filter.gameObject.AddComponent<MeshCollider>();
+                    collider.sharedMesh = filter.sharedMesh;
+                    shell.Add(collider);
+                }
+                Physics.SyncTransforms();
+                foreach (var target in new[] {
+                    new Vector3(-1.2f, 1.5f, 8.3f), new Vector3(1.2f, 1.5f, 8.3f),
+                    new Vector3(0f, 0.5f, 8.7f), new Vector3(-1.3f, 1.3f, 7.1f),
+                    new Vector3(1.3f, 1.3f, 7.1f), new Vector3(-1.3f, 1.3f, 6.1f),
+                    new Vector3(0f, 0.5f, 7.1f) })
+                    Assert.That(ShellBlocks(shell, rig.Seat.position, rig.transform.TransformPoint(target)),
+                        Is.True, "Ground must be occluded below the window sill: " + target);
+                foreach (var target in new[] {
+                    new Vector3(0f, 2.4f, 8.5f), new Vector3(-1.1f, 2.4f, 7.1f),
+                    new Vector3(1.1f, 2.4f, 7.1f) })
+                    Assert.That(ShellBlocks(shell, rig.Seat.position, rig.transform.TransformPoint(target)),
+                        Is.False, "The shell must leave the windows open: " + target);
+            }
+            finally { Object.DestroyImmediate(aircraft); }
+        }
+
+        private static bool ShellBlocks(List<MeshCollider> shell, Vector3 eye, Vector3 target)
+        {
+            var ray = new Ray(eye, target - eye);
+            var distance = Vector3.Distance(eye, target);
+            foreach (var collider in shell)
+                if (collider.Raycast(ray, out _, distance)) return true;
+            return false;
         }
     }
 }

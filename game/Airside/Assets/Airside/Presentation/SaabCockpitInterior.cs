@@ -244,7 +244,13 @@ namespace Airside.Presentation
             Seat.SetParent(transform, false);
             Seat.localPosition = new Vector3(-0.43f, 2.38f, 7.13f);
             Seat.localRotation = Quaternion.Euler(16f, 0f, 0f);
-            Box("Flight deck floor", new Vector3(0f, 1.20f, 7.0f), new Vector3(1.72f, 0.07f, 2.45f), trim);
+            // Continuous opaque shell: the exterior fuselage is hidden in cockpit mode.
+            // The panel and trim are fittings, not a substitute for walls beneath the panes.
+            Face("Flight deck floor", new[] {
+                new Vector3(-0.90f, 1.23f, 5.86f), new Vector3(-0.90f, 1.23f, 7.69f),
+                new Vector3(-0.69f, 1.23f, 8.18f), new Vector3(0f, 1.23f, 8.35f),
+                new Vector3(0.69f, 1.23f, 8.18f), new Vector3(0.90f, 1.23f, 7.69f),
+                new Vector3(0.90f, 1.23f, 5.86f) }, trim);
             Box("Flight deck roof", new Vector3(0f, 2.79f, 6.94f), new Vector3(1.7f, 0.08f, 2.20f), lining);
             Box("Rear bulkhead", new Vector3(0f, 1.98f, 5.9f), new Vector3(1.72f, 1.55f, 0.06f), lining);
             // Raked forward panes, angled corner panes and side panes; no flat bus windscreen.
@@ -268,7 +274,19 @@ namespace Airside.Presentation
                 Beam("Sliding window rear post", new Vector3(side * 0.86f, 2.04f, 6.38f), new Vector3(side * 0.81f, 2.72f, 6.38f), 0.043f, lining);
                 Face("Forward roof taper", new[] { centreHigh, frontHigh, cornerHigh,
                     new Vector3(side * 0.85f, 2.79f, 6.8f), new Vector3(0f, 2.79f, 6.8f) }, lining);
-                Box("Lower side lining", new Vector3(side * 0.86f, 1.66f, 7.03f), new Vector3(0.075f, 0.72f, 1.90f), lining);
+                Face("Lower side lining", new[] { cornerLow,
+                    new Vector3(side * 0.86f, 2.04f, 5.86f),
+                    new Vector3(side * 0.90f, 1.23f, 5.86f),
+                    new Vector3(side * 0.90f, 1.23f, 7.69f) }, lining);
+                Face("Forward footwell shell", new[] { centreLow, frontLow, cornerLow,
+                    new Vector3(side * 0.90f, 1.23f, 7.69f),
+                    new Vector3(side * 0.69f, 1.23f, 8.18f),
+                    new Vector3(0f, 1.23f, 8.35f) }, lining);
+                Face("Rear side lining", new[] {
+                    new Vector3(side * 0.86f, 2.04f, 5.86f),
+                    new Vector3(side * 0.86f, 2.04f, 6.38f),
+                    new Vector3(side * 0.81f, 2.79f, 6.38f),
+                    new Vector3(side * 0.81f, 2.79f, 5.86f) }, lining);
                 Beam("Window latch", new Vector3(side * 0.83f, 2.07f, 7.12f), new Vector3(side * 0.83f, 2.07f, 7.29f), 0.018f, _metal);
                 Box("Side console", new Vector3(side * 0.74f, 1.49f, 7.18f), new Vector3(0.16f, 0.1f, 0.65f), _panel);
                 Box("Pilot cushion", new Vector3(side * 0.43f, 1.55f, 6.91f), new Vector3(0.50f, 0.13f, 0.48f), fabric);

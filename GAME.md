@@ -4,6 +4,8 @@
   Bradman Drive, Burbridge Road and Sir Richard Williams Avenue get landside
   verge eucalypts (both sides, outside the fence). Cap 220. Soft-deduped vs
   Tapleys windbreak. Same tip / PR #510.
+  Also retargeted `PropGovernorHoldsTheNoteWhileJetRevsRise` to #507's modest
+  jet pitch sweep (was failing on `main` and blocking headless CI).
   **NEXT:** Phase 2 dune scrub / LOD, or Phase 3 building accuracy.
 
 - **2026-10-01 Cursor — Phase 2c Tapleys Hill Road windbreak (ADR 0216).**

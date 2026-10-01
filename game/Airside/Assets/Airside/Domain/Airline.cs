@@ -73,6 +73,7 @@ namespace Airside.Domain
                     case "QTR": return "QATAR";
                     case "FJI": return "FIJI";
                     case "RFDS": return "RFDS";
+                    case "SAAS": return "SA AMBULANCE";
                     default: return Wordmark(Name);
                 }
             }
@@ -100,7 +101,7 @@ namespace Airside.Domain
         public bool IsPlayer { get; }
 
         /// <summary>Emergency medical flights — exempt from the Adelaide curfew.</summary>
-        public bool IsEmergency => Id.Value == "RFDS";
+        public bool IsEmergency => Id.Value is "RFDS" or "SAAS";
 
         /// <summary>
         /// Renames the airline in place — every existing reference (fleet aircraft, save
@@ -167,6 +168,12 @@ namespace Airside.Domain
         /// the sim flies a Saab 340 until that type exists. Exempt from the 23:00–05:00 curfew.
         /// </summary>
         public static Airline Rfds() => new("RFDS", "Royal Flying Doctor Service", "#C8102E", isPlayer: false);
+
+        /// <summary>
+        /// SA Ambulance Service rescue and retrieval, flying the Bell 412EP from Helipad West (ADR 0186, 0207).
+        /// Emergency flights: exempt from the Adelaide curfew and weather-limited more leniently than civil.
+        /// </summary>
+        public static Airline SaAmbulance() => new("SAAS", "SA Ambulance Rescue", "#C4161C", isPlayer: false);
 
         public static Airline Player(string name, string liveryHex, string code = null) =>
             new("PLAYER", name, liveryHex, isPlayer: true, code);

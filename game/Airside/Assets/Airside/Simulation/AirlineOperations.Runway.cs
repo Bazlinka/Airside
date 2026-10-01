@@ -96,6 +96,9 @@ namespace Airside.Simulation
                 return false;
             if (aircraft.State is not (FleetState.TakingOff or FleetState.Landing))
                 return false;
+            // A helicopter uses its pad, never a strip (ADR 0207).
+            if (aircraft.Type.IsRotorcraft)
+                return false;
             var until = StripBusyUntil(aircraft);
             return until.HasValue && until.Value.CompareTo(_clock.Now) > 0;
         }
@@ -708,6 +711,12 @@ namespace Airside.Simulation
 
         private void ScheduleAiDeparture(FleetAircraft aircraft, SimulationTime now)
         {
+            if (aircraft.Type.IsRotorcraft)
+            {
+                ScheduleRescueMission(aircraft, now);
+                return;
+            }
+
             if (aircraft.Airline.Id.Value == "VOZ")
             {
                 // Rotation, not a random draw, so the mainline timetable is stable.

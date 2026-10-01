@@ -19,7 +19,11 @@ namespace Airside.Simulation
         /// <summary>The route to the runway was not clear of other ground traffic.</summary>
         Taxiway,
         /// <summary>The route crosses a runway that was busy (ADR 0126).</summary>
-        RunwayCrossing
+        RunwayCrossing,
+        /// <summary>A helicopter held by weather: a storm, fog for a civil flight, or hard wind (ADR 0207).</summary>
+        Weather,
+        /// <summary>A helicopter waiting for the pad while another lifted off or landed (ADR 0207).</summary>
+        Pad
     }
 
     public static class DelayCauses
@@ -32,6 +36,8 @@ namespace Airside.Simulation
             DelayCause.LeadIn => "a blocked lead-in",
             DelayCause.Taxiway => "taxiway traffic",
             DelayCause.RunwayCrossing => "runway crossings",
+            DelayCause.Weather => "weather",
+            DelayCause.Pad => "pad traffic",
             _ => "ground control"
         };
     }

@@ -6,10 +6,11 @@ namespace Airside.Presentation
     /// <summary>Local spectator access; never changes aircraft schedules or saves.</summary>
     public static class CockpitAvailability
     {
-        public static bool Supported(AircraftType type) => type != null && type.Id == AircraftType.Saab340.Id;
+        public static bool Supported(AircraftType type) => type != null && (type.Id == AircraftType.Saab340.Id
+            || type.Id == AircraftType.Atr42.Id || type.Id == AircraftType.Dash8Q400.Id);
         public static string Reason(AircraftType type, bool visible, EngineState engines)
         {
-            if (!Supported(type)) return "Cockpit coming later for this type";
+            if (!Supported(type)) return "Turboprop cockpits only";
             if (!visible) return "Aircraft outside the local area";
             // First non-zero spool, rather than AnyRunning's 2% threshold.
             if (engines.Left <= 0f && engines.Right <= 0f) return "Available after engine start";

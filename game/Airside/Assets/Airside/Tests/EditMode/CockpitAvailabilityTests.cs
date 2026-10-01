@@ -41,9 +41,25 @@ namespace Airside.Tests
             Assert.That(camera.Bottom, Is.LessThanOrEqualTo(height));
         }
 
-        [Test] public void UnsupportedTypeNeverUsesSaabSeat()
+        [TestCase("SF34")]
+        [TestCase("ATR42")]
+        [TestCase("DH8D")]
+        public void EveryCurrentTurbopropUsesTheSameEngineAndVisibilityRules(string id)
         {
-            Assert.That(CockpitAvailability.Reason(AircraftType.Atr42, true, EngineState.Running), Is.Not.Empty);
+            Assert.That(AircraftType.TryFromId(id, out var type), Is.True);
+            Assert.That(CockpitAvailability.Supported(type), Is.True);
+            Assert.That(CockpitAvailability.Reason(type, true, new EngineState(0f, 0.001f, true, false)), Is.Empty);
+            Assert.That(CockpitAvailability.Reason(type, true, EngineState.ColdAndOpen), Is.EqualTo("Available after engine start"));
+            Assert.That(CockpitAvailability.Reason(type, false, EngineState.Running), Is.EqualTo("Aircraft outside the local area"));
+        }
+
+        [Test] public void JetsAndUnknownTypesRemainUnavailable()
+        {
+            foreach (var spec in AircraftCatalogue.All)
+                if (spec.Type.Id != AircraftType.Saab340.Id && spec.Type.Id != AircraftType.Atr42.Id
+                    && spec.Type.Id != AircraftType.Dash8Q400.Id)
+                    Assert.That(CockpitAvailability.Reason(spec.Type, true, EngineState.Running),
+                        Is.EqualTo("Turboprop cockpits only"), spec.Id);
             Assert.That(CockpitAvailability.Supported(null), Is.False);
         }
     }

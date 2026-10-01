@@ -1,5 +1,25 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Codex — turboprop cockpit rollout (`feature/turboprop-cockpits`, ADR 0215).**
+  Bailey requested cockpit view for turboprops only. Supported: SF34 Saab 340B,
+  ATR42 ATR 42-600 and DH8D Dash 8-400. The ATR and Dash have original fitted
+  glass-cockpit layouts; Saab retains its existing layout. All share exterior
+  restoration, opaque lower shells and existing camera/engine/visibility rules.
+  Jets show a disabled action with "Turboprop cockpits only". No save/simulation changes.
+  **Verification:** availability/card tests 8/8 pass. Native EditMode and visual
+  review are blocked by Unity licensing IPC before test execution; no completed
+  native result, new Mac build or new runtime screenshot is claimed. Offline
+  Unity-reference compilation passed for presentation, editor and test assemblies.
+  Full domain: 1280 pass / 1 existing audio failure; metadata audit passed.
+  Full domain status and exact continuation commands:
+  `docs/testing/turboprop-cockpits-2026-10-01/README.md`.
+  **NEXT:** once Unity licensing is healthy, run native cockpit/full EditMode checks,
+  inspect all three interiors and lower sightlines, build a clean Mac player,
+  then capture real eligible flight phases. Bailey explicitly requested merging
+  this implementation on 1 October despite the recorded native licensing blocker;
+  the remaining verification gates stay open after merge.
+
+
 - **2026-10-01 Codex — Saab cockpit opaque shell fix.**
   The revision-2 startup image exposed apron through gaps beside/below the panel.
   Hiding the exterior fuselage requires a complete interior shell. Continuous

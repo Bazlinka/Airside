@@ -1,5 +1,15 @@
 ## Unreleased
 
+- **My Flights panel shows the whole story; aircraft doors open onto a real doorway.**
+  Each flight tile is now taller and carries the flight number and airframe, the route
+  ("Adelaide → Kingscote") with the registration, a state line, the time that matters
+  ("Departs 14:05", "ETA 15:20", "Check ends 18:00") and a progress bar for the departure
+  prep, flight leg or outstation turnaround. Behind every passenger and cargo door of all 13 flying types
+  there is now a hollow — a dark reveal, a black cabin and a lit vestibule that follow the fuselage
+  curve — drawn only while the door is away from the hull, so people on the stairs or bridge walk
+  into a doorway instead of a grey wall. `AircraftAppearanceReview` gained `-aircraftReviewDoors open`
+  and a `door` close-up view. Presentation only: no simulation, save or model-file change.
+
 - **Phase 2a multi-lobe eucalypt crowns (ADR 0212).** NDVI suburb trees use a
   3-lobe faceted canopy (primary dome + two side clusters, 28 crown tris) so
   they read as eucalypts instead of one hex blob. Layout in

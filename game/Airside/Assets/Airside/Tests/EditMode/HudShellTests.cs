@@ -76,6 +76,42 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FlightTiles_FitAllTheirTextAndShowProgressInsideEachTile()
+        {
+            var area = new HudBox(1000f, 16f, HudShell.OperationsWidth, HudShell.OperationsMaxHeight);
+            var rows = new List<OperationsRow>
+            {
+                new("VH-PAX", "KGC", "Fuelling 40%", StatusSeverity.Attention, true,
+                    "ZL3482", "Saab 340B", "Adelaide → Kingscote", "Departs 14:05", 0.4f, "Fuelling 40%"),
+                new("VH-ABC", "MEL", "Inbound", StatusSeverity.Normal, false,
+                    "VA613", "Boeing 737-800", "Melbourne → Adelaide", "ETA 15:20", 0.62f, "62% of flight"),
+                new("VH-XYZ", string.Empty, "Available", StatusSeverity.Normal, false)
+            };
+            var list = new HudDrawList();
+            HudShellPainter.PaintOperations(list, area, rows, "VH-ABC", "1 aircraft available");
+            var hotspots = list.Commands.Where(c => c.Kind == HudDrawKind.Hotspot).ToArray();
+            Assert.That(hotspots, Has.Length.EqualTo(3), "every row is a clickable tile");
+            Assert.That(hotspots.All(h => h.Box.Height == HudShell.OperationsTileHeight));
+            foreach (var tile in hotspots)
+            {
+                var inside = list.Commands.Where(c => c.Kind != HudDrawKind.Surface && c.Kind != HudDrawKind.Card
+                    && c.Kind != HudDrawKind.Hotspot && c.Kind != HudDrawKind.Outline
+                    && c.Box.Y >= tile.Box.Y && c.Box.Y < tile.Box.Bottom).ToArray();
+                foreach (var c in inside)
+                {
+                    Assert.That(c.Box.X, Is.GreaterThanOrEqualTo(tile.Box.X - 0.01f), c.Text);
+                    Assert.That(c.Box.Right, Is.LessThanOrEqualTo(tile.Box.Right + 0.01f), c.Text);
+                    Assert.That(c.Box.Bottom, Is.LessThanOrEqualTo(tile.Box.Bottom + 0.01f), c.Text);
+                }
+            }
+
+            Assert.That(list.Commands.Count(c => c.Kind == HudDrawKind.Bar), Is.EqualTo(2), "bars only where there is progress");
+            foreach (var wanted in new[] { "ZL3482", "Saab 340B", "Adelaide → Kingscote  ·  VH-PAX", "Departs 14:05", "ETA 15:20" })
+                Assert.That(list.Commands.Any(c => c.Text == wanted), Is.True, wanted);
+            Assert.That(list.Commands.Last().Text, Is.EqualTo("1 aircraft available"));
+        }
+
+        [Test]
         public void Shell_OpenSheetReplacesTheOverviewPanels()
         {
             var shell = HudShell.Layout(1440f, 900f, workspaceOpen: true);

@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Phase 1 land cover: Golf distinct from Park (ADR 0206).** OSM golf courses
+  paint `Kind.Golf` with a richer irrigated green tint at overview (Royal
+  Adelaide, Glenelg, …). Parks stay olive. Regenerated `AdelaideLandCover`;
+  locked by `AdelaideLandCoverTests`. No save-schema changes.
+- **Visual overhaul plan approved; continue without ask-to-verify.** Bailey
+  closed P0 and approved the visual plan; agents ship Phase 1+ code; he rebuilds
+  when he wants. Mac baseline PNG/metrics optional, not a gate.
 - **P0 closed by Bailey (move to P1).** Owner waived remaining unverified
   stills/listening rows in `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`.
   Plan + ADR 0205 + `GAME.md` handoff point at the visual overhaul gate. No

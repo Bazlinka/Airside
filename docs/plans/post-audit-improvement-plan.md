@@ -31,22 +31,19 @@ helpers from #491 remain on `main` for optional later use. Open tip #492
 
 Do not reopen P0 unless Bailey asks. Next priority is **P1**.
 
-### P1 — Visual overhaul gate (do next)
+### P1 — Visual overhaul (do next)
 
-1. Bailey signs off (or rejects) `docs/plans/visual-overhaul-plan.md`.
-2. If yes: finish **Phase 0 baseline** (named captures + fps / p95 / SetPass / batches)
-   before more Phase 1 ground/land. No new visual phase lands without a before/after number.
-3. Building audit: 71/78 heights are still rule defaults (`docs/data/ypad-buildings-audit.md`).
+**Status: approved (Bailey 2026-10-01).** Continue Phase 1+ code; do **not** ask Bailey to
+verify each slice — he rebuilds when he wants. Optional Mac baseline captures are never a merge gate.
 
-**Already on `main` (ahead of / parallel to the gate — does not mean P1 is done):**
-- Phase 0 bookmarks (ADR 0200) via #485; Mac `capture-visual-baseline.sh` metrics
-  still owed under `docs/testing/visual-baseline-2026-09-30/`.
+1. Land-cover polish → far ring (remaining Phase 1 in `docs/plans/visual-overhaul-plan.md`).
+2. Then Phase 2 trees, Phase 3 buildings (audit already done), Phase 4 lighting, as narrow ADRs.
+3. Building heights: 71/78 still rule defaults (`docs/data/ypad-buildings-audit.md`) — later Phase 3.
+
+**Already on `main`:**
+- Phase 0 bookmarks (ADR 0200) via #485.
 - Phase 1 oil stains (ADR 0201) + apron wear (ADR 0202) via #486.
 - Phase 1 West Beach dunes / shore foam / Patawalonga outlet (ADR 0203) via #489.
-
-Still open for P1: plan sign-off, committed baseline metrics PNGs, remaining Phase 1
-items in the visual plan (land-cover polish, far-ring skyline, etc.), then later
-visual phases only after Bailey clears the gate.
 
 ### P2 — Finish freight as a mode
 
@@ -99,7 +96,8 @@ overrides):
 
 1. Read this plan and the top of `GAME.md` before choosing work.
 2. One change, one owner; `feature/<name>` or `cursor/<name>-…` with non-overlapping files.
-3. Behaviour changes: `scripts/test-domain.sh` here; `scripts/test-unity.sh` + Mac look before merge.
+3. Behaviour changes: `scripts/test-domain.sh` here; Unity EditMode on a Mac before merge when available.
+   Do **not** ask Bailey to playtest or fill RESULTS — he builds when he wants.
 4. Update `GAME.md` and `CHANGELOG.md` in the same commit; push to `origin`.
 5. Do not treat stale `GAME.md` footer “Next work” or early `PROJECT_PLAN.md` “gaps”
    sections as current truth — this plan + top handoff + ADR 0120 win.

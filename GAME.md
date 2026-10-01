@@ -1,14 +1,10 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-10-01 Cursor — P0 closed by Bailey; move to P1.**
-  Owner override: remaining P0 stills/listening rows stay `unverified` (waived).
-  Plan + RESULTS + ADR 0205 updated. Do not reopen P0 unless Bailey asks.
-  Optional tip #492 (pick locks) is leftover tooling, not a blocker.
-  **NEXT:** P1 visual overhaul gate — Bailey signs off or rejects
-  `docs/plans/visual-overhaul-plan.md`; if yes, run Mac
-  `scripts/capture-visual-baseline.sh` and commit metrics under
-  `docs/testing/visual-baseline-2026-09-30/` (bookmarks already on `main` via #485).
-  Some Phase 1 ground/coast slices already merged (#486, #489) ahead of the gate.
+- **2026-10-01 Cursor — Phase 1 Golf land cover (ADR 0206) + P0 closed / plan approved.**
+  OSM `leisure=golf_course` → `AdelaideLandCover.Kind.Golf` with irrigated green tint;
+  parks stay olive. Bailey closed P0, approved the visual plan, and said keep shipping —
+  no ask-to-verify. **Checks:** `scripts/test-domain.sh` after this tip.
+  **NEXT:** Phase 1 bunkers / far-ring skyline (still land-cover polish).
 
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.

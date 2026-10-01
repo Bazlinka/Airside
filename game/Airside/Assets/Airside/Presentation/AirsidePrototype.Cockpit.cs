@@ -49,6 +49,7 @@ namespace Airside.Presentation
 
         private void BindCockpitView(Transform view)
         {
+            ReleaseCockpitAirflow();
             if (_cockpitInterior != null)
             {
                 _cockpitInterior.Leave();
@@ -72,6 +73,7 @@ namespace Airside.Presentation
         {
             if (!InCockpit) return;
             var id = _cockpitAircraftId;
+            ReleaseCockpitAirflow();
             _cockpitAircraftId = null;
             if (_cockpitInterior != null)
             {
@@ -149,14 +151,19 @@ namespace Airside.Presentation
             var fromAdelaideKm = Math.Sqrt(worldX * worldX + worldZ * worldZ) / 1000.0;
             if (_fleetAircraftById.TryGetValue(_cockpitAircraftId, out var aircraft))
                 GUI.Label(new Rect(strip.x + 12f, strip.y + 8f, strip.width - 270f, 96f),
-                    $"{aircraft.Registration} · {AircraftStatus.TagPhase(aircraft, _clock.Now)}\n{aircraft.CurrentDestination?.Code ?? "Local flight"} · GS {_cockpitGroundKnots:0} kt · V/S {_cockpitVerticalFeet:+0;-0;0} ft/min\n{fromAdelaideKm:0.0} km from Adelaide · Right-drag / scroll zoom\n1 forward · 2 left · 3 panel · 4 right · 5 overhead");
+                    $"{aircraft.Registration} · {AircraftStatus.TagPhase(aircraft, _clock.Now)}\n{aircraft.CurrentDestination?.Code ?? "Local flight"} · GS {_cockpitGroundKnots:0} kt · V/S {_cockpitVerticalFeet:+0;-0;0} ft/min\n{fromAdelaideKm:0.0} km from Adelaide · Drag/arrows look · scroll/+− zoom\n1 forward · 2 left · 3 panel · 4 right · 5 overhead");
             if (GUI.Button(new Rect(strip.xMax - 246f, strip.y + 10f, 112f, 36f), "Recenter", button))
                 _cameraController.RecenterCockpit();
             if (GUI.Button(new Rect(strip.xMax - 124f, strip.y + 10f, 112f, 36f), "Exit (Esc)", button))
                 ExitCockpit(false);
-            _cameraController.CockpitMotionEnabled = GUI.Toggle(
+            var motion = GUI.Toggle(
                 new Rect(strip.xMax - 246f, strip.y + 54f, 234f, 24f),
                 _cameraController.CockpitMotionEnabled, "Cockpit vibration");
+            if (motion != _cameraController.CockpitMotionEnabled)
+            {
+                _cameraController.CockpitMotionEnabled = motion;
+                AirsideSettings.Current.Save();
+            }
             var placement = AirlineHudLayout.Create(layout, false);
             DrawToast(placement.Toast);
         }

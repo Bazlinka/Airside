@@ -550,6 +550,7 @@ namespace Airside.Presentation
 
         private void OnDestroy()
         {
+            ReleaseCockpitAirflow();
             if (_cockpitInterior != null)
             {
                 _cockpitInterior.Leave();

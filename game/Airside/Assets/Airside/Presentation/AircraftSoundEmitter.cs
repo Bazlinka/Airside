@@ -66,6 +66,11 @@ namespace Airside.Presentation
             if (InteriorListening) cutoff = Mathf.Min(cutoff, 1800f);
             for (var i = 0; i < _filters.Length; i++)
                 _filters[i].cutoffFrequency = cutoff;
+            // The listener rides this airframe. Pose updates/floating-origin steps must
+            // not pitch-bend its engine, reverse or tyre voices as if it flew past.
+            var doppler = InteriorListening ? 0f : 0.2f;
+            _idle.dopplerLevel = _power.dopplerLevel = _reverse.dopplerLevel = doppler;
+            _wheels.dopplerLevel = _touchdown.dopplerLevel = doppler;
             ApplyLoop(_idle, mix.Idle * zoomGain, mix.Pitch, deltaSeconds);
             ApplyLoop(_power, mix.Power * zoomGain, mix.Pitch, deltaSeconds);
             ApplyLoop(_reverse, mix.Reverse * zoomGain, mix.Pitch * 0.96f, deltaSeconds);

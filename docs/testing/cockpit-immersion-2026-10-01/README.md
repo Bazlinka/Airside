@@ -21,3 +21,7 @@ The 900–1600 m deck is stylised, not a surveyed cloud-base/top model. The exte
 weather palette/simulation remain authoritative; clear sky above is a cockpit
 background/horizon presentation blend. Model-specific recorded interior voices,
 interactive avionics and head translation remain outside this candidate.
+
+Bailey subsequently explicitly authorised commit/merge and continued work. PR #517
+merged into main at `dd9c6730`. Outstanding native/packaged limits above remain open;
+continued work is recorded in `docs/testing/cockpit-sound-2026-10-01/README.md`.

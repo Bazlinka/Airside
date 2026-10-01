@@ -1,6 +1,11 @@
 ## Unreleased
 
-- Cockpit immersion candidate: eased wider zoom, five seat view shortcuts,
+- Cockpit sound/control refinement: suppress airport ambience/PA inside, add
+  original quiet speed-dependent airflow, remove own-aircraft Doppler, ease
+  seat turns, support arrows/+−/Home and save the vibration preference.
+  Native listening/input acceptance remains open.
+
+- Cockpit immersion (PR #517, merge authorised): eased wider zoom, five seat view shortcuts,
   optional engine/rolling/cloud vibration, destination/distance/vertical-speed
   HUD, cloud-deck fog and rain/sky transitions above the deck. Select interior
   sound filtering by watched aircraft. Native visual/audio acceptance pending.

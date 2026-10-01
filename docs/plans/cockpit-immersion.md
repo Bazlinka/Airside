@@ -25,3 +25,30 @@ flight/landing listening and performance checks remain required before merging.
 Validation: pure cloud envelope tests and full headless suite; asset metadata and
 harness audit. This Linux worker has no Unity editor or Mac player; native checks
 and perceptual acceptance are explicitly outstanding.
+
+## Authorised merge and follow-up
+
+Bailey requested commit/merge and continued work. PR #517 merged on 2026-10-01,
+with its outstanding native/packaged acceptance explicitly retained.
+
+Next player outcome: cockpit sound no longer includes the non-spatial apron bed
+or terminal PA; own-aircraft voices have no Doppler pitch shift. Original filtered
+noise supplies a quiet airflow/ventilation bed, rising with rendered ground speed
+(a presentation proxy, not measured airspeed or recorded model-specific audio).
+Arrows look, +/− zoom and Home faces forward. Presets and drag ease into position;
+mouse pitch respects invert-orbit. The vibration checkbox persists across launches.
+
+Scope: existing soundscape, emitter Doppler selection, transient cockpit airflow
+source/clip, pure airflow generator/tests, cockpit camera and one PlayerPrefs key.
+Existing exterior sound, aircraft recordings/synthesis, weather, simulation,
+reservation/route/time/economy and save schema remain unchanged.
+
+Acceptance: no apron bed/terminal chime during cockpit flight, including a chime
+already playing when entering; exterior ambience resumes on exit without catch-up
+chimes. Airflow is quiet at taxi and builds at flight speed, fades smoothly with
+speed and silences immediately on mute. Rebind/exit/destruction release its clip
+and source; no accumulating voices across entry cycles. Own engine/reverse/wheel
+voices retain pitch on floating-origin travel; exterior Doppler returns on exit.
+Keyboard navigation obeys menu ownership and clamps to the existing seat limits.
+Check settings relaunch; native EditMode audio regression, all-type cockpit inputs,
+listening and frame-time acceptance remain required.

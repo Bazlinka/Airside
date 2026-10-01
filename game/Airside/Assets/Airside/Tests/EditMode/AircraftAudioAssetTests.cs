@@ -41,6 +41,28 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void InteriorVoicesDisableDopplerAndRestoreItOnExit()
+        {
+            var go = new GameObject("Cockpit audio aircraft");
+            try
+            {
+                var emitter = go.AddComponent<AircraftSoundEmitter>();
+                emitter.Configure(AircraftType.Saab340, null, null);
+                var sources = go.GetComponentsInChildren<AudioSource>();
+                emitter.InteriorListening = true;
+                // Zero gain avoids playback; the actual mix still configures every voice.
+                emitter.Apply("cockpit", 1f, 1f, 1f, 1f, 0f, 30f, false, false,
+                    Vector3.zero, 0f, false, 0.1f);
+                foreach (var source in sources) Assert.That(source.dopplerLevel, Is.Zero);
+                emitter.InteriorListening = false;
+                emitter.Apply("cockpit", 1f, 1f, 1f, 1f, 0f, 30f, false, false,
+                    Vector3.zero, 0f, false, 0.1f);
+                foreach (var source in sources) Assert.That(source.dopplerLevel, Is.EqualTo(0.2f).Within(0.001f));
+            }
+            finally { Object.DestroyImmediate(go); }
+        }
+
+        [Test]
         public void MutingCullingAndDisablingImmediatelySilenceEverySpatialLayer()
         {
             var go = new GameObject("Audio test aircraft");

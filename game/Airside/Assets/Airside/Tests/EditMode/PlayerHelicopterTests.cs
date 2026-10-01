@@ -127,7 +127,7 @@ namespace Airside.Tests
                     Assert.That(bell.Stand, Is.Not.EqualTo(default(StableId)));
                 if (bell.State is FleetState.Landing or FleetState.AtStand && bell.Stand.Value != null
                     && bell.CompletedTrips > 0)
-                    Assert.That(bell.Stand.Value, Is.AnyOf("HELI-2", "HELI-3"), "second " + second);
+                    Assert.That(new[] { "HELI-2", "HELI-3" }, Does.Contain(bell.Stand.Value), "second " + second);
             }
 
             Assert.That(rescue.CompletedTrips, Is.GreaterThanOrEqualTo(1), "the rescue crew kept flying");

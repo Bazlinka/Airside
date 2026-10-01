@@ -1,0 +1,7 @@
+commit=6f1d6ddd
+commitFull=6f1d6ddda3916688322fff8f2ba1dfb204ee76e8
+branch=feature/all-jet-cockpits
+subject=Merge current main while preserving all jet and turboprop cockpits
+committedAt=2026-10-01T15:09:33+09:30
+dirty=false
+stampedAt=2026-10-01T05:39:39Z

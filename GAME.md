@@ -1,3 +1,15 @@
+## Merge handoff — 1 October 2026
+
+Bailey authorised merging `feature/all-jet-cockpits` after reviewing its evidence
+and remaining packaged acceptance limits. Integrating current main preserves the
+new ATR42/DH8D/SF34 cockpits alongside all ten jets. Both families share the tested
+`CockpitInterior` lifetime; turboprop geometry stays unchanged. Current main also
+contains the separate audio assertion fix. Combined full checks pass: headless 1,345/1,345; native 1,765 passed,
+zero failures, two existing inconclusives. The new native result is retained in
+`docs/testing/jet-cockpits-2026-10-01/merge-native-tests.xml`. Asset audit and
+generated harness checks pass. Clean combined Mac build passes at `6f1d6ddd`; PR #514 is the authorised merge. Packaged flight/night/weather/performance remain unverified;
+merge authorisation does not turn those into passing checks. Jet ADR is now 0225.
+
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
 - **2026-10-01 Cursor — arrivals bunched on final (`main`).** Bailey saw three
@@ -8,15 +20,30 @@
   Presentation-only consumer; tower, saves and random draws unchanged.
   **Evidence:** new `DrawnFinal_KeepsConsecutiveArrivalsKilometresApart` (one day,
   seed 2026: under-3 km pairs 389 → 0, p5 gap 221 m → 9.4 km). On top of PR #510,
-  Unity EditMode **1737 passed / 0 failed / 2 inconclusive** (after the separate
-  `ClearCache` compile fix below). Clean Mac build follows.
+  Unity EditMode **1737 passed / 0 failed / 2 inconclusive**. Clean Mac build passed.
   **NEXT:** watch a busy arrival bank in the packaged game.
 
-- **2026-10-01 Cursor — main did not compile in Unity after PR #510.** Five
-  vegetation placement tests call `ClearCache()`, which was `internal` in
-  Presentation (no `InternalsVisibleTo` there). The dotnet harness compiles one
-  assembly so it never saw this. Made the five `ClearCache` methods public.
-  **Watch:** headless green is not Unity green for Presentation internals.
+- **2026-10-01 Codex — all-jet cockpit candidate (`feature/all-jet-cockpits`, ADR 0225).**
+  Isolated checkout: `/private/tmp/airside-jet-cockpits`; unrelated primary-checkout
+  audio work retained. All ten jets have explicit fitted left-seat decks with
+  family-specific displays, yokes/sidesticks, windows, guidance rail, overhead and
+  pedestal. Lower/front shell, floor, roof and rear bulkhead close non-window gaps.
+  A continuous welded jet shell now has a checked window boundary: no unintended
+  mesh seams; rails/pillars fit its exact edges. Focused cockpit checks: 27/27.
+  SF34 uses its existing geometry through a shared interior lifecycle. Cockpit
+  remains spectator mode; first spool/local visibility/shutdown rules unchanged.
+  Plan and task packet: `docs/plans/jet-cockpits.md`. Validation and open acceptance:
+  `docs/testing/jet-cockpits-2026-10-01/README.md`. **NEXT:** complete packaged journeys/entry/exit/weather/night/audio/performance
+  acceptance remains open after the authorised merge. Native all-type geometry review is complete.
+  **Checks:** focused headless cockpit 27/27; focused native Unity 35/35.
+  Licensing recovered by stopping the stale helper from the initial sandbox run.
+  All ten types' ten-angle native sheets inspected (100 stills): no unintended shell
+  gaps seen; overhead visibility corrected. Evidence under `docs/testing/jet-cockpits-2026-10-01/native/`.
+  Full native: 1,702 passed, one inherited audio failure, two existing inconclusives.
+  Unity asset audit passes. Mac player builds passed from clean dc2041f3 and 57d14e09. Packaged capture
+  attempts did not reach an eligible local jet within their bounded waits; no cockpit
+  PNGs accepted. Journey/night/weather/audio/performance acceptance remains open.
+
 
 - **2026-10-01 Cursor — merge PR #510 visual overhaul tip onto main (goal stopped).**
   Merges Phase 2b–2g vegetation + Phase 3 tower/hangars/ARFF onto main that

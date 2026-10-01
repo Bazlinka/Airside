@@ -63,7 +63,7 @@ namespace Airside.Presentation
             return _cached;
         }
 
-        public static void ClearCache()
+        internal static void ClearCache()
         {
             _cached = null;
             _nameIndex = short.MinValue;

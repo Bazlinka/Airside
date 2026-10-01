@@ -50,7 +50,7 @@ namespace Airside.Presentation
             return _cached;
         }
 
-        public static void ClearCache() => _cached = null;
+        internal static void ClearCache() => _cached = null;
 
         private static Site[] ComputeSites()
         {

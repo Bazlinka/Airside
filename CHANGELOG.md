@@ -7,8 +7,21 @@
   3 km fell from 389 to 0; the closest 5 % are now about 9 km apart. Presentation only: tower
   sequencing, saves and simulation outcomes are unchanged.
 
-- **Unity compiles again after the vegetation merge.** Five placement tests called an
-  `internal` cache reset the Unity test assembly cannot see; it is now public.
+- Allow the native EditMode test assembly to use presentation cache-reset hooks,
+  matching the existing headless harness access for vegetation placement tests.
+
+- Combine all ten jet cockpits with main's three turboprop cockpits through one
+  renderer-restoration/resource lifetime. Preserve arrival-review and all-type native
+  review commands from both branches. Jet rollout decision: ADR 0225.
+
+- Replace separate jet cockpit shell pieces with a continuous welded shell and
+  exactly fitted window frames. All-type topology tests reject unintended wall,
+  floor or roof openings and inconsistent surface winding.
+
+- All ten catalogue jets gain fitted cockpit spectator interiors with family-specific
+  controls, display arrangements, windows, overheads and pedestals; shared shell
+  restoration preserves the existing SF34 cockpit. Live local telemetry and engine
+  spool labels; autonomous flight and saves unchanged. Jet rollout, ADR 0225.
 
 - **Phase 3 ARFF/fire-station silhouette (ADR 0223).** Taller/wider appliance
   bay doors, hose-drying tower with obstruction light, concrete parking pads

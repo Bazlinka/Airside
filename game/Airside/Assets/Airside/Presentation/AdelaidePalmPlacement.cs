@@ -53,7 +53,7 @@ namespace Airside.Presentation
         }
 
         /// <summary>Test hook — clears the cache so layout rule changes are re-evaluated.</summary>
-        public static void ClearCache() => _cached = null;
+        internal static void ClearCache() => _cached = null;
 
         private static Site[] ComputeSites()
         {

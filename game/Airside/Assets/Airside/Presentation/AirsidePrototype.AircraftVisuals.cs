@@ -119,7 +119,7 @@ namespace Airside.Presentation
                 }
                 var pitch = journey.HasValue ? -Mathf.Atan2(next.y-position.y,
                     new Vector2(next.x-position.x,next.z-position.z).magnitude)*Mathf.Rad2Deg
-                    : PhasePitchDegrees(phase, progress);
+                    : AirsideFlightPath.PitchDegrees(phase, progress, aircraftType);
                 var bank = SmoothedBankDegrees(flight.AircraftId, view, heading, phase,
                     journey.HasValue ? 0f : DepartureBankDegrees(flight, phase, progress));
                 var targetRotation = heading * Quaternion.Euler(pitch, 0f, bank);
@@ -157,7 +157,7 @@ namespace Airside.Presentation
                 RollLandingGearTires(view, FleetTireRollSpeed(flight, phase, progress, aircraftType));
                 ApplyOleoSettling(view, phase, progress);
                 UpdateControlSurfaces(viewParts.ControlSurfaces, viewParts.Articulation, phase, progress, bank,
-                    PresentationDeltaTime, engines, engines.HasValue);
+                    PresentationDeltaTime, engines, engines.HasValue, aircraftType);
                 UpdateGroundShadow(view);
                 UpdateSelectionMarker(view, flight.AircraftId);
                 GroundPose? groundPose = TryFleetGround(flight, out var groundAircraft, out var groundVisual)

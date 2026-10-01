@@ -1,8 +1,13 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Cursor — Phase 2g NDVI tree bake LOD (ADR 0220).**
+  Suburb trees: Full 3-lobe ≤1.4 km, Medium primary ≤2.8 km, Billboard cards
+  beyond. `AdelaideTreeLod` + `AirsideAdelaideSuburbs.AddTree`. Same tip / PR #510.
+  **NEXT:** Phase 2 wind / ground tufts, or Phase 3 building accuracy.
+
 - **2026-10-01 Cursor — Phase 2f Norfolk Island pines on Henley Beach Road (ADR 0219).**
   Tiered conical pines along Henley Beach Road verges. Cap 120. Same tip / PR #510.
-  **NEXT:** Phase 2 LOD / wind / ground tufts, or Phase 3 building accuracy.
+  **NEXT:** Phase 2g done on same tip.
 
 - **2026-10-01 Cursor — Phase 2e West Beach dune scrub (ADR 0218).**
   Low multi-lobe tea-tree/scrub on OSM Sand cells in the coast dune band

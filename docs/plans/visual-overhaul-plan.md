@@ -138,8 +138,10 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
   (`AdelaideDuneScrubPlacement`) — no new assets.
 - Phase 2f (ADR 0219): Norfolk Island pines on Henley Beach Road
   (`AdelaideNorfolkPinePlacement`) — no new assets.
-  **Next:** Phase 2 LOD / wind / ground-cover tufts, or Phase 3 building
-  accuracy.
+- Phase 2g (ADR 0220): NDVI tree bake LOD (Full / Medium / Billboard by
+  distance) — no new assets.
+  **Next:** Phase 2 wind / ground-cover tufts / runtime impostors, or Phase 3
+  building accuracy.
 - Phases 2 (remainder), 3b–f, 4, 5 remain.
 
 ## Risks

@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Phase 2g NDVI tree bake LOD (ADR 0220).** Suburb trees use Full / Medium /
+  Billboard crowns by distance from ARP (1.4 km / 2.8 km), cutting far-ring
+  triangles. Locked by `AdelaideTreeLodTests`. No new assets or save-schema
+  changes.
+
 - **Phase 2f Norfolk Island pines on Henley Beach Road (ADR 0219).** Tiered
   conical araucaria silhouette along both landside verges. Cap 120. Locked by
   `AdelaideNorfolkPinePlacementTests`. No new assets or save-schema changes.

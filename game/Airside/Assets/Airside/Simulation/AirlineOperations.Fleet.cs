@@ -119,6 +119,8 @@ namespace Airside.Simulation
                 return CommandResult.Refused("Open that base first.");
             if (type == null || !AircraftAcquisition.TryFor(type, out var offer))
                 return CommandResult.Refused("That aircraft is not for sale.");
+            if (type.IsRotorcraft)
+                return CommandResult.Refused("A helicopter flies from the Adelaide helipad; it cannot be based at an outstation.");
             if (PlayerFleetCount() >= AircraftAcquisition.MaxPlayerAircraft)
                 return CommandResult.Refused("Your fleet is full.");
             var based = 0;

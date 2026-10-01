@@ -564,6 +564,11 @@ namespace Airside.Simulation
                 operations.AddMissingEmergencyOperators();
                 operations.AddMissingTerminalOperators();
             }
+            else
+            {
+                // ADR 0207: every save gains the rescue helicopter on the helipad if it is not already there.
+                operations.AddMissingEmergencyOperators(rotorcraftOnly: true);
+            }
 
             // A pre-6 save never had a career: start fresh Provisional with the same
             // opening float a new airline gets, rather than back-computing rewards for

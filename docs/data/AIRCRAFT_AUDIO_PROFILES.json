@@ -105,5 +105,13 @@
       "brightness_hz": 2350,
       "body_hz": 114
     }
+  ],
+  "rotorcraft": [
+    {
+      "id": "B412",
+      "pitch": 1.0,
+      "gain": 0.95,
+      "note": "ADR 0207: Bell 412EP; loops synthesised by scripts/audio/generate_rotorcraft_audio.py, not derived from a family bed."
+    }
   ]
 }

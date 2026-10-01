@@ -257,8 +257,9 @@ namespace Airside.Simulation
 
         private static long Scale(AircraftType type, long seconds, PlayerBaseLevel baseLevel)
         {
-            var typeScale = type != null && AircraftCatalogue.TryFor(type, out var spec)
-                            && spec.StandClass == StandClass.TerminalGate ? 1.5 : 1.0;
+            var typeScale = type != null && type.IsRotorcraft ? 0.6
+                : type != null && AircraftCatalogue.TryFor(type, out var spec)
+                  && spec.StandClass == StandClass.TerminalGate ? 1.5 : 1.0;
             var baseScale = baseLevel switch
             {
                 PlayerBaseLevel.ExpandedRegional => 0.90,

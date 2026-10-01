@@ -1,0 +1,24 @@
+[
+  {
+    "file": "eng_b412_idle_v01.wav",
+    "sha256": "8b3c89ccd10561a96a275de8fb6c31538e74d249d77ba6ba93d937c3969e2c8c",
+    "seconds": 8.0,
+    "rms_db": -20.0,
+    "peak": 0.47466,
+    "seam": 0.044525,
+    "looping": true,
+    "blade_pass_hz": 22.0,
+    "blade_pass_line": 77.5
+  },
+  {
+    "file": "eng_b412_power_v01.wav",
+    "sha256": "cb970837eaf2c09ab762fa128f414ced58f856df42245e7e076180c4b7fc78a7",
+    "seconds": 8.0,
+    "rms_db": -17.0,
+    "peak": 0.76641,
+    "seam": 0.104584,
+    "looping": true,
+    "blade_pass_hz": 22.0,
+    "blade_pass_line": 95.61
+  }
+]

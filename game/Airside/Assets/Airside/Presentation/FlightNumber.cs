@@ -51,6 +51,7 @@ namespace Airside.Presentation
                 "FJI" => "FJ",
                 "REX" => "ZL",
                 "RFDS" => "FD",
+                "SAAS" => "SR",
                 _ => airline.Id.Value
             };
         }
@@ -239,6 +240,13 @@ namespace Airside.Presentation
                 ("RFDS", "WYA") => 240,
                 ("RFDS", "KGC") => 250,
                 ("RFDS", "BHQ") => 260,
+                // SA Ambulance rescue call-outs (ADR 0207): one number per hospital.
+                ("SAAS", "RAH") => 100,
+                ("SAAS", "FMC") => 110,
+                ("SAAS", "LMH") => 120,
+                ("SAAS", "MTB") => 130,
+                ("SAAS", "GAW") => 140,
+                ("SAAS", "VHB") => 150,
                 _ => null
             };
     }

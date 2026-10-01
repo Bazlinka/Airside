@@ -46,6 +46,8 @@ namespace Airside.Presentation
             float rotation, float left, float right, float reverse, float groundSpeed, bool grounded)
         {
             var profile = AircraftAudioProfiles.For(type);
+            if (type != null && type.IsRotorcraft)
+                return ForRotorcraft(profile, aircraftId, power, rotation, left, right);
             var prop = EngineVoice.ClassOf(type) == EngineClass.Turboprop;
             power = Clamp(power);
             rotation = Clamp(rotation);
@@ -76,6 +78,29 @@ namespace Airside.Presentation
             return new AircraftAudioMix(pitch, idle, loaded, reversed, wheels, Lerp(0.55f, 1.25f, roll));
         }
 
+        /// <summary>
+        /// A helicopter: the rotor is governed to a near-constant speed, so pitch only bends while it spools up
+        /// or winds down; the blade slap and turbine whine (the power layer) rise with load, and the idle layer
+        /// carries the pad. No reverse and no tyres (ADR 0207).
+        /// </summary>
+        public static AircraftAudioMix ForRotorcraft(AircraftAudioProfile profile, string aircraftId, float power,
+            float rotor, float left, float right)
+        {
+            power = Clamp(power);
+            rotor = Clamp(rotor);
+            left = Clamp(left);
+            right = Clamp(right);
+            var running = (float)Math.Sqrt((left * left + right * right) * 0.5f);
+            var load = Smooth(Clamp((power - 0.12f) / 0.88f));
+            var detune = 1f + (EngineVoice.Detune(aircraftId) - 1f) * 0.25f;
+            // Rotor speed is what the ear tracks: the chop slows audibly as the rotor spools down.
+            var pitch = profile.Pitch * detune * Lerp(0.5f, 1f, Smooth(rotor));
+            var energy = running * rotor * profile.Gain;
+            var idle = 0.22f * energy * (float)Math.Sqrt(1f - 0.6f * load);
+            var loaded = 0.52f * energy * (float)Math.Sqrt(load) * Lerp(0.5f, 1f, load);
+            return new AircraftAudioMix(pitch, idle, loaded, 0f, 0f, 1f);
+        }
+
         public static float SmoothTowards(float current, float target, float deltaSeconds, float seconds)
             => Lerp(current, target, 1f - (float)Math.Exp(-Math.Max(0f, deltaSeconds) / Math.Max(0.01f, seconds)));
 
@@ -84,6 +109,8 @@ namespace Airside.Presentation
             EngineClass.Turboprop => 1000f,
             EngineClass.RegionalJet => 1300f,
             EngineClass.Widebody => 2200f,
+            // Blade slap carries across the whole field and well beyond the fence.
+            EngineClass.Rotorcraft => 1900f,
             _ => 1700f
         };
 

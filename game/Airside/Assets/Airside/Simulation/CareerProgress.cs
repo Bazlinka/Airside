@@ -93,6 +93,9 @@ namespace Airside.Simulation
             AircraftOffer first = null;
             foreach (var offer in AircraftAcquisition.All)
             {
+                // The helicopter is a side branch of the fleet, not a rung of the fixed-wing ladder (ADR 0207).
+                if (offer.Type.IsRotorcraft)
+                    continue;
                 first ??= offer;
                 if (Owns(ownedTypes, offer.Type))
                     continue;

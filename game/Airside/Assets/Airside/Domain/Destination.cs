@@ -159,9 +159,41 @@ namespace Airside.Domain
             }
         }
 
+        /// <summary>
+        /// Hospital helipads and scene sites the rescue helicopter flies to (ADR 0207). Looked up by
+        /// <see cref="TryFind"/> so a save mid-mission resolves them, but kept out of <see cref="All"/>
+        /// because they are not airports an airline can plan a route to. Reference points to three decimals.
+        /// </summary>
+        public static readonly IReadOnlyList<Destination> RescueSites = new[]
+        {
+            new Destination("RAH", "Royal Adelaide Hospital", "SA", -34.921, 138.587),
+            new Destination("FMC", "Flinders Medical Centre", "SA", -35.023, 138.570),
+            new Destination("LMH", "Lyell McEwin Hospital", "SA", -34.750, 138.674),
+            new Destination("MTB", "Mount Barker Hospital", "SA", -35.067, 138.860),
+            new Destination("GAW", "Gawler Hospital", "SA", -34.599, 138.745),
+            new Destination("VHB", "Victor Harbor Hospital", "SA", -35.551, 138.615),
+        };
+
+        public static bool IsRescueSite(Destination destination)
+        {
+            foreach (var site in RescueSites)
+                if (site.Equals(destination))
+                    return true;
+            return false;
+        }
+
         public static bool TryFind(string code, out Destination destination)
         {
             foreach (var candidate in All)
+            {
+                if (string.Equals(candidate.Code, code, StringComparison.OrdinalIgnoreCase))
+                {
+                    destination = candidate;
+                    return true;
+                }
+            }
+
+            foreach (var candidate in RescueSites)
             {
                 if (string.Equals(candidate.Code, code, StringComparison.OrdinalIgnoreCase))
                 {
@@ -184,11 +216,18 @@ namespace Airside.Domain
     {
         public const long ClimbDescentAllowanceSeconds = 10 * 60;
 
+        /// <summary>
+        /// A helicopter's climb-out and arrival are drawn and timed by its own take-off and landing states, so
+        /// the en-route leg carries only a short allowance for the turn onto and off its flight line.
+        /// </summary>
+        public const long RotorcraftLegAllowanceSeconds = 40;
+
         public static long AirborneSeconds(double distanceKm, AircraftType type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             var cruise = distanceKm / type.CruiseKmh * 3600.0;
-            return ClimbDescentAllowanceSeconds + (long)Math.Round(cruise);
+            return (type.IsRotorcraft ? RotorcraftLegAllowanceSeconds : ClimbDescentAllowanceSeconds)
+                   + (long)Math.Round(cruise);
         }
     }
 }

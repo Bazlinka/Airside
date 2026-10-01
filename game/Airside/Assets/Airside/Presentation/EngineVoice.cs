@@ -9,7 +9,9 @@ namespace Airside.Presentation
         Turboprop,
         RegionalJet,
         Narrowbody,
-        Widebody
+        Widebody,
+        /// <summary>A helicopter: governed rotor speed, blade-slap and a turbine whine that carry a long way (ADR 0207).</summary>
+        Rotorcraft
     }
 
     /// <summary>
@@ -24,6 +26,8 @@ namespace Airside.Presentation
 
         public static EngineClass ClassOf(AircraftType type)
         {
+            if (type != null && type.IsRotorcraft)
+                return EngineClass.Rotorcraft;
             if (type == null || !AircraftCatalogue.TryFor(type, out var spec))
                 return EngineClass.Narrowbody;
             if (spec.StandClass == StandClass.RegionalBay)
@@ -47,6 +51,8 @@ namespace Airside.Presentation
             EngineClass.Turboprop => 0.8f,
             EngineClass.RegionalJet => 0.9f,
             EngineClass.Widebody => 1.15f,
+            // The 22 Hz blade pass is low and impulsive, so a medium helicopter is heard as loudly as a regional jet.
+            EngineClass.Rotorcraft => 0.95f,
             _ => 1f
         };
 
@@ -56,6 +62,7 @@ namespace Airside.Presentation
             EngineClass.Turboprop => (12f, 260f),
             EngineClass.RegionalJet => (14f, 320f),
             EngineClass.Widebody => (24f, 520f),
+            EngineClass.Rotorcraft => (14f, 420f),
             _ => (16f, 380f)
         };
 

@@ -110,7 +110,7 @@ namespace Airside.Tests.EditMode
                 ops.Update();
                 if (drawnAt < 0 && BestDrawnAutoLandingRank(ops, clock.Now) >= 0)
                     drawnAt = t;
-                if (landingAt < 0 && ops.Fleet.Any(a => a.State == FleetState.Landing))
+                if (landingAt < 0 && ops.Fleet.Any(a => a.State == FleetState.Landing && !a.Type.IsRotorcraft))
                 {
                     landingAt = t;
                     break;
@@ -143,7 +143,7 @@ namespace Airside.Tests.EditMode
                 ops.Update();
                 if (drawnAt < 0 && BestDrawnAutoTakeoffRank(ops, clock.Now) >= 0)
                     drawnAt = t;
-                if (takingOffAt < 0 && ops.Fleet.Any(a => a.State == FleetState.TakingOff))
+                if (takingOffAt < 0 && ops.Fleet.Any(a => a.State == FleetState.TakingOff && !a.Type.IsRotorcraft))
                 {
                     takingOffAt = t;
                     break;
@@ -208,7 +208,7 @@ namespace Airside.Tests.EditMode
         private static int BestDrawnAutoLandingRank(AirlineOperations ops, SimulationTime now)
         {
             var best = -1;
-            foreach (var aircraft in ops.Fleet)
+            foreach (var aircraft in ops.Fleet.Where(a => !a.Type.IsRotorcraft))
             {
                 var hasView = FleetVisual.For(aircraft, now).Visible;
                 var preferJet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
@@ -223,7 +223,7 @@ namespace Airside.Tests.EditMode
         private static int BestDrawnAutoTakeoffRank(AirlineOperations ops, SimulationTime now)
         {
             var best = -1;
-            foreach (var aircraft in ops.Fleet)
+            foreach (var aircraft in ops.Fleet.Where(a => !a.Type.IsRotorcraft))
             {
                 var hasView = FleetVisual.For(aircraft, now).Visible;
                 var preferJet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
@@ -239,7 +239,7 @@ namespace Airside.Tests.EditMode
         {
             FleetAircraft best = null;
             var bestRank = int.MaxValue;
-            foreach (var aircraft in ops.Fleet)
+            foreach (var aircraft in ops.Fleet.Where(a => !a.Type.IsRotorcraft))
             {
                 var hasView = FleetVisual.For(aircraft, now).Visible;
                 var preferJet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
@@ -258,7 +258,7 @@ namespace Airside.Tests.EditMode
         {
             FleetAircraft best = null;
             var bestRank = int.MaxValue;
-            foreach (var aircraft in ops.Fleet)
+            foreach (var aircraft in ops.Fleet.Where(a => !a.Type.IsRotorcraft))
             {
                 var hasView = FleetVisual.For(aircraft, now).Visible;
                 var preferJet = AirlineOperations.NeedsTerminalGate(aircraft.Type);

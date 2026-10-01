@@ -18,14 +18,14 @@ namespace Airside.Tests
         {
             var ops = NewGame(out _);
             Assert.That(ops.Airlines.Select(a => a.Name), Does.Contain("Rex").And.Contain("QantasLink").And.Contain("Royal Flying Doctor Service"));
-            var regional = ops.Fleet.Where(a => !AirlineOperations.NeedsTerminalGate(a.Type)).ToList();
+            var regional = ops.Fleet.Where(a => !AirlineOperations.NeedsTerminalGate(a.Type) && !a.Type.IsRotorcraft).ToList();
             Assert.That(regional.Count, Is.EqualTo(12),
                 "player Saab plus six Rex, four QantasLink and RFDS (ADR 0111)");
             Assert.That(regional.Count(a => a.State == FleetState.AtStand), Is.GreaterThanOrEqualTo(6),
                 "most regionals stay on the apron; only a short inbound bank flies in");
             Assert.That(regional.Where(a => a.State == FleetState.AtStand).All(a => AirlineOperations.AdelaideRegionalBays.Contains(a.Stand)), Is.True);
             Assert.That(ops.Fleet.Where(a => a.Airline.Name == "Rex").All(a => a.Type == AircraftType.Saab340), Is.True);
-            Assert.That(ops.Fleet.Single(a => a.Airline.IsEmergency).State, Is.EqualTo(FleetState.AtStand),
+            Assert.That(ops.Fleet.Single(a => a.Airline.Id.Value == "RFDS").State, Is.EqualTo(FleetState.AtStand),
                 "RFDS always keeps a bay");
             Assert.That(regional.Count(a => a.State == FleetState.Inbound), Is.GreaterThanOrEqualTo(1));
         }

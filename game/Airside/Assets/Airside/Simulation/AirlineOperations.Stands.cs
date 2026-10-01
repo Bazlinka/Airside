@@ -24,11 +24,13 @@ namespace Airside.Simulation
 
         private static IReadOnlyList<StableId> CombinedStands()
         {
-            var all = new StableId[AdelaideRegionalBays.Count + AdelaideTerminalGates.Count];
+            var all = new StableId[AdelaideRegionalBays.Count + AdelaideTerminalGates.Count + AdelaideHelipadStands.Count];
             for (var i = 0; i < AdelaideRegionalBays.Count; i++)
                 all[i] = AdelaideRegionalBays[i];
             for (var i = 0; i < AdelaideTerminalGates.Count; i++)
                 all[AdelaideRegionalBays.Count + i] = AdelaideTerminalGates[i];
+            for (var i = 0; i < AdelaideHelipadStands.Count; i++)
+                all[AdelaideRegionalBays.Count + AdelaideTerminalGates.Count + i] = AdelaideHelipadStands[i];
             return all;
         }
 
@@ -76,6 +78,11 @@ namespace Airside.Simulation
         /// </summary>
         public static bool StandClassFits(AircraftType type, StableId stand)
         {
+            // Helicopters park on the helipad and nothing else does (ADR 0207).
+            if (AdelaideHelipad.IsHelipadStand(stand) != (type != null && type.IsRotorcraft))
+                return false;
+            if (type != null && type.IsRotorcraft)
+                return true;
             if (AdelaideGround.IsTerminalGate(stand) != NeedsTerminalGate(type))
                 return false;
             // AIP walk-outs are SF340 / marshaller only — not ATR or Dash 8.
@@ -154,7 +161,7 @@ namespace Airside.Simulation
         public IEnumerable<StableId> FreeStands()
         {
             foreach (var stand in _stands)
-                if (!AdelaideGround.IsTerminalGate(stand) && IsStandFree(stand))
+                if (!AdelaideGround.IsTerminalGate(stand) && !AdelaideHelipad.IsHelipadStand(stand) && IsStandFree(stand))
                     yield return stand;
         }
 
@@ -221,7 +228,10 @@ namespace Airside.Simulation
         {
             if (HoldsStand(aircraft) && aircraft.Stand.Equals(stand))
                 return true;
-            return aircraft.State == FleetState.TaxiOut && aircraft.DepartureStand.Equals(stand);
+            // A helicopter lifting off holds its spot until it is away (no taxi-out state for it).
+            return aircraft.State == FleetState.TaxiOut && aircraft.DepartureStand.Equals(stand)
+                   || aircraft.State == FleetState.TakingOff && aircraft.Type.IsRotorcraft
+                   && aircraft.DepartureStand.Equals(stand);
         }
 
         /// <summary>A gate's lead-in is in use while an aircraft taxis in to it or pushes
@@ -344,7 +354,8 @@ namespace Airside.Simulation
 
             // Player turboprops that are away reserve that many regional bays, so a second
             // ATR coming home is not stranded by AI filling the apron (ADR 0056).
-            if (!aircraft.Airline.IsPlayer && !NeedsTerminalGate(aircraft.Type) && PlayerAirline != null)
+            if (!aircraft.Airline.IsPlayer && !NeedsTerminalGate(aircraft.Type) && !aircraft.Type.IsRotorcraft
+                && PlayerAirline != null)
             {
                 var reserved = PlayerTurbopropsNeedingABay();
                 var free = 0;
@@ -381,7 +392,7 @@ namespace Airside.Simulation
             // if the authored dedicated bay does not fit (e.g. ATR/Dash on walk-out 10A),
             // use another free regional bay. Existing away-aircraft reservation logic still
             // keeps enough shared capacity available for the player's fleet.
-            if (!NeedsTerminalGate(type) && CareerState.BaseLevel >= PlayerBaseLevel.ExpandedRegional)
+            if (!NeedsTerminalGate(type) && !type.IsRotorcraft && CareerState.BaseLevel >= PlayerBaseLevel.ExpandedRegional)
                 return SuggestStandFor(type, except, allowPlayerDedicated: true);
 
             return null;
@@ -415,7 +426,7 @@ namespace Airside.Simulation
                 // Keep code E gates for the widebodies that need them (ADR 0110), and the
                 // 50-series for the ATR / Q400s that cannot use a Saab walk-out (ADR 0111).
                 var oversized = WastesStand(type, stand);
-                var seconds = TaxiInSecondsTo(stand, type);
+                var seconds = type.IsRotorcraft ? 0L : TaxiInSecondsTo(stand, type);
                 // Wasting a stand another type needs outranks a tight neighbour: crowding is
                 // cosmetic, but a Q400 with every 50-series bay full of Saabs cannot park.
                 if (best != null)

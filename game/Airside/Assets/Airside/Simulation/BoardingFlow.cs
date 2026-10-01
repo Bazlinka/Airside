@@ -79,6 +79,9 @@ namespace Airside.Simulation
         {
             if (aircraft == null || aircraft.State != FleetState.AtStand)
                 return BoardingMode.None;
+            // A helicopter on its pad has no stairs, bridge, bus or ramp crew (ADR 0207).
+            if (aircraft.Type.IsRotorcraft)
+                return BoardingMode.None;
             if (AdelaideAerobridges.Serves(aircraft.Stand))
                 return BoardingMode.Aerobridge;
             return AirlineOperations.NeedsTerminalGate(aircraft.Type)
@@ -221,7 +224,8 @@ namespace Airside.Simulation
         /// </summary>
         public static float CargoDoorOpen(FleetAircraft aircraft, double nowSeconds)
         {
-            if (aircraft == null || aircraft.State != FleetState.AtStand || InCheck(aircraft, nowSeconds))
+            if (aircraft == null || aircraft.State != FleetState.AtStand || InCheck(aircraft, nowSeconds)
+                || aircraft.Type.IsRotorcraft)
                 return 0f;
             var parked = (double)aircraft.StateStartedAt.ElapsedSeconds;
             var seconds = DepartureCountdown.CargoDoorSeconds;

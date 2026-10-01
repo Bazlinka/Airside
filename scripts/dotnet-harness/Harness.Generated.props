@@ -240,6 +240,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HangarBaysTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HangarTenantPaletteTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HangarTowTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HelicopterTrackTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HoldReasonTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HouseStyleTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HudMomentsTests.cs" />
@@ -260,6 +261,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/OperationsRealismTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/OperationsSummaryTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/OperationsWorkspaceTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/PlayerHelicopterTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ProgressGateTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/PushbackTimeTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/PushbackTugTests.cs" />
@@ -272,6 +274,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ReviewOverviewFramingTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ReviewShotScheduleTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RoadMarkingPlanTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RotorcraftTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RouteMapTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RouteMapWorkspaceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RunwayRubberMarksTests.cs" />

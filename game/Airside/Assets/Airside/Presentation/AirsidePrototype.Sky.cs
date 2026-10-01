@@ -130,6 +130,8 @@ namespace Airside.Presentation
             for (var i = 0; i < VisualFlights.Count; i++)
             {
                 var flight = VisualFlights[i];
+                if (IsRotorcraftFlight(flight))
+                    continue;
                 var phase = flight.Operation.Phase;
                 var progress = VisualPhaseProgress(flight, 0f);
                 // Ground spray only — not climbing takeoff or airborne approach.

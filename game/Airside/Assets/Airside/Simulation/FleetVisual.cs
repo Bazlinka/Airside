@@ -52,6 +52,8 @@ namespace Airside.Simulation
 
         public static FleetVisual For(FleetAircraft aircraft, SimulationTime now)
         {
+            if (aircraft.Type.IsRotorcraft)
+                return ForRotorcraft(aircraft);
             var performance = AircraftPerformance.For(aircraft.Type);
             var start = aircraft.StateStartedAt;
             var elapsed = now.ElapsedSeconds - start.ElapsedSeconds;
@@ -126,6 +128,31 @@ namespace Airside.Simulation
 
                 default:
                     // Away or turning around at the destination: not drawn at the field.
+                    return Hidden(start);
+            }
+        }
+
+        /// <summary>
+        /// A helicopter is on its pad, lifting off, flying its leg, or landing: all of it drawn (ADR 0207), and
+        /// none of it on a runway or taxiway. The phases are the circuit's vocabulary only so the shared lights,
+        /// audio and selection code has something to read; <see cref="HelicopterTrack"/> owns the pose.
+        /// </summary>
+        private static FleetVisual ForRotorcraft(FleetAircraft aircraft)
+        {
+            var start = aircraft.StateStartedAt;
+            switch (aircraft.State)
+            {
+                case FleetState.AtStand:
+                    return Ground(AircraftPhase.AtStand, start, FleetGroundLeg.Parked, start, 0);
+                case FleetState.TakingOff:
+                    return Air(AircraftPhase.Takeoff, start);
+                case FleetState.Outbound:
+                    return Air(AircraftPhase.Departed, start);
+                case FleetState.Inbound:
+                    return Air(AircraftPhase.Approach, start);
+                case FleetState.Landing:
+                    return Air(AircraftPhase.Landing, start);
+                default:
                     return Hidden(start);
             }
         }

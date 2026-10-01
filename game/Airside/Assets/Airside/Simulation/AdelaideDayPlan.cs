@@ -164,6 +164,9 @@ namespace Airside.Simulation
             {
                 if (aircraft?.Type == null || !aircraft.CurrentDestination.HasValue)
                     continue;
+                // A helicopter's whole flight is drawn by the fleet view, at true scale (ADR 0207).
+                if (aircraft.Type.IsRotorcraft)
+                    continue;
                 var away = aircraft.CurrentDestination.Value;
                 var duration = LegTiming.AirborneSeconds(home.DistanceKmTo(away), aircraft.Type);
                 double start;

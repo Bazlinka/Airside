@@ -72,6 +72,8 @@ namespace Airside.Simulation
                 return "—";
             if (TryTerminalGate(stand, out var gate))
                 return $"Gate {gate.Reference}";
+            if (AdelaideHelipad.IsHelipadStand(stand))
+                return AdelaideHelipad.SpotLabel(stand);
             foreach (var bay in AdelaideLayout.Bays)
                 if (bay.Id == stand.Value)
                     return $"Bay {bay.Reference}";
@@ -337,6 +339,8 @@ namespace Airside.Simulation
         /// <summary>Where an aircraft parked on <paramref name="stand"/> stands: its stop and nose heading.</summary>
         public static GroundPose StandPose(StableId stand)
         {
+            if (AdelaideHelipad.IsHelipadStand(stand))
+                return AdelaideHelipad.SpotPose(stand);
             double heading;
             float x, z;
             if (TryTerminalGate(stand, out var gate))

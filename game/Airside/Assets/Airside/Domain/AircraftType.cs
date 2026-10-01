@@ -8,7 +8,8 @@ namespace Airside.Domain
     /// </summary>
     public sealed class AircraftType
     {
-        public AircraftType(string id, string name, double cruiseKmh, double practicalRangeKm)
+        public AircraftType(string id, string name, double cruiseKmh, double practicalRangeKm,
+            bool isRotorcraft = false)
         {
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentException("An aircraft type id is required.", nameof(id));
@@ -21,11 +22,18 @@ namespace Airside.Domain
             Name = name;
             CruiseKmh = cruiseKmh;
             PracticalRangeKm = practicalRangeKm;
+            IsRotorcraft = isRotorcraft;
         }
 
         public string Id { get; }
         public string Name { get; }
         public double CruiseKmh { get; }
+
+        /// <summary>
+        /// A helicopter: it lifts off and lands vertically from a helipad stand, never uses a runway,
+        /// the taxi network or the tower's strip queue, and flies short legs at helicopter speeds.
+        /// </summary>
+        public bool IsRotorcraft { get; }
 
         /// <summary>
         /// Airline planning range with a typical payload and reserves, not the brochure
@@ -48,6 +56,7 @@ namespace Airside.Domain
         public static AircraftType Boeing78710 => AircraftCatalogue.Boeing78710.Type;
         public static AircraftType AirbusA330900 => AircraftCatalogue.AirbusA330900.Type;
         public static AircraftType Boeing7879 => AircraftCatalogue.Boeing7879.Type;
+        public static AircraftType Bell412 => AircraftCatalogue.Bell412.Type;
 
         public bool CanReach(double legKm) => legKm <= PracticalRangeKm;
 
@@ -55,6 +64,13 @@ namespace Airside.Domain
         {
             type = null;
             foreach (var spec in AircraftCatalogue.All)
+            {
+                if (!string.Equals(id, spec.Id, StringComparison.Ordinal))
+                    continue;
+                type = spec.Type;
+                return true;
+            }
+            foreach (var spec in AircraftCatalogue.Rotorcraft)
             {
                 if (!string.Equals(id, spec.Id, StringComparison.Ordinal))
                     continue;

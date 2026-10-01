@@ -99,9 +99,15 @@ namespace Airside.Presentation
             {
                 var planeDistance = _mainCamera.nearClipPlane + 0.1f;
                 var planeHeight = 2f * planeDistance * Mathf.Tan(_mainCamera.fieldOfView * Mathf.Deg2Rad * 0.5f);
-                _groundFog.transform.SetPositionAndRotation(camera + _mainCamera.transform.forward * planeDistance,
-                    _mainCamera.transform.rotation);
-                _groundFog.transform.localScale = new Vector3(planeHeight * _mainCamera.aspect * 1.01f,
+                // Parented to the camera, not placed from its position: this runs in Update but the camera
+                // moves in LateUpdate, so a world-placed quad this close to the lens trailed one frame behind
+                // a drag or orbit and fell out of view, and the weather vanished for as long as you dragged.
+                var fogTransform = _groundFog.transform;
+                if (fogTransform.parent != _mainCamera.transform)
+                    fogTransform.SetParent(_mainCamera.transform, false);
+                fogTransform.localPosition = new Vector3(0f, 0f, planeDistance);
+                fogTransform.localRotation = Quaternion.identity;
+                fogTransform.localScale = new Vector3(planeHeight * _mainCamera.aspect * 1.01f,
                     planeHeight * 1.01f, 1f);
                 var strength = _atmosphere.Mist;
                 _groundFog.enabled = strength > 0.01f;

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="18" result="Passed" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-01 05:18:10Z" end-time="2026-10-01 05:18:12Z" duration="1.9561242">
+  <test-suite type="TestSuite" id="1000" name="Airside" fullname="Airside" runstate="Runnable" testcasecount="1697" result="Passed" start-time="2026-10-01 05:18:10Z" end-time="2026-10-01 05:18:12Z" duration="1.956124" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2955" name="Airside.Tests.EditMode.dll" fullname="/private/tmp/airside-sa-world/game/Airside/Library/ScriptAssemblies/Airside.Tests.EditMode.dll" runstate="Runnable" testcasecount="1696" result="Passed" start-time="2026-10-01 05:18:10Z" end-time="2026-10-01 05:18:12Z" duration="1.941207" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="82182" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2956" name="Airside" fullname="Airside" runstate="Runnable" testcasecount="1696" result="Passed" start-time="2026-10-01 05:18:10Z" end-time="2026-10-01 05:18:12Z" duration="1.931187" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2957" name="Tests" fullname="Airside.Tests" runstate="Runnable" testcasecount="1696" result="Passed" start-time="2026-10-01 05:18:11Z" end-time="2026-10-01 05:18:12Z" duration="1.921497" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="2153" name="FlightWorldJourneyTests" fullname="Airside.Tests.FlightWorldJourneyTests" classname="Airside.Tests.FlightWorldJourneyTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-01 05:18:11Z" end-time="2026-10-01 05:18:12Z" duration="1.876986" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="2159" name="DistantActorCullingRestoresPreviouslyHiddenActorsAndAcceptsDestroyedObjects" fullname="Airside.Tests.FlightWorldJourneyTests.DistantActorCullingRestoresPreviouslyHiddenActorsAndAcceptsDestroyedObjects" methodname="DistantActorCullingRestoresPreviouslyHiddenActorsAndAcceptsDestroyedObjects" classname="Airside.Tests.FlightWorldJourneyTests" runstate="Runnable" seed="1148652420" result="Passed" start-time="2026-10-01 05:18:11Z" end-time="2026-10-01 05:18:11Z" duration="0.010400" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="2158" name="RegionalTrackStaysContinuousAcrossCruiseAndTerminalHandoffs" fullname="Airside.Tests.FlightWorldJourneyTests.RegionalTrackStaysContinuousAcrossCruiseAndTerminalHandoffs" classname="Airside.Tests.FlightWorldJourneyTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-01 05:18:11Z" end-time="2026-10-01 05:18:12Z" duration="1.858918" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2154" name="RegionalTrackStaysContinuousAcrossCruiseAndTerminalHandoffs(&quot;KGC&quot;,Outbound)" fullname="Airside.Tests.FlightWorldJourneyTests.RegionalTrackStaysContinuousAcrossCruiseAndTerminalHandoffs(&quot;KGC&quot;,Outbound)" methodname="RegionalTrackStaysContinuousAcrossCruiseAndTerminalHandoffs" classname="Airside.Tests.FlightWorldJourneyTests" runstate="Runnable" seed="692128352" result="Passed" start-time="2026-10-01 05:18:11Z" end-time="2026-10-01 05:18:11Z" duration="0.246709" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2155" name="RegionalTrackStaysContinuousAcrossCruiseAndTerminalHandoffs(&quot;CPD&quot;,Outbound)" fullname="Airside.Tests.FlightWorldJourneyTests.RegionalTrackStaysContinuousAcrossCruiseAndTerminalHandoffs(&quot;CPD&quot;,Outbound)" methodname="RegionalTrackStaysContinuousAcrossCruiseAndTerminalHandoffs" classname="Airside.Tests.FlightWorldJourneyTests" runstate="Runnable" seed="276067819" result="Passed" start-time="2026-10-01 05:18:11Z" end-time="2026-10-01 05:18:12Z" duration="0.748090" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2156" name="RegionalTrackStaysContinuousAcrossCruiseAndTerminalHandoffs(&quot;KGC&quot;,Inbound)" fullname="Airside.Tests.FlightWorldJourneyTests.RegionalTrackStaysContinuousAcrossCruiseAndTerminalHandoffs(&quot;KGC&quot;,Inbound)" methodname="RegionalTrackStaysContinuousAcrossCruiseAndTerminalHandoffs" classname="Airside.Tests.FlightWorldJourneyTests" runstate="Runnable" seed="693908020" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.175705" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2157" name="RegionalTrackStaysContinuousAcrossCruiseAndTerminalHandoffs(&quot;CPD&quot;,Inbound)" fullname="Airside.Tests.FlightWorldJourneyTests.RegionalTrackStaysContinuousAcrossCruiseAndTerminalHandoffs(&quot;CPD&quot;,Inbound)" methodname="RegionalTrackStaysContinuousAcrossCruiseAndTerminalHandoffs" classname="Airside.Tests.FlightWorldJourneyTests" runstate="Runnable" seed="1541745640" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.686632" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+          </test-suite>
+          <test-suite type="TestFixture" id="2160" name="FlightWorldTests" fullname="Airside.Tests.FlightWorldTests" classname="Airside.Tests.FlightWorldTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.021710" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="2169" name="AllSouthAustralianDestinationsAreCovered" fullname="Airside.Tests.FlightWorldTests.AllSouthAustralianDestinationsAreCovered" methodname="AllSouthAustralianDestinationsAreCovered" classname="Airside.Tests.FlightWorldTests" runstate="Runnable" seed="1332860306" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.000287" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2174" name="CorruptOrTruncatedHeightsFailSoft" fullname="Airside.Tests.FlightWorldTests.CorruptOrTruncatedHeightsFailSoft" methodname="CorruptOrTruncatedHeightsFailSoft" classname="Airside.Tests.FlightWorldTests" runstate="Runnable" seed="286039973" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.001671" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2173" name="HeightsInterpolateAndRefuseOutOfBounds" fullname="Airside.Tests.FlightWorldTests.HeightsInterpolateAndRefuseOutOfBounds" methodname="HeightsInterpolateAndRefuseOutOfBounds" classname="Airside.Tests.FlightWorldTests" runstate="Runnable" seed="76541065" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.003339" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2170" name="MappedRegionalLandingsEndOnTheRunwayAtAirportElevation" fullname="Airside.Tests.FlightWorldTests.MappedRegionalLandingsEndOnTheRunwayAtAirportElevation" methodname="MappedRegionalLandingsEndOnTheRunwayAtAirportElevation" classname="Airside.Tests.FlightWorldTests" runstate="Runnable" seed="1113214716" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.003935" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2168" name="OriginKeepsAircraftWithinFourKilometresWithoutLosingGeographicPosition" fullname="Airside.Tests.FlightWorldTests.OriginKeepsAircraftWithinFourKilometresWithoutLosingGeographicPosition" methodname="OriginKeepsAircraftWithinFourKilometresWithoutLosingGeographicPosition" classname="Airside.Tests.FlightWorldTests" runstate="Runnable" seed="1277626027" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.000316" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2172" name="RegionalDepartureStartsAtThePreviousRolloutEndAndClimbs" fullname="Airside.Tests.FlightWorldTests.RegionalDepartureStartsAtThePreviousRolloutEndAndClimbs" methodname="RegionalDepartureStartsAtThePreviousRolloutEndAndClimbs" classname="Airside.Tests.FlightWorldTests" runstate="Runnable" seed="799735205" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.000231" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2167" name="ResidentWindowHasFixedUpperBoundAfterLongFlights" fullname="Airside.Tests.FlightWorldTests.ResidentWindowHasFixedUpperBoundAfterLongFlights" methodname="ResidentWindowHasFixedUpperBoundAfterLongFlights" classname="Airside.Tests.FlightWorldTests" runstate="Runnable" seed="380909818" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.000147" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2166" name="RunwayTerrainCellsStayFlatAcrossTheCoarseMesh" fullname="Airside.Tests.FlightWorldTests.RunwayTerrainCellsStayFlatAcrossTheCoarseMesh" methodname="RunwayTerrainCellsStayFlatAcrossTheCoarseMesh" classname="Airside.Tests.FlightWorldTests" runstate="Runnable" seed="974768918" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.001090" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2171" name="ShippedElevationCoversNorthernAndSouthernSouthAustralia" fullname="Airside.Tests.FlightWorldTests.ShippedElevationCoversNorthernAndSouthernSouthAustralia" methodname="ShippedElevationCoversNorthernAndSouthernSouthAustralia" classname="Airside.Tests.FlightWorldTests" runstate="Runnable" seed="2112906495" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.008080" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="2165" name="TileUsesFloorAcrossBothSides" fullname="Airside.Tests.FlightWorldTests.TileUsesFloorAcrossBothSides" classname="Airside.Tests.FlightWorldTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.000781" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2161" name="TileUsesFloorAcrossBothSides(-1,-1)" fullname="Airside.Tests.FlightWorldTests.TileUsesFloorAcrossBothSides(-1,-1)" methodname="TileUsesFloorAcrossBothSides" classname="Airside.Tests.FlightWorldTests" runstate="Runnable" seed="61976393" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.000248" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2162" name="TileUsesFloorAcrossBothSides(0,0)" fullname="Airside.Tests.FlightWorldTests.TileUsesFloorAcrossBothSides(0,0)" methodname="TileUsesFloorAcrossBothSides" classname="Airside.Tests.FlightWorldTests" runstate="Runnable" seed="361181610" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.000034" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2163" name="TileUsesFloorAcrossBothSides(15999,0)" fullname="Airside.Tests.FlightWorldTests.TileUsesFloorAcrossBothSides(15999,0)" methodname="TileUsesFloorAcrossBothSides" classname="Airside.Tests.FlightWorldTests" runstate="Runnable" seed="1968841973" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.000034" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2164" name="TileUsesFloorAcrossBothSides(16000,1)" fullname="Airside.Tests.FlightWorldTests.TileUsesFloorAcrossBothSides(16000,1)" methodname="TileUsesFloorAcrossBothSides" classname="Airside.Tests.FlightWorldTests" runstate="Runnable" seed="1079847768" result="Passed" start-time="2026-10-01 05:18:12Z" end-time="2026-10-01 05:18:12Z" duration="0.000031" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: /Users/bailey.fleming/Library/Application Support/DefaultCompany/Airside/TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

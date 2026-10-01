@@ -30,13 +30,14 @@ The original Developer checkout's audio changes are untouched.
   stayed below the strip. New regression samples every runway's containing cells.
   All 13 focused headless flight-world tests pass (303 ms); harness derivation
   check is current. Packaged review driver source compilation: zero errors, nine
-  existing warnings; native/player verification of the driver remains pending.
-- First Mac build is still running (shader compilation completed, native Burst/
-  player packaging active). Its stamped identity is `40caaf9d-dirty`; it does not
-  contain the subsequently added journey review driver or terrain-cell fix. Wait
-  for it, then native-test and rebuild current source before running the driver.
-  Graphics-on acceptance remains open. Native path continuity
-  does not establish cockpit appearance, frame rate or seamless view ownership.
+  existing warnings; native compilation now verified, player verification pending.
+- Latest native focused world/journey run: 18/18 passed, 1.956 s; current review
+  driver imported/compiled successfully. `world-results.xml` contains the results.
+- First Mac build succeeded, identity `40caaf9d-dirty`, log reports `Build Finished,
+  Result: Success`. It excludes the later journey review driver and terrain-cell
+  fix. Current clean source must be rebuilt before running the review driver.
+  Graphics-on acceptance remains open. Native path continuity does not establish
+  cockpit appearance, frame rate or seamless view ownership.
 - Asset audit reports existing missing `Assets/Resources.meta` and orphan Animation
   World/Aircraft/Vehicles metadata. No new GUID or runtime mirror errors reported.
   These baseline metadata issues are not repaired as part of this feature.

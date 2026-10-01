@@ -1607,6 +1607,7 @@ namespace Airside.Presentation
                         // Saab / Dash 8 / ATR airstair door (ADR 0114): hinged at the sill, it
                         // folds down and out until its steps rest on the apron.
                         var target = Mathf.Lerp(0f, parts[i].OpenDegrees, passenger);
+                        ShowDoorway(parts[i].Doorway, passenger);
                         euler.z = timed ? target : Mathf.MoveTowards(Signed(euler.z), target, Time.unscaledDeltaTime * 55f);
                         break;
                     }
@@ -1614,12 +1615,14 @@ namespace Airside.Presentation
                     {
                         // A jet's plug door swings out and round against the fuselage.
                         var target = Mathf.Lerp(0f, -85f, passenger);
+                        ShowDoorway(parts[i].Doorway, passenger);
                         euler.y = timed ? target : Mathf.MoveTowards(Signed(euler.y), target, Time.unscaledDeltaTime * 120f);
                         break;
                     }
                     default:
                     {
                         var target = Mathf.Lerp(0f, 70f, cargo);
+                        ShowDoorway(parts[i].Doorway, cargo);
                         euler.y = timed ? target : Mathf.MoveTowards(Signed(euler.y), target, Time.unscaledDeltaTime * 100f);
                         break;
                     }
@@ -3381,6 +3384,7 @@ namespace Airside.Presentation
                 RebakeWheelPivots(root);
                 RigLandingGearArticulation(root);
                 NestCabinDoorParts(root);
+                AttachDoorways(root);
                 ConvertToAirstairDoor(root);
                 NestFlapParts(root);
                 NestWingMountedParts(root);
@@ -3460,6 +3464,7 @@ namespace Airside.Presentation
                 RebakeWheelPivots(root);
                 RigLandingGearArticulation(root);
                 NestCabinDoorParts(root);
+                AttachDoorways(root);
                 ConvertToAirstairDoor(root);
                 NestFlapParts(root);
                 NestWingMountedParts(root);
@@ -3546,6 +3551,7 @@ namespace Airside.Presentation
                 RebakeWheelPivots(root);
                 RigLandingGearArticulation(root);
                 NestCabinDoorParts(root);
+                AttachDoorways(root);
                 NestFlapParts(root);
                 NestWingMountedParts(root);
                 EnsureJetFanDiscs(root);
@@ -4215,12 +4221,17 @@ namespace Airside.Presentation
             public readonly CabinDoorKind Kind;
             /// <summary>Airstair only: signed fold about the fuselage axis that puts the steps on the ground.</summary>
             public readonly float OpenDegrees;
+            /// <summary>The hollow behind the leaf, shown while it is open; null when the kit has none.</summary>
+            public readonly GameObject Doorway;
 
             public CabinDoorPart(Transform transform, CabinDoorKind kind, float openDegrees = 0f)
             {
                 Transform = transform;
                 Kind = kind;
                 OpenDegrees = openDegrees;
+                Doorway = transform != null && transform.TryGetComponent<AircraftDoorway>(out var doorway)
+                    ? doorway.Shell
+                    : null;
             }
         }
 

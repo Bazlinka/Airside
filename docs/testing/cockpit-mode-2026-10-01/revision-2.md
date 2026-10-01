@@ -28,5 +28,20 @@ Its small cube tick marks disappeared in the player, despite appearing in native
 stills. Thicker separate geometry at `b8e871bd` still disappeared in the player.
 The final approach uses original code-drawn tick artwork directly on the dial
 faces, removing the separate tick surfaces. Native Unity passed again with the
-same counts. Final Mac rebuild and airport capture are next. Broader cockpit-mode journey/audio/performance
+same counts. Final clean Mac player build passed from committed source `4c153d46`.
+
+## Final packaged visual proof
+
+`v2-game-startup.png` and `v2-game-startup.log` are from that clean Mac player in
+the actual airport at 1600x900. The camera entered VH-ZRC at first nonzero spool;
+telemetry subsequently records R0.07. The screenshot shows the real cockpit at
+stand (GS 0 kt, height 0 ft, heading 233 degrees), with clear windows, visible
+paired flight displays, round engine instruments and the small live readout.
+The tick marks are now visible on the dial faces in the player. No managed
+exception is recorded. The short capture includes startup and overview frames;
+it is not a controlled performance comparison, complete flight, or 14-minute soak.
+
+The requested reference-driven gamified visual rebuild is complete. Full cockpit
+journey, controls playtest, weather/night, audio and performance acceptance remain
+separate requirements for merging the broader cockpit-mode feature. Broader cockpit-mode journey/audio/performance
 acceptance remains in the parent README and is not claimed by this visual revision.

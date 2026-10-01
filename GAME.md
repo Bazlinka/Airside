@@ -27,7 +27,10 @@
   build passed at `047a296f`; player review exposed disappearing fine tick marks.
   Thicker separate geometry did not fix the player discrepancy. Dial markings now
   use two original code-drawn textures on the dial faces; full native suite passed
-  again. Next: final Mac rebuild and packaged evidence with visible markings.
+  again. Final clean Mac build passed at `4c153d46`; actual airport startup image
+  `v2-game-startup.png` confirms the markings are visible. No managed exception.
+  Visual rebuild complete; broader cockpit journey/audio/performance gates remain
+  open as above. See `docs/testing/cockpit-mode-2026-10-01/revision-2.md`.
   Interior is a simplified candidate. Do not claim a completed fleet cockpit rollout
   or merge until those acceptance rows have actual evidence.
 

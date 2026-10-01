@@ -54,6 +54,23 @@ namespace Airside.Tests
             Assert.That(heavy.Visibility, Is.LessThan(drizzle.Visibility));
         }
 
+        [TestCase(1500f)]
+        [TestCase(3080f)]
+        [TestCase(9000f)]
+        [TestCase(24000f)]
+        public void RealVisibility_IsDrawnAtThatDistance(float metres)
+        {
+            var look = LiveWeather.LookFor(WeatherKind.Cloudy, 0.5f, 0f, metres);
+            Assert.That(look.VisibilityMetres, Is.EqualTo(metres).Within(metres * 0.05f));
+        }
+
+        [Test]
+        public void Downpour_IsRainNotFog_ButDryLowVisibilityIsFog()
+        {
+            Assert.That(LiveWeather.Classify(65, 1f, 3f, 900f), Is.EqualTo(WeatherKind.Rain));
+            Assert.That(LiveWeather.Classify(0, 0.2f, 0f, 900f), Is.EqualTo(WeatherKind.Fog));
+        }
+
         [Test]
         public void Feed_IsFixedToAdelaideAndRequestsNoPlayerLocation()
         {

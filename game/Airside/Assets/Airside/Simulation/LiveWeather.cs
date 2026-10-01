@@ -110,11 +110,15 @@ namespace Airside.Simulation
         {
             if (wmoCode is 95 or 96 or 99)
                 return WeatherKind.Storm;
-            if (wmoCode is 45 or 48 || visibilityMetres < 1200f)
+            if (wmoCode is 45 or 48)
                 return WeatherKind.Fog;
+            // Rain is checked before low visibility: a downpour cuts the view to a kilometre or so, and that is
+            // rain, not fog.
             if ((wmoCode >= 51 && wmoCode <= 67) || (wmoCode >= 80 && wmoCode <= 82)
                 || precipitationMillimetres > 0.05f)
                 return WeatherKind.Rain;
+            if (visibilityMetres < 1200f)
+                return WeatherKind.Fog;
             if (wmoCode == 3 || cloudCover >= 0.82f)
                 return WeatherKind.Overcast;
             if (wmoCode is 1 or 2 || cloudCover >= 0.24f)
@@ -131,7 +135,9 @@ namespace Airside.Simulation
         {
             cloudCover = Clamp01(cloudCover);
             var rain = Clamp01(PrecipitationScale(precipitationMillimetres));
-            var visibility = Clamp01((visibilityMetres - 350f) / 19650f);
+            // On the same scale WeatherLook.VisibilityMetres reads back (exponential), so 3 km of real visibility is
+            // drawn as about 3 km and not as thick fog.
+            var visibility = WeatherLook.VisibilityFromMetres(visibilityMetres);
             var authored = WeatherLook.For(kind);
 
             var precipitation = Math.Max(authored.Precipitation * 0.55f, rain);

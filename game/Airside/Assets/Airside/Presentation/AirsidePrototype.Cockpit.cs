@@ -20,9 +20,9 @@ namespace Airside.Presentation
         private string CockpitReason(FleetAircraft aircraft)
         {
             if (aircraft == null) return "Select an aircraft";
-            var visible = IsFleetFlightVisible(aircraft.Registration)
+            var visible = CanWatchJourney(aircraft) || (IsFleetFlightVisible(aircraft.Registration)
                 && _fleetViewById.TryGetValue(aircraft.Registration, out var view)
-                && view != null && view.gameObject.activeInHierarchy;
+                && view != null && view.gameObject.activeInHierarchy);
             return CockpitAvailability.Reason(aircraft.Type, visible, EngineStartSequence.For(aircraft, _preciseTime));
         }
 
@@ -34,6 +34,8 @@ namespace Airside.Presentation
             _selectedAircraftId = aircraft.Registration;
             _activeWorkspace = HudWorkspace.None;
             _devToolsOpen = _controlsHelpOpen = false;
+            UpdateFlightWorld();
+            UpdateAircraftVisual();
             BindCockpitView(_fleetViewById[aircraft.Registration]);
             if (_cockpitInterior == null || !_cameraController.StartCockpit(_cockpitInterior.Seat))
             {
@@ -78,7 +80,10 @@ namespace Airside.Presentation
             _cockpitInterior = null;
             _cockpitView = null;
             _cameraController?.EndCockpit();
-            if (overview || !TryFollowFleetAircraft(id)) ResetView();
+            var wasRemote = _flightOriginX != 0 || _flightOriginZ != 0;
+            ResetFlightWorld();
+            UpdateAircraftVisual();
+            if (overview || wasRemote || !TryFollowFleetAircraft(id)) ResetView();
         }
 
         /// <summary>Runs after final aircraft poses; resolve registration every frame, never a fleet slot.</summary>
@@ -91,7 +96,7 @@ namespace Airside.Presentation
                 || view == null || !view.gameObject.activeInHierarchy)
             {
                 ExitCockpit(true);
-                ShowToast("Aircraft has left the local area.");
+                ShowToast("Flight left the supported region or reached its destination.");
                 return;
             }
             if (CockpitReason(aircraft).Length != 0)
@@ -160,6 +165,7 @@ namespace Airside.Presentation
             FleetAircraft best = null;
             foreach (var aircraft in _fleetAircraftById.Values)
             {
+                if (FlightJourneyReviewActive && aircraft.Registration != _reviewJourneyAircraftId) continue;
                 // Prefer an actual departure so the first still covers engine startup,
                 // rather than jumping into an inbound already at full power.
                 if (CockpitReviewType != null && aircraft.Type.Id != CockpitReviewType) continue;

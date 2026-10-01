@@ -83,7 +83,7 @@ namespace Airside.Presentation
             CurrentPitch = transform.eulerAngles.x;
             CurrentYaw = transform.eulerAngles.y;
             _camera.nearClipPlane = 0.035f;
-            _camera.farClipPlane = Mathf.Max(_savedFar, 30000f);
+            _camera.farClipPlane = Mathf.Max(_savedFar, 55000f);
             // Never use the overview distance's horizon compression from inside an aircraft.
             Shader.SetGlobalFloat(HorizonScaleId, 1f);
         }

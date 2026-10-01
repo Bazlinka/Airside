@@ -122,7 +122,7 @@ namespace Airside.Presentation
 
                 var type = LiveTraffic.ModelFor(aircraft.TypeCode);
                 _liveShown.Add(aircraft.Hex);
-                var target = new Vector3((float)pose.X, AirsideFlightPath.GroundY + (float)pose.Y, (float)pose.Z);
+                var target = new Vector3((float)(pose.X-_flightOriginX), AirsideFlightPath.GroundY + (float)pose.Y, (float)(pose.Z-_flightOriginZ));
                 if (!_liveViews.TryGetValue(aircraft.Hex, out var view) || view == null)
                 {
                     view = BuildAircraftForType($"Live {aircraft.Label}", type, ColorForSkyAirline(aircraft.Callsign), null);

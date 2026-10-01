@@ -9,6 +9,7 @@
   less per flight than a turboprop (13 seats), preps faster, is checked on the pad and cannot be based at an outstation.
   Sound: a synthesised rotor loop (22 Hz blade slap, tail-rotor buzz, turbine whine) that carries over the field and
   changes pitch as the rotor spools. Details and limits in ADR 0227.
+- Stream a bounded South Australia terrain window for SF34 regional cockpit journeys, with real Copernicus elevation, mapped regional strips and a moving render origin (ADR 0215; native path checks and Kingscote landing verified; long-trip performance remains open). Ease inbound cruise height onto the local approach and hide airport actors around a distant render origin. Keep the coarse terrain cells around each mapped strip at runway elevation; regional poses omit local departure bank commands. Add a fresh-airline packaged journey review driver with required phase captures and stall diagnostics.
 
 - **Arrivals no longer bunch up nose to tail on final.** An inbound's drawn position on the
   extended final only counted aircraft already holding, so arrivals due close together got the

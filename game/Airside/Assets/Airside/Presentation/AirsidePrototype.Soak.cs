@@ -512,7 +512,9 @@ namespace Airside.Presentation
                 _soakBatchesRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Batches Count", 1);
                 _soakSetPassRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "SetPass Calls Count", 1);
                 _saveProbed = true; // never offer or read the player's save
+                InitializeFlightJourneyReview(args);
                 StartAirline("Soak Air");
+                BeginFlightJourneyReviewClock();
                 ApplySoakRenderIsolation(args);
                 Debug.Log($"{SoakLogTag} started for {_soakMinutes:0} min in live time");
                 var followIndex = Array.IndexOf(args, ReviewAircraftFlag);
@@ -584,6 +586,8 @@ namespace Airside.Presentation
 
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
             {
+                // Regional review schedules exactly the supported cockpit subject.
+                if (FlightJourneyReviewActive && aircraft.Registration != _reviewJourneyAircraftId) continue;
                 // Keep the review freighter / hangar subject free of soak auto-dispatch.
                 if (_reviewFreighterHold && aircraft.IsFreighter)
                     continue;
@@ -598,7 +602,15 @@ namespace Airside.Presentation
                             _operations.DispatchCost(aircraft.Type, _operations.DistanceKm(d)))).ToList();
                     if (reachable.Count == 0)
                         continue;
+                    if (FlightJourneyReviewActive && aircraft.CompletedTrips > 0) continue;
                     var destination = reachable[_soakChoices.NextInt(0, reachable.Count)];
+                    if (FlightJourneyReviewActive)
+                    {
+                        var selected = reachable.FindIndex(d => d.Code == _reviewJourneyCode);
+                        if (selected < 0)
+                        { Debug.LogError($"[Airside journey] {_reviewJourneyCode} is not operable"); Application.Quit(2); return; }
+                        destination = reachable[selected];
+                    }
                     // The first flight leaves four minutes in, so every soak covers a full
                     // engine start early; later ones are spread over half an hour.
                     var delay = aircraft.CompletedTrips == 0

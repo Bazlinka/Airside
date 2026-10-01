@@ -181,6 +181,8 @@ Shader "Airside/AdelaideGround"
                 return n;
             }
 
+            float4 _AirsideFlightOrigin;
+
             half4 frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
@@ -189,7 +191,7 @@ Shader "Airside/AdelaideGround"
                 float sum = max(1e-4, w.r + w.g + w.b);
                 w /= sum;
 
-                float2 xz = input.positionWS.xz;
+                float2 xz = input.positionWS.xz + _AirsideFlightOrigin.xz;
                 float farMix = smoothstep(_FarBlendStart, _FarBlendEnd, distance(input.positionWS, GetCameraPositionWS()));
                 float3 aDry, aGreen, aDirt;
                 float3 mDry, mGreen, mDirt;

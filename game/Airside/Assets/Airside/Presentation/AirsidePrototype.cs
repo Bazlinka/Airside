@@ -556,6 +556,8 @@ namespace Airside.Presentation
                 Destroy(_cockpitInterior.gameObject);
             }
             _cameraController?.EndCockpit();
+            ResetFlightWorld();
+            if (_flightTerrain != null) Destroy(_flightTerrain.gameObject);
             DisposeSoakRecorders();
             if (_active == this)
                 _active = null;
@@ -578,7 +580,7 @@ namespace Airside.Presentation
             // Live time: once an airline runs, simulation time is read off the real clock.
             // Before that the demo circuit simply runs at 1x.
             _preciseTime = FleetMode
-                ? LivePresentationTime(_operations.Clock.SecondsAt(DateTime.UtcNow))
+                ? FlightJourneyPresentationTime(_operations.Clock.SecondsAt(DateTime.UtcNow))
                 : _preciseTime + Time.unscaledDeltaTime;
 
             var wholeSeconds = (long)Math.Floor(_preciseTime);
@@ -603,16 +605,21 @@ namespace Airside.Presentation
                 }
             }
 
+            UpdateFlightWorld();
             UpdateLiveWeather();
             ApplyDayCycle();
             AdvancePresentationClock();
             var soakStageStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             UpdateAircraftVisual();
             UpdateCockpitView();
+            TraceFlightJourneyReview();
             if (SoakMode)
                 _soakFleetTicks += System.Diagnostics.Stopwatch.GetTimestamp() - soakStageStarted;
-            UpdateAerobridges();
-            UpdateBoardingPresentation();
+            if (AirportPresentationVisible)
+            {
+                UpdateAerobridges();
+                UpdateBoardingPresentation();
+            }
             soakStageStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             UpdateFocusAudioListener();
             UpdateLiveTraffic();
@@ -629,15 +636,18 @@ namespace Airside.Presentation
             UpdateWheelSmoke();
             UpdateCloudDrift();
             UpdateAtmosphereLayers();
-            UpdateBirdFlock();
+            if (AirportPresentationVisible) UpdateBirdFlock();
             UpdateHangarDoor();
-            UpdateCoastalMotion();
+            if (AirportPresentationVisible) UpdateCoastalMotion();
             UpdateOpsAntenna();
             UpdateStarField();
             soakStageStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
-            UpdateApronLife();
-            UpdateGateServicing();
-            UpdatePushbackTugs();
+            if (AirportPresentationVisible)
+            {
+                UpdateApronLife();
+                UpdateGateServicing();
+                UpdatePushbackTugs();
+            }
             if (SoakMode)
                 _soakGroundTicks += System.Diagnostics.Stopwatch.GetTimestamp() - soakStageStarted;
             if (SoakMode)

@@ -57,9 +57,11 @@ namespace Airside.Presentation
             var load = Smooth(Clamp((power - (prop ? 0.06f : 0.21f)) / (prop ? 0.94f : 0.74f)));
             var detune = 1f + (EngineVoice.Detune(aircraftId) - 1f) * 0.35f;
             // The prop governor holds RPM; load mostly changes the spectrum and level.
-            // Jet N1 has a much wider pitch sweep. No forced approach/takeoff volume floor.
+            // Jet N1 sweeps wider than a governed prop, but resampling the whole bed by ~60% reads as
+            // a turbine winding up on every throttle change, so the sweep is kept modest.
+            // No forced approach/takeoff volume floor.
             var revs = prop ? Lerp(0.76f, 1.04f, rotation) * Lerp(0.98f, 1.03f, load)
-                            : Lerp(0.76f, 1.23f, rotation);
+                            : Lerp(0.86f, 1.14f, rotation);
             var pitch = profile.Pitch * detune * revs;
             var energy = running * profile.Gain;
             var idle = 0.17f * energy * (float)Math.Sqrt(1f - load);

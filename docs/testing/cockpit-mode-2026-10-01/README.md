@@ -16,7 +16,27 @@ Branch: `feature/saab-cockpit-mode`; starting point `e55e3c30` (remote main).
 
 Native interior stills use a simple review runway and the real runtime SF34 model.
 They prove geometry/rendering, not the complete airport journey or controls.
-Mac build and packaged evidence will be recorded below once verified.
+Mac player build passed from clean committed source `3e377fe7`. Final focused
+camera tests passed 2/2, including local fog distance and clip restoration.
+
+## Packaged startup review
+
+`game-startup.png`, `game-after-startup.png` and `game-startup.log` come from that
+Mac player at 1600x900 in the actual airport. The review entered SF34 VH-ZRC at the
+first nonzero engine spool and retained the same aircraft and seat pose for both
+captures. The entry log rounds this tiny positive spool to 0.000; subsequent
+telemetry confirms both engines reach 1.00. Both screenshots show AtStand,
+GS 0 kt and height 0 ft. The second still is **not flight or taxi evidence**.
+The interior, windows, compact HUD and panel text render without exterior-shell
+occlusion. Ground equipment and boarding people remain visible outside.
+
+No managed exception is recorded. The run contains a 196,372 ms frame stall,
+so it provides no performance acceptance. Its cause is not established. It also
+quit after the requested captures rather than completing a 14-minute soak.
+Taxi, takeoff, arrival and automatic local-view exit still require actual evidence.
+The script now calls the second image `after-startup.png` to avoid implying an
+unobserved phase. A private per-invocation TMPDIR was used for the successful
+rebuild after a shared compiler stall; other checkout/build processes were untouched.
 
 ## Remaining acceptance
 

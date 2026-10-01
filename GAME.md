@@ -12,8 +12,12 @@
   **Checks:** baseline headless 1194/1194; changed headless 1198/1198 and final focused
   eligibility/card tests 5/5; Unity EditMode 1585/1587, zero failures, two existing
   inconclusives. Native cockpit renders exposed/fixed a roof gap and text sizing.
-  **NEXT:** verify Mac build and packaged cockpit captures, then finish complete-local-
-  journey, entry/exit, day/night/weather, manual audio and performance acceptance.
+  Mac player build passed from clean `3e377fe7`; focused camera tests 2/2.
+  Packaged startup screenshots/log are committed under `docs/testing/cockpit-mode-2026-10-01/`.
+  Both captures show VH-ZRC at stand, engines running; they do not prove taxi or flight.
+  Review recorded a 196-second frame stall of unknown cause; performance is not accepted.
+  Draft PR #503. **NEXT:** complete local movement/journey and investigate the stall,
+  then entry/exit, day/night/weather, manual audio and comparative performance acceptance.
   Interior is a simplified candidate. Do not claim a completed fleet cockpit rollout
   or merge until those acceptance rows have actual evidence.
 

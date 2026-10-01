@@ -159,6 +159,53 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FlightTile_ParkedAircraftSaysWhereItIsAndWhatIsFlying()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            var rows = new List<OperationsRow>();
+            OperationsSummary.FillPlayerRows(ops.FleetOf(ops.PlayerAirline), clock.Now, rows, ops);
+            Assert.That(rows[0].TypeName, Is.EqualTo(plane.Type.Name));
+            Assert.That(rows[0].FlightLabel, Is.EqualTo("VH-PAX"), "no route yet: the registration is the label");
+            Assert.That(rows[0].RouteText, Is.Not.Empty, "the stand");
+            Assert.That(rows[0].HasProgress, Is.False);
+        }
+
+        [Test]
+        public void FlightTile_PlannedFlightShowsDepartureTimeAndTurnaroundProgress()
+        {
+            var (clock, ops, plane) = PlayerOnly();
+            var departAt = clock.Now.Advance(DeparturePrep.LeadSeconds(plane.Type));
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), departAt).Accepted, Is.True);
+            var rows = new List<OperationsRow>();
+            OperationsSummary.FillPlayerRows(ops.FleetOf(ops.PlayerAirline), clock.Now, rows, ops);
+            var row = rows[0];
+            Assert.That(row.RouteText, Is.EqualTo("Adelaide → " + FlightNumber.PlaceName(plane)));
+            Assert.That(row.TimeText, Does.StartWith("Departs "));
+            Assert.That(row.FlightLabel, Is.Not.EqualTo("VH-PAX"), "the board's flight number");
+            Assert.That(row.HasProgress, Is.True);
+            Assert.That(row.Progress01, Is.InRange(0f, 1f));
+        }
+
+        [Test]
+        public void FlightTile_AirborneAircraftShowsEtaAndHowFarThroughItsLeg()
+        {
+            var (clock, ops, _) = PlayerOnly();
+            var start = clock.Now;
+            ops.RestoreAircraft(
+                "VH-NEW", ops.PlayerAirline, AircraftType.Atr42, FleetState.Inbound,
+                start, start.Advance(8 * 60), default, default,
+                Code("KGC"), null, 0);
+            var inbound = ops.Fleet.Single(a => a.Registration == "VH-NEW");
+            clock.Set(start.Advance(2 * 60));
+            var rows = new List<OperationsRow>();
+            OperationsSummary.FillPlayerRows(new[] { inbound }, clock.Now, rows, ops);
+            Assert.That(rows[0].TimeText, Does.StartWith("ETA "));
+            Assert.That(rows[0].RouteText, Does.EndWith("→ Adelaide"));
+            Assert.That(rows[0].Progress01, Is.EqualTo(0.25f).Within(0.02f));
+            Assert.That(rows[0].ProgressText, Is.EqualTo("25% of flight"));
+        }
+
+        [Test]
         public void PrimaryAction_MatchesAircraftState()
         {
             var (clock, ops, plane) = PlayerOnly();

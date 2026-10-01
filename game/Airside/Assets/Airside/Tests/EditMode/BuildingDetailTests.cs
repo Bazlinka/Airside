@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Airside.Domain;
 using Airside.Presentation;
 using Airside.Simulation;
 using NUnit.Framework;
@@ -77,9 +78,23 @@ namespace Airside.Tests
             {
                 var detail = BuildingDetail.For(hangar, 0f);
                 var doors = detail.Boxes.Where(b => b.Part == BuildingPart.Door).ToList();
-                Assert.That(doors.Count, Is.EqualTo(1), hangar.Id);
-                Assert.That(doors[0].Top, Is.LessThan(hangar.HeightMetres), hangar.Id);
-                Assert.That(doors[0].Length, Is.GreaterThan(6f), hangar.Id);
+                Assert.That(doors, Is.Not.Empty, hangar.Id);
+                if (detail.IsHollow)
+                {
+                    // Open: one doorway through the front wall, its leaves stacked beside it.
+                    Assert.That(detail.Openings.Count, Is.EqualTo(1), hangar.Id);
+                    var opening = detail.Openings[0];
+                    Assert.That(opening.ToMetres - opening.FromMetres, Is.GreaterThan(8f), hangar.Id);
+                    Assert.That(opening.TopMetres, Is.LessThan(hangar.HeightMetres), hangar.Id);
+                    Assert.That(doors.Max(d => d.Height), Is.LessThan(opening.TopMetres + 0.01f), hangar.Id);
+                }
+                else
+                {
+                    var door = doors.OrderByDescending(d => d.Length).First();
+                    Assert.That(door.Top, Is.LessThan(hangar.HeightMetres), hangar.Id);
+                    Assert.That(door.Length, Is.GreaterThan(6f), hangar.Id);
+                }
+
                 Assert.That(detail.Roofs.Count, Is.EqualTo(1), $"{hangar.Id} has no shaped roof");
                 var roof = detail.Roofs[0];
                 Assert.That(roof.EaveY, Is.GreaterThan(hangar.HeightMetres), hangar.Id);
@@ -95,7 +110,78 @@ namespace Airside.Tests
             Assert.That(profiles.Count, Is.GreaterThanOrEqualTo(2), "the hangar district still has one repeated roof silhouette");
 
             var station = BuildingDetail.For(Of(AdelaideBuildingKind.FireStation), 0f);
-            Assert.That(station.Boxes.Count(b => b.Part == BuildingPart.Door), Is.InRange(1, 5));
+            // Each bay is a door slab or, when the appliance fits, an opening with a rolled-up shutter box above it.
+            Assert.That(station.Boxes.Count(b => b.Part == BuildingPart.Door) + 0, Is.InRange(1, 5));
+        }
+
+        [Test]
+        public void MostHangars_AreHollow_WithADoorwayAndEquipmentInsideTheirWings()
+        {
+            var hollow = 0;
+            foreach (var hangar in AdelaideBuildings.All.Where(b => b.Kind == AdelaideBuildingKind.Hangar))
+            {
+                var set = BuildingDetail.For(hangar, 0f);
+                if (!set.IsHollow)
+                    continue;
+                hollow++;
+                var stored = set.Boxes.Where(b => b.Part is BuildingPart.Equipment or BuildingPart.EquipmentDark
+                    or BuildingPart.EquipmentRed).ToList();
+                Assert.That(stored, Is.Not.Empty, $"{hangar.Id} is hollow but empty");
+                var count = hangar.Xz.Length / 2;
+                foreach (var box in stored)
+                {
+                    Assert.That(BuildingDetail.Contains(hangar.Xz, box.X, box.Z), Is.True, $"{hangar.Id} equipment outside");
+                    Assert.That(box.Bottom, Is.GreaterThanOrEqualTo(-0.01f), hangar.Id);
+                    Assert.That(box.Top, Is.LessThan(hangar.HeightMetres - 0.5f), hangar.Id);
+                    // Within reach of a wall, so the middle stays clear for the aircraft the tow brings in.
+                    var nearest = float.MaxValue;
+                    for (var i = 0; i < count; i++)
+                    {
+                        var j = (i + 1) % count;
+                        nearest = Math.Min(nearest, DistanceToSegment(box.X, box.Z, hangar.Xz[i * 2], hangar.Xz[i * 2 + 1],
+                            hangar.Xz[j * 2], hangar.Xz[j * 2 + 1]));
+                    }
+
+                    Assert.That(nearest, Is.LessThan(BuildingDetail.EquipmentBandMetres + 0.2f), $"{hangar.Id} equipment mid-hall");
+                }
+            }
+
+            Assert.That(hollow, Is.GreaterThanOrEqualTo(6), "the hangars are still solid blocks");
+        }
+
+        [Test]
+        public void HollowHangars_TakeTheirAircraftInThroughTheDoorTheyHave()
+        {
+            var checkedAny = 0;
+            foreach (var hangar in AdelaideBuildings.All.Where(b => b.Kind == AdelaideBuildingKind.Hangar))
+            {
+                if (!HangarFront.TryFor(hangar.Xz, hangar.HeightMetres, out var front))
+                    continue;
+                foreach (var stand in new[] { "BAY-3", "BAY-10A", "GATE-21" })
+                foreach (var type in new[] { AircraftType.Atr42, AircraftType.Dash8Q400, AircraftType.Boeing737800 })
+                    foreach (var plan in HangarTow.Options(type, new StableId(stand)).Where(p => p.HangarId == hangar.Id))
+                    {
+                        checkedAny++;
+                        // Nose points into the building, so it is the reverse of the wall's outward direction.
+                        Assert.That(plan.InsideNoseX, Is.EqualTo(-front.OutX), $"{hangar.Id} {type.Id} enters by another wall");
+                        Assert.That(plan.InsideNoseZ, Is.EqualTo(-front.OutZ), hangar.Id);
+                        Assert.That(plan.Span + 2f, Is.LessThanOrEqualTo(front.DoorWidth + 0.01f), $"{hangar.Id} {type.Id} wings");
+                        Assert.That(plan.TailHeight + 0.4f, Is.LessThanOrEqualTo(front.DoorHeight + 0.01f), $"{hangar.Id} {type.Id} tail");
+                    }
+            }
+
+            Assert.That(checkedAny, Is.GreaterThan(0));
+        }
+
+        private static float DistanceToSegment(float px, float pz, float ax, float az, float bx, float bz)
+        {
+            var dx = bx - ax;
+            var dz = bz - az;
+            var l2 = dx * dx + dz * dz;
+            var t = l2 < 1e-6f ? 0f : Math.Max(0f, Math.Min(1f, ((px - ax) * dx + (pz - az) * dz) / l2));
+            var cx = ax + dx * t;
+            var cz = az + dz * t;
+            return (float)Math.Sqrt((px - cx) * (px - cx) + (pz - cz) * (pz - cz));
         }
 
         [Test]

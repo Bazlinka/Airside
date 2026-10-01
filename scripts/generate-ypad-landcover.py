@@ -34,14 +34,15 @@ ORIGIN = -HALF_EXTENT
 CORE_HALF_X = 1600.0
 CORE_HALF_Z = 550.0
 
-NONE, RESIDENTIAL, COMMERCIAL, PARK, PARKING, WATER, SAND, SCRUB = range(8)
+NONE, RESIDENTIAL, COMMERCIAL, PARK, PARKING, WATER, SAND, SCRUB, GOLF = range(9)
 PRIORITY = {
     NONE: 0, SCRUB: 1, RESIDENTIAL: 2, SAND: 3, COMMERCIAL: 4,
-    PARK: 5, PARKING: 6, WATER: 7,
+    PARK: 5, GOLF: 6, PARKING: 7, WATER: 8,
 }
 CLASS_NAME = {
     NONE: "None", RESIDENTIAL: "Residential", COMMERCIAL: "Commercial",
     PARK: "Park", PARKING: "Parking", WATER: "Water", SAND: "Sand", SCRUB: "Scrub",
+    GOLF: "Golf",
 }
 
 
@@ -53,7 +54,9 @@ def classify(tags):
     if tags.get("amenity") == "parking":
         return PARKING
     leisure = tags.get("leisure")
-    if leisure in ("park", "golf_course", "nature_reserve", "recreation_ground", "pitch"):
+    if leisure == "golf_course":
+        return GOLF
+    if leisure in ("park", "nature_reserve", "recreation_ground", "pitch"):
         return PARK
     landuse = tags.get("landuse")
     if landuse in (
@@ -192,7 +195,7 @@ def main():
         data = json.load(f)
 
     grid = bytearray(SIZE * SIZE)
-    painted = {k: 0 for k in range(8)}
+    painted = {k: 0 for k in range(9)}
 
     jobs = []
     for e in data["elements"]:
@@ -218,7 +221,7 @@ def main():
         for idx, chunk in enumerate(chunks)
     )
     osm_base = (data.get("osm3s") or {}).get("timestamp_osm_base", "unknown")
-    coverage = {CLASS_NAME[k]: round(100.0 * painted[k] / (SIZE * SIZE), 2) for k in range(1, 8)}
+    coverage = {CLASS_NAME[k]: round(100.0 * painted[k] / (SIZE * SIZE), 2) for k in range(1, 9)}
 
     # Centroids measured from the named OSM polygons in runway-frame metres.
     landmarks = {
@@ -262,6 +265,7 @@ namespace Airside.Simulation
             Water = 5,
             Sand = 6,
             Scrub = 7,
+            Golf = 8,
         }}
 
         public const float HalfExtentMetres = {HALF_EXTENT:g}f;
@@ -284,6 +288,7 @@ namespace Airside.Simulation
         public const float CoverageWaterPercent = {coverage['Water']}f;
         public const float CoverageSandPercent = {coverage['Sand']}f;
         public const float CoverageScrubPercent = {coverage['Scrub']}f;
+        public const float CoverageGolfPercent = {coverage['Golf']}f;
 
         public static Kind Sample(float x, float z)
         {{
@@ -307,17 +312,17 @@ namespace Airside.Simulation
 
     print(
         f"landcover: {SIZE}x{SIZE} @ {CELL:g}m; "
-        + ", ".join(f"{CLASS_NAME[k]}={painted[k]}" for k in range(1, 8))
+        + ", ".join(f"{CLASS_NAME[k]}={painted[k]}" for k in range(1, 9))
     )
     print("landmarks:", landmark_kinds)
     print("coverage%:", coverage)
     print("wrote", os.path.relpath(OUTPUT, ROOT))
 
     expect = {
-        "RoyalAdelaideGolf": {"Park"},
+        "RoyalAdelaideGolf": {"Golf"},
         "Patawalonga": {"Water"},
         "HarbourTown": {"Commercial", "Parking"},
-        "GlenelgGolf": {"Park"},
+        "GlenelgGolf": {"Golf"},
     }
     failed = False
     for name, want in expect.items():

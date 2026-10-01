@@ -24,7 +24,36 @@ namespace Airside.Presentation
         /// <summary>The red obstruction light on the tower mast.</summary>
         ObstructionLight,
         /// <summary>Terminal kerb canopy and its columns.</summary>
-        Canopy
+        Canopy,
+        /// <summary>Ground equipment kept inside hangars and docks: tugs, power carts, stairs (yellow-orange).</summary>
+        Equipment,
+        /// <summary>Tyres, bumpers, seat backs and cab glass on that equipment.</summary>
+        EquipmentDark,
+        /// <summary>Fire appliances and tool chests.</summary>
+        EquipmentRed
+    }
+
+    /// <summary>
+    /// A doorway cut right through a building's wall (ADR 0213): along edge <see cref="EdgeIndex"/> from
+    /// <see cref="FromMetres"/> to <see cref="ToMetres"/> (measured from the edge's first point), from
+    /// <see cref="BottomMetres"/> up to <see cref="TopMetres"/> above the base. The shell is hollow behind it.
+    /// </summary>
+    public readonly struct DetailOpening
+    {
+        public DetailOpening(int edgeIndex, float fromMetres, float toMetres, float bottomMetres, float topMetres)
+        {
+            EdgeIndex = edgeIndex;
+            FromMetres = fromMetres;
+            ToMetres = toMetres;
+            BottomMetres = bottomMetres;
+            TopMetres = topMetres;
+        }
+
+        public int EdgeIndex { get; }
+        public float FromMetres { get; }
+        public float ToMetres { get; }
+        public float BottomMetres { get; }
+        public float TopMetres { get; }
     }
 
     /// <summary>A box in world metres: centre, size along its own axis, height, depth, and the axis.</summary>
@@ -121,6 +150,14 @@ namespace Airside.Presentation
         public readonly List<DetailBox> Boxes = new();
         public readonly List<DetailPrism> Prisms = new();
         public readonly List<DetailRoof> Roofs = new();
+
+        /// <summary>Doorways cut through the walls. When there are any, the building is drawn hollow behind them.</summary>
+        public readonly List<DetailOpening> Openings = new();
+
+        /// <summary>Height of the inside floor above the base (a loading dock is raised).</summary>
+        public float InteriorFloorMetres;
+
+        public bool IsHollow => Openings.Count > 0;
     }
 
     /// <summary>
@@ -131,7 +168,7 @@ namespace Airside.Presentation
     /// deterministic (seeded from the OSM id) — no UnityEngine types — so it is tested headlessly
     /// and the runtime only merges the pieces into one mesh per material.
     /// </summary>
-    public static class BuildingDetail
+    public static partial class BuildingDetail
     {
         public const float StoreyMetres = 3.4f;
         public const float ParapetDepthMetres = 0.32f;
@@ -173,12 +210,16 @@ namespace Airside.Presentation
             switch (building.Kind)
             {
                 case AdelaideBuildingKind.Hangar:
-                    AddHangarDoor(set, xz, front, baseY, height);
+                    // Open and hollow where the footprint allows (ADR 0213), else the flat door it always had.
+                    if (!TryAddOpenHangar(set, xz, baseY, height, random))
+                        AddHangarDoor(set, xz, front, baseY, height);
                     AddHangarRoof(set, xz, baseY + height, building.Id, 1f);
                     AddWindowBands(set, xz, baseY, 1, random, skipEdge: front);
+                    AddPlinth(set, xz, baseY);
+                    AddCladding(set, xz, baseY, height, front, random);
                     break;
                 case AdelaideBuildingKind.FireStation:
-                    AddApplianceBays(set, xz, front, baseY, height);
+                    AddApplianceBays(set, xz, front, baseY, height, random);
                     AddWindowBands(set, xz, baseY, Storeys(height), random, skipEdge: front);
                     AddPlinth(set, xz, baseY);
                     // A low-pitched roof cap; plant only when the footprint cannot carry one.
@@ -186,9 +227,10 @@ namespace Airside.Presentation
                         AddRoofPlant(set, xz, baseY + height, random);
                     break;
                 case AdelaideBuildingKind.Freight:
-                    AddLoadingDoors(set, xz, front, baseY, height);
+                    AddLoadingDoors(set, xz, front, baseY, height, random);
                     AddWindowBands(set, xz, baseY, 1, random, skipEdge: front);
                     AddPlinth(set, xz, baseY);
+                    AddCladding(set, xz, baseY, height, front, random);
                     if (!AddHangarRoof(set, xz, baseY + height, building.Id, RoofRiseScale))
                         AddRoofPlant(set, xz, baseY + height, random);
                     break;
@@ -232,6 +274,7 @@ namespace Airside.Presentation
                 set.Boxes.Add(OnWall(BuildingPart.Trim, edge, 0.5f, edge.Length, baseY + height - 1.1f, 1.6f, 0.35f));
                 // Office windows on the upper level.
                 AddPanes(set, edge, baseY + 8.2f, random, margin: 3f);
+                AddFacadeFins(set, edge, baseY, height);
                 // Kerb canopy: a 6 m deep slab at 4.6 m on slim columns every 9 m.
                 var canopyLength = edge.Length - 6f;
                 if (canopyLength < 12f)
@@ -460,55 +503,6 @@ namespace Airside.Presentation
             set.Boxes.Add(OnWall(BuildingPart.Trim, edge, 0.5f, width + 1.2f, baseY + 0.06f, 0.12f, 0.8f, outward: 0.4f));
             for (var side = -1; side <= 1; side += 2)
                 AddWallPack(set, edge, 0.5f + side * (width * 0.5f + 0.9f) / edge.Length, doorHeight, baseY);
-        }
-
-        private static void AddApplianceBays(BuildingDetailSet set, float[] xz, int front, float baseY, float height)
-        {
-            if (front < 0)
-                return;
-            var edge = Edge(xz, front, Winding(xz));
-            var bays = Math.Min(5, (int)(edge.Length * 0.85f / 6f));
-            if (bays < 1)
-                return;
-            var doorHeight = Math.Min(5.2f, height - 1.5f);
-            var pitch = edge.Length * 0.85f / bays;
-            for (var b = 0; b < bays; b++)
-            {
-                var t = 0.5f + ((b + 0.5f) / bays - 0.5f) * edge.Length * 0.85f / edge.Length;
-                set.Boxes.Add(OnWall(BuildingPart.Door, edge, t, Math.Min(4.6f, pitch - 1.2f), baseY + doorHeight * 0.5f,
-                    doorHeight, 0.16f, outward: 0.08f));
-                // Roller-door slats read as three horizontal lines.
-                for (var s = 1; s <= 3; s++)
-                    set.Boxes.Add(OnWall(BuildingPart.Trim, edge, t, Math.Min(4.6f, pitch - 1.2f), baseY + doorHeight * s / 4f,
-                        0.08f, 0.22f, outward: 0.12f));
-                AddWallPack(set, edge, t, doorHeight, baseY);
-            }
-
-            set.Boxes.Add(OnWall(BuildingPart.Trim, edge, 0.5f, edge.Length * 0.9f, baseY + doorHeight + 0.35f, 0.5f, 0.4f,
-                outward: 0.2f));
-        }
-
-        private static void AddLoadingDoors(BuildingDetailSet set, float[] xz, int front, float baseY, float height)
-        {
-            if (front < 0)
-                return;
-            var edge = Edge(xz, front, Winding(xz));
-            var doors = Math.Min(8, (int)(edge.Length * 0.7f / 8f));
-            var doorHeight = Math.Min(4.2f, height - 1.8f);
-            for (var d = 0; d < doors; d++)
-            {
-                var t = 0.5f + ((d + 0.5f) / doors - 0.5f) * 0.7f;
-                set.Boxes.Add(OnWall(BuildingPart.Door, edge, t, 3.6f, baseY + doorHeight * 0.5f, doorHeight, 0.14f,
-                    outward: 0.07f));
-                set.Boxes.Add(OnWall(BuildingPart.Trim, edge, t, 4.2f, baseY + doorHeight + 0.25f, 0.35f, 0.9f,
-                    outward: 0.45f));
-                AddWallPack(set, edge, t, doorHeight - 0.3f, baseY);
-                // Dock bumpers either side of the leaf and a kerb bollard in front.
-                for (var side = -1; side <= 1; side += 2)
-                    set.Boxes.Add(OnWall(BuildingPart.Trim, edge, t + side * 2.0f / edge.Length, 0.3f, baseY + 1.1f, 0.5f, 0.3f,
-                        outward: 0.2f));
-                set.Boxes.Add(OnWall(BuildingPart.Trim, edge, t, 0.24f, baseY + 0.55f, 1.1f, 0.24f, outward: 2.4f));
-            }
         }
 
         /// <summary>
@@ -770,38 +764,7 @@ namespace Airside.Presentation
         /// The edge the doors go on: the longest wall that faces the field centre (the runways
         /// sit around the world origin), else the longest wall.
         /// </summary>
-        public static int FrontEdge(float[] xz)
-        {
-            var count = xz.Length / 2;
-            var winding = Winding(xz);
-            var (cx, cz) = Centroid(xz);
-            var best = -1;
-            var bestFacing = -1;
-            var bestLength = 0f;
-            var bestAny = -1;
-            var bestAnyLength = 0f;
-            for (var i = 0; i < count; i++)
-            {
-                var edge = Edge(xz, i, winding);
-                if (edge.Length > bestAnyLength)
-                {
-                    bestAny = i;
-                    bestAnyLength = edge.Length;
-                }
-
-                var facing = edge.OutX * -cx + edge.OutZ * -cz > 0f ? 1 : 0;
-                if (edge.Length < 8f)
-                    continue;
-                if (facing > bestFacing || (facing == bestFacing && edge.Length > bestLength))
-                {
-                    best = i;
-                    bestFacing = facing;
-                    bestLength = edge.Length;
-                }
-            }
-
-            return best >= 0 ? best : bestAny;
-        }
+        public static int FrontEdge(float[] xz) => HangarFront.FrontEdge(xz);
 
         public static (float x, float z) Centroid(float[] xz)
         {

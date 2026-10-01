@@ -1,4 +1,4 @@
-# 0207 — Aircraft cockpit spectator mode
+# 0214 — Aircraft cockpit spectator mode
 
 Date: 2026-10-01. Status: approved direction; SF34 candidate under verification.
 

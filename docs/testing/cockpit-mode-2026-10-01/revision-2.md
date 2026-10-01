@@ -43,5 +43,20 @@ it is not a controlled performance comparison, complete flight, or 14-minute soa
 
 The requested reference-driven gamified visual rebuild is complete. Full cockpit
 journey, controls playtest, weather/night, audio and performance acceptance remain
-separate requirements for merging the broader cockpit-mode feature. Broader cockpit-mode journey/audio/performance
+open follow-up requirements. Bailey approved merging the simplified SF34 candidate
+on 1 October. Broader cockpit-mode journey/audio/performance
 acceptance remains in the parent README and is not claimed by this visual revision.
+
+## Integration with main
+
+Integrated main `b290b275`, preserving aircraft articulation, hollow doorways and
+hangar work. Restored main's implemented `AttachDoorways` runtime-kit call.
+Cockpit ADR is now 0214 because main independently used 0207 for golf bunkers.
+
+Headless regression: 1275 passed, zero failures. Native Unity EditMode: 1674 total,
+1672 passed, zero failures, two existing inconclusives (`FleetMarket_SaysASharedLockOnce`
+and `Storm_IsAGroundStop`). Asset audit passed: 1589 GUIDs, 347 mirrors, 70 character
+materials. Diff whitespace check against main passed. Unity's shared compiler
+stalled; the same assembly compiled successfully without `/shared`. Removing
+that flag from this worktree's ignored Bee cache allowed the actual Unity test
+runner to complete. This local workaround changes no shipped source or install.

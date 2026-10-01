@@ -9,9 +9,59 @@
   overview. An original metre-authored interior shows live ground speed, height above
   the runway datum and heading; the listener uses an interior engine mix. Other types
   remain disabled pending fitted interiors. No flight-control, simulation or save changes.
-  ADR 0207 and `docs/plans/cockpit-mode.md`; visual/journey acceptance is tracked separately.
-- **Restore native compilation after orphan doorway call.** Remove the remote-main
-  call to missing `AttachDoorways` until its actual implementation is committed.
+  ADR 0214 and `docs/plans/cockpit-mode.md`; visual/journey acceptance is tracked separately.
+- **Cockpit integration:** retain current main's doorway attachment now that its
+  implementation is committed; preserve the aircraft articulation and hangar changes.
+- **My Flights panel shows the whole story; aircraft doors open onto a real doorway.**
+  Each flight tile is now taller and carries the flight number and airframe, the route
+  ("Adelaide → Kingscote") with the registration, a state line, the time that matters
+  ("Departs 14:05", "ETA 15:20", "Check ends 18:00") and a progress bar for the departure
+  prep, flight leg or outstation turnaround. Behind every passenger and cargo door of all 13 flying types
+  there is now a hollow — a dark reveal, a black cabin and a lit vestibule that follow the fuselage
+  curve — drawn only while the door is away from the hull, so people on the stairs or bridge walk
+  into a doorway instead of a grey wall. `AircraftAppearanceReview` gained `-aircraftReviewDoors open`
+  and a `door` close-up view. Presentation only: no simulation, save or model-file change.
+
+- **Phase 2a multi-lobe eucalypt crowns (ADR 0212).** NDVI suburb trees use a
+  3-lobe faceted canopy (primary dome + two side clusters, 28 crown tris) so
+  they read as eucalypts instead of one hex blob. Layout in
+  `AdelaideTreeGeometry`; drawn by `AirsideAdelaideSuburbs.AddTree`. No new
+  assets or licences. Locked by `AdelaideTreeGeometryTests`. No save-schema
+  changes.
+- **Phase 1 Hills aerial haze (ADR 0210).** Outer-terrain land vertex colours
+  cool toward blue-grey with distance and height so the Hills dissolve instead
+  of reading as a hard brown rim. Locked by `AdelaideAerialPerspectiveTests`.
+  No save-schema changes.
+- **Phase 1 seasonal dry-grass tint (ADR 0209).** Surroundings Park/Scrub/plain
+  bake strawier mid-January and greener mid-July from the Adelaide calendar day.
+  Golf irrigated green unchanged. Locked by `AdelaideSeasonGrassTintTests`. No
+  save-schema changes.
+- **Phase 1 CBD skyline boxes (ADR 0208).** 42 OSM-height towers near Victoria
+  Square (~7 km ENE) draw as one grey low-poly mesh on DEM relief. From existing
+  suburb-buildings snapshot — not billboards; no new licence. Locked by
+  `AdelaideCbdSkylineTests`. No save-schema changes.
+- **Phase 1 golf bunker discs (ADR 0207).** 213 OSM `golf=bunker` discs draw as
+  sand discs on the surroundings mesh (Glenelg and nearby courses). Land-cover
+  Golf tint unchanged. Locked by `GolfBunkerMarksTests`. No save-schema changes.
+- **Phase 1 land cover: Golf distinct from Park (ADR 0211).** OSM golf courses
+  paint `Kind.Golf` with a richer irrigated green tint at overview (Royal
+  Adelaide, Glenelg, …). Parks stay olive. Regenerated `AdelaideLandCover`;
+  locked by `AdelaideLandCoverTests`. Renumbered from draft 0206 after runway
+  paint claimed 0206 on `main`. No save-schema changes.
+- **Visual overhaul plan approved; continue without ask-to-verify.** Bailey
+  closed P0 and approved the visual plan; agents ship Phase 1+ code; he rebuilds
+  when he wants. Mac baseline PNG/metrics optional, not a gate.
+- **P0 closed by Bailey (move to P1).** Owner waived remaining unverified
+  stills/listening rows in `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`.
+  Plan + ADR 0205 + `GAME.md` handoff point at the visual overhaul gate. No
+  simulation or save changes.
+- **Hollow hangars, open bays and stored equipment; more wall detail.** Hangars now have a real doorway cut
+  through the front wall with a lined room behind it (floor, ceiling, trusses, strip lights), door leaves stacked
+  beside it, and tugs, power carts, stairs and tool chests along the side walls. The hangar tow uses that same door
+  and only takes aircraft that fit it (`HangarFront`). Fire-station bays that fit open onto a crash tender; every
+  other freight dock opens onto a raised floor with pallets and sometimes a van. Hangars and sheds gain ribs, girts,
+  gutters, downpipes, louvres and a personnel door; the terminal landside gains fins and a spandrel band. Cobham's
+  hangar is 17 m so jets fit. ADR 0213.
 
 - **Runway edge lines and centreline no longer shimmer into dashes.** A 0.9 m line is under a pixel wide
   from about a kilometre out, so it broke up and crawled as the camera moved. The 05/23 and 12/30 edge and
@@ -19,11 +69,28 @@
   about 1.6 px (`AirsidePaintWidening`, capped at 9x), so they stay continuous at every zoom and are exact
   when near. Presentation only. Checked in a Mac build at 250 m, 1 km and 3 km; ADR 0206.
 
+- **Aircraft physical-animation pass: control surfaces, gear, wheels.** Every fixed-wing type now moves
+  like the real thing. Flaps, ailerons, elevators and the rudder hinge on their real swept hinge lines
+  (fitted from each mesh) instead of the bare lateral axis, and several signs that were backwards are
+  fixed: flaps deployed trailing-edge-up, spoilers sank into the wing and the rudder swung against the turn.
+  Ailerons and rudder now command roll *rate* (they deflect to roll in or out and neutralise on a steady
+  bank), the elevator follows nose-up attitude and pitch rate, flaps run aft on their tracks and move at
+  actuator speed, the wing going down raises a roll spoiler, and a shut-down aircraft parked on the stand
+  droops its ailerons and elevators. The gear folds the way its airframe's does: nose legs forward, jet
+  mains (and the ATR's) inboard into the belly, Dash 8 mains aft into the nacelle, Saab mains forward.
+  Leg-mounted door plates fold away with the leg, belly doors hinge on their outer edge and open before the
+  leg moves, the 787/A330/A350 trucks tip as the leg swings, and nose-wheel steering composes inside the
+  fold. Tyres spin up hard at touchdown and spin down gently after lift-off instead of snapping. Presentation
+  only: no simulation, save or model-file change. New `AircraftArticulation` (pure rules, headless-tested),
+  `AirsidePrototype.Articulation.cs`, and an `AircraftArticulationReview` editor tool
+  (`-executeMethod AircraftArticulationReview.Render -articulationPose geardown|gearup|gearmid|roll|landing`).
+
 - **Smoother propeller spool-up and a clearly visible blur at speed.** Shaft speed is now
   jerk-limited (the acceleration itself eases in and out) so starts and run-downs no longer step;
   the blur disc is ~2.6x denser with a brighter tip ring, grows with rpm all the way to governed
   speed (`DiscSpeedLook`) so you can see when a prop is up to speed, and blades now hide at 60%
   blur instead of 92% so there is no pop. Presentation only.
+
 
 - **P0 Stage C multi-shot log inventory fix.** `capture-game` mirrors Unity's one
   `-logFile` onto sibling `.log` paths; remaining inventory falls back to the batch
@@ -55,14 +122,11 @@
   prompt accepts either checkout. Locked by `test-p0-mac-agent-launch.sh`. No
   simulation or save changes.
 - **P0 tip `67050b65` CI CLEAN (#492).** Headless green with `ReviewFreighterPick`
-  + tip retarget after #491 merge. Mac Stage A / `CURSOR_API_KEY` still required.
-  No simulation or save changes.
+  + tip retarget after #491 merge. Merged to `main`. No simulation or save changes.
 - **P0 Stage A freighter pick locked on soak seed.** `ReviewFreighterPick` (Simulation)
   prefers a parked unbooked jet for `-airsideReviewFreighter`; EditMode proves
   seed `20260913` can refit at T+0 and stay AtStand through the 28s still.
-  Soak uses the shared pick. Mac tip defaults follow
-  `cursor/p0-freighter-pick-lock-709e` after #491 merged to `main`. No save-schema
-  changes.
+  Soak uses the shared pick. No save-schema changes.
 - **P0 tip `b67a32a1` CI CLEAN.** Headless green on #491 with Stage A caffeinate +
   osascript notify, fail-closed framing/follow, and CreateAgent Stage A path.
   Mac workers online; `CURSOR_API_KEY` still blocks CreateAgent. No simulation

@@ -11,94 +11,6 @@ namespace Airside.Presentation
 {
     public sealed partial class AirsidePrototype
     {
-        private static void UpdateControlSurfaces(
-            ControlSurfacePart[] parts, AircraftPhase phase, float progress, float bankDegrees, float deltaTime,
-            bool drawnOnGround = false)
-        {
-            // Presentation-only: rudder/elevator deflect with attitude (Batch D life).
-            // deltaTime is the presentation clock, so surfaces hold still while paused
-            // and sweep 4x faster at 4x speed instead of running on their own timeline.
-            if (deltaTime <= 0f)
-                return;
-            var pitch = PhasePitchDegrees(phase, progress);
-            var elevator = Mathf.Clamp(-pitch * 1.4f, -22f, 22f);
-            var rudder = Mathf.Clamp(-bankDegrees * 0.9f, -18f, 18f);
-            var wingFlex = AirsideReusableMotion.WingFlexDegrees(phase, progress);
-            for (var i = 0; i < parts.Length; i++)
-            {
-                var child = parts[i].Transform;
-                if (child == null)
-                    continue;
-                switch (parts[i].Kind)
-                {
-                    case ControlSurfaceKind.Rudder:
-                    {
-                        var euler = child.localEulerAngles;
-                        var current = euler.y > 180f ? euler.y - 360f : euler.y;
-                        euler.y = Mathf.MoveTowards(current, rudder, deltaTime * 90f);
-                        child.localEulerAngles = euler;
-                        break;
-                    }
-                    case ControlSurfaceKind.Elevator:
-                    {
-                        // Soft elevator cue on the whole tailplane when no separate elevator mesh.
-                        var euler = child.localEulerAngles;
-                        var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                        var target = elevator * parts[i].Factor;
-                        euler.x = Mathf.MoveTowards(current, target, deltaTime * 80f);
-                        child.localEulerAngles = euler;
-                        break;
-                    }
-                    case ControlSurfaceKind.Aileron:
-                    {
-                        var euler = child.localEulerAngles;
-                        var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                        var target = Mathf.Clamp(bankDegrees * 0.8f * parts[i].Factor, -18f, 18f);
-                        euler.x = Mathf.MoveTowards(current, target, deltaTime * 90f);
-                        child.localEulerAngles = euler;
-                        break;
-                    }
-                    case ControlSurfaceKind.Wing:
-                    {
-                        // Flex the authored wing roots in opposite directions so both tips
-                        // rise under load. Keep the cue subtle and ease it between phases.
-                        var euler = child.localEulerAngles;
-                        var current = euler.z > 180f ? euler.z - 360f : euler.z;
-                        euler.z = Mathf.MoveTowards(current, wingFlex * parts[i].Factor, deltaTime * 3.5f);
-                        child.localEulerAngles = euler;
-                        break;
-                    }
-                    case ControlSurfaceKind.Flap:
-                    {
-                        // Takeoff flap is set for the roll and milked off after rotation —
-                        // it used to keep extending all the way through the climb.
-                        var deploy = AirsideReusableMotion.FlapDegrees(phase, progress, drawnOnGround);
-                        var euler = child.localEulerAngles;
-                        var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                        euler.x = Mathf.MoveTowards(current, deploy, deltaTime * 40f);
-                        child.localEulerAngles = euler;
-                        break;
-                    }
-                    case ControlSurfaceKind.Spoiler:
-                    {
-                        // Spoilers pop on touchdown and stow as the rollout ends, rather
-                        // than creeping up from zero through the whole flare.
-                        var raise = phase == AircraftPhase.Landing
-                            ? 35f * Mathf.Clamp01(Mathf.InverseLerp(
-                                  AirsideFlightPath.TouchdownProgress,
-                                  AirsideFlightPath.TouchdownProgress + 0.06f, progress)
-                                - Mathf.InverseLerp(0.86f, 1f, progress))
-                            : 0f;
-                        var euler = child.localEulerAngles;
-                        var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                        euler.x = Mathf.MoveTowards(current, -raise, deltaTime * 55f);
-                        child.localEulerAngles = euler;
-                        break;
-                    }
-                }
-            }
-        }
-
         private void UpdateTerminalFlag()
         {
             if (_terminalFlag == null)
@@ -347,7 +259,11 @@ namespace Airside.Presentation
             }
 
             // The coastal plain and Gulf St Vincent past the airfield edge, from the real OSM coast.
-            if (AirsideAdelaideSurroundings.TryBuild(_airfieldRoot, out var surroundingsMaterial) && surroundingsMaterial != null)
+            // ADR 0209: bake seasonal dry-grass tint from the Adelaide calendar day once at build.
+            var seasonClock = _operations?.Clock ?? AirlineClock.Default;
+            var seasonDay = seasonClock.LocalAt(_clock.Now).DayOfYear;
+            if (AirsideAdelaideSurroundings.TryBuild(_airfieldRoot, seasonDay, out var surroundingsMaterial)
+                && surroundingsMaterial != null)
             {
                 // The suburbs around the field (ADR 0159), fading with the land they stand on.
                 // Spread across frames so the mesh build does not freeze the first picture (ADR 0162).

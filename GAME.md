@@ -1,6 +1,6 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
-- **2026-10-01 Codex — SF34 cockpit spectator candidate (`feature/saab-cockpit-mode`, ADR 0207).**
+- **2026-10-01 Codex — SF34 cockpit spectator candidate (`feature/saab-cockpit-mode`, ADR 0214).**
   Isolated checkout: `/private/tmp/airside-cockpit`; original dirty checkout untouched.
   Select a local aircraft → Cockpit. SF34 availability follows first engine spool,
   local visibility and shutdown; other types are disabled. Left-seat 3D interior,
@@ -8,7 +8,8 @@
   registration resolution, restored shell/glazing state and interior listener/mix.
   Live panel values: horizontal ground speed, height above runway datum, heading.
   Plan/task packet: `docs/plans/cockpit-mode.md`. No simulation or save changes.
-  Removed one orphan `AttachDoorways` call already present on remote main so Unity compiles.
+  The temporary orphan-doorway-call removal is superseded: current main implements
+  `AttachDoorways`, so its runtime-kit call is restored for the integration.
   **Checks:** baseline headless 1194/1194; changed headless 1198/1198 and final focused
   eligibility/card tests 5/5; Unity EditMode 1585/1587, zero failures, two existing
   inconclusives. Native cockpit renders exposed/fixed a roof gap and text sizing.
@@ -16,7 +17,7 @@
   Packaged startup screenshots/log are committed under `docs/testing/cockpit-mode-2026-10-01/`.
   Both captures show VH-ZRC at stand, engines running; they do not prove taxi or flight.
   Review recorded a 196-second frame stall of unknown cause; performance is not accepted.
-  Draft PR #503. **NEXT:** complete local movement/journey and investigate the stall,
+  PR #503 approved for merge. **NEXT:** complete local movement/journey and investigate the stall,
   then entry/exit, day/night/weather, manual audio and comparative performance acceptance.
   **Revision 2:** rebuilt the interior from inspected C&L Saab 340B panel/overhead
   photos at Bailey's request: raked windscreens, grey panel, stacked CRT pairs,
@@ -31,9 +32,28 @@
   `v2-game-startup.png` confirms the markings are visible. No managed exception.
   Visual rebuild complete; broader cockpit journey/audio/performance gates remain
   open as above. See `docs/testing/cockpit-mode-2026-10-01/revision-2.md`.
-  Interior is a simplified candidate. Do not claim a completed fleet cockpit rollout
-  or merge until those acceptance rows have actual evidence.
+  Bailey authorised merging this simplified SF34 candidate on 1 October. The
+  remaining acceptance rows stay open; do not claim a completed fleet rollout.
+  Integration retains current main's aircraft articulation, doorways and hangars.
+  ADR renumbered 0214 because main assigned 0207 to golf bunkers.
+  Integration checks: headless 1275 passed; native Unity 1672 passed, zero failures,
+  two existing inconclusives (1674 total); asset audit passed. Shared compiler
+  stalled; removing `/shared` only in this worktree's ignored Bee cache unblocked
+  the completed native run. No compiler/install configuration changes shipped.
 
+- **2026-10-01 Claude — My Flights tiles, hollow aircraft doorways, A320 door fit (ADR 0206).**
+  Each My Flights tile now shows flight number, airframe, route, registration, state, the time to watch
+  (departs / ETA / check ends) and a progress bar. Every passenger and cargo door of all 13 flying types
+  has a hollow (dark reveal, black cabin, lit vestibule) drawn only while the door is open, and jet/cargo
+  leaves hinge on the edge that swings them clear. The A320's doors were buried up to 6 cm in its hull
+  (inherited from the 737 skin); `scripts/fit-aircraft-doors.py` refit them and CI now audits all kits.
+  Presentation only.
+  - **Checks:** Unity EditMode 53/53 on the touched suites (doorway, doorway geometry, operations summary,
+    HUD shell, dispatch, assets, catalogue); `scripts/test-domain.sh` green; `fit-aircraft-doors.py audit` clean;
+    13/13 door close-ups reviewed with `AircraftAppearanceReview -aircraftReviewDoors open`.
+  - **Not verified:** the panel and an open door at follow distance at dusk/night; the A320/ATR editable FBX and
+    `generate-air-adelaide-fleet.py` still carry the old A320 door cut (re-run `fit A320` after any regenerate).
+  - **NEXT:** eyeball the tiles on a busy fleet (6+ aircraft) and an aerobridge/stair boarding at the door.
 
 - **2026-10-01 Cursor — P0 waiting on Stage A evidence push (#492).**
   Tip **#492** `dc546ac1` (CI green, MERGEABLE). Stage A fail-closed locks are on tip;
@@ -46,18 +66,44 @@
   `scripts/run-post-audit-p0-stage-a.command` if none exist), then continue B/C
   + manual listening. Do not invent RESULTS.
 
+- **2026-10-01 Cursor — Goal paused; Phase 1 tip + Phase 2a merged to `main`.**
+  Bailey asked to pause the standing visual-overhaul goal and land the tip on
+  `main`. Phase 1 ground/land (Golf/bunkers/CBD/seasonal/haze) + Phase 2a
+  multi-lobe eucalypt crowns (ADR 0212) are on `main`. Superseded draft PRs
+  closed. **Checks:** `scripts/test-domain.sh` **1215/1215**.
+  **NEXT (when resumed):** Phase 2 species/LOD/placement, or Phase 3 building
+  accuracy — do not continue autonomously until Bailey unpauses.
+
+- **2026-10-01 Cursor — Phase 2a multi-lobe eucalypt crowns (ADR 0212).**
+  NDVI suburb trees draw a 3-lobe faceted canopy (primary + two sides, 28 crown
+  tris) via `AdelaideTreeGeometry` instead of one hex blob. No new assets.
+
+- **2026-10-01 Cursor — Phase 1 Hills aerial haze (ADR 0210); tip rebased after #492.**
+  Outer-terrain land colours cool toward blue-grey with distance/height.
+  `AdelaideAerialPerspective`. Phase 1 ground/land checklist complete on tip.
+  Golf land-cover ADR renumbered **0211** (main took 0206 for runway paint).
+  **Checks:** `scripts/test-domain.sh` **1210/1210** after merging `main` (#492 + paint/prop).
+  **NEXT:** Phase 2 trees (2a started).
+
+- **2026-10-01 Cursor — Phase 1 seasonal dry-grass tint (ADR 0209).**
+  Surroundings Park/Scrub/plain straw mid-Jan / greener mid-Jul from Adelaide
+  calendar day at field build. Golf stays irrigated. `AdelaideSeasonGrassTint`.
+
+- **2026-10-01 Cursor — Phase 1 CBD skyline boxes (ADR 0208).**
+  42 sourced-height OSM towers near Victoria Square (~7 km ENE) as one grey mesh
+  on DEM relief.
+
+- **2026-10-01 Cursor — Phase 1 Golf + bunker discs (ADR 0211/0207); P0 closed / #492 merged.**
+  Golf courses tint irrigated green; 213 OSM bunker discs as sand marks.
+  Bailey closed P0; #492 freighter/hangar/boarding pick locks are on `main`.
+
 - **2026-09-30 Codex — local consolidation onto `main`.**
   Canonical checkout: `/Users/baileyfleming/Code/Airside`; `~/Documents/Codex/Airside` is its compatibility symlink.
   Claude/Cursor work and old local branches were audited; incorporated work is retained on `main`.
-  Post-audit captures are merged via #490; the standing backlog and Mac review tools are consolidated here (ADR 0205).
-  The P0 runner uses this checkout on `main`, without resurrecting retired results/plan branches.
+  Post-audit captures are merged via #490; the standing backlog is ADR 0205.
   Three malformed Unity script GUIDs were replaced with the valid GUIDs generated by Unity.
   **Checks:** Unity EditMode 1,533/1,535 passed, zero failures, two unmet-precondition inconclusives;
-    Unity asset audit passes (1,543 GUIDs, 347 art mirrors). Existing Mac build at `22abb8a1` reports success.
-  **NEXT:** close remaining P0 using `docs/testing/post-audit-p0-manual-checklist.md`
-  (night-sky re-capture + listening/play rows in `docs/testing/post-audit-p0-2026-09-30/RESULTS.md`).
-  Automated stills are mostly **keep**. P0 unsigned until manual rows pass; freight AI stays parked.
-  Resume from `main` (or this tip until #484 merges).
+    Unity asset audit passes (1,543 GUIDs, 347 art mirrors).
 
 
 - **2026-09-30 Codex — unique aircraft liveries + five player presets (branch `feature/aircraft-livery-overhaul`, ADR 0204).**

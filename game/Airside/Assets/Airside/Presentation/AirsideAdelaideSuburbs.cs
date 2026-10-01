@@ -295,22 +295,19 @@ namespace Airside.Presentation
         }
 
         /// <summary>
-        /// A low-poly eucalypt: a three-sided trunk and a six-sided faceted crown whose widest ring
-        /// sits a little above its middle. About 18 triangles.
+        /// A low-poly eucalypt: three-sided trunk plus multi-lobe faceted crown (ADR 0212).
+        /// Primary dome + two side clusters (~28 crown tris); widest ring in the upper half.
         /// </summary>
         private static void AddTree(MeshParts parts, AdelaideTreeData.Tree tree, float baseY)
         {
-            var crownBottom = baseY + tree.Height * 0.32f;
-            // A high widest ring keeps the top a low dome, like a eucalypt, not a conifer's spike.
-            var ring = baseY + tree.Height * 0.72f;
-            var apex = new Vector3(tree.X, baseY + tree.Height, tree.Z);
-            var low = new Vector3(tree.X, crownBottom, tree.Z);
             var spin = (tree.X * 0.137f + tree.Z * 0.071f) % (Mathf.PI * 2f);
             var leaf = TreeColours[Mathf.Clamp(tree.Colour, 0, TreeColours.Length - 1)].linear;
             leaf.a = 0f;
             var bark = Bark.linear;
             bark.a = 0f;
 
+            var lobes = AdelaideTreeGeometry.LobesForSeed(tree.X, tree.Z);
+            var trunkTop = baseY + tree.Height * lobes[0].BottomHeightFrac;
             var trunkR = Mathf.Max(0.18f, tree.CrownRadius * 0.08f);
             for (var k = 0; k < 3; k++)
             {
@@ -319,22 +316,37 @@ namespace Airside.Presentation
                 var p = new Vector3(tree.X + Mathf.Cos(a0) * trunkR, baseY, tree.Z + Mathf.Sin(a0) * trunkR);
                 var q = new Vector3(tree.X + Mathf.Cos(a1) * trunkR, baseY, tree.Z + Mathf.Sin(a1) * trunkR);
                 var outward = new Vector3(Mathf.Cos((a0 + a1) * 0.5f), 0f, Mathf.Sin((a0 + a1) * 0.5f));
-                parts.Quad(p, q, new Vector3(q.x, crownBottom + 0.5f, q.z), new Vector3(p.x, crownBottom + 0.5f, p.z),
+                parts.Quad(p, q, new Vector3(q.x, trunkTop + 0.5f, q.z), new Vector3(p.x, trunkTop + 0.5f, p.z),
                     outward, bark);
             }
 
-            for (var k = 0; k < 6; k++)
+            for (var i = 0; i < lobes.Length; i++)
             {
-                var a0 = spin + k * Mathf.PI / 3f;
-                var a1 = spin + (k + 1) * Mathf.PI / 3f;
-                // Alternate ring radii break the regular hexagon into a looser crown.
-                var r0 = tree.CrownRadius * (k % 2 == 0 ? 1f : 0.82f);
-                var r1 = tree.CrownRadius * ((k + 1) % 2 == 0 ? 1f : 0.82f);
-                var p = new Vector3(tree.X + Mathf.Cos(a0) * r0, ring, tree.Z + Mathf.Sin(a0) * r0);
-                var q = new Vector3(tree.X + Mathf.Cos(a1) * r1, ring, tree.Z + Mathf.Sin(a1) * r1);
-                var side = new Vector3(Mathf.Cos((a0 + a1) * 0.5f), 0f, Mathf.Sin((a0 + a1) * 0.5f));
-                parts.Triangle(p, q, apex, side + Vector3.up * 0.8f, leaf);
-                parts.Triangle(p, q, low, side - Vector3.up * 0.5f, leaf * 0.85f);
+                var lobe = lobes[i];
+                var cx = tree.X + lobe.OffsetXFrac * tree.CrownRadius;
+                var cz = tree.Z + lobe.OffsetZFrac * tree.CrownRadius;
+                var radius = tree.CrownRadius * lobe.RadiusScale;
+                var bottom = baseY + tree.Height * lobe.BottomHeightFrac;
+                var ring = baseY + tree.Height * lobe.RingHeightFrac;
+                var apex = new Vector3(cx, baseY + tree.Height * lobe.ApexHeightFrac, cz);
+                var low = new Vector3(cx, bottom, cz);
+                var lobeLeaf = i == 0 ? leaf : leaf * (0.92f - i * 0.04f);
+                var lobeShade = lobeLeaf * 0.85f;
+                var sides = lobe.SideCount;
+                var step = Mathf.PI * 2f / sides;
+                for (var k = 0; k < sides; k++)
+                {
+                    var a0 = spin + k * step;
+                    var a1 = spin + (k + 1) * step;
+                    // Alternate ring radii break regular polygons into looser crowns.
+                    var r0 = radius * (k % 2 == 0 ? 1f : 0.82f);
+                    var r1 = radius * ((k + 1) % 2 == 0 ? 1f : 0.82f);
+                    var p = new Vector3(cx + Mathf.Cos(a0) * r0, ring, cz + Mathf.Sin(a0) * r0);
+                    var q = new Vector3(cx + Mathf.Cos(a1) * r1, ring, cz + Mathf.Sin(a1) * r1);
+                    var side = new Vector3(Mathf.Cos((a0 + a1) * 0.5f), 0f, Mathf.Sin((a0 + a1) * 0.5f));
+                    parts.Triangle(p, q, apex, side + Vector3.up * 0.8f, lobeLeaf);
+                    parts.Triangle(p, q, low, side - Vector3.up * 0.5f, lobeShade);
+                }
             }
         }
 

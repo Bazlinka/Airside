@@ -28,12 +28,12 @@ Docs and agent handoff only. No simulation, presentation, or save behaviour chan
 
 None.
 
-## Follow-up (same day)
+## Follow-up
 
 Mac P0 tooling added without changing game behaviour: `scripts/review-post-audit-p0.sh`
-and `docs/testing/post-audit-p0-playtest.md`. Freight AI / cargo apron / freighter-gated
-contracts stay parked until P0 signs off the player freighter and tyre rows.
+and `docs/testing/post-audit-p0-playtest.md`. Renumbered to **0205** during consolidation
+so it does not collide with ADRs 0200–0204.
 
-Renumbered to **0205** during consolidation so it does not collide with ADRs 0200–0204.
-The Mac P0 runner now requires a clean, current `main` checkout and never creates or checks out a retired branch.
-Actual capture verdicts from #490 supersede the earlier blank RESULTS draft; manual checks remain open.
+**2026-10-01 — Bailey closed P0** and asked agents to move past verification debt.
+Remaining RESULTS rows stay `unverified` (waived, not eyes-on keep). Next backlog
+item is **P1** (visual overhaul gate). P2 freight is no longer parked behind P0.

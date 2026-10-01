@@ -128,7 +128,10 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
   Hills aerial haze (0210) on tip — Phase 1 ground/land checklist complete.
 - Phase 2a (ADR 0212): multi-lobe eucalypt crowns on NDVI suburb trees
   (`AdelaideTreeGeometry`) — no new assets.
-  **Next:** Phase 2 species/LOD/placement, or Phase 3 building accuracy.
+- Phase 2b (ADR 0215): date-palm rows on terminal/car-park edges
+  (`AdelaidePalmPlacement`) — no new assets.
+  **Next:** Phase 2c avenues / Tapleys windbreak / dune scrub, or Phase 3
+  building accuracy.
 - Phases 2 (remainder), 3b–f, 4, 5 remain.
 
 ## Risks

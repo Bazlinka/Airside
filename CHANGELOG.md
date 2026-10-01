@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Phase 2b terminal car-park date-palm rows (ADR 0215).** Procedural Canary
+  Island date palms along OSM car-park edges in the Terminal 1 landside ring
+  (cap 180), drawn into the road props mesh. Layout in `AdelaidePalmPlacement` /
+  `AdelaidePalmGeometry`. No new assets or licences. Locked by
+  `AdelaidePalmGeometryTests` and `AdelaidePalmPlacementTests`. No save-schema
+  changes.
+
 - **Weather no longer drops out while you drag the camera.** The ground-fog/mist layer was placed in
   `Update` from the camera's position, but the camera moves in `LateUpdate`, so while panning or orbiting
   it trailed a frame behind and left the view, and the foggy weather vanished until you let go. It is now

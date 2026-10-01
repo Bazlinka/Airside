@@ -115,6 +115,7 @@ namespace Airside.Presentation
             var props = new RoadMeshSink();
             AdelaideCarParkGeometry.BuildCars(props, options);
             AdelaideCarParkGeometry.BuildLamps(props, options);
+            AdelaideCarParkGeometry.BuildPalms(props, options);
             AdelaidePrecinctGeometry.BuildCanopies(props, options);
             AdelaidePrecinctGeometry.BuildSolar(props, options);
             AdelaidePrecinctGeometry.BuildTanks(props, options);

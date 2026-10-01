@@ -191,7 +191,9 @@ aircraft types cannot enter. Status: candidate, not fleet-wide production.
 
 ### 2026-10-01 SF34 cockpit revision 2
 
-Original procedural geometry and vector instrument marks in `SaabCockpitInterior.cs`.
+Original procedural geometry, vector instrument needles and two code-drawn
+128px dial-marking textures in `SaabCockpitInterior.cs`. The artwork is generated
+from geometric tick positions at runtime; no photographic pixels are used.
 Authored by Codex for Airside; no external runtime artwork, fonts or audio added.
 Visual layout references: C&L Aerospace Saab 340B-447 and 340B-331 specification
 photographs, inspected locally on page 3. URLs, limitations and source handling:

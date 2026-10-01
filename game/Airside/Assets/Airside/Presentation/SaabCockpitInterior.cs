@@ -100,7 +100,8 @@ namespace Airside.Presentation
         // Reference-driven SF34B layout. All geometry and markings are original;
         // reference photographs are not textures or shipped assets.
         private readonly List<Mesh> _meshes = new();
-        private Material _black, _panel, _white, _green, _metal;
+        private Material _black, _panel, _white, _green, _metal, _dialMarks, _compassMarks;
+        private readonly List<Texture2D> _textures = new();
 
         private Transform Face(string name, Vector3[] vertices, Material material)
         {
@@ -117,6 +118,12 @@ namespace Airside.Presentation
             }
             mesh.vertices = bothSides; mesh.triangles = triangles.ToArray();
             mesh.RecalculateNormals(); mesh.RecalculateBounds();
+            var uv = new Vector2[bothSides.Length];
+            var bounds = mesh.bounds;
+            for (var i = 0; i < bothSides.Length; i++)
+                uv[i] = new Vector2((bothSides[i].x - bounds.min.x) / Mathf.Max(0.0001f, bounds.size.x),
+                    (bothSides[i].y - bounds.min.y) / Mathf.Max(0.0001f, bounds.size.y));
+            mesh.uv = uv;
             _meshes.Add(mesh);
             part.AddComponent<MeshFilter>().sharedMesh = mesh;
             part.AddComponent<MeshRenderer>().sharedMaterial = material;
@@ -158,14 +165,7 @@ namespace Airside.Presentation
         {
             var z = 7.985f;
             Disc(name + " rim", new Vector3(x, y, z), radius, _metal);
-            Disc(name + " face", new Vector3(x, y, z - 0.002f), radius * 0.88f, _black);
-            for (var tick = 0; tick < 10; tick++)
-            {
-                var angle = (tick * 27f + 150f) * Mathf.Deg2Rad;
-                var direction = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f);
-                Stroke(name + " tick", new Vector3(x, y, z - 0.004f) + direction * radius * 0.68f,
-                    new Vector3(x, y, z - 0.004f) + direction * radius * 0.84f, Mathf.Max(0.0035f, radius * 0.075f), _white);
-            }
+            Disc(name + " face", new Vector3(x, y, z - 0.002f), radius * 0.88f, _dialMarks);
             var needle = new Vector3(Mathf.Sin(needleDegrees * Mathf.Deg2Rad), Mathf.Cos(needleDegrees * Mathf.Deg2Rad), 0f);
             Stroke(name + " needle", new Vector3(x, y, z - 0.006f),
                 new Vector3(x, y, z - 0.006f) + needle * radius * 0.65f, Mathf.Max(0.003f, radius * 0.05f), _white);
@@ -190,16 +190,42 @@ namespace Airside.Presentation
                 Box("Pitch ladder", new Vector3(x, 1.91f + row * 0.02f, 7.95f), new Vector3(row == 0 ? 0.09f : 0.035f, 0.0018f, 0.002f), _white);
             Box("Flight director", new Vector3(x, 1.91f, 7.947f), new Vector3(0.07f, 0.004f, 0.002f), _green);
             Disc("Navigation compass", new Vector3(x, 1.665f, 7.955f), 0.072f, _metal);
-            Disc("Navigation background", new Vector3(x, 1.665f, 7.953f), 0.066f, _black);
-            for (var tick = 0; tick < 12; tick++)
-            {
-                var angle = tick * Mathf.PI / 6f;
-                var d = new Vector3(Mathf.Sin(angle), Mathf.Cos(angle), 0f);
-                Stroke("Compass tick", new Vector3(x, 1.665f, 7.95f) + d * 0.053f,
-                    new Vector3(x, 1.665f, 7.95f) + d * 0.062f, 0.0035f, _white);
-            }
+            Disc("Navigation background", new Vector3(x, 1.665f, 7.953f), 0.066f, _compassMarks);
             Beam("Course pointer", new Vector3(x, 1.615f, 7.945f), new Vector3(x, 1.715f, 7.945f), 0.003f, _green);
             Label("Compass north", "N", new Vector3(x, 1.712f, 7.94f), 0.0028f, Color.white);
+        }
+
+        private Material DialArtwork(string name, int ticks, float startDegrees, float stepDegrees)
+        {
+            // Original code-drawn markings share the dial's depth surface. Separate
+            // millimetre-thin tick geometry vanished in the large-coordinate player scene.
+            const int size = 128;
+            var pixels = new Color32[size * size];
+            var dark = new Color32(6, 9, 9, 255);
+            var light = new Color32(201, 211, 193, 255);
+            for (var i = 0; i < pixels.Length; i++) pixels[i] = dark;
+            var centre = new Vector2(63.5f, 63.5f);
+            for (var tick = 0; tick < ticks; tick++)
+            {
+                var angle = (startDegrees + tick * stepDegrees) * Mathf.Deg2Rad;
+                var direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+                var a = centre + direction * 48f;
+                var b = centre + direction * 57f;
+                for (var y = 0; y < size; y++)
+                    for (var x = 0; x < size; x++)
+                    {
+                        var point = new Vector2(x, y);
+                        var t = Mathf.Clamp01(Vector2.Dot(point - a, b - a) / (b - a).sqrMagnitude);
+                        if ((point - Vector2.Lerp(a, b, t)).sqrMagnitude <= 3.1f)
+                            pixels[y * size + x] = light;
+                    }
+            }
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, true)
+            { name = name, wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            texture.SetPixels32(pixels); texture.Apply(true, true); _textures.Add(texture);
+            var material = Surface(name, Color.white, false);
+            material.SetTexture("_BaseMap", texture);
+            return material;
         }
 
         private void MakeInterior()
@@ -211,6 +237,8 @@ namespace Airside.Presentation
             _white = Surface("instrument markings", new Color(0.78f, 0.82f, 0.74f), false);
             _green = Surface("instrument green", new Color(0.45f, 0.78f, 0.51f), false);
             _metal = Surface("instrument rims", new Color(0.26f, 0.29f, 0.28f));
+            _dialMarks = DialArtwork("dial face markings", 10, 150f, 27f);
+            _compassMarks = DialArtwork("compass face markings", 12, 0f, 30f);
             var fabric = Surface("seat fabric", new Color(0.36f, 0.38f, 0.35f));
             Seat = new GameObject("Left pilot eye").transform;
             Seat.SetParent(transform, false);
@@ -329,6 +357,8 @@ namespace Airside.Presentation
         {
             foreach (var entry in _exterior)
                 if (entry.renderer != null) entry.renderer.forceRenderingOff = entry.hidden;
+            foreach (var texture in _textures)
+                if (texture != null) Dispose(texture);
             foreach (var mesh in _meshes)
                 if (mesh != null) Dispose(mesh);
             foreach (var material in _materials)

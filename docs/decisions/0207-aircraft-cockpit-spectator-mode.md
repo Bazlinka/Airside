@@ -20,3 +20,14 @@ Migration: none. Runtime camera/interior state is transient and never saved.
 Build prerequisite discovered: remote main e55e3c30 calls `AttachDoorways(root)`
 without any committed definition. Remove this single orphan call on the feature
 branch; retain ongoing doorway work in the original dirty checkout untouched.
+
+## 2026-10-01 visual revision requested by Bailey
+
+Replace the rejected generic blockout with a gamified SF34B layout based on
+visually inspected C&L Aerospace aircraft interior photographs. Keep the raked
+window arrangement, paired stacked flight displays, grey panel, central round
+engine gauges, squared yokes, radio/lever pedestal and overhead. Use original
+geometry and original code-drawn dial art, with decorative avionics and a small
+live local telemetry display. References and handling are recorded in
+`docs/art/reference/saab340-cockpit/README.md`; no third-party photo pixels ship.
+Camera ownership, eligibility, simulation, controls, audio and saves are unchanged.

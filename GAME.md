@@ -25,8 +25,9 @@
   V2 checks: headless 1199 passed; native 1585 passed/0 failed/2 inconclusive;
   asset audit passed; seven native angles inspected and committed. First V2 Mac
   build passed at `047a296f`; player review exposed disappearing fine tick marks.
-  Replaced those with thicker flat geometry; full native suite passed again.
-  Next: final Mac rebuild and packaged startup evidence with visible markings.
+  Thicker separate geometry did not fix the player discrepancy. Dial markings now
+  use two original code-drawn textures on the dial faces; full native suite passed
+  again. Next: final Mac rebuild and packaged evidence with visible markings.
   Interior is a simplified candidate. Do not claim a completed fleet cockpit rollout
   or merge until those acceptance rows have actual evidence.
 

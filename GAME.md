@@ -10,9 +10,10 @@
 - Packet: `docs/plans/south-australia-flight-world.md`; ADR 0215. Interstate later.
 - Checks: changed domain 1289 pass / one existing audio failure (baseline 1277 / same
   failure). All 12 new tests pass. Full presentation source compilation: zero errors.
-  Native EditMode blocked by missing LicensingClient channel; no player FPS, shader,
-  full-journey or appearance acceptance. Existing asset metadata audit issues remain.
-- NEXT: restore normal native Unity licensing; run EditMode/build and the packet's
+  Native EditMode: 1688 pass / same audio failure / two inconclusive. Five added
+  actual journey/actor native cases pass after fixing inbound altitude discontinuity.
+  Licensing restored through installed Unity Hub. Player/FPS acceptance remains open.
+- NEXT: finish Mac build and the packet's
   SF34 KGC/CPD round-trip, origin/actor/weather checks and comparative frame-time test.
   Candidate branch only; do not mark this ready to merge from source checks alone.
 

@@ -9,6 +9,31 @@ namespace Airside.Presentation
     {
         private double _flightOriginX, _flightOriginZ;
         private AirsideFlightWorldTerrain _flightTerrain;
+        private readonly FlightWorldActorVisibility _flightAirportActors = new();
+        private bool AirportPresentationVisible => _flightOriginX == 0 && _flightOriginZ == 0;
+
+        private void UpdateFlightWorldAirportActors()
+        {
+            if (AirportPresentationVisible) { _flightAirportActors.Restore(); return; }
+            _flightAirportActors.Hide(_boardingRoot);
+            _flightAirportActors.Hide(_aerobridgeRoot);
+            _flightAirportActors.Hide(_apronLifeRoot);
+            _flightAirportActors.Hide(_birdFlockRoot);
+            _flightAirportActors.Hide(_cloudUmbraRoot);
+            _flightAirportActors.Hide(_fuelTruck);
+            _flightAirportActors.Hide(_cateringTruck);
+            _flightAirportActors.Hide(_baggageCart);
+            _flightAirportActors.Hide(_passengerBus);
+            _flightAirportActors.Hide(_stairs);
+            _flightAirportActors.Hide(_chocks);
+            _flightAirportActors.Hide(_gpuCart);
+            foreach (var set in _ambientSets)
+            { _flightAirportActors.Hide(set.Fuel); _flightAirportActors.Hide(set.Bags); }
+            foreach (var truck in _stairTruckPool) _flightAirportActors.Hide(truck.Root);
+            foreach (var bus in _remoteBusPool) _flightAirportActors.Hide(bus.Root);
+            foreach (var tug in _tugPool) _flightAirportActors.Hide(tug.Root);
+            foreach (var boat in _coastBoats) _flightAirportActors.Hide(boat.Boat);
+        }
         private bool CanWatchJourney(FleetAircraft aircraft) => aircraft != null
             && aircraft.CurrentDestination.HasValue
             && aircraft.State is FleetState.Outbound or FleetState.Inbound or FleetState.AtDestination
@@ -37,6 +62,7 @@ namespace Airside.Presentation
             _flightOriginX=ox;_flightOriginZ=oz;
             if(_airfieldRoot!=null) _airfieldRoot.position=-FlightOrigin;
             Shader.SetGlobalVector("_AirsideFlightOrigin",new Vector4((float)ox,0,(float)oz,0));
+            UpdateFlightWorldAirportActors();
             if(active)
             {
                 if(_flightTerrain==null) _flightTerrain=AirsideFlightWorldTerrain.Create();
@@ -49,6 +75,7 @@ namespace Airside.Presentation
         {
             _flightOriginX=_flightOriginZ=0;
             Shader.SetGlobalVector("_AirsideFlightOrigin",Vector4.zero);
+            _flightAirportActors.Restore();
             if(_airfieldRoot!=null) _airfieldRoot.position=Vector3.zero;
             if(_flightTerrain!=null) _flightTerrain.gameObject.SetActive(false);
         }
@@ -97,13 +124,16 @@ namespace Airside.Presentation
                     x+=(sx-tx)*keepDeparture;z+=(sz-tz)*keepDeparture;
                 }
                 y=AirsideFlightPath.GroundY+profile.AltitudeFeetAt(elapsed)/EnrouteProfile.FeetPerMetre;
-                // Extended final is a 3 degree slope; match the local arrival before its ownership handoff.
-                if(metres<=ArrivalApproach.ShowMetres)
+                // Ease the cruise height onto the same capped slope used by the local final.
+                // Changing ownership at ShowMetres must not change the cockpit's altitude.
+                if(metres<ArrivalApproach.ShowMetres+ArrivalMapTrack.BlendMetres)
                 {
-                    ArrivalMapTrack.FinalWorldXZ(runway,aircraft.Type,(float)metres,
-                        ArrivalApproach.LateralFactor(aircraft,runway),0,out var fx,out var fz);
                     var hold=AirsideFlightPath.Approach((float)ApproachHold.HoldingFinalProgress(0),0,aircraft.Type);
-                    y=hold.y+metres*CircuitProfile.GlideslopeTangent;
+                    var finalHeight=AirsideFlightPath.GroundY+ArrivalApproach.Height(
+                        CircuitProfile.GlideslopeHeight(hold.x-(float)metres));
+                    var blend=Math.Clamp((metres-ArrivalApproach.ShowMetres)/ArrivalMapTrack.BlendMetres,0,1);
+                    var finalWeight=1-blend*blend*(3-2*blend);
+                    y+=(finalHeight-y)*finalWeight;
                 }
                 return;
             }

@@ -614,8 +614,11 @@ namespace Airside.Presentation
             UpdateCockpitView();
             if (SoakMode)
                 _soakFleetTicks += System.Diagnostics.Stopwatch.GetTimestamp() - soakStageStarted;
-            UpdateAerobridges();
-            UpdateBoardingPresentation();
+            if (AirportPresentationVisible)
+            {
+                UpdateAerobridges();
+                UpdateBoardingPresentation();
+            }
             soakStageStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             UpdateFocusAudioListener();
             UpdateLiveTraffic();
@@ -632,15 +635,18 @@ namespace Airside.Presentation
             UpdateWheelSmoke();
             UpdateCloudDrift();
             UpdateAtmosphereLayers();
-            UpdateBirdFlock();
+            if (AirportPresentationVisible) UpdateBirdFlock();
             UpdateHangarDoor();
-            UpdateCoastalMotion();
+            if (AirportPresentationVisible) UpdateCoastalMotion();
             UpdateOpsAntenna();
             UpdateStarField();
             soakStageStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
-            UpdateApronLife();
-            UpdateGateServicing();
-            UpdatePushbackTugs();
+            if (AirportPresentationVisible)
+            {
+                UpdateApronLife();
+                UpdateGateServicing();
+                UpdatePushbackTugs();
+            }
             if (SoakMode)
                 _soakGroundTicks += System.Diagnostics.Stopwatch.GetTimestamp() - soakStageStarted;
             if (SoakMode)

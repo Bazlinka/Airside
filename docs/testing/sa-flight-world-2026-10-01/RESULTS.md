@@ -13,10 +13,20 @@ The original Developer checkout's audio changes are untouched.
   Unity engine/package DLLs: zero errors, nine existing warnings. This uses current
   source for all three layers; cached Domain/Simulation DLLs were stale and are not
   evidence for this branch. Compilation summary in `presentation-compile.txt`.
-- Native Unity EditMode: no results; licensing initialization failed after 74.85 s,
-  `LicenseClient-bailey.fleming` missing and `com.unity.editor.headless` not found.
-  Reconnection retries did not succeed; the blocked run was interrupted. No native
-  build, shader compilation, packaged screenshots, full journey or FPS measurement.
+- Native Unity licensing recovered after launching the installed Unity Hub normally.
+  Full EditMode: 1688 passed, one failure (the same baseline audio assertion), two
+  inconclusive cases. No licensing or compilation blocker remains.
+- Five additional native tests exercise the actual presentation journey at 0.25 s
+  intervals for KGC and CPD, both directions, and actor visibility restoration.
+  Initially exposed kilometre-scale inbound altitude jumps at the 32 km approach
+  handoff. Cruise height now eases onto the same capped local final over the 40 km
+  map-track blend; final five cases passed in 5.785 s. XML: `journey-results.xml`.
+- Airport-only GSE, boarding, aerobridges, birds and coastal boats are hidden while
+  the distant origin is active; original active states restore on return/exit.
+  Their visual updates pause; simulation continues. The local arrival owner seeds
+  its pose from the watched view rather than snapping to a fresh tower estimate.
+- Mac build and graphics-on acceptance are in progress. Native path continuity
+  does not establish cockpit appearance, frame rate or seamless view ownership.
 - Asset audit reports existing missing `Assets/Resources.meta` and orphan Animation
   World/Aircraft/Vehicles metadata. No new GUID or runtime mirror errors reported.
   These baseline metadata issues are not repaired as part of this feature.

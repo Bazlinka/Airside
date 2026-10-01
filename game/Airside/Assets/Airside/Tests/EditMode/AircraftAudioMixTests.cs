@@ -43,11 +43,17 @@ namespace Airside.Tests
         {
             var taxi = AircraftAudioMix.For(AircraftType.Saab340, "test", 0.14f, 0.9f, 1f, 1f, 0f, 0f, true);
             var takeoff = AircraftAudioMix.For(AircraftType.Saab340, "test", 1f, 0.9f, 1f, 1f, 0f, 0f, true);
-            Assert.That(takeoff.Pitch / taxi.Pitch, Is.LessThan(1.10f));
+            var propRatio = takeoff.Pitch / taxi.Pitch;
+            Assert.That(propRatio, Is.LessThan(1.10f));
             Assert.That(takeoff.Power, Is.GreaterThan(taxi.Power * 8f));
             var jetTaxi = AircraftAudioMix.For(AircraftType.Boeing7378, "test", 0.26f, 0.26f, 1f, 1f, 0f, 0f, true);
             var jetTakeoff = AircraftAudioMix.For(AircraftType.Boeing7378, "test", 0.95f, 0.95f, 1f, 1f, 0f, 0f, true);
-            Assert.That(jetTakeoff.Pitch / jetTaxi.Pitch, Is.GreaterThan(1.30f));
+            // #507 narrowed the jet bed sweep so throttle changes do not read as a full spool-up;
+            // jets still rise more than a governed prop, but stay well under the old ~1.37 ratio.
+            var jetRatio = jetTakeoff.Pitch / jetTaxi.Pitch;
+            Assert.That(jetRatio, Is.GreaterThan(1.15f));
+            Assert.That(jetRatio, Is.LessThan(1.28f));
+            Assert.That(jetRatio, Is.GreaterThan(propRatio));
         }
 
         [Test]

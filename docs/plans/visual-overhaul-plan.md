@@ -128,7 +128,25 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
   Hills aerial haze (0210) on tip — Phase 1 ground/land checklist complete.
 - Phase 2a (ADR 0212): multi-lobe eucalypt crowns on NDVI suburb trees
   (`AdelaideTreeGeometry`) — no new assets.
-  **Next:** Phase 2 species/LOD/placement, or Phase 3 building accuracy.
+- Phase 2b (ADR 0215): date-palm rows on terminal/car-park edges
+  (`AdelaidePalmPlacement`) — no new assets.
+- Phase 2c (ADR 0216): Tapleys Hill Road landside windbreak eucalypts
+  (`AdelaideWindbreakPlacement`) — no new assets.
+- Phase 2d (ADR 0217): Bradman / Burbridge / Williams avenue eucalypts
+  (`AdelaideAvenuePlacement`) — no new assets.
+- Phase 2e (ADR 0218): West Beach dune scrub on Sand cells
+  (`AdelaideDuneScrubPlacement`) — no new assets.
+- Phase 2f (ADR 0219): Norfolk Island pines on Henley Beach Road
+  (`AdelaideNorfolkPinePlacement`) — no new assets.
+- Phase 2g (ADR 0220): NDVI tree bake LOD (Full / Medium / Billboard by
+  distance) — no new assets.
+- Phase 3 tower (ADR 0221): outward-canted control-tower cab geometry.
+- Phase 3 hangars (ADR 0222): per-tenant shell/door/roof cladding bands
+  (`HangarTenantPalette`) including RFDS split from Terminal 1 grey.
+- Phase 3 fire station (ADR 0223): ARFF silhouette — wider bays, hose tower,
+  parking pads, yellow fascia via `BuildingDetail`.
+  **Next:** Phase 2 wind / ground-cover tufts, or Phase 3 Terminal 1
+  accuracy.
 - Phases 2 (remainder), 3b–f, 4, 5 remain.
 
 ## Risks

@@ -347,7 +347,11 @@ namespace Airside.Presentation
             }
 
             // The coastal plain and Gulf St Vincent past the airfield edge, from the real OSM coast.
-            if (AirsideAdelaideSurroundings.TryBuild(_airfieldRoot, out var surroundingsMaterial) && surroundingsMaterial != null)
+            // ADR 0209: bake seasonal dry-grass tint from the Adelaide calendar day once at build.
+            var seasonClock = _operations?.Clock ?? AirlineClock.Default;
+            var seasonDay = seasonClock.LocalAt(_clock.Now).DayOfYear;
+            if (AirsideAdelaideSurroundings.TryBuild(_airfieldRoot, seasonDay, out var surroundingsMaterial)
+                && surroundingsMaterial != null)
             {
                 // The suburbs around the field (ADR 0159), fading with the land they stand on.
                 // Spread across frames so the mesh build does not freeze the first picture (ADR 0162).

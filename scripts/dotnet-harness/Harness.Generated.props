@@ -11,6 +11,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaidePrecinctGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideRoadFurnitureGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideRoadGeometry.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideSeasonGrassTint.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideStandMarkings.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideSuburbData.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideTaxiwayLabels.cs" />
@@ -104,6 +105,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideRoadFurnitureTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideRoadGeometryTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideRoadNetworkTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideSeasonGrassTintTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideStandMarkingTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideSuburbDataTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideTaxiRouterTests.cs" />

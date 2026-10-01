@@ -1,6 +1,6 @@
 # 0209 — Phase 1 seasonal / dry-grass tint by date
 
-Date: 2026-10-01 · Owner: Cursor · Status: **design lock** (implement next)
+Date: 2026-10-01 · Owner: Cursor · Status: **implemented** (`AdelaideSeasonGrassTint` + Surroundings bake)
 
 **Decision:** tint Adelaide surroundings grass-like vertex colours from the injected
 airline clock’s Adelaide calendar day — a pure dryness curve, no new textures.

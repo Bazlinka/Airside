@@ -85,6 +85,14 @@ namespace Airside.Presentation
                 Mathf.Clamp01(captured));
         }
 
+        /// <summary>
+        /// Spool smoothing. The speed chases its target at <c>SpoolGain</c> per second, limited by the
+        /// stage's rpm-per-second rate, and the rate itself eases in over <c>SpoolRateLagSeconds</c>.
+        /// 4 × lag × gain stays under 1, so the second-order response never overshoots the target.
+        /// </summary>
+        public const float SpoolGain = 0.8f;
+        public const float SpoolRateLagSeconds = 0.3f;
+
         /// <summary>True while the starter is still turning the propeller and the turbine has not lit.</summary>
         public static bool Motoring(float engineFraction) =>
             engineFraction > 0.001f && engineFraction < LightOffFraction;
@@ -317,11 +325,35 @@ namespace Airside.Presentation
 
         /// <summary>How dark a blade reads against what is behind it (grey blades, bright sky or apron).</summary>
         public const float BladeContrast = 0.8f;
-        /// <summary>Painted blade tips trace a faint ring, the one thing the eye still catches at full power.</summary>
-        public const float TipRingAlpha = 0.07f;
+        /// <summary>
+        /// Gain on the true blade coverage. Physically the haze is only 5–20 %, which is so faint at
+        /// game camera distances that nothing told the player a propeller had come up to speed; this
+        /// lifts it into a clearly visible translucent disc, densest near the root.
+        /// </summary>
+        public const float DiscVisibilityGain = 2.6f;
+        /// <summary>Most opaque any ring of the blur disc gets.</summary>
+        public const float DiscPeakCoverage = 0.6f;
+        /// <summary>Painted blade tips trace a ring that brightens the disc edge once it is up to speed.</summary>
+        public const float TipRingAlpha = 0.24f;
+        /// <summary>
+        /// Blur blend above which the individual blades are hidden. Below it blades and disc are both
+        /// drawn, so the disc is already well formed when the blades go and nothing pops.
+        /// </summary>
+        public const float BladesHideBlend = 0.6f;
 
         /// <summary>
-        /// Blur-texture opacity at radius <paramref name="r"/>: the blade coverage (no blade ghosts;
+        /// 0.45 … 1 disc opacity multiplier from shaft speed alone. The blur gate saturates at a few
+        /// hundred rpm, long before a propeller is at power; this keeps the disc growing denser and
+        /// more solid all the way to governed speed so the player can see it spool up.
+        /// </summary>
+        public static float DiscSpeedLook(float rpm)
+        {
+            var t = Mathf.Clamp01((rpm - 250f) / (GovernedRpm * 0.95f - 250f));
+            return Mathf.Lerp(0.45f, 1f, t * t * (3f - 2f * t));
+        }
+
+        /// <summary>
+        /// Blur-texture opacity at radius <paramref name="r"/>: the blade coverage, boosted to read (no blade ghosts;
         /// the old disc painted them in and turned them slowly, so the blades never went away)
         /// plus the faint tip ring, clear over the spinner and beyond the tips.
         /// </summary>
@@ -331,7 +363,8 @@ namespace Airside.Presentation
                 return 0f;
             var ring = TipRingAlpha * Mathf.Exp(-Mathf.Pow((r - 0.955f) / 0.022f, 2f));
             var edge = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.975f, 1f, r));
-            return Mathf.Clamp01((DiscCoverage(r, blades) * BladeContrast + ring) * edge);
+            var body = Mathf.Min(DiscPeakCoverage, DiscCoverage(r, blades) * BladeContrast * DiscVisibilityGain);
+            return Mathf.Clamp01((body + ring) * edge);
         }
 
         /// <summary>

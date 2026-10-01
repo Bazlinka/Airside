@@ -152,8 +152,8 @@ namespace Airside.Tests
                     area += r;
                 }
 
-                Assert.That(peak, Is.LessThan(0.25f), $"{blades} blades: a haze, not a solid disc");
-                Assert.That(weighted / area, Is.InRange(0.03f, 0.12f), $"{blades} blades: faint but there");
+                Assert.That(peak, Is.LessThan(0.9f), $"{blades} blades: translucent, not a solid disc");
+                Assert.That(weighted / area, Is.InRange(0.12f, 0.4f), $"{blades} blades: clearly visible blur");
                 Assert.That(AirsidePropellerDynamics.PropDiscAlpha(0.1f, blades), Is.Zero, "clear over the spinner");
                 Assert.That(AirsidePropellerDynamics.PropDiscAlpha(1f, blades), Is.Zero);
                 Assert.That(AirsidePropellerDynamics.PropDiscAlpha(0.955f, blades),
@@ -162,6 +162,29 @@ namespace Airside.Tests
 
             Assert.That(AirsidePropellerDynamics.PropDiscAlpha(0.5f, 6),
                 Is.GreaterThan(AirsidePropellerDynamics.PropDiscAlpha(0.5f, 4)), "more blades, denser haze");
+        }
+
+        [Test]
+        public void DiscSpeedLook_KeepsGrowingUntilThePropellerIsUpToSpeed()
+        {
+            var idle = AirsidePropellerDynamics.DiscSpeedLook(AirsideReusableMotion.PropRpmGroundIdle);
+            var governed = AirsidePropellerDynamics.DiscSpeedLook(AirsidePropellerDynamics.GovernedRpm);
+            Assert.That(governed, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(idle, Is.LessThan(governed - 0.1f), "idle is visibly thinner than full speed");
+            var last = 0f;
+            for (var rpm = 0f; rpm <= AirsidePropellerDynamics.GovernedRpm; rpm += 25f)
+            {
+                var look = AirsidePropellerDynamics.DiscSpeedLook(rpm);
+                Assert.That(look, Is.GreaterThanOrEqualTo(last), "monotonic: never dims as it speeds up");
+                last = look;
+            }
+        }
+
+        [Test]
+        public void SpoolResponse_NeverOvershoots()
+        {
+            Assert.That(4f * AirsidePropellerDynamics.SpoolRateLagSeconds * AirsidePropellerDynamics.SpoolGain,
+                Is.LessThanOrEqualTo(1f));
         }
 
         [Test]

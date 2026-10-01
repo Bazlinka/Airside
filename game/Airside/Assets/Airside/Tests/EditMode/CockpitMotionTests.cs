@@ -61,6 +61,50 @@ namespace Airside.Tests
             Assert.That(peaks[^1], Is.GreaterThan(peaks[0] * 1.4f), "landings vary in firmness");
         }
 
+        private static float RolloutRms(int seed, bool decelerating, bool turboprop)
+        {
+            var m = new CockpitMotion(); m.Reset(seed);
+            var t = 0f;
+            for (var i = 0; i < 240; i++)
+            { t += Dt; m.Step(new CockpitMotion.Sample { DeltaSeconds = Dt, SimRate = 1f, Time = t, GroundSpeed = 70f,
+                HeightAgl = Math.Max(0.5f, 6f - i * 0.025f), VerticalSpeed = -1f, PitchUpDegrees = 5f, Spool = 0.6f, Turboprop = turboprop }); }
+            var speed = 68f; double sum = 0; var n = 0;
+            for (var i = 0; i < 360; i++)
+            {
+                t += Dt; if (decelerating) speed = Math.Max(30f, speed - 3f * Dt);
+                var up = m.Step(new CockpitMotion.Sample { DeltaSeconds = Dt, SimRate = 1f, Time = t, GroundSpeed = speed,
+                    HeightAgl = 0f, PitchUpDegrees = 3f, Spool = 0.6f, Turboprop = turboprop }).Up;
+                if (i > 180) { sum += up * up; n++; }
+            }
+            return (float)Math.Sqrt(sum / n);
+        }
+
+        [Test] public void ReverseThrustRoarsThroughTheSeatDuringHardBraking()
+        {
+            Assert.That(RolloutRms(2, true, false), Is.GreaterThan(RolloutRms(2, false, false) * 1.05f));
+            Assert.That(RolloutRms(2, true, true), Is.GreaterThan(RolloutRms(2, true, false)), "beta roars harder than jet reverse");
+        }
+
+        [Test] public void OnlyFirmLandingsSkipOnce()
+        {
+            // Smooth seed vs firm seed: find each class by their touchdown jolt, then compare the second rise.
+            float SecondRise(int seed)
+            {
+                var m = new CockpitMotion(); m.Reset(seed); var t = 0f; var best = -1f;
+                for (var i = 0; i < 240; i++)
+                { t += Dt; m.Step(new CockpitMotion.Sample { DeltaSeconds = Dt, SimRate = 1f, Time = t, GroundSpeed = 70f,
+                    HeightAgl = Math.Max(0.5f, 6f - i * 0.025f), VerticalSpeed = -1f, PitchUpDegrees = 5f, Spool = 0.6f }); }
+                for (var i = 0; i < 150; i++)
+                { t += Dt; var up = m.Step(new CockpitMotion.Sample { DeltaSeconds = Dt, SimRate = 1f, Time = t, GroundSpeed = 68f,
+                    HeightAgl = 0f, PitchUpDegrees = 4f, Spool = 0.6f }).Up; if (i > 45) best = Math.Max(best, up); }
+                return best;
+            }
+            var rises = new float[60];
+            for (var seed = 0; seed < rises.Length; seed++) rises[seed] = SecondRise(seed);
+            Array.Sort(rises);
+            Assert.That(rises[^1], Is.GreaterThan(rises[0] + 0.004f), "some landings bounce, most do not");
+        }
+
         [Test] public void TouchdownIsTheSameAtAnyFrameRate()
         {
             var a = TouchdownPeak(7, 1f / 30f); var b = TouchdownPeak(7, 1f / 120f);

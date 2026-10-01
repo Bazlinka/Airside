@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Cockpit touchdown detail:** ground-spoiler thump, an occasional skip on firm landings, and
+  reverse-thrust/beta vibration while braking (ADR 0228, presentation only).
+
 - **Cockpit flight feel for takeoff, approach and landing.** Jets now rotate and climb at their own
   attitudes (about 15 degrees for narrowbodies instead of the ATR's 7.5) and flare to about 5;
   the pilot's head and body feel runway thumps that grow with speed, engine vibration, unstick,

@@ -57,7 +57,8 @@ namespace Airside.Presentation
         private bool _started, _airborne, _noseDown, _gearDownDone, _gearUpDone, _everHigh;
         private float _prevVerticalSpeed, _prevSpeed, _surge, _heaveG, _lookYaw;
         private float _jointDistance, _lightDistance, _sinceLiftoff, _buffet, _firmness = 0.8f;
-        private float _noseSettle, _rollSign = 1f;
+        private float _noseSettle, _rollSign = 1f, _sinceTouchdown;
+        private bool _spoilersDone, _bounceDone;
         private bool _landed;
 
         /// <summary>How hard this landing feels, in metres per second of sink. Deterministic per flight.</summary>
@@ -69,7 +70,8 @@ namespace Airside.Presentation
             _sway = new Spring { Omega = 11f, Zeta = 0.45f };
             _started = _airborne = _noseDown = _landed = _gearDownDone = _gearUpDone = _everHigh = false;
             _prevVerticalSpeed = _prevSpeed = _surge = _heaveG = _lookYaw = 0f;
-            _jointDistance = _lightDistance = _sinceLiftoff = _buffet = _noseSettle = 0f;
+            _jointDistance = _lightDistance = _sinceLiftoff = _buffet = _noseSettle = _sinceTouchdown = 0f;
+            _spoilersDone = _bounceDone = false;
             // Most landings are smooth (0.5 m/s, ~100 fpm); a few are firm (up to ~1.5 m/s, ~300 fpm).
             var h = (uint)seed * 2654435761u;
             var u = ((h >> 8) & 0xFFFF) / 65535f;
@@ -108,7 +110,7 @@ namespace Airside.Presentation
                 _pitch.V += 3f + 4.5f * sink;           // degrees/second, nose drops
                 _roll.V += (0.4f + 0.6f * sink) * _rollSign;
                 _airborne = false; _noseDown = false; _landed = true; _noseSettle = 0f; _sinceLiftoff = 0f;
-                _rollSign = -_rollSign;
+                _rollSign = -_rollSign; _sinceTouchdown = 0f; _spoilersDone = _bounceDone = false;
                 _gearDownDone = true; _everHigh = false;
             }
             else if (!onGround && !_airborne)
@@ -125,6 +127,18 @@ namespace Airside.Presentation
                 _pitch.V += 2.2f;
             }
             if (onGround && !_noseDown) _noseSettle += dt;
+            if (onGround && _landed && rate > 0f)
+            {
+                _sinceTouchdown += dt * scale;
+                if (!_spoilersDone && _sinceTouchdown > 0.4f)
+                {                                       // ground spoilers rise: lift dumps, the airframe settles
+                    _spoilersDone = true; _heave.V -= evt * 0.09f; _pitch.V += evt * 1.1f;
+                }
+                if (!_bounceDone && _sinceTouchdown > 0.9f && _firmness > 1.25f && s.GroundSpeed > 40f)
+                {                                       // a firm arrival skips once before settling
+                    _bounceDone = true; _heave.V += 0.35f; _pitch.V -= 2.0f;
+                }
+            }
             if (_airborne)
             {
                 _sinceLiftoff += dt * scale;
@@ -153,6 +167,9 @@ namespace Airside.Presentation
             var rumble = onGround ? 0.0005f + 0.0045f * speed01 : 0f;
             var power = Clamp01(s.Spool) * (onGround ? (_surge > 0.6f ? 1f : _surge < -0.8f ? 0.85f : 0.3f)
                                                       : (s.VerticalSpeed > 1.5f ? 0.9f : 0.5f));
+            // Reverse thrust / beta: strong low-frequency roar through the seat while decelerating hard.
+            var reversing = onGround && _landed && _surge < -0.8f && s.GroundSpeed > 25f && _sinceTouchdown > 1.0f;
+            var reverse = reversing ? (s.Turboprop ? 0.0040f : 0.0030f) * Smooth(s.GroundSpeed / 50f) : 0f;
             var engine = Clamp01(s.Spool) * (s.Turboprop ? 0.0017f : 0.0007f) * (0.45f + 0.55f * power);
             var low = Math.Max(0f, 1f - s.HeightAgl / 600f);
             var turbulence = onGround ? 0f : 0.0022f * (1f + 1.4f * low) + (_buffet > 0f ? 0.004f * Math.Min(1f, _buffet) : 0f);
@@ -160,7 +177,7 @@ namespace Airside.Presentation
             var slow = Noise(t, 0.37f, 0.71f, 1.31f);
             var throb = s.Turboprop ? (float)Math.Sin(t * 6.2f) * (float)Math.Sin(t * 0.8f) * engine * 0.6f : 0f;
             var amp = rate;
-            var heaveShake = (rumble * noise + engine * Noise(t + 1.7f, 7.7f, 11.3f, 14.9f) + throb + turbulence * slow) * amp;
+            var heaveShake = (rumble * noise + engine * Noise(t + 1.7f, 7.7f, 11.3f, 14.9f) + reverse * Noise(t + 4.4f, 9.4f, 13.3f, 17.1f) + throb + turbulence * slow) * amp;
             var pitchShake = (rumble * 38f * Noise(t + 3.1f, 4.7f, 9.2f, 13.1f) + turbulence * 36f * Noise(t + 5f, 0.43f, 0.81f, 1.19f)) * amp;
             var rollShake = (rumble * 20f * Noise(t + 6.4f, 3.9f, 7.3f, 11.7f) + turbulence * 90f * Noise(t + 9f, 0.31f, 0.67f, 1.07f)) * amp;
             var swayShake = (rumble * 0.6f * Noise(t + 8.2f, 4.1f, 6.8f, 10.3f) + turbulence * 0.8f * Noise(t + 2f, 0.29f, 0.59f, 0.97f)) * amp;

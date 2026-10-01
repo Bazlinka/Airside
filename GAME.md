@@ -23,6 +23,21 @@ merge authorisation does not turn those into passing checks. Jet ADR is now 0225
   Unity EditMode **1737 passed / 0 failed / 2 inconclusive**. Clean Mac build passed.
   **NEXT:** watch a busy arrival bank in the packaged game.
 
+- **2026-10-01 Codex — weather coverage (`fix/regional-weather-coverage`, ADR 0226).**
+  Bailey selected whole-visible-landscape weather with fade only at render limits.
+  Cloud recycling now surrounds the viewer; world positions/wind remain stable
+  until soft-edge reuse. Sixteen jittered bodies and matched fading shadows.
+  Ground fog's airport mask removed; 30 km ray/deck coverage, 20–30 km radial fade;
+  overcast stays visible from above. Simulation, operations and saves unchanged.
+  Focused headless weather checks: 13/13. Focused native weather/cockpit checks:
+  30/30, including all three turboprop lower shells; licensing has recovered.
+  Integrated full domain: 1337/1337. Full native: 1744 passed / zero failures /
+  two existing inconclusives. Latest-main scenery tests compile with explicit
+  EditMode friend-assembly access.
+  Task packet: `docs/plans/weather-coverage.md`. Final combined Mac build 409b9349 clean; 67/67 focused native and 37/37
+  focused headless after jet cockpit integration. Eleven player views inspected; evidence/result record:
+  `docs/testing/weather-coverage-2026-10-01/README.md`.
+
 - **2026-10-01 Codex — all-jet cockpit candidate (`feature/all-jet-cockpits`, ADR 0225).**
   Isolated checkout: `/private/tmp/airside-jet-cockpits`; unrelated primary-checkout
   audio work retained. All ten jets have explicit fitted left-seat decks with

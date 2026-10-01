@@ -7,6 +7,11 @@
   3 km fell from 389 to 0; the closest 5 % are now about 9 km apart. Presentation only: tower
   sequencing, saves and simulation outcomes are unchanged.
 
+- **Weather across the landscape:** cloud bodies recycle around the moving view
+  rather than the airport, with matched shadow fades. Ground fog no longer ends
+  at the airport rectangle; fog and the broader overcast deck fade over 20–30 km.
+  The deck remains visible from above. Existing cloud/rain object budgets retained.
+
 - Allow the native EditMode test assembly to use presentation cache-reset hooks,
   matching the existing headless harness access for vegetation placement tests.
 

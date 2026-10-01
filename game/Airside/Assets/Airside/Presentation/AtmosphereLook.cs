@@ -71,7 +71,7 @@ namespace Airside.Presentation
         /// <summary>0..1 how strongly the low mist layer shows (fog, rain, dawn).</summary>
         public float Mist { get; }
 
-        /// <summary>0..1 the overcast sheet's opacity, already faded out for a camera above it.</summary>
+        /// <summary>0..1 the overcast deck opacity. Visible below and above the layer.</summary>
         public float Stratus { get; }
 
         /// <summary>0..1 the distant horizon cloud band.</summary>
@@ -127,8 +127,9 @@ namespace Airside.Presentation
             var dawnMist = dawn ? warm * 0.3f * (1f - cover * 0.5f) : 0f;
             var mist = Clamp01(Math.Max(fogMist, Math.Max(rainMist, dawnMist)));
 
-            var stratus = Smooth(0.55f, 0.95f, cover) * 0.8f
-                          * (1f - Smooth(StratusHeightMetres - 400f, StratusHeightMetres - 50f, cameraHeightMetres));
+            // Looking down from above still shows the deck; crossing its altitude must
+            // not switch off every cloud. Vertical separation comes from real geometry.
+            var stratus = Smooth(0.55f, 0.95f, cover) * 0.8f;
             var band = Lerp(0.25f, 0.8f, cover) * (1f - foggy * 0.7f);
             var shade = Lerp(1f, 0.45f, Smooth(0.2f, 0.6f, gloom));
             return new AtmosphereLook(sky, fog, density, mist, stratus, band, shade);

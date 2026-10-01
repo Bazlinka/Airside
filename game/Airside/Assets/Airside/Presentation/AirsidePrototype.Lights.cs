@@ -24,6 +24,7 @@ namespace Airside.Presentation
             var gearBias = aircraftType != null
                 ? AirsideReusableMotion.GearBias(phase, progress01, aircraftType)
                 : AirsideReusableMotion.GearBias(phase, progress01);
+            var retractTarget = 1f - gearBias;
             var airborne = phase is AircraftPhase.Departed or AircraftPhase.Approach
                 or AircraftPhase.Circuit or AircraftPhase.GoAround
                 || (phase == AircraftPhase.Takeoff
@@ -52,30 +53,20 @@ namespace Airside.Presentation
                 switch (parts[i].Kind)
                 {
                     case LightGearKind.GearDoor:
-                    {
-                        // Doors open only while the gear is in transit; closed when locked
-                        // up or locked down so the wells read correctly on the rollout.
+                        // Belly panels open before the leg moves and shut once it is locked up or down.
                         child.gameObject.SetActive(true);
-                        var euler = child.localEulerAngles;
-                        var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                        var doorOpen = AirsideReusableMotion.GearDoorOpenBias(phase, progress01, aircraftType);
-                        var target = Mathf.Lerp(0f, 78f, doorOpen);
-                        euler.x = Mathf.MoveTowards(current, target, deltaTime * 90f);
-                        child.localEulerAngles = euler;
+                        PoseGearDoor(parts[i], retractTarget, deltaTime);
                         break;
-                    }
                     case LightGearKind.GearStrut:
-                    {
-                        // Soft retract/deploy instead of a hard pop (Batch D ANM-AIR-002 language).
-                        // Exact strut names only — densified "Gear scissors *" must not pitch with legs.
+                        // Each leg folds the way its airframe's gear does (nose forward; mains inboard, aft or
+                        // forward), steering composed inside the fold. Exact strut names only: the oleo, scissors
+                        // and tyres are nested under the leg and ride it.
                         child.gameObject.SetActive(true);
-                        var euler = child.localEulerAngles;
-                        var current = euler.x > 180f ? euler.x - 360f : euler.x;
-                        var target = Mathf.Lerp(0f, -80f, 1f - gearBias);
-                        euler.x = Mathf.MoveTowards(current, target, deltaTime * 70f);
-                        child.localEulerAngles = euler;
+                        PoseGearStrut(parts[i], retractTarget, deltaTime);
                         break;
-                    }
+                    case LightGearKind.GearTruck:
+                        PoseGearTruck(parts[i], retractTarget, deltaTime);
+                        break;
                     case LightGearKind.NavigationLight:
                     {
                         var navOn = AirsideReusableMotion.NavigationLightsOn(

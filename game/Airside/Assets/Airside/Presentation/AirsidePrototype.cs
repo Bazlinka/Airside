@@ -1607,6 +1607,7 @@ namespace Airside.Presentation
                         // Saab / Dash 8 / ATR airstair door (ADR 0114): hinged at the sill, it
                         // folds down and out until its steps rest on the apron.
                         var target = Mathf.Lerp(0f, parts[i].OpenDegrees, passenger);
+                        ShowDoorway(parts[i].Doorway, passenger);
                         euler.z = timed ? target : Mathf.MoveTowards(Signed(euler.z), target, Time.unscaledDeltaTime * 55f);
                         break;
                     }
@@ -1614,12 +1615,14 @@ namespace Airside.Presentation
                     {
                         // A jet's plug door swings out and round against the fuselage.
                         var target = Mathf.Lerp(0f, -85f, passenger);
+                        ShowDoorway(parts[i].Doorway, passenger);
                         euler.y = timed ? target : Mathf.MoveTowards(Signed(euler.y), target, Time.unscaledDeltaTime * 120f);
                         break;
                     }
                     default:
                     {
                         var target = Mathf.Lerp(0f, 70f, cargo);
+                        ShowDoorway(parts[i].Doorway, cargo);
                         euler.y = timed ? target : Mathf.MoveTowards(Signed(euler.y), target, Time.unscaledDeltaTime * 100f);
                         break;
                     }
@@ -1836,16 +1839,6 @@ namespace Airside.Presentation
             material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
             cache[key] = material;
             return material;
-        }
-
-        private static void UpdateNoseWheelSteering(Transform noseGear, float targetDegrees, float deltaTime)
-        {
-            if (noseGear == null || deltaTime <= 0f)
-                return;
-            var euler = noseGear.localEulerAngles;
-            var current = euler.y > 180f ? euler.y - 360f : euler.y;
-            euler.y = Mathf.MoveTowards(current, targetDegrees, deltaTime * 80f);
-            noseGear.localEulerAngles = euler;
         }
 
         /// <summary>
@@ -3389,7 +3382,9 @@ namespace Airside.Presentation
                 RebakeAircraftArticulatedPivots(root);
                 NestLandingGearParts(root);
                 RebakeWheelPivots(root);
+                RigLandingGearArticulation(root);
                 NestCabinDoorParts(root);
+                AttachDoorways(root);
                 ConvertToAirstairDoor(root);
                 NestFlapParts(root);
                 NestWingMountedParts(root);
@@ -3467,7 +3462,9 @@ namespace Airside.Presentation
                 RebakeAircraftArticulatedPivots(root);
                 NestLandingGearParts(root);
                 RebakeWheelPivots(root);
+                RigLandingGearArticulation(root);
                 NestCabinDoorParts(root);
+                AttachDoorways(root);
                 ConvertToAirstairDoor(root);
                 NestFlapParts(root);
                 NestWingMountedParts(root);
@@ -3552,7 +3549,9 @@ namespace Airside.Presentation
                 RebakeAircraftArticulatedPivots(root);
                 NestLandingGearParts(root);
                 RebakeWheelPivots(root);
+                RigLandingGearArticulation(root);
                 NestCabinDoorParts(root);
+                AttachDoorways(root);
                 NestFlapParts(root);
                 NestWingMountedParts(root);
                 EnsureJetFanDiscs(root);
@@ -4152,21 +4151,33 @@ namespace Airside.Presentation
         /// <see cref="ControlSurfaceKind.Elevator"/>, or the L/R sign on
         /// <see cref="ControlSurfaceKind.Aileron"/>/<see cref="ControlSurfaceKind.Wing"/>.
         /// </summary>
-        private readonly struct ControlSurfacePart
+        private sealed class ControlSurfacePart
         {
             public readonly Transform Transform;
             public readonly ControlSurfaceKind Kind;
             public readonly float Factor;
+            /// <summary>Hinge line in the part's own frame, oriented +X (+Y for the rudder); swept surfaces slant it.</summary>
+            public readonly Vector3 HingeAxis;
+            public readonly Quaternion RestRotation;
+            public readonly Vector3 RestPosition;
+            public readonly float ChordMetres;
+            /// <summary>Current trailing-edge-down deflection in degrees (a raised spoiler is negative).</summary>
+            public float Deflection;
 
             public ControlSurfacePart(Transform transform, ControlSurfaceKind kind, float factor)
             {
                 Transform = transform;
                 Kind = kind;
                 Factor = factor;
+                RestRotation = transform != null ? transform.localRotation : Quaternion.identity;
+                RestPosition = transform != null ? transform.localPosition : Vector3.zero;
+                HingeAxis = ControlSurfaceHinge(transform, kind, out ChordMetres);
             }
         }
 
-        private enum LightGearKind { GearDoor, GearStrut, NavigationLight, Beacon, LandingLight, TaxiLight }
+        private enum LightGearKind { GearDoor, GearStrut, GearTruck, NavigationLight, Beacon, LandingLight, TaxiLight }
+
+        private enum GearRole { None, Nose, MainLeft, MainRight }
 
         private sealed class LightGearPart
         {
@@ -4181,11 +4192,24 @@ namespace Airside.Presentation
             public Renderer Lamp;
             public bool LampResolved;
 
+            // Landing-gear articulation (struts, trucks and belly doors). Retract is the part's own
+            // 0 (down and locked) .. 1 (up and locked) travel; the pass slews it toward the phase's target.
+            public GearRole Role;
+            public GearRetractStyle Style;
+            public Quaternion Rest = Quaternion.identity;
+            public float Retract;
+            public bool RetractSeeded;
+            public float SteerDegrees;
+            /// <summary>Belly doors: -1 when hinged on the left edge, +1 on the right (free edge swings down).</summary>
+            public float DoorSign = -1f;
+
             public LightGearPart(Transform transform, LightGearKind kind, AircraftNavigationLight navLight = AircraftNavigationLight.None)
             {
                 Transform = transform;
                 Kind = kind;
                 NavLight = navLight;
+                if (transform != null)
+                    Rest = transform.localRotation;
             }
         }
 
@@ -4197,12 +4221,17 @@ namespace Airside.Presentation
             public readonly CabinDoorKind Kind;
             /// <summary>Airstair only: signed fold about the fuselage axis that puts the steps on the ground.</summary>
             public readonly float OpenDegrees;
+            /// <summary>The hollow behind the leaf, shown while it is open; null when the kit has none.</summary>
+            public readonly GameObject Doorway;
 
             public CabinDoorPart(Transform transform, CabinDoorKind kind, float openDegrees = 0f)
             {
                 Transform = transform;
                 Kind = kind;
                 OpenDegrees = openDegrees;
+                Doorway = transform != null && transform.TryGetComponent<AircraftDoorway>(out var doorway)
+                    ? doorway.Shell
+                    : null;
             }
         }
 
@@ -4236,6 +4265,10 @@ namespace Airside.Presentation
             public Transform Marker;
             public Renderer MarkerRenderer;
             public Transform GearNose;
+            /// <summary>The nose strut as a gear-rig part, so steering and retraction compose in one place.</summary>
+            public LightGearPart GearNosePart;
+            public AircraftArticulationState Articulation;
+            public WheelPart[] Wheels;
             public float WheelbaseMetres;
             /// <summary>Main-gear centre along the fuselage (root local Z); pitch pivots here.</summary>
             public float MainGearZMetres;
@@ -4267,7 +4300,8 @@ namespace Airside.Presentation
                 Owner = aircraft,
                 Profile = aircraft.GetComponent<AircraftVisualProfileComponent>(),
                 Shadow = aircraft.Find("GroundShadow"),
-                Marker = aircraft.Find(AircraftPickRouting.MarkerChildName)
+                Marker = aircraft.Find(AircraftPickRouting.MarkerChildName),
+                Articulation = new AircraftArticulationState()
             };
             parts.ShadowRenderer = parts.Shadow != null ? parts.Shadow.GetComponent<Renderer>() : null;
             parts.MarkerRenderer = parts.Marker != null ? parts.Marker.GetComponent<Renderer>() : null;
@@ -4330,6 +4364,24 @@ namespace Airside.Presentation
             var cabinWindowGlass = new List<(Transform, Renderer, Color)>();
             var engineHeatVents = new List<(Transform, Renderer)>();
             var propellers = new List<PropellerPart>();
+            var wheels = new List<WheelPart>();
+
+            // Which way the mains fold depends on the airframe, not on a type id the traffic and circuit
+            // paths do not carry: a jet swings them inboard, as does an ATR on its fuselage sponsons, a
+            // Dash 8 goes aft into its nacelle (it keeps inner nacelle doors), a Saab forward.
+            var turboprop = false;
+            var innerNacelleDoors = false;
+            var sponsonLegs = false;
+            for (var i = 0; i < names.Length; i++)
+            {
+                if (names[i].StartsWith("Propeller", StringComparison.Ordinal))
+                    turboprop = true;
+                else if (names[i].StartsWith("gear_door_inner", StringComparison.OrdinalIgnoreCase))
+                    innerNacelleDoors = true;
+                else if (names[i] == "Gear L" && children[i] != null && parts.Owner != null)
+                    sponsonLegs = Mathf.Abs(parts.Owner.InverseTransformPoint(children[i].position).x) < 2.5f;
+            }
+            var mainGearStyle = AircraftArticulation.MainGearStyle(turboprop, innerNacelleDoors, sponsonLegs);
 
             for (var i = 0; i < names.Length; i++)
             {
@@ -4360,13 +4412,34 @@ namespace Airside.Presentation
                 else if (childName is "Flap L" or "Flap R")
                     controlSurfaces.Add(new ControlSurfacePart(child, ControlSurfaceKind.Flap, 0f));
                 else if (childName.StartsWith("Spoiler", StringComparison.Ordinal))
-                    controlSurfaces.Add(new ControlSurfacePart(child, ControlSurfaceKind.Spoiler, 0f));
+                {
+                    var side = childName.IndexOf(" L", StringComparison.Ordinal) >= 0 ? 1f : -1f;
+                    controlSurfaces.Add(new ControlSurfacePart(child, ControlSurfaceKind.Spoiler, side));
+                }
 
                 // -- lights and gear (UpdateAircraftLightsAndGear) --
-                if (childName.StartsWith("Gear door", StringComparison.Ordinal))
-                    lightsAndGear.Add(new LightGearPart(child, LightGearKind.GearDoor));
-                else if (childName is "Gear nose" or "Gear L" or "Gear R")
-                    lightsAndGear.Add(new LightGearPart(child, LightGearKind.GearStrut));
+                if (AirsideAircraftParts.IsGearDoor(childName))
+                {
+                    // A plate carried on a leg rides it; only belly panels swing open on their own.
+                    if (child.parent == null || !AirsideAircraftParts.IsGearStrut(child.parent.name))
+                        lightsAndGear.Add(new LightGearPart(child, LightGearKind.GearDoor)
+                        {
+                            DoorSign = BellyDoorHingeSign(child)
+                        });
+                }
+                else if (AirsideAircraftParts.IsGearStrut(childName))
+                {
+                    var role = childName == "Gear nose" ? GearRole.Nose
+                        : childName == "Gear L" ? GearRole.MainLeft
+                        : GearRole.MainRight;
+                    lightsAndGear.Add(new LightGearPart(child, LightGearKind.GearStrut)
+                    {
+                        Role = role,
+                        Style = role == GearRole.Nose ? GearRetractStyle.Forward : mainGearStyle
+                    });
+                }
+                else if (childName.StartsWith("Truck ", StringComparison.Ordinal))
+                    lightsAndGear.Add(new LightGearPart(child, LightGearKind.GearTruck));
                 else if (AirsideAircraftParts.NavigationLightFor(childName) is var navigationLight
                          && navigationLight != AircraftNavigationLight.None)
                     lightsAndGear.Add(new LightGearPart(child, LightGearKind.NavigationLight, navigationLight));
@@ -4406,6 +4479,11 @@ namespace Airside.Presentation
                 if (childName.StartsWith("EngineHeat", StringComparison.Ordinal))
                     engineHeatVents.Add((child, child.GetComponent<Renderer>()));
 
+                // -- tyres (RollLandingGearTires) --
+                if (AirsideAircraftParts.RollsInPlace(childName))
+                    wheels.Add(new WheelPart(child,
+                        childName.IndexOf("nose", StringComparison.OrdinalIgnoreCase) >= 0));
+
                 // -- propellers (SpinPropellers / SpinPropellersPerEngine) --
                 if (childName.StartsWith("Propeller", StringComparison.Ordinal))
                     propellers.Add(new PropellerPart(child, childName.EndsWith(" L", StringComparison.Ordinal)));
@@ -4423,6 +4501,12 @@ namespace Airside.Presentation
             parts.CabinWindowGlass = cabinWindowGlass.ToArray();
             parts.EngineHeatVents = engineHeatVents.ToArray();
             parts.Propellers = propellers.ToArray();
+            parts.Wheels = wheels.ToArray();
+            foreach (var gear in lightsAndGear)
+            {
+                if (gear.Kind == LightGearKind.GearStrut && gear.Role == GearRole.Nose)
+                    parts.GearNosePart = gear;
+            }
         }
 
         /// <summary>Prefer the richest present kit/prefab; null when none are available.</summary>

@@ -4,10 +4,23 @@
   Procedural Canary Island date-palm rows along OSM car-park edges in the
   Terminal 1 landside ring (`AdelaidePalmPlacement` / `AdelaidePalmGeometry`),
   drawn into the road props sink. Cap hit: **180** palms. No new assets.
-  Branch `cursor/phase2b-carpark-palms-709e`.
+  Branch `cursor/phase2b-carpark-palms-709e` (rebased on main after #509).
   **Checks:** palm suites **10/10**; full headless otherwise green except pre-existing
   `PropGovernorHoldsTheNoteWhileJetRevsRise` flake also failing on `main`.
   **NEXT:** Phase 2c avenues / Tapleys windbreak, or Phase 3 building accuracy.
+
+- **2026-10-01 Codex — Saab cockpit opaque shell fix.**
+  The revision-2 startup image exposed apron through gaps beside/below the panel.
+  Hiding the exterior fuselage requires a complete interior shell. Continuous
+  floor, lower side lining, forward footwell and rear side lining now meet beneath
+  the window sills. Actual windows remain open. Native pilot-seat forward and
+  downward renders were inspected; level/banked sightline regression covers the
+  missing areas. Native tests: 1677 passed/0 failed/2 existing inconclusives
+  (1679 total); headless 1278 passed/0 failed.
+  Clean Mac build `437b6462`; packaged startup image confirms the panel gap is
+  closed. Latest-main integration: 4/4 native cockpit cases passed. Its unrelated
+  jet-pitch test already fails on main after PR #507; do not claim full CI green.
+  Evidence: `docs/testing/cockpit-shell-2026-10-01/`.
 
 - **2026-10-01 Codex — SF34 cockpit spectator candidate (`feature/saab-cockpit-mode`, ADR 0214).**
   Isolated checkout: `/private/tmp/airside-cockpit`; original dirty checkout untouched.

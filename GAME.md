@@ -1,9 +1,14 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Cursor — Phase 3 hangar tenant colours (ADR 0222).**
+  Named hangars + RFDS get stylised shell/door/roof bands via
+  `HangarTenantPalette`; unnamed keep grey. Same tip / PR #510.
+  **NEXT:** Phase 2 wind / ground tufts, or more Phase 3 (Terminal 1 / fire).
+
 - **2026-10-01 Cursor — Phase 3 control tower canted cab (ADR 0221).**
   Outward-canted glazed cab (stacked rings) + overhanging roof on the surveyed
   44 m tower. Same tip / PR #510.
-  **NEXT:** Phase 2 wind / ground tufts, or more Phase 3 building accuracy.
+  **NEXT:** hangar tenant colours done on same tip.
 
 - **2026-10-01 Cursor — Phase 2g NDVI tree bake LOD (ADR 0220).**
   Suburb trees: Full 3-lobe ≤1.4 km, Medium primary ≤2.8 km, Billboard cards

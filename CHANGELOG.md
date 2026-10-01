@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Phase 3 hangar tenant colours (ADR 0222).** Named hangars (Cobham, Rex,
+  Sharp, Pilatus, Pulse, Aerobond, SAPOL) and RFDS get stylised shell / door /
+  roof cladding bands; unnamed hangars keep the previous grey. Locked by
+  `HangarTenantPaletteTests`. No new assets or save-schema changes.
+
 - **Phase 3 control tower canted cab (ADR 0221).** Outward-canted glazed cab
   (stacked lower/upper rings) with overhanging roof on the surveyed 44 m tower.
   Locked by `BuildingDetailTests.Tower_HasAGlassCabAboveItsShaftAndALitMast`.

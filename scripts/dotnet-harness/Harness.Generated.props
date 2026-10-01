@@ -80,6 +80,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightNumber.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightPlanner.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/GolfBunkerMarks.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/HangarTenantPalette.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HoldReasonText.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudBox.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudDraw.cs" />
@@ -228,6 +229,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundRouterTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundServiceRunTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HangarBaysTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HangarTenantPaletteTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HangarTowTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HoldReasonTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HouseStyleTests.cs" />

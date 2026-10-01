@@ -141,8 +141,10 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
 - Phase 2g (ADR 0220): NDVI tree bake LOD (Full / Medium / Billboard by
   distance) — no new assets.
 - Phase 3 tower (ADR 0221): outward-canted control-tower cab geometry.
-  **Next:** Phase 2 wind / ground-cover tufts, or Phase 3 hangar/terminal
-  accuracy.
+- Phase 3 hangars (ADR 0222): per-tenant shell/door/roof cladding bands
+  (`HangarTenantPalette`) including RFDS split from Terminal 1 grey.
+  **Next:** Phase 2 wind / ground-cover tufts, or Phase 3 Terminal 1 /
+  fire-station accuracy.
 - Phases 2 (remainder), 3b–f, 4, 5 remain.
 
 ## Risks

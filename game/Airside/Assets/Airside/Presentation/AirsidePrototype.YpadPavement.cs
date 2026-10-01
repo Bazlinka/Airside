@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Airside.Simulation;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -95,23 +96,31 @@ namespace Airside.Presentation
             if (AirsideFocusMode.ShowTerminal)
             {
                 var buildings = new SurfaceMesh();
+                var rfdsHangar = new SurfaceMesh();
                 var terminalDetail = new BuildingDetailMeshes();
                 var groundY = runwayTop;
                 foreach (var terminal in AdelaideLayout.Terminals)
                 {
-                    var height = terminal.Name.IndexOf("Flying Doctor", StringComparison.OrdinalIgnoreCase) >= 0
+                    var rfds = terminal.Name.IndexOf("Flying Doctor", StringComparison.OrdinalIgnoreCase) >= 0;
+                    var height = rfds
                         ? AdelaideTerminalArchitecture.RfdsHangarHeightMetres
                         : AdelaideTerminalArchitecture.ShellHeightMetres;
                     var sit = TerminalGroundY(terminal.Xz, runwayTop);
                     if (sit < groundY)
                         groundY = sit;
-                    AddPrism(buildings, terminal.Xz, sit, height,
+                    var shell = rfds ? rfdsHangar : buildings;
+                    AddPrism(shell, terminal.Xz, sit, height,
                         cutUndercroftPortal: terminal.Name == "Domestic & International Terminal");
-                    AddDetail(terminalDetail, buildings, BuildingDetail.ForTerminal(terminal.Name, terminal.Xz, sit, height,
-                        rfds: height <= AdelaideTerminalArchitecture.RfdsHangarHeightMetres));
+                    AddDetail(terminalDetail, shell, BuildingDetail.ForTerminal(terminal.Name, terminal.Xz, sit, height,
+                        rfds: rfds), hangarTenantKey: rfds ? HangarTenantPalette.Rfds.Key : null);
                 }
 
                 SpawnSurface(root, AirsideAdelaidePavement.TerminalsName, buildings, new Color(0.43f, 0.45f, 0.46f), null, castShadows: true);
+                // ADR 0222: RFDS is a hangar, not Terminal 1 grey — cream shell + red door band.
+                var rfdsColours = HangarTenantPalette.Rfds;
+                var metalAlbedo = PreferSurfaceBasecolor("tx_corrugated_metal");
+                SpawnSurface(root, "YPAD RFDS hangar", rfdsHangar, AirsideTheme.FromHex(rfdsColours.ShellHex),
+                    metalAlbedo, castShadows: true);
                 BuildYpadOperationalBuildings(root, runwayTop, terminalDetail);
                 BuildAdelaideTerminalArchitecture(groundY);
                 // Aerobridges hang off this terminal; built once the world exists (ADR 0113).
@@ -158,7 +167,7 @@ namespace Airside.Presentation
         private static void BuildYpadOperationalBuildings(Transform root, float fallbackGroundY, BuildingDetailMeshes detail)
         {
             var support = new SurfaceMesh();
-            var hangars = new SurfaceMesh();
+            var hangarShells = new Dictionary<string, SurfaceMesh>();
             var freight = new SurfaceMesh();
             var fireStation = new SurfaceMesh();
             var tower = new SurfaceMesh();
@@ -166,14 +175,31 @@ namespace Airside.Presentation
             foreach (var building in AdelaideBuildings.All)
             {
                 var sit = TerminalGroundY(building.Xz, fallbackGroundY);
-                var shell = building.Kind switch
+                string hangarTenantKey = null;
+                SurfaceMesh shell;
+                switch (building.Kind)
                 {
-                    AdelaideBuildingKind.ControlTower => tower,
-                    AdelaideBuildingKind.FireStation => fireStation,
-                    AdelaideBuildingKind.Hangar => hangars,
-                    AdelaideBuildingKind.Freight => freight,
-                    _ => support
-                };
+                    case AdelaideBuildingKind.ControlTower:
+                        shell = tower;
+                        break;
+                    case AdelaideBuildingKind.FireStation:
+                        shell = fireStation;
+                        break;
+                    case AdelaideBuildingKind.Hangar:
+                        hangarTenantKey = HangarTenantPalette.KeyFor(building.Name);
+                        if (!hangarShells.TryGetValue(hangarTenantKey, out shell))
+                        {
+                            shell = new SurfaceMesh();
+                            hangarShells[hangarTenantKey] = shell;
+                        }
+                        break;
+                    case AdelaideBuildingKind.Freight:
+                        shell = freight;
+                        break;
+                    default:
+                        shell = support;
+                        break;
+                }
                 // The tower's shaft, cab floor, glass ring and roof all come from BuildingDetail
                 // (ADR 0124); every other building is its surveyed prism plus facade detail.
                 var set = BuildingDetail.For(building, sit);
@@ -182,11 +208,17 @@ namespace Airside.Presentation
                 // ADR 0213: a doorway through the wall needs a room behind it, or you would see through to the sky.
                 if (set.IsHollow)
                     AddHollowInterior(detail, building.Xz, sit, building.HeightMetres, set);
-                AddDetail(detail, shell, set);
+                AddDetail(detail, shell, set, hangarTenantKey);
             }
 
             var metalAlbedo = PreferSurfaceBasecolor("tx_corrugated_metal");
-            SpawnSurface(root, "YPAD operational hangars", hangars, new Color(0.48f, 0.50f, 0.50f), metalAlbedo, castShadows: true);
+            // ADR 0222: one draw call per tenant key (Default keeps the old grey).
+            foreach (var pair in hangarShells.OrderBy(p => p.Key, StringComparer.Ordinal))
+            {
+                var colours = HangarTenantPalette.Resolve(pair.Key);
+                SpawnSurface(root, "YPAD hangar " + pair.Key, pair.Value, AirsideTheme.FromHex(colours.ShellHex),
+                    metalAlbedo, castShadows: true);
+            }
             SpawnSurface(root, "YPAD freight and catering", freight, new Color(0.40f, 0.43f, 0.45f), metalAlbedo, castShadows: true);
             SpawnSurface(root, "YPAD support buildings", support, new Color(0.51f, 0.52f, 0.50f), null, castShadows: true);
             SpawnSurface(root, "YPAD fire station", fireStation, new Color(0.48f, 0.24f, 0.20f), null, castShadows: true);
@@ -205,24 +237,53 @@ namespace Airside.Presentation
             public readonly SurfaceMesh CabGlass = new();
             public readonly SurfaceMesh Canopy = new();
             public readonly SurfaceMesh HangarRoofs = new();
+            /// <summary>Hangar bay doors batched by <see cref="HangarTenantPalette"/> key (ADR 0222).</summary>
+            public readonly Dictionary<string, SurfaceMesh> HangarDoorsByTenant = new();
+            /// <summary>Hangar roof silhouettes batched by tenant key (ADR 0222).</summary>
+            public readonly Dictionary<string, SurfaceMesh> HangarRoofsByTenant = new();
             public readonly SurfaceMesh InteriorWalls = new();
             public readonly SurfaceMesh InteriorFloor = new();
             public readonly SurfaceMesh Equipment = new();
             public readonly SurfaceMesh EquipmentDark = new();
             public readonly SurfaceMesh EquipmentRed = new();
             public readonly List<Vector3> ObstructionLights = new();
+
+            public SurfaceMesh HangarDoorMesh(string tenantKey)
+            {
+                if (!HangarDoorsByTenant.TryGetValue(tenantKey, out var mesh))
+                {
+                    mesh = new SurfaceMesh();
+                    HangarDoorsByTenant[tenantKey] = mesh;
+                }
+
+                return mesh;
+            }
+
+            public SurfaceMesh HangarRoofMesh(string tenantKey)
+            {
+                if (!HangarRoofsByTenant.TryGetValue(tenantKey, out var mesh))
+                {
+                    mesh = new SurfaceMesh();
+                    HangarRoofsByTenant[tenantKey] = mesh;
+                }
+
+                return mesh;
+            }
         }
 
         public const string BuildingWindowsLitName = "YPAD building windows lit";
         public const string TowerCabGlassName = "YPAD tower cab glass";
 
-        private static void AddDetail(BuildingDetailMeshes meshes, SurfaceMesh shell, BuildingDetailSet set)
+        private static void AddDetail(BuildingDetailMeshes meshes, SurfaceMesh shell, BuildingDetailSet set,
+            string hangarTenantKey = null)
         {
             SurfaceMesh Target(BuildingPart part) => part switch
             {
                 BuildingPart.WindowLit => meshes.WindowsLit,
                 BuildingPart.WindowDark => meshes.WindowsDark,
-                BuildingPart.Door => meshes.Doors,
+                BuildingPart.Door => hangarTenantKey != null
+                    ? meshes.HangarDoorMesh(hangarTenantKey)
+                    : meshes.Doors,
                 BuildingPart.Trim => meshes.Trim,
                 BuildingPart.Plant => meshes.Plant,
                 BuildingPart.CabGlass => meshes.CabGlass,
@@ -235,8 +296,11 @@ namespace Airside.Presentation
 
             foreach (var prism in set.Prisms)
                 AddPrism(Target(prism.Part), prism.Xz, prism.BaseY, prism.Height);
+            var roofMesh = hangarTenantKey != null
+                ? meshes.HangarRoofMesh(hangarTenantKey)
+                : meshes.HangarRoofs;
             foreach (var roof in set.Roofs)
-                AddHangarRoof(meshes.HangarRoofs, roof);
+                AddHangarRoof(roofMesh, roof);
             foreach (var box in set.Boxes)
             {
                 if (box.Part == BuildingPart.ObstructionLight)
@@ -256,8 +320,15 @@ namespace Airside.Presentation
             SpawnSurface(root, "YPAD building windows", detail.WindowsDark, glass, null, castShadows: false, useTextures: false);
             SpawnSurface(root, TowerCabGlassName, detail.CabGlass, new Color(0.10f, 0.15f, 0.18f), null, castShadows: false,
                 useTextures: false);
+            // Freight / fire / terminal bay doors stay on the shared grey mesh.
             SpawnSurface(root, "YPAD hangar and bay doors", detail.Doors, new Color(0.70f, 0.72f, 0.72f), metalAlbedo,
                 castShadows: false);
+            foreach (var pair in detail.HangarDoorsByTenant.OrderBy(p => p.Key, StringComparer.Ordinal))
+            {
+                var colours = HangarTenantPalette.Resolve(pair.Key);
+                SpawnSurface(root, "YPAD hangar doors " + pair.Key, pair.Value, AirsideTheme.FromHex(colours.DoorHex),
+                    metalAlbedo, castShadows: false);
+            }
             SpawnSurface(root, "YPAD building trim", detail.Trim, new Color(0.22f, 0.23f, 0.24f), null, castShadows: true,
                 useTextures: false);
             SpawnSurface(root, "YPAD rooftop plant", detail.Plant, new Color(0.62f, 0.64f, 0.63f), metalAlbedo, castShadows: true);
@@ -265,6 +336,12 @@ namespace Airside.Presentation
                 useTextures: false);
             SpawnSurface(root, "YPAD hangar roof silhouettes", detail.HangarRoofs, new Color(0.56f, 0.58f, 0.58f),
                 metalAlbedo, castShadows: true);
+            foreach (var pair in detail.HangarRoofsByTenant.OrderBy(p => p.Key, StringComparer.Ordinal))
+            {
+                var colours = HangarTenantPalette.Resolve(pair.Key);
+                SpawnSurface(root, "YPAD hangar roofs " + pair.Key, pair.Value, AirsideTheme.FromHex(colours.RoofHex),
+                    metalAlbedo, castShadows: true);
+            }
             // ADR 0213: the rooms behind the open doorways, and what is kept in them.
             SpawnSurface(root, "YPAD building interior walls", detail.InteriorWalls, new Color(0.30f, 0.32f, 0.34f), null,
                 castShadows: false, useTextures: false);

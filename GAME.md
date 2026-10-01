@@ -1,3 +1,19 @@
+## Where to resume — cockpit immersion candidate
+
+- **2026-10-01 Codex — `feature/cockpit-immersion`, ADR 0228.** Bailey requested
+  improved in-flight cockpit immersion. Eased 35–85° FOV, 1–5 view shortcuts,
+  optional restrained angular vibration driven by engines/rolling/clouds;
+  destination, distance from Adelaide and rendered vertical speed in the HUD.
+  Stylised 900–1600 m cloud-deck entry/exit fog, rain fade and clear sky above.
+  Interior sound filtering now selects the watched registration. Existing engine,
+  reverse, wheel and contact sounds reused; no recorded cockpit-audio claim.
+  **NEXT:** native Unity compile/EditMode and packaged all-type cockpit input,
+  zoom/window, cloud/storm journey, listening and performance acceptance before
+  merging. Linux has no Mac Unity editor. Seven pure envelope tests pass.
+  Evidence: `docs/testing/cockpit-immersion-2026-10-01/README.md`.
+  Existing asset audit issues: Resources directory missing metadata; three empty
+  Animation folders have orphan metadata. No new asset audit issue identified.
+
 ## South Australia flight world — authorised merge, 2026-10-01
 
 Bailey authorised merging `feature/south-australia-flight-world` into main.

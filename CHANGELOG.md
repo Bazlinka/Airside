@@ -1,5 +1,10 @@
 ## Unreleased
 
+- Cockpit immersion candidate: eased wider zoom, five seat view shortcuts,
+  optional engine/rolling/cloud vibration, destination/distance/vertical-speed
+  HUD, cloud-deck fog and rain/sky transitions above the deck. Select interior
+  sound filtering by watched aircraft. Native visual/audio acceptance pending.
+
 - **Helicopters: the Bell 412 flies, and you can own one.** SA Ambulance Rescue's Bell 412EP now works from
   Helipad West: it spools its rotor, lifts to a hover, turns, climbs away and flies to Adelaide hospitals (Royal
   Adelaide, Flinders, Lyell McEwin, Mount Barker, Gawler, Victor Harbor), then returns and lands on its spot, on call-outs

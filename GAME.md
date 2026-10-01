@@ -8,6 +8,9 @@
   downward renders were inspected; level/banked sightline regression covers the
   missing areas. Native tests: 1677 passed/0 failed/2 existing inconclusives
   (1679 total); headless 1278 passed/0 failed.
+  Clean Mac build `437b6462`; packaged startup image confirms the panel gap is
+  closed. Latest-main integration: 4/4 native cockpit cases passed. Its unrelated
+  jet-pitch test already fails on main after PR #507; do not claim full CI green.
   Evidence: `docs/testing/cockpit-shell-2026-10-01/`.
 
 - **2026-10-01 Codex — SF34 cockpit spectator candidate (`feature/saab-cockpit-mode`, ADR 0214).**

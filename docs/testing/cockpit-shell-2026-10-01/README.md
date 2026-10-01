@@ -16,3 +16,20 @@ Regression uses the actual shell meshes to check seven lower sightlines at level
 and banked/rotated aircraft poses, and three window sightlines that must stay open.
 Native Unity: 1679 total, 1677 passed, zero failures; two existing inconclusives.
 Headless: 1278 passed, zero failures. Diff whitespace check passed.
+
+## Packaged proof and main integration
+
+Clean Mac build passed at `437b6462`. `game-startup.png` and its log are from that
+actual airport player: real VH-ZRC engine-start eligibility, pilot-eye camera,
+1600x900. Visually inspected: the open apron strip beside the panel is replaced
+by solid lining; window views remain clear. No managed exception in the capture.
+The initial three-minute attempt ended before engine eligibility; the ten-minute
+window captured shortly after real first spool and then stopped. This is visual
+proof of this shell fix, not complete flight or performance acceptance.
+
+Integrated newer main `67299614` fog and audio changes; only changelog conflicted.
+All four native cockpit camera/lifecycle/shell cases passed on that integration.
+Main's GitHub run 36812953638 already fails the unrelated
+`AircraftAudioMixTests.PropGovernorHoldsTheNoteWhileJetRevsRise` assertion after
+PR #507 changed jet pitch. The source shell fix does not change audio or that test;
+prior full-suite success above applies before those concurrent audio changes.

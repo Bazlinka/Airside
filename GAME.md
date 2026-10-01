@@ -1,10 +1,16 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Cursor — Goal paused; Phase 1 tip + Phase 2a merged to `main`.**
+  Bailey asked to pause the standing visual-overhaul goal and land the tip on
+  `main`. Phase 1 ground/land (Golf/bunkers/CBD/seasonal/haze) + Phase 2a
+  multi-lobe eucalypt crowns (ADR 0212) are on `main`. Superseded draft PRs
+  closed. **Checks:** `scripts/test-domain.sh` **1215/1215**.
+  **NEXT (when resumed):** Phase 2 species/LOD/placement, or Phase 3 building
+  accuracy — do not continue autonomously until Bailey unpauses.
+
 - **2026-10-01 Cursor — Phase 2a multi-lobe eucalypt crowns (ADR 0212).**
   NDVI suburb trees draw a 3-lobe faceted canopy (primary + two sides, 28 crown
   tris) via `AdelaideTreeGeometry` instead of one hex blob. No new assets.
-  Branch `cursor/phase2a-eucalypt-crowns-709e` off the Phase 1 tip.
-  **NEXT:** Phase 2 species/LOD/placement, or Phase 3 building accuracy.
 
 - **2026-10-01 Cursor — Phase 1 Hills aerial haze (ADR 0210); tip rebased after #492.**
   Outer-terrain land colours cool toward blue-grey with distance/height.

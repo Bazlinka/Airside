@@ -1,12 +1,17 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Cursor — Phase 2e West Beach dune scrub (ADR 0218).**
+  Low multi-lobe tea-tree/scrub on OSM Sand cells in the coast dune band
+  (28–150 m inland). Cap 250. Same tip / PR #510.
+  **NEXT:** Phase 2 LOD / wind, or Phase 3 building accuracy.
+
 - **2026-10-01 Cursor — Phase 2d approach avenue trees (ADR 0217).**
   Bradman Drive, Burbridge Road and Sir Richard Williams Avenue get landside
   verge eucalypts (both sides, outside the fence). Cap 220. Soft-deduped vs
   Tapleys windbreak. Same tip / PR #510.
   Also retargeted `PropGovernorHoldsTheNoteWhileJetRevsRise` to #507's modest
   jet pitch sweep (was failing on `main` and blocking headless CI).
-  **NEXT:** Phase 2 dune scrub / LOD, or Phase 3 building accuracy.
+  **NEXT:** Phase 2e done on same tip.
 
 - **2026-10-01 Cursor — Phase 2c Tapleys Hill Road windbreak (ADR 0216).**
   Deterministic eucalypt row on the Tapleys landside verge (outside the

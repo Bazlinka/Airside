@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Phase 2e West Beach dune scrub (ADR 0218).** Low multi-lobe coastal scrub
+  on OSM Sand cells in the dune band (28–150 m inland). Cap 250, ≤16 tris each.
+  Locked by `AdelaideDuneScrubPlacementTests`. No new assets or save-schema
+  changes.
+
 - **Lock jet pitch sweep to the #507 modest range.** `PropGovernorHoldsTheNoteWhileJetRevsRise`
   still required a >1.30 jet taxi→takeoff pitch ratio after #507 narrowed the bed
   sweep to stop spool-up chirps; update the lock to >1.15 / <1.28 and still above

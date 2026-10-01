@@ -134,7 +134,10 @@ Phases 1, 2 and 3a can run in parallel on separate branches (disjoint files).
   (`AdelaideWindbreakPlacement`) — no new assets.
 - Phase 2d (ADR 0217): Bradman / Burbridge / Williams avenue eucalypts
   (`AdelaideAvenuePlacement`) — no new assets.
-  **Next:** Phase 2 dune scrub / LOD / wind, or Phase 3 building accuracy.
+- Phase 2e (ADR 0218): West Beach dune scrub on Sand cells
+  (`AdelaideDuneScrubPlacement`) — no new assets.
+  **Next:** Phase 2 LOD / wind / ground-cover tufts, or Phase 3 building
+  accuracy.
 - Phases 2 (remainder), 3b–f, 4, 5 remain.
 
 ## Risks

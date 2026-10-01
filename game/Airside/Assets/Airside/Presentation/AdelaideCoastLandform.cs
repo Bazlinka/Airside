@@ -53,6 +53,36 @@ namespace Airside.Presentation
         public const float OutletBlendEndMetres = 70f;
 
         /// <summary>
+        /// Horizontal distance to the nearest OSM coastline segment (metres).
+        /// Used by dune scrub placement (ADR 0218) as well as the heightfield.
+        /// </summary>
+        public static float CoastDistanceMetres(float x, float z, float[] coastline = null)
+        {
+            coastline ??= AdelaideCoast.Coastline;
+            if (coastline == null || coastline.Length < 4)
+                return float.MaxValue;
+            var best = float.MaxValue;
+            for (var i = 0; i + 3 < coastline.Length; i += 2)
+            {
+                var ax = coastline[i];
+                var az = coastline[i + 1];
+                var bx = coastline[i + 2];
+                var bz = coastline[i + 3];
+                var dx = bx - ax;
+                var dz = bz - az;
+                var len2 = dx * dx + dz * dz;
+                var t = len2 < 1e-9f ? 0f : Math.Max(0f, Math.Min(1f, ((x - ax) * dx + (z - az) * dz) / len2));
+                var px = x - ax - dx * t;
+                var pz = z - az - dz * t;
+                var d = (float)Math.Sqrt(px * px + pz * pz);
+                if (d < best)
+                    best = d;
+            }
+
+            return best;
+        }
+
+        /// <summary>
         /// Extra height for a land vertex near the coast: a soft berm peaking ~70 m inland,
         /// stronger on OSM sand/scrub (West Beach dunes).
         /// </summary>

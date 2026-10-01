@@ -8,6 +8,8 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideCarParkGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideCbdSkylineGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideCoastLandform.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideDuneScrubGeometry.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideDuneScrubPlacement.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideEmergencyAviationGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideFarLandCover.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AdelaideOuterTerrainGeometry.cs" />
@@ -111,6 +113,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideCbdSkylineTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideCoastLandformTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideDayPlanTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideDuneScrubPlacementTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideGroundTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideHourProfileTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideLandCoverTests.cs" />

@@ -685,6 +685,9 @@ namespace Airside.Presentation
             for (var index = 0; index < VisualFlights.Count; index++)
             {
                 var flight = VisualFlights[index];
+                // A helicopter settles onto a pad on skids: no tyre smoke, no skid marks, no rubber (ADR 0207).
+                if (IsRotorcraftFlight(flight))
+                    continue;
                 var phase = flight.Operation.Phase;
                 var id = flight.AircraftId;
                 // Flights past the visible limit have no view; a hidden fleet aircraft has

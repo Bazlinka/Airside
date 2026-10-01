@@ -33,6 +33,11 @@ namespace Airside.Presentation
         }
 
         private readonly Dictionary<int, HelicopterRig> _helicopterRigs = new();
+
+        /// <summary>True when this drawn flight is a helicopter: no runway circuit, no tyre smoke, no taxi spray.</summary>
+        private bool IsRotorcraftFlight(CommercialFlight flight) =>
+            FleetMode && flight != null && _fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft)
+            && aircraft.Type.IsRotorcraft;
         private bool _staticRescueHelicopterHidden;
 
         private static Transform BuildBell412(string name, Color accent)

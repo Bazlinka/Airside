@@ -12,6 +12,17 @@ merge authorisation does not turn those into passing checks. Jet ADR is now 0225
 
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Cursor — arrivals bunched on final (`main`).** Bailey saw three
+  arrivals flying nose to tail over the coast. `ExpectedLandingQueueTime` gave an
+  Inbound aircraft only the HoldingForLanding traffic ahead, never other inbounds
+  joining first, so close-scheduled arrivals shared one estimate and were drawn
+  together. It now queues behind earlier-joining inbounds (same strip, `RunwayFor`).
+  Presentation-only consumer; tower, saves and random draws unchanged.
+  **Evidence:** new `DrawnFinal_KeepsConsecutiveArrivalsKilometresApart` (one day,
+  seed 2026: under-3 km pairs 389 → 0, p5 gap 221 m → 9.4 km). On top of PR #510,
+  Unity EditMode **1737 passed / 0 failed / 2 inconclusive**. Clean Mac build passed.
+  **NEXT:** watch a busy arrival bank in the packaged game.
+
 - **2026-10-01 Codex — weather coverage (`fix/regional-weather-coverage`, ADR 0226).**
   Bailey selected whole-visible-landscape weather with fade only at render limits.
   Cloud recycling now surrounds the viewer; world positions/wind remain stable
@@ -26,7 +37,6 @@ merge authorisation does not turn those into passing checks. Jet ADR is now 0225
   Task packet: `docs/plans/weather-coverage.md`. Final combined Mac build 409b9349 clean; 67/67 focused native and 37/37
   focused headless after jet cockpit integration. Eleven player views inspected; evidence/result record:
   `docs/testing/weather-coverage-2026-10-01/README.md`.
-
 
 - **2026-10-01 Codex — all-jet cockpit candidate (`feature/all-jet-cockpits`, ADR 0225).**
   Isolated checkout: `/private/tmp/airside-jet-cockpits`; unrelated primary-checkout
@@ -48,6 +58,7 @@ merge authorisation does not turn those into passing checks. Jet ADR is now 0225
   Unity asset audit passes. Mac player builds passed from clean dc2041f3 and 57d14e09. Packaged capture
   attempts did not reach an eligible local jet within their bounded waits; no cockpit
   PNGs accepted. Journey/night/weather/audio/performance acceptance remains open.
+
 
 - **2026-10-01 Cursor — merge PR #510 visual overhaul tip onto main (goal stopped).**
   Merges Phase 2b–2g vegetation + Phase 3 tower/hangars/ARFF onto main that

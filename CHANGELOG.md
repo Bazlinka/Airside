@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Arrivals no longer bunch up nose to tail on final.** An inbound's drawn position on the
+  extended final only counted aircraft already holding, so arrivals due close together got the
+  same landing estimate and flew in a line a few hundred metres apart (some on the same spot).
+  Each now queues behind the inbounds that join first. Over a simulated day, drawn pairs under
+  3 km fell from 389 to 0; the closest 5 % are now about 9 km apart. Presentation only: tower
+  sequencing, saves and simulation outcomes are unchanged.
+
 - **Weather across the landscape:** cloud bodies recycle around the moving view
   rather than the airport, with matched shadow fades. Ground fog no longer ends
   at the airport rectangle; fog and the broader overcast deck fade over 20–30 km.
@@ -20,6 +27,7 @@
   controls, display arrangements, windows, overheads and pedestals; shared shell
   restoration preserves the existing SF34 cockpit. Live local telemetry and engine
   spool labels; autonomous flight and saves unchanged. Jet rollout, ADR 0225.
+
 - **Phase 3 ARFF/fire-station silhouette (ADR 0223).** Taller/wider appliance
   bay doors, hose-drying tower with obstruction light, concrete parking pads
   with yellow bay cues, and a yellow sign fascia — pure-math `BuildingDetail`.

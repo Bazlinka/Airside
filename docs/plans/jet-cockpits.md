@@ -42,6 +42,13 @@ narrowbody roots are nose-stop coordinates. Windows are open geometry so the
 existing sky/weather remains visible. No transparent glazing layer or extra camera.
 Shared geometry does not mean shared fits: every type has an explicit datum.
 
+`JetCockpitShellGeometry` welds a continuous floor, sidewalls, front footwell,
+bulkhead and roof with a deliberate open window band. The headless topology check
+requires every interior edge to join exactly two triangles with opposite winding;
+every open edge must lie on the declared single window-boundary loop. Decorative
+rails/pillars fit that exact boundary. This proves no unintended mesh seam, while
+actual seat-angle rendering remains a separate acceptance check.
+
 Panel readouts label ground speed, height above runway datum, heading and engine
 spool (the game's 0–1 engine startup presentation state, not measured N1/N2).
 The attitude graphic follows rendered bank. Decorative compass marks and controls

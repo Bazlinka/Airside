@@ -5,6 +5,7 @@ using UnityEngine.Rendering;
 namespace Airside.Presentation
 {
     /// <summary>Original, editable SF34 spectator interior, authored in the exterior kit's metre coordinates.</summary>
+    [ExecuteAlways]
     public sealed class SaabCockpitInterior : CockpitInterior
     {
         public static SaabCockpitInterior Build(Transform aircraft)

@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Replace separate jet cockpit shell pieces with a continuous welded shell and
+  exactly fitted window frames. All-type topology tests reject unintended wall,
+  floor or roof openings and inconsistent surface winding.
+
 - All ten catalogue jets gain fitted cockpit spectator interiors with family-specific
   controls, display arrangements, windows, overheads and pedestals; shared shell
   restoration preserves the existing SF34 cockpit. Live local telemetry and engine

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Airside.Domain;
 using Airside.Simulation;
 using UnityEngine;
@@ -6,11 +7,13 @@ using UnityEngine;
 namespace Airside.Presentation
 {
     /// <summary>Original simplified family-specific spectator decks. No flight controls or simulated avionics.</summary>
+    [ExecuteAlways]
     public sealed class JetCockpitInterior : CockpitInterior
     {
         public JetCockpitProfile Profile { get; private set; }
         private Material _panel, _trim, _black, _white, _cyan, _green, _sky, _earth;
         private readonly Transform[] _horizons = new Transform[2];
+        private readonly List<(Transform bar, float bottom, bool left)> _engineBars = new();
         private TextMesh _engineReadout;
         private TextMesh _phaseReadout;
         private string _lastEngines, _lastPhase;
@@ -89,31 +92,45 @@ namespace Airside.Presentation
         private void MakeShell(Material lining)
         {
             var w = Profile.HalfWidth;
-            // A closed lower shell, floor, rear bulkhead and ceiling. Only the window belt is open.
-            Box("Closed flight deck floor", new Vector3(0f, -1.46f, -0.08f), new Vector3(w * 2f + 0.10f, 0.12f, 3.32f), _trim);
-            Box("Rear flight deck bulkhead", new Vector3(0f, -0.39f, -1.73f), new Vector3(w * 2f + 0.10f, 2.15f, 0.10f), lining);
-            Box("Flight deck ceiling", new Vector3(0f, 0.72f, -0.21f), new Vector3(w * 2f + 0.10f, 0.10f, 2.96f), lining);
+            var geometry = JetCockpitShellGeometry.Build(w);
+            var vertexCount = geometry.Vertices.Count;
+            var vertices = new Vector3[vertexCount * 2];
+            for (var i = 0; i < vertexCount; i++)
+            {
+                var v = geometry.Vertices[i];
+                vertices[i] = vertices[i + vertexCount] = new Vector3(v.X, v.Y, v.Z);
+            }
+            var triangles = new int[geometry.Triangles.Count * 2];
+            geometry.Triangles.CopyTo(triangles, 0);
+            for (var i = 0; i < geometry.Triangles.Count; i += 3)
+            {
+                var offset = geometry.Triangles.Count + i;
+                triangles[offset] = geometry.Triangles[i] + vertexCount;
+                triangles[offset + 1] = geometry.Triangles[i + 2] + vertexCount;
+                triangles[offset + 2] = geometry.Triangles[i + 1] + vertexCount;
+            }
+            var shell = new GameObject("Closed cockpit shell");
+            shell.transform.SetParent(transform, false);
+            var mesh = new Mesh { name = "Continuous jet cockpit shell", vertices = vertices, triangles = triangles };
+            mesh.RecalculateNormals(); mesh.RecalculateBounds(); _meshes.Add(mesh);
+            shell.AddComponent<MeshFilter>().sharedMesh = mesh;
+            shell.AddComponent<MeshRenderer>().sharedMaterial = lining;
             Box("Flight deck door", new Vector3(0f, -0.40f, -1.665f), new Vector3(0.56f, 1.90f, 0.035f), _panel);
             foreach (var side in new[] { -1f, 1f })
             {
-                Box("Closed lower sidewall", new Vector3(side * w, -0.76f, -0.09f), new Vector3(0.12f, 1.40f, 3.20f), lining);
-                Box("Rear side lining", new Vector3(side * w, 0.29f, -1.13f), new Vector3(0.12f, 0.76f, 1.12f), lining);
-                Beam("Side window upper rail", new Vector3(side * w, 0.66f, -0.63f), new Vector3(side * w * 0.84f, 0.49f, 1.05f), 0.07f, lining);
-                Beam("Side window sill", new Vector3(side * w, -0.06f, -0.64f), new Vector3(side * w * 0.84f, -0.04f, 1.26f), 0.07f, _panel);
-                Beam("Rear window pillar", new Vector3(side * w, -0.10f, -0.61f), new Vector3(side * w, 0.66f, -0.61f), 0.06f, lining);
-                Beam("Front windscreen outer pillar", new Vector3(side * w * 0.84f, -0.08f, 1.26f), new Vector3(side * w * 0.73f, 0.51f, 0.98f), 0.065f, lining);
+                Beam("Side window upper rail", new Vector3(side * w, 0.67f, -0.61f), new Vector3(side * w, 0.67f, 0.72f), 0.07f, lining);
+                Beam("Side window sill", new Vector3(side * w, -0.05f, -0.61f), new Vector3(side * w, -0.05f, 0.72f), 0.07f, _panel);
+                Beam("Forward side window upper rail", new Vector3(side * w, 0.67f, 0.72f), new Vector3(side * w * 0.73f, 0.51f, 1.05f), 0.07f, lining);
+                Beam("Forward side window sill", new Vector3(side * w, -0.05f, 0.72f), new Vector3(side * w * 0.84f, -0.05f, 1.30f), 0.07f, _panel);
+                Beam("Rear window pillar", new Vector3(side * w, -0.05f, -0.61f), new Vector3(side * w, 0.67f, -0.61f), 0.06f, lining);
+                Beam("Front windscreen outer pillar", new Vector3(side * w * 0.84f, -0.05f, 1.30f), new Vector3(side * w * 0.73f, 0.51f, 1.05f), 0.065f, lining);
                 if (Profile.Deck != JetFlightDeck.Boeing787)
-                    Beam("Side quarterlight pillar", new Vector3(side * w, -0.07f, 0.41f), new Vector3(side * w * 0.91f, 0.59f, 0.35f), 0.045f, lining);
-                Face("Closed front cheek", new[] { new Vector3(side * w, -1.40f, 0.72f), new Vector3(side * w, -0.05f, 0.72f),
-                    new Vector3(side * w * 0.84f, -0.05f, 1.30f), new Vector3(side * w * 0.84f, -1.40f, 1.30f) }, lining);
+                    Beam("Side quarterlight pillar", new Vector3(side * w, -0.05f, 0.41f), new Vector3(side * w, 0.67f, 0.41f), 0.045f, lining);
                 Beam("Parked windscreen wiper", new Vector3(side * 0.12f, -0.015f, 1.31f), new Vector3(side * w * 0.64f, 0.005f, 1.28f), 0.013f, _trim);
             }
-            Beam("Windscreen centre post", new Vector3(0f, -0.07f, 1.36f), new Vector3(0f, 0.49f, 1.05f), 0.047f, lining);
-            Beam("Windscreen brow", new Vector3(-w * 0.76f, 0.51f, 1.00f), new Vector3(w * 0.76f, 0.51f, 1.00f), 0.075f, lining);
-            // Roof taper closes the wedge behind the raked windscreen brow.
-            Face("Forward roof lining", new[] { new Vector3(-w, 0.67f, 0.77f), new Vector3(w, 0.67f, 0.77f),
-                new Vector3(w * 0.84f, 0.51f, 1.08f), new Vector3(-w * 0.84f, 0.51f, 1.08f) }, lining);
-            Box("Closed front footwell", new Vector3(0f, -0.85f, 1.32f), new Vector3(w * 1.72f, 1.15f, 0.14f), _panel);
+            Beam("Windscreen centre post", new Vector3(0f, -0.05f, 1.30f), new Vector3(0f, 0.51f, 1.05f), 0.047f, lining);
+            Beam("Windscreen brow", new Vector3(-w * 0.73f, 0.51f, 1.05f), new Vector3(w * 0.73f, 0.51f, 1.05f), 0.075f, lining);
+
         }
 
         private void MakePanel()
@@ -185,6 +202,29 @@ namespace Airside.Presentation
                     Box("Display tape tick", new Vector3(x + width * 0.34f, y + tick * 0.036f, z - 0.015f), new Vector3(0.018f, 0.004f, 0.002f), _white);
                 }
             }
+            else if (title == "ENG" || title == "ECAM" || title == "EICAS")
+            {
+                // Two real startup-state bars, rather than a decorative compass on an engine display.
+                foreach (var side in new[] { -1f, 1f })
+                {
+                    var bottom = y - height * 0.28f;
+                    Box("Engine spool track", new Vector3(x + side * width * 0.22f, y - 0.005f, z - 0.013f),
+                        new Vector3(0.038f, height * 0.51f, 0.002f), _panel);
+                    var bar = Box("Live engine spool bar", new Vector3(x + side * width * 0.22f, bottom + height * 0.25f, z - 0.017f),
+                        new Vector3(0.027f, height * 0.50f, 0.002f), _green);
+                    var host = new GameObject("Engine bar datum").transform;
+                    host.SetParent(transform, false); host.localPosition = new Vector3(0f, bottom, 0f);
+                    bar.SetParent(host, true);
+                    _engineBars.Add((bar, height * 0.50f, side < 0));
+                }
+            }
+            else if (title == "SYS" || title == "SYSTEM" || title == "OIS")
+            {
+                // Restrained system/status layout; no fictitious pressures, routes or avionics values.
+                for (var row = 0; row < 3; row++)
+                    Box("System page row", new Vector3(x, y + 0.04f - row * 0.04f, z - 0.014f),
+                        new Vector3(width * 0.58f, 0.005f, 0.002f), row == 0 ? _cyan : _white);
+            }
             else
             {
                 // A compass rose with no invented route or avionics values.
@@ -246,6 +286,12 @@ namespace Airside.Presentation
             foreach (var horizon in _horizons)
                 if (horizon != null)
                     horizon.localRotation = Quaternion.Euler(0f, 0f, -Mathf.DeltaAngle(0f, aircraft.eulerAngles.z));
+            foreach (var (bar, height, left) in _engineBars)
+            {
+                var fill = Mathf.Clamp01(left ? engines.Left : engines.Right);
+                var size = bar.localScale; size.y = Mathf.Max(0.001f, height * fill); bar.localScale = size;
+                var position = bar.localPosition; position.y = size.y * 0.5f; bar.localPosition = position;
+            }
             var text = $"SPOOL L {engines.Left * 100f:0}%\nSPOOL R {engines.Right * 100f:0}%";
             if (text != _lastEngines) { _engineReadout.text = text; _lastEngines = text; }
             if (phase != _lastPhase) { _phaseReadout.text = phase; _lastPhase = phase; }

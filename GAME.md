@@ -5,16 +5,21 @@
   audio work retained. All ten jets have explicit fitted left-seat decks with
   family-specific displays, yokes/sidesticks, windows, guidance rail, overhead and
   pedestal. Lower/front shell, floor, roof and rear bulkhead close non-window gaps.
+  A continuous welded jet shell now has a checked window boundary: no unintended
+  mesh seams; rails/pillars fit its exact edges. Focused cockpit checks: 27/27.
   SF34 uses its existing geometry through a shared interior lifecycle. Cockpit
   remains spectator mode; first spool/local visibility/shutdown rules unchanged.
   Plan and task packet: `docs/plans/jet-cockpits.md`. Validation and open acceptance:
   `docs/testing/jet-cockpits-2026-10-01/README.md`. **NEXT:** review native all-type
   renders and packaged journeys/entry/exit/weather/night/audio/performance before
   merging; do not call type coverage completed visual acceptance.
-  **Checks:** focused cockpit 16/16; full headless 1,288 passed/1 inherited audio
-  failure. Presentation/Editor/EditMode test sources compile against cached Unity
-  references; native Unity tests/renders/build blocked by LicensingClient IPC.
-  No rendered jet visual acceptance yet. All changes committed/pushed on this branch.
+  **Checks:** focused headless cockpit 27/27; focused native Unity 35/35.
+  Licensing recovered by stopping the stale helper from the initial sandbox run.
+  All ten types' ten-angle native sheets inspected (100 stills): no unintended shell
+  gaps seen; overhead visibility corrected. Evidence under `docs/testing/jet-cockpits-2026-10-01/native/`.
+  Full native: 1,702 passed, one inherited audio failure, two existing inconclusives.
+  Unity asset audit passes. Mac player build is next; packaged
+  journey/night/weather/audio/performance acceptance remains open.
 
 
 - **2026-10-01 Codex — Saab cockpit opaque shell fix.**

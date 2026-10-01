@@ -13,8 +13,8 @@ python3 - "$run_dir" <<'PY'
 import pathlib, sys
 folder = pathlib.Path(sys.argv[1])
 types = ['B738','B38M','A320','A21N','E190','A223','A359','A339','B789','B78X']
-shots = ['forward','left','panel','right','overhead','layout','bank']
+shots = ['forward','left','panel','right','overhead','layout','bank','footwell','left-down','right-down']
 missing = [f'{t}_{s}.png' for t in types for s in shots if not (folder / f'{t}_{s}.png').is_file()]
 if missing: sys.exit('Missing cockpit renders: ' + ', '.join(missing))
-print('All 70 type/angle captures produced in ' + str(folder) + '; inspect them before accepting the visuals.')
+print('All 100 type/angle captures produced in ' + str(folder) + '; inspect them before accepting the visuals.')
 PY

@@ -38,7 +38,7 @@ namespace Airside.Tests
                 Assert.That(rig.Seat.IsChildOf(rig.transform), Is.True);
                 Assert.That(rig.Seat.localPosition.x, Is.LessThan(0f));
                 var parts = rig.GetComponentsInChildren<Transform>();
-                foreach (var name in new[] { "Closed flight deck floor", "Rear flight deck bulkhead", "Flight deck ceiling", "Closed front footwell", "Overhead panel", "Centre pedestal" })
+                foreach (var name in new[] { "Closed cockpit shell", "Overhead panel", "Centre pedestal" })
                     Assert.That(parts.Any(p => p.name == name), Is.True, id + ": " + name);
                 Assert.That(parts.Count(p => p.name.EndsWith(" screen")), Is.EqualTo(rig.Profile.DisplayCount));
                 Assert.That(parts.Any(p => p.name == "Sidestick grip"), Is.EqualTo(rig.Profile.Sidestick));

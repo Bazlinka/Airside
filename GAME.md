@@ -3,6 +3,7 @@
 - **2026-10-01 Cursor — Phase 1 Golf + bunker discs (ADR 0206/0207); P0 closed / plan approved.**
   Golf courses tint irrigated green; 213 OSM bunker discs as sand marks on surroundings.
   Bailey closed P0, approved the visual plan, keep shipping — no ask-to-verify.
+  **Checks:** `scripts/test-domain.sh` **1182/1182**.
   **NEXT:** Phase 1 far-ring skyline / seasonal tint.
 
 - **2026-09-30 Codex — local consolidation onto `main`.**

@@ -181,8 +181,8 @@ namespace Airside.Presentation
         public const float GuideHeight = CareerHeight;
 
         public const float OperationsWidth = 300f;
-        public const float OperationsMaxHeight = 320f;
-        public const float OperationsTileHeight = 52f;
+        public const float OperationsMaxHeight = 440f;
+        public const float OperationsTileHeight = 78f;
         public const float OperationsHeaderHeight = 34f;
 
         public const float MiniMapWidth = 236f;
@@ -688,13 +688,38 @@ namespace Airside.Presentation
                 else if (row.Registration == selectedRegistration)
                     into.Outline(tile, HudTone.Accent, 0.7f);
                 var tone = SeverityTone(row.Severity, row.IsPriority);
+                // Line 1: flight number, airframe, destination code.
                 into.Dot(tile.X + 14f, tile.Y + 17f, 8f, tone);
-                into.Text(new HudBox(tile.X + 26f, tile.Y + 8f, 90f, 18f), row.Registration, 13f, HudTone.Default,
+                into.Text(new HudBox(tile.X + 26f, tile.Y + 8f, 90f, 18f), row.FlightLabel, 13f, HudTone.Default,
                     HudTextStyle.Bold);
-                into.Pill(new HudBox(tile.Right - 70f, tile.Y + 8f, 60f, 18f),
+                var typeX = tile.X + 26f + HudShell.Measure(row.FlightLabel, 13f) + 8f;
+                var pillX = tile.Right - 70f;
+                if (row.TypeName.Length > 0 && typeX < pillX - 24f)
+                    into.Text(new HudBox(typeX, tile.Y + 10f, pillX - typeX - 6f, 14f),
+                        row.TypeName, 10f, HudTone.Muted);
+                into.Pill(new HudBox(pillX, tile.Y + 8f, 60f, 18f),
                     string.IsNullOrEmpty(row.Route) ? "—" : row.Route.ToUpperInvariant(), HudTone.Route);
-                into.Text(new HudBox(tile.X + 26f, tile.Y + 29f, tile.Width - 36f, 16f), row.State, 11f,
-                    row.IsPriority ? HudTone.Caution : HudTone.Muted, row.IsPriority ? HudTextStyle.Bold : HudTextStyle.Regular);
+                // Line 2: where it is going, and the registration it flies under.
+                var line2 = row.RouteText;
+                if (row.FlightLabel != row.Registration)
+                    line2 = line2.Length == 0 ? row.Registration : line2 + "  ·  " + row.Registration;
+                into.Text(new HudBox(tile.X + 14f, tile.Y + 29f, tile.Width - 24f, 16f), line2, 11f, HudTone.Default);
+                // Line 3: what it is doing, and the time to watch.
+                var timeText = row.TimeText.Length > 0 ? row.TimeText : row.ProgressText;
+                var timeWidth = timeText.Length > 0 ? Math.Min(HudShell.Measure(timeText, 10f) + 4f, tile.Width * 0.5f) : 0f;
+                into.Text(new HudBox(tile.X + 14f, tile.Y + 47f, tile.Width - 28f - timeWidth, 16f), row.State, 11f,
+                    row.IsPriority ? HudTone.Caution : tone == HudTone.Positive ? HudTone.Muted : tone,
+                    HudTextStyle.Bold);
+                if (timeWidth > 0f)
+                    into.Text(new HudBox(tile.Right - 14f - timeWidth, tile.Y + 48f, timeWidth, 16f), timeText, 10f,
+                        HudTone.Muted, HudTextStyle.Regular, HudAlign.Right);
+                // Line 4: progress through the turnaround, the flight leg or the check.
+                if (row.HasProgress)
+                {
+                    var bar = new HudBox(tile.X + 14f, tile.Bottom - 10f, tile.Width - 28f, 3f);
+                    into.Bar(bar, row.Progress01,
+                        row.Progress01 >= 1f ? HudTone.Positive : tone == HudTone.Positive ? HudTone.Accent : tone);
+                }
                 into.Hotspot(tile, HudAction.Select(row.Registration));
                 y += HudShell.OperationsTileHeight + 6f;
             }

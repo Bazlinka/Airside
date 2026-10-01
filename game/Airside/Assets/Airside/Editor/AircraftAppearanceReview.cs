@@ -72,17 +72,24 @@ public static class AircraftAppearanceReview
                 if (renderer.name.Contains("shadow", StringComparison.OrdinalIgnoreCase)) { renderer.enabled = false; continue; }
                 if (first) { bounds = renderer.bounds; first = false; } else bounds.Encapsulate(renderer.bounds);
             }
-            foreach (var angle in new[] { ("front", 38f, 22f), ("side", 90f, 5f), ("opposite", -90f, 5f), ("rear", 145f, 28f), ("overview", 40f, 55f) })
+            // -aircraftReviewDoors open: swing every door as the boarding timeline does, so the hollow behind it shows.
+            var doorBounds = Arg("-aircraftReviewDoors", "shut") == "open" ? OpenDoors(root) : (Bounds?)null;
+            var viewList = new System.Collections.Generic.List<(string, float, float)>
+                { ("front", 38f, 22f), ("side", 90f, 5f), ("opposite", -90f, 5f), ("rear", 145f, 28f), ("overview", 40f, 55f) };
+            if (doorBounds.HasValue)
+                viewList.Add(("door", doorBounds.Value.center.x < 0f ? 90f : -90f, 6f));
+            foreach (var angle in viewList)
             {
                 if (!Arg("-aircraftReviewViews", "front,side,opposite,rear,overview").Contains(angle.Item1)) continue;
                 var rotation = Quaternion.Euler(-angle.Item3, -angle.Item2, 0f);
                 var direction = rotation * Vector3.forward;
-                camera.transform.position = bounds.center + direction * 150f;
-                camera.transform.LookAt(bounds.center);
-                var ext = bounds.extents;
+                var framed = angle.Item1 == "door" ? doorBounds.Value : bounds;
+                camera.transform.position = framed.center + direction * (angle.Item1 == "door" ? 30f : 150f);
+                camera.transform.LookAt(framed.center);
+                var ext = framed.extents;
                 var right = camera.transform.right; var up = camera.transform.up;
                 float Extent(Vector3 axis) => Mathf.Abs(axis.x) * ext.x + Mathf.Abs(axis.y) * ext.y + Mathf.Abs(axis.z) * ext.z;
-                camera.orthographicSize = Mathf.Max(Extent(up), Extent(right) / camera.aspect) * 1.14f;
+                camera.orthographicSize = Mathf.Max(Extent(up), Extent(right) / camera.aspect) * (angle.Item1 == "door" ? 1.6f : 1.14f);
                 // Labels use the same side visibility tracker in normal play; invoke it here
                 // because editor executeMethod does not run MonoBehaviour.LateUpdate.
                 foreach (var behaviour in root.GetComponents<MonoBehaviour>())
@@ -105,5 +112,29 @@ public static class AircraftAppearanceReview
         camera.targetTexture = null;
         Object.DestroyImmediate(target);
         Debug.Log("Aircraft appearance review: " + output);
+    }
+
+    /// <summary>Open the passenger and cargo doors the way UpdateCabinDoor does; returns the passenger door's bounds.</summary>
+    private static Bounds? OpenDoors(Transform root)
+    {
+        Bounds? passenger = null;
+        var show = typeof(AirsidePrototype).GetMethod("ShowDoorway", PrivateStatic);
+        foreach (var door in root.GetComponentsInChildren<Transform>(true))
+        {
+            var isCabin = door.name.StartsWith("CabinDoor", StringComparison.Ordinal) && door.GetComponent<MeshFilter>() != null;
+            var isCargo = door.name.StartsWith("Cargo door", StringComparison.Ordinal);
+            if (!isCabin && !isCargo) continue;
+            if (isCabin) passenger = door.GetComponent<Renderer>().bounds;
+            var euler = door.localEulerAngles;
+            var airstair = door.GetComponent("Airside.Presentation.AirstairDoor");
+            if (airstair != null)
+                euler.z = (float)airstair.GetType().GetField("OpenDegrees").GetValue(airstair);
+            else
+                euler.y = isCabin ? -85f : 70f;
+            door.localEulerAngles = euler;
+            var doorway = door.GetComponent<AircraftDoorway>();
+            if (doorway != null) show.Invoke(null, new object[] { doorway.Shell, 1f });
+        }
+        return passenger;
     }
 }

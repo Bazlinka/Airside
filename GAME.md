@@ -1,5 +1,30 @@
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Claude — My Flights tiles, hollow aircraft doorways, A320 door fit (ADR 0206).**
+  Each My Flights tile now shows flight number, airframe, route, registration, state, the time to watch
+  (departs / ETA / check ends) and a progress bar. Every passenger and cargo door of all 13 flying types
+  has a hollow (dark reveal, black cabin, lit vestibule) drawn only while the door is open, and jet/cargo
+  leaves hinge on the edge that swings them clear. The A320's doors were buried up to 6 cm in its hull
+  (inherited from the 737 skin); `scripts/fit-aircraft-doors.py` refit them and CI now audits all kits.
+  Presentation only.
+  - **Checks:** Unity EditMode 53/53 on the touched suites (doorway, doorway geometry, operations summary,
+    HUD shell, dispatch, assets, catalogue); `scripts/test-domain.sh` green; `fit-aircraft-doors.py audit` clean;
+    13/13 door close-ups reviewed with `AircraftAppearanceReview -aircraftReviewDoors open`.
+  - **Not verified:** the panel and an open door at follow distance at dusk/night; the A320/ATR editable FBX and
+    `generate-air-adelaide-fleet.py` still carry the old A320 door cut (re-run `fit A320` after any regenerate).
+  - **NEXT:** eyeball the tiles on a busy fleet (6+ aircraft) and an aerobridge/stair boarding at the door.
+
+- **2026-10-01 Cursor — P0 waiting on Stage A evidence push (#492).**
+  Tip **#492** `dc546ac1` (CI green, MERGEABLE). Stage A fail-closed locks are on tip;
+  headless env Save proposed (`bld-20260930-f5f76b1e`). Bailey marked Mac Stage A
+  CTA done and skipped `CURSOR_API_KEY`, but tip still has **no** `follow-freighter.png`
+  and night-sky is still the nose-down #490 still. Mac workers often online.
+  20 RESULTS unverified. Freight parked.
+  **NEXT:** On Mac, push Stage A PNGs + eye verdicts into
+  `docs/testing/post-audit-p0-2026-09-30/` on this tip (or re-run
+  `scripts/run-post-audit-p0-stage-a.command` if none exist), then continue B/C
+  + manual listening. Do not invent RESULTS.
+
 - **2026-10-01 Cursor — Goal paused; Phase 1 tip + Phase 2a merged to `main`.**
   Bailey asked to pause the standing visual-overhaul goal and land the tip on
   `main`. Phase 1 ground/land (Golf/bunkers/CBD/seasonal/haze) + Phase 2a

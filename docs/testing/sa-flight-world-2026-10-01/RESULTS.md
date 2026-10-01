@@ -25,7 +25,17 @@ The original Developer checkout's audio changes are untouched.
   the distant origin is active; original active states restore on return/exit.
   Their visual updates pause; simulation continues. The local arrival owner seeds
   its pose from the watched view rather than snapping to a fresh tower estimate.
-- Mac build and graphics-on acceptance are in progress. Native path continuity
+- Coarse-mesh runway support widened to 1.5 km flat / 3 km blend: a 200 m
+  pointwise flatten did not guarantee that the surrounding 1 km triangle vertices
+  stayed below the strip. New regression samples every runway's containing cells.
+  All 13 focused headless flight-world tests pass (303 ms); harness derivation
+  check is current. Packaged review driver source compilation: zero errors, nine
+  existing warnings; native/player verification of the driver remains pending.
+- First Mac build is still running (shader compilation completed, native Burst/
+  player packaging active). Its stamped identity is `40caaf9d-dirty`; it does not
+  contain the subsequently added journey review driver or terrain-cell fix. Wait
+  for it, then native-test and rebuild current source before running the driver.
+  Graphics-on acceptance remains open. Native path continuity
   does not establish cockpit appearance, frame rate or seamless view ownership.
 - Asset audit reports existing missing `Assets/Resources.meta` and orphan Animation
   World/Aircraft/Vehicles metadata. No new GUID or runtime mirror errors reported.

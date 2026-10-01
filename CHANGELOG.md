@@ -1,6 +1,6 @@
 ## Unreleased
 
-- Candidate: stream a bounded South Australia terrain window for SF34 regional cockpit journeys, with real Copernicus elevation, mapped regional strips and a moving render origin (ADR 0215; native path checks pass, player acceptance pending). Ease inbound cruise height onto the local approach and hide airport actors around a distant render origin.
+- Candidate: stream a bounded South Australia terrain window for SF34 regional cockpit journeys, with real Copernicus elevation, mapped regional strips and a moving render origin (ADR 0215; native path checks pass, player acceptance pending). Ease inbound cruise height onto the local approach and hide airport actors around a distant render origin. Keep the coarse terrain cells around each mapped strip at runway elevation; add a fresh-airline packaged journey review driver.
 
 - Close the Saab cockpit shell beneath the windows, including the gaps beside the
   panel and under the footwell, so apron/terrain cannot show through the body.

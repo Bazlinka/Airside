@@ -1,0 +1,6 @@
+  Harness -> /private/tmp/airside-sa-world/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll
+Test run for /private/tmp/airside-sa-world/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll (.NETCoreApp,Version=v8.0)
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:    13, Skipped:     0, Total:    13, Duration: 303 ms - Harness.dll (net8.0)

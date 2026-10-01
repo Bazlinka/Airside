@@ -13,6 +13,14 @@
   Native EditMode: 1688 pass / same audio failure / two inconclusive. Five added
   actual journey/actor native cases pass after fixing inbound altitude discontinuity.
   Licensing restored through installed Unity Hub. Player/FPS acceptance remains open.
+- Packaged QA driver: fresh soak airline, selected KGC/CPD scheduling, optional
+  accelerated review clock, phase/periodic captures, complete-trip restoration log.
+  See packet flags; accelerated evidence is separate from live-time FPS.
+- Build in progress: own Unity PID 72853, `work/mac-build.log`, shell session
+  10399. It packages the earlier path/actor fixes (`40caaf9d-dirty`), not the
+  subsequently added QA driver or terrain-cell fix. Wait for completion; do not
+  restart it merely because shader/Burst compilation takes time. Then run focused
+  native FlightWorld tests and rebuild current HEAD using the populated cache.
 - NEXT: finish Mac build and the packet's
   SF34 KGC/CPD round-trip, origin/actor/weather checks and comparative frame-time test.
   Candidate branch only; do not mark this ready to merge from source checks alone.

@@ -10,6 +10,21 @@ namespace Airside.Tests
     {
         [TestCase(-1,-1)] [TestCase(0,0)] [TestCase(15999,0)] [TestCase(16000,1)]
         public void TileUsesFloorAcrossBothSides(double metres,int expected) => Assert.That(FlightWorldGrid.Tile(metres),Is.EqualTo(expected));
+        [Test] public void RunwayTerrainCellsStayFlatAcrossTheCoarseMesh()
+        {
+            var stride=FlightWorldGrid.TileMetres/FlightWorldGrid.Cells;
+            foreach(var runway in RegionalRunways.All)
+            for(var i=0;i<=20;i++)
+            {
+                var x=runway.Ax+(runway.Bx-runway.Ax)*i/20;
+                var z=runway.Az+(runway.Bz-runway.Az)*i/20;
+                var cx=Math.Floor(x/stride)*stride;var cz=Math.Floor(z/stride)*stride;
+                for(var dz=0;dz<=1;dz++) for(var dx=0;dx<=1;dx++)
+                    Assert.That(RegionalRunways.Ground(cx+dx*stride,cz+dz*stride,900),
+                        Is.EqualTo(runway.Elevation).Within(.001),runway.Code);
+            }
+        }
+
         [Test] public void ResidentWindowHasFixedUpperBoundAfterLongFlights()
         {
             foreach(var centre in new[]{-100,0,100})

@@ -33,7 +33,7 @@ namespace Airside.Presentation
                 var dx=r.Bx-r.Ax;var dz=r.Bz-r.Az;
                 var t=Math.Clamp(((x-r.Ax)*dx+(z-r.Az)*dz)/(dx*dx+dz*dz),0,1);
                 var distance=Math.Sqrt(Math.Pow(x-r.Ax-t*dx,2)+Math.Pow(z-r.Az-t*dz,2));
-                if(distance<1500){var u=Math.Clamp((distance-200)/1300,0,1);return r.Elevation+(height-r.Elevation)*u*u*(3-2*u);}
+                if(distance<3000){var u=Math.Clamp((distance-1500)/1500,0,1);return r.Elevation+(height-r.Elevation)*u*u*(3-2*u);}
             }
             return height;
         }

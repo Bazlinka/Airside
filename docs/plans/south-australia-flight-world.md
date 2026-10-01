@@ -67,3 +67,20 @@ Required packaged playtest (still open):
    cockpit stall remains unresolved; bounded tile counts do not prove good FPS.
 
 Current evidence and blockers: `docs/testing/sa-flight-world-2026-10-01/RESULTS.md`.
+
+## Packaged review flags
+
+`-airsideSoak -airsideReviewCockpit -airsideReviewJourney KGC`
+(or CPD) schedules the selected destination through normal operations in a fresh
+soak airline. Player saves are not loaded. `-airsideReviewJourneyRate 20` advances
+only this QA clock, without forcing aircraft states; omit it for real-time review.
+`-airsideReviewJourneyOut /absolute/output/folder` saves phase/periodic player
+frames and, after the first completed round trip reaches its stand, restores the
+overview, records origin/actor state, captures that view and quits. Logs record
+real/sim time, state, actual cockpit world coordinates, origin and resident tiles.
+Accelerated captures establish presentation coverage only, never live-time FPS.
+
+Run both packaged journeys with `bash scripts/review-sa-flight.sh KGC 20` and
+`bash scripts/review-sa-flight.sh CPD 20`; inspect frames/logs, not merely the script
+exit status. The default timeout is 30 real minutes. Rate 1 performance runs use
+a separate bounded soak; a real full CPD round trip will exceed this timeout.

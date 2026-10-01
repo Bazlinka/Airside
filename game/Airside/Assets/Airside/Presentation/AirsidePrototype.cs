@@ -580,7 +580,7 @@ namespace Airside.Presentation
             // Live time: once an airline runs, simulation time is read off the real clock.
             // Before that the demo circuit simply runs at 1x.
             _preciseTime = FleetMode
-                ? LivePresentationTime(_operations.Clock.SecondsAt(DateTime.UtcNow))
+                ? FlightJourneyPresentationTime(_operations.Clock.SecondsAt(DateTime.UtcNow))
                 : _preciseTime + Time.unscaledDeltaTime;
 
             var wholeSeconds = (long)Math.Floor(_preciseTime);
@@ -612,6 +612,7 @@ namespace Airside.Presentation
             var soakStageStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             UpdateAircraftVisual();
             UpdateCockpitView();
+            TraceFlightJourneyReview();
             if (SoakMode)
                 _soakFleetTicks += System.Diagnostics.Stopwatch.GetTimestamp() - soakStageStarted;
             if (AirportPresentationVisible)

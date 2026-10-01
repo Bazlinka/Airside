@@ -243,6 +243,13 @@ namespace Airside.Simulation
             }
         }
 
+        /// <summary>The 0..1 <see cref="Visibility"/> that reads back as <paramref name="metres"/> through <see cref="VisibilityMetres"/>.</summary>
+        public static float VisibilityFromMetres(float metres)
+        {
+            var v = (float)(Math.Log(Math.Max(150f, metres) / 150.0) / Math.Log(400.0));
+            return v < 0f ? 0f : v > 1f ? 1f : v;
+        }
+
         /// <summary>
         /// Exponential-squared fog density that fades to 5% at <see cref="VisibilityMetres"/>:
         /// exp(−(d·D)²) = 0.05 gives D = √3 / visibility.

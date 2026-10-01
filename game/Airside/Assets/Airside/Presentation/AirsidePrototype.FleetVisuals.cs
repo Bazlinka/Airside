@@ -829,7 +829,7 @@ namespace Airside.Presentation
             var hits = Physics.RaycastAll(ray, AirsideBareField.MaxOrbitDistance * 2f, mask, QueryTriggerInteraction.Collide);
             if (hits == null || hits.Length == 0)
             {
-                DeselectOnEmptyFieldClick();
+                SelectNearMissOrDeselect(camera, inputSystemPosition);
                 return;
             }
 
@@ -849,11 +849,41 @@ namespace Airside.Presentation
 
             if (id == null || !_fleetAircraftById.TryGetValue(id, out var aircraft))
             {
-                DeselectOnEmptyFieldClick();
+                SelectNearMissOrDeselect(camera, inputSystemPosition);
                 return;
             }
 
             SelectAircraft(aircraft);
+        }
+
+        private readonly List<AircraftScreenPoint> _screenPickPoints = new();
+
+        /// <summary>
+        /// The ray hit no aircraft. If the click landed close to one on screen, that is what the
+        /// player meant; only a click on open ground lets go of the selection.
+        /// </summary>
+        private void SelectNearMissOrDeselect(Camera camera, Vector2 screenPosition)
+        {
+            _screenPickPoints.Clear();
+            foreach (var pair in _fleetViewById)
+            {
+                var view = pair.Value;
+                if (view == null || !view.gameObject.activeInHierarchy)
+                    continue;
+                var screen = camera.WorldToScreenPoint(view.position + Vector3.up * AircraftPickRouting.ProxyCentreYMetres);
+                if (screen.z <= 0f)
+                    continue;
+                _screenPickPoints.Add(new AircraftScreenPoint(pair.Key, screen.x, screen.y));
+            }
+
+            var near = AircraftPickRouting.ResolveNearestOnScreen(_screenPickPoints, screenPosition.x, screenPosition.y);
+            if (near != null && _fleetAircraftById.TryGetValue(near, out var aircraft))
+            {
+                SelectAircraft(aircraft);
+                return;
+            }
+
+            DeselectOnEmptyFieldClick();
         }
 
         /// <summary>
@@ -862,9 +892,14 @@ namespace Airside.Presentation
         /// </summary>
         private void DeselectOnEmptyFieldClick()
         {
-            if (string.IsNullOrEmpty(_selectedAircraftId))
+            // The card also shows whichever aircraft the camera is following, so a click on open
+            // ground has to let go of that too or the card could not be dismissed.
+            var following = _cameraController != null && _cameraController.IsFollowing;
+            if (string.IsNullOrEmpty(_selectedAircraftId) && !following)
                 return;
             _selectedAircraftId = null;
+            if (following)
+                _cameraController.ReleaseFollow();
             PlayUiClick();
         }
     }

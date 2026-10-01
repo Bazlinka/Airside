@@ -1021,6 +1021,20 @@ namespace Airside.Presentation
             var clicked = _hudPainter.Draw(_selectionDrawList);
             if (clicked == null)
                 return;
+            // Close and Follow belong to every card, the player's or an AI's.
+            if (clicked == HudAction.CardClose)
+            {
+                ClearAircraftSelection(releaseFollow: true);
+                PlayUiClick();
+                return;
+            }
+
+            if (clicked == HudAction.CardFollow)
+            {
+                ToggleFollowOf(aircraft);
+                return;
+            }
+
             // ADR 0128: the hold line (and the back chip) select another aircraft — any card, AI too.
             if (FollowHoldLink(aircraft, clicked) || !aircraft.Airline.IsPlayer)
                 return;
@@ -1091,6 +1105,20 @@ namespace Airside.Presentation
             card.LiveryHex = aircraft.Airline.LiveryHex;
             card.RouteLine = SelectionRouteLine(aircraft);
             card.LiveLine = SelectionLiveStats(aircraft);
+            var drawn = _fleetViewById.TryGetValue(aircraft.Registration, out var drawnView)
+                && drawnView != null && drawnView.gameObject.activeSelf;
+            SelectionCardText.SplitReadout(drawn ? card.LiveLine : null,
+                out card.Speed, out card.Altitude, out card.Heading);
+            if (drawn && string.IsNullOrEmpty(card.Altitude) && card.Speed.StartsWith("0 kt", StringComparison.Ordinal))
+            {
+                // Sitting still on the ground: columns of zeroes say nothing, the status sentence does.
+                card.Speed = card.Altitude = card.Heading = string.Empty;
+                card.LiveLine = StatusText(aircraft);
+            }
+
+            card.CanFollow = drawn && _cameraController != null;
+            card.Following = card.CanFollow && _cameraController.IsFollowing && _cameraController.FollowTarget == drawnView;
+            FillSelectionJourney(card, aircraft);
             card.PhaseLabel = AircraftStatus.TagPhase(aircraft, _clock.Now);
             // Why it is waiting (ADR 0124): the chip gets the short form, the live line the sentence.
             var hold = _operations.Why(aircraft);
@@ -1128,6 +1156,54 @@ namespace Airside.Presentation
                     card.Stands.Add(new SelectionStandChoice(stand.Value, StandNames.Short(stand),
                         suggested.HasValue && stand.Equals(suggested.Value)));
             }
+        }
+
+        /// <summary>What happens next and when, with how far through the current leg it is.</summary>
+        private void FillSelectionJourney(SelectionCardData card, FleetAircraft aircraft)
+        {
+            card.JourneyLeft = string.Empty;
+            card.JourneyRight = string.Empty;
+            card.JourneyProgress = -1f;
+            var now = _clock.Now;
+            if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue && !aircraft.Scheduled.Value.Cancelled)
+            {
+                // The turnaround timeline already says how far along the departure is.
+                if (card.Prep.Count > 0 || ShowsDeparturePrep(aircraft))
+                    return;
+                var departs = aircraft.Scheduled.Value.DepartAt;
+                card.JourneyLeft = $"Departs {ClockText(departs)}";
+                card.JourneyRight = SelectionCardText.Remaining(departs.ElapsedSeconds - now.ElapsedSeconds);
+                return;
+            }
+
+            if (!aircraft.StateEndsAt.HasValue)
+                return;
+            var verb = aircraft.State switch
+            {
+                FleetState.Outbound or FleetState.Inbound => "Lands",
+                FleetState.AtDestination => "Departs",
+                FleetState.TaxiOut => "At runway",
+                FleetState.TaxiIn => "On stand",
+                _ => null
+            };
+            if (verb == null)
+                return;
+            var ends = aircraft.StateEndsAt.Value;
+            card.JourneyLeft = $"{verb} {ClockText(ends)}";
+            card.JourneyRight = SelectionCardText.Remaining(ends.ElapsedSeconds - now.ElapsedSeconds);
+            card.JourneyProgress = (float)aircraft.StateProgress(now);
+        }
+
+        /// <summary>Follow this aircraft with the camera, or let the camera go if it already is.</summary>
+        private void ToggleFollowOf(FleetAircraft aircraft)
+        {
+            if (_cameraController == null || !_fleetViewById.TryGetValue(aircraft.Registration, out var view) || view == null)
+                return;
+            if (_cameraController.IsFollowing && _cameraController.FollowTarget == view)
+                _cameraController.ReleaseFollow();
+            else
+                TryFollowFleetAircraft(aircraft.Registration);
+            PlayUiClick();
         }
 
         private string SelectionRouteLine(FleetAircraft aircraft)
@@ -1326,10 +1402,14 @@ namespace Airside.Presentation
             return _playerFleetRows;
         }
 
-        private bool ClearAircraftSelection()
+        private bool ClearAircraftSelection(bool releaseFollow = false)
         {
+            // The card follows the camera's target too, so letting go of an aircraft while the
+            // camera is still on it would leave the card up with no way to dismiss it.
+            if (releaseFollow && _cameraController != null && _cameraController.IsFollowing)
+                _cameraController.ReleaseFollow();
             if (string.IsNullOrEmpty(_selectedAircraftId))
-                return false;
+                return releaseFollow;
             _selectedAircraftId = null;
             _activeWorkspace = HudWorkspace.None;
             _devToolsOpen = false;

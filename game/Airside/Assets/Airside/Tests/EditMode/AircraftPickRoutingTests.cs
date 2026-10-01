@@ -81,5 +81,40 @@ namespace Airside.Tests
             Assert.That(AircraftPickRouting.IndexOfSame(System.Array.Empty<object>(), selected), Is.EqualTo(-1));
             Assert.That(AircraftPickRouting.IndexOfSame(next, null), Is.EqualTo(-1));
         }
+
+        [Test]
+        public void ResolveNearestOnScreen_TakesTheClosestAircraftInsideTheRadius()
+        {
+            var points = new[]
+            {
+                new AircraftScreenPoint("far", 500f, 500f),
+                new AircraftScreenPoint("near", 110f, 100f),
+                new AircraftScreenPoint("nearer", 103f, 100f)
+            };
+            Assert.That(AircraftPickRouting.ResolveNearestOnScreen(points, 100f, 100f), Is.EqualTo("nearer"));
+            Assert.That(AircraftPickRouting.ResolveNearestOnScreen(points, 300f, 300f), Is.Null,
+                "open ground still deselects");
+            Assert.That(AircraftPickRouting.ResolveNearestOnScreen(
+                new[] { new AircraftScreenPoint("edge", 100f + AircraftPickRouting.ScreenPickRadiusPixels + 1f, 100f) },
+                100f, 100f), Is.Null);
+            Assert.That(AircraftPickRouting.ResolveNearestOnScreen(new List<AircraftScreenPoint>(), 0f, 0f), Is.Null);
+        }
+
+        [Test]
+        public void SelectionCardText_WordsCountdownsAndSplitsTheReadout()
+        {
+            Assert.That(SelectionCardText.Remaining(20), Is.EqualTo("under a minute"));
+            Assert.That(SelectionCardText.Remaining(61), Is.EqualTo("2 min"));
+            Assert.That(SelectionCardText.Remaining(12 * 60), Is.EqualTo("12 min"));
+            Assert.That(SelectionCardText.Remaining(65 * 60), Is.EqualTo("1 h 05 min"));
+            Assert.That(SelectionCardText.Remaining(-5), Is.EqualTo("now"));
+
+            SelectionCardText.SplitReadout("142 kt  ·  1,200 ft ▲  ·  HDG 230", out var speed, out var altitude, out var heading);
+            Assert.That((speed, altitude, heading), Is.EqualTo(("142 kt", "1,200 ft ▲", "230°")));
+            SelectionCardText.SplitReadout("12 kt  ·  HDG 045", out speed, out altitude, out heading);
+            Assert.That((speed, altitude, heading), Is.EqualTo(("12 kt", string.Empty, "045°")));
+            SelectionCardText.SplitReadout(null, out speed, out altitude, out heading);
+            Assert.That(speed + altitude + heading, Is.Empty);
+        }
     }
 }

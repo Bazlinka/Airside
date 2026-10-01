@@ -9,7 +9,8 @@ timeout="${AIRSIDE_JOURNEY_TIMEOUT:-1800}"
 perf="${AIRSIDE_JOURNEY_PERF_SECONDS:-0}"
 extra=()
 if [ "$perf" != 0 ]; then extra=(-airsideReviewJourneyPerfSeconds "$perf"); fi
-app="${AIRSIDE_APP:-$root/work/builds/Airside.app}/Contents/MacOS/Airside"
+app="${AIRSIDE_JOURNEY_EXE:-}"
+if [ -z "$app" ]; then app="${AIRSIDE_APP:-$root/work/builds/Airside.app}/Contents/MacOS/Airside"; fi
 if [ ! -x "$app" ]; then echo "Build the Mac player first." >&2; exit 1; fi
 mkdir -p "$out"
 out="$(cd "$out" && pwd)"
@@ -41,7 +42,9 @@ while kill -0 "$pid" 2>/dev/null; do
   fi
   sleep 2
 done
-wait "$pid" || true
+player_status=0
+wait "$pid" || player_status=$?
+echo "Player exit status: $player_status" >&2
 trap - EXIT
 if ! rg -q '\[Airside journey\] COMPLETE round trip; origin 0,0 airport True' "$log"; then
   echo "Journey did not complete with the airport restored. Log: $log" >&2

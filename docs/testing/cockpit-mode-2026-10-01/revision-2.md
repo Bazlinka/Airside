@@ -66,3 +66,9 @@ selection-card redesign. Final integration keeps its Follow/Following toggle,
 close button, telemetry and journey, with Cockpit in a separate bottom row.
 Native Unity regression passed again: 1677 total, 1675 passed, zero failures,
 the same two existing inconclusives.
+
+Final headless regression: 1278 passed, zero failures. Final clean Mac player
+build passed from `a99a0390`, including the selection-card integration, at
+`/private/tmp/airside-cockpit/work/builds/Airside.app`. Build completion proves
+compilation and packaging; a new complete cockpit flight/performance playtest
+is still not claimed.

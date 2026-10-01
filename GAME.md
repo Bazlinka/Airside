@@ -43,7 +43,8 @@
   Final integration also includes main `245e7b53` selection-card redesign. Its
   Follow/Following toggle, close, telemetry and journey remain; Cockpit occupies
   a separate bottom row. Native Unity: 1675 passed/0 failed/2 inconclusive (1677).
-  Clean Mac build passed at `bc20661f` before the selection-card update.
+  Final headless: 1278 passed/0 failed. Final clean Mac build passed at
+  `a99a0390`, including the selection-card integration.
 
 - **2026-10-01 Claude — My Flights tiles, hollow aircraft doorways, A320 door fit (ADR 0206).**
   Each My Flights tile now shows flight number, airframe, route, registration, state, the time to watch

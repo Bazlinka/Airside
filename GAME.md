@@ -18,7 +18,7 @@
   All ten types' ten-angle native sheets inspected (100 stills): no unintended shell
   gaps seen; overhead visibility corrected. Evidence under `docs/testing/jet-cockpits-2026-10-01/native/`.
   Full native: 1,702 passed, one inherited audio failure, two existing inconclusives.
-  Unity asset audit passes. Mac player build is next; packaged
+  Unity asset audit passes. Mac player build passed at dc2041f3; packaged cockpit capture is next; packaged
   journey/night/weather/audio/performance acceptance remains open.
 
 

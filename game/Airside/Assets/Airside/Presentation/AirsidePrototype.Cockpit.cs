@@ -142,6 +142,7 @@ namespace Airside.Presentation
         // Reproducible packaged review: only a real eligible aircraft, never force-start engines.
         private static readonly bool CockpitReview = Array.IndexOf(Environment.GetCommandLineArgs(), "-airsideReviewCockpit") >= 0;
         private static readonly string CockpitReviewType = ReadCockpitReviewType();
+        private static readonly bool CockpitReviewAnyPhase = Array.IndexOf(Environment.GetCommandLineArgs(), "-airsideReviewCockpitAnyPhase") >= 0;
         private static string ReadCockpitReviewType()
         {
             var args = Environment.GetCommandLineArgs();
@@ -159,7 +160,7 @@ namespace Airside.Presentation
                 // Prefer an actual departure so the first still covers engine startup,
                 // rather than jumping into an inbound already at full power.
                 if (CockpitReviewType != null && aircraft.Type.Id != CockpitReviewType) continue;
-                if (aircraft.State is not (FleetState.AtStand or FleetState.TaxiOut)
+                if ((!CockpitReviewAnyPhase && aircraft.State is not (FleetState.AtStand or FleetState.TaxiOut))
                     || !CockpitAvailability.Supported(aircraft.Type) || CockpitReason(aircraft).Length != 0) continue;
                 if (best == null || (aircraft.Airline.IsPlayer && !best.Airline.IsPlayer)
                     || (aircraft.Airline.IsPlayer == best.Airline.IsPlayer

@@ -91,3 +91,5 @@ runway background. They do not establish genuine gameplay journeys or audio.
    `-airsideReviewCockpit -airsideReviewCockpitType B738` (substitute any jet ID).
    It waits for an eligible actual type; does not force-start engines or fake flights.
 6. Record evidence, fix any gaps and merge only after branch review.
+
+Packaged Mac build passed at clean commit `dc2041f3`. The first B738 departure capture completed its six-minute soak without an eligible departure, so no cockpit images were produced. The review helper now offers `-airsideReviewCockpitAnyPhase` to enter an actual eligible running arrival; the default still waits for departure startup. This flag does not modify aircraft or engine state.

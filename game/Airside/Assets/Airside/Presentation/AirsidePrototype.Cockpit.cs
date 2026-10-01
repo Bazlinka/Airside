@@ -137,16 +137,30 @@ namespace Airside.Presentation
         // Reproducible packaged review: only a real eligible SF34, never force-start engines.
         private static readonly bool CockpitReview = Array.IndexOf(Environment.GetCommandLineArgs(), "-airsideReviewCockpit") >= 0;
         private bool _cockpitReviewStarted;
+        private float _cockpitReviewEnteredAt = -1f;
         private void TryStartCockpitReview()
         {
             if (!CockpitReview || _cockpitReviewStarted || !SoakMode || _menuOpen) return;
+            FleetAircraft best = null;
             foreach (var aircraft in _fleetAircraftById.Values)
-                if (aircraft.Airline.IsPlayer && CockpitAvailability.Supported(aircraft.Type) && CockpitReason(aircraft).Length == 0)
-                {
-                    _cockpitReviewStarted = EnterCockpit(aircraft);
-                    if (_cockpitReviewStarted) Debug.Log($"[Airside cockpit] review entered {aircraft.Registration}");
-                    return;
-                }
+            {
+                // Prefer an actual departure so the first still covers engine startup,
+                // rather than jumping into an inbound already at full power.
+                if (aircraft.State is not (FleetState.AtStand or FleetState.TaxiOut)
+                    || !CockpitAvailability.Supported(aircraft.Type) || CockpitReason(aircraft).Length != 0) continue;
+                if (best == null || (aircraft.Airline.IsPlayer && !best.Airline.IsPlayer)
+                    || (aircraft.Airline.IsPlayer == best.Airline.IsPlayer
+                        && string.CompareOrdinal(aircraft.Registration, best.Registration) < 0)) best = aircraft;
+            }
+            if (best == null) return;
+            _cockpitReviewStarted = EnterCockpit(best);
+            if (_cockpitReviewStarted)
+            {
+                _cockpitReviewEnteredAt = Time.unscaledTime;
+                var engines = EngineStartSequence.For(best, _preciseTime);
+                Debug.Log($"[Airside cockpit] review entered {best.Registration} {best.State} "
+                    + $"eng L{engines.Left:0.000}/R{engines.Right:0.000}");
+            }
         }
     }
 }

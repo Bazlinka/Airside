@@ -30,3 +30,10 @@ Reproduce native stills with CockpitAppearanceReview.Run in Unity.
 Run `scripts/review-cockpit.sh` after `scripts/build-mac.sh` for real-time packaged
 SF34 captures. It uses a fresh soak career and leaves the player's save alone.
 The capture aborts if no eligible cockpit is active; it cannot substitute overview evidence.
+
+Initial packaged review at fixed T+220s correctly aborted with no PNG: the player
+SF34 was still cold. The soak's old four-minute comment does not include the
+current prep lead. The review now chooses an eligible SF34 departure (player
+preferred, then registration order) and starts its shot timers at real cockpit
+entry. It does not skip preparation, advance time or force engines. It waits at
+most 600s for entry and still aborts if the actual cockpit is lost before a shot.

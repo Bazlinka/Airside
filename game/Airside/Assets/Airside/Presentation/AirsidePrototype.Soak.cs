@@ -336,6 +336,20 @@ namespace Airside.Presentation
             var dueAt = _soakStartedAt >= 0f
                 ? _soakStartedAt + entry.DelaySeconds
                 : Time.unscaledTime + entry.DelaySeconds;
+            if (CockpitReview)
+            {
+                if (_cockpitReviewEnteredAt < 0f)
+                {
+                    if (_soakStartedAt >= 0f && Time.unscaledTime - _soakStartedAt > 600f)
+                    {
+                        Debug.LogError("[Airside cockpit] review aborted: no eligible departure after 600s (no PNG)");
+                        Application.Quit();
+                    }
+                    return;
+                }
+                // Cockpit shot delays are relative to real eligible entry, not launch.
+                dueAt = _cockpitReviewEnteredAt + entry.DelaySeconds;
+            }
             if (Time.unscaledTime < dueAt)
                 return;
 

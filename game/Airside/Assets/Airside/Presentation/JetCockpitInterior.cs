@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Airside.Domain;
 using Airside.Simulation;
 using UnityEngine;
+using static Airside.Presentation.JetCockpitShellGeometry;
 
 namespace Airside.Presentation
 {
@@ -11,8 +12,8 @@ namespace Airside.Presentation
     public sealed class JetCockpitInterior : CockpitInterior
     {
         public JetCockpitProfile Profile { get; private set; }
-        private Material _panel, _trim, _black, _white, _cyan, _green, _sky, _earth;
-        private readonly Transform[] _horizons = new Transform[2];
+        private Material _panel, _trim, _black, _white, _cyan, _green;
+        private readonly AttitudeDisc[] _horizons = new AttitudeDisc[2];
         private readonly List<(Transform bar, float bottom, bool left)> _engineBars = new();
         private TextMesh _engineReadout;
         private TextMesh _phaseReadout;
@@ -41,8 +42,6 @@ namespace Airside.Presentation
             _white = Surface("markings", new Color(0.82f, 0.85f, 0.82f), false);
             _cyan = Surface("display cyan", new Color(0.12f, 0.70f, 0.83f), false);
             _green = Surface("display green", new Color(0.30f, 0.87f, 0.43f), false);
-            _sky = Surface("attitude sky", new Color(0.12f, 0.33f, 0.53f), false);
-            _earth = Surface("attitude earth", new Color(0.38f, 0.23f, 0.10f), false);
             var lining = Surface("lining", new Color(0.48f, 0.49f, 0.47f));
             var seat = new GameObject("Left pilot eye").transform;
             seat.SetParent(transform, false);
@@ -118,22 +117,36 @@ namespace Airside.Presentation
             Box("Flight deck door", new Vector3(0f, -0.40f, -1.665f), new Vector3(0.56f, 1.90f, 0.035f), _panel);
             foreach (var side in new[] { -1f, 1f })
             {
-                Beam("Side window upper rail", new Vector3(side * w, 0.67f, -0.61f), new Vector3(side * w, 0.67f, 0.72f), 0.07f, lining);
-                Beam("Side window sill", new Vector3(side * w, -0.05f, -0.61f), new Vector3(side * w, -0.05f, 0.72f), 0.07f, _panel);
-                Beam("Forward side window upper rail", new Vector3(side * w, 0.67f, 0.72f), new Vector3(side * w * 0.73f, 0.51f, 1.05f), 0.07f, lining);
-                Beam("Forward side window sill", new Vector3(side * w, -0.05f, 0.72f), new Vector3(side * w * 0.84f, -0.05f, 1.30f), 0.07f, _panel);
-                Beam("Rear window pillar", new Vector3(side * w, -0.05f, -0.61f), new Vector3(side * w, 0.67f, -0.61f), 0.06f, lining);
-                Beam("Front windscreen outer pillar", new Vector3(side * w * 0.84f, -0.05f, 1.30f), new Vector3(side * w * 0.73f, 0.51f, 1.05f), 0.065f, lining);
+                Beam("Side window upper rail", new Vector3(side * w, JetCockpitShellGeometry.SideTopY, -0.61f), new Vector3(side * w, JetCockpitShellGeometry.SideTopY, 0.72f), 0.07f, lining);
+                Beam("Side window sill", new Vector3(side * w, JetCockpitShellGeometry.SillY, -0.61f), new Vector3(side * w, JetCockpitShellGeometry.SillY, 0.72f), 0.07f, _panel);
+                Beam("Forward side window upper rail", new Vector3(side * w, JetCockpitShellGeometry.SideTopY, 0.72f), new Vector3(side * w * 0.73f, FrontTopY, 1.05f), 0.07f, lining);
+                Beam("Forward side window sill", new Vector3(side * w, JetCockpitShellGeometry.SillY, 0.72f), new Vector3(side * w * 0.84f, SillY, 1.30f), 0.07f, _panel);
+                Beam("Rear window pillar", new Vector3(side * w, JetCockpitShellGeometry.SillY, -0.61f), new Vector3(side * w, JetCockpitShellGeometry.SideTopY, -0.61f), 0.06f, lining);
+                Beam("Front windscreen outer pillar", new Vector3(side * w * 0.84f, SillY, 1.30f), new Vector3(side * w * 0.73f, FrontTopY, 1.05f), 0.065f, lining);
                 if (Profile.Deck != JetFlightDeck.Boeing787)
-                    Beam("Side quarterlight pillar", new Vector3(side * w, -0.05f, 0.41f), new Vector3(side * w, 0.67f, 0.41f), 0.045f, lining);
-                Beam("Parked windscreen wiper", new Vector3(side * 0.12f, -0.015f, 1.31f), new Vector3(side * w * 0.64f, 0.005f, 1.28f), 0.013f, _trim);
+                    Beam("Side quarterlight pillar", new Vector3(side * w, JetCockpitShellGeometry.SillY, 0.41f), new Vector3(side * w, JetCockpitShellGeometry.SideTopY, 0.41f), 0.045f, lining);
+                Wiper(new Vector3(side * 0.12f, SillY + 0.035f, 1.31f), new Vector3(side * w * 0.64f, SillY + 0.055f, 1.28f), 0.013f, _trim, side);
             }
-            Beam("Windscreen centre post", new Vector3(0f, -0.05f, 1.30f), new Vector3(0f, 0.51f, 1.05f), 0.047f, lining);
-            Beam("Windscreen brow", new Vector3(-w * 0.73f, 0.51f, 1.05f), new Vector3(w * 0.73f, 0.51f, 1.05f), 0.075f, lining);
+            Beam("Windscreen centre post", new Vector3(0f, SillY, 1.30f), new Vector3(0f, FrontTopY, 1.05f), 0.047f, lining);
+            Beam("Windscreen brow", new Vector3(-w * 0.73f, FrontTopY, 1.05f), new Vector3(w * 0.73f, FrontTopY, 1.05f), 0.075f, lining);
 
         }
 
         private void MakePanel()
+        {
+            var first = transform.childCount;
+            BuildPanel();
+            // Authored with the glareshield 0.0575 below the eye; drop the whole panel so its leading
+            // edge sits at the real over-the-nose angle and the runway stays visible past the nose.
+            var drop = GlareTopY - 0.0325f - (-0.09f);
+            for (var i = first; i < transform.childCount; i++)
+            {
+                var child = transform.GetChild(i);
+                child.localPosition += new Vector3(0f, drop, 0f);
+            }
+        }
+
+        private void BuildPanel()
         {
             var w = Profile.HalfWidth;
             Box("Main instrument panel", new Vector3(0f, -0.51f, 1.13f), new Vector3(w * 1.75f, 0.79f, 0.20f), _panel);
@@ -189,12 +202,7 @@ namespace Airside.Presentation
             Label(title + " title", title, new Vector3(x, y + height * 0.39f, z - 0.01f), 0.0038f, Color.white);
             if (pilot >= 0)
             {
-                var horizon = new GameObject("Live local attitude").transform;
-                horizon.SetParent(transform, false); horizon.localPosition = new Vector3(x, y, z - 0.012f);
-                var sky = Box("Attitude sky", new Vector3(x, y + 0.043f, z - 0.013f), new Vector3(width * 0.48f, 0.086f, 0.002f), _sky);
-                var earth = Box("Attitude ground", new Vector3(x, y - 0.043f, z - 0.013f), new Vector3(width * 0.48f, 0.086f, 0.002f), _earth);
-                sky.SetParent(horizon, true); earth.SetParent(horizon, true);
-                _horizons[pilot] = horizon;
+                _horizons[pilot] = MakeAttitudeDisc("Live local attitude", new Vector3(x, y, z - 0.013f), Mathf.Min(width, height) * 0.36f);
                 Box("Fixed attitude reference", new Vector3(x, y, z - 0.024f), new Vector3(width * 0.22f, 0.005f, 0.002f), _white);
                 for (var tick = -2; tick <= 2; tick++)
                 {
@@ -280,12 +288,13 @@ namespace Airside.Presentation
             }
         }
 
+                public override void SetAttitude(float pitchUpDegrees, float bankLeftDegrees)
+        {
+            foreach (var horizon in _horizons) horizon?.Set(pitchUpDegrees, bankLeftDegrees);
+        }
+
         public void SetFlightState(Transform aircraft, EngineState engines, string phase)
         {
-            // Attitude follows the already-rendered aircraft, not a second flight model.
-            foreach (var horizon in _horizons)
-                if (horizon != null)
-                    horizon.localRotation = Quaternion.Euler(0f, 0f, -Mathf.DeltaAngle(0f, aircraft.eulerAngles.z));
             foreach (var (bar, height, left) in _engineBars)
             {
                 var fill = Mathf.Clamp01(left ? engines.Left : engines.Right);

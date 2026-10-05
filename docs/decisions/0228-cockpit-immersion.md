@@ -24,3 +24,11 @@ belongs to the current interior and is destroyed at rebind/exit/teardown.
 Add arrow/+−/Home navigation, eased head turns and a saved vibration preference.
 One optional PlayerPrefs key defaults on; airline-save schema is unchanged.
 No external asset or claim of recorded interior fidelity is introduced.
+
+## Observer sky and fog at cloud breakout
+
+Unify cockpit sky colour, fog and celestial occlusion using a cover-aware cloud-top
+transition. Ground/deck weather remains unchanged; a clear sky has no artificial
+altitude-triggered breakout. This corrects the first pass's mismatch where the
+background became clear but storm fog and hidden celestial bodies persisted.
+Included with #521 after GitHub access recovery. No data migration.

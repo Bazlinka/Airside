@@ -1,9 +1,26 @@
 ## Unreleased
 
+- Cloud-breakout correction: cockpit fog and sun/moon/star visibility clear with
+  the sky above dense cloud; exterior and ground/deck weather stay consistent.
+
 - Cockpit sound/control refinement: suppress airport ambience/PA inside, add
   original quiet speed-dependent airflow, remove own-aircraft Doppler, ease
   seat turns, support arrows/+−/Home and save the vibration preference.
   Native listening/input acceptance remains open.
+
+- **Cockpit touchdown detail:** ground-spoiler thump, an occasional skip on firm landings, and
+  reverse-thrust/beta vibration while braking (ADR 0228, presentation only).
+
+- **Cockpit flight feel for takeoff, approach and landing.** Jets now rotate and climb at their own
+  attitudes (about 15 degrees for narrowbodies instead of the ATR's 7.5) and flare to about 5;
+  the pilot's head and body feel runway thumps that grow with speed, engine vibration, unstick,
+  a touchdown jolt that varies from smooth to firm with a nose-wheel slam, gear thumps, bumpier
+  low-level air, thrust and braking lean, and the gaze leading into turns. Jet and ATR/Dash
+  flight displays show live pitch as well as bank, and the readout adds vertical speed
+  (ADR 0228, presentation only; native review pending). Also: crew callouts (80 knots, V1, rotate,
+  positive rate, 1,000/500/50-10 ft, retard, spoilers, reverse green), a warm panel glow at night,
+  rain-driven windscreen wipers, and a live attitude display on the Saab 340. Cockpit look: arrow keys
+  and 1-5 glances (forward, left window, right window, panel, overhead) ease the head smoothly.
 
 - Cockpit immersion (PR #517, merge authorised): eased wider zoom, five seat view shortcuts,
   optional engine/rolling/cloud vibration, destination/distance/vertical-speed
@@ -19,6 +36,14 @@
   less per flight than a turboprop (13 seats), preps faster, is checked on the pad and cannot be based at an outstation.
   Sound: a synthesised rotor loop (22 Hz blade slap, tail-rotor buzz, turbine whine) that carries over the field and
   changes pitch as the rotor spools. Details and limits in ADR 0227.
+
+- **Cockpit window views fitted to real aircraft.** Jet decks now give about 16 degrees of
+  over-the-nose view (the glareshield used to hide everything below 4 degrees, so the runway
+  ahead was blocked), with lower sills and taller windscreens; ATR 42 / Dash 8 panels sit lower
+  with a more level default gaze. Out of the windows the wings now keep their flaps, ailerons,
+  spoilers and winglets, and engines keep fans, intakes, pylons and exhausts. Presentation only
+  (ADR 0229). Headless checks 30/30; native render review still to do.
+
 - Stream a bounded South Australia terrain window for SF34 regional cockpit journeys, with real Copernicus elevation, mapped regional strips and a moving render origin (ADR 0215; native path checks and Kingscote landing verified; long-trip performance remains open). Ease inbound cruise height onto the local approach and hide airport actors around a distant render origin. Keep the coarse terrain cells around each mapped strip at runway elevation; regional poses omit local departure bank commands. Add a fresh-airline packaged journey review driver with required phase captures and stall diagnostics.
 
 - **Arrivals no longer bunch up nose to tail on final.** An inbound's drawn position on the

@@ -1,3 +1,17 @@
+## GitHub recovery and authorised cockpit integration — 5 October 2026
+
+Access restored. Bailey's authorised PR #521 merge is being integrated with main
+`84b30159`, preserving window glances, CockpitMotion/touchdown effects, callouts,
+live attitude, panel lighting and wipers alongside airflow/PA isolation, own-aircraft
+Doppler removal, keyboard zoom/Home, inverted drag and saved vibration preference.
+Keep the newer vertical-speed telemetry and shared glance table. Full integration
+checkpoint: 1,474/1,474; final combined focused: 102/102. Evidence:
+`docs/testing/cockpit-recovery-2026-10-05/README.md`. Native Unity
+remains unavailable; earlier headless evidence does not substitute for native
+visual/audio/performance acceptance. Cloud-breakout correction `a9c21462` is also included in this combined PR #521
+merge under Bailey’s 5 October instruction to merge all. It aligns fog, sky colour
+and celestial visibility above the deck. The original branch is now pushed.
+
 ## Where to resume — cockpit sound and controls follow-up
 
 - **2026-10-01 Codex — `feature/cockpit-sound-and-controls`, ADR 0228.**
@@ -49,6 +63,13 @@ merge authorisation does not turn those into passing checks. Jet ADR is now 0225
 
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
 
+- **2026-10-01 Claude — cockpit flight feel (`feature/cockpit-window-view`, ADR 0228).**
+  Per-type pitch (`AircraftAttitude`), head/body motion (`CockpitMotion`, fed from
+  `UpdateCockpitView`, applied by `SetCockpitMotion`), live pitch/bank ADI on jets and ATR/Dash.
+  Headless: motion/attitude/jet-cockpit checks pass. No Unity editor here, so **NEXT:** compile in
+  Unity, run native review of takeoff roll, rotation, climb, descent, flare and touchdown for a jet
+  and a turboprop; tune amplitudes if too strong/weak; Saab live ADI; crosswind crab needs a wind model.
+
 - **2026-10-01 Claude — helicopter operations (branch `feature/helicopter-operations`, ADR 0227).**
   - **Player-visible outcome:** the SA Ambulance Bell 412 (VH-SAR) flies rescue call-outs from Helipad West to
     Adelaide hospitals (first one within ~8 min of a new game) with a spinning rotor and a rotor sound; the player can
@@ -62,6 +83,14 @@ merge authorisation does not turn those into passing checks. Jet ADR is now 0225
     simulation tests but not yet in a packaged run; no hospital-end ground handling or medevac contract exists.
   - **NEXT:** open the PR, wait for CI, merge when green. Backlog: civil medevac contracts, rotor-wash/dust on the pad,
     a helicopter cockpit, AW139 (SA's 2027 replacement) and a light single (both need authored models).
+
+- **2026-10-01 Claude — cockpit window view fit (`feature/cockpit-window-view`, ADR 0229).** Jets: glareshield
+  cut raised from ~4 to ~16 degrees over the nose, sills/windscreen heights shared as
+  `JetCockpitShellGeometry` constants. ATR/Dash: panel dropped 6 cm, gaze 8-9 degrees.
+  Cockpit keep-list now includes flaps/ailerons/spoilers/fans/intakes/pylons/exhausts/nav lights
+  (`CockpitExteriorVisibility`). Headless jet-cockpit filter 30/30; no Unity editor available,
+  so **NEXT:** native cockpit review sheets for all 13 types (check panel readability after the
+  drop, no lining strip below windscreens, wing/engine through side windows) and Mac build.
 
 - **2026-10-01 Cursor — arrivals bunched on final (`main`).** Bailey saw three
   arrivals flying nose to tail over the coast. `ExpectedLandingQueueTime` gave an

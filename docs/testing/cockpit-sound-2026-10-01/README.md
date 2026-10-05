@@ -21,3 +21,7 @@ Use the continued-work acceptance packet in `docs/plans/cockpit-immersion.md`.
 Verify no terminal PA/airport bed in cockpit; enter during a playing chime and
 repeat entry/mute/unmute/rebind/exit. Keep engine voices audible over the new bed
 through taxi/takeoff/cruise/landing/reverse. Check exterior sound resumes normally.
+
+GitHub access restored on 5 October. Both follow-ups are included in the
+authorised combined PR #521 integration. Updated evidence and remaining native
+acceptance limits: `docs/testing/cockpit-recovery-2026-10-05/README.md`.

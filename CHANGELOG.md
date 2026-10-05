@@ -1,5 +1,13 @@
 ## Unreleased
 
+- Cloud-breakout correction: cockpit fog and sun/moon/star visibility clear with
+  the sky above dense cloud; exterior and ground/deck weather stay consistent.
+
+- Cockpit sound/control refinement: suppress airport ambience/PA inside, add
+  original quiet speed-dependent airflow, remove own-aircraft Doppler, ease
+  seat turns, support arrows/+−/Home and save the vibration preference.
+  Native listening/input acceptance remains open.
+
 - **Cockpit touchdown detail:** ground-spoiler thump, an occasional skip on firm landings, and
   reverse-thrust/beta vibration while braking (ADR 0228, presentation only).
 
@@ -14,7 +22,7 @@
   rain-driven windscreen wipers, and a live attitude display on the Saab 340. Cockpit look: arrow keys
   and 1-5 glances (forward, left window, right window, panel, overhead) ease the head smoothly.
 
-- Cockpit immersion candidate: eased wider zoom, five seat view shortcuts,
+- Cockpit immersion (PR #517, merge authorised): eased wider zoom, five seat view shortcuts,
   optional engine/rolling/cloud vibration, destination/distance/vertical-speed
   HUD, cloud-deck fog and rain/sky transitions above the deck. Select interior
   sound filtering by watched aircraft. Native visual/audio acceptance pending.

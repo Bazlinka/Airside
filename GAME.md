@@ -1,19 +1,36 @@
-## Where to resume — cockpit immersion candidate
+## GitHub recovery and authorised cockpit integration — 5 October 2026
 
-- **2026-10-01 Codex — `feature/cockpit-immersion`, ADR 0228.** Bailey requested
-  improved in-flight cockpit immersion. Eased 35–85° FOV, 1–5 view shortcuts,
-  optional restrained angular vibration driven by engines/rolling/clouds;
-  destination, distance from Adelaide and rendered vertical speed in the HUD.
-  Stylised 900–1600 m cloud-deck entry/exit fog, rain fade and clear sky above.
-  Interior sound filtering now selects the watched registration. Existing engine,
-  reverse, wheel and contact sounds reused; no recorded cockpit-audio claim.
-  **NEXT:** native Unity compile/EditMode and packaged all-type cockpit input,
-  zoom/window, cloud/storm journey, listening and performance acceptance before
-  merging. Linux has no Mac Unity editor. Seven pure envelope tests and full headless suite (1,424/1,424) pass.
-  Draft PR #517: https://github.com/Bazlinka/Airside/pull/517.
-  Evidence: `docs/testing/cockpit-immersion-2026-10-01/README.md`.
+Access restored. Bailey's authorised PR #521 merge is being integrated with main
+`84b30159`, preserving window glances, CockpitMotion/touchdown effects, callouts,
+live attitude, panel lighting and wipers alongside airflow/PA isolation, own-aircraft
+Doppler removal, keyboard zoom/Home, inverted drag and saved vibration preference.
+Keep the newer vertical-speed telemetry and shared glance table. Full integration
+checkpoint: 1,474/1,474; final combined focused: 102/102. Evidence:
+`docs/testing/cockpit-recovery-2026-10-05/README.md`. Native Unity
+remains unavailable; earlier headless evidence does not substitute for native
+visual/audio/performance acceptance. Cloud-breakout correction `a9c21462` is also included in this combined PR #521
+merge under Bailey’s 5 October instruction to merge all. It aligns fog, sky colour
+and celestial visibility above the deck. The original branch is now pushed.
+
+## Where to resume — cockpit sound and controls follow-up
+
+- **2026-10-01 Codex — `feature/cockpit-sound-and-controls`, ADR 0228.**
+  Bailey authorised committing/merging cockpit immersion and continuing.
+  PR #517 merged to main at `dd9c6730`; its native checks remain outstanding,
+  not retrospectively passed. This follow-up suppresses non-spatial airport bed/PA
+  while in cockpit, adds a quiet original filtered-noise airflow bed driven by
+  rendered ground speed, and removes own-aircraft Doppler. Airflow lives only
+  with the active interior; mute, rebind, exit and teardown stop/release it.
+  Arrow keys look; +/− zoom; Home recenters. Seat turns ease and drag obeys invert.
+  Vibration preference now survives relaunch in PlayerPrefs (no save schema change).
+  **NEXT:** native Unity compilation/EditMode and packaged input/audio/performance
+  review. The worker has no Mac Unity editor. Plan/evidence:
+  `docs/plans/cockpit-immersion.md`, `docs/testing/cockpit-immersion-2026-10-01/`.
+  Follow-up focused checks: 16/16; full headless: 1,426/1,426.
+  Evidence: `docs/testing/cockpit-sound-2026-10-01/README.md`.
+  Prior main: seven cloud tests and full 1,424-test headless pass; CI green.
   Existing asset audit issues: Resources directory missing metadata; three empty
-  Animation folders have orphan metadata. No new asset audit issue identified.
+  Animation folders have orphan metadata.
 
 ## South Australia flight world — authorised merge, 2026-10-01
 

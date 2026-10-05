@@ -48,17 +48,26 @@ namespace Airside.Presentation
             }
 
             var open = _operations == null || !AirportCurfew.IsClosed(_clock.Now, _operations.Clock);
-            var target = _audioMuted || AirsideFocusMode.BareWorld ? 0f : ApronBedVolume * (open ? 1f : 0.35f) * AmbientDuck;
+            var target = _audioMuted || InCockpit || AirsideFocusMode.BareWorld ? 0f : ApronBedVolume * (open ? 1f : 0.35f) * AmbientDuck;
             _apronAudio.volume = Mathf.MoveTowards(_apronAudio.volume, target, Time.unscaledDeltaTime * 0.05f);
             if (target > 0f && !_apronAudio.isPlaying && CanStartAudio(_apronAudio))
                 _apronAudio.Play();
+
+            // The cockpit cannot hear a non-spatial terminal loudspeaker or apron bed.
+            if (InCockpit)
+            {
+                _apronAudio.Stop();
+                _apronAudio.volume = 0f;
+                if (_paAudio.isPlaying) _paAudio.Stop();
+            }
+            UpdateCockpitAirflow();
 
             // The terminal chime: every four to eight minutes while the airport is open.
             var now = Time.unscaledTime;
             if (now >= _nextPaChimeAt)
             {
                 _nextPaChimeAt = now + PaChimeMinSeconds + Mathf.PerlinNoise(now * 0.01f, 3.3f) * PaChimeSpreadSeconds;
-                if (open && !_audioMuted && !AirsideFocusMode.BareWorld && _paAudio != null)
+                if (open && !_audioMuted && !InCockpit && !AirsideFocusMode.BareWorld && _paAudio != null)
                 {
                     if (_paChimeClip == null)
                     {

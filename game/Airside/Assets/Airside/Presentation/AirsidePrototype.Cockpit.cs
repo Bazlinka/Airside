@@ -28,7 +28,6 @@ namespace Airside.Presentation
             return hash;
         }
         private double _cockpitNextReadout;
-        private float _cockpitVerticalFeet;
         private bool InCockpit => !string.IsNullOrEmpty(_cockpitAircraftId);
 
         private string CockpitReason(FleetAircraft aircraft)
@@ -62,6 +61,7 @@ namespace Airside.Presentation
 
         private void BindCockpitView(Transform view)
         {
+            ReleaseCockpitAirflow();
             if (_cockpitInterior != null)
             {
                 _cockpitInterior.Leave();
@@ -77,7 +77,7 @@ namespace Airside.Presentation
             _cockpitInterior.Enter();
             _cockpitPreviousPosition = view.position;
             _cockpitPreviousTime = _preciseTime;
-            _cockpitGroundKnots = _cockpitVerticalFeet = 0f;
+            _cockpitGroundKnots = 0f;
             _cockpitNextReadout = 0;
             _cockpitMotion.Reset(StableHash(_cockpitAircraftId));
             _cockpitCallouts.Reset();
@@ -91,6 +91,7 @@ namespace Airside.Presentation
         {
             if (!InCockpit) return;
             var id = _cockpitAircraftId;
+            ReleaseCockpitAirflow();
             _cockpitAircraftId = null;
             if (_cockpitInterior != null)
             {
@@ -141,8 +142,6 @@ namespace Airside.Presentation
             if (elapsed > 0 && elapsed < 0.75)
             {
                 var delta = view.position - _cockpitPreviousPosition;
-                _cockpitVerticalFeet = Mathf.Lerp(_cockpitVerticalFeet, delta.y / (float)elapsed * 196.8504f,
-                    1f - Mathf.Exp(-3f * (float)elapsed));
                 delta.y = 0f;
                 var speed = CircuitProfile.ToKnots(delta.magnitude / (float)elapsed);
                 _cockpitGroundKnots = Mathf.Lerp(_cockpitGroundKnots, speed, 1f - Mathf.Exp(-6f * (float)elapsed));
@@ -202,7 +201,7 @@ namespace Airside.Presentation
             var fromAdelaideKm = Math.Sqrt(worldX * worldX + worldZ * worldZ) / 1000.0;
             if (_fleetAircraftById.TryGetValue(_cockpitAircraftId, out var aircraft))
                 GUI.Label(new Rect(strip.x + 12f, strip.y + 8f, strip.width - 270f, 96f),
-                    $"{aircraft.Registration} · {AircraftStatus.TagPhase(aircraft, _clock.Now)}\n{aircraft.CurrentDestination?.Code ?? "Local flight"} · GS {_cockpitGroundKnots:0} kt · V/S {_cockpitVerticalSpeed * 196.85f:+0;-0;0} ft/min\n{fromAdelaideKm:0.0} km from Adelaide · Drag/arrows look · scroll zoom\n1 forward · 2 left · 3 panel · 4 right · 5 overhead");
+                    $"{aircraft.Registration} · {AircraftStatus.TagPhase(aircraft, _clock.Now)}\n{aircraft.CurrentDestination?.Code ?? "Local flight"} · GS {_cockpitGroundKnots:0} kt · V/S {_cockpitVerticalSpeed * 196.85f:+0;-0;0} ft/min\n{fromAdelaideKm:0.0} km from Adelaide · Drag/arrows look · scroll/+− zoom\n1 forward · 2 left · 3 panel · 4 right · 5 overhead");
             if (GUI.Button(new Rect(strip.xMax - 246f, strip.y + 10f, 112f, 36f), "Recenter", button))
                 _cameraController.RecenterCockpit();
             if (GUI.Button(new Rect(strip.xMax - 124f, strip.y + 10f, 112f, 36f), "Exit (Esc)", button))
@@ -219,9 +218,14 @@ namespace Airside.Presentation
                 _calloutStyle.normal.textColor = new Color(0.92f, 0.96f, 0.9f, fade);
                 GUI.Label(area, _cockpitCallText, _calloutStyle);
             }
-            _cameraController.CockpitMotionEnabled = GUI.Toggle(
+            var motion = GUI.Toggle(
                 new Rect(strip.xMax - 246f, strip.y + 54f, 234f, 24f),
                 _cameraController.CockpitMotionEnabled, "Cockpit vibration");
+            if (motion != _cameraController.CockpitMotionEnabled)
+            {
+                _cameraController.CockpitMotionEnabled = motion;
+                AirsideSettings.Current.Save();
+            }
             var placement = AirlineHudLayout.Create(layout, false);
             DrawToast(placement.Toast);
         }

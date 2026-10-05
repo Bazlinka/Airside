@@ -8,9 +8,14 @@ namespace Airside.Presentation
         private Transform _cockpitSeat;
         private bool _cockpitActive;
         private float _cockpitYaw, _cockpitPitch;
+        private float _cockpitShownYaw, _cockpitShownPitch;
         private float _cockpitTargetFov = 65f;
         private float _cockpitRumble;
-        public bool CockpitMotionEnabled { get; set; } = true;
+        public bool CockpitMotionEnabled
+        {
+            get => AirsideSettings.Current.CockpitMotion;
+            set => AirsideSettings.Current.CockpitMotion = value;
+        }
         public void SetCockpitRumble(float strength) => _cockpitRumble = Mathf.Clamp01(strength);
         private float _savedNear, _savedFar, _savedFov;
         private bool _cockpitRightDrag;
@@ -23,8 +28,8 @@ namespace Airside.Presentation
             ? _cockpitSeat.position + _cockpitSeat.rotation * (CockpitMotionEnabled ? _cockpitMotionOffset : Vector3.zero) : transform.position;
         public Quaternion CockpitRotation => _cockpitSeat != null
             ? _cockpitSeat.rotation * Quaternion.Euler(
-                _cockpitPitch + (CockpitMotionEnabled ? _cockpitMotionEuler.x : 0f),
-                _cockpitYaw + (CockpitMotionEnabled ? _cockpitMotionEuler.y : 0f),
+                _cockpitShownPitch + (CockpitMotionEnabled ? _cockpitMotionEuler.x : 0f),
+                _cockpitShownYaw + (CockpitMotionEnabled ? _cockpitMotionEuler.y : 0f),
                 CockpitMotionEnabled ? _cockpitMotionEuler.z : 0f) : transform.rotation;
 
         public void SetCockpitMotion(Vector3 offset, Vector3 euler)
@@ -57,7 +62,7 @@ namespace Airside.Presentation
 
         public void RecenterCockpit()
         {
-            _cockpitYaw = _cockpitPitch = 0f;
+            _cockpitShownYaw = _cockpitShownPitch = _cockpitYaw = _cockpitPitch = 0f;
             _cockpitTargetFov = 65f;
             _cockpitPreset = -1;
         }
@@ -91,9 +96,16 @@ namespace Airside.Presentation
                 if (!mouse.rightButton.isPressed) _cockpitRightDrag = false;
                 if (_cockpitRightDrag)
                 {
+                    if (_cockpitPreset >= 0)
+                    {
+                        _cockpitYaw = _cockpitShownYaw;
+                        _cockpitPitch = _cockpitShownPitch;
+                        _cockpitPreset = -1;
+                    }
                     var delta = mouse.delta.ReadValue();
+                    var pitchSign = AirsideSettings.Current.InvertOrbit ? 1f : -1f;
                     _cockpitYaw = Mathf.Clamp(_cockpitYaw + delta.x * 0.15f, -95f, 95f);
-                    _cockpitPitch = Mathf.Clamp(_cockpitPitch - delta.y * 0.15f, -35f, 45f);
+                    _cockpitPitch = Mathf.Clamp(_cockpitPitch + delta.y * 0.15f * pitchSign, -35f, 45f);
                 }
                 if (!overHud)
                     _cockpitTargetFov = Mathf.Clamp(_cockpitTargetFov - mouse.scroll.ReadValue().y * 0.025f, 35f, 85f);
@@ -106,25 +118,42 @@ namespace Airside.Presentation
                 _glanceKeys[0] = keyboard.digit1Key; _glanceKeys[1] = keyboard.digit2Key; _glanceKeys[2] = keyboard.digit3Key;
                 _glanceKeys[3] = keyboard.digit4Key; _glanceKeys[4] = keyboard.digit5Key;
                 var keys = _glanceKeys;
+                var dt = Mathf.Min(Time.unscaledDeltaTime, 0.1f);
+                if (keyboard.homeKey.wasPressedThisFrame) RecenterCockpit();
+                if (keyboard.equalsKey.isPressed) _cockpitTargetFov -= 24f * dt;
+                if (keyboard.minusKey.isPressed) _cockpitTargetFov += 24f * dt;
+                _cockpitTargetFov = Mathf.Clamp(_cockpitTargetFov, 35f, 85f);
                 for (var i = 0; i < keys.Length; i++)
-                    if (keys[i].wasPressedThisFrame) _cockpitPreset = i;
+                    if (keys[i].wasPressedThisFrame)
+                    {
+                        _cockpitPreset = i;
+                        if (i == 0) _cockpitTargetFov = 65f;
+                    }
                 var yawInput = (keyboard.rightArrowKey.isPressed ? 1f : 0f) - (keyboard.leftArrowKey.isPressed ? 1f : 0f);
                 var pitchInput = (keyboard.downArrowKey.isPressed ? 1f : 0f) - (keyboard.upArrowKey.isPressed ? 1f : 0f);
                 if (yawInput != 0f || pitchInput != 0f)
                 {
+                    if (_cockpitPreset >= 0)
+                    {
+                        _cockpitYaw = _cockpitShownYaw;
+                        _cockpitPitch = _cockpitShownPitch;
+                    }
                     _cockpitPreset = -1;
-                    _cockpitYaw = Mathf.Clamp(_cockpitYaw + yawInput * 90f * Time.unscaledDeltaTime,
+                    _cockpitYaw = Mathf.Clamp(_cockpitYaw + yawInput * 90f * AirsideSettings.Current.CameraSpeed * dt,
                         -CockpitLookPresets.MaxYaw, CockpitLookPresets.MaxYaw);
-                    _cockpitPitch = Mathf.Clamp(_cockpitPitch + pitchInput * 60f * Time.unscaledDeltaTime,
+                    _cockpitPitch = Mathf.Clamp(_cockpitPitch + pitchInput * 60f * AirsideSettings.Current.CameraSpeed * dt,
                         CockpitLookPresets.MinPitch, CockpitLookPresets.MaxPitch);
                 }
             }
             if (_cockpitPreset >= 0)
             {
                 var glance = CockpitLookPresets.All[_cockpitPreset];
-                _cockpitYaw = CockpitLookPresets.Ease(_cockpitYaw, glance.Yaw, 7f, Time.unscaledDeltaTime);
-                _cockpitPitch = CockpitLookPresets.Ease(_cockpitPitch, glance.Pitch, 7f, Time.unscaledDeltaTime);
+                _cockpitYaw = glance.Yaw;
+                _cockpitPitch = glance.Pitch;
             }
+            var turnEase = 1f - Mathf.Exp(-(_cockpitPreset >= 0 ? 7f : 16f) * Time.unscaledDeltaTime);
+            _cockpitShownYaw = Mathf.Lerp(_cockpitShownYaw, _cockpitYaw, turnEase);
+            _cockpitShownPitch = Mathf.Lerp(_cockpitShownPitch, _cockpitPitch, turnEase);
             _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, _cockpitTargetFov,
                 1f - Mathf.Exp(-12f * Time.unscaledDeltaTime));
             ApplyCockpitPose();

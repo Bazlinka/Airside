@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="e3e887ba-1bd4-4039-bf3e-8f179946ed5b" name="@0906f725c016 2026-10-01 08:33:32" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-01T08:33:32.2025462+00:00" queuing="2026-10-01T08:33:32.2025463+00:00" start="2026-10-01T08:33:30.9610181+00:00" finish="2026-10-01T08:33:32.2422454+00:00" />
+  <TestSettings name="default" id="29b35d39-0098-475b-a53a-bca8b57436fd">
+    <Deployment runDeploymentRoot="_0906f725c016_2026-10-01_08_33_32" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="bb86eb15-9ab6-4231-8f6d-4e55753b1165" testId="46f86633-ee7f-394f-4f79-b003c7375946" testName="ClearWeatherHasNoArtificialCloudBreakout" computerName="0906f725c016" duration="00:00:00.0001090" startTime="2026-10-01T08:33:32.0989629+00:00" endTime="2026-10-01T08:33:32.0990718+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bb86eb15-9ab6-4231-8f6d-4e55753b1165" />
+    <UnitTestResult executionId="d44b6213-8b08-40df-bf03-2537ff80473a" testId="e21eb35f-d84b-fe7b-00c5-712f89ae4fbb" testName="BrokenCloudRetainsSomeSkyOcclusionAboveTheDeck" computerName="0906f725c016" duration="00:00:00.0003560" startTime="2026-10-01T08:33:32.0983909+00:00" endTime="2026-10-01T08:33:32.0987471+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d44b6213-8b08-40df-bf03-2537ff80473a" />
+    <UnitTestResult executionId="51ce4c55-2b73-475f-8cd5-82f69f3204f4" testId="ffaba44a-8ab1-69a7-a546-a0358953fb94" testName="TheSkyCarriesTheWeather" computerName="0906f725c016" duration="00:00:00.0004860" startTime="2026-10-01T08:33:32.0956646+00:00" endTime="2026-10-01T08:33:32.0961504+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="51ce4c55-2b73-475f-8cd5-82f69f3204f4" />
+    <UnitTestResult executionId="7d8f00b5-d9ed-497f-aa5b-f5d311412de8" testId="03345a29-1bf6-fb22-1082-aa0586cada3d" testName="Layers_FollowTheWeather" computerName="0906f725c016" duration="00:00:00.0008780" startTime="2026-10-01T08:33:32.0936577+00:00" endTime="2026-10-01T08:33:32.0945357+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7d8f00b5-d9ed-497f-aa5b-f5d311412de8" />
+    <UnitTestResult executionId="dde8c913-6b6d-4ad0-8ed6-5f82cb72813c" testId="8d22bbc5-924f-15c4-a5ed-c33e4ae715c5" testName="RainStopsAboveDeck" computerName="0906f725c016" duration="00:00:00.0005190" startTime="2026-10-01T08:33:32.0996284+00:00" endTime="2026-10-01T08:33:32.1001474+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dde8c913-6b6d-4ad0-8ed6-5f82cb72813c" />
+    <UnitTestResult executionId="ce99d427-5c78-44c3-9725-da342fa53b97" testId="432032e0-90e1-b1a2-94bf-f0e41d24dd3d" testName="StormSkyAndVisibilityClearTogetherAboveClouds" computerName="0906f725c016" duration="00:00:00.0007120" startTime="2026-10-01T08:33:32.1001778+00:00" endTime="2026-10-01T08:33:32.1008893+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ce99d427-5c78-44c3-9725-da342fa53b97" />
+    <UnitTestResult executionId="669db5fe-b19e-4a90-a257-a0e56fac75e2" testId="89a59a57-a928-91bf-cd63-f95721b6ead7" testName="OutsideDeckHasNoCloudFog(0.0f)" computerName="0906f725c016" duration="00:00:00.0000810" startTime="2026-10-01T08:33:32.0992156+00:00" endTime="2026-10-01T08:33:32.0992962+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="669db5fe-b19e-4a90-a257-a0e56fac75e2" />
+    <UnitTestResult executionId="e2134a8f-bcee-4c9a-827d-8c225d81b5cc" testId="540ed42d-e621-64e9-fe76-8db672dd73b8" testName="ClimbingThroughCloudHeightDoesNotClearTheEntireOvercastDeck" computerName="0906f725c016" duration="00:00:00.0085040" startTime="2026-10-01T08:33:32.0807087+00:00" endTime="2026-10-01T08:33:32.0891666+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e2134a8f-bcee-4c9a-827d-8c225d81b5cc" />
+    <UnitTestResult executionId="8562bdba-b6d9-4691-8074-05d193d70158" testId="b3d7a612-62bb-7aae-9c50-f159599c1bef" testName="ClearSkyHasNoCloudFog" computerName="0906f725c016" duration="00:00:00.0001740" startTime="2026-10-01T08:33:32.0987695+00:00" endTime="2026-10-01T08:33:32.0989432+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8562bdba-b6d9-4691-8074-05d193d70158" />
+    <UnitTestResult executionId="c324424e-cc76-4e61-8f4d-d56d77efd588" testId="9aafb064-d161-7aa7-b3f1-40616ff04d3d" testName="OutsideDeckHasNoCloudFog(4000.0f)" computerName="0906f725c016" duration="00:00:00.0000060" startTime="2026-10-01T08:33:32.0995753+00:00" endTime="2026-10-01T08:33:32.0995817+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c324424e-cc76-4e61-8f4d-d56d77efd588" />
+    <UnitTestResult executionId="24ed59ab-5665-4a2c-9bba-c2e3b96b6edc" testId="1a29147a-e3ff-5c6a-be93-fd00b96c60b1" testName="OutsideDeckHasNoCloudFog(800.0f)" computerName="0906f725c016" duration="00:00:00.0002210" startTime="2026-10-01T08:33:32.0993121+00:00" endTime="2026-10-01T08:33:32.0995325+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="24ed59ab-5665-4a2c-9bba-c2e3b96b6edc" />
+    <UnitTestResult executionId="fa2f76da-ebb0-4114-92db-d72dd444fb10" testId="105e5df9-2db7-ad0c-8b08-65d1871adbd6" testName="TheFogMatchesTheSky" computerName="0906f725c016" duration="00:00:00.0005280" startTime="2026-10-01T08:33:32.0945604+00:00" endTime="2026-10-01T08:33:32.0950877+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fa2f76da-ebb0-4114-92db-d72dd444fb10" />
+    <UnitTestResult executionId="65d078fd-7a10-47af-ba59-d3f99fac4f7b" testId="b71254e2-c0a2-21dc-02be-d953de07d50c" testName="FogDensity_FollowsVisibility_AndEasesForAHighCamera" computerName="0906f725c016" duration="00:00:00.0026080" startTime="2026-10-01T08:33:32.0910171+00:00" endTime="2026-10-01T08:33:32.0936254+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="65d078fd-7a10-47af-ba59-d3f99fac4f7b" />
+    <UnitTestResult executionId="579ea192-e150-4143-883f-014763ad8627" testId="0ff4f09e-05fb-c570-bfaf-4f57d1a638d5" testName="OutsideDeckHasNoCloudFog(1600.0f)" computerName="0906f725c016" duration="00:00:00.0000120" startTime="2026-10-01T08:33:32.0995535+00:00" endTime="2026-10-01T08:33:32.0995652+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="579ea192-e150-4143-883f-014763ad8627" />
+    <UnitTestResult executionId="680533ca-0cb1-4d20-afa8-f569bddcb055" testId="f884cd83-2243-ca0f-fed1-3661e1304ac0" testName="TheLook_IsContinuousBetweenWeathers" computerName="0906f725c016" duration="00:00:00.0005290" startTime="2026-10-01T08:33:32.0951124+00:00" endTime="2026-10-01T08:33:32.0956415+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="680533ca-0cb1-4d20-afa8-f569bddcb055" />
+    <UnitTestResult executionId="f3ab3145-4783-4877-a7e5-7d62134e36dd" testId="b1753c2e-b885-d1bc-4252-bff5f43cfc0a" testName="DenseDeckEnvelopsViewer" computerName="0906f725c016" duration="00:00:00.0000790" startTime="2026-10-01T08:33:32.0990889+00:00" endTime="2026-10-01T08:33:32.0991676+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f3ab3145-4783-4877-a7e5-7d62134e36dd" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="TheSkyCarriesTheWeather" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="ffaba44a-8ab1-69a7-a546-a0358953fb94">
+      <Execution id="51ce4c55-2b73-475f-8cd5-82f69f3204f4" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.AtmosphereLookTests" name="TheSkyCarriesTheWeather" />
+    </UnitTest>
+    <UnitTest name="FogDensity_FollowsVisibility_AndEasesForAHighCamera" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="b71254e2-c0a2-21dc-02be-d953de07d50c">
+      <Execution id="65d078fd-7a10-47af-ba59-d3f99fac4f7b" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.AtmosphereLookTests" name="FogDensity_FollowsVisibility_AndEasesForAHighCamera" />
+    </UnitTest>
+    <UnitTest name="OutsideDeckHasNoCloudFog(4000.0f)" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="9aafb064-d161-7aa7-b3f1-40616ff04d3d">
+      <Execution id="c324424e-cc76-4e61-8f4d-d56d77efd588" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CockpitWeatherEnvelopeTests" name="OutsideDeckHasNoCloudFog(4000.0f)" />
+    </UnitTest>
+    <UnitTest name="BrokenCloudRetainsSomeSkyOcclusionAboveTheDeck" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="e21eb35f-d84b-fe7b-00c5-712f89ae4fbb">
+      <Execution id="d44b6213-8b08-40df-bf03-2537ff80473a" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CockpitWeatherEnvelopeTests" name="BrokenCloudRetainsSomeSkyOcclusionAboveTheDeck" />
+    </UnitTest>
+    <UnitTest name="StormSkyAndVisibilityClearTogetherAboveClouds" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="432032e0-90e1-b1a2-94bf-f0e41d24dd3d">
+      <Execution id="ce99d427-5c78-44c3-9725-da342fa53b97" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CockpitWeatherEnvelopeTests" name="StormSkyAndVisibilityClearTogetherAboveClouds" />
+    </UnitTest>
+    <UnitTest name="RainStopsAboveDeck" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="8d22bbc5-924f-15c4-a5ed-c33e4ae715c5">
+      <Execution id="dde8c913-6b6d-4ad0-8ed6-5f82cb72813c" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CockpitWeatherEnvelopeTests" name="RainStopsAboveDeck" />
+    </UnitTest>
+    <UnitTest name="DenseDeckEnvelopsViewer" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="b1753c2e-b885-d1bc-4252-bff5f43cfc0a">
+      <Execution id="f3ab3145-4783-4877-a7e5-7d62134e36dd" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CockpitWeatherEnvelopeTests" name="DenseDeckEnvelopsViewer" />
+    </UnitTest>
+    <UnitTest name="ClearSkyHasNoCloudFog" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="b3d7a612-62bb-7aae-9c50-f159599c1bef">
+      <Execution id="8562bdba-b6d9-4691-8074-05d193d70158" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CockpitWeatherEnvelopeTests" name="ClearSkyHasNoCloudFog" />
+    </UnitTest>
+    <UnitTest name="OutsideDeckHasNoCloudFog(1600.0f)" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="0ff4f09e-05fb-c570-bfaf-4f57d1a638d5">
+      <Execution id="579ea192-e150-4143-883f-014763ad8627" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CockpitWeatherEnvelopeTests" name="OutsideDeckHasNoCloudFog(1600.0f)" />
+    </UnitTest>
+    <UnitTest name="TheFogMatchesTheSky" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="105e5df9-2db7-ad0c-8b08-65d1871adbd6">
+      <Execution id="fa2f76da-ebb0-4114-92db-d72dd444fb10" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.AtmosphereLookTests" name="TheFogMatchesTheSky" />
+    </UnitTest>
+    <UnitTest name="OutsideDeckHasNoCloudFog(0.0f)" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="89a59a57-a928-91bf-cd63-f95721b6ead7">
+      <Execution id="669db5fe-b19e-4a90-a257-a0e56fac75e2" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CockpitWeatherEnvelopeTests" name="OutsideDeckHasNoCloudFog(0.0f)" />
+    </UnitTest>
+    <UnitTest name="OutsideDeckHasNoCloudFog(800.0f)" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="1a29147a-e3ff-5c6a-be93-fd00b96c60b1">
+      <Execution id="24ed59ab-5665-4a2c-9bba-c2e3b96b6edc" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CockpitWeatherEnvelopeTests" name="OutsideDeckHasNoCloudFog(800.0f)" />
+    </UnitTest>
+    <UnitTest name="TheLook_IsContinuousBetweenWeathers" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="f884cd83-2243-ca0f-fed1-3661e1304ac0">
+      <Execution id="680533ca-0cb1-4d20-afa8-f569bddcb055" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.AtmosphereLookTests" name="TheLook_IsContinuousBetweenWeathers" />
+    </UnitTest>
+    <UnitTest name="ClearWeatherHasNoArtificialCloudBreakout" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="46f86633-ee7f-394f-4f79-b003c7375946">
+      <Execution id="bb86eb15-9ab6-4231-8f6d-4e55753b1165" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CockpitWeatherEnvelopeTests" name="ClearWeatherHasNoArtificialCloudBreakout" />
+    </UnitTest>
+    <UnitTest name="ClimbingThroughCloudHeightDoesNotClearTheEntireOvercastDeck" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="540ed42d-e621-64e9-fe76-8db672dd73b8">
+      <Execution id="e2134a8f-bcee-4c9a-827d-8c225d81b5cc" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.AtmosphereLookTests" name="ClimbingThroughCloudHeightDoesNotClearTheEntireOvercastDeck" />
+    </UnitTest>
+    <UnitTest name="Layers_FollowTheWeather" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="03345a29-1bf6-fb22-1082-aa0586cada3d">
+      <Execution id="7d8f00b5-d9ed-497f-aa5b-f5d311412de8" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.AtmosphereLookTests" name="Layers_FollowTheWeather" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="46f86633-ee7f-394f-4f79-b003c7375946" executionId="bb86eb15-9ab6-4231-8f6d-4e55753b1165" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e21eb35f-d84b-fe7b-00c5-712f89ae4fbb" executionId="d44b6213-8b08-40df-bf03-2537ff80473a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ffaba44a-8ab1-69a7-a546-a0358953fb94" executionId="51ce4c55-2b73-475f-8cd5-82f69f3204f4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="03345a29-1bf6-fb22-1082-aa0586cada3d" executionId="7d8f00b5-d9ed-497f-aa5b-f5d311412de8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8d22bbc5-924f-15c4-a5ed-c33e4ae715c5" executionId="dde8c913-6b6d-4ad0-8ed6-5f82cb72813c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="432032e0-90e1-b1a2-94bf-f0e41d24dd3d" executionId="ce99d427-5c78-44c3-9725-da342fa53b97" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="89a59a57-a928-91bf-cd63-f95721b6ead7" executionId="669db5fe-b19e-4a90-a257-a0e56fac75e2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="540ed42d-e621-64e9-fe76-8db672dd73b8" executionId="e2134a8f-bcee-4c9a-827d-8c225d81b5cc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b3d7a612-62bb-7aae-9c50-f159599c1bef" executionId="8562bdba-b6d9-4691-8074-05d193d70158" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9aafb064-d161-7aa7-b3f1-40616ff04d3d" executionId="c324424e-cc76-4e61-8f4d-d56d77efd588" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1a29147a-e3ff-5c6a-be93-fd00b96c60b1" executionId="24ed59ab-5665-4a2c-9bba-c2e3b96b6edc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="105e5df9-2db7-ad0c-8b08-65d1871adbd6" executionId="fa2f76da-ebb0-4114-92db-d72dd444fb10" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b71254e2-c0a2-21dc-02be-d953de07d50c" executionId="65d078fd-7a10-47af-ba59-d3f99fac4f7b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0ff4f09e-05fb-c570-bfaf-4f57d1a638d5" executionId="579ea192-e150-4143-883f-014763ad8627" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f884cd83-2243-ca0f-fed1-3661e1304ac0" executionId="680533ca-0cb1-4d20-afa8-f569bddcb055" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b1753c2e-b885-d1bc-4252-bff5f43cfc0a" executionId="f3ab3145-4783-4877-a7e5-7d62134e36dd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="16" executed="16" passed="16" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>NUnit Adapter 4.6.0.0: Test execution started
+Running selected tests in /workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll
+   NUnit3TestExecutor discovered 16 of 16 NUnit test cases using Current Discovery mode, Non-Explicit run
+NUnit Adapter 4.6.0.0: Test execution complete
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

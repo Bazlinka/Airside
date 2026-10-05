@@ -252,3 +252,17 @@ coverage choice. ADR 0225 / `docs/plans/weather-coverage.md`. Cost: zero acquisi
 or image-generation cost. Existing licences retained; no new attribution required.
 Fallback: existing cloud atlas when the volume shader is unavailable; weather layers
 can be disabled. Rendered verification status is in the weather coverage test record.
+
+## Cockpit procedural airflow — 2026-10-01
+
+Source/generator: original project C# `Presentation/CockpitAirflow.cs`, Codex for
+Airside, in response to Bailey’s in-flight immersion and continuation request.
+Deterministic xorshift filtered noise, four seconds at 22,050 Hz mono, generated
+into a transient AudioClip for the active cockpit. No downloaded/sample/reference
+recording, external library, image generation or runtime file. Acquisition cost:
+zero. Project-original source; no third-party attribution requirement. Evidence:
+ADR 0228, cockpit task packet and focused sample-shape/level tests. This is a quiet
+representative airflow/ventilation bed driven by ground-speed proxy, not a
+manufacturer recording. Fallback: existing type-specific engine audio; mute
+stops the bed. Clip/source are released on cockpit rebind, exit and teardown.
+Native listening acceptance remains open.

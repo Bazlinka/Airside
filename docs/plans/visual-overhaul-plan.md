@@ -1,6 +1,12 @@
 # Visual overhaul plan — buildings, ground, trees, land
 
-Status: **approved (Bailey 2026-10-01)** · continue Phase 1+ without ask-to-verify · Author: Claude · ADR 0198
+Status: **current merged visuals accepted (Bailey 2026-10-06); overhaul goal stopped** · Author: Claude · ADR 0198
+
+Bailey is happy with the game and marked current playtesting complete. See
+`docs/testing/playtest-acceptance-2026-10-06.md`. The phase descriptions below
+retain the earlier plan and optional content backlog; do not resume them without
+new prioritisation. Current next choices are release preparation or P2 freight
+in `docs/plans/post-audit-improvement-plan.md`.
 
 ## Goal
 The overview and follow cameras should look attractive *and* read as Adelaide Airport (YPAD): accurate footprints and

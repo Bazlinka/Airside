@@ -1,6 +1,6 @@
 # Post-audit improvement plan
 
-Status: **active** · 2026-09-30 · Author: Cursor (comprehensive code audit) · Branch `main` · ADR **0205**
+Status: **active; acceptance updated 2026-10-06** · 2026-09-30 · Author: Cursor (comprehensive code audit) · Branch `main` · ADR **0205**
 
 This is the standing backlog for what to improve next before a major expansion.
 It comes from a full Domain / Simulation / Presentation / tests / product-plan audit
@@ -9,13 +9,27 @@ and other tools should follow this order unless Bailey overrides it.
 
 Related: `docs/plans/visual-overhaul-plan.md` (ADR 0198, Bailey-approved 2026-10-01).
 
+## Current owner acceptance — 6 October 2026
+
+Bailey marked all current playtests complete and is happy with the game.
+`docs/testing/playtest-acceptance-2026-10-06.md` supersedes historical pending
+manual acceptance in this plan and the testing reports. P0 is complete; the
+merged P1 visuals are accepted and the earlier visual-overhaul goal was stopped
+(see `GAME.md`, PR #510 handoff). Further visual content remains optional backlog.
+Do not resume P1 or ask Bailey to repeat old playtests by default.
+
+Recommended next action for shipping is release preparation: a clean Mac package,
+version/tag and release notes. If Bailey chooses development, P2 freight mode is
+the next product slice. P3 technical debt remains open; measured performance
+budgets are not inferred from owner acceptance. P4 milestones remain unopened.
+
 ## Verdict (do not re-litigate)
 
 Airside is already a production-grade Adelaide airline game, not a prototype.
 Career, saves (v19), tower, AI traffic, Glass Cockpit and the map stack are solid.
-P0 verification debt is closed by Bailey (2026-10-01). Next risks before going
-bigger are the **visual overhaul gate**, then **Presentation concentration /
-performance**, then finishing half-done product slices (freight).
+P0 and current manual playtest acceptance are closed by Bailey (2026-10-06).
+The current presentation is accepted. Remaining development backlog is freight
+mode and Presentation structure/performance, before broad expansion.
 
 ## Priority order
 
@@ -29,12 +43,14 @@ Automated Mac captures from #490 are in `docs/testing/post-audit-p0-2026-09-30/`
 helpers from #491 and freighter/hangar/boarding pick locks from **#492** are on
 `main` for optional later use.
 
-Do not reopen P0 unless Bailey asks. Next priority is **P1**.
+Do not reopen P0 unless Bailey asks. Current next choices are recorded above.
 
-### P1 — Visual overhaul (do next)
+### P1 — Visual overhaul (current merged visuals accepted)
 
-**Status: approved (Bailey 2026-10-01).** Continue Phase 1+ code; do **not** ask Bailey to
-verify each slice — he rebuilds when he wants. Optional Mac baseline captures are never a merge gate.
+**Status: merged visuals accepted (Bailey 2026-10-06); earlier overhaul goal stopped.**
+The Phase 1–3 notes below are historical planning and optional remaining content,
+not instructions to continue the overhaul. Optional Mac baseline captures are
+never a merge gate.
 
 1. Phase 1 ground/land checklist complete on tip (ADRs 0211 Golf, 0207 bunkers,
    0208 CBD, 0209 seasonal tint, 0210 Hills haze). Continue Phase 2 trees or
@@ -56,8 +72,9 @@ at freighter livery + tyre rotation when convenient, then finish as one narrow A
 - Contracts that require a freighter (`ContractKind.Freight` today does not)
 - Outstation settle using freighter forecast overload
 
-Until that slice: leave player freight as-is; no freight AI / apron / freighter-gated
-contracts unless Bailey prioritises P2 over P1.
+Until Bailey opens the next development slice, leave player freight as-is.
+P2 is the next product recommendation after current acceptance; this record does
+not start freight implementation.
 
 ### P3 — Pay down structure and performance debt
 

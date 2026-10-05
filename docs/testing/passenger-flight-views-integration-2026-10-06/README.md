@@ -1,5 +1,9 @@
 # Passenger/exterior integration — 6 October 2026 (Adelaide)
 
+**Current acceptance (6 October 2026): all existing playtests complete; Bailey is
+happy with the game.** See [owner sign-off](../playtest-acceptance-2026-10-06.md). Pending manual acceptance
+below is historical and superseded. Recorded agent-run evidence remains unchanged.
+
 Bailey authorised merging #518. Integrate main `7194c18f` into the existing
 passenger/exterior branch; resolve camera, HUD, audio and documentation conflicts.
 

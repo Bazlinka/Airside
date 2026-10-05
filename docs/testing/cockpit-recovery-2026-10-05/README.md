@@ -28,3 +28,8 @@ inferred from adding the three cases to the earlier full run.
 
 Full integration checkpoint: 1,474 passed, zero failed, 2 m 55 s (`domain-result.txt`).
 Final combined focused source: 102/102. Whitespace and generated-harness checks pass.
+
+Merged: PR #521 at `2554fea0722db9b6e962930015090ef6a404e044` on
+2026-10-05 23:05 UTC, under Bailey’s explicit merge-all instruction. Local and
+remote main were synchronised afterward. GitHub headless CI was queued at merge;
+its success is not claimed here. Native acceptance remains outstanding.

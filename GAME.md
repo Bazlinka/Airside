@@ -1,16 +1,22 @@
-## GitHub recovery and authorised cockpit integration — 5 October 2026
+## Where to resume — combined cockpit work merged, 5 October 2026
 
-Access restored. Bailey's authorised PR #521 merge is being integrated with main
-`84b30159`, preserving window glances, CockpitMotion/touchdown effects, callouts,
-live attitude, panel lighting and wipers alongside airflow/PA isolation, own-aircraft
-Doppler removal, keyboard zoom/Home, inverted drag and saved vibration preference.
-Keep the newer vertical-speed telemetry and shared glance table. Full integration
-checkpoint: 1,474/1,474; final combined focused: 102/102. Evidence:
-`docs/testing/cockpit-recovery-2026-10-05/README.md`. Native Unity
-remains unavailable; earlier headless evidence does not substitute for native
-visual/audio/performance acceptance. Cloud-breakout correction `a9c21462` is also included in this combined PR #521
-merge under Bailey’s 5 October instruction to merge all. It aligns fog, sky colour
-and celestial visibility above the deck. The original branch is now pushed.
+GitHub access is restored. Bailey explicitly authorised merging all cockpit work.
+PR #521 merged into `main` at `2554fea0`, including sound/control follow-up,
+cloud-breakout correction and integration with main's window/flight-feel changes.
+Local and remote main are synced. No cockpit implementation remains unpushed.
+
+Preserved motion/touchdown/reverse effects, glances, callouts, live attitude,
+lighting and wipers; added airflow/PA isolation, own-aircraft Doppler removal,
+keyboard zoom/Home, inverted/eased drag, saved vibration choice and aligned
+cloud-top sky/fog/celestial visibility. Seven newer scripts/tests have stable metadata.
+
+Validation: full integration checkpoint 1,474/1,474; final combined focused
+102/102. Evidence: `docs/testing/cockpit-recovery-2026-10-05/README.md`.
+GitHub CI was queued at merge; no CI success is inferred from local results.
+**NEXT:** native Unity compile/EditMode and packaged visual/input/listening/
+performance review. The Linux worker has no Mac Unity editor; merge authorisation
+does not make those checks passing. Existing Resources/empty Animation metadata
+issues remain. Prior handoff entries below are historical and superseded here.
 
 ## Where to resume — cockpit sound and controls follow-up
 

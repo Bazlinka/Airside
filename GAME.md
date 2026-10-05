@@ -1,3 +1,19 @@
+## Where to resume — passenger/exterior flight views, 6 October 2026
+
+Combined-source validation: **1,477 headless regression tests passed**, plus 122 focused checks and C# syntax checks. Evidence: `docs/testing/passenger-flight-views-integration-2026-10-06/`. Native Unity integration review remains outstanding.
+
+Bailey authorised merging PR #518 into main. Integrate current `7194c18f` so the
+new passenger left/right seats and exterior flight orbit retain cockpit motion,
+callouts, cloud breakout, airflow/PA isolation, watched-aircraft Doppler routing,
+saved vibration, keyboard zoom/Home, inverted drag and eased gaze. Flight HUD
+keeps registration, route/GS/V/S/distance, view buttons and vibration/recenter/exit.
+Exterior telemetry updates, and exterior orbit ignores interior motion/rumble.
+Original branch native evidence remains separate from this combined-source check.
+**NEXT:** native Unity and packaged view-cycle review of current combined source. This Linux worker has no Mac Unity editor.
+Original 35 native / 35 focused headless and 52 rendered stills are retained in
+`docs/testing/passenger-flight-views-2026-10-01/`; updated evidence is recorded in
+`docs/testing/passenger-flight-views-integration-2026-10-06/README.md`.
+
 ## Passenger/exterior flight views — 2026-10-01 Codex
 
 Branch `feature/passenger-and-exterior-flight-views`, isolated `/private/tmp/airside-sa-world`.
@@ -10,6 +26,46 @@ headless 35/35, asset audit passed. All 13 types rendered in left/right/cabin/ou
 views; 52 native stills inspected. Packaged build/view cycle pending. Evidence:
 `docs/testing/passenger-flight-views-2026-10-01/README.md`.
 No new full-flight performance claim; the existing long-trip stall remains open.
+
+## Where to resume — combined cockpit work merged, 5 October 2026
+
+GitHub access is restored. Bailey explicitly authorised merging all cockpit work.
+PR #521 merged into `main` at `2554fea0`, including sound/control follow-up,
+cloud-breakout correction and integration with main's window/flight-feel changes.
+Local and remote main are synced. No cockpit implementation remains unpushed.
+
+Preserved motion/touchdown/reverse effects, glances, callouts, live attitude,
+lighting and wipers; added airflow/PA isolation, own-aircraft Doppler removal,
+keyboard zoom/Home, inverted/eased drag, saved vibration choice and aligned
+cloud-top sky/fog/celestial visibility. Seven newer scripts/tests have stable metadata.
+
+Validation: full integration checkpoint 1,474/1,474; final combined focused
+102/102. Evidence: `docs/testing/cockpit-recovery-2026-10-05/README.md`.
+GitHub CI was queued at merge; no CI success is inferred from local results.
+**NEXT:** native Unity compile/EditMode and packaged visual/input/listening/
+performance review. The Linux worker has no Mac Unity editor; merge authorisation
+does not make those checks passing. Existing Resources/empty Animation metadata
+issues remain. Prior handoff entries below are historical and superseded here.
+
+## Where to resume — cockpit sound and controls follow-up
+
+- **2026-10-01 Codex — `feature/cockpit-sound-and-controls`, ADR 0228.**
+  Bailey authorised committing/merging cockpit immersion and continuing.
+  PR #517 merged to main at `dd9c6730`; its native checks remain outstanding,
+  not retrospectively passed. This follow-up suppresses non-spatial airport bed/PA
+  while in cockpit, adds a quiet original filtered-noise airflow bed driven by
+  rendered ground speed, and removes own-aircraft Doppler. Airflow lives only
+  with the active interior; mute, rebind, exit and teardown stop/release it.
+  Arrow keys look; +/− zoom; Home recenters. Seat turns ease and drag obeys invert.
+  Vibration preference now survives relaunch in PlayerPrefs (no save schema change).
+  **NEXT:** native Unity compilation/EditMode and packaged input/audio/performance
+  review. The worker has no Mac Unity editor. Plan/evidence:
+  `docs/plans/cockpit-immersion.md`, `docs/testing/cockpit-immersion-2026-10-01/`.
+  Follow-up focused checks: 16/16; full headless: 1,426/1,426.
+  Evidence: `docs/testing/cockpit-sound-2026-10-01/README.md`.
+  Prior main: seven cloud tests and full 1,424-test headless pass; CI green.
+  Existing asset audit issues: Resources directory missing metadata; three empty
+  Animation folders have orphan metadata.
 
 ## South Australia flight world — authorised merge, 2026-10-01
 
@@ -41,6 +97,35 @@ generated harness checks pass. Clean combined Mac build passes at `6f1d6ddd`; PR
 merge authorisation does not turn those into passing checks. Jet ADR is now 0225.
 
 ## Where to resume — career coherence + Glass Cockpit HUD + title screen + airline setup
+
+- **2026-10-01 Claude — cockpit flight feel (`feature/cockpit-window-view`, ADR 0228).**
+  Per-type pitch (`AircraftAttitude`), head/body motion (`CockpitMotion`, fed from
+  `UpdateCockpitView`, applied by `SetCockpitMotion`), live pitch/bank ADI on jets and ATR/Dash.
+  Headless: motion/attitude/jet-cockpit checks pass. No Unity editor here, so **NEXT:** compile in
+  Unity, run native review of takeoff roll, rotation, climb, descent, flare and touchdown for a jet
+  and a turboprop; tune amplitudes if too strong/weak; Saab live ADI; crosswind crab needs a wind model.
+
+- **2026-10-01 Claude — helicopter operations (branch `feature/helicopter-operations`, ADR 0227).**
+  - **Player-visible outcome:** the SA Ambulance Bell 412 (VH-SAR) flies rescue call-outs from Helipad West to
+    Adelaide hospitals (first one within ~8 min of a new game) with a spinning rotor and a rotor sound; the player can
+    buy a Bell 412 for the regional band once the Expanded regional base is open (pad spots HELI-2/3).
+  - **Where it lives:** `Simulation/AirlineOperations.Rotorcraft.cs` (pad, weather, rescue call-outs, arrival),
+    `RotorcraftPerformance.cs` (VTOL shape), `HelicopterTrack.cs` (world pose), `AdelaideHelipad.cs` (stands),
+    `Presentation/AirsidePrototype.Helicopter.cs` (rig and per-frame pose), `scripts/audio/generate_rotorcraft_audio.py`.
+    Helicopters are in `AircraftCatalogue.Rotorcraft`, deliberately not `All`.
+  - **Checks:** headless 1,379 pass; Unity EditMode for touched suites; packaged captures `work/captures/heli-*.png`.
+  - **Not verified:** nobody has listened to the rotor loops; the player's own helicopter has been exercised in
+    simulation tests but not yet in a packaged run; no hospital-end ground handling or medevac contract exists.
+  - **NEXT:** open the PR, wait for CI, merge when green. Backlog: civil medevac contracts, rotor-wash/dust on the pad,
+    a helicopter cockpit, AW139 (SA's 2027 replacement) and a light single (both need authored models).
+
+- **2026-10-01 Claude — cockpit window view fit (`feature/cockpit-window-view`, ADR 0229).** Jets: glareshield
+  cut raised from ~4 to ~16 degrees over the nose, sills/windscreen heights shared as
+  `JetCockpitShellGeometry` constants. ATR/Dash: panel dropped 6 cm, gaze 8-9 degrees.
+  Cockpit keep-list now includes flaps/ailerons/spoilers/fans/intakes/pylons/exhausts/nav lights
+  (`CockpitExteriorVisibility`). Headless jet-cockpit filter 30/30; no Unity editor available,
+  so **NEXT:** native cockpit review sheets for all 13 types (check panel readability after the
+  drop, no lining strip below windscreens, wing/engine through side windows) and Mac build.
 
 - **2026-10-01 Cursor — arrivals bunched on final (`main`).** Bailey saw three
   arrivals flying nose to tail over the coast. `ExpectedLandingQueueTime` gave an

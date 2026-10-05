@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Airside.Domain;
 using Airside.Simulation;
 using UnityEngine;
 
@@ -300,13 +301,14 @@ namespace Airside.Presentation
 
         private static void UpdateControlSurfaces(
             ControlSurfacePart[] parts, AircraftArticulationState state, AircraftPhase phase, float progress,
-            float bankDegrees, float deltaTime, EngineState? engines, bool drawnOnGround = false)
+            float bankDegrees, float deltaTime, EngineState? engines, bool drawnOnGround = false,
+            AircraftType type = null)
         {
             // Presentation-only. deltaTime is the presentation clock, so surfaces hold still while paused
             // and sweep 4x faster at 4x speed instead of running on their own timeline.
             if (deltaTime <= 0f)
                 return;
-            var pitchUp = -PhasePitchDegrees(phase, progress);
+            var pitchUp = -AirsideFlightPath.PitchDegrees(phase, progress, type);
             state.Observe(bankDegrees, pitchUp, deltaTime);
             var rollLeftRate = state.RollLeftRate;
             var hydraulicsOff = drawnOnGround && engines.HasValue && !engines.Value.AnyRunning
@@ -314,10 +316,11 @@ namespace Airside.Presentation
             var droop = AircraftArticulation.ParkedDroopDegrees(hydraulicsOff);
             var elevatorUp = AircraftArticulation.ElevatorTrailingEdgeUpDegrees(pitchUp, state.PitchUpRate);
             var wingFlex = AirsideReusableMotion.WingFlexDegrees(phase, progress);
+            var touchdownProgress = AircraftPerformance.For(type).TouchdownProgress;
             var groundSpoiler = phase == AircraftPhase.Landing
                 ? 40f * Mathf.Clamp01(Mathf.InverseLerp(
-                      AirsideFlightPath.TouchdownProgress,
-                      AirsideFlightPath.TouchdownProgress + 0.06f, progress)
+                      touchdownProgress,
+                      touchdownProgress + 0.06f, progress)
                   - Mathf.InverseLerp(0.86f, 1f, progress))
                 : 0f;
 

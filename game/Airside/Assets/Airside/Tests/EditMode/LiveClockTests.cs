@@ -85,7 +85,7 @@ namespace Airside.Tests
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(8), Airline.Player("Live Air", "#2E7D32"));
-            var departures = ops.Fleet.Where(a => !a.Airline.IsPlayer && a.State == FleetState.AtStand && a.Scheduled.HasValue)
+            var departures = ops.Fleet.Where(a => !a.Airline.IsPlayer && !a.Airline.IsEmergency && a.State == FleetState.AtStand && a.Scheduled.HasValue)
                 .Select(a => a.Scheduled.Value.DepartAt.ElapsedSeconds).OrderBy(t => t)
                 .Take(AirlineOperations.AiOpeningDepartureSeconds.Length).ToArray();
             Assert.That(departures.Length, Is.GreaterThanOrEqualTo(8), "apron metal fills the opening bank");

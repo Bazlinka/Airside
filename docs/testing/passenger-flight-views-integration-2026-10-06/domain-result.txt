@@ -1,0 +1,15 @@
+attempt 1: dropping 1 Presentation file(s): ArrivalMapTrack.cs
+attempt 2: excluding 5 test(s): AircraftCatalogueTests.cs, CircuitPresentationLogicTests.cs, GroundSeparationTests.cs, ParkedAircraftAndMotionTests.cs, TaxiRunwayNightTests.cs
+Harness.Generated.props is up to date
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Harness -> /workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll
+Test run for /workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll (.NETCoreApp,Version=v8.0)
+VSTest version 17.11.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+  Skipped FleetMarket_SaysASharedLockOnce [13 ms]
+  Skipped Storm_IsAGroundStop [< 1 ms]
+
+Passed!  - Failed:     0, Passed:  1477, Skipped:     0, Total:  1477, Duration: 2 m 52 s - Harness.dll (net8.0)

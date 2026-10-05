@@ -414,8 +414,10 @@ namespace Airside.Simulation
             (float MinX, float MinZ, float MaxX, float MaxZ) b) =>
             a.MinX <= b.MaxX && b.MinX <= a.MaxX && a.MinZ <= b.MaxZ && b.MinZ <= a.MaxZ;
 
-        private static bool OnTheGround(FleetAircraft aircraft) => aircraft.State is FleetState.TaxiOut
-            or FleetState.HoldingShort or FleetState.TakingOff or FleetState.Landing
-            or FleetState.AwaitingStand or FleetState.TaxiIn;
+        // A helicopter lifts off and lands on its pad and never rolls along a taxiway or runway (ADR 0207).
+        private static bool OnTheGround(FleetAircraft aircraft) => !aircraft.Type.IsRotorcraft
+            && aircraft.State is FleetState.TaxiOut
+                or FleetState.HoldingShort or FleetState.TakingOff or FleetState.Landing
+                or FleetState.AwaitingStand or FleetState.TaxiIn;
     }
 }

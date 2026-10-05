@@ -139,7 +139,7 @@ namespace Airside.Simulation
         /// <summary>
         /// Add the RFDS aircraft if this field still has a free regional bay. Safe on every load.
         /// </summary>
-        public int AddMissingEmergencyOperators(List<FleetAircraft> added = null)
+        public int AddMissingEmergencyOperators(List<FleetAircraft> added = null, bool rotorcraftOnly = false)
         {
             var count = 0;
             foreach (var (make, fleet) in EmergencyOperators)
@@ -148,6 +148,9 @@ namespace Airside.Simulation
                 var airline = _airlines.Find(a => a.Id.Equals(template.Id));
                 foreach (var (registration, type) in fleet)
                 {
+                    // A save from before helicopters gains the rescue helicopter without touching its RFDS history.
+                    if (rotorcraftOnly && !type.IsRotorcraft)
+                        continue;
                     if (_fleet.Exists(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase)))
                         continue;
                     var stand = SuggestStandFor(type);
@@ -408,6 +411,7 @@ namespace Airside.Simulation
             "QTR" => QatarNetwork,
             "FJI" => FijiNetwork,
             "RFDS" => RfdsNetwork,
+            "SAAS" => RescueNetwork,
             _ => AiNetwork
         };
 

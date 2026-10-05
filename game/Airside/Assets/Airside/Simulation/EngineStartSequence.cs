@@ -70,6 +70,10 @@ namespace Airside.Simulation
 
         public static EngineState For(FleetAircraft aircraft, double nowSeconds)
         {
+            // A helicopter spools its rotor on the pad, with no pushback, stairs or doors (ADR 0207).
+            if (aircraft != null && aircraft.Type.IsRotorcraft)
+                return RotorcraftEngines.StateFor(aircraft, nowSeconds);
+
             // A jet starts its engines during the push (ADR 0177): No.2, then No.1.
             if (aircraft != null && aircraft.State == FleetState.TaxiOut && AirlineOperations.NeedsTerminalGate(aircraft.Type))
             {

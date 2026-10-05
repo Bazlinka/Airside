@@ -66,7 +66,7 @@ namespace Airside.Domain
         public static RouteBand Ceiling(AircraftType type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            if (type.Id == AircraftType.Atr42.Id || type.Id == AircraftType.Saab340.Id)
+            if (type.Id == AircraftType.Atr42.Id || type.Id == AircraftType.Saab340.Id || type.IsRotorcraft)
                 return RouteBand.Regional;
             if (type.Id == AircraftType.Dash8Q400.Id || type.Id == AircraftType.EmbraerE190.Id)
                 return RouteBand.Domestic;

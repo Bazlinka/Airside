@@ -52,6 +52,9 @@ namespace Airside.Presentation
                 var phase = flight.Operation.Phase;
                 var type = FleetMode && _fleetAircraftById.TryGetValue(flight.AircraftId, out var fleet)
                     ? fleet.Type : AircraftType.Atr42;
+                // A helicopter's rotor sound is driven by its own pose in UpdateHelicopterView (ADR 0207).
+                if (type.IsRotorcraft)
+                    continue;
                 var progress = VisualPhaseProgress(flight, 0f);
                 var engines = FleetEngines(flight) ?? (AirsideReusableMotion.PropellersSpinning(phase)
                     ? EngineState.Running : EngineState.ColdAndOpen);
@@ -72,7 +75,7 @@ namespace Airside.Presentation
                 _engineAudio[id] = emitter;
             }
             emitter.Configure(type, LoadEngineClip(type), CreateTouchdownClip());
-            emitter.InteriorListening = InteriorListening;
+            emitter.InteriorListening = InteriorListening && aircraftId == _cockpitAircraftId;
             var power = EnginePower(view);
             var prop = EngineVoice.ClassOf(type) == EngineClass.Turboprop;
             var rotation = prop

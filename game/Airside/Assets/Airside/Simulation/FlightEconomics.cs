@@ -127,6 +127,9 @@ namespace Airside.Simulation
         public static double Weight(AircraftType type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
+            // Thirteen seats and a short-hop helicopter: a lighter load than a turboprop, priced like one to run.
+            if (type.IsRotorcraft)
+                return 0.7;
             return AircraftCatalogue.For(type).StandClass == StandClass.RegionalBay ? 1.0 : 2.2;
         }
     }

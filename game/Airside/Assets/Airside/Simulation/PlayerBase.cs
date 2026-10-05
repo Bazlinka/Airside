@@ -50,6 +50,12 @@ namespace Airside.Simulation
             new("BAY-1"), new("BAY-7"), new("BAY-10A")
         };
 
+        // Helipad spots 2 and 3 are the player's; spot 1 stays the SA Ambulance crew's home (ADR 0207).
+        private static readonly StableId[] PlayerHelipadStands =
+        {
+            new("HELI-2"), new("HELI-3")
+        };
+
         private static readonly StableId[] JetGateStands =
         {
             new("GATE-27"), new("GATE-29")
@@ -103,6 +109,9 @@ namespace Airside.Simulation
                 return PlayerBaseLevel.International;
             if (AirlineOperations.NeedsTerminalGate(type))
                 return PlayerBaseLevel.JetGate;
+            // A helicopter needs the expanded base: its helipad spots come with the regional apron (ADR 0207).
+            if (type.IsRotorcraft)
+                return PlayerBaseLevel.ExpandedRegional;
             if (type.Id != AircraftType.Saab340.Id)
                 return PlayerBaseLevel.ExpandedRegional;
             return PlayerBaseLevel.Starter;
@@ -121,6 +130,8 @@ namespace Airside.Simulation
         {
             if (type == null)
                 return Array.Empty<StableId>();
+            if (type.IsRotorcraft)
+                return level >= PlayerBaseLevel.ExpandedRegional ? PlayerHelipadStands : Array.Empty<StableId>();
             if (!AirlineOperations.NeedsTerminalGate(type))
                 return level >= PlayerBaseLevel.ExpandedRegional ? ExpandedRegionalStands : StarterRegionalStands;
             if (level < PlayerBaseLevel.JetGate)
@@ -135,6 +146,9 @@ namespace Airside.Simulation
             if (string.IsNullOrEmpty(stand.Value))
                 return false;
             foreach (var candidate in ExpandedRegionalStands)
+                if (level >= PlayerBaseLevel.ExpandedRegional && candidate.Equals(stand))
+                    return true;
+            foreach (var candidate in PlayerHelipadStands)
                 if (level >= PlayerBaseLevel.ExpandedRegional && candidate.Equals(stand))
                     return true;
             if (level == PlayerBaseLevel.Starter)
@@ -157,6 +171,14 @@ namespace Airside.Simulation
             if (type == null || string.IsNullOrEmpty(stand.Value) || !Supports(level, type))
                 return false;
 
+            if (type.IsRotorcraft)
+            {
+                foreach (var candidate in DedicatedStands(level, type))
+                    if (candidate.Equals(stand))
+                        return true;
+                return false;
+            }
+
             if (!AirlineOperations.NeedsTerminalGate(type))
             {
                 if (level == PlayerBaseLevel.Starter)
@@ -177,7 +199,8 @@ namespace Airside.Simulation
 
         public static string StandAccessLine(PlayerBaseLevel level)
         {
-            var regional = level >= PlayerBaseLevel.ExpandedRegional ? "50D · 50G · 10A + shared regional apron" : "50D · 50G";
+            var regional = level >= PlayerBaseLevel.ExpandedRegional
+                ? "50D · 50G · 10A + shared regional apron · helipad" : "50D · 50G";
             return level switch
             {
                 PlayerBaseLevel.JetGate => regional + " · gates 27/29",

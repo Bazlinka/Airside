@@ -96,7 +96,7 @@ namespace Airside.Simulation
             SimulationTime? holdUntil = null;
             foreach (var aircraft in _fleet)
             {
-                if (aircraft.State is not (FleetState.TakingOff or FleetState.Landing))
+                if (aircraft.State is not (FleetState.TakingOff or FleetState.Landing) || aircraft.Type.IsRotorcraft)
                     continue;
                 if (RunwayWeather.IsMainRunway(aircraft.AssignedRunway) != mainStrip)
                     continue;

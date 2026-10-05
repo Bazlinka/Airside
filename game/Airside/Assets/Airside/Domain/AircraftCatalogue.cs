@@ -7,7 +7,9 @@ namespace Airside.Domain
     public enum StandClass
     {
         RegionalBay,
-        TerminalGate
+        TerminalGate,
+        /// <summary>A helicopter pad spot: vertical take-off and landing, no taxiway (ADR 0207).</summary>
+        Helipad
     }
 
     /// <summary>Whether the type has its own runtime model yet.</summary>
@@ -31,9 +33,9 @@ namespace Airside.Domain
         internal AircraftSpec(string id, string name, string role, double lengthMetres, double wingspanMetres,
             double heightMetres, double planningCruiseKmh, double practicalRangeKm, double manufacturerMaxCruiseKmh,
             double manufacturerRangeKm, string manufacturerRangeBasis, StandClass standClass, ModelStatus modelStatus,
-            string runtimeModelPath, string thumbnailPath, string sourceId)
+            string runtimeModelPath, string thumbnailPath, string sourceId, bool rotorcraft = false)
         {
-            Type = new AircraftType(id, name, planningCruiseKmh, practicalRangeKm);
+            Type = new AircraftType(id, name, planningCruiseKmh, practicalRangeKm, rotorcraft);
             Role = role;
             LengthMetres = lengthMetres;
             WingspanMetres = wingspanMetres;
@@ -77,7 +79,8 @@ namespace Airside.Domain
         /// <summary>Key into docs/data/AIRCRAFT_SPECIFICATIONS.md.</summary>
         public string SourceId { get; }
 
-        public string StandClassLabel => StandClass == StandClass.TerminalGate ? "Terminal gate" : "Regional bay";
+        public string StandClassLabel => StandClass == StandClass.TerminalGate ? "Terminal gate"
+            : StandClass == StandClass.Helipad ? "Helipad" : "Regional bay";
 
         /// <summary>ICAO aerodrome reference code letter from wingspan (Annex 14): stand sizing.</summary>
         public char CodeLetter => AircraftCatalogue.CodeLetterForSpan(WingspanMetres);
@@ -199,6 +202,24 @@ namespace Airside.Domain
             StandClass.TerminalGate, ModelStatus.Genuine,
             "Models/Aircraft/mdl_787_9_v01.gltf", "UI/Aircraft/thb_air_b789_v01.png", "SPEC-BOEING-787-9");
 
+        // Bell 412EP (AIR-017): the SA Ambulance rescue helicopter at Helipad West (ADR 0186, 0207). Bell's
+        // published envelope is 17.1 m long with rotors turning, 14.0 m rotor, 4.6 m high, 226 km/h maximum
+        // cruise and 358 nm range; planning cruise sits below that and the practical range allows reserves.
+        public static readonly AircraftSpec Bell412 = new(
+            "B412", "Bell 412EP", "Rescue / utility helicopter · 13 seats",
+            17.10, 14.02, 4.60,
+            planningCruiseKmh: 205, practicalRangeKm: 520,
+            manufacturerMaxCruiseKmh: 226, manufacturerRangeKm: 663, manufacturerRangeBasis: "358 nm standard fuel",
+            StandClass.Helipad, ModelStatus.Genuine,
+            "Models/Aircraft/mdl_bell_412_rescue_v01.gltf", "UI/Aircraft/thb_air_b412_v01.png", "SPEC-BELL-412EP",
+            rotorcraft: true);
+
+        /// <summary>
+        /// Helicopters, kept apart from <see cref="All"/>: the airline fleet, purchase list and every
+        /// runway/taxi rule iterate that list and must not see a type that has no runway (ADR 0207).
+        /// </summary>
+        public static IReadOnlyList<AircraftSpec> Rotorcraft { get; } = new[] { Bell412 };
+
         public static IReadOnlyList<AircraftSpec> All { get; } = new[]
         {
             Atr42, Saab340, Dash8Q400, EmbraerE190, AirbusA220300,
@@ -212,6 +233,13 @@ namespace Airside.Domain
             if (type == null)
                 return false;
             foreach (var spec in All)
+            {
+                if (spec.Id != type.Id)
+                    continue;
+                found = spec;
+                return true;
+            }
+            foreach (var spec in Rotorcraft)
             {
                 if (spec.Id != type.Id)
                     continue;
@@ -274,6 +302,9 @@ namespace Airside.Domain
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
             foreach (var spec in All)
+                if (spec.Id == type.Id)
+                    return spec;
+            foreach (var spec in Rotorcraft)
                 if (spec.Id == type.Id)
                     return spec;
             throw new ArgumentException($"{type.Id} is not in the aircraft catalogue.", nameof(type));

@@ -550,6 +550,7 @@ namespace Airside.Presentation
 
         private void OnDestroy()
         {
+            ReleaseCockpitAirflow();
             if (_cockpitInterior != null)
             {
                 _cockpitInterior.Leave();
@@ -671,7 +672,8 @@ namespace Airside.Presentation
             FleetAircraft playerTurn = null;
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
             {
-                if (aircraft.State != FleetState.AtStand || !aircraft.Scheduled.HasValue)
+                // A helicopter is fuelled and briefed at its pad with no vehicles to draw (ADR 0207).
+                if (aircraft.State != FleetState.AtStand || !aircraft.Scheduled.HasValue || aircraft.Type.IsRotorcraft)
                     continue;
                 var prep = DeparturePrep.For(aircraft, _clock.Now, _operations.CareerState.BaseLevel);
                 if (prep.Ready)
@@ -748,7 +750,7 @@ namespace Airside.Presentation
             {
                 if (wanted.Count >= AmbientServiceSets)
                     break;
-                if (aircraft.Airline.IsPlayer || aircraft.State != FleetState.AtStand
+                if (aircraft.Airline.IsPlayer || aircraft.State != FleetState.AtStand || aircraft.Type.IsRotorcraft
                     || aircraft == skipA || aircraft == skipB || string.IsNullOrEmpty(aircraft.Stand.Value))
                     continue;
                 var onStand = _preciseTime - aircraft.StateStartedAt.ElapsedSeconds;
@@ -1152,7 +1154,9 @@ namespace Airside.Presentation
             // Taxiing fleet aircraft move along the Adelaide ground routes, which the
             // circuit speed schedule knows nothing about, so measure them directly.
             var type = FleetMode && fleetAircraft != null ? fleetAircraft.Type : AircraftType.Atr42;
-            var knots = flight != null && FleetGroundSpeed(flight) is { } groundSpeed
+            var knots = type.IsRotorcraft
+                ? CircuitProfile.ToKnots(HelicopterTrack.For(fleetAircraft, _preciseTime).SpeedMetresPerSecond)
+                : flight != null && FleetGroundSpeed(flight) is { } groundSpeed
                 ? CircuitProfile.ToKnots(groundSpeed)
                 : flight != null
                     ? AirsideFlightPath.AirspeedKnots(flight.Operation.Phase, VisualPhaseProgress(flight, 0f), type)

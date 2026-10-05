@@ -130,6 +130,8 @@ namespace Airside.Presentation
             for (var i = 0; i < VisualFlights.Count; i++)
             {
                 var flight = VisualFlights[i];
+                if (IsRotorcraftFlight(flight))
+                    continue;
                 var phase = flight.Operation.Phase;
                 var progress = VisualPhaseProgress(flight, 0f);
                 // Ground spray only — not climbing takeoff or airborne approach.
@@ -619,6 +621,13 @@ namespace Airside.Presentation
             var cameraHeight = _mainCamera != null ? Mathf.Max(0f, _mainCamera.transform.position.y) : 0f;
             _atmosphere = AtmosphereLook.For(CurrentWeatherLook, daylight, warm, sunAzimuth < 180.0, cameraHeight);
             var sky = ToColor(_atmosphere.Sky);
+            var aboveDeck = CockpitAboveDeck;
+            var clearSky = AtmosphereLook.For(WeatherLook.For(WeatherKind.Clear), daylight,
+                warm, sunAzimuth < 180.0, cameraHeight);
+            if (InCockpit && AirsideSettings.Current.WeatherLayers && _cockpitView != null)
+            {
+                sky = Color.Lerp(sky, ToColor(clearSky.Sky), aboveDeck);
+            }
             if (_mainCamera != null)
                 _mainCamera.backgroundColor = sky;
             if (_horizonDome != null)
@@ -642,6 +651,15 @@ namespace Airside.Presentation
                     ? _atmosphere.FogDensity * AirsideCameraFeel.FogScale(AirsideCameraController.CurrentDistance,
                         AirsideBareField.ClassicMaxOrbitDistance)
                     : Mathf.Lerp(0.0036f, 0.0016f, daylight) + (1f - look.Visibility) * 0.012f + warm * 0.00035f;
+            }
+
+            if (InCockpit && AirsideSettings.Current.WeatherLayers && _cockpitView != null)
+            {
+                var cloud = CockpitWeatherEnvelope.InCloud(_cockpitView.position.y, CurrentWeatherLook.CloudCover);
+                RenderSettings.fogDensity = Mathf.Lerp(RenderSettings.fogDensity, 0.018f, cloud);
+                RenderSettings.fogColor = Color.Lerp(RenderSettings.fogColor, ToColor(_atmosphere.Sky), cloud);
+                RenderSettings.fogDensity = Mathf.Lerp(RenderSettings.fogDensity, clearSky.FogDensity, aboveDeck);
+                RenderSettings.fogColor = Color.Lerp(RenderSettings.fogColor, ToColor(clearSky.Fog), aboveDeck);
             }
 
             // ADR 0059: a storm strike briefly overrides the sky/ambient/sun with a white
@@ -922,6 +940,15 @@ namespace Airside.Presentation
             return daylightFade * cloudFade;
         }
 
+        // Keep the ground/deck weather intact; only the sky seen from the seat clears.
+        private float CockpitAboveDeck => InCockpit && AirsideSettings.Current.WeatherLayers
+            && _cockpitView != null
+                ? CockpitWeatherEnvelope.AboveDeck(_cockpitView.position.y, CurrentWeatherLook.CloudCover) : 0f;
+        private float ObserverSkyCover => InCockpit && AirsideSettings.Current.WeatherLayers
+            && _cockpitView != null
+                ? CockpitWeatherEnvelope.SkyCover(_cockpitView.position.y, CurrentWeatherLook.CloudCover)
+                : CurrentWeatherLook.CloudCover;
+
         private void UpdateStarField()
         {
             if (_starFieldRoot == null)
@@ -935,7 +962,7 @@ namespace Airside.Presentation
             var daylight = PresentationDaylight;
             // Stars used to switch off at daylight 0.35 while still three-quarters bright,
             // so the whole sky blinked once every dawn and dusk. Fade them out instead.
-            var fade = StarFieldFade(daylight, CurrentWeatherLook.CloudCover);
+            var fade = StarFieldFade(daylight, ObserverSkyCover);
             var show = fade > 0.002f;
             if (_starFieldRoot.gameObject.activeSelf != show)
                 _starFieldRoot.gameObject.SetActive(show);
@@ -1028,7 +1055,7 @@ namespace Airside.Presentation
             }
 
             var skyAnchor = _mainCamera != null ? _mainCamera.transform.position : Vector3.zero;
-            var cloudCover = CurrentWeatherLook.CloudCover;
+            var cloudCover = ObserverSkyCover;
             var discVisibility = Mathf.Clamp01(1f - Mathf.InverseLerp(0.3f, 0.75f, cloudCover));
 
             SkyDirection.ToWorld(sky.Sun, out var sx, out var sy, out var sz);

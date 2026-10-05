@@ -40,6 +40,13 @@ namespace Airside.Domain
         public static readonly AircraftOffer Atr42 = new(
             AircraftType.Atr42, 5_200, OperatingTier.Provisional, 70, 5);
 
+        /// <summary>
+        /// The Bell 412EP (ADR 0207): a helicopter that lifts from the helipad beside the rescue base and flies the
+        /// regional band. Thirteen seats pay less per flight than a turboprop's, and it needs the expanded base's pad.
+        /// </summary>
+        public static readonly AircraftOffer Bell412 = new(
+            AircraftType.Bell412, 6_800, OperatingTier.Provisional, 75, 8);
+
         public static readonly AircraftOffer Dash8Q400 = new(
             AircraftType.Dash8Q400, 14_500, OperatingTier.Regional, 75, 12);
 
@@ -84,7 +91,7 @@ namespace Airside.Domain
         /// <summary>Every offer, in the order a career meets them (tier, then price).</summary>
         public static readonly IReadOnlyList<AircraftOffer> All = new[]
         {
-            Saab340, Atr42, Dash8Q400,
+            Saab340, Atr42, Bell412, Dash8Q400,
             EmbraerE190, AirbusA220300, Boeing737800, AirbusA320200, Boeing7378, AirbusA321Neo,
             AirbusA330900, Boeing7879, Boeing78710, AirbusA350900
         };

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using Airside.Domain;
 using Airside.Simulation;
 using Unity.Profiling;
 using UnityEngine;
@@ -105,6 +106,43 @@ namespace Airside.Presentation
         private bool _reviewFreighterHold;
         private bool _reviewHangarHold;
         private bool _reviewBoardingApplied;
+
+        /// <summary>
+        /// <c>-airsideSoakAddType B412 [-airsideSoakAddTo KGC]</c>: the soak airline starts with one extra aircraft of
+        /// that type on a stand that fits, and, with a destination, a flight booked a few minutes out. Soak only;
+        /// lets a packaged run exercise a type the opening fleet does not include (the player's helicopter, ADR 0227).
+        /// </summary>
+        private void TryAddSoakAircraft(string[] args)
+        {
+            var typeIndex = Array.IndexOf(args, "-airsideSoakAddType");
+            if (typeIndex < 0 || typeIndex + 1 >= args.Length || _operations == null
+                || !AircraftType.TryFromId(args[typeIndex + 1], out var type))
+                return;
+            var player = _operations.PlayerAirline;
+            StableId? stand = null;
+            foreach (var free in _operations.FreeStandsFor(type))
+            {
+                stand = free;
+                break;
+            }
+
+            if (player == null || !stand.HasValue)
+            {
+                Debug.Log($"{SoakLogTag} could not add {type.Id}: no free stand");
+                return;
+            }
+
+            var aircraft = _operations.AddAircraft(player, "VH-TS1", type, stand.Value);
+            var toIndex = Array.IndexOf(args, "-airsideSoakAddTo");
+            if (toIndex >= 0 && toIndex + 1 < args.Length
+                && DestinationCatalogue.TryFind(args[toIndex + 1], out var destination))
+            {
+                var departAt = AirlineOperations.WholeMinute(_clock.Now.Advance(
+                    Math.Max(6 * 60, DeparturePrep.LeadSeconds(type, aircraft.BaseLevel) + 60)));
+                var result = _operations.ScheduleDeparture(aircraft, destination, departAt);
+                Debug.Log($"{SoakLogTag} added {aircraft.Registration} ({type.Id}) on {stand.Value}; booked to {destination.Code}: {(result.Accepted ? "ok" : result.Reason)}");
+            }
+        }
 
         private void OpenReviewPanel(string[] args)
         {
@@ -280,7 +318,7 @@ namespace Airside.Presentation
             foreach (var pair in _fleetAircraftById)
             {
                 var aircraft = pair.Value;
-                if (aircraft == null)
+                if (aircraft == null || aircraft.Type.IsRotorcraft)
                     continue;
                 var hasView = _fleetViewById.ContainsKey(pair.Key);
                 var preferJet = AirlineOperations.NeedsTerminalGate(aircraft.Type);
@@ -482,6 +520,7 @@ namespace Airside.Presentation
                 var followIndex = Array.IndexOf(args, ReviewAircraftFlag);
                 _reviewAircraftId = followIndex >= 0 && followIndex + 1 < args.Length
                     ? args[followIndex + 1] : null;
+                TryAddSoakAircraft(args);
                 if (Array.IndexOf(args, ReviewFreighterFlag) >= 0)
                 {
                     _reviewFreighterRequired = true;

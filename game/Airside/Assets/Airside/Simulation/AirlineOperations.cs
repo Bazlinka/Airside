@@ -159,7 +159,10 @@ namespace Airside.Simulation
         /// <summary>Terminal gates (ADR 0047): jets only, a separate stand system from the regional bays.</summary>
         public static readonly IReadOnlyList<StableId> AdelaideTerminalGates = StandIds(AdelaideLayout.TerminalGates);
 
-        /// <summary>Every stand at Adelaide: the regional bays, then the terminal gates.</summary>
+        /// <summary>The helipad spots (ADR 0207): helicopters only, no taxiway.</summary>
+        public static readonly IReadOnlyList<StableId> AdelaideHelipadStands = HelipadStandIds();
+
+        /// <summary>Every stand at Adelaide: the regional bays, the terminal gates, then the helipad spots.</summary>
         public static readonly IReadOnlyList<StableId> AdelaideStands = CombinedStands();
 
         /// <summary>
@@ -279,7 +282,9 @@ namespace Airside.Simulation
         /// </summary>
         public static readonly IReadOnlyList<(Func<Airline> Make, (string Registration, AircraftType Type)[] Fleet)> EmergencyOperators = new (Func<Airline>, (string, AircraftType)[])[]
         {
-            (Airline.Rfds, new[] { ("VH-FDA", AircraftType.Saab340) })
+            (Airline.Rfds, new[] { ("VH-FDA", AircraftType.Saab340) }),
+            // SA Ambulance rescue helicopter on Helipad West (ADR 0207); the Bell 412EP Babcock flies for SA.
+            (Airline.SaAmbulance, new[] { ("VH-SAR", AircraftType.Bell412) })
         };
 
         private readonly ISimulationClock _clock;
@@ -462,7 +467,7 @@ namespace Airside.Simulation
             var aircraft = new FleetAircraft(registration, airline, type, stand, _processedTo);
             aircraft.Owner = this;
             _fleet.Add(aircraft);
-            if (!airline.IsPlayer && !airline.IsEmergency)
+            if (!airline.IsPlayer && (!airline.IsEmergency || type.IsRotorcraft))
                 ScheduleAiDeparture(aircraft, _processedTo);
             return aircraft;
         }
@@ -614,7 +619,16 @@ namespace Airside.Simulation
                         }
 
                         Consider(readyAt);
-                        if (readyAt.CompareTo(now) <= 0)
+                        if (readyAt.CompareTo(now) <= 0 && aircraft.Type.IsRotorcraft)
+                        {
+                            // Ready but held by the pad, the weather or the curfew: a helicopter has no taxiway
+                            // to wait on, so the next change is one of those (ADR 0207).
+                            Consider(HelipadFreeAt());
+                            Consider(Weather.NextBlock(now));
+                            if (!ExemptFromCurfew(aircraft) && AirportCurfew.IsClosed(now, Clock))
+                                Consider(AirportCurfew.OpensAt(now, Clock));
+                        }
+                        else if (readyAt.CompareTo(now) <= 0)
                         {
                             // Ready but still at the stand: it may be waiting for the ground to
                             // clear, which is re-checked on the grid. Curfew is a wall-clock wait.
@@ -1090,6 +1104,8 @@ namespace Airside.Simulation
                     }
                     if (!DeparturePrep.IsReady(aircraft, now, CareerState.BaseLevel))
                         return false;
+                    if (aircraft.Type.IsRotorcraft)
+                        return DepartRotorcraft(aircraft, now);
                     var pushingBackFromGate = AdelaideGround.IsTerminalGate(aircraft.Stand);
                     var readyAt = DepartureReadyAt(aircraft);
                     if (NextTaxiReleaseAt(now, pushingBackFromGate).HasValue)
@@ -1145,7 +1161,9 @@ namespace Airside.Simulation
                     return true;
 
                 case FleetState.Outbound:
-                    Transition(aircraft, FleetState.AtDestination, now, AwayTurnaroundSeconds(aircraft, now));
+                    Transition(aircraft, FleetState.AtDestination, now, aircraft.Type.IsRotorcraft
+                        ? RescueTurnaroundSeconds(aircraft)
+                        : AwayTurnaroundSeconds(aircraft, now));
                     return true;
 
                 case FleetState.AtDestination:
@@ -1153,7 +1171,8 @@ namespace Airside.Simulation
                     if (aircraft.Airline.Id.Value == "CPA" && !IsCathaySeason(now))
                         return false;
                     var inboundSeconds = LegAirborne(aircraft);
-                    if (!aircraft.Airline.IsPlayer)
+                    // A rescue call-out is not a timetabled flight: no random delay or cancellation.
+                    if (!aircraft.Airline.IsPlayer && !aircraft.Type.IsRotorcraft)
                     {
                         var inbound = FlightDisruption.For(
                             $"{aircraft.Registration}:in:{aircraft.CompletedTrips}", now, Clock);
@@ -1183,6 +1202,8 @@ namespace Airside.Simulation
                     // late arrival could touch down onto a full apron just before curfew and
                     // sit across the runway-exit taxiway until the 05:00 departure wave. Keep
                     // it in flow control and recheck at a useful interval instead.
+                    if (aircraft.Type.IsRotorcraft)
+                        return ArriveRotorcraft(aircraft, now);
                     var arrivalStand = SuggestStand(aircraft);
                     if (!aircraft.Airline.IsPlayer && arrivalStand == null)
                     {
@@ -1204,6 +1225,8 @@ namespace Airside.Simulation
                     return true;
 
                 case FleetState.Landing:
+                    if (aircraft.Type.IsRotorcraft)
+                        return FinishArrival(aircraft, now);
                     // A missed approach is stored as Landing for ApproachSeconds only. The
                     // real landing after that is a longer state (approach + roll + vacate)
                     // and must still reach a stand even though WentAroundThisTrip stays set
@@ -1243,22 +1266,7 @@ namespace Airside.Simulation
                     return true;
 
                 case FleetState.TaxiIn:
-                    var justFlown = aircraft.CurrentDestination;
-                    aircraft.CompletedTrips++;
-                    aircraft.RotationsSinceCheck++;
-                    // A rotation begun with the check already overdue (ADR 0085).
-                    if (aircraft.Airline.IsPlayer && aircraft.RotationsSinceCheck > Maintenance.IntervalRotations)
-                        CareerState?.ApplyPunctuality(-Maintenance.OverduePenalty);
-                    aircraft.WentAroundThisTrip = false;
-                    // Transition before clearing the destination so the AtStand event still
-                    // carries the route for the Operations board history strip.
-                    Transition(aircraft, FleetState.AtStand, now, null);
-                    aircraft.CurrentDestination = null;
-                    if (aircraft.Airline.IsPlayer)
-                        TrySettleFlight(aircraft, justFlown, now);
-                    else
-                        ScheduleAiDeparture(aircraft, now);
-                    return true;
+                    return FinishArrival(aircraft, now);
 
                 default:
                     return false;
@@ -1278,7 +1286,8 @@ namespace Airside.Simulation
         {
             var count = 0;
             foreach (var aircraft in _fleet)
-                if (aircraft.Airline.IsPlayer && !NeedsTerminalGate(aircraft.Type) && !HoldsStand(aircraft))
+                if (aircraft.Airline.IsPlayer && !NeedsTerminalGate(aircraft.Type) && !aircraft.Type.IsRotorcraft
+                    && !HoldsStand(aircraft))
                     count++;
             return count;
         }

@@ -494,7 +494,8 @@ namespace Airside.Presentation
             var flights = VisualFlights;
             for (var f = 0; f < flights.Count; f++)
             {
-                if (flights[f].Operation.Phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.TaxiIn)
+                if (flights[f].Operation.Phase is AircraftPhase.Approach or AircraftPhase.Landing or AircraftPhase.TaxiIn
+                    && !IsRotorcraftFlight(flights[f]))
                 {
                     inbound = true;
                     break;

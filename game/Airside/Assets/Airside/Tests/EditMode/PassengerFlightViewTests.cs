@@ -44,6 +44,31 @@ namespace Airside.Tests
             }
             finally {Object.DestroyImmediate(root);}
         }
+        [Test] public void ExteriorIgnoresInteriorMotionAndKeepsItsOwnOptics()
+        {
+            var host = new GameObject("Exterior camera");
+            var aircraft = new GameObject("Watched aircraft");
+            try
+            {
+                var camera = host.AddComponent<Camera>();
+                var controller = host.AddComponent<AirsideCameraController>();
+                typeof(AirsideCameraController).GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(controller, null);
+                aircraft.transform.SetPositionAndRotation(new Vector3(30f, 800f, 50f), Quaternion.Euler(-10f, 120f, 8f));
+                Assert.That(controller.StartFlightExterior(aircraft.transform, new Vector3(0f, 2f, -10f), 38f), Is.True);
+                var position = host.transform.position;
+                var rotation = host.transform.rotation;
+                controller.SetCockpitMotion(new Vector3(0.1f, -0.1f, 0.05f), new Vector3(3f, 4f, 2f));
+                controller.SetCockpitRumble(1f);
+                typeof(AirsideCameraController).GetMethod("ApplyCockpitPose", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(controller, null);
+                Assert.That(Vector3.Distance(host.transform.position, position), Is.LessThan(0.001f));
+                Assert.That(Quaternion.Angle(host.transform.rotation, rotation), Is.LessThan(0.001f));
+                controller.RecenterCockpit();
+                typeof(AirsideCameraController).GetMethod("ApplyCockpitPose", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(controller, null);
+                Assert.That(Vector3.Distance(host.transform.position, position), Is.LessThan(0.001f));
+                Assert.That(camera.fieldOfView, Is.EqualTo(48f).Within(0.001f));
+            }
+            finally { Object.DestroyImmediate(host); Object.DestroyImmediate(aircraft); }
+        }
         [Test] public void ExteriorTracksAircraftAndSurvivesOriginShiftThenRestoresOptics()
         {
             var host=new GameObject("Camera");var aircraft=new GameObject("Aircraft");

@@ -17,6 +17,19 @@ namespace Airside.Presentation
         private Vector3 _cockpitPreviousPosition;
         private double _cockpitPreviousTime;
         private float _cockpitGroundKnots;
+        private readonly CockpitMotion _cockpitMotion = new();
+        private readonly CockpitCallouts _cockpitCallouts = new();
+        private string _cockpitCallText;
+        private float _cockpitCallUntil;
+        private GUIStyle _calloutStyle;
+        private bool _cockpitIsJet;
+        private float _cockpitGearHeight, _cockpitVerticalSpeed;
+        private static int StableHash(string text)
+        {
+            var hash = 17;
+            foreach (var c in text) hash = hash * 31 + c;
+            return hash;
+        }
         private double _cockpitNextReadout;
         private bool InCockpit => !string.IsNullOrEmpty(_cockpitAircraftId);
 
@@ -77,6 +90,7 @@ namespace Airside.Presentation
 
         private void BindCockpitView(Transform view)
         {
+            ReleaseCockpitAirflow();
             if (_cockpitInterior != null)
             {
                 _cockpitInterior.Leave();
@@ -85,6 +99,16 @@ namespace Airside.Presentation
             _cockpitView = view;
             _cockpitInterior=null;
             var type = _fleetAircraftById[_cockpitAircraftId].Type;
+            _cockpitPreviousPosition = view.position;
+            _cockpitPreviousTime = _preciseTime;
+            _cockpitGroundKnots = 0f;
+            _cockpitNextReadout = 0;
+            _cockpitMotion.Reset(StableHash(_cockpitAircraftId));
+            _cockpitCallouts.Reset();
+            _cockpitIsJet = JetCockpitProfile.TryFor(_fleetAircraftById[_cockpitAircraftId].Type.Id, out _);
+            _cockpitCallText = null;
+            _cockpitGearHeight = Mathf.Max(0f, view.position.y - AirsideFlightPath.GroundY);
+            _cockpitVerticalSpeed = 0f;
             if (_aircraftViewMode == AircraftViewMode.Exterior) return;
             if (_aircraftViewMode == AircraftViewMode.LeftWindow || _aircraftViewMode == AircraftViewMode.RightWindow)
                 _cockpitInterior=PassengerCabinInterior.Build(view,type,_aircraftViewMode == AircraftViewMode.RightWindow);
@@ -94,16 +118,13 @@ namespace Airside.Presentation
                 : TurbopropCockpitInterior.Create(view, type);
             if (_cockpitInterior == null) return;
             _cockpitInterior.Enter();
-            _cockpitPreviousPosition = view.position;
-            _cockpitPreviousTime = _preciseTime;
-            _cockpitGroundKnots = 0f;
-            _cockpitNextReadout = 0;
         }
 
         private void ExitCockpit(bool overview)
         {
             if (!InCockpit) return;
             var id = _cockpitAircraftId;
+            ReleaseCockpitAirflow();
             _cockpitAircraftId = null;
             if (_cockpitInterior != null)
             {
@@ -143,51 +164,122 @@ namespace Airside.Presentation
                 BindCockpitView(view);
                 StartFlightCamera(aircraft);
             }
-            if (_aircraftViewMode == AircraftViewMode.Exterior) return;
             var elapsed = _preciseTime - _cockpitPreviousTime;
+            var parts = PartsFor(view);
+            // Wheel height: take the gear-pivot lift back out so a pitched-up roll still reads as on the ground.
+            var lift = parts.Profile != null
+                ? AircraftGearPivot.LiftMetres(view.rotation,
+                    new Vector3(0f, parts.Profile.ModelGroundOffsetMetres, parts.MainGearZMetres)) : 0f;
+            var gearHeight = Mathf.Max(0f, view.position.y - lift - AirsideFlightPath.GroundY);
+            var simRate = 0f;
             if (elapsed > 0 && elapsed < 0.75)
             {
                 var delta = view.position - _cockpitPreviousPosition;
                 delta.y = 0f;
                 var speed = CircuitProfile.ToKnots(delta.magnitude / (float)elapsed);
                 _cockpitGroundKnots = Mathf.Lerp(_cockpitGroundKnots, speed, 1f - Mathf.Exp(-6f * (float)elapsed));
+                var rawVertical = (gearHeight - _cockpitGearHeight) / (float)elapsed;
+                _cockpitVerticalSpeed = Mathf.Lerp(_cockpitVerticalSpeed, rawVertical, 1f - Mathf.Exp(-10f * (float)elapsed));
+                simRate = Time.unscaledDeltaTime > 1e-4f ? (float)elapsed / Time.unscaledDeltaTime : 1f;
             }
             _cockpitPreviousTime = _preciseTime;
             _cockpitPreviousPosition = view.position;
+            _cockpitGearHeight = gearHeight;
+            if (_aircraftViewMode == AircraftViewMode.Exterior) return;
+            var spool = EngineStartSequence.For(aircraft, _preciseTime);
+            var pitchUp = -Mathf.DeltaAngle(0f, view.eulerAngles.x);
+            var bankLeft = Mathf.DeltaAngle(0f, view.eulerAngles.z);
+            // Head and body motion every frame: rumble, touchdown jolt, thumps, g-load and gaze into turns.
+            var motion = _cockpitMotion.Step(new CockpitMotion.Sample
+            {
+                DeltaSeconds = Time.unscaledDeltaTime, SimRate = simRate, Time = Time.unscaledTime,
+                GroundSpeed = _cockpitGroundKnots / 1.943844f, VerticalSpeed = _cockpitVerticalSpeed,
+                HeightAgl = gearHeight, PitchUpDegrees = pitchUp, BankLeftDegrees = bankLeft,
+                Spool = (spool.Left + spool.Right) * 0.5f,
+                Turboprop = !_cockpitIsJet,
+            });
+            _cameraController.SetCockpitMotion(new Vector3(motion.Right, motion.Up, motion.Forward),
+                new Vector3(motion.PitchDownDegrees, motion.YawDegrees, motion.RollDegrees));
+            _cockpitInterior.SetAttitude(pitchUp, bankLeft);
+            _cockpitInterior.SetEnvironment(PresentationDaylight, CurrentWeatherLook.Precipitation, Time.unscaledTime);
+            _cockpitCallouts.DeltaSeconds = (float)Math.Max(0.0, elapsed);
+            var call = _cockpitCallouts.Step(new CockpitCallouts.Sample
+            {
+                GroundKnots = _cockpitGroundKnots, RotateKnots = AircraftPerformance.For(aircraft.Type).RotateKnots,
+                HeightFeet = gearHeight * 3.28084f, VerticalFeetPerMinute = _cockpitVerticalSpeed * 196.85f,
+                Jet = _cockpitIsJet,
+            });
+            if (call != null) { _cockpitCallText = call; _cockpitCallUntil = Time.unscaledTime + 2.2f; }
+            // Cloud/storm buffet from the shared weather envelope; engine and runway feel come from CockpitMotion.
+            var cloud = CockpitWeatherEnvelope.InCloud(view.position.y, CurrentWeatherLook.CloudCover);
+            var inAir = gearHeight > 5f;
+            _cameraController.SetCockpitRumble(inAir ? cloud * (CurrentWeather == WeatherKind.Storm ? 0.65f : 0.25f) : 0f);
             if (_preciseTime < _cockpitNextReadout) return;
             _cockpitNextReadout = _preciseTime + 0.1;
-            var height = Mathf.Max(0f, view.position.y - AirsideFlightPath.GroundY) * 3.28084f;
             if (_cockpitInterior is JetCockpitInterior jet)
-                jet.SetFlightState(view, EngineStartSequence.For(aircraft, _preciseTime), AircraftStatus.TagPhase(aircraft, _clock.Now));
-            _cockpitInterior.SetReadout($"GS {_cockpitGroundKnots:0} kt\nHEIGHT {height:0} ft\nHDG {view.eulerAngles.y:000}°");
+                jet.SetFlightState(view, spool, AircraftStatus.TagPhase(aircraft, _clock.Now));
+            var height = gearHeight * 3.28084f;
+            var vs = _cockpitVerticalSpeed * 196.85f;   // ft/min
+            _cockpitInterior.SetReadout($"GS {_cockpitGroundKnots:0} kt\nHEIGHT {height:0} ft  VS {vs:+0;-0;0}\nHDG {view.eulerAngles.y:000}°");
         }
 
         private void DrawCockpitHud(HudLayout layout, GUIStyle panel, GUIStyle button)
         {
             _hudPanels.Clear();
-            _cameraController.KeyboardCaptured=_menuOpen || GUIUtility.keyboardControl != 0;
-            var strip=new Rect(18,18,Mathf.Min(860,layout.Viewport.x-36),92);
-            _hudPanels.Add(strip); GUI.Box(strip,GUIContent.none,panel);
-            if (_fleetAircraftById.TryGetValue(_cockpitAircraftId,out var aircraft))
+            _cameraController.KeyboardCaptured = _menuOpen || GUIUtility.keyboardControl != 0;
+            var strip = new Rect(18f, 18f, Mathf.Min(900f, layout.Viewport.x - 36f), 146f);
+            _hudPanels.Add(strip);
+            GUI.Box(strip, GUIContent.none, panel);
+            var worldX = (_cockpitView != null ? _cockpitView.position.x : 0f) + _flightOriginX;
+            var worldZ = (_cockpitView != null ? _cockpitView.position.z : 0f) + _flightOriginZ;
+            var fromAdelaideKm = Math.Sqrt(worldX * worldX + worldZ * worldZ) / 1000.0;
+            if (_fleetAircraftById.TryGetValue(_cockpitAircraftId, out var aircraft))
             {
-                GUI.Label(new Rect(strip.x+12,strip.y+7,strip.width-24,23),
-                    $"{aircraft.Registration} · {aircraft.Type.Name} · {AircraftStatus.TagPhase(aircraft,_clock.Now)}");
-                var labels=new[]{"Cockpit","Left window","Right window","Outside"};
-                var width=(strip.width-24-3*6)/4;
-                for(int i=0;i<4;i++)
+                GUI.Label(new Rect(strip.x + 12f, strip.y + 7f, strip.width - 24f, 22f),
+                    $"{aircraft.Registration} · {aircraft.Type.Name} · {AircraftStatus.TagPhase(aircraft, _clock.Now)}");
+                GUI.Label(new Rect(strip.x + 12f, strip.y + 29f, strip.width - 24f, 22f),
+                    $"{aircraft.CurrentDestination?.Code ?? "Local flight"} · GS {_cockpitGroundKnots:0} kt · V/S {_cockpitVerticalSpeed * 196.85f:+0;-0;0} ft/min · {fromAdelaideKm:0.0} km from Adelaide");
+                var labels = new[] { "Cockpit", "Left window", "Right window", "Outside" };
+                var width = (strip.width - 24f - 18f) / 4f;
+                for (var i = 0; i < 4; i++)
                 {
-                    var mode=(AircraftViewMode)i; var old=GUI.enabled;
-                    GUI.enabled=FlightViewReason(aircraft,mode).Length == 0;
-                    if(GUI.Button(new Rect(strip.x+12+i*(width+6),strip.y+33,width,25),
-                        (_aircraftViewMode == mode ? "● " : "")+labels[i],button)) EnterFlightView(aircraft,mode);
-                    GUI.enabled=old;
+                    var mode = (AircraftViewMode)i;
+                    var enabled = GUI.enabled;
+                    GUI.enabled = FlightViewReason(aircraft, mode).Length == 0;
+                    if (GUI.Button(new Rect(strip.x + 12f + i * (width + 6f), strip.y + 53f, width, 25f),
+                        (_aircraftViewMode == mode ? "● " : "") + labels[i], button)) EnterFlightView(aircraft, mode);
+                    GUI.enabled = enabled;
                 }
             }
-            GUI.Label(new Rect(strip.x+12,strip.y+64,strip.width-210,20),
-                _aircraftViewMode == AircraftViewMode.Exterior ? "Right-drag to orbit · scroll for distance" : "Right-drag to look · scroll to zoom");
-            if(GUI.Button(new Rect(strip.xMax-202,strip.y+63,90,23),"Recenter",button)) _cameraController.RecenterCockpit();
-            if(GUI.Button(new Rect(strip.xMax-106,strip.y+63,94,23),"Overview (Esc)",button)) ExitCockpit(true);
-            DrawToast(AirlineHudLayout.Create(layout,false).Toast);
+            var hint = _aircraftViewMode == AircraftViewMode.Exterior
+                ? "Drag/arrows to orbit · scroll/+− for distance · Home to recenter"
+                : "Drag/arrows to look · scroll/+− to zoom · Home to recenter";
+            if (_aircraftViewMode == AircraftViewMode.Cockpit) hint += " · 1–5 glances";
+            GUI.Label(new Rect(strip.x + 12f, strip.y + 83f, strip.width - 24f, 22f), hint);
+            if (GUI.Button(new Rect(strip.xMax - 202f, strip.y + 111f, 90f, 23f), "Recenter", button))
+                _cameraController.RecenterCockpit();
+            if (GUI.Button(new Rect(strip.xMax - 106f, strip.y + 111f, 94f, 23f), "Overview (Esc)", button))
+                ExitCockpit(true);
+            if (_aircraftViewMode == AircraftViewMode.Cockpit && !string.IsNullOrEmpty(_cockpitCallText) && Time.unscaledTime < _cockpitCallUntil)
+            {
+                _calloutStyle ??= new GUIStyle(GUI.skin.label)
+                { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
+                _calloutStyle.fontSize = Mathf.RoundToInt(Mathf.Clamp(layout.Viewport.y * 0.045f, 22f, 44f));
+                var area = new Rect(0f, layout.Viewport.y * 0.62f, layout.Viewport.x, 60f);
+                var fade = Mathf.Clamp01((_cockpitCallUntil - Time.unscaledTime) / 0.6f);
+                _calloutStyle.normal.textColor = new Color(0f, 0f, 0f, 0.7f * fade);
+                GUI.Label(new Rect(area.x + 2f, area.y + 2f, area.width, area.height), _cockpitCallText, _calloutStyle);
+                _calloutStyle.normal.textColor = new Color(0.92f, 0.96f, 0.9f, fade);
+                GUI.Label(area, _cockpitCallText, _calloutStyle);
+            }
+            var motion = GUI.Toggle(new Rect(strip.x + 12f, strip.y + 111f, 220f, 24f),
+                _cameraController.CockpitMotionEnabled, "Flight vibration");
+            if (motion != _cameraController.CockpitMotionEnabled)
+            {
+                _cameraController.CockpitMotionEnabled = motion;
+                AirsideSettings.Current.Save();
+            }
+            DrawToast(AirlineHudLayout.Create(layout, false).Toast);
         }
 
         // Reproducible packaged review: only a real eligible aircraft, never force-start engines.

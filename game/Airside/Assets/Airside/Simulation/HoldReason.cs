@@ -241,7 +241,7 @@ namespace Airside.Simulation
                 FleetAircraft latest = null;
                 foreach (var other in _fleet)
                 {
-                    if (other.State is not (FleetState.TakingOff or FleetState.Landing)
+                    if (other.Type.IsRotorcraft || other.State is not (FleetState.TakingOff or FleetState.Landing)
                         || RunwayWeather.IsMainRunway(other.AssignedRunway) != main)
                         continue;
                     if (IsOccupyingRunway(other))

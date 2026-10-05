@@ -182,8 +182,26 @@ namespace Airside.Presentation
             mainTireRadiusMetres: 0.50f,
             noseTireRadiusMetres: 0.34f);
 
+        // AIR-017: the Bell 412EP-class rescue helicopter (ADR 0186, 0207). The authored root has its skids at
+        // local y=0.20, the rotor axis 0.28 m behind the origin and the tail 10.3 m aft, so the airframe's
+        // visual centre sits about 3.2 m behind the root.
+        public static readonly AircraftVisualProfile Bell412 = new(
+            artRelativePath: "Models/Aircraft/mdl_bell_412_rescue_v01.gltf",
+            modelGroundOffsetMetres: -0.20f,
+            visualCentreOffsetMetres: new Vector3(0f, 0f, -3.2f),
+            pickSizeMetres: new Vector3(15f, 6f, 20f),
+            pickCentreYMetres: 2.4f,
+            shadowWidthMetres: 14f,
+            shadowDepthMetres: 18f,
+            selectionMarkerDiameterMetres: 20f,
+            followDistanceMultiplier: 0.7f,
+            mainTireRadiusMetres: 0.0f,
+            noseTireRadiusMetres: 0.0f);
+
         public static AircraftVisualProfile For(AircraftType type)
         {
+            if (type != null && type.IsRotorcraft)
+                return Bell412;
             if (type != null && type.Id == AircraftType.Boeing7378.Id)
                 return Boeing7378;
             if (type != null && type.Id == AircraftType.Boeing737800.Id)
@@ -236,6 +254,9 @@ namespace Airside.Presentation
 
         public static bool IsSaab340(AircraftType type) =>
             type != null && type.Id == AircraftType.Saab340.Id;
+
+        public static bool IsBell412(AircraftType type) =>
+            type != null && type.Id == AircraftType.Bell412.Id;
     }
 
     /// <summary>

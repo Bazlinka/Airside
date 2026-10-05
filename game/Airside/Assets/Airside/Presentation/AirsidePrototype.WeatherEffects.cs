@@ -58,6 +58,9 @@ namespace Airside.Presentation
 
         private void UpdateRainMesh(float precipitation, bool storm)
         {
+            var altitudeFade = InCockpit && _cockpitView != null
+                ? CockpitWeatherEnvelope.RainAtHeight(_cockpitView.position.y) : 1f;
+            precipitation *= altitudeFade;
             if (_mainCamera == null || _weatherRainMesh == null)
                 return;
             _weatherRainRenderer ??= _rainRoot.GetComponent<Renderer>();
@@ -99,7 +102,7 @@ namespace Airside.Presentation
             _weatherRainMesh.vertices = _weatherRainVertices;
             _weatherRainMesh.bounds = new Bounds(Vector3.zero, Vector3.one * (radius * 2f + 10f));
             var tint = Color.Lerp(new Color(0.30f, 0.38f, 0.48f), new Color(0.77f, 0.83f, 0.88f), PresentationDaylight);
-            tint.a = Mathf.Lerp(0.28f, 0.60f, precipitation);
+            tint.a = Mathf.Lerp(0.28f, 0.60f, precipitation) * altitudeFade;
             SetRendererColor(_weatherRainRenderer, tint);
         }
     }

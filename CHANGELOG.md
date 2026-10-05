@@ -1,5 +1,11 @@
 ## Unreleased
 
+- Integrate passenger/exterior views with current cockpit flight feel, airflow,
+  cloud breakout and saved controls; keep live flight details across all four
+  modes, full passenger/exterior look range and eased exterior distance zoom.
+
+- Add left/right passenger window views for all 13 passenger aircraft and an orbiting exterior flight view. Switch between cockpit, window seats and outside while retaining regional terrain; Overview/Esc returns to the airport. Fitted simplified cabin layouts, batched surfaces and separate interior/exterior audio (ADR 0227).
+
 - Cloud-breakout correction: cockpit fog and sun/moon/star visibility clear with
   the sky above dense cloud; exterior and ground/deck weather stay consistent.
 

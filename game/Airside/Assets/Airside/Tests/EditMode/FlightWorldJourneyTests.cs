@@ -78,6 +78,38 @@ namespace Airside.Tests
             }
         }
 
+        [Test] public void DistantTerrainAndPoseOwnershipRemainActiveAcrossAllFlightViews()
+        {
+            Start("CPD");
+            _aircraft.Restore(FleetState.Outbound,new SimulationTime(0),new SimulationTime(_seconds));
+            Pose(_seconds*.5); Set("_cockpitAircraftId",_aircraft.Registration);
+            var viewMode=typeof(AirsidePrototype).GetNestedType("AircraftViewMode",BindingFlags.NonPublic);
+            var update=typeof(AirsidePrototype).GetMethod("UpdateFlightWorld",Hidden);
+            var originX=typeof(AirsidePrototype).GetField("_flightOriginX",Hidden);
+            var originZ=typeof(AirsidePrototype).GetField("_flightOriginZ",Hidden);
+            var terrainField=typeof(AirsidePrototype).GetField("_flightTerrain",Hidden);
+            object x=null,z=null;
+            try
+            {
+                foreach(var mode in Enum.GetValues(viewMode))
+                {
+                    Set("_aircraftViewMode",mode);update.Invoke(_prototype,null);
+                    if(x == null){x=originX.GetValue(_prototype);z=originZ.GetValue(_prototype);}
+                    Assert.That(originX.GetValue(_prototype),Is.EqualTo(x));Assert.That(originZ.GetValue(_prototype),Is.EqualTo(z));
+                    Assert.That((double)x == 0 && (double)z == 0,Is.False,"Expected a distant streaming origin");
+                    Assert.That(((AirsideFlightWorldTerrain)terrainField.GetValue(_prototype)).gameObject.activeSelf,Is.True);
+                    Assert.That(typeof(AirsidePrototype).GetMethod("WatchingJourney",Hidden).Invoke(_prototype,new object[]{_aircraft.Registration}),Is.True);
+                }
+                typeof(AirsidePrototype).GetMethod("ResetFlightWorld",Hidden).Invoke(_prototype,null);
+                Assert.That(originX.GetValue(_prototype),Is.EqualTo(0d));Assert.That(originZ.GetValue(_prototype),Is.EqualTo(0d));
+            }
+            finally
+            {
+                var terrain=(AirsideFlightWorldTerrain)terrainField.GetValue(_prototype);
+                if(terrain != null) Object.DestroyImmediate(terrain.gameObject);
+            }
+        }
+
         [Test] public void DistantActorCullingRestoresPreviouslyHiddenActorsAndAcceptsDestroyedObjects()
         {
             var active = new GameObject("Airport vehicle");

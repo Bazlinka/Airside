@@ -1,3 +1,32 @@
+## Where to resume — passenger/exterior flight views, 6 October 2026
+
+Combined-source validation: **1,477 headless regression tests passed**, plus 122 focused checks and C# syntax checks. Evidence: `docs/testing/passenger-flight-views-integration-2026-10-06/`. Native Unity integration review remains outstanding.
+
+Bailey authorised merging PR #518 into main. Integrate current `7194c18f` so the
+new passenger left/right seats and exterior flight orbit retain cockpit motion,
+callouts, cloud breakout, airflow/PA isolation, watched-aircraft Doppler routing,
+saved vibration, keyboard zoom/Home, inverted drag and eased gaze. Flight HUD
+keeps registration, route/GS/V/S/distance, view buttons and vibration/recenter/exit.
+Exterior telemetry updates, and exterior orbit ignores interior motion/rumble.
+Original branch native evidence remains separate from this combined-source check.
+**NEXT:** native Unity and packaged view-cycle review of current combined source. This Linux worker has no Mac Unity editor.
+Original 35 native / 35 focused headless and 52 rendered stills are retained in
+`docs/testing/passenger-flight-views-2026-10-01/`; updated evidence is recorded in
+`docs/testing/passenger-flight-views-integration-2026-10-06/README.md`.
+
+## Passenger/exterior flight views — 2026-10-01 Codex
+
+Branch `feature/passenger-and-exterior-flight-views`, isolated `/private/tmp/airside-sa-world`.
+Bailey requested authentic passenger views for all jets/turboprops and a flying
+exterior view. Left/right fitted window seats and exterior orbit share the watched
+registration and streamed terrain. Overview/Esc leaves the journey. Original
+simplified cabin sections use type-specific representative economy layouts.
+Task packet `docs/plans/passenger-flight-views.md`, ADR 0227. Focused native 35/35,
+headless 35/35, asset audit passed. All 13 types rendered in left/right/cabin/outside
+views; 52 native stills inspected. Packaged build/view cycle pending. Evidence:
+`docs/testing/passenger-flight-views-2026-10-01/README.md`.
+No new full-flight performance claim; the existing long-trip stall remains open.
+
 ## Where to resume — combined cockpit work merged, 5 October 2026
 
 GitHub access is restored. Bailey explicitly authorised merging all cockpit work.

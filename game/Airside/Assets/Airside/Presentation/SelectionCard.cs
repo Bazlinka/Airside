@@ -64,6 +64,8 @@ namespace Airside.Presentation
         /// <summary>The camera is following it now.</summary>
         public bool Following;
         public bool ShowCameraActions;
+        public bool CanPassenger { get; set; }
+        public bool CanExterior { get; set; }
         public bool CanCockpit;
         public string CockpitHint = string.Empty;
 
@@ -190,9 +192,13 @@ namespace Airside.Presentation
             into.Surface(box, 0.9f);
             if (data.ShowCameraActions)
             {
-                into.Button(new HudBox(box.X + 20f, box.Bottom - 34f, box.Width - 40f, 26f),
-                    data.CanCockpit ? "COCKPIT" : data.CockpitHint.ToUpperInvariant(), "camera-cockpit",
-                    HudButtonStyle.Secondary, data.CanCockpit);
+                var cameraWidth=(box.Width-52f)/3f;
+                into.Button(new HudBox(box.X+20f,box.Bottom-34f,cameraWidth,26f),"COCKPIT","camera-cockpit",
+                    HudButtonStyle.Secondary,data.CanCockpit);
+                into.Button(new HudBox(box.X+26f+cameraWidth,box.Bottom-34f,cameraWidth,26f),"PASSENGER","camera-passenger",
+                    HudButtonStyle.Secondary,data.CanPassenger);
+                into.Button(new HudBox(box.X+32f+cameraWidth*2,box.Bottom-34f,cameraWidth,26f),"OUTSIDE","camera-exterior",
+                    HudButtonStyle.Secondary,data.CanExterior);
                 box = new HudBox(box.X, box.Y, box.Width, box.Height - 38f);
             }
             var x = box.X + 20f;

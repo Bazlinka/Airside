@@ -287,7 +287,7 @@ namespace Airside.Presentation
             }
 
             emitter.Configure(aircraft.Type, LoadEngineClip(aircraft.Type), CreateTouchdownClip());
-            emitter.InteriorListening = InCockpit && aircraft.Registration == _cockpitAircraftId;
+            emitter.InteriorListening = InteriorListening && aircraft.Registration == _cockpitAircraftId;
             emitter.Apply(aircraft.Registration, pose.RotorLoad01, pose.RotorSpeed01, engines.Left, engines.Right,
                 0f, 0f, pose.OnGround, false,
                 _audioListener != null ? _audioListener.position : view.position,

@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Unity compiles again.** The cockpit-motion seed helper was named `StableHash`, hiding the
+  `StableHash` class inside `AirsidePrototype`; renamed to `CockpitSeedHash` (same values).
+
 - Integrate passenger/exterior views with current cockpit flight feel, airflow,
   cloud breakout and saved controls; keep live flight details across all four
   modes, full passenger/exterior look range and eased exterior distance zoom.

@@ -1,3 +1,12 @@
+## Where to resume — main compile fix, 6 October 2026
+
+- **2026-10-06 Cursor — `main` did not compile in Unity.** `AirsidePrototype.Cockpit.cs`
+  (from `18d2f932`) added a private `StableHash(string)` method, which hides the
+  `StableHash` class inside the partial class, so `StableNameHash` failed (CS0119).
+  Renamed the helper to `CockpitSeedHash`; seed values unchanged. Unity EditMode
+  1919 passed / 0 failed / 2 inconclusive. **Watch:** do not name members after
+  existing Presentation types inside `AirsidePrototype`.
+
 ## Where to resume — passenger/exterior flight views, 6 October 2026
 
 Combined-source validation: **1,477 headless regression tests passed**, plus 122 focused checks and C# syntax checks. Evidence: `docs/testing/passenger-flight-views-integration-2026-10-06/`. Native Unity integration review remains outstanding.

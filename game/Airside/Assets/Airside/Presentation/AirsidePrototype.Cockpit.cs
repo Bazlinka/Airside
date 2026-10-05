@@ -24,7 +24,7 @@ namespace Airside.Presentation
         private GUIStyle _calloutStyle;
         private bool _cockpitIsJet;
         private float _cockpitGearHeight, _cockpitVerticalSpeed;
-        private static int StableHash(string text)
+        private static int CockpitSeedHash(string text)
         {
             var hash = 17;
             foreach (var c in text) hash = hash * 31 + c;
@@ -103,7 +103,7 @@ namespace Airside.Presentation
             _cockpitPreviousTime = _preciseTime;
             _cockpitGroundKnots = 0f;
             _cockpitNextReadout = 0;
-            _cockpitMotion.Reset(StableHash(_cockpitAircraftId));
+            _cockpitMotion.Reset(CockpitSeedHash(_cockpitAircraftId));
             _cockpitCallouts.Reset();
             _cockpitIsJet = JetCockpitProfile.TryFor(_fleetAircraftById[_cockpitAircraftId].Type.Id, out _);
             _cockpitCallText = null;

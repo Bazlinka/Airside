@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Record Bailey’s completion and acceptance of all current playtesting; close
+  historical manual acceptance reminders and identify release preparation or
+  freight mode as the next choice (6 October 2026; documentation only).
+
 - **Unity compiles again.** The cockpit-motion seed helper was named `StableHash`, hiding the
   `StableHash` class inside `AirsidePrototype`; renamed to `CockpitSeedHash` (same values).
 

@@ -1,3 +1,28 @@
+## Where to resume — all current playtesting complete, 6 October 2026
+
+**Bailey accepts the current game and is happy with it. All existing manual
+playtests are complete by owner sign-off.** This covers gameplay, visual/audio,
+controls, weather, cockpit/passenger/exterior views and journey/performance
+acceptance for work merged through `bfb4a300` (PR #523). Do not carry forward or
+reopen historical playtest reminders unless Bailey asks or a new regression appears.
+Canonical acceptance: `docs/testing/playtest-acceptance-2026-10-06.md`.
+Historical evidence below records what agents actually ran; no new captures,
+listening session or numerical performance measurement is claimed by this sign-off.
+
+**Git:** main is synced; no open PRs or issues at inspection; latest main CI is
+green. Latest native Unity result: 1,919 passed / 0 failed / 2 inconclusive.
+Latest combined headless regression: 1,477 passed.
+
+**NEXT:** release preparation (clean Mac package, version/tag and release notes)
+if Bailey wants to ship this accepted version. If choosing new development,
+P2 freight mode is the next standing product slice; P3 structure/performance is
+technical backlog. No implementation, release publication or new expansion is
+started by this documentation change. Companion/CloudKit remains unopened.
+
+**Handoff:** Codex; documentation-only acceptance update. All previous handoff
+entries and the old “Next work” footer below are historical and superseded by this
+block and `docs/plans/post-audit-improvement-plan.md`.
+
 ## Where to resume — main compile fix, 6 October 2026
 
 - **2026-10-06 Cursor — `main` did not compile in Unity.** `AirsidePrototype.Cockpit.cs`

@@ -1,5 +1,9 @@
 # GitHub recovery and cockpit integration — 5 October 2026
 
+**Current acceptance (6 October 2026): all existing playtests complete; Bailey is
+happy with the game.** See [owner sign-off](../playtest-acceptance-2026-10-06.md). Pending manual acceptance
+below is historical and superseded. Recorded agent-run evidence remains unchanged.
+
 GitHub API and git access are restored. Bailey's previous explicit merge approval
 for #521 remains in effect. Integrate main `84b30159` before merging #521: retain
 the shared glance targets, head/body/landing/reverse effects, callouts, attitude,

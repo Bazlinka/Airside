@@ -1,5 +1,9 @@
 # Post-audit P0 playtest checklist
 
+**Current acceptance (6 October 2026): all existing playtests complete; Bailey is
+happy with the game.** See [owner sign-off](playtest-acceptance-2026-10-06.md). Pending manual acceptance
+below is historical and superseded. Recorded agent-run evidence remains unchanged.
+
 Date: 2026-09-30 · Plan: `docs/plans/post-audit-improvement-plan.md` (ADR 0205)
 
 **Goal:** eyes and ears on recent merges that are green in tests but “not yet seen /

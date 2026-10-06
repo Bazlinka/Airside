@@ -84,3 +84,25 @@ python3 scripts/assemble-aircraft-identity-review.py work/identity-native docs/t
 
 All new art is original deterministic project-owned geometry. Existing airline
 names in simulation are unchanged; no real airline logo or livery has been copied.
+
+## Combined main regression
+
+Current main `18a65490` (AI freight and Unity metadata repair) is integrated at
+`a392b080`. Combined headless suite: **1,508 passed, zero failures**
+(`combined-domain.log`). Required GitHub CI passed on PR #529.
+
+Combined native Unity: **1,951 passed, one failure, two inconclusives**, 1,954 total
+(`combined-unity-results.xml`). The failing busy-day ground-separation test records
+a Dash 8 parked/taxi-in overlap and projects the Bell helicopter onto a fixed-wing
+runway takeoff. To distinguish this from the paint change, all six changed C# files
+were temporarily replaced with exact `origin/main` source and only that test run.
+It reproduces the same two episodes on main (`baseline-main-ground-results.xml`).
+The refresh source was then restored. This inherited simulation/test issue remains
+open; the native suite is not reported as wholly passing. No ground-traffic change
+is included in this visual refresh.
+
+Combined asset audit passes (1,665 unique GUIDs, 349 mirrored art files and
+70 character materials). The comparison encountered the same local shared-compiler
+stall and used the earlier ignored Bee-cache workaround. The pre-integration clean
+Mac build remains the recorded build; the combined revision is not claimed to have
+a new packaged build or full gameplay acceptance.

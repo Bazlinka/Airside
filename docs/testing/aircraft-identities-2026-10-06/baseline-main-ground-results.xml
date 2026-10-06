@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-06 01:34:16Z" end-time="2026-10-06 01:34:19Z" duration="3.2380234">
+  <test-suite type="TestSuite" id="1000" name="Airside" fullname="Airside" runstate="Runnable" testcasecount="1953" result="Failed" site="Child" start-time="2026-10-06 01:34:16Z" end-time="2026-10-06 01:34:19Z" duration="3.238023" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="3253" name="Airside.Tests.EditMode.dll" fullname="/private/tmp/airside-livery-review-20261006/game/Airside/Library/ScriptAssemblies/Airside.Tests.EditMode.dll" runstate="Runnable" testcasecount="1952" result="Failed" site="Child" start-time="2026-10-06 01:34:16Z" end-time="2026-10-06 01:34:19Z" duration="3.226241" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="41674" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="3254" name="Airside" fullname="Airside" runstate="Runnable" testcasecount="1952" result="Failed" site="Child" start-time="2026-10-06 01:34:16Z" end-time="2026-10-06 01:34:19Z" duration="3.217590" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="3255" name="Tests" fullname="Airside.Tests" runstate="Runnable" testcasecount="1952" result="Failed" site="Child" start-time="2026-10-06 01:34:16Z" end-time="2026-10-06 01:34:19Z" duration="3.209303" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestFixture" id="2402" name="GroundSeparationTests" fullname="Airside.Tests.GroundSeparationTests" classname="Airside.Tests.GroundSeparationTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-10-06 01:34:16Z" end-time="2026-10-06 01:34:19Z" duration="3.191190" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-case id="2403" name="BusyDay_NoAircraftDriveThroughEachOther" fullname="Airside.Tests.GroundSeparationTests.BusyDay_NoAircraftDriveThroughEachOther" methodname="BusyDay_NoAircraftDriveThroughEachOther" classname="Airside.Tests.GroundSeparationTests" runstate="Runnable" seed="1178812667" result="Failed" start-time="2026-10-06 01:34:16Z" end-time="2026-10-06 01:34:19Z" duration="3.185891" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[     1  Parked x TaxiIn   e.g. t=29918 VH-QOK(DH8D TaxiIn Runway30) @(1024,527) vs VH-QOM(DH8D AtStand Runway12) @(1028,502) d=26
+   1  Lineup x TakeoffRoll   e.g. t=47238 VH-SAR(B412 TakingOff Runway05) @(-1500,0) vs VH-FDH(B38M TakingOff Runway05) @(-1505,0) d=5
+
+  Expected: <empty>
+  But was:  < [Parked x TaxiIn, 1], [Lineup x TakeoffRoll, 1] >
+]]></message>
+                <stack-trace><![CDATA[at Airside.Tests.GroundSeparationTests.BusyDay_NoAircraftDriveThroughEachOther () [0x00504] in /private/tmp/airside-livery-review-20261006/game/Airside/Assets/Airside/Tests/EditMode/GroundSeparationTests.cs:84
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Saving results to: /Users/bailey.fleming/Library/Application Support/DefaultCompany/Airside/TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

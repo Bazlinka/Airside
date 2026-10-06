@@ -1,3 +1,11 @@
+## Where to resume — render cost trim, 7 October 2026
+
+- **2026-10-07 Claude — settings-only GPU savings (ADR 0246), branch `claude/brave-babbage-ybgffc`.**
+  SSAO downsample 1, MSAA budget 2.5 M px, High shadows 3 cascades/110 m; one test updated.
+  **Unverified:** no Unity or dotnet available. **NEXT:** run `scripts/test-unity.sh`, then
+  compare frame time and look (SSAO banding, shadow pop-in) at day/dusk/night; revert any item
+  that regresses. The 27 native failures listed below remain open.
+
 ## Where to resume — main compile fix + 27 hidden native failures, 7 October 2026
 
 - **2026-10-07 Cursor — `main` did not compile in Unity (Mac build blocked).**

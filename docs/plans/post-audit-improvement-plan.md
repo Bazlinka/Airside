@@ -20,7 +20,7 @@ Do not resume P1 or ask Bailey to repeat old playtests by default.
 
 Bailey clarified that he is happy with the game but it is not ready. Continue
 development; release preparation is deferred. P2 freight mode is the standing next
-product recommendation, subject to Bailey's priorities for remaining gaps.
+product slice; Bailey selected “Follow the existing backlog”.
 P3 technical debt remains open; measured performance budgets are not inferred
 from owner acceptance. P4 milestones remain unopened.
 

@@ -17,10 +17,9 @@ Latest combined headless regression: 1,477 passed.
 playtest completion does not mean development is finished or the game is ready
 for release. Continue development; release preparation is not the next milestone.
 
-**NEXT:** P2 freight mode is the standing next product recommendation, followed
-by P3 structure/performance work, subject to Bailey's priorities for remaining
-gaps. No new implementation starts with this clarification. Companion/CloudKit
-remains unopened.
+**NEXT:** Bailey selected “Follow the existing backlog”: P2 freight mode next,
+then P3 structure/performance work. No new implementation starts with this
+clarification. Companion/CloudKit remains unopened.
 
 **Handoff:** Codex; documentation-only acceptance update. All previous handoff
 entries and the old “Next work” footer below are historical and superseded by this

@@ -43,7 +43,7 @@ Future behaviour changes still need their own relevant checks.
 
 Continue development. The standing next product recommendation is P2 freight
 mode: freighter-required contracts, AI freight, cargo stands and correct outstation
-forecasts. P3 structure/performance work remains technical backlog. Bailey may
-reprioritise remaining gaps. Release preparation is deferred until Bailey considers
+forecasts. Bailey selected “Follow the existing backlog”; P3 structure/performance
+work follows freight. Release preparation is deferred until Bailey considers
 the game ready. Companion/CloudKit and a second playable airport remain unopened
 milestones.

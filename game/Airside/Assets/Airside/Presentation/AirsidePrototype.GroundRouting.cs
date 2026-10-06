@@ -144,6 +144,22 @@ namespace Airside.Presentation
                     _movingAircraft.Add((view, AircraftLayout.For(aircraft.Type)));
         }
 
+        /// <summary>Vehicle slow zone within 15 m of the visible ground-aircraft footprint.</summary>
+        private bool WithinAircraftVehicleSlowZone(Vector3 point)
+        {
+            if (!FleetMode || _operations == null) return false;
+            foreach (var aircraft in _operations.Fleet)
+            {
+                if (!TryGroundView(aircraft, out var view) || view.position.y - point.y > 4f) continue;
+                var local = view.InverseTransformPoint(point);
+                var layout = AircraftLayout.For(aircraft.Type);
+                var dx = Mathf.Max(0f, Mathf.Abs(local.x) - layout.HalfSpan);
+                var dz = Mathf.Max(0f, Mathf.Max(layout.TailZ - local.z, local.z - layout.NoseZ));
+                if (dx * dx + dz * dz <= 15f * 15f) return true;
+            }
+            return false;
+        }
+
         /// <summary>
         /// True when <paramref name="point"/> is under, or in the path of, a taxiing or
         /// pushing-back aircraft: its whole span, plus a corridor ahead of the nose and behind

@@ -310,7 +310,7 @@ namespace Airside.Simulation
         {
             var cruise = flight.AltitudeFeet / EnrouteProfile.FeetPerMetre * DisplayAltitudeScale;
             var band = AircraftCatalogue.TryFor(flight.Type, out var spec)
-                ? spec.WingspanMetres >= AirlineOperations.HeavyWakeWingspanMetres ? 220.0
+                ? spec.WingspanMetres >= 50.0 ? 220.0
                     : spec.StandClass == StandClass.TerminalGate ? 120.0 : 0.0
                 : 0.0;
             var jitter = 0.0;

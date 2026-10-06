@@ -47,8 +47,10 @@ namespace Airside.Simulation
         /// 20 (ADR 0239) marks aircraft on a ferry between bases (they earn nothing on arrival) and gives
         /// each outstation aircraft a logbook: join time, recorded revenue and routes. Older saves have no
         /// ferries and outstation aircraft begin their logbook on migration.
+        /// 21 (ADR 0243) preserves preceding runway movements for follower-specific wake minima.
+        /// Older saves keep their already-booked conservative strip deadlines.
         /// </summary>
-        public const int CurrentVersion = 20;
+        public const int CurrentVersion = 21;
 
         public int Version = CurrentVersion;
 
@@ -66,6 +68,9 @@ namespace Airside.Simulation
         /// immediately free so the cross strip is not stuck behind the old mutex.
         /// </summary>
         public long CrossRunwayFreeAtSeconds;
+        /// <summary>v21: preceding movements for follower-specific wake separation.</summary>
+        public RunwayWakeRecord MainWake;
+        public RunwayWakeRecord CrossWake;
         public long TotalEvents;
         public uint RandomState;
         public List<AirlineRecord> Airlines = new();
@@ -257,6 +262,10 @@ namespace Airside.Simulation
 
     public static class AirlineSave
     {
+        private static RunwayWakeRecord CopyWake(RunwayWakeRecord record) => record == null ? null
+            : new RunwayWakeRecord { TypeId = record.TypeId, Departure = record.Departure,
+                EventAtSeconds = record.EventAtSeconds };
+
         public static AirlineSaveData Capture(AirlineOperations operations, DateTime? savedAtUtc = null)
         {
             if (operations == null) throw new ArgumentNullException(nameof(operations));
@@ -269,6 +278,8 @@ namespace Airside.Simulation
                 ClockSeconds = operations.ProcessedTo.ElapsedSeconds,
                 RunwayFreeAtSeconds = operations.RunwayFreeAt.ElapsedSeconds,
                 CrossRunwayFreeAtSeconds = operations.CrossRunwayFreeAt.ElapsedSeconds,
+                MainWake = CopyWake(operations.MainWake),
+                CrossWake = CopyWake(operations.CrossWake),
                 TotalEvents = operations.TotalEvents,
                 RandomState = operations.RandomState,
                 CareerFunds = operations.CareerState.Funds,
@@ -591,6 +602,8 @@ namespace Airside.Simulation
                 new SimulationTime(data.RunwayFreeAtSeconds),
                 new SimulationTime(data.CrossRunwayFreeAtSeconds),
                 data.TotalEvents);
+            if (data.Version >= 21)
+                operations.RestoreWake(CopyWake(data.MainWake), CopyWake(data.CrossWake));
             operations.ReconcileRunwayFreeAt();
             operations.Clock = ClockFor(data);
             if (data.Version <= 4)

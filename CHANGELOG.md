@@ -1,5 +1,12 @@
 ## Unreleased
 
+- Keep stationary aircraft blocking ground clearances permanently, reserve full-airframe
+  runway crossings and intersecting-strip occupancy, apply/save follower-specific MTOW
+  wake minima, route terminal departures around Adelaide ERSA restrictions with eastbound
+  Code C pushbacks, and use compatible widebody arrival exits. Cap shared service vehicles
+  at the airport's apron/terminal/aircraft-zone speeds. Arrival estimates share the tower
+  guards. Save v21 migrates older deadlines conservatively (ADR 0243); Unity unverified.
+
 - Aircraft views (cockpit, window, exterior) feel better on a Mac and everywhere: the trackpad now taps and
   rumbles with touchdown, gear thumps, runway joints and turbulence (system haptics, no plugin; the Vibration
   toggle governs it and the shake); either mouse button looks round; drag and scroll spikes are bounded and

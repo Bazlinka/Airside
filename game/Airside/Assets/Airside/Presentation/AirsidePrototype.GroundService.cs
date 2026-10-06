@@ -156,7 +156,10 @@ namespace Airside.Presentation
                 vehicle.position = parkPosition;
 
             var previous = vehicle.position;
-            var speed = (active ? 7.5f : 5.5f) * 1f;
+            // Adelaide vehicle handbook: 25 km/h apron, 15 km/h terminal road,
+            // and 10 km/h within 15 m of an aircraft (also when returning from service).
+            var speed = Mathf.Min(active ? 7.5f : 5.5f, (routed ? 25f : 15f) / 3.6f);
+            if (WithinAircraftVehicleSlowZone(previous)) speed = Mathf.Min(speed, 10f / 3.6f);
             // Round parked aircraft, buildings and the terminal, not through them; and never
             // into the path of an aircraft that is taxiing or being pushed back.
             var steer = routed ? RouteWaypoint(vehicle, target, VehicleClearanceMetres) : target;

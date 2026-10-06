@@ -198,25 +198,21 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void HeavyAircraftReceiveLongerWakeSpacing()
+        public void HeavyAircraftRequireTwoMinutesBeforeAMediumDeparture()
         {
-            Assert.That(AirlineOperations.WakeSeparationSeconds(Airside.Domain.AircraftType.AirbusA350900), Is.EqualTo(180));
-            Assert.That(AirlineOperations.WakeSeparationSeconds(Airside.Domain.AircraftType.Boeing78710), Is.EqualTo(180));
-            Assert.That(AirlineOperations.WakeSeparationSeconds(Airside.Domain.AircraftType.Atr42), Is.EqualTo(90));
+            Assert.That(WakeSeparation.Seconds(Airside.Domain.AircraftType.AirbusA350900,
+                Airside.Domain.AircraftType.Boeing7378, landing: false), Is.EqualTo(120));
+            Assert.That(WakeSeparation.Seconds(Airside.Domain.AircraftType.Boeing78710,
+                Airside.Domain.AircraftType.Atr42, landing: false), Is.EqualTo(120));
         }
 
         [Test]
-        public void MediumJetsGetTheMiddleWakeBand()
+        public void MediumAircraftDoNotRequireTimeWakeBeforeAnotherMedium()
         {
-            // WakeSeparationSeconds used to classify by a hand-picked list of type IDs - a
-            // second, disconnected source of truth from the catalogue's own wingspan data
-            // that would silently give any newly added heavy jet only the smallest 90 s
-            // separation if its ID were never added to match. It is now derived from
-            // AircraftCatalogue.WingspanMetres directly.
-            Assert.That(AirlineOperations.WakeSeparationSeconds(Airside.Domain.AircraftType.Boeing7378), Is.EqualTo(120));
-            Assert.That(AirlineOperations.WakeSeparationSeconds(Airside.Domain.AircraftType.AirbusA321Neo), Is.EqualTo(120));
-            Assert.That(AirlineOperations.WakeSeparationSeconds(Airside.Domain.AircraftType.Saab340), Is.EqualTo(90));
-            Assert.That(AirlineOperations.WakeSeparationSeconds(Airside.Domain.AircraftType.Dash8Q400), Is.EqualTo(90));
+            Assert.That(WakeSeparation.Seconds(Airside.Domain.AircraftType.Boeing7378,
+                Airside.Domain.AircraftType.Saab340, landing: false), Is.Zero);
+            Assert.That(WakeSeparation.Seconds(Airside.Domain.AircraftType.Dash8Q400,
+                Airside.Domain.AircraftType.Atr42, landing: true), Is.Zero);
         }
     }
 }

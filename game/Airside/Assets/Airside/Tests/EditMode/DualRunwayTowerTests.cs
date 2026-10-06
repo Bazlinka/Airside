@@ -7,13 +7,12 @@ using NUnit.Framework;
 namespace Airside.Tests
 {
     /// <summary>
-    /// After jets moved to 05/23 and regionals to 12/30, the tower must clear each
-    /// strip independently — a Dash 8 on 12 must not wait for a 787 wake on 05.
+    /// Adelaide's runways have separate queues but share an intersection occupancy reservation.
     /// </summary>
     public sealed class DualRunwayTowerTests
     {
         [Test]
-        public void ParallelStrips_CanMoveAtTheSameTime()
+        public void IntersectingStrips_HoldTheSecondDepartureWhileTheFirstOccupiesRunway()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));
             var ops = new AirlineOperations(clock, new SeededRandomSource(3), DestinationCatalogue.Adelaide,
@@ -33,7 +32,13 @@ namespace Airside.Tests
             var jet = ops.Fleet.Single(a => a.Registration == "VH-JET");
             var reg = ops.Fleet.Single(a => a.Registration == "VH-REG");
             Assert.That(jet.State, Is.EqualTo(FleetState.TakingOff), "05/23 clears independently");
-            Assert.That(reg.State, Is.EqualTo(FleetState.TakingOff), "12/30 clears independently");
+            Assert.That(reg.State, Is.EqualTo(FleetState.HoldingShort), "intersecting strip waits for occupancy");
+            Assert.That(ops.Why(reg).Kind, Is.EqualTo(HoldKind.RunwayOccupied));
+            var release = AdelaideGround.LineupFor(jet.AssignedRunway, jet.Type).WholeSeconds
+                + AircraftPerformance.For(jet.Type).TakeoffSeconds;
+            clock.Set(new SimulationTime(release));
+            ops.Update();
+            Assert.That(reg.State, Is.EqualTo(FleetState.TakingOff), "its separate strip can clear after physical occupancy ends");
             Assert.That(ops.RunwayFreeAt.ElapsedSeconds, Is.GreaterThan(0));
             Assert.That(ops.CrossRunwayFreeAt.ElapsedSeconds, Is.GreaterThan(0));
         }

@@ -22,7 +22,16 @@ namespace Airside.Presentation
         }
         public void SetCockpitRumble(float strength) => _cockpitRumble = Mathf.Clamp01(strength);
         private float _savedNear, _savedFar, _savedFov;
-        private bool _cockpitRightDrag;
+        private bool _cockpitRightDrag;     // a look drag is in progress, started with either mouse button
+        // Gliding from the outside camera to the seat (or between seats) and back out, instead of cutting.
+        private Vector3 _blendFromPos;
+        private Quaternion _blendFromRot = Quaternion.identity;
+        private float _blendSeconds = CockpitLookInput.TransitionSeconds;
+        private Vector3 _exitFromPos;
+        private Quaternion _exitFromRot = Quaternion.identity;
+        private float _exitFromFov;
+        private float _exitSeconds = CockpitLookInput.TransitionSeconds;
+        private int _exitBlendFrame = -1;
         private int _cockpitPreset = -1;
         private readonly UnityEngine.InputSystem.Controls.KeyControl[] _glanceKeys = new UnityEngine.InputSystem.Controls.KeyControl[5];
         public bool IsCockpit => _cockpitActive;
@@ -45,6 +54,9 @@ namespace Airside.Presentation
         public bool StartCockpit(Transform seat)
         {
             if (seat == null || !seat.gameObject.activeInHierarchy || _camera == null) return false;
+            _blendFromPos = transform.position;
+            _blendFromRot = transform.rotation;
+            _blendSeconds = 0f;
             if (!_cockpitActive)
             {
                 _savedNear = _camera.nearClipPlane;
@@ -61,7 +73,7 @@ namespace Airside.Presentation
             _cockpitRightDrag = false;
             RecenterCockpit();
             _cockpitRumble = 0f;
-            _camera.fieldOfView = 65f;
+            // The field of view eases to 65 in UpdateCockpitCamera rather than snapping here.
             ApplyCockpitPose();
             return true;
         }
@@ -89,7 +101,6 @@ namespace Airside.Presentation
             _exteriorCentre = centre;
             _exteriorBaseRadius = Mathf.Max(28f, span * 1.15f);
             RecenterCockpit();
-            _camera.fieldOfView = _cockpitTargetFov;
             ApplyCockpitPose();
             return true;
         }
@@ -97,6 +108,10 @@ namespace Airside.Presentation
         public void EndCockpit()
         {
             if (!_cockpitActive) return;
+            _exitFromPos = transform.position;
+            _exitFromRot = transform.rotation;
+            _exitFromFov = _camera != null ? _camera.fieldOfView : _savedFov;
+            _exitSeconds = 0f;
             _cockpitActive = false;
             _flightExterior = false;
             _passengerSeat = false;
@@ -121,8 +136,10 @@ namespace Airside.Presentation
             if (mouse != null && !KeyboardCaptured)
             {
                 var overHud = PointerOverHud != null && PointerOverHud(mouse.position.ReadValue());
-                if (mouse.rightButton.wasPressedThisFrame) _cockpitRightDrag = !overHud;
-                if (!mouse.rightButton.isPressed) _cockpitRightDrag = false;
+                // Either button looks: right-drag is awkward on a trackpad, and nothing else is clickable out here.
+                if (mouse.rightButton.wasPressedThisFrame || mouse.leftButton.wasPressedThisFrame)
+                    _cockpitRightDrag = !overHud;
+                if (!mouse.rightButton.isPressed && !mouse.leftButton.isPressed) _cockpitRightDrag = false;
                 if (_cockpitRightDrag)
                 {
                     if (_cockpitPreset >= 0)
@@ -133,13 +150,20 @@ namespace Airside.Presentation
                     }
                     var delta = mouse.delta.ReadValue();
                     var pitchSign = AirsideSettings.Current.InvertOrbit ? 1f : -1f;
-                    _cockpitYaw = ClampFlightViewYaw(_cockpitYaw + delta.x * (_flightExterior || _passengerSeat ? 0.2f : 0.15f));
-                    _cockpitPitch = ClampFlightViewPitch(_cockpitPitch + delta.y * 0.15f * pitchSign);
+                    // Bounded per frame, and finer when zoomed in, so a trackpad flick cannot whip the view round.
+                    var fov = _flightExterior ? CockpitLookInput.ReferenceFov : _cockpitTargetFov;
+                    var speed = AirsideSettings.Current.CameraSpeed;
+                    var yawRate = CockpitLookInput.DegreesPerPixel(_flightExterior || _passengerSeat
+                        ? CockpitLookInput.OrbitDegreesPerPixel : CockpitLookInput.CockpitDegreesPerPixel, fov, speed);
+                    var pitchRate = CockpitLookInput.DegreesPerPixel(CockpitLookInput.CockpitDegreesPerPixel, fov, speed);
+                    _cockpitYaw = ClampFlightViewYaw(_cockpitYaw + CockpitLookInput.ClampPixels(delta.x) * yawRate);
+                    _cockpitPitch = ClampFlightViewPitch(_cockpitPitch + CockpitLookInput.ClampPixels(delta.y) * pitchRate * pitchSign);
                 }
                 if (!overHud)
                 {
-                    if (_flightExterior) _exteriorTargetRadius = ClampExteriorRadius(_exteriorTargetRadius - mouse.scroll.ReadValue().y * 0.03f);
-                    else _cockpitTargetFov = Mathf.Clamp(_cockpitTargetFov - mouse.scroll.ReadValue().y * 0.025f, 35f, 85f);
+                    var scroll = CockpitLookInput.ClampScroll(mouse.scroll.ReadValue().y);
+                    if (_flightExterior) _exteriorTargetRadius = ClampExteriorRadius(_exteriorTargetRadius - scroll * 0.03f);
+                    else _cockpitTargetFov = Mathf.Clamp(_cockpitTargetFov - scroll * 0.025f, 35f, 85f);
                 }
             }
             else _cockpitRightDrag = false;
@@ -195,6 +219,7 @@ namespace Airside.Presentation
             _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, _cockpitTargetFov,
                 1f - Mathf.Exp(-12f * Time.unscaledDeltaTime));
             _exteriorRadius = Mathf.Lerp(_exteriorRadius, _exteriorTargetRadius, 1f - Mathf.Exp(-12f * Time.unscaledDeltaTime));
+            _blendSeconds += Mathf.Min(Time.unscaledDeltaTime, 0.1f);
             ApplyCockpitPose();
         }
 
@@ -225,6 +250,12 @@ namespace Airside.Presentation
                     Mathf.Sin(t * 29f) * 0.06f * _cockpitRumble,
                     Mathf.Sin(t * 43f) * 0.08f * _cockpitRumble);
             }
+            if (_blendSeconds < CockpitLookInput.TransitionSeconds)
+            {
+                var glide = CockpitLookInput.Ease(_blendSeconds);
+                transform.SetPositionAndRotation(Vector3.Lerp(_blendFromPos, transform.position, glide),
+                    Quaternion.Slerp(_blendFromRot, transform.rotation, glide));
+            }
             CurrentDistance = _flightExterior ? _exteriorRadius : 0f;
             CurrentPitch = transform.eulerAngles.x;
             CurrentYaw = transform.eulerAngles.y;
@@ -232,6 +263,21 @@ namespace Airside.Presentation
             _camera.farClipPlane = Mathf.Max(_savedFar, 55000f);
             // Never use the overview distance's horizon compression from inside an aircraft.
             Shader.SetGlobalFloat(HorizonScaleId, 1f);
+        }
+
+        /// <summary>Glides the free camera out from where the seat view left it. Called after each free-camera pose.</summary>
+        private void ApplyExitBlend()
+        {
+            if (_exitSeconds >= CockpitLookInput.TransitionSeconds || _camera == null) return;
+            if (_exitBlendFrame != Time.frameCount)
+            {
+                _exitBlendFrame = Time.frameCount;
+                _exitSeconds += Mathf.Min(Time.unscaledDeltaTime, 0.1f);
+            }
+            var glide = CockpitLookInput.Ease(_exitSeconds);
+            transform.SetPositionAndRotation(Vector3.Lerp(_exitFromPos, transform.position, glide),
+                Quaternion.Slerp(_exitFromRot, transform.rotation, glide));
+            _camera.fieldOfView = Mathf.Lerp(_exitFromFov, _camera.fieldOfView, glide);
         }
     }
 }

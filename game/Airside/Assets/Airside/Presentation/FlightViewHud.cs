@@ -102,7 +102,7 @@ namespace Airside.Presentation
             into.Button(new HudBox(x + actionWidth + 8f, box.Y + 62f, narrow ? actionWidth : 126f, 28f),
                 data.MotionEnabled ? "Vibration on" : "Vibration off", Motion, HudButtonStyle.Secondary, data.SelectedView == 0);
             var hint = data.PassengerIsCargo ? "Cargo aircraft / no passenger seats"
-                : data.SelectedView == 3 ? "Drag to orbit · scroll to zoom" : "Drag to look · scroll to zoom";
+                : CockpitControlHints.Dock(data.SelectedView, narrow);
             into.Text(new HudBox(narrow ? x : x + 272f, box.Y + (narrow ? 102f : 65f), narrow ? box.Width - 32f : box.Width - 304f, 28f), hint, 11f, HudTone.Muted,
                 HudTextStyle.Wrap, HudAlign.Right);
         }

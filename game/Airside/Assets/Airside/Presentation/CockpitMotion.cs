@@ -60,6 +60,26 @@ namespace Airside.Presentation
         private float _noseSettle, _rollSign = 1f, _sinceTouchdown;
         private bool _spoilersDone, _bounceDone;
         private bool _landed;
+        private HapticKind _haptic;
+
+        /// <summary>
+        /// 0..1 level of continuous airframe buzz (turbulence, reverse thrust, engine) that is not already
+        /// carried by discrete events, for a trackpad to rumble to. Zero while paused.
+        /// </summary>
+        public float Rumble01 { get; private set; }
+
+        /// <summary>The strongest trackpad tap this step's events called for since the last call, then cleared.</summary>
+        public HapticKind TakeHaptic()
+        {
+            var kind = _haptic;
+            _haptic = HapticKind.None;
+            return kind;
+        }
+
+        private void Tap(HapticKind kind)
+        {
+            if (kind > _haptic) _haptic = kind;
+        }
 
         /// <summary>How hard this landing feels, in metres per second of sink. Deterministic per flight.</summary>
         public void Reset(int seed)
@@ -72,6 +92,8 @@ namespace Airside.Presentation
             _prevVerticalSpeed = _prevSpeed = _surge = _heaveG = _lookYaw = 0f;
             _jointDistance = _lightDistance = _sinceLiftoff = _buffet = _noseSettle = _sinceTouchdown = 0f;
             _spoilersDone = _bounceDone = false;
+            _haptic = HapticKind.None;
+            Rumble01 = 0f;
             // Most landings are smooth (0.5 m/s, ~100 fpm); a few are firm (up to ~1.5 m/s, ~300 fpm).
             var h = (uint)seed * 2654435761u;
             var u = ((h >> 8) & 0xFFFF) / 65535f;
@@ -112,11 +134,13 @@ namespace Airside.Presentation
                 _airborne = false; _noseDown = false; _landed = true; _noseSettle = 0f; _sinceLiftoff = 0f;
                 _rollSign = -_rollSign; _sinceTouchdown = 0f; _spoilersDone = _bounceDone = false;
                 _gearDownDone = true; _everHigh = false;
+                Tap(sink > 0.9f ? HapticKind.Heavy : HapticKind.Medium);
             }
             else if (!onGround && !_airborne)
             {
                 _heave.V += 0.22f;                      // unstick as the wheels unload
                 _airborne = true; _landed = false; _sinceLiftoff = 0f; _gearUpDone = false;
+                Tap(HapticKind.Tick);
             }
             if (onGround && _landed && !_noseDown && s.GroundSpeed > 20f && s.PitchUpDegrees < 1.2f
                 && _noseSettle > 0.5f)
@@ -125,6 +149,7 @@ namespace Airside.Presentation
                 _noseDown = true;
                 _heave.V -= 0.20f + 0.20f * _firmness;
                 _pitch.V += 2.2f;
+                Tap(HapticKind.Medium);
             }
             if (onGround && !_noseDown) _noseSettle += dt;
             if (onGround && _landed && rate > 0f)
@@ -133,10 +158,12 @@ namespace Airside.Presentation
                 if (!_spoilersDone && _sinceTouchdown > 0.4f)
                 {                                       // ground spoilers rise: lift dumps, the airframe settles
                     _spoilersDone = true; _heave.V -= evt * 0.09f; _pitch.V += evt * 1.1f;
+                    Tap(HapticKind.Tick);
                 }
                 if (!_bounceDone && _sinceTouchdown > 0.9f && _firmness > 1.25f && s.GroundSpeed > 40f)
                 {                                       // a firm arrival skips once before settling
                     _bounceDone = true; _heave.V += 0.35f; _pitch.V -= 2.0f;
+                    Tap(HapticKind.Medium);
                 }
             }
             if (_airborne)
@@ -144,9 +171,9 @@ namespace Airside.Presentation
                 _sinceLiftoff += dt * scale;
                 if (s.HeightAgl > 450f) _everHigh = true;
                 if (!_gearUpDone && _sinceLiftoff > GearRetractDelaySeconds && s.VerticalSpeed > 1f)
-                { _gearUpDone = true; _heave.V -= 0.16f; _roll.V += 0.5f; _buffet = 1.2f; }
+                { _gearUpDone = true; _heave.V -= 0.16f; _roll.V += 0.5f; _buffet = 1.2f; Tap(HapticKind.Medium); }
                 if (!_gearDownDone && s.VerticalSpeed < -1f && s.HeightAgl < GearExtendHeightMetres && _everHigh)
-                { _gearDownDone = true; _heave.V -= 0.20f; _pitch.V += 1.5f; _buffet = 3.5f; }
+                { _gearDownDone = true; _heave.V -= 0.20f; _pitch.V += 1.5f; _buffet = 3.5f; Tap(HapticKind.Medium); }
             }
             _buffet = Math.Max(0f, _buffet - dt);
 
@@ -156,7 +183,11 @@ namespace Airside.Presentation
                 var step = s.GroundSpeed * dt * scale;
                 _jointDistance += step; _lightDistance += step;
                 while (_jointDistance >= JointSpacingMetres)
-                { _jointDistance -= JointSpacingMetres; _heave.V -= evt * 0.035f / (1f + s.GroundSpeed / 25f); }
+                {
+                    _jointDistance -= JointSpacingMetres; _heave.V -= evt * 0.035f / (1f + s.GroundSpeed / 25f);
+                    // The runway-joint thump is the ground texture a trackpad feels; skipped in fast-forward.
+                    if (s.SimRate <= 1.5f && s.GroundSpeed > 6f) Tap(HapticKind.Tick);
+                }
                 while (_lightDistance >= CentreLightSpacingMetres)
                 { _lightDistance -= CentreLightSpacingMetres; if (s.GroundSpeed > 12f) { _heave.V -= evt * 0.016f; _pitch.V += evt * 0.15f; } }
             }
@@ -177,6 +208,7 @@ namespace Airside.Presentation
             var slow = Noise(t, 0.37f, 0.71f, 1.31f);
             var throb = s.Turboprop ? (float)Math.Sin(t * 6.2f) * (float)Math.Sin(t * 0.8f) * engine * 0.6f : 0f;
             var amp = rate;
+            Rumble01 = Clamp01(turbulence / 0.005f + reverse / 0.004f + (onGround ? 0f : engine / 0.004f)) * amp;
             var heaveShake = (rumble * noise + engine * Noise(t + 1.7f, 7.7f, 11.3f, 14.9f) + reverse * Noise(t + 4.4f, 9.4f, 13.3f, 17.1f) + throb + turbulence * slow) * amp;
             var pitchShake = (rumble * 38f * Noise(t + 3.1f, 4.7f, 9.2f, 13.1f) + turbulence * 36f * Noise(t + 5f, 0.43f, 0.81f, 1.19f)) * amp;
             var rollShake = (rumble * 20f * Noise(t + 6.4f, 3.9f, 7.3f, 11.7f) + turbulence * 90f * Noise(t + 9f, 0.31f, 0.67f, 1.07f)) * amp;

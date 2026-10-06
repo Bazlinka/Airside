@@ -1,5 +1,12 @@
 ## Unreleased
 
+- Aircraft views (cockpit, window, exterior) feel better on a Mac and everywhere: the trackpad now taps and
+  rumbles with touchdown, gear thumps, runway joints and turbulence (system haptics, no plugin; the Vibration
+  toggle governs it and the shake); either mouse button looks round; drag and scroll spikes are bounded and
+  drag follows the zoom; entering, switching and leaving a seat glide instead of cutting; the dock hint,
+  a once-per-run toast and F1 help say how to look, glance, zoom and recentre (ADR 0242). Headless suite
+  passes; Unity compile, trackpad feel and visuals are not verified.
+
 - Distinguish jet family windshield shells, shape pilot/passenger seats and regional
   yokes, add family bin/PSU fittings, and enable an analog Bell 412EP cockpit with
   fitted front frames and retained rotor visibility. Correct Bell tail geometry

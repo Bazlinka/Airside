@@ -184,8 +184,9 @@ namespace Airside.Simulation
             if (aircraft == null || aircraft.State != FleetState.AwaitingStand)
                 return list;
 
-            foreach (var stand in FreeStandsFor(aircraft.Type))
+            foreach (var stand in _stands)
             {
+                if (!StandFits(aircraft.Type, stand) || !IsStandFree(stand, aircraft)) continue;
                 if (aircraft.Airline.IsPlayer && CareerState != null
                     && !PlayerBase.CanUseStand(CareerState.BaseLevel, aircraft.Type, stand))
                     continue;
@@ -267,13 +268,21 @@ namespace Airside.Simulation
                 && !PlayerBase.CanUseStand(CareerState.BaseLevel, aircraft.Type, stand))
                 return CommandResult.Refused(
                     $"{AdelaideGround.StandLabel(stand)} isn't part of your {CareerState.Base.Title}.");
-            if (!IsStandFree(stand))
+            if (!IsStandFree(stand, aircraft))
                 return CommandResult.Refused($"{AdelaideGround.StandLabel(stand)} is taken.");
             if (AdelaideGround.IsTerminalGate(stand) && !IsLeadInFree(stand, aircraft))
                 return CommandResult.Refused($"Someone is on the {AdelaideGround.StandLabel(stand)} lead-in.");
 
+            // A chosen stand is a reservation, not permission to drive through traffic.
+            // Keep the choice while ground control waits, and release it through the same
+            // path/crossing checks as automatic taxi-in when the route becomes clear.
             aircraft.Stand = stand;
-            Transition(aircraft, FleetState.TaxiIn, _processedTo, TaxiInSecondsTo(stand, aircraft.Type, aircraft.AssignedRunway));
+            var leg = AdelaideGround.TaxiIn(stand, aircraft.Type, aircraft.AssignedRunway);
+            if (!AdelaideGroundPolicy.RouteAvailable(stand, aircraft.Type, aircraft.AssignedRunway, outbound: false)
+                || !GroundTraffic.PathClear(_fleet, aircraft, leg, aircraft.AssignedRunway, taxiOut: false, _processedTo)
+                || CrossingIntoBusyStrip(leg, aircraft.AssignedRunway, _processedTo, aircraft.Type).HasValue)
+                return CommandResult.Ok;
+            Transition(aircraft, FleetState.TaxiIn, _processedTo, leg.WholeSeconds);
             return CommandResult.Ok;
         }
 

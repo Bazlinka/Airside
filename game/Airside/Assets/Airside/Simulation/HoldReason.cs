@@ -21,6 +21,7 @@ namespace Airside.Simulation
         LeadInBlocked,
         /// <summary>The route is not clear of other ground traffic.</summary>
         TaxiwayBlocked,
+        TaxiRouteUnavailable,
         /// <summary>An aircraft is landing or taking off on the strip.</summary>
         RunwayOccupied,
         /// <summary>The strip is clear but separation behind the last movement is still running.</summary>
@@ -170,13 +171,14 @@ namespace Airside.Simulation
                     GroundResourceHolder(AdelaideGround.LeadInResource(aircraft.Stand)));
 
             var runway = RunwayFor(aircraft);
-            var readyAt = DepartureReadyAt(aircraft);
+            if (!AdelaideGroundPolicy.RouteAvailable(aircraft.Stand, aircraft.Type, runway, outbound: true))
+                return new HoldReason(HoldKind.TaxiRouteUnavailable, runway: runway);
             if (!GroundTraffic.PathClear(_fleet, aircraft, AdelaideGround.TaxiOut(aircraft.Stand, aircraft.Type, runway),
                     runway, taxiOut: true, now,
-                    includeStationary: now.ElapsedSeconds - readyAt.ElapsedSeconds < GroundTraffic.MaxWaitSeconds,
+                    includeStationary: true,
                     out var blocker))
                 return new HoldReason(HoldKind.TaxiwayBlocked, blocker, runway);
-            var busy = CrossingIntoBusyStrip(AdelaideGround.TaxiOut(aircraft.Stand, aircraft.Type, runway), runway, now);
+            var busy = CrossingIntoBusyStrip(AdelaideGround.TaxiOut(aircraft.Stand, aircraft.Type, runway), runway, now, aircraft.Type);
             if (busy.HasValue)
                 return new HoldReason(HoldKind.CrossingRunway, runway: runway,
                     detail: busy.Value.MainStrip ? "05/23" : "12/30");
@@ -189,18 +191,20 @@ namespace Airside.Simulation
             var chosen = SuggestStand(aircraft);
             if (chosen == null)
                 return new HoldReason(HoldKind.NoStandFree, detail: NoStandDetail(aircraft));
-            if (aircraft.Airline.IsPlayer
+            if (aircraft.Airline.IsPlayer && string.IsNullOrEmpty(aircraft.Stand.Value)
                 && now.ElapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds < PlayerStandAutoSeconds)
                 return new HoldReason(HoldKind.ChooseStand,
                     until: aircraft.StateStartedAt.Advance(PlayerStandAutoSeconds));
+            if (!AdelaideGroundPolicy.RouteAvailable(chosen.Value, aircraft.Type, aircraft.AssignedRunway, outbound: false))
+                return new HoldReason(HoldKind.TaxiRouteUnavailable, runway: aircraft.AssignedRunway);
             if (!GroundTraffic.PathClear(_fleet, aircraft,
                     AdelaideGround.TaxiIn(chosen.Value, aircraft.Type, aircraft.AssignedRunway),
                     aircraft.AssignedRunway, taxiOut: false, now,
-                    includeStationary: now.ElapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds < GroundTraffic.MaxWaitSeconds,
+                    includeStationary: true,
                     out var blocker))
                 return new HoldReason(HoldKind.TaxiwayBlocked, blocker, aircraft.AssignedRunway);
             var busy = CrossingIntoBusyStrip(AdelaideGround.TaxiIn(chosen.Value, aircraft.Type, aircraft.AssignedRunway),
-                aircraft.AssignedRunway, now);
+                aircraft.AssignedRunway, now, aircraft.Type);
             if (busy.HasValue)
                 return new HoldReason(HoldKind.CrossingRunway, runway: aircraft.AssignedRunway,
                     detail: busy.Value.MainStrip ? "05/23" : "12/30");
@@ -234,7 +238,10 @@ namespace Airside.Simulation
             if (!departure && aircraft.StateEndsAt.HasValue && aircraft.StateEndsAt.Value.CompareTo(now) > 0)
                 return new HoldReason(HoldKind.HeldAirborne, runway: runway, until: aircraft.StateEndsAt, detail: "curfew");
 
-            var freeAt = main ? _mainRunwayFreeAt : _crossRunwayFreeAt;
+            var intersection = IntersectingRunwayOccupier(main, now);
+            if (intersection != null)
+                return new HoldReason(HoldKind.RunwayOccupied, intersection, runway, IntersectionBusyUntil(intersection));
+            var freeAt = MovementFreeAt(aircraft, landing: !departure);
             if (freeAt.CompareTo(now) > 0)
             {
                 FleetAircraft occupier = null;

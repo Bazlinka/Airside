@@ -18,8 +18,6 @@ namespace Airside.Simulation
         /// outcome does not depend on how often the simulation is stepped.</summary>
         public const long GridSeconds = 5;
 
-        /// <summary>After this long, stop waiting for aircraft that are standing still (see <see cref="PathClear"/>).</summary>
-        public const long MaxWaitSeconds = 180;
 
         /// <summary>
         /// ADR 0153: how often a candidate leg is compared against other traffic. At taxi speed
@@ -267,10 +265,8 @@ namespace Airside.Simulation
         /// length. A taxi-out ignores the queue for its own runway: it stops behind it instead.
         /// </summary>
         /// <param name="includeStationary">
-        /// Also keep clear of aircraft standing still (holding short, waiting for a stand). Those can
-        /// wait indefinitely — a player's aircraft with no stand — so after
-        /// <see cref="MaxWaitSeconds"/> the caller stops waiting for them. Moving traffic always
-        /// finishes its leg, so it is always respected.
+        /// Include aircraft holding short or awaiting a stand. Movement clearances must keep this
+        /// enabled: elapsed waiting time never grants permission to drive through a stationary aircraft.
         /// </param>
         public static bool PathClear(IReadOnlyList<FleetAircraft> fleet, FleetAircraft candidate, GroundLeg leg,
             RunwayDirection candidateRunway, bool taxiOut, SimulationTime start, bool includeStationary = true) =>

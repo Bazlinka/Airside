@@ -22,6 +22,9 @@ namespace Airside.Domain
         Placeholder
     }
 
+    /// <summary>Published MTOW bands used by Australian wake rules, independent of wingspan.</summary>
+    public enum AircraftWeightBand { Light, MediumBelow25Tonnes, Medium, Heavy, Super }
+
     /// <summary>
     /// One aircraft type's facts in one place (ADR 0048): identity, role, real dimensions,
     /// planning performance, stand compatibility and art status. Dimensions and manufacturer
@@ -33,7 +36,7 @@ namespace Airside.Domain
         internal AircraftSpec(string id, string name, string role, double lengthMetres, double wingspanMetres,
             double heightMetres, double planningCruiseKmh, double practicalRangeKm, double manufacturerMaxCruiseKmh,
             double manufacturerRangeKm, string manufacturerRangeBasis, StandClass standClass, ModelStatus modelStatus,
-            string runtimeModelPath, string thumbnailPath, string sourceId, bool rotorcraft = false)
+            string runtimeModelPath, string thumbnailPath, string sourceId, AircraftWeightBand weightBand, bool rotorcraft = false)
         {
             Type = new AircraftType(id, name, planningCruiseKmh, practicalRangeKm, rotorcraft);
             Role = role;
@@ -48,6 +51,7 @@ namespace Airside.Domain
             RuntimeModelPath = runtimeModelPath;
             ThumbnailPath = thumbnailPath;
             SourceId = sourceId;
+            WeightBand = weightBand;
         }
 
         /// <summary>The simulation type these facts describe (planning cruise and practical range).</summary>
@@ -79,6 +83,9 @@ namespace Airside.Domain
         /// <summary>Key into docs/data/AIRCRAFT_SPECIFICATIONS.md.</summary>
         public string SourceId { get; }
 
+        /// <summary>MTOW band; sources and threshold distinctions in ADELAIDE_GROUND_PROTOCOLS.md.</summary>
+        public AircraftWeightBand WeightBand { get; }
+
         public string StandClassLabel => StandClass == StandClass.TerminalGate ? "Terminal gate"
             : StandClass == StandClass.Helipad ? "Helipad" : "Regional bay";
 
@@ -95,7 +102,7 @@ namespace Airside.Domain
             planningCruiseKmh: 556, practicalRangeKm: 1100,
             manufacturerMaxCruiseKmh: 556, manufacturerRangeKm: 1302, manufacturerRangeBasis: "703 NM with max passengers",
             StandClass.RegionalBay, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_atr42_starter_v03.gltf", "UI/Aircraft/thb_air_atr42_v01.png", "SPEC-ATR42-600");
+            "Models/Aircraft/mdl_atr42_starter_v03.gltf", "UI/Aircraft/thb_air_atr42_v01.png", "SPEC-ATR42-600", AircraftWeightBand.MediumBelow25Tonnes);
 
         // Rex's type (AIR-007). Saab publishes no range on its product page; 1,000 km stays a
         // planning assumption until a manufacturer figure is recorded.
@@ -105,7 +112,7 @@ namespace Airside.Domain
             planningCruiseKmh: 500, practicalRangeKm: 1000,
             manufacturerMaxCruiseKmh: 524, manufacturerRangeKm: 0, manufacturerRangeBasis: "not published on the cited source",
             StandClass.RegionalBay, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_saab_340b_v01.gltf", "UI/Aircraft/thb_air_sf34_v01.png", "SPEC-SAAB-340B");
+            "Models/Aircraft/mdl_saab_340b_v01.gltf", "UI/Aircraft/thb_air_sf34_v01.png", "SPEC-SAAB-340B", AircraftWeightBand.MediumBelow25Tonnes);
 
         // QantasLink's type (AIR-006). Practical range 1,500 km sits below the
         // 1,596 km full-passenger range.
@@ -115,7 +122,7 @@ namespace Airside.Domain
             planningCruiseKmh: 667, practicalRangeKm: 1500,
             manufacturerMaxCruiseKmh: 667, manufacturerRangeKm: 1596, manufacturerRangeBasis: "full passenger range, 102 kg per passenger",
             StandClass.RegionalBay, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_dash8_q400_v01.gltf", "UI/Aircraft/thb_air_dh8d_v01.png", "SPEC-DASH8-400");
+            "Models/Aircraft/mdl_dash8_q400_v01.gltf", "UI/Aircraft/thb_air_dh8d_v01.png", "SPEC-DASH8-400", AircraftWeightBand.Medium);
 
         public static readonly AircraftSpec EmbraerE190 = new(
             "E190", "Embraer E190", "Regional jet · 98–106 seats",
@@ -123,7 +130,7 @@ namespace Airside.Domain
             planningCruiseKmh: 829, practicalRangeKm: 3500,
             manufacturerMaxCruiseKmh: 0, manufacturerRangeKm: 0, manufacturerRangeBasis: "performance varies by E190 weight variant",
             StandClass.TerminalGate, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_e190_v01.gltf", "UI/Aircraft/thb_air_e190_v01.png", "SPEC-EMBRAER-E190");
+            "Models/Aircraft/mdl_e190_v01.gltf", "UI/Aircraft/thb_air_e190_v01.png", "SPEC-EMBRAER-E190", AircraftWeightBand.Medium);
 
         public static readonly AircraftSpec AirbusA220300 = new(
             "A223", "Airbus A220-300", "Regional jet · 120–160 seats",
@@ -131,7 +138,7 @@ namespace Airside.Domain
             planningCruiseKmh: 829, practicalRangeKm: 5500,
             manufacturerMaxCruiseKmh: 871, manufacturerRangeKm: 6297, manufacturerRangeBasis: "3,400 nm Airbus family figure",
             StandClass.TerminalGate, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_a220_300_v01.gltf", "UI/Aircraft/thb_air_a223_v01.png", "SPEC-AIRBUS-A220-300");
+            "Models/Aircraft/mdl_a220_300_v01.gltf", "UI/Aircraft/thb_air_a223_v01.png", "SPEC-AIRBUS-A220-300", AircraftWeightBand.Medium);
 
         public static readonly AircraftSpec AirbusA320200 = new(
             "A320", "Airbus A320-200", "Narrowbody jet · 180 seats",
@@ -139,7 +146,7 @@ namespace Airside.Domain
             planningCruiseKmh: 830, practicalRangeKm: 5000,
             manufacturerMaxCruiseKmh: 871, manufacturerRangeKm: 6200, manufacturerRangeBasis: "representative A320 family figure",
             StandClass.TerminalGate, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_a320_200_v01.gltf", "UI/Aircraft/thb_air_a320_v01.png", "SPEC-AIRBUS-A320-200");
+            "Models/Aircraft/mdl_a320_200_v01.gltf", "UI/Aircraft/thb_air_a320_v01.png", "SPEC-AIRBUS-A320-200", AircraftWeightBand.Medium);
 
         public static readonly AircraftSpec Boeing737800 = new(
             "B738", "Boeing 737-800", "Narrowbody jet · 160–189 seats",
@@ -147,7 +154,7 @@ namespace Airside.Domain
             planningCruiseKmh: 839, practicalRangeKm: 4800,
             manufacturerMaxCruiseKmh: 0, manufacturerRangeKm: 5190, manufacturerRangeBasis: "up to 2,800 nmi",
             StandClass.TerminalGate, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_737_800_v01.gltf", "UI/Aircraft/thb_air_b738_v01.png", "SPEC-BOEING-737-800");
+            "Models/Aircraft/mdl_737_800_v01.gltf", "UI/Aircraft/thb_air_b738_v01.png", "SPEC-BOEING-737-800", AircraftWeightBand.Medium);
 
         // Virgin Australia's type (AIR-005). Boeing lists no cruise speed on the cited page; 839 km/h
         // (about Mach 0.79) is the planning figure.
@@ -157,7 +164,7 @@ namespace Airside.Domain
             planningCruiseKmh: 839, practicalRangeKm: 5200,
             manufacturerMaxCruiseKmh: 0, manufacturerRangeKm: 6480, manufacturerRangeBasis: "up to 3,500 nmi",
             StandClass.TerminalGate, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_737_8_narrowbody_v01.gltf", "UI/Aircraft/thb_air_b38m_v01.png", "SPEC-BOEING-737-8");
+            "Models/Aircraft/mdl_737_8_narrowbody_v01.gltf", "UI/Aircraft/thb_air_b38m_v01.png", "SPEC-BOEING-737-8", AircraftWeightBand.Medium);
 
         // Air New Zealand's trans-Tasman type (AIR-008). Airbus publishes M0.82 as
         // maximum cruise and 7,400 km as the advertised range; the lower figures are
@@ -168,7 +175,7 @@ namespace Airside.Domain
             planningCruiseKmh: 833, practicalRangeKm: 6000,
             manufacturerMaxCruiseKmh: 871, manufacturerRangeKm: 7400, manufacturerRangeBasis: "up to 4,000 nm",
             StandClass.TerminalGate, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_a321neo_v01.gltf", "UI/Aircraft/thb_air_a21n_v01.png", "SPEC-AIRBUS-A321NEO");
+            "Models/Aircraft/mdl_a321neo_v01.gltf", "UI/Aircraft/thb_air_a21n_v01.png", "SPEC-AIRBUS-A321NEO", AircraftWeightBand.Medium);
 
         public static readonly AircraftSpec AirbusA350900 = new(
             "A359", "Airbus A350-900", "Long-haul widebody · 300–350 seats",
@@ -176,7 +183,7 @@ namespace Airside.Domain
             planningCruiseKmh: 903, practicalRangeKm: 15000,
             manufacturerMaxCruiseKmh: 903, manufacturerRangeKm: 15750, manufacturerRangeBasis: "Airbus key figures",
             StandClass.TerminalGate, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_a350_900_v01.gltf", "UI/Aircraft/thb_air_a359_v01.png", "SPEC-AIRBUS-A350-900");
+            "Models/Aircraft/mdl_a350_900_v01.gltf", "UI/Aircraft/thb_air_a359_v01.png", "SPEC-AIRBUS-A350-900", AircraftWeightBand.Heavy);
 
         public static readonly AircraftSpec Boeing78710 = new(
             "B78X", "Boeing 787-10", "Long-haul widebody · 300–375 seats",
@@ -184,7 +191,7 @@ namespace Airside.Domain
             planningCruiseKmh: 903, practicalRangeKm: 12000,
             manufacturerMaxCruiseKmh: 0, manufacturerRangeKm: 13890, manufacturerRangeBasis: "up to 7,500 nmi",
             StandClass.TerminalGate, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_787_10_v01.gltf", "UI/Aircraft/thb_air_b78x_v01.png", "SPEC-BOEING-787-10");
+            "Models/Aircraft/mdl_787_10_v01.gltf", "UI/Aircraft/thb_air_b78x_v01.png", "SPEC-BOEING-787-10", AircraftWeightBand.Heavy);
 
         public static readonly AircraftSpec AirbusA330900 = new(
             "A339", "Airbus A330-900neo", "Long-haul widebody · 260–300 seats",
@@ -192,7 +199,7 @@ namespace Airside.Domain
             planningCruiseKmh: 871, practicalRangeKm: 12000,
             manufacturerMaxCruiseKmh: 871, manufacturerRangeKm: 13334, manufacturerRangeBasis: "7,200 nm Airbus family figure",
             StandClass.TerminalGate, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_a330_900neo_v01.gltf", "UI/Aircraft/thb_air_a339_v01.png", "SPEC-AIRBUS-A330-900");
+            "Models/Aircraft/mdl_a330_900neo_v01.gltf", "UI/Aircraft/thb_air_a339_v01.png", "SPEC-AIRBUS-A330-900", AircraftWeightBand.Heavy);
 
         public static readonly AircraftSpec Boeing7879 = new(
             "B789", "Boeing 787-9", "Long-haul widebody · 250–325 seats",
@@ -200,7 +207,7 @@ namespace Airside.Domain
             planningCruiseKmh: 903, practicalRangeKm: 15000,
             manufacturerMaxCruiseKmh: 0, manufacturerRangeKm: 15370, manufacturerRangeBasis: "up to 8,300 nmi",
             StandClass.TerminalGate, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_787_9_v01.gltf", "UI/Aircraft/thb_air_b789_v01.png", "SPEC-BOEING-787-9");
+            "Models/Aircraft/mdl_787_9_v01.gltf", "UI/Aircraft/thb_air_b789_v01.png", "SPEC-BOEING-787-9", AircraftWeightBand.Heavy);
 
         // Bell 412EP (AIR-017): the SA Ambulance rescue helicopter at Helipad West (ADR 0186, 0207). Bell's
         // published envelope is 17.1 m long with rotors turning, 14.0 m rotor, 4.6 m high, 226 km/h maximum
@@ -211,7 +218,7 @@ namespace Airside.Domain
             planningCruiseKmh: 205, practicalRangeKm: 520,
             manufacturerMaxCruiseKmh: 226, manufacturerRangeKm: 663, manufacturerRangeBasis: "358 nm standard fuel",
             StandClass.Helipad, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_bell_412_rescue_v01.gltf", "UI/Aircraft/thb_air_b412_v01.png", "SPEC-BELL-412EP",
+            "Models/Aircraft/mdl_bell_412_rescue_v01.gltf", "UI/Aircraft/thb_air_b412_v01.png", "SPEC-BELL-412EP", AircraftWeightBand.Light,
             rotorcraft: true);
 
         /// <summary>

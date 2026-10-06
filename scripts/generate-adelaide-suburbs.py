@@ -52,6 +52,9 @@ STREETS_SNAPSHOT = sorted((ROOT / "docs/data/osm").glob("adelaide-suburb-streets
 LANDCOVER_CS = ROOT / "game/Airside/Assets/Airside/Simulation/AdelaideLandCover.cs"
 AERODROME_RAW = ROOT / "work/cache/osm/aerodrome.json"
 OUTPUT = ROOT / "game/Airside/Assets/Airside/Art/Terrain/osm_adelaide_suburbs_v01.bin"
+BOUNDARY_SNAPSHOT = sorted((ROOT / "docs/data/osm").glob("ypad-boundary-*.json"))[-1]
+OVERTURE_SNAPSHOTS = sorted((ROOT / "docs/data/overture").glob("ypad-suburb-buildings-*.json.gz"))
+OVERTURE_DUPLICATE = 0.3   # share of the smaller footprint that must overlap an OSM one to count as the same building
 OVERPASS = "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
 BBOX = "-35.005,138.462,-34.894,138.598"
 
@@ -317,9 +320,62 @@ def fill_frontage(layout, streets, buildings, boundary, landcover):
     return houses
 
 
+def merge_overture(layout, snapshot):
+    """Add Overture/Microsoft footprints OSM does not already have (ADR 0236).
+
+    OSM maps a fraction of these suburbs; Overture's Microsoft ML footprints, validated against the SA Government
+    LiDAR building raster by prepare-ypad-overture-buildings.py, cover nearly every roof. A footprint that
+    overlaps an OSM building by more than OVERTURE_DUPLICATE of the smaller one is the same building and is
+    dropped, so OSM tags keep winning. Returns how many were added.
+    """
+    import gzip
+    from shapely.strtree import STRtree
+    if not OVERTURE_SNAPSHOTS:
+        return 0
+    data = json.loads(gzip.open(OVERTURE_SNAPSHOTS[-1], "rt").read())
+    existing = []
+    for b in snapshot["buildings"]:
+        pts = [local(layout, lon, lat) for lon, lat in b["geometry"]]
+        if len(pts) >= 4:
+            poly = Polygon(pts)
+            existing.append(poly if poly.is_valid else poly.buffer(0))
+    tree = STRtree(existing)
+    # Overture carries the airport's own sheds and hangars; those stay with AdelaideBuildings and the terminals.
+    aerodrome = next(e for e in json.loads(BOUNDARY_SNAPSHOT.read_text())["elements"] if e["id"] == 146489105)
+    boundary = Polygon([local(layout, p["lon"], p["lat"]) for p in aerodrome["geometry"]]).buffer(5.0)
+    added = 0
+    for b in data["buildings"]:
+        pts = [local(layout, lon, lat) for lon, lat in b["g"]]
+        if len(pts) < 4:
+            continue
+        poly = Polygon(pts)
+        if not poly.is_valid:
+            poly = poly.buffer(0)
+        if poly.is_empty or poly.area < 12.0 or boundary.contains(poly.centroid):
+            continue
+        smaller = poly.area
+        duplicate = False
+        for i in tree.query(poly, predicate="intersects"):
+            other = existing[i]
+            if poly.intersection(other).area > OVERTURE_DUPLICATE * min(smaller, other.area):
+                duplicate = True
+                break
+        if duplicate:
+            continue
+        tags = {"building": b["c"] or "yes"}
+        if b["h"]:
+            tags["height"] = str(round(b["h"], 1))
+        if b["f"]:
+            tags["building:levels"] = str(b["f"])
+        snapshot["buildings"].append({"id": "ov:" + b["id"], "tags": tags, "geometry": b["g"]})
+        added += 1
+    return added
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--fetch", action="store_true", help="Download from Overpass first")
+    parser.add_argument("--no-overture", action="store_true", help="OSM footprints only (the pre-ADR 0236 behaviour)")
     args = parser.parse_args()
     layout = load_layout()
 
@@ -373,6 +429,8 @@ def main():
         }, separators=(",", ":")))
 
     snapshot = json.loads(SNAPSHOT.read_text())
+    osm_count = len(snapshot["buildings"])
+    overture_added = 0 if args.no_overture else merge_overture(layout, snapshot)
     # the band fetch keeps every highway; the house filler only wants streets a house can face
     footpaths = {"footway", "cycleway", "path", "steps", "pedestrian", "corridor", "platform", "construction", "track", "bridleway"}
     streets = [st for st in json.loads(STREETS_SNAPSHOT.read_text())["streets"]
@@ -475,8 +533,8 @@ def main():
     OUTPUT.write_bytes(b"ASUB" + struct.pack("<ii", 1, count) + bytes(out))
     print(f"Wrote {OUTPUT}: {count} buildings ({houses} OSM houses, {flats} flat, {fillers} street-front "
           f"fill; {excluded} airport-owned, {thinned} thinned), "
-          f"~{triangles} triangles, {OUTPUT.stat().st_size} bytes; snapshot {len(snapshot['buildings'])} "
-          f"from OSM base {snapshot['osm_base']}")
+          f"~{triangles} triangles, {OUTPUT.stat().st_size} bytes; snapshot {osm_count} "
+          f"from OSM base {snapshot['osm_base']} + {overture_added} Overture")
 
 
 if __name__ == "__main__":

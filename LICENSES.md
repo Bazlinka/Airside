@@ -21,6 +21,8 @@ register with its licence and the credit shown in the game (Flight Manual › Ma
 - **Copernicus Sentinel-2** ("Contains modified Copernicus Sentinel data") and **Copernicus DEM GLO-30**
   (© DLR e.V. and © Airbus Defence and Space GmbH, provided under COPERNICUS by the EU and ESA): satellite tint,
   terrain height and derived tree positions.
+- **Overture Maps buildings** (ODbL 1.0; OpenStreetMap + Microsoft footprints) and the **Government of South Australia 2022 LiDAR
+  canopy height and building footprints** (CC BY 4.0, Department for Environment and Water): suburb houses and tree crowns.
 - **Natural Earth** and **OurAirports** (public domain): the route map.
 - **Open-Meteo** (CC BY 4.0) and **adsb.lol** (ODbL): live weather and traffic.
 - **CC0 textures, characters and audio** (ambientCG, Poly Haven, Quaternius, qubodup and others).

@@ -1903,7 +1903,8 @@ namespace Airside.Presentation
                     local[v] = xf.InverseTransformPoint(worldVerts[i][v]);
                 mesh.vertices = local;
                 mesh.RecalculateBounds();
-                mesh.RecalculateNormals();
+                // Rebaking only translates the mesh: keep its cloned smooth normals and
+                // matching tangent frame instead of replacing normals independently.
                 filter.sharedMesh = mesh;
             }
         }

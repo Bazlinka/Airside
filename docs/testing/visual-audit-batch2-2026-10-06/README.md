@@ -58,7 +58,10 @@ Always-included shader registration is a static packaging precaution, not proof
 of a successful build.
 
 The mesh loader uses the tested pure unwrap/tangent helpers, preserving source
-normals and triangle order before upload. It selects 32-bit indices after seam
+normals and triangle order before upload. Final caller review also preserves the
+cloned normals/tangents in the fan pivot rebake: vertex translation does not
+change either direction, so a normals-only rebuild was removed. This native
+caller safeguard is source-reviewed; the compiled headless assemblies are unchanged. It selects 32-bit indices after seam
 expansion. Changed native Mesh calls, material bindings and shaders were reviewed
 as source and were not compiled in Unity. Headless tests do not verify normal-map
 appearance, rendered coast positions, star depth ordering, wiper transforms,

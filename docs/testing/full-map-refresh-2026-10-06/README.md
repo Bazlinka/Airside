@@ -26,5 +26,9 @@ Validation before integration with #531:
 Final focused native checks: 52/52 pass (`focused-unity-results.xml`), including
 full-map overlap cycling. After integrating #531, native checks including Adelaide
 map coverage/suburb data: 58/58 pass (`integrated-unity-results.xml`).
-Integrated headless and clean packaged review follow below. Screenshots are presentation evidence; they do not establish
+Integration exposed #531's credits-page overflow (the final weather/live-traffic
+heading was omitted). Move its two scenery sections to a dedicated page, preserving
+their complete attribution. Final native suite including manual/terrain tests:
+73/73 pass (`final-unity-results.xml`). Integrated headless and clean packaged
+review follow below. Screenshots are presentation evidence; they do not establish
 hardware mouse input, full-flight weather behaviour or performance acceptance.

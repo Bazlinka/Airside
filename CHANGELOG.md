@@ -3,7 +3,8 @@
 - Put flight status and camera actions on the full map in a dedicated inspector;
   show all operators by default, add a South Australia shortcut and tidy labels,
   routes and opaque map chrome. Refresh shared icons/buttons across the game;
-  return the mini map to a polished airport scope (ADR 0237).
+  return the mini map to a polished airport scope; keep the new scenery credits
+  on a separate manual page so all attribution remains visible (ADR 0237).
 
 - Map accuracy from open data (ADR 0236): Overture/Microsoft footprints, validated against SA Government
   LiDAR roofs, replace most invented suburb filler houses (real houses 4,523 → 17,618); trees come from the SA 2022

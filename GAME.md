@@ -28,6 +28,58 @@ Not done, deliberately: moving an Adelaide aircraft to an outstation; purchase d
 (they still pay a free first flight — balance review needed); a jet bought with no free gate; outstation
 cameras; helicopters at outstations. See ADR 0239.
 
+## Where to resume — fitted passenger cabin code, 6 October 2026
+
+Codex; Bailey authorised merging both audit reports and continuing the recommended
+window/cabin slice. #538 merged at `0ef9f32a`; historical #534 at `2868e6c8`.
+Implementation branch `feature/aircraft-cabin-immersion-20261006`, ADR 0239.
+
+All thirteen passenger profiles separate pane spacing/shape from seat pitch.
+ATR42/A320/B789 eyes align with individual shipped panes. The shared builder adds
+curved lining/crown, deep trim with clear openings, fitted shaped bins/PSUs, bounded
+12/16/20 m continuation, detailed nearest-five-row fittings and cheap distant seats.
+Lining sits inboard of the pane datum; representative groupings are retained.
+Materials/cloth differ; one shadowless ceiling light replaces inherited panel glow
+in cabins. 787 dimmer fittings are decorative, with clear windows and no new control.
+
+Evidence: `docs/testing/cabin-immersion-2026-10-06/README.md`.
+Unity-free suite **1,683 passed / 0 failed**; final focused profile checks **19/19**;
+static asset audit passes (1,766 GUIDs / 386 mirrors / 70 character materials).
+**No Unity tests, builds, editor/player execution or renders** by instruction;
+native compilation, actual appearance, clipping, switching and performance remain
+unverified. Bell interiors, large real 787 glazing, exact cabin widths and remaining
+individual camera-station/family-cockpit passes are still outstanding audit work.
+
+**NEXT:** finish this code PR/CI/merge if still open. Continue with aircraft-specific
+cockpit shell/panel modelling and the remaining individual cabin fits from the
+merged audit. Retain the no-Unity restriction until Bailey changes it.
+
+## Where to resume — aircraft interior immersion analysis, 6 October 2026
+
+Codex; Bailey requested one dedicated agent per aircraft to analyse markedly more
+realistic, immersive cockpit, passenger and exterior views. Documentation branch
+`docs/aircraft-immersion-audit-20261006`, based on main `64ca4a23` (merged #537).
+Fourteen dedicated reports cover thirteen passenger aircraft and Bell 412EP:
+`docs/art/aircraft-immersion-audit-2026-10-06/README.md`.
+
+Analysis only: **no game code/assets changed, no Unity tests, builds, editor/player
+execution or new renders**. Evidence is current source, retained historical native
+fixtures and primary aircraft references. Historical captures do not certify the
+current packaged game; ATR/Q400 cockpit captures remain unavailable. Bell cockpit
+and passenger views are unsupported today; its proposed interiors are new scope.
+
+Highest-value shared work: aircraft-specific apertures/window stations independent
+of seat pitch; fitted curved cabin sections and depth beyond the five-row box;
+family-specific windshield/panel structure; shaped seats/bins and distinct
+materials/cabin lighting. Individual reports preserve genuine family differences
+and flag optional/operator cabin fits. Functional avionics are outside the request.
+
+**NEXT:** review the report and select an implementation slice. Recommended first:
+shared window/cabin structure proved on ATR42, A320 and B789, then fit the remaining
+profiles. Use one owner per shared builder; aircraft workers own disjoint profile/
+model files. Recommendations are proposals, not an approved milestone or completed
+visual implementation. Keep the user's no-Unity restriction until they change it.
+
 ## Where to resume — smooth takeoff and flight information, 6 October 2026
 
 Codex; Bailey reported an altitude jump at takeoff and requested flight status /
@@ -104,6 +156,30 @@ remain as previously recorded.
 After merge, this seven-fix code batch is complete within the requested scope. The other nine concrete
 findings in #534 and its optional design work remain pending; the audit PR is
 still a separate draft. Standing freight work and release status are unchanged.
+
+## Historical review — visual code review continuation, 6 October 2026 (superseded)
+
+Codex; branch `docs/visual-review-continuation`, reviewed main `000ab56b` after
+PR #532 merged. Bailey asked to continue Claude’s interrupted **Main branch
+review**: a comprehensive visual-code backlog for agents working in parallel.
+Recovered Claude’s cloud review, CORE/GROUND summary and saved branch; completed
+six independent static reviews. Claude’s original processes remain stopped by
+its usage limit; this is a new review, not a resumed Claude agent session.
+
+Report: `docs/testing/VISUAL_BACKLOG_2026-10-06.md`, with six evidence packets in
+`docs/testing/visual-review-2026-10-06/`. It contains 16 concrete source/data
+findings and two optional lighting-coverage gaps, plus retained design work,
+retracted claims, meaningful proposed checks and explicit file ownership.
+No game source changed; no new Unity tests, captures, visual sign-off or FPS
+measurement. Documentation links and whitespace were checked. Existing owner
+acceptance remains closed; historical technical failures remain recorded.
+
+**Historical status:** all 16 concrete findings were implemented and merged in
+PRs #535 and #536. This #534 report preserves the original analysis and proposed
+acceptance checks; it is not an active implementation queue. Optional lighting,
+scenery and design proposals remain unapproved. No native compilation, captures,
+visual sign-off or performance checks were added. Follow the newer handoffs above
+for active work; standing freight priorities remain unchanged.
 
 ## Where to resume — full-map inspection and shared controls, 6 October 2026
 

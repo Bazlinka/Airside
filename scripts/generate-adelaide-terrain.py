@@ -24,6 +24,12 @@ Sea and anything below 0 m are stored as 0.
 Run: python3 scripts/generate-adelaide-terrain.py          the ±32 km near file (125 m)
      python3 scripts/generate-adelaide-terrain.py --far    the ±96 km far file (250 m), dem_adelaide_runway_far_v01.bin,
                                                            for the zoomed-out view (ADR 0185)
+     python3 scripts/generate-adelaide-terrain.py --elvis work/cache/elvis
+         blend 1 m / 5 m LiDAR bare-earth DTM GeoTIFFs over the Copernicus heights wherever they cover (ADR 0236).
+         Order them free (CC BY 4.0, Geoscience Australia) at https://elevation.fsdf.org.au/ : draw the area
+         around Adelaide Airport, tick "1 Metre DEM" (newest Adelaide / Adelaide Metro project), enter an email,
+         unzip the emailed download into work/cache/elvis/. Any projected CRS (MGA zone 54 etc.) is handled;
+         works with --far too (coarse cells are block means of the 1 m data).
 Needs numpy, scipy, rasterio, pyproj, pillow.
 """
 from __future__ import annotations
@@ -50,6 +56,7 @@ PREVIEW = ROOT / ("docs/testing/map-2026-09-29/terrain-far-hillshade.jpg" if "--
 CACHE = ROOT / "work/cache/copernicus-dem"
 
 FAR = "--far" in sys.argv
+ELVIS_DIR = Path(sys.argv[sys.argv.index("--elvis") + 1]) if "--elvis" in sys.argv else None
 EXTENT_METRES = 96_000.0 if FAR else 32_000.0
 SPACING = 250.0 if FAR else 125.0
 COUNT = int(round(2 * EXTENT_METRES / SPACING)) + 1   # 513 near, 769 far
@@ -113,6 +120,44 @@ def read_mosaic(lon_min, lat_min, lon_max, lat_max):
     return mosaic, box
 
 
+def blend_elvis(layout, ground, axis):
+    """Overwrite `ground` with LiDAR bare-earth DTM block means wherever ELVIS tiles cover a cell (ADR 0236)."""
+    from pyproj import Transformer
+    from rasterio.enums import Resampling
+    tifs = sorted(p for p in ELVIS_DIR.rglob("*") if p.suffix.lower() in (".tif", ".tiff", ".asc"))
+    if not tifs:
+        print(f"  no DEM files under {ELVIS_DIR}: Copernicus heights kept")
+        return ground
+    gx, gz = np.meshgrid(axis, axis)
+    lon, lat = local_to_lonlat(layout, gx, gz)
+    replaced = np.zeros(ground.shape, bool)
+    out = ground.copy()
+    for tif in tifs:
+        with rasterio.open(tif) as src:
+            if src.crs is None:
+                print(f"  skip {tif.name}: no CRS")
+                continue
+            to_src = Transformer.from_crs("EPSG:4326", src.crs, always_xy=True)
+            x, y = to_src.transform(lon, lat)
+            b = src.bounds
+            inside = (x >= b.left) & (x < b.right) & (y > b.bottom) & (y <= b.top) & ~replaced
+            if not inside.any():
+                continue
+            # read at about a third of a cell so the block mean is a true average of the 1 m data
+            scale = max(1.0, (SPACING / 3.0) / abs(src.res[0]))
+            shape = (max(1, int(src.height / scale)), max(1, int(src.width / scale)))
+            data = src.read(1, out_shape=shape, resampling=Resampling.average, masked=True)
+            cx = ((x - b.left) / (b.right - b.left) * shape[1]).astype(int).clip(0, shape[1] - 1)
+            cy = ((b.top - y) / (b.top - b.bottom) * shape[0]).astype(int).clip(0, shape[0] - 1)
+            value = data[cy, cx]
+            ok = inside & ~np.ma.getmaskarray(value) & (value.filled(-9999) > -50.0)
+            out[ok] = value.filled(0.0)[ok]
+            replaced |= ok
+            print(f"  {tif.name}: {int(ok.sum())} cells from LiDAR")
+    print(f"  LiDAR DTM replaces {int(replaced.sum())} of {replaced.size} cells ({100.0 * replaced.mean():.1f} %)")
+    return out
+
+
 def main():
     os.environ.setdefault("GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR")
     os.environ.setdefault("AWS_NO_SIGN_REQUEST", "YES")
@@ -147,6 +192,8 @@ def main():
     median = np.median(stack, axis=0)
     ground = np.where(median > 80.0, median, np.percentile(stack, GROUND_PERCENTILE, axis=0))
     ground = gaussian_filter(ground, 0.8)
+    if ELVIS_DIR is not None:
+        ground = blend_elvis(layout, ground, axis)
     ground = np.clip(ground, 0.0, None)
 
     stored = np.clip(np.round(ground / HEIGHT_SCALE), 0, 32767).astype("<i2")

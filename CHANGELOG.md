@@ -1,5 +1,10 @@
 ## Unreleased
 
+- Map accuracy from open data (ADR 0236): Overture/Microsoft footprints, validated against SA Government
+  LiDAR roofs, replace most invented suburb filler houses (real houses 4,523 → 17,618); trees come from the SA 2022
+  LiDAR canopy height model; OSM airport snapshot refreshed to 2026-10-06; optional `--elvis` 1 m LiDAR terrain
+  hook; credits and register updated.
+
 - Select distant South Australian flights from the corner map using an Airport /
   South Australia switch. Show live status and journey plus available camera views;
   include interstate SA segments and cycle overlapping flight markers (ADR 0235).

@@ -109,7 +109,7 @@ namespace Airside.Tests
             }
 
             Assert.That(total, Is.GreaterThan(5000));
-            Assert.That(stranded.Count, Is.LessThanOrEqualTo(total / 500),
+            Assert.That(stranded.Count, Is.LessThanOrEqualTo(total / 300), // Overture adds real yards and sheds set back from OSM's roads (ADR 0236)
                 $"{stranded.Count} of {total} buildings are more than {ReachMetres} m from a road, e.g. " +
                 string.Join(" ", stranded.GetRange(0, Math.Min(12, stranded.Count))));
         }

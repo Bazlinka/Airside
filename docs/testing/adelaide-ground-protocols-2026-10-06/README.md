@@ -41,7 +41,15 @@ whitespace check passed. Focused policy/anchor/save/route/blocker tests pass.
 Rebased onto `3f8d0969` (merged fleet management and cockpit work). Wake data moved
 to save v21 so the fleet v20 migration remains separate. The focused v20 migration
 regression passes: preserve ferry flag and both runway deadlines, ignore fields that
-v20 could not have written. Final combined suite is pending.
+v20 could not have written. Final integrated suite: 1,799 executed/passed, zero failed (4.0786 minutes),
+plus the separately executed v20 migration regression (1/1). Integrated TRX SHA256:
+`ee51c31ec37643e02711f342115cff56b3d9da3a94e913975969d18558a80ef8`.
+Integrated C# 9 syntax: 21 files, zero errors. Asset audit: 1,785 GUIDs,
+386 mirrored art files, 70 character materials. Draft PR #549 is mergeable;
+GitHub headless checks passed on the implementation head. Generated harness
+freshness and branch-wide whitespace checks passed after integration. The harness
+retains its baseline exclusions: ArrivalMapTrack and five Unity-dependent test files;
+these checks do not substitute for the native gate.
 The arrival-prediction regression exposed by the intersecting-strip guard was corrected
 by sharing that guard with `LandingGroundClear`; focused result: 57/63 within 2 seconds
 (>=85% existing acceptance), no early estimates. Code C push direction is checked against

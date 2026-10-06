@@ -22,7 +22,7 @@ explicit limits. Current aircraft taxi bands and the intentional 05:00 game curf
 remain design assumptions. Native Unity compilation/visuals are unverified by
 owner instruction; no full journey reproduction was run.
 
-NEXT: complete headless/static checks and review the draft PR; do not merge until
+NEXT: review draft PR #549 (1,799 integrated tests plus migration regression pass); do not merge until
 the native gate is satisfied. The separate background capture-stall fix is #545.
 
 ## Where to resume — aircraft view feel, 6 October 2026

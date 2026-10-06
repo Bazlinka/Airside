@@ -106,7 +106,8 @@ namespace Airside.Simulation
                 return false;
             }
             var km = origin.DistanceKmTo(Home);
-            if (!aircraft.Type.CanReach(km) || !RouteAccess.Allows(aircraft.Type, Home))
+            // Range only: route bands rank destinations for filed services, and Adelaide, the home, has no band.
+            if (!aircraft.Type.CanReach(km))
             {
                 reason = $"{Article.CapitalA(aircraft.Type.Name)} cannot fly the {km:N0} km from {aircraft.BaseCode} to Adelaide.";
                 return false;

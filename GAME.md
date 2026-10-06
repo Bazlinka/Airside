@@ -1,3 +1,32 @@
+## Where to resume — complete visual-audit code fixes, 6 October 2026
+
+Codex; three workers in each of two sequential batches. Bailey authorised the
+concrete findings from draft #534 and explicitly excluded **Unity testing,
+builds and player execution**. This overrides the usual native-check requirement;
+no native C# or shader compilation, player capture or performance check is claimed.
+
+First batch merged in #535 (`582290c0`): seven map, ground-service and aircraft
+fixes; combined headless 1,557 pass and GitHub headless CI pass. Second integration
+branch `fix/visual-audit-batch2-20261006` covers the remaining nine: AST-01/02
+(box UVs/tangents), CORE-01 (geographic foam), WLD-01 (roof origin), AIR-02
+(nav colours), CK-01 (observer rain/wipers), WX-01 (downwind flow), SKY-01/02
+(star colour/fade/background depth). Evidence and final headless result:
+`docs/testing/visual-audit-batch2-2026-10-06/README.md`. Final combined headless
+**1,603 passed / 0 failed**; six weather/star source contracts and static
+asset audit pass (1,760 GUIDs, 386 mirrors, 70 character materials).
+
+All 16 concrete findings have code implementations. Native transforms, shader
+compilation, rendered correctness and performance remain unverified by user
+instruction. The dedicated star shader is explicitly included with an independent
+existing unlit fallback; source/asset-only checks are not build evidence.
+Draft #534 remains the separate audit report. Optional lighting/SSAO, scenery,
+terrain data and design work are unchanged; no new asset data was acquired.
+Historical playtest acceptance and inherited technical issues stay recorded.
+
+**NEXT:** check the second integration PR state; if open, finish code-only CI,
+merge and sync. Once merged, the authorised concrete code backlog is complete;
+return to standing freight priorities unless Bailey selects optional design work.
+
 ## Where to resume — first visual-audit code batch, 6 October 2026
 
 Codex; Bailey authorised three parallel workers from draft PR #534, then explicitly

@@ -1,5 +1,11 @@
 ## Unreleased
 
+- Complete the nine remaining concrete #534 code findings: noncollapsed kit UVs
+  and tangent frames, fixed geographic foam and roof texture coordinates,
+  port-red/starboard-green lights, altitude-adjusted wipers, downwind weather flow,
+  and vertex-coloured stars with background depth/additive fade. No Unity tests,
+  builds or player execution by Bailey's instruction; native visuals unverified.
+
 - First visual-audit code batch (#534 findings): show first scheduled flights on
   the map, clear stale inspection on explicit planning/selection and project field
   headings; rotate service tyres at their own axles and place boarding stairs/walks

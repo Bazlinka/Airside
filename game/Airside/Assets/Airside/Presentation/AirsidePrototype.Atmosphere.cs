@@ -74,8 +74,8 @@ namespace Airside.Presentation
                 return;
             }
 
-            var windYaw = RunwayWeather.UnityYawFromTrue(PresentationWind.DirectionDegrees) * Mathf.Deg2Rad;
-            Shader.SetGlobalVector("_AirsideWeatherWind", new Vector4(Mathf.Sin(windYaw) * 7f, 0f, Mathf.Cos(windYaw) * 7f, 0f));
+            var flow = WeatherWindFlow.ShaderGlobal(PresentationWind);
+            Shader.SetGlobalVector("_AirsideWeatherWind", new Vector4(flow.X, 0f, flow.Z, 0f));
             Shader.SetGlobalFloat("_AirsideWeatherTime", Time.unscaledTime);
             Shader.SetGlobalVector("_AirsideWeatherRange", new Vector4(
                 WeatherCoverage.AtmosphereFadeStart, WeatherCoverage.AtmosphereDistance, 0f, 0f));

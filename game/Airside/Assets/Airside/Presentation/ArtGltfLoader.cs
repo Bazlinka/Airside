@@ -273,18 +273,37 @@ namespace Airside.Presentation
                     indices[n] = BitConverter.ToUInt16(blob, offset + n * 2);
                 offset += indexPadded;
 
+                // Compute the existing smooth normals before adding UV seams. Copying them
+                // through the remap preserves curved-kit shading and hard source edges.
+                var normals = MeshNormalSmoothing.Compute(vertices, indices, MeshNormalSmoothing.DefaultAngleDegrees);
+                Vector2[] uvs;
+                if (metreUvs)
+                    uvs = BuildMetreUvs(vertices); // Aircraft metre/cylindrical mapping stays separate.
+                else
+                {
+                    var unwrap = BoxKitSurfaceGeometry.Build(FlattenVectors(vertices), indices);
+                    var sourceVertices = vertices;
+                    var sourceNormals = normals;
+                    vertices = new Vector3[unwrap.SourceIndices.Length];
+                    normals = new Vector3[vertices.Length];
+                    uvs = new Vector2[vertices.Length];
+                    for (var vertex = 0; vertex < vertices.Length; vertex++)
+                    {
+                        var source = unwrap.SourceIndices[vertex];
+                        vertices[vertex] = sourceVertices[source];
+                        normals[vertex] = sourceNormals[source];
+                        uvs[vertex] = new Vector2(unwrap.Uvs[vertex * 2], unwrap.Uvs[vertex * 2 + 1]);
+                    }
+                    indices = unwrap.Triangles;
+                }
                 var mesh = new Mesh { name = name };
+                if (vertices.Length > ushort.MaxValue)
+                    mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
                 mesh.SetVertices(vertices);
                 mesh.SetTriangles(indices, 0);
-                // A bare RecalculateNormals() only smooths across faces sharing the exact
-                // same vertex index — most of this project's procedural generators emit
-                // fresh, unshared vertices per quad, so a fuselage tube or nacelle rendered
-                // with a hard facet per quad regardless of segment count. This welds by
-                // position and smooths by angle instead, matching how Unity's own asset
-                // importer treats a smoothing-angle setting.
-                MeshNormalSmoothing.RecalculateSmoothNormals(mesh, vertices, indices);
-                var uvs = metreUvs ? BuildMetreUvs(vertices) : BuildPlanarUvs(vertices);
+                mesh.SetNormals(normals);
                 mesh.SetUVs(0, uvs);
+                SetKitTangents(mesh, vertices, normals, uvs, indices);
                 mesh.RecalculateBounds();
                 // Kit part meshes stay CPU-readable: the aircraft rebakes props, control
                 // surfaces and wheels onto their pivots by reading these vertices, and a
@@ -293,7 +312,7 @@ namespace Airside.Presentation
                 // kits below are never edited, so they still drop their CPU copy.
                 AirsideMeshUtil.UploadKeepReadable(mesh);
 
-                var entry = new MeshEntry(name, mesh, vertices, indices, uvs);
+                var entry = new MeshEntry(name, mesh, vertices, indices, uvs, normals);
                 kit.Meshes.Add(entry);
                 kit.ByName[name] = entry;
             }
@@ -387,6 +406,7 @@ namespace Airside.Presentation
             }
 
             var vertices = new Vector3[vertCount];
+            var normals = new Vector3[vertCount];
             var uvs = new Vector2[vertCount];
             var materials = new Material[groups.Count];
             var trianglesPerGroup = new int[groups.Count][];
@@ -410,6 +430,7 @@ namespace Airside.Presentation
                         for (var v = 0; v < count; v++)
                             vertices[vertOffset + v] += offset;
                     }
+                    Array.Copy(entry.Normals, 0, normals, vertOffset, count);
                     if (entry.Uvs != null && entry.Uvs.Length == count)
                         Array.Copy(entry.Uvs, 0, uvs, vertOffset, count);
                     var indices = entry.Indices;
@@ -424,12 +445,18 @@ namespace Airside.Presentation
             }
 
             var combined = new Mesh { name = "Combined kit" };
+            if (vertices.Length > ushort.MaxValue)
+                combined.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
             combined.SetVertices(vertices);
             combined.SetUVs(0, uvs);
             combined.subMeshCount = groups.Count;
             for (var g = 0; g < groups.Count; g++)
                 combined.SetTriangles(trianglesPerGroup[g], g);
-            combined.RecalculateNormals();
+            combined.SetNormals(normals);
+            var allTriangles = new List<int>();
+            foreach (var groupTriangles in trianglesPerGroup)
+                allTriangles.AddRange(groupTriangles);
+            SetKitTangents(combined, vertices, normals, uvs, allTriangles.ToArray());
             combined.RecalculateBounds();
             AirsideMeshUtil.UploadStatic(combined);
             return new CombinedTemplate(combined, materials);
@@ -441,12 +468,9 @@ namespace Airside.Presentation
         /// <summary>
         /// Cylindrical unwrap in metres about each part's longest axis, for aircraft kits.
         ///
-        /// <see cref="BuildPlanarUvs"/> normalises each part's own bounding box to 0..1, so
-        /// texel density varied by over a hundred times across one airframe: a 39 m fuselage
-        /// got a single texture repeat over its whole length while a 0.3 m window got one
-        /// across 30 cm. Worse, its axis choice drops the *longest* axis, so a fuselage was
-        /// unwrapped looking straight down its own length and every ring of the tube landed
-        /// on the same UV — the skin maps could only ever read as a lengthwise smear.
+        /// The former single planar projection normalised each part to 0..1 and could
+        /// collapse tube rings. Aircraft therefore retain their dedicated cylindrical
+        /// metre mapping, independent of non-aircraft face-projection seams.
         ///
         /// Aircraft parts are overwhelmingly bodies of revolution or extrusions (fuselage,
         /// nacelles, gear legs, wings), so one rule suits them all: V runs along the longest
@@ -486,57 +510,24 @@ namespace Airside.Presentation
             return uvs;
         }
 
-        /// <summary>
-        /// Simple planar UVs from dominant axes so Batch B basecolours tile on
-        /// box kits (ArtGltfLoader has no TEXCOORD0). Presentation only.
-        /// </summary>
-        private static Vector2[] BuildPlanarUvs(Vector3[] vertices)
+        private static float[] FlattenVectors(Vector3[] vectors)
         {
-            if (vertices == null || vertices.Length == 0)
-                return Array.Empty<Vector2>();
+            var result = new float[vectors.Length * 3];
+            for (var i = 0; i < vectors.Length; i++)
+            { result[i * 3] = vectors[i].x; result[i * 3 + 1] = vectors[i].y; result[i * 3 + 2] = vectors[i].z; }
+            return result;
+        }
 
-            var min = vertices[0];
-            var max = vertices[0];
-            for (var i = 1; i < vertices.Length; i++)
-            {
-                min = Vector3.Min(min, vertices[i]);
-                max = Vector3.Max(max, vertices[i]);
-            }
-
-            var size = max - min;
-            // Prefer the two largest axes for unwrap (walls/roofs/aprons).
-            var abs = new Vector3(Mathf.Abs(size.x), Mathf.Abs(size.y), Mathf.Abs(size.z));
-            var uAxis = 0;
-            var vAxis = 2;
-            if (abs.y >= abs.x && abs.y >= abs.z)
-            {
-                // Tallest span is Y → use XZ (top-down) or XY for walls later per-vertex.
-                uAxis = 0;
-                vAxis = 2;
-            }
-            else if (abs.z >= abs.x)
-            {
-                uAxis = 0;
-                vAxis = 1;
-            }
-            else
-            {
-                uAxis = 2;
-                vAxis = 1;
-            }
-
-            var uSize = Mathf.Max(0.0001f, abs[uAxis]);
-            var vSize = Mathf.Max(0.0001f, abs[vAxis]);
-            var uvs = new Vector2[vertices.Length];
-            for (var i = 0; i < vertices.Length; i++)
-            {
-                var p = vertices[i];
-                uvs[i] = new Vector2(
-                    (p[uAxis] - min[uAxis]) / uSize,
-                    (p[vAxis] - min[vAxis]) / vSize);
-            }
-
-            return uvs;
+        private static void SetKitTangents(Mesh mesh, Vector3[] vertices, Vector3[] normals, Vector2[] uvs, int[] triangles)
+        {
+            var flatUvs = new float[uvs.Length * 2];
+            for (var i = 0; i < uvs.Length; i++)
+            { flatUvs[i * 2] = uvs[i].x; flatUvs[i * 2 + 1] = uvs[i].y; }
+            var basis = RuntimeKitTangents.Build(FlattenVectors(vertices), FlattenVectors(normals), flatUvs, triangles);
+            var tangents = new Vector4[vertices.Length];
+            for (var i = 0; i < tangents.Length; i++)
+                tangents[i] = new Vector4(basis[i * 4], basis[i * 4 + 1], basis[i * 4 + 2], basis[i * 4 + 3]);
+            mesh.SetTangents(tangents);
         }
 
         private static string MatchFirst(string input, string pattern)
@@ -595,13 +586,14 @@ namespace Airside.Presentation
 
         private sealed class MeshEntry
         {
-            public MeshEntry(string name, Mesh mesh, Vector3[] vertices, int[] indices, Vector2[] uvs)
+            public MeshEntry(string name, Mesh mesh, Vector3[] vertices, int[] indices, Vector2[] uvs, Vector3[] normals)
             {
                 Name = name;
                 Mesh = mesh;
                 Vertices = vertices;
                 Indices = indices;
                 Uvs = uvs;
+                Normals = normals;
             }
 
             public string Name { get; }
@@ -609,6 +601,7 @@ namespace Airside.Presentation
             public Vector3[] Vertices { get; }
             public int[] Indices { get; }
             public Vector2[] Uvs { get; }
+            public Vector3[] Normals { get; }
         }
     }
 }

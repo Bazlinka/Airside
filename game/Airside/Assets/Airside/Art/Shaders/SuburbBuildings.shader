@@ -37,6 +37,8 @@ Shader "Airside/SuburbBuildings"
 
             // Global (not per material): the camera's haze scale, see AirsideCameraController.
             float _AirsideHorizonScale;
+            // Geographic texture lookup uses absolute field metres; lighting/fog remain camera-relative.
+            float4 _AirsideFlightOrigin;
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _SatelliteTint;
@@ -87,7 +89,8 @@ Shader "Airside/SuburbBuildings"
                 Light mainLight = GetMainLight();
                 float NdotL = saturate(dot(normalWS, mainLight.direction));
 
-                float2 satelliteUv = saturate(input.positionWS.xz / (2.0 * max(_SatelliteExtent, 1.0)) + 0.5);
+                float2 geographicXZ = input.positionWS.xz + _AirsideFlightOrigin.xz;
+                float2 satelliteUv = saturate(geographicXZ / (2.0 * max(_SatelliteExtent, 1.0)) + 0.5);
                 float3 roof = SAMPLE_TEXTURE2D(_SatelliteAlbedo, sampler_SatelliteAlbedo, satelliteUv).rgb
                     * _SatelliteTint.rgb * _RoofGain;
                 float3 albedo = lerp(input.color.rgb, roof, saturate(input.color.a));

@@ -7,6 +7,17 @@
   a once-per-run toast and F1 help say how to look, glance, zoom and recentre (ADR 0242). Headless suite
   passes; Unity compile, trackpad feel and visuals are not verified.
 
+- One fleet across every base (ADR 0239). The Fleet workspace now lists every aircraft at
+  Adelaide, Melbourne, Sydney, Brisbane and Perth, grouped by base with SHOW and SORT, and a
+  bases strip that filters the roster and picks where BUY delivers. Each aircraft has a profile
+  with logbook, check, sell value and its actions: send an outstation aircraft on a route in one
+  click, TO ADELAIDE (a visible ferry that earns nothing), SELL (two clicks), and the camera views.
+  Selecting a row no longer closes the sheet; the Network screen is gone. Outstation aircraft appear
+  on the map and in Stats, the return briefing and My Flights. Selling an aircraft now refuses a
+  booked flight; a sold outstation mark is not reissued; a second Saab opens its own planner. Save
+  v20 adds the ferry flag and an outstation logbook. Code only: nothing compiled or run (Bailey's
+  instruction), so build, headless tests and visuals are unverified.
+
 - Distinguish jet family windshield shells, shape pilot/passenger seats and regional
   yokes, add family bin/PSU fittings, and enable an analog Bell 412EP cockpit with
   fitted front frames and retained rotor visibility. Correct Bell tail geometry
@@ -61,7 +72,7 @@
   on a separate manual page so all attribution remains visible (ADR 0237).
 
 - **Mac builds recover from Unity's script-build hang.** `scripts/build-mac.sh` watches the
-  log; if it stops growing for 3 minutes (`AIRSIDE_BUILD_STALL_SECONDS`) right after Unity
+  log; if it stops growing for 60 seconds (`AIRSIDE_BUILD_STALL_SECONDS`) right after Unity
   starts `bee_backend`, it kills that run, clears the `Library/Bee` build graphs and retries
   once, then fails clearly instead of hanging forever.
 

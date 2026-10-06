@@ -133,6 +133,17 @@ namespace Airside.Simulation
         /// </summary>
         private bool FinishArrival(FleetAircraft aircraft, SimulationTime now)
         {
+            if (aircraft.IsFerry)
+            {
+                // A ferry between bases (ADR 0239) is a repositioning, not a service: park it with no
+                // revenue, no rotation and no wear, so its next real flight settles as CompletedTrips + 1.
+                aircraft.IsFerry = false;
+                aircraft.WentAroundThisTrip = false;
+                Transition(aircraft, FleetState.AtStand, now, null);
+                aircraft.CurrentDestination = null;
+                return true;
+            }
+
             var justFlown = aircraft.CurrentDestination;
             aircraft.CompletedTrips++;
             aircraft.RotationsSinceCheck++;

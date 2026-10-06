@@ -141,14 +141,19 @@ namespace Airside.Simulation
             while (true)
             {
                 var registration = $"VH-O{number:00}";
-                var used = false;
+                // A sold aircraft's mark stays spent: its settlement keys (reg#N) already exist, so a
+                // reissued mark would restart at trip 1 and its first flights would silently never pay.
+                var used = CareerState.HasSettlementHistory(registration);
                 foreach (var existing in _fleet)
                     if (existing.Registration == registration) used = true;
                 foreach (var existing in _outstationFleet)
                     if (existing.Registration == registration) used = true;
                 if (!used)
                 {
-                    _outstationFleet.Add(new OutstationAircraft(registration, type, baseCode));
+                    _outstationFleet.Add(new OutstationAircraft(registration, type, baseCode)
+                    {
+                        JoinedAtSeconds = _processedTo.ElapsedSeconds
+                    });
                     break;
                 }
                 number++;
@@ -222,8 +227,7 @@ namespace Airside.Simulation
             if (!aircraft.CheckDue) return CommandResult.Refused("It isn't due for a check yet.");
             // An outstation is equipped for the types it is allowed to base, so its checks are
             // priced and timed like a local check at the matching Adelaide capability.
-            var outstationCapability = AircraftCatalogue.IsWidebody(aircraft.Type) ? PlayerBaseLevel.International
-                : NeedsTerminalGate(aircraft.Type) ? PlayerBaseLevel.JetGate : PlayerBaseLevel.ExpandedRegional;
+            var outstationCapability = OutstationCheckCapability(aircraft.Type);
             var cost = Maintenance.CheckCost(aircraft.Type, outstationCapability);
             if (!CareerState.TryChargePurchase(cost))
                 return CommandResult.Refused($"A check costs ${cost:N0}. You have ${CareerState.Funds:N0}.");
@@ -231,6 +235,11 @@ namespace Airside.Simulation
                 + Maintenance.CheckSeconds(aircraft.Type, outstationCapability));
             return CommandResult.Ok;
         }
+
+        /// <summary>The Adelaide capability level an outstation's checks are priced and timed at for this type.</summary>
+        public static PlayerBaseLevel OutstationCheckCapability(AircraftType type) =>
+            AircraftCatalogue.IsWidebody(type) ? PlayerBaseLevel.International
+            : NeedsTerminalGate(type) ? PlayerBaseLevel.JetGate : PlayerBaseLevel.ExpandedRegional;
 
         public CommandResult SetRepeatSchedule(string registration, string destinationCode, int intervalHours)
         {
@@ -302,6 +311,7 @@ namespace Airside.Simulation
                     forecast.Revenue, matching,
                     PlayerOwnedTypes(), returnedAt, PlayerFleetCount());
                 if (settlement == null) continue;
+                aircraft.RecordHistory(destinationCode, settlement.Value.Payment);
                 var completionBonus = settlement.Value.ContractFulfilled ? matching.CompletionReward : 0;
                 CareerState.RecordService(destinationCode,
                     settlement.Value.Payment - completionBonus - forecast.Cost, !wasAutomated);
@@ -450,6 +460,8 @@ namespace Airside.Simulation
                 return CommandResult.Refused("You can only sell your own aircraft.");
             if (aircraft.State != FleetState.AtStand)
                 return CommandResult.Refused($"{aircraft.Registration} has to be parked to sell.");
+            if (aircraft.Scheduled.HasValue)
+                return CommandResult.Refused($"{aircraft.Registration} has a flight booked. Cancel it first.");
             if (Maintenance.InCheck(aircraft, _processedTo))
                 return CommandResult.Refused($"{aircraft.Registration} is in its check until {Clock.TimeText(aircraft.CheckUntil.Value)}.");
             if (!CanResell(aircraft))
@@ -460,6 +472,7 @@ namespace Airside.Simulation
             AircraftAcquisition.TryFor(aircraft.Type, out var offer);
             var refund = (long)Math.Round(offer.Price * ResaleFraction);
             CareerState.RefundDispatch(refund);
+            _repeatSchedules.RemoveAll(p => p.Registration == aircraft.Registration);
             _fleet.Remove(aircraft);
             return CommandResult.Ok;
         }

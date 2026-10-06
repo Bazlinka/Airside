@@ -206,6 +206,14 @@ namespace Airside.Simulation
             aircraft.CheckUntil = checkUntilSeconds > 0 ? new SimulationTime(checkUntilSeconds) : null;
         }
 
+        internal void RestoreFerry(string registration)
+        {
+            var aircraft = _fleet.Find(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase));
+            if (aircraft == null)
+                throw new FormatException($"{registration}: ferry flag has no aircraft.");
+            aircraft.IsFerry = true;
+        }
+
         internal void RestoreFreighter(string registration)
         {
             var aircraft = _fleet.Find(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase));

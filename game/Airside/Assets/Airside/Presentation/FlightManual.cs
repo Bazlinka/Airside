@@ -141,8 +141,10 @@ namespace Airside.Presentation
                         "EXPAND BASE (Career › Airline) adds room for more aircraft, jet gates, your own maintenance "
                         + "and quicker turnarounds."),
                     ("Outstations",
-                        "From the Domestic tier you can open bases in Melbourne, Sydney, Brisbane or Perth (Fleet › "
-                        + "Network). Aircraft based there fly between other cities off the map."),
+                        "From the Domestic tier you can open bases in Melbourne, Sydney, Brisbane or Perth from the "
+                        + "bases strip at the top of Fleet. Pick a base and the market delivers to it. Aircraft based "
+                        + "there fly between other cities and show on the map. TO ADELAIDE flies one in to join your "
+                        + "Adelaide fleet."),
                     ("Repeat schedules",
                         "After 12 hand-planned flights, REPEAT keeps an aircraft flying a route every 6, 12 or 24 "
                         + "hours while you play.")

@@ -11,6 +11,36 @@ a profile, not a guess); two-finger swipe look; pinch zoom.
 **NEXT:** Unity compile and EditMode run, then try it on a Mac trackpad (haptics play only while a finger rests
 on it) and tune strengths/rates in `CockpitHapticScheduler` and the event strengths in `CockpitMotion`.
 
+## Where to resume — unified fleet management, 6 October 2026
+
+Claude; Bailey asked for better ways to manage and view aircraft across Adelaide and
+Melbourne. Branch `feature/unified-fleet-management-20261006` (from main 64ca4a23), ADR 0239.
+Instruction: **code only — nothing was compiled or run** (no Unity, no dotnet, no builds), so
+every claim below is unverified until someone runs the checks.
+
+The fleet was two systems: Adelaide aircraft (simulated, drawn) and outstation aircraft
+(`VH-O##`, a timed record on a separate NETWORK screen: no roster, map, sale or way to Adelaide).
+Now `PlayerFleet.Entries` merges them and the Fleet workspace is the one place for all of it:
+bases strip (filters the roster and chooses where BUY delivers; opens new bases), roster grouped by
+base with SHOW/SORT, per-aircraft profile (logbook, check, sell value, SEND on a route for outstation
+aircraft, TO ADELAIDE ferry, SELL with a second click, track, camera views), and a market that
+delivers to the chosen base (`PurchaseRefusal` mirrors both buy commands). Row clicks stay in the
+sheet. Outstation aircraft are drawn on the map and counted in Stats, the return briefing and My
+Flights. Save v20: `IsFerry` and an outstation logbook. The Network screen is deleted.
+
+**NEXT (needs a Mac/dotnet):** (1) `python3 scripts/update-harness.py` and commit any diff — the four
+new files were added to `Harness.Generated.props` by hand; (2) `scripts/test-domain.sh`, fix compile
+errors and any failing test (new: PlayerFleetTests, RelocationTests, FleetBoardTests; watch
+FleetWorkspaceTests, HudWorkspacePainterTests, FullCareerTests, StatsWorkspaceTests,
+AwayCatchUp tests); (3) `scripts/test-unity.sh` and `scripts/build-mac.sh`; (4) playtest: buy at MEL
+from the bases strip, select it (sheet stays open), SEND a route, wait for the return, TO ADELAIDE,
+watch the ferry land, fly it, SELL it; check the map markers and that Fleet, Stats and the career
+footer agree. Check text fits at 1024×640 and 1440×900.
+
+Not done, deliberately: moving an Adelaide aircraft to an outstation; purchase deliveries as ferries
+(they still pay a free first flight — balance review needed); a jet bought with no free gate; outstation
+cameras; helicopters at outstations. See ADR 0239.
+
 ## Where to resume — family interiors and Bell cockpit, 6 October 2026
 
 PR #540 is merged at `c28591eb`: all thirteen fixed-wing cockpit fittings and
@@ -220,7 +250,7 @@ for active work; standing freight priorities remain unchanged.
 - **2026-10-06 Cursor — `scripts/build-mac.sh` recovers from the bee_backend deadlock.**
   After pulls that change scripts, Unity's script build repeatedly queued every job, ran
   none and idled at 0% CPU forever (seen 1 Oct and twice on 6 Oct). The script now runs
-  Unity under a watchdog: log silent for `AIRSIDE_BUILD_STALL_SECONDS` (default 180) with
+  Unity under a watchdog: log silent for `AIRSIDE_BUILD_STALL_SECONDS` (default 60; was 180) with
   `bee_backend` as the last started process → kill the Unity process tree, clear
   `Library/Bee` *.dag graphs, retry once, else fail with a message.
   **Evidence:** real build with a 10 s threshold never false-triggered (log grows during
@@ -6689,7 +6719,7 @@ Simulation:
   and returns to overview when one is selected; otherwise opens or closes the menu
   (Resume, Options, Quit) — time keeps running
 - Tab: open or close the destinations map (scroll to zoom, drag to pan; state labels appear when zoomed)
-- H: open or close the Hangar (all aircraft + flight progress)
+- H: open or close Fleet (every aircraft at every base, its profile, the base strip and the market; clicking a row stays in the sheet)
 - M: mute audio
 
 Camera:

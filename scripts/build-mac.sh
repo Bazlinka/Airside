@@ -23,7 +23,7 @@ rm -rf "$destination"
 # queues every compile job, runs none, and the build sits at 0% CPU forever. Clearing its
 # cached build graphs fixes it. A stall is the log not growing for this long while the last
 # thing Unity started was bee_backend; real compiles finish well inside it.
-stall_seconds="${AIRSIDE_BUILD_STALL_SECONDS:-180}"
+stall_seconds="${AIRSIDE_BUILD_STALL_SECONDS:-60}"
 bee="$root/game/Airside/Library/Bee"
 
 kill_tree() {

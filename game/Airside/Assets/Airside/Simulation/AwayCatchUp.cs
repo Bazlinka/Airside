@@ -108,6 +108,25 @@ namespace Airside.Simulation
                     : $"{aircraft.Registration} {status}.");
             }
 
+            // Aircraft based away from Adelaide fly off the map but still earn while the player is away (ADR 0239).
+            var servicesBefore = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var record in before.OutstationFleet ?? new List<OutstationAircraftSaveRecord>())
+                servicesBefore[record.Registration] = record.CompletedServices;
+            foreach (var aircraft in after.OutstationFleet)
+            {
+                servicesBefore.TryGetValue(aircraft.Registration, out var was);
+                var flown = Math.Max(0, aircraft.CompletedServices - was);
+                playerFlights += flown;
+                var where = DestinationCatalogue.TryFind(aircraft.BaseCode, out var origin) ? origin.Name : aircraft.BaseCode;
+                var status = aircraft.HasFlight && DestinationCatalogue.TryFind(aircraft.DestinationCode, out var destination)
+                    ? $"is on a service to {destination.Name}"
+                    : aircraft.InCheck(after.ProcessedTo.ElapsedSeconds) ? "is in its check"
+                    : $"is waiting at {where}";
+                lines.Add(flown > 0
+                    ? $"{aircraft.Registration} flew {Plural(flown, "service")} from {where} and {status}."
+                    : $"{aircraft.Registration} {status}.");
+            }
+
             var fleetLines = new List<string>(lines);
 
             foreach (var airline in after.Airlines)

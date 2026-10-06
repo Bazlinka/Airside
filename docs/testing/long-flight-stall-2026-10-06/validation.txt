@@ -1,0 +1,29 @@
+Full Unity-free regression:
+  scripts/test-domain.sh
+  Harness.Generated.props is up to date.
+  1724 passed / 0 failed / 0 skipped in summary; 3m22s.
+  Two existing unmet-precondition cases also print as skipped.
+
+Focused worker regression:
+  dotnet test scripts/dotnet-harness/Harness.csproj --no-build --filter FullyQualifiedName~BackgroundCaptureWriteTests
+  2 passed / 0 failed / 0 skipped, 34 ms.
+
+C# syntax (SDK Roslyn, C# 9):
+  ReviewFrameCapture.cs, BackgroundCaptureWrite.cs,
+  AirsidePrototype.Soak.cs, AirsidePrototype.FlightWorldReview.cs,
+  BackgroundCaptureWriteTests.cs
+  5 files parsed / 0 syntax errors. Not Unity API/type compilation.
+
+Static asset audit:
+  python3 scripts/audit-unity-assets.py
+  Passed: 1771 unique GUIDs / 386 mirrored runtime art files /
+  70 committed character materials.
+
+Source contracts:
+  Both screenshot callers delegate to ReviewFrameCapture.Capture.
+  Neither screenshot caller contains ReadPixels or EncodeToPNG.
+  Shared pipeline uses AsyncGPUReadback.Request and BackgroundCaptureWrite.Start.
+  Pending stages yield frames; capture timeout is 15 real seconds.
+  ScreenCapture builtin manifest and lock entries agree on version 1.0.0.
+
+No Unity editor/player/build/tests or full-journey reproduction run.

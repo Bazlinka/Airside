@@ -144,14 +144,14 @@ namespace Airside.Presentation
 
         private System.Collections.IEnumerator CaptureFlightJourneyFrame(string path, bool complete)
         {
-            yield return null;
-            yield return new WaitForEndOfFrame();
-            var texture = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
-            texture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
-            texture.Apply();
-            File.WriteAllBytes(path, texture.EncodeToPNG());
-            Destroy(texture);
+            var succeeded = false;
+            yield return ReviewFrameCapture.Capture(path, ok => succeeded = ok);
             _reviewJourneyCapturing = false;
+            if (!succeeded)
+            {
+                Application.Quit(2);
+                yield break;
+            }
             Debug.Log($"[Airside journey] frame {path}");
             if (complete)
             {

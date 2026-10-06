@@ -1,5 +1,10 @@
 ## Unreleased
 
+- Remove synchronous GPU readback, PNG encoding and disk writes from packaged
+  review screenshots, a plausible source of the recorded 172/196-second frames.
+  Use async readback and background writes; capture failures/timeouts fail QA.
+  Historic cause remains unproven; no Unity or full-journey reproduction run.
+
 - Aircraft views (cockpit, window, exterior) feel better on a Mac and everywhere: the trackpad now taps and
   rumbles with touchdown, gear thumps, runway joints and turbulence (system haptics, no plugin; the Vibration
   toggle governs it and the shake); either mouse button looks round; drag and scroll spikes are bounded and

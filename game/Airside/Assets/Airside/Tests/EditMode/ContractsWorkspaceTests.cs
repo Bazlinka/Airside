@@ -80,7 +80,8 @@ namespace Airside.Tests
                 "a fulfilled contract is not drawn at all, so it cannot be clicked");
             foreach (var offer in model.Offers)
                 Assert.That(offer.CanAccept, Is.EqualTo(ops.CareerState.Tier >= offer.Definition.RequiredTier
-                                                        && HudTestAirline.OwnsType(ops, offer.Definition.EligibleType)));
+                                                        && ops.HasContractAircraft(offer.Definition)
+                                                        && (!offer.Definition.HasDeadline || ops.CanStillFinish(offer.Definition))));
         }
 
         [Test]

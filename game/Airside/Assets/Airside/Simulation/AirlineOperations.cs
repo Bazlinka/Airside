@@ -903,7 +903,8 @@ namespace Airside.Simulation
             var firstFree = long.MaxValue;
             foreach (var aircraft in _fleet)
             {
-                if (!aircraft.Airline.IsPlayer || aircraft.Type.Id != definition.EligibleType.Id)
+                if (!aircraft.Airline.IsPlayer
+                    || !definition.MatchesAircraft(aircraft.Type, aircraft.IsFreighter))
                     continue;
                 count++;
                 firstFree = Math.Min(firstFree, SecondsUntilHome(aircraft));
@@ -955,7 +956,7 @@ namespace Airside.Simulation
             var contract = CareerState.ActiveContract;
             if (contract != null
                 && CareerState.TryFindDefinition(contract.DefinitionId, out var definition)
-                && definition.EligibleType == aircraft.Type
+                && definition.MatchesAircraft(aircraft.Type, aircraft.IsFreighter)
                 && definition.MatchesRoute(Home.Code, justFlown.Value.Code))
                 matching = definition;
 

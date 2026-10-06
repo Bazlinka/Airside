@@ -86,7 +86,7 @@ namespace Airside.Simulation
                 CareerState?.Tier ?? OperatingTier.Provisional, CareerState?.BaseLevel ?? PlayerBaseLevel.Starter));
             var usable = false;
             foreach (var offer in offers)
-                if (!CareerState.HasCompleted(offer.Id) && localTypes.Exists(t => t.Id == offer.EligibleType.Id))
+                if (!CareerState.HasCompleted(offer.Id) && HasContractAircraft(offer))
                     usable = true;
             // A usable-looking offer is still a dead end when the airline cannot afford
             // even one dispatch. Keep a funded recovery path visible in that case too.
@@ -145,15 +145,28 @@ namespace Airside.Simulation
                 return CommandResult.Refused("You have already completed this contract.");
             if (CareerState.Tier < definition.RequiredTier)
                 return CommandResult.Refused($"This contract needs the {definition.RequiredTier} tier.");
-            if (!AdelaideOwnedTypes().Exists(t => t.Id == definition.EligibleType.Id))
+            if (!HasContractAircraft(definition))
                 return CommandResult.Refused(
-                    $"This contract needs {Article.A(definition.EligibleType.Name)} at Adelaide.");
+                    definition.RequiresFreighter
+                        ? $"Refit {Article.A(definition.EligibleType.Name)} at Adelaide as a freighter for this contract."
+                        : $"This contract needs {Article.A(definition.EligibleType.Name)} at Adelaide.");
             if (definition.HasDeadline && !CanStillFinish(definition))
                 return CommandResult.Refused("You can't fly this in time with your aircraft.");
 
             CareerState.Remember(definition);
             CareerState.ActiveContract = new ActiveRouteContract(definition.Id, _processedTo);
             return CommandResult.Ok;
+        }
+
+        /// <summary>Shared acceptance/HUD eligibility; aircraft at outstations cannot service Adelaide work.</summary>
+        public bool HasContractAircraft(RouteContractDefinition definition)
+        {
+            if (definition == null) return false;
+            foreach (var aircraft in _fleet)
+                if (aircraft.Airline.IsPlayer
+                    && definition.MatchesAircraft(aircraft.Type, aircraft.IsFreighter))
+                    return true;
+            return false;
         }
 
         /// <summary>

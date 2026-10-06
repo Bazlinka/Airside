@@ -297,7 +297,7 @@ namespace Airside.Simulation
             // (right airline, aircraft, route); an unrelated cancellation is free.
             if (aircraft.Airline.IsPlayer && CareerState.ActiveContract != null
                 && CareerState.TryFindDefinition(CareerState.ActiveContract.DefinitionId, out var contract)
-                && contract.EligibleType == aircraft.Type
+                && contract.MatchesAircraft(aircraft.Type, aircraft.IsFreighter)
                 && contract.MatchesRoute(Home.Code, aircraft.Scheduled.Value.Destination.Code))
                 CareerState.PenalizeCancellation(contract.Id, contract.ReliabilityLossOnCancel);
 

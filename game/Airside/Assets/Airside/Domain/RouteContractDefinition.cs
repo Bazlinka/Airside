@@ -63,6 +63,12 @@ namespace Airside.Domain
 
         public ContractKind Kind { get; }
 
+        public bool RequiresFreighter => Kind == ContractKind.Freight;
+
+        /// <summary>The aircraft type and operating role needed to earn contract progress.</summary>
+        public bool MatchesAircraft(AircraftType type, bool isFreighter) =>
+            type != null && type.Id == EligibleType.Id && (!RequiresFreighter || isFreighter);
+
         /// <summary>Seconds from acceptance to fly every rotation, or 0 for no deadline (ADR 0127).</summary>
         public long DeadlineSeconds { get; }
 

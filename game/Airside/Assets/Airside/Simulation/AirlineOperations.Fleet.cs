@@ -294,7 +294,7 @@ namespace Airside.Simulation
                 RouteContractDefinition matching = null;
                 var active = CareerState.ActiveContract;
                 if (active != null && CareerState.TryFindDefinition(active.DefinitionId, out var definition)
-                    && definition.EligibleType.Id == aircraft.Type.Id
+                    && definition.MatchesAircraft(aircraft.Type, isFreighter: false)
                     && definition.MatchesRoute(aircraft.BaseCode, destinationCode))
                     matching = definition;
                 var settlement = CareerState.RecordCompletedRotation(

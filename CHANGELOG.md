@@ -1,5 +1,8 @@
 ## Unreleased
 
+- Require a matching refitted freighter to accept and progress freight contracts;
+  align deadlines, cancellation penalties and HUD eligibility (ADR 0230).
+
 - Clarify Bailey’s playtest sign-off: happy with the current game, still in
   development and not ready for release. Defer release preparation; retain
   freight and structure/performance backlog (6 October 2026; documentation only).

@@ -1,3 +1,19 @@
+## Where to resume — freight contracts candidate, 6 October 2026
+
+Codex; branch `feature/freight-and-interface-refresh`. Bailey approved requiring
+freighters for freight work, plus an interface/viewing, return-summary and click
+sound redesign. Freight eligibility is implemented across acceptance, completion,
+deadline capacity, cancellation and contract HUD. Passenger-only outstation work
+does not count as cargo. Existing save fields and earned progress remain intact.
+ADR 0230; task: `docs/plans/freight-and-interface-refresh.md`.
+
+Combined-work headless checkpoint: 1,487 passed / 0 failed. Evidence:
+`docs/testing/interface-refresh-2026-10-06/`. New native verification is unavailable
+on this Linux worker and is required before merge by `AGENTS.md`. Existing-game
+playtest acceptance below remains complete. **NEXT:** finish/publish the matching
+interface change, then native Unity compile/EditMode for this candidate. Later
+freight slices remain AI freight, cargo stands and outstation cargo operations.
+
 ## Where to resume — all current playtesting complete, 6 October 2026
 
 **Bailey accepts the current game and is happy with it. All existing manual

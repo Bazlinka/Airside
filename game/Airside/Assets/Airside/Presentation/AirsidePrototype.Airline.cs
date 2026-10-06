@@ -3053,7 +3053,7 @@ namespace Airside.Presentation
                 return;
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
             {
-                if (aircraft.Type.Id != definition.EligibleType.Id)
+                if (!definition.MatchesAircraft(aircraft.Type, aircraft.IsFreighter))
                     continue;
                 SetWorkspace(HudWorkspace.Fleet);
                 SelectAircraft(aircraft);

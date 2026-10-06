@@ -111,7 +111,7 @@ namespace Airside.Presentation
             ActiveProgress01 = required <= 0 ? 0f : Clamp01(done / (float)required);
             ActiveProgressPercent = $"{(int)(ActiveProgress01 * 100f)}%";
 
-            _activeTerms.Add($"Aircraft: {definition.EligibleType.Name}");
+            _activeTerms.Add($"Aircraft: {definition.EligibleType.Name}" + (definition.RequiresFreighter ? " · freighter refit required" : ""));
             _activeTerms.Add($"${definition.PaymentPerRotation:N0} a flight"
                              + $"  ·  ${definition.CompletionReward:N0} when done");
             _activeTerms.Add(definition.ReliabilityLossOnCancel > 0
@@ -127,7 +127,7 @@ namespace Airside.Presentation
             }
 
 
-            EligibleAircraftLine = EligibleRegistrations(operations, definition.EligibleType, out var any);
+            EligibleAircraftLine = EligibleRegistrations(operations, definition, out var any);
             HasEligibleAircraft = any;
         }
 
@@ -146,6 +146,7 @@ namespace Airside.Presentation
                 var title = OfferTitle(definition);
                 var terms = $"{definition.RequiredRotations} {(definition.RequiredRotations == 1 ? "flight" : "flights")}"
                             + $"  ·  {definition.EligibleType.Name}"
+                            + (definition.RequiresFreighter ? " freighter" : "")
                             + $"  ·  ${total:N0} total"
                             + (definition.HasDeadline ? $"  ·  within {RouteMapWorkspaceModel.Duration(definition.DeadlineSeconds)}" : string.Empty);
 
@@ -154,8 +155,12 @@ namespace Airside.Presentation
                     lockReason = "One contract at a time. Finish or abandon yours first";
                 else if (career.Tier < definition.RequiredTier)
                     lockReason = $"Needs the {definition.RequiredTier} tier";
-                else if (!OwnsType(operations, definition.EligibleType))
-                    lockReason = $"Needs {Article.A(definition.EligibleType.Name)} in your fleet";
+                else if (!operations.HasContractAircraft(definition))
+                    lockReason = definition.RequiresFreighter
+                        ? $"Refit {Article.A(definition.EligibleType.Name)} as a freighter at Adelaide"
+                        : $"Needs {Article.A(definition.EligibleType.Name)} at Adelaide";
+                else if (definition.HasDeadline && !operations.CanStillFinish(definition))
+                    lockReason = "Your eligible aircraft cannot finish before the deadline";
                 else
                     lockReason = string.Empty;
 
@@ -182,16 +187,9 @@ namespace Airside.Presentation
             };
         }
 
-        private static bool OwnsType(AirlineOperations operations, AircraftType type)
+        private static string EligibleRegistrations(AirlineOperations operations, RouteContractDefinition definition, out bool any)
         {
-            foreach (var owned in operations.PlayerOwnedTypes())
-                if (owned.Id == type.Id)
-                    return true;
-            return false;
-        }
-
-        private static string EligibleRegistrations(AirlineOperations operations, AircraftType type, out bool any)
-        {
+            var type = definition.EligibleType;
             any = false;
             var player = operations.PlayerAirline;
             if (player == null)
@@ -200,13 +198,15 @@ namespace Airside.Presentation
             var list = string.Empty;
             foreach (var aircraft in operations.FleetOf(player))
             {
-                if (aircraft.Type.Id != type.Id)
+                if (!definition.MatchesAircraft(aircraft.Type, aircraft.IsFreighter))
                     continue;
                 any = true;
                 list = list.Length == 0 ? aircraft.Registration : $"{list}  ·  {aircraft.Registration}";
             }
 
-            return any ? list : $"No {type.Name} in your fleet yet";
+            return any ? list : definition.RequiresFreighter
+                ? $"Refit {Article.A(type.Name)} as a freighter at Adelaide"
+                : $"No {type.Name} at Adelaide yet";
         }
 
         private static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;

@@ -145,12 +145,8 @@ namespace Airside.Presentation
             return pivot;
         }
 
-        private static Color NavLensColor(AircraftNavigationLight kind) => kind switch
-        {
-            AircraftNavigationLight.Right => new Color(0.95f, 0.15f, 0.12f),
-            AircraftNavigationLight.Tail => new Color(0.95f, 0.95f, 0.90f),
-            _ => new Color(0.12f, 0.95f, 0.28f)
-        };
+        private static Color NavLensColor(AircraftNavigationLight kind)
+            => ToColor(AircraftNavigationPalette.For(kind));
 
         /// <summary>Lens glow: its own colour when on, a white flash for the wingtip strobe.</summary>
         private static void GlowLamp(LightGearPart part, Color lens, float on, float strobe)
@@ -181,12 +177,7 @@ namespace Airside.Presentation
             {
                 light = LampPivot(lamp).gameObject.AddComponent<Light>();
                 light.type = LightType.Point;
-                light.color = kind switch
-                {
-                    AircraftNavigationLight.Right => new Color(0.95f, 0.15f, 0.12f),
-                    AircraftNavigationLight.Tail => new Color(0.95f, 0.95f, 0.90f),
-                    _ => new Color(0.12f, 0.95f, 0.28f)
-                };
+                light.color = NavLensColor(kind);
                 light.range = 8f;
                 light.shadows = LightShadows.None;
                 part.Light = light;

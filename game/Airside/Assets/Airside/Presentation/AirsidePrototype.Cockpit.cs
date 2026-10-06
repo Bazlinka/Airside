@@ -204,7 +204,9 @@ namespace Airside.Presentation
             _cameraController.SetCockpitMotion(new Vector3(motion.Right, motion.Up, motion.Forward),
                 new Vector3(motion.PitchDownDegrees, motion.YawDegrees, motion.RollDegrees));
             _cockpitInterior.SetAttitude(pitchUp, bankLeft);
-            _cockpitInterior.SetEnvironment(PresentationDaylight, CurrentWeatherLook.Precipitation, Time.unscaledTime);
+            var observerRain = CockpitObserverWeather.Rain(CurrentWeatherLook.Precipitation,
+                _cockpitView != null ? _cockpitView.position.y : 0f, InCockpit && _cockpitView != null);
+            _cockpitInterior.SetEnvironment(PresentationDaylight, observerRain, Time.unscaledTime);
             _cockpitCallouts.DeltaSeconds = (float)Math.Max(0.0, elapsed);
             var call = _cockpitCallouts.Step(new CockpitCallouts.Sample
             {

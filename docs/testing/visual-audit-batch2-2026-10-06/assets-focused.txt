@@ -1,0 +1,44 @@
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(155,94): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Node.Name' is never assigned to, and will always have its default value null [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(174,95): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Buffer.Uri' is never assigned to, and will always have its default value null [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(164,53): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Accessor.Count' is never assigned to, and will always have its default value 0 [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(170,54): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.View.Buffer' is never assigned to, and will always have its default value 0 [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(156,105): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Mesh.Primitives' is never assigned to, and will always have its default value null [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(157,109): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Primitive.Attributes' is never assigned to, and will always have its default value null [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(153,60): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Gltf.Buffers' is never assigned to, and will always have its default value null [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(151,64): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Gltf.Accessors' is never assigned to, and will always have its default value null [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(152,62): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Gltf.Views' is never assigned to, and will always have its default value null [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(162,58): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Accessor.Offset' is never assigned to, and will always have its default value 0 [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(166,55): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Accessor.Max' is never assigned to, and will always have its default value null [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(149,56): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Gltf.Nodes' is never assigned to, and will always have its default value null [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(165,55): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Accessor.Min' is never assigned to, and will always have its default value null [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(161,58): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Accessor.View' is never assigned to, and will always have its default value 0 [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(155,139): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Node.Mesh' is never assigned to, and will always have its default value 0 [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(158,101): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Attributes.Position' is never assigned to, and will always have its default value 0 [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(171,58): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.View.Offset' is never assigned to, and will always have its default value 0 [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(163,61): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Accessor.Component' is never assigned to, and will always have its default value 0 [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(150,57): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.Gltf.Meshes' is never assigned to, and will always have its default value null [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+/private/tmp/airside-audit-assets-20261006/game/Airside/Assets/Airside/Tests/EditMode/ServiceWheelAndBoardingContactTests.cs(172,58): warning CS0649: Field 'ServiceWheelAndBoardingContactTests.View.Stride' is never assigned to, and will always have its default value 0 [/private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/Harness.csproj]
+  Harness -> /private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll
+Test run for /private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll (.NETCoreApp,Version=v8.0)
+Microsoft (R) Test Execution Command Line Tool Version 17.8.0 (arm64)
+Copyright (c) Microsoft Corporation.  All rights reserved.
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+NUnit Adapter 4.6.0.0: Test execution started
+Running selected tests in /private/tmp/airside-audit-assets-20261006/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll
+   NUnit3TestExecutor discovered 8 of 8 NUnit test cases using Current Discovery mode, Non-Explicit run
+NUnit Adapter 4.6.0.0: Test execution complete
+  Passed CombinedTranslatedPartsKeepIndependentNormalAndUvFrames [8 ms]
+  Passed DegenerateUvProducesFiniteOrthogonalFallbackWithoutClaimingRepairedMapping [< 1 ms]
+  Passed SharedBoxCornersSplitAtAllSixFaceProjectionSeams [10 ms]
+  Passed ShippedOperationsShedHasNoncollapsedUvAndSoundTangentFramesOnEveryBodyFace [47 ms]
+  Passed SlopingRoofAndVerticalWallRetainTwoDimensionalTextureVariation [< 1 ms]
+  Passed TangentsFollowTextureDerivativeAndMirroredHandedness(False) [< 1 ms]
+  Passed TangentsFollowTextureDerivativeAndMirroredHandedness(True) [< 1 ms]
+  Passed ValidUnsignedShortSourceCanExpandBeyondUnsignedShortVertexBudget [50 ms]
+
+Test Run Successful.
+Total tests: 8
+     Passed: 8
+ Total time: 0.9239 Seconds

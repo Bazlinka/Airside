@@ -300,6 +300,31 @@ namespace Airside.Presentation
             return material;
         }
 
+        private static Material _starsMaterial;
+
+        /// <summary>Dedicated vertex-colour background material; ordinary UnlitSky users stay unchanged.</summary>
+        public static Material CreateSharedStars()
+        {
+            // Unity's destroyed-object comparison also handles a disabled domain reload.
+            if (_starsMaterial != null)
+                return _starsMaterial;
+            var shader = Shader.Find("Airside/CelestialStars");
+            // Keep the existing unlit presentation usable if an imported shader is
+            // unavailable. This separate instance cannot mutate sun/moon materials.
+            // The fallback lacks per-vertex tint; the dedicated included shader is preferred.
+            _starsMaterial = shader != null && shader.isSupported
+                ? new Material(shader)
+                : Create(Color.white, SurfaceKind.UnlitSky, useTextures: false);
+            _starsMaterial.name = "Celestial stars";
+            _starsMaterial.enableInstancing = true;
+            if (_starsMaterial.HasProperty("_BaseColor"))
+                _starsMaterial.SetColor("_BaseColor", Color.white);
+            if (_starsMaterial.HasProperty("_ZWrite"))
+                _starsMaterial.SetInt("_ZWrite", 0);
+            _starsMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Background;
+            return _starsMaterial;
+        }
+
         private readonly struct SharedMaterialKey : IEquatable<SharedMaterialKey>
         {
             private readonly Color _color;

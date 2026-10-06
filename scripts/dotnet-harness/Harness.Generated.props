@@ -37,6 +37,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftDoorwayGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftEngineAudio.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftFanDiscGeometry.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftNavigationPalette.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftPickRouting.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftSkinUv.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftStatus.cs" />
@@ -67,16 +68,20 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AustraliaMapLens.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BevelledBox.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BoardingGroundContact.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/BoxKitSurfaceGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BuildingDetail.Interiors.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BuildingDetail.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CareerTrackWorkspace.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/CelestialStarColour.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CoastGrid.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/CoastalFoamMotion.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitAirflow.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitAvailability.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitCallouts.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitExteriorVisibility.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitLookPresets.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitMotion.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitObserverWeather.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitWeatherEnvelope.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ContractsWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ControlsHelp.cs" />
@@ -120,6 +125,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RoadMarkingPlan.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RouteMap.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RouteMapWorkspace.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/RuntimeKitTangents.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RunwayRubberMarks.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/SelectionCard.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ServiceVehicleWheelGeometry.cs" />
@@ -131,6 +137,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/TaxiwayEdgeWear.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ToastQueue.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/WeatherCoverage.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/WeatherWindFlow.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideAccuracyTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideAerialPerspectiveTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideAvenuePlacementTests.cs" />
@@ -236,6 +243,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/EngineStartSequenceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/EngineVoiceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/EnrouteProfileTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/EnvironmentAuditCoordinateTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FirstFlightGuideTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FleetVisualTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FleetWorkspaceTests.cs" />
@@ -301,6 +309,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RotorcraftTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RouteMapTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RouteMapWorkspaceTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RuntimeKitSurfaceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RunwayRubberMarksTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RunwayWeatherTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ServiceChoreographyTests.cs" />
@@ -318,6 +327,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TerrainFieldTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TowerAndStandChoiceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/VisualBaselineViewsTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/WeatherAuditPolicyTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/WeatherCoverageTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/WeatherTests.cs" />
   </ItemGroup>

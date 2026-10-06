@@ -1682,10 +1682,10 @@ namespace Airside.Presentation
             "door_fwd" or "cargo_door" => new Color(0.91f, 0.93f, 0.95f),
             "antenna" or "antenna_aft" or "pitot" or "pitot_b" or "vor_antenna"
                 or "hf_antenna" or "static_wick_left" or "static_wick_right" => new Color(0.35f, 0.35f, 0.38f),
-            "nav_light_left" => new Color(0.2f, 0.9f, 0.3f),
-            "nav_light_right" => new Color(0.9f, 0.2f, 0.2f),
+            "nav_light_left" => NavLensColor(AircraftNavigationLight.Left),
+            "nav_light_right" => NavLensColor(AircraftNavigationLight.Right),
             "beacon_top" or "beacon_bottom" => new Color(0.95f, 0.35f, 0.12f),
-            "tail_nav_light" => new Color(0.95f, 0.95f, 0.9f),
+            "tail_nav_light" => NavLensColor(AircraftNavigationLight.Tail),
             "landing_light_l" or "landing_light_r" or "taxi_light" => new Color(0.95f, 0.95f, 0.85f),
             _ => null
             };
@@ -1903,7 +1903,8 @@ namespace Airside.Presentation
                     local[v] = xf.InverseTransformPoint(worldVerts[i][v]);
                 mesh.vertices = local;
                 mesh.RecalculateBounds();
-                mesh.RecalculateNormals();
+                // Rebaking only translates the mesh: keep its cloned smooth normals and
+                // matching tangent frame instead of replacing normals independently.
                 filter.sharedMesh = mesh;
             }
         }

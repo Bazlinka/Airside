@@ -3249,7 +3249,7 @@ namespace Airside.Presentation
             {
                 var pulse = 0.92f + 0.08f * Mathf.Sin(t * AirsideReusableMotion.FoamPulseHz);
                 var scale = _coastFoam.localScale;
-                scale.z = 2.2f * pulse;
+                scale.z = CoastalFoamMotion.PrimaryScaleZ(_coastFoam.name, pulse);
                 _coastFoam.localScale = scale;
                 if (_coastFoamRenderer != null)
                 {
@@ -3268,13 +3268,13 @@ namespace Airside.Presentation
                 var renderer = i < _coastFoamRenderers.Count ? _coastFoamRenderers[i] : null;
                 if (renderer == null)
                     continue;
-                var wave = 0.5f + 0.5f * Mathf.Sin(t * 1.8f + i * 1.7f);
+                var wave = CoastalFoamMotion.Wave(t, i);
                 var c = GetRendererColor(renderer);
-                c.a = 0.3f + 0.35f * wave;
+                c.a = CoastalFoamMotion.Alpha(wave);
                 SetRendererColor(renderer, c);
-                // Soft Z pulse so the surf edge breathes toward shore.
+                // Geographic ribbons stay fixed on their shoreline; local KI pads retain their pulse.
                 var scale = foam.localScale;
-                scale.z = (i == 0 ? 1.1f : 1.4f) * (0.92f + 0.1f * wave);
+                scale.z = CoastalFoamMotion.LayerScaleZ(foam.name, i, wave);
                 foam.localScale = scale;
             }
 

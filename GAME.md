@@ -1,3 +1,18 @@
+## Where to resume — sky anchoring fix, 6 October 2026
+
+Claude; branch `fix/sky-star-parallax-20261006` off `origin/main` (038d8b5a), made in a
+separate worktree because the main checkout holds another feature's uncommitted work.
+Stars, sun/moon discs, stratus deck, horizon band and the rain volume were re-centred on the camera in
+`AirsidePrototype.Update`, but the camera moves in `AirsideCameraController.LateUpdate`,
+so they lagged one frame and slid against the view on any pan/orbit/zoom. New
+`CameraShellAnchor` (execution order 500) re-applies their offsets after the camera moves.
+Evidence: harness `--check` and asset audit pass; two EditMode tests added in
+`PresentationBugSweepTests`. **Not compiled or run in Unity** (no-Unity restriction still
+in force) and not visually confirmed: native compile, the new tests and the actual look
+while panning/orbiting at night remain unverified.
+
+**NEXT:** Bailey to confirm in a build that stars hold still while panning; then merge.
+
 ## Where to resume — fitted passenger cabin code, 6 October 2026
 
 Codex; Bailey authorised merging both audit reports and continuing the recommended

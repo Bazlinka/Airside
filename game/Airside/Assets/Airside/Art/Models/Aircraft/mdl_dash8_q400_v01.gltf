@@ -6,7 +6,7 @@
   "buffers": [
     {
       "uri": "mdl_dash8_q400_v01.bin",
-      "byteLength": 1785668
+      "byteLength": 1869388
     }
   ],
   "bufferViews": [
@@ -2365,72 +2365,72 @@
     {
       "buffer": 0,
       "byteOffset": 1680924,
-      "byteLength": 14856,
+      "byteLength": 17316,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 1695780,
-      "byteLength": 3348,
+      "byteOffset": 1698240,
+      "byteLength": 3522,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 1699128,
-      "byteLength": 15828,
+      "byteOffset": 1701764,
+      "byteLength": 18816,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 1714956,
-      "byteLength": 3594,
+      "byteOffset": 1720580,
+      "byteLength": 3900,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 1718552,
-      "byteLength": 18336,
+      "byteOffset": 1724480,
+      "byteLength": 83988,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 1736888,
-      "byteLength": 4356,
+      "byteOffset": 1808468,
+      "byteLength": 16494,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 1741244,
+      "byteOffset": 1824964,
       "byteLength": 6096,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 1747340,
+      "byteOffset": 1831060,
       "byteLength": 1464,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 1748804,
+      "byteOffset": 1832524,
       "byteLength": 15360,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 1764164,
+      "byteOffset": 1847884,
       "byteLength": 3072,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 1767236,
+      "byteOffset": 1850956,
       "byteLength": 15360,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 1782596,
+      "byteOffset": 1866316,
       "byteLength": 3072,
       "target": 34963
     }
@@ -6751,67 +6751,67 @@
     {
       "bufferView": 392,
       "componentType": 5126,
-      "count": 1238,
+      "count": 1443,
       "type": "VEC3",
       "max": [
-        -0.012000000104308128,
-        3.3673298358917236,
-        11.490500450134277
+        -0.6170734167098999,
+        2.7158000469207764,
+        11.162200927734375
       ],
       "min": [
-        -1.3626869916915894,
-        1.456200122833252,
-        -13.94521427154541
+        -1.3622910976409912,
+        1.0542000532150269,
+        -14.773500442504883
       ]
     },
     {
       "bufferView": 393,
       "componentType": 5123,
-      "count": 1674,
+      "count": 1761,
       "type": "SCALAR"
     },
     {
       "bufferView": 394,
       "componentType": 5126,
-      "count": 1319,
+      "count": 1568,
       "type": "VEC3",
       "max": [
-        1.3626869916915894,
-        3.3673298358917236,
-        11.490500450134277
+        1.3622910976409912,
+        2.7158000469207764,
+        11.162200927734375
       ],
       "min": [
-        0.012000000104308128,
-        1.456200122833252,
-        -13.94521427154541
+        0.6170734763145447,
+        1.0542000532150269,
+        -14.773500442504883
       ]
     },
     {
       "bufferView": 395,
       "componentType": 5123,
-      "count": 1797,
+      "count": 1950,
       "type": "SCALAR"
     },
     {
       "bufferView": 396,
       "componentType": 5126,
-      "count": 1528,
+      "count": 6999,
       "type": "VEC3",
       "max": [
-        1.3659236431121826,
-        5.66719913482666,
-        11.490500450134277
+        1.374000072479248,
+        5.204599380493164,
+        6.566000461578369
       ],
       "min": [
-        -1.3659236431121826,
-        1.7309000492095947,
-        -14.541017532348633
+        -1.374000072479248,
+        1.710800051689148,
+        -14.773500442504883
       ]
     },
     {
       "bufferView": 397,
       "componentType": 5123,
-      "count": 2178,
+      "count": 8247,
       "type": "SCALAR"
     },
     {

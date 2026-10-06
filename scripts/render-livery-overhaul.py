@@ -34,8 +34,17 @@ def main():
         tile = ImageOps.mirror(Image.open(path)).convert('RGBA')
         x,y=(i%2)*600,(i//2)*260
         sheet.paste(tile,(x,y),tile)
-        ImageDraw.Draw(sheet).text((x+15,y+228),cid+' · '+finish.PROFILES[cid][0],font=font,fill='#17242A')
+        ImageDraw.Draw(sheet).text((x+15,y+228),cid+' · '+finish.IDENTITIES[cid][0],font=font,fill='#17242A')
         print(cid,flush=True)
+    parts = thumbs.load_parts(str(Path(thumbs.ART)/'Models/Aircraft/mdl_bell_412_rescue_v01.gltf'))
+    primary = paint.hex_rgb('#0F8B8D')
+    colour = paint.paint_colour(primary)
+    path = args.output/'B412.png'
+    thumbs.render_view(parts,str(path),90,8,width=600,height=220,supersample=1,
+        colour_fn=lambda name: primary if name.startswith('rescue_red') else colour(name))
+    tile = ImageOps.mirror(Image.open(path)).convert('RGBA')
+    sheet.paste(tile,(600,6*260),tile)
+    ImageDraw.Draw(sheet).text((615,6*260+228),'B412 · Mountain Rescue',font=font,fill='#17242A')
     sheet.save(args.output/'all-aircraft.jpg',quality=90)
     sheet = Image.new('RGB',(1000,5*250),'#EEF1EC')
     parts = thumbs.load_parts(str(Path(thumbs.ART)/thumbs.MODELS[5][1]))

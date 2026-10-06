@@ -19,7 +19,7 @@ SCRIPTS = Path(__file__).resolve().parent
 REPO = SCRIPTS.parent
 AIRCRAFT = REPO / "game" / "Airside" / "Assets" / "Airside" / "Art" / "Models" / "Aircraft"
 BASENAME = "mdl_bell_412_rescue_v01"
-EXPECTED_PARTS = 43
+EXPECTED_PARTS = 45
 
 _SPEC = importlib.util.spec_from_file_location("air_001_v05", SCRIPTS / "generate-air-001-v05.py")
 _base = importlib.util.module_from_spec(_SPEC)
@@ -145,9 +145,31 @@ def bell_412_meshes():
     meshes["sliding_door_left"] = _base.box(-1.39, 1.57, -0.10, 0.045, 1.72, 1.72)
     meshes["sliding_door_right"] = _base.box(1.39, 1.57, -0.10, 0.045, 1.72, 1.72)
 
-    # Original broad rescue blocking and operational details; deliberately no marks or text.
-    meshes["rescue_red_belly"] = _base.box(0.0, 1.02, 0.15, 2.55, 0.30, 4.30)
-    meshes["rescue_red_tail"] = _base.box(0.0, 2.25, -5.65, 0.62, 0.24, 5.75)
+    # Original Mountain Rescue identity, clipped to the real hull (ADR 0232).
+    # Retain the historical paint part names so existing rescue/custom tint paths work.
+    spec = importlib.util.spec_from_file_location("identity_finish", SCRIPTS / "finish-aircraft-liveries.py")
+    paint = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(paint)
+    def bilateral(mesh, polygon, offset=.012):
+        vertices, indices = paint.merge([paint.clip(mesh, triangle, side=side, offset=offset)
+                            for side in (-1, 1) for triangle in paint.triangulate_polygon(polygon)])
+        # The old box fin has inward winding. Paint shells need outward faces so
+        # the native back-face culler sees the same marks as the software proof.
+        faces = indices.reshape(-1, 3).copy()
+        tris = vertices[faces]
+        normals = np.cross(tris[:, 1]-tris[:, 0], tris[:, 2]-tris[:, 0])
+        reverse = normals[:, 0] * tris[:, :, 0].mean(axis=1) < 0
+        faces[reverse] = faces[reverse][:, [0, 2, 1]]
+        return vertices, faces.reshape(-1)
+    meshes["rescue_red_belly"] = bilateral(meshes["fuselage"],
+        [(-2.3, .8), (3.8, .8), (3.8, 1.48), (-.8, 1.48), (-2.3, 2.16)])
+    meshes["rescue_red_tail"] = paint.merge([
+        bilateral(meshes["tail_boom"], [(-9.8, 1.4), (-2., 1.4), (-2., 2.08), (-9.8, 2.85)]),
+        bilateral(meshes["tail_fin"], [(-11., 2.2), (-8., 2.2), (-8., 4.6), (-11., 4.6)])])
+    meshes["livery_secondary"] = bilateral(meshes["fuselage"],
+        [(-2.3, 2.27), (-.8, 1.60), (3.2, 1.60), (3.2, 1.75), (-.8, 1.75), (-2.3, 2.42)], offset=.016)
+    meshes["livery_emblem"] = bilateral(meshes["tail_fin"],
+        [(-9.90, 3.03), (-9.45, 3.84), (-8.94, 3.03), (-9.23, 3.03), (-9.45, 3.42), (-9.66, 3.03)], offset=.022)
     meshes["nose_searchlight"] = _base.box(-0.55, 1.12, 3.18, 0.34, 0.34, 0.25)
     meshes["camera_pod"] = _base.oval_lathe_fuselage([(2.75, 0.24, 0.24, 0.98), (3.20, 0.12, 0.12, 0.98)], segments=16)
     meshes["wire_strike_upper"] = rotated(_base.box(0.0, 3.52, 2.03, 0.06, 0.78, 0.06), x_degrees=-22.0,

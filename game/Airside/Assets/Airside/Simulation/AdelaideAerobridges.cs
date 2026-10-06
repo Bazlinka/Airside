@@ -39,7 +39,7 @@ namespace Airside.Simulation
             if (Is(type, AircraftType.AirbusA220300))
                 return new AircraftDoor(-1.62f, -5.95f, 2.32f, 3.91f);
             if (Is(type, AircraftType.AirbusA320200))
-                return new AircraftDoor(-1.91f, -4.94f, 2.55f, 4.23f);
+                return new AircraftDoor(-1.92f, -4.94f, 2.55f, 4.23f);
             if (Is(type, AircraftType.Boeing737800))
                 return new AircraftDoor(-1.82f, -5.19f, 2.75f, 4.54f);
             if (Is(type, AircraftType.Boeing7378))

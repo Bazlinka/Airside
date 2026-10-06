@@ -1,0 +1,7 @@
+Test run for /private/tmp/airside-livery-review-20261006/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll (.NETCoreApp,Version=v8.0)
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+  Skipped FleetMarket_SaysASharedLockOnce [11 ms]
+  Skipped Storm_IsAGroundStop [< 1 ms]
+
+Passed!  - Failed:     0, Passed:  1508, Skipped:     0, Total:  1508, Duration: 2 m 18 s - Harness.dll (net8.0)

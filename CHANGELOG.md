@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Refresh all fourteen aircraft identities with original fitted paint: thirteen
+  distinct fixed-wing hull compositions, bolder A220/787-10 tail marks, refreshed
+  Hangar thumbnails, and fitted Bell 412 panels using the operator/repaint palette
+  (ADR 0234). Existing audio fixes are already on main through #507.
 - Track the Resources folder metadata and retain the three empty authored
   Animation folders in Git, preserving their existing GUIDs. Make the Unity
   asset audit recognise Git-only folder sentinels (ADR 0233).

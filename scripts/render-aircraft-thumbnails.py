@@ -53,6 +53,8 @@ METAL = (140, 143, 148)
 
 def colour(name):
     n = name
+    if n.startswith("rescue_red"):
+        return SLATE
     if n == "livery_emblem": return (245, 242, 230)
     if n == "livery_secondary": return (201, 166, 99)
     if n.startswith(("livery_", "tail_fin", "rudder", "dorsal", "winglet")): return SLATE
@@ -213,6 +215,10 @@ def main():
     for type_id, model, thumb in MODELS:
         count = render(os.path.join(ART, model), os.path.join(ART, thumb))
         print(f"{type_id}: {count} triangles from {model} -> {thumb} ({WIDTH}x{HEIGHT})")
+    model = "Models/Aircraft/mdl_bell_412_rescue_v01.gltf"
+    thumb = "UI/Aircraft/thb_air_b412_v01.png"
+    count = render(os.path.join(ART, model), os.path.join(ART, thumb))
+    print(f"B412: {count} triangles -> {thumb} ({WIDTH}x{HEIGHT})")
 
 
 if __name__ == "__main__":

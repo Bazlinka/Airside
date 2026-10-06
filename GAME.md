@@ -1,3 +1,16 @@
+## Where to resume — authorised fleet identity merge, 6 October 2026
+
+Bailey approved publishing and merging PR #529, original fitted paint for all
+fourteen aircraft (ADR 0234), integrated with main `18a65490`. Combined headless
+1,508/1,508 and required GitHub CI pass; native Unity compiles, 1,951 pass with two
+inconclusives and one inherited busy-day ground-separation failure. Exact main C#
+reproduces the same failure; details and evidence are in
+`docs/testing/aircraft-identities-2026-10-06/README.md`. Preserve this open issue.
+Clean Mac build at `4d5b3965` and all 56 native fleet views remain the visual evidence;
+combined packaged gameplay/night/weather/repaint UI/performance remain unverified.
+**NEXT:** complete protected-main merge and sync; subsequent development priorities
+remain cargo apron/handling, outstation freight, then structure/performance.
+
 ## Where to resume — AI freight and metadata integration, 6 October 2026
 
 Codex. Bailey explicitly authorised placing PRs #527 and #528 together onto main.
@@ -67,6 +80,25 @@ performance. Do not reopen old playtests or present all freight work as complete
 Task packet: `docs/plans/ai-freight-traffic.md`. Earlier handoffs below are historical.
 
 ## Where to resume — freight and interface refresh candidate, 6 October 2026
+
+- **2026-10-06 Codex — original fleet identity refresh (ADR 0234).**
+  Branch `feature/aircraft-identity-refresh`; clean checkout
+  `/private/tmp/airside-livery-review-20261006`, parent `19fd9688`.
+  Thirteen distinct fitted hull compositions, larger A220/787-10 fin motifs,
+  refreshed thumbnails; Bell 412 fitted paint and operator-colour repaint.
+  Original fixed-wing non-paint vertex/index arrays verified byte-identical.
+  Existing audio fixes already merged via #507 (`e5151ded`): local changed
+  jet WAVs/manifest match main, so no stale audio-code overwrite is needed.
+  Evidence: `docs/testing/aircraft-identities-2026-10-06/README.md`.
+  Checks: headless 1490/1490; native Unity 1933 passed/0 failed, two existing
+  inconclusives; fitted-paint, connectivity and asset audits pass; 56 native
+  captures inspected across fourteen types. Clean Mac build passed at `4d5b3965`.
+  Packaged lighting/weather/repaint UI and performance acceptance remain open.
+  Bailey explicitly approved publishing and merging this refresh on 6 October.
+  **NEXT:** publish the PR, pass combined checks and merge; packaged acceptance stays open.
+  The original checkout is clean at prior main `19fd9688`; duplicate audio work
+  exactly matched merged #507 and was backed up to
+  `/private/tmp/airside-audio-before-sync-20261006.patch` before clearing/syncing.
 
 Codex; branch `feature/freight-and-interface-refresh`. Bailey approved requiring
 freighters for freight work and a substantial HUD/viewing, return-summary and

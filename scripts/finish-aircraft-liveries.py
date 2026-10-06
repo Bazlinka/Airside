@@ -17,21 +17,67 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 ART = ROOT / 'game/Airside/Assets/Airside/Art/Models/Aircraft'
 
-# name, ribbon family, sweep begins (fraction nose -> tail), lower belt, belt width
+# Display name and original fin-symbol family. Hull compositions live in IDENTITIES.
 PROFILES = {
-    'ATR42': ('Saltwater', 'feather', .63, -.38, .17),
-    'SF34': ('Ochre Country', 'sunrise', .69, -.31, .14),
-    'DH8D': ('Coastal Current', 'current', .70, -.40, .17),
-    'E190': ('Southern Star', 'compass', .67, -.34, .18),
-    'A223': ('Morning Light', 'rays', .66, -.39, .20),
-    'A320': ('Tidal Arc', 'tide', .66, -.37, .22),
-    'B738': ('Outback Horizon', 'horizon', .71, -.34, .18),
-    'B38M': ('Crosswind', 'crosswind', .68, -.40, .22),
-    'A21N': ('Long Coast', 'coast', .73, -.36, .19),
-    'A359': ('Southern Aurora', 'aurora', .68, -.40, .23),
-    'A339': ('Desert Dawn', 'dawn', .71, -.38, .24),
-    'B789': ('Ocean Reach', 'ocean', .69, -.42, .23),
-    'B78X': ('Southern Meridian', 'meridian', .73, -.38, .23),
+    'ATR42': ('Saltwater Wings', 'feather'),
+    'SF34': ('Ochre Rise', 'sunrise'),
+    'DH8D': ('Coastal Current', 'current'),
+    'E190': ('Starpoint', 'compass'),
+    'A223': ('Daybreak', 'rays'),
+    'A320': ('Tidal Arc', 'tide'),
+    'B738': ('Range Country', 'horizon'),
+    'B38M': ('Crosswind', 'crosswind'),
+    'A21N': ('Long Coast', 'coast'),
+    'A359': ('Aurora', 'aurora'),
+    'A339': ('Desert Dawn', 'dawn'),
+    'B789': ('Ocean Reach', 'ocean'),
+    'B78X': ('Meridian', 'meridian'),
+}
+
+
+# ADR 0232: independent silhouettes of paint, expressed in nose-to-tail / hull-height
+# coordinates. Broad shapes survive overview zoom; the title/window belt stays white.
+# Primary and secondary regions are disjoint: no stacked coplanar paint.
+IDENTITIES = {
+    'ATR42': ('Saltwater Wings',
+        [[(.14,-.78),(.56,-.78),(.94,.55),(.94,.90),(.53,-.37),(.14,-.37)]],
+        [[(.14,-.94),(.56,-.94),(.94,.33),(.94,.45),(.55,-.83),(.14,-.83)]]),
+    'SF34': ('Ochre Rise',
+        [[(.12,-.92),(.73,-.92),(.73,-.45),(.12,-.45)],[(.80,-.92),(.95,-.92),(.95,.88),(.86,.88)]],
+        [[(.12,-.36),(.69,-.36),(.73,-.26),(.12,-.26)]]),
+    'DH8D': ('Coastal Current',
+        [[(.16,-.87),(.55,-.87),(.95,.06),(.95,.37),(.56,-.53),(.16,-.53)]],
+        [[(.30,-.38),(.57,-.38),(.95,.53),(.95,.76),(.57,-.20),(.30,-.20)]]),
+    'E190': ('Starpoint',
+        [[(.17,-.92),(.94,-.92),(.94,-.48),(.17,-.48)],[(.77,-.38),(.95,-.38),(.95,.94),(.88,.94)]],
+        [[(.17,-.39),(.71,-.39),(.76,-.24),(.17,-.24)]]),
+    'A223': ('Daybreak',
+        [[(.62,-.92),(.95,-.92),(.95,.93),(.86,.93)],[(.18,-.66),(.54,-.66),(.62,-.38),(.18,-.38)]],
+        [[(.62,-.11),(.70,.12),(.77,.12),(.69,-.11)],[(.69,.20),(.77,.43),(.84,.43),(.76,.20)]]),
+    'A320': ('Tidal Arc',
+        [[(.14,-.95),(.94,-.95),(.94,-.62),(.56,-.50),(.14,-.50)],[(.74,-.40),(.95,-.05),(.95,.91),(.89,.91)]],
+        [[(.24,-.39),(.59,-.39),(.88,.32),(.88,.48),(.59,-.24),(.24,-.24)]]),
+    'B738': ('Range Country',
+        [[(.16,-.93),(.95,-.93),(.95,-.26),(.82,-.26),(.73,-.45),(.64,-.26),(.55,-.50),(.16,-.50)]],
+        [[(.73,-.18),(.83,.17),(.95,-.18),(.95,-.02),(.83,.40),(.73,-.02)]]),
+    'B38M': ('Crosswind',
+        [[(.17,-.74),(.68,-.74),(.95,.52),(.95,.93),(.67,-.35),(.17,-.35)]],
+        [[(.67,.78),(.73,.78),(.92,-.75),(.86,-.75)]]),
+    'A21N': ('Long Coast',
+        [[(.16,-.93),(.66,-.93),(.66,-.41),(.16,-.41)],[(.76,-.93),(.95,-.93),(.95,.94),(.91,.94)]],
+        [[(.71,-.50),(.75,-.50),(.90,.70),(.86,.70)]]),
+    'A359': ('Aurora',
+        [[(.14,-.94),(.95,-.94),(.95,-.54),(.14,-.54)],[(.59,-.42),(.68,-.42),(.91,.92),(.83,.92)]],
+        [[(.70,-.41),(.78,-.41),(.95,.62),(.95,.90)]]),
+    'A339': ('Desert Dawn',
+        [[(.14,-.92),(.63,-.92),(.78,-.51),(.91,-.18),(.95,-.18),(.95,.07),(.91,.07),(.75,-.25),(.59,-.49),(.14,-.49)]],
+        [[(.73,-.07),(.86,.65),(.95,.65),(.95,.86),(.83,.86),(.68,-.07)]]),
+    'B789': ('Ocean Reach',
+        [[(.14,-.93),(.95,-.93),(.95,.65),(.87,.65),(.74,-.35),(.14,-.35)]],
+        [[(.53,-.22),(.70,-.22),(.93,.82),(.90,.91),(.69,-.07),(.53,-.07)]]),
+    'B78X': ('Meridian',
+        [[(.16,-.91),(.95,-.91),(.95,-.38),(.16,-.38)],[(.77,-.26),(.82,-.26),(.91,.93),(.86,.93)]],
+        [[(.86,-.25),(.91,-.25),(.95,.32),(.95,.89)]]),
 }
 
 
@@ -42,10 +88,10 @@ MOTIFS = {
                [(.18,.60),(.62,.77),(.49,.81),(.16,.66)]],
     'current': [[(.15,.39),(.55,.51),(.69,.65),(.50,.58),(.15,.46)],
                 [(.19,.61),(.58,.72),(.63,.82),(.43,.75),(.18,.67)]],
-    'rays': [[(.17,.46),(.65,.46),(.61,.51),(.17,.51)],
-             [(.31,.55),(.26,.74),(.32,.77),(.37,.55)],
-             [(.41,.55),(.44,.83),(.50,.81),(.47,.55)],
-             [(.51,.55),(.64,.72),(.68,.68),(.57,.54)]],
+    'rays': [[(.15,.40),(.72,.40),(.72,.50),(.15,.50)],
+             [(.20,.56),(.16,.78),(.29,.81),(.34,.56)],
+             [(.40,.56),(.44,.85),(.56,.81),(.52,.56)],
+             [(.60,.56),(.77,.71),(.80,.59),(.68,.52)]],
     'tide': [[(.15,.43),(.55,.43),(.70,.58),(.35,.55)],
              [(.19,.65),(.52,.58),(.66,.67),(.36,.75)]],
     'horizon': [[(.14,.43),(.68,.43),(.64,.49),(.14,.49)],
@@ -62,9 +108,9 @@ MOTIFS = {
              [(.23,.57),(.40,.79),(.59,.57),(.41,.62)]],
     'ocean': [[(.15,.46),(.48,.57),(.68,.55),(.53,.66),(.28,.58)],
               [(.20,.67),(.50,.74),(.60,.70),(.47,.81),(.25,.75)]],
-    'meridian': [[(.35,.41),(.42,.41),(.48,.82),(.41,.84)],
-                 [(.17,.59),(.34,.72),(.32,.63)],
-                 [(.50,.64),(.66,.54),(.53,.54)]]
+    'meridian': [[(.31,.39),(.47,.39),(.52,.85),(.36,.85)],
+                 [(.08,.59),(.28,.76),(.28,.53)],
+                 [(.56,.66),(.80,.48),(.58,.48)]]
 }
 
 
@@ -210,23 +256,24 @@ def flush_spoilers(meshes):
         if len(patch[1]): meshes[name]=patch
 
 
-def finish(meshes, type_id):
+def finish(meshes, type_id, paint_only=False):
     """Final paint pass; fuselage/glazing, gear and type dimensions survive."""
-    _, family, sweep, belt, width = PROFILES[type_id]
+    _, family = PROFILES[type_id]
     for name in list(meshes):
         if name.startswith('livery_'): del meshes[name]
-    flush_spoilers(meshes)
-    # The shared narrowbody pylon top extended above the wing and appeared as a
-    # rectangular block. Fit the upper edge into the wing's lower skin instead.
-    for side in ('left','right'):
-        pylon=meshes.get('pylon_'+side); wing=meshes.get('wing_'+side)
-        if pylon is None or wing is None: continue
-        pv,pi=pylon; wv,_=wing
-        stations=np.unique(wv[:,0])
-        underside=np.array([wv[wv[:,0]==x,1].min() for x in stations])
-        limit=np.interp(pv[:,0],stations,underside)+.025
-        pv=pv.copy(); pv[:,1]=np.minimum(pv[:,1],limit)
-        meshes['pylon_'+side]=(pv,pi)
+    if not paint_only:
+        flush_spoilers(meshes)
+        # The shared narrowbody pylon top extended above the wing and appeared as a
+        # rectangular block. Fit the upper edge into the wing's lower skin instead.
+        for side in ('left','right'):
+            pylon=meshes.get('pylon_'+side); wing=meshes.get('wing_'+side)
+            if pylon is None or wing is None: continue
+            pv,pi=pylon; wv,_=wing
+            stations=np.unique(wv[:,0])
+            underside=np.array([wv[wv[:,0]==x,1].min() for x in stations])
+            limit=np.interp(pv[:,0],stations,underside)+.025
+            pv=pv.copy(); pv[:,1]=np.minimum(pv[:,1],limit)
+            meshes['pylon_'+side]=(pv,pi)
     skin=merge([mesh for name,mesh in meshes.items() if name in ('fuselage','fuselage_port')], allow32=True)
     v,_=skin; zmin,zmax=v[:,2].min(),v[:,2].max(); length=zmax-zmin
     wide=v[np.abs(v[:,0])>np.abs(v[:,0]).max()*.97]
@@ -236,27 +283,16 @@ def finish(meshes, type_id):
     if not len(middle): middle=v
     cy=(middle[:,1].max()+middle[:,1].min())*.5; ry=np.ptp(middle[:,1])*.5
     def point(t,h): return (zmax-t*length,cy+h*ry)
-    # Fine, continuous belt below the windows. The last aft panel climbs into the fin.
-    ts=np.linspace(.15,.935,30)
-    def height(t):
-        q=max(0.,(t-sweep)/(.935-sweep))
-        if family in ('horizon', 'meridian', 'crosswind'):
-            rise = q*q  # a crisp, late ascending ribbon
-        elif family in ('current', 'tide', 'ocean'):
-            rise = np.sin(q*np.pi*.5)**2  # a broad wave sweep
-        else:
-            rise = q*q*(3-2*q)
-        return belt+1.34*rise
     secondary=[]
+    _, primary_regions, accent_regions = IDENTITIES[type_id]
     for side,key in ((-1,'livery_stripe'),(1,'livery_stripe_lower')):
         primary=[]
-        for a,b in zip(ts[:-1],ts[1:]):
-            taper=min(1.,(a-.14)/.075)
-            ha,hb=height(a),height(b)
-            wa=width*taper; wb=width*min(1.,(b-.14)/.075)
-            primary.append(clip(skin,[point(a,ha-wa),point(b,hb-wb),point(b,hb),point(a,ha)],side=side))
-            # A separated pinstripe gives the belt an intentional two-tone edge.
-            secondary.append(clip(skin,[point(a,ha+.035),point(b,hb+.035),point(b,hb+.095),point(a,ha+.095)],side=side,offset=.014))
+        for polygon in primary_regions:
+            for triangle in triangulate_polygon(polygon):
+                primary.append(clip(skin,[point(*p) for p in triangle],side=side))
+        for polygon in accent_regions:
+            for triangle in triangulate_polygon(polygon):
+                secondary.append(clip(skin,[point(*p) for p in triangle],side=side,offset=.014))
         meshes[key]=merge(primary)
     tail=merge([mesh for name,mesh in meshes.items() if name in ('tail_fin','tail_fin_tip')])
     tv,_=tail; ymin,ymax=tv[:,1].min(),tv[:,1].max(); tzmin,tzmax=tv[:,2].min(),tv[:,2].max()
@@ -275,8 +311,15 @@ def finish(meshes, type_id):
         return (hits.min()+(hits.max()-hits.min())*u,y)
     emblems=[]
     for side in (-1,1):
-        # Contrasting lower diagonal echo under the white symbol.
-        secondary.append(clip(tail,[tailpoint(.05,.16),tailpoint(.92,.39),tailpoint(.88,.48),tailpoint(.03,.25)],side=side,offset=.018))
+        # A small root signature replaces the repeated diagonal stripe.
+        rootmarks = {
+            'sunrise': [(.08,.15),(.84,.15),(.84,.24),(.08,.24)],
+            'horizon': [(.08,.16),(.48,.32),(.87,.16),(.87,.26),(.48,.42),(.08,.26)],
+            'meridian': [(.17,.17),(.69,.17),(.69,.26),(.17,.26)],
+        }
+        mark = rootmarks.get(family,[(.08,.15),(.86,.29),(.86,.39),(.08,.25)])
+        for triangle in triangulate_polygon(mark):
+            secondary.append(clip(tail,[tailpoint(*p) for p in triangle],side=side,offset=.018))
         for polygon in emblem_polygons(family):
             for triangle in triangulate_polygon(polygon):
                 emblems.append(clip(tail,[tailpoint(*p) for p in triangle],side=side,offset=.022))
@@ -310,13 +353,9 @@ def main():
     for cid in args.types or PROFILES:
         basename=glazing.SOURCES[cid][2]
         meshes=load_meshes(ART/(basename+'.gltf'))
-        filename,function,_=glazing.SOURCES[cid]
-        source=getattr(glazing.load_module(filename),function)()
-        for name,mesh in source.items():
-            if name.startswith(('spoiler_','pylon_')): meshes[name]=mesh
-        finish(meshes,cid)
+        finish(meshes,cid,paint_only=True)
         args.output_dir.mkdir(parents=True,exist_ok=True)
         writer(args.output_dir,basename,meshes)
-        print(cid,PROFILES[cid][0],sum(len(i)//3 for _,i in meshes.values()),'triangles',flush=True)
+        print(cid,IDENTITIES[cid][0],sum(len(i)//3 for _,i in meshes.values()),'triangles',flush=True)
 
 if __name__=='__main__': main()

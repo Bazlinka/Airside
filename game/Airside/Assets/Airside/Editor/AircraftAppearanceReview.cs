@@ -20,7 +20,7 @@ public static class AircraftAppearanceReview
         var args = Environment.GetCommandLineArgs();
         string Arg(string key, string fallback) { var i = Array.IndexOf(args, key); return i >= 0 && i + 1 < args.Length ? args[i + 1] : fallback; }
         var output = Path.GetFullPath(Arg("-aircraftReviewOutput", "../../work/aircraft-review"));
-        var only = Arg("-aircraftReviewTypes", "ATR42,SF34,DH8D,E190,A223,A320,B738,B38M,A21N,A359,A339,B789,B78X").Split(',');
+        var only = Arg("-aircraftReviewTypes", "ATR42,SF34,DH8D,E190,A223,A320,B738,B38M,A21N,A359,A339,B789,B78X,B412").Split(',');
         Directory.CreateDirectory(output);
         ShaderUtil.allowAsyncCompilation = false;
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -60,8 +60,9 @@ public static class AircraftAppearanceReview
             var airline = Airline.Player(title, hex);
             var fleet = (FleetAircraft)Activator.CreateInstance(typeof(FleetAircraft), BindingFlags.Instance | BindingFlags.NonPublic,
                 null, new object[] { "VH-ASH", airline, type, new StableId("REVIEW"), new SimulationTime(0) }, null);
-            typeof(AirsidePrototype).GetMethod("EnsureAircraftIdentityMarkings", PrivateStatic)
-                .Invoke(null, new object[] { root, fleet, accent });
+            if (!type.IsRotorcraft)
+                typeof(AirsidePrototype).GetMethod("EnsureAircraftIdentityMarkings", PrivateStatic)
+                    .Invoke(null, new object[] { root, fleet, accent });
             foreach (var lod in root.GetComponentsInChildren<LODGroup>()) lod.ForceLOD(0);
             foreach (var r in root.GetComponentsInChildren<MeshRenderer>())
                 if (r.name is "Fuselage" or "Wing L" or "Tail" or "Livery emblem")

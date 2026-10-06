@@ -44,8 +44,11 @@ namespace Airside.Simulation
         /// founding-aircraft identity, recorded revenue and routes. Older aircraft keep
         /// their completed-flight count and begin the detailed logbook on migration.
         /// 19 (ADR 0194) records which player aircraft are freighters. Older saves are all passenger.
+        /// 20 (ADR 0239) marks aircraft on a ferry between bases (they earn nothing on arrival) and gives
+        /// each outstation aircraft a logbook: join time, recorded revenue and routes. Older saves have no
+        /// ferries and outstation aircraft begin their logbook on migration.
         /// </summary>
-        public const int CurrentVersion = 19;
+        public const int CurrentVersion = 20;
 
         public int Version = CurrentVersion;
 
@@ -166,6 +169,12 @@ namespace Airside.Simulation
         public bool Automated;
         public int RotationsSinceCheck;
         public long CheckUntilSeconds;
+
+        /// <summary>v20 (ADR 0239): the outstation aircraft's logbook. Older saves load it empty.</summary>
+        public long JoinedAtSeconds;
+        public long LifetimeRevenue;
+        public int HistoryFlights;
+        public List<AircraftRouteSaveRecord> RouteHistory = new();
     }
 
     [Serializable]
@@ -234,6 +243,9 @@ namespace Airside.Simulation
 
         /// <summary>v19 (ADR 0194): converted to a package freighter.</summary>
         public bool IsFreighter;
+
+        /// <summary>v20 (ADR 0239): being ferried between bases; arrives without paying or counting a flight.</summary>
+        public bool IsFerry;
     }
 
     [Serializable]
@@ -299,7 +311,8 @@ namespace Airside.Simulation
             data.HighReliabilityStreak = operations.CareerState.HighReliabilityStreak;
             data.RecentReliability.AddRange(operations.CareerState.RecentReliability);
             foreach (var aircraft in operations.OutstationFleet)
-                data.OutstationFleet.Add(new OutstationAircraftSaveRecord
+            {
+                var outstationRecord = new OutstationAircraftSaveRecord
                 {
                     Registration = aircraft.Registration,
                     TypeId = aircraft.Type.Id,
@@ -310,8 +323,19 @@ namespace Airside.Simulation
                     CompletedServices = aircraft.CompletedServices,
                     Automated = aircraft.Automated,
                     RotationsSinceCheck = aircraft.RotationsSinceCheck,
-                    CheckUntilSeconds = aircraft.CheckUntilSeconds
-                });
+                    CheckUntilSeconds = aircraft.CheckUntilSeconds,
+                    JoinedAtSeconds = aircraft.JoinedAtSeconds,
+                    LifetimeRevenue = aircraft.LifetimeRevenue,
+                    HistoryFlights = aircraft.HistoryFlights
+                };
+                foreach (var route in aircraft.RouteHistory.OrderBy(r => r.DestinationCode, StringComparer.Ordinal))
+                    outstationRecord.RouteHistory.Add(new AircraftRouteSaveRecord
+                    {
+                        DestinationCode = route.DestinationCode,
+                        Flights = route.Flights
+                    });
+                data.OutstationFleet.Add(outstationRecord);
+            }
             foreach (var plan in operations.RepeatSchedules)
                 data.RepeatSchedules.Add(new RepeatScheduleSaveRecord
                 {
@@ -396,7 +420,8 @@ namespace Airside.Simulation
                     IsFoundingAircraft = a.IsFoundingAircraft,
                     LifetimeRevenue = a.LifetimeRevenue,
                     HistoryFlights = a.HistoryFlights,
-                    IsFreighter = a.IsFreighter
+                    IsFreighter = a.IsFreighter,
+                    IsFerry = a.IsFerry
                 };
                 foreach (var route in a.RouteHistory.OrderBy(r => r.DestinationCode, StringComparer.Ordinal))
                     record.RouteHistory.Add(new AircraftRouteSaveRecord
@@ -548,6 +573,16 @@ namespace Airside.Simulation
                 }
                 if (data.Version >= 19 && record.IsFreighter && airline.IsPlayer)
                     operations.RestoreFreighter(restoredRegistration);
+                if (data.Version >= 20 && record.IsFerry)
+                {
+                    // A ferry is a player aircraft on its way in; it is never parked, booked or on the ground
+                    // at its far end, because the first thing it does on arrival is clear the flag.
+                    if (!airline.IsPlayer
+                        || state is not (FleetState.Inbound or FleetState.HoldingForLanding or FleetState.GoAround
+                            or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn))
+                        throw new FormatException($"{registration} is marked as a ferry but is {record.State}.");
+                    operations.RestoreFerry(restoredRegistration);
+                }
                 if (data.Version >= 13 && airline.IsPlayer)
                     operations.RestoreAutomatedTrip(restoredRegistration, record.AutomatedTrip);
             }
@@ -634,7 +669,7 @@ namespace Airside.Simulation
             {
                 var bases = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var code in data.OutstationBaseCodes ?? new List<string>())
-                    if ((code != "MEL" && code != "SYD" && code != "BNE" && code != "PER")
+                    if (!AirlineOperations.IsOutstationCandidate(code)
                         || !bases.Add(code))
                         throw new FormatException("Invalid outstation base in save.");
                 if (bases.Count > 3)
@@ -724,10 +759,34 @@ namespace Airside.Simulation
                     else if (record.DepartAtSeconds != 0 || record.ReturnAtSeconds != 0 || record.Automated)
                         throw new FormatException("Inactive outstation aircraft has service state.");
                     playerRegistrations.Add(record.Registration);
-                    networkFleet.Add(new OutstationAircraft(record.Registration, type, record.BaseCode,
+                    var restoredOutstation = new OutstationAircraft(record.Registration, type, record.BaseCode,
                         record.DestinationCode, record.DepartAtSeconds, record.ReturnAtSeconds,
                         record.CompletedServices, record.Automated, record.RotationsSinceCheck,
-                        record.CheckUntilSeconds));
+                        record.CheckUntilSeconds);
+                    if (data.Version >= 20)
+                    {
+                        if (record.JoinedAtSeconds < 0 || record.JoinedAtSeconds > data.ClockSeconds
+                            || record.LifetimeRevenue < 0 || record.HistoryFlights < 0)
+                            throw new FormatException($"Invalid aircraft logbook for {record.Registration}.");
+                        var outstationRoutes = new List<AircraftRouteTally>();
+                        var outstationRouteTotal = 0;
+                        var outstationSeen = new HashSet<string>(StringComparer.Ordinal);
+                        foreach (var route in record.RouteHistory ?? new List<AircraftRouteSaveRecord>())
+                        {
+                            if (route == null || route.Flights <= 0
+                                || !outstationSeen.Add(route.DestinationCode ?? string.Empty)
+                                || !DestinationCatalogue.TryFind(route.DestinationCode, out _))
+                                throw new FormatException($"Invalid route history for {record.Registration}.");
+                            outstationRouteTotal += route.Flights;
+                            outstationRoutes.Add(new AircraftRouteTally(route.DestinationCode, route.Flights));
+                        }
+                        if (outstationRouteTotal != record.HistoryFlights
+                            || record.HistoryFlights > record.CompletedServices)
+                            throw new FormatException($"Aircraft logbook totals do not match for {record.Registration}.");
+                        restoredOutstation.RestoreHistory(record.JoinedAtSeconds, record.LifetimeRevenue,
+                            record.HistoryFlights, outstationRoutes);
+                    }
+                    networkFleet.Add(restoredOutstation);
                 }
                 var plans = new List<RepeatSchedule>();
                 var seenPlans = new HashSet<string>(StringComparer.Ordinal);

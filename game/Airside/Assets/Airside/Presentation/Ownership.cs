@@ -4,7 +4,7 @@ namespace Airside.Presentation
 {
     /// <summary>
     /// The one rule for telling the player's aircraft from everyone else's (ADR 0048), shared by
-    /// the Hangar, fleet panel, Flights board, route map, field tags and selection card: the same
+    /// the Fleet workspace, Flights board, route map, field tags and selection card: the same
     /// section names, the player's livery accent and ownership badge, and quieter AI traffic.
     /// </summary>
     public static class Ownership

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Airside.Domain;
 
 namespace Airside.Simulation
@@ -40,6 +41,65 @@ namespace Airside.Simulation
         public long CheckUntilSeconds { get; private set; }
         public bool CheckDue => RotationsSinceCheck >= Maintenance.IntervalRotations;
         public bool InCheck(long nowSeconds) => CheckUntilSeconds > nowSeconds;
+
+        /// <summary>When this airframe joined the airline; 0 for aircraft bought before the logbook (save v20).</summary>
+        public long JoinedAtSeconds { get; internal set; }
+
+        /// <summary>Revenue credited to this airframe since its logbook began (save v20).</summary>
+        public long LifetimeRevenue { get; private set; }
+
+        /// <summary>Services with route and revenue entries in the logbook; never above <see cref="CompletedServices"/>.</summary>
+        public int HistoryFlights { get; private set; }
+
+        private readonly Dictionary<string, int> _routeFlights = new(StringComparer.Ordinal);
+
+        public IEnumerable<AircraftRouteTally> RouteHistory
+        {
+            get
+            {
+                foreach (var pair in _routeFlights)
+                    yield return new AircraftRouteTally(pair.Key, pair.Value);
+            }
+        }
+
+        public AircraftRouteTally FavouriteRoute
+        {
+            get
+            {
+                var bestCode = string.Empty;
+                var bestFlights = 0;
+                foreach (var pair in _routeFlights)
+                    if (pair.Value > bestFlights || pair.Value == bestFlights
+                        && string.CompareOrdinal(pair.Key, bestCode) < 0)
+                    {
+                        bestCode = pair.Key;
+                        bestFlights = pair.Value;
+                    }
+                return new AircraftRouteTally(bestCode, bestFlights);
+            }
+        }
+
+        internal void RecordHistory(string destinationCode, long revenue)
+        {
+            HistoryFlights++;
+            LifetimeRevenue += Math.Max(0, revenue);
+            _routeFlights.TryGetValue(destinationCode, out var flights);
+            _routeFlights[destinationCode] = flights + 1;
+        }
+
+        internal void RestoreHistory(long joinedAtSeconds, long lifetimeRevenue, int historyFlights,
+            IEnumerable<AircraftRouteTally> routes)
+        {
+            JoinedAtSeconds = Math.Max(0, joinedAtSeconds);
+            LifetimeRevenue = Math.Max(0, lifetimeRevenue);
+            HistoryFlights = Math.Max(0, historyFlights);
+            _routeFlights.Clear();
+            if (routes == null)
+                return;
+            foreach (var route in routes)
+                if (!string.IsNullOrWhiteSpace(route.DestinationCode) && route.Flights > 0)
+                    _routeFlights[route.DestinationCode] = route.Flights;
+        }
 
         internal void StartCheck(long untilSeconds)
         {

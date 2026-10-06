@@ -1,5 +1,16 @@
 ## Unreleased
 
+- One fleet across every base (ADR 0239). The Fleet workspace now lists every aircraft at
+  Adelaide, Melbourne, Sydney, Brisbane and Perth, grouped by base with SHOW and SORT, and a
+  bases strip that filters the roster and picks where BUY delivers. Each aircraft has a profile
+  with logbook, check, sell value and its actions: send an outstation aircraft on a route in one
+  click, TO ADELAIDE (a visible ferry that earns nothing), SELL (two clicks), and the camera views.
+  Selecting a row no longer closes the sheet; the Network screen is gone. Outstation aircraft appear
+  on the map and in Stats, the return briefing and My Flights. Selling an aircraft now refuses a
+  booked flight; a sold outstation mark is not reissued; a second Saab opens its own planner. Save
+  v20 adds the ferry flag and an outstation logbook. Code only: nothing compiled or run (Bailey's
+  instruction), so build, headless tests and visuals are unverified.
+
 - Smooth the watched takeoff-to-climb-out handoff instead of jumping 174–218 m
   onto the enroute profile; match vertical rates through rotation and climb-out.
   Add shared flight status, location, height, true heading and journey progress /

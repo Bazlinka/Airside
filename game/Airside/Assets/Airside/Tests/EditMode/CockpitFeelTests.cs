@@ -110,7 +110,7 @@ namespace Airside.Tests
             {
                 DeltaSeconds = Dt, SimRate = 1f, Time = t, GroundSpeed = 70f, HeightAgl = 0f, Spool = 0.5f,
             });
-            Assert.That(motion.TakeHaptic(), Is.AnyOf(HapticKind.Medium, HapticKind.Heavy));
+            Assert.That(motion.TakeHaptic(), Is.EqualTo(HapticKind.Medium).Or.EqualTo(HapticKind.Heavy));
             Assert.That(motion.TakeHaptic(), Is.EqualTo(HapticKind.None), "taking clears it");
         }
 

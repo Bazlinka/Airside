@@ -1,3 +1,22 @@
+## Where to resume — main compile fix + 27 hidden native failures, 7 October 2026
+
+- **2026-10-07 Cursor — `main` did not compile in Unity (Mac build blocked).**
+  `EngineStartSequenceTests`/`OperationsWorkspaceTests` used `Math` without `using System;`
+  and `CockpitFeelTests` used `Is.AnyOf` (absent from Unity's NUnit); the dotnet harness
+  accepts both. Fixed. **Watch:** headless-green PRs can still break the Unity compile.
+- **OPEN — 27 native EditMode failures now visible on `main`** (2259 passed / 27 failed /
+  2 inconclusive). Not caused by this fix; hidden while Unity could not compile:
+  `PassengerFlightViewTests` (window sightlines for all 13 types + two exterior cases),
+  `PresentationLayoutTests` (HUD layout ×4), `FieldMiniMapTests.PanelFor_ShowsOnTheDesktopWindow`,
+  `AirsideSettingsTests.Defaults_MatchAPlayableAdelaideSession`,
+  `CockpitCameraTests.CockpitTracksSeatAfterAircraftPoseAndRestoresCameraSettings`,
+  `PresentationBugSweepTests.CameraShellAnchor_FollowsCameraMovedAfterPlacement`,
+  `GroundSeparationTests.BusyDay_NoAircraftDriveThroughEachOther`, and save/resume:
+  `AirlineSaveTests.ResumedGame_ContinuesExactlyLikeOneThatNeverStopped`,
+  `TerminalGateOperationsTests.OldSave_GainsTheJetOnce_WithoutDuplicates`,
+  `TerminalGateOperationsTests.SaveAndCatchUp_JetResumesExactlyAsLivePlay`.
+  **NEXT:** triage — the save/resume failures touch the save-compatibility invariant.
+
 ## Where to resume — implemented maintenance journey and refined interface, 7 October 2026
 
 Codex; Bailey approved implementation of ADR 0244. Branch

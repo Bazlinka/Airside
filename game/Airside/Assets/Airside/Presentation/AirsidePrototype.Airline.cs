@@ -1644,6 +1644,7 @@ namespace Airside.Presentation
             /// <summary>Inbound only: the field's own final, so the map agrees with the 3D view.</summary>
             public bool OnFinalTrack;
             public bool OnRegionalTrack;
+            public bool OnField;
             public double LegMetres;
             public double MetresOut;
             public RunwayDirection Runway;
@@ -1663,9 +1664,17 @@ namespace Airside.Presentation
             var home = _operations.Home;
             foreach (var flying in _operations.Fleet)
             {
-                if (!flying.IsOffMap || !flying.CurrentDestination.HasValue)
-                    continue;
+                if (!flying.CurrentDestination.HasValue) continue;
                 var destination = flying.CurrentDestination.Value;
+                if (!flying.IsOffMap)
+                {
+                    if (!TryMiniMapLocation(flying, out var latitude, out var longitude)) continue;
+                    var arriving = flying.State is FleetState.HoldingForLanding or FleetState.GoAround
+                        or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn;
+                    _mapFlights.Add(new MapFlight { Aircraft = flying, Latitude = latitude, Longitude = longitude,
+                        From = arriving ? destination : home, To = arriving ? home : destination, OnField = true });
+                    continue;
+                }
                 var inbound = flying.State == FleetState.Inbound;
                 var flight = new MapFlight
                 {
@@ -1789,7 +1798,8 @@ namespace Airside.Presentation
                     // Parked at the far end, nose pointing home.
                     delta = homePoint - flight.Point;
                 }
-                flight.HeadingDegrees = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg + 90f;
+                flight.HeadingDegrees = flight.OnField && _fleetViewById.TryGetValue(flight.Aircraft.Registration, out var fieldView)
+                    ? fieldView.eulerAngles.y : Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg + 90f;
                 _mapFlights[i] = flight;
                 if ((flight.Aircraft.Airline.IsPlayer || _mapRivalsVisible) && mapRect.Contains(flight.Point))
                 {
@@ -1856,7 +1866,7 @@ namespace Airside.Presentation
             // Routes flown right now: flown part solid, the rest faint, along the great circle.
             foreach (var flight in _mapFlights)
             {
-                if (flight.Aircraft.Registration != _mapFlightInspectorId && !flight.Aircraft.Airline.IsPlayer)
+                if (flight.OnField || (flight.Aircraft.Registration != _mapFlightInspectorId && !flight.Aircraft.Airline.IsPlayer))
                     continue;
                 var colour = AirsideTheme.FromHex(flight.Aircraft.Airline.LiveryHex);
                 DrawGreatCircle(mapRect, flight.From, flight.To, 0.0, flight.Progress,
@@ -1982,7 +1992,7 @@ namespace Airside.Presentation
                     _mapLens.Reset();
             }
 
-            if (GUI.Button(rivalRect, $"{(_mapRivalsVisible ? "All flights" : "My flights")} · {rivalFlights}", smallButton))
+            if (GUI.Button(rivalRect, $"{(_mapRivalsVisible ? "All flights" : "My flights")} · {(_mapRivalsVisible ? _mapFlights.Count : _mapFlights.Count - rivalFlights)}", smallButton))
             {
                 _mapRivalsVisible = !_mapRivalsVisible;
                 if (!_mapRivalsVisible && tracked >= 0 && !_mapFlights[tracked].Aircraft.Airline.IsPlayer)
@@ -2058,6 +2068,7 @@ namespace Airside.Presentation
         {
             var aircraft = flight.Aircraft;
             var ends = aircraft.StateEndsAt.HasValue ? ClockText(aircraft.StateEndsAt.Value) : "";
+            if (flight.OnField) return $"{StatusText(aircraft)} · {SelectionLiveStats(aircraft)}";
             if (aircraft.State == FleetState.AtDestination)
                 return $"On the ground at {flight.To.Code} · leaves {ends}";
             var legKm = flight.From.DistanceKmTo(flight.To);

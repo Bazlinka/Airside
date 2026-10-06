@@ -39,3 +39,10 @@ redundant header type/destination label clipped. The preset now fits 129–141 E
 in the route line. Dark operator markers are lightened for legibility. Final
 native suite: 82/82 pass (`visual-final-unity-results.xml`), including two
 region-fit viewport cases.
+
+Local flights (including landing, go-around and taxi/departure) now use their
+visible actor's real position including render-origin offset. They share the
+full-map picker and inspector with distant flights. Final complete focused native
+suite: 85/85 (`complete-unity-results.xml`). Integrated full headless after the
+credits fix: 1,509 passed (`integrated-domain.log`); subsequent lens fit cases are
+covered by native checks and final GitHub CI.

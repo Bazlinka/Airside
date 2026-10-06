@@ -62,6 +62,25 @@ namespace Airside.Tests
 
         [TearDown] public void Cleanup() { if (_host != null) Object.DestroyImmediate(_host); }
 
+        [TestCase(FleetState.Landing)]
+        [TestCase(FleetState.GoAround)]
+        [TestCase(FleetState.TaxiOut)]
+        public void FullMapIncludesLocalFlightsUsingTheirActualRenderPosition(FleetState state)
+        {
+            Start("CPD"); _aircraft.Restore(state, new SimulationTime(0), new SimulationTime(200));
+            var actor = new GameObject("Visible local aircraft"); actor.transform.SetParent(_host.transform);
+            actor.transform.position = new Vector3(123, 100, 456);
+            Set("_flightOriginX", 1000d); Set("_flightOriginZ", 2000d);
+            ((Dictionary<string, Transform>)typeof(AirsidePrototype).GetField("_fleetViewById", Hidden).GetValue(_prototype))
+                .Add(_aircraft.Registration, actor.transform);
+            typeof(AirsidePrototype).GetMethod("LocateMapFlights", Hidden).Invoke(_prototype, null);
+            var flights = (System.Collections.IList)typeof(AirsidePrototype).GetField("_mapFlights", Hidden).GetValue(_prototype);
+            Assert.That(flights.Count, Is.EqualTo(1));
+            var row = flights[0]; YpadFrame.ToLatLon(1123, 2456, out var latitude, out var longitude);
+            Assert.That(row.GetType().GetField("Latitude").GetValue(row), Is.EqualTo(latitude).Within(.000001));
+            Assert.That(row.GetType().GetField("Longitude").GetValue(row), Is.EqualTo(longitude).Within(.000001));
+        }
+
         [Test] public void FullMapFlightSelectionKeepsTheMapOpenAndExposesViewingActions()
         {
             Start("CPD");

@@ -57,6 +57,17 @@ namespace Airside.Presentation
             ClampCenterToView(areaWidth, areaHeight);
         }
 
+        /// <summary>Fit the SA region with room for map controls at either window aspect.</summary>
+        public void ShowSouthAustralia(float areaWidth, float areaHeight)
+        {
+            Zoom = HomeZoom;
+            var baseScale = PixelsPerDegree(areaWidth, areaHeight);
+            var scale = Math.Min(Math.Max(1f, areaWidth - 48f) / (12f * Aspect),
+                Math.Max(1f, areaHeight - 140f) / 12.5f);
+            SetZoom(scale / Math.Max(.001f, baseScale));
+            CenterOn(areaWidth, areaHeight, 135, -32.25);
+        }
+
         public void SetZoom(float zoom) =>
             Zoom = Clamp(zoom, MinZoom, MaxZoom);
 

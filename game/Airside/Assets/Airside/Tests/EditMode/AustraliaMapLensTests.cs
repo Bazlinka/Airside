@@ -6,6 +6,19 @@ namespace Airside.Tests
 {
     public sealed class AustraliaMapLensTests
     {
+        [TestCase(934f, 716f)]
+        [TestCase(460f, 500f)]
+        public void SouthAustraliaPresetFitsTheWholeRegionAwayFromControls(float width, float height)
+        {
+            var lens = new AustraliaMapLens(); lens.ShowSouthAustralia(width, height);
+            foreach (var longitude in new[] { 129d, 141d })
+            foreach (var latitude in new[] { -26d, -38.5d })
+            {
+                lens.Project(0, 0, width, height, longitude, latitude, out var x, out var y);
+                Assert.That(x, Is.InRange(23f, width - 23f));
+                Assert.That(y, Is.InRange(69f, height - 69f));
+            }
+        }
         [Test]
         public void Reset_ReturnsToContinentOverview()
         {

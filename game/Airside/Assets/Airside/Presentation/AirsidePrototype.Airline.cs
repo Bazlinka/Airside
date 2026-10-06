@@ -1725,8 +1725,7 @@ namespace Airside.Presentation
 
             if (_mapSaScopeRequested)
             {
-                _mapLens.SetZoom(3.3f);
-                _mapLens.CenterOn(mapRect.width, mapRect.height, 134.5, -32.2);
+                _mapLens.ShowSouthAustralia(mapRect.width, mapRect.height);
                 _mapSaScopeRequested = false;
             }
             LocateMapFlights();
@@ -1905,7 +1904,8 @@ namespace Airside.Presentation
                     AirsideTheme.DrawRounded(new Rect(flight.Point.x - iconSize * .55f, flight.Point.y - iconSize * .55f,
                         iconSize * 1.1f, iconSize * 1.1f), AirsideTheme.WithAlpha(AirsideTheme.InstrumentText, .08f), iconSize);
                 DrawPlaneIcon(flight.Point, iconSize + 3f, flight.HeadingDegrees, new Color(0f, 0f, 0f, 0.75f * iconAlpha));
-                var iconColour = AirsideTheme.FromHex(flight.Aircraft.Airline.LiveryHex);
+                var iconColour = Color.Lerp(AirsideTheme.FromHex(flight.Aircraft.Airline.LiveryHex),
+                    AirsideTheme.InstrumentText, .35f);
                 iconColour.a = iconAlpha;
                 DrawPlaneIcon(flight.Point, iconSize, flight.HeadingDegrees, iconColour);
 
@@ -2016,6 +2016,8 @@ namespace Airside.Presentation
         {
             if (_mapFlightInspectorId == null || !_fleetAircraftById.TryGetValue(_mapFlightInspectorId, out var aircraft)) return;
             FillSelectionCard(aircraft);
+            // The operator/type/route line below already carries this identity.
+            _selectionCard.TypeName = string.Empty;
             var pane = layout.Detail.IsEmpty
                 ? new HudBox(layout.Map.Right - 340f, layout.Map.Y + 56f, 330f, layout.Map.Height - 120f)
                 : layout.Detail;
@@ -2340,7 +2342,7 @@ namespace Airside.Presentation
 
             var hint = Styled(GUI.skin.label, "map-hint", s => AirsideTheme.TextStyle(new GUIStyle(s) { fontSize = 11 }, AirsideTheme.InstrumentMuted));
             GUI.Label(new Rect(mapRect.x + 6f, mapRect.yMax - 20f, mapRect.width - 12f, 18f),
-                "Scroll to zoom · drag to pan · click a destination, or a plane to track it", hint);
+                "Scroll to zoom · drag to pan · click a destination to plan or a flight for status", hint);
         }
 
         private void DrawOperationsWorkspace(Rect rect)

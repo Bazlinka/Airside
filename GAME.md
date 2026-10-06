@@ -9,7 +9,8 @@ icons and flatter slate/Coastal Blue buttons. Mini map returns to airport scope
 with visual polish. The earlier regional eligibility/flight views remain reusable.
 Checks: headless 1,509 pass; native 1,961 pass with the inherited ground-separation
 failure and two inconclusives; final focused 52/52. Integrated map-accuracy main #531 (`20340fb7`). Integrated native checks: 58/58 pass; final map/camera/manual/terrain suite 73/73
-passes after keeping new scenery attribution on its own page. **NEXT:** clean
+passes after keeping new scenery attribution on its own page. Player review corrected SA preset fitting and redundant card-header clipping;
+final native suite 82/82 passes. **NEXT:** clean
 Mac build, packaged review and normal PR/main workflow.
 Evidence: `docs/testing/full-map-refresh-2026-10-06/`. Preserve the known inherited
 ground-separation failure; do not claim full native regression green.

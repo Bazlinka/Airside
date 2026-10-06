@@ -32,3 +32,10 @@ their complete attribution. Final native suite including manual/terrain tests:
 73/73 pass (`final-unity-results.xml`). Integrated headless and clean packaged
 review follow below. Screenshots are presentation evidence; they do not establish
 hardware mouse input, full-flight weather behaviour or performance acceptance.
+
+First packaged review found the fixed SA zoom could crop the southern edge and a
+redundant header type/destination label clipped. The preset now fits 129–141 E,
+26–38.5 S with control margins at both window aspects; the full identity remains
+in the route line. Dark operator markers are lightened for legibility. Final
+native suite: 82/82 pass (`visual-final-unity-results.xml`), including two
+region-fit viewport cases.

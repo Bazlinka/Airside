@@ -17,6 +17,34 @@ root cause is not proven; the concrete blocking capture path has been removed.
 Native compilation/GPU behaviour and capture fidelity remain unverified. NEXT:
 review PR/CI; keep the existing no-Unity restriction unless Bailey changes it.
 
+## Where to resume — Adelaide ground protocols, 6 October 2026
+
+ADR 0243 implements the owner's requested source-to-game comparison and selected
+safety corrections on `fix/adelaide-ground-protocols-20261006`. Stationary aircraft
+never stop blocking after a timeout; arrival clearance checks them too. Manual
+stand choices remain reserved while waiting for the same safe clearance. Crossing
+reservations cover the full airframe. The intersecting strips share occupancy,
+with separate queues and follower-specific MTOW wake minima anchored at airborne /
+touchdown time. Save v21 retains prior movements, without inventing old history. The v20 fleet/ferry schema remains intact.
+
+Code C gates push east on either main-runway end, then use a bay/airframe-filtered
+taxiway graph; typed searches have no grass-chord fallback. Above-C arrivals use
+compatible forward exits instead of E2. Supported gate routes retain apron/painted
+stand connections. Shared service vehicles now respect 25/15/10 km/h apron,
+terminal-road and aircraft-proximity limits. Arrival estimates use the new guard.
+
+Reference/comparison: `docs/data/ADELAIDE_GROUND_PROTOCOLS.md`.
+Task/evidence: `docs/testing/adelaide-ground-protocols-2026-10-06/README.md`.
+Holds remain at route release (stand/exit); intermediate node holds, D1's default
+23 early rollout, a full map-label audit and specialised vehicle systems remain
+explicit limits. Current aircraft taxi bands and the intentional 05:00 game curfew
+remain design assumptions. Native Unity compilation/visuals are unverified by
+owner instruction; no full journey reproduction was run.
+
+PR #549 merged at `64fa0b1d` under Bailey's explicit merge instruction; 1,799
+integrated tests plus migration regression passed. Native validation remains open.
+The separate background capture-stall fix is #545.
+
 ## Where to resume — aircraft view feel, 6 October 2026
 
 Claude; branch `feature/cockpit-haptics-look-20261006`, ADR 0242. Bailey asked for better vibration, Mac

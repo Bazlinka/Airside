@@ -4,6 +4,10 @@ Bailey instructed: “Apart from play tests - mark everything as play test compl
 and i am happy with game”. This records owner acceptance of all existing gameplay
 and presentation merged into `main` at `bfb4a300ba7a203534dddefa622f25c3093cd083`.
 
+Bailey subsequently clarified: “im happy with it - but its not ready.” This
+closes current playtests only. The game remains in development and is not ready
+for release; missing features and technical backlog remain open.
+
 ## Completed acceptance
 
 - [x] Current career/gameplay loop and first-session experience.
@@ -37,12 +41,9 @@ Future behaviour changes still need their own relevant checks.
 
 ## Next
 
-Release preparation is the recommended next action for the accepted game:
-package a clean Mac build from the accepted main revision, then choose a version
-and tag that release with the package and release notes. No release tag, binary
-publication or distribution is authorised or performed by this acceptance record.
-
-If Bailey chooses further development instead, the standing next product slice is
-P2 freight mode: freighter-required contracts, AI freight, cargo stands and correct
-outstation forecasts. P3 structure/performance work remains technical backlog.
-Companion/CloudKit and a second playable airport remain unopened milestones.
+Continue development. The standing next product recommendation is P2 freight
+mode: freighter-required contracts, AI freight, cargo stands and correct outstation
+forecasts. P3 structure/performance work remains technical backlog. Bailey may
+reprioritise remaining gaps. Release preparation is deferred until Bailey considers
+the game ready. Companion/CloudKit and a second playable airport remain unopened
+milestones.

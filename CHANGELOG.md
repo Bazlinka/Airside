@@ -1,8 +1,12 @@
 ## Unreleased
 
+- Clarify Bailey’s playtest sign-off: happy with the current game, still in
+  development and not ready for release. Defer release preparation; retain
+  freight and structure/performance backlog (6 October 2026; documentation only).
+
 - Record Bailey’s completion and acceptance of all current playtesting; close
-  historical manual acceptance reminders and identify release preparation or
-  freight mode as the next choice (6 October 2026; documentation only).
+  historical manual acceptance reminders and retain freight mode as the next
+  development recommendation (6 October 2026; documentation only).
 
 - **Unity compiles again.** The cockpit-motion seed helper was named `StableHash`, hiding the
   `StableHash` class inside `AirsidePrototype`; renamed to `CockpitSeedHash` (same values).

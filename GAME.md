@@ -1,3 +1,16 @@
+## Where to resume — aircraft view feel, 6 October 2026
+
+Claude; branch `feature/cockpit-haptics-look-20261006`, ADR 0242. Bailey asked for better vibration, Mac
+navigation, hints and smoothness inside the aircraft. Done: haptic events and `Rumble01` out of
+`CockpitMotion`, `CockpitHapticScheduler`, `MacTrackpadHaptics` (Objective-C runtime, no plugin), either-button
+look with bounded and zoom-scaled drag, clamped scroll, 0.9 s glides on entry, seat switch and exit, dock hint,
+entry toast, F1 row. Full headless suite passes (1,736 tests); update-harness check and asset audit pass.
+**Not compiled in Unity and not felt on a trackpad.** Not done: frame-rate stutter inside the aircraft (needs
+a profile, not a guess); two-finger swipe look; pinch zoom.
+
+**NEXT:** Unity compile and EditMode run, then try it on a Mac trackpad (haptics play only while a finger rests
+on it) and tune strengths/rates in `CockpitHapticScheduler` and the event strengths in `CockpitMotion`.
+
 ## Where to resume — unified fleet management, 6 October 2026
 
 Claude; Bailey asked for better ways to manage and view aircraft across Adelaide and

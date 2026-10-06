@@ -482,6 +482,7 @@ namespace Airside.Presentation
             var groundY = AirsideAdelaideGround.WorldHeight(position.x, position.z);
             position.y = Mathf.Max(position.y, groundY + MinGroundClearanceMetres);
             transform.SetPositionAndRotation(position, rotation);
+            ApplyExitBlend();
         }
 
         private static float LookAheadMetres(AircraftPhase phase, float progress, float altitude)

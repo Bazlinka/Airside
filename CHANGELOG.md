@@ -1,5 +1,12 @@
 ## Unreleased
 
+- Aircraft views (cockpit, window, exterior) feel better on a Mac and everywhere: the trackpad now taps and
+  rumbles with touchdown, gear thumps, runway joints and turbulence (system haptics, no plugin; the Vibration
+  toggle governs it and the shake); either mouse button looks round; drag and scroll spikes are bounded and
+  drag follows the zoom; entering, switching and leaving a seat glide instead of cutting; the dock hint,
+  a once-per-run toast and F1 help say how to look, glance, zoom and recentre (ADR 0242). Headless suite
+  passes; Unity compile, trackpad feel and visuals are not verified.
+
 - One fleet across every base (ADR 0239). The Fleet workspace now lists every aircraft at
   Adelaide, Melbourne, Sydney, Brisbane and Perth, grouped by base with SHOW and SORT, and a
   bases strip that filters the roster and picks where BUY delivers. Each aircraft has a profile

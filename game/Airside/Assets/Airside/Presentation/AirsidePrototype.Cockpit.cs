@@ -18,6 +18,8 @@ namespace Airside.Presentation
         private double _cockpitPreviousTime;
         private float _cockpitGroundKnots;
         private readonly CockpitMotion _cockpitMotion = new();
+        private readonly CockpitHapticScheduler _cockpitHaptics = new();
+        private bool _cockpitControlsHinted;
         private readonly CockpitCallouts _cockpitCallouts = new();
         private string _cockpitCallText;
         private float _cockpitCallUntil;
@@ -75,7 +77,11 @@ namespace Airside.Presentation
             { ExitCockpit(true); return false; }
             BindCockpitView(view);
             if (!StartFlightCamera(aircraft)) { ExitCockpit(true); return false; }
-            PlayUiClick(); return true;
+            PlayUiClick();
+            // Once per run: how to look round, since the free-camera keys do not apply in here.
+            if (!_cockpitControlsHinted && CockpitControlHints.EntryToast((int)mode) is { } hint)
+            { _cockpitControlsHinted = true; ShowToast(hint); }
+            return true;
         }
         private bool StartFlightCamera(FleetAircraft aircraft)
         {
@@ -107,6 +113,7 @@ namespace Airside.Presentation
             _cockpitGroundKnots = 0f;
             _cockpitNextReadout = 0;
             _cockpitMotion.Reset(CockpitSeedHash(_cockpitAircraftId));
+            _cockpitHaptics.Clear();
             _cockpitCallouts.Reset();
             _cockpitIsJet = JetCockpitProfile.TryFor(_fleetAircraftById[_cockpitAircraftId].Type.Id, out _);
             _cockpitCallText = null;
@@ -205,6 +212,12 @@ namespace Airside.Presentation
             });
             _cameraController.SetCockpitMotion(new Vector3(motion.Right, motion.Up, motion.Forward),
                 new Vector3(motion.PitchDownDegrees, motion.YawDegrees, motion.RollDegrees));
+            // Trackpad taps for the same events the camera shakes to. Only while the window has focus,
+            // and only with the Vibration toggle on (it governs both the shake and the trackpad).
+            _cockpitHaptics.Post(_cockpitMotion.TakeHaptic());
+            var tap = _cockpitHaptics.Step(Time.unscaledDeltaTime, _cockpitMotion.Rumble01,
+                _cameraController.CockpitMotionEnabled && Application.isFocused);
+            if (tap != HapticKind.None) MacTrackpadHaptics.Perform(tap);
             _cockpitInterior.SetAttitude(pitchUp, bankLeft);
             var observerRain = CockpitObserverWeather.Rain(CurrentWeatherLook.Precipitation,
                 _cockpitView != null ? _cockpitView.position.y : 0f, InCockpit && _cockpitView != null);

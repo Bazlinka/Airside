@@ -1,0 +1,8 @@
+mdl_a320_200_v01.gltf left: blades 0.7771 m; disc 0.7965 m; coverage 1.025
+mdl_a320_200_v01.gltf right: blades 0.7771 m; disc 0.7965 m; coverage 1.025
+mdl_737_8_narrowbody_v01.gltf left: blades 0.7800 m; disc 0.7995 m; coverage 1.025
+mdl_737_8_narrowbody_v01.gltf right: blades 0.7800 m; disc 0.7995 m; coverage 1.025
+mdl_a350_900_v01.gltf left: blades 1.4200 m; disc 1.4555 m; coverage 1.025
+mdl_a350_900_v01.gltf right: blades 1.4200 m; disc 1.4555 m; coverage 1.025
+mdl_787_10_v01.gltf left: blades 1.4168 m; disc 1.4522 m; coverage 1.025
+mdl_787_10_v01.gltf right: blades 1.4168 m; disc 1.4522 m; coverage 1.025

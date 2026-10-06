@@ -1366,7 +1366,7 @@ namespace Airside.Presentation
 
         private void SelectAircraft(FleetAircraft aircraft)
         {
-            _selectedAircraftId = aircraft.Registration;
+            ApplyMapInteraction(MapInteraction().Select(aircraft.Registration, aircraft.Airline.IsPlayer));
             var plannerStaysOpen = _activeWorkspace == HudWorkspace.Map && aircraft.Airline.IsPlayer;
             if (aircraft.Airline.IsPlayer)
                 SetPlanningAircraft(aircraft);
@@ -1545,9 +1545,9 @@ namespace Airside.Presentation
             _mapLens.Reset();
             _mapTrackId = null;
             var chosen = aircraft ?? FlightPlanner.ChoosePlanningAircraft(PlayerFleet(), _selectedAircraftId ?? _mapAircraft?.Registration);
+            ApplyMapInteraction(MapInteraction().Plan(chosen?.Registration));
             if (chosen != null)
             {
-                _selectedAircraftId = chosen.Registration;
                 TryFollowFleetAircraft(chosen.Registration);
             }
             SetPlanningAircraft(chosen, force: true);
@@ -1664,17 +1664,16 @@ namespace Airside.Presentation
             var home = _operations.Home;
             foreach (var flying in _operations.Fleet)
             {
-                if (!flying.CurrentDestination.HasValue) continue;
-                var destination = flying.CurrentDestination.Value;
                 if (!flying.IsOffMap)
                 {
-                    if (!TryMiniMapLocation(flying, out var latitude, out var longitude)) continue;
-                    var arriving = flying.State is FleetState.HoldingForLanding or FleetState.GoAround
-                        or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn;
-                    _mapFlights.Add(new MapFlight { Aircraft = flying, Latitude = latitude, Longitude = longitude,
-                        From = arriving ? destination : home, To = arriving ? home : destination, OnField = true });
+                    var hasLocation = TryMiniMapLocation(flying, out var latitude, out var longitude);
+                    if (FullMapFlightPresentation.TryFieldFlight(flying, home, hasLocation, latitude, longitude, out var row))
+                        _mapFlights.Add(new MapFlight { Aircraft = row.Aircraft, Latitude = row.Latitude, Longitude = row.Longitude,
+                            From = row.From, To = row.To, OnField = true });
                     continue;
                 }
+                if (!flying.CurrentDestination.HasValue) continue;
+                var destination = flying.CurrentDestination.Value;
                 var inbound = flying.State == FleetState.Inbound;
                 var flight = new MapFlight
                 {
@@ -1798,8 +1797,12 @@ namespace Airside.Presentation
                     // Parked at the far end, nose pointing home.
                     delta = homePoint - flight.Point;
                 }
-                flight.HeadingDegrees = flight.OnField && _fleetViewById.TryGetValue(flight.Aircraft.Registration, out var fieldView)
-                    ? fieldView.eulerAngles.y : Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg + 90f;
+                if (flight.OnField && _fleetViewById.TryGetValue(flight.Aircraft.Registration, out var fieldView))
+                    flight.HeadingDegrees = FullMapFlightPresentation.FieldHeading(_mapLens, mapRect.width, mapRect.height,
+                        fieldView.position.x + _flightOriginX, fieldView.position.z + _flightOriginZ,
+                        fieldView.forward.x, fieldView.forward.z);
+                else
+                    flight.HeadingDegrees = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg + 90f;
                 _mapFlights[i] = flight;
                 if ((flight.Aircraft.Airline.IsPlayer || _mapRivalsVisible) && mapRect.Contains(flight.Point))
                 {
@@ -2013,10 +2016,19 @@ namespace Airside.Presentation
         private bool _mapSaScopeRequested;
         private readonly HudDrawList _mapInspectorDrawList = new();
 
+        private FullMapFlightPresentation.Interaction MapInteraction() =>
+            new(_mapAircraft?.Registration, _selectedAircraftId, _mapFlightInspectorId);
+
+        private void ApplyMapInteraction(FullMapFlightPresentation.Interaction state)
+        {
+            _selectedAircraftId = state.SelectedId;
+            _mapFlightInspectorId = state.InspectorId;
+        }
+
         private void SelectMapFlight(FleetAircraft aircraft)
         {
             _cameraController?.ReleaseFollow();
-            _selectedAircraftId = _mapFlightInspectorId = aircraft.Registration;
+            ApplyMapInteraction(MapInteraction().Inspect(aircraft.Registration));
             _mapTrackId = null;
             _activeWorkspace = HudWorkspace.Map;
             PlayUiClick();

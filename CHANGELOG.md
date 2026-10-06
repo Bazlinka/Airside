@@ -1,5 +1,12 @@
 ## Unreleased
 
+- First visual-audit code batch (#534 findings): show first scheduled flights on
+  the map, clear stale inspection on explicit planning/selection and project field
+  headings; rotate service tyres at their own axles and place boarding stairs/walks
+  on pavement; size jet fan discs to blade radii and trigger touchdown effects at
+  each aircraft type's contact threshold. Code/headless validation only; Unity,
+  builds and player execution explicitly excluded by Bailey.
+
 - Put flight status and camera actions on the full map in a dedicated inspector;
   show all operators by default, add a South Australia shortcut and tidy labels,
   routes and opaque map chrome. Refresh shared icons/buttons across the game;

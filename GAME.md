@@ -1,3 +1,24 @@
+## Where to resume — first visual-audit code batch, 6 October 2026
+
+Codex; Bailey authorised three parallel workers from draft PR #534, then explicitly
+requested **code-only work: no Unity testing, builds or player execution**. This
+instruction overrides the usual native-check requirement for this batch.
+Integration branch `fix/visual-audit-batch1-20261006`, based on main `000ab56b`.
+
+Scope: MAP-01/02/03 (scheduled map rows, inspector transitions and projected
+headings), GND-01/02 (service tyre pivots/roles and boarding pavement contact),
+AIR-01/03 (fan-disc coverage and type-specific touchdown events). Evidence and
+verification limits: `docs/testing/visual-audit-batch1-2026-10-06/README.md`.
+Headless baseline: 1,511 passed; combined **1,557 passed / 0 failed** (46 new
+regression cases). Static asset audit and eight shipped jet-fan probes pass. No native compilation, runtime transforms, visual quality or performance
+result is claimed. Historical playtest acceptance and inherited technical issues
+remain as previously recorded.
+
+**NEXT:** check the integration PR state; if open, finish code-only CI/merge/sync.
+After merge, this seven-fix code batch is complete within the requested scope. The other nine concrete
+findings in #534 and its optional design work remain pending; the audit PR is
+still a separate draft. Standing freight work and release status are unchanged.
+
 ## Where to resume — full-map inspection and shared controls, 6 October 2026
 
 ## Where to resume — build script stall recovery, 6 October 2026

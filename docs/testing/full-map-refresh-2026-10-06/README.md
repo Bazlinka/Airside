@@ -23,6 +23,8 @@ Validation before integration with #531:
 - Asset audit: 1,741 unique GUIDs, 386 matching art mirrors and 70 materials.
 - Shared glyph sheet inspected (`icons.png`); old packaged map captured (`before.png`).
 
-Final focused validation, integrated headless and clean packaged review are recorded
-below when complete. Screenshots are presentation evidence; they do not establish
+Final focused native checks: 52/52 pass (`focused-unity-results.xml`), including
+full-map overlap cycling. After integrating #531, native checks including Adelaide
+map coverage/suburb data: 58/58 pass (`integrated-unity-results.xml`).
+Integrated headless and clean packaged review follow below. Screenshots are presentation evidence; they do not establish
 hardware mouse input, full-flight weather behaviour or performance acceptance.

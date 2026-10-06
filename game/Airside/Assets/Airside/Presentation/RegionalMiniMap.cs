@@ -53,18 +53,18 @@ namespace Airside.Presentation
             return pixels;
         }
         /// <summary>Repeated clicks cycle overlapping registrations, independent of paint order.</summary>
-        public static int Pick(IReadOnlyList<Vector2> points, IReadOnlyList<string> ids, Vector2 click, string selected)
+        public static int Pick(IReadOnlyList<Vector2> points, IReadOnlyList<string> ids, Vector2 click, string selected, float radius = FieldMiniMap.DotHitRadius)
         {
-            var nearest = FieldMiniMap.NearestDot(points, click);
+            var nearest = FieldMiniMap.NearestDot(points, click, radius);
             if (nearest < 0) return -1;
             var selectedAt = -1;
             for (var i = 0; i < ids.Count; i++) if (ids[i] == selected) selectedAt = i;
-            if (selectedAt < 0 || (points[selectedAt] - click).sqrMagnitude > FieldMiniMap.DotHitRadius * FieldMiniMap.DotHitRadius)
+            if (selectedAt < 0 || (points[selectedAt] - click).sqrMagnitude > radius * radius)
                 return nearest;
             var next = -1; var first = -1;
             for (var i = 0; i < points.Count; i++)
             {
-                if ((points[i] - click).sqrMagnitude > FieldMiniMap.DotHitRadius * FieldMiniMap.DotHitRadius) continue;
+                if ((points[i] - click).sqrMagnitude > radius * radius) continue;
                 if (first < 0 || string.CompareOrdinal(ids[i], ids[first]) < 0) first = i;
                 if (string.CompareOrdinal(ids[i], selected) > 0 && (next < 0 || string.CompareOrdinal(ids[i], ids[next]) < 0)) next = i;
             }

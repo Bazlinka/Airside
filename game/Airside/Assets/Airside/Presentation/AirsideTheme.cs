@@ -422,15 +422,15 @@ namespace Airside.Presentation
             return style;
         }
 
-        /// <summary>Filled avionics-amber primary action — one dominant button per card.</summary>
+        /// <summary>Filled Coastal Blue primary action — one dominant button per card.</summary>
         public static GUIStyle PrimaryButtonStyle(GUIStyle basis)
         {
             var style = new GUIStyle(basis);
             SetButtonStates(style,
-                RoundedTexture(Amber, new Color(1f, 1f, 1f, 0.10f), 6),
-                RoundedTexture(Color.Lerp(Amber, Color.white, 0.18f), new Color(1f, 1f, 1f, 0.18f), 6),
-                RoundedTexture(Color.Lerp(Amber, Color.black, 0.12f), new Color(1f, 1f, 1f, 0.08f), 6),
-                OnAccent);
+                RoundedTexture(CoastalBlue, new Color(1f, 1f, 1f, 0.04f), 7),
+                RoundedTexture(Color.Lerp(CoastalBlue, Color.white, 0.14f), new Color(1f, 1f, 1f, 0.10f), 7),
+                RoundedTexture(Color.Lerp(CoastalBlue, Color.black, 0.12f), new Color(1f, 1f, 1f, 0.06f), 7),
+                InstrumentText);
             style.fontStyle = FontStyle.Bold;
             return style;
         }
@@ -456,7 +456,7 @@ namespace Airside.Presentation
         }
 
         /// <summary>Resting button — raised glass with a faint rim, so it reads as clickable.</summary>
-        public static Texture2D ButtonNormal => _buttonNormal ??= RoundedTexture(GlassRaised, new Color(1f, 1f, 1f, 0.09f), 6);
+        public static Texture2D ButtonNormal => _buttonNormal ??= RoundedTexture(new Color(.16f, .21f, .25f), new Color(1f, 1f, 1f, 0.045f), 7);
 
         /// <summary>Hover fill — Coastal Blue, the approved accent for interaction.</summary>
         public static Texture2D ButtonHover => _buttonHover ??=
@@ -484,7 +484,8 @@ namespace Airside.Presentation
             if (IconCache.TryGetValue(key, out var cached))
                 return cached;
 
-            var texture = LoadArtTexture($"UI/Icons/ui_{category}_{name}_v01.png");
+            var texture = LoadArtTexture($"UI/Icons/ui_{category}_{name}_v02.png")
+                ?? LoadArtTexture($"UI/Icons/ui_{category}_{name}_v01.png");
             IconCache[key] = texture;
             return texture;
         }

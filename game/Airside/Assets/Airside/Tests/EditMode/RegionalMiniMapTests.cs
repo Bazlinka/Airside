@@ -39,6 +39,13 @@ namespace Airside.Tests
             Assert.That(RegionalMiniMap.Pick(points, ids, new Vector2(50, 50), "VH-B"), Is.EqualTo(1));
             Assert.That(RegionalMiniMap.Pick(points, ids, new Vector2(70, 80), null), Is.EqualTo(-1));
         }
+        [Test] public void FullMapHitRadiusCyclesNearbyFlightsOutsideMiniMapRadius()
+        {
+            var points = new[] { new Vector2(50, 50), new Vector2(65, 50) };
+            var ids = new[] { "VH-A", "VH-B" };
+            Assert.That(RegionalMiniMap.Pick(points, ids, new Vector2(50, 50), "VH-A"), Is.EqualTo(0));
+            Assert.That(RegionalMiniMap.Pick(points, ids, new Vector2(50, 50), "VH-A", 18f), Is.EqualTo(1));
+        }
         [Test] public void NorthAndEastProjectUpAndRightAndFitStaysInsidePanel()
         {
             var area = new Rect(25, 30, 250, 140); var map = RegionalMiniMap.Fit(area);

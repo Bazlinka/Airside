@@ -1,5 +1,11 @@
 ## Unreleased
 
+- Put flight status and camera actions on the full map in a dedicated inspector;
+  show all operators by default, add a South Australia shortcut and tidy labels,
+  routes and opaque map chrome. Refresh shared icons/buttons across the game;
+  return the mini map to a polished airport scope; keep the new scenery credits
+  on a separate manual page so all attribution remains visible (ADR 0237).
+
 - **Mac builds recover from Unity's script-build hang.** `scripts/build-mac.sh` watches the
   log; if it stops growing for 3 minutes (`AIRSIDE_BUILD_STALL_SECONDS`) right after Unity
   starts `bee_backend`, it kills that run, clears the `Library/Bee` build graphs and retries

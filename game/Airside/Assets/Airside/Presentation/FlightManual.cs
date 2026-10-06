@@ -157,11 +157,6 @@ namespace Airside.Presentation
                     ("Map", MapAttribution.OpenStreetMap + " (ODbL). The airport layout, coast, land use, "
                             + "every road and footpath, car parks and bays, buildings, masts, tanks, solar arrays "
                             + "and bus stops."),
-                    ("Suburb buildings", "Overture Maps buildings (ODbL 1.0), combining OpenStreetMap, Microsoft and other "
-                                         + "open footprints, checked against Government of South Australia LiDAR building "
-                                         + "footprints."),
-                    ("Trees", "Tree crowns and heights from the Government of South Australia, Department for "
-                              + "Environment and Water, Metropolitan Adelaide tree canopy 2022 (CC BY 4.0)."),
                     ("Aircraft sound", "Engine recordings by Pack489, mycompasstv and qubodup. Tyre contact by craigsmith "
                                         + "on Freesound (CC0 / public domain). Adapted for Airside."),
                     ("Satellite imagery", MapAttribution.Sentinel + ". Nine clear summer passes, 2024 to 2026."),
@@ -172,6 +167,16 @@ namespace Airside.Presentation
                                    + "Copernicus Sentinel data (2021) processed by the ESA WorldCover consortium."),
                     ("Weather and live traffic", "Open-Meteo (CC BY 4.0) and adsb.lol (ODbL), credited on screen "
                                                  + "while they are in use.")
+                }),
+            new FlightManualPage("scenery-credits", "Scenery credits",
+                "Sources for Adelaide's suburb buildings and tree canopy.",
+                new[]
+                {
+                    ("Suburb buildings", "Overture Maps buildings (ODbL 1.0), combining OpenStreetMap, Microsoft and other "
+                                         + "open footprints, checked against Government of South Australia LiDAR building "
+                                         + "footprints."),
+                    ("Trees", "Tree crowns and heights from the Government of South Australia, Department for "
+                              + "Environment and Water, Metropolitan Adelaide tree canopy 2022 (CC BY 4.0).")
                 })
         };
 

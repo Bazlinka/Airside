@@ -1,0 +1,9 @@
+Mac build created at /private/tmp/airside-livery-review-20261006/work/builds/Airside.app
+Build identity:
+commit=00e43f21
+commitFull=00e43f219620c9688dd6861e74b1bf636496c218
+branch=feature/full-map-flight-inspector
+subject=Include local arrivals and departures in map flight inspection
+committedAt=2026-10-06T13:48:47+10:30
+dirty=false
+stampedAt=2026-10-06T03:18:47Z

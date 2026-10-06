@@ -408,19 +408,19 @@ namespace Airside.Presentation
     /// </summary>
     public static class RouteMapWorkspacePainter
     {
-        public static void Paint(HudDrawList into, RouteMapWorkspaceModel model, RouteMapWorkspaceLayout layout)
+        public static void Paint(HudDrawList into, RouteMapWorkspaceModel model, RouteMapWorkspaceLayout layout, bool showDetail = true)
         {
             if (into == null || model == null)
                 return;
 
             into.Clear();
             into.Surface(layout.Surface);
-            HudShellPainter.PaintSheetHeader(into, layout.Surface, model.Title, string.Empty,
-                layout.TitleBox, HudBox.Empty);
 
             // The map well is darker than the surface so the coastline and routes read.
-            into.Fill(layout.Map, HudTone.Default, 0.55f, AirsidePalette.CoastalBlueDeepHex);
-            PaintDetail(into, model, layout);
+            into.Fill(layout.Surface, HudTone.Default, 1f, "#17242C");
+            HudShellPainter.PaintSheetHeader(into, layout.Surface, model.Title, string.Empty, layout.TitleBox, HudBox.Empty);
+            into.Fill(layout.Map, HudTone.Default, 1f, "#101C24");
+            if (showDetail) PaintDetail(into, model, layout);
         }
 
         /// <summary>

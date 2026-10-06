@@ -39,7 +39,8 @@ namespace Airside.Presentation
         private Vector2 _mapPanGui;
         private readonly List<(float x, float y)> _mapDestinationPoints = new();
         private readonly List<PlannerDestination> _mapDestinationRows = new();
-        private readonly List<(float x, float y)> _mapAircraftPoints = new();
+        private readonly List<Vector2> _mapAircraftPoints = new();
+        private readonly List<string> _mapAircraftIds = new();
         private readonly List<FleetAircraft> _mapAircraftRows = new();
         private readonly List<FleetAircraft> _playerFleetRows = new();
         private readonly List<AircraftType> _ownedTypeScratch = new();
@@ -1019,12 +1020,16 @@ namespace Airside.Presentation
             if (!TrySelectionHudCardRect(hud, placement, out var rect, out var aircraft))
                 return;
 
-            var action = OperationsSummary.PrimaryAction(aircraft, _clock.Now);
             _selectionDrawList.Clear();
             SelectionCardPainter.Paint(_selectionDrawList, Box(rect), _selectionCard);
             var clicked = _hudPainter.Draw(_selectionDrawList);
-            if (clicked == null)
-                return;
+            HandleSelectionCardAction(aircraft, clicked);
+        }
+
+        private void HandleSelectionCardAction(FleetAircraft aircraft, string clicked)
+        {
+            var action = OperationsSummary.PrimaryAction(aircraft, _clock.Now);
+            if (clicked == null) return;
             if (clicked == "camera-cockpit") { EnterCockpit(aircraft); return; }
             if (clicked == "camera-passenger") { EnterFlightView(aircraft,AircraftViewMode.LeftWindow); return; }
             if (clicked == "camera-exterior") { EnterFlightView(aircraft,AircraftViewMode.Exterior); return; }
@@ -1639,6 +1644,7 @@ namespace Airside.Presentation
             /// <summary>Inbound only: the field's own final, so the map agrees with the 3D view.</summary>
             public bool OnFinalTrack;
             public bool OnRegionalTrack;
+            public bool OnField;
             public double LegMetres;
             public double MetresOut;
             public RunwayDirection Runway;
@@ -1649,8 +1655,7 @@ namespace Airside.Presentation
         private readonly List<Rect> _mapControlRects = new();
         private readonly List<HudBox> _mapFlightLabelBoxes = new();
         private string _mapTrackId;
-        private bool _mapRivalsVisible;
-        private static Texture2D _planeIcon;
+        private bool _mapRivalsVisible = true;
 
         /// <summary>Where each off-map flight is right now, to the sub-second, along its great circle.</summary>
         private void LocateMapFlights()
@@ -1659,9 +1664,17 @@ namespace Airside.Presentation
             var home = _operations.Home;
             foreach (var flying in _operations.Fleet)
             {
-                if (!flying.IsOffMap || !flying.CurrentDestination.HasValue)
-                    continue;
+                if (!flying.CurrentDestination.HasValue) continue;
                 var destination = flying.CurrentDestination.Value;
+                if (!flying.IsOffMap)
+                {
+                    if (!TryMiniMapLocation(flying, out var latitude, out var longitude)) continue;
+                    var arriving = flying.State is FleetState.HoldingForLanding or FleetState.GoAround
+                        or FleetState.Landing or FleetState.AwaitingStand or FleetState.TaxiIn;
+                    _mapFlights.Add(new MapFlight { Aircraft = flying, Latitude = latitude, Longitude = longitude,
+                        From = arriving ? destination : home, To = arriving ? home : destination, OnField = true });
+                    continue;
+                }
                 var inbound = flying.State == FleetState.Inbound;
                 var flight = new MapFlight
                 {
@@ -1716,9 +1729,14 @@ namespace Airside.Presentation
             // the live map inside it keeps its own zoom, pan, tracking and pointer handling.
             _routeMapWorkspace.Rebuild(_operations, aircraft, _mapSelection, _departureDelaySeconds,
                 _clock.Now, _mapFilter);
-            RouteMapWorkspacePainter.Paint(_workspaceDrawList, _routeMapWorkspace, workspaceLayout);
+            RouteMapWorkspacePainter.Paint(_workspaceDrawList, _routeMapWorkspace, workspaceLayout, showDetail: _mapFlightInspectorId == null);
             var chromeAction = _hudPainter.Draw(_workspaceDrawList);
 
+            if (_mapSaScopeRequested)
+            {
+                _mapLens.ShowSouthAustralia(mapRect.width, mapRect.height);
+                _mapSaScopeRequested = false;
+            }
             LocateMapFlights();
             var tracked = -1;
             for (var i = 0; i < _mapFlights.Count; i++)
@@ -1744,6 +1762,7 @@ namespace Airside.Presentation
             var homePoint = Project(mapRect, home.Longitude, home.Latitude);
             _mapAircraftRows.Clear();
             _mapAircraftPoints.Clear();
+            _mapAircraftIds.Clear();
             for (var i = 0; i < _mapFlights.Count; i++)
             {
                 var flight = _mapFlights[i];
@@ -1779,20 +1798,20 @@ namespace Airside.Presentation
                     // Parked at the far end, nose pointing home.
                     delta = homePoint - flight.Point;
                 }
-                flight.HeadingDegrees = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg + 90f;
+                flight.HeadingDegrees = flight.OnField && _fleetViewById.TryGetValue(flight.Aircraft.Registration, out var fieldView)
+                    ? fieldView.eulerAngles.y : Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg + 90f;
                 _mapFlights[i] = flight;
-                if (flight.Aircraft.Airline.IsPlayer || _mapRivalsVisible)
+                if ((flight.Aircraft.Airline.IsPlayer || _mapRivalsVisible) && mapRect.Contains(flight.Point))
                 {
                     _mapAircraftRows.Add(flight.Aircraft);
-                    _mapAircraftPoints.Add((flight.Point.x, flight.Point.y));
+                    _mapAircraftPoints.Add(flight.Point);
+                    _mapAircraftIds.Add(flight.Aircraft.Registration);
                 }
             }
 
             // Map controls in the top-left corner; the pointer handler leaves them alone.
             _mapControlRects.Clear();
             // Bottom-left: the AVAILABLE / LOCKED pills own the top-left corner now.
-            var trackRect = new Rect(mapRect.x + 12f, mapRect.yMax - 58f, 170f, 24f);
-            var zoomOutRect = new Rect(trackRect.xMax + 6f, trackRect.y, 90f, 24f);
             var rivalRect = HudPainter.ToRect(workspaceLayout.RivalsToggle);
             var rivalFlights = 0;
             for (var i = 0; i < _mapFlights.Count; i++)
@@ -1804,8 +1823,19 @@ namespace Airside.Presentation
                     && (_mapFlights[i].Aircraft.Airline.IsPlayer || _mapRivalsVisible))
                     selectedFlight = i;
             var showTrack = tracked >= 0 || selectedFlight >= 0;
-            if (showTrack)
-                _mapControlRects.Add(trackRect);
+            // Share the available width; tracking must not push the preset off the map.
+            var available = Mathf.Max(1f, mapRect.width - 24f);
+            var presetWidth = Mathf.Min(90f, available * .28f);
+            var scopeWidth = Mathf.Min(142f, available - presetWidth - 8f);
+            var saRect = new Rect(mapRect.x + 12f, mapRect.yMax - 58f, scopeWidth, 28f);
+            var zoomOutRect = new Rect(mapRect.xMax - 12f - presetWidth, saRect.y, presetWidth, 28f);
+            var trackWidth = zoomOutRect.x - saRect.xMax - 16f;
+            var trackRect = new Rect(saRect.xMax + 8f, saRect.y, Mathf.Max(0f, trackWidth), 28f);
+            showTrack &= trackWidth >= 90f;
+            _mapControlRects.Add(saRect);
+            if (showTrack) _mapControlRects.Add(trackRect);
+            if (workspaceLayout.Detail.IsEmpty && _mapFlightInspectorId != null)
+                _mapControlRects.Add(new Rect(mapRect.xMax - 340f, mapRect.y + 56f, 330f, mapRect.height - 120f));
             _mapControlRects.Add(zoomOutRect);
             _mapControlRects.Add(rivalRect);
             _mapControlRects.Add(HudPainter.ToRect(workspaceLayout.FilterBox(0)));
@@ -1818,7 +1848,7 @@ namespace Airside.Presentation
             // same painter the offline mockups render, so what is compared is what is drawn.
             _mapNetworkDrawList.Clear();
             RouteMapWorkspacePainter.PaintNetwork(_mapNetworkDrawList, workspaceLayout.Map, _mapLens,
-                _mapDestinationRows, home, _mapSelection, _operations.PlayerAirline.LiveryHex,
+                _mapDestinationRows, home, _mapFlightInspectorId == null ? _mapSelection : null, _operations.PlayerAirline.LiveryHex,
                 _routeMapWorkspace.AircraftRangeKm, _routeMapWorkspace.AircraftRangeLabel,
                 _routeMapWorkspace.CareerTargetCodes);
             RouteMapWorkspacePainter.PaintAirports(_mapNetworkDrawList, workspaceLayout.Map, _mapLens,
@@ -1836,7 +1866,7 @@ namespace Airside.Presentation
             // Routes flown right now: flown part solid, the rest faint, along the great circle.
             foreach (var flight in _mapFlights)
             {
-                if (!flight.Aircraft.Airline.IsPlayer && !_mapRivalsVisible)
+                if (flight.OnField || (flight.Aircraft.Registration != _mapFlightInspectorId && !flight.Aircraft.Airline.IsPlayer))
                     continue;
                 var colour = AirsideTheme.FromHex(flight.Aircraft.Airline.LiveryHex);
                 DrawGreatCircle(mapRect, flight.From, flight.To, 0.0, flight.Progress,
@@ -1878,18 +1908,23 @@ namespace Airside.Presentation
                 var iconSize = Mathf.Lerp(18f, 30f, Mathf.InverseLerp(1f, 12f, _mapLens.Zoom)) * (mine ? 1.15f : 0.85f);
                 var iconAlpha = isSelected || i == tracked ? 1f : Ownership.AlphaFor(flight.Aircraft.Airline);
                 if (isSelected || i == tracked)
-                    DrawPlaneIcon(flight.Point, iconSize + 8f, flight.HeadingDegrees, AirsideTheme.Amber);
+                    AirsideTheme.DrawRounded(new Rect(flight.Point.x - iconSize * .7f, flight.Point.y - iconSize * .7f,
+                        iconSize * 1.4f, iconSize * 1.4f), AirsideTheme.WithAlpha(AirsideTheme.Aqua, .25f), iconSize);
                 else if (mine)
-                    DrawPlaneIcon(flight.Point, iconSize + 6f, flight.HeadingDegrees, new Color(1f, 1f, 1f, 0.85f));
+                    AirsideTheme.DrawRounded(new Rect(flight.Point.x - iconSize * .55f, flight.Point.y - iconSize * .55f,
+                        iconSize * 1.1f, iconSize * 1.1f), AirsideTheme.WithAlpha(AirsideTheme.InstrumentText, .08f), iconSize);
                 DrawPlaneIcon(flight.Point, iconSize + 3f, flight.HeadingDegrees, new Color(0f, 0f, 0f, 0.75f * iconAlpha));
-                var iconColour = AirsideTheme.FromHex(flight.Aircraft.Airline.LiveryHex);
+                var iconColour = Color.Lerp(AirsideTheme.FromHex(flight.Aircraft.Airline.LiveryHex),
+                    AirsideTheme.InstrumentText, .35f);
                 iconColour.a = iconAlpha;
                 DrawPlaneIcon(flight.Point, iconSize, flight.HeadingDegrees, iconColour);
 
+                var hoveredFlight = mapRect.Contains(mouse) && (mouse - flight.Point).sqrMagnitude <= 18f * 18f;
+                if (!isSelected && i != tracked && !hoveredFlight && !mine) continue;
                 var labelColour = GUI.color;
                 GUI.color = new Color(1f, 1f, 1f, iconAlpha);
-                var detailed = isSelected || i == tracked || _mapLens.Zoom >= 4f;
-                var labelWidth = detailed ? 300f : 150f;
+                var detailed = isSelected || i == tracked || hoveredFlight;
+                var labelWidth = detailed ? 240f : 115f;
                 var labelHeight = detailed ? 36f : 18f;
                 if (!MapLabelLayout.TryPlace(labelBounds, flight.Point.x, flight.Point.y, iconSize * 0.6f,
                         labelWidth, labelHeight, _mapFlightLabelBoxes, out var labelBox))
@@ -1941,6 +1976,11 @@ namespace Airside.Presentation
                 }
             }
 
+            if (GUI.Button(saRect, "South Australia", smallButton))
+            {
+                _mapTrackId = null; _mapSaScopeRequested = true; PlayUiClick();
+            }
+
             // ADR 0140: one button between the two views that matter: Australia and the whole map.
             var atHome = Mathf.Abs(_mapLens.Zoom - AustraliaMapLens.HomeZoom) < 0.01f;
             if (GUI.Button(zoomOutRect, atHome ? "World" : "Australia", smallButton))
@@ -1952,7 +1992,7 @@ namespace Airside.Presentation
                     _mapLens.Reset();
             }
 
-            if (GUI.Button(rivalRect, $"RIVALS {rivalFlights} · {(_mapRivalsVisible ? "ON" : "OFF")}", smallButton))
+            if (GUI.Button(rivalRect, $"{(_mapRivalsVisible ? "All flights" : "My flights")} · {(_mapRivalsVisible ? _mapFlights.Count : _mapFlights.Count - rivalFlights)}", smallButton))
             {
                 _mapRivalsVisible = !_mapRivalsVisible;
                 if (!_mapRivalsVisible && tracked >= 0 && !_mapFlights[tracked].Aircraft.Airline.IsPlayer)
@@ -1966,6 +2006,38 @@ namespace Airside.Presentation
             var filterAction = _hudPainter.Draw(_mapFilterDrawList);
 
             DispatchWorkspaceAction(chromeAction ?? filterAction);
+            DrawMapFlightInspector(workspaceLayout);
+        }
+
+        private string _mapFlightInspectorId;
+        private bool _mapSaScopeRequested;
+        private readonly HudDrawList _mapInspectorDrawList = new();
+
+        private void SelectMapFlight(FleetAircraft aircraft)
+        {
+            _cameraController?.ReleaseFollow();
+            _selectedAircraftId = _mapFlightInspectorId = aircraft.Registration;
+            _mapTrackId = null;
+            _activeWorkspace = HudWorkspace.Map;
+            PlayUiClick();
+        }
+
+        private void DrawMapFlightInspector(RouteMapWorkspaceLayout layout)
+        {
+            if (_mapFlightInspectorId == null || !_fleetAircraftById.TryGetValue(_mapFlightInspectorId, out var aircraft)) return;
+            FillSelectionCard(aircraft);
+            // The operator/type/route line below already carries this identity.
+            _selectionCard.TypeName = string.Empty;
+            var pane = layout.Detail.IsEmpty
+                ? new HudBox(layout.Map.Right - 340f, layout.Map.Y + 56f, 330f, layout.Map.Height - 120f)
+                : layout.Detail;
+            var height = Mathf.Min(SelectionCardPainter.HeightFor(_selectionCard), pane.Height - 40f);
+            _mapInspectorDrawList.Clear();
+            _mapInspectorDrawList.Caption(new HudBox(pane.X, pane.Y, pane.Width, 20f), "FLIGHT DETAILS");
+            SelectionCardPainter.Paint(_mapInspectorDrawList, new HudBox(pane.X, pane.Y + 28f, pane.Width, height), _selectionCard);
+            var action = _hudPainter.Draw(_mapInspectorDrawList);
+            if (action == HudAction.CardClose) { _mapFlightInspectorId = null; return; }
+            HandleSelectionCardAction(aircraft, action);
         }
 
         private float _mapZoomPending;
@@ -1996,6 +2068,7 @@ namespace Airside.Presentation
         {
             var aircraft = flight.Aircraft;
             var ends = aircraft.StateEndsAt.HasValue ? ClockText(aircraft.StateEndsAt.Value) : "";
+            if (flight.OnField) return $"{StatusText(aircraft)} · {SelectionLiveStats(aircraft)}";
             if (aircraft.State == FleetState.AtDestination)
                 return $"On the ground at {flight.To.Code} · leaves {ends}";
             var legKm = flight.From.DistanceKmTo(flight.To);
@@ -2096,7 +2169,7 @@ namespace Airside.Presentation
                 return;
             var since = Time.realtimeSinceStartup - _liveFetchedAt;
             var size = Mathf.Lerp(12f, 20f, Mathf.InverseLerp(1f, 12f, _mapLens.Zoom));
-            var labelled = _mapLens.Zoom >= 4f;
+            var labelled = _mapLens.Zoom >= 8f;
             var cloud = AirsideTheme.InstrumentText;
             foreach (var aircraft in _liveAircraft)
             {
@@ -2141,41 +2214,11 @@ namespace Airside.Presentation
             GUI.matrix = matrix;
         }
 
-        private static Texture2D PlaneIcon()
-        {
-            if (_planeIcon != null)
-                return _planeIcon;
-
-            const int n = 64;
-            var texture = new Texture2D(n, n, TextureFormat.RGBA32, false)
-            {
-                filterMode = FilterMode.Bilinear,
-                wrapMode = TextureWrapMode.Clamp,
-                hideFlags = HideFlags.HideAndDontSave
-            };
-            var pixels = new Color32[n * n];
-            for (var y = 0; y < n; y++)
-            for (var x = 0; x < n; x++)
-            {
-                // u across (-1..1), v along with +1 at the nose (texture top draws at the top in IMGUI).
-                var u = (x + 0.5f) / n * 2f - 1f;
-                var v = (y + 0.5f) / n * 2f - 1f;
-                var au = Mathf.Abs(u);
-                var noseTaper = v > 0.7f ? Mathf.Lerp(0.1f, 0.03f, (v - 0.7f) / 0.25f) : 0.1f;
-                var fuselage = au < noseTaper && v > -0.9f && v < 0.95f;
-                var wing = au < 0.96f && v > 0.08f && v < 0.3f - 0.06f * au;
-                var tail = au < 0.38f && v > -0.86f && v < -0.7f + 0.04f * (1f - au);
-                pixels[y * n + x] = fuselage || wing || tail ? new Color32(255, 255, 255, 255) : new Color32(255, 255, 255, 0);
-            }
-
-            texture.SetPixels32(pixels);
-            texture.Apply(false, true);
-            _planeIcon = texture;
-            return _planeIcon;
-        }
+        private static Texture2D PlaneIcon() => AirsideTheme.IconMask("system", "aircraft");
 
         private void PickDestination(Destination destination)
         {
+            _mapFlightInspectorId = null;
             _mapSelection = destination;
             _mapMessage = null;
             PlayUiClick();
@@ -2254,10 +2297,10 @@ namespace Airside.Presentation
 
                     // Only what is drawn can be clicked: zoomed in, a dot or plane just past the
                     // map edge is culled from the drawing but was still inside the hit radius.
-                    var aircraftHit = FlightPlanner.NearestWithin(_mapAircraftPoints, ev.mousePosition.x, ev.mousePosition.y, 18f);
+                    var aircraftHit = RegionalMiniMap.Pick(_mapAircraftPoints, _mapAircraftIds, ev.mousePosition, _selectedAircraftId, 18f);
                     if (aircraftHit >= 0 && mapRect.Contains(new Vector2(_mapAircraftPoints[aircraftHit].x, _mapAircraftPoints[aircraftHit].y)))
                     {
-                        SelectAircraft(_mapAircraftRows[aircraftHit]);
+                        SelectMapFlight(_mapAircraftRows[aircraftHit]);
                         ev.Use();
                         break;
                     }
@@ -2310,7 +2353,7 @@ namespace Airside.Presentation
 
             var hint = Styled(GUI.skin.label, "map-hint", s => AirsideTheme.TextStyle(new GUIStyle(s) { fontSize = 11 }, AirsideTheme.InstrumentMuted));
             GUI.Label(new Rect(mapRect.x + 6f, mapRect.yMax - 20f, mapRect.width - 12f, 18f),
-                "Scroll to zoom · drag to pan · click a destination, or a plane to track it", hint);
+                "Scroll to zoom · drag to pan · click a destination to plan or a flight for status", hint);
         }
 
         private void DrawOperationsWorkspace(Rect rect)

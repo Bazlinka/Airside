@@ -13,6 +13,18 @@ namespace Airside.Tests
     /// </summary>
     public sealed class RouteMapWorkspaceTests
     {
+        [Test] public void FlightInspectorReplacesPlanningDetailsRatherThanPaintingOverThem()
+        {
+            var (clock, ops, plane) = HudTestAirline.Create();
+            var model = new RouteMapWorkspaceModel();
+            model.Rebuild(ops, plane, HudTestAirline.Code("KGC"), 900, clock.Now, RouteMapFilter.Available);
+            var layout = RouteMapWorkspaceLayout.Create(new HudBox(0, 0, 1100, 700));
+            var draw = new HudDrawList();
+            RouteMapWorkspacePainter.Paint(draw, model, layout, showDetail: false);
+            Assert.That(draw.Commands.Any(c => c.ActionId == HudAction.ViewContracts), Is.False);
+            Assert.That(draw.Commands.Any(c => c.Text == model.DestinationTitle), Is.False);
+        }
+
         [Test]
         public void Map_SplitsAvailableFromLockedByRealCapability()
         {

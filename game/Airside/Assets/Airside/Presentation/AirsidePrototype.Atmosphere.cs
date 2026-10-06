@@ -89,7 +89,8 @@ namespace Airside.Presentation
             {
                 var alpha = _atmosphere.Stratus;
                 _stratusSheet.enabled = alpha > 0.01f;
-                _stratusSheet.transform.position = new Vector3(camera.x, AtmosphereLook.StratusHeightMetres, camera.z);
+                CameraShellAnchor.Place(_mainCamera, _stratusSheet.transform,
+                    new Vector3(0f, AtmosphereLook.StratusHeightMetres, 0f), absoluteHeight: true);
                 var under = Color.Lerp(sky * 0.85f, sky, 0.5f);
                 SetLayerColour(_stratusSheet, new Color(under.r, under.g, under.b, alpha));
             }
@@ -102,10 +103,12 @@ namespace Airside.Presentation
                 var segment = _horizonBand[i];
                 segment.enabled = bandTint.a > 0.01f;
                 var angle = (i + 0.5f) / _horizonBand.Count * Mathf.PI * 2f;
-                var at = new Vector3(camera.x + Mathf.Sin(angle) * HorizonBandRadius, 700f,
-                    camera.z + Mathf.Cos(angle) * HorizonBandRadius);
-                segment.transform.position = at;
-                segment.transform.rotation = Quaternion.LookRotation(at - new Vector3(camera.x, 700f, camera.z), Vector3.up);
+                var outward = new Vector3(Mathf.Sin(angle) * HorizonBandRadius, 700f,
+                    Mathf.Cos(angle) * HorizonBandRadius);
+                CameraShellAnchor.Place(_mainCamera, segment.transform, outward, absoluteHeight: true);
+                // Facing depends only on the ring angle, not on where the camera is.
+                segment.transform.rotation = Quaternion.LookRotation(
+                    new Vector3(outward.x, 0f, outward.z), Vector3.up);
                 SetLayerColour(segment, bandTint);
             }
 

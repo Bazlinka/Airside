@@ -1,6 +1,6 @@
 # ADR 0232 — AI freight operators and cargo banks
 
-Date: 6 October 2026. Status: implemented candidate; native Unity verification pending.
+Date: 6 October 2026. Status: merged in PR #527 under Bailey’s explicit approval; native Unity verification remains pending.
 
 ## Decision and reason
 

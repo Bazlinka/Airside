@@ -30,7 +30,7 @@ Freighter-required contracts and the shared interface refresh merged in PR #526
 at `19fd9688`, under Bailey's explicit merge approval; headless CI passed. Native
 Unity verification was not available in the Linux worker.
 
-Bailey approved AI freight carriers next. Active branch: `feature/ai-freight-traffic`;
+AI freight merged in PR #527 at `aceadd4d` under Bailey’s explicit approval;
 task packet: `docs/plans/ai-freight-traffic.md`. Qantas Freight and DHL Air use
 existing representative 737 art, their own colours and dawn/evening cargo banks.
 Cargo stands/loaders and outstation cargo remain subsequent slices.
@@ -79,13 +79,13 @@ never a merge gate.
 P0 no longer blocks this. Player freighter refit exists (save v19). Prefer a Mac look
 at freighter livery + tyre rotation when convenient, then finish as one narrow ADR slice:
 
-- AI freight carriers: active slice (ADR 0232), own colours and curfew-respecting dawn/evening banks
+- AI freight carriers: merged in PR #527 (ADR 0232), own colours and curfew-respecting dawn/evening banks
 - Cargo apron / stands
 - Freighter-required contracts: merged in PR #526
 - Outstation settle using freighter forecast overload
 
-Bailey has opened AI freight above. Continue cargo stands/handling, then outstation
-cargo as narrow follow-up changes after this slice.
+AI freight is merged. Continue cargo stands/handling, then outstation cargo
+as narrow follow-up changes. PR #528 repairs inherited folder metadata issues.
 
 ### P3 — Pay down structure and performance debt
 

@@ -1,6 +1,7 @@
 # AI freight traffic — task packet
 
-Approved by Bailey, 6 October 2026. Branch: `feature/ai-freight-traffic`.
+Approved by Bailey, 6 October 2026. Merged in PR #527 at `aceadd4d` under
+his explicit merge approval. Native Unity validation remains outstanding.
 
 ## Outcome and scope
 

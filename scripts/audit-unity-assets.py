@@ -48,7 +48,9 @@ def main() -> int:
 
     missing_meta = []
     for path in ASSETS.rglob("*"):
-        if path == ASSETS or path.name == ".DS_Store" or path.suffix == ".meta":
+        # Unity ignores hidden Git sentinels; they retain empty authored folders
+        # without becoming imported assets or needing their own metadata.
+        if path == ASSETS or path.name in {".DS_Store", ".gitkeep"} or path.suffix == ".meta":
             continue
         if not Path(f"{path}.meta").is_file():
             missing_meta.append(relative(path))

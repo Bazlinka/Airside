@@ -38,7 +38,9 @@ absent at `/Applications/Unity/Hub/Editor/6000.3.23f1/Unity.app/Contents/MacOS/U
 Native FreightPaintTests (including the new operator-colour assertion), complete
 Unity EditMode compilation and runtime appearance are unverified. No new manual
 playtest sign-off, screenshot or native pass is claimed. Keep this candidate in
-review pending native validation; existing-game owner sign-off stays closed.
+review pending native validation at implementation time. Bailey subsequently
+explicitly authorised merging PR #527 onto main; it merged at `aceadd4d` with CI
+green. Native validation remains unverified; existing-game sign-off stays closed.
 
 ## Following backlog
 

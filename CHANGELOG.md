@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Track the Resources folder metadata and retain the three empty authored
+  Animation folders in Git, preserving their existing GUIDs. Make the Unity
+  asset audit recognise Git-only folder sentinels (ADR 0233).
+
 - Add Qantas Freight and DHL Air AI freighters with operator paint, domestic cargo
   networks and curfew-respecting Adelaide dawn/evening banks. Add missing aircraft
   once on loading; suppress passenger boarding equipment on freighters (ADR 0232).

@@ -1,3 +1,30 @@
+## Where to resume — smooth takeoff and flight information, 6 October 2026
+
+Codex; Bailey reported an altitude jump at takeoff and requested flight status /
+location immersion in cockpit, both passenger windows and exterior views. Branch
+`fix/takeoff-flight-details-20261006`, ADR 0238. User instruction remains code-only:
+**no Unity tests, editor/player execution or builds**; this overrides native gates.
+
+Watched Outbound formerly skipped the local Departed climb and jumped roughly
+174–218 m straight to the enroute starting altitude. It now uses the local runway /
+departure-turn curve first, then joins the timed geographic route with a position /
+velocity offset. Rotation and climb-out share vertical-rate endpoints; authored
+body attitude fades onto the enroute angle. Schedules and save format are unchanged.
+
+All four aircraft views share route/status, nearest catalogue airport + coordinates,
+field-relative height, true heading, GS/V-S, direct distance to the target, model
+leg progress and supported arrival-area estimate. Ground/holding states have no
+invented ETA; stable watched identity and origin correction are retained. The top
+panel adapts to narrow widths; toast placement follows its height.
+
+Evidence: `docs/testing/takeoff-flight-details-2026-10-06/README.md`.
+61 new focused pure/painter checks pass; integrated headless **1,664 passed / 0 failed**.
+Native C# compilation, transform/camera behaviour and rendered legibility remain
+unverified. Prior audit fixes merged in #535/#536; #534 remains a draft report.
+
+**NEXT:** finish code-only CI/merge for this branch if still open, then owner
+playtest takeoff/climb-out and the expanded aircraft-view information when ready.
+
 ## Where to resume — complete visual-audit code fixes, 6 October 2026
 
 Codex; three workers in each of two sequential batches. Bailey authorised the

@@ -244,13 +244,8 @@ namespace Airside.Presentation
 
             var c = Local(u, profile.RotateProgress, 1f);
             var cx = Mathf.Lerp(profile.RotateX + rollIn, profile.TakeoffEndX + rollIn, DistanceFraction(c, vRotate, vClimb));
-            // Rotation takes a moment, so the climb eases in rather than snapping to
-            // the full gradient the instant the nose comes up. The exponent sets how
-            // hot the climb is by the end of the phase: 1.5 would finish at 1 790
-            // ft/min, far too much for an ATR, while 1.15 arrives at about 1 370 —
-            // just above the nominal 1 300 and still starting from a flat rotation.
-            var climbShape = Mathf.Pow(c, 1.15f);
-            return new Vector3(cx, GroundY + profile.TakeoffEndHeight * climbShape, 0f);
+            // Match height and vertical speed through rotation and the climb-out seam.
+            return new Vector3(cx, GroundY + (float)DepartureFlightTransition.TakeoffHeight(profile, u), 0f);
         }
 
         /// <summary>Right-hand visual circuit south of runway 05. <paramref name="t"/> is 0..1 around the lap.</summary>
@@ -288,7 +283,7 @@ namespace Airside.Presentation
             var s = DistanceFraction(t, Mps(profile.InitialClimbKnots), Mps(profile.ClimbOutKnots));
             return new Vector3(
                 Mathf.Lerp(profile.TakeoffEndX + rollIn, profile.DepartedEndX + rollIn, s),
-                Mathf.Lerp(GroundY + profile.TakeoffEndHeight, GroundY + profile.DepartedEndHeight, s),
+                GroundY + (float)DepartureFlightTransition.DepartedHeight(profile, t),
                 0f);
         }
 

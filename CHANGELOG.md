@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Refine the maintenance movement and whole-interface proposal with a concrete
+  interactive design study, seven retained previews and implementation/acceptance
+  packets (ADR 0242). Design only; no runtime game changes.
+
 - One fleet across every base (ADR 0239). The Fleet workspace now lists every aircraft at
   Adelaide, Melbourne, Sydney, Brisbane and Perth, grouped by base with SHOW and SORT, and a
   bases strip that filters the roster and picks where BUY delivers. Each aircraft has a profile

@@ -332,3 +332,15 @@ to opposed half-spans in the existing X-shaft plane. Source generator and author
 glTF/bin/FBX plus packaged mirrors agree; all other geometry and identity paint
 are preserved. No external assets, attribution or cost. Prior git revision is the
 fallback. Static geometry checks pass; native appearance/motion are unverified.
+
+
+## Interface refinement design study — 6 October 2026 (ADR 0242)
+
+Original Codex-authored HTML/CSS, inline SVG airport/aircraft/icon geometry and
+Chromium screenshots under `docs/art/interface-refinement-2026-10-06/`. Source
+brief: Bailey's accepted maintenance/interface plan and request for further polish;
+full specification `docs/plans/refined-interface-and-maintenance.md`. Review-only
+assets, not runtime art or real airport/simulation data. No external acquisition,
+additional cost or attribution requirement. System Arial is referenced locally,
+not downloaded or redistributed. Existing Unity UI and approved world art are
+the fallback. Screenshots verify the browser study only, not native gameplay.

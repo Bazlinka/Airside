@@ -1,3 +1,23 @@
+## Where to resume — refined interface and maintenance plan, 6 October 2026
+
+Codex; Bailey accepted the proposed repair journey and requested further refinement
+and a markedly more polished interface. Branch `docs/refined-interface-maintenance-20261006`,
+ADR 0242. Detailed packet: `docs/plans/refined-interface-and-maintenance.md`.
+Interactive study and seven retained previews:
+`docs/art/interface-refinement-2026-10-06/preview.html`.
+
+Design-only: slim status/navigation, optional side inspector, restrained typography,
+spacious management rows, taxi/repair progress and fixed aircraft actions. Original
+schematic backdrop and sample data are labelled; this is not Unity implementation.
+Maintenance proposal adds actual startup, traffic reservations, apron shutdown/tug
+positioning, repair/return phases and explicit save/catch-up migration requirements.
+No product-plan files, runtime source or assets changed. Chromium layout/interaction
+checks cover four sizes; native appearance/performance remain unverified.
+
+NEXT: review the concrete study; first implementation slice is shared overview/
+inspector plus one full Saab maintenance job, then jet startup/clearance. Keep the
+recorded no-Unity restriction. Prior aircraft-interior handoffs below remain valid.
+
 ## Where to resume — unified fleet management, 6 October 2026
 
 Claude; Bailey asked for better ways to manage and view aircraft across Adelaide and

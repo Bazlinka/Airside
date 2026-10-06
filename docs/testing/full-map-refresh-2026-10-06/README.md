@@ -1,0 +1,28 @@
+# Full map and shared controls — 6 October 2026
+
+ADR 0237 corrects ADR 0235's scope after Bailey clarified the normal map, then
+requested shared icons/buttons across the whole game with the map first.
+Click simulated flights on the full map to inspect live status and available
+cockpit, window-seat and exterior views. All operators appear by default, repeated
+clicks cycle overlapping markers, and the South Australia shortcut centres the map.
+Destination selection restores the booking pane without replacing its aircraft.
+The airport mini map has simpler markers and a more solid frame.
+
+37 original glyphs share a 32-unit grid, rounded strokes and safe margins. Editable
+SVGs and `scripts/generate-ui-icons.py` reproduce the supersampled PNGs. Shared
+buttons now use slate secondary fills and Coastal Blue primary actions. No external
+art or new licence dependency. The full map uses an opaque background and fewer
+unselected flight labels/routes.
+
+Validation before integration with #531:
+- Supplementary headless: 1,509 pass, no failures (`domain.log`).
+- Full native Unity: 1,961 pass, one inherited ground-separation failure, two
+  existing inconclusives, 1,964 total (`unity-results.xml`). The two failure episodes
+  exactly match the main baseline in the aircraft-identity evidence: parked/taxi
+  VH-QOK/VH-QOM and runway VH-SAR/VH-FDH. This change does not modify separation.
+- Asset audit: 1,741 unique GUIDs, 386 matching art mirrors and 70 materials.
+- Shared glyph sheet inspected (`icons.png`); old packaged map captured (`before.png`).
+
+Final focused validation, integrated headless and clean packaged review are recorded
+below when complete. Screenshots are presentation evidence; they do not establish
+hardware mouse input, full-flight weather behaviour or performance acceptance.

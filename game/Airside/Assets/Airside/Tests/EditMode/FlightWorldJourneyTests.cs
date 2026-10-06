@@ -62,6 +62,24 @@ namespace Airside.Tests
 
         [TearDown] public void Cleanup() { if (_host != null) Object.DestroyImmediate(_host); }
 
+        [Test] public void FullMapFlightSelectionKeepsTheMapOpenAndExposesViewingActions()
+        {
+            Start("CPD");
+            _aircraft.Restore(FleetState.Outbound, new SimulationTime(0), new SimulationTime(_seconds));
+            Pose(_seconds * .5);
+            typeof(AirsidePrototype).GetMethod("SelectMapFlight", Hidden).Invoke(_prototype, new object[] { _aircraft });
+            Assert.That(typeof(AirsidePrototype).GetField("_activeWorkspace", Hidden).GetValue(_prototype).ToString(), Is.EqualTo("Map"));
+            Assert.That(typeof(AirsidePrototype).GetField("_mapFlightInspectorId", Hidden).GetValue(_prototype), Is.EqualTo(_aircraft.Registration));
+            Assert.That(typeof(AirsidePrototype).GetField("_mapAircraft", Hidden).GetValue(_prototype), Is.Null,
+                "viewing an airborne flight must not replace the aircraft being planned");
+            typeof(AirsidePrototype).GetMethod("FillSelectionCard", Hidden).Invoke(_prototype, new object[] { _aircraft });
+            var card = (SelectionCardData)typeof(AirsidePrototype).GetField("_selectionCard", Hidden).GetValue(_prototype);
+            var commands = new HudDrawList();
+            SelectionCardPainter.Paint(commands, new HudBox(0, 0, 320, 500), card);
+            Assert.That(System.Linq.Enumerable.Any(commands.Commands, c => c.ActionId == "camera-exterior" && c.Enabled), Is.True);
+            Assert.That(card.JourneyLeft, Does.StartWith("Lands"));
+        }
+
         [Test] public void HelicopterMapAndExteriorUseTheHelicopterTrackInsteadOfARunwayPath()
         {
             Start("CPD", AircraftType.Bell412);

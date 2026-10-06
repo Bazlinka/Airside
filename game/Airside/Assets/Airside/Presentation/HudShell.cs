@@ -618,7 +618,7 @@ namespace Airside.Presentation
         {
             if (into == null || box.IsEmpty)
                 return;
-            into.Surface(box, 0.88f);
+            into.Surface(box, 0.97f);
             const float ring = 74f;
             var cx = box.X + 18f + ring * 0.5f;
             var cy = box.Y + 18f + ring * 0.5f;
@@ -811,7 +811,7 @@ namespace Airside.Presentation
         {
             if (into == null || box.IsEmpty)
                 return;
-            into.Surface(box, 0.88f);
+            into.Surface(box, 0.97f);
             into.Dot(box.X + 16f, box.Y + 12f, 6f, HudTone.Accent);
             into.Caption(new HudBox(box.X + 26f, box.Y + 6f, box.Width - 36f, 12f), header, HudTone.Muted,
                 HudAlign.Left, 9f);

@@ -1,5 +1,10 @@
 ## Unreleased
 
+- Put flight status and camera actions on the full map in a dedicated inspector;
+  show all operators by default, add a South Australia shortcut and tidy labels,
+  routes and opaque map chrome. Refresh shared icons/buttons across the game;
+  return the mini map to a polished airport scope (ADR 0236).
+
 - Select distant South Australian flights from the corner map using an Airport /
   South Australia switch. Show live status and journey plus available camera views;
   include interstate SA segments and cycle overlapping flight markers (ADR 0235).

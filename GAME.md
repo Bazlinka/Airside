@@ -1,3 +1,18 @@
+## Where to resume — full-map correction and shared UI refresh, 6 October 2026
+
+Bailey clarified that flight status/view options belong on the full map, and asked
+for icons/buttons across the whole game to be refreshed with the map first.
+Branch `feature/full-map-flight-inspector`, based on merged #530 (`ac7d2a9e`).
+ADR 0237: dedicated full-map flight inspector, all operators visible by default,
+SA shortcut, opaque map surface, simpler flight labels/routes, original v02 shared
+icons and flatter slate/Coastal Blue buttons. Mini map returns to airport scope
+with visual polish. The earlier regional eligibility/flight views remain reusable.
+Checks: headless 1,509 pass; native 1,961 pass with the inherited ground-separation
+failure and two inconclusives; final focused 33/33. **NEXT:** integrate #531, clean
+Mac build, packaged review and normal PR/main workflow.
+Evidence: `docs/testing/full-map-refresh-2026-10-06/`. Preserve the known inherited
+ground-separation failure; do not claim full native regression green.
+
 ## Where to resume — South Australia mini-map flight selection, 6 October 2026
 
 Bailey requested all simulated flights within SA to be selectable from the corner

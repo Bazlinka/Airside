@@ -116,10 +116,13 @@ def bell_412_meshes():
     for index, angle in enumerate((0.0, 90.0, 180.0, 270.0), start=1):
         meshes[f"main_rotor_blade_{index}"] = tapered_blade(0.0, 4.60, -0.28, 6.95, 0.34, angle)
     meshes["tail_rotor_hub"] = _base.box(0.18, 3.05, -9.66, 0.28, 0.22, 0.22)
-    meshes["tail_rotor_blade_1"] = rotated(_base.box(0.28, 3.05, -9.66, 0.08, 2.65, 0.22),
-                                             z_degrees=28.0, pivot=(0.28, 3.05, -9.66))
-    meshes["tail_rotor_blade_2"] = rotated(_base.box(0.30, 3.05, -9.66, 0.08, 2.65, 0.22),
-                                             z_degrees=118.0, pivot=(0.30, 3.05, -9.66))
+    # Two opposed half-span blades, not two crossed full-diameter bars. The
+    # existing runtime rig spins around X, so the blade span belongs in YZ.
+    # Retain the authored 2.65 m diameter, chord, thickness and rig part names.
+    for index, (x, angle) in enumerate(((0.28, 28.0), (0.30, 208.0)), start=1):
+        meshes[f"tail_rotor_blade_{index}"] = rotated(
+            _base.box(x, 3.05 + 2.65 * .25, -9.66, 0.08, 2.65 * .5, 0.22),
+            x_degrees=angle, pivot=(x, 3.05, -9.66))
 
     # High skid gear, cross tubes and visible boarding steps.
     for side, x in (("left", -1.22), ("right", 1.22)):
@@ -194,6 +197,21 @@ def validate(meshes):
     }
     if not required <= set(meshes):
         raise ValueError(f"missing required parts: {sorted(required - set(meshes))}")
+    # Validate the actual half-span topology around the same X axis as the rig.
+    centres = []
+    for index in (1, 2):
+        vertices, _ = meshes[f"tail_rotor_blade_{index}"]
+        radial = vertices[:, 1:] - np.array([3.05, -9.66])
+        centres.append(radial.mean(axis=0))
+        if not np.allclose(np.ptp(vertices[:, 0]), .08, atol=1e-5):
+            raise ValueError("tail blade must remain thin along the X rotor axis")
+        if not np.isclose(np.max(np.linalg.norm(radial, axis=1)), np.hypot(1.325, .11), atol=1e-5):
+            raise ValueError("tail blade must retain the authored 1.325 m radial span")
+        axis = centres[-1] / np.linalg.norm(centres[-1])
+        if np.min(radial @ axis) < -1e-5:
+            raise ValueError("tail blade crosses the hub instead of occupying one half-span")
+    if not np.allclose(centres[0], -centres[1], atol=1e-5):
+        raise ValueError("tail blades must be opposite around the rotor hub")
     all_vertices = np.concatenate([vertices for vertices, _ in meshes.values()])
     minimum, maximum = all_vertices.min(axis=0), all_vertices.max(axis=0)
     size = maximum - minimum

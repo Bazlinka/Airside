@@ -311,24 +311,74 @@ namespace Airside.Presentation
         {
             CabinShellCuboid(lamps,new Vector3(side*(inner+.035f),top+.012f,0),
                 new Vector3(.025f,.015f,end*2-.08f));
-            var count=Mathf.FloorToInt((end-.12f)/Profile.Pitch);
-            for(var row=-count;row<=count;row++)
+            // Economy fittings are authored family treatments. Longer drop/pivot lids
+            // distinguish twin-aisle cabins; regional shelves keep compact row modules.
+            var modulePitch=Profile.Pitch*(WidebodyCabin ? 2f : 1f);
+            var count=Mathf.FloorToInt((end-modulePitch*.47f)/modulePitch);
+            for(var module=-count;module<=count;module++)
+            {
+                var z=module*modulePitch;
+                CabinShellCuboid(trim,new Vector3(side*(inner-.003f),(bottom+top)*.5f,z+modulePitch*.43f),
+                    new Vector3(.006f,(top-bottom)*.67f,.008f));
+                if(Mathf.Abs(z)>Profile.Pitch*2.1f) continue;
+                if(Profile.HasElectronicDimming)
+                {
+                    // Two small recess shoulders frame a wide flush pivot-bin catch.
+                    CabinShellCuboid(trim,new Vector3(side*(inner+.008f),bottom+.10f,z),
+                        new Vector3(.018f,.026f,.090f));
+                    CabinShellCuboid(frame,new Vector3(side*(inner-.004f),bottom+.102f,z),
+                        new Vector3(.014f,.013f,.063f));
+                }
+                else if(AirbusCabin && !RegionalCabin)
+                {
+                    CabinShellCuboid(trim,new Vector3(side*(inner+.008f),bottom+.12f,z),
+                        new Vector3(.018f,.023f,.075f));
+                    CabinShellCuboid(frame,new Vector3(side*(inner-.005f),bottom+.12f,z),
+                        new Vector3(.014f,.013f,.049f));
+                }
+                else
+                    CabinShellCuboid(trim,new Vector3(side*(inner+.008f),bottom+.12f,z),
+                        new Vector3(.022f,RegionalCabin ? .034f : .024f,RegionalCabin ? .045f : .060f));
+            }
+            var rows=Mathf.Min(2,Mathf.FloorToInt((end-.24f)/Profile.Pitch));
+            var bankSeats=outer<Profile.LiningHalfWidth*.65f && WidebodyCabin
+                ? (Profile.SeatGroups[1]+1)/2
+                : Profile.SeatGroups[side<0 ? 0 : Profile.SeatGroups.Length-1];
+            var plateWidth=Mathf.Min((outer-inner)-.045f,.065f*bankSeats+.05f);
+            var psuX=side*Mathf.Lerp(inner,outer,.48f);
+            for(var row=-rows;row<=rows;row++)
             {
                 var z=row*Profile.Pitch;
-                CabinShellCuboid(trim,new Vector3(side*(inner-.003f),(bottom+top)*.5f,z+Profile.Pitch*.43f),
-                    new Vector3(.006f,(top-bottom)*.67f,.008f));
-                CabinShellCuboid(trim,new Vector3(side*(inner+.008f),bottom+.12f,z),
-                    new Vector3(.018f,.024f,.060f));
-                // PSU plate and paired vents/reading lenses are geometry, not dynamic lights.
-                var psuX=side*Mathf.Lerp(inner,outer,.48f);
-                CabinShellCuboid(frame,new Vector3(psuX,bottom-.015f,z+.05f),new Vector3(.18f,.02f,.24f));
-                foreach(var direction in new[]{-1f,1f})
+                CabinShellCuboid(frame,new Vector3(psuX,bottom-.015f,z+.05f),
+                    new Vector3(plateWidth,.02f,RegionalCabin ? .19f : .25f));
+                for(var seat=0;seat<bankSeats;seat++)
                 {
-                    CabinShellCuboid(trim,new Vector3(psuX+direction*.045f,bottom-.028f,z+.09f),
-                        new Vector3(.033f,.008f,.035f));
-                    CabinShellCuboid(lamps,new Vector3(psuX+direction*.045f,bottom-.029f,z-.015f),
-                        new Vector3(.025f,.008f,.027f));
+                    var deviceX=psuX+(seat-(bankSeats-1)*.5f)*(plateWidth-.045f)/Mathf.Max(1,bankSeats-1);
+                    // Circular gaspers/reading lenses replace identical square pairs.
+                    // Family-specific nozzle/lens separation remains purely decorative.
+                    CabinPsuDisc(trim,new Vector3(deviceX,bottom-.028f,z+.10f),.017f);
+                    CabinPsuDisc(frame,new Vector3(deviceX,bottom-.029f,z+.10f),.009f);
+                    CabinPsuDisc(lamps,new Vector3(deviceX,bottom-.030f,
+                        z+(Profile.HasElectronicDimming ? -.035f : -.015f)),.012f);
+                    if(!RegionalCabin)
+                        CabinShellCuboid(trim,new Vector3(deviceX,bottom-.029f,z+.038f),
+                            new Vector3(.012f,.006f,.017f));
                 }
+                if(WidebodyCabin)
+                    CabinShellCuboid(trim,new Vector3(psuX,bottom-.028f,z+.155f),
+                        new Vector3(plateWidth*.58f,.005f,.008f));
+            }
+        }
+
+        private static void CabinPsuDisc(CabinShellBuffer buffer,Vector3 centre,float radius)
+        {
+            const int segments=10;
+            for(var segment=0;segment<segments;segment++)
+            {
+                var a=segment*Mathf.PI*2/segments;var b=(segment+1)*Mathf.PI*2/segments;
+                var p=centre+new Vector3(Mathf.Cos(a)*radius,0,Mathf.Sin(a)*radius);
+                var q=centre+new Vector3(Mathf.Cos(b)*radius,0,Mathf.Sin(b)*radius);
+                buffer.Quad(centre,p,q,q);
             }
         }
         private static void CabinShellCuboid(CabinShellBuffer buffer,Vector3 centre,Vector3 size)

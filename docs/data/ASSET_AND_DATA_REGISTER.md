@@ -324,3 +324,11 @@ geometry, 1.8-unit round strokes, supersampled to 128px. Covers navigation,
 operations, services, economy, weather and system controls. No copied assets,
 external data, attribution requirement or additional cost. v01 remains fallback.
 Decision: ADR 0236. Validation: `docs/testing/full-map-refresh-2026-10-06/`.
+
+## Bell tail rotor geometry correction — 6 October 2026 (ADR 0241)
+
+Original project-owned AIR-017 geometry only: corrected the two tail blade parts
+to opposed half-spans in the existing X-shaft plane. Source generator and authored
+glTF/bin/FBX plus packaged mirrors agree; all other geometry and identity paint
+are preserved. No external assets, attribution or cost. Prior git revision is the
+fallback. Static geometry checks pass; native appearance/motion are unverified.

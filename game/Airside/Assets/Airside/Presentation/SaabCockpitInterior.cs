@@ -141,13 +141,25 @@ namespace Airside.Presentation
                 MakePilotSeat(side * 0.43f, fabric, trim);
                 Box("Yoke column", new Vector3(side * 0.43f, 1.50f, 7.57f), new Vector3(0.09f, 0.57f, 0.10f), lining).localRotation = Quaternion.Euler(-8f, 0f, 0f);
                 var x = side * 0.43f;
-                Beam("Yoke lower crossbar", new Vector3(x - 0.15f, 1.77f, 7.52f), new Vector3(x + 0.15f, 1.77f, 7.52f), 0.027f, trim);
+                // Rounded rectangular SF34 wheel: segmented corners soften the squared stock grips.
                 foreach (var grip in new[] { -1f, 1f })
                 {
-                    Beam("Yoke squared grip", new Vector3(x + grip * 0.15f, 1.77f, 7.52f), new Vector3(x + grip * 0.15f, 1.94f, 7.56f), 0.032f, trim);
-                    Beam("Yoke inward shoulder", new Vector3(x + grip * 0.15f, 1.94f, 7.56f), new Vector3(x + grip * 0.045f, 1.94f, 7.56f), 0.028f, trim);
+                    var a = new Vector3(x + grip * 0.045f, 1.79f, 7.52f);
+                    var b = new Vector3(x + grip * 0.135f, 1.79f, 7.52f);
+                    var c = new Vector3(x + grip * 0.165f, 1.82f, 7.53f);
+                    var d = new Vector3(x + grip * 0.165f, 1.89f, 7.55f);
+                    var e = new Vector3(x + grip * 0.135f, 1.93f, 7.56f);
+                    Beam("Yoke lower spoke", a, b, 0.028f, trim);
+                    Beam("Yoke rounded lower corner", b, c, 0.032f, trim);
+                    Beam("Yoke padded grip", c, d, 0.042f, trim);
+                    Beam("Yoke tapered upper corner", d, e, 0.032f, trim);
+                    Beam("Yoke inward shoulder", e, new Vector3(x + grip * 0.045f, 1.93f, 7.56f), 0.026f, trim);
+                    Box("Yoke thumb button", new Vector3(x + grip * 0.145f, 1.915f, 7.531f), new Vector3(0.018f, 0.021f, 0.012f), _metal);
+                    Box("Rudder pedal", new Vector3(x + grip * 0.12f, 1.35f, 7.92f), new Vector3(0.16f, 0.045f, 0.18f), _metal)
+                        .localRotation = Quaternion.Euler(-22f, 0f, 0f);
                 }
-                Box("Yoke centre hub", new Vector3(x, 1.85f, 7.54f), new Vector3(0.085f, 0.07f, 0.05f), trim);
+                Box("Yoke column floor boot", new Vector3(x, 1.27f, 7.60f), new Vector3(0.16f, 0.07f, 0.18f), trim);
+                Box("Yoke centre hub", new Vector3(x, 1.85f, 7.54f), new Vector3(0.085f, 0.10f, 0.05f), trim);
                 Box("Yoke checklist clip", new Vector3(x, 1.81f, 7.49f), new Vector3(0.075f, 0.13f, 0.004f), _white);
                 Label("Yoke identification", "SF34", new Vector3(x, 1.85f, 7.509f), 0.0033f, Color.white);
                 // Separate vertical CRT pair with adjacent round instruments.

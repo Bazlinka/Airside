@@ -69,12 +69,7 @@ namespace Airside.Presentation
                 MakePilotSeat(x, fabric);
                 Box("Yoke column", P(x, -0.76f, 0.42f), new Vector3(0.09f, 0.58f, 0.11f), _panel)
                     .localRotation = Quaternion.Euler(_dash ? -10f : -6f, 0f, 0f);
-                Beam("Yoke crossbar", P(x - 0.17f, -0.51f, 0.40f), P(x + 0.17f, -0.51f, 0.40f), 0.033f, _trim);
-                foreach (var grip in new[] { -1f, 1f })
-                {
-                    Beam("Yoke grip", P(x + grip * 0.17f, -0.51f, 0.40f), P(x + grip * 0.145f, -0.32f, 0.44f), 0.037f, _trim);
-                    Beam("Yoke shoulder", P(x + grip * 0.145f, -0.32f, 0.44f), P(x + grip * 0.05f, -0.31f, 0.44f), 0.033f, _trim);
-                }
+                MakeYokeGrips(x);
                 Box("Yoke hub", P(x, -0.44f, 0.38f), new Vector3(0.09f, 0.10f, 0.055f), _metal);
                 Box("Side console", P(side * (_width - 0.14f), -0.91f, -0.04f), new Vector3(0.17f, 0.12f, 0.80f), _panel);
                 Box("Side air vent", P(side * (_width - 0.13f), -0.40f, 0.31f), new Vector3(0.08f, 0.08f, 0.04f), _black);
@@ -224,6 +219,30 @@ namespace Airside.Presentation
             texture.SetPixels32(pixels); texture.Apply(true, true); _textures.Add(texture);
             var material = Surface(name, Color.white, false); material.SetTexture("_BaseMap", texture);
             return material;
+        }
+
+        private void MakeYokeGrips(float x)
+        {
+            // Representative family silhouettes; controls remain spectator props.
+            foreach (var grip in new[] { -1f, 1f })
+            {
+                var a = P(x + grip * 0.035f, -0.47f, 0.40f);
+                var b = P(x + grip * (_dash ? 0.13f : 0.09f), _dash ? -0.50f : -0.485f, 0.40f);
+                var c = P(x + grip * (_dash ? 0.18f : 0.16f), _dash ? -0.475f : -0.44f, 0.41f);
+                var d = P(x + grip * 0.18f, _dash ? -0.36f : -0.37f, 0.43f);
+                var e = P(x + grip * 0.155f, _dash ? -0.315f : -0.295f, 0.44f);
+                Beam("Yoke swept inner spoke", a, b, 0.03f, _trim);
+                Beam("Yoke curved lower shoulder", b, c, 0.035f, _trim);
+                Beam("Yoke padded grip", c, d, _dash ? 0.045f : 0.041f, _trim);
+                Beam("Yoke tapered upper grip", d, e, 0.032f, _trim);
+                Beam("Yoke inward horn", e, P(x + grip * (_dash ? 0.065f : 0.11f),
+                    _dash ? -0.315f : -0.30f, 0.44f), 0.026f, _trim);
+                Box("Yoke thumb button", P(x + grip * 0.165f, _dash ? -0.335f : -0.32f, 0.415f),
+                    new Vector3(0.020f, 0.022f, 0.012f), _metal);
+                Box("Rudder pedal", P(x + grip * 0.13f, -1.09f, 0.71f), new Vector3(0.17f, 0.045f, 0.18f), _metal)
+                    .localRotation = Quaternion.Euler(-22f, 0f, 0f);
+            }
+            Box("Yoke column floor boot", P(x, -1.12f, 0.48f), new Vector3(0.16f, 0.20f, 0.19f), _trim);
         }
 
         private static void Finish(Material material, float smoothness)

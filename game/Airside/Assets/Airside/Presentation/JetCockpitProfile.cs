@@ -11,6 +11,7 @@ namespace Airside.Presentation
         public float EyeY { get; }
         public float EyeZ { get; }
         public float HalfWidth { get; }
+        public JetCockpitShellGeometry.Layout Shell => JetCockpitShellGeometry.ForDeck(Deck);
         public bool Sidestick => Deck == JetFlightDeck.AirbusClassic || Deck == JetFlightDeck.AirbusA350 || Deck == JetFlightDeck.AirbusA220;
         public int DisplayCount => Deck == JetFlightDeck.Boeing737Max ? 4 :
             Deck == JetFlightDeck.Boeing787 || Deck == JetFlightDeck.AirbusA220 || Deck == JetFlightDeck.Embraer ? 5 : 6;

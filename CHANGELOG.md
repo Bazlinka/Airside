@@ -1,5 +1,10 @@
 ## Unreleased
 
+- Add family-specific cockpit controls, panels, overhead fittings and pilot seats
+  across all thirteen fixed-wing types; fit every passenger camera to individual
+  glazing and bound cabin sections to real window belts (ADR 0240). Unity-free
+  checks only; native visuals remain unverified.
+
 - Stop stars, sun/moon discs, the stratus deck, the horizon band and the rain volume sliding while the
   camera pans, orbits or zooms. They were re-centred in `Update` but the camera moves in
   `LateUpdate`, so they trailed one frame behind; a new `CameraShellAnchor` re-applies their

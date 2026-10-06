@@ -64,6 +64,8 @@ namespace Airside.Domain
                     case "QLK": return "QANTASLINK";
                     case "VOZ": return "VIRGIN";
                     case "QFA": return "QANTAS";
+                    case "QFR": return "QANTAS FREIGHT";
+                    case "DHL": return "DHL";
                     case "JST": return "JETSTAR";
                     case "ANZ": return "AIR NZ";
                     case "SIA": return "SINGAPORE";
@@ -79,11 +81,13 @@ namespace Airside.Domain
             }
         }
 
-        /// <summary>The fuselage title on a freighter (ADR 0194): the wordmark plus CARGO, shortened to fit.</summary>
+        /// <summary>Dedicated cargo title, or the converted operator's wordmark plus CARGO, shortened to fit.</summary>
         public string FreightTitle
         {
             get
             {
+                if (IsFreightCarrier)
+                    return FuselageTitle;
                 var title = FuselageTitle;
                 if (title.EndsWith("CARGO", StringComparison.Ordinal))
                     return title;
@@ -102,6 +106,9 @@ namespace Airside.Domain
 
         /// <summary>Emergency medical flights — exempt from the Adelaide curfew.</summary>
         public bool IsEmergency => Id.Value is "RFDS" or "SAAS";
+
+        /// <summary>Dedicated commercial cargo operators; they still observe Adelaide's curfew.</summary>
+        public bool IsFreightCarrier => !IsPlayer && (Id.Value is "QFR" or "DHL");
 
         /// <summary>
         /// Renames the airline in place — every existing reference (fleet aircraft, save
@@ -140,6 +147,10 @@ namespace Airside.Domain
 
         /// <summary>Qantas mainline domestic services from Adelaide (737-8).</summary>
         public static Airline Qantas() => new("QFA", "Qantas", "#E4002B", isPlayer: false);
+
+        public static Airline QantasFreight() => new("QFR", "Qantas Freight", "#E4002B", isPlayer: false);
+
+        public static Airline DhlAir() => new("DHL", "DHL Air", "#F2C14B", isPlayer: false);
 
         /// <summary>Jetstar domestic services from Adelaide (A321neo).</summary>
         public static Airline Jetstar() => new("JST", "Jetstar", "#F26623", isPlayer: false);

@@ -1,6 +1,6 @@
 # ADR 0231 — Calm shared HUD and structured return briefing
 
-Date: 6 October 2026. Status: implementation candidate. Requested by Bailey.
+Date: 6 October 2026. Status: merged in PR #526 under Bailey’s explicit approval. Native Unity verification remains outstanding.
 
 Replace the bright instrument accents and pill-heavy controls with slate surfaces,
 warm-white type, muted sea-glass selection and soft gold primary actions. Shared

@@ -806,6 +806,7 @@ namespace Airside.Presentation
             var joined = restored.AddMissingRegionalCarriers();
             var emergencyJoined = restored.AddMissingEmergencyOperators();
             var jetJoined = restored.AddMissingTerminalOperators();
+            var freightJoined = restored.AddMissingFreightOperators();
 
             _clock = clock;
             _simulation = new AirportSimulation(_clock, new SeededRandomSource(24031996), new ReservationTable());
@@ -820,6 +821,8 @@ namespace Airside.Presentation
                 ShowToast("The RFDS can fly through the 23:00 to 05:00 curfew.");
             if (jetJoined > 0)
                 ShowToast("Virgin Australia's 737-8 now uses Gate 13.");
+            if (freightJoined > 0)
+                ShowToast("Qantas Freight and DHL Air now operate Adelaide's cargo banks.");
             RefreshFleetFlights();
             if (_awaySummary == null)
                 ShowToast($"Welcome back to {_operations.PlayerAirline.Name}.");

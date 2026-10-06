@@ -1,3 +1,31 @@
+## Where to resume — AI freight traffic candidate, 6 October 2026
+
+Codex; branch `feature/ai-freight-traffic`. Bailey authorised AI freight carriers
+as the next existing-backlog slice after PR #526 merged at `19fd9688` under his
+explicit approval. The game remains in development; release preparation stays deferred.
+
+Qantas Freight and DHL Air now have dedicated cargo aircraft, operator paint and
+a domestic MEL/SYD/BNE/PER network. Existing 737 art represents the freighters.
+Cargo uses dawn and late-evening Adelaide-local banks, respects curfew, and avoids
+the passenger opening ladder. Existing saves gain missing registrations once on
+normal loading. Full compatible aprons start cargo away; no parked aircraft is
+displaced. Freight role/timetable survive save/restore without a schema change.
+Freighters do not summon passenger buses/stairs or dock aerobridges; hold doors
+retain loading/unloading timing. Player conversions retain dark cargo paint.
+QFR/DHL codes are reserved from player setup (ADR 0232).
+
+**Checks:** full headless regression **1,508 passed / 0 failed**; generated harness
+is current; whitespace is clean. Evidence: `docs/testing/ai-freight-2026-10-06/README.md`. Four Unity-facing source/test files parse
+without syntax errors. Native Unity is unavailable in this Linux worker; native
+colour assertions and runtime appearance remain unverified. Metadata audit has
+only the inherited Resources/empty Animation issues.
+
+**NEXT:** review the AI freight PR and get native Unity compile/EditMode validation
+before merging this new behaviour under `AGENTS.md`. Subsequent approved backlog:
+cargo apron/stands and handling, then outstation freight, then P3 structure and
+performance. Do not reopen old playtests or present all freight work as complete.
+Task packet: `docs/plans/ai-freight-traffic.md`. Earlier handoffs below are historical.
+
 ## Where to resume — freight and interface refresh candidate, 6 October 2026
 
 Codex; branch `feature/freight-and-interface-refresh`. Bailey approved requiring

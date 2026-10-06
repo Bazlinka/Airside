@@ -1,18 +1,31 @@
-## Where to resume — freight contracts candidate, 6 October 2026
+## Where to resume — freight and interface refresh candidate, 6 October 2026
 
 Codex; branch `feature/freight-and-interface-refresh`. Bailey approved requiring
-freighters for freight work, plus an interface/viewing, return-summary and click
-sound redesign. Freight eligibility is implemented across acceptance, completion,
-deadline capacity, cancellation and contract HUD. Passenger-only outstation work
-does not count as cargo. Existing save fields and earned progress remain intact.
-ADR 0230; task: `docs/plans/freight-and-interface-refresh.md`.
+freighters for freight work and a substantial HUD/viewing, return-summary and
+click-sound redesign. Implementation is complete as a review candidate:
 
-Combined-work headless checkpoint: 1,487 passed / 0 failed. Evidence:
-`docs/testing/interface-refresh-2026-10-06/`. New native verification is unavailable
-on this Linux worker and is required before merge by `AGENTS.md`. Existing-game
-playtest acceptance below remains complete. **NEXT:** finish/publish the matching
-interface change, then native Unity compile/EditMode for this candidate. Later
-freight slices remain AI freight, cargo stands and outstation cargo operations.
+- Freight contracts share role eligibility across acceptance, completion,
+  deadlines, cancellation and the HUD. Passenger-only outstation services do
+  not count as cargo. Saved progress and existing fields are preserved (ADR 0230).
+- Shared slate/warm-white/sea-glass styling across HUD, workspaces and menus;
+  stable hover targets, clearer selected-aircraft view controls and a compact
+  four-view dock. Structured return briefing with real flight/net-funds/reliability
+  facts, scrolling fleet status and a fixed return action. Softer, quieter click
+  synthesis with duplicate acknowledgement suppression (ADR 0231).
+
+**Checks:** baseline 1,477 passed; combined full headless checkpoint **1,487/1,487**;
+final focused **47/47**; shared preview exporter builds; five Unity-facing C# files
+parse without syntax errors; whitespace passes. New metadata is stable. Existing
+Resources/empty Animation metadata audit issues persist. Evidence and offline
+previews: `docs/testing/interface-refresh-2026-10-06/`; task packet:
+`docs/plans/freight-and-interface-refresh.md`.
+
+**NEXT:** native Unity compile/EditMode for this new candidate before merge
+(`AGENTS.md`); the Linux worker has no Mac Unity executable. Offline previews
+are not runtime screenshots or listening acceptance. Existing-game playtest
+sign-off below stays complete and does not validate these new changes. Keep this
+as a draft until native verification. Later freight work: AI carriers, cargo
+stands and outstation cargo operations. The game remains in development.
 
 ## Where to resume — all current playtesting complete, 6 October 2026
 

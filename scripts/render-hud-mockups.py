@@ -42,17 +42,17 @@ BOLD = first_font(
 
 # Airside.Presentation.AirsidePalette (Glass Cockpit, ADR 0122), kept in step by palette_check() below.
 PALETTE = {
-    "Glass": "#0E1216",
-    "GlassRaised": "#1B222A",
+    "Glass": "#121B22",
+    "GlassRaised": "#1D2A33",
     "GlassEdge": "#FFFFFF",
-    "InstrumentText": "#E8EDF1",
-    "InstrumentMuted": "#8793A0",
-    "Aqua": "#3FD0C9",
-    "Amber": "#FFB547",
-    "GoGreen": "#4CD37A",
-    "WarnRed": "#FF5F56",
-    "RouteMagenta": "#E15AA8",
-    "OnAccent": "#0B0F12",
+    "InstrumentText": "#F2F0E8",
+    "InstrumentMuted": "#A4AFB6",
+    "Aqua": "#9FC8C5",
+    "Amber": "#D8BE8A",
+    "GoGreen": "#8CB99C",
+    "WarnRed": "#E38D80",
+    "RouteMagenta": "#B9AECF",
+    "OnAccent": "#121B22",
 }
 
 TONE = {
@@ -232,7 +232,7 @@ def draw_button(image, command):
     style = int(command.get("Value", 0))
     enabled = command.get("Enabled", True)
     label = command.get("Text") or ""
-    radius = h / 2.0
+    radius = 6 * SCALE
 
     if style == 0:  # Primary — amber pill
         draw_rect(image, rect, rgb(PALETTE["Amber"]), 1.0 if enabled else 0.25, radius)
@@ -247,13 +247,13 @@ def draw_button(image, command):
         text_colour = PALETTE["InstrumentText"] if enabled else PALETTE["InstrumentMuted"]
 
     glyph = label in ("×", "?")
-    size = 18.0 if glyph else 11.0
+    size = 18.0 if glyph else 12.0
     draw_text(image, {
         "Box": [command["Box"][0], command["Box"][1] + (command["Box"][3] - size * 1.15) / 2.0,
                 command["Box"][2], size * 1.3],
         "Text": label,
         "FontSize": size,
-        "Style": STYLE_BOLD | (0 if glyph else STYLE_CAPTION),
+        "Style": STYLE_BOLD if style == 0 else 0,
         "Align": "Center",
         "Colour": text_colour,
         "Value": 1.0 if enabled else 0.55,
@@ -352,10 +352,10 @@ def render(page, width, height):
         rect = (x, y, x + w, y + h)
 
         if kind == "Surface":
-            glass(image, rect, command.get("Value", 0.9), 14 * SCALE)
+            glass(image, rect, min(1.0, command.get("Value", 0.9) * 1.045), 10 * SCALE)
         elif kind == "Card":
-            draw_rect(image, rect, rgb(PALETTE["GlassRaised"]), 0.9 * (command.get("Value", 1.0) or 1.0), 10 * SCALE)
-            draw_rect(image, rect, rgb(PALETTE["GlassEdge"]), 0.06, 10 * SCALE, outline=True)
+            draw_rect(image, rect, rgb(PALETTE["GlassRaised"]), 0.96 * (command.get("Value", 1.0) or 1.0), 7 * SCALE)
+            draw_rect(image, rect, rgb(PALETTE["GlassEdge"]), 0.06, 7 * SCALE, outline=True)
         elif kind == "Fill":
             draw_rect(image, rect, colour_of(command), command.get("Value", 1.0), fill_radius(w, h))
         elif kind == "Hairline":

@@ -60,7 +60,9 @@ namespace Airside.Presentation
                 && (mode == AircraftViewMode.LeftWindow || mode == AircraftViewMode.RightWindow))
             {
                 _aircraftViewMode=mode; cabin.SelectSide(mode == AircraftViewMode.RightWindow);
-                return _cameraController.StartPassenger(cabin.Seat);
+                var started = _cameraController.StartPassenger(cabin.Seat);
+                if (started) PlayUiClick();
+                return started;
             }
             // Switching seats/cameras retains registration, render origin and the terrain window.
             if (InCockpit && _cockpitAircraftId != aircraft.Registration) ExitCockpit(true);
@@ -223,43 +225,51 @@ namespace Airside.Presentation
             _cockpitInterior.SetReadout($"GS {_cockpitGroundKnots:0} kt\nHEIGHT {height:0} ft  VS {vs:+0;-0;0}\nHDG {view.eulerAngles.y:000}°");
         }
 
+        private readonly HudDrawList _flightViewDrawList = new();
+        private readonly FlightViewHudData _flightViewHud = new();
+
         private void DrawCockpitHud(HudLayout layout, GUIStyle panel, GUIStyle button)
         {
             _hudPanels.Clear();
             _cameraController.KeyboardCaptured = _menuOpen || GUIUtility.keyboardControl != 0;
-            var strip = new Rect(18f, 18f, Mathf.Min(900f, layout.Viewport.x - 36f), 146f);
-            _hudPanels.Add(strip);
-            GUI.Box(strip, GUIContent.none, panel);
+            var placement = new FlightViewHudLayout(layout.Viewport.x, layout.Viewport.y);
+            _hudPanels.Add(HudPainter.ToRect(placement.Identity));
+            _hudPanels.Add(HudPainter.ToRect(placement.Controls));
             var worldX = (_cockpitView != null ? _cockpitView.position.x : 0f) + _flightOriginX;
             var worldZ = (_cockpitView != null ? _cockpitView.position.z : 0f) + _flightOriginZ;
             var fromAdelaideKm = Math.Sqrt(worldX * worldX + worldZ * worldZ) / 1000.0;
             if (_fleetAircraftById.TryGetValue(_cockpitAircraftId, out var aircraft))
             {
-                GUI.Label(new Rect(strip.x + 12f, strip.y + 7f, strip.width - 24f, 22f),
-                    $"{aircraft.Registration} · {aircraft.Type.Name} · {AircraftStatus.TagPhase(aircraft, _clock.Now)}");
-                GUI.Label(new Rect(strip.x + 12f, strip.y + 29f, strip.width - 24f, 22f),
-                    $"{aircraft.CurrentDestination?.Code ?? "Local flight"} · GS {_cockpitGroundKnots:0} kt · V/S {_cockpitVerticalSpeed * 196.85f:+0;-0;0} ft/min · {fromAdelaideKm:0.0} km from Adelaide");
-                var labels = new[] { "Cockpit", "Left window", "Right window", "Outside" };
-                var width = (strip.width - 24f - 18f) / 4f;
+                _flightViewHud.Registration = aircraft.Registration;
+                _flightViewHud.Aircraft = aircraft.Type.Name;
+                _flightViewHud.Phase = AircraftStatus.TagPhase(aircraft, _clock.Now);
+                var returning = aircraft.State is FleetState.Inbound or FleetState.HoldingForLanding
+                    or FleetState.Landing or FleetState.GoAround or FleetState.AwaitingStand or FleetState.TaxiIn;
+                var destination = aircraft.CurrentDestination?.Code ?? "Local flight";
+                _flightViewHud.Route = returning ? destination + " → ADL" : "ADL → " + destination;
+                _flightViewHud.Speed = $"{_cockpitGroundKnots:0} kt";
+                _flightViewHud.VerticalSpeed = $"{_cockpitVerticalSpeed * 196.85f:+0;-0;0} ft/min";
+                _flightViewHud.Distance = $"{fromAdelaideKm:0.0} km";
+                _flightViewHud.SelectedView = (int)_aircraftViewMode;
+                _flightViewHud.MotionEnabled = _cameraController.CockpitMotionEnabled;
+                _flightViewHud.PassengerIsCargo = aircraft.IsFreighter;
                 for (var i = 0; i < 4; i++)
+                    _flightViewHud.Available[i] = FlightViewReason(aircraft, (AircraftViewMode)i).Length == 0;
+                _flightViewDrawList.Clear();
+                FlightViewHudPainter.Paint(_flightViewDrawList, placement, _flightViewHud);
+                var action = _hudPainter.Draw(_flightViewDrawList);
+                var view = HudAction.Payload(action, FlightViewHudPainter.ViewPrefix);
+                if (int.TryParse(view, out var index) && index >= 0 && index < 4 && index != (int)_aircraftViewMode)
+                    EnterFlightView(aircraft, (AircraftViewMode)index);
+                else if (action == FlightViewHudPainter.Overview) { ExitCockpit(true); PlayUiClick(); }
+                else if (action == FlightViewHudPainter.Recenter) { _cameraController.RecenterCockpit(); PlayUiClick(); }
+                else if (action == FlightViewHudPainter.Motion)
                 {
-                    var mode = (AircraftViewMode)i;
-                    var enabled = GUI.enabled;
-                    GUI.enabled = FlightViewReason(aircraft, mode).Length == 0;
-                    if (GUI.Button(new Rect(strip.x + 12f + i * (width + 6f), strip.y + 53f, width, 25f),
-                        (_aircraftViewMode == mode ? "● " : "") + labels[i], button)) EnterFlightView(aircraft, mode);
-                    GUI.enabled = enabled;
+                    _cameraController.CockpitMotionEnabled = !_cameraController.CockpitMotionEnabled;
+                    AirsideSettings.Current.Save();
+                    PlayUiClick();
                 }
             }
-            var hint = _aircraftViewMode == AircraftViewMode.Exterior
-                ? "Drag/arrows to orbit · scroll/+− for distance · Home to recenter"
-                : "Drag/arrows to look · scroll/+− to zoom · Home to recenter";
-            if (_aircraftViewMode == AircraftViewMode.Cockpit) hint += " · 1–5 glances";
-            GUI.Label(new Rect(strip.x + 12f, strip.y + 83f, strip.width - 24f, 22f), hint);
-            if (GUI.Button(new Rect(strip.xMax - 202f, strip.y + 111f, 90f, 23f), "Recenter", button))
-                _cameraController.RecenterCockpit();
-            if (GUI.Button(new Rect(strip.xMax - 106f, strip.y + 111f, 94f, 23f), "Overview (Esc)", button))
-                ExitCockpit(true);
             if (_aircraftViewMode == AircraftViewMode.Cockpit && !string.IsNullOrEmpty(_cockpitCallText) && Time.unscaledTime < _cockpitCallUntil)
             {
                 _calloutStyle ??= new GUIStyle(GUI.skin.label)
@@ -272,14 +282,7 @@ namespace Airside.Presentation
                 _calloutStyle.normal.textColor = new Color(0.92f, 0.96f, 0.9f, fade);
                 GUI.Label(area, _cockpitCallText, _calloutStyle);
             }
-            var motion = GUI.Toggle(new Rect(strip.x + 12f, strip.y + 111f, 220f, 24f),
-                _cameraController.CockpitMotionEnabled, "Flight vibration");
-            if (motion != _cameraController.CockpitMotionEnabled)
-            {
-                _cameraController.CockpitMotionEnabled = motion;
-                AirsideSettings.Current.Save();
-            }
-            DrawToast(AirlineHudLayout.Create(layout, false).Toast);
+            DrawToast(new Rect(20f, 134f, Mathf.Min(480f, layout.Viewport.x - 40f), 54f));
         }
 
         // Reproducible packaged review: only a real eligible aircraft, never force-start engines.

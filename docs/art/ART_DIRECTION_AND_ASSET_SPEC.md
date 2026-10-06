@@ -438,3 +438,17 @@ representative sound-design voices, not exact recordings of each engine variant.
 The static AIR-017 rescue helicopter remains parked and engine-off. No sound
 controls simulation timing. Built-player DSP captures and final verification
 are recorded in `docs/testing/audio-2026-09-30/README.md`.
+
+## Shared interface refresh — 6 October 2026 (ADR 0231)
+
+Bailey requested a substantial HUD/viewing and welcome-back redesign. The runtime
+interface now uses a restrained slate palette: `AirsidePalette.GlassHex` #121B22,
+raised surface #1D2A33, warm-white text #F2F0E8, muted text #A4AFB6, sea-glass
+selection #9FC8C5 and soft gold action #D8BE8A. Positive, negative and route hues
+are likewise muted. This supersedes the brighter Glass Cockpit UI accents while
+preserving the airport/world palette above. Shared controls have stable hover
+geometry and modest corners. Original icons/brand art remain available; no new
+external art or font is added. Runtime text stays in Unity.
+
+Evidence: `docs/testing/interface-refresh-2026-10-06/`. Rendered previews show
+shared layout and palette, not native runtime verification.

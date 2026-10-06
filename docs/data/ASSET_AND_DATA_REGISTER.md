@@ -287,3 +287,12 @@ representative airflow/ventilation bed driven by ground-speed proxy, not a
 manufacturer recording. Fallback: existing type-specific engine audio; mute
 stops the bed. Clip/source are released on cockpit rebind, exit and teardown.
 Native listening acceptance remains open.
+
+## Interface click revision — 6 October 2026 (ADR 0231)
+
+`HudSounds.UiClick()` remains original project-owned synthesis, generated in memory
+at runtime: deterministic low-passed noise and a damped switch body, now with a
+rounded attack and lower peak/playback gain. No external source/sample, purchase,
+attribution requirement or shipped audio file. Existing UI sound is the fallback.
+The WAV in `docs/testing/interface-refresh-2026-10-06/` is an exported listening
+preview at runtime gain, not a new runtime asset or listening acceptance claim.

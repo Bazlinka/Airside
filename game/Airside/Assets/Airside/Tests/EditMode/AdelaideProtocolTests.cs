@@ -229,6 +229,28 @@ namespace Airside.Tests
             Assert.Fail("Fixture must include a real vacate crossing.");
         }
 
+        [Test]
+        public void Version20FleetSave_KeepsFerryAndDeadlinesWithoutInventingWakeHistory()
+        {
+            var ops = NewOperations(out var clock);
+            var player = Airline.Player("Migration Air", "#123456");
+            ops.AddAirline(player);
+            ops.RestoreAircraft("VH-FER", player, AircraftType.Saab340, FleetState.Inbound,
+                clock.Now, new SimulationTime(1200), default, default, HudTestAirline.Code("MEL"), null, 0);
+            ops.Fleet.Single().IsFerry = true;
+            ops.RestoreTower(new SimulationTime(600), new SimulationTime(300), 0);
+            var save = AirlineSave.Capture(ops);
+            Assert.That(save.Version, Is.EqualTo(21));
+            save.Version = 20;
+            // Version 20 predates these fields: even a stray field cannot become wake history.
+            save.MainWake = new RunwayWakeRecord { TypeId = "UNKNOWN", EventAtSeconds = -1 };
+            var restored = AirlineSave.Restore(save, new ManualSimulationClock(clock.Now));
+            Assert.That(restored.Fleet.Single(a => a.Registration == "VH-FER").IsFerry, Is.True);
+            Assert.That(restored.MainWake, Is.Null);
+            Assert.That(restored.RunwayFreeAt.ElapsedSeconds, Is.EqualTo(600));
+            Assert.That(restored.CrossRunwayFreeAt.ElapsedSeconds, Is.EqualTo(300));
+        }
+
         private static AirlineOperations NewOperations(out ManualSimulationClock clock)
         {
             clock = new ManualSimulationClock(new SimulationTime(0));

@@ -6,7 +6,7 @@ never stop blocking after a timeout; arrival clearance checks them too. Manual
 stand choices remain reserved while waiting for the same safe clearance. Crossing
 reservations cover the full airframe. The intersecting strips share occupancy,
 with separate queues and follower-specific MTOW wake minima anchored at airborne /
-touchdown time. Save v21 retains prior movements, without inventing old history.
+touchdown time. Save v21 retains prior movements, without inventing old history. The v20 fleet/ferry schema remains intact.
 
 Code C gates push east on either main-runway end, then use a bay/airframe-filtered
 taxiway graph; typed searches have no grass-chord fallback. Above-C arrivals use

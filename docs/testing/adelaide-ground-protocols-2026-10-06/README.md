@@ -38,7 +38,10 @@ TRX SHA256: `f5494c02e0501c5b5fbc6ae1798d7cd592ea16460557cad0d14193572483114b`.
 Two existing conditional cases were not executed. C# 9 syntax: 21 files, zero errors;
 asset audit: 1,772 GUIDs, 386 mirrored art files, 70 character materials; harness fresh;
 whitespace check passed. Focused policy/anchor/save/route/blocker tests pass.
-Final validation against the newly merged fleet/cockpit main is pending.
+Rebased onto `3f8d0969` (merged fleet management and cockpit work). Wake data moved
+to save v21 so the fleet v20 migration remains separate. The focused v20 migration
+regression passes: preserve ferry flag and both runway deadlines, ignore fields that
+v20 could not have written. Final combined suite is pending.
 The arrival-prediction regression exposed by the intersecting-strip guard was corrected
 by sharing that guard with `LandingGroundClear`; focused result: 57/63 within 2 seconds
 (>=85% existing acceptance), no early estimates. Code C push direction is checked against

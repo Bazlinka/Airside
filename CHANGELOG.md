@@ -1,5 +1,12 @@
 ## Unreleased
 
+- **Sharper Adelaide Hills (ADR 0247, unverified).** The far terrain ring now uses the full
+  125 m DEM (was every second sample), so the Hills keep their ridges when the map is zoomed out.
+
+- **Render cost trim (ADR 0246, unverified).** SSAO now half resolution, 2x MSAA + SMAA above
+  2.5 M px (1440p+), High shadows 3 cascades / 110 m. Untested natively; needs a Mac
+  before/after capture.
+
 - **Unity compiles again.** Three tests used `Math` without `using System;` or NUnit's
   `Is.AnyOf`, which the headless harness accepts but Unity's NUnit does not.
 

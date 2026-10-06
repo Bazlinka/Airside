@@ -21,8 +21,9 @@ namespace Airside.Presentation
         public const int MediumMsaa = 2;
         // At a 4K-class backing surface, 4x MSAA allocates several very large HDR/depth
         // buffers for little visible gain because the camera already uses high-quality SMAA.
-        // Keep the high world/lighting ladder, but cap only MSAA above this pixel budget.
-        public const long HighMsaaPixelBudget = 5_000_000;
+        // Keep the high world/lighting ladder, but cap only MSAA above this pixel budget
+        // (2.5 M px: 1080p keeps 4x; 1440p and above use 2x + SMAA).
+        public const long HighMsaaPixelBudget = 2_500_000;
         public const int VSyncCount = 1;
         public const int AnisoLevel = 8;
         // URP's per-object additional-lights cap: the max real-time Point/Spot lights that
@@ -37,9 +38,9 @@ namespace Airside.Presentation
         // for a field this size. Unverified without a Unity look at the actual apron.
         public const int HighAdditionalLights = 24;
         public const int MediumAdditionalLights = 12;
-        public const float HighShadowDistance = 140f;
+        public const float HighShadowDistance = 110f;
         public const float MediumShadowDistance = 55f;
-        public const int HighShadowCascades = 4;
+        public const int HighShadowCascades = 3;
         public const int MediumShadowCascades = 2;
         public const int HighEdgeLightStep = 10;
         public const int MediumEdgeLightStep = 16;

@@ -9,7 +9,7 @@ namespace Airside.Presentation
     /// ADR 0158 (plan P6) — the land and Gulf beyond the ±12 km surroundings, out to the 30 km far
     /// clip: the rest of the Adelaide plain, the CBD rise and the Adelaide Hills as the eastern
     /// skyline, on real Copernicus heights and draped with the far Sentinel-2 image toned like the
-    /// near one. One mesh, one material, 250 m cells; the square the surroundings own is left out
+    /// near one. One mesh, one material, 125 m cells; the square the surroundings own is left out
     /// but for a narrow band tucked just under their edge so no sky shows through the join.
     /// </summary>
     public static class AirsideAdelaideFarTerrain
@@ -19,8 +19,11 @@ namespace Airside.Presentation
         public const float SatelliteExtentMetres = 30500f;
         public const float RadiusMetres = 30000f;
 
-        /// <summary>Every second DEM sample: 250 m cells, sub-pixel at 12–30 km.</summary>
-        public const int Stride = 2;
+        /// <summary>
+        /// Every DEM sample: 125 m cells (ADR 0247). Stride 2 threw away half the Hills' relief, so
+        /// ridges and gullies read as a faceted lump when the camera pulled out over them.
+        /// </summary>
+        public const int Stride = 1;
 
         /// <summary>Cells wholly inside this half-size belong to the surroundings mesh.</summary>
         public const float InnerHalfMetres = CoastGrid.ExtentMetres - 300f;

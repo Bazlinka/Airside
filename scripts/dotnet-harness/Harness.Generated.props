@@ -285,6 +285,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundMotionSmoothnessTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundMotionTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundRouterTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundSeparationTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundServiceRunTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HangarBaysTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HangarTenantPaletteTests.cs" />

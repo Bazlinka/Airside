@@ -9,6 +9,12 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-07.*
 
+**PR #552 (7 Oct, Codex):** native fixture repairs, stricter blank-save validation and camera glide anchors across origin shifts.
+Bailey explicitly authorised merging without further tests; native Unity confirmation stays pending.
+Rebased onto current main, preserving fleet/outstation flight views and the newer arrivals/rendering changes.
+Earlier branch validation: 1,830 headless passed; rebased save fixtures 10/10. Packet:
+`docs/testing/native-editmode-fixes-2026-10-07/README.md`.
+
 **Merged (7 Oct, Claude):** arrivals never freeze on final — landing gated by the runway only, forced go-around at a 4 min decision point,
 inbounds metered in the circuit (ADR `2026-10-07-arrivals-never-hold-on-final`). Headless-green only; needs a Unity run and a busy-day look at finals and go-around visuals.
 
@@ -33,7 +39,7 @@ now logged as `[Airside soak] hitch`. Still unchecked: depth precision, sky/star
   compare day/dusk/night for AO banding, shimmer and shadow pop-in; check the seam where the near satellite ends,
   startup-to-title time and memory (far image decodes to ~64 MB); at 100–450 km zoom check coastline blockiness, the 40 m join between
   coarse and fine tiles, sky/stars/sun at a 1,170 km far clip, depth precision and frame time while tiles stream. Each is a one-line revert (see the ADRs).
-- **24 native EditMode failures** on `main` (Unity 2265 passed / 24 failed): `PassengerFlightViewTests`
+- **24 native EditMode failures reported before #552** (Unity 2265 passed / 24 failed). Source fixtures are repaired in #552; native rerun remains pending: `PassengerFlightViewTests`
   (window sightlines, all 13 types + two exterior cases), `PresentationLayoutTests` (HUD layout ×4),
   `FieldMiniMapTests.PanelFor_ShowsOnTheDesktopWindow`, `AirsideSettingsTests.Defaults_MatchAPlayableAdelaideSession`,
   `CockpitCameraTests.CockpitTracksSeatAfterAircraftPoseAndRestoresCameraSettings`,

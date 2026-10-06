@@ -12,7 +12,7 @@ namespace Airside.Tests
             var settings = new AirsideSettings();
             Assert.That(settings.SoundOn, Is.True);
             Assert.That(settings.FieldTags, Is.True);
-            Assert.That(settings.MiniMap, Is.True);
+            Assert.That(settings.MiniMap, Is.False, "radar is available on demand to keep the overview clear");
             Assert.That(settings.FollowOnSelect, Is.True);
             Assert.That(settings.InvertOrbit, Is.False);
             Assert.That(settings.LiveTraffic, Is.False,

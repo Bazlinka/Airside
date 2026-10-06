@@ -72,7 +72,7 @@ namespace Airside.Tests
             {
                 var scale = HudLayout.ScaleFor(screenWidth, screenHeight);
                 var hud = HudLayout.Create(screenWidth / scale, screenHeight / scale);
-                var airline = AirlineHudLayout.Create(hud, guide);
+                var airline = AirlineHudLayout.Create(hud, guide, showMiniMap: true);
                 var panel = FieldMiniMap.PanelFor(hud, airline);
                 if (panel.width <= 0f)
                     continue;
@@ -90,7 +90,7 @@ namespace Airside.Tests
         public void PanelFor_ShowsOnTheDesktopWindow()
         {
             var hud = HudLayout.Create(1440f, 900f);
-            Assert.That(FieldMiniMap.PanelFor(hud, AirlineHudLayout.Create(hud)).width, Is.EqualTo(FieldMiniMap.PanelWidth));
+            Assert.That(FieldMiniMap.PanelFor(hud, AirlineHudLayout.Create(hud, showMiniMap: true)).width, Is.EqualTo(FieldMiniMap.PanelWidth));
         }
 
         [Test]

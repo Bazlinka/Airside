@@ -353,7 +353,8 @@ namespace Airside.Tests
 
                 // The camera controller moves the camera in LateUpdate, after the Update that placed the shell.
                 cameraObject.transform.position = new Vector3(60f, 9f, 30f);
-                cameraObject.GetComponent<CameraShellAnchor>().SendMessage("LateUpdate");
+                typeof(CameraShellAnchor).GetMethod("LateUpdate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                    .Invoke(cameraObject.GetComponent<CameraShellAnchor>(), null);
                 Assert.That(shell.transform.position, Is.EqualTo(new Vector3(60f, 429f, 30f)),
                     "a shell placed before the camera moved must catch up, not trail a frame");
             }

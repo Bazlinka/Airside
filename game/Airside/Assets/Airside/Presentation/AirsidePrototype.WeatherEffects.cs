@@ -58,9 +58,10 @@ namespace Airside.Presentation
 
         private void UpdateRainMesh(float precipitation, bool storm)
         {
-            var altitudeFade = InCockpit && _cockpitView != null
-                ? CockpitWeatherEnvelope.RainAtHeight(_cockpitView.position.y) : 1f;
-            precipitation *= altitudeFade;
+            var altitudeFade = CockpitObserverWeather.Rain(1f,
+                _cockpitView != null ? _cockpitView.position.y : 0f, InCockpit && _cockpitView != null);
+            precipitation = CockpitObserverWeather.Rain(precipitation,
+                _cockpitView != null ? _cockpitView.position.y : 0f, InCockpit && _cockpitView != null);
             if (_mainCamera == null || _weatherRainMesh == null)
                 return;
             _weatherRainRenderer ??= _rainRoot.GetComponent<Renderer>();
@@ -72,8 +73,8 @@ namespace Airside.Presentation
             var centre = _mainCamera.transform.position + _mainCamera.transform.forward * radius * 1.25f;
             _rainRoot.position = centre;
             _rainRoot.localScale = Vector3.one;
-            var yaw = RunwayWeather.UnityYawFromTrue(PresentationWind.DirectionDegrees) * Mathf.Deg2Rad;
-            var drift = new Vector3(Mathf.Sin(yaw), 0f, Mathf.Cos(yaw)) * (storm ? 6f : 2.5f);
+            var flow = WeatherWindFlow.Rain(PresentationWind, storm);
+            var drift = new Vector3(flow.X, 0f, flow.Z);
             var fall = Vector3.down * Mathf.Lerp(16f, 28f, precipitation) + drift;
             var halfLength = Mathf.Clamp(radius * 0.015f, 0.18f, 4.8f);
             var width = Mathf.Clamp(radius * 0.0008f, 0.012f, 0.32f);

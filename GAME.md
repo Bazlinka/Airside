@@ -1,4 +1,107 @@
-## Where to resume — visual code review continuation, 6 October 2026
+## Where to resume — aircraft interior immersion analysis, 6 October 2026
+
+Codex; Bailey requested one dedicated agent per aircraft to analyse markedly more
+realistic, immersive cockpit, passenger and exterior views. Documentation branch
+`docs/aircraft-immersion-audit-20261006`, based on main `64ca4a23` (merged #537).
+Fourteen dedicated reports cover thirteen passenger aircraft and Bell 412EP:
+`docs/art/aircraft-immersion-audit-2026-10-06/README.md`.
+
+Analysis only: **no game code/assets changed, no Unity tests, builds, editor/player
+execution or new renders**. Evidence is current source, retained historical native
+fixtures and primary aircraft references. Historical captures do not certify the
+current packaged game; ATR/Q400 cockpit captures remain unavailable. Bell cockpit
+and passenger views are unsupported today; its proposed interiors are new scope.
+
+Highest-value shared work: aircraft-specific apertures/window stations independent
+of seat pitch; fitted curved cabin sections and depth beyond the five-row box;
+family-specific windshield/panel structure; shaped seats/bins and distinct
+materials/cabin lighting. Individual reports preserve genuine family differences
+and flag optional/operator cabin fits. Functional avionics are outside the request.
+
+**NEXT:** review the report and select an implementation slice. Recommended first:
+shared window/cabin structure proved on ATR42, A320 and B789, then fit the remaining
+profiles. Use one owner per shared builder; aircraft workers own disjoint profile/
+model files. Recommendations are proposals, not an approved milestone or completed
+visual implementation. Keep the user's no-Unity restriction until they change it.
+
+## Where to resume — smooth takeoff and flight information, 6 October 2026
+
+Codex; Bailey reported an altitude jump at takeoff and requested flight status /
+location immersion in cockpit, both passenger windows and exterior views. Branch
+`fix/takeoff-flight-details-20261006`, ADR 0238. User instruction remains code-only:
+**no Unity tests, editor/player execution or builds**; this overrides native gates.
+
+Watched Outbound formerly skipped the local Departed climb and jumped roughly
+174–218 m straight to the enroute starting altitude. It now uses the local runway /
+departure-turn curve first, then joins the timed geographic route with a position /
+velocity offset. Rotation and climb-out share vertical-rate endpoints; authored
+body attitude fades onto the enroute angle. Schedules and save format are unchanged.
+
+All four aircraft views share route/status, nearest catalogue airport + coordinates,
+field-relative height, true heading, GS/V-S, direct distance to the target, model
+leg progress and supported arrival-area estimate. Ground/holding states have no
+invented ETA; stable watched identity and origin correction are retained. The top
+panel adapts to narrow widths; toast placement follows its height.
+
+Evidence: `docs/testing/takeoff-flight-details-2026-10-06/README.md`.
+61 new focused pure/painter checks pass; integrated headless **1,664 passed / 0 failed**.
+Native C# compilation, transform/camera behaviour and rendered legibility remain
+unverified. Prior audit fixes merged in #535/#536; #534 remains a draft report.
+
+**NEXT:** finish code-only CI/merge for this branch if still open, then owner
+playtest takeoff/climb-out and the expanded aircraft-view information when ready.
+
+## Where to resume — complete visual-audit code fixes, 6 October 2026
+
+Codex; three workers in each of two sequential batches. Bailey authorised the
+concrete findings from draft #534 and explicitly excluded **Unity testing,
+builds and player execution**. This overrides the usual native-check requirement;
+no native C# or shader compilation, player capture or performance check is claimed.
+
+First batch merged in #535 (`582290c0`): seven map, ground-service and aircraft
+fixes; combined headless 1,557 pass and GitHub headless CI pass. Second integration
+branch `fix/visual-audit-batch2-20261006` covers the remaining nine: AST-01/02
+(box UVs/tangents), CORE-01 (geographic foam), WLD-01 (roof origin), AIR-02
+(nav colours), CK-01 (observer rain/wipers), WX-01 (downwind flow), SKY-01/02
+(star colour/fade/background depth). Evidence and final headless result:
+`docs/testing/visual-audit-batch2-2026-10-06/README.md`. Final combined headless
+**1,603 passed / 0 failed**; six weather/star source contracts and static
+asset audit pass (1,760 GUIDs, 386 mirrors, 70 character materials).
+
+All 16 concrete findings have code implementations. Native transforms, shader
+compilation, rendered correctness and performance remain unverified by user
+instruction. The dedicated star shader is explicitly included with an independent
+existing unlit fallback; source/asset-only checks are not build evidence.
+Draft #534 remains the separate audit report. Optional lighting/SSAO, scenery,
+terrain data and design work are unchanged; no new asset data was acquired.
+Historical playtest acceptance and inherited technical issues stay recorded.
+
+**NEXT:** check the second integration PR state; if open, finish code-only CI,
+merge and sync. Once merged, the authorised concrete code backlog is complete;
+return to standing freight priorities unless Bailey selects optional design work.
+
+## Where to resume — first visual-audit code batch, 6 October 2026
+
+Codex; Bailey authorised three parallel workers from draft PR #534, then explicitly
+requested **code-only work: no Unity testing, builds or player execution**. This
+instruction overrides the usual native-check requirement for this batch.
+Integration branch `fix/visual-audit-batch1-20261006`, based on main `000ab56b`.
+
+Scope: MAP-01/02/03 (scheduled map rows, inspector transitions and projected
+headings), GND-01/02 (service tyre pivots/roles and boarding pavement contact),
+AIR-01/03 (fan-disc coverage and type-specific touchdown events). Evidence and
+verification limits: `docs/testing/visual-audit-batch1-2026-10-06/README.md`.
+Headless baseline: 1,511 passed; combined **1,557 passed / 0 failed** (46 new
+regression cases). Static asset audit and eight shipped jet-fan probes pass. No native compilation, runtime transforms, visual quality or performance
+result is claimed. Historical playtest acceptance and inherited technical issues
+remain as previously recorded.
+
+**NEXT:** check the integration PR state; if open, finish code-only CI/merge/sync.
+After merge, this seven-fix code batch is complete within the requested scope. The other nine concrete
+findings in #534 and its optional design work remain pending; the audit PR is
+still a separate draft. Standing freight work and release status are unchanged.
+
+## Historical review — visual code review continuation, 6 October 2026 (superseded)
 
 Codex; branch `docs/visual-review-continuation`, reviewed main `000ab56b` after
 PR #532 merged. Bailey asked to continue Claude’s interrupted **Main branch
@@ -15,10 +118,12 @@ No game source changed; no new Unity tests, captures, visual sign-off or FPS
 measurement. Documentation links and whitespace were checked. Existing owner
 acceptance remains closed; historical technical failures remain recorded.
 
-**NEXT:** choose a narrow report packet and its reserved files before implementing.
-The report does not automatically start a visual overhaul or replace the standing
-cargo apron/handling, outstation freight and structure/performance priorities.
-Earlier handoffs below preserve their original evidence and dates.
+**Historical status:** all 16 concrete findings were implemented and merged in
+PRs #535 and #536. This #534 report preserves the original analysis and proposed
+acceptance checks; it is not an active implementation queue. Optional lighting,
+scenery and design proposals remain unapproved. No native compilation, captures,
+visual sign-off or performance checks were added. Follow the newer handoffs above
+for active work; standing freight priorities remain unchanged.
 
 ## Where to resume — full-map inspection and shared controls, 6 October 2026
 

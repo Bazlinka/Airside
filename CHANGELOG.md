@@ -1,8 +1,28 @@
 ## Unreleased
 
-- Continue Claude’s interrupted visual-code review with 16 source/data findings,
-  two lighting-coverage gaps, corrected audit claims and explicit implementation
-  ownership. Add code-based fix/acceptance packets; game behavior is unchanged.
+- Preserve the historical #534 visual-code audit and six evidence packets: 16
+  concrete source/data findings already implemented in merged #535/#536, two
+  optional lighting gaps, corrected claims and explicit implementation ownership.
+  Documentation only; no new native checks or game behaviour changes.
+
+- Smooth the watched takeoff-to-climb-out handoff instead of jumping 174–218 m
+  onto the enroute profile; match vertical rates through rotation and climb-out.
+  Add shared flight status, location, height, true heading and journey progress /
+  arrival-area estimates to every aircraft view (ADR 0238). Code-only checks;
+  Unity tests/builds/player execution excluded by Bailey, native visuals unverified.
+
+- Complete the nine remaining concrete #534 code findings: noncollapsed kit UVs
+  and tangent frames, fixed geographic foam and roof texture coordinates,
+  port-red/starboard-green lights, altitude-adjusted wipers, downwind weather flow,
+  and vertex-coloured stars with background depth/additive fade. No Unity tests,
+  builds or player execution by Bailey's instruction; native visuals unverified.
+
+- First visual-audit code batch (#534 findings): show first scheduled flights on
+  the map, clear stale inspection on explicit planning/selection and project field
+  headings; rotate service tyres at their own axles and place boarding stairs/walks
+  on pavement; size jet fan discs to blade radii and trigger touchdown effects at
+  each aircraft type's contact threshold. Code/headless validation only; Unity,
+  builds and player execution explicitly excluded by Bailey.
 
 - Put flight status and camera actions on the full map in a dedicated inspector;
   show all operators by default, add a South Australia shortcut and tidy labels,

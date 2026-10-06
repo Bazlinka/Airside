@@ -864,20 +864,15 @@ namespace Airside.Presentation
                     Mathf.Sin(yaw * Mathf.Deg2Rad) * horizontal,
                     y,
                     Mathf.Cos(yaw * Mathf.Deg2Rad) * horizontal);
-                // Far enough out to sit beyond the whole flight envelope — an arrival
-                // joining final 430 m out must not be occluded by a star. Radius and
-                // quad size scale together, so the night sky looks unchanged.
+                // Radius controls angular size only. The dedicated celestial shader
+                // projects stars to background depth and never writes scene depth.
                 const float radius = 128f * StarDistanceScale;
                 var pos = dir * radius;
                 var hero = i % 31 == 0 ? 1.65f : i % 11 == 0 ? 1.22f : 1f;
                 var s = (0.10f + (float)rng.NextDouble() * 0.18f) * StarDistanceScale * hero;
                 var bright = 0.65f + (float)rng.NextDouble() * 0.35f;
                 var tint = (float)rng.NextDouble();
-                var color = tint < 0.18f
-                    ? new Color(0.84f * bright, 0.91f * bright, bright, 1f)
-                    : tint > 0.84f
-                        ? new Color(bright, 0.91f * bright, 0.78f * bright, 1f)
-                        : new Color(bright, bright, 0.95f * bright, 1f);
+                var color = ToColor(CelestialStarColour.For(bright, tint));
                 var right = Vector3.Cross(dir, Vector3.up);
                 if (right.sqrMagnitude < 0.001f)
                     right = Vector3.right;
@@ -921,11 +916,7 @@ namespace Airside.Presentation
 
         private static Material StarSharedMaterial()
         {
-            var mat = AirsideMaterialLibrary.CreateShared(
-                Color.white, AirsideMaterialLibrary.SurfaceKind.UnlitSky);
-            if (mat.HasProperty("_EmissionColor"))
-                mat.EnableKeyword("_EMISSION");
-            return mat;
+            return AirsideMaterialLibrary.CreateSharedStars();
         }
 
         /// <summary>Star brightness for the daylight level: full at night, gone by mid-dawn.</summary>
@@ -1237,14 +1228,10 @@ namespace Airside.Presentation
             // (the only other wind-reactive visual) was pointing.
             var daylight = PresentationDaylight;
             var look = CurrentWeatherLook;
-            var wind = PresentationWind;
-            var windYawRad = RunwayWeather.UnityYawFromTrue(wind.DirectionDegrees) * Mathf.Deg2Rad;
-            // ADR 0143: drift at the wind's own speed (knots to m/s, quickened 1.6× so it reads
-            // from the overview); calm days still creep.
-            var windMetres = Mathf.Max(1.5f, wind.Knots * 0.5144f);
-            var driftSpeed = Time.unscaledDeltaTime * (AirsideBareField.Enabled ? windMetres * 1.6f : 0.35f);
-            var driftX = Mathf.Sin(windYawRad) * driftSpeed;
-            var driftZ = Mathf.Cos(windYawRad) * driftSpeed;
+            // ADR 0143 speeds remain unchanged; direction is the downwind flow.
+            var flow = WeatherWindFlow.Cloud(PresentationWind, AirsideBareField.Enabled);
+            var driftX = flow.X * Time.unscaledDeltaTime;
+            var driftZ = flow.Z * Time.unscaledDeltaTime;
             var weather = CurrentWeather;
             var overcast = look.CloudCover >= 0.7f;
             var cloudy = look.CloudCover > 0.3f && !overcast;

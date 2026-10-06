@@ -1,4 +1,14 @@
-# Visual code review and implementation backlog — 6 October 2026
+# Historical visual code review — 6 October 2026
+
+**Status after PRs #535/#536:** all 16 concrete findings below have code
+implementations merged on main. This #534 report and its six evidence packets
+retain the original analysis at `000ab56b`; source references, proposed fixes and
+ownership below are historical, not active instructions. Optional lighting and
+design proposals remain unapproved. See the implementation evidence in
+[batch one](visual-audit-batch1-2026-10-06/README.md) and
+[batch two](visual-audit-batch2-2026-10-06/README.md). Native compilation,
+rendered correctness and performance remain unverified under Bailey's no-Unity
+instruction; the documentation merge adds no such checks.
 
 Continuation of Claude’s **Main branch review**, at Bailey’s request. Reviewed
 `main` at `000ab56b` (including #532), superseding the initial static backlog at
@@ -21,7 +31,7 @@ Bailey’s accepted style and historical manual playtests remain closed. Accepta
 at `bfb4a300` does not establish technical evidence for later changes. These are
 development choices; the standing freight backlog and release status are unchanged.
 
-## Concrete defect queue
+## Original concrete findings (implemented in #535/#536)
 
 The detailed packets below give triggers, exact source references, correction
 boundaries and proposed checks. P2 means a functional/coordinate error worth
@@ -95,7 +105,7 @@ persistent **2.2× coast-foam scale** is overwritten later in the same update; t
 remaining geographic scaling error is detailed in CORE-01. E3’s “procedural normals are an art ceiling” is also retracted: authored normal maps are preferred; the runtime tangent omission is AST-02. A small raw viewport
 must be traced through GUI normalization before asserting HUD layout overflow.
 
-## Parallel ownership and merge order
+## Historical parallel ownership and merge order
 
 Read-only audits can run together. Implementation needs one owner per file and
 separate branches/worktrees. The old WS-B/C/D/H streams overlap and are not safe

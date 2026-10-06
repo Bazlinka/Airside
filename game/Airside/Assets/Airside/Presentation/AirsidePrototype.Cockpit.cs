@@ -204,7 +204,9 @@ namespace Airside.Presentation
             _cameraController.SetCockpitMotion(new Vector3(motion.Right, motion.Up, motion.Forward),
                 new Vector3(motion.PitchDownDegrees, motion.YawDegrees, motion.RollDegrees));
             _cockpitInterior.SetAttitude(pitchUp, bankLeft);
-            _cockpitInterior.SetEnvironment(PresentationDaylight, CurrentWeatherLook.Precipitation, Time.unscaledTime);
+            var observerRain = CockpitObserverWeather.Rain(CurrentWeatherLook.Precipitation,
+                _cockpitView != null ? _cockpitView.position.y : 0f, InCockpit && _cockpitView != null);
+            _cockpitInterior.SetEnvironment(PresentationDaylight, observerRain, Time.unscaledTime);
             _cockpitCallouts.DeltaSeconds = (float)Math.Max(0.0, elapsed);
             var call = _cockpitCallouts.Step(new CockpitCallouts.Sample
             {
@@ -223,7 +225,7 @@ namespace Airside.Presentation
                 jet.SetFlightState(view, spool, AircraftStatus.TagPhase(aircraft, _clock.Now));
             var height = gearHeight * 3.28084f;
             var vs = _cockpitVerticalSpeed * 196.85f;   // ft/min
-            _cockpitInterior.SetReadout($"GS {_cockpitGroundKnots:0} kt\nHEIGHT {height:0} ft  VS {vs:+0;-0;0}\nHDG {view.eulerAngles.y:000}°");
+            _cockpitInterior.SetReadout($"GS {_cockpitGroundKnots:0} kt\nHEIGHT {height:0} ft  VS {vs:+0;-0;0}\nHDG {FlightViewInformation.TrueHeading(view.forward.x, view.forward.z):000}° T");
         }
 
         private readonly HudDrawList _flightViewDrawList = new();
@@ -236,21 +238,13 @@ namespace Airside.Presentation
             var placement = new FlightViewHudLayout(layout.Viewport.x, layout.Viewport.y);
             _hudPanels.Add(HudPainter.ToRect(placement.Identity));
             _hudPanels.Add(HudPainter.ToRect(placement.Controls));
-            var worldX = (_cockpitView != null ? _cockpitView.position.x : 0f) + _flightOriginX;
-            var worldZ = (_cockpitView != null ? _cockpitView.position.z : 0f) + _flightOriginZ;
-            var fromAdelaideKm = Math.Sqrt(worldX * worldX + worldZ * worldZ) / 1000.0;
-            if (_fleetAircraftById.TryGetValue(_cockpitAircraftId, out var aircraft))
+            if (_fleetAircraftById.TryGetValue(_cockpitAircraftId, out var aircraft) && _cockpitView != null)
             {
-                _flightViewHud.Registration = aircraft.Registration;
-                _flightViewHud.Aircraft = aircraft.Type.Name;
-                _flightViewHud.Phase = AircraftStatus.TagPhase(aircraft, _clock.Now);
-                var returning = aircraft.State is FleetState.Inbound or FleetState.HoldingForLanding
-                    or FleetState.Landing or FleetState.GoAround or FleetState.AwaitingStand or FleetState.TaxiIn;
-                var destination = aircraft.CurrentDestination?.Code ?? "Local flight";
-                _flightViewHud.Route = returning ? destination + " → ADL" : "ADL → " + destination;
-                _flightViewHud.Speed = $"{_cockpitGroundKnots:0} kt";
-                _flightViewHud.VerticalSpeed = $"{_cockpitVerticalSpeed * 196.85f:+0;-0;0} ft/min";
-                _flightViewHud.Distance = $"{fromAdelaideKm:0.0} km";
+                var hasProfile = TryEnroute(aircraft, out var profile, out var elapsed);
+                FlightViewInformation.Fill(_flightViewHud, aircraft, _operations.Home, _preciseTime,
+                    _cockpitView.position.x, _cockpitView.position.z, _flightOriginX, _flightOriginZ,
+                    _cockpitGearHeight, _cockpitView.forward.x, _cockpitView.forward.z,
+                    _cockpitGroundKnots, _cockpitVerticalSpeed, hasProfile ? profile : null, elapsed);
                 _flightViewHud.SelectedView = (int)_aircraftViewMode;
                 _flightViewHud.MotionEnabled = _cameraController.CockpitMotionEnabled;
                 _flightViewHud.PassengerIsCargo = aircraft.IsFreighter;
@@ -283,7 +277,7 @@ namespace Airside.Presentation
                 _calloutStyle.normal.textColor = new Color(0.92f, 0.96f, 0.9f, fade);
                 GUI.Label(area, _cockpitCallText, _calloutStyle);
             }
-            DrawToast(new Rect(20f, 134f, Mathf.Min(480f, layout.Viewport.x - 40f), 54f));
+            DrawToast(HudPainter.ToRect(placement.Toast));
         }
 
         // Reproducible packaged review: only a real eligible aircraft, never force-start engines.

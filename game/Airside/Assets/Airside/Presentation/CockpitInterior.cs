@@ -121,7 +121,7 @@ namespace Airside.Presentation
                 _panelLight.enabled = night > 0.02f;
             }
             var sweep = 0f;
-            if (precipitation > 0.04f)
+            if (CockpitObserverWeather.WipersActive(precipitation))
             {
                 var period = Mathf.Lerp(3.2f, 1.1f, Mathf.Clamp01(precipitation));
                 var phase = seconds / period % 1f;

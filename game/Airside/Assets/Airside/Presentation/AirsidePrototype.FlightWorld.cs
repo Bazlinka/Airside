@@ -156,19 +156,30 @@ namespace Airside.Presentation
                 RegionalFlightPath.Landing(regionalRunway,0,0,remaining,out x,out y,out z);
                 return;
             }
-            var progress=profile.DistanceFractionAt(elapsed);
-            RouteMap.FlightPoint(_operations.Home.Latitude,_operations.Home.Longitude,destination.Latitude,
-                destination.Longitude,progress,aircraft.Registration,out lat,out lon);
-            YpadFrame.ToWorld(lat,lon,out x,out z);
-            // The map starts at the airport centre, the 3D climb-out ends kilometres beyond it.
-            // Fade their positional difference over 40 km rather than teleporting to the centre.
-            var end=RunwayPosition(flight,ApplyDepartureTurn(flight,AircraftPhase.Departed,1,
-                AirsideFlightPath.Departed(1,TakeoffOffsetX,aircraft.Type,aircraft.AssignedRunway)));
-            YpadFrame.ToWorld(_operations.Home.Latitude,_operations.Home.Longitude,out var hx,out var hz);
-            var u=Math.Clamp(profile.LegMetres*progress/40000,0,1);
-            var keep=1-u*u*(3-2*u);
-            x+=(end.x-hx)*keep;z+=(end.z-hz)*keep;
-            y=AirsideFlightPath.GroundY+profile.AltitudeFeetAt(elapsed)/EnrouteProfile.FeetPerMetre;
+            var performance = AircraftPerformance.For(aircraft.Type);
+            var exitSeconds = performance.DepartedSeconds;
+            // Outbound begins at the END of Takeoff, not the END of Departed. Use the
+            // same local climb-out in every view before handing the pose to the route.
+            if (DepartureFlightTransition.UsesLocalClimbout(performance, elapsed))
+            {
+                var local = DepartureWorldPosition(flight, aircraft, (float)(elapsed / exitSeconds));
+                x = local.x; y = local.y; z = local.z;
+                return;
+            }
+            OutboundRouteWorld(aircraft, profile, elapsed, out x, out y, out z);
+            var end = DepartureWorldPosition(flight, aircraft, 1);
+            const float derivativeSeconds = .1f;
+            var beforeEnd = DepartureWorldPosition(flight, aircraft, 1 - derivativeSeconds / exitSeconds);
+            OutboundRouteWorld(aircraft, profile, exitSeconds, out var rx, out _, out var rz);
+            OutboundRouteWorld(aircraft, profile, exitSeconds + derivativeSeconds, out var nx, out _, out var nz);
+            // Keep this join before the regional approach blend; its timer and ETA stay intact.
+            var joinSeconds = DepartureFlightTransition.JoinDuration(performance, profile);
+            var sinceExit = elapsed - exitSeconds;
+            x += DepartureFlightTransition.RouteOffset(sinceExit, joinSeconds, end.x-rx,
+                (end.x-beforeEnd.x)/derivativeSeconds - (nx-rx)/derivativeSeconds);
+            y = AirsideFlightPath.GroundY + DepartureFlightTransition.OutboundHeight(performance, profile, elapsed);
+            z += DepartureFlightTransition.RouteOffset(sinceExit, joinSeconds, end.z-rz,
+                (end.z-beforeEnd.z)/derivativeSeconds - (nz-rz)/derivativeSeconds);
             if (RegionalRunways.TryGet(destination.Code,out regionalRunway) && remaining<360)
             {
                 // Bend the cruise track onto the mapped runway's terminal approach.
@@ -181,6 +192,21 @@ namespace Airside.Presentation
                 x+=(sx-tx)*blend;z+=(sz-tz)*blend;
                 y+=(sy-(AirsideFlightPath.GroundY+profile.AltitudeFeetAt(profile.LegSeconds-180)/EnrouteProfile.FeetPerMetre))*blend;
             }
+        }
+
+        private Vector3 DepartureWorldPosition(CommercialFlight flight, FleetAircraft aircraft, float progress) =>
+            RunwayPosition(flight, ApplyDepartureTurn(flight, AircraftPhase.Departed, progress,
+                AirsideFlightPath.Departed(progress, TakeoffOffsetX, aircraft.Type, aircraft.AssignedRunway)));
+
+        private void OutboundRouteWorld(FleetAircraft aircraft, EnrouteProfile profile, double elapsed,
+            out double x, out double y, out double z)
+        {
+            var destination = aircraft.CurrentDestination.Value;
+            RouteMap.FlightPoint(_operations.Home.Latitude, _operations.Home.Longitude,
+                destination.Latitude, destination.Longitude, profile.DistanceFractionAt(elapsed),
+                aircraft.Registration, out var lat, out var lon);
+            YpadFrame.ToWorld(lat, lon, out x, out z);
+            y = AirsideFlightPath.GroundY + profile.AltitudeFeetAt(elapsed) / EnrouteProfile.FeetPerMetre;
         }
     }
 }

@@ -50,6 +50,13 @@ until its GPU callback, including after a timeout, then releases exactly once.
 The coroutine yields until completion with a 15-second real-time limit; it logs
 request, readback and written stages so any future capture hang has attribution.
 Unsupported async readback fails explicitly; there is no blocking fallback.
+Unity's API documentation explicitly calls
+[`ImageConversion.EncodeArrayToPNG`](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/ImageConversion.EncodeArrayToPNG.html)
+thread safe, and recommends
+[`ScreenCapture.CaptureScreenshotIntoRenderTexture`](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/ScreenCapture.CaptureScreenshotIntoRenderTexture.html)
+with AsyncGPUReadback to reduce main-thread work after rendering completes.
+Both API pages were read during this source-only investigation; they do not
+substitute for compiling against this project's Unity version.
 
 ## Acceptance and validation
 

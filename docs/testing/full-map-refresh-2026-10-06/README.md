@@ -46,3 +46,19 @@ full-map picker and inspector with distant flights. Final complete focused nativ
 suite: 85/85 (`complete-unity-results.xml`). Integrated full headless after the
 credits fix: 1,509 passed (`integrated-domain.log`); subsequent lens fit cases are
 covered by native checks and final GitHub CI.
+
+Clean final Mac player: `00e43f21`, `dirty=false` (`build.log`). Actual packaged
+captures inspected: `player-map.png` (1440×900 SA inspector),
+`player-map-small.png` (1024×768), `player-planning.png` (destination/booking pane)
+and `player-airport.png` (shared navigation and airport mini map). The SA preset
+includes CPD, CED, WYA, PLO, KGC and MGB; Rex ZL3497 shows inbound speed/altitude,
+landing time/progress and all three available camera actions. Flight-card headings,
+bottom map controls and booking controls fit without overlap in both inspected
+window sizes. Real-feed decorations do not expose simulated camera/status actions.
+
+Capture command: `bash scripts/capture-game.sh --out work/captures/map.png --delay
+10 --minutes 1 -- -airsideReviewPanel map-flight -screen-width 1440 -screen-height
+900 -screen-fullscreen 0`. Use `map` for booking review or omit the review argument
+for the airport. Final PR: #532. Full native remains non-green because of the
+recorded inherited ground-separation failure; static captures do not prove physical
+mouse input or full-flight weather/performance acceptance.

@@ -1,3 +1,15 @@
+## Where to resume — build script stall recovery, 6 October 2026
+
+- **2026-10-06 Cursor — `scripts/build-mac.sh` recovers from the bee_backend deadlock.**
+  After pulls that change scripts, Unity's script build repeatedly queued every job, ran
+  none and idled at 0% CPU forever (seen 1 Oct and twice on 6 Oct). The script now runs
+  Unity under a watchdog: log silent for `AIRSIDE_BUILD_STALL_SECONDS` (default 180) with
+  `bee_backend` as the last started process → kill the Unity process tree, clear
+  `Library/Bee` *.dag graphs, retry once, else fail with a message.
+  **Evidence:** real build with a 10 s threshold never false-triggered (log grows during
+  compiles); a fake Unity that hangs after a bee_backend line was detected, killed with no
+  orphans, retried, and failed cleanly (exit 1); default real build passes.
+
 ## Where to resume — map accuracy from open data, 6 October 2026
 
 Claude, at Bailey's request ("best map data you can find", private play only). Branch

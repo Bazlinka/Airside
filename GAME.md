@@ -1,3 +1,29 @@
+## Where to resume — aircraft interior immersion analysis, 6 October 2026
+
+Codex; Bailey requested one dedicated agent per aircraft to analyse markedly more
+realistic, immersive cockpit, passenger and exterior views. Documentation branch
+`docs/aircraft-immersion-audit-20261006`, based on main `64ca4a23` (merged #537).
+Fourteen dedicated reports cover thirteen passenger aircraft and Bell 412EP:
+`docs/art/aircraft-immersion-audit-2026-10-06/README.md`.
+
+Analysis only: **no game code/assets changed, no Unity tests, builds, editor/player
+execution or new renders**. Evidence is current source, retained historical native
+fixtures and primary aircraft references. Historical captures do not certify the
+current packaged game; ATR/Q400 cockpit captures remain unavailable. Bell cockpit
+and passenger views are unsupported today; its proposed interiors are new scope.
+
+Highest-value shared work: aircraft-specific apertures/window stations independent
+of seat pitch; fitted curved cabin sections and depth beyond the five-row box;
+family-specific windshield/panel structure; shaped seats/bins and distinct
+materials/cabin lighting. Individual reports preserve genuine family differences
+and flag optional/operator cabin fits. Functional avionics are outside the request.
+
+**NEXT:** review the report and select an implementation slice. Recommended first:
+shared window/cabin structure proved on ATR42, A320 and B789, then fit the remaining
+profiles. Use one owner per shared builder; aircraft workers own disjoint profile/
+model files. Recommendations are proposals, not an approved milestone or completed
+visual implementation. Keep the user's no-Unity restriction until they change it.
+
 ## Where to resume — smooth takeoff and flight information, 6 October 2026
 
 Codex; Bailey reported an altitude jump at takeoff and requested flight status /

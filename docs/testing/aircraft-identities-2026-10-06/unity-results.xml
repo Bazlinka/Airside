@@ -4035,7 +4035,7 @@
                 <property name="retryIteration" value="0" />
                 <property name="repeatIteration" value="0" />
               </properties>
-              <output><![CDATA[exact 48/51; late 5,15,9; early 
+              <output><![CDATA[exact 48/51; late 5,15,9; early
 ]]></output>
             </test-case>
             <test-case id="1722" name="Inbound_ExpectsClearanceNoEarlierThanItArrives" fullname="Airside.Tests.ArrivalClearanceTests.Inbound_ExpectsClearanceNoEarlierThanItArrives" methodname="Inbound_ExpectsClearanceNoEarlierThanItArrives" classname="Airside.Tests.ArrivalClearanceTests" runstate="Runnable" seed="2017156914" result="Passed" start-time="2026-10-06 01:07:00Z" end-time="2026-10-06 01:07:35Z" duration="34.871926" asserts="0">

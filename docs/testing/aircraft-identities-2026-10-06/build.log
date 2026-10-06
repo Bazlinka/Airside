@@ -1,0 +1,9 @@
+Mac build created at /private/tmp/airside-livery-review-20261006/work/builds/Airside.app
+Build identity:
+commit=4d5b3965
+commitFull=4d5b3965e53654caad86f1ddb1250bb4904fec58
+branch=feature/aircraft-identity-refresh
+subject=Refresh fitted visual identities across the aircraft fleet
+committedAt=2026-10-06T11:48:50+10:30
+dirty=false
+stampedAt=2026-10-06T01:18:55Z

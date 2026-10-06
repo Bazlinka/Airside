@@ -9,7 +9,15 @@
   Existing audio fixes already merged via #507 (`e5151ded`): local changed
   jet WAVs/manifest match main, so no stale audio-code overwrite is needed.
   Evidence: `docs/testing/aircraft-identities-2026-10-06/README.md`.
-  Validation details and remaining packaged coverage are recorded there.
+  Checks: headless 1490/1490; native Unity 1933 passed/0 failed, two existing
+  inconclusives; fitted-paint, connectivity and asset audits pass; 56 native
+  captures inspected across fourteen types. Clean Mac build passed at `4d5b3965`.
+  Packaged lighting/weather/repaint UI and performance acceptance remain open.
+  **NEXT:** explicit approval to publish the aircraft refresh to GitHub/main;
+  automatic approval review rejected the branch push. No PR or remote art merge.
+  The original checkout is clean at prior main `19fd9688`; duplicate audio work
+  exactly matched merged #507 and was backed up to
+  `/private/tmp/airside-audio-before-sync-20261006.patch` before clearing/syncing.
 
 Codex; branch `feature/freight-and-interface-refresh`. Bailey approved requiring
 freighters for freight work and a substantial HUD/viewing, return-summary and

@@ -48,7 +48,13 @@ the A220 sun rays and 787-10 meridian are enlarged, and the Bell gets fitted pan
   checkout's ignored Bee JSON and compiled DAG cache. The next compile completed in
   20 seconds. No tracked project or compiler configuration changes are shipped.
 
-Mac build result is recorded separately below. A native
+- Mac player build: passed from clean source commit `4d5b3965` (`build.log`).
+  Bundle: `work/builds/Airside.app`. Build identity records `dirty=false`.
+  The later validation/compositor commit changes review tooling and evidence only.
+- GitHub publication: automatic approval review rejected the branch push because
+  explicit authorization to publish this aircraft refresh's source and renders is
+  required. No PR was created and the art has not reached remote main. The complete
+  implementation and evidence remain committed locally for approval. A native
 isolated render does not validate packaged camera interaction, night/weather,
 repainting UI, freighter appearance or frame time. No claim of full-fleet packaged
 playtesting is made by this evidence.
@@ -67,6 +73,13 @@ python3 scripts/audio/generate_aircraft_audio.py --check
 bash scripts/test-domain.sh
 bash scripts/test-unity.sh
 python3 scripts/render-livery-overhaul.py docs/testing/aircraft-identities-2026-10-06
+```
+
+Native sheets can be reproduced after `AircraftAppearanceReview.Render` has
+written all fourteen types with `-aircraftReviewViews front,side,opposite,overview`:
+
+```sh
+python3 scripts/assemble-aircraft-identity-review.py work/identity-native docs/testing/aircraft-identities-2026-10-06/native
 ```
 
 All new art is original deterministic project-owned geometry. Existing airline

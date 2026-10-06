@@ -27,3 +27,10 @@ Source contracts:
   ScreenCapture builtin manifest and lock entries agree on version 1.0.0.
 
 No Unity editor/player/build/tests or full-journey reproduction run.
+
+Rebase onto current main 3f8d0969:
+  scripts/test-domain.sh: 1779 passed / 0 failed, 3m21s.
+  python3 scripts/update-harness.py: current derived file; no extra diff.
+  5 capture C# files parse under C# 9; zero syntax errors.
+  Asset audit passes: 1784 GUIDs / 386 mirrors / 70 character materials.
+  git diff --check passes. No Unity/native/journey execution.

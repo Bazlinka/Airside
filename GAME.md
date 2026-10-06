@@ -9,7 +9,8 @@ and fail QA with code 2 after an error/15-second timeout. Enable Unity's built-i
 ScreenCapture module; no blocking fallback and no normal gameplay/simulation change.
 
 Evidence and exact limits: `docs/testing/long-flight-stall-2026-10-06/README.md`.
-Unity-free regression **1,724/1,724**, focused worker **2/2**, C# 9 parsing **5/5**,
+Rebased on `3f8d0969`: Unity-free regression **1,779/1,779**, focused worker
+**2/2**, C# 9 parsing **5/5**,
 asset audit and harness derivation pass. No full journey reproduction or Unity
 execution by instruction. Historic 172-second
 root cause is not proven; the concrete blocking capture path has been removed.

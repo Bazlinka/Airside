@@ -81,3 +81,12 @@ when the frame is submitted, rather than after its asynchronous write finishes.
 No Unity editor, player, build, native test or full-flight reproduction was run,
 as requested. The historic 172-second cause remains unproven; this fixes the
 concrete blocking capture path most consistent with the available evidence.
+
+## Rebase validation — current main `3f8d0969`
+
+Rebased onto the merged unified fleet/cockpit changes; only top-of-file
+GAME/CHANGELOG handoffs conflicted, with both sets retained. Rebased headless
+suite **1,779 passed / 0 failed** (3m21s). Harness derivation is current; the
+five capture C# files parse without syntax errors; asset audit passes with
+**1,784 GUIDs / 386 mirrors / 70 character materials**; whitespace is clean.
+No Unity or journey run. Original capture investigation above remains unchanged.

@@ -35,7 +35,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void ChecksTakeDistinctBerths_UntilEveryFittingHangarIsFull()
+        public void ChecksReserveDistinctSheds_UntilEveryFittingHangarIsOccupied()
         {
             var options = HangarTow.Options(AircraftType.Saab340, AirlineOperations.AdelaideRegionalBays[0]);
             var total = options.Sum(o => o.Capacity);
@@ -46,14 +46,14 @@ namespace Airside.Tests
                 var result = ops.StartCheck(plane);
                 if (!result.Accepted)
                 {
-                    StringAssert.Contains("full until", result.Reason);
+                    StringAssert.Contains("occupied", result.Reason);
                     break;
                 }
 
                 accepted++;
             }
 
-            Assert.That(accepted, Is.GreaterThanOrEqualTo(options[0].Capacity), "the best hangar fills before any check is refused");
+            Assert.That(accepted, Is.GreaterThanOrEqualTo(1), "new jobs conservatively reserve a complete shed");
             TestContext.WriteLine($"{accepted} of {planes.Count} accepted; best hangar {options[0].HangarName} holds {options[0].Capacity}; all hangars {total}");
 
             var berths = planes.Where(p => p.CheckUntil.HasValue)

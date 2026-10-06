@@ -126,6 +126,14 @@ namespace Airside.Presentation
 
         public void Clear() => _commands.Clear();
 
+        public void AppendClipped(HudDrawList source, HudBox visible)
+        {
+            foreach (var command in source.Commands)
+                if (command.Box.X >= visible.X && command.Box.Right <= visible.Right
+                    && command.Box.Y >= visible.Y && command.Box.Bottom <= visible.Bottom)
+                    _commands.Add(command);
+        }
+
         // Workspaces sit over a world the player is still operating. Graphite glass keeps the
         // miniature airport present behind it without sacrificing text contrast.
         public void Surface(HudBox box, float alpha = 0.90f) => Add(HudDrawKind.Surface, box, value: alpha);

@@ -33,7 +33,9 @@ namespace Airside.Simulation
         /// <summary>Vacated the runway; waiting for a stand to be chosen.</summary>
         AwaitingStand,
         /// <summary>Taxiing to the assigned stand.</summary>
-        TaxiIn
+        TaxiIn,
+        /// <summary>A ground maintenance job, independent of commercial trips.</summary>
+        Maintenance
     }
 
     /// <summary>A destination and the number of completed return flights an aircraft has made there.</summary>
@@ -296,6 +298,8 @@ namespace Airside.Simulation
 
         /// <summary>When the check under way finishes; null when none is.</summary>
         public SimulationTime? CheckUntil { get; internal set; }
+
+        public MaintenanceJob MaintenanceJob { get; internal set; }
 
         /// <summary>Runway fixed when the movement enters the airport sequence.</summary>
         public RunwayDirection AssignedRunway { get; internal set; } = RunwayDirection.Runway05;

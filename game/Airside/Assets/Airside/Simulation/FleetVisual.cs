@@ -52,6 +52,10 @@ namespace Airside.Simulation
 
         public static FleetVisual For(FleetAircraft aircraft, SimulationTime now)
         {
+            if (aircraft.MaintenanceJob is { } maintenance)
+                return Ground(maintenance.ActiveLeg(aircraft.Type) != null ? AircraftPhase.TaxiOut : AircraftPhase.AtStand,
+                    new SimulationTime(maintenance.PhaseStartedAt), FleetGroundLeg.Parked,
+                    new SimulationTime(maintenance.PhaseStartedAt), maintenance.PhaseEndsAt - maintenance.PhaseStartedAt);
             if (aircraft.Type.IsRotorcraft)
                 return ForRotorcraft(aircraft);
             var performance = AircraftPerformance.For(aircraft.Type);

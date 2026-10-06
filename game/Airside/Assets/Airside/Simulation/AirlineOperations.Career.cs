@@ -42,8 +42,8 @@ namespace Airside.Simulation
                 return CommandResult.Refused($"{aircraft.Registration} must be parked on a stand to be refitted.");
             if (aircraft.Scheduled.HasValue)
                 return CommandResult.Refused($"Cancel {aircraft.Registration}'s booked flight before the refit.");
-            if (aircraft.CheckUntil is { } checkEnds && checkEnds.CompareTo(_processedTo) > 0)
-                return CommandResult.Refused($"{aircraft.Registration} is in its check until {Clock.TimeText(checkEnds)}.");
+            if (Maintenance.InCheck(aircraft, _processedTo))
+                return CommandResult.Refused($"{aircraft.Registration} is in its check: {Maintenance.Status(aircraft, _processedTo, Clock)}.");
             var cost = FreightRates.ConversionCost(aircraft.Type);
             if (!CareerState.TryChargeDispatch(cost))
                 return CommandResult.Refused($"The refit costs ${cost:N0}. You have ${CareerState.Funds:N0}.");

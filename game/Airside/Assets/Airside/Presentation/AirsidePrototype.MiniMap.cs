@@ -12,7 +12,7 @@ namespace Airside.Presentation
     /// </summary>
     public sealed partial class AirsidePrototype
     {
-        private bool _miniMapVisible = true;
+        private bool _miniMapVisible = false;
         private Texture2D _miniMapTexture;
         private bool _miniMapDragging;
         private bool _miniMapPressed;

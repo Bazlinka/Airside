@@ -114,6 +114,12 @@ namespace Airside.Simulation
             Track track, out GroundPose pose, out FleetGroundLeg leg)
         {
             pose = default;
+            if (aircraft.MaintenanceJob is { } job)
+            {
+                pose = job.Pose(aircraft.Type, seconds);
+                leg = FleetGroundLeg.Parked;
+                return true;
+            }
             var at = new SimulationTime((long)Math.Floor(seconds));
             FleetVisual visual;
             if (track != null && track.Visual.HasValue && seconds < track.ValidUntil)
@@ -388,6 +394,12 @@ namespace Airside.Simulation
         private static (float MinX, float MinZ, float MaxX, float MaxZ) RouteBounds(IReadOnlyList<FleetAircraft> fleet,
             FleetAircraft aircraft, SimulationTime at)
         {
+            if (aircraft.MaintenanceJob is { } job)
+            {
+                if (job.ActiveLeg(aircraft.Type) is { } movement) return movement.Bounds;
+                var here = job.Pose(aircraft.Type, at.ElapsedSeconds);
+                return (here.X, here.Z, here.X, here.Z);
+            }
             var leg = aircraft.State switch
             {
                 FleetState.TaxiOut => FleetGroundLeg.TaxiOut,
@@ -416,8 +428,8 @@ namespace Airside.Simulation
 
         // A helicopter lifts off and lands on its pad and never rolls along a taxiway or runway (ADR 0207).
         private static bool OnTheGround(FleetAircraft aircraft) => !aircraft.Type.IsRotorcraft
-            && aircraft.State is FleetState.TaxiOut
+            && (aircraft.MaintenanceJob != null || aircraft.State is FleetState.TaxiOut
                 or FleetState.HoldingShort or FleetState.TakingOff or FleetState.Landing
-                or FleetState.AwaitingStand or FleetState.TaxiIn;
+                or FleetState.AwaitingStand or FleetState.TaxiIn);
     }
 }

@@ -91,6 +91,21 @@ namespace Airside.Presentation
             pull = PushbackTugTimeline.StandPullForwardMetres;
             if (aircraft.Type.IsRotorcraft)
                 return false;
+            if (aircraft.MaintenanceJob is { } job)
+            {
+                var paths = job.Paths(aircraft.Type);
+                var elapsedJob = _preciseTime - job.PhaseStartedAt;
+                anchor = job.Pose(aircraft.Type, _preciseTime);
+                if (job.Phase == MaintenancePhase.Positioning)
+                    state = new TugState(TugPhase.Coupled, 0f);
+                else if (job.Phase == MaintenancePhase.Taxiing)
+                    state = PushbackTugTimeline.OnTaxiOut(elapsedJob, paths.PushSeconds,
+                        paths.Outbound.Parts[1].PauseBeforeSeconds);
+                else if (job.Phase == MaintenancePhase.Returning)
+                    state = PushbackTugTimeline.OnTaxiOut(elapsedJob, paths.ExitSeconds, 120);
+                else return false;
+                return state.Visible;
+            }
             GroundLeg leg;
             if (aircraft.State == FleetState.AtStand && aircraft.Scheduled is { Cancelled: false } booked)
             {

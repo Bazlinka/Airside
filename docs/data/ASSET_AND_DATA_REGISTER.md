@@ -344,3 +344,15 @@ assets, not runtime art or real airport/simulation data. No external acquisition
 additional cost or attribution requirement. System Arial is referenced locally,
 not downloaded or redistributed. Existing Unity UI and approved world art are
 the fallback. Screenshots verify the browser study only, not native gameplay.
+
+
+## Refined shared interface implementation previews — 7 October 2026 (ADR 0243)
+
+Original project-owned HUD painters, exported by `scripts/hud-mockup` from real
+headless simulation fixtures and rasterized by `scripts/render-hud-mockups.py`.
+Retained under `docs/testing/refined-interface-maintenance-2026-10-07/`. These are
+review evidence with a synthetic backdrop, not runtime textures or Unity captures.
+Existing approved palette/icons remain the runtime sources. No external imagery,
+new asset acquisition, additional cost or attribution. Local DejaVu fonts are used
+by the established review renderer; no fonts are added to game assets. Previous
+shared HUD source revision remains the fallback.

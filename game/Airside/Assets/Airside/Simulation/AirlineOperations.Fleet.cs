@@ -409,18 +409,54 @@ namespace Airside.Simulation
                 return CommandResult.Refused($"{aircraft.Registration} is already in its check.");
             if (CareerState == null)
                 return CommandResult.Refused("No career to charge the check against.");
+            if (_processedTo.ElapsedSeconds < BoardingFlow.ClearedForMaintenanceAt(aircraft))
+                return CommandResult.Refused("Wait for passengers and unloading to clear before maintenance.");
             var seconds = Maintenance.CheckSeconds(aircraft.Type, CareerState.BaseLevel);
-            var berth = HangarBays.Assign(_fleet, aircraft, _processedTo.ElapsedSeconds, _processedTo.ElapsedSeconds + seconds,
-                CareerState.BaseLevel);
-            if (berth.Full)
-                return CommandResult.Refused($"Every hangar that fits {aircraft.Registration} is full until "
-                    + $"{Clock.TimeText(new SimulationTime(berth.FreeAtSeconds))}.");
+            var options = HangarTow.Options(aircraft.Type, aircraft.Stand);
+            HangarTow.Plan selected = null;
+            foreach (var option in options)
+            {
+                var occupied = false;
+                foreach (var other in _fleet)
+                {
+                    if (other == aircraft) continue;
+                    if (other.MaintenanceJob?.HangarId == option.HangarId) { occupied = true; break; }
+                    if (other.MaintenanceJob == null && Maintenance.InCheck(other, _processedTo))
+                    {
+                        var legacy = HangarBays.Of(_fleet, other, CareerState.BaseLevel);
+                        var legacyOptions = HangarTow.Options(other.Type, other.Stand);
+                        if (legacy.HasHangar && legacy.Hangar < legacyOptions.Count
+                            && legacyOptions[legacy.Hangar].HangarId == option.HangarId) { occupied = true; break; }
+                    }
+                }
+                if (!occupied) { selected = option; break; }
+            }
+            if (options.Count > 0 && selected == null)
+                return CommandResult.Refused("Every fitting maintenance shed is occupied. Wait for a shed to clear.");
+            var job = selected == null ? null : new MaintenanceJob
+            {
+                OriginStand = aircraft.Stand.Value, HangarId = selected.HangarId,
+                Phase = MaintenancePhase.Preparing, RequestedAt = _processedTo.ElapsedSeconds,
+                PhaseStartedAt = _processedTo.ElapsedSeconds, PhaseEndsAt = _processedTo.ElapsedSeconds + 90,
+                RepairSeconds = seconds
+            };
+            if (job != null) _ = job.Paths(aircraft.Type); // Validate the route before any charge.
             var cost = Maintenance.CheckCost(aircraft.Type, CareerState.BaseLevel);
             if (!CareerState.TryChargePurchase(cost))
                 return CommandResult.Refused($"A check costs ${cost:N0}. You have ${CareerState.Funds:N0}.");
-
-            aircraft.RotationsSinceCheck = 0;
-            aircraft.CheckUntil = _processedTo.Advance(Maintenance.CheckSeconds(aircraft.Type, CareerState.BaseLevel));
+            if (job == null)
+            {
+                // Pad or outsourced checks retain the legacy timed path when no fitting shed exists.
+                aircraft.RotationsSinceCheck = 0;
+                aircraft.CheckUntil = _processedTo.Advance(seconds);
+            }
+            else
+            {
+                aircraft.MaintenanceJob = job;
+                aircraft.CheckUntil = _processedTo.Advance(seconds + 90 + 130 + job.Paths(aircraft.Type).Outbound.WholeSeconds
+                    + 75 + job.Paths(aircraft.Type).Entry.WholeSeconds);
+                Transition(aircraft, FleetState.Maintenance, _processedTo, null);
+            }
             return CommandResult.Ok;
         }
 

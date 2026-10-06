@@ -99,6 +99,7 @@ namespace Airside.Presentation
         {
             if (aircraft == null)
                 return string.Empty;
+            if (aircraft.MaintenanceJob is { } job) return job.Label;
             if (aircraft.Airline.IsPlayer && Maintenance.InCheck(aircraft, now))
                 return "in check";
             if (aircraft.Airline.IsPlayer && aircraft.State == FleetState.AtStand && !aircraft.Scheduled.HasValue

@@ -1,5 +1,15 @@
 ## Unreleased
 
+- Implement the refined shared interface and real maintenance journey (ADR 0243):
+  normal startup without passengers/loading, traffic-aware taxi, apron shutdown,
+  continuous tug positioning into the shed, repair and return to a free stand.
+  Wear resets after repair; save v21 resumes the actual phase. Older timed checks
+  retain their prior completion semantics. Each active job reserves its shed.
+- Simplify overview navigation/status, make radar optional, add a right aircraft
+  inspector with fixed actions and scrolling details, and increase Fleet/Operations
+  row spacing. Keep command feedback visible below management sheets. Offline
+  shared-painter previews cover 1440×900 and 1280×720; native Unity verification pending.
+
 - Refine the maintenance movement and whole-interface proposal with a concrete
   interactive design study, seven retained previews and implementation/acceptance
   packets (ADR 0242). Design only; no runtime game changes.

@@ -9,3 +9,5 @@ Propose a separate deterministic maintenance job sharing aircraft-specific start
 Affected systems: future shared HUD/workspaces, startup/service gating, maintenance, hangar capacity/geometry, ground reservations and save/catch-up. No runtime changes or save migration in this design commit. Existing product plans and current gameplay remain intact.
 
 Evidence: `docs/art/interface-refinement-2026-10-06/`; implementation packet: `docs/plans/refined-interface-and-maintenance.md`. Original schematic background and sample figures are explicitly labelled. No Unity execution, compile, native appearance or performance claim. First recommended implementation slice is overview/inspector plus a complete Saab maintenance journey, followed by jet pushback and larger-aircraft clearance.
+
+Implementation follow-through: ADR 0243, 7 October 2026. The study is retained as design history; shared runtime painters now implement its overview/inspector direction.

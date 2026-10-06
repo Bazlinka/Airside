@@ -51,8 +51,8 @@ namespace Airside.Presentation
         /// <summary>The region modal cards (setup, away summary, help) are centred in.</summary>
         public Rect SetupArea => ToRect(Shell.SetupArea);
 
-        public static AirlineHudLayout Create(HudLayout hud, bool showGuide = false, bool workspaceOpen = false) =>
-            new(HudShell.Layout(hud.Viewport.x, hud.Viewport.y, showGuide, workspaceOpen));
+        public static AirlineHudLayout Create(HudLayout hud, bool showGuide = false, bool workspaceOpen = false, bool showMiniMap = false) =>
+            new(HudShell.Layout(hud.Viewport.x, hud.Viewport.y, showGuide, workspaceOpen, showMiniMap));
 
         /// <summary>A modal card of the preferred height, centred in <see cref="SetupArea"/>.</summary>
         public Rect SetupPanel(float preferredHeight) =>

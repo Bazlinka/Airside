@@ -192,6 +192,11 @@ namespace Airside.Presentation
         private static (string Route, string Time, float Progress, string ProgressText) Detail(
             FleetAircraft aircraft, SimulationTime now, AirlineClock clock, PlayerBaseLevel? baseLevel)
         {
+            if (aircraft.MaintenanceJob is { } job)
+            {
+                var remaining = job.Phase == MaintenancePhase.Repairing ? "Repair ends " + clock.TimeText(new SimulationTime(job.PhaseEndsAt)) : "Return time pending";
+                return (job.Hangar(aircraft.Type).HangarName, remaining, -1f, job.Label);
+            }
             var place = FlightNumber.PlaceName(aircraft);
             var route = string.IsNullOrEmpty(place)
                 ? StandNames.Display(aircraft.Stand)
@@ -369,6 +374,8 @@ namespace Airside.Presentation
                 return ($"Next: let {priority.Registration} park, then plan its first flight",
                     StatusSeverity.Attention);
 
+            if (priority.MaintenanceJob is { } maintenanceJob)
+                return ($"Next: track {priority.Registration} · {maintenanceJob.Label.ToLowerInvariant()}", StatusSeverity.Normal);
             if (Maintenance.InCheck(priority, now))
                 return ($"Next: {priority.Registration} is in its check until {clock.TimeText(priority.CheckUntil.Value)}",
                     StatusSeverity.Attention);

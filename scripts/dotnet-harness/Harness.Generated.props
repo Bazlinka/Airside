@@ -37,6 +37,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftDoorwayGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftEngineAudio.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftFanDiscGeometry.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftInspector.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftNavigationPalette.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftPickRouting.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftSkinUv.cs" />
@@ -292,6 +293,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/LiveClockTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/LiveTrafficTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/LiveWeatherTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/MaintenanceJourneyTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/MaintenanceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/MapGeographyTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/MapLabelLayoutTests.cs" />
@@ -306,6 +308,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/PushbackTimeTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/PushbackTugTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RampCrewTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RefinedHudTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RegionalCarriersTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RelocationTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ReviewAircraftFollowTests.cs" />

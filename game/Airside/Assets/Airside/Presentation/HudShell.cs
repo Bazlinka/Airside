@@ -158,27 +158,27 @@ namespace Airside.Presentation
     public static class HudShell
     {
         /// <summary>Outer margin the whole HUD keeps clear of the window edge.</summary>
-        public const float Margin = 16f;
+        public const float Margin = 20f;
 
         /// <summary>Gap between neighbouring floating panels.</summary>
-        public const float Gap = 10f;
+        public const float Gap = 16f;
 
-        public const float RailWidth = 76f;
-        public const float RailMarkHeight = 70f;
-        public const float RailItemHeight = 64f;
+        public const float RailWidth = 64f;
+        public const float RailMarkHeight = 8f;
+        public const float RailItemHeight = 58f;
         public const float RailItemMinHeight = 46f;
-        public const float RailFootHeight = 56f;
+        public const float RailFootHeight = 48f;
 
-        public const float CapsuleHeight = 52f;
+        public const float CapsuleHeight = 64f;
         public const float CapsuleMaxWidth = 700f;
         public const float CapsuleMinWidth = 300f;
 
         /// <summary>A long airline name is clipped rather than pushing every other readout out.</summary>
-        public const float MaxReadoutWidth = 150f;
+        public const float MaxReadoutWidth = 210f;
 
-        public const float CareerWidth = 340f;
-        public const float CareerHeight = 150f;
-        public const float GuideHeight = CareerHeight;
+        public const float CareerWidth = 400f;
+        public const float CareerHeight = 68f;
+        public const float GuideHeight = 144f;
 
         public const float OperationsWidth = 300f;
         public const float OperationsMaxHeight = 440f;
@@ -188,8 +188,8 @@ namespace Airside.Presentation
         public const float MiniMapWidth = 236f;
         public const float MiniMapHeight = 150f;
 
-        public const float SelectedCardWidth = 460f;
-        public const float SelectedCardHeight = 220f;
+        public const float SelectedCardWidth = 328f;
+        public const float SelectedCardHeight = 700f;
         public const float SelectedCardMinWidth = 300f;
 
         public const float ToastWidth = 420f;
@@ -208,11 +208,11 @@ namespace Airside.Presentation
 
         public static readonly (HudWorkspace workspace, string label)[] Tabs =
         {
-            (HudWorkspace.Operations, "OPS"),
-            (HudWorkspace.Map, "MAP"),
-            (HudWorkspace.Fleet, "FLEET"),
-            (HudWorkspace.Contracts, "CONTRACTS"),
-            (HudWorkspace.Stats, "CAREER")
+            (HudWorkspace.Operations, "Operations"),
+            (HudWorkspace.Map, "Map"),
+            (HudWorkspace.Fleet, "Fleet"),
+            (HudWorkspace.Contracts, "Contracts"),
+            (HudWorkspace.Stats, "Career")
         };
 
         /// <summary>The approved UI line icon for each rail item (Art/UI/Icons).</summary>
@@ -229,22 +229,21 @@ namespace Airside.Presentation
         /// <summary>The navigation rail, full height when there is room for every item.</summary>
         public static HudBox Rail(float viewportWidth, float viewportHeight)
         {
-            var available = Max(1f, viewportHeight - Margin * 2f);
-            var itemHeight = RailItemHeightFor(viewportHeight);
-            var height = Min(available, RailMarkHeight + itemHeight * Tabs.Length + RailFootHeight);
-            return new HudBox(Margin, Margin, Min(RailWidth, Max(1f, viewportWidth - Margin * 2f)), height);
+            var top = Margin + CapsuleHeight + Gap;
+            var available = Max(1f, viewportHeight - top - Margin);
+            var height = Min(available, RailMarkHeight + RailItemHeightFor(viewportHeight) * Tabs.Length + RailFootHeight);
+            return new HudBox(Margin, top, Min(RailWidth, Max(1f, viewportWidth - Margin * 2f)), height);
         }
 
         /// <summary>Item height after shrinking to fit a short window (never below a clickable size).</summary>
         public static float RailItemHeightFor(float viewportHeight)
         {
-            var available = viewportHeight - Margin * 2f - RailMarkHeight - RailFootHeight;
+            var available = viewportHeight - Margin * 2f - CapsuleHeight - Gap - RailMarkHeight - RailFootHeight;
             return Clamp(available / Tabs.Length, RailItemMinHeight, RailItemHeight);
         }
 
         /// <summary>The brand-mark slot at the top of the rail.</summary>
-        public static HudBox RailMark(HudBox rail) =>
-            new(rail.X + (rail.Width - 40f) * 0.5f, rail.Y + 14f, 40f, 40f);
+        public static HudBox RailMark(HudBox rail) => new(rail.X, rail.Y, 0f, 0f);
 
         /// <summary>The round "?" at the foot of the rail that opens the Flight Manual.</summary>
         public static HudBox RailHelp(HudBox rail) =>
@@ -277,17 +276,8 @@ namespace Airside.Presentation
         /// <summary>The top status capsule: centred when it fits, otherwise beside the rail.</summary>
         public static HudBox Capsule(float viewportWidth, float viewportHeight)
         {
-            var rail = Rail(viewportWidth, viewportHeight);
-            var left = rail.Right + Gap;
-            var right = viewportWidth - Margin - OperationsWidth - Gap;
-            var room = right - left;
-            if (room < CapsuleMinWidth)
-                right = viewportWidth - Margin;
-            room = Max(1f, right - left);
-            var width = Min(CapsuleMaxWidth, room);
-            var centred = (viewportWidth - width) * 0.5f;
-            var x = centred >= left && centred + width <= right ? centred : left;
-            return new HudBox(x, Margin, width, Min(CapsuleHeight, Max(1f, viewportHeight - Margin * 2f)));
+            return new HudBox(Margin, Margin, Max(1f, viewportWidth - Margin * 2f),
+                Min(CapsuleHeight, Max(1f, viewportHeight - Margin * 2f)));
         }
 
         /// <summary>
@@ -301,7 +291,7 @@ namespace Airside.Presentation
             if (values == null || capsule.IsEmpty)
                 return;
             var x = capsule.X + 20f;
-            var limit = capsule.Right - 16f;
+            var limit = capsule.Right - (capsule.Width >= 800f ? 290f : 70f);
             foreach (var value in values)
             {
                 var width = value.Kind == HudCapsuleKind.Chip
@@ -317,88 +307,41 @@ namespace Airside.Presentation
 
         /// <summary>The whole persistent shell for one window size and HUD state.</summary>
         public static HudShellLayout Layout(float viewportWidth, float viewportHeight, bool showGuide = false,
-            bool workspaceOpen = false)
+            bool workspaceOpen = false, bool showMiniMap = false)
         {
             var width = viewportWidth;
             var height = viewportHeight;
             var floor = height - Margin;
             var rail = Rail(width, height);
             var capsule = Capsule(width, height);
-            var workspace = WorkspaceSurface(width, height);
-
-            // Bottom-left career card; if the rail reaches down that far, it sits beside the rail.
-            var careerWidth = Min(CareerWidth, Max(1f, width - Margin * 2f));
+            var left = rail.Right + Gap;
+            var available = Max(1f, width - Margin - left);
+            var top = capsule.Bottom + Gap;
             var careerHeight = showGuide ? GuideHeight : CareerHeight;
-            var career = new HudBox(Margin, floor - careerHeight, careerWidth, careerHeight);
-            if (career.Y < rail.Bottom + Gap)
-            {
-                careerWidth = Min(CareerWidth, Max(1f, width - rail.Right - Gap - Margin));
-                career = new HudBox(rail.Right + Gap, floor - careerHeight, careerWidth, careerHeight);
-            }
-            if (career.Y < capsule.Bottom + Gap || career.Width < 220f)
-                career = Hidden(career);
-
-            // Bottom-right radar.
-            var mini = new HudBox(width - Margin - MiniMapWidth, floor - MiniMapHeight, MiniMapWidth, MiniMapHeight);
-            if (mini.X < career.Right + Gap + SelectedCardMinWidth + Gap || mini.Y < capsule.Bottom + Gap)
-                mini = Hidden(mini);
-
-            // Top-right live flight tiles, never reaching the radar.
-            var opsBottom = mini.IsEmpty ? floor - (career.IsEmpty ? 0f : 0f) : mini.Y - Gap;
-            var opsX = width - Margin - OperationsWidth;
-            var operations = new HudBox(opsX, Margin, OperationsWidth,
-                Min(OperationsMaxHeight, Max(0f, opsBottom - Margin)));
-            if (operations.X < capsule.Right + Gap - 0.01f || operations.Height < OperationsHeaderHeight + OperationsTileHeight)
-                operations = Hidden(operations);
-
-            // Bottom-centre selected aircraft, between the career card and the radar.
-            var leftEdge = career.IsEmpty ? rail.Right + Gap : career.Right + Gap;
-            if (rail.Bottom + Gap < floor - SelectedCardHeight && career.IsEmpty)
-                leftEdge = Margin;
-            var rightEdge = mini.IsEmpty ? width - Margin : mini.X - Gap;
-            var selectedWidth = Min(SelectedCardWidth, rightEdge - leftEdge);
-            var selectedHeight = Min(SelectedCardHeight, Max(0f, floor - capsule.Bottom - Gap));
-            var selected = new HudBox(leftEdge + (rightEdge - leftEdge - selectedWidth) * 0.5f,
-                floor - selectedHeight, selectedWidth, selectedHeight);
-            if (selectedWidth < SelectedCardMinWidth || selectedHeight < 88f)
-                selected = Hidden(selected);
-            if (!selected.IsEmpty && !operations.IsEmpty && selected.Overlaps(operations))
-                operations = operations.Bottom > selected.Y - Gap && selected.Y - Gap - operations.Y
-                             >= OperationsHeaderHeight + OperationsTileHeight
-                    ? operations.WithHeight(selected.Y - Gap - operations.Y)
-                    : Hidden(operations);
-
-            // Toasts: under the capsule on the overview; in the tiles' corner over an open sheet.
-            HudBox toast;
-            if (workspaceOpen)
-            {
-                var toastWidth = Min(ToastWidth, width - capsule.Right - Gap - Margin);
-                toast = new HudBox(width - Margin - toastWidth, Margin, toastWidth, ToastHeight);
-                if (toastWidth < 200f)
-                    toast = Hidden(toast);
-            }
-            else
-            {
-                var toastWidth = Min(ToastWidth, capsule.Width);
-                toast = new HudBox(capsule.X + (capsule.Width - toastWidth) * 0.5f, capsule.Bottom + Gap,
-                    toastWidth, ToastHeight);
-                if (toastWidth < 200f)
-                    toast = Hidden(toast);
-            }
-
+            var career = new HudBox(left, floor - careerHeight, Min(CareerWidth, available), careerHeight);
+            if (career.Y < top || career.Width < 220f) career = Hidden(career);
+            var selectedWidth = Min(SelectedCardWidth, available);
+            var selectedHeight = Min(SelectedCardHeight, Max(0f, floor - top));
+            var selected = new HudBox(width - Margin - selectedWidth, top, selectedWidth, selectedHeight);
+            if (selectedWidth < SelectedCardMinWidth || selectedHeight < 340f
+                || !career.IsEmpty && selected.Overlaps(career)) selected = Hidden(selected);
+            var mini = new HudBox(left, career.IsEmpty ? floor - MiniMapHeight : career.Y - Gap - MiniMapHeight,
+                MiniMapWidth, MiniMapHeight);
+            if (!showMiniMap || mini.Y < top || mini.Right > width - Margin
+                || !selected.IsEmpty && mini.Overlaps(selected)) mini = Hidden(mini);
+            var operations = new HudBox(0, 0, 0, 0);
+            var toastRoom = (selected.IsEmpty ? width - Margin : selected.X - Gap) - left;
+            var toast = new HudBox(left, top, Min(ToastWidth, Max(0f, toastRoom)), ToastHeight);
+            if (toast.Width < 200f || toast.Bottom > floor) toast = Hidden(toast);
             var setup = new HudBox(Margin, Margin, Max(1f, width - Margin * 2f), Max(1f, height - Margin * 2f));
-
-            if (!workspaceOpen)
-                workspace = Hidden(workspace);
+            var workspace = WorkspaceSurface(width, height);
+            if (!workspaceOpen) workspace = Hidden(workspace);
             else
             {
-                // The sheet replaces the overview panels; only the rail, capsule and toast stay.
-                career = Hidden(career);
-                operations = Hidden(operations);
-                mini = Hidden(mini);
-                selected = Hidden(selected);
+                career = Hidden(career); mini = Hidden(mini); selected = Hidden(selected);
+                // Keep command feedback below the sheet, clear of its scrollable body and actions.
+                toast = new HudBox(left, workspace.Bottom + ToastGap, Math.Min(ToastWidth, available), ToastHeight);
             }
-
             return new HudShellLayout(rail, capsule, career, operations, workspace, toast, mini, selected, setup);
         }
 
@@ -409,7 +352,7 @@ namespace Airside.Presentation
             var capsule = Capsule(viewportWidth, viewportHeight);
             var x = rail.Right + Gap;
             var top = capsule.Bottom + Gap;
-            var floor = viewportHeight - Margin;
+            var floor = viewportHeight - Margin - ToastHeight - ToastGap;
             return new HudBox(x, top, Max(1f, viewportWidth - Margin - x), Max(1f, floor - top));
         }
 
@@ -531,8 +474,25 @@ namespace Airside.Presentation
                 : fundsDirection < 0 || funds < 0 ? HudTone.Negative : HudTone.Default));
             into.Add(new HudCapsuleValue("RELIABILITY", career.Reliability + "%", HudTone.Default,
                 HudCapsuleKind.Gauge, career.Reliability / 100f));
-            into.Add(new HudCapsuleValue("TIER", career.FinaleReached ? "ESTABLISHED" : career.Tier.ToString().ToUpperInvariant(),
-                HudTone.Accent, HudCapsuleKind.Chip));
+            // Tier progress lives in the Career workspace, keeping the overview calm.
+        }
+
+        public const string OverviewAction = "shell:overview";
+        public const string MiniMapAction = "shell:minimap";
+        public const string MenuAction = "shell:menu";
+
+        public static void PaintControls(HudDrawList into, HudBox capsule, bool miniMapVisible)
+        {
+            if (capsule.Width < 800f)
+            {
+                into.Button(new HudBox(capsule.Right - 62f, capsule.Y + 16f, 50f, 32f), "Menu", MenuAction, HudButtonStyle.Secondary);
+                return;
+            }
+            var x = capsule.Right - 272f;
+            into.Caption(new HudBox(x, capsule.Y + 9f, 252f, 12f), "LIVE · REAL-TIME OPERATIONS", fontSize: 9f);
+            into.Button(new HudBox(x, capsule.Y + 26f, 82f, 30f), "Overview", OverviewAction, HudButtonStyle.Secondary);
+            into.Button(new HudBox(x + 88f, capsule.Y + 26f, 92f, 30f), miniMapVisible ? "Hide radar" : "Radar (N)", MiniMapAction, HudButtonStyle.Secondary);
+            into.Button(new HudBox(x + 186f, capsule.Y + 26f, 66f, 30f), "Menu", MenuAction, HudButtonStyle.Secondary);
         }
 
         /// <summary>The rail: livery-ringed brand slot, then icon-over-label workspace items.</summary>
@@ -540,15 +500,8 @@ namespace Airside.Presentation
         {
             if (into == null || rail.IsEmpty)
                 return;
-            into.Surface(rail, 0.88f);
+            into.Surface(rail, 0.97f);
             var mark = HudShell.RailMark(rail);
-            // The airline's livery rings the brand mark; the runtime draws the mark texture inside.
-            into.Ring(mark.X + mark.Width * 0.5f, mark.Y + mark.Height * 0.5f, mark.Width + 10f, 1f,
-                HudTone.Default, 3f);
-            into.Dot(mark.X + mark.Width * 0.5f, mark.Y + mark.Height * 0.5f, mark.Width + 5f, HudTone.Default,
-                liveryHex);
-            into.Hairline(new HudBox(rail.X + 16f, rail.Y + HudShell.RailMarkHeight - 6f, rail.Width - 32f, 1f),
-                HudTone.Muted, 0.25f);
             if (tabs == null)
                 return;
             foreach (var tab in tabs)
@@ -563,10 +516,10 @@ namespace Airside.Presentation
                 var iconSize = tab.Box.Height >= 56f ? 24f : 18f;
                 into.Icon(new HudBox(tab.Box.X + (tab.Box.Width - iconSize) * 0.5f,
                         tab.Box.Y + (tab.Box.Height - iconSize - 14f) * 0.5f, iconSize, iconSize),
-                    tab.IconCategory, tab.IconName, tab.Selected ? HudTone.Accent : HudTone.Default,
+                    tab.IconCategory, tab.IconName, tab.Selected ? HudTone.Accent : HudTone.Muted,
                     tab.Selected ? 1f : 0.72f);
                 into.Text(new HudBox(tab.Box.X, tab.Box.Bottom - 6f - (tab.Box.Height - iconSize - 14f) * 0.5f - 12f,
-                        tab.Box.Width, 12f), tab.Label, tab.Label.Length > 7 ? 9f : 10f, tone, HudTextStyle.Bold | HudTextStyle.Caption,
+                        tab.Box.Width, 12f), tab.Label, tab.Label.Length > 7 ? 9f : 10f, tone, HudTextStyle.Regular,
                     HudAlign.Center);
                 into.Hotspot(tab.Box, WorkspaceAction(tab.Workspace));
             }
@@ -580,7 +533,7 @@ namespace Airside.Presentation
         {
             if (into == null || capsule.IsEmpty)
                 return;
-            into.Surface(capsule, 0.86f);
+            into.Surface(capsule, 0.97f);
             if (segments == null)
                 return;
             for (var i = 0; i < segments.Count; i++)
@@ -619,31 +572,11 @@ namespace Airside.Presentation
             if (into == null || box.IsEmpty)
                 return;
             into.Surface(box, 0.97f);
-            const float ring = 74f;
-            var cx = box.X + 18f + ring * 0.5f;
-            var cy = box.Y + 18f + ring * 0.5f;
-            into.Ring(cx, cy, ring, 1f, HudTone.Muted, 7f);
-            into.Ring(cx, cy, ring, stage01, HudTone.Accent, 7f);
-            into.Text(new HudBox(cx - ring * 0.5f, cy - 12f, ring, 20f), stageText ?? string.Empty, 16f,
-                HudTone.Default, HudTextStyle.Bold, HudAlign.Center);
-            into.Caption(new HudBox(cx - ring * 0.5f, cy + 7f, ring, 10f), "STEPS", HudTone.Muted, HudAlign.Center, 8f);
-
-            var x = box.X + 18f + ring + 16f;
-            var width = box.Right - 16f - x;
-            into.Caption(new HudBox(x, box.Y + 16f, width, 12f), objective.Caption, HudTone.Accent, HudAlign.Left, 9f);
-            into.Text(new HudBox(x, box.Y + 31f, width, 40f), objective.Title, 15f, HudTone.Default,
-                HudTextStyle.Bold | HudTextStyle.Wrap);
-            into.Bar(new HudBox(x, box.Y + 76f, width, 4f), objective.Progress01, HudTone.Accent);
-            into.Text(new HudBox(x, box.Y + 84f, width, 14f), objective.ProgressText, 10f, HudTone.Muted);
-            var next = objective.NextLine ?? string.Empty;
-            var late = next.IndexOf("delay", StringComparison.OrdinalIgnoreCase) >= 0
-                       || next.IndexOf("late", StringComparison.OrdinalIgnoreCase) >= 0;
-            into.Fill(new HudBox(box.X + 12f, box.Bottom - 44f, box.Width - 24f, 32f),
-                late ? HudTone.Negative : HudTone.Caution, 0.12f);
-            into.Dot(box.X + 26f, box.Bottom - 28f, 7f, late ? HudTone.Negative : HudTone.Caution);
-            into.Text(new HudBox(box.X + 38f, box.Bottom - 37f, box.Width - 56f, 20f),
-                next.StartsWith("Next: ", StringComparison.Ordinal) ? next.Substring(6) : next, 11f,
-                late ? HudTone.Negative : HudTone.Caution, HudTextStyle.Bold);
+            into.Text(new HudBox(box.X + 16f, box.Y + 22f, 38f, 20f), stageText ?? string.Empty, 11f, HudTone.Accent, align: HudAlign.Center);
+            var x = box.X + 68f;
+            var width = box.Width - 84f;
+            into.Caption(new HudBox(x, box.Y + 12f, width, 12f), "NEXT MILESTONE", fontSize: 9f);
+            into.Text(new HudBox(x, box.Y + 30f, width, 24f), objective.Title, 13f, HudTone.Default, HudTextStyle.Wrap);
         }
 
         /// <summary>The first-flight guide in the career card's place: a numbered coaching card.</summary>
@@ -740,8 +673,7 @@ namespace Airside.Presentation
         public static void PaintSheetHeader(HudDrawList into, HudBox surface, string title, string subtitle,
             HudBox titleBox, HudBox subtitleBox)
         {
-            into.Fill(new HudBox(titleBox.X - 12f, titleBox.Y + 5f, 4f, 22f), HudTone.Accent, 1f);
-            into.Text(titleBox, TitleCase(title), 24f, HudTone.Default, HudTextStyle.Bold);
+            into.Text(titleBox, TitleCase(title), 26f, HudTone.Default, HudTextStyle.Regular);
             into.Text(subtitleBox, subtitle, 12f, HudTone.Muted);
             into.Button(CloseBox(surface), "×", HudAction.Close, HudButtonStyle.Secondary);
             into.Hairline(HudShell.HeaderRule(surface), HudTone.Muted, 0.16f);

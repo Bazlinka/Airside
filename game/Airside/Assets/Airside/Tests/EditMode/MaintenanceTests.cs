@@ -64,7 +64,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void StartCheck_ChargesGroundsAndResetsWear()
+        public void StartCheck_ChargesGroundsAndPreservesWearUntilRepair()
         {
             var (clock, ops, plane) = PlayerOnly();
             ops.RestoreMaintenance(plane.Registration, 7, 0);
@@ -73,14 +73,14 @@ namespace Airside.Tests
             var result = ops.StartCheck(plane);
 
             Assert.That(result.Accepted, Is.True);
-            Assert.That(plane.RotationsSinceCheck, Is.EqualTo(0));
+            Assert.That(plane.RotationsSinceCheck, Is.EqualTo(7));
             Assert.That(Maintenance.InCheck(plane, clock.Now), Is.True);
             Assert.That(plane.CheckUntil.Value.ElapsedSeconds,
-                Is.EqualTo(Maintenance.CheckSeconds(plane.Type, PlayerBaseLevel.Starter)));
+                Is.GreaterThan(Maintenance.CheckSeconds(plane.Type, PlayerBaseLevel.Starter)));
             Assert.That(ops.CareerState.Funds,
                 Is.EqualTo(funds - Maintenance.CheckCost(plane.Type, PlayerBaseLevel.Starter)));
             Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), new SimulationTime(600)).Accepted, Is.False);
-            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), plane.CheckUntil.Value).Accepted, Is.True);
+            Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), plane.CheckUntil.Value).Accepted, Is.False);
         }
 
         [Test]
@@ -110,11 +110,11 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void CheckEnds_AircraftIsFreeAgainWithoutAnEvent()
+        public void CheckEnds_AircraftReturnsBeforeDispatch()
         {
             var (clock, ops, plane) = PlayerOnly();
             Assert.That(ops.StartCheck(plane).Accepted, Is.True);
-            RunTo(clock, ops, plane.CheckUntil.Value.ElapsedSeconds);
+            RunTo(clock, ops, 24 * 3600);
             Assert.That(Maintenance.InCheck(plane, clock.Now), Is.False);
             Assert.That(ops.ScheduleDeparture(plane, Code("KGC"), clock.Now.Advance(DeparturePrep.LeadSeconds(plane.Type)))
                 .Accepted, Is.True);
@@ -191,11 +191,11 @@ namespace Airside.Tests
             Assert.That(ops.StartCheck(plane).Accepted, Is.True);
 
             Assert.That(OperationsSummary.AvailableCount(new[] { plane }, clock.Now), Is.EqualTo(0));
-            Assert.That(OperationsSummary.PrimaryAction(plane, clock.Now), Is.EqualTo(AircraftHudAction.PlanFlight),
-                "planning a departure after the check is still allowed");
-            Assert.That(OperationsSummary.CompactState(plane, clock.Now, ops.Clock), Does.StartWith("In check until"));
+            Assert.That(OperationsSummary.PrimaryAction(plane, clock.Now), Is.EqualTo(AircraftHudAction.TrackFlight),
+                "maintenance availability is uncertain until the aircraft returns");
+            Assert.That(OperationsSummary.CompactState(plane, clock.Now, ops.Clock), Does.StartWith("Preparing for maintenance"));
             var next = OperationsSummary.Objective(new[] { plane }, clock.Now, ops.Clock, ops.CareerState).NextLine;
-            Assert.That(next.ToLowerInvariant(), Does.Contain("in its check"));
+            Assert.That(next.ToLowerInvariant(), Does.Contain("track"));
         }
 
         [Test]

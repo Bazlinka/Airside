@@ -37,6 +37,7 @@ namespace Airside.Simulation
             public GroundPath Out;
             public GroundPath Back;
             public float InsideX, InsideZ, InsideNoseX, InsideNoseZ;
+            public float ApronX, ApronZ;
             public float LeaveX, LeaveZ;
             public float StandNoseX, StandNoseZ;
             /// <summary>Sideways positions (metres across the door, slot 0 first) where an aircraft of this type fits.</summary>
@@ -345,6 +346,7 @@ namespace Airside.Simulation
             {
                 HangarName = building.Name,
                 HangarId = building.Id,
+                ApronX = frontX, ApronZ = frontZ,
                 Out = new GroundPath(outbound.ToArray(), TowLimits),
                 Back = new GroundPath(back.ToArray(), TowLimits),
                 InsideX = noseX,

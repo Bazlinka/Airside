@@ -389,7 +389,7 @@ namespace Airside.Presentation
         public const float StatRowHeight = 26f;
         public const float MilestoneRowHeight = 22f;
         public const float HistoryRowHeight = 22f;
-        public const float MinColumnWidth = 300f;
+        public const float MinColumnWidth = 280f;
 
         private StatsWorkspaceLayout(HudBox surface, HudBox header, HudBox leftColumn, HudBox rightColumn,
             HudBox divider, HudBox footer)
@@ -432,7 +432,8 @@ namespace Airside.Presentation
         public HudBox OverviewCaption => LeftColumn.WithHeight(CaptionHeight);
 
         /// <summary>Where the visual base roadmap starts, below the compact operation summary.</summary>
-        public float NextTierY => LeftColumn.Y + 112f;
+        public bool CompactOverview => LeftColumn.Height < 340f;
+        public float NextTierY => LeftColumn.Y + (CompactOverview ? 72f : 112f);
 
         public HudBox NextTierCaption => new(LeftColumn.X, NextTierY, LeftColumn.Width, CaptionHeight);
         public HudBox NextTierTitleBox => new(LeftColumn.X, NextTierY + CaptionHeight + 6f, LeftColumn.Width, 20f);
@@ -448,7 +449,7 @@ namespace Airside.Presentation
         public const float SwatchGap = 8f;
 
         /// <summary>Where the livery-repaint swatches start, below the next-tier requirement text.</summary>
-        public float ProfileY => NextTierY + 210f;
+        public float ProfileY => Math.Min(NextTierY + 210f, LeftColumn.Bottom - CaptionHeight - 8f - SwatchSize);
 
         public HudBox ProfileCaption => new(LeftColumn.X, ProfileY, LeftColumn.Width, CaptionHeight);
 
@@ -596,13 +597,15 @@ namespace Airside.Presentation
                 model.FundsLine, model.LifetimeRevenueLine, model.ReliabilityLine, model.TierLine,
                 model.FleetLine, model.BaseSummaryLine
             };
-            var cardWidth = (layout.LeftColumn.Width - 8f) * 0.5f;
+            const int columns = 2;
+            var cardWidth = (layout.LeftColumn.Width - 8f * (columns - 1)) / columns;
             for (var i = 0; i < stats.Length; i++)
             {
-                var row = i / 2;
-                var column = i % 2;
+                var row = i / columns;
+                var column = i % columns;
                 var card = new HudBox(layout.LeftColumn.X + column * (cardWidth + 8f),
-                    layout.LeftColumn.Y + StatsWorkspaceLayout.CaptionHeight + 6f + row * 27f, cardWidth, 23f);
+                    layout.LeftColumn.Y + StatsWorkspaceLayout.CaptionHeight + 6f + row * (layout.CompactOverview ? 16f : 27f),
+                    cardWidth, layout.CompactOverview ? 16f : 23f);
                 // ADR 0130: each figure leads with its icon.
                 // A narrow window drops the icons first, so the figures keep their room.
                 var withIcon = card.Width >= 190f;
@@ -623,26 +626,27 @@ namespace Airside.Presentation
                     i == 0 || i == 2 ? HudTextStyle.Bold : HudTextStyle.Regular);
             }
 
+            var detailOffset = layout.CompactOverview ? 36f : 48f;
             into.Caption(layout.NextTierCaption, "BASE ROADMAP");
             PaintBaseRoadmap(into, model, layout);
-            into.Text(layout.NextTierTitleBox.Offset(0f, 48f), model.NextTierTitle,
+            into.Text(layout.NextTierTitleBox.Offset(0f, detailOffset), model.NextTierTitle,
                 HudShell.FitFontSize(model.NextTierTitle, 14f, layout.NextTierTitleBox.Width, 11f),
                 HudTone.Default, HudTextStyle.Bold);
             if (model.HasNextTier)
             {
-                into.Bar(layout.NextTierBar.Offset(0f, 48f), model.NextTierProgress01, HudTone.Accent);
-                into.Text(layout.NextTierPercent.Offset(0f, 48f), $"{(int)(model.NextTierProgress01 * 100f)}%",
+                into.Bar(layout.NextTierBar.Offset(0f, detailOffset), model.NextTierProgress01, HudTone.Accent);
+                into.Text(layout.NextTierPercent.Offset(0f, detailOffset), $"{(int)(model.NextTierProgress01 * 100f)}%",
                     12f, HudTone.Muted);
             }
 
-            into.Text(layout.NextTierRequirementBox.Offset(0f, 48f), model.NextTierRequirementLine, 11f,
+            into.Text(layout.NextTierRequirementBox.Offset(0f, detailOffset).WithHeight(layout.CompactOverview ? 24f : 36f), model.NextTierRequirementLine, 11f,
                 HudTone.Muted, HudTextStyle.Wrap);
             // A fully grown base has no EXPAND button; its full description takes that space instead.
             if (!model.HasNextTier)
-                into.Text(layout.BaseUpgradeButton.Offset(0f, 48f).WithWidth(layout.LeftColumn.Width), "Now: " + model.BaseCapabilityLine,
+                into.Text(layout.BaseUpgradeButton.Offset(0f, detailOffset - (layout.CompactOverview ? 12f : 0f)).WithHeight(layout.CompactOverview ? 24f : 30f).WithWidth(layout.LeftColumn.Width), "Now: " + model.BaseCapabilityLine,
                     11f, HudTone.Muted, HudTextStyle.Wrap);
             if (model.HasNextTier)
-                into.Button(layout.BaseUpgradeButton.Offset(0f, 48f), "EXPAND BASE", HudAction.UpgradeBase,
+                into.Button(layout.BaseUpgradeButton.Offset(0f, detailOffset - (layout.CompactOverview ? 12f : 0f)).WithHeight(layout.CompactOverview ? 24f : 30f), "EXPAND BASE", HudAction.UpgradeBase,
                     HudButtonStyle.Primary, model.CanUpgradeBase);
 
             PaintProfile(into, model, layout);
@@ -689,7 +693,7 @@ namespace Airside.Presentation
                     AirlineSetupModel.PaletteAccents[i]);
                 into.Outline(swatch, current ? HudTone.Default : HudTone.Muted, current ? 1f : 0.4f);
                 into.Hotspot(swatch, HudAction.Livery(hex));
-                if (current)
+                if (current && swatch.Bottom + 21f <= layout.LeftColumn.Bottom)
                     into.Text(new HudBox(layout.LeftColumn.X, swatch.Bottom + 5f, layout.LeftColumn.Width, 16f),
                         label, 11f, HudTone.Muted);
             }

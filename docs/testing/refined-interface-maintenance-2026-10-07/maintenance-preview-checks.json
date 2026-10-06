@@ -1,0 +1,38 @@
+[
+  {
+    "viewport": [
+      1440,
+      900
+    ],
+    "page": "maintenance-taxi",
+    "empty_aircraft_message": true,
+    "fixed_follow_and_camera_actions": true
+  },
+  {
+    "viewport": [
+      1440,
+      900
+    ],
+    "page": "maintenance-repair",
+    "empty_aircraft_message": true,
+    "fixed_follow_and_camera_actions": true
+  },
+  {
+    "viewport": [
+      1280,
+      720
+    ],
+    "page": "maintenance-taxi",
+    "empty_aircraft_message": true,
+    "fixed_follow_and_camera_actions": true
+  },
+  {
+    "viewport": [
+      1280,
+      720
+    ],
+    "page": "maintenance-repair",
+    "empty_aircraft_message": true,
+    "fixed_follow_and_camera_actions": true
+  }
+]

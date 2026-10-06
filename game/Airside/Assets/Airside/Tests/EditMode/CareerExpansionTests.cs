@@ -377,7 +377,8 @@ namespace Airside.Tests
             Assert.That(outsourcedCost, Is.EqualTo(Maintenance.CheckCost(AircraftType.Saab340, PlayerBaseLevel.Starter)));
             Assert.That(outsourcedCost, Is.GreaterThan(localCost));
             Assert.That(outsourcedSeconds, Is.GreaterThan(localSeconds));
-            Assert.That(localSeconds, Is.EqualTo(Maintenance.CheckSeconds(AircraftType.Saab340)));
+            Assert.That(localPlane.MaintenanceJob.RepairSeconds, Is.EqualTo(Maintenance.CheckSeconds(AircraftType.Saab340)));
+            Assert.That(localSeconds, Is.GreaterThan(localPlane.MaintenanceJob.RepairSeconds), "ground movement precedes the repair");
         }
 
         [Test]

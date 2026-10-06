@@ -111,3 +111,7 @@ Reject the visual pass if it merely recolours existing cards. Review hierarchy, 
 The interactive study covers overview, selected maintenance taxi/repair, fleet, operations, contracts and lightweight career/map/settings composition. Flight-view, title/setup and return-report detailed mockups remain later design work. No new native game rendering or performance claim is made.
 
 First implementation milestone: shared overview/aircraft inspector plus one complete Saab maintenance job. Expand only after traffic, bay placement and save/catch-up are proved. Then a terminal-gate jet demonstrates pushback/start sequencing and larger swept clearances before fleet-wide rollout.
+
+## Implementation follow-through — 7 October 2026
+
+Implemented under Bailey's approval in ADR 0243. Shared IMGUI shell/inspector and actual prop/jet maintenance jobs are integrated, including save v21 migration and deterministic catch-up. Evidence and remaining native checks: `docs/testing/refined-interface-maintenance-2026-10-07/`. Conservatively reserve one entire shed per active job until native swept-clearance validation supports multi-bay concurrency. Timed pad/no-fitting-shed checks retain their prior path.

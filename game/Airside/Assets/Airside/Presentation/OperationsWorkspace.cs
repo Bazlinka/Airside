@@ -778,7 +778,7 @@ namespace Airside.Presentation
         public const float TabHeight = 30f;
         public const float TabWidth = 124f;
         public const float ColumnHeaderHeight = 22f;
-        public const float FlightRowHeight = 54f;
+        public const float FlightRowHeight = 64f;
         public const float DetailWidth = 300f;
         public const float DetailGap = 20f;
         public const float MinBoardWidth = 390f;

@@ -27,7 +27,7 @@ namespace Airside.Tests
         [Test]
         public void Shell_NamesTheCareerWorkspaceCareer()
         {
-            Assert.That(HudShell.Tabs.Single(t => t.workspace == HudWorkspace.Stats).label, Is.EqualTo("CAREER"));
+            Assert.That(HudShell.Tabs.Single(t => t.workspace == HudWorkspace.Stats).label, Is.EqualTo("Career"));
         }
 
         [Test]
@@ -60,19 +60,17 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Shell_DesktopShowsEveryOverviewPanel()
+        public void Shell_DesktopKeepsOverviewQuietWithOneOptionalInspector()
         {
             var shell = HudShell.Layout(1440f, 900f);
             Assert.That(shell.Career.IsEmpty, Is.False);
-            Assert.That(shell.Operations.IsEmpty, Is.False);
-            Assert.That(shell.MiniMap.IsEmpty, Is.False);
+            Assert.That(shell.Operations.IsEmpty, Is.True);
+            Assert.That(shell.MiniMap.IsEmpty, Is.True);
             Assert.That(shell.SelectedCard.IsEmpty, Is.False);
             Assert.That(shell.Toast.IsEmpty, Is.False);
-            Assert.That(shell.Career.X, Is.LessThan(shell.SelectedCard.X), "career card bottom-left");
-            Assert.That(shell.MiniMap.X, Is.GreaterThan(shell.SelectedCard.Right), "radar bottom-right");
-            Assert.That(shell.Operations.Y, Is.LessThan(shell.MiniMap.Y), "flight tiles top-right");
-            Assert.That(System.Math.Abs(shell.Capsule.X + shell.Capsule.Width * 0.5f - 720f), Is.LessThan(1f),
-                "the capsule is centred on a desktop window");
+            Assert.That(shell.Career.X, Is.LessThan(shell.SelectedCard.X));
+            Assert.That(shell.SelectedCard.Y, Is.GreaterThan(shell.Capsule.Bottom));
+            Assert.That(shell.SelectedCard.X, Is.GreaterThan(1000f));
         }
 
         [Test]
@@ -175,10 +173,10 @@ namespace Airside.Tests
                 new CareerObjective("Fly five services", "2/5", 0.4f, "Next: plan a flight for VH-PAX",
                     StatusSeverity.Attention, "TOWARD REGIONAL"), 1f / 3f, "1/3");
 
-            Assert.That(draw.Commands.Count(c => c.Kind == HudDrawKind.Ring), Is.EqualTo(2), "track and progress");
-            Assert.That(draw.Commands.Any(c => c.Text == "TOWARD REGIONAL"), Is.True);
-            Assert.That(draw.Commands.Any(c => c.Text == "Fly five services" && c.FontSize >= 15f), Is.True);
-            Assert.That(draw.Commands.Any(c => c.Text == "plan a flight for VH-PAX"), Is.True);
+            Assert.That(draw.Commands.Count(c => c.Kind == HudDrawKind.Ring), Is.Zero, "career progress lives in its workspace");
+            Assert.That(draw.Commands.Any(c => c.Text == "NEXT MILESTONE"), Is.True);
+            Assert.That(draw.Commands.Any(c => c.Text == "Fly five services" && c.FontSize >= 13f), Is.True);
+            Assert.That(draw.Commands.Any(c => c.Text == "1/3"), Is.True);
         }
 
         [Test]

@@ -87,6 +87,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightNotices.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightNumber.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightPlanner.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightViewHud.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightWorldGrid.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightWorldHeights.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/GolfBunkerMarks.cs" />
@@ -111,6 +112,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/PushbackTugTimeline.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RegionalFlightPath.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RegionalRunways.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/ReturnBriefing.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RoadMarkingPlan.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RouteMap.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RouteMapWorkspace.cs" />
@@ -260,6 +262,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HudSoundsTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HudTestAirline.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/HudWorkspacePainterTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/InterfaceRefreshTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/JetCockpitShellGeometryTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/LightningTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/LineupSteeringTests.cs" />

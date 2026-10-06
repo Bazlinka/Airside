@@ -1524,7 +1524,14 @@ namespace Airside.Presentation
                         emitter.StopVoices();
         }
 
-        private void PlayUiClick() => PlayMoment(ref _uiClickClip, HudSounds.UiClick, "UI click", 0.7f);
+        private float _lastUiClickAt = -1f;
+        private void PlayUiClick()
+        {
+            // Several controls can acknowledge the same action: never stack their ticks.
+            if (Time.unscaledTime - _lastUiClickAt < 0.075f) return;
+            _lastUiClickAt = Time.unscaledTime;
+            PlayMoment(ref _uiClickClip, HudSounds.UiClick, "UI click", 0.45f);
+        }
 
         private void UpdateAmbientAudio()
         {

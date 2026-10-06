@@ -38,37 +38,37 @@ namespace Airside.Presentation
         // palette above stays the art-direction palette for the airport itself.
 
         /// <summary>Graphite glass — every HUD card and sheet, drawn translucent.</summary>
-        public const string GlassHex = "#0E1216";
+        public const string GlassHex = "#121B22";
 
         /// <summary>A raised glass layer inside a sheet: sub-cards, secondary buttons, wells.</summary>
-        public const string GlassRaisedHex = "#1B222A";
+        public const string GlassRaisedHex = "#1D2A33";
 
         /// <summary>The 1 px inner highlight around glass.</summary>
         public const string GlassEdgeHex = "#FFFFFF";
 
         /// <summary>Primary instrument text.</summary>
-        public const string InstrumentTextHex = "#E8EDF1";
+        public const string InstrumentTextHex = "#F2F0E8";
 
         /// <summary>Secondary instrument text — captions, units, column headers.</summary>
-        public const string InstrumentMutedHex = "#8793A0";
+        public const string InstrumentMutedHex = "#A4AFB6";
 
         /// <summary>Aqua — selection, live state, links and progress.</summary>
-        public const string AquaHex = "#3FD0C9";
+        public const string AquaHex = "#9FC8C5";
 
         /// <summary>Avionics amber — the primary action and the one current priority.</summary>
-        public const string AmberHex = "#FFB547";
+        public const string AmberHex = "#D8BE8A";
 
         /// <summary>Go green — done, on time, available.</summary>
-        public const string GoGreenHex = "#4CD37A";
+        public const string GoGreenHex = "#8CB99C";
 
         /// <summary>Warning red — refused, cancelled, overdue.</summary>
-        public const string WarnRedHex = "#FF5F56";
+        public const string WarnRedHex = "#E38D80";
 
         /// <summary>Magenta — routes and flight paths, as on a nav display.</summary>
-        public const string RouteMagentaHex = "#E15AA8";
+        public const string RouteMagentaHex = "#B9AECF";
 
         /// <summary>Text drawn on an amber or aqua fill.</summary>
-        public const string OnAccentHex = "#0B0F12";
+        public const string OnAccentHex = "#121B22";
 
         public static string Hex(HudTone tone) => tone switch
         {

@@ -1,5 +1,13 @@
 ## Unreleased
 
+- Refresh shared HUD/workspace/menu styling with slate, warm white and muted
+  accents; clearer aircraft-view controls and a compact viewing dock. Replace
+  the welcome-back sentence stack with metrics and a scrolling fleet report.
+  Soften and quiet button ticks and suppress duplicate acknowledgements (ADR 0231).
+
+- Require a matching refitted freighter to accept and progress freight contracts;
+  align deadlines, cancellation penalties and HUD eligibility (ADR 0230).
+
 - Clarify Bailey’s playtest sign-off: happy with the current game, still in
   development and not ready for release. Defer release preparation; retain
   freight and structure/performance backlog (6 October 2026; documentation only).

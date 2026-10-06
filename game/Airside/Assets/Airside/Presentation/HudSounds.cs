@@ -75,16 +75,19 @@ namespace Airside.Presentation
             for (var i = 0; i < samples.Length; i++)
             {
                 var time = i / (float)SampleRate;
-                low += 0.35f * (noise.Next() - low);
-                var tick = Math.Exp(-time * 90.0);
-                var thump = Math.Sin(2 * Math.PI * 140 * time) * Math.Exp(-time * 40.0);
-                samples[i] = (float)(low * tick * 0.8 + thump * 0.35);
+                low += 0.12f * (noise.Next() - low);
+                // Rounded attack avoids the old first-sample crack; a muted switch body
+                // stays below the brighter airport/career cues.
+                var attack = Math.Min(1.0, time / 0.003);
+                var tick = Math.Exp(-time * 120.0);
+                var body = Math.Sin(2 * Math.PI * 420 * time) * Math.Exp(-time * 95.0);
+                samples[i] = (float)(attack * (low * tick * 0.28 + body * 0.65));
             }
 
             var fade = (int)(SampleRate * 0.03f);
             for (var i = 0; i < fade && i < samples.Length; i++)
                 samples[samples.Length - 1 - i] *= i / (float)fade;
-            return Normalise(samples, 0.5f);
+            return Normalise(samples, 0.32f);
         }
 
         /// <summary>A panel opening: a short, soft rising air whoosh (ADR 0136).</summary>

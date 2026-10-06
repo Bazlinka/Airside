@@ -103,6 +103,8 @@ namespace Airside.Tests
             var ops = Start(out var clock);
             var freight = new RouteContractDefinition("MKT-9-0-KGC-SF34-FRT", "ADL", "KGC", AircraftType.Saab340, 2, 300, 400, 1,
                 OperatingTier.Provisional, 2, kind: ContractKind.Freight, deadlineSeconds: 24 * 3600);
+            var plane = ops.FleetOf(ops.PlayerAirline).First(a => a.Type == AircraftType.Saab340);
+            Assert.That(ops.SetFreighter(plane, true).Accepted, Is.True);
             Assert.That(ops.AcceptContract(freight).Accepted, Is.True);
             for (var i = 0; i < 7; i++)
                 ops.CareerState.RecordPushback(true);

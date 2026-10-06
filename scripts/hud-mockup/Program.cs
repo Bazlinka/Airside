@@ -31,6 +31,8 @@ public static class Program
             SplashPage(scenario, width, height, SplashStep.NewAirline, SetupStep.Briefing),
             ManualPage(width, height, 1),
             CelebrationPage(width, height),
+            ReturnBriefingPage(scenario, width, height),
+            FlightViewPage(scenario, width, height),
             Overview(scenario, width, height),
             Operations(scenario, width, height),
             RouteMapPage(scenario, width, height),
@@ -55,6 +57,7 @@ public static class Program
         File.WriteAllText(titles, JsonSerializer.Serialize(TitleMetrics(scenario),
             new JsonSerializerOptions { WriteIndented = false }));
 
+        WriteClickPreview(Path.Combine(directory ?? ".", "ui-click-preview.wav"));
         Console.WriteLine($"Wrote {pages.Count} pages to {output}");
         Console.WriteLine($"Wrote fuselage title metrics to {titles}");
         Console.WriteLine(scenario.Describe());
@@ -65,6 +68,56 @@ public static class Program
     /// To-scale fuselage title measurements per type, so scripts/render-aircraft-titles.py
     /// can show what the paint actually comes out at against the real airframe length.
     /// </summary>
+    private static void WriteClickPreview(string path)
+    {
+        // Three actual generated ticks at the runtime playback gain, with gaps for listening.
+        var click = HudSounds.UiClick();
+        var samples = new float[HudSounds.SampleRate * 2];
+        foreach (var start in new[] { 0.2, 0.7, 1.2 })
+        {
+            var offset = (int)(start * HudSounds.SampleRate);
+            for (var i = 0; i < click.Length; i++) samples[offset + i] = click[i] * 0.45f;
+        }
+        using var writer = new BinaryWriter(File.Create(path));
+        writer.Write(System.Text.Encoding.ASCII.GetBytes("RIFF")); writer.Write(36 + samples.Length * 2);
+        writer.Write(System.Text.Encoding.ASCII.GetBytes("WAVEfmt ")); writer.Write(16);
+        writer.Write((short)1); writer.Write((short)1); writer.Write(HudSounds.SampleRate);
+        writer.Write(HudSounds.SampleRate * 2); writer.Write((short)2); writer.Write((short)16);
+        writer.Write(System.Text.Encoding.ASCII.GetBytes("data")); writer.Write(samples.Length * 2);
+        foreach (var sample in samples) writer.Write((short)(sample * short.MaxValue));
+    }
+
+    private static Page ReturnBriefingPage(Scenario scenario, float width, float height)
+    {
+        var list = new HudDrawList();
+        var before = AirlineSave.Capture(scenario.Operations);
+        // Real saved state advanced through the same catch-up path; isolated from other mockup pages.
+        var clock = new ManualSimulationClock(new SimulationTime(before.ClockSeconds));
+        var after = AirlineSave.Restore(before, clock);
+        clock.Set(clock.Now.Advance(3 * 3600));
+        after.Update();
+        var summary = AwaySummary.Build(before, after, 3 * 3600);
+        var layout = new ReturnBriefingLayout(new HudBox(20f, 20f, width - 40f, height - 40f));
+        ReturnBriefingPainter.Paint(list, layout, summary, after.PlayerAirline.Name);
+        ReturnBriefingPainter.PaintFleet(list, layout.Fleet, summary);
+        return new Page("return-briefing", Serialise(list));
+    }
+
+    private static Page FlightViewPage(Scenario scenario, float width, float height)
+    {
+        var list = new HudDrawList();
+        var aircraft = scenario.Selected;
+        var data = new FlightViewHudData
+        {
+            Registration = aircraft.Registration, Aircraft = aircraft.Type.Name,
+            Route = "ADL → KGC", Phase = "Cruise", Speed = "224 kt", VerticalSpeed = "+0 ft/min",
+            Distance = "85.4 km", SelectedView = 1, MotionEnabled = true
+        };
+        for (var i = 0; i < 4; i++) data.Available[i] = true;
+        FlightViewHudPainter.Paint(list, new FlightViewHudLayout(width, height), data);
+        return new Page("flight-view", Serialise(list));
+    }
+
     private static List<TitleMetric> TitleMetrics(Scenario scenario)
     {
         var name = scenario.Operations.PlayerAirline.Name.ToUpperInvariant();

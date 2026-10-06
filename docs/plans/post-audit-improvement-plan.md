@@ -24,6 +24,16 @@ product slice; Bailey selected “Follow the existing backlog”.
 P3 technical debt remains open; measured performance budgets are not inferred
 from owner acceptance. P4 milestones remain unopened.
 
+## Active slice — 6 October 2026
+
+Bailey authorised freighter-required contracts and a substantial HUD/viewing,
+welcome-back-summary and click-sound redesign. Candidate branch:
+`feature/freight-and-interface-refresh`; task packet:
+`docs/plans/freight-and-interface-refresh.md`. Freight role checks and the shared
+interface refresh are implemented, pending native Unity verification before merge.
+This is new work after the previous playtest sign-off. AI freight, cargo stands
+and outstation cargo operations remain the subsequent freight slices.
+
 ## Verdict (do not re-litigate)
 
 Airside has a playable Adelaide airline foundation and remains in development.
@@ -70,12 +80,11 @@ at freighter livery + tyre rotation when convenient, then finish as one narrow A
 
 - AI freight carriers (DHL / Qantas Freight–style, night bank, own liveries)
 - Cargo apron / stands
-- Contracts that require a freighter (`ContractKind.Freight` today does not)
+- Freighter-required contracts: implemented on the active candidate branch; native verification/merge pending
 - Outstation settle using freighter forecast overload
 
-Until Bailey opens the next development slice, leave player freight as-is.
-P2 is the next product recommendation after current acceptance; this record does
-not start freight implementation.
+Bailey has opened the contract eligibility slice above. Continue the remaining
+freight items as narrow follow-up changes after its verification and merge.
 
 ### P3 — Pay down structure and performance debt
 

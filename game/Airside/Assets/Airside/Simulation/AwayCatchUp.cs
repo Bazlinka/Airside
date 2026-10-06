@@ -59,14 +59,27 @@ namespace Airside.Simulation
     /// <summary>What changed while the player was away, in plain sentences.</summary>
     public sealed class AwaySummary
     {
-        private AwaySummary(long awaySeconds, IReadOnlyList<string> lines)
+        private AwaySummary(long awaySeconds, IReadOnlyList<string> lines, IReadOnlyList<string> fleetLines,
+            int playerFlights, int otherFlights, long netFunds, int reliability, int reliabilityChange)
         {
             AwaySeconds = awaySeconds;
             Lines = lines;
+            FleetLines = fleetLines;
+            PlayerFlights = playerFlights;
+            OtherFlights = otherFlights;
+            NetFunds = netFunds;
+            Reliability = reliability;
+            ReliabilityChange = reliabilityChange;
         }
 
         public long AwaySeconds { get; }
         public IReadOnlyList<string> Lines { get; }
+        public IReadOnlyList<string> FleetLines { get; }
+        public int PlayerFlights { get; }
+        public int OtherFlights { get; }
+        public long NetFunds { get; }
+        public int Reliability { get; }
+        public int ReliabilityChange { get; }
 
         public string Title => $"You were away {AirlineClock.DurationText(AwaySeconds)}";
 
@@ -82,15 +95,20 @@ namespace Airside.Simulation
                 tripsBefore[record.Registration] = record.CompletedTrips;
 
             var lines = new List<string>();
+            var playerFlights = 0;
+            var otherFlights = 0;
             foreach (var aircraft in after.FleetOf(after.PlayerAirline))
             {
                 tripsBefore.TryGetValue(aircraft.Registration, out var was);
                 var flown = aircraft.CompletedTrips - was;
+                playerFlights += Math.Max(0, flown);
                 var status = Status(aircraft, after.Clock);
                 lines.Add(flown > 0
                     ? $"{aircraft.Registration} flew {Plural(flown, "flight")} and {status}."
                     : $"{aircraft.Registration} {status}.");
             }
+
+            var fleetLines = new List<string>(lines);
 
             foreach (var airline in after.Airlines)
             {
@@ -104,6 +122,7 @@ namespace Airside.Simulation
                 }
 
                 lines.Add(flown > 0 ? $"{airline.Name} flew {Plural(flown, "flight")}." : $"{airline.Name} flew nothing.");
+                otherFlights += flown;
             }
 
             // A pre-6 save has no career fields (they default to 0), but the career itself
@@ -125,7 +144,8 @@ namespace Airside.Simulation
             if (awaySeconds >= AwayCatchUp.MaxSeconds)
                 lines.Add("The airport only catches up one week. Anything longer is skipped.");
 
-            return new AwaySummary(awaySeconds, lines);
+            return new AwaySummary(awaySeconds, lines, fleetLines, playerFlights, otherFlights,
+                fundsEarned, after.CareerState.Reliability, reliabilityChange);
         }
 
         private static string Status(FleetAircraft aircraft, AirlineClock clock)

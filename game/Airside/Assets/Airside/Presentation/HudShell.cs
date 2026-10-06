@@ -556,7 +556,7 @@ namespace Airside.Presentation
                 var tone = tab.Selected ? HudTone.Accent : HudTone.Muted;
                 if (tab.Selected)
                 {
-                    into.Fill(tab.Highlight, HudTone.Accent, 0.16f);
+                    into.Fill(tab.Highlight, HudTone.Accent, 0.08f);
                     into.Fill(new HudBox(tab.Box.X + 2f, tab.Box.Y + tab.Box.Height * 0.25f, 3f,
                         tab.Box.Height * 0.5f), HudTone.Accent, 1f);
                 }
@@ -566,7 +566,7 @@ namespace Airside.Presentation
                     tab.IconCategory, tab.IconName, tab.Selected ? HudTone.Accent : HudTone.Default,
                     tab.Selected ? 1f : 0.72f);
                 into.Text(new HudBox(tab.Box.X, tab.Box.Bottom - 6f - (tab.Box.Height - iconSize - 14f) * 0.5f - 12f,
-                        tab.Box.Width, 12f), tab.Label, tab.Label.Length > 7 ? 7.5f : 9f, tone, HudTextStyle.Bold | HudTextStyle.Caption,
+                        tab.Box.Width, 12f), tab.Label, tab.Label.Length > 7 ? 9f : 10f, tone, HudTextStyle.Bold | HudTextStyle.Caption,
                     HudAlign.Center);
                 into.Hotspot(tab.Box, WorkspaceAction(tab.Workspace));
             }
@@ -588,7 +588,7 @@ namespace Airside.Presentation
                 var segment = segments[i];
                 var box = segment.Box;
                 if (i > 0)
-                    into.Dot(box.X - 13f, box.Y + box.Height * 0.5f, 3f, HudTone.Muted);
+                    into.Hairline(new HudBox(box.X - 13f, box.Y + 10f, 1f, box.Height - 20f), alpha: 0.16f);
                 switch (segment.Kind)
                 {
                     case HudCapsuleKind.Chip:

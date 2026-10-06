@@ -697,31 +697,32 @@ namespace Airside.Presentation
 
         // ---- Away summary -----------------------------------------------------------------
 
+        private readonly HudDrawList _returnDrawList = new();
+        private readonly HudDrawList _returnFleetDrawList = new();
+        private Vector2 _returnFleetScroll;
+
         private void DrawAwaySummary(AirlineHudLayout placement, GUIStyle panel, GUIStyle title, GUIStyle label, GUIStyle button)
         {
             var summary = _awaySummary;
-            // Measure each sentence at the panel's text width: a fixed 40 px row clipped the
-            // third line of a long status ("…departing 14:05 for Mount Gambier").
-            var inner = placement.SetupPanel(100f).width - 40f;
-            var linesHeight = 0f;
-            foreach (var line in summary.Lines)
-                linesHeight += label.CalcHeight(new GUIContent(line), inner) + 8f;
-            var rect = placement.SetupPanel(70f + linesHeight + 80f);
-            GUI.Box(rect, GUIContent.none, panel);
-            var x = rect.x + 20f;
-
-            GUI.Label(new Rect(x, rect.y + 16f, inner, 30f), summary.Title, title);
-            var y = rect.y + 58f;
-            foreach (var line in summary.Lines)
-            {
-                var height = label.CalcHeight(new GUIContent(line), inner);
-                GUI.Label(new Rect(x, y, inner, height), line, label);
-                y += height + 8f;
-            }
-
-            if (GUI.Button(new Rect(x, rect.yMax - 58f, inner, 40f), "Back to the airport", button))
+            var layout = new ReturnBriefingLayout(placement.Shell.SetupArea);
+            AirsideTheme.DrawRounded(HudPainter.ToRect(placement.Shell.SetupArea),
+                new Color(0.02f, 0.03f, 0.04f, 0.52f), 0f);
+            _returnDrawList.Clear();
+            ReturnBriefingPainter.Paint(_returnDrawList, layout, summary, _operations.PlayerAirline.Name);
+            var clicked = _hudPainter.Draw(_returnDrawList);
+            var viewport = HudPainter.ToRect(layout.Fleet);
+            var contentHeight = Mathf.Max(viewport.height, summary.FleetLines.Count * ReturnBriefingPainter.FleetRowHeight);
+            var content = new Rect(0f, 0f, viewport.width - 20f, contentHeight);
+            _returnFleetScroll = GUI.BeginScrollView(viewport, _returnFleetScroll, content);
+            _returnFleetDrawList.Clear();
+            ReturnBriefingPainter.PaintFleet(_returnFleetDrawList,
+                new HudBox(0f, 0f, content.width, content.height), summary);
+            _hudPainter.Draw(_returnFleetDrawList);
+            GUI.EndScrollView();
+            if (clicked == ReturnBriefingPainter.ContinueAction)
             {
                 _awaySummary = null;
+                _returnFleetScroll = Vector2.zero;
                 PlayUiClick();
             }
         }
@@ -3053,7 +3054,7 @@ namespace Airside.Presentation
                 return;
             foreach (var aircraft in _operations.FleetOf(_operations.PlayerAirline))
             {
-                if (aircraft.Type.Id != definition.EligibleType.Id)
+                if (!definition.MatchesAircraft(aircraft.Type, aircraft.IsFreighter))
                     continue;
                 SetWorkspace(HudWorkspace.Fleet);
                 SelectAircraft(aircraft);

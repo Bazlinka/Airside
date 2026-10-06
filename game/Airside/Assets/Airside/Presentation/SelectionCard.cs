@@ -177,7 +177,7 @@ namespace Airside.Presentation
                 l.Bottom = l.BodyY + 18f + ((System.Math.Max(1, data.Stands.Count) + 1) / 2) * StandRowHeight + 14f;
             else
                 l.Bottom = l.BodyY + 54f;
-            if (data.ShowCameraActions) l.Bottom += 38f;
+            if (data.ShowCameraActions) l.Bottom += 70f;
             return l;
         }
 
@@ -192,15 +192,19 @@ namespace Airside.Presentation
             into.Surface(box, 0.9f);
             if (data.ShowCameraActions)
             {
-                var cameraWidth=(box.Width-52f)/3f;
-                into.Button(new HudBox(box.X+20f,box.Bottom-34f,cameraWidth,26f),"COCKPIT","camera-cockpit",
-                    HudButtonStyle.Secondary,data.CanCockpit);
-                into.Button(new HudBox(box.X+26f+cameraWidth,box.Bottom-34f,cameraWidth,26f),"PASSENGER","camera-passenger",
-                    HudButtonStyle.Secondary,data.CanPassenger);
-                into.Button(new HudBox(box.X+32f+cameraWidth*2,box.Bottom-34f,cameraWidth,26f),"OUTSIDE","camera-exterior",
-                    HudButtonStyle.Secondary,data.CanExterior);
-                box = new HudBox(box.X, box.Y, box.Width, box.Height - 38f);
+                var cameraWidth = (box.Width - 52f) / 3f;
+                into.Hairline(new HudBox(box.X + 20f, box.Bottom - 68f, box.Width - 40f, 1f), alpha: 0.2f);
+                into.Caption(new HudBox(box.X + 20f, box.Bottom - 60f, box.Width - 40f, 14f), data.CanCockpit || string.IsNullOrEmpty(data.CockpitHint) ? "VIEW AIRCRAFT" : "VIEW AIRCRAFT / " + data.CockpitHint,
+                    fontSize: 9f);
+                into.Button(new HudBox(box.X + 20f, box.Bottom - 40f, cameraWidth, 30f), "Cockpit", "camera-cockpit",
+                    HudButtonStyle.Secondary, data.CanCockpit);
+                into.Button(new HudBox(box.X + 26f + cameraWidth, box.Bottom - 40f, cameraWidth, 30f), "Window seat", "camera-passenger",
+                    HudButtonStyle.Secondary, data.CanPassenger);
+                into.Button(new HudBox(box.X + 32f + cameraWidth * 2, box.Bottom - 40f, cameraWidth, 30f), "Exterior", "camera-exterior",
+                    HudButtonStyle.Secondary, data.CanExterior);
+                box = new HudBox(box.X, box.Y, box.Width, box.Height - 70f);
             }
+
             var x = box.X + 20f;
             var inner = box.Width - 40f;
             into.Fill(new HudBox(box.X + 8f, box.Y + 16f, 4f, 30f), HudTone.Default, 1f, data.LiveryHex);

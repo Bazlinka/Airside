@@ -33,6 +33,65 @@ namespace Airside.Tests
             ops.Update();
         }
 
+        private static RouteContractDefinition CargoContract(long deadline = 0) => new(
+            "FRT-KGC-SF34", "ADL", "KGC", AircraftType.Saab340, 2, 300, 400, 1,
+            OperatingTier.Provisional, 2, kind: ContractKind.Freight, deadlineSeconds: deadline);
+
+        [Test]
+        public void FreightOffer_LocksUntilTheMatchingAircraftIsRefitted()
+        {
+            var (_, ops, plane) = PlayerOnly();
+            var contract = CargoContract();
+            Assert.That(ops.AcceptContract(contract).Reason, Does.Contain("freighter"));
+            Assert.That(ops.CareerState.ActiveContract, Is.Null);
+            Assert.That(ops.HasContractAircraft(contract), Is.False);
+            Assert.That(ops.SetFreighter(plane, true).Accepted, Is.True);
+            Assert.That(ops.HasContractAircraft(contract), Is.True);
+            Assert.That(ops.AcceptContract(contract).Accepted, Is.True);
+        }
+
+        [Test]
+        public void FreightDeadline_DoesNotCountPassengerAircraft()
+        {
+            var (_, ops, plane) = PlayerOnly();
+            var contract = CargoContract(24 * 3600);
+            Assert.That(ops.CanStillFinish(contract), Is.False);
+            Assert.That(ops.SetFreighter(plane, true).Accepted, Is.True);
+            Assert.That(ops.CanStillFinish(contract), Is.True);
+        }
+
+        [Test]
+        public void PassengerReturn_CannotEarnFreightProgress_ButFreighterReturnCan()
+        {
+            var (clock, ops, passenger) = PlayerOnly();
+            var cargo = ops.AddAircraft(ops.PlayerAirline, "VH-CGO", AircraftType.Saab340,
+                AirlineOperations.AdelaideRegionalBays[1]);
+            Assert.That(ops.SetFreighter(cargo, true).Accepted, Is.True);
+            var contract = CargoContract();
+            Assert.That(ops.AcceptContract(contract).Accepted, Is.True);
+            Fly(passenger);
+            Assert.That(ops.CareerState.ActiveContract.CompletedRotations, Is.Zero);
+            Assert.That(ops.RecentSettlements.Last().ContractDefinitionId, Is.Empty);
+            Fly(cargo);
+            Assert.That(ops.CareerState.ActiveContract.CompletedRotations, Is.EqualTo(1));
+            Assert.That(ops.RecentSettlements.Last().ContractDefinitionId, Is.EqualTo(contract.Id));
+            var saved = AirlineSave.Capture(ops);
+            var restored = AirlineSave.Restore(saved, clock);
+            Assert.That(restored.CareerState.ActiveContract.CompletedRotations, Is.EqualTo(1));
+            Assert.That(restored.HasContractAircraft(contract), Is.True);
+
+            void Fly(FleetAircraft aircraft)
+            {
+                var depart = clock.Now.Advance(DeparturePrep.LeadSeconds(aircraft.Type));
+                var before = aircraft.CompletedTrips;
+                Assert.That(ops.ScheduleDeparture(aircraft, Code("KGC"), depart).Accepted, Is.True);
+                var until = depart.ElapsedSeconds + 6 * 3600;
+                while (aircraft.CompletedTrips == before && clock.Now.ElapsedSeconds < until)
+                    RunTo(clock, ops, (ops.NextEventAt() ?? clock.Now.Advance(60)).ElapsedSeconds);
+                Assert.That(aircraft.CompletedTrips, Is.EqualTo(before + 1));
+            }
+        }
+
         [Test]
         public void EveryType_HasAPayloadAndAPositiveRefitCost()
         {

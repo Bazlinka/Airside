@@ -178,14 +178,7 @@ namespace Airside.Presentation
             var enabled = GUI.enabled;
             GUI.enabled = enabled && command.Enabled;
             var style = ButtonStyle(command.ButtonStyle, command.Text == "×" || command.Text == "?");
-            // ADR 0135: an enabled button lifts a little and glows under the pointer.
-            if (command.Enabled && enabled && Event.current != null && rect.Contains(Event.current.mousePosition))
-            {
-                AirsideTheme.DrawRounded(new Rect(rect.x - 2f, rect.y - 1f, rect.width + 4f, rect.height + 4f),
-                    new Color(AirsideTheme.Aqua.r, AirsideTheme.Aqua.g, AirsideTheme.Aqua.b, 0.16f),
-                    Mathf.Min(rect.height * 0.5f + 2f, 20f));
-                rect = new Rect(rect.x, rect.y - 1.5f, rect.width, rect.height);
-            }
+            // Stable geometry on hover keeps neighbouring targets from appearing to shift.
             var pressed = GUI.Button(rect, command.Text, style);
             GUI.enabled = enabled;
             return pressed;
@@ -281,8 +274,8 @@ namespace Airside.Presentation
 
             var basis = new GUIStyle(GUI.skin.button)
             {
-                fontSize = glyph ? 18 : 11,
-                fontStyle = FontStyle.Bold,
+                fontSize = glyph ? 18 : 12,
+                fontStyle = FontStyle.Normal,
                 alignment = TextAnchor.MiddleCenter,
                 wordWrap = false,
                 clipping = TextClipping.Clip,

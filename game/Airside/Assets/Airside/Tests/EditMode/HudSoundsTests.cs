@@ -20,6 +20,15 @@ namespace Airside.Tests
         };
 
         [Test]
+        public void UiClick_HasASoftAttackAndQuietPeak()
+        {
+            var click = HudSounds.UiClick();
+            Assert.That(click[0], Is.Zero, "no first-sample discontinuity");
+            Assert.That(click.Max(Math.Abs), Is.LessThanOrEqualTo(0.35f));
+            Assert.That(Math.Abs(click[^1]), Is.LessThan(0.001f), "no abrupt tail cutoff");
+        }
+
+        [Test]
         public void UiClick_IsATick()
         {
             var click = HudSounds.UiClick();

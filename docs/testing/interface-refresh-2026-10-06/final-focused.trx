@@ -1,0 +1,309 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="e9f081d2-30ba-4fbd-8dfc-f230415d5736" name="@f144c3d744e2 2026-10-06 00:24:37" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-06T00:24:37.7633096+00:00" queuing="2026-10-06T00:24:37.7633096+00:00" start="2026-10-06T00:24:34.3030114+00:00" finish="2026-10-06T00:24:50.6588301+00:00" />
+  <TestSettings name="default" id="bf089645-e184-4bac-acc5-4bd328ff32f4">
+    <Deployment runDeploymentRoot="_f144c3d744e2_2026-10-06_00_24_37" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="336bb159-b522-4a72-ad6d-97da3a8e3425" testId="9445f380-81a6-f714-3c58-dfa10b766f73" testName="ViewingDock_PreservesTheSightlineAndContainsAllControls(800.0f,600.0f)" computerName="f144c3d744e2" duration="00:00:00.0000200" startTime="2026-10-06T00:24:50.6068230+00:00" endTime="2026-10-06T00:24:50.6068429+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="336bb159-b522-4a72-ad6d-97da3a8e3425" />
+    <UnitTestResult executionId="23a92789-bc74-4a61-a9e5-65b3e33cba58" testId="07f73155-22d7-4ca5-ab80-aeea4b69bffc" testName="AircraftCard_ViewActionsStayBelowOperationalActions(False,False)" computerName="f144c3d744e2" duration="00:00:00.0050159" startTime="2026-10-06T00:24:50.5906327+00:00" endTime="2026-10-06T00:24:50.5956483+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="23a92789-bc74-4a61-a9e5-65b3e33cba58" />
+    <UnitTestResult executionId="40315fa3-3cbd-4b5e-ab03-848132b9734b" testId="1c905dba-feef-dd8d-ea5f-e56067383b52" testName="Summary_SaysWhatHappenedAndWhatNeedsYou" computerName="f144c3d744e2" duration="00:00:00.4796060" startTime="2026-10-06T00:24:38.0228004+00:00" endTime="2026-10-06T00:24:38.5024053+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="40315fa3-3cbd-4b5e-ab03-848132b9734b" />
+    <UnitTestResult executionId="3d14e6bf-f76f-46ba-8aa8-1d98402b1895" testId="40fb6a80-9cd8-f38c-f222-277e6e36415c" testName="Contracts_NeverShowACompletedContractAsActionable" computerName="f144c3d744e2" duration="00:00:00.0040600" startTime="2026-10-06T00:24:50.2004809+00:00" endTime="2026-10-06T00:24:50.2045412+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3d14e6bf-f76f-46ba-8aa8-1d98402b1895" />
+    <UnitTestResult executionId="a1e26cc5-a890-49fc-82eb-944678fe634c" testId="13231f73-998d-68a4-1fe7-b09ad98815e5" testName="PassengerReturn_CannotEarnFreightProgress_ButFreighterReturnCan" computerName="f144c3d744e2" duration="00:00:00.0031700" startTime="2026-10-06T00:24:50.2194938+00:00" endTime="2026-10-06T00:24:50.2226638+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a1e26cc5-a890-49fc-82eb-944678fe634c" />
+    <UnitTestResult executionId="74fe9249-3f9f-498b-82ba-5a3b030f31a4" testId="ae56becf-6209-4716-a3dd-1096a89aeb86" testName="CatchUp_ReachesTheSameStateAsPlayingLive" computerName="f144c3d744e2" duration="00:00:02.0156410" startTime="2026-10-06T00:24:35.0838944+00:00" endTime="2026-10-06T00:24:37.0994839+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="74fe9249-3f9f-498b-82ba-5a3b030f31a4" />
+    <UnitTestResult executionId="12695ec3-9e03-42ee-aa45-475ef6726684" testId="41c6fbbd-d0a3-f23f-82c5-bda0ce479f1d" testName="ViewingDock_PreservesTheSightlineAndContainsAllControls(1280.0f,720.0f)" computerName="f144c3d744e2" duration="00:00:00.0016070" startTime="2026-10-06T00:24:50.6049404+00:00" endTime="2026-10-06T00:24:50.6065470+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="12695ec3-9e03-42ee-aa45-475ef6726684" />
+    <UnitTestResult executionId="8252ce21-b7a1-4544-871c-310e18091e63" testId="e6822606-1c8d-3be1-b801-a596b71c4c65" testName="UiClick_IsATick" computerName="f144c3d744e2" duration="00:00:00.0003070" startTime="2026-10-06T00:24:50.5901555+00:00" endTime="2026-10-06T00:24:50.5904626+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8252ce21-b7a1-4544-871c-310e18091e63" />
+    <UnitTestResult executionId="9e435dc2-d91f-4aa7-8658-3827e69f3bbb" testId="97d5be41-f925-7090-d6f7-fbfd2239baca" testName="Freighter_CarriesNoPassengers" computerName="f144c3d744e2" duration="00:00:00.0004010" startTime="2026-10-06T00:24:50.2158948+00:00" endTime="2026-10-06T00:24:50.2162952+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9e435dc2-d91f-4aa7-8658-3827e69f3bbb" />
+    <UnitTestResult executionId="096999b9-8300-46e9-be59-91eb201ec99e" testId="26e1f80a-1ffb-147a-727e-e3a6fc601b89" testName="OlderSaves_LoadAsAllPassenger" computerName="f144c3d744e2" duration="00:00:00.0003330" startTime="2026-10-06T00:24:50.2191494+00:00" endTime="2026-10-06T00:24:50.2194822+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="096999b9-8300-46e9-be59-91eb201ec99e" />
+    <UnitTestResult executionId="4372a9dd-db9d-4ca3-8750-223b6217cf8e" testId="1f909234-f900-f5f9-a064-32541640ddc7" testName="Market_OffersEveryKindWithTheirOwnTerms" computerName="f144c3d744e2" duration="00:00:00.0082690" startTime="2026-10-06T00:24:50.1726216+00:00" endTime="2026-10-06T00:24:50.1808898+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4372a9dd-db9d-4ca3-8750-223b6217cf8e" />
+    <UnitTestResult executionId="849c0195-177b-43fe-9c5e-f7ee263bc875" testId="fd5557d9-85cc-c9e8-dbff-4dfcfc6c7c28" testName="AircraftCard_ViewActionsStayBelowOperationalActions(True,False)" computerName="f144c3d744e2" duration="00:00:00.0004050" startTime="2026-10-06T00:24:50.5956832+00:00" endTime="2026-10-06T00:24:50.5960882+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="849c0195-177b-43fe-9c5e-f7ee263bc875" />
+    <UnitTestResult executionId="ee8ea0b3-3604-4a93-8ba1-23367d8a09cf" testId="ff5f6e96-8043-7fdf-49cc-16252d66be09" testName="Contracts_OfferTotalsAddUpToWhatTheContractActuallyPays" computerName="f144c3d744e2" duration="00:00:00.0071600" startTime="2026-10-06T00:24:50.2045740+00:00" endTime="2026-10-06T00:24:50.2117335+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ee8ea0b3-3604-4a93-8ba1-23367d8a09cf" />
+    <UnitTestResult executionId="57a5f775-4fed-462f-ab30-46097e4bae52" testId="b48f1dbc-4cbc-2317-15aa-15c89597227e" testName="DemandEvents_AreDeterministicAndRaiseTheForecastWhereTheyApply" computerName="f144c3d744e2" duration="00:00:02.8706090" startTime="2026-10-06T00:24:47.3019452+00:00" endTime="2026-10-06T00:24:50.1725526+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="57a5f775-4fed-462f-ab30-46097e4bae52" />
+    <UnitTestResult executionId="b58bf32c-a804-4877-9ca1-32cb5511f2f9" testId="75139070-b228-08b7-6e27-93c903e0d781" testName="OnTimeStreak_PaysItsChallengeOnce" computerName="f144c3d744e2" duration="00:00:00.0058280" startTime="2026-10-06T00:24:50.1809368+00:00" endTime="2026-10-06T00:24:50.1867647+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b58bf32c-a804-4877-9ca1-32cb5511f2f9" />
+    <UnitTestResult executionId="c5cd0f37-ac83-4e99-96ae-0dd4ad5efc0c" testId="7304f07b-2834-9d11-6d99-5dba50a01ffd" testName="Contracts_LayoutKeepsBothColumnsInsideTheSurface" computerName="f144c3d744e2" duration="00:00:00.0025510" startTime="2026-10-06T00:24:50.1970560+00:00" endTime="2026-10-06T00:24:50.1996070+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c5cd0f37-ac83-4e99-96ae-0dd4ad5efc0c" />
+    <UnitTestResult executionId="a4f7de77-63cc-4e2b-8de4-762d6209201e" testId="2cbc5294-3578-c837-1149-323cdf4a1ab8" testName="ContractDeadline_LapsesAtTheExactMomentWhateverTheStepSize" computerName="f144c3d744e2" duration="00:00:01.6237649" startTime="2026-10-06T00:24:45.6781133+00:00" endTime="2026-10-06T00:24:47.3018766+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a4f7de77-63cc-4e2b-8de4-762d6209201e" />
+    <UnitTestResult executionId="c7429193-ff2a-4c08-80a7-2c4b643bf32f" testId="fe16992c-35e3-cc45-ac4e-9753e03af499" testName="CargoTitle_IsTheWordmarkPlusCargo_AndFitsTheFuselage" computerName="f144c3d744e2" duration="00:00:00.0006370" startTime="2026-10-06T00:24:50.2123206+00:00" endTime="2026-10-06T00:24:50.2129577+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c7429193-ff2a-4c08-80a7-2c4b643bf32f" />
+    <UnitTestResult executionId="95ed9641-8670-4cab-a560-bb6d2cfa0e00" testId="04c014ed-99a0-27db-a8d2-349af64949dd" testName="Sounds_AreDeterministic" computerName="f144c3d744e2" duration="00:00:00.1282150" startTime="2026-10-06T00:24:50.4608108+00:00" endTime="2026-10-06T00:24:50.5890249+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="95ed9641-8670-4cab-a560-bb6d2cfa0e00" />
+    <UnitTestResult executionId="bb50f32d-57d0-4bf1-923e-2d4f33c25179" testId="57ae216f-b5f0-c567-2648-c07af1ff8221" testName="AircraftCard_ViewActionsStayBelowOperationalActions(True,True)" computerName="f144c3d744e2" duration="00:00:00.0005700" startTime="2026-10-06T00:24:50.5961205+00:00" endTime="2026-10-06T00:24:50.5966905+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bb50f32d-57d0-4bf1-923e-2d4f33c25179" />
+    <UnitTestResult executionId="f344de40-cfbb-4956-bddb-ea0b29403854" testId="e2576bb9-a995-f2a5-5528-004dbb49467a" testName="FreightOffer_LocksUntilTheMatchingAircraftIsRefitted" computerName="f144c3d744e2" duration="00:00:00.0004320" startTime="2026-10-06T00:24:50.2186850+00:00" endTime="2026-10-06T00:24:50.2191167+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f344de40-cfbb-4956-bddb-ea0b29403854" />
+    <UnitTestResult executionId="c5a88ce4-cbd3-4403-96ec-61f9e6646a88" testId="f6553802-fd09-96d1-8e09-ce8132815a1d" testName="Save_RemembersWhichAircraftAreFreighters" computerName="f144c3d744e2" duration="00:00:00.0003920" startTime="2026-10-06T00:24:50.2237453+00:00" endTime="2026-10-06T00:24:50.2241374+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c5a88ce4-cbd3-4403-96ec-61f9e6646a88" />
+    <UnitTestResult executionId="d030c014-7764-48db-bceb-8aadbdb58e69" testId="24f6a30a-e9a0-bfdb-47b6-ef3efd16e046" testName="ViewingDock_PreservesTheSightlineAndContainsAllControls(1920.0f,1080.0f)" computerName="f144c3d744e2" duration="00:00:00.0000300" startTime="2026-10-06T00:24:50.6067898+00:00" endTime="2026-10-06T00:24:50.6068195+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d030c014-7764-48db-bceb-8aadbdb58e69" />
+    <UnitTestResult executionId="d8cb14e3-fe66-46c9-863a-5d052e64e590" testId="1b9d088d-8caf-b616-f32a-33fd4a3e43c9" testName="ApronBed_IsAQuietSeamlessLoop" computerName="f144c3d744e2" duration="00:00:00.2103820" startTime="2026-10-06T00:24:50.2244778+00:00" endTime="2026-10-06T00:24:50.4348585+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d8cb14e3-fe66-46c9-863a-5d052e64e590" />
+    <UnitTestResult executionId="b136fdd6-81a3-4749-8940-d1c1e1941cc0" testId="2eff6183-5164-5c03-3d27-46e79782feee" testName="FreighterRotation_PaysItsFreightForecastOnReturn" computerName="f144c3d744e2" duration="00:00:00.0011030" startTime="2026-10-06T00:24:50.2175501+00:00" endTime="2026-10-06T00:24:50.2186533+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b136fdd6-81a3-4749-8940-d1c1e1941cc0" />
+    <UnitTestResult executionId="83c6cfbc-525c-4ed3-ac6e-4df492c8a864" testId="14f3bf81-4996-8274-c072-327e846cae7b" testName="Summary_ReportsCareerEarningsWhileAway" computerName="f144c3d744e2" duration="00:00:00.4696070" startTime="2026-10-06T00:24:37.5531275+00:00" endTime="2026-10-06T00:24:38.0227333+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="83c6cfbc-525c-4ed3-ac6e-4df492c8a864" />
+    <UnitTestResult executionId="25ad1ced-feab-4c42-a32a-cf87e9b06054" testId="72c661eb-aca8-5ae3-9074-2642c31d606d" testName="FreighterForecast_IsInTonnesAndPaysFromTheFreightThePlaceOffers" computerName="f144c3d744e2" duration="00:00:00.0011980" startTime="2026-10-06T00:24:50.2163218+00:00" endTime="2026-10-06T00:24:50.2175198+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="25ad1ced-feab-4c42-a32a-cf87e9b06054" />
+    <UnitTestResult executionId="c7816531-9e3d-45f9-8142-7fb34e0cbbd4" testId="eaa03a28-e9fa-1dbe-4b5d-f06a387b91fb" testName="ViewingDock_PreservesTheSightlineAndContainsAllControls(1440.0f,900.0f)" computerName="f144c3d744e2" duration="00:00:00.0001850" startTime="2026-10-06T00:24:50.6065762+00:00" endTime="2026-10-06T00:24:50.6067614+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c7816531-9e3d-45f9-8142-7fb34e0cbbd4" />
+    <UnitTestResult executionId="c8e8a933-2b92-4ca0-ad94-cac6f1ba110b" testId="9329aa8e-6ebd-4afd-7da8-1849002c5b64" testName="Contracts_CountDownToTheRealMarketRefresh" computerName="f144c3d744e2" duration="00:00:00.0022200" startTime="2026-10-06T00:24:50.1925888+00:00" endTime="2026-10-06T00:24:50.1948086+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c8e8a933-2b92-4ca0-ad94-cac6f1ba110b" />
+    <UnitTestResult executionId="72e6be19-02f1-4ef5-8e10-2f8c1599940f" testId="c197886b-28f2-6c93-e754-79f9e7c69b30" testName="ReturnReport_KeepsActionsBelowItsScrollableFleet(800.0f,600.0f)" computerName="f144c3d744e2" duration="00:00:00.0030170" startTime="2026-10-06T00:24:50.6018623+00:00" endTime="2026-10-06T00:24:50.6048791+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="72e6be19-02f1-4ef5-8e10-2f8c1599940f" />
+    <UnitTestResult executionId="b8f518de-d6b5-4668-bc61-32ac3e590e92" testId="423e6bee-9bb2-7191-f9bb-111347035765" testName="AFlownDay_EndsWithAReportAndTheDaysNews" computerName="f144c3d744e2" duration="00:00:07.1690570" startTime="2026-10-06T00:24:38.5089830+00:00" endTime="2026-10-06T00:24:45.6780390+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b8f518de-d6b5-4668-bc61-32ac3e590e92" />
+    <UnitTestResult executionId="15d572aa-a974-415a-8ce1-63a5950ebefb" testId="811dac69-3d60-0031-94a4-c99c91e7832d" testName="UiClick_HasASoftAttackAndQuietPeak" computerName="f144c3d744e2" duration="00:00:00.0010340" startTime="2026-10-06T00:24:50.5890777+00:00" endTime="2026-10-06T00:24:50.5901113+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="15d572aa-a974-415a-8ce1-63a5950ebefb" />
+    <UnitTestResult executionId="d9d0a863-3181-48cf-976f-da374d1f27a9" testId="3a89d3af-4e2f-3abc-5487-3934e7208974" testName="EveryType_HasAPayloadAndAPositiveRefitCost" computerName="f144c3d744e2" duration="00:00:00.0009280" startTime="2026-10-06T00:24:50.2129692+00:00" endTime="2026-10-06T00:24:50.2138970+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d9d0a863-3181-48cf-976f-da374d1f27a9" />
+    <UnitTestResult executionId="044f9c46-c650-4cbc-bab6-3a0d4811bd11" testId="221c3b6c-7a3b-8052-cc25-8cf1bfcf1a64" testName="EverySound_IsShortAudibleAndNeverClips" computerName="f144c3d744e2" duration="00:00:00.0258260" startTime="2026-10-06T00:24:50.4349237+00:00" endTime="2026-10-06T00:24:50.4607483+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="044f9c46-c650-4cbc-bab6-3a0d4811bd11" />
+    <UnitTestResult executionId="68916ce1-28b1-4e2d-85a1-a787416b634b" testId="86b26f9a-331e-a826-ef73-b6dadf96cfc3" testName="Contracts_LockedTierNamesTheOperatingTier" computerName="f144c3d744e2" duration="00:00:00.0005109" startTime="2026-10-06T00:24:50.1996423+00:00" endTime="2026-10-06T00:24:50.2001529+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="68916ce1-28b1-4e2d-85a1-a787416b634b" />
+    <UnitTestResult executionId="0ef0812a-6bc2-4e5b-a891-54629887ac5c" testId="97777eb2-743f-4433-a4e6-2ff3ac250705" testName="ThinPassengerRoutes_CanPayBetterByFreight" computerName="f144c3d744e2" duration="00:00:00.0001390" startTime="2026-10-06T00:24:50.2241695+00:00" endTime="2026-10-06T00:24:50.2243087+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0ef0812a-6bc2-4e5b-a891-54629887ac5c" />
+    <UnitTestResult executionId="1243f30c-7f26-471a-a02a-57e68cbf96c0" testId="378b5948-c43d-deb0-3a81-24c6a99a8afd" testName="Refit_ChargesTheFeeAndTurnsTheAircraftIntoAFreighterAndBack" computerName="f144c3d744e2" duration="00:00:00.0003320" startTime="2026-10-06T00:24:50.2226979+00:00" endTime="2026-10-06T00:24:50.2230297+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1243f30c-7f26-471a-a02a-57e68cbf96c0" />
+    <UnitTestResult executionId="ee0aeb61-b7fd-4b9c-86d9-8571cb04c0b1" testId="ff58335e-b26e-6200-2c69-d79e04da100e" testName="SecondsAway_IsRealTimeSinceTheSaveCappedAtAWeek" computerName="f144c3d744e2" duration="00:00:00.0020260" startTime="2026-10-06T00:24:37.1007651+00:00" endTime="2026-10-06T00:24:37.1027909+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ee0aeb61-b7fd-4b9c-86d9-8571cb04c0b1" />
+    <UnitTestResult executionId="16a065aa-0118-4995-94bf-3cf95a70bcdc" testId="2d69c4db-9747-2076-de63-69319ec4c5f5" testName="ReturnReport_KeepsActionsBelowItsScrollableFleet(1280.0f,720.0f)" computerName="f144c3d744e2" duration="00:00:00.0050730" startTime="2026-10-06T00:24:50.5967574+00:00" endTime="2026-10-06T00:24:50.6018298+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="16a065aa-0118-4995-94bf-3cf95a70bcdc" />
+    <UnitTestResult executionId="21427231-6c56-45ec-849d-484ce7a3a25f" testId="b62af82d-9dda-9013-ecc1-770cefef1c30" testName="Summary_MigratingAPre6Save_DoesNotMisreportTheFreshCareerAsChangedWhileAway" computerName="f144c3d744e2" duration="00:00:00.4502230" startTime="2026-10-06T00:24:37.1028320+00:00" endTime="2026-10-06T00:24:37.5530539+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="21427231-6c56-45ec-849d-484ce7a3a25f" />
+    <UnitTestResult executionId="d472e708-b0bf-4528-8cbe-aeb13c361819" testId="6b6c4de6-1298-b03b-5dc5-b76a1cd176fe" testName="Refit_IsRefusedWithABookedFlightOrTooLittleCash" computerName="f144c3d744e2" duration="00:00:00.0006620" startTime="2026-10-06T00:24:50.2230529+00:00" endTime="2026-10-06T00:24:50.2237146+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d472e708-b0bf-4528-8cbe-aeb13c361819" />
+    <UnitTestResult executionId="36be5f84-d932-4298-98b3-ca5c4351d597" testId="9848847a-ecf0-bf79-0516-ed61df381adc" testName="FreightDemand_IsCappedAtThePayload" computerName="f144c3d744e2" duration="00:00:00.0017440" startTime="2026-10-06T00:24:50.2141206+00:00" endTime="2026-10-06T00:24:50.2158643+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="36be5f84-d932-4298-98b3-ca5c4351d597" />
+    <UnitTestResult executionId="7fab721a-8ccb-438c-b819-065153ea10cf" testId="67d18229-3e9f-eb97-f5a5-132b1342edad" testName="FreightDeadline_DoesNotCountPassengerAircraft" computerName="f144c3d744e2" duration="00:00:00.0001840" startTime="2026-10-06T00:24:50.2139258+00:00" endTime="2026-10-06T00:24:50.2141101+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7fab721a-8ccb-438c-b819-065153ea10cf" />
+    <UnitTestResult executionId="eb7bd258-5ecb-4dbc-b1cc-a379c642051c" testId="a81d9e8b-7eda-61cd-79be-0a76c991dff3" testName="Save_V15KeepsTheContractKindDeadlineAndStreak" computerName="f144c3d744e2" duration="00:00:00.0055510" startTime="2026-10-06T00:24:50.1867955+00:00" endTime="2026-10-06T00:24:50.1923458+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eb7bd258-5ecb-4dbc-b1cc-a379c642051c" />
+    <UnitTestResult executionId="7db961d5-4914-4aaf-9d72-051e28146f0f" testId="8488733a-2f70-8a8b-d570-8281012dd7b8" testName="Contracts_KeepTheActiveCommitmentApartFromTheMarket" computerName="f144c3d744e2" duration="00:00:00.0021770" startTime="2026-10-06T00:24:50.1948439+00:00" endTime="2026-10-06T00:24:50.1970223+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7db961d5-4914-4aaf-9d72-051e28146f0f" />
+    <UnitTestResult executionId="7f469482-d09e-4a29-8fd8-2b7b75ef1bb1" testId="a2f20d6e-1068-ee5d-747a-1993160abe35" testName="VersionOneSave_StillLoads" computerName="f144c3d744e2" duration="00:00:00.0044580" startTime="2026-10-06T00:24:38.5024635+00:00" endTime="2026-10-06T00:24:38.5069205+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7f469482-d09e-4a29-8fd8-2b7b75ef1bb1" />
+    <UnitTestResult executionId="53d1bf2e-5719-493a-9134-44dcf16fe512" testId="7a20be52-2e27-c190-1627-ea1faca618ed" testName="AiAircraft_CannotBeRefitted" computerName="f144c3d744e2" duration="00:00:00.0004120" startTime="2026-10-06T00:24:50.2118969+00:00" endTime="2026-10-06T00:24:50.2123088+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="53d1bf2e-5719-493a-9134-44dcf16fe512" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="UiClick_HasASoftAttackAndQuietPeak" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="811dac69-3d60-0031-94a4-c99c91e7832d">
+      <Execution id="15d572aa-a974-415a-8ce1-63a5950ebefb" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.HudSoundsTests" name="UiClick_HasASoftAttackAndQuietPeak" />
+    </UnitTest>
+    <UnitTest name="Refit_ChargesTheFeeAndTurnsTheAircraftIntoAFreighterAndBack" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="378b5948-c43d-deb0-3a81-24c6a99a8afd">
+      <Execution id="1243f30c-7f26-471a-a02a-57e68cbf96c0" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.FreightTests" name="Refit_ChargesTheFeeAndTurnsTheAircraftIntoAFreighterAndBack" />
+    </UnitTest>
+    <UnitTest name="Contracts_KeepTheActiveCommitmentApartFromTheMarket" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="8488733a-2f70-8a8b-d570-8281012dd7b8">
+      <Execution id="7db961d5-4914-4aaf-9d72-051e28146f0f" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.ContractsWorkspaceTests" name="Contracts_KeepTheActiveCommitmentApartFromTheMarket" />
+    </UnitTest>
+    <UnitTest name="VersionOneSave_StillLoads" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="a2f20d6e-1068-ee5d-747a-1993160abe35">
+      <Execution id="7f469482-d09e-4a29-8fd8-2b7b75ef1bb1" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.AwayCatchUpTests" name="VersionOneSave_StillLoads" />
+    </UnitTest>
+    <UnitTest name="ApronBed_IsAQuietSeamlessLoop" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="1b9d088d-8caf-b616-f32a-33fd4a3e43c9">
+      <Execution id="d8cb14e3-fe66-46c9-863a-5d052e64e590" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.HudSoundsTests" name="ApronBed_IsAQuietSeamlessLoop" />
+    </UnitTest>
+    <UnitTest name="EveryType_HasAPayloadAndAPositiveRefitCost" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="3a89d3af-4e2f-3abc-5487-3934e7208974">
+      <Execution id="d9d0a863-3181-48cf-976f-da374d1f27a9" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.FreightTests" name="EveryType_HasAPayloadAndAPositiveRefitCost" />
+    </UnitTest>
+    <UnitTest name="Summary_MigratingAPre6Save_DoesNotMisreportTheFreshCareerAsChangedWhileAway" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="b62af82d-9dda-9013-ecc1-770cefef1c30">
+      <Execution id="21427231-6c56-45ec-849d-484ce7a3a25f" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.AwayCatchUpTests" name="Summary_MigratingAPre6Save_DoesNotMisreportTheFreshCareerAsChangedWhileAway" />
+    </UnitTest>
+    <UnitTest name="ThinPassengerRoutes_CanPayBetterByFreight" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="97777eb2-743f-4433-a4e6-2ff3ac250705">
+      <Execution id="0ef0812a-6bc2-4e5b-a891-54629887ac5c" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.FreightTests" name="ThinPassengerRoutes_CanPayBetterByFreight" />
+    </UnitTest>
+    <UnitTest name="Save_V15KeepsTheContractKindDeadlineAndStreak" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="a81d9e8b-7eda-61cd-79be-0a76c991dff3">
+      <Execution id="eb7bd258-5ecb-4dbc-b1cc-a379c642051c" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CareerVarietyTests" name="Save_V15KeepsTheContractKindDeadlineAndStreak" />
+    </UnitTest>
+    <UnitTest name="CargoTitle_IsTheWordmarkPlusCargo_AndFitsTheFuselage" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="fe16992c-35e3-cc45-ac4e-9753e03af499">
+      <Execution id="c7429193-ff2a-4c08-80a7-2c4b643bf32f" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.FreightTests" name="CargoTitle_IsTheWordmarkPlusCargo_AndFitsTheFuselage" />
+    </UnitTest>
+    <UnitTest name="OnTimeStreak_PaysItsChallengeOnce" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="75139070-b228-08b7-6e27-93c903e0d781">
+      <Execution id="b58bf32c-a804-4877-9ca1-32cb5511f2f9" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CareerVarietyTests" name="OnTimeStreak_PaysItsChallengeOnce" />
+    </UnitTest>
+    <UnitTest name="Contracts_CountDownToTheRealMarketRefresh" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="9329aa8e-6ebd-4afd-7da8-1849002c5b64">
+      <Execution id="c8e8a933-2b92-4ca0-ad94-cac6f1ba110b" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.ContractsWorkspaceTests" name="Contracts_CountDownToTheRealMarketRefresh" />
+    </UnitTest>
+    <UnitTest name="PassengerReturn_CannotEarnFreightProgress_ButFreighterReturnCan" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="13231f73-998d-68a4-1fe7-b09ad98815e5">
+      <Execution id="a1e26cc5-a890-49fc-82eb-944678fe634c" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.FreightTests" name="PassengerReturn_CannotEarnFreightProgress_ButFreighterReturnCan" />
+    </UnitTest>
+    <UnitTest name="Summary_SaysWhatHappenedAndWhatNeedsYou" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="1c905dba-feef-dd8d-ea5f-e56067383b52">
+      <Execution id="40315fa3-3cbd-4b5e-ab03-848132b9734b" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.AwayCatchUpTests" name="Summary_SaysWhatHappenedAndWhatNeedsYou" />
+    </UnitTest>
+    <UnitTest name="AiAircraft_CannotBeRefitted" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="7a20be52-2e27-c190-1627-ea1faca618ed">
+      <Execution id="53d1bf2e-5719-493a-9134-44dcf16fe512" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.FreightTests" name="AiAircraft_CannotBeRefitted" />
+    </UnitTest>
+    <UnitTest name="FreightDeadline_DoesNotCountPassengerAircraft" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="67d18229-3e9f-eb97-f5a5-132b1342edad">
+      <Execution id="7fab721a-8ccb-438c-b819-065153ea10cf" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.FreightTests" name="FreightDeadline_DoesNotCountPassengerAircraft" />
+    </UnitTest>
+    <UnitTest name="Market_OffersEveryKindWithTheirOwnTerms" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="1f909234-f900-f5f9-a064-32541640ddc7">
+      <Execution id="4372a9dd-db9d-4ca3-8750-223b6217cf8e" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CareerVarietyTests" name="Market_OffersEveryKindWithTheirOwnTerms" />
+    </UnitTest>
+    <UnitTest name="UiClick_IsATick" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="e6822606-1c8d-3be1-b801-a596b71c4c65">
+      <Execution id="8252ce21-b7a1-4544-871c-310e18091e63" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.HudSoundsTests" name="UiClick_IsATick" />
+    </UnitTest>
+    <UnitTest name="Contracts_LayoutKeepsBothColumnsInsideTheSurface" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="7304f07b-2834-9d11-6d99-5dba50a01ffd">
+      <Execution id="c5cd0f37-ac83-4e99-96ae-0dd4ad5efc0c" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.ContractsWorkspaceTests" name="Contracts_LayoutKeepsBothColumnsInsideTheSurface" />
+    </UnitTest>
+    <UnitTest name="FreightDemand_IsCappedAtThePayload" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="9848847a-ecf0-bf79-0516-ed61df381adc">
+      <Execution id="36be5f84-d932-4298-98b3-ca5c4351d597" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.FreightTests" name="FreightDemand_IsCappedAtThePayload" />
+    </UnitTest>
+    <UnitTest name="ViewingDock_PreservesTheSightlineAndContainsAllControls(1280.0f,720.0f)" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="41c6fbbd-d0a3-f23f-82c5-bda0ce479f1d">
+      <Execution id="12695ec3-9e03-42ee-aa45-475ef6726684" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.InterfaceRefreshTests" name="ViewingDock_PreservesTheSightlineAndContainsAllControls(1280.0f,720.0f)" />
+    </UnitTest>
+    <UnitTest name="EverySound_IsShortAudibleAndNeverClips" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="221c3b6c-7a3b-8052-cc25-8cf1bfcf1a64">
+      <Execution id="044f9c46-c650-4cbc-bab6-3a0d4811bd11" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.HudSoundsTests" name="EverySound_IsShortAudibleAndNeverClips" />
+    </UnitTest>
+    <UnitTest name="FreighterRotation_PaysItsFreightForecastOnReturn" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="2eff6183-5164-5c03-3d27-46e79782feee">
+      <Execution id="b136fdd6-81a3-4749-8940-d1c1e1941cc0" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.FreightTests" name="FreighterRotation_PaysItsFreightForecastOnReturn" />
+    </UnitTest>
+    <UnitTest name="AircraftCard_ViewActionsStayBelowOperationalActions(False,False)" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="07f73155-22d7-4ca5-ab80-aeea4b69bffc">
+      <Execution id="23a92789-bc74-4a61-a9e5-65b3e33cba58" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.InterfaceRefreshTests" name="AircraftCard_ViewActionsStayBelowOperationalActions(False,False)" />
+    </UnitTest>
+    <UnitTest name="Freighter_CarriesNoPassengers" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="97d5be41-f925-7090-d6f7-fbfd2239baca">
+      <Execution id="9e435dc2-d91f-4aa7-8658-3827e69f3bbb" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.FreightTests" name="Freighter_CarriesNoPassengers" />
+    </UnitTest>
+    <UnitTest name="AircraftCard_ViewActionsStayBelowOperationalActions(True,True)" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="57ae216f-b5f0-c567-2648-c07af1ff8221">
+      <Execution id="bb50f32d-57d0-4bf1-923e-2d4f33c25179" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.InterfaceRefreshTests" name="AircraftCard_ViewActionsStayBelowOperationalActions(True,True)" />
+    </UnitTest>
+    <UnitTest name="DemandEvents_AreDeterministicAndRaiseTheForecastWhereTheyApply" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="b48f1dbc-4cbc-2317-15aa-15c89597227e">
+      <Execution id="57a5f775-4fed-462f-ab30-46097e4bae52" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CareerVarietyTests" name="DemandEvents_AreDeterministicAndRaiseTheForecastWhereTheyApply" />
+    </UnitTest>
+    <UnitTest name="FreightOffer_LocksUntilTheMatchingAircraftIsRefitted" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="e2576bb9-a995-f2a5-5528-004dbb49467a">
+      <Execution id="f344de40-cfbb-4956-bddb-ea0b29403854" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.FreightTests" name="FreightOffer_LocksUntilTheMatchingAircraftIsRefitted" />
+    </UnitTest>
+    <UnitTest name="AFlownDay_EndsWithAReportAndTheDaysNews" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="423e6bee-9bb2-7191-f9bb-111347035765">
+      <Execution id="b8f518de-d6b5-4668-bc61-32ac3e590e92" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CareerVarietyTests" name="AFlownDay_EndsWithAReportAndTheDaysNews" />
+    </UnitTest>
+    <UnitTest name="OlderSaves_LoadAsAllPassenger" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="26e1f80a-1ffb-147a-727e-e3a6fc601b89">
+      <Execution id="096999b9-8300-46e9-be59-91eb201ec99e" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.FreightTests" name="OlderSaves_LoadAsAllPassenger" />
+    </UnitTest>
+    <UnitTest name="CatchUp_ReachesTheSameStateAsPlayingLive" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="ae56becf-6209-4716-a3dd-1096a89aeb86">
+      <Execution id="74fe9249-3f9f-498b-82ba-5a3b030f31a4" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.AwayCatchUpTests" name="CatchUp_ReachesTheSameStateAsPlayingLive" />
+    </UnitTest>
+    <UnitTest name="Summary_ReportsCareerEarningsWhileAway" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="14f3bf81-4996-8274-c072-327e846cae7b">
+      <Execution id="83c6cfbc-525c-4ed3-ac6e-4df492c8a864" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.AwayCatchUpTests" name="Summary_ReportsCareerEarningsWhileAway" />
+    </UnitTest>
+    <UnitTest name="Save_RemembersWhichAircraftAreFreighters" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="f6553802-fd09-96d1-8e09-ce8132815a1d">
+      <Execution id="c5a88ce4-cbd3-4403-96ec-61f9e6646a88" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.FreightTests" name="Save_RemembersWhichAircraftAreFreighters" />
+    </UnitTest>
+    <UnitTest name="Sounds_AreDeterministic" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="04c014ed-99a0-27db-a8d2-349af64949dd">
+      <Execution id="95ed9641-8670-4cab-a560-bb6d2cfa0e00" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.HudSoundsTests" name="Sounds_AreDeterministic" />
+    </UnitTest>
+    <UnitTest name="ViewingDock_PreservesTheSightlineAndContainsAllControls(800.0f,600.0f)" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="9445f380-81a6-f714-3c58-dfa10b766f73">
+      <Execution id="336bb159-b522-4a72-ad6d-97da3a8e3425" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.InterfaceRefreshTests" name="ViewingDock_PreservesTheSightlineAndContainsAllControls(800.0f,600.0f)" />
+    </UnitTest>
+    <UnitTest name="ViewingDock_PreservesTheSightlineAndContainsAllControls(1920.0f,1080.0f)" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="24f6a30a-e9a0-bfdb-47b6-ef3efd16e046">
+      <Execution id="d030c014-7764-48db-bceb-8aadbdb58e69" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.InterfaceRefreshTests" name="ViewingDock_PreservesTheSightlineAndContainsAllControls(1920.0f,1080.0f)" />
+    </UnitTest>
+    <UnitTest name="Contracts_OfferTotalsAddUpToWhatTheContractActuallyPays" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="ff5f6e96-8043-7fdf-49cc-16252d66be09">
+      <Execution id="ee8ea0b3-3604-4a93-8ba1-23367d8a09cf" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.ContractsWorkspaceTests" name="Contracts_OfferTotalsAddUpToWhatTheContractActuallyPays" />
+    </UnitTest>
+    <UnitTest name="ReturnReport_KeepsActionsBelowItsScrollableFleet(1280.0f,720.0f)" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="2d69c4db-9747-2076-de63-69319ec4c5f5">
+      <Execution id="16a065aa-0118-4995-94bf-3cf95a70bcdc" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.InterfaceRefreshTests" name="ReturnReport_KeepsActionsBelowItsScrollableFleet(1280.0f,720.0f)" />
+    </UnitTest>
+    <UnitTest name="ReturnReport_KeepsActionsBelowItsScrollableFleet(800.0f,600.0f)" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="c197886b-28f2-6c93-e754-79f9e7c69b30">
+      <Execution id="72e6be19-02f1-4ef5-8e10-2f8c1599940f" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.InterfaceRefreshTests" name="ReturnReport_KeepsActionsBelowItsScrollableFleet(800.0f,600.0f)" />
+    </UnitTest>
+    <UnitTest name="ViewingDock_PreservesTheSightlineAndContainsAllControls(1440.0f,900.0f)" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="eaa03a28-e9fa-1dbe-4b5d-f06a387b91fb">
+      <Execution id="c7816531-9e3d-45f9-8142-7fb34e0cbbd4" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.InterfaceRefreshTests" name="ViewingDock_PreservesTheSightlineAndContainsAllControls(1440.0f,900.0f)" />
+    </UnitTest>
+    <UnitTest name="FreighterForecast_IsInTonnesAndPaysFromTheFreightThePlaceOffers" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="72c661eb-aca8-5ae3-9074-2642c31d606d">
+      <Execution id="25ad1ced-feab-4c42-a32a-cf87e9b06054" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.FreightTests" name="FreighterForecast_IsInTonnesAndPaysFromTheFreightThePlaceOffers" />
+    </UnitTest>
+    <UnitTest name="SecondsAway_IsRealTimeSinceTheSaveCappedAtAWeek" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="ff58335e-b26e-6200-2c69-d79e04da100e">
+      <Execution id="ee0aeb61-b7fd-4b9c-86d9-8571cb04c0b1" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.AwayCatchUpTests" name="SecondsAway_IsRealTimeSinceTheSaveCappedAtAWeek" />
+    </UnitTest>
+    <UnitTest name="Contracts_LockedTierNamesTheOperatingTier" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="86b26f9a-331e-a826-ef73-b6dadf96cfc3">
+      <Execution id="68916ce1-28b1-4e2d-85a1-a787416b634b" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.ContractsWorkspaceTests" name="Contracts_LockedTierNamesTheOperatingTier" />
+    </UnitTest>
+    <UnitTest name="Contracts_NeverShowACompletedContractAsActionable" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="40fb6a80-9cd8-f38c-f222-277e6e36415c">
+      <Execution id="3d14e6bf-f76f-46ba-8aa8-1d98402b1895" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.ContractsWorkspaceTests" name="Contracts_NeverShowACompletedContractAsActionable" />
+    </UnitTest>
+    <UnitTest name="Refit_IsRefusedWithABookedFlightOrTooLittleCash" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="6b6c4de6-1298-b03b-5dc5-b76a1cd176fe">
+      <Execution id="d472e708-b0bf-4528-8cbe-aeb13c361819" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.FreightTests" name="Refit_IsRefusedWithABookedFlightOrTooLittleCash" />
+    </UnitTest>
+    <UnitTest name="AircraftCard_ViewActionsStayBelowOperationalActions(True,False)" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="fd5557d9-85cc-c9e8-dbff-4dfcfc6c7c28">
+      <Execution id="849c0195-177b-43fe-9c5e-f7ee263bc875" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.InterfaceRefreshTests" name="AircraftCard_ViewActionsStayBelowOperationalActions(True,False)" />
+    </UnitTest>
+    <UnitTest name="ContractDeadline_LapsesAtTheExactMomentWhateverTheStepSize" storage="/workspace/airside/scripts/dotnet-harness/bin/debug/net8.0/harness.dll" id="2cbc5294-3578-c837-1149-323cdf4a1ab8">
+      <Execution id="a4f7de77-63cc-4e2b-8de4-762d6209201e" />
+      <TestMethod codeBase="/workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll" adapterTypeName="executor://nunit3testexecutor/" className="Airside.Tests.CareerVarietyTests" name="ContractDeadline_LapsesAtTheExactMomentWhateverTheStepSize" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="9445f380-81a6-f714-3c58-dfa10b766f73" executionId="336bb159-b522-4a72-ad6d-97da3a8e3425" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="07f73155-22d7-4ca5-ab80-aeea4b69bffc" executionId="23a92789-bc74-4a61-a9e5-65b3e33cba58" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1c905dba-feef-dd8d-ea5f-e56067383b52" executionId="40315fa3-3cbd-4b5e-ab03-848132b9734b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="40fb6a80-9cd8-f38c-f222-277e6e36415c" executionId="3d14e6bf-f76f-46ba-8aa8-1d98402b1895" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="13231f73-998d-68a4-1fe7-b09ad98815e5" executionId="a1e26cc5-a890-49fc-82eb-944678fe634c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ae56becf-6209-4716-a3dd-1096a89aeb86" executionId="74fe9249-3f9f-498b-82ba-5a3b030f31a4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="41c6fbbd-d0a3-f23f-82c5-bda0ce479f1d" executionId="12695ec3-9e03-42ee-aa45-475ef6726684" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e6822606-1c8d-3be1-b801-a596b71c4c65" executionId="8252ce21-b7a1-4544-871c-310e18091e63" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="97d5be41-f925-7090-d6f7-fbfd2239baca" executionId="9e435dc2-d91f-4aa7-8658-3827e69f3bbb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="26e1f80a-1ffb-147a-727e-e3a6fc601b89" executionId="096999b9-8300-46e9-be59-91eb201ec99e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1f909234-f900-f5f9-a064-32541640ddc7" executionId="4372a9dd-db9d-4ca3-8750-223b6217cf8e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fd5557d9-85cc-c9e8-dbff-4dfcfc6c7c28" executionId="849c0195-177b-43fe-9c5e-f7ee263bc875" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ff5f6e96-8043-7fdf-49cc-16252d66be09" executionId="ee8ea0b3-3604-4a93-8ba1-23367d8a09cf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b48f1dbc-4cbc-2317-15aa-15c89597227e" executionId="57a5f775-4fed-462f-ab30-46097e4bae52" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="75139070-b228-08b7-6e27-93c903e0d781" executionId="b58bf32c-a804-4877-9ca1-32cb5511f2f9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7304f07b-2834-9d11-6d99-5dba50a01ffd" executionId="c5cd0f37-ac83-4e99-96ae-0dd4ad5efc0c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2cbc5294-3578-c837-1149-323cdf4a1ab8" executionId="a4f7de77-63cc-4e2b-8de4-762d6209201e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fe16992c-35e3-cc45-ac4e-9753e03af499" executionId="c7429193-ff2a-4c08-80a7-2c4b643bf32f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="04c014ed-99a0-27db-a8d2-349af64949dd" executionId="95ed9641-8670-4cab-a560-bb6d2cfa0e00" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="57ae216f-b5f0-c567-2648-c07af1ff8221" executionId="bb50f32d-57d0-4bf1-923e-2d4f33c25179" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e2576bb9-a995-f2a5-5528-004dbb49467a" executionId="f344de40-cfbb-4956-bddb-ea0b29403854" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f6553802-fd09-96d1-8e09-ce8132815a1d" executionId="c5a88ce4-cbd3-4403-96ec-61f9e6646a88" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="24f6a30a-e9a0-bfdb-47b6-ef3efd16e046" executionId="d030c014-7764-48db-bceb-8aadbdb58e69" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1b9d088d-8caf-b616-f32a-33fd4a3e43c9" executionId="d8cb14e3-fe66-46c9-863a-5d052e64e590" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2eff6183-5164-5c03-3d27-46e79782feee" executionId="b136fdd6-81a3-4749-8940-d1c1e1941cc0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="14f3bf81-4996-8274-c072-327e846cae7b" executionId="83c6cfbc-525c-4ed3-ac6e-4df492c8a864" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="72c661eb-aca8-5ae3-9074-2642c31d606d" executionId="25ad1ced-feab-4c42-a32a-cf87e9b06054" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="eaa03a28-e9fa-1dbe-4b5d-f06a387b91fb" executionId="c7816531-9e3d-45f9-8142-7fb34e0cbbd4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9329aa8e-6ebd-4afd-7da8-1849002c5b64" executionId="c8e8a933-2b92-4ca0-ad94-cac6f1ba110b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c197886b-28f2-6c93-e754-79f9e7c69b30" executionId="72e6be19-02f1-4ef5-8e10-2f8c1599940f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="423e6bee-9bb2-7191-f9bb-111347035765" executionId="b8f518de-d6b5-4668-bc61-32ac3e590e92" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="811dac69-3d60-0031-94a4-c99c91e7832d" executionId="15d572aa-a974-415a-8ce1-63a5950ebefb" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3a89d3af-4e2f-3abc-5487-3934e7208974" executionId="d9d0a863-3181-48cf-976f-da374d1f27a9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="221c3b6c-7a3b-8052-cc25-8cf1bfcf1a64" executionId="044f9c46-c650-4cbc-bab6-3a0d4811bd11" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="86b26f9a-331e-a826-ef73-b6dadf96cfc3" executionId="68916ce1-28b1-4e2d-85a1-a787416b634b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="97777eb2-743f-4433-a4e6-2ff3ac250705" executionId="0ef0812a-6bc2-4e5b-a891-54629887ac5c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="378b5948-c43d-deb0-3a81-24c6a99a8afd" executionId="1243f30c-7f26-471a-a02a-57e68cbf96c0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ff58335e-b26e-6200-2c69-d79e04da100e" executionId="ee0aeb61-b7fd-4b9c-86d9-8571cb04c0b1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2d69c4db-9747-2076-de63-69319ec4c5f5" executionId="16a065aa-0118-4995-94bf-3cf95a70bcdc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b62af82d-9dda-9013-ecc1-770cefef1c30" executionId="21427231-6c56-45ec-849d-484ce7a3a25f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6b6c4de6-1298-b03b-5dc5-b76a1cd176fe" executionId="d472e708-b0bf-4528-8cbe-aeb13c361819" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9848847a-ecf0-bf79-0516-ed61df381adc" executionId="36be5f84-d932-4298-98b3-ca5c4351d597" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="67d18229-3e9f-eb97-f5a5-132b1342edad" executionId="7fab721a-8ccb-438c-b819-065153ea10cf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a81d9e8b-7eda-61cd-79be-0a76c991dff3" executionId="eb7bd258-5ecb-4dbc-b1cc-a379c642051c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8488733a-2f70-8a8b-d570-8281012dd7b8" executionId="7db961d5-4914-4aaf-9d72-051e28146f0f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a2f20d6e-1068-ee5d-747a-1993160abe35" executionId="7f469482-d09e-4a29-8fd8-2b7b75ef1bb1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7a20be52-2e27-c190-1627-ea1faca618ed" executionId="53d1bf2e-5719-493a-9134-44dcf16fe512" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="47" executed="47" passed="47" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>NUnit Adapter 4.6.0.0: Test execution started
+Running selected tests in /workspace/Airside/scripts/dotnet-harness/bin/Debug/net8.0/Harness.dll
+   NUnit3TestExecutor discovered 47 of 47 NUnit test cases using Current Discovery mode, Non-Explicit run
+NUnit Adapter 4.6.0.0: Test execution complete
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

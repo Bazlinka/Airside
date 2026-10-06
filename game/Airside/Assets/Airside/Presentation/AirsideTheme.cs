@@ -41,9 +41,9 @@ namespace Airside.Presentation
         public static readonly Color RouteMagenta = FromHex(AirsidePalette.RouteMagentaHex);
         public static readonly Color OnAccent = FromHex(AirsidePalette.OnAccentHex);
 
-        public const float PanelRadius = 14f;
-        public const float CardRadius = 10f;
-        public const float ControlRadius = 8f;
+        public const float PanelRadius = 10f;
+        public const float CardRadius = 7f;
+        public const float ControlRadius = 6f;
 
         public static Color WithAlpha(Color colour, float alpha) => new(colour.r, colour.g, colour.b, Mathf.Clamp01(alpha));
 
@@ -67,20 +67,20 @@ namespace Airside.Presentation
         {
             if (rect.width <= 1f || rect.height <= 1f)
                 return;
-            for (var i = 3; i >= 1; i--)
+            for (var i = 2; i >= 1; i--)
             {
                 var spread = i * 3.5f;
                 DrawRounded(new Rect(rect.x - spread * 0.4f, rect.y + spread * 0.25f, rect.width + spread * 0.8f,
                     rect.height + spread), new Color(0f, 0f, 0f, 0.07f * alpha), radius + spread);
             }
-            DrawRounded(rect, WithAlpha(Glass, alpha), radius);
-            DrawRounded(rect, new Color(1f, 1f, 1f, 0.09f * alpha), radius, 1f);
+            DrawRounded(rect, WithAlpha(Glass, Mathf.Clamp01(alpha * 1.045f)), radius);
+            DrawRounded(rect, new Color(1f, 1f, 1f, 0.06f * alpha), radius, 1f);
         }
 
         /// <summary>A raised glass sub-card inside a panel.</summary>
         public static void DrawCard(Rect rect, float alpha = 1f)
         {
-            DrawRounded(rect, WithAlpha(GlassRaised, 0.9f * alpha), CardRadius);
+            DrawRounded(rect, WithAlpha(GlassRaised, 0.96f * alpha), CardRadius);
             DrawRounded(rect, new Color(1f, 1f, 1f, 0.06f * alpha), CardRadius, 1f);
         }
 
@@ -356,14 +356,14 @@ namespace Airside.Presentation
                 DrawRounded(new Rect(rect.x, rect.y, Mathf.Max(rect.height, fillWidth), rect.height), fill, radius);
         }
 
-        private static readonly RectOffset PanelBorder = new(16, 16, 16, 16);
-        private static readonly RectOffset ControlBorder = new(10, 10, 10, 10);
+        private static readonly RectOffset PanelBorder = new(12, 12, 12, 12);
+        private static readonly RectOffset ControlBorder = new(7, 7, 7, 7);
 
         /// <summary>A rounded graphite-glass box style — every raw-IMGUI panel (menus, help, dev tools).</summary>
         public static GUIStyle PanelStyle(GUIStyle basis)
         {
             var style = new GUIStyle(basis);
-            style.normal.background = RoundedTexture(WithAlpha(Glass, 0.93f), new Color(1f, 1f, 1f, 0.10f), 14);
+            style.normal.background = RoundedTexture(WithAlpha(Glass, 0.97f), new Color(1f, 1f, 1f, 0.07f), 10);
             style.normal.textColor = InstrumentText;
             style.border = PanelBorder;
             return style;
@@ -427,9 +427,9 @@ namespace Airside.Presentation
         {
             var style = new GUIStyle(basis);
             SetButtonStates(style,
-                RoundedTexture(Amber, new Color(1f, 1f, 1f, 0.18f), 9),
-                RoundedTexture(Color.Lerp(Amber, Color.white, 0.18f), new Color(1f, 1f, 1f, 0.3f), 9),
-                RoundedTexture(Color.Lerp(Amber, Color.black, 0.12f), new Color(1f, 1f, 1f, 0.1f), 9),
+                RoundedTexture(Amber, new Color(1f, 1f, 1f, 0.10f), 6),
+                RoundedTexture(Color.Lerp(Amber, Color.white, 0.18f), new Color(1f, 1f, 1f, 0.18f), 6),
+                RoundedTexture(Color.Lerp(Amber, Color.black, 0.12f), new Color(1f, 1f, 1f, 0.08f), 6),
                 OnAccent);
             style.fontStyle = FontStyle.Bold;
             return style;
@@ -456,14 +456,14 @@ namespace Airside.Presentation
         }
 
         /// <summary>Resting button — raised glass with a faint rim, so it reads as clickable.</summary>
-        public static Texture2D ButtonNormal => _buttonNormal ??= RoundedTexture(GlassRaised, new Color(1f, 1f, 1f, 0.16f), 9);
+        public static Texture2D ButtonNormal => _buttonNormal ??= RoundedTexture(GlassRaised, new Color(1f, 1f, 1f, 0.09f), 6);
 
         /// <summary>Hover fill — Coastal Blue, the approved accent for interaction.</summary>
         public static Texture2D ButtonHover => _buttonHover ??=
-            RoundedTexture(Color.Lerp(GlassRaised, Aqua, 0.18f), WithAlpha(Aqua, 0.8f), 9);
+            RoundedTexture(Color.Lerp(GlassRaised, Aqua, 0.12f), WithAlpha(Aqua, 0.35f), 6);
 
         /// <summary>Pressed — full aqua.</summary>
-        public static Texture2D ButtonActive => _buttonActive ??= RoundedTexture(WithAlpha(Aqua, 0.85f), Aqua, 9);
+        public static Texture2D ButtonActive => _buttonActive ??= RoundedTexture(Color.Lerp(GlassRaised, Aqua, 0.22f), WithAlpha(Aqua, 0.45f), 6);
 
         internal static Color FromHex(string hex) =>
             ColorUtility.TryParseHtmlString(hex, out var color) ? color : Color.magenta;

@@ -89,6 +89,10 @@ namespace Airside.Tests
 
             var summary = AwaySummary.Build(saved, ops, 3 * 3600);
             Assert.That(summary.Lines.Any(l => l.Contains("earned $")), Is.True);
+            Assert.That(summary.PlayerFlights, Is.EqualTo(plane.CompletedTrips - saved.Fleet.Single(a => a.Registration == plane.Registration).CompletedTrips));
+            Assert.That(summary.NetFunds, Is.EqualTo(ops.CareerState.Funds - saved.CareerFunds));
+            Assert.That(summary.Reliability, Is.EqualTo(ops.CareerState.Reliability));
+            Assert.That(summary.FleetLines.Count, Is.EqualTo(ops.FleetOf(ops.PlayerAirline).Count()));
         }
 
         [Test]

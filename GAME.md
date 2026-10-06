@@ -5,6 +5,12 @@
   **Unverified:** no Unity or dotnet available. **NEXT:** run `scripts/test-unity.sh`, then
   compare frame time and look (SSAO banding, shadow pop-in) at day/dusk/night; revert any item
   that regresses. The 27 native failures listed below remain open.
+- **2026-10-07 Claude — far terrain at full DEM resolution (ADR 0247).** Bailey saw the Hills look
+  poor when the map was dragged out. `AirsideAdelaideFarTerrain.Stride` 2 → 1 (125 m cells).
+  Unverified (no Unity). **Watch:** startup build time and frame time; far satellite is still
+  2048 px/61 km — a sharper image is a decision for Bailey. A per-layer small-prop cull distance
+  was considered and NOT done: fence/furniture are already merged by static batching, so a cull
+  would drop whole strips.
 
 ## Where to resume — main compile fix + 27 hidden native failures, 7 October 2026
 

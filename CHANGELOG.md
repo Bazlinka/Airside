@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Refine the maintenance movement and whole-interface proposal with a concrete
+  interactive design study, seven retained previews and implementation/acceptance
+  packets (ADR 0242). Design only; no runtime game changes.
+
 - Distinguish jet family windshield shells, shape pilot/passenger seats and regional
   yokes, add family bin/PSU fittings, and enable an analog Bell 412EP cockpit with
   fitted front frames and retained rotor visibility. Correct Bell tail geometry

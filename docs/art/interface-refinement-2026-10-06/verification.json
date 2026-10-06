@@ -1,0 +1,40 @@
+{
+  "errors": [],
+  "layouts": [
+    {
+      "width": 1440,
+      "height": 900,
+      "views": 8,
+      "overflow": false,
+      "maintenance_actions_visible": true
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "views": 8,
+      "overflow": false,
+      "maintenance_actions_visible": true
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "views": 8,
+      "overflow": false,
+      "maintenance_actions_visible": true
+    },
+    {
+      "width": 900,
+      "height": 720,
+      "views": 8,
+      "overflow": false,
+      "maintenance_actions_visible": true
+    }
+  ],
+  "interactions": [
+    "taxi-to-repair preview",
+    "close, fleet filter and shared aircraft inspector",
+    "pause and speed acknowledgement",
+    "settings toggle",
+    "ineligible contract is disabled"
+  ]
+}

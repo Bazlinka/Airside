@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Track the Resources folder metadata and retain the three empty authored
+  Animation folders in Git, preserving their existing GUIDs. Make the Unity
+  asset audit recognise Git-only folder sentinels (ADR 0233).
+
 - Refresh shared HUD/workspace/menu styling with slate, warm white and muted
   accents; clearer aircraft-view controls and a compact viewing dock. Replace
   the welcome-back sentence stack with metrics and a scrolling fleet report.

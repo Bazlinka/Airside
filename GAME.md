@@ -1,3 +1,22 @@
+## Where to resume — Unity folder metadata repair, 6 October 2026
+
+Codex; branch `fix/unity-folder-metadata`, independently based on main. Bailey
+asked to continue useful work. Before the next cargo apron/handling slice, repair
+the inherited asset audit failures: track Resources.meta and retain the three
+empty authored Animation directories with Git-only sentinels. Existing Animation
+GUIDs are preserved; no gameplay or new art content is changed (ADR 0233).
+
+**Checks:** asset audit and fresh-checkout verification recorded in
+`docs/testing/folder-metadata-2026-10-06/README.md`. Native Unity remains unavailable;
+this repair does not claim compilation, runtime visuals or new playtest acceptance.
+
+**NEXT:** review the independent metadata repair PR. AI freight is on the separate
+`feature/ai-freight-traffic` branch in draft PR #527 (1,508 headless tests passed
+locally; native validation pending). Cargo stands/handling and outstation freight
+remain the subsequent backlog, then structure/performance. Earlier candidate
+handoffs below are historical; PR #526 already merged at `19fd9688` under Bailey's
+explicit approval. The game remains in development.
+
 ## Where to resume — freight and interface refresh candidate, 6 October 2026
 
 Codex; branch `feature/freight-and-interface-refresh`. Bailey approved requiring

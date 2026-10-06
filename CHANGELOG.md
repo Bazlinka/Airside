@@ -1,5 +1,11 @@
 ## Unreleased
 
+- WIP (not accepted or merged): enlarge both 787 variants' passenger glazing and matching clear apertures,
+  thin their seals and cut matching hull openings exactly while preserving
+  unrelated geometry/paint. Coordinate source generators, cabin profiles, FBX,
+  runtime models and packaged mirrors (ADR 0242). Unity-free checks only; native
+  visuals and performance remain unverified.
+
 - Distinguish jet family windshield shells, shape pilot/passenger seats and regional
   yokes, add family bin/PSU fittings, and enable an analog Bell 412EP cockpit with
   fitted front frames and retained rotor visibility. Correct Bell tail geometry

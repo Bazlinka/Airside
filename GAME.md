@@ -1,3 +1,27 @@
+## STOP — 787 window WIP, 6 October 2026
+
+WIP — DO NOT MERGE. Enlarged 787 models fail the strict clear-boundary grid: a residual hull fragment masks the declared opening. Exact convex cutting was attempted but exceeded the UInt16 mesh limit even after side splitting, so corrected models were not written. Source exact cutter is provisional and models retain the prior coarse cut. Next: chunk the refined hull into supported meshes, refresh all coordinated formats, and rerun the strict geometry gate before merging. Unity-free suite 1,723 passed and syntax/asset checks passed; these do not override the geometry failure. No Unity execution.
+
+Completed #540 and #542 remain merged on main.
+
+## Where to resume — coordinated 787 clear windows, 6 October 2026
+
+Aircraft batches #540 (`c28591eb`) and #542 (`6dfa3e8b`) are merged.
+The final batch enlarges both 787 variants' glass, thins matching seals and cuts
+matching hull openings exactly (ADR 0242). Clear openings are 0.270×0.470 m;
+outer glass is larger. Existing eye/station/pitch/cabin-section values remain.
+Source generation, authored FBX, runtime glTF/bin and packaged mirrors agree.
+
+Evidence: `docs/testing/787-window-realism-2026-10-06/README.md` plus immutable
+baseline/source-hull fixtures and static measurements. Unity-free suite 1,723/1,723;
+two C# files parse cleanly; asset audit passes. Final static window gate pending.
+No Unity execution by instruction; native compilation, appearance, curvature
+clearance, switching and performance remain unverified.
+
+NEXT: finish this batch's CI/merge. Remaining work includes Bell passenger views,
+exact cabin widths and measured jet-family exterior hull fits. Do not run Unity
+until Bailey changes the restriction.
+
 ## Where to resume — family interiors and Bell cockpit, 6 October 2026
 
 PR #540 is merged at `c28591eb`: all thirteen fixed-wing cockpit fittings and

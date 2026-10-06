@@ -332,3 +332,14 @@ to opposed half-spans in the existing X-shaft plane. Source generator and author
 glTF/bin/FBX plus packaged mirrors agree; all other geometry and identity paint
 are preserved. No external assets, attribution or cost. Prior git revision is the
 fallback. Static geometry checks pass; native appearance/motion are unverified.
+
+## 787 clear passenger glazing — 6 October 2026 (ADR 0242)
+
+Original project-owned AIR-010/AIR-016 geometry only: taller representative
+passenger glass, thinner seals and matching hull cutouts; shared source fitter
+`scripts/fit-787-cabin-windows.py` and existing deterministic glazing finisher.
+Art dimensions are not certified manufacturer/operator measurements. Original
+paint, doors and unrelated geometry remain. Authored FBX, runtime glTF/bin and
+packaged mirrors match. No external assets, cost or attribution. Prior git
+revision is the fallback. Static geometry checks gate merge; native visuals and
+performance remain unverified.

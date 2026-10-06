@@ -46,16 +46,20 @@ namespace Airside.Presentation
         // Reveals, squareness, section heights, aisles and continuation lengths are authored
         // lining choices. Existing lateral/eye fit and representative seat layouts remain.
         // See docs/art/aircraft-immersion-audit-2026-10-06/aircraft/{ATR42,A320,B789}.md.
-        // IMPORTANT: the 787 kit inherits scaled A350 panes. Its small apertures and
-        // different -9/-10 longitudinal scale are source limitations; a real large-window
-        // upgrade requires a coordinated exterior/interior change, beyond this slice.
+        // 787 panes have .287234 x .500 m outer bounds; the 94% inner gasket leaves
+        // .270 x .470 m clear openings matched here, not certified dimensions. Both variants
+        // retain their prior Y/Z centres and pitches; aperture width no longer shrinks
+        // with the -9's inherited longitudinal scale.
         // Hero WindowZ now selects an individual left pane rather than the old pair midpoint:
         // ATR42 cabin_window_4: 2.048 -> 1.794158 (-.253842 m);
         // A320 cabin_window_7: -13.960 -> -14.295 (-.335 m);
         // B789 cabin_window_17: -24.471 -> -24.232627 (+.238373 m).
         // Remaining WindowZ stations select their nearest individual left pane (mesh components,
-        // not merged-node bounds). X/Y retain the fitted eye datum: the pane X centre is
-        // .015 m farther out and every retained Y is within .0005 m of the pane centre.
+        // not merged-node bounds). Pane X bounding centres are about .015 m outside
+        // the profile datum, except enlarged 787 panes (about .0066 m). Their taller
+        // curved skins change the bounding centre; retain the fitted 787 eye/lining
+        // planes rather than moving them to a bounding-box midpoint. Every retained
+        // Y is within .0005 m of the pane centre. Local curvature still needs review.
         // Uniform repeats match local pane pitch; curved/end sections are not certified
         // by this central-pane fit. Symmetric continuation fits within each measured pane belt:
         // SF34/ATR42 shorten to 7 m and E190 to 14 m to avoid crossing its forward end.
@@ -74,8 +78,8 @@ namespace Airside.Presentation
             new("A223", 1.673f, 3.800f, -15.107f, 0.79f, new[] { 2,3 }, .787f, .250f, .349f, 16f),
             new("A359", 2.836f, 7.133f, -25.772001f, 0.79f, new[] { 3,3,3 }, .508f, .250f, .345f, 20f),
             new("A339", 2.683f, 7.025f, -25.044684f, 0.79f, new[] { 2,4,2 }, .484120f, .238249f, .340f, 20f),
-            new("B789", 2.745f, 7.121f, -24.232627f, 0.79f, new[] { 3,3,3 }, .477656f, .235067f, .345f, 20f, revealDepth: .12f, windowSquareness: 2.6f, ceilingY: 1.15f, aisleWidth: .46f, electronicDimming: true),
-            new("B78X", 2.745f, 7.121f, -26.350715f, 0.79f, new[] { 3,3,3 }, .519407f, .255613f, .345f, 24f, revealDepth: .12f, windowSquareness: 2.6f, ceilingY: 1.15f, aisleWidth: .46f, electronicDimming: true),
+            new("B789", 2.745f, 7.121f, -24.232627f, 0.79f, new[] { 3,3,3 }, .477656f, .270f, .470f, 20f, revealDepth: .12f, windowSquareness: 2.6f, ceilingY: 1.15f, aisleWidth: .46f, electronicDimming: true),
+            new("B78X", 2.745f, 7.121f, -26.350715f, 0.79f, new[] { 3,3,3 }, .519407f, .270f, .470f, 24f, revealDepth: .12f, windowSquareness: 2.6f, ceilingY: 1.15f, aisleWidth: .46f, electronicDimming: true),
         };
         public static bool TryFor(string id, out PassengerCabinProfile profile)
         {

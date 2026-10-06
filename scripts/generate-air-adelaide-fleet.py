@@ -342,10 +342,12 @@ def airbus_a330_900neo_meshes():
 def boeing_787_9_meshes():
     # Same 787 wing/cabin/gear family as AIR-010, shortened to the -9's exact
     # airport-planning envelope while retaining its four-pane deck and chevrons.
-    return _scale(
-        b78x.boeing_787_10_meshes(),
+    meshes = _scale(
+        b78x.boeing_787_10_meshes(fit_cabin_windows=False),
         (60.12 / b78x.TARGET_SPAN_M, 17.02 / b78x.TARGET_HEIGHT_M, 62.81 / b78x.TARGET_LENGTH_M),
     )
+    # Fit after shortening so both variants share representative aperture size.
+    return b78x.windows.fit_windows(meshes)
 
 
 BUILDERS = {

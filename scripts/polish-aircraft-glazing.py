@@ -94,7 +94,7 @@ def components(vertices: np.ndarray, indices: np.ndarray):
         yield vertices[start:end], (tris[used] - start).reshape(-1)
 
 
-def pane_detail(vertices: np.ndarray, indices: np.ndarray, *, cockpit: bool):
+def pane_detail(vertices: np.ndarray, indices: np.ndarray, *, cockpit: bool, cabin_seal_inner=SEAL_INNER_CABIN):
     """Make the rubber seal and recessed interior for one aircraft_skin.skin_patch pane."""
     if len(indices) < 6 or len(vertices) % 2:
         raise ValueError("expected a closed skin-patch pane")
@@ -139,7 +139,7 @@ def pane_detail(vertices: np.ndarray, indices: np.ndarray, *, cockpit: bool):
     # metal reveal and no painted-on glint (every pane caught the "sun" in the same corner
     # from every angle). The seal runs inward past the skin cut so the aperture edge stays
     # hidden; the glazing shader supplies the actual sky reflection.
-    gasket = ring(SEAL_OUTER, SEAL_INNER_FLIGHTDECK if cockpit else SEAL_INNER_CABIN, SEAL_PROUD)
+    gasket = ring(SEAL_OUTER, SEAL_INNER_FLIGHTDECK if cockpit else cabin_seal_inner, SEAL_PROUD)
 
     # The dark cabin/flight deck lies behind an actual skin opening. It stops the
     # opposite white fuselage shining through the translucent outer glazing.
@@ -216,7 +216,47 @@ def _refine_near_pane(vertices, triangles, centre, normal, tangent, up, polygon,
     return np.asarray(points, np.float32), np.asarray(refined, np.uint32)
 
 
-def open_skin(meshes, panes):
+def _subtract_clear_contour(vertices, triangles, candidates, centre, tangent, up, polygon):
+    """Exact convex contour subtraction for the 787's thin seal; no centroid slivers."""
+    points = vertices.tolist()
+    # Only local vertices can meet this aperture: avoid rebuilding a whole-hull
+    # deduplication dictionary for each of the many cabin windows.
+    lookup = {tuple(np.round(vertices[i], 9)): int(i)
+              for i in np.unique(triangles[candidates])}
+    selected = set(int(i) for i in candidates)
+    kept = [tuple(t) for i, t in enumerate(triangles) if i not in selected]
+    area = sum(a[0]*b[1]-a[1]*b[0] for a,b in zip(polygon,np.roll(polygon,-1,axis=0)))
+    orientation = 1 if area > 0 else -1
+    def index(point):
+        key = tuple(np.round(point, 9))
+        if key not in lookup:
+            lookup[key] = len(points); points.append(point.tolist())
+        return lookup[key]
+    for triangle in triangles[candidates]:
+        remaining = [vertices[int(i)].astype(float) for i in triangle]
+        for a,b in zip(polygon,np.roll(polygon,-1,axis=0)):
+            if not remaining: break
+            def distance(point):
+                relative = point-centre; q = np.array([relative@tangent,relative@up])-a
+                edge=b-a
+                return orientation*(edge[0]*q[1]-edge[1]*q[0])
+            inside=[]; outside=[]
+            for previous,current in zip(remaining[-1:]+remaining[:-1],remaining):
+                dp=distance(previous);dc=distance(current)
+                if (dp>=0)!=(dc>=0):
+                    intersection=previous+(current-previous)*dp/(dp-dc)
+                    inside.append(intersection);outside.append(intersection)
+                (inside if dc>=0 else outside).append(current)
+            if len(outside)>=3:
+                for k in range(1,len(outside)-1):
+                    tri=[outside[0],outside[k],outside[k+1]]
+                    if np.linalg.norm(np.cross(tri[1]-tri[0],tri[2]-tri[0]))>1e-12:
+                        kept.append(tuple(index(point) for point in tri))
+            remaining=inside
+    return np.asarray(points,np.float32),np.asarray(kept,np.uint32)
+
+
+def open_skin(meshes, panes, *, cabin_skin_cut=SKIN_CUT_CABIN):
     """Cut smooth, bounded apertures inside each window's rubber gasket."""
     shells = ("fuselage", "nose", "radome", "flightdeck_crown",
               "cockpit_mask_left", "cockpit_mask_right")
@@ -231,7 +271,7 @@ def open_skin(meshes, panes):
             tangent /= np.linalg.norm(tangent)
             up = np.cross(normal, tangent)
             polygon = np.column_stack(((outer - centre) @ tangent, (outer - centre) @ up))
-            polygon *= SKIN_CUT_FLIGHTDECK if cockpit else SKIN_CUT_CABIN
+            polygon *= SKIN_CUT_FLIGHTDECK if cockpit else cabin_skin_cut
             edge_limit = 0.13 if cockpit else 0.10
             vertices, triangles = _refine_near_pane(
                 vertices, triangles, centre, normal, tangent, up, polygon, edge_limit)
@@ -243,6 +283,17 @@ def open_skin(meshes, panes):
                 continue
             points = np.column_stack((relative[near] @ tangent, relative[near] @ up))
             candidates = np.flatnonzero(near)
+            if not cockpit and cabin_skin_cut != SKIN_CUT_CABIN:
+                # The thinner 787 seal cannot hide a .10 m centroid-cut triangle.
+                # Clip the intersecting skin triangles exactly to the cut contour.
+                corners = vertices[triangles[candidates]].astype(float)-centre
+                uv = np.stack((corners@tangent,corners@up),axis=2)
+                lo=polygon.min(axis=0);hi=polygon.max(axis=0)
+                intersects=np.all(uv.min(axis=1)<=hi,axis=1)&np.all(uv.max(axis=1)>=lo,axis=1)
+                targets=candidates[intersects]
+                vertices,triangles=_subtract_clear_contour(vertices,triangles,targets,centre,tangent,up,polygon)
+                total+=len(targets)
+                continue
             inside = _inside_polygon(points, polygon)
             if name.startswith("cockpit_mask_"):
                 # A painted mask is dark under the glass anyway; cut only faces wholly inside
@@ -450,7 +501,13 @@ def ellipsoid(centre, radii, sides=12, rings=8):
     return np.asarray(vertices, np.float32), np.asarray(faces, np.uint16)
 
 
-def polish(meshes: dict[str, tuple[np.ndarray, np.ndarray]]):
+def polish(meshes: dict[str, tuple[np.ndarray, np.ndarray]], *, type_id=None):
+    # 787 glass is enlarged to .287234 x .500 m; a thin .94 seal leaves the
+    # representative .270 x .470 m clear contour. Other family finishes retain
+    # their established coefficients and geometry.
+    dreamliner = type_id in ("B789", "B78X")
+    cabin_seal_inner = .94 if dreamliner else SEAL_INNER_CABIN
+    cabin_skin_cut = .96 if dreamliner else SKIN_CUT_CABIN
     skin = load_module("aircraft_skin.py")
     groups: dict[str, dict[str, list]] = {}
     panes = []
@@ -476,7 +533,7 @@ def polish(meshes: dict[str, tuple[np.ndarray, np.ndarray]]):
             front_faces = front_faces[np.all(front_faces < front_count, axis=1)]
             outer_lites.append((pane_vertices[:front_count], front_faces.reshape(-1)))
             gasket, interior, pane = pane_detail(
-                pane_vertices, pane_indices, cockpit=kind == "flightdeck")
+                pane_vertices, pane_indices, cockpit=kind == "flightdeck", cabin_seal_inner=cabin_seal_inner)
             group["gasket"].append(gasket)
             group["interior"].append(interior)
             panes.append(pane)
@@ -497,7 +554,7 @@ def polish(meshes: dict[str, tuple[np.ndarray, np.ndarray]]):
         for key, pieces in parts.items():
             if pieces:
                 meshes[f"glazing_{group_name}_{key}"] = skin.merge_meshes(pieces)
-    removed = open_skin(meshes, panes)
+    removed = open_skin(meshes, panes, cabin_skin_cut=cabin_skin_cut)
     if removed < count:
         raise ValueError(f"only {removed} skin triangles opened for {count} panes")
     def extra_points(*names):
@@ -548,7 +605,7 @@ def main():
     for type_id in args.types or SOURCES:
         filename, function, basename = SOURCES[type_id]
         meshes = getattr(load_module(filename), function)()
-        count = 0 if args.baseline else polish(meshes)
+        count = 0 if args.baseline else polish(meshes, type_id=type_id)
         if not args.baseline:
             load_module("finish-aircraft-liveries.py").finish(meshes, type_id)
         writer(args.output_dir, basename, meshes)

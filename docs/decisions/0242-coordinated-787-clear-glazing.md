@@ -1,0 +1,13 @@
+WIP — DO NOT MERGE. Enlarged 787 models fail the strict clear-boundary grid: a residual hull fragment masks the declared opening. Exact convex cutting was attempted but exceeded the UInt16 mesh limit even after side splitting, so corrected models were not written. Source exact cutter is provisional and models retain the prior coarse cut. Next: chunk the refined hull into supported meshes, refresh all coordinated formats, and rerun the strict geometry gate before merging. Unity-free suite 1,723 passed and syntax/asset checks passed; these do not override the geometry failure. No Unity execution.
+
+# ADR 0242: Coordinated 787 clear glazing
+
+Status: provisional WIP, 6 October 2026.
+
+Both 787 variants now use original representative tall passenger glazing: outer glass approximately 0.287234×0.500 m, with a 94% inner seal leaving a 0.270×0.470 m clear opening. These are project art dimensions, not certified Boeing/operator measurements. Pane centres, pitch, camera eyes and cabin-section lengths remain; both variant profiles use the clear opening while measured fixtures record the larger outer glass.
+
+The source generators refit panes to the uncut authored hull. The finishing pipeline uses 787-only thin seals and matching cut contours. Exact convex subtraction replaces centroid-only cutting for these thin seals, avoiding residual hull triangles at the clear boundary. Other aircraft retain their existing finishing coefficients/cutter. The shipped edit replaces only panes, matching cabin gaskets/interior glazing and necessary hull cutout groups; paint, doors, cockpit, wings, engines and unrelated geometry are preserved. FBX, runtime glTF/bin and packaged mirrors agree; supported hull splitting keeps individual meshes within UInt16 limits.
+
+Validation: final Unity-free suite 1,723 passed, zero failed; two changed C# files parse cleanly. Static asset audit passes: 1,768 GUIDs, 386 mirrored art files, 70 character materials. Static window regression gate is pending final regenerated models. The regression uses committed baseline geometry and uncut source-hull fixtures, runs with stdlib in shallow CI, and checks all 186 panes per variant for preserved stations/topology/shape, skin fit, adjacency, unrelated geometry, FBX links and mirror identity. Clear-opening rays test centre, edges and a dense grid independently of the source cutter.
+
+No Unity tests, builds, editor/player execution or renders by Bailey's instruction. Native compilation, appearance, curvature clearance, view switching and performance remain unverified. Bell passenger views, exact cabin widths and measured jet hull-family fits remain outstanding.

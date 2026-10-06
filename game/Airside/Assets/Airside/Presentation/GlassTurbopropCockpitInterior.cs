@@ -46,7 +46,9 @@ namespace Airside.Presentation
             _black = Surface("instrument black", new Color(0.018f, 0.025f, 0.028f), false);
             _white = Surface("instrument markings", new Color(0.81f, 0.85f, 0.81f), false);
             _metal = Surface("switch rims", new Color(0.29f, 0.33f, 0.34f));
-            var fabric = Surface("seat fabric", new Color(0.32f, 0.35f, 0.34f));
+            var fabric = Surface("seat fabric", _dash ? new Color(0.30f, 0.32f, 0.31f) : new Color(0.33f, 0.37f, 0.39f));
+            Finish(_lining, 0.16f); Finish(_trim, 0.045f); Finish(_panel, 0.12f);
+            Finish(_metal, 0.38f); Finish(fabric, 0.025f);
             Seat = new GameObject("Left pilot eye").transform;
             Seat.SetParent(transform, false);
             Seat.localPosition = P(_dash ? -0.47f : -0.48f, 0f, 0f);
@@ -58,25 +60,16 @@ namespace Airside.Presentation
                 P(0.97f, -0.49f, panelZ), P(0.85f, -0.23f, panelZ),
                 P(-0.85f, -0.23f, panelZ), P(-0.97f, -0.49f, panelZ) }, _panel);
             Box("Glareshield", P(0f, -0.20f, panelZ + 0.10f), new Vector3(1.84f, 0.06f, 0.31f), _trim);
-            Box("Flight guidance panel", P(0f, -0.29f, panelZ - 0.02f), new Vector3(0.76f, 0.095f, 0.045f), _metal);
-            for (var i = 0; i < 10; i++)
-                Box("Guidance control", P(-0.31f + i * 0.069f, -0.29f, panelZ - 0.05f), new Vector3(0.035f, 0.025f, 0.02f), _trim);
-            Label("Guidance legends", "HDG   NAV   ALT   VS", P(0f, -0.245f, panelZ - 0.057f), 0.0035f, Color.white);
+            MakeGuidance(panelZ);
             MakeDisplays(panelZ);
             DropPanelParts(panelStart);
             foreach (var side in new[] { -1f, 1f })
             {
                 var x = side * 0.47f;
-                Box("Pilot cushion", P(x, -0.80f, -0.20f), new Vector3(0.52f, 0.13f, 0.48f), fabric);
-                Box("Pilot seat back", P(x, -0.47f, -0.48f), new Vector3(0.52f, 0.70f, 0.12f), fabric);
-                Box("Pilot headrest", P(x, -0.05f, -0.49f), new Vector3(0.29f, 0.20f, 0.13f), fabric);
-                Box("Yoke column", P(x, -0.76f, 0.42f), new Vector3(0.09f, 0.58f, 0.11f), _panel);
-                Beam("Yoke crossbar", P(x - 0.17f, -0.51f, 0.40f), P(x + 0.17f, -0.51f, 0.40f), 0.033f, _trim);
-                foreach (var grip in new[] { -1f, 1f })
-                {
-                    Beam("Yoke grip", P(x + grip * 0.17f, -0.51f, 0.40f), P(x + grip * 0.145f, -0.32f, 0.44f), 0.037f, _trim);
-                    Beam("Yoke shoulder", P(x + grip * 0.145f, -0.32f, 0.44f), P(x + grip * 0.05f, -0.31f, 0.44f), 0.033f, _trim);
-                }
+                MakePilotSeat(x, fabric);
+                Box("Yoke column", P(x, -0.76f, 0.42f), new Vector3(0.09f, 0.58f, 0.11f), _panel)
+                    .localRotation = Quaternion.Euler(_dash ? -10f : -6f, 0f, 0f);
+                MakeYokeGrips(x);
                 Box("Yoke hub", P(x, -0.44f, 0.38f), new Vector3(0.09f, 0.10f, 0.055f), _metal);
                 Box("Side console", P(side * (_width - 0.14f), -0.91f, -0.04f), new Vector3(0.17f, 0.12f, 0.80f), _panel);
                 Box("Side air vent", P(side * (_width - 0.13f), -0.40f, 0.31f), new Vector3(0.08f, 0.08f, 0.04f), _black);
@@ -162,7 +155,8 @@ namespace Airside.Presentation
             for (var i = 0; i < 5; i++)
             {
                 var x = (i - 2) * pitch;
-                Box("LCD bezel " + i, P(x, y, z - 0.015f), new Vector3(width + 0.043f, height + 0.040f, 0.038f), _black);
+                Box("LCD mounting flange " + i, P(x, y, z + 0.004f), new Vector3(width + 0.035f, height + 0.055f, 0.020f), _metal);
+                Box("LCD bezel " + i, P(x, y, z - 0.015f), new Vector3(width + 0.025f, height + 0.040f, 0.038f), _black);
                 var front = z - 0.038f;
                 Face("LCD face " + i, new[] { P(x - width * 0.5f, y - height * 0.5f, front),
                     P(x + width * 0.5f, y - height * 0.5f, front), P(x + width * 0.5f, y + height * 0.5f, front),
@@ -227,22 +221,87 @@ namespace Airside.Presentation
             return material;
         }
 
-        private void MakePedestal()
+        private void MakeYokeGrips(float x)
         {
-            Box("Centre pedestal", P(0f, -0.92f, 0.05f), new Vector3(0.37f, 0.45f, 1.18f), _panel);
+            // Representative family silhouettes; controls remain spectator props.
+            foreach (var grip in new[] { -1f, 1f })
+            {
+                var a = P(x + grip * 0.035f, -0.47f, 0.40f);
+                var b = P(x + grip * (_dash ? 0.13f : 0.09f), _dash ? -0.50f : -0.485f, 0.40f);
+                var c = P(x + grip * (_dash ? 0.18f : 0.16f), _dash ? -0.475f : -0.44f, 0.41f);
+                var d = P(x + grip * 0.18f, _dash ? -0.36f : -0.37f, 0.43f);
+                var e = P(x + grip * 0.155f, _dash ? -0.315f : -0.295f, 0.44f);
+                Beam("Yoke swept inner spoke", a, b, 0.03f, _trim);
+                Beam("Yoke curved lower shoulder", b, c, 0.035f, _trim);
+                Beam("Yoke padded grip", c, d, _dash ? 0.045f : 0.041f, _trim);
+                Beam("Yoke tapered upper grip", d, e, 0.032f, _trim);
+                Beam("Yoke inward horn", e, P(x + grip * (_dash ? 0.065f : 0.11f),
+                    _dash ? -0.315f : -0.30f, 0.44f), 0.026f, _trim);
+                Box("Yoke thumb button", P(x + grip * 0.165f, _dash ? -0.335f : -0.32f, 0.415f),
+                    new Vector3(0.020f, 0.022f, 0.012f), _metal);
+                Box("Rudder pedal", P(x + grip * 0.13f, -1.09f, 0.71f), new Vector3(0.17f, 0.045f, 0.18f), _metal)
+                    .localRotation = Quaternion.Euler(-22f, 0f, 0f);
+            }
+            Box("Yoke column floor boot", P(x, -1.12f, 0.48f), new Vector3(0.16f, 0.20f, 0.19f), _trim);
+        }
+
+        private static void Finish(Material material, float smoothness)
+        {
+            if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", smoothness);
+        }
+
+        private void MakeGuidance(float z)
+        {
+            var width = _dash ? 0.72f : 0.82f;
+            Box("Flight guidance panel", P(0f, -0.29f, z - 0.02f), new Vector3(width, 0.095f, 0.045f), _metal);
             foreach (var side in new[] { -1f, 1f })
             {
-                var x = side * 0.096f;
-                Box("FMS unit", P(x, -0.678f, 0.46f), new Vector3(0.16f, 0.025f, 0.23f), _metal);
-                Box("FMS display", P(x, -0.661f, 0.51f), new Vector3(0.13f, 0.008f, 0.10f), _black);
+                // Larger outer selectors and two compact mode banks preserve the unobstructed brow.
+                Disc("Guidance selector bezel", P(side * width * 0.42f, -0.29f, z - 0.047f), 0.025f, _black);
+                Disc("Guidance selector knob", P(side * width * 0.42f, -0.29f, z - 0.054f), 0.018f, _metal);
+                for (var i = 0; i < 3; i++)
+                    Box("Guidance mode key", P(side * (0.065f + i * 0.066f), -0.29f, z - 0.05f),
+                        new Vector3(_dash ? 0.033f : 0.041f, 0.022f, 0.012f), _trim);
+            }
+            Box("Guidance bank separator", P(0f, -0.29f, z - 0.046f), new Vector3(0.007f, 0.074f, 0.008f), _trim);
+            Label("Guidance legends", "HDG   NAV   ALT   VS", P(0f, -0.245f, z - 0.057f), 0.0035f, Color.white);
+        }
+
+        private void MakePilotSeat(float x, Material fabric)
+        {
+            Box("Seat suspension base", P(x, -0.95f, -0.22f), new Vector3(0.30f, 0.18f, 0.34f), _metal);
+            Box("Pilot cushion", P(x, -0.80f, -0.20f), new Vector3(0.42f, 0.13f, 0.46f), fabric);
+            Box("Pilot sculpted seat back", P(x, -0.47f, -0.48f), new Vector3(0.43f, 0.68f, 0.12f), fabric)
+                .localRotation = Quaternion.Euler(-7f, 0f, 0f);
+            Box("Pilot headrest", P(x, -0.05f, -0.52f), new Vector3(0.29f, 0.19f, 0.15f), fabric);
+            foreach (var side in new[] { -1f, 1f })
+            {
+                Beam("Seat side bolster", P(x + side * 0.22f, -0.73f, -0.42f), P(x + side * 0.18f, -0.21f, -0.48f), 0.065f, fabric);
+                Box("Seat cushion bolster", P(x + side * 0.23f, -0.77f, -0.20f), new Vector3(0.065f, 0.13f, 0.43f), fabric);
+                Box("Pilot armrest", P(x + side * 0.28f, -0.58f, -0.24f), new Vector3(0.06f, 0.045f, 0.33f), _trim);
+            }
+            Beam("Seat lap belt", P(x - 0.18f, -0.727f, -0.13f), P(x + 0.18f, -0.727f, -0.22f), 0.025f, _trim);
+        }
+
+        private void MakePedestal()
+        {
+            Box("Centre pedestal", P(0f, -0.92f, 0.05f), new Vector3(_dash ? 0.35f : 0.40f, 0.45f, 1.18f), _panel);
+            foreach (var side in new[] { -1f, 1f })
+            {
+                var x = side * (_dash ? 0.087f : 0.104f);
+                var fmsZ = _dash ? 0.49f : 0.43f;
+                Box("FMS unit", P(x, -0.678f, fmsZ), new Vector3(_dash ? 0.15f : 0.18f, 0.025f, 0.23f), _metal);
+                Box("FMS display", P(x, -0.661f, fmsZ + 0.05f), new Vector3(0.13f, 0.008f, 0.10f), _black);
                 for (var row = 0; row < 3; row++) for (var col = 0; col < 4; col++)
-                    Box("FMS key", P(x - 0.045f + col * 0.030f, -0.656f, 0.40f - row * 0.027f), new Vector3(0.018f, 0.010f, 0.018f), _trim);
+                    Box("FMS key", P(x - 0.045f + col * 0.030f, -0.656f, fmsZ - 0.06f - row * 0.027f), new Vector3(0.018f, 0.010f, 0.018f), _trim);
                 for (var group = 0; group < 2; group++)
                 {
-                    var leverX = side * 0.034f + (group - 0.5f) * 0.17f;
-                    Box("Lever slot", P(leverX, -0.686f, 0.025f), new Vector3(0.012f, 0.008f, 0.30f), _black);
-                    Beam(group == 0 ? "Power lever" : "Condition lever", P(leverX, -0.68f, 0f), P(leverX, -0.48f, 0.11f), 0.016f, _metal);
-                    Box(group == 0 ? "Power handle" : "Condition handle", P(leverX, -0.48f, 0.11f), new Vector3(0.045f, 0.028f, 0.055f), group == 0 ? _trim : _white);
+                    var leverX = side * 0.034f + (group - 0.5f) * (_dash ? 0.145f : 0.18f);
+                    var leverZ = _dash && group == 1 ? -0.08f : 0f;
+                    var leverHeight = group == 0 ? -0.48f : -0.53f;
+                    Box("Lever slot", P(leverX, -0.686f, leverZ + 0.025f), new Vector3(0.012f, 0.008f, 0.30f), _black);
+                    Beam(group == 0 ? "Power lever" : "Condition lever", P(leverX, -0.68f, leverZ), P(leverX, leverHeight, leverZ + 0.11f), 0.016f, _metal);
+                    Box(group == 0 ? "Power handle" : "Condition handle", P(leverX, leverHeight, leverZ + 0.11f), new Vector3(0.045f, 0.028f, 0.055f), group == 0 ? _trim : _white);
                 }
             }
             Label("Lever legends", "POWER     CONDITION", P(0f, -0.73f, 0.27f), 0.0031f, Color.white);
@@ -252,9 +311,17 @@ namespace Airside.Presentation
         {
             var width = _dash ? 0.50f : 0.66f;
             Box("Overhead systems panel", P(0f, _roof - 0.06f, 0.12f), new Vector3(width, 0.035f, 1.14f), _panel);
-            for (var row = 0; row < 7; row++) for (var col = 0; col < 6; col++)
-                Box("Overhead switch", P(-width * 0.38f + col * width * 0.152f, _roof - 0.095f, -0.34f + row * 0.15f),
-                    new Vector3(0.019f, 0.030f, 0.025f), (row + col) % 4 == 0 ? _white : _trim);
+            // Representative decorative banks: grouped trays with clear gaps and mixed control sizes.
+            for (var group = 0; group < 3; group++)
+            {
+                var z = -0.27f + group * 0.34f;
+                Box("Overhead equipment tray", P(0f, _roof - 0.085f, z), new Vector3(width - 0.05f, 0.018f, 0.28f), _metal);
+                foreach (var side in new[] { -1f, 1f })
+                    for (var i = 0; i < (_dash ? 3 : 4); i++)
+                        Box("Overhead paired switch", P(side * width * 0.27f, _roof - 0.11f, z - 0.09f + i * 0.06f),
+                            new Vector3(0.018f, 0.029f, 0.025f), i == 0 ? _white : _trim);
+                Box("Overhead guarded control", P(0f, _roof - 0.11f, z + 0.06f), new Vector3(0.055f, 0.025f, 0.09f), _trim);
+            }
             if (_dash)
                 Box("Roof escape hatch", P(0f, _roof - 0.008f, -0.82f), new Vector3(0.55f, 0.018f, 0.40f), _metal);
         }

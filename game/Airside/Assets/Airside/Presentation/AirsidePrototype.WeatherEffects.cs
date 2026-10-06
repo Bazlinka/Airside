@@ -70,8 +70,9 @@ namespace Airside.Presentation
             // Keep droplets near the lens at every zoom, instead of stretching metre-wide cubes
             // over the apron. The world-depth test hides streaks behind aircraft and roofs.
             var radius = Mathf.Clamp(range * 0.13f, 18f, 420f);
-            var centre = _mainCamera.transform.position + _mainCamera.transform.forward * radius * 1.25f;
-            _rainRoot.position = centre;
+            // Held ahead of the lens by the camera-shell anchor, which runs after the camera moves;
+            // placing it here alone lagged a frame, so streaks jumped against the view while panning.
+            CameraShellAnchor.Place(_mainCamera, _rainRoot, Vector3.zero, forwardMetres: radius * 1.25f);
             _rainRoot.localScale = Vector3.one;
             var flow = WeatherWindFlow.Rain(PresentationWind, storm);
             var drift = new Vector3(flow.X, 0f, flow.Z);

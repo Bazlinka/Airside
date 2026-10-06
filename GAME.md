@@ -28,6 +28,55 @@ Not done, deliberately: moving an Adelaide aircraft to an outstation; purchase d
 (they still pay a free first flight — balance review needed); a jet bought with no free gate; outstation
 cameras; helicopters at outstations. See ADR 0239.
 
+## Where to resume — family interiors and Bell cockpit, 6 October 2026
+
+PR #540 is merged at `c28591eb`: all thirteen fixed-wing cockpit fittings and
+passenger window stations. The next batch adds six jet shell silhouettes with
+shared aperture/frame vertices, shaped pilot/passenger seats, distinct bins/PSUs,
+regional yokes/pedals and a reachable analog Bell 412EP cockpit (ADR 0241).
+Bell retains rotor/blur/skid visibility; existing switching restores the hull.
+Its authored tail now has two opposed half-span blades aligned to the X shaft;
+static glTF/FBX/mirror regression passes and unrelated geometry is preserved.
+
+Evidence: `docs/testing/interior-details-2026-10-06/README.md`.
+Unity-free suite 1,722/1,722; thirteen C# files parse cleanly; asset audit passes.
+No Unity execution by instruction: native compilation, appearance, clipping,
+switching, rotor motion and performance remain unverified.
+
+NEXT: finish this batch's PR/CI/merge. Remaining audit work includes larger actual
+787 glazing, measured jet hull fits, exact cabin widths and optional Bell cabin
+views. Keep the no-Unity restriction until Bailey changes it.
+
+## Where to resume — full fleet cockpit fittings, 6 October 2026
+
+All thirteen fixed-wing cockpits receive family-specific controls, panel layers,
+overhead groupings, upholstery and shaped pilot seats (ADR 0240). All thirteen
+passenger stations now fit individual glazing panes; bounded sections are 7–24 m.
+A350 has six equal-format displays and inward lateral OIS stations.
+
+Evidence: `docs/testing/cockpit-realism-2026-10-06/README.md` and measured pane JSON.
+Unity-free integrated suite 1,707/1,707 plus final new A350 check 1/1; seven changed
+C# files parse cleanly; static asset audit passes. No Unity execution by instruction;
+native appearance, compilation, clipping and performance remain unverified.
+
+NEXT: merge this batch, then continue cockpit family shells and remaining visual
+immersion gaps. Bell interiors remain unsupported. Keep the no-Unity restriction.
+
+## Where to resume — sky anchoring fix, 6 October 2026
+
+Claude; branch `fix/sky-star-parallax-20261006` off `origin/main` (038d8b5a), made in a
+separate worktree because the main checkout holds another feature's uncommitted work.
+Stars, sun/moon discs, stratus deck, horizon band and the rain volume were re-centred on the camera in
+`AirsidePrototype.Update`, but the camera moves in `AirsideCameraController.LateUpdate`,
+so they lagged one frame and slid against the view on any pan/orbit/zoom. New
+`CameraShellAnchor` (execution order 500) re-applies their offsets after the camera moves.
+Evidence: harness `--check` and asset audit pass; two EditMode tests added in
+`PresentationBugSweepTests`. **Not compiled or run in Unity** (no-Unity restriction still
+in force) and not visually confirmed: native compile, the new tests and the actual look
+while panning/orbiting at night remain unverified.
+
+**NEXT:** Bailey to confirm in a build that stars hold still while panning; then merge.
+
 ## Where to resume — fitted passenger cabin code, 6 October 2026
 
 Codex; Bailey authorised merging both audit reports and continuing the recommended

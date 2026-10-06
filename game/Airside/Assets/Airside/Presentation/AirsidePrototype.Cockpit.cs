@@ -115,7 +115,9 @@ namespace Airside.Presentation
             if (_aircraftViewMode == AircraftViewMode.Exterior) return;
             if (_aircraftViewMode == AircraftViewMode.LeftWindow || _aircraftViewMode == AircraftViewMode.RightWindow)
                 _cockpitInterior=PassengerCabinInterior.Build(view,type,_aircraftViewMode == AircraftViewMode.RightWindow);
-            else _cockpitInterior = type.Id == AircraftType.Saab340.Id
+            else _cockpitInterior = type.Id == AircraftType.Bell412.Id
+                ? BellCockpitInterior.Build(view)
+                : type.Id == AircraftType.Saab340.Id
                 ? SaabCockpitInterior.Build(view)
                 : JetCockpitProfile.TryFor(type.Id, out _) ? JetCockpitInterior.Build(view, type)
                 : TurbopropCockpitInterior.Create(view, type);
@@ -208,7 +210,7 @@ namespace Airside.Presentation
                 _cockpitView != null ? _cockpitView.position.y : 0f, InCockpit && _cockpitView != null);
             _cockpitInterior.SetEnvironment(PresentationDaylight, observerRain, Time.unscaledTime);
             _cockpitCallouts.DeltaSeconds = (float)Math.Max(0.0, elapsed);
-            var call = _cockpitCallouts.Step(new CockpitCallouts.Sample
+            var call = aircraft.Type.IsRotorcraft ? null : _cockpitCallouts.Step(new CockpitCallouts.Sample
             {
                 GroundKnots = _cockpitGroundKnots, RotateKnots = AircraftPerformance.For(aircraft.Type).RotateKnots,
                 HeightFeet = gearHeight * 3.28084f, VerticalFeetPerMinute = _cockpitVerticalSpeed * 196.85f,

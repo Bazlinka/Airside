@@ -53,22 +53,29 @@ namespace Airside.Presentation
         // ATR42 cabin_window_4: 2.048 -> 1.794158 (-.253842 m);
         // A320 cabin_window_7: -13.960 -> -14.295 (-.335 m);
         // B789 cabin_window_17: -24.471 -> -24.232627 (+.238373 m).
-        // Other longitudinal eye stations retain their previous fit pending dedicated review.
+        // Remaining WindowZ stations select their nearest individual left pane (mesh components,
+        // not merged-node bounds). X/Y retain the fitted eye datum: the pane X centre is
+        // .015 m farther out and every retained Y is within .0005 m of the pane centre.
+        // Uniform repeats match local pane pitch; curved/end sections are not certified
+        // by this central-pane fit. Symmetric continuation fits within each measured pane belt:
+        // SF34/ATR42 shorten to 7 m and E190 to 14 m to avoid crossing its forward end.
+        // A21N extends to 19 m versus A320's 16; B78X to 24 m versus B789's 20.
+        // These are bounded visual sections, not full-cabin/operator dimensions.
         public static readonly PassengerCabinProfile[] All =
         {
-            new("SF34", 1.080f, 2.288f, 1.682f, 0.76f, new[] { 1,2 }, .508f, .240f, .329f, 12f),
-            new("ATR42", 1.340f, 2.168f, 1.794158f, 0.76f, new[] { 2,2 }, .508f, .240f, .330f, 12f, revealDepth: .075f, windowSquareness: 2.6f, ceilingY: .90f),
-            new("DH8D", 1.295f, 2.566f, 3.650f, 0.76f, new[] { 2,2 }, .508f, .240f, .329f, 12f),
-            new("B738", 1.795f, 4.833f, -14.517f, 0.79f, new[] { 3,3 }, .508f, .250f, .350f, 16f),
-            new("B38M", 1.795f, 4.802f, -14.517f, 0.79f, new[] { 3,3 }, .508f, .250f, .348f, 16f),
+            new("SF34", 1.080f, 2.288f, 1.936f, 0.76f, new[] { 1,2 }, .508f, .240f, .329f, 7f),
+            new("ATR42", 1.340f, 2.168f, 1.794158f, 0.76f, new[] { 2,2 }, .508f, .240f, .330f, 7f, revealDepth: .075f, windowSquareness: 2.6f, ceilingY: .90f),
+            new("DH8D", 1.295f, 2.566f, 3.396f, 0.76f, new[] { 2,2 }, .508f, .240f, .329f, 12f),
+            new("B738", 1.795f, 4.833f, -14.263f, 0.79f, new[] { 3,3 }, .508f, .250f, .350f, 16f),
+            new("B38M", 1.795f, 4.802f, -14.263f, 0.79f, new[] { 3,3 }, .508f, .250f, .348f, 16f),
             new("A320", 1.892f, 4.642f, -14.295f, 0.79f, new[] { 3,3 }, .670f, .220f, .329f, 16f, revealDepth: .085f, windowSquareness: 2.8f),
-            new("A21N", 1.789f, 4.547f, -16.371f, 0.79f, new[] { 3,3 }, .572866f, .281923f, .329f, 16f),
-            new("E190", 1.430f, 3.947f, -12.710f, 0.79f, new[] { 2,2 }, .787f, .230f, .319f, 16f),
-            new("A223", 1.673f, 3.800f, -14.714f, 0.79f, new[] { 2,3 }, .787f, .250f, .349f, 16f),
-            new("A359", 2.836f, 7.133f, -26.026f, 0.79f, new[] { 3,3,3 }, .508f, .250f, .345f, 20f),
-            new("A339", 2.683f, 7.025f, -24.803f, 0.79f, new[] { 2,4,2 }, .484120f, .238249f, .340f, 20f),
+            new("A21N", 1.789f, 4.547f, -16.657136f, 0.79f, new[] { 3,3 }, .572866f, .281923f, .329f, 19f),
+            new("E190", 1.430f, 3.947f, -13.103001f, 0.79f, new[] { 2,2 }, .787f, .230f, .319f, 14f),
+            new("A223", 1.673f, 3.800f, -15.107f, 0.79f, new[] { 2,3 }, .787f, .250f, .349f, 16f),
+            new("A359", 2.836f, 7.133f, -25.772001f, 0.79f, new[] { 3,3,3 }, .508f, .250f, .345f, 20f),
+            new("A339", 2.683f, 7.025f, -25.044684f, 0.79f, new[] { 2,4,2 }, .484120f, .238249f, .340f, 20f),
             new("B789", 2.745f, 7.121f, -24.232627f, 0.79f, new[] { 3,3,3 }, .477656f, .235067f, .345f, 20f, revealDepth: .12f, windowSquareness: 2.6f, ceilingY: 1.15f, aisleWidth: .46f, electronicDimming: true),
-            new("B78X", 2.745f, 7.121f, -26.610f, 0.79f, new[] { 3,3,3 }, .519407f, .255613f, .345f, 20f, revealDepth: .12f, windowSquareness: 2.6f, ceilingY: 1.15f, aisleWidth: .46f, electronicDimming: true),
+            new("B78X", 2.745f, 7.121f, -26.350715f, 0.79f, new[] { 3,3,3 }, .519407f, .255613f, .345f, 24f, revealDepth: .12f, windowSquareness: 2.6f, ceilingY: 1.15f, aisleWidth: .46f, electronicDimming: true),
         };
         public static bool TryFor(string id, out PassengerCabinProfile profile)
         {

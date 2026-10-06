@@ -27,6 +27,7 @@ namespace Airside.Presentation
         {
             var z = 7.985f;
             Disc(name + " rim", new Vector3(x, y, z), radius, _metal);
+            Disc(name + " recessed gasket", new Vector3(x, y, z - 0.001f), radius * 0.95f, _black);
             Disc(name + " face", new Vector3(x, y, z - 0.002f), radius * 0.88f, _dialMarks);
             var needle = new Vector3(Mathf.Sin(needleDegrees * Mathf.Deg2Rad), Mathf.Cos(needleDegrees * Mathf.Deg2Rad), 0f);
             Stroke(name + " needle", new Vector3(x, y, z - 0.006f),
@@ -38,6 +39,7 @@ namespace Airside.Presentation
         {
             foreach (var y in new[] { 1.91f, 1.665f })
             {
+                Box("CRT mounting surround", new Vector3(x, y, 8.018f), new Vector3(0.25f, 0.235f, 0.033f), _metal);
                 Box("CRT bezel", new Vector3(x, y, 8.0f), new Vector3(0.23f, 0.215f, 0.055f), _black);
                 Box("CRT glass", new Vector3(x, y, 7.967f), new Vector3(0.185f, 0.17f, 0.009f), _black);
                 for (var side = -1; side <= 1; side += 2)
@@ -49,6 +51,28 @@ namespace Airside.Presentation
             Disc("Navigation background", new Vector3(x, 1.665f, 7.953f), 0.066f, _compassMarks);
             Beam("Course pointer", new Vector3(x, 1.615f, 7.945f), new Vector3(x, 1.715f, 7.945f), 0.003f, _green);
             Label("Compass north", "N", new Vector3(x, 1.712f, 7.94f), 0.0028f, Color.white);
+        }
+
+        private static void Finish(Material material, float smoothness)
+        {
+            if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", smoothness);
+        }
+
+        private void MakePilotSeat(float x, Material fabric, Material trim)
+        {
+            Box("Seat suspension base", new Vector3(x, 1.40f, 6.88f), new Vector3(0.29f, 0.18f, 0.34f), _metal);
+            Box("Pilot cushion", new Vector3(x, 1.55f, 6.91f), new Vector3(0.40f, 0.13f, 0.46f), fabric);
+            Box("Pilot sculpted seat back", new Vector3(x, 1.90f, 6.64f), new Vector3(0.42f, 0.68f, 0.12f), fabric)
+                .localRotation = Quaternion.Euler(-7f, 0f, 0f);
+            Box("Pilot headrest", new Vector3(x, 2.31f, 6.60f), new Vector3(0.27f, 0.19f, 0.15f), fabric);
+            foreach (var side in new[] { -1f, 1f })
+            {
+                Beam("Seat side bolster", new Vector3(x + side * 0.21f, 1.65f, 6.70f),
+                    new Vector3(x + side * 0.17f, 2.16f, 6.64f), 0.065f, fabric);
+                Box("Seat cushion bolster", new Vector3(x + side * 0.22f, 1.58f, 6.90f), new Vector3(0.065f, 0.13f, 0.43f), fabric);
+                Box("Pilot armrest", new Vector3(x + side * 0.27f, 1.76f, 6.87f), new Vector3(0.06f, 0.045f, 0.33f), trim);
+            }
+            Beam("Seat lap belt", new Vector3(x - 0.17f, 1.623f, 6.98f), new Vector3(x + 0.17f, 1.623f, 6.89f), 0.025f, trim);
         }
 
         private void MakeInterior()
@@ -63,6 +87,8 @@ namespace Airside.Presentation
             _dialMarks = DialArtwork("dial face markings", 10, 150f, 27f);
             _compassMarks = DialArtwork("compass face markings", 12, 0f, 30f);
             var fabric = Surface("seat fabric", new Color(0.36f, 0.38f, 0.35f));
+            Finish(lining, 0.16f); Finish(trim, 0.045f); Finish(_panel, 0.12f);
+            Finish(_metal, 0.38f); Finish(fabric, 0.025f);
             Seat = new GameObject("Left pilot eye").transform;
             Seat.SetParent(transform, false);
             Seat.localPosition = new Vector3(-0.43f, 2.38f, 7.13f);
@@ -112,18 +138,28 @@ namespace Airside.Presentation
                     new Vector3(side * 0.81f, 2.79f, 5.86f) }, lining);
                 Beam("Window latch", new Vector3(side * 0.83f, 2.07f, 7.12f), new Vector3(side * 0.83f, 2.07f, 7.29f), 0.018f, _metal);
                 Box("Side console", new Vector3(side * 0.74f, 1.49f, 7.18f), new Vector3(0.16f, 0.1f, 0.65f), _panel);
-                Box("Pilot cushion", new Vector3(side * 0.43f, 1.55f, 6.91f), new Vector3(0.50f, 0.13f, 0.48f), fabric);
-                Box("Pilot seat back", new Vector3(side * 0.43f, 1.90f, 6.64f), new Vector3(0.50f, 0.70f, 0.12f), fabric);
-                Box("Pilot headrest", new Vector3(side * 0.43f, 2.31f, 6.62f), new Vector3(0.27f, 0.21f, 0.13f), fabric);
-                Box("Yoke column", new Vector3(side * 0.43f, 1.50f, 7.57f), new Vector3(0.09f, 0.57f, 0.10f), lining);
+                MakePilotSeat(side * 0.43f, fabric, trim);
+                Box("Yoke column", new Vector3(side * 0.43f, 1.50f, 7.57f), new Vector3(0.09f, 0.57f, 0.10f), lining).localRotation = Quaternion.Euler(-8f, 0f, 0f);
                 var x = side * 0.43f;
-                Beam("Yoke lower crossbar", new Vector3(x - 0.15f, 1.77f, 7.52f), new Vector3(x + 0.15f, 1.77f, 7.52f), 0.027f, trim);
+                // Rounded rectangular SF34 wheel: segmented corners soften the squared stock grips.
                 foreach (var grip in new[] { -1f, 1f })
                 {
-                    Beam("Yoke squared grip", new Vector3(x + grip * 0.15f, 1.77f, 7.52f), new Vector3(x + grip * 0.15f, 1.94f, 7.56f), 0.032f, trim);
-                    Beam("Yoke inward shoulder", new Vector3(x + grip * 0.15f, 1.94f, 7.56f), new Vector3(x + grip * 0.045f, 1.94f, 7.56f), 0.028f, trim);
+                    var a = new Vector3(x + grip * 0.045f, 1.79f, 7.52f);
+                    var b = new Vector3(x + grip * 0.135f, 1.79f, 7.52f);
+                    var c = new Vector3(x + grip * 0.165f, 1.82f, 7.53f);
+                    var d = new Vector3(x + grip * 0.165f, 1.89f, 7.55f);
+                    var e = new Vector3(x + grip * 0.135f, 1.93f, 7.56f);
+                    Beam("Yoke lower spoke", a, b, 0.028f, trim);
+                    Beam("Yoke rounded lower corner", b, c, 0.032f, trim);
+                    Beam("Yoke padded grip", c, d, 0.042f, trim);
+                    Beam("Yoke tapered upper corner", d, e, 0.032f, trim);
+                    Beam("Yoke inward shoulder", e, new Vector3(x + grip * 0.045f, 1.93f, 7.56f), 0.026f, trim);
+                    Box("Yoke thumb button", new Vector3(x + grip * 0.145f, 1.915f, 7.531f), new Vector3(0.018f, 0.021f, 0.012f), _metal);
+                    Box("Rudder pedal", new Vector3(x + grip * 0.12f, 1.35f, 7.92f), new Vector3(0.16f, 0.045f, 0.18f), _metal)
+                        .localRotation = Quaternion.Euler(-22f, 0f, 0f);
                 }
-                Box("Yoke centre hub", new Vector3(x, 1.85f, 7.54f), new Vector3(0.085f, 0.07f, 0.05f), trim);
+                Box("Yoke column floor boot", new Vector3(x, 1.27f, 7.60f), new Vector3(0.16f, 0.07f, 0.18f), trim);
+                Box("Yoke centre hub", new Vector3(x, 1.85f, 7.54f), new Vector3(0.085f, 0.10f, 0.05f), trim);
                 Box("Yoke checklist clip", new Vector3(x, 1.81f, 7.49f), new Vector3(0.075f, 0.13f, 0.004f), _white);
                 Label("Yoke identification", "SF34", new Vector3(x, 1.85f, 7.509f), 0.0033f, Color.white);
                 // Separate vertical CRT pair with adjacent round instruments.
@@ -182,9 +218,17 @@ namespace Airside.Presentation
                         new Vector3(x, 1.86f - group * 0.025f, 7.23f), new Vector3(0.039f, 0.027f, 0.06f), group == 1 ? _white : trim);
                 }
             Box("Overhead electrical panel", new Vector3(0f, 2.742f, 7.31f), new Vector3(0.48f, 0.025f, 1.04f), _panel);
-            for (var row = 0; row < 6; row++)
-                for (var col = 0; col < 6; col++)
-                    Box("Overhead switch", new Vector3(-0.19f + col * 0.076f, 2.719f, 6.88f + row * 0.155f), new Vector3(0.013f, 0.033f, 0.018f), trim);
+            // Separate shallow equipment trays and paired switch banks, rather than a wallpaper grid.
+            for (var group = 0; group < 3; group++)
+            {
+                var z = 6.96f + group * 0.32f;
+                Box("Overhead equipment tray", new Vector3(0f, 2.722f, z), new Vector3(0.43f, 0.018f, 0.27f), _metal);
+                foreach (var side in new[] { -1f, 1f })
+                    for (var i = 0; i < 3; i++)
+                        Box("Overhead paired switch", new Vector3(side * 0.115f, 2.702f, z - 0.08f + i * 0.08f),
+                            new Vector3(0.014f, 0.027f, 0.020f), trim);
+                Box("Overhead guarded control", new Vector3(0f, 2.702f, z + 0.055f), new Vector3(0.045f, 0.025f, 0.07f), trim);
+            }
             SetReadout("GS 0 kt\nHEIGHT 0 ft\nHDG 000°");
         }
 

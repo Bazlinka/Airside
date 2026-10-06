@@ -12,7 +12,7 @@ namespace Airside.Presentation
     public sealed class JetCockpitInterior : CockpitInterior
     {
         public JetCockpitProfile Profile { get; private set; }
-        private Material _panel, _trim, _black, _white, _cyan, _green;
+        private Material _panel, _trim, _black, _white, _cyan, _green, _seatFabric;
         private readonly AttitudeDisc[] _horizons = new AttitudeDisc[2];
         private readonly List<(Transform bar, float bottom, bool left)> _engineBars = new();
         private TextMesh _engineReadout;
@@ -35,8 +35,19 @@ namespace Airside.Presentation
 
         private void MakeInterior()
         {
-            var boeing = !Profile.Sidestick && Profile.Deck != JetFlightDeck.Embraer;
-            _panel = Surface("panel", boeing ? new Color(0.36f, 0.32f, 0.27f) : new Color(0.32f, 0.39f, 0.43f));
+            // Family material treatments are project-authored, not operator-specific replicas.
+            var panelColor = Profile.Deck switch
+            {
+                JetFlightDeck.Boeing737Ng or JetFlightDeck.Boeing737Max => new Color(0.36f, 0.32f, 0.27f),
+                JetFlightDeck.Boeing787 => new Color(0.31f, 0.29f, 0.27f),
+                JetFlightDeck.AirbusClassic => new Color(0.32f, 0.39f, 0.43f),
+                JetFlightDeck.AirbusA350 => new Color(0.27f, 0.33f, 0.36f),
+                JetFlightDeck.AirbusA220 => new Color(0.38f, 0.40f, 0.41f),
+                _ => new Color(0.37f, 0.39f, 0.40f),
+            };
+            _panel = Surface("panel", panelColor);
+            _seatFabric = Surface("woven pilot upholstery", panelColor * 0.55f);
+            if (_seatFabric.HasProperty("_Smoothness")) _seatFabric.SetFloat("_Smoothness", 0.03f);
             _trim = Surface("dark trim", new Color(0.065f, 0.075f, 0.085f));
             _black = Surface("display black", new Color(0.006f, 0.012f, 0.017f), false);
             _white = Surface("markings", new Color(0.82f, 0.85f, 0.82f), false);
@@ -54,16 +65,17 @@ namespace Airside.Presentation
             foreach (var side in new[] { -1f, 1f })
             {
                 var x = side * Profile.HalfWidth * 0.43f;
-                Box("Pilot seat cushion", new Vector3(x, -0.77f, -0.19f), new Vector3(0.48f, 0.15f, 0.52f), _trim);
-                Box("Pilot seat back", new Vector3(x, -0.32f, -0.48f), new Vector3(0.48f, 0.83f, 0.12f), _trim);
-                Box("Pilot headrest", new Vector3(x, 0.22f, -0.49f), new Vector3(0.29f, 0.23f, 0.12f), _trim);
+                MakePilotSeat(x, side);
                 foreach (var foot in new[] { -1f, 1f })
                     Box("Rudder pedal", new Vector3(x + foot * 0.10f, -1.22f, 0.65f), new Vector3(0.16f, 0.08f, 0.20f), _trim);
                 if (Profile.Sidestick)
                 {
                     Box("Sidestick console", new Vector3(side * (Profile.HalfWidth - 0.19f), -0.64f, 0.03f), new Vector3(0.31f, 0.20f, 0.65f), _panel);
-                    Beam("Sidestick grip", new Vector3(side * (Profile.HalfWidth - 0.19f), -0.54f, 0.12f),
-                        new Vector3(side * (Profile.HalfWidth - 0.19f), -0.34f, 0.08f), 0.055f, _trim);
+                    var stickX = side * (Profile.HalfWidth - 0.19f);
+                    Box("Sidestick gaiter", new Vector3(stickX, -0.535f, 0.12f), new Vector3(0.12f, 0.05f, 0.13f), _trim);
+                    Beam("Sidestick stem", new Vector3(stickX, -0.53f, 0.12f), new Vector3(stickX, -0.41f, 0.085f), 0.032f, _trim);
+                    Beam("Sidestick grip", new Vector3(stickX, -0.44f, 0.095f), new Vector3(stickX + side * 0.015f, -0.34f, 0.08f), 0.06f, _trim);
+                    Box("Sidestick trigger", new Vector3(stickX, -0.38f, 0.047f), new Vector3(0.024f, 0.031f, 0.018f), _white);
                     Box("Sidestick thumb switch", new Vector3(side * (Profile.HalfWidth - 0.19f), -0.33f, 0.08f), new Vector3(0.022f, 0.018f, 0.025f), _white);
                     if (Profile.Deck != JetFlightDeck.AirbusA220)
                         Box("Stowed pilot tray", new Vector3(x, -0.39f, 0.55f), new Vector3(0.43f, 0.026f, 0.12f), _panel);
@@ -71,27 +83,78 @@ namespace Airside.Presentation
                 else
                 {
                     Beam("Control column", new Vector3(x, -1.32f, 0.40f), new Vector3(x, -0.53f, 0.30f), 0.065f, _trim);
-                    var y = -0.49f;
-                    if (Profile.Deck == JetFlightDeck.Embraer)
-                    {
-                        Beam("Embraer ram horn left", new Vector3(x, y, 0.29f), new Vector3(x - 0.17f, y + 0.12f, 0.27f), 0.042f, _trim);
-                        Beam("Embraer ram horn right", new Vector3(x, y, 0.29f), new Vector3(x + 0.17f, y + 0.12f, 0.27f), 0.042f, _trim);
-                    }
-                    else
-                    {
-                        Box("Yoke crossbar", new Vector3(x, y, 0.28f), new Vector3(0.34f, 0.045f, 0.05f), _trim);
-                        foreach (var hand in new[] { -1f, 1f })
-                            Box("Yoke grip", new Vector3(x + hand * 0.17f, y + 0.07f, 0.28f), new Vector3(0.045f, 0.18f, 0.055f), _trim);
-                    }
+                    MakeYoke(x);
                 }
             }
             SetReadout("GS 0 kt\nHEIGHT 0 ft\nHDG 000°");
         }
 
+        private void MakePilotSeat(float x, float side)
+        {
+            // Project-authored family seating: all backs/harnesses remain behind
+            // the fixed pilot-eye plane, with no headrest wrapping into the view.
+            var wideDeck = Profile.Deck == JetFlightDeck.AirbusA350 || Profile.Deck == JetFlightDeck.Boeing787;
+            var backWidth = wideDeck ? 0.46f : 0.43f;
+            var tilt = Profile.Deck == JetFlightDeck.Embraer ? -7f : -10f;
+            Box("Pilot seat pan", new Vector3(x, -0.845f, -0.19f), new Vector3(0.48f, 0.065f, 0.52f), _trim);
+            Box("Pilot seat cushion", new Vector3(x, -0.765f, -0.18f), new Vector3(0.42f, 0.13f, 0.49f), _seatFabric);
+            var back = Box("Pilot seat back", new Vector3(x, -0.32f, -0.48f), new Vector3(backWidth, 0.78f, 0.10f), _seatFabric);
+            back.localRotation = Quaternion.Euler(tilt, 0f, 0f);
+            var shell = Box("Pilot seat rear shell", new Vector3(x, -0.33f, -0.55f), new Vector3(backWidth + 0.018f, 0.75f, 0.045f), _panel);
+            shell.localRotation = back.localRotation;
+            var head = Box("Pilot headrest", new Vector3(x, 0.22f, -0.54f), new Vector3(wideDeck ? 0.30f : 0.27f, 0.20f, 0.13f), _seatFabric);
+            head.localRotation = Quaternion.Euler(tilt, 0f, 0f);
+            Box("Pilot lumbar cushion", new Vector3(x, -0.56f, -0.38f), new Vector3(backWidth * 0.74f, 0.17f, 0.09f), _seatFabric);
+            Box("Seat suspension base", new Vector3(x, -1.11f, -0.27f), new Vector3(0.25f, 0.49f, 0.30f), _trim);
+            foreach (var hand in new[] { -1f, 1f })
+            {
+                var bolster = Box("Pilot seat side bolster", new Vector3(x + hand * backWidth * 0.44f, -0.33f, -0.42f),
+                    new Vector3(0.065f, 0.63f, 0.11f), _seatFabric);
+                bolster.localRotation = back.localRotation;
+                Box("Seat floor rail", new Vector3(x + hand * 0.14f, -1.3775f, -0.23f), new Vector3(0.035f, 0.045f, 0.72f), _trim);
+                Beam("Headrest support", new Vector3(x + hand * 0.075f, 0.04f, -0.53f),
+                    new Vector3(x + hand * 0.075f, 0.15f, -0.55f), 0.015f, _panel);
+                var outboardStick = Profile.Sidestick && hand == side;
+                var armZ = outboardStick ? -0.22f : -0.06f;
+                Box("Pilot armrest", new Vector3(x + hand * 0.255f, -0.53f, armZ),
+                    new Vector3(0.062f, 0.060f, outboardStick ? 0.30f : 0.42f), _trim);
+                Beam("Armrest support", new Vector3(x + hand * 0.24f, -0.80f, -0.28f),
+                    new Vector3(x + hand * 0.255f, -0.56f, -0.23f), 0.025f, _panel);
+                // Static stowed harness; no restraint animation or seat movement.
+                Beam("Pilot shoulder harness", new Vector3(x + hand * 0.12f, -0.03f, -0.405f),
+                    new Vector3(x + hand * 0.055f, -0.60f, -0.345f), 0.023f, _trim);
+                Beam("Pilot lap harness", new Vector3(x + hand * 0.18f, -0.70f, -0.17f),
+                    new Vector3(x + hand * 0.025f, -0.70f, -0.30f), 0.023f, _trim);
+            }
+            Box("Pilot harness buckle", new Vector3(x, -0.69f, -0.29f), new Vector3(0.05f, 0.018f, 0.042f), _panel);
+        }
+
+        private void MakeYoke(float x)
+        {
+            const float y = -0.49f;
+            Box("Yoke hub", new Vector3(x, y, 0.29f), new Vector3(0.11f, 0.09f, 0.08f), _trim);
+            foreach (var hand in new[] { -1f, 1f })
+            {
+                var horn = Profile.Deck == JetFlightDeck.Embraer;
+                var modern = Profile.Deck == JetFlightDeck.Boeing787;
+                // Bent, tapered segments retain family silhouettes without a square crossbar.
+                var a = new Vector3(x + hand * 0.045f, y, 0.29f);
+                var b = new Vector3(x + hand * (horn ? 0.11f : 0.14f), y + (horn ? 0.03f : -0.015f), 0.27f);
+                var c = new Vector3(x + hand * (horn ? 0.16f : 0.18f), y + (horn ? 0.09f : 0.025f), modern ? 0.24f : 0.27f);
+                var d = new Vector3(x + hand * (horn ? 0.13f : modern ? 0.15f : 0.17f), y + 0.15f, 0.255f);
+                var name = horn ? "Embraer ram horn" : modern ? "787 moulded yoke" : "737 yoke";
+                Beam(name + " arm", a, b, 0.047f, _trim);
+                Beam(name + " shoulder", b, c, 0.052f, _trim);
+                Beam(name + " grip", c, d, horn ? 0.043f : 0.057f, _trim);
+                Box("Yoke thumb switch", d + new Vector3(0f, -0.015f, -0.028f), new Vector3(0.023f, 0.015f, 0.013f), _white);
+            }
+            Box("Yoke checklist clip", new Vector3(x, y + 0.035f, 0.24f), new Vector3(0.045f, 0.013f, 0.017f), _white);
+        }
+
         private void MakeShell(Material lining)
         {
             var w = Profile.HalfWidth;
-            var geometry = JetCockpitShellGeometry.Build(w);
+            var geometry = JetCockpitShellGeometry.Build(Profile);
             var vertexCount = geometry.Vertices.Count;
             var vertices = new Vector3[vertexCount * 2];
             for (var i = 0; i < vertexCount; i++)
@@ -115,20 +178,12 @@ namespace Airside.Presentation
             shell.AddComponent<MeshFilter>().sharedMesh = mesh;
             shell.AddComponent<MeshRenderer>().sharedMaterial = lining;
             Box("Flight deck door", new Vector3(0f, -0.40f, -1.665f), new Vector3(0.56f, 1.90f, 0.035f), _panel);
+            foreach (var frame in geometry.Frames)
+                Beam(frame.Name, new Vector3(frame.Start.X, frame.Start.Y, frame.Start.Z),
+                    new Vector3(frame.End.X, frame.End.Y, frame.End.Z), frame.Width, frame.PanelMaterial ? _panel : lining);
             foreach (var side in new[] { -1f, 1f })
-            {
-                Beam("Side window upper rail", new Vector3(side * w, JetCockpitShellGeometry.SideTopY, -0.61f), new Vector3(side * w, JetCockpitShellGeometry.SideTopY, 0.72f), 0.07f, lining);
-                Beam("Side window sill", new Vector3(side * w, JetCockpitShellGeometry.SillY, -0.61f), new Vector3(side * w, JetCockpitShellGeometry.SillY, 0.72f), 0.07f, _panel);
-                Beam("Forward side window upper rail", new Vector3(side * w, JetCockpitShellGeometry.SideTopY, 0.72f), new Vector3(side * w * 0.73f, FrontTopY, 1.05f), 0.07f, lining);
-                Beam("Forward side window sill", new Vector3(side * w, JetCockpitShellGeometry.SillY, 0.72f), new Vector3(side * w * 0.84f, SillY, 1.30f), 0.07f, _panel);
-                Beam("Rear window pillar", new Vector3(side * w, JetCockpitShellGeometry.SillY, -0.61f), new Vector3(side * w, JetCockpitShellGeometry.SideTopY, -0.61f), 0.06f, lining);
-                Beam("Front windscreen outer pillar", new Vector3(side * w * 0.84f, SillY, 1.30f), new Vector3(side * w * 0.73f, FrontTopY, 1.05f), 0.065f, lining);
-                if (Profile.Deck != JetFlightDeck.Boeing787)
-                    Beam("Side quarterlight pillar", new Vector3(side * w, JetCockpitShellGeometry.SillY, 0.41f), new Vector3(side * w, JetCockpitShellGeometry.SideTopY, 0.41f), 0.045f, lining);
-                Wiper(new Vector3(side * 0.12f, SillY + 0.035f, 1.31f), new Vector3(side * w * 0.64f, SillY + 0.055f, 1.28f), 0.013f, _trim, side);
-            }
-            Beam("Windscreen centre post", new Vector3(0f, SillY, 1.30f), new Vector3(0f, FrontTopY, 1.05f), 0.047f, lining);
-            Beam("Windscreen brow", new Vector3(-w * 0.73f, FrontTopY, 1.05f), new Vector3(w * 0.73f, FrontTopY, 1.05f), 0.075f, lining);
+                Wiper(new Vector3(side * 0.12f, SillY + 0.035f, 1.31f),
+                    new Vector3(side * w * 0.64f, SillY + 0.055f, 1.28f), 0.013f, _trim, side);
 
         }
 
@@ -153,11 +208,17 @@ namespace Airside.Presentation
             Box("Glareshield", new Vector3(0f, -0.09f, 1.10f), new Vector3(w * 1.78f, 0.065f, 0.50f), _trim);
             Box("Flight guidance rail", new Vector3(0f, -0.18f, 0.91f), new Vector3(w * 1.02f, 0.13f, 0.065f), _panel);
             Label("Guidance legends", Profile.Sidestick ? "SPD    HDG    ALT    VS     AP" : "COURSE   IAS/MACH   HDG   ALT   V/S", new Vector3(0f, -0.145f, 0.87f), 0.0036f, Color.white);
-            for (var i = 0; i < 8; i++)
+            for (var i = 0; i < 4; i++)
             {
-                var x = -w * 0.43f + i * w * 0.123f;
-                Box("Guidance knob", new Vector3(x, -0.20f, 0.857f), new Vector3(0.036f, 0.036f, 0.023f), _trim);
+                var x = (i - 1.5f) * w * 0.24f;
+                Box("Guidance value aperture", new Vector3(x, -0.175f, 0.869f), new Vector3(w * 0.16f, 0.035f, 0.004f), _black);
+                Box("Guidance rotary collar", new Vector3(x, -0.215f, 0.865f), new Vector3(0.049f, 0.044f, 0.013f), _trim);
+                Box("Guidance knob", new Vector3(x, -0.215f, 0.851f), new Vector3(0.030f, 0.031f, 0.027f), _panel);
             }
+            foreach (var side in new[] { -1f, 1f })
+                for (var button = 0; button < 2; button++)
+                    Box("Autopilot pushbutton", new Vector3(side * w * (0.43f + button * 0.055f), -0.195f, 0.863f),
+                        new Vector3(0.031f, 0.029f, 0.011f), _trim);
             var deck = Profile.Deck;
             if (deck == JetFlightDeck.Boeing737Ng || deck == JetFlightDeck.AirbusClassic)
             {
@@ -172,9 +233,8 @@ namespace Airside.Presentation
             }
             else if (deck == JetFlightDeck.AirbusA350)
             {
-                for (var i = 0; i < 5; i++)
-                    Display((i - 2) * 0.49f, -0.45f, 0.46f, 0.32f, i == 0 || i == 4 ? "OIS" : i == 2 ? "ECAM" : "PFD / ND", i == 1 ? 0 : i == 3 ? 1 : -1);
-                Display(0f, -0.78f, 0.43f, 0.22f, "SYSTEM");
+                foreach (var station in JetCockpitProfile.A350Displays)
+                    Display(station.X, station.Y, station.Width, station.Height, station.Title, station.Pilot, station.Yaw);
             }
             else
             {
@@ -194,8 +254,9 @@ namespace Airside.Presentation
             Box("Standby bezel", new Vector3(0f, -0.235f, 1.001f), new Vector3(0.10f, 0.06f, 0.025f), _trim);
         }
 
-        private void Display(float x, float y, float width, float height, string title, int pilot = -1)
+        private void Display(float x, float y, float width, float height, string title, int pilot = -1, float yaw = 0f)
         {
+            var first = transform.childCount;
             const float z = 1.008f;
             Box(title + " bezel", new Vector3(x, y, z + 0.015f), new Vector3(width, height, 0.025f), _trim);
             Box(title + " screen", new Vector3(x, y, z - 0.002f), new Vector3(width - 0.026f, height - 0.03f, 0.003f), _black);
@@ -245,6 +306,19 @@ namespace Airside.Presentation
             }
             for (var i = 0; i < 5; i++)
                 Box("Display key", new Vector3(x - width * 0.32f + i * width * 0.16f, y - height * 0.46f, z - 0.01f), new Vector3(0.022f, 0.008f, 0.008f), _panel);
+            if (yaw != 0f)
+            {
+                // Rotate bezel, page details and keys together around the screen centre.
+                var group = new GameObject(title + " inward display station").transform;
+                group.SetParent(transform, false);
+                group.localPosition = new Vector3(x, y, z);
+                for (var child = transform.childCount - 2; child >= first; child--)
+                    transform.GetChild(child).SetParent(group, true);
+                group.localRotation = Quaternion.Euler(0f, yaw, 0f);
+                // Pull the complete angled housing forward so its inner edge cannot
+                // disappear inside the otherwise flat main-panel face (Z = 1.03).
+                group.localPosition -= new Vector3(0f, 0f, Mathf.Abs(Mathf.Sin(yaw * Mathf.Deg2Rad)) * width * 0.5f + 0.012f);
+            }
         }
 
         private void MakePedestal()
@@ -253,11 +327,22 @@ namespace Airside.Presentation
             foreach (var side in new[] { -1f, 1f })
             {
                 var x = side * 0.105f;
-                Box("FMS bezel", new Vector3(x, -0.69f, 0.63f), new Vector3(0.19f, 0.045f, 0.29f), _trim);
-                Box("FMS display", new Vector3(x, -0.662f, 0.70f), new Vector3(0.15f, 0.003f, 0.10f), _black);
-                for (var row = 0; row < 4; row++)
-                    for (var col = 0; col < 4; col++)
-                        Box("FMS key", new Vector3(x - 0.060f + col * 0.04f, -0.655f, 0.61f - row * 0.035f), new Vector3(0.022f, 0.012f, 0.017f), _panel);
+                var cursorDeck = Profile.Deck == JetFlightDeck.AirbusA350 || Profile.Deck == JetFlightDeck.Boeing787;
+                Box(cursorDeck ? "Cursor controller plinth" : "FMS bezel", new Vector3(x, -0.69f, 0.63f), new Vector3(0.19f, 0.045f, 0.29f), _trim);
+                if (cursorDeck)
+                {
+                    Box("Cursor palm rest", new Vector3(x, -0.648f, 0.59f), new Vector3(0.13f, 0.065f, 0.11f), _panel);
+                    Box("Cursor touch surface", new Vector3(x, -0.66f, 0.70f), new Vector3(0.105f, 0.009f, 0.075f), _black);
+                    foreach (var keySide in new[] { -1f, 1f })
+                        Box("Cursor select key", new Vector3(x + keySide * 0.07f, -0.655f, 0.70f), new Vector3(0.022f, 0.012f, 0.05f), _panel);
+                }
+                else
+                {
+                    Box("FMS display", new Vector3(x, -0.662f, 0.70f), new Vector3(0.15f, 0.003f, 0.10f), _black);
+                    for (var row = 0; row < 4; row++)
+                        for (var col = 0; col < 4; col++)
+                            Box("FMS key", new Vector3(x - 0.060f + col * 0.04f, -0.655f, 0.61f - row * 0.035f), new Vector3(0.022f, 0.012f, 0.017f), _panel);
+                }
                 Box("Thrust lever slot", new Vector3(side * 0.054f, -0.72f, 0.02f), new Vector3(0.018f, 0.012f, 0.35f), _trim);
                 Beam("Thrust lever", new Vector3(side * 0.054f, -0.70f, 0.0f), new Vector3(side * 0.054f, -0.47f, 0.10f), 0.021f, _white);
                 Box("Thrust handle", new Vector3(side * 0.054f, -0.47f, 0.10f), new Vector3(0.07f, 0.046f, 0.10f), _trim);
@@ -276,19 +361,40 @@ namespace Airside.Presentation
         private void MakeOverhead()
         {
             Box("Overhead panel", new Vector3(0f, 0.635f, -0.10f), new Vector3(0.64f, 0.052f, 1.30f), _panel);
-            var legends = new[] { "ELEC", "FUEL", "HYD", "AIR", "LIGHTS", "ANTI ICE" };
-            for (var row = 0; row < 6; row++)
-            {
-                var z = 0.43f - row * 0.20f;
-                Box("Overhead section", new Vector3(0f, 0.602f, z), new Vector3(0.59f, 0.010f, 0.18f), _trim);
-                var label = Label("Overhead legend", legends[row], new Vector3(0f, 0.592f, z + 0.05f), 0.0048f, Color.white);
-                label.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-                for (var col = 0; col < 6; col++)
-                    Box("Overhead toggle", new Vector3(-0.23f + col * 0.092f, 0.575f, z - 0.015f), new Vector3(0.017f, 0.036f, 0.022f), _panel);
-            }
+            // Unequal system groups break the old six identical rows. These are
+            // restrained spectator fittings, with no invented operational indications.
+            var boeing = Profile.Deck == JetFlightDeck.Boeing737Ng || Profile.Deck == JetFlightDeck.Boeing737Max || Profile.Deck == JetFlightDeck.Boeing787;
+            var modern = Profile.Deck == JetFlightDeck.AirbusA350 || Profile.Deck == JetFlightDeck.AirbusA220 || Profile.Deck == JetFlightDeck.Boeing787;
+            OverheadGroup("ELEC", -0.155f, 0.27f, 0.28f, 0.42f, boeing ? 3 : 2, modern);
+            OverheadGroup("FUEL", 0.155f, 0.27f, 0.28f, 0.42f, boeing ? 4 : 3, modern);
+            OverheadGroup("HYD", -0.155f, -0.13f, 0.28f, 0.32f, 2, modern);
+            OverheadGroup("AIR", 0.155f, -0.13f, 0.28f, 0.32f, 3, modern);
+            OverheadGroup("LIGHTS / ANTI ICE", 0f, -0.49f, 0.59f, 0.29f, boeing ? 5 : 4, false);
+
         }
 
-                public override void SetAttitude(float pitchUpDegrees, float bankLeftDegrees)
+        private void OverheadGroup(string legend, float x, float z, float width, float depth, int count, bool pushbuttons)
+        {
+            Box(legend + " overhead section", new Vector3(x, 0.602f, z), new Vector3(width, 0.010f, depth), _trim);
+            var label = Label("Overhead legend", legend, new Vector3(x, 0.592f, z + depth * 0.31f), 0.0038f, Color.white);
+            label.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+            for (var i = 0; i < count; i++)
+            {
+                var controlX = x + (i - (count - 1) * 0.5f) * width / (count + 1);
+                Box("Overhead switch mounting", new Vector3(controlX, 0.589f, z - depth * 0.12f), new Vector3(0.038f, 0.009f, 0.047f), _panel);
+                if (pushbuttons)
+                    Box("Overhead pushbutton", new Vector3(controlX, 0.58f, z - depth * 0.12f), new Vector3(0.026f, 0.014f, 0.033f), _trim);
+                else
+                    Beam("Overhead toggle", new Vector3(controlX, 0.587f, z - depth * 0.12f),
+                        new Vector3(controlX, 0.558f, z - depth * 0.12f + 0.012f), 0.012f, _white);
+            }
+            if (depth > 0.30f)
+                foreach (var side in new[] { -1f, 1f })
+                    Box("Overhead rotary selector", new Vector3(x + side * width * 0.22f, 0.571f, z - depth * 0.34f),
+                        new Vector3(0.038f, 0.03f, 0.038f), _panel);
+        }
+
+        public override void SetAttitude(float pitchUpDegrees, float bankLeftDegrees)
         {
             foreach (var horizon in _horizons) horizon?.Set(pitchUpDegrees, bankLeftDegrees);
         }

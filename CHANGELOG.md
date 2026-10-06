@@ -11,6 +11,23 @@
   v20 adds the ferry flag and an outstation logbook. Code only: nothing compiled or run (Bailey's
   instruction), so build, headless tests and visuals are unverified.
 
+- Distinguish jet family windshield shells, shape pilot/passenger seats and regional
+  yokes, add family bin/PSU fittings, and enable an analog Bell 412EP cockpit with
+  fitted front frames and retained rotor visibility. Correct Bell tail geometry
+  to two opposed blades in the shaft plane (ADR 0241). Unity-free
+  verification only; native appearance and switching remain unverified.
+
+- Add family-specific cockpit controls, panels, overhead fittings and pilot seats
+  across all thirteen fixed-wing types; fit every passenger camera to individual
+  glazing and bound cabin sections to real window belts (ADR 0240). Unity-free
+  checks only; native visuals remain unverified.
+
+- Stop stars, sun/moon discs, the stratus deck, the horizon band and the rain volume sliding while the
+  camera pans, orbits or zooms. They were re-centred in `Update` but the camera moves in
+  `LateUpdate`, so they trailed one frame behind; a new `CameraShellAnchor` re-applies their
+  offsets after the camera has moved. EditMode tests added; not yet verified in a Unity run
+  or visually.
+
 - Fit passenger windows independently from seat rows, add curved cabin walls/
   ceiling, recessed trim, shaped bins/PSUs, deeper inward views and nearby seat
   fittings. Align ATR42/A320/B789 cameras to individual kit panes; distinguish

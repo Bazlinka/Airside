@@ -50,7 +50,7 @@ namespace Airside.Presentation
                 root,
                 out _,
                 HelicopterPartName,
-                kitName => AirsideAdelaideEmergencyAviation.PartColour(kitName),
+                kitName => AirsideAdelaideEmergencyAviation.PartColour(kitName, accent),
                 localPosition: new Vector3(0f, profile.ModelGroundOffsetMetres, 0f));
             if (!usedArt)
                 AirsideAdelaideEmergencyAviation.BuildFallback(root);
@@ -66,7 +66,6 @@ namespace Airside.Presentation
             if (!HasNamedChild(root, "LandingLight L"))
                 ParentBlock(root, "LandingLight L", new Vector3(-0.55f, 1.1f, 3.2f), new Vector3(0.2f, 0.16f, 0.2f), new Color(0.95f, 0.95f, 0.85f));
             AttachEngineAudio(root, AircraftType.Bell412, 14f, 420f, 0.12f);
-            _ = accent;
             return root;
         }
 

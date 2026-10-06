@@ -1,5 +1,16 @@
 ## Where to resume — freight and interface refresh candidate, 6 October 2026
 
+- **2026-10-06 Codex — original fleet identity refresh (ADR 0232).**
+  Branch `feature/aircraft-identity-refresh`; clean checkout
+  `/private/tmp/airside-livery-review-20261006`, parent `19fd9688`.
+  Thirteen distinct fitted hull compositions, larger A220/787-10 fin motifs,
+  refreshed thumbnails; Bell 412 fitted paint and operator-colour repaint.
+  Original fixed-wing non-paint vertex/index arrays verified byte-identical.
+  Existing audio fixes already merged via #507 (`e5151ded`): local changed
+  jet WAVs/manifest match main, so no stale audio-code overwrite is needed.
+  Evidence: `docs/testing/aircraft-identities-2026-10-06/README.md`.
+  Validation details and remaining packaged coverage are recorded there.
+
 Codex; branch `feature/freight-and-interface-refresh`. Bailey approved requiring
 freighters for freight work and a substantial HUD/viewing, return-summary and
 click-sound redesign. Implementation is complete as a review candidate:

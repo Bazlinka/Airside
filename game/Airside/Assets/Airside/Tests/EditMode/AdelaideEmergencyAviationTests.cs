@@ -9,6 +9,21 @@ namespace Airside.Tests
     public sealed class AdelaideEmergencyAviationTests
     {
         [Test]
+        public void BellPaintUsesOperatorPrimaryAndPresetAccentWithoutRecolouringGlassOrRotors()
+        {
+            ColorUtility.TryParseHtmlString("#0F8B8D", out var primary);
+            Assert.That(AirsideAdelaideEmergencyAviation.PartColour("rescue_red_belly", primary), Is.EqualTo(primary));
+            Assert.That(AirsideAdelaideEmergencyAviation.PartColour("livery_secondary", primary),
+                Is.EqualTo(AircraftLiveryPaint.Secondary(primary)));
+            Assert.That(AirsideAdelaideEmergencyAviation.PartColour("livery_emblem", primary),
+                Is.EqualTo(AircraftLiveryPaint.Emblem(primary)));
+            Assert.That(AirsideAdelaideEmergencyAviation.PartColour("cockpit_glass_left", primary),
+                Is.EqualTo(AirsideAdelaideEmergencyAviation.PartColour("cockpit_glass_left")));
+            Assert.That(AirsideAdelaideEmergencyAviation.PartColour("main_rotor_blade_1", primary),
+                Is.EqualTo(AirsideAdelaideEmergencyAviation.PartColour("main_rotor_blade_1")));
+        }
+
+        [Test]
         public void HelipadWest_UsesTheCommittedOsmOutlineAndCentre()
         {
             Assert.That(AdelaideEmergencyAviationGeometry.OsmWayId, Is.EqualTo(1229789628));
@@ -65,7 +80,7 @@ namespace Airside.Tests
                     Assert.That(root.Find($"main_rotor_blade_{i}"), Is.Not.Null);
 
                 var renderers = root.GetComponentsInChildren<Renderer>(true);
-                Assert.That(renderers.Length, Is.EqualTo(43));
+                Assert.That(renderers.Length, Is.EqualTo(45));
                 var bounds = renderers[0].bounds;
                 for (var i = 1; i < renderers.Length; i++)
                     bounds.Encapsulate(renderers[i].bounds);

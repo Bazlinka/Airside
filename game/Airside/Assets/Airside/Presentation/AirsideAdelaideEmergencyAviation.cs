@@ -55,6 +55,8 @@ namespace Airside.Presentation
             var key = part.ToLowerInvariant();
             if (key.Contains("glass") || key.Contains("window"))
                 return new Color(0.08f, 0.16f, 0.22f, 0.68f);
+            if (key.StartsWith("livery_", StringComparison.Ordinal))
+                return AircraftLiveryPaint.Colour(key, rescueRed ?? new Color(0.68f, 0.07f, 0.055f));
             if (key.Contains("rescue_red"))
                 return rescueRed ?? new Color(0.68f, 0.07f, 0.055f);
             if (key.Contains("rotor_blade") || key.Contains("landing_skid") || key.Contains("skid_strut")

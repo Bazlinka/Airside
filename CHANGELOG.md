@@ -1,5 +1,10 @@
 ## Unreleased
 
+- Refresh all fourteen aircraft identities with original fitted paint: thirteen
+  distinct fixed-wing hull compositions, bolder A220/787-10 tail marks, refreshed
+  Hangar thumbnails, and fitted Bell 412 panels using the operator/repaint palette
+  (ADR 0232). Existing audio fixes are already on main through #507.
+
 - Refresh shared HUD/workspace/menu styling with slate, warm white and muted
   accents; clearer aircraft-view controls and a compact viewing dock. Replace
   the welcome-back sentence stack with metrics and a scrolling fleet report.

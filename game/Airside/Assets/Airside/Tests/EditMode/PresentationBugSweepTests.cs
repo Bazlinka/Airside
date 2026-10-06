@@ -339,6 +339,40 @@ namespace Airside.Tests
         }
     
         [Test]
+        public void CameraShellAnchor_FollowsCameraMovedAfterPlacement()
+        {
+            var cameraObject = new GameObject("Shell camera");
+            var shell = new GameObject("Shell");
+            try
+            {
+                var camera = cameraObject.AddComponent<Camera>();
+                cameraObject.transform.position = new Vector3(10f, 5f, -4f);
+                var offset = new Vector3(0f, 420f, 0f);
+                CameraShellAnchor.Place(camera, shell.transform, offset);
+                Assert.That(shell.transform.position, Is.EqualTo(new Vector3(10f, 425f, -4f)));
+
+                // The camera controller moves the camera in LateUpdate, after the Update that placed the shell.
+                cameraObject.transform.position = new Vector3(60f, 9f, 30f);
+                cameraObject.GetComponent<CameraShellAnchor>().SendMessage("LateUpdate");
+                Assert.That(shell.transform.position, Is.EqualTo(new Vector3(60f, 429f, 30f)),
+                    "a shell placed before the camera moved must catch up, not trail a frame");
+            }
+            finally
+            {
+                Object.DestroyImmediate(shell);
+                Object.DestroyImmediate(cameraObject);
+            }
+        }
+
+        [Test]
+        public void CameraShellAnchor_AbsoluteHeightFollowsOnlyHorizontalTravel()
+        {
+            var resolved = CameraShellAnchor.Resolve(
+                new Vector3(100f, 80f, -50f), new Vector3(3f, 700f, 4f), absoluteHeight: true);
+            Assert.That(resolved, Is.EqualTo(new Vector3(103f, 700f, -46f)));
+        }
+
+        [Test]
         public void StarField_FadesOutRatherThanBlinkingOff()
         {
             Assert.That(AirsidePrototype.StarFieldFade(0f), Is.GreaterThan(1f));

@@ -1,5 +1,11 @@
 ## Unreleased
 
+- Stop stars, sun/moon discs, the stratus deck and the horizon band sliding while the
+  camera pans, orbits or zooms. They were re-centred in `Update` but the camera moves in
+  `LateUpdate`, so they trailed one frame behind; a new `CameraShellAnchor` re-applies their
+  offsets after the camera has moved. EditMode tests added; not yet verified in a Unity run
+  or visually.
+
 - Fit passenger windows independently from seat rows, add curved cabin walls/
   ceiling, recessed trim, shaped bins/PSUs, deeper inward views and nearby seat
   fittings. Align ATR42/A320/B789 cameras to individual kit panes; distinguish

@@ -962,8 +962,9 @@ namespace Airside.Presentation
 
             // The Adelaide field spans kilometres. Keep the celestial shell centred on
             // the active camera so stars cannot be left behind by overview/follow pans.
-            if (_mainCamera != null)
-                _starFieldRoot.position = _mainCamera.transform.position;
+            // The camera moves in LateUpdate, so the anchor re-applies this after it has moved;
+            // a position taken here alone is a frame stale and the stars slid against the view.
+            CameraShellAnchor.Place(_mainCamera, _starFieldRoot, Vector3.zero);
 
             var twinkle = 0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * AirsideReusableMotion.StarTwinkleHz);
             if (_starFieldRenderer == null)
@@ -1045,7 +1046,6 @@ namespace Airside.Presentation
                 return;
             }
 
-            var skyAnchor = _mainCamera != null ? _mainCamera.transform.position : Vector3.zero;
             var cloudCover = ObserverSkyCover;
             var discVisibility = Mathf.Clamp01(1f - Mathf.InverseLerp(0.3f, 0.75f, cloudCover));
 
@@ -1062,7 +1062,7 @@ namespace Airside.Presentation
                 _sunDisc.gameObject.SetActive(showSun);
                 if (showSun)
                 {
-                    _sunDisc.position = skyAnchor + sunDir * 420f;
+                    CameraShellAnchor.Place(_mainCamera, _sunDisc, sunDir * 420f);
                     var sunColor = Color.Lerp(
                         new Color(1f, 0.52f, 0.24f),
                         new Color(1f, 0.96f, 0.82f),
@@ -1089,7 +1089,7 @@ namespace Airside.Presentation
                 _moonDisc.gameObject.SetActive(showMoon);
                 if (showMoon)
                 {
-                    _moonDisc.position = skyAnchor + moonDir * 420f;
+                    CameraShellAnchor.Place(_mainCamera, _moonDisc, moonDir * 420f);
                     if (_moonDiscRenderer == null)
                         _moonDiscRenderer = _moonDisc.GetComponent<Renderer>();
                     if (_moonDiscRenderer != null)

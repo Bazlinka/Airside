@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Airside.Domain;
+using Airside.Simulation;
 using UnityEngine;
 
 namespace Airside.Presentation
@@ -12,6 +14,8 @@ namespace Airside.Presentation
     {
         private bool _miniMapVisible = true;
         private Texture2D _miniMapTexture;
+        private Texture2D _regionalMiniMapTexture;
+        private bool _regionalMiniMap;
         private bool _miniMapDragging;
         private bool _miniMapPressed;
         private Vector2 _miniMapPressAt;
@@ -22,7 +26,7 @@ namespace Airside.Presentation
         {
             _miniMapVisible = !_miniMapVisible;
             ApplySettingsAndSave();
-            ShowToast(_miniMapVisible ? "Airport map on (N)." : "Airport map off (N).");
+            ShowToast(_miniMapVisible ? "Flight map on (N)." : "Flight map off (N).");
             PlayUiClick();
         }
 
@@ -75,9 +79,22 @@ namespace Airside.Presentation
             // Radar (ADR 0122): a glass frame with its header, the lit airfield scope inside.
             _miniMapDrawList.Clear();
             MiniMapFrame.Paint(_miniMapDrawList, Box(panelRect),
-                "ADELAIDE  ·  RWY " + (_operations != null ? RunwayName(_operations.ActiveRunway) : "23"));
+                _regionalMiniMap ? "SOUTH AUSTRALIA" : "ADELAIDE  ·  RWY " + (_operations != null ? RunwayName(_operations.ActiveRunway) : "23"));
             _hudPainter.Draw(_miniMapDrawList);
             var area = HudPainter.ToRect(MiniMapFrame.Inner(Box(panelRect)).Inset(3f));
+            var tabWidth = area.width / 2;
+            if (GUI.Toggle(new Rect(area.x, area.y, tabWidth, 20f), !_regionalMiniMap, "Airport", GUI.skin.button) && _regionalMiniMap)
+                SetMiniMapScope(false);
+            if (GUI.Toggle(new Rect(area.x + tabWidth, area.y, tabWidth, 20f), _regionalMiniMap, "South Australia", GUI.skin.button) && !_regionalMiniMap)
+                SetMiniMapScope(true);
+            area.y += 24f; area.height -= 24f;
+            if (_regionalMiniMap)
+            {
+                var regional = RegionalMiniMap.Fit(area);
+                DrawRegionalMiniMap(regional, small);
+                HandleMiniMapPointer(regional);
+                return;
+            }
             var map = FieldMiniMap.FitMap(area);
             GUI.DrawTexture(map, MiniMapTexture(), ScaleMode.StretchToFill, true);
             DrawMiniMapRunwayNames(map, small);
@@ -128,7 +145,7 @@ namespace Airside.Presentation
             {
                 if (view == null || !view.gameObject.activeInHierarchy)
                     continue;
-                var live = FieldMiniMap.WorldToMap(map, view.position.x, view.position.z);
+                var live = FieldMiniMap.WorldToMap(map, (float)(view.position.x + _flightOriginX), (float)(view.position.z + _flightOriginZ));
                 if (!map.Contains(live))
                     continue;
                 AirsideTheme.DrawRounded(new Rect(live.x - 3f, live.y - 3f, 6f, 6f),
@@ -149,7 +166,7 @@ namespace Airside.Presentation
                 if (MiniMapDotPass(mine, selected) != pass)
                     continue;
 
-                var point = FieldMiniMap.WorldToMap(map, view.position.x, view.position.z);
+                var point = FieldMiniMap.WorldToMap(map, (float)(view.position.x + _flightOriginX), (float)(view.position.z + _flightOriginZ));
                 // Arrivals on the extended final are drawn 32 km out, well beyond the field: pin them
                 // to the edge they are approaching from, smaller, rather than dropping them.
                 var offMap = !map.Contains(point);
@@ -206,9 +223,11 @@ namespace Airside.Presentation
                 case EventType.MouseUp when _miniMapPressed:
                     if (!_miniMapDragging)
                     {
-                        var hit = FieldMiniMap.NearestDot(_miniMapDots, ev.mousePosition);
+                        var hit = RegionalMiniMap.Pick(_miniMapDots, _miniMapDotIds, ev.mousePosition, _selectedAircraftId);
                         if (hit >= 0 && _fleetAircraftById.TryGetValue(_miniMapDotIds[hit], out var aircraft))
-                            SelectAircraft(aircraft);
+                        {
+                            SelectMiniMapAircraft(aircraft);
+                        }
                         else
                             CentreCameraOnMiniMap(map, ev.mousePosition);
                         PlayUiClick();
@@ -222,10 +241,81 @@ namespace Airside.Presentation
 
         private void CentreCameraOnMiniMap(Rect map, Vector2 point)
         {
-            if (_cameraController == null)
+            if (_cameraController == null || _regionalMiniMap)
                 return;
             var ground = FieldMiniMap.MapToWorld(map, point);
             _cameraController.CentreOn(ground.x, ground.y);
+        }
+
+        private void SelectMiniMapAircraft(FleetAircraft aircraft)
+        {
+            if (InCockpit) ExitCockpit(true);
+            // An old follow target takes precedence over selection in the status card.
+            _cameraController?.ReleaseFollow();
+            SelectAircraft(aircraft);
+            _activeWorkspace = HudWorkspace.None;
+            _mapTrackId = null;
+        }
+
+        private void SetMiniMapScope(bool regional)
+        {
+            _regionalMiniMap = regional;
+            _miniMapPressed = _miniMapDragging = false;
+            PlayUiClick();
+        }
+
+        private void DrawRegionalMiniMap(Rect map, GUIStyle small)
+        {
+            if (_regionalMiniMapTexture == null)
+            {
+                _regionalMiniMapTexture = new Texture2D(96, 128, TextureFormat.RGBA32, false)
+                { name = "South Australia flight scope", filterMode = FilterMode.Bilinear, hideFlags = HideFlags.DontSave };
+                _regionalMiniMapTexture.SetPixels32(RegionalMiniMap.Bake(96, 128));
+                _regionalMiniMapTexture.Apply(false, true);
+            }
+            GUI.DrawTexture(map, _regionalMiniMapTexture);
+            foreach (var destination in DestinationCatalogue.All)
+            {
+                if (!RegionalMiniMap.Contains(destination.Latitude, destination.Longitude)) continue;
+                var point = RegionalMiniMap.Point(map, destination.Latitude, destination.Longitude);
+                AirsideTheme.DrawRounded(new Rect(point.x - 1, point.y - 1, 2, 2), AirsideTheme.InstrumentText, 1);
+                if (destination.Code == "ADL" || destination.Code == "PLO" || destination.Code == "MGB")
+                    GUI.Label(new Rect(point.x + 3, point.y - 7, 32, 16), destination.Code, small);
+            }
+            _miniMapDots.Clear(); _miniMapDotIds.Clear();
+            if (_operations == null) return;
+            // Positions come from the simulation even when the distant 3D actor is hidden.
+            for (var pass = 0; pass < 3; pass++)
+            foreach (var aircraft in _operations.Fleet)
+            {
+                var selected = aircraft.Registration == _selectedAircraftId;
+                if (MiniMapDotPass(aircraft.Airline.IsPlayer, selected) != pass
+                    || !TryMiniMapLocation(aircraft, out var latitude, out var longitude)
+                    || !RegionalMiniMap.Contains(latitude, longitude)) continue;
+                var point = RegionalMiniMap.Point(map, latitude, longitude);
+                _miniMapDots.Add(point); _miniMapDotIds.Add(aircraft.Registration);
+                var size = selected ? 8f : 5f;
+                AirsideTheme.DrawRounded(new Rect(point.x - size / 2 - 1, point.y - size / 2 - 1, size + 2, size + 2),
+                    selected ? AirsideTheme.Amber : AirsideTheme.InstrumentText, size);
+                AirsideTheme.DrawRounded(new Rect(point.x - size / 2, point.y - size / 2, size, size),
+                    AirsideTheme.FromHex(aircraft.Airline.LiveryHex), size);
+            }
+        }
+
+        private bool TryMiniMapLocation(FleetAircraft aircraft, out double latitude, out double longitude)
+        {
+            latitude = longitude = 0;
+            if (aircraft.IsOffMap && aircraft.CurrentDestination.HasValue
+                && _fleetFlightById.TryGetValue(aircraft.Registration, out var flight))
+            {
+                JourneyWorld(flight, 0, out var x, out _, out var z);
+                YpadFrame.ToLatLon(x, z, out latitude, out longitude);
+                return true;
+            }
+            if (!_fleetViewById.TryGetValue(aircraft.Registration, out var view)
+                || view == null || !view.gameObject.activeInHierarchy) return false;
+            YpadFrame.ToLatLon(view.position.x + _flightOriginX, view.position.z + _flightOriginZ, out latitude, out longitude);
+            return true;
         }
 
         private static Vector2 ClampToRect(Vector2 point, Rect rect) =>

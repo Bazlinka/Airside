@@ -1,0 +1,50 @@
+Mono path[0] = '/private/tmp/airside-livery-review-20261006/work/builds/Airside.app/Contents/Resources/Data/Managed'
+Mono config path = '/private/tmp/airside-livery-review-20261006/work/builds/Airside.app/Contents/MonoBleedingEdge/etc'
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+Initialize engine version: 6000.3.23f1 (09d2ecc7fb28)
+[Subsystems] Discovering subsystems at path /private/tmp/airside-livery-review-20261006/work/builds/Airside.app/Contents/Resources/Data/UnitySubsystems
+GfxDevice: creating device client; kGfxThreadingModeThreaded
+ preferred device: Apple M2 (high power)
+Metal devices available: 1
+0: Apple M2 (high power)
+Using device Apple M2 (high power)
+Initializing Metal device caps: Apple M2
+Mac GPU Family: 2
+Apple GPU Family: 8
+MSL Version: 3.0
+Has Float MSAA: 1
+Has Float Filtering: 1
+ReadWrite Texture Tier: 2
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.096 seconds
+- Finished resetting the current domain, in  0.001 seconds
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+UnloadTime: 1.468125 ms
+Airside 823ee4d9 · feature/sa-minimap-flight-selection · committed 2026-10-06 02:15 UTC · built 2026-10-06 02:15 UTC
+[Airside soak] largest world renderer groups: Terminal 111, Airfield 52, Adelaide 49, YPAD 43, Cloud 32, Tyre 24, Runway 19, Smoke 4, Spray 4, Boundary 4, Apron 3, Rubber 2, Coast 2, Tower 2, Sun 2, Taxiway 2, Taxiways 2, Stand 2, Aircraft 1, Star 1
+[Airside soak] render set: world 369 (visible), aircraft 198 (visible), world prefix none
+[Airside soak] started for 3 min in live time
+[Airside soak] active renderers 4590; transparent material slots 335; transparent triangles 189090
+[Airside soak] largest transparent groups: Universal Render Pipeline/Lit / Universal Render Pipeline/Lit / Tunnel 102/1224, Universal Render Pipeline/Lit / Universal Render Pipeline/Lit / Cab 51/612, Universal Render Pipeline/Lit / Universal Render Pipeline/Lit / Terminal 28/1232, Universal Render Pipeline/Lit / Universal Render Pipeline/Lit / GroundShadow 24/1920, Aircraft finish AircraftGlazing / Universal Render Pipeline/Lit / Cabin 23/174026, mat_corrugated_metal_v01 / Universal Render Pipeline/Lit / Fuel 22/464, Aircraft finish PaintedMetal / Universal Render Pipeline/Lit / Cabin 20/7052, Universal Render Pipeline/Lit / Universal Render Pipeline/Lit / Rotunda 17/1360, Universal Render Pipeline/Lit / Universal Render Pipeline/Lit / Fuel 13/156, mat_glass_v01 / Universal Render Pipeline/Lit / Fuel 13/156, mat_aircraft_v01 / Universal Render Pipeline/Lit / Fuel 4/100, mat_glass_v01 / Universal Render Pipeline/Lit / Coast 2/352, mat_glass_v01 / Universal Render Pipeline/Lit / Door 2/24, mat_painted_line_v01 / Universal Render Pipeline/Lit / Fuel 2/24, mat_fan_blur / Universal Render Pipeline/Unlit / FanDisc 2/4, mat_airfield_light_point Approach FFF5D6 / Airside/AirfieldLightPoint / Airfield 1/116, mat_airfield_light_point Approach FF291F / Airside/AirfieldLightPoint / Airfield 1/72, mat_airfield_light_point Approach 33FF73 / Airside/AirfieldLightPoint / Airfield 1/56, Universal Render Pipeline/Lit / Universal Render Pipeline/Lit / Starter 1/44, mat_airfield_light_point Guard FFB814 / Airside/AirfieldLightPoint / Airfield 1/32, mat_airfield_light_point Approach FFF5D1 / Airside/AirfieldLightPoint / Airfield 1/16, Aircraft finish Glass / Universal Render Pipeline/Lit / cockpit_glass_right 1/12, Aircraft finish Glass / Universal Render Pipeline/Lit / cabin_window_left 1/12, Aircraft finish Glass / Universal Render Pipeline/Lit / cabin_window_right 1/12, Aircraft finish Glass / Universal Render Pipeline/Lit / cockpit_glass_left 1/12
+[Airside weather] Cloudy mist 0.00 fog enabled False shader Airside/HeightFog camera (677.63, 1838.51, 1799.65) tint RGBA(0.577, 0.697, 0.824, 1.000) layers True
+[Airside soak] review shot /private/tmp/airside-sa-minimap-ui.png at 1440x900 pose pitch=50 yaw=200 dist=2400 following=False
+Thread 0x16c9d3000 may have been prematurely finalized
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+Thread 0x16b807000 may have been prematurely finalized
+Thread 0x16ba37000 may have been prematurely finalized
+Thread 0x16b91f000 may have been prematurely finalized
+Thread 0x16bb4f000 may have been prematurely finalized
+Thread 0x16b9ab000 may have been prematurely finalized
+Thread 0x16bac3000 may have been prematurely finalized
+Thread 0x16b893000 may have been prematurely finalized

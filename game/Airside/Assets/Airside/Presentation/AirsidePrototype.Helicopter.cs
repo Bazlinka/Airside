@@ -216,7 +216,7 @@ namespace Airside.Presentation
             var hover = pose.HeightMetres > 0.3f ? Mathf.Clamp01(1f - pose.SpeedMetresPerSecond / 14f) : 0f;
             var wobblePitch = hover * (Mathf.Sin(t * 1.7f + rig.Seed) * 0.6f + Mathf.Sin(t * 3.9f + rig.Seed * 2.3f) * 0.25f);
             var wobbleBank = hover * (Mathf.Sin(t * 1.3f + rig.Seed * 1.7f) * 0.7f + Mathf.Sin(t * 4.3f + rig.Seed) * 0.25f);
-            view.position = new Vector3(pose.X, groundY + pose.HeightMetres, pose.Z);
+            view.position = new Vector3(pose.X, groundY + pose.HeightMetres, pose.Z) - FlightOrigin;
             view.rotation = Quaternion.Euler(0f, pose.YawDegrees, 0f)
                             * Quaternion.Euler(pose.PitchDegrees + wobblePitch, 0f, pose.BankDegrees + wobbleBank);
 

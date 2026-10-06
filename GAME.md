@@ -1,3 +1,17 @@
+## Where to resume — South Australia mini-map flight selection, 6 October 2026
+
+Bailey requested all simulated flights within SA to be selectable from the corner
+mini map, with status and view options. Branch `feature/sa-minimap-flight-selection`,
+based on merged #529 (`0c0c752d`); task packet ADR 0235. Airport / South Australia
+scope switch, hidden-actor geographic markers, overlapping-marker cycling and HUD
+selection reuse existing flight/camera systems. Interstate flights gain view access
+while over the SA scope; helicopter exterior access is separate from cabin support.
+Checks: headless 1,508 pass; initial native 1,957 pass with the inherited failure
+and two inconclusives; final focused native 29/29; asset audit passes.
+Clean Mac player `823ee4d9` passed; packaged 1440×900 regional-map/status capture
+inspected. PR #530 is published. **NEXT:** final CI and protected-main merge/sync. Preserve the inherited ground-separation test failure
+already reproduced on main. Evidence: `docs/testing/sa-minimap-2026-10-06/`.
+
 ## Where to resume — authorised fleet identity merge, 6 October 2026
 
 Bailey approved publishing and merging PR #529, original fitted paint for all

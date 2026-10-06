@@ -46,7 +46,8 @@ namespace Airside.Presentation
         {
             if (mode == AircraftViewMode.Cockpit) return CockpitReason(aircraft);
             if (aircraft != null && aircraft.IsFreighter && mode != AircraftViewMode.Exterior) return "Cargo cabin";
-            if (aircraft == null || !PassengerCabinProfile.TryFor(aircraft.Type.Id, out _)) return "Passenger view unavailable";
+            if (aircraft == null) return "Select an aircraft";
+            if (mode != AircraftViewMode.Exterior && !PassengerCabinProfile.TryFor(aircraft.Type.Id, out _)) return "Passenger view unavailable";
             return CanWatchJourney(aircraft) || (IsFleetFlightVisible(aircraft.Registration)
                 && _fleetViewById.TryGetValue(aircraft.Registration, out var view)
                 && view != null && view.gameObject.activeInHierarchy) ? "" : "Aircraft outside the supported view";

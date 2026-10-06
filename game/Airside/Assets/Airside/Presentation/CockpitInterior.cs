@@ -103,7 +103,7 @@ namespace Airside.Presentation
         }
 
         /// <summary>Night panel glow and rain wipers. Presentation only; called every frame by the runtime.</summary>
-        public void SetEnvironment(float daylight, float precipitation, float seconds)
+        public virtual void SetEnvironment(float daylight, float precipitation, float seconds)
         {
             var night = 1f - Mathf.SmoothStep(0.15f, 0.55f, daylight);
             if (night > 0.02f && _panelLight == null && Seat != null)

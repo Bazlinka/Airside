@@ -1,5 +1,11 @@
 ## Unreleased
 
+- Fit passenger windows independently from seat rows, add curved cabin walls/
+  ceiling, recessed trim, shaped bins/PSUs, deeper inward views and nearby seat
+  fittings. Align ATR42/A320/B789 cameras to individual kit panes; distinguish
+  cabin materials/cloth and ceiling light, with decorative 787 dimmer fittings
+  (ADR 0239). Code/headless checks only; native visuals unverified by instruction.
+
 - Preserve the historical #534 visual-code audit and six evidence packets: 16
   concrete source/data findings already implemented in merged #535/#536, two
   optional lighting gaps, corrected claims and explicit implementation ownership.

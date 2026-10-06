@@ -1,17 +1,21 @@
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using UnityEngine.Rendering;
 using Airside.Domain;
 using UnityEngine;
 
 namespace Airside.Presentation
 {
-    /// <summary>A fitted five-row cabin section, shared exterior visibility lifetime with cockpits.</summary>
+    /// <summary>A fitted cabin glance section, sharing exterior visibility lifetime with cockpits.</summary>
     [ExecuteAlways]
-    public sealed class PassengerCabinInterior : CockpitInterior
+    public sealed partial class PassengerCabinInterior : CockpitInterior
     {
         public PassengerCabinProfile Profile { get; private set; }
         private Material _lining, _fabric, _trim, _frame;
+        private Light _cabinLight;
+        private Mesh _seatCube;
+        private readonly Dictionary<Material,List<CombineInstance>> _seatParts=new();
         public static PassengerCabinInterior Build(Transform aircraft, AircraftType type, bool right)
         {
             if (aircraft == null || type == null || !PassengerCabinProfile.TryFor(type.Id, out var p))
@@ -23,54 +27,132 @@ namespace Airside.Presentation
         }
         public void SelectSide(bool right)
         {
-            Seat.localPosition=new Vector3((right ? 1 : -1)*(Profile.HalfWidth-.43f),0,0);
+            Seat.localPosition=new Vector3((right ? 1 : -1)*(Profile.HalfWidth-Profile.SeatEyeInset),0,0);
             Seat.localRotation=Quaternion.Euler(0,right ? 78 : -78,0);
         }
         private void MakeCabin(bool right)
         {
-            _lining=Surface("cabin lining",new Color(.80f,.80f,.75f));
-            _fabric=Surface("seat upholstery",new Color(.16f,.25f,.29f));
-            _trim=Surface("cabin trim",new Color(.19f,.21f,.22f));
-            _frame=Surface("window reveal",new Color(.94f,.92f,.84f));
-            var floor=Surface("aisle carpet",new Color(.22f,.25f,.25f));
-            var light=Surface("cabin lights",new Color(.91f,.89f,.72f),false);
-            Seat=new GameObject("Passenger eye").transform;Seat.SetParent(transform,false);SelectSide(right);
-            var half=Profile.HalfWidth; var length=Profile.Pitch*5;
-            Box("Cabin floor",new Vector3(0,-1.02f,0),new Vector3(half*2,.10f,length),floor,false);
-            Box("Cabin ceiling",new Vector3(0,.99f,0),new Vector3(half*2,.10f,length),_lining,false);
-            foreach(var end in new[]{-1f,1f})
-                Box("Cabin section bulkhead",new Vector3(0,0,end*length*.5f),new Vector3(half*2,2.0f,.08f),_lining,false);
-            foreach(var side in new[]{-1f,1f})
-            {
-                Box("Overhead luggage bins",new Vector3(side*(half-.27f),.69f,0),new Vector3(.53f,.31f,length),_lining);
-                Box("Aisle light strip",new Vector3(side*(half-.55f),.865f,0),new Vector3(.035f,.015f,length-.15f),light);
-                for(int row=-2;row<=2;row++) Window(side,row*Profile.Pitch);
-            }
-            var seats=0;foreach(var n in Profile.SeatGroups) seats+=n;
-            var aisle=.44f;var seatWidth=(half*2-.20f-aisle*(Profile.SeatGroups.Length-1))/seats;
-            for(int row=-2;row<=2;row++)
-            {
-                var x=-half+.10f;
-                for(int group=0;group<Profile.SeatGroups.Length;group++)
+            _lining=CabinSurface("cabin lining",new Color(.80f,.80f,.77f),.24f);
+            _fabric=CabinSurface("seat upholstery",new Color(.16f,.25f,.29f),.04f);
+            _trim=CabinSurface("rubber and seat frame",new Color(.15f,.17f,.18f),.09f);
+            _frame=CabinSurface("moulded window trim",new Color(.92f,.91f,.86f),.38f);
+            var floor=CabinSurface("aisle carpet",new Color(.22f,.25f,.25f),.02f);
+            var light=Surface("cabin light diffuser",new Color(.81f,.79f,.68f),false);
+            AddFabricWeave(_fabric);
+            Seat=new GameObject("Passenger eye").transform;
+            Seat.SetParent(transform,false);SelectSide(right);
+            BuildShell(floor,light);
+            BuildSeats();
+            BatchSurfaces();
+        }
+
+        private Material CabinSurface(string name,Color colour,float smoothness)
+        {
+            var material=Surface(name,colour);
+            if(material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness",smoothness);
+            return material;
+        }
+
+        // Original procedural cloth, subtle enough to preserve the miniature palette.
+        private void AddFabricWeave(Material material)
+        {
+            const int size=32;
+            var texture=new Texture2D(size,size,TextureFormat.RGBA32,false)
+                {name="Cabin woven fabric",wrapMode=TextureWrapMode.Repeat,filterMode=FilterMode.Bilinear};
+            var pixels=new Color[size*size];
+            for(var y=0;y<size;y++)
+                for(var x=0;x<size;x++)
                 {
-                    for(int seat=0;seat<Profile.SeatGroups[group];seat++)
+                    var value=((x+y)%2==0 ? .96f : 1f)-((x%4==0 || y%4==0) ? .025f : 0f);
+                    pixels[y*size+x]=new Color(value,value,value,1f);
+                }
+            texture.SetPixels(pixels);texture.Apply(false,true);_textures.Add(texture);
+            if(material.HasProperty("_BaseMap")) material.SetTexture("_BaseMap",texture);
+            material.mainTexture=texture;material.mainTextureScale=new Vector2(5f,5f);
+        }
+
+        private void BuildSeats()
+        {
+            var seats=0;foreach(var n in Profile.SeatGroups) seats+=n;
+            var seatWidth=(Profile.LiningHalfWidth*2-.20f-Profile.AisleWidth*(Profile.SeatGroups.Length-1))/seats;
+            var lastRow=Mathf.FloorToInt((Profile.CabinLength*.5f-.45f)/Profile.Pitch);
+            for(var row=-lastRow;row<=lastRow;row++)
+            {
+                var x=-Profile.LiningHalfWidth+.10f;
+                for(var group=0;group<Profile.SeatGroups.Length;group++)
+                {
+                    for(var seat=0;seat<Profile.SeatGroups[group];seat++)
                     {
-                        var cx=x+seatWidth*.5f;var z=row*Profile.Pitch;
-                        Box("Passenger seat cushion",new Vector3(cx,-.69f,z-.03f),new Vector3(seatWidth-.035f,.12f,.43f),_fabric);
-                        Box("Passenger seat back",new Vector3(cx,-.24f,z-.30f),new Vector3(seatWidth-.035f,.84f,.10f),_fabric);
-                        Box("Seat headrest",new Vector3(cx,.18f,z-.32f),new Vector3(seatWidth-.09f,.19f,.12f),_fabric);
-                        Box("Folded tray table",new Vector3(cx,-.23f,z-.36f),new Vector3(seatWidth-.10f,.25f,.025f),_lining);
-                        foreach(var arm in new[]{-1f,1f})
-                            Box("Seat armrest",new Vector3(cx+arm*(seatWidth*.5f-.03f),-.41f,z-.02f),new Vector3(.045f,.06f,.42f),_trim);
+                        MakeSeat(x+seatWidth*.5f,row*Profile.Pitch,seatWidth,Mathf.Abs(row)<=2);
                         x+=seatWidth;
                     }
-                    x+=aisle;
+                    x+=Profile.AisleWidth;
                 }
             }
-            if(Profile.SeatGroups.Length == 3)
-                foreach(var side in new[]{-1f,1f})
-                    Box("Centre overhead luggage bins",new Vector3(side*half*.36f,.77f,0),new Vector3(.62f,.23f,length),_lining);
-            BatchSurfaces();
+            foreach(var pair in _seatParts)
+            {
+                var mesh=new Mesh{name="Cabin seats "+pair.Key.name,indexFormat=IndexFormat.UInt32};
+                mesh.CombineMeshes(pair.Value.ToArray(),true,true);mesh.RecalculateBounds();_meshes.Add(mesh);
+                var host=new GameObject(mesh.name);host.transform.SetParent(transform,false);
+                host.AddComponent<MeshFilter>().sharedMesh=mesh;
+                host.AddComponent<MeshRenderer>().sharedMaterial=pair.Key;
+            }
+            _seatParts.Clear();
+        }
+
+        // Accumulate fittings without allocating a GameObject and collider for every belt/armrest.
+        private void SeatPart(string name,Vector3 position,Vector3 size,Material material,
+            bool bevelled=true,Quaternion? rotation=null)
+        {
+            var mesh=bevelled ? AirsidePrototype.CockpitBoxMesh(size) : null;
+            if(mesh==null)
+            {
+                if(_seatCube==null)
+                {
+                    var template=GameObject.CreatePrimitive(PrimitiveType.Cube);template.SetActive(false);
+                    _seatCube=template.GetComponent<MeshFilter>().sharedMesh;Dispose(template);
+                }
+                mesh=_seatCube; // Built-in shared mesh, not owned by this interior.
+            }
+            if(!_seatParts.TryGetValue(material,out var parts))
+            {parts=new List<CombineInstance>();_seatParts.Add(material,parts);}
+            parts.Add(new CombineInstance{mesh=mesh,transform=Matrix4x4.TRS(position,rotation??Quaternion.identity,size)});
+        }
+
+        private void MakeSeat(float x,float z,float width,bool detailed)
+        {
+            var cushionY=Profile.FloorY+.33f;
+            var backY=cushionY+.43f;
+            SeatPart("Rounded seat cushion",new Vector3(x,cushionY,z-.03f),new Vector3(width-.035f,.12f,.43f),_fabric,detailed);
+            SeatPart("Reclined seat back",new Vector3(x,backY,z-.30f),new Vector3(width-.035f,.80f,.115f),
+                _fabric,detailed,Quaternion.Euler(-8f,0f,0f));
+            if(!detailed) return; // Cheap continuation; only the five nearest rows carry fittings.
+            SeatPart("Seat headrest bolster",new Vector3(x,backY+.36f,z-.35f),new Vector3(width-.09f,.20f,.15f),_fabric);
+            SeatPart("Stowed tray shell",new Vector3(x,backY-.04f,z-.39f),new Vector3(width-.11f,.26f,.026f),_lining);
+            SeatPart("Tray latch",new Vector3(x,backY+.10f,z-.407f),new Vector3(.035f,.024f,.013f),_trim);
+            SeatPart("Seat pocket seam",new Vector3(x,backY-.24f,z-.374f),new Vector3(width-.13f,.015f,.018f),_trim);
+            foreach(var side in new[]{-1f,1f})
+            {
+                SeatPart("Armrest cap",new Vector3(x+side*(width*.5f-.03f),cushionY+.27f,z-.02f),new Vector3(.045f,.065f,.41f),_trim);
+                SeatPart("Seat support",new Vector3(x+side*width*.27f,Profile.FloorY+.16f,z-.10f),new Vector3(.035f,.28f,.035f),_trim);
+            }
+            SeatPart("Resting lap belt",new Vector3(x,cushionY+.067f,z-.03f),new Vector3(width-.09f,.012f,.036f),_trim);
+            SeatPart("Belt buckle",new Vector3(x+.04f,cushionY+.077f,z-.03f),new Vector3(.037f,.014f,.045f),_frame);
+        }
+
+        // Cabins have a ceiling fill, rather than inheriting the pilot's panel light.
+        public override void SetEnvironment(float daylight,float precipitation,float seconds)
+        {
+            if(_cabinLight==null)
+            {
+                var host=new GameObject("Cabin ceiling fill");host.transform.SetParent(transform,false);
+                host.transform.localPosition=new Vector3(0,Profile.CeilingY-.24f,0);
+                _cabinLight=host.AddComponent<Light>();_cabinLight.type=LightType.Point;
+                _cabinLight.range=Mathf.Max(3.4f,Profile.HalfWidth*2.4f);
+                _cabinLight.color=new Color(1f,.93f,.82f);_cabinLight.shadows=LightShadows.None;
+            }
+            var night=1f-Mathf.SmoothStep(.15f,.55f,daylight);
+            _cabinLight.intensity=.08f+.82f*night;
         }
         // One draw per material, rather than hundreds of cabin/window primitives.
         private void BatchSurfaces()
@@ -85,33 +167,16 @@ namespace Airside.Presentation
                 var mesh=new Mesh{name="Passenger cabin "+material.name,indexFormat=IndexFormat.UInt32};
                 mesh.CombineMeshes(combine,true,true);mesh.RecalculateBounds();_meshes.Add(mesh);
                 var host=new GameObject(material.name);host.transform.SetParent(transform,false);
-                host.AddComponent<MeshFilter>().sharedMesh=mesh;host.AddComponent<MeshRenderer>().sharedMaterial=material;
-                foreach(var filter in group){filter.gameObject.SetActive(false);Dispose(filter.gameObject);}
-            }
-        }
-        private void Window(float side,float z)
-        {
-            var x=side*Profile.HalfWidth; const float wz=.16f, hy=.22f;
-            var pitch=Profile.Pitch;
-            Box("Sidewall below window",new Vector3(x,-.61f,z),new Vector3(.06f,.78f,pitch),_lining,false);
-            Box("Sidewall above window",new Vector3(x,.61f,z),new Vector3(.06f,.78f,pitch),_lining,false);
-            foreach(var direction in new[]{-1f,1f})
-                Box("Window sidewall pillar",new Vector3(x,0,z+direction*(pitch*.25f+wz*.5f)),new Vector3(.06f,hy*2,pitch*.5f-wz),_lining,false);
-            // Rounded aperture with an opaque reveal. The exterior fuselage is hidden,
-            // while wings/engines/props remain visible through this actual mesh opening.
-            for(int i=0;i<32;i++)
-            {
-                var a=i*Mathf.PI*2/32;var b=(i+1)*Mathf.PI*2/32;
-                var pa=new Vector3(x,Mathf.Sin(a)*hy,z+Mathf.Cos(a)*wz);
-                var pb=new Vector3(x,Mathf.Sin(b)*hy,z+Mathf.Cos(b)*wz);
-                // Each quadrant fans from its enclosing rectangular corner to the arc.
-                var mid=(a+b)*.5f;var corner=new Vector3(x,Mathf.Sign(Mathf.Sin(mid))*hy,z+Mathf.Sign(Mathf.Cos(mid))*wz);
-                Face("Rounded window corner",new[]{corner,pa,pb},_lining);
-                Face("Window reveal",new[]{pa,pb,pb-new Vector3(side*.045f,0,0),pa-new Vector3(side*.045f,0,0)},_frame);
-                var ox=x-side*.047f;
-                var ra=new Vector3(ox,Mathf.Sin(a)*(hy+.018f),z+Mathf.Cos(a)*(wz+.018f));
-                var rb=new Vector3(ox,Mathf.Sin(b)*(hy+.018f),z+Mathf.Cos(b)*(wz+.018f));
-                Face("Window rim",new[]{pa-new Vector3(side*.047f,0,0),pb-new Vector3(side*.047f,0,0),rb,ra},_frame);
+                host.AddComponent<MeshFilter>().sharedMesh=mesh;
+                var renderer=host.AddComponent<MeshRenderer>();renderer.sharedMaterial=material;
+                renderer.shadowCastingMode=ShadowCastingMode.Off;
+                foreach(var filter in group)
+                {
+                    // Shell buffers are owned here; cached primitive meshes are shared.
+                    var original=filter.sharedMesh;
+                    if(_meshes.Remove(original)) Dispose(original);
+                    filter.gameObject.SetActive(false);Dispose(filter.gameObject);
+                }
             }
         }
     }

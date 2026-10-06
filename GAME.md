@@ -1,3 +1,29 @@
+## Where to resume — fitted passenger cabin code, 6 October 2026
+
+Codex; Bailey authorised merging both audit reports and continuing the recommended
+window/cabin slice. #538 merged at `0ef9f32a`; historical #534 at `2868e6c8`.
+Implementation branch `feature/aircraft-cabin-immersion-20261006`, ADR 0239.
+
+All thirteen passenger profiles separate pane spacing/shape from seat pitch.
+ATR42/A320/B789 eyes align with individual shipped panes. The shared builder adds
+curved lining/crown, deep trim with clear openings, fitted shaped bins/PSUs, bounded
+12/16/20 m continuation, detailed nearest-five-row fittings and cheap distant seats.
+Lining sits inboard of the pane datum; representative groupings are retained.
+Materials/cloth differ; one shadowless ceiling light replaces inherited panel glow
+in cabins. 787 dimmer fittings are decorative, with clear windows and no new control.
+
+Evidence: `docs/testing/cabin-immersion-2026-10-06/README.md`.
+Unity-free suite **1,683 passed / 0 failed**; final focused profile checks **19/19**;
+static asset audit passes (1,766 GUIDs / 386 mirrors / 70 character materials).
+**No Unity tests, builds, editor/player execution or renders** by instruction;
+native compilation, actual appearance, clipping, switching and performance remain
+unverified. Bell interiors, large real 787 glazing, exact cabin widths and remaining
+individual camera-station/family-cockpit passes are still outstanding audit work.
+
+**NEXT:** finish this code PR/CI/merge if still open. Continue with aircraft-specific
+cockpit shell/panel modelling and the remaining individual cabin fits from the
+merged audit. Retain the no-Unity restriction until Bailey changes it.
+
 ## Where to resume — aircraft interior immersion analysis, 6 October 2026
 
 Codex; Bailey requested one dedicated agent per aircraft to analyse markedly more

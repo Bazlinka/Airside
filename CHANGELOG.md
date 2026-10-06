@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Continue Claude’s interrupted visual-code review with 16 source/data findings,
+  two lighting-coverage gaps, corrected audit claims and explicit implementation
+  ownership. Add code-based fix/acceptance packets; game behavior is unchanged.
+
 - Put flight status and camera actions on the full map in a dedicated inspector;
   show all operators by default, add a South Australia shortcut and tidy labels,
   routes and opaque map chrome. Refresh shared icons/buttons across the game;

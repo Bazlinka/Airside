@@ -1,3 +1,25 @@
+## Where to resume — visual code review continuation, 6 October 2026
+
+Codex; branch `docs/visual-review-continuation`, reviewed main `000ab56b` after
+PR #532 merged. Bailey asked to continue Claude’s interrupted **Main branch
+review**: a comprehensive visual-code backlog for agents working in parallel.
+Recovered Claude’s cloud review, CORE/GROUND summary and saved branch; completed
+six independent static reviews. Claude’s original processes remain stopped by
+its usage limit; this is a new review, not a resumed Claude agent session.
+
+Report: `docs/testing/VISUAL_BACKLOG_2026-10-06.md`, with six evidence packets in
+`docs/testing/visual-review-2026-10-06/`. It contains 16 concrete source/data
+findings and two optional lighting-coverage gaps, plus retained design work,
+retracted claims, meaningful proposed checks and explicit file ownership.
+No game source changed; no new Unity tests, captures, visual sign-off or FPS
+measurement. Documentation links and whitespace were checked. Existing owner
+acceptance remains closed; historical technical failures remain recorded.
+
+**NEXT:** choose a narrow report packet and its reserved files before implementing.
+The report does not automatically start a visual overhaul or replace the standing
+cargo apron/handling, outstation freight and structure/performance priorities.
+Earlier handoffs below preserve their original evidence and dates.
+
 ## Where to resume — full-map inspection and shared controls, 6 October 2026
 
 ## Where to resume — build script stall recovery, 6 October 2026

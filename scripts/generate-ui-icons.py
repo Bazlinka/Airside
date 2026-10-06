@@ -64,5 +64,5 @@ for key,(paths,circles) in P.items():
     meta=Path(str(target)+'.meta')
     if not meta.exists():
         old=OUT/f'ui_{key}_v01.png.meta';text=(old if old.exists() else OUT/'ui_system_follow_v01.png.meta').read_text();import re
-        meta.write_text(re.sub(r'^guid: .+$','guid: '+uuid.uuid4().hex,text,flags=re.M))
+        meta.write_text('\n'.join(line.rstrip() for line in re.sub(r'^guid: .+$','guid: '+uuid.uuid4().hex,text,flags=re.M).splitlines())+'\n')
 print(f'Generated {len(P)} editable SVG / runtime icon pairs')

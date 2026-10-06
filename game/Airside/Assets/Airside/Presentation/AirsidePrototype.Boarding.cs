@@ -209,6 +209,7 @@ namespace Airside.Presentation
         private sealed class PassengerBusView
         {
             public Transform Root;
+            public float ContactOffset;
             public string Registration;
             /// <summary>Planned park→stand route (x, z pairs) and the ends it was planned for.</summary>
             public readonly List<float> Route = new();
@@ -320,7 +321,17 @@ namespace Airside.Presentation
             }
         }
 
-        private static float StairRun(float sill) => Mathf.Max(1.2f, sill * 1.45f);
+        private static float BoardingPavementY(FleetAircraft aircraft)
+        {
+            // These passengers board at the home field; outstation flight views have no boarding
+            // trucks. The retired miniature has different surfaces, so keep its datum separate.
+            var localY = AirsideBareField.Enabled ? BoardingGroundContact.AdelaideApronY
+                : aircraft.Stand.Equals(AirportSimulation.StandThree) ? BoardingGroundContact.MiniatureStandThreeY
+                : BoardingGroundContact.MiniatureApronY;
+            return localY + (_airfieldRoot != null ? _airfieldRoot.position.y : 0f);
+        }
+
+        private static float StairRun(float sill) => BoardingGroundContact.StairRun(sill);
 
         private void UpdateStairTrucks()
         {
@@ -335,9 +346,10 @@ namespace Airside.Presentation
                     _stairTruckWanted.Add(aircraft.Registration);
                     var truck = TakeStairTruck(aircraft.Registration);
                     var (doorSill, into) = JetDoorSill(aircraft, view);
-                    var sill = Mathf.Max(0.6f, doorSill.y - view.position.y);
+                    var ground = BoardingPavementY(aircraft);
+                    var sill = BoardingGroundContact.StairRise(doorSill.y, ground);
                     BuildStairFlight(truck, sill);
-                    var dock = new Vector3(doorSill.x, view.position.y, doorSill.z) - into * 0.45f;
+                    var dock = new Vector3(doorSill.x, ground, doorSill.z) - into * 0.45f;
                     var eased = Mathf.SmoothStep(0f, 1f, fraction);
                     truck.Root.position = dock - into * (1f - eased) * StairTruckApproachMetres;
                     truck.Root.rotation = Quaternion.LookRotation(into, Vector3.up);
@@ -495,7 +507,7 @@ namespace Airside.Presentation
 
                     var along = GroundRouter.Along(bus.Route, eased * GroundRouter.Length(bus.Route));
                     bus.Root.gameObject.SetActive(true);
-                    bus.Root.position = new Vector3(along.X, stop.y, along.Z);
+                    bus.Root.position = new Vector3(along.X, stop.y + bus.ContactOffset * bus.Root.lossyScale.y, along.Z);
                     var direction = new Vector3(along.DirX, 0f, along.DirZ);
                     if (direction.sqrMagnitude > 0.001f)
                         bus.Root.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
@@ -511,6 +523,25 @@ namespace Airside.Presentation
                 bus.Route.Clear();
                 bus.Root.gameObject.SetActive(false);
             }
+        }
+
+        private static float ServiceVehicleContactOffset(Transform root)
+        {
+            var lowest = float.MaxValue;
+            foreach (var part in root.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (part.sharedMesh == null || !ServiceVehicleWheelGeometry.IsRoadWheel(part.name)) continue;
+                var bounds = part.sharedMesh.bounds;
+                // Work in vehicle-root coordinates: includes kit lowering, prefab scales/rotations.
+                for (var corner = 0; corner < 8; corner++)
+                {
+                    var point = new Vector3((corner & 1) == 0 ? bounds.min.x : bounds.max.x,
+                        (corner & 2) == 0 ? bounds.min.y : bounds.max.y,
+                        (corner & 4) == 0 ? bounds.min.z : bounds.max.z);
+                    lowest = Mathf.Min(lowest, root.InverseTransformPoint(part.transform.TransformPoint(point)).y);
+                }
+            }
+            return lowest < float.MaxValue ? -lowest : 0f;
         }
 
         private PassengerBusView TakePassengerBus(string registration)
@@ -537,7 +568,7 @@ namespace Airside.Presentation
                         "Models/Vehicles/mdl_passenger_bus_apron_authored_v01.gltf"));
                 OrientPlusXKitToForward(root);
                 root.SetParent(BoardingRoot(), true);
-                bus = new PassengerBusView { Root = root };
+                bus = new PassengerBusView { Root = root, ContactOffset = ServiceVehicleContactOffset(root) };
                 _remoteBusPool.Add(bus);
             }
             bus.Registration = registration;
@@ -1060,7 +1091,7 @@ namespace Airside.Presentation
         private bool TryWalkPath(FleetAircraft aircraft, Transform view, BoardingMode mode, out WalkPath path)
         {
             path = default;
-            var ground = view.position.y;
+            var ground = BoardingPavementY(aircraft);
 
             if (mode == BoardingMode.Aerobridge)
             {
@@ -1086,7 +1117,7 @@ namespace Airside.Presentation
                 var (sill, inward) = JetDoorSill(aircraft, view);
                 into = inward;
                 top = sill - into * 0.9f;
-                var rise = Mathf.Max(0.6f, sill.y - ground);
+                var rise = BoardingGroundContact.StairRise(sill.y, ground);
                 foot = new Vector3(top.x, ground, top.z) - into * (0.8f + StairRun(rise));
             }
             else
@@ -1154,8 +1185,9 @@ namespace Airside.Presentation
             var (sill, inward) = JetDoorSill(aircraft, view);
             var into = inward.sqrMagnitude > 0.001f ? inward.normalized : Vector3.right;
             var forward = Flat(view.forward).normalized;
-            var foot = new Vector3(sill.x, view.position.y, sill.z) - into *
-                (0.8f + StairRun(Mathf.Max(0.6f, sill.y - view.position.y)));
+            var ground = BoardingPavementY(aircraft);
+            var foot = new Vector3(sill.x, ground, sill.z) - into *
+                (0.8f + StairRun(BoardingGroundContact.StairRise(sill.y, ground)));
             // The bus door faces the walking lane, outside the stair manoeuvring box.
             stop = foot - into * 9.5f + forward * 2.5f;
             park = stop - forward * 34f - into * 8f;

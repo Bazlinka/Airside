@@ -186,19 +186,46 @@ namespace Airside.Presentation
             var degrees = travel * 120f + (travel > 0.001f ? Time.unscaledDeltaTime * spinRpm : 0f);
             if (degrees <= 0f)
                 return;
-            var namedChildren9 = AirsideNamedChildren.Get(vehicle);
-            var childNames9 = AirsideNamedChildren.Names(vehicle);
-            for (var childIndex9 = 0; childIndex9 < namedChildren9.Length; childIndex9++)
+            var wheels = _serviceWheelPivots.GetValue(vehicle, CollectServiceWheelPivots);
+            foreach (var wheel in wheels)
+                if (wheel.Pivot != null)
+                    wheel.Pivot.Rotate(wheel.Axis, degrees, Space.Self);
+        }
+
+        // Weak keys release cached axle frames when a vehicle leaves the pool permanently.
+        private readonly System.Runtime.CompilerServices.ConditionalWeakTable<Transform,
+            List<(Transform Pivot, Vector3 Axis)>> _serviceWheelPivots = new();
+
+        private static List<(Transform Pivot, Vector3 Axis)> CollectServiceWheelPivots(Transform vehicle)
+        {
+            var result = new List<(Transform Pivot, Vector3 Axis)>();
+            // Snapshot first: adding axle parents must not change this traversal.
+            foreach (var meshPart in vehicle.GetComponentsInChildren<MeshFilter>(true))
             {
-                var child = namedChildren9[childIndex9];
-                var childName = childNames9[childIndex9];
-                if (child == vehicle)
+                var part = meshPart.transform;
+                if (!ServiceVehicleWheelGeometry.IsRoadWheel(part.name) || meshPart.sharedMesh == null)
                     continue;
-                if (childName.IndexOf("wheel", StringComparison.OrdinalIgnoreCase) >= 0
-                    && childName.IndexOf("arch", StringComparison.OrdinalIgnoreCase) < 0
-                    && childName.IndexOf("hub", StringComparison.OrdinalIgnoreCase) < 0)
-                    child.Rotate(Vector3.right, degrees, Space.Self);
+                var bounds = meshPart.sharedMesh.bounds;
+                var centre = new Vector3(ServiceVehicleWheelGeometry.Centre(bounds.min.x, bounds.max.x),
+                    ServiceVehicleWheelGeometry.Centre(bounds.min.y, bounds.max.y),
+                    ServiceVehicleWheelGeometry.Centre(bounds.min.z, bounds.max.z));
+                var scale = part.localScale;
+                var size = Vector3.Scale(bounds.size, new Vector3(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z)));
+                var axle = ServiceVehicleWheelGeometry.AxleAxis(size.x, size.y, size.z);
+                var pivot = new GameObject("Service axle pivot").transform;
+                pivot.SetParent(part.parent, false);
+                pivot.localPosition = part.localPosition + part.localRotation * Vector3.Scale(scale, centre);
+                pivot.localRotation = part.localRotation;
+                pivot.localScale = scale;
+                // Insert an axle frame without touching cached meshes. At zero roll the composed
+                // transform is exactly the original transform, including prefab rotation/scale.
+                part.SetParent(pivot, false);
+                part.localPosition = -centre;
+                part.localRotation = Quaternion.identity;
+                part.localScale = Vector3.one;
+                result.Add((pivot, axle == 2 ? Vector3.forward : axle == 0 ? Vector3.right : Vector3.up));
             }
+            return result;
         }
 
         /// <summary>

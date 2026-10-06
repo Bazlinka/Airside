@@ -726,12 +726,11 @@ namespace Airside.Presentation
 
                 // Fire once when the visual path actually meets the runway — not at the
                 // Approach→Landing phase change (that is still ~1.5 m AGL after the path fix).
-                if (phase == AircraftPhase.Landing
-                    && hasView
-                    && !_touchdownFired.Contains(id)
-                    && VisualPhaseProgress(flight, 0f) >= AirsideFlightPath.TouchdownProgress)
+                var type = FleetMode && _fleetAircraftById.TryGetValue(id, out var fleetAircraft)
+                    ? fleetAircraft.Type : AircraftType.Atr42;
+                if (AircraftTouchdownContact.TryRecord(_touchdownFired, id, phase, type,
+                    VisualPhaseProgress(flight, 0f), hasView))
                 {
-                    _touchdownFired.Add(id);
                     TryGetMainGearContacts(_commercialAircraft[index], out var smokeLeft, out var smokeRight);
                     var smokeAt = (smokeLeft + smokeRight) * 0.5f;
                     smokeAt.y = AirsideFlightPath.GroundY;
@@ -755,10 +754,6 @@ namespace Airside.Presentation
 
                     if (_cameraController != null)
                         _cameraController.PulseTouchdown();
-                }
-                else if (phase != AircraftPhase.Landing)
-                {
-                    _touchdownFired.Remove(id);
                 }
 
                 // Rolling trail: after the wheels are down the tread keeps smoking
@@ -2293,12 +2288,39 @@ namespace Airside.Presentation
                 if (fan == aircraft || !(names[i] is "Fan L" or "Fan R") || fan.Find("FanDisc") != null)
                     continue;
 
-                var radius = 0.45f;
+                var radiusSquared = 0f;
                 foreach (var blade in fan.GetComponentsInChildren<Renderer>(true))
                 {
                     if (blade == null || !blade.name.StartsWith("Fan blade", StringComparison.Ordinal))
                         continue;
-                    radius = Mathf.Max(radius, Mathf.Max(blade.bounds.extents.x, blade.bounds.extents.y));
+                    // Measure authored vertices relative to the rebaked pivot, not the size of
+                    // an individual blade or a world-axis bounding box. Parent rotation and
+                    // scale cancel here; child offsets and scales remain part of the fan.
+                    var bladeToFan = fan.worldToLocalMatrix * blade.transform.localToWorldMatrix;
+                    var mesh = blade.GetComponent<MeshFilter>()?.sharedMesh;
+                    if (mesh != null && mesh.isReadable)
+                    {
+                        foreach (var vertex in mesh.vertices)
+                        {
+                            var local = bladeToFan.MultiplyPoint3x4(vertex);
+                            radiusSquared = AircraftFanDiscGeometry.IncludeRadiusSquared(radiusSquared, local.x, local.y);
+                        }
+                    }
+                    else
+                    {
+                        // Imported unreadable meshes still have local bounds; transformed
+                        // corners conservatively contain their full radial envelope.
+                        var bounds = blade.localBounds;
+                        for (var corner = 0; corner < 8; corner++)
+                        {
+                            var point = bounds.center + Vector3.Scale(bounds.extents, new Vector3(
+                                (corner & 1) == 0 ? -1f : 1f,
+                                (corner & 2) == 0 ? -1f : 1f,
+                                (corner & 4) == 0 ? -1f : 1f));
+                            var local = bladeToFan.MultiplyPoint3x4(point);
+                            radiusSquared = AircraftFanDiscGeometry.IncludeRadiusSquared(radiusSquared, local.x, local.y);
+                        }
+                    }
                 }
 
                 // ADR 0168: a double-sided quad in the fan plane (local XY, spin axis Z) with a near-solid
@@ -2310,7 +2332,7 @@ namespace Airside.Presentation
                 disc.transform.SetParent(fan, false);
                 disc.transform.localPosition = new Vector3(0f, 0f, 0.035f);
                 disc.transform.localRotation = Quaternion.identity;
-                var diameter = Mathf.Clamp(radius * 2.05f, 0.8f, 2.7f);
+                var diameter = AircraftFanDiscGeometry.Diameter(radiusSquared);
                 disc.transform.localScale = new Vector3(diameter, diameter, 1f);
                 var colour = new Color(0.2f, 0.23f, 0.26f, AirsideReusableMotion.JetFanDiscPeakAlpha);
                 var renderer = disc.GetComponent<Renderer>();

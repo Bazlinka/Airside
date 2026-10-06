@@ -161,6 +161,13 @@ namespace Airside.Presentation
                     SetWorkspace(HudWorkspace.Operations);
                     break;
                 case "map": OpenPlanner(null); break;
+                case "flight-map":
+                    _regionalMiniMap = _miniMapVisible = true;
+                    var regional = _operations.Fleet.FirstOrDefault(a => a.IsOffMap
+                        && TryMiniMapLocation(a, out var latitude, out var longitude)
+                        && RegionalMiniMap.Contains(latitude, longitude));
+                    if (regional != null) SelectMiniMapAircraft(regional);
+                    break;
                 case "contracts": SetWorkspace(HudWorkspace.Contracts); break;
                 case "stats": SetWorkspace(HudWorkspace.Stats); break;
                 case "devtools": ToggleDevTools(); break;

@@ -22,7 +22,7 @@ namespace Airside.Tests
 
         private void Set(string name, object value) => typeof(AirsidePrototype).GetField(name, Hidden).SetValue(_prototype, value);
 
-        private void Start(string code)
+        private void Start(string code, AircraftType type = null)
         {
             // The game bootstrap touches the prototype's shared materials before loading
             // its component. Do likewise: Unity disallows native material-block creation
@@ -32,10 +32,12 @@ namespace Airside.Tests
             _prototype = _host.AddComponent<AirsidePrototype>();
             _clock = new ManualSimulationClock(new SimulationTime(0));
             var random = new SeededRandomSource(5);
-            var operations = new AirlineOperations(_clock, random, DestinationCatalogue.Adelaide, AirlineOperations.AdelaideRegionalBays);
+            var operations = new AirlineOperations(_clock, random, DestinationCatalogue.Adelaide,
+                type != null && type.IsRotorcraft ? AirlineOperations.AdelaideHelipadStands : AirlineOperations.AdelaideRegionalBays);
             var airline = Airline.Player("Flight world test", "#335566");
             operations.AddAirline(airline);
-            _aircraft = operations.AddAircraft(airline, "VH-TST", AircraftType.Saab340, AirlineOperations.AdelaideRegionalBays[0]);
+            _aircraft = operations.AddAircraft(airline, "VH-TST", type ?? AircraftType.Saab340,
+                type != null && type.IsRotorcraft ? AirlineOperations.AdelaideHelipadStands[0] : AirlineOperations.AdelaideRegionalBays[0]);
             DestinationCatalogue.TryFind(code, out var destination);
             _aircraft.CurrentDestination = destination;
             _seconds = LegTiming.AirborneSeconds(DestinationCatalogue.Adelaide.DistanceKmTo(destination), _aircraft.Type);
@@ -59,6 +61,63 @@ namespace Airside.Tests
         }
 
         [TearDown] public void Cleanup() { if (_host != null) Object.DestroyImmediate(_host); }
+
+        [Test] public void HelicopterMapAndExteriorUseTheHelicopterTrackInsteadOfARunwayPath()
+        {
+            Start("CPD", AircraftType.Bell412);
+            _aircraft.Restore(FleetState.Outbound, new SimulationTime(0), new SimulationTime(_seconds));
+            var world = Pose(_seconds * .5);
+            var rotor = HelicopterTrack.For(_aircraft, _seconds * .5);
+            Assert.That(world.x, Is.EqualTo(rotor.X).Within(.01));
+            Assert.That(world.z, Is.EqualTo(rotor.Z).Within(.01));
+            Assert.That(world.y, Is.EqualTo(AirsideAdelaideEmergencyAviation.PadGroundY + .18f + rotor.HeightMetres).Within(.01));
+            var mode = typeof(AirsidePrototype).GetNestedType("AircraftViewMode", BindingFlags.NonPublic);
+            var reason = typeof(AirsidePrototype).GetMethod("FlightViewReason", Hidden);
+            Assert.That(reason.Invoke(_prototype, new[] { (object)_aircraft, Enum.Parse(mode, "Exterior") }), Is.EqualTo(""));
+            Assert.That(reason.Invoke(_prototype, new[] { (object)_aircraft, Enum.Parse(mode, "LeftWindow") }), Is.EqualTo("Passenger view unavailable"));
+        }
+
+        [Test] public void InterstateFlightCanBeViewedDuringItsSouthAustralianSegment()
+        {
+            Start("MEL");
+            _aircraft.Restore(FleetState.Outbound, new SimulationTime(0), new SimulationTime(_seconds));
+            Pose(60);
+            var canWatch = typeof(AirsidePrototype).GetMethod("CanWatchJourney", Hidden);
+            Assert.That(canWatch.Invoke(_prototype, new object[] { _aircraft }), Is.True);
+            Pose(_seconds - 1);
+            Assert.That(canWatch.Invoke(_prototype, new object[] { _aircraft }), Is.False);
+        }
+
+        [Test] public void HiddenRegionalAircraftStillHasGeographicPositionAndStatusReadout()
+        {
+            Start("CPD");
+            _aircraft.Restore(FleetState.Outbound, new SimulationTime(0), new SimulationTime(_seconds));
+            var position = Pose(_seconds * .5);
+            Set("_flightOriginX", 240000d); Set("_flightOriginZ", -80000d);
+            var args = new object[] { _aircraft, 0d, 0d };
+            Assert.That(typeof(AirsidePrototype).GetMethod("TryMiniMapLocation", Hidden).Invoke(_prototype, args), Is.True);
+            YpadFrame.ToLatLon(position.x, position.z, out var latitude, out var longitude);
+            Assert.That((double)args[1], Is.EqualTo(latitude).Within(.00001));
+            Assert.That((double)args[2], Is.EqualTo(longitude).Within(.00001));
+            var text = (string)typeof(AirsidePrototype).GetMethod("SelectionLiveStats", Hidden).Invoke(_prototype, new object[] { _aircraft });
+            SelectionCardText.SplitReadout(text, out var speed, out var altitude, out _);
+            Assert.That(speed, Does.Contain("kt")); Assert.That(altitude, Does.Contain("ft"));
+        }
+
+        [Test] public void MiniMapSelectionKeepsStatusAndCameraActionsOutsideThePlanner()
+        {
+            Start("CPD");
+            _aircraft.Restore(FleetState.Outbound, new SimulationTime(0), new SimulationTime(_seconds));
+            Pose(_seconds * .5);
+            typeof(AirsidePrototype).GetMethod("SelectMiniMapAircraft", Hidden).Invoke(_prototype, new object[] { _aircraft });
+            Assert.That(typeof(AirsidePrototype).GetField("_selectedAircraftId", Hidden).GetValue(_prototype), Is.EqualTo(_aircraft.Registration));
+            Assert.That(typeof(AirsidePrototype).GetField("_activeWorkspace", Hidden).GetValue(_prototype).ToString(), Is.EqualTo("None"));
+            typeof(AirsidePrototype).GetMethod("FillSelectionCard", Hidden).Invoke(_prototype, new object[] { _aircraft });
+            var card = (SelectionCardData)typeof(AirsidePrototype).GetField("_selectionCard", Hidden).GetValue(_prototype);
+            Assert.That(card.ShowCameraActions, Is.True);
+            Assert.That(card.CanExterior, Is.True); Assert.That(card.CanPassenger, Is.True);
+            Assert.That(card.JourneyLeft, Does.StartWith("Lands"));
+        }
 
         [TestCase("KGC", FleetState.Outbound)] [TestCase("CPD", FleetState.Outbound)]
         [TestCase("KGC", FleetState.Inbound)] [TestCase("CPD", FleetState.Inbound)]

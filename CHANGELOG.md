@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Select distant South Australian flights from the corner map using an Airport /
+  South Australia switch. Show live status and journey plus available camera views;
+  include interstate SA segments and cycle overlapping flight markers (ADR 0235).
+
 - Refresh all fourteen aircraft identities with original fitted paint: thirteen
   distinct fixed-wing hull compositions, bolder A220/787-10 tail marks, refreshed
   Hangar thumbnails, and fitted Bell 412 panels using the operator/repaint palette

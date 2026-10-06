@@ -34,10 +34,16 @@ namespace Airside.Presentation
             foreach (var tug in _tugPool) _flightAirportActors.Hide(tug.Root);
             foreach (var boat in _coastBoats) _flightAirportActors.Hide(boat.Boat);
         }
-        private bool CanWatchJourney(FleetAircraft aircraft) => aircraft != null
-            && aircraft.CurrentDestination.HasValue
-            && aircraft.State is FleetState.Outbound or FleetState.Inbound or FleetState.AtDestination
-            && FlightWorldGrid.Covered(aircraft.CurrentDestination.Value.Latitude, aircraft.CurrentDestination.Value.Longitude);
+        private bool CanWatchJourney(FleetAircraft aircraft)
+        {
+            if (aircraft == null || !aircraft.CurrentDestination.HasValue
+                || aircraft.State is not (FleetState.Outbound or FleetState.Inbound or FleetState.AtDestination)) return false;
+            var destination = aircraft.CurrentDestination.Value;
+            if (FlightWorldGrid.Covered(destination.Latitude, destination.Longitude)) return true;
+            // An interstate service is watchable during its South Australian segment.
+            return TryMiniMapLocation(aircraft, out var latitude, out var longitude)
+                && RegionalMiniMap.Contains(latitude, longitude);
+        }
         private bool WatchingJourney(string id) => InCockpit && id == _cockpitAircraftId
             && _fleetAircraftById.TryGetValue(id, out var aircraft) && CanWatchJourney(aircraft);
         private Vector3 FlightOrigin => new Vector3((float)_flightOriginX,0,(float)_flightOriginZ);
@@ -88,6 +94,13 @@ namespace Airside.Presentation
         private void JourneyWorld(CommercialFlight flight,float ahead,out double x,out double y,out double z)
         {
             var aircraft=_fleetAircraftById[flight.AircraftId];
+            if (aircraft.Type.IsRotorcraft)
+            {
+                var rotor = HelicopterTrack.For(aircraft, _preciseTime + ahead);
+                x = rotor.X; z = rotor.Z;
+                y = AirsideAdelaideEmergencyAviation.PadGroundY + .18f + rotor.HeightMetres;
+                return;
+            }
             if (aircraft.State == FleetState.AtDestination
                 && RegionalRunways.TryGet(aircraft.CurrentDestination.Value.Code,out var parkedRunway))
             {

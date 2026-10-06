@@ -1114,7 +1114,7 @@ namespace Airside.Presentation
             card.LiveLine = SelectionLiveStats(aircraft);
             var drawn = _fleetViewById.TryGetValue(aircraft.Registration, out var drawnView)
                 && drawnView != null && drawnView.gameObject.activeSelf;
-            SelectionCardText.SplitReadout(drawn ? card.LiveLine : null,
+            SelectionCardText.SplitReadout(drawn || aircraft.IsOffMap ? card.LiveLine : null,
                 out card.Speed, out card.Altitude, out card.Heading);
             if (drawn && string.IsNullOrEmpty(card.Altitude) && card.Speed.StartsWith("0 kt", StringComparison.Ordinal))
             {
@@ -1332,7 +1332,11 @@ namespace Airside.Presentation
         {
             if (!_fleetViewById.TryGetValue(aircraft.Registration, out var view)
                 || view == null || !view.gameObject.activeSelf)
+            {
+                if (TryEnroute(aircraft, out var profile, out var elapsed))
+                    return $"{profile.GroundSpeedKnotsAt(elapsed):0} kt · {profile.AltitudeFeetAt(elapsed):#,0} ft";
                 return StatusText(aircraft);
+            }
 
             CommercialFlight flight = null;
             for (var i = 0; i < VisualFlights.Count; i++)

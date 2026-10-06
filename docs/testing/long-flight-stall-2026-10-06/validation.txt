@@ -34,3 +34,10 @@ Rebase onto current main 3f8d0969:
   5 capture C# files parse under C# 9; zero syntax errors.
   Asset audit passes: 1784 GUIDs / 386 mirrors / 70 character materials.
   git diff --check passes. No Unity/native/journey execution.
+
+Final combined main 64fa0b1d / merged taxi PR #549:
+  scripts/test-domain.sh: 1802 passed / 0 failed, 3m52s.
+  Harness.Generated.props is up to date.
+  5 capture C# files parse under C# 9; zero syntax errors.
+  Asset audit passes: 1788 GUIDs / 386 mirrors / 70 character materials.
+  git diff --check passes. No Unity/native/journey execution.

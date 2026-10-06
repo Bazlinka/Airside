@@ -90,3 +90,14 @@ suite **1,779 passed / 0 failed** (3m21s). Harness derivation is current; the
 five capture C# files parse without syntax errors; asset audit passes with
 **1,784 GUIDs / 386 mirrors / 70 character materials**; whitespace is clean.
 No Unity or journey run. Original capture investigation above remains unchanged.
+
+## Final combined validation — taxi main `64fa0b1d`
+
+Merged the owner's authorised taxi/protocol PR #549 from main. Only GAME and
+CHANGELOG handoffs conflicted; both were retained. No further taxi implementation
+changed. Full combined Unity-free suite **1,802 passed / 0 failed** (3m52s),
+including the v20 ferry migration and capture worker regressions. Harness check
+passes; five capture C# files parse without syntax errors; asset audit passes
+with **1,788 GUIDs / 386 mirrors / 70 character materials**; whitespace is clean.
+Bailey explicitly requested merging both fixes with the known native limitation;
+the root agent owns the #545 merge. No Unity/native or journey run occurred.

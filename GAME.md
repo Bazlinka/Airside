@@ -9,13 +9,16 @@ and fail QA with code 2 after an error/15-second timeout. Enable Unity's built-i
 ScreenCapture module; no blocking fallback and no normal gameplay/simulation change.
 
 Evidence and exact limits: `docs/testing/long-flight-stall-2026-10-06/README.md`.
-Rebased on `3f8d0969`: Unity-free regression **1,779/1,779**, focused worker
+Integrated with merged taxi main `64fa0b1d`: Unity-free regression
+**1,802/1,802**, focused worker
 **2/2**, C# 9 parsing **5/5**,
 asset audit and harness derivation pass. No full journey reproduction or Unity
 execution by instruction. Historic 172-second
 root cause is not proven; the concrete blocking capture path has been removed.
 Native compilation/GPU behaviour and capture fidelity remain unverified. NEXT:
-review PR/CI; keep the existing no-Unity restriction unless Bailey changes it.
+root to merge PR #545 under Bailey's explicit request to merge both fixes. The
+native merge gate is waived for this merge under the retained no-Unity instruction;
+no native validation or full-journey performance acceptance is claimed.
 
 ## Where to resume — Adelaide ground protocols, 6 October 2026
 

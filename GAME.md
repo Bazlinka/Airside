@@ -237,7 +237,7 @@ for active work; standing freight priorities remain unchanged.
 - **2026-10-06 Cursor — `scripts/build-mac.sh` recovers from the bee_backend deadlock.**
   After pulls that change scripts, Unity's script build repeatedly queued every job, ran
   none and idled at 0% CPU forever (seen 1 Oct and twice on 6 Oct). The script now runs
-  Unity under a watchdog: log silent for `AIRSIDE_BUILD_STALL_SECONDS` (default 180) with
+  Unity under a watchdog: log silent for `AIRSIDE_BUILD_STALL_SECONDS` (default 60; was 180) with
   `bee_backend` as the last started process → kill the Unity process tree, clear
   `Library/Bee` *.dag graphs, retry once, else fail with a message.
   **Evidence:** real build with a 10 s threshold never false-triggered (log grows during

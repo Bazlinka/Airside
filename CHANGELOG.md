@@ -3,7 +3,14 @@
 - Refresh all fourteen aircraft identities with original fitted paint: thirteen
   distinct fixed-wing hull compositions, bolder A220/787-10 tail marks, refreshed
   Hangar thumbnails, and fitted Bell 412 panels using the operator/repaint palette
-  (ADR 0232). Existing audio fixes are already on main through #507.
+  (ADR 0234). Existing audio fixes are already on main through #507.
+- Track the Resources folder metadata and retain the three empty authored
+  Animation folders in Git, preserving their existing GUIDs. Make the Unity
+  asset audit recognise Git-only folder sentinels (ADR 0233).
+
+- Add Qantas Freight and DHL Air AI freighters with operator paint, domestic cargo
+  networks and curfew-respecting Adelaide dawn/evening banks. Add missing aircraft
+  once on loading; suppress passenger boarding equipment on freighters (ADR 0232).
 
 - Refresh shared HUD/workspace/menu styling with slate, warm white and muted
   accents; clearer aircraft-view controls and a compact viewing dock. Replace

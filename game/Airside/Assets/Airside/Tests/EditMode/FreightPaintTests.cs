@@ -1,4 +1,5 @@
 using Airside.Presentation;
+using Airside.Domain;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -7,6 +8,19 @@ namespace Airside.Tests
     /// <summary>The cargo livery colour (ADR 0194). Needs UnityEngine, so the headless harness skips it.</summary>
     public sealed class FreightPaintTests
     {
+        [Test]
+        public void DedicatedCarriers_KeepTheirOperatorPaint_AndPlayerConversionsStayDark()
+        {
+            foreach (var airline in new[] { Airline.QantasFreight(), Airline.DhlAir() })
+            {
+                ColorUtility.TryParseHtmlString(airline.LiveryHex, out var expected);
+                Assert.That(AircraftLiveryPaint.OperatorPrimary(airline, true), Is.EqualTo(expected));
+            }
+            var player = Airline.Player("Test Air", "#E4002B");
+            ColorUtility.TryParseHtmlString(player.LiveryHex, out var primary);
+            Assert.That(AircraftLiveryPaint.OperatorPrimary(player, true),
+                Is.EqualTo(AircraftLiveryPaint.FreightPrimary(primary)));
+        }
         [Test]
         public void CargoPaint_IsADeeperVersionOfTheOperatorColour()
         {

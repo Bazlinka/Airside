@@ -1,6 +1,6 @@
 # Aircraft identity refresh — 6 October 2026
 
-Parent main: `19fd9688`. ADR 0232. All fourteen current flying types are covered:
+Parent main: `19fd9688`. ADR 0234. All fourteen current flying types are covered:
 thirteen fixed-wing types and the Bell 412. The parked static rescue model shares
 the Bell kit with its default emergency colour; player/AI fleet helicopters use
 their operator colour and support in-place palette repaint.
@@ -51,10 +51,10 @@ the A220 sun rays and 787-10 meridian are enlarged, and the Bell gets fitted pan
 - Mac player build: passed from clean source commit `4d5b3965` (`build.log`).
   Bundle: `work/builds/Airside.app`. Build identity records `dirty=false`.
   The later validation/compositor commit changes review tooling and evidence only.
-- GitHub publication: automatic approval review rejected the branch push because
-  explicit authorization to publish this aircraft refresh's source and renders is
-  required. No PR was created and the art has not reached remote main. The complete
-  implementation and evidence remain committed locally for approval. A native
+- Publication and merge explicitly approved by Bailey on 6 October 2026. Latest
+  freight/metadata main (`18a65490`) is integrated before publication; combined
+  regression evidence follows below. Original review/build evidence above is from
+  the pre-integration source and is retained with its exact revision. A native
 isolated render does not validate packaged camera interaction, night/weather,
 repainting UI, freighter appearance or frame time. No claim of full-fleet packaged
 playtesting is made by this evidence.

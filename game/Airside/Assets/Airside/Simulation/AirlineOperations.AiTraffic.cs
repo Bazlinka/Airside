@@ -6,6 +6,69 @@ namespace Airside.Simulation
 {
     public sealed partial class AirlineOperations
     {
+        // Authored game fleet, not a claim about current real-world registrations or aircraft variants.
+        // The existing 737 model represents narrowbody freighters until dedicated cargo art is available.
+        public static readonly IReadOnlyList<(Func<Airline> Make, string Registration, AircraftType Type)> FreightOperators =
+            new (Func<Airline>, string, AircraftType)[]
+            {
+                (Airline.QantasFreight, "VH-FQF", AircraftType.Boeing7378),
+                (Airline.DhlAir, "VH-FDH", AircraftType.Boeing7378)
+            };
+
+        public static readonly IReadOnlyList<(string Code, int Weight)> FreightNetwork =
+            new[] { ("MEL", 4), ("SYD", 4), ("BNE", 2), ("PER", 1) };
+
+        /// <summary>Safe on every load; never displace an aircraft or add cargo to an incompatible airport.</summary>
+        public int AddMissingFreightOperators(List<FleetAircraft> added = null)
+        {
+            if (!Home.Equals(DestinationCatalogue.Adelaide))
+                return 0;
+            var count = 0;
+            foreach (var (make, registration, type) in FreightOperators)
+            {
+                if (_fleet.Exists(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+                var stand = SuggestStandFor(type);
+                if (!stand.HasValue && !HasStandFor(type))
+                    continue;
+                var template = make();
+                var airline = _airlines.Find(a => a.Id.Equals(template.Id));
+                if (airline == null)
+                {
+                    airline = template;
+                    AddAirline(airline);
+                }
+                var aircraft = stand.HasValue
+                    ? AddAircraft(airline, registration, type, stand.Value)
+                    : AddAircraftAway(airline, registration, type);
+                added?.Add(aircraft);
+                count++;
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// Cargo banks are in Adelaide local time, outside the 23:00–05:00 curfew. Stable
+        /// registration offsets spread the two operators without consuming a random draw.
+        /// </summary>
+        internal SimulationTime FreightBankAt(FleetAircraft aircraft, SimulationTime readyAt, bool arrival = false)
+        {
+            var local = Clock.LocalAt(readyAt);
+            var slots = arrival ? FreightArrivalMinutes : FreightDepartureMinutes;
+            var offset = FirstWaveKey(aircraft) % 3 * 5;
+            for (var day = 0; day <= 1; day++)
+            foreach (var minute in slots)
+            {
+                var candidate = Clock.AtLocal(local.Date.AddDays(day).AddMinutes(minute + offset));
+                if (candidate.CompareTo(readyAt) >= 0)
+                    return candidate;
+            }
+            throw new InvalidOperationException("No freight bank found.");
+        }
+
+        private static readonly int[] FreightDepartureMinutes = { 5 * 60 + 10, 5 * 60 + 40, 20 * 60 + 30, 21 * 60 + 15, 22 * 60 };
+        private static readonly int[] FreightArrivalMinutes = { 5 * 60 + 15, 6 * 60, 19 * 60 + 15, 20 * 60, 21 * 60 };
+
         /// <summary>
         /// Short opening arrival bank so most authored metal stays on stands (ADR 0100).
         /// Morning: ~7 inbound over ~40 minutes. Evening: stretch those onto the remaining
@@ -303,6 +366,8 @@ namespace Airside.Simulation
             var landsAt = AirportCurfew.IsClosed(Clock.LocalAt(soon)) || AirportCurfew.IsClosed(local)
                 ? MorningArrivalAt(aircraft, _processedTo)
                 : soon;
+            if (airline.IsFreightCarrier)
+                landsAt = FreightBankAt(aircraft, soon, arrival: true);
             aircraft.Restore(FleetState.Inbound, _processedTo, landsAt);
             _fleet.Add(aircraft);
             return aircraft;
@@ -336,6 +401,8 @@ namespace Airside.Simulation
         /// </summary>
         internal SimulationTime MorningArrivalAt(FleetAircraft aircraft, SimulationTime now)
         {
+            if (aircraft.Airline.IsFreightCarrier)
+                return FreightBankAt(aircraft, now, arrival: true);
             var local = Clock.LocalAt(now);
             var day = local.Hour < AirportCurfew.OpensAtHour ? local.Date : local.Date.AddDays(1);
             var at = Clock.AtLocal(day.AddHours(6).AddMinutes(FirstWaveKey(aircraft) % 150));
@@ -402,6 +469,8 @@ namespace Airside.Simulation
             "QLK" => QantasLinkNetwork,
             "VOZ" => VirginNetwork,
             "QFA" => QantasNetwork,
+            "QFR" => FreightNetwork,
+            "DHL" => FreightNetwork,
             "JST" => JetstarNetwork,
             "ANZ" => AirNewZealandNetwork,
             "SIA" => SingaporeNetwork,
@@ -457,7 +526,7 @@ namespace Airside.Simulation
         /// </summary>
         private bool ShouldNightStopHere(FleetAircraft aircraft, Destination destination, SimulationTime departAt)
         {
-            if (ExemptFromCurfew(aircraft) || LongHaulHomeOf(aircraft.Airline.Id.Value) != null
+            if (aircraft.Airline.IsFreightCarrier || ExemptFromCurfew(aircraft) || LongHaulHomeOf(aircraft.Airline.Id.Value) != null
                 || FirstWaveKey(aircraft) % 3 == 0)
                 return false;
             var local = Clock.LocalAt(departAt);
@@ -489,6 +558,8 @@ namespace Airside.Simulation
         {
             if (aircraft == null || aircraft.Airline.IsPlayer || aircraft.Airline.IsEmergency)
                 return departAt;
+            if (aircraft.Airline.IsFreightCarrier)
+                return FreightBankAt(aircraft, departAt);
             var local = Clock.LocalAt(departAt);
             var snapped = AdelaideHourProfile.SnapToBankLocal(local, AiFirstDepartureHour, AiLastDepartureHour,
                 FirstWaveKey(aircraft));
@@ -527,6 +598,8 @@ namespace Airside.Simulation
         /// </summary>
         internal SimulationTime AiDepartureWithinHours(SimulationTime readyAt, FleetAircraft aircraft)
         {
+            if (aircraft != null && aircraft.Airline.IsFreightCarrier)
+                return FreightBankAt(aircraft, readyAt);
             if (aircraft != null && aircraft.Airline.IsEmergency)
             {
                 var local = Clock.LocalAt(readyAt);
@@ -569,6 +642,12 @@ namespace Airside.Simulation
         private long AwayTurnaroundSeconds(FleetAircraft aircraft, SimulationTime now)
         {
             var turn = (long)DestinationTurnaroundSeconds;
+            if (aircraft.Airline.IsFreightCarrier)
+            {
+                var earliest = now.Advance(turn + LegAirborne(aircraft));
+                var bank = FreightBankAt(aircraft, earliest, arrival: true);
+                return turn + bank.ElapsedSeconds - earliest.ElapsedSeconds;
+            }
             var id = aircraft.Airline.Id.Value;
             if (id != "UAE" && id != "QTR")
                 return turn;

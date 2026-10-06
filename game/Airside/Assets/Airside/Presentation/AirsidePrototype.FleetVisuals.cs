@@ -343,11 +343,10 @@ namespace Airside.Presentation
             return view;
         }
 
-        /// <summary>The operator colour, or its dark cargo variant once the aircraft is a freighter (ADR 0194).</summary>
+        /// <summary>Dedicated operator paint, or dark working paint for a passenger-airline conversion.</summary>
         private static Color FleetLiveryColour(FleetAircraft aircraft)
         {
-            var accent = AirsideTheme.FromHex(aircraft.Airline.LiveryHex);
-            return aircraft.IsFreighter ? AircraftLiveryPaint.FreightPrimary(accent) : accent;
+            return AircraftLiveryPaint.OperatorPrimary(aircraft.Airline, aircraft.IsFreighter);
         }
 
         // Per view: was it last painted as a freighter? A refit repaints in place, no rebuild.

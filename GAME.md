@@ -1,6 +1,81 @@
+## Where to resume — approved fleet identity refresh, 6 October 2026
+
+Bailey approved publishing and merging `feature/aircraft-identity-refresh` (ADR 0234).
+Latest main freight/metadata changes at `18a65490` are integrated. Complete the
+combined checks and protected-main PR workflow; retain the packaged review limits
+in `docs/testing/aircraft-identities-2026-10-06/README.md`.
+
+## Where to resume — AI freight and metadata integration, 6 October 2026
+
+Codex. Bailey explicitly authorised placing PRs #527 and #528 together onto main.
+AI freight merged in #527 at `aceadd4d`; #528 integrates its source with the folder
+metadata repair. Qantas Freight and DHL Air have cargo roles, domestic networks,
+operator paint and Adelaide dawn/evening banks. Resources metadata is tracked;
+empty Animation folders retain their original GUIDs. Save schema is unchanged.
+
+**Checks:** AI freight full headless regression 1,508 passed / 0 failed; #527 CI
+passed. Combined asset audit passes: 1,664 unique GUIDs, 349 byte-identical runtime
+art mirrors and 70 committed materials. Folder repair was also checked in a fresh
+tracked checkout with missing-metadata and duplicate-GUID rejection verified.
+Integration resolves only handoff/changelog overlaps; game source is unchanged
+from #527. Native Unity compilation and runtime visuals remain unverified; Bailey's
+explicit merge authorisation does not claim a native pass or release readiness.
+
+**NEXT development:** cargo apron/stands and handling, then outstation freight,
+then structure/performance. Existing playtest sign-off stays closed. Evidence:
+`docs/testing/ai-freight-2026-10-06/` and `docs/testing/folder-metadata-2026-10-06/`.
+Earlier handoffs below are historical. The game remains in development.
+
+## Where to resume — Unity folder metadata repair, 6 October 2026
+
+Codex; branch `fix/unity-folder-metadata`, independently based on main. Bailey
+asked to continue useful work. Before the next cargo apron/handling slice, repair
+the inherited asset audit failures: track Resources.meta and retain the three
+empty authored Animation directories with Git-only sentinels. Existing Animation
+GUIDs are preserved; no gameplay or new art content is changed (ADR 0233).
+
+**Checks:** asset audit and fresh-checkout verification recorded in
+`docs/testing/folder-metadata-2026-10-06/README.md`. Native Unity remains unavailable;
+this repair does not claim compilation, runtime visuals or new playtest acceptance.
+
+**NEXT:** review the independent metadata repair PR. AI freight is on the separate
+`feature/ai-freight-traffic` branch in draft PR #527 (1,508 headless tests passed
+locally; native validation pending). Cargo stands/handling and outstation freight
+remain the subsequent backlog, then structure/performance. Earlier candidate
+handoffs below are historical; PR #526 already merged at `19fd9688` under Bailey's
+explicit approval. The game remains in development.
+
+## Where to resume — AI freight traffic candidate, 6 October 2026
+
+Codex; branch `feature/ai-freight-traffic`. Bailey authorised AI freight carriers
+as the next existing-backlog slice after PR #526 merged at `19fd9688` under his
+explicit approval. The game remains in development; release preparation stays deferred.
+
+Qantas Freight and DHL Air now have dedicated cargo aircraft, operator paint and
+a domestic MEL/SYD/BNE/PER network. Existing 737 art represents the freighters.
+Cargo uses dawn and late-evening Adelaide-local banks, respects curfew, and avoids
+the passenger opening ladder. Existing saves gain missing registrations once on
+normal loading. Full compatible aprons start cargo away; no parked aircraft is
+displaced. Freight role/timetable survive save/restore without a schema change.
+Freighters do not summon passenger buses/stairs or dock aerobridges; hold doors
+retain loading/unloading timing. Player conversions retain dark cargo paint.
+QFR/DHL codes are reserved from player setup (ADR 0232).
+
+**Checks:** full headless regression **1,508 passed / 0 failed**; generated harness
+is current; whitespace is clean. Evidence: `docs/testing/ai-freight-2026-10-06/README.md`. Four Unity-facing source/test files parse
+without syntax errors. Native Unity is unavailable in this Linux worker; native
+colour assertions and runtime appearance remain unverified. Metadata audit has
+only the inherited Resources/empty Animation issues.
+
+**NEXT:** review the AI freight PR and get native Unity compile/EditMode validation
+before merging this new behaviour under `AGENTS.md`. Subsequent approved backlog:
+cargo apron/stands and handling, then outstation freight, then P3 structure and
+performance. Do not reopen old playtests or present all freight work as complete.
+Task packet: `docs/plans/ai-freight-traffic.md`. Earlier handoffs below are historical.
+
 ## Where to resume — freight and interface refresh candidate, 6 October 2026
 
-- **2026-10-06 Codex — original fleet identity refresh (ADR 0232).**
+- **2026-10-06 Codex — original fleet identity refresh (ADR 0234).**
   Branch `feature/aircraft-identity-refresh`; clean checkout
   `/private/tmp/airside-livery-review-20261006`, parent `19fd9688`.
   Thirteen distinct fitted hull compositions, larger A220/787-10 fin motifs,
@@ -13,8 +88,8 @@
   inconclusives; fitted-paint, connectivity and asset audits pass; 56 native
   captures inspected across fourteen types. Clean Mac build passed at `4d5b3965`.
   Packaged lighting/weather/repaint UI and performance acceptance remain open.
-  **NEXT:** explicit approval to publish the aircraft refresh to GitHub/main;
-  automatic approval review rejected the branch push. No PR or remote art merge.
+  Bailey explicitly approved publishing and merging this refresh on 6 October.
+  **NEXT:** publish the PR, pass combined checks and merge; packaged acceptance stays open.
   The original checkout is clean at prior main `19fd9688`; duplicate audio work
   exactly matched merged #507 and was backed up to
   `/private/tmp/airside-audio-before-sync-20261006.patch` before clearing/syncing.

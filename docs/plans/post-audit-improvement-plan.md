@@ -26,13 +26,14 @@ from owner acceptance. P4 milestones remain unopened.
 
 ## Active slice — 6 October 2026
 
-Bailey authorised freighter-required contracts and a substantial HUD/viewing,
-welcome-back-summary and click-sound redesign. Candidate branch:
-`feature/freight-and-interface-refresh`; task packet:
-`docs/plans/freight-and-interface-refresh.md`. Freight role checks and the shared
-interface refresh are implemented, pending native Unity verification before merge.
-This is new work after the previous playtest sign-off. AI freight, cargo stands
-and outstation cargo operations remain the subsequent freight slices.
+Freighter-required contracts and the shared interface refresh merged in PR #526
+at `19fd9688`, under Bailey's explicit merge approval; headless CI passed. Native
+Unity verification was not available in the Linux worker.
+
+AI freight merged in PR #527 at `aceadd4d` under Bailey’s explicit approval;
+task packet: `docs/plans/ai-freight-traffic.md`. Qantas Freight and DHL Air use
+existing representative 737 art, their own colours and dawn/evening cargo banks.
+Cargo stands/loaders and outstation cargo remain subsequent slices.
 
 ## Verdict (do not re-litigate)
 
@@ -78,13 +79,13 @@ never a merge gate.
 P0 no longer blocks this. Player freighter refit exists (save v19). Prefer a Mac look
 at freighter livery + tyre rotation when convenient, then finish as one narrow ADR slice:
 
-- AI freight carriers (DHL / Qantas Freight–style, night bank, own liveries)
+- AI freight carriers: merged in PR #527 (ADR 0232), own colours and curfew-respecting dawn/evening banks
 - Cargo apron / stands
-- Freighter-required contracts: implemented on the active candidate branch; native verification/merge pending
+- Freighter-required contracts: merged in PR #526
 - Outstation settle using freighter forecast overload
 
-Bailey has opened the contract eligibility slice above. Continue the remaining
-freight items as narrow follow-up changes after its verification and merge.
+AI freight is merged. Continue cargo stands/handling, then outstation cargo
+as narrow follow-up changes. PR #528 repairs inherited folder metadata issues.
 
 ### P3 — Pay down structure and performance debt
 

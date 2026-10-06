@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Airside.Domain;
 using UnityEngine;
 
 namespace Airside.Presentation
@@ -48,6 +49,13 @@ namespace Airside.Presentation
             if (saturation < 0.12f)
                 return new Color(0.20f, 0.24f, 0.29f);
             return Color.HSVToRGB(hue, Mathf.Clamp(saturation, 0.40f, 0.80f), 0.34f);
+        }
+
+        /// <summary>Dedicated carriers retain their authored red/yellow; player conversions keep working paint.</summary>
+        public static Color OperatorPrimary(Airline airline, bool isFreighter)
+        {
+            ColorUtility.TryParseHtmlString(airline.LiveryHex, out var primary);
+            return isFreighter && !airline.IsFreightCarrier ? FreightPrimary(primary) : primary;
         }
 
         public static Color Colour(string part, Color primary)

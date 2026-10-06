@@ -1,4 +1,4 @@
-# ADR 0232: Readable original aircraft identities
+# ADR 0234: Readable original aircraft identities
 
 Date: 2026-10-06. Owner: Codex. Request: refresh every aircraft's visual identity.
 

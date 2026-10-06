@@ -1,0 +1,9 @@
+Mac build created at /private/tmp/airside-livery-review-20261006/work/builds/Airside.app
+Build identity:
+commit=823ee4d9
+commitFull=823ee4d999dd2d53067c1876744eb1169a71fb5e
+branch=feature/sa-minimap-flight-selection
+subject=Select South Australian flights from the mini map with status and camera options
+committedAt=2026-10-06T12:45:25+10:30
+dirty=false
+stampedAt=2026-10-06T02:15:25Z

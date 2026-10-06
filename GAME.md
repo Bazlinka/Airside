@@ -8,8 +8,8 @@ selection reuse existing flight/camera systems. Interstate flights gain view acc
 while over the SA scope; helicopter exterior access is separate from cabin support.
 Checks: headless 1,508 pass; initial native 1,957 pass with the inherited failure
 and two inconclusives; final focused native 29/29; asset audit passes.
-**NEXT:** clean Mac build and packaged visual review, then publish
-under the normal PR workflow. Preserve the inherited ground-separation test failure
+Clean Mac player `823ee4d9` passed; packaged 1440×900 regional-map/status capture
+inspected. PR #530 is published. **NEXT:** final CI and protected-main merge/sync. Preserve the inherited ground-separation test failure
 already reproduced on main. Evidence: `docs/testing/sa-minimap-2026-10-06/`.
 
 ## Where to resume — authorised fleet identity merge, 6 October 2026

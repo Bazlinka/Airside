@@ -20,7 +20,12 @@ repeated clicks cycle overlapping registrations. Live-feed decoration is unchang
 - Asset audit: 1,667 unique GUIDs, 349 matching runtime art mirrors and 70 character
   materials. No new external art/data. Whitespace check passes.
 
-Mac build and packaged UI review are pending at this source commit. The soak-only
+Clean Mac build passed from `823ee4d9` with `dirty=false` (`build.log`). Packaged
+1440×900 capture inspected: [regional map and status](player-status.png). Selected
+Rex ZL3497, Mount Gambier → Adelaide: inbound, 201 kt, 11,428 ft, landing 12:54,
+8 minutes remaining. Cockpit, Window seat and Exterior buttons appear beneath the
+status. Both scope buttons and in-scope aircraft markers render without overlap
+with the status card. The soak-only
 `-airsideReviewPanel flight-map` entry opens the regional scope and selects a
 simulated in-scope flight through the same mini-map selection handler.
 

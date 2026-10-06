@@ -120,6 +120,19 @@ namespace Airside.Presentation
                 var pitch = journey.HasValue ? -Mathf.Atan2(next.y-position.y,
                     new Vector2(next.x-position.x,next.z-position.z).magnitude)*Mathf.Rad2Deg
                     : AirsideFlightPath.PitchDegrees(phase, progress, aircraftType);
+                // Retain the authored body attitude at the takeoff handoff. The route's
+                // path angle alone would abruptly discard the aircraft's angle of attack.
+                if (journey.HasValue && _fleetAircraftById.TryGetValue(flight.AircraftId, out var departing)
+                    && departing.State == FleetState.Outbound && TryEnroute(departing, out var departureProfile, out var departureElapsed))
+                {
+                    var performance = AircraftPerformance.For(departing.Type);
+                    var localProgress = Mathf.Clamp01((float)(departureElapsed / performance.DepartedSeconds));
+                    var sinceExit = Math.Max(0, departureElapsed - performance.DepartedSeconds);
+                    var join = DepartureFlightTransition.JoinDuration(performance, departureProfile);
+                    var u = Mathf.Clamp01((float)(sinceExit / join));
+                    var weight = 1 - u*u*(3 - 2*u);
+                    pitch = Mathf.Lerp(pitch, AirsideFlightPath.PitchDegrees(AircraftPhase.Departed, localProgress, departing.Type), weight);
+                }
                 var bank = SmoothedBankDegrees(flight.AircraftId, view, heading, phase,
                     journey.HasValue ? 0f : DepartureBankDegrees(flight, phase, progress));
                 var targetRotation = heading * Quaternion.Euler(pitch, 0f, bank);

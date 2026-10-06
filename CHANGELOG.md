@@ -1,5 +1,11 @@
 ## Unreleased
 
+- Smooth the watched takeoff-to-climb-out handoff instead of jumping 174–218 m
+  onto the enroute profile; match vertical rates through rotation and climb-out.
+  Add shared flight status, location, height, true heading and journey progress /
+  arrival-area estimates to every aircraft view (ADR 0238). Code-only checks;
+  Unity tests/builds/player execution excluded by Bailey, native visuals unverified.
+
 - Complete the nine remaining concrete #534 code findings: noncollapsed kit UVs
   and tangent frames, fixed geographic foam and roof texture coordinates,
   port-red/starboard-green lights, altitude-adjusted wipers, downwind weather flow,

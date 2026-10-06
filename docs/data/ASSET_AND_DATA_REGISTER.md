@@ -296,3 +296,14 @@ rounded attack and lower peak/playback gain. No external source/sample, purchase
 attribution requirement or shipped audio file. Existing UI sound is the fallback.
 The WAV in `docs/testing/interface-refresh-2026-10-06/` is an exported listening
 preview at runtime gain, not a new runtime asset or listening acceptance claim.
+
+## AI freight carrier paint — 6 October 2026 (ADR 0232)
+
+Original project runtime colour blocks and rendered text, implemented in Airline
+and AircraftLiveryPaint by Codex for Bailey's approved AI freight slice. Qantas
+Freight uses red #E4002B; DHL Air uses warm yellow #F2C14B. Operator names are game
+data; no downloaded logos, official brand artwork, external references, samples,
+textures or new aircraft geometry were acquired. Existing project-owned 737 art
+and runtime paint/wordmark systems are reused. Acquisition cost zero; no new
+third-party asset licence or attribution requirement. Source evidence ADR 0232;
+fallback is the existing shared aircraft paint. Native visual verification pending.

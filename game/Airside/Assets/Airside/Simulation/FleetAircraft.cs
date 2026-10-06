@@ -157,6 +157,8 @@ namespace Airside.Simulation
 
             Registration = registration;
             Airline = airline ?? throw new ArgumentNullException(nameof(airline));
+            // Dedicated operators are cargo on both creation and restore; player role remains saved/refittable.
+            IsFreighter = airline.IsFreightCarrier;
             Type = type ?? throw new ArgumentNullException(nameof(type));
             Stand = stand;
             State = FleetState.AtStand;

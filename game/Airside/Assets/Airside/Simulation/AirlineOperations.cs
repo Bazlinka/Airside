@@ -363,6 +363,8 @@ namespace Airside.Simulation
             var terminalFleet = new List<FleetAircraft>();
             operations.AddMissingTerminalOperators(terminalFleet);
             operations.SeedOpeningTraffic(aiFleet, terminalFleet);
+            // Cargo keeps its own night bank; never rewrite it onto the passenger opening ladder.
+            operations.AddMissingFreightOperators();
             return operations;
         }
 

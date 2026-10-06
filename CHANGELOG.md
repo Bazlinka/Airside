@@ -1,5 +1,9 @@
 ## Unreleased
 
+- Add Qantas Freight and DHL Air AI freighters with operator paint, domestic cargo
+  networks and curfew-respecting Adelaide dawn/evening banks. Add missing aircraft
+  once on loading; suppress passenger boarding equipment on freighters (ADR 0232).
+
 - Refresh shared HUD/workspace/menu styling with slate, warm white and muted
   accents; clearer aircraft-view controls and a compact viewing dock. Replace
   the welcome-back sentence stack with metrics and a scrolling fleet report.

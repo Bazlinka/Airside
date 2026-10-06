@@ -1,6 +1,7 @@
 # Freight contracts and interface refresh — task packet
 
-Approved by Bailey, 6 October 2026. Branch: `feature/freight-and-interface-refresh`.
+Approved by Bailey, 6 October 2026. Merged in PR #526 at `19fd9688` under
+his explicit merge approval. Native Unity validation remains outstanding.
 
 ## Player-visible outcome
 

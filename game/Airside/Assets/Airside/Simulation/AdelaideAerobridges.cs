@@ -272,7 +272,7 @@ namespace Airside.Simulation
         public static float DockedFraction(FleetAircraft aircraft, double nowSeconds,
             PlayerBaseLevel baseLevel = PlayerBaseLevel.Starter)
         {
-            if (aircraft == null || aircraft.State != FleetState.AtStand || !AdelaideAerobridges.Serves(aircraft.Stand))
+            if (aircraft == null || aircraft.IsFreighter || aircraft.State != FleetState.AtStand || !AdelaideAerobridges.Serves(aircraft.Stand))
                 return 0f;
 
             var parked = nowSeconds - aircraft.StateStartedAt.ElapsedSeconds;
@@ -291,6 +291,8 @@ namespace Airside.Simulation
         public static bool? DoorsOpen(FleetAircraft aircraft, double nowSeconds,
             PlayerBaseLevel baseLevel = PlayerBaseLevel.Starter)
         {
+            if (aircraft?.IsFreighter == true)
+                return false;
             if (aircraft == null || aircraft.State != FleetState.AtStand || !AdelaideAerobridges.Serves(aircraft.Stand))
                 return null;
             var parked = nowSeconds - aircraft.StateStartedAt.ElapsedSeconds;

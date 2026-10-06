@@ -179,26 +179,34 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>Read the finished frame (3D and HUD) back and write it as PNG. The ScreenCapture module is not in this project.</summary>
+        /// <summary>Capture the finished frame (3D and HUD) without blocking gameplay.</summary>
         private System.Collections.IEnumerator CaptureReviewShot(string path)
         {
-            // One frame so mid-soak zoom/weather overrides reach the rendered image.
-            yield return null;
-            yield return new WaitForEndOfFrame();
-            var texture = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
-            texture.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
-            texture.Apply();
-            File.WriteAllBytes(path, texture.EncodeToPNG());
-            Destroy(texture);
+            var succeeded = false;
+            var width = 0; var height = 0;
+            var pitch = 0f; var yaw = 0f; var distance = 0f; var following = false;
+            yield return ReviewFrameCapture.Capture(path, ok => succeeded = ok, () =>
+            {
+                width = Screen.width; height = Screen.height;
+                pitch = AirsideCameraController.CurrentPitch;
+                yaw = AirsideCameraController.CurrentYaw;
+                distance = AirsideCameraController.CurrentDistance;
+                following = _cameraController != null && _cameraController.IsFollowing;
+            });
+            _reviewCaptureInFlight = false;
+            if (!succeeded)
+            {
+                Application.Quit(2);
+                yield break;
+            }
             Debug.Log(
-                $"{SoakLogTag} review shot {path} at {Screen.width}x{Screen.height} "
-                + $"pose pitch={AirsideCameraController.CurrentPitch:0.#} "
-                + $"yaw={AirsideCameraController.CurrentYaw:0.#} "
-                + $"dist={AirsideCameraController.CurrentDistance:0} "
-                + $"following={(_cameraController != null && _cameraController.IsFollowing)}");
+                $"{SoakLogTag} review shot {path} at {width}x{height} "
+                + $"pose pitch={pitch:0.#} "
+                + $"yaw={yaw:0.#} "
+                + $"dist={distance:0} "
+                + $"following={following}");
             _reviewLastCaptureAt = Time.unscaledTime;
             _reviewShotIndex++;
-            _reviewCaptureInFlight = false;
         }
 
         private void ApplyReviewShotPresentation(ReviewShotSchedule.Entry entry)

@@ -66,6 +66,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AssemblyInfo.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AtmosphereLook.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AustraliaMapLens.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/BackgroundCaptureWrite.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BevelledBox.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BoardingGroundContact.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BoxKitSurfaceGeometry.cs" />
@@ -213,6 +214,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AtmosphereLookTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AustraliaMapLensTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AwayCatchUpTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/BackgroundCaptureWriteTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/BareFieldTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/BoardingFlowTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/BugFixPassTests.cs" />

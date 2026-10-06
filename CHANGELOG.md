@@ -1,5 +1,10 @@
 ## Unreleased
 
+- Remove synchronous GPU readback, PNG encoding and disk writes from packaged
+  review screenshots, a plausible source of the recorded 172/196-second frames.
+  Use async readback and background writes; capture failures/timeouts fail QA.
+  Historic cause remains unproven; no Unity or full-journey reproduction run.
+
 - Keep stationary aircraft blocking ground clearances permanently, reserve full-airframe
   runway crossings and intersecting-strip occupancy, apply/save follower-specific MTOW
   wake minima, route terminal departures around Adelaide ERSA restrictions with eastbound

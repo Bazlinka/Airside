@@ -1,3 +1,25 @@
+## Where to resume — recorded flight-stall capture fix, 6 October 2026
+
+Codex; branch `fix/long-flight-stall-20261006`, isolated `/workspace/Airside-stall`.
+The earlier 196-second AtStand frame predates regional terrain and reports only
+3.67 ms average Update / 0.64 ms operations. Both QA screenshot coroutines ran
+synchronous GPU readback/PNG/disk writes outside those timers. They now share
+asynchronous GPU readback and worker encoding/write, retain finished HUD frames,
+and fail QA with code 2 after an error/15-second timeout. Enable Unity's built-in
+ScreenCapture module; no blocking fallback and no normal gameplay/simulation change.
+
+Evidence and exact limits: `docs/testing/long-flight-stall-2026-10-06/README.md`.
+Integrated with merged taxi main `64fa0b1d`: Unity-free regression
+**1,802/1,802**, focused worker
+**2/2**, C# 9 parsing **5/5**,
+asset audit and harness derivation pass. No full journey reproduction or Unity
+execution by instruction. Historic 172-second
+root cause is not proven; the concrete blocking capture path has been removed.
+Native compilation/GPU behaviour and capture fidelity remain unverified. NEXT:
+root to merge PR #545 under Bailey's explicit request to merge both fixes. The
+native merge gate is waived for this merge under the retained no-Unity instruction;
+no native validation or full-journey performance acceptance is claimed.
+
 ## Where to resume — Adelaide ground protocols, 6 October 2026
 
 ADR 0243 implements the owner's requested source-to-game comparison and selected
@@ -22,8 +44,9 @@ explicit limits. Current aircraft taxi bands and the intentional 05:00 game curf
 remain design assumptions. Native Unity compilation/visuals are unverified by
 owner instruction; no full journey reproduction was run.
 
-NEXT: review draft PR #549 (1,799 integrated tests plus migration regression pass); do not merge until
-the native gate is satisfied. The separate background capture-stall fix is #545.
+PR #549 merged at `64fa0b1d` under Bailey's explicit merge instruction; 1,799
+integrated tests plus migration regression passed. Native validation remains open.
+The separate background capture-stall fix is #545.
 
 ## Where to resume — aircraft view feel, 6 October 2026
 

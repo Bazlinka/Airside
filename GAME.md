@@ -1,3 +1,18 @@
+## Where to resume — full fleet cockpit fittings, 6 October 2026
+
+All thirteen fixed-wing cockpits receive family-specific controls, panel layers,
+overhead groupings, upholstery and shaped pilot seats (ADR 0240). All thirteen
+passenger stations now fit individual glazing panes; bounded sections are 7–24 m.
+A350 has six equal-format displays and inward lateral OIS stations.
+
+Evidence: `docs/testing/cockpit-realism-2026-10-06/README.md` and measured pane JSON.
+Unity-free integrated suite 1,707/1,707 plus final new A350 check 1/1; seven changed
+C# files parse cleanly; static asset audit passes. No Unity execution by instruction;
+native appearance, compilation, clipping and performance remain unverified.
+
+NEXT: merge this batch, then continue cockpit family shells and remaining visual
+immersion gaps. Bell interiors remain unsupported. Keep the no-Unity restriction.
+
 ## Where to resume — fitted passenger cabin code, 6 October 2026
 
 Codex; Bailey authorised merging both audit reports and continuing the recommended

@@ -14,6 +14,26 @@ namespace Airside.Presentation
         public bool Sidestick => Deck == JetFlightDeck.AirbusClassic || Deck == JetFlightDeck.AirbusA350 || Deck == JetFlightDeck.AirbusA220;
         public int DisplayCount => Deck == JetFlightDeck.Boeing737Max ? 4 :
             Deck == JetFlightDeck.Boeing787 || Deck == JetFlightDeck.AirbusA220 || Deck == JetFlightDeck.Embraer ? 5 : 6;
+        // Simplified visual stations, not certified aircraft dimensions. All six A350
+        // units share one format; lateral OIS units turn toward the seated pilots.
+        public readonly struct DisplayStation
+        {
+            public readonly float X, Y, Width, Height, Yaw;
+            public readonly string Title;
+            public readonly int Pilot;
+            public DisplayStation(float x, float y, string title, int pilot = -1, float yaw = 0f)
+            { X = x; Y = y; Width = 0.46f; Height = 0.32f; Title = title; Pilot = pilot; Yaw = yaw; }
+        }
+        public static readonly System.Collections.Generic.IReadOnlyList<DisplayStation> A350Displays =
+            System.Array.AsReadOnly(new[]
+            {
+                new DisplayStation(-1.04f, -0.40f, "OIS", yaw: -18f),
+                new DisplayStation(-0.51f, -0.40f, "PFD / ND", 0),
+                new DisplayStation(0f, -0.40f, "ECAM"),
+                new DisplayStation(0.51f, -0.40f, "PFD / ND", 1),
+                new DisplayStation(1.04f, -0.40f, "OIS", yaw: 18f),
+                new DisplayStation(0f, -0.74f, "SYSTEM"),
+            });
         private JetCockpitProfile(string id, JetFlightDeck deck, float y, float z, float width)
         { TypeId = id; Deck = deck; EyeY = y; EyeZ = z; HalfWidth = width; }
 

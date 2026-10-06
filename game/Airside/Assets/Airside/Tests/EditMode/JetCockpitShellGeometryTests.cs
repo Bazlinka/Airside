@@ -52,6 +52,33 @@ namespace Airside.Tests
                 Assert.That(seen, Is.EquivalentTo(geometry.WindowBoundary), "The window band must be one continuous loop");
             }
         }
+        [Test] public void A350DisplayStationsHaveEqualFormatsClearEdgesAndInwardLateralNormals()
+        {
+            var stations = JetCockpitProfile.A350Displays;
+            Assert.That(stations.Count, Is.EqualTo(6));
+            Assert.That(JetCockpitProfile.TryFor("A359", out var profile), Is.True);
+            var pilots = new HashSet<int>();
+            for (var i = 0; i < stations.Count; i++)
+            {
+                var a = stations[i];
+                Assert.That(a.Width, Is.EqualTo(stations[0].Width));
+                Assert.That(a.Height, Is.EqualTo(stations[0].Height));
+                Assert.That(Math.Abs(a.X) + a.Width * 0.5f, Is.LessThan(profile.HalfWidth * 0.875f));
+                // Positive yaw points a screen's rear-facing normal left, toward the
+                // pilots for the right lateral screen; the left screen mirrors it.
+                if (a.Yaw != 0f) Assert.That(a.X * -Math.Sin(a.Yaw * Math.PI / 180.0), Is.LessThan(0));
+                if (a.Pilot >= 0) Assert.That(pilots.Add(a.Pilot), Is.True);
+                for (var j = i + 1; j < stations.Count; j++)
+                {
+                    var b = stations[j];
+                    Assert.That(Math.Abs(a.X - b.X) > (a.Width + b.Width) * 0.5f ||
+                        Math.Abs(a.Y - b.Y) > (a.Height + b.Height) * 0.5f, Is.True,
+                        "Adjacent bezels must have clearance");
+                }
+            }
+            Assert.That(pilots, Is.EquivalentTo(new[] { 0, 1 }));
+        }
+
         [Test] public void GlareshieldGivesARealisticOverTheNoseAngleAndWindowsReachUp()
         {
             Assert.That(JetCockpitShellGeometry.OverNoseDownDegrees, Is.InRange(15f, 20f));

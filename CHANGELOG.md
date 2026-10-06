@@ -1,5 +1,10 @@
 ## Unreleased
 
+- Add family-specific cockpit controls, panels, overhead fittings and pilot seats
+  across all thirteen fixed-wing types; fit every passenger camera to individual
+  glazing and bound cabin sections to real window belts (ADR 0240). Unity-free
+  checks only; native visuals remain unverified.
+
 - Fit passenger windows independently from seat rows, add curved cabin walls/
   ceiling, recessed trim, shaped bins/PSUs, deeper inward views and nearby seat
   fittings. Align ATR42/A320/B789 cameras to individual kit panes; distinguish

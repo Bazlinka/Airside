@@ -1,5 +1,8 @@
 ## Unreleased
 
+- **Unity compiles again.** Three tests used `Math` without `using System;` or NUnit's
+  `Is.AnyOf`, which the headless harness accepts but Unity's NUnit does not.
+
 - Implement the refined shared interface and real maintenance journey (ADR 0245):
   normal startup without passengers/loading, traffic-aware taxi, apron shutdown,
   continuous tug positioning into the shed, repair and return to a free stand.

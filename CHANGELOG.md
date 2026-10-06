@@ -6,6 +6,11 @@
   return the mini map to a polished airport scope; keep the new scenery credits
   on a separate manual page so all attribution remains visible (ADR 0237).
 
+- **Mac builds recover from Unity's script-build hang.** `scripts/build-mac.sh` watches the
+  log; if it stops growing for 3 minutes (`AIRSIDE_BUILD_STALL_SECONDS`) right after Unity
+  starts `bee_backend`, it kills that run, clears the `Library/Bee` build graphs and retries
+  once, then fails clearly instead of hanging forever.
+
 - Map accuracy from open data (ADR 0236): Overture/Microsoft footprints, validated against SA Government
   LiDAR roofs, replace most invented suburb filler houses (real houses 4,523 → 17,618); trees come from the SA 2022
   LiDAR canopy height model; OSM airport snapshot refreshed to 2026-10-06; optional `--elvis` 1 m LiDAR terrain

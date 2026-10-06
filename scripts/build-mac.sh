@@ -18,12 +18,65 @@ bash "$root/scripts/stamp-build-identity.sh" --refresh
 
 mkdir -p "$root/work/builds"
 rm -rf "$destination"
+
+# Unity's script build (bee_backend) sometimes deadlocks after a pull changes scripts: it
+# queues every compile job, runs none, and the build sits at 0% CPU forever. Clearing its
+# cached build graphs fixes it. A stall is the log not growing for this long while the last
+# thing Unity started was bee_backend; real compiles finish well inside it.
+stall_seconds="${AIRSIDE_BUILD_STALL_SECONDS:-180}"
+bee="$root/game/Airside/Library/Bee"
+
+kill_tree() {
+  local child
+  for child in $(pgrep -P "$1" 2>/dev/null); do
+    kill_tree "$child"
+  done
+  kill "$1" 2>/dev/null || true
+}
+
+clear_bee_graphs() {
+  rm -rf "$bee"/*.dag "$bee"/*.dag.* "$bee"/*.dag_* "$bee/PlayerScriptAssemblies" "$bee"/artifacts/*.dag
+}
+
+# Sets status; returns 2 (and leaves status unset) when the script build stalled.
+run_unity() {
+  : > "$log"
+  "$unity" -batchmode -nographics -quit \
+    -projectPath "$root/game/Airside" \
+    -buildTarget StandaloneOSX \
+    -buildOSXUniversalPlayer "$destination" \
+    -logFile "$log" &
+  local pid=$! size=-1 idle=0 now
+  while kill -0 "$pid" 2>/dev/null; do
+    sleep 5
+    now="$(wc -c < "$log" 2>/dev/null || echo 0)"
+    if [ "$now" != "$size" ]; then
+      size="$now"
+      idle=0
+      continue
+    fi
+    idle=$((idle + 5))
+    if [ "$idle" -ge "$stall_seconds" ] \
+      && grep '^Starting: ' "$log" | tail -1 | grep -q 'bee_backend'; then
+      kill_tree "$pid"
+      wait "$pid" 2>/dev/null || true
+      return 2
+    fi
+  done
+  status=0
+  wait "$pid" || status=$?
+}
+
 status=0
-"$unity" -batchmode -nographics -quit \
-  -projectPath "$root/game/Airside" \
-  -buildTarget StandaloneOSX \
-  -buildOSXUniversalPlayer "$destination" \
-  -logFile "$log" || status=$?
+if ! run_unity; then
+  echo "Unity's script build stalled for ${stall_seconds}s; clearing Library/Bee build graphs and retrying." >&2
+  clear_bee_graphs
+  rm -rf "$destination"
+  if ! run_unity; then
+    echo "Mac build stalled again in Unity's script build after clearing Library/Bee. Log: $log" >&2
+    exit 1
+  fi
+fi
 
 # Everything Unity says goes to the log file, so a failure used to print nothing
 # at all. Show why, and never claim a build that is not on disk.

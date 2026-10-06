@@ -229,11 +229,10 @@ namespace Airside.Presentation
                 return;
 
             var career = operations.CareerState;
-            var ownedTypes = operations.Fleet
-                .Where(a => a.Airline.IsPlayer)
-                .Select(a => a.Type)
-                .ToList();
-            var fleetSize = ownedTypes.Count;
+            // The whole airline, outstation aircraft included, so Stats and the achievement toasts agree (ADR 0239).
+            var ownedTypes = operations.PlayerOwnedTypes();
+            var fleetSize = operations.PlayerFleetCount();
+            var liveFleet = fleetSize - operations.OutstationFleet.Count;
 
             AirlineName = operations.PlayerAirline.Name;
             CurrentLiveryHex = operations.PlayerAirline.LiveryHex;
@@ -241,7 +240,8 @@ namespace Airside.Presentation
             LifetimeRevenueLine = $"${career.LifetimeRevenue:N0} earned";
             ReliabilityLine = $"{career.Reliability}% reliability";
             TierLine = $"{career.Tier} tier";
-            FleetLine = $"{fleetSize} of {career.Base.FleetCapacity} aircraft";
+            FleetLine = $"{liveFleet} of {career.Base.FleetCapacity} aircraft"
+                        + (operations.OutstationFleet.Count > 0 ? $" · {operations.OutstationFleet.Count} based away" : string.Empty);
             BaseSummaryLine = career.Base.Title;
             BaseCapabilityLine = career.Base.Title
                                  + " · " + PlayerBase.MaintenanceCapabilityLine(career.BaseLevel)

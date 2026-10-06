@@ -225,6 +225,12 @@ namespace Airside.Simulation
         /// <summary>The original player aircraft, kept distinct from later Saabs with the same type.</summary>
         public bool IsFoundingAircraft { get; internal set; }
 
+        /// <summary>
+        /// Being moved between bases (ADR 0239): it flies in like any arrival but earns nothing and counts no flight
+        /// when it parks. Persisted from save v20, because a long ferry is likely to be saved mid-air.
+        /// </summary>
+        public bool IsFerry { get; internal set; }
+
         /// <summary>Revenue credited to this airframe since its logbook began (save v18).</summary>
         public long LifetimeRevenue { get; internal set; }
 

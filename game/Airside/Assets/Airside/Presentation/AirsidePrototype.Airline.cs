@@ -647,6 +647,10 @@ namespace Airside.Presentation
             var footer = hidden > 0
                 ? $"{visibleRows} shown · {hidden} more in Ops"
                 : available == 1 ? "1 aircraft available" : $"{available} aircraft available";
+            // Aircraft based away from Adelaide have no tile; say where they are so the count is not a mystery.
+            var awayFleet = Airside.Simulation.PlayerFleet.OutstationSummary(_operations);
+            if (hidden <= 0 && awayFleet.Length > 0)
+                footer += " · " + awayFleet;
             _shellDrawList.Clear();
             HudShellPainter.PaintOperations(_shellDrawList, box, _compactOpsRows, _selectedAircraftId, footer);
             var clicked = _hudPainter.Draw(_shellDrawList);
@@ -1947,6 +1951,8 @@ namespace Airside.Presentation
                 GUI.color = labelColour;
             }
 
+            DrawOutstationMarkers(mapRect, small, ink);
+
             if (hovered >= 0)
             {
                 var row = _mapDestinationRows[hovered];
@@ -2317,6 +2323,12 @@ namespace Airside.Presentation
                         break;
                     }
 
+                    if (TryPickOutstationMarker(ev.mousePosition))
+                    {
+                        ev.Use();
+                        break;
+                    }
+
                     var destinationHit = FlightPlanner.NearestWithin(_mapDestinationPoints, ev.mousePosition.x, ev.mousePosition.y);
                     if (destinationHit >= 0
                         && mapRect.Contains(new Vector2(_mapDestinationPoints[destinationHit].x, _mapDestinationPoints[destinationHit].y)))
@@ -2461,209 +2473,28 @@ namespace Airside.Presentation
             : !string.IsNullOrEmpty(e.DestinationCode) ? e.DestinationCode
             : "its route";
 
-        private bool _fleetNetworkView;
-        private string _selectedNetworkBase = "MEL";
-        private string _selectedNetworkRegistration;
-        private int _networkDestinationIndex;
-        private int _networkBuyTypeIndex;
-        private int _networkScroll;
-
-        private List<Destination> NetworkDestinations(OutstationAircraft aircraft)
-        {
-            var list = new List<Destination>();
-            if (aircraft == null || !DestinationCatalogue.TryFind(aircraft.BaseCode, out var origin))
-                return list;
-            foreach (var destination in DestinationCatalogue.All)
-            {
-                if (destination.Code == "ADL" || destination.Code == aircraft.BaseCode)
-                    continue;
-                if (RouteAccess.BandOf(destination) >= RouteBand.Tasman
-                    && _operations.CareerState.Tier < OperatingTier.International)
-                    continue;
-                if (!aircraft.Type.CanReach(origin.DistanceKmTo(destination))
-                    || !RouteAccess.Allows(aircraft.Type, destination))
-                    continue;
-                list.Add(destination);
-            }
-            return list;
-        }
-
-        private void DrawNetworkWorkspace(Rect rect)
-        {
-            var surface = Box(rect);
-            var body = HudShell.Body(surface, hasFooter: true);
-            var listWidth = body.Width * 0.47f;
-            var left = new HudBox(body.X, body.Y, listWidth, body.Height);
-            var right = new HudBox(body.X + listWidth + 18f, body.Y, body.Width - listWidth - 18f,
-                body.Height);
-            _workspaceDrawList.Clear();
-            _workspaceDrawList.Surface(surface);
-            var header = HudShell.Header(surface);
-            HudShellPainter.PaintSheetHeader(_workspaceDrawList, surface, "Network",
-                "Outstation bases and the aircraft flying from them",
-                new HudBox(header.X + HudShell.SurfacePadding + 12f, header.Y + 14f, header.Width * 0.5f, 30f),
-                new HudBox(header.X + HudShell.SurfacePadding, header.Y + 44f, header.Width - 300f, 16f));
-            var close = OperationsWorkspacePainter.CloseBox(surface);
-            _workspaceDrawList.Button(HudShellPainter.HeaderActionBox(surface),
-                "ADELAIDE", "network:back", HudButtonStyle.Secondary);
-            _workspaceDrawList.Caption(left.WithHeight(18f), "BASES");
-            var candidates = new[] { "MEL", "SYD", "BNE", "PER" };
-            for (var i = 0; i < candidates.Length; i++)
-            {
-                var code = candidates[i];
-                var row = new HudBox(left.X, left.Y + 24f + i * 30f, left.Width, 27f);
-                var open = _operations.CareerState.HasOutstationBase(code);
-                if (code == _selectedNetworkBase)
-                    _workspaceDrawList.Fill(row, HudTone.Accent, 0.22f);
-                _workspaceDrawList.Text(new HudBox(row.X + 9f, row.Y + 5f, row.Width - 150f, 19f),
-                    code + (open ? " · open" : $" · ${_operations.NextOutstationCost:N0}"), 13f,
-                    open ? HudTone.Default : HudTone.Muted);
-                if (!open && i == 0 && _operations.NextOutstationRequirement() is { Length: > 0 } needs)
-                    _workspaceDrawList.Text(new HudBox(left.X + 9f, left.Y + 24f + candidates.Length * 30f, left.Width - 18f, 16f),
-                        needs, 11f, HudTone.Caution);
-                _workspaceDrawList.Button(new HudBox(row.Right - 112f, row.Y + 1f, 108f, 25f),
-                    open ? "SELECT" : "OPEN",
-                    (open ? "network:base:" : "network:open:") + code, HudButtonStyle.Secondary);
-            }
-            var fleetArea = new HudBox(left.X, left.Y + 172f, left.Width, left.Height - 175f);
-            _workspaceDrawList.Caption(fleetArea.WithHeight(18f), _selectedNetworkBase + " AIRCRAFT");
-            var based = new List<OutstationAircraft>();
-            foreach (var aircraft in _operations.OutstationFleet)
-                if (aircraft.BaseCode == _selectedNetworkBase) based.Add(aircraft);
-            var visible = Math.Max(1, (int)((fleetArea.Height - 22f) / 34f));
-            _networkScroll = ScrollRows(_networkScroll, fleetArea, based.Count - visible);
-            if (based.Count == 0)
-                _workspaceDrawList.Text(new HudBox(fleetArea.X, fleetArea.Y + 27f, fleetArea.Width, 30f),
-                    "No aircraft based here yet.", 12f, HudTone.Muted);
-            for (var i = _networkScroll; i < based.Count && i < _networkScroll + visible; i++)
-            {
-                var aircraft = based[i];
-                var row = new HudBox(fleetArea.X, fleetArea.Y + 24f + (i - _networkScroll) * 34f,
-                    fleetArea.Width, 31f);
-                if (aircraft.Registration == _selectedNetworkRegistration)
-                    _workspaceDrawList.Fill(row, HudTone.Accent, 0.20f);
-                _workspaceDrawList.Text(new HudBox(row.X + 8f, row.Y + 7f, row.Width - 16f, 18f),
-                    aircraft.Registration + " · " + aircraft.Type.Name + " · "
-                    + (aircraft.HasFlight ? "on " + aircraft.DestinationCode
-                        : aircraft.InCheck(_clock.Now.ElapsedSeconds) ? "in check"
-                        : aircraft.CheckDue ? "check due" : "available"), 12f);
-                _workspaceDrawList.Hotspot(row, "network:select:" + aircraft.Registration);
-            }
-
-            _workspaceDrawList.Caption(right.WithHeight(18f), "GROW THIS BASE");
-            var offer = AircraftAcquisition.All[_networkBuyTypeIndex % AircraftAcquisition.All.Count];
-            _workspaceDrawList.Text(new HudBox(right.X, right.Y + 29f, right.Width, 24f),
-                $"Next aircraft · {offer.Type.Name} · ${offer.Price:N0}", 14f, HudTone.Default,
-                HudTextStyle.Bold);
-            _workspaceDrawList.Button(new HudBox(right.X, right.Y + 60f, 58f, 28f), "PREV",
-                "network:type-prev", HudButtonStyle.Secondary);
-            _workspaceDrawList.Button(new HudBox(right.X + 64f, right.Y + 60f, 58f, 28f), "NEXT",
-                "network:type-next", HudButtonStyle.Secondary);
-            var flyable = _operations.HasOutstationRoute(offer.Type, _selectedNetworkBase);
-            _workspaceDrawList.Button(new HudBox(right.Right - 135f, right.Y + 60f, 135f, 28f),
-                "BUY AT BASE", "network:buy", HudButtonStyle.Primary,
-                _operations.CareerState.HasOutstationBase(_selectedNetworkBase) && flyable);
-            if (!flyable)
-                _workspaceDrawList.Text(new HudBox(right.X + 130f, right.Y + 66f, right.Width - 275f, 18f),
-                    $"No route from {_selectedNetworkBase}", 11f, HudTone.Caution);
-            _workspaceDrawList.Hairline(new HudBox(right.X, right.Y + 103f, right.Width, 1f));
-            OutstationAircraft selected = null;
-            foreach (var aircraft in based)
-                if (aircraft.Registration == _selectedNetworkRegistration) selected = aircraft;
-            if (selected == null)
-            {
-                _workspaceDrawList.Text(new HudBox(right.X, right.Y + 122f, right.Width, 48f),
-                    "Select an aircraft to plan a flight or set a repeat schedule.", 13f, HudTone.Muted,
-                    HudTextStyle.Wrap);
-            }
-            else
-            {
-                _workspaceDrawList.Text(new HudBox(right.X, right.Y + 121f, right.Width, 25f),
-                    selected.Registration + " · " + selected.Type.Name, 17f, HudTone.Default,
-                    HudTextStyle.Bold);
-                var destinations = NetworkDestinations(selected);
-                if (destinations.Count > 0)
-                {
-                    _networkDestinationIndex %= destinations.Count;
-                    var destination = destinations[_networkDestinationIndex];
-                    _workspaceDrawList.Text(new HudBox(right.X, right.Y + 152f, right.Width, 22f),
-                        "Route: " + selected.BaseCode + " ↔ " + destination.Name, 13f);
-                    _workspaceDrawList.Button(new HudBox(right.X, right.Y + 180f, 58f, 28f), "PREV",
-                        "network:route-prev", HudButtonStyle.Secondary);
-                    _workspaceDrawList.Button(new HudBox(right.X + 64f, right.Y + 180f, 58f, 28f), "NEXT",
-                        "network:route-next", HudButtonStyle.Secondary);
-                    if (DestinationCatalogue.TryFind(selected.BaseCode, out var origin))
-                    {
-                        var km = origin.DistanceKmTo(destination);
-                        var forecast = _operations.Forecast(origin, destination, selected.Type);
-                        var pay = forecast.Revenue;
-                        var cost = forecast.Cost;
-                        _workspaceDrawList.Text(new HudBox(right.X, right.Y + 220f, right.Width, 20f),
-                            $"{forecast.LoadText} · pays about ${pay:N0} · profit ${pay - cost:N0}",
-                            12f, pay >= cost ? HudTone.Positive : HudTone.Caution);
-                    }
-                    _workspaceDrawList.Button(new HudBox(right.X, right.Y + 256f, 150f, 32f),
-                        selected.CheckDue ? "START CHECK" : "PLAN FLIGHT",
-                        selected.CheckDue ? "network:check" : "network:plan",
-                        HudButtonStyle.Primary, !selected.HasFlight
-                        && !selected.InCheck(_clock.Now.ElapsedSeconds));
-                    var repeat = _operations.RepeatSchedules.FirstOrDefault(p => p.Registration == selected.Registration
-                        && p.DestinationCode == destination.Code);
-                    _workspaceDrawList.Button(new HudBox(right.X + 160f, right.Y + 256f, 155f, 32f),
-                        repeat == null ? "REPEAT 12 HOURS" : repeat.Paused ? "RESUME REPEAT" : "PAUSE REPEAT",
-                        "network:repeat", HudButtonStyle.Secondary, _operations.DelegationUnlocked);
-                    if (repeat != null)
-                    {
-                        _workspaceDrawList.Text(new HudBox(right.X, right.Y + 300f, right.Width, 45f),
-                            repeat.Exception.Length > 0 ? repeat.Exception :
-                            $"Repeats to {repeat.DestinationCode} every {repeat.IntervalHours} h while you play",
-                            12f, repeat.Exception.Length > 0 ? HudTone.Caution : HudTone.Muted,
-                            HudTextStyle.Wrap);
-                        _workspaceDrawList.Button(new HudBox(right.X, right.Y + 349f, 155f, 28f),
-                            "REMOVE REPEAT", "network:remove-repeat", HudButtonStyle.Secondary);
-                    }
-                    else if (!_operations.DelegationUnlocked)
-                        _workspaceDrawList.Text(new HudBox(right.X, right.Y + 300f, right.Width, 32f),
-                            $"Repeat schedules unlock after 12 flights you plan yourself "
-                            + $"({_operations.CareerState.ManualRotations}/12).", 12f, HudTone.Muted);
-                }
-            }
-            var footer = HudShell.Footer(surface);
-            _workspaceDrawList.Hairline(HudShell.FooterRule(surface));
-            _workspaceDrawList.Text(footer.Inset(HudShell.SurfacePadding, 8f, HudShell.SurfacePadding, 0f)
-                .WithHeight(20f), "Outstation flights happen off the map. Adelaide flights use the live airport.",
-                11f, HudTone.Muted);
-            DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
-        }
-
-        /// <summary>The Fleet workspace (ADR 0057): your aircraft, their detail, the real market.</summary>
+        /// <summary>
+        /// The Fleet workspace (ADR 0057, 0239): every aircraft at every base, the profile of the selected one,
+        /// and the market for the chosen base.
+        /// </summary>
         private void DrawFleetWorkspace(Rect rect)
         {
-            if (_fleetNetworkView)
-            {
-                DrawNetworkWorkspace(rect);
-                return;
-            }
             var surface = Box(rect);
-            _fleetWorkspace.Rebuild(_operations, _clock.Now, _selectedAircraftId);
+            _fleetWorkspace.Rebuild(_operations, _clock.Now, _selectedAircraftId, _fleetBoard);
             if (!_fleetWorkspace.HasSelection && _fleetWorkspace.Mine.Count > 0)
             {
                 _selectedAircraftId = _fleetWorkspace.Mine[0].Registration;
-                _fleetWorkspace.Rebuild(_operations, _clock.Now, _selectedAircraftId);
+                _fleetWorkspace.Rebuild(_operations, _clock.Now, _selectedAircraftId, _fleetBoard);
             }
+            FillFleetCameras();
             var layout = FleetWorkspaceLayout.Create(surface, _fleetWorkspace.Market.Count);
-            var rows = _fleetWorkspace.Mine.Count + (_fleetShowOtherOperators
-                ? _fleetWorkspace.Others.Count + (_fleetWorkspace.Others.Count > 0 ? 1 : 0)
-                : 0);
+            var rows = _fleetWorkspace.RosterSlotCount(_fleetShowOtherOperators);
             _rosterScrollRow = ScrollRows(_rosterScrollRow, layout.Roster, rows - layout.VisibleRosterRows);
             _fleetMarketStart = FleetWorkspacePainter.ClampMarketStart(_fleetMarketStart, _fleetWorkspace.Market.Count,
                 layout.MarketRows);
             FleetWorkspacePainter.Paint(_workspaceDrawList, _fleetWorkspace, layout, _selectedAircraftId,
                 _rosterScrollRow, _fleetShowOtherOperators, _fleetMarketStart);
-            var close = OperationsWorkspacePainter.CloseBox(surface);
-            _workspaceDrawList.Button(HudShellPainter.HeaderActionBox(surface),
-                "NETWORK", "network:view", HudButtonStyle.Secondary);
-            DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
+            DispatchFleetAction(_hudPainter.Draw(_workspaceDrawList));
         }
 
         /// <summary>The Contracts workspace (ADR 0057): the active commitment beside the market.</summary>
@@ -2790,31 +2621,6 @@ namespace Airside.Presentation
             if (string.IsNullOrEmpty(action))
                 return;
 
-            if (action.StartsWith("network:open:", StringComparison.Ordinal))
-            {
-                var baseCode = action.Substring("network:open:".Length);
-                var result = _operations.OpenOutstationBase(baseCode);
-                ShowToast(result.Accepted ? "Your " + baseCode + " base is open." : result.Reason);
-                if (result.Accepted) { _selectedNetworkBase = baseCode; SaveAirline(); }
-                PlayUiClick();
-                return;
-            }
-            if (action.StartsWith("network:base:", StringComparison.Ordinal))
-            {
-                _selectedNetworkBase = action.Substring("network:base:".Length);
-                _selectedNetworkRegistration = null;
-                _networkScroll = 0;
-                PlayUiClick();
-                return;
-            }
-            if (action.StartsWith("network:select:", StringComparison.Ordinal))
-            {
-                _selectedNetworkRegistration = action.Substring("network:select:".Length);
-                _networkDestinationIndex = 0;
-                PlayUiClick();
-                return;
-            }
-
             var goalId = HudAction.Payload(action, HudAction.PinGoalPrefix);
             if (goalId.Length > 0)
             {
@@ -2830,87 +2636,6 @@ namespace Airside.Presentation
                 case HudAction.Close:
                     TryCloseAirlineOverlay();
                     return;
-                case "network:view":
-                    _fleetNetworkView = true;
-                    PlayUiClick();
-                    return;
-                case "network:back":
-                    _fleetNetworkView = false;
-                    PlayUiClick();
-                    return;
-                case "network:type-prev":
-                    _networkBuyTypeIndex = (_networkBuyTypeIndex + AircraftAcquisition.All.Count - 1)
-                                           % AircraftAcquisition.All.Count;
-                    PlayUiClick();
-                    return;
-                case "network:type-next":
-                    _networkBuyTypeIndex = (_networkBuyTypeIndex + 1) % AircraftAcquisition.All.Count;
-                    PlayUiClick();
-                    return;
-                case "network:route-prev":
-                case "network:route-next":
-                {
-                    var aircraft = _operations.OutstationFleet.FirstOrDefault(a =>
-                        a.Registration == _selectedNetworkRegistration);
-                    var routes = NetworkDestinations(aircraft);
-                    if (routes.Count > 0)
-                        _networkDestinationIndex = (_networkDestinationIndex
-                            + (action == "network:route-next" ? 1 : routes.Count - 1)) % routes.Count;
-                    PlayUiClick();
-                    return;
-                }
-                case "network:buy":
-                {
-                    var offer = AircraftAcquisition.All[_networkBuyTypeIndex];
-                    var result = _operations.BuyAircraftAtOutstation(offer.Type, _selectedNetworkBase);
-                    ShowToast(result.Accepted ? "Bought " + Article.A(offer.Type.Name) + " for " + _selectedNetworkBase + "." : result.Reason);
-                    if (result.Accepted) SaveAirline();
-                    PlayUiClick();
-                    return;
-                }
-                case "network:plan":
-                case "network:repeat":
-                {
-                    var aircraft = _operations.OutstationFleet.FirstOrDefault(a =>
-                        a.Registration == _selectedNetworkRegistration);
-                    var routes = NetworkDestinations(aircraft);
-                    if (aircraft == null || routes.Count == 0) return;
-                    var networkDestination = routes[_networkDestinationIndex % routes.Count];
-                    CommandResult result;
-                    if (action == "network:plan")
-                        result = _operations.ScheduleOutstationService(aircraft.Registration,
-                            networkDestination.Code, _clock.Now.Advance(30 * 60));
-                    else
-                    {
-                        // Pause/resume only the plan for this route; another route replaces it.
-                        var repeat = _operations.RepeatSchedules.FirstOrDefault(p =>
-                            p.Registration == aircraft.Registration && p.DestinationCode == networkDestination.Code);
-                        result = repeat == null
-                            ? _operations.SetRepeatSchedule(aircraft.Registration, networkDestination.Code, 12)
-                            : _operations.PauseRepeatSchedule(aircraft.Registration, !repeat.Paused);
-                    }
-                    ShowToast(result.Accepted ? (action == "network:plan" ? "Flight planned." : "Repeat schedule updated.")
-                        : result.Reason);
-                    if (result.Accepted) SaveAirline();
-                    PlayUiClick();
-                    return;
-                }
-                case "network:check":
-                {
-                    var result = _operations.StartOutstationCheck(_selectedNetworkRegistration);
-                    ShowToast(result.Accepted ? "Check started." : result.Reason);
-                    if (result.Accepted) SaveAirline();
-                    PlayUiClick();
-                    return;
-                }
-                case "network:remove-repeat":
-                {
-                    var result = _operations.RemoveRepeatSchedule(_selectedNetworkRegistration);
-                    ShowToast(result.Accepted ? "Repeat schedule removed." : result.Reason);
-                    if (result.Accepted) SaveAirline();
-                    PlayUiClick();
-                    return;
-                }
                 case HudAction.CancelContract:
                     AbandonContractFromHud();
                     return;
@@ -3130,6 +2855,12 @@ namespace Airside.Presentation
         {
             if (!AircraftType.TryFromId(typeId, out var type))
                 return;
+            // The market delivers to the base chosen on the bases strip (ADR 0239).
+            if (_fleetWorkspace.BuyBase != _operations.Home.Code && _fleetWorkspace.BuyBase.Length > 0)
+            {
+                BuyAtOutstationFromHud(type, _fleetWorkspace.BuyBase);
+                return;
+            }
             var result = _operations.BuyAircraft(type);
             if (result.Accepted)
             {
@@ -3172,13 +2903,17 @@ namespace Airside.Presentation
 
         private FleetAircraft NewestPlayerOfType(AircraftType type)
         {
+            // The last aircraft to join, not the highest registration: VH-PAX sorts above every VH-PA? mark, so a
+            // second Saab used to open the founding aircraft's planner instead of the new one's.
             FleetAircraft newest = null;
             foreach (var aircraft in PlayerFleet())
             {
-                if (!ReferenceEquals(aircraft.Type, type))
+                if (!ReferenceEquals(aircraft.Type, type) || aircraft.IsFoundingAircraft)
                     continue;
                 if (newest == null
-                    || string.CompareOrdinal(aircraft.Registration, newest.Registration) > 0)
+                    || aircraft.JoinedAirlineAt.CompareTo(newest.JoinedAirlineAt) > 0
+                    || aircraft.JoinedAirlineAt.CompareTo(newest.JoinedAirlineAt) == 0
+                    && string.CompareOrdinal(aircraft.Registration, newest.Registration) > 0)
                     newest = aircraft;
             }
 

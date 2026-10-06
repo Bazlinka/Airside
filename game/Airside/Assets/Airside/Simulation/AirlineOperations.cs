@@ -755,7 +755,18 @@ namespace Airside.Simulation
         // ---- Owner commands ------------------------------------------------------
 
         public const int OutstationCapacity = 8;
-        private static readonly string[] OutstationCandidates = { "MEL", "SYD", "BNE", "PER" };
+        private static readonly string[] OutstationCodes = { "MEL", "SYD", "BNE", "PER" };
+
+        /// <summary>The only cities that can host an outstation base — the one list save, rules and HUD share.</summary>
+        public static IReadOnlyList<string> OutstationCandidates => OutstationCodes;
+
+        public static bool IsOutstationCandidate(string code)
+        {
+            foreach (var candidate in OutstationCodes)
+                if (candidate == code)
+                    return true;
+            return false;
+        }
 
         public long NextOutstationCost => CareerState.OutstationBases.Count == 0 ? 15_000 : 40_000;
 

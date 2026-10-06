@@ -260,6 +260,11 @@ namespace Airside.Presentation
         public const string PinGoalPrefix = "career:pin:";
         public const string StandPrefix = "stand:";
 
+        /// <summary>The three views of an aircraft, as the selection card and the Fleet profile both dispatch them.</summary>
+        public const string CameraCockpit = "camera-cockpit";
+        public const string CameraPassenger = "camera-passenger";
+        public const string CameraExterior = "camera-exterior";
+
         public static string PinGoal(string id) => PinGoalPrefix + id;
         public static string Select(string registration) => SelectPrefix + registration;
         public static string Buy(string typeId) => BuyPrefix + typeId;

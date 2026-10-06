@@ -13,11 +13,13 @@ listening session or numerical performance measurement is claimed by this sign-o
 green. Latest native Unity result: 1,919 passed / 0 failed / 2 inconclusive.
 Latest combined headless regression: 1,477 passed.
 
-**NEXT:** release preparation (clean Mac package, version/tag and release notes)
-if Bailey wants to ship this accepted version. If choosing new development,
-P2 freight mode is the next standing product slice; P3 structure/performance is
-technical backlog. No implementation, release publication or new expansion is
-started by this documentation change. Companion/CloudKit remains unopened.
+**Readiness:** Bailey clarified: “im happy with it - but its not ready.” Current
+playtest completion does not mean development is finished or the game is ready
+for release. Continue development; release preparation is not the next milestone.
+
+**NEXT:** Bailey selected “Follow the existing backlog”: P2 freight mode next,
+then P3 structure/performance work. No new implementation starts with this
+clarification. Companion/CloudKit remains unopened.
 
 **Handoff:** Codex; documentation-only acceptance update. All previous handoff
 entries and the old “Next work” footer below are historical and superseded by this

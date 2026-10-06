@@ -18,14 +18,15 @@ merged P1 visuals are accepted and the earlier visual-overhaul goal was stopped
 (see `GAME.md`, PR #510 handoff). Further visual content remains optional backlog.
 Do not resume P1 or ask Bailey to repeat old playtests by default.
 
-Recommended next action for shipping is release preparation: a clean Mac package,
-version/tag and release notes. If Bailey chooses development, P2 freight mode is
-the next product slice. P3 technical debt remains open; measured performance
-budgets are not inferred from owner acceptance. P4 milestones remain unopened.
+Bailey clarified that he is happy with the game but it is not ready. Continue
+development; release preparation is deferred. P2 freight mode is the standing next
+product slice; Bailey selected “Follow the existing backlog”.
+P3 technical debt remains open; measured performance budgets are not inferred
+from owner acceptance. P4 milestones remain unopened.
 
 ## Verdict (do not re-litigate)
 
-Airside is already a production-grade Adelaide airline game, not a prototype.
+Airside has a playable Adelaide airline foundation and remains in development.
 Career, saves (v19), tower, AI traffic, Glass Cockpit and the map stack are solid.
 P0 and current manual playtest acceptance are closed by Bailey (2026-10-06).
 The current presentation is accepted. Remaining development backlog is freight

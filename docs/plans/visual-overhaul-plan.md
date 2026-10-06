@@ -5,7 +5,7 @@ Status: **current merged visuals accepted (Bailey 2026-10-06); overhaul goal sto
 Bailey is happy with the game and marked current playtesting complete. See
 `docs/testing/playtest-acceptance-2026-10-06.md`. The phase descriptions below
 retain the earlier plan and optional content backlog; do not resume them without
-new prioritisation. Current next choices are release preparation or P2 freight
+new prioritisation. The game remains in development; the next recommendation is P2 freight
 in `docs/plans/post-audit-improvement-plan.md`.
 
 ## Goal

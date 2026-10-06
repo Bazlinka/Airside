@@ -31,7 +31,7 @@ namespace Airside.Simulation
         public static bool IsOverdue(FleetAircraft aircraft) => RotationsUntilDue(aircraft) <= 0;
 
         public static bool InCheck(FleetAircraft aircraft, SimulationTime now) =>
-            aircraft?.CheckUntil is { } until && until.CompareTo(now) > 0;
+            aircraft?.MaintenanceJob != null || aircraft?.CheckUntil is { } until && until.CompareTo(now) > 0;
 
         /// <summary>
         /// Parked, idle, not already in a check — the HUD can offer the button. Funds and
@@ -42,7 +42,8 @@ namespace Airside.Simulation
             && aircraft.Airline.IsPlayer
             && aircraft.State == FleetState.AtStand
             && !aircraft.Scheduled.HasValue
-            && !InCheck(aircraft, now);
+            && !InCheck(aircraft, now)
+            && now.ElapsedSeconds >= BoardingFlow.ClearedForMaintenanceAt(aircraft);
 
         public static long CheckSeconds(AircraftType type) =>
             AircraftCatalogue.TryFor(type, out var spec) && spec.StandClass == StandClass.TerminalGate
@@ -85,6 +86,8 @@ namespace Airside.Simulation
         {
             if (aircraft == null || !aircraft.Airline.IsPlayer)
                 return string.Empty;
+            if (aircraft.MaintenanceJob is { } job)
+                return job.Label + (string.IsNullOrEmpty(job.WaitReason) ? string.Empty : " · " + job.WaitReason);
             if (InCheck(aircraft, now))
                 return $"In check until {(clock ?? AirlineClock.Default).TimeText(aircraft.CheckUntil.Value)}";
             if (IsOverdue(aircraft))

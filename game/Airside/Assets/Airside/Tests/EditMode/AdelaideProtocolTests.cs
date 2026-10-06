@@ -240,7 +240,7 @@ namespace Airside.Tests
             ops.Fleet.Single().IsFerry = true;
             ops.RestoreTower(new SimulationTime(600), new SimulationTime(300), 0);
             var save = AirlineSave.Capture(ops);
-            Assert.That(save.Version, Is.EqualTo(21));
+            Assert.That(save.Version, Is.EqualTo(AirlineSaveData.CurrentVersion));
             save.Version = 20;
             // Version 20 predates these fields: even a stray field cannot become wake history.
             save.MainWake = new RunwayWakeRecord { TypeId = "UNKNOWN", EventAtSeconds = -1 };

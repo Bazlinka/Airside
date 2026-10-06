@@ -491,13 +491,14 @@ namespace Airside.Simulation
     public readonly struct GroundLegPart
     {
         public GroundLegPart(GroundPath path, bool tailFirst, double pauseBeforeSeconds = 0, float trackMetres = 0f,
-            bool slipFree = false)
+            bool slipFree = false, float turnAfterMetres = 0f)
         {
             Path = path;
             TailFirst = tailFirst;
             PauseBeforeSeconds = pauseBeforeSeconds;
             TrackMetres = trackMetres;
             SlipFree = slipFree;
+            TurnAfterMetres = turnAfterMetres;
         }
 
         public GroundPath Path { get; }
@@ -517,6 +518,7 @@ namespace Airside.Simulation
 
         /// <summary>Nose on the path, main gear trailing with no sideslip. Used on the lineup turn.</summary>
         public bool SlipFree { get; }
+        public float TurnAfterMetres { get; }
         public double Seconds => PauseBeforeSeconds + Path.Seconds;
     }
 
@@ -548,6 +550,8 @@ namespace Airside.Simulation
     public sealed class GroundLeg
     {
         private readonly List<GroundLegPart> _parts;
+
+        public GroundLegPart FirstPart => _parts[0];
 
         public GroundLeg(params GroundLegPart[] parts)
         {
@@ -778,7 +782,7 @@ namespace Airside.Simulation
                 {
                     var span = part.Path.Seconds;
                     var u = span > 1e-6 ? pathSeconds / span : 1.0;
-                    var late = now + residual * Smooth01((u - 0.8) / 0.2);
+                    var late = now + residual * (part.TurnAfterMetres > 0f ? PushTurnBlend(part, pathSeconds) : Smooth01((u - 0.8) / 0.2));
                     return new GroundPose(pose.X, pose.Z, (float)Math.Sin(late), (float)Math.Cos(late), pose.Speed, true);
                 }
             }
@@ -836,6 +840,9 @@ namespace Airside.Simulation
         /// <summary>Tug starts the turnout a quarter of the way through the push and finishes before it stops.</summary>
         private static double PushTurnBlend(GroundLegPart push, double pathSeconds)
         {
+            if (push.TurnAfterMetres > 0f)
+                return Smooth01((push.Path.DistanceAt(pathSeconds) - push.TurnAfterMetres)
+                    / Math.Max(.01f, push.Path.Length - push.TurnAfterMetres));
             var span = push.Path.Seconds;
             var u = span > 1e-6 ? pathSeconds / span : 1.0;
             return Smooth01((u - 0.25) / 0.67);

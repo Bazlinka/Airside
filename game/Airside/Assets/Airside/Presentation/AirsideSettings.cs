@@ -18,7 +18,7 @@ namespace Airside.Presentation
 
         public bool SoundOn = true;
         public bool FieldTags = true;
-        public bool MiniMap = true;
+        public bool MiniMap = false;
         public bool FollowOnSelect = true;
         public bool InvertOrbit = false;
         public bool CockpitMotion = true;
@@ -122,7 +122,7 @@ namespace Airside.Presentation
             var settings = new AirsideSettings();
             settings.SoundOn = Pref("sound", 1) != 0;
             settings.FieldTags = Pref("tags", 1) != 0;
-            settings.MiniMap = Pref("minimap", 1) != 0;
+            settings.MiniMap = Pref("minimap", 0) != 0;
             settings.FollowOnSelect = Pref("follow", 1) != 0;
             settings.InvertOrbit = Pref("invert", 0) != 0;
             settings.CockpitMotion = Pref("cockpitmotion.v1", 1) != 0;

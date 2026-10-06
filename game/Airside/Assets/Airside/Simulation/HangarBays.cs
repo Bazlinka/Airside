@@ -61,7 +61,7 @@ namespace Airside.Simulation
             var entries = new List<Entry>();
             foreach (var aircraft in fleet)
             {
-                if (aircraft == subject || aircraft == null || !aircraft.Airline.IsPlayer || !aircraft.CheckUntil.HasValue)
+                if (aircraft == subject || aircraft == null || !aircraft.Airline.IsPlayer || !aircraft.CheckUntil.HasValue || aircraft.MaintenanceJob != null)
                     continue;
                 var until = aircraft.CheckUntil.Value.ElapsedSeconds;
                 entries.Add(new Entry { Aircraft = aircraft, End = until, Start = until - Maintenance.CheckSeconds(aircraft.Type, level) });
@@ -128,6 +128,12 @@ namespace Airside.Simulation
         /// <summary>The berth of an aircraft already in its check.</summary>
         public static Berth Of(IEnumerable<FleetAircraft> fleet, FleetAircraft aircraft, PlayerBaseLevel level)
         {
+            if (aircraft?.MaintenanceJob is { } job)
+            {
+                var options = HangarTow.Options(aircraft.Type, new StableId(job.OriginStand));
+                for (var i = 0; i < options.Count; i++)
+                    if (options[i].HangarId == job.HangarId) return new Berth(true, i, 0, false, 0);
+            }
             if (aircraft == null || !aircraft.CheckUntil.HasValue)
                 return new Berth(false, 0, 0, false, 0);
             var end = aircraft.CheckUntil.Value.ElapsedSeconds;

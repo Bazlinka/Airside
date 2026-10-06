@@ -132,7 +132,7 @@ namespace Airside.Simulation
                 RotationsUntilCheck = Maintenance.RotationsUntilDue(aircraft),
                 InCheck = Maintenance.InCheck(aircraft, now)
             };
-            if (entry.InCheck && aircraft.CheckUntil.HasValue)
+            if (entry.InCheck && aircraft.MaintenanceJob == null && aircraft.CheckUntil.HasValue)
                 entry.CheckUntilSeconds = aircraft.CheckUntil.Value.ElapsedSeconds;
 
             if (aircraft.Scheduled.HasValue)

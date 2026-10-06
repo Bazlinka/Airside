@@ -125,6 +125,10 @@ namespace Airside.Tests
 
             model.Rebuild(ops, plane, destination, plane.CheckUntil.Value.ElapsedSeconds,
                 clock.Now, RouteMapFilter.Available);
+            Assert.That(model.CanPlan, Is.False, "a requested check stays unavailable until the aircraft returns");
+            clock.Set(new SimulationTime(24000));
+            ops.Update();
+            model.Rebuild(ops, plane, destination, 900, clock.Now, RouteMapFilter.Available);
             Assert.That(model.CanPlan, Is.True);
         }
 

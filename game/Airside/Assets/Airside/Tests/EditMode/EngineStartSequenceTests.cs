@@ -54,7 +54,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void AircraftInACheck_IsTowedColdWithNobodyBoarding()
+        public void MaintenanceWaitsForDeplaningThenClosesDoorsWithoutBoarding()
         {
             var (clock, ops, plane) = Parked();
             DestinationCatalogue.TryFind("KGC", out var kgc);
@@ -71,11 +71,13 @@ namespace Airside.Tests
             clock.Set(new SimulationTime(parkedAt + 20));
             ops.Update();
             Assert.That(EngineStartSequence.For(plane, parkedAt + 20).AnyRunning, Is.True);
+            Assert.That(ops.StartCheck(plane).Accepted, Is.False, "arriving people must finish deplaning");
+            clock.Set(new SimulationTime((long)Math.Ceiling(BoardingFlow.ClearedForMaintenanceAt(plane))));
+            ops.Update();
             Assert.That(ops.StartCheck(plane).Accepted, Is.True);
-
-            var now = parkedAt + 25;
+            var now = clock.Now.ElapsedSeconds + 5;
             var state = EngineStartSequence.For(plane, now);
-            Assert.That(state.AnyRunning, Is.False, "towed with the engines off");
+            Assert.That(state.AnyRunning, Is.False, "preparation before normal maintenance startup");
             Assert.That(state.DoorsOpen, Is.False);
             Assert.That(state.Beacon, Is.False);
             var moves = new System.Collections.Generic.List<PassengerMove>();
@@ -84,7 +86,9 @@ namespace Airside.Tests
             Assert.That(BoardingFlow.CargoDoorOpen(plane, now), Is.EqualTo(0f));
 
             var after = plane.CheckUntil.Value.ElapsedSeconds + 1;
-            Assert.That(BoardingFlow.InCheck(plane, after), Is.False);
+            Assert.That(BoardingFlow.InCheck(plane, after), Is.True, "job owns availability until actual return");
+            clock.Set(new SimulationTime(parkedAt + 24 * 3600)); ops.Update();
+            Assert.That(BoardingFlow.InCheck(plane, clock.Now.ElapsedSeconds), Is.False);
         }
 
         [Test]

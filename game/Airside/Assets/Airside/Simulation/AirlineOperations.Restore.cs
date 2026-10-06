@@ -30,7 +30,8 @@ namespace Airside.Simulation
                 throw new FormatException($"{registration} is {state} with no departure stand.");
             // AtStand/TaxiIn always require a stand. Newer saves may also contain an AI
             // arrival reservation while holding or landing; older saves legitimately do not.
-            var requiresStand = state is FleetState.AtStand or FleetState.TaxiIn;
+            var requiresStand = state is FleetState.AtStand or FleetState.TaxiIn
+                                || state == FleetState.Maintenance && !string.IsNullOrEmpty(stand.Value);
             var hasReservation = !string.IsNullOrEmpty(stand.Value)
                                  && state is FleetState.HoldingForLanding or FleetState.Landing
                                      or FleetState.GoAround or FleetState.AwaitingStand;

@@ -124,6 +124,8 @@ namespace Airside.Presentation
 
         private GroundPose FleetGroundPose(FleetAircraft aircraft, FleetVisual visual, float lookAheadSeconds)
         {
+            if (aircraft.MaintenanceJob is { } job)
+                return job.Pose(aircraft.Type, _preciseTime + lookAheadSeconds);
             if (lookAheadSeconds != 0f)
             {
                 // ADR 0144: look ahead from where the aircraft is drawn, not from where the plan says.
@@ -142,7 +144,7 @@ namespace Airside.Presentation
 
             // ADR 0144: every taxiing, queueing and lineup pose comes from the ground-flow chain, so an
             // aircraft never jumps; parked stays exact.
-            var flow = GroundFlowPose(aircraft, visual, 0f);
+            GroundPose? flow = aircraft.MaintenanceJob == null ? GroundFlowPose(aircraft, visual, 0f) : null;
             var pose = flow.HasValue
                 ? HumanGroundPose(aircraft, visual.Leg, flow.Value)
                 : ComputeFleetGroundPose(aircraft, visual, 0f);
@@ -152,6 +154,7 @@ namespace Airside.Presentation
 
         private GroundPose ComputeFleetGroundPose(FleetAircraft aircraft, FleetVisual visual, float lookAheadSeconds)
         {
+            if (aircraft.MaintenanceJob is { } job) return job.Pose(aircraft.Type, _preciseTime + lookAheadSeconds);
             switch (visual.Leg)
             {
                 case FleetGroundLeg.Parked:

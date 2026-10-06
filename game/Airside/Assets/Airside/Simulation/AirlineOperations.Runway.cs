@@ -158,7 +158,13 @@ namespace Airside.Simulation
             {
                 GroundLeg leg;
                 var legStartsAt = aircraft.StateStartedAt.ElapsedSeconds;
-                if (aircraft.State == FleetState.Landing && aircraft.StateEndsAt.HasValue
+                if (aircraft.MaintenanceJob is { } job)
+                {
+                    leg = job.ActiveLeg(aircraft.Type);
+                    if (leg == null) continue;
+                    legStartsAt = job.PhaseStartedAt;
+                }
+                else if (aircraft.State == FleetState.Landing && aircraft.StateEndsAt.HasValue
                     && !IsMissedApproachLanding(aircraft))
                 {
                     leg = AdelaideGround.VacateFor(aircraft.Type, aircraft.AssignedRunway);
@@ -170,7 +176,7 @@ namespace Airside.Simulation
                     leg = AdelaideGround.TaxiIn(aircraft.Stand, aircraft.Type, aircraft.AssignedRunway);
                 else
                     continue;
-                foreach (var crossing in RunwayCrossings.For(leg, aircraft.AssignedRunway, aircraft.Type))
+                foreach (var crossing in RunwayCrossings.For(leg, aircraft.AssignedRunway, aircraft.Type, aircraft.MaintenanceJob != null))
                 {
                     if (crossing.MainStrip != mainStrip)
                         continue;
@@ -185,9 +191,9 @@ namespace Airside.Simulation
         }
 
         /// <summary>The first crossing on <paramref name="leg"/>, started now, that would meet a busy strip.</summary>
-        internal RunwayCrossing? CrossingIntoBusyStrip(GroundLeg leg, RunwayDirection ownRunway, SimulationTime start, AircraftType type = null)
+        internal RunwayCrossing? CrossingIntoBusyStrip(GroundLeg leg, RunwayDirection ownRunway, SimulationTime start, AircraftType type = null, bool includeOwnRunway = false)
         {
-            foreach (var crossing in RunwayCrossings.For(leg, ownRunway, type))
+            foreach (var crossing in RunwayCrossings.For(leg, ownRunway, type, includeOwnRunway))
             {
                 var freeAt = crossing.MainStrip ? _mainRunwayFreeAt : _crossRunwayFreeAt;
                 if (freeAt.ElapsedSeconds > start.ElapsedSeconds + (long)Math.Floor(crossing.EnterSeconds))

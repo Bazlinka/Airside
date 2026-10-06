@@ -53,6 +53,7 @@ namespace Airside.Presentation
         public string PhaseLabel = string.Empty;
         public HudTone PhaseTone = HudTone.Accent;
         public bool IsPlayer;
+        public bool IsMaintenance;
         public bool AwaitingStand;
         public string PrimaryLabel = string.Empty;
         public bool CanCancel;

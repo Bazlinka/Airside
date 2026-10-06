@@ -49,7 +49,7 @@ namespace Airside.Simulation
         /// Crossings of any strip other than <paramref name="ownRunway"/>'s own (a taxi-out ends at its own
         /// runway's holding point; that is not a crossing).
         /// </summary>
-        public static IReadOnlyList<RunwayCrossing> For(GroundLeg leg, RunwayDirection ownRunway, AircraftType type = null)
+        public static IReadOnlyList<RunwayCrossing> For(GroundLeg leg, RunwayDirection ownRunway, AircraftType type = null, bool includeOwnRunway = false)
         {
             var own = RunwayWeather.IsMainRunway(ownRunway);
             // Ground pose is near the nose gear: include the full aft length, half-span and
@@ -57,6 +57,7 @@ namespace Airside.Simulation
             var envelope = AircraftCatalogue.TryFor(type, out var spec)
                 ? (float)Math.Max(spec.LengthMetres, spec.WingspanMetres * 0.5) + 3f : 0f;
             var all = All(leg, envelope);
+            if (includeOwnRunway) return all;
             var count = 0;
             foreach (var crossing in all)
                 if (crossing.MainStrip != own)

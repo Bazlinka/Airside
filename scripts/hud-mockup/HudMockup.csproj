@@ -37,10 +37,13 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudSounds.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ReturnBriefing.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightViewHud.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitControlHints.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudDraw.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudShell.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CareerTrackWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/SelectionCard.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftInspector.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/FleetBoard.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/SplashScreen.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightManual.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HoldReasonText.cs" />

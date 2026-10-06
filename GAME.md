@@ -1,3 +1,56 @@
+## Where to resume — implemented maintenance journey and refined interface, 7 October 2026
+
+Codex; Bailey approved implementation of ADR 0244. Branch
+`feature/refined-interface-maintenance-20261006`, ADR 0245. Rebased onto the unified
+fleet management changes in main; preserved the multi-base Fleet workspace.
+Draft PR #550 now also integrates main's ERSA ground protocols and async review
+capture fix. Save v22 preserves v21 wake history alongside maintenance jobs.
+ADR numbers moved to 0244/0245 to keep main's independent 0242/0243 records intact.
+
+Maintenance is now a saved simulation job: clear unloading, prepare/start normally,
+push/taxi with shared traffic clearance, stop and shut down on the shed apron,
+tug into the fitted interior pose, repair, reverse out, start/taxi to a reserved
+compatible stand and park. No passenger/cargo servicing. Wear resets at repair
+completion; dispatch stays blocked until return. Save v22 persists phase and times;
+v21 and earlier timed checks finish using their prior behavior without a new charge.
+A shed is reserved exclusively until the aircraft has returned. No-fitting-shed and
+rotorcraft checks retain the timed pad/outsourced path.
+
+Shared UI now has a quieter full-width status strip, compact navigation, optional
+radar, small career objective, spacious management rows and a right aircraft
+inspector with scrollable details and fixed follow/flight/camera actions. Transient
+command feedback remains below open workspaces. Shared-painter exports and evidence:
+`docs/testing/refined-interface-maintenance-2026-10-07/` (synthetic backdrop; not Unity captures).
+
+NEXT: native Unity compile/playtest and visual/performance verification on Bailey's
+machine, **only when Bailey lifts the recorded no-Unity execution restriction**.
+Follow the retained native checklist for prop/jet startup, gear/tug alignment,
+swept doorway clearance, busy taxi traffic and save/reload through every phase.
+Do not merge on offline painter previews alone. Prior cockpit/interior handoffs
+below remain valid. Integrated headless full regression: 1,826 passed; final maintenance/ERSA/tower
+follow-up: 48 passed. Compact Career/inspector: 29 passed. Results and scope are
+recorded in the evidence README.
+
+## Where to resume — refined interface and maintenance plan, 6 October 2026
+
+Codex; Bailey accepted the proposed repair journey and requested further refinement
+and a markedly more polished interface. Branch `docs/refined-interface-maintenance-20261006`,
+ADR 0244. Detailed packet: `docs/plans/refined-interface-and-maintenance.md`.
+Interactive study and seven retained previews:
+`docs/art/interface-refinement-2026-10-06/preview.html`.
+
+Design-only: slim status/navigation, optional side inspector, restrained typography,
+spacious management rows, taxi/repair progress and fixed aircraft actions. Original
+schematic backdrop and sample data are labelled; this is not Unity implementation.
+Maintenance proposal adds actual startup, traffic reservations, apron shutdown/tug
+positioning, repair/return phases and explicit save/catch-up migration requirements.
+No product-plan files, runtime source or assets changed. Chromium layout/interaction
+checks cover four sizes; native appearance/performance remain unverified.
+
+NEXT: review the concrete study; first implementation slice is shared overview/
+inspector plus one full Saab maintenance job, then jet startup/clearance. Keep the
+recorded no-Unity restriction. Prior aircraft-interior handoffs below remain valid.
+
 ## Where to resume — recorded flight-stall capture fix, 6 October 2026
 
 Codex; branch `fix/long-flight-stall-20261006`, isolated `/workspace/Airside-stall`.

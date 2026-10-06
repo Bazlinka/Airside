@@ -463,7 +463,8 @@ namespace Airside.Simulation
             return best;
         }
 
-        private static bool HoldsStand(FleetAircraft aircraft) =>
+        private static bool HoldsStand(FleetAircraft aircraft) => aircraft.State == FleetState.Maintenance
+            && !string.IsNullOrEmpty(aircraft.Stand.Value) ||
             !string.IsNullOrEmpty(aircraft.Stand.Value)
             && (aircraft.State is FleetState.AtStand or FleetState.HoldingForLanding or FleetState.Landing
                 or FleetState.GoAround or FleetState.AwaitingStand or FleetState.TaxiIn);

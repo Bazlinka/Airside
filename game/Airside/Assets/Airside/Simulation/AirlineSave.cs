@@ -50,7 +50,9 @@ namespace Airside.Simulation
         /// 21 (ADR 0243) preserves preceding runway movements for follower-specific wake minima.
         /// Older saves keep their already-booked conservative strip deadlines.
         /// </summary>
-        public const int CurrentVersion = 21;
+        // v22 (ADR 0245): saved maintenance startup/taxi/position/repair/return phases.
+        // Older timed checks keep their original completion and charge semantics.
+        public const int CurrentVersion = 22;
 
         public int Version = CurrentVersion;
 
@@ -238,6 +240,9 @@ namespace Airside.Simulation
         /// <summary>v11 (ADR 0085). Older saves load as 0: every aircraft starts fresh.</summary>
         public int RotationsSinceCheck;
         public long CheckUntilSeconds;
+
+        /// <summary>v22: actual ground maintenance journey. Null preserves legacy timed checks.</summary>
+        public MaintenanceJob MaintenanceJob;
 
         /// <summary>v18 (ADR 0178): persistent identity and individual-aircraft logbook.</summary>
         public long JoinedAirlineAtSeconds;
@@ -427,6 +432,7 @@ namespace Airside.Simulation
                     PushbackDelay = a.PushbackDelay?.Serialize() ?? string.Empty,
                     RotationsSinceCheck = a.RotationsSinceCheck,
                     CheckUntilSeconds = a.CheckUntil?.ElapsedSeconds ?? 0,
+                    MaintenanceJob = a.MaintenanceJob?.Copy(),
                     JoinedAirlineAtSeconds = a.JoinedAirlineAt.ElapsedSeconds,
                     IsFoundingAircraft = a.IsFoundingAircraft,
                     LifetimeRevenue = a.LifetimeRevenue,
@@ -552,6 +558,10 @@ namespace Airside.Simulation
                         data.Version >= 16 ? record.PushbackDelay : null);
                 if (data.Version >= 11)
                     operations.RestoreMaintenance(restoredRegistration, record.RotationsSinceCheck, record.CheckUntilSeconds);
+                if (data.Version >= 22 && record.MaintenanceJob != null)
+                    operations.RestoreMaintenanceJob(restoredRegistration, record.MaintenanceJob);
+                else if (state == FleetState.Maintenance)
+                    throw new FormatException("Maintenance aircraft has no saved job: " + registration);
                 if (data.Version >= 18)
                 {
                     if (record.JoinedAirlineAtSeconds < 0 || record.JoinedAirlineAtSeconds > data.ClockSeconds

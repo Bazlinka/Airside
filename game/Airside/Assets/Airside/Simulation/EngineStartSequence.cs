@@ -70,6 +70,9 @@ namespace Airside.Simulation
 
         public static EngineState For(FleetAircraft aircraft, double nowSeconds)
         {
+            if (aircraft?.MaintenanceJob is { } maintenance)
+                return maintenance.Engines(aircraft.Type, nowSeconds);
+
             // A helicopter spools its rotor on the pad, with no pushback, stairs or doors (ADR 0207).
             if (aircraft != null && aircraft.Type.IsRotorcraft)
                 return RotorcraftEngines.StateFor(aircraft, nowSeconds);
@@ -147,6 +150,20 @@ namespace Airside.Simulation
                 beacon: parked < BeaconOffAfterSeconds,
                 doorsOpen: parked >= DoorsOpenAfterSeconds);
         }
+
+        /// <summary>Shared normal spool order for a ground movement, with all doors shut.</summary>
+        public static EngineState Start(AircraftType type, double seconds, bool duringPush)
+        {
+            if (AirlineOperations.NeedsTerminalGate(type) && !duringPush)
+                return new EngineState(0f, 0f, seconds >= 0, 0f, 0f);
+            var right = duringPush ? DepartureCountdown.JetRightStartAfterPushSeconds : 10;
+            var left = duringPush ? DepartureCountdown.JetLeftStartAfterPushSeconds : 40;
+            return new EngineState(Ramp(seconds - left), Ramp(seconds - right), seconds >= 0, 0f, 0f);
+        }
+
+        public static EngineState Stop(double seconds) => new(
+            1f - Ramp(seconds - LeftStopAfterSeconds), 1f - Ramp(seconds - RightStopAfterSeconds),
+            seconds < BeaconOffAfterSeconds, 0f, 0f);
 
         private static float Ramp(double secondsSinceStart)
         {

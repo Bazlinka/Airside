@@ -280,6 +280,11 @@ namespace Airside.Presentation
             DepartureDetail = $"in {Duration(delay)}  ·  "
                               + $"{Duration(operations.AirborneSeconds(aircraft, destination))} each way";
 
+            if (aircraft.MaintenanceJob != null)
+            {
+                PlanBlockedReason = $"{aircraft.Registration} is in its check: {Maintenance.Status(aircraft, now, clock)}";
+                return;
+            }
             if (aircraft.State != FleetState.AtStand)
             {
                 PlanBlockedReason = $"{aircraft.Registration} has to be parked at Adelaide first";
@@ -453,6 +458,12 @@ namespace Airside.Presentation
                 return;
             }
 
+            if (pane.Height < 520f)
+            {
+                PaintCompactDetail(into, model, pane);
+                return;
+            }
+
             into.Text(new HudBox(pane.X, pane.Y, pane.Width, 30f), model.DestinationTitle, 22f,
                 HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
             into.Caption(new HudBox(pane.X, pane.Y + 27f, pane.Width, 14f), "DESTINATION",
@@ -535,6 +546,50 @@ namespace Airside.Presentation
             else if (model.HasBooking)
                 into.Text(new HudBox(pane.X, buttonY - 34f, pane.Width, 32f), model.BookingLine, 11f,
                     HudTone.Muted, HudTextStyle.Wrap);
+        }
+
+        /// <summary>Keep booking controls fixed and reachable in a short desktop window.</summary>
+        private static void PaintCompactDetail(HudDrawList into, RouteMapWorkspaceModel model, HudBox pane)
+        {
+            into.Text(new HudBox(pane.X, pane.Y, pane.Width, 28f), model.DestinationTitle, 20f, HudTone.Default, HudTextStyle.Bold);
+            var buttonY = pane.Bottom - 84f;
+            var controlsY = buttonY - 116f;
+            var y = pane.Y + 36f;
+            void Line(string text, HudTone tone, float height = 20f)
+            {
+                if (string.IsNullOrEmpty(text) || y + height > controlsY - 8f) return;
+                into.Text(new HudBox(pane.X, y, pane.Width, height), text, 11f, tone, HudTextStyle.Wrap);
+                y += height + 2f;
+            }
+            Line(model.BandAndDistance, HudTone.Muted);
+            Line(model.DispatchLine, HudTone.Default);
+            Line(model.ReturnLine, HudTone.Positive);
+            Line(model.AvailabilityLine, model.AvailabilityTone, 28f);
+            Line(model.CareerLine, model.CareerTone, 28f);
+            if (model.DepartureLabel.Length > 0)
+            {
+                into.Button(new HudBox(pane.X, controlsY, pane.Width, 28f), model.AircraftLabel + "   ▾",
+                    HudAction.NextAircraft, HudButtonStyle.Secondary, model.CanCycleAircraft);
+                var rowY = controlsY + 34f;
+                into.Button(new HudBox(pane.X, rowY, 34f, 28f), "−", HudAction.PreviousDeparture, HudButtonStyle.Secondary);
+                into.Button(new HudBox(pane.X + 40f, rowY, pane.Width - 80f, 28f), model.DepartureLabel,
+                    HudAction.NextDeparture, HudButtonStyle.Secondary);
+                into.Button(new HudBox(pane.Right - 34f, rowY, 34f, 28f), "+", HudAction.NextDeparture, HudButtonStyle.Secondary);
+                into.Text(new HudBox(pane.X, rowY + 32f, pane.Width, 16f), model.DepartureDetail, 11f, HudTone.Muted);
+            }
+            var notice = !model.CanPlan ? model.PlanBlockedReason : model.HasBooking ? model.BookingLine : string.Empty;
+            if (!string.IsNullOrEmpty(notice))
+                into.Text(new HudBox(pane.X, buttonY - 32f, pane.Width, 30f), notice, 11f, HudTone.Muted, HudTextStyle.Wrap);
+            into.Button(new HudBox(pane.X, buttonY, pane.Width, 44f), model.PlanLabel, HudAction.PlanFlight,
+                HudButtonStyle.Primary, model.CanPlan);
+            var reset = new HudBox(pane.X, buttonY + 50f, pane.Width, 30f);
+            if (model.CanDelegate)
+            {
+                var width = (pane.Width - 8f) * .5f;
+                into.Button(reset.WithWidth(width), model.RepeatLabel, HudAction.RepeatFlight, HudButtonStyle.Secondary);
+                reset = new HudBox(pane.X + width + 8f, reset.Y, width, reset.Height);
+            }
+            into.Button(reset, "RESET MAP", HudAction.ResetMap, HudButtonStyle.Secondary);
         }
 
         private static void PaintFact(HudDrawList into, HudBox pane, ref float y, string caption,

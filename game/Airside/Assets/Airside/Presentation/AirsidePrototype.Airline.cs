@@ -215,7 +215,7 @@ namespace Airside.Presentation
             _lastGuideStep = _guideStep;
             var showGuide = !AirlineModalOpen && _guideStep != GuideStep.Complete;
             var placement = AirlineHudLayout.Create(layout, showGuide,
-                workspaceOpen: _activeWorkspace != HudWorkspace.None || _devToolsOpen);
+                workspaceOpen: _activeWorkspace != HudWorkspace.None || _devToolsOpen, showMiniMap: MiniMapShows);
             RememberHudPanels(layout, placement, showGuide);
 
             var label = _hudLabel ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true });
@@ -591,11 +591,12 @@ namespace Airside.Presentation
             _shellDrawList.Clear();
             HudShellPainter.PaintRail(_shellDrawList, rail, airline.LiveryHex, _navTabs);
             HudShellPainter.PaintCapsule(_shellDrawList, Box(placement.Capsule), _capsuleSegments);
+            HudShellPainter.PaintControls(_shellDrawList, Box(placement.Capsule), _miniMapVisible);
             var clicked = _hudPainter.Draw(_shellDrawList);
 
             // The approved brand mark inside its livery ring.
             var mark = AirsideTheme.AppMarkLight;
-            if (mark != null)
+            if (mark != null && !HudShell.RailMark(rail).IsEmpty)
             {
                 var markBox = HudShell.RailMark(rail);
                 GUI.DrawTexture(HudPainter.ToRect(markBox.Inset(7f)), mark, ScaleMode.ScaleToFit, true);
@@ -603,6 +604,9 @@ namespace Airside.Presentation
 
             if (clicked == null)
                 return;
+            if (clicked == HudShellPainter.OverviewAction) { SetWorkspace(HudWorkspace.None); return; }
+            if (clicked == HudShellPainter.MiniMapAction) { ToggleMiniMap(); return; }
+            if (clicked == HudShellPainter.MenuAction) { ToggleMenu(); return; }
             if (clicked == HudShellPainter.HelpAction)
             {
                 ToggleControlsHelp();
@@ -907,6 +911,9 @@ namespace Airside.Presentation
 
         private readonly SelectionCardData _selectionCard = new();
         private readonly HudDrawList _selectionDrawList = new();
+        private Vector2 _inspectorScroll;
+        private string _inspectorRegistration;
+
 
         private HudWorkspace _workspaceShown = HudWorkspace.None;
         private float _workspaceOpenedAt;
@@ -1024,9 +1031,26 @@ namespace Airside.Presentation
             if (!TrySelectionHudCardRect(hud, placement, out var rect, out var aircraft))
                 return;
 
+            if (_inspectorRegistration != aircraft.Registration)
+            {
+                _inspectorRegistration = aircraft.Registration; _inspectorScroll = Vector2.zero;
+            }
+            var inspector = new AircraftInspectorLayout(Box(rect));
             _selectionDrawList.Clear();
-            SelectionCardPainter.Paint(_selectionDrawList, Box(rect), _selectionCard);
+            AircraftInspectorPainter.Header(_selectionDrawList, inspector, _selectionCard);
             var clicked = _hudPainter.Draw(_selectionDrawList);
+            var body = HudPainter.ToRect(inspector.Body);
+            var contentHeight = Mathf.Max(body.height, AircraftInspectorPainter.ContentHeight(_selectionCard));
+            _inspectorScroll = GUI.BeginScrollView(body, _inspectorScroll,
+                new Rect(0f, 0f, body.width - 16f, contentHeight));
+            _selectionDrawList.Clear();
+            AircraftInspectorPainter.Body(_selectionDrawList, new HudBox(0f, 0f, body.width - 16f, contentHeight), _selectionCard);
+            var bodyClicked = _hudPainter.Draw(_selectionDrawList);
+            GUI.EndScrollView();
+            _selectionDrawList.Clear();
+            AircraftInspectorPainter.Footer(_selectionDrawList, inspector, _selectionCard);
+            var footerClicked = _hudPainter.Draw(_selectionDrawList);
+            clicked = clicked ?? bodyClicked ?? footerClicked;
             HandleSelectionCardAction(aircraft, clicked);
         }
 
@@ -1114,10 +1138,8 @@ namespace Airside.Presentation
         private void FillSelectionCard(FleetAircraft aircraft)
         {
             var card = _selectionCard;
-            var flightNumber = FlightNumber.ForAircraft(aircraft);
-            var place = FlightNumber.PlaceName(aircraft);
-            card.Registration = flightNumber ?? aircraft.Registration;
-            card.TypeName = string.IsNullOrEmpty(place) ? aircraft.Type.Name : place;
+            card.Registration = aircraft.Registration;
+            card.TypeName = aircraft.Type.Name + " · " + aircraft.Airline.Name;
             card.LiveryHex = aircraft.Airline.LiveryHex;
             card.RouteLine = SelectionRouteLine(aircraft);
             card.LiveLine = SelectionLiveStats(aircraft);
@@ -1149,6 +1171,7 @@ namespace Airside.Presentation
             card.PhaseTone = severity == StatusSeverity.Warning ? HudTone.Negative
                 : severity == StatusSeverity.Attention ? HudTone.Caution : HudTone.Accent;
             card.IsPlayer = aircraft.Airline.IsPlayer;
+            card.IsMaintenance = aircraft.MaintenanceJob != null;
             card.ShowCameraActions = true;
             card.CockpitHint = CockpitReason(aircraft);
             card.CanCockpit = card.CockpitHint.Length == 0;
@@ -1161,7 +1184,8 @@ namespace Airside.Presentation
             card.GuidePrimary = IsGuided(aircraft, GuideStep.PlanFirstFlight) && action == AircraftHudAction.PlanFlight;
             card.GuideBestStand = IsGuided(aircraft, GuideStep.ChooseStand);
             card.Prep.Clear();
-            if (ShowsDeparturePrep(aircraft))
+            if (aircraft.MaintenanceJob != null) MaintenanceInspectorProjection.Fill(card, aircraft, _clock.Now);
+            else if (ShowsDeparturePrep(aircraft))
             {
                 var prep = DeparturePrep.For(aircraft, _clock.Now, _operations.CareerState.BaseLevel);
                 card.Prep.Add(new SelectionPrepStage("Fuel", (float)prep.FuelProgress, prep.Stage == DeparturePrepStage.Fuel));
@@ -1186,6 +1210,17 @@ namespace Airside.Presentation
             card.JourneyRight = string.Empty;
             card.JourneyProgress = -1f;
             var now = _clock.Now;
+            if (aircraft.MaintenanceJob is { } job)
+            {
+                if (job.Phase == MaintenancePhase.Repairing)
+                {
+                    card.JourneyLeft = "Repair time remaining";
+                    card.JourneyRight = SelectionCardText.Remaining(job.PhaseEndsAt - now.ElapsedSeconds);
+                    card.JourneyProgress = (float)Math.Clamp((now.ElapsedSeconds - job.PhaseStartedAt) / (double)job.RepairSeconds, 0, 1);
+                }
+                else card.JourneyLeft = job.Waiting ? "Return time pending" : "Ground movement in progress";
+                return;
+            }
             if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue && !aircraft.Scheduled.Value.Cancelled)
             {
                 // The turnaround timeline already says how far along the departure is.
@@ -1327,13 +1362,8 @@ namespace Airside.Presentation
             if (_activeWorkspace != HudWorkspace.None || _devToolsOpen)
                 return false;
             FillSelectionCard(aircraft);
-            // Camera actions add a separate 38px row. Preserve the existing stand/prep
-            // area rather than stealing its height and overlapping its buttons.
-            var cameraHeight = _selectionCard.ShowCameraActions ? 38f : 0f;
-            var height = Mathf.Min(SelectionCardPainter.HeightFor(_selectionCard), placement.SelectedCard.height + cameraHeight);
-            var bottom = placement.SelectedCard.yMax;
-            rect = new Rect(placement.SelectedCard.x, bottom - height,
-                placement.SelectedCard.width, height);
+            // Shared inspector reserves its fixed header and action footer independently of scrolling details.
+            rect = placement.SelectedCard;
             return true;
         }
 
@@ -1462,6 +1492,7 @@ namespace Airside.Presentation
         /// <summary>Where an aircraft in its check is: the hangar it is berthed in, or its stand when none fits (ADR 0188).</summary>
         private string CheckPlace(FleetAircraft aircraft)
         {
+            if (aircraft.MaintenanceJob is { } job) return job.Hangar(aircraft.Type).HangarName;
             var berth = HangarBays.Of(_operations.Fleet, aircraft, _operations.CareerState.BaseLevel);
             var options = berth.HasHangar ? HangarTow.Options(aircraft.Type, aircraft.Stand) : null;
             return options != null && berth.Hangar < options.Count
@@ -1471,6 +1502,7 @@ namespace Airside.Presentation
 
         private string StatusText(FleetAircraft aircraft)
         {
+            if (aircraft.MaintenanceJob != null) return Maintenance.Status(aircraft, _clock.Now, _operations.Clock);
             var to = aircraft.CurrentDestination;
             var dest = to.HasValue ? to.Value.Name : string.Empty;
             var ends = aircraft.StateEndsAt.HasValue ? ClockText(aircraft.StateEndsAt.Value) : string.Empty;

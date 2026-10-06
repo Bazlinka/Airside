@@ -34,6 +34,8 @@ public static class Program
             ReturnBriefingPage(scenario, width, height),
             FlightViewPage(scenario, width, height),
             Overview(scenario, width, height),
+            MaintenancePage(width, height, MaintenancePhase.Taxiing),
+            MaintenancePage(width, height, MaintenancePhase.Repairing),
             Operations(scenario, width, height),
             RouteMapPage(scenario, width, height),
             Fleet(scenario, width, height),
@@ -193,15 +195,44 @@ public static class Program
             card.Prep.Add(new SelectionPrepStage("Baggage", (float)prep.BaggageProgress, prep.Stage == DeparturePrepStage.Baggage));
             card.Prep.Add(new SelectionPrepStage("Boarding", (float)prep.BoardingProgress, prep.Stage == DeparturePrepStage.Boarding));
         }
-        var cardHeight = Math.Min(shell.SelectedCard.Height, SelectionCardPainter.HeightFor(card));
-        SelectionCardPainter.Paint(list, new HudBox(shell.SelectedCard.X, shell.SelectedCard.Bottom - cardHeight,
-            shell.SelectedCard.Width, cardHeight), card);
+        AircraftInspectorPainter.Paint(list, shell.SelectedCard, card);
 
         ToastPainter.Paint(list, shell.Toast, "Soak Air is open for business. Plan a flight for VH-PAX.",
             HudTone.Accent, 1f);
         if (!shell.MiniMap.IsEmpty)
             MiniMapFrame.Paint(list, shell.MiniMap, "ADELAIDE · 23 / 05");
         return new Page("overview", Serialise(list));
+    }
+
+    private static Page MaintenancePage(float width, float height, MaintenancePhase phase)
+    {
+        var clock = new ManualSimulationClock(new SimulationTime(0));
+        var ops = new AirlineOperations(clock, new SeededRandomSource(7), DestinationCatalogue.Adelaide, AirlineOperations.AdelaideStands);
+        var player = Airline.Player("Coastline Regional", "#39708A"); ops.AddAirline(player);
+        ops.CareerState.BaseLevel = PlayerBaseLevel.ExpandedRegional;
+        var aircraft = ops.AddAircraft(player, "VH-PAX", AircraftType.Saab340, AirlineOperations.AdelaideRegionalBays[0]);
+        if (!ops.StartCheck(aircraft).Accepted) throw new InvalidOperationException("Preview maintenance request failed.");
+        for (var i = 0; i < 1000 && aircraft.MaintenanceJob?.Phase != phase; i++)
+        {
+            clock.Set(ops.NextEventAt() ?? clock.Now.Advance(5)); ops.Update();
+        }
+        if (aircraft.MaintenanceJob?.Phase != phase) throw new InvalidOperationException("Preview maintenance phase unavailable.");
+        var shell = HudShell.Layout(width, height);
+        var list = new HudDrawList();
+        var tabs = new List<HudNavTab>(); HudShell.FillTabs(shell.Rail, height, HudWorkspace.None, tabs);
+        HudShellPainter.PaintRail(list, shell.Rail, player.LiveryHex, tabs);
+        var values = new List<HudCapsuleValue>(); HudShellPainter.CapsuleValues(ops, ops.Clock.TimeText(clock.Now), values);
+        var segments = new List<HudCapsuleSegment>(); HudShell.FillCapsule(shell.Capsule, values, segments);
+        HudShellPainter.PaintCapsule(list, shell.Capsule, segments); HudShellPainter.PaintControls(list, shell.Capsule, false);
+        var card = new SelectionCardData
+        {
+            Registration = aircraft.Registration, TypeName = aircraft.Type.Name + " · " + player.Name,
+            IsPlayer = true, CanFollow = true, ShowCameraActions = true, CanCockpit = true, CanExterior = true,
+            CanPassenger = true
+        };
+        MaintenanceInspectorProjection.Fill(card, aircraft, clock.Now);
+        AircraftInspectorPainter.Paint(list, shell.SelectedCard, card);
+        return new Page(phase == MaintenancePhase.Repairing ? "maintenance-repair" : "maintenance-taxi", Serialise(list));
     }
 
     private static Page CelebrationPage(float width, float height)
@@ -394,6 +425,7 @@ public static class Program
         var segments = new List<HudCapsuleSegment>();
         HudShell.FillCapsule(shell.Capsule, values, segments);
         HudShellPainter.PaintCapsule(list, shell.Capsule, segments);
+        HudShellPainter.PaintControls(list, shell.Capsule, false);
     }
 
     // ---- Serialisation -------------------------------------------------------------

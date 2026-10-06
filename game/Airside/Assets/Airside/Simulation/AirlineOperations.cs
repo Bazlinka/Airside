@@ -600,6 +600,13 @@ namespace Airside.Simulation
             var taxiReleaseWantedGate = false;
             foreach (var aircraft in _fleet)
             {
+                if (aircraft.MaintenanceJob is { } job)
+                {
+                    Consider(job.Waiting ? GroundTraffic.NextGrid(now) : new SimulationTime(job.PhaseEndsAt));
+                    if (job.Phase == MaintenancePhase.Taxiing && !string.IsNullOrEmpty(aircraft.Stand.Value))
+                        Consider(new SimulationTime(job.PhaseStartedAt + (long)Math.Ceiling(job.Paths(aircraft.Type).PushSeconds) + 60));
+                    continue;
+                }
                 if (aircraft.StateEndsAt.HasValue)
                     Consider(aircraft.StateEndsAt.Value);
                 if (aircraft.State == FleetState.AtStand && aircraft.Scheduled.HasValue)
@@ -1087,6 +1094,7 @@ namespace Airside.Simulation
 
         private bool AdvanceAircraft(FleetAircraft aircraft, SimulationTime now)
         {
+            if (aircraft.MaintenanceJob != null) return AdvanceMaintenance(aircraft, now);
             if (aircraft.StateEndsAt.HasValue && aircraft.StateEndsAt.Value.CompareTo(now) > 0)
                 return false;
 

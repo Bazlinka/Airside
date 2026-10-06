@@ -465,7 +465,11 @@ namespace Airside.Tests
             var complete = list.Commands.Count(c => c.Kind == HudDrawKind.Hotspot
                 && c.Box.Y >= layout.Board.Y && c.Box.Bottom <= layout.Board.Bottom);
             Assert.That(compact, Is.LessThanOrEqualTo(5));
-            Assert.That(complete, Is.GreaterThan(compact));
+            Assert.That(complete, Is.GreaterThanOrEqualTo(compact));
+            Assert.That(complete, Is.EqualTo(Math.Min(model.Rows.Count, layout.VisibleRows)));
+            var scrolled = new HudDrawList();
+            OperationsWorkspacePainter.Paint(scrolled, model, layout, null, model.Rows.Count - 1, allMovements: true);
+            Assert.That(scrolled.Commands.Any(c => c.ActionId == HudAction.Select(model.Rows[model.Rows.Count - 1].Registration)), Is.True, "last movement remains reachable by scrolling");
             Assert.That(list.Commands.Any(c => c.Text == "LIVE APRON"
                 && c.ActionId == HudAction.ToggleMovements), Is.True);
         }

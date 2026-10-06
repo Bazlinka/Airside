@@ -850,7 +850,7 @@ namespace Airside.Presentation
     /// <summary>Where the Fleet workspace draws its bases strip, roster, detail pane and market strip.</summary>
     public readonly struct FleetWorkspaceLayout
     {
-        public const float RosterRowHeight = 44f;
+        public const float RosterRowHeight = 60f;
         public const float SectionCaptionHeight = 18f;
         public const float DetailGap = 24f;
         public const float MarketRowHeight = 92f;

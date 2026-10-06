@@ -21,7 +21,7 @@ namespace Airside.Simulation
 
         /// <summary>No straight-line fallback: false means ground control must withhold clearance.</summary>
         public static bool TryRoute(float startX, float startZ, float endX, float endZ,
-            AircraftType type, StableId departureStand, out float[] route, RunwayDirection? rollout = null)
+            AircraftType type, StableId departureStand, out float[] route, RunwayDirection? rollout = null, float apronAccessMetres = 35f)
         {
             var key = AdelaideTaxiPolicy.Key(type, departureStand);
             if (!PolicyGraphs.TryGetValue(key, out var graph))
@@ -29,9 +29,10 @@ namespace Airside.Simulation
             var start = graph.Nearest(startX, startZ);
             var goal = graph.Nearest(endX, endZ);
             route = null;
-            // Avoid snapping across grass to a disconnected/restricted route endpoint.
-            if (Hypot(graph.X[start] - startX, graph.Z[start] - startZ) > 35f
-                || Hypot(graph.X[goal] - endX, graph.Z[goal] - endZ) > 35f) return false;
+            // Normal routes snap at most 35 m. Maintenance supplies a bounded explicit apron
+            // access distance for its authored stand/shed connectors; graph restrictions remain.
+            if (Hypot(graph.X[start] - startX, graph.Z[start] - startZ) > apronAccessMetres
+                || Hypot(graph.X[goal] - endX, graph.Z[goal] - endZ) > apronAccessMetres) return false;
             var hops = graph.Dijkstra(start, goal, rollout);
             if (hops == null || hops.Count == 0) return false;
             var points = new List<float> { startX, startZ };

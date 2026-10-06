@@ -94,7 +94,7 @@ namespace Airside.Simulation
         /// passengers, stair truck, bus or open doors belong to it until the check ends.
         /// </summary>
         public static bool InCheck(FleetAircraft aircraft, double nowSeconds) =>
-            aircraft?.CheckUntil is { } until && until.ElapsedSeconds > nowSeconds;
+            aircraft?.MaintenanceJob != null || aircraft?.CheckUntil is { } until && until.ElapsedSeconds > nowSeconds;
 
         public static bool UsesStairTruck(BoardingMode mode) =>
             mode is BoardingMode.StairTruck or BoardingMode.RemoteBus;
@@ -273,6 +273,14 @@ namespace Airside.Simulation
             public int Boarding { get; }
             public double BoardStart { get; }
             public double BoardInterval { get; }
+        }
+
+        public static double ClearedForMaintenanceAt(FleetAircraft aircraft)
+        {
+            if (aircraft == null || aircraft.CompletedTrips == 0) return 0;
+            var windows = WindowsFor(aircraft, ModeFor(aircraft), aircraft.BaseLevel);
+            return Math.Max(windows.DeplaneEnd + WalkBudgetSeconds,
+                aircraft.StateStartedAt.ElapsedSeconds + RemoteBusArrivalLeaveAfterParkSeconds);
         }
 
         private static Windows WindowsFor(FleetAircraft aircraft, BoardingMode mode, PlayerBaseLevel baseLevel)

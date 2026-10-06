@@ -82,7 +82,7 @@ namespace Airside.Presentation
         public static bool IsTakenCode(string code) => code switch
         {
             "REX" or "QLK" or "VOZ" or "QFA" or "JST" or "ANZ" or "SIA" or "CPA" or "MAS" or "UAE" or "QTR"
-                or "FJI" or "RFDS" or "SAAS" or "SR"
+                or "FJI" or "RFDS" or "SAAS" or "SR" or "QFR" or "DHL"
                 or "QF" or "VA" or "JQ" or "NZ" or "SQ" or "CX" or "MH" or "EK" or "QR" or "FJ" or "ZL" or "FD" => true,
             _ => false
         };

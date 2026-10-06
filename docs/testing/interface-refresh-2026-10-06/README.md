@@ -41,7 +41,9 @@ not proof of a reviewed in-game sound mix.
 `scripts/test-unity.sh` exits before execution because the Mac Unity 6.3 LTS
 executable is absent. No new Unity build, runtime screenshot, native test or
 listening acceptance is claimed. `AGENTS.md` requires native compile/EditMode
-before merging behaviour changes, so this work stays a draft PR until that run.
+before merging behaviour changes. Bailey explicitly authorised merging PR #526
+on 6 October 2026; it merged at `19fd9688` with headless CI green. Native
+verification remains outstanding; no native pass is claimed.
 The prior current-game playtest sign-off is preserved and is not reused as new
 validation of these changes.
 

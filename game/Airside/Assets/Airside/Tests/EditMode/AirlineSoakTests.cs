@@ -79,7 +79,10 @@ namespace Airside.Tests
                     {
                         if (aircraft.Scheduled.HasValue)
                         {
-                            var limit = aircraft.Airline.IsEmergency ? 20 * 3600 : 14 * 3600;
+                            // Cargo can wait from the end of the dawn bank until 20:30,
+                            // plus its turnaround; keep the passenger bound unchanged.
+                            var limit = aircraft.Airline.IsEmergency ? 20 * 3600
+                                : aircraft.Airline.IsFreightCarrier ? 17 * 3600 : 14 * 3600;
                             Assert.That(aircraft.Scheduled.Value.DepartAt.ElapsedSeconds - clock.Now.ElapsedSeconds,
                                 Is.LessThan(limit), $"{aircraft} booked too far ahead");
                         }

@@ -77,7 +77,7 @@ namespace Airside.Simulation
 
         public static BoardingMode ModeFor(FleetAircraft aircraft)
         {
-            if (aircraft == null || aircraft.State != FleetState.AtStand)
+            if (aircraft == null || aircraft.State != FleetState.AtStand || aircraft.IsFreighter)
                 return BoardingMode.None;
             // A helicopter on its pad has no stairs, bridge, bus or ramp crew (ADR 0207).
             if (aircraft.Type.IsRotorcraft)

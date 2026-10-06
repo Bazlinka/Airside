@@ -1,6 +1,6 @@
 # ADR 0230 — Require freighters for freight contracts
 
-Date: 6 October 2026. Status: implementation candidate. Requested by Bailey.
+Date: 6 October 2026. Status: merged in PR #526 under Bailey’s explicit approval. Native Unity verification remains outstanding.
 
 A contract's existing `Kind == Freight` now implies a freighter refit. The pure
 `MatchesAircraft(type, isFreighter)` predicate is shared by acceptance, completion,

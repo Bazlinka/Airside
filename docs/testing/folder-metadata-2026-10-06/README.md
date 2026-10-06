@@ -26,8 +26,11 @@ all imported asset files remain checked. No new simulation tests are needed for
 this metadata/checker repair. No Unity editor is installed in this worker, and no
 native compilation, visual review or new playtest acceptance is claimed.
 
-## Next
+## Integration
 
-Review this independent repair PR. AI freight remains in draft PR #527 with native
-verification pending. Cargo apron/handling and outstation freight remain backlog;
-this repair does not implement those features or imply release readiness.
+Bailey explicitly authorised integrating PRs #527 and #528 onto main. Combined
+asset audit passes: 1,664 unique GUIDs (including the added freight test metadata),
+349 runtime art mirrors and 70 materials. Game source is unchanged from #527;
+only documentation overlaps needed resolving. Native Unity remains unverified.
+Cargo apron/handling and outstation freight remain backlog; this repair does not
+implement those features or imply release readiness.

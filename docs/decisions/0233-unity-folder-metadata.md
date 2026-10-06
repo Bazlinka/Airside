@@ -1,6 +1,6 @@
 # ADR 0233 — Preserve authored Unity folder metadata in Git
 
-Date: 6 October 2026. Status: implemented repair candidate.
+Date: 6 October 2026. Status: implemented repair in PR #528; Bailey explicitly authorised integration onto main.
 
 The asset audit on main reports a Resources directory without metadata and three
 orphan Animation folder metadata files. Resources.meta was explicitly ignored;

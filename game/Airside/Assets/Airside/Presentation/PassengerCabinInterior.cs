@@ -12,7 +12,13 @@ namespace Airside.Presentation
     public sealed partial class PassengerCabinInterior : CockpitInterior
     {
         public PassengerCabinProfile Profile { get; private set; }
-        private Material _lining, _fabric, _trim, _frame;
+        private Material _lining, _fabric, _trim, _frame, _seatShell, _headrestFabric;
+        private Mesh _shapedSeatBack;
+        // Authored economy treatments, not an operator LOPA or guaranteed factory seat.
+        private bool RegionalCabin => Profile.TypeId == "SF34" || Profile.TypeId == "ATR42" || Profile.TypeId == "DH8D";
+        private bool RegionalJetCabin => Profile.TypeId == "E190" || Profile.TypeId == "A223";
+        private bool WidebodyCabin => Profile.SeatGroups.Length == 3;
+        private bool AirbusCabin => Profile.TypeId == "A320" || Profile.TypeId == "A21N" || Profile.TypeId == "A359" || Profile.TypeId == "A339" || Profile.TypeId == "A223";
         private Light _cabinLight;
         private Mesh _seatCube;
         private readonly Dictionary<Material,List<CombineInstance>> _seatParts=new();
@@ -33,12 +39,21 @@ namespace Airside.Presentation
         private void MakeCabin(bool right)
         {
             _lining=CabinSurface("cabin lining",new Color(.80f,.80f,.77f),.24f);
-            _fabric=CabinSurface("seat upholstery",new Color(.16f,.25f,.29f),.04f);
+            var upholstery=RegionalCabin ? new Color(.22f,.31f,.29f)
+                : Profile.HasElectronicDimming ? new Color(.19f,.24f,.33f)
+                : AirbusCabin ? new Color(.17f,.28f,.32f) : new Color(.23f,.25f,.29f);
+            _fabric=CabinSurface("seat upholstery",upholstery,.04f);
+            _headrestFabric=CabinSurface("headrest upholstery",Color.Lerp(upholstery,Color.white,.13f),.04f);
+            _seatShell=CabinSurface("seat back shell",RegionalCabin
+                ? new Color(.34f,.38f,.35f) : new Color(.56f,.59f,.59f),.17f);
             _trim=CabinSurface("rubber and seat frame",new Color(.15f,.17f,.18f),.09f);
             _frame=CabinSurface("moulded window trim",new Color(.92f,.91f,.86f),.38f);
             var floor=CabinSurface("aisle carpet",new Color(.22f,.25f,.25f),.02f);
             var light=Surface("cabin light diffuser",new Color(.81f,.79f,.68f),false);
             AddFabricWeave(_fabric);
+            if(_headrestFabric.HasProperty("_BaseMap")) _headrestFabric.SetTexture("_BaseMap",_fabric.mainTexture);
+            _headrestFabric.mainTexture=_fabric.mainTexture;
+            _headrestFabric.mainTextureScale=_fabric.mainTextureScale;
             Seat=new GameObject("Passenger eye").transform;
             Seat.SetParent(transform,false);SelectSide(right);
             BuildShell(floor,light);
@@ -114,30 +129,97 @@ namespace Airside.Presentation
                 }
                 mesh=_seatCube; // Built-in shared mesh, not owned by this interior.
             }
-            if(!_seatParts.TryGetValue(material,out var parts))
-            {parts=new List<CombineInstance>();_seatParts.Add(material,parts);}
-            parts.Add(new CombineInstance{mesh=mesh,transform=Matrix4x4.TRS(position,rotation??Quaternion.identity,size)});
+            AddSeatMesh(mesh,position,size,material,rotation??Quaternion.identity);
         }
 
         private void MakeSeat(float x,float z,float width,bool detailed)
         {
             var cushionY=Profile.FloorY+.33f;
             var backY=cushionY+.43f;
+            var recline=Quaternion.Euler(RegionalCabin ? -5f : -8f,0f,0f);
             SeatPart("Rounded seat cushion",new Vector3(x,cushionY,z-.03f),new Vector3(width-.035f,.12f,.43f),_fabric,detailed);
-            SeatPart("Reclined seat back",new Vector3(x,backY,z-.30f),new Vector3(width-.035f,.80f,.115f),
-                _fabric,detailed,Quaternion.Euler(-8f,0f,0f));
+            if(detailed)
+            {
+                if(_shapedSeatBack==null) _shapedSeatBack=MakeSeatBackMesh();
+                AddSeatMesh(_shapedSeatBack,new Vector3(x,backY,z-.30f),
+                    new Vector3(width-.035f,.80f,RegionalCabin ? .14f : .115f),
+                    RegionalCabin ? _fabric : _seatShell,recline);
+                // Fabric insert and lumbar pad sit on the passenger-facing side of the
+                // tapered shell. Distant rows retain two cheap boxes per seat.
+                SeatPart("Back fabric insert",new Vector3(x,backY+.035f,z-.24f),
+                    new Vector3(width-.095f,.58f,.044f),_fabric,true,recline);
+                SeatPart("Lumbar bolster",new Vector3(x,cushionY+.23f,z-.245f),
+                    new Vector3(width-.11f,.13f,.075f),_fabric);
+            }
+            else SeatPart("Distant seat back",new Vector3(x,backY,z-.30f),
+                new Vector3(width-.035f,.80f,.115f),_fabric,false,recline);
             if(!detailed) return; // Cheap continuation; only the five nearest rows carry fittings.
-            SeatPart("Seat headrest bolster",new Vector3(x,backY+.36f,z-.35f),new Vector3(width-.09f,.20f,.15f),_fabric);
+            var headrestWidth=width-(RegionalCabin ? .12f : .09f);
+            SeatPart("Seat headrest bolster",new Vector3(x,backY+.35f,z-.35f),
+                new Vector3(headrestWidth,RegionalCabin ? .17f : .21f,.15f),_headrestFabric);
+            if(WidebodyCabin)
+                foreach(var side in new[]{-1f,1f})
+                    SeatPart("Headrest side wing",new Vector3(x+side*(headrestWidth*.5f-.025f),backY+.35f,z-.295f),
+                        new Vector3(.055f,.18f,.11f),_headrestFabric,true,Quaternion.Euler(0,side*18f,0));
+            else if(RegionalJetCabin)
+                SeatPart("Slim headrest centre seam",new Vector3(x,backY+.35f,z-.271f),
+                    new Vector3(.008f,.13f,.005f),_trim,false);
             SeatPart("Stowed tray shell",new Vector3(x,backY-.04f,z-.39f),new Vector3(width-.11f,.26f,.026f),_lining);
             SeatPart("Tray latch",new Vector3(x,backY+.10f,z-.407f),new Vector3(.035f,.024f,.013f),_trim);
             SeatPart("Seat pocket seam",new Vector3(x,backY-.24f,z-.374f),new Vector3(width-.13f,.015f,.018f),_trim);
             foreach(var side in new[]{-1f,1f})
             {
-                SeatPart("Armrest cap",new Vector3(x+side*(width*.5f-.03f),cushionY+.27f,z-.02f),new Vector3(.045f,.065f,.41f),_trim);
+                SeatPart("Armrest cap",new Vector3(x+side*(width*.5f-.03f),cushionY+.27f,z-.02f),new Vector3(.045f,RegionalCabin ? .045f : .065f,RegionalJetCabin ? .36f : .41f),_trim);
+                if(!RegionalCabin)
+                    SeatPart("Armrest pivot",new Vector3(x+side*(width*.5f-.03f),cushionY+.15f,z-.19f),
+                        new Vector3(.032f,.18f,.045f),_seatShell);
                 SeatPart("Seat support",new Vector3(x+side*width*.27f,Profile.FloorY+.16f,z-.10f),new Vector3(.035f,.28f,.035f),_trim);
             }
             SeatPart("Resting lap belt",new Vector3(x,cushionY+.067f,z-.03f),new Vector3(width-.09f,.012f,.036f),_trim);
             SeatPart("Belt buckle",new Vector3(x+.04f,cushionY+.077f,z-.03f),new Vector3(.037f,.014f,.045f),_frame);
+        }
+
+        private void AddSeatMesh(Mesh mesh,Vector3 position,Vector3 size,Material material,Quaternion rotation)
+        {
+            if(!_seatParts.TryGetValue(material,out var parts))
+            {parts=new List<CombineInstance>();_seatParts.Add(material,parts);}
+            parts.Add(new CombineInstance{mesh=mesh,transform=Matrix4x4.TRS(position,rotation,size)});
+        }
+
+        // One owned unit mesh per cabin, reused for every detailed seat. Four rounded
+        // rings form a lumbar waist, shoulder taper and soft crown instead of a slab.
+        private Mesh MakeSeatBackMesh()
+        {
+            var vertices=new List<Vector3>();var triangles=new List<int>();
+            var heights=new[]{-.5f,-.22f,.30f,.5f};
+            var widths=RegionalCabin ? new[]{.44f,.50f,.47f,.39f}
+                : RegionalJetCabin ? new[]{.43f,.50f,.44f,.34f} : new[]{.45f,.50f,.46f,.37f};
+            var depths=new[]{.38f,.50f,.50f,.36f};
+            for(var ring=0;ring<heights.Length;ring++)
+            {
+                var w=widths[ring];var d=depths[ring];const float bevel=.08f;
+                var points=new[]{new Vector2(-w+bevel,-d),new Vector2(w-bevel,-d),
+                    new Vector2(w,-d+bevel),new Vector2(w,d-bevel),
+                    new Vector2(w-bevel,d),new Vector2(-w+bevel,d),
+                    new Vector2(-w,d-bevel),new Vector2(-w,-d+bevel)};
+                foreach(var point in points) vertices.Add(new Vector3(point.x,heights[ring],point.y));
+            }
+            for(var ring=0;ring<heights.Length-1;ring++)
+                for(var corner=0;corner<8;corner++)
+                {
+                    var a=ring*8+corner;var b=ring*8+(corner+1)%8;
+                    triangles.AddRange(new[]{a,b+8,b,a,a+8,b+8});
+                }
+            for(var corner=1;corner<7;corner++)
+            {
+                triangles.AddRange(new[]{0,corner,corner+1});
+                var top=(heights.Length-1)*8;
+                triangles.AddRange(new[]{top,top+corner+1,top+corner});
+            }
+            var mesh=new Mesh{name="Tapered passenger seat back"};
+            mesh.SetVertices(vertices);mesh.SetTriangles(triangles,0);
+            mesh.SetUVs(0,vertices.Select(v=>new Vector2(v.x+.5f,v.y+.5f)).ToList());
+            mesh.RecalculateNormals();mesh.RecalculateBounds();_meshes.Add(mesh);return mesh;
         }
 
         // Cabins have a ceiling fill, rather than inheriting the pilot's panel light.

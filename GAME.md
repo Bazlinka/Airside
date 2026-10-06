@@ -1,3 +1,22 @@
+## Where to resume — family interiors and Bell cockpit, 6 October 2026
+
+PR #540 is merged at `c28591eb`: all thirteen fixed-wing cockpit fittings and
+passenger window stations. The next batch adds six jet shell silhouettes with
+shared aperture/frame vertices, shaped pilot/passenger seats, distinct bins/PSUs,
+regional yokes/pedals and a reachable analog Bell 412EP cockpit (ADR 0241).
+Bell retains rotor/blur/skid visibility; existing switching restores the hull.
+Its authored tail now has two opposed half-span blades aligned to the X shaft;
+static glTF/FBX/mirror regression passes and unrelated geometry is preserved.
+
+Evidence: `docs/testing/interior-details-2026-10-06/README.md`.
+Unity-free suite 1,722/1,722; thirteen C# files parse cleanly; asset audit passes.
+No Unity execution by instruction: native compilation, appearance, clipping,
+switching, rotor motion and performance remain unverified.
+
+NEXT: finish this batch's PR/CI/merge. Remaining audit work includes larger actual
+787 glazing, measured jet hull fits, exact cabin widths and optional Bell cabin
+views. Keep the no-Unity restriction until Bailey changes it.
+
 ## Where to resume — full fleet cockpit fittings, 6 October 2026
 
 All thirteen fixed-wing cockpits receive family-specific controls, panel layers,

@@ -1,0 +1,15 @@
+# ADR 0241: Family interior details and Bell cockpit
+
+Status: accepted, 6 October 2026.
+
+Six original family shell layouts now distinguish all ten jets through brow taper/rake, shoulder and quarterlight geometry. Perimeter frames share the shell aperture vertices. Existing pilot-eye, sill and glareshield datums remain; lower shell walls clear the panel. Shaped pilot seats have lumbar/side bolsters, harnesses, arms and floor rails. Saab/ATR/Q400 receive distinct segmented yokes, floor boots and pedals.
+
+Passenger views now have tapered rounded seat backs, family upholstery/headrests/armrests, distinct bin catches/modules and circular PSU fittings matched to seat-bank counts. Detailed fittings remain within the nearest five rows; distant seats remain cheap, with material batching and no per-seat objects.
+
+Bell 412EP now has a reachable cockpit view using the existing fleet visibility/rotorcraft spool gates. Original representative analog EP instruments, paired live attitude indicators, radios, overhead fittings, shaped seats, cyclic/collective/pedals and rain wipers replace the hidden hull. The right pilot eye is (0.55,2.48,1.78) m before the -0.20 m kit ground offset. Front frames follow shipped pane centres (±0.67,2.42,2.83), size 1.04×0.82 m and ordered -20° X / ±14° Y rotations. Existing switching restores hidden exterior renderers and destroys owned resources; rotor/blur/skid visibility is retained, and fixed-wing callouts are suppressed for helicopters. This is not an EPX full-glass retrofit or certified equipment replica. Bell passenger views remain unsupported.
+
+Validation: Unity-free integrated suite 1,722 passed, zero failed. All thirteen changed C# files parse under C# 9 with zero syntax errors; parsing does not establish Unity type resolution. Static asset audit passes: 1,767 unique GUIDs, 386 mirrored art files and 70 character materials.
+
+No Unity tests, builds, editor/player execution or renders by Bailey's instruction. Native compilation, actual appearance, clipping, camera switching, rotor motion and performance remain unverified. Jet family shells are authored silhouettes rather than measured exterior hull fits; large real 787 glazing and exact cabin widths remain outstanding.
+
+Bell tail rotor correction: two opposed half-span blades now occupy the YZ plane around the existing X shaft, retaining the 2.65 m authored diameter. Source generator, authored glTF/bin/FBX and packaged mirrors agree. Static regression and generator checks pass. Preservation evidence: all 43 other FBX geometry blocks are byte-identical; only 498 bytes in the two blade POSITION arrays change, preserving paint, fitted doors/glazing, indices and material bindings. No native appearance or rotor-motion check was performed.

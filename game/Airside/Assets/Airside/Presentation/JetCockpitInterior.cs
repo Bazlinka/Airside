@@ -65,9 +65,7 @@ namespace Airside.Presentation
             foreach (var side in new[] { -1f, 1f })
             {
                 var x = side * Profile.HalfWidth * 0.43f;
-                Box("Pilot seat cushion", new Vector3(x, -0.77f, -0.19f), new Vector3(0.48f, 0.15f, 0.52f), _seatFabric);
-                Box("Pilot seat back", new Vector3(x, -0.32f, -0.48f), new Vector3(0.48f, 0.83f, 0.12f), _seatFabric);
-                Box("Pilot headrest", new Vector3(x, 0.22f, -0.49f), new Vector3(0.29f, 0.23f, 0.12f), _seatFabric);
+                MakePilotSeat(x, side);
                 foreach (var foot in new[] { -1f, 1f })
                     Box("Rudder pedal", new Vector3(x + foot * 0.10f, -1.22f, 0.65f), new Vector3(0.16f, 0.08f, 0.20f), _trim);
                 if (Profile.Sidestick)
@@ -89,6 +87,46 @@ namespace Airside.Presentation
                 }
             }
             SetReadout("GS 0 kt\nHEIGHT 0 ft\nHDG 000°");
+        }
+
+        private void MakePilotSeat(float x, float side)
+        {
+            // Project-authored family seating: all backs/harnesses remain behind
+            // the fixed pilot-eye plane, with no headrest wrapping into the view.
+            var wideDeck = Profile.Deck == JetFlightDeck.AirbusA350 || Profile.Deck == JetFlightDeck.Boeing787;
+            var backWidth = wideDeck ? 0.46f : 0.43f;
+            var tilt = Profile.Deck == JetFlightDeck.Embraer ? -7f : -10f;
+            Box("Pilot seat pan", new Vector3(x, -0.845f, -0.19f), new Vector3(0.48f, 0.065f, 0.52f), _trim);
+            Box("Pilot seat cushion", new Vector3(x, -0.765f, -0.18f), new Vector3(0.42f, 0.13f, 0.49f), _seatFabric);
+            var back = Box("Pilot seat back", new Vector3(x, -0.32f, -0.48f), new Vector3(backWidth, 0.78f, 0.10f), _seatFabric);
+            back.localRotation = Quaternion.Euler(tilt, 0f, 0f);
+            var shell = Box("Pilot seat rear shell", new Vector3(x, -0.33f, -0.55f), new Vector3(backWidth + 0.018f, 0.75f, 0.045f), _panel);
+            shell.localRotation = back.localRotation;
+            var head = Box("Pilot headrest", new Vector3(x, 0.22f, -0.54f), new Vector3(wideDeck ? 0.30f : 0.27f, 0.20f, 0.13f), _seatFabric);
+            head.localRotation = Quaternion.Euler(tilt, 0f, 0f);
+            Box("Pilot lumbar cushion", new Vector3(x, -0.56f, -0.38f), new Vector3(backWidth * 0.74f, 0.17f, 0.09f), _seatFabric);
+            Box("Seat suspension base", new Vector3(x, -1.11f, -0.27f), new Vector3(0.25f, 0.49f, 0.30f), _trim);
+            foreach (var hand in new[] { -1f, 1f })
+            {
+                var bolster = Box("Pilot seat side bolster", new Vector3(x + hand * backWidth * 0.44f, -0.33f, -0.42f),
+                    new Vector3(0.065f, 0.63f, 0.11f), _seatFabric);
+                bolster.localRotation = back.localRotation;
+                Box("Seat floor rail", new Vector3(x + hand * 0.14f, -1.3775f, -0.23f), new Vector3(0.035f, 0.045f, 0.72f), _trim);
+                Beam("Headrest support", new Vector3(x + hand * 0.075f, 0.04f, -0.53f),
+                    new Vector3(x + hand * 0.075f, 0.15f, -0.55f), 0.015f, _panel);
+                var outboardStick = Profile.Sidestick && hand == side;
+                var armZ = outboardStick ? -0.22f : -0.06f;
+                Box("Pilot armrest", new Vector3(x + hand * 0.255f, -0.53f, armZ),
+                    new Vector3(0.062f, 0.060f, outboardStick ? 0.30f : 0.42f), _trim);
+                Beam("Armrest support", new Vector3(x + hand * 0.24f, -0.80f, -0.28f),
+                    new Vector3(x + hand * 0.255f, -0.56f, -0.23f), 0.025f, _panel);
+                // Static stowed harness; no restraint animation or seat movement.
+                Beam("Pilot shoulder harness", new Vector3(x + hand * 0.12f, -0.03f, -0.405f),
+                    new Vector3(x + hand * 0.055f, -0.60f, -0.345f), 0.023f, _trim);
+                Beam("Pilot lap harness", new Vector3(x + hand * 0.18f, -0.70f, -0.17f),
+                    new Vector3(x + hand * 0.025f, -0.70f, -0.30f), 0.023f, _trim);
+            }
+            Box("Pilot harness buckle", new Vector3(x, -0.69f, -0.29f), new Vector3(0.05f, 0.018f, 0.042f), _panel);
         }
 
         private void MakeYoke(float x)
@@ -116,7 +154,7 @@ namespace Airside.Presentation
         private void MakeShell(Material lining)
         {
             var w = Profile.HalfWidth;
-            var geometry = JetCockpitShellGeometry.Build(w);
+            var geometry = JetCockpitShellGeometry.Build(Profile);
             var vertexCount = geometry.Vertices.Count;
             var vertices = new Vector3[vertexCount * 2];
             for (var i = 0; i < vertexCount; i++)
@@ -140,20 +178,12 @@ namespace Airside.Presentation
             shell.AddComponent<MeshFilter>().sharedMesh = mesh;
             shell.AddComponent<MeshRenderer>().sharedMaterial = lining;
             Box("Flight deck door", new Vector3(0f, -0.40f, -1.665f), new Vector3(0.56f, 1.90f, 0.035f), _panel);
+            foreach (var frame in geometry.Frames)
+                Beam(frame.Name, new Vector3(frame.Start.X, frame.Start.Y, frame.Start.Z),
+                    new Vector3(frame.End.X, frame.End.Y, frame.End.Z), frame.Width, frame.PanelMaterial ? _panel : lining);
             foreach (var side in new[] { -1f, 1f })
-            {
-                Beam("Side window upper rail", new Vector3(side * w, JetCockpitShellGeometry.SideTopY, -0.61f), new Vector3(side * w, JetCockpitShellGeometry.SideTopY, 0.72f), 0.07f, lining);
-                Beam("Side window sill", new Vector3(side * w, JetCockpitShellGeometry.SillY, -0.61f), new Vector3(side * w, JetCockpitShellGeometry.SillY, 0.72f), 0.07f, _panel);
-                Beam("Forward side window upper rail", new Vector3(side * w, JetCockpitShellGeometry.SideTopY, 0.72f), new Vector3(side * w * 0.73f, FrontTopY, 1.05f), 0.07f, lining);
-                Beam("Forward side window sill", new Vector3(side * w, JetCockpitShellGeometry.SillY, 0.72f), new Vector3(side * w * 0.84f, SillY, 1.30f), 0.07f, _panel);
-                Beam("Rear window pillar", new Vector3(side * w, JetCockpitShellGeometry.SillY, -0.61f), new Vector3(side * w, JetCockpitShellGeometry.SideTopY, -0.61f), 0.06f, lining);
-                Beam("Front windscreen outer pillar", new Vector3(side * w * 0.84f, SillY, 1.30f), new Vector3(side * w * 0.73f, FrontTopY, 1.05f), 0.065f, lining);
-                if (Profile.Deck != JetFlightDeck.Boeing787)
-                    Beam("Side quarterlight pillar", new Vector3(side * w, JetCockpitShellGeometry.SillY, 0.41f), new Vector3(side * w, JetCockpitShellGeometry.SideTopY, 0.41f), 0.045f, lining);
-                Wiper(new Vector3(side * 0.12f, SillY + 0.035f, 1.31f), new Vector3(side * w * 0.64f, SillY + 0.055f, 1.28f), 0.013f, _trim, side);
-            }
-            Beam("Windscreen centre post", new Vector3(0f, SillY, 1.30f), new Vector3(0f, FrontTopY, 1.05f), 0.047f, lining);
-            Beam("Windscreen brow", new Vector3(-w * 0.73f, FrontTopY, 1.05f), new Vector3(w * 0.73f, FrontTopY, 1.05f), 0.075f, lining);
+                Wiper(new Vector3(side * 0.12f, SillY + 0.035f, 1.31f),
+                    new Vector3(side * w * 0.64f, SillY + 0.055f, 1.28f), 0.013f, _trim, side);
 
         }
 

@@ -1,5 +1,11 @@
 ## Unreleased
 
+- Distinguish jet family windshield shells, shape pilot/passenger seats and regional
+  yokes, add family bin/PSU fittings, and enable an analog Bell 412EP cockpit with
+  fitted front frames and retained rotor visibility. Correct Bell tail geometry
+  to two opposed blades in the shaft plane (ADR 0241). Unity-free
+  verification only; native appearance and switching remain unverified.
+
 - Add family-specific cockpit controls, panels, overhead fittings and pilot seats
   across all thirteen fixed-wing types; fit every passenger camera to individual
   glazing and bound cabin sections to real window belts (ADR 0240). Unity-free

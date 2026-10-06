@@ -14,6 +14,8 @@ namespace Airside.Presentation
             "wing", "flap", "aileron", "spoiler", "slat", "static wick", "nav light",
             "engine", "nacelle", "intake", "fan", "pylon", "exhaust", "cowl", "oil cooler",
             "prop", "spinner", "hub cap",
+            "main rotor", "tail rotor", "rotor", "main_rotor", "tail_rotor",
+            "landing_skid", "skid_strut", "skid",
         };
 
         public static bool KeepsDuringCockpit(string partName)

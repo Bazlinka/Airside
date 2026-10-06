@@ -86,6 +86,35 @@ namespace Airside.Tests
             Assert.That(CockpitAvailability.Reason(type, false, EngineState.Running), Is.EqualTo("Aircraft outside the local area"));
         }
 
+        [Test] public void BellCockpitRequiresLocalVisibilityAndNonzeroRotorcraftSpool()
+        {
+            Assert.That(CockpitAvailability.Supported(AircraftType.Bell412), Is.True);
+            Assert.That(CockpitAvailability.Reason(AircraftType.Bell412, true, new EngineState(0f, 0.001f, true, false)), Is.Empty);
+            Assert.That(CockpitAvailability.Reason(AircraftType.Bell412, true, EngineState.ColdAndOpen), Is.EqualTo("Available after engine start"));
+            Assert.That(CockpitAvailability.Reason(AircraftType.Bell412, false, EngineState.Running), Is.EqualTo("Aircraft outside the local area"));
+        }
+
+        [TestCase("Main rotor")]
+        [TestCase("Tail rotor")]
+        [TestCase("Rotor disc")]
+        [TestCase("rotor_mast")]
+        [TestCase("main_rotor_blade_1")]
+        [TestCase("tail_rotor_hub")]
+        [TestCase("landing_skid_left")]
+        [TestCase("skid_strut_right_front")]
+        public void BellWindowViewsRetainRotorsBlurAndSkids(string name)
+        {
+            Assert.That(CockpitExteriorVisibility.KeepsDuringCockpit(name), Is.True);
+        }
+
+        [TestCase("fuselage")]
+        [TestCase("cockpit_glass_left")]
+        [TestCase("sliding_door_right")]
+        public void BellOpaqueHullAndGlazingAreReplacedByTheClearInteriorShell(string name)
+        {
+            Assert.That(CockpitExteriorVisibility.KeepsDuringCockpit(name), Is.False);
+        }
+
         [Test] public void NullTypeRemainsUnavailable()
         {
             Assert.That(CockpitAvailability.Supported(null), Is.False);

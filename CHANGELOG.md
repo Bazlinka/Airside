@@ -3,7 +3,12 @@
 - Put flight status and camera actions on the full map in a dedicated inspector;
   show all operators by default, add a South Australia shortcut and tidy labels,
   routes and opaque map chrome. Refresh shared icons/buttons across the game;
-  return the mini map to a polished airport scope (ADR 0236).
+  return the mini map to a polished airport scope (ADR 0237).
+
+- Map accuracy from open data (ADR 0236): Overture/Microsoft footprints, validated against SA Government
+  LiDAR roofs, replace most invented suburb filler houses (real houses 4,523 → 17,618); trees come from the SA 2022
+  LiDAR canopy height model; OSM airport snapshot refreshed to 2026-10-06; optional `--elvis` 1 m LiDAR terrain
+  hook; credits and register updated.
 
 - Select distant South Australian flights from the corner map using an Airport /
   South Australia switch. Show live status and journey plus available camera views;

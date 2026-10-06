@@ -39,11 +39,11 @@ namespace Airside.Tests
         {
             var trees = AdelaideTreeData.Parse(Find(AdelaideTreeData.ArtPath));
             Assert.That(trees, Is.Not.Null);
-            Assert.That(trees.Trees.Count, Is.InRange(3_000, 30_000));
+            Assert.That(trees.Trees.Count, Is.InRange(3_000, 45_000));
             foreach (var t in trees.Trees)
             {
-                Assert.That(t.Height, Is.InRange(5f, 16f));
-                Assert.That(t.CrownRadius, Is.InRange(2f, 5f));
+                Assert.That(t.Height, Is.InRange(3f, 24f));      // measured LiDAR crown heights (ADR 0236)
+                Assert.That(t.CrownRadius, Is.InRange(1.8f, 6.5f));
                 Assert.That(t.Colour, Is.LessThan(AdelaideTreeData.ColourCount));
                 var inPrecinct = t.X > 750f && t.X < 1750f && t.Z > 430f && t.Z < 920f;
                 Assert.That(inPrecinct, Is.False, $"tree at {t.X:0},{t.Z:0} in the landside precinct");
@@ -64,7 +64,7 @@ namespace Airside.Tests
             Assert.That(all.Count, Is.InRange(8_000, 25_000));
             Assert.That(all.Count(b => b.Kind == AdelaideSuburbData.Kind.FlatPrism), Is.GreaterThan(500));
             Assert.That(all.Count(b => b.Kind == AdelaideSuburbData.Kind.OsmHouse), Is.GreaterThan(2_000));
-            Assert.That(all.Count(b => b.Kind == AdelaideSuburbData.Kind.FillerHouse), Is.GreaterThan(2_000));
+            Assert.That(all.Count(b => b.Kind == AdelaideSuburbData.Kind.FillerHouse), Is.GreaterThan(300));
         }
 
         [Test]

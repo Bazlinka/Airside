@@ -8,10 +8,24 @@ SA shortcut, opaque map surface, simpler flight labels/routes, original v02 shar
 icons and flatter slate/Coastal Blue buttons. Mini map returns to airport scope
 with visual polish. The earlier regional eligibility/flight views remain reusable.
 Checks: headless 1,509 pass; native 1,961 pass with the inherited ground-separation
-failure and two inconclusives; final focused 33/33. **NEXT:** integrate #531, clean
+failure and two inconclusives; final focused 52/52. Integrated map-accuracy main #531 (`20340fb7`). **NEXT:** clean
 Mac build, packaged review and normal PR/main workflow.
 Evidence: `docs/testing/full-map-refresh-2026-10-06/`. Preserve the known inherited
 ground-separation failure; do not claim full native regression green.
+
+## Where to resume — map accuracy from open data, 6 October 2026
+
+Claude, at Bailey's request ("best map data you can find", private play only). Branch
+`feature/map-accuracy-20261006` (from `fix/ground-fog-follows-camera`); ADR 0236. Suburb buildings now merge
+Overture Maps footprints (validated against SA Government LiDAR roofs) with OSM: real houses 4,523 → 17,618,
+invented filler houses 8,880 → 660. Trees are real LiDAR canopy crowns (measured heights, crown radii) instead of
+random trees on NDVI pixels. OSM airport snapshot refreshed to 2026-10-06 (roads, car parks, precinct, bunkers
+regenerated; airside aeroways unchanged). Headless 1,508 pass. **Not yet done:** native Unity run and a packaged
+look at suburbs/trees/frame time (more mesh: 21.7k buildings, 35k trees). **Optional next:** order the 1 m ELVIS
+LiDAR DEM (steps in `scripts/generate-adelaide-terrain.py` docstring) and run it with `--elvis work/cache/elvis`;
+credits wording for ELVIS must be confirmed from the downloaded licence first. Raw inputs live in git-ignored
+`work/cache/` (SA zips, Overture fetch); re-create with the scripts named in the register rows DAT-SA-LIDAR-*,
+DAT-YPAD-OVERTURE.
 
 ## Where to resume — South Australia mini-map flight selection, 6 October 2026
 

@@ -67,7 +67,7 @@ namespace Airside.Tests
         [TestCase("A339", "2,4,2", .79f, 2.683f, 7.025f)]
         [TestCase("B789", "3,3,3", .79f, 2.745f, 7.121f)]
         [TestCase("B78X", "3,3,3", .79f, 2.745f, 7.121f)]
-        public void ExistingLayoutsAndLateralEyeFitsAreRetained(string type, string groups,
+        public void LayoutsAndMeasuredLateralEyeFitsRemainConsistent(string type, string groups,
             float pitch, float halfWidth, float eyeY)
         {
             PassengerCabinProfile.TryFor(type, out var p);
@@ -81,8 +81,9 @@ namespace Airside.Tests
         // Independently decoded POSITION/index connected-component bounds of the actual
         // shipped left panes, not values derived from the profile under test. The old
         // merged nodes span two windows; their midpoint is not an aperture centre.
-        // X is the curved pane bounding-box centre, with an intentional .015 m inboard
-        // lining datum. Central fit does not prove uniform end/curved-section fit.
+        // X is the curved pane bounding-box centre. Most profile planes sit .015 m
+        // inboard; enlarged 787 curvature leaves about .0066 m while preserving the fitted
+        // eye/lining plane. Bounds do not certify uniform local curved-section fit.
         [TestCase("SF34", 1.095209f, 2.288343f, 1.936000f, 0.508000f, 0.240000f, 0.328812f)]
         [TestCase("ATR42", 1.354591f, 2.168136f, 1.794158f, 0.508045f, 0.240021f, 0.330165f)]
         [TestCase("DH8D", 1.309830f, 2.565833f, 3.396000f, 0.508000f, 0.240000f, 0.328921f)]
@@ -94,18 +95,28 @@ namespace Airside.Tests
         [TestCase("A223", 1.688442f, 3.800141f, -15.107000f, 0.787001f, 0.250000f, 0.348898f)]
         [TestCase("A359", 2.851398f, 7.133434f, -25.772001f, 0.507999f, 0.250000f, 0.345256f)]
         [TestCase("A339", 2.698303f, 7.024654f, -25.044684f, 0.484122f, 0.238249f, 0.339992f)]
-        [TestCase("B789", 2.760498f, 7.120883f, -24.232627f, 0.477657f, 0.235067f, 0.344649f)]
-        [TestCase("B78X", 2.760498f, 7.120883f, -26.350715f, 0.519407f, 0.255613f, 0.344649f)]
+        [TestCase("B789", 2.751617f, 7.120883f, -24.232628f, 0.477657f, 0.287233f, 0.500000f)]
+        [TestCase("B78X", 2.751617f, 7.120883f, -26.350716f, 0.519409f, 0.287233f, 0.500000f)]
         public void EveryOpeningFitsAnIndividualShippedPane(string type, float paneHalfWidth,
             float centreY, float centreZ, float pitch, float width, float height)
         {
             PassengerCabinProfile.TryFor(type, out var p);
-            Assert.That(paneHalfWidth - p.HalfWidth, Is.InRange(.014f, .016f));
+            var dreamliner = type == "B789" || type == "B78X";
+            Assert.That(paneHalfWidth - p.HalfWidth,
+                dreamliner ? Is.InRange(.006f, .008f) : Is.InRange(.014f, .016f));
             Assert.That(p.WindowY, Is.EqualTo(centreY).Within(.0005f));
             Assert.That(p.WindowZ, Is.EqualTo(centreZ).Within(.0005f));
             Assert.That(p.WindowPitch, Is.EqualTo(pitch).Within(.0005f));
-            Assert.That(p.WindowWidth, Is.EqualTo(width).Within(.0005f));
-            Assert.That(p.WindowHeight, Is.EqualTo(height).Within(.0005f));
+            // 787 bounds describe the full glass. Its coordinated gasket retains
+            // 94% as clear aperture; cabin lining must fit the clear hole, not glass.
+            var clearFraction = dreamliner ? .94f : 1f;
+            Assert.That(p.WindowWidth, Is.EqualTo(width * clearFraction).Within(.0005f));
+            Assert.That(p.WindowHeight, Is.EqualTo(height * clearFraction).Within(.0005f));
+            if (dreamliner)
+            {
+                Assert.That(p.WindowWidth, Is.LessThan(width));
+                Assert.That(p.WindowHeight, Is.LessThan(height));
+            }
         }
 
         // Overall connected-pane belt bounds measured independently from the shipped kits.
@@ -122,8 +133,8 @@ namespace Airside.Tests
         [TestCase("A223", -30.972000f, -6.325001f)]
         [TestCase("A359", -58.409004f, -8.375002f)]
         [TestCase("A339", -55.663429f, -7.981327f)]
-        [TestCase("B789", -54.920204f, -7.874759f)]
-        [TestCase("B78X", -59.720585f, -8.563064f)]
+        [TestCase("B789", -54.946285f, -7.848675f)]
+        [TestCase("B78X", -59.736393f, -8.547254f)]
         public void VisualContinuationStaysWithinTheMeasuredPaneBelt(string type,
             float aftPaneEdgeZ, float forwardPaneEdgeZ)
         {
@@ -145,7 +156,34 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void DreamlinersShareSectionAndDimmingButRetainAuthoredLongitudinalScaling()
+        public void EnlargedDreamlinerWindowsShareAperturesAndClearTheRetainedPassengerGaze()
+        {
+            PassengerCabinProfile.TryFor("B789", out var nine);
+            PassengerCabinProfile.TryFor("B78X", out var ten);
+            foreach (var p in new[] { nine, ten })
+            {
+                Assert.That(p.WindowWidth, Is.EqualTo(.270f));
+                Assert.That(p.WindowHeight, Is.EqualTo(.470f));
+                // More than 40% larger bounding area than either inherited small pane.
+                Assert.That(p.WindowWidth * p.WindowHeight, Is.GreaterThan(.255613f * .345f * 1.4f));
+                Assert.That(p.SeatEyeInset, Is.EqualTo(.43f));
+                Assert.That(p.HalfWidth, Is.EqualTo(2.745f));
+                Assert.That(p.WindowY, Is.EqualTo(7.121f));
+                // At the existing +/-78 degree outward gaze, the centre eye ray
+                // stays within the opening at both ends of its recessed reveal.
+                var outwardSlope = Math.Tan(12 * Math.PI / 180);
+                foreach (var distance in new[] { p.SeatEyeInset, p.SeatEyeInset - p.RevealDepth })
+                    Assert.That(distance * outwardSlope + .02f, Is.LessThan(p.WindowWidth * .5f));
+                Assert.That(p.WindowWidth + .086f, Is.LessThan(p.WindowPitch), "Neighbouring rims retain solid lining");
+            }
+            Assert.That(nine.WindowZ, Is.Not.EqualTo(ten.WindowZ));
+            Assert.That(nine.WindowPitch, Is.LessThan(ten.WindowPitch));
+            Assert.That(nine.WindowY, Is.EqualTo(ten.WindowY));
+            Assert.That(nine.CabinLength, Is.LessThan(ten.CabinLength));
+        }
+
+        [Test]
+        public void DreamlinersShareSectionAndDimmingButRetainVariantStationSpacing()
         {
             PassengerCabinProfile.TryFor("B789", out var nine);
             PassengerCabinProfile.TryFor("B78X", out var ten);
@@ -159,7 +197,7 @@ namespace Airside.Tests
             Assert.That(nine.AisleWidth, Is.EqualTo(ten.AisleWidth));
             var authoredScale = 62.81f / 68.30f;
             Assert.That(nine.WindowPitch / ten.WindowPitch, Is.EqualTo(authoredScale).Within(.00002f));
-            Assert.That(nine.WindowWidth / ten.WindowWidth, Is.EqualTo(authoredScale).Within(.00002f));
+            Assert.That(nine.WindowWidth, Is.EqualTo(ten.WindowWidth));
             Assert.That(nine.RevealDepth, Is.GreaterThan(PassengerCabinProfile.All.Single(p => p.TypeId == "A320").RevealDepth));
             Assert.That(PassengerCabinProfile.All.Where(p => p.HasElectronicDimming).Select(p => p.TypeId),
                 Is.EquivalentTo(new[] { "B789", "B78X" }));

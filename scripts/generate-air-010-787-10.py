@@ -26,6 +26,10 @@ a350 = importlib.util.module_from_spec(_A350_SPEC)
 assert _A350_SPEC.loader is not None
 _A350_SPEC.loader.exec_module(a350)
 
+_WINDOW_SPEC = importlib.util.spec_from_file_location("airside_787_windows", SCRIPTS / "fit-787-cabin-windows.py")
+windows = importlib.util.module_from_spec(_WINDOW_SPEC)
+_WINDOW_SPEC.loader.exec_module(windows)
+
 TARGET_LENGTH_M = 68.30
 TARGET_SPAN_M = 60.12
 TARGET_HEIGHT_M = 17.02
@@ -68,7 +72,7 @@ def _chevron_ring(cx: float, cy: float, z: float, radius: float, teeth=14):
     return a350.orient_outward(np.asarray(vertices, np.float32), np.asarray(indices, np.uint16))
 
 
-def boeing_787_10_meshes():
+def boeing_787_10_meshes(*, fit_cabin_windows=True):
     source = a350.a350_900_meshes()
     meshes = {}
     for name, (vertices, indices) in source.items():
@@ -97,7 +101,7 @@ def boeing_787_10_meshes():
         meshes[f"exhaust_chevron_{suffix}"] = _chevron_ring(
             engine_x, engine_y, exhaust_z, 0.78 * float(SCALE[1]))
 
-    return meshes
+    return windows.fit_windows(meshes) if fit_cabin_windows else meshes
 
 
 def validate_meshes(meshes):

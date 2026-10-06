@@ -368,8 +368,10 @@ namespace Airside.Tests
         public void CameraShellAnchor_AbsoluteHeightFollowsOnlyHorizontalTravel()
         {
             var resolved = CameraShellAnchor.Resolve(
-                new Vector3(100f, 80f, -50f), new Vector3(3f, 700f, 4f), absoluteHeight: true);
+                new Vector3(100f, 80f, -50f), Vector3.forward, new Vector3(3f, 700f, 4f), absoluteHeight: true);
             Assert.That(resolved, Is.EqualTo(new Vector3(103f, 700f, -46f)));
+            Assert.That(CameraShellAnchor.Resolve(new Vector3(1f, 2f, 3f), Vector3.right, Vector3.zero,
+                absoluteHeight: false, forwardMetres: 10f), Is.EqualTo(new Vector3(11f, 2f, 3f)));
         }
 
         [Test]

@@ -1,6 +1,6 @@
 ## Unreleased
 
-- Stop stars, sun/moon discs, the stratus deck and the horizon band sliding while the
+- Stop stars, sun/moon discs, the stratus deck, the horizon band and the rain volume sliding while the
   camera pans, orbits or zooms. They were re-centred in `Update` but the camera moves in
   `LateUpdate`, so they trailed one frame behind; a new `CameraShellAnchor` re-applies their
   offsets after the camera has moved. EditMode tests added; not yet verified in a Unity run

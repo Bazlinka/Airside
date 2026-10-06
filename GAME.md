@@ -2,7 +2,7 @@
 
 Claude; branch `fix/sky-star-parallax-20261006` off `origin/main` (038d8b5a), made in a
 separate worktree because the main checkout holds another feature's uncommitted work.
-Stars, sun/moon discs, stratus deck and horizon band were re-centred on the camera in
+Stars, sun/moon discs, stratus deck, horizon band and the rain volume were re-centred on the camera in
 `AirsidePrototype.Update`, but the camera moves in `AirsideCameraController.LateUpdate`,
 so they lagged one frame and slid against the view on any pan/orbit/zoom. New
 `CameraShellAnchor` (execution order 500) re-applies their offsets after the camera moves.

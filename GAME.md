@@ -101,6 +101,30 @@ After merge, this seven-fix code batch is complete within the requested scope. T
 findings in #534 and its optional design work remain pending; the audit PR is
 still a separate draft. Standing freight work and release status are unchanged.
 
+## Historical review — visual code review continuation, 6 October 2026 (superseded)
+
+Codex; branch `docs/visual-review-continuation`, reviewed main `000ab56b` after
+PR #532 merged. Bailey asked to continue Claude’s interrupted **Main branch
+review**: a comprehensive visual-code backlog for agents working in parallel.
+Recovered Claude’s cloud review, CORE/GROUND summary and saved branch; completed
+six independent static reviews. Claude’s original processes remain stopped by
+its usage limit; this is a new review, not a resumed Claude agent session.
+
+Report: `docs/testing/VISUAL_BACKLOG_2026-10-06.md`, with six evidence packets in
+`docs/testing/visual-review-2026-10-06/`. It contains 16 concrete source/data
+findings and two optional lighting-coverage gaps, plus retained design work,
+retracted claims, meaningful proposed checks and explicit file ownership.
+No game source changed; no new Unity tests, captures, visual sign-off or FPS
+measurement. Documentation links and whitespace were checked. Existing owner
+acceptance remains closed; historical technical failures remain recorded.
+
+**Historical status:** all 16 concrete findings were implemented and merged in
+PRs #535 and #536. This #534 report preserves the original analysis and proposed
+acceptance checks; it is not an active implementation queue. Optional lighting,
+scenery and design proposals remain unapproved. No native compilation, captures,
+visual sign-off or performance checks were added. Follow the newer handoffs above
+for active work; standing freight priorities remain unchanged.
+
 ## Where to resume — full-map inspection and shared controls, 6 October 2026
 
 ## Where to resume — build script stall recovery, 6 October 2026

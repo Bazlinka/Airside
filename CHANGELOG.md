@@ -1,5 +1,10 @@
 ## Unreleased
 
+- Preserve the historical #534 visual-code audit and six evidence packets: 16
+  concrete source/data findings already implemented in merged #535/#536, two
+  optional lighting gaps, corrected claims and explicit implementation ownership.
+  Documentation only; no new native checks or game behaviour changes.
+
 - Smooth the watched takeoff-to-climb-out handoff instead of jumping 174–218 m
   onto the enroute profile; match vertical rates through rotation and climb-out.
   Add shared flight status, location, height, true heading and journey progress /

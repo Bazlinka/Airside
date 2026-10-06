@@ -157,18 +157,31 @@ namespace Airside.Simulation
             foreach (var aircraft in _fleet)
             {
                 GroundLeg leg;
-                if (aircraft.State == FleetState.TaxiOut)
+                var legStartsAt = aircraft.StateStartedAt.ElapsedSeconds;
+                if (aircraft.MaintenanceJob is { } job)
+                {
+                    leg = job.ActiveLeg(aircraft.Type);
+                    if (leg == null) continue;
+                    legStartsAt = job.PhaseStartedAt;
+                }
+                else if (aircraft.State == FleetState.Landing && aircraft.StateEndsAt.HasValue
+                    && !IsMissedApproachLanding(aircraft))
+                {
+                    leg = AdelaideGround.VacateFor(aircraft.Type, aircraft.AssignedRunway);
+                    legStartsAt = aircraft.StateEndsAt.Value.ElapsedSeconds - leg.WholeSeconds;
+                }
+                else if (aircraft.State == FleetState.TaxiOut)
                     leg = AdelaideGround.TaxiOut(aircraft.DepartureStand, aircraft.Type, aircraft.AssignedRunway);
                 else if (aircraft.State == FleetState.TaxiIn)
                     leg = AdelaideGround.TaxiIn(aircraft.Stand, aircraft.Type, aircraft.AssignedRunway);
                 else
                     continue;
-                foreach (var crossing in RunwayCrossings.For(leg, aircraft.AssignedRunway))
+                foreach (var crossing in RunwayCrossings.For(leg, aircraft.AssignedRunway, aircraft.Type, aircraft.MaintenanceJob != null))
                 {
                     if (crossing.MainStrip != mainStrip)
                         continue;
-                    var enter = aircraft.StateStartedAt.ElapsedSeconds + (long)Math.Floor(crossing.EnterSeconds);
-                    var exit = aircraft.StateStartedAt.ElapsedSeconds + (long)Math.Ceiling(crossing.ExitSeconds);
+                    var enter = legStartsAt + (long)Math.Floor(crossing.EnterSeconds);
+                    var exit = legStartsAt + (long)Math.Ceiling(crossing.ExitSeconds);
                     if (exit > from.ElapsedSeconds && enter < until.ElapsedSeconds)
                         return aircraft;
                 }
@@ -178,9 +191,9 @@ namespace Airside.Simulation
         }
 
         /// <summary>The first crossing on <paramref name="leg"/>, started now, that would meet a busy strip.</summary>
-        internal RunwayCrossing? CrossingIntoBusyStrip(GroundLeg leg, RunwayDirection ownRunway, SimulationTime start)
+        internal RunwayCrossing? CrossingIntoBusyStrip(GroundLeg leg, RunwayDirection ownRunway, SimulationTime start, AircraftType type = null, bool includeOwnRunway = false)
         {
-            foreach (var crossing in RunwayCrossings.For(leg, ownRunway))
+            foreach (var crossing in RunwayCrossings.For(leg, ownRunway, type, includeOwnRunway))
             {
                 var freeAt = crossing.MainStrip ? _mainRunwayFreeAt : _crossRunwayFreeAt;
                 if (freeAt.ElapsedSeconds > start.ElapsedSeconds + (long)Math.Floor(crossing.EnterSeconds))
@@ -389,6 +402,9 @@ namespace Airside.Simulation
             // wind was near a tie. Go-around rejoin still reassigns via AdvanceAircraft.
             var landing = next.State == FleetState.HoldingForLanding;
             var profile = AircraftPerformance.For(next.Type);
+            if (MovementFreeAt(next, landing).CompareTo(now) > 0
+                || IntersectingRunwayOccupier(mainStrip, now) != null)
+                return false;
             // ADR 0126: no landing or takeoff while taxiing traffic is due across this strip. The
             // crossing aircraft is already moving, so the wait is short; re-checked on the grid.
             if (CrossingDue(mainStrip, now, now.Advance(RunwayBusySeconds(next, landing))) != null)
@@ -404,7 +420,7 @@ namespace Airside.Simulation
                 next.WentAroundThisTrip = true;
                 var missedFinal = ApproachHold.RemainingFinalSeconds(profile.ApproachSeconds, next.Registration);
                 Transition(next, FleetState.Landing, now, missedFinal);
-                SetStripFreeAt(mainStrip, now.Advance(missedFinal + WakeSeparationSeconds(next.Type)));
+                SetStripFreeAt(mainStrip, now.Advance(missedFinal + RunwaySeparationSeconds));
                 return true;
             }
 
@@ -416,15 +432,17 @@ namespace Airside.Simulation
                 var vacateSeconds = AdelaideGround.VacateFor(next.Type, next.AssignedRunway).WholeSeconds;
                 var clearSeconds = AdelaideGround.ClearOfRunwaySeconds(next.Type, next.AssignedRunway);
                 var runwaySeconds = finalSeconds + profile.LandingSeconds + vacateSeconds;
+                RecordWake(next, landing: true, now);
                 Transition(next, FleetState.Landing, now, runwaySeconds);
                 SetStripFreeAt(mainStrip,
                     now.Advance(finalSeconds + profile.LandingSeconds + clearSeconds
-                                + WakeSeparationSeconds(next.Type)));
+                                + RunwaySeparationSeconds));
                 return true;
             }
 
             var lineupSeconds = AdelaideGround.LineupFor(next.AssignedRunway, next.Type).WholeSeconds;
             var takeoffSeconds = lineupSeconds + profile.TakeoffSeconds;
+            RecordWake(next, landing: false, now);
             Transition(next, FleetState.TakingOff, now, takeoffSeconds);
             // The strip itself is only occupied through the ground roll to rotation — the
             // arrival side already draws this distinction (ClearOfRunwaySeconds vs. the fuller
@@ -435,7 +453,7 @@ namespace Airside.Simulation
             // reported before the next departure gets moving.
             var rollSeconds = (long)Math.Round(profile.TakeoffRollExactSeconds);
             SetStripFreeAt(mainStrip,
-                now.Advance(lineupSeconds + rollSeconds + WakeSeparationSeconds(next.Type)));
+                now.Advance(lineupSeconds + rollSeconds + RunwaySeparationSeconds));
             return true;
         }
 
@@ -524,7 +542,7 @@ namespace Airside.Simulation
                 if (arrival.Aircraft.State == FleetState.Inbound && arrival.Joined.CompareTo(firstJoins) < 0)
                     firstJoins = arrival.Joined;
 
-            var at = mainStrip ? _mainRunwayFreeAt : _crossRunwayFreeAt;
+            var at = MovementFreeAt(aircraft, landing: true);
             if (at.CompareTo(_clock.Now) < 0)
                 at = _clock.Now;
             // Until an inbound joins the queue nothing is waiting to land, so holders depart freely.
@@ -565,7 +583,7 @@ namespace Airside.Simulation
                 at = at.Advance(ApproachHold.RemainingFinalSeconds(landing.ApproachSeconds, ahead.Registration)
                                 + landing.LandingSeconds
                                 + AdelaideGround.ClearOfRunwaySeconds(ahead.Type, ahead.AssignedRunway)
-                                + WakeSeparationSeconds(ahead.Type));
+                                + Math.Max(RunwaySeparationSeconds, WakeSeparation.Seconds(ahead.Type, aircraft.Type, landing: true)));
             }
 
             return at;
@@ -580,7 +598,9 @@ namespace Airside.Simulation
         {
             var main = RunwayWeather.IsMainRunway(aircraft.AssignedRunway);
             var busy = RunwayBusySeconds(aircraft, landing: true);
-            return VacateClearOfTaxiing(aircraft, at)
+            return MovementFreeAt(aircraft, landing: true).CompareTo(at) <= 0
+                   && IntersectingRunwayOccupier(main, at) == null
+                   && VacateClearOfTaxiing(aircraft, at)
                    && CrossingDue(main, at, at.Advance(busy)) == null
                    && (GroundTraffic.OnGrid(at) || CrossingDue(main, GridBefore(at), at) == null);
         }
@@ -604,8 +624,10 @@ namespace Airside.Simulation
             var touchdownIn = ApproachHold.RemainingFinalSeconds(profile.ApproachSeconds, arrival.Registration)
                               + profile.LandingSeconds;
             var vacate = AdelaideGround.VacateFor(arrival.Type, arrival.AssignedRunway);
+            if (CrossingIntoBusyStrip(vacate, arrival.AssignedRunway, now.Advance(touchdownIn), arrival.Type).HasValue)
+                return false;
             if (!GroundTraffic.PathClear(_fleet, arrival, vacate, arrival.AssignedRunway, taxiOut: false,
-                    now.Advance(touchdownIn), includeStationary: false))
+                    now.Advance(touchdownIn), includeStationary: true))
                 return false;
 
             // A reserved stand lets the tower validate the route beyond the runway exit too.
@@ -616,7 +638,7 @@ namespace Airside.Simulation
                 return true;
             var taxiIn = AdelaideGround.TaxiIn(arrival.Stand, arrival.Type, arrival.AssignedRunway);
             return GroundTraffic.PathClear(_fleet, arrival, taxiIn, arrival.AssignedRunway, taxiOut: false,
-                now.Advance(touchdownIn + vacate.WholeSeconds), includeStationary: false, out _,
+                now.Advance(touchdownIn + vacate.WholeSeconds), includeStationary: true, out _,
                 GroundTraffic.LandingTaxiInHorizonSeconds);
         }
 
@@ -661,7 +683,7 @@ namespace Airside.Simulation
         private static long DepartureRunwaySeconds(FleetAircraft departure) =>
             AdelaideGround.LineupFor(departure.AssignedRunway, departure.Type).WholeSeconds
             + (long)Math.Round(AircraftPerformance.For(departure.Type).TakeoffRollExactSeconds)
-            + WakeSeparationSeconds(departure.Type);
+            + RunwaySeparationSeconds;
 
         /// <summary>The first moment at or after <paramref name="at"/> that is not in a storm hold.</summary>
         private static SimulationTime AfterStorms(SimulationTime at)
@@ -695,21 +717,6 @@ namespace Airside.Simulation
 
             var seed = GoAroundSeed(aircraft.CompletedTrips, aircraft.Registration, now.ElapsedSeconds);
             return arrivals >= 2 && Math.Abs(seed % 11) == 0;
-        }
-
-        /// <summary>
-        /// Wake-turbulence separation owed to whoever uses the runway next, derived from the
-        /// leading aircraft's own wingspan (<see cref="AircraftCatalogue"/>) rather than a
-        /// hand-picked list of type IDs — a second, disconnected classification that would
-        /// silently give any newly added heavy jet only the smallest 90 s separation if its
-        /// ID were never added here to match.
-        /// </summary>
-        public static long WakeSeparationSeconds(AircraftType type)
-        {
-            var wingspan = AircraftCatalogue.TryFor(type, out var spec) ? spec.WingspanMetres : 0;
-            if (wingspan >= HeavyWakeWingspanMetres)
-                return 180;
-            return wingspan >= MediumWakeWingspanMetres ? 120 : RunwaySeparationSeconds;
         }
 
         private long LegAirborne(FleetAircraft aircraft) =>

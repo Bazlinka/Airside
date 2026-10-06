@@ -43,7 +43,7 @@ namespace Airside.Simulation
                         job.WaitReason = blocker == null ? "Waiting for taxiway traffic" : "Waiting for " + blocker.Registration;
                         return false;
                     }
-                    if (CrossingIntoBusyStrip(paths.Outbound, aircraft.AssignedRunway, now).HasValue)
+                    if (CrossingIntoBusyStrip(paths.Outbound, aircraft.AssignedRunway, now, aircraft.Type, includeOwnRunway: true).HasValue)
                     {
                         job.WaitReason = "Waiting for runway crossing clearance";
                         return false;
@@ -78,7 +78,10 @@ namespace Airside.Simulation
                         {
                             if (!StandFits(aircraft.Type, stand) || !IsStandFree(stand)
                                 || !PlayerBase.CanUseStand(CareerState.BaseLevel, aircraft.Type, stand)) continue;
-                            job.ReturnStand = stand.Value; aircraft.Stand = stand;
+                            job.ReturnStand = stand.Value;
+                            try { _ = job.Paths(aircraft.Type); }
+                            catch (InvalidOperationException) { job.ReturnStand = null; continue; }
+                            aircraft.Stand = stand;
                             break;
                         }
                     }
@@ -94,7 +97,7 @@ namespace Airside.Simulation
                         job.WaitReason = returningBlocker == null ? "Waiting for return taxiway traffic" : "Waiting for " + returningBlocker.Registration;
                         return false;
                     }
-                    if (CrossingIntoBusyStrip(paths.Return, aircraft.AssignedRunway, now).HasValue)
+                    if (CrossingIntoBusyStrip(paths.Return, aircraft.AssignedRunway, now, aircraft.Type, includeOwnRunway: true).HasValue)
                     {
                         job.WaitReason = "Waiting for runway crossing clearance";
                         return false;

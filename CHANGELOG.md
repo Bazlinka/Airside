@@ -1,9 +1,9 @@
 ## Unreleased
 
-- Implement the refined shared interface and real maintenance journey (ADR 0243):
+- Implement the refined shared interface and real maintenance journey (ADR 0245):
   normal startup without passengers/loading, traffic-aware taxi, apron shutdown,
   continuous tug positioning into the shed, repair and return to a free stand.
-  Wear resets after repair; save v21 resumes the actual phase. Older timed checks
+  Wear resets after repair; save v22 resumes the actual phase. Older timed checks
   retain their prior completion semantics. Each active job reserves its shed.
 - Simplify overview navigation/status, make radar optional, add a right aircraft
   inspector with fixed actions and scrolling details, and increase Fleet/Operations
@@ -12,7 +12,26 @@
 
 - Refine the maintenance movement and whole-interface proposal with a concrete
   interactive design study, seven retained previews and implementation/acceptance
-  packets (ADR 0242). Design only; no runtime game changes.
+  packets (ADR 0244). Design only; no runtime game changes.
+
+- Remove synchronous GPU readback, PNG encoding and disk writes from packaged
+  review screenshots, a plausible source of the recorded 172/196-second frames.
+  Use async readback and background writes; capture failures/timeouts fail QA.
+  Historic cause remains unproven; no Unity or full-journey reproduction run.
+
+- Keep stationary aircraft blocking ground clearances permanently, reserve full-airframe
+  runway crossings and intersecting-strip occupancy, apply/save follower-specific MTOW
+  wake minima, route terminal departures around Adelaide ERSA restrictions with eastbound
+  Code C pushbacks, and use compatible widebody arrival exits. Cap shared service vehicles
+  at the airport's apron/terminal/aircraft-zone speeds. Arrival estimates share the tower
+  guards. Save v21 migrates older deadlines conservatively (ADR 0243); Unity unverified.
+
+- Aircraft views (cockpit, window, exterior) feel better on a Mac and everywhere: the trackpad now taps and
+  rumbles with touchdown, gear thumps, runway joints and turbulence (system haptics, no plugin; the Vibration
+  toggle governs it and the shake); either mouse button looks round; drag and scroll spikes are bounded and
+  drag follows the zoom; entering, switching and leaving a seat glide instead of cutting; the dock hint,
+  a once-per-run toast and F1 help say how to look, glance, zoom and recentre (ADR 0242). Headless suite
+  passes; Unity compile, trackpad feel and visuals are not verified.
 
 - One fleet across every base (ADR 0239). The Fleet workspace now lists every aircraft at
   Adelaide, Melbourne, Sydney, Brisbane and Perth, grouped by base with SHOW and SORT, and a
@@ -79,7 +98,7 @@
   on a separate manual page so all attribution remains visible (ADR 0237).
 
 - **Mac builds recover from Unity's script-build hang.** `scripts/build-mac.sh` watches the
-  log; if it stops growing for 3 minutes (`AIRSIDE_BUILD_STALL_SECONDS`) right after Unity
+  log; if it stops growing for 60 seconds (`AIRSIDE_BUILD_STALL_SECONDS`) right after Unity
   starts `bee_backend`, it kills that run, clears the `Library/Bee` build graphs and retries
   once, then fails clearly instead of hanging forever.
 

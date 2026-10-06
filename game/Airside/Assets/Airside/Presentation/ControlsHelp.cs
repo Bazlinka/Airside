@@ -43,6 +43,7 @@ namespace Airside.Presentation
                 new Binding("F", "Follow selected aircraft"),
                 new Binding("R", "Back to the overview"),
                 new Binding("Mouse", "Right-drag orbits, drag pans, scroll zooms, click picks an aircraft"),
+                new Binding("In an aircraft", "Drag or arrows look, 1-5 glance, Home recentres"),
             }),
             new Section("Airline", new[]
             {

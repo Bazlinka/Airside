@@ -440,7 +440,11 @@ namespace Airside.Simulation
                 PhaseStartedAt = _processedTo.ElapsedSeconds, PhaseEndsAt = _processedTo.ElapsedSeconds + 90,
                 RepairSeconds = seconds
             };
-            if (job != null) _ = job.Paths(aircraft.Type); // Validate the route before any charge.
+            if (job != null)
+            {
+                try { _ = job.Paths(aircraft.Type); } // Validate before any charge.
+                catch (InvalidOperationException error) { return CommandResult.Refused(error.Message); }
+            }
             var cost = Maintenance.CheckCost(aircraft.Type, CareerState.BaseLevel);
             if (!CareerState.TryChargePurchase(cost))
                 return CommandResult.Refused($"A check costs ${cost:N0}. You have ${CareerState.Funds:N0}.");

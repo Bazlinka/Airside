@@ -334,7 +334,7 @@ are preserved. No external assets, attribution or cost. Prior git revision is th
 fallback. Static geometry checks pass; native appearance/motion are unverified.
 
 
-## Interface refinement design study — 6 October 2026 (ADR 0242)
+## Interface refinement design study — 6 October 2026 (ADR 0244)
 
 Original Codex-authored HTML/CSS, inline SVG airport/aircraft/icon geometry and
 Chromium screenshots under `docs/art/interface-refinement-2026-10-06/`. Source
@@ -346,7 +346,7 @@ not downloaded or redistributed. Existing Unity UI and approved world art are
 the fallback. Screenshots verify the browser study only, not native gameplay.
 
 
-## Refined shared interface implementation previews — 7 October 2026 (ADR 0243)
+## Refined shared interface implementation previews — 7 October 2026 (ADR 0245)
 
 Original project-owned HUD painters, exported by `scripts/hud-mockup` from real
 headless simulation fixtures and rasterized by `scripts/render-hud-mockups.py`.

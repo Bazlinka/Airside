@@ -10,7 +10,7 @@ namespace Airside.Simulation
         Repairing, WaitingReturn, Returning, Parking
     }
 
-    /// <summary>Saved v21 maintenance job. Derived paths are not persisted; phase boundaries belong to simulation.</summary>
+    /// <summary>Saved v22 maintenance job. Derived paths are not persisted; phase boundaries belong to simulation.</summary>
     [Serializable]
     public sealed class MaintenanceJob
     {
@@ -73,7 +73,11 @@ namespace Airside.Simulation
             var extra = Math.Max(0f, plan.Length + HangarTow.ClearanceMetres - HangarTow.ApronMetres);
             var apronX = plan.ApronX - plan.InsideNoseX * extra;
             var apronZ = plan.ApronZ - plan.InsideNoseZ * extra;
-            var route = AdelaideTaxiRouter.Route(p.X, p.Z, apronX - plan.InsideNoseX * 40f, apronZ - plan.InsideNoseZ * 40f);
+            if (!AdelaideTaxiRouter.TryRoute(p.X, p.Z, apronX - plan.InsideNoseX * 40f, apronZ - plan.InsideNoseZ * 40f,
+                    type, new StableId(OriginStand), out var route, apronAccessMetres: 180f))
+                throw new InvalidOperationException("No permitted taxi route to the maintenance apron.");
+            // Explicit stand/shed apron connectors may be outside the taxiway graph; the graph
+            // itself still excludes forbidden taxiways and has no disconnected-route fallback.
             // Approach the doorway on its centreline, leaving the complete tail outside the shed.
             var approach = new List<float>(route);
             approach.Add(apronX); approach.Add(apronZ);
@@ -93,7 +97,9 @@ namespace Airside.Simulation
                 var arrival = AdelaideGround.TaxiIn(new StableId(ReturnStand), type).FirstPart.Path;
                 var from = Math.Max(0f, arrival.Length - Math.Max(60f, plan.Length * 2f));
                 var join = arrival.PointAtDistance(from);
-                var back = new List<float>(AdelaideTaxiRouter.Route(apronX, apronZ, join.x, join.z));
+                if (!AdelaideTaxiRouter.TryRoute(apronX, apronZ, join.x, join.z, type, default, out var returningRoute, apronAccessMetres: 180f))
+                    throw new InvalidOperationException("No permitted return route from the maintenance apron.");
+                var back = new List<float>(returningRoute);
                 for (var d = from; d < arrival.Length; d += 5f)
                 {
                     var point = arrival.PointAtDistance(d); back.Add(point.x); back.Add(point.z);

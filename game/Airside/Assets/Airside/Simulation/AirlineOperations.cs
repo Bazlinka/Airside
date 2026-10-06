@@ -106,9 +106,9 @@ namespace Airside.Simulation
     /// two-hour flight costs a handful of steps and any mix of frame sizes, time
     /// rates or skip-to-next-event lands on exactly the same state.
     ///
-    /// The airport runs itself. The tower owns each physical strip separately —
-    /// 05/23 and 12/30 can move in parallel — with arrivals before departures and
-    /// wake separation on that strip. Owners only choose where and when an aircraft
+    /// The airport runs itself. The tower owns separate queues for 05/23 and 12/30,
+    /// with shared intersection occupancy and applicable cross-flight wake separation.
+    /// Arrivals normally precede departures. Owners only choose where and when an aircraft
     /// goes, and which stand it parks on. AI airlines make both choices automatically.
     /// </summary>
     public sealed partial class AirlineOperations
@@ -387,10 +387,10 @@ namespace Airside.Simulation
         /// <summary>Simulation time everything has been resolved up to.</summary>
         public SimulationTime ProcessedTo => _processedTo;
 
-        /// <summary>When the tower may next clear a movement on the 05/23 strip.</summary>
+        /// <summary>Physical-strip scheduling deadline for 05/23; follower wake/crossings may hold longer.</summary>
         public SimulationTime RunwayFreeAt => _mainRunwayFreeAt;
 
-        /// <summary>When the tower may next clear a movement on the 12/30 strip.</summary>
+        /// <summary>Physical-strip scheduling deadline for 12/30; follower wake/crossings may hold longer.</summary>
         public SimulationTime CrossRunwayFreeAt => _crossRunwayFreeAt;
 
         public SurfaceWind Wind => RunwayWeather.At(Clock, _processedTo);
@@ -673,7 +673,7 @@ namespace Airside.Simulation
                 // Player aircraft first get a fixed decision window to pick a stand themselves.
                 if (aircraft.State == FleetState.AwaitingStand)
                 {
-                    if (aircraft.Airline.IsPlayer)
+                    if (aircraft.Airline.IsPlayer && string.IsNullOrEmpty(aircraft.Stand.Value))
                     {
                         var autoAt = aircraft.StateStartedAt.Advance(PlayerStandAutoSeconds);
                         if (autoAt.CompareTo(now) > 0)
@@ -690,6 +690,14 @@ namespace Airside.Simulation
             {
                 Consider(_mainRunwayFreeAt);
                 Consider(_crossRunwayFreeAt);
+                foreach (var waiting in _fleet)
+                    if (waiting.State is FleetState.HoldingShort or FleetState.HoldingForLanding)
+                    {
+                        Consider(MovementFreeAt(waiting, waiting.State == FleetState.HoldingForLanding));
+                        var occupier = IntersectingRunwayOccupier(RunwayWeather.IsMainRunway(waiting.AssignedRunway), now);
+                        if (occupier != null && IntersectionBusyUntil(occupier).HasValue)
+                            Consider(IntersectionBusyUntil(occupier).Value);
+                    }
                 // An arrival still holding with its strip already free is being held for taxiing
                 // traffic (or a storm): re-check it on the ground-control grid.
                 foreach (var aircraft in _fleet)
@@ -1143,12 +1151,14 @@ namespace Airside.Simulation
                     if (!now.Equals(readyAt) && !GroundTraffic.OnGrid(now))
                         return false;
                     var taxiOutLeg = AdelaideGround.TaxiOut(aircraft.Stand, aircraft.Type, departureRunway);
+                    if (!AdelaideGroundPolicy.RouteAvailable(aircraft.Stand, aircraft.Type, departureRunway, outbound: true))
+                        return false;
                     if (!GroundTraffic.PathClear(_fleet, aircraft, taxiOutLeg,
                             departureRunway, taxiOut: true, now,
-                            includeStationary: now.ElapsedSeconds - readyAt.ElapsedSeconds < GroundTraffic.MaxWaitSeconds))
+                            includeStationary: true))
                         return NoteDelay(aircraft, now, readyAt, DelayCause.Taxiway);
                     // ADR 0126: not onto a route that crosses a runway while that runway is busy.
-                    if (CrossingIntoBusyStrip(taxiOutLeg, departureRunway, now).HasValue)
+                    if (CrossingIntoBusyStrip(taxiOutLeg, departureRunway, now, aircraft.Type).HasValue)
                         return NoteDelay(aircraft, now, readyAt, DelayCause.RunwayCrossing);
                     if (aircraft.Airline.IsPlayer)
                     {
@@ -1268,7 +1278,7 @@ namespace Airside.Simulation
                     // Player: wait for AssignStand, or auto-park after PlayerStandAutoSeconds
                     // so a missed toast never strands them (ADR 0056). The deadline is fixed
                     // from StateStartedAt — any step size / skip lands on the same moment.
-                    if (aircraft.Airline.IsPlayer
+                    if (aircraft.Airline.IsPlayer && string.IsNullOrEmpty(aircraft.Stand.Value)
                         && now.ElapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds < PlayerStandAutoSeconds)
                         return false;
                     // Ground control, as for a pushback: the taxi-in waits at the exit until its
@@ -1276,12 +1286,13 @@ namespace Airside.Simulation
                     if (!now.Equals(aircraft.StateStartedAt) && !GroundTraffic.OnGrid(now))
                         return false;
                     var taxiInLeg = AdelaideGround.TaxiIn(chosen.Value, aircraft.Type, aircraft.AssignedRunway);
+                    if (!AdelaideGroundPolicy.RouteAvailable(chosen.Value, aircraft.Type, aircraft.AssignedRunway, outbound: false))
+                        return false;
                     if (!GroundTraffic.PathClear(_fleet, aircraft, taxiInLeg,
                             aircraft.AssignedRunway, taxiOut: false, now,
-                            includeStationary: now.ElapsedSeconds - aircraft.StateStartedAt.ElapsedSeconds
-                                               < GroundTraffic.MaxWaitSeconds))
+                            includeStationary: true))
                         return false;
-                    if (CrossingIntoBusyStrip(taxiInLeg, aircraft.AssignedRunway, now).HasValue)
+                    if (CrossingIntoBusyStrip(taxiInLeg, aircraft.AssignedRunway, now, aircraft.Type).HasValue)
                         return false;
                     aircraft.Stand = chosen.Value;
                     Transition(aircraft, FleetState.TaxiIn, now, TaxiInSecondsTo(chosen.Value, aircraft.Type, aircraft.AssignedRunway));
@@ -1370,12 +1381,6 @@ namespace Airside.Simulation
                 return hash;
             }
         }
-
-        /// <summary>Wingspan (m) at or above which a departing/landing aircraft is Heavy wake category.</summary>
-        public const double HeavyWakeWingspanMetres = 50.0;
-
-        /// <summary>Wingspan (m) at or above which a departing/landing aircraft is Medium wake category.</summary>
-        public const double MediumWakeWingspanMetres = 30.0;
 
         private FleetAircraft LongestWaiting(FleetState state, bool mainStrip)
         {

@@ -125,10 +125,10 @@ namespace Airside.Tests
             Assert.That(ops2.CareerState.Funds, Is.EqualTo(ops.CareerState.Funds));
         }
 
-        [Test]
-        public void LegacyCheck_RestoresWithoutNewStartupOrCharge()
+        [TestCase(20)] [TestCase(21)]
+        public void LegacyCheck_RestoresWithoutNewStartupOrCharge(int version)
         {
-            var (clock, ops, aircraft) = Create(); var data = AirlineSave.Capture(ops); data.Version = 20;
+            var (clock, ops, aircraft) = Create(); var data = AirlineSave.Capture(ops); data.Version = version;
             data.Fleet[0].CheckUntilSeconds = 7200;
             var restored = AirlineSave.Restore(data, clock); var mine = restored.FleetOf(restored.PlayerAirline).Single();
             Assert.That(mine.MaintenanceJob, Is.Null); Assert.That(Maintenance.InCheck(mine, clock.Now), Is.True);
@@ -171,6 +171,25 @@ namespace Airside.Tests
             var restored = AirlineSave.Restore(AirlineSave.Capture(ops), clock);
             Assert.That(restored.Fleet.Single(a => a.Registration == "VH-PAX").MaintenanceJob.Phase,
                 Is.EqualTo(MaintenancePhase.WaitingReturn));
+        }
+
+        [Test]
+        public void Tower_ProtectsBothStripsForMaintenanceInsteadOfIgnoringAssignedRunway()
+        {
+            var (clock, ops, aircraft) = Create(); ops.StartCheck(aircraft);
+            Until(clock, ops, aircraft, MaintenancePhase.Taxiing);
+            var job = aircraft.MaintenanceJob;
+            var leg = new GroundLeg(new GroundLegPart(new GroundPath(new[] { -500f, 180f, -500f, -180f },
+                new GroundSpeedLimits(4f, .4f, .6f, .7f)), false));
+            job.Paths(aircraft.Type).Outbound = leg;
+            var crossing = RunwayCrossings.For(leg, RunwayDirection.Runway05, aircraft.Type, includeOwnRunway: true)
+                .First(c => c.MainStrip);
+            var from = new SimulationTime(job.PhaseStartedAt + (long)Math.Floor(crossing.EnterSeconds));
+            var until = new SimulationTime(job.PhaseStartedAt + (long)Math.Ceiling(crossing.ExitSeconds));
+            Assert.That(ops.CrossingDue(true, from, until), Is.SameAs(aircraft));
+            ops.RestoreTower(clock.Now.Advance(leg.WholeSeconds + 100), new SimulationTime(0), 0);
+            Assert.That(ops.CrossingIntoBusyStrip(leg, RunwayDirection.Runway05, clock.Now, aircraft.Type,
+                includeOwnRunway: true).HasValue, Is.True);
         }
 
         [Test]

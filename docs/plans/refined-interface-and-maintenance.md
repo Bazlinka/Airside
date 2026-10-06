@@ -114,4 +114,4 @@ First implementation milestone: shared overview/aircraft inspector plus one comp
 
 ## Implementation follow-through — 7 October 2026
 
-Implemented under Bailey's approval in ADR 0243. Shared IMGUI shell/inspector and actual prop/jet maintenance jobs are integrated, including save v21 migration and deterministic catch-up. Evidence and remaining native checks: `docs/testing/refined-interface-maintenance-2026-10-07/`. Conservatively reserve one entire shed per active job until native swept-clearance validation supports multi-bay concurrency. Timed pad/no-fitting-shed checks retain their prior path.
+Implemented under Bailey's approval in ADR 0245. Shared IMGUI shell/inspector and actual prop/jet maintenance jobs are integrated, including save v22 migration and deterministic catch-up. Evidence and remaining native checks: `docs/testing/refined-interface-maintenance-2026-10-07/`. Conservatively reserve one entire shed per active job until native swept-clearance validation supports multi-bay concurrency. Timed pad/no-fitting-shed checks retain their prior path.

@@ -1,15 +1,18 @@
 ## Where to resume — implemented maintenance journey and refined interface, 7 October 2026
 
-Codex; Bailey approved implementation of ADR 0242. Branch
-`feature/refined-interface-maintenance-20261006`, ADR 0243. Rebased onto the unified
+Codex; Bailey approved implementation of ADR 0244. Branch
+`feature/refined-interface-maintenance-20261006`, ADR 0245. Rebased onto the unified
 fleet management changes in main; preserved the multi-base Fleet workspace.
+Draft PR #550 now also integrates main's ERSA ground protocols and async review
+capture fix. Save v22 preserves v21 wake history alongside maintenance jobs.
+ADR numbers moved to 0244/0245 to keep main's independent 0242/0243 records intact.
 
 Maintenance is now a saved simulation job: clear unloading, prepare/start normally,
 push/taxi with shared traffic clearance, stop and shut down on the shed apron,
 tug into the fitted interior pose, repair, reverse out, start/taxi to a reserved
 compatible stand and park. No passenger/cargo servicing. Wear resets at repair
-completion; dispatch stays blocked until return. Save v21 persists phase and times;
-v20 and earlier timed checks finish using their prior behavior without a new charge.
+completion; dispatch stays blocked until return. Save v22 persists phase and times;
+v21 and earlier timed checks finish using their prior behavior without a new charge.
 A shed is reserved exclusively until the aircraft has returned. No-fitting-shed and
 rotorcraft checks retain the timed pad/outsourced path.
 
@@ -24,14 +27,15 @@ machine, **only when Bailey lifts the recorded no-Unity execution restriction**.
 Follow the retained native checklist for prop/jet startup, gear/tug alignment,
 swept doorway clearance, busy taxi traffic and save/reload through every phase.
 Do not merge on offline painter previews alone. Prior cockpit/interior handoffs
-below remain valid. Headless full regression: 1,785 passed; final compact Career/inspector follow-up:
-29 passed. Results and scope are recorded in the evidence README.
+below remain valid. Integrated headless full regression: 1,826 passed; final maintenance/ERSA/tower
+follow-up: 48 passed. Compact Career/inspector: 29 passed. Results and scope are
+recorded in the evidence README.
 
 ## Where to resume — refined interface and maintenance plan, 6 October 2026
 
 Codex; Bailey accepted the proposed repair journey and requested further refinement
 and a markedly more polished interface. Branch `docs/refined-interface-maintenance-20261006`,
-ADR 0242. Detailed packet: `docs/plans/refined-interface-and-maintenance.md`.
+ADR 0244. Detailed packet: `docs/plans/refined-interface-and-maintenance.md`.
 Interactive study and seven retained previews:
 `docs/art/interface-refinement-2026-10-06/preview.html`.
 
@@ -46,6 +50,69 @@ checks cover four sizes; native appearance/performance remain unverified.
 NEXT: review the concrete study; first implementation slice is shared overview/
 inspector plus one full Saab maintenance job, then jet startup/clearance. Keep the
 recorded no-Unity restriction. Prior aircraft-interior handoffs below remain valid.
+
+## Where to resume — recorded flight-stall capture fix, 6 October 2026
+
+Codex; branch `fix/long-flight-stall-20261006`, isolated `/workspace/Airside-stall`.
+The earlier 196-second AtStand frame predates regional terrain and reports only
+3.67 ms average Update / 0.64 ms operations. Both QA screenshot coroutines ran
+synchronous GPU readback/PNG/disk writes outside those timers. They now share
+asynchronous GPU readback and worker encoding/write, retain finished HUD frames,
+and fail QA with code 2 after an error/15-second timeout. Enable Unity's built-in
+ScreenCapture module; no blocking fallback and no normal gameplay/simulation change.
+
+Evidence and exact limits: `docs/testing/long-flight-stall-2026-10-06/README.md`.
+Integrated with merged taxi main `64fa0b1d`: Unity-free regression
+**1,802/1,802**, focused worker
+**2/2**, C# 9 parsing **5/5**,
+asset audit and harness derivation pass. No full journey reproduction or Unity
+execution by instruction. Historic 172-second
+root cause is not proven; the concrete blocking capture path has been removed.
+Native compilation/GPU behaviour and capture fidelity remain unverified. NEXT:
+root to merge PR #545 under Bailey's explicit request to merge both fixes. The
+native merge gate is waived for this merge under the retained no-Unity instruction;
+no native validation or full-journey performance acceptance is claimed.
+
+## Where to resume — Adelaide ground protocols, 6 October 2026
+
+ADR 0243 implements the owner's requested source-to-game comparison and selected
+safety corrections on `fix/adelaide-ground-protocols-20261006`. Stationary aircraft
+never stop blocking after a timeout; arrival clearance checks them too. Manual
+stand choices remain reserved while waiting for the same safe clearance. Crossing
+reservations cover the full airframe. The intersecting strips share occupancy,
+with separate queues and follower-specific MTOW wake minima anchored at airborne /
+touchdown time. Save v21 retains prior movements, without inventing old history. The v20 fleet/ferry schema remains intact.
+
+Code C gates push east on either main-runway end, then use a bay/airframe-filtered
+taxiway graph; typed searches have no grass-chord fallback. Above-C arrivals use
+compatible forward exits instead of E2. Supported gate routes retain apron/painted
+stand connections. Shared service vehicles now respect 25/15/10 km/h apron,
+terminal-road and aircraft-proximity limits. Arrival estimates use the new guard.
+
+Reference/comparison: `docs/data/ADELAIDE_GROUND_PROTOCOLS.md`.
+Task/evidence: `docs/testing/adelaide-ground-protocols-2026-10-06/README.md`.
+Holds remain at route release (stand/exit); intermediate node holds, D1's default
+23 early rollout, a full map-label audit and specialised vehicle systems remain
+explicit limits. Current aircraft taxi bands and the intentional 05:00 game curfew
+remain design assumptions. Native Unity compilation/visuals are unverified by
+owner instruction; no full journey reproduction was run.
+
+PR #549 merged at `64fa0b1d` under Bailey's explicit merge instruction; 1,799
+integrated tests plus migration regression passed. Native validation remains open.
+The separate background capture-stall fix is #545.
+
+## Where to resume — aircraft view feel, 6 October 2026
+
+Claude; branch `feature/cockpit-haptics-look-20261006`, ADR 0242. Bailey asked for better vibration, Mac
+navigation, hints and smoothness inside the aircraft. Done: haptic events and `Rumble01` out of
+`CockpitMotion`, `CockpitHapticScheduler`, `MacTrackpadHaptics` (Objective-C runtime, no plugin), either-button
+look with bounded and zoom-scaled drag, clamped scroll, 0.9 s glides on entry, seat switch and exit, dock hint,
+entry toast, F1 row. Full headless suite passes (1,736 tests); update-harness check and asset audit pass.
+**Not compiled in Unity and not felt on a trackpad.** Not done: frame-rate stutter inside the aircraft (needs
+a profile, not a guess); two-finger swipe look; pinch zoom.
+
+**NEXT:** Unity compile and EditMode run, then try it on a Mac trackpad (haptics play only while a finger rests
+on it) and tune strengths/rates in `CockpitHapticScheduler` and the event strengths in `CockpitMotion`.
 
 ## Where to resume — unified fleet management, 6 October 2026
 
@@ -286,7 +353,7 @@ for active work; standing freight priorities remain unchanged.
 - **2026-10-06 Cursor — `scripts/build-mac.sh` recovers from the bee_backend deadlock.**
   After pulls that change scripts, Unity's script build repeatedly queued every job, ran
   none and idled at 0% CPU forever (seen 1 Oct and twice on 6 Oct). The script now runs
-  Unity under a watchdog: log silent for `AIRSIDE_BUILD_STALL_SECONDS` (default 180) with
+  Unity under a watchdog: log silent for `AIRSIDE_BUILD_STALL_SECONDS` (default 60; was 180) with
   `bee_backend` as the last started process → kill the Unity process tree, clear
   `Library/Bee` *.dag graphs, retry once, else fail with a message.
   **Evidence:** real build with a 10 s threshold never false-triggered (log grows during

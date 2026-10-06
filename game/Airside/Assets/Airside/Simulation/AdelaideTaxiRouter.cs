@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Airside.Domain;
 
 namespace Airside.Simulation
 {
@@ -16,6 +17,32 @@ namespace Airside.Simulation
         public const float RunwayCost = 20f;
 
         private static Graph _graph;
+        private static readonly Dictionary<string, Graph> PolicyGraphs = new();
+
+        /// <summary>No straight-line fallback: false means ground control must withhold clearance.</summary>
+        public static bool TryRoute(float startX, float startZ, float endX, float endZ,
+            AircraftType type, StableId departureStand, out float[] route, RunwayDirection? rollout = null, float apronAccessMetres = 35f)
+        {
+            var key = AdelaideTaxiPolicy.Key(type, departureStand);
+            if (!PolicyGraphs.TryGetValue(key, out var graph))
+                PolicyGraphs[key] = graph = Build(type, departureStand, restricted: true);
+            var start = graph.Nearest(startX, startZ);
+            var goal = graph.Nearest(endX, endZ);
+            route = null;
+            // Normal routes snap at most 35 m. Maintenance supplies a bounded explicit apron
+            // access distance for its authored stand/shed connectors; graph restrictions remain.
+            if (Hypot(graph.X[start] - startX, graph.Z[start] - startZ) > apronAccessMetres
+                || Hypot(graph.X[goal] - endX, graph.Z[goal] - endZ) > apronAccessMetres) return false;
+            var hops = graph.Dijkstra(start, goal, rollout);
+            if (hops == null || hops.Count == 0) return false;
+            var points = new List<float> { startX, startZ };
+            foreach (var node in hops) Append(points, graph.X[node], graph.Z[node]);
+            Append(points, endX, endZ);
+            route = GroundPathSmoothing.RelaxTightTurns(
+                GroundPathSmoothing.FilletAndDensify(points.ToArray(), 24f, 8f));
+            return true;
+        }
+
 
         /// <summary>Taxiway-following polyline from <paramref name="start"/> to <paramref name="end"/>.</summary>
         public static float[] Route(float startX, float startZ, float endX, float endZ)
@@ -53,11 +80,12 @@ namespace Airside.Simulation
 
         private static Graph Shared() => _graph ??= Build();
 
-        private static Graph Build()
+        private static Graph Build(AircraftType type = null, StableId stand = default, bool restricted = false)
         {
             var graph = new Graph();
             foreach (var taxiway in AdelaideLayout.Taxiways)
-                graph.AddPolyline(taxiway.Xz, runway: false);
+                if (!restricted || AdelaideTaxiPolicy.Allows(taxiway.Reference, type, stand))
+                    graph.AddPolyline(taxiway.Xz, runway: false);
             graph.AddPolyline(MainRunway(), runway: true);
             graph.AddPolyline(CrossRunway(), runway: true);
             graph.JoinNearby(JoinMetres);
@@ -198,7 +226,7 @@ namespace Airside.Simulation
                 return best;
             }
 
-            public List<int> Dijkstra(int start, int goal)
+            public List<int> Dijkstra(int start, int goal, RunwayDirection? rollout = null)
             {
                 var count = Count;
                 var dist = new float[count];
@@ -228,6 +256,9 @@ namespace Airside.Simulation
                     used[u] = true;
                     foreach (var edge in _adj[u])
                     {
+                        if (rollout.HasValue && edge.Runway
+                            && (rollout == RunwayDirection.Runway05 && X[edge.To] < X[u]
+                                || rollout == RunwayDirection.Runway23 && X[edge.To] > X[u])) continue;
                         var next = dist[u] + edge.Cost;
                         if (next >= dist[edge.To])
                             continue;
@@ -266,8 +297,8 @@ namespace Airside.Simulation
                     return;
                 if (runway)
                     cost *= RunwayCost;
-                _adj[a].Add(new Edge(b, cost));
-                _adj[b].Add(new Edge(a, cost));
+                _adj[a].Add(new Edge(b, cost, runway));
+                _adj[b].Add(new Edge(a, cost, runway));
             }
 
             private bool Linked(int a, int b)
@@ -283,14 +314,16 @@ namespace Airside.Simulation
 
         private readonly struct Edge
         {
-            public Edge(int to, float cost)
+            public Edge(int to, float cost, bool runway)
             {
                 To = to;
                 Cost = cost;
+                Runway = runway;
             }
 
             public int To { get; }
             public float Cost { get; }
+            public bool Runway { get; }
         }
     }
 }

@@ -102,7 +102,7 @@ namespace Airside.Simulation
                 if (RunwayWeather.IsMainRunway(aircraft.AssignedRunway) != mainStrip)
                     continue;
                 var until = StripBusyUntil(aircraft) ?? _processedTo;
-                until = until.Advance(WakeSeparationSeconds(aircraft.Type));
+                until = until.Advance(RunwaySeparationSeconds);
                 if (!holdUntil.HasValue || until.CompareTo(holdUntil.Value) > 0)
                     holdUntil = until;
             }

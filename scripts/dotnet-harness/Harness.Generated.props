@@ -67,6 +67,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AssemblyInfo.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AtmosphereLook.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AustraliaMapLens.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/BackgroundCaptureWrite.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BevelledBox.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BoardingGroundContact.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BoxKitSurfaceGeometry.cs" />
@@ -79,7 +80,10 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitAirflow.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitAvailability.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitCallouts.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitControlHints.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitExteriorVisibility.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitHaptics.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitLookInput.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitLookPresets.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitMotion.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CockpitObserverWeather.cs" />
@@ -114,6 +118,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/JetCockpitProfile.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/JetCockpitShellGeometry.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/MacTrackpadHaptics.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/MapGeography.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/MapGeographyData.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/MapLabelLayout.cs" />
@@ -161,6 +166,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaidePalmGeometryTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaidePalmPlacementTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaidePrecinctTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideProtocolTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideRoadFurnitureTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideRoadGeometryTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideRoadNetworkTests.cs" />
@@ -209,6 +215,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AtmosphereLookTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AustraliaMapLensTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AwayCatchUpTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/BackgroundCaptureWriteTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/BareFieldTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/BoardingFlowTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/BugFixPassTests.cs" />
@@ -230,6 +237,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CockpitAirflowTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CockpitAvailabilityTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CockpitCalloutsTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CockpitFeelTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CockpitMotionTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CockpitWeatherEnvelopeTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CollisionPass100Tests.cs" />

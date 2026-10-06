@@ -88,6 +88,7 @@ namespace Airside.Simulation
 
         public static GroundLeg VacateFor(AircraftType type, RunwayDirection runway)
         {
+            type ??= AircraftType.Atr42;
             var key = (type?.Id ?? "ATR42") + "/" + runway;
             if (!VacateLegs.TryGetValue(key, out var leg))
             {
@@ -136,16 +137,19 @@ namespace Airside.Simulation
         /// landing (and takeoff) for the whole leg, roughly 90 s longer than the runway was in use; the next
         /// arrival's own vacate is still checked against the one ahead of it.
         /// </summary>
-        public static long MainClearOfRunwaySeconds(GroundLeg vacate)
+        public static long MainClearOfRunwaySeconds(GroundLeg vacate, AircraftType type = null)
         {
             if (vacate.Parts.Count == 0)
                 return vacate.WholeSeconds;
             var path = vacate.Parts[0].Path;
             var metres = path.Length;
+            var clearance = AircraftCatalogue.TryFor(type, out var spec)
+                ? Math.Max(MainStripClearMetres, RunwayCrossings.StripHalfWidthMetres + spec.LengthMetres + 3)
+                : MainStripClearMetres;
             for (var d = 0f; d <= path.Length; d += 2f)
             {
                 var (_, z) = path.PointAtDistance(d);
-                if (Math.Abs(z) >= MainStripClearMetres)
+                if (Math.Abs(z) >= clearance)
                 {
                     metres = d;
                     break;
@@ -164,7 +168,7 @@ namespace Airside.Simulation
         {
             var vacate = VacateFor(type, runway);
             if (RunwayWeather.IsMainRunway(runway))
-                return MainClearOfRunwaySeconds(vacate);
+                return MainClearOfRunwaySeconds(vacate, type);
 
             // Cross strip: free once well clear of the pavement and past the shared
             // exit conflict zone — not after the full kilometre to E2, but later than
@@ -373,6 +377,7 @@ namespace Airside.Simulation
 
         public static GroundLeg TaxiOut(StableId stand, AircraftType type, RunwayDirection runway)
         {
+            type ??= IsTerminalGate(stand) ? AircraftType.Boeing7378 : AircraftType.Atr42;
             if (TryTerminalGate(stand, out var gate))
                 return GateTaxiOut(gate, type, runway);
             var bay = Bay(stand);
@@ -385,6 +390,7 @@ namespace Airside.Simulation
                     ? (BayPushback(bay, type), CleanTaxiOut(TaxiOutPath(bay, runway)))
                     : PushAndTaxi(bay.StopX, bay.StopZ, bay.HeadingDegrees, BayPushback(bay, type),
                         CleanTaxiOut(TaxiOutPath(bay, runway)), CleanTaxiOut(bay.TaxiOut), type);
+                taxi = AdelaideGroundPolicy.Outbound(taxi, stand, type, runway);
                 leg = new GroundLeg(
                     new GroundLegPart(new GroundPath(push, GroundSpeedLimits.Pushback),
                         tailFirst: true, trackMetres: wheelbase),
@@ -401,22 +407,7 @@ namespace Airside.Simulation
             => TaxiIn(stand, IsTerminalGate(stand) ? AircraftType.Boeing7378 : AircraftType.Atr42);
 
         public static GroundLeg TaxiIn(StableId stand, AircraftType type)
-        {
-            if (TryTerminalGate(stand, out var gate))
-                return GateTaxiIn(gate, type);
-            var bay = Bay(stand);
-            var key = bay.Id + "/" + (type?.Id ?? "ATR42");
-            if (!TaxiInLegs.TryGetValue(key, out var leg))
-            {
-                var limits = GroundSpeedLimits.TaxiFor(type);
-                var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
-                leg = new GroundLeg(new GroundLegPart(new GroundPath(BayTaxiIn(bay, bay.TaxiIn, type), limits, 0f, 0f,
-                    null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false, trackMetres: wheelbase));
-                TaxiInLegs[key] = leg;
-            }
-
-            return leg;
-        }
+            => TaxiIn(stand, type, RunwayDirection.Runway05);
 
         /// <summary>
         /// Taxi-in for an arrival off <paramref name="runway"/>. A 12/30 vacate ends partway
@@ -424,8 +415,8 @@ namespace Airside.Simulation
         /// </summary>
         public static GroundLeg TaxiIn(StableId stand, AircraftType type, RunwayDirection runway)
         {
-            if (!AdelaideCrossRoutes.TryArrivalJoin(runway, out _, out _))
-                return TaxiIn(stand, type);
+            type ??= IsTerminalGate(stand) ? AircraftType.Boeing7378 : AircraftType.Atr42;
+            var main = RunwayWeather.IsMainRunway(runway);
             var key = stand.Value + "/" + (type?.Id ?? "ATR42") + "/" + runway;
             if (TaxiInLegs.TryGetValue(key, out var leg))
                 return leg;
@@ -435,7 +426,8 @@ namespace Airside.Simulation
             {
                 var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
                 leg = new GroundLeg(new GroundLegPart(new GroundPath(
-                    Drivable(AdelaideCrossRoutes.TrimToArrivalJoin(gate.TaxiIn, runway), type), limits, 0f, 0f,
+                    Drivable(main ? AdelaideGroundPolicy.Inbound(gate.TaxiIn, stand, type, runway)
+                        : AdelaideCrossRoutes.TrimToArrivalJoin(gate.TaxiIn, runway), type), limits, 0f, 0f,
                     null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false, trackMetres: wheelbase));
             }
             else
@@ -443,7 +435,8 @@ namespace Airside.Simulation
                 var bay = Bay(stand);
                 var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
                 leg = new GroundLeg(new GroundLegPart(new GroundPath(
-                    BayTaxiIn(bay, AdelaideCrossRoutes.TrimToArrivalJoin(bay.TaxiIn, runway), type), limits, 0f, 0f,
+                    BayTaxiIn(bay, main ? AdelaideGroundPolicy.Inbound(bay.TaxiIn, stand, type, runway)
+                        : AdelaideCrossRoutes.TrimToArrivalJoin(bay.TaxiIn, runway), type), limits, 0f, 0f,
                     null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false, trackMetres: wheelbase));
             }
 
@@ -552,9 +545,20 @@ namespace Airside.Simulation
                 // the nose datum by its own actual wheelbase — a 737 and an A350 do not
                 // track a corner the same way. See AircraftPerformanceProfile.NoseToMainGearMetres.
                 var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
+                // ERSA: Code C pushes east regardless of departure runway. The 05 apron
+                // connection supplies that push; routing beyond it goes to the assigned hold.
+                var eastPush = AircraftCatalogue.TryFor(type, out var spec) && spec.CodeLetter == 'C';
                 var (push, taxi) = PushAndTaxi(gate.NoseX, gate.NoseZ, gate.HeadingDegrees,
-                    DrivablePushback(gate.Pushback, type), CleanTaxiOut(TaxiOutPath(gate, runway)),
+                    DrivablePushback(gate.Pushback, type), CleanTaxiOut(eastPush ? gate.TaxiOut : TaxiOutPath(gate, runway)),
                     CleanTaxiOut(gate.TaxiOut), type);
+                if (eastPush && runway != RunwayDirection.Runway05)
+                {
+                    var destination = TaxiOutPath(gate, runway);
+                    taxi = (float[])taxi.Clone();
+                    taxi[taxi.Length - 2] = destination[destination.Length - 2];
+                    taxi[taxi.Length - 1] = destination[destination.Length - 1];
+                }
+                taxi = AdelaideGroundPolicy.Outbound(taxi, new StableId(gate.Id), type, runway);
                 leg = new GroundLeg(
                     new GroundLegPart(new GroundPath(push, GroundSpeedLimits.Pushback),
                         tailFirst: true, trackMetres: wheelbase),
@@ -562,21 +566,6 @@ namespace Airside.Simulation
                             limits, 0f, 0f, new[] { ApronZone(type) }, null),
                         tailFirst: false, TugDisconnectSeconds, wheelbase));
                 TaxiOutLegs[key] = leg;
-            }
-
-            return leg;
-        }
-
-        private static GroundLeg GateTaxiIn(AdelaideTerminalGate gate, AircraftType type)
-        {
-            var key = gate.Id + "/" + (type?.Id ?? "B38M");
-            if (!TaxiInLegs.TryGetValue(key, out var leg))
-            {
-                var limits = GroundSpeedLimits.TaxiFor(type);
-                var wheelbase = AircraftPerformance.For(type).NoseToMainGearMetres;
-                leg = new GroundLeg(new GroundLegPart(new GroundPath(Drivable(gate.TaxiIn, type), limits, 0f, 0f,
-                    null, new[] { ApronZone(type), StandLeadInZone }), tailFirst: false, trackMetres: wheelbase));
-                TaxiInLegs[key] = leg;
             }
 
             return leg;
@@ -703,7 +692,7 @@ namespace Airside.Simulation
             if (!VacatePaths.TryGetValue(key, out var path))
             {
                 var performance = AircraftPerformance.For(type);
-                path = new GroundPath(VacatePolyline(runway),
+                path = new GroundPath(AdelaideGroundPolicy.Vacate(type, runway, VacatePolyline(runway)),
                     GroundSpeedLimits.TaxiFor(type),
                     entrySpeed: CircuitProfile.Knots(performance.RunwayExitKnots));
                 VacatePaths[key] = path;

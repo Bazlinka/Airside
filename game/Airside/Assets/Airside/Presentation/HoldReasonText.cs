@@ -34,6 +34,8 @@ namespace Airside.Presentation
                     return reason.Blocker != null
                         ? $"Waiting to push: {who} is on the lead-in"
                         : "Waiting to push: the lead-in is in use";
+                case HoldKind.TaxiRouteUnavailable:
+                    return "Holding: no permitted taxi route for this aircraft";
                 case HoldKind.TaxiwayBlocked:
                     if (aircraft?.State == FleetState.AtStand)
                         return reason.Blocker != null
@@ -85,6 +87,7 @@ namespace Airside.Presentation
             HoldKind.Turnaround => Lower(reason.Detail),
             HoldKind.ApronBusy => "wait · apron busy",
             HoldKind.LeadInBlocked => "wait · lead-in",
+            HoldKind.TaxiRouteUnavailable => "hold · route unavailable",
             HoldKind.TaxiwayBlocked => "wait · traffic",
             HoldKind.RunwayOccupied => $"hold · {ShortType(reason.Blocker)} {Movement(reason.Blocker)}",
             HoldKind.WakeSeparation => "hold · spacing",

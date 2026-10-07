@@ -10,7 +10,7 @@ Include parked fixed-wing aircraft in taxi clearance. Retain ADR 0153's three me
 
 Correct only BAY-4's inbound apron segment with a smooth local offset, at most eight metres north inside the existing 23 m lane. Preserve graph connectors, final stand stop, runway exit and every other bay's route. Existing runway/stand restrictions stay in place.
 
-Preserve the accepted `2026-10-07-arrivals-never-hold-on-final.md`: landing clearance depends on runway/exit safety, not the taxi-in route. No pre-landing taxi check from the earlier sweep is retained.
+Preserve the accepted `2026-10-07-arrivals-never-hold-on-final.md`: landing clearance depends on runway/exit safety, not the taxi-in route. No pre-landing taxi check from the earlier sweep is retained. Main #579's accepted `StandingSpotClear` window remains unchanged; this task adds exit-conflict and distant-taxi regression coverage.
 
 ## Evidence and reason
 

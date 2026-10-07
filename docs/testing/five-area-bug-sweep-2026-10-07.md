@@ -1,11 +1,11 @@
 # Five-area bug sweep — 7 October 2026
 
-Task issue: #576. Owner: Codex / Bazlinka. Five agents requested by Bailey, one each for Aircraft, Ground, Graphics, Performance and Buttons, used isolated worktrees from main `0087ded0`. Root reviewed their fixes and integrated current main `1fd4c9fc` into `codex/five-area-bug-sweep-20261007` before final acceptance.
+Task issue: #576. Owner: Codex / Bazlinka. Five agents requested by Bailey, one each for Aircraft, Ground, Graphics, Performance and Buttons, used isolated worktrees from main `0087ded0`. Root reviewed their fixes and integrated current main `0dc6e629` into `codex/five-area-bug-sweep-20261007` before final acceptance.
 
 ## Final scope and acceptance
 
 - Aircraft: preserve main #552's `ShiftFlightOrigin` camera/glide correction and stronger native cabin/view fixtures; add three native midpoint/exit origin-shift regressions.
-- Ground: keep parked fixed-wing aircraft in taxi clearance, isolate helicopter liftoff from fixed-wing queues/poses, use a positive 1 m parked planning allowance while keeping 3 m for moving/queued traffic, and correct the short BAY-4 inbound apron section while preserving graph connectors/stop. Add strict optional-save-record regressions around main #552's implementation.
+- Ground: keep parked fixed-wing aircraft in taxi clearance, isolate helicopter liftoff from fixed-wing queues/poses, use a positive 1 m parked planning allowance while keeping 3 m for moving/queued traffic, and correct the short BAY-4 inbound apron section while preserving graph connectors/stop. Preserve main #579's merged exit-occupancy window and add regressions showing the exit conflict is rejected while distant taxi-in conflicts still permit landing. Add strict optional-save-record regressions around main #552's implementation.
 - Graphics: one camera owns each sky/rain shell; transfer/destruction cannot let another camera reclaim it.
 - Performance: cache both filtered runway crossing views and avoid boxed catalogue enumeration. 10,000 warm queries allocate 560,000 bytes before and zero after in the .NET 8 measurement; this is not a player frame-time measurement.
 - Buttons: reserve the inspector's actual fixed header/footer space and give the Flight Manual exclusive input while open. Preserve current fleet/outstation controls and main's native optional-radar/layout fixtures.
@@ -25,13 +25,14 @@ Current-main static audit: 428 compatible routes / 14,552 worst-compatible parke
 
 ## Current-main verification
 
-- Focused integration: 67 of 68 passed, including the unchanged 30-day soak, approved arrival-priority tests, optional save restore, query cache, HUD and review capture checks. The one failure was an obsolete new fixture expecting the now-corrected BAY-4 route to intersect parked BAY-2; it was replaced with a deliberately conflicting route to verify the guard independently of that geometric fix.
-- Final geometry/guard unit run: **14 passed, zero failed**. Rejects 0.5 m parked gap / accepts 1.5 m; rejects 2.5 m queued gap / accepts 3.5 m. All four Q400 BAY-4 routes clear the three nearest largest parked neighbours with the larger dynamic allowance and retain the stop. Actual parked obstruction blocks/releases as its aircraft leaves; opening-bank progress and rotor queue exclusion remain checked.
-- `scripts/test-domain.sh`: current integration **1,892 passed / one failed (1,893 total, 5 m 8 s)**. The sole remaining case is `GroundSeparationTests.BusyDay_NoAircraftDriveThroughEachOther`, awaiting-exit Q400 versus taxiing 737 MAX at t=48890. Final correction/verification pending. This script also checks generated harness consistency and compiles eligible tests against Unity's NUnit 3.5 without implicit usings; that compile step has passed.
-- Asset audit: **1,805 unique GUIDs, 388 byte-identical art mirrors, 70 committed character materials**. No new authored assets in this task.
-- C# 9 syntax check and `git diff --check`: passed; syntax parsing is not native type checking or a Unity compile.
+- Required `scripts/test-domain.sh`: **1,905 passed / zero failed**, runner summary total 1,905, test duration 5 m 19 s. Includes the unchanged busy-day separation test and longer soak/capture checks. The log also emits skip notices for the pre-existing `FleetMarket_SaysASharedLockOnce` and `Storm_IsAGroundStop`; those notices are not included in the runner's passing total.
+- Generated harness consistency and compile against Unity's NUnit 3.5 without implicit usings: passed as part of that required script. This is not a Unity editor compile.
+- New exit regressions pass: the departure crossing the arrival's exit after vacating blocks clearance, clearance releases after the departure passes, and an obstructed distant taxi-in route still permits landing at a safe exit. Main #579's `StandingSpotClear` implementation and window remain unchanged.
+- Ground geometry/guard focused run: **14 passed, zero failed**. Rejects 0.5 m parked gap / accepts 1.5 m; rejects 2.5 m queued gap / accepts 3.5 m. All four Q400 BAY-4 routes clear nearby largest parked neighbours, preserving their stop. The final full suite includes these cases.
+- Asset audit: **1,811 unique GUIDs, 388 byte-identical art mirrors, 70 committed character materials**. No new authored assets in this task.
+- C# 9 syntax: **16 changed files, zero syntax errors**. Presentation map regenerated and checked; `git diff --check` passed. Syntax parsing is not native type checking.
 
-Historical baseline: main `0087ded0`, 1,827 headless passed. Older intermediate suite: 1,850 passed / seven ground timing/soak/capture failures; the failed changes and old arrival-policy guard were corrected/superseded before current-main verification. Final acceptance uses only the final source and current-main results above.
+Historical evidence: original main `0087ded0` passed 1,827 headless tests. An older intermediate suite passed 1,850 with seven ground timing/soak/capture failures; those changes and the old airborne taxi-route guard were superseded. Integration at main `1fd4c9fc` passed 1,892 with one busy-day collision. Its trace showed the vacate check ended at 48,888 s while the already-cleared departure crossed the stationary arrival two seconds later; main #579 independently fixed that exit-standing gap. A temporary endpoint-horizon alternative was discarded in favor of main's accepted implementation. Earlier targeted integration passed 67/68; its obsolete BAY-4 fixture was corrected to use a deliberately conflicting route after the real route geometry was repaired. These earlier runs are not final acceptance. Final acceptance is the required green current-main run above.
 
 ## Native checklist and remaining limits
 

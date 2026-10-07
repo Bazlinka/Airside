@@ -7,20 +7,18 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
-*One block, replaced (not stacked) at the end of every session. Updated 2026-10-07.*
+*One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*
 
-**Five-area bug sweep (Codex, issue #576):** five requested agents; review branch
+**Five-area bug sweep (Codex, issue #576, draft PR #580):** five requested agents;
 `codex/five-area-bug-sweep-20261007`, integrated with main `0dc6e629`.
-Remaining runtime fixes: exclusive camera-shell ownership, compact inspector/manual
-clicks, allocation-free runway query filters/catalogue lookup, rotor queue isolation,
-parked-aircraft taxi clearance with a positive 1 m static margin (moving/queued 3 m),
-and a local BAY-4 apron correction. Preserve main's approved runway-only arrival
-clearance and its merged save/glide/native fixture fixes; add regression coverage.
-Current-main targeted ground: 14 passed; required full suite: 1,892 passed / one
-busy-day collision fixed independently on main #579; final integrated rerun pending. Unity-NUnit compile passed;
-no Unity run.
-Packet: `docs/testing/five-area-bug-sweep-2026-10-07.md`. NEXT: review draft and run
-its native checklist when authorized; do not merge on headless evidence alone.
+Fixes: exclusive camera-shell ownership, compact inspector/manual clicks,
+allocation-free runway filters/catalogue lookup, rotor queue isolation, parked-aircraft
+clearance (positive 1 m static margin; moving/queued 3 m), and local BAY-4 apron geometry.
+Preserve main's approved arrival policy and merged save/glide/exit fixes; add regressions.
+Required `scripts/test-domain.sh`: **1,905 passed / zero failed** (5 m 19 s test run);
+Unity-NUnit compile, asset audit, C# syntax and generated presentation map passed.
+Packet: `docs/testing/five-area-bug-sweep-2026-10-07.md`. Unverified in Unity for this
+sweep. NEXT: review draft and run its native checklist; do not merge on headless evidence alone.
 
 **Aircraft lighting by type (7 Oct, Claude):** `AircraftLightingProfile` gives each family (turboprop, regional jet, narrowbody, widebody,
 Bell 412) its own landing/taxi beam shape and aim, strobe pattern, tail strobe (jets), beacon rate and a nose lamp that doubles as the takeoff

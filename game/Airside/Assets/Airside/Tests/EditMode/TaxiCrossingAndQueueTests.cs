@@ -11,6 +11,64 @@ namespace Airside.Tests
     public sealed class TaxiCrossingAndQueueTests
     {
         [Test]
+        public void LandingExit_RemainsReservedAfterVacateUntilCommittedDeparturePasses()
+        {
+            // Busy-day collision at 48,890 s: the departure was clear during the entire
+            // vacate but crossed its endpoint two seconds after the arrival stopped there.
+            var now = new SimulationTime(48646);
+            var clock = new ManualSimulationClock(now);
+            var ops = new AirlineOperations(clock, new SeededRandomSource(4), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideStands);
+            var other = new Airline("OTH", "Other Air", "#C95D50", isPlayer: false);
+            ops.AddAirline(other);
+            ops.RestoreAircraft("DQ-FAE", other, AircraftType.Boeing7378, FleetState.TaxiOut,
+                new SimulationTime(48600), new SimulationTime(49135), default, new StableId("GATE-12L"),
+                HudTestAirline.Code("KGC"), null, 0);
+            var departure = ops.Fleet.Last(); departure.AssignedRunway = RunwayDirection.Runway05;
+            ops.RestoreAircraft("VH-QON", other, AircraftType.Dash8Q400, FleetState.HoldingForLanding,
+                now, null, new StableId("BAY-2"), default, HudTestAirline.Code("KGC"), null, 0);
+            var arrival = ops.Fleet.Last(); arrival.AssignedRunway = RunwayDirection.Runway30;
+            var profile = AircraftPerformance.For(arrival.Type);
+            var vacateStart = now.Advance(ApproachHold.RemainingFinalSeconds(profile.ApproachSeconds,
+                arrival.Registration) + profile.LandingSeconds);
+            var vacate = AdelaideGround.VacateFor(arrival.Type, arrival.AssignedRunway);
+            Assert.That(GroundTraffic.PathClear(ops.Fleet, arrival, vacate, arrival.AssignedRunway,
+                false, vacateStart), Is.True, "the moving vacate itself clears the departure");
+            Assert.That(ops.LandingGroundClear(arrival, now), Is.False,
+                "the occupied exit cannot be crossed by an already-committed departure");
+            Assert.That(ops.LandingGroundClear(arrival, now.Advance(600)), Is.True,
+                "clear the arrival once the departure has passed the exit footprint");
+        }
+
+        [Test]
+        public void LandingClearance_DistantTaxiInConflictDoesNotBlockSafeRunwayExit()
+        {
+            var now = new SimulationTime(1000);
+            var clock = new ManualSimulationClock(now);
+            var ops = new AirlineOperations(clock, new SeededRandomSource(4), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideStands);
+            var other = new Airline("OTH", "Other Air", "#C95D50", isPlayer: false);
+            ops.AddAirline(other);
+            ops.RestoreAircraft("DQ-FAE", other, AircraftType.Boeing7378, FleetState.TaxiOut,
+                now.Advance(-60), now.Advance(475), default, new StableId("GATE-12L"),
+                HudTestAirline.Code("KGC"), null, 0);
+            var departure = ops.Fleet.Last(); departure.AssignedRunway = RunwayDirection.Runway05;
+            ops.RestoreAircraft("VH-ARR", other, AircraftType.Boeing7378, FleetState.HoldingForLanding,
+                now, null, new StableId("GATE-19"), default, HudTestAirline.Code("KGC"), null, 0);
+            var arrival = ops.Fleet.Last(); arrival.AssignedRunway = RunwayDirection.Runway05;
+            var profile = AircraftPerformance.For(arrival.Type);
+            var taxiStart = now.Advance(ApproachHold.RemainingFinalSeconds(profile.ApproachSeconds,
+                arrival.Registration) + profile.LandingSeconds
+                + AdelaideGround.VacateFor(arrival.Type, arrival.AssignedRunway).WholeSeconds);
+            Assert.That(GroundTraffic.PathClear(ops.Fleet, arrival,
+                AdelaideGround.TaxiIn(arrival.Stand, arrival.Type, arrival.AssignedRunway),
+                arrival.AssignedRunway, false, taxiStart), Is.False,
+                "ground control must hold the later taxi-in while the departure crosses it");
+            Assert.That(ops.LandingGroundClear(arrival, now), Is.True,
+                "traffic beyond the clear runway exit cannot gate landing clearance");
+        }
+
+        [Test]
         public void HelicopterLiftingFromPad_NeverMovesTheRunwayQueueBack()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));

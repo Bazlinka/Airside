@@ -54,11 +54,13 @@ namespace Airside.Presentation
             Math.Max(MaxPanRadiusMetres, distance * FarPanFractionOfDistance);
 
         /// <summary>
-        /// Near clip plane: 0.3 m as always up to 3 km out, then growing with distance so depth precision holds when
-        /// zoomed far out (nothing is nearer than the ground and sky the camera sits above).
+        /// Near clip plane: 0.3 m close in, growing with distance. The old 0.3 m held to 3 km, which left the default
+        /// 2.4 km overview at a 1 : 100,000 near/far ratio and the coplanar ground layers (markings, roads, aprons)
+        /// z-fighting and shimmering as the camera moved. Nothing is nearer than the ground the camera sits above, so
+        /// 0.2 % of the orbit distance is safe (4.8 m at the overview); past 3 km the original steeper ramp takes over.
         /// </summary>
         public static float NearClip(float distance) =>
-            Math.Min(300f, Math.Max(0.3f, (distance - 3000f) * 0.006f));
+            Math.Min(300f, Math.Max(0.3f, Math.Max(distance * 0.002f, (distance - 3000f) * 0.006f)));
 
         /// <summary>Far clip plane: the 30 km the game has always drawn, or 2.6 x the camera distance when that is more.</summary>
         public static float FarClip(float distance, float baseFarClip) =>

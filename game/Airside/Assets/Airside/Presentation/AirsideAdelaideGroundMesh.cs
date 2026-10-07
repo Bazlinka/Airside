@@ -175,14 +175,12 @@ namespace Airside.Presentation
             if (greenM != null) material.SetTexture("_GreenMask", greenM);
             if (dirtM != null) material.SetTexture("_DirtMask", dirtM);
 
-            // Ground is almost always viewed obliquely. Retain a little more of the authored
-            // detail mip before it dissolves into the far-scale sample; the conservative bias
-            // avoids the shimmer produced by pushing below -0.5.
+            // Ground is almost always viewed obliquely. A negative mip bias samples a finer mip than the
+            // screen footprint warrants, which crawls and flickers as the camera moves (ADR 2026-10-07-clean-image-pass); 16x
+            // anisotropy keeps oblique grass and dirt sharp without it.
             foreach (var texture in new[] { dry, green, dirt, dryN, greenN, dirtN, dryM, greenM, dirtM })
                 if (texture != null)
-                    texture.mipMapBias = AirsideRuntimeQuality.Current == AirsideRuntimeQuality.Ladder.High
-                        ? -0.28f
-                        : -0.12f;
+                    texture.mipMapBias = 0f;
 
             material.SetFloat("_DryTile", AirsideAdelaideGround.TileSize(AirsideAdelaideGround.LayerDryGrass));
             material.SetFloat("_GreenTile", AirsideAdelaideGround.TileSize(AirsideAdelaideGround.LayerGreenGrass));

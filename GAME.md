@@ -33,9 +33,10 @@ a coarse 64 km ring (121 tiles, 2 km cells) so the state can be dragged under th
   alignment, swept doorway clearance, busy taxi traffic, save/reload through every phase. Do not merge on offline
   painter previews alone.
 
-**Visual planning candidates (7 Oct, Codex):** five finished-product concepts and build notes in
-`docs/art/candidates/finished_product_20261007/README.md`, branch `feature/finished-product-vision-20261007`.
-Generated references only; no runtime or approved-design changes. Review the overview, HUD, aircraft, fleet and turnaround targets before production.
+**Visual planning (7 Oct, Codex):** Bailey rejected the earlier photographic vision. Three grounded edits and a staged plan now live in
+`docs/art/candidates/attainable_direction_20261007/README.md`, branch `feature/attainable-visual-direction-20261007`.
+They use actual 6 October packaged captures/native aircraft references and propose a fresh horizontal dispatch interface.
+Review candidates only; no runtime changes. Current-build baseline capture and native implementation validation remain necessary.
 
 **Watch:**
 - Headless-green PRs can still break UnityEngine tests: the dotnet harness skips every test that touches `UnityEngine`. Since ADR 0252 it

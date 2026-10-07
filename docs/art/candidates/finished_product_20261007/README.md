@@ -1,5 +1,7 @@
 # Airside finished-product vision
 
+**Superseded as the planning recommendation:** Bailey rejected this photographic finish as unrealistic for the current game. Use `../attainable_direction_20261007/README.md` and its reference-based concepts instead. This batch remains historical generation evidence only.
+
 Generated 7 October 2026 for Bailey's visual planning request. Five current concepts based on the Unity project, approved art direction, airline career plan and refined interface. These are proposed visual targets for review, not gameplay captures or a change to the approved product plan.
 
 | Image | Planning purpose |

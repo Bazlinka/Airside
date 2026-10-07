@@ -33,6 +33,10 @@ a coarse 64 km ring (121 tiles, 2 km cells) so the state can be dragged under th
   alignment, swept doorway clearance, busy taxi traffic, save/reload through every phase. Do not merge on offline
   painter previews alone.
 
+**Visual planning candidates (7 Oct, Codex):** five finished-product concepts and build notes in
+`docs/art/candidates/finished_product_20261007/README.md`, branch `feature/finished-product-vision-20261007`.
+Generated references only; no runtime or approved-design changes. Review the overview, HUD, aircraft, fleet and turnaround targets before production.
+
 **Watch:**
 - Headless-green PRs can still break UnityEngine tests: the dotnet harness skips every test that touches `UnityEngine`. Since ADR 0252 it
   no longer misses missing `using`s or NUnit APIs Unity lacks (`Is.AnyOf`), but run `scripts/test-unity.sh` before merging behaviour changes.

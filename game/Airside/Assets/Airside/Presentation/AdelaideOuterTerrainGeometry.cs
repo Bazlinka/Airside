@@ -123,7 +123,12 @@ namespace Airside.Presentation
         public static float LandCoverColour(AdelaideFarLandCover landCover, int xi, int zi, float slope, float[] seaLinear,
             float[] into)
         {
-            var cls = landCover.ClassAt(xi, zi);
+            return LandCoverColour(landCover.ClassAt(xi, zi), xi, zi, slope, seaLinear, into);
+        }
+
+        /// <summary>The same rule for a class already looked up (the state-wide map, ADR 0250). Returns the water flag alpha.</summary>
+        public static float LandCoverColour(int cls, int xi, int zi, float slope, float[] seaLinear, float[] into)
+        {
             if (cls == AdelaideFarLandCover.Water)
             {
                 // A lake or reservoir: lit like the sea, a little lighter.

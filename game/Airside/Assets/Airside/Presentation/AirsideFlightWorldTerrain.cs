@@ -15,6 +15,9 @@ namespace Airside.Presentation
         private readonly List<(RegionalRunway runway,Transform view)> _runways = new();
         private Material _material;
         private FlightWorldHeights _heights;
+        private FlightWorldLandCover _cover;
+        private readonly float[] _tint = new float[3];
+        private float[] _seaLinear;
         private double _originX, _originZ;
         public int ResidentTiles => _tiles.Count;
         public bool HasElevation => _heights != null;
@@ -23,6 +26,11 @@ namespace Airside.Presentation
             var result = new GameObject("South Australia flight terrain").AddComponent<AirsideFlightWorldTerrain>();
             var path = ArtRuntimePaths.ResolveExisting(FlightWorldHeights.ArtPath);
             if (path != null) result._heights = FlightWorldHeights.Parse(File.ReadAllBytes(path));
+            // State-wide land cover (ADR 0250). Without the file the tiles keep their height-only colouring.
+            var coverPath = ArtRuntimePaths.ResolveExisting(FlightWorldLandCover.ArtPath);
+            if (coverPath != null) result._cover = FlightWorldLandCover.Parse(File.ReadAllBytes(coverPath));
+            var sea = AirsideAdelaideSurroundings.DeepWater.linear;
+            result._seaLinear = new[] { sea.r, sea.g, sea.b };
             // Same vertex-colour shader as the existing Adelaide outer landscape.
             var shader = Shader.Find("Airside/Surroundings");
             if (shader == null) shader = Shader.Find("Universal Render Pipeline/Lit");
@@ -101,6 +109,13 @@ namespace Airside.Presentation
                 // The original detailed meshes own Adelaide. This landscape tucks under them.
                 if (Math.Abs(wx)<=96000 && Math.Abs(wz)<=96000) y-=12;
                 vertices[z*n+x]=new Vector3(x*stride,(float)y,z*stride);
+                if (land && _cover != null && _cover.TryCell(lat,lon,out var cx,out var cz) && _cover.TryClass(lat,lon,out var cls))
+                {
+                    // Real land cover, in the palette the Adelaide rings use so the two meet without a step.
+                    var alpha=AdelaideOuterTerrainGeometry.LandCoverColour(cls,cx,cz,0f,_seaLinear,_tint);
+                    colors[z*n+x]=new Color(_tint[0],_tint[1],_tint[2],alpha);
+                    continue;
+                }
                 var color=land ? Color.Lerp(new Color(.54f,.53f,.34f),new Color(.35f,.40f,.28f),(float)Math.Min(1,height/800))
                     : AirsideAdelaideSurroundings.DeepWater;
                 colors[z*n+x]=color.linear;

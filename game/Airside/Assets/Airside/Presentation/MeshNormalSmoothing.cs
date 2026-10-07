@@ -42,55 +42,58 @@ namespace Airside.Presentation
         public static Vector3[] Compute(Vector3[] vertices, int[] triangles, float angleDegrees)
         {
             var vertexCount = vertices.Length;
-            var direct = new Vector3[vertexCount];
-
-            for (var t = 0; t + 2 < triangles.Length; t += 3)
+            var faceCount = triangles.Length / 3;
+            var faceNormals = new Vector3[faceCount];
+            // Corner angle at each of a face's three vertices: weighting by it (rather than by
+            // face count) stops a fan of thin triangles at a vertex from out-voting the one wide
+            // face beside them, which is what made smoothly curved panels read lumpy.
+            var cornerAngles = new float[faceCount * 3];
+            for (var f = 0; f < faceCount; f++)
             {
-                var i0 = triangles[t];
-                var i1 = triangles[t + 1];
-                var i2 = triangles[t + 2];
-                var faceNormal = Vector3.Cross(
-                    vertices[i1] - vertices[i0], vertices[i2] - vertices[i0]).normalized;
-                direct[i0] += faceNormal;
-                direct[i1] += faceNormal;
-                direct[i2] += faceNormal;
+                var p0 = vertices[triangles[f * 3]];
+                var p1 = vertices[triangles[f * 3 + 1]];
+                var p2 = vertices[triangles[f * 3 + 2]];
+                faceNormals[f] = Vector3.Cross(p1 - p0, p2 - p0).normalized;
+                cornerAngles[f * 3] = Vector3.Angle(p1 - p0, p2 - p0);
+                cornerAngles[f * 3 + 1] = Vector3.Angle(p0 - p1, p2 - p1);
+                cornerAngles[f * 3 + 2] = Vector3.Angle(p0 - p2, p1 - p2);
             }
-            for (var i = 0; i < vertexCount; i++)
-                direct[i] = direct[i].sqrMagnitude > 0f ? direct[i].normalized : Vector3.up;
 
-            // Weld vertices that share a position (within a small epsilon of a metre — plenty
-            // for real-world-scale models, and generous enough to catch the near-exact
-            // floating-point coincidence the generators actually produce at unwelded quad
-            // boundaries) into groups, so their otherwise-independent per-index normals can be
-            // blended.
+            // Weld corners that share a position (within a millimetre: the generators emit
+            // near-exact coincidence at unwelded quad boundaries) so each corner can blend with
+            // every neighbouring face, whichever vertex index that face happens to use.
             var groups = new Dictionary<(int, int, int), List<int>>();
-            for (var i = 0; i < vertexCount; i++)
+            for (var c = 0; c < faceCount * 3; c++)
             {
-                var key = PositionKey(vertices[i]);
+                var key = PositionKey(vertices[triangles[c]]);
                 if (!groups.TryGetValue(key, out var list))
-                    groups[key] = list = new List<int>(4);
-                list.Add(i);
+                    groups[key] = list = new List<int>(6);
+                list.Add(c);
             }
 
+            // Each corner averages the faces in its group that lie within the threshold of its own
+            // face; a vertex index shared by several corners averages their results.
             var cosThreshold = Mathf.Cos(angleDegrees * Mathf.Deg2Rad);
-            var result = new Vector3[vertexCount];
+            var sums = new Vector3[vertexCount];
             foreach (var group in groups.Values)
             {
-                if (group.Count == 1)
+                foreach (var c in group)
                 {
-                    result[group[0]] = direct[group[0]];
-                    continue;
-                }
-                foreach (var i in group)
-                {
+                    var own = faceNormals[c / 3];
                     var sum = Vector3.zero;
-                    foreach (var j in group)
-                        if (Vector3.Dot(direct[i], direct[j]) >= cosThreshold)
-                            sum += direct[j];
-                    result[i] = sum.sqrMagnitude > 0f ? sum.normalized : direct[i];
+                    foreach (var d in group)
+                    {
+                        var other = faceNormals[d / 3];
+                        if (Vector3.Dot(own, other) >= cosThreshold)
+                            sum += other * cornerAngles[d];
+                    }
+                    sums[triangles[c]] += sum.sqrMagnitude > 0f ? sum.normalized : own;
                 }
             }
 
+            var result = new Vector3[vertexCount];
+            for (var i = 0; i < vertexCount; i++)
+                result[i] = sums[i].sqrMagnitude > 0f ? sums[i].normalized : Vector3.up;
             return result;
         }
 

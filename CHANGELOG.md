@@ -8,6 +8,7 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- Arrivals on final never wait on ground traffic: runway-only landing clearance, 4 min decision point then go-around, inbounds metered in the circuit (unverified in Unity).
 - **Wide overview polish (ADR 0251 amendment).** No pale square round Adelaide, smooth far colours, the ring follows the camera out and fades into the sky; soak logs hitches.
 
 - **Faster agent loop.** Cloud-session bootstrap (.NET 8), `scripts/test-quick.py --changed`, `scripts/new-meta.py`, docs-only PRs skip heavy CI, `docs/ai/RECIPES.md`, `.cursorignore`.

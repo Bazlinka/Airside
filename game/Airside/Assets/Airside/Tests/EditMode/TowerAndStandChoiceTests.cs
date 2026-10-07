@@ -69,7 +69,7 @@ namespace Airside.Tests
         {
             var (clock, ops, player, _) = Empty();
             var departure = Restore(ops, "VH-DEP", player, AircraftType.Atr42, FleetState.HoldingShort, 0, default, Kgc());
-            var arrival = Restore(ops, "VH-ARR", player, AircraftType.Atr42, FleetState.HoldingForLanding, 60, default, Kgc());
+            var arrival = Restore(ops, "VH-ARR", player, AircraftType.Atr42, FleetState.HoldingForLanding, 200, default, Kgc());
 
             RunwayBusyUntil(ops, AirlineOperations.DepartureMaxHoldSeconds);
             RunTo(clock, ops, AirlineOperations.DepartureMaxHoldSeconds);
@@ -83,7 +83,7 @@ namespace Airside.Tests
         {
             var (clock, ops, player, _) = Empty();
             var departure = Restore(ops, "VH-DEP", player, AircraftType.Atr42, FleetState.HoldingShort, 0, default, Kgc());
-            var arrival = Restore(ops, "VH-ARR", player, AircraftType.Atr42, FleetState.HoldingForLanding, 30, default, Kgc());
+            var arrival = Restore(ops, "VH-ARR", player, AircraftType.Atr42, FleetState.HoldingForLanding, 100, default, Kgc());
 
             RunwayBusyUntil(ops, AirlineOperations.DepartureMaxHoldSeconds - 60);
             RunTo(clock, ops, AirlineOperations.DepartureMaxHoldSeconds - 60);
@@ -93,17 +93,19 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Tower_LandsAnArrivalThatHasCircledLongerThanTheDepartureHeld()
+        public void Tower_SendsAnArrivalAroundRatherThanLeaveItWaitingOnFinal()
         {
             var (clock, ops, player, _) = Empty();
             var arrival = Restore(ops, "VH-ARR", player, AircraftType.Atr42, FleetState.HoldingForLanding, 0, default, Kgc());
             var departure = Restore(ops, "VH-DEP", player, AircraftType.Atr42, FleetState.HoldingShort, 10, default, Kgc());
 
-            RunwayBusyUntil(ops, AirlineOperations.DepartureMaxHoldSeconds + 60);
-            RunTo(clock, ops, AirlineOperations.DepartureMaxHoldSeconds + 60);
+            // The strip stays busy past the arrival's decision point: it must not sit on final.
+            RunwayBusyUntil(ops, ApproachRules.FinalHoldLimitSeconds + 120);
+            RunTo(clock, ops, ApproachRules.FinalHoldLimitSeconds);
 
-            Assert.That(arrival.State, Is.EqualTo(FleetState.Landing));
-            Assert.That(departure.State, Is.EqualTo(FleetState.HoldingShort));
+            Assert.That(arrival.State, Is.Not.EqualTo(FleetState.HoldingForLanding));
+            Assert.That(arrival.WentAroundThisTrip, Is.True);
+            Assert.That(departure.State, Is.EqualTo(FleetState.HoldingShort).Or.EqualTo(FleetState.TakingOff));
         }
 
         [Test]

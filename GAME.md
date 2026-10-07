@@ -9,6 +9,9 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-07.*
 
+**In progress (7 Oct, Claude, branch `claude/serene-turing-bzumv3`):** arrivals never freeze on final — landing gated by the runway only, forced go-around at a 4 min decision point,
+inbounds metered in the circuit (ADR `2026-10-07-arrivals-never-hold-on-final`). Headless-green only; needs a Unity run and a busy-day look at finals and go-around visuals.
+
 **Latest merged work (7 Oct):** far-terrain satellite → land-cover hand-over at 30 km and the white "cloud" fix on
 the outer terrain (Cursor); selected-aircraft panel only on selection; save-load fix for blank `JsonUtility`
 records (v22 saves failed to load); render cost trim (ADR 0246), far terrain at full 125 m DEM (ADR 0247) and a

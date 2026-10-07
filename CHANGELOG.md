@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **The aircraft panel only opens when you pick an aircraft, and fits its content.** It used to
+  pop up for the most urgent aircraft (any idle one), so it was always on screen and Close
+  just brought it back. It was also always 700 px tall; a parked aircraft now gets a short panel.
+
 - **Saved airlines load again.** Unity's JSON saver writes an empty maintenance job or runway
   wake record as an all-blank object, and loading rejected it ("Invalid maintenance job for
   VH-PAX"). A job with no hangar, or a wake with no aircraft type, now means none. Existing

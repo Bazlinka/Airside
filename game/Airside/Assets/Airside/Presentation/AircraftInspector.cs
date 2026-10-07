@@ -16,6 +16,17 @@ namespace Airside.Presentation
             Body = new HudBox(panel.X + 20f, panel.Y + header, Math.Max(1f, panel.Width - 40f), Math.Max(1f, panel.Height - header - footer));
             Footer = new HudBox(panel.X + 20f, panel.Bottom - footer + 12f, Math.Max(1f, panel.Width - 40f), footer - 24f);
         }
+        /// <summary>Shortest panel that keeps the full header and footer.</summary>
+        public const float MinFittedHeight = 430f;
+
+        /// <summary>
+        /// Panel height for this much body content: the full header and footer plus the content,
+        /// never taller than the space the shell allows. A parked aircraft no longer gets a
+        /// mostly empty full-height panel.
+        /// </summary>
+        public static float FittedHeight(float available, float contentHeight) =>
+            Math.Min(available, Math.Max(MinFittedHeight, 128f + 150f + contentHeight + 8f));
+
         public HudBox Panel { get; }
         public HudBox Header { get; }
         public HudBox Body { get; }

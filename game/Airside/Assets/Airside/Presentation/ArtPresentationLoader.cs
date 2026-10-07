@@ -91,12 +91,17 @@ namespace Airside.Presentation
                     root.localPosition = localPosition;
                     ApplyPresentationMaterials(root, rename, colorFor,
                         artRelativePath.StartsWith("Models/Aircraft/", StringComparison.OrdinalIgnoreCase));
+                    if (artRelativePath.StartsWith("Models/Aircraft/", StringComparison.OrdinalIgnoreCase))
+                        AircraftSurfaceDetails.Build(root);
                     return true;
                 }
             }
 
-            return ArtGltfLoader.TryInstantiate(
+            var loaded = ArtGltfLoader.TryInstantiate(
                 artRelativePath, parent, out root, rename, colorFor, localPosition);
+            if (loaded && artRelativePath.StartsWith("Models/Aircraft/", StringComparison.OrdinalIgnoreCase))
+                AircraftSurfaceDetails.Build(root);
+            return loaded;
         }
 
         /// <summary>

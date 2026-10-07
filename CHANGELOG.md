@@ -8,6 +8,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- Fleet door seams, latches, thresholds, Bell sliding rails and service hatches follow fitted aircraft skins and existing door motion (#578; unverified in Unity).
+
 - #552: repair native fixture contracts, validate blank saves strictly and shift camera glide anchors with flight origins (unverified in Unity; owner-authorised merge).
 
 - **Cleaner image.** Full-res SSAO again, near clip scales with distance, ground mip bias 0, 16x aniso against flicker/pixelation (unverified in Unity; ADR 2026-10-07-clean-image-pass).

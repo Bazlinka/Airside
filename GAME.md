@@ -9,6 +9,19 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-07.*
 
+**Five-area bug sweep (Codex, issue #576):** five requested agents; review branch
+`codex/five-area-bug-sweep-20261007`, integrated with main `1fd4c9fc`.
+Remaining runtime fixes: exclusive camera-shell ownership, compact inspector/manual
+clicks, allocation-free runway query filters/catalogue lookup, rotor queue isolation,
+parked-aircraft taxi clearance with a positive 1 m static margin (moving/queued 3 m),
+and a local BAY-4 apron correction. Preserve main's approved runway-only arrival
+clearance and its merged save/glide/native fixture fixes; add regression coverage.
+Current-main targeted ground: 14 passed; required full suite: 1,892 passed / one
+busy-day moving-separation failure under investigation. Unity-NUnit compile passed;
+no Unity run.
+Packet: `docs/testing/five-area-bug-sweep-2026-10-07.md`. NEXT: review draft and run
+its native checklist when authorized; do not merge on headless evidence alone.
+
 **PR #552 (7 Oct, Codex):** native fixture repairs, stricter blank-save validation and camera glide anchors across origin shifts.
 Bailey explicitly authorised merging without further tests; native Unity confirmation stays pending.
 Rebased onto current main, preserving fleet/outstation flight views and the newer arrivals/rendering changes.

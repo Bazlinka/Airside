@@ -293,6 +293,7 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-07 | [An arrival on final never waits: it lands or goes around](2026-10-07-arrivals-never-hold-on-final.md) | accepted |
 | 2026-10-07 | [Clean-image pass: full-res SSAO, depth range, mip bias, 16x aniso](2026-10-07-clean-image-pass.md) |  |
 | 2026-10-07 | [A faster feedback loop for AI tools: ready sessions, targeted tests, lighter CI](2026-10-07-fast-agent-feedback-loop.md) | accepted |
+| 2026-10-07 | [Fixed parked clearance and the BAY-4 apron route](2026-10-07-fixed-parked-clearance-and-bay-four-route.md) | implemented on review branch; native acceptance pending |
 | 2026-10-07 | [Fleet and flight clarity](2026-10-07-fleet-flight-clarity.md) |  |
 | 2026-10-07 | [Multi-tool collaboration: one routine, generated indexes, date-named ADRs](2026-10-07-multi-agent-collaboration.md) | accepted |
 | 2026-10-07 | [Inline save absence and native flight-view contracts](2026-10-07-native-save-and-flight-view-contracts.md) |  |

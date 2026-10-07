@@ -172,6 +172,81 @@ namespace Airside.Tests
             finally { Object.DestroyImmediate(aircraft); }
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void EntryGlideSurvivesOriginRebaseWithoutChangingProgress(bool exterior)
+        {
+            var host = new GameObject("Rebasing camera");
+            var aircraft = new GameObject("Rebasing aircraft");
+            try
+            {
+                host.AddComponent<Camera>();
+                var controller = host.AddComponent<AirsideCameraController>();
+                typeof(AirsideCameraController).GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(controller, null);
+                aircraft.transform.position = new Vector3(2000f, 1000f, 400f);
+                host.transform.position = aircraft.transform.position + new Vector3(40f, 10f, -80f);
+                var from = host.transform.position;
+                if (exterior) controller.StartFlightExterior(aircraft.transform, Vector3.zero, 38f);
+                else controller.StartCockpit(aircraft.transform);
+                Assert.That(Vector3.Distance(host.transform.position, from), Is.LessThan(0.001f),
+                    "Entry must begin at the previous view, preserving the glide");
+                SetTransitionSeconds(controller, "_blendSeconds", CockpitLookInput.TransitionSeconds * 0.5f);
+                ApplyPose(controller);
+                var prior = host.transform.position;
+                var priorRotation = host.transform.rotation;
+                var delta = new Vector3(-8000f, 0f, -8000f);
+                aircraft.transform.position += delta;
+                controller.ShiftFlightOrigin(delta);
+                ApplyPose(controller);
+                Assert.That(Vector3.Distance(host.transform.position, prior + delta), Is.LessThan(0.01f),
+                    "The whole entry glide must translate with the origin, including its source anchor");
+                Assert.That(Quaternion.Angle(host.transform.rotation, priorRotation), Is.LessThan(0.01f));
+                SetTransitionSeconds(controller, "_blendSeconds", CockpitLookInput.TransitionSeconds);
+                ApplyPose(controller);
+                if (!exterior)
+                    Assert.That(Vector3.Distance(host.transform.position, aircraft.transform.position), Is.LessThan(0.001f));
+            }
+            finally { Object.DestroyImmediate(aircraft); Object.DestroyImmediate(host); }
+        }
+
+        [Test] public void ExitGlideSourceRebasesWhenReturningFromRegionalFlight()
+        {
+            var host = new GameObject("Exit camera");
+            var aircraft = new GameObject("Distant aircraft");
+            try
+            {
+                host.AddComponent<Camera>();
+                var controller = host.AddComponent<AirsideCameraController>();
+                typeof(AirsideCameraController).GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(controller, null);
+                aircraft.transform.position = new Vector3(2000f, 1000f, 400f);
+                controller.StartCockpit(aircraft.transform);
+                SetTransitionSeconds(controller, "_blendSeconds", CockpitLookInput.TransitionSeconds);
+                ApplyPose(controller);
+                controller.EndCockpit();
+                var delta = new Vector3(80000f, 0f, 80000f);
+                controller.ShiftFlightOrigin(delta);
+                // The first overview frame has zero transition progress and must still
+                // start from the same absolute aircraft position after resetting the origin.
+                host.transform.position = Vector3.zero;
+                SetTransitionSeconds(controller, "_exitSeconds", 0f);
+                typeof(AirsideCameraController).GetField("_exitBlendFrame", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(controller, Time.frameCount);
+                typeof(AirsideCameraController).GetMethod("ApplyExitBlend", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(controller, null);
+                Assert.That(Vector3.Distance(host.transform.position, aircraft.transform.position + delta), Is.LessThan(0.01f));
+            }
+            finally { Object.DestroyImmediate(aircraft); Object.DestroyImmediate(host); }
+        }
+
+        private static void SetTransitionSeconds(AirsideCameraController controller, string field, float seconds)
+            => typeof(AirsideCameraController).GetField(field, BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(controller, seconds);
+        private static void ApplyPose(AirsideCameraController controller)
+            => typeof(AirsideCameraController).GetMethod("ApplyCockpitPose", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(controller, null);
+
         private static bool ShellBlocks(List<MeshCollider> shell, Vector3 eye, Vector3 target)
         {
             var ray = new Ray(eye, target - eye);

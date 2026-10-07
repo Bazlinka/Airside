@@ -87,10 +87,12 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void PanelFor_ShowsOnTheDesktopWindow()
+        public void PanelFor_ShowsOnTheDesktopWindowOnlyWhenRequested()
         {
             var hud = HudLayout.Create(1440f, 900f);
-            Assert.That(FieldMiniMap.PanelFor(hud, AirlineHudLayout.Create(hud, showMiniMap: true)).width, Is.EqualTo(FieldMiniMap.PanelWidth));
+            Assert.That(FieldMiniMap.PanelFor(hud, AirlineHudLayout.Create(hud)).width, Is.Zero);
+            Assert.That(FieldMiniMap.PanelFor(hud, AirlineHudLayout.Create(hud, showMiniMap: true)).width,
+                Is.EqualTo(FieldMiniMap.PanelWidth));
         }
 
         [Test]

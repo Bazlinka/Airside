@@ -8,6 +8,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- Fix parked/bay taxi clearance, rotor queues, sky ownership, inspector/manual buttons and repeated query allocations; add aircraft/save coverage (#576; Unity unverified).
+
 - #552: repair native fixture contracts, validate blank saves strictly and shift camera glide anchors with flight origins (unverified in Unity; owner-authorised merge).
 
 - **Cleaner image.** Full-res SSAO again, near clip scales with distance, ground mip bias 0, 16x aniso against flicker/pixelation (unverified in Unity; ADR 2026-10-07-clean-image-pass).

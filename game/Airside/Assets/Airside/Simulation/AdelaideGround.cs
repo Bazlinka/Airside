@@ -612,7 +612,7 @@ namespace Airside.Simulation
         private static float[] BayTaxiIn(AdelaideBay bay, float[] taxiIn, AircraftType type)
         {
             if (!IsWalkOut(bay) || bay.Pushback.Length < 4)
-                return Drivable(taxiIn, type);
+                return ClearBayFourApron(bay, Drivable(taxiIn, type));
 
             // The pushback is the stand line reversed: walk back from the stop while the
             // taxi-in is still on it. The route may end a point short of the line's start.
@@ -631,6 +631,33 @@ namespace Airside.Simulation
             var standLine = new float[taxiIn.Length - split * 2];
             Array.Copy(taxiIn, split * 2, standLine, 0, standLine.Length);
             return GroundPathSmoothing.Join(Drivable(route, type), standLine);
+        }
+
+        // Bay 50A's inbound nose track clipped the parked Q400 at 50C. Keep the
+        // same graph/stand connectors and move only the short apron section north,
+        // inside the 23 m taxi lane. The smooth 8 m maximum offset leaves the stand
+        // stop, runway exit and all other bay approaches exactly where they were.
+        private static float[] ClearBayFourApron(AdelaideBay bay, float[] route)
+        {
+            if (bay.Id != "BAY-4") return route;
+            var parked = Bay(new StableId("BAY-2"));
+            var clear = (float[])route.Clone();
+            for (var i = 1; i < route.Length / 2 - 1; i++)
+            {
+                var dx = Math.Abs(route[i * 2] - parked.StopX);
+                if (dx >= 70f) continue;
+                var north = Smooth01((route[i * 2 + 1] - parked.StopZ - 12f) / 16f);
+                var apron = Smooth01((600f - route[i * 2 + 1]) / 50f);
+                var along = 0.5f * (1f + (float)Math.Cos(Math.PI * dx / 70f));
+                clear[i * 2 + 1] += 8f * along * north * apron;
+            }
+            return clear;
+        }
+
+        private static float Smooth01(float value)
+        {
+            var t = Math.Max(0f, Math.Min(1f, value));
+            return t * t * (3f - 2f * t);
         }
 
         private static float[] BayPushback(AdelaideBay bay, AircraftType type) =>

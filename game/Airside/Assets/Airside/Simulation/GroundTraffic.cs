@@ -53,6 +53,11 @@ namespace Airside.Simulation
         /// </summary>
         private const double PlanningMarginMetres = 3.0;
 
+        // A fixed stand pose cannot shuffle forward in a queue or change taxi speed.
+        // Keep a positive 1 m planning gap for parked airframes; moving/queued traffic
+        // retains ADR 0153's full 3 m allowance for those sources of drift.
+        private const double ParkedPlanningMarginMetres = 1.0;
+
         /// <summary>The same metres the queue positions step back by.</summary>
         public static float QueueSpacingMetres => AdelaideGround.AwaitingSpacingMetres;
 
@@ -112,6 +117,9 @@ namespace Airside.Simulation
             Track track, out GroundPose pose, out FleetGroundLeg leg)
         {
             pose = default;
+            leg = FleetGroundLeg.None;
+            if (aircraft.Type.IsRotorcraft)
+                return false; // HelicopterTrack owns pad flight; it never uses a runway ground roll.
             if (aircraft.MaintenanceJob is { } job)
             {
                 pose = job.Pose(aircraft.Type, seconds);
@@ -153,7 +161,11 @@ namespace Airside.Simulation
                 case FleetGroundLeg.None:
                     return TryRunwayGroundPose(aircraft, visual, seconds, out pose);
                 case FleetGroundLeg.Parked:
-                    return false;
+                    if (track == null)
+                        return false;
+                    pose = AdelaideGround.StandPose(aircraft.Stand);
+                    track.StandingPose = pose;
+                    return true;
                 case FleetGroundLeg.HoldingShort:
                     pose = AdelaideGround.HoldingShortPose(aircraft.DepartureStand,
                         track?.Slot ?? FleetVisual.QueueSlot(fleet, aircraft, at), aircraft.AssignedRunway, aircraft.Type);
@@ -336,12 +348,14 @@ namespace Airside.Simulation
                 {
                     if (s >= queueZoneFrom && other.SameQueue)
                         continue;
+                    if (other.Aircraft.State == FleetState.AtStand && NearOwnStand(candidate, mine, taxiOut))
+                        continue;
                     if (!TryPose(fleet, other.Aircraft, when, other, out var theirs, out _))
                         continue;
                     // Coarse pass only asks whether these two come anywhere near each other here.
                     if (!TooClose(mine, half, theirs, other.HalfSpan, EncounterProbeMetres))
                         continue;
-                    if (EncounterBreachesClearance(fleet, leg, half, other, queueZoneFrom, start, s))
+                    if (EncounterBreachesClearance(fleet, candidate, taxiOut, leg, half, other, queueZoneFrom, start, s))
                     {
                         blocker = other.Aircraft;
                         return false;
@@ -366,7 +380,7 @@ namespace Airside.Simulation
         /// testing, so two aircraft crossing could pass between two samples — which is exactly how
         /// the surviving conflicts happened, at 24 and 25 m against a 25 m limit.
         /// </summary>
-        private static bool EncounterBreachesClearance(IReadOnlyList<FleetAircraft> fleet, GroundLeg leg,
+        private static bool EncounterBreachesClearance(IReadOnlyList<FleetAircraft> fleet, FleetAircraft candidate, bool taxiOut, GroundLeg leg,
             double half, Track other, double queueZoneFrom, SimulationTime start, double coarseSeconds)
         {
             var from = Math.Max(0.0, coarseSeconds - SampleSeconds);
@@ -377,9 +391,13 @@ namespace Airside.Simulation
                     continue;
                 var (mx, mz) = leg.PositionAt(s);
                 var mine = new GroundPose(mx, mz, 0f, 1f, 0f, false);
+                if (other.Aircraft.State == FleetState.AtStand && NearOwnStand(candidate, mine, taxiOut))
+                    continue;
                 if (!TryPose(fleet, other.Aircraft, start.ElapsedSeconds + s, other, out var theirs, out _))
                     continue;
-                if (TooClose(mine, half, theirs, other.HalfSpan, PlanningMarginMetres))
+                var margin = other.Aircraft.State == FleetState.AtStand
+                    ? ParkedPlanningMarginMetres : PlanningMarginMetres;
+                if (TooClose(mine, half, theirs, other.HalfSpan, margin))
                     return true;
             }
 
@@ -395,6 +413,11 @@ namespace Airside.Simulation
                 if (job.ActiveLeg(aircraft.Type) is { } movement) return movement.Bounds;
                 var here = job.Pose(aircraft.Type, at.ElapsedSeconds);
                 return (here.X, here.Z, here.X, here.Z);
+            }
+            if (aircraft.State == FleetState.AtStand)
+            {
+                var parked = AdelaideGround.StandPose(aircraft.Stand);
+                return (parked.X, parked.Z, parked.X, parked.Z);
             }
             var leg = aircraft.State switch
             {
@@ -422,9 +445,23 @@ namespace Airside.Simulation
             (float MinX, float MinZ, float MaxX, float MaxZ) b) =>
             a.MinX <= b.MaxX && b.MinX <= a.MaxX && a.MinZ <= b.MaxZ && b.MinZ <= a.MaxZ;
 
+        // Adjacent parked stands share their lead-in geometry. Restrict that exception
+        // to the candidate's own stand approach/push; parked aircraft remain obstacles
+        // everywhere else on the taxiway (including the shared regional bay corridor).
+        private static bool NearOwnStand(FleetAircraft candidate, GroundPose pose, bool taxiOut)
+        {
+            var stand = taxiOut && candidate.State == FleetState.TaxiOut
+                ? candidate.DepartureStand : candidate.Stand;
+            if (string.IsNullOrEmpty(stand.Value)) return false;
+            var own = AdelaideGround.StandPose(stand);
+            var dx = own.X - pose.X;
+            var dz = own.Z - pose.Z;
+            return dx * dx + dz * dz < AdelaideGroundPolicy.StandApproachMetres * AdelaideGroundPolicy.StandApproachMetres;
+        }
+
         // A helicopter lifts off and lands on its pad and never rolls along a taxiway or runway (ADR 0207).
         private static bool OnTheGround(FleetAircraft aircraft) => !aircraft.Type.IsRotorcraft
-            && (aircraft.MaintenanceJob != null || aircraft.State is FleetState.TaxiOut
+            && (aircraft.MaintenanceJob != null || aircraft.State is FleetState.AtStand or FleetState.TaxiOut
                 or FleetState.HoldingShort or FleetState.TakingOff or FleetState.Landing
                 or FleetState.AwaitingStand or FleetState.TaxiIn);
     }

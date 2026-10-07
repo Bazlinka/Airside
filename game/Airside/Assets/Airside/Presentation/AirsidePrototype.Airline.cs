@@ -234,6 +234,14 @@ namespace Airside.Presentation
                 return;
             }
 
+            // IMGUI gives the first drawn control the click. A modal manual must
+            // draw before any live workspace buttons can consume its page / close clicks.
+            if (_controlsHelpOpen)
+            {
+                DrawControlsHelp(layout);
+                return;
+            }
+
             if (WatchingOutstation) { _hudPanels.Add(OutstationHudRect()); return; }
             var overview = _activeWorkspace == HudWorkspace.None && !_devToolsOpen;
 
@@ -293,10 +301,7 @@ namespace Airside.Presentation
             DrawMiniMap(FieldMiniMap.PanelFor(layout, placement), panel, small);
             if (overview)
                 DrawSelectionHudCard(layout, placement);
-            if (_controlsHelpOpen)
-                DrawControlsHelp(layout);
-            else
-                DrawCelebration(layout);
+            DrawCelebration(layout);
             DrawToast(placement.Toast);
         }
 

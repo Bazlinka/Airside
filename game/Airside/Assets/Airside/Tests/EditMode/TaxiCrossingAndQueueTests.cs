@@ -11,6 +11,70 @@ namespace Airside.Tests
     public sealed class TaxiCrossingAndQueueTests
     {
         [Test]
+        public void HelicopterLiftingFromPad_NeverMovesTheRunwayQueueBack()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(4), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideStands);
+            var other = new Airline("OTH", "Other Air", "#C95D50", isPlayer: false);
+            ops.AddAirline(other);
+            ops.RestoreAircraft("VH-ROT", other, AircraftType.Bell412, FleetState.TakingOff,
+                clock.Now, clock.Now.Advance((long)Math.Ceiling(RotorcraftPerformance.Bell412.TakeoffSeconds)), default,
+                AirlineOperations.AdelaideHelipadStands[0], HudTestAirline.Code("KGC"), null, 0);
+            var rotor = ops.Fleet.Last();
+            ops.RestoreAircraft("VH-DEP", other, AircraftType.Atr42, FleetState.HoldingShort,
+                clock.Now, null, default, AirlineOperations.AdelaideRegionalBays[0], HudTestAirline.Code("KGC"), null, 0);
+            var departure = ops.Fleet.Last();
+            Assert.That(FleetVisual.QueueSlot(ops.Fleet, departure, clock.Now), Is.Zero);
+            Assert.That(FleetVisual.QueueAhead(ops.Fleet, departure, clock.Now), Is.Zero);
+            Assert.That(GroundTraffic.TryPose(ops.Fleet, rotor, 0, out _, out _), Is.False,
+                "the pad liftoff must not be reconstructed as a runway roll");
+        }
+
+        [Test]
+        public void BusyOpeningBank_DoesNotTrapTheBayFourArrivalAgainstBayTwoDeparture()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(2026),
+                Airline.Player("Probe Air", "#123456"));
+            var firstArrival = ops.Fleet.Single(a => a.Registration == "VH-QOM");
+            var parkedBlocker = ops.Fleet.Single(a => a.Registration == "VH-QOK");
+            clock.Set(new SimulationTime(3600)); ops.Update();
+            Assert.That(parkedBlocker.State, Is.EqualTo(FleetState.Outbound),
+                "the booked departure must get past the exit and fly its actual route");
+            Assert.That(firstArrival.CompletedTrips, Is.GreaterThan(0),
+                "the inbound aircraft must reach its bay and resume its rotation");
+        }
+
+        [Test]
+        public void TaxiIn_HoldsForAnActualParkedObstacleAndReleasesAfterItLeaves()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(4), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideStands);
+            var other = new Airline("OTH", "Other Air", "#C95D50", isPlayer: false);
+            ops.AddAirline(other);
+            var parked = ops.AddAircraft(other, "VH-PKD", AircraftType.Dash8Q400, new StableId("BAY-2"));
+            ops.RestoreAircraft("VH-ARR", other, AircraftType.Dash8Q400, FleetState.AwaitingStand,
+                clock.Now, null, new StableId("BAY-4"), default, HudTestAirline.Code("KGC"), null, 0);
+            var arrival = ops.Fleet.Last(); arrival.AssignedRunway = RunwayDirection.Runway30;
+            // A deliberately conflicting transit route tests the guard independently
+            // of the now-corrected BAY-4 apron route, which clears this parked neighbour.
+            var obstaclePose = AdelaideGround.StandPose(parked.Stand);
+            var route = new GroundLeg(new GroundLegPart(new GroundPath(new[]
+            {
+                obstaclePose.X - 40f, obstaclePose.Z, obstaclePose.X + 40f, obstaclePose.Z
+            }, GroundSpeedLimits.TaxiFor(arrival.Type)), false));
+            Assert.That(GroundTraffic.PathClear(ops.Fleet, arrival, route, arrival.AssignedRunway,
+                taxiOut: false, clock.Now, includeStationary: true, out var blocker), Is.False);
+            Assert.That(blocker, Is.SameAs(parked));
+            // After the blocker departs, the exact same route can be released.
+            parked.Restore(FleetState.AtDestination, clock.Now, clock.Now.Advance(3600));
+            Assert.That(GroundTraffic.PathClear(ops.Fleet, arrival, route, arrival.AssignedRunway,
+                taxiOut: false, clock.Now), Is.True);
+        }
+
+        [Test]
         public void QueuedTaxiOut_BrakesEvenlyToAStandstillAtItsPlace()
         {
             var stand = AirlineOperations.AdelaideRegionalBays[0];

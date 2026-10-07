@@ -1,0 +1,26 @@
+using Airside.Domain;
+using Airside.Simulation;
+var clock = new ManualSimulationClock(new SimulationTime(0));
+var ops = AirlineOperations.StartAtAdelaide(clock,new SeededRandomSource(2026),Airline.Player("Probe","#2E7D32"));
+var reported=new HashSet<string>();
+for(long t=0;t<86400;t+=2) {
+clock.Set(new SimulationTime(t)); ops.Update(); if(t%3600==0)Console.WriteLine("hour="+(t/3600)+" completed="+ops.Fleet.Sum(a=>a.CompletedTrips));
+var hour=ops.Clock.LocalAt(clock.Now).Hour;if(hour>=AirportCurfew.ClosedFromHour||hour<AirportCurfew.OpensAtHour+1)continue;
+var placed=new List<(FleetAircraft a,GroundPose p,FleetGroundLeg leg)>();
+foreach(var a in ops.Fleet) {
+if(a.Type.IsRotorcraft)continue;
+if(a.State==FleetState.AtStand)placed.Add((a,AdelaideGround.StandPose(a.Stand),FleetGroundLeg.Parked));
+else if(GroundTraffic.TryPose(ops.Fleet,a,t,out var p,out var leg))placed.Add((a,p,leg));
+}
+for(int i=0;i<placed.Count;i++)for(int j=i+1;j<placed.Count;j++){
+var a=placed[i];var b=placed[j];
+if(a.leg==FleetGroundLeg.Parked&&b.leg==FleetGroundLeg.Parked)continue;
+if(a.leg==FleetGroundLeg.Parked&&NearOwn(b.a,b.p)||b.leg==FleetGroundLeg.Parked&&NearOwn(a.a,a.p))continue;
+if(GroundTraffic.TooClose(a.p,GroundTraffic.HalfSpan(a.a.Type),b.p,GroundTraffic.HalfSpan(b.a.Type))){var k=a.a.Registration+"|"+b.a.Registration; if(reported.Add(k)) Console.WriteLine($"t={t} {a.a.Registration} {a.a.State} {a.leg} {a.a.AssignedRunway} ({a.p.X},{a.p.Z}) vs {b.a.Registration} {b.a.State} {b.leg} {b.a.AssignedRunway} ({b.p.X},{b.p.Z})");}
+}
+}
+Console.WriteLine("pairs="+reported.Count);
+Console.WriteLine("completed="+ops.Fleet.Sum(a=>a.CompletedTrips));
+foreach(var a in ops.Fleet)Console.WriteLine(a.Registration+" "+a.State+" trips="+a.CompletedTrips);
+
+static bool NearOwn(FleetAircraft a, GroundPose p){var stand=a.State==FleetState.TaxiOut?a.DepartureStand:a.Stand;if(string.IsNullOrEmpty(stand.Value))return false;var own=AdelaideGround.StandPose(stand);var dx=own.X-p.X;var dz=own.Z-p.Z;return dx*dx+dz*dz<90*90;}

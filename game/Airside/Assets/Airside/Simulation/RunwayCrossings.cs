@@ -31,7 +31,7 @@ namespace Airside.Simulation
         public const float StripHalfWidthMetres = 30f;
 
         private const double ScanSeconds = 1.0;
-        private static readonly Dictionary<(GroundLeg, float), RunwayCrossing[]> Cache = new();
+        private static readonly Dictionary<(GroundLeg, float), CachedCrossings> Cache = new();
 
         public static bool OnStrip(float x, float z, bool mainStrip, float envelopeMetres = 0f)
         {
@@ -56,23 +56,45 @@ namespace Airside.Simulation
             // planning margin. A centre-point crossing can free the strip with the tail still on it.
             var envelope = AircraftCatalogue.TryFor(type, out var spec)
                 ? (float)Math.Max(spec.LengthMetres, spec.WingspanMetres * 0.5) + 3f : 0f;
-            var all = All(leg, envelope);
-            if (includeOwnRunway) return all;
-            var count = 0;
-            foreach (var crossing in all)
-                if (crossing.MainStrip != own)
-                    count++;
-            if (count == all.Length)
-                return all;
-            var result = new RunwayCrossing[count];
-            var i = 0;
-            foreach (var crossing in all)
-                if (crossing.MainStrip != own)
-                    result[i++] = crossing;
-            return result;
+            var crossings = All(leg, envelope);
+            return includeOwnRunway ? crossings.All : own ? crossings.CrossStrip : crossings.MainStrip;
         }
 
-        private static RunwayCrossing[] All(GroundLeg leg, float envelope)
+        // The same taxi leg is queried repeatedly by tower clearance and hold-reason polling.
+        // Keep both filtered views alongside the scan rather than allocating on every query.
+        private sealed class CachedCrossings
+        {
+            public readonly RunwayCrossing[] All;
+            public readonly RunwayCrossing[] MainStrip;
+            public readonly RunwayCrossing[] CrossStrip;
+
+            public CachedCrossings(RunwayCrossing[] all)
+            {
+                All = all;
+                MainStrip = Filter(all, true);
+                CrossStrip = Filter(all, false);
+            }
+
+            private static RunwayCrossing[] Filter(RunwayCrossing[] all, bool mainStrip)
+            {
+                var count = 0;
+                foreach (var crossing in all)
+                    if (crossing.MainStrip == mainStrip)
+                        count++;
+                if (count == all.Length)
+                    return all;
+                if (count == 0)
+                    return Array.Empty<RunwayCrossing>();
+                var result = new RunwayCrossing[count];
+                var i = 0;
+                foreach (var crossing in all)
+                    if (crossing.MainStrip == mainStrip)
+                        result[i++] = crossing;
+                return result;
+            }
+        }
+
+        private static CachedCrossings All(GroundLeg leg, float envelope)
         {
             lock (Cache)
             {
@@ -101,10 +123,10 @@ namespace Airside.Simulation
                     found.Add(new RunwayCrossing(main, enter.Value, leg.Seconds));
             }
 
-            var array = found.ToArray();
+            var crossings = new CachedCrossings(found.ToArray());
             lock (Cache)
-                Cache[(leg, envelope)] = array;
-            return array;
+                Cache[(leg, envelope)] = crossings;
+            return crossings;
         }
     }
 }

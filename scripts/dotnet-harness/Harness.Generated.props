@@ -281,6 +281,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GlassCockpitPainterTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GoAroundRejoinTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GolfBunkerMarksTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundClearanceRegressionTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundLegSeamTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundMotionSmoothnessTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/GroundMotionTests.cs" />
@@ -334,6 +335,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RouteMapTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RouteMapWorkspaceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RuntimeKitSurfaceTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RunwayCrossingsCacheTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RunwayRubberMarksTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RunwayWeatherTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ServiceChoreographyTests.cs" />

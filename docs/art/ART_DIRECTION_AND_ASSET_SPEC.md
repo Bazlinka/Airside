@@ -452,3 +452,16 @@ external art or font is added. Runtime text stays in Unity.
 
 Evidence: `docs/testing/interface-refresh-2026-10-06/`. Rendered previews show
 shared layout and palette, not native runtime verification.
+
+## Fleet surface details — 7 October 2026
+
+Task #578 extends AIR-001 and AIR-005…017 with runtime-derived door seams, latch
+surrounds/bars, thresholds, hinge marks and forward service hatches. Bell sliding
+doors carry an upper rail. Existing exact model paths, IDs, fictional liveries,
+colour customization and imported geometry remain authoritative. The shared
+`AircraftSurfaceDetails` pass applies to glTF and readable prefab source meshes;
+geometry is clipped to the real source triangles and attached to each moving leaf.
+No reference-image or external model generation is involved. Status: **Integrated,
+unverified in Unity**. Native overview/follow day/dusk/night, door motion and
+performance checks remain open. ADR `2026-10-07-fleet-surface-details`; proof and
+plan: `docs/testing/fleet-surface-details-2026-10-07/`.

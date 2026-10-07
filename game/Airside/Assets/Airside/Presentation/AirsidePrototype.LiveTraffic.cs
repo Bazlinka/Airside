@@ -142,7 +142,7 @@ namespace Airside.Presentation
 
                 var parts = PartsFor(view);
                 UpdateAircraftLightsAndGear(parts.LightsAndGear, AircraftPhase.Circuit, PresentationDaylight, 0.5f,
-                    PresentationDeltaTime, PresentationClock, null);
+                    PresentationDeltaTime, PresentationClock, null, null, type);
                 SpinJetFans(view, parts.FanLeft, parts.FanRight, AircraftPhase.Circuit, null);
                 SpinPropellers(view, parts.Propellers, AircraftPhase.Circuit, null);
                 UpdateAircraftSound(view, type, AircraftPhase.Circuit, aircraft.Hex, 0.5f, EngineState.Running, 0f);

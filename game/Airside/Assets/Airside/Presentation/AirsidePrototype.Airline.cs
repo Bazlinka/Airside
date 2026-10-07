@@ -2420,7 +2420,7 @@ namespace Airside.Presentation
             // Opening Operations should land on the one live decision, not an empty detail
             // pane. Selection is presentation state only; all commands still pass through
             // AirlineOperations and the complete movement model remains untouched.
-            if (!_operationsWorkspace.HasSelection && _operationsWorkspace.Attention.Count > 0)
+            if (_operationsAllMovements && !_operationsWorkspace.HasSelection && _operationsWorkspace.Attention.Count > 0)
             {
                 _selectedAircraftId = _operationsWorkspace.Attention[0].Registration;
                 _operationsWorkspace.Rebuild(_operations, _clock.Now,
@@ -2428,15 +2428,16 @@ namespace Airside.Presentation
                     _selectedAircraftId, _eventHistory, PresentationWeatherSummary);
             }
 
-            var layout = OperationsWorkspaceLayout.Create(surface, _operationsWorkspace.Attention.Count);
+            var layout = OperationsWorkspaceLayout.Create(surface, _operationsAllMovements ? _operationsWorkspace.Attention.Count : 0,
+                airlineView: !_operationsAllMovements);
             var nowRow = _operationsWorkspace.FirstActiveRowIndex;
-            if (_boardScrollSnapToDay)
+            if (_operationsAllMovements && _boardScrollSnapToDay)
             {
                 _boardScrollRow = nowRow;
                 _boardScrollFollowRow = nowRow;
                 _boardScrollSnapToDay = false;
             }
-            else if (_boardScrollFollowRow >= 0 && _boardScrollRow == _boardScrollFollowRow)
+            else if (_operationsAllMovements && _boardScrollFollowRow >= 0 && _boardScrollRow == _boardScrollFollowRow)
             {
                 // Still parked on the previous NOW — walk forward with the clock so a board
                 // left open from 09:55 is not still showing 09:55 at 11:55.
@@ -2445,9 +2446,8 @@ namespace Airside.Presentation
             }
 
             var beforeScroll = _boardScrollRow;
-            if (_operationsAllMovements)
-                _boardScrollRow = ScrollRows(_boardScrollRow, layout.Board,
-                    _operationsWorkspace.Rows.Count - layout.VisibleRows);
+            _boardScrollRow = ScrollRows(_boardScrollRow, layout.Board,
+                (_operationsAllMovements ? _operationsWorkspace.Rows.Count : _operationsWorkspace.AirlineRows.Count) - layout.VisibleRows);
             if (_boardScrollRow != beforeScroll)
                 _boardScrollFollowRow = -1;
             OperationsWorkspacePainter.Paint(_workspaceDrawList, _operationsWorkspace, layout,
@@ -2807,6 +2807,15 @@ namespace Airside.Presentation
             var registration = HudAction.Payload(action, HudAction.SelectPrefix);
             if (registration.Length > 0)
             {
+                var owned = Airside.Simulation.PlayerFleet.Find(_operations, _clock.Now, registration);
+                if (owned != null && (_activeWorkspace == HudWorkspace.Operations && !_operationsAllMovements || owned.IsOutstation))
+                {
+                    _fleetBoard.Focus(owned);
+                    _rosterScrollRow = 0;
+                    SetWorkspace(HudWorkspace.Fleet);
+                    DispatchFleetAction(action);
+                    return;
+                }
                 if (TryFindFleetAircraft(registration, out var picked))
                     SelectAircraft(picked);
                 return;

@@ -290,10 +290,15 @@ Nothing here has been judged superseded except where the ADR says so.
 | 0250 | [State-wide land cover for the streamed South Australia terrain](0250-south-australia-land-cover.md) | accepted (Unity look not yet verified) |
 | 0251 | [Wide overview: zoom to 450 km and stream South Australia from the camera](0251-wide-overview-streaming.md) | accepted (Unity look and performance not yet verified) |
 | 0252 | [The headless harness must fail where Unity's compile fails](0252-headless-harness-matches-unity-compile.md) | accepted |
+| 2026-10-07 | [Per-type aircraft lighting profiles](2026-10-07-aircraft-lighting-profiles.md) |  |
+| 2026-10-07 | [Angle-weighted smooth normals for runtime-loaded models](2026-10-07-angle-weighted-normals.md) |  |
 | 2026-10-07 | [An arrival on final never waits: it lands or goes around](2026-10-07-arrivals-never-hold-on-final.md) | accepted |
 | 2026-10-07 | [Clean-image pass: full-res SSAO, depth range, mip bias, 16x aniso](2026-10-07-clean-image-pass.md) |  |
+| 2026-10-07 | [Landing gate also checks the exit's standing spot](2026-10-07-exit-standing-spot-clear.md) |  |
 | 2026-10-07 | [A faster feedback loop for AI tools: ready sessions, targeted tests, lighter CI](2026-10-07-fast-agent-feedback-loop.md) | accepted |
 | 2026-10-07 | [Fixed parked clearance and the BAY-4 apron route](2026-10-07-fixed-parked-clearance-and-bay-four-route.md) | implemented on review branch; native acceptance pending |
 | 2026-10-07 | [Fleet and flight clarity](2026-10-07-fleet-flight-clarity.md) |  |
+| 2026-10-07 | [Fitted door and service details across the fleet](2026-10-07-fleet-surface-details.md) |  |
 | 2026-10-07 | [Multi-tool collaboration: one routine, generated indexes, date-named ADRs](2026-10-07-multi-agent-collaboration.md) | accepted |
 | 2026-10-07 | [Inline save absence and native flight-view contracts](2026-10-07-native-save-and-flight-view-contracts.md) |  |
+| 2026-10-07 | [All-base airline operations](2026-10-07-network-operations.md) |  |

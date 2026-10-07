@@ -1,0 +1,29 @@
+namespace Airside.Simulation
+{
+    /// <summary>
+    /// The rule an arrival on final is held to: it keeps moving and either lands or goes around.
+    /// It is never parked on the approach waiting for ground traffic (ADR 2026-10-07).
+    /// Sources: ICAO Doc 4444 (PANS-ATM) 6.7 and 7.4 runway separation and landing clearance, ICAO
+    /// Doc 8168 (PANS-OPS) stabilised approach, CASA MOS Part 172 §10.12 wake minima (see
+    /// <see cref="WakeSeparation"/>). Figures are gameplay-scaled from those, as ADR 0243 does.
+    /// </summary>
+    public static class ApproachRules
+    {
+        /// <summary>
+        /// Longest an arrival may be established on final without a landing clearance. About the time to fly
+        /// the last ~8 NM at reference speed; a stabilised approach is flown from ~1000 ft (PANS-OPS), so an
+        /// aircraft still without clearance at this point goes around instead of waiting on the approach.
+        /// </summary>
+        public const long FinalHoldLimitSeconds = 4 * 60;
+
+        /// <summary>
+        /// An inbound joins final only when its landing is expected within this long, so a queue of
+        /// arrivals is metered out in the circuit rather than stacked on short final. Kept under
+        /// <see cref="FinalHoldLimitSeconds"/> so a normal clearance beats the decision point.
+        /// </summary>
+        public const long MeterHorizonSeconds = 3 * 60;
+
+        /// <summary>The moment an arrival that joined final at <paramref name="joinedAtSeconds"/> must go around.</summary>
+        public static long DecisionPointAt(long joinedAtSeconds) => joinedAtSeconds + FinalHoldLimitSeconds;
+    }
+}

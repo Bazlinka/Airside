@@ -41,6 +41,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftPickRouting.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftSkinUv.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftStatus.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftSurfaceDetailGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftTitlePaint.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftTouchdownContact.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AirfieldFixture.cs" />
@@ -195,6 +196,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftPickRoutingTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftSkinUvTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftStatusTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftSurfaceDetailGeometryTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftTitlePaintTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirfieldFixtureTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirlineCareerTests.cs" />

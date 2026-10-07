@@ -1,19 +1,12 @@
 # Claude Code — Airside
 
-Read [`AGENTS.md`](AGENTS.md) and [`GAME.md`](GAME.md) before any task. They are the
-shared working contract for every contributor (Bailey, ChatGPT, Cursor, Codex,
-Claude) and take precedence over anything here.
+@AGENTS.md
 
-Quick pointers:
+`AGENTS.md` (imported above) is the shared contract for every tool and takes precedence over anything here. Then read `GAME.md`
+(current state, ~170 lines). How several tools share this repo: `docs/ai/WORKFLOW.md`. Where code lives: `game/Airside/AGENTS.md`.
 
-- The Unity game is `game/Airside/` (Unity 6.3 LTS). Open that folder in Unity.
-- Run checks: `scripts/test-unity.sh` (source of truth; needs a Mac Unity editor).
-  Without one, `scripts/test-domain.sh` runs the same Domain/Simulation
-  EditMode tests headlessly via `dotnet test` — supplementary, not a replacement.
-  Local Mac build: `scripts/build-mac.sh`.
-- The git repo is the single source of truth. `git pull --rebase` before work;
-  update `GAME.md` and `CHANGELOG.md` in the same commit; push to `origin`
-  straight after.
-- One change, one owner. Use a `feature/<name>` branch for parallel work.
-- Claude's standing role here is independent architecture and large-context
-  review — inspect the real code and build state, never merge on a claim alone.
+Claude-specific:
+
+- Cloud sessions have no Unity editor. Run `scripts/test-domain.sh` before every push and say plainly that behaviour is "unverified in
+  Unity"; never present a headless pass as a Unity pass.
+- Claude's standing role is independent architecture and large-context review: inspect the real code and build state, never merge on a claim alone.

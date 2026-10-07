@@ -24,7 +24,7 @@ Airside/
   AGENTS.md                  This file — the shared working contract
   CLAUDE.md                  Pointer for Claude Code (defers to this file)
   .cursor/rules/             Pointer for Cursor (defers to this file)
-  game/Airside/              The Unity 6.3 LTS macOS game (open THIS in Unity)
+  game/Airside/              The Unity 6.3 LTS macOS game (open THIS in Unity); AGENTS.md here = code-area guidance
     Assets/Airside/
       Domain/                Pure rules: time, ids — no UnityEngine types
       Simulation/            Airport simulation — deterministic, clock-injected
@@ -42,11 +42,14 @@ Airside/
     architecture/            Technical decisions and data contracts
     decisions/               Numbered decision records (ADRs); README.md is the index and numbering rule
     history/                 Archived handoff log and changelog (verbatim, read-only); docs/README.md maps it all
+    ai/                      WORKFLOW.md — how several AI tools and accounts share this repo (claim, branch, verify, merge)
     data/                    Asset and data licence register
     art/                     Canonical art direction, manifest, prompts and references
     testing/                 Acceptance checks and fixtures
   scripts/
     test-unity.sh            Deterministic simulation checks (source of truth; needs a Mac Unity editor)
+    index-adrs.py / index-scripts.py
+                             Regenerate docs/decisions/README.md and scripts/README.md (generated, never hand-edited, never a CI gate)
     map-presentation.py      Regenerates docs/architecture/PRESENTATION_MAP.md (what each AirsidePrototype partial owns); --check
                              fails on a stale map or an undescribed new partial — add its line in the same commit
     check-unity-nunit.sh     Compile-only check against Unity's NUnit 3.5, no implicit usings (CI + test-domain.sh; ADR 0252)
@@ -99,12 +102,15 @@ note it here in the same commit.
    `docs/testing/<topic>/`.
 6. **Commit message:** short imperative subject, then what changed and the
    evidence. Push to `origin` immediately so other tools see it.
-7. **Decisions:** a design change adds a dated entry under `docs/decisions/`
-   (date, decision, reason, affected systems, migration impact) and a row in `docs/decisions/README.md`.
-   Take the next free ADR number after checking `origin/main` and open branches, and mark any ADR you
-   replace "Superseded by NNNN". New ideas go to a backlog, not straight into the active milestone.
-8. **Branches:** delete your `feature/*` / `fix/*` branch once its PR is merged. Never delete a branch
-   that has commits not on `main`.
+7. **Decisions:** a design change adds an entry under `docs/decisions/` named `YYYY-MM-DD-slug.md`
+   (date, decision, reason, affected systems, migration impact; ADRs 0001–0252 keep their numbers) and marks any ADR it
+   replaces "Superseded by <file>". Do not hand-edit `docs/decisions/README.md`: it is generated (`scripts/index-adrs.py`).
+   New ideas go to a backlog, not straight into the active milestone.
+8. **Branches:** name them `<tool>/<topic>-<yyyymmdd>` (`claude`, `cursor`, `codex`, `chatgpt`); delete yours once its PR is merged.
+   Never delete a branch that has commits not on `main`.
+9. **Several tools, several accounts:** claim the task first (a GitHub issue from the Task packet template, with `Owner:` and your file scope),
+   one issue = one branch = one PR, and fill in the PR template. The routine, the rules for generated indexes and a ChatGPT starter prompt are in
+   `docs/ai/WORKFLOW.md`.
 
 ## Session handoff protocol
 

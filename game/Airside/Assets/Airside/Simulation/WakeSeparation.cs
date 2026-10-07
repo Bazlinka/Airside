@@ -57,6 +57,9 @@ namespace Airside.Simulation
 
         internal void RestoreWake(RunwayWakeRecord main, RunwayWakeRecord cross)
         {
+            // JsonUtility writes a null record as an all-default object: no type means no wake.
+            if (string.IsNullOrEmpty(main?.TypeId)) main = null;
+            if (string.IsNullOrEmpty(cross?.TypeId)) cross = null;
             Validate(main);
             Validate(cross);
             MainWake = main;

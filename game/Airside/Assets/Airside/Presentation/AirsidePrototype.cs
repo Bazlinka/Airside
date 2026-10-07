@@ -4246,7 +4246,22 @@ namespace Airside.Presentation
                 Kind = kind;
                 NavLight = navLight;
                 if (transform != null)
-                    Rest = transform.localRotation;
+                    Rest = RestRotationOf(transform);
+            }
+
+            // The authored rest pose, captured once per transform. Parts are rebuilt whenever a view's children
+            // change (selecting an aircraft adds a marker), and reading the pose then recorded a gear leg that was
+            // already folded as its rest, so the fold was applied twice and the legs stood up (jets in flight).
+            private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Transform,
+                System.Runtime.CompilerServices.StrongBox<Quaternion>> RestPoses = new();
+
+            private static Quaternion RestRotationOf(Transform transform)
+            {
+                if (RestPoses.TryGetValue(transform, out var box))
+                    return box.Value;
+                var rest = transform.localRotation;
+                RestPoses.Add(transform, new System.Runtime.CompilerServices.StrongBox<Quaternion>(rest));
+                return rest;
             }
         }
 

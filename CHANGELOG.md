@@ -8,6 +8,7 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- Fix landing gear standing up on selected jets in flight: gear rest pose is captured once, not re-read when the view's parts are rebuilt (unverified in Unity).
 - Arrivals on final never wait on ground traffic: runway-only landing clearance, 4 min decision point then go-around, inbounds metered in the circuit (unverified in Unity).
 - **Wide overview polish (ADR 0251 amendment).** No pale square round Adelaide, smooth far colours, the ring follows the camera out and fades into the sky; soak logs hitches.
 

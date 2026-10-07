@@ -10,6 +10,7 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 - Fleet door seams, latches, thresholds, Bell sliding rails and service hatches follow fitted aircraft skins and existing door motion (#578; unverified in Unity).
 
+- **Smoother model shading.** Runtime model normals are weighted by corner angle so curved panels stop rippling (unverified in Unity; ADR 2026-10-07-angle-weighted-normals).
 - **Fix ground-separation CI failure.** Landing gate also keeps the end of the exit clear for 28 s, so a taxi-out no longer passes within 25 m of a stopped arrival (unverified in Unity).
 - #552: repair native fixture contracts, validate blank saves strictly and shift camera glide anchors with flight origins (unverified in Unity; owner-authorised merge).
 

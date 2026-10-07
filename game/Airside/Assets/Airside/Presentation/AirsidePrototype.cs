@@ -925,13 +925,12 @@ namespace Airside.Presentation
                 return;
 
             // Typing the airline name must not follow, reset the view or mute.
-            if (WatchingOutstation)
+            if (WatchingOutstation && keyboard.hKey.wasPressedThisFrame)
             {
-                if (keyboard.rKey.wasPressedThisFrame || keyboard.fKey.wasPressedThisFrame || keyboard.hKey.wasPressedThisFrame)
-                    ExitOutstationView(true);
+                ExitOutstationView(true);
                 return;
             }
-            if (!InCockpit && ReadAirlineControls(keyboard))
+            if (!InCockpit && !WatchingOutstation && ReadAirlineControls(keyboard))
                 return;
 
             if (keyboard.fKey.wasPressedThisFrame)

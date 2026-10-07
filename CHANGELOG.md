@@ -9,6 +9,7 @@ Older entries (about 1,000, through 2026-10-07) are in
 ## Unreleased
 
 - **Faster agent loop.** Cloud-session bootstrap (.NET 8), `scripts/test-quick.py --changed`, `scripts/new-meta.py`, docs-only PRs skip heavy CI, `docs/ai/RECIPES.md`, `.cursorignore`.
+- **Connected player-flow study (#567).** Interactive local airline journeys, commitment/refusal recovery and a fresh dispatch layout; no Unity runtime changes.
 
 - **Multi-tool workflow.** Pointer files only, per-area `AGENTS.md`, task/PR templates, date-named ADRs and generated indexes (`docs/ai/WORKFLOW.md`).
 - **Player-flow contract.** Consolidates 24 player tasks, decisions and recovery paths; visual interface proposals must be checked against it. Documentation only.

@@ -14,7 +14,7 @@ the outer terrain (Cursor); selected-aircraft panel only on selection; save-load
 records (v22 saves failed to load); render cost trim (ADR 0246), far terrain at full 125 m DEM (ADR 0247) and a
 4096 px far satellite (ADR 0248), repo tidy (ADR 0249) and state-wide land-cover colours (ADR 0250) (Claude).
 
-**Next approved work:** none queued by Bailey beyond verification. **Done in code, unverified (ADR 0250/0251):** state-wide land-cover
+**Next approved work:** review the connected player-flow study requested by Bailey; existing native verification remains open. **Done in code, unverified (ADR 0250/0251):** state-wide land-cover
 colours on the streamed terrain, and the wide overview — zoom to 450 km, and past 60 km the overview camera streams a fine 16 km ring plus
 a coarse 64 km ring (121 tiles, 2 km cells) so the state can be dragged under the camera. Packet: `docs/plans/south-australia-overview-streaming.md`.
 
@@ -33,12 +33,12 @@ a coarse 64 km ring (121 tiles, 2 km cells) so the state can be dragged under th
   alignment, swept doorway clearance, busy taxi traffic, save/reload through every phase. Do not merge on offline
   painter previews alone.
 
-**Visual planning (7 Oct, Codex):** Bailey rejected the earlier photographic vision. Three grounded edits and a staged plan now live in
-`docs/art/candidates/attainable_direction_20261007/README.md`, branch `feature/attainable-visual-direction-20261007`.
-They use actual 6 October packaged captures/native aircraft references and propose a fresh horizontal dispatch interface.
-Review candidates only; no runtime changes. Current-build baseline capture and native implementation validation remain necessary.
-**Player-flow planning:** `docs/plans/player_flows_and_interface_contract.md` consolidates 24 tasks and recovery paths.
-Further interface design must validate these before treating overview/Schedule mockups as a complete solution; no runtime changes.
+**Player-flow study (7 Oct, Codex):** `docs/art/player-flow-prototype-2026-10-07/README.md`, branch
+`codex/player-flow-prototype-20261007`, task #567. Connected sample journeys follow the 24-task contract;
+12 browser journey groups/model integrity pass at five sizes; supplementary headless suite 1,842/1,842.
+Evidence: `docs/testing/player-flow-study-2026-10-07/`. Review the local prototype/portable bundle.
+Runtime Unity files and saves are unchanged; native interface/command wiring, appearance and performance remain unverified.
+Earlier photographic vision was rejected; capture-based visual studies remain proposals subordinate to the flow contract.
 
 **Watch:**
 - Headless-green PRs can still break UnityEngine tests: the dotnet harness skips every test that touches `UnityEngine`. Since ADR 0252 it

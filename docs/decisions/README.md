@@ -292,3 +292,4 @@ Nothing here has been judged superseded except where the ADR says so.
 | 0252 | [The headless harness must fail where Unity's compile fails](0252-headless-harness-matches-unity-compile.md) | accepted |
 | 2026-10-07 | [A faster feedback loop for AI tools: ready sessions, targeted tests, lighter CI](2026-10-07-fast-agent-feedback-loop.md) | accepted |
 | 2026-10-07 | [Multi-tool collaboration: one routine, generated indexes, date-named ADRs](2026-10-07-multi-agent-collaboration.md) | accepted |
+| 2026-10-07 | [Validate player journeys with a local interactive dispatch study](2026-10-07-player-flow-design-study.md) | accepted for design-study work; runtime interface direction remains pr |

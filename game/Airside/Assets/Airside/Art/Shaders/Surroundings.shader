@@ -15,6 +15,8 @@ Shader "Airside/Surroundings"
         _SatelliteFarStrength ("Far satellite blend", Range(0, 1)) = 0.92
         _SatelliteFarBlendStart ("Far satellite start metres", Float) = 1800
         _SatelliteFarBlendEnd ("Far satellite end metres", Float) = 5200
+        _SatelliteFadeStart ("Satellite radial fade start metres", Float) = 10000000
+        _SatelliteFadeEnd ("Satellite radial fade end metres", Float) = 11000000
         _SatelliteTint ("Satellite exposure tint", Color) = (0.56, 0.58, 0.56, 1)
         _AirfieldTint ("Airfield edge tint", Color) = (0.59, 0.61, 0.55, 1)
         _AirfieldHalfX ("Airfield half width X", Float) = 1950
@@ -66,6 +68,8 @@ Shader "Airside/Surroundings"
                 float _SatelliteFarStrength;
                 float _SatelliteFarBlendStart;
                 float _SatelliteFarBlendEnd;
+                float _SatelliteFadeStart;
+                float _SatelliteFadeEnd;
                 float _AirfieldHalfX;
                 float _AirfieldHalfZ;
                 float _EdgeTextureBlend;
@@ -172,7 +176,10 @@ Shader "Airside/Surroundings"
                 float fromAirfield = length(outsideAxis);
                 float distanceBlend = smoothstep(_SatelliteFarBlendStart, _SatelliteFarBlendEnd, fromAirfield);
                 float satelliteStrength = lerp(_SatelliteNearStrength, _SatelliteFarStrength, distanceBlend);
-                float satelliteBlend = satelliteStrength * (1.0 - saturate(input.color.a));
+                // Before the image runs out the drape hands over to the vertex land cover, which
+                // carries on across the outer ring in the same colours (ADR 0190 palette).
+                float radialFade = 1.0 - smoothstep(_SatelliteFadeStart, _SatelliteFadeEnd, length(xz));
+                float satelliteBlend = satelliteStrength * radialFade * (1.0 - saturate(input.color.a));
                 float3 broadAlbedo = lerp(input.color.rgb, satellite, satelliteBlend);
                 // Two differently oriented detail samples keep the mid-field crisp without
                 // pretending 10 m satellite pixels contain sub-metre information.

@@ -38,6 +38,9 @@ namespace Airside.Presentation
             return _cells[zi * Count + xi];
         }
 
+        /// <summary>The grid index nearest runway-local coordinate <paramref name="metres"/> (same on both axes).</summary>
+        public int CellOf(float metres) => (int)Math.Round((metres - Origin) / Spacing);
+
         /// <summary>Header (ALCV, version, count, spacing, origin) then a raw-deflate stream of one byte per cell; null if not that.</summary>
         public static AdelaideFarLandCover Parse(byte[] bytes)
         {
@@ -66,22 +69,43 @@ namespace Airside.Presentation
             return new AdelaideFarLandCover(count, spacing, origin, cells);
         }
 
-        // Linear-space base colours (sRGB in the comment). A late-summer Adelaide: dry grass and crops are straw, the plain is
-        // pale, the Hills and the Fleurieu are darker green, suburbs read as grey-tan.
+        // Albedo as the shader sees it (the project renders in Gamma space): the far ring's drape as rendered (Sentinel-2 times tint at the far strength, over the old plain
+        // vertex colour), averaged per class 15-30 km from the field by scripts/calibrate-landcover-palette.py. The far ring
+        // hands its drape over to these before 30 km, so they must match the image in game or the hand-over shows as a ring.
         private static readonly float[][] Base =
         {
-            new[] { 0.020f, 0.085f, 0.135f },   // water (sea colour is passed in by the caller; this is inland)
-            new[] { 0.014f, 0.052f, 0.020f },   // tree  (0.13, 0.25, 0.15)
-            new[] { 0.070f, 0.085f, 0.030f },   // shrub (0.30, 0.33, 0.19)
-            new[] { 0.190f, 0.170f, 0.070f },   // grass (0.47, 0.45, 0.30)
-            new[] { 0.250f, 0.200f, 0.070f },   // crop  (0.54, 0.49, 0.30)
-            new[] { 0.150f, 0.140f, 0.125f },   // built (0.42, 0.41, 0.39)
-            new[] { 0.290f, 0.230f, 0.150f },   // bare  (0.58, 0.52, 0.42)
-            new[] { 0.030f, 0.075f, 0.060f }    // wetland
+            new[] { 0.065f, 0.103f, 0.109f },   // water (sea colour is passed in by the caller; this is inland)
+            new[] { 0.140f, 0.130f, 0.088f },   // tree
+            new[] { 0.156f, 0.150f, 0.110f },   // shrub
+            new[] { 0.204f, 0.177f, 0.128f },   // grass
+            new[] { 0.263f, 0.214f, 0.158f },   // crop
+            new[] { 0.226f, 0.211f, 0.164f },   // built
+            new[] { 0.357f, 0.339f, 0.276f },   // bare
+            new[] { 0.107f, 0.119f, 0.075f }    // wetland
         };
 
-        private static readonly float[] GreenCrop = { 0.075f, 0.140f, 0.045f };
-        private static readonly float[] FallowCrop = { 0.310f, 0.240f, 0.100f };
+        // Paddock variants of the measured crop colour: a green crop and a paler fallow.
+        private static readonly float[] GreenCrop = { 0.115f, 0.150f, 0.085f };
+        private static readonly float[] FallowCrop = { 0.320f, 0.255f, 0.180f };
+
+        /// <summary>
+        /// One channel of the far ring's vertex colour while its drape hands over to land cover. The shader draws
+        /// <c>strength * (1 - t) * image + (1 - strength * (1 - t)) * vertex</c>; this vertex makes that an exact crossfade from
+        /// the old look (<paramref name="plain"/> under the image) at t = 0 to <paramref name="land"/> at t = 1, whatever the image.
+        /// </summary>
+        public static float DrapeHandover(float plain, float land, float t, float strength)
+        {
+            t = Math.Max(0f, Math.Min(1f, t));
+            var weight = 1f - strength * (1f - t);
+            return weight <= 1e-5f ? plain : ((1f - t) * (1f - strength) * plain + t * land) / weight;
+        }
+
+        /// <summary>HLSL smoothstep, so C# can predict the shader's hand-over weight at a vertex.</summary>
+        public static float Smoothstep(float edge0, float edge1, float x)
+        {
+            var t = Math.Max(0f, Math.Min(1f, (x - edge0) / Math.Max(1e-5f, edge1 - edge0)));
+            return t * t * (3f - 2f * t);
+        }
 
         /// <summary>
         /// The colour (linear rgb) of a cell: its class, with a stable patchwork of paddocks in crop land and a little variation
@@ -102,7 +126,8 @@ namespace Airside.Presentation
             }
 
             var v = 0.90f + 0.20f * (Hash(xi, zi) % 1000u) / 1000f;
-            var shade = (1f - 0.35f * Math.Max(0f, Math.Min(1f, slope))) * v;
+            // Light touch: the palette is measured from an image that already holds the Hills' shading, and the mesh is lit.
+            var shade = (1f - 0.1f * Math.Max(0f, Math.Min(1f, slope))) * v;
             into[0] = r * shade;
             into[1] = g * shade;
             into[2] = bl * shade;

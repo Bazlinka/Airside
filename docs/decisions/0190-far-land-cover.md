@@ -16,3 +16,9 @@ the coast, and the coloured mesh keeps its shape.
 Not done: a finer mesh mid-range (a change of cell size would need crack-free seams), a blend at the 30 km satellite seam,
 and roads or coastline lines on the far ground. Known: colour is per 500 m mesh vertex, so it is soft up close; that only
 matters when the camera is very high.
+
+**Amendment 2026-10-07 (Cursor):** the palette is now measured, not hand-picked: the far
+ring's Sentinel-2 drape as rendered (texels times tint at the far strength, over the old plain
+vertex colour; the project renders in Gamma space), averaged per class 15–30 km out by
+`scripts/calibrate-landcover-palette.py`. The far ring fades its drape into these colours over
+24–29.5 km so it meets the outer ring without a seam. Slope darkening reduced to 10%.

@@ -68,16 +68,9 @@ namespace Airside.Presentation
                     a = 0f;
                     if (landCover != null)
                     {
-                        var cls = landCover.ClassAt(xi * Stride, zi * Stride);
                         var slope = Slope(heightAt, xi * Stride, zi * Stride, count, spacing);
                         c = new float[3];
-                        AdelaideFarLandCover.Colour(cls, xi * Stride, zi * Stride, slope, c);
-                        if (cls == AdelaideFarLandCover.Water)
-                        {
-                            // A lake or reservoir: lit like the sea, a little lighter.
-                            c[0] = seaLinear[0] * 1.3f; c[1] = seaLinear[1] * 1.3f; c[2] = seaLinear[2] * 1.3f;
-                            a = 0.7f;
-                        }
+                        a = LandCoverColour(landCover, xi * Stride, zi * Stride, slope, seaLinear, c);
                     }
 
                     // ADR 0210: cool aerial haze on distant / high land (not water).
@@ -123,6 +116,25 @@ namespace Airside.Presentation
             && x0 * x0 + z1 * z1 <= radiusSq && x1 * x1 + z1 * z1 <= radiusSq;
 
         /// <summary>0 (flat) to 1 (about 25 degrees or steeper) from the height differences around a DEM sample.</summary>
+        /// <summary>
+        /// Land-cover colour of cell (xi, zi) into <paramref name="into"/>; returns the vertex alpha (water sheen). Shared with
+        /// the far ring, which fades its satellite drape into this so the two meet in one colour.
+        /// </summary>
+        public static float LandCoverColour(AdelaideFarLandCover landCover, int xi, int zi, float slope, float[] seaLinear,
+            float[] into)
+        {
+            var cls = landCover.ClassAt(xi, zi);
+            if (cls == AdelaideFarLandCover.Water)
+            {
+                // A lake or reservoir: lit like the sea, a little lighter.
+                into[0] = seaLinear[0] * 1.3f; into[1] = seaLinear[1] * 1.3f; into[2] = seaLinear[2] * 1.3f;
+                return 0.7f;
+            }
+
+            AdelaideFarLandCover.Colour(cls, xi, zi, slope, into);
+            return 0f;
+        }
+
         public static float Slope(Func<int, int, float> heightAt, int xi, int zi, int count, float spacing)
         {
             var xa = Math.Max(0, xi - 1);

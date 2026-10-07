@@ -12,7 +12,8 @@ Date: 2026-10-07 (requested by Bailey: "implement a much more uniform and tighte
   3. `docs/decisions/README.md` indexes all ADRs, shows only the status each ADR states, and records the rule
      "take the next free number after checking origin/main and open branches". Existing numbers are NOT renumbered.
   4. `docs/README.md` is the one-page map of the docs tree.
-  5. Merged remote branches are pruned (list and method in the PR); unmerged branches are never touched.
+  5. Fully merged remote branches are listed for pruning in `docs/history/branch-inventory-2026-10-07.md` (not yet deleted —
+     awaiting Bailey's go-ahead); unmerged branches are never touched.
 - **Reason:** `GAME.md` could not be read in a single pass, the changelog was never versioned, 10 ADR numbers were
   duplicated by parallel work, and 77 remote branches obscured what was live.
 - **Affected systems:** documentation and `AGENTS.md` (handoff protocol, repo map) only. No code, asset, save or

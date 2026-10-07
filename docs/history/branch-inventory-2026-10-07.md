@@ -1,8 +1,8 @@
 # Branch inventory — 2026-10-07 (ADR 0249)
 
-Snapshot against `origin/main` at `baab39e646`. Recovery for a deleted branch: `git branch <name> <sha>` (the commits are all in `main`).
+Snapshot against `origin/main` at `baab39e646`. **Nothing below has been deleted yet** (pending Bailey's go-ahead). If a branch is deleted, recover it with: `git branch <name> <sha>` (the commits are all in `main`).
 
-## Deleted — fully merged into main (43)
+## To delete — fully merged into main (43)
 
 | Branch | Tip SHA | Last commit |
 |---|---|---|

@@ -8,6 +8,7 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- **Aircraft lighting by type.** Turboprops, regional jets, narrowbodies, widebodies and the Bell 412 get their own beam widths, strobe pattern, tail strobe, beacon rate and nose-lamp takeoff light (ADR 2026-10-07; unverified in Unity).
 - #577: Operations shows all owned aircraft across bases, live next events and direct Fleet controls; Adelaide movements stay available (unverified in Unity).
 - Fleet door seams, latches, thresholds, Bell sliding rails and service hatches follow fitted aircraft skins and existing door motion (#578; unverified in Unity).
 

@@ -37,6 +37,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftEngineAudio.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftFanDiscGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftInspector.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftLightingProfile.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftNavigationPalette.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftPickRouting.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftSkinUv.cs" />

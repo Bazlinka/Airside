@@ -8,6 +8,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- **South Australia land cover (ADR 0250, unverified).** Streamed flight terrain is coloured by real state-wide land cover (ESA WorldCover, 123 KB, no imagery) in the Adelaide-ring palette.
+
 - **Repo tidy (ADR 0249).** `GAME.md` is now ~170 lines of current state and `CHANGELOG.md` one line per change; full originals, an ADR index and a branch inventory are in `docs/history/` and `docs/decisions/README.md`.
 
 - **Smooth hand-over from the satellite image to the far land.** Zoomed out, the photo used to

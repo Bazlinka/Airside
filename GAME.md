@@ -15,10 +15,13 @@ records (v22 saves failed to load); render cost trim (ADR 0246), far terrain at 
 4096 px far satellite (ADR 0248) (Claude).
 
 **Next approved work:** drag/zoom the overview across all of South Australia, streaming `AirsideFlightWorldTerrain`
-tiles in as you pan and colouring them by real land cover state-wide (no new satellite imagery) — Bailey approved.
+tiles in as you pan (Bailey approved). **Increment 1 done (ADR 0250, branch `claude/brave-babbage-ybgffc`):** state-wide
+land cover (`landcover_south_australia_v01.bin`, 123 KB, ESA WorldCover, no imagery) now colours the streamed tiles.
+**Increment 2 (needs Unity to verify):** unlock the overview pan leash when zoomed far out, tick the tiles from the camera, add a
+coarse outer tile ring for wide views — packet `docs/plans/south-australia-overview-streaming.md`.
 
 **Open — needs the Mac (nothing below is verified in Unity):**
-- ADR 0246/0247/0248 (SSAO half-res, MSAA budget, 3 shadow cascades/110 m, full-DEM far mesh, 4096 px far image):
+- ADR 0246/0247/0248/0250 (SSAO half-res, MSAA budget, 3 shadow cascades/110 m, full-DEM far mesh, 4096 px far image, state-wide land-cover colours on the flight tiles):
   compare day/dusk/night for AO banding, shimmer and shadow pop-in; check the seam where the near satellite ends,
   startup-to-title time and memory (far image decodes to ~64 MB). Each is a one-line revert (see the ADRs).
 - **24 native EditMode failures** on `main` (Unity 2265 passed / 24 failed): `PassengerFlightViewTests`

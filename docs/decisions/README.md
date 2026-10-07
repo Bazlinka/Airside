@@ -285,3 +285,5 @@ superseded except where the ADR says so. Please keep this index current when add
 | 0246 | [Render cost trim: SSAO downsample, MSAA budget, shadow cascades](0246-render-cost-trim-ssao-msaa-shadows.md) |  |
 | 0247 | [Far terrain uses the full 125 m DEM](0247-far-terrain-full-dem-resolution.md) |  |
 | 0248 | [Sharper far satellite image (v02)](0248-sharper-far-satellite.md) |  |
+| 0249 | [Repo tidy: short status board, short changelog, ADR index](0249-repo-tidy-status-board-changelog-adr-index.md) | accepted |
+| 0250 | [State-wide land cover for the streamed South Australia terrain](0250-south-australia-land-cover.md) | accepted (Unity look not yet verified) |

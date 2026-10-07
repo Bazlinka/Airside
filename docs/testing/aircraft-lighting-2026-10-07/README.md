@@ -9,3 +9,11 @@ pattern, beacon rate, taxi/takeoff lamp rules). **Unity playtest still needed** 
 4. Bell 412: searchlight points down at the pad on approach.
 5. Landing beams hit the runway ahead rather than the horizon; left/right lamps toe outwards (check the sign).
 6. Frame time at night with a busy apron unchanged (beam ranges grew on the jets).
+
+## Beam-aim checks (added)
+
+`AircraftLightingProfile.AimGroundHitMetres` gives where a lamp's axis meets level ground; EditMode tests require each
+family's landing beam axis to land ahead of the nose (> 3 m) and inside 90% of the lamp range, and the taxi axis 10 m to 80%
+of range ahead. `python3 scripts/render-lighting-beams.py` repeats the same checks and draws `beam-geometry.svg` (side view of
+landing and taxi cones per family, approximate lamp heights). Offline geometry only, not a Unity capture; it does not settle
+the toe-out sign or night look (items 1-6 above).

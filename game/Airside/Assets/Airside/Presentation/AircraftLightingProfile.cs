@@ -175,6 +175,26 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>
+        /// Distance ahead, on level ground, where the axis of a lamp <paramref name="heightMetres"/> up and
+        /// pitched <paramref name="pitchDownDegrees"/> below the fuselage axis meets the ground; infinity when
+        /// the lamp is not aimed down. The beam only reaches it if that is inside the lamp's range.
+        /// </summary>
+        public static float AimGroundHitMetres(float heightMetres, float pitchDownDegrees)
+        {
+            if (pitchDownDegrees <= 0f)
+                return float.PositiveInfinity;
+            return heightMetres / (float)System.Math.Tan(pitchDownDegrees * System.Math.PI / 180.0);
+        }
+
+        /// <summary>Where this profile's landing lamps put the middle of their beam on the ground ahead.</summary>
+        public float LandingAimGroundHitMetres(float lampHeightMetres) =>
+            AimGroundHitMetres(lampHeightMetres, LandingPitchDownDegrees);
+
+        /// <summary>Where this profile's nose-gear lamp puts the middle of its beam on the ground ahead.</summary>
+        public float TaxiAimGroundHitMetres(float lampHeightMetres) =>
+            AimGroundHitMetres(lampHeightMetres, TaxiPitchDownDegrees);
+
         /// <summary>Strobe brightness 0..1 at a presentation time: one or two short flashes per cycle.</summary>
         public float StrobeLevel(float presentationSeconds)
         {

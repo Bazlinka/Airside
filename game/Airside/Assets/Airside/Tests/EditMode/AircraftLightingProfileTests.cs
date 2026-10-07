@@ -137,6 +137,45 @@ namespace Airside.Tests
             Assert.That(turboprop.TaxiLampOn(AircraftPhase.Landing, false, true, true), Is.False);
         }
 
+        // Wing-root landing lamps and the nose-gear lamp sit about this high on the airliners (metres).
+        private static float LandingLampHeight(AircraftLightingFamily f) => f switch
+        {
+            AircraftLightingFamily.Widebody => 4.5f,
+            AircraftLightingFamily.Turboprop => 2.6f,
+            AircraftLightingFamily.Helicopter => 2.0f,
+            _ => 3.2f
+        };
+
+        [Test]
+        public void LandingBeam_MiddleLandsOnTheGroundAheadAndInsideTheLampRange()
+        {
+            foreach (var type in Fixed.Concat(new[] { AircraftType.Bell412 }))
+            {
+                var p = AircraftLightingProfile.For(type);
+                var hit = p.LandingAimGroundHitMetres(LandingLampHeight(p.Family));
+                Assert.That(hit, Is.GreaterThan(3f), type.Id + " beam would land under the nose");
+                Assert.That(hit, Is.LessThan(p.LandingRange * 0.9f), type.Id + " beam axis never reaches the ground");
+            }
+        }
+
+        [Test]
+        public void TaxiBeam_MiddleLandsOnTheApronJustAhead()
+        {
+            foreach (var type in Fixed)
+            {
+                var p = AircraftLightingProfile.For(type);
+                var hit = p.TaxiAimGroundHitMetres(1.6f);
+                Assert.That(hit, Is.InRange(10f, p.TaxiRange * 0.8f), type.Id);
+            }
+        }
+
+        [Test]
+        public void AimGroundHit_IsInfiniteWhenNotAimedDown()
+        {
+            Assert.That(float.IsPositiveInfinity(AircraftLightingProfile.AimGroundHitMetres(3f, 0f)));
+            Assert.That(AircraftLightingProfile.AimGroundHitMetres(3f, 3f), Is.EqualTo(57.2f).Within(0.2f));
+        }
+
         private static int FlashesPerCycle(AircraftLightingProfile p)
         {
             var flashes = 0;

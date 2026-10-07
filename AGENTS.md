@@ -52,6 +52,10 @@ Airside/
                              Regenerate docs/decisions/README.md and scripts/README.md (generated, never hand-edited, never a CI gate)
     map-presentation.py      Regenerates docs/architecture/PRESENTATION_MAP.md (what each AirsidePrototype partial owns); --check
                              fails on a stale map or an undescribed new partial — add its line in the same commit
+    bootstrap-dotnet.sh      Installs the .NET 8 SDK without root and restores the harness packages (cloud sessions run it automatically)
+    test-quick.py            Fast loop: runs only the headless tests that mention your changed C# (`--changed`); not a replacement for test-domain.sh
+    new-meta.py              Creates the Unity .meta (fresh GUID) for a new file or folder under Assets/
+    ci-changes.sh            CI helper: docs-only change lists skip the heavy steps (tested by test-ci-changes.sh)
     check-unity-nunit.sh     Compile-only check against Unity's NUnit 3.5, no implicit usings (CI + test-domain.sh; ADR 0252)
     test-domain.sh           Headless dotnet test mirror of the EditMode Domain/Simulation
                              tests, for machines without Unity — supplementary, not a replacement
@@ -122,8 +126,8 @@ repo. These two checklists keep that reliable.
 ### Start of session
 
 1. `git pull --rebase origin main`.
-2. Read `GAME.md`, starting with the **"Where to resume — session handoff"**
-   block: current branch, what to do next, anything half-done, what to watch for.
+2. Read `GAME.md`, starting with its single **"Where to resume"** block (replaced, not stacked,
+   each session): latest work, next approved step, what is open or unverified, what to watch for.
 3. Skim `CHANGELOG.md` and `git log --oneline -10` for what changed recently.
 4. If the handoff block names an unfinished branch, check it out
    (`git checkout <branch>`) instead of starting on `main`.

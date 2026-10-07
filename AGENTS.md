@@ -108,7 +108,7 @@ note it here in the same commit.
    New ideas go to a backlog, not straight into the active milestone.
 8. **Branches:** name them `<tool>/<topic>-<yyyymmdd>` (`claude`, `cursor`, `codex`, `chatgpt`); delete yours once its PR is merged.
    Never delete a branch that has commits not on `main`.
-9. **Several tools, several accounts:** claim the task first (a GitHub issue from the Task packet template, with `Owner:` and your file scope),
+9. **Several tools, several accounts** (fast loop: `python3 scripts/test-quick.py --changed`; routine tasks: `docs/ai/RECIPES.md`): claim the task first (a GitHub issue from the Task packet template, with `Owner:` and your file scope),
    one issue = one branch = one PR, and fill in the PR template. The routine, the rules for generated indexes and a ChatGPT starter prompt are in
    `docs/ai/WORKFLOW.md`.
 

@@ -14,9 +14,13 @@ namespace Airside.Tests
         public void CoarseTileUsesFloorAcrossBothSides(double metres,int expected) => Assert.That(FlightWorldGrid.CoarseTile(metres),Is.EqualTo(expected));
         [Test] public void CoarseRingIsBoundedAndCoversTheWholeStateFromAdelaide()
         {
-            Assert.That(FlightWorldGrid.CoarseMaxTiles,Is.EqualTo(121));
+            Assert.That(FlightWorldGrid.CoarseMaxTiles,Is.EqualTo(289));
             var resident=0;
             for(var x=-20;x<=20;x++) for(var z=-20;z<=20;z++) if(FlightWorldGrid.CoarseResident(x,z,0,0)) resident++;
+            Assert.That(resident,Is.EqualTo(121),"the default ring is 5 tiles");
+            resident=0;
+            for(var x=-20;x<=20;x++) for(var z=-20;z<=20;z++)
+                if(FlightWorldGrid.CoarseResident(x,z,0,0,FlightWorldGrid.CoarseMaxRadiusTiles)) resident++;
             Assert.That(resident,Is.EqualTo(FlightWorldGrid.CoarseMaxTiles));
             Assert.That(FlightWorldGrid.CoarseResident(5,-5,0,0),Is.True);
             Assert.That(FlightWorldGrid.CoarseResident(6,0,0,0),Is.False);
@@ -24,6 +28,29 @@ namespace Airside.Tests
             // The ring must reach well past the 96 km Adelaide rings and the fine ring's 56 km.
             Assert.That((FlightWorldGrid.CoarseRadiusTiles+0.0)*FlightWorldGrid.CoarseTileMetres,Is.GreaterThan(300000));
             Assert.That(FlightWorldGrid.CoarseTileMetres/FlightWorldGrid.CoarseCells,Is.LessThanOrEqualTo(2000),"~2 km cells match the DEM");
+        }
+        [Test] public void CoarseRingGrowsToKeepTheGroundUnderTheCameraCovered()
+        {
+            Assert.That(FlightWorldGrid.CoarseRadiusFor(60001),Is.EqualTo(FlightWorldGrid.CoarseRadiusTiles));
+            Assert.That(FlightWorldGrid.CoarseRadiusFor(AirsideBareField.MaxOrbitDistance),Is.EqualTo(FlightWorldGrid.CoarseMaxRadiusTiles));
+            foreach(var distance in new[]{60001.0,150000,300000,AirsideBareField.MaxOrbitDistance})
+            {
+                // The camera stands at most its orbit distance from the focus; the focus can sit anywhere in its tile.
+                var reach=(FlightWorldGrid.CoarseRadiusFor(distance)+0.0)*FlightWorldGrid.CoarseTileMetres;
+                Assert.That(reach,Is.GreaterThan(distance),$"ground under the camera at {distance} m");
+            }
+        }
+        [Test] public void WideHorizonFadeKeepsTheFocusClearAndHidesTheRingEdge()
+        {
+            foreach(var distance in new[]{60001.0,150000,AirsideBareField.MaxOrbitDistance})
+            {
+                var scale=AirsideCameraFeel.HorizonScale((float)distance,AirsideBareField.CameraFarClip);
+                FlightWorldGrid.WideHorizonFade(distance,scale,out var start,out var end);
+                Assert.That(start*scale,Is.GreaterThan(distance),"the focus is never hazed");
+                Assert.That(end,Is.GreaterThan(start));
+                var reach=(FlightWorldGrid.CoarseRadiusFor(distance)+0.0)*FlightWorldGrid.CoarseTileMetres;
+                Assert.That(end*scale,Is.LessThan(Math.Sqrt(reach*reach+distance*distance)),"gone before the nearest ring edge in view");
+            }
         }
         [Test] public void WideMapStartsOnlyBeyondTheClassicZoom()
         {

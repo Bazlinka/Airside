@@ -72,17 +72,6 @@ namespace Airside.Presentation
                         c = new float[3];
                         a = LandCoverColour(landCover, xi * Stride, zi * Stride, slope, seaLinear, c);
                     }
-
-                    // ADR 0210: cool aerial haze on distant / high land (not water).
-                    if (a < 0.5f)
-                    {
-                        var dist = (float)Math.Sqrt(x * x + z * z);
-                        var r = c[0];
-                        var g = c[1];
-                        var b = c[2];
-                        AdelaideAerialPerspective.ApplyRgb(ref r, ref g, ref b, dist, h);
-                        c = new[] { r, g, b };
-                    }
                 }
 
                 positions[i * 3] = x;

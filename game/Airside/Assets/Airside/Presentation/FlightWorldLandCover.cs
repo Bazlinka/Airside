@@ -24,6 +24,8 @@ namespace Airside.Presentation
 
         public int Width { get; }
         public int Height { get; }
+        /// <summary>Cell size in degrees (0.01 in the shipped map).</summary>
+        public double StepDegrees => _step;
 
         /// <summary>
         /// Header (SALC, version 1, width, height, west, south, step) then a raw-deflate stream of one byte per cell,

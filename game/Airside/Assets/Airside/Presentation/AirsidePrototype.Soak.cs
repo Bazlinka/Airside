@@ -498,10 +498,14 @@ namespace Airside.Presentation
             var frameMs = Time.unscaledDeltaTime * 1000f;
             if (_soakFrameSamples < _soakFrameMs.Length)
                 _soakFrameMs[_soakFrameSamples++] = frameMs;
-            if (frameMs > 33.3f)
+            // The first soak frame's delta is the whole scene load, not a hitch anyone sees in play.
+            if (_soakStartedAt >= 0f && frameMs > 33.3f)
                 _soakSlowFrames++;
-            if (frameMs > _soakWorstFrameMs)
+            if (_soakStartedAt >= 0f && frameMs > _soakWorstFrameMs)
                 _soakWorstFrameMs = frameMs;
+            if (_soakStartedAt >= 0f && frameMs > 500f)
+                Debug.Log($"[Airside soak] hitch {frameMs:0} ms at {Time.unscaledTime - _soakStartedAt:0.0} s " +
+                          $"(frame {_soakFrames}, orbit {AirsideCameraController.CurrentDistance:0} m)");
             if (_soakStartedAt < 0f)
             {
                 var args = Environment.GetCommandLineArgs();

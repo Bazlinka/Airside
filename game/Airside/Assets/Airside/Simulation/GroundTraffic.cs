@@ -353,6 +353,45 @@ namespace Airside.Simulation
         }
 
         /// <summary>
+        /// An arrival that has left the runway stops at the end of its exit and stays there until ground
+        /// control moves it, so the vacate leg alone says nothing about traffic that reaches the same
+        /// spot a few seconds after it stops (or a few seconds off the landing estimate). True when no
+        /// other aircraft comes within planning clearance of <paramref name="spot"/> from
+        /// <paramref name="windowStart"/> for <paramref name="windowSeconds"/>.
+        /// </summary>
+        public static bool StandingSpotClear(IReadOnlyList<FleetAircraft> fleet, FleetAircraft candidate,
+            GroundPose spot, SimulationTime start, double windowStart, double windowSeconds)
+        {
+            if (fleet == null || candidate == null)
+                return true;
+            var half = HalfSpan(candidate.Type);
+            var around = Grow((spot.X, spot.Z, spot.X, spot.Z), 80f);
+            var others = new List<Track>();
+            foreach (var other in fleet)
+            {
+                if (ReferenceEquals(other, candidate) || !OnTheGround(other)
+                    || !Overlaps(around, RouteBounds(fleet, other, start)))
+                    continue;
+                others.Add(new Track
+                {
+                    Aircraft = other,
+                    Slot = other.State is FleetState.HoldingShort or FleetState.AwaitingStand
+                        ? FleetVisual.QueueSlot(fleet, other, start) : 0,
+                    Ahead = other.State == FleetState.TaxiOut ? FleetVisual.QueueAhead(fleet, other, start) : 0,
+                    ExitAhead = other.State == FleetState.Landing ? FleetVisual.ExitQueueAhead(fleet, other, start) : 0,
+                    HalfSpan = HalfSpan(other.Type)
+                });
+            }
+
+            foreach (var other in others)
+                for (var s = windowStart; s <= windowStart + windowSeconds + 1e-6; s += 1.0)
+                    if (TryPose(fleet, other.Aircraft, start.ElapsedSeconds + s, other, out var theirs, out _)
+                        && TooClose(spot, half, theirs, other.HalfSpan, PlanningMarginMetres))
+                        return false;
+            return true;
+        }
+
+        /// <summary>
         /// ADR 0180: how much of the taxi-in the tower checks before it clears a landing. Beyond this the
         /// arrival is already off the runway and waiting at the exit, and ground control clears its
         /// taxi-in over the whole route before it moves (<c>AwaitingStand</c>), so a conflict minutes

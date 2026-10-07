@@ -662,6 +662,9 @@ namespace Airside.Simulation
             return at;
         }
 
+        /// <summary>How long after it stops at the end of its exit an arrival's standing spot is kept clear of passing traffic.</summary>
+        private const double ExitStandingWindowSeconds = 28.0;
+
         /// <summary>Its vacate, flown from now, stays clear of every aircraft already moving on the ground.</summary>
         private bool VacateClearOfTaxiing(FleetAircraft arrival, SimulationTime now)
         {
@@ -673,6 +676,12 @@ namespace Airside.Simulation
                 return false;
             if (!GroundTraffic.PathClear(_fleet, arrival, vacate, arrival.AssignedRunway, taxiOut: false,
                     now.Advance(touchdownIn), includeStationary: true))
+                return false;
+
+            // It then stands at the end of the exit until ground control moves it: traffic reaching that
+            // spot just after it stops, or off the landing estimate by a few seconds, would pass through it.
+            if (!GroundTraffic.StandingSpotClear(_fleet, arrival, vacate.PoseAt(vacate.Seconds),
+                    now.Advance(touchdownIn), vacate.Seconds - 8.0, ExitStandingWindowSeconds))
                 return false;
 
             // Only the runway and its exit gate a landing. The taxiway beyond belongs to ground control:

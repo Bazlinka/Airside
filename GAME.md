@@ -19,7 +19,7 @@ colours on the streamed terrain, and the wide overview — zoom to 450 km, and p
 a coarse 64 km ring (121 tiles, 2 km cells) so the state can be dragged under the camera. Packet: `docs/plans/south-australia-overview-streaming.md`.
 
 **Open — needs the Mac (nothing below is verified in Unity):**
-- ADR 0246/0247/0248/0250/0251 (SSAO half-res, MSAA budget, 3 shadow cascades/110 m, full-DEM far mesh, 4096 px far image, state-wide land-cover colours, zoom to 450 km with coarse-ring streaming):
+- Clean-image pass (full-res SSAO, near clip scales with distance, ground mip bias 0, 16x aniso) is unverified: compare ground-marking flicker, AO softness and frame time. ADR 0246/0247/0248/0250/0251 (SSAO half-res — now reverted, MSAA budget, 3 shadow cascades/110 m, full-DEM far mesh, 4096 px far image, state-wide land-cover colours, zoom to 450 km with coarse-ring streaming):
   compare day/dusk/night for AO banding, shimmer and shadow pop-in; check the seam where the near satellite ends,
   startup-to-title time and memory (far image decodes to ~64 MB); at 100–450 km zoom check coastline blockiness, the 40 m join between
   coarse and fine tiles, sky/stars/sun at a 1,170 km far clip, depth precision and frame time while tiles stream. Each is a one-line revert (see the ADRs).
@@ -68,8 +68,8 @@ liveries and UI direction. Runtime aircraft, buildings and service vehicles rema
 true 3D assets; animation and VFX mirror simulation state and never drive it.
 
 - Anti-aliasing is on: High keeps 4× MSAA on the PC pipeline up to 2.5 M pixels (1080p), and 2× above that
-  (1440p+), plus SMAA (high) on the runtime camera; Medium uses 2× MSAA + SMAA (ADR 0246). SSAO runs at half
-  resolution; High shadows are 3 cascades to 110 m. Vsync is on (`vSyncCount` 1).
+  (1440p+), plus SMAA (high) on the runtime camera; Medium uses 2× MSAA + SMAA (ADR 0246). SSAO runs at full
+  resolution (Medium samples; ADR 2026-10-07-clean-image-pass); High shadows are 3 cascades to 110 m. Vsync is on (`vSyncCount` 1).
 - The post stack runs a deliberate grade only — the template default profile's depth of field, motion blur, lens distortion, chromatic aberration, lens flare and panini are pinned off.
 - The simulation keeps running when the window loses focus (`runInBackground`).
 

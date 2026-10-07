@@ -8,6 +8,7 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- **Cleaner image.** Full-res SSAO again, near clip scales with distance, ground mip bias 0, 16x aniso against flicker/pixelation (unverified in Unity; ADR 2026-10-07-clean-image-pass).
 - **Faster agent loop.** Cloud-session bootstrap (.NET 8), `scripts/test-quick.py --changed`, `scripts/new-meta.py`, docs-only PRs skip heavy CI, `docs/ai/RECIPES.md`, `.cursorignore`.
 
 - **Multi-tool workflow.** Pointer files only, per-area `AGENTS.md`, task/PR templates, date-named ADRs and generated indexes (`docs/ai/WORKFLOW.md`).

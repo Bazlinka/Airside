@@ -277,7 +277,8 @@ namespace Airside.Tests
                 Assert.That(AirsideCameraFeel.PanRadius(distance), Is.EqualTo(AirsideCameraFeel.MaxPanRadiusMetres).Within(1f).Or.GreaterThan(AirsideCameraFeel.MaxPanRadiusMetres));
             }
 
-            Assert.That(AirsideCameraFeel.NearClip(2400f), Is.EqualTo(0.3f), "0.3 m as always inside 3 km");
+            Assert.That(AirsideCameraFeel.NearClip(2400f), Is.EqualTo(4.8f).Within(0.01f), "0.2 % of the distance keeps depth precision at the overview");
+            Assert.That(AirsideCameraFeel.NearClip(18f), Is.EqualTo(0.3f), "0.3 m at the closest follow distance");
             Assert.That(AirsideCameraFeel.FogScale(4500f, 4500f), Is.EqualTo(1f));
             Assert.That(AirsideCameraFeel.PanRadius(4000f), Is.EqualTo(AirsideCameraFeel.MaxPanRadiusMetres));
         }

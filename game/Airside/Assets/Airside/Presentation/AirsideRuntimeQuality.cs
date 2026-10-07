@@ -25,7 +25,7 @@ namespace Airside.Presentation
         // (2.5 M px: 1080p keeps 4x; 1440p and above use 2x + SMAA).
         public const long HighMsaaPixelBudget = 2_500_000;
         public const int VSyncCount = 1;
-        public const int AnisoLevel = 8;
+        public const int AnisoLevel = 16;
         // URP's per-object additional-lights cap: the max real-time Point/Spot lights that
         // can affect any ONE renderer/mesh at once, chosen fresh each frame from whichever
         // are nearest. Apron floods (10), runway edge/threshold/PAPI/ALS lights (hundreds

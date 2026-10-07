@@ -9,6 +9,7 @@
 | `art/` | Canonical art direction, manifest, prompts, references. | current |
 | `data/` | Asset and data licence register (`ASSET_AND_DATA_REGISTER.md`) and source data notes. | current |
 | `testing/` | Acceptance checks, fixtures and per-topic evidence (`testing/<topic>-<date>/README.md`). | evidence |
+| `ai/` | [`WORKFLOW.md`](ai/WORKFLOW.md): how several AI tools and accounts share the repo (claim, branch, verify, merge) and a ChatGPT starter prompt. | current |
 | `history/` | Archived handoff log and changelog (verbatim). Read-only; never the place for new work. | history |
 
 Top level: [`GAME.md`](../GAME.md) = current state (short); [`CHANGELOG.md`](../CHANGELOG.md) = one line per change;

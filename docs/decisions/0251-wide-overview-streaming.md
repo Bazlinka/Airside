@@ -30,3 +30,11 @@ Date: 2026-10-07 (increment 2 of Bailey's approved request; increment 1 is ADR 0
 - **Limits:** the coarse ring is a backdrop (2 km cells, land-cover colours, no slope shading); the detail pan reaches 0.9 × distance
   from the overview, so reaching the far west means zooming out, panning, then zooming in (the leash already keeps a zoomed-in view).
 - **Revert:** set `MaxOrbitDistance` back to 45,000 and `GroundRayReachMetres` to 400,000; `WideMap` then never triggers.
+
+**Amendment 2026-10-07 (Cursor, run on the Mac):** at 450 km the camera stands ~345 km behind its focus,
+outside a 5-tile ring, so the near edge showed. The coarse ring now grows with the orbit distance
+(`FlightWorldGrid.CoarseRadiusFor`, 5 to 8 tiles, at most 289) and its material's horizon fade is pulled in
+(`WideHorizonFade`: clear to 1.1x the orbit distance, gone before the nearest ring edge in view); cockpit callers
+get the old 40/55 km fade back. Coarse and fine vertices take the mean land-cover colour of the cells round them
+(point samples read as speckle). ADR 0210's baked haze was removed: it tinted only the Adelaide ±96 km ring and
+showed as a pale square. Measured: tiles ≤70 ms, terrain creation 12 ms; the soak's long frame is the first render.

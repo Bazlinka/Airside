@@ -8,6 +8,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- **Wide overview polish (ADR 0251 amendment).** No pale square round Adelaide, smooth far colours, the ring follows the camera out and fades into the sky; soak logs hitches.
+
 - **Faster agent loop.** Cloud-session bootstrap (.NET 8), `scripts/test-quick.py --changed`, `scripts/new-meta.py`, docs-only PRs skip heavy CI, `docs/ai/RECIPES.md`, `.cursorignore`.
 
 - **Multi-tool workflow.** Pointer files only, per-area `AGENTS.md`, task/PR templates, date-named ADRs and generated indexes (`docs/ai/WORKFLOW.md`).

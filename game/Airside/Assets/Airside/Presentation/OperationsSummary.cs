@@ -48,8 +48,9 @@ namespace Airside.Presentation
     {
         public OperationsRow(string registration, string route, string state, StatusSeverity severity, bool isPriority,
             string flightLabel = null, string typeName = null, string routeText = null, string timeText = null,
-            float progress01 = -1f, string progressText = null)
+            float progress01 = -1f, string progressText = null, string baseCode = "ADL")
         {
+            BaseCode = baseCode ?? string.Empty;
             Registration = registration ?? string.Empty;
             Route = route ?? string.Empty;
             State = state ?? string.Empty;
@@ -63,6 +64,7 @@ namespace Airside.Presentation
             ProgressText = progressText ?? string.Empty;
         }
 
+        public string BaseCode { get; }
         public string Registration { get; }
         public string Route { get; }
         public string State { get; }
@@ -183,6 +185,100 @@ namespace Airside.Presentation
                     aircraft.Type.Name,
                     detail.Route, detail.Time, detail.Progress, detail.ProgressText));
             }
+        }
+
+        /// <summary>Every owned aircraft across all bases, ordered by attention then next event.</summary>
+        public static int FillAirlineRows(AirlineOperations operations, SimulationTime now, List<OperationsRow> into)
+        {
+            into.Clear();
+            if (operations?.PlayerAirline == null) return 0;
+            FillPlayerRows(operations.FleetOf(operations.PlayerAirline), now, into, operations);
+            var clock = operations.Clock ?? AirlineClock.Default;
+            var entries = new List<PlayerFleetEntry>();
+            PlayerFleet.Entries(operations, now, entries);
+            var nextTimes = new Dictionary<string, long>();
+            var available = 0;
+            foreach (var entry in entries)
+            {
+                nextTimes[entry.Registration] = entry.NextAtSeconds;
+                if (entry.Kind == PlayerFleetKind.Parked && !entry.CheckDue && !entry.InCheck) available++;
+            }
+            foreach (var aircraft in operations.OutstationFleet)
+            {
+                var home = DestinationCatalogue.TryFind(aircraft.BaseCode, out var origin) ? origin.Name : aircraft.BaseCode;
+                var far = DestinationCatalogue.TryFind(aircraft.DestinationCode, out var destination) ? destination.Name : aircraft.DestinationCode;
+                var route = "Based at " + home;
+                var state = "Available";
+                var time = string.Empty;
+                var progress = -1f;
+                var progressText = string.Empty;
+                var severity = StatusSeverity.Normal;
+                if (aircraft.InCheck(now.ElapsedSeconds))
+                {
+                    state = "Routine check";
+                    time = "Check ends " + clock.TimeText(new SimulationTime(aircraft.CheckUntilSeconds));
+                }
+                else if (aircraft.HasFlight)
+                {
+                    route = home + " → " + far;
+                    if (now.ElapsedSeconds < aircraft.DepartAtSeconds)
+                    {
+                        state = "Booked";
+                        time = "Departs " + clock.TimeText(new SimulationTime(aircraft.DepartAtSeconds));
+                    }
+                    else if (PlayerFleet.TryPosition(aircraft, now, out _, out _, out var phase, out var fraction))
+                    {
+                        var leg = Math.Max(1L, (aircraft.ReturnAtSeconds - aircraft.DepartAtSeconds - PlayerFleet.TurnaroundSeconds) / 2);
+                        progress = (float)fraction;
+                        switch (phase)
+                        {
+                            case OutstationPhase.Outbound:
+                                state = "Outbound";
+                                time = "Arrives " + clock.TimeText(new SimulationTime(aircraft.DepartAtSeconds + leg));
+                                break;
+                            case OutstationPhase.Turnaround:
+                                state = "Turnaround";
+                                route = "At " + far + " · returns to " + home;
+                                time = "Leaves " + clock.TimeText(new SimulationTime(aircraft.DepartAtSeconds + leg + PlayerFleet.TurnaroundSeconds));
+                                break;
+                            case OutstationPhase.Inbound:
+                                state = "Inbound";
+                                route = far + " → " + home;
+                                time = "Returns " + clock.TimeText(new SimulationTime(aircraft.ReturnAtSeconds));
+                                break;
+                        }
+                        progressText = state;
+                    }
+                }
+                else if (aircraft.CheckDue)
+                {
+                    state = "Check overdue";
+                    severity = StatusSeverity.Warning;
+                }
+                var repeat = operations.RepeatSchedules.FirstOrDefault(r => r.Registration == aircraft.Registration);
+                if (!aircraft.HasFlight && !aircraft.CheckDue && !aircraft.InCheck(now.ElapsedSeconds) && repeat?.Exception.Length > 0)
+                {
+                    state = "Repeat needs attention";
+                    time = repeat.Exception;
+                    severity = StatusSeverity.Attention;
+                }
+                if (!aircraft.HasFlight && !aircraft.InCheck(now.ElapsedSeconds) && !aircraft.CheckDue
+                    && repeat?.Paused == true && repeat.Exception.Length == 0) state = "Repeat paused";
+                into.Add(new OperationsRow(aircraft.Registration, aircraft.BaseCode, state, severity,
+                    severity >= StatusSeverity.Attention, typeName: aircraft.Type.Name,
+                    routeText: route, timeText: time, progress01: progress, progressText: progressText, baseCode: aircraft.BaseCode));
+            }
+            // Stable registration tie-break prevents rows jittering between frames. Active work precedes idle aircraft.
+            into.Sort((a, b) =>
+            {
+                var severity = b.Severity.CompareTo(a.Severity);
+                if (severity != 0) return severity;
+                var active = (b.TimeText.Length > 0 || b.HasProgress).CompareTo(a.TimeText.Length > 0 || a.HasProgress);
+                if (active != 0) return active;
+                var next = nextTimes[a.Registration].CompareTo(nextTimes[b.Registration]);
+                return next != 0 ? next : string.CompareOrdinal(a.Registration, b.Registration);
+            });
+            return available;
         }
 
         /// <summary>

@@ -8,7 +8,9 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- #577: Operations shows all owned aircraft across bases, live next events and direct Fleet controls; Adelaide movements stay available (unverified in Unity).
 - **Fix ground-separation CI failure.** Landing gate also keeps the end of the exit clear for 28 s, so a taxi-out no longer passes within 25 m of a stopped arrival (unverified in Unity).
+
 - #552: repair native fixture contracts, validate blank saves strictly and shift camera glide anchors with flight origins (unverified in Unity; owner-authorised merge).
 
 - **Cleaner image.** Full-res SSAO again, near clip scales with distance, ground mip bias 0, 16x aniso against flicker/pixelation (unverified in Unity; ADR 2026-10-07-clean-image-pass).

@@ -25,7 +25,9 @@ records (v22 saves failed to load); render cost trim (ADR 0246), far terrain at 
 
 **Current implementation (#570):** a quieter Fleet workspace with Available/All bases, correct selection after airport changes, optional market/details, reviewed network bookings and cancellations, and airborne Melbourne exterior/cockpit/window views. The flight planner compares expected round-trip profit using production economics. Native Unity behavior is unverified; evidence and checks: `docs/testing/fleet-flight-clarity-2026-10-07/`. Bailey explicitly authorized implementation and merge without another review pause.
 
-**Next approved work:** verify the fleet/flight changes in the Mac build.
+**Current implementation (#577):** Operations opens on My airline, listing every owned aircraft across all bases with live route/status/next-event times and scroll access. Selecting an aircraft opens its correct Fleet profile; Airport movements retains the Adelaide board. Native Unity verification remains pending; evidence: `docs/testing/network-operations-2026-10-07/`.
+
+**Next approved work:** verify the all-base Operations and fleet/flight journeys in the Mac build.
 
 **Wide overview (ADR 0250/0251), run on the Mac 7 Oct (Cursor):**
 zoom to 450 km; past 60 km the overview streams a fine 16 km ring plus a coarse 64 km ring that grows with the zoom (5 to 8 tiles, up to

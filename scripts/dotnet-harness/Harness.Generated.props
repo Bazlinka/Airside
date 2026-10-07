@@ -309,6 +309,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/MaintenanceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/MapGeographyTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/MapLabelLayoutTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/NetworkOperationsTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/NightVisibilityTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/OperationsRealismTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/OperationsSummaryTests.cs" />

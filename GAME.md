@@ -1,3 +1,15 @@
+## Where to resume — white "cloud" on the zoomed-out outer terrain, 7 October 2026
+
+- **2026-10-07 Cursor — outer terrain no longer bakes to near-white.** Bailey, zoomed far out in
+  the overview in clear weather: "weird weird cloud cover". Not weather or the shader haze: ADR
+  0210's `AdelaideAerialPerspective` blended outer-ring land toward a pale haze colour by range
+  from the airfield (12 to 48 km, full strength), so from above the 30 to 96 km ring read as white
+  with blue lakes (water skipped it) and a hard edge at the satellite disc. Now it starts at the
+  30 km disc edge, runs to 96 km and is capped at 0.3. **Evidence:** reproduced with
+  `capture-game.sh -- -airsideOverviewDistance 40000 -airsideOverviewPitch 30 -airsideOverviewYaw 45
+  -airsidePinDaylight` before and after (land colours now); 5 `AdelaideAerialPerspectiveTests` pass;
+  Unity EditMode 2264 passed / 24 failed (the known unrelated failures).
+
 ## Where to resume — aircraft panel only on selection, 7 October 2026
 
 - **2026-10-07 Cursor — selected-aircraft panel no longer always on screen.** Bailey: "always

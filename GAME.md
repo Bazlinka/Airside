@@ -1,3 +1,13 @@
+## Where to resume — aircraft panel only on selection, 7 October 2026
+
+- **2026-10-07 Cursor — selected-aircraft panel no longer always on screen.** Bailey: "always
+  present by default. It looks ugly." `SelectionCardAircraft` fell back to the operations
+  priority aircraft (Attention includes any idle aircraft), so the card showed whenever none
+  was picked and Close reopened it. Now only `WatchedAircraft()`. The card also takes
+  `AircraftInspectorLayout.FittedHeight` (header + footer + content, 430 px min, shell max)
+  instead of a fixed 700 px. **Evidence:** new `RefinedHudTests` fitted-panel test passes;
+  Unity EditMode 2263 passed / 24 failed (exactly the known non-save failures) / 2 inconclusive.
+
 ## Where to resume — saves failed to load (blank JsonUtility records), 7 October 2026
 
 - **2026-10-07 Cursor — every v22 save failed to load in the game.** Bailey: "Your saved

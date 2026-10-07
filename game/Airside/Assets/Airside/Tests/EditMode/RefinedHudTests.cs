@@ -20,6 +20,26 @@ namespace Airside.Tests
             Assert.That(radar.MiniMap.Overlaps(radar.SelectedCard), Is.False);
         }
 
+        [Test]
+        public void Inspector_FitsAParkedAircraftAndKeepsActionsInsideTheShorterPanel()
+        {
+            var full = HudShell.Layout(1440f, 900f).SelectedCard;
+            var data = new SelectionCardData { Registration = "VH-PAA", IsPlayer = true, CanFollow = true,
+                ShowCameraActions = true, CanExterior = true };
+            var fitted = AircraftInspectorLayout.FittedHeight(full.Height, AircraftInspectorPainter.ContentHeight(data));
+            Assert.That(fitted, Is.LessThan(full.Height * .7f), "a parked aircraft gets a short panel");
+            var panel = new HudBox(full.X, full.Y, full.Width, fitted);
+            var layout = new AircraftInspectorLayout(panel);
+            Assert.That(layout.Body.Height, Is.GreaterThanOrEqualTo(AircraftInspectorPainter.ContentHeight(data) - 1f));
+            var list = new HudDrawList(); AircraftInspectorPainter.Footer(list, layout, data);
+            Assert.That(list.Commands.Where(c => c.Kind == HudDrawKind.Button).All(c =>
+                c.Box.Y >= layout.Footer.Y && c.Box.Bottom <= panel.Bottom), Is.True);
+
+            for (var i = 0; i < 12; i++) data.Prep.Add(new SelectionPrepStage("Step", 0, false));
+            Assert.That(AircraftInspectorLayout.FittedHeight(full.Height, AircraftInspectorPainter.ContentHeight(data)),
+                Is.EqualTo(full.Height), "long details still use the full height and scroll");
+        }
+
         [TestCase(1280f, 720f)] [TestCase(1440f, 900f)]
         public void Inspector_KeepsActionsOutsideScrollingDetails(float width, float height)
         {

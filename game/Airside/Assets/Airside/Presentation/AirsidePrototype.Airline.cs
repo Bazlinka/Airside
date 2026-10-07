@@ -1335,18 +1335,12 @@ namespace Airside.Presentation
             return null;
         }
 
-        private FleetAircraft SelectionCardAircraft()
-        {
-            var watched = WatchedAircraft();
-            if (watched != null)
-                return watched;
-
-            var fleet = PlayerFleet();
-            var priority = OperationsSummary.PriorityAircraft(fleet, _clock.Now);
-            if (priority != null && AircraftStatus.Severity(priority, _clock.Now) >= StatusSeverity.Attention)
-                return priority;
-            return null;
-        }
+        /// <summary>
+        /// Only an aircraft the player picked. Auto-showing the most urgent one kept the card open
+        /// whenever any aircraft sat idle, and Close just brought it back; the operations panel
+        /// already flags that aircraft.
+        /// </summary>
+        private FleetAircraft SelectionCardAircraft() => WatchedAircraft();
 
         private bool TrySelectionHudCardRect(HudLayout hud, AirlineHudLayout placement, out Rect rect)
         {
@@ -1364,6 +1358,7 @@ namespace Airside.Presentation
             FillSelectionCard(aircraft);
             // Shared inspector reserves its fixed header and action footer independently of scrolling details.
             rect = placement.SelectedCard;
+            rect.height = AircraftInspectorLayout.FittedHeight(rect.height, AircraftInspectorPainter.ContentHeight(_selectionCard));
             return true;
         }
 

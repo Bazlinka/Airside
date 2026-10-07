@@ -32,9 +32,10 @@ into `work/cache/sentinel-2/`, about 2 minutes). `--scenes ID ...` pins the scen
 
 Shipped JPEG SHA-256: `d80280f594df5a257f659b0d090dcce8ced0b63099b08111b3b53ae44ac127bd`; the authored and StreamingAssets copies match.
 
-## Far ring (ADR 0158)
+## Far ring (ADR 0158, sharpened in ADR 0248)
 
-`tx_adelaide_sentinel2_l2a_far_v01.jpg` is the same median, read from the COG overviews at 40 m,
-over a ±30.5 km square at 2048 px. It uses exactly the tone fitted on the near image, so the far
+`tx_adelaide_sentinel2_l2a_far_v02.jpg` is the same median, read from the COG overviews at 20 m,
+over a ±30.5 km square at 4096 px (`--far-only` regenerates just this file, with `--scenes` pinning
+the manifest's nine scenes). The earlier `_far_v01.jpg` (40 m source, 2048 px) is kept as the fallback. It uses exactly the tone fitted on the near image, so the far
 terrain ring meets the surroundings without a colour step. Two corners fall outside tile 54HTG and
 are filled flat; both lie outside the 30 km disc the ring draws.

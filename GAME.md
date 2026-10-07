@@ -1,3 +1,11 @@
+## Where to resume — sharper far satellite, 7 October 2026
+
+- **2026-10-07 Claude — far satellite v02 (ADR 0248), branch `claude/brave-babbage-ybgffc`.**
+  Bailey approved `docs/plans/sharper-far-satellite.md`; image regenerated (4096 px, 20 m source) and
+  wired in. **Unverified in Unity.** **NEXT on the Mac:** check the seam with the 12 km near image,
+  startup-to-title time and memory (decoded texture ~64 MB); revert `SatelliteTexturePath` to v01 if
+  either regresses. The 27 native failures from the entry below remain open.
+
 ## Where to resume — render cost trim, 7 October 2026
 
 - **2026-10-07 Claude — settings-only GPU savings (ADR 0246), branch `claude/brave-babbage-ybgffc`.**

@@ -47,7 +47,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LAYOUT_PATH = ROOT / "scripts/generate-ypad-layout.py"
 ENV = ROOT / "game/Airside/Assets/Airside/Art/Textures/Environment"
 OUTPUT = ENV / "tx_adelaide_sentinel2_l2a_v02.jpg"
-FAR_OUTPUT = ENV / "tx_adelaide_sentinel2_l2a_far_v01.jpg"
+FAR_OUTPUT = ENV / "tx_adelaide_sentinel2_l2a_far_v02.jpg"
 # v01, kept out of the build as the tone reference the shaders were tuned against.
 PREVIOUS = ROOT / "docs/data/esa-worldcover/tx_adelaide_sentinel2_2021_v01.png"
 MANIFEST = ROOT / "docs/data/sentinel-2/adelaide-l2a-v02-scenes.json"
@@ -56,7 +56,8 @@ CACHE = ROOT / "work/cache/sentinel-2"
 EXTENT_METRES = 12_000.0      # half size, same square as CoastGrid and the v01 texture
 SIZE = 4096
 FAR_EXTENT_METRES = 30_500.0  # the far terrain ring is a 30 km disc (the camera far clip)
-FAR_SIZE = 2048
+FAR_SIZE = 4096               # v02 (ADR 0248): ~15 m/px; v01 was 2048 px from a 40 m source
+FAR_SOURCE_METRES = 20.0
 TILE = "54HTG"
 UTM = "EPSG:32754"
 STAC = "https://earth-search.aws.element84.com/v1/search"
@@ -280,6 +281,9 @@ def save(rgb, path, quality):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--scenes", nargs="*", help="Scene ids to use instead of searching")
+    parser.add_argument("--far-only", action="store_true",
+                        help="Write only the far ring image; the near texture and manifest are left untouched "
+                             "(the near square is still baked, to fit the same tone)")
     args = parser.parse_args()
 
     os.environ.setdefault("GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR")
@@ -298,14 +302,18 @@ def main():
     previous = np.asarray(Image.open(PREVIOUS).convert("RGB").resize((SIZE, SIZE), Image.Resampling.BILINEAR),
                           dtype=np.float32) / 255.0
     tone = fit_tone(near, near_water, previous)
-    save(apply_tone(near, near_water, tone, 2.0), OUTPUT, 90)
-    print(f"Wrote {OUTPUT} ({SIZE}x{SIZE}, runway-local +/-{EXTENT_METRES:.0f} m)")
+    if not args.far_only:
+        save(apply_tone(near, near_water, tone, 2.0), OUTPUT, 90)
+        print(f"Wrote {OUTPUT} ({SIZE}x{SIZE}, runway-local +/-{EXTENT_METRES:.0f} m)")
     del near, near_water
 
-    # The far ring (plan P6): the same scenes and tone, 40 m source over the 30 km disc.
-    far, far_water = bake(layout, to_utm, scenes, FAR_EXTENT_METRES, FAR_SIZE, 40.0)
+    # The far ring (plan P6): the same scenes and tone, 20 m source over the 30 km disc.
+    far, far_water = bake(layout, to_utm, scenes, FAR_EXTENT_METRES, FAR_SIZE, FAR_SOURCE_METRES)
     save(apply_tone(far, far_water, tone, 1.0), FAR_OUTPUT, 88)
     print(f"Wrote {FAR_OUTPUT} ({FAR_SIZE}x{FAR_SIZE}, runway-local +/-{FAR_EXTENT_METRES:.0f} m)")
+
+    if args.far_only:
+        return
 
     years = sorted({s["properties"]["datetime"][:4] for s in scenes})
     MANIFEST.parent.mkdir(parents=True, exist_ok=True)
@@ -314,7 +322,7 @@ def main():
             {"path": str(OUTPUT.relative_to(ROOT)), "size": SIZE, "half_extent_metres": EXTENT_METRES,
              "source_metres": 10},
             {"path": str(FAR_OUTPUT.relative_to(ROOT)), "size": FAR_SIZE,
-             "half_extent_metres": FAR_EXTENT_METRES, "source_metres": 40},
+             "half_extent_metres": FAR_EXTENT_METRES, "source_metres": int(FAR_SOURCE_METRES)},
         ],
         "tile": TILE,
         "gain": GAIN,

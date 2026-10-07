@@ -292,6 +292,7 @@ Nothing here has been judged superseded except where the ADR says so.
 | 0252 | [The headless harness must fail where Unity's compile fails](0252-headless-harness-matches-unity-compile.md) | accepted |
 | 2026-10-07 | [An arrival on final never waits: it lands or goes around](2026-10-07-arrivals-never-hold-on-final.md) | accepted |
 | 2026-10-07 | [Clean-image pass: full-res SSAO, depth range, mip bias, 16x aniso](2026-10-07-clean-image-pass.md) |  |
+| 2026-10-07 | [Landing gate also checks the exit's standing spot](2026-10-07-exit-standing-spot-clear.md) |  |
 | 2026-10-07 | [A faster feedback loop for AI tools: ready sessions, targeted tests, lighter CI](2026-10-07-fast-agent-feedback-loop.md) | accepted |
 | 2026-10-07 | [Fleet and flight clarity](2026-10-07-fleet-flight-clarity.md) |  |
 | 2026-10-07 | [Fitted door and service details across the fleet](2026-10-07-fleet-surface-details.md) |  |

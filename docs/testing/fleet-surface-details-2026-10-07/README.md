@@ -54,7 +54,7 @@ are not shown. The faceted shading is the offline rasteriser, not a Unity result
 
 - Production geometry probe: all 14 types, 58 door leaves and 14 fuselages generated trim and hardware.
 - Asset metadata audit: 1,805 unique GUIDs and 388 byte-identical runtime art mirrors passed.
-- Focused clipping checks cover left/right curved surfaces, back-face exclusion,
+- Five focused clipping checks passed: left/right curved surfaces, back-face exclusion,
   patch bounds, inward-wound Bell panels, empty intersections and invalid indices.
 - Headless Unity-NUnit compile check passed. The initial full run encountered the existing
   `BusyDay_NoAircraftDriveThroughEachOther` failure on main (fixed separately in #579).

@@ -47,6 +47,8 @@ Airside/
     testing/                 Acceptance checks and fixtures
   scripts/
     test-unity.sh            Deterministic simulation checks (source of truth; needs a Mac Unity editor)
+    map-presentation.py      Regenerates docs/architecture/PRESENTATION_MAP.md (what each AirsidePrototype partial owns); --check
+                             fails on a stale map or an undescribed new partial — add its line in the same commit
     check-unity-nunit.sh     Compile-only check against Unity's NUnit 3.5, no implicit usings (CI + test-domain.sh; ADR 0252)
     test-domain.sh           Headless dotnet test mirror of the EditMode Domain/Simulation
                              tests, for machines without Unity — supplementary, not a replacement

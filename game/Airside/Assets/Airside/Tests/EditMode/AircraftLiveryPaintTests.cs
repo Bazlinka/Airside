@@ -74,9 +74,10 @@ namespace Airside.Tests
                     // Rebuild the wrapper as the scene index does when a lamp gains a child.
                     var part = System.Activator.CreateInstance(partType, new object[] {
                         lamp.transform, System.Enum.Parse(kindType, kindName), AircraftNavigationLight.Left });
+                    var profile = AircraftLightingProfile.For(null);
                     var arguments = methodName == "EnsureLandingSpotLight"
-                        ? new object[] { part, true, true }
-                        : new object[] { part, methodName == "EnsureBeaconPointLight" ? (object)1f : true };
+                        ? new object[] { part, true, true, profile }
+                        : new object[] { part, methodName == "EnsureBeaconPointLight" ? (object)1f : true, profile };
                     method.Invoke(null, arguments);
                     var lights = lamp.GetComponentsInChildren<Light>(true);
                     Assert.That(lights.Length, Is.EqualTo(1));

@@ -9,6 +9,11 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-07.*
 
+**Aircraft lighting by type (7 Oct, Claude):** `AircraftLightingProfile` gives each family (turboprop, regional jet, narrowbody, widebody,
+Bell 412) its own landing/taxi beam shape and aim, strobe pattern, tail strobe (jets), beacon rate and a nose lamp that doubles as the takeoff
+light on jets. ADR `2026-10-07-aircraft-lighting-profiles`; checks and a night playtest list in `docs/testing/aircraft-lighting-2026-10-07/`.
+Unity EditMode 2325 passed / 0 failed; look at it at night in follow view before trusting the beam aim and toe-out sign.
+
 **PR #552 (7 Oct, Codex):** native fixture repairs, stricter blank-save validation and camera glide anchors across origin shifts.
 Bailey explicitly authorised merging without further tests; native Unity confirmation stays pending.
 Rebased onto current main, preserving fleet/outstation flight views and the newer arrivals/rendering changes.

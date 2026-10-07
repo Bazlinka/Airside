@@ -41,9 +41,9 @@ namespace Airside.Presentation
             // this was the same bug in a narrower, still-visible form.
             // ADR 0126: and only while actually taxiing forward — dark on the tail-first push and
             // while stopped in a queue, as crews do, instead of lit from pushback to the hold.
-            var taxiLights = !airborne && enginesOn
-                && phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback
-                && (groundPose == null || (!groundPose.Value.TailFirst && groundPose.Value.Speed > 0.5f));
+            var profile = AircraftLightingProfile.For(aircraftType);
+            var taxiLights = profile.TaxiLampOn(phase, airborne, enginesOn,
+                groundPose == null || (!groundPose.Value.TailFirst && groundPose.Value.Speed > 0.5f));
 
             for (var i = 0; i < parts.Length; i++)
             {
@@ -74,28 +74,31 @@ namespace Airside.Presentation
                             engines?.Beacon ?? enginesOn);
                         // The lens is always there; only its glow and light switch (ADR 0124).
                         child.gameObject.SetActive(true);
-                        EnsureNavPointLight(parts[i], navOn);
+                        EnsureNavPointLight(parts[i], navOn, profile);
                         var strobe = 0f;
-                        if (parts[i].NavLight is AircraftNavigationLight.Left or AircraftNavigationLight.Right)
+                        if (parts[i].NavLight is AircraftNavigationLight.Left or AircraftNavigationLight.Right
+                            || parts[i].NavLight == AircraftNavigationLight.Tail && profile.TailStrobe)
                         {
-                            strobe = navOn ? AirsideReusableMotion.StrobeIntensity(phase, presentationTime) : 0f;
-                            EnsureWingtipStrobe(parts[i], strobe);
+                            strobe = navOn && AirsideReusableMotion.StrobesOn(phase)
+                                ? profile.StrobeLevel(presentationTime)
+                                : 0f;
+                            EnsureWingtipStrobe(parts[i], strobe, profile);
                         }
                         GlowLamp(parts[i], NavLensColor(parts[i].NavLight), navOn ? 1f : 0f, strobe);
                         break;
                     }
                     case LightGearKind.Beacon:
                     {
-                        var beacon = AirsideReusableMotion.BeaconIntensity(engines?.Beacon ?? enginesOn, presentationTime);
+                        var beacon = profile.BeaconLevel(engines?.Beacon ?? enginesOn, presentationTime);
                         child.gameObject.SetActive(true);
-                        EnsureBeaconPointLight(parts[i], beacon);
+                        EnsureBeaconPointLight(parts[i], beacon, profile);
                         GlowLamp(parts[i], new Color(1f, 0.16f, 0.08f), beacon, 0f);
                         break;
                     }
                     case LightGearKind.LandingLight:
                     {
                         child.gameObject.SetActive(landingLights);
-                        EnsureLandingSpotLight(parts[i], landingLights, night);
+                        EnsureLandingSpotLight(parts[i], landingLights, night, profile);
                         if (!parts[i].LampResolved)
                         {
                             parts[i].Lamp = child.GetComponent<Renderer>();
@@ -119,7 +122,7 @@ namespace Airside.Presentation
                     case LightGearKind.TaxiLight:
                     {
                         child.gameObject.SetActive(taxiLights);
-                        EnsureTaxiSpotLight(parts[i], taxiLights);
+                        EnsureTaxiSpotLight(parts[i], taxiLights, profile);
                         break;
                     }
                 }
@@ -166,7 +169,7 @@ namespace Airside.Presentation
         /// <summary>
         /// Decision 0025 items 5+7 — wingtip nav lights cast real coloured PointLights.
         /// </summary>
-        private static void EnsureNavPointLight(LightGearPart part, bool on)
+        private static void EnsureNavPointLight(LightGearPart part, bool on, AircraftLightingProfile profile)
         {
             var lamp = part.Transform;
             var kind = part.NavLight;
@@ -185,10 +188,13 @@ namespace Airside.Presentation
 
             light.enabled = on && AirsideSettings.Current.AircraftLights;
             if (on)
+            {
+                light.range = profile.NavRange;
                 light.intensity = 1.8f * AirsideReusableMotion.NavSteady;
+            }
         }
 
-        private static void EnsureWingtipStrobe(LightGearPart part, float intensity)
+        private static void EnsureWingtipStrobe(LightGearPart part, float intensity, AircraftLightingProfile profile)
         {
             var point = part.Strobe;
             if (point == null)
@@ -210,10 +216,11 @@ namespace Airside.Presentation
             }
 
             point.enabled = intensity > 0.01f && AirsideSettings.Current.AircraftLights;
-            point.intensity = 12f * intensity;
+            point.range = profile.StrobeRange;
+            point.intensity = profile.StrobeIntensity * intensity;
         }
 
-        private static void EnsureBeaconPointLight(LightGearPart part, float intensity)
+        private static void EnsureBeaconPointLight(LightGearPart part, float intensity, AircraftLightingProfile profile)
         {
             var lamp = part.Transform;
             if (part.Light == null)
@@ -229,6 +236,7 @@ namespace Airside.Presentation
             }
 
             light.enabled = intensity > 0.01f && AirsideSettings.Current.AircraftLights;
+            light.range = profile.BeaconRange;
             light.intensity = 2.6f * intensity;
         }
 
@@ -236,7 +244,7 @@ namespace Airside.Presentation
         /// Decision 0025 items 5+7 — real SpotLights on landing / taxi lamp meshes so
         /// approach and night taxi cast light on the runway and apron.
         /// </summary>
-        private static void EnsureLandingSpotLight(LightGearPart part, bool on, bool night)
+        private static void EnsureLandingSpotLight(LightGearPart part, bool on, bool night, AircraftLightingProfile profile)
         {
             var lamp = part.Transform;
             if (part.Light == null)
@@ -262,15 +270,19 @@ namespace Airside.Presentation
             if (light.shadows != shadows)
                 light.shadows = shadows;
             // Pinned daylight washes a night-tuned lamp. Keep the beam readable in follow.
-            light.intensity = night ? 7.5f : 9.5f;
-            light.range = 90f;
-            light.spotAngle = 48f;
-            light.innerSpotAngle = 22f;
-            // Lamp mesh faces +Z (aircraft forward); SpotLights aim along local +Z.
-            light.transform.localRotation = Quaternion.identity;
+            light.intensity = night ? profile.LandingIntensityNight : profile.LandingIntensityDay;
+            light.range = profile.LandingRange;
+            light.spotAngle = profile.LandingSpotAngle;
+            light.innerSpotAngle = profile.LandingInnerAngle;
+            // Lamp mesh faces +Z (aircraft forward); SpotLights aim along local +Z. Aim a little down
+            // and toe the wing-root lamps outwards (right lamp +X = starboard, left lamp -X).
+            var toe = lamp.name.EndsWith(" R", StringComparison.Ordinal) ? profile.LandingToeOutDegrees
+                : lamp.name.EndsWith(" L", StringComparison.Ordinal) ? -profile.LandingToeOutDegrees
+                : 0f;
+            light.transform.localRotation = Quaternion.Euler(profile.LandingPitchDownDegrees, toe, 0f);
         }
 
-        private static void EnsureTaxiSpotLight(LightGearPart part, bool on)
+        private static void EnsureTaxiSpotLight(LightGearPart part, bool on, AircraftLightingProfile profile)
         {
             var lamp = part.Transform;
             if (part.Light == null)
@@ -289,6 +301,13 @@ namespace Airside.Presentation
             }
 
             light.enabled = on && AirsideSettings.Current.AircraftLights;
+            if (!light.enabled)
+                return;
+            light.range = profile.TaxiRange;
+            light.spotAngle = profile.TaxiSpotAngle;
+            light.innerSpotAngle = profile.TaxiInnerAngle;
+            light.intensity = profile.TaxiIntensity;
+            light.transform.localRotation = Quaternion.Euler(profile.TaxiPitchDownDegrees, 0f, 0f);
         }
 
         /// <summary>Glow has only six distinct outputs; do not rewrite every pane each frame.</summary>

@@ -125,6 +125,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/NightVisibility.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/OperationsSummary.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/OperationsWorkspace.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/OutstationJourney.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/Ownership.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/PassengerCabinProfile.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/PushbackTugTimeline.cs" />
@@ -259,6 +260,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/EnvironmentAuditCoordinateTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FirstFlightGuideTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FleetBoardTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FleetFlightClarityTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FleetVisualTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FleetWorkspaceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightBoardTests.cs" />

@@ -50,7 +50,7 @@ namespace Airside.Tests
             Assert.That(model.MineSlots[0].Text, Does.StartWith("ADELAIDE"));
             Assert.That(model.MineSlots[2].IsHeader, Is.True);
             Assert.That(model.MineSlots[2].Text, Does.StartWith("MELBOURNE"));
-            Assert.That(model.Subtitle, Does.StartWith("1 of "));
+            Assert.That(model.Subtitle, Does.StartWith("2 owned · 2 available"));
             Assert.That(model.Subtitle, Does.Contain("1 based away"));
             Assert.That(model.OwnedCount, Is.EqualTo(ops.PlayerFleetCount()));
         }
@@ -122,7 +122,7 @@ namespace Airside.Tests
         public void BoardState_CyclesThroughEveryFilterAndSortThenWrapsRound()
         {
             var board = new FleetBoardState();
-            for (var i = 0; i < 4; i++)
+            for (var i = 0; i < 5; i++)
                 board.CycleStatus();
             Assert.That(board.Status, Is.EqualTo(FleetStatusFilter.All));
             for (var i = 0; i < 4; i++)
@@ -398,7 +398,8 @@ namespace Airside.Tests
                 HudAction.CameraExterior, FleetWorkspacePainter.MarketPrevious, FleetWorkspacePainter.MarketNext,
                 FleetActions.CycleStatus, FleetActions.CycleSort, FleetActions.RoutesPrevious,
                 FleetActions.RoutesNext, FleetActions.Sell, FleetActions.MoveBase, FleetActions.OutstationCheck,
-                FleetActions.RemoveRepeat
+                FleetActions.RemoveRepeat, FleetActions.Available, FleetActions.All, FleetActions.ToggleMarket,
+                FleetActions.ConfirmRoute, FleetActions.BackRoutes, FleetActions.ToggleDetails, FleetActions.CancelRoute, FleetActions.ConfirmCancel
             };
             if (exact.Contains(id))
                 return true;

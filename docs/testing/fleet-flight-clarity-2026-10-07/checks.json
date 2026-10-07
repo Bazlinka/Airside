@@ -1,0 +1,35 @@
+{
+  "tested_base": "704e5f07",
+  "targeted": {
+    "passed": 70,
+    "failed": 0
+  },
+  "test_domain": {
+    "passed": 1850,
+    "failed": 0,
+    "reported_skipped": 0,
+    "nunit_3_5_compile": "passed"
+  },
+  "asset_audit": {
+    "status": "passed",
+    "unique_guids": 1802,
+    "mirrored_art_files": 388,
+    "character_materials": 70
+  },
+  "offline_painter": {
+    "status": "passed",
+    "fixture_viewport": [
+      1440,
+      900
+    ],
+    "pages": [
+      "fleet",
+      "fleet-network",
+      "fleet-network-review",
+      "map"
+    ],
+    "native_capture": false
+  },
+  "native_unity": "unverified; no editor/executable in cloud",
+  "note": "Latest main synchronization and complete CI results are recorded in the PR."
+}

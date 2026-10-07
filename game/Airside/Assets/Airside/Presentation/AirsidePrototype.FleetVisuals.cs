@@ -80,7 +80,7 @@ namespace Airside.Presentation
                 : null;
 
         private bool IsFleetFlightVisible(string aircraftId) =>
-            _fleetAircraftById.TryGetValue(aircraftId, out var aircraft)
+            !WatchingOutstation && _fleetAircraftById.TryGetValue(aircraftId, out var aircraft)
             && (FleetVisual.For(aircraft, _clock.Now).Visible || IsArrivingOnFinal(aircraft) || WatchingJourney(aircraftId));
 
         /// <summary>
@@ -369,10 +369,13 @@ namespace Airside.Presentation
             PaintFleetLivery(view, aircraft, FleetLiveryColour(aircraft));
         }
 
-        private void PaintFleetLivery(Transform view, FleetAircraft aircraft, Color accent)
+        private void PaintFleetLivery(Transform view, FleetAircraft aircraft, Color accent) =>
+            PaintFleetLivery(view, aircraft.Airline, aircraft.Type, aircraft.Registration, aircraft.IsFreighter, accent);
+
+        private void PaintFleetLivery(Transform view, Airline airline, AircraftType type, string registration, bool freighter, Color accent)
         {
             // The Bell has its own fitted panels; it shares the operator palette and repaint command.
-            if (aircraft.Type.IsRotorcraft)
+            if (type.IsRotorcraft)
             {
                 foreach (var renderer in view.GetComponentsInChildren<Renderer>(true))
                     if (renderer.name.StartsWith("rescue_red", StringComparison.Ordinal)
@@ -380,7 +383,7 @@ namespace Airside.Presentation
                         SetRendererColor(renderer, AircraftLiveryPaint.Colour(renderer.name, accent));
                 return;
             }
-            var airline = aircraft.Airline;
+
 
             // The same neutral skin sheet works across every authored type. Repainting
             // it here gives AI traffic a coherent operator colour instead of leaving
@@ -392,7 +395,7 @@ namespace Airside.Presentation
             // E190, A220, A321neo, A350 and 787s joined the A320/A330/737/turboprops), so the
             // decal is kept only for the primitive fallback, which has no sash of its own.
             var hasFittedLivery = HasNamedChild(view, "Livery stripe lower");
-            var decalHex = aircraft.IsFreighter ? "#" + ColorUtility.ToHtmlStringRGB(accent) : airline.LiveryHex;
+            var decalHex = freighter ? "#" + ColorUtility.ToHtmlStringRGB(accent) : airline.LiveryHex;
             var decal = hasFittedLivery ? null : TintedLiveryDecal(decalHex, accent);
             if (decal != null)
                 ApplyLiveryTexture(view, decal);
@@ -410,7 +413,7 @@ namespace Airside.Presentation
                     SetRendererColor(renderer, AircraftLiveryPaint.Colour(childName, accent));
             }
 
-            EnsureAircraftIdentityMarkings(view, aircraft, accent);
+            EnsureAircraftIdentityMarkings(view, airline, type, registration, freighter, accent);
         }
 
         /// <summary>Removes the painted title and registration so a refit can paint them again.</summary>
@@ -486,17 +489,21 @@ namespace Airside.Presentation
         private static void EnsureAircraftIdentityMarkings(
             Transform aircraftView,
             FleetAircraft aircraft,
-            Color operatorColour)
+            Color operatorColour) => EnsureAircraftIdentityMarkings(aircraftView, aircraft?.Airline, aircraft?.Type,
+                aircraft?.Registration, aircraft?.IsFreighter ?? false, operatorColour);
+
+        private static void EnsureAircraftIdentityMarkings(Transform aircraftView, Airline airline, AircraftType type,
+            string registration, bool freighter, Color operatorColour)
         {
-            if (aircraftView == null || aircraft == null || aircraft.Airline == null)
+            if (aircraftView == null || airline == null || type == null)
                 return;
 
-            var layout = AircraftIdentityMarkings.For(aircraft.Type);
-            var operatorText = aircraft.IsFreighter ? aircraft.Airline.FreightTitle : aircraft.Airline.FuselageTitle;
+            var layout = AircraftIdentityMarkings.For(type);
+            var operatorText = freighter ? airline.FreightTitle : airline.FuselageTitle;
             // A long airline name is painted smaller rather than off the end of the fuselage.
             var operatorSize = AircraftTitlePaint.OperatorCharacterSize(
-                aircraft.Type, operatorText, layout.OperatorCharacterSize);
-            var (r, g, b) = aircraft.Airline.LiveryRgb();
+                type, operatorText, layout.OperatorCharacterSize);
+            var (r, g, b) = airline.LiveryRgb();
             var titleColour = AircraftTitlePaint.AccentReadsOnWhiteMetal(r, g, b)
                 ? operatorColour
                 : RegistrationInk;
@@ -525,7 +532,7 @@ namespace Airside.Presentation
                 AddAircraftIdentityText(
                     aircraftView,
                     side < 0 ? "Registration L" : "Registration R",
-                    aircraft.Registration,
+                    registration,
                     new Vector3(side * layout.RegistrationX, layout.RegistrationY, layout.RegistrationZ),
                     side,
                     layout.RegistrationTiltDegrees,

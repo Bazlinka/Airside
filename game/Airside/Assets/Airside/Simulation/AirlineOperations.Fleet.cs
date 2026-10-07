@@ -217,6 +217,27 @@ namespace Airside.Simulation
             return CommandResult.Ok;
         }
 
+        /// <summary>Cancel before departure, refund once, and pause repetition so it cannot immediately rebook.</summary>
+        public CommandResult CancelOutstationService(string registration)
+        {
+            var aircraft = _outstationFleet.Find(a => a.Registration == registration);
+            if (aircraft == null) return CommandResult.Refused("Unknown outstation aircraft.");
+            if (!aircraft.HasFlight) return CommandResult.Refused("No booked flight to cancel.");
+            if (_processedTo.ElapsedSeconds >= aircraft.DepartAtSeconds)
+                return CommandResult.Refused("This flight has departed. Let it return before changing its plan.");
+            if (!DestinationCatalogue.TryFind(aircraft.BaseCode, out var origin)
+                || !DestinationCatalogue.TryFind(aircraft.DestinationCode, out var destination))
+                return CommandResult.Refused("Unknown network route.");
+            CareerState.RefundDispatch(DispatchCost(aircraft.Type, origin.DistanceKmTo(destination)));
+            if (CareerState.ActiveContract is { } active && CareerState.TryFindDefinition(active.DefinitionId, out var contract)
+                && contract.MatchesAircraft(aircraft.Type, false) && contract.MatchesRoute(aircraft.BaseCode, aircraft.DestinationCode))
+                CareerState.PenalizeCancellation(contract.Id, contract.ReliabilityLossOnCancel);
+            foreach (var repeat in _repeatSchedules)
+                if (repeat.Registration == registration) repeat.Paused = true;
+            aircraft.Cancel();
+            return CommandResult.Ok;
+        }
+
         public CommandResult StartOutstationCheck(string registration)
         {
             var aircraft = _outstationFleet.Find(a => a.Registration == registration);

@@ -1,0 +1,17 @@
+# Fleet and flight clarity — 7 October 2026
+
+Runtime implementation for task #570, requested directly by Bailey. This is not another HTML prototype. No native Unity executable/editor is available in the cloud workspace, so native compile, camera appearance, performance, input and save integration remain unverified.
+
+Focused checks: 70 passing headless tests across FleetFlightClarityTests, FleetBoardTests, FleetWorkspaceTests, FlightPlannerTests, RouteMapWorkspaceTests and the broader HudWorkspacePainterTests. The eight new regressions cover filtered selection/empty bases, available aircraft excluding bookings, review without charging, quote/settlement agreement, pending cancellation/refund exactly once with repeat pause, refusal after departure, outbound/ground/inbound journey telemetry, and fixed review controls at four desktop sizes (including the runtime side sheet).
+
+The full supplementary suite passed 1,850 tests with zero failures on base 704e5f07, including NUnit 3.5 compilation. Asset audit passed. Results are recorded in checks.json; the PR records verification after syncing subsequent main changes. The generated harness retains all previously included files/tests and adds OutstationJourney and FleetFlightClarityTests. Existing text/order expectations were updated to the new interface contract. These checks do not compile Unity-dependent AirsidePrototype code.
+
+Offline painter images are produced from the actual shared C# UI model/painter and fixture simulation using scripts/hud-mockup and scripts/render-hud-mockups.py. They check composition only; the backdrop is the exporter's schematic airport, not a native game capture. They establish no native gameplay or camera result.
+
+## Check on the Mac
+
+- Compile in Unity 6.3 LTS and run scripts/test-unity.sh. Main already records 24 native failures in GAME.md; distinguish them from new regressions.
+- Load a current career and start a new one. Compare Fleet's Available/All bases, booked/flying/check filters, optional Details and Buy aircraft. Changing to Melbourne must select its own aircraft; an empty filter must clear details. Check 1440×900, 1280×720, 900×720 and 800×600, including HUD scaling.
+- With a Melbourne aircraft airborne, enter exterior/cockpit/window. Check identity/livery, heading, gear/engine animation, telemetry, terrain fallback, stable floating-origin transitions and the absence of Adelaide aircraft in the remote scene. Esc/F/H returns to its Fleet profile. At turnaround the service continues and the view returns to Fleet. Track stays centered on the remote aircraft. Ground views are unavailable because there is no detailed Melbourne airport scene.
+- Open a Melbourne route review, press Back (no charge), confirm once (one charge), inspect the pending booking, cancel with review, and verify one refund and paused repetition. Matching contract reliability loss must be disclosed and applied once. Save/reload after booking/cancellation; flight history and completed services must not increment on cancellation. Once departed, cancellation must be unavailable/refused.
+- Open Plan a flight with an idle Adelaide aircraft. Compare profit-ordered routes, choose a destination, inspect cost/expected return/profit and book. Reopening a booked flight must keep its departure and credit the prior dispatch cost. Compare completion income with the estimate, allowing actual demand/reliability changes. Freight and contract eligibility must remain correct.

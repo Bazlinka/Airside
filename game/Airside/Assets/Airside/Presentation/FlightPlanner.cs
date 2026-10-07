@@ -8,18 +8,23 @@ namespace Airside.Presentation
     /// <summary>One destination as the flight planner lists it for a given aircraft.</summary>
     public readonly struct PlannerDestination
     {
-        public PlannerDestination(Destination destination, double distanceKm, long airborneSeconds, bool reachable)
+        public PlannerDestination(Destination destination, double distanceKm, long airborneSeconds, bool reachable, long cost = 0, long revenue = 0)
         {
             Destination = destination;
             DistanceKm = distanceKm;
             AirborneSeconds = airborneSeconds;
             Reachable = reachable;
+            Cost = cost;
+            Revenue = revenue;
         }
 
         public Destination Destination { get; }
         public double DistanceKm { get; }
         public long AirborneSeconds { get; }
         public bool Reachable { get; }
+        public long Cost { get; }
+        public long Revenue { get; }
+        public long Profit => Revenue - Cost;
     }
 
     /// <summary>The timeline a planned trip is expected to follow, for the planner summary.</summary>
@@ -148,7 +153,7 @@ namespace Airside.Presentation
             return aircraft[next];
         }
 
-        /// <summary>Destinations for this aircraft: reachable first, each group nearest first.</summary>
+        /// <summary>Destinations for this aircraft: reachable first by expected profit; locked routes nearest first.</summary>
         public static List<PlannerDestination> DestinationsFor(AirlineOperations operations, FleetAircraft aircraft)
         {
             var list = new List<PlannerDestination>();
@@ -164,16 +169,40 @@ namespace Airside.Presentation
             {
                 var reachable = aircraft != null && operations.CanOperate(aircraft, destination);
                 var airborne = aircraft != null ? operations.AirborneSeconds(aircraft, destination) : 0L;
-                list.Add(new PlannerDestination(destination, operations.DistanceKm(destination), airborne, reachable));
+                list.Add(new PlannerDestination(destination, operations.DistanceKm(destination), airborne, reachable,
+                    aircraft == null ? 0 : operations.DispatchCost(aircraft.Type, operations.DistanceKm(destination)),
+                    aircraft == null ? 0 : ExpectedRevenue(operations, operations.Home, destination, aircraft.Type, aircraft)));
             }
 
             list.Sort(ByReachThenDistance);
+        }
+
+        /// <summary>Same reliability and eligible contract payment rules as settlement; an estimate, not a guarantee.</summary>
+        public static long ExpectedRevenue(AirlineOperations operations, Destination origin, Destination destination,
+            AircraftType type, FleetAircraft aircraft = null)
+        {
+            var forecast = aircraft == null ? operations.Forecast(origin, destination, type)
+                : operations.Forecast(origin, destination, aircraft);
+            var career = operations.CareerState;
+            if (career == null) return forecast.Revenue;
+            var pay = (long)Math.Round(forecast.Revenue * FlightEconomics.ReliabilityMultiplier(career.Reliability));
+            var active = career.ActiveContract;
+            if (active != null && career.TryFindDefinition(active.DefinitionId, out var contract)
+                && contract.MatchesAircraft(type, aircraft?.IsFreighter ?? false)
+                && contract.MatchesRoute(origin.Code, destination.Code))
+            {
+                pay += contract.PaymentPerRotation;
+                if (active.CompletedRotations + 1 >= contract.RequiredRotations) pay += contract.CompletionReward;
+            }
+            return pay;
         }
 
         private static readonly Comparison<PlannerDestination> ByReachThenDistance = (a, b) =>
             {
                 if (a.Reachable != b.Reachable)
                     return a.Reachable ? -1 : 1;
+                var byProfit = b.Profit.CompareTo(a.Profit);
+                if (a.Reachable && byProfit != 0) return byProfit;
                 var byDistance = a.DistanceKm.CompareTo(b.DistanceKm);
                 return byDistance != 0 ? byDistance : string.CompareOrdinal(a.Destination.Code, b.Destination.Code);
             };

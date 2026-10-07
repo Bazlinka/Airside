@@ -71,8 +71,11 @@ namespace Airside.Presentation
         /// <summary>ADR 0142: 30 km, so an arrival 32 km out on the joining curve is inside the view.</summary>
         public const float CameraFarClip = 30000f;
         public const float MinOrbitDistance = 18f;
-        /// <summary>The zoom-out limit: far enough to watch an arrival join from 30 km or more (see AirsideCameraFeel).</summary>
-        public const float MaxOrbitDistance = 45000f;
+        /// <summary>
+        /// The zoom-out limit. ADR 0251: 450 km, so the whole of South Australia can be dragged under the camera. Up to the old
+        /// 45 km limit nothing changes; past 60 km the overview streams terrain from the camera (<see cref="FlightWorldGrid.WideMap"/>).
+        /// </summary>
+        public const float MaxOrbitDistance = 450000f;
         /// <summary>Up to here the camera behaves exactly as it always did; past it the clip planes, haze and pan reach grow.</summary>
         public const float ClassicMaxOrbitDistance = 4500f;
         public const float OverviewPanMetresPerSecond = 650f;

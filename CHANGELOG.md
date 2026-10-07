@@ -8,6 +8,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- **Wide overview (ADR 0251, unverified).** Zoom out to 450 km and pan across South Australia: the overview streams fine and coarse land-cover terrain from the camera past 60 km.
+
 - **South Australia land cover (ADR 0250, unverified).** Streamed flight terrain is coloured by real state-wide land cover (ESA WorldCover, 123 KB, no imagery) in the Adelaide-ring palette.
 
 - **Repo tidy (ADR 0249).** `GAME.md` is now ~170 lines of current state and `CHANGELOG.md` one line per change; full originals, an ADR index and a branch inventory are in `docs/history/` and `docs/decisions/README.md`.

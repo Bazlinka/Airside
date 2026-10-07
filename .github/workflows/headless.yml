@@ -10,40 +10,73 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Documentation-only pull requests (see scripts/ci-changes.sh) skip everything below, so they finish in seconds. Anything else,
+      # every push to main, and any doubt (a failed fetch, an unknown path) runs the full set. The job still reports success.
+      - name: What changed
+        id: changes
+        run: |
+          heavy=true
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+            if git fetch --no-tags --depth=1 origin "$base"; then
+              heavy="$(git diff --name-only "$base" HEAD | bash scripts/ci-changes.sh | sed 's/^heavy=//')"
+            fi
+          fi
+          echo "heavy=$heavy" >> "$GITHUB_OUTPUT"
+          echo "Heavy checks: $heavy"
       - uses: actions/setup-dotnet@v4
+        if: steps.changes.outputs.heavy == 'true'
         with:
           dotnet-version: 8.0.x
       - uses: actions/setup-python@v5
+        if: steps.changes.outputs.heavy == 'true'
         with:
           python-version: "3.11"
       - name: Generated data files are current
+        if: steps.changes.outputs.heavy == 'true'
         run: |
           python3 scripts/generate-ypad-roads.py --check
           python3 scripts/generate-ypad-carparks.py --check
           python3 scripts/generate-ypad-precinct.py --check
       - name: No buildings without a street
+        if: steps.changes.outputs.heavy == 'true'
         run: python3 scripts/audit-ypad-map.py --max-percent 0.5
       - name: Harness list is current
+        if: steps.changes.outputs.heavy == 'true'
         run: python3 scripts/update-harness.py --check
       - name: Aircraft doors sit on their hulls
+        if: steps.changes.outputs.heavy == 'true'
         run: python3 scripts/fit-aircraft-doors.py audit
       - name: Bell tail rotor geometry and packaged mirrors
+        if: steps.changes.outputs.heavy == 'true'
         run: python3 scripts/test-bell-tail-rotor.py
       - name: Capture soak outlives long review delays
+        if: steps.changes.outputs.heavy == 'true'
         run: bash scripts/test-capture-game-soak-window.sh
       - name: Capture resume keeps good PNGs
+        if: steps.changes.outputs.heavy == 'true'
         run: bash scripts/test-capture-game-resume.sh
       - name: P0 remaining capture delays stay locked
+        if: steps.changes.outputs.heavy == 'true'
         run: bash scripts/test-p0-remaining-delays.sh
       - name: P0 Stage B dirty RESULTS allowlist
+        if: steps.changes.outputs.heavy == 'true'
         run: bash scripts/test-p0-remaining-dirty-allowlist.sh
       - name: P0 Stage A/B/C ONLY filter
+        if: steps.changes.outputs.heavy == 'true'
         run: bash scripts/test-p0-remaining-only-filter.sh
       - name: P0 one-paste Stage A→B→C chain
+        if: steps.changes.outputs.heavy == 'true'
         run: bash scripts/test-p0-stages-chain.sh
       - name: P0 Mac CreateAgent launcher lock
+        if: steps.changes.outputs.heavy == 'true'
         run: bash scripts/test-p0-mac-agent-launch.sh
+      - name: CI change classifier
+        if: steps.changes.outputs.heavy == 'true'
+        run: bash scripts/test-ci-changes.sh
       - name: Tests compile against Unity's NUnit 3.5 without implicit usings
+        if: steps.changes.outputs.heavy == 'true'
         run: bash scripts/check-unity-nunit.sh
       - name: Domain, Simulation and Unity-free Presentation tests
+        if: steps.changes.outputs.heavy == 'true'
         run: dotnet test scripts/dotnet-harness/Harness.csproj --nologo

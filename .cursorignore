@@ -1,0 +1,19 @@
+# Keep AI context focused (docs/ai/WORKFLOW.md §8). These are huge archives, bulk data or binaries that cost tokens and tell a tool nothing it
+# should edit. Remove a line if you really need that file in context. Never ignore *.meta: new assets need them cloned from neighbours.
+docs/history/GAME-handoff-log-through-2026-10-07.md
+docs/history/CHANGELOG-through-2026-10-07.md
+docs/data/osm/
+docs/data/esa-worldcover/
+docs/art/candidates/
+work/
+*.fbx
+*.glb
+*.gltf
+*.png
+*.jpg
+*.jpeg
+*.bin
+*.wav
+*.ogg
+*.mp3
+*.docx

@@ -1,7 +1,7 @@
 # Working with several AI tools and accounts
 
 For Bailey and for every tool that edits this repo (Claude Code, Cursor, Codex, ChatGPT), on any number of accounts. The repo-wide contract is
-[`AGENTS.md`](../../AGENTS.md); this is the practical routine that keeps parallel work from colliding. Decision record:
+[`AGENTS.md`](../../AGENTS.md); [`RECIPES.md`](RECIPES.md) has the step-by-step for routine tasks; this is the practical routine that keeps parallel work from colliding. Decision record:
 [`2026-10-07-multi-agent-collaboration`](../decisions/2026-10-07-multi-agent-collaboration.md).
 
 ## 1. How each tool finds the rules
@@ -53,7 +53,16 @@ Never delete or force-push someone else's branch.
 > Unity. Work from a GitHub issue (task packet). Name branches `chatgpt/<topic>-<yyyymmdd>`. Change one thing, declare the files you will touch, run
 > `scripts/test-domain.sh` if you have a shell, and fill in the PR template. Do not edit generated indexes.
 
-## 7. Accounts and secrets
+## 7. Fast feedback and fewer tokens
+
+- **Cloud sessions are ready to test.** Claude Code cloud sessions run `.claude/hooks/session-start.sh` (installs .NET 8, restores the harness packages). Elsewhere:
+  `bash scripts/bootstrap-dotnet.sh` — and for Cursor cloud agents `.cursor/environment.json` runs it; for Codex set it as the environment setup script.
+- **Test only what you touched:** `python3 scripts/test-quick.py --changed` (seconds) while working; `scripts/test-domain.sh` before you push.
+- **Docs-only PRs skip the heavy CI steps** (`scripts/ci-changes.sh`): they finish in seconds. Anything touching code, scripts, workflows or data runs everything.
+- **Spend fewer tokens:** read the maps (`docs/README.md`, `docs/architecture/PRESENTATION_MAP.md`, `scripts/README.md`, `docs/decisions/README.md`) before grepping; routine tasks are in
+  [`RECIPES.md`](RECIPES.md); `.cursorignore` hides the two 500 KB archives, bulk data and binaries from Cursor — other tools should skip them by hand.
+
+## 8. Accounts and secrets
 
 Several accounts per tool are fine: each connects to GitHub with its own auth, and `Owner:` in the issue says who has what. Never put keys, tokens or personal
 details in the repo, issues or PRs. Keep the commit trailer your tool adds (e.g. `Co-Authored-By`) so history shows who did what.

@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Smooth hand-over from the satellite image to the far land.** Zoomed out, the photo used to
+  stop dead at 30 km and the land beyond started in brighter, yellower colours. The photo now
+  fades into the land-cover colours from 24 km, and those colours are measured from the photo
+  itself, so there is no ring.
+
 - **No more white "cloud" when zoomed far out.** The land beyond the 30 km satellite image was
   baked toward a pale haze colour so strongly that from above it looked like a white sheet with
   blue lakes. The haze now starts at the satellite edge and stays a light tint, so the far

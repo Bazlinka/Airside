@@ -1,3 +1,19 @@
+## Where to resume — satellite to land-cover hand-over at 30 km, 7 October 2026
+
+- **2026-10-07 Cursor — far terrain transition smoothed (step 1 of Bailey's far-map request).**
+  The far ring's Sentinel-2 drape now fades out over 24–29.5 km (`_SatelliteFadeStart/End`,
+  `AirsideAdelaideFarTerrain`), and its vertices take `AdelaideFarLandCover` colours through
+  `DrapeHandover`, which makes the shader output an exact crossfade (no halo). The ADR 0190 palette
+  is now measured from the drape as rendered (`scripts/calibrate-landcover-palette.py`); note the
+  project renders in **Gamma** colour space, so texel values are used as stored. Slope darkening
+  cut to 10% (the image already holds the Hills' shading). **Evidence:** captures at 40 km and
+  15 km; brightness profile across the band 93→74→92 (was 95→38 at a hard edge);
+  `DrapeHandover_CrossfadesFromTheImageToLandCoverWithoutAHalo` passes; Unity EditMode 2265
+  passed / 24 failed (the known unrelated set).
+- **Next (approved by Bailey):** drag/zoom the overview across all of South Australia, streaming
+  `AirsideFlightWorldTerrain` tiles in as you pan, and colour those tiles by real land cover
+  state-wide (no new satellite imagery).
+
 ## Where to resume — white "cloud" on the zoomed-out outer terrain, 7 October 2026
 
 - **2026-10-07 Cursor — outer terrain no longer bakes to near-white.** Bailey, zoomed far out in

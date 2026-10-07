@@ -27,10 +27,7 @@ namespace Airside.Presentation
                     return false;
 
                 // The land-cover map is optional: without it the ring is coloured by height alone, as in ADR 0185.
-                AdelaideFarLandCover landCover = null;
-                var coverPath = ArtRuntimePaths.ResolveExisting(AdelaideFarLandCover.ArtPath);
-                if (coverPath != null)
-                    landCover = AdelaideFarLandCover.Parse(System.IO.File.ReadAllBytes(coverPath));
+                var landCover = LoadLandCover();
                 if (landCover != null && landCover.Count != terrain.Count)
                     landCover = null;
 
@@ -84,7 +81,14 @@ namespace Airside.Presentation
             }
         }
 
-        private static float[] Linear(Color c)
+        /// <summary>The far land-cover map, or null when it is missing or unreadable.</summary>
+        public static AdelaideFarLandCover LoadLandCover()
+        {
+            var coverPath = ArtRuntimePaths.ResolveExisting(AdelaideFarLandCover.ArtPath);
+            return coverPath == null ? null : AdelaideFarLandCover.Parse(System.IO.File.ReadAllBytes(coverPath));
+        }
+
+        internal static float[] Linear(Color c)
         {
             var l = c.linear;
             return new[] { l.r, l.g, l.b };

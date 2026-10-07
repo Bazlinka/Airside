@@ -31,6 +31,13 @@ namespace Airside.Presentation
         /// <summary>The overlap band sits this far under the surroundings so the two never fight.</summary>
         public const float TuckMetres = 3f;
 
+        /// <summary>
+        /// The drape hands over to land-cover vertex colours across this band, so at the disc edge it is the same colour
+        /// as the outer ring beyond it. Only when the land-cover map loaded; otherwise the image runs to the edge.
+        /// </summary>
+        public const float SatelliteFadeStartMetres = 24000f;
+        public const float SatelliteFadeEndMetres = 29500f;
+
         public static bool TryBuild(Transform root, AdelaideTerrainHeights terrain, Shader shader)
         {
             if (root == null || terrain == null || shader == null)
@@ -48,9 +55,15 @@ namespace Airside.Presentation
                 material.SetFloat("_HorizonFadeStart", AirsideAdelaideSurroundings.FarHorizonFadeStartMetres);
                 material.SetFloat("_HorizonFadeEnd", AirsideAdelaideSurroundings.FarHorizonFadeEndMetres);
 
-                var mesh = BuildMesh(terrain, AirsideAdelaideGround.PavementWorldY);
+                var landCover = AirsideAdelaideOuterTerrain.LoadLandCover();
+                var mesh = BuildMesh(terrain, AirsideAdelaideGround.PavementWorldY, landCover);
                 if (mesh == null)
                     return false;
+                if (landCover != null)
+                {
+                    material.SetFloat("_SatelliteFadeStart", SatelliteFadeStartMetres);
+                    material.SetFloat("_SatelliteFadeEnd", SatelliteFadeEndMetres);
+                }
                 var go = new GameObject(ObjectName);
                 go.transform.SetParent(root, false);
                 go.AddComponent<MeshFilter>().sharedMesh = mesh;
@@ -67,10 +80,14 @@ namespace Airside.Presentation
             }
         }
 
-        public static Mesh BuildMesh(AdelaideTerrainHeights terrain, float pavementWorldY)
+        public static Mesh BuildMesh(AdelaideTerrainHeights terrain, float pavementWorldY, AdelaideFarLandCover landCover = null)
         {
             if (terrain == null)
                 return null;
+            var seaLinear = AirsideAdelaideOuterTerrain.Linear(AirsideAdelaideSurroundings.DeepWater);
+            var cover = new float[3];
+            var k = AirsideAdelaideSurroundings.SatelliteFarStrength;
+            Func<int, int, float> heightAt = terrain.Sample;
             var n = (terrain.Count - 1) / Stride + 1;
             var vertices = new Vector3[n * n];
             var colors = new Color[n * n];
@@ -99,7 +116,23 @@ namespace Airside.Presentation
 
                 var y = plainY + AdelaideTerrainHeights.ReliefAbovePlain(h);
                 vertices[i] = new Vector3(x, y - (inside ? TuckMetres : 0f), z);
-                colors[i] = land;
+                var t = landCover == null
+                    ? 0f
+                    : AdelaideFarLandCover.Smoothstep(SatelliteFadeStartMetres, SatelliteFadeEndMetres, Mathf.Sqrt(x * x + z * z));
+                if (t <= 0f)
+                {
+                    colors[i] = land;
+                    continue;
+                }
+
+                var slope = AdelaideOuterTerrainGeometry.Slope(heightAt, xi * Stride, zi * Stride, terrain.Count, terrain.Spacing);
+                // Colour only: a water-sheen alpha would also switch the drape off, and the 250 m class map's water
+                // cells overlap the beaches the image shows.
+                AdelaideOuterTerrainGeometry.LandCoverColour(landCover, landCover.CellOf(x), landCover.CellOf(z), slope,
+                    seaLinear, cover);
+                colors[i] = new Color(AdelaideFarLandCover.DrapeHandover(land.r, cover[0], t, k),
+                    AdelaideFarLandCover.DrapeHandover(land.g, cover[1], t, k),
+                    AdelaideFarLandCover.DrapeHandover(land.b, cover[2], t, k), 0f);
             }
 
             var triangles = new List<int>(n * n * 3);

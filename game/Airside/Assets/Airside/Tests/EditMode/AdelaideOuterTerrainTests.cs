@@ -172,7 +172,7 @@ namespace Airside.Tests
             for (var i = 0; i < 40; i++)
             {
                 AdelaideFarLandCover.Colour(AdelaideFarLandCover.Crop, i * 4, 8, 0f, colour);
-                paddocks.Add($"{Math.Round(colour[1] * 20)}");
+                paddocks.Add($"{Math.Round((colour[0] + colour[1] + colour[2]) * 30)}");
             }
 
             Assert.That(paddocks.Count, Is.GreaterThan(2), "crop land is a patchwork, not one tone");
@@ -181,6 +181,24 @@ namespace Airside.Tests
             AdelaideFarLandCover.Colour(AdelaideFarLandCover.Tree, 3, 3, 0f, flat);
             AdelaideFarLandCover.Colour(AdelaideFarLandCover.Tree, 3, 3, 1f, steep);
             Assert.That(steep[1], Is.LessThan(flat[1]), "hillsides are darker");
+        }
+
+        [Test]
+        public void DrapeHandover_CrossfadesFromTheImageToLandCoverWithoutAHalo()
+        {
+            const float strength = 0.92f, plain = 0.27f, land = 0.08f;
+            foreach (var image in new[] { 0.02f, 0.09f, 0.4f })
+            foreach (var t in new[] { 0f, 0.25f, 0.5f, 0.75f, 1f })
+            {
+                var vertex = AdelaideFarLandCover.DrapeHandover(plain, land, t, strength);
+                var drape = strength * (1f - t);
+                var rendered = drape * image + (1f - drape) * vertex;
+                var crossfade = (1f - t) * (strength * image + (1f - strength) * plain) + t * land;
+                Assert.That(rendered, Is.EqualTo(crossfade).Within(1e-5f), $"image {image}, t {t}");
+            }
+
+            Assert.That(AdelaideFarLandCover.Smoothstep(24000f, 29500f, 20000f), Is.EqualTo(0f));
+            Assert.That(AdelaideFarLandCover.Smoothstep(24000f, 29500f, 30000f), Is.EqualTo(1f));
         }
 
         [Test]

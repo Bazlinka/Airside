@@ -267,6 +267,14 @@ namespace Airside.Simulation
 
     public static class AirlineSave
     {
+        // Unity serializes inline reference fields by value: null may round-trip as an
+        // all-default object. Only that exact placeholder is absence; partial jobs stay invalid.
+        private static bool EmptyMaintenanceJob(MaintenanceJob job) =>
+            string.IsNullOrEmpty(job.OriginStand) && string.IsNullOrEmpty(job.HangarId)
+            && string.IsNullOrEmpty(job.ReturnStand) && job.Phase == MaintenancePhase.Preparing
+            && job.RequestedAt == 0 && job.PhaseStartedAt == 0 && job.PhaseEndsAt == 0
+            && job.RepairSeconds == 0 && !job.RepairCompleted;
+
         private static RunwayWakeRecord CopyWake(RunwayWakeRecord record) => record == null ? null
             : new RunwayWakeRecord { TypeId = record.TypeId, Departure = record.Departure,
                 EventAtSeconds = record.EventAtSeconds };
@@ -558,9 +566,7 @@ namespace Airside.Simulation
                         data.Version >= 16 ? record.PushbackDelay : null);
                 if (data.Version >= 11)
                     operations.RestoreMaintenance(restoredRegistration, record.RotationsSinceCheck, record.CheckUntilSeconds);
-                // JsonUtility writes a null job as an all-default object, so a job with no
-                // hangar is no job; every real job reserves one.
-                if (data.Version >= 22 && !string.IsNullOrEmpty(record.MaintenanceJob?.HangarId))
+                if (data.Version >= 22 && record.MaintenanceJob != null && !EmptyMaintenanceJob(record.MaintenanceJob))
                     operations.RestoreMaintenanceJob(restoredRegistration, record.MaintenanceJob);
                 else if (state == FleetState.Maintenance)
                     throw new FormatException("Maintenance aircraft has no saved job: " + registration);

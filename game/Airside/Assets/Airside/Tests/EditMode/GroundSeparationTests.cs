@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Airside.Domain;
-using Airside.Presentation;
 using Airside.Simulation;
 using NUnit.Framework;
 
@@ -74,7 +73,7 @@ namespace Airside.Tests
                     episodes[pair] = t;
                     counts[key] = counts.TryGetValue(key, out var n) ? n + 1 : 1;
                     if (!examples.ContainsKey(key))
-                        examples[key] = $"t={t:0} {a.Aircraft.Registration}({a.Aircraft.Type.Id} {a.Aircraft.State} {a.Aircraft.AssignedRunway}) @({a.X:0},{a.Z:0}) vs {b.Aircraft.Registration}({b.Aircraft.Type.Id} {b.Aircraft.State} {b.Aircraft.AssignedRunway}) @({b.X:0},{b.Z:0}) d={d:0}";
+                        examples[key] = $"t={t:0} {a.Aircraft.Registration}({a.Aircraft.Type.Id} {a.Aircraft.State} {a.Aircraft.AssignedRunway} stand={a.Aircraft.Stand}) @({a.X:0},{a.Z:0}) vs {b.Aircraft.Registration}({b.Aircraft.Type.Id} {b.Aircraft.State} {b.Aircraft.AssignedRunway} stand={b.Aircraft.Stand}) @({b.X:0},{b.Z:0}) d={d:0}";
                 }
             }
 
@@ -82,6 +81,7 @@ namespace Airside.Tests
             foreach (var pair in counts.OrderByDescending(p => p.Value))
                 sb.AppendLine($"{pair.Value,4}  {pair.Key}   e.g. {examples[pair.Key]}");
             Assert.That(counts, Is.Empty, sb.ToString());
+            Assert.That(ops.Fleet.Sum(a => a.CompletedTrips), Is.GreaterThan(100), "safe clearance must still allow a busy day");
         }
 
         private static bool NearOwnStand(Placed moving)
@@ -92,10 +92,11 @@ namespace Airside.Tests
             var pose = AdelaideGround.StandPose(stand);
             var dx = pose.X - moving.X;
             var dz = pose.Z - moving.Z;
-            // The final lead-in includes the aircraft datum ahead of the stop and can begin
-            // about 70 m out at Adelaide's remote gates. This is still stand geometry beside
-            // a parked neighbour, not two independently moving traffic streams.
-            return dx * dx + dz * dz < 90.0 * 90.0;
+            // Match the 100 m painted approach preserved by the actual route policy. A
+            // Q400's root can be ~95 m from its stop while entering that fitted lead-in.
+            // Neighbouring parked aircraft here are stand geometry, not transit traffic.
+            var approach = AdelaideGroundPolicy.StandApproachMetres;
+            return dx * dx + dz * dz < approach * approach;
         }
 
         private static bool TryPlace(AirlineOperations ops, FleetAircraft aircraft, double now, out Placed placed)
@@ -105,20 +106,19 @@ namespace Airside.Tests
             if (!visual.Visible)
                 return false;
             var half = GroundTraffic.HalfSpan(aircraft.Type);
+            if (aircraft.Type.IsRotorcraft)
+            {
+                var helicopter = HelicopterTrack.For(aircraft, now);
+                if (!helicopter.Visible || helicopter.HeightMetres > 3f) return false;
+                placed = new Placed { Aircraft = aircraft, Leg = helicopter.OnGround ? "Parked" : "PadFlight",
+                    X = helicopter.X, Z = helicopter.Z, Half = half };
+                return true;
+            }
             if (visual.Leg == FleetGroundLeg.None)
             {
-                var phase = visual.Phase;
-                if (phase is not (AircraftPhase.Landing or AircraftPhase.Takeoff))
-                    return false;
-                var duration = AirsideFlightPath.PhaseSeconds(phase, aircraft.Type);
-                var progress = (float)Math.Max(0, Math.Min(1, (now - visual.PhaseStartedAt.ElapsedSeconds) / duration));
-                var v = phase == AircraftPhase.Landing
-                    ? AirsideFlightPath.Landing(progress, 0f, aircraft.Type)
-                    : AirsideFlightPath.Takeoff(progress, 0f, aircraft.Type, aircraft.AssignedRunway);
-                if (v.y - AirsideFlightPath.GroundY > 3f)
-                    return false;
-                RunwayFrame.ToWorld(aircraft.AssignedRunway, v.x, 0f, v.z, out var wx, out _, out var wz);
-                placed = new Placed { Aircraft = aircraft, Leg = phase == AircraftPhase.Landing ? "Rollout" : "TakeoffRoll", X = wx, Z = wz, Half = half };
+                if (!GroundTraffic.TryPose(ops.Fleet, aircraft, now, out var runwayPose, out _)) return false;
+                placed = new Placed { Aircraft = aircraft, Leg = visual.Phase == AircraftPhase.Landing ? "Rollout" : "TakeoffRoll",
+                    X = runwayPose.X, Z = runwayPose.Z, Half = half };
                 return true;
             }
 

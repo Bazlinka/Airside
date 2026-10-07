@@ -69,7 +69,7 @@ namespace Airside.Presentation
             // Correct the previous position too: origin steps must never read as a speed spike.
             var originDelta=new Vector3((float)(_flightOriginX-ox),0,(float)(_flightOriginZ-oz));
             _cockpitPreviousPosition+=originDelta;
-            if((InCockpit || WatchingOutstation) && _cameraController!=null) _cameraController.transform.position+=originDelta;
+            if(_cameraController!=null) _cameraController.ShiftFlightOrigin(originDelta);
             _flightOriginX=ox;_flightOriginZ=oz;
             if(_airfieldRoot!=null) _airfieldRoot.position=-FlightOrigin;
             Shader.SetGlobalVector("_AirsideFlightOrigin",new Vector4((float)ox,0,(float)oz,0));

@@ -288,12 +288,14 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void AirlineHudLayout_DesktopPutsEachPanelInItsCorner()
+        public void AirlineHudLayout_DesktopKeepsOverviewClearWithAnOptionalRadar()
         {
             var airline = AirlineHudLayout.Create(HudLayout.Create(1440f, 900f));
-            Assert.That(airline.Operations.x, Is.GreaterThan(airline.Capsule.xMax));
+            Assert.That(airline.Operations.width, Is.EqualTo(0f));
+            Assert.That(airline.MiniMap.width, Is.EqualTo(0f));
+            airline = AirlineHudLayout.Create(HudLayout.Create(1440f, 900f), showMiniMap: true);
             Assert.That(airline.Objective.x, Is.LessThan(airline.SelectedCard.x));
-            Assert.That(airline.MiniMap.x, Is.GreaterThan(airline.SelectedCard.xMax));
+            Assert.That(airline.MiniMap.xMax, Is.LessThan(airline.SelectedCard.x));
             Assert.That(airline.MiniMap.width, Is.EqualTo(AirlineHudLayout.MiniMapWidth));
             Assert.That(airline.SelectedCard.width, Is.EqualTo(AirlineHudLayout.SelectedCardWidth));
             Assert.That(airline.MiniMap.width, Is.LessThan(280f), "radar stays compact");
@@ -307,7 +309,7 @@ namespace Airside.Tests
             var scale = HudLayout.ScaleFor(screenWidth, screenHeight);
             var airline = AirlineHudLayout.Create(HudLayout.Create(screenWidth / scale, screenHeight / scale));
             Assert.That(airline.Objective.width, Is.GreaterThanOrEqualTo(280f));
-            Assert.That(airline.Operations.width, Is.GreaterThanOrEqualTo(240f));
+            Assert.That(airline.Operations.width, Is.EqualTo(0f), "live flights are accessed through Operations");
             Assert.That(airline.Capsule.width, Is.GreaterThanOrEqualTo(HudShell.CapsuleMinWidth));
             Assert.That(airline.SelectedCard.height, Is.GreaterThanOrEqualTo(100f));
         }

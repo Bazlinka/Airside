@@ -44,6 +44,8 @@ public static class Program
             Stats(scenario, width, height)
         };
         pages.AddRange(RouteMapZooms(scenario, width, height));
+        pages.Add(NetworkFleet(scenario, width, height, false));
+        pages.Add(NetworkFleet(scenario, width, height, true));
 
         var document = new Document(new[] { width, height }, pages);
         var directory = Path.GetDirectoryName(Path.GetFullPath(output));
@@ -364,11 +366,34 @@ public static class Program
 
         var model = new FleetWorkspaceModel();
         model.Rebuild(scenario.Operations, scenario.Now, scenario.SelectedRegistration);
-        var layout = FleetWorkspaceLayout.Create(HudShell.SideSheet(HudShell.WorkspaceSurface(width, height)), model.Market.Count);
+        var layout = FleetWorkspaceLayout.Create(HudShell.SideSheet(HudShell.WorkspaceSurface(width, height)), model.Market.Count, model.ShowMarket);
 
         var page = new HudDrawList();
         FleetWorkspacePainter.Paint(page, model, layout, scenario.SelectedRegistration, 0);
         return new Page("fleet", Serialise(list, page));
+    }
+
+    private static Page NetworkFleet(Scenario scenario, float width, float height, bool review)
+    {
+        var ops = scenario.Operations;
+        if (ops.OutstationFleet.Count == 0)
+        {
+            ops.RestoreCareerState(500_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+                Array.Empty<string>(), Array.Empty<string>(), 100, baseLevel: PlayerBaseLevel.ExpandedRegional, manualRotations: 12);
+            ops.OpenOutstationBase("MEL");
+            ops.BuyAircraftAtOutstation(AircraftType.Dash8Q400, "MEL");
+        }
+        var board = new FleetBoardState { BaseFilter = "MEL", ReviewRoute = review ? "SYD" : string.Empty };
+        var model = new FleetWorkspaceModel();
+        model.Rebuild(ops, scenario.Now, ops.OutstationFleet[0].Registration, board);
+        model.Camera.Visible = true;
+        var list = new HudDrawList();
+        PaintShell(list, scenario, HudWorkspace.Fleet, width, height);
+        var surface = HudShell.SideSheet(HudShell.WorkspaceSurface(width, height));
+        var page = new HudDrawList();
+        FleetWorkspacePainter.Paint(page, model, FleetWorkspaceLayout.Create(surface, model.Market.Count, false),
+            model.SelectedRegistration, 0);
+        return new Page(review ? "fleet-network-review" : "fleet-network", Serialise(list, page));
     }
 
     private static Page Contracts(Scenario scenario, float width, float height)

@@ -58,13 +58,18 @@ namespace Airside.Presentation
                 JourneyWorld(flight,0,out x,out _,out z);
             else if(active && _cockpitView != null)
             { x=_cockpitView.position.x+_flightOriginX;z=_cockpitView.position.z+_flightOriginZ; }
+            if (WatchingOutstation && OutstationJourney.TryFor(WatchedOutstation(), _preciseTime, out var network))
+            {
+                YpadFrame.ToWorld(network.Latitude, network.Longitude, out x, out z);
+                active = true;
+            }
             var distant=active && Math.Max(Math.Abs(x),Math.Abs(z))>80000;
             var ox=distant ? FlightWorldGrid.Origin(x) : 0;
             var oz=distant ? FlightWorldGrid.Origin(z) : 0;
             // Correct the previous position too: origin steps must never read as a speed spike.
             var originDelta=new Vector3((float)(_flightOriginX-ox),0,(float)(_flightOriginZ-oz));
             _cockpitPreviousPosition+=originDelta;
-            if(InCockpit && _cameraController!=null) _cameraController.transform.position+=originDelta;
+            if((InCockpit || WatchingOutstation) && _cameraController!=null) _cameraController.transform.position+=originDelta;
             _flightOriginX=ox;_flightOriginZ=oz;
             if(_airfieldRoot!=null) _airfieldRoot.position=-FlightOrigin;
             Shader.SetGlobalVector("_AirsideFlightOrigin",new Vector4((float)ox,0,(float)oz,0));

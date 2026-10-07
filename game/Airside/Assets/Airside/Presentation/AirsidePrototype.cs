@@ -550,6 +550,7 @@ namespace Airside.Presentation
 
         private void OnDestroy()
         {
+            ExitOutstationView(false);
             ReleaseCockpitAirflow();
             if (_cockpitInterior != null)
             {
@@ -612,6 +613,7 @@ namespace Airside.Presentation
             AdvancePresentationClock();
             var soakStageStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             UpdateAircraftVisual();
+            UpdateOutstationView();
             UpdateCockpitView();
             UpdateFlightViewReview();
             TraceFlightJourneyReview();
@@ -897,6 +899,7 @@ namespace Airside.Presentation
                     return;
                 }
 
+                if (WatchingOutstation) { ExitOutstationView(true); return; }
                 if (InCockpit)
                 {
                     ExitCockpit(true);
@@ -922,6 +925,12 @@ namespace Airside.Presentation
                 return;
 
             // Typing the airline name must not follow, reset the view or mute.
+            if (WatchingOutstation)
+            {
+                if (keyboard.rKey.wasPressedThisFrame || keyboard.fKey.wasPressedThisFrame || keyboard.hKey.wasPressedThisFrame)
+                    ExitOutstationView(true);
+                return;
+            }
             if (!InCockpit && ReadAirlineControls(keyboard))
                 return;
 
@@ -971,6 +980,7 @@ namespace Airside.Presentation
         {
             if (_cameraController == null)
                 return;
+            if (WatchingOutstation) { ExitOutstationView(true); return; }
             if (InCockpit) { ExitCockpit(false); return; }
 
             // Turning follow off hands the camera back where it is — free to orbit,
@@ -990,6 +1000,7 @@ namespace Airside.Presentation
             if (_cameraController == null)
                 return;
 
+            if (WatchingOutstation) { ExitOutstationView(true); return; }
             if (InCockpit) { ExitCockpit(true); return; }
             ClearAircraftSelection();
             _cameraController.ReturnToOverview();
@@ -1055,13 +1066,14 @@ namespace Airside.Presentation
             // Follow / Overview live on the circuit HUD only. The airline overview
             // uses the selected-aircraft card and Esc/R instead (ADR 0053). The
             // live speed / altitude / heading strip stays up in both modes.
-            if (!AirlineModalOpen && !_menuOpen && !InCockpit)
+            if (!AirlineModalOpen && !_menuOpen && !InCockpit && !WatchingOutstation)
             {
                 DrawSpeedReadout(layout, panel);
                 if (!FleetMode)
                     DrawControlBar(layout, button);
             }
-            if (InCockpit && !_menuOpen) DrawCockpitHud(layout, panel, button);
+            if (WatchingOutstation && !_menuOpen) DrawOutstationViewHud(panel, title, button);
+            else if (InCockpit && !_menuOpen) DrawCockpitHud(layout, panel, button);
             else DrawAirlineHud(layout, panel, title, button);
             DrawMapCredit(layout);
             DrawBuildStamp(layout);

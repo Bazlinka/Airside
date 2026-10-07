@@ -291,4 +291,5 @@ Nothing here has been judged superseded except where the ADR says so.
 | 0251 | [Wide overview: zoom to 450 km and stream South Australia from the camera](0251-wide-overview-streaming.md) | accepted (Unity look and performance not yet verified) |
 | 0252 | [The headless harness must fail where Unity's compile fails](0252-headless-harness-matches-unity-compile.md) | accepted |
 | 2026-10-07 | [A faster feedback loop for AI tools: ready sessions, targeted tests, lighter CI](2026-10-07-fast-agent-feedback-loop.md) | accepted |
+| 2026-10-07 | [Fleet and flight clarity](2026-10-07-fleet-flight-clarity.md) |  |
 | 2026-10-07 | [Multi-tool collaboration: one routine, generated indexes, date-named ADRs](2026-10-07-multi-agent-collaboration.md) | accepted |

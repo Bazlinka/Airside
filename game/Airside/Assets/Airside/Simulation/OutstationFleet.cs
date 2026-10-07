@@ -116,6 +116,13 @@ namespace Airside.Simulation
             Automated = automated;
         }
 
+        internal void Cancel()
+        {
+            DestinationCode = string.Empty;
+            DepartAtSeconds = ReturnAtSeconds = 0;
+            Automated = false;
+        }
+
         internal void Complete()
         {
             if (!HasFlight) throw new InvalidOperationException("No service to complete.");

@@ -15,7 +15,7 @@ namespace Airside.Presentation
     public static class AirsideAdelaideFarTerrain
     {
         public const string ObjectName = "Adelaide Far Terrain";
-        public const string SatelliteTexturePath = "Textures/Environment/tx_adelaide_sentinel2_l2a_far_v01.jpg";
+        public const string SatelliteTexturePath = "Textures/Environment/tx_adelaide_sentinel2_l2a_far_v02.jpg";
         public const float SatelliteExtentMetres = 30500f;
         public const float RadiusMetres = 30000f;
 

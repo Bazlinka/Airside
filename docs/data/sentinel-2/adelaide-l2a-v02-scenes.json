@@ -7,10 +7,10 @@
       "source_metres": 10
     },
     {
-      "path": "game/Airside/Assets/Airside/Art/Textures/Environment/tx_adelaide_sentinel2_l2a_far_v01.jpg",
-      "size": 2048,
+      "path": "game/Airside/Assets/Airside/Art/Textures/Environment/tx_adelaide_sentinel2_l2a_far_v02.jpg",
+      "size": 4096,
       "half_extent_metres": 30500.0,
-      "source_metres": 40
+      "source_metres": 20
     }
   ],
   "tile": "54HTG",

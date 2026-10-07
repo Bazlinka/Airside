@@ -1,6 +1,6 @@
 # Task packet — sharper far satellite image (Adelaide Hills)
 
-Status: **proposed, needs Bailey's sign-off** (changes a shipped art asset and the data register).
+Status: **approved by Bailey 2026-10-07; implemented, see ADR 0248** (changes a shipped art asset and the data register).
 Drafted 2026-10-07 by Claude. Follows ADR 0247 (far terrain now meshed at 125 m).
 
 ## Player-visible outcome

@@ -1,5 +1,9 @@
 ## Unreleased
 
+- **Sharper far satellite image (ADR 0248, unverified).** The far terrain ring now uses a 4096 px
+  image baked from a 20 m Sentinel-2 source (was 2048 px from 40 m), so the Hills and suburbs keep
+  road/creek/block detail when the map is zoomed out. v01 kept as fallback; startup/memory unmeasured.
+
 - **Sharper Adelaide Hills (ADR 0247, unverified).** The far terrain ring now uses the full
   125 m DEM (was every second sample), so the Hills keep their ridges when the map is zoomed out.
 

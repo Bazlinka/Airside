@@ -3980,6 +3980,14 @@ namespace Airside.Presentation
                 mesh.RecalculateBounds();
                 mesh.RecalculateNormals();
                 filter.sharedMesh = mesh;
+                // Generated door details belong to this instance. Retire their
+                // previous mesh after each hinge rebake, and own the replacement.
+                var owner = filter.GetComponent<AirsideGeneratedMeshOwner>();
+                if (owner != null)
+                {
+                    DestroyPresentationObject(owner.Mesh);
+                    owner.Mesh = mesh;
+                }
             }
         }
 

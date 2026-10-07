@@ -57,6 +57,18 @@ namespace Airside.Presentation
         public int RoutePage { get; set; }
         public string ReviewRoute { get; set; } = string.Empty;
 
+        /// <summary>Open an owned aircraft from Operations without stale filters hiding it.</summary>
+        public void Focus(PlayerFleetEntry entry)
+        {
+            if (entry == null) return;
+            BaseFilter = entry.BaseCode;
+            Status = FleetStatusFilter.All;
+            ShowMarket = false;
+            RoutePage = 0;
+            ReviewRoute = string.Empty;
+            CancelReview = false;
+        }
+
         public void ToggleBase(string code)
         {
             BaseFilter = BaseFilter == code ? string.Empty : code;

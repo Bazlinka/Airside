@@ -46,6 +46,7 @@ public static class Program
         pages.AddRange(RouteMapZooms(scenario, width, height));
         pages.Add(NetworkFleet(scenario, width, height, false));
         pages.Add(NetworkFleet(scenario, width, height, true));
+        pages.Add(Operations(scenario, width, height, network: true));
 
         var document = new Document(new[] { width, height }, pages);
         var directory = Path.GetDirectoryName(Path.GetFullPath(output));
@@ -292,8 +293,11 @@ public static class Program
         return new Page("career", Serialise(list, page));
     }
 
-    private static Page Operations(Scenario scenario, float width, float height)
+    private static Page Operations(Scenario scenario, float width, float height, bool network = false)
     {
+        if (network && !scenario.Operations.OutstationFleet[0].HasFlight)
+            scenario.Operations.ScheduleOutstationService(scenario.Operations.OutstationFleet[0].Registration,
+                "SYD", scenario.Now.Advance(1800));
         var list = new HudDrawList();
         PaintShell(list, scenario, HudWorkspace.Operations, width, height);
 
@@ -301,12 +305,11 @@ public static class Program
         model.Rebuild(scenario.Operations, scenario.Now, OperationsBoardTab.Departures,
             scenario.SelectedRegistration, scenario.EventHistory);
         var layout = OperationsWorkspaceLayout.Create(HudShell.WorkspaceSurface(width, height),
-            model.Attention.Count);
+            0, airlineView: true);
 
         var page = new HudDrawList();
-        OperationsWorkspacePainter.Paint(page, model, layout, scenario.SelectedRegistration,
-            model.FirstActiveRowIndex);
-        return new Page("operations", Serialise(list, page));
+        OperationsWorkspacePainter.Paint(page, model, layout, scenario.SelectedRegistration, 0);
+        return new Page(network ? "operations-network" : "operations", Serialise(list, page));
     }
 
     private static Page RouteMapPage(Scenario scenario, float width, float height) =>

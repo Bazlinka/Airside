@@ -145,6 +145,9 @@ namespace Airside.Presentation
     public sealed class OperationsWorkspaceModel
     {
         private readonly List<OperationsFlightRow> _rows = new();
+        private readonly List<OperationsRow> _airlineRows = new();
+        public IReadOnlyList<OperationsRow> AirlineRows => _airlineRows;
+        public int AvailableAircraft { get; private set; }
         private readonly List<OperationsAttentionRow> _attention = new();
         private readonly List<OperationsPrepCheck> _prep = new();
         private readonly List<OperationsEventLine> _events = new();
@@ -253,6 +256,8 @@ namespace Airside.Presentation
             string presentationWeather = null)
         {
             _rows.Clear();
+            _airlineRows.Clear();
+            AvailableAircraft = 0;
             _attention.Clear();
             _prep.Clear();
             _events.Clear();
@@ -291,6 +296,7 @@ namespace Airside.Presentation
                        + $"  ·  {presentationWeather ?? Weather.Describe(operations.CurrentWeather)}"
                        + (GroundStopped ? "  ·  GROUND STOP" : string.Empty);
 
+            AvailableAircraft = OperationsSummary.FillAirlineRows(operations, now, _airlineRows);
             FillDayProgress(operations, now, clock);
             FillBoard(operations, now, tab, clock);
             FillAttention(operations, now, clock);
@@ -858,10 +864,10 @@ namespace Airside.Presentation
 
         public static readonly string[] ColumnLabels = { "TIME", "FLIGHT", "ROUTE", "STAND", "STATUS" };
 
-        public static OperationsWorkspaceLayout Create(HudBox surface, int attentionRows)
+        public static OperationsWorkspaceLayout Create(HudBox surface, int attentionRows, bool airlineView = false)
         {
             var header = HudShell.Header(surface);
-            var footer = surface.SliceBottom(EventFooterHeight);
+            var footer = surface.SliceBottom(airlineView ? HudShell.FooterHeight : EventFooterHeight);
             // Match HudShell.Body padding, but stop above the taller event-history footer.
             var top = surface.Y + HudShell.HeaderHeight + 1f;
             var bottom = footer.Y;
@@ -872,7 +878,7 @@ namespace Airside.Presentation
                 surface.Width - HudShell.SurfacePadding * 2f, bodyHeight);
 
             var y = body.Y;
-            var dayStrip = new HudBox(body.X, y, body.Width, DayStripHeight);
+            var dayStrip = new HudBox(body.X, y, body.Width, airlineView ? 32f : DayStripHeight);
             y = dayStrip.Bottom + 12f;
 
             var attention = HudBox.Empty;
@@ -887,7 +893,7 @@ namespace Airside.Presentation
             var tabs = new HudBox(body.X, y, body.Width, TabHeight);
             y = tabs.Bottom + 10f;
 
-            var detailWidth = body.Width - MinBoardWidth - DetailGap >= DetailWidth ? DetailWidth : 0f;
+            var detailWidth = !airlineView && body.Width - MinBoardWidth - DetailGap >= DetailWidth ? DetailWidth : 0f;
             var boardWidth = detailWidth > 0f ? body.Width - detailWidth - DetailGap : body.Width;
             var boardTop = y + ColumnHeaderHeight;
             var boardHeight = body.Bottom - boardTop;
@@ -935,13 +941,28 @@ namespace Airside.Presentation
 
             into.Clear();
             into.Surface(layout.Surface);
-            PaintHeader(into, model, layout);
-            PaintDayStrip(into, model, layout);
-            PaintAttention(into, model, layout);
-            PaintTabs(into, model, layout);
+            if (!allMovements)
+            {
+                HudShellPainter.PaintSheetHeader(into, layout.Surface, "Operations", "Your airline · all bases",
+                    layout.TitleBox, layout.SubtitleBox);
+                into.Text(layout.DayCaptionBox, $"{model.AirlineRows.Count} aircraft · {model.AvailableAircraft} available", 15f,
+                    HudTone.Default, HudTextStyle.Bold);
+                into.Pill(layout.TabBox(0), "MY AIRLINE", HudTone.Accent, filled: true);
+                into.Button(layout.TabBox(1).WithWidth(176f), "AIRPORT MOVEMENTS", HudAction.ToggleMovements, HudButtonStyle.Secondary);
+            }
+            else
+            {
+                PaintHeader(into, model, layout);
+                PaintDayStrip(into, model, layout);
+                PaintAttention(into, model, layout);
+                PaintTabs(into, model, layout);
+            }
             PaintBoard(into, model, layout, selectedRegistration, scrollRow, allMovements, flaps, now);
-            PaintDetail(into, model, layout);
-            PaintFooter(into, model, layout);
+            if (allMovements) PaintDetail(into, model, layout);
+            if (allMovements) PaintFooter(into, model, layout);
+            else
+                into.Text(layout.Footer.Inset(HudShell.SurfacePadding, 10f, HudShell.SurfacePadding, 10f),
+                    "Select an aircraft for its bookings, checks and cameras.", 11f, HudTone.Muted);
         }
 
         private static void PaintHeader(HudDrawList into, OperationsWorkspaceModel model,
@@ -1035,17 +1056,56 @@ namespace Airside.Presentation
                 model.Tab == OperationsBoardTab.Arrivals ? HudButtonStyle.Primary : HudButtonStyle.Secondary);
         }
 
+        private static void PaintAirlineBoard(HudDrawList into, OperationsWorkspaceModel model,
+            OperationsWorkspaceLayout layout, string selectedRegistration, int scrollRow)
+        {
+            var rows = model.AirlineRows;
+            if (rows.Count == 0)
+                into.Text(layout.Board.WithHeight(24f), "No aircraft owned. Open Fleet to add an aircraft.", 13f, HudTone.Muted);
+            var first = Math.Max(0, Math.Min(scrollRow, Math.Max(0, rows.Count - layout.VisibleRows)));
+            var last = Math.Min(rows.Count, first + layout.VisibleRows);
+            for (var i = first; i < last; i++)
+            {
+                var row = rows[i];
+                var box = layout.FlightRow(i - first).Inset(0f, 2f, 0f, 2f);
+                var selected = row.Registration == selectedRegistration;
+                into.Card(box, selected ? 1f : .8f);
+                if (selected || row.Severity >= StatusSeverity.Attention)
+                    into.Outline(box, selected ? HudTone.Accent : HudTone.Caution, .8f);
+                var left = box.X + 12f;
+                var width = box.Width - 24f;
+                var timeWidth = Math.Min(180f, width * .4f);
+                into.Text(new HudBox(left, box.Y + 5f, width - timeWidth, 18f),
+                    row.Registration + " · " + row.BaseCode + " · " + row.TypeName, 13f, HudTone.Default, HudTextStyle.Bold);
+                into.Text(new HudBox(box.Right - 12f - timeWidth, box.Y + 7f, timeWidth, 16f),
+                    row.TimeText, 11f, HudTone.Muted, HudTextStyle.Regular, HudAlign.Right);
+                into.Text(new HudBox(left, box.Y + 25f, width - timeWidth, 18f), row.RouteText, 12f, HudTone.Muted);
+                into.Text(new HudBox(box.Right - 12f - timeWidth, box.Y + 25f, timeWidth, 18f), row.State, 12f,
+                    row.Severity >= StatusSeverity.Attention ? HudTone.Caution : HudTone.Default,
+                    HudTextStyle.Regular, HudAlign.Right);
+                if (row.HasProgress)
+                    into.Bar(new HudBox(left, box.Bottom - 5f, width, 2f), row.Progress01, HudTone.Accent);
+                into.Hotspot(box, HudAction.Select(row.Registration));
+            }
+        }
+
         private static void PaintBoard(HudDrawList into, OperationsWorkspaceModel model,
             OperationsWorkspaceLayout layout, string selectedRegistration, int scrollRow,
             bool allMovements, FlapBoardState flaps, float now)
         {
             var header = layout.ColumnHeader;
-            into.Caption(new HudBox(header.X, header.Y + 4f, header.Width - 140f, 16f),
-                allMovements ? "ALL MOVEMENTS" : "IMMEDIATE MOVEMENTS");
-            into.Button(new HudBox(header.Right - 136f, header.Y, 136f, 21f),
-                allMovements ? "LIVE APRON" : "ALL MOVEMENTS", HudAction.ToggleMovements,
-                HudButtonStyle.Secondary);
+            into.Caption(new HudBox(header.X, header.Y + 4f, header.Width - (allMovements ? 140f : 0f), 16f),
+                allMovements ? "ADELAIDE MOVEMENTS" : $"{model.AirlineRows.Count} AIRCRAFT · ALL BASES · SCROLL");
+            if (allMovements)
+                into.Button(new HudBox(header.Right - 136f, header.Y, 136f, 21f),
+                    "MY AIRLINE", HudAction.ToggleMovements, HudButtonStyle.Secondary);
             into.Hairline(new HudBox(layout.Board.X, header.Bottom - 1f, layout.Board.Width, 1f));
+
+            if (!allMovements)
+            {
+                PaintAirlineBoard(into, model, layout, selectedRegistration, scrollRow);
+                return;
+            }
 
             if (model.Rows.Count == 0)
             {
@@ -1056,39 +1116,12 @@ namespace Airside.Presentation
                 return;
             }
 
-            // The compact apron is a lens over the complete live board. Players can
-            // explicitly open All Movements to inspect the longer arrivals/departures
-            // history and scroll it using the existing board control.
-            var relevant = new List<int>();
-            if (allMovements)
-            {
-                for (var i = 0; i < model.Rows.Count; i++)
-                    relevant.Add(i);
-            }
-            else
-            {
-                // First: player commitments, explicit selection and genuine exceptions.
-                for (var i = 0; i < model.Rows.Count; i++)
-                {
-                    var row = model.Rows[i];
-                    if ((row.IsPlayer && !row.IsPast) || row.Severity >= StatusSeverity.Attention
-                                                      || row.Registration == selectedRegistration)
-                        relevant.Add(i);
-                }
-                // Then only enough live context to make the apron feel inhabited.
-                for (var i = 0; i < model.Rows.Count && relevant.Count < 5; i++)
-                    if (model.Rows[i].OnField && !relevant.Contains(i))
-                        relevant.Add(i);
-            }
-            if (relevant.Count == 0)
-                relevant.Add(model.FirstActiveRowIndex < model.Rows.Count ? model.FirstActiveRowIndex : 0);
-
-            var first = allMovements ? Math.Max(0, Math.Min(scrollRow, relevant.Count - 1)) : 0;
-            var last = Math.Min(relevant.Count, first + layout.VisibleRows);
+            var first = Math.Max(0, Math.Min(scrollRow, Math.Max(0, model.Rows.Count - layout.VisibleRows)));
+            var last = Math.Min(model.Rows.Count, first + layout.VisibleRows);
 
             for (var visible = first; visible < last; visible++)
             {
-                var i = relevant[visible];
+                var i = visible;
                 var row = model.Rows[i];
                 var box = layout.FlightRow(visible - first);
                 var selected = row.Registration == selectedRegistration;
@@ -1114,9 +1147,9 @@ namespace Airside.Presentation
                 into.Hotspot(box, HudAction.Select(row.Registration));
             }
 
-            if (allMovements && last < relevant.Count)
+            if (last < model.Rows.Count)
                 into.Text(new HudBox(layout.Board.X, layout.Board.Bottom - 16f,
-                        layout.Board.Width, 16f), $"{relevant.Count - last} more below. Scroll to see them.",
+                        layout.Board.Width, 16f), $"{model.Rows.Count - last} more below. Scroll to see them.",
                     11f, HudTone.Muted, HudTextStyle.Caption);
 
         }
@@ -1340,7 +1373,7 @@ namespace Airside.Presentation
             into.Hairline(new HudBox(layout.Surface.X + HudShell.SurfacePadding, layout.Footer.Y,
                 layout.Surface.Width - HudShell.SurfacePadding * 2f, 1f));
             var footer = layout.Footer.Inset(HudShell.SurfacePadding, 6f, HudShell.SurfacePadding, 5f);
-            into.Caption(footer.WithHeight(13f), "EVENT HISTORY");
+            into.Caption(footer.WithHeight(13f), "ADELAIDE EVENT HISTORY");
             if (model.Events.Count == 0)
             {
                 into.Text(new HudBox(footer.X, footer.Y + 16f, footer.Width, 15f),

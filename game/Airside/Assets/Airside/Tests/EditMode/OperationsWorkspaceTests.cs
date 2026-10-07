@@ -471,7 +471,7 @@ namespace Airside.Tests
             var scrolled = new HudDrawList();
             OperationsWorkspacePainter.Paint(scrolled, model, layout, null, model.Rows.Count - 1, allMovements: true);
             Assert.That(scrolled.Commands.Any(c => c.ActionId == HudAction.Select(model.Rows[model.Rows.Count - 1].Registration)), Is.True, "last movement remains reachable by scrolling");
-            Assert.That(list.Commands.Any(c => c.Text == "LIVE APRON"
+            Assert.That(list.Commands.Any(c => c.Text == "MY AIRLINE"
                 && c.ActionId == HudAction.ToggleMovements), Is.True);
         }
 

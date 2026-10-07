@@ -2,6 +2,10 @@
 
 7 October 2026. Proposed direction for Bailey's review, based on actual packaged-game captures and native aircraft renders. This supersedes the earlier photographic finished-product vision as the planning recommendation. No runtime implementation or approved product-plan change is included.
 
+## Player flows come first
+
+The task-by-task contract is [`../../../plans/player_flows_and_interface_contract.md`](../../../plans/player_flows_and_interface_contract.md). These visual studies cover only a subset of its 24 tasks. They are not a complete interface plan or proof that all player actions remain discoverable. Validate flows and recovery before choosing the shell or final styling.
+
 ## The target
 
 A coherent, readable airline simulation with the airport and simple aircraft Airside already has. Keep the geographically sourced Adelaide world. Improve surface contrast, material consistency and readability before investing in new geometry. Explore a fresh horizontal airline-dispatch interface rather than reskinning the current vertical rail and floating cards.

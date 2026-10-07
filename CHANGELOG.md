@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **Saved airlines load again.** Unity's JSON saver writes an empty maintenance job or runway
+  wake record as an all-blank object, and loading rejected it ("Invalid maintenance job for
+  VH-PAX"). A job with no hangar, or a wake with no aircraft type, now means none. Existing
+  saves load unchanged; no save-format change.
+
 - **Sharper far satellite image (ADR 0248, unverified).** The far terrain ring now uses a 4096 px
   image baked from a 20 m Sentinel-2 source (was 2048 px from 40 m), so the Hills and suburbs keep
   road/creek/block detail when the map is zoomed out. v01 kept as fallback; startup/memory unmeasured.

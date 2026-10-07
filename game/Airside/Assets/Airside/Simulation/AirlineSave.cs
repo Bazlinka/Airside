@@ -558,7 +558,9 @@ namespace Airside.Simulation
                         data.Version >= 16 ? record.PushbackDelay : null);
                 if (data.Version >= 11)
                     operations.RestoreMaintenance(restoredRegistration, record.RotationsSinceCheck, record.CheckUntilSeconds);
-                if (data.Version >= 22 && record.MaintenanceJob != null)
+                // JsonUtility writes a null job as an all-default object, so a job with no
+                // hangar is no job; every real job reserves one.
+                if (data.Version >= 22 && !string.IsNullOrEmpty(record.MaintenanceJob?.HangarId))
                     operations.RestoreMaintenanceJob(restoredRegistration, record.MaintenanceJob);
                 else if (state == FleetState.Maintenance)
                     throw new FormatException("Maintenance aircraft has no saved job: " + registration);

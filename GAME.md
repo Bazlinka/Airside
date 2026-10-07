@@ -1,3 +1,17 @@
+## Where to resume — saves failed to load (blank JsonUtility records), 7 October 2026
+
+- **2026-10-07 Cursor — every v22 save failed to load in the game.** Bailey: "Your saved
+  airline couldn't be loaded (Invalid maintenance job for VH-PAX.)". `JsonUtility` cannot
+  write null, so an aircraft with no `MaintenanceJob` (and an empty `MainWake`/`CrossWake`)
+  is saved as an all-default object; restore treated it as a real record and rejected it.
+  Restore now treats a job with no `HangarId`, or a wake with no `TypeId`, as none. No
+  schema change. Bailey's save backed up beside the original as
+  `airline-save.json.backup-20261007-1107`; it loads (45 aircraft) with the fix.
+  **Evidence:** focused Unity save/terminal/wake tests 25/25 (was 3 failing); full suite
+  before the wake half: 2262 passed / 25 failed, the rest are the non-save failures below.
+  **Watch:** headless tests never exercise `JsonUtility`; any new nested save object
+  needs the same blank-means-none handling.
+
 ## Where to resume — sharper far satellite, 7 October 2026
 
 - **2026-10-07 Claude — far satellite v02 (ADR 0248), branch `claude/brave-babbage-ybgffc`.**

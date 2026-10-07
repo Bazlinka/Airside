@@ -23,4 +23,6 @@ cd "$root/scripts/dotnet-harness"
 #   python3 scripts/update-harness.py
 python3 "$root/scripts/update-harness.py" --check
 
+# Compile-only pass against Unity's NUnit 3.5 (no implicit usings), then the real run on NUnit 3.14 (ADR 0252).
+bash "$root/scripts/check-unity-nunit.sh"
 dotnet test

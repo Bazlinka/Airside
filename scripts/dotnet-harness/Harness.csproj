@@ -9,7 +9,8 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Off on purpose: Unity has no implicit usings, so a missing `using System;` must fail here exactly as it fails in Unity (ADR 0252). -->
+    <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <IsPackable>false</IsPackable>
     <LangVersion>latest</LangVersion>
@@ -17,7 +18,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-    <PackageReference Include="NUnit" Version="3.14.0" />
+    <!--
+      Tests RUN on NUnit 3.14 (3.5 has no .NET 8 assets). Unity Test Framework 1.6 bundles NUnit 3.5, so a compile-only build with
+      -p:UnityNUnit=true (scripts/check-unity-nunit.sh, CI) rejects constraints Unity lacks, e.g. Is.AnyOf (ADR 0252).
+    -->
+    <PackageReference Include="NUnit" Version="3.14.0" Condition="'$(UnityNUnit)' != 'true'" />
+    <PackageReference Include="NUnit" Version="3.5.0" Condition="'$(UnityNUnit)' == 'true'" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
   </ItemGroup>
 

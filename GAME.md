@@ -34,8 +34,8 @@ a coarse 64 km ring (121 tiles, 2 km cells) so the state can be dragged under th
   painter previews alone.
 
 **Watch:**
-- Headless-green PRs can still break the Unity compile or UnityEngine tests: the dotnet harness skips every test
-  that touches `UnityEngine`. Run `scripts/test-unity.sh` before merging behaviour changes.
+- Headless-green PRs can still break UnityEngine tests: the dotnet harness skips every test that touches `UnityEngine`. Since ADR 0252 it
+  no longer misses missing `using`s or NUnit APIs Unity lacks (`Is.AnyOf`), but run `scripts/test-unity.sh` before merging behaviour changes.
 - `JsonUtility` cannot write null: any new nested save object needs the same blank-means-none handling on restore.
 - The long-trip frame stall (earlier run: 172 s) is not accepted as fixed; no full-flight performance claim exists.
 

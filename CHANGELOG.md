@@ -8,6 +8,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- **Headless checks now fail where Unity's compile fails (ADR 0252).** No implicit usings and a compile-only build against Unity's NUnit 3.5 in CI (catches `Is.AnyOf`, missing `using System;`).
+
 - **Wide overview (ADR 0251, unverified).** Zoom out to 450 km and pan across South Australia: the overview streams fine and coarse land-cover terrain from the camera past 60 km.
 
 - **South Australia land cover (ADR 0250, unverified).** Streamed flight terrain is coloured by real state-wide land cover (ESA WorldCover, 123 KB, no imagery) in the Adelaide-ring palette.

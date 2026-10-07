@@ -19,8 +19,8 @@ Codex and Claude. Read it and `GAME.md` before making any change.
 ```
 Airside/
   README.md                  Orientation and first-run steps
-  GAME.md                    Living status board — read before every task
-  CHANGELOG.md               One line per merged change, newest first
+  GAME.md                    Current state only (~170 lines) — read before every task
+  CHANGELOG.md               One line per merged change, newest first (older: docs/history/)
   AGENTS.md                  This file — the shared working contract
   CLAUDE.md                  Pointer for Claude Code (defers to this file)
   .cursor/rules/             Pointer for Cursor (defers to this file)
@@ -40,7 +40,8 @@ Airside/
   docs/
     product/                 Design plan (.docx + .md), agreed scope
     architecture/            Technical decisions and data contracts
-    decisions/               Numbered decision records (ADRs)
+    decisions/               Numbered decision records (ADRs); README.md is the index and numbering rule
+    history/                 Archived handoff log and changelog (verbatim, read-only); docs/README.md maps it all
     data/                    Asset and data licence register
     art/                     Canonical art direction, manifest, prompts and references
     testing/                 Acceptance checks and fixtures
@@ -89,12 +90,18 @@ note it here in the same commit.
    agent's claim alone that a build passed. Without a Mac Unity editor, run
    `scripts/test-domain.sh` (needs the .NET 8 SDK) as a fast Domain/Simulation/
    pre-check, but still get a Unity run before merging.
-5. **Update `GAME.md` and `CHANGELOG.md`** in the same commit as the change.
+5. **Update `GAME.md` and `CHANGELOG.md`** in the same commit as the change. `GAME.md` holds current state
+   only: edit the single "Where to resume" block in place (never stack a new dated block on top) and keep
+   the file under ~250 lines; the changelog entry is one line (~160 chars). Detail goes in the PR, an ADR or
+   `docs/testing/<topic>/`.
 6. **Commit message:** short imperative subject, then what changed and the
    evidence. Push to `origin` immediately so other tools see it.
 7. **Decisions:** a design change adds a dated entry under `docs/decisions/`
-   (date, decision, reason, affected systems, migration impact). New ideas go to a
-   backlog, not straight into the active milestone.
+   (date, decision, reason, affected systems, migration impact) and a row in `docs/decisions/README.md`.
+   Take the next free ADR number after checking `origin/main` and open branches, and mark any ADR you
+   replace "Superseded by NNNN". New ideas go to a backlog, not straight into the active milestone.
+8. **Branches:** delete your `feature/*` / `fix/*` branch once its PR is merged. Never delete a branch
+   that has commits not on `main`.
 
 ## Session handoff protocol
 
@@ -120,9 +127,9 @@ repo. These two checklists keep that reliable.
    half-done or red, commit to a `feature/<name>` branch — never leave
    uncommitted work in the tree.
 2. `git push origin HEAD` — unpushed work is invisible to the next tool.
-3. Update the **"Where to resume"** block in `GAME.md`: date, your tool name,
-   branch, the exact next step, anything in progress, anything to watch for, any
-   open question for Bailey. Commit and push that too.
+3. **Replace** the **"Where to resume"** block in `GAME.md` (do not stack a new one): latest work, next
+   approved step, what is open/unverified, anything to watch, any open question for Bailey. Move anything
+   no longer current to `docs/history/`. Commit and push that too.
 4. Update `CHANGELOG.md` under "Unreleased" if behaviour changed.
 5. If you made a design decision, add a dated record under `docs/decisions/`.
 

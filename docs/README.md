@@ -3,7 +3,7 @@
 | Folder | What lives here | Current or history |
 |---|---|---|
 | `product/` | The agreed design: `Airside Project Plan.docx` / `PROJECT_PLAN.md`. Changes need Bailey's sign-off. | current |
-| `architecture/` | Technical decisions and data contracts. | current |
+| `architecture/` | Technical decisions and data contracts; [`PRESENTATION_MAP.md`](architecture/PRESENTATION_MAP.md) is the index of the 39 `AirsidePrototype` partial files. | current |
 | `decisions/` | ADRs; start at [`decisions/README.md`](decisions/README.md) (index, numbering rule, duplicates). | current + history |
 | `plans/` | Task packets and proposals for upcoming work; mark each `Status:` at the top. | current |
 | `art/` | Canonical art direction, manifest, prompts, references. | current |

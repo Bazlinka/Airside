@@ -43,5 +43,7 @@ jobs:
         run: bash scripts/test-p0-stages-chain.sh
       - name: P0 Mac CreateAgent launcher lock
         run: bash scripts/test-p0-mac-agent-launch.sh
+      - name: Tests compile against Unity's NUnit 3.5 without implicit usings
+        run: bash scripts/check-unity-nunit.sh
       - name: Domain, Simulation and Unity-free Presentation tests
         run: dotnet test scripts/dotnet-harness/Harness.csproj --nologo

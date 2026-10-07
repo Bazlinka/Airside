@@ -47,6 +47,7 @@ Airside/
     testing/                 Acceptance checks and fixtures
   scripts/
     test-unity.sh            Deterministic simulation checks (source of truth; needs a Mac Unity editor)
+    check-unity-nunit.sh     Compile-only check against Unity's NUnit 3.5, no implicit usings (CI + test-domain.sh; ADR 0252)
     test-domain.sh           Headless dotnet test mirror of the EditMode Domain/Simulation
                              tests, for machines without Unity — supplementary, not a replacement
     aircraft_skin.py         Shared skin-conforming doors/windows/panels and gear pods for the aircraft

@@ -192,15 +192,15 @@ def draw_text(image, command):
             lines[0] = lines[0][:-1]
     if wrap:
         lines = []
-        current = ""
-        for word in value.split(" "):
-            candidate = word if not current else current + " " + word
-            if text_width(draw, candidate, f, tracking) <= w or not current:
-                current = candidate
-            else:
-                lines.append(current)
-                current = word
-        if current:
+        for paragraph in value.split("\n"):
+            current = ""
+            for word in paragraph.split(" "):
+                candidate = word if not current else current + " " + word
+                if text_width(draw, candidate, f, tracking) <= w or not current:
+                    current = candidate
+                else:
+                    lines.append(current)
+                    current = word
             lines.append(current)
 
     line_height = size * 1.25

@@ -6,7 +6,7 @@ using Airside.Simulation;
 namespace Airside.Presentation
 {
     /// <summary>Which aircraft the Fleet roster lists by what they are doing (ADR 0239).</summary>
-    public enum FleetStatusFilter { All, Flying, Parked, Check }
+    public enum FleetStatusFilter { All, Flying, Parked, Check, Available }
 
     /// <summary>How the roster orders the aircraft inside each base.</summary>
     public enum FleetSortMode { Fleet, Status, Type, Earnings }
@@ -14,6 +14,14 @@ namespace Airside.Presentation
     /// <summary>Action ids owned by the unified Fleet workspace (ADR 0239).</summary>
     public static class FleetActions
     {
+        public const string ToggleDetails = "fleet:details";
+        public const string CancelRoute = "fleet:cancel-route";
+        public const string ConfirmCancel = "fleet:confirm-cancel";
+        public const string ToggleMarket = "fleet:market";
+        public const string Available = "fleet:available";
+        public const string All = "fleet:all";
+        public const string ConfirmRoute = "fleet:confirm-route";
+        public const string BackRoutes = "fleet:back-routes";
         public const string CycleStatus = "fleet:status";
         public const string CycleSort = "fleet:sort";
         public const string BasePrefix = "fleet:base:";
@@ -39,24 +47,31 @@ namespace Airside.Presentation
         /// <summary>A base code to list, or empty for every base. It is also where BUY delivers.</summary>
         public string BaseFilter { get; set; } = string.Empty;
 
+        public bool ShowDetails { get; set; }
+        public bool CancelReview { get; set; }
+        public bool ShowMarket { get; set; }
         public FleetStatusFilter Status { get; set; }
         public FleetSortMode Sort { get; set; }
 
         /// <summary>Which page of route rows an outstation aircraft shows.</summary>
         public int RoutePage { get; set; }
+        public string ReviewRoute { get; set; } = string.Empty;
 
         public void ToggleBase(string code)
         {
             BaseFilter = BaseFilter == code ? string.Empty : code;
             RoutePage = 0;
+            ReviewRoute = string.Empty;
+            CancelReview = false;
         }
 
-        public void CycleStatus() => Status = (FleetStatusFilter)(((int)Status + 1) % 4);
+        public void CycleStatus() => Status = (FleetStatusFilter)(((int)Status + 1) % 5);
 
         public void CycleSort() => Sort = (FleetSortMode)(((int)Sort + 1) % 4);
 
         public static string StatusLabel(FleetStatusFilter status) => status switch
         {
+            FleetStatusFilter.Available => "AVAILABLE",
             FleetStatusFilter.Flying => "FLYING",
             FleetStatusFilter.Parked => "PARKED",
             FleetStatusFilter.Check => "CHECKS",
@@ -79,6 +94,7 @@ namespace Airside.Presentation
                 return false;
             return Status switch
             {
+                FleetStatusFilter.Available => entry.Kind == PlayerFleetKind.Parked && !entry.CheckDue && !entry.InCheck,
                 FleetStatusFilter.Flying => entry.IsFlying,
                 FleetStatusFilter.Parked => entry.Kind == PlayerFleetKind.Parked || entry.Kind == PlayerFleetKind.Booked,
                 FleetStatusFilter.Check => entry.InCheck || entry.CheckDue,

@@ -139,6 +139,14 @@ namespace Airside.Presentation
         private readonly List<FleetRouteRow> _routes = new();
 
         public string Title => "FLEET";
+        public bool ShowMarket { get; private set; }
+        public bool ShowDetails { get; private set; }
+        public bool CanCancel { get; private set; }
+        public string ReviewCommitAction { get; private set; } = FleetActions.ConfirmRoute;
+        public int AvailableCount { get; private set; }
+        public string RouteReview { get; private set; } = string.Empty;
+        public string ReviewSummary { get; private set; } = string.Empty;
+        public bool CanConfirmRoute { get; private set; }
         public string Subtitle { get; private set; } = string.Empty;
 
         /// <summary>The player's aircraft that pass the board's filters, grouped by base and sorted.</summary>
@@ -238,6 +246,10 @@ namespace Airside.Presentation
             FleetBoardState board)
         {
             board ??= new FleetBoardState();
+            ShowMarket = board.ShowMarket;
+            ShowDetails = board.ShowDetails;
+            CanCancel = false;
+            ReviewCommitAction = FleetActions.ConfirmRoute;
             _mine.Clear();
             _mineSlots.Clear();
             _others.Clear();
@@ -284,6 +296,9 @@ namespace Airside.Presentation
             RouteBlockedNote = string.Empty;
             OpenHint = string.Empty;
             OwnedCount = 0;
+            AvailableCount = 0;
+            RouteReview = ReviewSummary = string.Empty;
+            CanConfirmRoute = false;
             BuyBase = "ADL";
             MarketCaption = "AIRCRAFT MARKET";
             StatusFilterLabel = FleetBoardState.StatusLabel(board.Status);
@@ -315,12 +330,22 @@ namespace Airside.Presentation
                     outstationCount++;
                 else
                     liveCount++;
-                if (entry.Registration == selectedRegistration)
+                if (entry.Kind == PlayerFleetKind.Parked && !entry.CheckDue && !entry.InCheck) AvailableCount++;
+                if (entry.Registration == selectedRegistration && board.Passes(entry))
                     selectedEntry = entry;
                 if (board.Passes(entry))
                     _shown.Add(entry);
             }
 
+            if ((board.BaseFilter.Length > 0 || board.Status != FleetStatusFilter.All)
+                && selectedLive?.Airline.IsPlayer == false) selectedLive = null;
+            // Selection must belong to the visible roster after changing airport/status.
+            if (selectedEntry == null && _shown.Count > 0 && selectedLive?.Airline.IsPlayer != false)
+                selectedEntry = _shown[0];
+            if (selectedLive?.Airline.IsPlayer == true)
+                selectedLive = selectedEntry?.Live;
+            else if (selectedLive == null)
+                selectedLive = selectedEntry?.Live;
             _shown.Sort(FleetEntryComparer.For(board.Sort));
             FillRoster(operations, now, clock, baseLevel);
 
@@ -328,7 +353,7 @@ namespace Airside.Presentation
             foreach (var _ in operations.FreeStands())
                 freeBays++;
             var playerBase = operations.CareerState.Base;
-            Subtitle = $"{liveCount} of {playerBase.FleetCapacity} aircraft"
+            Subtitle = $"{OwnedCount} owned · {AvailableCount} available · {liveCount} of {playerBase.FleetCapacity} at Adelaide"
                        + $"  ·  {Plural(freeBays, "regional stand")} free"
                        + $"  ·  {playerBase.Title}";
             if (outstationCount > 0)
@@ -378,10 +403,11 @@ namespace Airside.Presentation
             var status = FleetStatusText.For(entry, now, clock, baseLevel);
             var severity = FleetStatusText.SeverityFor(entry, now);
             if (entry.IsOutstation)
-                return new FleetRosterRow(entry.Registration, entry.Type.Name, status, entry.BaseCode, string.Empty,
+                return new FleetRosterRow(entry.Registration, entry.Type.Name, status, string.IsNullOrEmpty(entry.DestinationCode) ? entry.BaseCode : entry.DestinationCode, string.Empty,
                     liveryHex, severity, true, entry.BaseCode, true);
             var aircraft = entry.Live;
-            var stand = string.IsNullOrEmpty(aircraft.Stand.Value) ? "—" : AdelaideGround.StandLabel(aircraft.Stand);
+            var stand = aircraft.CurrentDestination?.Code ?? aircraft.Scheduled?.Destination.Code
+                ?? (string.IsNullOrEmpty(aircraft.Stand.Value) ? "ADL" : AdelaideGround.StandLabel(aircraft.Stand));
             return new FleetRosterRow(aircraft.Registration, aircraft.Type.Name, status, stand,
                 aircraft.Airline.Name, aircraft.Airline.LiveryHex, severity, true, entry.BaseCode, false);
         }
@@ -695,12 +721,14 @@ namespace Airside.Presentation
             SelectedTypeName = entry.Type.Name;
             SelectedIsPlayer = true;
             SelectedIsOutstation = true;
+            CanTrack = true;
+            CanCancel = entry.Kind == PlayerFleetKind.Booked;
             SelectedBaseCode = entry.BaseCode;
             SelectedThumbnail = FleetWorkspacePainter.Thumbnail(entry.Type);
             SelectedLiveryHex = operations.PlayerAirline?.LiveryHex ?? string.Empty;
             var baseName = FleetStatusText.NameOf(entry.BaseCode);
 
-            AddFact("operation/stand", $"Based at {baseName} · off the Adelaide map");
+            AddFact("operation/stand", $"Based at {baseName}");
             var ceiling = RouteAccess.Ceiling(entry.Type);
             var ceilingSuffix = ceiling == RouteBand.Regional ? "" : ", +closer";
             AddFact("operation/departure", $"Flies {RouteMapWorkspaceModel.BandLabel(ceiling).ToLowerInvariant()} routes "
@@ -795,6 +823,21 @@ namespace Airside.Presentation
                 RouteBlockedNote = "A check is due before its next flight.";
             else
                 FillRoutes(operations, entry, board);
+            if (board.CancelReview && aircraft.HasFlight)
+            {
+                RouteReview = "Cancel flight";
+                var refund = operations.DispatchCost(entry.Type, DestinationCatalogue.TryFind(entry.BaseCode, out var home)
+                    && DestinationCatalogue.TryFind(entry.DestinationCode, out var away) ? home.DistanceKmTo(away) : 0);
+                ReviewSummary = $"Cancel {entry.Registration}'s flight to {FleetStatusText.NameOf(entry.DestinationCode)}?\nDispatch refund ${refund:N0}. Repeat plans will be paused.";
+                if (operations.CareerState.ActiveContract is { } active
+                    && operations.CareerState.TryFindDefinition(active.DefinitionId, out var contract)
+                    && contract.MatchesAircraft(entry.Type, false) && contract.MatchesRoute(entry.BaseCode, entry.DestinationCode))
+                    ReviewSummary += $"\nContract cancellation costs {contract.ReliabilityLossOnCancel}% reliability.";
+                CanConfirmRoute = CanCancel;
+                ReviewCommitAction = FleetActions.ConfirmCancel;
+            }
+            else if (!string.IsNullOrEmpty(board.ReviewRoute))
+                FillRouteReview(operations, entry, board.ReviewRoute, now);
         }
 
         private void FillRoutes(AirlineOperations operations, PlayerFleetEntry entry, FleetBoardState board)
@@ -814,7 +857,7 @@ namespace Airside.Presentation
                 if (!entry.Type.CanReach(km) || !RouteAccess.Allows(entry.Type, destination))
                     continue;
                 var forecast = operations.Forecast(origin, destination, entry.Type);
-                var profit = forecast.Revenue - forecast.Cost;
+                var profit = FlightPlanner.ExpectedRevenue(operations, origin, destination, entry.Type) - forecast.Cost;
                 var repeats = false;
                 var paused = false;
                 foreach (var plan in operations.RepeatSchedules)
@@ -834,6 +877,19 @@ namespace Airside.Presentation
                 _routes.Add(item.Row);
             RoutePageCount = Math.Max(1, (_routes.Count + RoutesPerPage - 1) / RoutesPerPage);
             RoutePage = Math.Max(0, Math.Min(board.RoutePage, RoutePageCount - 1));
+        }
+
+        private void FillRouteReview(AirlineOperations operations, PlayerFleetEntry entry, string code, SimulationTime now)
+        {
+            if (!DestinationCatalogue.TryFind(entry.BaseCode, out var origin)
+                || !DestinationCatalogue.TryFind(code, out var destination)) return;
+            var cost = operations.DispatchCost(entry.Type, origin.DistanceKmTo(destination));
+            var pay = FlightPlanner.ExpectedRevenue(operations, origin, destination, entry.Type);
+            var profit = pay - cost;
+            RouteReview = destination.Name;
+            ReviewSummary = $"Pay now ${cost:N0} · expected return ${pay:N0}\nExpected profit {(profit >= 0 ? "+" : "−")}${Math.Abs(profit):N0}\nDeparture {operations.Clock.TimeText(now.Advance(1800))} · 30 min from confirmation";
+            CanConfirmRoute = _routes.Exists(r => r.Code == code) && operations.CareerState.Funds >= cost;
+            if (!CanConfirmRoute) ReviewSummary += "\n" + (RouteBlockedNote.Length > 0 ? RouteBlockedNote : "Route unavailable or insufficient funds.");
         }
 
         private static OperationsPrepCheck PrepCheck(string name, double progress, bool active)
@@ -866,7 +922,7 @@ namespace Airside.Presentation
         public const float BasesStripHeight = BasesCaptionHeight + 4f + BaseChipHeight;
 
         /// <summary>The bases strip needs this much body height; a short window drops it for the roster.</summary>
-        public const float BasesStripMinBodyHeight = 460f;
+        public const float BasesStripMinBodyHeight = 300f;
 
         private FleetWorkspaceLayout(HudBox surface, HudBox header, HudBox bases, HudBox roster, HudBox detail,
             HudBox market, HudBox divider, int marketRows)
@@ -932,7 +988,7 @@ namespace Airside.Presentation
             : new HudBox(Market.X + index * (Market.Width / MarketRows), Market.Y + MarketCaptionHeight + 6f,
                 Market.Width / MarketRows - 10f, MarketRowHeight);
 
-        public static FleetWorkspaceLayout Create(HudBox surface, int marketOffers)
+        public static FleetWorkspaceLayout Create(HudBox surface, int marketOffers, bool showMarket = true)
         {
             var header = HudShell.Header(surface);
             var wholeBody = HudShell.Body(surface, hasFooter: false);
@@ -944,11 +1000,11 @@ namespace Airside.Presentation
             var body = new HudBox(wholeBody.X, wholeBody.Y + stripHeight, wholeBody.Width,
                 wholeBody.Height - stripHeight);
 
-            var rows = marketOffers < 0 ? 0 : marketOffers > 3 ? 3 : marketOffers;
+            var rows = !showMarket || marketOffers < 0 ? 0 : marketOffers > 3 ? 3 : marketOffers;
             var marketHeight = rows == 0
                 ? 0f
                 : MarketCaptionHeight + 6f + MarketRowHeight + 8f;
-            if (marketHeight > body.Height * 0.45f)
+            if (marketHeight == 0f || marketHeight > body.Height * 0.45f)
             {
                 rows = 0;
                 marketHeight = 0f;
@@ -999,6 +1055,8 @@ namespace Airside.Presentation
                 layout.TitleBox, layout.SubtitleBox);
 
             PaintBases(into, model, layout);
+            into.Button(HudShellPainter.HeaderActionBox(layout.Surface), model.ShowMarket ? "HIDE MARKET" : "BUY AIRCRAFT",
+                FleetActions.ToggleMarket, HudButtonStyle.Secondary);
             PaintRoster(into, model, layout, selectedRegistration, scrollRow, showOtherOperators);
             if (!layout.Divider.IsEmpty)
                 into.Hairline(layout.Divider);
@@ -1058,25 +1116,26 @@ namespace Airside.Presentation
             FleetWorkspaceLayout layout, string selectedRegistration, int scrollRow, bool showOtherOperators)
         {
             var toolbar = layout.RosterToolbar;
-            if (toolbar.Width >= 285f)
-                into.Caption(new HudBox(toolbar.X, toolbar.Y + 8f, toolbar.Width - 175f, 18f), "YOUR AIRCRAFT");
-            if (model.Others.Count > 0)
-            {
-                var buttonWidth = toolbar.Width >= 285f ? 170f : toolbar.Width;
-                into.Button(new HudBox(toolbar.Right - buttonWidth, toolbar.Y, buttonWidth, 26f),
-                    showOtherOperators ? "HIDE OTHER AIRLINES" : $"OTHER AIRLINES · {model.Others.Count}",
-                    HudAction.ToggleOtherOperators, HudButtonStyle.Secondary);
-            }
-
+            var availableWidth = Math.Min(150f, toolbar.Width * .52f);
+            into.Button(new HudBox(toolbar.X, toolbar.Y, availableWidth, 26f), $"AVAILABLE · {model.AvailableCount}",
+                FleetActions.Available, HudButtonStyle.Secondary);
+            into.Button(new HudBox(toolbar.X + availableWidth + 6f, toolbar.Y, toolbar.Width - availableWidth - 6f, 26f),
+                "ALL BASES", FleetActions.All, HudButtonStyle.Secondary);
+            toolbar = HudBox.Empty;
             // Show and sort: two cycling buttons, so a long fleet is read the way the player asks for it.
             var filters = layout.RosterFilters;
             if (!filters.IsEmpty && layout.VisibleRosterRows > 0)
             {
-                var half = (filters.Width - 8f) * 0.5f;
-                into.Button(new HudBox(filters.X, filters.Y, half, 24f), "SHOW · " + model.StatusFilterLabel,
+                var trafficWidth = model.Others.Count > 0 ? Math.Min(86f, filters.Width * .3f) : 0f;
+                var filterWidth = filters.Width - (trafficWidth > 0 ? trafficWidth + 8f : 0);
+                var half = (filterWidth - 8f) * .5f;
+                into.Button(new HudBox(filters.X, filters.Y, half, 24f), model.StatusFilterLabel,
                     FleetActions.CycleStatus, HudButtonStyle.Secondary);
                 into.Button(new HudBox(filters.X + half + 8f, filters.Y, half, 24f), "SORT · " + model.SortLabel,
                     FleetActions.CycleSort, HudButtonStyle.Secondary);
+                if (trafficWidth > 0)
+                    into.Button(new HudBox(filters.Right - trafficWidth, filters.Y, trafficWidth, 24f), "TRAFFIC",
+                        HudAction.ToggleOtherOperators, showOtherOperators ? HudButtonStyle.Primary : HudButtonStyle.Secondary);
             }
 
             var index = 0;
@@ -1140,7 +1199,7 @@ namespace Airside.Presentation
             const float regWidth = 70f;
             // Status is the column worth reading; on a narrow roster the type gives way to it
             // rather than squeezing it to nothing.
-            var typeWidth = body.Width >= 290f ? 104f : 0f;
+            var typeWidth = 0f;
 
             into.Text(body.WithWidth(regWidth), row.Registration, 13f, HudTone.Default, HudTextStyle.Bold,
                 alpha: alpha);
@@ -1152,6 +1211,8 @@ namespace Airside.Presentation
             if (standWidth > 0f)
                 into.Text(new HudBox(box.Right - standWidth, box.Y + 7f, standWidth - 6f, 18f), row.Stand,
                     12f, HudTone.Muted, HudTextStyle.Regular, HudAlign.Right, alpha: alpha);
+            into.Text(new HudBox(box.X + 12f, box.Y + 29f, box.Width - 18f, 18f),
+                row.TypeName + " · " + FleetStatusText.NameOf(row.BaseCode) + " base", 11f, HudTone.Muted, alpha: alpha);
             into.Hotspot(box, HudAction.Select(row.Registration));
         }
 
@@ -1190,6 +1251,20 @@ namespace Airside.Presentation
                 into.Pill(new HudBox(pane.Right - chipWidth, top + 4f, chipWidth, 20f), model.SelectedBaseCode,
                     HudTone.Accent);
 
+            if (model.RouteReview.Length > 0)
+            {
+                into.Text(new HudBox(pane.X, top + 38f, pane.Width, 22f), "REVIEW · " + model.RouteReview, 15f, HudTone.Default, HudTextStyle.Bold);
+                var buttonY = pane.Bottom - 34f;
+                into.Text(new HudBox(pane.X, top + 68f, pane.Width, Math.Max(0, buttonY - top - 76f)),
+                    model.ReviewSummary + "\n\nEstimates can change with demand and reliability. Operating fees are calculated automatically.",
+                    13f, HudTone.Default, HudTextStyle.Wrap);
+                var reviewHalf = (pane.Width - 8f) / 2f;
+                into.Button(new HudBox(pane.X, buttonY, reviewHalf, 34f), "BACK", FleetActions.BackRoutes, HudButtonStyle.Secondary);
+                into.Button(new HudBox(pane.X + reviewHalf + 8f, buttonY, reviewHalf, 34f), model.ReviewCommitAction == FleetActions.ConfirmCancel ? "CANCEL FLIGHT" : "CONFIRM FLIGHT", model.ReviewCommitAction,
+                    HudButtonStyle.Primary, model.CanConfirmRoute);
+                return;
+            }
+
             if (!model.SelectedIsPlayer)
             {
                 var y0 = PaintFacts(into, model, pane, top + 38f, pane.Bottom - 90f);
@@ -1206,10 +1281,10 @@ namespace Airside.Presentation
             // Actions sit at the bottom of the pane in a fixed order of importance. A row that does not fit
             // is dropped, lowest priority first, rather than drawn over the text above it.
             var nowHeight = 68f + (model.SelectedPrep.Count > 0 ? 56f : 0f);
-            var minimumContent = (top - pane.Y) + 38f + 3f * 21f + nowHeight;
+            var minimumContent = (top - pane.Y) + 38f + 21f + nowHeight;
             var budget = pane.Height - minimumContent;
 
-            var showPrimary = model.PrimaryAction != AircraftHudAction.None || model.CanStartCheck || model.CanTrack;
+            var showPrimary = model.PrimaryAction != AircraftHudAction.None || model.CanStartCheck || model.CanTrack || model.CanCancel;
             var showSell = model.SellLabel.Length > 0 || model.HasMoveAction;
             var showRole = model.RoleLine.Length > 0 && !model.SelectedIsOutstation;
             var showCamera = model.Camera.Visible;
@@ -1218,6 +1293,11 @@ namespace Airside.Presentation
                 used += ActionPrimaryHeight + ActionGap;
             else
                 showPrimary = false;
+            if (showCamera && used + ActionRowHeight + ActionGap <= budget)
+                used += ActionRowHeight + ActionGap;
+            else
+                showCamera = false;
+
             if (showSell && used + ActionRowHeight + ActionGap <= budget)
                 used += ActionRowHeight + ActionGap;
             else
@@ -1226,13 +1306,10 @@ namespace Airside.Presentation
                 used += ActionRowHeight + ActionGap;
             else
                 showRole = false;
-            if (showCamera && used + ActionRowHeight + ActionGap <= budget)
-                used += ActionRowHeight + ActionGap;
-            else
-                showCamera = false;
-
             var actionTop = pane.Bottom - used;
-            var content = PaintFacts(into, model, pane, top + 38f, actionTop - nowHeight - 12f);
+            var factsLimit = model.ShowDetails ? actionTop - nowHeight - 12f
+                : Math.Min(top + 38f + 42f, actionTop - nowHeight - (model.SelectedIsOutstation ? 152f : 12f));
+            var content = PaintFacts(into, model, pane, top + 38f, factsLimit);
             content = PaintNow(into, model, pane, content + 6f);
 
             if (model.SelectedPrep.Count > 0)
@@ -1247,6 +1324,8 @@ namespace Airside.Presentation
                 if (model.PrimaryAction != AircraftHudAction.None)
                     into.Button(new HudBox(pane.X, y, half, ActionPrimaryHeight), model.PrimaryActionLabel,
                         HudAction.Primary, HudButtonStyle.Primary);
+                if (model.CanCancel)
+                    into.Button(new HudBox(pane.X, y, half, ActionPrimaryHeight), "CANCEL FLIGHT", FleetActions.CancelRoute, HudButtonStyle.Secondary);
                 if (model.CanStartCheck)
                 {
                     // Alone (an outstation aircraft has no primary action) the check takes the whole row.
@@ -1322,7 +1401,9 @@ namespace Airside.Presentation
         {
             into.Hairline(new HudBox(pane.X, y, pane.Width, 1f));
             y += 10f;
-            into.Caption(new HudBox(pane.X, y, pane.Width, 16f), "NOW");
+            into.Caption(new HudBox(pane.X, y, pane.Width - 90f, 16f), "NOW");
+            into.Button(new HudBox(pane.Right - 84f, y - 3f, 84f, 22f), model.ShowDetails ? "LESS DETAIL" : "DETAILS",
+                FleetActions.ToggleDetails, HudButtonStyle.Secondary);
             y += 18f;
             into.Text(new HudBox(pane.X, y, pane.Width, 20f), model.AssignmentLine, 14f, HudTone.Default,
                 HudTextStyle.Bold);
@@ -1377,7 +1458,7 @@ namespace Airside.Presentation
 
             into.Hairline(new HudBox(pane.X, y, pane.Width, 1f));
             y += 8f;
-            into.Caption(new HudBox(pane.X, y, pane.Width * 0.6f, 16f), "SEND ON A ROUTE");
+            into.Caption(new HudBox(pane.X, y, pane.Width * 0.6f, 16f), "EXPECTED PROFIT · BEST FIRST");
             if (model.RoutePageCount > 1 && pane.Width >= 300f)
             {
                 var pager = new HudBox(pane.Right - 110f, y - 4f, 110f, 22f);
@@ -1408,7 +1489,7 @@ namespace Airside.Presentation
                     route.Forecast, 12f, route.Profitable ? HudTone.Positive : HudTone.Caution, HudTextStyle.Regular,
                     HudAlign.Right);
                 var x = row.Right - buttonWidth;
-                into.Button(new HudBox(x, row.Y + 2f, buttonWidth, row.Height - 4f), "SEND",
+                into.Button(new HudBox(x, row.Y + 2f, buttonWidth, row.Height - 4f), "REVIEW",
                     FleetActions.Route(route.Code), HudButtonStyle.Primary);
                 if (repeatWidth > 0f)
                     into.Button(new HudBox(x - repeatWidth - 4f, row.Y + 2f, repeatWidth, row.Height - 4f),

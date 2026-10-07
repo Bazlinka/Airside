@@ -28,7 +28,9 @@ namespace Airside.Presentation
         private readonly List<AircraftType> _ownedTypes = new();
         private readonly HashSet<string> _careerTargets = new(StringComparer.Ordinal);
 
-        public string Title => "ROUTE MAP";
+        public string Title => "PLAN A FLIGHT";
+        public string ProfitLine { get; private set; } = string.Empty;
+        public HudTone ProfitTone { get; private set; } = HudTone.Positive;
         public RouteMapFilter Filter { get; private set; }
 
         /// <summary>Destinations this aircraft may operate today.</summary>
@@ -107,6 +109,7 @@ namespace Airside.Presentation
             BandAndDistance = string.Empty;
             CompatibilityLine = string.Empty;
             DispatchLine = string.Empty;
+            ProfitLine = string.Empty;
             ReturnLine = string.Empty;
             OperatingNote = string.Empty;
             AvailabilityLine = string.Empty;
@@ -143,15 +146,6 @@ namespace Airside.Presentation
             foreach (var row in _all)
                 if (operations.CareerRouteGuidance(row.Destination).Length > 0)
                     _careerTargets.Add(row.Destination.Code);
-            // Career targets head the list so a far one (an international goal) is never cut
-            // off below the fold; the rest keep their reach-then-distance order.
-            var targets = _shown.FindAll(row => _careerTargets.Contains(row.Destination.Code));
-            if (targets.Count > 0)
-            {
-                _shown.RemoveAll(row => _careerTargets.Contains(row.Destination.Code));
-                _shown.InsertRange(0, targets);
-            }
-
             AircraftLabel = aircraft == null
                 ? "No aircraft"
                 : FlightNumber.ForAircraft(aircraft) is { } flight
@@ -216,28 +210,28 @@ namespace Airside.Presentation
                 : 0;
             var changeCost = dispatch - alreadyPaid;
             var forecast = operations.Forecast(operations.Home, destination, aircraft);
-            var basePay = forecast.Revenue;
             BandAndDistance += $" · {forecast.LoadText}";
-            var pay = (long)Math.Round(basePay *
-                FlightEconomics.ReliabilityMultiplier(operations.CareerState.Reliability));
+            var pay = FlightPlanner.ExpectedRevenue(operations, operations.Home, destination, type, aircraft);
             var active = operations.CareerState.ActiveContract;
             if (active != null
                 && operations.CareerState.TryFindDefinition(active.DefinitionId, out var contract)
-                && contract.EligibleType == type
+                && contract.MatchesAircraft(type, aircraft.IsFreighter)
                 && contract.MatchesRoute(operations.Home.Code, destination.Code))
             {
                 var contractPay = contract.PaymentPerRotation;
                 if (active.CompletedRotations + 1 >= contract.RequiredRotations)
                     contractPay += contract.CompletionReward;
-                pay += contractPay;
+
                 OperatingNote = contract.ReliabilityLossOnCancel > 0
                     ? $"Contract +${contractPay:N0} · abandoning costs {contract.ReliabilityLossOnCancel} reliability"
                     : $"Contract +${contractPay:N0} on return";
             }
+            ProfitLine = $"Expected profit {(pay - dispatch >= 0 ? "+" : "−")}${Math.Abs(pay - dispatch):N0}";
+            ProfitTone = pay >= dispatch ? HudTone.Positive : HudTone.Caution;
             DispatchLine = alreadyPaid > 0
                 ? $"Change  {(changeCost >= 0 ? "+" : "−")}${Math.Abs(changeCost):N0}"
-                : $"Cost  ${dispatch:N0}";
-            ReturnLine = $"Pays about  ${pay:N0}  ·  profit {(pay - dispatch >= 0 ? "+" : "−")}${Math.Abs(pay - dispatch):N0}";
+                : $"Pay now ${dispatch:N0}";
+            ReturnLine = $"Expected return ${pay:N0}";
             if (Maintenance.IsDueSoon(aircraft))
             {
                 var checkNote = Maintenance.IsOverdue(aircraft)
@@ -458,7 +452,7 @@ namespace Airside.Presentation
                 return;
             }
 
-            if (pane.Height < 520f)
+            if (pane.Height < 620f)
             {
                 PaintCompactDetail(into, model, pane);
                 return;
@@ -475,10 +469,12 @@ namespace Airside.Presentation
             PaintFact(into, pane, ref y, "AIRCRAFT", model.CompatibilityLine, HudTone.Default);
             if (model.DispatchLine.Length > 0)
             {
-                PaintFact(into, pane, ref y, "OUTBOUND", model.DispatchLine, HudTone.Default);
-                PaintFact(into, pane, ref y, "RETURN", model.ReturnLine, HudTone.Positive);
+                PaintFact(into, pane, ref y, "PAY NOW", model.DispatchLine, HudTone.Default);
+                PaintFact(into, pane, ref y, "RETURN", model.ReturnLine, HudTone.Default);
             }
 
+            into.Text(new HudBox(pane.X, y, pane.Width, 24f), model.ProfitLine, 17f, model.ProfitTone, HudTextStyle.Bold);
+            y += 30f;
             into.Hairline(new HudBox(pane.X, y, pane.Width, 1f));
             y += 12f;
             into.Text(new HudBox(pane.X, y, pane.Width, 36f), model.AvailabilityLine, 13f,
@@ -534,11 +530,11 @@ namespace Airside.Presentation
                 into.Button(new HudBox(pane.X, buttonY + 50f, (pane.Width - 8f) * 0.5f, 30f),
                     model.RepeatLabel, HudAction.RepeatFlight, HudButtonStyle.Secondary);
                 into.Button(new HudBox(pane.X + (pane.Width + 8f) * 0.5f, buttonY + 50f,
-                    (pane.Width - 8f) * 0.5f, 30f), "RESET MAP", HudAction.ResetMap,
+                    (pane.Width - 8f) * 0.5f, 30f), "COMPARE ROUTES", HudAction.ResetMap,
                     HudButtonStyle.Secondary);
             }
             else
-                into.Button(new HudBox(pane.X, buttonY + 50f, pane.Width, 30f), "RESET MAP",
+                into.Button(new HudBox(pane.X, buttonY + 50f, pane.Width, 30f), "COMPARE ROUTES",
                     HudAction.ResetMap, HudButtonStyle.Secondary);
             if (!model.CanPlan && model.PlanBlockedReason.Length > 0)
                 into.Text(new HudBox(pane.X, buttonY - 34f, pane.Width, 32f), model.PlanBlockedReason, 11f,
@@ -561,11 +557,17 @@ namespace Airside.Presentation
                 into.Text(new HudBox(pane.X, y, pane.Width, height), text, 11f, tone, HudTextStyle.Wrap);
                 y += height + 2f;
             }
+            Line(model.ProfitLine, model.ProfitTone, 24f);
             Line(model.BandAndDistance, HudTone.Muted);
             Line(model.DispatchLine, HudTone.Default);
-            Line(model.ReturnLine, HudTone.Positive);
+            Line(model.ReturnLine, HudTone.Default);
             Line(model.AvailabilityLine, model.AvailabilityTone, 28f);
             Line(model.CareerLine, model.CareerTone, 28f);
+            if (model.CareerLine.Length > 0 && y + 28f <= controlsY - 8f)
+            {
+                into.Button(new HudBox(pane.X, y, Math.Min(pane.Width, 132f), 28f), "VIEW CONTRACTS",
+                    HudAction.ViewContracts, HudButtonStyle.Secondary);
+            }
             if (model.DepartureLabel.Length > 0)
             {
                 into.Button(new HudBox(pane.X, controlsY, pane.Width, 28f), model.AircraftLabel + "   ▾",
@@ -589,7 +591,7 @@ namespace Airside.Presentation
                 into.Button(reset.WithWidth(width), model.RepeatLabel, HudAction.RepeatFlight, HudButtonStyle.Secondary);
                 reset = new HudBox(pane.X + width + 8f, reset.Y, width, reset.Height);
             }
-            into.Button(reset, "RESET MAP", HudAction.ResetMap, HudButtonStyle.Secondary);
+            into.Button(reset, "COMPARE ROUTES", HudAction.ResetMap, HudButtonStyle.Secondary);
         }
 
         private static void PaintFact(HudDrawList into, HudBox pane, ref float y, string caption,
@@ -610,7 +612,7 @@ namespace Airside.Presentation
                 HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
             into.Text(new HudBox(pane.X, pane.Y + 28f, pane.Width, 18f),
                 model.HasAircraft
-                    ? "Pick a dot on the map, or a destination here."
+                    ? "Expected profit per round trip · best first."
                     : "Choose an aircraft to see what it can fly.", 12f, HudTone.Muted);
 
             var y = pane.Y + 54f;
@@ -629,10 +631,10 @@ namespace Airside.Presentation
                     careerTarget ? $"CAREER TARGET · {row.Destination.Region}" : row.Destination.Region,
                     11f, careerTarget ? HudTone.Caution : HudTone.Muted,
                     careerTarget ? HudTextStyle.Bold : HudTextStyle.Regular);
-                into.Text(new HudBox(box.Right - 96f, box.Y, 96f, 17f), $"{row.DistanceKm:0} km", 12f,
-                    HudTone.Muted, HudTextStyle.Regular, HudAlign.Right);
+                into.Text(new HudBox(box.Right - 96f, box.Y, 96f, 17f), $"{(row.Profit >= 0 ? "+" : "−")}${Math.Abs(row.Profit):N0}", 12f,
+                    row.Reachable && row.Profit >= 0 ? HudTone.Positive : HudTone.Muted, HudTextStyle.Regular, HudAlign.Right);
                 into.Text(new HudBox(box.Right - 96f, box.Y + 16f, 96f, 15f),
-                    row.Reachable ? RouteMapWorkspaceModel.Duration(row.AirborneSeconds) : "locked", 11f,
+                    row.Reachable ? RouteMapWorkspaceModel.Duration(row.AirborneSeconds * 2 + AirlineOperations.DestinationTurnaroundSeconds) : "locked", 11f,
                     row.Reachable ? HudTone.Positive : HudTone.Muted, HudTextStyle.Regular, HudAlign.Right);
                 into.Hotspot(box, HudAction.Destination(row.Destination.Code));
                 y += 34f;

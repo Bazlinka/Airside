@@ -1,5 +1,8 @@
 # ADR 0239 — one fleet across every base, with a ferry between them
 
+Amended by [2026-10-07 fleet and flight clarity](2026-10-07-fleet-flight-clarity.md):
+airborne network services now have read-only 3D views and pending services can be cancelled; the unified fleet and ferry contracts remain in force.
+
 Date: 2026-10-06. Status: implemented in code; compile, headless and native checks not run.
 
 Bailey asked for better ways to manage and view aircraft, after buying aircraft at

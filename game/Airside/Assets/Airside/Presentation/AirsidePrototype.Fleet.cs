@@ -34,6 +34,8 @@ namespace Airside.Presentation
             {
                 _selectedAircraftId = registration;
                 _fleetBoard.RoutePage = 0;
+                _fleetBoard.ReviewRoute = string.Empty;
+                _fleetBoard.CancelReview = false;
                 _sellArmedRegistration = null;
                 PlayUiClick();
                 return;
@@ -43,6 +45,7 @@ namespace Airside.Presentation
             if (baseCode.Length > 0)
             {
                 _fleetBoard.ToggleBase(baseCode);
+                _fleetBoard.Status = FleetStatusFilter.All;
                 _rosterScrollRow = 0;
                 _fleetMarketStart = 0;
                 PlayUiClick();
@@ -59,7 +62,8 @@ namespace Airside.Presentation
             var routeCode = HudAction.Payload(action, FleetActions.RoutePrefix);
             if (routeCode.Length > 0)
             {
-                SendOutstationAircraft(routeCode);
+                _fleetBoard.ReviewRoute = routeCode;
+                PlayUiClick();
                 return;
             }
 
@@ -72,6 +76,61 @@ namespace Airside.Presentation
 
             switch (action)
             {
+                case HudAction.Track:
+                    if (_fleetWorkspace.SelectedIsOutstation)
+                    {
+                        _mapNetworkTrackId = _selectedAircraftId;
+                        _mapTrackId = null;
+                        _mapFlightInspectorId = null;
+                        _activeWorkspace = HudWorkspace.Map;
+                        _mapSelection = null;
+                        _mapLens.SetZoom(2f);
+                        PlayUiClick();
+                        return;
+                    }
+                    break;
+                case FleetActions.ToggleDetails:
+                    _fleetBoard.ShowDetails = !_fleetBoard.ShowDetails;
+                    PlayUiClick();
+                    return;
+                case FleetActions.CancelRoute:
+                    _fleetBoard.CancelReview = true;
+                    PlayUiClick();
+                    return;
+                case FleetActions.ConfirmCancel:
+                {
+                    var result = _operations.CancelOutstationService(_selectedAircraftId);
+                    ShowToast(result.Accepted ? "Flight cancelled. Dispatch cost refunded; repeat plan paused." : result.Reason);
+                    _fleetBoard.CancelReview = false;
+                    if (result.Accepted) SaveAirline();
+                    PlayUiClick();
+                    return;
+                }
+                case FleetActions.ToggleMarket:
+                    _fleetBoard.ShowMarket = !_fleetBoard.ShowMarket;
+                    PlayUiClick();
+                    return;
+                case FleetActions.Available:
+                    _fleetBoard.Status = FleetStatusFilter.Available;
+                    _fleetBoard.BaseFilter = string.Empty;
+                    _rosterScrollRow = 0;
+                    PlayUiClick();
+                    return;
+                case FleetActions.All:
+                    _fleetBoard.Status = FleetStatusFilter.All;
+                    _fleetBoard.BaseFilter = string.Empty;
+                    _rosterScrollRow = 0;
+                    PlayUiClick();
+                    return;
+                case FleetActions.BackRoutes:
+                    _fleetBoard.CancelReview = false;
+                    _fleetBoard.ReviewRoute = string.Empty;
+                    PlayUiClick();
+                    return;
+                case FleetActions.ConfirmRoute:
+                    if (_fleetWorkspace.CanConfirmRoute) SendOutstationAircraft(_fleetBoard.ReviewRoute);
+                    _fleetBoard.ReviewRoute = string.Empty;
+                    return;
                 case FleetActions.CycleStatus:
                     _fleetBoard.CycleStatus();
                     _rosterScrollRow = 0;
@@ -128,7 +187,17 @@ namespace Airside.Presentation
         {
             var camera = _fleetWorkspace.Camera;
             camera.Clear();
-            if (_fleetWorkspace.SelectedIsOutstation || !_fleetWorkspace.SelectedIsPlayer
+            if (_fleetWorkspace.SelectedIsOutstation)
+            {
+                var entry = Airside.Simulation.PlayerFleet.Find(_operations, _clock.Now, _fleetWorkspace.SelectedRegistration);
+                camera.Visible = true;
+                var airborne = entry != null && OutstationJourney.TryFor(entry.Outstation, _clock.Now, out var journey) && journey.Airborne;
+                camera.Exterior = camera.Cockpit = airborne;
+                camera.Window = airborne && PassengerCabinProfile.TryFor(entry.Type.Id, out _);
+                camera.Hint = airborne ? "Network flight view" : "Flight views open when airborne";
+                return;
+            }
+            if (!_fleetWorkspace.SelectedIsPlayer
                 || !TryFindFleetAircraft(_fleetWorkspace.SelectedRegistration, out var aircraft))
                 return;
             camera.Visible = true;
@@ -140,6 +209,13 @@ namespace Airside.Presentation
 
         private void EnterViewFromFleet(string action)
         {
+            var entry = Airside.Simulation.PlayerFleet.Find(_operations, _clock.Now, _selectedAircraftId);
+            if (entry?.IsOutstation == true)
+            {
+                EnterOutstationView(entry.Outstation, action == HudAction.CameraCockpit ? AircraftViewMode.Cockpit
+                    : action == HudAction.CameraPassenger ? AircraftViewMode.LeftWindow : AircraftViewMode.Exterior);
+                return;
+            }
             if (!TryFindFleetAircraft(_selectedAircraftId, out var aircraft))
                 return;
             var mode = action == HudAction.CameraCockpit ? AircraftViewMode.Cockpit

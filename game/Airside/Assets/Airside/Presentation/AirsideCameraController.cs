@@ -905,7 +905,7 @@ namespace Airside.Presentation
         /// orbit limit; a real hit further out (zoomed out, cursor on the far side of the city)
         /// must still count or zoom aims at the ground under the camera instead.
         /// </summary>
-        private const float GroundRayReachMetres = 400_000f;
+        private const float GroundRayReachMetres = 1_500_000f;
 
         private void ClampPanCentre(float keepMetres = 0f)
         {

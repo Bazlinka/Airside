@@ -75,6 +75,15 @@ namespace Airside.Presentation
                 _flightTerrain.gameObject.SetActive(true);
                 _flightTerrain.Tick(x,z,ox,oz);
             }
+            else if(!InCockpit && _cameraController!=null && FlightWorldGrid.WideMap(AirsideCameraController.CurrentDistance))
+            {
+                // ADR 0251: zoomed past the classic limit, the overview camera streams the state under its focus.
+                // No floating origin here: outside the cockpit the render origin is the world origin.
+                if(_flightTerrain==null) _flightTerrain=AirsideFlightWorldTerrain.Create();
+                _flightTerrain.gameObject.SetActive(true);
+                var focus=_cameraController.FocusPoint;
+                _flightTerrain.Tick(focus.x,focus.z,0,0,true);
+            }
             else if(_flightTerrain!=null) _flightTerrain.gameObject.SetActive(false);
         }
         private void ResetFlightWorld()

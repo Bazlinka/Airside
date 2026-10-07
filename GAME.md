@@ -12,18 +12,17 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 **Latest merged work (7 Oct):** far-terrain satellite → land-cover hand-over at 30 km and the white "cloud" fix on
 the outer terrain (Cursor); selected-aircraft panel only on selection; save-load fix for blank `JsonUtility`
 records (v22 saves failed to load); render cost trim (ADR 0246), far terrain at full 125 m DEM (ADR 0247) and a
-4096 px far satellite (ADR 0248) (Claude).
+4096 px far satellite (ADR 0248), repo tidy (ADR 0249) and state-wide land-cover colours (ADR 0250) (Claude).
 
-**Next approved work:** drag/zoom the overview across all of South Australia, streaming `AirsideFlightWorldTerrain`
-tiles in as you pan (Bailey approved). **Increment 1 done (ADR 0250, branch `claude/brave-babbage-ybgffc`):** state-wide
-land cover (`landcover_south_australia_v01.bin`, 123 KB, ESA WorldCover, no imagery) now colours the streamed tiles.
-**Increment 2 (needs Unity to verify):** unlock the overview pan leash when zoomed far out, tick the tiles from the camera, add a
-coarse outer tile ring for wide views — packet `docs/plans/south-australia-overview-streaming.md`.
+**Next approved work:** none queued by Bailey beyond verification. **Done in code, unverified (ADR 0250/0251):** state-wide land-cover
+colours on the streamed terrain, and the wide overview — zoom to 450 km, and past 60 km the overview camera streams a fine 16 km ring plus
+a coarse 64 km ring (121 tiles, 2 km cells) so the state can be dragged under the camera. Packet: `docs/plans/south-australia-overview-streaming.md`.
 
 **Open — needs the Mac (nothing below is verified in Unity):**
-- ADR 0246/0247/0248/0250 (SSAO half-res, MSAA budget, 3 shadow cascades/110 m, full-DEM far mesh, 4096 px far image, state-wide land-cover colours on the flight tiles):
+- ADR 0246/0247/0248/0250/0251 (SSAO half-res, MSAA budget, 3 shadow cascades/110 m, full-DEM far mesh, 4096 px far image, state-wide land-cover colours, zoom to 450 km with coarse-ring streaming):
   compare day/dusk/night for AO banding, shimmer and shadow pop-in; check the seam where the near satellite ends,
-  startup-to-title time and memory (far image decodes to ~64 MB). Each is a one-line revert (see the ADRs).
+  startup-to-title time and memory (far image decodes to ~64 MB); at 100–450 km zoom check coastline blockiness, the 40 m join between
+  coarse and fine tiles, sky/stars/sun at a 1,170 km far clip, depth precision and frame time while tiles stream. Each is a one-line revert (see the ADRs).
 - **24 native EditMode failures** on `main` (Unity 2265 passed / 24 failed): `PassengerFlightViewTests`
   (window sightlines, all 13 types + two exterior cases), `PresentationLayoutTests` (HUD layout ×4),
   `FieldMiniMapTests.PanelFor_ShowsOnTheDesktopWindow`, `AirsideSettingsTests.Defaults_MatchAPlayableAdelaideSession`,

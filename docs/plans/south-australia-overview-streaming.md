@@ -1,6 +1,6 @@
 # Task packet — pan and zoom the overview across all of South Australia
 
-Status: **proposed; the land-cover data and tile colouring are done (ADR 0250); the camera/streaming work below needs Unity to verify.**
+Status: **implemented in code (ADR 0250 data/colour, ADR 0251 zoom + streaming); native verification still open.** Correction found on reading the camera code: the pan leash already scales with distance (0.9 × distance), so the real limiter was the 45 km zoom-out limit, not the leash — step 1 below became "raise the zoom limit".
 Drafted 2026-10-07 by Claude. Approved by Bailey as the next far-map step ("drag/zoom the overview across all of South Australia,
 streaming `AirsideFlightWorldTerrain` tiles in as you pan, coloured by real land cover, no new satellite imagery").
 

@@ -10,6 +10,29 @@ namespace Airside.Tests
     {
         [TestCase(-1,-1)] [TestCase(0,0)] [TestCase(15999,0)] [TestCase(16000,1)]
         public void TileUsesFloorAcrossBothSides(double metres,int expected) => Assert.That(FlightWorldGrid.Tile(metres),Is.EqualTo(expected));
+        [TestCase(-1,-1)] [TestCase(0,0)] [TestCase(63999,0)] [TestCase(64000,1)] [TestCase(-64001,-2)]
+        public void CoarseTileUsesFloorAcrossBothSides(double metres,int expected) => Assert.That(FlightWorldGrid.CoarseTile(metres),Is.EqualTo(expected));
+        [Test] public void CoarseRingIsBoundedAndCoversTheWholeStateFromAdelaide()
+        {
+            Assert.That(FlightWorldGrid.CoarseMaxTiles,Is.EqualTo(121));
+            var resident=0;
+            for(var x=-20;x<=20;x++) for(var z=-20;z<=20;z++) if(FlightWorldGrid.CoarseResident(x,z,0,0)) resident++;
+            Assert.That(resident,Is.EqualTo(FlightWorldGrid.CoarseMaxTiles));
+            Assert.That(FlightWorldGrid.CoarseResident(5,-5,0,0),Is.True);
+            Assert.That(FlightWorldGrid.CoarseResident(6,0,0,0),Is.False);
+            Assert.That(FlightWorldGrid.CoarseResident(int.MaxValue,0,int.MinValue,0),Is.False,"no overflow");
+            // The ring must reach well past the 96 km Adelaide rings and the fine ring's 56 km.
+            Assert.That((FlightWorldGrid.CoarseRadiusTiles+0.0)*FlightWorldGrid.CoarseTileMetres,Is.GreaterThan(300000));
+            Assert.That(FlightWorldGrid.CoarseTileMetres/FlightWorldGrid.CoarseCells,Is.LessThanOrEqualTo(2000),"~2 km cells match the DEM");
+        }
+        [Test] public void WideMapStartsOnlyBeyondTheClassicZoom()
+        {
+            Assert.That(FlightWorldGrid.WideMap(AirsideBareField.ClassicMaxOrbitDistance),Is.False);
+            Assert.That(FlightWorldGrid.WideMap(45000),Is.False,"the old zoom limit never streams");
+            Assert.That(FlightWorldGrid.WideMap(60000),Is.False);
+            Assert.That(FlightWorldGrid.WideMap(60001),Is.True);
+            Assert.That(FlightWorldGrid.WideMap(AirsideBareField.MaxOrbitDistance),Is.True);
+        }
         [Test] public void RunwayTerrainCellsStayFlatAcrossTheCoarseMesh()
         {
             var stride=FlightWorldGrid.TileMetres/FlightWorldGrid.Cells;

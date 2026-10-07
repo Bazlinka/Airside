@@ -48,7 +48,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void DestinationsFor_ListsReachableFirstNearestFirst()
+        public void DestinationsFor_ListsReachableFirstBestProfitFirst()
         {
             var (_, ops, fleet) = PlayerFleet(1);
             var list = FlightPlanner.DestinationsFor(ops, fleet[0]);
@@ -62,7 +62,7 @@ namespace Airside.Tests
             var reachable = list.Where(d => d.Reachable).ToList();
             Assert.That(reachable, Is.Not.Empty);
             for (var i = 1; i < reachable.Count; i++)
-                Assert.That(reachable[i].DistanceKm, Is.GreaterThanOrEqualTo(reachable[i - 1].DistanceKm));
+                Assert.That(reachable[i].Profit, Is.LessThanOrEqualTo(reachable[i - 1].Profit));
             Assert.That(reachable.All(d => d.AirborneSeconds > 0), Is.True);
         }
 

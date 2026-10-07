@@ -17,3 +17,7 @@ the camera, so the zoomed-out overview looked straight down on full-strength haz
 the 30 to 96 km ring read as white cloud. It now starts at the 30 km satellite-disc
 edge (no seam), runs to 96 km and is capped at 0.3 (`MaxStrength`). Ground-level views
 are unaffected: the shader's camera-distance fade already hazes that ring.
+
+**Superseded 2026-10-07 (Cursor):** removed. With the state-wide streamed terrain (ADR 0251) un-hazed, the
+baked haze on the Adelaide outer ring showed as a pale square from the wide overview. The shader's camera-distance
+fade covers ground views.

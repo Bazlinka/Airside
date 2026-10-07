@@ -88,8 +88,9 @@ namespace Airside.Tests
             var dispatch = FlightEconomics.DispatchCost(plane.Type, km);
             var pay = RouteForecast.For(ops.Home, kingscote, plane.Type).Revenue;
             Assert.That(model.DispatchLine,
-                Is.EqualTo($"Cost  ${dispatch:N0}"));
-            Assert.That(model.ReturnLine, Is.EqualTo($"Pays about  ${pay:N0}  ·  profit +${pay - dispatch:N0}"));
+                Is.EqualTo($"Pay now ${dispatch:N0}"));
+            Assert.That(model.ReturnLine, Is.EqualTo($"Expected return ${pay:N0}"));
+            Assert.That(model.ProfitLine, Is.EqualTo($"Expected profit +${pay - dispatch:N0}"));
             Assert.That(model.CompatibilityLine, Is.EqualTo("Saab 340B can fly this"));
             Assert.That(model.AvailabilityLine, Is.EqualTo("Regional route. You can fly it"));
             Assert.That(model.CanPlan, Is.True);

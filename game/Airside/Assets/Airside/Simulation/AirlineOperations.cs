@@ -669,6 +669,8 @@ namespace Airside.Simulation
                 }
                 if (aircraft.State is FleetState.HoldingShort or FleetState.HoldingForLanding)
                     runwayWanted = true;
+                if (aircraft.State == FleetState.HoldingForLanding)
+                    Consider(new SimulationTime(ApproachRules.DecisionPointAt(aircraft.StateStartedAt.ElapsedSeconds)));
                 // Waiting at the exit with a stand to go to: the taxi-in may be held for traffic.
                 // Player aircraft first get a fixed decision window to pick a stand themselves.
                 if (aircraft.State == FleetState.AwaitingStand)
@@ -1236,6 +1238,12 @@ namespace Airside.Simulation
                     // it in flow control and recheck at a useful interval instead.
                     if (aircraft.Type.IsRotorcraft)
                         return ArriveRotorcraft(aircraft, now);
+                    // Metered in the circuit until its landing is near, never stacked on short final.
+                    if (FinalJoinTime(aircraft, now) is { } joinAt)
+                    {
+                        aircraft.ExtendUntil(joinAt);
+                        return false;
+                    }
                     var arrivalStand = SuggestStand(aircraft);
                     if (!aircraft.Airline.IsPlayer && arrivalStand == null)
                     {

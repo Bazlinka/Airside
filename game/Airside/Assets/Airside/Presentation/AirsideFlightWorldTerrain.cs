@@ -43,8 +43,8 @@ namespace Airside.Presentation
             result._material = new Material(shader) { name = "mat_sa_flight_terrain" };
             result._material.SetFloat("_SatelliteNearStrength",0f);
             result._material.SetFloat("_SatelliteFarStrength",0f);
-            result._material.SetFloat("_HorizonFadeStart",40000f);
-            result._material.SetFloat("_HorizonFadeEnd",55000f);
+            result._material.SetFloat("_HorizonFadeStart",CockpitFadeStartMetres);
+            result._material.SetFloat("_HorizonFadeEnd",CockpitFadeEndMetres);
             foreach(var runway in RegionalRunways.All)
             {
                 var go=new GameObject("Regional runway "+runway.Code);go.transform.SetParent(result.transform,false);
@@ -62,16 +62,34 @@ namespace Airside.Presentation
             }
             return result;
         }
-        public void Tick(double worldX, double worldZ, double originX, double originZ, bool wide = false)
+        public const float CockpitFadeStartMetres = 40000f, CockpitFadeEndMetres = 55000f;
+        private float _fadeStart = CockpitFadeStartMetres, _fadeEnd = CockpitFadeEndMetres;
+        private readonly System.Diagnostics.Stopwatch _buildClock = new();
+        /// <summary>Slowest single tile build so far, in milliseconds (the soak log reports it).</summary>
+        public double SlowestBuildMs { get; private set; }
+        /// <summary>
+        /// The horizon fade (metres before <c>_AirsideHorizonScale</c>). The wide overview pulls it in so the terrain
+        /// dissolves into the sky before its streamed ring ends, instead of stopping at a hard edge.
+        /// </summary>
+        public void SetHorizonFade(float start, float end)
         {
+            if (Math.Abs(start - _fadeStart) < 1f && Math.Abs(end - _fadeEnd) < 1f) return;
+            _fadeStart = start; _fadeEnd = end;
+            _material.SetFloat("_HorizonFadeStart", start);
+            _material.SetFloat("_HorizonFadeEnd", end);
+        }
+        public void Tick(double worldX, double worldZ, double originX, double originZ, bool wide = false,
+            int coarseRadius = FlightWorldGrid.CoarseRadiusTiles)
+        {
+            if (!wide) SetHorizonFade(CockpitFadeStartMetres, CockpitFadeEndMetres);
             _originX = originX; _originZ = originZ;
             foreach(var strip in _runways)
                 strip.view.position=new Vector3((float)((strip.runway.Ax+strip.runway.Bx)/2-originX),
                     (float)(strip.runway.Elevation+AirsideFlightPath.GroundY+.02),(float)((strip.runway.Az+strip.runway.Bz)/2-originZ));
             var cx = FlightWorldGrid.Tile(worldX); var cz = FlightWorldGrid.Tile(worldZ);
             var ccx = FlightWorldGrid.CoarseTile(worldX); var ccz = FlightWorldGrid.CoarseTile(worldZ);
-            Retire(_tiles, cx, cz, false, true);
-            Retire(_coarse, ccx, ccz, true, wide);
+            Retire(_tiles, cx, cz, false, true, 0);
+            Retire(_coarse, ccx, ccz, true, wide, coarseRadius);
             // Fill nearest first, bounded work. Existing tiles stay visible throughout travel.
             for (var ring = 0; ring <= FlightWorldGrid.RadiusTiles; ring++)
             for (var dz = -ring; dz <= ring; dz++)
@@ -86,7 +104,7 @@ namespace Airside.Presentation
             }
             if (!wide) return;
             // One build per frame in total: the coarse ring only fills once the fine ring is complete.
-            for (var ring = 0; ring <= FlightWorldGrid.CoarseRadiusTiles; ring++)
+            for (var ring = 0; ring <= coarseRadius; ring++)
             for (var dz = -ring; dz <= ring; dz++)
             for (var dx = -ring; dx <= ring; dx++)
             {
@@ -99,13 +117,13 @@ namespace Airside.Presentation
             }
         }
         /// <summary>Re-seats resident tiles for the current origin and destroys those that left the ring (all of them when not kept).</summary>
-        private void Retire(Dictionary<(int x, int z), GameObject> tiles, int cx, int cz, bool coarse, bool keep)
+        private void Retire(Dictionary<(int x, int z), GameObject> tiles, int cx, int cz, bool coarse, bool keep, int coarseRadius)
         {
             _drop.Clear();
             var size = coarse ? FlightWorldGrid.CoarseTileMetres : FlightWorldGrid.TileMetres;
             foreach (var pair in tiles)
             {
-                var resident = keep && (coarse ? FlightWorldGrid.CoarseResident(pair.Key.x,pair.Key.z,cx,cz)
+                var resident = keep && (coarse ? FlightWorldGrid.CoarseResident(pair.Key.x,pair.Key.z,cx,cz,coarseRadius)
                     : FlightWorldGrid.Resident(pair.Key.x,pair.Key.z,cx,cz));
                 if (!resident) _drop.Add(pair.Key);
                 else Position(pair.Key, pair.Value.transform, size);
@@ -121,6 +139,18 @@ namespace Airside.Presentation
             new Vector3((float)(key.x*(double)tileMetres-_originX),0,
                         (float)(key.z*(double)tileMetres-_originZ));
         private GameObject Build(int tx, int tz, bool coarse)
+        {
+            _buildClock.Restart();
+            var go = BuildTile(tx, tz, coarse);
+            var ms = _buildClock.Elapsed.TotalMilliseconds;
+            if (ms > SlowestBuildMs)
+            {
+                SlowestBuildMs = ms;
+                if (ms > 50) Debug.Log($"[Airside terrain] slowest tile so far {ms:F0} ms ({(coarse ? "coarse" : "fine")} {tx},{tz})");
+            }
+            return go;
+        }
+        private GameObject BuildTile(int tx, int tz, bool coarse)
         {
             var tileMetres = coarse ? FlightWorldGrid.CoarseTileMetres : FlightWorldGrid.TileMetres;
             var cells = coarse ? FlightWorldGrid.CoarseCells : FlightWorldGrid.Cells;
@@ -144,11 +174,9 @@ namespace Airside.Presentation
                 // The original detailed meshes own Adelaide. This landscape tucks under them.
                 if (Math.Abs(wx)<=96000 && Math.Abs(wz)<=96000) y-=12;
                 vertices[z*n+x]=new Vector3(x*stride,(float)y,z*stride);
-                if (land && _cover != null && _cover.TryCell(lat,lon,out var cx,out var cz) && _cover.TryClass(lat,lon,out var cls))
+                if (land && _cover != null && CoverColour(lat,lon,coarse,out var coverColour))
                 {
-                    // Real land cover, in the palette the Adelaide rings use so the two meet without a step.
-                    var alpha=AdelaideOuterTerrainGeometry.LandCoverColour(cls,cx,cz,0f,_seaLinear,_tint);
-                    colors[z*n+x]=new Color(_tint[0],_tint[1],_tint[2],alpha);
+                    colors[z*n+x]=coverColour;
                     continue;
                 }
                 var color=land ? Color.Lerp(new Color(.54f,.53f,.34f),new Color(.35f,.40f,.28f),(float)Math.Min(1,height/800))
@@ -173,6 +201,37 @@ namespace Airside.Presentation
             var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=_material;
             renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;
             return go;
+        }
+        /// <summary>
+        /// Real land cover, in the palette the Adelaide rings use so the two meet without a step. A vertex stands for a
+        /// whole 1 or 2 km cell, so it takes the mean colour of the land cells round it: one point sample per vertex
+        /// read as dark-green and straw speckle from the overview. Water neighbours are left out so coasts stay land-coloured.
+        /// </summary>
+        private bool CoverColour(double lat, double lon, bool coarse, out Color colour)
+        {
+            colour = default;
+            var reach = coarse ? 1.0 : 0.5;
+            float r = 0f, g = 0f, b = 0f; var count = 0;
+            for (var dz = -1; dz <= 1; dz++)
+            for (var dx = -1; dx <= 1; dx++)
+            {
+                var sLat = lat + dz * reach * _cover.StepDegrees;
+                var sLon = lon + dx * reach * _cover.StepDegrees;
+                if (!_cover.TryClass(sLat, sLon, out var cls) || cls == AdelaideFarLandCover.Water) continue;
+                if (!_cover.TryCell(sLat, sLon, out var cx, out var cz)) continue;
+                // Cells are ~1 km; the palette's paddocks and variation are sized for 250 m cells.
+                AdelaideOuterTerrainGeometry.LandCoverColour(cls, cx * 4, cz * 4, 0f, _seaLinear, _tint);
+                r += _tint[0]; g += _tint[1]; b += _tint[2]; count++;
+            }
+            if (count > 0)
+            {
+                colour = new Color(r / count, g / count, b / count, 0f);
+                return true;
+            }
+            if (!_cover.TryCell(lat, lon, out var wx, out var wz) || !_cover.TryClass(lat, lon, out var centre)) return false;
+            var alpha = AdelaideOuterTerrainGeometry.LandCoverColour(centre, wx * 4, wz * 4, 0f, _seaLinear, _tint);
+            colour = new Color(_tint[0], _tint[1], _tint[2], alpha);
+            return true;
         }
         private void OnDestroy()
         {

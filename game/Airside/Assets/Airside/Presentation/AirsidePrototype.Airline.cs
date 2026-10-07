@@ -234,6 +234,7 @@ namespace Airside.Presentation
                 return;
             }
 
+            if (WatchingOutstation) { _hudPanels.Add(OutstationHudRect()); return; }
             var overview = _activeWorkspace == HudWorkspace.None && !_devToolsOpen;
 
             // A first click on a contract card arms it, the second commits (AcceptContractFromHud)
@@ -1582,18 +1583,6 @@ namespace Airside.Presentation
                 TryFollowFleetAircraft(chosen.Registration);
             }
             SetPlanningAircraft(chosen, force: true);
-            if (!_mapSelection.HasValue && chosen != null)
-            {
-                // Start the desk with one real, operable dossier instead of an empty
-                // instruction pane. The player can still clear or choose any map point.
-                foreach (var destination in _operations.MapDestinations())
-                {
-                    if (!_operations.CanOperate(chosen, destination))
-                        continue;
-                    _mapSelection = destination;
-                    break;
-                }
-            }
             PlayUiClick();
         }
 
@@ -1766,6 +1755,14 @@ namespace Airside.Presentation
             {
                 _mapLens.ShowSouthAustralia(mapRect.width, mapRect.height);
                 _mapSaScopeRequested = false;
+            }
+            if (!string.IsNullOrEmpty(_mapNetworkTrackId) && !_mapPanning)
+            {
+                var network = Airside.Simulation.PlayerFleet.Find(_operations, _clock.Now, _mapNetworkTrackId);
+                if (network?.IsOutstation == true && Airside.Simulation.PlayerFleet.TryPosition(network.Outstation, _clock.Now,
+                    out var networkLat, out var networkLon, out _, out _))
+                    _mapLens.CenterOn(mapRect.width, mapRect.height, networkLon, networkLat);
+                else _mapNetworkTrackId = null;
             }
             LocateMapFlights();
             var tracked = -1;
@@ -2504,6 +2501,8 @@ namespace Airside.Presentation
         /// The Fleet workspace (ADR 0057, 0239): every aircraft at every base, the profile of the selected one,
         /// and the market for the chosen base.
         /// </summary>
+        private string _mapNetworkTrackId;
+
         private void DrawFleetWorkspace(Rect rect)
         {
             var surface = Box(rect);
@@ -2513,8 +2512,9 @@ namespace Airside.Presentation
                 _selectedAircraftId = _fleetWorkspace.Mine[0].Registration;
                 _fleetWorkspace.Rebuild(_operations, _clock.Now, _selectedAircraftId, _fleetBoard);
             }
+            _selectedAircraftId = _fleetWorkspace.HasSelection ? _fleetWorkspace.SelectedRegistration : null;
             FillFleetCameras();
-            var layout = FleetWorkspaceLayout.Create(surface, _fleetWorkspace.Market.Count);
+            var layout = FleetWorkspaceLayout.Create(surface, _fleetWorkspace.Market.Count, _fleetBoard.ShowMarket);
             var rows = _fleetWorkspace.RosterSlotCount(_fleetShowOtherOperators);
             _rosterScrollRow = ScrollRows(_rosterScrollRow, layout.Roster, rows - layout.VisibleRosterRows);
             _fleetMarketStart = FleetWorkspacePainter.ClampMarketStart(_fleetMarketStart, _fleetWorkspace.Market.Count,
@@ -2772,6 +2772,7 @@ namespace Airside.Presentation
                     return;
                 }
                 case HudAction.ResetMap:
+                    _mapNetworkTrackId = null;
                     _mapTrackId = null;
                     _mapSelection = null;
                     _mapLens.Reset();

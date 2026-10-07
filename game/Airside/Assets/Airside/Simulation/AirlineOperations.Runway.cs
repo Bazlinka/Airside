@@ -99,6 +99,10 @@ namespace Airside.Simulation
             // A helicopter uses its pad, never a strip (ADR 0207).
             if (aircraft.Type.IsRotorcraft)
                 return false;
+            // A missed approach never touches the pavement: it climbs away over the strip, so it does not
+            // occupy it (a go-around from final must not read as a second movement on the runway).
+            if (aircraft.State == FleetState.Landing && IsMissedApproachLanding(aircraft))
+                return false;
             var until = StripBusyUntil(aircraft);
             return until.HasValue && until.Value.CompareTo(_clock.Now) > 0;
         }
@@ -330,7 +334,44 @@ namespace Airside.Simulation
             var changed = false;
             changed |= RunTowerOnStrip(now, mainStrip: true);
             changed |= RunTowerOnStrip(now, mainStrip: false);
+            changed |= SendAroundUnclearedArrivals(now);
             return changed;
+        }
+
+        /// <summary>
+        /// An arrival that reaches its decision point without a landing clearance goes around — it is
+        /// never left parked on final. Runs after both strips have cleared whatever could land.
+        /// </summary>
+        private bool SendAroundUnclearedArrivals(SimulationTime now)
+        {
+            var changed = false;
+            foreach (var aircraft in _fleet)
+            {
+                if (aircraft.State != FleetState.HoldingForLanding || aircraft.Type.IsRotorcraft
+                    || now.ElapsedSeconds < ApproachRules.DecisionPointAt(aircraft.StateStartedAt.ElapsedSeconds)
+                    || !MayUseRunwayDuringCurfew(aircraft, now))
+                    continue;
+                aircraft.WentAroundThisTrip = true;
+                var missedFinal = ApproachHold.RemainingFinalSeconds(
+                    AircraftPerformance.For(aircraft.Type).ApproachSeconds, aircraft.Registration);
+                Transition(aircraft, FleetState.Landing, now, missedFinal);
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        /// <summary>
+        /// Metering: when an inbound's landing is expected later than <see cref="ApproachRules.MeterHorizonSeconds"/>
+        /// from now, the time it should join final; null when it may join now.
+        /// </summary>
+        private SimulationTime? FinalJoinTime(FleetAircraft aircraft, SimulationTime now)
+        {
+            var queued = ExpectedLandingQueueTime(aircraft, out _, now);
+            if (!queued.HasValue)
+                return null;
+            var joinAt = queued.Value.Advance(-ApproachRules.MeterHorizonSeconds);
+            return joinAt.CompareTo(now) > 0 ? joinAt : null;
         }
 
         private bool RunTowerOnStrip(SimulationTime now, bool mainStrip)
@@ -482,7 +523,11 @@ namespace Airside.Simulation
         /// check. Cheap; the ground check is the expensive part (up to 144 path tests), so the
         /// presentation runs it a few steps per frame with <see cref="LandingGroundClear"/>.
         /// </summary>
-        public SimulationTime? ExpectedLandingQueueTime(FleetAircraft aircraft, out RunwayDirection runway)
+        public SimulationTime? ExpectedLandingQueueTime(FleetAircraft aircraft, out RunwayDirection runway) =>
+            ExpectedLandingQueueTime(aircraft, out runway, _clock.Now);
+
+        /// <summary>As above, as the tower sees it at <paramref name="asOf"/> (the instant being processed, not the clock).</summary>
+        internal SimulationTime? ExpectedLandingQueueTime(FleetAircraft aircraft, out RunwayDirection runway, SimulationTime asOf)
         {
             runway = RunwayDirection.Runway05;
             if (aircraft == null)
@@ -534,7 +579,7 @@ namespace Airside.Simulation
 
             arrivals.Sort((a, b) => Before(a.Aircraft, a.Joined, b.Aircraft, b.Joined) ? -1 : 1);
             departures.Sort((a, b) => a.StateStartedAt.CompareTo(b.StateStartedAt));
-            if (established && Weather.At(_clock.Now) == WeatherKind.Storm)
+            if (established && Weather.At(asOf) == WeatherKind.Storm)
                 departures.Clear();
 
             var firstJoins = joins;
@@ -543,8 +588,8 @@ namespace Airside.Simulation
                     firstJoins = arrival.Joined;
 
             var at = MovementFreeAt(aircraft, landing: true);
-            if (at.CompareTo(_clock.Now) < 0)
-                at = _clock.Now;
+            if (at.CompareTo(asOf) < 0)
+                at = asOf;
             // Until an inbound joins the queue nothing is waiting to land, so holders depart freely.
             while (aircraft.State == FleetState.Inbound && departures.Count > 0 && at.CompareTo(firstJoins) < 0)
             {
@@ -630,16 +675,9 @@ namespace Airside.Simulation
                     now.Advance(touchdownIn), includeStationary: true))
                 return false;
 
-            // A reserved stand lets the tower validate the route beyond the runway exit too.
-            // Checking only the vacate allowed an outbound aircraft to cross that waiting point
-            // a few seconds after the arrival stopped there. Only the first stretch though (ADR 0180):
-            // the rest is checked by ground control before the taxi-in starts.
-            if (string.IsNullOrEmpty(arrival.Stand.Value))
-                return true;
-            var taxiIn = AdelaideGround.TaxiIn(arrival.Stand, arrival.Type, arrival.AssignedRunway);
-            return GroundTraffic.PathClear(_fleet, arrival, taxiIn, arrival.AssignedRunway, taxiOut: false,
-                now.Advance(touchdownIn + vacate.WholeSeconds), includeStationary: true, out _,
-                GroundTraffic.LandingTaxiInHorizonSeconds);
+            // Only the runway and its exit gate a landing. The taxiway beyond belongs to ground control:
+            // an arrival on final must never wait on traffic elsewhere on the airport (ADR 2026-10-07).
+            return true;
         }
 
         private bool VacateCrossesHolder(FleetAircraft arrival, bool mainStrip)

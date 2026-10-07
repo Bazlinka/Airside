@@ -58,20 +58,25 @@ namespace Airside.Presentation
                 JourneyWorld(flight,0,out x,out _,out z);
             else if(active && _cockpitView != null)
             { x=_cockpitView.position.x+_flightOriginX;z=_cockpitView.position.z+_flightOriginZ; }
+            if (WatchingOutstation && OutstationJourney.TryFor(WatchedOutstation(), _preciseTime, out var network))
+            {
+                YpadFrame.ToWorld(network.Latitude, network.Longitude, out x, out z);
+                active = true;
+            }
             var distant=active && Math.Max(Math.Abs(x),Math.Abs(z))>80000;
             var ox=distant ? FlightWorldGrid.Origin(x) : 0;
             var oz=distant ? FlightWorldGrid.Origin(z) : 0;
             // Correct the previous position too: origin steps must never read as a speed spike.
             var originDelta=new Vector3((float)(_flightOriginX-ox),0,(float)(_flightOriginZ-oz));
             _cockpitPreviousPosition+=originDelta;
-            if(InCockpit && _cameraController!=null) _cameraController.transform.position+=originDelta;
+            if((InCockpit || WatchingOutstation) && _cameraController!=null) _cameraController.transform.position+=originDelta;
             _flightOriginX=ox;_flightOriginZ=oz;
             if(_airfieldRoot!=null) _airfieldRoot.position=-FlightOrigin;
             Shader.SetGlobalVector("_AirsideFlightOrigin",new Vector4((float)ox,0,(float)oz,0));
             UpdateFlightWorldAirportActors();
             if(active)
             {
-                if(_flightTerrain==null) _flightTerrain=AirsideFlightWorldTerrain.Create();
+                if(_flightTerrain==null) CreateFlightTerrainTimed();
                 _flightTerrain.gameObject.SetActive(true);
                 _flightTerrain.Tick(x,z,ox,oz);
             }
@@ -79,12 +84,22 @@ namespace Airside.Presentation
             {
                 // ADR 0251: zoomed past the classic limit, the overview camera streams the state under its focus.
                 // No floating origin here: outside the cockpit the render origin is the world origin.
-                if(_flightTerrain==null) _flightTerrain=AirsideFlightWorldTerrain.Create();
+                if(_flightTerrain==null) CreateFlightTerrainTimed();
                 _flightTerrain.gameObject.SetActive(true);
                 var focus=_cameraController.FocusPoint;
-                _flightTerrain.Tick(focus.x,focus.z,0,0,true);
+                var distance=AirsideCameraController.CurrentDistance;
+                FlightWorldGrid.WideHorizonFade(distance,AirsideCameraFeel.HorizonScale(distance,AirsideBareField.CameraFarClip),
+                    out var fadeStart,out var fadeEnd);
+                _flightTerrain.SetHorizonFade(fadeStart,fadeEnd);
+                _flightTerrain.Tick(focus.x,focus.z,0,0,true,FlightWorldGrid.CoarseRadiusFor(distance));
             }
             else if(_flightTerrain!=null) _flightTerrain.gameObject.SetActive(false);
+        }
+        private void CreateFlightTerrainTimed()
+        {
+            var clock=System.Diagnostics.Stopwatch.StartNew();
+            _flightTerrain=AirsideFlightWorldTerrain.Create();
+            Debug.Log($"[Airside terrain] flight terrain created in {clock.Elapsed.TotalMilliseconds:F0} ms");
         }
         private void ResetFlightWorld()
         {

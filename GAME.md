@@ -9,14 +9,24 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-07.*
 
+**Merged (7 Oct, Claude):** arrivals never freeze on final — landing gated by the runway only, forced go-around at a 4 min decision point,
+inbounds metered in the circuit (ADR `2026-10-07-arrivals-never-hold-on-final`). Headless-green only; needs a Unity run and a busy-day look at finals and go-around visuals.
+
 **Latest merged work (7 Oct):** far-terrain satellite → land-cover hand-over at 30 km and the white "cloud" fix on
 the outer terrain (Cursor); selected-aircraft panel only on selection; save-load fix for blank `JsonUtility`
 records (v22 saves failed to load); render cost trim (ADR 0246), far terrain at full 125 m DEM (ADR 0247) and a
 4096 px far satellite (ADR 0248), repo tidy (ADR 0249) and state-wide land-cover colours (ADR 0250) (Claude).
 
-**Next approved work:** none queued by Bailey beyond verification. **Done in code, unverified (ADR 0250/0251):** state-wide land-cover
-colours on the streamed terrain, and the wide overview — zoom to 450 km, and past 60 km the overview camera streams a fine 16 km ring plus
-a coarse 64 km ring (121 tiles, 2 km cells) so the state can be dragged under the camera. Packet: `docs/plans/south-australia-overview-streaming.md`.
+**Current implementation (#570):** a quieter Fleet workspace with Available/All bases, correct selection after airport changes, optional market/details, reviewed network bookings and cancellations, and airborne Melbourne exterior/cockpit/window views. The flight planner compares expected round-trip profit using production economics. Native Unity behavior is unverified; evidence and checks: `docs/testing/fleet-flight-clarity-2026-10-07/`. Bailey explicitly authorized implementation and merge without another review pause.
+
+**Next approved work:** verify the fleet/flight changes in the Mac build.
+
+**Wide overview (ADR 0250/0251), run on the Mac 7 Oct (Cursor):**
+zoom to 450 km; past 60 km the overview streams a fine 16 km ring plus a coarse 64 km ring that grows with the zoom (5 to 8 tiles, up to
+289) so the ground under the camera stays covered, fading into the sky before its edge. Coarse vertices average the land cover round them;
+the baked ADR 0210 haze is gone (it made a pale square). Tiles build in ≤70 ms; the only long frame is the first render (~2.5 s at startup),
+now logged as `[Airside soak] hitch`. Still unchecked: depth precision, sky/stars at the 1,170 km clip, dusk/night. Packet:
+`docs/plans/south-australia-overview-streaming.md`.
 
 **Open — needs the Mac (nothing below is verified in Unity):**
 - Clean-image pass (full-res SSAO, near clip scales with distance, ground mip bias 0, 16x aniso) is unverified: compare ground-marking flicker, AO softness and frame time. ADR 0246/0247/0248/0250/0251 (SSAO half-res — now reverted, MSAA budget, 3 shadow cascades/110 m, full-DEM far mesh, 4096 px far image, state-wide land-cover colours, zoom to 450 km with coarse-ring streaming):

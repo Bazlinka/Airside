@@ -550,6 +550,7 @@ namespace Airside.Presentation
 
         private void OnDestroy()
         {
+            ExitOutstationView(false);
             ReleaseCockpitAirflow();
             if (_cockpitInterior != null)
             {
@@ -612,6 +613,7 @@ namespace Airside.Presentation
             AdvancePresentationClock();
             var soakStageStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             UpdateAircraftVisual();
+            UpdateOutstationView();
             UpdateCockpitView();
             UpdateFlightViewReview();
             TraceFlightJourneyReview();
@@ -897,6 +899,7 @@ namespace Airside.Presentation
                     return;
                 }
 
+                if (WatchingOutstation) { ExitOutstationView(true); return; }
                 if (InCockpit)
                 {
                     ExitCockpit(true);
@@ -922,7 +925,12 @@ namespace Airside.Presentation
                 return;
 
             // Typing the airline name must not follow, reset the view or mute.
-            if (!InCockpit && ReadAirlineControls(keyboard))
+            if (WatchingOutstation && keyboard.hKey.wasPressedThisFrame)
+            {
+                ExitOutstationView(true);
+                return;
+            }
+            if (!InCockpit && !WatchingOutstation && ReadAirlineControls(keyboard))
                 return;
 
             if (keyboard.fKey.wasPressedThisFrame)
@@ -971,6 +979,7 @@ namespace Airside.Presentation
         {
             if (_cameraController == null)
                 return;
+            if (WatchingOutstation) { ExitOutstationView(true); return; }
             if (InCockpit) { ExitCockpit(false); return; }
 
             // Turning follow off hands the camera back where it is — free to orbit,
@@ -990,6 +999,7 @@ namespace Airside.Presentation
             if (_cameraController == null)
                 return;
 
+            if (WatchingOutstation) { ExitOutstationView(true); return; }
             if (InCockpit) { ExitCockpit(true); return; }
             ClearAircraftSelection();
             _cameraController.ReturnToOverview();
@@ -1055,13 +1065,14 @@ namespace Airside.Presentation
             // Follow / Overview live on the circuit HUD only. The airline overview
             // uses the selected-aircraft card and Esc/R instead (ADR 0053). The
             // live speed / altitude / heading strip stays up in both modes.
-            if (!AirlineModalOpen && !_menuOpen && !InCockpit)
+            if (!AirlineModalOpen && !_menuOpen && !InCockpit && !WatchingOutstation)
             {
                 DrawSpeedReadout(layout, panel);
                 if (!FleetMode)
                     DrawControlBar(layout, button);
             }
-            if (InCockpit && !_menuOpen) DrawCockpitHud(layout, panel, button);
+            if (WatchingOutstation && !_menuOpen) DrawOutstationViewHud(panel, title, button);
+            else if (InCockpit && !_menuOpen) DrawCockpitHud(layout, panel, button);
             else DrawAirlineHud(layout, panel, title, button);
             DrawMapCredit(layout);
             DrawBuildStamp(layout);
@@ -4246,7 +4257,22 @@ namespace Airside.Presentation
                 Kind = kind;
                 NavLight = navLight;
                 if (transform != null)
-                    Rest = transform.localRotation;
+                    Rest = RestRotationOf(transform);
+            }
+
+            // The authored rest pose, captured once per transform. Parts are rebuilt whenever a view's children
+            // change (selecting an aircraft adds a marker), and reading the pose then recorded a gear leg that was
+            // already folded as its rest, so the fold was applied twice and the legs stood up (jets in flight).
+            private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Transform,
+                System.Runtime.CompilerServices.StrongBox<Quaternion>> RestPoses = new();
+
+            private static Quaternion RestRotationOf(Transform transform)
+            {
+                if (RestPoses.TryGetValue(transform, out var box))
+                    return box.Value;
+                var rest = transform.localRotation;
+                RestPoses.Add(transform, new System.Runtime.CompilerServices.StrongBox<Quaternion>(rest));
+                return rest;
             }
         }
 

@@ -32,7 +32,7 @@ namespace Airside.Tests
             Assert.That(model.Mine.Select(r => r.Registration), Is.EqualTo(new[] { "VH-PAX", "VH-SUN" }));
             Assert.That(model.Mine.All(r => r.IsPlayer), Is.True);
             Assert.That(model.Others.Select(r => r.Registration), Is.EqualTo(new[] { "VH-ZRC" }));
-            Assert.That(model.Subtitle, Does.StartWith("2 of 3 aircraft"));
+            Assert.That(model.Subtitle, Does.StartWith("2 owned · 2 available"));
             Assert.That(model.Subtitle, Does.Contain("Expanded regional base"));
         }
 

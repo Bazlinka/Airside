@@ -216,11 +216,26 @@ namespace Airside.Presentation
             var turnEase = 1f - Mathf.Exp(-(_cockpitPreset >= 0 ? 7f : 16f) * Time.unscaledDeltaTime);
             _cockpitShownYaw = Mathf.LerpAngle(_cockpitShownYaw, _cockpitYaw, turnEase);
             _cockpitShownPitch = Mathf.Lerp(_cockpitShownPitch, _cockpitPitch, turnEase);
-            _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, _cockpitTargetFov,
-                1f - Mathf.Exp(-12f * Time.unscaledDeltaTime));
+            AdvanceFlightViewTransition(Time.unscaledDeltaTime);
             _exteriorRadius = Mathf.Lerp(_exteriorRadius, _exteriorTargetRadius, 1f - Mathf.Exp(-12f * Time.unscaledDeltaTime));
-            _blendSeconds += Mathf.Min(Time.unscaledDeltaTime, 0.1f);
             ApplyCockpitPose();
+        }
+
+        // One clock-driven step, also exercised by EditMode tests without depending on editor frame time.
+        private void AdvanceFlightViewTransition(float deltaSeconds)
+        {
+            var dt = Mathf.Clamp(deltaSeconds, 0f, 0.1f);
+            _blendSeconds += dt;
+            _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, _cockpitTargetFov,
+                1f - Mathf.Exp(-12f * dt));
+        }
+
+        /// <summary>Move the camera and its glide anchors into the new presentation origin.</summary>
+        public void ShiftFlightOrigin(Vector3 delta)
+        {
+            transform.position += delta;
+            _blendFromPos += delta;
+            _exitFromPos += delta;
         }
 
         private float ClampFlightViewYaw(float yaw) => _flightExterior || _passengerSeat

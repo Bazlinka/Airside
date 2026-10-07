@@ -9,6 +9,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 ## Unreleased
 
 - **Smoother model shading.** Runtime model normals are weighted by corner angle so curved panels stop rippling (unverified in Unity; ADR 2026-10-07-angle-weighted-normals).
+- #552: repair native fixture contracts, validate blank saves strictly and shift camera glide anchors with flight origins (unverified in Unity; owner-authorised merge).
+
 - **Cleaner image.** Full-res SSAO again, near clip scales with distance, ground mip bias 0, 16x aniso against flicker/pixelation (unverified in Unity; ADR 2026-10-07-clean-image-pass).
 - Fix landing gear standing up on selected jets in flight: gear rest pose is captured once, not re-read when the view's parts are rebuilt (unverified in Unity).
 - Arrivals on final never wait on ground traffic: runway-only landing clearance, 4 min decision point then go-around, inbounds metered in the circuit (unverified in Unity).

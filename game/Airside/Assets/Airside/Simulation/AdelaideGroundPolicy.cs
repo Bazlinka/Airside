@@ -6,6 +6,9 @@ namespace Airside.Simulation
 {
     public static class AdelaideGroundPolicy
     {
+        /// <summary>Painted final stand approach preserved when joining the permitted taxiway graph.</summary>
+        public const float StandApproachMetres = 100f;
+
         private static readonly HashSet<string> Unavailable = new();
         private static string Key(StableId stand, AircraftType type, RunwayDirection runway, bool outbound) =>
             stand.Value + "/" + type?.Id + "/" + runway + "/" + outbound;
@@ -48,7 +51,7 @@ namespace Airside.Simulation
             // Keep the last 100 m painted stand approach; graph routing stops on the taxilane.
             var join = Math.Max(0, taxi.Length - 2);
             var remaining = 0f;
-            while (join > 0 && remaining < 100f)
+            while (join > 0 && remaining < StandApproachMetres)
             {
                 var dx = taxi[join] - taxi[join - 2];
                 var dz = taxi[join + 1] - taxi[join - 1];

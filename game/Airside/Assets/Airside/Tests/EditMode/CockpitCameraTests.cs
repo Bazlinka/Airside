@@ -9,6 +9,13 @@ namespace Airside.Tests
 {
     public sealed class CockpitCameraTests
     {
+        private static void FinishEntry(AirsideCameraController controller)
+        {
+            var step = typeof(AirsideCameraController).GetMethod("AdvanceFlightViewTransition",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            for (var i = 0; i < 12; i++) step.Invoke(controller, new object[] { 0.1f });
+        }
+
         [Test] public void CockpitTracksSeatAfterAircraftPoseAndRestoresCameraSettings()
         {
             var host = new GameObject("Test camera");
@@ -29,6 +36,7 @@ namespace Airside.Tests
                 seat.localPosition = new Vector3(-0.38f, 1.65f, 7.1f);
                 Assert.That(controller.StartCockpit(seat), Is.True);
                 aircraft.transform.SetPositionAndRotation(new Vector3(12f, 100f, 42f), Quaternion.Euler(-8f, 230f, 12f));
+                FinishEntry(controller);
                 typeof(AirsideCameraController).GetMethod("LateUpdate", BindingFlags.Instance | BindingFlags.NonPublic)
                     .Invoke(controller, null);
                 Assert.That(Vector3.Distance(host.transform.position, seat.position), Is.LessThan(0.001f));

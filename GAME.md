@@ -14,23 +14,21 @@ Bell 412) its own landing/taxi beam shape and aim, strobe pattern, tail strobe (
 light on jets. ADR `2026-10-07-aircraft-lighting-profiles`; checks and a night playtest list in `docs/testing/aircraft-lighting-2026-10-07/`.
 Unity EditMode 2325 passed / 0 failed; look at it at night in follow view before trusting the beam aim and toe-out sign.
 
-**PR #552 (7 Oct, Codex):** native fixture repairs, stricter blank-save validation and camera glide anchors across origin shifts.
-Bailey explicitly authorised merging without further tests; native Unity confirmation stays pending.
-Rebased onto current main, preserving fleet/outstation flight views and the newer arrivals/rendering changes.
-Earlier branch validation: 1,830 headless passed; rebased save fixtures 10/10. Packet:
-`docs/testing/native-editmode-fixes-2026-10-07/README.md`.
+**Latest implementation (7 Oct, Codex, #578):** fitted door seams, handle surrounds/latches,
+thresholds, cargo hardware, Bell sliding rails and service hatches across all 14 aircraft.
+Original liveries and assets stay configurable; details attach to each leaf through existing hinge motion.
+Implemented for both glTF and readable prefab sources. Bailey requested implementation and merge with
+light testing; native Unity look/motion is unverified. Plan, coverage and proof:
+`docs/testing/fleet-surface-details-2026-10-07/`.
 
-**Merged (7 Oct, Claude):** arrivals never freeze on final — landing gated by the runway only, forced go-around at a 4 min decision point,
-inbounds metered in the circuit (ADR `2026-10-07-arrivals-never-hold-on-final`). Headless-green only; needs a Unity run and a busy-day look at finals and go-around visuals.
+**Earlier merged work:** #552 native fixture/blank-save/camera-origin repairs (native rerun pending);
+#570 fleet/flight clarity and Melbourne views; arrivals gated by runway only with 4-minute go-around;
+clean-image rendering and far-terrain hand-over. Their native follow-ups remain below.
 
-**Latest merged work (7 Oct):** far-terrain satellite → land-cover hand-over at 30 km and the white "cloud" fix on
-the outer terrain (Cursor); selected-aircraft panel only on selection; save-load fix for blank `JsonUtility`
-records (v22 saves failed to load); render cost trim (ADR 0246), far terrain at full 125 m DEM (ADR 0247) and a
-4096 px far satellite (ADR 0248), repo tidy (ADR 0249) and state-wide land-cover colours (ADR 0250) (Claude).
+**Current implementation (#577):** Operations opens on My airline, listing every owned aircraft across all bases with live route/status/next-event times and scroll access. Selecting an aircraft opens its correct Fleet profile; Airport movements retains the Adelaide board. Native Unity verification remains pending; evidence: `docs/testing/network-operations-2026-10-07/`.
 
-**Current implementation (#570):** a quieter Fleet workspace with Available/All bases, correct selection after airport changes, optional market/details, reviewed network bookings and cancellations, and airborne Melbourne exterior/cockpit/window views. The flight planner compares expected round-trip profit using production economics. Native Unity behavior is unverified; evidence and checks: `docs/testing/fleet-flight-clarity-2026-10-07/`. Bailey explicitly authorized implementation and merge without another review pause.
-
-**Next approved work:** verify the fleet/flight changes in the Mac build.
+**Next approved work:** Mac follow/overview day/dusk/night check of the door detail pass (including ATR airstairs), the all-base
+Operations and fleet/flight journeys, and the pending native fixtures. No native visual claim.
 
 **Wide overview (ADR 0250/0251), run on the Mac 7 Oct (Cursor):**
 zoom to 450 km; past 60 km the overview streams a fine 16 km ring plus a coarse 64 km ring that grows with the zoom (5 to 8 tiles, up to

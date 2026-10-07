@@ -1,5 +1,10 @@
 ## Unreleased
 
+- **No more white "cloud" when zoomed far out.** The land beyond the 30 km satellite image was
+  baked toward a pale haze colour so strongly that from above it looked like a white sheet with
+  blue lakes. The haze now starts at the satellite edge and stays a light tint, so the far
+  farmland and hills keep their colour.
+
 - **The aircraft panel only opens when you pick an aircraft, and fits its content.** It used to
   pop up for the most urgent aircraft (any idle one), so it was always on screen and Close
   just brought it back. It was also always 700 px tall; a parked aircraft now gets a short panel.

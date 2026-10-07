@@ -1,0 +1,287 @@
+# Decision records (ADRs) — index
+
+Generated from the files in this folder on 2026-10-07 (ADR 0249). **Status is only what each ADR states about itself:**
+most do not state one, so a blank means "not stated", not "accepted" or "current". Nothing here has been judged
+superseded except where the ADR says so. Please keep this index current when adding an ADR (one row).
+
+## Rules for new ADRs
+
+- **Take the next free number after checking `origin/main` and open PRs/branches** (`git fetch; ls docs/decisions | tail`).
+  Parallel work has produced 10 duplicated numbers (below); do not renumber existing ones — code, docs and ADRs cite them.
+- First lines: `# NNNN — title`, then `Status: proposed | accepted | superseded by NNNN`, then the date.
+- A design change that replaces an earlier ADR adds `Superseded by NNNN` to the old one in the same commit.
+
+## Duplicated numbers (disambiguate by filename)
+
+- **0083**: `0083-adelaide-scheduled-passenger-fleet-coverage.md`, `0083-career-campaign-chapters.md`
+- **0185**: `0185-adelaide-hero-architecture.md`, `0185-far-zoom-out.md`
+- **0186**: `0186-adelaide-emergency-aviation-and-road-assets.md`, `0186-hangar-tow-for-checks.md`
+- **0190**: `0190-far-land-cover.md`, `0190-on-final-lands-through-a-storm.md`
+- **0196**: `0196-aircraft-audio-focus-listener.md`, `0196-check-tow-quiet-and-temporary-tape.md`
+- **0206**: `0206-distance-widened-runway-lines.md`, `0206-my-flights-tiles-and-hollow-aircraft-doorways.md`
+- **0215**: `0215-south-australia-flight-world.md`, `0215-terminal-carpark-date-palm-rows.md`, `0215-turboprop-cockpit-rollout.md`
+- **0227**: `0227-helicopter-operations.md`, `0227-passenger-and-exterior-flight-views.md`
+- **0228**: `0228-cockpit-flight-feel.md`, `0228-cockpit-immersion.md`
+- **0239**: `0239-fitted-passenger-cabin-sections.md`, `0239-unified-fleet-and-relocation.md`
+
+## Index
+
+| # | Decision | Stated status |
+|---|---|---|
+| 0001 | [Decision 0001: deterministic simulation boundary](0001-simulation-boundary.md) |  |
+| 0002 | [Decision 0002: turnaround dependencies and delay accounting](0002-turnaround-and-economy.md) |  |
+| 0003 | [Decision 0003: replayable local saves and offline catch-up](0003-local-save-and-catch-up.md) |  |
+| 0004 | [Decision 0004: named taxi routes and operational history](0004-taxi-network-and-event-history.md) |  |
+| 0005 | [Decision 0005: segment clearance and traffic wait diagnostics](0005-segment-clearance-and-wait-diagnostics.md) |  |
+| 0006 | [Decision 0006: second aircraft, priority and yield](0006-second-aircraft-priority-and-yield.md) |  |
+| 0007 | [Decision 0007: the second aircraft runs a schedule](0007-second-aircraft-schedule.md) |  |
+| 0008 | [Decision 0008: a ground-traffic fleet gated by a corridor lock](0008-ground-traffic-fleet-and-corridor-lock.md) |  |
+| 0009 | [Decision 0009: fair corridor hand-off](0009-fair-corridor-handoff.md) |  |
+| 0010 | [Decision 0010: airport location and a day/night cycle](0010-location-and-day-cycle.md) |  |
+| 0011 | [Decision 0011: airline route proposals](0011-airline-route-proposals.md) |  |
+| 0012 | [Decision 0012: airport reputation](0012-reputation.md) |  |
+| 0013 | [Decision 0013: simulated weather and daily running costs](0013-weather-and-daily-running-costs.md) |  |
+| 0014 | [Decision 0014: staffing by role](0014-staffing-by-role.md) |  |
+| 0015 | [Decision 0015: insolvency / game-over state](0015-insolvency-game-over.md) |  |
+| 0016 | [Decision 0016: first buildable capacity upgrade (third stand)](0016-third-stand-capacity.md) |  |
+| 0017 | [Decision 0017: research progression (operations efficiency)](0017-research-operations-efficiency.md) |  |
+| 0018 | [Decision 0018: daily operations report](0018-daily-operations-report.md) |  |
+| 0019 | [Decision 0019: concurrent commercial flights — design](0019-concurrent-commercial-flights.md) |  |
+| 0020 | [Decision 0020: stands gate route acceptance](0020-accept-route-capacity.md) |  |
+| 0021 | [Decision 0021: daily finance brief](0021-daily-finance-brief.md) |  |
+| 0022 | [Art direction and asset pipeline](0022-art-direction-and-asset-pipeline.md) | Accepted |
+| 0023 | [Decision 0023: passenger services research](0023-passenger-services-research.md) | Accepted |
+| 0024 | [Decision 0024 First playable delivery focus](0024-first-playable-delivery-focus.md) | Accepted by Bailey |
+| 0025 | [Packaged-build art path and visual delivery reality](0025-packaged-art-path-and-visual-reality.md) | Accepted (Bailey visual assessment) |
+| 0026 | [Prefab / Addressables art loader scaffold](0026-prefab-addressables-art-loader-scaffold.md) | Accepted (implementation scaffold; Resources prefabs + runtime Address |
+| 0027 | [First-playable visual asset gap closure](0027-first-playable-visual-asset-gap-closure.md) | Accepted |
+| 0028 | [AIR-001 v06 and metre-scale FBX imports](0028-air-001-v06-and-metre-scale-fbx.md) | Accepted |
+| 0029 | [Combined airfield, shared materials, Addressables on demand, graphics ladder](0029-runtime-airfield-performance.md) | Accepted |
+| 0030 | [Aircraft motion read from the presentation clock, aircraft-only focus](0030-aircraft-motion-and-focus.md) | Accepted |
+| 0031 | [CC0 Unity Terrain for the airfield ground](0031-cc0-terrain-ground.md) | Implemented on `feature/cc0-terrain-ground`; awaiting Unity compile, |
+| 0032 | [Bare Adelaide field: one aircraft, one runway, empty ground](0032-bare-adelaide-field.md) | Accepted |
+| 0033 | [Real-metre runway circuit, no taxi](0033-runway-circuit-loop.md) | Accepted |
+| 0034 | [Final ATR 42-class starter aircraft](0034-final-atr42-starter-aircraft.md) | Accepted |
+| 0035 | [Adelaide bare-field authored ground mesh](0035-adelaide-authored-ground-mesh.md) | Accepted |
+| 0036 | [Adelaide YPAD pavement silhouette (05/23 + 12/30 + taxi)](0036-adelaide-ypad-pavement-silhouette.md) | Accepted |
+| 0037 | [YPAD pavement fillets + Adelaide perimeter fence](0037-adelaide-pavement-fillets-and-perimeter.md) | Accepted |
+| 0038 | [YPAD denser taxi / apron silhouette (A + exits + pads)](0038-adelaide-taxi-apron-silhouette.md) | Accepted |
+| 0039 | [YPAD silhouette geometry corrections (fillets, separations, fence seating)](0039-adelaide-pavement-geometry-corrections.md) | Accepted |
+| 0040 | [AIR-001 v02 visual finish](0040-atr42-visual-finish.md) |  |
+| 0041 | [Strip Airside to a bare circuit sandbox](0041-strip-to-a-bare-circuit-sandbox.md) |  |
+| 0042 | [Camera control scheme and single-owner input](0042-camera-control-scheme.md) |  |
+| 0043 | [Audit of the branch-consolidation graft](0043-consolidation-graft-audit.md) |  |
+| 0044 | [Circuit flown to ATR 42 performance](0044-realistic-circuit-performance.md) |  |
+| 0045 | [Player airline at Adelaide (design direction)](0045-player-airline-at-adelaide.md) |  |
+| 0046 | [One-at-a-time Adelaide aircraft asset rollout](0046-one-at-a-time-adelaide-aircraft-assets.md) |  |
+| 0047 | [Gate 13 terminal stand and the fictional jet operator](0047-gate13-terminal-stand-and-fictional-jet-operator.md) |  |
+| 0048 | [Aircraft catalogue, Hangar types and player/AI presentation](0048-aircraft-catalogue-and-ownership-presentation.md) |  |
+| 0049 | [Genuine Dash 8-400 visual](0049-genuine-dash8-q400-visual.md) |  |
+| 0050 | [Genuine Saab 340B visual](0050-genuine-saab-340b-visual.md) |  |
+| 0051 | [AIR-001 ATR 42-600 visual fidelity pass (v03)](0051-atr42-visual-fidelity-v03.md) |  |
+| 0052 | [Runway fairness for long holds and stand suggestion beside a Dash 8-400](0052-runway-fairness-and-stand-suggestion.md) |  |
+| 0053 | [Airline career progression and HUD direction](0053-airline-career-and-hud-direction.md) | Accepted |
+| 0054 | [Field camera zooms toward the pointer and grabs the ground](0054-field-camera-zoom-toward-pointer.md) |  |
+| 0055 | [Living airport: visible circuit, per-flight pay, sky traffic](0055-living-airport-and-career-loop.md) |  |
+| 0056 | [Career fleet, rotating contracts, departure prep, auto-stand](0056-career-fleet-market-and-turnaround.md) |  |
+| 0057 | [HUD workspaces on a shared draw list](0057-hud-workspaces-and-shared-draw-list.md) |  |
+| 0058 | [Storms hold the runway (a ground stop)](0058-storm-ground-stop.md) |  |
+| 0059 | [Storm lightning/thunder, and a sun/moon that hides behind cloud](0059-storm-lightning-and-cloud-obscured-sun.md) |  |
+| 0060 | [Departure climb-out actually turns after the SID establishes](0060-departure-turn-actually-turns.md) |  |
+| 0061 | [Road lane markings, bolder apron labels, runway left as-is](0061-road-lane-markings-and-apron-label-weight.md) |  |
+| 0062 | [Contracts card fill, terminal roof fixes, weather fog tint, and a documented go-around bug](0062-contracts-card-fill-terminal-roof-fog-tint.md) |  |
+| 0063 | [Night visibility floor, and Fleet copy that names real destinations](0063-night-visibility-floor-and-fleet-route-clarity.md) |  |
+| 0064 | [Night moonlight for form shading, and a backwards vignette](0064-night-form-shading-and-vignette-fix.md) |  |
+| 0065 | [Departure turn jump, unrealistic departure spacing, stand-queue overflow, apron light star](0065-departure-turn-departure-spacing-stand-queue-apron-lights.md) |  |
+| 0066 | [Career Stats workspace, and nine features supporting it](0066-career-stats-workspace-and-nine-supporting-features.md) |  |
+| 0067 | [Livery repaint wired into the Stats HUD](0067-livery-repaint-wired-into-the-stats-hud.md) |  |
+| 0068 | [Clearing the standing backlog](0068-clearing-the-standing-backlog.md) |  |
+| 0069 | [Real YPAD operational buildings and painted stand labels](0069-real-ypad-operational-buildings-and-painted-stand-labels.md) |  |
+| 0070 | [Competitive career HUD using real Adelaide activity](0070-competitive-career-hud-with-real-activity.md) |  |
+| 0071 | [Operations board honesty, schedule feel, no live Adelaide traffic feed](0071-operations-board-honesty-and-no-live-traffic.md) |  |
+| 0072 | [Layered cloud meshes over realtime volumetrics](0072-layered-clouds-over-realtime-volumetrics.md) |  |
+| 0073 | [Airport-scale ground rhythm and route range rings](0073-ground-rhythm-and-route-range-rings.md) |  |
+| 0074 | [Distance-aware ground clarity without fake resolution](0074-distance-aware-ground-clarity.md) |  |
+| 0075 | [Authored cloud atlas instead of procedural sphere clusters](0075-authored-cloud-atlas.md) |  |
+| 0076 | [Aircraft-specific reach and an honest live-rivals map](0076-aircraft-range-and-live-rivals-map.md) |  |
+| 0077 | [Saab starter, bit-by-bit fleet unlocks, light finance pressure](0077-saab-starter-fleet-ladder-finance-pressure.md) |  |
+| 0078 | [Hangar goal on the objective card, on-time reliability](0078-hangar-goal-and-ontime-reliability.md) |  |
+| 0080 | [Build identity so two Macs can be compared](0080-build-identity-stamp.md) |  |
+| 0081 | [Live Adelaide sky traffic from adsb.lol (presentation only)](0081-live-adelaide-sky-traffic.md) |  |
+| 0082 | [Live traffic on the maps and on the ground](0082-live-traffic-on-maps-and-ground.md) |  |
+| 0083 | [Adelaide scheduled-passenger fleet coverage](0083-adelaide-scheduled-passenger-fleet-coverage.md) | Accepted |
+| 0083 | [Career campaign chapters](0083-career-campaign-chapters.md) |  |
+| 0084 | [Authored career contracts on offer](0084-career-contracts-on-offer.md) |  |
+| 0085 | [Routine aircraft checks](0085-routine-aircraft-checks.md) |  |
+| 0086 | [AI-only metal, real Adelaide sun and moon](0086-ai-only-field-and-adelaide-sky.md) |  |
+| 0087 | [Adelaide curfew, short-final freeze, recorded engines](0087-adelaide-curfew-final-hold-engine-audio.md) |  |
+| 0088 | [Evening last flights sit near curfew](0088-evening-last-flights.md) |  |
+| 0089 | [Engine audio mute and takeoff-loop cacophony](0089-engine-audio-mute.md) |  |
+| 0090 | [Adelaide base capability roadmap](0090-adelaide-base-capability-roadmap.md) | Superseded |
+| 0091 | [Player Adelaide base is a real operating constraint](0091-player-adelaide-base.md) |  |
+| 0092 | [Player base operational facilities](0092-player-base-operational-facilities.md) |  |
+| 0093 | [Base-aware turnaround services](0093-base-aware-turnaround-services.md) |  |
+| 0094 | [Base growth is part of campaign progression](0094-campaign-requires-base-growth.md) |  |
+| 0095 | [Gate lead-in releases at Holding Short](0095-gate-lead-in-release.md) |  |
+| 0096 | [Aircraft visual fidelity pass](0096-aircraft-visual-fidelity-pass.md) |  |
+| 0097 | [Aircraft surface detail: metre UVs, a real skin, and a 737 that reads as one](0097-aircraft-surface-detail.md) |  |
+| 0098 | [The E190 and A220-300 get their own geometry](0098-e190-a220-own-geometry.md) |  |
+| 0099 | [Live Adelaide weather and a complete celestial sky](0099-live-adelaide-weather-and-sky.md) |  |
+| 0100 | [Adelaide apron density and bank-shaped departures](0100-adelaide-apron-density-and-bank-departures.md) |  |
+| 0101 | [macOS frame pacing and render budget](0101-macos-frame-pacing-and-render-budget.md) |  |
+| 0102 | [Daily Service Pattern](0102-daily-service-pattern.md) |  |
+| 0103 | [Player stand choice and longer Operations boards](0103-player-stand-choice-and-ops-board.md) |  |
+| 0104 | [Desktop HUD interface hierarchy](0104-desktop-hud-interface-hierarchy.md) |  |
+| 0105 | [A320 appearance before dimensional perfection](0105-a320-appearance-pass.md) |  |
+| 0106 | [A330-900 nose and fitted livery](0106-a330-appearance-pass.md) |  |
+| 0107 | [Fitted starter-turboprop liveries](0107-starter-turboprop-fitted-livery.md) |  |
+| 0108 | [Beginner aircraft airframe shapes](0108-beginner-aircraft-airframe-shapes.md) |  |
+| 0109 | [737 fitted livery and depth-tested fuselage titles](0109-737-fitted-livery-and-title-depth.md) |  |
+| 0110 | [05:00–23:00 operating day, banked schedule, apron hold and gate codes](0110-operations-day-banked-schedule-gate-codes.md) |  |
+| 0111 | [Bigger AI fleet, night-stops away and at Adelaide](0111-bigger-ai-fleet-night-stops.md) |  |
+| 0112 | [Fitted liveries on every type, and fuselage titles that are paint](0112-fitted-liveries-all-types-and-title-paint.md) |  |
+| 0113 | [Terminal 1 aerobridges that drive to the aircraft](0113-terminal-1-aerobridges.md) |  |
+| 0114 | [Boarding people, turboprop airstairs and stair trucks](0114-boarding-people-airstairs-stair-trucks.md) |  |
+| 0115 | [Airside service roads, and ground vehicles that drive them](0115-airside-service-roads-and-gse-trips.md) |  |
+| 0116 | [A catering truck that exists, and people on the apron](0116-catering-truck-and-ramp-crew.md) |  |
+| 0117 | [Fitted aircraft glazing across the fleet](0117-fitted-aircraft-glazing.md) |  |
+| 0118 | [Cut-through aircraft glazing and operator paint](0118-cut-through-aircraft-glazing-and-operator-paint.md) |  |
+| 0119 | [Route-plan operating preview and soak evidence](0119-route-plan-operating-preview-and-soak-evidence.md) |  |
+| 0120 | [Self-led long career and network growth](0120-self-led-long-career.md) |  |
+| 0121 | [One coherent career](0121-one-coherent-career.md) |  |
+| 0122 | [Glass Cockpit HUD and title screen](0122-glass-cockpit-hud-and-title-screen.md) |  |
+| 0123 | [First-time airline setup, difficulty and the Flight Manual](0123-first-time-airline-setup.md) |  |
+| 0124 | [Hold reasons, building detail, airfield lighting and softer geometry](0124-hold-reasons-and-airfield-detail.md) |  |
+| 0125 | [Career balance simulator and the first tuning pass](0125-career-balance-simulator.md) |  |
+| 0126 | [Turnaround vehicles on the field, fleet pushback tugs, and taxiing](0126-turnaround-vehicles-tugs-and-taxiing.md) |  |
+| 0127 | [One career balance, and more to do in it](0127-one-career-and-career-variety.md) |  |
+| 0128 | [Delay attribution and actionable holds](0128-delay-attribution-and-actionable-holds.md) |  |
+| 0129 | [One voice for the game's text](0129-one-voice-for-game-text.md) |  |
+| 0130 | [Making the HUD feel like a game (first pass)](0130-hud-game-feel-first-pass.md) |  |
+| 0131 | [Every modelled aircraft is for sale](0131-every-modelled-aircraft-for-sale.md) |  |
+| 0132 | [Moments: counting funds, flipping boards, celebration cards](0132-hud-moments.md) |  |
+| 0133 | [A dev-tools Showcase, and sounds for the moments](0133-showcase-and-moment-sounds.md) |  |
+| 0134 | [Keep cash for the usual flight](0134-cash-for-the-usual-flight.md) |  |
+| 0135 | [Side sheets over the airport, and HUD motion](0135-side-sheets-and-hud-motion.md) |  |
+| 0136 | [Sound pass: level-matched engines, engine voices, an apron soundscape](0136-sound-pass.md) |  |
+| 0137 | [Pushback times that agree everywhere](0137-pushback-times.md) | lines used the starter base's prep time |
+| 0138 | [Contracts you can always finish](0138-contracts-you-can-finish.md) |  |
+| 0139 | [Tighter progress gates](0139-tighter-progress-gates.md) |  |
+| 0140 | [Countries, a wider map, real coastlines, towns and runways](0140-countries-and-world-map.md) |  |
+| 0141 | [Terminal gates lined up along T1](0141-gates-lined-up.md) |  |
+| 0142 | [Arrivals from further out](0142-arrivals-from-further-out.md) |  |
+| 0143 | [Weather that drifts, one sky, fog that matches it, better clouds](0143-weather-drift-sky-fog-clouds.md) |  |
+| 0144 | [Ground movement that never jumps](0144-ground-movement-never-jumps.md) |  |
+| 0145 | [Stands park the way they arrive](0145-stands-park-the-way-they-arrive.md) |  |
+| 0146 | [Pushback like a tug does it](0146-tug-pushback.md) |  |
+| 0147 | [Onto the runway and off the approach, smoothly](0147-runway-entry-and-approach-handoff.md) |  |
+| 0148 | [Propellers that spin like propellers](0148-propellers.md) |  |
+| 0149 | [Pushback rejoin skips route hooks; apron tests follow ground control](0149-pushback-rejoin-fix.md) |  |
+| 0150 | [Aircraft enamel and original fleet liveries](0150-aircraft-enamel-and-original-liveries.md) |  |
+| 0151 | [Constant-speed propellers, feathering, and engines driven by power](0151-constant-speed-propellers-and-engines.md) |  |
+| 0152 | [Honest en-route speeds, and motion paced by the frames that draw it](0152-honest-speeds-and-smooth-motion.md) |  |
+| 0153 | [Aircraft that no longer taxi through each other](0153-taxi-conflicts-and-clearance-sampling.md) |  |
+| 0154 | [Ground-path point lookups no longer recurse down the path](0154-ground-path-point-recursion.md) |  |
+| 0155 | [Graphics test switches](0155-graphics-test-switches.md) |  |
+| 0156 | [Pier halves count as wasting a code E gate; restore uses the tower's takeoff strip time](0156-pier-halves-and-takeoff-strip-time.md) |  |
+| 0157 | [Ground imagery rebuilt from native Sentinel-2 L2A](0157-sentinel2-l2a-ground-imagery.md) |  |
+| 0158 | [Real Adelaide terrain and the far ring out to the Hills](0158-adelaide-terrain-and-far-ring.md) |  |
+| 0159 | [The suburbs around the airfield as buildings](0159-suburb-buildings.md) |  |
+| 0160 | [Trees where the satellite sees tree canopy](0160-satellite-placed-trees.md) |  |
+| 0161 | [Line up without the tail sliding, and a takeoff roll that sounds like one](0161-lineup-steering-and-takeoff-sound.md) |  |
+| 0162 | [Startup and frame stutter](0162-startup-and-frame-stutter.md) |  |
+| 0163 | [Button click and the apron bed](0163-button-click-and-apron-bed.md) |  |
+| 0164 | [A second Saab from the opening cash, and flight toasts](0164-second-saab-and-flight-toasts.md) |  |
+| 0165 | [Flight numbers and city names](0165-flight-numbers-and-city-names.md) |  |
+| 0166 | [Departures turn properly, and the gear waits until the aircraft has climbed away](0166-departure-turn-and-gear-timing.md) |  |
+| 0167 | [Airfield lights as light points, and a night brightness option](0167-airfield-light-points-and-night-brightness.md) |  |
+| 0168 | [Propellers that disappear at speed, and turbofans with a solid face](0168-propellers-and-fans-at-speed.md) |  |
+| 0169 | [Wet-runway light reflections](0169-wet-runway-light-reflections.md) |  |
+| 0170 | [Engine exhaust as haze, with a start puff](0170-honest-engine-exhaust.md) |  |
+| 0171 | [Aircraft windows that read like the real thing](0171-realistic-aircraft-glazing.md) |  |
+| 0172 | [Airside control-vector identity](0172-airside-control-vector-identity.md) |  |
+| 0173 | [Final approach without the slowdown, a line-up that doesn't swivel, and parked aircraft th](0173-final-approach-cost-lineup-entry-and-parked-aircraft.md) |  |
+| 0174 | [Simulation-driven human operations](0174-simulation-driven-human-operations.md) |  |
+| 0175 | [Per-type aircraft layout and ground routing](0175-aircraft-layout-and-ground-routing.md) |  |
+| 0176 | [Hands-on turnaround choreography](0176-hands-on-turnaround-choreography.md) |  |
+| 0177 | [Departure countdown and door timing](0177-departure-countdown-and-door-timing.md) |  |
+| 0178 | [Individual aircraft logbooks](0178-individual-aircraft-logbooks.md) |  |
+| 0179 | [The route map and the field agree on the final](0179-map-and-field-agree-on-the-final.md) |  |
+| 0180 | [The landing check covers the exit, not the whole taxi-in](0180-landing-check-covers-the-exit-not-the-whole-taxi-in.md) |  |
+| 0181 | [The airport fence follows the real aerodrome boundary](0181-real-aerodrome-boundary-fence.md) |  |
+| 0182 | [Road edge lines and lane lines](0182-road-edge-lines-and-lane-lines.md) |  |
+| 0183 | [The main strip frees when the aircraft is off the pavement](0183-main-strip-frees-when-off-the-pavement.md) |  |
+| 0184 | [Adelaide map overhaul: vector-first from OpenStreetMap](0184-adelaide-map-overhaul-data-foundation.md) |  |
+| 0185 | [Adelaide hero architecture stays presentation-only](0185-adelaide-hero-architecture.md) | Accepted |
+| 0185 | [Far zoom-out to 45 km](0185-far-zoom-out.md) | accepted (Unity look not yet verified) |
+| 0186 | [Ground Adelaide emergency aviation in the current rescue precinct](0186-adelaide-emergency-aviation-and-road-assets.md) | Accepted |
+| 0186 | [Checks are done in a hangar](0186-hangar-tow-for-checks.md) | accepted (Unity look not yet verified) |
+| 0187 | [Fenced passenger walkways](0187-fenced-passenger-walkways.md) | accepted (Unity look not yet verified) |
+| 0188 | [Hangar berths for checks](0188-hangar-berths.md) | accepted (Unity look not yet verified) |
+| 0189 | [Smoother follow camera](0189-smoother-follow-camera.md) | accepted (Unity feel not yet verified) |
+| 0190 | [Far land cover for the zoomed-out map](0190-far-land-cover.md) | accepted (Unity look not yet verified) |
+| 0190 | [An arrival already on final lands through a storm](0190-on-final-lands-through-a-storm.md) |  |
+| 0191 | [Far zoom stays where you look](0191-far-zoom-stays-where-you-look.md) |  |
+| 0192 | [Aircraft engines build with power, and landings have contact and rollout](0192-aircraft-audio-layers-and-contact.md) |  |
+| 0193 | [Weather with depth](0193-weather-depth.md) |  |
+| 0194 | [Freight flights, and pitching about the main gear](0194-freight-flights-and-gear-pivot.md) |  |
+| 0195 | [Sky traffic drawn at readable speed](0195-sky-traffic-readable-speed.md) |  |
+| 0196 | [Aircraft heard from the camera focus point](0196-aircraft-audio-focus-listener.md) |  |
+| 0196 | [A checked aircraft is towed quiet; boarding tape is temporary](0196-check-tow-quiet-and-temporary-tape.md) | accepted (Unity look not yet verified; the pure parts are tested) |
+| 0197 | [Terminal 1 doors and facade detail](0197-terminal-doors-and-facade-detail.md) |  |
+| 0198 | [Visual overhaul plan](0198-visual-overhaul-plan.md) |  |
+| 0199 | [Airside building detail (visual overhaul Phase 3d, first slice)](0199-airside-building-detail.md) |  |
+| 0200 | [Visual overhaul Phase 0 baseline bookmarks](0200-visual-baseline-phase0.md) |  |
+| 0201 | [Stand oil stains (visual overhaul Phase 1)](0201-stand-oil-stains-phase1.md) |  |
+| 0202 | [Apron patch repairs and drainage pits (visual overhaul Phase 1)](0202-apron-surface-wear-phase1.md) |  |
+| 0203 | [West Beach dunes, shore foam and Patawalonga outlet](0203-west-beach-dunes-foam-outlet.md) |  |
+| 0204 | [Unique aircraft designs and five player livery presets](0204-unique-aircraft-and-five-player-liveries.md) |  |
+| 0205 | [Post-audit improvement plan is the standing backlog](0205-post-audit-improvement-plan.md) |  |
+| 0206 | [Runway lines widen with distance](0206-distance-widened-runway-lines.md) |  |
+| 0206 | [My Flights tiles carry the whole story; aircraft doors open onto a hollow doorway](0206-my-flights-tiles-and-hollow-aircraft-doorways.md) |  |
+| 0207 | [Golf bunker discs at overview](0207-golf-bunker-discs.md) |  |
+| 0208 | [Phase 1 CBD skyline silhouette (far ring)](0208-cbd-skyline-silhouette-phase1.md) |  |
+| 0209 | [Phase 1 seasonal / dry-grass tint by date](0209-seasonal-dry-grass-tint.md) |  |
+| 0210 | [Hills haze / aerial perspective on the outer ring](0210-hills-aerial-perspective.md) |  |
+| 0211 | [Distinct Golf land-cover kind](0211-land-cover-golf-kind.md) |  |
+| 0212 | [Multi-lobe eucalypt crowns on NDVI suburb trees](0212-multi-lobe-eucalypt-crowns.md) |  |
+| 0213 | [Hollow hangars, open bays and stored equipment](0213-hollow-hangars-and-stored-equipment.md) |  |
+| 0214 | [Aircraft cockpit spectator mode](0214-aircraft-cockpit-spectator-mode.md) |  |
+| 0215 | [Streamed South Australian cockpit world](0215-south-australia-flight-world.md) |  |
+| 0215 | [Terminal / car-park date-palm rows](0215-terminal-carpark-date-palm-rows.md) |  |
+| 0215 | [Turboprop-only cockpit rollout](0215-turboprop-cockpit-rollout.md) |  |
+| 0216 | [Tapleys Hill Road windbreak trees](0216-tapleys-hill-windbreak-trees.md) |  |
+| 0217 | [Approach avenue trees (Bradman / Burbridge / Williams)](0217-approach-avenue-trees.md) |  |
+| 0218 | [Coastal dune scrub on West Beach sand](0218-coastal-dune-scrub.md) |  |
+| 0219 | [Norfolk Island pine avenue on Henley Beach Road](0219-norfolk-island-pine-avenue.md) |  |
+| 0220 | [Bake-time LOD for NDVI suburb trees](0220-ndvi-tree-bake-lod.md) |  |
+| 0221 | [Control tower outward-canted cab](0221-control-tower-cab-geometry.md) |  |
+| 0222 | [Hangar tenant cladding colours](0222-hangar-tenant-colours.md) |  |
+| 0223 | [Fire-station / ARFF silhouette accuracy](0223-fire-station-arff-silhouette.md) |  |
+| 0225 | [All-jet spectator cockpit interiors](0225-all-jet-cockpit-interiors.md) |  |
+| 0226 | [View-centred weather coverage](0226-view-centred-weather-coverage.md) |  |
+| 0227 | [Helicopter operations (the Bell 412 and the helipad)](0227-helicopter-operations.md) |  |
+| 0227 | [Passenger and exterior journey views](0227-passenger-and-exterior-flight-views.md) |  |
+| 0228 | [Cockpit flight feel: per-type attitude, head/body motion, live attitude indicator](0228-cockpit-flight-feel.md) |  |
+| 0228 | [Cockpit immersion presentation](0228-cockpit-immersion.md) |  |
+| 0229 | [Cockpit window view fitted to real over-the-nose vision](0229-cockpit-window-view-fit.md) |  |
+| 0230 | [Require freighters for freight contracts](0230-freighter-required-contracts.md) |  |
+| 0231 | [Calm shared HUD and structured return briefing](0231-interface-and-return-briefing.md) |  |
+| 0232 | [AI freight operators and cargo banks](0232-ai-freight-traffic.md) |  |
+| 0233 | [Preserve authored Unity folder metadata in Git](0233-unity-folder-metadata.md) |  |
+| 0234 | [Readable original aircraft identities](0234-aircraft-identity-refresh.md) |  |
+| 0235 | [Select South Australian flights from the mini map](0235-south-australia-flight-minimap.md) | card on the HUD rather than opening the route planner. |
+| 0236 | [Map accuracy from open Australian data](0236-map-accuracy-open-data.md) |  |
+| 0237 | [Full-map flight inspection and shared UI controls](0237-full-map-flight-inspector-and-ui-controls.md) | /journey/card data and cockpit, window-seat and exterior actions |
+| 0238 | [continuous takeoff and shared flight information](0238-continuous-takeoff-and-flight-information.md) | /location information in every aircraft view |
+| 0239 | [fitted passenger cabin sections](0239-fitted-passenger-cabin-sections.md) |  |
+| 0239 | [one fleet across every base, with a ferry between them](0239-unified-fleet-and-relocation.md) |  |
+| 0240 | [Cockpit fittings and full fleet window stations](0240-cockpit-fittings-and-full-fleet-window-stations.md) | accepted, 6 October 2026. |
+| 0241 | [Family interior details and Bell cockpit](0241-family-interior-details-and-bell-cockpit.md) | accepted, 6 October 2026. |
+| 0242 | [Trackpad haptics, either-button look and eased view changes in aircraft views](0242-cockpit-trackpad-haptics-and-smoother-look.md) |  |
+| 0243 | [Adelaide ground clearances and wake separation](0243-adelaide-ground-protocols.md) | accepted for implementation, 6 October 2026 |
+| 0244 | [Refined interface and maintenance design study](0244-refined-interface-and-maintenance-design-study.md) |  |
+| 0245 | [Maintenance jobs and refined shared interface](0245-maintenance-jobs-and-refined-shared-interface.md) | , slim navigation, compact objective, optional radar and a right aircr |
+| 0246 | [Render cost trim: SSAO downsample, MSAA budget, shadow cascades](0246-render-cost-trim-ssao-msaa-shadows.md) |  |
+| 0247 | [Far terrain uses the full 125 m DEM](0247-far-terrain-full-dem-resolution.md) |  |
+| 0248 | [Sharper far satellite image (v02)](0248-sharper-far-satellite.md) |  |

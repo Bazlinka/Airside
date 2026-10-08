@@ -23,8 +23,22 @@ slew; real clearance retains the held pose through the handoff. Map/follow/selec
 status use the actual held pose. This represents existing operational delays; it does
 not grant runway/stand/curfew clearance or create a new saved state. Focused holding
 and approach checks pass 16/16; changed C# syntax parses. Rendered holding/rejoin and
-terrain performance remain unverified. Holding pose is transient across reloads;
-live-feed expiry and unsupported outstation presentation still have explicit limits.
+terrain performance remain unverified. Save v23 now retains final/holding pose and
+phase, guarded by registration/type/destination/state/start-time after offline catch-up;
+changed journeys are not resurrected. Old saves rebuild their unsaved presentation.
+Live-feed expiry and unsupported outstation presentation retain explicit limits.
+
+**Shared operational weather and reload continuity (9 Oct, Codex, #679):** validated
+live weather/wind samples enter a saved timeline at processed simulation time. Ground
+stops, runway/rotor wind rules, final-entry commitment, sky/rain and wind motion read
+that same timeline. Expiry, disabling live weather and unknown offline periods fall
+back to the deterministic forecast. Historical samples replay on catch-up; expiry is
+an explicit event boundary. Save v23 adds flat optional observation/arrival records;
+v1–22 retain their prior forecast and rebuild presentation. Review-only weather pins
+remain cosmetic. Focused continuity, save, Operations, runway and hold checks pass
+53/53; new Unity JsonUtility round-trip test is added but unrun here. Unity compile,
+serialization, actual weather releases, reload/holding appearance and performance
+remain unverified.
 
 **Cloud continuity/weather variety (9 Oct, Codex, #674):** clouds recycle/fade around
 the watched area, not the orbiting lens. The wider footprint keeps storm bodies away

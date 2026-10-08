@@ -7,8 +7,8 @@ using UnityEngine;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// Presentation-only Adelaide forecast polling. The operational simulation never
-    /// sees this feed, so a network failure cannot alter a runway, clearance, save or replay.
+    /// Adelaide forecast polling records validated samples at the processed simulation time.
+    /// Airport rules and visuals share those saved inputs; unknown periods use the seeded forecast.
     /// </summary>
     public sealed partial class AirsidePrototype
     {
@@ -32,6 +32,9 @@ namespace Airside.Presentation
             _stormDepth = Mathf.Lerp(_stormDepth, storm, ease);
         }
 
+        private AirlineOperations _weatherInputOwner;
+        private long RemainingWeatherValidity => Math.Max(1L, (long)Math.Floor(
+            LiveWeather.StaleSeconds - (Time.realtimeSinceStartup - _liveWeatherFetchedAt)));
         private Task<LiveWeatherSnapshot?> _liveWeatherFetch;
         private LiveWeatherSnapshot? _liveWeatherSnapshot;
         private float _liveWeatherFetchedAt = float.NegativeInfinity;
@@ -58,9 +61,12 @@ namespace Airside.Presentation
             }
         }
 
-        private string PresentationWeatherSummary => LiveWeatherHealthy
-            ? $"Live {WeatherAppearance.Describe(_liveWeatherSnapshot.Value.Kind, _liveWeatherSnapshot.Value.Look)} · {_liveWeatherSnapshot.Value.TemperatureCelsius:0}°C"
-            : $"Forecast {WeatherAppearance.Describe(CurrentWeather, TargetWeatherLook)}";
+        private string PresentationWeatherSummary =>
+            FleetMode && _operations.WeatherTimeline.TryAt(_clock.Now, out _)
+                ? $"Current {WeatherAppearance.Describe(CurrentWeather, TargetWeatherLook)}"
+                : !FleetMode && LiveWeatherHealthy
+                    ? $"Live {WeatherAppearance.Describe(CurrentWeather, TargetWeatherLook)} · {_liveWeatherSnapshot.Value.TemperatureCelsius:0}°C"
+                    : $"Forecast {WeatherAppearance.Describe(CurrentWeather, TargetWeatherLook)}";
 
         private static HttpClient CreateWeatherHttp()
         {
@@ -71,6 +77,21 @@ namespace Airside.Presentation
 
         private void UpdateLiveWeather()
         {
+            if (!FleetMode) _weatherInputOwner = null;
+            if (FleetMode && !ReviewWeather.HasValue)
+            {
+                if (_weatherInputOwner != _operations)
+                {
+                    _weatherInputOwner = _operations;
+                    if (LiveWeatherHealthy)
+                        _operations.ObserveWeather(_liveWeatherSnapshot.Value, RemainingWeatherValidity);
+                }
+                if (!AirsideSettings.Current.LiveWeather || _liveWeatherSnapshot.HasValue
+                    && Time.realtimeSinceStartup - _liveWeatherFetchedAt >= LiveWeather.StaleSeconds)
+                    _operations.WeatherTimeline.EndLiveAt(_operations.ProcessedTo);
+                else if (LiveWeatherHealthy && !_operations.WeatherTimeline.TryAt(_clock.Now, out _))
+                    _operations.ObserveWeather(_liveWeatherSnapshot.Value, RemainingWeatherValidity);
+            }
             AdvanceWeatherLook();
             if (!AirsideSettings.Current.LiveWeather || ReviewWeather.HasValue)
                 return;
@@ -87,6 +108,11 @@ namespace Airside.Presentation
                     _liveWeatherSnapshot = _liveWeatherFetch.Result.Value;
                     _liveWeatherFetchedAt = now;
                     _liveWeatherFailures = 0;
+                    if (FleetMode)
+                    {
+                        _operations.ObserveWeather(_liveWeatherSnapshot.Value);
+                        RequestAutosave();
+                    }
                 }
                 else
                 {

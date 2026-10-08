@@ -20,7 +20,8 @@ namespace Airside.Simulation
         /// arrival. Derive entry from its existing leg deadline so live play, catch-up and
         /// restored saves agree without a presentation callback or new persisted flag.
         /// </summary>
-        public static bool EnteredFinalBeforeStorm(FleetAircraft aircraft, SimulationTime now)
+        public static bool EnteredFinalBeforeStorm(FleetAircraft aircraft, SimulationTime now,
+            Func<SimulationTime, WeatherKind> weatherAt = null)
         {
             if (aircraft == null || aircraft.Type.IsRotorcraft)
                 return false;
@@ -28,11 +29,12 @@ namespace Airside.Simulation
                 return true;
             if (aircraft.State != FleetState.Inbound || !aircraft.StateEndsAt.HasValue)
                 return false;
+            if (aircraft.ArrivalCommittedBeforeStorm) return true;
             var speed = CircuitProfile.Knots(AircraftPerformance.For(aircraft.Type).ApproachKnots);
             var entrySeconds = Math.Max(aircraft.StateStartedAt.ElapsedSeconds,
                 aircraft.StateEndsAt.Value.ElapsedSeconds - (long)Math.Ceiling(ExtendedFinalMetres / speed));
             return entrySeconds <= now.ElapsedSeconds
-                && Weather.At(new SimulationTime(entrySeconds)) != WeatherKind.Storm;
+                && (weatherAt ?? Weather.At)(new SimulationTime(entrySeconds)) != WeatherKind.Storm;
         }
 
         /// <summary>

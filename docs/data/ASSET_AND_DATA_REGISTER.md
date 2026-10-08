@@ -491,3 +491,12 @@ and far-plane proxy handling, authored by Codex for Bailey. No downloaded assets
 image generation, external code, new attribution or cost. Source/evidence: #674 and
 `2026-10-09-cloud-continuity-and-variety`. Existing shader/atlas paths and missing-shader
 fallback remain. Native shader compilation, rendered appearance and GPU unverified.
+
+## Recorded weather integration — 9 October 2026 (#679)
+
+The already registered Open-Meteo forecast sample now also enters the game's saved
+operational timeline and replay. Provider, fixed Adelaide coordinate, API request,
+CC BY 4.0 attribution and existing private-prototype/release terms remain as registered;
+no new data source, asset, acquisition cost or endpoint is introduced. Source/evidence:
+`2026-10-09-recorded-weather-and-arrival-continuity`. The deterministic forecast remains
+the unknown/expired-input fallback. Native save/restore integration is unverified.

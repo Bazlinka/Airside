@@ -65,7 +65,7 @@ namespace Airside.Simulation
 
         /// <summary>Weather and pad gate for a helicopter movement at <paramref name="now"/>.</summary>
         private bool RotorcraftMayMoveNow(FleetAircraft aircraft, SimulationTime now) =>
-            RotorcraftRules.MayMove(Weather.At(now), RunwayWeather.At(Clock, now).Knots, aircraft.Airline.IsEmergency);
+            RotorcraftRules.MayMove(WeatherAt(now), WindAt(now).Knots, aircraft.Airline.IsEmergency);
 
         private bool DepartRotorcraft(FleetAircraft aircraft, SimulationTime now)
         {

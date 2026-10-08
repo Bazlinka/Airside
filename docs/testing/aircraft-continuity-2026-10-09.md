@@ -29,12 +29,13 @@ storm finals and holds new departures at stands.
 Other inbound timer extensions still affect the operational route estimate; an
 already established rendered arrival stays physically present instead of rewinding
 with that estimate. Holding is a transient presentation of an existing delay, not
-new clearance or a complete ATC/fuel/diversion system. Its orbit is not saved; a reload
-reconstructs presentation from saved operational state rather than preserving the
-exact holding phase. Native final/hold/rejoin and cleared-landing timing remain
+new clearance or a complete ATC/fuel/diversion system. Save v23 now preserves its
+entry, heading, phase and world pose, applying it only to the same journey after
+catch-up. Older saves reconstruct their previously unsaved presentation. Native final/hold/rejoin and cleared-landing timing remain
 unverified, especially when clearance occurs between rendered ETA updates.
-Live weather remains cosmetic while operational weather uses the deterministic
-chain; this pre-existing split remains a broader design mismatch to address explicitly.
+The prior live/operational source split is resolved for airline operations by a saved
+observation timeline shared with visuals. Historical inputs replay; unknown/expired
+periods use forecast. Review-only pins and the legacy demo remain cosmetic tools.
 An expired live-feed target and an unsupported network outstation still leave their
 limited presentation, with service retained in Fleet. They are separate from the
 authored Adelaide arrival lifecycle. Regional ground presentation requires a known
@@ -46,7 +47,8 @@ Keep all owned aircraft in Fleet and physically parked in 3D. Exclude long-idle 
 aircraft from active-flight counts and automatic follow cycling until scheduled
 pushback is within two hours; retain explicit selection. An overdue aircraft waiting
 for weather stays active, and moving/airborne aircraft never depend on that window.
-This recommendation has not changed activity UI policy yet.
+Implemented after Bailey instructed continuation: active counts and automatic camera
+cycling use this window, preserving physical views, direct follow and timetable rows.
 
 ## Evidence
 
@@ -54,4 +56,6 @@ Headless compile checks the pure presence policy. Roslyn parses changed Unity-fa
 C#; neither establishes Unity compilation, camera appearance or terrain performance.
 Holding/approach regressions pass 16/16, including retained-estimate boundaries,
 initial heading/speed, sustained orbit motion and monotonic climb over several laps.
+The subsequent activity/weather/reload changes pass 53 focused continuity, save,
+Operations, runway and hold checks. New native JsonUtility fixture is added but unrun.
 No broad suite, packaged build or player review under the standing policy.

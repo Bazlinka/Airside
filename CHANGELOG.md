@@ -1,6 +1,7 @@
 # Changelog
 
 - 2026-10-08 — Camera drag no longer hits an invisible wall: free-pan limit widened from 3.8 km to 12 km around the airfield (unverified in Unity).
+- 2026-10-08 — Jet routing factor: cruise time on jet legs rises linearly from 1.0 at 600 km to 1.08 at 2,500 km+ (routing/headwind); Perth 173→183 min (headless audit only).
 
 - 2026-10-08 — Flight-time audit: ATR 42/Dash 8 planning cruise 510/620 km/h (was max cruise), A350/787-9 practical range 13,500 km, 787-10 11,200 km (headless audit only).
 

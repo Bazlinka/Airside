@@ -458,45 +458,7 @@ namespace Airside.Presentation
                 return;
             }
 
-            into.Text(new HudBox(pane.X, pane.Y, pane.Width, 30f), model.DestinationTitle, 22f,
-                HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
-            into.Caption(new HudBox(pane.X, pane.Y + 27f, pane.Width, 14f), "DESTINATION",
-                model.CareerLine.Length > 0 ? HudTone.Caution : HudTone.Muted);
-            into.Hairline(new HudBox(pane.X, pane.Y + 46f, pane.Width, 1f));
-
-            var y = pane.Y + 58f;
-            PaintFact(into, pane, ref y, "ROUTE", model.BandAndDistance, HudTone.Default);
-            PaintFact(into, pane, ref y, "AIRCRAFT", model.CompatibilityLine, HudTone.Default);
-            if (model.DispatchLine.Length > 0)
-            {
-                PaintFact(into, pane, ref y, "PAY NOW", model.DispatchLine, HudTone.Default);
-                PaintFact(into, pane, ref y, "RETURN", model.ReturnLine, HudTone.Default);
-            }
-
-            into.Text(new HudBox(pane.X, y, pane.Width, 24f), model.ProfitLine, 17f, model.ProfitTone, HudTextStyle.Bold);
-            y += 30f;
-            into.Hairline(new HudBox(pane.X, y, pane.Width, 1f));
-            y += 12f;
-            into.Text(new HudBox(pane.X, y, pane.Width, 36f), model.AvailabilityLine, 13f,
-                model.AvailabilityTone, HudTextStyle.Wrap);
-            y += 44f;
-
-            if (model.CareerLine.Length > 0)
-            {
-                into.Hairline(new HudBox(pane.X, y, pane.Width, 1f));
-                y += 10f;
-                into.Caption(new HudBox(pane.X, y, pane.Width, 16f), "CAREER");
-                y += 19f;
-                into.Text(new HudBox(pane.X, y, pane.Width, 34f), model.CareerLine, 12f,
-                    model.CareerTone, HudTextStyle.Bold | HudTextStyle.Wrap);
-                y += 38f;
-                if (pane.Height >= 520f)
-                {
-                    into.Button(new HudBox(pane.X, y, 132f, 28f), "VIEW CONTRACTS",
-                        HudAction.ViewContracts, HudButtonStyle.Secondary);
-                    y += 36f;
-                }
-            }
+            var y = PaintSummary(into, model, pane, pane.Bottom - 100f);
 
             if (model.DepartureLabel.Length > 0)
             {
@@ -544,30 +506,82 @@ namespace Airside.Presentation
                     HudTone.Muted, HudTextStyle.Wrap);
         }
 
+        /// <summary>
+        /// Destination first, then the one number that decides the choice (profit) in a card with its two
+        /// parts, then whether you can fly it, then the career nudge. Parts that would not fit above
+        /// <paramref name="limit"/> are left out, so a short window never paints over its booking controls.
+        /// Returns where the next block starts.
+        /// </summary>
+        private static float PaintSummary(HudDrawList into, RouteMapWorkspaceModel model, HudBox pane, float limit)
+        {
+            into.Text(new HudBox(pane.X, pane.Y, pane.Width, 30f), model.DestinationTitle, 22f,
+                HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
+            into.Text(new HudBox(pane.X, pane.Y + 31f, pane.Width, 16f), model.BandAndDistance, 12f, HudTone.Muted);
+
+            var y = pane.Y + 58f;
+            var card = new HudBox(pane.X, y, pane.Width, 92f);
+            if (card.Bottom > limit)
+            {
+                into.Text(new HudBox(pane.X, y, pane.Width, 24f), model.ProfitLine, 17f, model.ProfitTone, HudTextStyle.Bold);
+                return y + 30f;
+            }
+
+            into.Card(card, 0.9f);
+            into.Text(new HudBox(card.X + 14f, card.Y + 10f, card.Width - 28f, 26f), model.ProfitLine, 20f,
+                model.ProfitTone, HudTextStyle.Bold);
+            if (model.DispatchLine.Length > 0)
+            {
+                var half = (card.Width - 28f) * 0.5f;
+                PaintFigure(into, card.X + 14f, card.Y + 46f, half - 8f, "PAY NOW", model.DispatchLine);
+                PaintFigure(into, card.X + 14f + half, card.Y + 46f, half - 8f, "RETURN", model.ReturnLine);
+            }
+            else
+                PaintFigure(into, card.X + 14f, card.Y + 46f, card.Width - 28f, "AIRCRAFT", model.CompatibilityLine);
+            y = card.Bottom + 12f;
+
+            var oneLine = HudShell.Measure(model.AvailabilityLine, 12f) <= pane.Width - 28f;
+            var status = new HudBox(pane.X, y, pane.Width, oneLine ? 30f : 44f);
+            if (status.Bottom <= limit)
+            {
+                into.Fill(status, model.AvailabilityTone, 0.12f);
+                into.Fill(new HudBox(status.X, status.Y + 6f, 3f, status.Height - 12f), model.AvailabilityTone, 1f);
+                into.Text(new HudBox(status.X + 14f, status.Y + (oneLine ? 7f : 5f), status.Width - 24f, status.Height - 8f), model.AvailabilityLine, 12f,
+                    model.AvailabilityTone, HudTextStyle.Bold | HudTextStyle.Wrap);
+                y = status.Bottom + 6f;
+                if (model.DispatchLine.Length > 0 && model.CompatibilityLine.Length > 0 && y + 16f <= limit)
+                {
+                    into.Text(new HudBox(pane.X, y, pane.Width, 16f), model.CompatibilityLine, 11f, HudTone.Muted);
+                    y += 22f;
+                }
+            }
+
+            y += 6f;
+            if (model.CareerLine.Length > 0)
+            {
+                var withButton = pane.Height >= 520f;
+                var note = new HudBox(pane.X, y, pane.Width, withButton ? 92f : 58f);
+                if (note.Bottom <= limit)
+                {
+                    into.Fill(note, model.CareerTone, 0.08f);
+                    into.Caption(new HudBox(note.X + 12f, note.Y + 8f, note.Width - 24f, 14f), "CAREER", model.CareerTone);
+                    into.Text(new HudBox(note.X + 12f, note.Y + 24f, note.Width - 24f, 34f), model.CareerLine, 12f,
+                        HudTone.Default, HudTextStyle.Wrap);
+                    if (withButton)
+                        into.Button(new HudBox(note.X + 12f, note.Bottom - 34f, 132f, 26f), "VIEW CONTRACTS",
+                            HudAction.ViewContracts, HudButtonStyle.Secondary);
+                    y = note.Bottom + 14f;
+                }
+            }
+
+            return y;
+        }
+
         /// <summary>Keep booking controls fixed and reachable in a short desktop window.</summary>
         private static void PaintCompactDetail(HudDrawList into, RouteMapWorkspaceModel model, HudBox pane)
         {
-            into.Text(new HudBox(pane.X, pane.Y, pane.Width, 28f), model.DestinationTitle, 20f, HudTone.Default, HudTextStyle.Bold);
             var buttonY = pane.Bottom - 84f;
             var controlsY = buttonY - 116f;
-            var y = pane.Y + 36f;
-            void Line(string text, HudTone tone, float height = 20f)
-            {
-                if (string.IsNullOrEmpty(text) || y + height > controlsY - 8f) return;
-                into.Text(new HudBox(pane.X, y, pane.Width, height), text, 11f, tone, HudTextStyle.Wrap);
-                y += height + 2f;
-            }
-            Line(model.ProfitLine, model.ProfitTone, 24f);
-            Line(model.BandAndDistance, HudTone.Muted);
-            Line(model.DispatchLine, HudTone.Default);
-            Line(model.ReturnLine, HudTone.Default);
-            Line(model.AvailabilityLine, model.AvailabilityTone, 28f);
-            Line(model.CareerLine, model.CareerTone, 28f);
-            if (model.CareerLine.Length > 0 && y + 28f <= controlsY - 8f)
-            {
-                into.Button(new HudBox(pane.X, y, Math.Min(pane.Width, 132f), 28f), "VIEW CONTRACTS",
-                    HudAction.ViewContracts, HudButtonStyle.Secondary);
-            }
+            PaintSummary(into, model, pane, controlsY - 8f);
             if (model.DepartureLabel.Length > 0)
             {
                 into.Button(new HudBox(pane.X, controlsY, pane.Width, 28f), model.AircraftLabel + "   ▾",
@@ -594,15 +608,14 @@ namespace Airside.Presentation
             into.Button(reset, "COMPARE ROUTES", HudAction.ResetMap, HudButtonStyle.Secondary);
         }
 
-        private static void PaintFact(HudDrawList into, HudBox pane, ref float y, string caption,
-            string value, HudTone tone)
+        /// <summary>A small caption over a bold value, shrunk to fit its column.</summary>
+        private static void PaintFigure(HudDrawList into, float x, float y, float width, string caption, string value)
         {
-            var row = new HudBox(pane.X, y, pane.Width, 26f);
-            into.Fill(row, HudTone.Default, 0.035f);
-            into.Caption(new HudBox(row.X + 8f, row.Y + 6f, 78f, 15f), caption);
-            into.Text(new HudBox(row.X + 88f, row.Y + 5f, row.Width - 96f, 17f), value, 12f, tone,
-                HudTextStyle.Bold, HudAlign.Right);
-            y += 32f;
+            // The caption already says what it is; drop the model's own lead-in words.
+            value = (value ?? string.Empty).Replace("Expected return ", string.Empty).Replace("Change ", string.Empty);
+            into.Caption(new HudBox(x, y, width, 12f), caption, HudTone.Muted, HudAlign.Left, 9f);
+            into.Text(new HudBox(x, y + 14f, width, 20f), value, HudShell.FitFontSize(value, 14f, width, 10f),
+                HudTone.Default, HudTextStyle.Bold);
         }
 
         private static void PaintDestinationList(HudDrawList into, RouteMapWorkspaceModel model, HudBox pane)

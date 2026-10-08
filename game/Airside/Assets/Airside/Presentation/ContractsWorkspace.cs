@@ -375,7 +375,7 @@ namespace Airside.Presentation
 
             var wanted = ContractsWorkspaceLayout.ActiveCardHeightFor(model.ActiveTerms.Count);
             var body = card.WithHeight(Math.Min(card.Height, wanted));
-            into.Fill(body, HudTone.Default, 0.05f);
+            into.Card(body, 1f);
             into.Outline(body, HudTone.Caution, 0.7f);
 
             var x = body.X + 16f;
@@ -487,8 +487,10 @@ namespace Airside.Presentation
                 var definition = offer.Definition;
                 var card = layout.OfferCard(i, shown);
                 var highlighted = offer.CanAccept && definition.Id == highlightedContractId;
-                into.Fill(card, highlighted ? HudTone.Accent : HudTone.Default, highlighted ? 0.22f : 0.04f);
-                into.Outline(card, highlighted ? HudTone.Accent : HudTone.Muted, highlighted ? 0.9f : 0.25f);
+                into.Card(card, offer.CanAccept ? 0.95f : 0.6f);
+                if (highlighted)
+                    into.Fill(card, HudTone.Accent, 0.14f);
+                into.Outline(card, highlighted ? HudTone.Accent : HudTone.Muted, highlighted ? 0.9f : 0.18f);
 
                 var reason = shared == null ? offer.LockReason : string.Empty;
                 var contentHeight = reason.Length > 0 ? 70f : 52f;
@@ -517,7 +519,7 @@ namespace Airside.Presentation
                 var rows = 1;
                 foreach (var chip in Chips(definition))
                 {
-                    var chipWidth = HudShell.Measure(chip, 10f, 0.6f) + 22f;
+                    var chipWidth = HudShell.Measure(chip, 10f, 0.3f) + 16f;
                     if (chipX + chipWidth > textX + textWidth)
                     {
                         // A narrow card (side sheet, ADR 0135) takes a second row rather than drop a term.
@@ -545,7 +547,7 @@ namespace Airside.Presentation
                 // The money, big, over the button.
                 var total = definition.PaymentPerRotation * definition.RequiredRotations + definition.CompletionReward;
                 var right = new HudBox(card.Right - rightWidth - 16f, contentY - 4f, rightWidth, 26f);
-                into.Text(right, $"${total:N0}", 20f, offer.CanAccept ? HudTone.Positive : HudTone.Muted,
+                into.Text(right, $"${total:N0}", 22f, offer.CanAccept ? HudTone.Positive : HudTone.Muted,
                     HudTextStyle.Bold, HudAlign.Right);
                 into.Button(new HudBox(right.X, right.Y + 30f, rightWidth, 30f), "ACCEPT",
                     HudAction.Accept(definition.Id),

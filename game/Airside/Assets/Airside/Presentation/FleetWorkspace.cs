@@ -1187,11 +1187,12 @@ namespace Airside.Presentation
             var selected = row.Registration == selectedRegistration;
             var alpha = quiet ? OperationsWorkspacePainter.SubordinateAlpha : 1f;
 
+            // Each aircraft is its own raised card (livery colour down its edge); the selected one is
+            // outlined in aqua rather than flooded with it, so its text stays easy to read.
+            into.Card(box.Inset(0f, 1f, 0f, 1f), selected ? 1f : 0.55f * alpha);
             if (selected)
-                into.Fill(box, HudTone.Accent, 0.28f);
-            else if ((slot & 1) == 1)
-                into.Fill(box, HudTone.Default, 0.025f);
-            into.Fill(new HudBox(box.X, box.Y, 3f, box.Height), HudTone.Default, quiet ? 0.5f : 1f,
+                into.Outline(box.Inset(0f, 1f, 0f, 1f), HudTone.Accent, 0.85f);
+            into.Fill(new HudBox(box.X + 1f, box.Y + 7f, 3f, box.Height - 14f), HudTone.Default, quiet ? 0.5f : 1f,
                 row.LiveryHex);
 
             var standWidth = box.Width >= 240f ? 74f : 0f;
@@ -1207,7 +1208,7 @@ namespace Airside.Presentation
                 into.Text(body.Offset(regWidth, 0f).WithWidth(typeWidth - 8f), row.TypeName, 11f,
                     HudTone.Muted, alpha: alpha);
             into.Text(body.Offset(regWidth + typeWidth, 0f).WithWidth(body.Width - regWidth - typeWidth),
-                row.Status, 12f, row.StatusTone, alpha: alpha);
+                row.Status, 12f, row.StatusTone, HudTextStyle.Bold, alpha: alpha);
             if (standWidth > 0f)
                 into.Text(new HudBox(box.Right - standWidth, box.Y + 7f, standWidth - 6f, 18f), row.Stand,
                     12f, HudTone.Muted, HudTextStyle.Regular, HudAlign.Right, alpha: alpha);

@@ -897,8 +897,7 @@ namespace Airside.Presentation
                 {
                     if (_optionsOpen)
                     {
-                        _optionsOpen = false;
-                        PlayUiClick();
+                        CloseOptionsMenu();
                         return;
                     }
                     ToggleMenu();
@@ -1341,149 +1340,6 @@ namespace Airside.Presentation
         }
 
         private GUIStyle _pauseStampStyle;
-        private GUIStyle _optionsNoteStyle;
-
-        private void DrawOptionsMenu(HudLayout layout, GUIStyle panel, GUIStyle title, GUIStyle button)
-        {
-            var rect = layout.OptionsMenu;
-            GUI.Box(rect, GUIContent.none, panel);
-            GUI.Label(new Rect(rect.x + 20f, rect.y + 16f, rect.width - 40f, 30f), "Options", title);
-
-            var settings = AirsideSettings.Current;
-            var row = new Rect(rect.x + 20f, rect.y + 62f, rect.width - 40f, 38f);
-            if (GUI.Button(row, settings.SoundOn ? "Sound  ·  On" : "Sound  ·  Off", button))
-            {
-                _audioMuted = !_audioMuted;
-                ApplySettingsAndSave();
-                ApplyMasterMute();
-                PlayUiClick();
-            }
-
-            row.y += 46f;
-            if (GUI.Button(row, settings.FieldTags ? "Aircraft tags  ·  On" : "Aircraft tags  ·  Off", button))
-            {
-                _fieldTagsVisible = !settings.FieldTags;
-                ApplySettingsAndSave();
-                PlayUiClick();
-            }
-
-            row.y += 46f;
-            if (GUI.Button(row, settings.MiniMap ? "Airport map  ·  On" : "Airport map  ·  Off", button))
-            {
-                _miniMapVisible = !settings.MiniMap;
-                ApplySettingsAndSave();
-                PlayUiClick();
-            }
-
-            row.y += 46f;
-            if (GUI.Button(row, settings.FollowOnSelect ? "Follow on select  ·  On" : "Follow on select  ·  Off", button))
-            {
-                settings.FollowOnSelect = !settings.FollowOnSelect;
-                settings.Save();
-                PlayUiClick();
-            }
-
-            row.y += 46f;
-            if (GUI.Button(row, settings.InvertOrbit ? "Invert orbit  ·  On" : "Invert orbit  ·  Off", button))
-            {
-                settings.InvertOrbit = !settings.InvertOrbit;
-                settings.Save();
-                PlayUiClick();
-            }
-
-            row.y += 46f;
-            if (GUI.Button(row, $"Camera speed  ·  {AirsideSettings.CameraSpeedLabels[settings.CameraSpeedIndex]}", button))
-            {
-                settings.CycleCameraSpeed().Save();
-                PlayUiClick();
-            }
-
-            row.y += 46f;
-            if (GUI.Button(row, $"Night brightness  ·  {NightVisibility.Labels[NightVisibility.Clamp(settings.NightBrightness)]}", button))
-            {
-                settings.CycleNightBrightness().Save();
-                PlayUiClick();
-            }
-
-            row.y += 46f;
-            if (GUI.Button(row, $"Live Adelaide sky traffic  ·  {LiveTrafficStatus}", button))
-            {
-                settings.LiveTraffic = !settings.LiveTraffic;
-                settings.Save();
-                PlayUiClick();
-            }
-
-            row.y += 46f;
-            if (GUI.Button(row, $"Live Adelaide weather  ·  {LiveWeatherStatus}", button))
-            {
-                settings.LiveWeather = !settings.LiveWeather;
-                settings.Save();
-                if (settings.LiveWeather)
-                    _nextLiveWeatherPollAt = 0f;
-                PlayUiClick();
-            }
-
-            row.y += 46f;
-            if (GUI.Button(row, settings.UncappedFrameRate ? "Frame rate  ·  Display max" : "Frame rate  ·  60 fps", button))
-            {
-                settings.UncappedFrameRate = !settings.UncappedFrameRate;
-                settings.Save();
-                AirsideFramePacing.Apply(settings.UncappedFrameRate, SoakMode);
-                PlayUiClick();
-            }
-
-            // Graphics tests (ADR 0155): each switches one heavier effect off to find a slowdown.
-            row.y += 50f;
-            GUI.Label(new Rect(row.x, row.y, row.width, 24f), "Graphics tests  ·  turn one off to compare", _optionsNoteStyle ??=
-                AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 13 }));
-            row.y += 28f;
-            if (GUI.Button(row, settings.WeatherLayers ? "Weather layers  ·  On" : "Weather layers  ·  Off", button))
-            {
-                settings.WeatherLayers = !settings.WeatherLayers;
-                settings.Save();
-                PlayUiClick();
-            }
-
-            row.y += 46f;
-            if (GUI.Button(row, settings.PropellerBlur ? "Propeller blur  ·  On" : "Propeller blur  ·  Off", button))
-            {
-                settings.PropellerBlur = !settings.PropellerBlur;
-                settings.Save();
-                PlayUiClick();
-            }
-
-            row.y += 46f;
-            if (GUI.Button(row, settings.DistantGlows ? "Distant aircraft glow  ·  On" : "Distant aircraft glow  ·  Off", button))
-            {
-                settings.DistantGlows = !settings.DistantGlows;
-                settings.Save();
-                PlayUiClick();
-            }
-
-            row.y += 46f;
-            if (GUI.Button(row, settings.AircraftLights ? "Aircraft lights  ·  On" : "Aircraft lights  ·  Off", button))
-            {
-                settings.AircraftLights = !settings.AircraftLights;
-                settings.Save();
-                PlayUiClick();
-            }
-
-            row.y += 46f;
-            if (GUI.Button(row, settings.SuburbBuildings ? "Suburbs and trees  ·  On" : "Suburbs and trees  ·  Off (next launch)", button))
-            {
-                settings.SuburbBuildings = !settings.SuburbBuildings;
-                settings.Save();
-                PlayUiClick();
-            }
-
-            row.y += 56f;
-            if (GUI.Button(row, "Back", button))
-            {
-                _optionsOpen = false;
-                PlayUiClick();
-            }
-        }
-
         private static float PhasePitchDegrees(AircraftPhase phase, float progress) =>
             AirsideFlightPath.PitchDegrees(phase, progress);
 
@@ -3955,9 +3811,14 @@ namespace Airside.Presentation
             filter.sharedMesh = mesh;
         }
 
-        private static void RebakePartPivot(Transform part, Vector3 pivotWorld)
+        /// <summary>
+        /// Re-origin a part at <paramref name="pivotWorld"/>, keeping every vertex where it is in the world.
+        /// With <paramref name="worldRotation"/> the part's own rotation is reset too and baked into its mesh,
+        /// for a part that must start at identity because its animation sets the rotation outright.
+        /// </summary>
+        private static void RebakePartPivot(Transform part, Vector3 pivotWorld, Quaternion? worldRotation = null)
         {
-            if ((part.position - pivotWorld).sqrMagnitude < 0.0025f)
+            if ((part.position - pivotWorld).sqrMagnitude < 0.0025f && !worldRotation.HasValue)
                 return;
 
             var filters = part.GetComponentsInChildren<MeshFilter>(true);
@@ -3975,6 +3836,8 @@ namespace Airside.Presentation
             }
 
             part.position = pivotWorld;
+            if (worldRotation.HasValue)
+                part.rotation = worldRotation.Value;
             for (var i = 0; i < filters.Length; i++)
             {
                 if (worldVertices[i] == null)

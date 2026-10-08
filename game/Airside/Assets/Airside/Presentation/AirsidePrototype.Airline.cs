@@ -754,6 +754,7 @@ namespace Airside.Presentation
 
         private AwaySummary _awaySummary;
         private bool _saveProbed;
+        private bool _saveRecoveredFromBackup;
         private AirlineSaveData _savedAirline;
         private string _saveError;
         private float _nextAutosaveAt;
@@ -765,9 +766,9 @@ namespace Airside.Presentation
                 return;
             _saveProbed = true;
 
-            if (AirlineSaveFile.TryRead(SavePath, out var data, out var error))
+            if (AirlineSaveFile.TryRead(SavePath, out var data, out var error, out _saveRecoveredFromBackup))
                 _savedAirline = data;
-            else if (File.Exists(SavePath))
+            else if (File.Exists(SavePath) || File.Exists(SavePath + ".bak"))
                 _saveError = $"{error} Starting a new airline will replace it.";
         }
 
@@ -788,7 +789,7 @@ namespace Airside.Presentation
                 foreach (var airline in _savedAirline.Airlines)
                     if (airline.IsPlayer && airline.Id == aircraft.AirlineId)
                         trips += aircraft.CompletedTrips;
-            return $"Saved {savedClock.DateText(at)} {savedClock.TimeText(at)}  ·  {trips} trip{(trips == 1 ? "" : "s")} flown";
+            return $"{(_saveRecoveredFromBackup ? "Recovery copy" : "Saved")} {savedClock.DateText(at)} {savedClock.TimeText(at)}  ·  {trips} trip{(trips == 1 ? "" : "s")} flown";
         }
 
         /// <summary>
@@ -847,6 +848,8 @@ namespace Airside.Presentation
             RefreshFleetFlights();
             if (_awaySummary == null)
                 ShowToast($"Welcome back to {_operations.PlayerAirline.Name}.");
+            if (_saveRecoveredFromBackup)
+                ShowToast("Recovered the previous save. Your most recent changes may be missing.", HudTone.Caution);
             SaveAirline();
             PlayUiClick();
             StartIntro($"Welcome back to {_operations.PlayerAirline.Name}");

@@ -7,7 +7,7 @@ Nothing here has been judged superseded except where the ADR says so.
 ## Rules for new ADRs
 
 - **Name new ADRs `YYYY-MM-DD-short-slug.md`** (the ADRs numbered 0001–0252 keep their numbers). A date and slug cannot collide the way a
-  sequential number did: parallel work claimed 10 numbers twice. Refer to one in code and docs as `ADR 2026-10-08-short-slug`.
+  sequential number did: parallel work claimed 11 numbers twice. Refer to one in code and docs as `ADR 2026-10-08-short-slug`.
 - First lines: `# Title`, then `Status: proposed | accepted | superseded by <file>`, then the date, decision, reason, affected systems, migration impact.
 - A design change that replaces an earlier ADR adds `Superseded by <file>` to the old one in the same commit.
 - Do not add the new ADR to this index by hand; regenerate it.
@@ -24,6 +24,7 @@ Nothing here has been judged superseded except where the ADR says so.
 - **0227**: `0227-helicopter-operations.md`, `0227-passenger-and-exterior-flight-views.md`
 - **0228**: `0228-cockpit-flight-feel.md`, `0228-cockpit-immersion.md`
 - **0239**: `0239-fitted-passenger-cabin-sections.md`, `0239-unified-fleet-and-relocation.md`
+- **0242**: `0242-cockpit-trackpad-haptics-and-smoother-look.md`, `0242-refined-interface-and-maintenance-design-study.md`
 
 ## Index
 
@@ -280,6 +281,7 @@ Nothing here has been judged superseded except where the ADR says so.
 | 0240 | [Cockpit fittings and full fleet window stations](0240-cockpit-fittings-and-full-fleet-window-stations.md) | accepted, 6 October 2026. |
 | 0241 | [Family interior details and Bell cockpit](0241-family-interior-details-and-bell-cockpit.md) | accepted, 6 October 2026. |
 | 0242 | [Trackpad haptics, either-button look and eased view changes in aircraft views](0242-cockpit-trackpad-haptics-and-smoother-look.md) |  |
+| 0242 | [Refined interface and maintenance design study](0242-refined-interface-and-maintenance-design-study.md) |  |
 | 0243 | [Adelaide ground clearances and wake separation](0243-adelaide-ground-protocols.md) | accepted for implementation, 6 October 2026 |
 | 0244 | [Refined interface and maintenance design study](0244-refined-interface-and-maintenance-design-study.md) |  |
 | 0245 | [Maintenance jobs and refined shared interface](0245-maintenance-jobs-and-refined-shared-interface.md) | , slim navigation, compact objective, optional radar and a right aircr |
@@ -302,9 +304,12 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-07 | [Multi-tool collaboration: one routine, generated indexes, date-named ADRs](2026-10-07-multi-agent-collaboration.md) | accepted |
 | 2026-10-07 | [Inline save absence and native flight-view contracts](2026-10-07-native-save-and-flight-view-contracts.md) |  |
 | 2026-10-07 | [All-base airline operations](2026-10-07-network-operations.md) |  |
+| 2026-10-07 | [Validate player journeys with a local interactive dispatch study](2026-10-07-player-flow-design-study.md) | accepted for design-study work; runtime interface direction remains pr |
 | 2026-10-08 | [Generic airport templates for every Australian destination](2026-10-08-airport-templates.md) | accepted (code only; unverified in Unity) |
 | 2026-10-08 | [Coherent world surface lighting](2026-10-08-coherent-world-lighting.md) |  |
 | 2026-10-08 | [Fleet flight performance and camera telemetry — 8 October 2026](2026-10-08-fleet-flight-performance.md) |  |
 | 2026-10-08 | [Fleet exterior lighting realism — 8 October 2026](2026-10-08-fleet-lighting-realism.md) |  |
 | 2026-10-08 | [Free sourced assets and coherent close-view materials](2026-10-08-free-visual-upgrade.md) |  |
+| 2026-10-08 | [Opening and Options clarity](2026-10-08-opening-options.md) | Accepted for implementation |
 | 2026-10-08 | [Independent Parafield airport](2026-10-08-parafield-independent-airport.md) |  |
+| 2026-10-08 | [Save recovery copy](2026-10-08-save-recovery.md) | Accepted for implementation |

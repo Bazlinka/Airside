@@ -62,6 +62,55 @@ namespace Airside.Tests
 
         [TearDown] public void Cleanup() { if (_host != null) Object.DestroyImmediate(_host); }
 
+        [Test]
+        public void FollowTargetRefresh_PreservesDeployedFlapRestPose_AndCruiseRetractsIt()
+        {
+            Start("KGC");
+            var view = new GameObject(AircraftPickRouting.ViewNamePrefix + _aircraft.Registration).transform;
+            try
+            {
+                var flap = new GameObject("Flap L").transform;
+                flap.SetParent(view, false);
+                var views = (Dictionary<string, Transform>)typeof(AirsidePrototype)
+                    .GetField("_fleetViewById", Hidden).GetValue(_prototype);
+                views[_aircraft.Registration] = view;
+                var partsFor = typeof(AirsidePrototype).GetMethod("PartsFor", Hidden);
+                var original = partsFor.Invoke(_prototype, new object[] { view });
+                var partsType = original.GetType();
+                var surfaces = (Array)partsType.GetField("ControlSurfaces").GetValue(original);
+                var surface = surfaces.GetValue(0);
+                var surfaceType = surface.GetType();
+                surfaceType.GetField("Deflection").SetValue(surface, 12f);
+                flap.localRotation = Quaternion.AngleAxis(
+                    AircraftArticulation.HingeAngleForTrailingEdgeDown(12f), Vector3.right);
+                flap.localPosition = Vector3.back * 0.2f;
+
+                var refresh = typeof(AirsidePrototype).GetMethod("EnsureFleetPickables", Hidden);
+                // First creation and later follow-set refresh must both preserve the live rig.
+                for (var i = 0; i < 2; i++)
+                    refresh.Invoke(_prototype, new object[] { new[] { view } });
+                var refreshed = partsFor.Invoke(_prototype, new object[] { view });
+                Assert.That(partsType.GetField("ControlSurfaces").GetValue(refreshed), Is.SameAs(surfaces));
+                Assert.That(partsType.GetField("Marker").GetValue(refreshed),
+                    Is.EqualTo(view.Find(AircraftPickRouting.MarkerChildName)));
+
+                typeof(AirsidePrototype).GetMethod("UpdateControlSurfaces",
+                    BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[]
+                    {
+                        surfaces, partsType.GetField("Articulation").GetValue(refreshed),
+                        AircraftPhase.Departed, 1f, 0f, 10f, null, true, AircraftType.Boeing7378
+                    });
+                Assert.That(Quaternion.Angle(flap.localRotation, Quaternion.identity), Is.LessThan(0.001f),
+                    "cruise must retract to the original wing plane, not a recaptured deployed pose");
+                Assert.That(flap.localPosition.sqrMagnitude, Is.LessThan(0.000001f));
+            }
+            finally
+            {
+                AirsideNamedChildren.Forget(view);
+                Object.DestroyImmediate(view.gameObject);
+            }
+        }
+
         [TestCase(FleetState.Landing)]
         [TestCase(FleetState.GoAround)]
         [TestCase(FleetState.TaxiOut)]

@@ -1,0 +1,12 @@
+{
+  "scope": "Documentation-only browser design study; no Unity runtime changes",
+  "javascript_syntax": "app.js and flow-model.js passed node --check",
+  "domain_check": {
+    "command": "scripts/test-domain.sh",
+    "passed": 1842,
+    "failed": 0,
+    "reported_skipped": 0,
+    "native_unity": "not run"
+  },
+  "pngs": "Chromium prototype captures, not Unity/game screenshots"
+}

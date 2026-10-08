@@ -2,6 +2,10 @@
 
 6 October 2026. Bailey approved refining the proposed maintenance journey and whole-interface design in chat. This packet makes that proposal concrete; the HTML study is a design prototype, not game implementation or a UI-framework migration. Existing product-plan files are unchanged.
 
+## Consolidated player-flow follow-through — 7 October 2026
+
+[`player_flows_and_interface_contract.md`](player_flows_and_interface_contract.md) now records all 24 documented player tasks, their entry points, decisions, command outcomes and recovery. This earlier packet covers screens and maintenance in depth but does not specify all end-to-end flows. Its pause/speed references are stale; the current game uses live time without player pause or rates. The new consolidated contract is a proposal for the next interface design, not a claim of implementation.
+
 ## Player-visible outcome
 
 An aircraft sent for maintenance prepares without boarding or loading, starts normally, leaves its stand and taxis through actual airport traffic to a fitting maintenance shed. It is manoeuvred continuously into a correctly aligned interior bay, shut down during repair, and returned to an available stand. The interface makes this journey easy to follow and makes airport management look deliberately composed, calm and polished.

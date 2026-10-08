@@ -110,7 +110,11 @@ namespace Airside.Tests
                 Assert.That(AirlineSaveFile.TryRead(path, out var data, out var error), Is.True, error);
                 Assert.That(data.Airlines.Single(a => a.IsPlayer).Name, Is.EqualTo("Gulf Air Link"));
 
+                Assert.That(System.IO.File.Exists(path + ".bak"), Is.True);
                 System.IO.File.WriteAllText(path, "{ not json");
+                Assert.That(AirlineSaveFile.TryRead(path, out _, out error, out var recovered), Is.True, error);
+                Assert.That(recovered, Is.True);
+                System.IO.File.WriteAllText(path + ".bak", "{ not json");
                 Assert.That(AirlineSaveFile.TryRead(path, out _, out error), Is.False);
                 Assert.That(error, Is.Not.Empty);
             }
@@ -118,6 +122,50 @@ namespace Airside.Tests
             {
                 System.IO.File.Delete(path);
                 System.IO.File.Delete(path + ".tmp");
+                System.IO.File.Delete(path + ".bak");
+            }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void SaveFile_RecoversPreviousSaveWithoutOverwritingItsBackup(bool missingPrimary)
+        {
+            var (_, ops) = MidGame();
+            var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"airside-recovery-test-{Guid.NewGuid():N}.json");
+            try
+            {
+                var previous = AirlineSave.Capture(ops);
+                AirlineSaveFile.Write(path, previous);
+                var current = AirlineSave.Capture(ops);
+                current.Airlines.Single(a => a.IsPlayer).Name = "Latest airline";
+                AirlineSaveFile.Write(path, current);
+                // Rotate an existing backup too, rather than only testing its first creation.
+                current.Airlines.Single(a => a.IsPlayer).Name = "Newest airline";
+                AirlineSaveFile.Write(path, current);
+                var backupText = System.IO.File.ReadAllText(path + ".bak");
+                Assert.That(AirlineSaveFile.TryRead(path, out var healthy, out _, out var recovered), Is.True);
+                Assert.That(recovered, Is.False);
+                Assert.That(healthy.Airlines.Single(a => a.IsPlayer).Name, Is.EqualTo("Newest airline"));
+                if (missingPrimary)
+                    System.IO.File.Delete(path);
+                else
+                    System.IO.File.WriteAllText(path, "{ not json");
+
+                Assert.That(AirlineSaveFile.TryRead(path, out var restored, out var error, out recovered), Is.True, error);
+                Assert.That(recovered, Is.True);
+                Assert.That(restored.Airlines.Single(a => a.IsPlayer).Name, Is.EqualTo("Latest airline"));
+                restored.Airlines.Single(a => a.IsPlayer).Name = "Recovered airline";
+                AirlineSaveFile.Write(path, restored);
+                Assert.That(System.IO.File.ReadAllText(path + ".bak"), Is.EqualTo(backupText));
+                Assert.That(AirlineSaveFile.TryRead(path, out var written, out _, out recovered), Is.True);
+                Assert.That(recovered, Is.False);
+                Assert.That(written.Airlines.Single(a => a.IsPlayer).Name, Is.EqualTo("Recovered airline"));
+            }
+            finally
+            {
+                System.IO.File.Delete(path);
+                System.IO.File.Delete(path + ".tmp");
+                System.IO.File.Delete(path + ".bak");
             }
         }
 

@@ -7,6 +7,24 @@ namespace Airside.Presentation
     /// <summary>A lightweight distant approach/rollout; no resource reservations or simulation changes.</summary>
     public static class RegionalFlightPath
     {
+        /// <summary>
+        /// Visual phase of the journey currently being drawn. Inbound simulation state also
+        /// describes cruise back to Adelaide; it must not inherit the local approach's flaps/gear.
+        /// </summary>
+        public static AircraftPhase JourneyPhase(FleetState state, double elapsedSeconds, double legSeconds, double rotateSeconds = 40)
+        {
+            if (state == FleetState.AtDestination) return AircraftPhase.AtStand;
+            if (state == FleetState.Inbound)
+                return elapsedSeconds < rotateSeconds ? AircraftPhase.Takeoff : AircraftPhase.Departed;
+            if (state == FleetState.Outbound)
+            {
+                var remaining = legSeconds - elapsedSeconds;
+                if (remaining <= RolloutSeconds) return AircraftPhase.Landing;
+                if (remaining <= TerminalSeconds) return AircraftPhase.Approach;
+            }
+            return AircraftPhase.Departed;
+        }
+
         public const double TerminalSeconds=180;
         public const double RolloutSeconds=40;
         public static void Landing(RegionalRunway runway,double homeX,double homeZ,double remaining,

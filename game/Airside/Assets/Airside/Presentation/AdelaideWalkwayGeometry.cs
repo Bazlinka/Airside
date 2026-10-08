@@ -47,18 +47,16 @@ namespace Airside.Presentation
         private static Dictionary<string, float[]> BuildCorridors()
         {
             var map = new Dictionary<string, float[]>(StringComparer.Ordinal);
-            float[] terminalXz = null;
-            foreach (var outline in AdelaideLayout.Terminals)
-                if (outline.Name == "Domestic & International Terminal")
-                    terminalXz = outline.Xz;
-            if (terminalXz == null)
-                return map;
-
             foreach (var bay in AdelaideLayout.Bays)
             {
-                NearestOnOutline(terminalXz, bay.StopX, bay.StopZ, out var wallX, out var wallZ);
-                var dx = bay.StopX - wallX;
-                var dz = bay.StopZ - wallZ;
+                // The walk starts in front of the bay's terminal door (AdelaideTerminalDoors), not at an arbitrary
+                // point of wall, and heads for a point short of the aircraft.
+                if (!AdelaideTerminalDoors.TryForBay(bay.Id, out var door))
+                    continue;
+                var startX = door.ThresholdX;
+                var startZ = door.ThresholdZ;
+                var dx = bay.StopX - startX;
+                var dz = bay.StopZ - startZ;
                 var length = (float)Math.Sqrt(dx * dx + dz * dz);
                 if (length < StopShortMetres + 6f || length > MaxLengthMetres + StopShortMetres)
                     continue;
@@ -66,38 +64,12 @@ namespace Airside.Presentation
                 dz /= length;
                 map[bay.Id] = new[]
                 {
-                    wallX + dx * 1.2f, wallZ + dz * 1.2f,
+                    startX, startZ,
                     bay.StopX - dx * StopShortMetres, bay.StopZ - dz * StopShortMetres
                 };
             }
 
             return map;
-        }
-
-        private static void NearestOnOutline(float[] xz, float x, float z, out float qx, out float qz)
-        {
-            qx = xz[0];
-            qz = xz[1];
-            var best = float.MaxValue;
-            var n = xz.Length / 2;
-            for (var i = 0; i < n; i++)
-            {
-                var j = (i + 1) % n;
-                var ax = xz[i * 2];
-                var az = xz[i * 2 + 1];
-                var bx = xz[j * 2] - ax;
-                var bz = xz[j * 2 + 1] - az;
-                var l2 = bx * bx + bz * bz;
-                var t = l2 < 1e-6f ? 0f : Math.Max(0f, Math.Min(1f, ((x - ax) * bx + (z - az) * bz) / l2));
-                var px = ax + bx * t;
-                var pz = az + bz * t;
-                var d = (x - px) * (x - px) + (z - pz) * (z - pz);
-                if (d >= best)
-                    continue;
-                best = d;
-                qx = px;
-                qz = pz;
-            }
         }
 
         /// <summary>Posts and tape along both edges of every corridor. Returns the number of corridors drawn.</summary>

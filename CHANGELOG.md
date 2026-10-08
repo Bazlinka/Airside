@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-08 — HUD Tower button beside Overview/Radar/Menu enters the control-tower cab view (unverified in Unity).
 - 2026-10-08 Inbound pitch eases into the approach attitude before the glideslope entry, removing the level-off-to-final step (presentation only)
 
 - 2026-10-08 — Runway 23 approach lights now run sequenced flashers toward the threshold at night, as the real-scale field's approach lights were steady only (unverified).

@@ -618,6 +618,12 @@ namespace Airside.Presentation
                 return;
             if (clicked == HudShellPainter.OverviewAction) { SetWorkspace(HudWorkspace.None); return; }
             if (clicked == HudShellPainter.MiniMapAction) { ToggleMiniMap(); return; }
+            if (clicked == HudShellPainter.TowerAction)
+            {
+                if (InTower) ExitTower();
+                else if (!EnterTower()) ShowToast("Control tower view isn't available from here.");
+                return;
+            }
             if (clicked == HudShellPainter.MenuAction) { ToggleMenu(); return; }
             if (clicked == HudShellPainter.HelpAction)
             {

@@ -7,6 +7,10 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Flight transitions (8 Oct, Claude):** full-journey legs took pitch from the route slope alone, so no flare, no rotation and a snap at cruise-to-approach.
+`RegionalFlightPath.ApproachPitchDegrees` / `DeparturePitchDegrees` now blend route pitch into the authored attitude (flare over 300 m, ~7 s; was 150 m). Presentation only.
+Unity compile and appearance unverified — watch a regional arrival and departure from the follow camera.
+
 **Flight-view moving map (8 Oct, Claude):** `AirsidePrototype.FlightMap.cs` + `CockpitMovingMap.cs`. Panel bottom-right in every aircraft view (N toggles,
 +/−/scroll scale, A auto): airfield layout (runway-up) near the field, South Australia coast (north-up) with great-circle route elsewhere. Unity compile/appearance unverified.
 

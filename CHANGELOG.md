@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-08 Smoother regional flight transitions: authored flare, rotation and cruise/approach pitch hand-over; flare lengthened to ~7 s (presentation only)
 - 2026-10-08 — Camera drag no longer hits an invisible wall: free-pan limit widened from 3.8 km to 12 km around the airfield (unverified in Unity).
 
 - 2026-10-08 — Flight-time audit: ATR 42/Dash 8 planning cruise 510/620 km/h (was max cruise), A350/787-9 practical range 13,500 km, 787-10 11,200 km (headless audit only).

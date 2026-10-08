@@ -23,6 +23,7 @@ namespace Airside.Presentation
         public bool InvertOrbit = false;
         public bool CockpitMotion = true;
         public bool OpeningAnimation = true;
+        public bool MacNotifications = false;
 
         /// <summary>
         /// Real aircraft from adsb.lol in the sky only (ADR 0081/0086). Off until the game
@@ -128,6 +129,7 @@ namespace Airside.Presentation
             settings.InvertOrbit = Pref("invert", 0) != 0;
             settings.CockpitMotion = Pref("cockpitmotion.v1", 1) != 0;
             settings.OpeningAnimation = Pref("openinganimation.v1", 1) != 0;
+            settings.MacNotifications = Pref("macnotifications.v1", 0) != 0;
             settings.LiveTraffic = Pref("livetraffic.v2", 0) != 0;
             settings.LiveWeather = Pref("liveweather.v1", 1) != 0;
             settings.UncappedFrameRate = Pref("uncappedfps", 0) != 0;
@@ -150,6 +152,7 @@ namespace Airside.Presentation
             PlayerPrefs.SetInt(PrefPrefix + "invert", InvertOrbit ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "cockpitmotion.v1", CockpitMotion ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "openinganimation.v1", OpeningAnimation ? 1 : 0);
+            PlayerPrefs.SetInt(PrefPrefix + "macnotifications.v1", MacNotifications ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "livetraffic.v2", LiveTraffic ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "liveweather.v1", LiveWeather ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "uncappedfps", UncappedFrameRate ? 1 : 0);

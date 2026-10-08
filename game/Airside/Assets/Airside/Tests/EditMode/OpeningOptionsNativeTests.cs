@@ -24,17 +24,19 @@ namespace Airside.Tests
                 var prototype = host.AddComponent<AirsidePrototype>();
                 var model = (OptionsMenuModel)typeof(AirsidePrototype).GetField("_optionsModel", Private).GetValue(prototype);
                 var actions = new List<string>();
-                foreach (var section in new[] { OptionsSection.General, OptionsSection.Camera, OptionsSection.Display, OptionsSection.World })
+                foreach (var section in new[] { OptionsSection.General, OptionsSection.Camera, OptionsSection.Display, OptionsSection.World, OptionsSection.Notifications })
                 {
                     model.Section = section;
                     typeof(AirsidePrototype).GetMethod("FillOptionsModel", Private).Invoke(prototype, null);
                     Assert.That(model.Rows.Count, Is.LessThanOrEqualTo(5));
                     actions.AddRange(model.Rows.Select(row => row.Action));
                 }
-                Assert.That(actions.Distinct().Count(), Is.EqualTo(17));
-                Assert.That(actions.Count, Is.EqualTo(17));
+                Assert.That(actions.Distinct().Count(), Is.EqualTo(20));
+                Assert.That(actions.Count, Is.EqualTo(20));
                 Assert.That(actions, Does.Contain("options:cockpit"));
                 Assert.That(actions, Does.Contain("options:opening"));
+                Assert.That(actions, Does.Contain("options:notifications"));
+                Assert.That(actions, Does.Contain("options:notification-test"));
             }
             finally { Object.DestroyImmediate(host); }
         }

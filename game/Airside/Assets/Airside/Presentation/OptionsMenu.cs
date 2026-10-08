@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Airside.Presentation
 {
-    public enum OptionsSection { General, Camera, Display, World }
+    public enum OptionsSection { General, Camera, Display, World, Notifications }
 
     public readonly struct OptionsRow
     {
@@ -25,7 +25,7 @@ namespace Airside.Presentation
     public static class OptionsMenuPainter
     {
         public const string Back = "options:back";
-        public static readonly string[] Sections = { "General", "Camera", "Display", "World" };
+        public static readonly string[] Sections = { "General", "Camera", "Display", "World", "Notifications" };
 
         public static HudBox Panel(float width, float height)
         {
@@ -42,7 +42,7 @@ namespace Airside.Presentation
             var width = panel.Width - 48f;
             into.Text(new HudBox(x, panel.Y + 20f, width, 28f), "Options", 24f, HudTone.Default, HudTextStyle.Bold);
             into.Text(new HudBox(x, panel.Y + 54f, width, 18f), "Make Airside comfortable for you.", 12f, HudTone.Muted);
-            var tabWidth = (width - 18f) / 4f;
+            var tabWidth = (width - 6f * (Sections.Length - 1)) / Sections.Length;
             for (var i = 0; i < Sections.Length; i++)
                 into.Button(new HudBox(x + i * (tabWidth + 6f), panel.Y + 84f, tabWidth, 34f),
                     Sections[i], "options:section:" + i,

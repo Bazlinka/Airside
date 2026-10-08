@@ -59,6 +59,7 @@ Older entries (about 1,000, through 2026-10-07) are in
 [`docs/history/CHANGELOG-through-2026-10-07.md`](docs/history/CHANGELOG-through-2026-10-07.md).
 
 ## Unreleased
+- Add opt-in native Mac notifications for important background airline events, grouped bursts, permission/test controls and click-to-return (#645).
 - Restyle toasts with status labels, wrapped text, repeat badges, lifetime bars and eased motion; keep stacks clear of panels and screen edges (#642).
 - Redesign the Adelaide T1 opening, restore AIRSIDE with a vector lockup/text fallback, and add a skippable centre-opening Continue reveal (#626).
 

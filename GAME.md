@@ -9,6 +9,13 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*
 
+**Opening and Options (8 Oct, Codex, #601):** branch `codex/opening-options-20261008`.
+Clearer title, shorter/skippable entry, grouped Options with setting explanations,
+opening-animation/cockpit-motion controls and direct return to title. Validation
+complete for affected checks: native 152/152, focused headless 20/20; all 12 native UI
+views inspected. Broad regressions retain 3 existing failures; draft review, packaged
+handoff/interaction unverified. Evidence: `docs/testing/opening-options-2026-10-08/`.
+
 **Airport templates (8 Oct, Claude):** branch `claude/airport-templates-20261008`. Generic runways, terminals and gates for all 19
 Australian destinations (`AirportTemplates`) and a deterministic runway/gate planner (`AirportArrivalPlanner`); the network flight
 HUD shows the landing runway and gate. Runways cross-checked against OSM/OurAirports; real gate numbers and terminals from OSM for MEL, SYD, BNE, PER, CBR, OOL, DRW, ASP (airlines prefer their own terminal); HBA, KGC and the small fields stay generic.
@@ -75,17 +82,15 @@ the baked ADR 0210 haze is gone (it made a pale square). Tiles build in ≤70 ms
 now logged as `[Airside soak] hitch`. Still unchecked: depth precision, sky/stars at the 1,170 km clip, dusk/night. Packet:
 `docs/plans/south-australia-overview-streaming.md`.
 
-**Open — needs the Mac (nothing below is verified in Unity):**
+**Open validation and regressions:**
 - Clean-image pass (full-res SSAO, near clip scales with distance, ground mip bias 0, 16x aniso) is unverified: compare ground-marking flicker, AO softness and frame time. ADR 0246/0247/0248/0250/0251 (SSAO half-res — now reverted, MSAA budget, 3 shadow cascades/110 m, full-DEM far mesh, 4096 px far image, state-wide land-cover colours, zoom to 450 km with coarse-ring streaming):
   compare day/dusk/night for AO banding, shimmer and shadow pop-in; check the seam where the near satellite ends,
   startup-to-title time and memory (far image decodes to ~64 MB); at 100–450 km zoom check coastline blockiness, the 40 m join between
   coarse and fine tiles, sky/stars/sun at a 1,170 km far clip, depth precision and frame time while tiles stream. Each is a one-line revert (see the ADRs).
-- **24 native EditMode failures reported before #552** (Unity 2265 passed / 24 failed). Source fixtures are repaired in #552; native rerun remains pending: `PassengerFlightViewTests`
-  (window sightlines, all 13 types + two exterior cases), `PresentationLayoutTests` (HUD layout ×4),
-  `FieldMiniMapTests.PanelFor_ShowsOnTheDesktopWindow`, `AirsideSettingsTests.Defaults_MatchAPlayableAdelaideSession`,
-  `CockpitCameraTests.CockpitTracksSeatAfterAircraftPoseAndRestoresCameraSettings`,
-  `PresentationBugSweepTests.CameraShellAnchor_FollowsCameraMovedAfterPlacement`,
-  `GroundSeparationTests.BusyDay_NoAircraftDriveThroughEachOther`. (The three save/resume failures were fixed.)
+- **Current baseline regressions (8 Oct):** busy-day waiting/taxiing ground overlap, plus night-sky
+  review framing and yaw. Full headless has the same 3 failures. Opening/Options' broad native run
+  also exposed two obsolete menu/intro assertions; their updated checks pass in the final 152/152
+  affected rerun. Full regression is not green. Evidence: `docs/testing/opening-options-2026-10-08/`.
 - Maintenance journey and refined interface (ADR 0245) still wait on a native playtest: prop/jet startup, gear/tug
   alignment, swept doorway clearance, busy taxi traffic, save/reload through every phase. Do not merge on offline
   painter previews alone.

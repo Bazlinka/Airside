@@ -28,6 +28,15 @@ Focused coverage/profile regressions pass 11/11; changed Unity-facing C# syntax
 parses and the generated headless harness is current. Native shader compilation,
 orbit/pan/zoom appearance and GPU performance remain unverified.
 
+**Terminal doors and more people (9 Oct, Claude):** each regional-stand walk now starts at a terminal door (`AdelaideTerminalDoors`, six doors on
+the OSM terminal outline; airside doors are derived, not surveyed) with a sliding-glass door prop, a six-person boarding queue and a gate agent at the
+door, 18 landside walkers (OSM entrances, car-park bays) and airside staff (`AdelaideAmbientPeople`), person cap 110 with distance-throttled posing.
+ADR `2026-10-09-terminal-doors-and-people.md`. Pure tests pass and the whole Presentation assembly compiles against Unity's own libraries
+(quick compile recipe in the PR); look and frame time in the Mac build unverified. Aerobridge and bus flows unchanged. Still open from the 8 Oct
+HUD/map work (ADR `2026-10-08-hud-chrome-redesign.md`): unredesigned screens (selected-aircraft card, movements board, radar, Fleet detail,
+Career layout, setup/menu), and two layout tests failing on main in compact windows
+(`Contracts_LayoutKeepsBothColumnsInsideTheSurface`, `GrowingOverview_LastAircraftRemainsReachableInCompactWindows`).
+
 **Storm movement commitment (8 Oct, Codex, #670):** ready fixed-wing departures wait
 at their gate/bay; taxi-released departures continue under normal runway/traffic rules.
 An inbound already on the shared 32 km extended final before storm onset keeps its

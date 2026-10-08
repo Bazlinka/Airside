@@ -63,6 +63,7 @@ OWNERS = {
     "AirsidePrototype.PushbackTugs.cs": ("Ground operations visuals", "A real tug for every tail-first pushback (ADR 0126)"),
     "AirsidePrototype.ServiceWork.cs": ("Ground operations visuals", "Loose bags, galley boxes and trolleys on their way into an aircraft"),
     "AirsidePrototype.Boarding.cs": ("Ground operations visuals", "Boarding: doors and airstairs, ramp, boarding root"),
+    "AirsidePrototype.TerminalPeople.cs": ("Ground operations visuals", "Terminal doors, door queue, gate agent, background people"),
     "AirsidePrototype.WalkwayTape.cs": ("Ground operations visuals", "Temporary barrier tape along the route passengers walk (ADR 0187)"),
     "AirsidePrototype.Cockpit.cs": ("Flight views and traffic", "Entering, binding and leaving a cockpit or flight view; cockpit HUD"),
     "AirsidePrototype.CockpitAudio.cs": ("Flight views and traffic", "Cockpit audio"),

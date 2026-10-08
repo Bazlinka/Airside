@@ -878,7 +878,15 @@ namespace Airside.Presentation
                 surface.Width - HudShell.SurfacePadding * 2f, bodyHeight);
 
             var y = body.Y;
-            var dayStrip = new HudBox(body.X, y, body.Width, airlineView ? 32f : DayStripHeight);
+            // The airline view has no day track, so its tab buttons share the day strip's row: a compact
+            // window then keeps room for several aircraft rows instead of a second band of chrome.
+            var airlineTabsWidth = TabWidth + 8f + 176f;
+            var shareRow = airlineView && body.Width >= airlineTabsWidth + 220f;
+            var dayStrip = new HudBox(body.X, y, shareRow ? body.Width - airlineTabsWidth - 8f : body.Width,
+                airlineView ? 32f : DayStripHeight);
+            var sharedTabs = shareRow
+                ? new HudBox(body.Right - airlineTabsWidth, y + 1f, airlineTabsWidth, TabHeight)
+                : HudBox.Empty;
             y = dayStrip.Bottom + 12f;
 
             var attention = HudBox.Empty;
@@ -890,8 +898,9 @@ namespace Airside.Presentation
                 y = attention.Bottom + 16f;
             }
 
-            var tabs = new HudBox(body.X, y, body.Width, TabHeight);
-            y = tabs.Bottom + 10f;
+            var tabs = shareRow ? sharedTabs : new HudBox(body.X, y, body.Width, TabHeight);
+            if (!shareRow)
+                y = tabs.Bottom + 10f;
 
             var detailWidth = !airlineView && body.Width - MinBoardWidth - DetailGap >= DetailWidth ? DetailWidth : 0f;
             var boardWidth = detailWidth > 0f ? body.Width - detailWidth - DetailGap : body.Width;

@@ -461,8 +461,8 @@ namespace Airside.Tests
             Assert.That(EngineVoice.ClassOf(AircraftType.Atr42), Is.EqualTo(EngineClass.Turboprop));
             var profile = AircraftAudioProfiles.For(AircraftType.Bell412);
             Assert.That(profile.Key, Is.EqualTo("b412"));
-            Assert.That(profile.Resource("idle"), Is.EqualTo("Airside/Audio/eng_b412_idle_v01"));
-            Assert.That(profile.Resource("power"), Is.EqualTo("Airside/Audio/eng_b412_power_v01"));
+            Assert.That(profile.Resource("idle"), Is.EqualTo("Airside/Audio/eng_b412_idle_v02"));
+            Assert.That(profile.Resource("power"), Is.EqualTo("Airside/Audio/eng_b412_power_v02"));
             Assert.That(AircraftAudioMix.AudibleDistance(EngineClass.Rotorcraft),
                 Is.GreaterThan(AircraftAudioMix.AudibleDistance(EngineClass.Turboprop)),
                 "blade slap carries further than a turboprop");

@@ -68,8 +68,8 @@ namespace Airside.Tests
         [Test]
         public void Credits_NameTheElevationAndImagerySources()
         {
-            var credits = string.Join(" ", FlightManual.Pages[FlightManual.IndexOf(FlightManual.CreditsPageId)]
-                .Sections.Select(s => s.Body));
+            var credits = string.Join(" ", new[] { FlightManual.CreditsPageId, "terrain-sound-credits" }
+                .SelectMany(id => FlightManual.Pages[FlightManual.IndexOf(id)].Sections).Select(s => s.Body));
             Assert.That(credits, Does.Contain("Copernicus DEM").And.Contain("DLR e.V.").And.Contain("Airbus"));
             Assert.That(credits, Does.Contain(MapAttribution.Sentinel));
             Assert.That(credits, Does.Contain("OpenStreetMap"));

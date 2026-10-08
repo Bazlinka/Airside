@@ -319,6 +319,10 @@ namespace Airside.Presentation
                 // Too narrow for two columns: stack the active contract above the offers.
                 var wanted = CaptionHeight + 8f + ActiveCardHeightFor(activeTerms);
                 var top = wanted > body.Height * 0.62f ? body.Height * 0.62f : wanted;
+                // Always leave room for one offer card, or compact windows show no offers at all.
+                var offerRoom = body.Height - 12f - (CaptionHeight + 8f + OfferHeight);
+                if (top > offerRoom)
+                    top = offerRoom > 0f ? offerRoom : 0f;
                 var stackedActive = new HudBox(body.X, body.Y, body.Width, top);
                 var stackedOffers = new HudBox(body.X, body.Y + top + 12f, body.Width,
                     body.Height - top - 12f);

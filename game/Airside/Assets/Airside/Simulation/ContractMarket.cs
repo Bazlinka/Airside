@@ -57,6 +57,9 @@ namespace Airside.Simulation
                 var km = DestinationCatalogue.Adelaide.DistanceKmTo(dest.Value);
                 if (!type.CanReach(km) || !RouteAccess.Allows(type, dest.Value))
                     continue;
+                // Never offer work on a route this aircraft cannot fly at a profit (a 737 to Kingscote).
+                if (RouteForecast.For(DestinationCatalogue.Adelaide, dest.Value, type).Margin < 0)
+                    continue;
 
                 var basePay = FlightEconomics.FlightPay(type, km, RouteAccess.BandOf(dest.Value));
                 var kind = KindFor(type, dest.Value, rng);

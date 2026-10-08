@@ -102,3 +102,21 @@ Expanded regional base". **Fix:** use `HudShell.FitText`-style shrink, or shorte
 ## Not bugs (checked)
 Overdue-check pay cut (reliability multiplier), award-sized payout differences, and curfew-delayed rotations
 explained all payout/elapsed-time differences in the sweep.
+
+## Fix status (A-grade, same branch)
+
+| # | Status |
+|---|---|
+| 1 | Fixed: credits split into "Map and data credits" and "Terrain and sound credits"; terrain test reads both pages. |
+| 2 | Fixed: stacked Contracts layout always reserves room for one offer card. |
+| 3 | Fixed: airline-view tab buttons share the day-strip row when the surface is wide enough (3+ rows at 800x600). |
+| 4 | Fixed: demand added for NOU, POM, CGK, BKK, SGN, MNL, PVG, ICN, KIX, NRT, HNL, LAX. |
+| 5 | Fixed: `FlightEconomics.Weight` for jets now steps with size (<=120 seats 1.6, <=220 2.2, <=300 3.0, else 3.4), so pay and cost grow with the aircraft. |
+| 6 | Mostly fixed by 5 plus DPS demand 200 -> 150 (A321neo Bali is now below the 787-9 on margin but still strong; re-check in play). |
+| 7 | Fixed for contracts: `ContractMarket` skips routes with a negative forecast margin. The planner still lets jets fly regional strips (player's choice). |
+| 8 | ATR cruise range and B412 audio asset names updated. **Still failing, needs a decision:** helicopter cost/km (test expects 1.45, code 1.0) and 3 NightSkyReview tests (no early overflight traffic after the flight-time retune). |
+| 9 | Fixed: semicolon reworded. |
+
+Headless suite after fixes: 2,032 pass, 4 fail (the helicopter test and the 3 night-sky tests, all pre-existing).
+Tests touched for the economy change: two tests that parked a 787-10 on the starter float now use a 737-8,
+and the Weight test asserts size ordering instead of a fixed 2.2. Unity compile/appearance and play balance are unverified.

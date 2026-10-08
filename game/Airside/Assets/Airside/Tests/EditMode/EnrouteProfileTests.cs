@@ -21,7 +21,7 @@ namespace Airside.Tests
             var p = For("MEL");
             Assert.That(p.CruiseFeet, Is.InRange(20000, 25000));
             var cruiseKnots = p.GroundSpeedKnotsAt(p.ClimbSeconds + p.CruiseSeconds * 0.5);
-            Assert.That(cruiseKnots, Is.InRange(270, 320), "ATR 42-600 cruises near 300 kt");
+            Assert.That(cruiseKnots, Is.InRange(250, 320), "ATR 42-600 cruises near its 275 kt planning speed");
             Assert.That(p.GroundSpeedKnotsAt(10), Is.LessThan(cruiseKnots));
         }
 

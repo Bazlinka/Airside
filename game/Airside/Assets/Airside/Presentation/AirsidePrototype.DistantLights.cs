@@ -35,6 +35,14 @@ namespace Airside.Presentation
             var strength = AirsideSettings.Current.DistantGlows && powered
                 ? ArrivalApproach.BeaconStrength(distance) * (forwardBeam ? 1f : flash > 0f ? 0.85f : 0.28f)
                 : 0f;
+            // One entry per view ever drawn; drop those whose aircraft was destroyed, so the table stays small.
+            if (_distantLights.Count > 96 && Time.frameCount % 600 == 0)
+            {
+                var stale = new List<int>();
+                foreach (var pair in _distantLights)
+                    if (pair.Value == null) stale.Add(pair.Key);
+                foreach (var key in stale) _distantLights.Remove(key);
+            }
             _distantLights.TryGetValue(view.GetInstanceID(), out var glow);
             if (strength <= 0.01f)
             {

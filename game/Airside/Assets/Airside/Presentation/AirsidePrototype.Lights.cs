@@ -166,7 +166,8 @@ namespace Airside.Presentation
             Vector3 centre = default;
             if (lit && camera != null && part.AircraftRoot != null && AirsideSettings.Current.AircraftLights)
             {
-                centre = LampPivot(part.Transform).position;
+                // Cached: LampPivot does a by-name Find, too dear for every lit lamp every frame.
+                centre = (part.FlarePivot ??= LampPivot(part.Transform)).position;
                 var toCamera = camera.transform.position - centre;
                 distance = toCamera.magnitude;
                 if (distance > 0.1f)
@@ -200,7 +201,8 @@ namespace Airside.Presentation
 
             flare.enabled = true;
             var t = flare.transform;
-            t.position = centre;
+            // Stand a little toward the camera: centred on the lens, the airframe skin hid half the flare.
+            t.position = centre + (camera.transform.position - centre).normalized * 0.4f;
             var worldPerPixel = 2f * distance * Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad)
                                 / Mathf.Max(1f, camera.pixelHeight);
             var size = Mathf.Max(minMetres, worldPerPixel * minPixels);

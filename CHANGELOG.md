@@ -1,7 +1,14 @@
 # Changelog
 
 - 2026-10-08 Smoother regional flight transitions: authored flare, rotation and cruise/approach pitch hand-over; flare lengthened to ~7 s (presentation only)
+- 2026-10-08 — Smoother flight-view transitions: the glide travels with the moving aircraft, field of view follows the same glide, and the fuselage hides mid-glide (unverified in Unity).
+
+- 2026-10-08 — Switching to cockpit/window view no longer shows the wings floating without a fuselage: the airframe hides only once the camera glide arrives (unverified in Unity).
+
+- 2026-10-08 — Approach gear follows height (down ~2,000 ft AGL jets / 1,500 turboprops, lowered over ~22 s) instead of phase progress; sources in lighting README (unverified in Unity).
+
 - 2026-10-08 — Camera drag no longer hits an invisible wall: free-pan limit widened from 3.8 km to 12 km around the airfield (unverified in Unity).
+- 2026-10-08 — Jet routing factor: cruise time on jet legs rises linearly from 1.0 at 600 km to 1.08 at 2,500 km+ (routing/headwind); Perth 173→183 min (headless audit only).
 
 - 2026-10-08 — Flight-time audit: ATR 42/Dash 8 planning cruise 510/620 km/h (was max cruise), A350/787-9 practical range 13,500 km, 787-10 11,200 km (headless audit only).
 

@@ -225,11 +225,23 @@ namespace Airside.Domain
         /// </summary>
         public const long RotorcraftLegAllowanceSeconds = 40;
 
+        /// <summary>Extra cruise time on a long jet leg for airways routing, detours and net headwind (no wind is modelled).</summary>
+        public const double JetLongLegCruiseFactor = 1.08;
+        public const double JetRoutingRampStartKm = 600.0;
+        public const double JetRoutingRampEndKm = 2500.0;
+
+        /// <summary>1.0 up to 600 km, rising linearly to <see cref="JetLongLegCruiseFactor"/> at 2,500 km and beyond.</summary>
+        public static double JetRoutingFactor(double distanceKm)
+        {
+            var u = (distanceKm - JetRoutingRampStartKm) / (JetRoutingRampEndKm - JetRoutingRampStartKm);
+            return 1.0 + (JetLongLegCruiseFactor - 1.0) * Math.Max(0.0, Math.Min(1.0, u));
+        }
+
         public static long AirborneSeconds(double distanceKm, AircraftType type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            var cruise = distanceKm / type.CruiseKmh * 3600.0;
             var jet=AircraftCatalogue.TryFor(type,out var spec) && spec.StandClass==StandClass.TerminalGate;
+            var cruise = distanceKm / type.CruiseKmh * 3600.0 * (jet ? JetRoutingFactor(distanceKm) : 1.0);
             return (type.IsRotorcraft ? RotorcraftLegAllowanceSeconds
                 : jet ? JetClimbDescentAllowanceSeconds : ClimbDescentAllowanceSeconds)
                    + (long)Math.Round(cruise);

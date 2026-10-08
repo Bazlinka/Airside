@@ -261,7 +261,9 @@ namespace Airside.Presentation
             else
             {
                 // Faster than the longest authored cycle, so it only ever softens a phase change.
-                part.Retract = AircraftArticulation.MoveToward(part.Retract, target, deltaTime * 0.35f);
+                // Lowering is the slow stroke (a real extension takes 15-30 s); raising stays quick.
+                var rate = target < part.Retract ? part.ExtendRate : 0.35f;
+                part.Retract = AircraftArticulation.MoveToward(part.Retract, target, deltaTime * rate);
             }
 
             return part.Retract;

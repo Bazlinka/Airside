@@ -33,5 +33,13 @@
     "source_base": "0dc6e629",
     "source_dirty": true,
     "note": "Compiled final lighting working tree before commit; 300-second stall window allowed active Metal shader compilation to complete."
+  },
+  "integration_base": "3fcb8063",
+  "native_after_main_integration": {
+    "total": "37",
+    "passed": "37",
+    "failed": "0",
+    "start-time": "2026-10-08 00:37:04Z",
+    "end-time": "2026-10-08 00:37:09Z"
   }
 }

@@ -108,3 +108,5 @@ blade shadows are static and do not certify moving-propeller appearance.
 - [Beam footprints](beam-footprints.jpg): forward ground-light views for all 14 types.
 - [Offline beam axes](beam-geometry.svg): geometric checks only.
 - [Machine-readable validation](validation.json).
+
+Rebased onto current main `3fcb8063` (five-area bug sweep); handoff conflict resolved preserving both entries. Native lighting checks pass again: **37/37**. The catalogue lookup and rotor lineup changes on main preserve this pass's lighting profiles and installations.

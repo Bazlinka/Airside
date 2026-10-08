@@ -51,7 +51,7 @@ namespace Airside.Simulation
                 return CommandResult.Refused($"{Article.CapitalA(type.Name)} needs {offer.RequiredReliability}% reliability.");
             if (CareerState.CompletedPlayerRotations < offer.RequiredRotations)
                 return CommandResult.Refused(
-                    $"{Article.CapitalA(type.Name)} needs {offer.RequiredRotations} completed flights.");
+                    $"{Article.CapitalA(type.Name)} needs {offer.RequiredRotations} completed flight{(offer.RequiredRotations == 1 ? "" : "s")}.");
             if (!CareerState.CanAfford(offer.Price))
                 return CommandResult.Refused($"{Article.CapitalA(type.Name)} costs ${offer.Price:N0}. You have ${CareerState.Funds:N0}.");
 
@@ -103,7 +103,7 @@ namespace Airside.Simulation
                 if (CareerState.Reliability < gate.Reliability)
                     return CommandResult.Refused($"Your next outstation needs {gate.Reliability}% reliability. You have {CareerState.Reliability}%.");
                 if (CareerState.CompletedPlayerRotations < gate.Flights)
-                    return CommandResult.Refused($"Your next outstation needs {gate.Flights} flights. You have flown {CareerState.CompletedPlayerRotations}.");
+                    return CommandResult.Refused($"Your next outstation needs {gate.Flights} flight{(gate.Flights == 1 ? "" : "s")}. You have flown {CareerState.CompletedPlayerRotations}.");
             }
             var cost = NextOutstationCost;
             if (!CareerState.TryChargePurchase(cost))
@@ -400,7 +400,7 @@ namespace Airside.Simulation
             if (CareerState.Tier < next.RequiredTier)
                 return CommandResult.Refused($"The {next.Title} needs the {next.RequiredTier} tier.");
             if (CareerState.CompletedPlayerRotations < next.RequiredRotations)
-                return CommandResult.Refused($"The {next.Title} needs {next.RequiredRotations} completed flights.");
+                return CommandResult.Refused($"The {next.Title} needs {next.RequiredRotations} completed flight{(next.RequiredRotations == 1 ? "" : "s")}.");
             if (CareerState.Reliability < next.RequiredReliability)
                 return CommandResult.Refused($"The {next.Title} needs {next.RequiredReliability}% reliability. You have {CareerState.Reliability}%.");
             if (!CareerState.TryChargePurchase(next.UpgradeCost))

@@ -139,7 +139,13 @@ namespace Airside.Simulation
             // Thirteen seats and a short-hop helicopter: a lighter load than a turboprop, priced like one to run.
             if (type.IsRotorcraft)
                 return 0.7;
-            return AircraftCatalogue.For(type).StandClass == StandClass.RegionalBay ? 1.0 : 2.2;
+            if (AircraftCatalogue.For(type).StandClass == StandClass.RegionalBay)
+                return 1.0;
+            // A jet's pay and running cost step up with its size class, or a 337-seat 787-10 would earn less than a
+            // 170-seat 737 on the same route (revenue only reflects load factor). Classes, not exact seats, so
+            // sister types (737-8 / 737-800) still pay the same.
+            var seats = AircraftCatalogue.TypicalSeats(type);
+            return seats <= 120 ? 1.6 : seats <= 220 ? 2.2 : seats <= 300 ? 3.0 : 3.4;
         }
     }
 }

@@ -883,7 +883,7 @@ namespace Airside.Presentation
                 AirlineSaveFile.Write(SavePath, AirlineSave.Capture(_operations, DateTime.UtcNow));
                 _saveFailureShown = false;
             }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            catch (Exception e)
             {
                 if (_saveFailureShown)
                     return;

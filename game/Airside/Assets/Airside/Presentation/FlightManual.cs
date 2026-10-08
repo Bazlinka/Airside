@@ -160,7 +160,10 @@ namespace Airside.Presentation
                             + "every road and footpath, car parks and bays, buildings, masts, tanks, solar arrays "
                             + "and bus stops. Also Overture Maps (ODbL) and SA Government LiDAR (CC BY 4.0)."),
                     ("Aircraft sound", "Engine recordings by Pack489, mycompasstv and qubodup. Tyre contact by craigsmith "
-                                        + "on Freesound (CC0 / public domain). Adapted for Airside."),
+                                        + "on Freesound (CC0 / public domain). Cabin airframe recording by richwise (CC0). "
+                                        + "Adapted for Airside; rotating machinery and mechanical cues authored by Airside."),
+                    ("Australia terrain", "Mapzen Terrain Tiles (CC BY 4.0), with USGS/NASA SRTM and GMTED2010 elevation. "
+                                          + "Adapted and resampled for Airside. https://registry.opendata.aws/terrain-tiles/"),
                     ("Satellite imagery", MapAttribution.Sentinel + ". Nine clear summer passes, 2024 to 2026."),
                     ("Terrain", "Copernicus DEM GLO-30. © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH "
                                 + "2014-2018 provided under COPERNICUS by the European Union and ESA. All rights "

@@ -10,6 +10,19 @@ namespace Airside.Tests
     public sealed class AircraftAudioMixTests
     {
         [Test]
+        public void StartsWindUpButShutdownAndGovernedRunningDoNotReplayStarter()
+        {
+            Assert.That(AircraftAudioDynamics.Starter(0.4f, true), Is.GreaterThan(0.1f));
+            Assert.That(AircraftAudioDynamics.Starter(0.4f, false), Is.Zero);
+            Assert.That(AircraftAudioDynamics.Starter(0f, true), Is.Zero);
+            Assert.That(AircraftAudioDynamics.Starter(1f, true), Is.Zero);
+            Assert.That(AircraftAudioDynamics.CorePitch(EngineClass.RegionalJet, 0.95f, 1f),
+                Is.GreaterThan(AircraftAudioDynamics.CorePitch(EngineClass.RegionalJet, 0.26f, 1f) * 1.8f));
+            Assert.That(AircraftAudioDynamics.InteriorEngineGain(true, true),
+                Is.GreaterThan(AircraftAudioDynamics.InteriorEngineGain(true, false)));
+        }
+
+        [Test]
         public void EveryFlyingTypeHasItsOwnVoiceAndStartsCold()
         {
             var keys = new HashSet<string>();

@@ -11,6 +11,13 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 tests/builds/playtesting only on request. Merge completed authorised work into main
 without repeated approval. Canonical instructions: AGENTS.md testing and merge policy.
 
+**Aircraft and soundscape audio (8 Oct, Codex, #614):** v02 bank with 68 clips,
+independent twin cores/starters, spatial exhaust, cabin/airflow/rain, gear/door cues,
+regional contact/reverse, network-flight audio, spatial local PA/apron, refined UI
+and bounded traffic/master headroom. 67 pure numeric assertions and bank byte/seam
+checks pass; Unity listening/compile/performance unverified. Evidence:
+`docs/testing/audio-overhaul-2026-10-08/`. No simulation/save changes.
+
 **ATR 42 hold door (8 Oct, Claude):** `RelocateAtrDoors` flipped the door 180° in its transform and `UpdateCabinDoor` overwrote that yaw, so the shut door stood mirrored ahead of the cockpit. The flip is now baked into the mesh (`RebakePartPivot` with a rotation). Look at the ATR on the apron and while loading. Windscreen white patches in the same screenshot are not investigated.
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*

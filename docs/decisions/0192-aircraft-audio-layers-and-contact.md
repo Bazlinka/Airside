@@ -3,6 +3,8 @@
 Date: 30 September 2026. Author: Codex, at Bailey's request for an audio pass on
 all aircraft, including increasing revs and realistic landing noise.
 
+**Superseded in part by [2026-10-08 aircraft and soundscape audio](2026-10-08-aircraft-and-soundscape-audio.md)** for runtime bank selection and emitter topology; pure load/contact rules and retained source licensing still apply.
+
 ## Decision and reason
 
 The previous three recorded beds were played as one loop per aircraft. A narrow

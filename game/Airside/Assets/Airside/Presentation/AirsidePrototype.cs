@@ -1417,10 +1417,10 @@ namespace Airside.Presentation
             var weather = CurrentWeather;
             var raining = weather == WeatherKind.Rain || weather == WeatherKind.Storm;
             var storm = weather == WeatherKind.Storm;
-            var windTarget = _audioMuted ? 0f : AmbientWindVolume * AmbientDuck;
-            var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume) * AmbientDuck;
+            var windTarget = _audioMuted ? 0f : AmbientWindVolume * AmbientDuck * ExteriorWeatherGain;
+            var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume) * AmbientDuck * ExteriorWeatherGain;
             var coastTarget = _audioMuted || AirsideFocusMode.BareWorld ? 0f
-                : AmbientCoastVolume * (storm ? 1.45f : raining ? 1.2f : 1f) * AmbientDuck;
+                : AmbientCoastVolume * (storm ? 1.45f : raining ? 1.2f : 1f) * AmbientDuck * CoastAudioGain;
             // Slight day/night wind variation (presentation only).
             if (!_audioMuted)
                 windTarget *= Mathf.Lerp(0.75f, 1.1f, 1f - PresentationDaylight);
@@ -1444,11 +1444,11 @@ namespace Airside.Presentation
             if (_thunderAudio != null && Time.unscaledTime >= _thunderPlayAt)
             {
                 _thunderPlayAt = float.PositiveInfinity;
-                if (!_audioMuted && _thunderClip != null)
+                if (!_audioMuted && _thunderClip != null && ExteriorWeatherGain > 0.05f)
                 {
                     var volume = Mathf.Lerp(0.55f, 0.16f, _lightningDistance01);
                     _thunderAudio.pitch = Mathf.Lerp(0.92f, 1.05f, 1f - _lightningDistance01);
-                    _thunderAudio.PlayOneShot(_thunderClip, volume);
+                    _thunderAudio.PlayOneShot(_thunderClip, volume * ExteriorWeatherGain);
                 }
             }
         }

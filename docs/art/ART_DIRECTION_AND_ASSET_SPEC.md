@@ -504,3 +504,17 @@ stabiliser dimensions and original approximate fin profiles are distinguished in
 Runtime glTF/bin, editable FBX, packaged mirrors and existing hangar thumbnails
 are updated. Integrated with geometry/render evidence; native lighting, moving
 control surfaces and performance remain unverified. Prior git assets are fallback.
+
+
+## Ground character — 9 October 2026
+
+Task #687 extends existing airport and surrounding land surfaces with original
+procedural local variation: grass/soil islands, irregular mowing, restrained dry/damp
+colour, asphalt repair/sealed-crack detail and concrete joints. Existing apron repairs
+have varied sizes/ages and full mapped-edge containment. This is surface character,
+not surveyed repair locations or new physical terrain roughness. Keep operational
+markings and aircraft legible; pixel-filter/fade thin detail at distance, retain
+mapped geographic shapes and the airfield edge handover. Existing source texture
+paths/GUIDs remain; only `Art/Shaders/GroundCharacter.hlsl` is introduced as a shared
+include with metadata. Zero external assets/cost. Integrated; native shader lighting,
+visual strength and GPU cost are unverified. Decision/evidence: `2026-10-09-ground-character`.

@@ -35,7 +35,7 @@ namespace Airside.Presentation
     {
         public const int Seed = 8813;
         public const float EdgeInsetMetres = 4f;
-        public const int PatchesPerApron = 6;
+        public const int PatchesPerApron = 14;
         public const int PitsPerApron = 4;
 
         private static ApronWearMark[] _cached;
@@ -106,11 +106,18 @@ namespace Airside.Presentation
                 }
                 else
                 {
-                    halfX = Lerp(2.2f, 6.5f, (float)random.NextDouble());
-                    halfZ = Lerp(1.4f, 4.0f, (float)random.NextDouble());
+                    // Mostly small local repairs, with occasional wider resurfacing.
+                    var large = random.NextDouble() > .78;
+                    halfX = Lerp(2.2f, large ? 10.5f : 5.5f, (float)random.NextDouble());
+                    halfZ = Lerp(1.4f, large ? 6.5f : 3.4f, (float)random.NextDouble());
                     yaw = Lerp(-12f, 12f, (float)random.NextDouble());
                 }
 
+                // The whole rotated patch fits inside an inset apron, including
+                // concave edges. A centre-only check let large repairs spill out.
+                var radius = (float)Math.Sqrt(halfX*halfX + halfZ*halfZ);
+                if (DistanceToEdge(xz,x,z) < Math.Max(EdgeInsetMetres,radius+1f))
+                    continue;
                 list.Add(new ApronWearMark(x, z, halfX, halfZ, yaw, drainage));
                 placed++;
             }

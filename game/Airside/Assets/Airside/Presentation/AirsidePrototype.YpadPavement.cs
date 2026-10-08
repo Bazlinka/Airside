@@ -59,9 +59,15 @@ namespace Airside.Presentation
 
             var aprons = new SurfaceMesh();
             var apronJoints = new SurfaceMesh();
+            var pavementShader = Shader.Find("Airside/Pavement");
+            var shaderJoints = pavementShader != null && pavementShader.isSupported;
             foreach (var apron in AdelaideLayout.Aprons)
             {
                 AddPolygon(aprons, apron.Xz, apronY);
+                // The detailed material owns joints; retain the coarse geometry
+                // only as the missing-shader fallback, never draw two grids.
+                if (shaderJoints)
+                    continue;
                 foreach (var joint in ApronSlabJoints.Generate(apron.Xz))
                 {
                     AddRibbon(
@@ -160,17 +166,23 @@ namespace Airside.Presentation
 
         /// <summary>
         /// Patch repairs and drainage pits on the real apron outlines (Phase 1).
-        /// Combined into two meshes so draw cost stays fixed regardless of mark count.
+        /// Combined into three meshes so draw cost stays fixed regardless of mark count.
         /// </summary>
         private static void BuildYpadApronSurfaceWear(Transform root, float y)
         {
             var patches = new SurfaceMesh();
+            var faded = new SurfaceMesh();
             var pits = new SurfaceMesh();
+            var repairIndex = 0;
             foreach (var mark in ApronSurfaceWear.All())
-                AddPolygon(mark.Drainage ? pits : patches, ApronSurfaceWear.Corners(mark),
-                    mark.Drainage ? y + 0.0015f : y);
+            {
+                var target = mark.Drainage ? pits : repairIndex++ % 3 == 0 ? patches : faded;
+                AddPolygon(target, ApronSurfaceWear.Corners(mark), mark.Drainage ? y + 0.0015f : y);
+            }
 
             SpawnSurface(root, "Apron patch repairs", patches, new Color(.39f,.40f,.40f), PreferSurfaceBasecolor("tx_concrete_apron"),
+                castShadows: false);
+            SpawnSurface(root, "Apron faded repairs", faded, new Color(.48f,.475f,.45f), PreferSurfaceBasecolor("tx_concrete_apron"),
                 castShadows: false);
             SpawnSurface(root, "Apron drainage pits", pits, new Color(0.16f, 0.16f, 0.17f), null,
                 castShadows: false, useTextures: false);

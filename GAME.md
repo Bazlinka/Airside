@@ -11,6 +11,10 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*
 
+**Blur root cause (8 Oct, Claude):** Unity had saved a maximised 1600x900 window in `com.DefaultCompany.Airside.plist`, so the player rendered at 1600x900 and was stretched
+with black bars on a 3456x2168 Retina screen. `AirsideDisplay.EnsureNativeResolution` now resets any non-windowed render size below 90% of the display at
+startup. Confirmed by screenshot: clearing the saved size gave full-screen, sharper output.
+
 **Enroute flap review (8 Oct, Codex, #586 / PR #588):** retains animated rig rest poses
 when follow targets refresh and selects flap/gear phase from the regional journey.
 Updated against current main, preserving aircraft-specific return rotation timing.

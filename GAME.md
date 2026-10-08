@@ -7,12 +7,14 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**ATR 42 hold door (8 Oct, Claude):** `RelocateAtrDoors` flipped the door 180° in its transform and `UpdateCabinDoor` overwrote that yaw, so the shut door stood mirrored ahead of the cockpit. The flip is now baked into the mesh (`RebakePartPivot` with a rotation). Look at the ATR on the apron and while loading. Windscreen white patches in the same screenshot are not investigated.
+
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*
 
 **Enroute flap review (8 Oct, Codex, #586 / PR #588):** retains animated rig rest poses
 when follow targets refresh and selects flap/gear phase from the regional journey.
 Updated against current main, preserving aircraft-specific return rotation timing.
-Native review 295/295 passed; packaged flight journeys unverified.
+Native review with #604: 296/296 passed; packaged flight journeys unverified.
 Evidence: `docs/testing/enroute-flaps-2026-10-08/`.
 
 **Save recovery (8 Oct, Codex, #599):** merged in PR #600. Retains a readable previous

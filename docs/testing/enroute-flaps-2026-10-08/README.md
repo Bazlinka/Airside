@@ -39,3 +39,10 @@ Asset audit passed: 1,886 GUIDs, 407 mirrored art files, 70 materials.
 Full headless: 2,003 passed / the same 3 main failures (busy-day ground separation
 and both night-sky review checks). NUnit 3.5 compilation and generated harness check
 passed. Packaged flight/playtest remains unverified. Summary: review-headless-results.txt.
+
+Final refresh: main c681101e brought ATR door PR #604 during review. Only the
+changelog conflicted. Reran the same native coverage plus AtrCargoDoorTests:
+296/296 passed. Summary: final-native-results.json. Final harness consistency and
+asset audit passed (1,887 GUIDs, 407 mirrors, 70 materials). The full headless result
+above precedes #604; its incoming changes are Unity-only and excluded from that
+harness. No packaged flight/rendering claim.

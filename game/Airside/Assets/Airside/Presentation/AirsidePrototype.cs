@@ -622,6 +622,7 @@ namespace Airside.Presentation
             UpdateAircraftVisual();
             UpdateOutstationView();
             UpdateCockpitView();
+            UpdateTowerView();
             UpdateFlightViewReview();
             TraceFlightJourneyReview();
             if (SoakMode)
@@ -906,6 +907,7 @@ namespace Airside.Presentation
                 }
 
                 if (WatchingOutstation) { ExitOutstationView(true); return; }
+                if (InTower) { ExitTower(); return; }
                 if (InCockpit)
                 {
                     ExitCockpit(true);
@@ -936,7 +938,7 @@ namespace Airside.Presentation
                 ExitOutstationView(true);
                 return;
             }
-            if (!InCockpit && !WatchingOutstation && ReadAirlineControls(keyboard))
+            if (!InCockpit && !InTower && !WatchingOutstation && ReadAirlineControls(keyboard))
                 return;
 
             if (keyboard.fKey.wasPressedThisFrame)
@@ -1073,7 +1075,7 @@ namespace Airside.Presentation
             // Follow / Overview live on the circuit HUD only. The airline overview
             // uses the selected-aircraft card and Esc/R instead (ADR 0053). The
             // live speed / altitude / heading strip stays up in both modes.
-            if (!AirlineModalOpen && !_menuOpen && !InCockpit && !WatchingOutstation)
+            if (!AirlineModalOpen && !_menuOpen && !InCockpit && !InTower && !WatchingOutstation)
             {
                 DrawSpeedReadout(layout, panel);
                 if (!FleetMode)
@@ -1081,6 +1083,7 @@ namespace Airside.Presentation
             }
             if (WatchingOutstation && !_menuOpen) DrawOutstationViewHud(panel, title, button);
             else if (InCockpit && !_menuOpen) DrawCockpitHud(layout, panel, button);
+            else if (InTower && !_menuOpen) DrawTowerHud(layout, panel, title, button);
             else DrawAirlineHud(layout, panel, title, button);
             DrawParafieldWatchPanel(layout);
             DrawMapCredit(layout);

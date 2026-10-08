@@ -19,6 +19,22 @@ Native Unity appearance, doors/cabin views and performance are unverified.
 No simulation/save changes; these remain representative models, not manufacturer CAD.
 The WIP 787-window-height proposal (#543) is separate.
 
+**Flight times, maps and HUD redesign (8 Oct, Claude, #621/#624/#632/#641/#646/#652/#656/#659):** all merged; Unity compile and appearance
+unverified (pure maths and draw lists checked headlessly: `dotnet test` filters plus `scripts/render-hud-mockups.py`).
+- *Flight times:* ATR 42/Dash 8 planning cruise 510/620 km/h; A350/787-9 practical range 13,500 km, 787-10 11,200 km; jets get a cruise-time
+  factor of 1.0 (600 km) to 1.08 (2,500 km+) in `LegTiming.AirborneSeconds` for routing/headwind (no wind is modelled; HUD Mach reads lower on long legs).
+- *Maps:* flight-view moving map simplified (one-line footer, no rings) with worker-thread textures and a windowed anti-aliased coast.
+  Route Map has an async-baked land fill (`RouteMapLandLayer`, `RouteMapLandWindow`), faint coast/borders, rimmed dots, codes then names by zoom,
+  and on-field aircraft collapse to dots plus "N on field" below zoom 60.
+- *HUD:* ADR `2026-10-08-hud-chrome-redesign.md`. Floating capsule + action group, 72 pt rail, new Glass palette, milestone card, flight-view
+  instrument tiles, Operations rows, Map plan pane, Fleet/Contracts cards, Career stat cards. Not yet redesigned: selected-aircraft card,
+  airport-movements board, radar, Fleet detail pane, Career layout (roadmap/activity/right column), setup/splash/menu screens.
+- *Open/unverified:* look at the Route Map and HUD in the Mac build; check `PC_RPAsset`/`packages-lock` local edits are intentional (left uncommitted).
+  `Contracts_LayoutKeepsBothColumnsInsideTheSurface` and `GrowingOverview_LastAircraftRemainsReachableInCompactWindows` fail on main (layout-only,
+  compact windows; not caused by the HUD painter work) and need a cause found. Next approved work: Bailey's call — remaining HUD screens above.
+
+**Regional departure climb (8 Oct, Claude):** the route profile starts at the height a local climb-out reaches, but a regional leg begins at brake release, so the old code had the aircraft gain the whole gap in 120 s (up to ~5,200 ft/min on a 737). `RegionalFlightPath.ClimbLagSeconds` + `ClimbAltitudeFeet` start the route climb late (finishing out of the cruise), and `DepartureClimbHeight` replaces the smoothstep with one steady rate. Peak now <= 3,000 ft/min in `RegionalDepartureClimbTests`. Board/card/map altitude text now uses `BoardAltitudeFeet` (same lag). Unity unverified.
+
 **Next:** Bailey chooses Mac build/playtest timing. Check the fleet's nose and
 tail contours, opened/shut doors and interior glazing at overview/follow distances,
 then day/dusk/night and performance. Standing policy: quick relevant checks only;

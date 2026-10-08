@@ -12,7 +12,8 @@ namespace Airside.Tests
         [Test]
         public void LaunchIntro_IsBriefAndHasADeliberateMarkReveal()
         {
-            Assert.That(AirsidePrototype.IntroSeconds, Is.EqualTo(4.2f).Within(0.001f));
+            Assert.That(AirsidePrototype.IntroSeconds, Is.GreaterThanOrEqualTo(2f));
+            Assert.That(AirsidePrototype.IntroSeconds, Is.LessThanOrEqualTo(3f), "the opening should hand over promptly");
             Assert.That(AirsidePrototype.IntroMarkRevealSeconds, Is.GreaterThan(0f));
             Assert.That(AirsidePrototype.IntroMarkRevealSeconds, Is.LessThan(AirsidePrototype.IntroSeconds));
         }

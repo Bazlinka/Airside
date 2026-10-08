@@ -1,0 +1,113 @@
+{
+  "initial_full": {
+    "total": "2526",
+    "passed": "2518",
+    "failed": "5",
+    "inconclusive": "2",
+    "skipped": "1",
+    "duration": "318.2241333",
+    "failures": [
+      {
+        "name": "Airside.Tests.GroundSeparationTests.BusyDay_NoAircraftDriveThroughEachOther",
+        "message": "     3  AwaitingStand x TaxiOut   e.g. t=20166 VH-QOK(DH8D AwaitingStand Runway12 stand=BAY-3) @(662,196) vs VH-8IA(B38M TaxiOut Runway05 stand=) @(674,196) d=11\n\n  Expected: <empty>\n  But was:  < [AwaitingStand x TaxiOut, 3] >\n"
+      },
+      {
+        "name": "Airside.Tests.MacRenderBudgetTests.OptionsMenu_FitsTheFrameRateRow",
+        "message": "  Expected: greater than or equal to 832.0f\n  But was:  560.0f\n"
+      },
+      {
+        "name": "Airside.Tests.PresentationLayoutTests.LaunchIntro_IsBriefAndHasADeliberateMarkReveal",
+        "message": "  Expected: 4.19999981f +/- 0.00100000005f\n  But was:  2.79999995f\n"
+      },
+      {
+        "name": "Airside.Tests.SkyTrafficTests.NightSkyReviewFraming_PutsDrawableCruiseInUpperHalfOfFrame",
+        "message": "  night-sky re-run pose (11 km / pitch 8 / yaw 270) must put at least one drawable cruise in the upper half of a 1600\u00d7900 / FOV 48 frame at T+45s\n  Expected: greater than 0\n  But was:  0\n"
+      },
+      {
+        "name": "Airside.Tests.SkyTrafficTests.NightSkyReviewYaw_FacesADrawableOverflightSector",
+        "message": "  review yaw 270 should face the early-soak drawable overflight\n  Expected: less than or equal to 20.0d\n  But was:  137.05407953555971d\n"
+      }
+    ],
+    "opening_options_cases": [
+      {
+        "name": "Airside.Tests.OpeningOptionsNativeTests.AllExistingAndNewOptionsAreAvailableExactlyOnce",
+        "result": "Passed"
+      },
+      {
+        "name": "Airside.Tests.OpeningOptionsNativeTests.OpeningAnimationPreferenceCanDisableMotionAndKeepsItsDefault",
+        "result": "Passed"
+      },
+      {
+        "name": "Airside.Tests.OpeningOptionsNativeTests.OptionsBackClosesTitleOverlayButKeepsInGameMenu(True)",
+        "result": "Passed"
+      },
+      {
+        "name": "Airside.Tests.OpeningOptionsNativeTests.OptionsBackClosesTitleOverlayButKeepsInGameMenu(False)",
+        "result": "Passed"
+      },
+      {
+        "name": "Airside.Tests.OptionsMenuTests.FiveRowsAndEveryNavigationActionFitThePanel(800.0f,600.0f)",
+        "result": "Passed"
+      },
+      {
+        "name": "Airside.Tests.OptionsMenuTests.FiveRowsAndEveryNavigationActionFitThePanel(1024.0f,640.0f)",
+        "result": "Passed"
+      },
+      {
+        "name": "Airside.Tests.OptionsMenuTests.FiveRowsAndEveryNavigationActionFitThePanel(1440.0f,900.0f)",
+        "result": "Passed"
+      },
+      {
+        "name": "Airside.Tests.OptionsMenuTests.InGameOptionsReturnLabelDoesNotClaimToLeaveTheAirline",
+        "result": "Passed"
+      }
+    ]
+  },
+  "final_affected": {
+    "total": "152",
+    "passed": "152",
+    "failed": "0",
+    "inconclusive": "0",
+    "skipped": "0",
+    "duration": "0.3438158",
+    "failures": [],
+    "opening_options_cases": [
+      {
+        "name": "Airside.Tests.OpeningOptionsNativeTests.AllExistingAndNewOptionsAreAvailableExactlyOnce",
+        "result": "Passed"
+      },
+      {
+        "name": "Airside.Tests.OpeningOptionsNativeTests.OpeningAnimationPreferenceCanDisableMotionAndKeepsItsDefault",
+        "result": "Passed"
+      },
+      {
+        "name": "Airside.Tests.OpeningOptionsNativeTests.OptionsBackClosesTitleOverlayButKeepsInGameMenu(True)",
+        "result": "Passed"
+      },
+      {
+        "name": "Airside.Tests.OpeningOptionsNativeTests.OptionsBackClosesTitleOverlayButKeepsInGameMenu(False)",
+        "result": "Passed"
+      },
+      {
+        "name": "Airside.Tests.OpeningOptionsNativeTests.TitleOwnsEscapeWithoutOpeningAnInGameResumeMenu",
+        "result": "Passed"
+      },
+      {
+        "name": "Airside.Tests.OptionsMenuTests.FiveRowsAndEveryNavigationActionFitThePanel(800.0f,600.0f)",
+        "result": "Passed"
+      },
+      {
+        "name": "Airside.Tests.OptionsMenuTests.FiveRowsAndEveryNavigationActionFitThePanel(1024.0f,640.0f)",
+        "result": "Passed"
+      },
+      {
+        "name": "Airside.Tests.OptionsMenuTests.FiveRowsAndEveryNavigationActionFitThePanel(1440.0f,900.0f)",
+        "result": "Passed"
+      },
+      {
+        "name": "Airside.Tests.OptionsMenuTests.InGameOptionsReturnLabelDoesNotClaimToLeaveTheAirline",
+        "result": "Passed"
+      }
+    ]
+  }
+}

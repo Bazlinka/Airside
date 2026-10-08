@@ -9,12 +9,19 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*
 
-**Save recovery (8 Oct, Codex, #599):** branch `codex/save-recovery-20261008`.
-Atomic saves retain one previous readable `.bak`; Continue can recover missing/unreadable
-primary JSON, with a recovery label and warning. Save schema unchanged. Native/headless
-checks: all 11 save tests pass; full Unity 2,514 pass / 3 existing failures,
-headless baseline 1,985 pass / same 3 failures. Draft review; packaged UI unverified.
+**Save recovery review (8 Oct, Codex, #599 / PR #600):** branch `codex/save-recovery-20261008`.
+Atomic saves retain one previous readable `.bak`; Continue recovers missing/unreadable
+primary JSON with a recovery label and warning. Save schema unchanged. Original native
+run passed all 11 save tests; full regression retains 3 baseline failures. Updated with
+merged opening/options; native compatibility rerun 163/163 passed. Packaged UI unverified.
 Evidence: `docs/testing/save-recovery-2026-10-08/`.
+
+**Opening and Options (8 Oct, Codex, #601):** merged in PR #603.
+Clearer title, shorter/skippable entry, grouped Options with setting explanations,
+opening-animation/cockpit-motion controls and direct return to title. Validation
+complete for affected checks: native 152/152, focused headless 20/20; all 12 native UI
+views inspected. Broad regressions retain 3 existing failures; packaged
+handoff/interaction unverified. Evidence: `docs/testing/opening-options-2026-10-08/`.
 
 **Airport templates (8 Oct, Claude):** branch `claude/airport-templates-20261008`. Generic runways, terminals and gates for all 19
 Australian destinations (`AirportTemplates`) and a deterministic runway/gate planner (`AirportArrivalPlanner`); the network flight
@@ -87,11 +94,10 @@ now logged as `[Airside soak] hitch`. Still unchecked: depth precision, sky/star
   compare day/dusk/night for AO banding, shimmer and shadow pop-in; check the seam where the near satellite ends,
   startup-to-title time and memory (far image decodes to ~64 MB); at 100–450 km zoom check coastline blockiness, the 40 m join between
   coarse and fine tiles, sky/stars/sun at a 1,170 km far clip, depth precision and frame time while tiles stream. Each is a one-line revert (see the ADRs).
-- **Current regression failures (8 Oct rerun):** full Unity 2,514 passed / 3 failed / 2 inconclusive / 1 skipped.
-  Headless baseline has the same 3 failures: `GroundSeparationTests.BusyDay_NoAircraftDriveThroughEachOther`
-  (waiting Dash 8 / taxiing 737 overlap), and `SkyTrafficTests.NightSkyReviewFraming_PutsDrawableCruiseInUpperHalfOfFrame`
-  / `NightSkyReviewYaw_FacesADrawableOverflightSector`. Earlier #552 native fixture failures no longer fail this run.
-  Evidence: `docs/testing/save-recovery-2026-10-08/`. Full regression is not green.
+- **Current baseline regressions (8 Oct):** busy-day waiting/taxiing ground overlap, plus night-sky
+  review framing and yaw. Full headless has the same 3 failures. Opening/Options' broad native run
+  also exposed two obsolete menu/intro assertions; their updated checks pass in the final 152/152
+  affected rerun. Full regression is not green. Evidence: `docs/testing/opening-options-2026-10-08/`.
 - Maintenance journey and refined interface (ADR 0245) still wait on a native playtest: prop/jet startup, gear/tug
   alignment, swept doorway clearance, busy taxi traffic, save/reload through every phase. Do not merge on offline
   painter previews alone.

@@ -30,3 +30,13 @@ refusal. No packaged title/toast visual acceptance or performance claim is made.
 For a packaged UI check, use an isolated test save, save twice, corrupt its main
 JSON, relaunch, inspect “Recovery copy” on the Continue card, then Continue and
 check the warning. Never damage the player's actual save for this check.
+
+## Review against merged opening/options (8 Oct)
+
+Updated PR #600 with main ebbc0545. Conflicts were restricted to GAME.md and
+CHANGELOG.md; both save recovery and opening/options status were preserved.
+Native Unity compiled the combined source and passed all 163 affected tests,
+including 11 AirlineSaveTests and 152 opening/options/settings checks. No failures,
+inconclusive or skipped cases. Summary: compatibility-native-results.json.
+Full regression was not rerun; existing main ground-separation and two night-sky
+failures remain documented. Packaged recovery/title journey remains unverified.

@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-08 — Light audit: all fleet types carry landing/taxi/nav/beacon/strobe lamps; Parafield trainers gained a cowl landing lamp, beacon flash and wingtip strobes (unverified in Unity).
+
 - 2026-10-08 — #613: Australian flight terrain, denser real airport maps, mapped runway paint and economical high-altitude streaming (Unity unverified).
 
 - 2026-10-08 — #595: unify terrain/road/pavement lighting and colour handling; reduce daytime washout and retain pavement detail (ADR coherent-world-lighting).

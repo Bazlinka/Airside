@@ -9,6 +9,13 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*
 
+**World lighting pass (8 Oct, Codex, #595):** terrain, roads and airport pavement
+share URP surface lighting. Corrected Gamma vertex palette/texture blending,
+excluded solid roads/props from satellite-edge/water treatment, normalised pavement
+scan grain around authored colour and reduced daytime sun/grade washout.
+Native day/dusk/night comparison views and focused checks:
+`docs/testing/world-lighting-2026-10-08/`. Packaged build/soak deferred; review pending.
+
 **Parafield first working airport (8 Oct, Codex, #593):** independent YPPF with four mapped
 runways, taxiways, apron/hangars and four original light trainers on a reserved training circuit.
 Operations → WATCH PARAFIELD; ADELAIDE/R returns to Adelaide. Player bases/economics/saves

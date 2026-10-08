@@ -203,7 +203,7 @@ namespace Airside.Presentation
         {
             weatherGloom = Mathf.Clamp01(weatherGloom);
 
-            // Day: slight lift + clear contrast so apron/grass/sky separate.
+            // Day: neutral exposure/saturation; material lighting supplies surface separation.
             // Night: keep exposure readable — floods define pools; do not crush midtones
             // into a purple soup (aircraft/hangar must stay identifiable).
             //
@@ -212,9 +212,9 @@ namespace Airside.Presentation
             // (see the matching ambient-floor comment in AirsidePrototype.ApplyDayCycle) — a
             // real player reported "can't see anything" at night. Raised toward a small
             // positive EV instead; day's own exposure is unchanged.
-            var exposure = Mathf.Lerp(0.06f, 0.22f, daylight) + warm * 0.12f - weatherGloom * 0.28f
+            var exposure = Mathf.Lerp(0.06f, 0f, daylight) + warm * 0.12f - weatherGloom * 0.28f
                 + nightExposureLift;
-            var contrast = Mathf.Lerp(6f, 8.5f, daylight) + weatherGloom * 3.5f;
+            var contrast = Mathf.Lerp(6f, 5f, daylight) + weatherGloom * 3.5f;
             var dayFilter = Color.Lerp(Color.white, new Color(1f, 0.82f, 0.68f), warm * 0.65f);
             var nightFilter = new Color(0.86f, 0.9f, 1f); // soft cool, not heavy blue cast
             var stormFilter = new Color(0.72f, 0.76f, 0.84f);
@@ -226,7 +226,7 @@ namespace Airside.Presentation
             _color.postExposure.Override(exposure);
             _color.contrast.Override(contrast);
             _color.colorFilter.Override(filter);
-            _color.saturation.Override(Mathf.Lerp(6f, 8f, daylight) - weatherGloom * 7f + warm * 2.5f);
+            _color.saturation.Override(Mathf.Lerp(6f, 0f, daylight) - weatherGloom * 7f + warm * 2.5f);
             _color.hueShift.Override(Mathf.Lerp(0f, -4f, weatherGloom) + warm * 2f);
 
             // Bloom: day barely; night only floods/windows (high threshold, modest intensity).
@@ -299,13 +299,13 @@ namespace Airside.Presentation
             _channelMixer.blueOutGreenIn.Override(coolPush * 0.08f);
             _channelMixer.blueOutBlueIn.Override(100f + coolPush * 0.12f - warmPush * 0.06f);
 
-            // Noon contrast punch — apron concrete lifts vs grass midtones (REF-001).
+            // Keep noon neutral instead of exaggerating satellite colour and concrete highlights.
             // Golden-hour bloom lift so flood heads / glass catch warm specular (REF-002).
             // Both fade in: lighting follows the live clock, so hard thresholds popped the
             // whole frame when daylight crossed 0.75 or warmth crossed 0.35.
             var noon = NoonPunchWeight(daylight, warm);
-            _color.contrast.Override(contrast + 1.8f * noon);
-            var noonSaturation = Mathf.Lerp(6f, 10f, daylight) - weatherGloom * 7f;
+            _color.contrast.Override(contrast);
+            var noonSaturation = Mathf.Lerp(6f, 0f, daylight) - weatherGloom * 7f;
             _color.saturation.Override(Mathf.Lerp(_color.saturation.value, noonSaturation, noon));
             var golden = GoldenBloomWeight(warm) * (1f - noon);
             var goldenBloom = Mathf.Lerp(0.24f, 0.08f, daylight) * (1f - weatherGloom * 0.28f)

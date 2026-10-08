@@ -69,6 +69,7 @@ namespace Airside.Presentation
                 name = "mat_adelaide_road_network_v01",
                 enableInstancing = true
             };
+            asphaltMaterial.SetFloat("_VertexSurface", 1f);
             var paintMaterial = AirsideMaterialLibrary.CreateShared(PaintColour, AirsideMaterialLibrary.SurfaceKind.PaintedLine);
             var clock = System.Diagnostics.Stopwatch.StartNew();
             const double budgetMs = 3.0;
@@ -260,6 +261,7 @@ namespace Airside.Presentation
                 if (shader == null)
                     return null;
                 _propMaterial = new Material(shader) { name = "mat_boarding_tape_v01", enableInstancing = true };
+                _propMaterial.SetFloat("_VertexSurface", 1f);
             }
 
             var root = new GameObject(name);

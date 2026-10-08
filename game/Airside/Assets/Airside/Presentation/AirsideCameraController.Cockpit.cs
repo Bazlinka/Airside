@@ -37,6 +37,7 @@ namespace Airside.Presentation
         // stayed with the moving aircraft, not from a fixed world point the aircraft has flown away from.
         private Transform _exitAnchor;
         private Vector3 _exitAnchorPos;
+        private Quaternion _exitAnchorRot = Quaternion.identity;
         private const float ExitAnchorMaxStepMetres = 1000f;
         private float _exitSeconds = CockpitLookInput.TransitionSeconds;
         private int _exitBlendFrame = -1;
@@ -126,6 +127,7 @@ namespace Airside.Presentation
             if (_exitAnchor != null)
             {
                 _exitAnchorPos = _exitAnchor.position;
+                _exitAnchorRot = _exitAnchor.rotation;
             }
             _exitFromFov = _camera != null ? _camera.fieldOfView : _savedFov;
             _exitSeconds = 0f;
@@ -319,6 +321,12 @@ namespace Airside.Presentation
                 _exitAnchorPos = _exitAnchor.position;
                 if (step.sqrMagnitude < ExitAnchorMaxStepMetres * ExitAnchorMaxStepMetres)
                     _exitFromPos += step;
+                // Turn with it too: swing the camera's offset and heading by the aircraft's own turn this
+                // frame, so a banking aircraft does not slide sideways out of the glide's start view.
+                var turn = _exitAnchor.rotation * Quaternion.Inverse(_exitAnchorRot);
+                _exitAnchorRot = _exitAnchor.rotation;
+                _exitFromPos = _exitAnchor.position + turn * (_exitFromPos - _exitAnchor.position);
+                _exitFromRot = turn * _exitFromRot;
             }
             transform.SetPositionAndRotation(Vector3.Lerp(_exitFromPos, transform.position, glide),
                 Quaternion.Slerp(_exitFromRot, transform.rotation, glide));

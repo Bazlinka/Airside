@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-08 — Exit glide also turns with the aircraft, so the camera no longer drifts sideways when leaving a flight view mid-turn (unverified in Unity).
+
 - 2026-10-08 Circuit pitch eases to the approach attitude so the go-around circuit-to-approach hand-over no longer steps (presentation only)
 - 2026-10-08 — Leaving exterior/cockpit view: the exit glide now travels with the moving aircraft instead of chasing it from a fixed point (unverified in Unity).
 

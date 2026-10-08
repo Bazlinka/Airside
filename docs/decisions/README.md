@@ -316,8 +316,16 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-08 | [Flight costs rebalanced upward](2026-10-08-flight-cost-rebalance.md) |  |
 | 2026-10-08 | [Free sourced assets and coherent close-view materials](2026-10-08-free-visual-upgrade.md) |  |
 | 2026-10-08 | [HUD chrome redesign (stage 1)](2026-10-08-hud-chrome-redesign.md) | headless draw-list renders and HUD layout tests checked; Unity appeara |
+| 2026-10-08 | [macOS notification registration and recoverable permission setup](2026-10-08-macos-notification-registration.md) | Implemented; native Mac verification pending |
 | 2026-10-08 | [Important background macOS notifications](2026-10-08-macos-notifications.md) | Implemented at Bailey’s request; native Mac verification pending |
+| 2026-10-08 | [Night final light-source visibility](2026-10-08-night-final-light-visibility.md) | Accepted for implementation under Bailey's bug report |
 | 2026-10-08 | [Opening and Options clarity](2026-10-08-opening-options.md) | Accepted for implementation |
 | 2026-10-08 | [Independent Parafield airport](2026-10-08-parafield-independent-airport.md) |  |
 | 2026-10-08 | [Save recovery copy](2026-10-08-save-recovery.md) | Accepted for implementation |
+| 2026-10-08 | [Storm holds at stands and committed movements continue](2026-10-08-storm-movement-commitment.md) | Accepted — Bailey's explicit 8 October storm movement instruction |
 | 2026-10-08 | [Departure-style toast notifications](2026-10-08-toast-notifications.md) | Implemented at Bailey’s request; Unity appearance pending |
+| 2026-10-08 | [Persistent weather at flight altitude and restrained cockpit motion](2026-10-08-weather-altitude-and-restraint.md) | Accepted |
+| 2026-10-09 | [Aircraft presence and camera eligibility](2026-10-09-aircraft-presence-and-camera-eligibility.md) | Accepted for the continuity fixes; parked activity window remains prop |
+| 2026-10-09 | [Stable cloud coverage and visual weather variety](2026-10-09-cloud-continuity-and-variety.md) | Accepted — Bailey's cloud continuity and weather variety instruction |
+| 2026-10-09 | [Established arrivals retain physical presence when estimates are postponed](2026-10-09-established-arrival-holding-presence.md) | Accepted — Bailey's no-disappearing-aircraft instruction |
+| 2026-10-09 | [Terminal doors and more people on the ground](2026-10-09-terminal-doors-and-people.md) | pure geometry and walk tests pass; the Unity assembly compiles; appear |

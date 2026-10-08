@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Airside.Editor
 {
     /// <summary>Compile/import the generated universal plugin before Unity packages and signs a Mac player.</summary>
-    public sealed class MacNotificationsBuild : IPreprocessBuildWithReport
+    public sealed class MacNotificationsBuild : IPreprocessBuildWithReport, IPostprocessBuildWithReport
     {
         public int callbackOrder => -100;
 
@@ -53,6 +53,15 @@ namespace Airside.Editor
             importer.SetCompatibleWithPlatform(BuildTarget.StandaloneOSX, true);
             importer.SetPlatformData(BuildTarget.StandaloneOSX, "CPU", "AnyCPU");
             importer.SaveAndReimport();
+        }
+
+        public void OnPostprocessBuild(BuildReport report)
+        {
+            if (report.summary.platform != BuildTarget.StandaloneOSX) return;
+            var plugins = Path.Combine(report.summary.outputPath, "Contents/Plugins");
+            if (!Directory.Exists(plugins) ||
+                Directory.GetFiles(plugins, "AirsideNotifications", SearchOption.AllDirectories).Length == 0)
+                throw new BuildFailedException("The built Airside.app is missing its notification bridge. Rebuild on a Mac; do not distribute this player.");
         }
 
         private static string Quote(string value) => "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";

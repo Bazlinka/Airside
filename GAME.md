@@ -7,65 +7,96 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
-**Aircraft bodies (8 Oct, Codex, #651):** all 13 scheduled aircraft plus Bell 412
-and Parafield trainer have continuous body contours, rounded tips and fitted
-skin details at their existing asset paths. Bell/trainer glazing and doors now
-follow the shell; A320 inherited doors are refitted and v02 source-adapted engines,
-fans and wheels retained. Regeneration: shared body pass before glazing/paint,
-Bell/trainer generators, A320 free-source adaptation, runtime art sync.
-Bounded numeric/fit evidence and limits:
-`docs/testing/aircraft-bodies-2026-10-08/README.md`.
-Native Unity appearance, doors/cabin views and performance are unverified.
-No simulation/save changes; these remain representative models, not manufacturer CAD.
-The WIP 787-window-height proposal (#543) is separate.
+**Aircraft continuity (9 Oct, Codex, #672):** full route poses are now available to
+ordinary overview/follow views, rather than hiding departures after the local climb
+projection ends. Ordinary follow streams journey terrain and shifts the render origin.
+Aircraft identity lookup includes every physically present fleet view independently
+of follow-cycle filtering; direct follow can select a present aircraft outside that cycle.
+Parked models remain visible. The proposed two-hour activity window remains a product
+recommendation pending Bailey's choice; Fleet inventory must always retain them.
+Audit coverage and remaining limitations: `docs/testing/aircraft-continuity-2026-10-09.md`.
+Established final poses now survive missing/postponed ETAs in a continuous holding
+orbit (#677), climbing to at least 1.5 km. A usable ETA rejoins through bounded pose
+slew; real clearance retains the held pose through the handoff. Map/follow/selected
+status use the actual held pose. This represents existing operational delays; it does
+not grant runway/stand/curfew clearance or create a new saved state. Focused holding
+and approach checks pass 16/16; changed C# syntax parses. Rendered holding/rejoin and
+terrain performance remain unverified. Holding pose is transient across reloads;
+live-feed expiry and unsupported outstation presentation still have explicit limits.
 
-**Flight times, maps and HUD redesign (8 Oct, Claude, #621/#624/#632/#641/#646/#652/#656/#659):** all merged; Unity compile and appearance
-unverified (pure maths and draw lists checked headlessly: `dotnet test` filters plus `scripts/render-hud-mockups.py`).
-- *Flight times:* ATR 42/Dash 8 planning cruise 510/620 km/h; A350/787-9 practical range 13,500 km, 787-10 11,200 km; jets get a cruise-time
-  factor of 1.0 (600 km) to 1.08 (2,500 km+) in `LegTiming.AirborneSeconds` for routing/headwind (no wind is modelled; HUD Mach reads lower on long legs).
-- *Maps:* flight-view moving map simplified (one-line footer, no rings) with worker-thread textures and a windowed anti-aliased coast.
-  Route Map has an async-baked land fill (`RouteMapLandLayer`, `RouteMapLandWindow`), faint coast/borders, rimmed dots, codes then names by zoom,
-  and on-field aircraft collapse to dots plus "N on field" below zoom 60.
-- *HUD:* ADR `2026-10-08-hud-chrome-redesign.md`. Floating capsule + action group, 72 pt rail, new Glass palette, milestone card, flight-view
-  instrument tiles, Operations rows, Map plan pane, Fleet/Contracts cards, Career stat cards. Not yet redesigned: selected-aircraft card,
-  airport-movements board, radar, Fleet detail pane, Career layout (roadmap/activity/right column), setup/splash/menu screens.
-- *Open/unverified:* look at the Route Map and HUD in the Mac build; check `PC_RPAsset`/`packages-lock` local edits are intentional (left uncommitted).
-  `Contracts_LayoutKeepsBothColumnsInsideTheSurface` and `GrowingOverview_LastAircraftRemainsReachableInCompactWindows` fail on main (layout-only,
-  compact windows; not caused by the HUD painter work) and need a cause found. Next approved work: Bailey's call — remaining HUD screens above.
+**Cloud continuity/weather variety (9 Oct, Codex, #674):** clouds recycle/fade around
+the watched area, not the orbiting lens. The wider footprint keeps storm bodies away
+from wrap seams; the volume proxy survives a far-plane-clipped exit face. Thin high
+wisps, cumulus, broad stratiform banks and storm towers share persistent geometry and
+smooth morphology. Authored rain includes drizzle/showers/continuous-rain profiles;
+weather summaries reflect continuous live conditions too. The existing operational
+weather enum/chain, RNG and save schema are unchanged. Original shader source only;
+sixteen-volume budget and atlas fallback retained. Decision: `2026-10-09-cloud-continuity-and-variety`.
+Focused coverage/profile regressions pass 11/11; changed Unity-facing C# syntax
+parses and the generated headless harness is current. Native shader compilation,
+orbit/pan/zoom appearance and GPU performance remain unverified.
 
-**Regional departure climb (8 Oct, Claude):** the route profile starts at the height a local climb-out reaches, but a regional leg begins at brake release, so the old code had the aircraft gain the whole gap in 120 s (up to ~5,200 ft/min on a 737). `RegionalFlightPath.ClimbLagSeconds` + `ClimbAltitudeFeet` start the route climb late (finishing out of the cruise), and `DepartureClimbHeight` replaces the smoothstep with one steady rate. Peak now <= 3,000 ft/min in `RegionalDepartureClimbTests`. Board/card/map altitude text now uses `BoardAltitudeFeet` (same lag). Unity unverified.
+**Terminal doors and more people (9 Oct, Claude):** each regional-stand walk now starts at a terminal door (`AdelaideTerminalDoors`, six doors on
+the OSM terminal outline; airside doors are derived, not surveyed) with a sliding-glass door prop, a six-person boarding queue and a gate agent at the
+door, 18 landside walkers (OSM entrances, car-park bays) and airside staff (`AdelaideAmbientPeople`), person cap 110 with distance-throttled posing.
+ADR `2026-10-09-terminal-doors-and-people.md`. Pure tests pass and the whole Presentation assembly compiles against Unity's own libraries
+(quick compile recipe in the PR); look and frame time in the Mac build unverified. Aerobridge and bus flows unchanged. Still open from the 8 Oct
+HUD/map work (ADR `2026-10-08-hud-chrome-redesign.md`): unredesigned screens (selected-aircraft card, movements board, radar, Fleet detail,
+Career layout, setup/menu), and two layout tests failing on main in compact windows
+(`Contracts_LayoutKeepsBothColumnsInsideTheSurface`, `GrowingOverview_LastAircraftRemainsReachableInCompactWindows`).
 
-**Next:** Bailey chooses Mac build/playtest timing. Check the fleet's nose and
-tail contours, opened/shut doors and interior glazing at overview/follow distances,
-then day/dusk/night and performance. Standing policy: quick relevant checks only;
-broad suites/builds/player reviews only on request; merge completed authorised
-work without repeated approval.
+**Storm movement commitment (8 Oct, Codex, #670):** ready fixed-wing departures wait
+at their gate/bay; taxi-released departures continue under normal runway/traffic rules.
+An inbound already on the shared 32 km extended final before storm onset keeps its
+arrival timer/estimate and joins landing rather than disappearing when that timer is
+postponed. Later inbounds remain held before final. No save schema/camera/rendering
+changes; curfew, separation and rotorcraft rules retained. Cockpit exit restores
+exterior rendering; no fault found there. Native cockpit→tower and storm landing
+appearance remains unverified. Focused checks: 48/48 pass; a larger arrival-estimate
+selection hit the 60 s limit and remains unverified. Decision: `2026-10-08-storm-movement-commitment`.
 
-**Regional flight updates (8 Oct, Claude):** regional departure altitude now
-uses a delayed route climb and a steady local climb-out rate (peak <= 3,000 ft/min);
-Operations/card/map text shares that drawn altitude. Regional landings integrate
-route/approach/touchdown speeds and brake at the aircraft's rollout deceleration.
-`FlightSpeedEnvelope` holds stall margins, the 250 kt CAS cap and acceleration
-limits; its bank-dependent minimum is not yet enforced on the live bank. Unity
-appearance remains unverified. Main also includes HUD stage 3 (Map/Fleet/Contracts/
-Career pages) and road turning heads/give-way teeth from other tools.
+**Night final visibility (8 Oct, Codex, #668):** aircraft flares use an original additive
+light-source shader with the same haze transmission as runway point lights, rather than
+URP surface fog. Distant halos sit outside the fuselage in camera depth and use corrected
+projected size. Night airborne position/strobe glows remain inside 6 km for side-on finals;
+individual landing flares still carry the close nose-on approach. Graphics toggles,
+weather attenuation, lamp policy, simulation and saves stay unchanged. Source/geometry
+checks and Roslyn C# syntax pass; asset metadata passes except the known satellite
+JPEG mirror mismatch. Native shader compilation and Mac night overview/tower/follow appearance
+(clear/fog, head-on/side/aft and near/far handoff) remain unverified.
 
-**Other current work:** main includes opt-in Mac notifications (#645), redesigned
-toast cards (#642 / #644), turn banking, flight-transition pitch/flare easing,
-aircraft-relative exit glides, control-tower view, flight moving map, aerodrome
-beacon, landing-light flare and the Adelaide opening (#626 / #638). Their native
-appearance/packaging/performance checks remain open. Mac notifications need
-Options → Notifications → allow permission → SEND TEST, then background delivery
-and click activation. Check title/Continue, skip, animation-off and returned-airline
-paths in the next Mac build. The v03 Dock/app icon is retained. Flight-dispatch
-cost rebalance retains prices/pay/start funds; next economy work is standing
-aircraft daily cost and fuel price, with career pacing unverified.
+**Weather and aircraft vibration (8 Oct, Codex, #666):** sixteen bounded cloud volumes now
+include broad storm towers/anvils reaching roughly 10 km; lit deck tops remain below a
+high observer. Fog clears above its shallow ground bank; rain, wipers, interior audio,
+sky and cloud immersion share observer altitude across camera views. Cloud geometry
+and noise survive flight-origin shifts; integrated wind travel and 12-second weather
+transitions reduce jumps. Lightning follows displayed storms, glows within clouds and
+has a brief channel with independent distance-delayed thunder. Rapid duplicate camera
+shake and continuous trackpad/joint tapping removed; reduced engine/runway buzz,
+slow weather gusts and discrete landing/gear contact retained. Vibration switch remains.
+No operations, schedule, economy, saves or new external assets changed.
+Decision/limits: `docs/decisions/2026-10-08-weather-altitude-and-restraint.md`.
 
-Existing opening FlightManual page 7 failure and satellite JPEG mirror mismatch
-are unrelated. Earlier audio/terrain/aircraft/save/native validation limits and
-other tools' branches remain in
-`docs/history/game-handoff-before-adelaide-opening-2026-10-08.md`.
-Do not treat the title illustration or generated Hangar thumbnails as native captures.
+**Checks:** 90 focused headless regressions and six static shader/producer contracts pass;
+changed C# syntax parsed. Generated harness is current and presentation map refreshed.
+Unity compilation, shaders, actual appearance/audio, packaging and GPU performance are
+unverified. No broad suite/build/player testing run under the standing policy.
+
+**Next:** Bailey chooses the Mac build/playtest timing. Check fog ground/climb; storm
+below/inside/above, cloud silhouettes and deck crossings; cockpit/exterior and long
+journey origin shifts; live/fallback weather; quiet cruise, storm gusts, landing/gear
+thumps and Vibration off. Check lightning/thunder alignment and transparent rendering.
+Standing policy: quick relevant checks only; broad suites/builds/player reviews only
+on request; merge completed authorised work without repeated approval.
+
+**Other current context:** aircraft body realism (#651), regional departure/landing
+speeds/altitude, maps/HUD redesign, notifications/registration (#645/#663), toasts,
+control-tower view, Adelaide opening and earlier lighting/audio/native changes retain
+their existing Unity/Mac verification limits. Remaining HUD surfaces and compact-window
+layout failures, WIP 787-window proposal (#543), known FlightManual page 7 failure and
+satellite JPEG mirror mismatch remain separate. The preceding status and exact other
+tools' open work are preserved in
+`docs/history/game-handoff-before-weather-realism-2026-10-08.md`.
 
 *One block, replaced at the end of each session. Updated 2026-10-08.*
 

@@ -107,12 +107,17 @@ namespace Airside.Tests
         [Test]
         public void Storm_IsAGroundStop()
         {
-            var (clock, ops, player, _) = Empty();
-            var departure = Restore(ops, "VH-DEP", player, FleetState.HoldingShort, 0);
             var storm = FirstTime(s => Weather.At(new SimulationTime(s)) == WeatherKind.Storm);
-            RunTo(clock, ops, storm);
-            if (departure.State != FleetState.HoldingShort)
-                Assert.Inconclusive("cleared before the storm");
+            var clock = new ManualSimulationClock(new SimulationTime(storm));
+            var ops = new AirlineOperations(clock, new SeededRandomSource(9), DestinationCatalogue.Adelaide,
+                AirlineOperations.AdelaideRegionalBays);
+            var player = Airline.Player("Storm Air", "#39708A");
+            ops.AddAirline(player);
+            var departure = Restore(ops, "VH-DEP", player, FleetState.AtStand, storm - 600,
+                AirlineOperations.AdelaideRegionalBays[0], new ScheduledDeparture(Kgc(), clock.Now));
+            departure.PrepStartedAt = new SimulationTime(storm - 600);
+            ops.Update();
+            Assert.That(departure.State, Is.EqualTo(FleetState.AtStand));
             Assert.That(ops.Why(departure).Kind, Is.EqualTo(HoldKind.GroundStop));
             Assert.That(HoldReasonText.Long(departure, ops.Why(departure), new SimulationTime(storm)), Does.Contain("storm"));
         }

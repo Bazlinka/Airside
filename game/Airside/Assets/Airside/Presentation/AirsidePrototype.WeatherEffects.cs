@@ -59,9 +59,9 @@ namespace Airside.Presentation
         private void UpdateRainMesh(float precipitation, bool storm)
         {
             var altitudeFade = CockpitObserverWeather.Rain(1f,
-                _cockpitView != null ? _cockpitView.position.y : 0f, InCockpit && _cockpitView != null);
+                ObserverHeight, true, _stormDepth);
             precipitation = CockpitObserverWeather.Rain(precipitation,
-                _cockpitView != null ? _cockpitView.position.y : 0f, InCockpit && _cockpitView != null);
+                ObserverHeight, true, _stormDepth);
             if (_mainCamera == null || _weatherRainMesh == null)
                 return;
             _weatherRainRenderer ??= _rainRoot.GetComponent<Renderer>();

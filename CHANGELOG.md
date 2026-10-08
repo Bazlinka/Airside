@@ -1,6 +1,17 @@
 # Changelog
 
 - 2026-10-09 — Bug-analysis fixes: credits no longer dropped at 800x600, compact Contracts/Operations/HUD text fits, jet pay and cost scale with size, 12 missing demand entries, loss-making contract routes skipped, rename-box hotkeys, missed daily report, plurals (headless-checked; Unity unverified; see docs/testing/bug-analysis-2026-10-08).
+- 2026-10-09 — Established arrivals fly a visible hold when their ETA is lost/postponed; map/follow use the actual pose and retain clearance handoffs (Unity unverified).
+
+- 2026-10-09 — Anchor clouds to the watched area; retain far-clipped volume proxies; add high wisps, stratiform banks and drizzle/showers (Unity unverified).
+
+- 2026-10-09 — Keep in-range fleet route models after climb-out; ordinary follow streams terrain; aircraft lookup survives camera filtering (Unity unverified).
+- 2026-10-09 — Terminal doors and people: a sliding door where each stand walk starts, a boarding queue and gate agent at it, 18 landside walkers and airside staff, person cap 60→110 with distance-throttled posing (Unity unverified).
+
+- 2026-10-08 — Persistent fog/storm clouds, lit tops, altitude-aware weather and lightning; restrained cockpit vibration (Unity unverified).
+- 2026-10-08 — Dash 8 main gear now twin wheels side by side (were in tandem); approaching aircraft keep a landing-light glow inside 6 km instead of only a tiny lamp lens (unverified in Unity).
+- 2026-10-08 — Mac notifications: register app, retry permission, verify packaged bridge and preserve Unity signature; clearer failure help (Mac unverified).
+
 - 2026-10-08 — Operations board, selection card and map detail show the altitude the aircraft is actually drawn at on regional departures (was the unlagged route profile; unverified in Unity).
 - 2026-10-08 — Regional departures climb at a steady ~2,400 ft/min (was up to ~5,200): the route climb starts when the aircraft reaches its start height, and rotation-to-exit uses one steady rate (headless-tested; unverified in Unity).
 
@@ -71,6 +82,10 @@ Older entries (about 1,000, through 2026-10-07) are in
 [`docs/history/CHANGELOG-through-2026-10-07.md`](docs/history/CHANGELOG-through-2026-10-07.md).
 
 ## Unreleased
+
+- Hold storm departures at their stands; taxi-released aircraft continue and arrivals already on extended final retain their landing timer (#670).
+
+- Fix night final visibility: haze-aware aircraft light halos, fuselage-safe distant glows and readable close night position lights (#668).
 
 - Improve all 15 aircraft bodies with continuous contours, rounded noses and fitted glazing/doors; retain type envelopes and A320 source detail (#651).
 - Add opt-in native Mac notifications for important background airline events, grouped bursts, permission/test controls and click-to-return (#645).

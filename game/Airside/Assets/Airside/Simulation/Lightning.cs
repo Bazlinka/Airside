@@ -38,9 +38,12 @@ namespace Airside.Simulation
         /// <see cref="WeatherKind.Storm"/> block; the ladder always starts fresh at that
         /// block's own first second, so two non-adjacent storm hours never share a cadence.
         /// </summary>
-        public static bool StrikesAt(SimulationTime now)
+        public static bool StrikesAt(SimulationTime now) => StrikesAt(now, Weather.At(now) == WeatherKind.Storm);
+
+        /// <summary>Same deterministic cadence, gated by the weather actually displayed by the caller.</summary>
+        public static bool StrikesAt(SimulationTime now, bool storm)
         {
-            if (Weather.At(now) != WeatherKind.Storm)
+            if (!storm)
                 return false;
 
             var target = now.ElapsedSeconds;

@@ -28,10 +28,37 @@ namespace Airside.Presentation
         {
             get
             {
-                if (!Supported) return "UNAVAILABLE";
+                if (_missing) return "PLUGIN MISSING";
+                if (!Supported) return "BUILT MAC APP ONLY";
                 var state = State();
-                return state switch { 0 => "NOT ASKED", 1 => "REQUESTING", 2 => "ALLOWED", 3 => "BLOCKED", _ => "UNAVAILABLE" };
+                return state switch { 0 => "NOT ASKED", 1 => "REQUESTING", 2 => "ALLOWED", 3 => "BLOCKED", _ => "REQUEST FAILED" };
             }
+        }
+
+        public static string PermissionHint
+        {
+            get
+            {
+                if (_missing) return "This build cannot load its notification plugin. Rebuild Airside on a Mac.";
+                if (!Supported) return "Notifications require the built Airside.app, not Unity Play mode.";
+                if (!AirsideSettings.Current.MacNotifications) return "Turn Mac notifications on here first, then allow the macOS permission prompt.";
+                return State() switch
+                {
+                    0 => "Click to request permission. Airside appears in macOS Notifications after the request.",
+                    1 => "Respond to the macOS permission prompt, then use SEND TEST.",
+                    4 => "Click to retry permission. If it fails again, check Airside’s Player.log for the macOS error.",
+                    _ => "Open macOS Notifications to manage Airside’s banners, sound and Focus."
+                };
+            }
+        }
+
+        public static bool OpenPermissionSettings()
+        {
+            if (!Supported || !AirsideSettings.Current.MacNotifications) return false;
+            var state = State();
+            if (state == 0 || state == 4) RequestPermission();
+            else if (state != 1) Call(() => AS_OpenSettings());
+            return !_missing;
         }
 
         public static void RequestPermission()
@@ -66,11 +93,6 @@ namespace Airside.Presentation
             return !_missing;
         }
 
-        public static void OpenSystemSettings()
-        {
-            if (Supported) Call(() => AS_OpenSettings());
-        }
-
         private static int State()
         {
             if (!Supported) return 4;
@@ -98,7 +120,7 @@ namespace Airside.Presentation
             {
                 _missing = true;
                 Buffer.ClearPending();
-                Debug.LogWarning("Airside macOS notifications unavailable in this build: " + e.GetType().Name);
+                Debug.LogWarning("Airside macOS notifications unavailable in this build: " + e);
             }
         }
 

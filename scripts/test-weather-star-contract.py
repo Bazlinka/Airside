@@ -30,8 +30,7 @@ class WeatherStarSourceContracts(unittest.TestCase):
         self.assertIn('SetEnvironment(PresentationDaylight, observerRain', cockpit)
         self.assertIn('precipitation = CockpitObserverWeather.Rain(precipitation', rain)
         for producer in [cockpit, rain]:
-            self.assertIn('_cockpitView.position.y', producer)
-            self.assertIn('InCockpit && _cockpitView != null', producer)
+            self.assertIn('ObserverHeight, true, _stormDepth', producer)
         self.assertIn('CockpitObserverWeather.WipersActive(precipitation)', source('CockpitInterior.cs'))
 
     def test_all_wind_producers_consume_flow_builders(self):

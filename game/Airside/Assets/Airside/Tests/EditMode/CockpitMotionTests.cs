@@ -133,6 +133,26 @@ namespace Airside.Tests
             Assert.That(Air(80f), Is.GreaterThan(Air(5000f)));
         }
 
+        [Test] public void ClearCruiseIsSteadyAndStormGustsAreSlowAndBounded()
+        {
+            float Peak(float turbulence)
+            {
+                var motion = new CockpitMotion(); motion.Reset(1);
+                var peak = 0f;
+                for (var i = 0; i < 1800; i++)
+                {
+                    var pose = motion.Step(new CockpitMotion.Sample { DeltaSeconds = Dt, SimRate = 1f,
+                        Time = i * Dt, GroundSpeed = 150f, HeightAgl = 5000f, Spool = 0.6f,
+                        WeatherTurbulence = turbulence });
+                    peak = Math.Max(peak, Math.Abs(pose.RollDegrees));
+                    Assert.That(motion.Rumble01, Is.Zero);
+                }
+                return peak;
+            }
+            Assert.That(Peak(0f), Is.LessThan(0.01f));
+            Assert.That(Peak(1f), Is.InRange(0.04f, 0.3f));
+        }
+
         [Test] public void TurbopropsShakeMoreThanJetsAtTheSamePower()
         {
             float At(bool prop)

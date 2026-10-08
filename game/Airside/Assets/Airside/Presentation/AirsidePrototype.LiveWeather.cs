@@ -13,6 +13,24 @@ namespace Airside.Presentation
     public sealed partial class AirsidePrototype
     {
         private static readonly HttpClient WeatherHttp = CreateWeatherHttp();
+        private WeatherLook _displayWeather;
+        private bool _displayWeatherReady;
+        private float _stormDepth;
+        private WeatherLook CurrentWeatherLook => _displayWeatherReady ? _displayWeather : TargetWeatherLook;
+
+        private void AdvanceWeatherLook()
+        {
+            var target = TargetWeatherLook;
+            var storm = CurrentWeather == WeatherKind.Storm ? 1f : 0f;
+            if (!_displayWeatherReady)
+            {
+                _displayWeather = target; _stormDepth = storm; _displayWeatherReady = true;
+                return;
+            }
+            var ease = 1f - Mathf.Exp(-Time.unscaledDeltaTime / 12f);
+            _displayWeather = WeatherLook.Lerp(_displayWeather, target, ease);
+            _stormDepth = Mathf.Lerp(_stormDepth, storm, ease);
+        }
 
         private Task<LiveWeatherSnapshot?> _liveWeatherFetch;
         private LiveWeatherSnapshot? _liveWeatherSnapshot;
@@ -34,15 +52,15 @@ namespace Airside.Presentation
                 if (LiveWeatherHealthy)
                 {
                     var sample = _liveWeatherSnapshot.Value;
-                    return $"Live · {Weather.Describe(sample.Kind)} · {sample.TemperatureCelsius:0}°C";
+                    return $"Live · {WeatherAppearance.Describe(sample.Kind, sample.Look)} · {sample.TemperatureCelsius:0}°C";
                 }
                 return _liveWeatherFailures > 0 ? "On · offline fallback" : "On · connecting";
             }
         }
 
         private string PresentationWeatherSummary => LiveWeatherHealthy
-            ? $"Live {Weather.Describe(_liveWeatherSnapshot.Value.Kind)} · {_liveWeatherSnapshot.Value.TemperatureCelsius:0}°C"
-            : $"Forecast {Weather.Describe(CurrentWeather)}";
+            ? $"Live {WeatherAppearance.Describe(_liveWeatherSnapshot.Value.Kind, _liveWeatherSnapshot.Value.Look)} · {_liveWeatherSnapshot.Value.TemperatureCelsius:0}°C"
+            : $"Forecast {WeatherAppearance.Describe(CurrentWeather, TargetWeatherLook)}";
 
         private static HttpClient CreateWeatherHttp()
         {
@@ -53,6 +71,7 @@ namespace Airside.Presentation
 
         private void UpdateLiveWeather()
         {
+            AdvanceWeatherLook();
             if (!AirsideSettings.Current.LiveWeather || ReviewWeather.HasValue)
                 return;
 

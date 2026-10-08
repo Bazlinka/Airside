@@ -26,7 +26,7 @@ namespace Airside.Simulation
         RunwayOccupied,
         /// <summary>The strip is clear but separation behind the last movement is still running.</summary>
         WakeSeparation,
-        /// <summary>Storm: the tower is not clearing anything (ADR 0058).</summary>
+        /// <summary>Storm holds an aircraft at its stand or before joining final.</summary>
         GroundStop,
         /// <summary>Another aircraft in the same queue goes first.</summary>
         Queued,
@@ -124,7 +124,8 @@ namespace Airside.Simulation
                     return WhyAwaitingStand(aircraft, now);
                 case FleetState.Inbound when aircraft.StateEndsAt.HasValue
                                              && aircraft.StateEndsAt.Value.CompareTo(now) > 0:
-                    if (Weather.At(now) == WeatherKind.Storm)
+                    if (Weather.At(now) == WeatherKind.Storm
+                        && !ApproachRules.EnteredFinalBeforeStorm(aircraft, now))
                         return new HoldReason(HoldKind.GroundStop, until: aircraft.StateEndsAt, detail: "storm");
                     if (!ExemptFromCurfew(aircraft) && AirportCurfew.IsClosed(now, Clock))
                         return new HoldReason(HoldKind.HeldAirborne, until: aircraft.StateEndsAt, detail: "curfew");
@@ -154,6 +155,8 @@ namespace Airside.Simulation
             if (aircraft.Airline.IsPlayer && !DeparturePrep.IsReady(aircraft, now, CareerState.BaseLevel))
                 return new HoldReason(HoldKind.Turnaround,
                     detail: DeparturePrep.For(aircraft, now, CareerState.BaseLevel).Label);
+            if (!aircraft.Type.IsRotorcraft && Weather.At(now) == WeatherKind.Storm)
+                return new HoldReason(HoldKind.GroundStop, until: Weather.NextBlock(now), detail: "storm");
 
             var gate = AdelaideGround.IsTerminalGate(aircraft.Stand);
             var release = NextTaxiReleaseAt(now, gate);
@@ -231,10 +234,8 @@ namespace Airside.Simulation
         {
             var runway = aircraft.AssignedRunway;
             var main = RunwayWeather.IsMainRunway(runway);
-            // Departures stay on the ground stop. An arrival already on final is cleared
-            // through the storm (ADR 0190), so its card names whatever else is in the way.
-            if (departure && Weather.At(now) == WeatherKind.Storm)
-                return new HoldReason(HoldKind.GroundStop, runway: runway);
+            // Both taxi-released departures and established arrivals are committed. Name
+            // the actual traffic/separation blocker even while new gate releases are stopped.
             if (!departure && aircraft.StateEndsAt.HasValue && aircraft.StateEndsAt.Value.CompareTo(now) > 0)
                 return new HoldReason(HoldKind.HeldAirborne, runway: runway, until: aircraft.StateEndsAt, detail: "curfew");
 

@@ -1,5 +1,6 @@
 # 0058 — Storms hold the runway (a ground stop)
 
+Superseded by [2026-10-08-storm-movement-commitment.md](2026-10-08-storm-movement-commitment.md).
 Date: 2026-09-20
 
 ## Decision

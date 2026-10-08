@@ -32,6 +32,14 @@ namespace Airside.Tests
                         continue;
                     Assert.That(ApronSurfaceWear.DistanceToEdge(apron.Xz, mark.CentreX, mark.CentreZ),
                         Is.GreaterThanOrEqualTo(ApronSurfaceWear.EdgeInsetMetres - 0.05f));
+                    var corners = ApronSurfaceWear.Corners(mark);
+                    for (var i = 0; i < corners.Length; i += 2)
+                    {
+                        Assert.That(ApronSurfaceWear.Contains(apron.Xz,corners[i],corners[i+1]),
+                            Is.True, "rotated repair corner left its apron");
+                        Assert.That(ApronSurfaceWear.DistanceToEdge(apron.Xz,corners[i],corners[i+1]),
+                            Is.GreaterThanOrEqualTo(.95f));
+                    }
                     inside = true;
                     break;
                 }

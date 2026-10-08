@@ -57,6 +57,7 @@ Shader "Airside/Surroundings"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "WorldSurfaceLighting.hlsl"
+            #include "GroundCharacter.hlsl"
 
             TEXTURE2D(_AirfieldAlbedo); SAMPLER(sampler_AirfieldAlbedo);
             TEXTURE2D(_SatelliteAlbedo); SAMPLER(sampler_SatelliteAlbedo);
@@ -174,6 +175,9 @@ Shader "Airside/Surroundings"
                 edgeAlbedo *= 1.0 + macro * 2.0 * _MacroStrength;
                 edgeAlbedo.r *= 1.0 + macro * 0.5 * _MacroStrength;
 
+                // Match the airfield's dry surface character at the mesh boundary.
+                edgeAlbedo = AirsideNaturalGround(edgeAlbedo,xz,
+                    distance(input.positionWS,GetCameraPositionWS()),1.0);
                 // The source image has already been rotated into Airside's runway-local x/z
                 // frame. It replaces the coarse map palette at overview distance while the
                 // detailed dry-grass material continues smoothly past the airfield edge.
@@ -198,6 +202,12 @@ Shader "Airside/Surroundings"
                     * _AirfieldTint.rgb;
                 float detailWeight = (1.0 - satelliteStrength) * (1.0 - saturate(input.color.a)) * 0.18;
                 broadAlbedo = lerp(broadAlbedo, broadAlbedo * lerp(0.82, 1.18, dot(detailAlbedo, float3(0.3, 0.59, 0.11))), detailWeight);
+                // Restrained ground grain on the surrounding land, not the sea or
+                // distant satellite image. Large mapped shapes remain authoritative.
+                float landDetail = (1.0-saturate(input.color.a))
+                    * (1.0-smoothstep(180.0,650.0,distance(input.positionWS,GetCameraPositionWS()))) * .38;
+                broadAlbedo = AirsideNaturalGround(broadAlbedo,xz,
+                    distance(input.positionWS,GetCameraPositionWS()),landDetail);
                 // At the mesh join this must be the exact same equation as AdelaideGround,
                 // not an approximation based on the palette beneath it. The previous weighted
                 // blend exposed the whole rectangular airfield as soon as satellite influence

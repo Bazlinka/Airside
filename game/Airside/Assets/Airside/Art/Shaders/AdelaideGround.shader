@@ -64,6 +64,7 @@ Shader "Airside/AdelaideGround"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "WorldSurfaceLighting.hlsl"
+            #include "GroundCharacter.hlsl"
 
             TEXTURE2D(_DryAlbedo);    SAMPLER(sampler_DryAlbedo);
             TEXTURE2D(_GreenAlbedo);  SAMPLER(sampler_GreenAlbedo);
@@ -198,6 +199,8 @@ Shader "Airside/AdelaideGround"
 
                 float2 xz = input.positionWS.xz + _AirsideFlightOrigin.xz;
                 float farMix = smoothstep(_FarBlendStart, _FarBlendEnd, distance(input.positionWS, GetCameraPositionWS()));
+                float insideEdge = min(_GroundHalfX - abs(xz.x), _GroundHalfZ - abs(xz.y));
+                float fieldDetail = smoothstep(0.0,max(_SatelliteEdgeBlend,1.0),insideEdge);
                 float3 aDry, aGreen, aDirt;
                 float3 mDry, mGreen, mDirt;
                 float3 nDry = SampleLayer(TEXTURE2D_ARGS(_DryAlbedo, sampler_DryAlbedo),
@@ -210,6 +213,11 @@ Shader "Airside/AdelaideGround"
                     TEXTURE2D_ARGS(_DirtNormal, sampler_DirtNormal), TEXTURE2D_ARGS(_DirtMask, sampler_DirtMask),
                     xz, _DirtTile, input.normalWS, farMix, aDirt, mDirt);
 
+                // Break the vertex-grid blends with local bare/matted islands. This
+                // changes surface colour only; operational heights remain untouched.
+                float soilIsland = smoothstep(.58,.84,AirsideGroundNoise(xz/13.7+41.2))
+                    * smoothstep(.37,.72,AirsideGroundNoise(xz/53.0+8.4)) * .32;
+                w = lerp(w,float3(0,0,1),soilIsland*(1.0-w.b)*fieldDetail);
                 // Height-aware blending removes the soft painted-gradient look where grass
                 // meets worn dirt without introducing another runtime texture.
                 float3 weightedHeight = w + float3(mDry.y, mGreen.y, mDirt.y) * 0.18;
@@ -227,13 +235,14 @@ Shader "Airside/AdelaideGround"
                 // carpet. Soft alternating cuts parallel to 05/23 add airport-scale structure;
                 // dirt weight suppresses them where service wear has taken over.
                 float stripePhase = xz.y / max(_MownStripeWidth, 1.0)
-                    + ValueNoise(float2(xz.x / 620.0, 11.7)) * 0.22;
-                float stripe = sin(stripePhase * 3.14159265) * _MownStripeStrength;
-                float maintainedGrass = saturate(w.r + w.g - w.b * 1.5);
+                    + ValueNoise(xz / 190.0 + 11.7) * 0.42;
+                float cutContinuity = smoothstep(.23,.67,AirsideGroundNoise(xz/91.0+23.4));
+                float stripe = sin(stripePhase * 3.14159265) * _MownStripeStrength * cutContinuity;
+                float maintainedGrass = saturate(w.r + w.g - w.b * 1.5) * fieldDetail;
                 albedo *= 1.0 + stripe * maintainedGrass;
+                albedo = AirsideNaturalGround(albedo,xz,distance(input.positionWS,GetCameraPositionWS()),1.0);
                 // Dissolve the large rectangular field into the same real Adelaide image
                 // used outside it. The central operational area keeps authored grass detail.
-                float insideEdge = min(_GroundHalfX - abs(xz.x), _GroundHalfZ - abs(xz.y));
                 float satelliteBlend = _SatelliteStrength
                     * (1.0 - smoothstep(0.0, max(_SatelliteEdgeBlend, 1.0), insideEdge));
                 float2 satelliteUv = saturate(xz / (2.0 * max(_SatelliteExtent, 1.0)) + 0.5);

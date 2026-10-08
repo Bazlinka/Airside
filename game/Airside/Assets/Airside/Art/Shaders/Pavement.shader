@@ -17,6 +17,7 @@ Shader "Airside/Pavement"
         _TileMetres ("Scan size metres", Float) = 3
         _MacroStrength ("Large surface variation", Range(0,.2)) = .045
         _PatchStrength ("Resurfacing variation", Range(0,.2)) = .025
+        _ConcreteSurface ("Concrete slab character", Range(0,1)) = 0
     }
     SubShader
     {
@@ -39,6 +40,7 @@ Shader "Airside/Pavement"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "WorldSurfaceLighting.hlsl"
+            #include "GroundCharacter.hlsl"
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_BumpMap); SAMPLER(sampler_BumpMap);
             TEXTURE2D(_MetallicGlossMap); SAMPLER(sampler_MetallicGlossMap);
@@ -47,6 +49,7 @@ Shader "Airside/Pavement"
                 float4 _BaseColor, _ScanMean;
                 float _BumpScale, _Metallic, _Smoothness, _OcclusionStrength;
                 float _TileMetres, _MacroStrength, _PatchStrength, _ScanContrast, _SurfaceWetness;
+                float _ConcreteSurface;
             CBUFFER_END
             float4 _AirsideFlightOrigin;
             struct Attributes { float4 positionOS:POSITION; float3 normalOS:NORMAL; UNITY_VERTEX_INPUT_INSTANCE_ID };
@@ -89,9 +92,15 @@ Shader "Airside/Pavement"
                 float macro=(Noise(xz/43)-.5)*2*_MacroStrength;
                 float patch=(Noise(xz/11.3+7.1)-.5)*2*_PatchStrength;
                 albedo*=1+macro+patch;
+                // Wear belongs to ground-facing surfaces, not vertical
+                // building facades that share this material library.
+                float horizontal = smoothstep(.80,.96,normalize(input.normalWS).y);
+                float3 wear = AirsidePavementCharacter(xz,distance(GetCameraPositionWS(),input.positionWS),_ConcreteSurface);
+                albedo *= 1.0 + horizontal*(wear.z*.18 - wear.x*.085 - wear.y*.30);
                 float3 detail=UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap,sampler_BumpMap,uv),_BumpScale*(1-far*.8));
                 float3 n=normalize(input.normalWS+float3(detail.x,0,detail.y));
                 float smooth=lerp(SAMPLE_TEXTURE2D(_MetallicGlossMap,sampler_MetallicGlossMap,uv).a,1,_SurfaceWetness)*_Smoothness;
+                smooth *= 1.0 - horizontal*wear.x*.18*(1.0-_SurfaceWetness);
                 float ao=lerp(1,SAMPLE_TEXTURE2D(_OcclusionMap,sampler_OcclusionMap,uv).g,_OcclusionStrength);
                 half3 color=AirsideWorldLighting(albedo,n,input.positionWS,input.positionCS,smooth,ao);
                 return half4(MixFog(color,input.fog),1);

@@ -91,8 +91,10 @@ namespace Airside.Presentation
         /// once per colour: a signed-distance rounded rectangle with an anti-aliased edge and an
         /// optional 1 px rim.
         /// </summary>
-        public static Texture2D RoundedTexture(Color fill, Color rim, int radius)
+        public static Texture2D RoundedTexture(Color fill, Color rim, int radius, float scale = 1f)
         {
+            // Baked at device pixels: a 7 pt corner on a 2.25x HUD is a 16 px corner, not a 7 px one stretched.
+            radius = Mathf.Max(1, Mathf.RoundToInt(radius * Mathf.Max(1f, scale)));
             var key = $"{ColorUtility.ToHtmlStringRGBA(fill)}:{ColorUtility.ToHtmlStringRGBA(rim)}:{radius}";
             if (RoundedTextures.TryGetValue(key, out var cached) && cached != null)
                 return cached;
@@ -378,7 +380,7 @@ namespace Airside.Presentation
         }
 
         private static void SetButtonStates(GUIStyle style, Texture2D normal, Texture2D hover, Texture2D active, Color text,
-            Color? hoverText = null)
+            Color? hoverText = null, float scale = 1f)
         {
             style.normal.background = normal;
             style.normal.textColor = text;
@@ -390,7 +392,8 @@ namespace Airside.Presentation
             style.focused.textColor = text;
             style.onNormal.background = active;
             style.onNormal.textColor = hoverText ?? text;
-            style.border = ControlBorder;
+            var edge = Mathf.RoundToInt(ControlBorder.left * Mathf.Max(1f, scale));
+            style.border = new RectOffset(edge, edge, edge, edge);
             style.alignment = TextAnchor.MiddleCenter;
         }
 
@@ -415,35 +418,42 @@ namespace Airside.Presentation
         }
 
         /// <summary>A raised glass pill button; hover lifts it with an aqua rim.</summary>
-        public static GUIStyle ButtonStyle(GUIStyle basis, Color? textColor = null)
+        public static GUIStyle ButtonStyle(GUIStyle basis, Color? textColor = null, float scale = 1f)
         {
             var style = new GUIStyle(basis);
-            SetButtonStates(style, ButtonNormal, ButtonHover, ButtonActive, textColor ?? InstrumentText);
+            if (scale > 1f)
+                SetButtonStates(style,
+                    RoundedTexture(new Color(.16f, .21f, .25f), new Color(1f, 1f, 1f, 0.045f), 7, scale),
+                    RoundedTexture(Color.Lerp(GlassRaised, Aqua, 0.12f), WithAlpha(Aqua, 0.35f), 6, scale),
+                    RoundedTexture(Color.Lerp(GlassRaised, Aqua, 0.22f), WithAlpha(Aqua, 0.45f), 6, scale),
+                    textColor ?? InstrumentText, null, scale);
+            else
+                SetButtonStates(style, ButtonNormal, ButtonHover, ButtonActive, textColor ?? InstrumentText);
             return style;
         }
 
         /// <summary>Filled Coastal Blue primary action — one dominant button per card.</summary>
-        public static GUIStyle PrimaryButtonStyle(GUIStyle basis)
+        public static GUIStyle PrimaryButtonStyle(GUIStyle basis, float scale = 1f)
         {
             var style = new GUIStyle(basis);
             SetButtonStates(style,
-                RoundedTexture(CoastalBlue, new Color(1f, 1f, 1f, 0.04f), 7),
-                RoundedTexture(Color.Lerp(CoastalBlue, Color.white, 0.14f), new Color(1f, 1f, 1f, 0.10f), 7),
-                RoundedTexture(Color.Lerp(CoastalBlue, Color.black, 0.12f), new Color(1f, 1f, 1f, 0.06f), 7),
-                InstrumentText);
+                RoundedTexture(CoastalBlue, new Color(1f, 1f, 1f, 0.04f), 7, scale),
+                RoundedTexture(Color.Lerp(CoastalBlue, Color.white, 0.14f), new Color(1f, 1f, 1f, 0.10f), 7, scale),
+                RoundedTexture(Color.Lerp(CoastalBlue, Color.black, 0.12f), new Color(1f, 1f, 1f, 0.06f), 7, scale),
+                InstrumentText, null, scale);
             style.fontStyle = FontStyle.Bold;
             return style;
         }
 
         /// <summary>Red-rimmed destructive pill, visually below the primary.</summary>
-        public static GUIStyle DestructiveButtonStyle(GUIStyle basis)
+        public static GUIStyle DestructiveButtonStyle(GUIStyle basis, float scale = 1f)
         {
             var style = new GUIStyle(basis);
             SetButtonStates(style,
-                RoundedTexture(WithAlpha(WarnRed, 0.10f), WithAlpha(WarnRed, 0.85f), 9),
-                RoundedTexture(WithAlpha(WarnRed, 0.22f), WarnRed, 9),
-                RoundedTexture(WithAlpha(WarnRed, 0.32f), WarnRed, 9),
-                WarnRed);
+                RoundedTexture(WithAlpha(WarnRed, 0.10f), WithAlpha(WarnRed, 0.85f), 9, scale),
+                RoundedTexture(WithAlpha(WarnRed, 0.22f), WarnRed, 9, scale),
+                RoundedTexture(WithAlpha(WarnRed, 0.32f), WarnRed, 9, scale),
+                WarnRed, null, scale);
             return style;
         }
 

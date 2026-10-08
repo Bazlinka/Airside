@@ -45,7 +45,26 @@ namespace Airside.Presentation
                 && RegionalMiniMap.Contains(latitude, longitude);
         }
         private bool WatchingJourney(string id) => InCockpit && id == _cockpitAircraftId
-            && _fleetAircraftById.TryGetValue(id, out var aircraft) && CanWatchJourney(aircraft);
+            && _fleetAircraftById.TryGetValue(id, out var aircraft) && CanWatchJourney(aircraft)
+            || _cameraController != null && _cameraController.FollowTarget != null
+                && _fleetViewById.TryGetValue(id, out var followedView)
+                && followedView == _cameraController.FollowTarget;
+
+        private static bool HasFleetJourneyPose(FleetAircraft aircraft) => aircraft != null
+            && !aircraft.Type.IsRotorcraft
+            && AircraftPresence.HasJourneyPose(aircraft.State, aircraft.CurrentDestination.HasValue,
+                aircraft.StateEndsAt.HasValue, aircraft.CurrentDestination.HasValue
+                    && RegionalRunways.TryGet(aircraft.CurrentDestination.Value.Code, out _));
+
+        private bool FleetJourneyInView(FleetAircraft aircraft)
+        {
+            if (!HasFleetJourneyPose(aircraft) || _mainCamera == null
+                || !_fleetFlightById.TryGetValue(aircraft.Registration, out var flight)) return false;
+            JourneyWorld(flight, 0, out var x, out var y, out var z);
+            var camera = _mainCamera.transform.position;
+            return AircraftPresence.RouteInRange(x - _flightOriginX - camera.x, y - camera.y,
+                z - _flightOriginZ - camera.z, _mainCamera.farClipPlane, WatchingJourney(aircraft.Registration));
+        }
         private Vector3 FlightOrigin => new Vector3((float)_flightOriginX,0,(float)_flightOriginZ);
 
         // Runs before aircraft poses. Only presentation coordinates move; schedules/saves do not.
@@ -54,10 +73,16 @@ namespace Airside.Presentation
             var x=0.0; var z=0.0; var altitude=0.0;
             FleetAircraft aircraft = null;
             var active=InCockpit && _fleetAircraftById.TryGetValue(_cockpitAircraftId,out aircraft);
-            if(active && CanWatchJourney(aircraft) && _fleetFlightById.TryGetValue(_cockpitAircraftId,out var flight))
+            var watchView = active ? _cockpitView : _cameraController?.FollowTarget;
+            if (!active && watchView != null)
+                foreach (var pair in _fleetViewById)
+                    if (pair.Value == watchView && _fleetAircraftById.TryGetValue(pair.Key, out aircraft))
+                    { active = true; break; }
+            if(active && (CanWatchJourney(aircraft) || HasFleetJourneyPose(aircraft))
+                && _fleetFlightById.TryGetValue(aircraft.Registration,out var flight))
                 JourneyWorld(flight,0,out x,out altitude,out z);
-            else if(active && _cockpitView != null)
-            { altitude=_cockpitView.position.y; x=_cockpitView.position.x+_flightOriginX;z=_cockpitView.position.z+_flightOriginZ; }
+            else if(active && watchView != null)
+            { altitude=watchView.position.y; x=watchView.position.x+_flightOriginX;z=watchView.position.z+_flightOriginZ; }
             if (WatchingOutstation && OutstationJourney.TryFor(WatchedOutstation(), _preciseTime, out var network))
             {
                 YpadFrame.ToWorld(network.Latitude, network.Longitude, out x, out z);
@@ -116,7 +141,8 @@ namespace Airside.Presentation
         }
         private Vector3? FleetJourneyPosition(CommercialFlight flight,float ahead)
         {
-            if(!WatchingJourney(flight.AircraftId) || IsArrivingOnFinal(_fleetAircraftById[flight.AircraftId])) return null;
+            if (!_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft)
+                || !HasFleetJourneyPose(aircraft) || IsArrivingOnFinal(aircraft)) return null;
             JourneyWorld(flight,ahead,out var x,out var y,out var z);
             return new Vector3((float)(x-_flightOriginX),(float)y,(float)(z-_flightOriginZ));
         }

@@ -40,6 +40,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftLightingProfile.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftNavigationPalette.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftPickRouting.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftPresence.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftSkinUv.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftStatus.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AircraftSurfaceDetailGeometry.cs" />

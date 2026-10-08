@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-09 — Keep in-range fleet route models after climb-out; ordinary follow streams terrain; aircraft lookup survives camera filtering (Unity unverified).
+
 - 2026-10-08 — Persistent fog/storm clouds, lit tops, altitude-aware weather and lightning; restrained cockpit vibration (Unity unverified).
 - 2026-10-08 — Dash 8 main gear now twin wheels side by side (were in tandem); approaching aircraft keep a landing-light glow inside 6 km instead of only a tiny lamp lens (unverified in Unity).
 - 2026-10-08 — Mac notifications: register app, retry permission, verify packaged bridge and preserve Unity signature; clearer failure help (Mac unverified).

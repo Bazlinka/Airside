@@ -987,7 +987,7 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>HUD selection: follow one exact aircraft already registered as a target.</summary>
+        /// <summary>HUD selection: follow one exact physically present aircraft.</summary>
         public bool StartFollow(Transform target)
         {
             if (target == null || !target.gameObject.activeInHierarchy)
@@ -995,7 +995,13 @@ namespace Airside.Presentation
 
             var index = System.Array.IndexOf(_followTargets, target);
             if (index < 0)
-                return false;
+            {
+                // A direct request may name a distant or quiet parked aircraft omitted
+                // from automatic cycling. Retain that explicit target until the next sync.
+                index = _followTargets.Length;
+                System.Array.Resize(ref _followTargets, index + 1);
+                _followTargets[index] = target;
+            }
 
             EndCockpit();
             _following = true;

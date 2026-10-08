@@ -507,7 +507,8 @@ namespace Airside.Presentation
 
             var overview = _activeWorkspace == HudWorkspace.None && !_devToolsOpen;
             _hudPanels.Add(placement.Rail);
-            _hudPanels.Add(placement.Capsule);
+            _hudPanels.Add(HudPainter.ToRect(HudShellPainter.CapsuleContent(Box(placement.Capsule), _capsuleSegments)));
+            _hudPanels.Add(HudPainter.ToRect(HudShellPainter.ControlsBox(Box(placement.Capsule))));
             if (overview && placement.Objective.width > 0f)
                 _hudPanels.Add(placement.Objective);
             if (overview && placement.Operations.width > 0f)

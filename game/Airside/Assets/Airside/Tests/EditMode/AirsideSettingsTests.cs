@@ -11,6 +11,7 @@ namespace Airside.Tests
         {
             var settings = new AirsideSettings();
             Assert.That(settings.SoundOn, Is.True);
+            Assert.That(settings.MacNotifications, Is.False, "enabling explicitly requests macOS notification permission");
             Assert.That(settings.FieldTags, Is.True);
             Assert.That(settings.MiniMap, Is.False, "radar is available on demand to keep the overview clear");
             Assert.That(settings.FollowOnSelect, Is.True);

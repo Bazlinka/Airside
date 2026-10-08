@@ -100,6 +100,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/DaylightPresentation.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/DelayText.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/DepartureFlightTransition.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/DesktopNotificationPolicy.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/DevTools.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/EngineVoice.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FleetBoard.cs" />
@@ -270,6 +271,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/DepartureCountdownTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/DepartureFlightTransitionTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/DepartureTurnTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/DesktopNotificationTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/DevToolsTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/DualRunwayTowerTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/EngineStartSequenceTests.cs" />

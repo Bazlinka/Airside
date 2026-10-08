@@ -7,13 +7,19 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Mac notifications (8 Oct, Codex, #645):** Options → Notifications adds an opt-in switch, permission/settings
+shortcut and SEND TEST. Important player events only while Airside runs in the background: stand-needed
+arrivals, late settlements, contracts and career milestones. Bursts group/deduplicate; clicking a banner
+activates Airside. Career-event presentation drains in Update so minimising does not stop it. Existing
+toasts remain. Original universal UserNotifications plugin is compiled/imported before Mac builds;
+Xcode command-line tools/macOS 11+ required. No remote push, closed-game alerts or save migration.
+Decision/evidence: `docs/decisions/2026-10-08-macos-notifications.md`.
+
+**Toast redesign (#642 / PR #644):** merged status/wrapped-message/repeat/lifetime cards, eased motion and
+panel/screen-bounded stacks. Previous focused checks 22/22 pass; Mac appearance remains unverified.
+
 **Turn banking (8 Oct, Claude):** `CoordinatedBank` in AirsidePrototype.cs replaces the yaw-lag bank for airborne phases; physical bank from sim-time ground speed and heading rate, clamped ±25°, so regional/en-route turns now roll too. SID-arc bank still takes priority. Unity compile and look unverified; watch roll-in/out smoothness and ground-phase wings-level.
 
-**Toast redesign (8 Oct, Codex, #642):** departure-style notification cards now show a status caption/icon,
-wrapped message, separate repeat count and remaining-lifetime rule. Brief fade/rise entrance and smooth
-exit; stack stops at registered panels/screen margins. Workspace/flight slots reserve 68 points;
-opening greeting stays compact. Six-second lifetime/history/repeat behaviour and simulation/saves retained.
-Decision: `docs/decisions/2026-10-08-toast-notifications.md`.
 
 **Adelaide opening (#626 / PR #638):** merged T1 dawn artwork, v04 AIRSIDE vector/text fallback and
 skippable centre-opening Continue reveal. Still needs Mac appearance/build checks. Provenance:
@@ -28,12 +34,13 @@ culled from inside), ground-level terrain/LOD streaming and night look are unver
 `RegionalFlightPath.ApproachPitchDegrees` / `DeparturePitchDegrees` now blend route pitch into the authored attitude (flare over 300 m, ~7 s; was 150 m). Presentation only.
 Unity compile and appearance unverified — watch a regional arrival and departure from the follow camera.
 
-**Checks:** focused notification/painter/layout checks 22/22 passed; four edited C# files parse without
-syntax errors. This is not a Unity compile or rendered playtest. Opening’s previous 15/16 check result
-retains the untouched FlightManual page 7 “Land cover” failure at 800×600; the asset audit’s existing
-satellite JPEG mirror mismatch also remains unrelated. No new assets in the toast redesign.
+**Checks:** Mac notification policy/buffer plus Options painter checks 8/8 pass; edited C# and shell syntax
+checks pass. These do not verify native Mac/Unity compilation, plugin packaging/loading, permission or
+actual notification delivery. Updated native Options/settings coverage is not run here. Existing opening
+FlightManual page 7 failure and satellite JPEG mirror mismatch remain unrelated.
 
-**Next:** Bailey chooses the Mac build/playtest timing. Check the title and Continue, skip, animation-off,
+**Next:** Bailey chooses the Mac build/playtest timing. In the next Mac build, first enable Options →
+Notifications, allow the macOS prompt, send a test, then check background delivery and click activation. Check the title and Continue, skip, animation-off,
 new-airline and returned-airline paths in the next Mac build. Also inspect notification severity,
 long messages/repeats, entrance/expiry, stacked notices and workspace/flight-view placement. The v03 Dock/app icon is retained.
 Standing policy: quick relevant checks only; broad suites/builds/player reviews only on request;

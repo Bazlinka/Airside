@@ -115,6 +115,7 @@ namespace Airside.Presentation
 
         private void UpdateAirlineOperations()
         {
+            if (!SoakMode) AirsideMacNotifications.Tick();
             if (_operations == null)
                 return;
             if (Application.isFocused && !AirlineModalOpen)
@@ -137,6 +138,7 @@ namespace Airside.Presentation
             RefreshFleetFlights();
             AnnounceNewEvents();
             AnnounceNewSettlements();
+            AnnounceCareerEvents();
             AutosaveIfDue();
         }
 
@@ -257,7 +259,6 @@ namespace Airside.Presentation
 
             // Under every panel, so a tag never sits on top of a button.
             DrawFieldTags(small);
-            AnnounceCareerEvents();
             DrawShellChrome(layout, placement);
             // The career card and flight tiles belong to the overview; an open sheet replaces them.
             if (overview && showGuide)
@@ -3375,6 +3376,8 @@ namespace Airside.Presentation
                 if (!e.Aircraft.Airline.IsPlayer)
                     continue;
 
+                if (!SoakMode) AirsideMacNotifications.Publish(DesktopNotificationPolicy.Arrival(e));
+
                 var flight = FlightNumber.For(e.Aircraft.Airline, e.Aircraft.Registration, e.DestinationCode,
                     e.State is FleetState.AtDestination or FleetState.Inbound or FleetState.HoldingForLanding
                         or FleetState.Landing or FleetState.GoAround or FleetState.AwaitingStand
@@ -3417,6 +3420,7 @@ namespace Airside.Presentation
             {
                 // ADR 0128: the pay line also says whether it pushed on time, and what made it late.
                 var s = settlements[i];
+                if (!SoakMode) AirsideMacNotifications.Publish(DesktopNotificationPolicy.Settlement(s));
                 ShowToast(DelayText.SettlementToast(s, _operations.CareerState?.OnTimeStreak ?? 0), DelayText.Tone(s));
                 if (s.ContractFulfilled && _operations.CareerState != null
                     && _operations.CareerState.TryFindDefinition(s.ContractDefinitionId, out var fulfilled))
@@ -3475,6 +3479,7 @@ namespace Airside.Presentation
             var any = false;
             while (_operations.TryTakeCareerEvent(out var careerEvent))
             {
+                if (!SoakMode) AirsideMacNotifications.Publish(DesktopNotificationPolicy.Career(careerEvent));
                 // ADR 0132: the big moments get a card as well as the toast.
                 if (careerEvent.Kind == CareerEventKind.TierReached)
                     Celebrate(CelebrationCard.ForTier(careerEvent.Tier, _operations.PlayerAirline?.Name ?? "Your airline"));

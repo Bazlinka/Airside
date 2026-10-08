@@ -79,6 +79,9 @@ Airside/
                              (Harness.Generated.props); CI fails if it is stale
     dotnet-harness/          csproj backing test-domain.sh; the file list is generated
     build-mac.sh             Local macOS application build
+    build-mac-notifications.sh
+                             Compiles the original universal Notification Centre bundle before Mac builds
+    native/                  Original platform bridge sources (macOS notifications); generated binaries are ignored
     capture-game.sh          Screenshot from the built game, unattended (--follow REG, --delay s);
                              keeps the display awake — an asleep display freezes the Unity player
   work/                      Local scratch, downloads, builds — git-ignored, never committed

@@ -479,3 +479,14 @@ tricycle gear, cream body, coastal-blue/eucalyptus trim. Runtime geometry is tru
 Source: `scripts/generate-parafield-trainer.py`; zero cost; project-owned; simple
 procedural trainer remains the missing-asset fallback. Integrated for native
 review; evidence: `docs/testing/parafield-2026-10-08/`.
+
+## Aircraft body contours — 8 October 2026
+
+Task #651 refines AIR-001, AIR-005…017 and AIR-YPPF-001 at their existing exact
+runtime model paths. Continuous cubic nose/cabin/tail contours, rounded tips,
+and carried skin details replace straight station transitions. Bell/trainer
+window slabs become curved skin panels. A320 v02 retains registered free-source
+running gear and engines. Project-owned derivative geometry, zero cost; previous
+git assets remain fallback. Integrated, native appearance/performance unverified.
+Decision: `2026-10-08-aircraft-body-realism`; bounded numeric evidence:
+`docs/testing/aircraft-bodies-2026-10-08/`.

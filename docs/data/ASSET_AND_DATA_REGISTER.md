@@ -460,3 +460,14 @@ this entry does not claim visual verification before the recorded captures.
 | DAT-AU-FLIGHT-DEM | Mapzen Terrain Tiles, AWS `elevation-tiles-prod/terrarium`, `scripts/generate-australia-flight-world.py`: zoom 6 country grid at .025°; higher resolution airport approaches. Sources include USGS GMTED2010/SRTM, NASA and NOAA ETOPO1; bilinear resampled int16 metre heights. Exact paths/hashes in `australia-flight-world-*-v01.json` | Mapzen terrain tiles CC BY 4.0; underlying USGS/NASA/NOAA data public domain. Attribution: Mapzen, USGS, NASA, NOAA. $0 public HTTPS. Registry: https://registry.opendata.aws/terrain-tiles/ | `Art/Terrain/dem_australia_v01.bin`, `dem_approach_*_v01.bin` with identical StreamingAssets mirrors. No runtime network. Missing airport data uses national DEM; missing national data uses existing SA DEM and flat coast fallback. Native appearance/performance unverified. |
 | DAT-AU-FLIGHT-COVER | ESA WorldCover 2021 v200 COG overviews, country .025° / approaches .001°; class-only SALC derived by `scripts/generate-australia-flight-world.py` | CC BY 4.0. © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium. $0; same Flight Manual land-cover credit. | `landcover_australia_v01.bin`, `landcover_approach_*_v01.bin` and identical mirrors. Missing approach uses national cover; missing national uses SA cover/height palette/Natural Earth. No imagery shipped. |
 | DAT-AU-FLIGHT-AIRPORTS | OpenStreetMap Overpass aeroways, terminal/hangar/building footprints and major roads; eighteen regional field snapshots, with authored Adelaide scene retained. `scripts/generate-australia-flight-world.py` | ODbL 1.0; © OpenStreetMap contributors. $0 public HTTPS; existing on-screen/Flight Manual map credit. Derived feature maps are supplied in JSON with field coordinates and kind/width/height. | `airport_*_v01.json` under Art/Terrain and StreamingAssets; all original runway coordinates/field elevations come from existing public-domain OurAirports MAP-002 catalogue. Missing OSM data keeps accurate painted strips and terrain, no invented terminal. Procedural stylised geometry; native appearance unverified. |
+
+### Aircraft body-contour revision (8 October 2026, #651)
+
+AIR-001 / AIR-005…017 / AIR-YPPF-001 retain their registered model paths and
+existing source/licence records. Body derivatives are original project-owned
+procedural geometry (`scripts/aircraft_body.py`, Bell/trainer generators):
+continuous station profiles and fitted skin details, no downloaded geometry,
+no prompt/image generation, zero cost, no additional attribution. A320 v02 keeps
+its previously registered FlightGear free-source adaptations and attribution.
+Fallback: previous committed models and existing primitive missing-asset paths.
+Native appearance/performance unverified. Decision: `2026-10-08-aircraft-body-realism`.

@@ -307,6 +307,7 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-07 | [Validate player journeys with a local interactive dispatch study](2026-10-07-player-flow-design-study.md) | accepted for design-study work; runtime interface direction remains pr |
 | 2026-10-08 | [Adelaide T1 opening and dependable identity](2026-10-08-adelaide-opening-identity.md) | Implemented at Bailey's request; native visual acceptance pending |
 | 2026-10-08 | [Aircraft and soundscape audio presentation v02](2026-10-08-aircraft-and-soundscape-audio.md) |  |
+| 2026-10-08 | [Continuous aircraft bodies](2026-10-08-aircraft-body-realism.md) | Implemented; native appearance and performance unverified. |
 | 2026-10-08 | [Generic airport templates for every Australian destination](2026-10-08-airport-templates.md) | accepted (code only; unverified in Unity) |
 | 2026-10-08 | [Australian cruise terrain and mapped airport approaches](2026-10-08-australia-flight-ground.md) |  |
 | 2026-10-08 | [Coherent world surface lighting](2026-10-08-coherent-world-lighting.md) |  |

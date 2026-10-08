@@ -7,57 +7,49 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
-**Regional departure climb (8 Oct, Claude):** the route profile starts at the height a local climb-out reaches, but a regional leg begins at brake release, so the old code had the aircraft gain the whole gap in 120 s (up to ~5,200 ft/min on a 737). `RegionalFlightPath.ClimbLagSeconds` + `ClimbAltitudeFeet` start the route climb late (finishing out of the cruise), and `DepartureClimbHeight` replaces the smoothstep with one steady rate. Peak now <= 3,000 ft/min in `RegionalDepartureClimbTests`. Board/card/map altitude text now uses `BoardAltitudeFeet` (same lag). Unity unverified.
+**Aircraft bodies (8 Oct, Codex, #651):** all 13 scheduled aircraft plus Bell 412
+and Parafield trainer have continuous body contours, rounded tips and fitted
+skin details at their existing asset paths. Bell/trainer glazing and doors now
+follow the shell; A320 inherited doors are refitted and v02 source-adapted engines,
+fans and wheels retained. Regeneration: shared body pass before glazing/paint,
+Bell/trainer generators, A320 free-source adaptation, runtime art sync.
+Bounded numeric/fit evidence and limits:
+`docs/testing/aircraft-bodies-2026-10-08/README.md`.
+Native Unity appearance, doors/cabin views and performance are unverified.
+No simulation/save changes; these remain representative models, not manufacturer CAD.
+The WIP 787-window-height proposal (#543) is separate.
 
-**Mac notifications (8 Oct, Codex, #645):** Options → Notifications adds an opt-in switch, permission/settings
-shortcut and SEND TEST. Important player events only while Airside runs in the background: stand-needed
-arrivals, late settlements, contracts and career milestones. Bursts group/deduplicate; clicking a banner
-activates Airside. Career-event presentation drains in Update so minimising does not stop it. Existing
-toasts remain. Original universal UserNotifications plugin is compiled/imported before Mac builds;
-Xcode command-line tools/macOS 11+ required. No remote push, closed-game alerts or save migration.
-Decision/evidence: `docs/decisions/2026-10-08-macos-notifications.md`.
+**Next:** Bailey chooses Mac build/playtest timing. Check the fleet's nose and
+tail contours, opened/shut doors and interior glazing at overview/follow distances,
+then day/dusk/night and performance. Standing policy: quick relevant checks only;
+broad suites/builds/player reviews only on request; merge completed authorised
+work without repeated approval.
 
-**Toast redesign (#642 / PR #644):** merged status/wrapped-message/repeat/lifetime cards, eased motion and
-panel/screen-bounded stacks. Previous focused checks 22/22 pass; Mac appearance remains unverified.
-**Flight speeds (8 Oct, Claude):** probe showed every regional landing flew a flat 90 kt for the last 180 s (a 737 dropped from ~230 kt to below its stall speed at the seam, then stopped from 64 kt).
-`RegionalFlightPath.Landing(..., profile, type, ...)` now integrates `TerminalSpeedKnots` (route speed -> approach -> touchdown) and brakes at `RolloutDeceleration`; `FlightSpeedEnvelope`
-(Simulation) holds min speed (stall x margin x sqrt(1/cos bank)), the 250 kt CAS cap and climb/descent-angle acceleration limits. Adelaide circuit speeds and the Adelaide arrival track were checked and left unchanged.
-Open: regional departures still reach the route height at 120 s with a very steep climb (the route profile starts at ~1,150 ft); the envelope's bank minimum is not yet enforced on the live bank. Unity compile/appearance unverified.
+**Regional flight updates (8 Oct, Claude):** regional departure altitude now
+uses a delayed route climb and a steady local climb-out rate (peak <= 3,000 ft/min);
+Operations/card/map text shares that drawn altitude. Regional landings integrate
+route/approach/touchdown speeds and brake at the aircraft's rollout deceleration.
+`FlightSpeedEnvelope` holds stall margins, the 250 kt CAS cap and acceleration
+limits; its bank-dependent minimum is not yet enforced on the live bank. Unity
+appearance remains unverified. Main also includes HUD stage 3 (Map/Fleet/Contracts/
+Career pages) and road turning heads/give-way teeth from other tools.
 
-**Turn banking (8 Oct, Claude):** `CoordinatedBank` in AirsidePrototype.cs replaces the yaw-lag bank for airborne phases; physical bank from sim-time ground speed and heading rate, clamped ±25°, so regional/en-route turns now roll too. SID-arc bank still takes priority. Unity compile and look unverified; watch roll-in/out smoothness and ground-phase wings-level.
+**Other current work:** main includes opt-in Mac notifications (#645), redesigned
+toast cards (#642 / #644), turn banking, flight-transition pitch/flare easing,
+aircraft-relative exit glides, control-tower view, flight moving map, aerodrome
+beacon, landing-light flare and the Adelaide opening (#626 / #638). Their native
+appearance/packaging/performance checks remain open. Mac notifications need
+Options → Notifications → allow permission → SEND TEST, then background delivery
+and click activation. Check title/Continue, skip, animation-off and returned-airline
+paths in the next Mac build. The v03 Dock/app icon is retained. Flight-dispatch
+cost rebalance retains prices/pay/start funds; next economy work is standing
+aircraft daily cost and fuel price, with career pacing unverified.
 
-
-**Adelaide opening (#626 / PR #638):** merged T1 dawn artwork, v04 AIRSIDE vector/text fallback and
-skippable centre-opening Continue reveal. Still needs Mac appearance/build checks. Provenance:
-`docs/art/prompts/adelaide-opening-2026-10-08.md`.
-
-**Control-tower view (8 Oct, Claude):** click the Adelaide tower in the overview to stand in its cab (`AirsidePrototype.Tower.cs`, `ControlTowerView.cs`,
-`AirsideCameraController.Tower.cs`). Reuses the passenger-seat camera: 360° drag-look, scroll zoom, Home recentres, Esc / LEAVE TOWER glides back to the
-previous overview. Presentation only; saves unchanged. Headless geometry/pick tests pass; Unity compile, cab-interior appearance (glass is back-face
-culled from inside), ground-level terrain/LOD streaming and night look are unverified. Not available at Parafield or during flight views.
-
-**Flight transitions (8 Oct, Claude):** full-journey legs took pitch from the route slope alone, so no flare, no rotation and a snap at cruise-to-approach.
-`RegionalFlightPath.ApproachPitchDegrees` / `DeparturePitchDegrees` now blend route pitch into the authored attitude (flare over 300 m, ~7 s; was 150 m). Presentation only.
-Unity compile and appearance unverified — watch a regional arrival and departure from the follow camera.
-
-**Checks:** Mac notification policy/buffer plus Options painter checks 8/8 pass; edited C# and shell syntax
-checks pass. These do not verify native Mac/Unity compilation, plugin packaging/loading, permission or
-actual notification delivery. Updated native Options/settings coverage is not run here. Existing opening
-FlightManual page 7 failure and satellite JPEG mirror mismatch remain unrelated.
-
-**Next:** Bailey chooses the Mac build/playtest timing. In the next Mac build, first enable Options →
-Notifications, allow the macOS prompt, send a test, then check background delivery and click activation. Check the title and Continue, skip, animation-off,
-new-airline and returned-airline paths in the next Mac build. Also inspect notification severity,
-long messages/repeats, entrance/expiry, stacked notices and workspace/flight-view placement. The v03 Dock/app icon is retained.
-Standing policy: quick relevant checks only; broad suites/builds/player reviews only on request;
-merge completed authorised work without repeated approval.
-
-**Other active context:** current main includes flight-transition pitch/flare easing, aircraft-relative
-exit glides, the flight-view moving map, aerodrome beacon and landing-light flare. These still need
-Unity appearance checks. The new flight-dispatch cost rebalance leaves prices/pay/start funds unchanged;
-next economy work is standing aircraft daily cost then fuel price; career pacing remains unverified. Existing audio/terrain/aircraft/save/native validation limits, other tools’
-branches and earlier status are preserved in `docs/history/game-handoff-before-adelaide-opening-2026-10-08.md`.
-Do not treat the new title illustration as a capture of the live game or a change to the 3D airport.
+Existing opening FlightManual page 7 failure and satellite JPEG mirror mismatch
+are unrelated. Earlier audio/terrain/aircraft/save/native validation limits and
+other tools' branches remain in
+`docs/history/game-handoff-before-adelaide-opening-2026-10-08.md`.
+Do not treat the title illustration or generated Hangar thumbnails as native captures.
 
 *One block, replaced at the end of each session. Updated 2026-10-08.*
 

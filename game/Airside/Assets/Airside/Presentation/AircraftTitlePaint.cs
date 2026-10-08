@@ -157,31 +157,31 @@ namespace Airside.Presentation
         {
             // <generated title layout>
             if (Is(type, AircraftType.Atr42))
-                return new AircraftIdentityMarkingLayout(1.16f, 1.94f, 7.22f, 1.23f, 1.84f, -4.68f, 0.092f, 0.049f, 36.29f, 31.28f, 4.54f);
+                return new AircraftIdentityMarkingLayout(1.16f, 1.94f, 7.22f, 1.23f, 1.84f, -5.18f, 0.092f, 0.049f, 36.20f, 31.22f, 4.54f);
             if (Is(type, AircraftType.Saab340))
-                return new AircraftIdentityMarkingLayout(0.91f, 2.02f, 3.69f, 0.98f, 1.93f, -3.71f, 0.078f, 0.040f, 39.23f, 33.61f, 6.71f);
+                return new AircraftIdentityMarkingLayout(0.91f, 2.02f, 5.19f, 0.98f, 1.93f, -4.21f, 0.078f, 0.040f, 39.23f, 33.61f, 6.71f);
             if (Is(type, AircraftType.Dash8Q400))
-                return new AircraftIdentityMarkingLayout(1.11f, 2.34f, 10.13f, 1.18f, 2.23f, -9.27f, 0.092f, 0.047f, 37.17f, 31.91f, 5.98f);
+                return new AircraftIdentityMarkingLayout(1.11f, 2.34f, 10.63f, 1.18f, 2.23f, -9.27f, 0.092f, 0.047f, 37.17f, 31.91f, 6.48f);
             if (Is(type, AircraftType.EmbraerE190))
-                return new AircraftIdentityMarkingLayout(1.21f, 3.80f, -4.39f, 1.31f, 3.66f, -27.69f, 0.113f, 0.053f, 36.79f, 30.64f, 12.32f);
+                return new AircraftIdentityMarkingLayout(1.21f, 3.80f, -4.39f, 1.31f, 3.66f, -27.69f, 0.113f, 0.053f, 36.71f, 30.53f, 12.32f);
             if (Is(type, AircraftType.AirbusA220300))
-                return new AircraftIdentityMarkingLayout(1.41f, 3.75f, -5.85f, 1.52f, 3.59f, -28.15f, 0.132f, 0.061f, 36.73f, 30.48f, 13.16f);
+                return new AircraftIdentityMarkingLayout(1.42f, 3.75f, -5.35f, 1.53f, 3.58f, -29.15f, 0.133f, 0.061f, 36.53f, 30.23f, 13.16f);
             if (Is(type, AircraftType.AirbusA320200))
                 return new AircraftIdentityMarkingLayout(1.63f, 4.62f, -4.72f, 1.75f, 4.42f, -27.52f, 0.155f, 0.069f, 35.47f, 28.73f, 12.77f);
             if (Is(type, AircraftType.Boeing737800))
-                return new AircraftIdentityMarkingLayout(1.53f, 4.78f, -4.12f, 1.65f, 4.60f, -28.42f, 0.143f, 0.066f, 36.31f, 29.85f, 13.42f);
+                return new AircraftIdentityMarkingLayout(1.53f, 4.79f, -3.62f, 1.65f, 4.60f, -28.92f, 0.144f, 0.066f, 36.22f, 29.75f, 13.42f);
             if (Is(type, AircraftType.Boeing7378))
-                return new AircraftIdentityMarkingLayout(1.53f, 4.75f, -4.12f, 1.65f, 4.57f, -28.42f, 0.142f, 0.066f, 36.50f, 30.07f, 13.42f);
+                return new AircraftIdentityMarkingLayout(1.53f, 4.75f, -3.62f, 1.65f, 4.57f, -28.92f, 0.143f, 0.066f, 36.42f, 29.97f, 13.42f);
             if (Is(type, AircraftType.AirbusA321Neo))
-                return new AircraftIdentityMarkingLayout(1.52f, 4.47f, -4.16f, 1.63f, 4.31f, -31.96f, 0.134f, 0.065f, 38.12f, 31.91f, 15.13f);
+                return new AircraftIdentityMarkingLayout(1.52f, 4.47f, -4.16f, 1.64f, 4.31f, -32.46f, 0.135f, 0.065f, 37.99f, 31.75f, 15.13f);
             if (Is(type, AircraftType.AirbusA350900))
-                return new AircraftIdentityMarkingLayout(2.43f, 7.36f, -9.95f, 2.62f, 7.06f, -54.75f, 0.233f, 0.104f, 35.66f, 29.05f, 22.71f);
+                return new AircraftIdentityMarkingLayout(2.43f, 7.36f, -8.95f, 2.62f, 7.06f, -56.25f, 0.233f, 0.104f, 35.68f, 29.08f, 22.71f);
             if (Is(type, AircraftType.AirbusA330900))
-                return new AircraftIdentityMarkingLayout(2.30f, 7.23f, -6.32f, 2.49f, 6.93f, -52.62f, 0.230f, 0.098f, 34.48f, 27.75f, 21.65f);
+                return new AircraftIdentityMarkingLayout(2.30f, 7.23f, -6.32f, 2.49f, 6.93f, -53.12f, 0.230f, 0.098f, 34.49f, 27.77f, 21.65f);
             if (Is(type, AircraftType.Boeing7879))
-                return new AircraftIdentityMarkingLayout(2.36f, 7.34f, -9.46f, 2.54f, 7.04f, -51.26f, 0.233f, 0.101f, 34.75f, 28.05f, 21.36f);
+                return new AircraftIdentityMarkingLayout(2.36f, 7.34f, -8.46f, 2.54f, 7.04f, -52.76f, 0.233f, 0.101f, 34.77f, 28.07f, 21.36f);
             if (Is(type, AircraftType.Boeing78710))
-                return new AircraftIdentityMarkingLayout(2.36f, 7.34f, -9.95f, 2.54f, 7.04f, -55.75f, 0.233f, 0.101f, 34.75f, 28.05f, 23.22f);
+                return new AircraftIdentityMarkingLayout(2.36f, 7.34f, -8.95f, 2.54f, 7.04f, -57.75f, 0.233f, 0.101f, 34.77f, 28.07f, 23.22f);
             // </generated title layout>
             // Unknown or primitive-fallback types: the ATR's regional fuselage.
             return For(AircraftType.Atr42);

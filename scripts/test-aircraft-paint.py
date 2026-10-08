@@ -67,6 +67,9 @@ def main():
         parts = dict(thumbs.load_parts(os.path.join(thumbs.ART, model)))
         filename, function, _ = glazing.SOURCES[cid]
         source = getattr(glazing.load_module(filename), function)()
+        # Paint is fitted after the continuous body pass; compare against that
+        # uncut hull so glazing apertures cannot create missing ray hits.
+        glazing.load_module("aircraft_body.py").refine(source)
         for name in ("livery_stripe", "livery_stripe_lower"):
             if name not in parts:
                 failures.append(f"{cid}: no {name}")

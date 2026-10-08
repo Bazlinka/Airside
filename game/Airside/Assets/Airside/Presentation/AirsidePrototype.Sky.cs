@@ -1256,7 +1256,10 @@ namespace Airside.Presentation
             _cloudRoot.gameObject.SetActive(layers);
             if (_cloudUmbraRoot != null) _cloudUmbraRoot.gameObject.SetActive(layers);
             if (!layers) return;
-            var camera = _mainCamera != null ? _mainCamera.transform.position : Vector3.zero;
+            // Orbit and zoom move the lens, not the weather over the watched area.
+            // Cockpit follows the aircraft; ordinary views use their stable look/focus point.
+            var coverage = InCockpit && _cockpitView != null ? _cockpitView.position
+                : _cameraController != null ? _cameraController.FocusPoint : Vector3.zero;
 
             // Drift with the real surface wind (ADR 0068) rather than a fixed eastward slide —
             // clouds and rain used to move the same direction regardless of what the windsock
@@ -1295,20 +1298,28 @@ namespace Airside.Presentation
                 if (AirsideBareField.Enabled && isVolume)
                 {
                     var height = cloud.GetChild(0).localScale.y;
-                    p.y = Mathf.Lerp(restHeight, (900f + CockpitWeatherEnvelope.StormTopMetres) * 0.5f, development);
-                    cloud.localScale = new Vector3(Mathf.Lerp(cloudScale, 5.6f, development),
-                        Mathf.Lerp(cloudScale, (CockpitWeatherEnvelope.StormTopMetres - 900f) / height, development),
-                        Mathf.Lerp(cloudScale, 6.2f, development));
+                    var cirrus = WeatherAppearance.Cirrus(i, look.CloudCover, _stormDepth);
+                    var stratus = WeatherAppearance.Stratus(look.CloudCover, _stormDepth);
+                    var fairHeight = Mathf.Lerp(restHeight, 6000f + (i % 3) * 350f, cirrus);
+                    p.y = Mathf.Lerp(fairHeight, (900f + CockpitWeatherEnvelope.StormTopMetres) * 0.5f, development);
+                    var breadth = Mathf.Lerp(cloudScale, cloudScale * 2.4f, stratus);
+                    breadth = Mathf.Lerp(breadth, cloudScale * 5f, cirrus);
+                    var thickness = cloudScale * Mathf.Lerp(1f, 0.45f, stratus) * Mathf.Lerp(1f, 0.22f, cirrus);
+                    cloud.localScale = new Vector3(Mathf.Lerp(breadth, 5.6f, development),
+                        Mathf.Lerp(thickness, (CockpitWeatherEnvelope.StormTopMetres - 900f) / height, development),
+                        Mathf.Lerp(breadth, 6.2f, development));
                     var bodyRenderer = cloud.GetChild(0).GetComponent<Renderer>();
                     bodyRenderer.GetPropertyBlock(RendererTintBlock);
                     RendererTintBlock.SetFloat("_Storm", development);
+                    RendererTintBlock.SetFloat("_Cirrus", cirrus);
+                    RendererTintBlock.SetFloat("_Stratus", stratus);
                     bodyRenderer.SetPropertyBlock(RendererTintBlock);
                 }
                 else cloud.localScale = Vector3.one * cloudScale;
                 var wrapX = AirsideBareField.Enabled ? WeatherCoverage.CloudHalfWidth : 100f;
                 var wrapZ = AirsideBareField.Enabled ? WeatherCoverage.CloudHalfDepth : 100f;
-                var anchorX = AirsideBareField.Enabled ? camera.x : 0f;
-                var anchorZ = AirsideBareField.Enabled ? camera.z : 0f;
+                var anchorX = AirsideBareField.Enabled ? coverage.x : 0f;
+                var anchorZ = AirsideBareField.Enabled ? coverage.z : 0f;
                 p.x = WeatherCoverage.WrapNearView(p.x, anchorX, wrapX);
                 p.z = WeatherCoverage.WrapNearView(p.z, anchorZ, wrapZ);
                 cloud.position = p;
@@ -1338,7 +1349,7 @@ namespace Airside.Presentation
 
                 // ADR 0143: fade out near the wrap edges and back in on the far side, instead of popping.
                 var edge = AirsideBareField.Enabled
-                    ? WeatherCoverage.CloudEdge(p.x, p.z, camera.x, camera.z)
+                    ? WeatherCoverage.CloudEdge(p.x, p.z, coverage.x, coverage.z)
                     : Mathf.Min(Mathf.InverseLerp(wrapX, 0f, Mathf.Abs(p.x)),
                         Mathf.InverseLerp(wrapZ, 0f, Mathf.Abs(p.z)));
                 if (!tintChanged)

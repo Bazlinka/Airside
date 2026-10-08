@@ -483,3 +483,11 @@ Analytic core/skirt and haze attenuation follow the project's existing
 AirfieldLightPoint behaviour. Built-in URP halo remains the missing-shader fallback.
 Always-included shader reference retains it in player builds. Integrated;
 native shader compilation and day/night appearance remain unverified.
+
+## Cloud morphology revision — 9 October 2026 (#674)
+
+Existing `WeatherVolume.shader` gains original project-owned cirrus/stratiform density
+and far-plane proxy handling, authored by Codex for Bailey. No downloaded assets,
+image generation, external code, new attribution or cost. Source/evidence: #674 and
+`2026-10-09-cloud-continuity-and-variety`. Existing shader/atlas paths and missing-shader
+fallback remain. Native shader compilation, rendered appearance and GPU unverified.

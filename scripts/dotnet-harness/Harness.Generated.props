@@ -160,6 +160,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/StatsWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/TaxiwayEdgeWear.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ToastQueue.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/WeatherAppearance.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/WeatherCoverage.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/WeatherWindFlow.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AdelaideAccuracyTests.cs" />
@@ -380,6 +381,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TerrainFieldTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TowerAndStandChoiceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/VisualBaselineViewsTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/WeatherAppearanceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/WeatherAuditPolicyTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/WeatherCoverageTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/WeatherTests.cs" />

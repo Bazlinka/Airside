@@ -326,3 +326,4 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-08 | [Departure-style toast notifications](2026-10-08-toast-notifications.md) | Implemented at Bailey’s request; Unity appearance pending |
 | 2026-10-08 | [Persistent weather at flight altitude and restrained cockpit motion](2026-10-08-weather-altitude-and-restraint.md) | Accepted |
 | 2026-10-09 | [Aircraft presence and camera eligibility](2026-10-09-aircraft-presence-and-camera-eligibility.md) | Accepted for the continuity fixes; parked activity window remains prop |
+| 2026-10-09 | [Stable cloud coverage and visual weather variety](2026-10-09-cloud-continuity-and-variety.md) | Accepted — Bailey's cloud continuity and weather variety instruction |

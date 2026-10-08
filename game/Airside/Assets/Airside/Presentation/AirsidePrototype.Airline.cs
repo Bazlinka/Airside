@@ -1948,6 +1948,7 @@ namespace Airside.Presentation
             // sidecar slot and leaving only a saturated cluster's lower-priority text out.
             _mapFlightLabelBoxes.Clear();
             var labelBounds = Box(mapRect).Inset(6f, 48f, 6f, 28f);
+            var fieldCount = 0;
             for (var i = 0; i < _mapFlights.Count; i++)
             {
                 var flight = _mapFlights[i];
@@ -1957,6 +1958,17 @@ namespace Airside.Presentation
                     continue;
                 var mine = flight.Aircraft.Airline.IsPlayer;
                 var isSelected = flight.Aircraft.Registration == _selectedAircraftId;
+                // Aircraft on the field (gates, bays, taxiways) would pile a dozen icons and labels over
+                // the airport: they become quiet dots plus one count, and only speak when picked.
+                if (flight.OnField && !isSelected && i != tracked && _mapLens.Zoom < MapFieldDetailZoom)
+                {
+                    fieldCount++;
+                    var fieldDot = AirsideTheme.FromHex(flight.Aircraft.Airline.LiveryHex);
+                    AirsideTheme.DrawRounded(new Rect(flight.Point.x - 3.5f, flight.Point.y - 3.5f, 7f, 7f),
+                        AirsideTheme.WithAlpha(AirsideTheme.Glass, 0.85f), 7f);
+                    AirsideTheme.DrawRounded(new Rect(flight.Point.x - 2.5f, flight.Point.y - 2.5f, 5f, 5f), fieldDot, 5f);
+                    continue;
+                }
                 // Other operators fly smaller and fainter on the map, so your aircraft read first.
                 var iconSize = Mathf.Lerp(18f, 30f, Mathf.InverseLerp(1f, 12f, _mapLens.Zoom)) * (mine ? 1.15f : 0.85f);
                 var iconAlpha = isSelected || i == tracked ? 1f : Ownership.AlphaFor(flight.Aircraft.Airline);
@@ -1995,6 +2007,14 @@ namespace Airside.Presentation
                     GUI.Label(new Rect(labelRect.x + 4f, labelRect.y + 17f, labelRect.width - 8f, 18f),
                         $"{MapFlightDetail(flight)} · {flight.Aircraft.Airline.Name} {flight.Aircraft.Type.Name}", small);
                 GUI.color = labelColour;
+            }
+
+            if (fieldCount > 1 && mapRect.Contains(homePoint))
+            {
+                var fieldChip = new Rect(homePoint.x - 46f, homePoint.y + 14f, 92f, 18f);
+                AirsideTheme.DrawRounded(fieldChip, new Color(ink.r, ink.g, ink.b, 0.85f), 9f);
+                _mapFieldChipStyle ??= new GUIStyle(small) { alignment = TextAnchor.MiddleCenter };
+                GUI.Label(fieldChip, fieldCount + " on field", _mapFieldChipStyle);
             }
 
             DrawOutstationMarkers(mapRect, small, ink);
@@ -2063,6 +2083,10 @@ namespace Airside.Presentation
             DispatchWorkspaceAction(chromeAction ?? filterAction);
             DrawMapFlightInspector(workspaceLayout);
         }
+
+        /// <summary>From this zoom the route map draws every aircraft on the field as a full icon with its label.</summary>
+        private const float MapFieldDetailZoom = 60f;
+        private GUIStyle _mapFieldChipStyle;
 
         private string _mapFlightInspectorId;
         private bool _mapSaScopeRequested;

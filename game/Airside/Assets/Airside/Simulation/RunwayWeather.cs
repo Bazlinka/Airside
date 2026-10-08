@@ -43,6 +43,28 @@ namespace Airside.Simulation
             return new SurfaceWind((int)Math.Round(direction), (int)Math.Round(speed));
         }
 
+        /// <summary>
+        /// The forecast wind follows the sky instead of ignoring it: fog is near-calm, rain breezy, a storm gusty and
+        /// strong, clear air a little lighter than the seasonal baseline. Direction is unchanged, so runway choice still
+        /// follows the same slow veer. Knots are the mean wind; storms are capped at 45.
+        /// </summary>
+        public static SurfaceWind Coupled(SurfaceWind baseline, WeatherKind kind) =>
+            new SurfaceWind(baseline.DirectionDegrees, CoupledKnots(baseline.Knots, kind));
+
+        public static int CoupledKnots(int baselineKnots, WeatherKind kind)
+        {
+            var knots = (double)baselineKnots;
+            switch (kind)
+            {
+                case WeatherKind.Clear: knots *= 0.85; break;
+                case WeatherKind.Overcast: knots *= 1.1; break;
+                case WeatherKind.Rain: knots = knots * 1.35 + 2.0; break;
+                case WeatherKind.Storm: knots = Math.Min(45.0, knots * 1.9 + 10.0); break;
+                case WeatherKind.Fog: knots = Math.Min(4.0, knots * 0.3); break;
+            }
+            return (int)Math.Round(knots);
+        }
+
         /// <summary>Published 05/23 true headings, degrees clockwise from north.</summary>
         public const int Heading05 = 50;
         public const int Heading23 = 230;

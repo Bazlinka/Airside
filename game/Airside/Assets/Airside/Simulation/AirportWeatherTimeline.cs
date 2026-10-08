@@ -30,7 +30,25 @@ namespace Airside.Simulation
         }
         public WeatherKind At(SimulationTime at) => TryAt(at, out var record) ? (WeatherKind)record.Kind : Weather.At(at);
         public SurfaceWind WindAt(AirlineClock clock, SimulationTime at) => TryAt(at, out var record)
-            ? new SurfaceWind(record.WindDegrees, record.WindKnots) : RunwayWeather.At(clock, at);
+            ? new SurfaceWind(record.WindDegrees, record.WindKnots) : ForecastWindAt(clock, at);
+
+        /// <summary>
+        /// Forecast wind coupled to the forecast weather and eased between hours over the same window as the sky look,
+        /// so a change of weather is never a step in the windsock or the runway choice.
+        /// </summary>
+        private static SurfaceWind ForecastWindAt(AirlineClock clock, SimulationTime at)
+        {
+            var baseline = RunwayWeather.At(clock, at);
+            var current = RunwayWeather.CoupledKnots(baseline.Knots, Weather.At(at));
+            var into = at.ElapsedSeconds - Weather.BlockStart(at).ElapsedSeconds;
+            if (into >= Weather.BlendSeconds || at.ElapsedSeconds < Weather.BlockSeconds)
+                return new SurfaceWind(baseline.DirectionDegrees, current);
+            var before = RunwayWeather.CoupledKnots(baseline.Knots,
+                Weather.At(new SimulationTime(at.ElapsedSeconds - into - 1)));
+            var t = into / (double)Weather.BlendSeconds;
+            t = t * t * (3.0 - 2.0 * t);
+            return new SurfaceWind(baseline.DirectionDegrees, (int)Math.Round(before + (current - before) * t));
+        }
 
         public void Observe(SimulationTime from, LiveWeatherSnapshot sample, long validSeconds = LiveWeather.StaleSeconds)
         {

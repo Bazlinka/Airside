@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-09 — Forecast wind now follows the weather (fog near-calm, rain breezy, storm strong and gusty, clear a little lighter) and eases between hours; live-observed wind unchanged (headless-tested; unverified in Unity).
 - 2026-10-09 — Jet contrails: high jets in the sky traffic (above 24,000 ft) leave a widening trail per engine, hidden under rain, fog and storm and thinner under overcast (unverified in Unity).
 - 2026-10-09 — Rain is now relative to the observer: climbing, diving or running down the runway in a follow/cockpit view streams drops past at the right slant and length instead of falling straight down (unverified in Unity).
 - 2026-10-09 — Replace Dash 8 overlapping roof shells with one hull-seated wing fairing; preserve all other mesh geometry (Unity unverified).

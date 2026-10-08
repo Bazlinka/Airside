@@ -9,10 +9,10 @@ import math, sys
 
 # family: (landing height m, landing pitch, spot, range, taxi pitch, taxi spot, taxi range)
 F = {
-    "Turboprop":    (2.6, 3.0, 44, 70, 4.0, 66, 32),
-    "Regional jet": (3.2, 3.0, 36, 100, 4.5, 62, 45),
-    "Narrowbody":   (3.2, 3.0, 32, 120, 4.5, 62, 55),
-    "Widebody":     (4.5, 2.5, 28, 150, 4.5, 58, 70),
+    "Turboprop":    (2.6, 3.0, 20, 70, 4.0, 66, 32),
+    "Regional jet": (3.2, 3.0, 18, 100, 4.5, 62, 45),
+    "Narrowbody":   (3.2, 3.0, 16, 120, 4.5, 62, 55),
+    "Widebody":     (4.5, 2.5, 14, 150, 4.5, 58, 70),
     "Helicopter":   (2.0, 25.0, 18, 110, 0, 0, 0),
 }
 TAXI_H = 1.6
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     problems = check()
     for p in problems:
         print("FAIL", p)
-    out = sys.argv[1] if len(sys.argv) > 1 else "docs/testing/aircraft-lighting-2026-10-07/beam-geometry.svg"
+    out = sys.argv[1] if len(sys.argv) > 1 else "docs/testing/aircraft-lighting-2026-10-08/beam-geometry.svg"
     open(out, "w").write(svg())
     print("wrote", out, "- checks:", "FAILED" if problems else "all pass")
     sys.exit(1 if problems else 0)

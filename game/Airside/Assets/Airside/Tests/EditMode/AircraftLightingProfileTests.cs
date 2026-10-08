@@ -26,14 +26,14 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void UnknownOrMissingType_GetsTheOriginalFleetWideLamps()
+        public void UnknownOrMissingType_GetsTheFallbackLamps()
         {
             var generic = AircraftLightingProfile.For(null);
             Assert.That(generic.LandingRange, Is.EqualTo(90f));
-            Assert.That(generic.LandingSpotAngle, Is.EqualTo(48f));
+            Assert.That(generic.LandingSpotAngle, Is.EqualTo(24f));
             Assert.That(generic.StrobeFlashes, Is.EqualTo(2));
-            Assert.That(generic.StrobeCycleSeconds, Is.EqualTo(AirsideReusableMotion.StrobeCycleSeconds));
-            Assert.That(generic.BeaconHz, Is.EqualTo(AirsideReusableMotion.BeaconHz));
+            Assert.That(generic.StrobeCycleSeconds, Is.EqualTo(1.2f));
+            Assert.That(generic.BeaconHz, Is.EqualTo(1.4f));
             Assert.That(generic.TailStrobe, Is.False);
             Assert.That(AircraftLightingProfile.For(new AircraftType("XXXX", "Mystery", 500, 1000)),
                 Is.SameAs(AircraftLightingProfile.Generic));
@@ -79,11 +79,11 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void StrobePattern_FlashesOncePerCycleOnTurbopropsAndTwiceOnJets()
+        public void StrobePattern_DistinguishesBoeingFromAirbus()
         {
             Assert.That(FlashesPerCycle(AircraftLightingProfile.For(AircraftType.Saab340)), Is.EqualTo(1));
             Assert.That(FlashesPerCycle(AircraftLightingProfile.For(AircraftType.AirbusA320200)), Is.EqualTo(2));
-            Assert.That(FlashesPerCycle(AircraftLightingProfile.For(AircraftType.Boeing78710)), Is.EqualTo(2));
+            Assert.That(FlashesPerCycle(AircraftLightingProfile.For(AircraftType.Boeing78710)), Is.EqualTo(1));
             Assert.That(FlashesPerCycle(AircraftLightingProfile.For(null)), Is.EqualTo(2));
         }
 
@@ -135,6 +135,49 @@ namespace Airside.Tests
             var turboprop = AircraftLightingProfile.For(AircraftType.Atr42);
             Assert.That(turboprop.TaxiLampOn(AircraftPhase.Takeoff, false, true, true), Is.False);
             Assert.That(turboprop.TaxiLampOn(AircraftPhase.Landing, false, true, true), Is.False);
+        }
+
+        [Test]
+        public void AircraftFlashOffset_IsStableAndIndependent()
+        {
+            Assert.That(AircraftLightingProfile.ClockOffsetSeconds("Commercial VH-A01"),
+                Is.EqualTo(AircraftLightingProfile.ClockOffsetSeconds("Commercial VH-A01")));
+            Assert.That(AircraftLightingProfile.ClockOffsetSeconds("Commercial VH-A01"),
+                Is.Not.EqualTo(AircraftLightingProfile.ClockOffsetSeconds("Commercial VH-A02")));
+            Assert.That(AircraftLightingProfile.ClockOffsetSeconds(null), Is.Zero);
+        }
+
+        [Test]
+        public void LandingLamps_GoDarkInCruiseAndReturnBelowTheCeiling()
+        {
+            foreach (var type in Fixed.Concat(new[] { AircraftType.Bell412 }))
+            {
+                var p = AircraftLightingProfile.For(type);
+                foreach (var phase in new[] { AircraftPhase.Departed, AircraftPhase.Circuit, AircraftPhase.Approach })
+                {
+                    Assert.That(p.LandingLampOn(phase, 3047f), Is.True, type.Id);
+                    Assert.That(p.LandingLampOn(phase, 3048f), Is.False, type.Id);
+                    Assert.That(p.LandingLampOn(phase, 10000f), Is.False, type.Id);
+                }
+                Assert.That(p.LandingLampOn(AircraftPhase.AtStand, 0f), Is.False, type.Id);
+                Assert.That(p.LandingLampOn(AircraftPhase.TaxiOut, 0f), Is.False, type.Id);
+                Assert.That(p.LandingLampOn(AircraftPhase.Takeoff, 0f), Is.True, type.Id);
+                Assert.That(p.LandingLampOn(AircraftPhase.GoAround, 100f), Is.True, type.Id);
+                Assert.That(p.TaxiLampOn(AircraftPhase.Landing, false, false, true), Is.False, type.Id);
+            }
+        }
+
+        [TestCase(AircraftNavigationLight.Left, -90f, 1f)]
+        [TestCase(AircraftNavigationLight.Left, 90f, 0f)]
+        [TestCase(AircraftNavigationLight.Right, 90f, 1f)]
+        [TestCase(AircraftNavigationLight.Right, -90f, 0f)]
+        [TestCase(AircraftNavigationLight.Tail, 180f, 1f)]
+        [TestCase(AircraftNavigationLight.Tail, 0f, 0f)]
+        [TestCase(AircraftNavigationLight.Left, -180f, 0f)]
+        [TestCase(AircraftNavigationLight.Right, 450f, 1f)]
+        public void NavigationLenses_RespectTheirHorizontalSector(AircraftNavigationLight kind, float bearing, float expected)
+        {
+            Assert.That(AircraftLightingProfile.NavigationVisibility(kind, bearing), Is.EqualTo(expected));
         }
 
         // Wing-root landing lamps and the nose-gear lamp sit about this high on the airliners (metres).

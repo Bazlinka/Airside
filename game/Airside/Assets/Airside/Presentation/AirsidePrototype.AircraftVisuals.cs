@@ -178,7 +178,10 @@ namespace Airside.Presentation
                     : null;
                 UpdateAircraftLightsAndGear(viewParts.LightsAndGear, phase, PresentationDaylight, progress,
                     PresentationDeltaTime, PresentationClock, engines, groundPose, aircraftType);
-                UpdateDistantLight(view, AirsideReusableMotion.LandingLightsOn(phase, progress, engines.HasValue));
+                UpdateDistantLight(view, AircraftLightingProfile.For(aircraftType).LandingLampOn(phase,
+                    Mathf.Max(0f, view.position.y - AirsideFlightPath.GroundY)), aircraftType, phase,
+                    AirsideReusableMotion.NavigationLightsOn(engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase),
+                        engines?.Beacon ?? AirsideReusableMotion.PropellersSpinning(phase)));
                 UpdateCabinDoor(viewParts.CabinDoors, phase, engines);
                 var glowState = CabinWindowGlowState(phase, PresentationDaylight);
                 if (viewParts.CabinWindowGlowState != glowState)
@@ -1196,6 +1199,14 @@ namespace Airside.Presentation
         /// aircraft is; presentation only selects the matching silhouette and metrics.
         /// </summary>
         private static Transform BuildAircraftForType(
+            string name, AircraftType type, Color accent, string liveryDecalRelativePath = null)
+        {
+            var root = BuildAircraftForTypeCore(name, type, accent, liveryDecalRelativePath);
+            FitAircraftLighting(root, type);
+            return root;
+        }
+
+        private static Transform BuildAircraftForTypeCore(
             string name,
             AircraftType type,
             Color accent,
@@ -2058,7 +2069,8 @@ namespace Airside.Presentation
                 if (childName == "Gear nose") gearNose = child;
                 else if (childName == "Gear L") gearL = child;
                 else if (childName == "Gear R") gearR = child;
-                else if (childName.StartsWith("Gear scissors", StringComparison.Ordinal)
+                else if (childName == "TaxiLight"
+                         || childName.StartsWith("Gear scissors", StringComparison.Ordinal)
                          || childName.StartsWith("Gear oleo", StringComparison.Ordinal)
                          || childName.StartsWith("Tire", StringComparison.Ordinal)
                          || childName.StartsWith("Wheel", StringComparison.Ordinal)
@@ -2069,7 +2081,7 @@ namespace Airside.Presentation
             foreach (var part in movingParts)
             {
                 var lower = part.name.ToLowerInvariant();
-                var gear = lower.Contains("nose") ? gearNose
+                var gear = (part.name == "TaxiLight" || lower.Contains("nose")) ? gearNose
                     : part.name.IndexOf(" L", StringComparison.Ordinal) >= 0 ? gearL
                     : part.name.IndexOf(" R", StringComparison.Ordinal) >= 0 ? gearR
                     : null;

@@ -46,6 +46,7 @@ OWNERS = {
     "AirsidePrototype.Aerobridges.cs": ("Field and lighting build", "Terminal 1 aerobridges, one per bridged gate (ADR 0113)"),
     "AirsidePrototype.Lights.cs": ("Aircraft visuals", "Aircraft lamps, strobes and cabin glow; collects airfield lights; sun light and lightning"),
     "AirsidePrototype.AircraftVisuals.cs": ("Aircraft visuals", "Engine heat and exhaust, propeller and jet-fan spin and blur, gear tyres, commercial aircraft views"),
+    "AirsidePrototype.AircraftLightingFit.cs": ("Aircraft visuals", "Fits crown/belly/aft lamp installations to runtime hulls and carries fallback taxi lamps with nose gear"),
     "AirsidePrototype.Articulation.cs": ("Aircraft visuals", "Control surfaces hinged on their real axes"),
     "AirsidePrototype.Helicopter.cs": ("Aircraft visuals", "Bell 412 in the airline game: rotors and VTOL pose (ADR 0207)"),
     "AirsidePrototype.Doorways.cs": ("Aircraft visuals", "Door hollows on aircraft (AircraftDoorwayGeometry)"),

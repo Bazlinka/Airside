@@ -172,7 +172,7 @@ Start here:
 | `render-aircraft-thumbnails.py` | Render the Hangar's aircraft thumbnails from the actual runtime glTF models (ADR 0048). |
 | `render-aircraft-titles.py` | Draw each type's fuselage titles to scale against its real airframe length. |
 | `render-hud-mockups.py` | Rasterise the HUD draw lists exported by scripts/hud-mockup into PNGs. |
-| `render-lighting-beams.py` | Side-view SVG of each lighting family's landing and taxi beams over level ground, plus the |
+| `render-lighting-beams.py` | Side-view SVG of the current lighting families' landing/taxi beams, plus ground-hit checks; defaults to the 8 October lighting evidence. |
 | `render-livery-overhaul.py` | Offline geometry proof sheet, not a Unity gameplay capture (ADR 0204). |
 | `render-ypad-map.py` | Render the Adelaide Airport map data to a top-down PNG for QA without Unity (ADR 0184). |
 

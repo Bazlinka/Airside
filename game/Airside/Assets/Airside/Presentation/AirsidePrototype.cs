@@ -4245,6 +4245,9 @@ namespace Airside.Presentation
             // the wingtip strobe on every lamp of every visible aircraft, every frame.
             public Light Light;
             public Light Strobe;
+            public Renderer StrobeLens;
+            public readonly Transform AircraftRoot;
+            public readonly float LightingClockOffset;
             public Renderer Lamp;
             public bool LampResolved;
 
@@ -4264,6 +4267,9 @@ namespace Airside.Presentation
                 Transform = transform;
                 Kind = kind;
                 NavLight = navLight;
+                var profile = transform != null ? transform.GetComponentInParent<AircraftVisualProfileComponent>() : null;
+                AircraftRoot = profile != null ? profile.transform : transform != null ? transform.root : null;
+                LightingClockOffset = AircraftLightingProfile.ClockOffsetSeconds(AircraftRoot != null ? AircraftRoot.name : null);
                 if (transform != null)
                     Rest = RestRotationOf(transform);
             }

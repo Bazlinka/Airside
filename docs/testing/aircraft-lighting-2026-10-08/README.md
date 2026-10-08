@@ -110,3 +110,5 @@ blade shadows are static and do not certify moving-propeller appearance.
 - [Machine-readable validation](validation.json).
 
 Rebased onto current main `3fcb8063` (five-area bug sweep); handoff conflict resolved preserving both entries. Native lighting checks pass again: **37/37**. The catalogue lookup and rotor lineup changes on main preserve this pass's lighting profiles and installations.
+
+Final integrated Mac build passed from clean commit `840bbb215d82b52bbad52f3206d90a5d12fa1be1`, stamped `2026-10-08T00:38:38Z`. Subsequent validation-record edits do not change runtime code. Packaged flight and night performance remain unverified.

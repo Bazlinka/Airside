@@ -30,9 +30,10 @@
   "mac_build": {
     "result": "passed",
     "path": "work/builds/Airside.app",
-    "source_base": "0dc6e629",
-    "source_dirty": true,
-    "note": "Compiled final lighting working tree before commit; 300-second stall window allowed active Metal shader compilation to complete."
+    "commit": "840bbb215d82b52bbad52f3206d90a5d12fa1be1",
+    "source_dirty": false,
+    "stamped_at": "2026-10-08T00:38:38Z",
+    "note": "Clean integrated source built after rebase onto main 3fcb8063; 300-second stall window."
   },
   "integration_base": "3fcb8063",
   "native_after_main_integration": {
@@ -41,5 +42,12 @@
     "failed": "0",
     "start-time": "2026-10-08 00:37:04Z",
     "end-time": "2026-10-08 00:37:09Z"
+  },
+  "initial_mac_build": {
+    "result": "passed",
+    "path": "work/builds/Airside.app",
+    "source_base": "0dc6e629",
+    "source_dirty": true,
+    "note": "Compiled final lighting working tree before commit; 300-second stall window allowed active Metal shader compilation to complete."
   }
 }

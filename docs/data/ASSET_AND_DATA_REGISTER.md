@@ -369,3 +369,15 @@ graphs, BADA coefficients, imagery or licensed dataset files are imported; no ac
 cost. Attribution stays with each linked source. Existing takeoff planning values and the
 separate Bell VTOL profile remain fallback references. Derived CSV/plots are reproducible
 project test evidence rather than external data.
+## Free visual upgrade intake — 2026-10-08 (task #585)
+
+| ID | Source | Licence | Adaptation / runtime use | Evidence |
+|---|---|---|---|---|
+| AIR-011 v02 source parts | [A320 by manilov.ap](https://sketchfab.com/3d-models/a320-ec28bdee6c944688a19bef31ea33437f) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); commercial use allowed, credit required | Engines, pylons, fan blades, tyres and tail surfaces fitted into `mdl_a320_200_v02`; original Airside cabin, doors, apertures, rig and fictional liveries retained; airline textures omitted | Source VRML and public licence metadata in `scripts/sources/free-visuals`; packaged `ThirdPartyNotices.txt`; source/derivative hashes in `docs/testing/free-visual-upgrade-2026-10-08/sources.json` |
+| VEH-FREE-001 | [Kenney Car Kit 3.1](https://kenney.nl/assets/car-kit) | CC0 1.0 | Service cab and wheel geometry; fuel/baggage/bus v07, catering v02, pushback v04; existing dimensions and functional equipment preserved | Original GLBs and original License.txt kept; same hash ledger |
+| VEG-FREE-001 | [Kenney Nature Kit](https://kenney.nl/assets/nature-kit) | CC0 1.0 | Rounded thin-tree canopy and branches, muted palette; up to 128 trees within 1100 m of ARP, existing measured locations/heights, batched into existing kilometre tiles; other trees retain previous LOD | Original tree/shrub GLBs and original License.txt kept; same hash ledger |
+| TEX-CABIN-001 | [Fabric Pattern 07](https://polyhaven.com/a/fabric_pattern_07), Rob Tuytel / Poly Haven | CC0 1.0 | Tintable desaturated upholstery, normal and roughness-derived smoothness; three 1024 maps, shared by cabin seats/headrests; five fitted rows retain close details | Original JPEGs kept; same hash ledger |
+
+Existing CC0 asphalt, worn-concrete and ambientCG grass maps are reused. Pavement grain,
+macro variation and weather sheen now share a coherent world scale. No paid assets,
+subscriptions or signups are required by any runtime or regeneration step.

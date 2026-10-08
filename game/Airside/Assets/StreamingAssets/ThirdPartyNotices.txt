@@ -1,0 +1,21 @@
+Airside third-party visual asset notices
+
+A320 by manilov.ap
+https://sketchfab.com/3d-models/a320-ec28bdee6c944688a19bef31ea33437f
+https://sketchfab.com/manilov.ap
+Licensed under Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+Adapted by Airside: fitted engine casings, pylons, exhausts, rotating fan blades,
+wheel sidewalls and horizontal tail surfaces. Materials, scaling, coordinate
+conversion and animation integration changed. Original airline textures omitted.
+
+Kenney Car Kit and Nature Kit — Kenney — CC0 1.0 Universal
+https://kenney.nl/assets/car-kit
+https://kenney.nl/assets/nature-kit
+
+Fabric Pattern 07 — Rob Tuytel / Poly Haven — CC0 1.0 Universal
+https://polyhaven.com/a/fabric_pattern_07
+Colour desaturated and reduced in contrast; roughness repacked into smoothness.
+
+Further map, terrain, human, audio and surface sources are credited in the game's
+Flight Manual and the repository's docs/data/ASSET_AND_DATA_REGISTER.md.

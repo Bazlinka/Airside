@@ -23,37 +23,26 @@ unverified. Do not infer a packaged flight playtest from deterministic/native ma
 
 Merged lighting #587 retains 37 passing native checks and 70 reviewed night fixtures; full-flight/night
 performance acceptance remains separate in `docs/testing/aircraft-lighting-2026-10-08/`.
+**Free visual upgrades (8 Oct, Codex, task #585):** free A320 source parts fitted into
+v02; Kenney service vehicle/foliage derivatives; consistent scanned pavement,
+feathered wear, close grass grain, facade fittings, weather-responsive terminal
+reflections, paused-clock conveyor ribs and scanned cabin fabric/fittings.
+Source inputs, attribution and offline regeneration committed. Aircraft metrics,
+working cabin apertures, doors and simulation/save contracts retained. All ten
+workstreams and acceptance evidence: `docs/decisions/2026-10-08-free-visual-upgrade.md`,
+`docs/testing/free-visual-upgrade-2026-10-08/`. Merged in #589; its build and runtime acceptance evidence remains in that packet.
 
-**Five-area bug sweep (Codex, issue #576, draft PR #580):** five requested agents;
-`codex/five-area-bug-sweep-20261007`, integrated with main `0dc6e629`.
-Fixes: exclusive camera-shell ownership, compact inspector/manual clicks,
-allocation-free runway filters/catalogue lookup, rotor queue isolation, parked-aircraft
-clearance (positive 1 m static margin; moving/queued 3 m), and local BAY-4 apron geometry.
-Preserve main's approved arrival policy and merged save/glide/exit fixes; add regressions.
-Required `scripts/test-domain.sh`: **1,905 passed / zero failed** (5 m 19 s test run);
-Unity-NUnit compile, asset audit, C# syntax and generated presentation map passed.
-Packet: `docs/testing/five-area-bug-sweep-2026-10-07.md`. Unverified in Unity for this
-sweep. NEXT: review draft and run its native checklist; do not merge on headless evidence alone.
+**Earlier merged work:** #587 fits all 14 families’ exterior lights and night beams;
+#580 fixes camera-shell ownership, parked-aircraft clearance, rotor queues and query allocation.
+Their native follow-ups remain in their linked testing packets.
 
-**Aircraft lighting by type (7 Oct, Claude):** `AircraftLightingProfile` gives each family (turboprop, regional jet, narrowbody, widebody,
-Bell 412) its own landing/taxi beam shape and aim, strobe pattern, tail strobe (jets), beacon rate and a nose lamp that doubles as the takeoff
-light on jets. ADR `2026-10-07-aircraft-lighting-profiles`; checks and a night playtest list in `docs/testing/aircraft-lighting-2026-10-07/`.
-Unity EditMode 2325 passed / 0 failed; look at it at night in follow view before trusting the beam aim and toe-out sign.
-
-**Latest implementation (7 Oct, Codex, #578):** fitted door seams, handle surrounds/latches,
-thresholds, cargo hardware, Bell sliding rails and service hatches across all 14 aircraft.
-Original liveries and assets stay configurable; details attach to each leaf through existing hinge motion.
-Implemented for both glTF and readable prefab sources. Bailey requested implementation and merge with
-light testing; native Unity look/motion is unverified. Plan, coverage and proof:
-`docs/testing/fleet-surface-details-2026-10-07/`.
-
-**Earlier merged work:** #552 native fixture/blank-save/camera-origin repairs (native rerun pending);
+**Previous merged work:** #552 native fixture/blank-save/camera-origin repairs (native rerun pending);
 #570 fleet/flight clarity and Melbourne views; arrivals gated by runway only with 4-minute go-around;
 clean-image rendering and far-terrain hand-over. Their native follow-ups remain below.
 
 **Current implementation (#577):** Operations opens on My airline, listing every owned aircraft across all bases with live route/status/next-event times and scroll access. Selecting an aircraft opens its correct Fleet profile; Airport movements retains the Adelaide board. Native Unity verification remains pending; evidence: `docs/testing/network-operations-2026-10-07/`.
 
-**Next approved work:** full-flight and busy-apron night check of the lighting pass; Mac follow/overview day/dusk/night check of the door detail pass (including ATR airstairs), the all-base
+**Next approved work:** Mac follow/overview day/dusk/night check of the door detail pass (including ATR airstairs), the all-base
 Operations and fleet/flight journeys, and the pending native fixtures. No native visual claim.
 
 **Wide overview (ADR 0250/0251), run on the Mac 7 Oct (Cursor):**

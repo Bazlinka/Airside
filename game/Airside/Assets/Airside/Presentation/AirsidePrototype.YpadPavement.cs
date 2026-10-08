@@ -137,13 +137,25 @@ namespace Airside.Presentation
             var heavy = new SurfaceMesh();
             var light = new SurfaceMesh();
             foreach (var stain in StandOilStains.All())
-                AddPolygon(stain.Heavy ? heavy : light, StandOilStains.EllipseCorners(stain), y);
+            {
+                var target = stain.Heavy ? heavy : light;
+                var corners = StandOilStains.EllipseCorners(stain, 16);
+                var start = target.Vertices.Count;
+                AddPolygon(target, corners, y);
+                var yaw = stain.YawDegrees * Mathf.Deg2Rad;
+                for (var i = start; i < target.Vertices.Count; i++)
+                {
+                    var v = target.Vertices[i]; var dx = v.x - stain.CentreX; var dz = v.z - stain.CentreZ;
+                    target.Uvs[i] = new Vector2(.5f + (dx*Mathf.Cos(yaw)-dz*Mathf.Sin(yaw))/(2*stain.RadiusAcross),
+                        .5f + (dx*Mathf.Sin(yaw)+dz*Mathf.Cos(yaw))/(2*stain.RadiusAlong));
+                }
+            }
 
-            // Untextured dark blotches — concrete albedo would wash them out at overview.
-            SpawnSurface(root, "Stand oil (old)", light, new Color(0.30f, 0.27f, 0.22f), null,
-                castShadows: false, useTextures: false);
-            SpawnSurface(root, "Stand oil (fresh)", heavy, new Color(0.14f, 0.12f, 0.11f), null,
-                castShadows: false, useTextures: false);
+            // Two merged draw calls; feathered multiplication retains the real concrete under each stain.
+            SpawnSurface(root, "Stand oil (old)", light, new Color(.52f,.45f,.37f,.38f), null,
+                castShadows: false, useTextures: false, shaderName: "Airside/SurfaceStain");
+            SpawnSurface(root, "Stand oil (fresh)", heavy, new Color(.20f,.18f,.16f,.62f), null,
+                castShadows: false, useTextures: false, shaderName: "Airside/SurfaceStain");
         }
 
         /// <summary>
@@ -158,8 +170,8 @@ namespace Airside.Presentation
                 AddPolygon(mark.Drainage ? pits : patches, ApronSurfaceWear.Corners(mark),
                     mark.Drainage ? y + 0.0015f : y);
 
-            SpawnSurface(root, "Apron patch repairs", patches, new Color(0.40f, 0.41f, 0.42f), null,
-                castShadows: false, useTextures: false);
+            SpawnSurface(root, "Apron patch repairs", patches, new Color(.39f,.40f,.40f), PreferSurfaceBasecolor("tx_concrete_apron"),
+                castShadows: false);
             SpawnSurface(root, "Apron drainage pits", pits, new Color(0.16f, 0.16f, 0.17f), null,
                 castShadows: false, useTextures: false);
         }
@@ -1049,7 +1061,8 @@ namespace Airside.Presentation
             Color color,
             string albedo,
             bool castShadows,
-            bool useTextures = true)
+            bool useTextures = true,
+            string shaderName = null)
         {
             if (surface.Triangles.Count == 0)
                 return;
@@ -1069,6 +1082,16 @@ namespace Airside.Presentation
                 ? CreateSharedSurfaceMaterial(color, albedo, Vector2.one)
                 : AirsideMaterialLibrary.CreateShared(
                     color, AirsideMaterialLibrary.SurfaceKind.Default, null, Vector2.one, useTextures: false);
+            if (!string.IsNullOrEmpty(shaderName))
+            {
+                var shader = Shader.Find(shaderName);
+                if (shader != null && shader.isSupported)
+                {
+                    var wear = new Material(shader) { name = name + " feathered wear" };
+                    wear.SetColor("_BaseColor", color);
+                    renderer.sharedMaterial = wear;
+                }
+            }
             renderer.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
             renderer.receiveShadows = true;
             go.transform.SetParent(parent, false);

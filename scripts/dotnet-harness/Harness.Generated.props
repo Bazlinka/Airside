@@ -74,6 +74,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BoxKitSurfaceGeometry.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BuildingDetail.Interiors.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/BuildingDetail.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/BuildingFacadeModules.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CareerTrackWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CelestialStarColour.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/CoastGrid.cs" />

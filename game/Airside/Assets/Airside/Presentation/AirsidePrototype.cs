@@ -479,6 +479,7 @@ namespace Airside.Presentation
             {
                 _fuelTruck = BuildServiceVehicle("Fuel truck", new Color(0.95f, 0.76f, 0.12f), new Vector3(3.1f, 1.25f, 1.35f),
                     PreferArtKit(
+                        "Models/Vehicles/mdl_fuel_truck_small_v07.gltf",
                         "Models/Vehicles/mdl_fuel_truck_small_v06.gltf",
                         "Models/Vehicles/mdl_fuel_truck_small_v05.gltf",
                         "Models/Vehicles/mdl_fuel_truck_small_authored_v01.gltf",
@@ -490,9 +491,10 @@ namespace Airside.Presentation
                 // flat-shaded box. VEH-004 gives it the scissor-lift hi-loader silhouette.
                 _cateringTruck = BuildServiceVehicle("Catering truck", new Color(0.82f, 0.86f, 0.88f),
                     new Vector3(2.9f, 1.55f, 1.3f),
-                    PreferArtKit("Models/Vehicles/mdl_catering_truck_v01.gltf"));
+                    PreferArtKit("Models/Vehicles/mdl_catering_truck_v02.gltf", "Models/Vehicles/mdl_catering_truck_v01.gltf"));
                 _baggageCart = BuildServiceVehicle("Baggage cart", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f),
                     PreferArtKit(
+                        "Models/Vehicles/mdl_baggage_tug_train_v07.gltf",
                         "Models/Vehicles/mdl_baggage_tug_train_v06.gltf",
                         "Models/Vehicles/mdl_baggage_tug_train_v05.gltf",
                         "Models/Vehicles/mdl_baggage_tug_train_authored_v01.gltf",
@@ -502,6 +504,7 @@ namespace Airside.Presentation
                         "Models/Vehicles/mdl_baggage_tug_train_v01.gltf"));
                 _passengerBus = BuildServiceVehicle("Passenger bus", new Color(0.22f, 0.44f, 0.55f), new Vector3(3.8f, 1.5f, 1.45f),
                     PreferArtKit(
+                        "Models/Vehicles/mdl_passenger_bus_apron_v07.gltf",
                         "Models/Vehicles/mdl_passenger_bus_apron_v06.gltf",
                         "Models/Vehicles/mdl_passenger_bus_apron_v05.gltf",
                         "Models/Vehicles/mdl_passenger_bus_apron_authored_v01.gltf",
@@ -3579,7 +3582,9 @@ namespace Airside.Presentation
             var boeing787 = profile.ArtRelativePath.Contains("mdl_787_", StringComparison.Ordinal);
 
             var usedArt = ArtPresentationLoader.TryInstantiate(
-                profile.ArtRelativePath,
+                profile.ArtRelativePath.Contains("mdl_a320_200", StringComparison.Ordinal)
+                    ? PreferArtKit(profile.ArtRelativePath, "Models/Aircraft/mdl_a320_200_v01.gltf")
+                    : profile.ArtRelativePath,
                 root,
                 out _,
                 RenameAircraftPart,

@@ -51,9 +51,11 @@ namespace Airside.Presentation
             var floor=CabinSurface("aisle carpet",new Color(.22f,.25f,.25f),.02f);
             var light=Surface("cabin light diffuser",new Color(.81f,.79f,.68f),false);
             AddFabricWeave(_fabric);
+            ApplyScannedCloth(_fabric);
             if(_headrestFabric.HasProperty("_BaseMap")) _headrestFabric.SetTexture("_BaseMap",_fabric.mainTexture);
             _headrestFabric.mainTexture=_fabric.mainTexture;
             _headrestFabric.mainTextureScale=_fabric.mainTextureScale;
+            ApplyScannedCloth(_headrestFabric);
             Seat=new GameObject("Passenger eye").transform;
             Seat.SetParent(transform,false);SelectSide(right);
             BuildShell(floor,light);
@@ -84,6 +86,25 @@ namespace Airside.Presentation
             texture.SetPixels(pixels);texture.Apply(false,true);_textures.Add(texture);
             if(material.HasProperty("_BaseMap")) material.SetTexture("_BaseMap",texture);
             material.mainTexture=texture;material.mainTextureScale=new Vector2(5f,5f);
+        }
+
+        private static void ApplyScannedCloth(Material material)
+        {
+            var albedo = AirsideArtTextures.Load("Textures/Surfaces/tx_cabin_fabric_basecolor_v01.png");
+            if (albedo == null) return; // Keep the woven procedural fallback.
+            material.SetTexture("_BaseMap", albedo);
+            material.mainTextureScale = new Vector2(8f,8f);
+            var normal = AirsideArtTextures.Load("Textures/Surfaces/tx_cabin_fabric_normal_v01.png", linear:true);
+            if (normal != null && material.HasProperty("_BumpMap"))
+            {
+                material.SetTexture("_BumpMap",normal); material.SetFloat("_BumpScale",.10f);
+                material.EnableKeyword("_NORMALMAP");
+            }
+            var mask = AirsideArtTextures.Load("Textures/Surfaces/tx_cabin_fabric_mask_v01.png", linear:true);
+            if (mask != null && material.HasProperty("_MetallicGlossMap"))
+            {
+                material.SetTexture("_MetallicGlossMap",mask); material.EnableKeyword("_METALLICSPECGLOSSMAP");
+            }
         }
 
         private void BuildSeats()
@@ -166,6 +187,11 @@ namespace Airside.Presentation
                     new Vector3(.008f,.13f,.005f),_trim,false);
             SeatPart("Stowed tray shell",new Vector3(x,backY-.04f,z-.39f),new Vector3(width-.11f,.26f,.026f),_lining);
             SeatPart("Tray latch",new Vector3(x,backY+.10f,z-.407f),new Vector3(.035f,.024f,.013f),_trim);
+            SeatPart("Seatback pocket",new Vector3(x,backY-.28f,z-.40f),
+                new Vector3(width-.13f,.17f,.028f),_fabric,true,recline);
+            foreach (var edge in new[]{-1f,1f})
+                SeatPart("Cushion piping",new Vector3(x+edge*(width*.5f-.032f),cushionY+.055f,z-.03f),
+                    new Vector3(.008f,.012f,.36f),_headrestFabric,false);
             SeatPart("Seat pocket seam",new Vector3(x,backY-.24f,z-.374f),new Vector3(width-.13f,.015f,.018f),_trim);
             foreach(var side in new[]{-1f,1f})
             {

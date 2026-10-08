@@ -304,3 +304,4 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-07 | [All-base airline operations](2026-10-07-network-operations.md) |  |
 | 2026-10-08 | [Fleet flight performance and camera telemetry — 8 October 2026](2026-10-08-fleet-flight-performance.md) |  |
 | 2026-10-08 | [Fleet exterior lighting realism — 8 October 2026](2026-10-08-fleet-lighting-realism.md) |  |
+| 2026-10-08 | [Free sourced assets and coherent close-view materials](2026-10-08-free-visual-upgrade.md) |  |

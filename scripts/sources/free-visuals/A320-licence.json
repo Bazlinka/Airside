@@ -1,0 +1,16 @@
+{
+  "name": "A320",
+  "uid": "ec28bdee6c944688a19bef31ea33437f",
+  "license": {
+    "uri": "https://api.sketchfab.com/v3/licenses/322a749bcfa841b29dff1e8a1bb74b0b",
+    "label": "CC Attribution",
+    "fullName": "Creative Commons Attribution",
+    "requirements": "Author must be credited. Commercial use is allowed.",
+    "url": "http://creativecommons.org/licenses/by/4.0/",
+    "slug": "by"
+  },
+  "viewerUrl": "https://sketchfab.com/3d-models/a320-ec28bdee6c944688a19bef31ea33437f",
+  "description": "Airbus A320 \u2014 family narrow-body aircraft for airlines short and medium range, developed by the European consortium \"Airbus S. A. S\". Released in 1988, he became the first passenger aircraft, which was used wire control system (fbwcs, eng. fly-by-wire).\n\nAs of November 2014, there are orders 11163 aircraft of the family A320 with 6331 sold cars, operated 6092 aircraft. The main competitor of the Airbus A320 is a family of Boeing 737.",
+  "author": "manilov.ap",
+  "authorUrl": "https://sketchfab.com/manilov.ap"
+}

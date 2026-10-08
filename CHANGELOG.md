@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-09 — Replace Dash 8 overlapping roof shells with one hull-seated wing fairing; preserve all other mesh geometry (Unity unverified).
+
 - 2026-10-09 — Selected-aircraft card: body text (route, live stats, details) drew at the top-left of the screen instead of inside the card; no device-pixel text inside scroll views (unverified in Unity).
 - 2026-10-09 — "Your flights" tracker (six-step progress for each booked/moving flight, bottom-left) and per-view HUD layout (overview vs follow) with a Views options tab; L/N toggle per view (headless-checked; Unity unverified).
 - 2026-10-09 — Add patchy ground, interrupted mowing, pavement joints/sealed cracks and varied apron repairs; preserve level operational surfaces (Unity unverified).

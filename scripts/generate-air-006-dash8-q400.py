@@ -15,7 +15,9 @@ POSITION + uint16-index contract consumed by ArtGltfLoader.
 
 from __future__ import annotations
 
+import argparse
 import importlib.util
+import json
 from pathlib import Path
 
 import numpy as np
@@ -370,99 +372,74 @@ def nacelle_gear_fairing(x):
     return translated(local, x, 0.0, 0.0)
 
 
-def wing_fairing(side):
-    """Half of a continuous high-wing / fuselage saddle.
-
-    Real Dash 8 centre wing sits across the cabin crown as one piece. Each
-    side mesh runs from past the centreline out to the wing root so the pair
-    forms a continuous saddle with no centre valley or stepped root.
-    """
-    z_stations = np.linspace(-2.40, 3.55, 22)
-    segs = 36
-    rings = []
-    for z in z_stations:
-        t = float(np.clip((z + 2.40) / 5.95, 0.0, 1.0))
-        # Peak under the spar, soft taper fore/aft (not a hard step).
-        envelope = float(np.sin(np.pi * t) ** 0.70)
-        if z > 2.10:
-            envelope *= float(np.clip(1.0 - (z - 2.10) / 1.70, 0.05, 1.0))
-        if z < -1.60:
-            envelope *= float(np.clip(1.0 - (-1.60 - z) / 0.90, 0.08, 1.0))
-        crown_y = float(surface(float(z), np.deg2rad(90.0), offset=0.0)[1])
-        # Inner edge past centreline so left/right halves overlap into one roof.
-        x_inner = side * (0.55)
-        x_outer = side * (1.55 + 0.55 * envelope)
-        y_inner = crown_y + 0.06 + 0.42 * envelope
-        y_outer = 4.35 + 0.22 * envelope
-        # Build a rounded half-ring: flat belly on the cabin, arched crown into
-        # the wing root, closed at the centreline.
-        ring = []
-        for i in range(segs):
-            u = i / float(segs)
-            # Parametric half-oval from belly (u≈0/1) through outboard crown.
-            ang = 2.0 * np.pi * u
-            # Map angle into a spanwise blend: cos pushes outboard, sin lifts.
-            span = 0.5 + 0.5 * np.cos(ang)  # 1 at centreline-ish, 0 at outboard
-            # Remap so the mesh covers inner→outer continuously.
-            s = 0.5 - 0.5 * np.cos(ang)  # 0..1..0 around; use abs of lateral
-            # Prefer a simple elliptical section centred between inner and outer.
-            cx = 0.5 * (x_inner + x_outer)
-            rx = 0.5 * abs(x_outer - x_inner) + 0.08
-            cy = 0.5 * (y_inner + y_outer)
-            ry = 0.5 * abs(y_outer - y_inner) + 0.10 + 0.18 * envelope
-            # The belly reaches well below the crown so the root is *in* the fuselage: it used to
-            # hover ~10 cm above it, leaving the whole wing assembly floating free of the hull.
-            belly = max(0.35, (cy - (crown_y - 0.70)) / ry)
-            y_scale = 0.35 + 0.65 * np.sin(ang) if np.sin(ang) > 0.0 else belly
-            # Soften the inboard side so the two halves meet as one surface.
-            x = cx + rx * np.cos(ang)
-            if side > 0:
-                x = max(x, -0.05)
-            else:
-                x = min(x, 0.05)
-            ring.append(
-                [
-                    float(x),
-                    float(cy + ry * y_scale * np.sin(ang)),
-                    float(z),
-                ]
-            )
-        rings.append(np.asarray(ring, np.float32))
-    return _loft_rings(rings)
-
-
 def wing_centre_saddle():
-    """Full-span centre wing box that kills the left/right valley at the crown."""
-    z_stations = np.linspace(-2.20, 3.40, 20)
-    segs = 40
+    """One closed crown fairing, embedded in the hull and matched to the wings.
+
+    The former three oval pods overlapped above the cabin and exposed their
+    end caps. This loft uses a continuous top, hull-seated underside and actual
+    wing-root sections at its outer edges. Shared vertices give smooth normals.
+    """
+    root_z, chord = 3.25, 4.35
+    trailing_z = root_z - chord
+    # Include the wing's exact cosine-spaced section samples at each junction.
+    beta = np.linspace(0.0, np.pi, 22)
+    wing_z = root_z - (1.0 - np.cos(beta)) * chord * 0.5
+    zs = np.unique(np.r_[np.linspace(-2.40, 3.95, 65), wing_z])
+    span_samples = np.linspace(-1.0, 1.0, 33)
     rings = []
-    for z in z_stations:
-        t = float(np.clip((z + 2.20) / 5.60, 0.0, 1.0))
-        envelope = float(np.sin(np.pi * t) ** 0.65)
-        if z > 2.00:
-            envelope *= float(np.clip(1.0 - (z - 2.00) / 1.60, 0.06, 1.0))
-        crown_y = float(surface(float(z), np.deg2rad(90.0), offset=0.0)[1])
-        # Wide flattened oval sitting on the cabin roof — continuous across X=0.
-        rx = 1.15 + 0.55 * envelope
-        ry = 0.22 + 0.48 * envelope
-        cy = crown_y + 0.16 + 0.30 * envelope
-        ring = []
-        for i in range(segs):
-            ang = 2.0 * np.pi * i / segs
-            # Soft arched roof; the belly reaches 0.30 m below the crown so it is seated *in* the
-            # fuselage (it used to hover ~10 cm above it).
-            belly = max(0.22, (cy - (crown_y - 0.30)) / ry)
-            y_scale = 0.22 + 0.78 * np.sin(ang) if np.sin(ang) > 0.0 else belly
-            # Mild leading/trailing taper already in envelope; keep sides round.
-            ring.append(
-                [
-                    rx * np.cos(ang) * (0.92 + 0.08 * abs(np.sin(ang))),
-                    cy + ry * y_scale * np.sin(ang),
-                    float(z),
-                ]
-            )
-        rings.append(np.asarray(ring, np.float32))
-    return _loft_rings(rings)
+
+    def smooth(t):
+        t = float(np.clip(t, 0.0, 1.0))
+        return t * t * (3.0 - 2.0 * t)
+
+    for z in zs:
+        envelope = (smooth((z + 2.40) / (trailing_z + 2.40))
+                    if z < trailing_z else smooth((3.95 - z) / (3.95 - root_z))
+                    if z > root_z else 1.0)
+        width = 0.95 + 0.73 * envelope
+        rx = float(np.interp(z, STATIONS[:, 0], STATIONS[:, 1]))
+        ry = float(np.interp(z, STATIONS[:, 0], STATIONS[:, 2]))
+        cy = float(np.interp(z, STATIONS[:, 0], STATIONS[:, 3]))
+        top, bottom = [], []
+        for u in span_samples:
+            x = float(u * width)
+            # The outboard join lies slightly inside the existing wing mesh.
+            fraction = max(0.0, (abs(x) - 1.55) / (6.40 - 1.55))
+            section_y = 4.52 + fraction * (4.62 - 4.52)
+            section_z = root_z + fraction * (2.85 - root_z)
+            section_chord = chord + fraction * (2.95 - chord)
+            thickness = 0.40 + fraction * (0.26 - 0.40)
+            upper = _v05._section_loop(abs(x), section_y, section_z,
+                                       section_chord, thickness, 22, False)[:22]
+            half_height = float(np.interp(z, upper[::-1, 2], upper[::-1, 1])) - section_y
+            hull_y = cy + ry * np.sqrt(max(0.0, 1.0 - (x / rx) ** 2))
+            top_y = hull_y - 0.025 + envelope * (
+                section_y + half_height + 0.012 + 0.018 * (1.0 - u*u) - hull_y + 0.025)
+            # Centre underside penetrates the hull; outer underside meets the
+            # lower wing, without a free hanging lip beyond the wing root.
+            shoulder = smooth((abs(x) - 1.02) / (1.55 - 1.02)) * envelope
+            bottom_y = ((hull_y - 0.08) * (1.0 - shoulder)
+                        + (section_y - half_height - 0.012) * shoulder)
+            top.append((x, top_y, float(z)))
+            bottom.append((x, bottom_y, float(z)))
+        rings.append(top + bottom[::-1])
+    vertices = np.asarray(rings, np.float32).reshape(-1, 3)
+    count = len(rings[0])
+    indices = []
+    for r in range(len(rings) - 1):
+        for i in range(count):
+            a = r * count + i
+            b = r * count + (i + 1) % count
+            indices.extend((a, b + count, b, a, a + count, b + count))
+    # Cap the thin, concave hull-following section with matched strips.
+    # A fan from the ring mean crosses outside this crescent and flips faces.
+    for r, reverse in ((0, False), (len(rings) - 1, True)):
+        offset = r * count
+        for j in range(len(span_samples) - 1):
+            a, b = offset + j, offset + j + 1
+            c, d = offset + count - 2 - j, offset + count - 1 - j
+            indices.extend((a, c, b, a, d, c) if reverse else (a, b, c, a, c, d))
+    return _v05._orient_outward(vertices, np.asarray(indices, np.uint16))
 
 
 def tail_root_fillet():
@@ -601,7 +578,6 @@ def q400_meshes():
         meshes[f"spoiler_{name}"] = panel(
             side, 2.40, 6.80, 4.62, 4.72, 1.55, 1.35, 0.55, 0.42, 0.04
         )
-        meshes[f"wing_fairing_{name}"] = wing_fairing(side)
         meshes[f"winglet_{name}"] = lofted_aerofoil(
             [
                 (side * (HALF_SPAN - 0.08), 4.88, 1.55, 0.95, 0.08),
@@ -613,8 +589,7 @@ def q400_meshes():
         meshes[f"flap_track_{name[0]}1"] = box(side * 3.20, 4.34, -0.55, 0.10, 0.16, 0.55)
         meshes[f"flap_track_{name[0]}2"] = box(side * 5.80, 4.45, -0.20, 0.10, 0.14, 0.48)
 
-    # Continuous centre wing box across the cabin crown — kills the left/right
-    # valley so the high-wing root reads as one fuselage saddle.
+    # One hull-seated centre fairing; no overlapping left/right roof shells.
     meshes["wing_centre_saddle"] = wing_centre_saddle()
 
     for side, name in ((-1.0, "left"), (1.0, "right")):
@@ -868,7 +843,55 @@ def validate(meshes):
     return minimum, maximum
 
 
+def repair_existing_fairing():
+    """Replace only the roof meshes in the finished kit, preserving other work."""
+    path = AIRCRAFT / (BASENAME + ".gltf")
+    document = json.loads(path.read_text())
+    blob = (AIRCRAFT / document["buffers"][0]["uri"]).read_bytes()
+
+    def read_accessor(index):
+        accessor = document["accessors"][index]
+        view = document["bufferViews"][accessor["bufferView"]]
+        dtype = {5126: "<f4", 5123: "<u2"}[accessor["componentType"]]
+        components = {"VEC3": 3, "SCALAR": 1}[accessor["type"]]
+        if "byteStride" in view or "sparse" in accessor:
+            raise ValueError("fairing repair expects the packed Airside kit contract")
+        offset = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
+        return np.frombuffer(blob, dtype=dtype, count=accessor["count"] * components,
+                             offset=offset).copy().reshape(-1, components)
+
+    meshes = {}
+    for node in document["nodes"]:
+        if node.get("matrix") or any(k in node for k in ("translation", "rotation", "scale")):
+            raise ValueError("fairing repair expects mesh-local kit vertices")
+        name = node["name"]
+        if name in ("wing_fairing_left", "wing_fairing_right"):
+            continue
+        if name == "wing_centre_saddle":
+            meshes[name] = wing_centre_saddle()
+            continue
+        primitives = document["meshes"][node["mesh"]]["primitives"]
+        if len(primitives) != 1:
+            raise ValueError("fairing repair expects one primitive per kit node")
+        primitive = primitives[0]
+        meshes[name] = (read_accessor(primitive["attributes"]["POSITION"]),
+                        read_accessor(primitive["indices"]).reshape(-1))
+    if "wing_centre_saddle" not in meshes:
+        raise ValueError("finished Dash 8 kit is missing its centre saddle")
+    writer_spec = importlib.util.spec_from_file_location(
+        "airside_fairing_writer", SCRIPTS / "generate-authored-fbx-turboprop-terminal.py")
+    writer = importlib.util.module_from_spec(writer_spec)
+    writer_spec.loader.exec_module(writer)
+    writer.write_kit(AIRCRAFT, BASENAME, meshes)
+
+
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--fairing-only", action="store_true",
+                        help="repair the finished kit while preserving all other geometry")
+    if parser.parse_args().fairing_only:
+        repair_existing_fairing()
+        return
     AIRCRAFT.mkdir(parents=True, exist_ok=True)
     meshes = q400_meshes()
     minimum, maximum = validate(meshes)

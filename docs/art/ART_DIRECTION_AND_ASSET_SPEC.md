@@ -518,3 +518,13 @@ mapped geographic shapes and the airfield edge handover. Existing source texture
 paths/GUIDs remain; only `Art/Shaders/GroundCharacter.hlsl` is introduced as a shared
 include with metadata. Zero external assets/cost. Integrated; native shader lighting,
 visual strength and GPU cost are unverified. Decision/evidence: `2026-10-09-ground-character`.
+
+
+## Dash 8 wing-body fairing repair — 9 October 2026
+
+AIR-006 retains its existing exact model and thumbnail paths. One closed
+hull-seated crown fairing replaces the overlapping left/right pods and centre
+oval, with shared vertices for smooth normals and outer joins following the
+existing wing sections. All other finished model geometry remains identical.
+Project-owned source, zero cost, prior git fallback; native appearance and
+performance unverified. Evidence: `docs/testing/dash8-wing-fairing-2026-10-09.md`.

@@ -133,7 +133,7 @@ namespace Airside.Presentation
                 : JetCockpitProfile.TryFor(type.Id, out _) ? JetCockpitInterior.Build(view, type)
                 : TurbopropCockpitInterior.Create(view, type);
             if (_cockpitInterior == null) return;
-            _cockpitInterior.Enter();
+            _cockpitInterior.Enter(false);
         }
 
         private void ExitCockpit(bool overview)
@@ -180,6 +180,8 @@ namespace Airside.Presentation
                 BindCockpitView(view);
                 StartFlightCamera(aircraft);
             }
+            if (_cockpitInterior != null && _cameraController != null)
+                _cockpitInterior.SetExteriorHidden(_cameraController.SeatBlendSettled);
             var elapsed = _preciseTime - _cockpitPreviousTime;
             var parts = PartsFor(view);
             // Wheel height: take the gear-pivot lift back out so a pitched-up roll still reads as on the ground.

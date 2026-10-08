@@ -12,6 +12,7 @@ namespace Airside.Presentation
         protected TextMesh _readout;
         protected string _lastReadout;
         private bool _entered;
+        private bool _exteriorHidden;
         public void SetReadout(string value)
         {
             if (_readout == null || value == _lastReadout) return;
@@ -22,10 +23,22 @@ namespace Airside.Presentation
         /// <summary>Live pitch/bank for the primary flight displays. Types without a live ADI ignore it.</summary>
         public virtual void SetAttitude(float pitchUpDegrees, float bankLeftDegrees) { }
 
-        public void Enter()
+        /// <summary>Shows the interior. With <paramref name="hideExterior"/> false the airframe stays drawn until
+        /// <see cref="SetExteriorHidden"/> is called, so the camera's glide in from the exterior view does not
+        /// fly past wings and engines floating without a fuselage.</summary>
+        public void Enter(bool hideExterior = true)
         {
             if (_entered) return;
             _entered = true;
+            if (hideExterior) SetExteriorHidden(true);
+            gameObject.SetActive(true);
+        }
+
+        public void SetExteriorHidden(bool hide)
+        {
+            if (!_entered || hide == _exteriorHidden) return;
+            _exteriorHidden = hide;
+            if (!hide) { RestoreExterior(); return; }
             _exterior.Clear();
             foreach (var renderer in transform.parent.GetComponentsInChildren<Renderer>(true))
             {
@@ -35,7 +48,13 @@ namespace Airside.Presentation
                 _exterior.Add((renderer, renderer.forceRenderingOff));
                 renderer.forceRenderingOff = true;
             }
-            gameObject.SetActive(true);
+        }
+
+        private void RestoreExterior()
+        {
+            foreach (var entry in _exterior)
+                if (entry.renderer != null) entry.renderer.forceRenderingOff = entry.hidden;
+            _exterior.Clear();
         }
 
         protected bool KeepExteriorPart(Transform part)
@@ -50,9 +69,8 @@ namespace Airside.Presentation
 
         public void Leave()
         {
-            foreach (var entry in _exterior)
-                if (entry.renderer != null) entry.renderer.forceRenderingOff = entry.hidden;
-            _exterior.Clear();
+            RestoreExterior();
+            _exteriorHidden = false;
             _entered = false;
             gameObject.SetActive(false);
         }

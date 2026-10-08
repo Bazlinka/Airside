@@ -45,6 +45,9 @@ namespace Airside.Presentation
                 _cockpitShownYaw + (CockpitMotionEnabled ? _cockpitMotionEuler.y : 0f),
                 CockpitMotionEnabled ? _cockpitMotionEuler.z : 0f) : transform.rotation;
 
+        /// <summary>True once the glide into the seat has finished, so the airframe can be hidden without a visible pop.</summary>
+        public bool SeatBlendSettled => _blendSeconds >= CockpitLookInput.TransitionSeconds;
+
         public void SetCockpitMotion(Vector3 offset, Vector3 euler)
         {
             _cockpitMotionOffset = offset;

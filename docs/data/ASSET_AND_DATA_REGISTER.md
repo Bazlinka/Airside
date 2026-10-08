@@ -382,6 +382,22 @@ Existing CC0 asphalt, worn-concrete and ambientCG grass maps are reused. Pavemen
 macro variation and weather sheen now share a coherent world scale. No paid assets,
 subscriptions or signups are required by any runtime or regeneration step.
 
+## Australian airport runway, terminal and gate figures — 2026-10-08
+
+Source: the English Wikipedia article for each of the 19 airports in `DestinationCatalogue.Australia`, read 2026-10-08.
+Licence: CC BY-SA 4.0 (facts only; no prose reproduced). Cost: none. Attribution: Wikipedia contributors.
+Used for: `AirportTemplates` (runway designators and lengths, terminal and gate counts). Sheet: `docs/data/AUSTRALIAN_AIRPORTS_RUNWAYS_TERMINALS_GATES.md`.
+Fallback: a generic count (`FactBasis.Generic`) wherever no figure was found. Not yet cross-checked against AIP/ERSA.
+
+## Airport gate numbers and terminals (OpenStreetMap) — 2026-10-08
+
+Source: OpenStreetMap via the Overpass API (`aeroway=gate|terminal|runway|parking_position` inside each aerodrome), queried 2026-10-08
+for 16 of 18 non-Adelaide airports (Hobart and Kingscote timed out and keep their Wikipedia/generic templates). Trimmed to
+`docs/data/osm/airport-gates-2026-10-08.json` (21 KB). Licence: ODbL 1.0, (c) OpenStreetMap contributors. Cost: none.
+Used for: real gate numbers and terminal membership (`scripts/generate-airport-gates.py` -> `AirportGateData.cs`) at Melbourne, Sydney,
+Brisbane, Perth, Canberra, Gold Coast, Darwin and Alice Springs, and to cross-check runway designators (all matched except Whyalla 05/23,
+which OSM does not map). Fallback: the Wikipedia template. Aerobridge flags and gate size are inferred from a terminal's role, not mapped.
+
 ## Parafield independent airport — 2026-10-08 (task #593)
 
 | ID | Source / generator | Licence / cost / attribution | Runtime use / fallback |

@@ -13,6 +13,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- 2026-10-08: Runway/terminal/gate templates for all 19 Australian airports (real OSM gate numbers at 8) plus a runway and gate planner that sends airlines to their own terminal (unverified in Unity).
+
 - Add independent Parafield: four mapped runways, taxiways, hangars and light trainer traffic; watch from Operations (#593; packaged review pending).
 
 - Remove artificial ocean reflection rings by keeping far/outer water meshes planar; land overlap unchanged (native visual confirmation pending).

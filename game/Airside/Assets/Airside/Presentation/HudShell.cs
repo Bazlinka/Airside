@@ -193,7 +193,7 @@ namespace Airside.Presentation
         public const float SelectedCardMinWidth = 300f;
 
         public const float ToastWidth = 420f;
-        public const float ToastHeight = 42f;
+        public const float ToastHeight = 68f;
         public const float ToastGap = 6f;
 
         public const float SetupWidth = 460f;
@@ -719,17 +719,56 @@ namespace Airside.Presentation
 
 namespace Airside.Presentation
 {
-    /// <summary>A transient notice: a glass pill with a coloured leading dot (ADR 0122).</summary>
+    /// <summary>A departure-style notice: readable severity, wrapped message and optional lifetime/repeat indicators.</summary>
     public static class ToastPainter
     {
-        public static void Paint(HudDrawList into, HudBox box, string text, HudTone tone, float alpha)
+        public static void Paint(HudDrawList into, HudBox box, string text, HudTone tone, float alpha,
+            float remaining01 = -1f, int repeats = 1)
         {
             if (into == null || box.IsEmpty || string.IsNullOrEmpty(text) || alpha <= 0.01f)
                 return;
-            into.Surface(box, 0.92f * alpha);
-            into.Dot(box.X + 20f, box.Y + box.Height * 0.5f, 9f, tone);
-            into.Text(new HudBox(box.X + 34f, box.Y + (box.Height - 16f) * 0.5f, box.Width - 48f, 18f), text, 12f,
-                HudTone.Default, HudTextStyle.Bold, HudAlign.Left, null, alpha);
+            alpha = Math.Clamp(alpha, 0f, 1f);
+            into.Fill(box, HudTone.Default, 0.96f * alpha, AirsidePalette.GlassHex);
+            into.Outline(box, HudTone.Muted, 0.22f * alpha);
+            into.Hairline(new HudBox(box.X, box.Y + 10f, 2f, box.Height - 20f), tone, alpha);
+            var centreY = box.Y + box.Height * 0.5f;
+            into.Fill(new HudBox(box.X + 12f, centreY - 12f, 24f, 24f), tone, 0.14f * alpha);
+            into.Text(new HudBox(box.X + 12f, centreY - 10f, 24f, 20f),
+                tone == HudTone.Positive ? "+" : tone is HudTone.Caution or HudTone.Negative ? "!" : "i",
+                14f, tone, HudTextStyle.Bold, HudAlign.Center, alpha: alpha);
+            var x = box.X + 46f;
+            var width = box.Width - 60f;
+            var expanded = box.Height >= 60f;
+            if (expanded)
+            {
+                var label = tone switch
+                {
+                    HudTone.Positive => "SUCCESS",
+                    HudTone.Caution => "ATTENTION",
+                    HudTone.Negative => "ACTION NEEDED",
+                    HudTone.Accent => "AIRPORT UPDATE",
+                    _ => "NOTICE"
+                };
+                into.Text(new HudBox(x, box.Y + 9f, Math.Max(0f, width - (repeats > 1 ? 46f : 0f)), 12f),
+                    label, 9f, tone, HudTextStyle.Bold | HudTextStyle.Caption, alpha: alpha);
+            }
+            if (repeats > 1)
+            {
+                into.Text(new HudBox(box.Right - 58f, box.Y + 8f, 44f, 14f), "×" + repeats, 10f,
+                    HudTone.Muted, HudTextStyle.Bold, HudAlign.Right, alpha: alpha);
+                if (!expanded) width -= 46f;
+            }
+            into.Text(new HudBox(x, expanded ? box.Y + 25f : centreY - 15f, Math.Max(0f, width), 30f),
+                text, HudShell.FitFontSize(text, 12f, Math.Max(1f, width) * 2f, 10f),
+                HudTone.Default, HudTextStyle.Wrap, alpha: alpha);
+            if (remaining01 >= 0f)
+            {
+                var track = new HudBox(x, box.Bottom - 6f, Math.Max(0f, width), 1f);
+                into.Hairline(track, HudTone.Muted, 0.2f * alpha);
+                var remaining = Math.Clamp(remaining01, 0f, 1f);
+                if (remaining > 0f)
+                    into.Hairline(new HudBox(track.X, track.Y, track.Width * remaining, 1f), tone, 0.55f * alpha);
+            }
         }
     }
 

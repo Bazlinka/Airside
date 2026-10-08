@@ -52,6 +52,7 @@ Older entries (about 1,000, through 2026-10-07) are in
 [`docs/history/CHANGELOG-through-2026-10-07.md`](docs/history/CHANGELOG-through-2026-10-07.md).
 
 ## Unreleased
+- Restyle toasts with status labels, wrapped text, repeat badges, lifetime bars and eased motion; keep stacks clear of panels and screen edges (#642).
 - Redesign the Adelaide T1 opening, restore AIRSIDE with a vector lockup/text fallback, and add a skippable centre-opening Continue reveal (#626).
 
 - 2026-10-08 — #614: layered twin-engine starts/cores, cabin and spatial airport audio, regional landing cues and 68 v02 clips (Unity audio unverified).

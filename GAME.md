@@ -7,13 +7,16 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
-**Adelaide opening redesign (8 Oct, Codex, #626):** title now uses an Adelaide T1-specific dawn illustration,
-original v04 departure-vector AIRSIDE identity, departure-card menu and ADL/YPAD location signature.
-Brand images fit rather than crop; missing title art gets native AIRSIDE text. Continue/start opens the
-illustration from the centre while the camera glides, lifts the logo and retracts letterbox bars.
-Existing skip, OpeningAnimation option and 2.8-second duration remain. Simulation/saves unchanged.
-Provenance/implementation: `docs/art/prompts/adelaide-opening-2026-10-08.md`;
-decision `docs/decisions/2026-10-08-adelaide-opening-identity.md`.
+**Toast redesign (8 Oct, Codex, #642):** departure-style notification cards now show a status caption/icon,
+wrapped message, separate repeat count and remaining-lifetime rule. Brief fade/rise entrance and smooth
+exit; stack stops at registered panels/screen margins. Workspace/flight slots reserve 68 points;
+opening greeting stays compact. Six-second lifetime/history/repeat behaviour and simulation/saves retained.
+Decision: `docs/decisions/2026-10-08-toast-notifications.md`.
+
+**Adelaide opening (#626 / PR #638):** merged T1 dawn artwork, v04 AIRSIDE vector/text fallback and
+skippable centre-opening Continue reveal. Still needs Mac appearance/build checks. Provenance:
+`docs/art/prompts/adelaide-opening-2026-10-08.md`.
+
 **Control-tower view (8 Oct, Claude):** click the Adelaide tower in the overview to stand in its cab (`AirsidePrototype.Tower.cs`, `ControlTowerView.cs`,
 `AirsideCameraController.Tower.cs`). Reuses the passenger-seat camera: 360° drag-look, scroll zoom, Home recentres, Esc / LEAVE TOWER glides back to the
 previous overview. Presentation only; saves unchanged. Headless geometry/pick tests pass; Unity compile, cab-interior appearance (glass is back-face
@@ -23,14 +26,14 @@ culled from inside), ground-level terrain/LOD streaming and night look are unver
 `RegionalFlightPath.ApproachPitchDegrees` / `DeparturePitchDegrees` now blend route pitch into the authored attitude (flare over 300 m, ~7 s; was 150 m). Presentation only.
 Unity compile and appearance unverified — watch a regional arrival and departure from the follow camera.
 
-**Checks:** 15/16 relevant headless painter/setup checks passed; the failure is the untouched
-FlightManual page 7 “Land cover” assertion at 800×600. Four edited C# files parsed without syntax errors;
-this is not a Unity compile. New asset metadata/mirrors and wordmark regeneration pass. The global
-asset audit reports an existing source/StreamingAssets satellite JPEG mismatch (both bytes match HEAD).
-Unity compile, packaged loading, Retina appearance and interactive transition remain unverified.
+**Checks:** focused notification/painter/layout checks 22/22 passed; four edited C# files parse without
+syntax errors. This is not a Unity compile or rendered playtest. Opening’s previous 15/16 check result
+retains the untouched FlightManual page 7 “Land cover” failure at 800×600; the asset audit’s existing
+satellite JPEG mirror mismatch also remains unrelated. No new assets in the toast redesign.
 
 **Next:** Bailey chooses the Mac build/playtest timing. Check the title and Continue, skip, animation-off,
-new-airline and returned-airline paths in the next Mac build. The v03 Dock/app icon is retained.
+new-airline and returned-airline paths in the next Mac build. Also inspect notification severity,
+long messages/repeats, entrance/expiry, stacked notices and workspace/flight-view placement. The v03 Dock/app icon is retained.
 Standing policy: quick relevant checks only; broad suites/builds/player reviews only on request;
 merge completed authorised work without repeated approval.
 

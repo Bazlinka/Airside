@@ -3403,7 +3403,7 @@ namespace Airside.Presentation
 
         private readonly HudDrawList _toastDrawList = new();
 
-        /// <summary>Glass toast pills (ADR 0122): newest in the slot, older ones stepping away from the edge.</summary>
+        /// <summary>Departure-style notices with a short entrance and a panel-safe stack.</summary>
         private void DrawToast(Rect rect)
         {
             if (rect.width <= 0f || rect.height <= 0f)
@@ -3418,11 +3418,25 @@ namespace Airside.Presentation
             for (var i = 0; i < _visibleToasts.Count; i++)
             {
                 var entry = _visibleToasts[i];
-                var alpha = ToastQueue.Alpha(entry, now) * (i == 0 ? 1f : 0.8f);
+                var entrance = ToastQueue.Entrance(entry, now);
+                var alpha = ToastQueue.Alpha(entry, now) * entrance * (i == 0 ? 1f : 0.86f);
                 var slot = new Rect(rect.x, rect.y + step * i, rect.width, rect.height);
+                // Workspace feedback has room for one row; overview/flight views may have more.
+                // Keep both the final slot and the entrance path away from controls and the edge.
+                var viewportHeight = Screen.height / Mathf.Max(0.01f, _hudScale);
+                var rise = Mathf.Min(8f * (1f - entrance), Mathf.Max(0f, viewportHeight - HudShell.Margin - slot.yMax));
+                var path = new Rect(slot.x, slot.y, slot.width, slot.height + rise);
+                if (path.yMax > viewportHeight - HudShell.Margin)
+                    break;
+                var blocked = false;
+                foreach (var panel in _hudPanels)
+                    if (panel.Overlaps(path)) { blocked = true; break; }
+                if (blocked)
+                    break;
+                slot.y += rise;
                 _hudOverlays.Add(slot);
-                ToastPainter.Paint(_toastDrawList, Box(slot),
-                    entry.Repeats > 1 ? $"{entry.Message}  ×{entry.Repeats}" : entry.Message, entry.Tone, alpha);
+                ToastPainter.Paint(_toastDrawList, Box(slot), entry.Message, entry.Tone, alpha,
+                    ToastQueue.Remaining(entry, now), entry.Repeats);
             }
             _hudPainter.Draw(_toastDrawList);
         }

@@ -14,6 +14,7 @@ Older entries (about 1,000, through 2026-10-07) are in
 ## Unreleased
 
 - **ATR 42 hold door fixed.** The forward-left baggage door no longer sits mirrored a door-width ahead of the cockpit: the half turn is baked into its mesh, not its transform (unverified in Unity visually).
+- Keep one previous airline save and recover unreadable/missing primary JSON through Continue, with a clear recovery warning (#599).
 - Clearer opening, shorter optional entrance, grouped Options and direct return to title; expose cockpit motion and explain settings (#601).
 
 - 2026-10-08: Runway/terminal/gate templates for all 19 Australian airports (real OSM gate numbers at 8) plus a runway and gate planner that sends airlines to their own terminal (unverified in Unity).

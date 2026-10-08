@@ -11,7 +11,7 @@ Shader "Airside/WeatherVolume"
     SubShader
     {
         Tags { "RenderPipeline"="UniversalPipeline" "RenderType"="Transparent" "Queue"="Transparent-5" }
-        Blend SrcAlpha OneMinusSrcAlpha
+        Blend One OneMinusSrcAlpha
         ZWrite Off
         ZTest Always
         Cull Front
@@ -89,7 +89,9 @@ Shader "Airside/WeatherVolume"
                     float streaks=noise(float3(p.x*3,p.y*18,p.z*32)+_Seed+drift);
                     density*=lerp(1,saturate((streaks-0.30)*2)*0.35,_Cirrus);
                 }
-                return density;
+                // Ease the eroded silhouette without hardening thin ice wisps. The same
+                // density is used for view absorption and sun shadowing.
+                return density*smoothstep(0,0.12,density);
             }
             half4 frag(Varyings i) : SV_Target
             {
@@ -116,24 +118,50 @@ Shader "Airside/WeatherVolume"
                 float transmittance=1;
                 float3 colour=0;
                 Light sun=GetMainLight();
-                float3 lightOS=normalize(mul((float3x3)unity_WorldToObject,sun.direction));
+                float3 lightOS=mul((float3x3)unity_WorldToObject,sun.direction);
+                lightOS*=rsqrt(max(dot(lightOS,lightOS),0.000001));
+                float sunLuminance=dot(sun.color,float3(0.2126,0.7152,0.0722));
+                float sunStrength=saturate(sunLuminance);
+                // Preserve the existing weather/day tint, borrowing only a restrained
+                // amount of the directional light's hue (warm dusk, cool night).
+                float3 sunTint=lerp(float3(1,1,1),
+                    clamp(sun.color/max(sunLuminance,0.001),0.55,1.6),0.35);
+                float skyLuminance=dot(max(SampleSH(float3(0,1,0)),0),
+                    float3(0.2126,0.7152,0.0722));
+                float ambient=lerp(0.20,0.48,saturate(skyLuminance));
+                // Forward scattering brightens thin cloud when looking toward the
+                // light. Bound the phase response so it cannot become a white bloom slab.
+                float cosine=dot(directionWS,sun.direction);
+                const float anisotropy=0.55;
+                float phase=(1-anisotropy*anisotropy)/
+                    pow(max(1+anisotropy*anisotropy-2*anisotropy*cosine,0.05),1.5);
+                float silverLining=min(phase*0.18,0.65)*sunStrength;
+                // Reveal/wrap fades change optical depth, rather than making an opaque
+                // body into a translucent flat card after integration.
+                float extinction=length(direction)*lerp(13,24,_Storm)*saturate(_BaseColor.a);
                 float jitter=lerp(0.35,0.65,hash(float3(floor(i.positionCS.xy),_Seed)));
                 [loop] for(int s=0;s<steps;s++)
                 {
                     float t=start+(s+jitter)*stepLength;
                     float3 p=origin+direction*t;
-                    float density;
-                    float3 sampleColour=_BaseColor.rgb;
-                    density=cloudDensity(p);
-                    // Shade the lower body and the side hidden from the sun, keeping silver tops.
-                    float shade=exp(-cloudDensity(p+lightOS*0.09)*1.7);
-                    float topLight=saturate((p.y-0.05)*3)*_Storm;
-                    sampleColour=lerp(sampleColour, min(float3(0.95,0.97,1.0),sampleColour*1.8+0.15),topLight);
-                    sampleColour*=lerp(0.48,1.10,saturate(shade*0.65+(p.y+0.5)*0.55));
+                    float density=cloudDensity(p);
+                    if(density<0.001) continue;
+                    // Two fixed probes along the sun ray give both local lobe relief
+                    // and broader body shadowing; no nested light-marching loop.
+                    float nearDensity=cloudDensity(p+lightOS*0.09);
+                    float bodyDensity=cloudDensity(p+lightOS*0.23);
+                    float sunDepth=(nearDensity*1.2+bodyDensity*2.2)*lerp(1,1.35,_Storm);
+                    float sunTransmission=exp(-sunDepth);
+                    float heightFill=lerp(0.65,1.0,saturate(p.y+0.5));
+                    float skyFill=ambient*heightFill*lerp(1,0.72,_Storm);
+                    float edgeLight=silverLining*(1-density)*sunTransmission;
+                    float directLight=sunStrength*sunTransmission*0.85+edgeLight;
+                    float3 sampleColour=_BaseColor.rgb*
+                        (skyFill+sunTint*directLight);
                     float3 sampleWS=originWS+directionWS*t;
                     float glow=exp(-distance(sampleWS,_AirsideLightningPosition.xyz)/2200)*_AirsideLightningFlash;
                     sampleColour+=float3(0.6,0.68,0.85)*glow;
-                    density*=length(direction)*lerp(13,24,_Storm);
+                    density*=extinction;
                     float opacity=1-exp(-density*stepLength);
                     colour+=transmittance*opacity*sampleColour;
                     transmittance*=1-opacity;
@@ -141,7 +169,9 @@ Shader "Airside/WeatherVolume"
                 }
                 float alpha=1-transmittance;
                 clip(alpha-0.002);
-                return half4(colour/max(alpha,0.001),alpha*_BaseColor.a);
+                // Integration already produces premultiplied radiance. Composite it
+                // directly without dividing by near-zero edge opacity.
+                return half4(colour,alpha);
             }
             ENDHLSL
         }

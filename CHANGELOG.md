@@ -6,6 +6,7 @@
 - 2026-10-08 — Economy: flights cost more (120 base + 1.45/1.65 per km, was 70 + 1.12/1.28), pay and prices unchanged, so margins are thinner (balance unverified; ADR flight-cost-rebalance).
 
 - 2026-10-08 — Switching to cockpit/window view no longer shows the wings floating without a fuselage: the airframe hides only once the camera glide arrives (unverified in Unity).
+- 2026-10-08 — Moving map smoothness: textures bake on a worker thread (no open/zoom hitch), crisp anti-aliased coast window at every scale, mipmapped airfield, ring texture, cached route/text (Unity compile/look unverified).
 
 - 2026-10-08 — Approach gear follows height (down ~2,000 ft AGL jets / 1,500 turboprops, lowered over ~22 s) instead of phase progress; sources in lighting README (unverified in Unity).
 

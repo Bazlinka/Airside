@@ -728,13 +728,25 @@ namespace Airside.Presentation
             if (_thresholdLights != null)
             {
                 var approach = Mathf.Lerp(1.85f, 0.04f, daylight);
+                var sequenced = daylight < 0.42f;
+                if (_hialStation == null || _hialStation.Length != _thresholdLights.Length)
+                    _hialStation = HialStations(_thresholdLights, out _hialLast);
                 for (var i = 0; i < _thresholdLights.Length; i++)
                 {
                     var light = _thresholdLights[i];
                     if (light == null)
                         continue;
-                    light.intensity = approach;
-                    light.enabled = approach > 0.05f;
+                    var level = approach;
+                    // Runway 23's HIAL carries sequenced flashers: a bright flash that runs from the far end
+                    // of the approach in toward the threshold, twice a second, over a steady base.
+                    if (sequenced && _hialStation[i] >= 0 && _hialLast > 0)
+                    {
+                        var behind = (_hialLast - _hialStation[i]) / (float)_hialLast;
+                        var phase = Mathf.Repeat(Time.unscaledTime * AirsideReusableMotion.AlsChaseHz * 0.8f - behind * 0.85f, 1f);
+                        level = approach * (0.45f + 2.3f * (phase < 0.14f ? Mathf.Sin(phase / 0.14f * Mathf.PI) : 0f));
+                    }
+                    light.intensity = level;
+                    light.enabled = level > 0.05f;
                 }
             }
 

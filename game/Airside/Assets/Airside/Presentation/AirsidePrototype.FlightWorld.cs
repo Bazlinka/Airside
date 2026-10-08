@@ -128,7 +128,7 @@ namespace Airside.Presentation
             if (aircraft.State == FleetState.AtDestination
                 && RegionalRunways.TryGet(aircraft.CurrentDestination.Value.Code,out var parkedRunway))
             {
-                RegionalFlightPath.Landing(parkedRunway,0,0,0,out x,out y,out z);
+                RegionalFlightPath.Landing(parkedRunway,0,0,0,null,aircraft.Type,out x,out y,out z);
                 return;
             }
             TryEnroute(aircraft,out var profile,out var elapsed);
@@ -167,7 +167,7 @@ namespace Airside.Presentation
             var remaining=profile.LegSeconds-elapsed;
             if (RegionalRunways.TryGet(destination.Code,out var regionalRunway) && remaining<=RegionalFlightPath.TerminalSeconds)
             {
-                RegionalFlightPath.Landing(regionalRunway,0,0,remaining,out x,out y,out z);
+                RegionalFlightPath.Landing(regionalRunway,0,0,remaining,profile,aircraft.Type,out x,out y,out z);
                 return;
             }
             var performance = AircraftPerformance.For(aircraft.Type);
@@ -201,7 +201,7 @@ namespace Airside.Presentation
                 RouteMap.FlightPoint(_operations.Home.Latitude,_operations.Home.Longitude,destination.Latitude,
                     destination.Longitude,t,aircraft.Registration,out lat,out lon);
                 YpadFrame.ToWorld(lat,lon,out var tx,out var tz);
-                RegionalFlightPath.Landing(regionalRunway,0,0,RegionalFlightPath.TerminalSeconds,out var sx,out var sy,out var sz);
+                RegionalFlightPath.Landing(regionalRunway,0,0,RegionalFlightPath.TerminalSeconds,profile,aircraft.Type,out var sx,out var sy,out var sz);
                 var blend=Math.Clamp((360-remaining)/180,0,1);blend=blend*blend*(3-2*blend);
                 x+=(sx-tx)*blend;z+=(sz-tz)*blend;
                 y+=(sy-(AirsideFlightPath.GroundY+profile.AltitudeFeetAt(profile.LegSeconds-180)/EnrouteProfile.FeetPerMetre))*blend;

@@ -2,6 +2,7 @@
 
 - 2026-10-08 — Hollow aircraft fixed: a dark inner skin behind each fuselage so windscreens and cabin windows show a dark interior instead of the sky (unverified in Unity).
 
+- 2026-10-08 — Regional landings follow the route speed into the terminal area, settle to the type's approach/touchdown speed and brake to a stop (was a flat 90 kt for every type); new FlightSpeedEnvelope (min speed rises with bank, 250 kt CAS cap, climb/descent angle limits speed change). Headless-tested only.
 - 2026-10-08 — Freighters no longer show passenger cabin windows (flight deck only); exterior aircraft glass is a dark near-opaque tint so windscreens/cabin windows are not see-through (unverified).
 - 2026-10-08 — HUD chrome redesign (stage 1): floating status capsule and action group, wider rail with a clear selected state, milestone card with progress, richer palette (Unity appearance unverified).
 

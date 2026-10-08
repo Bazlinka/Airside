@@ -32,7 +32,58 @@ namespace Airside.Presentation
         public const double AttitudeBlendSeconds=25;
         public const double RolloutSeconds=40;
         public static void Landing(RegionalRunway runway,double homeX,double homeZ,double remaining,
-            out double x,out double y,out double z)
+            out double x,out double y,out double z) =>
+            Landing(runway,homeX,homeZ,remaining,null,null,out x,out y,out z);
+
+        /// <summary>
+        /// Terminal speed in knots, <paramref name="remaining"/> seconds before the journey ends. It starts from the
+        /// route's own ground speed (so the cruise-to-terminal seam does not jump) and settles onto the type's approach
+        /// speed and then touchdown speed, never below the speed envelope's minimum.
+        /// </summary>
+        public static double TerminalSpeedKnots(EnrouteProfile profile,AircraftType type,double remaining)
+        {
+            var perf=AircraftPerformance.For(type);
+            var s=Math.Clamp(remaining,RolloutSeconds,TerminalSeconds);
+            var route=profile.GroundSpeedKnotsAt(Math.Max(0,profile.LegSeconds-s));
+            var flare=Smooth((RolloutSeconds+20-s)/20);
+            var target=perf.ApproachKnots+(perf.TouchdownKnots-perf.ApproachKnots)*flare;
+            var w=Smooth((RolloutSeconds+35-s)/35);
+            var v=route+(target-route)*w;
+            return Math.Max(v,FlightSpeedEnvelope.MinimumKnots(type,0,true));
+        }
+
+        /// <summary>Metres still to fly to the touchdown point; the integral of <see cref="TerminalSpeedKnots"/>.</summary>
+        public static double TerminalDistanceMetres(EnrouteProfile profile,AircraftType type,double remaining)
+        {
+            var from=Math.Clamp(remaining,RolloutSeconds,TerminalSeconds);
+            var metres=0.0;
+            for(var t=from;t>RolloutSeconds;)
+            {
+                var step=Math.Min(1.0,t-RolloutSeconds);
+                metres+=TerminalSpeedKnots(profile,type,t-step*.5)*CircuitProfile.KnotsToMetresPerSecond*step;
+                t-=step;
+            }
+            return metres;
+        }
+
+        /// <summary>Constant deceleration (m/s^2) that stops a rollout of this type within the strip that remains.</summary>
+        public static double RolloutDeceleration(AircraftType type,double availableMetres)
+        {
+            var v0=AircraftPerformance.For(type).TouchdownKnots*CircuitProfile.KnotsToMetresPerSecond;
+            var comfortable=v0/(RolloutSeconds*.85);
+            var needed=v0*v0/(2*Math.Max(250,availableMetres));
+            return Math.Clamp(Math.Max(comfortable,needed),1.2,4.5);
+        }
+
+        private static double Smooth(double v){var u=Math.Clamp(v,0,1);return u*u*(3-2*u);}
+
+        /// <summary>
+        /// Regional landing for a known aircraft: ground speed follows the route into the terminal area, settles to
+        /// approach and touchdown speed, then brakes at a type-sized rate to a stop. Without a profile or type it is
+        /// the older fixed-time path.
+        /// </summary>
+        public static void Landing(RegionalRunway runway,double homeX,double homeZ,double remaining,
+            EnrouteProfile? journey,AircraftType type,out double x,out double y,out double z)
         {
             var ax=runway.Ax;var az=runway.Az;var bx=runway.Bx;var bz=runway.Bz;
             // Prefer the threshold nearest home. Weather/runway management remains Adelaide-only.
@@ -42,20 +93,31 @@ namespace Airside.Presentation
             var seconds=Math.Clamp(remaining,0,TerminalSeconds);
             var touchdown=Math.Min(450,length*.3);
             double along,height;
+            var typed=journey.HasValue && type!=null;
             if(seconds>RolloutSeconds)
             {
                 var t=(TerminalSeconds-seconds)/(TerminalSeconds-RolloutSeconds);
-                along=-6000+(6000+touchdown)*t;
+                var distance=typed ? TerminalDistanceMetres(journey.Value,type,seconds) : 6000*(1-t);
+                along=touchdown-distance;
                 // Smooth flare to zero sink at touchdown.
-                var distance=6000*(1-t);
                 var u=Math.Clamp(distance/FlareMetres,0,1);
                 height=distance>=FlareMetres ? distance*CircuitProfile.GlideslopeTangent
                     : FlareMetres*CircuitProfile.GlideslopeTangent*(2*u*u-u*u*u);
             }
             else
             {
-                var t=1-seconds/RolloutSeconds;
-                along=touchdown+(Math.Min(length-150,touchdown+700)-touchdown)*(2*t-t*t);
+                if(type!=null)
+                {
+                    var v0=AircraftPerformance.For(type).TouchdownKnots*CircuitProfile.KnotsToMetresPerSecond;
+                    var a=RolloutDeceleration(type,length-150-touchdown);
+                    var tau=Math.Min(RolloutSeconds-seconds,v0/a);
+                    along=touchdown+v0*tau-.5*a*tau*tau;
+                }
+                else
+                {
+                    var t=1-seconds/RolloutSeconds;
+                    along=touchdown+(Math.Min(length-150,touchdown+700)-touchdown)*(2*t-t*t);
+                }
                 height=0;
             }
             x=ax+dx*along;z=az+dz*along;y=runway.Elevation+AirsideFlightPathDatum+height;
@@ -68,12 +130,13 @@ namespace Airside.Presentation
         /// same distance the height flares, and fades in from <paramref name="routePitch"/> at the
         /// start of the terminal leg so the cruise-to-approach seam does not snap.
         /// </summary>
-        public static float ApproachPitchDegrees(AircraftAttitude attitude, double remaining, float routePitch)
+        public static float ApproachPitchDegrees(AircraftAttitude attitude, double remaining, float routePitch,
+            double distanceToTouchdown = -1)
         {
             var seconds=Math.Clamp(remaining,RolloutSeconds,TerminalSeconds);
             var t=(float)((TerminalSeconds-seconds)/(TerminalSeconds-RolloutSeconds));
             var pitch=attitude.ApproachStart+(attitude.ApproachEnd-attitude.ApproachStart)*t;
-            var round=1-Math.Clamp((6000*(1-t))/FlareMetres,0,1);
+            var round=1-Math.Clamp((distanceToTouchdown>=0 ? distanceToTouchdown : 6000*(1-t))/FlareMetres,0,1);
             var f=(float)(round*round*(3-2*round));
             pitch+=(attitude.Flare-pitch)*f;
             var fade=(float)Math.Clamp((TerminalSeconds-remaining)/AttitudeBlendSeconds,0,1);

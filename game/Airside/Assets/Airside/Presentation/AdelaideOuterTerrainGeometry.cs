@@ -51,7 +51,9 @@ namespace Airside.Presentation
                 float a;
                 if (h <= 0.01f)
                 {
-                    y = seaY - tuck;
+                    // Keep the whole water plane tucked down. A radial height step
+                    // tilts its normals and the water glint exposes a circular halo.
+                    y = seaY - TuckMetres;
                     c = seaLinear;
                     a = 1f;
                 }

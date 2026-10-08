@@ -9,6 +9,10 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*
 
+**Ocean halo fix (8 Oct, Codex):** far and outer ocean meshes keep one constant overlap height,
+removing the artificial sloped bands that catch water reflections. Land overlap stays unchanged.
+Bailey requested a quick fix without tests; Mac rebuild passed. Visual confirmation remains pending.
+
 **Fleet flight performance (8 Oct, Codex):** branch `fix/fleet-flight-performance-20261008`, based on merged lighting PR #587.
 Research: `docs/data/FLIGHT_PERFORMANCE_RESEARCH.md`; decision `2026-10-08-fleet-flight-performance`.
 Derived altitude rates vary with height and capture level cruise; normal upper levels are separate from

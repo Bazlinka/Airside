@@ -109,7 +109,9 @@ namespace Airside.Presentation
                 // past its shallows, so the two meet at their edge in the same colour.
                 if (h <= 0.01f)
                 {
-                    vertices[i] = new Vector3(x, seaY - (inside ? TuckMetres : 0f), z);
+                    // Water must remain planar across the overlap boundary: a tucked
+                    // strip alone creates a slope that catches the shader's sun glint.
+                    vertices[i] = new Vector3(x, seaY - TuckMetres, z);
                     colors[i] = sea;
                     continue;
                 }

@@ -74,14 +74,16 @@ namespace Airside.Presentation
                     rect.height + spread), new Color(0f, 0f, 0f, 0.07f * alpha), radius + spread);
             }
             DrawRounded(rect, WithAlpha(Glass, Mathf.Clamp01(alpha * 1.045f)), radius);
-            DrawRounded(rect, new Color(1f, 1f, 1f, 0.06f * alpha), radius, 1f);
+            DrawRounded(rect, new Color(1f, 1f, 1f, 0.11f * alpha), radius, 1f);
+            // A brighter lip along the top edge gives the glass a lit, raised look instead of a flat slab.
+            DrawRounded(new Rect(rect.x + radius, rect.y + 1f, rect.width - radius * 2f, 1f), new Color(1f, 1f, 1f, 0.07f * alpha), 0f);
         }
 
         /// <summary>A raised glass sub-card inside a panel.</summary>
         public static void DrawCard(Rect rect, float alpha = 1f)
         {
             DrawRounded(rect, WithAlpha(GlassRaised, 0.96f * alpha), CardRadius);
-            DrawRounded(rect, new Color(1f, 1f, 1f, 0.06f * alpha), CardRadius, 1f);
+            DrawRounded(rect, new Color(1f, 1f, 1f, 0.09f * alpha), CardRadius, 1f);
         }
 
         private static readonly Dictionary<string, Texture2D> RoundedTextures = new();

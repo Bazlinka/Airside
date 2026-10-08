@@ -42,17 +42,17 @@ BOLD = first_font(
 
 # Airside.Presentation.AirsidePalette (Glass Cockpit, ADR 0122), kept in step by palette_check() below.
 PALETTE = {
-    "Glass": "#121B22",
-    "GlassRaised": "#1D2A33",
+    "Glass": "#0E1620",
+    "GlassRaised": "#18242F",
     "GlassEdge": "#FFFFFF",
-    "InstrumentText": "#F2F0E8",
-    "InstrumentMuted": "#A4AFB6",
-    "Aqua": "#9FC8C5",
-    "Amber": "#D8BE8A",
-    "GoGreen": "#8CB99C",
-    "WarnRed": "#E38D80",
-    "RouteMagenta": "#B9AECF",
-    "OnAccent": "#121B22",
+    "InstrumentText": "#F4F6F3",
+    "InstrumentMuted": "#9BAAB4",
+    "Aqua": "#7CD6D0",
+    "Amber": "#F2C14B",
+    "GoGreen": "#6FCB8E",
+    "WarnRed": "#F0786A",
+    "RouteMagenta": "#B8A8E2",
+    "OnAccent": "#0E1620",
 }
 
 TONE = {

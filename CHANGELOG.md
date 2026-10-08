@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-09 — Bug-analysis fixes: credits no longer dropped at 800x600, compact Contracts/Operations/HUD text fits, jet pay and cost scale with size, 12 missing demand entries, loss-making contract routes skipped, rename-box hotkeys, missed daily report, plurals (headless-checked; Unity unverified; see docs/testing/bug-analysis-2026-10-08).
 - 2026-10-08 — Operations board, selection card and map detail show the altitude the aircraft is actually drawn at on regional departures (was the unlagged route profile; unverified in Unity).
 - 2026-10-08 — Regional departures climb at a steady ~2,400 ft/min (was up to ~5,200): the route climb starts when the aircraft reaches its start height, and rotation-to-exit uses one steady rate (headless-tested; unverified in Unity).
 

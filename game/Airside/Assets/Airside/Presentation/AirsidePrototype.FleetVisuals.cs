@@ -65,7 +65,10 @@ namespace Airside.Presentation
                 }
 
                 // An inbound already on the drawn extended final flies it as an approach.
-                var phase = !visual.Visible && IsArrivingOnFinal(aircraft) ? AircraftPhase.Approach : visual.Phase;
+                var onFinal = (aircraft.State is FleetState.Inbound or FleetState.HoldingForLanding)
+                    && TryArrivalFinal(aircraft, out _);
+                var phase = onFinal && IsArrivalHolding(aircraft) ? AircraftPhase.Circuit
+                    : !visual.Visible && onFinal ? AircraftPhase.Approach : visual.Phase;
                 if (flight.Operation.Phase != phase || !flight.Operation.PhaseStartedAt.Equals(visual.PhaseStartedAt))
                     flight.Operation = AircraftOperation.InPhase(id, phase, visual.PhaseStartedAt);
 

@@ -15,7 +15,15 @@ of follow-cycle filtering; direct follow can select a present aircraft outside t
 Parked models remain visible. The proposed two-hour activity window remains a product
 recommendation pending Bailey's choice; Fleet inventory must always retain them.
 Audit coverage and remaining limitations: `docs/testing/aircraft-continuity-2026-10-09.md`.
-Unity rendering, camera transitions and performance remain unverified.
+Established final poses now survive missing/postponed ETAs in a continuous holding
+orbit (#677), climbing to at least 1.5 km. A usable ETA rejoins through bounded pose
+slew; real clearance retains the held pose through the handoff. Map/follow/selected
+status use the actual held pose. This represents existing operational delays; it does
+not grant runway/stand/curfew clearance or create a new saved state. Focused holding
+and approach checks pass 16/16; changed C# syntax parses. Rendered holding/rejoin and
+terrain performance remain unverified. Holding pose is transient across reloads;
+live-feed expiry and unsupported outstation presentation still have explicit limits.
+
 **Cloud continuity/weather variety (9 Oct, Codex, #674):** clouds recycle/fade around
 the watched area, not the orbiting lens. The wider footprint keeps storm bodies away
 from wrap seams; the volume proxy survives a far-plane-clipped exit face. Thin high

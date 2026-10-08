@@ -245,6 +245,11 @@ namespace Airside.Presentation
         private bool TryMiniMapLocation(FleetAircraft aircraft, out double latitude, out double longitude)
         {
             latitude = longitude = 0;
+            if (_arrivalFinal.TryGetValue(aircraft.Registration, out var final) && final.Active)
+            {
+                YpadFrame.ToLatLon(final.World.x, final.World.z, out latitude, out longitude);
+                return true;
+            }
             if (aircraft.IsOffMap && aircraft.CurrentDestination.HasValue
                 && _fleetFlightById.TryGetValue(aircraft.Registration, out var flight))
             {

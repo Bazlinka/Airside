@@ -78,7 +78,9 @@ namespace Airside.Presentation
                 foreach (var pair in _fleetViewById)
                     if (pair.Value == watchView && _fleetAircraftById.TryGetValue(pair.Key, out aircraft))
                     { active = true; break; }
-            if(active && (CanWatchJourney(aircraft) || HasFleetJourneyPose(aircraft))
+            if (active && TryArrivalFinal(aircraft, out var final))
+            { x = final.World.x; altitude = final.World.y; z = final.World.z; }
+            else if(active && (CanWatchJourney(aircraft) || HasFleetJourneyPose(aircraft))
                 && _fleetFlightById.TryGetValue(aircraft.Registration,out var flight))
                 JourneyWorld(flight,0,out x,out altitude,out z);
             else if(active && watchView != null)

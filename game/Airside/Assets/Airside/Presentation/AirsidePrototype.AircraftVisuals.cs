@@ -126,6 +126,10 @@ namespace Airside.Presentation
                 var pitch = journey.HasValue ? -Mathf.Atan2(next.y-position.y,
                     new Vector2(next.x-position.x,next.z-position.z).magnitude)*Mathf.Rad2Deg
                     : AirsideFlightPath.PitchDegrees(phase, progress, aircraftType);
+                if (!journey.HasValue && FleetMode
+                    && _fleetAircraftById.TryGetValue(flight.AircraftId, out var heldAircraft) && IsArrivalHolding(heldAircraft))
+                    pitch = -Mathf.Atan2(next.y - position.y,
+                        new Vector2(next.x - position.x, next.z - position.z).magnitude) * Mathf.Rad2Deg;
                 // Regional arrival and departure legs: the route's path angle has no angle of attack, which
                 // lost the flare and the rotation. Hand the attitude over to the authored curves.
                 if (journey.HasValue && _fleetAircraftById.TryGetValue(flight.AircraftId, out var legAircraft)

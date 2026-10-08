@@ -144,6 +144,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ReturnBriefing.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RoadMarkingPlan.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RouteMap.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/RouteMapLandWindow.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RouteMapWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RuntimeKitTangents.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RunwayRubberMarks.cs" />

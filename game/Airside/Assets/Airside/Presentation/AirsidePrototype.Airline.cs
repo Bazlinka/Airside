@@ -1891,6 +1891,8 @@ namespace Airside.Presentation
 
             // Coastline, borders, every route from Adelaide and the destination dots, from the
             // same painter the offline mockups render, so what is compared is what is drawn.
+            if (Event.current.type == EventType.Repaint)
+                _mapLand.Draw(mapRect, _mapLens);
             _mapNetworkDrawList.Clear();
             RouteMapWorkspacePainter.PaintNetwork(_mapNetworkDrawList, workspaceLayout.Map, _mapLens,
                 _mapDestinationRows, home, _mapFlightInspectorId == null ? _mapSelection : null, _operations.PlayerAirline.LiveryHex,

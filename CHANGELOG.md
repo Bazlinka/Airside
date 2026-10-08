@@ -12,6 +12,8 @@
 - 2026-10-08 — Airport lighting: the real-scale Adelaide field now has its night aerodrome beacon (white/green flashes, lens, light and glow on the tower cab); it was only built on the old miniature (unverified).
 
 - 2026-10-08 — Control-tower view: click the Adelaide tower to look out from its cab (360° look, zoom, Esc to leave); presentation only (unverified in Unity).
+- 2026-10-08 — Route Map redesign: filled land (async baked), faint coast/borders, dark-rimmed dots, codes for reachable places, halo labels, one solid range ring; flight-view map cut to the essentials (Unity compile/look unverified).
+
 - 2026-10-08 Smoother regional flight transitions: authored flare, rotation and cruise/approach pitch hand-over; flare lengthened to ~7 s (presentation only)
 - 2026-10-08 — Smoother flight-view transitions: the glide travels with the moving aircraft, field of view follows the same glide, and the fuselage hides mid-glide (unverified in Unity).
 

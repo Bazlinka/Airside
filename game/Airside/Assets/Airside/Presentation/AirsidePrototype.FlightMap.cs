@@ -19,9 +19,9 @@ namespace Airside.Presentation
     {
         private bool _flightMapVisible = true;
         private int _flightMapRange = CockpitMovingMap.Auto;
+        private readonly RouteMapLandLayer _mapLand = new();
         private Texture2D _flightMapField;
         private Texture2D _flightMapCoast;
-        private Texture2D _flightMapRing;
         private GUIStyle _flightMapLabel;
 
         // Baking happens on a worker thread; the textures are uploaded when a bake finishes, so opening
@@ -42,7 +42,7 @@ namespace Airside.Presentation
         private readonly double[] _flightMapRouteLon = new double[FlightMapRouteSteps + 1];
         private string _flightMapRouteFrom, _flightMapRouteTo;
         private float _flightMapTextTime = -10f;
-        private string _flightMapRouteText = string.Empty, _flightMapStatText = string.Empty;
+        private string _flightMapRouteText = string.Empty;
         private string _flightMapTextKey = string.Empty;
 
         private const string FlightMapZoomIn = "flightmap:in";
@@ -50,14 +50,14 @@ namespace Airside.Presentation
         private const string FlightMapAuto = "flightmap:auto";
         private const string FlightMapShow = "flightmap:show";
         private const string FlightMapHide = "flightmap:hide";
-        private const float FlightMapHeader = 32f, FlightMapFooter = 44f;
+        private const float FlightMapHeader = 30f, FlightMapFooter = 26f;
 
         private void DisposeFlightMap()
         {
+            _mapLand.Dispose();
             if (_flightMapField != null) Destroy(_flightMapField);
             if (_flightMapCoast != null) Destroy(_flightMapCoast);
-            if (_flightMapRing != null) Destroy(_flightMapRing);
-            _flightMapField = _flightMapCoast = _flightMapRing = null;
+            _flightMapField = _flightMapCoast = null;
             _flightMapFieldTask = null;
             _flightMapCoastTask = null;
         }
@@ -140,25 +140,6 @@ namespace Airside.Presentation
                 RegionalMiniMap.Bake(size, size, west, east, south, north, FlightMapLand, true)));
         }
 
-        /// <summary>A soft anti-aliased ring, tinted when drawn: two quads replace ~100 rotated line draws a frame.</summary>
-        private Texture2D FlightMapRingTexture()
-        {
-            if (_flightMapRing != null) return _flightMapRing;
-            const int size = 192;
-            var pixels = new Color32[size * size];
-            var radius = size * 0.5f - 3f;
-            for (var y = 0; y < size; y++)
-                for (var x = 0; x < size; x++)
-                {
-                    var d = Mathf.Sqrt((x + .5f - size * .5f) * (x + .5f - size * .5f) + (y + .5f - size * .5f) * (y + .5f - size * .5f));
-                    var a = Mathf.Clamp01(1.5f - Mathf.Abs(d - radius));
-                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)(a * 255f));
-                }
-
-            _flightMapRing = UploadFlightMapTexture(null, pixels, size, size, "Flight map ring", false);
-            return _flightMapRing;
-        }
-
         private void ToggleFlightMap()
         {
             _flightMapVisible = !_flightMapVisible;
@@ -228,27 +209,32 @@ namespace Airside.Presentation
             var panel = new HudBox(box.X, box.Y, box.Width, box.Height);
             _flightViewDrawList.Clear();
             _flightViewDrawList.Surface(panel);
-            _flightViewDrawList.Text(new HudBox(box.X + 12f, box.Y + 8f, 110f, 18f), "MOVING MAP", 11f, HudTone.Accent, style: HudTextStyle.Bold);
-            _flightViewDrawList.Button(new HudBox(box.Right - 118f, box.Y + 4f, 26f, 24f), "−", FlightMapZoomOut, HudButtonStyle.Secondary);
-            _flightViewDrawList.Button(new HudBox(box.Right - 90f, box.Y + 4f, 26f, 24f), "+", FlightMapZoomIn, HudButtonStyle.Secondary);
-            _flightViewDrawList.Button(new HudBox(box.Right - 62f, box.Y + 4f, 26f, 24f), "A", FlightMapAuto, HudButtonStyle.Secondary);
-            _flightViewDrawList.Button(new HudBox(box.Right - 34f, box.Y + 4f, 26f, 24f), "×", FlightMapHide, HudButtonStyle.Secondary);
+            _flightViewDrawList.Text(new HudBox(box.X + 12f, box.Y + 8f, 80f, 18f), "MAP", 11f, HudTone.Accent, style: HudTextStyle.Bold);
+            var buttonX = box.Right - 34f;
+            _flightViewDrawList.Button(new HudBox(buttonX, box.Y + 4f, 26f, 24f), "×", FlightMapHide, HudButtonStyle.Secondary);
+            buttonX -= 28f;
+            _flightViewDrawList.Button(new HudBox(buttonX, box.Y + 4f, 26f, 24f), "+", FlightMapZoomIn, HudButtonStyle.Secondary);
+            buttonX -= 28f;
+            _flightViewDrawList.Button(new HudBox(buttonX, box.Y + 4f, 26f, 24f), "−", FlightMapZoomOut, HudButtonStyle.Secondary);
+            if (_flightMapRange != CockpitMovingMap.Auto)
+            {
+                buttonX -= 28f;
+                _flightViewDrawList.Button(new HudBox(buttonX, box.Y + 4f, 26f, 24f), "A", FlightMapAuto, HudButtonStyle.Secondary);
+            }
+
             var footerY = mapRect.yMax + 4f;
             var textKey = legFrom.Code + legTo.Code;
             if (Time.unscaledTime - _flightMapTextTime > FlightMapTextInterval || textKey != _flightMapTextKey)
             {
                 _flightMapTextTime = Time.unscaledTime;
                 _flightMapTextKey = textKey;
-                var routeText = legTo.Code == home.Code && legFrom.Code == home.Code ? "At " + home.Code : legFrom.Code + " → " + legTo.Code;
-                _flightMapRouteText = routeText + "   " + CockpitMovingMap.DistanceText("TO " + legTo.Code, kmTarget)
-                    + (_flightViewHud.Arrival != "—" ? "   ETE " + _flightViewHud.Arrival : "");
-                _flightMapStatText = "HDG " + ((int)Mathf.Round(heading) % 360).ToString("000") + "° T   GS " + _flightViewHud.Speed
-                    + "   " + Math.Abs(lat).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + (lat < 0 ? "°S " : "°N ")
-                    + Math.Abs(lon).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + (lon < 0 ? "°W" : "°E");
+                // One line: where it is going, how far, how long. Heading and position are on the HUD already.
+                _flightMapRouteText = legTo.Code == home.Code && legFrom.Code == home.Code ? "At " + home.Code
+                    : legFrom.Code + " → " + legTo.Code + "  ·  " + (kmTarget < 10 ? kmTarget.ToString("0.0") : kmTarget.ToString("0")) + " km"
+                      + (_flightViewHud.Arrival != "—" ? "  ·  ETE " + _flightViewHud.Arrival : "");
             }
 
             _flightViewDrawList.Text(new HudBox(box.X + 12f, footerY, box.Width - 24f, 18f), _flightMapRouteText, 11f, HudTone.Default);
-            _flightViewDrawList.Text(new HudBox(box.X + 12f, footerY + 18f, box.Width - 24f, 18f), _flightMapStatText, 10f, HudTone.Muted);
             var action = _hudPainter.Draw(_flightViewDrawList);
             if (action == FlightMapZoomIn) { StepFlightMapRange(-1, autoRange); PlayUiClick(); }
             else if (action == FlightMapZoomOut) { StepFlightMapRange(1, autoRange); PlayUiClick(); }
@@ -320,17 +306,6 @@ namespace Airside.Presentation
                 headingScreen = new Vector2((float)hx, (float)hy);
             }
 
-            // Range rings at half and full range.
-            var ringColour = AirsideTheme.WithAlpha(AirsideTheme.InstrumentText, 0.18f);
-            var ring = FlightMapRingTexture();
-            var previousColour = GUI.color;
-            GUI.color = ringColour;
-            GUI.DrawTexture(new Rect(centre.x - half, centre.y - half, half * 2f, half * 2f), ring, ScaleMode.StretchToFill, true);
-            GUI.DrawTexture(new Rect(centre.x - half * 0.5f, centre.y - half * 0.5f, half, half), ring, ScaleMode.StretchToFill, true);
-            GUI.color = previousColour;
-            _flightMapLabel.normal.textColor = AirsideTheme.WithAlpha(AirsideTheme.InstrumentText, 0.55f);
-            GUI.Label(new Rect(centre.x + 4f, centre.y - half * 0.5f - 7f, 60f, 14f), CockpitMovingMap.RangeLabel(rangeKm * 0.5f), _flightMapLabel);
-
             // Route and airports (coast map; the airfield view is too close for either to mean much).
             if (!fieldMode)
             {
@@ -345,9 +320,9 @@ namespace Airside.Presentation
                     var p = ProjectLatLon(airport.Latitude, airport.Longitude);
                     if (p.x < -4f || p.y < -4f || p.x > rect.width + 4f || p.y > rect.height + 4f) continue;
                     var key = airport.Code == legFrom.Code || airport.Code == legTo.Code;
-                    var colour = key ? AirsideTheme.Amber : AirsideTheme.WithAlpha(AirsideTheme.InstrumentText, 0.7f);
+                    var colour = key ? AirsideTheme.Amber : AirsideTheme.WithAlpha(AirsideTheme.InstrumentText, 0.45f);
                     AirsideTheme.DrawRounded(new Rect(p.x - 2.5f, p.y - 2.5f, 5f, 5f), colour, 3f);
-                    if (key || rangeKm <= 250f)
+                    if (key)
                     {
                         _flightMapLabel.normal.textColor = colour;
                         GUI.Label(new Rect(p.x + 5f, p.y - 7f, 40f, 14f), airport.Code, _flightMapLabel);
@@ -376,9 +351,7 @@ namespace Airside.Presentation
 
                 if (point.x < 0f || point.y < 0f || point.x > rect.width || point.y > rect.height) continue;
                 var livery = AirsideTheme.FromHex(other.Airline.LiveryHex);
-                var s = other.Airline.IsPlayer ? 6f : 4f;
-                AirsideTheme.DrawRounded(new Rect(point.x - s * 0.5f - 1f, point.y - s * 0.5f - 1f, s + 2f, s + 2f),
-                    AirsideTheme.WithAlpha(AirsideTheme.Glass, 0.9f), s);
+                var s = other.Airline.IsPlayer ? 5f : 3.5f;
                 AirsideTheme.DrawRounded(new Rect(point.x - s * 0.5f, point.y - s * 0.5f, s, s), livery, s);
             }
 
@@ -394,9 +367,7 @@ namespace Airside.Presentation
             DrawLine(notch, right, ship, 2.2f); DrawLine(right, tip, ship, 2.2f);
 
             _flightMapLabel.normal.textColor = AirsideTheme.WithAlpha(AirsideTheme.InstrumentText, 0.7f);
-            GUI.Label(new Rect(8f, rect.height - 20f, 120f, 14f),
-                (_flightMapRange == CockpitMovingMap.Auto ? "AUTO  " : "") + CockpitMovingMap.RangeLabel(rangeKm)
-                + (fieldMode ? "  ·  RWY-UP" : "  ·  N-UP"), _flightMapLabel);
+            GUI.Label(new Rect(8f, rect.height - 20f, 120f, 14f), CockpitMovingMap.RangeLabel(rangeKm), _flightMapLabel);
 
             // North mark.
             var np = new Vector2(rect.width - 18f, 18f);
@@ -428,9 +399,7 @@ namespace Airside.Presentation
                         i / (double)FlightMapRouteSteps, out _flightMapRouteLat[i], out _flightMapRouteLon[i]);
             }
 
-            var progress = _flightViewHud.JourneyProgress;
-            var flownColour = AirsideTheme.WithAlpha(AirsideTheme.Aqua, 0.35f);
-            var aheadColour = AirsideTheme.WithAlpha(AirsideTheme.Amber, 0.9f);
+            var aheadColour = AirsideTheme.WithAlpha(AirsideTheme.Amber, 0.85f);
             var last = project(_flightMapRouteLat[0], _flightMapRouteLon[0]);
             for (var i = 1; i <= FlightMapRouteSteps; i++)
             {
@@ -441,8 +410,7 @@ namespace Airside.Presentation
                                || Mathf.Max(last.y, next.y) < -4f || Mathf.Min(last.y, next.y) > rect.height + 4f);
                 if (inside)
                 {
-                    var flown = progress >= 0f && i / (float)FlightMapRouteSteps <= progress;
-                    DrawLine(last, next, flown ? flownColour : aheadColour, flown ? 1.2f : 1.8f);
+                    DrawLine(last, next, aheadColour, 1.6f);
                 }
 
                 last = next;

@@ -1,0 +1,30 @@
+name: Temporary airport terrain acquisition
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/terrain-acquire.yml'
+      - 'scripts/generate-australia-flight-world.py'
+permissions:
+  contents: read
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy pillow rasterio
+      - name: Bake real airport elevation and land cover
+        run: python scripts/generate-australia-flight-world.py airports
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: australian-airport-approach-grids
+          path: |
+            game/Airside/Assets/Airside/Art/Terrain/dem_approach_*_v01.bin
+            game/Airside/Assets/Airside/Art/Terrain/landcover_approach_*_v01.bin
+            docs/data/australia-flight-world-airports-v01.json
+          if-no-files-found: error
+          retention-days: 2

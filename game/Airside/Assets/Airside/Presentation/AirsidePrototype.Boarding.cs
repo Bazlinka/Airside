@@ -146,6 +146,10 @@ namespace Airside.Presentation
                     // Half a turn about the aircraft's own vertical axis takes it to the left side.
                     part.RotateAround(aircraft.position, aircraft.up, 180f);
                     part.position += forward;
+                    // The half turn must live in the mesh, not the transform: UpdateCabinDoor sets the door's
+                    // Y rotation outright (0 shut), which wiped a baked 180 and mirrored the shut door a door
+                    // width forward, standing out ahead of the cockpit.
+                    RebakePartPivot(part, part.position, aircraft.rotation);
                 }
             }
         }

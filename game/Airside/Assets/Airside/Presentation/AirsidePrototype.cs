@@ -339,6 +339,7 @@ namespace Airside.Presentation
             _simulation = new AirportSimulation(_clock, new SeededRandomSource(24031996), new ReservationTable());
             _preciseTime = _clock.Now.ElapsedSeconds;
 
+            AirsideDisplay.EnsureNativeResolution();
             BuildLightingAndCamera();
             ApplyMasterMute();
             // The title screen opens first; the camera glide plays when the player continues.

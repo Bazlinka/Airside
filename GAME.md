@@ -9,6 +9,10 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*
 
+**Blur root cause (8 Oct, Claude):** Unity had saved a maximised 1600x900 window in `com.DefaultCompany.Airside.plist`, so the player rendered at 1600x900 and was stretched
+with black bars on a 3456x2168 Retina screen. `AirsideDisplay.EnsureNativeResolution` now resets any non-windowed render size below 90% of the display at
+startup. Confirmed by screenshot: clearing the saved size gave full-screen, sharper output.
+
 **Crisp HUD (8 Oct, Claude):** branch `claude/crisp-hud-20261008`. The HUD is laid out at 1440x900 and enlarged by `GUI.matrix` (2.25x on the
 3456x2168 Retina surface), which stretched text and button art. `HudPainter` text, pills and buttons now draw at device pixels (font size and
 rounded button textures scaled, matrix undone for that draw). Panels already used crisp shader-rounded rects. Menus, help and dev tools still

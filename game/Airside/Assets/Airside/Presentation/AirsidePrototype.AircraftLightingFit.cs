@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Airside.Domain;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -47,6 +48,7 @@ namespace Airside.Presentation
                     else { var b = hull.Value; b.Encapsulate(local); hull = b; }
                 }
             }
+            AddFuselageLiner(root);
             // Also catches procedural fallbacks, whose lamps are added after the initial gear rig.
             if (nose != null && taxi != null && !taxi.IsChildOf(nose))
                 NestUnderProp(nose, taxi, taxi.name);
@@ -85,6 +87,91 @@ namespace Airside.Presentation
                 if (renderer != null) renderer.shadowCastingMode = ShadowCastingMode.Off;
             }
             AirsideNamedChildren.Forget(root);
+        }
+        private static readonly Dictionary<Mesh, Mesh> FuselageLinerMeshes = new();
+        private static Material _fuselageLinerMaterial;
+        private const string FuselageLinerName = "Dark backing";
+        /// <summary>How far in the liner sits: a fraction of the radius, about 8 cm on a narrowbody.</summary>
+        private const float FuselageLinerInset = 0.965f;
+
+        /// <summary>
+        /// The fuselage kits are a single-sided skin with apertures cut for the windscreens and cabin
+        /// windows, so through the glass you saw the far wall's culled back face and then the sky: a hollow
+        /// airframe. A dark inner skin, the same shape drawn inside-out and a little smaller, closes it: from
+        /// outside it is hidden behind the real skin, through a window it reads as a dark cabin or flight
+        /// deck. Meshes are built once per kit and shared. Presentation only; the cockpit and cabin views
+        /// hide the exterior shell, and this with it.
+        /// </summary>
+        private static void AddFuselageLiner(Transform root)
+        {
+            Transform fuselage = null;
+            foreach (var t in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name.Equals("fuselage", StringComparison.OrdinalIgnoreCase)) { fuselage = t; break; }
+            }
+
+            if (fuselage == null || fuselage.Find(FuselageLinerName) != null) return;
+            var filter = fuselage.GetComponent<MeshFilter>();
+            if (filter == null || filter.sharedMesh == null || !filter.sharedMesh.isReadable) return;
+            if (!FuselageLinerMeshes.TryGetValue(filter.sharedMesh, out var liner) || liner == null)
+            {
+                liner = BuildFuselageLinerMesh(filter.sharedMesh);
+                FuselageLinerMeshes[filter.sharedMesh] = liner;
+            }
+
+            _fuselageLinerMaterial ??= CreateMaterial(new Color(0.03f, 0.032f, 0.036f));
+            var go = new GameObject(FuselageLinerName);
+            go.transform.SetParent(fuselage, false);
+            go.AddComponent<MeshFilter>().sharedMesh = liner;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = _fuselageLinerMaterial;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+        }
+
+        private static Mesh BuildFuselageLinerMesh(Mesh source)
+        {
+            var vertices = source.vertices;
+            var normals = source.normals;
+            var bounds = source.bounds;
+            // The axis runs along z through the middle of the barrel, not the fin or wing roots.
+            float minX = float.MaxValue, maxX = float.MinValue, minY = float.MaxValue, maxY = float.MinValue;
+            var zLow = bounds.center.z - bounds.extents.z * 0.1f;
+            var zHigh = bounds.center.z + bounds.extents.z * 0.1f;
+            foreach (var v in vertices)
+            {
+                if (v.z < zLow || v.z > zHigh) continue;
+                if (v.x < minX) minX = v.x; if (v.x > maxX) maxX = v.x;
+                if (v.y < minY) minY = v.y; if (v.y > maxY) maxY = v.y;
+            }
+
+            var cx = minX <= maxX ? (minX + maxX) * 0.5f : bounds.center.x;
+            var cy = minY <= maxY ? (minY + maxY) * 0.5f : bounds.center.y;
+            for (var i = 0; i < vertices.Length; i++)
+            {
+                vertices[i].x = cx + (vertices[i].x - cx) * FuselageLinerInset;
+                vertices[i].y = cy + (vertices[i].y - cy) * FuselageLinerInset;
+            }
+
+            var mesh = new Mesh { name = source.name + " liner", indexFormat = source.indexFormat };
+            mesh.vertices = vertices;
+            if (normals != null && normals.Length == vertices.Length)
+            {
+                for (var i = 0; i < normals.Length; i++) normals[i] = -normals[i];
+                mesh.normals = normals;
+            }
+
+            mesh.subMeshCount = source.subMeshCount;
+            for (var s = 0; s < source.subMeshCount; s++)
+            {
+                var triangles = source.GetTriangles(s);
+                for (var i = 0; i + 2 < triangles.Length; i += 3)
+                    (triangles[i + 1], triangles[i + 2]) = (triangles[i + 2], triangles[i + 1]);
+                mesh.SetTriangles(triangles, s);
+            }
+
+            mesh.RecalculateBounds();
+            return mesh;
         }
     }
 }

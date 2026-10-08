@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Airside.Domain;
 using Airside.Simulation;
 using UnityEngine;
@@ -19,7 +21,29 @@ namespace Airside.Presentation
         private int _flightMapRange = CockpitMovingMap.Auto;
         private Texture2D _flightMapField;
         private Texture2D _flightMapCoast;
+        private Texture2D _flightMapRing;
         private GUIStyle _flightMapLabel;
+
+        // Baking happens on a worker thread; the textures are uploaded when a bake finishes, so opening
+        // the map or changing scale never stalls a frame.
+        private Task<Color32[]> _flightMapFieldTask;
+        private Task<Color32[]> _flightMapCoastTask;
+        private double _coastSouth, _coastNorth, _coastWest, _coastEast;
+        private float _coastRangeKm;
+        private double _coastPendingSouth, _coastPendingNorth, _coastPendingWest, _coastPendingEast;
+        private float _coastPendingRangeKm;
+
+        // Route points are cached per leg, and footer text is rebuilt a few times a second, not per event.
+        private const int FlightMapRouteSteps = 48;
+        private const float FlightMapTextInterval = 0.2f;
+        private static readonly Color32 FlightMapLand = new(52, 68, 62, 255);
+        private static Destination[] _flightMapAirports;
+        private readonly double[] _flightMapRouteLat = new double[FlightMapRouteSteps + 1];
+        private readonly double[] _flightMapRouteLon = new double[FlightMapRouteSteps + 1];
+        private string _flightMapRouteFrom, _flightMapRouteTo;
+        private float _flightMapTextTime = -10f;
+        private string _flightMapRouteText = string.Empty, _flightMapStatText = string.Empty;
+        private string _flightMapTextKey = string.Empty;
 
         private const string FlightMapZoomIn = "flightmap:in";
         private const string FlightMapZoomOut = "flightmap:out";
@@ -32,36 +56,107 @@ namespace Airside.Presentation
         {
             if (_flightMapField != null) Destroy(_flightMapField);
             if (_flightMapCoast != null) Destroy(_flightMapCoast);
+            if (_flightMapRing != null) Destroy(_flightMapRing);
+            _flightMapField = _flightMapCoast = _flightMapRing = null;
+            _flightMapFieldTask = null;
+            _flightMapCoastTask = null;
         }
 
+        private static Color32[] SafeBake(Func<Color32[]> bake)
+        {
+            try { return bake(); }
+            catch (Exception) { return null; }
+        }
+
+        private Texture2D UploadFlightMapTexture(Texture2D existing, Color32[] pixels, int width, int height, string name, bool mips)
+        {
+            if (existing == null || existing.width != width || existing.height != height)
+            {
+                if (existing != null) Destroy(existing);
+                existing = new Texture2D(width, height, TextureFormat.RGBA32, mips)
+                {
+                    name = name, filterMode = mips ? FilterMode.Trilinear : FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.DontSave
+                };
+            }
+
+            existing.SetPixels32(pixels);
+            existing.Apply(mips, false);
+            return existing;
+        }
+
+        /// <summary>The baked airfield, or null until its worker-thread bake lands (mipmapped so it does not shimmer when zoomed out).</summary>
         private Texture2D FlightMapFieldTexture()
         {
             if (_flightMapField != null) return _flightMapField;
             FieldMiniMap.WorldBounds(out var minX, out var maxX, out var minZ, out var maxZ);
             const int width = 1280;
             var height = Mathf.Max(8, Mathf.RoundToInt(width * (maxZ - minZ) / (maxX - minX)));
-            _flightMapField = new Texture2D(width, height, TextureFormat.RGBA32, false)
+            if (_flightMapFieldTask == null)
             {
-                name = "Flight map airfield", filterMode = FilterMode.Bilinear,
-                wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.DontSave
-            };
-            _flightMapField.SetPixels32(FieldMiniMap.Bake(width, height));
-            _flightMapField.Apply(false, true);
+                _flightMapFieldTask = Task.Run(() => SafeBake(() => FieldMiniMap.Bake(width, height)));
+                return null;
+            }
+
+            if (!_flightMapFieldTask.IsCompleted) return null;
+            var pixels = _flightMapFieldTask.Result;
+            _flightMapFieldTask = null;
+            if (pixels == null) pixels = FieldMiniMap.Bake(width, height);
+            _flightMapField = UploadFlightMapTexture(null, pixels, width, height, "Flight map airfield", true);
             return _flightMapField;
         }
 
-        private Texture2D FlightMapCoastTexture()
+        /// <summary>
+        /// Keeps a coast window baked around the aircraft for the current scale. The previous window keeps
+        /// drawing (in its own coordinates) until the new one is ready, so a rebake is never visible as a gap.
+        /// </summary>
+        private void UpdateFlightMapCoast(double lat, double lon, float rangeKm)
         {
-            if (_flightMapCoast != null) return _flightMapCoast;
-            const int size = 1536;
-            _flightMapCoast = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            if (_flightMapCoastTask != null && _flightMapCoastTask.IsCompleted)
             {
-                name = "Flight map coast", filterMode = FilterMode.Bilinear,
-                wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.DontSave
-            };
-            _flightMapCoast.SetPixels32(RegionalMiniMap.Bake(size, size));
-            _flightMapCoast.Apply(false, true);
-            return _flightMapCoast;
+                var pixels = _flightMapCoastTask.Result;
+                _flightMapCoastTask = null;
+                if (pixels != null)
+                {
+                    _flightMapCoast = UploadFlightMapTexture(_flightMapCoast, pixels, CockpitMovingMap.CoastWindowPixels,
+                        CockpitMovingMap.CoastWindowPixels, "Flight map coast", false);
+                    _coastSouth = _coastPendingSouth; _coastNorth = _coastPendingNorth;
+                    _coastWest = _coastPendingWest; _coastEast = _coastPendingEast;
+                    _coastRangeKm = _coastPendingRangeKm;
+                }
+            }
+
+            if (_flightMapCoastTask != null)
+                return;
+            if (_flightMapCoast != null && CockpitMovingMap.CoastWindowServes(_coastSouth, _coastNorth, _coastWest,
+                    _coastEast, _coastRangeKm, lat, lon, rangeKm))
+                return;
+
+            CockpitMovingMap.CoastWindow(lat, lon, rangeKm, out var south, out var north, out var west, out var east);
+            _coastPendingSouth = south; _coastPendingNorth = north; _coastPendingWest = west; _coastPendingEast = east;
+            _coastPendingRangeKm = rangeKm;
+            const int size = CockpitMovingMap.CoastWindowPixels;
+            _flightMapCoastTask = Task.Run(() => SafeBake(() =>
+                RegionalMiniMap.Bake(size, size, west, east, south, north, FlightMapLand, true)));
+        }
+
+        /// <summary>A soft anti-aliased ring, tinted when drawn: two quads replace ~100 rotated line draws a frame.</summary>
+        private Texture2D FlightMapRingTexture()
+        {
+            if (_flightMapRing != null) return _flightMapRing;
+            const int size = 192;
+            var pixels = new Color32[size * size];
+            var radius = size * 0.5f - 3f;
+            for (var y = 0; y < size; y++)
+                for (var x = 0; x < size; x++)
+                {
+                    var d = Mathf.Sqrt((x + .5f - size * .5f) * (x + .5f - size * .5f) + (y + .5f - size * .5f) * (y + .5f - size * .5f));
+                    var a = Mathf.Clamp01(1.5f - Mathf.Abs(d - radius));
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)(a * 255f));
+                }
+
+            _flightMapRing = UploadFlightMapTexture(null, pixels, size, size, "Flight map ring", false);
+            return _flightMapRing;
         }
 
         private void ToggleFlightMap()
@@ -139,14 +234,21 @@ namespace Airside.Presentation
             _flightViewDrawList.Button(new HudBox(box.Right - 62f, box.Y + 4f, 26f, 24f), "A", FlightMapAuto, HudButtonStyle.Secondary);
             _flightViewDrawList.Button(new HudBox(box.Right - 34f, box.Y + 4f, 26f, 24f), "×", FlightMapHide, HudButtonStyle.Secondary);
             var footerY = mapRect.yMax + 4f;
-            var routeText = legTo.Code == home.Code && legFrom.Code == home.Code ? "At " + home.Code : legFrom.Code + " → " + legTo.Code;
-            _flightViewDrawList.Text(new HudBox(box.X + 12f, footerY, box.Width - 24f, 18f),
-                routeText + "   " + CockpitMovingMap.DistanceText("TO " + legTo.Code, kmTarget)
-                + (_flightViewHud.Arrival != "—" ? "   ETE " + _flightViewHud.Arrival : ""), 11f, HudTone.Default);
-            _flightViewDrawList.Text(new HudBox(box.X + 12f, footerY + 18f, box.Width - 24f, 18f),
-                "HDG " + ((int)Mathf.Round(heading) % 360).ToString("000") + "° T   GS " + _flightViewHud.Speed
-                + "   " + Math.Abs(lat).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + (lat < 0 ? "°S " : "°N ")
-                + Math.Abs(lon).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + (lon < 0 ? "°W" : "°E"), 10f, HudTone.Muted);
+            var textKey = legFrom.Code + legTo.Code;
+            if (Time.unscaledTime - _flightMapTextTime > FlightMapTextInterval || textKey != _flightMapTextKey)
+            {
+                _flightMapTextTime = Time.unscaledTime;
+                _flightMapTextKey = textKey;
+                var routeText = legTo.Code == home.Code && legFrom.Code == home.Code ? "At " + home.Code : legFrom.Code + " → " + legTo.Code;
+                _flightMapRouteText = routeText + "   " + CockpitMovingMap.DistanceText("TO " + legTo.Code, kmTarget)
+                    + (_flightViewHud.Arrival != "—" ? "   ETE " + _flightViewHud.Arrival : "");
+                _flightMapStatText = "HDG " + ((int)Mathf.Round(heading) % 360).ToString("000") + "° T   GS " + _flightViewHud.Speed
+                    + "   " + Math.Abs(lat).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + (lat < 0 ? "°S " : "°N ")
+                    + Math.Abs(lon).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + (lon < 0 ? "°W" : "°E");
+            }
+
+            _flightViewDrawList.Text(new HudBox(box.X + 12f, footerY, box.Width - 24f, 18f), _flightMapRouteText, 11f, HudTone.Default);
+            _flightViewDrawList.Text(new HudBox(box.X + 12f, footerY + 18f, box.Width - 24f, 18f), _flightMapStatText, 10f, HudTone.Muted);
             var action = _hudPainter.Draw(_flightViewDrawList);
             if (action == FlightMapZoomIn) { StepFlightMapRange(-1, autoRange); PlayUiClick(); }
             else if (action == FlightMapZoomOut) { StepFlightMapRange(1, autoRange); PlayUiClick(); }
@@ -196,7 +298,9 @@ namespace Airside.Presentation
                 var size = new Vector2((maxX - minX) * pxPerMetre, (maxZ - minZ) * pxPerMetre);
                 var own = FieldMiniMap.WorldToMap(new Rect(0f, 0f, size.x, size.y), worldX, worldZ);
                 fieldRect = new Rect(centre.x - own.x, centre.y - own.y, size.x, size.y);
-                GUI.DrawTexture(fieldRect, FlightMapFieldTexture(), ScaleMode.StretchToFill, true);
+                var fieldTexture = FlightMapFieldTexture();
+                if (fieldTexture != null)
+                    GUI.DrawTexture(fieldRect, fieldTexture, ScaleMode.StretchToFill, true);
                 YpadFrame.FromEastNorth(0, 1, out var nx, out var nz);
                 northScreen = new Vector2((float)nx, (float)-nz).normalized;
                 var flat = Vector3.ProjectOnPlane(view.forward, Vector3.up);
@@ -204,19 +308,26 @@ namespace Airside.Presentation
             }
             else
             {
-                var texture = FlightMapCoastTexture();
-                var topLeft = ProjectLatLon(RegionalMiniMap.North, RegionalMiniMap.West);
-                var bottomRight = ProjectLatLon(RegionalMiniMap.South, RegionalMiniMap.East);
-                GUI.DrawTexture(new Rect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y),
-                    texture, ScaleMode.StretchToFill, true);
+                UpdateFlightMapCoast(lat, lon, rangeKm);
+                if (_flightMapCoast != null)
+                {
+                    var topLeft = ProjectLatLon(_coastNorth, _coastWest);
+                    var bottomRight = ProjectLatLon(_coastSouth, _coastEast);
+                    GUI.DrawTexture(new Rect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y),
+                        _flightMapCoast, ScaleMode.StretchToFill, true);
+                }
                 CockpitMovingMap.HeadingDirection(heading, out var hx, out var hy);
                 headingScreen = new Vector2((float)hx, (float)hy);
             }
 
             // Range rings at half and full range.
-            var ringColour = AirsideTheme.WithAlpha(AirsideTheme.InstrumentText, 0.16f);
-            DrawMapCircle(centre, half * 0.5f, ringColour);
-            DrawMapCircle(centre, half * 0.98f, ringColour);
+            var ringColour = AirsideTheme.WithAlpha(AirsideTheme.InstrumentText, 0.18f);
+            var ring = FlightMapRingTexture();
+            var previousColour = GUI.color;
+            GUI.color = ringColour;
+            GUI.DrawTexture(new Rect(centre.x - half, centre.y - half, half * 2f, half * 2f), ring, ScaleMode.StretchToFill, true);
+            GUI.DrawTexture(new Rect(centre.x - half * 0.5f, centre.y - half * 0.5f, half, half), ring, ScaleMode.StretchToFill, true);
+            GUI.color = previousColour;
             _flightMapLabel.normal.textColor = AirsideTheme.WithAlpha(AirsideTheme.InstrumentText, 0.55f);
             GUI.Label(new Rect(centre.x + 4f, centre.y - half * 0.5f - 7f, 60f, 14f), CockpitMovingMap.RangeLabel(rangeKm * 0.5f), _flightMapLabel);
 
@@ -224,23 +335,13 @@ namespace Airside.Presentation
             if (!fieldMode)
             {
                 if (legKm > 5.0)
-                {
-                    var progress = _flightViewHud.JourneyProgress;
-                    var previous = ProjectLatLon(legFrom.Latitude, legFrom.Longitude);
-                    const int steps = 64;
-                    for (var i = 1; i <= steps; i++)
-                    {
-                        RouteMap.GreatCirclePoint(legFrom.Latitude, legFrom.Longitude, legTo.Latitude, legTo.Longitude, i / (double)steps, out var la, out var lo);
-                        var next = ProjectLatLon(la, lo);
-                        var flown = progress >= 0f && i / (float)steps <= progress;
-                        DrawLine(previous, next, flown ? AirsideTheme.WithAlpha(AirsideTheme.Aqua, 0.35f)
-                            : AirsideTheme.WithAlpha(AirsideTheme.Amber, 0.9f), flown ? 1.2f : 1.8f);
-                        previous = next;
-                    }
-                }
+                    DrawFlightMapRoute(legFrom, legTo, ProjectLatLon, rect);
 
-                foreach (var airport in DestinationCatalogue.All)
+                _flightMapAirports ??= new List<Destination>(DestinationCatalogue.All).ToArray();
+                var airports = _flightMapAirports;
+                for (var a = 0; a < airports.Length; a++)
                 {
+                    var airport = airports[a];
                     var p = ProjectLatLon(airport.Latitude, airport.Longitude);
                     if (p.x < -4f || p.y < -4f || p.x > rect.width + 4f || p.y > rect.height + 4f) continue;
                     var key = airport.Code == legFrom.Code || airport.Code == legTo.Code;
@@ -302,19 +403,49 @@ namespace Airside.Presentation
             DrawLine(np, np + northScreen * 9f, AirsideTheme.WithAlpha(AirsideTheme.InstrumentText, 0.8f), 1.5f);
             _flightMapLabel.normal.textColor = AirsideTheme.WithAlpha(AirsideTheme.InstrumentText, 0.8f);
             GUI.Label(new Rect(np.x + northScreen.x * 16f - 4f, np.y + northScreen.y * 16f - 7f, 12f, 14f), "N", _flightMapLabel);
+
+            // A hairline frame so the square map reads as an instrument, not a loose texture.
+            var edge = AirsideTheme.WithAlpha(AirsideTheme.InstrumentText, 0.28f);
+            DrawSolid(new Rect(0f, 0f, rect.width, 1f), edge);
+            DrawSolid(new Rect(0f, rect.height - 1f, rect.width, 1f), edge);
+            DrawSolid(new Rect(0f, 0f, 1f, rect.height), edge);
+            DrawSolid(new Rect(rect.width - 1f, 0f, 1f, rect.height), edge);
             GUI.EndGroup();
         }
 
-        private static void DrawMapCircle(Vector2 centre, float radius, Color colour)
+        /// <summary>
+        /// The great-circle leg, from points cached per leg. Segments wholly outside the panel are skipped and
+        /// points under a few pixels apart are merged, so a long route costs a handful of draws, not 64.
+        /// </summary>
+        private void DrawFlightMapRoute(Destination legFrom, Destination legTo, Func<double, double, Vector2> project, Rect rect)
         {
-            const int segments = 48;
-            var previous = centre + new Vector2(radius, 0f);
-            for (var i = 1; i <= segments; i++)
+            if (_flightMapRouteFrom != legFrom.Code || _flightMapRouteTo != legTo.Code)
             {
-                var a = i * Mathf.PI * 2f / segments;
-                var next = centre + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * radius;
-                DrawLine(previous, next, colour, 1f);
-                previous = next;
+                _flightMapRouteFrom = legFrom.Code;
+                _flightMapRouteTo = legTo.Code;
+                for (var i = 0; i <= FlightMapRouteSteps; i++)
+                    RouteMap.GreatCirclePoint(legFrom.Latitude, legFrom.Longitude, legTo.Latitude, legTo.Longitude,
+                        i / (double)FlightMapRouteSteps, out _flightMapRouteLat[i], out _flightMapRouteLon[i]);
+            }
+
+            var progress = _flightViewHud.JourneyProgress;
+            var flownColour = AirsideTheme.WithAlpha(AirsideTheme.Aqua, 0.35f);
+            var aheadColour = AirsideTheme.WithAlpha(AirsideTheme.Amber, 0.9f);
+            var last = project(_flightMapRouteLat[0], _flightMapRouteLon[0]);
+            for (var i = 1; i <= FlightMapRouteSteps; i++)
+            {
+                var next = project(_flightMapRouteLat[i], _flightMapRouteLon[i]);
+                if ((next - last).sqrMagnitude < 36f && i < FlightMapRouteSteps)
+                    continue;
+                var inside = !(Mathf.Max(last.x, next.x) < -4f || Mathf.Min(last.x, next.x) > rect.width + 4f
+                               || Mathf.Max(last.y, next.y) < -4f || Mathf.Min(last.y, next.y) > rect.height + 4f);
+                if (inside)
+                {
+                    var flown = progress >= 0f && i / (float)FlightMapRouteSteps <= progress;
+                    DrawLine(last, next, flown ? flownColour : aheadColour, flown ? 1.2f : 1.8f);
+                }
+
+                last = next;
             }
         }
     }

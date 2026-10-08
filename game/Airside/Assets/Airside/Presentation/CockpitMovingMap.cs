@@ -56,6 +56,34 @@ namespace Airside.Presentation
             y = -Math.Cos(r);
         }
 
+        /// <summary>Square coast texture size, and how many ranges either side of the aircraft it covers.</summary>
+        public const int CoastWindowPixels = 512;
+        public const double CoastWindowSpan = 2.0;
+
+        /// <summary>The latitude/longitude window to bake around the aircraft for a scale (equirectangular).</summary>
+        public static void CoastWindow(double lat, double lon, float rangeKm,
+            out double south, out double north, out double west, out double east)
+        {
+            var halfLat = rangeKm * CoastWindowSpan / KmPerDegree;
+            var halfLon = halfLat / Math.Max(0.2, Math.Cos(lat * Math.PI / 180.0));
+            south = lat - halfLat; north = lat + halfLat;
+            west = lon - halfLon; east = lon + halfLon;
+        }
+
+        /// <summary>
+        /// Whether a baked coast window still serves the view: it must hold the whole panel (including
+        /// the corners) and not be so much coarser or finer than the current scale that it looks soft.
+        /// </summary>
+        public static bool CoastWindowServes(double south, double north, double west, double east, float bakedRangeKm,
+            double lat, double lon, float rangeKm)
+        {
+            if (rangeKm < bakedRangeKm * 0.55f || rangeKm > bakedRangeKm * 1.15f)
+                return false;
+            var halfLat = rangeKm * 1.42 / KmPerDegree;
+            var halfLon = halfLat / Math.Max(0.2, Math.Cos(lat * Math.PI / 180.0));
+            return lat - halfLat >= south && lat + halfLat <= north && lon - halfLon >= west && lon + halfLon <= east;
+        }
+
         /// <summary>Bearing and distance text for the footer, e.g. "MEL 412 km".</summary>
         public static string DistanceText(string code, double km) =>
             code + "  " + (km < 10 ? km.ToString("0.0") : km.ToString("0")) + " km";

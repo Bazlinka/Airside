@@ -1,12 +1,15 @@
 # Changelog
 
 - 2026-10-08 Circuit pitch eases to the approach attitude so the go-around circuit-to-approach hand-over no longer steps (presentation only)
+- 2026-10-08 — Leaving exterior/cockpit view: the exit glide now travels with the moving aircraft instead of chasing it from a fixed point (unverified in Unity).
+
 - 2026-10-08 Smoother regional flight transitions: authored flare, rotation and cruise/approach pitch hand-over; flare lengthened to ~7 s (presentation only)
 - 2026-10-08 — Smoother flight-view transitions: the glide travels with the moving aircraft, field of view follows the same glide, and the fuselage hides mid-glide (unverified in Unity).
 
 - 2026-10-08 — Economy: flights cost more (120 base + 1.45/1.65 per km, was 70 + 1.12/1.28), pay and prices unchanged, so margins are thinner (balance unverified; ADR flight-cost-rebalance).
 
 - 2026-10-08 — Switching to cockpit/window view no longer shows the wings floating without a fuselage: the airframe hides only once the camera glide arrives (unverified in Unity).
+- 2026-10-08 — Moving map smoothness: textures bake on a worker thread (no open/zoom hitch), crisp anti-aliased coast window at every scale, mipmapped airfield, ring texture, cached route/text (Unity compile/look unverified).
 
 - 2026-10-08 — Approach gear follows height (down ~2,000 ft AGL jets / 1,500 turboprops, lowered over ~22 s) instead of phase progress; sources in lighting README (unverified in Unity).
 

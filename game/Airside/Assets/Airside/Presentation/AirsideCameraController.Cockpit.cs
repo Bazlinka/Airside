@@ -33,6 +33,11 @@ namespace Airside.Presentation
         private Vector3 _exitFromPos;
         private Quaternion _exitFromRot = Quaternion.identity;
         private float _exitFromFov;
+        // The aircraft the view was on, so the exit glide starts from where the camera would be had it
+        // stayed with the moving aircraft, not from a fixed world point the aircraft has flown away from.
+        private Transform _exitAnchor;
+        private Vector3 _exitAnchorPos;
+        private const float ExitAnchorMaxStepMetres = 1000f;
         private float _exitSeconds = CockpitLookInput.TransitionSeconds;
         private int _exitBlendFrame = -1;
         private int _cockpitPreset = -1;
@@ -117,6 +122,11 @@ namespace Airside.Presentation
             if (!_cockpitActive) return;
             _exitFromPos = transform.position;
             _exitFromRot = transform.rotation;
+            _exitAnchor = _cockpitSeat;
+            if (_exitAnchor != null)
+            {
+                _exitAnchorPos = _exitAnchor.position;
+            }
             _exitFromFov = _camera != null ? _camera.fieldOfView : _savedFov;
             _exitSeconds = 0f;
             _cockpitActive = false;
@@ -294,13 +304,22 @@ namespace Airside.Presentation
         /// <summary>Glides the free camera out from where the seat view left it. Called after each free-camera pose.</summary>
         private void ApplyExitBlend()
         {
-            if (_exitSeconds >= CockpitLookInput.TransitionSeconds || _camera == null) return;
+            if (_exitSeconds >= CockpitLookInput.TransitionSeconds || _camera == null) { _exitAnchor = null; return; }
             if (_exitBlendFrame != Time.frameCount)
             {
                 _exitBlendFrame = Time.frameCount;
                 _exitSeconds += Mathf.Min(Time.unscaledDeltaTime, 0.1f);
             }
             var glide = CockpitLookInput.Ease(_exitSeconds);
+            if (_exitAnchor != null)
+            {
+                // Follow the aircraft step by step. A jump of kilometres is an origin shift (already applied to
+                // the glide start by ShiftFlightOrigin), not flight, so it is skipped.
+                var step = _exitAnchor.position - _exitAnchorPos;
+                _exitAnchorPos = _exitAnchor.position;
+                if (step.sqrMagnitude < ExitAnchorMaxStepMetres * ExitAnchorMaxStepMetres)
+                    _exitFromPos += step;
+            }
             transform.SetPositionAndRotation(Vector3.Lerp(_exitFromPos, transform.position, glide),
                 Quaternion.Slerp(_exitFromRot, transform.rotation, glide));
             _camera.fieldOfView = Mathf.Lerp(_exitFromFov, _camera.fieldOfView, glide);

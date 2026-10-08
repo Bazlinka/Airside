@@ -418,6 +418,37 @@ cream airframe/coastal-blue or eucalyptus trim, real-metre fixed landing gear,
 no marks baked into textures. Status: integrated for native/packaged review;
 this entry does not claim visual verification before the recorded captures.
 
+### Aircraft and soundscape audio v02 — 8 October 2026 (#614)
+
+- **AUD-014 fleet rotating/exhaust bank:** 14 aircraft families × idle, power,
+  reverse and independently controlled rotating core; 8 s, mono 22.05 kHz PCM.
+  Idle/power/reverse derive from the existing registered CC0 AUD-007/008/009 →
+  AUD-010 v01 family banks. Bell and rotating cores are original Airside synthesis.
+  Representative designed voices, **not recordings of each manufacturer's engine**.
+- **AUD-015 cabin recording:** richwise, [inside a passenger jet mid-flight](https://freesound.org/people/richwise/sounds/451741/),
+  CC0 1.0 Universal. Source page/CC0 link verified 2026-10-08. HQ MP3 retained as
+  `docs/data/audio/src_jet_cabin_richwise_451741.mp3`; decoded 12–32 s mono 22.05 kHz
+  crop retained alongside it. A 620 Hz lowpass removes intelligible speech while
+  retaining airframe/pack texture; jet, prop and rotor cabin derivatives combine
+  this with registered AUD-007 or original rotor/noise. Voluntary richwise credit
+  appears in Flight Manual; no attribution required. No foreign PA announcements.
+- **AUD-016 supporting machinery/soundscape:** original Airside starter beds
+  (prop/jet/rotor), APU, airflow, gear/flap/door cues and apron bed. No external
+  sample or AI audio model. HUD switch/tine cues are original runtime synthesis.
+- **Generation:** `scripts/audio/generate_audio_overhaul.py`; immutable input
+  hashes, acquisition/crop, source URLs, licence evidence and fallback are in
+  `docs/data/audio/audio_overhaul_sources.json`. Every output SHA-256, peak/RMS,
+  duration and loop-seam/mean-step metric is in `audio_overhaul_manifest_v02.json`.
+  Rotating circular signals to a low-slope boundary retains waveform energy;
+  no artificial endpoint plateau. Existing source assets and v01 bank retained.
+- **Cost:** $0. Existing NumPy build dependency licence remains registered above.
+  Original processing/code is project-owned. Runtime needs no network.
+- **Fallback:** existing registered family/constructed engine when a v02 bed is
+  missing; optional core/starter/APU/mechanics/cabin layers go silent. Existing
+  generated airflow/apron fallback and touchdown/tyre assets remain available.
+- **Evidence:** `docs/testing/audio-overhaul-2026-10-08/README.md`. Numerical and
+  byte/headroom checks passed; Unity listening/device/performance assessment is
+  unverified. This is not an aircraft-specific recording or auditory QA claim.
 
 ## Australian flight world — 8 October 2026
 

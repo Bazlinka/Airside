@@ -1,51 +1,97 @@
+using Airside.Domain;
+using Airside.Simulation;
 using UnityEngine;
 
 namespace Airside.Presentation
 {
     public sealed partial class AirsidePrototype
     {
-        private AudioSource _cockpitAirflow;
+        private AudioSource _cockpitAirflow, _cabinRumble, _cabinRain;
         private AudioClip _cockpitAirflowClip;
+        private string _cabinAudioFamily;
 
         private void UpdateCockpitAirflow()
         {
-            if (!InCockpit || _cockpitInterior == null) return;
-            if (_audioMuted)
+            if (!SoundInteriorListening)
             {
-                if (_cockpitAirflow != null) { _cockpitAirflow.Stop(); _cockpitAirflow.volume = 0f; }
+                if (_cockpitAirflow != null) ReleaseCockpitAirflow();
                 return;
             }
+            var type = WatchingOutstation ? WatchedOutstation()?.Type
+                : _fleetAircraftById.TryGetValue(_cockpitAircraftId, out var aircraft) ? aircraft.Type : AircraftType.Atr42;
+            var kind = EngineVoice.ClassOf(type);
+            var family = kind == EngineClass.Rotorcraft ? "rotor" : kind == EngineClass.Turboprop ? "prop" : "jet";
+            if (_cockpitAirflow != null && family != _cabinAudioFamily) ReleaseCockpitAirflow();
             if (_cockpitAirflow == null)
             {
-                var samples = CockpitAirflow.Samples();
-                _cockpitAirflowClip = AudioClip.Create("Cockpit filtered airflow", samples.Length,
-                    1, CockpitAirflow.SampleRate, false);
-                _cockpitAirflowClip.SetData(samples, 0);
-                _cockpitAirflow = _cockpitInterior.gameObject.AddComponent<AudioSource>();
-                _cockpitAirflow.playOnAwake = false;
-                _cockpitAirflow.loop = true;
-                _cockpitAirflow.spatialBlend = 0f;
-                _cockpitAirflow.dopplerLevel = 0f;
-                _cockpitAirflow.priority = 145;
-                _cockpitAirflow.volume = 0f;
-                _cockpitAirflow.clip = _cockpitAirflowClip;
+                _cabinAudioFamily = family;
+                var clip = Resources.Load<AudioClip>("Airside/Audio/aircraft_airflow_v02");
+                if (clip == null)
+                {
+                    var samples = CockpitAirflow.Samples();
+                    _cockpitAirflowClip = AudioClip.Create("Cockpit filtered airflow fallback", samples.Length,
+                        1, CockpitAirflow.SampleRate, false);
+                    _cockpitAirflowClip.SetData(samples, 0);
+                    clip = _cockpitAirflowClip;
+                }
+                _cockpitAirflow = InteriorSource(clip, 130, 2600f);
+                _cabinRumble = InteriorSource(Resources.Load<AudioClip>("Airside/Audio/aircraft_cabin_" + family + "_v02"), 120, 850f);
+                _cabinRain = InteriorSource(_ambientRainAudio != null ? _ambientRainAudio.clip : null, 140, 1400f);
             }
-            _cockpitAirflow.volume = AircraftAudioMix.SmoothTowards(_cockpitAirflow.volume,
-                CockpitAirflow.Volume(_cockpitGroundKnots), Time.unscaledDeltaTime, 0.75f);
-            if (!_cockpitAirflow.isPlaying && CanStartAudio(_cockpitAirflow)) _cockpitAirflow.Play();
+            var knots = _cockpitGroundKnots;
+            var height = _cockpitGearHeight;
+            if (WatchingOutstation && OutstationJourney.TryFor(WatchedOutstation(), _preciseTime, out var journey))
+            {
+                knots = (float)journey.SpeedKnots;
+                height = (float)(journey.AltitudeFeet / EnrouteProfile.FeetPerMetre);
+            }
+            // A real cabin's pressure/pack bed stays under the wind, while speed adds rushing air.
+            var passenger = SoundPassengerListening;
+            InteriorLoop(_cockpitAirflow, _audioMuted ? 0f : AircraftAudioDynamics.AirflowGain(knots, passenger), 1f);
+            InteriorLoop(_cabinRumble, _audioMuted ? 0f : (passenger ? 0.24f : 0.17f), 1f);
+            var wet = (CurrentWeather == WeatherKind.Rain || CurrentWeather == WeatherKind.Storm)
+                && height < 1600f;
+            InteriorLoop(_cabinRain, _audioMuted || !wet ? 0f : 0.12f * Mathf.Clamp01(1f - height / 1600f), 1f);
+        }
+
+        private AudioSource InteriorSource(AudioClip clip, int priority, float cutoff)
+        {
+            var host = new GameObject("Interior sound");
+            host.transform.SetParent(transform, false);
+            var filter = host.AddComponent<AudioLowPassFilter>();
+            filter.cutoffFrequency = cutoff;
+            var source = host.AddComponent<AudioSource>();
+            source.playOnAwake = false; source.loop = true; source.spatialBlend = 0f;
+            source.dopplerLevel = 0f; source.priority = priority; source.volume = 0f; source.clip = clip;
+            return source;
+        }
+
+        private void InteriorLoop(AudioSource source, float volume, float pitch)
+        {
+            if (source == null || source.clip == null) return;
+            if (_audioMuted) { source.Stop(); source.volume = 0f; return; }
+            source.volume = AircraftAudioMix.SmoothTowards(source.volume, volume * AmbientDuck, Time.unscaledDeltaTime, 0.85f);
+            source.pitch = pitch;
+            if (volume <= 0.001f && source.volume <= 0.001f) source.Stop();
+            else if (!source.isPlaying && CanStartAudio(source)) source.Play();
         }
 
         private void ReleaseCockpitAirflow()
         {
-            if (_cockpitAirflow != null)
-            {
-                _cockpitAirflow.Stop();
-                _cockpitAirflow.clip = null;
-                DestroyPresentationObject(_cockpitAirflow);
-            }
+            ReleaseInteriorSource(_cockpitAirflow);
+            ReleaseInteriorSource(_cabinRumble);
+            ReleaseInteriorSource(_cabinRain);
             if (_cockpitAirflowClip != null) DestroyPresentationObject(_cockpitAirflowClip);
-            _cockpitAirflow = null;
+            _cockpitAirflow = _cabinRumble = _cabinRain = null;
             _cockpitAirflowClip = null;
+            _cabinAudioFamily = null;
+        }
+
+        private void ReleaseInteriorSource(AudioSource source)
+        {
+            if (source == null) return;
+            source.Stop(); source.clip = null;
+            DestroyPresentationObject(source.gameObject);
         }
     }
 }

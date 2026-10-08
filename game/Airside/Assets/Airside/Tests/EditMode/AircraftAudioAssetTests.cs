@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Airside.Domain;
 using Airside.Presentation;
 using NUnit.Framework;
@@ -8,10 +9,10 @@ namespace Airside.Tests
     public sealed class AircraftAudioAssetTests
     {
         [Test]
-        public void EveryProfileLoadsItsOwnThreeFiniteSeamlessEngineLayers()
+        public void EveryProfileLoadsItsOwnFourFiniteSeamlessEngineLayers()
         {
             foreach (var spec in AircraftCatalogue.All)
-                foreach (var layer in new[] { "idle", "power", "reverse" })
+                foreach (var layer in new[] { "idle", "power", "reverse", "core" })
                 {
                     var name = AircraftAudioProfiles.For(spec.Type).Resource(layer);
                     var clip = Resources.Load<AudioClip>(name);
@@ -53,11 +54,22 @@ namespace Airside.Tests
                 // Zero gain avoids playback; the actual mix still configures every voice.
                 emitter.Apply("cockpit", 1f, 1f, 1f, 1f, 0f, 30f, false, false,
                     Vector3.zero, 0f, false, 0.1f);
-                foreach (var source in sources) Assert.That(source.dopplerLevel, Is.Zero);
+                var hosts = new HashSet<GameObject>();
+                foreach (var source in sources)
+                {
+                    Assert.That(source.dopplerLevel, Is.Zero);
+                    Assert.That(source.spatialBlend, Is.Zero, "interior loses exterior range attenuation");
+                    Assert.That(source.GetComponent<AudioLowPassFilter>(), Is.Not.Null);
+                    Assert.That(hosts.Add(source.gameObject), Is.True, "each band owns its filter host");
+                }
                 emitter.InteriorListening = false;
                 emitter.Apply("cockpit", 1f, 1f, 1f, 1f, 0f, 30f, false, false,
                     Vector3.zero, 0f, false, 0.1f);
-                foreach (var source in sources) Assert.That(source.dopplerLevel, Is.EqualTo(0.2f).Within(0.001f));
+                foreach (var source in sources)
+                {
+                    Assert.That(source.dopplerLevel, Is.EqualTo(0.2f).Within(0.001f));
+                    Assert.That(source.spatialBlend, Is.EqualTo(1f), "exterior distance restored");
+                }
             }
             finally { Object.DestroyImmediate(go); }
         }
@@ -71,7 +83,7 @@ namespace Airside.Tests
                 var emitter = go.AddComponent<AircraftSoundEmitter>();
                 emitter.Configure(AircraftType.AirbusA350900, null, null);
                 var sources = go.GetComponentsInChildren<AudioSource>();
-                Assert.That(sources.Length, Is.EqualTo(5));
+                Assert.That(sources.Length, Is.EqualTo(11));
                 foreach (var source in sources)
                 {
                     Assert.That(source.spatialBlend, Is.EqualTo(1f));

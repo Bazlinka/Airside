@@ -288,11 +288,13 @@ namespace Airside.Presentation
             }
 
             emitter.Configure(aircraft.Type, LoadEngineClip(aircraft.Type), CreateTouchdownClip());
-            emitter.InteriorListening = InteriorListening && aircraft.Registration == _cockpitAircraftId;
+            emitter.InteriorListening = SoundInteriorListening && aircraft.Registration == SoundAircraftId;
+            emitter.PassengerListening = SoundPassengerListening && aircraft.Registration == SoundAircraftId;
+            emitter.FollowListening = aircraft.Registration == SoundAircraftId;
             emitter.Apply(aircraft.Registration, pose.RotorLoad01, pose.RotorSpeed01, engines.Left, engines.Right,
                 0f, 0f, pose.OnGround, false,
                 _audioListener != null ? _audioListener.position : view.position,
-                _aircraftZoomGain, _audioMuted, Time.unscaledDeltaTime);
+                _aircraftZoomGain * AmbientDuck, _audioMuted, Time.unscaledDeltaTime);
         }
 
         /// <summary>

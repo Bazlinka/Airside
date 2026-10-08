@@ -15,6 +15,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- 2026-10-08 — #614: layered twin-engine starts/cores, cabin and spatial airport audio, regional landing cues and 68 v02 clips (Unity audio unverified).
+
 - Render at the display's native size: a stale saved window size (1600x900 maximised on a Retina screen) made the game soft and letterboxed; the player now resets it at startup.
 - Preserve flap/gear rig rest poses across follow-target refreshes and use the actual regional journey phase in cruise (#586).
 - **ATR 42 hold door fixed.** The forward-left baggage door no longer sits mirrored a door-width ahead of the cockpit: the half turn is baked into its mesh, not its transform (unverified in Unity visually).

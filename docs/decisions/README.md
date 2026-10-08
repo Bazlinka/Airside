@@ -305,6 +305,7 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-07 | [Inline save absence and native flight-view contracts](2026-10-07-native-save-and-flight-view-contracts.md) |  |
 | 2026-10-07 | [All-base airline operations](2026-10-07-network-operations.md) |  |
 | 2026-10-07 | [Validate player journeys with a local interactive dispatch study](2026-10-07-player-flow-design-study.md) | accepted for design-study work; runtime interface direction remains pr |
+| 2026-10-08 | [Aircraft and soundscape audio presentation v02](2026-10-08-aircraft-and-soundscape-audio.md) |  |
 | 2026-10-08 | [Generic airport templates for every Australian destination](2026-10-08-airport-templates.md) | accepted (code only; unverified in Unity) |
 | 2026-10-08 | [Australian cruise terrain and mapped airport approaches](2026-10-08-australia-flight-ground.md) |  |
 | 2026-10-08 | [Coherent world surface lighting](2026-10-08-coherent-world-lighting.md) |  |

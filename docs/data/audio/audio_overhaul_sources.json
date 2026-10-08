@@ -1,0 +1,110 @@
+{
+  "verified_at": "2026-10-08",
+  "cabin_source": {
+    "creator": "richwise",
+    "title": "Inside the cabin of a large passenger jet mid flight",
+    "page": "https://freesound.org/people/richwise/sounds/451741/",
+    "download": "https://cdn.freesound.org/previews/451/451741_1481531-hq.mp3",
+    "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "page_evidence": "License anchor on source page reads Creative Commons 0 and links to publicdomain/zero/1.0; description: Inside the cabin of a large passenger jet mid flight. Lots of engine and air noise obscuring the sounds of people talking eating drinking.",
+    "cost_usd": 0,
+    "required_attribution": false,
+    "voluntary_credit": "richwise, credited in Flight Manual",
+    "crop": "ffmpeg -v error -y -ss 12 -t 20 -i src_jet_cabin_richwise_451741.mp3 -ac 1 -ar 22050 src_jet_cabin_richwise_451741.wav",
+    "adaptation": "Lowpass at 620 Hz, loop extraction; no speech/PA announcement inserted into game."
+  },
+  "other_lineage": "AUD-007/008/009 -> AUD-010 v01 type banks -> v02 idle/power/reverse. Original additive rotating cores/starter/APU/airflow/apron and mechanics, no AI audio model used. Cabin turboprop also uses AUD-007. No exact engine-variant recording claim.",
+  "inputs": [
+    {
+      "file": "game/Airside/Assets/Resources/Airside/Audio/eng_a21n_power_v01.wav",
+      "sha256": "bdc5e209ddb0c1715136ae9dc54e349edab2ac679f9f3b1d4b1fd05aed10262b",
+      "license": "Registered AUD-010/AUD-013 family-derived or project-authored v01 bank; see ASSET_AND_DATA_REGISTER.md"
+    },
+    {
+      "file": "game/Airside/Assets/Resources/Airside/Audio/eng_a223_power_v01.wav",
+      "sha256": "99eb88cb6f53ce74bb65f2c30db077efb607ccfc1042d7aa5506443b9ab033ff",
+      "license": "Registered AUD-010/AUD-013 family-derived or project-authored v01 bank; see ASSET_AND_DATA_REGISTER.md"
+    },
+    {
+      "file": "game/Airside/Assets/Resources/Airside/Audio/eng_a320_power_v01.wav",
+      "sha256": "4dc56b8557c207f12ce1b2e36bce849eae22ef57c0622d3d30283c717b75434c",
+      "license": "Registered AUD-010/AUD-013 family-derived or project-authored v01 bank; see ASSET_AND_DATA_REGISTER.md"
+    },
+    {
+      "file": "game/Airside/Assets/Resources/Airside/Audio/eng_a339_power_v01.wav",
+      "sha256": "61a2410247c0b281b1599abea498ece0ab5eade77514142ac4a81d629f8de629",
+      "license": "Registered AUD-010/AUD-013 family-derived or project-authored v01 bank; see ASSET_AND_DATA_REGISTER.md"
+    },
+    {
+      "file": "game/Airside/Assets/Resources/Airside/Audio/eng_a359_power_v01.wav",
+      "sha256": "e38c4cb7c66af724b2e0f07ff43fa64a0c3c1f92b6adae2cf742c5c2846855d7",
+      "license": "Registered AUD-010/AUD-013 family-derived or project-authored v01 bank; see ASSET_AND_DATA_REGISTER.md"
+    },
+    {
+      "file": "game/Airside/Assets/Resources/Airside/Audio/eng_atr42_power_v01.wav",
+      "sha256": "4f8d27c5c73ce69744b1ff4b442a6c5149280dfbfb5dad99f5d9d483987ef7c0",
+      "license": "Registered AUD-010/AUD-013 family-derived or project-authored v01 bank; see ASSET_AND_DATA_REGISTER.md"
+    },
+    {
+      "file": "game/Airside/Assets/Resources/Airside/Audio/eng_b38m_power_v01.wav",
+      "sha256": "a2c49fe5364014de4c5df22ff88e63788db9ca2b71d563088c661c60dd798f18",
+      "license": "Registered AUD-010/AUD-013 family-derived or project-authored v01 bank; see ASSET_AND_DATA_REGISTER.md"
+    },
+    {
+      "file": "game/Airside/Assets/Resources/Airside/Audio/eng_b412_power_v01.wav",
+      "sha256": "cb970837eaf2c09ab762fa128f414ced58f856df42245e7e076180c4b7fc78a7",
+      "license": "Registered AUD-010/AUD-013 family-derived or project-authored v01 bank; see ASSET_AND_DATA_REGISTER.md"
+    },
+    {
+      "file": "game/Airside/Assets/Resources/Airside/Audio/eng_b738_power_v01.wav",
+      "sha256": "261b1f76309f2b8e2a2408c89b088c43129f5cdd2dd9f8ebe7988d6071b63555",
+      "license": "Registered AUD-010/AUD-013 family-derived or project-authored v01 bank; see ASSET_AND_DATA_REGISTER.md"
+    },
+    {
+      "file": "game/Airside/Assets/Resources/Airside/Audio/eng_b789_power_v01.wav",
+      "sha256": "7660aeb2c01f526ff6607cf9f361648d7145aec6483c838269c8ea563a25215c",
+      "license": "Registered AUD-010/AUD-013 family-derived or project-authored v01 bank; see ASSET_AND_DATA_REGISTER.md"
+    },
+    {
+      "file": "game/Airside/Assets/Resources/Airside/Audio/eng_b78x_power_v01.wav",
+      "sha256": "2ddac8258127cdf348aa3757f17185ea1c2f91d00a58b7038282bc3fffe34c97",
+      "license": "Registered AUD-010/AUD-013 family-derived or project-authored v01 bank; see ASSET_AND_DATA_REGISTER.md"
+    },
+    {
+      "file": "game/Airside/Assets/Resources/Airside/Audio/eng_dh8d_power_v01.wav",
+      "sha256": "5e9d78f8ef5ae73785fbde69ded8f072d63ead5ae6682a1688a4241173e08d58",
+      "license": "Registered AUD-010/AUD-013 family-derived or project-authored v01 bank; see ASSET_AND_DATA_REGISTER.md"
+    },
+    {
+      "file": "game/Airside/Assets/Resources/Airside/Audio/eng_e190_power_v01.wav",
+      "sha256": "ed5f54617a21ffcda6eabdff2b3a7068cdf2f4863659d4e4f133d79451fa0ebd",
+      "license": "Registered AUD-010/AUD-013 family-derived or project-authored v01 bank; see ASSET_AND_DATA_REGISTER.md"
+    },
+    {
+      "file": "game/Airside/Assets/Resources/Airside/Audio/eng_sf34_power_v01.wav",
+      "sha256": "96c4fa4e8ff3770f7cbace91d1aae08773a1ce7acb3879c318514745821e4a71",
+      "license": "Registered AUD-010/AUD-013 family-derived or project-authored v01 bank; see ASSET_AND_DATA_REGISTER.md"
+    },
+    {
+      "file": "docs/data/audio/src_jet_cabin_richwise_451741.mp3",
+      "sha256": "898682f617f449261cf7fc7db382f383838c38def6d193a95f12fa62706c745a",
+      "license": "CC0 1.0 Universal, richwise"
+    },
+    {
+      "file": "docs/data/audio/src_jet_cabin_richwise_451741.wav",
+      "sha256": "16e034e662c56312045cc260ad1dfc0e95398070ff018fa07bca8c29e23d2473",
+      "license": "CC0 1.0 Universal, richwise"
+    },
+    {
+      "file": "game/Airside/Assets/Resources/Airside/Audio/eng_dash8_300_twin.wav",
+      "sha256": "fe1bed2519020716f66289b4b42e064b2ee53cfe83abec84e6fedd4cf411cee9",
+      "license": "Existing registered AUD-007 CC0 source / project-authored profile tuning"
+    },
+    {
+      "file": "docs/data/AIRCRAFT_AUDIO_PROFILES.json",
+      "sha256": "dce8a697c5c3f7468ebf3d1b640338af06904f5897e30b44dc6071217de96344",
+      "license": "Existing registered AUD-007 CC0 source / project-authored profile tuning"
+    }
+  ],
+  "fallback": "Missing engine v02 uses existing registered family recording / procedural fallback; optional core/starter/APU/airframe/cabin omitted, airflow/apron generated fallback; existing mute/settings unchanged."
+}

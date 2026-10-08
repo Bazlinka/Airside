@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-08 — Regional departures climb at a steady ~2,400 ft/min (was up to ~5,200): the route climb starts when the aircraft reaches its start height, and rotation-to-exit uses one steady rate (headless-tested; unverified in Unity).
 - 2026-10-08 — Roads: OSM snapshot refreshed (+55 drivable roads incl. new service roads, 16,068 total) and road/car-park/precinct data regenerated; coverage checked against live OSM count (unverified in Unity).
 - 2026-10-08 — HUD stage 2: flight-view HUD as captioned instruments with route/phase chips and progress; Operations rows with severity stripe, bold status and time (Unity unverified).
 

@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-08 Smoother regional flight transitions: authored flare, rotation and cruise/approach pitch hand-over; flare lengthened to ~7 s (presentation only)
 - 2026-10-08 — Smoother flight-view transitions: the glide travels with the moving aircraft, field of view follows the same glide, and the fuselage hides mid-glide (unverified in Unity).
 
 - 2026-10-08 — Switching to cockpit/window view no longer shows the wings floating without a fuselage: the airframe hides only once the camera glide arrives (unverified in Unity).

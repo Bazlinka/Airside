@@ -26,6 +26,10 @@ namespace Airside.Presentation
         }
 
         public const double TerminalSeconds=180;
+        /// <summary>Distance from touchdown where the glideslope rounds out to zero sink (about 7 s).</summary>
+        public const double FlareMetres=300;
+        /// <summary>Seconds over which the route's path angle hands over to the authored attitude (and back).</summary>
+        public const double AttitudeBlendSeconds=25;
         public const double RolloutSeconds=40;
         public static void Landing(RegionalRunway runway,double homeX,double homeZ,double remaining,
             out double x,out double y,out double z)
@@ -44,9 +48,9 @@ namespace Airside.Presentation
                 along=-6000+(6000+touchdown)*t;
                 // Smooth flare to zero sink at touchdown.
                 var distance=6000*(1-t);
-                var u=Math.Clamp(distance/150,0,1);
-                height=distance>=150 ? distance*CircuitProfile.GlideslopeTangent
-                    : 150*CircuitProfile.GlideslopeTangent*(2*u*u-u*u*u);
+                var u=Math.Clamp(distance/FlareMetres,0,1);
+                height=distance>=FlareMetres ? distance*CircuitProfile.GlideslopeTangent
+                    : FlareMetres*CircuitProfile.GlideslopeTangent*(2*u*u-u*u*u);
             }
             else
             {
@@ -56,6 +60,43 @@ namespace Airside.Presentation
             }
             x=ax+dx*along;z=az+dz*along;y=runway.Elevation+AirsideFlightPathDatum+height;
         }
+
+        /// <summary>
+        /// Body pitch (codebase sign: negative is nose-up) for the final approach of a regional arrival.
+        /// The route's path angle alone drops the nose to ~0 at touchdown, so the flare never showed;
+        /// this follows the authored approach attitude, rounds out to the flare attitude over the
+        /// same distance the height flares, and fades in from <paramref name="routePitch"/> at the
+        /// start of the terminal leg so the cruise-to-approach seam does not snap.
+        /// </summary>
+        public static float ApproachPitchDegrees(AircraftAttitude attitude, double remaining, float routePitch)
+        {
+            var seconds=Math.Clamp(remaining,RolloutSeconds,TerminalSeconds);
+            var t=(float)((TerminalSeconds-seconds)/(TerminalSeconds-RolloutSeconds));
+            var pitch=attitude.ApproachStart+(attitude.ApproachEnd-attitude.ApproachStart)*t;
+            var round=1-Math.Clamp((6000*(1-t))/FlareMetres,0,1);
+            var f=(float)(round*round*(3-2*round));
+            pitch+=(attitude.Flare-pitch)*f;
+            var fade=(float)Math.Clamp((TerminalSeconds-remaining)/AttitudeBlendSeconds,0,1);
+            fade=fade*fade*(3-2*fade);
+            return routePitch+(pitch-routePitch)*fade;
+        }
+
+        /// <summary>
+        /// Body pitch for a regional departure from the destination: level for the roll, a smooth
+        /// rotation to the climb attitude, then a hand-over to the route's own path angle.
+        /// </summary>
+        public static float DeparturePitchDegrees(AircraftAttitude attitude,AircraftPerformanceProfile profile,
+            double seconds,double rotateSeconds,float routePitch)
+        {
+            if(seconds<=rotateSeconds)return 0;
+            var span=Math.Max(1,DepartureSeconds-rotateSeconds);
+            var progress=profile.RotateProgress+(1-profile.RotateProgress)*Math.Clamp((seconds-rotateSeconds)/span,0,1);
+            var pitch=attitude.PitchDegrees(AircraftPhase.Takeoff,(float)progress,profile);
+            var fade=(float)Math.Clamp((seconds-DepartureSeconds)/AttitudeBlendSeconds,0,1);
+            fade=fade*fade*(3-2*fade);
+            return pitch+(routePitch-pitch)*fade;
+        }
+
         public const double DepartureSeconds=120;
         public static void Departure(RegionalRunway runway,double seconds,double exitHeight,
             out double x,out double y,out double z)

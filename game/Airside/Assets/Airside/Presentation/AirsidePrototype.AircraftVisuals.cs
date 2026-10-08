@@ -126,6 +126,27 @@ namespace Airside.Presentation
                 var pitch = journey.HasValue ? -Mathf.Atan2(next.y-position.y,
                     new Vector2(next.x-position.x,next.z-position.z).magnitude)*Mathf.Rad2Deg
                     : AirsideFlightPath.PitchDegrees(phase, progress, aircraftType);
+                // Regional arrival and departure legs: the route's path angle has no angle of attack, which
+                // lost the flare and the rotation. Hand the attitude over to the authored curves.
+                if (journey.HasValue && _fleetAircraftById.TryGetValue(flight.AircraftId, out var legAircraft)
+                    && TryEnroute(legAircraft, out var legProfile, out var legElapsed))
+                {
+                    var attitude = AircraftAttitude.For(legAircraft.Type);
+                    if (legAircraft.State == FleetState.Outbound)
+                    {
+                        var remaining = legProfile.LegSeconds - legElapsed;
+                        if (remaining <= RegionalFlightPath.RolloutSeconds)
+                            pitch = attitude.PitchDegrees(AircraftPhase.Landing, progress, AircraftPerformance.For(legAircraft.Type));
+                        else if (remaining <= RegionalFlightPath.TerminalSeconds)
+                            pitch = RegionalFlightPath.ApproachPitchDegrees(attitude, remaining, pitch);
+                    }
+                    else if (legAircraft.State == FleetState.Inbound
+                             && legElapsed < RegionalFlightPath.DepartureSeconds + RegionalFlightPath.AttitudeBlendSeconds)
+                    {
+                        pitch = RegionalFlightPath.DeparturePitchDegrees(attitude, AircraftPerformance.For(legAircraft.Type),
+                            legElapsed, RegionalFlightPath.RotateSeconds(legAircraft.Type), pitch);
+                    }
+                }
                 // Retain the authored body attitude at the takeoff handoff. The route's
                 // path angle alone would abruptly discard the aircraft's angle of attack.
                 if (journey.HasValue && _fleetAircraftById.TryGetValue(flight.AircraftId, out var departing)

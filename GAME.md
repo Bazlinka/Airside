@@ -7,7 +7,7 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
-**Regional departure climb (8 Oct, Claude):** the route profile starts at the height a local climb-out reaches, but a regional leg begins at brake release, so the old code had the aircraft gain the whole gap in 120 s (up to ~5,200 ft/min on a 737). `RegionalFlightPath.ClimbLagSeconds` + `ClimbAltitudeFeet` start the route climb late (finishing out of the cruise), and `DepartureClimbHeight` replaces the smoothstep with one steady rate. Peak now <= 3,000 ft/min in `RegionalDepartureClimbTests`. Operations-board altitude text still reads the unlagged profile for the first minutes. Unity unverified.
+**Regional departure climb (8 Oct, Claude):** the route profile starts at the height a local climb-out reaches, but a regional leg begins at brake release, so the old code had the aircraft gain the whole gap in 120 s (up to ~5,200 ft/min on a 737). `RegionalFlightPath.ClimbLagSeconds` + `ClimbAltitudeFeet` start the route climb late (finishing out of the cruise), and `DepartureClimbHeight` replaces the smoothstep with one steady rate. Peak now <= 3,000 ft/min in `RegionalDepartureClimbTests`. Board/card/map altitude text now uses `BoardAltitudeFeet` (same lag). Unity unverified.
 
 **Mac notifications (8 Oct, Codex, #645):** Options → Notifications adds an opt-in switch, permission/settings
 shortcut and SEND TEST. Important player events only while Airside runs in the background: stand-needed

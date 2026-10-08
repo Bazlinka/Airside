@@ -11,11 +11,15 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*
 
-**Save recovery review (8 Oct, Codex, #599 / PR #600):** branch `codex/save-recovery-20261008`.
-Atomic saves retain one previous readable `.bak`; Continue recovers missing/unreadable
-primary JSON with a recovery label and warning. Save schema unchanged. Original native
-run passed all 11 save tests; full regression retains 3 baseline failures. Updated with
-merged opening/options; native compatibility rerun 163/163 passed. Packaged UI unverified.
+**Enroute flap review (8 Oct, Codex, #586 / PR #588):** retains animated rig rest poses
+when follow targets refresh and selects flap/gear phase from the regional journey.
+Updated against current main, preserving aircraft-specific return rotation timing.
+Native review with #604: 296/296 passed; packaged flight journeys unverified.
+Evidence: `docs/testing/enroute-flaps-2026-10-08/`.
+
+**Save recovery (8 Oct, Codex, #599):** merged in PR #600. Retains a readable previous
+save and recovers missing/unreadable primary JSON with a warning; save schema unchanged.
+Native compatibility 163/163 passed. Packaged recovery/title journey unverified.
 Evidence: `docs/testing/save-recovery-2026-10-08/`.
 
 **Opening and Options (8 Oct, Codex, #601):** merged in PR #603.

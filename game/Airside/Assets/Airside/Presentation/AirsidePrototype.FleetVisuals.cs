@@ -680,11 +680,15 @@ namespace Airside.Presentation
 
                 AircraftPickProxy.Ensure(view, registration);
                 EnsureSelectionMarker(view);
-                ForgetAircraftViewParts(view);
-                // Both calls above parent new children under the view. AirsideNamedChildren
-                // caches the child array for the life of the object and nothing was dropping
-                // it, so every later name lookup ran against a hierarchy snapshot taken
-                // before the pick proxy and selection marker existed.
+                // Pick/marker additions do not alter the animated rig. Reclassifying it here
+                // captures deployed flaps/gear as their new rest pose whenever follow targets
+                // change. Refresh only the marker fields and preserve actuator/rest data.
+                if (_aircraftViewParts.TryGetValue(view.GetInstanceID(), out var parts))
+                {
+                    parts.Marker = view.Find(AircraftPickRouting.MarkerChildName);
+                    parts.MarkerRenderer = parts.Marker != null ? parts.Marker.GetComponent<Renderer>() : null;
+                    _aircraftViewParts[view.GetInstanceID()] = parts;
+                }
                 AirsideNamedChildren.Forget(view);
             }
         }

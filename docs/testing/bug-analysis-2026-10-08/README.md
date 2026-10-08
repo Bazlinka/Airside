@@ -135,3 +135,12 @@ and the Weight test asserts size ordering instead of a fixed 2.2. Unity compile/
 | 17 | Fixed: `MarketOffers` and `AcceptContract` tolerate a null career. |
 
 Filtered headless run (Airline/Career/Contract/Fleet/Hud/Save, 324 tests) passes, including two new tests (hex colours, missed daily report).
+
+## Fix status (C-grade)
+
+#18 was a width estimate, not a measurement, and several flagged strings (for example the Stats overview lines)
+already shrink to fit by the code's own `HudShell.Measure`. Fixed where a single-line string had no fit logic:
+sheet subtitles (`PaintSheetHeader`), Fleet capability facts, the Fleet "SORT" button (drops the prefix when narrow),
+Career-track goal titles and next-goal lines, and Stats milestone rows now use `HudShell.FitFontSize`; the Contracts
+"No contract yet" box is taller. **Not changed:** the wrapped Stats text boxes (next-tier requirement, challenge line),
+whose height is fixed by the compact layout. They need a look at 800x600 in the Mac build before changing.

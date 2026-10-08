@@ -374,7 +374,7 @@ namespace Airside.Presentation
             if (!model.HasActive)
             {
                 into.Fill(card.WithHeight(96f), HudTone.Default, 0.03f);
-                into.Text(card.Inset(16f, 18f, 16f, 0f).WithHeight(44f),
+                into.Text(card.Inset(16f, 18f, 16f, 0f).WithHeight(60f),
                     "No contract yet. Take one from the offers below. It pays a bonus on top of each flight's pay.", 13f, HudTone.Muted, HudTextStyle.Wrap);
                 return;
             }

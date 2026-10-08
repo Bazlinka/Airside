@@ -756,7 +756,9 @@ namespace Airside.Presentation
                     continue;
                 var row = new HudBox(layout.RightColumn.X, y, layout.RightColumn.Width, 24f);
                 into.Text(row.SliceLeft(20f), "✓", 14f, HudTone.Positive, HudTextStyle.Bold);
-                into.Text(row.Inset(24f, 2f, 0f, 0f), milestone.Title, 12f, HudTone.Default);
+                var milestoneBox = row.Inset(24f, 2f, 0f, 0f);
+                into.Text(milestoneBox, milestone.Title,
+                    HudShell.FitFontSize(milestone.Title, 12f, milestoneBox.Width, 10f), HudTone.Default);
                 y += 24f;
                 achievements++;
             }

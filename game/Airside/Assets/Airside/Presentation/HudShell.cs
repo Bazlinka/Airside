@@ -711,7 +711,7 @@ namespace Airside.Presentation
             HudBox titleBox, HudBox subtitleBox)
         {
             into.Text(titleBox, TitleCase(title), 26f, HudTone.Default, HudTextStyle.Regular);
-            into.Text(subtitleBox, subtitle, 12f, HudTone.Muted);
+            into.Text(subtitleBox, subtitle, HudShell.FitFontSize(subtitle, 12f, subtitleBox.Width, 10f), HudTone.Muted);
             into.Button(CloseBox(surface), "×", HudAction.Close, HudButtonStyle.Secondary);
             into.Hairline(HudShell.HeaderRule(surface), HudTone.Muted, 0.16f);
         }

@@ -222,7 +222,8 @@ namespace Airside.Presentation
                 if (goal.Complete)
                     into.Text(new HudBox(card.X + 14f, card.Y + 15f, 12f, 14f), "✓", 10f, HudTone.Default,
                         HudTextStyle.Bold, HudAlign.Center, AirsidePalette.OnAccentHex);
-                into.Text(new HudBox(card.X + 36f, card.Y + 12f, card.Width - 130f, 20f), goal.Title, 14f,
+                into.Text(new HudBox(card.X + 36f, card.Y + 12f, card.Width - 130f, 20f), goal.Title,
+                    HudShell.FitFontSize(goal.Title, 14f, card.Width - 130f, 11f),
                     goal.Complete ? HudTone.Muted : HudTone.Default, HudTextStyle.Bold);
                 into.Bar(new HudBox(card.X + 36f, card.Y + 42f, card.Width - 52f, 5f),
                     goal.Target <= 0 ? 1f : goal.Progress / (float)goal.Target, tone);
@@ -254,8 +255,9 @@ namespace Airside.Presentation
                 var goal = model.NextGoals[i];
                 var x = preview.X + column * width;
                 into.Dot(x + 5f, y + 8f, 5f, HudTone.Muted);
-                into.Text(new HudBox(x + 16f, y, width - 24f, 18f),
-                    goal.Title + (goal.Complete ? "  ·  already done" : "  ·  " + goal.ProgressText), 12f,
+                var nextLine = goal.Title + (goal.Complete ? "  ·  already done" : "  ·  " + goal.ProgressText);
+                into.Text(new HudBox(x + 16f, y, width - 24f, 18f), nextLine,
+                    HudShell.FitFontSize(nextLine, 12f, width - 24f, 10f),
                     goal.Complete ? HudTone.Positive : HudTone.Muted);
             }
         }

@@ -69,6 +69,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronSlabJoints.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronSurfaceWear.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ArrivalApproach.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/ArrivalHoldingTrack.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AssemblyInfo.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AtmosphereLook.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AudioPeakLimiter.cs" />
@@ -231,6 +232,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ApronSurfaceWearTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ArrivalApproachTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ArrivalClearanceTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ArrivalHoldingTrackTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ArrivalPriorityTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ArticleTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AtmosphereLookTests.cs" />

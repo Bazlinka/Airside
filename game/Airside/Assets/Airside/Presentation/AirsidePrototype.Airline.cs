@@ -1539,7 +1539,11 @@ namespace Airside.Presentation
                     : $"Departing {RunwayWeather.Label(aircraft.AssignedRunway)} for {dest}",
                 FleetState.Outbound => $"Departed for {dest}{EnrouteAltitudeText(aircraft)} · lands {ends}",
                 FleetState.AtDestination => $"Away at {dest} · departs {ends}",
+                FleetState.Inbound when IsArrivalHolding(aircraft) =>
+                    $"Holding before arrival from {dest}{EnrouteAltitudeText(aircraft)}{wait}",
                 FleetState.Inbound => $"Inbound from {dest}{EnrouteAltitudeText(aircraft)} · {ends}",
+                FleetState.HoldingForLanding when IsArrivalHolding(aircraft) =>
+                    $"Holding for runway {RunwayWeather.Label(aircraft.AssignedRunway)}{EnrouteAltitudeText(aircraft)}{wait}",
                 FleetState.HoldingForLanding =>
                     $"On final {ApproachSide(aircraft.AssignedRunway)} for runway {RunwayWeather.Label(aircraft.AssignedRunway)}{wait}",
                 FleetState.GoAround => $"Going around, runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
@@ -2199,7 +2203,10 @@ namespace Airside.Presentation
         }
 
         private string EnrouteAltitudeText(FleetAircraft aircraft) =>
-            TryEnroute(aircraft, out var profile, out var elapsed)
+            (aircraft.State is FleetState.Inbound or FleetState.HoldingForLanding)
+                && TryArrivalFinal(aircraft, out var final)
+                ? " · " + EnrouteProfile.AltitudeText(final.World.y * EnrouteProfile.FeetPerMetre)
+                : TryEnroute(aircraft, out var profile, out var elapsed)
                 ? " · " + EnrouteProfile.AltitudeText(BoardAltitudeFeet(aircraft, profile, elapsed))
                 : string.Empty;
 

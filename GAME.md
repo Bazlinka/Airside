@@ -108,6 +108,13 @@ now logged as `[Airside soak] hitch`. Still unchecked: depth precision, sky/star
   alignment, swept doorway clearance, busy taxi traffic, save/reload through every phase. Do not merge on offline
   painter previews alone.
 
+**Visual planning (7 Oct, Codex):** Bailey rejected the earlier photographic vision. Three grounded edits and a staged plan now live in
+`docs/art/candidates/attainable_direction_20261007/README.md`, branch `feature/attainable-visual-direction-20261007`.
+They use actual 6 October packaged captures/native aircraft references and propose a fresh horizontal dispatch interface.
+Review candidates only; no runtime changes. Current-build baseline capture and native implementation validation remain necessary.
+**Player-flow planning:** `docs/plans/player_flows_and_interface_contract.md` consolidates 24 tasks and recovery paths.
+Further interface design must validate these before treating overview/Schedule mockups as a complete solution; no runtime changes.
+
 **Watch:**
 - Headless-green PRs can still break UnityEngine tests: the dotnet harness skips every test that touches `UnityEngine`. Since ADR 0252 it
   no longer misses missing `using`s or NUnit APIs Unity lacks (`Is.AnyOf`), but run `scripts/test-unity.sh` before merging behaviour changes.

@@ -465,3 +465,14 @@ No reference-image or external model generation is involved. Status: **Integrate
 unverified in Unity**. Native overview/follow day/dusk/night, door motion and
 performance checks remain open. ADR `2026-10-07-fleet-surface-details`; proof and
 plan: `docs/testing/fleet-surface-details-2026-10-07/`.
+
+## Parafield light trainer — 8 October 2026
+
+Bailey approved one light-aircraft type for the independent Parafield first version.
+AIR-YPPF-001: `Models/Aircraft/mdl_parafield_trainer_v01.gltf` and matching `.bin`.
+Original unbranded four-seat high-wing trainer: 11 m span, 8.3 m length, fixed
+tricycle gear, cream body, coastal-blue/eucalyptus trim. Runtime geometry is true
+3D with lathed body, airfoil wing/tail, struts, glazing and animated two-blade prop.
+Source: `scripts/generate-parafield-trainer.py`; zero cost; project-owned; simple
+procedural trainer remains the missing-asset fallback. Integrated for native
+review; evidence: `docs/testing/parafield-2026-10-08/`.

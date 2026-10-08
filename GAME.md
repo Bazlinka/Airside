@@ -14,6 +14,13 @@ Australian destinations (`AirportTemplates`) and a deterministic runway/gate pla
 HUD shows the landing runway and gate. Runways cross-checked against OSM/OurAirports; real gate numbers and terminals from OSM for MEL, SYD, BNE, PER, CBR, OOL, DRW, ASP (airlines prefer their own terminal); HBA, KGC and the small fields stay generic.
 ADR `2026-10-08-airport-templates`. Headless tests pass; unverified in Unity. Gate occupancy is not simulated away from Adelaide.
 
+**Parafield first working airport (8 Oct, Codex, #593):** independent YPPF with four mapped
+runways, taxiways, apron/hangars and four original light trainers on a reserved training circuit.
+Operations → WATCH PARAFIELD; ADELAIDE/R returns to Adelaide. Player bases/economics/saves
+unchanged. Five focused traffic checks and asset audit pass; Unity compiled. Bailey requested
+immediate merge after a brief pass; full suites stopped and Mac/visual review deferred.
+Evidence and limits: `docs/testing/parafield-2026-10-08/`.
+
 **Ocean halo fix (8 Oct, Codex):** far and outer ocean meshes keep one constant overlap height,
 removing the artificial sloped bands that catch water reflections. Land overlap stays unchanged.
 Bailey requested a quick fix without tests; Mac rebuild passed. Visual confirmation remains pending.

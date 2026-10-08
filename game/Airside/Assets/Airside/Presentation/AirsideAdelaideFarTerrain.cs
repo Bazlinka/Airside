@@ -103,6 +103,7 @@ namespace Airside.Presentation
                 var x = terrain.Origin + xi * Stride * terrain.Spacing;
                 var z = terrain.Origin + zi * Stride * terrain.Spacing;
                 var h = terrain.Sample(xi * Stride, zi * Stride);
+                h = Airside.Simulation.ParafieldLayout.GroundHeight(x, z, h);
                 var i = zi * n + xi;
                 var inside = Mathf.Abs(x) < InnerHalfMetres + 1f && Mathf.Abs(z) < InnerHalfMetres + 1f;
                 // Sea is stored as 0 m. It is the stylised Gulf, as the surroundings' open water is

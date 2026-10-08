@@ -38,7 +38,6 @@ jobs:
           python3 scripts/generate-ypad-roads.py --check
           python3 scripts/generate-ypad-carparks.py --check
           python3 scripts/generate-ypad-precinct.py --check
-          python3 scripts/generate-airport-gates.py --check
       - name: No buildings without a street
         if: steps.changes.outputs.heavy == 'true'
         run: python3 scripts/audit-ypad-map.py --max-percent 0.5

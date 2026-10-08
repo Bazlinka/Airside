@@ -110,7 +110,8 @@ namespace Airside.Presentation
                 || n == AirsideTerrainGround.TerrainObjectName
                 // Suburb tiles are large and built after the static batch. Combining them
                 // the way terrain once was spiked memory on packaged Mac (ADR 0162).
-                || n == AirsideAdelaideSuburbs.ObjectName;
+                || n == AirsideAdelaideSuburbs.ObjectName
+                || n == AirsideParafieldAirport.ObjectName;
         }
 
         private static void AttachDistantLod(Transform airfieldRoot)

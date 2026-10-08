@@ -397,3 +397,16 @@ for 16 of 18 non-Adelaide airports (Hobart and Kingscote timed out and keep thei
 Used for: real gate numbers and terminal membership (`scripts/generate-airport-gates.py` -> `AirportGateData.cs`) at Melbourne, Sydney,
 Brisbane, Perth, Canberra, Gold Coast, Darwin and Alice Springs, and to cross-check runway designators (all matched except Whyalla 05/23,
 which OSM does not map). Fallback: the Wikipedia template. Aerobridge flags and gate size are inferred from a terminal's role, not mapped.
+
+## Parafield independent airport — 2026-10-08 (task #593)
+
+| ID | Source / generator | Licence / cost / attribution | Runtime use / fallback |
+|---|---|---|---|
+| WLD-YPPF-001 | [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), Overpass snapshot retained in `parafield-layout-source-v01.json`; `scripts/generate-parafield-layout.py` | ODbL 1.0; zero cost; © OpenStreetMap contributors, existing in-game map credit retained | Runway/taxiway/apron/building outlines baked into project code; existing Adelaide satellite/terrain remains when YPPF presentation is disabled |
+| DATA-YPPF-001 | [OurAirports runway data](https://ourairports.com/data/), retained `parafield-runways-ourairports-v01.json`; official [Parafield master plan](https://parafieldairport.com.au/wp-content/uploads/Parafield-Airport-Master-Plan_Final_Digital-Complete-copy.pdf) consulted for sealed surfaces and main-only lighting | OurAirports public domain; official plan independently summarized facts only, no copied document or imagery; zero cost | Location/runway cross-check; mapped geometry retained as fallback |
+| AIR-YPPF-001 | `scripts/generate-parafield-trainer.py`: original unbranded, four-seat high-wing trainer using existing project lathe/airfoil primitives | Airside project-owned generated geometry; zero cost; no external mesh, texture, logo or AI image; no external attribution | `Models/Aircraft/mdl_parafield_trainer_v01.gltf` + `.bin`, 31 parts; high wing, struts, tricycle gear, glass, propeller; simple procedural high-wing fallback |
+
+Prompt/source specification: 11 m span, 8.3 m length, approximately 2.9 m high,
+cream airframe/coastal-blue or eucalyptus trim, real-metre fixed landing gear,
+no marks baked into textures. Status: integrated for native/packaged review;
+this entry does not claim visual verification before the recorded captures.

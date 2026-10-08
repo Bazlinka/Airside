@@ -8,7 +8,7 @@ namespace Airside.Presentation
     /// <summary>
     /// The single airline save on disk (ADR 0045): JSON in the player's persistent data
     /// folder, written to a temporary file and moved into place so a crash mid-write
-    /// never leaves a half-written save.
+    /// never leaves a half-written save. One previous readable save is retained for recovery.
     /// </summary>
     public static class AirlineSaveFile
     {
@@ -27,13 +27,37 @@ namespace Airside.Presentation
             var temporary = path + ".tmp";
             File.WriteAllText(temporary, JsonUtility.ToJson(data, prettyPrint: true));
             if (File.Exists(path))
-                File.Replace(temporary, path, destinationBackupFileName: null);
+                // Never rotate an unreadable primary over a usable recovery copy.
+                File.Replace(temporary, path,
+                    destinationBackupFileName: TryReadFile(path, out _, out _) ? path + ".bak" : null);
             else
                 File.Move(temporary, path);
         }
 
-        /// <summary>False with a reason when there is no save or it cannot be parsed.</summary>
+        /// <summary>Read the current save, or its previous copy if the current JSON is unreadable.</summary>
         public static bool TryRead(string path, out AirlineSaveData data, out string error)
+            => TryRead(path, out data, out error, out _);
+
+        public static bool TryRead(string path, out AirlineSaveData data, out string error,
+            out bool recoveredFromBackup)
+        {
+            recoveredFromBackup = false;
+            if (TryReadFile(path, out data, out error))
+                return true;
+
+            var primaryError = error;
+            if (TryReadFile(path + ".bak", out data, out _))
+            {
+                recoveredFromBackup = true;
+                error = string.Empty;
+                return true;
+            }
+
+            error = primaryError;
+            return false;
+        }
+
+        private static bool TryReadFile(string path, out AirlineSaveData data, out string error)
         {
             data = null;
             error = string.Empty;

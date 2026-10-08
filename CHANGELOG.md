@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-08 Inbound pitch eases into the approach attitude before the glideslope entry, removing the level-off-to-final step (presentation only)
 - 2026-10-08 — Exit glide also turns with the aircraft, so the camera no longer drifts sideways when leaving a flight view mid-turn (unverified in Unity).
 
 - 2026-10-08 Circuit pitch eases to the approach attitude so the go-around circuit-to-approach hand-over no longer steps (presentation only)

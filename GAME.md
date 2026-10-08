@@ -7,6 +7,10 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Weather clock (9 Oct, Claude):** `Weather` read local hour from `AirlineClock.Default`, so saves with another epoch had fog hours
+hours off the HUD clock (civil helicopters held in fog). `AirlineOperations.Clock` now calls `Weather.UseClock`. Weather
+sequences differ from before for non-default-epoch saves; saves unchanged. Quick headless tests only; Unity unverified.
+
 **Linear renderer (9 Oct, Codex, #681):** Unity now uses Linear colour rendering.
 Existing linear mesh palettes and Gamma fallback shader branch are retained. The
 far land-cover palette/calibration now match sRGB-decoded satellite imagery and

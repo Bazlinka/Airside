@@ -51,16 +51,17 @@ namespace Airside.Presentation
         // Runs before aircraft poses. Only presentation coordinates move; schedules/saves do not.
         private void UpdateFlightWorld()
         {
-            var x=0.0; var z=0.0;
+            var x=0.0; var z=0.0; var altitude=0.0;
             FleetAircraft aircraft = null;
             var active=InCockpit && _fleetAircraftById.TryGetValue(_cockpitAircraftId,out aircraft);
             if(active && CanWatchJourney(aircraft) && _fleetFlightById.TryGetValue(_cockpitAircraftId,out var flight))
-                JourneyWorld(flight,0,out x,out _,out z);
+                JourneyWorld(flight,0,out x,out altitude,out z);
             else if(active && _cockpitView != null)
-            { x=_cockpitView.position.x+_flightOriginX;z=_cockpitView.position.z+_flightOriginZ; }
+            { altitude=_cockpitView.position.y; x=_cockpitView.position.x+_flightOriginX;z=_cockpitView.position.z+_flightOriginZ; }
             if (WatchingOutstation && OutstationJourney.TryFor(WatchedOutstation(), _preciseTime, out var network))
             {
                 YpadFrame.ToWorld(network.Latitude, network.Longitude, out x, out z);
+                altitude = network.AltitudeFeet / EnrouteProfile.FeetPerMetre;
                 active = true;
             }
             var distant=active && Math.Max(Math.Abs(x),Math.Abs(z))>80000;
@@ -77,7 +78,7 @@ namespace Airside.Presentation
             {
                 if(_flightTerrain==null) CreateFlightTerrainTimed();
                 _flightTerrain.gameObject.SetActive(true);
-                _flightTerrain.Tick(x,z,ox,oz);
+                _flightTerrain.Tick(x,z,ox,oz,altitudeMetres:altitude);
             }
             else if(!InCockpit && _cameraController!=null && FlightWorldGrid.WideMap(AirsideCameraController.CurrentDistance))
             {

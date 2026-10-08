@@ -1,0 +1,102 @@
+{
+  "date": "2026-10-08",
+  "elevation_source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{}/{}/{}.png",
+  "elevation_terms": "Mapzen terrain tiles CC BY 4.0; underlying Australia elevation USGS GMTED2010/SRTM, NASA and NOAA ETOPO1 (public domain). Attribution: Mapzen, USGS, NASA, NOAA. https://github.com/tilezen/joerd/blob/master/docs/attribution.md",
+  "cover_source": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_{}_Map.tif",
+  "cover_terms": "CC BY 4.0; \u00a9 ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
+  "osm_terms": "ODbL 1.0, \u00a9 OpenStreetMap contributors",
+  "cost": "$0, public HTTPS",
+  "fallback": "SA DEM/cover, Natural Earth coastline and authored height palette; no runtime network",
+  "files": [
+    {
+      "file": "airport_asp_v01.json",
+      "bytes": 73358,
+      "sha256": "93eb613cc7a9c8e296cd2e7b1304569ff01c675c556fb9ac48a54c040f0e98f3"
+    },
+    {
+      "file": "airport_bhq_v01.json",
+      "bytes": 1075507,
+      "sha256": "c6227ec4f6d40caf59a92462b3df5cc6c9e7d082e6816a4541903aa24f00d234"
+    },
+    {
+      "file": "airport_bne_v01.json",
+      "bytes": 1036923,
+      "sha256": "60c04ff2056c822f0eacbd9296c5ff6b889fe55d134abf89c431cdfe6d8cb481"
+    },
+    {
+      "file": "airport_cbr_v01.json",
+      "bytes": 1392314,
+      "sha256": "a392ef72b90c9c523d96f1f0d2bd5cd851d6ec30a00bb54ed63abf7f94d2d80a"
+    },
+    {
+      "file": "airport_ced_v01.json",
+      "bytes": 87603,
+      "sha256": "f89ce73c3d34a16591581bf98b5fa4ee6c4e2f24c3a43c883f3f46bf8e969c47"
+    },
+    {
+      "file": "airport_cns_v01.json",
+      "bytes": 3369564,
+      "sha256": "b65234baf96db0ab3d08d1669262680ed7c7e24eade9beaf091a68f6bdac2e1f"
+    },
+    {
+      "file": "airport_cpd_v01.json",
+      "bytes": 56255,
+      "sha256": "3f28cf120296874296b3ea0c22d4908504f00d6bfa1772be06fb6e533a6b59f2"
+    },
+    {
+      "file": "airport_drw_v01.json",
+      "bytes": 3096587,
+      "sha256": "c47ab86aa718d92c0f726c7e12e27777d4d63e4c836c386960f6cfe248c978a6"
+    },
+    {
+      "file": "airport_hba_v01.json",
+      "bytes": 870879,
+      "sha256": "b68e9249777a170c3f0b3f7eb1120f5c6fadde4583817e0bd458abc3b26799da"
+    },
+    {
+      "file": "airport_kgc_v01.json",
+      "bytes": 126230,
+      "sha256": "7357846d1733f8c24242e54b5041e7c0d13c6f31ce6f7db92b07fdd285e949b7"
+    },
+    {
+      "file": "airport_mel_v01.json",
+      "bytes": 886616,
+      "sha256": "fb496784372671ebd4d5afd1535e236b85795f19f9cbcc54e242537938df8775"
+    },
+    {
+      "file": "airport_mgb_v01.json",
+      "bytes": 42269,
+      "sha256": "bf49f1aade7c65c8d79d29bde6bedcfb22aff361aef070e8e02296cdad4b00b1"
+    },
+    {
+      "file": "airport_mql_v01.json",
+      "bytes": 691107,
+      "sha256": "63d9995f61f2cffac8a5e1dcfed99d18fee2583ebebc63697337156ec246bffb"
+    },
+    {
+      "file": "airport_ool_v01.json",
+      "bytes": 709839,
+      "sha256": "6b9d3677faf1b5c64afefe2feefc4f3d8d3d6cc9c3997f820d0c0e001f820359"
+    },
+    {
+      "file": "airport_per_v01.json",
+      "bytes": 4867983,
+      "sha256": "fff4dc460fe4faccdc332d221c369f7b3a38bc71841bbe02fd575600e10c2580"
+    },
+    {
+      "file": "airport_plo_v01.json",
+      "bytes": 56424,
+      "sha256": "6d34914c0ab45f808de561b0d94f3648afc01b8e5506cc55adbe348e48a645ca"
+    },
+    {
+      "file": "airport_syd_v01.json",
+      "bytes": 3089575,
+      "sha256": "eae24ccd97d5d5f30293e92c053036b85c7a05e3e003afc35856406ade1f70c7"
+    },
+    {
+      "file": "airport_wya_v01.json",
+      "bytes": 1490073,
+      "sha256": "4b4e7b96a019d656c3698f3bfc29951867043d90ea63c58c6a0f6f57351a8b89"
+    }
+  ]
+}

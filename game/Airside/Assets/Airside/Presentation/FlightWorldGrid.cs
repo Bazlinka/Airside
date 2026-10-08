@@ -49,7 +49,7 @@ namespace Airside.Presentation
         public static bool CoarseResident(int tileX, int tileZ, int centreX, int centreZ, int radius = CoarseRadiusTiles) =>
             Math.Abs((long)tileX - centreX) <= radius && Math.Abs((long)tileZ - centreZ) <= radius;
         public static bool Covered(double latitude, double longitude) =>
-            latitude >= -39 && latitude <= -25 && longitude >= 128 && longitude <= 142;
+            latitude >= -45 && latitude <= -9 && longitude >= 112 && longitude <= 155;
         public static bool Resident(int tileX, int tileZ, int centreX, int centreZ) =>
             Math.Abs((long)tileX - centreX) <= RadiusTiles && Math.Abs((long)tileZ - centreZ) <= RadiusTiles;
     }

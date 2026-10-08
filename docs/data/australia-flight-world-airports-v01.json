@@ -1,0 +1,192 @@
+{
+  "date": "2026-10-08",
+  "elevation_source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{}/{}/{}.png",
+  "elevation_terms": "Mapzen terrain tiles CC BY 4.0; underlying Australia elevation USGS GMTED2010/SRTM, NASA and NOAA ETOPO1 (public domain). Attribution: Mapzen, USGS, NASA, NOAA. https://github.com/tilezen/joerd/blob/master/docs/attribution.md",
+  "cover_source": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_{}_Map.tif",
+  "cover_terms": "CC BY 4.0; \u00a9 ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
+  "osm_terms": "ODbL 1.0, \u00a9 OpenStreetMap contributors",
+  "cost": "$0, public HTTPS",
+  "fallback": "SA DEM/cover, Natural Earth coastline and authored height palette; no runtime network",
+  "files": [
+    {
+      "file": "dem_approach_asp_v01.bin",
+      "bytes": 982842,
+      "sha256": "a9163f3e905ac9c9541236c826ac8402496cdd0526763bf7119bf28cb57eb54a"
+    },
+    {
+      "file": "landcover_approach_asp_v01.bin",
+      "bytes": 53524,
+      "sha256": "1465ac870345fecd7e8c73e60d00393ef85a8dc723f388782905d75e7393cb66"
+    },
+    {
+      "file": "dem_approach_bhq_v01.bin",
+      "bytes": 982842,
+      "sha256": "f7eebc4394b7a983f8a3dabb2fe3621742d474549f3a2e315ff3e7256d26960c"
+    },
+    {
+      "file": "landcover_approach_bhq_v01.bin",
+      "bytes": 19980,
+      "sha256": "d5896e10ea72548f20524b26426384d56abcc2a3a17fb30c5a7d2ceceae6cc88"
+    },
+    {
+      "file": "dem_approach_bne_v01.bin",
+      "bytes": 982842,
+      "sha256": "1adf61decf54ff2760b116878be2cf3bc8cf373645e335902ba39aef2df34bae"
+    },
+    {
+      "file": "landcover_approach_bne_v01.bin",
+      "bytes": 50022,
+      "sha256": "23c7ecd98785139c723856cd06fc3e94e19f8eeef049bdbf740a1d96a7bd1ce4"
+    },
+    {
+      "file": "dem_approach_cbr_v01.bin",
+      "bytes": 982842,
+      "sha256": "de72dd411e8b616b03cb6875d1baee762737437f0a8c5163cef718c39115c189"
+    },
+    {
+      "file": "landcover_approach_cbr_v01.bin",
+      "bytes": 43106,
+      "sha256": "779c6adb50d89acef42d0fcfcc3bd673970226aed89c684e0480c094a597c18b"
+    },
+    {
+      "file": "dem_approach_ced_v01.bin",
+      "bytes": 981440,
+      "sha256": "c89b98686000905f74f3ef56e53dff4dff550b656cd4f1240f3d6cb8a6f88a20"
+    },
+    {
+      "file": "landcover_approach_ced_v01.bin",
+      "bytes": 41991,
+      "sha256": "4d8ca86214679604bdce7238f146b74e9df237917537bfd82e77d9ee23bfa562"
+    },
+    {
+      "file": "dem_approach_cns_v01.bin",
+      "bytes": 982842,
+      "sha256": "cf6bb15937253981e45042700cc50292647434fcfcb460317f8f5f96643f9d37"
+    },
+    {
+      "file": "landcover_approach_cns_v01.bin",
+      "bytes": 30322,
+      "sha256": "7b066ff2b6e388cd021383d0f909ecb703eae18eddbfc711d1797a2a9e22b507"
+    },
+    {
+      "file": "dem_approach_cpd_v01.bin",
+      "bytes": 982842,
+      "sha256": "0286989762fbdc48b7da96e3517b166e271878fc08e8c8edff4c455b91c3d152"
+    },
+    {
+      "file": "landcover_approach_cpd_v01.bin",
+      "bytes": 37443,
+      "sha256": "559cd8005099b62c5ea533a1b8646d4db222a808687fa0e4f503be8b44e7ed15"
+    },
+    {
+      "file": "dem_approach_drw_v01.bin",
+      "bytes": 982842,
+      "sha256": "823c2138d8c8b5fdb3333a996195bf8f03d2278dbd77c47bc7f6a163662b110d"
+    },
+    {
+      "file": "landcover_approach_drw_v01.bin",
+      "bytes": 32886,
+      "sha256": "d6b43e3138872da29e50c635fa697f34b91981ae14195a3ffea05469622a5b2b"
+    },
+    {
+      "file": "dem_approach_hba_v01.bin",
+      "bytes": 982842,
+      "sha256": "b251599b00b4d4bb64ccf4d5b89a7e2e2f2b15a6f2d15b4993ef755c1405052e"
+    },
+    {
+      "file": "landcover_approach_hba_v01.bin",
+      "bytes": 37055,
+      "sha256": "6838b7dde798bb37d3cd7c3a9e48afadbf2ea8e44146cb18a8521416b7301333"
+    },
+    {
+      "file": "dem_approach_kgc_v01.bin",
+      "bytes": 982842,
+      "sha256": "c0f02353a7a3561073e9ac4616e2811505f9c4dd6e93805e0847f5038476f946"
+    },
+    {
+      "file": "landcover_approach_kgc_v01.bin",
+      "bytes": 30714,
+      "sha256": "1091f22e35216b847e696ac46ead3d04296853f263aa666c68a35b062643a5a2"
+    },
+    {
+      "file": "dem_approach_mel_v01.bin",
+      "bytes": 984244,
+      "sha256": "673ca4b997932a343ced20b5b6b35bc7d58a8eaf3a78c9d5d5515dc2450dbdb8"
+    },
+    {
+      "file": "landcover_approach_mel_v01.bin",
+      "bytes": 54178,
+      "sha256": "40b487ad91c8ced8ca3358bab6068ce8c0a3e2c5d557d3670b438edeb9c5c622"
+    },
+    {
+      "file": "dem_approach_mgb_v01.bin",
+      "bytes": 982842,
+      "sha256": "06761ca919367ae5ceede41df9015776fd6cb187f2368c8110bacbb581498c91"
+    },
+    {
+      "file": "landcover_approach_mgb_v01.bin",
+      "bytes": 30381,
+      "sha256": "a01f2874b78030b152229e90f47e8ce4a46917c691d969308b24cb46a53951f3"
+    },
+    {
+      "file": "dem_approach_mql_v01.bin",
+      "bytes": 982842,
+      "sha256": "057bd1350ddcde543cc6c2e2b00264b1494b9a71635aaddf7c298076afead294"
+    },
+    {
+      "file": "landcover_approach_mql_v01.bin",
+      "bytes": 57483,
+      "sha256": "7fa48374c8c76e0963f30f259c4c8f9e36f110ee071e31c6238e8a8b4ebacf7b"
+    },
+    {
+      "file": "dem_approach_ool_v01.bin",
+      "bytes": 982842,
+      "sha256": "3af24f78cd8942c4176e8d151d2531301b0f059e4b9875473a09de1392a3cd83"
+    },
+    {
+      "file": "landcover_approach_ool_v01.bin",
+      "bytes": 30405,
+      "sha256": "2383e3585ec301d57ae42b175639e3ffd23f93deda1ec956457babef9feab091"
+    },
+    {
+      "file": "dem_approach_per_v01.bin",
+      "bytes": 982842,
+      "sha256": "5d6d0afbb8788ab57b97e9b7ba2240c832dc7ed6f70b835a4c019b84ff38ba43"
+    },
+    {
+      "file": "landcover_approach_per_v01.bin",
+      "bytes": 50069,
+      "sha256": "8745b88d28127a6817e7ce8a1e8a43629b5d3ea834263650118fda701df12475"
+    },
+    {
+      "file": "dem_approach_plo_v01.bin",
+      "bytes": 982842,
+      "sha256": "026b6f5bd59c9f764b9159a4c53b0e887bd556d023569c8c4d1d8986866e2e50"
+    },
+    {
+      "file": "landcover_approach_plo_v01.bin",
+      "bytes": 38481,
+      "sha256": "c7a2d8b815f19e88c410aceea2c072d590bc8b9e7a73bf029f2929e06d35133d"
+    },
+    {
+      "file": "dem_approach_syd_v01.bin",
+      "bytes": 981440,
+      "sha256": "66439e2ec8bd239f67801c909a019f0d56f7a929d61d934b87e3b7d4a9aebf9e"
+    },
+    {
+      "file": "landcover_approach_syd_v01.bin",
+      "bytes": 33573,
+      "sha256": "a0c67ce7bfa961506ad3a560464dfce436251f21a936c8158d22694721ec4539"
+    },
+    {
+      "file": "dem_approach_wya_v01.bin",
+      "bytes": 982842,
+      "sha256": "bb50f562c7eff25f2dc843213e6cd9bd60a843ee786a4e31a59b3c7aa1c3b151"
+    },
+    {
+      "file": "landcover_approach_wya_v01.bin",
+      "bytes": 33580,
+      "sha256": "54f4f07a95a119634ae08d4e419f936a7b287b9d192f8a84df50680704623f84"
+    }
+  ]
+}

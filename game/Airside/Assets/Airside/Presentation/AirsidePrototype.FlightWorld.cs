@@ -143,9 +143,12 @@ namespace Airside.Presentation
                 ArrivalMapTrack.LatLon(destination,_operations.Home,aircraft.Registration,profile.LegMetres,metres,
                     runway,aircraft.Type,ArrivalApproach.LateralFactor(aircraft,runway),out lat,out lon);
                 YpadFrame.ToWorld(lat,lon,out x,out z);
-                if (RegionalRunways.TryGet(destination.Code,out var departureRunway) && elapsed<240)
+                var hasDepartureRunway=RegionalRunways.TryGet(destination.Code,out var departureRunway);
+                var climbLag=hasDepartureRunway ? RegionalFlightPath.ClimbLagSeconds(aircraft.Type) : 0.0;
+                if (hasDepartureRunway && elapsed<240)
                 {
-                    var exit=AirsideFlightPath.GroundY+profile.AltitudeFeetAt(RegionalFlightPath.DepartureSeconds)/EnrouteProfile.FeetPerMetre;
+                    var exit=AirsideFlightPath.GroundY+ArrivalMapTrack.HeightMetres(profile.LegMetres/1000,profile.LegSeconds,
+                        profile.LegSeconds-RegionalFlightPath.DepartureSeconds,aircraft.Type,climbLag);
                     if(elapsed<=RegionalFlightPath.DepartureSeconds)
                     {
                         RegionalFlightPath.Departure(departureRunway,elapsed,exit,aircraft.Type,out x,out y,out z);
@@ -161,7 +164,7 @@ namespace Airside.Presentation
                     x+=(sx-tx)*keepDeparture;z+=(sz-tz)*keepDeparture;
                 }
                 y=AirsideFlightPath.GroundY+ArrivalMapTrack.HeightMetres(profile.LegMetres/1000,profile.LegSeconds,
-                    profile.LegSeconds-elapsed,aircraft.Type);
+                    profile.LegSeconds-elapsed,aircraft.Type,climbLag);
                 return;
             }
             var remaining=profile.LegSeconds-elapsed;

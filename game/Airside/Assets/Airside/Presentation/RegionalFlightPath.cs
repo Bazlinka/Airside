@@ -160,7 +160,26 @@ namespace Airside.Presentation
             return pitch+(routePitch-pitch)*fade;
         }
 
+        /// <summary>
+        /// The route profile starts its climb at the height a local climb-out reaches. A leg that begins at brake release
+        /// has not got there yet, so the climb is started <paramref name="lagSeconds"/> late and finishes that much later,
+        /// out of the cruise. Without it the aircraft had to gain the whole gap in the first two minutes (about 5,000 ft/min).
+        /// Legs whose cruise is too short to absorb the lag keep the plain profile.
+        /// </summary>
+        public static double ClimbAltitudeFeet(EnrouteProfile profile,double elapsed,double lagSeconds)
+        {
+            if(lagSeconds<=0 || profile.CruiseSeconds<lagSeconds || elapsed>=profile.ClimbSeconds+lagSeconds)
+                return profile.AltitudeFeetAt(elapsed);
+            return profile.AltitudeFeetAt(Math.Max(0,elapsed-lagSeconds));
+        }
+
         public const double DepartureSeconds=120;
+        /// <summary>Seconds from brake release until the aircraft reaches the height a route profile begins at.</summary>
+        public static double ClimbLagSeconds(AircraftType type)
+        {
+            var p=AircraftPerformance.For(type);
+            return p.TakeoffExactSeconds+p.DepartedExactSeconds;
+        }
         public static void Departure(RegionalRunway runway,double seconds,double exitHeight,
             out double x,out double y,out double z)
         {
@@ -178,6 +197,19 @@ namespace Airside.Presentation
         }
         /// <summary>Type-aware regional takeoff; runway roll integrates that type's Vr, then climb speed
         /// increases to its climb-out target. Existing fixed review/handoff duration remains unchanged.</summary>
+        /// <summary>
+        /// Height gained <paramref name="elapsed"/> seconds after rotation: no sink at lift-off, a ten second
+        /// ease into the climb, then one steady rate to the exit height. A smoothstep spent half the time
+        /// climbing at one and a half times the average.
+        /// </summary>
+        public static double DepartureClimbHeight(double rise,double elapsed,double duration)
+        {
+            if(rise<=0 || duration<=0) return 0;
+            var e=Math.Clamp(elapsed,0,duration);
+            var ease=Math.Min(10,duration*.5);
+            var rate=rise/(duration-ease*.5);
+            return e<ease ? rate*e*e/(2*ease) : rate*(e-ease*.5);
+        }
         public static double RotateSeconds(AircraftType type) => AircraftPerformance.For(type).TakeoffRollExactSeconds;
         public static void Departure(RegionalRunway runway,double seconds,double exitHeight,AircraftType type,
             out double x,out double y,out double z)
@@ -195,13 +227,11 @@ namespace Airside.Presentation
             }
             else
             {
-                var duration=DepartureSeconds-rotate;var elapsed=t-rotate;var u=elapsed/duration;
+                var duration=DepartureSeconds-rotate;var elapsed=t-rotate;
                 var v0=CircuitProfile.Knots(p.RotateKnots);var v1=CircuitProfile.Knots(p.ClimbOutKnots);
                 along=p.TakeoffRollMetres+v0*elapsed+.5*(v1-v0)*elapsed*elapsed/duration;
                 var rise=Math.Max(0,exitHeight-py);
-                // Zero sink at rotation; capture the researched route height smoothly at the join.
-                var endRate=Math.Min(p.ClimbOutRateMetresPerSecond,2*rise/duration);
-                height=(-2*u*u*u+3*u*u)*rise+(u*u*u-u*u)*duration*endRate;
+                height=DepartureClimbHeight(rise,elapsed,duration);
             }
             x=px+dx*along;z=pz+dz*along;y=py+height;
         }

@@ -78,7 +78,8 @@ namespace Airside.Presentation
 
         /// <summary>Height follows the arrival's reserved final time, rather than blending a late cruise
         /// descent down tens of thousands of feet in the last 40km. Both camera ownership paths meet at the same glideslope entry height.</summary>
-        public static double HeightMetres(double legKm,double legSeconds,double remaining,AircraftType type)
+        public static double HeightMetres(double legKm,double legSeconds,double remaining,AircraftType type,
+            double climbLagSeconds=0)
         {
             var speed=CircuitProfile.Knots(AircraftPerformance.For(type).ApproachKnots);
             var finalSeconds=ArrivalApproach.ShowMetres/speed;
@@ -87,10 +88,10 @@ namespace Airside.Presentation
             if(outMetres<=ArrivalApproach.ShowMetres)
                 return ArrivalApproach.Height(CircuitProfile.GlideslopeHeight(hold.x-(float)outMetres));
             if(legKm*1000<=ArrivalApproach.ShowMetres*1.5 || legSeconds<=finalSeconds*1.25)
-                return EnrouteProfile.For(legKm,legSeconds,type).AltitudeFeetAt(legSeconds-remaining)/EnrouteProfile.FeetPerMetre;
+                return RegionalFlightPath.ClimbAltitudeFeet(EnrouteProfile.For(legKm,legSeconds,type),legSeconds-remaining,climbLagSeconds)/EnrouteProfile.FeetPerMetre;
             var body=EnrouteProfile.For((legKm*1000-ArrivalApproach.ShowMetres)/1000,legSeconds-finalSeconds,type,
                 FinalEntryHeightMetres(type)*EnrouteProfile.FeetPerMetre);
-            return body.AltitudeFeetAt(legSeconds-remaining)/EnrouteProfile.FeetPerMetre;
+            return RegionalFlightPath.ClimbAltitudeFeet(body,legSeconds-remaining,climbLagSeconds)/EnrouteProfile.FeetPerMetre;
         }
 
         /// <summary>

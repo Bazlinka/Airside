@@ -32,8 +32,13 @@ namespace Airside.Presentation
             var forwardBeam = landingLights && Mathf.Abs(bearing) < 35f;
             var profile = AircraftLightingProfile.For(type);
             var flash = powered && AirsideReusableMotion.StrobesOn(phase) ? profile.StrobeLevel(PresentationClock + AircraftLightingProfile.ClockOffsetSeconds(view.name)) : 0f;
+            // An arrival nose-on to the camera keeps its landing-light glow all the way in (it used to
+            // vanish inside 6 km, leaving only a 20 cm lamp lens): fading out over the last 600 m.
+            var beacon = ArrivalApproach.BeaconStrength(distance);
+            if (forwardBeam)
+                beacon = Mathf.Max(beacon, 0.7f * Mathf.Clamp01((distance - 600f) / 600f));
             var strength = AirsideSettings.Current.DistantGlows && powered
-                ? ArrivalApproach.BeaconStrength(distance) * (forwardBeam ? 1f : flash > 0f ? 0.85f : 0.28f)
+                ? beacon * (forwardBeam ? 1f : flash > 0f ? 0.85f : 0.28f)
                 : 0f;
             // One entry per view ever drawn; drop those whose aircraft was destroyed, so the table stays small.
             if (_distantLights.Count > 96 && Time.frameCount % 600 == 0)

@@ -36,6 +36,10 @@ namespace Airside.Presentation
             if (parts.Length > 0) presentationTime += parts[0].LightingClockOffset;
             var height = root != null ? Mathf.Max(0f, root.position.y - AirsideFlightPath.GroundY) : 0f;
             var landingLights = profile.LandingLampOn(phase, height);
+            // On approach the gear follows height above the field, not phase progress: down at about
+            // 2,000 ft (jets) / 1,500 ft (turboprops), lowered slowly, never early on a long final.
+            if (phase == AircraftPhase.Approach && aircraftType != null && !aircraftType.IsRotorcraft)
+                retractTarget = ApproachGear.ApproachDown(aircraftType, height) ? 0f : 1f;
             var camera = Camera.main;
             var bearing = root != null && camera != null
                 ? Mathf.Atan2(root.InverseTransformPoint(camera.transform.position).x,
@@ -57,6 +61,7 @@ namespace Airside.Presentation
                 var child = parts[i].Transform;
                 if (child == null)
                     continue;
+                parts[i].ExtendRate = phase == AircraftPhase.Approach ? 1f / ApproachGear.ExtendSeconds : 0.35f;
                 switch (parts[i].Kind)
                 {
                     case LightGearKind.GearDoor:

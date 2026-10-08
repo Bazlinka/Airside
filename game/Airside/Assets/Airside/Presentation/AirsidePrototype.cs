@@ -4135,6 +4135,8 @@ namespace Airside.Presentation
             public Quaternion Rest = Quaternion.identity;
             public float Retract;
             public bool RetractSeeded;
+            /// <summary>Retract units per second when lowering: slow on approach, quick otherwise.</summary>
+            public float ExtendRate = 0.35f;
             public float SteerDegrees;
             /// <summary>Belly doors: -1 when hinged on the left edge, +1 on the right (free edge swings down).</summary>
             public float DoorSign = -1f;

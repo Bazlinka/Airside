@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-08 — Approach gear follows height (down ~2,000 ft AGL jets / 1,500 turboprops, lowered over ~22 s) instead of phase progress; sources in lighting README (unverified in Unity).
+
 - 2026-10-08 — Camera drag no longer hits an invisible wall: free-pan limit widened from 3.8 km to 12 km around the airfield (unverified in Unity).
 - 2026-10-08 — Jet routing factor: cruise time on jet legs rises linearly from 1.0 at 600 km to 1.08 at 2,500 km+ (routing/headwind); Perth 173→183 min (headless audit only).
 

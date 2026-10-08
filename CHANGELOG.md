@@ -75,6 +75,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- Fix night final visibility: haze-aware aircraft light halos, fuselage-safe distant glows and readable close night position lights (#668).
+
 - Improve all 15 aircraft bodies with continuous contours, rounded noses and fitted glazing/doors; retain type envelopes and A320 source detail (#651).
 - Add opt-in native Mac notifications for important background airline events, grouped bursts, permission/test controls and click-to-return (#645).
 - Restyle toasts with status labels, wrapped text, repeat badges, lifetime bars and eased motion; keep stacks clear of panels and screen edges (#642).

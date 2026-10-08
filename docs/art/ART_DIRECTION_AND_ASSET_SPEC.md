@@ -490,3 +490,17 @@ running gear and engines. Project-owned derivative geometry, zero cost; previous
 git assets remain fallback. Integrated, native appearance/performance unverified.
 Decision: `2026-10-08-aircraft-body-realism`; bounded numeric evidence:
 `docs/testing/aircraft-bodies-2026-10-08/`.
+
+
+## Connected aircraft tails — 9 October 2026
+
+Task #684 revises the existing aircraft manifest IDs and runtime paths, including
+both A320 versions and the Parafield trainer. Hull-sampled roots replace floating
+fin/stabiliser seams; fixed and moving aerofoils share a matched hinge. The
+project-owned per-type stations live in `scripts/aircraft_tail_profiles.json`;
+`scripts/aircraft_tail.py` is shared by finishing and generators. Published
+stabiliser dimensions and original approximate fin profiles are distinguished in
+`docs/testing/aircraft-tails-2026-10-09/`. No external geometry enters production.
+Runtime glTF/bin, editable FBX, packaged mirrors and existing hangar thumbnails
+are updated. Integrated with geometry/render evidence; native lighting, moving
+control surfaces and performance remain unverified. Prior git assets are fallback.

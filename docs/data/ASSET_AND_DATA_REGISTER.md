@@ -500,3 +500,18 @@ CC BY 4.0 attribution and existing private-prototype/release terms remain as reg
 no new data source, asset, acquisition cost or endpoint is introduced. Source/evidence:
 `2026-10-09-recorded-weather-and-arrival-continuity`. The deterministic forecast remains
 the unknown/expired-input fallback. Native save/restore integration is unverified.
+
+
+## Connected aircraft tails — 9 October 2026 (#684)
+
+ART-FLEET-TAILS-20261009 revises existing AIR-001, AIR-005…017 and AIR-YPPF-001
+runtime glTF/bin and editable FBX assets at their existing model paths; refreshed
+hangar PNGs and packaged glTF/bin/PNG mirrors use the same paths/GUIDs. New editable
+A320 v02 and trainer FBXs derive from those already registered models. Original
+project-owned tail geometry and scripts authored by Codex for Bailey; zero cost,
+no external mesh, image, texture or code. Manufacturer drawings were read only;
+links and dimension provenance are in `docs/testing/aircraft-tails-2026-10-09/`.
+Unchanged adapted A320 running gear/engines retain their existing source licence
+and attribution obligations. Previous committed assets remain the fallback.
+Geometry checks and actual asset renders cover the fleet; native Unity appearance,
+control articulation and performance remain unverified.

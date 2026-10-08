@@ -7,6 +7,16 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Connected aircraft tails (9 Oct, Codex, #684):** all 15 active airframes plus the
+A320 authored fallback now have curved hull-fitted fin/stabiliser roots and tapered
+aerofoils. Rudder/elevator hinges share the fixed surface geometry; T-tails retain
+a centre bullet. Per-type profiles correct stabiliser proportions, with unchanged
+rotors, wings, engines, landing gear, simulation and saves. Runtime models, editable
+FBXs, packaged mirrors and hangar thumbnails updated. Geometry checks and actual
+side/rear/top asset renders: `docs/testing/aircraft-tails-2026-10-09/`. Native Unity
+import, lighting, control deflection and performance remain unverified.
+Decision: `2026-10-09-connected-aircraft-tails`.
+
 **Weather clock (9 Oct, Claude):** `Weather` read local hour from `AirlineClock.Default`, so saves with another epoch had fog hours
 hours off the HUD clock (civil helicopters held in fog). `AirlineOperations.Clock` now calls `Weather.UseClock`. Weather
 sequences differ from before for non-default-epoch saves; saves unchanged. Quick headless tests only; Unity unverified.

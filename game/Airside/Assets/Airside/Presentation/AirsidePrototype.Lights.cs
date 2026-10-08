@@ -567,6 +567,29 @@ namespace Airside.Presentation
             return Mathf.Clamp01(Mathf.Max(primary, secondary));
         }
 
+        private int[] _hialStation;
+        private int _hialLast;
+
+        /// <summary>Station number of each "HIAL 23 point NN" light (-1 for every other light) and the last one.</summary>
+        private static int[] HialStations(Light[] lights, out int last)
+        {
+            var stations = new int[lights.Length];
+            last = 0;
+            for (var i = 0; i < lights.Length; i++)
+            {
+                stations[i] = -1;
+                if (lights[i] == null || !lights[i].name.StartsWith("HIAL 23 point ", StringComparison.Ordinal))
+                    continue;
+                if (int.TryParse(lights[i].name.Substring("HIAL 23 point ".Length), out var n))
+                {
+                    stations[i] = n;
+                    if (n > last) last = n;
+                }
+            }
+
+            return stations;
+        }
+
         private static byte[] ReilSides(Light[] lights)
         {
             var sides = new byte[lights.Length];

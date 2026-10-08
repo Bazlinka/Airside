@@ -42,9 +42,10 @@ namespace Airside.Presentation
         /// <summary>
         /// How far past the overview centre the free camera may pan. Wide enough for the
         /// whole YPAD circuit plus approaches, tight enough that you cannot lose the
-        /// airfield in empty ocean.
+        /// airfield in empty ocean. It was 3.8 km, which a drag hit as an invisible wall
+        /// (the pan clamped to nothing until you zoomed out); 12 km keeps drags free.
         /// </summary>
-        public const float MaxPanRadiusMetres = 3800f;
+        public const float MaxPanRadiusMetres = 12000f;
 
         /// <summary>Beyond the classic zoom limit the free camera may pan this fraction of its distance from the overview.</summary>
         public const float FarPanFractionOfDistance = 0.9f;

@@ -56,7 +56,7 @@ namespace Airside.Presentation
             progress = Math.Clamp((secondsNow - legStart) / seconds, 0, 1);
             FlightRoute.GreatCircle(from.Latitude, from.Longitude, to.Latitude, to.Longitude,
                 progress, out lat, out lon);
-            var profile = new EnrouteProfile(home.DistanceKmTo(far), seconds, aircraft.Type);
+            var profile = EnrouteProfile.For(home.DistanceKmTo(far), seconds, aircraft.Type);
             // Look slightly ahead rather than toward the end point at an almost-finished leg.
             FlightRoute.GreatCircle(from.Latitude, from.Longitude, to.Latitude, to.Longitude,
                 Math.Min(1, progress + .0001), out var aheadLat, out var aheadLon);

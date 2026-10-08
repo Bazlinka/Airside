@@ -360,6 +360,15 @@ new asset acquisition, additional cost or attribution. Local DejaVu fonts are us
 by the established review renderer; no fonts are added to game assets. Previous
 shared HUD source revision remains the fallback.
 
+## Fleet performance research — 8 October 2026
+
+`FLIGHT_PERFORMANCE_RESEARCH.md` records independently summarized manufacturer/regulator/
+EUROCONTROL public facts with links, variant boundaries and planning assumptions. Runtime
+profiles and atmosphere/trajectory math are project-owned. No copyrighted manuals, training
+graphs, BADA coefficients, imagery or licensed dataset files are imported; no acquisition
+cost. Attribution stays with each linked source. Existing takeoff planning values and the
+separate Bell VTOL profile remain fallback references. Derived CSV/plots are reproducible
+project test evidence rather than external data.
 ## Free visual upgrade intake — 2026-10-08 (task #585)
 
 | ID | Source | Licence | Adaptation / runtime use | Evidence |

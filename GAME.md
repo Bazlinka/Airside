@@ -9,6 +9,20 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*
 
+**Fleet flight performance (8 Oct, Codex):** branch `fix/fleet-flight-performance-20261008`, based on merged lighting PR #587.
+Research: `docs/data/FLIGHT_PERFORMANCE_RESEARCH.md`; decision `2026-10-08-fleet-flight-performance`.
+Derived altitude rates vary with height and capture level cruise; normal upper levels are separate from
+certified ceilings. CAS/Mach limits and integrated distance share a speed schedule. Camera telemetry
+handles accelerated clocks and origin shifts, shows IAS (CAS approximation), Mach and GS. Inbound height
+reserves the same extended final as its map track; regional departure uses the type's roll/Vr.
+New jet schedules allow twenty minutes for climb/descent instead of ten. No save-schema change.
+Bell remains on its own VTOL model with the common telemetry fix.
+Evidence: `docs/testing/flight-performance-2026-10-08/`: 166/166 focused native Unity checks passed.
+User requested immediate merge: full headless run stopped, Mac build and packaged camera journey
+unverified. Do not infer a packaged flight playtest from deterministic/native math checks.
+
+Merged lighting #587 retains 37 passing native checks and 70 reviewed night fixtures; full-flight/night
+performance acceptance remains separate in `docs/testing/aircraft-lighting-2026-10-08/`.
 **Free visual upgrades (8 Oct, Codex, task #585):** free A320 source parts fitted into
 v02; Kenney service vehicle/foliage derivatives; consistent scanned pavement,
 feathered wear, close grass grain, facade fittings, weather-responsive terminal
@@ -16,7 +30,7 @@ reflections, paused-clock conveyor ribs and scanned cabin fabric/fittings.
 Source inputs, attribution and offline regeneration committed. Aircraft metrics,
 working cabin apertures, doors and simulation/save contracts retained. All ten
 workstreams and acceptance evidence: `docs/decisions/2026-10-08-free-visual-upgrade.md`,
-`docs/testing/free-visual-upgrade-2026-10-08/`. Validation in progress; branch review pending.
+`docs/testing/free-visual-upgrade-2026-10-08/`. Merged in #589; its build and runtime acceptance evidence remains in that packet.
 
 **Earlier merged work:** #587 fits all 14 families’ exterior lights and night beams;
 #580 fixes camera-shell ownership, parked-aircraft clearance, rotor queues and query allocation.

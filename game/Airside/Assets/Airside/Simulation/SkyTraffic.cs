@@ -106,7 +106,7 @@ namespace Airside.Simulation
             if (elapsedOnLeg < 0 || elapsedOnLeg > duration)
                 return false;
             // Where the aeroplane has actually flown to, not a flat share of the leg time.
-            var profile = new EnrouteProfile(legKm, duration, type);
+            var profile = EnrouteProfile.For(legKm, duration, type);
             var progress = profile.DistanceFractionAt(elapsedOnLeg);
             FlightRoute.Point(from.Latitude, from.Longitude, to.Latitude, to.Longitude, progress,
                 callsign, out var lat, out var lon);

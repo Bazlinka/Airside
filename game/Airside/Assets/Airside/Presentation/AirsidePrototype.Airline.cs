@@ -2147,7 +2147,7 @@ namespace Airside.Presentation
             // Melbourne in twelve minutes came out at about 1 730 kt.
             var legKm = _operations.DistanceKm(aircraft.CurrentDestination.Value);
             var legSeconds = (double)LegTiming.AirborneSeconds(legKm, aircraft.Type);
-            profile = new EnrouteProfile(legKm, legSeconds, aircraft.Type);
+            profile = EnrouteProfile.For(legKm, legSeconds, aircraft.Type);
             // A delayed flight has longer left than the leg takes: hold it at the far end until
             // it is genuinely within flying time of home, instead of dragging it along too slowly.
             var remaining = Math.Clamp(aircraft.StateEndsAt.Value.ElapsedSeconds - _preciseTime, 0.0, legSeconds);

@@ -5,6 +5,7 @@ namespace Airside.Presentation
     public sealed class FlightViewHudData
     {
         public string Registration, Aircraft, Phase, Route, Speed, VerticalSpeed, Distance;
+        public string Airspeed;
         public string Location, Altitude, Heading, Remaining, Arrival, Journey;
         public float JourneyProgress = -1f;
         public int SelectedView;
@@ -20,7 +21,7 @@ namespace Airside.Presentation
         {
             var w = Math.Min(720f, Math.Max(0f, width - 32f));
             var narrow = w < 520f;
-            Identity = new HudBox((width - w) * 0.5f, 20f, w, narrow ? 220f : 182f);
+            Identity = new HudBox((width - w) * 0.5f, 20f, w, narrow ? 244f : 206f);
             var controlsHeight = narrow ? 140f : 108f;
             Controls = new HudBox((width - w) * 0.5f, height - controlsHeight - 20f, w, controlsHeight);
             Toast = new HudBox(20f, Identity.Bottom + 12f, Math.Min(480f, Math.Max(0f, width - 40f)), 54f);
@@ -66,7 +67,7 @@ namespace Airside.Presentation
             into.Text(new HudBox(x, routeY + 21f, box.Width - 40f, 18f), location,
                 HudShell.FitFontSize(location, 11f, box.Width - 40f, 10f), HudTone.Muted);
             var metrics = new[] { "GS  " + data.Speed, "FIELD HT  " + data.Altitude, "HDG  " + data.Heading,
-                "V/S  " + data.VerticalSpeed, "TO GO  " + data.Remaining, "TO AREA  " + data.Arrival };
+                "V/S  " + data.VerticalSpeed, "TO GO  " + data.Remaining, "TO AREA  " + data.Arrival, "IAS  " + data.Airspeed };
             var columns = narrow ? 2 : 3;
             var cell = (box.Width - 40f) / columns;
             for (var i = 0; i < metrics.Length; i++)

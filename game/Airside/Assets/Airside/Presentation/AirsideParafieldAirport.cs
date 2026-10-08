@@ -59,7 +59,7 @@ namespace Airside.Presentation
             var walls=new Batch(); var roofs=new Batch(); var doors=new Batch();
             foreach(var taxiway in ParafieldLayout.Taxiways)
                 for(var i=1;i<taxiway.Length;i++)
-                { asphalt.Strip(taxiway[i-1],taxiway[i],10,.01f); yellow.Strip(taxiway[i-1],taxiway[i],.14,.075f); }
+                { asphalt.Strip(taxiway[i-1],taxiway[i],10,.01f); yellow.Strip(taxiway[i-1],taxiway[i],.14,.26f); }
             foreach(var apron in ParafieldLayout.Aprons) asphalt.Polygon(apron,.035f);
             foreach(var runway in ParafieldLayout.Runways)
             {
@@ -67,14 +67,14 @@ namespace Airside.Presentation
                 var length=runway.Length;
                 var dx=(runway.B.X-runway.A.X)/length; var dz=(runway.B.Z-runway.A.Z)/length;
                 ParafieldPoint At(double distance,double across=0) => runway.A.Offset(dx*distance-dz*across,dz*distance+dx*across);
-                for(var d=75.0;d<length-75;d+=60) white.Strip(At(d),At(Math.Min(d+25,length-75)),.45,.085f);
-                white.Strip(At(0,-8.4),At(length,-8.4),.22,.085f);
-                white.Strip(At(0,8.4),At(length,8.4),.22,.085f);
+                for(var d=75.0;d<length-75;d+=60) white.Strip(At(d),At(Math.Min(d+25,length-75)),.45,.325f);
+                white.Strip(At(0,-8.4),At(length,-8.4),.22,.325f);
+                white.Strip(At(0,8.4),At(length,8.4),.22,.325f);
                 for(var stripe=-3;stripe<=3;stripe++)
                 {
                     if(stripe==0) continue;
-                    white.Strip(At(5,stripe*2),At(23,stripe*2),1,.085f);
-                    white.Strip(At(length-23,stripe*2),At(length-5,stripe*2),1,.085f);
+                    white.Strip(At(5,stripe*2),At(23,stripe*2),1,.325f);
+                    white.Strip(At(length-23,stripe*2),At(length-5,stripe*2),1,.325f);
                 }
                 var names=runway.Name.Split('/');
                 Label(names[0],At(40),Math.Atan2(dx,dz)*Mathf.Rad2Deg,3.5f);
@@ -94,9 +94,9 @@ namespace Airside.Presentation
                     doors.Vertical(l,r,.2f,4.8f);
                 }
             }
-            asphalt.Finish(transform,"Parafield pavement",new Color(.22f,.25f,.25f));
-            white.Finish(transform,"Parafield runway paint",new Color(.90f,.90f,.83f));
-            yellow.Finish(transform,"Parafield taxi centrelines",new Color(.84f,.66f,.25f));
+            asphalt.Finish(transform,"Parafield pavement",new Color(.22f,.25f,.25f),AirsideMaterialLibrary.SurfaceKind.Asphalt);
+            white.Finish(transform,"Parafield runway paint",new Color(.90f,.90f,.83f),AirsideMaterialLibrary.SurfaceKind.PaintedLine);
+            yellow.Finish(transform,"Parafield taxi centrelines",new Color(.84f,.66f,.25f),AirsideMaterialLibrary.SurfaceKind.PaintedLine);
             walls.Finish(transform,"Parafield hangar walls",new Color(.64f,.67f,.64f));
             roofs.Finish(transform,"Parafield hangar roofs",new Color(.45f,.53f,.52f));
             doors.Finish(transform,"Parafield hangar doors",new Color(.35f,.41f,.41f));
@@ -170,7 +170,7 @@ namespace Airside.Presentation
         private void Label(string text,ParafieldPoint point,double yaw,float size)
         {
             var go=new GameObject("Parafield runway "+text);go.transform.SetParent(transform,false);
-            go.transform.localPosition=new Vector3((float)point.X,.095f,(float)point.Z);
+            go.transform.localPosition=new Vector3((float)point.X,.345f,(float)point.Z);
             go.transform.localRotation=Quaternion.Euler(90,(float)yaw,0);
             var label=go.AddComponent<TextMesh>();label.text=text;label.anchor=TextAnchor.MiddleCenter;
             label.characterSize=size;label.fontSize=48;label.color=new Color(.91f,.91f,.85f);
@@ -213,13 +213,15 @@ namespace Airside.Presentation
                 var i=_vertices.Count;_vertices.AddRange(new[] {a,b,c,d});
                 _triangles.AddRange(new[] {i,i+1,i+2,i,i+2,i+3});
             }
-            public void Finish(Transform root,string name,Color colour)
+            public void Finish(Transform root,string name,Color colour,AirsideMaterialLibrary.SurfaceKind kind=AirsideMaterialLibrary.SurfaceKind.Default)
             {
                 if(_vertices.Count==0)return;
                 var mesh=new Mesh {name=name,indexFormat=IndexFormat.UInt32};
                 mesh.SetVertices(_vertices);mesh.SetTriangles(_triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
                 var go=new GameObject(name);go.transform.SetParent(root,false);go.AddComponent<MeshFilter>().sharedMesh=mesh;
-                var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=Material(colour);
+                var renderer=go.AddComponent<MeshRenderer>();
+                renderer.sharedMaterial=kind==AirsideMaterialLibrary.SurfaceKind.Default ? Material(colour)
+                    : AirsideMaterialLibrary.CreateShared(colour,kind);
                 renderer.shadowCastingMode=ShadowCastingMode.Off;
             }
         }

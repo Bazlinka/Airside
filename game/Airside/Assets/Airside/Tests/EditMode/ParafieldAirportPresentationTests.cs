@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Reflection;
 using Airside.Domain;
 using Airside.Presentation;
 using Airside.Simulation;
@@ -42,11 +43,14 @@ namespace Airside.Tests
             try
             {
                 var camera=go.AddComponent<AirsideCameraController>();
+                typeof(AirsideCameraController).GetMethod("Awake",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(camera,null);
                 var x=(float)ParafieldLayout.CentreX;var z=(float)ParafieldLayout.CentreZ;
                 camera.WatchAirport(new Vector3(x,12,z),2800,52,140);
                 camera.CentreOn(x+50,z+50);
                 Assert.That(camera.WatchingIndependentAirport,Is.True);
                 Assert.That(camera.FocusPoint.x,Is.EqualTo(x+50).Within(.01));
+                var lens=go.GetComponent<Camera>();
+                Assert.That(lens.farClipPlane/lens.nearClipPlane,Is.LessThan(1000),"remote pavement/paint depth precision");
                 camera.ReturnToOverview();
                 Assert.That(camera.WatchingIndependentAirport,Is.False);
             }

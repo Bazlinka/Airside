@@ -368,6 +368,21 @@ for active work; standing freight priorities remain unchanged.
   **Evidence:** real build with a 10 s threshold never false-triggered (log grows during
   compiles); a fake Unity that hangs after a bee_backend line was detected, killed with no
   orphans, retried, and failed cleanly (exit 1); default real build passes.
+## Where to resume — LiDAR texture experiment preserved, 6 October 2026
+
+Codex reviewed the unfinished local changes at Bailey's request to keep useful work
+and unblock the pull. Preserved on `feature/lidar-ground-detail`; **not approved
+for main**. The satellite texture has a subtle roof/canopy contrast experiment,
+and `scripts/enhance-adelaide-satellite-lidar.py` is its unfinished generator.
+Before promotion, fix canopy coverage calculation (threshold before averaging,
+not after), exact resampled pixel coordinates, immutable base reconstruction and
+source/derived-asset evidence. The script's ADR 0237 reference has no matching
+record. No headless, native Unity or packaged visual verification was run for
+this WIP. The local Flight Manual/register edits shorten source attribution and
+must not replace main's dedicated Scenery credits page. Preserve main's newer
+credits and icon register entries when integrating. Preview exists only locally
+at `work/lidar-texture-preview.png`; source raster caches remain git-ignored.
+**NEXT:** resume on updated main; this experiment is optional, not required to pull.
 
 ## Where to resume — map accuracy from open data, 6 October 2026
 

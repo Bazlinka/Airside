@@ -3810,9 +3810,14 @@ namespace Airside.Presentation
             filter.sharedMesh = mesh;
         }
 
-        private static void RebakePartPivot(Transform part, Vector3 pivotWorld)
+        /// <summary>
+        /// Re-origin a part at <paramref name="pivotWorld"/>, keeping every vertex where it is in the world.
+        /// With <paramref name="worldRotation"/> the part's own rotation is reset too and baked into its mesh,
+        /// for a part that must start at identity because its animation sets the rotation outright.
+        /// </summary>
+        private static void RebakePartPivot(Transform part, Vector3 pivotWorld, Quaternion? worldRotation = null)
         {
-            if ((part.position - pivotWorld).sqrMagnitude < 0.0025f)
+            if ((part.position - pivotWorld).sqrMagnitude < 0.0025f && !worldRotation.HasValue)
                 return;
 
             var filters = part.GetComponentsInChildren<MeshFilter>(true);
@@ -3830,6 +3835,8 @@ namespace Airside.Presentation
             }
 
             part.position = pivotWorld;
+            if (worldRotation.HasValue)
+                part.rotation = worldRotation.Value;
             for (var i = 0; i < filters.Length; i++)
             {
                 if (worldVertices[i] == null)

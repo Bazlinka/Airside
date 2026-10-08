@@ -3,15 +3,17 @@
 Short, checked against how this repo actually works (Unity 6.3 project in `game/Airside`). Each ends with what to run. If a recipe is wrong, fix it here in the same PR.
 
 ## Fast loop first
-`python3 scripts/test-quick.py --changed` runs only the headless tests that mention the C# you changed (seconds). Before you push, run the whole thing:
-`scripts/test-domain.sh` (needs .NET 8; `bash scripts/bootstrap-dotnet.sh` installs it on a fresh machine). Unity-only behaviour: say "unverified in Unity".
+Follow the root `AGENTS.md` testing and merge policy. Use only quick relevant checks
+by default; `python3 scripts/test-quick.py --changed` is optional when useful. Full
+headless/native suites, builds and player reviews run when Bailey requests them.
+Report unverified Unity behaviour. Merge completed authorised work without asking again.
 
 ## Add or change a C# file
 1. Put it in the layer that fits: `Domain` / `Simulation` (no `UnityEngine`), `Presentation` (may use it), `Editor`, `Tests/EditMode` (see `game/Airside/AGENTS.md`).
 2. New file → `python3 scripts/new-meta.py <path>` (every file and folder under `Assets/` needs a `.meta`).
 3. If it is pure (no `UnityEngine`) or is a test: `python3 scripts/update-harness.py` so the headless run compiles it (CI fails if the list is stale).
 4. A new `AirsidePrototype.*.cs` partial also needs its line in `scripts/map-presentation.py` (`OWNERS`), then `python3 scripts/map-presentation.py`.
-5. Add or extend a test next to similar ones. `python3 scripts/test-quick.py --changed`, then `scripts/test-domain.sh`.
+5. Use a quick syntax/compile check if available. Add a regression only when useful for the bug/change; do not require a new test or full suite for every edit.
 
 ## Add a runtime art or data file
 1. Put it under `game/Airside/Assets/Airside/Art/…`, then `python3 scripts/new-meta.py <path>`.
@@ -31,7 +33,7 @@ New file `docs/decisions/YYYY-MM-DD-slug.md` (title, `Status:`, date, decision, 
 Give it a one-line docstring (Python) or first comment (shell); `python3 scripts/index-scripts.py` refreshes `scripts/README.md`.
 
 ## Open a PR
-Claim the task first (`docs/ai/WORKFLOW.md`), branch `<tool>/<topic>-<yyyymmdd>`, `git pull --rebase origin main`, `scripts/test-domain.sh`, fill in the PR template
+Claim the task first (`docs/ai/WORKFLOW.md`), branch `<tool>/<topic>-<yyyymmdd>`, `git pull --rebase origin main`, quick checks under the root policy, fill in the PR template
 honestly (Verification / Not verified), replace the single "Where to resume" block in `GAME.md` if state changed, add one line to `CHANGELOG.md`.
 
 ## Look something up without burning context

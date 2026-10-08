@@ -87,6 +87,35 @@ Airside/
 New code goes in the matching folder above. If nothing fits, add the folder and
 note it here in the same commit.
 
+## Testing and merge policy — Bailey's standing instruction (8 October 2026)
+
+Prioritise implementation and progress. Bailey will choose when to playtest and
+report bugs. This policy replaces earlier default requirements for full test runs
+and repeated merge approval; Bailey's latest task instructions take precedence.
+
+- **Ordinary changes:** inspect the diff and use only quick checks relevant to the
+  change. Prefer a readily available syntax/compile check for changed code and a
+  small existing regression check when useful. Docs-only changes need no game tests.
+- **Do not automatically run broad testing:** no full `test-domain.sh` or
+  `test-unity.sh`, packaged builds, rendered reviews, gameplay journeys or soak runs
+  unless Bailey requests that testing/review. Do not add tests just to mirror a
+  simple implementation or repeatedly recheck an unchanged result.
+- **Keep checks bounded:** stop a local check after about 60 seconds if it stalls
+  or needs lengthy setup; record it as unverified and continue. Do not launch Unity
+  or install a runtime solely to satisfy a routine pre-merge checklist. Fix a known
+  new syntax/compile error before merging; unavailable verification is not a failure.
+- **Merge completed authorised work into `main` by default:** use a narrow branch
+  and PR, push, resolve routine conflicts, then merge without asking Bailey again.
+  Completed PRs should be ready, not left as drafts awaiting routine permission.
+  Keep genuinely incomplete work on a pushed branch/draft with a clear handoff.
+- **CI:** respect checks/protections actually enforced by GitHub; do not disable
+  tests or bypass protection. Optional pending checks and confirmed pre-existing
+  failures do not require waiting or another approval. Investigate new failures
+  attributable to the change before merging. Report actual blockers plainly.
+- **Be honest:** state what was checked, skipped or unverified. A merge does not
+  establish a Unity compile, rendered playtest, packaged build or performance pass.
+  Preserve simulation, save compatibility and other tools' active work.
+
 ## Git workflow (all tools follow this)
 
 1. **Start clean:** `git pull --rebase origin main` before touching anything.
@@ -95,11 +124,8 @@ note it here in the same commit.
    explicit, non-overlapping file boundaries. Never make simultaneous edits to the
    same system from two tools.
 3. **Keep commits narrow and reviewable** — one acceptance criterion per commit.
-4. **Run the checks** in `scripts/test-unity.sh` and confirm the project compiles
-   in Unity 6.3 LTS before committing behaviour changes. No commit rests on an
-   agent's claim alone that a build passed. Without a Mac Unity editor, run
-   `scripts/test-domain.sh` (needs the .NET 8 SDK) as a fast Domain/Simulation/
-   pre-check, but still get a Unity run before merging.
+4. **Follow the testing and merge policy above.** Use quick, relevant checks;
+   broad test suites and Unity/player verification run only when Bailey requests them.
 5. **Update `GAME.md` and `CHANGELOG.md`** in the same commit as the change. `GAME.md` holds current state
    only: edit the single "Where to resume" block in place (never stack a new dated block on top) and keep
    the file under ~250 lines; the changelog entry is one line (~160 chars). Detail goes in the PR, an ADR or
@@ -131,14 +157,14 @@ repo. These two checklists keep that reliable.
 3. Skim `CHANGELOG.md` and `git log --oneline -10` for what changed recently.
 4. If the handoff block names an unfinished branch, check it out
    (`git checkout <branch>`) instead of starting on `main`.
-5. Confirm the Unity project compiles / `scripts/test-unity.sh` passes before
-   building on top of unverified work.
+5. Read the existing validation limits. Do not automatically rerun tests or builds
+   at session start; use the testing and merge policy above.
 
 ### End of session (before you stop, or before a limit cuts you off)
 
-1. Commit everything. If it compiles and tests pass, commit to `main`. If it is
-   half-done or red, commit to a `feature/<name>` branch — never leave
-   uncommitted work in the tree.
+1. Commit and push the scoped work. Merge completed authorised work through its
+   PR into `main` by default. If it is incomplete or has a known new code failure,
+   keep it on a named branch/draft with the remaining work recorded.
 2. `git push origin HEAD` — unpushed work is invisible to the next tool.
 3. **Replace** the **"Where to resume"** block in `GAME.md` (do not stack a new one): latest work, next
    approved step, what is open/unverified, anything to watch, any open question for Bailey. Move anything

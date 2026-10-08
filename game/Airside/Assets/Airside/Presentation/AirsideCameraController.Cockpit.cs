@@ -79,6 +79,7 @@ namespace Airside.Presentation
             _cockpitActive = true;
             _flightExterior = false;
             _passengerSeat = false;
+            _towerView = false;
             _cockpitSeat = seat;
             _cockpitMotionOffset = _cockpitMotionEuler = Vector3.zero;
             _following = false;
@@ -134,6 +135,7 @@ namespace Airside.Presentation
             _cockpitActive = false;
             _flightExterior = false;
             _passengerSeat = false;
+            _towerView = false;
             _cockpitSeat = null;
             _cockpitMotionOffset = _cockpitMotionEuler = Vector3.zero;
             if (_camera != null)
@@ -261,7 +263,7 @@ namespace Airside.Presentation
 
         private float ClampFlightViewYaw(float yaw) => _flightExterior || _passengerSeat
             ? Mathf.Repeat(yaw + 180f, 360f) - 180f : Mathf.Clamp(yaw, -CockpitLookPresets.MaxYaw, CockpitLookPresets.MaxYaw);
-        private float ClampFlightViewPitch(float pitch) => Mathf.Clamp(pitch,
+        private float ClampFlightViewPitch(float pitch) => _towerView ? ClampTowerPitch(pitch) : Mathf.Clamp(pitch,
             _flightExterior ? -20f : _passengerSeat ? -60f : CockpitLookPresets.MinPitch,
             _flightExterior ? 80f : _passengerSeat ? 70f : CockpitLookPresets.MaxPitch);
         private float ClampExteriorRadius(float radius) => Mathf.Clamp(radius, _exteriorBaseRadius * 0.65f, _exteriorBaseRadius * 4f);

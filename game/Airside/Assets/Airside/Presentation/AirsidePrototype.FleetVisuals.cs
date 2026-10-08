@@ -846,6 +846,8 @@ namespace Airside.Presentation
             // step left them; a departure moves a metre or more between steps. Pick against
             // where the aircraft are drawn this frame.
             Physics.SyncTransforms();
+            if (TryEnterTowerAtScreen(camera, inputSystemPosition))
+                return;
             var ray = camera.ScreenPointToRay(inputSystemPosition);
             var layer = LayerMask.NameToLayer(AircraftPickRouting.PickLayerName);
             var mask = layer >= 0 ? 1 << layer : ~0;

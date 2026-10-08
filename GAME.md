@@ -14,6 +14,14 @@ illustration from the centre while the camera glides, lifts the logo and retract
 Existing skip, OpeningAnimation option and 2.8-second duration remain. Simulation/saves unchanged.
 Provenance/implementation: `docs/art/prompts/adelaide-opening-2026-10-08.md`;
 decision `docs/decisions/2026-10-08-adelaide-opening-identity.md`.
+**Control-tower view (8 Oct, Claude):** click the Adelaide tower in the overview to stand in its cab (`AirsidePrototype.Tower.cs`, `ControlTowerView.cs`,
+`AirsideCameraController.Tower.cs`). Reuses the passenger-seat camera: 360° drag-look, scroll zoom, Home recentres, Esc / LEAVE TOWER glides back to the
+previous overview. Presentation only; saves unchanged. Headless geometry/pick tests pass; Unity compile, cab-interior appearance (glass is back-face
+culled from inside), ground-level terrain/LOD streaming and night look are unverified. Not available at Parafield or during flight views.
+
+**Flight transitions (8 Oct, Claude):** full-journey legs took pitch from the route slope alone, so no flare, no rotation and a snap at cruise-to-approach.
+`RegionalFlightPath.ApproachPitchDegrees` / `DeparturePitchDegrees` now blend route pitch into the authored attitude (flare over 300 m, ~7 s; was 150 m). Presentation only.
+Unity compile and appearance unverified — watch a regional arrival and departure from the follow camera.
 
 **Checks:** 15/16 relevant headless painter/setup checks passed; the failure is the untouched
 FlightManual page 7 “Land cover” assertion at 800×600. Four edited C# files parsed without syntax errors;

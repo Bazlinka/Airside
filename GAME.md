@@ -7,6 +7,17 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Aircraft continuity (9 Oct, Codex, #672):** full route poses are now available to
+ordinary overview/follow views, rather than hiding departures after the local climb
+projection ends. Ordinary follow streams journey terrain and shifts the render origin.
+Aircraft identity lookup includes every physically present fleet view independently
+of follow-cycle filtering; direct follow can select a present aircraft outside that cycle.
+Parked models remain visible. The proposed two-hour activity window remains a product
+recommendation pending Bailey's choice; Fleet inventory must always retain them.
+Audit coverage and remaining limitations: `docs/testing/aircraft-continuity-2026-10-09.md`.
+Unity rendering, camera transitions and performance remain unverified.
+Cloud continuity and weather variety are the next authorised implementation.
+
 **Storm movement commitment (8 Oct, Codex, #670):** ready fixed-wing departures wait
 at their gate/bay; taxi-released departures continue under normal runway/traffic rules.
 An inbound already on the shared 32 km extended final before storm onset keeps its

@@ -325,3 +325,4 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-08 | [Storm holds at stands and committed movements continue](2026-10-08-storm-movement-commitment.md) | Accepted — Bailey's explicit 8 October storm movement instruction |
 | 2026-10-08 | [Departure-style toast notifications](2026-10-08-toast-notifications.md) | Implemented at Bailey’s request; Unity appearance pending |
 | 2026-10-08 | [Persistent weather at flight altitude and restrained cockpit motion](2026-10-08-weather-altitude-and-restraint.md) | Accepted |
+| 2026-10-09 | [Aircraft presence and camera eligibility](2026-10-09-aircraft-presence-and-camera-eligibility.md) | Accepted for the continuity fixes; parked activity window remains prop |

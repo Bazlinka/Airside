@@ -81,7 +81,8 @@ namespace Airside.Presentation
 
         private bool IsFleetFlightVisible(string aircraftId) =>
             !WatchingOutstation && _fleetAircraftById.TryGetValue(aircraftId, out var aircraft)
-            && (FleetVisual.For(aircraft, _clock.Now).Visible || IsArrivingOnFinal(aircraft) || WatchingJourney(aircraftId));
+            && (FleetVisual.For(aircraft, _clock.Now).Visible || IsArrivingOnFinal(aircraft)
+                || WatchingJourney(aircraftId) || FleetJourneyInView(aircraft));
 
         /// <summary>
         /// Last-line visibility guard immediately before a fleet view receives a world pose.
@@ -791,6 +792,10 @@ namespace Airside.Presentation
                 var view = views[i];
                 if (view == null || !view.gameObject.activeSelf)
                     continue;
+                // Registration is not camera-cycle eligibility. Other views, maps, direct
+                // selection and audio must retain every physically present aircraft.
+                if (i < VisualFlights.Count)
+                    _fleetViewById[VisualFlights[i].AircraftId] = view;
                 // A far-approach aircraft is excluded as a new cycling/pick candidate (too
                 // small and distant to be a sensible target) but never dropped out from
                 // under a follow already in progress — that used to release the camera the
@@ -803,8 +808,6 @@ namespace Airside.Presentation
                     && !ApproachCloseEnough(VisualFlights[i], view.position))
                     continue;
                 _fleetActiveViews.Add(view);
-                if (i < VisualFlights.Count)
-                    _fleetViewById[VisualFlights[i].AircraftId] = view;
             }
 
             if (SameTransforms(_fleetActiveViews, _fleetFollowTargets))

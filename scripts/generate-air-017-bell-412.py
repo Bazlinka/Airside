@@ -136,17 +136,30 @@ def bell_412_meshes():
     meshes["step_left"] = _base.box(-1.36, 0.62, 0.05, 0.28, 0.10, 1.85)
     meshes["step_right"] = _base.box(1.36, 0.62, 0.05, 0.28, 0.10, 1.85)
 
-    # Glazing and sliding-door read; shallow panels sit proud of the curved shell.
-    meshes["cockpit_glass_left"] = rotated(_base.box(-0.67, 2.42, 2.83, 1.04, 0.82, 0.07),
-                                            y_degrees=-14.0, x_degrees=-20.0,
-                                            pivot=(-0.67, 2.42, 2.83))
-    meshes["cockpit_glass_right"] = rotated(_base.box(0.67, 2.42, 2.83, 1.04, 0.82, 0.07),
-                                             y_degrees=14.0, x_degrees=-20.0,
-                                             pivot=(0.67, 2.42, 2.83))
-    meshes["cabin_window_left"] = _base.box(-1.36, 2.23, 0.20, 0.05, 0.88, 2.45)
-    meshes["cabin_window_right"] = _base.box(1.36, 2.23, 0.20, 0.05, 0.88, 2.45)
-    meshes["sliding_door_left"] = _base.box(-1.39, 1.57, -0.10, 0.045, 1.72, 1.72)
-    meshes["sliding_door_right"] = _base.box(1.39, 1.57, -0.10, 0.045, 1.72, 1.72)
+    # Continuous utility-cabin loft and curvature-fitted glazing/door leaves.
+    spec = importlib.util.spec_from_file_location("bell_body", SCRIPTS / "aircraft_body.py")
+    body = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(body)
+    profile = body.refine(meshes)
+    meshes["tail_boom"] = body.BodyProfile(meshes["tail_boom"]).loft(segments=48)
+    spec = importlib.util.spec_from_file_location("bell_skin", SCRIPTS / "aircraft_skin.py")
+    skin = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(skin)
+
+    def surface(z, angle, offset=0.0):
+        rx, ry, cy = profile.sample(z)
+        theta = np.deg2rad(angle)
+        return np.asarray(((rx+offset)*np.cos(theta), cy+(ry+offset)*np.sin(theta), z), np.float32)
+
+    for side, angle in (("left", 145.0), ("right", 35.0)):
+        meshes[f"cockpit_glass_{side}"] = skin.skin_patch(
+            surface, 2.66, angle, .58, .43, front=.012, radius=.13, rings=4, max_edge=.10)
+    for side, angle in (("left", 166.0), ("right", 14.0)):
+        meshes[f"cabin_window_{side}"] = skin.skin_patch(
+            surface, .20, angle, 1.15, .37, front=.012, radius=.12, rings=4, max_edge=.12)
+    for side, angle in (("left", 192.0), ("right", -12.0)):
+        meshes[f"sliding_door_{side}"] = skin.skin_patch(
+            surface, -.10, angle, .86, .84, front=.006, radius=.14, rings=4, max_edge=.12)
 
     # Original Mountain Rescue identity, clipped to the real hull (ADR 0232).
     # Retain the historical paint part names so existing rescue/custom tint paths work.

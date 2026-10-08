@@ -35,25 +35,25 @@ namespace Airside.Simulation
         {
             // <generated door layout>
             if (Is(type, AircraftType.EmbraerE190))
-                return new AircraftDoor(-1.38f, -5.52f, 2.52f, 3.99f);
+                return new AircraftDoor(-1.38f, -5.52f, 2.52f, 4.00f);
             if (Is(type, AircraftType.AirbusA220300))
-                return new AircraftDoor(-1.62f, -5.95f, 2.32f, 3.91f);
+                return new AircraftDoor(-1.63f, -5.95f, 2.32f, 3.91f);
             if (Is(type, AircraftType.AirbusA320200))
-                return new AircraftDoor(-1.92f, -4.94f, 2.55f, 4.23f);
+                return new AircraftDoor(-1.93f, -4.94f, 2.55f, 4.23f);
             if (Is(type, AircraftType.Boeing737800))
-                return new AircraftDoor(-1.82f, -5.19f, 2.75f, 4.54f);
+                return new AircraftDoor(-1.83f, -5.19f, 2.75f, 4.54f);
             if (Is(type, AircraftType.Boeing7378))
-                return new AircraftDoor(-1.82f, -5.19f, 2.73f, 4.51f);
+                return new AircraftDoor(-1.83f, -5.19f, 2.73f, 4.51f);
             if (Is(type, AircraftType.AirbusA321Neo))
                 return new AircraftDoor(-1.82f, -5.85f, 2.55f, 4.23f);
             if (Is(type, AircraftType.AirbusA350900))
-                return new AircraftDoor(-2.70f, -6.30f, 4.67f, 6.56f);
+                return new AircraftDoor(-2.73f, -6.30f, 4.66f, 6.57f);
             if (Is(type, AircraftType.AirbusA330900))
-                return new AircraftDoor(-2.73f, -6.00f, 4.55f, 6.43f);
+                return new AircraftDoor(-2.74f, -6.00f, 4.55f, 6.43f);
             if (Is(type, AircraftType.Boeing7879))
-                return new AircraftDoor(-2.62f, -5.92f, 4.66f, 6.54f);
+                return new AircraftDoor(-2.64f, -5.92f, 4.65f, 6.55f);
             if (Is(type, AircraftType.Boeing78710))
-                return new AircraftDoor(-2.62f, -6.44f, 4.66f, 6.54f);
+                return new AircraftDoor(-2.64f, -6.44f, 4.65f, 6.55f);
             // </generated door layout>
             return L1(AircraftType.Boeing7378);
         }

@@ -1,0 +1,68 @@
+hour=0 completed=0
+hour=1 completed=8
+hour=2 completed=12
+hour=3 completed=25
+hour=4 completed=31
+hour=5 completed=36
+hour=6 completed=43
+hour=7 completed=52
+hour=8 completed=57
+hour=9 completed=64
+hour=10 completed=73
+hour=11 completed=79
+hour=12 completed=88
+hour=13 completed=96
+hour=14 completed=101
+hour=15 completed=104
+hour=16 completed=105
+hour=17 completed=105
+hour=18 completed=105
+hour=19 completed=106
+hour=20 completed=107
+hour=21 completed=108
+hour=22 completed=111
+hour=23 completed=119
+pairs=0
+completed=129
+VH-PAX AtStand trips=0
+VH-FDA AtStand trips=1
+VH-SAR AtStand trips=15
+VH-ZRC AtStand trips=5
+VH-ZRD AtStand trips=5
+VH-ZRE AtStand trips=4
+VH-ZRF Inbound trips=4
+VH-ZRG Inbound trips=3
+VH-ZRH Outbound trips=4
+VH-QOK Outbound trips=4
+VH-QOL Landing trips=4
+VH-QOM AtDestination trips=4
+VH-QON AtDestination trips=3
+VH-8IA Inbound trips=2
+VH-8IB Inbound trips=3
+VH-8IC AtStand trips=4
+VH-VZX Outbound trips=3
+VH-VZY AtStand trips=3
+VH-VZZ AtStand trips=3
+VH-VFH Outbound trips=1
+VH-VFI Outbound trips=4
+ZK-NNA Inbound trips=2
+9V-SCA AtStand trips=2
+9M-MAB AtStand trips=1
+A6-EVA AtDestination trips=0
+A7-ANC Inbound trips=0
+DQ-FAE Inbound trips=1
+VH-8ID AtDestination trips=2
+VH-8IE AtDestination trips=4
+VH-8IF AtStand trips=3
+VH-8IG AtStand trips=4
+VH-VZU Outbound trips=3
+VH-VZV Inbound trips=3
+VH-VZW Inbound trips=3
+VH-VZR AtStand trips=3
+VH-VZS Outbound trips=4
+VH-VZT AtDestination trips=3
+VH-VFJ Outbound trips=3
+VH-VFK Outbound trips=3
+VH-VFL AtStand trips=4
+VH-FQF AtStand trips=1
+VH-FDH AtStand trips=1

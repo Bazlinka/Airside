@@ -239,15 +239,18 @@ namespace Airside.Domain
             found = null;
             if (type == null)
                 return false;
-            foreach (var spec in All)
+            // IReadOnlyList foreach boxes the array enumerator; this lookup runs in frame polling.
+            for (var i = 0; i < All.Count; i++)
             {
+                var spec = All[i];
                 if (spec.Id != type.Id)
                     continue;
                 found = spec;
                 return true;
             }
-            foreach (var spec in Rotorcraft)
+            for (var i = 0; i < Rotorcraft.Count; i++)
             {
+                var spec = Rotorcraft[i];
                 if (spec.Id != type.Id)
                     continue;
                 found = spec;

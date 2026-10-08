@@ -23,6 +23,9 @@ namespace Airside.Presentation
 
         private readonly List<Entry> _entries = new();
         private readonly Dictionary<Transform, int> _index = new();
+        // A sky/precipitation root may be handed to a different camera. Only its
+        // latest owner may place it, regardless of the cameras' LateUpdate order.
+        private static readonly Dictionary<Transform, CameraShellAnchor> Owners = new();
 
         /// <summary>
         /// The position an anchored object takes for a camera at <paramref name="camera"/> looking along
@@ -56,6 +59,9 @@ namespace Airside.Presentation
 
         private void Set(Transform target, Vector3 offset, bool absoluteHeight, float forwardMetres)
         {
+            if (Owners.TryGetValue(target, out var owner) && owner != null && owner != this)
+                owner.Remove(target);
+            Owners[target] = this;
             var entry = new Entry
             {
                 Target = target, Offset = offset, AbsoluteHeight = absoluteHeight, ForwardMetres = forwardMetres
@@ -69,6 +75,29 @@ namespace Airside.Presentation
             }
         }
 
+        private void Remove(Transform target)
+        {
+            if (!_index.TryGetValue(target, out var index))
+                return;
+            // Swap the final entry into the gap so indices stay valid without
+            // retaining destroyed targets or shifting every registered shell.
+            var last = _entries.Count - 1;
+            var moved = _entries[last];
+            _entries[index] = moved;
+            _entries.RemoveAt(last);
+            _index.Remove(target);
+            if (index != last)
+                _index[moved.Target] = index;
+            if (Owners.TryGetValue(target, out var owner) && ReferenceEquals(owner, this))
+                Owners.Remove(target);
+        }
+
+        private void OnDestroy()
+        {
+            while (_entries.Count > 0)
+                Remove(_entries[_entries.Count - 1].Target);
+        }
+
         private void LateUpdate()
         {
             var camera = transform.position;
@@ -79,6 +108,11 @@ namespace Airside.Presentation
                 if (entry.Target != null)
                     entry.Target.position = Resolve(camera, forward, entry.Offset, entry.AbsoluteHeight,
                         entry.ForwardMetres);
+                else
+                {
+                    Remove(entry.Target);
+                    i--; // The swapped entry still needs placement this frame.
+                }
             }
         }
     }

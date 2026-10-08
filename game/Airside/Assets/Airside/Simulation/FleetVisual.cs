@@ -294,7 +294,7 @@ namespace Airside.Simulation
 
         /// <summary>Taking off from <paramref name="runway"/> and still on the lineup leg at <paramref name="now"/>.</summary>
         private static bool IsLiningUp(FleetAircraft other, RunwayDirection runway, SimulationTime? now) =>
-            now.HasValue && other.State == FleetState.TakingOff && other.AssignedRunway == runway
+            now.HasValue && !other.Type.IsRotorcraft && other.State == FleetState.TakingOff && other.AssignedRunway == runway
             && now.Value.ElapsedSeconds - other.StateStartedAt.ElapsedSeconds
             < AdelaideGround.LineupFor(runway, other.Type).WholeSeconds;
 

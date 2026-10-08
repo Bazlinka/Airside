@@ -10,8 +10,11 @@ namespace Airside.Presentation
         public AircraftInspectorLayout(HudBox panel)
         {
             Panel = panel;
-            var header = Math.Min(128f, panel.Height * .3f);
-            var footer = Math.Min(150f, panel.Height * .35f);
+            // The painter uses fixed text and button sizes. Shrinking these bands
+            // on a short desktop makes details cover identity and camera buttons
+            // overlap Cancel / Follow. The body alone absorbs the smaller height.
+            var header = Math.Min(128f, panel.Height);
+            var footer = Math.Min(150f, Math.Max(0f, panel.Height - header));
             Header = new HudBox(panel.X, panel.Y, panel.Width, header);
             Body = new HudBox(panel.X + 20f, panel.Y + header, Math.Max(1f, panel.Width - 40f), Math.Max(1f, panel.Height - header - footer));
             Footer = new HudBox(panel.X + 20f, panel.Bottom - footer + 12f, Math.Max(1f, panel.Width - 40f), footer - 24f);

@@ -54,6 +54,39 @@ namespace Airside.Tests
             Assert.That(list.Commands.Single(c => c.ActionId == HudAction.CardFollow).Text, Is.EqualTo("Follow aircraft"));
         }
 
+        [TestCase(340f, false)] [TestCase(340f, true)]
+        [TestCase(400f, false)] [TestCase(400f, true)]
+        [TestCase(500f, false)] [TestCase(500f, true)]
+        public void Inspector_CompactPanelsKeepEveryActionDistinct(float height, bool canCancel)
+        {
+            var panel = new HudBox(100f, 100f, HudShell.SelectedCardWidth, height);
+            var layout = new AircraftInspectorLayout(panel);
+            var data = new SelectionCardData { Registration = "VH-PAX", IsPlayer = true, PhaseLabel = "Available",
+                PrimaryLabel = "Plan flight", CanCancel = canCancel, CanFollow = true,
+                ShowCameraActions = true, CanCockpit = true, CanPassenger = false, CanExterior = true };
+            var header = new HudDrawList();
+            AircraftInspectorPainter.Header(header, layout, data);
+            Assert.That(header.Commands.Where(c => c.Kind != HudDrawKind.Surface)
+                .All(c => c.Box.Bottom <= layout.Header.Bottom), Is.True,
+                "identity and close must remain above the scrolling details");
+            var footer = new HudDrawList();
+            AircraftInspectorPainter.Footer(footer, layout, data);
+            var buttons = footer.Commands.Where(c => c.Kind == HudDrawKind.Button).ToArray();
+            Assert.That(buttons, Has.Length.EqualTo(5));
+            foreach (var button in buttons)
+            {
+                Assert.That(button.Box.Y, Is.GreaterThanOrEqualTo(layout.Footer.Y), button.ActionId);
+                Assert.That(button.Box.Bottom, Is.LessThanOrEqualTo(layout.Footer.Bottom), button.ActionId);
+                Assert.That(button.Box.Overlaps(layout.Body), Is.False, button.ActionId);
+            }
+            for (var i = 0; i < buttons.Length; i++)
+            for (var j = i + 1; j < buttons.Length; j++)
+                Assert.That(buttons[i].Box.Overlaps(buttons[j].Box), Is.False,
+                    buttons[i].ActionId + " overlaps " + buttons[j].ActionId);
+            Assert.That(buttons.Single(c => c.ActionId == "camera-passenger").Enabled, Is.False,
+                "an unavailable camera target must remain disabled");
+        }
+
         [Test]
         public void CompactCareer_BaseActionDoesNotOverlapLiveryChoices()
         {

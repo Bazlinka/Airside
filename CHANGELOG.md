@@ -8,6 +8,7 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- Fix parked/bay taxi clearance, rotor queues, sky ownership, inspector/manual buttons and repeated query allocations; add aircraft/save coverage (#576; Unity unverified).
 - Lighting beam-aim checks: each family's landing/taxi beam must land on the ground ahead inside lamp range, with an offline beam diagram (unverified in Unity).
 - **Aircraft lighting by type.** Turboprops, regional jets, narrowbodies, widebodies and the Bell 412 get their own beam widths, strobe pattern, tail strobe, beacon rate and nose-lamp takeoff light (ADR 2026-10-07; unverified in Unity).
 - #577: Operations shows all owned aircraft across bases, live next events and direct Fleet controls; Adelaide movements stay available (unverified in Unity).

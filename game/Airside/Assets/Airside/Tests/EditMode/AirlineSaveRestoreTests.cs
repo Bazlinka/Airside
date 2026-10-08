@@ -11,6 +11,99 @@ namespace Airside.Tests
     public sealed class AirlineSaveRestoreTests
     {
         [Test]
+        public void Restore_InlineNullPlaceholdersKeepFreshSaveAndContinuation()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var live = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(99),
+                Airline.Player("Test Air", "#123456"));
+            var data = AirlineSave.Capture(live);
+            // Unity serializes inline classes by value: an absent optional record may
+            // deserialize as its all-default instance, rather than a CLR null.
+            data.MainWake = new RunwayWakeRecord();
+            data.CrossWake = new RunwayWakeRecord();
+            foreach (var record in data.Fleet)
+                record.MaintenanceJob = new MaintenanceJob();
+            var resumedClock = new ManualSimulationClock(clock.Now);
+            var resumed = AirlineSave.Restore(data, resumedClock);
+            Assert.That(resumed.MainWake, Is.Null);
+            Assert.That(resumed.CrossWake, Is.Null);
+            Assert.That(System.Linq.Enumerable.All(resumed.Fleet, a => a.MaintenanceJob == null), Is.True);
+            for (var t = 0L; t <= 3 * 3600; t += 97)
+            {
+                clock.Set(new SimulationTime(t)); resumedClock.Set(clock.Now);
+                live.Update(); resumed.Update();
+                Assert.That(resumed.RandomState, Is.EqualTo(live.RandomState));
+                Assert.That(resumed.TotalEvents, Is.EqualTo(live.TotalEvents));
+                Assert.That(resumed.RunwayFreeAt, Is.EqualTo(live.RunwayFreeAt));
+                Assert.That(resumed.CrossRunwayFreeAt, Is.EqualTo(live.CrossRunwayFreeAt));
+                for (var i = 0; i < live.Fleet.Count; i++)
+                {
+                    Assert.That(resumed.Fleet[i].State, Is.EqualTo(live.Fleet[i].State));
+                    Assert.That(resumed.Fleet[i].StateStartedAt, Is.EqualTo(live.Fleet[i].StateStartedAt));
+                    Assert.That(resumed.Fleet[i].StateEndsAt, Is.EqualTo(live.Fleet[i].StateEndsAt));
+                    Assert.That(resumed.Fleet[i].Stand, Is.EqualTo(live.Fleet[i].Stand));
+                    Assert.That(resumed.Fleet[i].CompletedTrips, Is.EqualTo(live.Fleet[i].CompletedTrips));
+                }
+            }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Restore_PartialWakePlaceholderStillFails(bool departure)
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var live = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(3),
+                Airline.Player("Test Air", "#123456"));
+            var data = AirlineSave.Capture(live);
+            data.MainWake = new RunwayWakeRecord { Departure = departure, EventAtSeconds = departure ? 0 : 1 };
+            Assert.Throws<FormatException>(() => AirlineSave.Restore(data, clock));
+        }
+
+        [TestCase("origin")]
+        [TestCase("hangar")]
+        [TestCase("return")]
+        [TestCase("phase")]
+        [TestCase("requested")]
+        [TestCase("started")]
+        [TestCase("ended")]
+        [TestCase("repair")]
+        [TestCase("completed")]
+        public void Restore_PartialMaintenancePlaceholderStillFails(string field)
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var live = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(3),
+                Airline.Player("Test Air", "#123456"));
+            var data = AirlineSave.Capture(live);
+            var job = new MaintenanceJob();
+            switch (field)
+            {
+                case "origin": job.OriginStand = "BAY-1"; break;
+                case "hangar": job.HangarId = "shed"; break;
+                case "return": job.ReturnStand = "BAY-1"; break;
+                case "phase": job.Phase = MaintenancePhase.Starting; break;
+                case "requested": job.RequestedAt = 1; break;
+                case "started": job.PhaseStartedAt = 1; break;
+                case "ended": job.PhaseEndsAt = 1; break;
+                case "repair": job.RepairSeconds = 1; break;
+                case "completed": job.RepairCompleted = true; break;
+            }
+            data.Fleet[0].MaintenanceJob = job;
+            Assert.Throws<FormatException>(() => AirlineSave.Restore(data, clock));
+        }
+
+        [Test]
+        public void Restore_MaintenanceStateStillRequiresAnActualJob()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var live = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(3),
+                Airline.Player("Test Air", "#123456"));
+            var data = AirlineSave.Capture(live);
+            data.Fleet[0].State = nameof(FleetState.Maintenance);
+            data.Fleet[0].MaintenanceJob = new MaintenanceJob();
+            Assert.Throws<FormatException>(() => AirlineSave.Restore(data, clock));
+        }
+
+        [Test]
         public void Restore_RejectsAMidTripAircraftWithNoDestination()
         {
             var clock = new ManualSimulationClock(new SimulationTime(0));

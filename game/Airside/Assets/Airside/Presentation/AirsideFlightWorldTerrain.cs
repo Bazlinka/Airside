@@ -32,7 +32,7 @@ namespace Airside.Presentation
         private double _originX, _originZ;
         public int ResidentTiles => _tiles.Count;
         public int ResidentCoarseTiles => _coarse.Count;
-        public bool HasElevation => _heights != null;
+        public bool HasElevation => _heights != null || _nationalHeights != null;
         public static AirsideFlightWorldTerrain Create()
         {
             var result = new GameObject("Australia flight terrain").AddComponent<AirsideFlightWorldTerrain>();
@@ -46,7 +46,7 @@ namespace Airside.Presentation
             // Same vertex-colour shader as the existing Adelaide outer landscape.
             var shader = Shader.Find("Airside/Surroundings");
             if (shader == null) shader = Shader.Find("Universal Render Pipeline/Lit");
-            result._material = new Material(shader) { name = "mat_sa_flight_terrain" };
+            result._material = new Material(shader) { name = "mat_australia_flight_terrain" };
             result._material.SetFloat("_SatelliteNearStrength",0f);
             result._material.SetFloat("_SatelliteFarStrength",0f);
             result._material.SetFloat("_HorizonFadeStart",CockpitFadeStartMetres);
@@ -186,13 +186,14 @@ namespace Airside.Presentation
         private void UpdateAirport(double x,double z,double altitude,bool wide)
         {
             RegionalRunway? nearest=null;var distance=FlightWorldDetail.AirportLoadMetres;
-            if(!wide)
+            var approaching=!wide && altitude<FlightWorldDetail.AirportPrefetchCeilingMetres;
+            if(approaching)
             foreach(var runway in RegionalRunways.All)
             {
                 var d=FlightWorldDetail.RunwayDistance(x,z,runway);
                 if(d<distance){distance=d;nearest=runway;}
             }
-            if(!nearest.HasValue && !wide && _airport.HasValue &&
+            if(!nearest.HasValue && approaching && _airport.HasValue &&
                 FlightWorldDetail.RunwayDistance(x,z,_airport.Value)<FlightWorldDetail.AirportUnloadMetres) nearest=_airport;
             if(nearest?.Code!=_airport?.Code)
             {
@@ -204,6 +205,7 @@ namespace Airside.Presentation
                     _approachHeights=LoadHeights("Terrain/dem_approach_"+code+"_v01.bin");
                     _approachCover=LoadCover("Terrain/landcover_approach_"+code+"_v01.bin");
                     _airportEnvironment=AirsideFlightAirportEnvironment.Create(nearest.Value,_material,_approachHeights ?? _nationalHeights ?? _heights);
+                    if(_airportEnvironment!=null) _airportEnvironment.transform.SetParent(transform,false);
                 }
             }
             if(_airportEnvironment!=null) _airportEnvironment.Tick(_originX,_originZ,!_cruise && !wide && altitude<5000);

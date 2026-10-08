@@ -6,6 +6,7 @@ namespace Airside.Presentation
     public static class FlightWorldDetail
     {
         public const double AirportLoadMetres = 70000;
+        public const double AirportPrefetchCeilingMetres = 6000;
         public const double AirportUnloadMetres = 80000;
         public const double CruiseEnterMetres = 4500;
         public const double CruiseExitMetres = 3500;

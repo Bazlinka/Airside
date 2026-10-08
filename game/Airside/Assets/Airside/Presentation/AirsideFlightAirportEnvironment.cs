@@ -13,10 +13,10 @@ namespace Airside.Presentation
         [Serializable] public sealed class Point { public double lat, lon; }
         [Serializable] public sealed class Feature { public string kind; public float width, height; public Point[] points; }
         [Serializable] public sealed class Map { public string code; public Feature[] features; }
+        public const int MaximumFeatures=4096;
         private Map _map;
         private int _cursor;
         private double _centreX, _centreZ;
-        private RegionalRunway _runway;
         private FlightWorldHeights _heights;
         private Material _material;
         private readonly List<Mesh> _meshes = new();
@@ -30,8 +30,23 @@ namespace Airside.Presentation
                 if(map?.features==null) return null;
                 var result=new GameObject("Mapped airport "+runway.Code).AddComponent<AirsideFlightAirportEnvironment>();
                 result._map=map;result._material=new Material(material) {name="Mapped airport solid surfaces"};
-                result._material.SetFloat("_VertexSurface",1f);result._runway=runway;result._heights=heights;
+                result._material.SetFloat("_VertexSurface",1f);result._heights=heights;
                 result._centreX=(runway.Ax+runway.Bx)/2;result._centreZ=(runway.Az+runway.Bz)/2;
+                YpadFrame.ToLatLon(result._centreX,result._centreZ,out var latitude,out var longitude);
+                var longitudeScale=Math.Cos(latitude*Math.PI/180);
+                int Priority(Feature feature) => feature?.kind=="building" ? 2 : feature?.kind=="road" ? 1 : 0;
+                double Distance(Feature feature)
+                {
+                    if(feature?.points==null || feature.points.Length==0) return double.MaxValue;
+                    var point=feature.points[0];var north=point.lat-latitude;var east=(point.lon-longitude)*longitudeScale;
+                    return north*north+east*east;
+                }
+                Array.Sort(map.features,(a,b)=>
+                {
+                    var priority=Priority(a).CompareTo(Priority(b));
+                    return priority!=0 ? priority : Distance(a).CompareTo(Distance(b));
+                });
+                if(map.features.Length>MaximumFeatures) Array.Resize(ref map.features,MaximumFeatures);
                 return result;
             }
             catch (Exception e) when(e is IOException || e is ArgumentException)
@@ -94,6 +109,9 @@ namespace Airside.Presentation
             var polygon=new List<Vector3>(count);var averageY=0f;
             for(var i=0;i<count;i++){var point=Position(feature.points[i]);polygon.Add(point);averageY+=point.y;}
             averageY/=count;
+            var signedArea=0f;
+            for(var i=0;i<count;i++) {var a=polygon[i];var b=polygon[(i+1)%count];signedArea+=a.x*b.z-b.x*a.z;}
+            if(signedArea<0) polygon.Reverse();
             var roofY=averageY+(building ? Mathf.Clamp(feature.height,3,45) : .1f);
             var roofColour=building ? Color.Lerp(colour,Color.white,.14f) : colour;
             for(var i=0;i<count;i++)

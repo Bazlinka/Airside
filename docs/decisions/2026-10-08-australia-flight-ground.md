@@ -16,13 +16,14 @@ strip determines the visual regional approach, while all actual strips appear.
 
 Ship a small offline Australia elevation/class grid; the existing SA files and Natural
 Earth shoreline remain safe fallbacks. Load at most one airport approach elevation,
-WorldCover class grid and OSM airport footprint map within 70 km, retaining it to 80 km
+WorldCover class grid and OSM airport footprint map below 6,000 m and within 70 km, retaining it to 80 km
 for hysteresis. Detailed airport terrain uses 250 m mesh cells across at most nine
 16 km tiles. Other near terrain uses 1 km cells; cruise uses 2 km cells. Enter cruise
 above 4,500 m and exit below 3,500 m, so altitude noise cannot continually rebuild tiles.
 Stream one mesh per frame, alternating fine and coarse builds to bring the high-altitude
 horizon in promptly. Cruise retains 49 near and 49 coarse tiles; wide overview retains
-its existing bounded 121–289 coarse ring. Airport models build 24 features per frame,
+its existing bounded 121–289 coarse ring. Airport models retain at most 4,096 features, prioritising mapped airside infrastructure and
+nearby roads/buildings, and build 24 features per frame,
 with no colliders, per-building objects or simulated resources. Owned meshes/materials
 are destroyed when their airport leaves the retained region.
 

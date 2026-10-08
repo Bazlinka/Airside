@@ -21,10 +21,14 @@ namespace Airside.Simulation
         /// Paid when the player books the rotation (refunded if they cancel before pushback).
         /// Covers the whole out-and-back, so the planner can show one number.
         /// </summary>
+        /// <summary>Flat part of every dispatch: landing, handling and crew call-out, whatever the distance.</summary>
+        public const long DispatchBaseCost = 120;
+        public const long MinimumDispatchCost = 180;
+
         public static long DispatchCost(AircraftType type, double oneWayKm)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
-            return Math.Max(90, (long)Math.Round(70 + Math.Max(0, oneWayKm) * CostPerKm(type)));
+            return Math.Max(MinimumDispatchCost, (long)Math.Round(DispatchBaseCost + Math.Max(0, oneWayKm) * CostPerKm(type)));
         }
 
         /// <summary>
@@ -33,7 +37,8 @@ namespace Airside.Simulation
         /// the Domestic stage asks for inside ADR 0120's play-time window.
         /// </summary>
         public static double CostPerKm(AircraftType type) =>
-            Weight(type) <= 1.0 ? TurbopropCostPerKm : JetCostPerKm * Weight(type) * RunningCostFactor(type);
+            type != null && type.IsRotorcraft ? RotorcraftCostPerKm
+            : Weight(type) <= 1.0 ? TurbopropCostPerKm : JetCostPerKm * Weight(type) * RunningCostFactor(type);
 
         /// <summary>
         /// ADR 0131: how thirsty a jet is against the modern types the economy was tuned on (1.0). Only
@@ -69,8 +74,12 @@ namespace Airside.Simulation
             return Math.Min(km, type.PracticalRangeKm);
         }
 
-        public const double TurbopropCostPerKm = 1.12;
-        public const double JetCostPerKm = 1.28;
+        // Rebalanced up (game dollars, 8 Oct 2026): a flight now costs real money. A starter Saab hop keeps about
+        // a fifth of its pay, a jet on a good domestic or longer leg 20-30%, so aircraft prices are earned over
+        // many flights instead of a handful. See docs/plans/economy_realism_plan.md.
+        public const double TurbopropCostPerKm = 1.45;
+        public const double JetCostPerKm = 1.65;
+        public const double RotorcraftCostPerKm = 1.0;
 
         /// <summary>Paid once when a player aircraft returns to stand, with or without a contract.</summary>
         public static long FlightPay(AircraftType type, double oneWayKm) =>

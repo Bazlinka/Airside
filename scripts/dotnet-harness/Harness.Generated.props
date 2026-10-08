@@ -116,6 +116,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightNumber.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightPlanner.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightTelemetrySampler.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightTracker.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightViewHud.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightViewInformation.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightWorldDetail.cs" />
@@ -131,6 +132,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudMoments.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudShell.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudSounds.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudVisibility.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/HudWorkspace.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/JetCockpitProfile.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/JetCockpitShellGeometry.cs" />
@@ -299,6 +301,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightPlannerTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightRouteTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightSpeedRealismTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightTrackerTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightViewInformationTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightWorldLandCoverTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightWorldTests.cs" />

@@ -44,7 +44,6 @@ namespace Airside.Presentation
         private readonly List<FleetAircraft> _mapAircraftRows = new();
         private readonly List<FleetAircraft> _playerFleetRows = new();
         private readonly List<AircraftType> _ownedTypeScratch = new();
-        private readonly List<OperationsRow> _compactOpsRows = new();
         // Departures first: the board opens on what you are about to send, not what is coming.
         private bool _flightsShowArrivals;
         private Vector2 _devToolsScroll;
@@ -216,8 +215,11 @@ namespace Airside.Presentation
                 ShowToast("First flight done. Plan the next one whenever you like.");
             _lastGuideStep = _guideStep;
             var showGuide = !AirlineModalOpen && _guideStep != GuideStep.Complete;
+            RefreshFlightTracker();
             var placement = AirlineHudLayout.Create(layout, showGuide,
-                workspaceOpen: _activeWorkspace != HudWorkspace.None || _devToolsOpen, showMiniMap: MiniMapShows);
+                workspaceOpen: _activeWorkspace != HudWorkspace.None || _devToolsOpen, showMiniMap: MiniMapShows,
+                trackerHeight: FlightTrackerPainter.HeightFor(_trackerRows.Count, FlightTracker.TotalTracked > _trackerRows.Count),
+                showCareerCard: HudShows(HudElement.CareerCard));
             RememberHudPanels(layout, placement, showGuide);
 
             var label = _hudLabel ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true });
@@ -263,10 +265,10 @@ namespace Airside.Presentation
             // The career card and flight tiles belong to the overview; an open sheet replaces them.
             if (overview && showGuide)
                 DrawGuide(placement.Objective);
-            else if (overview)
+            else if (overview && placement.Objective.width > 0f)
                 DrawObjectiveCard(placement.Objective);
             if (overview && placement.Operations.width > 0f)
-                DrawCompactOperations(placement.Operations);
+                DrawFlightTracker(placement.Operations);
             // ADR 0135: a newly opened sheet slides in from the right.
             if (_activeWorkspace != _workspaceShown)
             {
@@ -512,7 +514,7 @@ namespace Airside.Presentation
             if (overview && placement.Objective.width > 0f)
                 _hudPanels.Add(placement.Objective);
             if (overview && placement.Operations.width > 0f)
-                _hudPanels.Add(OperationsTilesRect(placement.Operations));
+                _hudPanels.Add(placement.Operations);
             if (_activeWorkspace != HudWorkspace.None || _devToolsOpen)
                 _hudPanels.Add(WorkspaceRect(placement));
             if (MiniMapShows)
@@ -605,7 +607,7 @@ namespace Airside.Presentation
             _shellDrawList.Clear();
             HudShellPainter.PaintRail(_shellDrawList, rail, airline.LiveryHex, _navTabs);
             HudShellPainter.PaintCapsule(_shellDrawList, Box(placement.Capsule), _capsuleSegments);
-            HudShellPainter.PaintControls(_shellDrawList, Box(placement.Capsule), _miniMapVisible);
+            HudShellPainter.PaintControls(_shellDrawList, Box(placement.Capsule), HudShows(HudElement.AirportMap));
             var clicked = _hudPainter.Draw(_shellDrawList);
 
             // The approved brand mark inside its livery ring.
@@ -645,59 +647,49 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>Live flight tiles for the player's own fleet. AI traffic stays on the full board.</summary>
-        private void DrawCompactOperations(Rect area)
-        {
-            if (area.width < 8f || area.height < 8f)
-                return;
+        private readonly List<FlightTrackerRow> _trackerRows = new();
+        private readonly List<OperationsRow> _trackerScratch = new();
+        private float _trackerRefreshAt;
 
-            var fleet = PlayerFleet();
-            OperationsSummary.FillPlayerRows(fleet, _clock.Now, _compactOpsRows, _operations);
-            var box = Box(area);
-            var visibleRows = HudShellPainter.VisibleTiles(box, _compactOpsRows.Count);
-            if (visibleRows > 0 && _compactOpsRows.Count > visibleRows)
+        /// <summary>
+        /// The flights the tracker follows, refreshed a few times a second (OnGUI runs several passes a frame).
+        /// Empty when the tracker is hidden in this view.
+        /// </summary>
+        private void RefreshFlightTracker()
+        {
+            if (!HudShows(HudElement.FlightTracker) || _operations == null || AirlineModalOpen)
             {
-                // The priority aircraft always keeps a tile.
-                var priorityIndex = _compactOpsRows.FindIndex(row => row.IsPriority);
-                if (priorityIndex >= visibleRows)
-                {
-                    var keep = _compactOpsRows[visibleRows - 1];
-                    _compactOpsRows[visibleRows - 1] = _compactOpsRows[priorityIndex];
-                    _compactOpsRows[priorityIndex] = keep;
-                }
+                _trackerRows.Clear();
+                return;
             }
-            var available = OperationsSummary.AvailableCount(fleet, _clock.Now);
-            var hidden = _compactOpsRows.Count - visibleRows;
-            var footer = hidden > 0
-                ? $"{visibleRows} shown · {hidden} more in Ops"
-                : available == 1 ? "1 aircraft available" : $"{available} aircraft available";
-            // Aircraft based away from Adelaide have no tile; say where they are so the count is not a mystery.
-            var awayFleet = Airside.Simulation.PlayerFleet.OutstationSummary(_operations);
-            if (hidden <= 0 && awayFleet.Length > 0)
-                footer += " · " + awayFleet;
+
+            if (Time.unscaledTime < _trackerRefreshAt)
+                return;
+            _trackerRefreshAt = Time.unscaledTime + 0.25f;
+            FlightTracker.Fill(_operations, _clock.Now, _selectedAircraftId, _trackerRows, _trackerScratch);
+        }
+
+        /// <summary>"Your flights": step-by-step progress for every booked or moving flight. Click one to select it.</summary>
+        private void DrawFlightTracker(Rect area)
+        {
+            if (area.width < 8f || area.height < 8f || _trackerRows.Count == 0)
+                return;
             _shellDrawList.Clear();
-            HudShellPainter.PaintOperations(_shellDrawList, box, _compactOpsRows, _selectedAircraftId, footer);
+            FlightTrackerPainter.Paint(_shellDrawList, Box(area), _trackerRows, FlightTracker.TotalTracked);
             var clicked = _hudPainter.Draw(_shellDrawList);
             var registration = HudAction.Payload(clicked, HudAction.SelectPrefix);
             if (registration.Length == 0)
                 return;
-            foreach (var aircraft in fleet)
+            foreach (var aircraft in PlayerFleet())
             {
                 if (aircraft.Registration != registration)
                     continue;
                 SelectAircraft(aircraft);
-                break;
+                return;
             }
-        }
 
-        /// <summary>The part of the tiles slot actually drawn, so clicks below it still reach the field.</summary>
-        private Rect OperationsTilesRect(Rect area)
-        {
-            var count = _compactOpsRows.Count > 0 ? _compactOpsRows.Count : 1;
-            var box = Box(area);
-            var visible = HudShellPainter.VisibleTiles(box, count);
-            var height = HudShell.OperationsHeaderHeight + visible * (HudShell.OperationsTileHeight + 6f) + 22f;
-            return new Rect(area.x, area.y, area.width, Mathf.Min(area.height, height));
+            // Based away from Adelaide: the Operations page lists it.
+            SetWorkspace(HudWorkspace.Operations);
         }
 
         private (string heading, string hint) GuideText(GuideStep step, FleetAircraft aircraft)
@@ -3144,7 +3136,11 @@ namespace Airside.Presentation
             var result = _operations.ScheduleDeparture(_mapAircraft, _mapSelection.Value, departAt);
             if (result.Accepted)
             {
-                ShowToast($"{_mapAircraft.Registration} leaves for {_mapSelection.Value.Name} at {ClockText(departAt)}.");
+                ShowToast($"{_mapAircraft.Registration} leaves for {_mapSelection.Value.Name} at {ClockText(departAt)}. "
+                          + "Follow it under Your flights.");
+                // Leave the planner on the booked aircraft: it is selected (no camera move) and tops the tracker.
+                _selectedAircraftId = _mapAircraft.Registration;
+                _trackerRefreshAt = 0f;
                 _activeWorkspace = HudWorkspace.None;
                 _mapSelection = null;
                 SaveAirline();

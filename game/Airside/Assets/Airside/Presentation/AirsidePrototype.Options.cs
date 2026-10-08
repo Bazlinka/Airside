@@ -5,6 +5,7 @@ namespace Airside.Presentation
     public sealed partial class AirsidePrototype
     {
         private readonly OptionsMenuModel _optionsModel = new();
+        private HudView _optionsHudView = HudView.Overview;
         private readonly HudDrawList _optionsDrawList = new();
 
         private void CloseOptionsMenu()
@@ -38,8 +39,6 @@ namespace Airside.Presentation
             {
                 case OptionsSection.General:
                     Add("Sound", On(s.SoundOn), "Airport ambience, aircraft and interface sounds.", "sound");
-                    Add("Aircraft labels", On(s.FieldTags), "Show registration labels over aircraft.", "tags");
-                    Add("Airport map", On(s.MiniMap), "Keep the corner airport map visible.", "map");
                     Add("Opening animation", On(s.OpeningAnimation), "Slow title-image movement and the camera glide on entry.", "opening");
                     break;
                 case OptionsSection.Camera:
@@ -47,6 +46,13 @@ namespace Airside.Presentation
                     Add("Invert orbit", On(s.InvertOrbit), "Reverse mouse movement when orbiting.", "invert");
                     Add("Camera speed", AirsideSettings.CameraSpeedLabels[s.CameraSpeedIndex], "Cycle how quickly manual camera movement responds.", "speed");
                     Add("Cockpit motion", On(s.CockpitMotion), "Camera movement inside the cockpit; turn off for a steadier view.", "cockpit");
+                    break;
+                case OptionsSection.Views:
+                    Add("Customise", HudVisibility.Label(_optionsHudView).ToUpperInvariant(),
+                        "Pick which view to set up. Each view remembers its own layout. Click to switch view.", "hudview");
+                    foreach (HudElement element in System.Enum.GetValues(typeof(HudElement)))
+                        Add(HudVisibility.Label(element), On(s.Hud.Shows(_optionsHudView, element)),
+                            HudVisibility.Detail(element), "hud:" + (int)element);
                     break;
                 case OptionsSection.Display:
                     Add("Night brightness", NightVisibility.Labels[NightVisibility.Clamp(s.NightBrightness)], "Cycle night visibility without changing the time of day.", "night");
@@ -85,12 +91,9 @@ namespace Airside.Presentation
                 case "options:sound":
                     _audioMuted = !_audioMuted;
                     ApplySettingsAndSave(); ApplyMasterMute(); PlayUiClick(); return;
-                case "options:tags":
-                    _fieldTagsVisible = !s.FieldTags;
-                    ApplySettingsAndSave(); PlayUiClick(); return;
-                case "options:map":
-                    _miniMapVisible = !s.MiniMap;
-                    ApplySettingsAndSave(); PlayUiClick(); return;
+                case "options:hudview":
+                    _optionsHudView = _optionsHudView == HudView.Overview ? HudView.Follow : HudView.Overview;
+                    PlayUiClick(); return;
                 case "options:opening": s.OpeningAnimation = !s.OpeningAnimation; break;
                 case "options:notifications":
                     if (!AirsideMacNotifications.Supported && !s.MacNotifications)
@@ -124,7 +127,15 @@ namespace Airside.Presentation
                 case "options:layers": s.WeatherLayers = !s.WeatherLayers; break;
                 case "options:lights": s.AircraftLights = !s.AircraftLights; break;
                 case "options:suburbs": s.SuburbBuildings = !s.SuburbBuildings; break;
-                default: return;
+                default:
+                    const string hud = "options:hud:";
+                    if (action.StartsWith(hud) && int.TryParse(action.Substring(hud.Length), out var element)
+                        && element >= 0 && element < HudVisibility.ElementCount)
+                    {
+                        s.Hud.Toggle(_optionsHudView, (HudElement)element);
+                        ApplySettingsAndSave(); PlayUiClick(); return;
+                    }
+                    return;
             }
             s.Save();
             PlayUiClick();

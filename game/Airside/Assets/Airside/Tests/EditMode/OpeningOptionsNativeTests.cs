@@ -24,7 +24,7 @@ namespace Airside.Tests
                 var prototype = host.AddComponent<AirsidePrototype>();
                 var model = (OptionsMenuModel)typeof(AirsidePrototype).GetField("_optionsModel", Private).GetValue(prototype);
                 var actions = new List<string>();
-                foreach (var section in new[] { OptionsSection.General, OptionsSection.Camera, OptionsSection.Display, OptionsSection.World, OptionsSection.Notifications })
+                foreach (var section in new[] { OptionsSection.General, OptionsSection.Camera, OptionsSection.Views, OptionsSection.Display, OptionsSection.World, OptionsSection.Notifications })
                 {
                     model.Section = section;
                     typeof(AirsidePrototype).GetMethod("FillOptionsModel", Private).Invoke(prototype, null);

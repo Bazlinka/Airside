@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Airside.Presentation
 {
-    public enum OptionsSection { General, Camera, Display, World, Notifications }
+    public enum OptionsSection { General, Camera, Views, Display, World, Notifications }
 
     public readonly struct OptionsRow
     {
@@ -25,7 +25,7 @@ namespace Airside.Presentation
     public static class OptionsMenuPainter
     {
         public const string Back = "options:back";
-        public static readonly string[] Sections = { "General", "Camera", "Display", "World", "Notifications" };
+        public static readonly string[] Sections = { "General", "Camera", "Views", "Display", "World", "Notifications" };
 
         public static HudBox Panel(float width, float height)
         {

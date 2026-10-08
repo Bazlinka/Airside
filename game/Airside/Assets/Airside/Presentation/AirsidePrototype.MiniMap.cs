@@ -12,7 +12,6 @@ namespace Airside.Presentation
     /// </summary>
     public sealed partial class AirsidePrototype
     {
-        private bool _miniMapVisible = false;
         private Texture2D _miniMapTexture;
         private bool _miniMapDragging;
         private bool _miniMapPressed;
@@ -22,14 +21,14 @@ namespace Airside.Presentation
 
         private void ToggleMiniMap()
         {
-            _miniMapVisible = !_miniMapVisible;
+            var on = AirsideSettings.Current.Hud.Toggle(CurrentHudView, HudElement.AirportMap);
             ApplySettingsAndSave();
-            ShowToast(_miniMapVisible ? "Flight map on (N)." : "Flight map off (N).");
+            ShowToast($"Flight map {(on ? "on" : "off")} in the {HudViewName(CurrentHudView)} (N).");
             PlayUiClick();
         }
 
         private bool MiniMapShows =>
-            _miniMapVisible && !(_activeWorkspace != HudWorkspace.None || _devToolsOpen || _controlsHelpOpen);
+            HudShows(HudElement.AirportMap) && !(_activeWorkspace != HudWorkspace.None || _devToolsOpen || _controlsHelpOpen);
 
         private readonly HudDrawList _miniMapDrawList = new();
 

@@ -307,7 +307,8 @@ namespace Airside.Presentation
 
         /// <summary>The whole persistent shell for one window size and HUD state.</summary>
         public static HudShellLayout Layout(float viewportWidth, float viewportHeight, bool showGuide = false,
-            bool workspaceOpen = false, bool showMiniMap = false)
+            bool workspaceOpen = false, bool showMiniMap = false, float trackerHeight = 0f,
+            bool showCareerCard = true)
         {
             var width = viewportWidth;
             var height = viewportHeight;
@@ -319,17 +320,31 @@ namespace Airside.Presentation
             var top = capsule.Bottom + Gap;
             var careerHeight = showGuide ? GuideHeight : CareerHeight;
             var career = new HudBox(left, floor - careerHeight, Min(CareerWidth, available), careerHeight);
-            if (career.Y < top || career.Width < 220f) career = Hidden(career);
+            if (career.Y < top || career.Width < 220f || !showCareerCard && !showGuide) career = Hidden(career);
             var selectedWidth = Min(SelectedCardWidth, available);
             var selectedHeight = Min(SelectedCardHeight, Max(0f, floor - top));
             var selected = new HudBox(width - Margin - selectedWidth, top, selectedWidth, selectedHeight);
             if (selectedWidth < SelectedCardMinWidth || selectedHeight < 340f
                 || !career.IsEmpty && selected.Overlaps(career)) selected = Hidden(selected);
-            var mini = new HudBox(left, career.IsEmpty ? floor - MiniMapHeight : career.Y - Gap - MiniMapHeight,
-                MiniMapWidth, MiniMapHeight);
+            // Bottom-left stack, from the floor up: career card, flight tracker, airport map.
+            var stackTop = career.IsEmpty ? floor : career.Y - Gap;
+            var tracker = new HudBox(0, 0, 0, 0);
+            if (trackerHeight > 0f)
+            {
+                var candidate = new HudBox(left, stackTop - trackerHeight, Min(FlightTrackerPainter.Width, available), trackerHeight);
+                // Clear of the toast strip along the top-left and of the selected card on the right.
+                if (candidate.Y >= top + ToastHeight + ToastGap && candidate.Width >= 280f
+                    && (selected.IsEmpty || candidate.Right + Gap <= selected.X))
+                {
+                    tracker = candidate;
+                    stackTop = candidate.Y - Gap;
+                }
+            }
+
+            var mini = new HudBox(left, stackTop - MiniMapHeight, MiniMapWidth, MiniMapHeight);
             if (!showMiniMap || mini.Y < top || mini.Right > width - Margin
                 || !selected.IsEmpty && mini.Overlaps(selected)) mini = Hidden(mini);
-            var operations = new HudBox(0, 0, 0, 0);
+            var operations = tracker;
             var toastRoom = (selected.IsEmpty ? width - Margin : selected.X - Gap) - left;
             var toast = new HudBox(left, top, Min(ToastWidth, Max(0f, toastRoom)), ToastHeight);
             if (toast.Width < 200f || toast.Bottom > floor) toast = Hidden(toast);
@@ -338,7 +353,7 @@ namespace Airside.Presentation
             if (!workspaceOpen) workspace = Hidden(workspace);
             else
             {
-                career = Hidden(career); mini = Hidden(mini); selected = Hidden(selected);
+                career = Hidden(career); mini = Hidden(mini); selected = Hidden(selected); operations = Hidden(operations);
                 // Keep command feedback below the sheet, clear of its scrollable body and actions.
                 toast = new HudBox(left, workspace.Bottom + ToastGap, Math.Min(ToastWidth, available), ToastHeight);
             }

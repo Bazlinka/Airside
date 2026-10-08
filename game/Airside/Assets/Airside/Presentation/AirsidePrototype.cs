@@ -977,8 +977,6 @@ namespace Airside.Presentation
         {
             var settings = AirsideSettings.Load();
             _audioMuted = !settings.SoundOn;
-            _fieldTagsVisible = settings.FieldTags;
-            _miniMapVisible = settings.MiniMap;
             ApplyMasterMute();
         }
 
@@ -986,8 +984,8 @@ namespace Airside.Presentation
         {
             var settings = AirsideSettings.Current;
             settings.SoundOn = !_audioMuted;
-            settings.FieldTags = _fieldTagsVisible;
-            settings.MiniMap = _miniMapVisible;
+            settings.FieldTags = settings.Hud.Shows(HudView.Overview, HudElement.AircraftLabels);
+            settings.MiniMap = settings.Hud.Shows(HudView.Overview, HudElement.AirportMap);
             settings.Save();
         }
 

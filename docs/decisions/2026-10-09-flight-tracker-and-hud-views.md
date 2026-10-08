@@ -1,0 +1,8 @@
+# Flight tracker and per-view HUD layout
+
+- **Date:** 2026-10-09
+- **Decision:** (1) A "Your flights" tracker card (bottom-left, above the career card) shows every booked or moving player flight with a six-step bar: Booked, Ready, Taxi, Flying, Landing, Arrived. It reads existing simulation state only, shows up to three flights (the selected one first, "+N more in Ops" beyond that) and clicking a row selects the aircraft. After booking from the planner the aircraft is selected (no camera move) so the tracker and selection card show where it stands. (2) HUD parts (aircraft labels, airport map, flight tracker, career card) can be shown or hidden per view: the airport overview and following an aircraft. L and N now toggle for the current view. A new Options tab, Views, edits either view.
+- **Reason:** After booking, the planner closed with a toast and nothing on screen said where the flight was or what came next. Labels and the map were single global switches, so a clean follow view meant a bare overview.
+- **Affected systems:** `FlightTracker`/`FlightTrackerPainter`, `HudVisibility`, `HudShell.Layout` (the previously unused Operations slot is now the tracker; `trackerHeight` and `showCareerCard` parameters), `AirsideSettings.Hud`, Options menu, `AirsidePrototype` (Airline, FieldTags, MiniMap, Options partials).
+- **Migration impact:** none for saves. Settings: per-view masks are stored as `airside.settings.hud.v1.<view>`; when absent they start from the old labels/map switches, which still mirror the overview.
+- **Status:** layout, painter, step logic and visibility rules covered by headless tests; Unity appearance, hit-testing and the Options tab unverified.

@@ -17,6 +17,10 @@ Decision/evidence: `docs/decisions/2026-10-08-macos-notifications.md`.
 
 **Toast redesign (#642 / PR #644):** merged status/wrapped-message/repeat/lifetime cards, eased motion and
 panel/screen-bounded stacks. Previous focused checks 22/22 pass; Mac appearance remains unverified.
+**Flight speeds (8 Oct, Claude):** probe showed every regional landing flew a flat 90 kt for the last 180 s (a 737 dropped from ~230 kt to below its stall speed at the seam, then stopped from 64 kt).
+`RegionalFlightPath.Landing(..., profile, type, ...)` now integrates `TerminalSpeedKnots` (route speed -> approach -> touchdown) and brakes at `RolloutDeceleration`; `FlightSpeedEnvelope`
+(Simulation) holds min speed (stall x margin x sqrt(1/cos bank)), the 250 kt CAS cap and climb/descent-angle acceleration limits. Adelaide circuit speeds and the Adelaide arrival track were checked and left unchanged.
+Open: regional departures still reach the route height at 120 s with a very steep climb (the route profile starts at ~1,150 ft); the envelope's bank minimum is not yet enforced on the live bank. Unity compile/appearance unverified.
 
 **Turn banking (8 Oct, Claude):** `CoordinatedBank` in AirsidePrototype.cs replaces the yaw-lag bank for airborne phases; physical bank from sim-time ground speed and heading rate, clamped ±25°, so regional/en-route turns now roll too. SID-arc bank still takes priority. Unity compile and look unverified; watch roll-in/out smoothness and ground-phase wings-level.
 

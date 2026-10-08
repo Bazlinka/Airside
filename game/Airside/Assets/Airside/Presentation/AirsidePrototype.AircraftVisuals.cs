@@ -138,7 +138,8 @@ namespace Airside.Presentation
                         if (remaining <= RegionalFlightPath.RolloutSeconds)
                             pitch = attitude.PitchDegrees(AircraftPhase.Landing, progress, AircraftPerformance.For(legAircraft.Type));
                         else if (remaining <= RegionalFlightPath.TerminalSeconds)
-                            pitch = RegionalFlightPath.ApproachPitchDegrees(attitude, remaining, pitch);
+                            pitch = RegionalFlightPath.ApproachPitchDegrees(attitude, remaining, pitch,
+                                RegionalFlightPath.TerminalDistanceMetres(legProfile, legAircraft.Type, remaining));
                     }
                     else if (legAircraft.State == FleetState.Inbound
                              && legElapsed < RegionalFlightPath.DepartureSeconds + RegionalFlightPath.AttitudeBlendSeconds)

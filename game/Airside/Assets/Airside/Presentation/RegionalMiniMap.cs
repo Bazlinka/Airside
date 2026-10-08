@@ -30,28 +30,46 @@ namespace Airside.Presentation
         /// by how much of each is land instead of leaving a stair-stepped edge.
         /// </summary>
         public static Color32[] Bake(int width, int height, double west, double east, double south, double north,
-            Color32 land, bool smoothEdges)
+            Color32 land, bool smoothEdges) =>
+            BakeRings(MapGeographyData.DetailCoasts, width, height, west, east, south, north, land,
+                FieldMiniMap.Water, smoothEdges);
+
+        /// <summary>
+        /// Fills the land inside any set of coast rings over a latitude/longitude window (row 0 is the
+        /// southern edge). Longitudes are unwrapped like the route map's (the Americas read as 180..300).
+        /// Pure and thread-safe; <paramref name="water"/> may be fully transparent so the panel shows through.
+        /// </summary>
+        public static Color32[] BakeRings(IEnumerable<float[]> rings, int width, int height,
+            double west, double east, double south, double north, Color32 land, Color32 water, bool smoothEdges)
         {
             var pixels = new Color32[width * height];
-            Array.Fill(pixels, FieldMiniMap.Water);
+            Array.Fill(pixels, water);
             var intersections = new List<double>();
             // Scan each coastline once per row rather than testing every pixel against it.
-            foreach (var ring in MapGeographyData.DetailCoasts)
+            foreach (var ring in rings)
             {
-                var bounds = MapGeography.BoundsOf(ring);
-                if (bounds.E < west || bounds.W > east || bounds.N < south || bounds.S > north) continue;
-                var rowFrom = Math.Max(0, (int)Math.Floor((bounds.S - south) / (north - south) * height - 1));
-                var rowTo = Math.Min(height - 1, (int)Math.Ceiling((bounds.N - south) / (north - south) * height + 1));
+                double ringWest = double.MaxValue, ringEast = double.MinValue, ringSouth = double.MaxValue, ringNorth = double.MinValue;
+                for (var k = 0; k + 1 < ring.Length; k += 2)
+                {
+                    var lon = Unwrap(ring[k]);
+                    ringWest = Math.Min(ringWest, lon); ringEast = Math.Max(ringEast, lon);
+                    ringSouth = Math.Min(ringSouth, ring[k + 1]); ringNorth = Math.Max(ringNorth, ring[k + 1]);
+                }
+
+                if (ringEast < west || ringWest > east || ringNorth < south || ringSouth > north) continue;
+                var rowFrom = Math.Max(0, (int)Math.Floor((ringSouth - south) / (north - south) * height - 1));
+                var rowTo = Math.Min(height - 1, (int)Math.Ceiling((ringNorth - south) / (north - south) * height + 1));
                 for (var y = rowFrom; y <= rowTo; y++)
                 {
                     var latitude = south + (y + .5) / height * (north - south);
-                    if (latitude < bounds.S || latitude > bounds.N) continue;
+                    if (latitude < ringSouth || latitude > ringNorth) continue;
                     intersections.Clear();
                     for (int i = 0, j = ring.Length - 2; i < ring.Length; j = i, i += 2)
                     {
                         var yi = ring[i + 1]; var yj = ring[j + 1];
                         if ((yi > latitude) == (yj > latitude)) continue;
-                        intersections.Add(ring[i] + (ring[j] - ring[i]) * (latitude - yi) / (yj - yi));
+                        var xi = Unwrap(ring[i]); var xj = Unwrap(ring[j]);
+                        intersections.Add(xi + (xj - xi) * (latitude - yi) / (yj - yi));
                     }
                     intersections.Sort();
                     for (var i = 0; i + 1 < intersections.Count; i += 2)
@@ -79,6 +97,8 @@ namespace Airside.Presentation
             }
             return pixels;
         }
+
+        private static double Unwrap(double longitude) => longitude < -60.0 ? longitude + 360.0 : longitude;
 
         private static Color32 Blend(Color32 a, Color32 b, float t) => new(
             (byte)(a.r + (b.r - a.r) * t), (byte)(a.g + (b.g - a.g) * t),

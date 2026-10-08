@@ -91,6 +91,12 @@ namespace Airside.Presentation
             view = default;
             if (string.IsNullOrWhiteSpace(id))
                 return false;
+            if(string.Equals(id.Trim(),"parafield",StringComparison.OrdinalIgnoreCase))
+            {
+                view=new View("parafield","Parafield Airport",(float)Airside.Simulation.ParafieldLayout.CentreX,
+                    (float)Airside.Simulation.ParafieldLayout.CentreZ,2800,52,140);
+                return true;
+            }
             foreach (var candidate in All)
             {
                 if (string.Equals(candidate.Id, id.Trim(), StringComparison.OrdinalIgnoreCase))

@@ -527,6 +527,12 @@ namespace Airside.Presentation
 
         private bool IsPointerOverHud(Vector2 inputSystemPosition)
         {
+            if(WatchingParafield && _activeWorkspace==HudWorkspace.None && !_menuOpen)
+            {
+                var scale=HudLayout.ScaleFor(Screen.width,Screen.height);
+                var point=new Vector2(inputSystemPosition.x/scale,(Screen.height-inputSystemPosition.y)/scale);
+                if(ParafieldPanelRect(Screen.width/scale,Screen.height/scale).Contains(point))return true;
+            }
             return HudHitTest.IsOverHud(inputSystemPosition, Screen.height, _hudScale, _hudPanels, _hudOverlays);
         }
 
@@ -2699,6 +2705,9 @@ namespace Airside.Presentation
                     _boardScrollFollowRow = -1;
                     _boardScrollSnapToDay = _operationsAllMovements;
                     PlayUiClick();
+                    return;
+                case HudAction.WatchParafield:
+                    WatchParafield();
                     return;
                 case FleetWorkspacePainter.MarketPrevious:
                     _fleetMarketStart = Math.Max(0, _fleetMarketStart - 3);

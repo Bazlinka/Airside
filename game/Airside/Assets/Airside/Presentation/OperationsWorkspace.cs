@@ -941,10 +941,13 @@ namespace Airside.Presentation
 
             into.Clear();
             into.Surface(layout.Surface);
+            var close=HudShellPainter.CloseBox(layout.Surface);
+            into.Button(new HudBox(close.X-164f,close.Y,156f,close.Height),
+                "WATCH PARAFIELD",HudAction.WatchParafield,HudButtonStyle.Secondary);
             if (!allMovements)
             {
                 HudShellPainter.PaintSheetHeader(into, layout.Surface, "Operations", "Your airline · all bases",
-                    layout.TitleBox, layout.SubtitleBox);
+                    layout.TitleBox.WithWidth(Math.Max(0,layout.TitleBox.Width-204)), layout.SubtitleBox);
                 into.Text(layout.DayCaptionBox, $"{model.AirlineRows.Count} aircraft · {model.AvailableAircraft} available", 15f,
                     HudTone.Default, HudTextStyle.Bold);
                 into.Pill(layout.TabBox(0), "MY AIRLINE", HudTone.Accent, filled: true);
@@ -969,7 +972,7 @@ namespace Airside.Presentation
             OperationsWorkspaceLayout layout)
         {
             HudShellPainter.PaintSheetHeader(into, layout.Surface, model.Title, model.Subtitle,
-                layout.TitleBox, layout.SubtitleBox);
+                layout.TitleBox.WithWidth(Math.Max(0,layout.TitleBox.Width-204)), layout.SubtitleBox);
         }
 
         private static void PaintDayStrip(HudDrawList into, OperationsWorkspaceModel model,

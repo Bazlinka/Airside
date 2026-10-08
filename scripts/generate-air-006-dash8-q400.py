@@ -806,8 +806,9 @@ def q400_meshes():
             x - side * 0.48, 2.00, -1.90, 0.08, 1.42, 1.22
         )
         meshes[f"gear_fairing_{name}"] = nacelle_gear_fairing(x)
-        wheel_set(meshes, f"{name}_forward", x, -1.40, 0.50, 0.34)
-        wheel_set(meshes, f"{name}_aft", x, -2.40, 0.50, 0.34)
+        # Q400 mains are twin wheels side by side on one axle across the leg (not in tandem).
+        wheel_set(meshes, f"{name}_forward", x - 0.26, -1.90, 0.50, 0.34)
+        wheel_set(meshes, f"{name}_aft", x + 0.26, -1.90, 0.50, 0.34)
 
     meshes["gear_nose"] = box(0.0, 0.95, 12.15, 0.18, 1.30, 0.26)
     meshes["gear_oleo_nose"] = cylinder(

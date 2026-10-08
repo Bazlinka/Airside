@@ -70,7 +70,6 @@ namespace Airside.Tests
                 var position = host.transform.position;
                 var rotation = host.transform.rotation;
                 controller.SetCockpitMotion(new Vector3(0.1f, -0.1f, 0.05f), new Vector3(3f, 4f, 2f));
-                controller.SetCockpitRumble(1f);
                 typeof(AirsideCameraController).GetMethod("ApplyCockpitPose", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(controller, null);
                 Assert.That(Vector3.Distance(host.transform.position, position), Is.LessThan(0.001f));
                 Assert.That(Quaternion.Angle(host.transform.rotation, rotation), Is.LessThan(0.001f));

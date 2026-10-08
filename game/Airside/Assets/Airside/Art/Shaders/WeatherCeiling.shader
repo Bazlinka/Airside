@@ -18,6 +18,8 @@ Shader "Airside/WeatherCeiling"
                 float4 _BaseColor;
             CBUFFER_END
             float4 _AirsideWeatherWind;
+            float4 _AirsideWeatherOffset;
+            float4 _AirsideFlightOrigin;
             float _AirsideWeatherTime;
             float4 _AirsideWeatherRange;
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; };
@@ -35,13 +37,14 @@ Shader "Airside/WeatherCeiling"
             }
             half4 frag(Varyings i) : SV_Target
             {
-                float2 p=(i.world.xz-_AirsideWeatherWind.xz*_AirsideWeatherTime)*0.0008;
+                float2 p=(i.world.xz+_AirsideFlightOrigin.xz-_AirsideWeatherOffset.xz)*0.0008;
                 float n=noise(p)*0.55+noise(p*2.13)*0.3+noise(p*4.7)*0.15;
                 // A radial distance fade hides the proxy's rectangular edge and near/far
                 // render cutoff, without moving the world-space noise with the camera.
                 float edge=1-smoothstep(_AirsideWeatherRange.x,_AirsideWeatherRange.y,
                     distance(i.world,GetCameraPositionWS()));
-                return half4(_BaseColor.rgb*lerp(0.65,1.15,n),_BaseColor.a*lerp(0.65,1,n)*edge);
+                float crossing=smoothstep(0,45,abs(i.world.y-GetCameraPositionWS().y));
+                return half4(_BaseColor.rgb*lerp(0.65,1.15,n),_BaseColor.a*lerp(0.78,1,n)*edge*crossing);
             }
             ENDHLSL
         }

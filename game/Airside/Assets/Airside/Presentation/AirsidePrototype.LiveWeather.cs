@@ -13,6 +13,24 @@ namespace Airside.Presentation
     public sealed partial class AirsidePrototype
     {
         private static readonly HttpClient WeatherHttp = CreateWeatherHttp();
+        private WeatherLook _displayWeather;
+        private bool _displayWeatherReady;
+        private float _stormDepth;
+        private WeatherLook CurrentWeatherLook => _displayWeatherReady ? _displayWeather : TargetWeatherLook;
+
+        private void AdvanceWeatherLook()
+        {
+            var target = TargetWeatherLook;
+            var storm = CurrentWeather == WeatherKind.Storm ? 1f : 0f;
+            if (!_displayWeatherReady)
+            {
+                _displayWeather = target; _stormDepth = storm; _displayWeatherReady = true;
+                return;
+            }
+            var ease = 1f - Mathf.Exp(-Time.unscaledDeltaTime / 12f);
+            _displayWeather = WeatherLook.Lerp(_displayWeather, target, ease);
+            _stormDepth = Mathf.Lerp(_stormDepth, storm, ease);
+        }
 
         private Task<LiveWeatherSnapshot?> _liveWeatherFetch;
         private LiveWeatherSnapshot? _liveWeatherSnapshot;
@@ -53,6 +71,7 @@ namespace Airside.Presentation
 
         private void UpdateLiveWeather()
         {
+            AdvanceWeatherLook();
             if (!AirsideSettings.Current.LiveWeather || ReviewWeather.HasValue)
                 return;
 

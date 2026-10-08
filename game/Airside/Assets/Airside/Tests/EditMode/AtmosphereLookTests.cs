@@ -44,13 +44,22 @@ namespace Airside.Tests
             Assert.That(clear.FogDensity, Is.EqualTo(WeatherLook.For(WeatherKind.Clear).FogDensity).Within(1e-7f));
 
             var fromOverview = Day(WeatherKind.Fog, 1_840f);
-            Assert.That(fromOverview.FogDensity, Is.EqualTo(fog.FogDensity * AtmosphereLook.HighCameraFogShare).Within(1e-6f));
+            Assert.That(fromOverview.FogDensity, Is.LessThan(fog.FogDensity * AtmosphereLook.HighCameraFogShare));
             // From the overview in fog the field (≈2.4 km away) still shows through.
             var d = 2_400f * fromOverview.FogDensity;
             Assert.That(System.Math.Exp(-d * d), Is.GreaterThan(0.3));
             // A clear day's arrivals 20 km out are not fogged away.
             var far = 20_000f * Day(WeatherKind.Clear, 1_840f).FogDensity;
             Assert.That(System.Math.Exp(-far * far), Is.GreaterThan(0.9));
+        }
+
+        [Test] public void FogBreakoutClearsObserverHazeButKeepsTheGroundBank()
+        {
+            var ground = Day(WeatherKind.Fog, 30f);
+            var above = Day(WeatherKind.Fog, 400f);
+            Assert.That(above.FogDensity, Is.LessThan(ground.FogDensity * 0.15f));
+            Assert.That(above.Sky.Saturation, Is.GreaterThan(ground.Sky.Saturation));
+            Assert.That(above.Mist, Is.EqualTo(ground.Mist), "fog still covers the landscape below");
         }
 
         [Test]

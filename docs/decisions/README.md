@@ -322,3 +322,4 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-08 | [Independent Parafield airport](2026-10-08-parafield-independent-airport.md) |  |
 | 2026-10-08 | [Save recovery copy](2026-10-08-save-recovery.md) | Accepted for implementation |
 | 2026-10-08 | [Departure-style toast notifications](2026-10-08-toast-notifications.md) | Implemented at Bailey’s request; Unity appearance pending |
+| 2026-10-08 | [Persistent weather at flight altitude and restrained cockpit motion](2026-10-08-weather-altitude-and-restraint.md) | Accepted |

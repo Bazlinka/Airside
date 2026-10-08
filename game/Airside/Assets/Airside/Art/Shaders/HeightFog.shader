@@ -21,6 +21,8 @@ Shader "Airside/HeightFog"
                 float4 _BaseColor;
             CBUFFER_END
             float4 _AirsideWeatherWind;
+            float4 _AirsideWeatherOffset;
+            float4 _AirsideFlightOrigin;
             float _AirsideWeatherTime;
             float4 _AirsideWeatherRange;
             struct Attributes { float4 positionOS : POSITION; };
@@ -67,7 +69,7 @@ Shader "Airside/HeightFog"
                     // under every view. Only distant ray samples fade out of the budget.
                     float edge=1-smoothstep(_AirsideWeatherRange.x,_AirsideWeatherRange.y,
                         distance(world,origin));
-                    float n=noise((world.xz-_AirsideWeatherWind.xz*_AirsideWeatherTime*0.13)*0.008);
+                    float n=noise((world.xz+_AirsideFlightOrigin.xz-_AirsideWeatherOffset.xz*0.13)*0.008);
                     variation+=weight*edge*lerp(0.55,1.4,n);
                     weights+=weight;
                 }

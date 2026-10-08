@@ -1,5 +1,7 @@
 # 0214 — Aircraft cockpit spectator mode
 
+Storm altitude/continuous vibration choices superseded by [2026-10-08-weather-altitude-and-restraint](2026-10-08-weather-altitude-and-restraint.md).
+
 Date: 2026-10-01. Status: approved direction; SF34 candidate under verification.
 
 Bailey approved a cockpit viewpoint from engine start until local departure,

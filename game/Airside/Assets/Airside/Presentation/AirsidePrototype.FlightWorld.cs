@@ -70,6 +70,8 @@ namespace Airside.Presentation
             // Shift the camera rig; telemetry already samples aircraft positions in world coordinates.
             var originDelta=new Vector3((float)(_flightOriginX-ox),0,(float)(_flightOriginZ-oz));
             if(_cameraController!=null) _cameraController.ShiftFlightOrigin(originDelta);
+            if (_cloudRoot != null) _cloudRoot.position += originDelta;
+            ShiftStormLightning(originDelta);
             _flightOriginX=ox;_flightOriginZ=oz;
             if(_airfieldRoot!=null) _airfieldRoot.position=-FlightOrigin;
             Shader.SetGlobalVector("_AirsideFlightOrigin",new Vector4((float)ox,0,(float)oz,0));
@@ -103,6 +105,9 @@ namespace Airside.Presentation
         }
         private void ResetFlightWorld()
         {
+            var weatherDelta = FlightOrigin;
+            if (_cloudRoot != null) _cloudRoot.position += weatherDelta;
+            ShiftStormLightning(weatherDelta);
             _flightOriginX=_flightOriginZ=0;
             Shader.SetGlobalVector("_AirsideFlightOrigin",Vector4.zero);
             _flightAirportActors.Restore();

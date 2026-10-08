@@ -5,7 +5,7 @@
 <!-- Files or folders touched; what must remain unchanged. Owner: tool + account. -->
 
 ## Verification
-<!-- What you ran and the real result, e.g. `scripts/test-domain.sh`: N passed / M failed. -->
+<!-- Quick relevant checks and their real results. Broad suites/builds are not required unless Bailey requests them; follow AGENTS.md. -->
 
 ## Not verified
 <!-- Be explicit. Cloud tools cannot run Unity: say "unverified in Unity" and list what to check on the Mac (look, performance, UnityEngine tests). -->
@@ -16,5 +16,6 @@
 - [ ] ADR `docs/decisions/YYYY-MM-DD-slug.md` — if a design decision changed
 
 ## Test plan
-- [ ] CI `headless` green
-- [ ] Mac: `scripts/test-unity.sh` and anything under "Not verified"
+- [ ] Quick checks appropriate to this change recorded
+- [ ] Skipped/unverified checks recorded honestly
+<!-- Full suites/player testing only on Bailey request. Merge completed authorised work without another confirmation; respect enforced GitHub checks. -->

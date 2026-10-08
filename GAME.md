@@ -7,6 +7,10 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Working policy (8 Oct, Bailey, #611):** quick relevant checks by default; broad
+tests/builds/playtesting only on request. Merge completed authorised work into main
+without repeated approval. Canonical instructions: AGENTS.md testing and merge policy.
+
 **ATR 42 hold door (8 Oct, Claude):** `RelocateAtrDoors` flipped the door 180° in its transform and `UpdateCabinDoor` overwrote that yaw, so the shut door stood mirrored ahead of the cockpit. The flip is now baked into the mesh (`RebakePartPivot` with a rotation). Look at the ATR on the apron and while loading. Windscreen white patches in the same screenshot are not investigated.
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*

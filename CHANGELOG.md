@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-08 — Roads: OSM snapshot refreshed (+55 drivable roads incl. new service roads, 16,068 total) and road/car-park/precinct data regenerated; coverage checked against live OSM count (unverified in Unity).
+
 - 2026-10-08 — Hollow aircraft fixed: a dark inner skin behind each fuselage so windscreens and cabin windows show a dark interior instead of the sky (unverified in Unity).
 
 - 2026-10-08 — Regional landings follow the route speed into the terminal area, settle to the type's approach/touchdown speed and brake to a stop (was a flat 90 kt for every type); new FlightSpeedEnvelope (min speed rises with bank, 250 kt CAS cap, climb/descent angle limits speed change). Headless-tested only.

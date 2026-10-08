@@ -16,6 +16,9 @@ when follow targets refresh and selects flap/gear phase from the regional journe
 Updated against current main, preserving aircraft-specific return rotation timing.
 Native review with #604: 296/296 passed; packaged flight journeys unverified.
 Evidence: `docs/testing/enroute-flaps-2026-10-08/`.
+**Next approved work:** review the connected player-flow study requested by Bailey; existing native verification remains open. **Done in code, unverified (ADR 0250/0251):** state-wide land-cover
+colours on the streamed terrain, and the wide overview — zoom to 450 km, and past 60 km the overview camera streams a fine 16 km ring plus
+a coarse 64 km ring (121 tiles, 2 km cells) so the state can be dragged under the camera. Packet: `docs/plans/south-australia-overview-streaming.md`.
 
 **Save recovery (8 Oct, Codex, #599):** merged in PR #600. Retains a readable previous
 save and recovers missing/unreadable primary JSON with a warning; save schema unchanged.
@@ -114,6 +117,12 @@ They use actual 6 October packaged captures/native aircraft references and propo
 Review candidates only; no runtime changes. Current-build baseline capture and native implementation validation remain necessary.
 **Player-flow planning:** `docs/plans/player_flows_and_interface_contract.md` consolidates 24 tasks and recovery paths.
 Further interface design must validate these before treating overview/Schedule mockups as a complete solution; no runtime changes.
+**Player-flow study (7 Oct, Codex):** `docs/art/player-flow-prototype-2026-10-07/README.md`, branch
+`codex/player-flow-prototype-20261007`, task #567. Connected sample journeys follow the 24-task contract;
+12 browser journey groups/model integrity pass at five sizes; supplementary headless suite 1,842/1,842.
+Evidence: `docs/testing/player-flow-study-2026-10-07/`. Review the local prototype/portable bundle.
+Runtime Unity files and saves are unchanged; native interface/command wiring, appearance and performance remain unverified.
+Earlier photographic vision was rejected; capture-based visual studies remain proposals subordinate to the flow contract.
 
 **Watch:**
 - Headless-green PRs can still break UnityEngine tests: the dotnet harness skips every test that touches `UnityEngine`. Since ADR 0252 it

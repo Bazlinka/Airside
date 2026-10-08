@@ -182,6 +182,18 @@ public static class AircraftArticulationReview
                     updateGear.Invoke(null, new object[] { gear, AircraftPhase.Takeoff, 1f, best, 0.1f, 0f, null, null, type });
                 break;
             }
+            case var approach when approach.StartsWith("approach"):
+            {
+                // approachNN: seed gear up in the circuit, then fly the first NN% of final at 20 fps.
+                var end = int.TryParse(approach.Substring(8), out var percent) ? percent / 100f : 0.1f;
+                for (var i = 0; i < 12; i++)
+                    updateGear.Invoke(null, new object[] { gear, AircraftPhase.Circuit, 1f, 0.5f, 1f, 0f, null, null, type });
+                const int frames = 100;
+                for (var i = 1; i <= frames; i++)
+                    updateGear.Invoke(null, new object[]
+                        { gear, AircraftPhase.Approach, 1f, end * i / frames, 0.05f, 0f, null, null, type });
+                break;
+            }
             case "roll":
             case "landing":
             {

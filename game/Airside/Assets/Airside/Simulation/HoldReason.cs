@@ -124,8 +124,8 @@ namespace Airside.Simulation
                     return WhyAwaitingStand(aircraft, now);
                 case FleetState.Inbound when aircraft.StateEndsAt.HasValue
                                              && aircraft.StateEndsAt.Value.CompareTo(now) > 0:
-                    if (Weather.At(now) == WeatherKind.Storm
-                        && !ApproachRules.EnteredFinalBeforeStorm(aircraft, now))
+                    if (WeatherAt(now) == WeatherKind.Storm
+                        && !ApproachRules.EnteredFinalBeforeStorm(aircraft, now, WeatherAt))
                         return new HoldReason(HoldKind.GroundStop, until: aircraft.StateEndsAt, detail: "storm");
                     if (!ExemptFromCurfew(aircraft) && AirportCurfew.IsClosed(now, Clock))
                         return new HoldReason(HoldKind.HeldAirborne, until: aircraft.StateEndsAt, detail: "curfew");
@@ -155,8 +155,8 @@ namespace Airside.Simulation
             if (aircraft.Airline.IsPlayer && !DeparturePrep.IsReady(aircraft, now, CareerState.BaseLevel))
                 return new HoldReason(HoldKind.Turnaround,
                     detail: DeparturePrep.For(aircraft, now, CareerState.BaseLevel).Label);
-            if (!aircraft.Type.IsRotorcraft && Weather.At(now) == WeatherKind.Storm)
-                return new HoldReason(HoldKind.GroundStop, until: Weather.NextBlock(now), detail: "storm");
+            if (!aircraft.Type.IsRotorcraft && WeatherAt(now) == WeatherKind.Storm)
+                return new HoldReason(HoldKind.GroundStop, until: AfterStorms(now), detail: "storm");
 
             var gate = AdelaideGround.IsTerminalGate(aircraft.Stand);
             var release = NextTaxiReleaseAt(now, gate);

@@ -306,6 +306,7 @@ namespace Airside.Simulation
 
         /// <summary>Prevents repeated go-arounds on the same round trip.</summary>
         public bool WentAroundThisTrip { get; internal set; }
+        public bool ArrivalCommittedBeforeStorm { get; internal set; }
 
         /// <summary>When player departure prep (fuel → catering → boarding) started. Null if none.</summary>
         public SimulationTime? PrepStartedAt { get; internal set; }
@@ -350,6 +351,7 @@ namespace Airside.Simulation
 
         internal void Enter(FleetState state, SimulationTime now, long? durationSeconds)
         {
+            if (state is FleetState.Inbound or FleetState.AtStand) ArrivalCommittedBeforeStorm = false;
             State = state;
             StateStartedAt = now;
             StateEndsAt = durationSeconds.HasValue ? now.Advance(Math.Max(0, durationSeconds.Value)) : null;

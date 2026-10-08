@@ -52,7 +52,9 @@ namespace Airside.Simulation
         /// </summary>
         // v22 (ADR 0245): saved maintenance startup/taxi/position/repair/return phases.
         // Older timed checks keep their original completion and charge semantics.
-        public const int CurrentVersion = 22;
+        // v23: recorded live weather, final commitment latch and flat arrival-view records.
+        // Older saves use deterministic weather and rebuild presentation.
+        public const int CurrentVersion = 23;
 
         public int Version = CurrentVersion;
 
@@ -63,6 +65,8 @@ namespace Airside.Simulation
         public long EpochUtcTicks;
         public string HomeCode;
         public long ClockSeconds;
+        public List<WeatherObservationRecord> WeatherObservations = new();
+        public List<ArrivalViewRecord> ArrivalViews = new();
         public long RunwayFreeAtSeconds;
         /// <summary>
         /// When the 12/30 strip is free. 0 on pre-dual-strip saves means "same as
@@ -229,6 +233,7 @@ namespace Airside.Simulation
         public bool AutomatedTrip;
         public string AssignedRunway;
         public bool WentAroundThisTrip;
+        public bool ArrivalCommittedBeforeStorm;
         public bool HasPrepStart;
         public long PrepStartedAt;
         public bool HasPushbackLateness;
@@ -265,6 +270,17 @@ namespace Airside.Simulation
         public int Flights;
     }
 
+    [Serializable]
+    public sealed class ArrivalViewRecord
+    {
+        public string Registration, DestinationCode, TypeId;
+        public int FleetState, Runway;
+        public long StateStartedAt;
+        public double LastTime, HoldingStartedAt;
+        public bool Holding, Active;
+        public float Metres, Speed, Lateral, X, Y, Z, EntryX, EntryY, EntryZ, ForwardX, ForwardZ;
+    }
+
     public static class AirlineSave
     {
         // Unity serializes inline reference fields by value: null may round-trip as an
@@ -289,6 +305,7 @@ namespace Airside.Simulation
                 EpochUtcTicks = operations.Clock.EpochUtcTicks,
                 HomeCode = operations.Home.Code,
                 ClockSeconds = operations.ProcessedTo.ElapsedSeconds,
+                WeatherObservations = operations.WeatherTimeline.Records.Select(r => r.Copy()).ToList(),
                 RunwayFreeAtSeconds = operations.RunwayFreeAt.ElapsedSeconds,
                 CrossRunwayFreeAtSeconds = operations.CrossRunwayFreeAt.ElapsedSeconds,
                 MainWake = CopyWake(operations.MainWake),
@@ -433,6 +450,7 @@ namespace Airside.Simulation
                     AutomatedTrip = a.AutomatedTrip,
                     AssignedRunway = a.AssignedRunway.ToString(),
                     WentAroundThisTrip = a.WentAroundThisTrip,
+                    ArrivalCommittedBeforeStorm = a.ArrivalCommittedBeforeStorm,
                     HasPrepStart = a.PrepStartedAt.HasValue,
                     PrepStartedAt = a.PrepStartedAt?.ElapsedSeconds ?? 0,
                     HasPushbackLateness = a.PushbackLatenessSeconds.HasValue,
@@ -481,6 +499,7 @@ namespace Airside.Simulation
             var operations = new AirlineOperations(clock, new SeededRandomSource(data.RandomState), home,
                 AirlineOperations.AdelaideStands);
 
+            if (data.Version >= 23) operations.WeatherTimeline.Restore(data.WeatherObservations);
             var airlines = new Dictionary<string, Airline>(StringComparer.Ordinal);
             foreach (var record in data.Airlines ?? new List<AirlineRecord>())
             {
@@ -557,7 +576,8 @@ namespace Airside.Simulation
                         || !Enum.TryParse(record.AssignedRunway, out RunwayDirection runway))
                         throw new FormatException(
                             $"Unknown assigned runway '{record.AssignedRunway}' for {registration}.");
-                    operations.RestoreMovementData(restoredRegistration, runway, record.WentAroundThisTrip);
+                    operations.RestoreMovementData(restoredRegistration, runway, record.WentAroundThisTrip,
+                        data.Version >= 23 && record.ArrivalCommittedBeforeStorm);
                 }
                 if (data.Version >= 8 && record.HasPrepStart)
                     operations.RestorePrepData(restoredRegistration, new SimulationTime(record.PrepStartedAt));

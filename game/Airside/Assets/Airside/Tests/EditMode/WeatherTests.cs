@@ -125,6 +125,28 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Fog_FollowsTheAirlineClockWhenItsEpochIsNotTheDefault()
+        {
+            var shifted = new AirlineClock(AirlineClock.DefaultEpochUtc.AddHours(3).Ticks);
+            try
+            {
+                Weather.UseClock(shifted);
+                for (long block = 0; block < 10_000; block++)
+                {
+                    var at = new SimulationTime(block * Weather.BlockSeconds);
+                    if (Weather.At(at) != WeatherKind.Fog)
+                        continue;
+                    var hour = shifted.LocalAt(at).Hour;
+                    Assert.That(hour, Is.InRange(Weather.FogFromHour, Weather.FogUntilHour - 1), $"fog at {hour}:00");
+                }
+            }
+            finally
+            {
+                Weather.UseClock(AirlineClock.Default);
+            }
+        }
+
+        [Test]
         public void Weather_IsTheSameWhicheverHourIsAskedFirst()
         {
             var forward = new List<WeatherKind>();

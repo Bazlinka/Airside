@@ -44,6 +44,8 @@ meshes['livery_accent_right']=base.box(.568,1.25,.12,.016,.065,1.95)
 spec=importlib.util.spec_from_file_location('trainer_body',ROOT/'scripts/aircraft_body.py')
 body=importlib.util.module_from_spec(spec);spec.loader.exec_module(body)
 profile=body.refine(meshes)
+from aircraft_tail import refine as refine_tail
+refine_tail(meshes,'TRAINER',profile.sample)
 spec=importlib.util.spec_from_file_location('trainer_skin',ROOT/'scripts/aircraft_skin.py')
 skin=importlib.util.module_from_spec(spec);spec.loader.exec_module(skin)
 def surface(z,angle,offset=0):

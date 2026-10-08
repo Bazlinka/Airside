@@ -1,5 +1,7 @@
 # 0099 — Live Adelaide weather and a complete celestial sky
 
+Presentation-only weather boundary superseded by [2026-10-09-recorded-weather-and-arrival-continuity](2026-10-09-recorded-weather-and-arrival-continuity.md). Other decisions remain.
+
 Date: 22 September 2026.
 
 ## Decision

@@ -61,7 +61,7 @@ namespace Airside.Simulation
         private const int FogFormsPercent = 18;
         private const int FogStaysPerMille = 700;
 
-        private static readonly AirlineClock LocalClock = AirlineClock.Default;
+        private static AirlineClock LocalClock = AirlineClock.Default;
         private static readonly Dictionary<long, WeatherKind[]> Days = new();
 
         public static WeatherKind At(SimulationTime now)
@@ -97,6 +97,23 @@ namespace Airside.Simulation
             var up = index < Chain.Length - 1 ? NeighbourWeights[index + 1] : 0;
             var pick = Hash(block, 13) % (uint)(down + up);
             return pick < down ? Chain[index - 1] : Chain[index + 1];
+        }
+
+        /// <summary>
+        /// Points the weather at the airline's own clock. Fog and its hours are local-time rules, so they must
+        /// read the same local time the HUD and curfew show; a save with another epoch otherwise had fog (and
+        /// the helicopter hold it causes) hours out of step. Cached days belong to the old clock and are dropped.
+        /// </summary>
+        public static void UseClock(AirlineClock clock)
+        {
+            clock ??= AirlineClock.Default;
+            lock (Days)
+            {
+                if (LocalClock.EpochUtcTicks == clock.EpochUtcTicks)
+                    return;
+                LocalClock = clock;
+                Days.Clear();
+            }
         }
 
         private static WeatherKind[] DayFrom(long anchor)

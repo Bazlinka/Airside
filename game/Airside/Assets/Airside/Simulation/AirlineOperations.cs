@@ -382,7 +382,19 @@ namespace Airside.Simulation
 
 
         /// <summary>Maps simulation time to real Adelaide time. Live: one simulated second per real second.</summary>
-        public AirlineClock Clock { get; internal set; } = AirlineClock.Default;
+        public AirlineClock Clock
+        {
+            get => _airlineClock;
+            internal set
+            {
+                _airlineClock = value ?? AirlineClock.Default;
+                // The weather's fog hours are local-time rules: keep them on this clock (a different epoch
+                // otherwise left fog, and the helicopters it grounds, hours out of step with the HUD).
+                Weather.UseClock(_airlineClock);
+            }
+        }
+
+        private AirlineClock _airlineClock = AirlineClock.Default;
 
         /// <summary>Simulation time everything has been resolved up to.</summary>
         public SimulationTime ProcessedTo => _processedTo;
@@ -393,11 +405,24 @@ namespace Airside.Simulation
         /// <summary>Physical-strip scheduling deadline for 12/30; follower wake/crossings may hold longer.</summary>
         public SimulationTime CrossRunwayFreeAt => _crossRunwayFreeAt;
 
-        public SurfaceWind Wind => RunwayWeather.At(Clock, _processedTo);
+        public AirportWeatherTimeline WeatherTimeline { get; } = new();
+        public void ObserveWeather(LiveWeatherSnapshot sample, long validSeconds = LiveWeather.StaleSeconds)
+        {
+            // Preserve already-entered finals before replacing weather at the same
+            // whole-second timestamp (including the opening arrival bank at time zero).
+            if (WeatherAt(_processedTo) != WeatherKind.Storm && sample.Kind == WeatherKind.Storm)
+                foreach (var aircraft in _fleet)
+                    if (ApproachRules.EnteredFinalBeforeStorm(aircraft, _processedTo, WeatherAt))
+                        aircraft.ArrivalCommittedBeforeStorm = true;
+            WeatherTimeline.Observe(_processedTo, sample, validSeconds);
+        }
+        public WeatherKind WeatherAt(SimulationTime at) => WeatherTimeline.At(at);
+        public SurfaceWind WindAt(SimulationTime at) => WeatherTimeline.WindAt(Clock, at);
+        public SurfaceWind Wind => WindAt(_processedTo);
         public RunwayDirection ActiveRunway => RunwayWeather.Select(Wind);
 
         /// <summary>Current forecast, for HUD and tower gating alike.</summary>
-        public WeatherKind CurrentWeather => Weather.At(_processedTo);
+        public WeatherKind CurrentWeather => WeatherAt(_processedTo);
 
         /// <summary>
         /// True while a storm holds new gate releases and arrivals not yet on final.
@@ -591,6 +616,7 @@ namespace Airside.Simulation
                     next = candidate;
             }
 
+            if (WeatherTimeline.NextBoundary(now) is { } weatherBoundary) Consider(weatherBoundary);
             if (ContractExpiresAt() is { } expiry)
                 Consider(expiry);
 
@@ -642,7 +668,7 @@ namespace Airside.Simulation
                             // clear, which is re-checked on the grid. Curfew is a wall-clock wait.
                             if (!ExemptFromCurfew(aircraft) && AirportCurfew.IsClosed(now, Clock))
                                 Consider(AirportCurfew.OpensAt(now, Clock));
-                            else if (Weather.At(now) == WeatherKind.Storm)
+                            else if (WeatherAt(now) == WeatherKind.Storm)
                             {
                                 Consider(Weather.NextBlock(now));
                                 continue;
@@ -1135,7 +1161,7 @@ namespace Airside.Simulation
                     var readyAt = DepartureReadyAt(aircraft);
                     // Hold at the stand, before releasing any taxi route. Once released the
                     // departure is committed and tower clearance follows normal traffic rules.
-                    if (Weather.At(now) == WeatherKind.Storm)
+                    if (WeatherAt(now) == WeatherKind.Storm)
                         return NoteDelay(aircraft, now, readyAt, DelayCause.Weather);
                     if (NextTaxiReleaseAt(now, pushingBackFromGate).HasValue)
                         return NoteDelay(aircraft, now, readyAt, DelayCause.ApronBusy);
@@ -1225,8 +1251,8 @@ namespace Airside.Simulation
                     }
                     // The extended final is visible before HoldingForLanding. Do not postpone
                     // a committed inbound's timer: that used to remove it from the drawn final.
-                    if (Weather.At(now) == WeatherKind.Storm
-                        && !ApproachRules.EnteredFinalBeforeStorm(aircraft, now))
+                    if (WeatherAt(now) == WeatherKind.Storm
+                        && !ApproachRules.EnteredFinalBeforeStorm(aircraft, now, WeatherAt))
                     {
                         aircraft.ExtendUntil(Weather.NextBlock(now));
                         return false;
@@ -1238,8 +1264,8 @@ namespace Airside.Simulation
                     if (aircraft.Type.IsRotorcraft)
                         return ArriveRotorcraft(aircraft, now);
                     // Metered in the circuit until its landing is near, never stacked on short final.
-                    if (!(Weather.At(now) == WeatherKind.Storm
-                            && ApproachRules.EnteredFinalBeforeStorm(aircraft, now))
+                    if (!(WeatherAt(now) == WeatherKind.Storm
+                            && ApproachRules.EnteredFinalBeforeStorm(aircraft, now, WeatherAt))
                         && FinalJoinTime(aircraft, now) is { } joinAt)
                     {
                         aircraft.ExtendUntil(joinAt);

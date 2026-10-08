@@ -4,9 +4,9 @@ using System.Globalization;
 namespace Airside.Simulation
 {
     /// <summary>
-    /// One presentation-only Adelaide forecast sample. Nothing in the operational
-    /// simulation reads this type: runway choice, ground stops, saves and replay keep
-    /// using the deterministic <see cref="Weather"/> and <see cref="RunwayWeather"/>.
+    /// One validated Adelaide forecast sample. AirportWeatherTimeline records samples
+    /// for shared operational/presentation use; unknown periods use the deterministic
+    /// Weather and RunwayWeather forecasts.
     /// </summary>
     public readonly struct LiveWeatherSnapshot
     {

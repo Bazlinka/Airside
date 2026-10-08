@@ -74,6 +74,47 @@ namespace Airside.Presentation
         private int _landingEtaBudgetFrame = -1;
         private int _landingEtaBudget;
 
+        private void CaptureArrivalViews(AirlineSaveData data)
+        {
+            foreach (var aircraft in _operations.Fleet)
+            {
+                if (!_arrivalFinal.TryGetValue(aircraft.Registration, out var view)
+                    || (!view.Active && !view.Holding)) continue;
+                data.ArrivalViews.Add(new ArrivalViewRecord { Registration = aircraft.Registration,
+                    DestinationCode = aircraft.CurrentDestination?.Code, TypeId = aircraft.Type.Id,
+                    FleetState = (int)aircraft.State, StateStartedAt = aircraft.StateStartedAt.ElapsedSeconds,
+                    Runway = (int)view.Runway, Active = view.Active, Holding = view.Holding,
+                    LastTime = view.LastTime, HoldingStartedAt = view.HoldingStartedAt,
+                    Metres = view.Metres, Speed = view.Speed, Lateral = view.Lateral,
+                    X = view.World.x, Y = view.World.y, Z = view.World.z,
+                    EntryX = view.HoldingEntry.x, EntryY = view.HoldingEntry.y, EntryZ = view.HoldingEntry.z,
+                    ForwardX = view.HoldingForward.x, ForwardZ = view.HoldingForward.z });
+            }
+        }
+
+        private void RestoreArrivalViews(AirlineSaveData data)
+        {
+            _arrivalFinal.Clear();
+            _landingEta.Clear();
+            _landingEtaBudgetFrame = -1;
+            if (data.Version < 23 || data.ArrivalViews == null) return;
+            foreach (var record in data.ArrivalViews)
+            {
+                if (record == null || string.IsNullOrEmpty(record.Registration)
+                    || !_fleetAircraftById.TryGetValue(record.Registration, out var aircraft)
+                    || !ArrivalViewContinuity.Matches(record, aircraft, data.ClockSeconds)) continue;
+                var state = new ArrivalFinalState { Active = record.Active, HasShown = true,
+                    Holding = record.Holding, HoldingStartedAt = record.HoldingStartedAt,
+                    LastTime = record.LastTime, Metres = record.Metres, Speed = record.Speed,
+                    Lateral = record.Lateral, Type = aircraft.Type, Runway = (RunwayDirection)record.Runway,
+                    World = new Vector3(record.X, record.Y, record.Z),
+                    HoldingEntry = new Vector3(record.EntryX, record.EntryY, record.EntryZ),
+                    HoldingForward = new Vector3(record.ForwardX, 0f, record.ForwardZ) };
+                state.Offset = state.World - ArrivalFinalWorld(state, 0f);
+                _arrivalFinal[record.Registration] = state;
+            }
+        }
+
         /// <summary>The landing estimate for an arrival that could be on the drawn final; false otherwise.</summary>
         private bool TryLandingEta(FleetAircraft aircraft, out SimulationTime eta, out RunwayDirection runway)
         {

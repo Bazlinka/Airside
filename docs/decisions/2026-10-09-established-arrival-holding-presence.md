@@ -1,5 +1,7 @@
 # Established arrivals retain physical presence when estimates are postponed
 
+Transient holding-save restriction superseded by [2026-10-09-recorded-weather-and-arrival-continuity](2026-10-09-recorded-weather-and-arrival-continuity.md). Other decisions remain.
+
 Date: 2026-10-09
 Status: Accepted — Bailey's no-disappearing-aircraft instruction
 Revises estimate-loss handling in the extended final presentation.

@@ -846,6 +846,7 @@ namespace Airside.Presentation
             if (freightJoined > 0)
                 ShowToast("Qantas Freight and DHL Air now operate Adelaide's cargo banks.");
             RefreshFleetFlights();
+            RestoreArrivalViews(data);
             if (_awaySummary == null)
                 ShowToast($"Welcome back to {_operations.PlayerAirline.Name}.");
             if (_saveRecoveredFromBackup)
@@ -872,7 +873,9 @@ namespace Airside.Presentation
             _nextAutosaveAt = Time.unscaledTime + AutosaveIntervalSeconds;
             try
             {
-                AirlineSaveFile.Write(SavePath, AirlineSave.Capture(_operations, DateTime.UtcNow));
+                var data = AirlineSave.Capture(_operations, DateTime.UtcNow);
+                CaptureArrivalViews(data);
+                AirlineSaveFile.Write(SavePath, data);
                 _saveFailureShown = false;
             }
             catch (Exception e)

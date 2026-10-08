@@ -1,6 +1,13 @@
 # Changelog
 
 - 2026-10-09 — "Your flights" tracker (six-step progress for each booked/moving flight, bottom-left) and per-view HUD layout (overview vs follow) with a Views options tab; L/N toggle per view (headless-checked; Unity unverified).
+- 2026-10-09 — Fit all aircraft tails into their hulls, match rudder/elevator hinges and correct per-type proportions; refresh models/thumbnails (Unity unverified).
+
+- 2026-10-09 — Sim weather (fog hours) now follows the airline clock, not the default epoch; fixes civil helicopters held for hours in off-clock fog (Unity unverified).
+
+- 2026-10-09 — Saved live weather/wind now drive airport rules and visuals together; save v23 preserves holding poses across compatible reloads (Unity unverified).
+
+- 2026-10-09 — Parked aircraft stay visible/selectable but leave active counts and automatic follow until two hours before departure; moving aircraft stay active.
 - 2026-10-09 — Bug-analysis fixes: credits no longer dropped at 800x600, compact Contracts/Operations/HUD text fits, jet pay and cost scale with size, 12 missing demand entries, loss-making contract routes skipped, rename-box hotkeys, missed daily report, plurals (headless-checked; Unity unverified; see docs/testing/bug-analysis-2026-10-08).
 - 2026-10-09 — Use Linear colour rendering; recalibrate far terrain to decoded satellite colours; existing quality budgets retained (Unity unverified).
 

@@ -549,7 +549,7 @@ namespace Airside.Simulation
             // Already on final: the tower will land it through a storm (ADR 0190), so the
             // estimate must not park it until the weather block ends.
             var established = aircraft.State == FleetState.HoldingForLanding
-                || ApproachRules.EnteredFinalBeforeStorm(aircraft, asOf);
+                || ApproachRules.EnteredFinalBeforeStorm(aircraft, asOf, WeatherAt);
             var arrivals = new List<(FleetAircraft Aircraft, SimulationTime Joined)>();
             var departures = new List<FleetAircraft>();
             foreach (var other in _fleet)
@@ -725,10 +725,14 @@ namespace Airside.Simulation
             + RunwaySeparationSeconds;
 
         /// <summary>The first moment at or after <paramref name="at"/> that is not in a storm hold.</summary>
-        private static SimulationTime AfterStorms(SimulationTime at)
+        private SimulationTime AfterStorms(SimulationTime at)
         {
-            for (var i = 0; i < 48 && Weather.At(at) == WeatherKind.Storm; i++)
-                at = Weather.NextBlock(at);
+            for (var i = 0; i < 48 && WeatherAt(at) == WeatherKind.Storm; i++)
+            {
+                var block = Weather.NextBlock(at);
+                var boundary = WeatherTimeline.NextBoundary(at);
+                at = boundary.HasValue && boundary.Value.CompareTo(block) < 0 ? boundary.Value : block;
+            }
             return at;
         }
 

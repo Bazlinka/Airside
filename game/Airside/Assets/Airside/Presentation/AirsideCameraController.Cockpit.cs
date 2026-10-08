@@ -24,8 +24,11 @@ namespace Airside.Presentation
         private float _savedNear, _savedFar, _savedFov;
         private bool _cockpitRightDrag;     // a look drag is in progress, started with either mouse button
         // Gliding from the outside camera to the seat (or between seats) and back out, instead of cutting.
-        private Vector3 _blendFromPos;
-        private Quaternion _blendFromRot = Quaternion.identity;
+        // The glide's start is kept in the target's own frame, so a moving aircraft carries it along
+        // instead of the camera sweeping from a fixed world point the aircraft has already left.
+        private Vector3 _blendFromLocalPos;
+        private Quaternion _blendFromLocalRot = Quaternion.identity;
+        private float _blendFromFov = 65f;
         private float _blendSeconds = CockpitLookInput.TransitionSeconds;
         private Vector3 _exitFromPos;
         private Quaternion _exitFromRot = Quaternion.identity;
@@ -45,8 +48,8 @@ namespace Airside.Presentation
                 _cockpitShownYaw + (CockpitMotionEnabled ? _cockpitMotionEuler.y : 0f),
                 CockpitMotionEnabled ? _cockpitMotionEuler.z : 0f) : transform.rotation;
 
-        /// <summary>True once the glide into the seat has finished, so the airframe can be hidden without a visible pop.</summary>
-        public bool SeatBlendSettled => _blendSeconds >= CockpitLookInput.TransitionSeconds;
+        /// <summary>0..1 progress through the glide into the seat or exterior orbit.</summary>
+        public float SeatBlendProgress => Mathf.Clamp01(_blendSeconds / CockpitLookInput.TransitionSeconds);
 
         public void SetCockpitMotion(Vector3 offset, Vector3 euler)
         {
@@ -57,8 +60,9 @@ namespace Airside.Presentation
         public bool StartCockpit(Transform seat)
         {
             if (seat == null || !seat.gameObject.activeInHierarchy || _camera == null) return false;
-            _blendFromPos = transform.position;
-            _blendFromRot = transform.rotation;
+            _blendFromLocalPos = seat.InverseTransformPoint(transform.position);
+            _blendFromLocalRot = Quaternion.Inverse(seat.rotation) * transform.rotation;
+            _blendFromFov = _camera.fieldOfView;
             _blendSeconds = 0f;
             if (!_cockpitActive)
             {
@@ -229,15 +233,17 @@ namespace Airside.Presentation
         {
             var dt = Mathf.Clamp(deltaSeconds, 0f, 0.1f);
             _blendSeconds += dt;
-            _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, _cockpitTargetFov,
-                1f - Mathf.Exp(-12f * dt));
+            // During the glide the field of view travels with it (exterior 48 to seat 65 used to snap
+            // in a quarter of a second while the camera was still moving); afterwards it eases to zoom input.
+            _camera.fieldOfView = _blendSeconds < CockpitLookInput.TransitionSeconds && _cockpitSeat != null
+                ? Mathf.Lerp(_blendFromFov, _cockpitTargetFov, CockpitLookInput.Ease(_blendSeconds))
+                : Mathf.Lerp(_camera.fieldOfView, _cockpitTargetFov, 1f - Mathf.Exp(-12f * dt));
         }
 
         /// <summary>Move the camera and its glide anchors into the new presentation origin.</summary>
         public void ShiftFlightOrigin(Vector3 delta)
         {
             transform.position += delta;
-            _blendFromPos += delta;
             _exitFromPos += delta;
         }
 
@@ -271,8 +277,10 @@ namespace Airside.Presentation
             if (_blendSeconds < CockpitLookInput.TransitionSeconds)
             {
                 var glide = CockpitLookInput.Ease(_blendSeconds);
-                transform.SetPositionAndRotation(Vector3.Lerp(_blendFromPos, transform.position, glide),
-                    Quaternion.Slerp(_blendFromRot, transform.rotation, glide));
+                var fromPos = _cockpitSeat != null ? _cockpitSeat.TransformPoint(_blendFromLocalPos) : transform.position;
+                var fromRot = _cockpitSeat != null ? _cockpitSeat.rotation * _blendFromLocalRot : transform.rotation;
+                transform.SetPositionAndRotation(Vector3.Lerp(fromPos, transform.position, glide),
+                    Quaternion.Slerp(fromRot, transform.rotation, glide));
             }
             CurrentDistance = _flightExterior ? _exteriorRadius : 0f;
             CurrentPitch = transform.eulerAngles.x;

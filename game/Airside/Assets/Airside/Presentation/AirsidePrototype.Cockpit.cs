@@ -136,6 +136,10 @@ namespace Airside.Presentation
             _cockpitInterior.Enter(false);
         }
 
+        /// <summary>Hide the airframe once the glide is this far in: the lens is by then inside the skin, which is
+        /// back-face culled, so the swap lands under the camera instead of a visible pop at the very end.</summary>
+        private const float ExteriorHideProgress = 0.6f;
+
         private void ExitCockpit(bool overview)
         {
             if (!InCockpit) return;
@@ -181,7 +185,7 @@ namespace Airside.Presentation
                 StartFlightCamera(aircraft);
             }
             if (_cockpitInterior != null && _cameraController != null)
-                _cockpitInterior.SetExteriorHidden(_cameraController.SeatBlendSettled);
+                _cockpitInterior.SetExteriorHidden(_cameraController.SeatBlendProgress >= ExteriorHideProgress);
             var elapsed = _preciseTime - _cockpitPreviousTime;
             var parts = PartsFor(view);
             // Wheel height: take the gear-pivot lift back out so a pitched-up roll still reads as on the ground.

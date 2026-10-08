@@ -29,7 +29,7 @@ Most of its state lives in `AirsidePrototype.cs` and `AirsidePrototype.Airline.c
   .NET harness would accept them; `scripts/check-unity-nunit.sh` (CI) now catches both.
 - **The headless harness skips every test that touches `UnityEngine`** (and Presentation files that need it). After adding a Presentation file or a test, run
   `python3 scripts/update-harness.py` (CI fails if the list is stale). A green headless run says nothing about those tests.
-- **The project renders in Gamma colour space**: colours that the shader reads are used as stored, not converted.
+- **The project renders in Linear colour space**: colour textures and Color material properties use sRGB authoring; normals/masks stay linear. Mesh vertex palettes are already linear: do not convert them twice.
 - Time comes from the injected clock, random choices from a seeded source; frame rate must never change simulation outcomes.
 - Presentation-only systems must keep a safe fallback (no network, missing file, missing asset) — see how the land-cover and DEM loaders return
   `null`/`false` instead of throwing.

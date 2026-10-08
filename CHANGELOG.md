@@ -1,6 +1,8 @@
 # Changelog
 
 - 2026-10-09 — Bug-analysis fixes: credits no longer dropped at 800x600, compact Contracts/Operations/HUD text fits, jet pay and cost scale with size, 12 missing demand entries, loss-making contract routes skipped, rename-box hotkeys, missed daily report, plurals (headless-checked; Unity unverified; see docs/testing/bug-analysis-2026-10-08).
+- 2026-10-09 — Use Linear colour rendering; recalibrate far terrain to decoded satellite colours; existing quality budgets retained (Unity unverified).
+
 - 2026-10-09 — Established arrivals fly a visible hold when their ETA is lost/postponed; map/follow use the actual pose and retain clearance handoffs (Unity unverified).
 
 - 2026-10-09 — Anchor clouds to the watched area; retain far-clipped volume proxies; add high wisps, stratiform banks and drizzle/showers (Unity unverified).

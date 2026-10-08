@@ -69,24 +69,24 @@ namespace Airside.Presentation
             return new AdelaideFarLandCover(count, spacing, origin, cells);
         }
 
-        // Albedo as the shader sees it (the project renders in Gamma space): the far ring's drape as rendered (Sentinel-2 times tint at the far strength, over the old plain
-        // vertex colour), averaged per class 15-30 km from the field by scripts/calibrate-landcover-palette.py. The far ring
-        // hands its drape over to these before 30 km, so they must match the image in game or the hand-over shows as a ring.
+        // Linear albedo measured from the sRGB-decoded Sentinel-2 image and material tint,
+        // blended over the linear plain vertex colour at the far drape strength (15–30 km).
+        // Regenerate with scripts/calibrate-landcover-palette.py when the drape changes.
         private static readonly float[][] Base =
         {
-            new[] { 0.065f, 0.103f, 0.109f },   // water (sea colour is passed in by the caller; this is inland)
-            new[] { 0.140f, 0.130f, 0.088f },   // tree
-            new[] { 0.156f, 0.150f, 0.110f },   // shrub
-            new[] { 0.204f, 0.177f, 0.128f },   // grass
-            new[] { 0.263f, 0.214f, 0.158f },   // crop
-            new[] { 0.226f, 0.211f, 0.164f },   // built
-            new[] { 0.357f, 0.339f, 0.276f },   // bare
-            new[] { 0.107f, 0.119f, 0.075f }    // wetland
+            new[] { 0.027f, 0.032f, 0.021f },   // water (caller supplies the sea colour)
+            new[] { 0.036f, 0.034f, 0.018f },   // tree
+            new[] { 0.048f, 0.048f, 0.031f },   // shrub
+            new[] { 0.052f, 0.045f, 0.025f },   // grass
+            new[] { 0.073f, 0.056f, 0.033f },   // crop
+            new[] { 0.059f, 0.055f, 0.034f },   // built
+            new[] { 0.137f, 0.130f, 0.092f },   // bare
+            new[] { 0.034f, 0.037f, 0.021f }    // wetland
         };
 
-        // Paddock variants of the measured crop colour: a green crop and a paler fallow.
-        private static readonly float[] GreenCrop = { 0.115f, 0.150f, 0.085f };
-        private static readonly float[] FallowCrop = { 0.320f, 0.255f, 0.180f };
+        // Retain the old green/fallow channel ratios around the recalibrated crop mean.
+        private static readonly float[] GreenCrop = { 0.032f, 0.039f, 0.018f };
+        private static readonly float[] FallowCrop = { 0.089f, 0.067f, 0.038f };
 
         /// <summary>
         /// One channel of the far ring's vertex colour while its drape hands over to land cover. The shader draws

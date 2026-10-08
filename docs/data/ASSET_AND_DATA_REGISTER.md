@@ -527,3 +527,15 @@ source licence/attribution obligation and zero acquisition cost. Existing scanne
 texture and satellite registrations remain applicable. Prior shaders/material
 fallbacks and previous git revision are the fallback. Native shader/appearance/GPU
 verification remains open; focused evidence: `docs/testing/ground-character-2026-10-09.md`.
+
+
+### Dash 8 wing-body fairing repair — 9 October 2026 (#691)
+
+AIR-006 retains `mdl_dash8_q400_v01.gltf`, `.bin`, `.fbx` and existing DH8D
+thumbnail paths. Source: original project-owned procedural loft in
+`scripts/generate-air-006-dash8-q400.py` (`--fairing-only` repairs the finished kit
+without regenerating unrelated geometry). One closed shared-vertex crown fairing
+replaces the two side pods and centre oval. No external source, attribution or
+licence added; zero cost. Prior git assets remain fallback. Packaged model/bin
+and thumbnail mirrors updated; native import/appearance/performance unverified.
+Evidence: `docs/testing/dash8-wing-fairing-2026-10-09.md`.

@@ -7,6 +7,15 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Dash 8 wing-body fairing (9 Oct, Codex, #691):** the three overlapping roof
+pods are replaced by one closed, smooth crown fairing with hull-buried ends and
+wing-profile joints. Existing AIR-006 model/FBX, packaged mirrors and hangar
+thumbnail updated; every other finished model node is preserved exactly.
+Focused manifold/winding/end-cap/wing-join checks pass; Unity import, native
+appearance and performance remain unverified. Full suites/builds were skipped.
+Evidence: `docs/testing/dash8-wing-fairing-2026-10-09.md`. Existing duplicate-file
+metadata and Sentinel texture mirror audit failures remain outside this scope.
+
 **Flight tracker and HUD views (9 Oct, Claude):** after booking, a "Your flights" card (bottom-left) follows each planned or moving flight through
 Booked, Ready, Taxi, Flying, Landing, Arrived; the booked aircraft is selected without moving the camera. Aircraft labels, airport map, tracker and
 career card can be shown per view (overview / follow) from Options > Views; L and N toggle for the current view. ADR `2026-10-09-flight-tracker-and-hud-views.md`.

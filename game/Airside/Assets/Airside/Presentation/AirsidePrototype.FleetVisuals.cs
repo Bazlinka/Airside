@@ -369,11 +369,27 @@ namespace Airside.Presentation
             PaintFleetLivery(view, aircraft, FleetLiveryColour(aircraft));
         }
 
+        private static void SetPassengerWindowsVisible(Transform view, bool visible)
+        {
+            foreach (var renderer in view.GetComponentsInChildren<Renderer>(true))
+            {
+                var n = renderer.name;
+                if (n.StartsWith("Cabin window", StringComparison.OrdinalIgnoreCase)
+                    || n.StartsWith("cabin_window", StringComparison.OrdinalIgnoreCase)
+                    || n.StartsWith("Window glow", StringComparison.OrdinalIgnoreCase)
+                    || n.StartsWith("Cabin glazing", StringComparison.OrdinalIgnoreCase))
+                    renderer.enabled = visible;
+            }
+        }
+
         private void PaintFleetLivery(Transform view, FleetAircraft aircraft, Color accent) =>
             PaintFleetLivery(view, aircraft.Airline, aircraft.Type, aircraft.Registration, aircraft.IsFreighter, accent);
 
         private void PaintFleetLivery(Transform view, Airline airline, AircraftType type, string registration, bool freighter, Color accent)
         {
+            // A freighter has no passenger windows: only the flight deck is glazed.
+            if (!type.IsRotorcraft)
+                SetPassengerWindowsVisible(view, !freighter);
             // The Bell has its own fitted panels; it shares the operator palette and repaint command.
             if (type.IsRotorcraft)
             {

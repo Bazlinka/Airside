@@ -51,6 +51,13 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>
+        /// Exterior aircraft glass is a dark tint, not a clear pane: at 0.5 the front windscreens and cabin windows
+        /// showed straight through the shell to the sky behind (a hollow airframe). The flight-deck and cabin
+        /// views replace the exterior glass, so nothing looks out through it.
+        /// </summary>
+        public const float AircraftGlazingMaxAlpha = 0.96f;
+
         private static readonly Dictionary<SurfaceKind, Profile> Profiles = new()
         {
             // Dry profiles tuned so wet variants can raise gloss without starting shiny.
@@ -393,7 +400,7 @@ namespace Airside.Presentation
             // Generated aircraft now have apertures and recessed interiors, so
             // their panes can transmit the flight deck instead of masking white skin.
             if (kind == SurfaceKind.AircraftGlazing)
-                color.a = Mathf.Min(color.a, 0.50f);
+                color.a = Mathf.Min(color.a, AircraftGlazingMaxAlpha);
             // Opaque RGB callers (terminal glass colors) still need real alpha panes.
             if ((kind == SurfaceKind.Glass || kind == SurfaceKind.Water) && color.a >= 0.99f)
                 color.a = kind == SurfaceKind.Glass ? 0.42f : 0.62f;
@@ -690,7 +697,7 @@ namespace Airside.Presentation
         {
             instance = null;
             if (kind == SurfaceKind.AircraftGlazing)
-                color.a = Mathf.Min(color.a, 0.50f);
+                color.a = Mathf.Min(color.a, AircraftGlazingMaxAlpha);
             var key = AuthoredMaterialKey(kind);
             if (key == null)
                 return false;

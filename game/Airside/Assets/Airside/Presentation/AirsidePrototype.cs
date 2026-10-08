@@ -3525,7 +3525,7 @@ namespace Airside.Presentation
         /// Aircraft glass seen from outside by day: near-black and neutral, with the smooth
         /// glazing material supplying the sky reflection. A blue-teal tint read as a toy.
         /// </summary>
-        private static readonly Color AircraftGlass = new(0.06f, 0.07f, 0.08f, 0.72f);
+        private static readonly Color AircraftGlass = new(0.06f, 0.07f, 0.08f, 0.96f);
 
         /// <summary>Seals, the painted flight-deck surround and windscreen posts.</summary>
         private static readonly Color AircraftGlazingSurround = new(0.035f, 0.037f, 0.04f);

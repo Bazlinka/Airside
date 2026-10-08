@@ -738,7 +738,9 @@ namespace Airside.Presentation
             _returnFleetDrawList.Clear();
             ReturnBriefingPainter.PaintFleet(_returnFleetDrawList,
                 new HudBox(0f, 0f, content.width, content.height), summary);
-            _hudPainter.Draw(_returnFleetDrawList);
+            _hudPainter.DeviceSpace = false;
+            try { _hudPainter.Draw(_returnFleetDrawList); }
+            finally { _hudPainter.DeviceSpace = true; }
             GUI.EndScrollView();
             if (clicked == ReturnBriefingPainter.ContinueAction)
             {
@@ -1063,7 +1065,10 @@ namespace Airside.Presentation
                 new Rect(0f, 0f, body.width - 16f, contentHeight));
             _selectionDrawList.Clear();
             AircraftInspectorPainter.Body(_selectionDrawList, new HudBox(0f, 0f, body.width - 16f, contentHeight), _selectionCard);
-            var bodyClicked = _hudPainter.Draw(_selectionDrawList);
+            _hudPainter.DeviceSpace = false;
+            string bodyClicked;
+            try { bodyClicked = _hudPainter.Draw(_selectionDrawList); }
+            finally { _hudPainter.DeviceSpace = true; }
             GUI.EndScrollView();
             _selectionDrawList.Clear();
             AircraftInspectorPainter.Footer(_selectionDrawList, inspector, _selectionCard);

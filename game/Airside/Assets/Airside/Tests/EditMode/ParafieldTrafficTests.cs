@@ -96,5 +96,50 @@ namespace Airside.Tests
                 Is.EqualTo(ParafieldLayout.ElevationMetres).Within(.001));
             Assert.That(ParafieldLayout.GroundHeight(ParafieldLayout.CentreX+2200,ParafieldLayout.CentreZ,100),Is.EqualTo(100));
         }
+
+        [Test]
+        public void ParkingAndApronLaneStayOnPavementAndClearOfHangars()
+        {
+            foreach(var points in new[] {ParafieldLayout.Parking,ParafieldLayout.ParkingLane})
+            foreach(var point in points)
+            {
+                var paved=false;
+                foreach(var apron in ParafieldLayout.Aprons)paved|=Inside(point,apron);
+                Assert.That(paved,Is.True,"parking/lane must be on the mapped apron");
+                foreach(var building in ParafieldLayout.Buildings)
+                {
+                    Assert.That(Inside(point,building),Is.False);
+                    for(var i=0;i<building.Length;i++)
+                        Assert.That(EdgeDistance(point,building[i],building[(i+1)%building.Length]),
+                            Is.GreaterThan(8),"11 m trainer span plus building margin");
+                }
+            }
+            for(var i=1;i<ParafieldLayout.ParkingLane.Length;i++)
+            for(var sample=0;sample<=20;sample++)
+            {
+                var point=ParafieldPoint.Lerp(ParafieldLayout.ParkingLane[0],ParafieldLayout.ParkingLane[i],sample/20.0);
+                var paved=false;
+                foreach(var apron in ParafieldLayout.Aprons)paved|=Inside(point,apron);
+                Assert.That(paved,Is.True,"apron lane stays on asphalt between stands");
+            }
+        }
+
+        private static bool Inside(ParafieldPoint p,ParafieldPoint[] polygon)
+        {
+            var result=false;
+            for(var i=0;i<polygon.Length;i++)
+            {
+                var a=polygon[i];var b=polygon[(i+1)%polygon.Length];
+                if((a.Z>p.Z)!=(b.Z>p.Z) && p.X<(b.X-a.X)*(p.Z-a.Z)/(b.Z-a.Z)+a.X)result=!result;
+            }
+            return result;
+        }
+
+        private static double EdgeDistance(ParafieldPoint p,ParafieldPoint a,ParafieldPoint b)
+        {
+            var dx=b.X-a.X;var dz=b.Z-a.Z;var squared=dx*dx+dz*dz;
+            var t=squared<.000001 ? 0 : Math.Clamp(((p.X-a.X)*dx+(p.Z-a.Z)*dz)/squared,0,1);
+            return p.Distance(ParafieldPoint.Lerp(a,b,t));
+        }
     }
 }

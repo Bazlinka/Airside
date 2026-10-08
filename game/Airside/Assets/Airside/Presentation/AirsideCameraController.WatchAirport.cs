@@ -16,6 +16,17 @@ namespace Airside.Presentation
             _pitch=pitch;
             _yaw=yaw;
             _fov=OverviewFov;
+            ApplyTransform();
+        }
+
+        private float OverviewNearClip()
+        {
+            var normal=AirsideCameraFeel.NearClip(_distance);
+            var independent=_watchCentre.HasValue || ReviewView.Id=="parafield";
+            // At a remote field the centimetre pavement/paint layers need more
+            // depth precision than the 30 km world clip and standard near plane give.
+            // Orbiting keeps the nearest scenery well beyond two percent of distance.
+            return independent && !_following ? Mathf.Max(normal,Mathf.Min(300,_distance*.02f)) : normal;
         }
     }
 }

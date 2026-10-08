@@ -26,6 +26,7 @@ namespace Airside.Presentation
             public float BankLeftDegrees;   // Unity z roll: positive is left wing down
             public float Spool;             // 0..1 engine spool
             public bool Turboprop;
+            public float WeatherTurbulence; // 0 smooth air .. 1 developed storm body
         }
 
         public readonly struct Pose
@@ -57,14 +58,13 @@ namespace Airside.Presentation
         private bool _started, _airborne, _noseDown, _gearDownDone, _gearUpDone, _everHigh;
         private float _prevVerticalSpeed, _prevSpeed, _surge, _heaveG, _lookYaw;
         private float _jointDistance, _lightDistance, _sinceLiftoff, _buffet, _firmness = 0.8f;
-        private float _noseSettle, _rollSign = 1f, _sinceTouchdown;
+        private float _noseSettle, _rollSign = 1f, _sinceTouchdown, _weatherTurbulence;
         private bool _spoilersDone, _bounceDone;
         private bool _landed;
         private HapticKind _haptic;
 
         /// <summary>
-        /// 0..1 level of continuous airframe buzz (turbulence, reverse thrust, engine) that is not already
-        /// carried by discrete events, for a trackpad to rumble to. Zero while paused.
+        /// Continuous trackpad rumble is disabled. Discrete contact/gear taps remain available via TakeHaptic.
         /// </summary>
         public float Rumble01 { get; private set; }
 
@@ -93,7 +93,7 @@ namespace Airside.Presentation
             _jointDistance = _lightDistance = _sinceLiftoff = _buffet = _noseSettle = _sinceTouchdown = 0f;
             _spoilersDone = _bounceDone = false;
             _haptic = HapticKind.None;
-            Rumble01 = 0f;
+            Rumble01 = 0f; _weatherTurbulence = 0f;
             // Most landings are smooth (0.5 m/s, ~100 fpm); a few are firm (up to ~1.5 m/s, ~300 fpm).
             var h = (uint)seed * 2654435761u;
             var u = ((h >> 8) & 0xFFFF) / 65535f;
@@ -185,8 +185,7 @@ namespace Airside.Presentation
                 while (_jointDistance >= JointSpacingMetres)
                 {
                     _jointDistance -= JointSpacingMetres; _heave.V -= evt * 0.035f / (1f + s.GroundSpeed / 25f);
-                    // The runway-joint thump is the ground texture a trackpad feels; skipped in fast-forward.
-                    if (s.SimRate <= 1.5f && s.GroundSpeed > 6f) Tap(HapticKind.Tick);
+                    // Slab joints move the suspension; avoid a repeated trackpad tap every few metres.
                 }
                 while (_lightDistance >= CentreLightSpacingMetres)
                 { _lightDistance -= CentreLightSpacingMetres; if (s.GroundSpeed > 12f) { _heave.V -= evt * 0.016f; _pitch.V += evt * 0.15f; } }
@@ -195,23 +194,26 @@ namespace Airside.Presentation
             // ---- continuous vibration ----------------------------------------------------------
             var t = s.Time;
             var speed01 = Smooth(s.GroundSpeed / 75f);
-            var rumble = onGround ? 0.0005f + 0.0045f * speed01 : 0f;
+            var rumble = onGround ? 0.00015f + 0.0012f * speed01 : 0f;
             var power = Clamp01(s.Spool) * (onGround ? (_surge > 0.6f ? 1f : _surge < -0.8f ? 0.85f : 0.3f)
                                                       : (s.VerticalSpeed > 1.5f ? 0.9f : 0.5f));
             // Reverse thrust / beta: strong low-frequency roar through the seat while decelerating hard.
             var reversing = onGround && _landed && _surge < -0.8f && s.GroundSpeed > 25f && _sinceTouchdown > 1.0f;
             var reverse = reversing ? (s.Turboprop ? 0.0040f : 0.0030f) * Smooth(s.GroundSpeed / 50f) : 0f;
-            var engine = Clamp01(s.Spool) * (s.Turboprop ? 0.0017f : 0.0007f) * (0.45f + 0.55f * power);
+            var engine = Clamp01(s.Spool) * (s.Turboprop ? 0.00035f : 0.00012f) * (0.45f + 0.55f * power);
             var low = Math.Max(0f, 1f - s.HeightAgl / 600f);
-            var turbulence = onGround ? 0f : 0.0022f * (1f + 1.4f * low) + (_buffet > 0f ? 0.004f * Math.Min(1f, _buffet) : 0f);
+            _weatherTurbulence += (Clamp01(s.WeatherTurbulence) - _weatherTurbulence)
+                * (1f - (float)Math.Exp(-dt * 0.65f));
+            var turbulence = onGround ? 0f : 0.00010f * low + 0.003f * _weatherTurbulence
+                + (_buffet > 0f ? 0.0006f * Math.Min(1f, _buffet) : 0f);
             var noise = Noise(t, 5.3f, 8.1f, 12.7f);
-            var slow = Noise(t, 0.37f, 0.71f, 1.31f);
+            var slow = Noise(t, 0.13f, 0.27f, 0.43f);
             var throb = s.Turboprop ? (float)Math.Sin(t * 6.2f) * (float)Math.Sin(t * 0.8f) * engine * 0.6f : 0f;
             var amp = rate;
-            Rumble01 = Clamp01(turbulence / 0.005f + reverse / 0.004f + (onGround ? 0f : engine / 0.004f)) * amp;
+            Rumble01 = 0f; // Continuous trackpad tapping is fatiguing; retain discrete contact/gear events.
             var heaveShake = (rumble * noise + engine * Noise(t + 1.7f, 7.7f, 11.3f, 14.9f) + reverse * Noise(t + 4.4f, 9.4f, 13.3f, 17.1f) + throb + turbulence * slow) * amp;
-            var pitchShake = (rumble * 38f * Noise(t + 3.1f, 4.7f, 9.2f, 13.1f) + turbulence * 36f * Noise(t + 5f, 0.43f, 0.81f, 1.19f)) * amp;
-            var rollShake = (rumble * 20f * Noise(t + 6.4f, 3.9f, 7.3f, 11.7f) + turbulence * 90f * Noise(t + 9f, 0.31f, 0.67f, 1.07f)) * amp;
+            var pitchShake = (rumble * 38f * Noise(t + 3.1f, 4.7f, 9.2f, 13.1f) + turbulence * 25f * Noise(t + 5f, 0.13f, 0.29f, 0.41f)) * amp;
+            var rollShake = (rumble * 20f * Noise(t + 6.4f, 3.9f, 7.3f, 11.7f) + turbulence * 55f * Noise(t + 9f, 0.11f, 0.23f, 0.37f)) * amp;
             var swayShake = (rumble * 0.6f * Noise(t + 8.2f, 4.1f, 6.8f, 10.3f) + turbulence * 0.8f * Noise(t + 2f, 0.29f, 0.59f, 0.97f)) * amp;
 
             // Rudder work on the roll and weather-vaning in rough air: a slow yaw wander.

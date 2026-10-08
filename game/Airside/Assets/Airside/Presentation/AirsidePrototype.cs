@@ -114,7 +114,6 @@ namespace Airside.Presentation
         // decides *when*, this only decides how it looks/sounds.
         private float _lightningFlashAt = float.NegativeInfinity;
         private float _lightningDistance01;
-        private float _thunderPlayAt = float.PositiveInfinity;
         private AudioSource _uiAudio;
         private AudioClip _uiClickClip;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
@@ -226,7 +225,7 @@ namespace Airside.Presentation
             ?? (LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Kind
                 : FleetMode ? Weather.At(_clock.Now) : _simulation.CurrentWeather);
 
-        private WeatherLook CurrentWeatherLook => ReviewWeather.HasValue
+        private WeatherLook TargetWeatherLook => ReviewWeather.HasValue
             ? WeatherLook.For(ReviewWeather.Value)
             : LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Look
             // ADR 0143: eased between hours so the sky never snaps.
@@ -564,6 +563,7 @@ namespace Airside.Presentation
             }
             _cameraController?.EndCockpit();
             ResetFlightWorld();
+            if (_stormBolt != null) Destroy(_stormBolt.sharedMaterial);
             if (_flightTerrain != null) Destroy(_flightTerrain.gameObject);
             DisposeSoakRecorders();
             if (_active == this)
@@ -605,11 +605,12 @@ namespace Airside.Presentation
                 // it must be asked exactly once per second — asking every frame would re-ask
                 // the same answer for as long as that second stays current and never notice
                 // the edge, and a big time-scale jump must never re-fire every second it skips.
-                if (Lightning.StrikesAt(_clock.Now))
+                if (Lightning.StrikesAt(_clock.Now, CurrentWeather == WeatherKind.Storm))
                 {
                     _lightningDistance01 = Lightning.DistanceFor(_clock.Now);
                     _lightningFlashAt = Time.unscaledTime;
-                    _thunderPlayAt = Time.unscaledTime + Lightning.ThunderDelaySeconds(_lightningDistance01);
+                    _stormStrikePending = true;
+                    _stormStrikeSeed = (int)(_clock.Now.ElapsedSeconds % int.MaxValue);
                 }
             }
 
@@ -647,6 +648,7 @@ namespace Airside.Presentation
             UpdateTouchdownSmoke();
             UpdateWheelSmoke();
             UpdateCloudDrift();
+            UpdateStormLightning();
             UpdateAtmosphereLayers();
             if (AirportPresentationVisible) UpdateBirdFlock();
             UpdateHangarDoor();
@@ -1462,7 +1464,8 @@ namespace Airside.Presentation
             var raining = weather == WeatherKind.Rain || weather == WeatherKind.Storm;
             var storm = weather == WeatherKind.Storm;
             var windTarget = _audioMuted ? 0f : AmbientWindVolume * AmbientDuck * ExteriorWeatherGain;
-            var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume) * AmbientDuck * ExteriorWeatherGain;
+            var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume) * AmbientDuck * ExteriorWeatherGain
+                * CockpitWeatherEnvelope.RainAtHeight(ObserverHeight, _stormDepth);
             var coastTarget = _audioMuted || AirsideFocusMode.BareWorld ? 0f
                 : AmbientCoastVolume * (storm ? 1.45f : raining ? 1.2f : 1f) * AmbientDuck * CoastAudioGain;
             // Slight day/night wind variation (presentation only).
@@ -1479,19 +1482,16 @@ namespace Airside.Presentation
                 _ambientCoastAudio.pitch = 0.92f + 0.08f * Mathf.PerlinNoise(Time.unscaledTime * 0.05f, 1.7f);
             }
 
-            // ADR 0059: the strike already fixed its own moment and delay (Update()); this
-            // only fires the one-shot once real time actually reaches it, so pausing or a
-            // slow frame delays thunder along with everything else instead of it arriving
-            // early. The clip itself is pre-warmed in EnsureAmbientClips — synthesising it
-            // here, on the first storm's first strike, cost a synchronous ~53k-sample
-            // generation loop at exactly the moment the clap needed to play on time.
-            if (_thunderAudio != null && Time.unscaledTime >= _thunderPlayAt)
+            // Independent delayed claps from visible strikes; consume even while muted.
+            for (var i = _stormThunder.Count - 1; i >= 0; i--)
             {
-                _thunderPlayAt = float.PositiveInfinity;
-                if (!_audioMuted && _thunderClip != null && ExteriorWeatherGain > 0.05f)
+                var clap = _stormThunder[i];
+                if (Time.unscaledTime < clap.At) continue;
+                _stormThunder.RemoveAt(i);
+                if (_thunderAudio != null && !_audioMuted && _thunderClip != null && ExteriorWeatherGain > 0.05f)
                 {
-                    var volume = Mathf.Lerp(0.55f, 0.16f, _lightningDistance01);
-                    _thunderAudio.pitch = Mathf.Lerp(0.92f, 1.05f, 1f - _lightningDistance01);
+                    var volume = Mathf.Lerp(0.55f, 0.16f, clap.Distance);
+                    _thunderAudio.pitch = Mathf.Lerp(0.92f, 1.05f, 1f - clap.Distance);
                     _thunderAudio.PlayOneShot(_thunderClip, volume * ExteriorWeatherGain);
                 }
             }

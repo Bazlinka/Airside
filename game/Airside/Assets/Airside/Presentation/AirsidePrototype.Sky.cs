@@ -543,7 +543,7 @@ namespace Airside.Presentation
             _sun.shadowStrength = Mathf.Lerp(0.28f, 0.78f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
-            var weatherGloom = EaseWeatherGloom(_weatherGloom, CurrentWeatherLook.Gloom,
+            var weatherGloom = EaseWeatherGloom(_weatherGloom, CurrentWeatherLook.Gloom * (1f - CockpitAboveDeck),
                 _weatherGloomReady ? Time.unscaledDeltaTime : float.PositiveInfinity);
             _weatherGloom = weatherGloom;
             _weatherGloomReady = true;
@@ -624,7 +624,7 @@ namespace Airside.Presentation
             var aboveDeck = CockpitAboveDeck;
             var clearSky = AtmosphereLook.For(WeatherLook.For(WeatherKind.Clear), daylight,
                 warm, sunAzimuth < 180.0, cameraHeight);
-            if (InCockpit && AirsideSettings.Current.WeatherLayers && _cockpitView != null)
+            if (AirsideSettings.Current.WeatherLayers && _mainCamera != null)
             {
                 sky = Color.Lerp(sky, ToColor(clearSky.Sky), aboveDeck);
             }
@@ -650,12 +650,12 @@ namespace Airside.Presentation
                 RenderSettings.fogDensity = AirsideBareField.Enabled
                     ? _atmosphere.FogDensity * AirsideCameraFeel.FogScale(AirsideCameraController.CurrentDistance,
                         AirsideBareField.ClassicMaxOrbitDistance)
-                    : Mathf.Lerp(0.0036f, 0.0016f, daylight) + (1f - look.Visibility) * 0.012f + warm * 0.00035f;
+                    : _atmosphere.FogDensity;
             }
 
-            if (InCockpit && AirsideSettings.Current.WeatherLayers && _cockpitView != null)
+            if (AirsideSettings.Current.WeatherLayers && _mainCamera != null)
             {
-                var cloud = CockpitWeatherEnvelope.InCloud(_cockpitView.position.y, CurrentWeatherLook.CloudCover);
+                var cloud = ObserverInCloud;
                 RenderSettings.fogDensity = Mathf.Lerp(RenderSettings.fogDensity, 0.018f, cloud);
                 RenderSettings.fogColor = Color.Lerp(RenderSettings.fogColor, ToColor(_atmosphere.Sky), cloud);
                 RenderSettings.fogDensity = Mathf.Lerp(RenderSettings.fogDensity, clearSky.FogDensity, aboveDeck);
@@ -665,10 +665,11 @@ namespace Airside.Presentation
             // ADR 0059: a storm strike briefly overrides the sky/ambient/sun with a white
             // flash that decays over ~0.5 s of real time, independent of the steady weather
             // gloom set above — that is the storm's baseline dimness, this is one instant.
-            var flash = LightningFlashEnvelope(Time.unscaledTime - _lightningFlashAt);
+            var flash = CurrentWeather == WeatherKind.Storm && AirsideSettings.Current.WeatherLayers
+                ? LightningFlashEnvelope(Time.unscaledTime - _lightningFlashAt) : 0f;
             if (flash > 0f)
             {
-                var punch = flash * Mathf.Lerp(0.35f, 1f, 1f - _lightningDistance01);
+                var punch = flash * Mathf.Lerp(0.08f, 1f, 1f - CockpitAboveDeck) * Mathf.Lerp(0.15f, 0.55f, 1f - _lightningDistance01);
                 _sun.intensity += punch * 2.4f;
                 RenderSettings.ambientIntensity += punch * 1.1f;
                 RenderSettings.ambientSkyColor = Color.Lerp(RenderSettings.ambientSkyColor, Color.white, punch * 0.6f);
@@ -943,14 +944,36 @@ namespace Airside.Presentation
             return daylightFade * cloudFade;
         }
 
-        // Keep the ground/deck weather intact; only the sky seen from the seat clears.
-        private float CockpitAboveDeck => InCockpit && AirsideSettings.Current.WeatherLayers
-            && _cockpitView != null
-                ? CockpitWeatherEnvelope.AboveDeck(_cockpitView.position.y, CurrentWeatherLook.CloudCover) : 0f;
-        private float ObserverSkyCover => InCockpit && AirsideSettings.Current.WeatherLayers
-            && _cockpitView != null
-                ? CockpitWeatherEnvelope.SkyCover(_cockpitView.position.y, CurrentWeatherLook.CloudCover)
-                : CurrentWeatherLook.CloudCover;
+        private float ObserverHeight => _mainCamera != null ? _mainCamera.transform.position.y : 0f;
+        private float ObserverInCloud
+        {
+            get
+            {
+                if (!AirsideSettings.Current.WeatherLayers) return 0f;
+                var cloud = CockpitWeatherEnvelope.InCloud(ObserverHeight, CurrentWeatherLook.CloudCover);
+                if (_cloudRoot == null || _mainCamera == null || _stormDepth < 0.01f) return cloud;
+                for (var i = 0; i < _cloudRoot.childCount; i += 3)
+                {
+                    var body = _cloudRoot.GetChild(i).GetChild(0);
+                    if (body.name != "Cloud volume") continue;
+                    if (!_cloudTints.TryGetValue(i, out var tint)) continue;
+                    var cloudPosition = _cloudRoot.GetChild(i).position;
+                    var edge = WeatherCoverage.CloudEdge(cloudPosition.x, cloudPosition.z,
+                        _mainCamera.transform.position.x, _mainCamera.transform.position.z);
+                    var point = body.InverseTransformPoint(_mainCamera.transform.position);
+                    var density = CockpitWeatherEnvelope.StormBody(point.x, point.y, point.z) * _stormDepth * tint.a * edge;
+                    cloud = Mathf.Max(cloud, density);
+                }
+                return cloud;
+            }
+        }
+
+        // Keep the ground/deck weather intact; only the sky above the observer clears.
+        private float CockpitAboveDeck => AirsideSettings.Current.WeatherLayers
+            ? CockpitWeatherEnvelope.AboveDeck(ObserverHeight, CurrentWeatherLook.CloudCover, _stormDepth) : 0f;
+        private float ObserverSkyCover => AirsideSettings.Current.WeatherLayers
+            ? CockpitWeatherEnvelope.SkyCover(ObserverHeight, CurrentWeatherLook.CloudCover, _stormDepth)
+            : CurrentWeatherLook.CloudCover;
 
         private void UpdateStarField()
         {
@@ -1264,6 +1287,24 @@ namespace Airside.Presentation
                 var p = cloud.position;
                 p.x += driftX;
                 p.z += driftZ;
+                if (!_cloudRestHeights.TryGetValue(i, out var restHeight))
+                    _cloudRestHeights[i] = restHeight = p.y;
+                var isVolume = cloud.GetChild(0).name == "Cloud volume";
+                var development = i % 3 == 0 ? _stormDepth : 0f;
+                var cloudScale = CloudCardScale(look.CloudCover);
+                if (AirsideBareField.Enabled && isVolume)
+                {
+                    var height = cloud.GetChild(0).localScale.y;
+                    p.y = Mathf.Lerp(restHeight, (900f + CockpitWeatherEnvelope.StormTopMetres) * 0.5f, development);
+                    cloud.localScale = new Vector3(Mathf.Lerp(cloudScale, 5.6f, development),
+                        Mathf.Lerp(cloudScale, (CockpitWeatherEnvelope.StormTopMetres - 900f) / height, development),
+                        Mathf.Lerp(cloudScale, 6.2f, development));
+                    var bodyRenderer = cloud.GetChild(0).GetComponent<Renderer>();
+                    bodyRenderer.GetPropertyBlock(RendererTintBlock);
+                    RendererTintBlock.SetFloat("_Storm", development);
+                    bodyRenderer.SetPropertyBlock(RendererTintBlock);
+                }
+                else cloud.localScale = Vector3.one * cloudScale;
                 var wrapX = AirsideBareField.Enabled ? WeatherCoverage.CloudHalfWidth : 100f;
                 var wrapZ = AirsideBareField.Enabled ? WeatherCoverage.CloudHalfDepth : 100f;
                 var anchorX = AirsideBareField.Enabled ? camera.x : 0f;
@@ -1325,10 +1366,8 @@ namespace Airside.Presentation
                 // up than an overcast one instead of the same 16 always present at a
                 // different opacity. Ramped over 0.08 cover so a cluster fades in rather
                 // than popping solid the instant cover crosses its threshold.
-                var revealAt = (float)i / _cloudRoot.childCount;
+                var revealAt = (float)((i * 7) % _cloudRoot.childCount) / _cloudRoot.childCount;
                 var visibility = Mathf.InverseLerp(revealAt, revealAt + 0.08f, look.CloudCover);
-                var tower = weather == WeatherKind.Storm && i % 3 == 0 ? 1.7f : 1f;
-                cloud.localScale = new Vector3(1f, tower, 1f) * CloudCardScale(look.CloudCover);
 
                 var cardTint = tint;
                 cardTint.a *= visibility;

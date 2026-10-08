@@ -21,6 +21,13 @@ namespace Airside.Tests
                 Assert.That(Lightning.StrikesAt(new SimulationTime(t)), Is.False);
         }
 
+        [Test] public void DisplayedLiveStormUsesCadenceEvenWhenAuthoredWeatherIsClear()
+        {
+            var clearBlock = new SimulationTime(0);
+            Assert.That(Lightning.StrikesAt(clearBlock, true), Is.True);
+            Assert.That(Lightning.StrikesAt(new SimulationTime(StormBlockStart), false), Is.False);
+        }
+
         [Test]
         public void Lightning_AlwaysOpensAStormOnItsFirstSecond()
         {

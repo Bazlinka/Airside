@@ -14,13 +14,11 @@ namespace Airside.Presentation
         private float _cockpitYaw, _cockpitPitch;
         private float _cockpitShownYaw, _cockpitShownPitch;
         private float _cockpitTargetFov = 65f;
-        private float _cockpitRumble;
         public bool CockpitMotionEnabled
         {
             get => AirsideSettings.Current.CockpitMotion;
             set => AirsideSettings.Current.CockpitMotion = value;
         }
-        public void SetCockpitRumble(float strength) => _cockpitRumble = Mathf.Clamp01(strength);
         private float _savedNear, _savedFar, _savedFov;
         private bool _cockpitRightDrag;     // a look drag is in progress, started with either mouse button
         // Gliding from the outside camera to the seat (or between seats) and back out, instead of cutting.
@@ -86,7 +84,6 @@ namespace Airside.Presentation
             _easingOverview = false;
             _cockpitRightDrag = false;
             RecenterCockpit();
-            _cockpitRumble = 0f;
             // The field of view eases to 65 in UpdateCockpitCamera rather than snapping here.
             ApplyCockpitPose();
             return true;
@@ -279,15 +276,6 @@ namespace Airside.Presentation
                 transform.SetPositionAndRotation(position,Quaternion.LookRotation(centre-position,Vector3.up));
             }
             else transform.SetPositionAndRotation(CockpitPosition, CockpitRotation);
-            if (!_flightExterior && CockpitMotionEnabled && _cockpitRumble > 0f)
-            {
-                // Small angular motion only: never move the eye through the fitted shell.
-                var t = Time.unscaledTime;
-                transform.rotation *= Quaternion.Euler(
-                    Mathf.Sin(t * 37f) * 0.10f * _cockpitRumble,
-                    Mathf.Sin(t * 29f) * 0.06f * _cockpitRumble,
-                    Mathf.Sin(t * 43f) * 0.08f * _cockpitRumble);
-            }
             if (_blendSeconds < CockpitLookInput.TransitionSeconds)
             {
                 var glide = CockpitLookInput.Ease(_blendSeconds);

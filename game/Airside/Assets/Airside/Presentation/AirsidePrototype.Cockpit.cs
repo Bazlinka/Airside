@@ -212,6 +212,7 @@ namespace Airside.Presentation
                 HeightAgl = gearHeight, PitchUpDegrees = pitchUp, BankLeftDegrees = bankLeft,
                 Spool = (spool.Left + spool.Right) * 0.5f,
                 Turboprop = !_cockpitIsJet,
+                WeatherTurbulence = ObserverInCloud * Mathf.Lerp(0.12f, 1f, _stormDepth),
             });
             _cameraController.SetCockpitMotion(new Vector3(motion.Right, motion.Up, motion.Forward),
                 new Vector3(motion.PitchDownDegrees, motion.YawDegrees, motion.RollDegrees));
@@ -223,7 +224,7 @@ namespace Airside.Presentation
             if (tap != HapticKind.None) MacTrackpadHaptics.Perform(tap);
             _cockpitInterior.SetAttitude(pitchUp, bankLeft);
             var observerRain = CockpitObserverWeather.Rain(CurrentWeatherLook.Precipitation,
-                _cockpitView != null ? _cockpitView.position.y : 0f, InCockpit && _cockpitView != null);
+                ObserverHeight, true, _stormDepth);
             _cockpitInterior.SetEnvironment(PresentationDaylight, observerRain, Time.unscaledTime);
             _cockpitCallouts.DeltaSeconds = (float)Math.Max(0.0, elapsed);
             var call = aircraft.Type.IsRotorcraft ? null : _cockpitCallouts.Step(new CockpitCallouts.Sample
@@ -233,10 +234,6 @@ namespace Airside.Presentation
                 Jet = _cockpitIsJet,
             });
             if (call != null) { _cockpitCallText = call; _cockpitCallUntil = Time.unscaledTime + 2.2f; }
-            // Cloud/storm buffet from the shared weather envelope; engine and runway feel come from CockpitMotion.
-            var cloud = CockpitWeatherEnvelope.InCloud(view.position.y, CurrentWeatherLook.CloudCover);
-            var inAir = gearHeight > 5f;
-            _cameraController.SetCockpitRumble(inAir ? cloud * (CurrentWeather == WeatherKind.Storm ? 0.65f : 0.25f) : 0f);
             if (_preciseTime < _cockpitNextReadout) return;
             _cockpitNextReadout = _preciseTime + 0.1;
             if (_cockpitInterior is JetCockpitInterior jet)

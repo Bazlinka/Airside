@@ -49,9 +49,8 @@ namespace Airside.Presentation
             var passenger = SoundPassengerListening;
             InteriorLoop(_cockpitAirflow, _audioMuted ? 0f : AircraftAudioDynamics.AirflowGain(knots, passenger), 1f);
             InteriorLoop(_cabinRumble, _audioMuted ? 0f : (passenger ? 0.24f : 0.17f), 1f);
-            var wet = (CurrentWeather == WeatherKind.Rain || CurrentWeather == WeatherKind.Storm)
-                && height < 1600f;
-            InteriorLoop(_cabinRain, _audioMuted || !wet ? 0f : 0.12f * Mathf.Clamp01(1f - height / 1600f), 1f);
+            var rain = CockpitObserverWeather.Rain(CurrentWeatherLook.Precipitation, height, true, _stormDepth);
+            InteriorLoop(_cabinRain, _audioMuted ? 0f : 0.12f * rain, 1f);
         }
 
         private AudioSource InteriorSource(AudioClip clip, int priority, float cutoff)

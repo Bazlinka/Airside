@@ -563,6 +563,7 @@ namespace Airside.Presentation
                     return null;
                 var root = BuildServiceVehicle("Passenger bus (remote)", new Color(0.22f, 0.44f, 0.55f),
                     new Vector3(3.8f, 1.5f, 1.45f), PreferArtKit(
+                        "Models/Vehicles/mdl_passenger_bus_apron_v07.gltf",
                         "Models/Vehicles/mdl_passenger_bus_apron_v06.gltf",
                         "Models/Vehicles/mdl_passenger_bus_apron_v05.gltf",
                         "Models/Vehicles/mdl_passenger_bus_apron_authored_v01.gltf"));

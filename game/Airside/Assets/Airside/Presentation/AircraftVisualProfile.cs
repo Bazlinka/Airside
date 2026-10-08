@@ -90,7 +90,7 @@ namespace Airside.Presentation
             new Vector3(40f, 14f, 43f), 6.2f, 34f, 39f, 41f, 1.55f, 0.62f, 0.55f);
 
         public static readonly AircraftVisualProfile AirbusA320200 = new(
-            "Models/Aircraft/mdl_a320_200_v01.gltf", -0.68f, new Vector3(0f, 0f, -18.785f),
+            "Models/Aircraft/mdl_a320_200_v02.gltf", -0.68f, new Vector3(0f, 0f, -18.785f),
             new Vector3(40f, 14f, 41f), 5.9f, 34f, 37f, 40f, 1.5f, 0.59f, 0.52f);
 
         public static readonly AircraftVisualProfile EmbraerE190 = new(

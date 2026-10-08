@@ -270,6 +270,7 @@ namespace Airside.Presentation
                     break;
             }
 
+            BuildingFacadeModules.Add(set, xz, baseY, height);
             return set;
         }
 
@@ -325,6 +326,7 @@ namespace Airside.Presentation
             AddRoofPlant(set, xz, baseY + height, random, maxUnits: 16,
                 keepClear: AdelaideTerminalArchitecture.RoofDetails());
             AddAirsideDoors(set, baseY);
+            BuildingFacadeModules.Add(set, xz, baseY, height);
             return set;
         }
 

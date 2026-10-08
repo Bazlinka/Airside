@@ -4,6 +4,7 @@ Every external asset or dataset must be added here before it enters a distributa
 
 | Item | Owner or source | Use | Licence | Attribution | Evidence | Status |
 |---|---|---|---|---|---|---|
+| ART-FLEET-LIGHTING-20261008 | Airside project; original runtime fitting code and procedural lens geometry over existing fleet models | Crown/belly/aft lamp fittings and separate white strobe lenses | Project-owned code/geometry; no external asset or additional cost | None; factual references linked in evidence | ADR `2026-10-08-fleet-lighting-realism`; `docs/testing/aircraft-lighting-2026-10-08/` | Integrated on review branch; native results recorded in evidence; existing family profiles and procedural models remain fallbacks |
 | ART-FLEET-SURFACE-DETAILS-20261007 | Airside project; original C# clipping and detail recipe over existing AIR-001/AIR-005…017 meshes | Runtime door seams, handle surrounds/bars, thresholds, cargo latches, hinge marks, Bell rails and service hatches | Project-owned code and geometry; no external asset or additional cost | None | Task #578; ADR `2026-10-07-fleet-surface-details`; `docs/testing/fleet-surface-details-2026-10-07/` | Integrated; native Unity unverified; missing/unreadable source retains previous appearance |
 | ART-CELESTIAL-STARS-20261006 Dedicated celestial star shader | Airside project; original `CelestialStars.shader` and material/policy code using the existing pinned URP runtime | Consumes generated star vertex tint/brightness, additive RGB fade, background far depth and no depth writes (PR #534 SKY-01/02) | Project-owned source; existing Unity/URP package terms unchanged; no new external asset or cost | None | `docs/testing/visual-audit-batch2-2026-10-06/README.md`; `scripts/test-weather-star-contract.py`; shader GUID explicitly in GraphicsSettings | Code-only implementation; missing/unsupported shader retains independent existing UnlitSky fallback without vertex tint; native shader compilation and runtime visuals unverified |
 | DAT-SA-LIDAR-CANOPY Adelaide LiDAR tree canopy height 2022 | Government of South Australia, Department for Environment and Water — "Metropolitan Adelaide tree canopy, green spaces and built environment 2022", Tree canopy height (UrbanCanopyHeight2022.tif, 0.5 m, EPSG:7854, centimetres), https://data.sa.gov.au/data/dataset/0f7ab193-326b-4894-aec4-298b5e6ea0ba (downloaded 2026-10-06, 2.9 GB, kept in git-ignored `work/cache/sa-open/`) | Real tree crowns (position, measured height, watershed crown radius) for `adelaide_trees_v01.bin` via `scripts/generate-adelaide-trees.py`; 62,724 crowns found, 35,166 placed (ADR 0236) | CC BY 4.0 | Flight Manual › Scenery credits › Trees: "Government of South Australia, Department for Environment and Water, Metropolitan Adelaide tree canopy 2022 (CC BY 4.0)" | Dataset licence `cc-by` / http://creativecommons.org/licenses/by/4.0 read from the data.sa.gov.au API 2026-10-06; only derived tree records are committed; fallback `--ndvi` Sentinel-2 placement | Integrated · headless tests pass; native Unity check pending |
@@ -358,3 +359,54 @@ Existing approved palette/icons remain the runtime sources. No external imagery,
 new asset acquisition, additional cost or attribution. Local DejaVu fonts are used
 by the established review renderer; no fonts are added to game assets. Previous
 shared HUD source revision remains the fallback.
+
+## Fleet performance research — 8 October 2026
+
+`FLIGHT_PERFORMANCE_RESEARCH.md` records independently summarized manufacturer/regulator/
+EUROCONTROL public facts with links, variant boundaries and planning assumptions. Runtime
+profiles and atmosphere/trajectory math are project-owned. No copyrighted manuals, training
+graphs, BADA coefficients, imagery or licensed dataset files are imported; no acquisition
+cost. Attribution stays with each linked source. Existing takeoff planning values and the
+separate Bell VTOL profile remain fallback references. Derived CSV/plots are reproducible
+project test evidence rather than external data.
+## Free visual upgrade intake — 2026-10-08 (task #585)
+
+| ID | Source | Licence | Adaptation / runtime use | Evidence |
+|---|---|---|---|---|
+| AIR-011 v02 source parts | [A320 by manilov.ap](https://sketchfab.com/3d-models/a320-ec28bdee6c944688a19bef31ea33437f) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); commercial use allowed, credit required | Engines, pylons, fan blades, tyres and tail surfaces fitted into `mdl_a320_200_v02`; original Airside cabin, doors, apertures, rig and fictional liveries retained; airline textures omitted | Source VRML and public licence metadata in `scripts/sources/free-visuals`; packaged `ThirdPartyNotices.txt`; source/derivative hashes in `docs/testing/free-visual-upgrade-2026-10-08/sources.json` |
+| VEH-FREE-001 | [Kenney Car Kit 3.1](https://kenney.nl/assets/car-kit) | CC0 1.0 | Service cab and wheel geometry; fuel/baggage/bus v07, catering v02, pushback v04; existing dimensions and functional equipment preserved | Original GLBs and original License.txt kept; same hash ledger |
+| VEG-FREE-001 | [Kenney Nature Kit](https://kenney.nl/assets/nature-kit) | CC0 1.0 | Rounded thin-tree canopy and branches, muted palette; up to 128 trees within 1100 m of ARP, existing measured locations/heights, batched into existing kilometre tiles; other trees retain previous LOD | Original tree/shrub GLBs and original License.txt kept; same hash ledger |
+| TEX-CABIN-001 | [Fabric Pattern 07](https://polyhaven.com/a/fabric_pattern_07), Rob Tuytel / Poly Haven | CC0 1.0 | Tintable desaturated upholstery, normal and roughness-derived smoothness; three 1024 maps, shared by cabin seats/headrests; five fitted rows retain close details | Original JPEGs kept; same hash ledger |
+
+Existing CC0 asphalt, worn-concrete and ambientCG grass maps are reused. Pavement grain,
+macro variation and weather sheen now share a coherent world scale. No paid assets,
+subscriptions or signups are required by any runtime or regeneration step.
+
+## Australian airport runway, terminal and gate figures — 2026-10-08
+
+Source: the English Wikipedia article for each of the 19 airports in `DestinationCatalogue.Australia`, read 2026-10-08.
+Licence: CC BY-SA 4.0 (facts only; no prose reproduced). Cost: none. Attribution: Wikipedia contributors.
+Used for: `AirportTemplates` (runway designators and lengths, terminal and gate counts). Sheet: `docs/data/AUSTRALIAN_AIRPORTS_RUNWAYS_TERMINALS_GATES.md`.
+Fallback: a generic count (`FactBasis.Generic`) wherever no figure was found. Not yet cross-checked against AIP/ERSA.
+
+## Airport gate numbers and terminals (OpenStreetMap) — 2026-10-08
+
+Source: OpenStreetMap via the Overpass API (`aeroway=gate|terminal|runway|parking_position` inside each aerodrome), queried 2026-10-08
+for 16 of 18 non-Adelaide airports (Hobart and Kingscote timed out and keep their Wikipedia/generic templates). Trimmed to
+`docs/data/osm/airport-gates-2026-10-08.json` (21 KB). Licence: ODbL 1.0, (c) OpenStreetMap contributors. Cost: none.
+Used for: real gate numbers and terminal membership (`scripts/generate-airport-gates.py` -> `AirportGateData.cs`) at Melbourne, Sydney,
+Brisbane, Perth, Canberra, Gold Coast, Darwin and Alice Springs, and to cross-check runway designators (all matched except Whyalla 05/23,
+which OSM does not map). Fallback: the Wikipedia template. Aerobridge flags and gate size are inferred from a terminal's role, not mapped.
+
+## Parafield independent airport — 2026-10-08 (task #593)
+
+| ID | Source / generator | Licence / cost / attribution | Runtime use / fallback |
+|---|---|---|---|
+| WLD-YPPF-001 | [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), Overpass snapshot retained in `parafield-layout-source-v01.json`; `scripts/generate-parafield-layout.py` | ODbL 1.0; zero cost; © OpenStreetMap contributors, existing in-game map credit retained | Runway/taxiway/apron/building outlines baked into project code; existing Adelaide satellite/terrain remains when YPPF presentation is disabled |
+| DATA-YPPF-001 | [OurAirports runway data](https://ourairports.com/data/), retained `parafield-runways-ourairports-v01.json`; official [Parafield master plan](https://parafieldairport.com.au/wp-content/uploads/Parafield-Airport-Master-Plan_Final_Digital-Complete-copy.pdf) consulted for sealed surfaces and main-only lighting | OurAirports public domain; official plan independently summarized facts only, no copied document or imagery; zero cost | Location/runway cross-check; mapped geometry retained as fallback |
+| AIR-YPPF-001 | `scripts/generate-parafield-trainer.py`: original unbranded, four-seat high-wing trainer using existing project lathe/airfoil primitives | Airside project-owned generated geometry; zero cost; no external mesh, texture, logo or AI image; no external attribution | `Models/Aircraft/mdl_parafield_trainer_v01.gltf` + `.bin`, 31 parts; high wing, struts, tricycle gear, glass, propeller; simple procedural high-wing fallback |
+
+Prompt/source specification: 11 m span, 8.3 m length, approximately 2.9 m high,
+cream airframe/coastal-blue or eucalyptus trim, real-metre fixed landing gear,
+no marks baked into textures. Status: integrated for native/packaged review;
+this entry does not claim visual verification before the recorded captures.

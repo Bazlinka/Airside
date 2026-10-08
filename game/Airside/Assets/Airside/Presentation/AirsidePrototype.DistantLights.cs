@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Airside.Domain;
+using Airside.Simulation;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -20,13 +22,18 @@ namespace Airside.Presentation
         private readonly Dictionary<int, Renderer> _distantLights = new();
         private MaterialPropertyBlock _distantLightBlock;
 
-        private void UpdateDistantLight(Transform view, bool landingLights)
+        private void UpdateDistantLight(Transform view, bool landingLights, AircraftType type, AircraftPhase phase, bool powered)
         {
             if (view == null || _mainCamera == null)
                 return;
             var distance = Vector3.Distance(_mainCamera.transform.position, view.position);
-            var strength = AirsideSettings.Current.DistantGlows
-                ? ArrivalApproach.BeaconStrength(distance) * (landingLights ? 1f : 0.45f)
+            var direction = view.InverseTransformPoint(_mainCamera.transform.position);
+            var bearing = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+            var forwardBeam = landingLights && Mathf.Abs(bearing) < 35f;
+            var profile = AircraftLightingProfile.For(type);
+            var flash = powered && AirsideReusableMotion.StrobesOn(phase) ? profile.StrobeLevel(PresentationClock + AircraftLightingProfile.ClockOffsetSeconds(view.name)) : 0f;
+            var strength = AirsideSettings.Current.DistantGlows && powered
+                ? ArrivalApproach.BeaconStrength(distance) * (forwardBeam ? 1f : flash > 0f ? 0.85f : 0.28f)
                 : 0f;
             _distantLights.TryGetValue(view.GetInstanceID(), out var glow);
             if (strength <= 0.01f)
@@ -62,7 +69,10 @@ namespace Airside.Presentation
             t.localScale = Vector3.one * (size / parentScale);
             t.rotation = Quaternion.LookRotation(t.position - _mainCamera.transform.position, _mainCamera.transform.up);
             _distantLightBlock ??= new MaterialPropertyBlock();
-            var warm = landingLights ? new Color(1f, 0.96f, 0.86f) : new Color(1f, 0.55f, 0.45f);
+            var nav = Mathf.Abs(bearing) > 110f ? Color.white
+                : NavLensColor(bearing < 0f ? AircraftNavigationLight.Left : AircraftNavigationLight.Right);
+            var warm = forwardBeam ? new Color(1f, 0.96f, 0.86f)
+                : flash > 0f ? new Color(0.92f, 0.96f, 1f) : nav;
             _distantLightBlock.SetColor("_BaseColor", warm * (1.6f * strength));
             glow.SetPropertyBlock(_distantLightBlock);
         }

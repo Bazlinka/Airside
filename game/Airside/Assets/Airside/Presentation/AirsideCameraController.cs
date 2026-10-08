@@ -909,8 +909,9 @@ namespace Airside.Presentation
 
         private void ClampPanCentre(float keepMetres = 0f)
         {
+            var anchor=_watchCentre ?? _overviewCenter;
             AirsideCameraFeel.ClampPanCentre(
-                _overviewCenter.x, _overviewCenter.z, _center.x, _center.z,
+                anchor.x, anchor.z, _center.x, _center.z,
                 out var cx, out var cz, AirsideCameraFeel.PanRadius(_distance), keepMetres);
             _center.x = cx;
             _center.z = cz;
@@ -918,8 +919,9 @@ namespace Airside.Presentation
 
         private float PlanarOffsetFromOverview(float x, float z)
         {
-            var dx = x - _overviewCenter.x;
-            var dz = z - _overviewCenter.z;
+            var anchor=_watchCentre ?? _overviewCenter;
+            var dx = x - anchor.x;
+            var dz = z - anchor.z;
             return Mathf.Sqrt(dx * dx + dz * dz);
         }
 
@@ -960,6 +962,7 @@ namespace Airside.Presentation
         /// </summary>
         public void ReturnToOverview()
         {
+            _watchCentre=null;
             EndCockpit();
             _following = false;
             _easingOverview = true;

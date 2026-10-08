@@ -36,7 +36,7 @@ namespace Airside.Presentation
             if (legMetres <= show * 1.5 || legSeconds <= finalSeconds * 1.25)
             {
                 // Too short a leg to have a separate final: the plain profile.
-                var profile = new EnrouteProfile(legKm, legSeconds, type);
+                var profile = EnrouteProfile.For(legKm, legSeconds, type);
                 return legMetres * (1.0 - profile.DistanceFractionAt(legSeconds - remaining));
             }
 
@@ -44,9 +44,32 @@ namespace Airside.Presentation
                 return speed * remaining;
             var bodyMetres = legMetres - show;
             var bodySeconds = legSeconds - finalSeconds;
-            var body = new EnrouteProfile(bodyMetres / 1000.0, bodySeconds, type);
+            var body = EnrouteProfile.For(bodyMetres / 1000.0, bodySeconds, type, FinalEntryHeightMetres(type)*EnrouteProfile.FeetPerMetre);
             var flown = bodySeconds - (remaining - finalSeconds);
             return show + bodyMetres * (1.0 - body.DistanceFractionAt(flown));
+        }
+
+        public static double FinalEntryHeightMetres(AircraftType type)
+        {
+            var hold=AirsideFlightPath.Approach((float)ApproachHold.HoldingFinalProgress(0),0,type);
+            return ArrivalApproach.Height(CircuitProfile.GlideslopeHeight(hold.x-ArrivalApproach.ShowMetres));
+        }
+
+        /// <summary>Height follows the arrival's reserved final time, rather than blending a late cruise
+        /// descent down tens of thousands of feet in the last 40km. Both camera ownership paths meet at the same glideslope entry height.</summary>
+        public static double HeightMetres(double legKm,double legSeconds,double remaining,AircraftType type)
+        {
+            var speed=CircuitProfile.Knots(AircraftPerformance.For(type).ApproachKnots);
+            var finalSeconds=ArrivalApproach.ShowMetres/speed;
+            var hold=AirsideFlightPath.Approach((float)ApproachHold.HoldingFinalProgress(0),0,type);
+            var outMetres=DistanceOutMetres(legKm,legSeconds,remaining,type);
+            if(outMetres<=ArrivalApproach.ShowMetres)
+                return ArrivalApproach.Height(CircuitProfile.GlideslopeHeight(hold.x-(float)outMetres));
+            if(legKm*1000<=ArrivalApproach.ShowMetres*1.5 || legSeconds<=finalSeconds*1.25)
+                return EnrouteProfile.For(legKm,legSeconds,type).AltitudeFeetAt(legSeconds-remaining)/EnrouteProfile.FeetPerMetre;
+            var body=EnrouteProfile.For((legKm*1000-ArrivalApproach.ShowMetres)/1000,legSeconds-finalSeconds,type,
+                FinalEntryHeightMetres(type)*EnrouteProfile.FeetPerMetre);
+            return body.AltitudeFeetAt(legSeconds-remaining)/EnrouteProfile.FeetPerMetre;
         }
 
         /// <summary>

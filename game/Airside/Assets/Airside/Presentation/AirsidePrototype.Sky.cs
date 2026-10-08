@@ -539,7 +539,7 @@ namespace Airside.Presentation
             // well under the floods' own intensity (52 apron / 1.55-2.1 runway, ADR 0063) adds
             // real directional shading — aircraft, hangars and terrain read as shapes, not silhouettes
             // dissolved into flat ambient.
-            _sun.intensity = Mathf.Lerp(0.30f, 2.05f, Mathf.SmoothStep(0f, 1f, daylight));
+            _sun.intensity = Mathf.Lerp(0.30f, 1.25f, Mathf.SmoothStep(0f, 1f, daylight));
             _sun.shadowStrength = Mathf.Lerp(0.28f, 0.78f, daylight);
 
             // Weather gloom cools the post stack (rain/fog/storm) without fighting day fog.
@@ -581,13 +581,13 @@ namespace Airside.Presentation
             // exposure dip (AirsideDayVolume) are applied on top — floods/runway lights are
             // still 3-150x brighter in absolute terms, so they keep reading as the brightest
             // pools rather than the only visible things.
-            var ambientDay = new Color(0.58f, 0.64f, 0.72f);
+            var ambientDay = new Color(0.42f, 0.43f, 0.44f);
             var ambientDusk = new Color(0.52f, 0.36f, 0.3f);
             var ambientNight = new Color(0.28f, 0.32f, 0.42f);
             var ambientSky = Color.Lerp(Color.Lerp(ambientNight, ambientDay, daylight), ambientDusk, warm * 0.55f);
             var ambientEquator = Color.Lerp(
                 new Color(0.30f, 0.32f, 0.40f),
-                Color.Lerp(new Color(0.46f, 0.5f, 0.52f), new Color(0.5f, 0.38f, 0.32f), warm),
+                Color.Lerp(new Color(0.32f, 0.35f, 0.38f), new Color(0.5f, 0.38f, 0.32f), warm),
                 daylight);
             var ambientGround = Color.Lerp(
                 new Color(0.19f, 0.20f, 0.24f),
@@ -597,7 +597,7 @@ namespace Airside.Presentation
             RenderSettings.ambientSkyColor = ambientSky;
             RenderSettings.ambientEquatorColor = ambientEquator;
             RenderSettings.ambientGroundColor = ambientGround;
-            RenderSettings.ambientIntensity = (Mathf.Lerp(1.05f, 1.12f, daylight) + warm * 0.06f)
+            RenderSettings.ambientIntensity = (Mathf.Lerp(1.05f, 1.0f, daylight) + warm * 0.06f)
                 * NightVisibility.AmbientGain(nightLevel, daylight);
             if (weatherGloom > 0f)
             {

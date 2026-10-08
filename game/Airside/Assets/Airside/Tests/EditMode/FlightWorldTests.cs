@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Airside.Domain;
 using Airside.Presentation;
 using Airside.Simulation;
 using NUnit.Framework;
@@ -23,6 +24,18 @@ namespace Airside.Tests
         public void JourneyVisualPhase_UsesActualJourneyStage(FleetState state, double elapsed, AircraftPhase expected)
         {
             Assert.That(RegionalFlightPath.JourneyPhase(state, elapsed, 1000), Is.EqualTo(expected));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void JourneyVisualPhase_PreservesAircraftSpecificReturnRotation(bool turboprop)
+        {
+            var type = turboprop ? AircraftType.Dash8Q400 : AircraftType.Boeing7378;
+            var rotate = RegionalFlightPath.RotateSeconds(type);
+            Assert.That(RegionalFlightPath.JourneyPhase(FleetState.Inbound, rotate - 0.001, 1000, rotate),
+                Is.EqualTo(AircraftPhase.Takeoff));
+            Assert.That(RegionalFlightPath.JourneyPhase(FleetState.Inbound, rotate, 1000, rotate),
+                Is.EqualTo(AircraftPhase.Departed));
         }
 
         [TestCase(-1,-1)] [TestCase(0,0)] [TestCase(15999,0)] [TestCase(16000,1)]

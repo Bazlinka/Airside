@@ -527,6 +527,12 @@ namespace Airside.Presentation
 
         private bool IsPointerOverHud(Vector2 inputSystemPosition)
         {
+            if(WatchingParafield && _activeWorkspace==HudWorkspace.None && !_menuOpen)
+            {
+                var scale=HudLayout.ScaleFor(Screen.width,Screen.height);
+                var point=new Vector2(inputSystemPosition.x/scale,(Screen.height-inputSystemPosition.y)/scale);
+                if(ParafieldPanelRect(Screen.width/scale,Screen.height/scale).Contains(point))return true;
+            }
             return HudHitTest.IsOverHud(inputSystemPosition, Screen.height, _hudScale, _hudPanels, _hudOverlays);
         }
 
@@ -748,6 +754,7 @@ namespace Airside.Presentation
 
         private AwaySummary _awaySummary;
         private bool _saveProbed;
+        private bool _saveRecoveredFromBackup;
         private AirlineSaveData _savedAirline;
         private string _saveError;
         private float _nextAutosaveAt;
@@ -759,9 +766,9 @@ namespace Airside.Presentation
                 return;
             _saveProbed = true;
 
-            if (AirlineSaveFile.TryRead(SavePath, out var data, out var error))
+            if (AirlineSaveFile.TryRead(SavePath, out var data, out var error, out _saveRecoveredFromBackup))
                 _savedAirline = data;
-            else if (File.Exists(SavePath))
+            else if (File.Exists(SavePath) || File.Exists(SavePath + ".bak"))
                 _saveError = $"{error} Starting a new airline will replace it.";
         }
 
@@ -782,7 +789,7 @@ namespace Airside.Presentation
                 foreach (var airline in _savedAirline.Airlines)
                     if (airline.IsPlayer && airline.Id == aircraft.AirlineId)
                         trips += aircraft.CompletedTrips;
-            return $"Saved {savedClock.DateText(at)} {savedClock.TimeText(at)}  ·  {trips} trip{(trips == 1 ? "" : "s")} flown";
+            return $"{(_saveRecoveredFromBackup ? "Recovery copy" : "Saved")} {savedClock.DateText(at)} {savedClock.TimeText(at)}  ·  {trips} trip{(trips == 1 ? "" : "s")} flown";
         }
 
         /// <summary>
@@ -841,6 +848,8 @@ namespace Airside.Presentation
             RefreshFleetFlights();
             if (_awaySummary == null)
                 ShowToast($"Welcome back to {_operations.PlayerAirline.Name}.");
+            if (_saveRecoveredFromBackup)
+                ShowToast("Recovered the previous save. Your most recent changes may be missing.", HudTone.Caution);
             SaveAirline();
             PlayUiClick();
             StartIntro($"Welcome back to {_operations.PlayerAirline.Name}");
@@ -2147,7 +2156,7 @@ namespace Airside.Presentation
             // Melbourne in twelve minutes came out at about 1 730 kt.
             var legKm = _operations.DistanceKm(aircraft.CurrentDestination.Value);
             var legSeconds = (double)LegTiming.AirborneSeconds(legKm, aircraft.Type);
-            profile = new EnrouteProfile(legKm, legSeconds, aircraft.Type);
+            profile = EnrouteProfile.For(legKm, legSeconds, aircraft.Type);
             // A delayed flight has longer left than the leg takes: hold it at the far end until
             // it is genuinely within flying time of home, instead of dragging it along too slowly.
             var remaining = Math.Clamp(aircraft.StateEndsAt.Value.ElapsedSeconds - _preciseTime, 0.0, legSeconds);
@@ -2699,6 +2708,9 @@ namespace Airside.Presentation
                     _boardScrollFollowRow = -1;
                     _boardScrollSnapToDay = _operationsAllMovements;
                     PlayUiClick();
+                    return;
+                case HudAction.WatchParafield:
+                    WatchParafield();
                     return;
                 case FleetWorkspacePainter.MarketPrevious:
                     _fleetMarketStart = Math.Max(0, _fleetMarketStart - 3);

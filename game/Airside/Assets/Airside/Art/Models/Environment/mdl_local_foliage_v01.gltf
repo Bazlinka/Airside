@@ -1,0 +1,181 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "Airside free source adaptation, 2026-10-08"
+  },
+  "buffers": [
+    {
+      "uri": "mdl_local_foliage_v01.bin",
+      "byteLength": 49788
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 23328,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 23328,
+      "byteLength": 3888,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 27216,
+      "byteLength": 4704,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 31920,
+      "byteLength": 396,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 32316,
+      "byteLength": 14976,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 47292,
+      "byteLength": 2496,
+      "target": 34963
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 1944,
+      "type": "VEC3",
+      "max": [
+        0.3888634443283081,
+        1.4402902126312256,
+        0.3615511655807495
+      ],
+      "min": [
+        -0.25123921036720276,
+        0.4499669671058655,
+        -0.24501371383666992
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5123,
+      "count": 1944,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 392,
+      "type": "VEC3",
+      "max": [
+        0.422986775636673,
+        1.4402979612350464,
+        0.3650486469268799
+      ],
+      "min": [
+        -0.2574497163295746,
+        -0.05000000074505806,
+        -0.25147387385368347
+      ]
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5123,
+      "count": 198,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 1248,
+      "type": "VEC3",
+      "max": [
+        0.2975653111934662,
+        0.2798938751220703,
+        0.2899712920188904
+      ],
+      "min": [
+        -0.284258633852005,
+        -0.04963936656713486,
+        -0.2895345985889435
+      ]
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5123,
+      "count": 1248,
+      "type": "SCALAR"
+    }
+  ],
+  "meshes": [
+    {
+      "name": "tree_foliage_0",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0
+          },
+          "indices": 1,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "tree_trunk_0",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 2
+          },
+          "indices": 3,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "bush_foliage_0",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 4
+          },
+          "indices": 5,
+          "mode": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "tree_foliage_0",
+      "mesh": 0
+    },
+    {
+      "name": "tree_trunk_0",
+      "mesh": 1
+    },
+    {
+      "name": "bush_foliage_0",
+      "mesh": 2
+    }
+  ],
+  "scenes": [
+    {
+      "name": "mdl_local_foliage_v01",
+      "nodes": [
+        0,
+        1,
+        2
+      ]
+    }
+  ],
+  "scene": 0
+}

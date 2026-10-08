@@ -1,0 +1,40 @@
+  Failed BusyDay_NoAircraftDriveThroughEachOther [3 s]
+  Error Message:
+        3  AwaitingStand x TaxiOut   e.g. t=20166 VH-QOK(DH8D AwaitingStand Runway12 stand=BAY-3) @(662,196) vs VH-8IA(B38M TaxiOut Runway05 stand=) @(674,196) d=11
+
+  Expected: <empty>
+  But was:  < ["AwaitingStand x TaxiOut", 3] >
+
+  Stack Trace:
+     at Airside.Tests.GroundSeparationTests.BusyDay_NoAircraftDriveThroughEachOther() in /Users/bailey.fleming/Developer/Airside/game/Airside/Assets/Airside/Tests/EditMode/GroundSeparationTests.cs:line 83
+
+1)    at Airside.Tests.GroundSeparationTests.BusyDay_NoAircraftDriveThroughEachOther() in /Users/bailey.fleming/Developer/Airside/game/Airside/Assets/Airside/Tests/EditMode/GroundSeparationTests.cs:line 83
+
+
+  Skipped Storm_IsAGroundStop [< 1 ms]
+  Failed NightSkyReviewFraming_PutsDrawableCruiseInUpperHalfOfFrame [1 ms]
+  Error Message:
+     night-sky re-run pose (11 km / pitch 8 / yaw 270) must put at least one drawable cruise in the upper half of a 1600×900 / FOV 48 frame at T+45s
+  Expected: greater than 0
+  But was:  0
+
+  Stack Trace:
+     at Airside.Tests.SkyTrafficTests.NightSkyReviewFraming_PutsDrawableCruiseInUpperHalfOfFrame() in /Users/bailey.fleming/Developer/Airside/game/Airside/Assets/Airside/Tests/EditMode/SkyTrafficTests.cs:line 335
+
+1)    at Airside.Tests.SkyTrafficTests.NightSkyReviewFraming_PutsDrawableCruiseInUpperHalfOfFrame() in /Users/bailey.fleming/Developer/Airside/game/Airside/Assets/Airside/Tests/EditMode/SkyTrafficTests.cs:line 335
+
+
+  Failed NightSkyReviewYaw_FacesADrawableOverflightSector [< 1 ms]
+  Error Message:
+     review yaw 270 should face the early-soak drawable overflight
+  Expected: less than or equal to 20.0d
+  But was:  137.05407981833253d
+
+  Stack Trace:
+     at Airside.Tests.SkyTrafficTests.NightSkyReviewYaw_FacesADrawableOverflightSector() in /Users/bailey.fleming/Developer/Airside/game/Airside/Assets/Airside/Tests/EditMode/SkyTrafficTests.cs:line 275
+
+1)    at Airside.Tests.SkyTrafficTests.NightSkyReviewYaw_FacesADrawableOverflightSector() in /Users/bailey.fleming/Developer/Airside/game/Airside/Assets/Airside/Tests/EditMode/SkyTrafficTests.cs:line 275
+
+
+
+Failed!  - Failed:     3, Passed:  2003, Skipped:     0, Total:  2006, Duration: 3 m 32 s - Harness.dll (net8.0)

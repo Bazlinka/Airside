@@ -9,38 +9,75 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*
 
-**Enroute flap phase correction (Codex, #586):** branch `codex/enroute-flap-phase-20261008`
-from main `3fcb8063`. Return cruise inherited the local Approach animation, commanding
-approach flaps/gear while flying enroute. Follow-target refresh also recaptured deployed
-flaps as their rest pose. Preserve the rig cache and select the drawn journey phase explicitly;
-preserve return takeoff and destination approach/rollout. Focused flight tests: 34 passed;
-required full suite: 1,917 passed / zero failed; NUnit compatibility compile and asset audit passed. Unverified in Unity. Packet: `docs/testing/enroute-flaps-2026-10-08/`.
-NEXT: review the fix and check cruise flaps/gear and terminal transitions in Unity.
+**Enroute flap review (8 Oct, Codex, #586 / PR #588):** retains animated rig rest poses
+when follow targets refresh and selects flap/gear phase from the regional journey.
+Updated against current main, preserving aircraft-specific return rotation timing.
+Native review 295/295 passed; packaged flight journeys unverified.
+Evidence: `docs/testing/enroute-flaps-2026-10-08/`.
 
-**Five-area bug sweep (Codex, issue #576, merged PR #580):** five requested agents;
-`codex/five-area-bug-sweep-20261007`, integrated with main `0dc6e629`.
-Fixes: exclusive camera-shell ownership, compact inspector/manual clicks,
-allocation-free runway filters/catalogue lookup, rotor queue isolation, parked-aircraft
-clearance (positive 1 m static margin; moving/queued 3 m), and local BAY-4 apron geometry.
-Preserve main's approved arrival policy and merged save/glide/exit fixes; add regressions.
-Required `scripts/test-domain.sh`: **1,905 passed / zero failed** (5 m 19 s test run);
-Unity-NUnit compile, asset audit, C# syntax and generated presentation map passed.
-Packet: `docs/testing/five-area-bug-sweep-2026-10-07.md`. Unverified in Unity for this
-sweep. Bailey authorised merging #580 without the pending native run; its native checklist remains open.
+**Save recovery (8 Oct, Codex, #599):** merged in PR #600. Retains a readable previous
+save and recovers missing/unreadable primary JSON with a warning; save schema unchanged.
+Native compatibility 163/163 passed. Packaged recovery/title journey unverified.
+Evidence: `docs/testing/save-recovery-2026-10-08/`.
 
-**Aircraft lighting by type (7 Oct, Claude):** `AircraftLightingProfile` gives each family (turboprop, regional jet, narrowbody, widebody,
-Bell 412) its own landing/taxi beam shape and aim, strobe pattern, tail strobe (jets), beacon rate and a nose lamp that doubles as the takeoff
-light on jets. ADR `2026-10-07-aircraft-lighting-profiles`; checks and a night playtest list in `docs/testing/aircraft-lighting-2026-10-07/`.
-Unity EditMode 2325 passed / 0 failed; look at it at night in follow view before trusting the beam aim and toe-out sign.
+**Opening and Options (8 Oct, Codex, #601):** merged in PR #603.
+Clearer title, shorter/skippable entry, grouped Options with setting explanations,
+opening-animation/cockpit-motion controls and direct return to title. Validation
+complete for affected checks: native 152/152, focused headless 20/20; all 12 native UI
+views inspected. Broad regressions retain 3 existing failures; packaged
+handoff/interaction unverified. Evidence: `docs/testing/opening-options-2026-10-08/`.
 
-**Latest implementation (7 Oct, Codex, #578):** fitted door seams, handle surrounds/latches,
-thresholds, cargo hardware, Bell sliding rails and service hatches across all 14 aircraft.
-Original liveries and assets stay configurable; details attach to each leaf through existing hinge motion.
-Implemented for both glTF and readable prefab sources. Bailey requested implementation and merge with
-light testing; native Unity look/motion is unverified. Plan, coverage and proof:
-`docs/testing/fleet-surface-details-2026-10-07/`.
+**Airport templates (8 Oct, Claude):** branch `claude/airport-templates-20261008`. Generic runways, terminals and gates for all 19
+Australian destinations (`AirportTemplates`) and a deterministic runway/gate planner (`AirportArrivalPlanner`); the network flight
+HUD shows the landing runway and gate. Runways cross-checked against OSM/OurAirports; real gate numbers and terminals from OSM for MEL, SYD, BNE, PER, CBR, OOL, DRW, ASP (airlines prefer their own terminal); HBA, KGC and the small fields stay generic.
+ADR `2026-10-08-airport-templates`. Headless tests pass; unverified in Unity. Gate occupancy is not simulated away from Adelaide.
 
-**Earlier merged work:** #552 native fixture/blank-save/camera-origin repairs (native rerun pending);
+**World lighting pass (8 Oct, Codex, #595):** terrain, roads and airport pavement
+share URP surface lighting. Corrected Gamma vertex palette/texture blending,
+excluded solid roads/props from satellite-edge/water treatment, normalised pavement
+scan grain around authored colour and reduced daytime sun/grade washout.
+Native day/dusk/night comparison views and focused checks:
+`docs/testing/world-lighting-2026-10-08/`. Packaged build/soak deferred; review pending.
+
+**Parafield first working airport (8 Oct, Codex, #593):** independent YPPF with four mapped
+runways, taxiways, apron/hangars and four original light trainers on a reserved training circuit.
+Operations → WATCH PARAFIELD; ADELAIDE/R returns to Adelaide. Player bases/economics/saves
+unchanged. Five focused traffic checks and asset audit pass; Unity compiled. Bailey requested
+immediate merge after a brief pass; full suites stopped and Mac/visual review deferred.
+Evidence and limits: `docs/testing/parafield-2026-10-08/`.
+
+**Ocean halo fix (8 Oct, Codex):** far and outer ocean meshes keep one constant overlap height,
+removing the artificial sloped bands that catch water reflections. Land overlap stays unchanged.
+Bailey requested a quick fix without tests; Mac rebuild passed. Visual confirmation remains pending.
+
+**Fleet flight performance (8 Oct, Codex):** branch `fix/fleet-flight-performance-20261008`, based on merged lighting PR #587.
+Research: `docs/data/FLIGHT_PERFORMANCE_RESEARCH.md`; decision `2026-10-08-fleet-flight-performance`.
+Derived altitude rates vary with height and capture level cruise; normal upper levels are separate from
+certified ceilings. CAS/Mach limits and integrated distance share a speed schedule. Camera telemetry
+handles accelerated clocks and origin shifts, shows IAS (CAS approximation), Mach and GS. Inbound height
+reserves the same extended final as its map track; regional departure uses the type's roll/Vr.
+New jet schedules allow twenty minutes for climb/descent instead of ten. No save-schema change.
+Bell remains on its own VTOL model with the common telemetry fix.
+Evidence: `docs/testing/flight-performance-2026-10-08/`: 166/166 focused native Unity checks passed.
+User requested immediate merge: full headless run stopped, Mac build and packaged camera journey
+unverified. Do not infer a packaged flight playtest from deterministic/native math checks.
+
+Merged lighting #587 retains 37 passing native checks and 70 reviewed night fixtures; full-flight/night
+performance acceptance remains separate in `docs/testing/aircraft-lighting-2026-10-08/`.
+**Free visual upgrades (8 Oct, Codex, task #585):** free A320 source parts fitted into
+v02; Kenney service vehicle/foliage derivatives; consistent scanned pavement,
+feathered wear, close grass grain, facade fittings, weather-responsive terminal
+reflections, paused-clock conveyor ribs and scanned cabin fabric/fittings.
+Source inputs, attribution and offline regeneration committed. Aircraft metrics,
+working cabin apertures, doors and simulation/save contracts retained. All ten
+workstreams and acceptance evidence: `docs/decisions/2026-10-08-free-visual-upgrade.md`,
+`docs/testing/free-visual-upgrade-2026-10-08/`. Merged in #589; its build and runtime acceptance evidence remains in that packet.
+
+**Earlier merged work:** #587 fits all 14 families’ exterior lights and night beams;
+#580 fixes camera-shell ownership, parked-aircraft clearance, rotor queues and query allocation.
+Their native follow-ups remain in their linked testing packets.
+
+**Previous merged work:** #552 native fixture/blank-save/camera-origin repairs (native rerun pending);
 #570 fleet/flight clarity and Melbourne views; arrivals gated by runway only with 4-minute go-around;
 clean-image rendering and far-terrain hand-over. Their native follow-ups remain below.
 
@@ -56,17 +93,15 @@ the baked ADR 0210 haze is gone (it made a pale square). Tiles build in ≤70 ms
 now logged as `[Airside soak] hitch`. Still unchecked: depth precision, sky/stars at the 1,170 km clip, dusk/night. Packet:
 `docs/plans/south-australia-overview-streaming.md`.
 
-**Open — needs the Mac (nothing below is verified in Unity):**
+**Open validation and regressions:**
 - Clean-image pass (full-res SSAO, near clip scales with distance, ground mip bias 0, 16x aniso) is unverified: compare ground-marking flicker, AO softness and frame time. ADR 0246/0247/0248/0250/0251 (SSAO half-res — now reverted, MSAA budget, 3 shadow cascades/110 m, full-DEM far mesh, 4096 px far image, state-wide land-cover colours, zoom to 450 km with coarse-ring streaming):
   compare day/dusk/night for AO banding, shimmer and shadow pop-in; check the seam where the near satellite ends,
   startup-to-title time and memory (far image decodes to ~64 MB); at 100–450 km zoom check coastline blockiness, the 40 m join between
   coarse and fine tiles, sky/stars/sun at a 1,170 km far clip, depth precision and frame time while tiles stream. Each is a one-line revert (see the ADRs).
-- **24 native EditMode failures reported before #552** (Unity 2265 passed / 24 failed). Source fixtures are repaired in #552; native rerun remains pending: `PassengerFlightViewTests`
-  (window sightlines, all 13 types + two exterior cases), `PresentationLayoutTests` (HUD layout ×4),
-  `FieldMiniMapTests.PanelFor_ShowsOnTheDesktopWindow`, `AirsideSettingsTests.Defaults_MatchAPlayableAdelaideSession`,
-  `CockpitCameraTests.CockpitTracksSeatAfterAircraftPoseAndRestoresCameraSettings`,
-  `PresentationBugSweepTests.CameraShellAnchor_FollowsCameraMovedAfterPlacement`,
-  `GroundSeparationTests.BusyDay_NoAircraftDriveThroughEachOther`. (The three save/resume failures were fixed.)
+- **Current baseline regressions (8 Oct):** busy-day waiting/taxiing ground overlap, plus night-sky
+  review framing and yaw. Full headless has the same 3 failures. Opening/Options' broad native run
+  also exposed two obsolete menu/intro assertions; their updated checks pass in the final 152/152
+  affected rerun. Full regression is not green. Evidence: `docs/testing/opening-options-2026-10-08/`.
 - Maintenance journey and refined interface (ADR 0245) still wait on a native playtest: prop/jet startup, gear/tug
   alignment, swept doorway clearance, busy taxi traffic, save/reload through every phase. Do not merge on offline
   painter previews alone.

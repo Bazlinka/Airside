@@ -31,8 +31,10 @@ AREAS = [
 ]
 
 OWNERS = {
+    "AirsidePrototype.Parafield.cs": ("Independent airports", "Builds and updates Parafield trainer traffic and watches the airport from Operations"),
     "AirsidePrototype.OutstationView.cs": ("Flight views and traffic", "Network aircraft views: read-only timed journey rendering, camera entry/exit and return to Fleet"),
     "AirsidePrototype.cs": ("Core", "The single instance; per-frame loop, selection / follow / reset ownership and most shared state"),
+    "AirsidePrototype.Options.cs": ("Core", "Grouped Options, setting actions and title/in-game return routing"),
     "AirsidePrototype.Intro.cs": ("Core", "Title screen and the opening dissolve into the live airport (ADR 0122)"),
     "AirsidePrototype.Soak.cs": ("Core", "Unattended soak mode for packaged builds (heartbeat log, stall detection)"),
     "AirsidePrototype.Airline.cs": ("Player airline UI", "Player-airline layer: start-your-airline panel, fleet panel, destinations map, HUD sheets (ADR 0045)"),
@@ -46,6 +48,7 @@ OWNERS = {
     "AirsidePrototype.Aerobridges.cs": ("Field and lighting build", "Terminal 1 aerobridges, one per bridged gate (ADR 0113)"),
     "AirsidePrototype.Lights.cs": ("Aircraft visuals", "Aircraft lamps, strobes and cabin glow; collects airfield lights; sun light and lightning"),
     "AirsidePrototype.AircraftVisuals.cs": ("Aircraft visuals", "Engine heat and exhaust, propeller and jet-fan spin and blur, gear tyres, commercial aircraft views"),
+    "AirsidePrototype.AircraftLightingFit.cs": ("Aircraft visuals", "Fits crown/belly/aft lamp installations to runtime hulls and carries fallback taxi lamps with nose gear"),
     "AirsidePrototype.Articulation.cs": ("Aircraft visuals", "Control surfaces hinged on their real axes"),
     "AirsidePrototype.Helicopter.cs": ("Aircraft visuals", "Bell 412 in the airline game: rotors and VTOL pose (ADR 0207)"),
     "AirsidePrototype.Doorways.cs": ("Aircraft visuals", "Door hollows on aircraft (AircraftDoorwayGeometry)"),

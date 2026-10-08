@@ -27,7 +27,7 @@ MODELS = [
     ("DH8D", "Models/Aircraft/mdl_dash8_q400_v01.gltf", "UI/Aircraft/thb_air_dh8d_v01.png"),
     ("E190", "Models/Aircraft/mdl_e190_v01.gltf", "UI/Aircraft/thb_air_e190_v01.png"),
     ("A223", "Models/Aircraft/mdl_a220_300_v01.gltf", "UI/Aircraft/thb_air_a223_v01.png"),
-    ("A320", "Models/Aircraft/mdl_a320_200_v01.gltf", "UI/Aircraft/thb_air_a320_v01.png"),
+    ("A320", "Models/Aircraft/mdl_a320_200_v02.gltf", "UI/Aircraft/thb_air_a320_v01.png"),
     ("B738", "Models/Aircraft/mdl_737_800_v01.gltf", "UI/Aircraft/thb_air_b738_v01.png"),
     ("B38M", "Models/Aircraft/mdl_737_8_narrowbody_v01.gltf", "UI/Aircraft/thb_air_b38m_v01.png"),
     ("A21N", "Models/Aircraft/mdl_a321neo_v01.gltf", "UI/Aircraft/thb_air_a21n_v01.png"),

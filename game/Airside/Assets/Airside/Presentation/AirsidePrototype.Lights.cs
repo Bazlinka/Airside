@@ -31,7 +31,15 @@ namespace Airside.Presentation
                     && AirsideReusableMotion.SecondsSinceLiftoff(phase, progress01, aircraftType) > 0f);
             var enginesOn = engines?.AnyRunning ?? AirsideReusableMotion.PropellersSpinning(phase);
             var night = daylight < 0.35f;
-            var landingLights = AirsideReusableMotion.LandingLightsOn(phase, progress01, drawnOnGround: engines.HasValue);
+            var profile = AircraftLightingProfile.For(aircraftType);
+            var root = parts.Length > 0 ? parts[0].AircraftRoot : null;
+            if (parts.Length > 0) presentationTime += parts[0].LightingClockOffset;
+            var height = root != null ? Mathf.Max(0f, root.position.y - AirsideFlightPath.GroundY) : 0f;
+            var landingLights = profile.LandingLampOn(phase, height);
+            var camera = Camera.main;
+            var bearing = root != null && camera != null
+                ? Mathf.Atan2(root.InverseTransformPoint(camera.transform.position).x,
+                    root.InverseTransformPoint(camera.transform.position).z) * Mathf.Rad2Deg : 0f;
             // Ground-movement phases only. This used to also gate on `night ||`, which made
             // the phase check meaningless after dark: EngineStartSequence spools engines up to
             // 120s before an at-stand departure and ramps them down over up to 35s after an
@@ -41,7 +49,6 @@ namespace Airside.Presentation
             // this was the same bug in a narrower, still-visible form.
             // ADR 0126: and only while actually taxiing forward — dark on the tail-first push and
             // while stopped in a queue, as crews do, instead of lit from pushback to the hold.
-            var profile = AircraftLightingProfile.For(aircraftType);
             var taxiLights = profile.TaxiLampOn(phase, airborne, enginesOn,
                 groundPose == null || (!groundPose.Value.TailFirst && groundPose.Value.Speed > 0.5f));
 
@@ -84,7 +91,10 @@ namespace Airside.Presentation
                                 : 0f;
                             EnsureWingtipStrobe(parts[i], strobe, profile);
                         }
-                        GlowLamp(parts[i], NavLensColor(parts[i].NavLight), navOn ? 1f : 0f, strobe);
+                        var visibility = camera != null
+                            ? AircraftLightingProfile.NavigationVisibility(parts[i].NavLight, bearing) : 1f;
+                        // The navigation lens remains coloured through the white strobe flash.
+                        GlowLamp(parts[i], NavLensColor(parts[i].NavLight), navOn ? visibility : 0f, 0f);
                         break;
                     }
                     case LightGearKind.Beacon:
@@ -97,7 +107,7 @@ namespace Airside.Presentation
                     }
                     case LightGearKind.LandingLight:
                     {
-                        child.gameObject.SetActive(landingLights);
+                        child.gameObject.SetActive(true);
                         EnsureLandingSpotLight(parts[i], landingLights, night, profile);
                         if (!parts[i].LampResolved)
                         {
@@ -121,8 +131,9 @@ namespace Airside.Presentation
                     }
                     case LightGearKind.TaxiLight:
                     {
-                        child.gameObject.SetActive(taxiLights);
+                        child.gameObject.SetActive(true);
                         EnsureTaxiSpotLight(parts[i], taxiLights, profile);
+                        GlowLamp(parts[i], new Color(1f, 0.94f, 0.78f), taxiLights ? 1f : 0f, 0f);
                         break;
                     }
                 }
@@ -179,7 +190,7 @@ namespace Airside.Presentation
             if (light == null)
             {
                 light = LampPivot(lamp).gameObject.AddComponent<Light>();
-                light.type = LightType.Point;
+                light.type = LightType.Spot;
                 light.color = NavLensColor(kind);
                 light.range = 8f;
                 light.shadows = LightShadows.None;
@@ -190,7 +201,14 @@ namespace Airside.Presentation
             if (on)
             {
                 light.range = profile.NavRange;
-                light.intensity = 1.8f * AirsideReusableMotion.NavSteady;
+                light.intensity = 0.6f * AirsideReusableMotion.NavSteady;
+                light.type = LightType.Spot;
+                light.spotAngle = kind == AircraftNavigationLight.Tail ? 140f : 110f;
+                light.innerSpotAngle = light.spotAngle - 4f;
+                var yaw = kind == AircraftNavigationLight.Left ? -55f
+                    : kind == AircraftNavigationLight.Right ? 55f : 180f;
+                if (part.AircraftRoot != null)
+                    light.transform.rotation = part.AircraftRoot.rotation * Quaternion.Euler(0f, yaw, 0f);
             }
         }
 
@@ -203,8 +221,18 @@ namespace Airside.Presentation
                 var strobe = wingtip.Find("White strobe");
                 if (strobe == null)
                 {
-                    strobe = new GameObject("White strobe").transform;
+                    strobe = GameObject.CreatePrimitive(PrimitiveType.Sphere).transform;
+                    strobe.name = "White strobe";
+                    DestroyPresentationObject(strobe.GetComponent<Collider>());
+                    var renderer = strobe.GetComponent<Renderer>();
+                    renderer.sharedMaterial = CreateMaterial(new Color(0.65f, 0.68f, 0.7f));
+                    renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    renderer.receiveShadows = false;
                     strobe.SetParent(wingtip, false);
+                    // A separate clear lens next to the coloured position lamp, in metres.
+                    var scale = Mathf.Max(0.001f, wingtip.lossyScale.x);
+                    strobe.localScale = Vector3.one * (0.12f / scale);
+                    strobe.position = wingtip.position + (part.AircraftRoot != null ? part.AircraftRoot.up : Vector3.up) * 0.10f;
                     var light = strobe.gameObject.AddComponent<Light>();
                     light.type = LightType.Point;
                     light.color = new Color(0.92f, 0.96f, 1f);
@@ -213,11 +241,15 @@ namespace Airside.Presentation
                 }
 
                 point = part.Strobe = strobe.GetComponent<Light>();
+                part.StrobeLens = strobe.GetComponent<Renderer>();
             }
 
             point.enabled = intensity > 0.01f && AirsideSettings.Current.AircraftLights;
             point.range = profile.StrobeRange;
             point.intensity = profile.StrobeIntensity * intensity;
+            if (part.StrobeLens != null)
+                SetRendererColor(part.StrobeLens, new Color(0.65f, 0.68f, 0.7f),
+                    new Color(3.5f, 3.6f, 3.8f) * intensity);
         }
 
         private static void EnsureBeaconPointLight(LightGearPart part, float intensity, AircraftLightingProfile profile)
@@ -254,6 +286,7 @@ namespace Airside.Presentation
             {
                 light = part.Light = LampPivot(lamp).gameObject.AddComponent<Light>();
                 light.type = LightType.Spot;
+                MoveBeamEmitterToLensFront(lamp, light);
                 light.color = new Color(1f, 0.97f, 0.88f);
                 light.range = 42f;
                 light.spotAngle = 48f;
@@ -279,7 +312,25 @@ namespace Airside.Presentation
             var toe = lamp.name.EndsWith(" R", StringComparison.Ordinal) ? profile.LandingToeOutDegrees
                 : lamp.name.EndsWith(" L", StringComparison.Ordinal) ? -profile.LandingToeOutDegrees
                 : 0f;
-            light.transform.localRotation = Quaternion.Euler(profile.LandingPitchDownDegrees, toe, 0f);
+            var height = part.AircraftRoot != null
+                ? Mathf.Max(0f, part.AircraftRoot.InverseTransformPoint(light.transform.position).y + AirsideFlightPath.GroundY)
+                : 0f;
+            var pitch = profile.LandingPitchDownDegrees;
+            // Actual fittings can sit higher than the previous guessed family height.
+            // Keep the beam axis inside its range, without steering a flying beam at the ground.
+            if (height > 0f)
+                pitch = Mathf.Max(pitch, Mathf.Atan2(height, profile.LandingRange * 0.7f) * Mathf.Rad2Deg);
+            light.transform.localRotation = Quaternion.Euler(pitch, toe, 0f);
+        }
+
+        private static void MoveBeamEmitterToLensFront(Transform lamp, Light light)
+        {
+            var filter = lamp.GetComponent<MeshFilter>();
+            if (filter == null || filter.sharedMesh == null || light.transform == lamp) return;
+            var bounds = filter.sharedMesh.bounds;
+            // The exported lens has thickness. Emit in front of it, avoiding its own
+            // shadow and an extremely bright spot inside the lamp housing.
+            light.transform.localPosition = bounds.center + Vector3.forward * (bounds.extents.z + 0.03f);
         }
 
         private static void EnsureTaxiSpotLight(LightGearPart part, bool on, AircraftLightingProfile profile)
@@ -292,6 +343,7 @@ namespace Airside.Presentation
             {
                 light = part.Light = LampPivot(lamp).gameObject.AddComponent<Light>();
                 light.type = LightType.Spot;
+                MoveBeamEmitterToLensFront(lamp, light);
                 light.color = new Color(1f, 0.94f, 0.78f);
                 light.range = 18f;
                 light.spotAngle = 55f;

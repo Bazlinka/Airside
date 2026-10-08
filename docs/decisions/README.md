@@ -302,3 +302,11 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-07 | [Multi-tool collaboration: one routine, generated indexes, date-named ADRs](2026-10-07-multi-agent-collaboration.md) | accepted |
 | 2026-10-07 | [Inline save absence and native flight-view contracts](2026-10-07-native-save-and-flight-view-contracts.md) |  |
 | 2026-10-07 | [All-base airline operations](2026-10-07-network-operations.md) |  |
+| 2026-10-08 | [Generic airport templates for every Australian destination](2026-10-08-airport-templates.md) | accepted (code only; unverified in Unity) |
+| 2026-10-08 | [Coherent world surface lighting](2026-10-08-coherent-world-lighting.md) |  |
+| 2026-10-08 | [Fleet flight performance and camera telemetry — 8 October 2026](2026-10-08-fleet-flight-performance.md) |  |
+| 2026-10-08 | [Fleet exterior lighting realism — 8 October 2026](2026-10-08-fleet-lighting-realism.md) |  |
+| 2026-10-08 | [Free sourced assets and coherent close-view materials](2026-10-08-free-visual-upgrade.md) |  |
+| 2026-10-08 | [Opening and Options clarity](2026-10-08-opening-options.md) | Accepted for implementation |
+| 2026-10-08 | [Independent Parafield airport](2026-10-08-parafield-independent-airport.md) |  |
+| 2026-10-08 | [Save recovery copy](2026-10-08-save-recovery.md) | Accepted for implementation |

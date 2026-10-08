@@ -1,5 +1,10 @@
 # Changelog
 
+- 2026-10-08 — #595: unify terrain/road/pavement lighting and colour handling; reduce daytime washout and retain pavement detail (ADR coherent-world-lighting).
+
+- 2026-10-08 — #585: free A320, vehicle and foliage derivatives; scanned surfaces, softer wear, facade fittings, reflections, conveyor motion and cabin fabric.
+- 2026-10-08: Fit fleet exterior lamps to their airframes, carry taxi lamps with nose gear, separate white strobes from coloured nav sectors, distinguish Boeing flashes and extinguish landing beams in cruise. Validation: docs/testing/aircraft-lighting-2026-10-08/.
+
 One line per merged change, newest first: what the player or contributor sees, plus the PR or ADR number.
 Keep each entry to **one line (about 160 characters)**; the evidence belongs in the PR, an ADR or
 `docs/testing/<topic>/README.md`. Mark behaviour not yet run in Unity as "(unverified)".
@@ -8,7 +13,16 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
-- Fix cruise flaps/gear: use the journey phase and preserve rig rest poses when follow targets refresh (#586; unverified in Unity).
+- Preserve flap/gear rig rest poses across follow-target refreshes and use the actual regional journey phase in cruise (#586).
+- Keep one previous airline save and recover unreadable/missing primary JSON through Continue, with a clear recovery warning (#599).
+- Clearer opening, shorter optional entrance, grouped Options and direct return to title; expose cockpit motion and explain settings (#601).
+
+- 2026-10-08: Runway/terminal/gate templates for all 19 Australian airports (real OSM gate numbers at 8) plus a runway and gate planner that sends airlines to their own terminal (unverified in Unity).
+
+- Add independent Parafield: four mapped runways, taxiways, hangars and light trainer traffic; watch from Operations (#593; packaged review pending).
+
+- Remove artificial ocean reflection rings by keeping far/outer water meshes planar; land overlap unchanged (native visual confirmation pending).
+- Taper fleet climb/descent rates, level cruise, constrain CAS/Mach and fix stale camera V/S, inbound altitude and regional takeoff; allow realistic jet leg time (ADR 2026-10-08).
 
 - Fix parked/bay taxi clearance, rotor queues, sky ownership, inspector/manual buttons and repeated query allocations; add aircraft/save coverage (#576; Unity unverified).
 - Lighting beam-aim checks: each family's landing/taxi beam must land on the ground ahead inside lamp range, with an offline beam diagram (unverified in Unity).

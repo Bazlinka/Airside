@@ -61,7 +61,8 @@ public static class AircraftAppearanceReview
             var fleet = (FleetAircraft)Activator.CreateInstance(typeof(FleetAircraft), BindingFlags.Instance | BindingFlags.NonPublic,
                 null, new object[] { "VH-ASH", airline, type, new StableId("REVIEW"), new SimulationTime(0) }, null);
             if (!type.IsRotorcraft)
-                typeof(AirsidePrototype).GetMethod("EnsureAircraftIdentityMarkings", PrivateStatic)
+                typeof(AirsidePrototype).GetMethod("EnsureAircraftIdentityMarkings", PrivateStatic, null,
+                    new[]{typeof(Transform),typeof(FleetAircraft),typeof(Color)},null)
                     .Invoke(null, new object[] { root, fleet, accent });
             foreach (var lod in root.GetComponentsInChildren<LODGroup>()) lod.ForceLOD(0);
             foreach (var r in root.GetComponentsInChildren<MeshRenderer>())

@@ -400,7 +400,10 @@ namespace Airside.Presentation
 
             // Batch F1 MAT-001 — prefer inspectable authored materials when present.
             if (useTextures && TryInstantiateAuthored(kind, color, albedo, tiling, out var authoredInstance))
+            {
+                ConfigurePavement(authoredInstance, kind, color);
                 return authoredInstance;
+            }
 
             Shader shader;
             if (kind == SurfaceKind.UnlitSky)
@@ -486,8 +489,34 @@ namespace Airside.Presentation
 
             if (profile.Transparent || color.a < 0.99f)
                 ApplyTransparent(material);
+            else if (useTextures)
+                ConfigurePavement(material, kind, color);
 
             return material;
+        }
+
+        // World-space scanned surfaces retain their actual grain size on every runway,
+        // shoulder and apron mesh. Transparent wear/paint and buildings keep their shaders.
+        private static void ConfigurePavement(Material material, SurfaceKind kind, Color color)
+        {
+            if (color.a < .99f || (kind != SurfaceKind.Asphalt && kind != SurfaceKind.Concrete)) return;
+            var shader = Shader.Find("Airside/Pavement");
+            if (shader == null || !shader.isSupported) return;
+            material.shader = shader;
+            EnsureAuthoredMaps();
+            material.SetTexture("_BumpMap", ResolveNormal(kind));
+            material.SetTexture("_OcclusionMap", ResolveAo(kind));
+            if (AuthoredMasks.TryGetValue(kind, out var scannedMask) && scannedMask != null)
+                material.SetTexture("_MetallicGlossMap", scannedMask);
+            material.SetFloat("_BumpScale", GetProfile(kind).BumpScale * .65f);
+            material.SetFloat("_OcclusionStrength", GetProfile(kind).Occlusion);
+            material.SetFloat("_TileMetres", kind == SurfaceKind.Asphalt ? 3f : 4f);
+            material.SetFloat("_MacroStrength", kind == SurfaceKind.Asphalt ? .065f : .035f);
+            material.SetFloat("_PatchStrength", kind == SurfaceKind.Asphalt ? .025f : .015f);
+            material.SetColor("_ScanMean", kind == SurfaceKind.Asphalt ? new Color(.38f,.39f,.40f) : new Color(.64f,.65f,.65f));
+            material.SetFloat("_ScanContrast", kind == SurfaceKind.Asphalt ? .55f : .22f);
+            material.SetFloat("_Metallic", 0f);
+            material.SetFloat("_Smoothness", GetProfile(kind).Smoothness);
         }
 
         public static float DrySmoothness(SurfaceKind kind) => GetProfile(kind).Smoothness;
@@ -543,6 +572,7 @@ namespace Airside.Presentation
             if (material == null)
                 return;
             wetness01 = Mathf.Clamp01(wetness01);
+            if (material.HasProperty("_SurfaceWetness")) material.SetFloat("_SurfaceWetness",wetness01);
             // Cool puddle tint + darken — asphalt goes nearly black; grass stays greenish.
             var wetTint = new Color(0.02f, 0.05f, 0.1f, 0f);
             var wetColor = Color.Lerp(dryColor, dryColor * 0.28f + wetTint, wetness01);

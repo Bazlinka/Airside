@@ -16,11 +16,13 @@ namespace Airside.Presentation
             var vehicle = kind == "Fuel truck"
                 ? BuildServiceVehicle("Fuel truck (AI)", new Color(0.95f, 0.76f, 0.12f), new Vector3(3.1f, 1.25f, 1.35f),
                     PreferArtKit(
+                        "Models/Vehicles/mdl_fuel_truck_small_v07.gltf",
                         "Models/Vehicles/mdl_fuel_truck_small_v06.gltf",
                         "Models/Vehicles/mdl_fuel_truck_small_v05.gltf",
                         "Models/Vehicles/mdl_fuel_truck_small_authored_v01.gltf"))
                 : BuildServiceVehicle("Baggage cart (AI)", new Color(0.91f, 0.38f, 0.12f), new Vector3(2.3f, 0.8f, 1.15f),
                     PreferArtKit(
+                        "Models/Vehicles/mdl_baggage_tug_train_v07.gltf",
                         "Models/Vehicles/mdl_baggage_tug_train_v06.gltf",
                         "Models/Vehicles/mdl_baggage_tug_train_v05.gltf",
                         "Models/Vehicles/mdl_baggage_tug_train_authored_v01.gltf"));
@@ -244,6 +246,7 @@ namespace Airside.Presentation
                 return;
             _probeBand = band;
             _apronProbe.RenderProbe();
+            if (_terminalProbe != null) _terminalProbe.RenderProbe();
         }
 
         private static ReflectionProbe BuildApronReflectionProbe()
@@ -1044,7 +1047,8 @@ namespace Airside.Presentation
         {
             // VEH-004 — prefer pushback tug v03, then v02, then pipeline-proof v01.
             var pushbackKit = PreferArtKit(
-                "Models/Vehicles/mdl_pushback_tug_v03.gltf",
+                "Models/Vehicles/mdl_pushback_tug_v04.gltf",
+                        "Models/Vehicles/mdl_pushback_tug_v03.gltf",
                 "Models/Vehicles/mdl_pushback_tug_v02.gltf");
             if (!string.IsNullOrEmpty(pushbackKit)
                 && ArtPresentationLoader.TryInstantiate(

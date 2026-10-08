@@ -66,7 +66,7 @@ namespace Airside.Presentation
             {
                 if (!TryPrepare(root, horizonFadeStart, horizonFadeEnd, out var parent, out var material, out var data, out var trees))
                     return false;
-                foreach (var (tile, mesh) in BuildMeshes(data, trees, AirsideAdelaideSurroundings.LandHeight))
+                foreach (var (tile, mesh) in BuildMeshes(data, trees, AirsideAdelaideSurroundings.LandHeight, sourcedTreeBudget:128))
                     AttachTile(parent, material, tile, mesh);
                 return true;
             }
@@ -110,11 +110,12 @@ namespace Airside.Presentation
             var clock = System.Diagnostics.Stopwatch.StartNew();
             const double budgetMs = 2.5;
 
+            var sourcedRemaining = 128;
             var treeList = trees?.Trees;
             var treeCount = treeList?.Count ?? 0;
             for (var i = 0; i < treeCount; i++)
             {
-                AppendTree(tiles, treeList[i], ground);
+                AppendTree(tiles, treeList[i], ground, ref sourcedRemaining);
                 if (clock.Elapsed.TotalMilliseconds < budgetMs)
                     continue;
                 yield return null;
@@ -191,13 +192,13 @@ namespace Airside.Presentation
 
         /// <summary>One mesh per <see cref="TileMetres"/> tile. <paramref name="groundHeight"/> is the world y of the land.</summary>
         public static List<(Vector2Int Tile, Mesh Mesh)> BuildMeshes(AdelaideSuburbData data,
-            AdelaideTreeData trees, Func<float, float, float> groundHeight)
+            AdelaideTreeData trees, Func<float, float, float> groundHeight, int sourcedTreeBudget = 0)
         {
             var tiles = new Dictionary<Vector2Int, MeshParts>();
             var corners = new float[8];
             if (trees != null)
                 foreach (var tree in trees.Trees)
-                    AppendTree(tiles, tree, groundHeight);
+                    AppendTree(tiles, tree, groundHeight, ref sourcedTreeBudget);
 
             var buildings = data?.Buildings ?? Array.Empty<AdelaideSuburbData.Building>();
             foreach (var b in buildings)
@@ -210,12 +211,16 @@ namespace Airside.Presentation
         }
 
         private static void AppendTree(Dictionary<Vector2Int, MeshParts> tiles, AdelaideTreeData.Tree tree,
-            Func<float, float, float> groundHeight)
+            Func<float, float, float> groundHeight, ref int sourcedRemaining)
         {
             var key = new Vector2Int(Mathf.FloorToInt(tree.X / TileMetres), Mathf.FloorToInt(tree.Z / TileMetres));
             if (!tiles.TryGetValue(key, out var parts))
                 tiles[key] = parts = new MeshParts();
-            AddTree(parts, tree, groundHeight(tree.X, tree.Z) - SinkMetres);
+            var baseY = groundHeight(tree.X, tree.Z) - SinkMetres;
+            if (sourcedRemaining > 0 && tree.X*tree.X + tree.Z*tree.Z < 1100f*1100f &&
+                AddSourcedTree(parts, tree, baseY))
+                sourcedRemaining--;
+            else AddTree(parts, tree, baseY);
         }
 
         private static void AppendBuilding(Dictionary<Vector2Int, MeshParts> tiles, AdelaideSuburbData.Building b,
@@ -298,6 +303,50 @@ namespace Airside.Presentation
         /// A low-poly eucalypt with bake-time LOD (ADR 0212 + 0220): Full 3-lobe near
         /// the field, primary lobe mid-range, crossed billboard cards far out.
         /// </summary>
+        private sealed class FoliagePart
+        {
+            public Vector3[] Vertices;
+            public int[] Triangles;
+            public bool Bark;
+        }
+        private static List<FoliagePart> _foliage;
+        private static Bounds _foliageBounds;
+        private static bool _foliageResolved;
+
+        private static bool AddSourcedTree(MeshParts target, AdelaideTreeData.Tree tree, float baseY)
+        {
+            if (!_foliageResolved)
+            {
+                _foliageResolved = true;
+                _foliage = new List<FoliagePart>();
+                foreach (var name in new[]{"tree_trunk_0","tree_foliage_0","tree_trunk_1","tree_foliage_1","tree_trunk_2","tree_foliage_2"})
+                    if (ArtGltfLoader.TryGetSharedMesh("Models/Environment/mdl_local_foliage_v01.gltf", name, out var mesh))
+                    {
+                        if (_foliage.Count == 0) _foliageBounds = mesh.bounds;
+                        else _foliageBounds.Encapsulate(mesh.bounds);
+                        _foliage.Add(new FoliagePart { Vertices=mesh.vertices, Triangles=mesh.triangles, Bark=name.Contains("trunk") });
+                    }
+            }
+            if (_foliage.Count == 0) return false;
+            var size = _foliageBounds.size;
+            var scale = new Vector3(tree.CrownRadius*2/Mathf.Max(size.x,.1f),tree.Height/Mathf.Max(size.y,.1f),tree.CrownRadius*2/Mathf.Max(size.z,.1f));
+            var yaw = Quaternion.Euler(0,(tree.X*.137f+tree.Z*.071f)*Mathf.Rad2Deg,0);
+            var offset = new Vector3(_foliageBounds.center.x,_foliageBounds.min.y,_foliageBounds.center.z);
+            foreach (var part in _foliage)
+            {
+                var colour = (part.Bark ? Bark : TreeColours[Mathf.Clamp(tree.Colour,0,TreeColours.Length-1)]).linear;
+                colour.a=0; // Foliage carries its own colour, rather than sampling roofs from the satellite.
+                for (var i=0;i<part.Triangles.Length;i+=3)
+                {
+                    var a=new Vector3(tree.X,baseY,tree.Z)+yaw*Vector3.Scale(part.Vertices[part.Triangles[i]]-offset,scale);
+                    var b=new Vector3(tree.X,baseY,tree.Z)+yaw*Vector3.Scale(part.Vertices[part.Triangles[i+1]]-offset,scale);
+                    var c=new Vector3(tree.X,baseY,tree.Z)+yaw*Vector3.Scale(part.Vertices[part.Triangles[i+2]]-offset,scale);
+                    target.Triangle(a,b,c,Vector3.Cross(b-a,c-a),colour);
+                }
+            }
+            return true;
+        }
+
         private static void AddTree(MeshParts parts, AdelaideTreeData.Tree tree, float baseY)
         {
             var spin = (tree.X * 0.137f + tree.Z * 0.071f) % (Mathf.PI * 2f);

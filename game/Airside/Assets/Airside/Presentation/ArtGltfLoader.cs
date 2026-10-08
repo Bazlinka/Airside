@@ -132,6 +132,15 @@ namespace Airside.Presentation
         public static bool HasKit(string artRelativePath) =>
             ArtRuntimePaths.ResolveExisting(artRelativePath) != null;
 
+        /// <summary>Shared, readable kit geometry for batching. Callers must never mutate or destroy it.</summary>
+        public static bool TryGetSharedMesh(string artRelativePath, string name, out Mesh mesh)
+        {
+            mesh = null;
+            if (!TryLoadKit(artRelativePath, out var kit) || !kit.ByName.TryGetValue(name, out var entry)) return false;
+            mesh = entry.Mesh;
+            return mesh != null && mesh.isReadable;
+        }
+
         public static bool HasMesh(string artRelativePath, string meshName)
         {
             if (string.IsNullOrEmpty(meshName) || !TryLoadKit(artRelativePath, out var kit) || kit == null)
@@ -170,6 +179,9 @@ namespace Airside.Presentation
             filter.sharedMesh = mesh;
             var renderer = go.AddComponent<MeshRenderer>();
             var kind = AirsideMaterialLibrary.InferFromMeshName(name);
+            if (!aircraft && (kind == AirsideMaterialLibrary.SurfaceKind.AircraftSkin ||
+                (kind == AirsideMaterialLibrary.SurfaceKind.Metal && name.IndexOf("body",StringComparison.OrdinalIgnoreCase)>=0)))
+                kind = AirsideMaterialLibrary.SurfaceKind.PaintedMetal;
             // Shared: kits build one renderer per mesh, and identical (colour, kind)
             // pairs are overwhelmingly common. Runtime tinting clones via .material.
             var hasUsableUvs = AirsideMeshUtil.HasUsableUvs(mesh);

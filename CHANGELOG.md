@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-08 — Task #585: free sourced A320/service/foliage derivatives, scaled scanned surfaces, feathered wear, facade fittings, coherent reflections, conveyor motion and cabin cloth; licences and offline sources retained.
 - 2026-10-08: Fit fleet exterior lamps to their airframes, carry taxi lamps with nose gear, separate white strobes from coloured nav sectors, distinguish Boeing flashes and extinguish landing beams in cruise. Validation: docs/testing/aircraft-lighting-2026-10-08/.
 
 One line per merged change, newest first: what the player or contributor sees, plus the PR or ADR number.

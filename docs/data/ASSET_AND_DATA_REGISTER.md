@@ -341,6 +341,7 @@ fallback. Static geometry checks pass; native appearance/motion are unverified.
 
 
 ## Interface refinement design study — 6 October 2026 (ADR 0244)
+## Interface refinement design study — 6 October 2026 (ADR 0242)
 
 Original Codex-authored HTML/CSS, inline SVG airport/aircraft/icon geometry and
 Chromium screenshots under `docs/art/interface-refinement-2026-10-06/`. Source

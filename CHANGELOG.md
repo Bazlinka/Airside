@@ -132,6 +132,9 @@ Older entries (about 1,000, through 2026-10-07) are in
   booked flight; a sold outstation mark is not reissued; a second Saab opens its own planner. Save
   v20 adds the ferry flag and an outstation logbook. Code only: nothing compiled or run (Bailey's
   instruction), so build, headless tests and visuals are unverified.
+- Refine the maintenance movement and whole-interface proposal with a concrete
+  interactive design study, seven retained previews and implementation/acceptance
+  packets (ADR 0242). Design only; no runtime game changes.
 
 - Distinguish jet family windshield shells, shape pilot/passenger seats and regional
   yokes, add family bin/PSU fittings, and enable an analog Bell 412EP cockpit with

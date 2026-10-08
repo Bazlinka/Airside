@@ -9,6 +9,11 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*
 
+**Crisp HUD (8 Oct, Claude):** branch `claude/crisp-hud-20261008`. The HUD is laid out at 1440x900 and enlarged by `GUI.matrix` (2.25x on the
+3456x2168 Retina surface), which stretched text and button art. `HudPainter` text, pills and buttons now draw at device pixels (font size and
+rounded button textures scaled, matrix undone for that draw). Panels already used crisp shader-rounded rects. Menus, help and dev tools still
+use the old path. 105 Unity EditMode tests (HUD layout + new `HudCrispnessTests`) pass; needs a Mac look at Operations/Fleet.
+
 **Airport templates (8 Oct, Claude):** branch `claude/airport-templates-20261008`. Generic runways, terminals and gates for all 19
 Australian destinations (`AirportTemplates`) and a deterministic runway/gate planner (`AirportArrivalPlanner`); the network flight
 HUD shows the landing runway and gate. Runways cross-checked against OSM/OurAirports; real gate numbers and terminals from OSM for MEL, SYD, BNE, PER, CBR, OOL, DRW, ASP (airlines prefer their own terminal); HBA, KGC and the small fields stay generic.

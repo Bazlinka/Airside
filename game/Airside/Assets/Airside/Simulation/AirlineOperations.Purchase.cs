@@ -44,7 +44,7 @@ namespace Airside.Simulation
                 if (CareerState.Reliability < offer.RequiredReliability)
                     return $"{Article.CapitalA(type.Name)} needs {offer.RequiredReliability}% reliability.";
                 if (CareerState.CompletedPlayerRotations < offer.RequiredRotations)
-                    return $"{Article.CapitalA(type.Name)} needs {offer.RequiredRotations} completed flights.";
+                    return $"{Article.CapitalA(type.Name)} needs {offer.RequiredRotations} completed flight{(offer.RequiredRotations == 1 ? "" : "s")}.";
                 if (!ignoreFunds && !CareerState.CanAfford(offer.Price))
                     return costText;
                 return null;

@@ -7,6 +7,16 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Linear renderer (9 Oct, Codex, #681):** Unity now uses Linear colour rendering.
+Existing linear mesh palettes and Gamma fallback shader branch are retained. The
+far land-cover palette/calibration now match sRGB-decoded satellite imagery and
+material tint; crop variants retain their relative colour differences. HDR/ACES,
+AA, shadows, weather geometry, simulation and saves are unchanged. Palette generation,
+Python syntax and diff/source checks pass. Unity/shader compilation, Mac appearance
+and GPU timings remain unverified. Compare day/dusk/night aircraft, glass, lamps,
+wet pavement and the satellite-to-land-cover handover before judging the visual gain.
+Decision: `2026-10-09-linear-colour-rendering`.
+
 **Aircraft continuity (9 Oct, Codex, #672):** full route poses are now available to
 ordinary overview/follow views, rather than hiding departures after the local climb
 projection ends. Ordinary follow streams journey terrain and shifts the render origin.

@@ -515,7 +515,7 @@ namespace Airside.Presentation
                     else if (career.Reliability < offer.RequiredReliability)
                         requirement = $"Needs {offer.RequiredReliability}% reliability. You have {career.Reliability}%";
                     else if (career.CompletedPlayerRotations < offer.RequiredRotations)
-                        requirement = $"Needs {offer.RequiredRotations} flights. You have flown {career.CompletedPlayerRotations}";
+                        requirement = $"Needs {offer.RequiredRotations} flight{(offer.RequiredRotations == 1 ? "" : "s")}. You have flown {career.CompletedPlayerRotations}";
                     else if (!affordable)
                         requirement = $"Costs ${offer.Price:N0}. You have ${career.Funds:N0}";
                     else
@@ -1131,7 +1131,7 @@ namespace Airside.Presentation
                 var half = (filterWidth - 8f) * .5f;
                 into.Button(new HudBox(filters.X, filters.Y, half, 24f), model.StatusFilterLabel,
                     FleetActions.CycleStatus, HudButtonStyle.Secondary);
-                into.Button(new HudBox(filters.X + half + 8f, filters.Y, half, 24f), "SORT · " + model.SortLabel,
+                into.Button(new HudBox(filters.X + half + 8f, filters.Y, half, 24f), half >= 120f ? "SORT · " + model.SortLabel : model.SortLabel,
                     FleetActions.CycleSort, HudButtonStyle.Secondary);
                 if (trafficWidth > 0)
                     into.Button(new HudBox(filters.Right - trafficWidth, filters.Y, trafficWidth, 24f), "TRAFFIC",
@@ -1391,7 +1391,8 @@ namespace Airside.Presentation
                 if (slash > 0)
                     into.Icon(new HudBox(pane.X, y, 16f, 16f), icon.Substring(0, slash), icon.Substring(slash + 1),
                         HudTone.Accent);
-                into.Text(new HudBox(pane.X + 24f, y, pane.Width - 24f, 18f), model.SelectedCapability[i], 13f);
+                into.Text(new HudBox(pane.X + 24f, y, pane.Width - 24f, 18f), model.SelectedCapability[i],
+                    HudShell.FitFontSize(model.SelectedCapability[i], 13f, pane.Width - 24f, 11f));
                 y += 21f;
             }
 

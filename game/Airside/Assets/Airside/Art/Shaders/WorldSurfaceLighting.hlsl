@@ -24,7 +24,8 @@ half3 AirsideWorldLighting(float3 albedo, float3 normalWS, float3 positionWS,
     return UniversalFragmentPBR(data, surface).rgb;
 }
 // Existing mesh generators deliberately store linear vertex palettes.
-// Texture samples and material colours are Gamma in this project.
+// The project renders in Linear. Keep the Gamma conversion for comparison/fallback builds;
+// sRGB colour textures and Color material properties are decoded by Unity.
 float3 AirsideWorldVertexColour(float3 linearColour)
 {
 #if defined(UNITY_COLORSPACE_GAMMA)

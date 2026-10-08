@@ -886,7 +886,7 @@ namespace Airside.Presentation
                 AirlineSaveFile.Write(SavePath, data);
                 _saveFailureShown = false;
             }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            catch (Exception e)
             {
                 if (_saveFailureShown)
                     return;

@@ -554,5 +554,65 @@ namespace Airside.Tests
                 Is.EqualTo(AirlineCareerState.StartingFunds - cost + scaledPay),
                 "flat-rate pay scaled down for a poor reliability record");
         }
+
+        [Test]
+        public void Airline_RejectsLiveryColoursWithSpacesOrNonHexCharacters()
+        {
+            Assert.Throws<System.ArgumentException>(() => Airline.Player("Spaces", "# 12345"));
+            Assert.Throws<System.ArgumentException>(() => Airline.Player("Sign", "#+12345"));
+            Assert.That(Airline.Player("Fine", "#a1B2c3").LiveryHex, Is.EqualTo("#A1B2C3"));
+        }
+
+        [Test]
+        public void DailyReport_IsStillGivenForADayTheGameWasNotRunningAtCurfew()
+        {
+            var clock = new ManualSimulationClock(new SimulationTime(0));
+            var ops = AirlineOperations.StartAtAdelaide(clock, new SeededRandomSource(3), Airline.Player("Report Air", "#6A3FA0"));
+            var plane = ops.FleetOf(ops.PlayerAirline).Single();
+            var kgc = DestinationCatalogue.Australia.First(d => d.Code == "KGC");
+
+            void FlyOneTrip(long departIn)
+            {
+                var before = plane.CompletedTrips;
+                Assert.That(ops.ScheduleDeparture(plane, kgc, clock.Now.Advance(departIn)).Accepted, Is.True);
+                var guard = 0;
+                while (plane.CompletedTrips == before && guard++ < 20000)
+                {
+                    if (plane.State == FleetState.AwaitingStand)
+                    {
+                        var stand = ops.SuggestStand(plane);
+                        if (stand.HasValue)
+                            ops.AssignStand(plane, stand.Value);
+                    }
+
+                    var next = ops.NextEventAt();
+                    Assert.That(next, Is.Not.Null);
+                    clock.Set(next.Value);
+                    ops.Update();
+                }
+
+                Assert.That(plane.CompletedTrips, Is.GreaterThan(before));
+            }
+
+            bool TakeReport()
+            {
+                var found = false;
+                while (ops.TryTakeCareerEvent(out var careerEvent))
+                    found |= careerEvent.Kind == CareerEventKind.DailyReport;
+                return found;
+            }
+
+            FlyOneTrip(600);
+            // Day 1 is reported normally once the curfew hour arrives (the clock starts at 08:00).
+            clock.Set(new SimulationTime(15 * 3600 + 20 * 60));
+            ops.Update();
+            Assert.That(TakeReport(), Is.True, "reported on the day");
+
+            FlyOneTrip(10 * 3600);
+            // Two further days pass with nothing running at curfew: the missed report still arrives.
+            clock.Set(clock.Now.Advance(2 * 86400));
+            ops.Update();
+            Assert.That(TakeReport(), Is.True, "a missed day is reported on return");
+        }
     }
 }

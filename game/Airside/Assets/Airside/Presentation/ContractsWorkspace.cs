@@ -107,7 +107,7 @@ namespace Airside.Presentation
 
             var done = career.ActiveContract.CompletedRotations;
             var required = definition.RequiredRotations;
-            ActiveProgressText = $"{done} of {required} flights done";
+            ActiveProgressText = $"{done} of {required} flight{(required == 1 ? "" : "s")} done";
             ActiveProgress01 = required <= 0 ? 0f : Clamp01(done / (float)required);
             ActiveProgressPercent = $"{(int)(ActiveProgress01 * 100f)}%";
 
@@ -123,7 +123,9 @@ namespace Airside.Presentation
             if (operations.ContractExpiresAt() is { } due)
             {
                 var left = Math.Max(0, due.ElapsedSeconds - now.ElapsedSeconds);
-                _activeTerms.Add($"Due in {RouteMapWorkspaceModel.Duration(left)}. Miss it and lose {definition.ReliabilityLossOnCancel} reliability");
+                _activeTerms.Add($"Due in {RouteMapWorkspaceModel.Duration(left)}."
+                                 + (definition.ReliabilityLossOnCancel > 0
+                                     ? $" Miss it and lose {definition.ReliabilityLossOnCancel} reliability" : string.Empty));
             }
 
 
@@ -319,6 +321,10 @@ namespace Airside.Presentation
                 // Too narrow for two columns: stack the active contract above the offers.
                 var wanted = CaptionHeight + 8f + ActiveCardHeightFor(activeTerms);
                 var top = wanted > body.Height * 0.62f ? body.Height * 0.62f : wanted;
+                // Always leave room for one offer card, or compact windows show no offers at all.
+                var offerRoom = body.Height - 12f - (CaptionHeight + 8f + OfferHeight);
+                if (top > offerRoom)
+                    top = offerRoom > 0f ? offerRoom : 0f;
                 var stackedActive = new HudBox(body.X, body.Y, body.Width, top);
                 var stackedOffers = new HudBox(body.X, body.Y + top + 12f, body.Width,
                     body.Height - top - 12f);
@@ -368,7 +374,7 @@ namespace Airside.Presentation
             if (!model.HasActive)
             {
                 into.Fill(card.WithHeight(96f), HudTone.Default, 0.03f);
-                into.Text(card.Inset(16f, 18f, 16f, 0f).WithHeight(44f),
+                into.Text(card.Inset(16f, 18f, 16f, 0f).WithHeight(60f),
                     "No contract yet. Take one from the offers below. It pays a bonus on top of each flight's pay.", 13f, HudTone.Muted, HudTextStyle.Wrap);
                 return;
             }

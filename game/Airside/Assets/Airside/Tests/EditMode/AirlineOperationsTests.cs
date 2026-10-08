@@ -342,7 +342,7 @@ namespace Airside.Tests
             var player = Player();
             ops.AddAirline(player);
             var bayPlane = ops.AddAircraft(player, "VH-PAA", AircraftType.Atr42, AirlineOperations.AdelaideRegionalBays[0]);
-            var gatePlane = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing78710, new StableId("GATE-18"));
+            var gatePlane = ops.AddAircraft(player, "VH-PAJ", AircraftType.Boeing7378, new StableId("GATE-18"));
             ops.ScheduleDeparture(bayPlane, Code("KGC"), new SimulationTime(600));
             ops.ScheduleDeparture(gatePlane, Code("MEL"), new SimulationTime(600));
 

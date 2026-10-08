@@ -933,6 +933,11 @@ namespace Airside.Presentation
             if (_menuOpen)
                 return;
 
+            // A focused text field (the airline rename box) owns every other key.
+            // (The title screen's own name field is handled by ReadSplashKeys, so it is left alone.)
+            if (!AirlineModalOpen && GUIUtility.keyboardControl != 0)
+                return;
+
             // Typing the airline name must not follow, reset the view or mute.
             if (WatchingOutstation && keyboard.hKey.wasPressedThisFrame)
             {

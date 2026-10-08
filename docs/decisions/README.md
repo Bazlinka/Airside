@@ -327,6 +327,7 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-08 | [Persistent weather at flight altitude and restrained cockpit motion](2026-10-08-weather-altitude-and-restraint.md) | Accepted |
 | 2026-10-09 | [Aircraft presence and camera eligibility](2026-10-09-aircraft-presence-and-camera-eligibility.md) | Accepted for the continuity fixes; parked activity window remains prop |
 | 2026-10-09 | [Stable cloud coverage and visual weather variety](2026-10-09-cloud-continuity-and-variety.md) | Accepted — Bailey's cloud continuity and weather variety instruction |
+| 2026-10-09 | [Connected, type-specific aircraft tails](2026-10-09-connected-aircraft-tails.md) | Accepted under Bailey's fleet-tail correction request |
 | 2026-10-09 | [Established arrivals retain physical presence when estimates are postponed](2026-10-09-established-arrival-holding-presence.md) | Accepted — Bailey's no-disappearing-aircraft instruction |
 | 2026-10-09 | [Linear colour rendering](2026-10-09-linear-colour-rendering.md) | Accepted — Bailey authorised the recommended first renderer improvemen |
 | 2026-10-09 | [Parked aircraft activity window](2026-10-09-parked-aircraft-activity-window.md) | Accepted — Bailey's parked-aircraft proposal and instruction to contin |

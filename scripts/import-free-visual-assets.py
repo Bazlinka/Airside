@@ -90,6 +90,9 @@ def aircraft():
   v,i=merged(['Torus02' if 'nose' in n else 'Torus33']);kit[n]=(fit(v,bounds([original[n]])).astype(np.float32),i)
  # Source horizontal tail: resample into the existing envelope so elevators stay aligned.
  v,i=merged(['Cylinder05','Cylinder197']);kit['tailplane']=(fit(v,bounds([original['tailplane']])).astype(np.float32),i)
+ # Finish after source adaptation so imported stabilisers cannot restore old
+ # gaps or bypass the A320-specific tail profile.
+ module('refine-aircraft-tails.py').apply(kit,'A320')
  save('Models/Aircraft/mdl_a320_200_v02.gltf',kit)
 
 def vehicles():

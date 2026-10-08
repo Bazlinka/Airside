@@ -142,6 +142,8 @@ def bell_412_meshes():
     spec.loader.exec_module(body)
     profile = body.refine(meshes)
     meshes["tail_boom"] = body.BodyProfile(meshes["tail_boom"]).loft(segments=48)
+    from aircraft_tail import refine as refine_tail
+    refine_tail(meshes, 'B412', profile.sample)
     spec = importlib.util.spec_from_file_location("bell_skin", SCRIPTS / "aircraft_skin.py")
     skin = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(skin)

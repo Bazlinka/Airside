@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-09 — Fit all aircraft tails into their hulls, match rudder/elevator hinges and correct per-type proportions; refresh models/thumbnails (Unity unverified).
+
 - 2026-10-09 — Sim weather (fog hours) now follows the airline clock, not the default epoch; fixes civil helicopters held for hours in off-clock fog (Unity unverified).
 
 - 2026-10-09 — Saved live weather/wind now drive airport rules and visuals together; save v23 preserves holding poses across compatible reloads (Unity unverified).

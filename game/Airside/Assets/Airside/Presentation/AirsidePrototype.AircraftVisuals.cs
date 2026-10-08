@@ -146,6 +146,14 @@ namespace Airside.Presentation
                         pitch = RegionalFlightPath.DeparturePitchDegrees(attitude, AircraftPerformance.For(legAircraft.Type),
                             legElapsed, RegionalFlightPath.RotateSeconds(legAircraft.Type), pitch);
                     }
+                    else if (legAircraft.State == FleetState.Inbound)
+                    {
+                        var finalSeconds = ArrivalMapTrack.FinalSeconds(legProfile.LegMetres, legProfile.LegSeconds, legAircraft.Type);
+                        var toEntry = legProfile.LegSeconds - legElapsed - finalSeconds;
+                        if (finalSeconds > 0 && toEntry <= RegionalFlightPath.AttitudeBlendSeconds)
+                            pitch = ArrivalMapTrack.FinalEntryPitchDegrees(attitude, toEntry,
+                                RegionalFlightPath.AttitudeBlendSeconds, pitch);
+                    }
                 }
                 // Retain the authored body attitude at the takeoff handoff. The route's
                 // path angle alone would abruptly discard the aircraft's angle of attack.

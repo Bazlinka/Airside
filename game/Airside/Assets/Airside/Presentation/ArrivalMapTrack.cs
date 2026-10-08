@@ -49,6 +49,27 @@ namespace Airside.Presentation
             return show + bodyMetres * (1.0 - body.DistanceFractionAt(flown));
         }
 
+        /// <summary>Seconds flown on the drawn final at approach speed; 0 when the leg is too short for a separate final.</summary>
+        public static double FinalSeconds(double legMetres, double legSeconds, AircraftType type)
+        {
+            var speed = CircuitProfile.Knots(AircraftPerformance.For(type).ApproachKnots);
+            var seconds = speed > 0f ? ArrivalApproach.ShowMetres / speed : 0.0;
+            return legMetres <= ArrivalApproach.ShowMetres * 1.5 || legSeconds <= seconds * 1.25 ? 0.0 : seconds;
+        }
+
+        /// <summary>
+        /// The descent body levels off at the glideslope entry and the final then starts at once, so the
+        /// route's path angle steps to the approach attitude. Fade to that attitude over the last
+        /// <paramref name="blendSeconds"/> before the entry. Negative pitch is nose-up.
+        /// </summary>
+        public static float FinalEntryPitchDegrees(AircraftAttitude attitude, double secondsToEntry,
+            double blendSeconds, float routePitch)
+        {
+            var u = (float)Math.Clamp(1.0 - secondsToEntry / Math.Max(1.0, blendSeconds), 0.0, 1.0);
+            u = u * u * (3f - 2f * u);
+            return routePitch + (attitude.ApproachStart - routePitch) * u;
+        }
+
         public static double FinalEntryHeightMetres(AircraftType type)
         {
             var hold=AirsideFlightPath.Approach((float)ApproachHold.HoldingFinalProgress(0),0,type);

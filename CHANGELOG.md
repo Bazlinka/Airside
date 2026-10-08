@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-09 — Anchor clouds to the watched area; retain far-clipped volume proxies; add high wisps, stratiform banks and drizzle/showers (Unity unverified).
+
 - 2026-10-09 — Keep in-range fleet route models after climb-out; ordinary follow streams terrain; aircraft lookup survives camera filtering (Unity unverified).
 - 2026-10-09 — Terminal doors and people: a sliding door where each stand walk starts, a boarding queue and gate agent at it, 18 landside walkers and airside staff, person cap 60→110 with distance-throttled posing (Unity unverified).
 

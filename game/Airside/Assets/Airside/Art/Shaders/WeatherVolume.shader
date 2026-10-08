@@ -5,6 +5,8 @@ Shader "Airside/WeatherVolume"
         _BaseColor ("Weather tint and visibility", Color) = (1,1,1,1)
         _Seed ("Cloud shape seed", Float) = 0
         _Storm ("Thunderstorm development", Range(0,1)) = 0
+        _Stratus ("Stratiform bank", Range(0,1)) = 0
+        _Cirrus ("High ice wisps", Range(0,1)) = 0
     }
     SubShader
     {
@@ -27,6 +29,8 @@ Shader "Airside/WeatherVolume"
                 float4 _BaseColor;
                 float _Seed;
                 float _Storm;
+                float _Stratus;
+                float _Cirrus;
             CBUFFER_END
             float _AirsideWeatherTime;
             float4 _AirsideLightningPosition;
@@ -38,6 +42,14 @@ Shader "Airside/WeatherVolume"
                 Varyings o;
                 o.positionWS=TransformObjectToWorld(v.positionOS.xyz);
                 o.positionCS=TransformWorldToHClip(o.positionWS);
+                // This cube is a ray-march proxy. Its exit face can lie beyond the
+                // far plane while the cloud in front remains visible. Retain the proxy
+                // face there; scene depth still limits the integrated cloud in metres.
+                #if UNITY_REVERSED_Z
+                    o.positionCS.z=max(o.positionCS.z,0.00001*o.positionCS.w);
+                #else
+                    o.positionCS.z=min(o.positionCS.z,0.99999*o.positionCS.w);
+                #endif
                 return o;
             }
             float hash(float3 p)
@@ -60,6 +72,10 @@ Shader "Airside/WeatherVolume"
                 float crown=1-length((p-float3(-0.14,0.07,-0.04))*float3(4.2,3.3,4.0));
                 float shoulder=1-length((p-float3(0.18,0.03,0.04))*float3(4.6,4.1,3.8));
                 float fairShape=max(body,max(crown,shoulder));
+                float bank=1-length((p-float3(0,-0.04,0))*float3(2.2,3.5,2.3));
+                float wisp=1-length(p*float3(2.1,4.5,2.5));
+                fairShape=lerp(fairShape,bank,_Stratus);
+                fairShape=lerp(fairShape,wisp,_Cirrus);
                 float tower=1-length((p-float3(0,-0.06,0))*float3(3.4,2.4,3.5));
                 float anvil=1-length((p-float3(0.08,0.32,0))*float3(2.1,6.5,2.2));
                 float shape=lerp(fairShape,max(tower,anvil),_Storm);
@@ -67,7 +83,13 @@ Shader "Airside/WeatherVolume"
                 float3 drift=float3(_AirsideWeatherTime*0.013,0,_AirsideWeatherTime*0.008);
                 float n=noise(p*7+_Seed+drift)*0.7+noise(p*17+_Seed*3+drift)*0.3;
                 float lobes=0.08*sin(p.x*23+_Seed)*sin(p.z*19+_Seed);
-                return saturate((shape+lobes+(n-0.52)*0.32)*4);
+                float density=saturate((shape+lobes+(n-0.52)*0.32)*4);
+                if (_Cirrus > 0.001)
+                {
+                    float streaks=noise(float3(p.x*3,p.y*18,p.z*32)+_Seed+drift);
+                    density*=lerp(1,saturate((streaks-0.30)*2)*0.35,_Cirrus);
+                }
+                return density;
             }
             half4 frag(Varyings i) : SV_Target
             {

@@ -2,6 +2,8 @@
 
 Status: Accepted. Date: 2026-10-08. Owner: Codex / Bazlinka. Task: #666.
 
+Cloud coverage/morphology revised by [2026-10-09-cloud-continuity-and-variety](2026-10-09-cloud-continuity-and-variety.md). Other altitude/audio decisions remain.
+
 ## Decision
 
 Keep the bounded presentation weather renderer, with sixteen local volumes and the

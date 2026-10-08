@@ -229,7 +229,7 @@ namespace Airside.Presentation
             ? WeatherLook.For(ReviewWeather.Value)
             : LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Look
             // ADR 0143: eased between hours so the sky never snaps.
-            : FleetMode ? Weather.LookAt(_clock.Now) : WeatherLook.For(CurrentWeather);
+            : FleetMode ? WeatherAppearance.Forecast(_clock.Now) : WeatherLook.For(CurrentWeather);
 
         /// <summary>This frame's sky, fog, mist and cloud layers (ADR 0143).</summary>
         private AtmosphereLook _atmosphere;

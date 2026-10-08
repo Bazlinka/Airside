@@ -52,15 +52,15 @@ namespace Airside.Presentation
                 if (LiveWeatherHealthy)
                 {
                     var sample = _liveWeatherSnapshot.Value;
-                    return $"Live · {Weather.Describe(sample.Kind)} · {sample.TemperatureCelsius:0}°C";
+                    return $"Live · {WeatherAppearance.Describe(sample.Kind, sample.Look)} · {sample.TemperatureCelsius:0}°C";
                 }
                 return _liveWeatherFailures > 0 ? "On · offline fallback" : "On · connecting";
             }
         }
 
         private string PresentationWeatherSummary => LiveWeatherHealthy
-            ? $"Live {Weather.Describe(_liveWeatherSnapshot.Value.Kind)} · {_liveWeatherSnapshot.Value.TemperatureCelsius:0}°C"
-            : $"Forecast {Weather.Describe(CurrentWeather)}";
+            ? $"Live {WeatherAppearance.Describe(_liveWeatherSnapshot.Value.Kind, _liveWeatherSnapshot.Value.Look)} · {_liveWeatherSnapshot.Value.TemperatureCelsius:0}°C"
+            : $"Forecast {WeatherAppearance.Describe(CurrentWeather, TargetWeatherLook)}";
 
         private static HttpClient CreateWeatherHttp()
         {

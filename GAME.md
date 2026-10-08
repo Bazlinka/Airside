@@ -16,7 +16,18 @@ Parked models remain visible. The proposed two-hour activity window remains a pr
 recommendation pending Bailey's choice; Fleet inventory must always retain them.
 Audit coverage and remaining limitations: `docs/testing/aircraft-continuity-2026-10-09.md`.
 Unity rendering, camera transitions and performance remain unverified.
-Cloud continuity and weather variety are the next authorised implementation.
+**Cloud continuity/weather variety (9 Oct, Codex, #674):** clouds recycle/fade around
+the watched area, not the orbiting lens. The wider footprint keeps storm bodies away
+from wrap seams; the volume proxy survives a far-plane-clipped exit face. Thin high
+wisps, cumulus, broad stratiform banks and storm towers share persistent geometry and
+smooth morphology. Authored rain includes drizzle/showers/continuous-rain profiles;
+weather summaries reflect continuous live conditions too. The existing operational
+weather enum/chain, RNG and save schema are unchanged. Original shader source only;
+sixteen-volume budget and atlas fallback retained. Decision: `2026-10-09-cloud-continuity-and-variety`.
+Focused coverage/profile regressions pass 11/11; changed Unity-facing C# syntax
+parses and the generated headless harness is current. Native shader compilation,
+orbit/pan/zoom appearance and GPU performance remain unverified.
+
 **Terminal doors and more people (9 Oct, Claude):** each regional-stand walk now starts at a terminal door (`AdelaideTerminalDoors`, six doors on
 the OSM terminal outline; airside doors are derived, not surveyed) with a sliding-glass door prop, a six-person boarding queue and a gate agent at the
 door, 18 landside walkers (OSM entrances, car-park bays) and airside staff (`AdelaideAmbientPeople`), person cap 110 with distance-throttled posing.

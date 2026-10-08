@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-08 — Roads: OSM snapshot refreshed (+55 drivable roads incl. new service roads, 16,068 total) and road/car-park/precinct data regenerated; coverage checked against live OSM count (unverified in Unity).
+
 - 2026-10-08 — Hollow aircraft fixed: a dark inner skin behind each fuselage so windscreens and cabin windows show a dark interior instead of the sky (unverified in Unity).
 
 - 2026-10-08 — Freighters no longer show passenger cabin windows (flight deck only); exterior aircraft glass is a dark near-opaque tint so windscreens/cabin windows are not see-through (unverified).

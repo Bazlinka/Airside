@@ -1075,19 +1075,27 @@ namespace Airside.Presentation
                 into.Card(box, selected ? 1f : .8f);
                 if (selected || row.Severity >= StatusSeverity.Attention)
                     into.Outline(box, selected ? HudTone.Accent : HudTone.Caution, .8f);
-                var left = box.X + 12f;
-                var width = box.Width - 24f;
-                var timeWidth = Math.Min(180f, width * .4f);
-                into.Text(new HudBox(left, box.Y + 5f, width - timeWidth, 18f),
-                    row.Registration + " · " + row.BaseCode + " · " + row.TypeName, 13f, HudTone.Default, HudTextStyle.Bold);
-                into.Text(new HudBox(box.Right - 12f - timeWidth, box.Y + 7f, timeWidth, 16f),
-                    row.TimeText, 11f, HudTone.Muted, HudTextStyle.Regular, HudAlign.Right);
-                into.Text(new HudBox(left, box.Y + 25f, width - timeWidth, 18f), row.RouteText, 12f, HudTone.Muted);
-                into.Text(new HudBox(box.Right - 12f - timeWidth, box.Y + 25f, timeWidth, 18f), row.State, 12f,
-                    row.Severity >= StatusSeverity.Attention ? HudTone.Caution : HudTone.Default,
-                    HudTextStyle.Regular, HudAlign.Right);
+                // A severity stripe, identity on the left, and on the right what it is doing now (bold, in its
+                // status colour) over the time to watch.
+                var stateTone = HudShellPainter.SeverityTone(row.Severity, false);
+                into.Fill(new HudBox(box.X + 1f, box.Y + 8f, 3f, box.Height - 16f), selected ? HudTone.Accent : stateTone, 1f);
+                var left = box.X + 18f;
+                var width = box.Width - 34f;
+                var rightWidth = Math.Min(300f, width * .46f);
+                var leftWidth = width - rightWidth - 12f;
+                var registrationWidth = HudShell.Measure(row.Registration, 15f) + 6f;
+                into.Text(new HudBox(left, box.Y + 8f, Math.Min(registrationWidth, leftWidth), 20f), row.Registration, 15f,
+                    HudTone.Default, HudTextStyle.Bold);
+                if (registrationWidth + 12f < leftWidth)
+                    into.Text(new HudBox(left + registrationWidth + 8f, box.Y + 11f, leftWidth - registrationWidth - 8f, 16f),
+                        row.TypeName + "  ·  " + row.BaseCode, 11f, HudTone.Muted);
+                into.Text(new HudBox(left, box.Y + 31f, leftWidth, 18f), row.RouteText, 13f, HudTone.Default);
+                into.Text(new HudBox(box.Right - 16f - rightWidth, box.Y + 9f, rightWidth, 18f), row.State, 12f,
+                    row.Severity >= StatusSeverity.Attention ? HudTone.Caution : HudTone.Default, HudTextStyle.Bold, HudAlign.Right);
+                into.Text(new HudBox(box.Right - 16f - rightWidth, box.Y + 31f, rightWidth, 16f), row.TimeText, 11f,
+                    HudTone.Muted, HudTextStyle.Regular, HudAlign.Right);
                 if (row.HasProgress)
-                    into.Bar(new HudBox(left, box.Bottom - 5f, width, 2f), row.Progress01, HudTone.Accent);
+                    into.Bar(new HudBox(left, box.Bottom - 8f, width, 3f), row.Progress01, HudTone.Accent);
                 into.Hotspot(box, HudAction.Select(row.Registration));
             }
         }

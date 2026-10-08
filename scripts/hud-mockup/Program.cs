@@ -116,7 +116,10 @@ public static class Program
         {
             Registration = aircraft.Registration, Aircraft = aircraft.Type.Name,
             Route = "ADL → KGC", Phase = "Cruise", Speed = "224 kt", VerticalSpeed = "+0 ft/min",
-            Distance = "85.4 km", SelectedView = 1, MotionEnabled = true
+            Distance = "85.4 km", SelectedView = 1, MotionEnabled = true,
+            Altitude = "9,200 ft", Heading = "087° T", Airspeed = "201 kt / M0.35", Remaining = "64 km direct",
+            Arrival = "11 min", Journey = "Cruise · 48% of leg · arrival area estimate", JourneyProgress = 0.48f,
+            Location = "38 km from Kingscote  ·  35.40°S 137.20°E"
         };
         for (var i = 0; i < 4; i++) data.Available[i] = true;
         FlightViewHudPainter.Paint(list, new FlightViewHudLayout(width, height), data);

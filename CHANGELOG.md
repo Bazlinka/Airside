@@ -11,6 +11,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- Add independent Parafield: four mapped runways, taxiways, hangars and light trainer traffic; watch from Operations (#593; packaged review pending).
+
 - Remove artificial ocean reflection rings by keeping far/outer water meshes planar; land overlap unchanged (native visual confirmation pending).
 - Taper fleet climb/descent rates, level cruise, constrain CAS/Mach and fix stale camera V/S, inbound altitude and regional takeoff; allow realistic jet leg time (ADR 2026-10-08).
 

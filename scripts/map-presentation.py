@@ -31,6 +31,7 @@ AREAS = [
 ]
 
 OWNERS = {
+    "AirsidePrototype.Parafield.cs": ("Independent airports", "Builds and updates Parafield trainer traffic and watches the airport from Operations"),
     "AirsidePrototype.OutstationView.cs": ("Flight views and traffic", "Network aircraft views: read-only timed journey rendering, camera entry/exit and return to Fleet"),
     "AirsidePrototype.cs": ("Core", "The single instance; per-frame loop, selection / follow / reset ownership and most shared state"),
     "AirsidePrototype.Intro.cs": ("Core", "Title screen and the opening dissolve into the live airport (ADR 0122)"),

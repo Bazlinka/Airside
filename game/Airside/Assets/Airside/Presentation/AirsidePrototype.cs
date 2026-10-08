@@ -350,6 +350,7 @@ namespace Airside.Presentation
             AirsideRuntimeQuality.Apply(_mainCamera);
             _dayVolume = AirsideDayVolume.Ensure(transform);
             BuildAirfield();
+            BuildParafield();
             if (AirsideFocusMode.ShowDecorativeLights)
             {
                 _apronLights = BuildApronLights();
@@ -613,6 +614,7 @@ namespace Airside.Presentation
             UpdateFlightWorld();
             UpdateLiveWeather();
             ApplyDayCycle();
+            UpdateParafield();
             AdvancePresentationClock();
             var soakStageStarted = SoakMode ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             UpdateAircraftVisual();
@@ -1077,6 +1079,7 @@ namespace Airside.Presentation
             if (WatchingOutstation && !_menuOpen) DrawOutstationViewHud(panel, title, button);
             else if (InCockpit && !_menuOpen) DrawCockpitHud(layout, panel, button);
             else DrawAirlineHud(layout, panel, title, button);
+            DrawParafieldWatchPanel(layout);
             DrawMapCredit(layout);
             DrawBuildStamp(layout);
             if (_menuOpen && _optionsOpen)

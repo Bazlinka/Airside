@@ -133,8 +133,17 @@ namespace Airside.Presentation
                         {
                             var before = GUI.color;
                             GUI.color = new Color(1f, 1f, 1f, command.Value <= 0f ? 1f : command.Value);
-                            GUI.DrawTexture(rect, image, ScaleMode.ScaleAndCrop, true);
+                            // Transparent brand lockups must keep their entire silhouette.
+                            GUI.DrawTexture(rect, image, command.Text.StartsWith("Brand/", System.StringComparison.Ordinal)
+                                ? ScaleMode.ScaleToFit : ScaleMode.ScaleAndCrop, true);
                             GUI.color = before;
+                        }
+                        else if (command.Text == SplashLayout.WordmarkArt)
+                        {
+                            // A missing/undecodable PNG must never leave the game's name blank.
+                            DrawText(new HudDrawCommand(HudDrawKind.Text, command.Box, "AIRSIDE", HudTone.Default,
+                                Mathf.Min(58f, command.Box.Height * 0.72f), HudTextStyle.Bold, HudAlign.Left,
+                                command.Value, null, null, true), rect);
                         }
                         break;
                 }

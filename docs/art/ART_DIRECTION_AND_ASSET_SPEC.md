@@ -171,16 +171,19 @@ in the same commit as each asset batch.
 | BRD-001 | `game/Airside/Assets/Airside/Art/Brand/airside_wordmark_light_v01.png` | Runtime image | Legacy transparent wordmark retained for compatibility; no tiny tagline | Retired from opening |
 | BRD-002 | `game/Airside/Assets/Airside/Art/Brand/airside_app_icon_v02.png` | Runtime image | Former approach-runway icon | Retired; v03 is the Player Settings icon |
 | BRD-003 | `game/Airside/Assets/Airside/Art/Brand/airside_brand_mark_v02.png` | Runtime image | Former transparent approach-runway mark | Retired from launch |
-| BRD-004 | `game/Airside/Assets/Airside/Art/Brand/airside_wordmark_light_v03.png` | Runtime image | 2048×512 transparent AS control-vector lockup with exact AIRSIDE spelling | Integrated (title; packaged via StreamingAssets) |
+| BRD-004 | `game/Airside/Assets/Airside/Art/Brand/airside_wordmark_light_v03.png` | Runtime image | 2048×512 transparent AS control-vector lockup with exact AIRSIDE spelling | Superseded on title by BRD-007; retained for compatibility |
 | BRD-005 | `game/Airside/Assets/Airside/Art/Brand/airside_app_icon_v03.png` | Runtime image | 1024² rounded Standalone/macOS app icon; no baked wordmark | Integrated (Player Settings default icon; Dock/Finder verify on Mac build) |
 | BRD-006 | `game/Airside/Assets/Airside/Art/Brand/airside_brand_mark_v03.png` | Runtime image | 1024² transparent AS control-vector mark for the launch sequence | Integrated (opening; packaged via StreamingAssets) |
-| UI-ILL-001 | `game/Airside/Assets/Airside/Art/UI/Illustrations/ui_splash_airport_dawn_v01.png` | Runtime image | 3840×2160, composition leaves quiet areas for Unity-rendered title and controls | Approved · Integrated (opening briefing backdrop; packaged via StreamingAssets) |
+| UI-ILL-001 | `game/Airside/Assets/Airside/Art/UI/Illustrations/ui_splash_airport_dawn_v01.png` | Runtime image | 3840×2160, composition leaves quiet areas for Unity-rendered title and controls | Legacy fallback; title superseded by UI-ILL-002 |
+| BRD-007 | `game/Airside/Assets/Airside/Art/Brand/airside_wordmark_light_v04.png` | Runtime image | 1800×360 transparent original departure-vector lockup; editable SVG/strokes; native-text missing-file fallback | Integrated at Bailey’s 8 October redesign request; Unity appearance unverified |
+| UI-ILL-002 | `game/Airside/Assets/Airside/Art/UI/Illustrations/ui_splash_adelaide_t1_dawn_v02.png` | Runtime image | 1672×941 Adelaide T1 dawn interpretation, low linear glass concourse/jetbridges/solar roof; no baked UI | Integrated at Bailey’s 8 October redesign request; Unity appearance unverified |
 
 **Gate:** Bailey approved REF-001 through REF-005 on 6 September 2026. Bailey
 approved BRD-001 and UI-ILL-001 on 7 September 2026 for runtime use. Bailey
 requested BRD-002 on 12 September 2026 and had it merged to `main` as the
 Standalone Player icon. Bailey requested the full v03 redesign on 28 September
 2026; BRD-004 through BRD-006 supersede BRD-001 through BRD-003 at runtime.
+Bailey requested the title/identity redesign on 8 October 2026; BRD-007 and UI-ILL-002 replace the opening assets under that authorisation. Evidence: `docs/art/prompts/adelaide-opening-2026-10-08.md`. The v03 app icon remains in Player Settings.
 Batches B–D may now use REF masters as production
 targets. UI-ILL-001 inherits that approved design rather than reinventing it.
 

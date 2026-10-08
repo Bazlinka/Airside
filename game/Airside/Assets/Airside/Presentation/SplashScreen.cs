@@ -27,15 +27,15 @@ namespace Airside.Presentation
     }
 
     /// <summary>
-    /// The opening title screen (ADR 0122): the approved dawn illustration full-bleed with a
-    /// graphite fade on the left, the wordmark and live Adelaide clock, and one glass card —
+    /// The opening title screen: Adelaide T1 full-bleed with a
+    /// graphite fade on the left, the wordmark and live Adelaide clock, and one departure card —
     /// Continue / New airline / Options / Quit, or the two-field new-airline form.
     /// Pure layout and painting; the runtime draws the editable name field at <see cref="NameField"/>.
     /// </summary>
     public readonly struct SplashLayout
     {
-        public const string SplashArt = "UI/Illustrations/ui_splash_airport_dawn_v01.png";
-        public const string WordmarkArt = "Brand/airside_wordmark_light_v03.png";
+        public const string SplashArt = "UI/Illustrations/ui_splash_adelaide_t1_dawn_v02.png";
+        public const string WordmarkArt = "Brand/airside_wordmark_light_v04.png";
         public const float CardWidth = 460f;
 
         private SplashLayout(HudBox viewport, HudBox title, HudBox card, HudBox footer)
@@ -87,6 +87,7 @@ namespace Airside.Presentation
                 return;
             into.Clear();
             var view = layout.Viewport;
+            into.Hairline(view, HudTone.Default, 1f, AirsidePalette.GlassHex);
             var push = 1f + 0.06f * Math.Clamp(kenBurns01, 0f, 1f);
             var artWidth = view.Width * push;
             var artHeight = view.Height * push;
@@ -95,9 +96,18 @@ namespace Airside.Presentation
 
             // Graphite fade from the left so the title and card read over the bright dawn sky.
             var fadeWidth = Math.Min(view.Width, Math.Max(layout.Card.Right + 260f, view.Width * 0.58f));
-            into.Gradient(new HudBox(view.X, view.Y, fadeWidth, view.Height), AirsidePalette.GlassHex, 0.88f);
-            into.Hairline(new HudBox(view.X, view.Bottom - 90f, view.Width, 90f), HudTone.Default, 0.35f,
+            into.Gradient(new HudBox(view.X, view.Y, fadeWidth, view.Height), AirsidePalette.GlassHex, 0.94f);
+            into.Hairline(new HudBox(view.X, view.Bottom - 64f, view.Width, 64f), HudTone.Default, 0.65f,
                 AirsidePalette.GlassHex);
+
+            // A location signature belongs in the interface, never baked into the illustration.
+            if (view.Width >= 1000f)
+            {
+                var location = new HudBox(view.Right - 330f, view.Bottom - 48f, 294f, 18f);
+                into.Caption(location, "ADL / YPAD   ·   TERMINAL 1", HudTone.Default, HudAlign.Right, 11f);
+                into.Caption(new HudBox(location.X, location.Y + 20f, location.Width, 14f),
+                    "SOUTH AUSTRALIA   /   34.95° S  138.53° E", HudTone.Muted, HudAlign.Right, 9f);
+            }
 
             if (layout.Title.Height > 0f)
                 PaintTitle(into, layout.Title, model);
@@ -113,12 +123,14 @@ namespace Airside.Presentation
 
         private static void PaintTitle(HudDrawList into, HudBox title, SplashModel model)
         {
-            var wordmarkWidth = Math.Min(360f, title.Width);
-            into.Image(new HudBox(title.X - 6f, title.Y, wordmarkWidth, wordmarkWidth * 0.25f), SplashLayout.WordmarkArt);
-            var y = title.Y + wordmarkWidth * 0.25f + 10f;
-            into.Text(new HudBox(title.X, y, title.Width, 30f), "Build your airline at Adelaide.", 20f,
+            var wordmarkWidth = Math.Min(400f, title.Width);
+            into.Caption(new HudBox(title.X, title.Y, title.Width, 14f), "AN AIRLINE OF YOUR OWN", HudTone.Accent,
+                HudAlign.Left, 10f);
+            into.Image(new HudBox(title.X, title.Y + 24f, wordmarkWidth, wordmarkWidth * 0.2f), SplashLayout.WordmarkArt);
+            var y = title.Y + 24f + wordmarkWidth * 0.2f + 10f;
+            into.Text(new HudBox(title.X, y, title.Width, 30f), "Adelaide. Your home port.", 20f,
                 HudTone.Default, HudTextStyle.Bold);
-            y += 36f;
+            y += 32f;
             var pill = new HudBox(title.X, y, 236f, 26f);
             into.Fill(pill, HudTone.Default, 0.72f, AirsidePalette.GlassHex);
             into.Dot(pill.X + 16f, pill.Y + 13f, 8f, HudTone.Positive);
@@ -130,7 +142,9 @@ namespace Airside.Presentation
         {
             if (card.IsEmpty)
                 return;
-            into.Surface(card, 0.9f);
+            into.Fill(card, HudTone.Default, 0.86f, AirsidePalette.GlassHex);
+            into.Hairline(new HudBox(card.X + 24f, card.Y, 54f, 2f), HudTone.Accent, 1f);
+            into.Hairline(new HudBox(card.X + 84f, card.Y, card.Width - 108f, 1f), HudTone.Muted, 0.35f);
             var x = card.X + 24f;
             var inner = card.Width - 48f;
             var y = card.Y + 22f;

@@ -11,7 +11,7 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 **Airport templates (8 Oct, Claude):** branch `claude/airport-templates-20261008`. Generic runways, terminals and gates for all 19
 Australian destinations (`AirportTemplates`) and a deterministic runway/gate planner (`AirportArrivalPlanner`); the network flight
-HUD shows the landing runway and gate. Figures from Wikipedia, not yet checked against AIP/ERSA; many gate counts are `Generic`.
+HUD shows the landing runway and gate. Runways cross-checked against OSM/OurAirports; real gate numbers and terminals from OSM for MEL, SYD, BNE, PER, CBR, OOL, DRW, ASP (airlines prefer their own terminal); HBA, KGC and the small fields stay generic.
 ADR `2026-10-08-airport-templates`. Headless tests pass; unverified in Unity. Gate occupancy is not simulated away from Adelaide.
 
 **Ocean halo fix (8 Oct, Codex):** far and outer ocean meshes keep one constant overlap height,

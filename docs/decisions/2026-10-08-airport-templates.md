@@ -25,3 +25,16 @@ Gate occupancy is not simulated away from Adelaide: callers may pass occupied id
 
 **Migration.** None: no save schema change, nothing persisted. Data is from Wikipedia (CC BY-SA 4.0), not yet cross-checked against
 AIP/ERSA; replace Generic gate counts as sources are found.
+
+## Second pass: real gates and terminals by airline
+
+Gate numbers and terminal membership now come from OpenStreetMap for Melbourne, Sydney, Brisbane, Perth, Canberra, Gold Coast, Darwin
+and Alice Springs (`scripts/generate-airport-gates.py`, checked in CI). Each gate joins the nearest mapped terminal. Terminals list the
+airlines that use them (`TerminalTemplate.Carriers`, codes from `Airline.cs`) and the planner prefers an airline's own terminal: Virgin
+Australia at Melbourne T3, Qantas at T1, Jetstar at Sydney T2. Gate ids are `<terminal>-<ref>`, such as `T3-5`, because refs repeat
+across terminals.
+- Perth's OSM terminals are airline-named buildings, so its gates are grouped by number range (10-24, 143-156, 201-219, 501-604). The
+  groupings are inferred and labelled by range, not as T1-T4.
+- The other airports (Hobart, Kingscote and the regional fields) keep Wikipedia/generic gates. Cairns has terminals but no mapped gate
+  numbers. Player aircraft have no real airline, so they take any suitable gate.
+- All main runways match OSM and OurAirports (OurAirports lengths match for the seven SA/Broken Hill fields).

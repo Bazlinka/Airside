@@ -54,13 +54,39 @@ namespace Airside.Tests
             AirportTemplates.TryFor("MEL", out var melbourne);
             Assert.That(melbourne.Runways[0].Id, Is.EqualTo("16/34"));
             Assert.That(melbourne.Runways[0].LengthMetres, Is.EqualTo(3657));
-            Assert.That(melbourne.Terminals.Single(t => t.Id == "T2").Gates.Count, Is.EqualTo(20));
             AirportTemplates.TryFor("SYD", out var sydney);
             Assert.That(sydney.Runways.Select(r => r.Id), Is.EquivalentTo(new[] { "16R/34L", "07/25", "16L/34R" }));
-            Assert.That(sydney.Terminals.Single(t => t.Id == "T1").Gates.Count, Is.EqualTo(25));
             AirportTemplates.TryFor("CNS", out var cairns);
             Assert.That(cairns.Terminals.Single(t => t.Id == "DOM").Gates.Count, Is.EqualTo(17));
             Assert.That(cairns.Terminals.Single(t => t.Id == "INT").Gates.Count, Is.EqualTo(10));
+        }
+
+        [Test]
+        public void OpenStreetMapAirports_HaveRealGateNumbers()
+        {
+            AirportTemplates.TryFor("MEL", out var melbourne);
+            Assert.That(melbourne.Terminals.Select(t => t.Id), Is.EquivalentTo(new[] { "T1", "T2", "T3", "T4" }));
+            Assert.That(melbourne.Terminals.Single(t => t.Id == "T4").Gates.Select(g => g.Id), Does.Contain("T4-41"));
+            AirportTemplates.TryFor("BNE", out var brisbane);
+            Assert.That(brisbane.Terminals.Single(t => t.Id == "INT").Gates.All(g => g.Use == GateUse.International), Is.True);
+            AirportTemplates.TryFor("OOL", out var goldCoast);
+            Assert.That(goldCoast.AllGates.Any(g => g.Use == GateUse.Swing), Is.True, "D10/I31 style gates serve both flows");
+        }
+
+        [Test]
+        public void Airlines_GoToTheirOwnTerminal()
+        {
+            AirportTemplates.TryFor("MEL", out var melbourne);
+            for (var i = 0; i < 20; i++)
+            {
+                var virgin = AirportArrivalPlanner.Plan(melbourne, AircraftType.Boeing737800, false, Calm, "v" + i, null, "VOZ");
+                Assert.That(virgin.Gate.TerminalId, Is.EqualTo("T3"));
+                var qantas = AirportArrivalPlanner.Plan(melbourne, AircraftType.Boeing737800, false, Calm, "q" + i, null, "QFA");
+                Assert.That(qantas.Gate.TerminalId, Is.EqualTo("T1"));
+            }
+
+            AirportTemplates.TryFor("SYD", out var sydney);
+            Assert.That(AirportArrivalPlanner.Plan(sydney, AircraftType.Boeing737800, false, Calm, "x", null, "JST").Gate.TerminalId, Is.EqualTo("T2"));
         }
 
         [Test]

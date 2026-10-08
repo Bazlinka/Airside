@@ -37,6 +37,12 @@ only for Sydney. "n/s" means the source did not state it. Gate counts are the ar
 - **Ceduna:** prevailing winds and approaches that avoid overflying the town shape operations. No stated preference.
 - No usage policy was stated for the other 16.
 
+## Second pass (OpenStreetMap, 2026-10-08)
+
+Gate numbers and terminals for MEL, SYD, BNE, PER, CBR, OOL, DRW and ASP now come from OpenStreetMap (ODbL) and replace the counts above
+in the game (`docs/data/osm/airport-gates-2026-10-08.json`). Runway designators matched OSM for every airport except Whyalla 05/23.
+The Wikipedia gate counts in the table are therefore only used for CNS, HBA, MQL, KGC, PLO, MGB, CED, WYA, CPD and BHQ.
+
 ## Gaps
 
 - No sourced preferred-runway policy for 16 of 19 airports, and no gate counts for 13.

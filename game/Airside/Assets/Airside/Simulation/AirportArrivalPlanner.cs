@@ -42,22 +42,22 @@ namespace Airside.Simulation
         public const double MinimumRunwayMetres = 900.0;
 
         public static bool TryPlan(string iata, AircraftType type, bool international, SurfaceWind wind, string seed,
-            IReadOnlyCollection<string> occupiedGateIds, out AirportArrival arrival)
+            IReadOnlyCollection<string> occupiedGateIds, out AirportArrival arrival, string airlineCode = null)
         {
             arrival = default;
             if (!AirportTemplates.TryFor(iata, out var airport) || type == null) return false;
-            arrival = Plan(airport, type, international, wind, seed, occupiedGateIds);
+            arrival = Plan(airport, type, international, wind, seed, occupiedGateIds, airlineCode);
             return true;
         }
 
         public static AirportArrival Plan(AirportTemplate airport, AircraftType type, bool international, SurfaceWind wind,
-            string seed, IReadOnlyCollection<string> occupiedGateIds = null)
+            string seed, IReadOnlyCollection<string> occupiedGateIds = null, string airlineCode = null)
         {
             if (airport == null) throw new ArgumentNullException(nameof(airport));
             if (type == null) throw new ArgumentNullException(nameof(type));
             var runway = type.IsRotorcraft ? default : ChooseRunway(airport, type, wind);
             if (type.IsRotorcraft) return new AirportArrival(airport, default, null, true);
-            var gate = ChooseGate(airport, type, international, seed, occupiedGateIds, out var free);
+            var gate = ChooseGate(airport, type, international, seed, occupiedGateIds, out var free, airlineCode);
             return new AirportArrival(airport, runway, gate, free);
         }
 
@@ -96,7 +96,7 @@ namespace Airside.Simulation
         /// aerobridge when one is free. If everything suitable is taken the same rules apply ignoring occupancy.
         /// </summary>
         public static GateTemplate ChooseGate(AirportTemplate airport, AircraftType type, bool international, string seed,
-            IReadOnlyCollection<string> occupiedGateIds, out bool free)
+            IReadOnlyCollection<string> occupiedGateIds, out bool free, string airlineCode = null)
         {
             var letter = AircraftCatalogue.CodeLetter(type);
             var terminalClass = !AircraftCatalogue.TryFor(type, out var spec) || spec.StandClass == StandClass.TerminalGate;
@@ -112,6 +112,9 @@ namespace Airside.Simulation
                 }
 
                 if (pool.Count == 0) continue;
+                // An airline's own terminal first (Virgin at Melbourne T3), when any of its gates qualify.
+                var own = pool.FindAll(gate => TerminalServes(airport, gate, airlineCode));
+                if (own.Count > 0) pool = own;
                 if (terminalClass && pool.Exists(gate => gate.Aerobridge))
                     pool.RemoveAll(gate => !gate.Aerobridge);
                 var smallest = char.MaxValue;
@@ -128,6 +131,13 @@ namespace Airside.Simulation
                 if (largest == null || gate.MaxCodeLetter > largest.MaxCodeLetter) largest = gate;
             free = false;
             return largest;
+        }
+
+        private static bool TerminalServes(AirportTemplate airport, GateTemplate gate, string airlineCode)
+        {
+            foreach (var terminal in airport.Terminals)
+                if (terminal.Id == gate.TerminalId) return terminal.Serves(airlineCode);
+            return false;
         }
 
         private static bool UseFits(GateUse use, bool international) =>

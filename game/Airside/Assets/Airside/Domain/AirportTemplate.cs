@@ -115,11 +115,23 @@ namespace Airside.Domain
     /// <summary>A passenger terminal (or concourse) and its gates.</summary>
     public sealed class TerminalTemplate
     {
-        public TerminalTemplate(string id, string name, IReadOnlyList<GateTemplate> gates)
+        public TerminalTemplate(string id, string name, IReadOnlyList<GateTemplate> gates, IReadOnlyList<string> carriers = null)
         {
             Id = id;
             Name = name;
             Gates = gates;
+            Carriers = carriers ?? Array.Empty<string>();
+        }
+
+        /// <summary>Airline codes (Airline.Code) that use this terminal; empty when any airline may.</summary>
+        public IReadOnlyList<string> Carriers { get; }
+
+        public bool Serves(string airlineCode)
+        {
+            if (string.IsNullOrEmpty(airlineCode) || Carriers.Count == 0) return false;
+            foreach (var carrier in Carriers)
+                if (string.Equals(carrier, airlineCode, StringComparison.Ordinal)) return true;
+            return false;
         }
 
         public string Id { get; }

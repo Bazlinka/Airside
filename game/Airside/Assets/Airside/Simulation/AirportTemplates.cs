@@ -159,7 +159,17 @@ namespace Airside.Simulation
             };
 
             var map = new Dictionary<string, AirportTemplate>(StringComparer.Ordinal);
-            foreach (var template in all) map[template.Iata] = template;
+            foreach (var template in all)
+            {
+                // Real gate numbers where OpenStreetMap has them (scripts/generate-airport-gates.py).
+                if (template.Iata != "ADL" && AirportGateData.TryFor(template.Icao, out var mapped))
+                    map[template.Iata] = new AirportTemplate(template.Iata, template.Icao, template.Name, template.State,
+                        template.Runways, template.CalmWindRunwayEnd, mapped,
+                        "Runways from Wikipedia; gate numbers and terminal membership from OpenStreetMap (ODbL). Aerobridge and size are inferred from the terminal's role.");
+                else
+                    map[template.Iata] = template;
+            }
+
             return map;
         }
 

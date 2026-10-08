@@ -1391,7 +1391,7 @@ namespace Airside.Presentation
                 || view == null || !view.gameObject.activeSelf)
             {
                 if (TryEnroute(aircraft, out var profile, out var elapsed))
-                    return $"{profile.GroundSpeedKnotsAt(elapsed):0} kt · {profile.AltitudeFeetAt(elapsed):#,0} ft";
+                    return $"{profile.GroundSpeedKnotsAt(elapsed):0} kt · {BoardAltitudeFeet(aircraft, profile, elapsed):#,0} ft";
                 return StatusText(aircraft);
             }
 
@@ -2171,7 +2171,7 @@ namespace Airside.Presentation
                 EnroutePhase.Descent => " ▼",
                 _ => string.Empty
             };
-            return $"{EnrouteProfile.AltitudeText(profile.AltitudeFeetAt(t))}{trend} · {profile.GroundSpeedKnotsAt(t):0} kt · {toGo:0} km · lands {ends}";
+            return $"{EnrouteProfile.AltitudeText(BoardAltitudeFeet(aircraft, profile, t))}{trend} · {profile.GroundSpeedKnotsAt(t):0} kt · {toGo:0} km · lands {ends}";
         }
 
         /// <summary>The away leg an aircraft is flying and how far into it, at sub-second time.</summary>
@@ -2200,8 +2200,18 @@ namespace Airside.Presentation
 
         private string EnrouteAltitudeText(FleetAircraft aircraft) =>
             TryEnroute(aircraft, out var profile, out var elapsed)
-                ? " · " + EnrouteProfile.AltitudeText(profile.AltitudeFeetAt(elapsed))
+                ? " · " + EnrouteProfile.AltitudeText(BoardAltitudeFeet(aircraft, profile, elapsed))
                 : string.Empty;
+
+        /// <summary>
+        /// Altitude as the world draws it. A leg that leaves a regional runway starts its climb late (see
+        /// <see cref="RegionalFlightPath.ClimbAltitudeFeet"/>), so the plain profile read too high for the first minutes.
+        /// </summary>
+        private static double BoardAltitudeFeet(FleetAircraft aircraft, EnrouteProfile profile, double elapsed) =>
+            aircraft.State == FleetState.Inbound && aircraft.CurrentDestination.HasValue
+            && RegionalRunways.TryGet(aircraft.CurrentDestination.Value.Code, out _)
+                ? RegionalFlightPath.ClimbAltitudeFeet(profile, elapsed, RegionalFlightPath.ClimbLagSeconds(aircraft.Type))
+                : profile.AltitudeFeetAt(elapsed);
 
         private void StartMapTracking(string aircraftId)
         {

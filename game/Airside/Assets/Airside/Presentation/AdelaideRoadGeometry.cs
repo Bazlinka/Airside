@@ -305,6 +305,7 @@ namespace Airside.Presentation
 
             BuildJunctionDiscs(sink, o);
             BuildTurningCircles(sink, o);
+            BuildEndCaps(sink, o);
             return drawn;
         }
 
@@ -538,6 +539,208 @@ namespace Airside.Presentation
             }
 
             sink.Fan(x, yc + o.YOffset, z, ring, color);
+        }
+
+        // --- road ends and side-road junction control ---
+
+        /// <summary>Beyond this the mapped network is cut by the edge of the downloaded data, not by the real road.</summary>
+        public const float DataEdgeMetres = 4500f;
+
+        private readonly struct RoadEnd
+        {
+            public RoadEnd(int road, float x, float z, float tx, float tz, float length, bool arrives)
+            {
+                Road = road; X = x; Z = z; Tx = tx; Tz = tz; Length = length; Arrives = arrives;
+            }
+
+            public readonly int Road;
+            public readonly float X, Z;
+            /// <summary>Unit direction of the road at this end, pointing out of the road toward the end point.</summary>
+            public readonly float Tx, Tz;
+            public readonly float Length;
+            /// <summary>False for a one-way road that leaves this end: traffic never approaches it from there.</summary>
+            public readonly bool Arrives;
+        }
+
+        private static List<RoadEnd> RoadEnds()
+        {
+            var ends = new List<RoadEnd>();
+            var roads = AdelaideRoadNetwork.Roads;
+            var pts = AdelaideRoadNetwork.Points;
+            for (var r = 0; r < roads.Length; r++)
+            {
+                var road = roads[r];
+                if (road.PointCount < 2)
+                    continue;
+                var first = road.PointStart;
+                var last = road.PointStart + road.PointCount - 1;
+                var length = 0f;
+                for (var i = first + 1; i <= last; i++)
+                {
+                    var dx = pts[i * 2] - pts[(i - 1) * 2];
+                    var dz = pts[i * 2 + 1] - pts[(i - 1) * 2 + 1];
+                    length += (float)Math.Sqrt(dx * dx + dz * dz);
+                }
+
+                AddEnd(ends, r, pts, first + 1, first, length, !road.IsOneWay);
+                AddEnd(ends, r, pts, last - 1, last, length, true);
+            }
+
+            return ends;
+        }
+
+        /// <summary>The end at point <paramref name="at"/>, approached from point <paramref name="from"/>.</summary>
+        private static void AddEnd(List<RoadEnd> ends, int road, float[] pts, int from, int at, float length, bool arrives)
+        {
+            var dx = pts[at * 2] - pts[from * 2];
+            var dz = pts[at * 2 + 1] - pts[from * 2 + 1];
+            var len = (float)Math.Sqrt(dx * dx + dz * dz);
+            if (len < 0.05f)
+                return;
+            ends.Add(new RoadEnd(road, pts[at * 2], pts[at * 2 + 1], dx / len, dz / len, length, arrives));
+        }
+
+        private static bool Skippable(AdelaideRoadNetwork.Road road) =>
+            road.IsAirside || road.Layer < 0 || road.Class == AdelaideRoadNetwork.RoadClass.Track
+            || (road.Flags & (AdelaideRoadNetwork.RoadFlags.Tunnel | AdelaideRoadNetwork.RoadFlags.Bridge)) != 0
+            || road.Service is AdelaideRoadNetwork.ServiceKind.Driveway or AdelaideRoadNetwork.ServiceKind.DriveThrough
+                or AdelaideRoadNetwork.ServiceKind.ParkingAisle;
+
+        /// <summary>
+        /// A road that stops dead used to end in a flat cut. A real street ends in a turning head or a rounded kerb, so
+        /// every free end of a mapped street gets a disc: a cul-de-sac head on a residential street, a rounded cap
+        /// otherwise. Not for driveways and parking aisles, airside or bridged roads, ends where a turning circle or
+        /// gate is already mapped, or the far arterials the edge of the downloaded data cut off. Returns discs drawn.
+        /// </summary>
+        public static int BuildEndCaps(RoadMeshSink sink, RoadBuildOptions o)
+        {
+            var junctions = new HashSet<long>();
+            var j = AdelaideRoadNetwork.Junctions;
+            for (var k = 0; k + 3 < j.Length; k += 4)
+                junctions.Add(Key(j[k], j[k + 1]));
+            var furniture = AdelaideRoadNetwork.Furniture;
+            var stride = AdelaideRoadNetwork.FurnitureStride;
+            var mapped = new List<(float X, float Z)>();
+            for (var k = 0; k + stride <= furniture.Length; k += stride)
+            {
+                var kind = (int)furniture[k];
+                if (kind == (int)AdelaideRoadNetwork.FurnitureKind.TurningCircle || kind == (int)AdelaideRoadNetwork.FurnitureKind.Gate)
+                    mapped.Add((furniture[k + 1], furniture[k + 2]));
+            }
+
+            var count = 0;
+            var roads = AdelaideRoadNetwork.Roads;
+            foreach (var end in RoadEnds())
+            {
+                var road = roads[end.Road];
+                if (Skippable(road) || end.Length < 12f || junctions.Contains(Key(end.X, end.Z)))
+                    continue;
+                if (road.Class <= AdelaideRoadNetwork.RoadClass.Unclassified
+                    && end.X * end.X + end.Z * end.Z > DataEdgeMetres * DataEdgeMetres)
+                    continue;
+                if (NearAprons(end.X, end.Z) && o.Rule(end.X, end.Z) != RoadSurfaceUse.Asphalt)
+                    continue;
+                var covered = false;
+                foreach (var m in mapped)
+                    if ((m.X - end.X) * (m.X - end.X) + (m.Z - end.Z) * (m.Z - end.Z) < 64f)
+                    {
+                        covered = true;
+                        break;
+                    }
+
+                if (covered)
+                    continue;
+                var half = road.Width * 0.5f;
+                var street = road.Class is AdelaideRoadNetwork.RoadClass.Residential or AdelaideRoadNetwork.RoadClass.LivingStreet
+                    or AdelaideRoadNetwork.RoadClass.Unclassified && road.Width >= 5f && end.Length >= 30f;
+                var radius = street ? Math.Max(half * 1.6f, 4.5f) : half;
+                // A turning head sits back from the end so it does not poke out past the street's last metre.
+                var back = street ? radius * 0.35f : 0f;
+                var cx = end.X - end.Tx * back;
+                var cz = end.Z - end.Tz * back;
+                Disc(sink, o, cx, cz, radius, AsphaltFor(road, AlphaAt(cx, cz)));
+                count++;
+            }
+
+            return count;
+        }
+
+        /// <summary>
+        /// Side roads give way to the road they meet: for every street that arrives at a junction with a more
+        /// important road (and where nothing is mapped within 20 m), a row of give-way teeth across its approach
+        /// lane just short of the through road. Returns approaches marked.
+        /// </summary>
+        public static int BuildSideRoadGiveWay(RoadMeshSink sink, RoadBuildOptions o)
+        {
+            var roads = AdelaideRoadNetwork.Roads;
+            var pts = AdelaideRoadNetwork.Points;
+            // Most important class at every node, from every road passing through or ending there.
+            var best = new Dictionary<long, byte>();
+            for (var r = 0; r < roads.Length; r++)
+            {
+                var road = roads[r];
+                if (road.IsAirside || road.Layer < 0)
+                    continue;
+                for (var i = road.PointStart; i < road.PointStart + road.PointCount; i++)
+                {
+                    var key = Key(pts[i * 2], pts[i * 2 + 1]);
+                    var cls = (byte)road.Class;
+                    if (!best.TryGetValue(key, out var have) || cls < have)
+                        best[key] = cls;
+                }
+            }
+
+            var halfWidth = new Dictionary<long, float>();
+            var jn = AdelaideRoadNetwork.Junctions;
+            for (var k = 0; k + 3 < jn.Length; k += 4)
+                halfWidth[Key(jn[k], jn[k + 1])] = jn[k + 2];
+            var furniture = AdelaideRoadNetwork.Furniture;
+            var stride = AdelaideRoadNetwork.FurnitureStride;
+            var control = new List<(float X, float Z)>();
+            for (var k = 0; k + stride <= furniture.Length; k += stride)
+            {
+                var kind = (int)furniture[k];
+                if (kind == (int)AdelaideRoadNetwork.FurnitureKind.TrafficSignal || kind == (int)AdelaideRoadNetwork.FurnitureKind.GiveWay
+                    || kind == (int)AdelaideRoadNetwork.FurnitureKind.Stop)
+                    control.Add((furniture[k + 1], furniture[k + 2]));
+            }
+
+            var count = 0;
+            foreach (var end in RoadEnds())
+            {
+                var road = roads[end.Road];
+                if (!end.Arrives || Skippable(road) || road.Width < 4.5f)
+                    continue;
+                var key = Key(end.X, end.Z);
+                if (!best.TryGetValue(key, out var major) || !halfWidth.TryGetValue(key, out var through))
+                    continue;
+                var own = (byte)road.Class;
+                var sideRoad = (major <= (byte)AdelaideRoadNetwork.RoadClass.Secondary && own >= (byte)AdelaideRoadNetwork.RoadClass.Tertiary)
+                               || (major <= (byte)AdelaideRoadNetwork.RoadClass.Tertiary && own >= (byte)AdelaideRoadNetwork.RoadClass.Unclassified);
+                if (!sideRoad || major >= own)
+                    continue;
+                var setback = Math.Max(2.5f, through + 1.2f);
+                if (end.Length < setback + 6f)
+                    continue;
+                var near = false;
+                foreach (var c in control)
+                    if ((c.X - end.X) * (c.X - end.X) + (c.Z - end.Z) * (c.Z - end.Z) < 400f)
+                    {
+                        near = true;
+                        break;
+                    }
+
+                if (near)
+                    continue;
+                var x = end.X - end.Tx * setback;
+                var z = end.Z - end.Tz * setback;
+                if (NearAprons(x, z) && o.Rule(x, z) != RoadSurfaceUse.Asphalt)
+                    continue;
+                AdelaideRoadFurnitureGeometry.GiveWayLine(sink, o, x, z, end.Tx, end.Tz, road.Width);
+                count++;
+            }
+
+            return count;
         }
 
         /// <summary>Roughly where the pavement rule can matter, so it is not evaluated for every suburban junction.</summary>

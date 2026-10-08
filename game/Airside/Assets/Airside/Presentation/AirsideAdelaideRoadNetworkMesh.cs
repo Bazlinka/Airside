@@ -110,6 +110,7 @@ namespace Airside.Presentation
             AdelaideRoadGeometry.BuildMarkings(paint, options);
             AdelaideCarParkGeometry.BuildBayLines(paint, options);
             AdelaideRoadFurnitureGeometry.BuildRoadPaint(paint, options);
+            AdelaideRoadGeometry.BuildSideRoadGiveWay(paint, options);
             AdelaideEmergencyAviationGeometry.BuildPaint(paint, options);
             // Parked cars, street lamps, canopies, solar arrays, tanks, masts and bus stops: solid, lit,
             // vertex-coloured (alpha 1 keeps the satellite out of them).

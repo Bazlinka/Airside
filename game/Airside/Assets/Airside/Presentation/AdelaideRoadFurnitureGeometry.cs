@@ -199,6 +199,10 @@ namespace Airside.Presentation
             sink.Tri(ax, H(ax, az), az, cx, H(cx, cz), cz, dx, H(dx, dz), dz, White);
         }
 
+        /// <summary>Give-way teeth for a side road, from outside this class (travel direction t).</summary>
+        public static void GiveWayLine(RoadMeshSink sink, RoadBuildOptions o, float x, float z, float tx, float tz, float width) =>
+            GiveWayTeeth(sink, o, x, z, tx, tz, width);
+
         /// <summary>Give-way "shark teeth": triangles across the left half whose points face the approaching traffic.</summary>
         private static void GiveWayTeeth(RoadMeshSink sink, RoadBuildOptions o, float x, float z, float tx, float tz, float width)
         {

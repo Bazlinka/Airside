@@ -1,0 +1,52 @@
+{
+  "prototype_only": true,
+  "checks": [
+    "F01/F12/F22: setup, goal pin and airline identity",
+    "F04/F05/F09/F10/F24: review/back, booking, camera, settlement once and save/return",
+    "F06/F08: cancellation confirmation, dismissal and protected stand assignment",
+    "F04/F05: insufficient funds and locked-route refusals keep draft",
+    "F11/F12/F21: complete contract, capability proof, reconciling rewards and abandonment",
+    "F13/F14/F15/F18: unified roster, purchase, sale and new-base purchase",
+    "F16: check charges once, repair differs from return, stand wait and UI dismissal",
+    "F09/F17/F19: remote-camera limits, non-commercial ferry and freighter seat restriction",
+    "F02/F20/F24: repeat pause preserves flight, away commits settle once, refusal pauses automation",
+    "F02/F03/F07: attention, blocker inspection/back, automatic hold and recoverable load error",
+    "F02/F24: portable study backup restores valid state and rejects corruption without overwrite",
+    "F23: settings/defaults, modal keyboard focus and five responsive sizes"
+  ],
+  "page_errors": [],
+  "failed_resources": [],
+  "layouts": [
+    {
+      "width": 1440,
+      "height": 900,
+      "no_document_overflow": true,
+      "settings_focus": true
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "no_document_overflow": true,
+      "settings_focus": true
+    },
+    {
+      "width": 900,
+      "height": 720,
+      "no_document_overflow": true,
+      "settings_focus": true
+    },
+    {
+      "width": 800,
+      "height": 600,
+      "no_document_overflow": true,
+      "settings_focus": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "no_document_overflow": true,
+      "settings_focus": true
+    }
+  ],
+  "model_integrity": "passed"
+}

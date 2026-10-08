@@ -17,6 +17,7 @@ Older entries (about 1,000, through 2026-10-07) are in
 - **ATR 42 hold door fixed.** The forward-left baggage door no longer sits mirrored a door-width ahead of the cockpit: the half turn is baked into its mesh, not its transform (unverified in Unity visually).
 - Keep one previous airline save and recover unreadable/missing primary JSON through Continue, with a clear recovery warning (#599).
 - Clearer opening, shorter optional entrance, grouped Options and direct return to title; expose cockpit motion and explain settings (#601).
+- Draw HUD workspace text and buttons at real device pixels (fonts and rounded button art scaled, not stretched) so Operations/Fleet are crisp on Retina (Unity tests pass; visual check pending).
 
 - 2026-10-08: Runway/terminal/gate templates for all 19 Australian airports (real OSM gate numbers at 8) plus a runway and gate planner that sends airlines to their own terminal (unverified in Unity).
 
@@ -42,6 +43,7 @@ Older entries (about 1,000, through 2026-10-07) are in
 - **Wide overview polish (ADR 0251 amendment).** No pale square round Adelaide, smooth far colours, the ring follows the camera out and fades into the sky; soak logs hitches.
 - **Fleet/flight clarity (#570).** Available aircraft, airport selection, Melbourne flight views and reviewed bookings/cancellations; compare expected profit.
 - **Faster agent loop.** Cloud-session bootstrap (.NET 8), `scripts/test-quick.py --changed`, `scripts/new-meta.py`, docs-only PRs skip heavy CI, `docs/ai/RECIPES.md`, `.cursorignore`.
+- **Connected player-flow study (#567).** Interactive local airline journeys, commitment/refusal recovery and a fresh dispatch layout; no Unity runtime changes.
 
 - **Multi-tool workflow.** Pointer files only, per-area `AGENTS.md`, task/PR templates, date-named ADRs and generated indexes (`docs/ai/WORKFLOW.md`).
 - **Player-flow contract.** Consolidates 24 player tasks, decisions and recovery paths; visual interface proposals must be checked against it. Documentation only.
@@ -131,6 +133,9 @@ Older entries (about 1,000, through 2026-10-07) are in
   booked flight; a sold outstation mark is not reissued; a second Saab opens its own planner. Save
   v20 adds the ferry flag and an outstation logbook. Code only: nothing compiled or run (Bailey's
   instruction), so build, headless tests and visuals are unverified.
+- Refine the maintenance movement and whole-interface proposal with a concrete
+  interactive design study, seven retained previews and implementation/acceptance
+  packets (ADR 0242). Design only; no runtime game changes.
 
 - Distinguish jet family windshield shells, shape pilot/passenger seats and regional
   yokes, add family bin/PSU fittings, and enable an analog Bell 412EP cockpit with

@@ -606,6 +606,7 @@ namespace Airside.Presentation
                 var card = new HudBox(layout.LeftColumn.X + column * (cardWidth + 8f),
                     layout.LeftColumn.Y + StatsWorkspaceLayout.CaptionHeight + 6f + row * (layout.CompactOverview ? 16f : 27f),
                     cardWidth, layout.CompactOverview ? 16f : 23f);
+                into.Card(card, i == 0 || i == 2 ? 0.9f : 0.6f);
                 // ADR 0130: each figure leads with its icon.
                 // A narrow window drops the icons first, so the figures keep their room.
                 var withIcon = card.Width >= 190f;

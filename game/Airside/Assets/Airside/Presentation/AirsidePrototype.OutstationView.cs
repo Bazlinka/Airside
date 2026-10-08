@@ -117,6 +117,16 @@ namespace Airside.Presentation
             return new Rect((viewportWidth - width) / 2f, 16f, width, 116f);
         }
 
+        /// <summary>" · lands MEL RWY 16 · Gate T2-07" from the destination's airport template; empty when it has none.</summary>
+        private string OutstationLandingText(OutstationAircraft aircraft, OutstationJourney journey)
+        {
+            var code = journey.Phase == OutstationPhase.Inbound ? aircraft.BaseCode : aircraft.DestinationCode;
+            var wind = RunwayWeather.At(_operations.Clock, new SimulationTime((long)_preciseTime));
+            return AirportArrivalPlanner.TryPlan(code, aircraft.Type, RouteAccess.IsInternational(code), wind,
+                aircraft.Registration + "@" + aircraft.ReturnAtSeconds, null, out var arrival)
+                ? " · lands " + code + " " + arrival.Text : string.Empty;
+        }
+
         private void DrawOutstationViewHud(GUIStyle panel, GUIStyle title, GUIStyle button)
         {
             var aircraft = WatchedOutstation();
@@ -128,7 +138,7 @@ namespace Airside.Presentation
                 aircraft.Registration + " · " + FleetStatusText.NameOf(aircraft.BaseCode) + " ↔ "
                 + FleetStatusText.NameOf(aircraft.DestinationCode), title);
             GUI.Label(new Rect(box.x + 16f, box.y + 42f, width - 32f, 22f),
-                $"{journey.Phase} · {journey.SpeedKnots:0} kt · {journey.AltitudeFeet:N0} ft · back { _operations.Clock.TimeText(new SimulationTime(aircraft.ReturnAtSeconds))}");
+                $"{journey.Phase} · {journey.SpeedKnots:0} kt · {journey.AltitudeFeet:N0} ft · back { _operations.Clock.TimeText(new SimulationTime(aircraft.ReturnAtSeconds))}{OutstationLandingText(aircraft, journey)}");
             if (GUI.Button(new Rect(box.x + 16f, box.y + 76f, 116f, 28f), "FLEET / BACK", button)) ExitOutstationView(true);
             var third = Mathf.Min(130f, (width - 170f) / 3f);
             if (GUI.Button(new Rect(box.x + 146f, box.y + 76f, third, 28f), "EXTERIOR", button)) EnterOutstationView(aircraft, AircraftViewMode.Exterior);

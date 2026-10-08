@@ -210,6 +210,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirlineSoakTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirportCurfewTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirportSimulationTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirportTemplateTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirsidePaintWideningTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirsideStripMarkingsTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ApproachHoldTests.cs" />

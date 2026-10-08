@@ -381,3 +381,10 @@ project test evidence rather than external data.
 Existing CC0 asphalt, worn-concrete and ambientCG grass maps are reused. Pavement grain,
 macro variation and weather sheen now share a coherent world scale. No paid assets,
 subscriptions or signups are required by any runtime or regeneration step.
+
+## Australian airport runway, terminal and gate figures — 2026-10-08
+
+Source: the English Wikipedia article for each of the 19 airports in `DestinationCatalogue.Australia`, read 2026-10-08.
+Licence: CC BY-SA 4.0 (facts only; no prose reproduced). Cost: none. Attribution: Wikipedia contributors.
+Used for: `AirportTemplates` (runway designators and lengths, terminal and gate counts). Sheet: `docs/data/AUSTRALIAN_AIRPORTS_RUNWAYS_TERMINALS_GATES.md`.
+Fallback: a generic count (`FactBasis.Generic`) wherever no figure was found. Not yet cross-checked against AIP/ERSA.

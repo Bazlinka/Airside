@@ -515,3 +515,15 @@ Unchanged adapted A320 running gear/engines retain their existing source licence
 and attribution obligations. Previous committed assets remain the fallback.
 Geometry checks and actual asset renders cover the fleet; native Unity appearance,
 control articulation and performance remain unverified.
+
+
+## Ground surface character — 9 October 2026 (#687)
+
+ART-GROUND-CHARACTER-20261009: original project-owned HLSL in existing AdelaideGround,
+Surroundings and Pavement shaders plus `GroundCharacter.hlsl`, authored by Codex for
+Bailey's request for a less perfect ground/world. Existing apron repair geometry
+is revised in project-owned C#; no downloaded image, model, data or code, no new
+source licence/attribution obligation and zero acquisition cost. Existing scanned
+texture and satellite registrations remain applicable. Prior shaders/material
+fallbacks and previous git revision are the fallback. Native shader/appearance/GPU
+verification remains open; focused evidence: `docs/testing/ground-character-2026-10-09.md`.

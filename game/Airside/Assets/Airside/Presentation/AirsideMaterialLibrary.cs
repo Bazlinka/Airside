@@ -519,7 +519,8 @@ namespace Airside.Presentation
             material.SetFloat("_OcclusionStrength", GetProfile(kind).Occlusion);
             material.SetFloat("_TileMetres", kind == SurfaceKind.Asphalt ? 3f : 4f);
             material.SetFloat("_MacroStrength", kind == SurfaceKind.Asphalt ? .065f : .035f);
-            material.SetFloat("_PatchStrength", kind == SurfaceKind.Asphalt ? .025f : .015f);
+            material.SetFloat("_PatchStrength", kind == SurfaceKind.Asphalt ? .04f : .025f);
+            material.SetFloat("_ConcreteSurface", kind == SurfaceKind.Concrete ? 1f : 0f);
             material.SetColor("_ScanMean", kind == SurfaceKind.Asphalt ? new Color(.38f,.39f,.40f) : new Color(.64f,.65f,.65f));
             material.SetFloat("_ScanContrast", kind == SurfaceKind.Asphalt ? .55f : .22f);
             material.SetFloat("_Metallic", 0f);

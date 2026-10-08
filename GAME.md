@@ -13,6 +13,17 @@ career card can be shown per view (overview / follow) from Options > Views; L an
 Headless draw-list/layout/step tests pass; **Unity unverified** (check the card's position with the map and selected card at 800x600, clicking a row,
 the Views tab, and that the first-flight guide still shows with the career card hidden).
 
+**Ground character (9 Oct, Codex, #687):** grass/soil gains local bare/matted islands,
+dry/damp variation and interrupted mowing. Pavement differentiates sparse asphalt
+repairs/sealed cracks from concrete slab joints and age variation; fine detail is
+filtered and fades with distance. Shared absolute-world character retains the
+Adelaide edge handover. Apron patches have varied size/age and stay wholly inside
+the mapped apron. Terrain heights, operational layouts, markings and saves retained.
+Focused apron checks pass 4/4, changed C# 9 syntax parses and generated harness is
+current. Native shaders, wet/dry/day/night appearance and GPU performance remain
+unverified; no player build or full suite run. Evidence: `docs/testing/ground-character-2026-10-09.md`.
+Decision: `2026-10-09-ground-character`.
+
 **Connected aircraft tails (9 Oct, Codex, #684):** all 15 active airframes plus the
 A320 authored fallback now have curved hull-fitted fin/stabiliser roots and tapered
 aerofoils. Rudder/elevator hinges share the fixed surface geometry; T-tails retain
@@ -144,7 +155,7 @@ satellite JPEG mirror mismatch remain separate. The preceding status and exact o
 tools' open work are preserved in
 `docs/history/game-handoff-before-weather-realism-2026-10-08.md`.
 
-*One block, replaced at the end of each session. Updated 2026-10-08.*
+*One block, replaced at the end of each session. Updated 2026-10-09.*
 
 ## Current milestone
 

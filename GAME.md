@@ -7,6 +7,9 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Flight-view moving map (8 Oct, Claude):** `AirsidePrototype.FlightMap.cs` + `CockpitMovingMap.cs`. Panel bottom-right in every aircraft view (N toggles,
++/−/scroll scale, A auto): airfield layout (runway-up) near the field, South Australia coast (north-up) with great-circle route elsewhere. Unity compile/appearance unverified.
+
 **Landing-light visibility (8 Oct, Claude):** lit landing/taxi lamps now draw a camera-facing flare (`UpdateLampFlare`, AirsidePrototype.Lights.cs);
 the 20 cm lens was invisible at play distances. Unity compile and appearance unverified — check at overview/follow, day and night.
 

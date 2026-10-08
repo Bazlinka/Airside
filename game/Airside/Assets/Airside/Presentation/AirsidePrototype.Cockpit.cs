@@ -279,6 +279,8 @@ namespace Airside.Presentation
                     AirsideSettings.Current.Save();
                     PlayUiClick();
                 }
+                if (InCockpit && _cockpitView != null)
+                    DrawFlightMap(layout, placement, aircraft);
             }
             if (_aircraftViewMode == AircraftViewMode.Cockpit && !string.IsNullOrEmpty(_cockpitCallText) && Time.unscaledTime < _cockpitCallUntil)
             {

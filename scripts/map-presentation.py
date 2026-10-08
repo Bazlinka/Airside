@@ -39,6 +39,7 @@ OWNERS = {
     "AirsidePrototype.Soak.cs": ("Core", "Unattended soak mode for packaged builds (heartbeat log, stall detection)"),
     "AirsidePrototype.Airline.cs": ("Player airline UI", "Player-airline layer: start-your-airline panel, fleet panel, destinations map, HUD sheets (ADR 0045)"),
     "AirsidePrototype.Fleet.cs": ("Player airline UI", "Unified Fleet workspace runtime: roster filters and sort, selection inside the sheet (ADR 0239)"),
+    "AirsidePrototype.FlightMap.cs": ("Flight views and traffic", "Moving map in the cockpit/window/exterior views: own ship, route, airports, fleet (N toggles)"),
     "AirsidePrototype.MiniMap.cs": ("Player airline UI", "Corner map of the airfield with every aircraft as a dot"),
     "AirsidePrototype.FieldTags.cs": ("Player airline UI", "Registration tags floating over aircraft on the field"),
     "AirsidePrototype.FieldBuild.cs": ("Field and lighting build", "Field construction: surfaces and their wet sheen, vegetation, perimeter, stand markings"),

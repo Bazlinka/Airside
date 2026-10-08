@@ -154,6 +154,18 @@ namespace Airside.Presentation
         /// bounds centre puts the light in the lens; procedural lamps (centred cubes) get zero.
         /// </summary>
         private static MaterialPropertyBlock _lampFlareBlock;
+        private static Material _aircraftHaloMaterial;
+
+        private static Material AircraftHaloMaterial()
+        {
+            if (_aircraftHaloMaterial != null)
+                return _aircraftHaloMaterial;
+            var shader = Shader.Find("Airside/AircraftLightHalo");
+            if (shader == null)
+                return HaloMaterial();
+            _aircraftHaloMaterial = new Material(shader) { name = "mat_aircraft_light_halo" };
+            return _aircraftHaloMaterial;
+        }
 
         /// <summary>
         /// A lit landing/taxi lamp is a 20 cm lens on a 40 m airframe: invisible from any play camera, so
@@ -191,7 +203,7 @@ namespace Airside.Presentation
 
             if (flare == null)
             {
-                var material = HaloMaterial();
+                var material = AircraftHaloMaterial();
                 if (material == null)
                     return;
                 var card = GameObject.CreatePrimitive(PrimitiveType.Quad);

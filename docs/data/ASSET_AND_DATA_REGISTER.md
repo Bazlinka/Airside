@@ -471,3 +471,15 @@ no prompt/image generation, zero cost, no additional attribution. A320 v02 keeps
 its previously registered FlightGear free-source adaptations and attribution.
 Fallback: previous committed models and existing primitive missing-asset paths.
 Native appearance/performance unverified. Decision: `2026-10-08-aircraft-body-realism`.
+
+
+## Aircraft light-source halo — 8 October 2026 (#668)
+
+`game/Airside/Assets/Airside/Art/Shaders/AircraftLightHalo.shader` is original
+project-owned HLSL authored by Codex for Bailey's night-arrival visibility report.
+Source/evidence: task #668 and `2026-10-08-night-final-light-visibility` decision.
+Zero cost; no external image, texture, model or code; no attribution obligation.
+Analytic core/skirt and haze attenuation follow the project's existing
+AirfieldLightPoint behaviour. Built-in URP halo remains the missing-shader fallback.
+Always-included shader reference retains it in player builds. Integrated;
+native shader compilation and day/night appearance remain unverified.

@@ -318,6 +318,7 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-08 | [HUD chrome redesign (stage 1)](2026-10-08-hud-chrome-redesign.md) | headless draw-list renders and HUD layout tests checked; Unity appeara |
 | 2026-10-08 | [macOS notification registration and recoverable permission setup](2026-10-08-macos-notification-registration.md) | Implemented; native Mac verification pending |
 | 2026-10-08 | [Important background macOS notifications](2026-10-08-macos-notifications.md) | Implemented at Bailey’s request; native Mac verification pending |
+| 2026-10-08 | [Night final light-source visibility](2026-10-08-night-final-light-visibility.md) | Accepted for implementation under Bailey's bug report |
 | 2026-10-08 | [Opening and Options clarity](2026-10-08-opening-options.md) | Accepted for implementation |
 | 2026-10-08 | [Independent Parafield airport](2026-10-08-parafield-independent-airport.md) |  |
 | 2026-10-08 | [Save recovery copy](2026-10-08-save-recovery.md) | Accepted for implementation |

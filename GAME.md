@@ -7,6 +7,16 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Night final visibility (8 Oct, Codex, #668):** aircraft flares use an original additive
+light-source shader with the same haze transmission as runway point lights, rather than
+URP surface fog. Distant halos sit outside the fuselage in camera depth and use corrected
+projected size. Night airborne position/strobe glows remain inside 6 km for side-on finals;
+individual landing flares still carry the close nose-on approach. Graphics toggles,
+weather attenuation, lamp policy, simulation and saves stay unchanged. Source/geometry
+checks and Roslyn C# syntax pass; asset metadata passes except the known satellite
+JPEG mirror mismatch. Native shader compilation and Mac night overview/tower/follow appearance
+(clear/fog, head-on/side/aft and near/far handoff) remain unverified.
+
 **Weather and aircraft vibration (8 Oct, Codex, #666):** sixteen bounded cloud volumes now
 include broad storm towers/anvils reaching roughly 10 km; lit deck tops remain below a
 high observer. Fog clears above its shallow ground bank; rain, wipers, interior audio,

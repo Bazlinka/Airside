@@ -99,22 +99,25 @@ namespace Airside.Presentation
                 if (journey.HasValue && _fleetAircraftById.TryGetValue(flight.AircraftId,out var watched))
                 {
                     if(watched.State==FleetState.AtDestination) {phase=AircraftPhase.AtStand;progress=1;}
-                    else if(watched.State==FleetState.Inbound && TryEnroute(watched,out var inboundProfile,out var inboundElapsed)
-                        && inboundElapsed<RegionalFlightPath.DepartureSeconds)
+                    else if (TryEnroute(watched, out var journeyProfile, out var journeyElapsed))
                     {
-                        phase=inboundElapsed<40 ? AircraftPhase.Takeoff : AircraftPhase.Departed;
-                        progress=inboundElapsed<40 ? (float)(inboundElapsed/40)*AirsideFlightPath.RotateProgress
-                            : (float)((inboundElapsed-40)/80);
-                    }
-                    else if(watched.State==FleetState.Outbound && TryEnroute(watched,out var profile,out var elapsed))
-                    {
-                        var remaining=profile.LegSeconds-elapsed;
-                        if(remaining<=RegionalFlightPath.RolloutSeconds)
+                        phase = RegionalFlightPath.JourneyPhase(watched.State, journeyElapsed, journeyProfile.LegSeconds);
+                        // Preserve Adelaide's departure progress during the initial climb.
+                        if (watched.State == FleetState.Inbound || phase == AircraftPhase.Approach)
+                            progress = 1f;
+                        if (watched.State == FleetState.Inbound && journeyElapsed < RegionalFlightPath.DepartureSeconds)
                         {
-                            phase=AircraftPhase.Landing;
-                            progress=Mathf.Lerp(AirsideFlightPath.TouchdownProgress,1,1-(float)(remaining/RegionalFlightPath.RolloutSeconds));
+                            progress = journeyElapsed < 40
+                                ? (float)(journeyElapsed / 40) * AirsideFlightPath.RotateProgress
+                                : (float)((journeyElapsed - 40) / 80);
                         }
-                        else if(remaining<=RegionalFlightPath.TerminalSeconds) {phase=AircraftPhase.Approach;progress=1;}
+                        else if (watched.State == FleetState.Outbound
+                                 && journeyProfile.LegSeconds - journeyElapsed <= RegionalFlightPath.RolloutSeconds)
+                        {
+                            var remaining = journeyProfile.LegSeconds - journeyElapsed;
+                            progress = Mathf.Lerp(AirsideFlightPath.TouchdownProgress, 1,
+                                1 - (float)(remaining / RegionalFlightPath.RolloutSeconds));
+                        }
                     }
                 }
                 var pitch = journey.HasValue ? -Mathf.Atan2(next.y-position.y,

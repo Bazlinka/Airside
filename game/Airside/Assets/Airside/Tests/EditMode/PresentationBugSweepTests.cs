@@ -7,6 +7,14 @@ namespace Airside.Tests
     /// <summary>Unity-side regressions for the 2026-09 presentation bug sweep.</summary>
     public sealed class PresentationBugSweepTests
     {
+        [TestCase(Airside.Simulation.FleetState.Outbound)]
+        [TestCase(Airside.Simulation.FleetState.Inbound)]
+        public void EnrouteJourney_HasRetractedFlaps(Airside.Simulation.FleetState state)
+        {
+            var phase = RegionalFlightPath.JourneyPhase(state, 600, 1000);
+            Assert.That(AirsideReusableMotion.FlapDegrees(phase, 1f, drawnOnGround: true), Is.EqualTo(0f));
+        }
+
         [Test]
         public void FleetVisibilityGuard_HidesOffMapAndMisorderedViewsBeforePose()
         {

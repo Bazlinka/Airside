@@ -8,6 +8,23 @@ namespace Airside.Tests
 {
     public sealed class FlightWorldTests
     {
+        [TestCase(FleetState.Outbound, 600, AircraftPhase.Departed)]
+        [TestCase(FleetState.Inbound, 600, AircraftPhase.Departed)]
+        [TestCase(FleetState.Inbound, 0, AircraftPhase.Takeoff)]
+        [TestCase(FleetState.Inbound, 39.9, AircraftPhase.Takeoff)]
+        [TestCase(FleetState.Inbound, 40, AircraftPhase.Departed)]
+        [TestCase(FleetState.Inbound, 120, AircraftPhase.Departed)]
+        [TestCase(FleetState.Outbound, 819.9, AircraftPhase.Departed)]
+        [TestCase(FleetState.Outbound, 820, AircraftPhase.Approach)]
+        [TestCase(FleetState.Outbound, 959.9, AircraftPhase.Approach)]
+        [TestCase(FleetState.Outbound, 960, AircraftPhase.Landing)]
+        [TestCase(FleetState.Outbound, 1000, AircraftPhase.Landing)]
+        [TestCase(FleetState.AtDestination, 0, AircraftPhase.AtStand)]
+        public void JourneyVisualPhase_UsesActualJourneyStage(FleetState state, double elapsed, AircraftPhase expected)
+        {
+            Assert.That(RegionalFlightPath.JourneyPhase(state, elapsed, 1000), Is.EqualTo(expected));
+        }
+
         [TestCase(-1,-1)] [TestCase(0,0)] [TestCase(15999,0)] [TestCase(16000,1)]
         public void TileUsesFloorAcrossBothSides(double metres,int expected) => Assert.That(FlightWorldGrid.Tile(metres),Is.EqualTo(expected));
         [TestCase(-1,-1)] [TestCase(0,0)] [TestCase(63999,0)] [TestCase(64000,1)] [TestCase(-64001,-2)]

@@ -9,7 +9,14 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*
 
-**Five-area bug sweep (Codex, issue #576, draft PR #580):** five requested agents;
+**Enroute flap phase correction (Codex, #586):** branch `codex/enroute-flap-phase-20261008`
+from main `3fcb8063`. Return cruise inherited the local Approach animation, commanding
+approach flaps/gear while flying enroute. Select the drawn journey phase explicitly;
+preserve return takeoff and destination approach/rollout. Focused flight tests: 34 passed;
+required full suite: 1,917 passed / zero failed; NUnit compatibility compile and asset audit passed. Unverified in Unity. Packet: `docs/testing/enroute-flaps-2026-10-08/`.
+NEXT: review the fix and check cruise flaps/gear and terminal transitions in Unity.
+
+**Five-area bug sweep (Codex, issue #576, merged PR #580):** five requested agents;
 `codex/five-area-bug-sweep-20261007`, integrated with main `0dc6e629`.
 Fixes: exclusive camera-shell ownership, compact inspector/manual clicks,
 allocation-free runway filters/catalogue lookup, rotor queue isolation, parked-aircraft
@@ -18,7 +25,7 @@ Preserve main's approved arrival policy and merged save/glide/exit fixes; add re
 Required `scripts/test-domain.sh`: **1,905 passed / zero failed** (5 m 19 s test run);
 Unity-NUnit compile, asset audit, C# syntax and generated presentation map passed.
 Packet: `docs/testing/five-area-bug-sweep-2026-10-07.md`. Unverified in Unity for this
-sweep. NEXT: review draft and run its native checklist; do not merge on headless evidence alone.
+sweep. Bailey authorised merging #580 without the pending native run; its native checklist remains open.
 
 **Aircraft lighting by type (7 Oct, Claude):** `AircraftLightingProfile` gives each family (turboprop, regional jet, narrowbody, widebody,
 Bell 412) its own landing/taxi beam shape and aim, strobe pattern, tail strobe (jets), beacon rate and a nose lamp that doubles as the takeoff

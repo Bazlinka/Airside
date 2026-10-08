@@ -4122,6 +4122,7 @@ namespace Airside.Presentation
             public readonly float LightingClockOffset;
             public Renderer Lamp;
             public bool LampResolved;
+            public Renderer Flare;
 
             // Landing-gear articulation (struts, trucks and belly doors). Retract is the part's own
             // 0 (down and locked) .. 1 (up and locked) travel; the pass slews it toward the phase's target.

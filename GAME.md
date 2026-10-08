@@ -7,6 +7,9 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Landing-light visibility (8 Oct, Claude):** lit landing/taxi lamps now draw a camera-facing flare (`UpdateLampFlare`, AirsidePrototype.Lights.cs);
+the 20 cm lens was invisible at play distances. Unity compile and appearance unverified — check at overview/follow, day and night.
+
 **Working policy (8 Oct, Bailey, #611):** quick relevant checks by default; broad
 tests/builds/playtesting only on request. Merge completed authorised work into main
 without repeated approval. Canonical instructions: AGENTS.md testing and merge policy.

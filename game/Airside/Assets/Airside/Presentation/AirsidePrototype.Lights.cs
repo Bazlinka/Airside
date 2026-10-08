@@ -127,6 +127,7 @@ namespace Airside.Presentation
                                 ? new Color(2.6f, 2.5f, 2.1f)
                                 : Color.black);
                         }
+                        UpdateLampFlare(parts[i], camera, landingLights, new Color(1f, 0.96f, 0.86f), 0.9f, 22f);
                         break;
                     }
                     case LightGearKind.TaxiLight:
@@ -134,6 +135,7 @@ namespace Airside.Presentation
                         child.gameObject.SetActive(true);
                         EnsureTaxiSpotLight(parts[i], taxiLights, profile);
                         GlowLamp(parts[i], new Color(1f, 0.94f, 0.78f), taxiLights ? 1f : 0f, 0f);
+                        UpdateLampFlare(parts[i], camera, taxiLights, new Color(1f, 0.94f, 0.78f), 0.5f, 14f);
                         break;
                     }
                 }
@@ -146,6 +148,70 @@ namespace Airside.Presentation
         /// the airframe origin — nav lights and strobes lit the belly. A child at the lens mesh's
         /// bounds centre puts the light in the lens; procedural lamps (centred cubes) get zero.
         /// </summary>
+        private static MaterialPropertyBlock _lampFlareBlock;
+
+        /// <summary>
+        /// A lit landing/taxi lamp is a 20 cm lens on a 40 m airframe: invisible from any play camera, so
+        /// the aircraft looked like it had no landing lights. Draw a soft camera-facing flare on the lamp
+        /// while it is lit, sized to stay readable at distance (never below <paramref name="minPixels"/>
+        /// across) and only seen from in front of the lamp, as a real beam is. Presentation only.
+        /// </summary>
+        private static void UpdateLampFlare(LightGearPart part, Camera camera, bool lit, Color colour, float minMetres, float minPixels)
+        {
+            var flare = part.Flare;
+            if (flare == null && (!lit || camera == null || part.AircraftRoot == null || !AirsideSettings.Current.AircraftLights))
+                return;
+            var strength = 0f;
+            var distance = 0f;
+            Vector3 centre = default;
+            if (lit && camera != null && part.AircraftRoot != null && AirsideSettings.Current.AircraftLights)
+            {
+                centre = LampPivot(part.Transform).position;
+                var toCamera = camera.transform.position - centre;
+                distance = toCamera.magnitude;
+                if (distance > 0.1f)
+                {
+                    var facing = Vector3.Dot(part.AircraftRoot.forward, toCamera / distance);
+                    strength = Mathf.Clamp01((facing - 0.1f) / 0.5f);
+                }
+            }
+
+            if (strength <= 0.01f)
+            {
+                if (flare != null && flare.enabled)
+                    flare.enabled = false;
+                return;
+            }
+
+            if (flare == null)
+            {
+                var material = HaloMaterial();
+                if (material == null)
+                    return;
+                var card = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                card.name = "Lamp flare";
+                DestroyPresentationObject(card.GetComponent<Collider>());
+                card.transform.SetParent(part.Transform, true);
+                flare = part.Flare = card.GetComponent<Renderer>();
+                flare.sharedMaterial = material;
+                flare.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                flare.receiveShadows = false;
+            }
+
+            flare.enabled = true;
+            var t = flare.transform;
+            t.position = centre;
+            var worldPerPixel = 2f * distance * Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad)
+                                / Mathf.Max(1f, camera.pixelHeight);
+            var size = Mathf.Max(minMetres, worldPerPixel * minPixels);
+            var parentScale = part.Transform.lossyScale.x > 0.0001f ? part.Transform.lossyScale.x : 1f;
+            t.localScale = Vector3.one * (size / parentScale);
+            t.rotation = Quaternion.LookRotation(t.position - camera.transform.position, camera.transform.up);
+            _lampFlareBlock ??= new MaterialPropertyBlock();
+            _lampFlareBlock.SetColor("_BaseColor", colour * (1.8f * strength));
+            flare.SetPropertyBlock(_lampFlareBlock);
+        }
+
         private static Transform LampPivot(Transform lamp)
         {
             var pivot = lamp.Find(LampPivotName);

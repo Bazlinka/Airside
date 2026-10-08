@@ -10,7 +10,7 @@ Unity GUID drift. No paid assets, runtime downloads or account requirements.
 
 - Unity EditMode rerun: 2342 passed, zero failures, two precondition-dependent inconclusive cases.
 - Domain suite: 1866 passed, zero failures; Unity NUnit 3.5 compile check passed.
-- Asset audit: 1848 unique GUIDs, 405 byte-identical runtime mirrors, 70 character materials.
+- Asset audit: 1854 unique GUIDs, 405 byte-identical runtime mirrors, 70 character materials.
 - Fan-disc coverage: all eight jet engine sides pass, including imported A320 fan blades.
 - Fitted paint/title/door checks: all 13 fixed-wing layouts and paint checks pass.
 - Native reference board: inspected actual Unity renders. Reduced concrete contrast
@@ -32,3 +32,18 @@ renders under common daylight. They are not screenshots from a packaged airport
 session. A whole-game capture and native aircraft/cabin checks are recorded below
 once completed. Frame-rate/performance acceptance across the airport, weather,
 aircraft motion and camera transitions remains separate from still-image checks.
+
+## Latest-main integration
+
+Rebased onto main `028e8b73` (task #580 bug sweep and #587 exterior lights).
+The final native suite passed **2411 tests, zero failures, two inconclusive**
+precondition-dependent cases (`editmode-final.xml`, 505 seconds).
+Final source/derivative hash check: all 27 inputs/outputs match the ledger.
+Offline regeneration: zero asset-byte or Unity-meta/GUID drift.
+Final A320 thumbnail uses the adapted open engine casing; source intake caps are
+removed. Cabin fabric removes the scan's broad plaid so only small grain remains.
+
+Native final renders: `a320-native.png`, `a320-side-native.png` and
+`cabin-native.png` inspected in Unity. Intakes reveal the fitted fan blades;
+headrests show fine cloth grain rather than the initial oversized plaid.
+All 13 fixed-wing cabin/left-window/right-window/outside views rendered (52 PNGs).

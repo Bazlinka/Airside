@@ -1,7 +1,7 @@
 {
   "date": "2026-10-08",
   "elevation_source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{}/{}/{}.png",
-  "elevation_terms": "Mapzen terrain tiles CC BY 4.0; underlying Australia elevation SRTM, USGS (public domain). Attribution: Mapzen, USGS, NASA. https://github.com/tilezen/joerd/blob/master/docs/attribution.md",
+  "elevation_terms": "Mapzen terrain tiles CC BY 4.0; underlying Australia elevation USGS GMTED2010/SRTM, NASA and NOAA ETOPO1 (public domain). Attribution: Mapzen, USGS, NASA, NOAA. https://github.com/tilezen/joerd/blob/master/docs/attribution.md",
   "cover_source": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_{}_Map.tif",
   "cover_terms": "CC BY 4.0; \u00a9 ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
   "osm_terms": "ODbL 1.0, \u00a9 OpenStreetMap contributors",

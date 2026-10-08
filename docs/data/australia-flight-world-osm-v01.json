@@ -1,7 +1,7 @@
 {
   "date": "2026-10-08",
   "elevation_source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{}/{}/{}.png",
-  "elevation_terms": "Mapzen terrain tiles CC BY 4.0; underlying Australia elevation SRTM, USGS (public domain). Attribution: Mapzen, USGS, NASA. https://github.com/tilezen/joerd/blob/master/docs/attribution.md",
+  "elevation_terms": "Mapzen terrain tiles CC BY 4.0; underlying Australia elevation USGS GMTED2010/SRTM, NASA and NOAA ETOPO1 (public domain). Attribution: Mapzen, USGS, NASA, NOAA. https://github.com/tilezen/joerd/blob/master/docs/attribution.md",
   "cover_source": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_{}_Map.tif",
   "cover_terms": "CC BY 4.0; \u00a9 ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
   "osm_terms": "ODbL 1.0, \u00a9 OpenStreetMap contributors",
@@ -9,99 +9,94 @@
   "fallback": "SA DEM/cover, Natural Earth coastline and authored height palette; no runtime network",
   "files": [
     {
-      "file": "airport_adl_v01.json",
-      "bytes": 3528250,
-      "sha256": "6a105b1e4b59d6d95fe3b37c94a008927e6e42f90c94ca402815d606ee6bf02e"
-    },
-    {
       "file": "airport_asp_v01.json",
       "bytes": 73358,
-      "sha256": "ba6c7ac71324da83542eb956444021d1a6f35b0ed2ed634d172b7da49cc83d45"
+      "sha256": "93eb613cc7a9c8e296cd2e7b1304569ff01c675c556fb9ac48a54c040f0e98f3"
     },
     {
       "file": "airport_bhq_v01.json",
       "bytes": 1075507,
-      "sha256": "36ea28a665490522876565ef7fa94510adb3c4a00352a2182d9b87fd57edf893"
+      "sha256": "c6227ec4f6d40caf59a92462b3df5cc6c9e7d082e6816a4541903aa24f00d234"
     },
     {
       "file": "airport_bne_v01.json",
       "bytes": 1036923,
-      "sha256": "4f1ea74ef2dc67531d8cdb488533ba573fa8b52a7453fa85a3bf2fa146e382d5"
+      "sha256": "60c04ff2056c822f0eacbd9296c5ff6b889fe55d134abf89c431cdfe6d8cb481"
     },
     {
       "file": "airport_cbr_v01.json",
       "bytes": 1392314,
-      "sha256": "586b392d8015962813c528694e0deae44d9c441d71d8fc820a6a9262959e1dc3"
+      "sha256": "a392ef72b90c9c523d96f1f0d2bd5cd851d6ec30a00bb54ed63abf7f94d2d80a"
     },
     {
       "file": "airport_ced_v01.json",
       "bytes": 87603,
-      "sha256": "b8ac115640cfa1c3689cd692b468fcd41c1065a0ea580a8c1e26c2f4ea405731"
+      "sha256": "f89ce73c3d34a16591581bf98b5fa4ee6c4e2f24c3a43c883f3f46bf8e969c47"
     },
     {
       "file": "airport_cns_v01.json",
       "bytes": 3369564,
-      "sha256": "0efdd7407800731b9dc6e09dc5f863e282273df3eda8a36ff717f5e31c9a30aa"
+      "sha256": "b65234baf96db0ab3d08d1669262680ed7c7e24eade9beaf091a68f6bdac2e1f"
     },
     {
       "file": "airport_cpd_v01.json",
       "bytes": 56255,
-      "sha256": "33fc9e242599e6d15280c6c4064a20a8409f19f500b93a3a047cf271885d881f"
+      "sha256": "3f28cf120296874296b3ea0c22d4908504f00d6bfa1772be06fb6e533a6b59f2"
     },
     {
       "file": "airport_drw_v01.json",
       "bytes": 3096587,
-      "sha256": "9722013962b3a123a60a65c9a788d4f2ef365c632efff3da58dbd8dfa65d2865"
+      "sha256": "c47ab86aa718d92c0f726c7e12e27777d4d63e4c836c386960f6cfe248c978a6"
     },
     {
       "file": "airport_hba_v01.json",
       "bytes": 870879,
-      "sha256": "32e0f7c5c22deb140c6997bc3fac66454da5206a28bf87bb7ea8b921cc78c45b"
+      "sha256": "b68e9249777a170c3f0b3f7eb1120f5c6fadde4583817e0bd458abc3b26799da"
     },
     {
       "file": "airport_kgc_v01.json",
       "bytes": 126230,
-      "sha256": "7e47f609cfed6fc3d37e369eae8a0cfb24b95e9c04b2a5e0ba17b06822cfa085"
+      "sha256": "7357846d1733f8c24242e54b5041e7c0d13c6f31ce6f7db92b07fdd285e949b7"
     },
     {
       "file": "airport_mel_v01.json",
       "bytes": 886616,
-      "sha256": "4639829e2ff9b3d9355a067726500789f82d812510acb9b77027522a7ddc44e2"
+      "sha256": "fb496784372671ebd4d5afd1535e236b85795f19f9cbcc54e242537938df8775"
     },
     {
       "file": "airport_mgb_v01.json",
       "bytes": 42269,
-      "sha256": "dbf73e42e2ea2e87d75ec29506f1211ffe853e3ee823d9bfce3291ae80cb8610"
+      "sha256": "bf49f1aade7c65c8d79d29bde6bedcfb22aff361aef070e8e02296cdad4b00b1"
     },
     {
       "file": "airport_mql_v01.json",
       "bytes": 691107,
-      "sha256": "b645fba142728749860a8fe91c755ae50dd5266320d4d610c3b19359214897d0"
+      "sha256": "63d9995f61f2cffac8a5e1dcfed99d18fee2583ebebc63697337156ec246bffb"
     },
     {
       "file": "airport_ool_v01.json",
       "bytes": 709839,
-      "sha256": "c0da7214279a561550617d3327ecf2db79eede938e1458048ba5f3e08662e931"
+      "sha256": "6b9d3677faf1b5c64afefe2feefc4f3d8d3d6cc9c3997f820d0c0e001f820359"
     },
     {
       "file": "airport_per_v01.json",
       "bytes": 4867983,
-      "sha256": "7b732e625977d927cd5842024643d3ac32f6f0fe99e9c9b6566338e699698892"
+      "sha256": "fff4dc460fe4faccdc332d221c369f7b3a38bc71841bbe02fd575600e10c2580"
     },
     {
       "file": "airport_plo_v01.json",
       "bytes": 56424,
-      "sha256": "688fd1f20852bb9cfbd00a05ebb8dc9b0374bcb45a73a69cb1f519859e4bb6db"
+      "sha256": "6d34914c0ab45f808de561b0d94f3648afc01b8e5506cc55adbe348e48a645ca"
     },
     {
       "file": "airport_syd_v01.json",
       "bytes": 3089575,
-      "sha256": "8e9050ea3c62fc4522b46846db5a96e4c398b9391b76895c2a1405f64100abce"
+      "sha256": "eae24ccd97d5d5f30293e92c053036b85c7a05e3e003afc35856406ade1f70c7"
     },
     {
       "file": "airport_wya_v01.json",
       "bytes": 1490073,
-      "sha256": "23c4ed73da8da1a3bc02c0bd8a00abdd2bef35b118651182ffc9aea6269cf5d6"
+      "sha256": "4b4e7b96a019d656c3698f3bfc29951867043d90ea63c58c6a0f6f57351a8b89"
     }
   ]
 }

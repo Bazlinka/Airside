@@ -6,6 +6,7 @@ Shader "Airside/Surroundings"
     // so the gulf never ends in a hard line against the sky.
     Properties
     {
+        _VertexSurface ("Solid vertex surface (roads/props)", Float) = 0
         _HorizonFadeStart ("Horizon Fade Start", Float) = 6500
         _HorizonFadeEnd ("Horizon Fade End", Float) = 9600
         _AirfieldAlbedo ("Airfield edge albedo", 2D) = "white" {}
@@ -46,11 +47,16 @@ Shader "Airside/Surroundings"
             // the coastal plain took hard-edged shadows while the airfield beside it (which
             // does declare it, in Airside/AdelaideGround) took soft ones.
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "WorldSurfaceLighting.hlsl"
 
             TEXTURE2D(_AirfieldAlbedo); SAMPLER(sampler_AirfieldAlbedo);
             TEXTURE2D(_SatelliteAlbedo); SAMPLER(sampler_SatelliteAlbedo);
@@ -73,6 +79,7 @@ Shader "Airside/Surroundings"
                 float _AirfieldHalfX;
                 float _AirfieldHalfZ;
                 float _EdgeTextureBlend;
+                float _VertexSurface;
                 float _DryTile;
                 float _MacroScale;
                 float _MacroStrength;
@@ -143,6 +150,8 @@ Shader "Airside/Surroundings"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 float3 normalWS = normalize(input.normalWS);
+                float3 vertexColour = AirsideWorldVertexColour(input.color.rgb);
+                float water = saturate(input.color.a) * (1.0 - _VertexSurface);
                 Light mainLight = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
                 float NdotL = saturate(dot(normalWS, mainLight.direction));
                 float2 xz = input.positionWS.xz + _AirsideFlightOrigin.xz;
@@ -180,7 +189,7 @@ Shader "Airside/Surroundings"
                 // carries on across the outer ring in the same colours (ADR 0190 palette).
                 float radialFade = 1.0 - smoothstep(_SatelliteFadeStart, _SatelliteFadeEnd, length(xz));
                 float satelliteBlend = satelliteStrength * radialFade * (1.0 - saturate(input.color.a));
-                float3 broadAlbedo = lerp(input.color.rgb, satellite, satelliteBlend);
+                float3 broadAlbedo = lerp(vertexColour, satellite, satelliteBlend);
                 // Two differently oriented detail samples keep the mid-field crisp without
                 // pretending 10 m satellite pixels contain sub-metre information.
                 float2 detailUv = mul(float2x2(0.94, -0.342, 0.342, 0.94), xz + 137.0)
@@ -195,13 +204,9 @@ Shader "Airside/Surroundings"
                 // was reduced enough to reveal useful procedural detail.
                 float3 edgeTarget = lerp(edgeAlbedo, satellite, _SatelliteNearStrength);
                 float3 albedo = lerp(broadAlbedo, edgeTarget, edgeBlend);
-                float3 color = albedo * (mainLight.color * (mainLight.shadowAttenuation * NdotL) + SampleSH(normalWS));
-
-                // Water sheen: a broad sun glint, strongest looking into the light.
-                float3 viewDir = GetWorldSpaceNormalizeViewDir(input.positionWS);
-                float3 halfDir = normalize(mainLight.direction + viewDir);
-                float glint = pow(saturate(dot(normalWS, halfDir)), 64.0) * input.color.a * 0.6;
-                color += mainLight.color * glint;
+                albedo = lerp(albedo, vertexColour, _VertexSurface);
+                float3 color = AirsideWorldLighting(albedo, normalWS, input.positionWS,
+                    input.positionCS, lerp(0.08, 0.35, water), 1.0);
 
                 color = MixFog(color, input.fogFactor);
                 float distanceWS = length(input.positionWS - GetCameraPositionWS());

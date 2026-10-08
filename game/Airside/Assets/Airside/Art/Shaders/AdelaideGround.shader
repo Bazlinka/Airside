@@ -52,6 +52,10 @@ Shader "Airside/AdelaideGround"
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile_instancing
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
             #pragma multi_compile_fog
             // High quality: a second, larger, rotated sample of each layer mixes in with
             // distance so the tile grid stops reading from the overview.
@@ -59,6 +63,7 @@ Shader "Airside/AdelaideGround"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "WorldSurfaceLighting.hlsl"
 
             TEXTURE2D(_DryAlbedo);    SAMPLER(sampler_DryAlbedo);
             TEXTURE2D(_GreenAlbedo);  SAMPLER(sampler_GreenAlbedo);
@@ -247,20 +252,8 @@ Shader "Airside/AdelaideGround"
                 float ao = dot(float3(mDry.x, mGreen.x, mDirt.x), w);
                 float smoothness = dot(float3(mDry.z, mGreen.z, mDirt.z), w) * _Smoothness;
 
-                // Per pixel, as URP Lit and Airside/Surroundings do. With cascades a vertex shadow
-                // coordinate picks one cascade per vertex; across a 40 m ground cell spanning a
-                // split that interpolates garbage, so aircraft shadows on the grass slid, clipped
-                // or vanished along the cascade boundaries.
-                Light mainLight = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
-                float NdotL = saturate(dot(normalWS, mainLight.direction));
-                // Sun plus sky ambient, as URP Lit does. The old "+0.28" was multiplied by the
-                // ~2.0 daytime sun and bleached the ground once this shader reached builds.
-                float3 lighting = mainLight.color * (mainLight.shadowAttenuation * NdotL) + SampleSH(normalWS) * ao;
-                float3 color = albedo * lighting;
-                // Tiny specular so asphalt-adjacent dirt does not look plastic.
-                float3 halfDir = normalize(mainLight.direction + GetWorldSpaceNormalizeViewDir(input.positionWS));
-                float spec = pow(saturate(dot(normalWS, halfDir)), lerp(8.0, 48.0, smoothness)) * smoothness * 0.2;
-                color += mainLight.color * spec * mainLight.shadowAttenuation;
+                float3 color = AirsideWorldLighting(albedo, normalWS, input.positionWS,
+                    input.positionCS, smoothness, ao);
                 color = MixFog(color, input.fogFactor);
                 return half4(color, 1);
             }

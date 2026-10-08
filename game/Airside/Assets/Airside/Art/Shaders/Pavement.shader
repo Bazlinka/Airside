@@ -33,10 +33,12 @@ Shader "Airside/Pavement"
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "WorldSurfaceLighting.hlsl"
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_BumpMap); SAMPLER(sampler_BumpMap);
             TEXTURE2D(_MetallicGlossMap); SAMPLER(sampler_MetallicGlossMap);
@@ -81,7 +83,9 @@ Shader "Airside/Pavement"
                 float3 albedo=SAMPLE_TEXTURE2D(_BaseMap,sampler_BaseMap,uv).rgb;
                 float3 second=SAMPLE_TEXTURE2D(_BaseMap,sampler_BaseMap,other).rgb;
                 albedo=lerp(albedo,(albedo+second)*.5,far*.7);
-                albedo=lerp(_ScanMean.rgb,albedo,_ScanContrast)*_BaseColor.rgb;
+                // BaseColor is the surface colour, not a second exposure multiplier.
+                float3 grain=clamp(albedo/max(_ScanMean.rgb,.05),.65,1.35);
+                albedo=lerp(1.0,grain,_ScanContrast)*_BaseColor.rgb;
                 float macro=(Noise(xz/43)-.5)*2*_MacroStrength;
                 float patch=(Noise(xz/11.3+7.1)-.5)*2*_PatchStrength;
                 albedo*=1+macro+patch;
@@ -89,18 +93,8 @@ Shader "Airside/Pavement"
                 float3 n=normalize(input.normalWS+float3(detail.x,0,detail.y));
                 float smooth=lerp(SAMPLE_TEXTURE2D(_MetallicGlossMap,sampler_MetallicGlossMap,uv).a,1,_SurfaceWetness)*_Smoothness;
                 float ao=lerp(1,SAMPLE_TEXTURE2D(_OcclusionMap,sampler_OcclusionMap,uv).g,_OcclusionStrength);
-                SurfaceData surface=(SurfaceData)0;
-                surface.albedo=albedo; surface.metallic=0; surface.smoothness=smooth;
-                surface.normalTS=float3(0,0,1); surface.occlusion=ao; surface.alpha=1;
-                InputData data=(InputData)0;
-                data.positionWS=input.positionWS; data.normalWS=n;
-                data.viewDirectionWS=GetWorldSpaceNormalizeViewDir(input.positionWS);
-                data.shadowCoord=TransformWorldToShadowCoord(input.positionWS);
-                data.fogCoord=input.fog; data.bakedGI=SampleSH(n);
-                data.normalizedScreenSpaceUV=GetNormalizedScreenSpaceUV(input.positionCS);
-                data.shadowMask=half4(1,1,1,1);
-                half4 color=UniversalFragmentPBR(data,surface);
-                color.rgb=MixFog(color.rgb,input.fog); return color;
+                half3 color=AirsideWorldLighting(albedo,n,input.positionWS,input.positionCS,smooth,ao);
+                return half4(MixFog(color,input.fog),1);
             }
             ENDHLSL
         }

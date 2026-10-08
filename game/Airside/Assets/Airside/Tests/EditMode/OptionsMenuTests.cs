@@ -24,7 +24,7 @@ namespace Airside.Tests
                 Assert.That(c.Box.Right, Is.LessThanOrEqualTo(panel.Right));
                 Assert.That(c.Box.Bottom, Is.LessThanOrEqualTo(panel.Bottom));
             }
-            Assert.That(draw.Commands.Count(c => c.Kind == HudDrawKind.Button), Is.EqualTo(11));
+            Assert.That(draw.Commands.Count(c => c.Kind == HudDrawKind.Button), Is.EqualTo(OptionsMenuPainter.Sections.Length + 6), "section tabs, five rows and Back");
             Assert.That(draw.Commands.Single(c => c.ActionId == OptionsMenuPainter.Back).Text, Is.EqualTo("BACK TO TITLE"));
         }
 

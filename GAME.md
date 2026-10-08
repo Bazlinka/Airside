@@ -7,6 +7,12 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Flight tracker and HUD views (9 Oct, Claude):** after booking, a "Your flights" card (bottom-left) follows each planned or moving flight through
+Booked, Ready, Taxi, Flying, Landing, Arrived; the booked aircraft is selected without moving the camera. Aircraft labels, airport map, tracker and
+career card can be shown per view (overview / follow) from Options > Views; L and N toggle for the current view. ADR `2026-10-09-flight-tracker-and-hud-views.md`.
+Headless draw-list/layout/step tests pass; **Unity unverified** (check the card's position with the map and selected card at 800x600, clicking a row,
+the Views tab, and that the first-flight guide still shows with the career card hidden).
+
 **Linear renderer (9 Oct, Codex, #681):** Unity now uses Linear colour rendering.
 Existing linear mesh palettes and Gamma fallback shader branch are retained. The
 far land-cover palette/calibration now match sRGB-decoded satellite imagery and

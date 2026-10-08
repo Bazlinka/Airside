@@ -55,9 +55,12 @@ toast cards (#642 / #644), turn banking, flight-transition pitch/flare easing,
 aircraft-relative exit glides, control-tower view, flight moving map, aerodrome
 beacon, landing-light flare and the Adelaide opening (#626 / #638). Their native
 appearance/packaging/performance checks remain open. Mac notifications need
-Options → Notifications → allow permission → SEND TEST, then background delivery
-and click activation. Check title/Continue, skip, animation-off and returned-airline
-paths in the next Mac build. The v03 Dock/app icon is retained. Flight-dispatch
+Options → Notifications → switch ON → allow permission → SEND TEST, then background
+delivery and click activation. Registration repair (#663) retries permission from
+the status row, registers the player with Launch Services, verifies plugin packaging
+and preserves Unity’s app signature (no post-sign plist edits). Missing-plugin and
+native-request failures now have separate status/help; Mac confirmation remains open.
+Check title/Continue, skip, animation-off and returned-airline paths in the next Mac build. The v03 Dock/app icon is retained. Flight-dispatch
 cost rebalance retains prices/pay/start funds; next economy work is standing
 aircraft daily cost and fuel price, with career pacing unverified.
 

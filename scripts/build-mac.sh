@@ -94,17 +94,10 @@ if [ -d "$debug_bundle" ]; then
   rm -rf "$debug_bundle"
 fi
 
-# Finder Get Info shows this. Same short sha as the in-game corner label.
+# Unity has already signed the app. Editing Info.plist here invalidates that
+# signature and can interfere with macOS app identity/permission registration.
+# The git build identity remains available in-game and in StreamingAssets.
 identity="$root/game/Airside/Assets/StreamingAssets/build-identity.txt"
-version="$(git -C "$root" rev-parse --short=8 HEAD)"
-if [[ -f "$identity" ]] && grep -q '^dirty=true$' "$identity"; then
-  version="${version}-dirty"
-fi
-plist="$destination/Contents/Info.plist"
-if [[ -f "$plist" ]] && [[ -x /usr/libexec/PlistBuddy ]]; then
-  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $version" "$plist"
-  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $version" "$plist"
-fi
 
 echo "Mac build created at $destination"
 if [[ -f "$identity" ]]; then

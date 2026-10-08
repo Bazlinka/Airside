@@ -1,5 +1,6 @@
 // Original Airside bridge to macOS Notification Centre; built into the player's universal bundle.
 #import <AppKit/AppKit.h>
+#import <CoreServices/CoreServices.h>
 #import <UserNotifications/UserNotifications.h>
 #include <atomic>
 
@@ -35,7 +36,10 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
 @end
 
 static UNUserNotificationCenter *Center() {
-    if (![[NSBundle mainBundle] bundleIdentifier]) { permission.store(4); return nil; }
+    if (![[NSBundle mainBundle] bundleIdentifier]) {
+        NSLog(@"Airside notifications unavailable: launch the built Airside.app with a bundle identifier.");
+        permission.store(4); return nil;
+    }
     static AirsideNotificationDelegate *delegate;
     static dispatch_once_t once;
     dispatch_once(&once, ^{ delegate = [AirsideNotificationDelegate new]; });
@@ -50,15 +54,22 @@ extern "C" __attribute__((visibility("default"))) void AS_RefreshPermission() {
     dispatch_async(dispatch_get_main_queue(), ^{
         @try {
             UNUserNotificationCenter *center = Center();
+            if (!center) return;
             [center getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings *settings) {
                 switch (settings.authorizationStatus) {
                     case UNAuthorizationStatusAuthorized: permission.store(2); break;
                     case UNAuthorizationStatusProvisional: permission.store(2); break;
                     case UNAuthorizationStatusDenied: permission.store(3); break;
-                    default: if (permission.load() != 1) permission.store(0); break;
+                    default:
+                        // Keep a failed request visible until the player retries it.
+                        if (permission.load() != 1 && permission.load() != 4) permission.store(0);
+                        break;
                 }
             }];
-        } @catch (NSException *exception) { permission.store(4); }
+        } @catch (NSException *exception) {
+            NSLog(@"Airside notifications failed: %@: %@", exception.name, exception.reason);
+            permission.store(4);
+        }
     });
 }
 
@@ -66,12 +77,24 @@ extern "C" __attribute__((visibility("default"))) void AS_RequestPermission() {
     permission.store(1);
     dispatch_async(dispatch_get_main_queue(), ^{
         @try {
+            // Register the actual player bundle even when launched directly from a build folder.
+            // Keep the existing bundle identity so macOS permissions survive future builds.
+            NSBundle *bundle = [NSBundle mainBundle];
+            if (![bundle bundleIdentifier]) { Center(); return; }
+            OSStatus registration = LSRegisterURL((__bridge CFURLRef)bundle.bundleURL, true);
+            if (registration != noErr)
+                NSLog(@"Airside notification app registration failed: %d (%@)", (int)registration, bundle.bundleIdentifier);
             UNUserNotificationCenter *center = Center();
+            if (!center) return;
             [center requestAuthorizationWithOptions:(UNAuthorizationOptionAlert | UNAuthorizationOptionSound)
                                   completionHandler:^(BOOL granted, NSError *error) {
+                if (error) NSLog(@"Airside notification permission failed: %@ (%ld): %@", error.domain, (long)error.code, error.localizedDescription);
                 permission.store(error ? 4 : granted ? 2 : 3);
             }];
-        } @catch (NSException *exception) { permission.store(4); }
+        } @catch (NSException *exception) {
+            NSLog(@"Airside notifications failed: %@: %@", exception.name, exception.reason);
+            permission.store(4);
+        }
     });
 }
 
@@ -95,7 +118,10 @@ extern "C" __attribute__((visibility("default"))) void AS_Send(const char *title
             [Center() addNotificationRequest:request withCompletionHandler:^(NSError *error) {
                 if (error) NSLog(@"Airside notification delivery failed: %@", error.localizedDescription);
             }];
-        } @catch (NSException *exception) { permission.store(4); }
+        } @catch (NSException *exception) {
+            NSLog(@"Airside notifications failed: %@: %@", exception.name, exception.reason);
+            permission.store(4);
+        }
     });
 }
 

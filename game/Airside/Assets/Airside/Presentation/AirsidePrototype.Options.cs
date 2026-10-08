@@ -65,7 +65,7 @@ namespace Airside.Presentation
                     Add("Mac notifications", On(s.MacNotifications),
                         "Important airline events while Airside runs in the background.", "notifications");
                     Add("macOS permission", AirsideMacNotifications.PermissionLabel,
-                        "Open Mac notification settings. macOS controls banners, sound and Focus.", "notification-settings");
+                        AirsideMacNotifications.PermissionHint, "notification-settings");
                     Add("Test notification", "SEND TEST",
                         "Preview an Airside banner after enabling and allowing notifications.", "notification-test");
                     break;
@@ -94,12 +94,15 @@ namespace Airside.Presentation
                 case "options:opening": s.OpeningAnimation = !s.OpeningAnimation; break;
                 case "options:notifications":
                     if (!AirsideMacNotifications.Supported && !s.MacNotifications)
-                    { ShowToast("Mac notifications are available in the built Airside app.", HudTone.Caution); return; }
+                    { ShowToast(AirsideMacNotifications.PermissionHint, HudTone.Caution); return; }
                     s.MacNotifications = !s.MacNotifications;
                     if (s.MacNotifications) AirsideMacNotifications.RequestPermission();
                     else AirsideMacNotifications.Disable();
                     break;
-                case "options:notification-settings": AirsideMacNotifications.OpenSystemSettings(); PlayUiClick(); return;
+                case "options:notification-settings":
+                    if (!AirsideMacNotifications.OpenPermissionSettings())
+                        ShowToast(AirsideMacNotifications.PermissionHint, HudTone.Caution);
+                    PlayUiClick(); return;
                 case "options:notification-test":
                     if (!AirsideMacNotifications.Test())
                         ShowToast("Enable Mac notifications and allow Airside in macOS Notifications, then try again.", HudTone.Caution);

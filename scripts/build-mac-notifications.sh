@@ -10,7 +10,7 @@ fi
 mkdir -p "$destination/Contents/MacOS"
 xcrun --sdk macosx clang++ -std=c++17 -fobjc-arc -fblocks \
   -arch arm64 -arch x86_64 -mmacosx-version-min=11.0 -bundle \
-  -framework Foundation -framework AppKit -framework UserNotifications \
+  -framework Foundation -framework AppKit -framework UserNotifications -framework CoreServices \
   "$root/scripts/native/airside-notifications.mm" \
   -o "$destination/Contents/MacOS/AirsideNotifications"
 cat > "$destination/Contents/Info.plist" <<'PLIST'

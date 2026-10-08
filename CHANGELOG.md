@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-08 — Flight-time audit: ATR 42/Dash 8 planning cruise 510/620 km/h (was max cruise), A350/787-9 practical range 13,500 km, 787-10 11,200 km (headless audit only).
+
 - 2026-10-08 — Moving map in cockpit/window/exterior views: centred own-ship, heading/track, route, airports, fleet, airfield or coast by scale; N toggles, +/− or scroll (unverified in Unity).
 
 - 2026-10-08 — Light audit: all fleet types carry landing/taxi/nav/beacon/strobe lamps; Parafield trainers gained a cowl landing lamp, beacon flash and wingtip strobes (unverified in Unity).

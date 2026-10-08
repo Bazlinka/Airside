@@ -99,7 +99,7 @@ namespace Airside.Domain
         public static readonly AircraftSpec Atr42 = new(
             "ATR42", "ATR 42-600", "Regional turboprop · 48 seats",
             22.67, 24.57, 7.59,
-            planningCruiseKmh: 556, practicalRangeKm: 1100,
+            planningCruiseKmh: 510, practicalRangeKm: 1100,
             manufacturerMaxCruiseKmh: 556, manufacturerRangeKm: 1302, manufacturerRangeBasis: "703 NM with max passengers",
             StandClass.RegionalBay, ModelStatus.Genuine,
             "Models/Aircraft/mdl_atr42_starter_v03.gltf", "UI/Aircraft/thb_air_atr42_v01.png", "SPEC-ATR42-600", AircraftWeightBand.MediumBelow25Tonnes);
@@ -119,7 +119,7 @@ namespace Airside.Domain
         public static readonly AircraftSpec Dash8Q400 = new(
             "DH8D", "Dash 8-400", "Regional turboprop · 82 seats",
             32.83, 28.42, 8.34,
-            planningCruiseKmh: 667, practicalRangeKm: 1500,
+            planningCruiseKmh: 620, practicalRangeKm: 1500,
             manufacturerMaxCruiseKmh: 667, manufacturerRangeKm: 1596, manufacturerRangeBasis: "full passenger range, 102 kg per passenger",
             StandClass.RegionalBay, ModelStatus.Genuine,
             "Models/Aircraft/mdl_dash8_q400_v01.gltf", "UI/Aircraft/thb_air_dh8d_v01.png", "SPEC-DASH8-400", AircraftWeightBand.Medium);
@@ -180,7 +180,7 @@ namespace Airside.Domain
         public static readonly AircraftSpec AirbusA350900 = new(
             "A359", "Airbus A350-900", "Long-haul widebody · 300–350 seats",
             66.80, 64.75, 17.05,
-            planningCruiseKmh: 903, practicalRangeKm: 15000,
+            planningCruiseKmh: 903, practicalRangeKm: 13500,
             manufacturerMaxCruiseKmh: 903, manufacturerRangeKm: 15750, manufacturerRangeBasis: "Airbus key figures",
             StandClass.TerminalGate, ModelStatus.Genuine,
             "Models/Aircraft/mdl_a350_900_v01.gltf", "UI/Aircraft/thb_air_a359_v01.png", "SPEC-AIRBUS-A350-900", AircraftWeightBand.Heavy);
@@ -188,7 +188,7 @@ namespace Airside.Domain
         public static readonly AircraftSpec Boeing78710 = new(
             "B78X", "Boeing 787-10", "Long-haul widebody · 300–375 seats",
             68.30, 60.12, 17.02,
-            planningCruiseKmh: 903, practicalRangeKm: 12000,
+            planningCruiseKmh: 903, practicalRangeKm: 11200,
             manufacturerMaxCruiseKmh: 0, manufacturerRangeKm: 13890, manufacturerRangeBasis: "up to 7,500 nmi",
             StandClass.TerminalGate, ModelStatus.Genuine,
             "Models/Aircraft/mdl_787_10_v01.gltf", "UI/Aircraft/thb_air_b78x_v01.png", "SPEC-BOEING-787-10", AircraftWeightBand.Heavy);
@@ -204,7 +204,7 @@ namespace Airside.Domain
         public static readonly AircraftSpec Boeing7879 = new(
             "B789", "Boeing 787-9", "Long-haul widebody · 250–325 seats",
             62.81, 60.12, 17.02,
-            planningCruiseKmh: 903, practicalRangeKm: 15000,
+            planningCruiseKmh: 903, practicalRangeKm: 13500,
             manufacturerMaxCruiseKmh: 0, manufacturerRangeKm: 15370, manufacturerRangeBasis: "up to 8,300 nmi",
             StandClass.TerminalGate, ModelStatus.Genuine,
             "Models/Aircraft/mdl_787_9_v01.gltf", "UI/Aircraft/thb_air_b789_v01.png", "SPEC-BOEING-787-9", AircraftWeightBand.Heavy);

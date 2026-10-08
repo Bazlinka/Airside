@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-08 — Moving map in cockpit/window/exterior views: centred own-ship, heading/track, route, airports, fleet, airfield or coast by scale; N toggles, +/− or scroll (unverified in Unity).
+
 - 2026-10-08 — Light audit: all fleet types carry landing/taxi/nav/beacon/strobe lamps; Parafield trainers gained a cowl landing lamp, beacon flash and wingtip strobes (unverified in Unity).
 
 - 2026-10-08 — Visible landing/taxi lights: soft camera-facing flare on each lit lamp so beams read from every play camera (Unity compile/appearance unverified).

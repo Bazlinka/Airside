@@ -570,6 +570,7 @@ namespace Airside.Presentation
                 _active = null;
             if (_miniMapTexture != null)
                 Destroy(_miniMapTexture);
+            DisposeFlightMap();
         }
 
         private void Update()
@@ -942,6 +943,8 @@ namespace Airside.Presentation
                 ToggleFollow();
             if (keyboard.rKey.wasPressedThisFrame)
                 ResetView();
+            if (InCockpit && keyboard.nKey.wasPressedThisFrame)
+                ToggleFlightMap();
             if (keyboard.mKey.wasPressedThisFrame)
             {
                 // Muting used to be silent in both senses: nothing on screen said the

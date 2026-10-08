@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-08 — Leaving exterior/cockpit view: the exit glide now travels with the moving aircraft instead of chasing it from a fixed point (unverified in Unity).
+
 - 2026-10-08 Smoother regional flight transitions: authored flare, rotation and cruise/approach pitch hand-over; flare lengthened to ~7 s (presentation only)
 - 2026-10-08 — Smoother flight-view transitions: the glide travels with the moving aircraft, field of view follows the same glide, and the fuselage hides mid-glide (unverified in Unity).
 

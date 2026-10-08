@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="18" result="Passed" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-08 02:30:06Z" end-time="2026-10-08 02:30:11Z" duration="4.5723914">
+  <test-suite type="TestSuite" id="1000" name="Airside" fullname="Airside" runstate="Runnable" testcasecount="2499" result="Passed" start-time="2026-10-08 02:30:06Z" end-time="2026-10-08 02:30:11Z" duration="4.572391" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="3896" name="Airside.Tests.EditMode.dll" fullname="/private/tmp/airside-free-visual-upgrade/game/Airside/Library/ScriptAssemblies/Airside.Tests.EditMode.dll" runstate="Runnable" testcasecount="2498" result="Passed" start-time="2026-10-08 02:30:06Z" end-time="2026-10-08 02:30:11Z" duration="4.531790" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="31179" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="3897" name="Airside" fullname="Airside" runstate="Runnable" testcasecount="2498" result="Passed" start-time="2026-10-08 02:30:06Z" end-time="2026-10-08 02:30:11Z" duration="4.514880" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="3898" name="Tests" fullname="Airside.Tests" runstate="Runnable" testcasecount="2498" result="Passed" start-time="2026-10-08 02:30:06Z" end-time="2026-10-08 02:30:11Z" duration="4.498351" total="18" passed="18" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1172" name="AdelaideRoadGeometryTests" fullname="Airside.Tests.AdelaideRoadGeometryTests" classname="Airside.Tests.AdelaideRoadGeometryTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-10-08 02:30:06Z" end-time="2026-10-08 02:30:07Z" duration="0.740263" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1176" name="AdaptiveDensify_SplitsOnlyWhereTheGroundBends" fullname="Airside.Tests.AdelaideRoadGeometryTests.AdaptiveDensify_SplitsOnlyWhereTheGroundBends" methodname="AdaptiveDensify_SplitsOnlyWhereTheGroundBends" classname="Airside.Tests.AdelaideRoadGeometryTests" runstate="Runnable" seed="262920671" result="Passed" start-time="2026-10-08 02:30:06Z" end-time="2026-10-08 02:30:06Z" duration="0.031800" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1173" name="Asphalt_DrawsEveryRoad_NotACappedSubset" fullname="Airside.Tests.AdelaideRoadGeometryTests.Asphalt_DrawsEveryRoad_NotACappedSubset" methodname="Asphalt_DrawsEveryRoad_NotACappedSubset" classname="Airside.Tests.AdelaideRoadGeometryTests" runstate="Runnable" seed="1551376027" result="Passed" start-time="2026-10-08 02:30:06Z" end-time="2026-10-08 02:30:06Z" duration="0.071538" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1175" name="Bridges_RiseFromTheGroundAtBothEnds_AndHaveParapets" fullname="Airside.Tests.AdelaideRoadGeometryTests.Bridges_RiseFromTheGroundAtBothEnds_AndHaveParapets" methodname="Bridges_RiseFromTheGroundAtBothEnds_AndHaveParapets" classname="Airside.Tests.AdelaideRoadGeometryTests" runstate="Runnable" seed="930944550" result="Passed" start-time="2026-10-08 02:30:06Z" end-time="2026-10-08 02:30:06Z" duration="0.053928" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1179" name="Crossings_AreDrawnOnRoadsThatCanCarryThem" fullname="Airside.Tests.AdelaideRoadGeometryTests.Crossings_AreDrawnOnRoadsThatCanCarryThem" methodname="Crossings_AreDrawnOnRoadsThatCanCarryThem" classname="Airside.Tests.AdelaideRoadGeometryTests" runstate="Runnable" seed="1456613331" result="Passed" start-time="2026-10-08 02:30:06Z" end-time="2026-10-08 02:30:06Z" duration="0.002074" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1182" name="Densify_LimitsSegmentLengthKeepingTheEnds" fullname="Airside.Tests.AdelaideRoadGeometryTests.Densify_LimitsSegmentLengthKeepingTheEnds" methodname="Densify_LimitsSegmentLengthKeepingTheEnds" classname="Airside.Tests.AdelaideRoadGeometryTests" runstate="Runnable" seed="1397302341" result="Passed" start-time="2026-10-08 02:30:06Z" end-time="2026-10-08 02:30:06Z" duration="0.000582" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1174" name="EveryTriangle_IsWoundTheWayItsNormalSays_AndStaysInsideTheMap" fullname="Airside.Tests.AdelaideRoadGeometryTests.EveryTriangle_IsWoundTheWayItsNormalSays_AndStaysInsideTheMap" methodname="EveryTriangle_IsWoundTheWayItsNormalSays_AndStaysInsideTheMap" classname="Airside.Tests.AdelaideRoadGeometryTests" runstate="Runnable" seed="1297926752" result="Passed" start-time="2026-10-08 02:30:06Z" end-time="2026-10-08 02:30:07Z" duration="0.356802" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1178" name="Geometry_SplitsIntoTilesAndStaysWithinTheVertexBudget" fullname="Airside.Tests.AdelaideRoadGeometryTests.Geometry_SplitsIntoTilesAndStaysWithinTheVertexBudget" methodname="Geometry_SplitsIntoTilesAndStaysWithinTheVertexBudget" classname="Airside.Tests.AdelaideRoadGeometryTests" runstate="Runnable" seed="677509536" result="Passed" start-time="2026-10-08 02:30:07Z" end-time="2026-10-08 02:30:07Z" duration="0.115745" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1183" name="MarkingPlan_UsesTaggedLanesAndOneWay" fullname="Airside.Tests.AdelaideRoadGeometryTests.MarkingPlan_UsesTaggedLanesAndOneWay" methodname="MarkingPlan_UsesTaggedLanesAndOneWay" classname="Airside.Tests.AdelaideRoadGeometryTests" runstate="Runnable" seed="1398503780" result="Passed" start-time="2026-10-08 02:30:07Z" end-time="2026-10-08 02:30:07Z" duration="0.000735" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1181" name="OffsetRun_StaysTheRightDistanceOffAStraightAndABend" fullname="Airside.Tests.AdelaideRoadGeometryTests.OffsetRun_StaysTheRightDistanceOffAStraightAndABend" methodname="OffsetRun_StaysTheRightDistanceOffAStraightAndABend" classname="Airside.Tests.AdelaideRoadGeometryTests" runstate="Runnable" seed="955659658" result="Passed" start-time="2026-10-08 02:30:07Z" end-time="2026-10-08 02:30:07Z" duration="0.000338" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1177" name="SkippingAirsideRoads_RemovesGeometry" fullname="Airside.Tests.AdelaideRoadGeometryTests.SkippingAirsideRoads_RemovesGeometry" methodname="SkippingAirsideRoads_RemovesGeometry" classname="Airside.Tests.AdelaideRoadGeometryTests" runstate="Runnable" seed="729151996" result="Passed" start-time="2026-10-08 02:30:07Z" end-time="2026-10-08 02:30:07Z" duration="0.098882" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1180" name="Trim_CutsBothEndsAlongTheRun" fullname="Airside.Tests.AdelaideRoadGeometryTests.Trim_CutsBothEndsAlongTheRun" methodname="Trim_CutsBothEndsAlongTheRun" classname="Airside.Tests.AdelaideRoadGeometryTests" runstate="Runnable" seed="340253761" result="Passed" start-time="2026-10-08 02:30:07Z" end-time="2026-10-08 02:30:07Z" duration="0.000602" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="2670" name="FreeVisualUpgradeTests" fullname="Airside.Tests.FreeVisualUpgradeTests" classname="Airside.Tests.FreeVisualUpgradeTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-08 02:30:07Z" end-time="2026-10-08 02:30:08Z" duration="1.038069" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="2671" name="A320DerivativeKeepsCabinOpeningsAndDoorGeometry" fullname="Airside.Tests.FreeVisualUpgradeTests.A320DerivativeKeepsCabinOpeningsAndDoorGeometry" methodname="A320DerivativeKeepsCabinOpeningsAndDoorGeometry" classname="Airside.Tests.FreeVisualUpgradeTests" runstate="Runnable" seed="748051358" result="Passed" start-time="2026-10-08 02:30:07Z" end-time="2026-10-08 02:30:07Z" duration="0.548991" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2673" name="ConveyorMotionFreezesWithSimTimeAndKeepsPhysicalSpeed" fullname="Airside.Tests.FreeVisualUpgradeTests.ConveyorMotionFreezesWithSimTimeAndKeepsPhysicalSpeed" methodname="ConveyorMotionFreezesWithSimTimeAndKeepsPhysicalSpeed" classname="Airside.Tests.FreeVisualUpgradeTests" runstate="Runnable" seed="1451958285" result="Passed" start-time="2026-10-08 02:30:07Z" end-time="2026-10-08 02:30:07Z" duration="0.007079" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2672" name="FacadeFittingsAvoidEntranceIntervals" fullname="Airside.Tests.FreeVisualUpgradeTests.FacadeFittingsAvoidEntranceIntervals" methodname="FacadeFittingsAvoidEntranceIntervals" classname="Airside.Tests.FreeVisualUpgradeTests" runstate="Runnable" seed="719656844" result="Passed" start-time="2026-10-08 02:30:07Z" end-time="2026-10-08 02:30:07Z" duration="0.001651" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2674" name="RuntimePavementShadersCompileAndOpaqueMaterialsUseScans" fullname="Airside.Tests.FreeVisualUpgradeTests.RuntimePavementShadersCompileAndOpaqueMaterialsUseScans" methodname="RuntimePavementShadersCompileAndOpaqueMaterialsUseScans" classname="Airside.Tests.FreeVisualUpgradeTests" runstate="Runnable" seed="1277313543" result="Passed" start-time="2026-10-08 02:30:07Z" end-time="2026-10-08 02:30:08Z" duration="0.478915" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="3864" name="WorldLightingTests" fullname="Airside.Tests.WorldLightingTests" classname="Airside.Tests.WorldLightingTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-08 02:30:08Z" end-time="2026-10-08 02:30:11Z" duration="2.656028" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="3866" name="DayGradeIsNeutralAndNightExposureRemainsReadable" fullname="Airside.Tests.WorldLightingTests.DayGradeIsNeutralAndNightExposureRemainsReadable" methodname="DayGradeIsNeutralAndNightExposureRemainsReadable" classname="Airside.Tests.WorldLightingTests" runstate="Runnable" seed="173790770" result="Passed" start-time="2026-10-08 02:30:08Z" end-time="2026-10-08 02:30:08Z" duration="0.006450" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="3865" name="EqualAlbedoGroundRoadAndPavementHaveMatchingRenderedBrightness" fullname="Airside.Tests.WorldLightingTests.EqualAlbedoGroundRoadAndPavementHaveMatchingRenderedBrightness" methodname="EqualAlbedoGroundRoadAndPavementHaveMatchingRenderedBrightness" classname="Airside.Tests.WorldLightingTests" runstate="Runnable" seed="976573968" result="Passed" start-time="2026-10-08 02:30:08Z" end-time="2026-10-08 02:30:11Z" duration="2.637110" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="3867" name="WorldShadersCompileInNativeUnity" fullname="Airside.Tests.WorldLightingTests.WorldShadersCompileInNativeUnity" methodname="WorldShadersCompileInNativeUnity" classname="Airside.Tests.WorldLightingTests" runstate="Runnable" seed="617915377" result="Passed" start-time="2026-10-08 02:30:11Z" end-time="2026-10-08 02:30:11Z" duration="0.000457" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/bailey.fleming/Library/Application Support/DefaultCompany/Airside/TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

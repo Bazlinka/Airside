@@ -7,6 +7,16 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Storm movement commitment (8 Oct, Codex, #670):** ready fixed-wing departures wait
+at their gate/bay; taxi-released departures continue under normal runway/traffic rules.
+An inbound already on the shared 32 km extended final before storm onset keeps its
+arrival timer/estimate and joins landing rather than disappearing when that timer is
+postponed. Later inbounds remain held before final. No save schema/camera/rendering
+changes; curfew, separation and rotorcraft rules retained. Cockpit exit restores
+exterior rendering; no fault found there. Native cockpit→tower and storm landing
+appearance remains unverified. Focused checks: 48/48 pass; a larger arrival-estimate
+selection hit the 60 s limit and remains unverified. Decision: `2026-10-08-storm-movement-commitment`.
+
 **Night final visibility (8 Oct, Codex, #668):** aircraft flares use an original additive
 light-source shader with the same haze transmission as runway point lights, rather than
 URP surface fog. Distant halos sit outside the fuselage in camera depth and use corrected

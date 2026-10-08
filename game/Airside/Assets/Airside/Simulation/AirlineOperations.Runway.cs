@@ -400,12 +400,9 @@ namespace Airside.Simulation
             var departure = LongestWaiting(FleetState.HoldingShort, mainStrip);
             if (departure != null && !MayUseRunwayDuringCurfew(departure, now))
                 departure = null;
-            // ADR 0058 / 0190: a storm holds every new clearance. An aircraft already on
-            // final is a movement underway and lands; departures stay at the hold.
-            var storm = Weather.At(now) == WeatherKind.Storm;
-            var launch = storm ? null : departure;
-            if (storm && arrival == null)
-                return false;
+            // Storms hold new departures at their stand. Every aircraft here has already
+            // committed to taxi or final, so clear it under the usual separation rules.
+            var launch = departure;
             var next = arrival ?? launch;
             if (arrival != null && launch != null
                 && now.ElapsedSeconds - launch.StateStartedAt.ElapsedSeconds >= DepartureMaxHoldSeconds
@@ -413,7 +410,6 @@ namespace Airside.Simulation
                 next = launch;
             // An arrival whose vacate runs through an aircraft holding short (12's exit passes the
             // 30 hold) would drive through it: send the holder first, then land the arrival.
-            // During a storm the holder cannot be sent, so the arrival waits rather than driving through.
             if (next == null)
                 return false;
             if (next == arrival && departure != null && VacateCrossesHolder(arrival, mainStrip))
@@ -552,7 +548,8 @@ namespace Airside.Simulation
             var mainStrip = RunwayWeather.IsMainRunway(runway);
             // Already on final: the tower will land it through a storm (ADR 0190), so the
             // estimate must not park it until the weather block ends.
-            var established = aircraft.State == FleetState.HoldingForLanding;
+            var established = aircraft.State == FleetState.HoldingForLanding
+                || ApproachRules.EnteredFinalBeforeStorm(aircraft, asOf);
             var arrivals = new List<(FleetAircraft Aircraft, SimulationTime Joined)>();
             var departures = new List<FleetAircraft>();
             foreach (var other in _fleet)
@@ -579,8 +576,6 @@ namespace Airside.Simulation
 
             arrivals.Sort((a, b) => Before(a.Aircraft, a.Joined, b.Aircraft, b.Joined) ? -1 : 1);
             departures.Sort((a, b) => a.StateStartedAt.CompareTo(b.StateStartedAt));
-            if (established && Weather.At(asOf) == WeatherKind.Storm)
-                departures.Clear();
 
             var firstJoins = joins;
             foreach (var arrival in arrivals)
@@ -593,9 +588,6 @@ namespace Airside.Simulation
             // Until an inbound joins the queue nothing is waiting to land, so holders depart freely.
             while (aircraft.State == FleetState.Inbound && departures.Count > 0 && at.CompareTo(firstJoins) < 0)
             {
-                at = AfterStorms(at);
-                if (at.CompareTo(firstJoins) >= 0)
-                    break;
                 at = at.Advance(DepartureRunwaySeconds(departures[0]));
                 departures.RemoveAt(0);
             }

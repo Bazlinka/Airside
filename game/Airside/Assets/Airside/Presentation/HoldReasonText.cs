@@ -53,7 +53,9 @@ namespace Airside.Presentation
                         ? $"{Where(departing, rwy)}: spacing behind {who}{soon}"
                         : $"{Where(departing, rwy)}: runway spacing{soon}";
                 case HoldKind.GroundStop:
-                    return "Ground stop: storm over the field";
+                    return aircraft?.State == FleetState.AtStand
+                        ? "Waiting at stand: storm over the field"
+                        : "Arrival held before final: storm over the field";
                 case HoldKind.Queued:
                     return departing
                         ? $"Number {reason.Position} for {rwy}, behind {who}"

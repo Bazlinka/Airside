@@ -75,6 +75,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- Hold storm departures at their stands; taxi-released aircraft continue and arrivals already on extended final retain their landing timer (#670).
+
 - Fix night final visibility: haze-aware aircraft light halos, fuselage-safe distant glows and readable close night position lights (#668).
 
 - Improve all 15 aircraft bodies with continuous contours, rounded noses and fitted glazing/doors; retain type envelopes and A320 source detail (#651).

@@ -291,7 +291,7 @@ namespace Airside.Presentation
             if (values == null || capsule.IsEmpty)
                 return;
             var x = capsule.X + 20f;
-            var limit = capsule.Right - (capsule.Width >= 800f ? 290f : 70f);
+            var limit = capsule.Right - (capsule.Width >= 800f ? 358f : 70f);
             foreach (var value in values)
             {
                 var width = value.Kind == HudCapsuleKind.Chip
@@ -479,6 +479,7 @@ namespace Airside.Presentation
 
         public const string OverviewAction = "shell:overview";
         public const string MiniMapAction = "shell:minimap";
+        public const string TowerAction = "shell:tower";
         public const string MenuAction = "shell:menu";
 
         public static void PaintControls(HudDrawList into, HudBox capsule, bool miniMapVisible)
@@ -488,11 +489,12 @@ namespace Airside.Presentation
                 into.Button(new HudBox(capsule.Right - 62f, capsule.Y + 16f, 50f, 32f), "Menu", MenuAction, HudButtonStyle.Secondary);
                 return;
             }
-            var x = capsule.Right - 272f;
-            into.Caption(new HudBox(x, capsule.Y + 9f, 252f, 12f), "LIVE · REAL-TIME OPERATIONS", fontSize: 9f);
+            var x = capsule.Right - 340f;
+            into.Caption(new HudBox(x, capsule.Y + 9f, 320f, 12f), "LIVE · REAL-TIME OPERATIONS", fontSize: 9f);
             into.Button(new HudBox(x, capsule.Y + 26f, 82f, 30f), "Overview", OverviewAction, HudButtonStyle.Secondary);
             into.Button(new HudBox(x + 88f, capsule.Y + 26f, 92f, 30f), miniMapVisible ? "Hide radar" : "Radar (N)", MiniMapAction, HudButtonStyle.Secondary);
-            into.Button(new HudBox(x + 186f, capsule.Y + 26f, 66f, 30f), "Menu", MenuAction, HudButtonStyle.Secondary);
+            into.Button(new HudBox(x + 186f, capsule.Y + 26f, 68f, 30f), "Tower", TowerAction, HudButtonStyle.Secondary);
+            into.Button(new HudBox(x + 260f, capsule.Y + 26f, 60f, 30f), "Menu", MenuAction, HudButtonStyle.Secondary);
         }
 
         /// <summary>The rail: livery-ringed brand slot, then icon-over-label workspace items.</summary>

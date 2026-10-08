@@ -114,11 +114,11 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Shell_ProvidesOverviewRadarAndMenuActionsWithoutSpeedControls()
+        public void Shell_ProvidesOverviewRadarTowerAndMenuActionsWithoutSpeedControls()
         {
             var list = new HudDrawList(); HudShellPainter.PaintControls(list, HudShell.Layout(1440, 900).Capsule, false);
             var actions = list.Commands.Where(c => c.Kind == HudDrawKind.Button).Select(c => c.ActionId).ToArray();
-            Assert.That(actions, Is.EquivalentTo(new[] { HudShellPainter.OverviewAction, HudShellPainter.MiniMapAction, HudShellPainter.MenuAction }));
+            Assert.That(actions, Is.EquivalentTo(new[] { HudShellPainter.OverviewAction, HudShellPainter.MiniMapAction, HudShellPainter.TowerAction, HudShellPainter.MenuAction }));
         }
     }
 }

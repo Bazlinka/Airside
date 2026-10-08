@@ -9,6 +9,14 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*
 
+**Fleet lighting realism (8 Oct, Codex):** branch `fix/aircraft-lighting-realism-20261008`.
+All 14 aircraft receive fitted crown/belly/aft lights, nose-gear taxi-lamp attachment,
+separate clear strobe lenses, navigation emission sectors and field-relative cruise
+landing-light cutoff. Boeing flash patterns differ from A320/A330/A350. Beam values
+remain visual tuning. Evidence and validation: `docs/testing/aircraft-lighting-2026-10-08/`;
+ADR `2026-10-08-fleet-lighting-realism`. 37 native lighting checks pass; 70 night fixtures reviewed; Mac build passes;
+packaged full-flight/night performance acceptance remains separate.
+
 **Five-area bug sweep (Codex, issue #576, draft PR #580):** five requested agents;
 `codex/five-area-bug-sweep-20261007`, integrated with main `0dc6e629`.
 Fixes: exclusive camera-shell ownership, compact inspector/manual clicks,
@@ -38,7 +46,7 @@ clean-image rendering and far-terrain hand-over. Their native follow-ups remain 
 
 **Current implementation (#577):** Operations opens on My airline, listing every owned aircraft across all bases with live route/status/next-event times and scroll access. Selecting an aircraft opens its correct Fleet profile; Airport movements retains the Adelaide board. Native Unity verification remains pending; evidence: `docs/testing/network-operations-2026-10-07/`.
 
-**Next approved work:** Mac follow/overview day/dusk/night check of the door detail pass (including ATR airstairs), the all-base
+**Next approved work:** full-flight and busy-apron night check of the lighting pass; Mac follow/overview day/dusk/night check of the door detail pass (including ATR airstairs), the all-base
 Operations and fleet/flight journeys, and the pending native fixtures. No native visual claim.
 
 **Wide overview (ADR 0250/0251), run on the Mac 7 Oct (Cursor):**

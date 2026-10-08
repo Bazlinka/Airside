@@ -1,0 +1,37 @@
+{
+  "base_commit": "0dc6e629",
+  "branch": "fix/aircraft-lighting-realism-20261008",
+  "native_lighting": {
+    "total": "37",
+    "passed": "37",
+    "failed": "0",
+    "inconclusive": "0",
+    "start-time": "2026-10-08 00:24:54Z",
+    "end-time": "2026-10-08 00:24:58Z"
+  },
+  "headless_integrated": {
+    "passed": 1888,
+    "failed": 0
+  },
+  "headless_final_profiles": {
+    "passed": 23,
+    "failed": 0
+  },
+  "native_capture_count": 70,
+  "capture_kind": "Unity runtime builders in static night fixture, not packaged gameplay",
+  "known_full_suite_failure": "Unchanged Bell art-loader fixture expects 45 renderers; shipped asset yields 51.",
+  "packaged_playtest": "not performed",
+  "night_performance": "not measured",
+  "asset_audit": {
+    "unique_guids": 1814,
+    "mirrored_files": 388,
+    "character_materials": 70
+  },
+  "mac_build": {
+    "result": "passed",
+    "path": "work/builds/Airside.app",
+    "source_base": "0dc6e629",
+    "source_dirty": true,
+    "note": "Compiled final lighting working tree before commit; 300-second stall window allowed active Metal shader compilation to complete."
+  }
+}

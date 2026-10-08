@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-08: Fit fleet exterior lamps to their airframes, carry taxi lamps with nose gear, separate white strobes from coloured nav sectors, distinguish Boeing flashes and extinguish landing beams in cruise. Validation: docs/testing/aircraft-lighting-2026-10-08/.
+
 One line per merged change, newest first: what the player or contributor sees, plus the PR or ADR number.
 Keep each entry to **one line (about 160 characters)**; the evidence belongs in the PR, an ADR or
 `docs/testing/<topic>/README.md`. Mark behaviour not yet run in Unity as "(unverified)".

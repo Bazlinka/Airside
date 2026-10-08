@@ -191,6 +191,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAuditFanGeometryTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftDoorwayGeometryTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftLayoutTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftLightingProfileTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftLineupTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftOperationTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftPartsTests.cs" />

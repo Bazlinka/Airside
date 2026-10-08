@@ -27,11 +27,11 @@ namespace Airside.Presentation
         public AircraftLightingFamily Family { get; private set; }
 
         // Landing lamps (wing roots; the helicopter's nose searchlight uses the same slot).
-        public float LandingSpotAngle { get; private set; } = 48f;
-        public float LandingInnerAngle { get; private set; } = 22f;
+        public float LandingSpotAngle { get; private set; } = 24f;
+        public float LandingInnerAngle { get; private set; } = 10f;
         public float LandingRange { get; private set; } = 90f;
-        public float LandingIntensityNight { get; private set; } = 7.5f;
-        public float LandingIntensityDay { get; private set; } = 9.5f;
+        public float LandingIntensityNight { get; private set; } = 600.0f;
+        public float LandingIntensityDay { get; private set; } = 760.0f;
         /// <summary>Lamps are aimed a little below the fuselage axis so the beam lands on the runway ahead.</summary>
         public float LandingPitchDownDegrees { get; private set; }
         /// <summary>Wing-root lamps toe outwards (left lamp left, right lamp right).</summary>
@@ -41,7 +41,7 @@ namespace Airside.Presentation
         public float TaxiSpotAngle { get; private set; } = 55f;
         public float TaxiInnerAngle { get; private set; } = 28f;
         public float TaxiRange { get; private set; } = 18f;
-        public float TaxiIntensity { get; private set; } = 2.4f;
+        public float TaxiIntensity { get; private set; } = 84.0f;
         public float TaxiPitchDownDegrees { get; private set; }
         /// <summary>The nose-gear lamp is also the takeoff light: lit for the roll and the landing, gear down.</summary>
         public bool TaxiLightDoublesAsTakeoff { get; private set; }
@@ -66,10 +66,10 @@ namespace Airside.Presentation
         private static readonly AircraftLightingProfile TurbopropProfile = new AircraftLightingProfile
         {
             Family = AircraftLightingFamily.Turboprop,
-            LandingSpotAngle = 44f, LandingInnerAngle = 20f, LandingRange = 70f,
-            LandingIntensityNight = 6.5f, LandingIntensityDay = 8.5f,
-            LandingPitchDownDegrees = 3f, LandingToeOutDegrees = 0f,
-            TaxiSpotAngle = 66f, TaxiInnerAngle = 32f, TaxiRange = 32f, TaxiIntensity = 2.4f,
+            LandingSpotAngle = 20f, LandingInnerAngle = 8f, LandingRange = 70f,
+            LandingIntensityNight = 520.0f, LandingIntensityDay = 680.0f,
+            LandingPitchDownDegrees = 3f, LandingToeOutDegrees = 6f,
+            TaxiSpotAngle = 66f, TaxiInnerAngle = 32f, TaxiRange = 32f, TaxiIntensity = 84.0f,
             TaxiPitchDownDegrees = 4f,
             StrobeFlashes = 1, StrobeCycleSeconds = 1.0f, StrobeFlashSeconds = 0.08f,
             StrobeRange = 16f, StrobeIntensity = 11f,
@@ -79,10 +79,10 @@ namespace Airside.Presentation
         private static readonly AircraftLightingProfile RegionalJetProfile = new AircraftLightingProfile
         {
             Family = AircraftLightingFamily.RegionalJet,
-            LandingSpotAngle = 36f, LandingInnerAngle = 16f, LandingRange = 100f,
-            LandingIntensityNight = 7.5f, LandingIntensityDay = 9.5f,
+            LandingSpotAngle = 18f, LandingInnerAngle = 8f, LandingRange = 100f,
+            LandingIntensityNight = 600.0f, LandingIntensityDay = 760.0f,
             LandingPitchDownDegrees = 3f, LandingToeOutDegrees = 2f,
-            TaxiSpotAngle = 62f, TaxiInnerAngle = 30f, TaxiRange = 45f, TaxiIntensity = 2.7f,
+            TaxiSpotAngle = 62f, TaxiInnerAngle = 30f, TaxiRange = 45f, TaxiIntensity = 94.5f,
             TaxiPitchDownDegrees = 4.5f, TaxiLightDoublesAsTakeoff = true,
             TailStrobe = true, StrobeRange = 20f, StrobeIntensity = 12f,
             NavRange = 11f, BeaconHz = 1.4f, BeaconRange = 10f
@@ -91,10 +91,10 @@ namespace Airside.Presentation
         private static readonly AircraftLightingProfile NarrowbodyProfile = new AircraftLightingProfile
         {
             Family = AircraftLightingFamily.Narrowbody,
-            LandingSpotAngle = 32f, LandingInnerAngle = 14f, LandingRange = 120f,
-            LandingIntensityNight = 8f, LandingIntensityDay = 10f,
+            LandingSpotAngle = 16f, LandingInnerAngle = 6f, LandingRange = 120f,
+            LandingIntensityNight = 640.0f, LandingIntensityDay = 800.0f,
             LandingPitchDownDegrees = 3f, LandingToeOutDegrees = 2.5f,
-            TaxiSpotAngle = 62f, TaxiInnerAngle = 30f, TaxiRange = 55f, TaxiIntensity = 2.8f,
+            TaxiSpotAngle = 62f, TaxiInnerAngle = 30f, TaxiRange = 55f, TaxiIntensity = 98.0f,
             TaxiPitchDownDegrees = 4.5f, TaxiLightDoublesAsTakeoff = true,
             TailStrobe = true, StrobeRange = 22f, StrobeIntensity = 12f,
             NavRange = 13f, BeaconHz = 1.4f, BeaconRange = 11f
@@ -103,10 +103,10 @@ namespace Airside.Presentation
         private static readonly AircraftLightingProfile WidebodyProfile = new AircraftLightingProfile
         {
             Family = AircraftLightingFamily.Widebody,
-            LandingSpotAngle = 28f, LandingInnerAngle = 12f, LandingRange = 150f,
-            LandingIntensityNight = 9f, LandingIntensityDay = 11.5f,
+            LandingSpotAngle = 14f, LandingInnerAngle = 6f, LandingRange = 150f,
+            LandingIntensityNight = 720.0f, LandingIntensityDay = 920.0f,
             LandingPitchDownDegrees = 2.5f, LandingToeOutDegrees = 3f,
-            TaxiSpotAngle = 58f, TaxiInnerAngle = 28f, TaxiRange = 70f, TaxiIntensity = 3.2f,
+            TaxiSpotAngle = 58f, TaxiInnerAngle = 28f, TaxiRange = 70f, TaxiIntensity = 112.0f,
             TaxiPitchDownDegrees = 4.5f, TaxiLightDoublesAsTakeoff = true,
             TailStrobe = true, StrobeRange = 28f, StrobeIntensity = 14f,
             NavRange = 16f, BeaconHz = 1.3f, BeaconRange = 13f
@@ -117,19 +117,75 @@ namespace Airside.Presentation
         {
             Family = AircraftLightingFamily.Helicopter,
             LandingSpotAngle = 18f, LandingInnerAngle = 8f, LandingRange = 110f,
-            LandingIntensityNight = 10f, LandingIntensityDay = 12f,
+            LandingIntensityNight = 800.0f, LandingIntensityDay = 960.0f,
             LandingPitchDownDegrees = 25f, LandingToeOutDegrees = 0f,
             StrobeFlashes = 1, StrobeCycleSeconds = 1.0f, StrobeFlashSeconds = 0.07f,
             StrobeRange = 14f, StrobeIntensity = 10f,
             NavRange = 7f, BeaconHz = 1.6f, BeaconRange = 8f
         };
 
+        private static AircraftLightingProfile SingleFlashCopy(AircraftLightingProfile basis)
+        {
+            var copy = (AircraftLightingProfile)basis.MemberwiseClone();
+            copy.StrobeFlashes = 1;
+            return copy;
+        }
+
+        private static readonly AircraftLightingProfile BoeingNarrowbodyProfile = SingleFlashCopy(NarrowbodyProfile);
+        private static readonly AircraftLightingProfile BoeingWidebodyProfile = SingleFlashCopy(WidebodyProfile);
+
+        /// <summary>A stable offset prevents every aircraft flashing in synchrony.
+        /// It uses the presentation identity, never random state or the simulation clock.</summary>
+        public static float ClockOffsetSeconds(string identity)
+        {
+            if (string.IsNullOrEmpty(identity)) return 0f;
+            uint hash = 2166136261;
+            foreach (var c in identity) hash = unchecked((hash ^ c) * 16777619);
+            return (hash % 10007) / 10007f * 10f;
+        }
+
+        /// <summary>Game policy: landing beams below 10,000 ft above the displayed field datum.</summary>
+        public const float LandingLightCeilingMetres = 3048f;
+
+        public bool LandingLampOn(AircraftPhase phase, float heightAboveFieldMetres)
+        {
+            if (phase == AircraftPhase.AtStand || phase == AircraftPhase.Pushback
+                || phase == AircraftPhase.TaxiIn || phase == AircraftPhase.TaxiOut)
+                return false;
+            return heightAboveFieldMetres < LandingLightCeilingMetres;
+        }
+
+        /// <summary>Position-light horizontal sectors: 110 degrees per wing, 140 aft.
+        /// Signed bearing from the nose: negative port, positive starboard. A two-degree
+        /// fade near each sector edge avoids a hard pop when the camera or aircraft turns.</summary>
+        public static float NavigationVisibility(AircraftNavigationLight kind, float bearingDegrees)
+        {
+            var bearing = ((bearingDegrees + 180f) % 360f + 360f) % 360f - 180f;
+            float edge;
+            switch (kind)
+            {
+                case AircraftNavigationLight.Left: edge = System.Math.Min(-bearing, bearing + 110f); break;
+                case AircraftNavigationLight.Right: edge = System.Math.Min(bearing, 110f - bearing); break;
+                case AircraftNavigationLight.Tail: edge = System.Math.Abs(bearing) - 110f; break;
+                default: return 0f;
+            }
+            return System.Math.Max(0f, System.Math.Min(1f, (edge + 1f) / 2f));
+        }
+
         /// <summary>The profile for a type; <see cref="Generic"/> for null or a type the table does not know.</summary>
         public static AircraftLightingProfile For(AircraftType type)
         {
             if (type == null)
                 return Generic;
-            return ForFamily(FamilyOf(type));
+            // Distinguish installed flash patterns from beam-size families. Boeing jets
+            // typically use one flash; Airbus A320/A330/A350 use two. A220 and E190
+            // keep the existing approximation until their exact installation is sourced.
+            switch (type.Id)
+            {
+                case "B738": case "B38M": return BoeingNarrowbodyProfile;
+                case "B789": case "B78X": return BoeingWidebodyProfile;
+                default: return ForFamily(FamilyOf(type));
+            }
         }
 
         public static AircraftLightingFamily FamilyOf(AircraftType type)
@@ -230,7 +286,7 @@ namespace Airside.Presentation
                 && (phase == AircraftPhase.TaxiIn || phase == AircraftPhase.TaxiOut || phase == AircraftPhase.Pushback)
                 && movingForwardOnGround)
                 return true;
-            if (!TaxiLightDoublesAsTakeoff)
+            if (!enginesOn || !TaxiLightDoublesAsTakeoff)
                 return false;
             if (phase == AircraftPhase.Landing || phase == AircraftPhase.Approach)
                 return true;

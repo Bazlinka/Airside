@@ -232,7 +232,9 @@ namespace Airside.Presentation
                 PresentationDeltaTime, PresentationClock, engines, null, aircraft.Type);
             UpdateGroundShadow(view);
             UpdateSelectionMarker(view, flight.AircraftId);
-            UpdateDistantLight(view, AirsideReusableMotion.LandingLightsOn(visual.Phase, progress, true));
+            UpdateDistantLight(view, AircraftLightingProfile.For(aircraft.Type).LandingLampOn(visual.Phase,
+                Mathf.Max(0f, view.position.y - AirsideFlightPath.GroundY)), aircraft.Type, visual.Phase,
+                AirsideReusableMotion.NavigationLightsOn(engines.AnyRunning, engines.Beacon));
             UpdateRotorcraftSound(view, aircraft, pose, engines);
 
             if (_cameraController != null && _cameraController.IsFollowing && _cameraController.FollowTarget == view)

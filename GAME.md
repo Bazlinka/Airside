@@ -7,6 +7,8 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Turn banking (8 Oct, Claude):** `CoordinatedBank` in AirsidePrototype.cs replaces the yaw-lag bank for airborne phases; physical bank from sim-time ground speed and heading rate, clamped ±25°, so regional/en-route turns now roll too. SID-arc bank still takes priority. Unity compile and look unverified; watch roll-in/out smoothness and ground-phase wings-level.
+
 **Toast redesign (8 Oct, Codex, #642):** departure-style notification cards now show a status caption/icon,
 wrapped message, separate repeat count and remaining-lifetime rule. Brief fade/rise entrance and smooth
 exit; stack stops at registered panels/screen margins. Workspace/flight slots reserve 68 points;

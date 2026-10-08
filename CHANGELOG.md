@@ -2,6 +2,7 @@
 
 - 2026-10-08 — Route Map: aircraft on the field collapse to quiet dots with one "N on field" count (full icons/labels only when zoomed in or picked), ending the label pile at Adelaide (Unity unverified).
 
+- 2026-10-08 — Airborne turns bank as a coordinated turn (tan bank = V·yaw rate/g, max 25°) from real ground speed and heading rate, also on en-route legs (unverified in Unity).
 - 2026-10-08 — HUD Tower button beside Overview/Radar/Menu enters the control-tower cab view (unverified in Unity).
 - 2026-10-08 Inbound pitch eases into the approach attitude before the glideslope entry, removing the level-off-to-final step (presentation only)
 

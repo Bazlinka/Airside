@@ -5,6 +5,8 @@
 - 2026-10-08 Circuit pitch eases to the approach attitude so the go-around circuit-to-approach hand-over no longer steps (presentation only)
 - 2026-10-08 — Leaving exterior/cockpit view: the exit glide now travels with the moving aircraft instead of chasing it from a fixed point (unverified in Unity).
 
+- 2026-10-08 — Airport lighting: the real-scale Adelaide field now has its night aerodrome beacon (white/green flashes, lens, light and glow on the tower cab); it was only built on the old miniature (unverified).
+
 - 2026-10-08 Smoother regional flight transitions: authored flare, rotation and cruise/approach pitch hand-over; flare lengthened to ~7 s (presentation only)
 - 2026-10-08 — Smoother flight-view transitions: the glide travels with the moving aircraft, field of view follows the same glide, and the fuselage hides mid-glide (unverified in Unity).
 

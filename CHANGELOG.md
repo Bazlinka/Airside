@@ -8,7 +8,7 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
-- Fix return-cruise aircraft inheriting approach flaps/gear; select visual phase from the journey stage (#586; unverified in Unity).
+- Fix cruise flaps/gear: use the journey phase and preserve rig rest poses when follow targets refresh (#586; unverified in Unity).
 
 - Fix parked/bay taxi clearance, rotor queues, sky ownership, inspector/manual buttons and repeated query allocations; add aircraft/save coverage (#576; Unity unverified).
 - Lighting beam-aim checks: each family's landing/taxi beam must land on the ground ahead inside lamp range, with an offline beam diagram (unverified in Unity).

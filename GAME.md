@@ -11,7 +11,8 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 **Enroute flap phase correction (Codex, #586):** branch `codex/enroute-flap-phase-20261008`
 from main `3fcb8063`. Return cruise inherited the local Approach animation, commanding
-approach flaps/gear while flying enroute. Select the drawn journey phase explicitly;
+approach flaps/gear while flying enroute. Follow-target refresh also recaptured deployed
+flaps as their rest pose. Preserve the rig cache and select the drawn journey phase explicitly;
 preserve return takeoff and destination approach/rollout. Focused flight tests: 34 passed;
 required full suite: 1,917 passed / zero failed; NUnit compatibility compile and asset audit passed. Unverified in Unity. Packet: `docs/testing/enroute-flaps-2026-10-08/`.
 NEXT: review the fix and check cruise flaps/gear and terminal transitions in Unity.

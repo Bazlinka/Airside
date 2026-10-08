@@ -36,7 +36,7 @@ def main():
     formula = re.search(r"Math\.Max\((\d+\.\d+)f \* (\d+\.\d+)f, radiusSquared\)\) \* (\d+\.\d+)f", HELPER.read_text())
     assert formula, "Update the probe for the production diameter formula"
     minimum_a, minimum_b, multiplier = map(float, formula.groups())
-    for name in ("mdl_a320_200_v01.gltf", "mdl_737_8_narrowbody_v01.gltf",
+    for name in ("mdl_a320_200_v02.gltf", "mdl_737_8_narrowbody_v01.gltf",
                  "mdl_a350_900_v01.gltf", "mdl_787_10_v01.gltf"):
         gltf = json.loads((FOLDER / name).read_text())
         blob = (FOLDER / gltf["buffers"][0]["uri"]).read_bytes()

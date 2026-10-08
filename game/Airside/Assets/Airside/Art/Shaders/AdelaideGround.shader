@@ -235,6 +235,14 @@ Shader "Airside/AdelaideGround"
                 float3 satellite = SAMPLE_TEXTURE2D(_SatelliteAlbedo, sampler_SatelliteAlbedo, satelliteUv).rgb
                     * _SatelliteTint.rgb;
                 albedo = lerp(albedo, satellite, satelliteBlend);
+                // At walking/follow distance, show real blade/soil scale rather than
+                // stretching the scan over a 30-50 m colour tile. Keep aerial context far away.
+                float nearDetail = 1.0 - smoothstep(35.0, 130.0, distance(GetCameraPositionWS(), input.positionWS));
+                float3 fineDry = SAMPLE_TEXTURE2D(_DryAlbedo, sampler_DryAlbedo, xz / 2.8).rgb;
+                float3 fineGreen = SAMPLE_TEXTURE2D(_GreenAlbedo, sampler_GreenAlbedo, xz / 2.2).rgb;
+                float3 fineDirt = SAMPLE_TEXTURE2D(_DirtAlbedo, sampler_DirtAlbedo, xz / 3.0).rgb;
+                float fineLuma = dot(fineDry*w.r + fineGreen*w.g + fineDirt*w.b, float3(.299,.587,.114));
+                albedo *= lerp(1.0, clamp(.82 + fineLuma*.5, .88, 1.15), nearDetail);
                 float3 normalWS = normalize(nDry * w.r + nGreen * w.g + nDirt * w.b);
                 float ao = dot(float3(mDry.x, mGreen.x, mDirt.x), w);
                 float smoothness = dot(float3(mDry.z, mGreen.z, mDirt.z), w) * _Smoothness;

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Airside.Presentation;
 using NUnit.Framework;
 using UnityEngine;
@@ -80,7 +81,10 @@ namespace Airside.Tests
                     Assert.That(root.Find($"main_rotor_blade_{i}"), Is.Not.Null);
 
                 var renderers = root.GetComponentsInChildren<Renderer>(true);
-                Assert.That(renderers.Length, Is.EqualTo(45));
+                // Surface details are added by the common loader after the source kit.
+                // Keep this silhouette guard about the 45 original model parts.
+                var sourceParts = renderers.Count(r => !r.name.StartsWith(AircraftSurfaceDetails.DetailName, StringComparison.Ordinal));
+                Assert.That(sourceParts, Is.EqualTo(45));
                 var bounds = renderers[0].bounds;
                 for (var i = 1; i < renderers.Length; i++)
                     bounds.Encapsulate(renderers[i].bounds);

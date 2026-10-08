@@ -24,6 +24,7 @@ namespace Airside.Presentation
             public Transform Belt;
             public Transform BeltSurface;
             public Transform BeltChassis;
+            public Transform[] BeltTreads;
             public Transform Planeside;
             public readonly List<Transform> PlanesideBags = new();
         }
@@ -76,13 +77,20 @@ namespace Airside.Presentation
             // A jet's belt loader, foot on the apron and top at the hold sill.
             if (scene.BeltLoader)
             {
-                props.Belt ??= BuildBeltLoader(props.Root, out props.BeltSurface, out props.BeltChassis);
+                if (props.Belt == null)
+                {
+                    props.Belt = BuildBeltLoader(props.Root, out props.BeltSurface, out props.BeltChassis);
+                    props.BeltTreads = new Transform[18];
+                    for (var i = 0; i < props.BeltTreads.Length; i++)
+                        props.BeltTreads[i] = props.BeltSurface.Find("Conveyor tread " + i);
+                }
                 props.Belt.gameObject.SetActive(true);
                 var foot = LayoutToWorld(pose, scene.BeltFoot, ground + 0.75f);
                 var top = LayoutToWorld(pose, scene.BeltTop, ground + scene.BeltTopHeight);
                 var span = top - foot;
                 props.BeltSurface.SetPositionAndRotation((foot + top) * 0.5f, Quaternion.LookRotation(span.normalized, Vector3.up));
                 props.BeltSurface.localScale = new Vector3(0.8f, 0.12f, span.magnitude + 0.4f);
+                PoseBeltTreads(props.BeltTreads, _preciseTime, span.magnitude + .4f);
                 var flat = new Vector3(span.x, 0f, span.z);
                 var chassisCentre = Vector3.Lerp(foot, top, 0.35f);
                 props.BeltChassis.SetPositionAndRotation(new Vector3(chassisCentre.x, ground + 0.35f, chassisCentre.z),
@@ -125,9 +133,22 @@ namespace Airside.Presentation
             surface = new GameObject("Belt").transform;
             surface.SetParent(root, false);
             ParentBlock(surface, "Belt surface", Vector3.zero, Vector3.one, BeltDark);
+            for (var i = 0; i < 18; i++)
+                ParentBlock(surface, "Conveyor tread " + i, new Vector3(0f,.56f,(float)i/18-.5f),
+                    new Vector3(.88f,.15f,.012f), BeltDark * .72f);
             foreach (var x in new[] { -0.5f, 0.5f })
                 ParentBlock(surface, "Belt rail", new Vector3(x, 1.2f, 0f), new Vector3(0.08f, 1.4f, 1f), BeltYellow);
             return root;
+        }
+
+        private static void PoseBeltTreads(Transform[] treads, double seconds, float length)
+        {
+            if (treads == null) return;
+            // Constant physical speed, independent of incline/length or rendered frame rate.
+            var phase = (float)((seconds * .48 / Mathf.Max(length, .5f)) % 1.0);
+            for (var i = 0; i < treads.Length; i++)
+                if (treads[i] != null)
+                    treads[i].localPosition = new Vector3(0f,.56f,Mathf.Repeat((float)i/treads.Length+phase,1f)-.5f);
         }
 
         private static Transform BuildPlanesideCart(Transform parent, List<Transform> bags)

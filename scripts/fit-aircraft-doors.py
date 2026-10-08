@@ -29,7 +29,7 @@ MIRROR = ROOT / "game/Airside/Assets/StreamingAssets/Airside/Art/Models/Aircraft
 
 MODELS = {
     "ATR42": "mdl_atr42_starter_v03", "SF34": "mdl_saab_340b_v01", "DH8D": "mdl_dash8_q400_v01",
-    "E190": "mdl_e190_v01", "A223": "mdl_a220_300_v01", "A320": "mdl_a320_200_v01",
+    "E190": "mdl_e190_v01", "A223": "mdl_a220_300_v01", "A320": "mdl_a320_200_v02",
     "B738": "mdl_737_800_v01", "B38M": "mdl_737_8_narrowbody_v01", "A21N": "mdl_a321neo_v01",
     "A359": "mdl_a350_900_v01", "A339": "mdl_a330_900neo_v01", "B789": "mdl_787_9_v01",
     "B78X": "mdl_787_10_v01",

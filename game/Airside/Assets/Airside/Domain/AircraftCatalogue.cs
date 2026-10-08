@@ -146,7 +146,7 @@ namespace Airside.Domain
             planningCruiseKmh: 830, practicalRangeKm: 5000,
             manufacturerMaxCruiseKmh: 871, manufacturerRangeKm: 6200, manufacturerRangeBasis: "representative A320 family figure",
             StandClass.TerminalGate, ModelStatus.Genuine,
-            "Models/Aircraft/mdl_a320_200_v01.gltf", "UI/Aircraft/thb_air_a320_v01.png", "SPEC-AIRBUS-A320-200", AircraftWeightBand.Medium);
+            "Models/Aircraft/mdl_a320_200_v02.gltf", "UI/Aircraft/thb_air_a320_v01.png", "SPEC-AIRBUS-A320-200", AircraftWeightBand.Medium);
 
         public static readonly AircraftSpec Boeing737800 = new(
             "B738", "Boeing 737-800", "Narrowbody jet · 160–189 seats",

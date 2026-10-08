@@ -1,0 +1,110 @@
+{
+  "scripts/sources/free-visuals/A320-licence.json": {
+    "bytes": 1032,
+    "sha256": "ef4db4646a5a606620a722dbd998d1ba636f86ccb45b574562e63d7308b81b54"
+  },
+  "scripts/sources/free-visuals/A320.wrl.gz": {
+    "bytes": 531292,
+    "sha256": "0f658822bbc876cf2feac1b16784ae2e6137223210df997891edfdaefb5fd4ed"
+  },
+  "scripts/sources/free-visuals/fabric-colour.jpg": {
+    "bytes": 788593,
+    "sha256": "aeb7a1487b77aec55e39de662def4d371f5c7c617f62d1f291d7f9932ffebdc9"
+  },
+  "scripts/sources/free-visuals/fabric-normal.jpg": {
+    "bytes": 828071,
+    "sha256": "f6955bbdead9f023f2357f6f8808ed49627d10882cd2a3cb6b5a5ace155abc45"
+  },
+  "scripts/sources/free-visuals/fabric-rough.jpg": {
+    "bytes": 488744,
+    "sha256": "3d90ac40b5c32a15649cc8525b7eeed133ea46b63a0e3eae5e34911d5c967e3a"
+  },
+  "scripts/sources/free-visuals/plant_bushDetailed.glb": {
+    "bytes": 10172,
+    "sha256": "2e0487020d68ccf664435db9d829c78ae00e6d2785ee3ec10b9f89cc70a10406"
+  },
+  "scripts/sources/free-visuals/tree_thin.glb": {
+    "bytes": 17200,
+    "sha256": "f0f1f6861fe0446963d3be216cc628324f538bb0841bc9a8e14140313f64e2f3"
+  },
+  "scripts/sources/free-visuals/truck.glb": {
+    "bytes": 176360,
+    "sha256": "5e1bc66c343501dd7d5734b57e672dd949bf95d7abdce680c6508cef99d374f8"
+  },
+  "scripts/sources/free-visuals/wheel-truck.glb": {
+    "bytes": 34304,
+    "sha256": "411ff9692f72e9b0490d20574e3efd94b20058732a587abc26f4952e2c91351e"
+  },
+  "user-download:a320.zip": {
+    "bytes": 3613050,
+    "sha256": "32e2c83caa9803ee87335f4fd6779652fd55ee3bdec6d924539218c67e979a88"
+  },
+  "game/Airside/Assets/Airside/Art/Models/Aircraft/mdl_a320_200_v02.bin": {
+    "bytes": 1721400,
+    "sha256": "b95f4c2bf477ec34cc75d37d60bb4e70dfa142e7f84dfbc2aadac04d0be37bf5"
+  },
+  "game/Airside/Assets/Airside/Art/Models/Aircraft/mdl_a320_200_v02.gltf": {
+    "bytes": 234252,
+    "sha256": "f51703fd13b2a4e823df4332a321e7781a05bb2e0743327aaa9bc7a985e89426"
+  },
+  "game/Airside/Assets/Airside/Art/Models/Environment/mdl_local_foliage_v01.bin": {
+    "bytes": 49788,
+    "sha256": "96923dfe67a13ee840262bd731d312d2e9bf1aa138edb9c0777100668b399ff4"
+  },
+  "game/Airside/Assets/Airside/Art/Models/Environment/mdl_local_foliage_v01.gltf": {
+    "bytes": 3154,
+    "sha256": "bd7ce9104c9dcde27513f06ac0d12278250f3d7891b5d94e7f2ea330a952ebcc"
+  },
+  "game/Airside/Assets/Airside/Art/Models/Vehicles/mdl_baggage_tug_train_v07.bin": {
+    "bytes": 104016,
+    "sha256": "c8cee66f793480ddaa1fbfe6cba3ba67e03235b86a7155d8b83aba17ec26f836"
+  },
+  "game/Airside/Assets/Airside/Art/Models/Vehicles/mdl_baggage_tug_train_v07.gltf": {
+    "bytes": 99142,
+    "sha256": "99ab2cdafd00fb88514f6e10c7a505e8d23bb28d971084f2e8a715f5967b5a1d"
+  },
+  "game/Airside/Assets/Airside/Art/Models/Vehicles/mdl_catering_truck_v02.bin": {
+    "bytes": 74196,
+    "sha256": "b1de3f62023fad1e891920140c717c7f587aa31e3e9d9914c47a071c2028ac38"
+  },
+  "game/Airside/Assets/Airside/Art/Models/Vehicles/mdl_catering_truck_v02.gltf": {
+    "bytes": 40310,
+    "sha256": "70cbe6d9e3ccb5d8d4b3b6c7c95f4e64a5372e8235b7f5be48914ae4ae12269e"
+  },
+  "game/Airside/Assets/Airside/Art/Models/Vehicles/mdl_fuel_truck_small_v07.bin": {
+    "bytes": 154644,
+    "sha256": "1d99a6912da5704a718f61ead29a10cb7188180d188710089b625bd0af36a8ce"
+  },
+  "game/Airside/Assets/Airside/Art/Models/Vehicles/mdl_fuel_truck_small_v07.gltf": {
+    "bytes": 94486,
+    "sha256": "6aa03245c6fcc6ed014ae7e2a4144eec98dd0abf2f16cc3ac26b0b715af82192"
+  },
+  "game/Airside/Assets/Airside/Art/Models/Vehicles/mdl_passenger_bus_apron_v07.bin": {
+    "bytes": 156312,
+    "sha256": "1ff8a910bfa56d14d5e5a0419bead6598bdbd2a7121e8daa53ffc2591a2bca8e"
+  },
+  "game/Airside/Assets/Airside/Art/Models/Vehicles/mdl_passenger_bus_apron_v07.gltf": {
+    "bytes": 89093,
+    "sha256": "d6bacb5249e3d64a30d21e1a8707142f0e6c64843b0bb97f5eab78fc5a6b1a62"
+  },
+  "game/Airside/Assets/Airside/Art/Models/Vehicles/mdl_pushback_tug_v04.bin": {
+    "bytes": 62184,
+    "sha256": "5be188063e122d07c4532c942182682dffc903b430a093c38e9df6a44ddd2edb"
+  },
+  "game/Airside/Assets/Airside/Art/Models/Vehicles/mdl_pushback_tug_v04.gltf": {
+    "bytes": 32234,
+    "sha256": "2478fda4244e13a5ad3ee51c9e610aa2b1ba023bb349577f9190d5490a507c15"
+  },
+  "game/Airside/Assets/Airside/Art/Textures/Surfaces/tx_cabin_fabric_basecolor_v01.png": {
+    "bytes": 719841,
+    "sha256": "5678032f6e4bcfd6f942414c32927726e54d18b33e65207df0cab93e62a13dae"
+  },
+  "game/Airside/Assets/Airside/Art/Textures/Surfaces/tx_cabin_fabric_mask_v01.png": {
+    "bytes": 988530,
+    "sha256": "876da854ff1c9dc69398ba92c36f595580857ef0e977ce52900092fd1cffb3d9"
+  },
+  "game/Airside/Assets/Airside/Art/Textures/Surfaces/tx_cabin_fabric_normal_v01.png": {
+    "bytes": 2002885,
+    "sha256": "a75ba5ff276431491230886752d5088128691d9e3f0ab4bb9cc8d6f91e281c26"
+  }
+}

@@ -1184,6 +1184,9 @@ namespace Airside.Presentation
 
         private void UpdateAerodromeBeacon(float daylight)
         {
+            // The true-scale field has its own beacon on the tower; the legacy mast needs the miniature.
+            if (UpdateYpadAerodromeBeacon(daylight))
+                return;
             if (_aerodromeBeacon == null)
                 return;
 

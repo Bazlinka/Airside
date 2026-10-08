@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Airside.Presentation
@@ -28,6 +29,7 @@ namespace Airside.Presentation
     {
         public const float LifetimeSeconds = 6f;
         public const float FadeSeconds = 0.6f;
+        public const float EntranceSeconds = 0.24f;
         public const int MaxVisible = 3;
         public const int HistoryLength = 10;
 
@@ -72,8 +74,19 @@ namespace Airside.Presentation
             var left = entry.ShownAt + LifetimeSeconds - now;
             if (left <= 0f)
                 return 0f;
-            return left >= FadeSeconds ? 1f : left / FadeSeconds;
+            var t = Math.Clamp(left / FadeSeconds, 0f, 1f);
+            return t * t * (3f - 2f * t);
         }
+
+        /// <summary>Brief cubic ease-out; repeated messages renew their entrance along with their timer.</summary>
+        public static float Entrance(ToastEntry entry, float now)
+        {
+            var t = Math.Clamp((now - entry.ShownAt) / EntranceSeconds, 0f, 1f);
+            return 1f - (1f - t) * (1f - t) * (1f - t);
+        }
+
+        public static float Remaining(ToastEntry entry, float now) =>
+            Math.Clamp((entry.ShownAt + LifetimeSeconds - now) / LifetimeSeconds, 0f, 1f);
 
         private static bool IsAlive(ToastEntry entry, float now) =>
             now >= entry.ShownAt && now < entry.ShownAt + LifetimeSeconds;

@@ -24,7 +24,7 @@ namespace Airside.Presentation
             Identity = new HudBox((width - w) * 0.5f, 20f, w, narrow ? 244f : 206f);
             var controlsHeight = narrow ? 140f : 108f;
             Controls = new HudBox((width - w) * 0.5f, height - controlsHeight - 20f, w, controlsHeight);
-            Toast = new HudBox(20f, Identity.Bottom + 12f, Math.Min(480f, Math.Max(0f, width - 40f)), 54f);
+            Toast = new HudBox(20f, Identity.Bottom + 12f, Math.Min(480f, Math.Max(0f, width - 40f)), HudShell.ToastHeight);
         }
         public HudBox Identity { get; }
         public HudBox Controls { get; }

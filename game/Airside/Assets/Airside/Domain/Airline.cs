@@ -217,7 +217,19 @@ namespace Airside.Domain
             hex != null
             && hex.Length == 7
             && hex[0] == '#'
-            && int.TryParse(hex.Substring(1), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out _);
+            && IsHexDigits(hex);
+
+        private static bool IsHexDigits(string hex)
+        {
+            for (var i = 1; i < hex.Length; i++)
+            {
+                var c = hex[i];
+                if (!(c >= '0' && c <= '9') && !(c >= 'a' && c <= 'f') && !(c >= 'A' && c <= 'F'))
+                    return false;
+            }
+
+            return true;
+        }
 
         public override string ToString() => Name;
     }

@@ -84,7 +84,8 @@ namespace Airside.Presentation
                 ? "You are an established airline. Every goal is done. Keep flying."
                 : $"{career.Tier} tier. Finish every step below to reach {stage.TargetLabel}. Pin one to show it on the HUD.";
             FooterLine = $"{career.BaseCount} base{(career.BaseCount == 1 ? "" : "s")} · {operations.PlayerFleetCount()} aircraft · "
-                         + $"{career.ServedDestinations.Count} destinations · {career.CompletedPlayerRotations} flights · "
+                         + $"{career.ServedDestinations.Count} destination{(career.ServedDestinations.Count == 1 ? "" : "s")} · "
+                         + $"{career.CompletedPlayerRotations} flight{(career.CompletedPlayerRotations == 1 ? "" : "s")} · "
                          + $"{career.ActivePlaySeconds / 3600} h played";
         }
     }

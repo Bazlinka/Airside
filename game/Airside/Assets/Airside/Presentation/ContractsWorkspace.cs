@@ -107,7 +107,7 @@ namespace Airside.Presentation
 
             var done = career.ActiveContract.CompletedRotations;
             var required = definition.RequiredRotations;
-            ActiveProgressText = $"{done} of {required} flights done";
+            ActiveProgressText = $"{done} of {required} flight{(required == 1 ? "" : "s")} done";
             ActiveProgress01 = required <= 0 ? 0f : Clamp01(done / (float)required);
             ActiveProgressPercent = $"{(int)(ActiveProgress01 * 100f)}%";
 
@@ -123,7 +123,9 @@ namespace Airside.Presentation
             if (operations.ContractExpiresAt() is { } due)
             {
                 var left = Math.Max(0, due.ElapsedSeconds - now.ElapsedSeconds);
-                _activeTerms.Add($"Due in {RouteMapWorkspaceModel.Duration(left)}. Miss it and lose {definition.ReliabilityLossOnCancel} reliability");
+                _activeTerms.Add($"Due in {RouteMapWorkspaceModel.Duration(left)}."
+                                 + (definition.ReliabilityLossOnCancel > 0
+                                     ? $" Miss it and lose {definition.ReliabilityLossOnCancel} reliability" : string.Empty));
             }
 
 

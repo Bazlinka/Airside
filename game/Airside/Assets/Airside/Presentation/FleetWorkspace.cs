@@ -515,7 +515,7 @@ namespace Airside.Presentation
                     else if (career.Reliability < offer.RequiredReliability)
                         requirement = $"Needs {offer.RequiredReliability}% reliability. You have {career.Reliability}%";
                     else if (career.CompletedPlayerRotations < offer.RequiredRotations)
-                        requirement = $"Needs {offer.RequiredRotations} flights. You have flown {career.CompletedPlayerRotations}";
+                        requirement = $"Needs {offer.RequiredRotations} flight{(offer.RequiredRotations == 1 ? "" : "s")}. You have flown {career.CompletedPlayerRotations}";
                     else if (!affordable)
                         requirement = $"Costs ${offer.Price:N0}. You have ${career.Funds:N0}";
                     else

@@ -120,3 +120,18 @@ explained all payout/elapsed-time differences in the sweep.
 Headless suite after fixes: 2,032 pass, 4 fail (the helicopter test and the 3 night-sky tests, all pre-existing).
 Tests touched for the economy change: two tests that parked a 787-10 on the starter float now use a 737-8,
 and the Weight test asserts size ordering instead of a fixed 2.2. Unity compile/appearance and play balance are unverified.
+
+## Fix status (B-grade)
+
+| # | Status |
+|---|---|
+| 10 | Fixed: `ReadSimulationControls` returns when an IMGUI text field has focus (not on the title screen, which has its own key handling). Unity-only, **unverified**. |
+| 11 | Fixed: `AirlineSaveFile.Write` re-reads the primary only on the first save of a session. |
+| 12 | Fixed: `SaveAirline` catches every exception and toasts once. |
+| 13 | Fixed: a skipped day is reported on return ("Last report: ..."); test added. |
+| 14 | Fixed: plurals in Contracts progress, Career footer, Fleet requirement, purchase/outstation/base refusals. |
+| 15 | Fixed: the "lose N reliability" clause is omitted when N is 0. |
+| 16 | Fixed: livery hex must be six hex digits. The 24-character name limit was **not** added to the constructor, because authored AI names such as "Royal Flying Doctor Service" are longer. |
+| 17 | Fixed: `MarketOffers` and `AcceptContract` tolerate a null career. |
+
+Filtered headless run (Airline/Career/Contract/Fleet/Hud/Save, 324 tests) passes, including two new tests (hex colours, missed daily report).

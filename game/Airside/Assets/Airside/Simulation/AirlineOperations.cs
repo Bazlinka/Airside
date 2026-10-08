@@ -400,9 +400,8 @@ namespace Airside.Simulation
         public WeatherKind CurrentWeather => Weather.At(_processedTo);
 
         /// <summary>
-        /// True while a storm holds every new landing/takeoff clearance (ADR 0058).
-        /// Movements already underway continue; this only stops the tower handing out
-        /// the next one.
+        /// True while a storm holds new gate releases and arrivals not yet on final.
+        /// Movements already underway continue through normal tower separation checks.
         /// </summary>
         public bool IsGroundStopped => CurrentWeather == WeatherKind.Storm;
 
@@ -643,6 +642,11 @@ namespace Airside.Simulation
                             // clear, which is re-checked on the grid. Curfew is a wall-clock wait.
                             if (!ExemptFromCurfew(aircraft) && AirportCurfew.IsClosed(now, Clock))
                                 Consider(AirportCurfew.OpensAt(now, Clock));
+                            else if (Weather.At(now) == WeatherKind.Storm)
+                            {
+                                Consider(Weather.NextBlock(now));
+                                continue;
+                            }
                             else
                                 Consider(GroundTraffic.NextGrid(now));
                             if (AdelaideGround.IsTerminalGate(aircraft.Stand))
@@ -701,7 +705,7 @@ namespace Airside.Simulation
                             Consider(IntersectionBusyUntil(occupier).Value);
                     }
                 // An arrival still holding with its strip already free is being held for taxiing
-                // traffic (or a storm): re-check it on the ground-control grid.
+                // traffic: re-check it on the ground-control grid.
                 foreach (var aircraft in _fleet)
                 {
                     if (aircraft.State != FleetState.HoldingForLanding)
@@ -716,17 +720,6 @@ namespace Airside.Simulation
                         break;
                     }
                 }
-                // ADR 0058: a strip can sit free-at-or-before now yet still be withheld by
-                // a storm, which RunTowerOnStrip checks against `now` itself rather than
-                // any tracked "reopens at" time. Without this, a big skip-to-next-event
-                // step could land past the moment the storm actually cleared and grant a
-                // clearance later than a series of small steps would have — the same
-                // storm, checked at a different `now`, must not answer differently. The
-                // next weather block boundary is always a candidate stop while a runway is
-                // wanted and it is currently storm-closed, so catch-up revisits the check
-                // at the same granularity live play would.
-                if (Weather.At(now) == WeatherKind.Storm)
-                    Consider(Weather.NextBlock(now));
                 // A departure held short for crossing traffic (ADR 0126) is re-checked on the grid.
                 foreach (var aircraft in _fleet)
                 {
@@ -1140,6 +1133,10 @@ namespace Airside.Simulation
                         return DepartRotorcraft(aircraft, now);
                     var pushingBackFromGate = AdelaideGround.IsTerminalGate(aircraft.Stand);
                     var readyAt = DepartureReadyAt(aircraft);
+                    // Hold at the stand, before releasing any taxi route. Once released the
+                    // departure is committed and tower clearance follows normal traffic rules.
+                    if (Weather.At(now) == WeatherKind.Storm)
+                        return NoteDelay(aircraft, now, readyAt, DelayCause.Weather);
                     if (NextTaxiReleaseAt(now, pushingBackFromGate).HasValue)
                         return NoteDelay(aircraft, now, readyAt, DelayCause.ApronBusy);
                     // A gate pushback needs its lead-in clear before the tug moves; it is re-checked
@@ -1226,8 +1223,10 @@ namespace Airside.Simulation
                         aircraft.ExtendUntil(MorningArrivalAt(aircraft, now));
                         return false;
                     }
-                    // Not on final yet. A storm holds it here; one already on final lands (ADR 0190).
-                    if (Weather.At(now) == WeatherKind.Storm)
+                    // The extended final is visible before HoldingForLanding. Do not postpone
+                    // a committed inbound's timer: that used to remove it from the drawn final.
+                    if (Weather.At(now) == WeatherKind.Storm
+                        && !ApproachRules.EnteredFinalBeforeStorm(aircraft, now))
                     {
                         aircraft.ExtendUntil(Weather.NextBlock(now));
                         return false;
@@ -1239,7 +1238,9 @@ namespace Airside.Simulation
                     if (aircraft.Type.IsRotorcraft)
                         return ArriveRotorcraft(aircraft, now);
                     // Metered in the circuit until its landing is near, never stacked on short final.
-                    if (FinalJoinTime(aircraft, now) is { } joinAt)
+                    if (!(Weather.At(now) == WeatherKind.Storm
+                            && ApproachRules.EnteredFinalBeforeStorm(aircraft, now))
+                        && FinalJoinTime(aircraft, now) is { } joinAt)
                     {
                         aircraft.ExtendUntil(joinAt);
                         return false;
@@ -1343,8 +1344,8 @@ namespace Airside.Simulation
         /// When the tower is expected to clear <paramref name="aircraft"/> off short final,
         /// for an arrival still inbound or holding. Replays the tower's own rule for its strip:
         /// the strip's free time, arrivals ahead in wait order, a departure that has held past
-        /// <see cref="DepartureMaxHoldSeconds"/> going first, and no clearances in a storm
-        /// (ADR 0058). Presentation flies the arrival in down an extended final to reach the
+        /// <see cref="DepartureMaxHoldSeconds"/> going first, and weather metering before final.
+        /// Presentation flies the arrival in down an extended final to reach the
         /// hold point just as it is cleared, instead of parking it motionless in mid-air there
         /// for the whole wait. Null for anything else. An estimate: traffic that has not yet
         /// reached the queue can still change it.

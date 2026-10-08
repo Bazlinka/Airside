@@ -1,5 +1,6 @@
 # 0190 — An arrival already on final lands through a storm
 
+Superseded by [2026-10-08-storm-movement-commitment.md](2026-10-08-storm-movement-commitment.md).
 Date: 30 September 2026. Author: Cursor, from Bailey's report: a plane on final will not land during a storm (CA103, card "Ground stop: storm over the field").
 
 ## Player-visible outcome

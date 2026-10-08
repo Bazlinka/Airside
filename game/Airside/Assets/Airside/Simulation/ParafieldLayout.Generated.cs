@@ -135,9 +135,9 @@ namespace Airside.Simulation
             new[] { new ParafieldPoint(-401.441, -136.385), new ParafieldPoint(-402.648, -138.474), new ParafieldPoint(-400.079, -139.967), new ParafieldPoint(-398.872, -137.863) },
         };
         public static readonly ParafieldPoint[] ApronToRunway = new[] { new ParafieldPoint(243.908, 440.287), new ParafieldPoint(-0.522, 381.168), new ParafieldPoint(-54.687, 357.652), new ParafieldPoint(-99.269, 322.404), new ParafieldPoint(-137.119, 281.979), new ParafieldPoint(-40.143, 223.752), new ParafieldPoint(253.310, 18.754), new ParafieldPoint(187.733, -78.739), new ParafieldPoint(127.477, -167.424), new ParafieldPoint(176.380, -197.963), new ParafieldPoint(294.064, -152.248), new ParafieldPoint(334.746, -251.794) };
-        public static readonly ParafieldPoint[] Parking = new[] { new ParafieldPoint(326.146, 419.246), new ParafieldPoint(407.172, 438.080), new ParafieldPoint(488.199, 456.914), new ParafieldPoint(569.226, 475.747) };
+        public static readonly ParafieldPoint[] Parking = new[] { new ParafieldPoint(300.913, 440.276), new ParafieldPoint(381.940, 459.110), new ParafieldPoint(462.966, 477.944), new ParafieldPoint(543.993, 496.778) };
         public static readonly ParafieldPoint LandingExit = new ParafieldPoint(-374.444, -537.762);
         public static readonly ParafieldPoint[] RunwayToApron = new[] { new ParafieldPoint(-374.444, -537.762), new ParafieldPoint(-391.258, -493.520), new ParafieldPoint(-413.354, -435.663), new ParafieldPoint(-51.536, -290.710), new ParafieldPoint(176.380, -197.963), new ParafieldPoint(127.477, -167.424), new ParafieldPoint(187.733, -78.739), new ParafieldPoint(253.310, 18.754), new ParafieldPoint(-40.143, 223.752), new ParafieldPoint(-137.119, 281.979), new ParafieldPoint(-99.269, 322.404), new ParafieldPoint(-54.687, 357.652), new ParafieldPoint(-0.522, 381.168), new ParafieldPoint(243.908, 440.287) };
-        public static readonly ParafieldPoint[] ParkingLane = new[] { new ParafieldPoint(337.970, 390.678), new ParafieldPoint(418.996, 409.512), new ParafieldPoint(500.023, 428.346), new ParafieldPoint(581.050, 447.180) };
+        public static readonly ParafieldPoint[] ParkingLane = new[] { new ParafieldPoint(284.091, 454.297), new ParafieldPoint(365.118, 473.131), new ParafieldPoint(446.145, 491.965), new ParafieldPoint(527.171, 510.798) };
     }
 }

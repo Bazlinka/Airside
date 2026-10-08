@@ -451,7 +451,7 @@ namespace Airside.Presentation
                 {
                     // Zoomed far out: push the clip planes and the terrain haze out with the camera (ADR 0185).
                     var far = AirsideCameraFeel.FarClip(_distance, AirsideBareField.CameraFarClip);
-                    _camera.nearClipPlane = AirsideCameraFeel.NearClip(_distance);
+                    _camera.nearClipPlane = OverviewNearClip();
                     _camera.farClipPlane = far;
                     Shader.SetGlobalFloat(HorizonScaleId, AirsideCameraFeel.HorizonScale(_distance, AirsideBareField.CameraFarClip));
                 }

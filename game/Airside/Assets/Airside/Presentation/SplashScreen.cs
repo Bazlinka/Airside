@@ -36,7 +36,7 @@ namespace Airside.Presentation
     {
         public const string SplashArt = "UI/Illustrations/ui_splash_airport_dawn_v01.png";
         public const string WordmarkArt = "Brand/airside_wordmark_light_v03.png";
-        public const float CardWidth = 420f;
+        public const float CardWidth = 460f;
 
         private SplashLayout(HudBox viewport, HudBox title, HudBox card, HudBox footer)
         {
@@ -107,7 +107,7 @@ namespace Airside.Presentation
                 PaintMenu(into, layout.Card, model);
             into.Text(layout.Footer, model.Step == SplashStep.NewAirline
                     ? "Enter  next      Esc  back"
-                    : model.HasSave ? "Enter  continue      Esc  menu" : "Enter  new airline      Esc  menu",
+                    : model.HasSave ? "Enter  continue      F1  flight manual" : "Enter  start your airline      F1  flight manual",
                 11f, HudTone.Muted, HudTextStyle.Bold | HudTextStyle.Caption);
         }
 
@@ -116,7 +116,7 @@ namespace Airside.Presentation
             var wordmarkWidth = Math.Min(360f, title.Width);
             into.Image(new HudBox(title.X - 6f, title.Y, wordmarkWidth, wordmarkWidth * 0.25f), SplashLayout.WordmarkArt);
             var y = title.Y + wordmarkWidth * 0.25f + 10f;
-            into.Text(new HudBox(title.X, y, title.Width, 30f), "Build an airline from one Saab at Adelaide.", 20f,
+            into.Text(new HudBox(title.X, y, title.Width, 30f), "Build your airline at Adelaide.", 20f,
                 HudTone.Default, HudTextStyle.Bold);
             y += 36f;
             var pill = new HudBox(title.X, y, 236f, 26f);
@@ -136,7 +136,7 @@ namespace Airside.Presentation
             var y = card.Y + 22f;
             if (model.HasSave)
             {
-                into.Caption(new HudBox(x, y, inner, 12f), "YOUR AIRLINE", HudTone.Accent, HudAlign.Left, 10f);
+                into.Caption(new HudBox(x, y, inner, 12f), "WELCOME BACK", HudTone.Accent, HudAlign.Left, 10f);
                 y += 22f;
                 into.Dot(x + 7f, y + 11f, 14f, HudTone.Default, model.SaveLiveryHex);
                 into.Text(new HudBox(x + 22f, y, inner - 130f, 24f), model.SaveName, 20f, HudTone.Default, HudTextStyle.Bold);
@@ -157,15 +157,15 @@ namespace Airside.Presentation
             {
                 into.Caption(new HudBox(x, y, inner, 12f), "ADELAIDE AIRPORT", HudTone.Accent, HudAlign.Left, 10f);
                 y += 22f;
-                into.Text(new HudBox(x, y, inner, 26f), "Start small. Grow the airline.", 20f, HudTone.Default, HudTextStyle.Bold);
+                into.Text(new HudBox(x, y, inner, 26f), "Your first aircraft is waiting.", 20f, HudTone.Default, HudTextStyle.Bold);
                 y += 32f;
                 var message = string.IsNullOrEmpty(model.SaveError)
-                    ? "One Saab on the regional bays. Fly contracts, earn your next aircraft and grow into an international airline."
+                    ? "Start with one Saab at Adelaide. Choose your routes, fly contracts and build your fleet. The airport runs on live Adelaide time."
                     : model.SaveError;
                 into.Text(new HudBox(x, y, inner, 52f), message, 12f,
                     string.IsNullOrEmpty(model.SaveError) ? HudTone.Muted : HudTone.Negative, HudTextStyle.Wrap);
                 y += 64f;
-                into.Button(new HudBox(x, y, inner, 44f), "NEW AIRLINE", NewAirline, HudButtonStyle.Primary);
+                into.Button(new HudBox(x, y, inner, 44f), "START YOUR AIRLINE", NewAirline, HudButtonStyle.Primary);
                 y += 54f;
             }
             into.Button(new HudBox(x, y, inner, 32f), "HOW TO PLAY", HowToPlay, HudButtonStyle.Secondary);

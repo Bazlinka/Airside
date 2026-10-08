@@ -15,7 +15,7 @@ namespace Airside.Presentation
     /// </summary>
     public sealed partial class AirsidePrototype
     {
-        public const float IntroSeconds = 4.2f;
+        public const float IntroSeconds = 2.8f;
 
         /// <summary>How long the title art takes to dissolve into the live airport.</summary>
         public const float IntroMarkRevealSeconds = 1.4f;
@@ -28,7 +28,7 @@ namespace Airside.Presentation
 
         private void StartIntro(string greeting = null)
         {
-            if (SoakMode || _cameraController == null)
+            if (SoakMode || _cameraController == null || !AirsideSettings.Current.OpeningAnimation)
                 return;
             _introGreeting = greeting ?? string.Empty;
             _cameraController.PlayIntro(IntroSeconds);
@@ -77,7 +77,7 @@ namespace Airside.Presentation
             }
             _hudPainter.Draw(_splashDrawList);
 
-            var hintAlpha = Smooth01((elapsed - 1.2f) / 0.5f) * (1f - greetingOut);
+            var hintAlpha = Smooth01((elapsed - 0.15f) / 0.3f) * (1f - greetingOut);
             if (hintAlpha > 0.01f)
             {
                 _splashDrawList.Clear();
@@ -98,7 +98,7 @@ namespace Airside.Presentation
             ProbeSavedAirline();
             FillSplashModel();
             var splashLayout = SplashLayout.Create(layout.Viewport.x, layout.Viewport.y, _splash.Step, _splash.HasSave);
-            SplashPainter.Paint(_splashDrawList, splashLayout, _splash, Mathf.Clamp01(Time.unscaledTime / 40f));
+            SplashPainter.Paint(_splashDrawList, splashLayout, _splash, AirsideSettings.Current.OpeningAnimation ? Mathf.Clamp01(Time.unscaledTime / 40f) : 0f);
 
             var enabled = GUI.enabled;
             GUI.enabled = enabled && interactive && !_controlsHelpOpen;
@@ -276,9 +276,11 @@ namespace Airside.Presentation
         /// <summary>Esc on the setup wizard steps back a card (or back to the title menu).</summary>
         private bool TrySplashBack()
         {
-            if (!AirlineSetupOpen || _splash.Step != SplashStep.NewAirline)
+            if (!AirlineSetupOpen)
                 return false;
-            RunSplashAction(AirlineSetupPainter.Back);
+            if (_splash.Step == SplashStep.NewAirline)
+                RunSplashAction(AirlineSetupPainter.Back);
+            // The title owns Escape; there is no running airline to resume yet.
             return true;
         }
     }

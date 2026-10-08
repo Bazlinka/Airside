@@ -158,7 +158,7 @@ namespace Airside.Presentation
                 {
                     ("Map", MapAttribution.OpenStreetMap + " (ODbL). The airport layout, coast, land use, "
                             + "every road and footpath, car parks and bays, buildings, masts, tanks, solar arrays "
-                            + "and bus stops."),
+                            + "and bus stops. Also Overture Maps (ODbL) and SA Government LiDAR (CC BY 4.0)."),
                     ("Aircraft sound", "Engine recordings by Pack489, mycompasstv and qubodup. Tyre contact by craigsmith "
                                         + "on Freesound (CC0 / public domain). Adapted for Airside."),
                     ("Satellite imagery", MapAttribution.Sentinel + ". Nine clear summer passes, 2024 to 2026."),

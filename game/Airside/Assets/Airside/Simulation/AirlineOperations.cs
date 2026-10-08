@@ -382,7 +382,19 @@ namespace Airside.Simulation
 
 
         /// <summary>Maps simulation time to real Adelaide time. Live: one simulated second per real second.</summary>
-        public AirlineClock Clock { get; internal set; } = AirlineClock.Default;
+        public AirlineClock Clock
+        {
+            get => _airlineClock;
+            internal set
+            {
+                _airlineClock = value ?? AirlineClock.Default;
+                // The weather's fog hours are local-time rules: keep them on this clock (a different epoch
+                // otherwise left fog, and the helicopters it grounds, hours out of step with the HUD).
+                Weather.UseClock(_airlineClock);
+            }
+        }
+
+        private AirlineClock _airlineClock = AirlineClock.Default;
 
         /// <summary>Simulation time everything has been resolved up to.</summary>
         public SimulationTime ProcessedTo => _processedTo;

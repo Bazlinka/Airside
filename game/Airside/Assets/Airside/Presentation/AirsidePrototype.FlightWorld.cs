@@ -66,9 +66,8 @@ namespace Airside.Presentation
             var distant=active && Math.Max(Math.Abs(x),Math.Abs(z))>80000;
             var ox=distant ? FlightWorldGrid.Origin(x) : 0;
             var oz=distant ? FlightWorldGrid.Origin(z) : 0;
-            // Correct the previous position too: origin steps must never read as a speed spike.
+            // Shift the camera rig; telemetry already samples aircraft positions in world coordinates.
             var originDelta=new Vector3((float)(_flightOriginX-ox),0,(float)(_flightOriginZ-oz));
-            _cockpitPreviousPosition+=originDelta;
             if(_cameraController!=null) _cameraController.ShiftFlightOrigin(originDelta);
             _flightOriginX=ox;_flightOriginZ=oz;
             if(_airfieldRoot!=null) _airfieldRoot.position=-FlightOrigin;
@@ -148,10 +147,10 @@ namespace Airside.Presentation
                     var exit=AirsideFlightPath.GroundY+profile.AltitudeFeetAt(RegionalFlightPath.DepartureSeconds)/EnrouteProfile.FeetPerMetre;
                     if(elapsed<=RegionalFlightPath.DepartureSeconds)
                     {
-                        RegionalFlightPath.Departure(departureRunway,elapsed,exit,out x,out y,out z);
+                        RegionalFlightPath.Departure(departureRunway,elapsed,exit,aircraft.Type,out x,out y,out z);
                         return;
                     }
-                    RegionalFlightPath.Departure(departureRunway,RegionalFlightPath.DepartureSeconds,exit,out var sx,out _,out var sz);
+                    RegionalFlightPath.Departure(departureRunway,RegionalFlightPath.DepartureSeconds,exit,aircraft.Type,out var sx,out _,out var sz);
                     var atExit=ArrivalMapTrack.DistanceOutMetres(profile.LegMetres/1000,profile.LegSeconds,
                         profile.LegSeconds-RegionalFlightPath.DepartureSeconds,aircraft.Type);
                     ArrivalMapTrack.LatLon(destination,_operations.Home,aircraft.Registration,profile.LegMetres,atExit,
@@ -160,18 +159,8 @@ namespace Airside.Presentation
                     var blend=Math.Clamp((elapsed-120)/120,0,1);var keepDeparture=1-blend*blend*(3-2*blend);
                     x+=(sx-tx)*keepDeparture;z+=(sz-tz)*keepDeparture;
                 }
-                y=AirsideFlightPath.GroundY+profile.AltitudeFeetAt(elapsed)/EnrouteProfile.FeetPerMetre;
-                // Ease the cruise height onto the same capped slope used by the local final.
-                // Changing ownership at ShowMetres must not change the cockpit's altitude.
-                if(metres<ArrivalApproach.ShowMetres+ArrivalMapTrack.BlendMetres)
-                {
-                    var hold=AirsideFlightPath.Approach((float)ApproachHold.HoldingFinalProgress(0),0,aircraft.Type);
-                    var finalHeight=AirsideFlightPath.GroundY+ArrivalApproach.Height(
-                        CircuitProfile.GlideslopeHeight(hold.x-(float)metres));
-                    var blend=Math.Clamp((metres-ArrivalApproach.ShowMetres)/ArrivalMapTrack.BlendMetres,0,1);
-                    var finalWeight=1-blend*blend*(3-2*blend);
-                    y+=(finalHeight-y)*finalWeight;
-                }
+                y=AirsideFlightPath.GroundY+ArrivalMapTrack.HeightMetres(profile.LegMetres/1000,profile.LegSeconds,
+                    profile.LegSeconds-elapsed,aircraft.Type);
                 return;
             }
             var remaining=profile.LegSeconds-elapsed;

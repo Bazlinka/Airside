@@ -1,4 +1,5 @@
 using System;
+using Airside.Domain;
 using Airside.Simulation;
 
 namespace Airside.Presentation
@@ -24,7 +25,10 @@ namespace Airside.Presentation
                 var t=(TerminalSeconds-seconds)/(TerminalSeconds-RolloutSeconds);
                 along=-6000+(6000+touchdown)*t;
                 // Smooth flare to zero sink at touchdown.
-                height=6000*CircuitProfile.GlideslopeTangent*(1-t)*(1-t);
+                var distance=6000*(1-t);
+                var u=Math.Clamp(distance/150,0,1);
+                height=distance>=150 ? distance*CircuitProfile.GlideslopeTangent
+                    : 150*CircuitProfile.GlideslopeTangent*(2*u*u-u*u*u);
             }
             else
             {
@@ -50,6 +54,36 @@ namespace Airside.Presentation
             x=px+dx*along;z=pz+dz*along;
             y=py+(Math.Max(py,exitHeight)-py)*climb*climb*(3-2*climb);
         }
+        /// <summary>Type-aware regional takeoff; runway roll integrates that type's Vr, then climb speed
+        /// increases to its climb-out target. Existing fixed review/handoff duration remains unchanged.</summary>
+        public static double RotateSeconds(AircraftType type) => AircraftPerformance.For(type).TakeoffRollExactSeconds;
+        public static void Departure(RegionalRunway runway,double seconds,double exitHeight,AircraftType type,
+            out double x,out double y,out double z)
+        {
+            Landing(runway,0,0,0,out var px,out var py,out var pz);
+            var ax=runway.Ax;var az=runway.Az;var bx=runway.Bx;var bz=runway.Bz;
+            if(bx*bx+bz*bz<ax*ax+az*az){(ax,bx)=(bx,ax);(az,bz)=(bz,az);}
+            var dx=(ax-bx)/runway.Length;var dz=(az-bz)/runway.Length;
+            var p=AircraftPerformance.For(type);
+            var t=Math.Clamp(seconds,0,DepartureSeconds);var rotate=RotateSeconds(type);
+            double along,height;
+            if(t<=rotate)
+            {
+                along=p.TakeoffRollMetres*AircraftPerformanceProfile.TakeoffRollDistance01((float)(t/rotate));height=0;
+            }
+            else
+            {
+                var duration=DepartureSeconds-rotate;var elapsed=t-rotate;var u=elapsed/duration;
+                var v0=CircuitProfile.Knots(p.RotateKnots);var v1=CircuitProfile.Knots(p.ClimbOutKnots);
+                along=p.TakeoffRollMetres+v0*elapsed+.5*(v1-v0)*elapsed*elapsed/duration;
+                var rise=Math.Max(0,exitHeight-py);
+                // Zero sink at rotation; capture the researched route height smoothly at the join.
+                var endRate=Math.Min(p.ClimbOutRateMetresPerSecond,2*rise/duration);
+                height=(-2*u*u*u+3*u*u)*rise+(u*u*u-u*u)*duration*endRate;
+            }
+            x=px+dx*along;z=pz+dz*along;y=py+height;
+        }
+
         public const double AirsideFlightPathDatum=.72;
     }
 }

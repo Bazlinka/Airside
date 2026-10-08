@@ -215,6 +215,9 @@ namespace Airside.Domain
     public static class LegTiming
     {
         public const long ClimbDescentAllowanceSeconds = 10 * 60;
+        // Jets need time for restrained low-level speeds, altitude-dependent climb and the
+        // reserved extended final. A cruise-only distance plus ten minutes can force a jump.
+        public const long JetClimbDescentAllowanceSeconds = 20 * 60;
 
         /// <summary>
         /// A helicopter's climb-out and arrival are drawn and timed by its own take-off and landing states, so
@@ -226,7 +229,9 @@ namespace Airside.Domain
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             var cruise = distanceKm / type.CruiseKmh * 3600.0;
-            return (type.IsRotorcraft ? RotorcraftLegAllowanceSeconds : ClimbDescentAllowanceSeconds)
+            var jet=AircraftCatalogue.TryFor(type,out var spec) && spec.StandClass==StandClass.TerminalGate;
+            return (type.IsRotorcraft ? RotorcraftLegAllowanceSeconds
+                : jet ? JetClimbDescentAllowanceSeconds : ClimbDescentAllowanceSeconds)
                    + (long)Math.Round(cruise);
         }
     }

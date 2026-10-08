@@ -14,7 +14,7 @@ namespace Airside.Presentation
         private string _cockpitAircraftId;
         private CockpitInterior _cockpitInterior;
         private Transform _cockpitView;
-        private Vector3 _cockpitPreviousPosition;
+        private readonly FlightTelemetrySampler _cockpitTelemetry = new();
         private double _cockpitPreviousTime;
         private float _cockpitGroundKnots;
         private readonly CockpitMotion _cockpitMotion = new();
@@ -108,7 +108,11 @@ namespace Airside.Presentation
             _cockpitView = view;
             _cockpitInterior=null;
             var type = _fleetAircraftById[_cockpitAircraftId].Type;
-            _cockpitPreviousPosition = view.position;
+            var parts=PartsFor(view);
+            var lift=parts.Profile!=null ? AircraftGearPivot.LiftMetres(view.rotation,
+                new Vector3(0f,parts.Profile.ModelGroundOffsetMetres,parts.MainGearZMetres)) : 0f;
+            _cockpitTelemetry.Reset(view.position.x,view.position.z,_flightOriginX,_flightOriginZ,
+                Mathf.Max(0f,view.position.y-lift-AirsideFlightPath.GroundY),_preciseTime);
             _cockpitPreviousTime = _preciseTime;
             _cockpitGroundKnots = 0f;
             _cockpitNextReadout = 0;
@@ -184,18 +188,11 @@ namespace Airside.Presentation
                     new Vector3(0f, parts.Profile.ModelGroundOffsetMetres, parts.MainGearZMetres)) : 0f;
             var gearHeight = Mathf.Max(0f, view.position.y - lift - AirsideFlightPath.GroundY);
             var simRate = 0f;
-            if (elapsed > 0 && elapsed < 0.75)
-            {
-                var delta = view.position - _cockpitPreviousPosition;
-                delta.y = 0f;
-                var speed = CircuitProfile.ToKnots(delta.magnitude / (float)elapsed);
-                _cockpitGroundKnots = Mathf.Lerp(_cockpitGroundKnots, speed, 1f - Mathf.Exp(-6f * (float)elapsed));
-                var rawVertical = (gearHeight - _cockpitGearHeight) / (float)elapsed;
-                _cockpitVerticalSpeed = Mathf.Lerp(_cockpitVerticalSpeed, rawVertical, 1f - Mathf.Exp(-10f * (float)elapsed));
-                simRate = Time.unscaledDeltaTime > 1e-4f ? (float)elapsed / Time.unscaledDeltaTime : 1f;
-            }
+            _cockpitTelemetry.Sample(view.position.x,view.position.z,_flightOriginX,_flightOriginZ,gearHeight,_preciseTime);
+            _cockpitGroundKnots=(float)_cockpitTelemetry.GroundKnots;
+            _cockpitVerticalSpeed=(float)_cockpitTelemetry.VerticalMetresPerSecond;
+            if(elapsed>0) simRate=Time.unscaledDeltaTime>1e-4f ? (float)elapsed/Time.unscaledDeltaTime : 1f;
             _cockpitPreviousTime = _preciseTime;
-            _cockpitPreviousPosition = view.position;
             _cockpitGearHeight = gearHeight;
             if (_aircraftViewMode == AircraftViewMode.Exterior) return;
             var spool = EngineStartSequence.For(aircraft, _preciseTime);
@@ -225,7 +222,7 @@ namespace Airside.Presentation
             _cockpitCallouts.DeltaSeconds = (float)Math.Max(0.0, elapsed);
             var call = aircraft.Type.IsRotorcraft ? null : _cockpitCallouts.Step(new CockpitCallouts.Sample
             {
-                GroundKnots = _cockpitGroundKnots, RotateKnots = AircraftPerformance.For(aircraft.Type).RotateKnots,
+                GroundKnots = (float)FlightAtmosphere.CalibratedKnots(_cockpitGroundKnots,gearHeight+FlightAtmosphere.FieldElevationMetres), RotateKnots = AircraftPerformance.For(aircraft.Type).RotateKnots,
                 HeightFeet = gearHeight * 3.28084f, VerticalFeetPerMinute = _cockpitVerticalSpeed * 196.85f,
                 Jet = _cockpitIsJet,
             });
@@ -240,7 +237,10 @@ namespace Airside.Presentation
                 jet.SetFlightState(view, spool, AircraftStatus.TagPhase(aircraft, _clock.Now));
             var height = gearHeight * 3.28084f;
             var vs = _cockpitVerticalSpeed * 196.85f;   // ft/min
-            _cockpitInterior.SetReadout($"GS {_cockpitGroundKnots:0} kt\nHEIGHT {height:0} ft  VS {vs:+0;-0;0}\nHDG {FlightViewInformation.TrueHeading(view.forward.x, view.forward.z):000}° T");
+            var altitude=gearHeight+FlightAtmosphere.FieldElevationMetres;
+            var cas=FlightAtmosphere.CalibratedKnots(_cockpitGroundKnots,altitude);
+            var mach=FlightAtmosphere.Mach(_cockpitGroundKnots,altitude);
+            _cockpitInterior.SetReadout($"IAS {cas:0} kt  M {mach:0.00}  GS {_cockpitGroundKnots:0}\nHEIGHT {height:0} ft  VS {vs:+0;-0;0}\nHDG {FlightViewInformation.TrueHeading(view.forward.x, view.forward.z):000}° T");
         }
 
         private readonly HudDrawList _flightViewDrawList = new();

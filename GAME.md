@@ -9,13 +9,20 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*
 
-**Fleet lighting realism (8 Oct, Codex):** branch `fix/aircraft-lighting-realism-20261008`.
-All 14 aircraft receive fitted crown/belly/aft lights, nose-gear taxi-lamp attachment,
-separate clear strobe lenses, navigation emission sectors and field-relative cruise
-landing-light cutoff. Boeing flash patterns differ from A320/A330/A350. Beam values
-remain visual tuning. Evidence and validation: `docs/testing/aircraft-lighting-2026-10-08/`;
-ADR `2026-10-08-fleet-lighting-realism`. 37 native lighting checks pass; 70 night fixtures reviewed; Mac build passes;
-packaged full-flight/night performance acceptance remains separate.
+**Fleet flight performance (8 Oct, Codex):** branch `fix/fleet-flight-performance-20261008`, based on merged lighting PR #587.
+Research: `docs/data/FLIGHT_PERFORMANCE_RESEARCH.md`; decision `2026-10-08-fleet-flight-performance`.
+Derived altitude rates vary with height and capture level cruise; normal upper levels are separate from
+certified ceilings. CAS/Mach limits and integrated distance share a speed schedule. Camera telemetry
+handles accelerated clocks and origin shifts, shows IAS (CAS approximation), Mach and GS. Inbound height
+reserves the same extended final as its map track; regional departure uses the type's roll/Vr.
+New jet schedules allow twenty minutes for climb/descent instead of ten. No save-schema change.
+Bell remains on its own VTOL model with the common telemetry fix.
+Evidence: `docs/testing/flight-performance-2026-10-08/`: 166/166 focused native Unity checks passed.
+User requested immediate merge: full headless run stopped, Mac build and packaged camera journey
+unverified. Do not infer a packaged flight playtest from deterministic/native math checks.
+
+Merged lighting #587 retains 37 passing native checks and 70 reviewed night fixtures; full-flight/night
+performance acceptance remains separate in `docs/testing/aircraft-lighting-2026-10-08/`.
 
 **Five-area bug sweep (Codex, issue #576, draft PR #580):** five requested agents;
 `codex/five-area-bug-sweep-20261007`, integrated with main `0dc6e629`.

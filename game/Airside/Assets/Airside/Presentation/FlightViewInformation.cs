@@ -35,6 +35,10 @@ namespace Airside.Presentation
             data.Aircraft = aircraft.Type.Name;
             data.Phase = AircraftStatus.TagPhase(aircraft, new SimulationTime((long)Math.Max(0, now)));
             data.Speed = FormattableString.Invariant($"{Math.Max(0, groundKnots):0} kt");
+            var altitude=fieldHeightMetres+FlightAtmosphere.FieldElevationMetres;
+            var cas=FlightAtmosphere.CalibratedKnots(Math.Max(0,groundKnots),altitude);
+            var mach=FlightAtmosphere.Mach(Math.Max(0,groundKnots),altitude);
+            data.Airspeed=FormattableString.Invariant($"{cas:0} kt / M{mach:0.00}");
             data.VerticalSpeed = FormattableString.Invariant($"{verticalMetresPerSecond * 196.85:+0;-0;0} ft/min");
             data.Altitude = FormattableString.Invariant($"{Math.Max(0, fieldHeightMetres) * 3.28084:0} ft");
             data.Heading = ((int)Math.Round(TrueHeading(forwardX, forwardZ)) % 360).ToString("000", CultureInfo.InvariantCulture) + "° T";

@@ -102,9 +102,11 @@ namespace Airside.Presentation
                     else if(watched.State==FleetState.Inbound && TryEnroute(watched,out var inboundProfile,out var inboundElapsed)
                         && inboundElapsed<RegionalFlightPath.DepartureSeconds)
                     {
-                        phase=inboundElapsed<40 ? AircraftPhase.Takeoff : AircraftPhase.Departed;
-                        progress=inboundElapsed<40 ? (float)(inboundElapsed/40)*AirsideFlightPath.RotateProgress
-                            : (float)((inboundElapsed-40)/80);
+                        var rotate=RegionalFlightPath.RotateSeconds(watched.Type);
+                        var performance=AircraftPerformance.For(watched.Type);
+                        phase=inboundElapsed<rotate ? AircraftPhase.Takeoff : AircraftPhase.Departed;
+                        progress=inboundElapsed<rotate ? (float)(inboundElapsed/rotate)*performance.RotateProgress
+                            : (float)((inboundElapsed-rotate)/(RegionalFlightPath.DepartureSeconds-rotate));
                     }
                     else if(watched.State==FleetState.Outbound && TryEnroute(watched,out var profile,out var elapsed))
                     {

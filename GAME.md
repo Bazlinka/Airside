@@ -11,6 +11,13 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 tests/builds/playtesting only on request. Merge completed authorised work into main
 without repeated approval. Canonical instructions: AGENTS.md testing and merge policy.
 
+**Australia flight ground (8 Oct, Codex cloud Agent 1, #613):** full Australian journeys are watchable;
+real country-wide elevation/WorldCover plus mapped airport pavement/buildings/roads,
+painted OurAirports runways and altitude/proximity terrain density. One airport data set,
+49 near tiles, interleaved cruise horizon and bounded geometry builds. Saves/simulation unchanged.
+Offline pure-source/data and syntax checks recorded in `docs/testing/australia-flight-ground-2026-10-08/`;
+Unity appearance, transitions and performance unverified. ADR `2026-10-08-australia-flight-ground.md`.
+
 **ATR 42 hold door (8 Oct, Claude):** `RelocateAtrDoors` flipped the door 180° in its transform and `UpdateCabinDoor` overwrote that yaw, so the shut door stood mirrored ahead of the cockpit. The flip is now baked into the mesh (`RebakePartPivot` with a rotation). Look at the ATR on the apron and while loading. Windscreen white patches in the same screenshot are not investigated.
 
 *One block, replaced (not stacked) at the end of every session. Updated 2026-10-08.*

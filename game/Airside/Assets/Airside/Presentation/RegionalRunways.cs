@@ -12,30 +12,38 @@ namespace Airside.Presentation
     }
     public static class RegionalRunways
     {
-        // OurAirports public-domain snapshot docs/data/sa-flight-runways-v01.json.
-        public static readonly RegionalRunway[] All = new RegionalRunway[]
+        // Existing MAP-002 OurAirports catalogue; the longest Australian runway owns flight paths.
+        public static readonly RegionalRunway[] All = Build(false);
+        public static readonly RegionalRunway[] Strips = Build(true);
+        private static RegionalRunway[] Build(bool everyStrip)
         {
-            new RegionalRunway("BHQ",-32.008998871,141.460998535,-31.996299744,141.483001709,291.998,29.870),
-            new RegionalRunway("CPD",-29.044300079,134.714004517,-29.035900116,134.725006104,225.552,29.870),
-            new RegionalRunway("CED",-32.127799988,133.697998047,-32.133399963,133.714996338,23.470,29.870),
-            new RegionalRunway("KGC",-35.723622000,137.521743000,-35.708409000,137.529049000,7.315,29.870),
-            // MGB endpoints estimated from airport centre, sourced heading and length.
-            new RegionalRunway("MGB",-37.736947652,140.780561000,-37.751816348,140.780561000,0.000,24.384),
-            new RegionalRunway("PLO",-34.612598419,135.876998901,-34.599700928,135.880996704,10.973,29.870),
-            new RegionalRunway("WYA",-33.051101685,137.518005371,-33.066299438,137.520004272,12.497,45.110),
-        };
+            var result = new System.Collections.Generic.List<RegionalRunway>();
+            foreach (var r in MapGeographyData.Runways)
+            {
+                if (r.Code == "ADL" || !FlightWorldGrid.Covered(r.Lat1, r.Lon1)) continue;
+                var runway = new RegionalRunway(r.Code, r.Lat1, r.Lon1, r.Lat2, r.Lon2,
+                    (MapGeography.ElevationFt(r.Code) ?? 0) * .3048, r.WidthM);
+                var index = result.FindIndex(item => item.Code == r.Code);
+                if (everyStrip || index < 0) result.Add(runway);
+                else if (runway.Length > result[index].Length) result[index] = runway;
+            }
+            return result.ToArray();
+        }
         public static bool TryGet(string code,out RegionalRunway runway)
         { foreach(var r in All) if(r.Code==code){runway=r;return true;} runway=default;return false; }
         public static double Ground(double x,double z,double height)
         {
-            foreach(var r in All)
+            var distance=800.0;var elevation=height;
+            foreach(var runway in Strips)
             {
-                var dx=r.Bx-r.Ax;var dz=r.Bz-r.Az;
-                var t=Math.Clamp(((x-r.Ax)*dx+(z-r.Az)*dz)/(dx*dx+dz*dz),0,1);
-                var distance=Math.Sqrt(Math.Pow(x-r.Ax-t*dx,2)+Math.Pow(z-r.Az-t*dz,2));
-                if(distance<3000){var u=Math.Clamp((distance-1500)/1500,0,1);return r.Elevation+(height-r.Elevation)*u*u*(3-2*u);}
+                if(x<Math.Min(runway.Ax,runway.Bx)-800 || x>Math.Max(runway.Ax,runway.Bx)+800
+                    || z<Math.Min(runway.Az,runway.Bz)-800 || z>Math.Max(runway.Az,runway.Bz)+800) continue;
+                var d=FlightWorldDetail.RunwayDistance(x,z,runway);
+                if(d<distance){distance=d;elevation=runway.Elevation;}
             }
-            return height;
+            if(distance>=800) return height;
+            var u=Math.Clamp((distance-400)/400,0,1);
+            return elevation+(height-elevation)*u*u*(3-2*u);
         }
     }
 }

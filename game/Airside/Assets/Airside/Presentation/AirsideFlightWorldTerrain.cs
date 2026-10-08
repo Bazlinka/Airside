@@ -8,17 +8,23 @@ using UnityEngine.Rendering;
 namespace Airside.Presentation
 {
     /// <summary>
-    /// 49 small terrain tiles around the spectator, one build per frame, no network at runtime. ADR 0251: when the overview
-    /// camera is zoomed out past the classic limit it also streams a coarse ring of 64 km tiles (121 resident, 2 km cells)
-    /// 40 m under the fine one; cockpit callers never pass <c>wide</c>, so their behaviour is unchanged.
+    /// Offline Australian terrain: 49 bounded near tiles, denser mapped airport approaches, cheap cruise cells,
+    /// and an interleaved horizon ring. Only one terrain mesh is built per frame; floating origins stay double precision.
     /// </summary>
     public sealed class AirsideFlightWorldTerrain : MonoBehaviour
     {
         private readonly Dictionary<(int x, int z), GameObject> _tiles = new();
         private readonly Dictionary<(int x, int z), GameObject> _coarse = new();
+        private readonly Dictionary<(int x, int z), int> _tileCells = new();
+        private FlightWorldHeights _nationalHeights, _approachHeights;
+        private FlightWorldLandCover _nationalCover, _approachCover;
+        private RegionalRunway? _airport;
+        private AirsideFlightAirportEnvironment _airportEnvironment;
+        private bool _cruise;
+        private int _streamFrame;
         private readonly List<(int x, int z)> _drop = new();
         private readonly List<(RegionalRunway runway,Transform view)> _runways = new();
-        private Material _material;
+        private Material _material, _runwayMaterial;
         private FlightWorldHeights _heights;
         private FlightWorldLandCover _cover;
         private readonly float[] _tint = new float[3];
@@ -29,12 +35,12 @@ namespace Airside.Presentation
         public bool HasElevation => _heights != null;
         public static AirsideFlightWorldTerrain Create()
         {
-            var result = new GameObject("South Australia flight terrain").AddComponent<AirsideFlightWorldTerrain>();
-            var path = ArtRuntimePaths.ResolveExisting(FlightWorldHeights.ArtPath);
-            if (path != null) result._heights = FlightWorldHeights.Parse(File.ReadAllBytes(path));
+            var result = new GameObject("Australia flight terrain").AddComponent<AirsideFlightWorldTerrain>();
+            result._heights = LoadHeights(FlightWorldHeights.ArtPath);
             // State-wide land cover (ADR 0250). Without the file the tiles keep their height-only colouring.
-            var coverPath = ArtRuntimePaths.ResolveExisting(FlightWorldLandCover.ArtPath);
-            if (coverPath != null) result._cover = FlightWorldLandCover.Parse(File.ReadAllBytes(coverPath));
+            result._cover = LoadCover(FlightWorldLandCover.ArtPath);
+            result._nationalHeights = LoadHeights("Terrain/dem_australia_v01.bin");
+            result._nationalCover = LoadCover("Terrain/landcover_australia_v01.bin");
             var sea = AirsideAdelaideSurroundings.DeepWater.linear;
             result._seaLinear = new[] { sea.r, sea.g, sea.b };
             // Same vertex-colour shader as the existing Adelaide outer landscape.
@@ -45,22 +51,48 @@ namespace Airside.Presentation
             result._material.SetFloat("_SatelliteFarStrength",0f);
             result._material.SetFloat("_HorizonFadeStart",CockpitFadeStartMetres);
             result._material.SetFloat("_HorizonFadeEnd",CockpitFadeEndMetres);
-            foreach(var runway in RegionalRunways.All)
+            result._runwayMaterial=new Material(result._material) {name="Australian runway paint"};
+            result._runwayMaterial.SetFloat("_VertexSurface",1f);
+            foreach(var runway in RegionalRunways.Strips)
             {
                 var go=new GameObject("Regional runway "+runway.Code);go.transform.SetParent(result.transform,false);
-                var length=(float)runway.Length;var width=(float)runway.Width;
-                var mesh=new Mesh {name=go.name};
-                mesh.vertices=new[]{new Vector3(-width/2,0,-length/2),new Vector3(width/2,0,-length/2),
-                    new Vector3(-width/2,0,length/2),new Vector3(width/2,0,length/2)};
-                mesh.colors=new[]{Color.gray.linear,Color.gray.linear,Color.gray.linear,Color.gray.linear};
-                mesh.triangles=new[]{0,2,1,1,2,3};mesh.RecalculateNormals();mesh.RecalculateBounds();
+                var mesh=BuildRunwayMesh(runway);
                 go.AddComponent<MeshFilter>().sharedMesh=mesh;
-                var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=result._material;
+                var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=result._runwayMaterial;
                 renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;
                 go.transform.rotation=Quaternion.LookRotation(new Vector3((float)(runway.Bx-runway.Ax),0,(float)(runway.Bz-runway.Az)));
                 result._runways.Add((runway,go.transform));
             }
             return result;
+        }
+        private static Mesh BuildRunwayMesh(RegionalRunway runway)
+        {
+            var vertices=new List<Vector3>();var colours=new List<Color>();var indices=new List<int>();
+            var length=(float)runway.Length;var width=(float)runway.Width;
+            void Rectangle(float x,float z,float w,float l,Color colour,float height=.025f)
+            {
+                var i=vertices.Count;vertices.Add(new Vector3(x-w/2,height,z-l/2));vertices.Add(new Vector3(x+w/2,height,z-l/2));
+                vertices.Add(new Vector3(x-w/2,height,z+l/2));vertices.Add(new Vector3(x+w/2,height,z+l/2));
+                for(var n=0;n<4;n++) colours.Add(colour.linear);
+                indices.Add(i);indices.Add(i+2);indices.Add(i+1);indices.Add(i+1);indices.Add(i+2);indices.Add(i+3);
+            }
+            Rectangle(0,0,width,length,new Color(.26f,.28f,.28f),0);
+            var white=new Color(.84f,.84f,.79f);
+            Rectangle(-width/2+1.2f,0,.35f,length-12,white);Rectangle(width/2-1.2f,0,.35f,length-12,white);
+            for(var z=-length/2+80;z<length/2-80;z+=60) Rectangle(0,z,.9f,30,white);
+            foreach(var sign in new[]{-1,1})
+            {
+                var z=sign*(length/2-25);var bars=width>=40 ? 5 : 3;
+                for(var n=1;n<=bars;n++)
+                { Rectangle(-n*width/(2*bars+3),z,1.8f,30,white);Rectangle(n*width/(2*bars+3),z,1.8f,30,white); }
+                if(length>1400)
+                {
+                    Rectangle(-width*.23f,sign*(length/2-300),3,45,white);
+                    Rectangle(width*.23f,sign*(length/2-300),3,45,white);
+                }
+            }
+            var mesh=new Mesh {name="Mapped runway "+runway.Code};mesh.SetVertices(vertices);mesh.SetColors(colours);
+            mesh.SetTriangles(indices,0);mesh.RecalculateNormals();mesh.RecalculateBounds();return mesh;
         }
         public const float CockpitFadeStartMetres = 40000f, CockpitFadeEndMetres = 55000f;
         private float _fadeStart = CockpitFadeStartMetres, _fadeEnd = CockpitFadeEndMetres;
@@ -79,17 +111,27 @@ namespace Airside.Presentation
             _material.SetFloat("_HorizonFadeEnd", end);
         }
         public void Tick(double worldX, double worldZ, double originX, double originZ, bool wide = false,
-            int coarseRadius = FlightWorldGrid.CoarseRadiusTiles)
+            int coarseRadius = FlightWorldGrid.CoarseRadiusTiles, double altitudeMetres = 0)
         {
             if (!wide) SetHorizonFade(CockpitFadeStartMetres, CockpitFadeEndMetres);
             _originX = originX; _originZ = originZ;
+            _cruise = !wide && FlightWorldDetail.Cruise(altitudeMetres, _cruise);
+            UpdateAirport(worldX,worldZ,altitudeMetres,wide);
+            _streamFrame++;
+            var keepCoarse = wide || _cruise;
+            if (_cruise) { coarseRadius=3; SetHorizonFade(110000,170000); }
             foreach(var strip in _runways)
+            {
+                strip.view.gameObject.SetActive(!wide && FlightWorldDetail.RunwayDistance(worldX,worldZ,strip.runway)<85000);
                 strip.view.position=new Vector3((float)((strip.runway.Ax+strip.runway.Bx)/2-originX),
                     (float)(strip.runway.Elevation+AirsideFlightPath.GroundY+.02),(float)((strip.runway.Az+strip.runway.Bz)/2-originZ));
+            }
             var cx = FlightWorldGrid.Tile(worldX); var cz = FlightWorldGrid.Tile(worldZ);
             var ccx = FlightWorldGrid.CoarseTile(worldX); var ccz = FlightWorldGrid.CoarseTile(worldZ);
             Retire(_tiles, cx, cz, false, true, 0);
-            Retire(_coarse, ccx, ccz, true, wide, coarseRadius);
+            Retire(_coarse, ccx, ccz, true, keepCoarse, coarseRadius);
+            // Alternate rings: cruise horizon appears immediately instead of starving behind all fine tiles.
+            if (keepCoarse && _streamFrame % 2 == 0 && FillCoarse(ccx,ccz,coarseRadius)) return;
             // Fill nearest first, bounded work. Existing tiles stay visible throughout travel.
             for (var ring = 0; ring <= FlightWorldGrid.RadiusTiles; ring++)
             for (var dz = -ring; dz <= ring; dz++)
@@ -97,24 +139,74 @@ namespace Airside.Presentation
             {
                 if (Math.Max(Math.Abs(dx),Math.Abs(dz)) != ring) continue;
                 var key = (cx+dx,cz+dz);
-                if (_tiles.ContainsKey(key)) continue;
+                var cells=CellsFor(key.Item1,key.Item2);
+                if (_tiles.ContainsKey(key))
+                {
+                    if(_tileCells[key]==cells) continue;
+                    // Replace one density per frame. The previous tile remains until its successor is ready.
+                    var previous=_tiles[key];var replacement=Build(key.Item1,key.Item2,false);
+                    _tiles[key]=replacement;_tileCells[key]=cells;Position(key,replacement.transform,FlightWorldGrid.TileMetres);
+                    Destroy(previous.GetComponent<MeshFilter>().sharedMesh);Destroy(previous);return;
+                }
                 var go = Build(key.Item1,key.Item2,false);
-                _tiles.Add(key,go); Position(key,go.transform,FlightWorldGrid.TileMetres);
+                _tiles.Add(key,go); _tileCells[key]=cells; Position(key,go.transform,FlightWorldGrid.TileMetres);
                 return;
             }
-            if (!wide) return;
-            // One build per frame in total: the coarse ring only fills once the fine ring is complete.
-            for (var ring = 0; ring <= coarseRadius; ring++)
-            for (var dz = -ring; dz <= ring; dz++)
-            for (var dx = -ring; dx <= ring; dx++)
+            if(keepCoarse) FillCoarse(ccx,ccz,coarseRadius);
+        }
+        private bool FillCoarse(int cx,int cz,int radius)
+        {
+            for(var ring=0;ring<=radius;ring++)
+            for(var dz=-ring;dz<=ring;dz++)
+            for(var dx=-ring;dx<=ring;dx++)
             {
-                if (Math.Max(Math.Abs(dx),Math.Abs(dz)) != ring) continue;
-                var key = (ccx+dx,ccz+dz);
-                if (_coarse.ContainsKey(key)) continue;
-                var go = Build(key.Item1,key.Item2,true);
-                _coarse.Add(key,go); Position(key,go.transform,FlightWorldGrid.CoarseTileMetres);
-                return;
+                if(Math.Max(Math.Abs(dx),Math.Abs(dz))!=ring) continue;
+                var key=(cx+dx,cz+dz);if(_coarse.ContainsKey(key)) continue;
+                var go=Build(key.Item1,key.Item2,true);_coarse.Add(key,go);
+                Position(key,go.transform,FlightWorldGrid.CoarseTileMetres);return true;
             }
+            return false;
+        }
+        private static FlightWorldHeights LoadHeights(string path)
+        {
+            try { var file=ArtRuntimePaths.ResolveExisting(path);return file==null ? null : FlightWorldHeights.Parse(File.ReadAllBytes(file)); }
+            catch(IOException) { return null; }
+        }
+        private static FlightWorldLandCover LoadCover(string path)
+        {
+            try { var file=ArtRuntimePaths.ResolveExisting(path);return file==null ? null : FlightWorldLandCover.Parse(File.ReadAllBytes(file)); }
+            catch(IOException) { return null; }
+        }
+        private int CellsFor(int tx,int tz)
+        {
+            var approach=!_cruise && _airport.HasValue && FlightWorldDetail.ApproachTile(tx,tz,
+                (_airport.Value.Ax+_airport.Value.Bx)/2,(_airport.Value.Az+_airport.Value.Bz)/2);
+            return FlightWorldDetail.Cells(_cruise,approach);
+        }
+        private void UpdateAirport(double x,double z,double altitude,bool wide)
+        {
+            RegionalRunway? nearest=null;var distance=FlightWorldDetail.AirportLoadMetres;
+            if(!wide)
+            foreach(var runway in RegionalRunways.All)
+            {
+                var d=FlightWorldDetail.RunwayDistance(x,z,runway);
+                if(d<distance){distance=d;nearest=runway;}
+            }
+            if(!nearest.HasValue && !wide && _airport.HasValue &&
+                FlightWorldDetail.RunwayDistance(x,z,_airport.Value)<FlightWorldDetail.AirportUnloadMetres) nearest=_airport;
+            if(nearest?.Code!=_airport?.Code)
+            {
+                if(_airportEnvironment!=null) Destroy(_airportEnvironment.gameObject);
+                _airportEnvironment=null;_airport=nearest;_approachHeights=null;_approachCover=null;
+                if(nearest.HasValue)
+                {
+                    var code=nearest.Value.Code.ToLowerInvariant();
+                    _approachHeights=LoadHeights("Terrain/dem_approach_"+code+"_v01.bin");
+                    _approachCover=LoadCover("Terrain/landcover_approach_"+code+"_v01.bin");
+                    _airportEnvironment=AirsideFlightAirportEnvironment.Create(nearest.Value,_material,_approachHeights ?? _nationalHeights ?? _heights);
+                }
+            }
+            if(_airportEnvironment!=null) _airportEnvironment.Tick(_originX,_originZ,!_cruise && !wide && altitude<5000);
         }
         /// <summary>Re-seats resident tiles for the current origin and destroys those that left the ring (all of them when not kept).</summary>
         private void Retire(Dictionary<(int x, int z), GameObject> tiles, int cx, int cz, bool coarse, bool keep, int coarseRadius)
@@ -132,7 +224,7 @@ namespace Airside.Presentation
             {
                 var go = tiles[key];
                 Destroy(go.GetComponent<MeshFilter>().sharedMesh);
-                Destroy(go); tiles.Remove(key);
+                Destroy(go); tiles.Remove(key); if(!coarse) _tileCells.Remove(key);
             }
         }
         private void Position((int x,int z) key, Transform tile, int tileMetres) => tile.position =
@@ -153,11 +245,12 @@ namespace Airside.Presentation
         private GameObject BuildTile(int tx, int tz, bool coarse)
         {
             var tileMetres = coarse ? FlightWorldGrid.CoarseTileMetres : FlightWorldGrid.TileMetres;
-            var cells = coarse ? FlightWorldGrid.CoarseCells : FlightWorldGrid.Cells;
+            var cells = coarse ? FlightWorldGrid.CoarseCells : CellsFor(tx,tz);
             var n = cells+1;
             var vertices = new Vector3[n*n]; var colors = new Color[n*n];
             var triangles = new List<int>(cells*cells*6);
             var stride = tileMetres / cells;
+
             for (var z=0; z<n; z++) for (var x=0; x<n; x++)
             {
                 var wx=tx*(double)tileMetres+x*stride;
@@ -165,16 +258,22 @@ namespace Airside.Presentation
                 YpadFrame.ToLatLon(wx,wz,out var lat,out var lon);
                 // The coarse ring takes known dry land from the cover map and only runs the (costly) coast test for water,
                 // so a 1,089-vertex tile costs about what a fine tile does.
-                var land=coarse && _cover != null && _cover.TryClass(lat,lon,out var known) && known != AdelaideFarLandCover.Water
-                    ? true : MapGeography.OnLand(lon,lat);
+                // Water comes from real cover at the active density, so Derwent estuary and coastal airports
+                // use their mapped shorelines. Coast polygons are the offline/missing-grid fallback.
+                var cover = !coarse && !_cruise && _approachCover!=null && _approachCover.TryClass(lat,lon,out _)
+                    ? _approachCover : _nationalCover!=null && _nationalCover.TryClass(lat,lon,out _)
+                    ? _nationalCover : _cover;
+                var sampled=cover!=null && cover.TryClass(lat,lon,out _);
+                var land=sampled ? cover.TryClass(lat,lon,out var cls) && cls!=AdelaideFarLandCover.Water : MapGeography.OnLand(lon,lat);
                 var height=0.0;
-                if (land) _heights?.TryHeight(lat,lon,out height);
+                if(land && !(!_cruise && !coarse && _approachHeights!=null && _approachHeights.TryHeight(lat,lon,out height))
+                    && !(_nationalHeights!=null && _nationalHeights.TryHeight(lat,lon,out height))) _heights?.TryHeight(lat,lon,out height);
                 var y = land ? AirsideFlightPath.GroundY + RegionalRunways.Ground(wx,wz,height-AdelaideTerrainHeights.PlainAboveSeaMetres) : -4;
                 if (coarse) y-=FlightWorldGrid.CoarseDropMetres;
                 // The original detailed meshes own Adelaide. This landscape tucks under them.
                 if (Math.Abs(wx)<=96000 && Math.Abs(wz)<=96000) y-=12;
                 vertices[z*n+x]=new Vector3(x*stride,(float)y,z*stride);
-                if (land && _cover != null && CoverColour(lat,lon,coarse,out var coverColour))
+                if (land && cover != null && CoverColour(cover,lat,lon,coarse,out var coverColour))
                 {
                     colors[z*n+x]=coverColour;
                     continue;
@@ -207,7 +306,7 @@ namespace Airside.Presentation
         /// whole 1 or 2 km cell, so it takes the mean colour of the land cells round it: one point sample per vertex
         /// read as dark-green and straw speckle from the overview. Water neighbours are left out so coasts stay land-coloured.
         /// </summary>
-        private bool CoverColour(double lat, double lon, bool coarse, out Color colour)
+        private bool CoverColour(FlightWorldLandCover cover,double lat, double lon, bool coarse, out Color colour)
         {
             colour = default;
             var reach = coarse ? 1.0 : 0.5;
@@ -215,10 +314,10 @@ namespace Airside.Presentation
             for (var dz = -1; dz <= 1; dz++)
             for (var dx = -1; dx <= 1; dx++)
             {
-                var sLat = lat + dz * reach * _cover.StepDegrees;
-                var sLon = lon + dx * reach * _cover.StepDegrees;
-                if (!_cover.TryClass(sLat, sLon, out var cls) || cls == AdelaideFarLandCover.Water) continue;
-                if (!_cover.TryCell(sLat, sLon, out var cx, out var cz)) continue;
+                var sLat = lat + dz * reach * cover.StepDegrees;
+                var sLon = lon + dx * reach * cover.StepDegrees;
+                if (!cover.TryClass(sLat, sLon, out var cls) || cls == AdelaideFarLandCover.Water) continue;
+                if (!cover.TryCell(sLat, sLon, out var cx, out var cz)) continue;
                 // Cells are ~1 km; the palette's paddocks and variation are sized for 250 m cells.
                 AdelaideOuterTerrainGeometry.LandCoverColour(cls, cx * 4, cz * 4, 0f, _seaLinear, _tint);
                 r += _tint[0]; g += _tint[1]; b += _tint[2]; count++;
@@ -228,7 +327,7 @@ namespace Airside.Presentation
                 colour = new Color(r / count, g / count, b / count, 0f);
                 return true;
             }
-            if (!_cover.TryCell(lat, lon, out var wx, out var wz) || !_cover.TryClass(lat, lon, out var centre)) return false;
+            if (!cover.TryCell(lat, lon, out var wx, out var wz) || !cover.TryClass(lat, lon, out var centre)) return false;
             var alpha = AdelaideOuterTerrainGeometry.LandCoverColour(centre, wx * 4, wz * 4, 0f, _seaLinear, _tint);
             colour = new Color(_tint[0], _tint[1], _tint[2], alpha);
             return true;
@@ -238,6 +337,8 @@ namespace Airside.Presentation
             foreach(var tile in _tiles.Values) if(tile!=null) Destroy(tile.GetComponent<MeshFilter>().sharedMesh);
             foreach(var tile in _coarse.Values) if(tile!=null) Destroy(tile.GetComponent<MeshFilter>().sharedMesh);
             foreach(var strip in _runways) if(strip.view!=null) Destroy(strip.view.GetComponent<MeshFilter>().sharedMesh);
+            if(_airportEnvironment!=null) Destroy(_airportEnvironment.gameObject);
+            if(_runwayMaterial!=null) Destroy(_runwayMaterial);
             if(_material!=null) Destroy(_material);
         }
     }

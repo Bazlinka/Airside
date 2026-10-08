@@ -107,6 +107,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightTelemetrySampler.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightViewHud.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightViewInformation.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightWorldDetail.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightWorldGrid.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightWorldHeights.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/FlightWorldLandCover.cs" />

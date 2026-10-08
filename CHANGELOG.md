@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-08 — #613: Australian flight terrain, denser real airport maps, mapped runway paint and economical high-altitude streaming (Unity unverified).
+
 - 2026-10-08 — #595: unify terrain/road/pavement lighting and colour handling; reduce daytime washout and retain pavement detail (ADR coherent-world-lighting).
 
 - 2026-10-08 — #585: free A320, vehicle and foliage derivatives; scanned surfaces, softer wear, facade fittings, reflections, conveyor motion and cabin fabric.

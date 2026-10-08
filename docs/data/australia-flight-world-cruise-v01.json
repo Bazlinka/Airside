@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-08",
+  "elevation_source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{}/{}/{}.png",
+  "elevation_terms": "Mapzen terrain tiles CC BY 4.0; underlying Australia elevation SRTM, USGS (public domain). Attribution: Mapzen, USGS, NASA. https://github.com/tilezen/joerd/blob/master/docs/attribution.md",
+  "cover_source": "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_{}_Map.tif",
+  "cover_terms": "CC BY 4.0; \u00a9 ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
+  "osm_terms": "ODbL 1.0, \u00a9 OpenStreetMap contributors",
+  "cost": "$0, public HTTPS",
+  "fallback": "SA DEM/cover, Natural Earth coastline and authored height palette; no runtime network",
+  "files": [
+    {
+      "file": "dem_australia_v01.bin",
+      "bytes": 4959962,
+      "sha256": "a273a145eb5edd7886baeb7b3d2880d6de1329210bee33cfea8b29ab50ae02a4"
+    },
+    {
+      "file": "landcover_australia_v01.bin",
+      "bytes": 136421,
+      "sha256": "f4ba5d0ff68c9f5112af627643c73e86ac893bd9a5a9f21fcb010d6da28ff162"
+    }
+  ]
+}

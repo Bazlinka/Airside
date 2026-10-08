@@ -1378,11 +1378,49 @@ namespace Airside.Presentation
         /// The raw value jitters frame to frame because it is a difference of two poses
         /// that are themselves being damped, which made the wings twitch on every turn.
         /// </summary>
+        private struct TurnSample { public float X, Z, Yaw, YawRate, Speed; public double Time; public bool Valid; }
+        private readonly Dictionary<string, TurnSample> _turnSamples = new();
+
+        /// <summary>Coordinated-turn bank from true ground speed and heading rate per simulated second.</summary>
+        private float CoordinatedBank(string aircraftId, Transform view, Quaternion heading)
+        {
+            _turnSamples.TryGetValue(aircraftId, out var s);
+            var forward = heading * Vector3.forward;
+            var yaw = CoordinatedTurn.YawDegrees(forward.x, forward.z);
+            var x = (float)(view.position.x + _flightOriginX);
+            var z = (float)(view.position.z + _flightOriginZ);
+            var dt = _preciseTime - s.Time;
+            if (!s.Valid || dt < 0 || dt > 30)
+                s = new TurnSample { X = x, Z = z, Yaw = yaw, Time = _preciseTime, Valid = true };
+            else if (dt > 1e-4)
+            {
+                var step = Mathf.Sqrt((x - s.X) * (x - s.X) + (z - s.Z) * (z - s.Z));
+                var speed = (float)(step / dt);
+                if (speed > CoordinatedTurn.MaxPlausibleMetresPerSecond)
+                    s = new TurnSample { X = x, Z = z, Yaw = yaw, Time = _preciseTime, Valid = true };
+                else
+                {
+                    var rate = (float)(CoordinatedTurn.DeltaAngle(s.Yaw, yaw) / dt);
+                    var k = AirsideFlightPath.DampFactor(4f, PresentationDeltaTime);
+                    s.Speed = Mathf.Lerp(s.Speed, speed, k);
+                    s.YawRate = Mathf.Lerp(s.YawRate, Mathf.Clamp(rate, -12f, 12f), k);
+                    s.X = x; s.Z = z; s.Yaw = yaw; s.Time = _preciseTime;
+                }
+            }
+            _turnSamples[aircraftId] = s;
+            return CoordinatedTurn.BankDegrees(s.Speed, s.YawRate);
+        }
+
         private float SmoothedBankDegrees(string aircraftId, Transform view, Quaternion heading, AircraftPhase phase,
             float commandedBank = 0f)
         {
             var visual = TurnBankDegrees(view, heading, phase);
-            var target = Mathf.Abs(commandedBank) > 0.4f ? commandedBank : visual;
+            // Airborne: bank for the turn the path is actually making (coordinated turn), not for how far the
+            // damped pose lags it. The old yaw-error bank was capped low, jittered, and did nothing on en-route legs.
+            var airborne = !(phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback
+                or AircraftPhase.Landing or AircraftPhase.AtStand);
+            var physical = airborne ? CoordinatedBank(aircraftId, view, heading) : 0f;
+            var target = Mathf.Abs(commandedBank) > 0.4f ? commandedBank : airborne ? physical : visual;
             if (!_bankDegrees.TryGetValue(aircraftId, out var current))
                 current = target;
 

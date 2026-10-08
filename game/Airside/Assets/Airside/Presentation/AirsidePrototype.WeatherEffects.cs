@@ -11,6 +11,45 @@ namespace Airside.Presentation
         private static Vector3[] _weatherRainVertices;
         private static readonly Vector3[] WeatherRainSeeds = new Vector3[WeatherRainDrops];
         private Renderer _weatherRainRenderer;
+        private Transform _rainObserver;
+        private Vector3 _rainObserverLast;
+        private Vector3 _rainObserverVelocity;
+        private Vector3 _rainFlowMetres;
+
+        /// <summary>Fastest the observer's own motion may lean the rain, m/s; time acceleration would otherwise smear it.</summary>
+        private const float RainObserverSpeedCap = 90f;
+
+        /// <summary>
+        /// Velocity of whoever the player is riding with (the cockpit view or the followed aircraft), smoothed. The
+        /// rain volume is carried with the lens, so without this the drops fell straight down however fast the
+        /// aircraft climbed, dived or ran down the runway. A freely panned overview has no observer motion.
+        /// </summary>
+        private Vector3 RainObserverVelocity()
+        {
+            var observer = InCockpit && _cockpitView != null ? _cockpitView
+                : _cameraController != null && _cameraController.IsFollowing ? _cameraController.FollowTarget : null;
+            var dt = Time.unscaledDeltaTime;
+            if (observer == null || dt <= 0f)
+            {
+                _rainObserver = null;
+                _rainObserverVelocity = Vector3.Lerp(_rainObserverVelocity, Vector3.zero, 1f - Mathf.Exp(-dt / 0.4f));
+                return _rainObserverVelocity;
+            }
+            var position = observer.position;
+            if (observer == _rainObserver)
+            {
+                var raw = (position - _rainObserverLast) / dt;
+                // A flight-origin shift or camera cut is a jump, not motion: keep the last velocity through it.
+                if (raw.magnitude < 400f)
+                    _rainObserverVelocity = Vector3.Lerp(_rainObserverVelocity,
+                        Vector3.ClampMagnitude(raw, RainObserverSpeedCap), 1f - Mathf.Exp(-dt / 0.3f));
+            }
+            else
+                _rainObserverVelocity = Vector3.zero;
+            _rainObserver = observer;
+            _rainObserverLast = position;
+            return _rainObserverVelocity;
+        }
 
         // A single dynamic mesh replaces hundreds of separately drawn cube drops. No per-frame
         // allocations, particle simulation or randomness can change airport state.
@@ -76,20 +115,23 @@ namespace Airside.Presentation
             _rainRoot.localScale = Vector3.one;
             var flow = WeatherWindFlow.Rain(PresentationWind, storm);
             var drift = new Vector3(flow.X, 0f, flow.Z);
-            var fall = Vector3.down * Mathf.Lerp(16f, 28f, precipitation) + drift;
+            // Drops fall through the world; the observer moves through the drops. What the eye sees is the difference,
+            // so climbing makes rain stream down faster and flying forward slants it back toward the lens.
+            var fall = Vector3.down * Mathf.Lerp(16f, 28f, precipitation) + drift - RainObserverVelocity();
+            _rainFlowMetres += fall * Mathf.Min(Time.unscaledDeltaTime, 0.1f);
             var halfLength = Mathf.Clamp(radius * 0.015f, 0.18f, 4.8f);
             var width = Mathf.Clamp(radius * 0.0008f, 0.012f, 0.32f);
             var right = _mainCamera.transform.right * width;
-            var along = fall.normalized * halfLength;
+            // Faster relative motion reads as longer streaks, up to about three times the still-air length.
+            var along = fall.normalized * (halfLength * Mathf.Clamp(fall.magnitude / 22f, 1f, 3f));
             var count = Mathf.CeilToInt(WeatherRainDrops * Mathf.Lerp(0.25f, 1f, precipitation));
-            var time = Time.unscaledTime;
             for (var i = 0; i < WeatherRainDrops; i++)
             {
                 var seed = WeatherRainSeeds[i];
                 var p = new Vector3(
-                    (Mathf.Repeat(seed.x + drift.x * time / (radius * 2f), 1f) * 2f - 1f) * radius,
-                    (Mathf.Repeat(seed.y + fall.y * time / (radius * 2f), 1f) * 2f - 1f) * radius,
-                    (Mathf.Repeat(seed.z + drift.z * time / (radius * 2f), 1f) * 2f - 1f) * radius);
+                    (Mathf.Repeat(seed.x + _rainFlowMetres.x / (radius * 2f), 1f) * 2f - 1f) * radius,
+                    (Mathf.Repeat(seed.y + _rainFlowMetres.y / (radius * 2f), 1f) * 2f - 1f) * radius,
+                    (Mathf.Repeat(seed.z + _rainFlowMetres.z / (radius * 2f), 1f) * 2f - 1f) * radius);
                 var v = i * 4;
                 if (i >= count)
                 {

@@ -75,6 +75,7 @@ OWNERS = {
     "AirsidePrototype.Sky.cs": ("Sky, weather and audio", "Weather presentation (puddles, taxi spray, windsock, gloom), day cycle and star field"),
     "AirsidePrototype.Atmosphere.cs": ("Sky, weather and audio", "Cloud ceiling, horizon banks and ground fog (ADR 0193)"),
     "AirsidePrototype.WeatherEffects.cs": ("Sky, weather and audio", "Rain mesh"),
+    "AirsidePrototype.Contrails.cs": ("Sky, weather and audio", "Jet contrails in sky traffic"),
     "AirsidePrototype.LiveWeather.cs": ("Sky, weather and audio", "Adelaide forecast polling and recorded weather input shared with airport rules"),
     "AirsidePrototype.Soundscape.cs": ("Sky, weather and audio", "Working-airport sound bed under the weather (ADR 0136)"),
     "AirsidePrototype.AircraftAudio.cs": ("Sky, weather and audio", "Aircraft heard from the ground point the camera looks at (ADR 0196)"),

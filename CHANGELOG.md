@@ -1,5 +1,8 @@
 # Changelog
 
+- 2026-10-09 — Saved live weather/wind now drive airport rules and visuals together; save v23 preserves holding poses across compatible reloads (Unity unverified).
+
+- 2026-10-09 — Parked aircraft stay visible/selectable but leave active counts and automatic follow until two hours before departure; moving aircraft stay active.
 - 2026-10-09 — Bug-analysis fixes: credits no longer dropped at 800x600, compact Contracts/Operations/HUD text fits, jet pay and cost scale with size, 12 missing demand entries, loss-making contract routes skipped, rename-box hotkeys, missed daily report, plurals (headless-checked; Unity unverified; see docs/testing/bug-analysis-2026-10-08).
 - 2026-10-09 — Use Linear colour rendering; recalibrate far terrain to decoded satellite colours; existing quality budgets retained (Unity unverified).
 

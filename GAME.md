@@ -22,8 +22,10 @@ ordinary overview/follow views, rather than hiding departures after the local cl
 projection ends. Ordinary follow streams journey terrain and shifts the render origin.
 Aircraft identity lookup includes every physically present fleet view independently
 of follow-cycle filtering; direct follow can select a present aircraft outside that cycle.
-Parked models remain visible. The proposed two-hour activity window remains a product
-recommendation pending Bailey's choice; Fleet inventory must always retain them.
+Parked models remain visible and explicitly selectable. Active-aircraft counts and
+automatic camera cycling now use a two-hour window before published departure; overdue
+weather waits and moving aircraft stay active. Fleet inventory retains idle aircraft.
+Long-idle known outstation ground aircraft likewise activate near their next departure.
 Audit coverage and remaining limitations: `docs/testing/aircraft-continuity-2026-10-09.md`.
 Established final poses now survive missing/postponed ETAs in a continuous holding
 orbit (#677), climbing to at least 1.5 km. A usable ETA rejoins through bounded pose
@@ -31,8 +33,22 @@ slew; real clearance retains the held pose through the handoff. Map/follow/selec
 status use the actual held pose. This represents existing operational delays; it does
 not grant runway/stand/curfew clearance or create a new saved state. Focused holding
 and approach checks pass 16/16; changed C# syntax parses. Rendered holding/rejoin and
-terrain performance remain unverified. Holding pose is transient across reloads;
-live-feed expiry and unsupported outstation presentation still have explicit limits.
+terrain performance remain unverified. Save v23 now retains final/holding pose and
+phase, guarded by registration/type/destination/state/start-time after offline catch-up;
+changed journeys are not resurrected. Old saves rebuild their unsaved presentation.
+Live-feed expiry and unsupported outstation presentation retain explicit limits.
+
+**Shared operational weather and reload continuity (9 Oct, Codex, #679):** validated
+live weather/wind samples enter a saved timeline at processed simulation time. Ground
+stops, runway/rotor wind rules, final-entry commitment, sky/rain and wind motion read
+that same timeline. Expiry, disabling live weather and unknown offline periods fall
+back to the deterministic forecast. Historical samples replay on catch-up; expiry is
+an explicit event boundary. Save v23 adds flat optional observation/arrival records;
+v1–22 retain their prior forecast and rebuild presentation. Review-only weather pins
+remain cosmetic. Focused continuity, save, Operations, runway and hold checks pass
+53/53; new Unity JsonUtility round-trip test is added but unrun here. Unity compile,
+serialization, actual weather releases, reload/holding appearance and performance
+remain unverified.
 
 **Cloud continuity/weather variety (9 Oct, Codex, #674):** clouds recycle/fade around
 the watched area, not the orbiting lens. The wider footprint keeps storm bodies away

@@ -70,6 +70,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ApronSurfaceWear.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ArrivalApproach.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/ArrivalHoldingTrack.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/ArrivalViewContinuity.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AssemblyInfo.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AtmosphereLook.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/AudioPeakLimiter.cs" />
@@ -222,6 +223,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirlineSaveRestoreTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirlineSetupTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirlineSoakTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirportContinuityTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirportCurfewTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirportSimulationTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AirportTemplateTests.cs" />

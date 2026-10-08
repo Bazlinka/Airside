@@ -340,10 +340,10 @@ namespace Airside.Presentation
                 // Same rule as drawing: Inbound / Away / far Outbound are off the map
                 // (FleetVisual.Hidden). Counting them here used to print "17 on field"
                 // while the apron looked empty.
+                if (AircraftPresence.IsActive(aircraft, now)) active++;
                 if (IsDrawnOnField(aircraft, now))
                 {
                     onField++;
-                    active++;
                     var markMin = MarkMinutes(aircraft, clock, nowMin);
                     if (markMin >= startMin && markMin <= endMin)
                         _dayMarks.Add(Clamp01((markMin - startMin) / (float)span));

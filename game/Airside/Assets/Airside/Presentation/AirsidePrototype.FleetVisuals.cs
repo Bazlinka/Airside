@@ -799,6 +799,11 @@ namespace Airside.Presentation
                 // selection and audio must retain every physically present aircraft.
                 if (i < VisualFlights.Count)
                     _fleetViewById[VisualFlights[i].AircraftId] = view;
+                if (view != followed && i < VisualFlights.Count
+                    && VisualFlights[i].AircraftId != _cockpitAircraftId
+                    && _fleetAircraftById.TryGetValue(VisualFlights[i].AircraftId, out var parked)
+                    && !AircraftPresence.IsActive(parked, _clock.Now))
+                    continue;
                 // A far-approach aircraft is excluded as a new cycling/pick candidate (too
                 // small and distant to be a sensible target) but never dropped out from
                 // under a follow already in progress — that used to release the camera the

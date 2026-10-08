@@ -222,24 +222,23 @@ namespace Airside.Presentation
 
         /// <summary>Sky over the field: the demo circuit's weather, or the airline clock's in airline mode.</summary>
         private WeatherKind CurrentWeather => ReviewWeather
-            ?? (LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Kind
-                : FleetMode ? Weather.At(_clock.Now) : _simulation.CurrentWeather);
+            ?? (FleetMode ? _operations.WeatherAt(_clock.Now)
+                : LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Kind : _simulation.CurrentWeather);
 
         private WeatherLook TargetWeatherLook => ReviewWeather.HasValue
             ? WeatherLook.For(ReviewWeather.Value)
-            : LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Look
-            // ADR 0143: eased between hours so the sky never snaps.
-            : FleetMode ? WeatherAppearance.Forecast(_clock.Now) : WeatherLook.For(CurrentWeather);
+            : FleetMode ? _operations.WeatherTimeline.TryAt(_clock.Now, out var observed)
+                ? observed.Look : WeatherAppearance.Forecast(_clock.Now)
+            : LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Look : WeatherLook.For(CurrentWeather);
 
         /// <summary>This frame's sky, fog, mist and cloud layers (ADR 0143).</summary>
         private AtmosphereLook _atmosphere;
 
         private static Color ToColor(Rgb rgb) => new(rgb.R, rgb.G, rgb.B);
 
-        /// <summary>Actual Adelaide wind for cloth/weather motion; never runway selection.</summary>
-        private SurfaceWind PresentationWind => LiveWeatherHealthy
-            ? _liveWeatherSnapshot.Value.Wind
-            : _operations != null ? _operations.Wind : RunwayWeather.At(AirlineClock.Default, _clock.Now);
+        /// <summary>Cloth, weather motion and airport rules read the same recorded wind.</summary>
+        private SurfaceWind PresentationWind => FleetMode ? _operations.WindAt(_clock.Now)
+            : LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Wind : RunwayWeather.At(AirlineClock.Default, _clock.Now);
 
         private float PresentationDaylight =>
             DaylightPresentation.Resolve(PinDaylightPresentation, PresentationCelestial.Daylight);

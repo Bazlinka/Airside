@@ -12,8 +12,10 @@ ordinary overview/follow views, rather than hiding departures after the local cl
 projection ends. Ordinary follow streams journey terrain and shifts the render origin.
 Aircraft identity lookup includes every physically present fleet view independently
 of follow-cycle filtering; direct follow can select a present aircraft outside that cycle.
-Parked models remain visible. The proposed two-hour activity window remains a product
-recommendation pending Bailey's choice; Fleet inventory must always retain them.
+Parked models remain visible and explicitly selectable. Active-aircraft counts and
+automatic camera cycling now use a two-hour window before published departure; overdue
+weather waits and moving aircraft stay active. Fleet inventory retains idle aircraft.
+Long-idle known outstation ground aircraft likewise activate near their next departure.
 Audit coverage and remaining limitations: `docs/testing/aircraft-continuity-2026-10-09.md`.
 Established final poses now survive missing/postponed ETAs in a continuous holding
 orbit (#677), climbing to at least 1.5 km. A usable ETA rejoins through bounded pose

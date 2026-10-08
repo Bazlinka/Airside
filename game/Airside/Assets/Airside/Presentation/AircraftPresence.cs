@@ -1,4 +1,5 @@
 using System;
+using Airside.Domain;
 using Airside.Simulation;
 
 namespace Airside.Presentation
@@ -6,6 +7,21 @@ namespace Airside.Presentation
     /// <summary>Physical presence is independent of activity lists and camera cycling.</summary>
     public static class AircraftPresence
     {
+        public const long DepartureActivityWindowSeconds = 2 * 3600;
+
+        public static bool IsActive(FleetAircraft aircraft, SimulationTime now)
+        {
+            if (aircraft == null) return false;
+            if (aircraft.MaintenanceJob?.ActiveLeg(aircraft.Type) != null) return true;
+            if (aircraft.State == FleetState.AtStand)
+                return aircraft.Scheduled.HasValue && !aircraft.Scheduled.Value.Cancelled
+                    && aircraft.Scheduled.Value.PublishedAt.ElapsedSeconds - now.ElapsedSeconds <= DepartureActivityWindowSeconds;
+            if (aircraft.State == FleetState.AtDestination)
+                return aircraft.StateEndsAt.HasValue
+                    && aircraft.StateEndsAt.Value.ElapsedSeconds - now.ElapsedSeconds <= DepartureActivityWindowSeconds;
+            return aircraft.State != FleetState.Maintenance;
+        }
+
         public static bool HasJourneyPose(FleetState state, bool hasDestination,
             bool hasDeadline, bool hasDestinationRunway) => hasDestination
             && (hasDeadline && (state is FleetState.Outbound or FleetState.Inbound)

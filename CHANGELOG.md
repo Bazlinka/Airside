@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-09 — Parked aircraft stay visible/selectable but leave active counts and automatic follow until two hours before departure; moving aircraft stay active.
+
 - 2026-10-09 — Established arrivals fly a visible hold when their ETA is lost/postponed; map/follow use the actual pose and retain clearance handoffs (Unity unverified).
 
 - 2026-10-09 — Anchor clouds to the watched area; retain far-clipped volume proxies; add high wisps, stratiform banks and drizzle/showers (Unity unverified).

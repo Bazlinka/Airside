@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-08 — Freighters no longer show passenger cabin windows (flight deck only); exterior aircraft glass is a dark near-opaque tint so windscreens/cabin windows are not see-through (unverified).
+
 - 2026-10-08 — Route Map: aircraft on the field collapse to quiet dots with one "N on field" count (full icons/labels only when zoomed in or picked), ending the label pile at Adelaide (Unity unverified).
 
 - 2026-10-08 — HUD Tower button beside Overview/Radar/Menu enters the control-tower cab view (unverified in Unity).

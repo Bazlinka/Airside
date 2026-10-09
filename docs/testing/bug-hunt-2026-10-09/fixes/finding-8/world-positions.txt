@@ -1,0 +1,22 @@
+Journey-review trace of the player Saab (VH-PAX) during its AtDestination at Kingscote, 40x clock.
+World metres in the flight-world frame (floating origin added back). One sample per 5 real seconds.
+
+BEFORE (main + helicopter fix e06806e2): every sample is the runway end (-125005.9, -6576.2)
+real   86.4s  sim   3108.8  VH-PAX  world(x,y,z) -125005.9,8.0,-6576.2
+real   91.4s  sim   3310.1  VH-PAX  world(x,y,z) -125005.9,8.0,-6576.2
+real   96.5s  sim   3510.7  VH-PAX  world(x,y,z) -125005.9,8.0,-6576.2
+real  101.5s  sim   3710.7  VH-PAX  world(x,y,z) -125005.9,8.0,-6576.2
+real  106.5s  sim   3913.4  VH-PAX  world(x,y,z) -125005.9,8.0,-6576.2
+real  111.6s  sim   4114.0  VH-PAX  world(x,y,z) -125005.9,8.0,-6576.2
+real  116.6s  sim   4314.7  VH-PAX  world(x,y,z) -125005.9,8.0,-6576.2
+real  121.6s  sim   4478.1  VH-PAX  world(x,y,z) -125005.9,8.0,-6576.2
+
+AFTER (turnaround on the apron, 08e8f30c): leaves the runway end, parks on the apron slot, ~1 km away
+real   97.8s  sim   3019.1  VH-PAX  world(x,y,z) -125005.9,8.0,-6576.2
+real  102.8s  sim   3219.4  VH-PAX  world(x,y,z) -124448.3,8.0,-5733.9
+real  107.8s  sim   3419.8  VH-PAX  world(x,y,z) -124440.2,8.0,-5723.6
+real  112.8s  sim   3620.1  VH-PAX  world(x,y,z) -124440.2,8.0,-5723.6
+real  117.8s  sim   3820.4  VH-PAX  world(x,y,z) -124440.2,8.0,-5723.6
+real  143.7s  sim   3883.8  VH-PAX  world(x,y,z) -124440.2,8.0,-5723.6
+real  148.7s  sim   4084.1  VH-PAX  world(x,y,z) -124440.2,8.0,-5723.6
+real  153.7s  sim   4284.1  VH-PAX  world(x,y,z) -124440.2,8.0,-5723.6

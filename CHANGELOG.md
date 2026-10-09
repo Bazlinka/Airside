@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-09 — #726: bug-hunt finding 15 (ATR 42 T-tail) verified not a defect — tailplane rendered in Exterior; evidence recorded, no code/asset change.
+
 - 2026-10-09 — #723: quitting from exterior/cockpit view no longer throws NullReferenceException in EndCockpit during teardown (destroyed camera controller was reached through `?.`).
 - 2026-10-09 — #724: aircraft doorway hollows no longer rejected for shells at the generators' 4 mm minimum thickness (float32 rounding); Saab/ATR/737/Dash 8 doors open onto a doorway, not bare hull.
 - 2026-10-09 — #729: the "has landed at <outstation>" toast names the outbound flight number, not the return (bug hunt #9); Adelaide arrivals keep the return number.

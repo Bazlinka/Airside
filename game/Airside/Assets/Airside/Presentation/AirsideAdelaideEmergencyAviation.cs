@@ -53,6 +53,8 @@ namespace Airside.Presentation
         internal static Color? PartColour(string part, Color? rescueRed = null)
         {
             var key = part.ToLowerInvariant();
+            if (key.StartsWith("intake_liner_", StringComparison.Ordinal))
+                return new Color(0.07f, 0.08f, 0.09f);
             if (key.Contains("glass") || key.Contains("window"))
                 return new Color(0.08f, 0.16f, 0.22f, 0.68f);
             if (key.StartsWith("livery_", StringComparison.Ordinal))

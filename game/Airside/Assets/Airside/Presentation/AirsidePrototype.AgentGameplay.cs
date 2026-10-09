@@ -314,6 +314,17 @@ namespace Airside.Presentation
             {
                 var n = r.name.ToLowerInvariant();
                 if (!(n.Contains("tail") || n.Contains("elev") || n.Contains("fin") || n.Contains("rudder") || n.Contains("stab"))) continue;
+                if (camera != null && (n == "tailplane" || n == "tail" || n == "rudder"))
+                {
+                    var b = r.bounds; var lo = new Vector2(1e9f, 1e9f); var hi = new Vector2(-1e9f, -1e9f);
+                    for (var k = 0; k < 8; k++)
+                    {
+                        var corner = b.center + Vector3.Scale(b.extents, new Vector3((k & 1) == 0 ? -1 : 1, (k & 2) == 0 ? -1 : 1, (k & 4) == 0 ? -1 : 1));
+                        var sp = camera.WorldToScreenPoint(corner);
+                        lo = Vector2.Min(lo, new Vector2(sp.x, Screen.height - sp.y)); hi = Vector2.Max(hi, new Vector2(sp.x, Screen.height - sp.y));
+                    }
+                    Debug.Log("[Airside diag] screen box of " + r.name + " " + lo + " - " + hi + " screen " + Screen.width + "x" + Screen.height);
+                }
                 var mf = r.GetComponent<MeshFilter>();
                 var m = r.sharedMaterial;
                 Debug.Log("[Airside diag] " + r.name + " enabled " + r.enabled + " active " + r.gameObject.activeInHierarchy + " visible " + r.isVisible

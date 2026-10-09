@@ -44,4 +44,3 @@ Standing policy: agents choose necessary focused runtime checks; broad suites/so
 Personal saves/running game and generated pipeline/package edits must be preserved.
 
 *One block, replaced at the end of each session. Updated 2026-10-09.*
-

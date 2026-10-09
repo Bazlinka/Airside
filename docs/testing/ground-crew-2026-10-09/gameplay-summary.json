@@ -1,0 +1,51 @@
+{
+  "protocol": 1,
+  "commit": "bbe40abd9256ce3275665f17a13beb6c4dbf2410",
+  "profile": "full",
+  "status": "passed",
+  "features": [
+    "booking",
+    "save",
+    "views"
+  ],
+  "issue": "",
+  "visualQuality": "requires agent image inspection",
+  "performance": "unverified",
+  "scenarios": [
+    {
+      "name": "features",
+      "status": "passed",
+      "steps": 9,
+      "realSeconds": 23.86
+    },
+    {
+      "name": "round-trip",
+      "status": "passed",
+      "realSeconds": 187.89,
+      "rate": 40,
+      "frames": [
+        "0176.0-TaxiIn.png",
+        "0132.8-AtDestination.png",
+        "0170.7-Landing.png",
+        "0132.9-Inbound.png",
+        "0179.7-completed-overview.png",
+        "0065.3-Outbound.png",
+        "0021.2-AtStand.png",
+        "0170.5-Inbound-final.png",
+        "0068.3-Outbound-approach.png",
+        "0117.8-AtDestination.png",
+        "0035.2-Outbound.png",
+        "0050.2-Outbound.png",
+        "0023.6-TaxiOut.png",
+        "0032.9-TakingOff.png",
+        "0072.8-AtDestination.png",
+        "0155.5-Inbound-final.png",
+        "0147.9-Inbound.png",
+        "0071.8-Outbound-rollout.png",
+        "0175.8-AwaitingStand.png",
+        "0102.8-AtDestination.png",
+        "0087.8-AtDestination.png"
+      ]
+    }
+  ]
+}

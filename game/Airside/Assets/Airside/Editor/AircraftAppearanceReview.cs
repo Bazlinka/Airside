@@ -20,7 +20,7 @@ public static class AircraftAppearanceReview
         var args = Environment.GetCommandLineArgs();
         string Arg(string key, string fallback) { var i = Array.IndexOf(args, key); return i >= 0 && i + 1 < args.Length ? args[i + 1] : fallback; }
         var output = Path.GetFullPath(Arg("-aircraftReviewOutput", "../../work/aircraft-review"));
-        var only = Arg("-aircraftReviewTypes", "ATR42,SF34,DH8D,E190,A223,A320,B738,B38M,A21N,A359,A339,B789,B78X,B412").Split(',');
+        var only = Arg("-aircraftReviewTypes", "ATR42,SF34,DH8D,E190,A223,A320,B738,B38M,A21N,A359,A339,B789,B78X,B412,TRAINER").Split(',');
         Directory.CreateDirectory(output);
         ShaderUtil.allowAsyncCompilation = false;
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -46,7 +46,7 @@ public static class AircraftAppearanceReview
         camera.targetTexture = target;
         foreach (var id in only)
         {
-            if (!AircraftType.TryFromId(id, out var type)) throw new InvalidOperationException("Unknown aircraft " + id);
+            if (!AircraftType.TryFromId(id, out var type) && id != "TRAINER") throw new InvalidOperationException("Unknown aircraft " + id);
             var hex = Arg("-aircraftReviewColour", "#0F8B8D");
             var title = Arg("-aircraftReviewAirline", "Coastline Regional");
             if (Arg("-aircraftReviewPalette", "custom") == "fleet")
@@ -55,12 +55,21 @@ public static class AircraftAppearanceReview
                 else if (id is "E190" or "B38M" or "A359" or "B78X") { hex = "#1F3A93"; title = "Southern Cross Link"; }
             }
             ColorUtility.TryParseHtmlString(hex, out var accent);
-            var root = (Transform)typeof(AirsidePrototype).GetMethod("BuildAircraftForType", PrivateStatic)
+            Transform root;
+            if (id == "TRAINER")
+            {
+                var colour = typeof(AirsideParafieldAirport).GetMethod("PartColour", PrivateStatic);
+                if (!ArtPresentationLoader.TryInstantiate(AirsideParafieldAirport.TrainerArtPath, null, out root,
+                    part => "Parafield trainer 0 " + part,
+                    part => (Color?)colour.Invoke(null, new object[] { part, 0 })))
+                    throw new InvalidOperationException("Trainer kit unavailable");
+            }
+            else root = (Transform)typeof(AirsidePrototype).GetMethod("BuildAircraftForType", PrivateStatic)
                 .Invoke(null, new object[] { "Review " + id, type, accent, null });
             var airline = Airline.Player(title, hex);
-            var fleet = (FleetAircraft)Activator.CreateInstance(typeof(FleetAircraft), BindingFlags.Instance | BindingFlags.NonPublic,
+            var fleet = type == null ? null : (FleetAircraft)Activator.CreateInstance(typeof(FleetAircraft), BindingFlags.Instance | BindingFlags.NonPublic,
                 null, new object[] { "VH-ASH", airline, type, new StableId("REVIEW"), new SimulationTime(0) }, null);
-            if (!type.IsRotorcraft)
+            if (type != null && !type.IsRotorcraft)
                 typeof(AirsidePrototype).GetMethod("EnsureAircraftIdentityMarkings", PrivateStatic, null,
                     new[]{typeof(Transform),typeof(FleetAircraft),typeof(Color)},null)
                     .Invoke(null, new object[] { root, fleet, accent });

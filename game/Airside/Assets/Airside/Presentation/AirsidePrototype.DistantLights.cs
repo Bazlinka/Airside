@@ -10,7 +10,8 @@ namespace Airside.Presentation
     /// ADR 0142 — a far-off aircraft is a few pixels of grey: an arrival 30 km out was drawn but
     /// could not be seen. Beyond 6 km each aircraft also carries a soft camera-facing glow (the
     /// ADR 0124 halo), sized to stay a few pixels across whatever the distance, bright white with
-    /// landing lights on, dimmer without. Close in it fades out, where the model reads by itself.
+    /// landing lights on, dimmer without. At night airborne position lights stay readable
+    /// closer in too; individual landing-lamp flares take over from the nose-on distant glow.
     /// </summary>
     public sealed partial class AirsidePrototype
     {
@@ -32,9 +33,28 @@ namespace Airside.Presentation
             var forwardBeam = landingLights && Mathf.Abs(bearing) < 35f;
             var profile = AircraftLightingProfile.For(type);
             var flash = powered && AirsideReusableMotion.StrobesOn(phase) ? profile.StrobeLevel(PresentationClock + AircraftLightingProfile.ClockOffsetSeconds(view.name)) : 0f;
+            // An arrival nose-on to the camera keeps its landing-light glow all the way in (it used to
+            // vanish inside 6 km, leaving only a 20 cm lamp lens): fading out over the last 600 m.
+            var beacon = ArrivalApproach.BeaconStrength(distance);
+            if (forwardBeam)
+                beacon = Mathf.Max(beacon, 0.7f * Mathf.Clamp01((distance - 600f) / 600f));
+            // Side-on finals do not face their landing lamps at the camera. At night their
+            // position lamps/strobes must still identify the aircraft inside the old 6 km cutoff.
+            var airborne = phase is AircraftPhase.Approach or AircraftPhase.Circuit
+                or AircraftPhase.Departed or AircraftPhase.GoAround;
+            if (airborne && PresentationDaylight < 0.35f)
+                beacon = Mathf.Max(beacon, Mathf.Clamp01((distance - 150f) / 450f));
             var strength = AirsideSettings.Current.DistantGlows && powered
-                ? ArrivalApproach.BeaconStrength(distance) * (forwardBeam ? 1f : flash > 0f ? 0.85f : 0.28f)
+                ? beacon * (forwardBeam ? 1f : flash > 0f ? 0.85f : 0.28f)
                 : 0f;
+            // One entry per view ever drawn; drop those whose aircraft was destroyed, so the table stays small.
+            if (_distantLights.Count > 96 && Time.frameCount % 600 == 0)
+            {
+                var stale = new List<int>();
+                foreach (var pair in _distantLights)
+                    if (pair.Value == null) stale.Add(pair.Key);
+                foreach (var key in stale) _distantLights.Remove(key);
+            }
             _distantLights.TryGetValue(view.GetInstanceID(), out var glow);
             if (strength <= 0.01f)
             {
@@ -45,7 +65,7 @@ namespace Airside.Presentation
 
             if (glow == null)
             {
-                var material = HaloMaterial();
+                var material = AircraftHaloMaterial();
                 if (material == null)
                     return;
                 var card = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -61,8 +81,17 @@ namespace Airside.Presentation
 
             glow.enabled = true;
             var t = glow.transform;
+            // The root is inside the fuselage: a depth-tested glow there is hidden by the
+            // very aircraft it should reveal. Pull it outside the airframe towards the camera,
+            // preserving depth tests against terrain/buildings and its projected location.
+            var pull = type != null && AircraftCatalogue.TryFor(type, out var spec)
+                ? 0.5f * Mathf.Sqrt((float)(spec.LengthMetres * spec.LengthMetres
+                    + spec.WingspanMetres * spec.WingspanMetres)) + 5f : 45f;
+            t.position = view.position + (_mainCamera.transform.position - view.position).normalized
+                * Mathf.Min(pull, distance * 0.1f);
+            var glowDistance = Vector3.Distance(_mainCamera.transform.position, t.position);
             // Constant screen size: world size grows with distance and the camera's view height.
-            var worldPerPixel = 2f * distance * Mathf.Tan(_mainCamera.fieldOfView * 0.5f * Mathf.Deg2Rad)
+            var worldPerPixel = 2f * glowDistance * Mathf.Tan(_mainCamera.fieldOfView * 0.5f * Mathf.Deg2Rad)
                                 / Mathf.Max(1f, _mainCamera.pixelHeight);
             var size = worldPerPixel * DistantLightPixels;
             var parentScale = view.lossyScale.x > 0.0001f ? view.lossyScale.x : 1f;

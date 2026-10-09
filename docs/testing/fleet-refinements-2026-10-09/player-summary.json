@@ -1,0 +1,22 @@
+{
+  "protocol": 1,
+  "commit": "22e199d79b31c00bb207cb78fabff1744e252307",
+  "profile": "smoke",
+  "status": "passed",
+  "features": [
+    "camera",
+    "follow",
+    "overview"
+  ],
+  "issue": "Inspect refined A350 engine mouths and fitted control hinges in follow and overview",
+  "visualQuality": "requires agent image inspection",
+  "performance": "unverified",
+  "scenarios": [
+    {
+      "name": "features",
+      "status": "passed",
+      "steps": 4,
+      "realSeconds": 24.91
+    }
+  ]
+}

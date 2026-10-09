@@ -49,8 +49,8 @@ namespace Airside.Presentation
             {
                 new Binding("Tab", "Map: plan flights"),
                 new Binding("[ / ]", "Previous / next aircraft"),
-                new Binding("L", "Aircraft tags at the airport"),
-                new Binding("N", "Airport mini-map (click or drag to move)"),
+                new Binding("L", "Aircraft tags (per view: overview or follow)"),
+                new Binding("N", "Airport mini-map for this view (click or drag to move)"),
                 new Binding("H", "Fleet: your aircraft and the market"),
                 new Binding("T", "Ops: the departures and arrivals board"),
                 new Binding("C", "Contracts: yours and the offers"),

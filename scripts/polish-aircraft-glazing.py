@@ -548,6 +548,9 @@ def main():
     for type_id in args.types or SOURCES:
         filename, function, basename = SOURCES[type_id]
         meshes = getattr(load_module(filename), function)()
+        if not args.baseline:
+            profile = load_module("aircraft_body.py").refine(meshes)
+            load_module("aircraft_tail.py").refine(meshes, type_id, profile.sample)
         count = 0 if args.baseline else polish(meshes)
         if not args.baseline:
             load_module("finish-aircraft-liveries.py").finish(meshes, type_id)

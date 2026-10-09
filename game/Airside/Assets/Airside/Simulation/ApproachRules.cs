@@ -1,3 +1,6 @@
+using System;
+using Airside.Domain;
+
 namespace Airside.Simulation
 {
     /// <summary>
@@ -9,6 +12,31 @@ namespace Airside.Simulation
     /// </summary>
     public static class ApproachRules
     {
+        /// <summary>Start of the displayed extended final, shared with arrival presentation.</summary>
+        public const float ExtendedFinalMetres = 32_000f;
+
+        /// <summary>
+        /// An inbound already flying the extended final before a storm is committed to its
+        /// arrival. Derive entry from its existing leg deadline so live play, catch-up and
+        /// restored saves agree without a presentation callback or new persisted flag.
+        /// </summary>
+        public static bool EnteredFinalBeforeStorm(FleetAircraft aircraft, SimulationTime now,
+            Func<SimulationTime, WeatherKind> weatherAt = null)
+        {
+            if (aircraft == null || aircraft.Type.IsRotorcraft)
+                return false;
+            if (aircraft.State == FleetState.HoldingForLanding)
+                return true;
+            if (aircraft.State != FleetState.Inbound || !aircraft.StateEndsAt.HasValue)
+                return false;
+            if (aircraft.ArrivalCommittedBeforeStorm) return true;
+            var speed = CircuitProfile.Knots(AircraftPerformance.For(aircraft.Type).ApproachKnots);
+            var entrySeconds = Math.Max(aircraft.StateStartedAt.ElapsedSeconds,
+                aircraft.StateEndsAt.Value.ElapsedSeconds - (long)Math.Ceiling(ExtendedFinalMetres / speed));
+            return entrySeconds <= now.ElapsedSeconds
+                && (weatherAt ?? Weather.At)(new SimulationTime(entrySeconds)) != WeatherKind.Storm;
+        }
+
         /// <summary>
         /// Longest an arrival may be established on final without a landing clearance. About the time to fly
         /// the last ~8 NM at reference speed; a stabilised approach is flown from ~1000 ft (PANS-OPS), so an

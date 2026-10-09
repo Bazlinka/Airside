@@ -121,6 +121,15 @@ namespace Airside.Presentation
             var ground = weather.FogDensity * Lerp(1.3f, 1f, daylight);
             var lift = Smooth(LowCameraMetres, HighCameraMetres, cameraHeightMetres);
             var density = ground * Lerp(1f, HighCameraFogShare, lift);
+            if (foggy > 0f)
+            {
+                var breakout = Smooth(90f, 300f, cameraHeightMetres) * foggy;
+                var overhead = Rgb.Lerp(ClearDay, OvercastDay, Smooth(0.3f, 0.9f, cover));
+                sky = Rgb.Lerp(sky, Rgb.Lerp(night, overhead, daylight), breakout);
+                fog = Rgb.Lerp(fog, sky, breakout);
+                // Depth-integrated ground fog remains below the observer; don't whiten the whole sky.
+                density = Lerp(density, WeatherLook.For(WeatherKind.Clear).FogDensity, breakout);
+            }
 
             var fogMist = Smooth(0.35f, 0.7f, visibilityLoss);
             var rainMist = Clamp01(weather.Precipitation) * 0.35f;

@@ -114,7 +114,6 @@ namespace Airside.Presentation
         // decides *when*, this only decides how it looks/sounds.
         private float _lightningFlashAt = float.NegativeInfinity;
         private float _lightningDistance01;
-        private float _thunderPlayAt = float.PositiveInfinity;
         private AudioSource _uiAudio;
         private AudioClip _uiClickClip;
         private readonly Dictionary<string, AircraftPhase> _previousPhases = new Dictionary<string, AircraftPhase>();
@@ -207,7 +206,7 @@ namespace Airside.Presentation
         // force noon while debugging lighting (was pinned through the 24 h day cutover).
         private static readonly bool PinDaylightPresentation =
             AirsideBareField.HasLaunchFlag("-airsidePinDaylight");
-        private static readonly TimeSpan? ReviewLocalTime =
+        private static TimeSpan? ReviewLocalTime =
             DaylightPresentation.ReviewLocalTime(Environment.GetCommandLineArgs());
         // Mutable so multi-shot review soaks can switch clear→storm between PNGs.
         private static WeatherKind? ReviewWeather = ReviewWeatherOverride(Environment.GetCommandLineArgs());
@@ -223,24 +222,23 @@ namespace Airside.Presentation
 
         /// <summary>Sky over the field: the demo circuit's weather, or the airline clock's in airline mode.</summary>
         private WeatherKind CurrentWeather => ReviewWeather
-            ?? (LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Kind
-                : FleetMode ? Weather.At(_clock.Now) : _simulation.CurrentWeather);
+            ?? (FleetMode ? _operations.WeatherAt(_clock.Now)
+                : LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Kind : _simulation.CurrentWeather);
 
-        private WeatherLook CurrentWeatherLook => ReviewWeather.HasValue
+        private WeatherLook TargetWeatherLook => ReviewWeather.HasValue
             ? WeatherLook.For(ReviewWeather.Value)
-            : LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Look
-            // ADR 0143: eased between hours so the sky never snaps.
-            : FleetMode ? Weather.LookAt(_clock.Now) : WeatherLook.For(CurrentWeather);
+            : FleetMode ? _operations.WeatherTimeline.TryAt(_clock.Now, out var observed)
+                ? observed.Look : WeatherAppearance.Forecast(_clock.Now)
+            : LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Look : WeatherLook.For(CurrentWeather);
 
         /// <summary>This frame's sky, fog, mist and cloud layers (ADR 0143).</summary>
         private AtmosphereLook _atmosphere;
 
         private static Color ToColor(Rgb rgb) => new(rgb.R, rgb.G, rgb.B);
 
-        /// <summary>Actual Adelaide wind for cloth/weather motion; never runway selection.</summary>
-        private SurfaceWind PresentationWind => LiveWeatherHealthy
-            ? _liveWeatherSnapshot.Value.Wind
-            : _operations != null ? _operations.Wind : RunwayWeather.At(AirlineClock.Default, _clock.Now);
+        /// <summary>Cloth, weather motion and airport rules read the same recorded wind.</summary>
+        private SurfaceWind PresentationWind => FleetMode ? _operations.WindAt(_clock.Now)
+            : LiveWeatherHealthy ? _liveWeatherSnapshot.Value.Wind : RunwayWeather.At(AirlineClock.Default, _clock.Now);
 
         private float PresentationDaylight =>
             DaylightPresentation.Resolve(PinDaylightPresentation, PresentationCelestial.Daylight);
@@ -322,6 +320,13 @@ namespace Airside.Presentation
                 return;
             }
 
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), AgentGameplayFlag) >= 0 && !SoakMode)
+            {
+                Debug.LogError("[Airside agent] isolated soak mode required");
+                enabled = false;
+                Application.Quit(2);
+                return;
+            }
             _active = this;
             if (AircraftAudioReview.TryStart(gameObject))
             {
@@ -339,6 +344,7 @@ namespace Airside.Presentation
             _simulation = new AirportSimulation(_clock, new SeededRandomSource(24031996), new ReservationTable());
             _preciseTime = _clock.Now.ElapsedSeconds;
 
+            AirsideDisplay.EnsureNativeResolution();
             BuildLightingAndCamera();
             ApplyMasterMute();
             // The title screen opens first; the camera glide plays when the player continues.
@@ -554,6 +560,7 @@ namespace Airside.Presentation
 
         private void OnDestroy()
         {
+            Application.logMessageReceived -= RecordAgentRuntimeError;
             ExitOutstationView(false);
             ReleaseCockpitAirflow();
             if (_cockpitInterior != null)
@@ -561,14 +568,18 @@ namespace Airside.Presentation
                 _cockpitInterior.Leave();
                 Destroy(_cockpitInterior.gameObject);
             }
-            _cameraController?.EndCockpit();
+            // Teardown can destroy the camera controller first; `?.` does not see a destroyed Unity object,
+            // so EndCockpit would read its transform and throw.
+            if (_cameraController != null) _cameraController.EndCockpit();
             ResetFlightWorld();
+            if (_stormBolt != null) Destroy(_stormBolt.sharedMaterial);
             if (_flightTerrain != null) Destroy(_flightTerrain.gameObject);
             DisposeSoakRecorders();
             if (_active == this)
                 _active = null;
             if (_miniMapTexture != null)
                 Destroy(_miniMapTexture);
+            DisposeFlightMap();
         }
 
         private void Update()
@@ -603,11 +614,12 @@ namespace Airside.Presentation
                 // it must be asked exactly once per second — asking every frame would re-ask
                 // the same answer for as long as that second stays current and never notice
                 // the edge, and a big time-scale jump must never re-fire every second it skips.
-                if (Lightning.StrikesAt(_clock.Now))
+                if (Lightning.StrikesAt(_clock.Now, CurrentWeather == WeatherKind.Storm))
                 {
                     _lightningDistance01 = Lightning.DistanceFor(_clock.Now);
                     _lightningFlashAt = Time.unscaledTime;
-                    _thunderPlayAt = Time.unscaledTime + Lightning.ThunderDelaySeconds(_lightningDistance01);
+                    _stormStrikePending = true;
+                    _stormStrikeSeed = (int)(_clock.Now.ElapsedSeconds % int.MaxValue);
                 }
             }
 
@@ -620,6 +632,7 @@ namespace Airside.Presentation
             UpdateAircraftVisual();
             UpdateOutstationView();
             UpdateCockpitView();
+            UpdateTowerView();
             UpdateFlightViewReview();
             TraceFlightJourneyReview();
             if (SoakMode)
@@ -644,6 +657,7 @@ namespace Airside.Presentation
             UpdateTouchdownSmoke();
             UpdateWheelSmoke();
             UpdateCloudDrift();
+            UpdateStormLightning();
             UpdateAtmosphereLayers();
             if (AirportPresentationVisible) UpdateBirdFlock();
             UpdateHangarDoor();
@@ -881,11 +895,10 @@ namespace Airside.Presentation
         private void ReadSimulationControls()
         {
             var keyboard = Keyboard.current;
-            if (keyboard == null)
-                return;
-
             // Any key or click during the launch intro skips it and does nothing else.
             if (ReadIntroSkip(keyboard))
+                return;
+            if (keyboard == null)
                 return;
 
             if (keyboard.escapeKey.wasPressedThisFrame)
@@ -904,6 +917,7 @@ namespace Airside.Presentation
                 }
 
                 if (WatchingOutstation) { ExitOutstationView(true); return; }
+                if (InTower) { ExitTower(); return; }
                 if (InCockpit)
                 {
                     ExitCockpit(true);
@@ -928,19 +942,26 @@ namespace Airside.Presentation
             if (_menuOpen)
                 return;
 
+            // A focused text field (the airline rename box) owns every other key.
+            // (The title screen's own name field is handled by ReadSplashKeys, so it is left alone.)
+            if (!AirlineModalOpen && GUIUtility.keyboardControl != 0)
+                return;
+
             // Typing the airline name must not follow, reset the view or mute.
             if (WatchingOutstation && keyboard.hKey.wasPressedThisFrame)
             {
                 ExitOutstationView(true);
                 return;
             }
-            if (!InCockpit && !WatchingOutstation && ReadAirlineControls(keyboard))
+            if (!InCockpit && !InTower && !WatchingOutstation && ReadAirlineControls(keyboard))
                 return;
 
             if (keyboard.fKey.wasPressedThisFrame)
                 ToggleFollow();
             if (keyboard.rKey.wasPressedThisFrame)
                 ResetView();
+            if (InCockpit && keyboard.nKey.wasPressedThisFrame)
+                ToggleFlightMap();
             if (keyboard.mKey.wasPressedThisFrame)
             {
                 // Muting used to be silent in both senses: nothing on screen said the
@@ -965,8 +986,6 @@ namespace Airside.Presentation
         {
             var settings = AirsideSettings.Load();
             _audioMuted = !settings.SoundOn;
-            _fieldTagsVisible = settings.FieldTags;
-            _miniMapVisible = settings.MiniMap;
             ApplyMasterMute();
         }
 
@@ -974,8 +993,8 @@ namespace Airside.Presentation
         {
             var settings = AirsideSettings.Current;
             settings.SoundOn = !_audioMuted;
-            settings.FieldTags = _fieldTagsVisible;
-            settings.MiniMap = _miniMapVisible;
+            settings.FieldTags = settings.Hud.Shows(HudView.Overview, HudElement.AircraftLabels);
+            settings.MiniMap = settings.Hud.Shows(HudView.Overview, HudElement.AirportMap);
             settings.Save();
         }
 
@@ -1069,14 +1088,20 @@ namespace Airside.Presentation
             // Follow / Overview live on the circuit HUD only. The airline overview
             // uses the selected-aircraft card and Esc/R instead (ADR 0053). The
             // live speed / altitude / heading strip stays up in both modes.
-            if (!AirlineModalOpen && !_menuOpen && !InCockpit && !WatchingOutstation)
+            if (!AirlineModalOpen && !_menuOpen && !InCockpit && !InTower && !WatchingOutstation)
             {
+                // Inert behind a celebration card (modal; see DrawAirlineHud).
+                var barWasEnabled = GUI.enabled;
+                if (CelebrationOpen)
+                    GUI.enabled = false;
                 DrawSpeedReadout(layout, panel);
                 if (!FleetMode)
                     DrawControlBar(layout, button);
+                GUI.enabled = barWasEnabled;
             }
             if (WatchingOutstation && !_menuOpen) DrawOutstationViewHud(panel, title, button);
             else if (InCockpit && !_menuOpen) DrawCockpitHud(layout, panel, button);
+            else if (InTower && !_menuOpen) DrawTowerHud(layout, panel, title, button);
             else DrawAirlineHud(layout, panel, title, button);
             DrawParafieldWatchPanel(layout);
             DrawMapCredit(layout);
@@ -1307,8 +1332,7 @@ namespace Airside.Presentation
             row.y += 52f;
             if (GUI.Button(row, "Options", button))
             {
-                _optionsOpen = true;
-                PlayUiClick();
+                OpenOptionsMenu();
             }
 
             row.y += 52f;
@@ -1371,11 +1395,49 @@ namespace Airside.Presentation
         /// The raw value jitters frame to frame because it is a difference of two poses
         /// that are themselves being damped, which made the wings twitch on every turn.
         /// </summary>
+        private struct TurnSample { public float X, Z, Yaw, YawRate, Speed; public double Time; public bool Valid; }
+        private readonly Dictionary<string, TurnSample> _turnSamples = new();
+
+        /// <summary>Coordinated-turn bank from true ground speed and heading rate per simulated second.</summary>
+        private float CoordinatedBank(string aircraftId, Transform view, Quaternion heading)
+        {
+            _turnSamples.TryGetValue(aircraftId, out var s);
+            var forward = heading * Vector3.forward;
+            var yaw = CoordinatedTurn.YawDegrees(forward.x, forward.z);
+            var x = (float)(view.position.x + _flightOriginX);
+            var z = (float)(view.position.z + _flightOriginZ);
+            var dt = _preciseTime - s.Time;
+            if (!s.Valid || dt < 0 || dt > 30)
+                s = new TurnSample { X = x, Z = z, Yaw = yaw, Time = _preciseTime, Valid = true };
+            else if (dt > 1e-4)
+            {
+                var step = Mathf.Sqrt((x - s.X) * (x - s.X) + (z - s.Z) * (z - s.Z));
+                var speed = (float)(step / dt);
+                if (speed > CoordinatedTurn.MaxPlausibleMetresPerSecond)
+                    s = new TurnSample { X = x, Z = z, Yaw = yaw, Time = _preciseTime, Valid = true };
+                else
+                {
+                    var rate = (float)(CoordinatedTurn.DeltaAngle(s.Yaw, yaw) / dt);
+                    var k = AirsideFlightPath.DampFactor(4f, PresentationDeltaTime);
+                    s.Speed = Mathf.Lerp(s.Speed, speed, k);
+                    s.YawRate = Mathf.Lerp(s.YawRate, Mathf.Clamp(rate, -12f, 12f), k);
+                    s.X = x; s.Z = z; s.Yaw = yaw; s.Time = _preciseTime;
+                }
+            }
+            _turnSamples[aircraftId] = s;
+            return CoordinatedTurn.BankDegrees(s.Speed, s.YawRate);
+        }
+
         private float SmoothedBankDegrees(string aircraftId, Transform view, Quaternion heading, AircraftPhase phase,
             float commandedBank = 0f)
         {
             var visual = TurnBankDegrees(view, heading, phase);
-            var target = Mathf.Abs(commandedBank) > 0.4f ? commandedBank : visual;
+            // Airborne: bank for the turn the path is actually making (coordinated turn), not for how far the
+            // damped pose lags it. The old yaw-error bank was capped low, jittered, and did nothing on en-route legs.
+            var airborne = !(phase is AircraftPhase.TaxiIn or AircraftPhase.TaxiOut or AircraftPhase.Pushback
+                or AircraftPhase.Landing or AircraftPhase.AtStand);
+            var physical = airborne ? CoordinatedBank(aircraftId, view, heading) : 0f;
+            var target = Mathf.Abs(commandedBank) > 0.4f ? commandedBank : airborne ? physical : visual;
             if (!_bankDegrees.TryGetValue(aircraftId, out var current))
                 current = target;
 
@@ -1416,10 +1478,11 @@ namespace Airside.Presentation
             var weather = CurrentWeather;
             var raining = weather == WeatherKind.Rain || weather == WeatherKind.Storm;
             var storm = weather == WeatherKind.Storm;
-            var windTarget = _audioMuted ? 0f : AmbientWindVolume * AmbientDuck;
-            var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume) * AmbientDuck;
+            var windTarget = _audioMuted ? 0f : AmbientWindVolume * AmbientDuck * ExteriorWeatherGain;
+            var rainTarget = _audioMuted || !raining ? 0f : (storm ? AmbientStormVolume : AmbientRainVolume) * AmbientDuck * ExteriorWeatherGain
+                * CockpitWeatherEnvelope.RainAtHeight(ObserverHeight, _stormDepth);
             var coastTarget = _audioMuted || AirsideFocusMode.BareWorld ? 0f
-                : AmbientCoastVolume * (storm ? 1.45f : raining ? 1.2f : 1f) * AmbientDuck;
+                : AmbientCoastVolume * (storm ? 1.45f : raining ? 1.2f : 1f) * AmbientDuck * CoastAudioGain;
             // Slight day/night wind variation (presentation only).
             if (!_audioMuted)
                 windTarget *= Mathf.Lerp(0.75f, 1.1f, 1f - PresentationDaylight);
@@ -1434,20 +1497,17 @@ namespace Airside.Presentation
                 _ambientCoastAudio.pitch = 0.92f + 0.08f * Mathf.PerlinNoise(Time.unscaledTime * 0.05f, 1.7f);
             }
 
-            // ADR 0059: the strike already fixed its own moment and delay (Update()); this
-            // only fires the one-shot once real time actually reaches it, so pausing or a
-            // slow frame delays thunder along with everything else instead of it arriving
-            // early. The clip itself is pre-warmed in EnsureAmbientClips — synthesising it
-            // here, on the first storm's first strike, cost a synchronous ~53k-sample
-            // generation loop at exactly the moment the clap needed to play on time.
-            if (_thunderAudio != null && Time.unscaledTime >= _thunderPlayAt)
+            // Independent delayed claps from visible strikes; consume even while muted.
+            for (var i = _stormThunder.Count - 1; i >= 0; i--)
             {
-                _thunderPlayAt = float.PositiveInfinity;
-                if (!_audioMuted && _thunderClip != null)
+                var clap = _stormThunder[i];
+                if (Time.unscaledTime < clap.At) continue;
+                _stormThunder.RemoveAt(i);
+                if (_thunderAudio != null && !_audioMuted && _thunderClip != null && ExteriorWeatherGain > 0.05f)
                 {
-                    var volume = Mathf.Lerp(0.55f, 0.16f, _lightningDistance01);
-                    _thunderAudio.pitch = Mathf.Lerp(0.92f, 1.05f, 1f - _lightningDistance01);
-                    _thunderAudio.PlayOneShot(_thunderClip, volume);
+                    var volume = Mathf.Lerp(0.55f, 0.16f, clap.Distance);
+                    _thunderAudio.pitch = Mathf.Lerp(0.92f, 1.05f, 1f - clap.Distance);
+                    _thunderAudio.PlayOneShot(_thunderClip, volume * ExteriorWeatherGain);
                 }
             }
         }
@@ -3518,7 +3578,7 @@ namespace Airside.Presentation
         /// Aircraft glass seen from outside by day: near-black and neutral, with the smooth
         /// glazing material supplying the sky reflection. A blue-teal tint read as a toy.
         /// </summary>
-        private static readonly Color AircraftGlass = new(0.06f, 0.07f, 0.08f, 0.72f);
+        private static readonly Color AircraftGlass = new(0.06f, 0.07f, 0.08f, 0.96f);
 
         /// <summary>Seals, the painted flight-deck surround and windscreen posts.</summary>
         private static readonly Color AircraftGlazingSurround = new(0.035f, 0.037f, 0.04f);
@@ -4121,6 +4181,8 @@ namespace Airside.Presentation
             public readonly float LightingClockOffset;
             public Renderer Lamp;
             public bool LampResolved;
+            public Renderer Flare;
+            public Transform FlarePivot;
 
             // Landing-gear articulation (struts, trucks and belly doors). Retract is the part's own
             // 0 (down and locked) .. 1 (up and locked) travel; the pass slews it toward the phase's target.
@@ -4129,6 +4191,8 @@ namespace Airside.Presentation
             public Quaternion Rest = Quaternion.identity;
             public float Retract;
             public bool RetractSeeded;
+            /// <summary>Retract units per second when lowering: slow on approach, quick otherwise.</summary>
+            public float ExtendRate = 0.35f;
             public float SteerDegrees;
             /// <summary>Belly doors: -1 when hinged on the left edge, +1 on the right (free edge swings down).</summary>
             public float DoorSign = -1f;

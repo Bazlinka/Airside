@@ -107,7 +107,7 @@ namespace Airside.Presentation
 
             var done = career.ActiveContract.CompletedRotations;
             var required = definition.RequiredRotations;
-            ActiveProgressText = $"{done} of {required} flights done";
+            ActiveProgressText = $"{done} of {required} flight{(required == 1 ? "" : "s")} done";
             ActiveProgress01 = required <= 0 ? 0f : Clamp01(done / (float)required);
             ActiveProgressPercent = $"{(int)(ActiveProgress01 * 100f)}%";
 
@@ -123,7 +123,9 @@ namespace Airside.Presentation
             if (operations.ContractExpiresAt() is { } due)
             {
                 var left = Math.Max(0, due.ElapsedSeconds - now.ElapsedSeconds);
-                _activeTerms.Add($"Due in {RouteMapWorkspaceModel.Duration(left)}. Miss it and lose {definition.ReliabilityLossOnCancel} reliability");
+                _activeTerms.Add($"Due in {RouteMapWorkspaceModel.Duration(left)}."
+                                 + (definition.ReliabilityLossOnCancel > 0
+                                     ? $" Miss it and lose {definition.ReliabilityLossOnCancel} reliability" : string.Empty));
             }
 
 
@@ -319,6 +321,10 @@ namespace Airside.Presentation
                 // Too narrow for two columns: stack the active contract above the offers.
                 var wanted = CaptionHeight + 8f + ActiveCardHeightFor(activeTerms);
                 var top = wanted > body.Height * 0.62f ? body.Height * 0.62f : wanted;
+                // Always leave room for one offer card, or compact windows show no offers at all.
+                var offerRoom = body.Height - 12f - (CaptionHeight + 8f + OfferHeight);
+                if (top > offerRoom)
+                    top = offerRoom > 0f ? offerRoom : 0f;
                 var stackedActive = new HudBox(body.X, body.Y, body.Width, top);
                 var stackedOffers = new HudBox(body.X, body.Y + top + 12f, body.Width,
                     body.Height - top - 12f);
@@ -368,14 +374,14 @@ namespace Airside.Presentation
             if (!model.HasActive)
             {
                 into.Fill(card.WithHeight(96f), HudTone.Default, 0.03f);
-                into.Text(card.Inset(16f, 18f, 16f, 0f).WithHeight(44f),
+                into.Text(card.Inset(16f, 18f, 16f, 0f).WithHeight(60f),
                     "No contract yet. Take one from the offers below. It pays a bonus on top of each flight's pay.", 13f, HudTone.Muted, HudTextStyle.Wrap);
                 return;
             }
 
             var wanted = ContractsWorkspaceLayout.ActiveCardHeightFor(model.ActiveTerms.Count);
             var body = card.WithHeight(Math.Min(card.Height, wanted));
-            into.Fill(body, HudTone.Default, 0.05f);
+            into.Card(body, 1f);
             into.Outline(body, HudTone.Caution, 0.7f);
 
             var x = body.X + 16f;
@@ -487,8 +493,10 @@ namespace Airside.Presentation
                 var definition = offer.Definition;
                 var card = layout.OfferCard(i, shown);
                 var highlighted = offer.CanAccept && definition.Id == highlightedContractId;
-                into.Fill(card, highlighted ? HudTone.Accent : HudTone.Default, highlighted ? 0.22f : 0.04f);
-                into.Outline(card, highlighted ? HudTone.Accent : HudTone.Muted, highlighted ? 0.9f : 0.25f);
+                into.Card(card, offer.CanAccept ? 0.95f : 0.6f);
+                if (highlighted)
+                    into.Fill(card, HudTone.Accent, 0.14f);
+                into.Outline(card, highlighted ? HudTone.Accent : HudTone.Muted, highlighted ? 0.9f : 0.18f);
 
                 var reason = shared == null ? offer.LockReason : string.Empty;
                 var contentHeight = reason.Length > 0 ? 70f : 52f;
@@ -517,7 +525,7 @@ namespace Airside.Presentation
                 var rows = 1;
                 foreach (var chip in Chips(definition))
                 {
-                    var chipWidth = HudShell.Measure(chip, 10f, 0.6f) + 22f;
+                    var chipWidth = HudShell.Measure(chip, 10f, 0.3f) + 16f;
                     if (chipX + chipWidth > textX + textWidth)
                     {
                         // A narrow card (side sheet, ADR 0135) takes a second row rather than drop a term.
@@ -545,9 +553,10 @@ namespace Airside.Presentation
                 // The money, big, over the button.
                 var total = definition.PaymentPerRotation * definition.RequiredRotations + definition.CompletionReward;
                 var right = new HudBox(card.Right - rightWidth - 16f, contentY - 4f, rightWidth, 26f);
-                into.Text(right, $"${total:N0}", 20f, offer.CanAccept ? HudTone.Positive : HudTone.Muted,
+                into.Text(right, $"${total:N0}", 22f, offer.CanAccept ? HudTone.Positive : HudTone.Muted,
                     HudTextStyle.Bold, HudAlign.Right);
-                into.Button(new HudBox(right.X, right.Y + 30f, rightWidth, 30f), "ACCEPT",
+                // The first click only arms a card (AcceptContractFromHud), so say what the next click does.
+                into.Button(new HudBox(right.X, right.Y + 30f, rightWidth, 30f), highlighted ? "CONFIRM" : "ACCEPT",
                     HudAction.Accept(definition.Id),
                     highlighted ? HudButtonStyle.Primary : HudButtonStyle.Secondary, offer.CanAccept);
                 into.Hotspot(card, HudAction.Accept(definition.Id));

@@ -48,9 +48,9 @@ def main():
 
     image = np.asarray(Image.open(SATELLITE).convert("RGB"), dtype=np.float64) / 255.0
     h, w, _ = image.shape
-    # The project renders in Gamma colour space: the shader uses texel values as stored, while the
-    # far ring's plain vertex colour is Color.linear of its sRGB value.
-    linear = image * TINT
+    # Linear rendering decodes the sRGB satellite texture and Color material tint.
+    # Mesh vertex colours already contain linear RGB; do not decode those twice.
+    linear = srgb_to_linear(image) * srgb_to_linear(TINT)
     cells, spacing, origin = load_landcover()
     count = cells.shape[0]
 

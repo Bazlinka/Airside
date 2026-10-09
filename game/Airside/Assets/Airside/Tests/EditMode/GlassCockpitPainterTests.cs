@@ -12,6 +12,21 @@ namespace Airside.Tests
     /// </summary>
     public sealed class GlassCockpitPainterTests
     {
+        [TestCase(800f, 600f, false)]
+        [TestCase(800f, 600f, true)]
+        [TestCase(1024f, 640f, true)]
+        public void ReturningTitleKeepsActionsAndRecoveryWarningInsideItsCard(float width, float height, bool recovered)
+        {
+            var model = Model(SplashStep.Menu, true);
+            if (recovered) model.SaveError = "Recovered your previous save. Continue to resume that version.";
+            var layout = SplashLayout.Create(width, height, model.Step, true, recovered);
+            var draw = new HudDrawList();
+            SplashPainter.Paint(draw, layout, model);
+            foreach (var action in draw.Commands.Where(c => c.Kind == HudDrawKind.Button))
+                Assert.That(action.Box.Bottom, Is.LessThanOrEqualTo(layout.Card.Bottom));
+            Assert.That(layout.Card.Bottom, Is.LessThan(layout.Footer.Y));
+            Assert.That(draw.Commands.Any(c => c.Text == model.SaveError && c.Kind == HudDrawKind.Text), Is.EqualTo(recovered));
+        }
         private static void AssertInside(HudDrawList draw, HudBox area, string label)
         {
             foreach (var c in draw.Commands)

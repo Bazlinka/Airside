@@ -79,8 +79,10 @@ namespace Airside.Simulation
             "MEL" => 250, "CBR" => 130, "SYD" => 260, "HBA" => 110,
             "BNE" => 200, "OOL" => 130, "ASP" => 75, "PER" => 170,
             "CNS" => 125, "DRW" => 95, "AKL" => 190, "CHC" => 140,
-            "NAN" => 90, "DPS" => 200, "SIN" => 300, "KUL" => 180,
+            "NAN" => 90, "DPS" => 150, "SIN" => 300, "KUL" => 180,
             "HKG" => 220, "DOH" => 170, "DXB" => 200,
+            "NOU" => 70, "POM" => 70, "CGK" => 150, "BKK" => 190, "SGN" => 120, "MNL" => 130,
+            "PVG" => 160, "ICN" => 170, "KIX" => 150, "NRT" => 200, "HNL" => 120, "LAX" => 170,
             _ => 60
         };
     }

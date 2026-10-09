@@ -29,15 +29,23 @@ Most of its state lives in `AirsidePrototype.cs` and `AirsidePrototype.Airline.c
   .NET harness would accept them; `scripts/check-unity-nunit.sh` (CI) now catches both.
 - **The headless harness skips every test that touches `UnityEngine`** (and Presentation files that need it). After adding a Presentation file or a test, run
   `python3 scripts/update-harness.py` (CI fails if the list is stale). A green headless run says nothing about those tests.
-- **The project renders in Gamma colour space**: colours that the shader reads are used as stored, not converted.
+- **The project renders in Linear colour space**: colour textures and Color material properties use sRGB authoring; normals/masks stay linear. Mesh vertex palettes are already linear: do not convert them twice.
 - Time comes from the injected clock, random choices from a seeded source; frame rate must never change simulation outcomes.
 - Presentation-only systems must keep a safe fallback (no network, missing file, missing asset) — see how the land-cover and DEM loaders return
   `null`/`false` instead of throwing.
 
-## Checks (run what you can, say what you could not)
+## Checks
 
-1. `scripts/test-domain.sh` — headless suite + compile check against Unity's NUnit 3.5 (needs the .NET 8 SDK). Any machine.
-2. `scripts/test-unity.sh` — the source of truth (Mac with Unity 6.3 LTS). Cloud agents cannot run it: state "unverified in Unity" and list what to check.
-3. `scripts/audit-unity-assets.py` — metadata and art mirrors.
+Follow the repo-wide **Testing and merge policy** in `../../AGENTS.md`. These are
+available tools, not a mandatory checklist:
+
+- `scripts/test-quick.py --changed`: optional focused checks when useful.
+- `scripts/test-domain.sh`: full headless suite, only when Bailey requests it.
+- `scripts/test-unity.sh`: full native suite, only when Bailey requests it.
+- `scripts/audit-unity-assets.py`: quick metadata/mirror check when assets change.
+
+Use quick syntax/compile checks when readily available. Report unverified Unity
+behaviour. Agents automatically choose necessary gameplay/native checks and build once
+if needed under the root policy; broad tests are not a default merge gate.
 
 New code goes in the matching folder; if nothing fits, add the folder and note it in `../../AGENTS.md`.

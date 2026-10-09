@@ -16,10 +16,12 @@ namespace Airside.Presentation
         private const float HorizonBandRadius = 14_000f;
         private const int HorizonBandSegments = 24;
         private Renderer _groundFog;
+        private readonly Dictionary<int, float> _cloudRestHeights = new();
         private bool _weatherVolumeReported;
+        private Vector3 _weatherAdvection;
 
         private Transform _atmosphereRoot;
-        private Renderer _stratusSheet;
+        private Renderer _stratusSheet, _stratusTop;
         private readonly List<Renderer> _horizonBand = new();
         private readonly Dictionary<int, Color> _cloudTints = new();
         private readonly Dictionary<int, Renderer[]> _cloudRenderers = new();
@@ -68,7 +70,7 @@ namespace Airside.Presentation
                 BuildAtmosphereLayers();
             if (_atmosphereRoot == null || _mainCamera == null)
                 return;
-            if (!AirsideSettings.Current.WeatherLayers)
+            if (!WorldWeatherVisible)
             {
                 HideAtmosphereLayers();
                 return;
@@ -77,6 +79,8 @@ namespace Airside.Presentation
             var flow = WeatherWindFlow.ShaderGlobal(PresentationWind);
             Shader.SetGlobalVector("_AirsideWeatherWind", new Vector4(flow.X, 0f, flow.Z, 0f));
             Shader.SetGlobalFloat("_AirsideWeatherTime", Time.unscaledTime);
+            _weatherAdvection += new Vector3(flow.X, 0f, flow.Z) * Time.unscaledDeltaTime;
+            Shader.SetGlobalVector("_AirsideWeatherOffset", _weatherAdvection);
             Shader.SetGlobalVector("_AirsideWeatherRange", new Vector4(
                 WeatherCoverage.AtmosphereFadeStart, WeatherCoverage.AtmosphereDistance, 0f, 0f));
             var sky = ToColor(_atmosphere.Sky);
@@ -88,11 +92,22 @@ namespace Airside.Presentation
             if (_stratusSheet != null)
             {
                 var alpha = _atmosphere.Stratus;
-                _stratusSheet.enabled = alpha > 0.01f;
+                _stratusSheet.enabled = alpha > 0.01f && camera.y < AtmosphereLook.StratusHeightMetres + 40f;
                 CameraShellAnchor.Place(_mainCamera, _stratusSheet.transform,
                     new Vector3(0f, AtmosphereLook.StratusHeightMetres, 0f), absoluteHeight: true);
                 var under = Color.Lerp(sky * 0.85f, sky, 0.5f);
                 SetLayerColour(_stratusSheet, new Color(under.r, under.g, under.b, alpha));
+            }
+
+            // A separate upper surface remains visible when looking down after breakout.
+            if (_stratusTop != null)
+            {
+                var alpha = _atmosphere.Stratus;
+                _stratusTop.enabled = alpha > 0.01f && camera.y > Mathf.Lerp(1450f, CockpitWeatherEnvelope.StormTopMetres - 250f, _stormDepth) - 40f;
+                var top = Mathf.Lerp(1450f, CockpitWeatherEnvelope.StormTopMetres - 250f, _stormDepth);
+                CameraShellAnchor.Place(_mainCamera, _stratusTop.transform, new Vector3(0f, top, 0f), absoluteHeight: true);
+                var topTint = Color.Lerp(new Color(0.28f, 0.32f, 0.42f), new Color(0.92f, 0.94f, 0.98f), daylight);
+                SetLayerColour(_stratusTop, new Color(topTint.r, topTint.g, topTint.b, alpha));
             }
 
             // Horizon band: a ring round the camera, tinted from the sky.
@@ -143,12 +158,97 @@ namespace Airside.Presentation
 
         }
 
+        private LineRenderer _stormBolt;
+        private bool _stormStrikePending;
+        private int _stormStrikeSeed;
+        private readonly List<(float At, float Distance)> _stormThunder = new();
+        private Vector3 _stormStrikePosition;
+
+        private void ShiftStormLightning(Vector3 delta)
+        {
+            _stormStrikePosition += delta;
+            if (_stormBolt == null) return;
+            for (var i = 0; i < _stormBolt.positionCount; i++)
+                _stormBolt.SetPosition(i, _stormBolt.GetPosition(i) + delta);
+        }
+
+        private void UpdateStormLightning()
+        {
+            if (!WorldWeatherVisible)
+            {
+                _stormStrikePending = false;
+                _stormThunder.Clear();
+                if (_stormBolt != null) _stormBolt.enabled = false;
+                if (_thunderAudio != null) _thunderAudio.Stop();
+                Shader.SetGlobalFloat("_AirsideLightningFlash", 0f);
+                return;
+            }
+            var flash = CurrentWeather == WeatherKind.Storm && AirsideSettings.Current.WeatherLayers
+                ? LightningFlashEnvelope(Time.unscaledTime - _lightningFlashAt) : 0f;
+            if (_stormStrikePending)
+            {
+                _stormStrikePending = false;
+                if (_cloudRoot != null && _cloudRoot.childCount > 0)
+                {
+                    var count = (_cloudRoot.childCount + 2) / 3;
+                    var index = (_stormStrikeSeed % count) * 3;
+                    var cloud = _cloudRoot.GetChild(index);
+                    _stormStrikePosition = cloud.position;
+                    // Most flashes stay inside the cloud. Occasional ground strikes show a brief channel.
+                    var groundStrike = _stormStrikeSeed % 4 == 0;
+                    var start = new Vector3(cloud.position.x, groundStrike ? 1800f : cloud.position.y, cloud.position.z);
+                    if (groundStrike) _stormStrikePosition = start;
+                    var end = groundStrike ? new Vector3(start.x + 240f, 0f, start.z - 180f)
+                        : start + new Vector3(650f, -550f, 300f);
+                    var strikeDistance = _mainCamera != null
+                        ? Vector3.Distance(_mainCamera.transform.position, start) : 2000f;
+                    _lightningDistance01 = Mathf.Clamp01(strikeDistance / 8000f);
+                    // Keep separate arrivals: a later flash must not cancel an earlier clap.
+                    if (_stormThunder.Count >= 8) _stormThunder.RemoveAt(0);
+                    _stormThunder.Add((Time.unscaledTime + Mathf.Clamp(strikeDistance / 343f, 0.3f, 30f),
+                        _lightningDistance01));
+                    if (_stormBolt == null)
+                    {
+                        var shader = Shader.Find("Universal Render Pipeline/Unlit");
+                        if (shader != null)
+                        {
+                            var bolt = new GameObject("Storm lightning");
+                            bolt.transform.SetParent(transform, false);
+                            _stormBolt = bolt.AddComponent<LineRenderer>();
+                            _stormBolt.sharedMaterial = new Material(shader) { name = "Airside lightning channel" };
+                            _stormBolt.sharedMaterial.SetColor("_BaseColor", new Color(3f, 3.2f, 3.8f));
+                            _stormBolt.useWorldSpace = true; _stormBolt.positionCount = 15;
+                            _stormBolt.widthMultiplier = groundStrike ? 2.2f : 4f;
+                            _stormBolt.shadowCastingMode = ShadowCastingMode.Off;
+                            _stormBolt.receiveShadows = false;
+                        }
+                    }
+                    if (_stormBolt != null)
+                    {
+                        var rng = new System.Random(_stormStrikeSeed);
+                        _stormBolt.widthMultiplier = groundStrike ? 2.2f : 4f;
+                        for (var i = 0; i < _stormBolt.positionCount; i++)
+                        {
+                            var t = (float)i / (_stormBolt.positionCount - 1);
+                            var jitter = Mathf.Sin(t * Mathf.PI) * 100f;
+                            _stormBolt.SetPosition(i, Vector3.Lerp(start, end, t) + new Vector3(
+                                ((float)rng.NextDouble() - 0.5f) * jitter, 0f, ((float)rng.NextDouble() - 0.5f) * jitter));
+                        }
+                    }
+                }
+            }
+            if (_stormBolt != null) _stormBolt.enabled = flash > 0.3f && CockpitAboveDeck < 0.95f;
+            Shader.SetGlobalVector("_AirsideLightningPosition", _stormStrikePosition);
+            Shader.SetGlobalFloat("_AirsideLightningFlash", flash);
+        }
+
         private void HideAtmosphereLayers()
         {
             if (_groundFog != null)
                 _groundFog.enabled = false;
             if (_stratusSheet != null)
                 _stratusSheet.enabled = false;
+            if (_stratusTop != null) _stratusTop.enabled = false;
             for (var i = 0; i < _horizonBand.Count; i++)
                 _horizonBand[i].enabled = false;
         }
@@ -172,6 +272,9 @@ namespace Airside.Presentation
                 ? new Material(ceilingShader) { name = "Airside rolling cloud ceiling" } : material;
             _stratusSheet = LayerQuad("Overcast sheet", ceilingMaterial, new Vector3(WeatherCoverage.AtmosphereDistance * 2f, WeatherCoverage.AtmosphereDistance * 2f, 1f));
             _stratusSheet.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            _stratusTop = LayerQuad("Cloud deck tops", ceilingMaterial,
+                new Vector3(WeatherCoverage.AtmosphereDistance * 2f, WeatherCoverage.AtmosphereDistance * 2f, 1f));
+            _stratusTop.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
             var width = 2f * Mathf.PI * HorizonBandRadius / HorizonBandSegments * 1.08f;
             for (var i = 0; i < HorizonBandSegments; i++)

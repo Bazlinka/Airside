@@ -43,5 +43,21 @@ namespace Airside.Tests
             Assert.That(CockpitWeatherEnvelope.RainAtHeight(1450f), Is.InRange(0f, 1f));
             Assert.That(CockpitWeatherEnvelope.RainAtHeight(1600f), Is.Zero);
         }
+        [Test] public void StormDoesNotBreakOutAtTheShallowOvercastTop()
+        {
+            Assert.That(CockpitWeatherEnvelope.AboveDeck(4000f, 0.95f, 1f), Is.Zero);
+            Assert.That(CockpitWeatherEnvelope.SkyCover(4000f, 0.95f, 1f), Is.EqualTo(0.95f));
+            Assert.That(CockpitWeatherEnvelope.AboveDeck(11000f, 0.95f, 1f), Is.EqualTo(1f));
+            Assert.That(CockpitWeatherEnvelope.RainAtHeight(2500f, 1f), Is.EqualTo(1f));
+            Assert.That(CockpitWeatherEnvelope.RainAtHeight(5000f, 1f), Is.Zero, "upper storm is cloud/ice, not liquid rain");
+        }
+
+        [Test] public void StormImmersionIsLocalToTheTowerAndAnvil()
+        {
+            Assert.That(CockpitWeatherEnvelope.StormBody(0f, 0f, 0f), Is.EqualTo(1f));
+            Assert.That(CockpitWeatherEnvelope.StormBody(0.08f, 0.32f, 0f), Is.EqualTo(1f));
+            Assert.That(CockpitWeatherEnvelope.StormBody(1f, 0f, 0f), Is.Zero);
+            Assert.That(CockpitWeatherEnvelope.StormBody(0f, 0.6f, 0f), Is.Zero);
+        }
     }
 }

@@ -79,6 +79,9 @@ Airside/
                              (Harness.Generated.props); CI fails if it is stale
     dotnet-harness/          csproj backing test-domain.sh; the file list is generated
     build-mac.sh             Local macOS application build
+    build-mac-notifications.sh
+                             Compiles the original universal Notification Centre bundle before Mac builds
+    native/                  Original platform bridge sources (macOS notifications); generated binaries are ignored
     capture-game.sh          Screenshot from the built game, unattended (--follow REG, --delay s);
                              keeps the display awake — an asleep display freezes the Unity player
   work/                      Local scratch, downloads, builds — git-ignored, never committed
@@ -86,6 +89,81 @@ Airside/
 
 New code goes in the matching folder above. If nothing fits, add the folder and
 note it here in the same commit.
+
+## Testing and merge policy — Bailey's standing instruction (updated 9 October 2026)
+
+Prioritise implementation and progress. Agents decide when gameplay checks are
+necessary and run them automatically; Bailey still chooses personal playtesting.
+This policy replaces earlier request-only gameplay testing and default full-suite
+requirements. Bailey's latest task instructions take precedence.
+
+- **Ordinary changes:** inspect the diff and use only quick checks relevant to the
+  change. Prefer a readily available syntax/compile check for changed code and a
+  small existing regression check when useful. Docs-only changes need no game tests.
+- **Choose necessary gameplay checks automatically:** use runtime evidence when
+  changes affect interaction/cameras, booking/cancellation, save restoration,
+  aircraft phases/visibility or rendered appearance, or when investigating a runtime
+  bug that compile/pure checks cannot resolve. Run the smallest relevant feature
+  selection or existing native review without asking again. Inspect actual captured
+  frames when appearance matters; PNG existence alone is not visual validation.
+- **Escalate only when warranted:** run the full agent gameplay profile/round trip
+  for changes spanning departure, flight, arrival or return-to-overview, or when
+  focused checks cannot resolve a concrete regression. The profile covers named
+  scenarios, not the entire game. Do not automatically run every feature, full
+  `test-domain.sh`/`test-unity.sh` suites, performance or long soak runs; those remain
+  on request. Do not add tests to mirror simple implementation or repeat unchanged
+  evidence.
+- **Build only for needed runtime evidence:** reuse a matching clean stamped build.
+  If needed checks have no current build, build once automatically, then reuse it;
+  no repeated permission required. Preserve another tool's/user's active Unity work
+  and personal saves. Do not install a runtime or launch Unity for a routine checklist.
+- **Keep checks bounded:** stop compile/setup checks after about 60 seconds if
+  stalled or needing lengthy setup; report unavailable verification and continue.
+  Necessary builds may continue while making meaningful progress. Gameplay scenarios
+  use the runner's explicit wall-clock timeout (90 s feature session, 600 s journey
+  defaults); do not let a hung process run indefinitely. Fix known new code errors
+  and attributable gameplay failures before merging; unavailable checks are not a
+  pass. Report the blocker and unverified scope.
+- **Merge completed authorised work into `main` by default:** use a narrow branch
+  and PR, push, resolve routine conflicts, then merge without asking Bailey again.
+  Completed PRs should be ready, not left as drafts awaiting routine permission.
+  Keep genuinely incomplete work on a pushed branch/draft with a clear handoff.
+- **CI:** respect checks/protections actually enforced by GitHub; do not disable
+  tests or bypass protection. Optional pending checks and confirmed pre-existing
+  failures do not require waiting or another approval. Investigate new failures
+  attributable to the change before merging. Report actual blockers plainly.
+- **Agent gameplay:** `scripts/agent-gameplay.py` is reserved for agent QA, hidden
+  from player controls. Agents select and run it automatically when warranted by the
+  rules above; use `--features` or, when justified, `--profile full`, with `--plan`
+  available to preview. It is not a blanket merge gate. See
+  `docs/testing/agent-gameplay/README.md` for coverage and private-save limits.
+- **Be honest:** state what was checked, skipped or unverified. A merge does not
+  establish a Unity compile, rendered playtest, packaged build or performance pass.
+  Preserve simulation, save compatibility and other tools' active work.
+
+## Reported-issue diagnostic workflow
+
+When Bailey reports a game issue, automatically investigate it in the real game:
+1. Record the symptom and expected behaviour. Inspect source/context to choose a
+   reproducible scenario; commit/push the scoped revision before native execution.
+2. Run `python3 scripts/diagnose-game.py --issue "<reported problem>"` (local Mac);
+   Linux agents automatically dispatch to the private Mac runner. `--remote` forces
+   that path. Use `--scenario <JSON>` for precise/custom steps and `--aircraft-type`
+   for the affected model. Do not substitute unrelated smoke checks for reproduction.
+3. Open relevant returned PNGs and read player logs, fleet/camera/weather state and
+   runtime errors. Determine reproduced/not reproduced/blocked; gather another probe
+   if evidence is insufficient. A successful capture is not a diagnosis or visual pass.
+4. Identify the cause, make the narrow fix, commit/push it, and rerun the identical
+   scenario on the fix revision. Inspect before/after evidence and relevant regressions.
+5. Report cause, fix, observed result and limits; keep evidence references in the PR
+   or testing record. If the Mac runner/licence is unavailable, report the real blocker
+   and request/run the diagnostic job; do not treat Linux as the end of investigation.
+   Do not invent a visual fix or a pass without evidence.
+
+The private Mac workflow is `agent-diagnostics.yml`; downloaded evidence is under
+`work/remote-diagnostics/`. Mac checkout/saves are isolated. The runner requires an
+awake logged-in Mac and authenticated repository access; it cannot run while offline.
+See `docs/testing/agent-gameplay/README.md`. No ordinary player control is added.
 
 ## Git workflow (all tools follow this)
 
@@ -95,11 +173,8 @@ note it here in the same commit.
    explicit, non-overlapping file boundaries. Never make simultaneous edits to the
    same system from two tools.
 3. **Keep commits narrow and reviewable** — one acceptance criterion per commit.
-4. **Run the checks** in `scripts/test-unity.sh` and confirm the project compiles
-   in Unity 6.3 LTS before committing behaviour changes. No commit rests on an
-   agent's claim alone that a build passed. Without a Mac Unity editor, run
-   `scripts/test-domain.sh` (needs the .NET 8 SDK) as a fast Domain/Simulation/
-   pre-check, but still get a Unity run before merging.
+4. **Follow the testing and merge policy above.** Use quick, relevant checks;
+   agents automatically select necessary Unity/player checks; broad suites remain on request.
 5. **Update `GAME.md` and `CHANGELOG.md`** in the same commit as the change. `GAME.md` holds current state
    only: edit the single "Where to resume" block in place (never stack a new dated block on top) and keep
    the file under ~250 lines; the changelog entry is one line (~160 chars). Detail goes in the PR, an ADR or
@@ -131,14 +206,14 @@ repo. These two checklists keep that reliable.
 3. Skim `CHANGELOG.md` and `git log --oneline -10` for what changed recently.
 4. If the handoff block names an unfinished branch, check it out
    (`git checkout <branch>`) instead of starting on `main`.
-5. Confirm the Unity project compiles / `scripts/test-unity.sh` passes before
-   building on top of unverified work.
+5. Read the existing validation limits. Do not automatically rerun tests or builds
+   at session start; use the testing and merge policy above.
 
 ### End of session (before you stop, or before a limit cuts you off)
 
-1. Commit everything. If it compiles and tests pass, commit to `main`. If it is
-   half-done or red, commit to a `feature/<name>` branch — never leave
-   uncommitted work in the tree.
+1. Commit and push the scoped work. Merge completed authorised work through its
+   PR into `main` by default. If it is incomplete or has a known new code failure,
+   keep it on a named branch/draft with the remaining work recorded.
 2. `git push origin HEAD` — unpushed work is invisible to the next tool.
 3. **Replace** the **"Where to resume"** block in `GAME.md` (do not stack a new one): latest work, next
    approved step, what is open/unverified, anything to watch, any open question for Bailey. Move anything

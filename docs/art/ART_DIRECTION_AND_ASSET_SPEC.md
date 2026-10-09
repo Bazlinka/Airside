@@ -171,16 +171,19 @@ in the same commit as each asset batch.
 | BRD-001 | `game/Airside/Assets/Airside/Art/Brand/airside_wordmark_light_v01.png` | Runtime image | Legacy transparent wordmark retained for compatibility; no tiny tagline | Retired from opening |
 | BRD-002 | `game/Airside/Assets/Airside/Art/Brand/airside_app_icon_v02.png` | Runtime image | Former approach-runway icon | Retired; v03 is the Player Settings icon |
 | BRD-003 | `game/Airside/Assets/Airside/Art/Brand/airside_brand_mark_v02.png` | Runtime image | Former transparent approach-runway mark | Retired from launch |
-| BRD-004 | `game/Airside/Assets/Airside/Art/Brand/airside_wordmark_light_v03.png` | Runtime image | 2048×512 transparent AS control-vector lockup with exact AIRSIDE spelling | Integrated (title; packaged via StreamingAssets) |
+| BRD-004 | `game/Airside/Assets/Airside/Art/Brand/airside_wordmark_light_v03.png` | Runtime image | 2048×512 transparent AS control-vector lockup with exact AIRSIDE spelling | Superseded on title by BRD-007; retained for compatibility |
 | BRD-005 | `game/Airside/Assets/Airside/Art/Brand/airside_app_icon_v03.png` | Runtime image | 1024² rounded Standalone/macOS app icon; no baked wordmark | Integrated (Player Settings default icon; Dock/Finder verify on Mac build) |
 | BRD-006 | `game/Airside/Assets/Airside/Art/Brand/airside_brand_mark_v03.png` | Runtime image | 1024² transparent AS control-vector mark for the launch sequence | Integrated (opening; packaged via StreamingAssets) |
-| UI-ILL-001 | `game/Airside/Assets/Airside/Art/UI/Illustrations/ui_splash_airport_dawn_v01.png` | Runtime image | 3840×2160, composition leaves quiet areas for Unity-rendered title and controls | Approved · Integrated (opening briefing backdrop; packaged via StreamingAssets) |
+| UI-ILL-001 | `game/Airside/Assets/Airside/Art/UI/Illustrations/ui_splash_airport_dawn_v01.png` | Runtime image | 3840×2160, composition leaves quiet areas for Unity-rendered title and controls | Legacy fallback; title superseded by UI-ILL-002 |
+| BRD-007 | `game/Airside/Assets/Airside/Art/Brand/airside_wordmark_light_v04.png` | Runtime image | 1800×360 transparent original departure-vector lockup; editable SVG/strokes; native-text missing-file fallback | Integrated at Bailey’s 8 October redesign request; Unity appearance unverified |
+| UI-ILL-002 | `game/Airside/Assets/Airside/Art/UI/Illustrations/ui_splash_adelaide_t1_dawn_v02.png` | Runtime image | 1672×941 Adelaide T1 dawn interpretation, low linear glass concourse/jetbridges/solar roof; no baked UI | Integrated at Bailey’s 8 October redesign request; Unity appearance unverified |
 
 **Gate:** Bailey approved REF-001 through REF-005 on 6 September 2026. Bailey
 approved BRD-001 and UI-ILL-001 on 7 September 2026 for runtime use. Bailey
 requested BRD-002 on 12 September 2026 and had it merged to `main` as the
 Standalone Player icon. Bailey requested the full v03 redesign on 28 September
 2026; BRD-004 through BRD-006 supersede BRD-001 through BRD-003 at runtime.
+Bailey requested the title/identity redesign on 8 October 2026; BRD-007 and UI-ILL-002 replace the opening assets under that authorisation. Evidence: `docs/art/prompts/adelaide-opening-2026-10-08.md`. The v03 app icon remains in Player Settings.
 Batches B–D may now use REF masters as production
 targets. UI-ILL-001 inherits that approved design rather than reinventing it.
 
@@ -476,3 +479,76 @@ tricycle gear, cream body, coastal-blue/eucalyptus trim. Runtime geometry is tru
 Source: `scripts/generate-parafield-trainer.py`; zero cost; project-owned; simple
 procedural trainer remains the missing-asset fallback. Integrated for native
 review; evidence: `docs/testing/parafield-2026-10-08/`.
+
+## Aircraft body contours — 8 October 2026
+
+Task #651 refines AIR-001, AIR-005…017 and AIR-YPPF-001 at their existing exact
+runtime model paths. Continuous cubic nose/cabin/tail contours, rounded tips,
+and carried skin details replace straight station transitions. Bell/trainer
+window slabs become curved skin panels. A320 v02 retains registered free-source
+running gear and engines. Project-owned derivative geometry, zero cost; previous
+git assets remain fallback. Integrated, native appearance/performance unverified.
+Decision: `2026-10-08-aircraft-body-realism`; bounded numeric evidence:
+`docs/testing/aircraft-bodies-2026-10-08/`.
+
+
+## Connected aircraft tails — 9 October 2026
+
+Task #684 revises the existing aircraft manifest IDs and runtime paths, including
+both A320 versions and the Parafield trainer. Hull-sampled roots replace floating
+fin/stabiliser seams; fixed and moving aerofoils share a matched hinge. The
+project-owned per-type stations live in `scripts/aircraft_tail_profiles.json`;
+`scripts/aircraft_tail.py` is shared by finishing and generators. Published
+stabiliser dimensions and original approximate fin profiles are distinguished in
+`docs/testing/aircraft-tails-2026-10-09/`. No external geometry enters production.
+Runtime glTF/bin, editable FBX, packaged mirrors and existing hangar thumbnails
+are updated. Integrated with geometry/render evidence; native lighting, moving
+control surfaces and performance remain unverified. Prior git assets are fallback.
+
+
+## Ground character — 9 October 2026
+
+Task #687 extends existing airport and surrounding land surfaces with original
+procedural local variation: grass/soil islands, irregular mowing, restrained dry/damp
+colour, asphalt repair/sealed-crack detail and concrete joints. Existing apron repairs
+have varied sizes/ages and full mapped-edge containment. This is surface character,
+not surveyed repair locations or new physical terrain roughness. Keep operational
+markings and aircraft legible; pixel-filter/fade thin detail at distance, retain
+mapped geographic shapes and the airfield edge handover. Existing source texture
+paths/GUIDs remain; only `Art/Shaders/GroundCharacter.hlsl` is introduced as a shared
+include with metadata. Zero external assets/cost. Integrated; native shader lighting,
+visual strength and GPU cost are unverified. Decision/evidence: `2026-10-09-ground-character`.
+
+
+## Dash 8 wing-body fairing repair — 9 October 2026
+
+AIR-006 retains its existing exact model and thumbnail paths. One closed
+hull-seated crown fairing replaces the overlapping left/right pods and centre
+oval, with shared vertices for smooth normals and outer joins following the
+existing wing sections. All other finished model geometry remains identical.
+Project-owned source, zero cost, prior git fallback; native appearance and
+performance unverified. Evidence: `docs/testing/dash8-wing-fairing-2026-10-09.md`.
+
+
+## Physical ground detail — 9 October 2026
+
+Task #693 adds original grass tufts on existing mapped landside planting anchors,
+varied coastal scrub shapes and fitted apron drain rims/bars; taxiway edge wear is
+varied/tapered. Keep the 160-cluster/3,840-triangle grass cap and 30-triangle scrub
+cap. Use true geometric face normals; retain whole-cluster road/pavement/airport
+clearance. This is authored visual detail, not surveyed tuft/drain condition data.
+Existing OSM/terrain geometry, material/source registrations and approved asset
+paths remain. New pure C# builders carry metadata; no external asset/model/texture.
+Integrated with focused geometry checks; native rendering/performance unverified.
+Decision: `2026-10-09-physical-ground-detail`.
+
+
+## Dash 8 nacelle/bay repair — 9 October 2026 (task #712)
+
+AIR-006 existing exact paths/GUIDs: original procedural nacelle, fitted bay doors,
+under-wing joins and cowl-shell refit; editable FBX/glTF/bin, existing thumbnail
+and packaged mirrors. Source: `scripts/generate-air-006-dash8-q400.py --nacelles-only`;
+project-owned derivative geometry, no external artwork/assets, no attribution or
+cost. Previous git revision is the fallback. Other finished aircraft parts and
+fictional tail paint are preserved. Native baseline reproduced the gear fault;
+fixed native gear poses and packaged parked follow captures inspected; moving-propeller video, night/storm and performance remain unverified. Evidence: `docs/testing/dash8-visual-repair-2026-10-09/README.md`.

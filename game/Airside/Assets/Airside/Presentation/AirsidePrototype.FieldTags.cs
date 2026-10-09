@@ -12,20 +12,27 @@ namespace Airside.Presentation
     public sealed partial class AirsidePrototype
     {
         private const float FieldTagLiftMetres = 9f;
-        private bool _fieldTagsVisible = true;
         private readonly System.Collections.Generic.List<Rect> _placedTags = new();
+
+        /// <summary>Which airline HUD view the player is looking at: the field overview, or following an aircraft.</summary>
+        private HudView CurrentHudView =>
+            _cameraController != null && _cameraController.IsFollowing ? HudView.Follow : HudView.Overview;
+
+        private bool HudShows(HudElement element) => AirsideSettings.Current.Hud.Shows(CurrentHudView, element);
+
+        private static string HudViewName(HudView view) => view == HudView.Follow ? "follow view" : "overview";
 
         private void ToggleFieldTags()
         {
-            _fieldTagsVisible = !_fieldTagsVisible;
+            var on = AirsideSettings.Current.Hud.Toggle(CurrentHudView, HudElement.AircraftLabels);
             ApplySettingsAndSave();
-            ShowToast(_fieldTagsVisible ? "Aircraft tags on (L)." : "Aircraft tags off (L).");
+            ShowToast($"Aircraft tags {(on ? "on" : "off")} in the {HudViewName(CurrentHudView)} (L).");
             PlayUiClick();
         }
 
         private void DrawFieldTags(GUIStyle small)
         {
-            if (!_fieldTagsVisible || _mainCamera == null || _fleetViewById.Count == 0 && _liveDrawn.Count == 0)
+            if (!HudShows(HudElement.AircraftLabels) || _mainCamera == null || _fleetViewById.Count == 0 && _liveDrawn.Count == 0)
                 return;
 
             var scale = HudLayout.ScaleFor(Screen.width, Screen.height);

@@ -47,8 +47,8 @@ namespace Airside.Presentation
                         + "and overseas routes and other bases all have to be earned."),
                     ("The screen",
                         "The rail on the left opens each page. Across the top: the time, your money, reliability and "
-                        + "tier. Bottom left is the career ring. Top right, your flights. Bottom right, the airfield "
-                        + "radar. Bottom centre, the aircraft you have selected.")
+                        + "tier. Bottom left, from the floor up: the career ring, your flights and the airfield radar. "
+                        + "The aircraft you have selected has its card on the right. Options > Views can hide the first three.")
                 }),
             new FlightManualPage("first-flight", "Your first flight",
                 "Plan it, turn it round, watch it go and bring it home.",
@@ -56,7 +56,7 @@ namespace Airside.Presentation
                 {
                     ("1 · Plan",
                         "Select your aircraft (click it or its flight tile, or press [ or ]) and press PLAN FLIGHT, or "
-                        + "open the Map with Tab. Pick a green destination and a time, then press PLAN FLIGHT again. "
+                        + "open the Map with Tab. Pick a destination and a time, then press PLAN FLIGHT again. Aqua dots are in reach, grey ones are not, and amber marks your pick or a career goal. "
                         + "Kingscote is a short first hop."),
                     ("2 · Turnaround",
                         "Fuel, catering, bags and boarding happen on their own before it leaves. The aircraft's card "
@@ -152,23 +152,31 @@ namespace Airside.Presentation
             new FlightManualPage(ControlsPageId, "Controls",
                 "The mouse does everything. The keys are shortcuts.",
                 Controls()),
-            new FlightManualPage(CreditsPageId, "Map, data and sound credits",
-                "Adelaide is built from open data and licensed sound. These are its sources.",
+            new FlightManualPage(CreditsPageId, "Map and data credits",
+                "Adelaide is built from open data. These are its sources.",
                 new[]
                 {
                     ("Map", MapAttribution.OpenStreetMap + " (ODbL). The airport layout, coast, land use, "
                             + "every road and footpath, car parks and bays, buildings, masts, tanks, solar arrays "
                             + "and bus stops. Also Overture Maps (ODbL) and SA Government LiDAR (CC BY 4.0)."),
-                    ("Aircraft sound", "Engine recordings by Pack489, mycompasstv and qubodup. Tyre contact by craigsmith "
-                                        + "on Freesound (CC0 / public domain). Adapted for Airside."),
                     ("Satellite imagery", MapAttribution.Sentinel + ". Nine clear summer passes, 2024 to 2026."),
-                    ("Terrain", "Copernicus DEM GLO-30. © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH "
-                                + "2014-2018 provided under COPERNICUS by the European Union and ESA. All rights "
-                                + "reserved."),
                     ("Land cover", "ESA WorldCover 2021 (CC BY 4.0). © ESA WorldCover project 2021 / Contains modified "
                                    + "Copernicus Sentinel data (2021) processed by the ESA WorldCover consortium."),
                     ("Weather and live traffic", "Open-Meteo (CC BY 4.0) and adsb.lol (ODbL), credited on screen "
                                                  + "while they are in use.")
+                }),
+            new FlightManualPage("terrain-sound-credits", "Terrain and sound credits",
+                "Elevation data and licensed sound. These are its sources.",
+                new[]
+                {
+                    ("Aircraft sound", "Engine recordings by Pack489, mycompasstv and qubodup. Tyre contact by craigsmith "
+                                        + "on Freesound (CC0 / public domain). Cabin airframe recording by richwise (CC0). "
+                                        + "Adapted for Airside. Rotating machinery and mechanical cues authored by Airside."),
+                    ("Australia terrain", "Mapzen Terrain Tiles (CC BY 4.0), with USGS/NASA SRTM and GMTED2010 elevation. "
+                                          + "Adapted and resampled for Airside. https://registry.opendata.aws/terrain-tiles/"),
+                    ("Terrain", "Copernicus DEM GLO-30. © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH "
+                                + "2014-2018 provided under COPERNICUS by the European Union and ESA. All rights "
+                                + "reserved.")
                 }),
             new FlightManualPage("scenery-credits", "Scenery credits",
                 "Sources for Adelaide's suburb buildings and tree canopy.",

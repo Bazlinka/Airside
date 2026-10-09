@@ -305,11 +305,39 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-07 | [Inline save absence and native flight-view contracts](2026-10-07-native-save-and-flight-view-contracts.md) |  |
 | 2026-10-07 | [All-base airline operations](2026-10-07-network-operations.md) |  |
 | 2026-10-07 | [Validate player journeys with a local interactive dispatch study](2026-10-07-player-flow-design-study.md) | accepted for design-study work; runtime interface direction remains pr |
+| 2026-10-08 | [Adelaide T1 opening and dependable identity](2026-10-08-adelaide-opening-identity.md) | Implemented at Bailey's request; native visual acceptance pending |
+| 2026-10-08 | [Aircraft and soundscape audio presentation v02](2026-10-08-aircraft-and-soundscape-audio.md) |  |
+| 2026-10-08 | [Continuous aircraft bodies](2026-10-08-aircraft-body-realism.md) | Implemented; native appearance and performance unverified. |
 | 2026-10-08 | [Generic airport templates for every Australian destination](2026-10-08-airport-templates.md) | accepted (code only; unverified in Unity) |
+| 2026-10-08 | [Australian cruise terrain and mapped airport approaches](2026-10-08-australia-flight-ground.md) |  |
 | 2026-10-08 | [Coherent world surface lighting](2026-10-08-coherent-world-lighting.md) |  |
 | 2026-10-08 | [Fleet flight performance and camera telemetry — 8 October 2026](2026-10-08-fleet-flight-performance.md) |  |
 | 2026-10-08 | [Fleet exterior lighting realism — 8 October 2026](2026-10-08-fleet-lighting-realism.md) |  |
+| 2026-10-08 | [Flight costs rebalanced upward](2026-10-08-flight-cost-rebalance.md) |  |
 | 2026-10-08 | [Free sourced assets and coherent close-view materials](2026-10-08-free-visual-upgrade.md) |  |
+| 2026-10-08 | [HUD chrome redesign (stage 1)](2026-10-08-hud-chrome-redesign.md) | headless draw-list renders and HUD layout tests checked; Unity appeara |
+| 2026-10-08 | [macOS notification registration and recoverable permission setup](2026-10-08-macos-notification-registration.md) | Implemented; native Mac verification pending |
+| 2026-10-08 | [Important background macOS notifications](2026-10-08-macos-notifications.md) | Implemented at Bailey’s request; native Mac verification pending |
+| 2026-10-08 | [Night final light-source visibility](2026-10-08-night-final-light-visibility.md) | Accepted for implementation under Bailey's bug report |
 | 2026-10-08 | [Opening and Options clarity](2026-10-08-opening-options.md) | Accepted for implementation |
 | 2026-10-08 | [Independent Parafield airport](2026-10-08-parafield-independent-airport.md) |  |
 | 2026-10-08 | [Save recovery copy](2026-10-08-save-recovery.md) | Accepted for implementation |
+| 2026-10-08 | [Storm holds at stands and committed movements continue](2026-10-08-storm-movement-commitment.md) | Accepted — Bailey's explicit 8 October storm movement instruction |
+| 2026-10-08 | [Departure-style toast notifications](2026-10-08-toast-notifications.md) | Implemented at Bailey’s request; Unity appearance pending |
+| 2026-10-08 | [Persistent weather at flight altitude and restrained cockpit motion](2026-10-08-weather-altitude-and-restraint.md) | Accepted |
+| 2026-10-09 | [Hidden agent gameplay scenarios](2026-10-09-agent-gameplay-runner.md) | Implemented; native gameplay execution unverified. |
+| 2026-10-09 | [Aircraft presence and camera eligibility](2026-10-09-aircraft-presence-and-camera-eligibility.md) | Accepted for the continuity fixes; parked activity window remains prop |
+| 2026-10-09 | [Stable cloud coverage and visual weather variety](2026-10-09-cloud-continuity-and-variety.md) | Accepted — Bailey's cloud continuity and weather variety instruction |
+| 2026-10-09 | [Cloud lighting and depth](2026-10-09-cloud-lighting-and-depth.md) | Accepted — Bailey authorised continued renderer implementation and mer |
+| 2026-10-09 | [Connected, type-specific aircraft tails](2026-10-09-connected-aircraft-tails.md) | Accepted under Bailey's fleet-tail correction request |
+| 2026-10-09 | [Established arrivals retain physical presence when estimates are postponed](2026-10-09-established-arrival-holding-presence.md) | Accepted — Bailey's no-disappearing-aircraft instruction |
+| 2026-10-09 | [Flight tracker and per-view HUD layout](2026-10-09-flight-tracker-and-hud-views.md) | layout, painter, step logic and visibility rules covered by headless t |
+| 2026-10-09 | [Ground character and restrained surface wear](2026-10-09-ground-character.md) | Accepted — Bailey requested a less perfect, more authentic ground/worl |
+| 2026-10-09 | [Issue-driven real-game diagnosis and Mac bridge](2026-10-09-issue-diagnostics-mac-bridge.md) | Implemented; end-to-end verification in progress. |
+| 2026-10-09 | [Linear colour rendering](2026-10-09-linear-colour-rendering.md) | Accepted — Bailey authorised the recommended first renderer improvemen |
+| 2026-10-09 | [Parked aircraft activity window](2026-10-09-parked-aircraft-activity-window.md) | Accepted — Bailey's parked-aircraft proposal and instruction to contin |
+| 2026-10-09 | [Physical ground detail on verges, drains and pavement edges](2026-10-09-physical-ground-detail.md) | Accepted — Bailey authorised the next environment improvements. |
+| 2026-10-09 | [Recorded weather and arrival continuity](2026-10-09-recorded-weather-and-arrival-continuity.md) | Accepted — Bailey's instruction to continue fixing the audited mismatc |
+| 2026-10-09 | [Terminal doors and more people on the ground](2026-10-09-terminal-doors-and-people.md) | pure geometry and walk tests pass; the Unity assembly compiles; appear |
+| 2026-10-09 | [Weather delay is not scored against punctuality](2026-10-09-weather-delay-not-scored.md) | Accepted — Bailey's request to improve weather consequences across the |
+| 2026-10-09 | [Welcome weather isolation and small comfort fixes](2026-10-09-welcome-weather-isolation.md) | Accepted |

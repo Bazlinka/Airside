@@ -80,8 +80,10 @@ namespace Airside.Presentation
                 // stays below the brighter airport/career cues.
                 var attack = Math.Min(1.0, time / 0.003);
                 var tick = Math.Exp(-time * 120.0);
-                var body = Math.Sin(2 * Math.PI * 420 * time) * Math.Exp(-time * 95.0);
-                samples[i] = (float)(attack * (low * tick * 0.28 + body * 0.65));
+                var body = Math.Sin(2 * Math.PI * 280 * time) * Math.Exp(-time * 115.0)
+                    + 0.18 * Math.Sin(2 * Math.PI * 1320 * time) * Math.Exp(-time * 190.0);
+                var latch = time < 0.014 ? 0 : low * 0.12 * Math.Exp(-(time - 0.014) * 200);
+                samples[i] = (float)(attack * (low * tick * 0.38 + body * 0.50 + latch));
             }
 
             var fade = (int)(SampleRate * 0.03f);
@@ -158,8 +160,13 @@ namespace Airside.Presentation
                 for (var i = start; i < samples.Length; i++)
                 {
                     var time = (i - start) / (double)SampleRate;
-                    var envelope = Math.Min(1.0, time / 0.01) * Math.Exp(-time * (last ? 2.2 : 6.0));
-                    var tone = Math.Sin(2 * Math.PI * notes[n] * time) + 0.3 * Math.Sin(2 * Math.PI * notes[n] * 2 * time);
+                    var envelope = Math.Min(1.0, time / 0.003) * Math.Exp(-time * (last ? 3.5 : 7.0));
+                    // Felt tine strike: noninteger bell partials decay sooner than the warm fundamental.
+                    var tone = Math.Sin(2 * Math.PI * notes[n] * time)
+                        + 0.26 * Math.Sin(2 * Math.PI * notes[n] * 2.7564 * time) * Math.Exp(-time * 13)
+                        + 0.09 * Math.Sin(2 * Math.PI * notes[n] * 5.4043 * time) * Math.Exp(-time * 24);
+                    if (time > 0.034)
+                        tone += 0.12 * Math.Sin(2 * Math.PI * notes[n] * (time - 0.034)) * Math.Exp(-time * 4);
                     samples[i] += (float)(tone * envelope);
                 }
             }

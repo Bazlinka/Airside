@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="9" result="Passed" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-09 01:25:30Z" end-time="2026-10-09 01:25:30Z" duration="0.0654041">
+  <test-suite type="TestSuite" id="1000" name="Airside" fullname="Airside" runstate="Runnable" testcasecount="2649" result="Passed" start-time="2026-10-09 01:25:30Z" end-time="2026-10-09 01:25:30Z" duration="0.065404" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="4078" name="Airside.Tests.EditMode.dll" fullname="/private/tmp/airside-dash8-visual-repair/game/Airside/Library/ScriptAssemblies/Airside.Tests.EditMode.dll" runstate="Runnable" testcasecount="2648" result="Passed" start-time="2026-10-09 01:25:30Z" end-time="2026-10-09 01:25:30Z" duration="0.059883" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="11702" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="4079" name="Airside" fullname="Airside" runstate="Runnable" testcasecount="2648" result="Passed" start-time="2026-10-09 01:25:30Z" end-time="2026-10-09 01:25:30Z" duration="0.042456" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="4080" name="Tests" fullname="Airside.Tests" runstate="Runnable" testcasecount="2648" result="Passed" start-time="2026-10-09 01:25:30Z" end-time="2026-10-09 01:25:30Z" duration="0.039768" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1272" name="AircraftArticulationRigTests" fullname="Airside.Tests.AircraftArticulationRigTests" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-09 01:25:30Z" end-time="2026-10-09 01:25:30Z" duration="0.013317" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1281" name="BellyDoor_FreeEdgeSwingsDown_OnEitherHinge" fullname="Airside.Tests.AircraftArticulationRigTests.BellyDoor_FreeEdgeSwingsDown_OnEitherHinge" methodname="BellyDoor_FreeEdgeSwingsDown_OnEitherHinge" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="315635719" result="Passed" start-time="2026-10-09 01:25:30Z" end-time="2026-10-09 01:25:30Z" duration="0.006062" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1275" name="ElevatorUp_RaisesTheTrailingEdge" fullname="Airside.Tests.AircraftArticulationRigTests.ElevatorUp_RaisesTheTrailingEdge" methodname="ElevatorUp_RaisesTheTrailingEdge" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1149345792" result="Passed" start-time="2026-10-09 01:25:30Z" end-time="2026-10-09 01:25:30Z" duration="0.000154" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1279" name="GearLegs_FoldTheirTipTowardTheirStowage" fullname="Airside.Tests.AircraftArticulationRigTests.GearLegs_FoldTheirTipTowardTheirStowage" methodname="GearLegs_FoldTheirTipTowardTheirStowage" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1450500972" result="Passed" start-time="2026-10-09 01:25:30Z" end-time="2026-10-09 01:25:30Z" duration="0.000315" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1273" name="ProjectConvention_NoseUpIsNegativePitch_LeftBankIsPositiveRoll" fullname="Airside.Tests.AircraftArticulationRigTests.ProjectConvention_NoseUpIsNegativePitch_LeftBankIsPositiveRoll" methodname="ProjectConvention_NoseUpIsNegativePitch_LeftBankIsPositiveRoll" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="51560019" result="Passed" start-time="2026-10-09 01:25:30Z" end-time="2026-10-09 01:25:30Z" duration="0.000148" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1278" name="RaisedSpoiler_LiftsItsTrailingEdge" fullname="Airside.Tests.AircraftArticulationRigTests.RaisedSpoiler_LiftsItsTrailingEdge" methodname="RaisedSpoiler_LiftsItsTrailingEdge" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1098180825" result="Passed" start-time="2026-10-09 01:25:30Z" end-time="2026-10-09 01:25:30Z" duration="0.000067" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1277" name="RightRoll_RightAileronUp_LeftAileronDown_RightRudder" fullname="Airside.Tests.AircraftArticulationRigTests.RightRoll_RightAileronUp_LeftAileronDown_RightRudder" methodname="RightRoll_RightAileronUp_LeftAileronDown_RightRudder" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1731458111" result="Passed" start-time="2026-10-09 01:25:30Z" end-time="2026-10-09 01:25:30Z" duration="0.000186" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1276" name="RightRudder_SwingsTheTrailingEdgeToTheRight" fullname="Airside.Tests.AircraftArticulationRigTests.RightRudder_SwingsTheTrailingEdgeToTheRight" methodname="RightRudder_SwingsTheTrailingEdgeToTheRight" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1805474973" result="Passed" start-time="2026-10-09 01:25:30Z" end-time="2026-10-09 01:25:30Z" duration="0.000144" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1274" name="TrailingEdgeDown_LowersTheTrailingEdge" fullname="Airside.Tests.AircraftArticulationRigTests.TrailingEdgeDown_LowersTheTrailingEdge" methodname="TrailingEdgeDown_LowersTheTrailingEdge" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1179899246" result="Passed" start-time="2026-10-09 01:25:30Z" end-time="2026-10-09 01:25:30Z" duration="0.000188" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1280" name="TruckTilt_RaisesTheForwardAxle" fullname="Airside.Tests.AircraftArticulationRigTests.TruckTilt_RaisesTheForwardAxle" methodname="TruckTilt_RaisesTheForwardAxle" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1881484825" result="Passed" start-time="2026-10-09 01:25:30Z" end-time="2026-10-09 01:25:30Z" duration="0.000096" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/bailey.fleming/Library/Application Support/DefaultCompany/Airside/TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

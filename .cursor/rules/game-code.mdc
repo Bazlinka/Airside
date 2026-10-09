@@ -5,6 +5,6 @@ alwaysApply: false
 ---
 
 Before editing C# under `game/Airside/Assets/`, read `game/Airside/AGENTS.md`: the Domain / Simulation / Presentation layering, the Unity
-pitfalls learned the hard way (`.meta` files, `JsonUtility`, NUnit 3.5, no implicit usings) and the checks to run
-(`scripts/test-domain.sh`; `scripts/test-unity.sh` on a Mac). `docs/architecture/PRESENTATION_MAP.md` says what each
+pitfalls learned the hard way (`.meta` files, `JsonUtility`, NUnit 3.5, no implicit usings) and the available checks
+under the root testing and merge policy. `docs/architecture/PRESENTATION_MAP.md` says what each
 `AirsidePrototype` partial owns.

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="17" result="Passed" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.0908336">
+  <test-suite type="TestSuite" id="1000" name="Airside" fullname="Airside" runstate="Runnable" testcasecount="2652" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.090834" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="4082" name="Airside.Tests.EditMode.dll" fullname="/private/tmp/airside-dash8-visual-repair/game/Airside/Library/ScriptAssemblies/Airside.Tests.EditMode.dll" runstate="Runnable" testcasecount="2651" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.083140" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="36752" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="4083" name="Airside" fullname="Airside" runstate="Runnable" testcasecount="2651" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.079157" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="4084" name="Tests" fullname="Airside.Tests" runstate="Runnable" testcasecount="2651" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.075365" total="17" passed="17" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1272" name="AircraftArticulationRigTests" fullname="Airside.Tests.AircraftArticulationRigTests" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.015222" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1281" name="BellyDoor_FreeEdgeSwingsDown_OnEitherHinge" fullname="Airside.Tests.AircraftArticulationRigTests.BellyDoor_FreeEdgeSwingsDown_OnEitherHinge" methodname="BellyDoor_FreeEdgeSwingsDown_OnEitherHinge" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1705292512" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.006595" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1275" name="ElevatorUp_RaisesTheTrailingEdge" fullname="Airside.Tests.AircraftArticulationRigTests.ElevatorUp_RaisesTheTrailingEdge" methodname="ElevatorUp_RaisesTheTrailingEdge" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="907189178" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.000199" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1279" name="GearLegs_FoldTheirTipTowardTheirStowage" fullname="Airside.Tests.AircraftArticulationRigTests.GearLegs_FoldTheirTipTowardTheirStowage" methodname="GearLegs_FoldTheirTipTowardTheirStowage" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="197357106" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.000359" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1273" name="ProjectConvention_NoseUpIsNegativePitch_LeftBankIsPositiveRoll" fullname="Airside.Tests.AircraftArticulationRigTests.ProjectConvention_NoseUpIsNegativePitch_LeftBankIsPositiveRoll" methodname="ProjectConvention_NoseUpIsNegativePitch_LeftBankIsPositiveRoll" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1957421880" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.000168" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1278" name="RaisedSpoiler_LiftsItsTrailingEdge" fullname="Airside.Tests.AircraftArticulationRigTests.RaisedSpoiler_LiftsItsTrailingEdge" methodname="RaisedSpoiler_LiftsItsTrailingEdge" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1313777076" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.000075" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1277" name="RightRoll_RightAileronUp_LeftAileronDown_RightRudder" fullname="Airside.Tests.AircraftArticulationRigTests.RightRoll_RightAileronUp_LeftAileronDown_RightRudder" methodname="RightRoll_RightAileronUp_LeftAileronDown_RightRudder" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1447149483" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.000201" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1276" name="RightRudder_SwingsTheTrailingEdgeToTheRight" fullname="Airside.Tests.AircraftArticulationRigTests.RightRudder_SwingsTheTrailingEdgeToTheRight" methodname="RightRudder_SwingsTheTrailingEdgeToTheRight" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="286413901" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.000170" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1274" name="TrailingEdgeDown_LowersTheTrailingEdge" fullname="Airside.Tests.AircraftArticulationRigTests.TrailingEdgeDown_LowersTheTrailingEdge" methodname="TrailingEdgeDown_LowersTheTrailingEdge" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="173934808" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.000205" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1280" name="TruckTilt_RaisesTheForwardAxle" fullname="Airside.Tests.AircraftArticulationRigTests.TruckTilt_RaisesTheForwardAxle" methodname="TruckTilt_RaisesTheForwardAxle" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="2143915990" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.000101" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1593" name="AircraftSurfaceDetailGeometryTests" fullname="Airside.Tests.AircraftSurfaceDetailGeometryTests" classname="Airside.Tests.AircraftSurfaceDetailGeometryTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.009203" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1602" name="APanelOutsideTheSkinProducesNoFloatingGeometry" fullname="Airside.Tests.AircraftSurfaceDetailGeometryTests.APanelOutsideTheSkinProducesNoFloatingGeometry" methodname="APanelOutsideTheSkinProducesNoFloatingGeometry" classname="Airside.Tests.AircraftSurfaceDetailGeometryTests" runstate="Runnable" seed="1856189070" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.001327" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1600" name="ClipsToCurvedFrontFaceAndNeverIncludesTheBack" fullname="Airside.Tests.AircraftSurfaceDetailGeometryTests.ClipsToCurvedFrontFaceAndNeverIncludesTheBack" classname="Airside.Tests.AircraftSurfaceDetailGeometryTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.004087" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1598" name="ClipsToCurvedFrontFaceAndNeverIncludesTheBack(-1)" fullname="Airside.Tests.AircraftSurfaceDetailGeometryTests.ClipsToCurvedFrontFaceAndNeverIncludesTheBack(-1)" methodname="ClipsToCurvedFrontFaceAndNeverIncludesTheBack" classname="Airside.Tests.AircraftSurfaceDetailGeometryTests" runstate="Runnable" seed="1187565393" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.003725" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1599" name="ClipsToCurvedFrontFaceAndNeverIncludesTheBack(1)" fullname="Airside.Tests.AircraftSurfaceDetailGeometryTests.ClipsToCurvedFrontFaceAndNeverIncludesTheBack(1)" methodname="ClipsToCurvedFrontFaceAndNeverIncludesTheBack" classname="Airside.Tests.AircraftSurfaceDetailGeometryTests" runstate="Runnable" seed="1323882134" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.000120" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="ParameterizedMethod" id="1596" name="HingeSeamFollowsTaperAndCantWithoutPaintingTheOppositeFace" fullname="Airside.Tests.AircraftSurfaceDetailGeometryTests.HingeSeamFollowsTaperAndCantWithoutPaintingTheOppositeFace" classname="Airside.Tests.AircraftSurfaceDetailGeometryTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.001617" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1594" name="HingeSeamFollowsTaperAndCantWithoutPaintingTheOppositeFace(False)" fullname="Airside.Tests.AircraftSurfaceDetailGeometryTests.HingeSeamFollowsTaperAndCantWithoutPaintingTheOppositeFace(False)" methodname="HingeSeamFollowsTaperAndCantWithoutPaintingTheOppositeFace" classname="Airside.Tests.AircraftSurfaceDetailGeometryTests" runstate="Runnable" seed="149829713" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.001059" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1595" name="HingeSeamFollowsTaperAndCantWithoutPaintingTheOppositeFace(True)" fullname="Airside.Tests.AircraftSurfaceDetailGeometryTests.HingeSeamFollowsTaperAndCantWithoutPaintingTheOppositeFace(True)" methodname="HingeSeamFollowsTaperAndCantWithoutPaintingTheOppositeFace" classname="Airside.Tests.AircraftSurfaceDetailGeometryTests" runstate="Runnable" seed="889330882" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.000338" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1603" name="InvalidIndicesAreRejectedBeforeBuildingAMesh" fullname="Airside.Tests.AircraftSurfaceDetailGeometryTests.InvalidIndicesAreRejectedBeforeBuildingAMesh" methodname="InvalidIndicesAreRejectedBeforeBuildingAMesh" classname="Airside.Tests.AircraftSurfaceDetailGeometryTests" runstate="Runnable" seed="1145335377" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.000488" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1601" name="InwardWoundClosedPanelStillGetsDetailsOnItsOutside" fullname="Airside.Tests.AircraftSurfaceDetailGeometryTests.InwardWoundClosedPanelStillGetsDetailsOnItsOutside" methodname="InwardWoundClosedPanelStillGetsDetailsOnItsOutside" classname="Airside.Tests.AircraftSurfaceDetailGeometryTests" runstate="Runnable" seed="393237213" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.000116" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1597" name="OverlappingWingGetsAFittedHingeAndMissingWingGetsNoFloatingMark" fullname="Airside.Tests.AircraftSurfaceDetailGeometryTests.OverlappingWingGetsAFittedHingeAndMissingWingGetsNoFloatingMark" methodname="OverlappingWingGetsAFittedHingeAndMissingWingGetsNoFloatingMark" classname="Airside.Tests.AircraftSurfaceDetailGeometryTests" runstate="Runnable" seed="1936462105" result="Passed" start-time="2026-10-09 02:10:33Z" end-time="2026-10-09 02:10:33Z" duration="0.000845" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/bailey.fleming/Library/Application Support/DefaultCompany/Airside/TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

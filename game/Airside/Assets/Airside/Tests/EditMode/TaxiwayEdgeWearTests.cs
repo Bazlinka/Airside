@@ -17,6 +17,18 @@ namespace Airside.Tests
             Assert.That(strips.Any(s => s.StartZ < 0f), Is.True);
             Assert.That(strips.All(s => s.Length <= TaxiwayEdgeWear.PatchLengthMetres + 0.001f), Is.True);
             Assert.That(strips.All(s => s.StartX >= 0f && s.EndX <= 100f), Is.True);
+            Assert.That(strips.Select(s=>s.Width).Distinct().Count(),Is.GreaterThan(2));
+            Assert.That(strips.All(s=>System.Math.Abs(s.StartZ)+s.Width*.5f<=10f+.001f),Is.True);
+            Assert.That(strips.All(s=>System.Math.Abs(s.EndZ)+s.Width*.5f<=10f+.001f),Is.True);
+            foreach(var strip in strips)
+            {
+                var corners=TaxiwayEdgeWear.Corners(strip);
+                for(var i=0;i<corners.Length;i+=2)
+                {
+                    Assert.That(corners[i],Is.InRange(0f,100f));
+                    Assert.That(System.Math.Abs(corners[i+1]),Is.LessThanOrEqualTo(10f+.001f));
+                }
+            }
         }
 
         [Test]

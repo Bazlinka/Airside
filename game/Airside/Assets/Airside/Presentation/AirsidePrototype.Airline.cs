@@ -44,7 +44,6 @@ namespace Airside.Presentation
         private readonly List<FleetAircraft> _mapAircraftRows = new();
         private readonly List<FleetAircraft> _playerFleetRows = new();
         private readonly List<AircraftType> _ownedTypeScratch = new();
-        private readonly List<OperationsRow> _compactOpsRows = new();
         // Departures first: the board opens on what you are about to send, not what is coming.
         private bool _flightsShowArrivals;
         private Vector2 _devToolsScroll;
@@ -115,6 +114,7 @@ namespace Airside.Presentation
 
         private void UpdateAirlineOperations()
         {
+            if (!SoakMode) AirsideMacNotifications.Tick();
             if (_operations == null)
                 return;
             if (Application.isFocused && !AirlineModalOpen)
@@ -137,6 +137,7 @@ namespace Airside.Presentation
             RefreshFleetFlights();
             AnnounceNewEvents();
             AnnounceNewSettlements();
+            AnnounceCareerEvents();
             AutosaveIfDue();
         }
 
@@ -160,6 +161,17 @@ namespace Airside.Presentation
                     PageManual(1);
                 if (keyboard.leftArrowKey.wasPressedThisFrame)
                     PageManual(-1);
+                return true;
+            }
+
+            // A celebration card is modal: Tab, H, T, C, the view and speed keys used to act on the
+            // page behind it. Enter closes it (Esc: TryCloseAirlineOverlay); F1 still opens the manual.
+            if (CelebrationOpen)
+            {
+                if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)
+                    DismissCelebration();
+                if (keyboard.f1Key.wasPressedThisFrame)
+                    ToggleControlsHelp();
                 return true;
             }
 
@@ -195,7 +207,7 @@ namespace Airside.Presentation
                 // The Esc menu owns the keyboard too: the camera reads WASD/QE/ZX itself, so without
                 // this the view kept panning and orbiting behind the open menu.
                 _cameraController.KeyboardCaptured =
-                    _menuOpen || AirlineModalOpen || _controlsHelpOpen
+                    _menuOpen || AirlineModalOpen || _controlsHelpOpen || CelebrationOpen
                     || GUIUtility.keyboardControl != 0;
             // The pause menu is itself modal. Drawing the airline setup, away summary or
             // workspace panels behind it produced overlapping labels and live buttons.
@@ -214,8 +226,11 @@ namespace Airside.Presentation
                 ShowToast("First flight done. Plan the next one whenever you like.");
             _lastGuideStep = _guideStep;
             var showGuide = !AirlineModalOpen && _guideStep != GuideStep.Complete;
+            RefreshFlightTracker();
             var placement = AirlineHudLayout.Create(layout, showGuide,
-                workspaceOpen: _activeWorkspace != HudWorkspace.None || _devToolsOpen, showMiniMap: MiniMapShows);
+                workspaceOpen: _activeWorkspace != HudWorkspace.None || _devToolsOpen, showMiniMap: MiniMapShows,
+                trackerHeight: FlightTrackerPainter.HeightFor(_trackerRows.Count, FlightTracker.TotalTracked > _trackerRows.Count),
+                showCareerCard: HudShows(HudElement.CareerCard));
             RememberHudPanels(layout, placement, showGuide);
 
             var label = _hudLabel ??= AirsideTheme.TextStyle(new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true });
@@ -255,17 +270,23 @@ namespace Airside.Presentation
             if (_activeWorkspace != HudWorkspace.Contracts)
                 _highlightedContractId = null;
 
+            // A celebration card is modal. It is drawn last (on top), but IMGUI gives a click to the
+            // first control drawn, so the buttons and cards under it took the click instead.
+            // Everything drawn until the card is inert (the same trick the title screen uses behind Options).
+            var hudWasEnabled = GUI.enabled;
+            if (CelebrationOpen)
+                GUI.enabled = false;
+
             // Under every panel, so a tag never sits on top of a button.
             DrawFieldTags(small);
-            AnnounceCareerEvents();
             DrawShellChrome(layout, placement);
             // The career card and flight tiles belong to the overview; an open sheet replaces them.
             if (overview && showGuide)
                 DrawGuide(placement.Objective);
-            else if (overview)
+            else if (overview && placement.Objective.width > 0f)
                 DrawObjectiveCard(placement.Objective);
             if (overview && placement.Operations.width > 0f)
-                DrawCompactOperations(placement.Operations);
+                DrawFlightTracker(placement.Operations);
             // ADR 0135: a newly opened sheet slides in from the right.
             if (_activeWorkspace != _workspaceShown)
             {
@@ -301,6 +322,7 @@ namespace Airside.Presentation
             DrawMiniMap(FieldMiniMap.PanelFor(layout, placement), panel, small);
             if (overview)
                 DrawSelectionHudCard(layout, placement);
+            GUI.enabled = hudWasEnabled;
             DrawCelebration(layout);
             DrawToast(placement.Toast);
         }
@@ -504,13 +526,21 @@ namespace Airside.Presentation
                 return;
             }
 
+            if (CelebrationOpen)
+            {
+                // Modal card: pointer drags and scrolls must not orbit, pan or zoom the view behind it.
+                _hudPanels.Add(new Rect(0f, 0f, layout.Viewport.x, layout.Viewport.y));
+                return;
+            }
+
             var overview = _activeWorkspace == HudWorkspace.None && !_devToolsOpen;
             _hudPanels.Add(placement.Rail);
-            _hudPanels.Add(placement.Capsule);
+            _hudPanels.Add(HudPainter.ToRect(HudShellPainter.CapsuleContent(Box(placement.Capsule), _capsuleSegments)));
+            _hudPanels.Add(HudPainter.ToRect(HudShellPainter.ControlsBox(Box(placement.Capsule))));
             if (overview && placement.Objective.width > 0f)
                 _hudPanels.Add(placement.Objective);
             if (overview && placement.Operations.width > 0f)
-                _hudPanels.Add(OperationsTilesRect(placement.Operations));
+                _hudPanels.Add(placement.Operations);
             if (_activeWorkspace != HudWorkspace.None || _devToolsOpen)
                 _hudPanels.Add(WorkspaceRect(placement));
             if (MiniMapShows)
@@ -603,7 +633,7 @@ namespace Airside.Presentation
             _shellDrawList.Clear();
             HudShellPainter.PaintRail(_shellDrawList, rail, airline.LiveryHex, _navTabs);
             HudShellPainter.PaintCapsule(_shellDrawList, Box(placement.Capsule), _capsuleSegments);
-            HudShellPainter.PaintControls(_shellDrawList, Box(placement.Capsule), _miniMapVisible);
+            HudShellPainter.PaintControls(_shellDrawList, Box(placement.Capsule), HudShows(HudElement.AirportMap));
             var clicked = _hudPainter.Draw(_shellDrawList);
 
             // The approved brand mark inside its livery ring.
@@ -618,6 +648,12 @@ namespace Airside.Presentation
                 return;
             if (clicked == HudShellPainter.OverviewAction) { SetWorkspace(HudWorkspace.None); return; }
             if (clicked == HudShellPainter.MiniMapAction) { ToggleMiniMap(); return; }
+            if (clicked == HudShellPainter.TowerAction)
+            {
+                if (InTower) ExitTower();
+                else if (!EnterTower()) ShowToast("Control tower view isn't available from here.");
+                return;
+            }
             if (clicked == HudShellPainter.MenuAction) { ToggleMenu(); return; }
             if (clicked == HudShellPainter.HelpAction)
             {
@@ -637,59 +673,49 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>Live flight tiles for the player's own fleet. AI traffic stays on the full board.</summary>
-        private void DrawCompactOperations(Rect area)
-        {
-            if (area.width < 8f || area.height < 8f)
-                return;
+        private readonly List<FlightTrackerRow> _trackerRows = new();
+        private readonly List<OperationsRow> _trackerScratch = new();
+        private float _trackerRefreshAt;
 
-            var fleet = PlayerFleet();
-            OperationsSummary.FillPlayerRows(fleet, _clock.Now, _compactOpsRows, _operations);
-            var box = Box(area);
-            var visibleRows = HudShellPainter.VisibleTiles(box, _compactOpsRows.Count);
-            if (visibleRows > 0 && _compactOpsRows.Count > visibleRows)
+        /// <summary>
+        /// The flights the tracker follows, refreshed a few times a second (OnGUI runs several passes a frame).
+        /// Empty when the tracker is hidden in this view.
+        /// </summary>
+        private void RefreshFlightTracker()
+        {
+            if (!HudShows(HudElement.FlightTracker) || _operations == null || AirlineModalOpen)
             {
-                // The priority aircraft always keeps a tile.
-                var priorityIndex = _compactOpsRows.FindIndex(row => row.IsPriority);
-                if (priorityIndex >= visibleRows)
-                {
-                    var keep = _compactOpsRows[visibleRows - 1];
-                    _compactOpsRows[visibleRows - 1] = _compactOpsRows[priorityIndex];
-                    _compactOpsRows[priorityIndex] = keep;
-                }
+                _trackerRows.Clear();
+                return;
             }
-            var available = OperationsSummary.AvailableCount(fleet, _clock.Now);
-            var hidden = _compactOpsRows.Count - visibleRows;
-            var footer = hidden > 0
-                ? $"{visibleRows} shown · {hidden} more in Ops"
-                : available == 1 ? "1 aircraft available" : $"{available} aircraft available";
-            // Aircraft based away from Adelaide have no tile; say where they are so the count is not a mystery.
-            var awayFleet = Airside.Simulation.PlayerFleet.OutstationSummary(_operations);
-            if (hidden <= 0 && awayFleet.Length > 0)
-                footer += " · " + awayFleet;
+
+            if (Time.unscaledTime < _trackerRefreshAt)
+                return;
+            _trackerRefreshAt = Time.unscaledTime + 0.25f;
+            FlightTracker.Fill(_operations, _clock.Now, _selectedAircraftId, _trackerRows, _trackerScratch);
+        }
+
+        /// <summary>"Your flights": step-by-step progress for every booked or moving flight. Click one to select it.</summary>
+        private void DrawFlightTracker(Rect area)
+        {
+            if (area.width < 8f || area.height < 8f || _trackerRows.Count == 0)
+                return;
             _shellDrawList.Clear();
-            HudShellPainter.PaintOperations(_shellDrawList, box, _compactOpsRows, _selectedAircraftId, footer);
+            FlightTrackerPainter.Paint(_shellDrawList, Box(area), _trackerRows, FlightTracker.TotalTracked);
             var clicked = _hudPainter.Draw(_shellDrawList);
             var registration = HudAction.Payload(clicked, HudAction.SelectPrefix);
             if (registration.Length == 0)
                 return;
-            foreach (var aircraft in fleet)
+            foreach (var aircraft in PlayerFleet())
             {
                 if (aircraft.Registration != registration)
                     continue;
                 SelectAircraft(aircraft);
-                break;
+                return;
             }
-        }
 
-        /// <summary>The part of the tiles slot actually drawn, so clicks below it still reach the field.</summary>
-        private Rect OperationsTilesRect(Rect area)
-        {
-            var count = _compactOpsRows.Count > 0 ? _compactOpsRows.Count : 1;
-            var box = Box(area);
-            var visible = HudShellPainter.VisibleTiles(box, count);
-            var height = HudShell.OperationsHeaderHeight + visible * (HudShell.OperationsTileHeight + 6f) + 22f;
-            return new Rect(area.x, area.y, area.width, Mathf.Min(area.height, height));
+            // Based away from Adelaide: the Operations page lists it.
+            SetWorkspace(HudWorkspace.Operations);
         }
 
         private (string heading, string hint) GuideText(GuideStep step, FleetAircraft aircraft)
@@ -704,8 +730,7 @@ namespace Airside.Presentation
                     $"Fuel, catering, bags and boarding will be done by {ClockText(aircraft.Scheduled.Value.DepartAt)}. Click the aircraft or press F to follow it."),
                 GuideStep.Departing => ($"Follow {reg}",
                     "Click the aircraft or press F to watch it taxi and take off."),
-                GuideStep.Away => ($"Watch {reg} return",
-                    $"On its way to {dest}. Watch it on the Map (Tab). It keeps flying while the game is closed."),
+                GuideStep.Away => FirstFlightGuide.AwayText(aircraft?.State ?? FleetState.Outbound, reg, dest),
                 GuideStep.Landing => ($"Watch {reg} land",
                     "Click the aircraft on final or press F to watch it land."),
                 GuideStep.ChooseStand => ($"Choose {reg}'s stand",
@@ -738,7 +763,9 @@ namespace Airside.Presentation
             _returnFleetDrawList.Clear();
             ReturnBriefingPainter.PaintFleet(_returnFleetDrawList,
                 new HudBox(0f, 0f, content.width, content.height), summary);
-            _hudPainter.Draw(_returnFleetDrawList);
+            _hudPainter.DeviceSpace = false;
+            try { _hudPainter.Draw(_returnFleetDrawList); }
+            finally { _hudPainter.DeviceSpace = true; }
             GUI.EndScrollView();
             if (clicked == ReturnBriefingPainter.ContinueAction)
             {
@@ -846,6 +873,7 @@ namespace Airside.Presentation
             if (freightJoined > 0)
                 ShowToast("Qantas Freight and DHL Air now operate Adelaide's cargo banks.");
             RefreshFleetFlights();
+            RestoreArrivalViews(data);
             if (_awaySummary == null)
                 ShowToast($"Welcome back to {_operations.PlayerAirline.Name}.");
             if (_saveRecoveredFromBackup)
@@ -872,10 +900,12 @@ namespace Airside.Presentation
             _nextAutosaveAt = Time.unscaledTime + AutosaveIntervalSeconds;
             try
             {
-                AirlineSaveFile.Write(SavePath, AirlineSave.Capture(_operations, DateTime.UtcNow));
+                var data = AirlineSave.Capture(_operations, DateTime.UtcNow);
+                CaptureArrivalViews(data);
+                AirlineSaveFile.Write(SavePath, data);
                 _saveFailureShown = false;
             }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            catch (Exception e)
             {
                 if (_saveFailureShown)
                     return;
@@ -1000,6 +1030,18 @@ namespace Airside.Presentation
             _lastFundsDirection = direction;
         }
 
+        /// <summary>A celebration card is waiting or on screen: it owns the HUD's input until closed.</summary>
+        private bool CelebrationOpen => _celebrations.Count > 0;
+
+        private void DismissCelebration()
+        {
+            if (_celebrations.Count == 0)
+                return;
+            _celebrations.Dequeue();
+            _celebrationShownAt = -1f;
+            PlayUiClick();
+        }
+
         private void Celebrate(CelebrationCard card)
         {
             if (card != null)
@@ -1027,11 +1069,7 @@ namespace Airside.Presentation
             _hudPanels.Add(new Rect(panel.X, panel.Y, panel.Width, panel.Height));
             var clicked = _hudPainter.Draw(_celebrationDrawList);
             if (clicked == CelebrationPainter.Close || now - _celebrationShownAt > CelebrationAutoCloseSeconds)
-            {
-                _celebrations.Dequeue();
-                _celebrationShownAt = -1f;
-                PlayUiClick();
-            }
+                DismissCelebration();
 
             return true;
         }
@@ -1060,7 +1098,10 @@ namespace Airside.Presentation
                 new Rect(0f, 0f, body.width - 16f, contentHeight));
             _selectionDrawList.Clear();
             AircraftInspectorPainter.Body(_selectionDrawList, new HudBox(0f, 0f, body.width - 16f, contentHeight), _selectionCard);
-            var bodyClicked = _hudPainter.Draw(_selectionDrawList);
+            _hudPainter.DeviceSpace = false;
+            string bodyClicked;
+            try { bodyClicked = _hudPainter.Draw(_selectionDrawList); }
+            finally { _hudPainter.DeviceSpace = true; }
             GUI.EndScrollView();
             _selectionDrawList.Clear();
             AircraftInspectorPainter.Footer(_selectionDrawList, inspector, _selectionCard);
@@ -1383,7 +1424,7 @@ namespace Airside.Presentation
                 || view == null || !view.gameObject.activeSelf)
             {
                 if (TryEnroute(aircraft, out var profile, out var elapsed))
-                    return $"{profile.GroundSpeedKnotsAt(elapsed):0} kt · {profile.AltitudeFeetAt(elapsed):#,0} ft";
+                    return $"{profile.GroundSpeedKnotsAt(elapsed):0} kt · {BoardAltitudeFeet(aircraft, profile, elapsed):#,0} ft";
                 return StatusText(aircraft);
             }
 
@@ -1489,6 +1530,13 @@ namespace Airside.Presentation
         /// <summary>Esc closes whichever overlay is open before it touches the selection.</summary>
         private bool TryCloseAirlineOverlay()
         {
+            // Esc closes a celebration card before it touches the page behind.
+            if (CelebrationOpen)
+            {
+                DismissCelebration();
+                return true;
+            }
+
             if (_activeWorkspace == HudWorkspace.None && !_devToolsOpen)
                 return false;
             _activeWorkspace = HudWorkspace.None;
@@ -1531,7 +1579,11 @@ namespace Airside.Presentation
                     : $"Departing {RunwayWeather.Label(aircraft.AssignedRunway)} for {dest}",
                 FleetState.Outbound => $"Departed for {dest}{EnrouteAltitudeText(aircraft)} · lands {ends}",
                 FleetState.AtDestination => $"Away at {dest} · departs {ends}",
+                FleetState.Inbound when IsArrivalHolding(aircraft) =>
+                    $"Holding before arrival from {dest}{EnrouteAltitudeText(aircraft)}{wait}",
                 FleetState.Inbound => $"Inbound from {dest}{EnrouteAltitudeText(aircraft)} · {ends}",
+                FleetState.HoldingForLanding when IsArrivalHolding(aircraft) =>
+                    $"Holding for runway {RunwayWeather.Label(aircraft.AssignedRunway)}{EnrouteAltitudeText(aircraft)}{wait}",
                 FleetState.HoldingForLanding =>
                     $"On final {ApproachSide(aircraft.AssignedRunway)} for runway {RunwayWeather.Label(aircraft.AssignedRunway)}{wait}",
                 FleetState.GoAround => $"Going around, runway {RunwayWeather.Label(aircraft.AssignedRunway)}",
@@ -1891,6 +1943,8 @@ namespace Airside.Presentation
 
             // Coastline, borders, every route from Adelaide and the destination dots, from the
             // same painter the offline mockups render, so what is compared is what is drawn.
+            if (Event.current.type == EventType.Repaint)
+                _mapLand.Draw(mapRect, _mapLens);
             _mapNetworkDrawList.Clear();
             RouteMapWorkspacePainter.PaintNetwork(_mapNetworkDrawList, workspaceLayout.Map, _mapLens,
                 _mapDestinationRows, home, _mapFlightInspectorId == null ? _mapSelection : null, _operations.PlayerAirline.LiveryHex,
@@ -1940,6 +1994,7 @@ namespace Airside.Presentation
             // sidecar slot and leaving only a saturated cluster's lower-priority text out.
             _mapFlightLabelBoxes.Clear();
             var labelBounds = Box(mapRect).Inset(6f, 48f, 6f, 28f);
+            var fieldCount = 0;
             for (var i = 0; i < _mapFlights.Count; i++)
             {
                 var flight = _mapFlights[i];
@@ -1949,6 +2004,17 @@ namespace Airside.Presentation
                     continue;
                 var mine = flight.Aircraft.Airline.IsPlayer;
                 var isSelected = flight.Aircraft.Registration == _selectedAircraftId;
+                // Aircraft on the field (gates, bays, taxiways) would pile a dozen icons and labels over
+                // the airport: they become quiet dots plus one count, and only speak when picked.
+                if (flight.OnField && !isSelected && i != tracked && _mapLens.Zoom < MapFieldDetailZoom)
+                {
+                    fieldCount++;
+                    var fieldDot = AirsideTheme.FromHex(flight.Aircraft.Airline.LiveryHex);
+                    AirsideTheme.DrawRounded(new Rect(flight.Point.x - 3.5f, flight.Point.y - 3.5f, 7f, 7f),
+                        AirsideTheme.WithAlpha(AirsideTheme.Glass, 0.85f), 7f);
+                    AirsideTheme.DrawRounded(new Rect(flight.Point.x - 2.5f, flight.Point.y - 2.5f, 5f, 5f), fieldDot, 5f);
+                    continue;
+                }
                 // Other operators fly smaller and fainter on the map, so your aircraft read first.
                 var iconSize = Mathf.Lerp(18f, 30f, Mathf.InverseLerp(1f, 12f, _mapLens.Zoom)) * (mine ? 1.15f : 0.85f);
                 var iconAlpha = isSelected || i == tracked ? 1f : Ownership.AlphaFor(flight.Aircraft.Airline);
@@ -1987,6 +2053,14 @@ namespace Airside.Presentation
                     GUI.Label(new Rect(labelRect.x + 4f, labelRect.y + 17f, labelRect.width - 8f, 18f),
                         $"{MapFlightDetail(flight)} · {flight.Aircraft.Airline.Name} {flight.Aircraft.Type.Name}", small);
                 GUI.color = labelColour;
+            }
+
+            if (fieldCount > 1 && mapRect.Contains(homePoint))
+            {
+                var fieldChip = new Rect(homePoint.x - 46f, homePoint.y + 14f, 92f, 18f);
+                AirsideTheme.DrawRounded(fieldChip, new Color(ink.r, ink.g, ink.b, 0.85f), 9f);
+                _mapFieldChipStyle ??= new GUIStyle(small) { alignment = TextAnchor.MiddleCenter };
+                GUI.Label(fieldChip, fieldCount + " on field", _mapFieldChipStyle);
             }
 
             DrawOutstationMarkers(mapRect, small, ink);
@@ -2055,6 +2129,10 @@ namespace Airside.Presentation
             DispatchWorkspaceAction(chromeAction ?? filterAction);
             DrawMapFlightInspector(workspaceLayout);
         }
+
+        /// <summary>From this zoom the route map draws every aircraft on the field as a full icon with its label.</summary>
+        private const float MapFieldDetailZoom = 60f;
+        private GUIStyle _mapFieldChipStyle;
 
         private string _mapFlightInspectorId;
         private bool _mapSaScopeRequested;
@@ -2137,7 +2215,7 @@ namespace Airside.Presentation
                 EnroutePhase.Descent => " ▼",
                 _ => string.Empty
             };
-            return $"{EnrouteProfile.AltitudeText(profile.AltitudeFeetAt(t))}{trend} · {profile.GroundSpeedKnotsAt(t):0} kt · {toGo:0} km · lands {ends}";
+            return $"{EnrouteProfile.AltitudeText(BoardAltitudeFeet(aircraft, profile, t))}{trend} · {profile.GroundSpeedKnotsAt(t):0} kt · {toGo:0} km · lands {ends}";
         }
 
         /// <summary>The away leg an aircraft is flying and how far into it, at sub-second time.</summary>
@@ -2165,9 +2243,22 @@ namespace Airside.Presentation
         }
 
         private string EnrouteAltitudeText(FleetAircraft aircraft) =>
-            TryEnroute(aircraft, out var profile, out var elapsed)
-                ? " · " + EnrouteProfile.AltitudeText(profile.AltitudeFeetAt(elapsed))
+            (aircraft.State is FleetState.Inbound or FleetState.HoldingForLanding)
+                && TryArrivalFinal(aircraft, out var final)
+                ? " · " + EnrouteProfile.AltitudeText(final.World.y * EnrouteProfile.FeetPerMetre)
+                : TryEnroute(aircraft, out var profile, out var elapsed)
+                ? " · " + EnrouteProfile.AltitudeText(BoardAltitudeFeet(aircraft, profile, elapsed))
                 : string.Empty;
+
+        /// <summary>
+        /// Altitude as the world draws it. A leg that leaves a regional runway starts its climb late (see
+        /// <see cref="RegionalFlightPath.ClimbAltitudeFeet"/>), so the plain profile read too high for the first minutes.
+        /// </summary>
+        private static double BoardAltitudeFeet(FleetAircraft aircraft, EnrouteProfile profile, double elapsed) =>
+            aircraft.State == FleetState.Inbound && aircraft.CurrentDestination.HasValue
+            && RegionalRunways.TryGet(aircraft.CurrentDestination.Value.Code, out _)
+                ? RegionalFlightPath.ClimbAltitudeFeet(profile, elapsed, RegionalFlightPath.ClimbLagSeconds(aircraft.Type))
+                : profile.AltitudeFeetAt(elapsed);
 
         private void StartMapTracking(string aircraftId)
         {
@@ -3090,7 +3181,11 @@ namespace Airside.Presentation
             var result = _operations.ScheduleDeparture(_mapAircraft, _mapSelection.Value, departAt);
             if (result.Accepted)
             {
-                ShowToast($"{_mapAircraft.Registration} leaves for {_mapSelection.Value.Name} at {ClockText(departAt)}.");
+                ShowToast($"{_mapAircraft.Registration} leaves for {_mapSelection.Value.Name} at {ClockText(departAt)}. "
+                          + "Follow it under Your flights.");
+                // Leave the planner on the booked aircraft: it is selected (no camera move) and tops the tracker.
+                _selectedAircraftId = _mapAircraft.Registration;
+                _trackerRefreshAt = 0f;
                 _activeWorkspace = HudWorkspace.None;
                 _mapSelection = null;
                 SaveAirline();
@@ -3343,10 +3438,10 @@ namespace Airside.Presentation
                 if (!e.Aircraft.Airline.IsPlayer)
                     continue;
 
+                if (!SoakMode) AirsideMacNotifications.Publish(DesktopNotificationPolicy.Arrival(e));
+
                 var flight = FlightNumber.For(e.Aircraft.Airline, e.Aircraft.Registration, e.DestinationCode,
-                    e.State is FleetState.AtDestination or FleetState.Inbound or FleetState.HoldingForLanding
-                        or FleetState.Landing or FleetState.GoAround or FleetState.AwaitingStand
-                        or FleetState.TaxiIn or FleetState.AtStand) ?? e.Aircraft.Registration;
+                    FlightNotices.IsReturnLegEvent(e.State)) ?? e.Aircraft.Registration;
                 switch (e.State)
                 {
                     case FleetState.Outbound:
@@ -3385,6 +3480,7 @@ namespace Airside.Presentation
             {
                 // ADR 0128: the pay line also says whether it pushed on time, and what made it late.
                 var s = settlements[i];
+                if (!SoakMode) AirsideMacNotifications.Publish(DesktopNotificationPolicy.Settlement(s));
                 ShowToast(DelayText.SettlementToast(s, _operations.CareerState?.OnTimeStreak ?? 0), DelayText.Tone(s));
                 if (s.ContractFulfilled && _operations.CareerState != null
                     && _operations.CareerState.TryFindDefinition(s.ContractDefinitionId, out var fulfilled))
@@ -3395,7 +3491,7 @@ namespace Airside.Presentation
 
         private readonly HudDrawList _toastDrawList = new();
 
-        /// <summary>Glass toast pills (ADR 0122): newest in the slot, older ones stepping away from the edge.</summary>
+        /// <summary>Departure-style notices with a short entrance and a panel-safe stack.</summary>
         private void DrawToast(Rect rect)
         {
             if (rect.width <= 0f || rect.height <= 0f)
@@ -3410,11 +3506,25 @@ namespace Airside.Presentation
             for (var i = 0; i < _visibleToasts.Count; i++)
             {
                 var entry = _visibleToasts[i];
-                var alpha = ToastQueue.Alpha(entry, now) * (i == 0 ? 1f : 0.8f);
+                var entrance = ToastQueue.Entrance(entry, now);
+                var alpha = ToastQueue.Alpha(entry, now) * entrance * (i == 0 ? 1f : 0.86f);
                 var slot = new Rect(rect.x, rect.y + step * i, rect.width, rect.height);
+                // Workspace feedback has room for one row; overview/flight views may have more.
+                // Keep both the final slot and the entrance path away from controls and the edge.
+                var viewportHeight = Screen.height / Mathf.Max(0.01f, _hudScale);
+                var rise = Mathf.Min(8f * (1f - entrance), Mathf.Max(0f, viewportHeight - HudShell.Margin - slot.yMax));
+                var path = new Rect(slot.x, slot.y, slot.width, slot.height + rise);
+                if (path.yMax > viewportHeight - HudShell.Margin)
+                    break;
+                var blocked = false;
+                foreach (var panel in _hudPanels)
+                    if (panel.Overlaps(path)) { blocked = true; break; }
+                if (blocked)
+                    break;
+                slot.y += rise;
                 _hudOverlays.Add(slot);
-                ToastPainter.Paint(_toastDrawList, Box(slot),
-                    entry.Repeats > 1 ? $"{entry.Message}  ×{entry.Repeats}" : entry.Message, entry.Tone, alpha);
+                ToastPainter.Paint(_toastDrawList, Box(slot), entry.Message, entry.Tone, alpha,
+                    ToastQueue.Remaining(entry, now), entry.Repeats);
             }
             _hudPainter.Draw(_toastDrawList);
         }
@@ -3429,6 +3539,7 @@ namespace Airside.Presentation
             var any = false;
             while (_operations.TryTakeCareerEvent(out var careerEvent))
             {
+                if (!SoakMode) AirsideMacNotifications.Publish(DesktopNotificationPolicy.Career(careerEvent));
                 // ADR 0132: the big moments get a card as well as the toast.
                 if (careerEvent.Kind == CareerEventKind.TierReached)
                     Celebrate(CelebrationCard.ForTier(careerEvent.Tier, _operations.PlayerAirline?.Name ?? "Your airline"));

@@ -458,45 +458,7 @@ namespace Airside.Presentation
                 return;
             }
 
-            into.Text(new HudBox(pane.X, pane.Y, pane.Width, 30f), model.DestinationTitle, 22f,
-                HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
-            into.Caption(new HudBox(pane.X, pane.Y + 27f, pane.Width, 14f), "DESTINATION",
-                model.CareerLine.Length > 0 ? HudTone.Caution : HudTone.Muted);
-            into.Hairline(new HudBox(pane.X, pane.Y + 46f, pane.Width, 1f));
-
-            var y = pane.Y + 58f;
-            PaintFact(into, pane, ref y, "ROUTE", model.BandAndDistance, HudTone.Default);
-            PaintFact(into, pane, ref y, "AIRCRAFT", model.CompatibilityLine, HudTone.Default);
-            if (model.DispatchLine.Length > 0)
-            {
-                PaintFact(into, pane, ref y, "PAY NOW", model.DispatchLine, HudTone.Default);
-                PaintFact(into, pane, ref y, "RETURN", model.ReturnLine, HudTone.Default);
-            }
-
-            into.Text(new HudBox(pane.X, y, pane.Width, 24f), model.ProfitLine, 17f, model.ProfitTone, HudTextStyle.Bold);
-            y += 30f;
-            into.Hairline(new HudBox(pane.X, y, pane.Width, 1f));
-            y += 12f;
-            into.Text(new HudBox(pane.X, y, pane.Width, 36f), model.AvailabilityLine, 13f,
-                model.AvailabilityTone, HudTextStyle.Wrap);
-            y += 44f;
-
-            if (model.CareerLine.Length > 0)
-            {
-                into.Hairline(new HudBox(pane.X, y, pane.Width, 1f));
-                y += 10f;
-                into.Caption(new HudBox(pane.X, y, pane.Width, 16f), "CAREER");
-                y += 19f;
-                into.Text(new HudBox(pane.X, y, pane.Width, 34f), model.CareerLine, 12f,
-                    model.CareerTone, HudTextStyle.Bold | HudTextStyle.Wrap);
-                y += 38f;
-                if (pane.Height >= 520f)
-                {
-                    into.Button(new HudBox(pane.X, y, 132f, 28f), "VIEW CONTRACTS",
-                        HudAction.ViewContracts, HudButtonStyle.Secondary);
-                    y += 36f;
-                }
-            }
+            var y = PaintSummary(into, model, pane, pane.Bottom - 100f);
 
             if (model.DepartureLabel.Length > 0)
             {
@@ -544,30 +506,82 @@ namespace Airside.Presentation
                     HudTone.Muted, HudTextStyle.Wrap);
         }
 
+        /// <summary>
+        /// Destination first, then the one number that decides the choice (profit) in a card with its two
+        /// parts, then whether you can fly it, then the career nudge. Parts that would not fit above
+        /// <paramref name="limit"/> are left out, so a short window never paints over its booking controls.
+        /// Returns where the next block starts.
+        /// </summary>
+        private static float PaintSummary(HudDrawList into, RouteMapWorkspaceModel model, HudBox pane, float limit)
+        {
+            into.Text(new HudBox(pane.X, pane.Y, pane.Width, 30f), model.DestinationTitle, 22f,
+                HudTone.Default, HudTextStyle.Bold | HudTextStyle.Caption);
+            into.Text(new HudBox(pane.X, pane.Y + 31f, pane.Width, 16f), model.BandAndDistance, 12f, HudTone.Muted);
+
+            var y = pane.Y + 58f;
+            var card = new HudBox(pane.X, y, pane.Width, 92f);
+            if (card.Bottom > limit)
+            {
+                into.Text(new HudBox(pane.X, y, pane.Width, 24f), model.ProfitLine, 17f, model.ProfitTone, HudTextStyle.Bold);
+                return y + 30f;
+            }
+
+            into.Card(card, 0.9f);
+            into.Text(new HudBox(card.X + 14f, card.Y + 10f, card.Width - 28f, 26f), model.ProfitLine, 20f,
+                model.ProfitTone, HudTextStyle.Bold);
+            if (model.DispatchLine.Length > 0)
+            {
+                var half = (card.Width - 28f) * 0.5f;
+                PaintFigure(into, card.X + 14f, card.Y + 46f, half - 8f, "PAY NOW", model.DispatchLine);
+                PaintFigure(into, card.X + 14f + half, card.Y + 46f, half - 8f, "RETURN", model.ReturnLine);
+            }
+            else
+                PaintFigure(into, card.X + 14f, card.Y + 46f, card.Width - 28f, "AIRCRAFT", model.CompatibilityLine);
+            y = card.Bottom + 12f;
+
+            var oneLine = HudShell.Measure(model.AvailabilityLine, 12f) <= pane.Width - 28f;
+            var status = new HudBox(pane.X, y, pane.Width, oneLine ? 30f : 44f);
+            if (status.Bottom <= limit)
+            {
+                into.Fill(status, model.AvailabilityTone, 0.12f);
+                into.Fill(new HudBox(status.X, status.Y + 6f, 3f, status.Height - 12f), model.AvailabilityTone, 1f);
+                into.Text(new HudBox(status.X + 14f, status.Y + (oneLine ? 7f : 5f), status.Width - 24f, status.Height - 8f), model.AvailabilityLine, 12f,
+                    model.AvailabilityTone, HudTextStyle.Bold | HudTextStyle.Wrap);
+                y = status.Bottom + 6f;
+                if (model.DispatchLine.Length > 0 && model.CompatibilityLine.Length > 0 && y + 16f <= limit)
+                {
+                    into.Text(new HudBox(pane.X, y, pane.Width, 16f), model.CompatibilityLine, 11f, HudTone.Muted);
+                    y += 22f;
+                }
+            }
+
+            y += 6f;
+            if (model.CareerLine.Length > 0)
+            {
+                var withButton = pane.Height >= 520f;
+                var note = new HudBox(pane.X, y, pane.Width, withButton ? 92f : 58f);
+                if (note.Bottom <= limit)
+                {
+                    into.Fill(note, model.CareerTone, 0.08f);
+                    into.Caption(new HudBox(note.X + 12f, note.Y + 8f, note.Width - 24f, 14f), "CAREER", model.CareerTone);
+                    into.Text(new HudBox(note.X + 12f, note.Y + 24f, note.Width - 24f, 34f), model.CareerLine, 12f,
+                        HudTone.Default, HudTextStyle.Wrap);
+                    if (withButton)
+                        into.Button(new HudBox(note.X + 12f, note.Bottom - 34f, 132f, 26f), "VIEW CONTRACTS",
+                            HudAction.ViewContracts, HudButtonStyle.Secondary);
+                    y = note.Bottom + 14f;
+                }
+            }
+
+            return y;
+        }
+
         /// <summary>Keep booking controls fixed and reachable in a short desktop window.</summary>
         private static void PaintCompactDetail(HudDrawList into, RouteMapWorkspaceModel model, HudBox pane)
         {
-            into.Text(new HudBox(pane.X, pane.Y, pane.Width, 28f), model.DestinationTitle, 20f, HudTone.Default, HudTextStyle.Bold);
             var buttonY = pane.Bottom - 84f;
             var controlsY = buttonY - 116f;
-            var y = pane.Y + 36f;
-            void Line(string text, HudTone tone, float height = 20f)
-            {
-                if (string.IsNullOrEmpty(text) || y + height > controlsY - 8f) return;
-                into.Text(new HudBox(pane.X, y, pane.Width, height), text, 11f, tone, HudTextStyle.Wrap);
-                y += height + 2f;
-            }
-            Line(model.ProfitLine, model.ProfitTone, 24f);
-            Line(model.BandAndDistance, HudTone.Muted);
-            Line(model.DispatchLine, HudTone.Default);
-            Line(model.ReturnLine, HudTone.Default);
-            Line(model.AvailabilityLine, model.AvailabilityTone, 28f);
-            Line(model.CareerLine, model.CareerTone, 28f);
-            if (model.CareerLine.Length > 0 && y + 28f <= controlsY - 8f)
-            {
-                into.Button(new HudBox(pane.X, y, Math.Min(pane.Width, 132f), 28f), "VIEW CONTRACTS",
-                    HudAction.ViewContracts, HudButtonStyle.Secondary);
-            }
+            PaintSummary(into, model, pane, controlsY - 8f);
             if (model.DepartureLabel.Length > 0)
             {
                 into.Button(new HudBox(pane.X, controlsY, pane.Width, 28f), model.AircraftLabel + "   ▾",
@@ -594,15 +608,14 @@ namespace Airside.Presentation
             into.Button(reset, "COMPARE ROUTES", HudAction.ResetMap, HudButtonStyle.Secondary);
         }
 
-        private static void PaintFact(HudDrawList into, HudBox pane, ref float y, string caption,
-            string value, HudTone tone)
+        /// <summary>A small caption over a bold value, shrunk to fit its column.</summary>
+        private static void PaintFigure(HudDrawList into, float x, float y, float width, string caption, string value)
         {
-            var row = new HudBox(pane.X, y, pane.Width, 26f);
-            into.Fill(row, HudTone.Default, 0.035f);
-            into.Caption(new HudBox(row.X + 8f, row.Y + 6f, 78f, 15f), caption);
-            into.Text(new HudBox(row.X + 88f, row.Y + 5f, row.Width - 96f, 17f), value, 12f, tone,
-                HudTextStyle.Bold, HudAlign.Right);
-            y += 32f;
+            // The caption already says what it is; drop the model's own lead-in words.
+            value = (value ?? string.Empty).Replace("Expected return ", string.Empty).Replace("Change ", string.Empty);
+            into.Caption(new HudBox(x, y, width, 12f), caption, HudTone.Muted, HudAlign.Left, 9f);
+            into.Text(new HudBox(x, y + 14f, width, 20f), value, HudShell.FitFontSize(value, 14f, width, 10f),
+                HudTone.Default, HudTextStyle.Bold);
         }
 
         private static void PaintDestinationList(HudDrawList into, RouteMapWorkspaceModel model, HudBox pane)
@@ -677,11 +690,15 @@ namespace Airside.Presentation
                 // each other city is labelled only where it fits (its dot is always drawn).
                 var taken = new List<HudBox>();
                 Project(lens, map, home.Longitude, home.Latitude, out var homeX, out var homeY);
-                taken.Add(new HudBox(homeX + 10f, homeY - 9f, HudShell.Measure(home.Name, 13f), 17f));
+                var homeWidth = HudShell.Measure(home.Name, 13f) + 4f;
+                taken.Add(new HudBox(homeX - homeWidth * 0.5f, homeY - 28f, homeWidth, 17f));
                 if (selected.HasValue)
                 {
                     Project(lens, map, selected.Value.Longitude, selected.Value.Latitude, out var sx, out var sy);
-                    taken.Add(new HudBox(sx + 9f, sy - 9f, HudShell.Measure(selected.Value.Name, 12f) + 26f, 17f));
+                    var selectedWidth = HudShell.Measure(selected.Value.Name, 12f) + 28f;
+                    taken.Add(sx < homeX
+                        ? new HudBox(sx - 9f - selectedWidth, sy - 9f, selectedWidth, 17f)
+                        : new HudBox(sx + 9f, sy - 9f, selectedWidth, 17f));
                 }
 
                 foreach (var row in destinations)
@@ -691,31 +708,43 @@ namespace Airside.Presentation
                         continue;
                     var isSelected = selected.HasValue && selected.Value.Equals(row.Destination);
                     var careerTarget = ContainsCode(careerTargetCodes, row.Destination.Code);
+                    var overseas = !row.Destination.IsAustralian;
                     var tone = isSelected || careerTarget
                         ? HudTone.Caution
                         : row.Reachable ? HudTone.Accent : HudTone.Muted;
-                    into.Dot(x, y, isSelected ? 13f : careerTarget ? 11f : 9f, tone);
-                    var overseas = !row.Destination.IsAustralian;
-                    // Overseas cities are few and far apart, so they keep their names further out.
-                    var label = isSelected || lens.Zoom >= 4f || (overseas && lens.Zoom >= 0.45f)
-                        ? row.Destination.Name
-                        : lens.Zoom >= 2f || overseas ? row.Destination.Code : string.Empty;
-                    var labelBox = new HudBox(x + 9f, y - 9f, HudShell.Measure(label, 12f) + (overseas ? 26f : 0f), 17f);
-                    // The selected city always shows its name; beside home it drops below instead of over it.
-                    var labelDy = isSelected && Collides(labelBox, taken.GetRange(0, 1)) ? 16f : 0f;
-                    if (label.Length > 0 && !isSelected && Collides(labelBox, taken))
-                        label = string.Empty;
-                    else if (label.Length > 0 && !isSelected)
+                    var diameter = isSelected ? 13f : careerTarget ? 11f : row.Reachable ? 9f : 6f;
+                    // A dark rim lifts every dot off the land fill and any route beneath it.
+                    into.Dot(x, y, diameter + 3f, HudTone.Default, DotRim);
+                    into.Dot(x, y, diameter, tone, row.Reachable || isSelected || careerTarget ? null : LockedDot);
+
+                    // Codes for places you can fly to, names as you zoom in; places out of reach stay
+                    // quiet until you are close. Overseas cities are few and far apart, so they keep names.
+                    var zoom = lens.Zoom;
+                    var label = isSelected ? row.Destination.Name
+                        : overseas ? (zoom >= 0.45f ? row.Destination.Name : string.Empty)
+                        : row.Reachable ? (zoom >= 2.2f ? row.Destination.Name : zoom >= 0.9f ? row.Destination.Code : string.Empty)
+                        : zoom >= 5f ? row.Destination.Name : zoom >= 3f ? row.Destination.Code : string.Empty;
+                    if (label.Length == 0)
+                        continue;
+                    var size = isSelected ? 12.5f : 11f;
+                    var textWidth = HudShell.Measure(label, size) + 2f;
+                    var chipWidth = overseas ? 26f : 0f;
+                    // The selected label sits on the side away from home so the route never runs through it.
+                    var left = isSelected && x < homeX;
+                    var labelBox = left
+                        ? new HudBox(x - 9f - textWidth - chipWidth, y - 9f, textWidth + chipWidth, 17f)
+                        : new HudBox(x + 9f, y - 9f, textWidth + chipWidth, 17f);
+                    if (!isSelected && Collides(labelBox, taken))
+                        continue;
+                    if (!isSelected)
                         taken.Add(labelBox);
-                    if (label.Length > 0)
-                    {
-                        var style = isSelected ? HudTextStyle.Bold : HudTextStyle.Regular;
-                        into.Text(new HudBox(x + 9f, y - 9f + labelDy, 128f, 17f), label, 12f,
-                            row.Reachable ? HudTone.Default : HudTone.Muted, style);
-                        if (overseas)
-                            CountryChip(into, x + 11f + HudShell.Measure(label, 12f), y - 7f + labelDy,
-                                row.Destination.Country, row.Reachable);
-                    }
+                    var style = isSelected ? HudTextStyle.Bold : HudTextStyle.Regular;
+                    var labelTone = isSelected ? HudTone.Default : row.Reachable ? HudTone.Default : HudTone.Muted;
+                    HaloText(into, new HudBox(labelBox.X, labelBox.Y, textWidth + 4f, 17f), label, size, labelTone, style,
+                        left ? HudAlign.Right : HudAlign.Left);
+                    if (overseas)
+                        CountryChip(into, left ? labelBox.X : labelBox.X + textWidth + 2f, y - 7f,
+                            row.Destination.Country, row.Reachable);
                     // No hotspot: the map's own pointer handler picks the nearest dot, so it
                     // can tell a click from the start of a pan. An IMGUI control here would
                     // also come and go as zoom culls dots, which is how control ids drift.
@@ -725,9 +754,26 @@ namespace Airside.Presentation
             Project(lens, map, home.Longitude, home.Latitude, out var hx, out var hy);
             if (!map.Contains(hx, hy))
                 return;
+            into.Dot(hx, hy, 17f, HudTone.Default, DotRim);
             into.Dot(hx, hy, 12f, HudTone.Caution, playerLiveryHex);
-            into.Text(new HudBox(hx + 10f, hy - 9f, 120f, 17f), home.Name, 13f, HudTone.Default,
-                HudTextStyle.Bold);
+            var homeLabelWidth = HudShell.Measure(home.Name, 13f) + 4f;
+            HaloText(into, new HudBox(hx - homeLabelWidth * 0.5f, hy - 28f, homeLabelWidth, 17f), home.Name, 13f,
+                HudTone.Default, HudTextStyle.Bold, HudAlign.Center);
+        }
+
+        private const string DotRim = "#0b141ad9";
+        private const string LockedDot = "#6f808a";
+        private const string CoastLine = "#7fa2ae99";
+        private const string BorderLine = "#7fa2ae38";
+        private const string RangeLine = "#5fc9dc70";
+        private const string HaloInk = "#0b141acc";
+
+        /// <summary>Text with a soft dark shadow so labels stay legible over land, coast and routes.</summary>
+        private static void HaloText(HudDrawList into, HudBox box, string text, float size, HudTone tone,
+            HudTextStyle style, HudAlign align)
+        {
+            into.Text(new HudBox(box.X + 1f, box.Y + 1f, box.Width, box.Height), text, size, tone, style, align, HaloInk);
+            into.Text(box, text, size, tone, style, align);
         }
 
         /// <summary>Runway detail for home and every destination in view (ADR 0140).</summary>
@@ -752,21 +798,21 @@ namespace Airside.Presentation
             lens.GuiToLonLat(map.X, map.Y, map.Width, map.Height, map.X, map.Y, out var west, out var north);
             lens.GuiToLonLat(map.X, map.Y, map.Width, map.Height, map.Right, map.Bottom, out var east, out var south);
             var view = (W: west, E: east, S: south, N: north);
-            var coastWidth = lens.Detail == MapDetail.Detail ? 1.4f : 1.6f;
+            var coastWidth = lens.Detail == MapDetail.Detail ? 1.1f : 1.3f;
             // Zoomed right in, the fine coast drawn around each airport takes over there, and the
             // detail coast is skipped inside those boxes so the shore is not drawn twice.
             var fine = lens.Zoom >= MapGeography.AirportCoastZoom;
             foreach (var ring in MapGeography.Coasts(lens.Detail))
                 if (Overlaps(MapGeography.BoundsOf(ring), view))
-                    Polyline(into, map, lens, ring, HudTone.Muted, coastWidth, fine);
+                    Polyline(into, map, lens, ring, HudTone.Muted, coastWidth, fine, CoastLine);
             if (fine)
                 foreach (var piece in MapGeographyData.AirportCoasts)
                     if (Overlaps(MapGeography.BoundsOf(piece), view))
-                        Polyline(into, map, lens, piece, HudTone.Muted, coastWidth);
+                        Polyline(into, map, lens, piece, HudTone.Muted, coastWidth, false, CoastLine);
             if (lens.Zoom >= 0.6f)
                 foreach (var border in MapGeographyData.StateBorders)
                     if (Overlaps(MapGeography.BoundsOf(border), view))
-                        Polyline(into, map, lens, border, HudTone.Muted, 0.8f);
+                        Polyline(into, map, lens, border, HudTone.Muted, 0.7f, false, BorderLine);
             PaintTowns(into, map, lens, view);
         }
 
@@ -803,11 +849,11 @@ namespace Airside.Presentation
                 foreach (var other in taken)
                     if (box.X < other.Right && other.X < box.Right && box.Y < other.Bottom && other.Y < box.Bottom)
                         clear = false;
-                into.Dot(x, y, town.Rank <= 1 ? 4f : 3f, HudTone.Muted);
+                into.Dot(x, y, town.Rank <= 1 ? 4f : 3f, HudTone.Muted, "#7fa2ae80");
                 if (!clear || taken.Count > 60)
                     continue;
                 taken.Add(box);
-                into.Text(box, town.Name, size, HudTone.Muted);
+                into.Text(box, town.Name, size, HudTone.Muted, colourHex: "#9fb4bdb0");
             }
         }
 
@@ -866,40 +912,51 @@ namespace Airside.Presentation
             return false;
         }
 
+        /// <summary>
+        /// How far the selected aircraft can fly: one solid, quiet ring with its label sitting on the ring
+        /// where it is most visible (the top of the map), instead of a dashed circle that ran off the panel.
+        /// </summary>
         private static void RangeRing(HudDrawList into, HudBox map, AustraliaMapLens lens,
             Destination home, double distanceKm, string label)
         {
-            const int segments = 72;
-            RouteMap.DestinationPoint(home.Latitude, home.Longitude, distanceKm, 0.0,
-                out var lat, out var lon);
+            const int segments = 120;
+            RouteMap.DestinationPoint(home.Latitude, home.Longitude, distanceKm, 0.0, out var lat, out var lon);
             Project(lens, map, lon, lat, out var px, out var py);
             var prevLon = lon;
+            var labelX = 0f;
+            var labelY = float.MaxValue;
             for (var i = 1; i <= segments; i++)
             {
-                RouteMap.DestinationPoint(home.Latitude, home.Longitude, distanceKm,
-                    i * 360.0 / segments, out lat, out lon);
+                RouteMap.DestinationPoint(home.Latitude, home.Longitude, distanceKm, i * 360.0 / segments, out lat, out lon);
                 Project(lens, map, lon, lat, out var nx, out var ny);
-                if ((i & 1) == 0 && !Wraps(prevLon, lon))
-                    Clipped(into, map, px, py, nx, ny, HudTone.Muted, 0.65f);
+                if (!Wraps(prevLon, lon))
+                    Clipped(into, map, px, py, nx, ny, HudTone.Accent, 1.1f, RangeLine);
+                // The highest ring point comfortably inside the map carries the label.
+                if (nx > map.X + 70f && nx < map.Right - 150f && ny > map.Y + 44f && ny < labelY)
+                {
+                    labelX = nx;
+                    labelY = ny;
+                }
+
                 px = nx;
                 py = ny;
                 prevLon = lon;
             }
 
-            RouteMap.DestinationPoint(home.Latitude, home.Longitude, distanceKm, 90.0,
-                out lat, out lon);
-            Project(lens, map, lon, lat, out var lx, out var ly);
-            if (map.Contains(lx, ly))
-                into.Text(new HudBox(lx + 4f, ly - 15f, 190f, 15f),
-                    string.IsNullOrEmpty(label) ? $"{distanceKm:N0} km range" : label, 9f,
-                    HudTone.Muted);
+            if (labelY == float.MaxValue)
+                return;
+            var text = string.IsNullOrEmpty(label) ? $"{distanceKm:N0} km range" : label;
+            var width = HudShell.Measure(text, 10f) + 12f;
+            var chip = new HudBox(labelX - width * 0.5f, labelY - 9f, width, 18f);
+            into.Fill(chip, HudTone.Default, 0.85f, "#0f1e27");
+            into.Text(chip, text, 10f, HudTone.Accent, HudTextStyle.Regular, HudAlign.Center);
         }
 
         /// <summary>Screen pixels a coast vertex must move before it is drawn (ADR 0140).</summary>
         public const float MinSegmentPixels = 2.5f;
 
         private static void Polyline(HudDrawList into, HudBox map, AustraliaMapLens lens, float[] lonLat,
-            HudTone tone, float thickness, bool skipNearAirports = false)
+            HudTone tone, float thickness, bool skipNearAirports = false, string colourHex = null)
         {
             var count = lonLat.Length / 2;
             if (count < 2)
@@ -914,7 +971,7 @@ namespace Airside.Presentation
                     continue;
                 var near = skipNearAirports && MapGeography.NearAirport(lonLat[i * 2], lonLat[i * 2 + 1]);
                 if (!(near && nearBefore))
-                    Clipped(into, map, x0, y0, x1, y1, tone, thickness);
+                    Clipped(into, map, x0, y0, x1, y1, tone, thickness, colourHex);
                 x0 = x1;
                 y0 = y1;
                 nearBefore = near;
@@ -947,11 +1004,11 @@ namespace Airside.Presentation
         }
 
         private static void Clipped(HudDrawList into, HudBox map, float x0, float y0, float x1, float y1,
-            HudTone tone, float thickness)
+            HudTone tone, float thickness, string colourHex = null)
         {
             if (!RouteMap.ClipSegment(ref x0, ref y0, ref x1, ref y1, map.X, map.Y, map.Right, map.Bottom))
                 return;
-            into.Line(x0, y0, x1, y1, tone, thickness);
+            into.Line(x0, y0, x1, y1, tone, thickness, colourHex);
         }
 
         private static void Project(AustraliaMapLens lens, HudBox map, double longitude, double latitude,

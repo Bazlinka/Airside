@@ -340,10 +340,10 @@ namespace Airside.Presentation
                 // Same rule as drawing: Inbound / Away / far Outbound are off the map
                 // (FleetVisual.Hidden). Counting them here used to print "17 on field"
                 // while the apron looked empty.
+                if (AircraftPresence.IsActive(aircraft, now)) active++;
                 if (IsDrawnOnField(aircraft, now))
                 {
                     onField++;
-                    active++;
                     var markMin = MarkMinutes(aircraft, clock, nowMin);
                     if (markMin >= startMin && markMin <= endMin)
                         _dayMarks.Add(Clamp01((markMin - startMin) / (float)span));
@@ -878,7 +878,15 @@ namespace Airside.Presentation
                 surface.Width - HudShell.SurfacePadding * 2f, bodyHeight);
 
             var y = body.Y;
-            var dayStrip = new HudBox(body.X, y, body.Width, airlineView ? 32f : DayStripHeight);
+            // The airline view has no day track, so its tab buttons share the day strip's row: a compact
+            // window then keeps room for several aircraft rows instead of a second band of chrome.
+            var airlineTabsWidth = TabWidth + 8f + 176f;
+            var shareRow = airlineView && body.Width >= airlineTabsWidth + 220f;
+            var dayStrip = new HudBox(body.X, y, shareRow ? body.Width - airlineTabsWidth - 8f : body.Width,
+                airlineView ? 32f : DayStripHeight);
+            var sharedTabs = shareRow
+                ? new HudBox(body.Right - airlineTabsWidth, y + 1f, airlineTabsWidth, TabHeight)
+                : HudBox.Empty;
             y = dayStrip.Bottom + 12f;
 
             var attention = HudBox.Empty;
@@ -890,8 +898,9 @@ namespace Airside.Presentation
                 y = attention.Bottom + 16f;
             }
 
-            var tabs = new HudBox(body.X, y, body.Width, TabHeight);
-            y = tabs.Bottom + 10f;
+            var tabs = shareRow ? sharedTabs : new HudBox(body.X, y, body.Width, TabHeight);
+            if (!shareRow)
+                y = tabs.Bottom + 10f;
 
             var detailWidth = !airlineView && body.Width - MinBoardWidth - DetailGap >= DetailWidth ? DetailWidth : 0f;
             var boardWidth = detailWidth > 0f ? body.Width - detailWidth - DetailGap : body.Width;
@@ -1075,19 +1084,27 @@ namespace Airside.Presentation
                 into.Card(box, selected ? 1f : .8f);
                 if (selected || row.Severity >= StatusSeverity.Attention)
                     into.Outline(box, selected ? HudTone.Accent : HudTone.Caution, .8f);
-                var left = box.X + 12f;
-                var width = box.Width - 24f;
-                var timeWidth = Math.Min(180f, width * .4f);
-                into.Text(new HudBox(left, box.Y + 5f, width - timeWidth, 18f),
-                    row.Registration + " · " + row.BaseCode + " · " + row.TypeName, 13f, HudTone.Default, HudTextStyle.Bold);
-                into.Text(new HudBox(box.Right - 12f - timeWidth, box.Y + 7f, timeWidth, 16f),
-                    row.TimeText, 11f, HudTone.Muted, HudTextStyle.Regular, HudAlign.Right);
-                into.Text(new HudBox(left, box.Y + 25f, width - timeWidth, 18f), row.RouteText, 12f, HudTone.Muted);
-                into.Text(new HudBox(box.Right - 12f - timeWidth, box.Y + 25f, timeWidth, 18f), row.State, 12f,
-                    row.Severity >= StatusSeverity.Attention ? HudTone.Caution : HudTone.Default,
-                    HudTextStyle.Regular, HudAlign.Right);
+                // A severity stripe, identity on the left, and on the right what it is doing now (bold, in its
+                // status colour) over the time to watch.
+                var stateTone = HudShellPainter.SeverityTone(row.Severity, false);
+                into.Fill(new HudBox(box.X + 1f, box.Y + 8f, 3f, box.Height - 16f), selected ? HudTone.Accent : stateTone, 1f);
+                var left = box.X + 18f;
+                var width = box.Width - 34f;
+                var rightWidth = Math.Min(300f, width * .46f);
+                var leftWidth = width - rightWidth - 12f;
+                var registrationWidth = HudShell.Measure(row.Registration, 15f) + 6f;
+                into.Text(new HudBox(left, box.Y + 8f, Math.Min(registrationWidth, leftWidth), 20f), row.Registration, 15f,
+                    HudTone.Default, HudTextStyle.Bold);
+                if (registrationWidth + 12f < leftWidth)
+                    into.Text(new HudBox(left + registrationWidth + 8f, box.Y + 11f, leftWidth - registrationWidth - 8f, 16f),
+                        row.TypeName + "  ·  " + row.BaseCode, 11f, HudTone.Muted);
+                into.Text(new HudBox(left, box.Y + 31f, leftWidth, 18f), row.RouteText, 13f, HudTone.Default);
+                into.Text(new HudBox(box.Right - 16f - rightWidth, box.Y + 9f, rightWidth, 18f), row.State, 12f,
+                    row.Severity >= StatusSeverity.Attention ? HudTone.Caution : HudTone.Default, HudTextStyle.Bold, HudAlign.Right);
+                into.Text(new HudBox(box.Right - 16f - rightWidth, box.Y + 31f, rightWidth, 16f), row.TimeText, 11f,
+                    HudTone.Muted, HudTextStyle.Regular, HudAlign.Right);
                 if (row.HasProgress)
-                    into.Bar(new HudBox(left, box.Bottom - 5f, width, 2f), row.Progress01, HudTone.Accent);
+                    into.Bar(new HudBox(left, box.Bottom - 8f, width, 3f), row.Progress01, HudTone.Accent);
                 into.Hotspot(box, HudAction.Select(row.Registration));
             }
         }

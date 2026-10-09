@@ -12,7 +12,6 @@ namespace Airside.Presentation
     /// </summary>
     public sealed partial class AirsidePrototype
     {
-        private bool _miniMapVisible = false;
         private Texture2D _miniMapTexture;
         private bool _miniMapDragging;
         private bool _miniMapPressed;
@@ -22,14 +21,19 @@ namespace Airside.Presentation
 
         private void ToggleMiniMap()
         {
-            _miniMapVisible = !_miniMapVisible;
+            var on = AirsideSettings.Current.Hud.Toggle(CurrentHudView, HudElement.AirportMap);
             ApplySettingsAndSave();
-            ShowToast(_miniMapVisible ? "Flight map on (N)." : "Flight map off (N).");
+            ShowToast($"Flight map {(on ? "on" : "off")} in the {HudViewName(CurrentHudView)} (N).");
             PlayUiClick();
         }
 
+        /// <summary>
+        /// The radar is Adelaide's airfield (its outline, RWY label and traffic dots). It is hidden while the
+        /// independent Parafield watch is up, otherwise it sat there unlabelled beside a "Parafield" card.
+        /// </summary>
         private bool MiniMapShows =>
-            _miniMapVisible && !(_activeWorkspace != HudWorkspace.None || _devToolsOpen || _controlsHelpOpen);
+            HudShows(HudElement.AirportMap) && !WatchingParafield
+            && !(_activeWorkspace != HudWorkspace.None || _devToolsOpen || _controlsHelpOpen);
 
         private readonly HudDrawList _miniMapDrawList = new();
 
@@ -245,6 +249,11 @@ namespace Airside.Presentation
         private bool TryMiniMapLocation(FleetAircraft aircraft, out double latitude, out double longitude)
         {
             latitude = longitude = 0;
+            if (_arrivalFinal.TryGetValue(aircraft.Registration, out var final) && final.Active)
+            {
+                YpadFrame.ToLatLon(final.World.x, final.World.z, out latitude, out longitude);
+                return true;
+            }
             if (aircraft.IsOffMap && aircraft.CurrentDestination.HasValue
                 && _fleetFlightById.TryGetValue(aircraft.Registration, out var flight))
             {

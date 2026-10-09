@@ -123,7 +123,7 @@ namespace Airside.Presentation
     }
 
     /// <summary>
-    /// The bottom-centre selected-aircraft card (ADR 0122): identity with a livery tick and a phase
+    /// The right-hand selected-aircraft card (ADR 0122): identity with a livery tick and a phase
     /// chip, route and live readout, a four-node turnaround timeline, then one amber action — or
     /// the stand choices after landing. Pure painter; the runtime reacts to the returned action ids.
     /// </summary>

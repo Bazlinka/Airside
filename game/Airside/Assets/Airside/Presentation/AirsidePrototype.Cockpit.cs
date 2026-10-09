@@ -133,8 +133,12 @@ namespace Airside.Presentation
                 : JetCockpitProfile.TryFor(type.Id, out _) ? JetCockpitInterior.Build(view, type)
                 : TurbopropCockpitInterior.Create(view, type);
             if (_cockpitInterior == null) return;
-            _cockpitInterior.Enter();
+            _cockpitInterior.Enter(false);
         }
+
+        /// <summary>Hide the airframe once the glide is this far in: the lens is by then inside the skin, which is
+        /// back-face culled, so the swap lands under the camera instead of a visible pop at the very end.</summary>
+        private const float ExteriorHideProgress = 0.6f;
 
         private void ExitCockpit(bool overview)
         {
@@ -149,7 +153,7 @@ namespace Airside.Presentation
             }
             _cockpitInterior = null;
             _cockpitView = null;
-            _cameraController?.EndCockpit();
+            if (_cameraController != null) _cameraController.EndCockpit();
             var wasRemote = _flightOriginX != 0 || _flightOriginZ != 0;
             ResetFlightWorld();
             UpdateAircraftVisual();
@@ -180,6 +184,8 @@ namespace Airside.Presentation
                 BindCockpitView(view);
                 StartFlightCamera(aircraft);
             }
+            if (_cockpitInterior != null && _cameraController != null)
+                _cockpitInterior.SetExteriorHidden(_cameraController.SeatBlendProgress >= ExteriorHideProgress);
             var elapsed = _preciseTime - _cockpitPreviousTime;
             var parts = PartsFor(view);
             // Wheel height: take the gear-pivot lift back out so a pitched-up roll still reads as on the ground.
@@ -206,6 +212,7 @@ namespace Airside.Presentation
                 HeightAgl = gearHeight, PitchUpDegrees = pitchUp, BankLeftDegrees = bankLeft,
                 Spool = (spool.Left + spool.Right) * 0.5f,
                 Turboprop = !_cockpitIsJet,
+                WeatherTurbulence = ObserverInCloud * Mathf.Lerp(0.12f, 1f, _stormDepth),
             });
             _cameraController.SetCockpitMotion(new Vector3(motion.Right, motion.Up, motion.Forward),
                 new Vector3(motion.PitchDownDegrees, motion.YawDegrees, motion.RollDegrees));
@@ -217,7 +224,7 @@ namespace Airside.Presentation
             if (tap != HapticKind.None) MacTrackpadHaptics.Perform(tap);
             _cockpitInterior.SetAttitude(pitchUp, bankLeft);
             var observerRain = CockpitObserverWeather.Rain(CurrentWeatherLook.Precipitation,
-                _cockpitView != null ? _cockpitView.position.y : 0f, InCockpit && _cockpitView != null);
+                ObserverHeight, true, _stormDepth);
             _cockpitInterior.SetEnvironment(PresentationDaylight, observerRain, Time.unscaledTime);
             _cockpitCallouts.DeltaSeconds = (float)Math.Max(0.0, elapsed);
             var call = aircraft.Type.IsRotorcraft ? null : _cockpitCallouts.Step(new CockpitCallouts.Sample
@@ -227,10 +234,6 @@ namespace Airside.Presentation
                 Jet = _cockpitIsJet,
             });
             if (call != null) { _cockpitCallText = call; _cockpitCallUntil = Time.unscaledTime + 2.2f; }
-            // Cloud/storm buffet from the shared weather envelope; engine and runway feel come from CockpitMotion.
-            var cloud = CockpitWeatherEnvelope.InCloud(view.position.y, CurrentWeatherLook.CloudCover);
-            var inAir = gearHeight > 5f;
-            _cameraController.SetCockpitRumble(inAir ? cloud * (CurrentWeather == WeatherKind.Storm ? 0.65f : 0.25f) : 0f);
             if (_preciseTime < _cockpitNextReadout) return;
             _cockpitNextReadout = _preciseTime + 0.1;
             if (_cockpitInterior is JetCockpitInterior jet)
@@ -279,6 +282,8 @@ namespace Airside.Presentation
                     AirsideSettings.Current.Save();
                     PlayUiClick();
                 }
+                if (InCockpit && _cockpitView != null)
+                    DrawFlightMap(layout, placement, aircraft);
             }
             if (_aircraftViewMode == AircraftViewMode.Cockpit && !string.IsNullOrEmpty(_cockpitCallText) && Time.unscaledTime < _cockpitCallUntil)
             {

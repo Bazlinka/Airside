@@ -60,6 +60,7 @@ namespace Airside.Presentation
         private bool _following;
         private bool _easingOverview;
         private float _orbitSuppressUntil;
+        private float _agentReviewDistance, _agentReviewPoseUntil;
         private float _touchdownShake;
         private AircraftPhase _followPhase = AircraftPhase.AtStand;
         private float _followProgress;
@@ -354,6 +355,7 @@ namespace Airside.Presentation
                     : 1f;
                 var followDistance = FollowDistance(_followPhase, altitude, _followProgress)
                                      * aircraftScale * _followZoom;
+                if (Time.unscaledTime < _agentReviewPoseUntil) followDistance = _agentReviewDistance;
                 if (recycled)
                 {
                     _center = lookPoint;
@@ -947,8 +949,24 @@ namespace Airside.Presentation
         /// pan and zoom from there — turning follow off is not a request to be
         /// dragged back across the field.
         /// </summary>
+        /// <summary>Explicit agent QA only: hold a reproducible orbit for real-frame diagnosis.</summary>
+        public void ApplyAgentReviewPose(float pitch, float yaw, float distance)
+        {
+            if (!AirsideBareField.HasLaunchFlag("-airsideAgentGameplay"))
+                throw new System.InvalidOperationException("Agent review launch required");
+            if (!float.IsFinite(pitch) || !float.IsFinite(yaw) || !float.IsFinite(distance)
+                || pitch < 5 || pitch > 85 || distance < 10 || distance > 10000)
+                throw new System.ArgumentException("Invalid diagnostic camera pose");
+            _easingOverview = false;
+            _orbitSuppressUntil = Time.unscaledTime + 30;
+            _agentReviewDistance = distance; _agentReviewPoseUntil = _orbitSuppressUntil;
+            _pitch = pitch; _yaw = yaw; _distance = distance;
+            ApplyTransform();
+        }
+
         public void ReleaseFollow()
         {
+            _agentReviewPoseUntil = 0;
             EndCockpit();
             _following = false;
             _easingOverview = false;
@@ -987,7 +1005,7 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>HUD selection: follow one exact aircraft already registered as a target.</summary>
+        /// <summary>HUD selection: follow one exact physically present aircraft.</summary>
         public bool StartFollow(Transform target)
         {
             if (target == null || !target.gameObject.activeInHierarchy)
@@ -995,7 +1013,13 @@ namespace Airside.Presentation
 
             var index = System.Array.IndexOf(_followTargets, target);
             if (index < 0)
-                return false;
+            {
+                // A direct request may name a distant or quiet parked aircraft omitted
+                // from automatic cycling. Retain that explicit target until the next sync.
+                index = _followTargets.Length;
+                System.Array.Resize(ref _followTargets, index + 1);
+                _followTargets[index] = target;
+            }
 
             EndCockpit();
             _following = true;

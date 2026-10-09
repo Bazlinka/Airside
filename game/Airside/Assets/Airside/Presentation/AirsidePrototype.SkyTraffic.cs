@@ -103,6 +103,7 @@ namespace Airside.Presentation
                 PresentationDeltaTime, PresentationClock, null, null, flight.Type);
             SpinJetFans(view, parts.FanLeft, parts.FanRight, AircraftPhase.Circuit, null);
             SpinPropellers(view, parts.Propellers, AircraftPhase.Circuit, null);
+            UpdateContrails(view, flight.Type, parts.Propellers != null && parts.Propellers.Length > 0, flight.AltitudeFeet);
             UpdateAircraftSound(view, flight.Type, AircraftPhase.Circuit, flight.Callsign, 0.5f, EngineState.Running, 0f);
         }
 

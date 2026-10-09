@@ -45,22 +45,50 @@ namespace Airside.Presentation
                 && RegionalMiniMap.Contains(latitude, longitude);
         }
         private bool WatchingJourney(string id) => InCockpit && id == _cockpitAircraftId
-            && _fleetAircraftById.TryGetValue(id, out var aircraft) && CanWatchJourney(aircraft);
+            && _fleetAircraftById.TryGetValue(id, out var aircraft) && CanWatchJourney(aircraft)
+            || _cameraController != null && _cameraController.FollowTarget != null
+                && _fleetViewById.TryGetValue(id, out var followedView)
+                && followedView == _cameraController.FollowTarget;
+
+        private static bool HasFleetJourneyPose(FleetAircraft aircraft) => aircraft != null
+            && !aircraft.Type.IsRotorcraft
+            && AircraftPresence.HasJourneyPose(aircraft.State, aircraft.CurrentDestination.HasValue,
+                aircraft.StateEndsAt.HasValue, aircraft.CurrentDestination.HasValue
+                    && RegionalRunways.TryGet(aircraft.CurrentDestination.Value.Code, out _));
+
+        private bool FleetJourneyInView(FleetAircraft aircraft)
+        {
+            if (!HasFleetJourneyPose(aircraft) || _mainCamera == null
+                || !_fleetFlightById.TryGetValue(aircraft.Registration, out var flight)) return false;
+            JourneyWorld(flight, 0, out var x, out var y, out var z);
+            var camera = _mainCamera.transform.position;
+            return AircraftPresence.RouteInRange(x - _flightOriginX - camera.x, y - camera.y,
+                z - _flightOriginZ - camera.z, _mainCamera.farClipPlane, WatchingJourney(aircraft.Registration));
+        }
         private Vector3 FlightOrigin => new Vector3((float)_flightOriginX,0,(float)_flightOriginZ);
 
         // Runs before aircraft poses. Only presentation coordinates move; schedules/saves do not.
         private void UpdateFlightWorld()
         {
-            var x=0.0; var z=0.0;
+            var x=0.0; var z=0.0; var altitude=0.0;
             FleetAircraft aircraft = null;
             var active=InCockpit && _fleetAircraftById.TryGetValue(_cockpitAircraftId,out aircraft);
-            if(active && CanWatchJourney(aircraft) && _fleetFlightById.TryGetValue(_cockpitAircraftId,out var flight))
-                JourneyWorld(flight,0,out x,out _,out z);
-            else if(active && _cockpitView != null)
-            { x=_cockpitView.position.x+_flightOriginX;z=_cockpitView.position.z+_flightOriginZ; }
+            var watchView = active ? _cockpitView : _cameraController?.FollowTarget;
+            if (!active && watchView != null)
+                foreach (var pair in _fleetViewById)
+                    if (pair.Value == watchView && _fleetAircraftById.TryGetValue(pair.Key, out aircraft))
+                    { active = true; break; }
+            if (active && TryArrivalFinal(aircraft, out var final))
+            { x = final.World.x; altitude = final.World.y; z = final.World.z; }
+            else if(active && (CanWatchJourney(aircraft) || HasFleetJourneyPose(aircraft))
+                && _fleetFlightById.TryGetValue(aircraft.Registration,out var flight))
+                JourneyWorld(flight,0,out x,out altitude,out z);
+            else if(active && watchView != null)
+            { altitude=watchView.position.y; x=watchView.position.x+_flightOriginX;z=watchView.position.z+_flightOriginZ; }
             if (WatchingOutstation && OutstationJourney.TryFor(WatchedOutstation(), _preciseTime, out var network))
             {
                 YpadFrame.ToWorld(network.Latitude, network.Longitude, out x, out z);
+                altitude = network.AltitudeFeet / EnrouteProfile.FeetPerMetre;
                 active = true;
             }
             var distant=active && Math.Max(Math.Abs(x),Math.Abs(z))>80000;
@@ -69,6 +97,8 @@ namespace Airside.Presentation
             // Shift the camera rig; telemetry already samples aircraft positions in world coordinates.
             var originDelta=new Vector3((float)(_flightOriginX-ox),0,(float)(_flightOriginZ-oz));
             if(_cameraController!=null) _cameraController.ShiftFlightOrigin(originDelta);
+            if (_cloudRoot != null) _cloudRoot.position += originDelta;
+            ShiftStormLightning(originDelta);
             _flightOriginX=ox;_flightOriginZ=oz;
             if(_airfieldRoot!=null) _airfieldRoot.position=-FlightOrigin;
             Shader.SetGlobalVector("_AirsideFlightOrigin",new Vector4((float)ox,0,(float)oz,0));
@@ -77,7 +107,7 @@ namespace Airside.Presentation
             {
                 if(_flightTerrain==null) CreateFlightTerrainTimed();
                 _flightTerrain.gameObject.SetActive(true);
-                _flightTerrain.Tick(x,z,ox,oz);
+                _flightTerrain.Tick(x,z,ox,oz,altitudeMetres:altitude);
             }
             else if(!InCockpit && _cameraController!=null && FlightWorldGrid.WideMap(AirsideCameraController.CurrentDistance))
             {
@@ -102,6 +132,9 @@ namespace Airside.Presentation
         }
         private void ResetFlightWorld()
         {
+            var weatherDelta = FlightOrigin;
+            if (_cloudRoot != null) _cloudRoot.position += weatherDelta;
+            ShiftStormLightning(weatherDelta);
             _flightOriginX=_flightOriginZ=0;
             Shader.SetGlobalVector("_AirsideFlightOrigin",Vector4.zero);
             _flightAirportActors.Restore();
@@ -110,7 +143,8 @@ namespace Airside.Presentation
         }
         private Vector3? FleetJourneyPosition(CommercialFlight flight,float ahead)
         {
-            if(!WatchingJourney(flight.AircraftId) || IsArrivingOnFinal(_fleetAircraftById[flight.AircraftId])) return null;
+            if (!_fleetAircraftById.TryGetValue(flight.AircraftId, out var aircraft)
+                || !HasFleetJourneyPose(aircraft) || IsArrivingOnFinal(aircraft)) return null;
             JourneyWorld(flight,ahead,out var x,out var y,out var z);
             return new Vector3((float)(x-_flightOriginX),(float)y,(float)(z-_flightOriginZ));
         }
@@ -127,7 +161,9 @@ namespace Airside.Presentation
             if (aircraft.State == FleetState.AtDestination
                 && RegionalRunways.TryGet(aircraft.CurrentDestination.Value.Code,out var parkedRunway))
             {
-                RegionalFlightPath.Landing(parkedRunway,0,0,0,out x,out y,out z);
+                RegionalFlightPath.Landing(parkedRunway,0,0,0,null,aircraft.Type,out x,out y,out z);
+                // The turnaround is spent on the mapped apron, not at the end of the landing roll.
+                if (TryTurnaroundPose(aircraft,parkedRunway,ahead,out var turnaround)) { x=turnaround.X; z=turnaround.Z; }
                 return;
             }
             TryEnroute(aircraft,out var profile,out var elapsed);
@@ -142,9 +178,12 @@ namespace Airside.Presentation
                 ArrivalMapTrack.LatLon(destination,_operations.Home,aircraft.Registration,profile.LegMetres,metres,
                     runway,aircraft.Type,ArrivalApproach.LateralFactor(aircraft,runway),out lat,out lon);
                 YpadFrame.ToWorld(lat,lon,out x,out z);
-                if (RegionalRunways.TryGet(destination.Code,out var departureRunway) && elapsed<240)
+                var hasDepartureRunway=RegionalRunways.TryGet(destination.Code,out var departureRunway);
+                var climbLag=hasDepartureRunway ? RegionalFlightPath.ClimbLagSeconds(aircraft.Type) : 0.0;
+                if (hasDepartureRunway && elapsed<240)
                 {
-                    var exit=AirsideFlightPath.GroundY+profile.AltitudeFeetAt(RegionalFlightPath.DepartureSeconds)/EnrouteProfile.FeetPerMetre;
+                    var exit=AirsideFlightPath.GroundY+ArrivalMapTrack.HeightMetres(profile.LegMetres/1000,profile.LegSeconds,
+                        profile.LegSeconds-RegionalFlightPath.DepartureSeconds,aircraft.Type,climbLag);
                     if(elapsed<=RegionalFlightPath.DepartureSeconds)
                     {
                         RegionalFlightPath.Departure(departureRunway,elapsed,exit,aircraft.Type,out x,out y,out z);
@@ -160,13 +199,13 @@ namespace Airside.Presentation
                     x+=(sx-tx)*keepDeparture;z+=(sz-tz)*keepDeparture;
                 }
                 y=AirsideFlightPath.GroundY+ArrivalMapTrack.HeightMetres(profile.LegMetres/1000,profile.LegSeconds,
-                    profile.LegSeconds-elapsed,aircraft.Type);
+                    profile.LegSeconds-elapsed,aircraft.Type,climbLag);
                 return;
             }
             var remaining=profile.LegSeconds-elapsed;
             if (RegionalRunways.TryGet(destination.Code,out var regionalRunway) && remaining<=RegionalFlightPath.TerminalSeconds)
             {
-                RegionalFlightPath.Landing(regionalRunway,0,0,remaining,out x,out y,out z);
+                RegionalFlightPath.Landing(regionalRunway,0,0,remaining,profile,aircraft.Type,out x,out y,out z);
                 return;
             }
             var performance = AircraftPerformance.For(aircraft.Type);
@@ -200,11 +239,32 @@ namespace Airside.Presentation
                 RouteMap.FlightPoint(_operations.Home.Latitude,_operations.Home.Longitude,destination.Latitude,
                     destination.Longitude,t,aircraft.Registration,out lat,out lon);
                 YpadFrame.ToWorld(lat,lon,out var tx,out var tz);
-                RegionalFlightPath.Landing(regionalRunway,0,0,RegionalFlightPath.TerminalSeconds,out var sx,out var sy,out var sz);
+                RegionalFlightPath.Landing(regionalRunway,0,0,RegionalFlightPath.TerminalSeconds,profile,aircraft.Type,out var sx,out var sy,out var sz);
                 var blend=Math.Clamp((360-remaining)/180,0,1);blend=blend*blend*(3-2*blend);
                 x+=(sx-tx)*blend;z+=(sz-tz)*blend;
                 y+=(sy-(AirsideFlightPath.GroundY+profile.AltitudeFeetAt(profile.LegSeconds-180)/EnrouteProfile.FeetPerMetre))*blend;
             }
+        }
+
+        /// <summary>
+        /// Where an aircraft turning round at a regional outstation is: taxiing in from the end of the landing roll to
+        /// the mapped apron, parked, then taxiing back to the exact point its departure roll starts from. False when
+        /// the airport has no mapped apron or the stay is too short to taxi: the aircraft stays where it stopped.
+        /// </summary>
+        private bool TryTurnaroundPose(FleetAircraft aircraft, RegionalRunway runway, double ahead, out TurnaroundPose pose)
+        {
+            pose = default;
+            if (aircraft.State != FleetState.AtDestination || !aircraft.StateEndsAt.HasValue
+                || !RegionalApron.TryFor(runway, aircraft.Registration, out var spot)) return false;
+            var started = aircraft.StateStartedAt.ElapsedSeconds;
+            var duration = aircraft.StateEndsAt.Value.ElapsedSeconds - started;
+            if (duration < RegionalTurnaround.MinimumStaySeconds) return false;
+            RegionalFlightPath.Landing(runway,0,0,0,null,aircraft.Type,out var stopX,out _,out var stopZ);
+            // The departure rolls from the plain landing-roll end; arriving there keeps the hand-over seamless.
+            RegionalFlightPath.Departure(runway,0,0,aircraft.Type,out var startX,out _,out var startZ);
+            RegionalTurnaround.RunwayYaws(runway,out var landingYaw,out var departureYaw);
+            pose = RegionalTurnaround.At(stopX,stopZ,landingYaw,startX,startZ,departureYaw,spot,_preciseTime+ahead-started,duration);
+            return true;
         }
 
         private Vector3 DepartureWorldPosition(CommercialFlight flight, FleetAircraft aircraft, float progress) =>

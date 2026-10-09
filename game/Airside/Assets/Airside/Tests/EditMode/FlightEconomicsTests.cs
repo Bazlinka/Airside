@@ -26,7 +26,8 @@ namespace Airside.Tests
         {
             const double km = 650;
             Assert.That(FlightEconomics.Weight(AircraftType.Atr42), Is.EqualTo(1.0));
-            Assert.That(FlightEconomics.Weight(AircraftType.Boeing78710), Is.EqualTo(2.2));
+            Assert.That(FlightEconomics.Weight(AircraftType.Boeing78710), Is.GreaterThan(FlightEconomics.Weight(AircraftType.Boeing7378)));
+            Assert.That(FlightEconomics.Weight(AircraftType.Boeing7378), Is.EqualTo(2.2));
             Assert.That(FlightEconomics.DispatchCost(AircraftType.Atr42, km),
                 Is.LessThan(FlightEconomics.DispatchCost(AircraftType.Boeing78710, km)));
             Assert.That(FlightEconomics.FlightPay(AircraftType.Atr42, km),

@@ -44,7 +44,7 @@ namespace Airside.Tests
         [Test] public void CameraBoundaryCrossingDoesNotPopAVisibleCloud()
         {
             var previousAlpha = -1f;
-            for (var camera = -4700f; camera <= -3700f; camera += 10f)
+            for (var camera = -WeatherCoverage.CloudHalfWidth - 200f; camera <= -WeatherCoverage.CloudHalfWidth + WeatherCoverage.CloudFadeWidth; camera += 10f)
             {
                 var cloud = WeatherCoverage.WrapNearView(0f, camera, WeatherCoverage.CloudHalfWidth);
                 var alpha = WeatherCoverage.CloudEdge(cloud, 0f, camera, 0f);

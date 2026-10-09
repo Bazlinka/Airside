@@ -41,6 +41,9 @@ namespace Airside.Presentation
             public AircraftType Type;
             /// <summary>Which side the arrival joins the final from (ADR 0142), fixed when first drawn.</summary>
             public float Lateral;
+            public bool Holding;
+            public double HoldingStartedAt;
+            public Vector3 HoldingEntry, HoldingForward;
         }
 
         private readonly Dictionary<string, ArrivalFinalState> _arrivalFinal = new();
@@ -70,6 +73,47 @@ namespace Airside.Presentation
         private readonly Dictionary<string, LandingEtaSearch> _landingEta = new();
         private int _landingEtaBudgetFrame = -1;
         private int _landingEtaBudget;
+
+        private void CaptureArrivalViews(AirlineSaveData data)
+        {
+            foreach (var aircraft in _operations.Fleet)
+            {
+                if (!_arrivalFinal.TryGetValue(aircraft.Registration, out var view)
+                    || (!view.Active && !view.Holding)) continue;
+                data.ArrivalViews.Add(new ArrivalViewRecord { Registration = aircraft.Registration,
+                    DestinationCode = aircraft.CurrentDestination?.Code, TypeId = aircraft.Type.Id,
+                    FleetState = (int)aircraft.State, StateStartedAt = aircraft.StateStartedAt.ElapsedSeconds,
+                    Runway = (int)view.Runway, Active = view.Active, Holding = view.Holding,
+                    LastTime = view.LastTime, HoldingStartedAt = view.HoldingStartedAt,
+                    Metres = view.Metres, Speed = view.Speed, Lateral = view.Lateral,
+                    X = view.World.x, Y = view.World.y, Z = view.World.z,
+                    EntryX = view.HoldingEntry.x, EntryY = view.HoldingEntry.y, EntryZ = view.HoldingEntry.z,
+                    ForwardX = view.HoldingForward.x, ForwardZ = view.HoldingForward.z });
+            }
+        }
+
+        private void RestoreArrivalViews(AirlineSaveData data)
+        {
+            _arrivalFinal.Clear();
+            _landingEta.Clear();
+            _landingEtaBudgetFrame = -1;
+            if (data.Version < 23 || data.ArrivalViews == null) return;
+            foreach (var record in data.ArrivalViews)
+            {
+                if (record == null || string.IsNullOrEmpty(record.Registration)
+                    || !_fleetAircraftById.TryGetValue(record.Registration, out var aircraft)
+                    || !ArrivalViewContinuity.Matches(record, aircraft, data.ClockSeconds)) continue;
+                var state = new ArrivalFinalState { Active = record.Active, HasShown = true,
+                    Holding = record.Holding, HoldingStartedAt = record.HoldingStartedAt,
+                    LastTime = record.LastTime, Metres = record.Metres, Speed = record.Speed,
+                    Lateral = record.Lateral, Type = aircraft.Type, Runway = (RunwayDirection)record.Runway,
+                    World = new Vector3(record.X, record.Y, record.Z),
+                    HoldingEntry = new Vector3(record.EntryX, record.EntryY, record.EntryZ),
+                    HoldingForward = new Vector3(record.ForwardX, 0f, record.ForwardZ) };
+                state.Offset = state.World - ArrivalFinalWorld(state, 0f);
+                _arrivalFinal[record.Registration] = state;
+            }
+        }
 
         /// <summary>The landing estimate for an arrival that could be on the drawn final; false otherwise.</summary>
         private bool TryLandingEta(FleetAircraft aircraft, out SimulationTime eta, out RunwayDirection runway)
@@ -161,13 +205,34 @@ namespace Airside.Presentation
         private bool TryArrivalFinal(FleetAircraft aircraft, out ArrivalFinalState state)
         {
             state = null;
-            if (!FleetMode || aircraft == null)
+            if (!FleetMode || aircraft == null || aircraft.Type.IsRotorcraft)
                 return false;
             _arrivalFinal.TryGetValue(aircraft.Registration, out state);
             if (state != null && state.Frame == Time.frameCount)
                 return state.Active;
 
             var hasEta = TryLandingEta(aircraft, out var eta, out var runway);
+            var speed = CircuitProfile.Knots(AircraftPerformance.For(aircraft.Type).ApproachKnots);
+            var target = hasEta ? speed * (float)System.Math.Max(0.0, eta.ElapsedSeconds - _preciseTime) : 0f;
+            if (ArrivalHoldingTrack.Required(state != null && state.Active,
+                    aircraft.State is FleetState.Inbound or FleetState.HoldingForLanding, hasEta, target))
+            {
+                if (!state.Holding)
+                {
+                    var tangent = ArrivalFinalWorld(state, 1f) - ArrivalFinalWorld(state, 0f);
+                    tangent.y = 0f;
+                    state.HoldingForward = tangent.sqrMagnitude > 0.001f ? tangent.normalized : Vector3.right;
+                    state.HoldingEntry = state.World;
+                    state.HoldingStartedAt = _preciseTime;
+                    state.Holding = true;
+                    state.Speed = speed;
+                }
+                state.LastTime = _preciseTime;
+                state.Frame = Time.frameCount;
+                state.Offset = Vector3.zero;
+                state.World = ArrivalFinalWorld(state, 0f);
+                return true;
+            }
             if (!hasEta)
             {
                 if (state == null)
@@ -185,8 +250,6 @@ namespace Airside.Presentation
                 return false;
             }
 
-            var speed = CircuitProfile.Knots(AircraftPerformance.For(aircraft.Type).ApproachKnots);
-            var target = speed * (float)System.Math.Max(0.0, eta.ElapsedSeconds - _preciseTime);
             if (state == null)
             {
                 if (target > ArrivalFinalShowMetres)
@@ -208,6 +271,14 @@ namespace Airside.Presentation
                 _arrivalFinal[aircraft.Registration] = state;
             }
 
+            if (state.Holding)
+            {
+                // A usable ETA returned. The final reference may move, but the rendered
+                // aircraft rejoins from its actual orbit through the existing bounded slew.
+                state.Holding = false;
+                state.Metres = target;
+                state.Speed = speed;
+            }
             var step = (float)System.Math.Max(0.0, _preciseTime - state.LastTime);
             state.LastTime = _preciseTime;
             if (state.Active)
@@ -238,6 +309,13 @@ namespace Airside.Presentation
         /// <summary>World position on the extended final, <paramref name="lookAheadSeconds"/> further in.</summary>
         private static Vector3 ArrivalFinalWorld(ArrivalFinalState state, float lookAheadSeconds)
         {
+            if (state.Holding)
+            {
+                ArrivalHoldingTrack.Offset(state.LastTime + lookAheadSeconds - state.HoldingStartedAt,
+                    state.Speed, state.HoldingEntry.y, state.HoldingForward.x, state.HoldingForward.z,
+                    out var hx, out var hy, out var hz);
+                return state.HoldingEntry + new Vector3((float)hx, (float)hy, (float)hz);
+            }
             var hold = AirsideFlightPath.Approach((float)ApproachHold.HoldingFinalProgress(0), 0f, state.Type);
             var metres = Mathf.Max(0f, state.Metres - state.Speed * lookAheadSeconds);
             var x = hold.x - metres;
@@ -261,6 +339,10 @@ namespace Airside.Presentation
             return lookAheadSeconds == 0f ? state.World : ArrivalFinalWorld(state, lookAheadSeconds) + state.Offset;
         }
 
+        private bool IsArrivalHolding(FleetAircraft aircraft) => aircraft != null
+            && (aircraft.State is FleetState.Inbound or FleetState.HoldingForLanding)
+            && _arrivalFinal.TryGetValue(aircraft.Registration, out var state) && state.Active && state.Holding;
+
         /// <summary>An inbound close enough to be on the drawn extended final.</summary>
         private bool IsArrivingOnFinal(FleetAircraft aircraft) =>
             aircraft != null && aircraft.State == FleetState.Inbound && TryArrivalFinal(aircraft, out _);
@@ -273,6 +355,20 @@ namespace Airside.Presentation
         {
             if (!_arrivalFinal.TryGetValue(flight.AircraftId, out var state) || state.Active)
                 return Vector3.zero;
+            if (state.Holding)
+            {
+                // Clearance can arrive between rendered ETA updates. Do not discard a
+                // held pose because it is over 4 km away or force it through a six-second
+                // blend. Keep the same model and converge at a bounded flight rate.
+                var step = (float)System.Math.Max(0.0, _preciseTime - state.LastTime);
+                state.LastTime = _preciseTime;
+                state.World = Vector3.MoveTowards(state.World, position,
+                    state.Speed * ArrivalApproach.PoseSlewFactor * step);
+                var heldOffset = state.World - position;
+                if (heldOffset.sqrMagnitude <= 1f)
+                    _arrivalFinal.Remove(flight.AircraftId);
+                return heldOffset;
+            }
             if (state.HandoffPending)
             {
                 state.HandoffPending = false;

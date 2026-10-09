@@ -90,9 +90,9 @@ namespace Airside.Tests
             Assert.That(FlightWorldGrid.WideMap(60001),Is.True);
             Assert.That(FlightWorldGrid.WideMap(AirsideBareField.MaxOrbitDistance),Is.True);
         }
-        [Test] public void RunwayTerrainCellsStayFlatAcrossTheCoarseMesh()
+        [Test] public void RunwayApproachTerrainCellsStayFlatAcrossTheDetailedMesh()
         {
-            var stride=FlightWorldGrid.TileMetres/FlightWorldGrid.Cells;
+            var stride=FlightWorldGrid.TileMetres/FlightWorldDetail.Cells(false,true);
             foreach(var runway in RegionalRunways.All)
             for(var i=0;i<=20;i++)
             {
@@ -125,14 +125,15 @@ namespace Airside.Tests
                 Assert.That(origin+rendered,Is.EqualTo(global).Within(.001));
             }
         }
-        [Test] public void AllSouthAustralianDestinationsAreCovered()
+        [Test] public void AllAustralianDestinationsAreCovered()
         {
             foreach(var d in Airside.Domain.DestinationCatalogue.Australia)
-                if(d.Region=="SA")Assert.That(FlightWorldGrid.Covered(d.Latitude,d.Longitude),Is.True,d.Name);
+                Assert.That(FlightWorldGrid.Covered(d.Latitude,d.Longitude),Is.True,d.Name);
         }
         [Test] public void MappedRegionalLandingsEndOnTheRunwayAtAirportElevation()
         {
-            Assert.That(RegionalRunways.All.Length,Is.EqualTo(7));
+            Assert.That(RegionalRunways.All.Length,Is.GreaterThanOrEqualTo(18));
+            Assert.That(RegionalRunways.TryGet("HBA",out _),Is.True);
             foreach(var runway in RegionalRunways.All)
             {
                 RegionalFlightPath.Landing(runway,0,0,0,out var x,out var y,out var z);
@@ -175,6 +176,20 @@ namespace Airside.Tests
                 RegionalFlightPath.Departure(runway,40,1500,out _,out y,out _);Assert.That(y,Is.EqualTo(py));
                 RegionalFlightPath.Departure(runway,120,1500,out _,out y,out _);Assert.That(y,Is.EqualTo(1500));
             }
+        }
+        [Test] public void CruiseDensityHasHysteresisAndAirportDetailStaysBounded()
+        {
+            Assert.That(FlightWorldDetail.Cruise(4400,false),Is.False);
+            Assert.That(FlightWorldDetail.Cruise(4500,false),Is.True);
+            Assert.That(FlightWorldDetail.Cruise(3600,true),Is.True);
+            Assert.That(FlightWorldDetail.Cruise(3499,true),Is.False);
+            Assert.That(FlightWorldDetail.Cruise(double.NaN,true),Is.False);
+            Assert.That(FlightWorldDetail.Cells(true,false),Is.EqualTo(8));
+            Assert.That(FlightWorldDetail.Cells(false,true),Is.EqualTo(64));
+            var count=0;
+            for(var z=-8;z<=8;z++) for(var x=-8;x<=8;x++)
+                if(FlightWorldDetail.ApproachTile(x,z,0,0)) count++;
+            Assert.That(count,Is.EqualTo(9));
         }
         private static byte[] Grid()
         {

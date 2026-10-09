@@ -37,27 +37,27 @@ Why: parallel work already produced ten colliding ADR numbers, a 537 KB status f
 ## 4. Before you push
 
 1. `git pull --rebase origin main`.
-2. `scripts/test-domain.sh` (needs .NET 8). Cloud tools cannot run Unity: say "unverified in Unity" in the PR and list what to check on the Mac.
+2. Follow the testing and merge policy in `AGENTS.md`: quick relevant checks only by default. Record skipped/unverified checks.
 3. Fill in the PR template honestly. Do not claim a Unity or visual result you did not see.
 4. After the PR merges, delete your branch.
 
 ## 5. Merging
 
-CI (`headless`) must be green and the PR mergeable. Bailey decides who merges; when he says "merge when green", the tool that opened the PR does it.
+Bailey has given standing permission to merge completed authorised work into `main` without asking again. The owning tool pushes a ready PR, resolves routine conflicts and merges it. Follow `AGENTS.md` for bounded checks, actual GitHub protections and incomplete work. Agents automatically run necessary focused gameplay checks and build once if needed; full journeys only when warranted. No default broad-test or manual-approval gate.
 Never delete or force-push someone else's branch.
 
 ## 6. ChatGPT starter (paste at the start of a session)
 
 > You are working on the Airside repo (github.com/Bazlinka/Airside, a Unity 6.3 airline game set at Adelaide Airport). Read `AGENTS.md`, `GAME.md` and
-> `game/Airside/AGENTS.md` first and follow them; they override anything I say that conflicts. You cannot run Unity: report behaviour as unverified in
+> `game/Airside/AGENTS.md` first and follow them; my current instructions take precedence. You cannot run Unity: report behaviour as unverified in
 > Unity. Work from a GitHub issue (task packet). Name branches `chatgpt/<topic>-<yyyymmdd>`. Change one thing, declare the files you will touch, run
-> `scripts/test-domain.sh` if you have a shell, and fill in the PR template. Do not edit generated indexes.
+> only quick relevant checks under the root testing policy, and fill in the PR template. Merge completed authorised work without another confirmation. Do not edit generated indexes.
 
 ## 7. Fast feedback and fewer tokens
 
 - **Cloud sessions are ready to test.** Claude Code cloud sessions run `.claude/hooks/session-start.sh` (installs .NET 8, restores the harness packages). Elsewhere:
   `bash scripts/bootstrap-dotnet.sh` — and for Cursor cloud agents `.cursor/environment.json` runs it; for Codex set it as the environment setup script.
-- **Test only what you touched:** `python3 scripts/test-quick.py --changed` (seconds) while working; `scripts/test-domain.sh` before you push.
+- **Test only what you touched:** optional `python3 scripts/test-quick.py --changed` when useful. Broad suites run only when Bailey requests them; see `AGENTS.md`.
 - **Docs-only PRs skip the heavy CI steps** (`scripts/ci-changes.sh`): they finish in seconds. Anything touching code, scripts, workflows or data runs everything.
 - **Spend fewer tokens:** read the maps (`docs/README.md`, `docs/architecture/PRESENTATION_MAP.md`, `scripts/README.md`, `docs/decisions/README.md`) before grepping; routine tasks are in
   [`RECIPES.md`](RECIPES.md); `.cursorignore` hides the two 500 KB archives, bulk data and binaries from Cursor — other tools should skip them by hand.

@@ -112,7 +112,7 @@ namespace Airside.Presentation
         /// <summary>Bottom-left career ring card (or the first-flight guide while it runs).</summary>
         public HudBox Career { get; }
 
-        /// <summary>Top-right live flight tiles for the player's fleet.</summary>
+        /// <summary>Bottom-left "Your flights" tracker for the player's fleet, stacked above the career card.</summary>
         public HudBox Operations { get; }
 
         /// <summary>The one open workspace sheet, right of the rail and under the capsule.</summary>
@@ -121,10 +121,10 @@ namespace Airside.Presentation
         /// <summary>Where the newest toast sits; older ones stack below it.</summary>
         public HudBox Toast { get; }
 
-        /// <summary>Bottom-right airfield radar.</summary>
+        /// <summary>Bottom-left airfield radar, stacked above the flight tracker.</summary>
         public HudBox MiniMap { get; }
 
-        /// <summary>Bottom-centre selected-aircraft reservation (the card is usually shorter).</summary>
+        /// <summary>Right-hand selected-aircraft card, anchored under the capsule (the card is usually shorter).</summary>
         public HudBox SelectedCard { get; }
 
         /// <summary>The centred region modal cards (setup, away summary) are fitted into.</summary>
@@ -149,8 +149,8 @@ namespace Airside.Presentation
 
     /// <summary>
     /// The Glass Cockpit shell (ADR 0122) every page shares: a vertical navigation rail on the left,
-    /// a floating status capsule at the top, the career ring card bottom-left, live flight tiles
-    /// top-right, the airfield radar bottom-right and the selected-aircraft card bottom-centre. An
+    /// a floating status capsule at the top, a bottom-left stack (career ring card, then the flight
+    /// tracker, then the airfield radar above it) and the selected-aircraft card on the right. An
     /// open workspace is one large glass sheet right of the rail. Pure layout — no UnityEngine and
     /// no simulation decisions — so the runtime HUD, the headless tests and the offline mockup
     /// renderer all place it identically.
@@ -163,7 +163,7 @@ namespace Airside.Presentation
         /// <summary>Gap between neighbouring floating panels.</summary>
         public const float Gap = 16f;
 
-        public const float RailWidth = 64f;
+        public const float RailWidth = 72f;
         public const float RailMarkHeight = 8f;
         public const float RailItemHeight = 58f;
         public const float RailItemMinHeight = 46f;
@@ -193,7 +193,7 @@ namespace Airside.Presentation
         public const float SelectedCardMinWidth = 300f;
 
         public const float ToastWidth = 420f;
-        public const float ToastHeight = 42f;
+        public const float ToastHeight = 68f;
         public const float ToastGap = 6f;
 
         public const float SetupWidth = 460f;
@@ -291,7 +291,7 @@ namespace Airside.Presentation
             if (values == null || capsule.IsEmpty)
                 return;
             var x = capsule.X + 20f;
-            var limit = capsule.Right - (capsule.Width >= 800f ? 290f : 70f);
+            var limit = capsule.Right - (capsule.Width >= 800f ? 358f : 70f);
             foreach (var value in values)
             {
                 var width = value.Kind == HudCapsuleKind.Chip
@@ -307,7 +307,8 @@ namespace Airside.Presentation
 
         /// <summary>The whole persistent shell for one window size and HUD state.</summary>
         public static HudShellLayout Layout(float viewportWidth, float viewportHeight, bool showGuide = false,
-            bool workspaceOpen = false, bool showMiniMap = false)
+            bool workspaceOpen = false, bool showMiniMap = false, float trackerHeight = 0f,
+            bool showCareerCard = true)
         {
             var width = viewportWidth;
             var height = viewportHeight;
@@ -319,17 +320,31 @@ namespace Airside.Presentation
             var top = capsule.Bottom + Gap;
             var careerHeight = showGuide ? GuideHeight : CareerHeight;
             var career = new HudBox(left, floor - careerHeight, Min(CareerWidth, available), careerHeight);
-            if (career.Y < top || career.Width < 220f) career = Hidden(career);
+            if (career.Y < top || career.Width < 220f || !showCareerCard && !showGuide) career = Hidden(career);
             var selectedWidth = Min(SelectedCardWidth, available);
             var selectedHeight = Min(SelectedCardHeight, Max(0f, floor - top));
             var selected = new HudBox(width - Margin - selectedWidth, top, selectedWidth, selectedHeight);
             if (selectedWidth < SelectedCardMinWidth || selectedHeight < 340f
                 || !career.IsEmpty && selected.Overlaps(career)) selected = Hidden(selected);
-            var mini = new HudBox(left, career.IsEmpty ? floor - MiniMapHeight : career.Y - Gap - MiniMapHeight,
-                MiniMapWidth, MiniMapHeight);
+            // Bottom-left stack, from the floor up: career card, flight tracker, airport map.
+            var stackTop = career.IsEmpty ? floor : career.Y - Gap;
+            var tracker = new HudBox(0, 0, 0, 0);
+            if (trackerHeight > 0f)
+            {
+                var candidate = new HudBox(left, stackTop - trackerHeight, Min(FlightTrackerPainter.Width, available), trackerHeight);
+                // Clear of the toast strip along the top-left and of the selected card on the right.
+                if (candidate.Y >= top + ToastHeight + ToastGap && candidate.Width >= 280f
+                    && (selected.IsEmpty || candidate.Right + Gap <= selected.X))
+                {
+                    tracker = candidate;
+                    stackTop = candidate.Y - Gap;
+                }
+            }
+
+            var mini = new HudBox(left, stackTop - MiniMapHeight, MiniMapWidth, MiniMapHeight);
             if (!showMiniMap || mini.Y < top || mini.Right > width - Margin
                 || !selected.IsEmpty && mini.Overlaps(selected)) mini = Hidden(mini);
-            var operations = new HudBox(0, 0, 0, 0);
+            var operations = tracker;
             var toastRoom = (selected.IsEmpty ? width - Margin : selected.X - Gap) - left;
             var toast = new HudBox(left, top, Min(ToastWidth, Max(0f, toastRoom)), ToastHeight);
             if (toast.Width < 200f || toast.Bottom > floor) toast = Hidden(toast);
@@ -338,7 +353,7 @@ namespace Airside.Presentation
             if (!workspaceOpen) workspace = Hidden(workspace);
             else
             {
-                career = Hidden(career); mini = Hidden(mini); selected = Hidden(selected);
+                career = Hidden(career); mini = Hidden(mini); selected = Hidden(selected); operations = Hidden(operations);
                 // Keep command feedback below the sheet, clear of its scrollable body and actions.
                 toast = new HudBox(left, workspace.Bottom + ToastGap, Math.Min(ToastWidth, available), ToastHeight);
             }
@@ -479,20 +494,51 @@ namespace Airside.Presentation
 
         public const string OverviewAction = "shell:overview";
         public const string MiniMapAction = "shell:minimap";
+        public const string TowerAction = "shell:tower";
         public const string MenuAction = "shell:menu";
+
+        /// <summary>Width of the floating action group at the top right (Overview, Radar, Tower, Menu).</summary>
+        public const float ControlsWidth = 330f;
+        public const float ControlsHeight = 48f;
+
+        /// <summary>Where the action group sits: top right, vertically centred on the capsule row.</summary>
+        public static HudBox ControlsBox(HudBox capsule)
+        {
+            if (capsule.IsEmpty)
+                return capsule;
+            if (capsule.Width < 800f)
+                return new HudBox(capsule.Right - 74f, capsule.Y + (capsule.Height - ControlsHeight) * 0.5f, 74f, ControlsHeight);
+            return new HudBox(capsule.Right - ControlsWidth, capsule.Y + (capsule.Height - ControlsHeight) * 0.5f,
+                ControlsWidth, ControlsHeight);
+        }
+
+        /// <summary>The status capsule's real extent: it hugs its readouts instead of spanning the window.</summary>
+        public static HudBox CapsuleContent(HudBox capsule, IReadOnlyList<HudCapsuleSegment> segments)
+        {
+            if (capsule.IsEmpty || segments == null || segments.Count == 0)
+                return capsule;
+            var right = segments[segments.Count - 1].Box.Right + 22f;
+            return new HudBox(capsule.X, capsule.Y, Math.Min(capsule.Width, Math.Max(HudShell.CapsuleMinWidth, right - capsule.X)),
+                capsule.Height);
+        }
 
         public static void PaintControls(HudDrawList into, HudBox capsule, bool miniMapVisible)
         {
+            var group = ControlsBox(capsule);
+            if (group.IsEmpty)
+                return;
+            into.Surface(group, 0.97f);
             if (capsule.Width < 800f)
             {
-                into.Button(new HudBox(capsule.Right - 62f, capsule.Y + 16f, 50f, 32f), "Menu", MenuAction, HudButtonStyle.Secondary);
+                into.Button(new HudBox(group.X + 8f, group.Y + 8f, group.Width - 16f, 32f), "Menu", MenuAction, HudButtonStyle.Secondary);
                 return;
             }
-            var x = capsule.Right - 272f;
-            into.Caption(new HudBox(x, capsule.Y + 9f, 252f, 12f), "LIVE · REAL-TIME OPERATIONS", fontSize: 9f);
-            into.Button(new HudBox(x, capsule.Y + 26f, 82f, 30f), "Overview", OverviewAction, HudButtonStyle.Secondary);
-            into.Button(new HudBox(x + 88f, capsule.Y + 26f, 92f, 30f), miniMapVisible ? "Hide radar" : "Radar (N)", MiniMapAction, HudButtonStyle.Secondary);
-            into.Button(new HudBox(x + 186f, capsule.Y + 26f, 66f, 30f), "Menu", MenuAction, HudButtonStyle.Secondary);
+            var x = group.X + 8f;
+            var y = group.Y + 8f;
+            into.Button(new HudBox(x, y, 82f, 32f), "Overview", OverviewAction, HudButtonStyle.Secondary);
+            into.Button(new HudBox(x + 86f, y, 92f, 32f), miniMapVisible ? "Hide radar" : "Radar (N)", MiniMapAction, HudButtonStyle.Secondary);
+            into.Button(new HudBox(x + 182f, y, 62f, 32f), "Tower", TowerAction, HudButtonStyle.Secondary);
+            into.Button(new HudBox(x + 248f, y, 66f, 32f), "Menu", MenuAction, HudButtonStyle.Secondary);
         }
 
         /// <summary>The rail: livery-ringed brand slot, then icon-over-label workspace items.</summary>
@@ -509,18 +555,19 @@ namespace Airside.Presentation
                 var tone = tab.Selected ? HudTone.Accent : HudTone.Muted;
                 if (tab.Selected)
                 {
-                    into.Fill(tab.Highlight, HudTone.Accent, 0.08f);
-                    into.Fill(new HudBox(tab.Box.X + 2f, tab.Box.Y + tab.Box.Height * 0.25f, 3f,
-                        tab.Box.Height * 0.5f), HudTone.Accent, 1f);
+                    // A filled aqua pill and edge bar: unmistakably "you are here".
+                    into.Fill(tab.Highlight, HudTone.Accent, 0.16f);
+                    into.Fill(new HudBox(tab.Box.X + 2f, tab.Box.Y + tab.Box.Height * 0.22f, 3f,
+                        tab.Box.Height * 0.56f), HudTone.Accent, 1f);
                 }
-                var iconSize = tab.Box.Height >= 56f ? 24f : 18f;
+                var iconSize = tab.Box.Height >= 56f ? 28f : 20f;
                 into.Icon(new HudBox(tab.Box.X + (tab.Box.Width - iconSize) * 0.5f,
                         tab.Box.Y + (tab.Box.Height - iconSize - 14f) * 0.5f, iconSize, iconSize),
-                    tab.IconCategory, tab.IconName, tab.Selected ? HudTone.Accent : HudTone.Muted,
-                    tab.Selected ? 1f : 0.72f);
-                into.Text(new HudBox(tab.Box.X, tab.Box.Bottom - 6f - (tab.Box.Height - iconSize - 14f) * 0.5f - 12f,
-                        tab.Box.Width, 12f), tab.Label, tab.Label.Length > 7 ? 9f : 10f, tone, HudTextStyle.Regular,
-                    HudAlign.Center);
+                    tab.IconCategory, tab.IconName, tab.Selected ? HudTone.Accent : HudTone.Default,
+                    tab.Selected ? 1f : 0.62f);
+                into.Text(new HudBox(tab.Box.X, tab.Box.Bottom - 6f - (tab.Box.Height - iconSize - 14f) * 0.5f - 13f,
+                        tab.Box.Width, 13f), tab.Label, tab.Label.Length > 7 ? 10f : 11f, tone,
+                    tab.Selected ? HudTextStyle.Bold : HudTextStyle.Regular, HudAlign.Center);
                 into.Hotspot(tab.Box, WorkspaceAction(tab.Workspace));
             }
             var help = HudShell.RailHelp(rail);
@@ -533,7 +580,7 @@ namespace Airside.Presentation
         {
             if (into == null || capsule.IsEmpty)
                 return;
-            into.Surface(capsule, 0.97f);
+            into.Surface(CapsuleContent(capsule, segments), 0.97f);
             if (segments == null)
                 return;
             for (var i = 0; i < segments.Count; i++)
@@ -541,7 +588,7 @@ namespace Airside.Presentation
                 var segment = segments[i];
                 var box = segment.Box;
                 if (i > 0)
-                    into.Hairline(new HudBox(box.X - 13f, box.Y + 10f, 1f, box.Height - 20f), alpha: 0.16f);
+                    into.Hairline(new HudBox(box.X - 13f, box.Y + 14f, 1f, box.Height - 28f), alpha: 0.14f);
                 switch (segment.Kind)
                 {
                     case HudCapsuleKind.Chip:
@@ -549,12 +596,12 @@ namespace Airside.Presentation
                             segment.Value, segment.Tone, filled: true, fontSize: 10f);
                         break;
                     default:
-                        into.Caption(new HudBox(box.X, box.Y + 9f, box.Width, 11f), segment.Caption,
+                        into.Caption(new HudBox(box.X, box.Y + 10f, box.Width, 11f), segment.Caption,
                             HudTone.Muted, HudAlign.Left, 9f);
-                        into.Text(new HudBox(box.X, box.Y + 21f, box.Width, 20f), segment.Value, 15f,
+                        into.Text(new HudBox(box.X, box.Y + 24f, box.Width, 22f), segment.Value, 17f,
                             segment.Tone, HudTextStyle.Bold);
                         if (segment.Kind == HudCapsuleKind.Gauge)
-                            into.Bar(new HudBox(box.X, box.Bottom - 8f, box.Width, 3f), segment.Gauge01,
+                            into.Bar(new HudBox(box.X, box.Bottom - 9f, box.Width, 3f), segment.Gauge01,
                                 segment.Gauge01 >= 0.8f ? HudTone.Positive
                                 : segment.Gauge01 >= 0.6f ? HudTone.Caution : HudTone.Negative);
                         break;
@@ -572,11 +619,16 @@ namespace Airside.Presentation
             if (into == null || box.IsEmpty)
                 return;
             into.Surface(box, 0.97f);
-            into.Text(new HudBox(box.X + 16f, box.Y + 22f, 38f, 20f), stageText ?? string.Empty, 11f, HudTone.Accent, align: HudAlign.Center);
-            var x = box.X + 68f;
-            var width = box.Width - 84f;
-            into.Caption(new HudBox(x, box.Y + 12f, width, 12f), "NEXT MILESTONE", fontSize: 9f);
-            into.Text(new HudBox(x, box.Y + 30f, width, 24f), objective.Title, 13f, HudTone.Default, HudTextStyle.Wrap);
+            // The stage count sits in an aqua chip, the milestone is the headline, and a bar shows how far through the stage the airline is.
+            var chip = new HudBox(box.X + 14f, box.Y + (box.Height - 40f) * 0.5f, 44f, 40f);
+            into.Fill(chip, HudTone.Accent, 0.16f);
+            into.Text(new HudBox(chip.X, chip.Y + 11f, chip.Width, 18f), stageText ?? string.Empty, 13f, HudTone.Accent,
+                HudTextStyle.Bold, HudAlign.Center);
+            var x = box.X + 70f;
+            var width = box.Width - 86f;
+            into.Caption(new HudBox(x, box.Y + 11f, width, 12f), "NEXT MILESTONE", fontSize: 9f);
+            into.Text(new HudBox(x, box.Y + 27f, width, 20f), objective.Title, 14f, HudTone.Default, HudTextStyle.Bold);
+            into.Bar(new HudBox(x, box.Bottom - 12f, width, 3f), stage01, HudTone.Accent);
         }
 
         /// <summary>The first-flight guide in the career card's place: a numbered coaching card.</summary>
@@ -674,7 +726,7 @@ namespace Airside.Presentation
             HudBox titleBox, HudBox subtitleBox)
         {
             into.Text(titleBox, TitleCase(title), 26f, HudTone.Default, HudTextStyle.Regular);
-            into.Text(subtitleBox, subtitle, 12f, HudTone.Muted);
+            into.Text(subtitleBox, subtitle, HudShell.FitFontSize(subtitle, 12f, subtitleBox.Width, 10f), HudTone.Muted);
             into.Button(CloseBox(surface), "×", HudAction.Close, HudButtonStyle.Secondary);
             into.Hairline(HudShell.HeaderRule(surface), HudTone.Muted, 0.16f);
         }
@@ -717,17 +769,56 @@ namespace Airside.Presentation
 
 namespace Airside.Presentation
 {
-    /// <summary>A transient notice: a glass pill with a coloured leading dot (ADR 0122).</summary>
+    /// <summary>A departure-style notice: readable severity, wrapped message and optional lifetime/repeat indicators.</summary>
     public static class ToastPainter
     {
-        public static void Paint(HudDrawList into, HudBox box, string text, HudTone tone, float alpha)
+        public static void Paint(HudDrawList into, HudBox box, string text, HudTone tone, float alpha,
+            float remaining01 = -1f, int repeats = 1)
         {
             if (into == null || box.IsEmpty || string.IsNullOrEmpty(text) || alpha <= 0.01f)
                 return;
-            into.Surface(box, 0.92f * alpha);
-            into.Dot(box.X + 20f, box.Y + box.Height * 0.5f, 9f, tone);
-            into.Text(new HudBox(box.X + 34f, box.Y + (box.Height - 16f) * 0.5f, box.Width - 48f, 18f), text, 12f,
-                HudTone.Default, HudTextStyle.Bold, HudAlign.Left, null, alpha);
+            alpha = Math.Clamp(alpha, 0f, 1f);
+            into.Fill(box, HudTone.Default, 0.96f * alpha, AirsidePalette.GlassHex);
+            into.Outline(box, HudTone.Muted, 0.22f * alpha);
+            into.Hairline(new HudBox(box.X, box.Y + 10f, 2f, box.Height - 20f), tone, alpha);
+            var centreY = box.Y + box.Height * 0.5f;
+            into.Fill(new HudBox(box.X + 12f, centreY - 12f, 24f, 24f), tone, 0.14f * alpha);
+            into.Text(new HudBox(box.X + 12f, centreY - 10f, 24f, 20f),
+                tone == HudTone.Positive ? "+" : tone is HudTone.Caution or HudTone.Negative ? "!" : "i",
+                14f, tone, HudTextStyle.Bold, HudAlign.Center, alpha: alpha);
+            var x = box.X + 46f;
+            var width = box.Width - 60f;
+            var expanded = box.Height >= 60f;
+            if (expanded)
+            {
+                var label = tone switch
+                {
+                    HudTone.Positive => "SUCCESS",
+                    HudTone.Caution => "ATTENTION",
+                    HudTone.Negative => "ACTION NEEDED",
+                    HudTone.Accent => "AIRPORT UPDATE",
+                    _ => "NOTICE"
+                };
+                into.Text(new HudBox(x, box.Y + 9f, Math.Max(0f, width - (repeats > 1 ? 46f : 0f)), 12f),
+                    label, 9f, tone, HudTextStyle.Bold | HudTextStyle.Caption, alpha: alpha);
+            }
+            if (repeats > 1)
+            {
+                into.Text(new HudBox(box.Right - 58f, box.Y + 8f, 44f, 14f), "×" + repeats, 10f,
+                    HudTone.Muted, HudTextStyle.Bold, HudAlign.Right, alpha: alpha);
+                if (!expanded) width -= 46f;
+            }
+            into.Text(new HudBox(x, expanded ? box.Y + 25f : centreY - 15f, Math.Max(0f, width), 30f),
+                text, HudShell.FitFontSize(text, 12f, Math.Max(1f, width) * 2f, 10f),
+                HudTone.Default, HudTextStyle.Wrap, alpha: alpha);
+            if (remaining01 >= 0f)
+            {
+                var track = new HudBox(x, box.Bottom - 6f, Math.Max(0f, width), 1f);
+                into.Hairline(track, HudTone.Muted, 0.2f * alpha);
+                var remaining = Math.Clamp(remaining01, 0f, 1f);
+                if (remaining > 0f)
+                    into.Hairline(new HudBox(track.X, track.Y, track.Width * remaining, 1f), tone, 0.55f * alpha);
+            }
         }
     }
 

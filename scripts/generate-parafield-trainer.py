@@ -40,7 +40,29 @@ meshes['prop_blade_2']=base.box(0,.68,3.78,.13,1.02,.06)
 meshes['beacon']=base.box(0,2.84,-3.45,.09,.08,.10)
 meshes['livery_accent_left']=base.box(-.568,1.25,.12,.016,.065,1.95)
 meshes['livery_accent_right']=base.box(.568,1.25,.12,.016,.065,1.95)
+# Refine the body and replace the old flat cockpit/cabin slabs with skin shells.
+spec=importlib.util.spec_from_file_location('trainer_body',ROOT/'scripts/aircraft_body.py')
+body=importlib.util.module_from_spec(spec);spec.loader.exec_module(body)
+profile=body.refine(meshes)
+from aircraft_tail import refine as refine_tail
+refine_tail(meshes,'TRAINER',profile.sample)
+spec=importlib.util.spec_from_file_location('trainer_skin',ROOT/'scripts/aircraft_skin.py')
+skin=importlib.util.module_from_spec(spec);spec.loader.exec_module(skin)
+def surface(z,angle,offset=0):
+    rx,ry,cy=profile.sample(z);theta=np.deg2rad(angle)
+    return np.array([(rx+offset)*np.cos(theta),cy+(ry+offset)*np.sin(theta),z],np.float32)
+meshes['windscreen_glass']=skin.skin_patch(surface,1.55,90,.39,.47,front=.012,radius=.08,rings=4,max_edge=.08)
+for side,angle in [('left',158),('right',22)]:
+    meshes['window_glass_'+side]=skin.skin_patch(surface,.35,angle,.65,.23,front=.012,radius=.08,rings=4,max_edge=.08)
+    lower=202 if side=='left' else -22
+    meshes['livery_accent_'+side]=skin.skin_patch(surface,.12,lower,.975,.0325,front=.010,radius=.025,rings=3,max_edge=.10)
+    meshes['door_seam_'+side]=skin.skin_patch(surface,.43,lower,.80,.0125,front=.008,radius=.010,rings=2,max_edge=.10)
+    handle=180 if side=='left' else 0
+    meshes['door_handle_'+side]=skin.skin_patch(surface,.10,handle,.08,.0175,front=.025,radius=.01,rings=2,max_edge=.05)
 meshes={k:(v.astype(np.float32),i) for k,(v,i) in meshes.items()}
 folder=ROOT/'game/Airside/Assets/Airside/Art/Models/Aircraft'
-base._auth.pack_gltf(folder/'mdl_parafield_trainer_v01.gltf',meshes)
+path=folder/'mdl_parafield_trainer_v01.gltf'
+preserved={Path(str(q)+'.meta'):Path(str(q)+'.meta').read_bytes() for q in (path,path.with_suffix('.bin')) if Path(str(q)+'.meta').exists()}
+base._auth.pack_gltf(path,meshes)
+for meta,data in preserved.items():meta.write_bytes(data)
 print('Generated',len(meshes),'trainer parts')

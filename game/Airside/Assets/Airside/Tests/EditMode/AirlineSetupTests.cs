@@ -14,6 +14,19 @@ namespace Airside.Tests
     public sealed class AirlineSetupTests
     {
         [Test]
+        public void EditedCodeCanBeClearedWithoutResurrectingTheSuggestion()
+        {
+            var setup = new AirlineSetupModel();
+            setup.EditCode("abé1c");
+            Assert.That(setup.EffectiveCode, Is.EqualTo("ABC"));
+            Assert.That(setup.CodeValid, Is.True);
+            setup.EditCode("");
+            Assert.That(setup.EffectiveCode, Is.Empty);
+            Assert.That(setup.CanAdvance, Is.False);
+            setup.EditCode("xy");
+            Assert.That(setup.CanAdvance, Is.True);
+        }
+        [Test]
         public void Wizard_WalksThreeCardsAndOnlyAdvancesPastValidOnes()
         {
             var setup = new AirlineSetupModel { Name = "" };
@@ -179,6 +192,22 @@ namespace Airside.Tests
             Assert.That(All("growing"), Does.Contain("After 12 hand-planned flights"));
             Assert.That(All(FlightManual.ControlsPageId), Does.Contain("F1"));
             Assert.That(FlightManual.Pages.Select(p => p.Id).Distinct().Count(), Is.EqualTo(FlightManual.Pages.Count));
+        }
+
+        [Test]
+        public void FlightManual_DescribesTheHudWhereItReallyIs()
+        {
+            string All(string id) => string.Join(" ", FlightManual.Pages[FlightManual.IndexOf(id)].Sections
+                .Select(s => s.Body));
+            var welcome = All("welcome");
+            Assert.That(welcome, Does.Contain("Bottom left, from the floor up: the career ring, your flights and the airfield radar"));
+            Assert.That(welcome, Does.Contain("card on the right"));
+            Assert.That(welcome, Does.Not.Contain("Top right"));
+            Assert.That(welcome, Does.Not.Contain("Bottom right"));
+            Assert.That(welcome, Does.Not.Contain("Bottom centre"));
+            // Reachable destinations on the Map are aqua, not green (RouteMapWorkspacePainter.PaintNetwork).
+            Assert.That(All("first-flight"), Does.Not.Contain("green"));
+            Assert.That(All("first-flight"), Does.Contain("Aqua dots"));
         }
 
         [Test]

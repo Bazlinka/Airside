@@ -36,6 +36,10 @@ namespace Airside.Presentation
             if (parts.Length > 0) presentationTime += parts[0].LightingClockOffset;
             var height = root != null ? Mathf.Max(0f, root.position.y - AirsideFlightPath.GroundY) : 0f;
             var landingLights = profile.LandingLampOn(phase, height);
+            // On approach the gear follows height above the field, not phase progress: down at about
+            // 2,000 ft (jets) / 1,500 ft (turboprops), lowered slowly, never early on a long final.
+            if (phase == AircraftPhase.Approach && aircraftType != null && !aircraftType.IsRotorcraft)
+                retractTarget = ApproachGear.ApproachDown(aircraftType, height) ? 0f : 1f;
             var camera = Camera.main;
             var bearing = root != null && camera != null
                 ? Mathf.Atan2(root.InverseTransformPoint(camera.transform.position).x,
@@ -57,6 +61,7 @@ namespace Airside.Presentation
                 var child = parts[i].Transform;
                 if (child == null)
                     continue;
+                parts[i].ExtendRate = phase == AircraftPhase.Approach ? 1f / ApproachGear.ExtendSeconds : 0.35f;
                 switch (parts[i].Kind)
                 {
                     case LightGearKind.GearDoor:
@@ -127,6 +132,7 @@ namespace Airside.Presentation
                                 ? new Color(2.6f, 2.5f, 2.1f)
                                 : Color.black);
                         }
+                        UpdateLampFlare(parts[i], camera, landingLights, new Color(1f, 0.96f, 0.86f), 0.9f, 22f);
                         break;
                     }
                     case LightGearKind.TaxiLight:
@@ -134,6 +140,7 @@ namespace Airside.Presentation
                         child.gameObject.SetActive(true);
                         EnsureTaxiSpotLight(parts[i], taxiLights, profile);
                         GlowLamp(parts[i], new Color(1f, 0.94f, 0.78f), taxiLights ? 1f : 0f, 0f);
+                        UpdateLampFlare(parts[i], camera, taxiLights, new Color(1f, 0.94f, 0.78f), 0.5f, 14f);
                         break;
                     }
                 }
@@ -146,6 +153,84 @@ namespace Airside.Presentation
         /// the airframe origin — nav lights and strobes lit the belly. A child at the lens mesh's
         /// bounds centre puts the light in the lens; procedural lamps (centred cubes) get zero.
         /// </summary>
+        private static MaterialPropertyBlock _lampFlareBlock;
+        private static Material _aircraftHaloMaterial;
+
+        private static Material AircraftHaloMaterial()
+        {
+            if (_aircraftHaloMaterial != null)
+                return _aircraftHaloMaterial;
+            var shader = Shader.Find("Airside/AircraftLightHalo");
+            if (shader == null)
+                return HaloMaterial();
+            _aircraftHaloMaterial = new Material(shader) { name = "mat_aircraft_light_halo" };
+            return _aircraftHaloMaterial;
+        }
+
+        /// <summary>
+        /// A lit landing/taxi lamp is a 20 cm lens on a 40 m airframe: invisible from any play camera, so
+        /// the aircraft looked like it had no landing lights. Draw a soft camera-facing flare on the lamp
+        /// while it is lit, sized to stay readable at distance (never below <paramref name="minPixels"/>
+        /// across) and only seen from in front of the lamp, as a real beam is. Presentation only.
+        /// </summary>
+        private static void UpdateLampFlare(LightGearPart part, Camera camera, bool lit, Color colour, float minMetres, float minPixels)
+        {
+            var flare = part.Flare;
+            if (flare == null && (!lit || camera == null || part.AircraftRoot == null || !AirsideSettings.Current.AircraftLights))
+                return;
+            var strength = 0f;
+            var distance = 0f;
+            Vector3 centre = default;
+            if (lit && camera != null && part.AircraftRoot != null && AirsideSettings.Current.AircraftLights)
+            {
+                // Cached: LampPivot does a by-name Find, too dear for every lit lamp every frame.
+                centre = (part.FlarePivot ??= LampPivot(part.Transform)).position;
+                var toCamera = camera.transform.position - centre;
+                distance = toCamera.magnitude;
+                if (distance > 0.1f)
+                {
+                    var facing = Vector3.Dot(part.AircraftRoot.forward, toCamera / distance);
+                    strength = Mathf.Clamp01((facing - 0.1f) / 0.5f);
+                }
+            }
+
+            if (strength <= 0.01f)
+            {
+                if (flare != null && flare.enabled)
+                    flare.enabled = false;
+                return;
+            }
+
+            if (flare == null)
+            {
+                var material = AircraftHaloMaterial();
+                if (material == null)
+                    return;
+                var card = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                card.name = "Lamp flare";
+                DestroyPresentationObject(card.GetComponent<Collider>());
+                card.transform.SetParent(part.Transform, true);
+                flare = part.Flare = card.GetComponent<Renderer>();
+                flare.sharedMaterial = material;
+                flare.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                flare.receiveShadows = false;
+            }
+
+            flare.enabled = true;
+            var t = flare.transform;
+            // Stand a little toward the camera: centred on the lens, the airframe skin hid half the flare.
+            t.position = centre + (camera.transform.position - centre).normalized * 0.4f;
+            var worldPerPixel = 2f * distance * Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad)
+                                / Mathf.Max(1f, camera.pixelHeight);
+            var size = Mathf.Max(minMetres, worldPerPixel * minPixels);
+            var parentScale = part.Transform.lossyScale.x > 0.0001f ? part.Transform.lossyScale.x : 1f;
+            t.localScale = Vector3.one * (size / parentScale);
+            t.rotation = Quaternion.LookRotation(t.position - camera.transform.position, camera.transform.up);
+            _lampFlareBlock ??= new MaterialPropertyBlock();
+            _lampFlareBlock.SetColor("_BaseColor", colour * (1.8f * strength));
+            flare.SetPropertyBlock(_lampFlareBlock);
+        }
+
         private static Transform LampPivot(Transform lamp)
         {
             var pivot = lamp.Find(LampPivotName);
@@ -492,6 +577,29 @@ namespace Airside.Presentation
                 ? Mathf.Exp(-(secondsSinceStrike - secondPulseAt) * 22f) * 0.5f
                 : 0f;
             return Mathf.Clamp01(Mathf.Max(primary, secondary));
+        }
+
+        private int[] _hialStation;
+        private int _hialLast;
+
+        /// <summary>Station number of each "HIAL 23 point NN" light (-1 for every other light) and the last one.</summary>
+        private static int[] HialStations(Light[] lights, out int last)
+        {
+            var stations = new int[lights.Length];
+            last = 0;
+            for (var i = 0; i < lights.Length; i++)
+            {
+                stations[i] = -1;
+                if (lights[i] == null || !lights[i].name.StartsWith("HIAL 23 point ", StringComparison.Ordinal))
+                    continue;
+                if (int.TryParse(lights[i].name.Substring("HIAL 23 point ".Length), out var n))
+                {
+                    stations[i] = n;
+                    if (n > last) last = n;
+                }
+            }
+
+            return stations;
         }
 
         private static byte[] ReilSides(Light[] lights)
@@ -1111,6 +1219,9 @@ namespace Airside.Presentation
 
         private void UpdateAerodromeBeacon(float daylight)
         {
+            // The true-scale field has its own beacon on the tower; the legacy mast needs the miniature.
+            if (UpdateYpadAerodromeBeacon(daylight))
+                return;
             if (_aerodromeBeacon == null)
                 return;
 

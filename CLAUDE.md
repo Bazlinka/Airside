@@ -7,6 +7,5 @@
 
 Claude-specific:
 
-- Cloud sessions have no Unity editor. Run `scripts/test-domain.sh` before every push and say plainly that behaviour is "unverified in
-  Unity"; never present a headless pass as a Unity pass.
+- Follow the testing and merge policy in `AGENTS.md`; cloud sessions must report unavailable Unity verification honestly.
 - Claude's standing role is independent architecture and large-context review: inspect the real code and build state, never merge on a claim alone.

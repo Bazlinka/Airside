@@ -98,7 +98,19 @@ namespace Airside.Presentation
                 if (!journey.HasValue) heading = DepartureLookRotation(flight, phase, progress, heading);
                 if (journey.HasValue && _fleetAircraftById.TryGetValue(flight.AircraftId,out var watched))
                 {
-                    if(watched.State==FleetState.AtDestination) {phase=AircraftPhase.AtStand;progress=1;}
+                    if(watched.State==FleetState.AtDestination)
+                    {
+                        phase=AircraftPhase.AtStand;progress=1;
+                        // Taxiing to or from the mapped apron: the ground phases give wheels and lights their taxi state,
+                        // and the path's own heading steers the nose (a parked aircraft has no motion to steer by).
+                        if(watched.CurrentDestination.HasValue && RegionalRunways.TryGet(watched.CurrentDestination.Value.Code,out var turnRunway)
+                            && TryTurnaroundPose(watched,turnRunway,0,out var turnaround))
+                        {
+                            phase=turnaround.Leg switch{TurnaroundLeg.TaxiIn=>AircraftPhase.TaxiIn,TurnaroundLeg.TaxiOut=>AircraftPhase.TaxiOut,_=>AircraftPhase.AtStand};
+                            progress=(float)turnaround.Progress01;
+                            heading=Quaternion.Euler(0f,(float)turnaround.YawDegrees,0f);
+                        }
+                    }
                     else if (TryEnroute(watched, out var journeyProfile, out var journeyElapsed))
                     {
                         var rotate = RegionalFlightPath.RotateSeconds(watched.Type);
@@ -126,6 +138,40 @@ namespace Airside.Presentation
                 var pitch = journey.HasValue ? -Mathf.Atan2(next.y-position.y,
                     new Vector2(next.x-position.x,next.z-position.z).magnitude)*Mathf.Rad2Deg
                     : AirsideFlightPath.PitchDegrees(phase, progress, aircraftType);
+                if (!journey.HasValue && FleetMode
+                    && _fleetAircraftById.TryGetValue(flight.AircraftId, out var heldAircraft) && IsArrivalHolding(heldAircraft))
+                    pitch = -Mathf.Atan2(next.y - position.y,
+                        new Vector2(next.x - position.x, next.z - position.z).magnitude) * Mathf.Rad2Deg;
+                // Regional arrival and departure legs: the route's path angle has no angle of attack, which
+                // lost the flare and the rotation. Hand the attitude over to the authored curves.
+                if (journey.HasValue && _fleetAircraftById.TryGetValue(flight.AircraftId, out var legAircraft)
+                    && TryEnroute(legAircraft, out var legProfile, out var legElapsed))
+                {
+                    var attitude = AircraftAttitude.For(legAircraft.Type);
+                    if (legAircraft.State == FleetState.Outbound)
+                    {
+                        var remaining = legProfile.LegSeconds - legElapsed;
+                        if (remaining <= RegionalFlightPath.RolloutSeconds)
+                            pitch = attitude.PitchDegrees(AircraftPhase.Landing, progress, AircraftPerformance.For(legAircraft.Type));
+                        else if (remaining <= RegionalFlightPath.TerminalSeconds)
+                            pitch = RegionalFlightPath.ApproachPitchDegrees(attitude, remaining, pitch,
+                                RegionalFlightPath.TerminalDistanceMetres(legProfile, legAircraft.Type, remaining));
+                    }
+                    else if (legAircraft.State == FleetState.Inbound
+                             && legElapsed < RegionalFlightPath.DepartureSeconds + RegionalFlightPath.AttitudeBlendSeconds)
+                    {
+                        pitch = RegionalFlightPath.DeparturePitchDegrees(attitude, AircraftPerformance.For(legAircraft.Type),
+                            legElapsed, RegionalFlightPath.RotateSeconds(legAircraft.Type), pitch);
+                    }
+                    else if (legAircraft.State == FleetState.Inbound)
+                    {
+                        var finalSeconds = ArrivalMapTrack.FinalSeconds(legProfile.LegMetres, legProfile.LegSeconds, legAircraft.Type);
+                        var toEntry = legProfile.LegSeconds - legElapsed - finalSeconds;
+                        if (finalSeconds > 0 && toEntry <= RegionalFlightPath.AttitudeBlendSeconds)
+                            pitch = ArrivalMapTrack.FinalEntryPitchDegrees(attitude, toEntry,
+                                RegionalFlightPath.AttitudeBlendSeconds, pitch);
+                    }
+                }
                 // Retain the authored body attitude at the takeoff handoff. The route's
                 // path angle alone would abruptly discard the aircraft's angle of attack.
                 if (journey.HasValue && _fleetAircraftById.TryGetValue(flight.AircraftId, out var departing)
@@ -1638,6 +1684,8 @@ namespace Airside.Presentation
                 return kitName.EndsWith("_head", StringComparison.Ordinal)
                     ? new Color(0.53f, 0.40f, 0.33f)
                     : new Color(0.075f, 0.105f, 0.15f);
+            if (kitName.StartsWith("intake_liner_", StringComparison.Ordinal))
+                return new Color(0.07f, 0.08f, 0.09f);
             if (kitName.StartsWith("fan_", StringComparison.Ordinal))
                 return new Color(0.16f, 0.18f, 0.21f);
             if (kitName.StartsWith("tire_", StringComparison.Ordinal))
@@ -1705,7 +1753,9 @@ namespace Airside.Presentation
             "gear_nose" or "gear_left" or "gear_right"
                 or "gear_oleo_nose" or "gear_oleo_left" or "gear_oleo_right"
                 or "gear_scissors_nose" or "gear_scissors_left" or "gear_scissors_right"
-                or "gear_door_nose" or "gear_door_left" or "gear_door_right" => new Color(0.25f, 0.25f, 0.28f),
+                or "gear_door_nose" => new Color(0.25f, 0.25f, 0.28f),
+            "gear_door_left" or "gear_door_right" or "gear_door_inner_l" or "gear_door_inner_r"
+                => AircraftLiveryPaint.AirframeWhite,
             "tire_nose" or "tire_left" or "tire_right" => new Color(0.12f, 0.12f, 0.13f),
             "rim_nose" or "rim_left" or "rim_right"
                 or "wheel_nose" or "wheel_left" or "wheel_right" => new Color(0.55f, 0.56f, 0.58f),
@@ -2029,7 +2079,16 @@ namespace Airside.Presentation
                         == GearDoorKind.LegMounted)
                         articulated = false;
                     else
-                        pivot = BellyDoorHingePivot(bounds, aircraft.TransformPoint(Vector3.zero).x);
+                    {
+                        var innerBayDoor = childName.StartsWith("gear_door_inner", StringComparison.OrdinalIgnoreCase);
+                        var nacelleBayDoor = innerBayDoor || ((childName is "Gear door L" or "Gear door R")
+                            && Array.Exists(childNames20, n => n.StartsWith("gear_door_inner", StringComparison.OrdinalIgnoreCase)));
+                        // The two Dash 8 leaves hinge at opposite edges of the same nacelle,
+                        // not both at the edge furthest from the aircraft centreline.
+                        pivot = nacelleBayDoor
+                            ? NacelleDoorHingePivot(bounds, aircraft.TransformPoint(Vector3.zero).x, innerBayDoor)
+                            : BellyDoorHingePivot(bounds, aircraft.TransformPoint(Vector3.zero).x);
+                    }
                 }
                 else if (childName is "Flap L" or "Flap R"
                          || childName.StartsWith("Aileron", StringComparison.Ordinal)

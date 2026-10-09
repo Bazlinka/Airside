@@ -28,6 +28,7 @@ namespace Airside.Presentation
             if (InCockpit) ExitCockpit(true);
             ExitOutstationView(false);
             _outstationWatchId = aircraft.Registration;
+            _outstationAudioMode = mode;
             _selectedAircraftId = aircraft.Registration;
             _activeWorkspace = HudWorkspace.None;
             var accent = AirsideTheme.FromHex(_operations.PlayerAirline.LiveryHex);
@@ -93,12 +94,14 @@ namespace Airside.Presentation
         private void ExitOutstationView(bool fleet)
         {
             if (!WatchingOutstation) return;
+            ReleaseCockpitAirflow();
             _outstationWatchId = null;
-            _cameraController?.EndCockpit();
+            if (_cameraController != null) _cameraController.EndCockpit();
             if (_outstationInterior != null) { _outstationInterior.Leave(); Destroy(_outstationInterior.gameObject); }
             _outstationInterior = null;
             if (_outstationWatchView != null)
             {
+                _engineAudio.Remove(_outstationWatchView.GetInstanceID());
                 AirsideNamedChildren.Forget(_outstationWatchView);
                 _aircraftViewParts.Remove(_outstationWatchView.GetInstanceID());
                 Destroy(_outstationWatchView.gameObject);

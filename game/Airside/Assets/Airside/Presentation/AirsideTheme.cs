@@ -74,14 +74,16 @@ namespace Airside.Presentation
                     rect.height + spread), new Color(0f, 0f, 0f, 0.07f * alpha), radius + spread);
             }
             DrawRounded(rect, WithAlpha(Glass, Mathf.Clamp01(alpha * 1.045f)), radius);
-            DrawRounded(rect, new Color(1f, 1f, 1f, 0.06f * alpha), radius, 1f);
+            DrawRounded(rect, new Color(1f, 1f, 1f, 0.11f * alpha), radius, 1f);
+            // A brighter lip along the top edge gives the glass a lit, raised look instead of a flat slab.
+            DrawRounded(new Rect(rect.x + radius, rect.y + 1f, rect.width - radius * 2f, 1f), new Color(1f, 1f, 1f, 0.07f * alpha), 0f);
         }
 
         /// <summary>A raised glass sub-card inside a panel.</summary>
         public static void DrawCard(Rect rect, float alpha = 1f)
         {
             DrawRounded(rect, WithAlpha(GlassRaised, 0.96f * alpha), CardRadius);
-            DrawRounded(rect, new Color(1f, 1f, 1f, 0.06f * alpha), CardRadius, 1f);
+            DrawRounded(rect, new Color(1f, 1f, 1f, 0.09f * alpha), CardRadius, 1f);
         }
 
         private static readonly Dictionary<string, Texture2D> RoundedTextures = new();
@@ -160,9 +162,9 @@ namespace Airside.Presentation
         {
             if (string.IsNullOrEmpty(artRelativePath))
                 return null;
-            if (artRelativePath == "UI/Illustrations/ui_splash_airport_dawn_v01.png")
+            if (artRelativePath == SplashLayout.SplashArt)
                 return SplashDawn;
-            if (artRelativePath == "Brand/airside_wordmark_light_v03.png")
+            if (artRelativePath == SplashLayout.WordmarkArt)
                 return WordmarkLight;
             if (ArtTextures.TryGetValue(artRelativePath, out var cached))
                 return cached;
@@ -224,7 +226,7 @@ namespace Airside.Presentation
         private static bool _appMarkResolved;
         private static bool _splashResolved;
 
-        /// <summary>BRD-004 v03 light wordmark (transparent). Null when the art file is missing.</summary>
+        /// <summary>v04 departure-vector wordmark. The painter supplies text if the PNG is missing.</summary>
         public static Texture2D WordmarkLight
         {
             get
@@ -232,7 +234,7 @@ namespace Airside.Presentation
                 if (!_wordmarkResolved)
                 {
                     _wordmarkResolved = true;
-                    _wordmarkLight = LoadArtTexture("Brand/airside_wordmark_light_v03.png");
+                    _wordmarkLight = LoadArtTexture(SplashLayout.WordmarkArt);
                 }
 
                 return _wordmarkLight;
@@ -254,7 +256,7 @@ namespace Airside.Presentation
             }
         }
 
-        /// <summary>UI-ILL-001 dawn splash illustration. Null when the art file is missing.</summary>
+        /// <summary>Adelaide T1 dawn illustration, with the legacy airport illustration as fallback.</summary>
         public static Texture2D SplashDawn
         {
             get
@@ -262,7 +264,8 @@ namespace Airside.Presentation
                 if (!_splashResolved)
                 {
                     _splashResolved = true;
-                    _splashDawn = LoadArtTexture("UI/Illustrations/ui_splash_airport_dawn_v01.png");
+                    _splashDawn = LoadArtTexture(SplashLayout.SplashArt)
+                        ?? LoadArtTexture("UI/Illustrations/ui_splash_airport_dawn_v01.png");
                 }
 
                 return _splashDawn;

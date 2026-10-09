@@ -112,3 +112,17 @@ blade shadows are static and do not certify moving-propeller appearance.
 Rebased onto current main `3fcb8063` (five-area bug sweep); handoff conflict resolved preserving both entries. Native lighting checks pass again: **37/37**. The catalogue lookup and rotor lineup changes on main preserve this pass's lighting profiles and installations.
 
 Final integrated Mac build passed from clean commit `840bbb215d82b52bbad52f3206d90a5d12fa1be1`, stamped `2026-10-08T00:38:38Z`. Subsequent validation-record edits do not change runtime code. Packaged flight and night performance remain unverified.
+
+## Approach gear and landing lights (8 Oct, follow-up)
+
+Gear on approach now follows height above the field, not phase progress. Network-flight arrivals used to
+hold the gear fully down for their whole terminal phase; the local final lowered it in the first 22% of the leg.
+Rule (`ApproachGear.cs`): selected down at about 2,000 ft AGL for jets (2,500 ft widebodies, 1,500 ft turboprops),
+lowered over ~22 s, so it is down and locked well before the 1,000 ft stabilised-approach gate.
+Sources (typical practice, not a manufacturer procedure; airline SOPs vary):
+[Flight Safety Foundation / SKYbrary stabilised approach](https://skybrary.aero/index.php/articles/stabilised-approach)
+(stable by 1,000 ft IMC / 500 ft VMC), an [Airbus A340 ILS SOP](https://www.smartcockpit.com/docs/A340-ILS_Approach.pdf)
+(gear down at 2,000 ft AGL), AVSIM/forum SOP discussions (gear at glideslope capture, ~3-10 NM), and
+extension times of about 15-30 s. Landing lights are unchanged: on at lineup/takeoff, off through 10,000 ft
+climbing, on again below 10,000 ft descending, off once clear of the runway (operator policy, not regulation).
+Native appearance unverified.

@@ -49,5 +49,20 @@ namespace Airside.Tests
             ops.ScheduleDeparture(mine, kingscote, clock.Now.Advance(60));
             Assert.That(FirstFlightGuide.For(ops, out _), Is.EqualTo(GuideStep.Complete));
         }
+
+        [Test]
+        public void AwayText_MatchesTheLegInsteadOfAlwaysSayingOnItsWayOut()
+        {
+            var outbound = FirstFlightGuide.AwayText(FleetState.Outbound, "VH-PAX", "Kingscote");
+            var turnaround = FirstFlightGuide.AwayText(FleetState.AtDestination, "VH-PAX", "Kingscote");
+            var inbound = FirstFlightGuide.AwayText(FleetState.Inbound, "VH-PAX", "Kingscote");
+
+            Assert.That(outbound.hint, Does.Contain("On its way to Kingscote"));
+            Assert.That(turnaround.heading, Does.Not.Contain("return"));
+            Assert.That(turnaround.hint, Does.Not.Contain("On its way to Kingscote"));
+            Assert.That(inbound.heading, Does.Contain("return"));
+            Assert.That(inbound.hint, Does.Not.Contain("On its way to Kingscote"));
+            Assert.That(inbound.hint, Does.Contain("Adelaide"));
+        }
     }
 }

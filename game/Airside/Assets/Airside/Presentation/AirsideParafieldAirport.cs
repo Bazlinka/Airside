@@ -17,6 +17,11 @@ namespace Airside.Presentation
         private readonly List<Renderer> _lamps = new();
         private readonly List<Light> _apronLights = new();
         private Material _lampMaterial;
+        // Per-trainer exterior lamps (landing light, red beacon, white wingtip strobes).
+        private readonly Light[] _landing = new Light[ParafieldTraffic.AircraftCount];
+        private readonly Renderer[] _landingLens = new Renderer[ParafieldTraffic.AircraftCount];
+        private readonly Renderer[] _beaconLens = new Renderer[ParafieldTraffic.AircraftCount];
+        private readonly Renderer[][] _strobeLens = new Renderer[ParafieldTraffic.AircraftCount][];
         private double _ground;
         public ParafieldTraffic Traffic => _traffic;
         public static float GroundY => AirsideAdelaideGround.PavementWorldY - AirsideAdelaideSurroundings.PlainBelowPavement
@@ -47,6 +52,8 @@ namespace Airside.Presentation
                 if(_propellers[i]!=null)
                     _propellers[i].localRotation=Quaternion.Euler(0,0,pose.EngineRunning ? (float)((preciseSeconds*9000)%360) : 0);
             }
+            var dark=night>.10f;
+            for(var i=0;i<_planes.Length;i++) TickTrainerLamps(i,preciseSeconds,dark,_traffic.Pose(i,preciseSeconds).EngineRunning);
             var lit=night>.10f;
             foreach(var lamp in _lamps) lamp.enabled=lit;
             foreach(var light in _apronLights) light.enabled=lit;
@@ -113,6 +120,7 @@ namespace Airside.Presentation
                 foreach(var child in _planes[i].GetComponentsInChildren<Transform>())
                     if(child.name.Contains("prop_blade_")) child.SetParent(prop,true);
                 _propellers[i]=prop;
+                BuildTrainerLamps(i);
             }
             Debug.Log("[Airside Parafield] Built 4 runways, "+ParafieldLayout.Taxiways.Length+" taxiways, "+_planes.Length+" trainers");
         }
@@ -125,6 +133,47 @@ namespace Airside.Presentation
             if(part.Contains("nav_light_left")) return new Color(.85f,.05f,.04f);
             if(part.Contains("nav_light_right")) return new Color(.04f,.70f,.12f);
             return new Color(.90f,.91f,.85f);
+        }
+
+        private static Renderer Lens(Transform parent,string name,Vector3 at,float size,Color colour)
+        {
+            var lens=GameObject.CreatePrimitive(PrimitiveType.Sphere);lens.name=name;
+            AirsideRuntimeQuality.StripVisualCollider(lens);
+            lens.transform.SetParent(parent,false);lens.transform.localPosition=at;lens.transform.localScale=Vector3.one*size;
+            var renderer=lens.GetComponent<Renderer>();renderer.sharedMaterial=Material(colour);
+            renderer.sharedMaterial.EnableKeyword("_EMISSION");renderer.shadowCastingMode=ShadowCastingMode.Off;
+            return renderer;
+        }
+
+        // The trainer kit has no landing lamp, beacon flash or strobes, and these aircraft bypass the shared
+        // lights pass. A cowl landing lamp, the fin beacon and wingtip strobes follow the usual light-aircraft fit.
+        private void BuildTrainerLamps(int i)
+        {
+            var plane=_planes[i];
+            _landingLens[i]=Lens(plane,"LandingLight",new Vector3(0,1.02f,3.86f),.18f,new Color(.95f,.95f,.85f));
+            var beam=new GameObject("Parafield landing beam").transform;beam.SetParent(plane,false);
+            beam.localPosition=new Vector3(0,1.02f,3.95f);beam.localRotation=Quaternion.Euler(4,0,0);
+            var light=beam.gameObject.AddComponent<Light>();light.type=LightType.Spot;light.spotAngle=22;light.innerSpotAngle=9;
+            light.range=75;light.intensity=520;light.color=new Color(1,.97f,.88f);light.shadows=LightShadows.None;light.enabled=false;
+            _landing[i]=light;
+            _beaconLens[i]=Lens(plane,"Beacon lens",new Vector3(0,2.84f,-3.45f),.14f,new Color(1,.16f,.08f));
+            _strobeLens[i]=new[]
+            {
+                Lens(plane,"Strobe L",new Vector3(-5.5f,2.3f,.14f),.12f,new Color(.9f,.93f,1f)),
+                Lens(plane,"Strobe R",new Vector3(5.5f,2.3f,.14f),.12f,new Color(.9f,.93f,1f))
+            };
+        }
+
+        private void TickTrainerLamps(int i,double seconds,bool dark,bool engine)
+        {
+            var offset=i*1.37;
+            var on=engine;
+            _landing[i].enabled=on&&dark;
+            var beacon=on?(Mathf.Repeat((float)(seconds+offset),.7f)<.12f?1f:0f):0f;
+            var strobe=on?(Mathf.Repeat((float)(seconds+offset),1f)<.07f?1f:0f):0f;
+            _landingLens[i].sharedMaterial.SetColor("_EmissionColor",on&&dark?new Color(2.6f,2.5f,2.1f):Color.black);
+            _beaconLens[i].sharedMaterial.SetColor("_EmissionColor",new Color(2.6f,.4f,.2f)*beacon);
+            foreach(var lens in _strobeLens[i]) lens.sharedMaterial.SetColor("_EmissionColor",new Color(3.5f,3.6f,3.8f)*strobe);
         }
 
         private Transform FallbackTrainer(int index)

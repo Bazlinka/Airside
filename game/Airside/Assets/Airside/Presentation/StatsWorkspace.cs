@@ -606,6 +606,7 @@ namespace Airside.Presentation
                 var card = new HudBox(layout.LeftColumn.X + column * (cardWidth + 8f),
                     layout.LeftColumn.Y + StatsWorkspaceLayout.CaptionHeight + 6f + row * (layout.CompactOverview ? 16f : 27f),
                     cardWidth, layout.CompactOverview ? 16f : 23f);
+                into.Card(card, i == 0 || i == 2 ? 0.9f : 0.6f);
                 // ADR 0130: each figure leads with its icon.
                 // A narrow window drops the icons first, so the figures keep their room.
                 var withIcon = card.Width >= 190f;
@@ -755,7 +756,9 @@ namespace Airside.Presentation
                     continue;
                 var row = new HudBox(layout.RightColumn.X, y, layout.RightColumn.Width, 24f);
                 into.Text(row.SliceLeft(20f), "✓", 14f, HudTone.Positive, HudTextStyle.Bold);
-                into.Text(row.Inset(24f, 2f, 0f, 0f), milestone.Title, 12f, HudTone.Default);
+                var milestoneBox = row.Inset(24f, 2f, 0f, 0f);
+                into.Text(milestoneBox, milestone.Title,
+                    HudShell.FitFontSize(milestone.Title, 12f, milestoneBox.Width, 10f), HudTone.Default);
                 y += 24f;
                 achievements++;
             }

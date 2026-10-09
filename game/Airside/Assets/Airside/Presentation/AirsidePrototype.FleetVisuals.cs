@@ -65,7 +65,10 @@ namespace Airside.Presentation
                 }
 
                 // An inbound already on the drawn extended final flies it as an approach.
-                var phase = !visual.Visible && IsArrivingOnFinal(aircraft) ? AircraftPhase.Approach : visual.Phase;
+                var onFinal = (aircraft.State is FleetState.Inbound or FleetState.HoldingForLanding)
+                    && TryArrivalFinal(aircraft, out _);
+                var phase = onFinal && IsArrivalHolding(aircraft) ? AircraftPhase.Circuit
+                    : !visual.Visible && onFinal ? AircraftPhase.Approach : visual.Phase;
                 if (flight.Operation.Phase != phase || !flight.Operation.PhaseStartedAt.Equals(visual.PhaseStartedAt))
                     flight.Operation = AircraftOperation.InPhase(id, phase, visual.PhaseStartedAt);
 
@@ -81,7 +84,8 @@ namespace Airside.Presentation
 
         private bool IsFleetFlightVisible(string aircraftId) =>
             !WatchingOutstation && _fleetAircraftById.TryGetValue(aircraftId, out var aircraft)
-            && (FleetVisual.For(aircraft, _clock.Now).Visible || IsArrivingOnFinal(aircraft) || WatchingJourney(aircraftId));
+            && (FleetVisual.For(aircraft, _clock.Now).Visible || IsArrivingOnFinal(aircraft)
+                || WatchingJourney(aircraftId) || FleetJourneyInView(aircraft));
 
         /// <summary>
         /// Last-line visibility guard immediately before a fleet view receives a world pose.
@@ -369,11 +373,27 @@ namespace Airside.Presentation
             PaintFleetLivery(view, aircraft, FleetLiveryColour(aircraft));
         }
 
+        private static void SetPassengerWindowsVisible(Transform view, bool visible)
+        {
+            foreach (var renderer in view.GetComponentsInChildren<Renderer>(true))
+            {
+                var n = renderer.name;
+                if (n.StartsWith("Cabin window", StringComparison.OrdinalIgnoreCase)
+                    || n.StartsWith("cabin_window", StringComparison.OrdinalIgnoreCase)
+                    || n.StartsWith("Window glow", StringComparison.OrdinalIgnoreCase)
+                    || n.StartsWith("Cabin glazing", StringComparison.OrdinalIgnoreCase))
+                    renderer.enabled = visible;
+            }
+        }
+
         private void PaintFleetLivery(Transform view, FleetAircraft aircraft, Color accent) =>
             PaintFleetLivery(view, aircraft.Airline, aircraft.Type, aircraft.Registration, aircraft.IsFreighter, accent);
 
         private void PaintFleetLivery(Transform view, Airline airline, AircraftType type, string registration, bool freighter, Color accent)
         {
+            // A freighter has no passenger windows: only the flight deck is glazed.
+            if (!type.IsRotorcraft)
+                SetPassengerWindowsVisible(view, !freighter);
             // The Bell has its own fitted panels; it shares the operator palette and repaint command.
             if (type.IsRotorcraft)
             {
@@ -775,6 +795,15 @@ namespace Airside.Presentation
                 var view = views[i];
                 if (view == null || !view.gameObject.activeSelf)
                     continue;
+                // Registration is not camera-cycle eligibility. Other views, maps, direct
+                // selection and audio must retain every physically present aircraft.
+                if (i < VisualFlights.Count)
+                    _fleetViewById[VisualFlights[i].AircraftId] = view;
+                if (view != followed && i < VisualFlights.Count
+                    && VisualFlights[i].AircraftId != _cockpitAircraftId
+                    && _fleetAircraftById.TryGetValue(VisualFlights[i].AircraftId, out var parked)
+                    && !AircraftPresence.IsActive(parked, _clock.Now))
+                    continue;
                 // A far-approach aircraft is excluded as a new cycling/pick candidate (too
                 // small and distant to be a sensible target) but never dropped out from
                 // under a follow already in progress — that used to release the camera the
@@ -787,8 +816,6 @@ namespace Airside.Presentation
                     && !ApproachCloseEnough(VisualFlights[i], view.position))
                     continue;
                 _fleetActiveViews.Add(view);
-                if (i < VisualFlights.Count)
-                    _fleetViewById[VisualFlights[i].AircraftId] = view;
             }
 
             if (SameTransforms(_fleetActiveViews, _fleetFollowTargets))
@@ -846,6 +873,8 @@ namespace Airside.Presentation
             // step left them; a departure moves a metre or more between steps. Pick against
             // where the aircraft are drawn this frame.
             Physics.SyncTransforms();
+            if (TryEnterTowerAtScreen(camera, inputSystemPosition))
+                return;
             var ray = camera.ScreenPointToRay(inputSystemPosition);
             var layer = LayerMask.NameToLayer(AircraftPickRouting.PickLayerName);
             var mask = layer >= 0 ? 1 << layer : ~0;

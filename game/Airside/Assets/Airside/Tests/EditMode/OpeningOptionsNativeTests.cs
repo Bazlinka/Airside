@@ -14,6 +14,60 @@ namespace Airside.Tests
         private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
 
         [Test]
+        public void OptionsInitiallyCustomiseTheCurrentFollowView()
+        {
+            System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(AirsidePrototype).TypeHandle);
+            var host = new GameObject("Follow options regression");
+            host.SetActive(false);
+            try
+            {
+                var prototype = host.AddComponent<AirsidePrototype>();
+                var controller = host.AddComponent<AirsideCameraController>();
+                typeof(AirsideCameraController).GetField("_following", Private).SetValue(controller, true);
+                typeof(AirsidePrototype).GetField("_cameraController", Private).SetValue(prototype, controller);
+                typeof(AirsidePrototype).GetMethod("OpenOptionsMenu", Private).Invoke(prototype, null);
+                Assert.That(typeof(AirsidePrototype).GetField("_optionsHudView", Private).GetValue(prototype), Is.EqualTo(HudView.Follow));
+            }
+            finally { Object.DestroyImmediate(host); }
+        }
+
+        [Test]
+        public void TitleHidesPreviouslyVisibleFogCloudsAndLightning()
+        {
+            System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(AirsidePrototype).TypeHandle);
+            var host = new GameObject("Welcome weather regression");
+            host.SetActive(false);
+            var cameraHost = new GameObject("Review camera");
+            var fog = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            var clouds = new GameObject("Review clouds");
+            var bolt = new GameObject("Review lightning").AddComponent<LineRenderer>();
+            try
+            {
+                var prototype = host.AddComponent<AirsidePrototype>();
+                void Set(string name, object value) => typeof(AirsidePrototype).GetField(name, Private).SetValue(prototype, value);
+                void Invoke(string name) => typeof(AirsidePrototype).GetMethod(name, Private).Invoke(prototype, null);
+                Set("_atmosphereRoot", host.transform);
+                Set("_mainCamera", cameraHost.AddComponent<Camera>());
+                Set("_groundFog", fog.GetComponent<Renderer>());
+                Set("_cloudRoot", clouds.transform);
+                Set("_stormBolt", bolt);
+                Set("_stormStrikePending", true);
+                Invoke("UpdateAtmosphereLayers");
+                Invoke("UpdateCloudDrift");
+                Invoke("UpdateStormLightning");
+                Assert.That(fog.GetComponent<Renderer>().enabled, Is.False);
+                Assert.That(clouds.activeSelf, Is.False);
+                Assert.That(bolt.enabled, Is.False);
+                Assert.That(typeof(AirsidePrototype).GetField("_stormStrikePending", Private).GetValue(prototype), Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(host); Object.DestroyImmediate(cameraHost);
+                Object.DestroyImmediate(fog); Object.DestroyImmediate(clouds); Object.DestroyImmediate(bolt.gameObject);
+            }
+        }
+
+        [Test]
         public void AllExistingAndNewOptionsAreAvailableExactlyOnce()
         {
             System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(AirsidePrototype).TypeHandle);
@@ -24,17 +78,19 @@ namespace Airside.Tests
                 var prototype = host.AddComponent<AirsidePrototype>();
                 var model = (OptionsMenuModel)typeof(AirsidePrototype).GetField("_optionsModel", Private).GetValue(prototype);
                 var actions = new List<string>();
-                foreach (var section in new[] { OptionsSection.General, OptionsSection.Camera, OptionsSection.Display, OptionsSection.World })
+                foreach (var section in new[] { OptionsSection.General, OptionsSection.Camera, OptionsSection.Views, OptionsSection.Display, OptionsSection.World, OptionsSection.Notifications })
                 {
                     model.Section = section;
                     typeof(AirsidePrototype).GetMethod("FillOptionsModel", Private).Invoke(prototype, null);
                     Assert.That(model.Rows.Count, Is.LessThanOrEqualTo(5));
                     actions.AddRange(model.Rows.Select(row => row.Action));
                 }
-                Assert.That(actions.Distinct().Count(), Is.EqualTo(17));
-                Assert.That(actions.Count, Is.EqualTo(17));
+                Assert.That(actions.Distinct().Count(), Is.EqualTo(20));
+                Assert.That(actions.Count, Is.EqualTo(20));
                 Assert.That(actions, Does.Contain("options:cockpit"));
                 Assert.That(actions, Does.Contain("options:opening"));
+                Assert.That(actions, Does.Contain("options:notifications"));
+                Assert.That(actions, Does.Contain("options:notification-test"));
             }
             finally { Object.DestroyImmediate(host); }
         }

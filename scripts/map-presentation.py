@@ -31,7 +31,9 @@ AREAS = [
 ]
 
 OWNERS = {
+    "AirsidePrototype.AgentGameplay.cs": ("Flight views and traffic", "Hidden isolated agent gameplay command scenarios and evidence reports"),
     "AirsidePrototype.Parafield.cs": ("Independent airports", "Builds and updates Parafield trainer traffic and watches the airport from Operations"),
+    "AirsidePrototype.Tower.cs": ("Flight views and traffic", "Control-tower cab view: click the tower to enter, 360-degree look, Esc or LEAVE TOWER to return"),
     "AirsidePrototype.OutstationView.cs": ("Flight views and traffic", "Network aircraft views: read-only timed journey rendering, camera entry/exit and return to Fleet"),
     "AirsidePrototype.cs": ("Core", "The single instance; per-frame loop, selection / follow / reset ownership and most shared state"),
     "AirsidePrototype.Options.cs": ("Core", "Grouped Options, setting actions and title/in-game return routing"),
@@ -39,6 +41,8 @@ OWNERS = {
     "AirsidePrototype.Soak.cs": ("Core", "Unattended soak mode for packaged builds (heartbeat log, stall detection)"),
     "AirsidePrototype.Airline.cs": ("Player airline UI", "Player-airline layer: start-your-airline panel, fleet panel, destinations map, HUD sheets (ADR 0045)"),
     "AirsidePrototype.Fleet.cs": ("Player airline UI", "Unified Fleet workspace runtime: roster filters and sort, selection inside the sheet (ADR 0239)"),
+    "AirsidePrototype.AerodromeBeacon.cs": ("Sky, weather and audio", "Rotating white/green aerodrome beacon on the real-scale tower cab, night only"),
+    "AirsidePrototype.FlightMap.cs": ("Flight views and traffic", "Moving map in the cockpit/window/exterior views: own ship, route, airports, fleet (N toggles)"),
     "AirsidePrototype.MiniMap.cs": ("Player airline UI", "Corner map of the airfield with every aircraft as a dot"),
     "AirsidePrototype.FieldTags.cs": ("Player airline UI", "Registration tags floating over aircraft on the field"),
     "AirsidePrototype.FieldBuild.cs": ("Field and lighting build", "Field construction: surfaces and their wet sheen, vegetation, perimeter, stand markings"),
@@ -60,6 +64,7 @@ OWNERS = {
     "AirsidePrototype.PushbackTugs.cs": ("Ground operations visuals", "A real tug for every tail-first pushback (ADR 0126)"),
     "AirsidePrototype.ServiceWork.cs": ("Ground operations visuals", "Loose bags, galley boxes and trolleys on their way into an aircraft"),
     "AirsidePrototype.Boarding.cs": ("Ground operations visuals", "Boarding: doors and airstairs, ramp, boarding root"),
+    "AirsidePrototype.TerminalPeople.cs": ("Ground operations visuals", "Terminal doors, door queue, gate agent, background people"),
     "AirsidePrototype.WalkwayTape.cs": ("Ground operations visuals", "Temporary barrier tape along the route passengers walk (ADR 0187)"),
     "AirsidePrototype.Cockpit.cs": ("Flight views and traffic", "Entering, binding and leaving a cockpit or flight view; cockpit HUD"),
     "AirsidePrototype.CockpitAudio.cs": ("Flight views and traffic", "Cockpit audio"),
@@ -71,7 +76,8 @@ OWNERS = {
     "AirsidePrototype.Sky.cs": ("Sky, weather and audio", "Weather presentation (puddles, taxi spray, windsock, gloom), day cycle and star field"),
     "AirsidePrototype.Atmosphere.cs": ("Sky, weather and audio", "Cloud ceiling, horizon banks and ground fog (ADR 0193)"),
     "AirsidePrototype.WeatherEffects.cs": ("Sky, weather and audio", "Rain mesh"),
-    "AirsidePrototype.LiveWeather.cs": ("Sky, weather and audio", "Adelaide forecast polling (presentation only)"),
+    "AirsidePrototype.Contrails.cs": ("Sky, weather and audio", "Jet contrails in sky traffic"),
+    "AirsidePrototype.LiveWeather.cs": ("Sky, weather and audio", "Adelaide forecast polling and recorded weather input shared with airport rules"),
     "AirsidePrototype.Soundscape.cs": ("Sky, weather and audio", "Working-airport sound bed under the weather (ADR 0136)"),
     "AirsidePrototype.AircraftAudio.cs": ("Sky, weather and audio", "Aircraft heard from the ground point the camera looks at (ADR 0196)"),
 }

@@ -402,7 +402,7 @@ namespace Airside.Presentation
             "chr_ramp_m_worker", "chr_ramp_f_worker"
         };
 
-        private const int MaxVisiblePassengers = 60;
+        private const int MaxVisiblePassengers = 110;
         private const float PassengerStairSpeed = 0.55f;
 
         private sealed class CharacterKind
@@ -428,11 +428,15 @@ namespace Airside.Presentation
 
         private readonly struct WalkPath
         {
-            public WalkPath(Vector3[] points, int stairStart)
+            public WalkPath(Vector3[] points, int stairStart, int outsideStart = 0)
             {
                 Points = points;
                 StairStart = stairStart;
+                OutsideStart = outsideStart;
             }
+
+            /// <summary>Index of the first point outside the terminal: 1 when the walk begins inside the doorway.</summary>
+            public int OutsideStart { get; }
 
             /// <summary>Terminal → approach → stair foot → door. Stair segment from <see cref="StairStart"/>.</summary>
             public Vector3[] Points { get; }
@@ -598,7 +602,19 @@ namespace Airside.Presentation
                         || !view.gameObject.activeInHierarchy)
                         continue;
                     BoardingFlow.Moves(aircraft, _preciseTime, _moveScratch, 240, level);
-                    if (_moveScratch.Count == 0 || !TryWalkPath(aircraft, view, mode, out var path))
+                    // Where the walk starts at a terminal door, the next boarders wait there before they set off.
+                    var queueable = mode is BoardingMode.IntegralAirstair or BoardingMode.StairTruck;
+                    var queued = false;
+                    if (queueable)
+                    {
+                        BoardingFlow.Moves(aircraft, _preciseTime + BoardingQueueLeadSeconds, _queueScratch,
+                            BoardingQueueLeadSeconds + 1.0, level);
+                        foreach (var next in _queueScratch)
+                            if (next.Boarding && next.StartSeconds > _preciseTime)
+                                queued = true;
+                    }
+
+                    if ((_moveScratch.Count == 0 && !queued) || !TryWalkPath(aircraft, view, mode, out var path))
                         continue;
                     var walking = _passengersWanted.Count;
                     foreach (var move in _moveScratch)
@@ -609,12 +625,26 @@ namespace Airside.Presentation
                             continue;
                     }
 
+                    if (queued && _passengersWanted.Count < MaxVisiblePassengers)
+                        PlaceBoardingQueue(aircraft, path);
+                    if (queueable)
+                    {
+                        var boarding = queued;
+                        foreach (var move in _moveScratch)
+                            boarding |= move.Boarding;
+                        if (boarding)
+                            PlaceGateAgent(aircraft, path);
+                    }
+
                     if (_passengersWanted.Count > walking && mode != BoardingMode.Aerobridge)
                         KeepWalkwayTape(aircraft.Registration, path);
                 }
             }
 
             UpdateWalkwayTape();
+
+            if (FleetMode && _operations != null && EnsureCharacters())
+                PlaceAmbientPeople();
 
             _passengerScratch.Clear();
             foreach (var pair in _passengers)
@@ -631,6 +661,8 @@ namespace Airside.Presentation
                     _passengerPool[person.Kind] = pool = new List<PassengerView>();
                 pool.Add(person);
             }
+
+            UpdateTerminalDoors();
         }
 
         private bool PlacePassenger(FleetAircraft aircraft, PassengerMove move, WalkPath path)
@@ -651,7 +683,7 @@ namespace Airside.Presentation
                 position += lateral * (lane * 0.48f);
             }
 
-            var key = ((long)aircraft.Registration.GetHashCode() << 20) ^ ((long)move.Index << 1) ^ (move.Boarding ? 1L : 0L);
+            var key = PassengerKey(aircraft, move.Index, move.Boarding);
             _passengersWanted.Add(key);
             if (!_passengers.TryGetValue(key, out var person))
             {
@@ -664,7 +696,8 @@ namespace Airside.Presentation
             if (heading.sqrMagnitude > 0.0001f)
                 t.rotation = Quaternion.LookRotation(heading, Vector3.up);
             var clip = person.Kind.Walk != null ? person.Kind.Walk : person.Kind.Idle;
-            if (clip != null && clip.length > 0.01f)
+            var poseDue = PoseDue(position, key);
+            if (poseDue && clip != null && clip.length > 0.01f)
             {
                 // Stride roughly matched to pace; sampled on the simulation clock so it never
                 // depends on frame rate.
@@ -679,7 +712,7 @@ namespace Airside.Presentation
                 // On a turboprop the roller bag is left planeside at the stairs (ADR 0176).
                 var keeps = !LeftBagPlaneside(aircraft, move, path, elapsed);
                 person.Bag.Root.gameObject.SetActive(keeps);
-                if (keeps)
+                if (keeps && poseDue)
                     HandTools.Pose(person.Bag, person.Rig, lifted: narrow);
             }
 
@@ -1142,14 +1175,21 @@ namespace Airside.Presentation
             Vector3? leadIn = null;
             var origin = mode == BoardingMode.RemoteBus && TryRemoteBusStop(aircraft, view, out var busStop, out _)
                 ? busStop + into * 2.0f
-                : NearestTerminalDoor(foot, ground);
+                : TerminalDoorThreshold(aircraft, foot, ground) is var terminalDoor && terminalDoor != Vector3.zero
+                    ? terminalDoor : NearestTerminalDoor(foot, ground);
             if (mode != BoardingMode.RemoteBus && AdelaideWalkwayGeometry.TryCorridor(aircraft.Stand, out var corridor))
             {
                 leadIn = new Vector3(corridor[0], ground, corridor[1]);
                 origin = new Vector3(corridor[2], ground, corridor[3]);
             }
 
-            path = RoutedWalk(aircraft.Registration, origin, approach, foot, top, leadIn);
+            // A door-origin walk starts just inside the doorway, so people are seen to come through the door and
+            // deplaning ones go back in through it, not appear and vanish on the apron.
+            Vector3? inside = null;
+            if (mode != BoardingMode.RemoteBus && AdelaideTerminalDoors.TryForBay(aircraft.Stand.Value, out var terminalDoorSite))
+                inside = new Vector3(terminalDoorSite.X - terminalDoorSite.NormalX * 0.9f, ground,
+                    terminalDoorSite.Z - terminalDoorSite.NormalZ * 0.9f);
+            path = RoutedWalk(aircraft.Registration, origin, approach, foot, top, leadIn, inside);
             return true;
         }
 
@@ -1162,20 +1202,22 @@ namespace Airside.Presentation
         /// nobody walks through a wing or a turning propeller. Cached: this runs every frame.
         /// </summary>
         private WalkPath RoutedWalk(string registration, Vector3 origin, Vector3 approach, Vector3 foot, Vector3 top,
-            Vector3? leadIn = null)
+            Vector3? leadIn = null, Vector3? inside = null)
         {
             if (_walkRoutes.TryGetValue(registration, out var cached)
                 && (cached.Origin - origin).sqrMagnitude < 0.25f && (cached.Approach - approach).sqrMagnitude < 0.25f)
                 return cached.Path;
             var route = PlanFixedRoute(origin, approach, PersonClearanceMetres, false, new List<float>());
             var points = new List<Vector3>();
+            if (inside.HasValue)
+                points.Add(inside.Value);
             if (leadIn.HasValue)
                 points.Add(leadIn.Value);
             for (var i = 0; i + 1 < route.Count; i += 2)
                 points.Add(new Vector3(route[i], origin.y, route[i + 1]));
             points.Add(foot);
             points.Add(top);
-            var path = new WalkPath(points.ToArray(), points.Count - 2);
+            var path = new WalkPath(points.ToArray(), points.Count - 2, inside.HasValue ? 1 : 0);
             _walkRoutes[registration] = (origin, approach, path);
             return path;
         }

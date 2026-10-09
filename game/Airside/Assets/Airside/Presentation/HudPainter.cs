@@ -21,6 +21,12 @@ namespace Airside.Presentation
         /// <summary>ADR 0135: shifts everything drawn (and its click areas) while a sheet slides in.</summary>
         public Vector2 Offset { get; set; }
 
+        /// <summary>
+        /// Draw text and buttons at 1:1 device pixels (the default). Off inside a <c>GUI.BeginScrollView</c>: its group
+        /// offset does not survive the shrunk matrix, so the content landed far from its card.
+        /// </summary>
+        public bool DeviceSpace { get => _deviceSpace; set => _deviceSpace = value; }
+
         public string Draw(HudDrawList list)
         {
             if (list == null)
@@ -133,8 +139,17 @@ namespace Airside.Presentation
                         {
                             var before = GUI.color;
                             GUI.color = new Color(1f, 1f, 1f, command.Value <= 0f ? 1f : command.Value);
-                            GUI.DrawTexture(rect, image, ScaleMode.ScaleAndCrop, true);
+                            // Transparent brand lockups must keep their entire silhouette.
+                            GUI.DrawTexture(rect, image, command.Text.StartsWith("Brand/", System.StringComparison.Ordinal)
+                                ? ScaleMode.ScaleToFit : ScaleMode.ScaleAndCrop, true);
                             GUI.color = before;
+                        }
+                        else if (command.Text == SplashLayout.WordmarkArt)
+                        {
+                            // A missing/undecodable PNG must never leave the game's name blank.
+                            DrawText(new HudDrawCommand(HudDrawKind.Text, command.Box, "AIRSIDE", HudTone.Default,
+                                Mathf.Min(58f, command.Box.Height * 0.72f), HudTextStyle.Bold, HudAlign.Left,
+                                command.Value, null, null, true), rect);
                         }
                         break;
                 }
@@ -166,8 +181,12 @@ namespace Airside.Presentation
         /// Device pixels per HUD point: the uniform scale the OnGUI matrix applies (1 when the HUD is not enlarged).
         /// Text and button art are drawn at this size so they are rasterised at real pixels, not stretched.
         /// </summary>
+        private static bool _deviceSpace = true;
+
         private static float DeviceScale()
         {
+            if (!_deviceSpace)
+                return 1f;
             var scale = GUI.matrix.lossyScale.x;
             return scale > 1.01f ? scale : 1f;
         }

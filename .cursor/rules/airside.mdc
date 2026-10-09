@@ -5,10 +5,10 @@ alwaysApply: true
 ---
 
 Read `AGENTS.md` and `GAME.md` at the repo root before making changes. `AGENTS.md` is the shared contract for every tool (Bailey, ChatGPT,
-Cursor, Codex, Claude) and overrides anything else; do not rely on a copy of its rules here. How several tools share the repo:
+Cursor, Codex, Claude); Bailey’s current instructions take precedence. Do not rely on a copy of its rules here. How several tools share the repo:
 `docs/ai/WORKFLOW.md`.
 
 Cursor-specific:
 
-- Cloud agents have no Unity editor: run `scripts/test-domain.sh` before every push and report Unity behaviour as unverified.
+- Follow the testing and merge policy in `AGENTS.md`; cloud agents report unavailable Unity verification honestly.
 - Claim your task and branch first (`docs/ai/WORKFLOW.md`), and keep to the files you declared.

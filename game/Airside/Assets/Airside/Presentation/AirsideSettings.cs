@@ -19,10 +19,14 @@ namespace Airside.Presentation
         public bool SoundOn = true;
         public bool FieldTags = true;
         public bool MiniMap = false;
+
+        /// <summary>Which HUD parts show in each view. FieldTags/MiniMap mirror the overview's values for older code.</summary>
+        public HudVisibility Hud = HudVisibility.Default();
         public bool FollowOnSelect = true;
         public bool InvertOrbit = false;
         public bool CockpitMotion = true;
         public bool OpeningAnimation = true;
+        public bool MacNotifications = false;
 
         /// <summary>
         /// Real aircraft from adsb.lol in the sky only (ADR 0081/0086). Off until the game
@@ -124,10 +128,19 @@ namespace Airside.Presentation
             settings.SoundOn = Pref("sound", 1) != 0;
             settings.FieldTags = Pref("tags", 1) != 0;
             settings.MiniMap = Pref("minimap", 0) != 0;
+            // Per-view layout; before it existed, the old labels/map switches applied to every view.
+            settings.Hud = HudVisibility.Default(settings.FieldTags, settings.MiniMap);
+            foreach (HudView view in System.Enum.GetValues(typeof(HudView)))
+            {
+                var key = PrefPrefix + "hud.v1." + view;
+                if (PlayerPrefs.HasKey(key))
+                    settings.Hud.SetMask(view, PlayerPrefs.GetInt(key));
+            }
             settings.FollowOnSelect = Pref("follow", 1) != 0;
             settings.InvertOrbit = Pref("invert", 0) != 0;
             settings.CockpitMotion = Pref("cockpitmotion.v1", 1) != 0;
             settings.OpeningAnimation = Pref("openinganimation.v1", 1) != 0;
+            settings.MacNotifications = Pref("macnotifications.v1", 0) != 0;
             settings.LiveTraffic = Pref("livetraffic.v2", 0) != 0;
             settings.LiveWeather = Pref("liveweather.v1", 1) != 0;
             settings.UncappedFrameRate = Pref("uncappedfps", 0) != 0;
@@ -146,10 +159,13 @@ namespace Airside.Presentation
             PlayerPrefs.SetInt(PrefPrefix + "sound", SoundOn ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "tags", FieldTags ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "minimap", MiniMap ? 1 : 0);
+            foreach (HudView view in System.Enum.GetValues(typeof(HudView)))
+                PlayerPrefs.SetInt(PrefPrefix + "hud.v1." + view, Hud.Mask(view));
             PlayerPrefs.SetInt(PrefPrefix + "follow", FollowOnSelect ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "invert", InvertOrbit ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "cockpitmotion.v1", CockpitMotion ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "openinganimation.v1", OpeningAnimation ? 1 : 0);
+            PlayerPrefs.SetInt(PrefPrefix + "macnotifications.v1", MacNotifications ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "livetraffic.v2", LiveTraffic ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "liveweather.v1", LiveWeather ? 1 : 0);
             PlayerPrefs.SetInt(PrefPrefix + "uncappedfps", UncappedFrameRate ? 1 : 0);

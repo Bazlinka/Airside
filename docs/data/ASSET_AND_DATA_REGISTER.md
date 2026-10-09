@@ -4,6 +4,8 @@ Every external asset or dataset must be added here before it enters a distributa
 
 | Item | Owner or source | Use | Licence | Attribution | Evidence | Status |
 |---|---|---|---|---|---|---|
+| UI-ILL-002 Adelaide T1 opening v02 | OpenAI built-in image generation, 8 Oct 2026 | Versioned 1672×941 opaque title illustration; interpreted long low T1 glass concourse, repeated jetbridges, pale roof/solar arrays and Adelaide setting; no baked UI | OpenAI service terms applicable at generation; generated illustration, no copied photo texture; reference URLs/prompts in `docs/art/prompts/adelaide-opening-2026-10-08.md` | No separate charge reported by tool; no attribution requirement reported | Source/candidate `docs/art/candidates/ui_splash_adelaide_t1_dawn_v02.png`; runtime UI/Illustrations PNG + identical StreamingAssets mirror; fallback v01 illustration/ink backing | Integrated at Bailey’s redesign request; Unity/packaged appearance unverified |
+| BRD-007 AIRSIDE departure-vector lockup v04 | Original Airside vector geometry/strokes; `scripts/generate-airside-brand-v04.py` | Exact AIRSIDE lettering, aqua departure vector/amber tip; transparent 1800×360 PNG and editable SVG | Project-authored original shapes; Pillow software use; no external font or trademark graphic | $0; no third-party asset attribution | Source `docs/art/source/airside_wordmark_light_v04.svg`; Brand PNG + identical StreamingAssets mirror; `--check`; fallback native AIRSIDE text | Integrated title/transition; v03 app icon retained; Unity appearance unverified |
 | ART-FLEET-LIGHTING-20261008 | Airside project; original runtime fitting code and procedural lens geometry over existing fleet models | Crown/belly/aft lamp fittings and separate white strobe lenses | Project-owned code/geometry; no external asset or additional cost | None; factual references linked in evidence | ADR `2026-10-08-fleet-lighting-realism`; `docs/testing/aircraft-lighting-2026-10-08/` | Integrated on review branch; native results recorded in evidence; existing family profiles and procedural models remain fallbacks |
 | ART-FLEET-SURFACE-DETAILS-20261007 | Airside project; original C# clipping and detail recipe over existing AIR-001/AIR-005…017 meshes | Runtime door seams, handle surrounds/bars, thresholds, cargo latches, hinge marks, Bell rails and service hatches | Project-owned code and geometry; no external asset or additional cost | None | Task #578; ADR `2026-10-07-fleet-surface-details`; `docs/testing/fleet-surface-details-2026-10-07/` | Integrated; native Unity unverified; missing/unreadable source retains previous appearance |
 | UI-STUDY-FLOWS-20261007 Connected player-flow prototype | Airside original HTML/CSS/JS, schematic vector diagram and browser captures | Documentation-only interactive design study; references existing game/native review images unchanged | Project-owned source; existing capture data/asset terms and credits retained | Existing recorded scenery/asset credits; system font only | docs/art/player-flow-prototype-2026-10-07/README.md; docs/testing/player-flow-study-2026-10-07/; no external libraries, font downloads or image-generation cost | Review prototype only; local sample storage; no runtime import or Unity-save access; current interface/assets remain fallback |
@@ -17,6 +19,7 @@ Every external asset or dataset must be added here before it enters a distributa
 | DAT-SA-LIDAR-BUILDINGS Adelaide LiDAR building footprints 2022 (validator) | Government of South Australia, Department for Environment and Water — same dataset, Building footprints (UrbanBuildings2022.tif, 0.5 m binary; 116 MB zip, `work/cache/sa-open/`) | Independent check that a Microsoft-only Overture footprint has a real roof (`scripts/prepare-ypad-overture-buildings.py`, `scripts/generate-ypad-lidar-buildings.py`, comparison renderer `scripts/compare-building-sources.py`); never used as outlines because it merges terraces and has sea clutter (ADR 0236) | CC BY 4.0 | Same credit as DAT-SA-LIDAR-CANOPY; Flight Manual › Map credits | As above; 282 of 32,152 footprints rejected | Integrated · headless tests pass |
 | DAT-YPAD-OVERTURE Overture Maps buildings, Adelaide suburbs | Overture Maps Foundation buildings theme, release 2026-09-23.1, public S3 `overturemaps-us-west-2` (OpenStreetMap contributors + Microsoft ML Buildings), fetched with `scripts/fetch-ypad-overture.py` | 22,732 extra real footprints (with height/floors where known) beside the OSM ones in `osm_adelaide_suburbs_v01.bin`; cuts invented filler houses from 8,880 to 660; committed as the band-trimmed, LiDAR-validated `docs/data/overture/ypad-suburb-buildings-2026-09-23.1.json.gz` (2.2 MB) | ODbL 1.0 (Overture buildings theme; Microsoft footprints also ODbL) | Flight Manual › Map credits: "Overture Maps buildings (ODbL 1.0), combining OpenStreetMap, Microsoft and other open footprints"; existing "© OpenStreetMap contributors" stays | Release path/licence read 2026-10-06; sources counted in the fetch: 61,605 Microsoft-only, 25,436 Microsoft+OSM, 21,939 OSM-only; fallback `generate-adelaide-suburbs.py --no-overture` | Integrated · headless tests pass; native Unity check pending |
 | DAT-YPAD-MAP-20261006 Adelaide Airport OSM snapshot refresh | OpenStreetMap contributors, OSM map API 0.6, same bbox as DAT-YPAD-MAP, retrieved 2026-10-06 (sha256 7e6777a5dd3f2bfd0873898d4895976d56fb58f22781d2533c368dc130eb832d) | Replaces the 2026-09-29 snapshot for roads, car parks, precinct furniture and golf bunkers; 18,673 elements (+50, −11, 75 edited; no airside aeroway change) | ODbL 1.0 | Unchanged "Map data © OpenStreetMap contributors" | `docs/data/osm/ypad-map-2026-10-06.json`; previous snapshot kept as fallback | Integrated · headless tests pass |
+| DAT-YPAD-MAP-20261008 Adelaide Airport OSM snapshot refresh | OpenStreetMap contributors, OSM map API 0.6 via `scripts/fetch-ypad-osm.py`, same bbox as DAT-YPAD-MAP, retrieved 2026-10-08 (sha256 2efebe71c170e453382e3b9d431dd1305e7a9784dd8b4c4bba2cfc0361257eb7) | Replaces the 2026-10-06 snapshot for roads, car parks, precinct furniture and golf bunkers; 18,748 elements (+75, none removed, 65 edited; includes new service roads and crossings). Road coverage check: an Overpass count of drivable highways in the bbox was 3,935 against 3,880 in the 10-06 snapshot; the regenerated network gained 55 roads (16,013 → 16,068, 1,978 km), matching the gap | ODbL 1.0 | Unchanged "Map data © OpenStreetMap contributors" | `docs/data/osm/ypad-map-2026-10-08.json`; earlier snapshots kept as fallback | Integrated · generated `AdelaideRoadNetwork.cs`, `AdelaideCarParks.cs`, `AdelaidePrecinct.cs`, `AdelaideGolfBunkers.cs` reproducible · headless/Unity tests not run |
 | DAT-YPAD-ELVIS-HOOK Geoscience Australia ELVIS 1 m LiDAR DEM (optional, not yet supplied) | Geoscience Australia ELVIS, https://elevation.fsdf.org.au/ — free order, CC BY 4.0 | `generate-adelaide-terrain.py --elvis DIR` blends bare-earth DTM over Copernicus 30 m where tiles exist; nothing is shipped or credited until tiles are ordered by hand (ADR 0236) | CC BY 4.0 (stated on the ELVIS portal / data.sa.gov.au ELVIS catalogue) | "Elevation data © Commonwealth of Australia (Geoscience Australia) / Government of South Australia (CC BY 4.0)" — confirm exact wording from the downloaded licence file before shipping | Hook proven on a synthetic GeoTIFF; real tiles pending | Prepared · awaiting manual download |
 | AIR-IDENTITY-20261006 Original fleet identity refresh | Airside project; deterministic `finish-aircraft-liveries.py` and `generate-air-017-bell-412.py` | Thirteen hull compositions, larger fin marks, fitted Bell paint, fourteen thumbnails, matching packaged art | Project-owned original geometry and renders; no copied airline artwork, logo or exact livery; no external assets or tool cost | None | ADR 0234; `docs/testing/aircraft-identities-2026-10-06/README.md`; prior git revision is fallback | Implemented; validation and packaged-play limits in evidence README |
 | AIR-017 Bell 412EP-class Adelaide rescue helicopter v01 + Helipad West presentation | Airside project; deterministic geometry by `scripts/generate-air-017-bell-412.py`; dimensional/type references from Bell, Babcock and South Australian Government; pad outline from existing DAT-YPAD-MAP OSM way 1229789628 | Original unbranded static rescue-helicopter model at the real western rescue/retrieval pad; pad surface, H, touchdown/perimeter paint and edge fixtures; no copied model, logo, registration or exact agency livery | Project-owned model/code; Bell/Babcock/government pages used as factual references only; OSM pad remains ODbL 1.0 under DAT-YPAD-MAP | Existing in-game `Map data © OpenStreetMap contributors`; no helicopter-art attribution required | ADR 0186; `docs/plans/adelaide-emergency-aviation-and-road-assets-task-packet.md`; [Bell 412 official literature](https://www.bellflight.com/products/literature); [Babcock SA fleet delivery](https://www.babcockinternational.com/news/babcock-delivers-new-airbus-h145-helicopter-to-support-south-australias-emergency-services/); [SA replacement-fleet timing](https://www.weare.sa.gov.au/news/eyes-in-the-sky-and-care-in-the-air-as-new-fleet-unites); generator reports 43 parts / 1,324 triangles / 13.90 × 16.97 × 4.45 m; rebased Unity EditMode 1454/1456, zero failures; clean pre-rebase Mac build `3294ed54`; packaged day/night captures under `work/captures/` | Integrated · generated source/runtime/StreamingAssets mirror and primitive fallback · packaged day/night close review passed |
@@ -417,3 +420,150 @@ Prompt/source specification: 11 m span, 8.3 m length, approximately 2.9 m high,
 cream airframe/coastal-blue or eucalyptus trim, real-metre fixed landing gear,
 no marks baked into textures. Status: integrated for native/packaged review;
 this entry does not claim visual verification before the recorded captures.
+
+### Aircraft and soundscape audio v02 — 8 October 2026 (#614)
+
+- **AUD-014 fleet rotating/exhaust bank:** 14 aircraft families × idle, power,
+  reverse and independently controlled rotating core; 8 s, mono 22.05 kHz PCM.
+  Idle/power/reverse derive from the existing registered CC0 AUD-007/008/009 →
+  AUD-010 v01 family banks. Bell and rotating cores are original Airside synthesis.
+  Representative designed voices, **not recordings of each manufacturer's engine**.
+- **AUD-015 cabin recording:** richwise, [inside a passenger jet mid-flight](https://freesound.org/people/richwise/sounds/451741/),
+  CC0 1.0 Universal. Source page/CC0 link verified 2026-10-08. HQ MP3 retained as
+  `docs/data/audio/src_jet_cabin_richwise_451741.mp3`; decoded 12–32 s mono 22.05 kHz
+  crop retained alongside it. A 620 Hz lowpass removes intelligible speech while
+  retaining airframe/pack texture; jet, prop and rotor cabin derivatives combine
+  this with registered AUD-007 or original rotor/noise. Voluntary richwise credit
+  appears in Flight Manual; no attribution required. No foreign PA announcements.
+- **AUD-016 supporting machinery/soundscape:** original Airside starter beds
+  (prop/jet/rotor), APU, airflow, gear/flap/door cues and apron bed. No external
+  sample or AI audio model. HUD switch/tine cues are original runtime synthesis.
+- **Generation:** `scripts/audio/generate_audio_overhaul.py`; immutable input
+  hashes, acquisition/crop, source URLs, licence evidence and fallback are in
+  `docs/data/audio/audio_overhaul_sources.json`. Every output SHA-256, peak/RMS,
+  duration and loop-seam/mean-step metric is in `audio_overhaul_manifest_v02.json`.
+  Rotating circular signals to a low-slope boundary retains waveform energy;
+  no artificial endpoint plateau. Existing source assets and v01 bank retained.
+- **Cost:** $0. Existing NumPy build dependency licence remains registered above.
+  Original processing/code is project-owned. Runtime needs no network.
+- **Fallback:** existing registered family/constructed engine when a v02 bed is
+  missing; optional core/starter/APU/mechanics/cabin layers go silent. Existing
+  generated airflow/apron fallback and touchdown/tyre assets remain available.
+- **Evidence:** `docs/testing/audio-overhaul-2026-10-08/README.md`. Numerical and
+  byte/headroom checks passed; Unity listening/device/performance assessment is
+  unverified. This is not an aircraft-specific recording or auditory QA claim.
+
+## Australian flight world — 8 October 2026
+
+| ID | Source / generator | Licence, attribution, cost | Integration and fallback |
+|---|---|---|---|
+| DAT-AU-FLIGHT-DEM | Mapzen Terrain Tiles, AWS `elevation-tiles-prod/terrarium`, `scripts/generate-australia-flight-world.py`: zoom 6 country grid at .025°; higher resolution airport approaches. Sources include USGS GMTED2010/SRTM, NASA and NOAA ETOPO1; bilinear resampled int16 metre heights. Exact paths/hashes in `australia-flight-world-*-v01.json` | Mapzen terrain tiles CC BY 4.0; underlying USGS/NASA/NOAA data public domain. Attribution: Mapzen, USGS, NASA, NOAA. $0 public HTTPS. Registry: https://registry.opendata.aws/terrain-tiles/ | `Art/Terrain/dem_australia_v01.bin`, `dem_approach_*_v01.bin` with identical StreamingAssets mirrors. No runtime network. Missing airport data uses national DEM; missing national data uses existing SA DEM and flat coast fallback. Native appearance/performance unverified. |
+| DAT-AU-FLIGHT-COVER | ESA WorldCover 2021 v200 COG overviews, country .025° / approaches .001°; class-only SALC derived by `scripts/generate-australia-flight-world.py` | CC BY 4.0. © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium. $0; same Flight Manual land-cover credit. | `landcover_australia_v01.bin`, `landcover_approach_*_v01.bin` and identical mirrors. Missing approach uses national cover; missing national uses SA cover/height palette/Natural Earth. No imagery shipped. |
+| DAT-AU-FLIGHT-AIRPORTS | OpenStreetMap Overpass aeroways, terminal/hangar/building footprints and major roads; eighteen regional field snapshots, with authored Adelaide scene retained. `scripts/generate-australia-flight-world.py` | ODbL 1.0; © OpenStreetMap contributors. $0 public HTTPS; existing on-screen/Flight Manual map credit. Derived feature maps are supplied in JSON with field coordinates and kind/width/height. | `airport_*_v01.json` under Art/Terrain and StreamingAssets; all original runway coordinates/field elevations come from existing public-domain OurAirports MAP-002 catalogue. Missing OSM data keeps accurate painted strips and terrain, no invented terminal. Procedural stylised geometry; native appearance unverified. |
+
+### Aircraft body-contour revision (8 October 2026, #651)
+
+AIR-001 / AIR-005…017 / AIR-YPPF-001 retain their registered model paths and
+existing source/licence records. Body derivatives are original project-owned
+procedural geometry (`scripts/aircraft_body.py`, Bell/trainer generators):
+continuous station profiles and fitted skin details, no downloaded geometry,
+no prompt/image generation, zero cost, no additional attribution. A320 v02 keeps
+its previously registered FlightGear free-source adaptations and attribution.
+Fallback: previous committed models and existing primitive missing-asset paths.
+Native appearance/performance unverified. Decision: `2026-10-08-aircraft-body-realism`.
+
+
+## Aircraft light-source halo — 8 October 2026 (#668)
+
+`game/Airside/Assets/Airside/Art/Shaders/AircraftLightHalo.shader` is original
+project-owned HLSL authored by Codex for Bailey's night-arrival visibility report.
+Source/evidence: task #668 and `2026-10-08-night-final-light-visibility` decision.
+Zero cost; no external image, texture, model or code; no attribution obligation.
+Analytic core/skirt and haze attenuation follow the project's existing
+AirfieldLightPoint behaviour. Built-in URP halo remains the missing-shader fallback.
+Always-included shader reference retains it in player builds. Integrated;
+native shader compilation and day/night appearance remain unverified.
+
+## Cloud morphology revision — 9 October 2026 (#674)
+
+Existing `WeatherVolume.shader` gains original project-owned cirrus/stratiform density
+and far-plane proxy handling, authored by Codex for Bailey. No downloaded assets,
+image generation, external code, new attribution or cost. Source/evidence: #674 and
+`2026-10-09-cloud-continuity-and-variety`. Existing shader/atlas paths and missing-shader
+fallback remain. Native shader compilation, rendered appearance and GPU unverified.
+
+## Recorded weather integration — 9 October 2026 (#679)
+
+The already registered Open-Meteo forecast sample now also enters the game's saved
+operational timeline and replay. Provider, fixed Adelaide coordinate, API request,
+CC BY 4.0 attribution and existing private-prototype/release terms remain as registered;
+no new data source, asset, acquisition cost or endpoint is introduced. Source/evidence:
+`2026-10-09-recorded-weather-and-arrival-continuity`. The deterministic forecast remains
+the unknown/expired-input fallback. Native save/restore integration is unverified.
+
+
+## Connected aircraft tails — 9 October 2026 (#684)
+
+ART-FLEET-TAILS-20261009 revises existing AIR-001, AIR-005…017 and AIR-YPPF-001
+runtime glTF/bin and editable FBX assets at their existing model paths; refreshed
+hangar PNGs and packaged glTF/bin/PNG mirrors use the same paths/GUIDs. New editable
+A320 v02 and trainer FBXs derive from those already registered models. Original
+project-owned tail geometry and scripts authored by Codex for Bailey; zero cost,
+no external mesh, image, texture or code. Manufacturer drawings were read only;
+links and dimension provenance are in `docs/testing/aircraft-tails-2026-10-09/`.
+Unchanged adapted A320 running gear/engines retain their existing source licence
+and attribution obligations. Previous committed assets remain the fallback.
+Geometry checks and actual asset renders cover the fleet; native Unity appearance,
+control articulation and performance remain unverified.
+
+
+## Ground surface character — 9 October 2026 (#687)
+
+ART-GROUND-CHARACTER-20261009: original project-owned HLSL in existing AdelaideGround,
+Surroundings and Pavement shaders plus `GroundCharacter.hlsl`, authored by Codex for
+Bailey's request for a less perfect ground/world. Existing apron repair geometry
+is revised in project-owned C#; no downloaded image, model, data or code, no new
+source licence/attribution obligation and zero acquisition cost. Existing scanned
+texture and satellite registrations remain applicable. Prior shaders/material
+fallbacks and previous git revision are the fallback. Native shader/appearance/GPU
+verification remains open; focused evidence: `docs/testing/ground-character-2026-10-09.md`.
+
+
+### Dash 8 wing-body fairing repair — 9 October 2026 (#691)
+
+AIR-006 retains `mdl_dash8_q400_v01.gltf`, `.bin`, `.fbx` and existing DH8D
+thumbnail paths. Source: original project-owned procedural loft in
+`scripts/generate-air-006-dash8-q400.py` (`--fairing-only` repairs the finished kit
+without regenerating unrelated geometry). One closed shared-vertex crown fairing
+replaces the two side pods and centre oval. No external source, attribution or
+licence added; zero cost. Prior git assets remain fallback. Packaged model/bin
+and thumbnail mirrors updated; native import/appearance/performance unverified.
+Evidence: `docs/testing/dash8-wing-fairing-2026-10-09.md`.
+
+
+## Physical ground detail — 9 October 2026 (#693)
+
+ART-GROUND-PHYSICAL-20261009: original procedural C# grass/scrub, drain metalwork
+and taxiway wear geometry authored by Codex for Bailey. New source files are
+`Presentation/AdelaideVergeDetail.cs` and `ApronDrainGeometry.cs`, each with its own
+metadata. No downloaded model/image/code/data or acquisition cost, no new source
+licence/attribution obligation. Existing mapped planting, OSM roads/land cover,
+terrain and their registered attribution remain applicable. Existing materials and
+previous committed geometry remain fallback. No new texture/model mirror. Focused
+checks are recorded in `docs/testing/physical-ground-detail-2026-10-09.md`; native
+appearance, lighting and performance remain unverified.
+
+
+## Dash 8 nacelle/bay repair — 9 October 2026 (task #712)
+
+AIR-006 existing exact paths/GUIDs: original procedural nacelle, fitted bay doors,
+under-wing joins and cowl-shell refit; editable FBX/glTF/bin, existing thumbnail
+and packaged mirrors. Source: `scripts/generate-air-006-dash8-q400.py --nacelles-only`;
+project-owned derivative geometry, no external artwork/assets, no attribution or
+cost. Previous git revision is the fallback. Other finished aircraft parts and
+fictional tail paint are preserved. Native baseline reproduced the gear fault;
+fixed native gear poses and packaged parked follow captures inspected; moving-propeller video, night/storm and performance remain unverified. Evidence: `docs/testing/dash8-visual-repair-2026-10-09/README.md`.
+
+### Fleet intake refinement, 9 October 2026 (#716)
+
+Original project-owned geometry by Codex: `scripts/aircraft_intakes.py`, `scripts/refine-aircraft-intakes.py`; no external asset, licence fee, attribution or generated bitmap. Surgical existing-kit pass retains moving meshes and GUIDs, opens blocking engine caps and fits recessed liners. Shared aircraft writer reapplies the finish on regeneration; adapted kits can use the explicit refinement command. Editable FBXs, glTF/bin, mirrors and thumbnails remain in existing paths. Runtime hinge seams derive from actual control triangles and follow their existing rigs; primitive fallback retained. Native evidence is recorded under `docs/testing/fleet-refinements-2026-10-09/`.

@@ -115,13 +115,13 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Motion_TurbulenceRumblesTheTrackpadButAPausedSimDoesNot()
+        public void Motion_ContinuousFlightDoesNotRattleTheTrackpad()
         {
             var motion = new CockpitMotion();
             motion.Reset(3);
             var t = 0f;
             for (var i = 0; i < 20; i++, t += Dt) motion.Step(Air(t, 60f, 1f));
-            Assert.That(motion.Rumble01, Is.GreaterThan(CockpitHapticScheduler.RumbleFloor));
+            Assert.That(motion.Rumble01, Is.Zero);
             var paused = Air(t, 60f, 1f);
             paused.SimRate = 0f;
             motion.Step(paused);
@@ -129,7 +129,7 @@ namespace Airside.Tests
         }
 
         [Test]
-        public void Motion_RolloutJointsTickUnlessFastForwarding()
+        public void Motion_RolloutJointsDoNotRepeatedlyTapTheTrackpad()
         {
             HapticKind Run(float simRate)
             {
@@ -147,7 +147,7 @@ namespace Airside.Tests
                 }
                 return strongest;
             }
-            Assert.That(Run(1f), Is.EqualTo(HapticKind.Tick));
+            Assert.That(Run(1f), Is.EqualTo(HapticKind.None));
             Assert.That(Run(4f), Is.EqualTo(HapticKind.None));
         }
 

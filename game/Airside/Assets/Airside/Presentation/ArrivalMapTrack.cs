@@ -49,6 +49,27 @@ namespace Airside.Presentation
             return show + bodyMetres * (1.0 - body.DistanceFractionAt(flown));
         }
 
+        /// <summary>Seconds flown on the drawn final at approach speed; 0 when the leg is too short for a separate final.</summary>
+        public static double FinalSeconds(double legMetres, double legSeconds, AircraftType type)
+        {
+            var speed = CircuitProfile.Knots(AircraftPerformance.For(type).ApproachKnots);
+            var seconds = speed > 0f ? ArrivalApproach.ShowMetres / speed : 0.0;
+            return legMetres <= ArrivalApproach.ShowMetres * 1.5 || legSeconds <= seconds * 1.25 ? 0.0 : seconds;
+        }
+
+        /// <summary>
+        /// The descent body levels off at the glideslope entry and the final then starts at once, so the
+        /// route's path angle steps to the approach attitude. Fade to that attitude over the last
+        /// <paramref name="blendSeconds"/> before the entry. Negative pitch is nose-up.
+        /// </summary>
+        public static float FinalEntryPitchDegrees(AircraftAttitude attitude, double secondsToEntry,
+            double blendSeconds, float routePitch)
+        {
+            var u = (float)Math.Clamp(1.0 - secondsToEntry / Math.Max(1.0, blendSeconds), 0.0, 1.0);
+            u = u * u * (3f - 2f * u);
+            return routePitch + (attitude.ApproachStart - routePitch) * u;
+        }
+
         public static double FinalEntryHeightMetres(AircraftType type)
         {
             var hold=AirsideFlightPath.Approach((float)ApproachHold.HoldingFinalProgress(0),0,type);
@@ -57,7 +78,8 @@ namespace Airside.Presentation
 
         /// <summary>Height follows the arrival's reserved final time, rather than blending a late cruise
         /// descent down tens of thousands of feet in the last 40km. Both camera ownership paths meet at the same glideslope entry height.</summary>
-        public static double HeightMetres(double legKm,double legSeconds,double remaining,AircraftType type)
+        public static double HeightMetres(double legKm,double legSeconds,double remaining,AircraftType type,
+            double climbLagSeconds=0)
         {
             var speed=CircuitProfile.Knots(AircraftPerformance.For(type).ApproachKnots);
             var finalSeconds=ArrivalApproach.ShowMetres/speed;
@@ -66,10 +88,10 @@ namespace Airside.Presentation
             if(outMetres<=ArrivalApproach.ShowMetres)
                 return ArrivalApproach.Height(CircuitProfile.GlideslopeHeight(hold.x-(float)outMetres));
             if(legKm*1000<=ArrivalApproach.ShowMetres*1.5 || legSeconds<=finalSeconds*1.25)
-                return EnrouteProfile.For(legKm,legSeconds,type).AltitudeFeetAt(legSeconds-remaining)/EnrouteProfile.FeetPerMetre;
+                return RegionalFlightPath.ClimbAltitudeFeet(EnrouteProfile.For(legKm,legSeconds,type),legSeconds-remaining,climbLagSeconds)/EnrouteProfile.FeetPerMetre;
             var body=EnrouteProfile.For((legKm*1000-ArrivalApproach.ShowMetres)/1000,legSeconds-finalSeconds,type,
                 FinalEntryHeightMetres(type)*EnrouteProfile.FeetPerMetre);
-            return body.AltitudeFeetAt(legSeconds-remaining)/EnrouteProfile.FeetPerMetre;
+            return RegionalFlightPath.ClimbAltitudeFeet(body,legSeconds-remaining,climbLagSeconds)/EnrouteProfile.FeetPerMetre;
         }
 
         /// <summary>

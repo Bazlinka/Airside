@@ -1,0 +1,258 @@
+{
+  "protocol": 1,
+  "expectedCommit": "aec646166196b269dd6c9d4a05e9059c2212060e",
+  "steps": [
+    {
+      "id": "observe-01",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-02",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-03",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-04",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-05",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-06",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-07",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-08",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-09",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-10",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-11",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-12",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-13",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-14",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-15",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-16",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-17",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-18",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-19",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-20",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-21",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-22",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-23",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-24",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-25",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-26",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-27",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-28",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-29",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-30",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-31",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-32",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-33",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-34",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-35",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "observe-36",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    }
+  ]
+}

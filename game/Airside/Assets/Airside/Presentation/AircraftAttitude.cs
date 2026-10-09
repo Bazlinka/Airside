@@ -76,7 +76,9 @@ namespace Airside.Presentation
                 case AircraftPhase.Departed:
                     return Lerp(Climb, DepartedEnd, t);
                 case AircraftPhase.Circuit:
-                    return Climb * 0.45f;
+                    // Hold the go-around's level-off attitude, then settle toward the approach attitude
+                    // over the last quarter so the hand-over to Approach does not step.
+                    return Lerp(Climb * 0.45f, ApproachStart, Smooth(Local(t, 0.75f, 1f)));
                 case AircraftPhase.GoAround:
                     return t < 0.28f ? Lerp(ApproachEnd, Climb, Smooth(t / 0.28f)) : Climb * 0.45f;
                 default:

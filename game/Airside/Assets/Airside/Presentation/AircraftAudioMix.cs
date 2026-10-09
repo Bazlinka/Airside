@@ -17,7 +17,7 @@ namespace Airside.Presentation
         public string Key { get; }
         public float Pitch { get; }
         public float Gain { get; }
-        public string Resource(string layer) => $"Airside/Audio/eng_{Key}_{layer}_v01";
+        public string Resource(string layer) => $"Airside/Audio/eng_{Key}_{layer}_v02";
     }
 
     /// <summary>Layer targets, derived from presentation inputs only. No commands, clock or saved state.</summary>
@@ -151,6 +151,35 @@ namespace Airside.Presentation
         private static float Clamp(float v) => Math.Max(0f, Math.Min(1f, v));
         private static float Smooth(float t) => t * t * (3f - 2f * t);
         private static float Lerp(float a, float b, float t) => a + (b - a) * t;
+    }
+
+    /// <summary>Independent rotating machinery and camera insulation, presentation only.</summary>
+    public static class AircraftAudioDynamics
+    {
+        public static float Starter(float spool, bool windingUp)
+        {
+            if (!windingUp || spool <= 0.015f || spool >= 0.86f) return 0f;
+            return (float)Math.Sin(Math.PI * (spool - 0.015f) / 0.845f) * 0.13f;
+        }
+
+        public static float CorePitch(EngineClass kind, float rotation, float spool)
+        {
+            var rotor = kind == EngineClass.Rotorcraft;
+            var prop = kind == EngineClass.Turboprop;
+            var speed = Math.Max(0f, Math.Min(1f, rotation));
+            return rotor ? 0.25f + 0.75f * speed
+                : prop ? (0.38f + 0.65f * speed) * (0.8f + 0.2f * spool)
+                : 0.38f + 0.90f * speed * spool;
+        }
+
+        public static float InteriorEngineGain(bool interior, bool passenger) =>
+            interior ? (passenger ? 0.48f : 0.37f) : 1f;
+
+        public static float AirflowGain(float knots, bool passenger)
+        {
+            var speed = Math.Max(0f, Math.Min(1f, knots / 430f));
+            return (passenger ? 0.035f : 0.025f) + speed * speed * (passenger ? 0.25f : 0.20f);
+        }
     }
 
     /// <summary>Contact edge detector: initial late restoration and muted landings never replay.</summary>

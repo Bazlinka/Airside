@@ -51,6 +51,13 @@ namespace Airside.Presentation
             }
         }
 
+        /// <summary>
+        /// Exterior aircraft glass is a dark tint, not a clear pane: at 0.5 the front windscreens and cabin windows
+        /// showed straight through the shell to the sky behind (a hollow airframe). The flight-deck and cabin
+        /// views replace the exterior glass, so nothing looks out through it.
+        /// </summary>
+        public const float AircraftGlazingMaxAlpha = 0.96f;
+
         private static readonly Dictionary<SurfaceKind, Profile> Profiles = new()
         {
             // Dry profiles tuned so wet variants can raise gloss without starting shiny.
@@ -393,7 +400,7 @@ namespace Airside.Presentation
             // Generated aircraft now have apertures and recessed interiors, so
             // their panes can transmit the flight deck instead of masking white skin.
             if (kind == SurfaceKind.AircraftGlazing)
-                color.a = Mathf.Min(color.a, 0.50f);
+                color.a = Mathf.Min(color.a, AircraftGlazingMaxAlpha);
             // Opaque RGB callers (terminal glass colors) still need real alpha panes.
             if ((kind == SurfaceKind.Glass || kind == SurfaceKind.Water) && color.a >= 0.99f)
                 color.a = kind == SurfaceKind.Glass ? 0.42f : 0.62f;
@@ -512,7 +519,8 @@ namespace Airside.Presentation
             material.SetFloat("_OcclusionStrength", GetProfile(kind).Occlusion);
             material.SetFloat("_TileMetres", kind == SurfaceKind.Asphalt ? 3f : 4f);
             material.SetFloat("_MacroStrength", kind == SurfaceKind.Asphalt ? .065f : .035f);
-            material.SetFloat("_PatchStrength", kind == SurfaceKind.Asphalt ? .025f : .015f);
+            material.SetFloat("_PatchStrength", kind == SurfaceKind.Asphalt ? .04f : .025f);
+            material.SetFloat("_ConcreteSurface", kind == SurfaceKind.Concrete ? 1f : 0f);
             material.SetColor("_ScanMean", kind == SurfaceKind.Asphalt ? new Color(.38f,.39f,.40f) : new Color(.64f,.65f,.65f));
             material.SetFloat("_ScanContrast", kind == SurfaceKind.Asphalt ? .55f : .22f);
             material.SetFloat("_Metallic", 0f);
@@ -690,7 +698,7 @@ namespace Airside.Presentation
         {
             instance = null;
             if (kind == SurfaceKind.AircraftGlazing)
-                color.a = Mathf.Min(color.a, 0.50f);
+                color.a = Mathf.Min(color.a, AircraftGlazingMaxAlpha);
             var key = AuthoredMaterialKey(kind);
             if (key == null)
                 return false;

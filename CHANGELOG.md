@@ -1,5 +1,129 @@
 # Changelog
 
+- 2026-10-09 — #742: aircraft turning round at a regional outstation (Kingscote) taxi to the mapped apron, park nose-in in their own slot and taxi back to the departure start, instead of sitting on the runway end (bug hunt #8).
+- 2026-10-09 — #727: helicopter legs are drawn at true geographical scale and held over far destinations, so a Bell 412 booked to Kingscote reaches the real Kingscote (bug hunt #12).
+- 2026-10-09 — Bug-hunt fix pass (#722-#726) closed out: findings 1/14/7 fixed, 2 not reproduced, 15 not a defect; integration run on main had zero runtime errors.
+
+- 2026-10-09 — #725: bug-hunt finding 2 (Saab right window obstructions) not reproduced on clean main at five times of day; evidence and limits recorded, no code/asset change.
+
+- 2026-10-09 — #726: bug-hunt finding 15 (ATR 42 T-tail) verified not a defect — tailplane rendered in Exterior; evidence recorded, no code/asset change.
+
+- 2026-10-09 — #723: quitting from exterior/cockpit view no longer throws NullReferenceException in EndCockpit during teardown (destroyed camera controller was reached through `?.`).
+- 2026-10-09 — #724: aircraft doorway hollows no longer rejected for shells at the generators' 4 mm minimum thickness (float32 rounding); Saab/ATR/737/Dash 8 doors open onto a doorway, not bare hull.
+- 2026-10-09 — #729: the "has landed at <outstation>" toast names the outbound flight number, not the return (bug hunt #9); Adelaide arrivals keep the return number.
+- 2026-10-09 — #733: a contract card armed by the first click now shows CONFIRM on its button instead of ACCEPT, signalling the deliberate second click (bug hunt #6).
+- 2026-10-09 — #739: the Adelaide radar is hidden while watching Parafield, so no unlabelled Adelaide outline/RWY sits beside the Parafield card (bug hunt #11).
+- 2026-10-09 — #744: Flight Manual now places the career ring, flights and radar bottom-left and the selected card on the right, and describes aqua/grey/amber destinations, not green (bug hunt #10).
+- 2026-10-09 — #735: achievement/tier/contract cards are now modal; the HUD, hotkeys (Tab, H, T, C...) and world clicks behind them are inert; Enter, Esc or the button closes them (bug hunt #5).
+- 2026-10-09 — #722: cockpit/passenger interior audio adds its AudioSource before the low-pass filter, ending the per-frame NullReference/Unity add-component spam (finding 1).
+- 2026-10-09 — #720: first-flight guide "Away" wording follows the leg (outbound / turning round / flying home) instead of always saying "on its way to" the outstation (bug hunt #3).
+
+- 2026-10-09 — #712: enclose Dash 8 folded wheels, fit curved nacelle doors with independent hinges and smooth the under-wing joins.
+
+- 2026-10-09 — Mac diagnostic frames retain upright orientation; weather probes include the sky; queued remote requests are kept rather than replaced.
+
+- 2026-10-09 — Failed diagnostic actions/state checks capture their visible context; remote agents use the Mac bridge before claiming runtime verification.
+
+- 2026-10-09 — #706: isolate welcome weather and fix title shortcuts, setup codes, compact/recovery cards and Options readability/view targeting.
+- 2026-10-09 — Add issue-specific gameplay diagnostics and private Mac execution for Linux agents, with real frames/state/errors and repeatable retesting.
+
+- 2026-10-09 — Cloud shader cost cut: cheap one-octave sun-shadow probes, second probe skipped in deep shadow, fewer steps on short chords, lightning glow only during a flash (appearance and GPU timing unverified; run the agent gameplay weather profile on the Mac).
+- 2026-10-09 — Weather delay (storm ground stop, weather-held helicopters) no longer costs reliability or breaks the on-time streak; the delay breakdown still shows it (headless-tested).
+- 2026-10-09 — Agents automatically choose necessary focused gameplay checks and build once if needed; full journeys only when warranted.
+
+- 2026-10-09 — Add roadside grass, varied coastal scrub, flush apron drain grates and tapered taxiway-edge wear; retain operational clearance (Unity unverified).
+
+- 2026-10-09 — Add hidden agent gameplay runner: batched feature checks, private saves, real frames, build reuse and optional accelerated round trip.
+- 2026-10-09 — Forecast wind now follows the weather (fog near-calm, rain breezy, storm strong and gusty, clear a little lighter) and eases between hours; live-observed wind unchanged (headless-tested; unverified in Unity).
+- 2026-10-09 — Clouds gain sunlit thin edges, deeper storm self-shadowing, eased silhouettes and density-based fades (Unity unverified).
+
+- 2026-10-09 — Jet contrails: high jets in the sky traffic (above 24,000 ft) leave a widening trail per engine, hidden under rain, fog and storm and thinner under overcast (unverified in Unity).
+- 2026-10-09 — Rain is now relative to the observer: climbing, diving or running down the runway in a follow/cockpit view streams drops past at the right slant and length instead of falling straight down (unverified in Unity).
+- 2026-10-09 — Replace Dash 8 overlapping roof shells with one hull-seated wing fairing; preserve all other mesh geometry (Unity unverified).
+
+- 2026-10-09 — Selected-aircraft card: body text (route, live stats, details) drew at the top-left of the screen instead of inside the card; no device-pixel text inside scroll views (unverified in Unity).
+- 2026-10-09 — "Your flights" tracker (six-step progress for each booked/moving flight, bottom-left) and per-view HUD layout (overview vs follow) with a Views options tab; L/N toggle per view (headless-checked; Unity unverified).
+- 2026-10-09 — Add patchy ground, interrupted mowing, pavement joints/sealed cracks and varied apron repairs; preserve level operational surfaces (Unity unverified).
+
+- 2026-10-09 — Fit all aircraft tails into their hulls, match rudder/elevator hinges and correct per-type proportions; refresh models/thumbnails (Unity unverified).
+
+- 2026-10-09 — Sim weather (fog hours) now follows the airline clock, not the default epoch; fixes civil helicopters held for hours in off-clock fog (Unity unverified).
+
+- 2026-10-09 — Saved live weather/wind now drive airport rules and visuals together; save v23 preserves holding poses across compatible reloads (Unity unverified).
+
+- 2026-10-09 — Parked aircraft stay visible/selectable but leave active counts and automatic follow until two hours before departure; moving aircraft stay active.
+- 2026-10-09 — Bug-analysis fixes: credits no longer dropped at 800x600, compact Contracts/Operations/HUD text fits, jet pay and cost scale with size, 12 missing demand entries, loss-making contract routes skipped, rename-box hotkeys, missed daily report, plurals (headless-checked; Unity unverified; see docs/testing/bug-analysis-2026-10-08).
+- 2026-10-09 — Use Linear colour rendering; recalibrate far terrain to decoded satellite colours; existing quality budgets retained (Unity unverified).
+
+- 2026-10-09 — Established arrivals fly a visible hold when their ETA is lost/postponed; map/follow use the actual pose and retain clearance handoffs (Unity unverified).
+
+- 2026-10-09 — Anchor clouds to the watched area; retain far-clipped volume proxies; add high wisps, stratiform banks and drizzle/showers (Unity unverified).
+
+- 2026-10-09 — Keep in-range fleet route models after climb-out; ordinary follow streams terrain; aircraft lookup survives camera filtering (Unity unverified).
+- 2026-10-09 — Terminal doors and people: a sliding door where each stand walk starts, a boarding queue and gate agent at it, 18 landside walkers and airside staff, person cap 60→110 with distance-throttled posing (Unity unverified).
+
+- 2026-10-08 — Persistent fog/storm clouds, lit tops, altitude-aware weather and lightning; restrained cockpit vibration (Unity unverified).
+- 2026-10-08 — Dash 8 main gear now twin wheels side by side (were in tandem); approaching aircraft keep a landing-light glow inside 6 km instead of only a tiny lamp lens (unverified in Unity).
+- 2026-10-08 — Mac notifications: register app, retry permission, verify packaged bridge and preserve Unity signature; clearer failure help (Mac unverified).
+
+- 2026-10-08 — Operations board, selection card and map detail show the altitude the aircraft is actually drawn at on regional departures (was the unlagged route profile; unverified in Unity).
+- 2026-10-08 — Regional departures climb at a steady ~2,400 ft/min (was up to ~5,200): the route climb starts when the aircraft reaches its start height, and rotation-to-exit uses one steady rate (headless-tested; unverified in Unity).
+
+- 2026-10-08 — Roads: free street ends get a turning head or rounded cap instead of a flat cut; side roads get give-way teeth where they meet a more important road (unverified in Unity).
+- 2026-10-08 — HUD stage 3: Map plan pane (profit card, status chip, career note), Fleet roster cards, Contracts cards and one-row chips, Career stat cards (Unity unverified).
+
+- 2026-10-08 — Roads: OSM snapshot refreshed (+55 drivable roads incl. new service roads, 16,068 total) and road/car-park/precinct data regenerated; coverage checked against live OSM count (unverified in Unity).
+- 2026-10-08 — HUD stage 2: flight-view HUD as captioned instruments with route/phase chips and progress; Operations rows with severity stripe, bold status and time (Unity unverified).
+
+- 2026-10-08 — Hollow aircraft fixed: a dark inner skin behind each fuselage so windscreens and cabin windows show a dark interior instead of the sky (unverified in Unity).
+
+- 2026-10-08 — Regional landings follow the route speed into the terminal area, settle to the type's approach/touchdown speed and brake to a stop (was a flat 90 kt for every type); new FlightSpeedEnvelope (min speed rises with bank, 250 kt CAS cap, climb/descent angle limits speed change). Headless-tested only.
+- 2026-10-08 — Freighters no longer show passenger cabin windows (flight deck only); exterior aircraft glass is a dark near-opaque tint so windscreens/cabin windows are not see-through (unverified).
+- 2026-10-08 — HUD chrome redesign (stage 1): floating status capsule and action group, wider rail with a clear selected state, milestone card with progress, richer palette (Unity appearance unverified).
+
+- 2026-10-08 — Route Map: aircraft on the field collapse to quiet dots with one "N on field" count (full icons/labels only when zoomed in or picked), ending the label pile at Adelaide (Unity unverified).
+
+- 2026-10-08 — Airborne turns bank as a coordinated turn (tan bank = V·yaw rate/g, max 25°) from real ground speed and heading rate, also on en-route legs (unverified in Unity).
+- 2026-10-08 — HUD Tower button beside Overview/Radar/Menu enters the control-tower cab view (unverified in Unity).
+- 2026-10-08 Inbound pitch eases into the approach attitude before the glideslope entry, removing the level-off-to-final step (presentation only)
+
+- 2026-10-08 — Runway 23 approach lights now run sequenced flashers toward the threshold at night, as the real-scale field's approach lights were steady only (unverified).
+
+- 2026-10-08 — Exit glide also turns with the aircraft, so the camera no longer drifts sideways when leaving a flight view mid-turn (unverified in Unity).
+
+- 2026-10-08 Circuit pitch eases to the approach attitude so the go-around circuit-to-approach hand-over no longer steps (presentation only)
+- 2026-10-08 — Leaving exterior/cockpit view: the exit glide now travels with the moving aircraft instead of chasing it from a fixed point (unverified in Unity).
+
+- 2026-10-08 — Airport lighting: the real-scale Adelaide field now has its night aerodrome beacon (white/green flashes, lens, light and glow on the tower cab); it was only built on the old miniature (unverified).
+
+- 2026-10-08 — Control-tower view: click the Adelaide tower to look out from its cab (360° look, zoom, Esc to leave); presentation only (unverified in Unity).
+- 2026-10-08 — Route Map redesign: filled land (async baked), faint coast/borders, dark-rimmed dots, codes for reachable places, halo labels, one solid range ring; flight-view map cut to the essentials (Unity compile/look unverified).
+
+- 2026-10-08 Smoother regional flight transitions: authored flare, rotation and cruise/approach pitch hand-over; flare lengthened to ~7 s (presentation only)
+- 2026-10-08 — Smoother flight-view transitions: the glide travels with the moving aircraft, field of view follows the same glide, and the fuselage hides mid-glide (unverified in Unity).
+
+- 2026-10-08 — Economy: flights cost more (120 base + 1.45/1.65 per km, was 70 + 1.12/1.28), pay and prices unchanged, so margins are thinner (balance unverified; ADR flight-cost-rebalance).
+
+- 2026-10-08 — Switching to cockpit/window view no longer shows the wings floating without a fuselage: the airframe hides only once the camera glide arrives (unverified in Unity).
+- 2026-10-08 — Moving map smoothness: textures bake on a worker thread (no open/zoom hitch), crisp anti-aliased coast window at every scale, mipmapped airfield, ring texture, cached route/text (Unity compile/look unverified).
+
+- 2026-10-08 — Approach gear follows height (down ~2,000 ft AGL jets / 1,500 turboprops, lowered over ~22 s) instead of phase progress; sources in lighting README (unverified in Unity).
+
+- 2026-10-08 — Camera drag no longer hits an invisible wall: free-pan limit widened from 3.8 km to 12 km around the airfield (unverified in Unity).
+- 2026-10-08 — Jet routing factor: cruise time on jet legs rises linearly from 1.0 at 600 km to 1.08 at 2,500 km+ (routing/headwind); Perth 173→183 min (headless audit only).
+
+- 2026-10-08 — Flight-time audit: ATR 42/Dash 8 planning cruise 510/620 km/h (was max cruise), A350/787-9 practical range 13,500 km, 787-10 11,200 km (headless audit only).
+
+- 2026-10-08 — Bug pass: lamp flare no longer half-hidden in the airframe and caches its pivot (was a per-frame Find); distant-glow table prunes destroyed aircraft (unverified in Unity).
+
+- 2026-10-08 — Moving map in cockpit/window/exterior views: centred own-ship, heading/track, route, airports, fleet, airfield or coast by scale; N toggles, +/− or scroll (unverified in Unity).
+
+- 2026-10-08 — Light audit: all fleet types carry landing/taxi/nav/beacon/strobe lamps; Parafield trainers gained a cowl landing lamp, beacon flash and wingtip strobes (unverified in Unity).
+
+- 2026-10-08 — Visible landing/taxi lights: soft camera-facing flare on each lit lamp so beams read from every play camera (Unity compile/appearance unverified).
+
+- 2026-10-08 — #613: Australian flight terrain, denser real airport maps, mapped runway paint and economical high-altitude streaming (Unity unverified).
+
 - 2026-10-08 — #595: unify terrain/road/pavement lighting and colour handling; reduce daytime washout and retain pavement detail (ADR coherent-world-lighting).
 
 - 2026-10-08 — #585: free A320, vehicle and foliage derivatives; scanned surfaces, softer wear, facade fittings, reflections, conveyor motion and cabin fabric.
@@ -13,6 +137,20 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- Refine fleet engine mouths with recessed liners and fitted control hinges; preserve aircraft geometry envelopes, animation pivots and saves (#716).
+
+- Hold storm departures at their stands; taxi-released aircraft continue and arrivals already on extended final retain their landing timer (#670).
+
+- Fix night final visibility: haze-aware aircraft light halos, fuselage-safe distant glows and readable close night position lights (#668).
+
+- Improve all 15 aircraft bodies with continuous contours, rounded noses and fitted glazing/doors; retain type envelopes and A320 source detail (#651).
+- Add opt-in native Mac notifications for important background airline events, grouped bursts, permission/test controls and click-to-return (#645).
+- Restyle toasts with status labels, wrapped text, repeat badges, lifetime bars and eased motion; keep stacks clear of panels and screen edges (#642).
+- Redesign the Adelaide T1 opening, restore AIRSIDE with a vector lockup/text fallback, and add a skippable centre-opening Continue reveal (#626).
+
+- 2026-10-08 — #614: layered twin-engine starts/cores, cabin and spatial airport audio, regional landing cues and 68 v02 clips (Unity audio unverified).
+
+- Render at the display's native size: a stale saved window size (1600x900 maximised on a Retina screen) made the game soft and letterboxed; the player now resets it at startup.
 - Editor review: preserve approachNN gear poses for inspection; native compile/test attempt stalled (#608).
 - Preserve flap/gear rig rest poses across follow-target refreshes and use the actual regional journey phase in cruise (#586).
 - **ATR 42 hold door fixed.** The forward-left baggage door no longer sits mirrored a door-width ahead of the cockpit: the half turn is baked into its mesh, not its transform (unverified in Unity visually).

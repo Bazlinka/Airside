@@ -1,0 +1,319 @@
+Mono path[0] = '/Users/baileyfleming/.codex/worktrees/bug-hunt-50/Airside/work/builds/Airside.app/Contents/Resources/Data/Managed'
+Mono config path = '/Users/baileyfleming/.codex/worktrees/bug-hunt-50/Airside/work/builds/Airside.app/Contents/MonoBleedingEdge/etc'
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+Initialize engine version: 6000.3.23f1 (09d2ecc7fb28)
+[Subsystems] Discovering subsystems at path /Users/baileyfleming/.codex/worktrees/bug-hunt-50/Airside/work/builds/Airside.app/Contents/Resources/Data/UnitySubsystems
+GfxDevice: creating device client; kGfxThreadingModeThreaded
+ preferred device: Apple M1 Pro (high power)
+Metal devices available: 1
+0: Apple M1 Pro (high power)
+Using device Apple M1 Pro (high power)
+Initializing Metal device caps: Apple M1 Pro
+Mac GPU Family: 2
+Apple GPU Family: 7
+MSL Version: 3.0
+Has Float MSAA: 1
+Has Float Filtering: 1
+ReadWrite Texture Tier: 2
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.098 seconds
+- Finished resetting the current domain, in  0.001 seconds
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+UnloadTime: 0.431708 ms
+Airside 0cca70b3 · HEAD · committed 2026-10-09 03:11 UTC · built 2026-10-09 03:25 UTC
+[Airside Parafield] Built 4 runways, 30 taxiways, 4 trainers
+[Airside agent] protocol 1 started; isolated save /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/test-save.json
+[Airside journey] started ADL-KGC rate 40; fresh soak save only
+[Airside soak] largest world renderer groups: Parafield 184, Terminal 111, Airfield 52, Adelaide 51, YPAD 43, Cloud 32, Aircraft 31, Tyre 24, Runway 19, Strobe 8, Apron 4, Spray 4, LandingLight 4, Beacon 4, Smoke 4, Boundary 4, Tower 2, Taxiways 2, Coast 2, Rubber 2
+[Airside soak] render set: world 602 (visible), aircraft 228 (visible), world prefix none
+[Airside soak] started for 12 min in live time
+[Airside journey] real 0.0s sim 0.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside soak] hitch 6447 ms at 6.4 s (frame 2, orbit 2400 m)
+[Airside journey] real 6.4s sim 4.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside weather] Overcast mist 0.00 fog enabled False shader Airside/HeightFog camera (677.63, 1838.51, 1799.65) tint RGBA(0.581, 0.699, 0.825, 1.000) layers True
+[Airside journey] real 11.5s sim 202.8 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 16.5s sim 403.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 21.5s sim 601.4 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-01.png
+[Airside capture] readback 57 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-01.png
+[Airside capture] written 112 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-01.png
+[Airside agent] PASS observe-01 Observed VH-PAX AtStand
+[Airside journey] real 26.5s sim 801.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside soak] hitch 667 ms at 31.1 s (frame 887, orbit 2400 m)
+[Airside journey] real 31.5s sim 977.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 36.5s sim 1174.8 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-02.png
+[Airside capture] readback 52 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-02.png
+[Airside capture] written 124 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-02.png
+[Airside agent] PASS observe-02 Observed VH-PAX AtStand
+[Airside journey] real 41.5s sim 1374.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 46.5s sim 1574.8 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 51.5s sim 1775.8 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-03.png
+[Airside capture] readback 59 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-03.png
+[Airside capture] written 135 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-03.png
+[Airside agent] PASS observe-03 Observed VH-PAX AtStand
+[Airside journey] real 56.5s sim 1974.8 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 61.6s sim 2174.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 66.6s sim 2372.8 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-04.png
+[Airside capture] readback 53 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-04.png
+[Airside capture] written 133 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-04.png
+[Airside agent] PASS observe-04 Observed VH-PAX AtStand
+[Airside journey] real 71.6s sim 2573.4 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 76.6s sim 2773.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 81.6s sim 2974.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-05.png
+[Airside capture] readback 58 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-05.png
+[Airside capture] written 129 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-05.png
+[Airside agent] PASS observe-05 Observed VH-PAX AtStand
+[Airside journey] real 86.7s sim 3175.8 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 91.7s sim 3374.8 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 96.7s sim 3574.9 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-06.png
+[Airside capture] readback 57 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-06.png
+[Airside capture] written 121 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-06.png
+[Airside agent] PASS observe-06 Observed VH-PAX AtStand
+[Airside journey] real 101.7s sim 3774.9 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 106.7s sim 3975.5 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 111.8s sim 4176.2 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-07.png
+[Airside capture] readback 59 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-07.png
+[Airside capture] written 130 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-07.png
+[Airside agent] PASS observe-07 Observed VH-PAX AtStand
+[Airside journey] real 116.8s sim 4376.5 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 121.8s sim 4576.9 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 126.8s sim 4777.2 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-08.png
+[Airside capture] readback 39 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-08.png
+[Airside capture] written 119 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-08.png
+[Airside agent] PASS observe-08 Observed VH-PAX AtStand
+[Airside journey] real 131.8s sim 4977.4 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 136.8s sim 5178.0 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 141.8s sim 5378.3 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-09.png
+[Airside capture] readback 53 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-09.png
+[Airside capture] written 115 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-09.png
+[Airside agent] PASS observe-09 Observed VH-PAX AtStand
+[Airside journey] real 146.8s sim 5578.0 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 151.8s sim 5778.4 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 156.9s sim 5979.0 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-10.png
+[Airside capture] readback 37 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-10.png
+[Airside capture] written 100 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-10.png
+[Airside agent] PASS observe-10 Observed VH-PAX AtStand
+[Airside journey] real 161.9s sim 6179.4 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 167.0s sim 6383.0 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 172.0s sim 6583.0 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-11.png
+[Airside capture] readback 37 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-11.png
+[Airside capture] written 108 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-11.png
+[Airside agent] PASS observe-11 Observed VH-PAX AtStand
+[Airside journey] real 177.0s sim 6783.7 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 182.0s sim 6984.0 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside journey] real 187.0s sim 7184.3 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-12.png
+[Airside capture] readback 38 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-12.png
+[Airside capture] written 121 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-12.png
+[Airside agent] PASS observe-12 Observed VH-PAX AtStand
+[Airside journey] real 192.0s sim 7385.0 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside terrain] flight terrain created in 55 ms
+[Airside journey] real 197.1s sim 7585.0 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 17 airport True elevation True
+[Airside journey] real 202.1s sim 7785.0 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-13.png
+[Airside capture] readback 55 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-13.png
+[Airside capture] written 121 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-13.png
+[Airside agent] PASS observe-13 Observed VH-PAX AtStand
+[Airside journey] real 207.1s sim 7985.7 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 212.1s sim 8186.4 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 217.1s sim 8385.7 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-14.png
+[Airside capture] readback 59 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-14.png
+[Airside capture] written 114 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-14.png
+[Airside agent] PASS observe-14 Observed VH-PAX AtStand
+[Airside journey] real 222.1s sim 8586.0 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 227.1s sim 8786.4 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 232.2s sim 8985.4 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-15.png
+[Airside capture] readback 43 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-15.png
+[Airside capture] written 114 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-15.png
+[Airside agent] PASS observe-15 Observed VH-PAX AtStand
+[Airside journey] real 237.2s sim 9185.7 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+Thread 0x16ebe7000 may have been prematurely finalized
+[Airside journey] real 242.2s sim 9386.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 247.2s sim 9586.4 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-16.png
+[Airside capture] readback 62 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-16.png
+[Airside capture] written 141 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-16.png
+[Airside agent] PASS observe-16 Observed VH-PAX AtStand
+[Airside journey] real 252.2s sim 9786.4 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 257.2s sim 9987.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 262.2s sim 10187.4 VH-PAX AtStand trips 0 cockpit True world 1269.0,0.7,422.8 attitude (0.00, 0.17, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-17.png
+[Airside capture] readback 39 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-17.png
+[Airside capture] written 122 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-17.png
+[Airside agent] PASS observe-17 Observed VH-PAX AtStand
+[Airside journey] real 267.2s sim 10387.7 VH-PAX AtStand trips 0 cockpit True world 1296.1,0.7,300.5 attitude (0.00, 264.19, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 272.2s sim 10586.7 VH-PAX AtStand trips 0 cockpit True world 180.1,0.7,408.2 attitude (0.00, 258.85, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 277.2s sim 10787.4 VH-PAX AtStand trips 0 cockpit True world -1529.9,0.7,90.3 attitude (0.00, 183.05, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-18.png
+[Airside capture] readback 25 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-18.png
+[Airside capture] written 97 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-18.png
+[Airside agent] PASS observe-18 Observed VH-PAX AtStand
+[Airside journey] real 282.3s sim 10988.4 VH-PAX AtStand trips 0 cockpit True world 5470.1,1030.8,-5958.8 attitude (351.71, 170.33, 347.15) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 287.3s sim 11189.0 VH-PAX AtStand trips 0 cockpit True world 13176.5,3684.4,-36012.4 attitude (356.39, 160.48, 0.02) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 292.3s sim 11385.0 VH-PAX AtStand trips 0 cockpit True world 24197.1,5507.1,-66857.5 attitude (357.02, 160.21, 0.02) origin 0,0 tiles 49 airport True elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-19.png
+[Airside capture] readback 41 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-19.png
+[Airside capture] written 112 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-19.png
+[Airside agent] PASS observe-19 Observed VH-PAX AtStand
+[Airside journey] real 297.3s sim 11585.4 VH-PAX AtStand trips 0 cockpit True world 35634.0,7147.6,-98371.7 attitude (357.35, 159.91, 0.03) origin 32000,-96000 tiles 49 airport False elevation True
+[Airside journey] real 302.3s sim 11786.0 VH-PAX AtStand trips 0 cockpit True world 47279.8,8561.3,-129920.3 attitude (357.82, 159.59, 0.03) origin 48000,-128000 tiles 49 airport False elevation True
+[Airside journey] real 307.3s sim 11986.7 VH-PAX AtStand trips 0 cockpit True world 59127.5,9666.6,-161439.9 attitude (358.64, 159.24, 0.03) origin 56000,-160000 tiles 49 airport False elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-20.png
+[Airside capture] readback 25 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-20.png
+[Airside capture] written 95 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-20.png
+[Airside agent] PASS observe-20 Observed VH-PAX AtStand
+[Airside journey] real 312.3s sim 12187.0 VH-PAX AtStand trips 0 cockpit True world 71175.1,9754.3,-192889.9 attitude (0.00, 158.87, 0.03) origin 72000,-192000 tiles 46 airport False elevation True
+[Airside journey] real 317.3s sim 12387.3 VH-PAX AtStand trips 0 cockpit True world 83443.3,9754.3,-224295.0 attitude (0.00, 158.48, 0.03) origin 80000,-224000 tiles 45 airport False elevation True
+[Airside journey] real 322.4s sim 12587.7 VH-PAX AtStand trips 0 cockpit True world 95949.1,9754.3,-255674.9 attitude (0.00, 158.09, 0.03) origin 96000,-256000 tiles 49 airport False elevation True
+Thread 0x16ebe7000 may have been prematurely finalized
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-21.png
+[Airside capture] readback 25 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-21.png
+[Airside capture] written 96 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-21.png
+[Airside agent] PASS observe-21 Observed VH-PAX AtStand
+[Airside journey] real 327.4s sim 12787.7 VH-PAX AtStand trips 0 cockpit True world 108669.9,9754.3,-286957.1 attitude (0.00, 157.68, 0.03) origin 112000,-288000 tiles 49 airport False elevation True
+[Airside journey] real 332.4s sim 12988.7 VH-PAX AtStand trips 0 cockpit True world 121696.3,9754.3,-318351.8 attitude (0.00, 157.28, 0.03) origin 120000,-320000 tiles 49 airport False elevation True
+[Airside journey] real 337.4s sim 13189.0 VH-PAX AtStand trips 0 cockpit True world 134922.7,9754.3,-349600.4 attitude (0.00, 156.87, 0.03) origin 136000,-352000 tiles 49 airport False elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-22.png
+[Airside capture] readback 42 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-22.png
+[Airside capture] written 112 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-22.png
+[Airside agent] PASS observe-22 Observed VH-PAX AtStand
+[Airside journey] real 342.4s sim 13389.4 VH-PAX AtStand trips 0 cockpit True world 148388.6,9754.3,-380804.3 attitude (0.00, 156.47, 0.03) origin 152000,-384000 tiles 49 airport False elevation True
+[Airside journey] real 347.4s sim 13589.4 VH-PAX AtStand trips 0 cockpit True world 162067.2,9754.3,-411913.3 attitude (0.00, 156.09, 0.03) origin 160000,-408000 tiles 49 airport False elevation True
+Thread 0x16f623000 may have been prematurely finalized
+[Airside journey] real 352.4s sim 13788.7 VH-PAX AtStand trips 0 cockpit True world 175928.1,9754.3,-442879.9 attitude (0.00, 155.72, 0.03) origin 176000,-440000 tiles 49 airport False elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-23.png
+[Airside capture] readback 26 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-23.png
+[Airside capture] written 96 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-23.png
+[Airside agent] PASS observe-23 Observed VH-PAX AtStand
+[Airside journey] real 357.5s sim 13992.0 VH-PAX AtStand trips 0 cockpit True world 190289.9,8961.8,-474425.1 attitude (3.75, 155.36, 0.03) origin 192000,-472000 tiles 49 airport False elevation True
+[Airside journey] real 362.5s sim 14193.4 VH-PAX AtStand trips 0 cockpit True world 204723.2,6720.7,-505624.9 attitude (3.65, 155.02, 0.03) origin 208000,-504000 tiles 49 airport False elevation True
+[Airside journey] real 367.5s sim 14393.7 VH-PAX AtStand trips 0 cockpit True world 219281.8,4672.3,-536637.8 attitude (3.23, 154.71, 0.03) origin 216000,-536000 tiles 49 airport False elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-24.png
+[Airside capture] readback 19 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-24.png
+[Airside capture] written 79 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-24.png
+[Airside agent] PASS observe-24 Observed VH-PAX AtStand
+[Airside journey] real 372.5s sim 14594.2 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 240000,-568000 tiles 49 airport False elevation True
+[Airside journey] real 377.5s sim 14794.5 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 256000,-592000 tiles 49 airport False elevation True
+[Airside journey] real 382.5s sim 14994.5 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 248000,-600000 tiles 49 airport False elevation True
+Thread 0x16f623000 may have been prematurely finalized
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-25.png
+[Airside capture] readback 29 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-25.png
+[Airside capture] written 86 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-25.png
+[Airside agent] PASS observe-25 Observed VH-PAX AtStand
+[Airside journey] real 387.5s sim 15194.5 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 248000,-600000 tiles 49 airport False elevation True
+[Airside journey] real 392.5s sim 15394.9 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 248000,-600000 tiles 49 airport False elevation True
+[Airside journey] real 397.6s sim 15595.2 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 248000,-600000 tiles 49 airport False elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-26.png
+[Airside capture] readback 19 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-26.png
+[Airside capture] written 89 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-26.png
+[Airside agent] PASS observe-26 Observed VH-PAX AtStand
+[Airside journey] real 402.6s sim 15795.2 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 248000,-600000 tiles 49 airport False elevation True
+Thread 0x70025d3000 may have been prematurely finalized
+[Airside journey] real 407.6s sim 15995.2 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 248000,-600000 tiles 49 airport False elevation True
+[Airside journey] real 412.6s sim 16195.2 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 248000,-600000 tiles 49 airport False elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-27.png
+[Airside capture] readback 19 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-27.png
+[Airside capture] written 88 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-27.png
+[Airside agent] PASS observe-27 Observed VH-PAX AtStand
+[Airside journey] real 417.6s sim 16395.5 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 248000,-600000 tiles 49 airport False elevation True
+[Airside journey] real 422.6s sim 16596.2 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 248000,-600000 tiles 49 airport False elevation True
+[Airside journey] real 427.6s sim 16796.5 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 248000,-600000 tiles 49 airport False elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-28.png
+[Airside capture] readback 20 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-28.png
+[Airside capture] written 92 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-28.png
+[Airside agent] PASS observe-28 Observed VH-PAX AtStand
+[Airside journey] real 432.6s sim 16996.5 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 248000,-600000 tiles 49 airport False elevation True
+[Airside journey] real 437.6s sim 17197.2 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 248000,-600000 tiles 49 airport False elevation True
+[Airside journey] real 442.6s sim 17397.5 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 256000,-592000 tiles 49 airport False elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-29.png
+[Airside capture] readback 19 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-29.png
+[Airside capture] written 89 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-29.png
+[Airside agent] PASS observe-29 Observed VH-PAX AtStand
+[Airside journey] real 447.6s sim 17597.5 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 232000,-560000 tiles 49 airport False elevation True
+[Airside journey] real 452.6s sim 17797.2 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 216000,-528000 tiles 49 airport False elevation True
+[Airside journey] real 457.6s sim 17997.5 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 200000,-496000 tiles 49 airport False elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-30.png
+[Airside capture] readback 35 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-30.png
+[Airside capture] written 99 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-30.png
+[Airside agent] PASS observe-30 Observed VH-PAX AtStand
+[Airside journey] real 462.7s sim 18198.2 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 192000,-464000 tiles 49 airport False elevation True
+[Airside journey] real 467.7s sim 18398.2 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 176000,-424000 tiles 49 airport False elevation True
+[Airside journey] real 472.7s sim 18598.5 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 160000,-392000 tiles 49 airport False elevation True
+Thread 0x700556b000 may have been prematurely finalized
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-31.png
+[Airside capture] readback 32 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-31.png
+[Airside capture] written 102 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-31.png
+[Airside agent] PASS observe-31 Observed VH-PAX AtStand
+[Airside journey] real 477.7s sim 18798.9 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 144000,-360000 tiles 49 airport False elevation True
+[Airside journey] real 482.7s sim 18999.2 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 136000,-328000 tiles 49 airport False elevation True
+[Airside journey] real 487.7s sim 19199.2 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 120000,-288000 tiles 49 airport False elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-32.png
+[Airside capture] readback 28 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-32.png
+[Airside capture] written 88 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-32.png
+[Airside agent] PASS observe-32 Observed VH-PAX AtStand
+[Airside journey] real 492.7s sim 19399.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 104000,-256000 tiles 49 airport False elevation True
+[Airside journey] real 493.2s sim 19418.8 VH-PAX Maintenance trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 104000,-256000 tiles 46 airport False elevation True
+[Airside journey] real 498.2s sim 19618.8 VH-PAX Maintenance trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 88000,-224000 tiles 49 airport False elevation True
+[Airside journey] real 503.2s sim 19819.1 VH-PAX Maintenance trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 80000,-192000 tiles 49 airport False elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-33.png
+[Airside capture] readback 23 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-33.png
+[Airside capture] written 79 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-33.png
+[Airside agent] PASS observe-33 Observed VH-PAX AtStand
+[Airside journey] real 508.2s sim 20019.5 VH-PAX Maintenance trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 64000,-152000 tiles 49 airport False elevation True
+[Airside journey] real 513.2s sim 20219.8 VH-PAX Maintenance trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 48000,-120000 tiles 49 airport False elevation True
+[Airside journey] real 518.2s sim 20419.6 VH-PAX Maintenance trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-34.png
+[Airside capture] readback 41 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-34.png
+[Airside capture] written 112 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-34.png
+[Airside agent] PASS observe-34 Observed VH-PAX Maintenance
+[Airside journey] real 523.2s sim 20619.6 VH-PAX Maintenance trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 528.2s sim 20819.2 VH-PAX Maintenance trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 533.2s sim 21018.3 VH-PAX Maintenance trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-35.png
+[Airside capture] readback 41 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-35.png
+[Airside capture] written 113 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-35.png
+[Airside agent] PASS observe-35 Observed VH-PAX Maintenance
+[Airside journey] real 538.2s sim 21218.3 VH-PAX Maintenance trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 543.2s sim 21418.3 VH-PAX Maintenance trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 548.2s sim 21618.3 VH-PAX Maintenance trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+Thread 0x700556b000 may have been prematurely finalized
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-36.png
+[Airside capture] readback 66 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-36.png
+[Airside capture] written 138 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/manual-jets/observe-36.png
+[Airside agent] PASS observe-36 Observed VH-PAX Maintenance
+[Airside agent] COMPLETE passed
+Thread 0x16edd7000 may have been prematurely finalized
+Thread 0x700556b000 may have been prematurely finalized
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+Thread 0x16dc0b000 may have been prematurely finalized
+Thread 0x16dc97000 may have been prematurely finalized
+Thread 0x16dd23000 may have been prematurely finalized
+Thread 0x16df53000 may have been prematurely finalized
+Thread 0x16dfdf000 may have been prematurely finalized
+Thread 0x16dec7000 may have been prematurely finalized
+Thread 0x16ddaf000 may have been prematurely finalized
+Thread 0x16de3b000 may have been prematurely finalized
+Thread 0x16e06b000 may have been prematurely finalized

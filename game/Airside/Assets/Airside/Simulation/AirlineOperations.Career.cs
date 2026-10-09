@@ -84,6 +84,8 @@ namespace Airside.Simulation
 
             offers.AddRange(ContractMarket.At(_processedTo, localTypes, CareerState?.Reliability ?? 0,
                 CareerState?.Tier ?? OperatingTier.Provisional, CareerState?.BaseLevel ?? PlayerBaseLevel.Starter));
+            if (CareerState == null)
+                return offers;
             var usable = false;
             foreach (var offer in offers)
                 if (!CareerState.HasCompleted(offer.Id) && HasContractAircraft(offer))
@@ -139,6 +141,8 @@ namespace Airside.Simulation
         {
             if (definition == null)
                 return CommandResult.Refused("Unknown contract.");
+            if (CareerState == null)
+                return CommandResult.Refused("No player airline.");
             if (CareerState.ActiveContract != null)
                 return CommandResult.Refused("You already have a contract. Finish or abandon it first.");
             if (CareerState.HasCompleted(definition.Id))
@@ -293,9 +297,12 @@ namespace Airside.Simulation
             }
 
             var local = Clock.LocalAt(now);
-            if (local.Hour < AirportCurfew.ClosedFromHour || _reportedDay == day)
+            // The report is due after the curfew falls, but a player who was away then still gets the one they
+            // missed (otherwise two days of flights merge into the next "Today").
+            var missedReport = _reportedDay.HasValue && _reportedDay.Value < day - 1;
+            if (!missedReport && (local.Hour < AirportCurfew.ClosedFromHour || _reportedDay == day))
                 return;
-            _reportedDay = day;
+            _reportedDay = missedReport ? day - 1 : day;
             if (_today.Flights == 0)
             {
                 _today.Reset(CareerState.Reliability);
@@ -305,7 +312,7 @@ namespace Airside.Simulation
             var change = CareerState.Reliability - (_today.StartReliability ?? CareerState.Reliability);
             var best = DestinationCatalogue.TryFind(_today.BestCode, out var bestPlace) ? bestPlace.Name : _today.BestCode;
             _careerEvents.Add(new CareerEvent(CareerEventKind.DailyReport, CareerState.Tier,
-                $"Today: {_today.Flights} flight{(_today.Flights == 1 ? "" : "s")} · ${_today.Revenue:N0} in · "
+                $"{(missedReport ? "Last report" : "Today")}: {_today.Flights} flight{(_today.Flights == 1 ? "" : "s")} · ${_today.Revenue:N0} in · "
                 + $"{(_today.Margin >= 0 ? "+" : "−")}${Math.Abs(_today.Margin):N0} margin · reliability {CareerState.Reliability}% "
                 + $"({(change >= 0 ? "+" : "")}{change}) · best route {best} · {DelaySummary(_today)}."));
             CheckChallenges(profitableDay: _today.Flights >= 4 && _today.Margin > 0);

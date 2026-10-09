@@ -14,22 +14,29 @@ namespace Airside.Presentation
         private float _cockpitYaw, _cockpitPitch;
         private float _cockpitShownYaw, _cockpitShownPitch;
         private float _cockpitTargetFov = 65f;
-        private float _cockpitRumble;
         public bool CockpitMotionEnabled
         {
             get => AirsideSettings.Current.CockpitMotion;
             set => AirsideSettings.Current.CockpitMotion = value;
         }
-        public void SetCockpitRumble(float strength) => _cockpitRumble = Mathf.Clamp01(strength);
         private float _savedNear, _savedFar, _savedFov;
         private bool _cockpitRightDrag;     // a look drag is in progress, started with either mouse button
         // Gliding from the outside camera to the seat (or between seats) and back out, instead of cutting.
-        private Vector3 _blendFromPos;
-        private Quaternion _blendFromRot = Quaternion.identity;
+        // The glide's start is kept in the target's own frame, so a moving aircraft carries it along
+        // instead of the camera sweeping from a fixed world point the aircraft has already left.
+        private Vector3 _blendFromLocalPos;
+        private Quaternion _blendFromLocalRot = Quaternion.identity;
+        private float _blendFromFov = 65f;
         private float _blendSeconds = CockpitLookInput.TransitionSeconds;
         private Vector3 _exitFromPos;
         private Quaternion _exitFromRot = Quaternion.identity;
         private float _exitFromFov;
+        // The aircraft the view was on, so the exit glide starts from where the camera would be had it
+        // stayed with the moving aircraft, not from a fixed world point the aircraft has flown away from.
+        private Transform _exitAnchor;
+        private Vector3 _exitAnchorPos;
+        private Quaternion _exitAnchorRot = Quaternion.identity;
+        private const float ExitAnchorMaxStepMetres = 1000f;
         private float _exitSeconds = CockpitLookInput.TransitionSeconds;
         private int _exitBlendFrame = -1;
         private int _cockpitPreset = -1;
@@ -45,6 +52,9 @@ namespace Airside.Presentation
                 _cockpitShownYaw + (CockpitMotionEnabled ? _cockpitMotionEuler.y : 0f),
                 CockpitMotionEnabled ? _cockpitMotionEuler.z : 0f) : transform.rotation;
 
+        /// <summary>0..1 progress through the glide into the seat or exterior orbit.</summary>
+        public float SeatBlendProgress => Mathf.Clamp01(_blendSeconds / CockpitLookInput.TransitionSeconds);
+
         public void SetCockpitMotion(Vector3 offset, Vector3 euler)
         {
             _cockpitMotionOffset = offset;
@@ -54,8 +64,9 @@ namespace Airside.Presentation
         public bool StartCockpit(Transform seat)
         {
             if (seat == null || !seat.gameObject.activeInHierarchy || _camera == null) return false;
-            _blendFromPos = transform.position;
-            _blendFromRot = transform.rotation;
+            _blendFromLocalPos = seat.InverseTransformPoint(transform.position);
+            _blendFromLocalRot = Quaternion.Inverse(seat.rotation) * transform.rotation;
+            _blendFromFov = _camera.fieldOfView;
             _blendSeconds = 0f;
             if (!_cockpitActive)
             {
@@ -66,13 +77,13 @@ namespace Airside.Presentation
             _cockpitActive = true;
             _flightExterior = false;
             _passengerSeat = false;
+            _towerView = false;
             _cockpitSeat = seat;
             _cockpitMotionOffset = _cockpitMotionEuler = Vector3.zero;
             _following = false;
             _easingOverview = false;
             _cockpitRightDrag = false;
             RecenterCockpit();
-            _cockpitRumble = 0f;
             // The field of view eases to 65 in UpdateCockpitCamera rather than snapping here.
             ApplyCockpitPose();
             return true;
@@ -110,11 +121,18 @@ namespace Airside.Presentation
             if (!_cockpitActive) return;
             _exitFromPos = transform.position;
             _exitFromRot = transform.rotation;
+            _exitAnchor = _cockpitSeat;
+            if (_exitAnchor != null)
+            {
+                _exitAnchorPos = _exitAnchor.position;
+                _exitAnchorRot = _exitAnchor.rotation;
+            }
             _exitFromFov = _camera != null ? _camera.fieldOfView : _savedFov;
             _exitSeconds = 0f;
             _cockpitActive = false;
             _flightExterior = false;
             _passengerSeat = false;
+            _towerView = false;
             _cockpitSeat = null;
             _cockpitMotionOffset = _cockpitMotionEuler = Vector3.zero;
             if (_camera != null)
@@ -226,21 +244,23 @@ namespace Airside.Presentation
         {
             var dt = Mathf.Clamp(deltaSeconds, 0f, 0.1f);
             _blendSeconds += dt;
-            _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, _cockpitTargetFov,
-                1f - Mathf.Exp(-12f * dt));
+            // During the glide the field of view travels with it (exterior 48 to seat 65 used to snap
+            // in a quarter of a second while the camera was still moving); afterwards it eases to zoom input.
+            _camera.fieldOfView = _blendSeconds < CockpitLookInput.TransitionSeconds && _cockpitSeat != null
+                ? Mathf.Lerp(_blendFromFov, _cockpitTargetFov, CockpitLookInput.Ease(_blendSeconds))
+                : Mathf.Lerp(_camera.fieldOfView, _cockpitTargetFov, 1f - Mathf.Exp(-12f * dt));
         }
 
         /// <summary>Move the camera and its glide anchors into the new presentation origin.</summary>
         public void ShiftFlightOrigin(Vector3 delta)
         {
             transform.position += delta;
-            _blendFromPos += delta;
             _exitFromPos += delta;
         }
 
         private float ClampFlightViewYaw(float yaw) => _flightExterior || _passengerSeat
             ? Mathf.Repeat(yaw + 180f, 360f) - 180f : Mathf.Clamp(yaw, -CockpitLookPresets.MaxYaw, CockpitLookPresets.MaxYaw);
-        private float ClampFlightViewPitch(float pitch) => Mathf.Clamp(pitch,
+        private float ClampFlightViewPitch(float pitch) => _towerView ? ClampTowerPitch(pitch) : Mathf.Clamp(pitch,
             _flightExterior ? -20f : _passengerSeat ? -60f : CockpitLookPresets.MinPitch,
             _flightExterior ? 80f : _passengerSeat ? 70f : CockpitLookPresets.MaxPitch);
         private float ClampExteriorRadius(float radius) => Mathf.Clamp(radius, _exteriorBaseRadius * 0.65f, _exteriorBaseRadius * 4f);
@@ -256,26 +276,19 @@ namespace Airside.Presentation
                 transform.SetPositionAndRotation(position,Quaternion.LookRotation(centre-position,Vector3.up));
             }
             else transform.SetPositionAndRotation(CockpitPosition, CockpitRotation);
-            if (!_flightExterior && CockpitMotionEnabled && _cockpitRumble > 0f)
-            {
-                // Small angular motion only: never move the eye through the fitted shell.
-                var t = Time.unscaledTime;
-                transform.rotation *= Quaternion.Euler(
-                    Mathf.Sin(t * 37f) * 0.10f * _cockpitRumble,
-                    Mathf.Sin(t * 29f) * 0.06f * _cockpitRumble,
-                    Mathf.Sin(t * 43f) * 0.08f * _cockpitRumble);
-            }
             if (_blendSeconds < CockpitLookInput.TransitionSeconds)
             {
                 var glide = CockpitLookInput.Ease(_blendSeconds);
-                transform.SetPositionAndRotation(Vector3.Lerp(_blendFromPos, transform.position, glide),
-                    Quaternion.Slerp(_blendFromRot, transform.rotation, glide));
+                var fromPos = _cockpitSeat != null ? _cockpitSeat.TransformPoint(_blendFromLocalPos) : transform.position;
+                var fromRot = _cockpitSeat != null ? _cockpitSeat.rotation * _blendFromLocalRot : transform.rotation;
+                transform.SetPositionAndRotation(Vector3.Lerp(fromPos, transform.position, glide),
+                    Quaternion.Slerp(fromRot, transform.rotation, glide));
             }
             CurrentDistance = _flightExterior ? _exteriorRadius : 0f;
             CurrentPitch = transform.eulerAngles.x;
             CurrentYaw = transform.eulerAngles.y;
             _camera.nearClipPlane = _flightExterior ? .15f : .035f;
-            _camera.farClipPlane = Mathf.Max(_savedFar, 55000f);
+            _camera.farClipPlane = Mathf.Max(_savedFar, transform.position.y > FlightWorldDetail.CruiseExitMetres ? 190000f : 55000f);
             // Never use the overview distance's horizon compression from inside an aircraft.
             Shader.SetGlobalFloat(HorizonScaleId, 1f);
         }
@@ -283,13 +296,28 @@ namespace Airside.Presentation
         /// <summary>Glides the free camera out from where the seat view left it. Called after each free-camera pose.</summary>
         private void ApplyExitBlend()
         {
-            if (_exitSeconds >= CockpitLookInput.TransitionSeconds || _camera == null) return;
+            if (_exitSeconds >= CockpitLookInput.TransitionSeconds || _camera == null) { _exitAnchor = null; return; }
             if (_exitBlendFrame != Time.frameCount)
             {
                 _exitBlendFrame = Time.frameCount;
                 _exitSeconds += Mathf.Min(Time.unscaledDeltaTime, 0.1f);
             }
             var glide = CockpitLookInput.Ease(_exitSeconds);
+            if (_exitAnchor != null)
+            {
+                // Follow the aircraft step by step. A jump of kilometres is an origin shift (already applied to
+                // the glide start by ShiftFlightOrigin), not flight, so it is skipped.
+                var step = _exitAnchor.position - _exitAnchorPos;
+                _exitAnchorPos = _exitAnchor.position;
+                if (step.sqrMagnitude < ExitAnchorMaxStepMetres * ExitAnchorMaxStepMetres)
+                    _exitFromPos += step;
+                // Turn with it too: swing the camera's offset and heading by the aircraft's own turn this
+                // frame, so a banking aircraft does not slide sideways out of the glide's start view.
+                var turn = _exitAnchor.rotation * Quaternion.Inverse(_exitAnchorRot);
+                _exitAnchorRot = _exitAnchor.rotation;
+                _exitFromPos = _exitAnchor.position + turn * (_exitFromPos - _exitAnchor.position);
+                _exitFromRot = turn * _exitFromRot;
+            }
             transform.SetPositionAndRotation(Vector3.Lerp(_exitFromPos, transform.position, glide),
                 Quaternion.Slerp(_exitFromRot, transform.rotation, glide));
             _camera.fieldOfView = Mathf.Lerp(_exitFromFov, _camera.fieldOfView, glide);

@@ -205,7 +205,7 @@ public static class AircraftArticulationReview
                 {
                     var bank = pose == "roll" ? i * 1f : 0f;
                     updateSurfaces.Invoke(null, new object[]
-                        { control, state, phase, progress, bank, 0.1f, null, true });
+                        { control, state, phase, progress, bank, 0.1f, null, true, type });
                 }
                 break;
             }

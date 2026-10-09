@@ -154,6 +154,14 @@ namespace Airside.Presentation
                 worldBounds.center.y, worldBounds.center.z);
         }
 
+        /// <summary>The outer and inner leaf hinge on opposite shoulders of the nacelle bay.</summary>
+        private static Vector3 NacelleDoorHingePivot(Bounds worldBounds, float centreX, bool inner)
+        {
+            var hingeOnLeft = (worldBounds.center.x < centreX) != inner;
+            return new Vector3(hingeOnLeft ? worldBounds.min.x : worldBounds.max.x,
+                worldBounds.max.y, worldBounds.center.z);
+        }
+
         /// <summary>-1 for a door hinged on its left (min X) edge, +1 on its right: the free edge swings down.</summary>
         private static float BellyDoorHingeSign(Transform door)
         {
@@ -261,7 +269,9 @@ namespace Airside.Presentation
             else
             {
                 // Faster than the longest authored cycle, so it only ever softens a phase change.
-                part.Retract = AircraftArticulation.MoveToward(part.Retract, target, deltaTime * 0.35f);
+                // Lowering is the slow stroke (a real extension takes 15-30 s); raising stays quick.
+                var rate = target < part.Retract ? part.ExtendRate : 0.35f;
+                part.Retract = AircraftArticulation.MoveToward(part.Retract, target, deltaTime * rate);
             }
 
             return part.Retract;

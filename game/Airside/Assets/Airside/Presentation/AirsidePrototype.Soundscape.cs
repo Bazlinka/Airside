@@ -1,4 +1,5 @@
 using Airside.Domain;
+using Airside.Simulation;
 using UnityEngine;
 
 namespace Airside.Presentation
@@ -11,8 +12,8 @@ namespace Airside.Presentation
     /// </summary>
     public sealed partial class AirsidePrototype
     {
-        private const float ApronBedVolume = 0.035f;
-        private const float PaChimeVolume = 0.22f;
+        private const float ApronBedVolume = 0.18f;
+        private const float PaChimeVolume = 0.27f;
         private const float PaChimeMinSeconds = 240f;
         private const float PaChimeSpreadSeconds = 240f;
 
@@ -33,28 +34,31 @@ namespace Airside.Presentation
         {
             if (_apronAudio == null)
             {
-                _apronAudio = gameObject.AddComponent<AudioSource>();
-                _apronAudio.playOnAwake = false;
-                _apronAudio.loop = true;
-                _apronAudio.spatialBlend = 0f;
-                _apronAudio.volume = 0f;
-                var samples = HudSounds.ApronBed();
-                var clip = AudioClip.Create("Apron bed", samples.Length, 1, HudSounds.SampleRate, false);
-                clip.SetData(samples, 0);
-                _apronAudio.clip = clip;
-                _paAudio = gameObject.AddComponent<AudioSource>();
-                _paAudio.playOnAwake = false;
-                _paAudio.spatialBlend = 0f;
+                var origin = AirportSoundOrigin();
+                _apronAudio = AirportSource("Working apron", origin, true, 2400f, 160);
+                _apronAudio.clip = Resources.Load<AudioClip>("Airside/Audio/airport_apron_v02");
+                if (_apronAudio.clip == null)
+                {
+                    var samples = HudSounds.ApronBed();
+                    var clip = AudioClip.Create("Apron fallback", samples.Length, 1, HudSounds.SampleRate, false);
+                    clip.SetData(samples, 0);
+                    _apronAudio.clip = clip;
+                }
+                _paAudio = AirportSource("Terminal loudspeaker", origin + Vector3.up * 4f, false, 800f, 120);
+                var echo = _paAudio.gameObject.AddComponent<AudioEchoFilter>();
+                echo.delay = 82f; echo.decayRatio = 0.18f; echo.wetMix = 0.16f; echo.dryMix = 1f;
             }
 
             var open = _operations == null || !AirportCurfew.IsClosed(_clock.Now, _operations.Clock);
-            var target = _audioMuted || InCockpit || AirsideFocusMode.BareWorld ? 0f : ApronBedVolume * (open ? 1f : 0.35f) * AmbientDuck;
+            var localAirport = AirportPresentationVisible && !InCockpit && !WatchingOutstation;
+            var target = _audioMuted || !localAirport || !AirsideFocusMode.ShowTerminal ? 0f
+                : ApronBedVolume * (open ? 1f : 0.28f) * AmbientDuck * ExteriorWeatherGain;
             _apronAudio.volume = Mathf.MoveTowards(_apronAudio.volume, target, Time.unscaledDeltaTime * 0.05f);
             if (target > 0f && !_apronAudio.isPlaying && CanStartAudio(_apronAudio))
                 _apronAudio.Play();
 
             // The cockpit cannot hear a non-spatial terminal loudspeaker or apron bed.
-            if (InCockpit)
+            if (!localAirport || _audioMuted)
             {
                 _apronAudio.Stop();
                 _apronAudio.volume = 0f;
@@ -67,7 +71,7 @@ namespace Airside.Presentation
             if (now >= _nextPaChimeAt)
             {
                 _nextPaChimeAt = now + PaChimeMinSeconds + Mathf.PerlinNoise(now * 0.01f, 3.3f) * PaChimeSpreadSeconds;
-                if (open && !_audioMuted && !InCockpit && !AirsideFocusMode.BareWorld && _paAudio != null)
+                if (open && !_audioMuted && localAirport && AirsideFocusMode.ShowTerminal && _paAudio != null)
                 {
                     if (_paChimeClip == null)
                     {
@@ -79,6 +83,35 @@ namespace Airside.Presentation
                     _paAudio.PlayOneShot(_paChimeClip, PaChimeVolume);
                 }
             }
+        }
+
+        private Vector3 AirportSoundOrigin()
+        {
+            if (!AirsideBareField.Enabled)
+                return _terminalProbe != null ? _terminalProbe.transform.position : new Vector3(26f, 3.2f, 27f);
+            // The release scene is at published metres; the legacy reflection probe is miniature-scale.
+            var gates = AdelaideLayout.TerminalGates;
+            var x = 0f; var z = 0f;
+            foreach (var gate in gates) { x += gate.NoseX; z += gate.NoseZ; }
+            return gates.Length > 0 ? new Vector3(x / gates.Length, AirsideAdelaideGround.PavementWorldY + 2f,
+                z / gates.Length + 20f) : new Vector3(1300f, AirsideFlightPath.GroundY + 2f, 436f);
+        }
+
+        private AudioSource AirportSource(string name, Vector3 position, bool loop, float range, int priority)
+        {
+            var host = new GameObject(name);
+            host.transform.SetParent(transform, false);
+            host.transform.position = position;
+            var source = host.AddComponent<AudioSource>();
+            source.playOnAwake = false; source.loop = loop; source.spatialBlend = 1f;
+            source.volume = 0f; source.dopplerLevel = 0f; source.priority = priority;
+            source.minDistance = 80f; source.maxDistance = range;
+            source.rolloffMode = AudioRolloffMode.Linear;
+            // Nonloop PA receives its gain through PlayOneShot; source volume must not remain zero.
+            if (!loop) source.volume = 1f;
+            var filter = host.AddComponent<AudioLowPassFilter>();
+            filter.cutoffFrequency = loop ? 2200f : 3600f;
+            return source;
         }
 
         /// <summary>A soft whoosh as a workspace sheet slides in.</summary>

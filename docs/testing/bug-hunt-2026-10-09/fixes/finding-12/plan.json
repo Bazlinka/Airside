@@ -1,0 +1,169 @@
+{
+ "protocol": 1,
+ "expectedCommit": "e06806e27ca2db90236d2281585fabd4089082bc",
+ "aircraftType": "B412",
+ "issue": "Bell 412 regional view never reaches the geographical destination (finding 12)",
+ "steps": [
+  {
+   "id": "wait-1",
+   "action": "snapshot",
+   "value": "",
+   "capture": false,
+   "settleSeconds": 15
+  },
+  {
+   "id": "wait-2",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "follow",
+   "action": "follow",
+   "value": "",
+   "capture": false,
+   "settleSeconds": 1
+  },
+  {
+   "id": "exterior",
+   "action": "view",
+   "value": "Exterior",
+   "capture": true,
+   "settleSeconds": 2
+  },
+  {
+   "id": "obs-03",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-04",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-05",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-06",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-07",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-08",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-09",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-10",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-11",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-12",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-13",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-14",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-15",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-16",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-17",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-18",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-19",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-20",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  },
+  {
+   "id": "obs-21",
+   "action": "snapshot",
+   "value": "",
+   "capture": true,
+   "settleSeconds": 15
+  }
+ ]
+}

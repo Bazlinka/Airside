@@ -48,13 +48,14 @@ namespace Airside.Simulation
             _fleet.Add(aircraft);
         }
 
-        internal void RestoreMovementData(string registration, RunwayDirection runway, bool wentAroundThisTrip)
+        internal void RestoreMovementData(string registration, RunwayDirection runway, bool wentAroundThisTrip, bool arrivalCommittedBeforeStorm = false)
         {
             var aircraft = _fleet.Find(a => string.Equals(a.Registration, registration, StringComparison.OrdinalIgnoreCase));
             if (aircraft == null)
                 throw new FormatException($"{registration}: movement data has no aircraft.");
             aircraft.AssignedRunway = runway;
             aircraft.WentAroundThisTrip = wentAroundThisTrip;
+            aircraft.ArrivalCommittedBeforeStorm = arrivalCommittedBeforeStorm;
         }
 
         internal void RestorePrepData(string registration, SimulationTime? prepStartedAt)

@@ -13,7 +13,7 @@ namespace Airside.Presentation
     public static class ArrivalApproach
     {
         /// <summary>Beyond this an inbound is not drawn yet.</summary>
-        public const float ShowMetres = 32_000f;
+        public const float ShowMetres = ApproachRules.ExtendedFinalMetres;
 
         /// <summary>6,000 ft: the highest an arrival is drawn on the approach.</summary>
         public const float CapMetres = 1_830f;

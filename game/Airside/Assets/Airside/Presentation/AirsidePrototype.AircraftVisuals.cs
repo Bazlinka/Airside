@@ -98,7 +98,19 @@ namespace Airside.Presentation
                 if (!journey.HasValue) heading = DepartureLookRotation(flight, phase, progress, heading);
                 if (journey.HasValue && _fleetAircraftById.TryGetValue(flight.AircraftId,out var watched))
                 {
-                    if(watched.State==FleetState.AtDestination) {phase=AircraftPhase.AtStand;progress=1;}
+                    if(watched.State==FleetState.AtDestination)
+                    {
+                        phase=AircraftPhase.AtStand;progress=1;
+                        // Taxiing to or from the mapped apron: the ground phases give wheels and lights their taxi state,
+                        // and the path's own heading steers the nose (a parked aircraft has no motion to steer by).
+                        if(watched.CurrentDestination.HasValue && RegionalRunways.TryGet(watched.CurrentDestination.Value.Code,out var turnRunway)
+                            && TryTurnaroundPose(watched,turnRunway,0,out var turnaround))
+                        {
+                            phase=turnaround.Leg switch{TurnaroundLeg.TaxiIn=>AircraftPhase.TaxiIn,TurnaroundLeg.TaxiOut=>AircraftPhase.TaxiOut,_=>AircraftPhase.AtStand};
+                            progress=(float)turnaround.Progress01;
+                            heading=Quaternion.Euler(0f,(float)turnaround.YawDegrees,0f);
+                        }
+                    }
                     else if (TryEnroute(watched, out var journeyProfile, out var journeyElapsed))
                     {
                         var rotate = RegionalFlightPath.RotateSeconds(watched.Type);

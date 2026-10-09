@@ -1210,8 +1210,15 @@ namespace Airside.Presentation
             into.Text(body.Offset(regWidth + typeWidth, 0f).WithWidth(body.Width - regWidth - typeWidth),
                 row.Status, 12f, row.StatusTone, HudTextStyle.Bold, alpha: alpha);
             if (standWidth > 0f)
-                into.Text(new HudBox(box.Right - standWidth, box.Y + 7f, standWidth - 6f, 18f), row.Stand,
-                    12f, HudTone.Muted, HudTextStyle.Regular, HudAlign.Right, alpha: alpha);
+            {
+                // A long stand label shrinks, then abbreviates, instead of overflowing past the box edge.
+                var standText = row.Stand ?? string.Empty;
+                if (HudShell.Measure(standText, 11f) > standWidth - 6f)
+                    standText = standText.Replace("Helipad spot ", "Pad ");
+                into.Text(new HudBox(box.Right - standWidth, box.Y + 7f, standWidth - 6f, 18f), standText,
+                    HudShell.FitFontSize(standText, 12f, standWidth - 6f, 10f), HudTone.Muted, HudTextStyle.Regular,
+                    HudAlign.Right, alpha: alpha);
+            }
             into.Text(new HudBox(box.X + 12f, box.Y + 29f, box.Width - 18f, 18f),
                 row.TypeName + " · " + FleetStatusText.NameOf(row.BaseCode) + " base", 11f, HudTone.Muted, alpha: alpha);
             into.Hotspot(box, HudAction.Select(row.Registration));

@@ -56,11 +56,7 @@ def execute(request):
         if platform.system()!='Darwin':raise ValueError('No local Mac; dispatch with --remote instead')
         current=output('git','rev-parse','HEAD')
         if current!=request['revision']:
-            # Worker owns an isolated checkout. Local invocation must never replace someone's work.
-            if not os.environ.get('GITHUB_ACTIONS'):raise ValueError('Checkout differs; use a clean scoped checkout or --remote')
-            run('git','fetch','--no-tags','--depth=1','origin',request['revision'])
-            run('git','checkout','--detach','--force',request['revision'])
-            if output('git','rev-parse','HEAD')!=request['revision']:raise ValueError('Requested commit was not checked out')
+            raise ValueError('Checkout differs from request; workflow must checkout the exact revision before Python starts')
         if output('git','status','--porcelain','--untracked-files=normal','--','game','scripts'):
             raise ValueError('Diagnostic source checkout is dirty')
         gameplay=load_gameplay()
@@ -73,7 +69,8 @@ def execute(request):
                 # Clean preflight established these files were untouched. Unity rewrites
                 # their generated metadata, including on a failed build; preserve source.
                 run('git','restore','--','game/Airside/ProjectSettings/ProjectSettings.asset',
-                    'game/Airside/Packages/packages-lock.json')
+                    'game/Airside/Packages/packages-lock.json',
+                    'game/Airside/Assets/Settings/PC_RPAsset.asset')
             gameplay.build_preflight(app,request['revision'],output('git','status','--porcelain','--','game','scripts'))
         plan_path=directory/'scenario.json';plan_path.write_text(json.dumps(plan,indent=2))
         # Issue probes settle weather/camera and require real frames; no substitute smoke pass.

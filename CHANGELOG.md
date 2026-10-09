@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-09 — Failed diagnostic actions/state checks capture their visible context; remote agents use the Mac bridge before claiming runtime verification.
+
 - 2026-10-09 — #706: isolate welcome weather and fix title shortcuts, setup codes, compact/recovery cards and Options readability/view targeting.
 - 2026-10-09 — Add issue-specific gameplay diagnostics and private Mac execution for Linux agents, with real frames/state/errors and repeatable retesting.
 

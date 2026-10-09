@@ -112,7 +112,7 @@ namespace Airside.Presentation
         /// <summary>Bottom-left career ring card (or the first-flight guide while it runs).</summary>
         public HudBox Career { get; }
 
-        /// <summary>Top-right live flight tiles for the player's fleet.</summary>
+        /// <summary>Bottom-left "Your flights" tracker for the player's fleet, stacked above the career card.</summary>
         public HudBox Operations { get; }
 
         /// <summary>The one open workspace sheet, right of the rail and under the capsule.</summary>
@@ -121,10 +121,10 @@ namespace Airside.Presentation
         /// <summary>Where the newest toast sits; older ones stack below it.</summary>
         public HudBox Toast { get; }
 
-        /// <summary>Bottom-right airfield radar.</summary>
+        /// <summary>Bottom-left airfield radar, stacked above the flight tracker.</summary>
         public HudBox MiniMap { get; }
 
-        /// <summary>Bottom-centre selected-aircraft reservation (the card is usually shorter).</summary>
+        /// <summary>Right-hand selected-aircraft card, anchored under the capsule (the card is usually shorter).</summary>
         public HudBox SelectedCard { get; }
 
         /// <summary>The centred region modal cards (setup, away summary) are fitted into.</summary>
@@ -149,8 +149,8 @@ namespace Airside.Presentation
 
     /// <summary>
     /// The Glass Cockpit shell (ADR 0122) every page shares: a vertical navigation rail on the left,
-    /// a floating status capsule at the top, the career ring card bottom-left, live flight tiles
-    /// top-right, the airfield radar bottom-right and the selected-aircraft card bottom-centre. An
+    /// a floating status capsule at the top, a bottom-left stack (career ring card, then the flight
+    /// tracker, then the airfield radar above it) and the selected-aircraft card on the right. An
     /// open workspace is one large glass sheet right of the rail. Pure layout — no UnityEngine and
     /// no simulation decisions — so the runtime HUD, the headless tests and the offline mockup
     /// renderer all place it identically.

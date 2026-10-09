@@ -290,7 +290,10 @@ namespace Airside.Presentation
                 return;
             }
 
-            if (operations.CareerState.Funds + alreadyPaid < dispatch)
+            // A recovery contract underwrites its own first dispatch (the same test the booking command uses).
+            var recoveryCredit = alreadyPaid == 0
+                                 && operations.CareerState.CanUnderwriteRecoveryDispatch(dispatch, destination.Code);
+            if (operations.CareerState.Funds + alreadyPaid < dispatch && !recoveryCredit)
             {
                 PlanBlockedReason =
                     $"{(alreadyPaid > 0 ? "The change" : "This flight")} costs ${changeCost:N0}. You have ${operations.CareerState.Funds:N0}";

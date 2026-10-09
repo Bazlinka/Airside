@@ -24,7 +24,7 @@ the existing build script recovered one Bee graph stall. Clean stamped identity 
   emerge at twilight and are retained at night. Existing airport/night ground lighting
   is unchanged. City lights differ from baseline because main's #760 is included.
 - HUD time is the running simulation clock; the review `time` action overrides visual
-  celestial time only. Moon placement remains simulation-clock-driven and was not changed.
+  celestial time only. Sun/moon geometry and celestial calculations were not changed.
 - All relevant real PNGs opened; retained representative images, reports and plans here.
   No broad suite, flight journey or soak. Diff whitespace check passes.
 

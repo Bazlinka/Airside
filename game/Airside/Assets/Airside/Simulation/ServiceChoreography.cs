@@ -275,7 +275,8 @@ namespace Airside.Simulation
                     : member.Task is RampTask.PlaceSafetyEquipment or RampTask.EquipmentRunner
                         ? SafetyEquipment(member, layout, elapsed, seconds, scene)
                         : Act(member, activity, layout, sills, type, taskTime, taskSeconds, scene, planesideDrops, planesideCart, hiLoader);
-                if (activity is RampActivity.Fuel or RampActivity.Catering && action.Height < 0.05f
+                if ((activity is RampActivity.Fuel or RampActivity.Catering
+                    || activity == RampActivity.Baggage && member.Task == RampTask.BaggageHold) && action.Height < 0.05f
                     && member.Task != RampTask.EquipmentRunner)
                     action = ApproachAndClear(action, layout, elapsed, seconds);
                 actions.Add(action);
@@ -344,7 +345,7 @@ namespace Airside.Simulation
             var t = placing ? (float)(e / arrival) : collecting
                 ? 1f - (float)((e - clearing) / Math.Max(1, seconds - clearing)) : 1f;
             if (!placing && !collecting)
-                scene.Transit.Add(new TransitItem(CarriedItem.Cone, at.X, at.Z, 0));
+                scene.Transit.Add(new TransitItem(CarriedItem.Cone, at.X, at.Z + 0.8f, 0));
             return new CrewAction(Lerp(from.X, at.X, t), Lerp(from.Z, at.Z, t), 0,
                 Heading(collecting ? from.X - at.X : at.X - from.X, 0), placing || collecting,
                 placing || collecting ? CarriedItem.Cone : CarriedItem.None);

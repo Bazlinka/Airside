@@ -129,6 +129,65 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void ADistantDestination_IsReachedAtItsRealPosition_NotAPointCompressedIntoTheDrawArea()
+        {
+            // Bug hunt finding 12: a Bell 412 booked to Kingscote hovered over the sea ~40 km out, because its
+            // site was projected with the sky-traffic compression while the flight world is geographical.
+            var ops = NewOps(out _, 6);
+            var heli = ops.Fleet.Single(a => a.Type.IsRotorcraft);
+            Assert.That(DestinationCatalogue.TryFind("KGC", out var kingscote), Is.True);
+            heli.CurrentDestination = kingscote;
+            var trueKm = kingscote.DistanceKmTo(DestinationCatalogue.Adelaide);
+            Assert.That(trueKm, Is.GreaterThan(100), "Kingscote is well beyond the airfield");
+
+            var leg = LegTiming.AirborneSeconds(trueKm, heli.Type);
+            heli.Restore(FleetState.Outbound, new SimulationTime(0), new SimulationTime(leg));
+            YpadFrame.ToWorld(kingscote.Latitude, kingscote.Longitude, out var siteX, out var siteZ);
+            var arrived = HelicopterTrack.For(heli, leg);
+            Assert.That(arrived.Visible, Is.True);
+            Assert.That(Math.Sqrt(Math.Pow(arrived.X - siteX, 2) + Math.Pow(arrived.Z - siteZ, 2)), Is.LessThan(5.0),
+                "the leg ends at the real Kingscote in the field frame");
+            var padToEndKm = Math.Sqrt(Math.Pow(arrived.X - AdelaideHelipad.PadCentreX, 2)
+                                       + Math.Pow(arrived.Z - AdelaideHelipad.PadCentreZ, 2)) / 1000.0;
+            Assert.That(padToEndKm, Is.EqualTo(trueKm).Within(1.2));
+
+            // The drawn ground speed is the route's true speed, so the tracker and the drawn aircraft agree.
+            var mid = HelicopterTrack.For(heli, leg * 0.5);
+            Assert.That(mid.SpeedMetresPerSecond, Is.InRange(40f, 70f));
+
+            // At Kingscote it stays at Kingscote for the turnaround instead of vanishing or snapping home.
+            heli.Restore(FleetState.AtDestination, new SimulationTime(leg), new SimulationTime(leg + 900));
+            var held = HelicopterTrack.For(heli, leg + 300);
+            Assert.That(HelicopterTrack.HoldsAtSite(heli), Is.True);
+            Assert.That(held.Visible, Is.True);
+            Assert.That(held.Segment, Is.EqualTo(HelicopterSegment.AtSite));
+            Assert.That(held.X, Is.EqualTo(arrived.X).Within(0.5f));
+            Assert.That(held.Z, Is.EqualTo(arrived.Z).Within(0.5f));
+            Assert.That(held.HeightMetres, Is.EqualTo(arrived.HeightMetres).Within(0.01f), "no jump from the end of the leg");
+            Assert.That(held.RotorSpeed01, Is.EqualTo(1f));
+            Assert.That(RotorcraftEngines.RotorSpeed01(heli, leg + 300), Is.EqualTo(1f), "lights and sound agree with the drawn rotor");
+
+            // And the return leg starts from the same place.
+            heli.Restore(FleetState.Inbound, new SimulationTime(leg + 900), new SimulationTime(leg + 900 + leg));
+            var leaving = HelicopterTrack.For(heli, leg + 900);
+            Assert.That(leaving.X, Is.EqualTo(arrived.X).Within(0.5f));
+            Assert.That(leaving.Z, Is.EqualTo(arrived.Z).Within(0.5f));
+        }
+
+        [Test]
+        public void ANearHospital_StaysOutOfSightWhileTheCrewIsOnTheGround()
+        {
+            var ops = NewOps(out _, 6);
+            var heli = ops.Fleet.Single(a => a.Type.IsRotorcraft);
+            Assert.That(DestinationCatalogue.TryFind("RAH", out var hospital), Is.True);
+            heli.CurrentDestination = hospital;
+            heli.Restore(FleetState.AtDestination, new SimulationTime(0), new SimulationTime(900));
+            Assert.That(HelicopterTrack.HoldsAtSite(heli), Is.False);
+            Assert.That(HelicopterTrack.For(heli, 300).Segment, Is.EqualTo(HelicopterSegment.Hidden));
+            Assert.That(RotorcraftEngines.RotorSpeed01(heli, 300), Is.EqualTo(0f));
+        }
+
+        [Test]
         public void LerpAngle_TakesTheShortWayRound()
         {
             Assert.That(HelicopterTrack.LerpAngle(350f, 10f, 0.5f), Is.EqualTo(0f).Within(0.01f));

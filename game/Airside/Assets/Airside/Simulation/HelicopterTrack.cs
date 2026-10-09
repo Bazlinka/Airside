@@ -60,14 +60,19 @@ namespace Airside.Simulation
         Takeoff,
         Outbound,
         Inbound,
-        Landing
+        Landing,
+
+        /// <summary>Held over a far-off destination (beyond the airfield) for its turnaround.</summary>
+        AtSite
     }
 
     /// <summary>
     /// A helicopter's whole movement as a pure function of its fleet state and the clock (ADR 0207): from the
     /// pad spot, up and round into its departure heading, out along a straight line to the hospital, and the
-    /// same line back to a landing on its spot. Drawn at true scale (the near field of the sky-traffic
-    /// projection) so the helicopter is seen flying to the hospital, not vanishing at the field edge.
+    /// same line back to a landing on its spot. The whole line is drawn at true geographical scale in the
+    /// field's own frame (<see cref="YpadFrame"/>, the frame the flight world, tracker map and regional runways
+    /// use), so a helicopter booked to a far destination such as Kingscote really reaches it. The compressed
+    /// sky-traffic projection that overflights use would stop it a few tens of kilometres short.
     /// </summary>
     public static class HelicopterTrack
     {
@@ -76,6 +81,17 @@ namespace Airside.Simulation
 
         /// <summary>Height above the pad at the far end, over the hospital roof.</summary>
         public const float SiteHeightMetres = 35f;
+
+        /// <summary>
+        /// A site farther than this from the pad is beyond the airfield (the old 1:1 near field of the sky-traffic
+        /// projection): its helicopter is held over it for the turnaround, so the flight world still has a pose at
+        /// the geographical destination. Nearer hospitals stay out of sight while the crew is on the ground.
+        /// </summary>
+        public const float RemoteSiteMetres = (float)(SkyTraffic.NearFieldKm * 1000.0);
+
+        /// <summary>A held helicopter finishes its pedal turn onto the return heading this long before it leaves.</summary>
+        private const double SiteTurnLeadSeconds = 20;
+        private const double SiteTurnSeconds = 12;
 
         public static HelicopterWorldPose For(FleetAircraft aircraft, double nowSeconds)
         {
@@ -118,9 +134,44 @@ namespace Airside.Simulation
                         pose.VerticalMetresPerSecond, pose.RotorLoad01, 1f, HelicopterSegment.Landing);
                 }
 
+                case FleetState.AtDestination when HoldsAtSite(aircraft):
+                {
+                    var site = SiteWorld(aircraft);
+                    // Facing out along the line it arrived on, then a pedal turn just before the return leg.
+                    var arrival = FlightHeadingDegrees(spot, site, outbound: true);
+                    var yaw = arrival;
+                    if (aircraft.StateEndsAt.HasValue)
+                    {
+                        var untilLeaving = aircraft.StateEndsAt.Value.ElapsedSeconds - nowSeconds;
+                        yaw = LerpAngle(arrival, FlightHeadingDegrees(spot, site, outbound: false),
+                            (float)((SiteTurnLeadSeconds - untilLeaving) / SiteTurnSeconds));
+                    }
+
+                    return Pose(true, site.X, site.Z, SiteHeightMetres, yaw, 0f, 0f, 0f, 0f, 0.5f, 1f,
+                        HelicopterSegment.AtSite);
+                }
+
                 default:
                     return Pose(false, spot.X, spot.Z, 0f, parked, 0f, 0f, 0f, 0f, 0f, 0f, HelicopterSegment.Hidden);
             }
+        }
+
+        /// <summary>
+        /// True while a helicopter turns round at a destination beyond the airfield (a regional town rather than
+        /// a nearby hospital): it hovers over the real place, so the flight world keeps a geographical pose.
+        /// </summary>
+        public static bool HoldsAtSite(FleetAircraft aircraft)
+        {
+            if (aircraft == null || aircraft.State != FleetState.AtDestination)
+                return false;
+            var destination = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
+            if (!destination.HasValue)
+                return false;
+            var spot = SpotOf(aircraft);
+            var site = SiteWorld(destination.Value);
+            var dx = site.X - spot.X;
+            var dz = site.Z - spot.Z;
+            return dx * dx + dz * dz > RemoteSiteMetres * RemoteSiteMetres;
         }
 
         /// <summary>The pad spot a helicopter lifts from or lands on; its stand while parked, its departure stand in the air.</summary>
@@ -133,7 +184,7 @@ namespace Airside.Simulation
             return AdelaideHelipad.Spots[0];
         }
 
-        /// <summary>The far end of the leg in the world frame (the hospital), eased into the draw area when distant.</summary>
+        /// <summary>The far end of the leg in the world frame (the hospital or regional town), at true scale.</summary>
         public static (float X, float Z) SiteWorld(FleetAircraft aircraft)
         {
             var destination = aircraft.CurrentDestination ?? aircraft.Scheduled?.Destination;
@@ -144,8 +195,9 @@ namespace Airside.Simulation
 
         public static (float X, float Z) SiteWorld(Destination site)
         {
-            SkyTraffic.ToLocalMetres(site.Latitude, site.Longitude, out var east, out var north);
-            SkyTraffic.ProjectLocal(east, north, out var x, out var z);
+            // The field's own frame, like the pad spots, the regional runways and the tracker map. Not
+            // SkyTraffic.ProjectLocal: that compresses everything past 12 km into the draw radius.
+            YpadFrame.ToWorld(site.Latitude, site.Longitude, out var x, out var z);
             return ((float)x, (float)z);
         }
 
@@ -262,6 +314,8 @@ namespace Airside.Simulation
                     return 1f;
                 case FleetState.AtStand:
                     return AtStandRotor(aircraft, nowSeconds);
+                case FleetState.AtDestination:
+                    return HelicopterTrack.HoldsAtSite(aircraft) ? 1f : 0f;
                 default:
                     return 0f;
             }

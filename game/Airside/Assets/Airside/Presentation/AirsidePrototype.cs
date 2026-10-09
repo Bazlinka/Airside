@@ -568,7 +568,9 @@ namespace Airside.Presentation
                 _cockpitInterior.Leave();
                 Destroy(_cockpitInterior.gameObject);
             }
-            _cameraController?.EndCockpit();
+            // Teardown can destroy the camera controller first; `?.` does not see a destroyed Unity object,
+            // so EndCockpit would read its transform and throw.
+            if (_cameraController != null) _cameraController.EndCockpit();
             ResetFlightWorld();
             if (_stormBolt != null) Destroy(_stormBolt.sharedMaterial);
             if (_flightTerrain != null) Destroy(_flightTerrain.gameObject);

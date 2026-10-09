@@ -96,7 +96,7 @@ namespace Airside.Presentation
             if (!WatchingOutstation) return;
             ReleaseCockpitAirflow();
             _outstationWatchId = null;
-            _cameraController?.EndCockpit();
+            if (_cameraController != null) _cameraController.EndCockpit();
             if (_outstationInterior != null) { _outstationInterior.Leave(); Destroy(_outstationInterior.gameObject); }
             _outstationInterior = null;
             if (_outstationWatchView != null)

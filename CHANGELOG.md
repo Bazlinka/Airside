@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-09 — #725: bug-hunt finding 2 (Saab right window obstructions) not reproduced on clean main at five times of day; evidence and limits recorded, no code/asset change.
+
 - 2026-10-09 — #726: bug-hunt finding 15 (ATR 42 T-tail) verified not a defect — tailplane rendered in Exterior; evidence recorded, no code/asset change.
 
 - 2026-10-09 — #723: quitting from exterior/cockpit view no longer throws NullReferenceException in EndCockpit during teardown (destroyed camera controller was reached through `?.`).

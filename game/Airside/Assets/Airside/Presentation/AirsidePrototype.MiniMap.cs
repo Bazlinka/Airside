@@ -27,8 +27,13 @@ namespace Airside.Presentation
             PlayUiClick();
         }
 
+        /// <summary>
+        /// The radar is Adelaide's airfield (its outline, RWY label and traffic dots). It is hidden while the
+        /// independent Parafield watch is up, otherwise it sat there unlabelled beside a "Parafield" card.
+        /// </summary>
         private bool MiniMapShows =>
-            HudShows(HudElement.AirportMap) && !(_activeWorkspace != HudWorkspace.None || _devToolsOpen || _controlsHelpOpen);
+            HudShows(HudElement.AirportMap) && !WatchingParafield
+            && !(_activeWorkspace != HudWorkspace.None || _devToolsOpen || _controlsHelpOpen);
 
         private readonly HudDrawList _miniMapDrawList = new();
 

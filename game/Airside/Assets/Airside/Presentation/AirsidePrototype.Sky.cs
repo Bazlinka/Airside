@@ -1044,7 +1044,11 @@ namespace Airside.Presentation
             var daylight = PresentationDaylight;
             // Stars used to switch off at daylight 0.35 while still three-quarters bright,
             // so the whole sky blinked once every dawn and dusk. Fade them out instead.
-            var fade = StarFieldFade(daylight, ObserverSkyCover);
+            // The operational daylight ramp extends well past sunrise. Star visibility
+            // instead follows civil/nautical twilight, so a bright horizon has no white dots.
+            var nightSky = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-1f, -10f,
+                (float)PresentationCelestial.Sun.ElevationDegrees));
+            var fade = StarFieldFade(daylight, ObserverSkyCover) * nightSky;
             var show = fade > 0.002f;
             if (_starFieldRoot.gameObject.activeSelf != show)
                 _starFieldRoot.gameObject.SetActive(show);

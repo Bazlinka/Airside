@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-09 — Docs: sourced real-world airline cost data (Adelaide fees, Airservices charges, fuel, crew) with confidence tiers for Economy v2; no code.
 - 2026-10-09 — Docs: roadmap for real-world-scale economy v2, competitor airlines and a walkable airport (proposal for Bailey's sign-off; no code).
 - 2026-10-09 — #756: enclose the tower viewpoint with a cab interior; preserve full flight-relative rain speed and elapsed movement.
 - 2026-10-09 — #758: directional sunrise/sunset glow, cooler overhead sky and blue-hour evenings; reduced broad orange fog.

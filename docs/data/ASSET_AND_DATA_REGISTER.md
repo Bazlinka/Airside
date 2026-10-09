@@ -578,3 +578,12 @@ registered OSM tower footprint. No external assets, images, fonts, fees or attri
 No claim that the furniture is surveyed Adelaide tower equipment. Existing exterior
 and standing eye retained; interior appears only during tower view. Previous git source
 is fallback. Native evidence/limits: `docs/testing/tower-rain-2026-10-09/README.md`.
+
+
+## Airline operating costs — 9 October 2026
+
+Facts-only cost inputs for Economy v2: `docs/data/AIRLINE_OPERATING_COSTS.md`. Sources are Adelaide Airport Ltd's
+published fee schedule, Airservices Australia's charging determination, ATR's factsheet and linked press/trade pages;
+each figure carries a confidence tier. No asset, code or prose reproduced; cost $0; no attribution requirement.
+Fallback: current `FlightEconomics` game-dollar formulas. Several lines (aircraft values, leases, crew on-costs) are
+unsourced and flagged; none may ship until replaced.

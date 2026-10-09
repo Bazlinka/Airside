@@ -7,6 +7,30 @@ namespace Airside.Tests
 {
     public sealed class RunwayWeatherTests
     {
+        [Test]
+        public void CoupledWind_FollowsTheWeather()
+        {
+            Assert.That(RunwayWeather.CoupledKnots(10, WeatherKind.Fog), Is.LessThanOrEqualTo(4));
+            Assert.That(RunwayWeather.CoupledKnots(10, WeatherKind.Clear), Is.LessThan(RunwayWeather.CoupledKnots(10, WeatherKind.Rain)));
+            Assert.That(RunwayWeather.CoupledKnots(10, WeatherKind.Rain), Is.LessThan(RunwayWeather.CoupledKnots(10, WeatherKind.Storm)));
+            Assert.That(RunwayWeather.CoupledKnots(40, WeatherKind.Storm), Is.EqualTo(45));
+            Assert.That(RunwayWeather.Coupled(new SurfaceWind(230, 10), WeatherKind.Storm).DirectionDegrees, Is.EqualTo(230));
+        }
+
+        [Test]
+        public void ForecastWind_NeverStepsAcrossAnHourBoundary()
+        {
+            var timeline = new AirportWeatherTimeline();
+            var clock = AirlineClock.Default;
+            for (var hour = 30; hour < 150; hour++)
+            {
+                var edge = hour * 3600L;
+                var before = timeline.WindAt(clock, new SimulationTime(edge - 1)).Knots;
+                var after = timeline.WindAt(clock, new SimulationTime(edge)).Knots;
+                Assert.That(Math.Abs(after - before), Is.LessThanOrEqualTo(2), "hour " + hour);
+            }
+        }
+
         [TestCase(50, 12, RunwayDirection.Runway05)]
         [TestCase(230, 12, RunwayDirection.Runway23)]
         [TestCase(230, 2, RunwayDirection.Runway05)]

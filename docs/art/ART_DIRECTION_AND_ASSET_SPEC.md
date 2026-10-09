@@ -560,4 +560,5 @@ Task #758 adds `Art/Shaders/DirectionalSky.shader`: original analytic sky colour
 cool zenith, sun-facing amber/rose horizon and blue-hour evening. No image generation
 or external asset/cost. Preserve readable night lighting and existing sun/moon/stars;
 weather and altitude suppress clear-sky effects. Existing solid-colour sky is fallback.
-Integrated; native review pending. Decision: `2026-10-09-directional-twilight-sky`.
+Refinement #773 adds restrained opposing rose and peach dawn; baseline native frames
+inspected, refined native review pending. Decision: `2026-10-09-directional-twilight-sky`.

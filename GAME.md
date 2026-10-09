@@ -28,7 +28,9 @@ probe has no runtime errors; regional close windows/GPU cost remain unverified; 
 **Directional twilight sky (9 Oct, Codex, #758):** cool zenith/horizon gradients,
 sun-facing amber/rose dawn and dusk, blue-hour evenings; broad orange fog reduced.
 Existing celestial clock, weather/altitude, stars, night readability and saves retained.
-Native clear dawn/day/sunset/evening/night and overcast/fog review pending on pushed revision.
+Native baseline dawn/day/sunset/evening/night/weather/follow frames inspected.
+Refinement #773 narrows amber, softens dawn, adds an opposing rose band and cools
+blue hour; clean native build and identical scenario review pending on pushed revision.
 Decision: `2026-10-09-directional-twilight-sky`.
 
 **Tower cab and rain motion (9 Oct, Codex, #756):** original interior ceiling, window

@@ -292,13 +292,36 @@ namespace Airside.Presentation
                     var distance = float.Parse(coordinates[2], CultureInfo.InvariantCulture);
                     _cameraController.ApplyAgentReviewPose(pitch, yaw, distance);
                     return "Camera pose " + step.value;
-                case "snapshot": return "Observed " + aircraft.Registration + " " + aircraft.State;
+                case "snapshot": DiagnoseAgentRenderers(aircraft); return "Observed " + aircraft.Registration + " " + aircraft.State;
                 case "weather":
                     if (!Enum.TryParse(step.value, true, out WeatherKind weather)) throw new ArgumentException("Unknown weather");
                     SetReviewWeatherToken(step.value);
                     if (CurrentWeather != weather) throw new InvalidOperationException("Weather override failed");
                     return "Visual weather " + weather + "; operational weather unchanged";
                 default: throw new ArgumentException("Unsupported agent action");
+            }
+        }
+            // TEMPORARY DIAGNOSTIC (finding 15): log tail renderers of the subject.
+        private void DiagnoseAgentRenderers(FleetAircraft aircraft)
+        {
+            if (!_fleetViewById.TryGetValue(aircraft.Registration, out var view) || view == null) return;
+            var camera = _cameraController != null ? _cameraController.GetComponent<Camera>() : null;
+            var planes = camera != null ? GeometryUtility.CalculateFrustumPlanes(camera) : null;
+            Debug.Log("[Airside diag] view " + view.name + " pos " + view.position + " rot " + view.eulerAngles + " scale " + view.lossyScale
+                + " camera " + (camera != null ? camera.transform.position.ToString() : "none") + " near " + (camera != null ? camera.nearClipPlane : 0) + " far " + (camera != null ? camera.farClipPlane : 0)
+                + " cockpit " + InCockpit + " mode " + _aircraftViewMode);
+            foreach (var r in view.GetComponentsInChildren<Renderer>(true))
+            {
+                var n = r.name.ToLowerInvariant();
+                if (!(n.Contains("tail") || n.Contains("elev") || n.Contains("fin") || n.Contains("rudder") || n.Contains("stab"))) continue;
+                var mf = r.GetComponent<MeshFilter>();
+                var m = r.sharedMaterial;
+                Debug.Log("[Airside diag] " + r.name + " enabled " + r.enabled + " active " + r.gameObject.activeInHierarchy + " visible " + r.isVisible
+                    + " inFrustum " + (planes != null && GeometryUtility.TestPlanesAABB(planes, r.bounds))
+                    + " centre " + view.InverseTransformPoint(r.bounds.center).ToString("F2") + " size " + r.bounds.size.ToString("F2")
+                    + " scale " + r.transform.lossyScale.ToString("F2") + " verts " + (mf != null && mf.sharedMesh != null ? mf.sharedMesh.vertexCount : -1)
+                    + " shader " + (m != null ? m.shader.name : "none") + " queue " + (m != null ? m.renderQueue : -1)
+                    + " shadow " + r.shadowCastingMode + " layer " + r.gameObject.layer + " mats " + r.sharedMaterials.Length);
             }
         }
     }

@@ -18,6 +18,7 @@ Outbound/AtDestination/Inbound (#720). #9 outstation landing toast keeps the out
 Outbound/AtDestination/Inbound (#720). #6 an armed contract card's button reads CONFIRM instead of ACCEPT (#733).
 Outbound/AtDestination/Inbound (#720). #11 the Adelaide radar is hidden while watching Parafield (#739).
 Outbound/AtDestination/Inbound (#720). #10 Flight Manual HUD placements and destination colours corrected (#744).
+Outbound/AtDestination/Inbound (#720). #5 a celebration card is modal: HUD, hotkeys and world clicks behind it are inert; Enter/Esc/button close it (#735).
 
 **Welcome and comfort fixes (9 Oct, Codex, #706):** title/setup weather isolation and consistent Weather Layers;
 F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; compact/recovery welcome cards;

@@ -1090,9 +1090,14 @@ namespace Airside.Presentation
             // live speed / altitude / heading strip stays up in both modes.
             if (!AirlineModalOpen && !_menuOpen && !InCockpit && !InTower && !WatchingOutstation)
             {
+                // Inert behind a celebration card (modal; see DrawAirlineHud).
+                var barWasEnabled = GUI.enabled;
+                if (CelebrationOpen)
+                    GUI.enabled = false;
                 DrawSpeedReadout(layout, panel);
                 if (!FleetMode)
                     DrawControlBar(layout, button);
+                GUI.enabled = barWasEnabled;
             }
             if (WatchingOutstation && !_menuOpen) DrawOutstationViewHud(panel, title, button);
             else if (InCockpit && !_menuOpen) DrawCockpitHud(layout, panel, button);

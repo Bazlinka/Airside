@@ -1324,6 +1324,8 @@ namespace Airside.Presentation
                 // glTF kits author prop verts at nacelle world positions while the
                 // Propeller transform sits at the kit origin — rebake so spin stays on-hub.
                 RebakePropellerPivots(root);
+                AircraftLandingGearGeometry.AddMissingBayDoors(root);
+                AirsideNamedChildren.Forget(root);
                 RebakeAircraftArticulatedPivots(root);
                 NestLandingGearParts(root);
                 // Tyre / wheel / rim meshes are baked at aircraft-space position with
@@ -2069,7 +2071,7 @@ namespace Airside.Presentation
                 var articulated = true;
                 if (AirsideAircraftParts.IsGearStrut(childName))
                 {
-                    pivot.y = bounds.max.y;
+                    pivot = AircraftLandingGearGeometry.TopAttachment(child, bounds);
                 }
                 else if (AirsideAircraftParts.IsGearDoor(childName))
                 {

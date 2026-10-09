@@ -212,6 +212,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAudioMixTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAuditContactTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftAuditFanGeometryTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftCatalogueTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftDoorShellAssetTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftDoorwayGeometryTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/AircraftLayoutTests.cs" />
@@ -264,6 +265,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CareerVarietyTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CathaySeasonTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CelestialSkyTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CircuitPresentationLogicTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CircuitProfileTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CircuitTrafficTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/CoastGridTests.cs" />
@@ -302,6 +304,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightDisruptionTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightEconomicsTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightNumberTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightPerformanceNativeTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightPerformanceRealismTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightPlannerTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/FlightRouteTests.cs" />
@@ -356,6 +359,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/OperationsWorkspaceTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/OptionsMenuTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ParafieldTrafficTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ParkedAircraftAndMotionTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/PassengerCabinProfileTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/PlayerFleetTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/PlayerHelicopterTests.cs" />
@@ -394,6 +398,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TaxiCrossingAndQueueTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TaxiLoopFixture.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TaxiPathCleanupTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TaxiRunwayNightTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TaxiwayEdgeWearTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TerminalPeopleTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/TerrainFieldTests.cs" />

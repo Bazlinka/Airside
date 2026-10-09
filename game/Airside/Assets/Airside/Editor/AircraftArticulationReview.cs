@@ -33,7 +33,9 @@ public static class AircraftArticulationReview
         string Arg(string key, string fallback) { var i = Array.IndexOf(args, key); return i >= 0 && i + 1 < args.Length ? args[i + 1] : fallback; }
         var output = Path.GetFullPath(Arg("-articulationOutput", "../../work/articulation-review"));
         var only = Arg("-aircraftReviewTypes", "ATR42,SF34,DH8D,E190,A223,A320,B738,B38M,A21N,A359,A339,B789,B78X").Split(',');
-        var pose = Arg("-articulationPose", "gearup");
+        var poses = Arg("-articulationPoses", Arg("-articulationPose", "gearup")).Split(',');
+        foreach (var pose in poses)
+        {
         var views = Arg("-aircraftReviewViews", pose is "roll" or "landing" ? "ahead,behind,top" : "side,front,under").Split(',');
         Directory.CreateDirectory(output);
         ShaderUtil.allowAsyncCompilation = false;
@@ -119,7 +121,7 @@ public static class AircraftArticulationReview
                 var rotation = Quaternion.Euler(-pitch, -yaw, 0f);
                 var framed = bounds;
                 // Gear shots frame the lower fuselage and the wheels, not the whole airframe.
-                if (pose is "gearup" or "gearmid" or "geardown" && gearBounds.HasValue)
+                if ((pose.StartsWith("gear") || pose.StartsWith("extend")) && gearBounds.HasValue)
                 {
                     framed = gearBounds.Value;
                     framed.Expand(2.5f);
@@ -148,6 +150,7 @@ public static class AircraftArticulationReview
         camera.targetTexture = null;
         Object.DestroyImmediate(target);
         Debug.Log("Aircraft articulation review: " + output);
+        }
     }
 
     private static void ApplyPose(Type proto, string pose, AircraftType type, object control, object gear,
@@ -168,18 +171,30 @@ public static class AircraftArticulationReview
                 for (var i = 0; i < 12; i++)
                     updateGear.Invoke(null, new object[] { gear, AircraftPhase.Circuit, 1f, 0.5f, 1f, 0f, null, null, type });
                 break;
+            case "gear10":
+            case "gear90":
             case "gearmid":
             {
                 // Seed fully down, then step to the progress that puts the gear half-way through its cycle.
                 updateGear.Invoke(null, GearArgs(AircraftPhase.Landing, 0.5f));
+                var wanted = pose == "gear10" ? 0.9f : pose == "gear90" ? 0.1f : 0.5f;
                 var best = 0f; var bestError = 9f;
                 for (var p = 0f; p <= 1f; p += 0.0005f)
                 {
-                    var error = Mathf.Abs(AirsideReusableMotion.GearBias(AircraftPhase.Takeoff, p, type) - 0.5f);
+                    var error = Mathf.Abs(AirsideReusableMotion.GearBias(AircraftPhase.Takeoff, p, type) - wanted);
                     if (error < bestError) { bestError = error; best = p; }
                 }
                 for (var i = 0; i < 80; i++)
                     updateGear.Invoke(null, new object[] { gear, AircraftPhase.Takeoff, 1f, best, 0.1f, 0f, null, null, type });
+                break;
+            }
+            case var extension when extension.StartsWith("extend"):
+            {
+                var seconds = float.Parse(extension.Substring(6), System.Globalization.CultureInfo.InvariantCulture);
+                for (var i = 0; i < 12; i++)
+                    updateGear.Invoke(null, new object[] { gear, AircraftPhase.Circuit, 1f, 0.5f, 1f, 0f, null, null, type });
+                for (var time = 0f; time < seconds - 0.001f; time += 0.05f)
+                    updateGear.Invoke(null, new object[] { gear, AircraftPhase.Approach, 1f, 0.5f, 0.05f, 0f, null, null, type });
                 break;
             }
             case var approach when approach.StartsWith("approach"):

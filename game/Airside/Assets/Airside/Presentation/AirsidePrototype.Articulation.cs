@@ -254,48 +254,40 @@ namespace Airside.Presentation
             truck.position = centre;
             truck.rotation = aircraft.rotation;
             truck.SetParent(strut, true);
+            // The kit bakes the beam and axles into the strut. Move their actual triangles
+            // with the wheel truck, otherwise tilted wheels visibly leave stationary axles.
+            AircraftLandingGearGeometry.SplitTruckBeam(strut, truck, centre);
             foreach (var wheel in wheelSet)
                 wheel.SetParent(truck, true);
         }
 
-        /// <summary>Slews a gear part's own retraction toward the phase's target; seeds it on first use.</summary>
-        private static float SlewGearRetract(LightGearPart part, float target, float deltaTime)
-        {
-            if (!part.RetractSeeded)
-            {
-                part.Retract = target;
-                part.RetractSeeded = true;
-            }
-            else
-            {
-                // Faster than the longest authored cycle, so it only ever softens a phase change.
-                // Lowering is the slow stroke (a real extension takes 15-30 s); raising stays quick.
-                var rate = target < part.Retract ? part.ExtendRate : 0.35f;
-                part.Retract = AircraftArticulation.MoveToward(part.Retract, target, deltaTime * rate);
-            }
-
-            return part.Retract;
-        }
+        // All legs, doors and trucks sample one clock. A new selection marker rebuilds the
+        // part cache; retaining the cycle on the root avoids a jump or an independently closing door.
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Transform,
+            AircraftArticulation.GearCycle> GearCycles = new();
 
         private static void PoseGearStrut(LightGearPart part, float retractTarget, float deltaTime)
         {
-            var swing = AircraftArticulation.GearLegSwing01(SlewGearRetract(part, retractTarget, deltaTime));
+            var swing = AircraftArticulation.GearLegSwing01(retractTarget);
             var rotation = AircraftArticulation.GearRetractRotation(part.Style, part.Role == GearRole.MainLeft, swing);
             var fold = Quaternion.AngleAxis(rotation.Degrees, new Vector3(rotation.AxisX, 0f, rotation.AxisZ));
+            // Centre steering before the leg leaves its lock; a turned twin-wheel assembly cannot fit the bay.
+            if (retractTarget > 0f)
+                part.SteerDegrees = Mathf.MoveTowards(part.SteerDegrees, 0f, deltaTime * 80f);
             // The leg retracts in its parent's frame; the nose wheel steers about the leg's own axis.
             part.Transform.localRotation = fold * part.Rest * Quaternion.AngleAxis(part.SteerDegrees, Vector3.up);
         }
 
         private static void PoseGearTruck(LightGearPart part, float retractTarget, float deltaTime)
         {
-            var swing = AircraftArticulation.GearLegSwing01(SlewGearRetract(part, retractTarget, deltaTime));
+            var swing = AircraftArticulation.GearLegSwing01(retractTarget);
             part.Transform.localRotation = part.Rest
                 * Quaternion.AngleAxis(AircraftArticulation.TruckTiltDegrees(swing), Vector3.right);
         }
 
         private static void PoseGearDoor(LightGearPart part, float retractTarget, float deltaTime)
         {
-            var open = AircraftArticulation.GearDoorOpen01(SlewGearRetract(part, retractTarget, deltaTime));
+            var open = AircraftArticulation.GearDoorOpen01(retractTarget);
             part.Transform.localRotation = part.Rest
                 * Quaternion.AngleAxis(part.DoorSign * AircraftArticulation.BellyDoorDegrees(open), Vector3.forward);
         }

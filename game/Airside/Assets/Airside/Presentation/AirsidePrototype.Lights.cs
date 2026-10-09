@@ -40,6 +40,9 @@ namespace Airside.Presentation
             // 2,000 ft (jets) / 1,500 ft (turboprops), lowered slowly, never early on a long final.
             if (phase == AircraftPhase.Approach && aircraftType != null && !aircraftType.IsRotorcraft)
                 retractTarget = ApproachGear.ApproachDown(aircraftType, height) ? 0f : 1f;
+            if (root != null)
+                retractTarget = GearCycles.GetValue(root, _ => new AircraftArticulation.GearCycle())
+                    .Step(retractTarget, deltaTime, ApproachGear.ExtendSeconds);
             var camera = Camera.main;
             var bearing = root != null && camera != null
                 ? Mathf.Atan2(root.InverseTransformPoint(camera.transform.position).x,
@@ -61,7 +64,6 @@ namespace Airside.Presentation
                 var child = parts[i].Transform;
                 if (child == null)
                     continue;
-                parts[i].ExtendRate = phase == AircraftPhase.Approach ? 1f / ApproachGear.ExtendSeconds : 0.35f;
                 switch (parts[i].Kind)
                 {
                     case LightGearKind.GearDoor:

@@ -18,18 +18,17 @@ namespace Airside.Presentation
 
         private static readonly Dictionary<string, TurnaroundSpot?> Cache = new();
 
-        public static bool TryFor(RegionalRunway runway, out TurnaroundSpot spot)
+        public static bool TryFor(RegionalRunway runway, string registration, out TurnaroundSpot spot)
         {
-            if (Cache.TryGetValue(runway.Code, out var cached))
+            if (!Cache.TryGetValue(runway.Code, out var cached))
             {
-                spot = cached ?? default;
-                return cached.HasValue;
+                cached = Load(runway);
+                Cache[runway.Code] = cached;
             }
 
-            var found = Load(runway);
-            Cache[runway.Code] = found;
-            spot = found ?? default;
-            return found.HasValue;
+            // Each aircraft has its own place on the apron, so those turning round together do not stack.
+            spot = cached.HasValue ? cached.Value.ForAircraft(registration) : default;
+            return cached.HasValue;
         }
 
         private static TurnaroundSpot? Load(RegionalRunway runway)

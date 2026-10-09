@@ -36,20 +36,55 @@ namespace Airside.Presentation
     }
 
     /// <summary>
-    /// A point on a mapped apron where an outstation turnaround is spent, and the way the nose faces there.
+    /// A point on a mapped apron where an outstation turnaround is spent, and the way the nose faces there. The apron's
+    /// spot is shared out in <see cref="Slots"/> side-by-side positions so aircraft turning round together do not stack.
     /// </summary>
     public readonly struct TurnaroundSpot
     {
-        public TurnaroundSpot(double x, double z, double yawDegrees)
+        public TurnaroundSpot(double x, double z, double yawDegrees, int slots = 1, double slotSpacing = 0.0,
+            double tangentX = 0.0, double tangentZ = 0.0)
         {
             X = x;
             Z = z;
             YawDegrees = yawDegrees;
+            Slots = Math.Max(1, slots);
+            SlotSpacing = slotSpacing;
+            TangentX = tangentX;
+            TangentZ = tangentZ;
         }
 
         public double X { get; }
         public double Z { get; }
         public double YawDegrees { get; }
+
+        /// <summary>How many aircraft fit side by side along the apron.</summary>
+        public int Slots { get; }
+        public double SlotSpacing { get; }
+        public double TangentX { get; }
+        public double TangentZ { get; }
+
+        /// <summary>The position of slot <paramref name="index"/> (wrapped into range), centred on the apron.</summary>
+        public TurnaroundSpot ForSlot(int index)
+        {
+            var slot = ((index % Slots) + Slots) % Slots;
+            var offset = (slot - (Slots - 1) * 0.5) * SlotSpacing;
+            return new TurnaroundSpot(X + TangentX * offset, Z + TangentZ * offset, YawDegrees);
+        }
+
+        /// <summary>
+        /// The slot an aircraft always uses here: a stable hash of its registration (never a runtime string hash, which
+        /// differs between runs), so the same aircraft parks in the same place every visit and after every load.
+        /// </summary>
+        public TurnaroundSpot ForAircraft(string registration)
+        {
+            unchecked
+            {
+                var hash = 2166136261u;
+                foreach (var c in registration ?? string.Empty)
+                    hash = (hash ^ c) * 16777619u;
+                return ForSlot((int)(hash % (uint)Slots));
+            }
+        }
     }
 
     /// <summary>
@@ -68,6 +103,11 @@ namespace Airside.Presentation
 
         /// <summary>Each taxi leg may take at most this share of the turnaround, so a short stay still parks.</summary>
         public const double MaximumLegShare = 0.3;
+
+        /// <summary>Spacing between parked aircraft along an apron: a regional wingspan plus clearance.</summary>
+        public const double SlotSpacingMetres = 38.0;
+        public const double SlotMarginMetres = 20.0;
+        public const int MaximumSlots = 6;
 
         /// <summary>Tightest turn on the taxi legs, about a turboprop's nose-wheel limit at taxi speed.</summary>
         public const double TurningRadiusMetres = 22.0;
@@ -154,7 +194,21 @@ namespace Airside.Presentation
                 }
             }
 
-            return new TurnaroundSpot(cx, cz, yaw);
+            // Side-by-side positions along the apron, perpendicular to the nose, kept inside its extent.
+            var yawRadians = yaw * Math.PI / 180.0;
+            var tx = Math.Cos(yawRadians);
+            var tz = -Math.Sin(yawRadians);
+            double low = double.MaxValue, high = double.MinValue;
+            for (var i = 0; i < apronX.Length; i++)
+            {
+                var along = (apronX[i] - cx) * tx + (apronZ[i] - cz) * tz;
+                low = Math.Min(low, along);
+                high = Math.Max(high, along);
+            }
+
+            var half = Math.Min(-low, high) - SlotMarginMetres;
+            var slots = half > 0 ? Math.Min(MaximumSlots, 1 + (int)Math.Floor(2.0 * half / SlotSpacingMetres)) : 1;
+            return new TurnaroundSpot(cx, cz, yaw, slots, SlotSpacingMetres, tx, tz);
         }
 
         /// <summary>

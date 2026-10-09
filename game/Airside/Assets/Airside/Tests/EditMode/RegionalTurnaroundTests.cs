@@ -121,6 +121,22 @@ namespace Airside.Tests
             Assert.That(spot.X, Is.EqualTo(50.0).Within(1e-9));
             Assert.That(spot.Z, Is.EqualTo(30.0).Within(1e-9));
             Assert.That(YawGap(spot.YawDegrees, 0.0), Is.LessThan(10.0), "terminal is straight ahead (+Z)");
+            // A 100 m wide apron fits two aircraft side by side; different aircraft use different places, always the same one.
+            Assert.That(spot.Slots, Is.EqualTo(2));
+            var left = spot.ForSlot(0);
+            var right = spot.ForSlot(1);
+            Assert.That(Distance(left.X, left.Z, right.X, right.Z), Is.EqualTo(RegionalTurnaround.SlotSpacingMetres).Within(1e-6));
+            Assert.That(left.YawDegrees, Is.EqualTo(spot.YawDegrees));
+            var used = new System.Collections.Generic.HashSet<string>();
+            for (var i = 0; i < 20; i++)
+            {
+                var p = spot.ForAircraft("VH-T" + i);
+                Assert.That(Distance(p.X, p.Z, spot.ForAircraft("VH-T" + i).X, spot.ForAircraft("VH-T" + i).Z), Is.EqualTo(0.0));
+                Assert.That(p.X, Is.InRange(0.0, 100.0), "stays on the apron");
+                used.Add(p.X.ToString("0.0"));
+            }
+
+            Assert.That(used.Count, Is.EqualTo(2), "twenty aircraft are spread over both places");
             var without = RegionalTurnaround.Spot(new[] { 0.0, 10, 10 }, new[] { 0.0, 0, 10 }, null, null, 77);
             Assert.That(without.YawDegrees, Is.EqualTo(77.0).Within(1e-9), "no terminal: parallel to the runway");
         }

@@ -255,7 +255,7 @@ namespace Airside.Presentation
         {
             pose = default;
             if (aircraft.State != FleetState.AtDestination || !aircraft.StateEndsAt.HasValue
-                || !RegionalApron.TryFor(runway, out var spot)) return false;
+                || !RegionalApron.TryFor(runway, aircraft.Registration, out var spot)) return false;
             var started = aircraft.StateStartedAt.ElapsedSeconds;
             var duration = aircraft.StateEndsAt.Value.ElapsedSeconds - started;
             if (duration < RegionalTurnaround.MinimumStaySeconds) return false;

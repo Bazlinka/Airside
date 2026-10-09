@@ -22,6 +22,13 @@ namespace Airside.Presentation
         public const float MinShellThickness = 0.004f;
         public const float MaxShellThickness = 0.05f;
 
+        /// <summary>
+        /// The generators clamp every door shell to exactly <see cref="MinShellThickness"/> where the skin is
+        /// flat, and storing that in float32 (then moving it into the aircraft's space) lands a few micrometres
+        /// short of 4 mm. A strict comparison rejected every such door and left bare hull behind it.
+        /// </summary>
+        public const float ThicknessTolerance = 0.0005f;
+
         /// <summary>Rings the generators give every door (the outline, three inner copies, then the centre).</summary>
         public const int DoorRings = 3;
 
@@ -54,7 +61,7 @@ namespace Airside.Presentation
                 var dy = positions[i * 3 + 1] - positions[(i + half) * 3 + 1];
                 var dz = positions[i * 3 + 2] - positions[(i + half) * 3 + 2];
                 var length = (float)Math.Sqrt(dx * dx + dy * dy + dz * dz);
-                if (length < MinShellThickness || length > MaxShellThickness)
+                if (length < MinShellThickness - ThicknessTolerance || length > MaxShellThickness)
                     return false;
                 outward[i * 3] = dx / length;
                 outward[i * 3 + 1] = dy / length;

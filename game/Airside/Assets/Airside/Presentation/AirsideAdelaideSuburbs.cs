@@ -281,7 +281,7 @@ namespace Airside.Presentation
                 parts.Quad(new Vector3(p.x, baseY, p.z), new Vector3(q.x, baseY, q.z),
                     new Vector3(q.x, eaves, q.z), new Vector3(p.x, eaves, p.z), outward, wall);
                 parts.Lights.Windows(new Vector3(p.x, baseY + SinkMetres, p.z),
-                    new Vector3(q.x, baseY + SinkMetres, q.z), b.WallHeight, b.IsHipped);
+                    new Vector3(q.x, baseY + SinkMetres, q.z), b.WallHeight, b.IsHipped, outward);
             }
 
             if (b.IsHipped)

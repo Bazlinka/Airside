@@ -39,7 +39,7 @@ namespace Airside.Presentation
                 var x = Vector3.right*radius; var z = Vector3.forward*radius;
                 Quad(position-x-z,position+x-z,position+x+z,position-x+z,colour,new Vector3(0,0,0));
             }
-            public void Windows(Vector3 a, Vector3 b, float height, bool house)
+            public void Windows(Vector3 a, Vector3 b, float height, bool house, Vector3? outwardNormal = null)
             {
                 var delta=b-a; delta.y=0;
                 var length=delta.magnitude;
@@ -47,7 +47,7 @@ namespace Airside.Presentation
                 var along=delta/length;
                 // Polygon winding differs between imported sources: both sides are rendered;
                 // a 2 cm offset avoids z-fighting without detaching the window from its wall.
-                var outward=new Vector3(along.z,0,-along.x)*.02f;
+                var outward=(outwardNormal ?? new Vector3(along.z,0,-along.x)).normalized*.02f;
                 var columns=Math.Min(20,(int)(length/3.2f));
                 var floors=house ? 1 : Math.Min(8,(int)(height/3.2f));
                 for(var floor=0;floor<floors;floor++)
@@ -61,9 +61,6 @@ namespace Airside.Presentation
                     var half=along*.48f; var up=Vector3.up*.55f;
                     Quad(centre-half-up+outward,centre+half-up+outward,
                         centre+half+up+outward,centre-half+up+outward,warm*.85f,new Vector3(0,-1,0));
-                    // Backward offset is needed for clockwise imported footprints.
-                    Quad(centre-half-up-outward,centre+half-up-outward,
-                        centre+half+up-outward,centre-half+up-outward,warm*.85f,new Vector3(0,-1,0));
                 }
             }
             public void Street(Vector3 ground, Vector3 roadDirection, float width, bool pole = true)
@@ -71,8 +68,8 @@ namespace Airside.Presentation
                 var side=new Vector3(-roadDirection.z,0,roadDirection.x).normalized;
                 var foot=ground+side*(width*.5f+.65f);
                 var head=foot+Vector3.up*7.5f-side*.8f;
-                var warm=new Color(1,.77f,.43f).linear;
-                Glow(head,.36f,warm*1.6f,5);
+                var warm=new Color(1,.70f,.33f).linear;
+                Glow(head,.36f,warm*.75f,5);
                 Pool(ground+Vector3.up*.10f,5.5f,warm*.065f);
                 if (!pole) return;
                 var metal=new Color(.19f,.21f,.22f).linear;
@@ -129,7 +126,7 @@ namespace Airside.Presentation
                 if(!batches.TryGetValue(tile,out var batch)) batches[tile]=batch=new Batch();
                 // Existing lamp props use this exact head offset and height.
                 var head=new Vector3(x+.5f,groundHeight(x,z)+AdelaideCarParkGeometry.LampHeight,z);
-                batch.Glow(head,.36f,new Color(1,.77f,.43f).linear*1.6f,5);
+                batch.Glow(head,.36f,new Color(1,.70f,.33f).linear*.75f,5);
                 batch.Pool(new Vector3(x,groundHeight(x,z)+.10f,z),5.5f,new Color(1,.77f,.43f).linear*.065f);
             }
             foreach(var road in AdelaideRoadNetwork.Roads)

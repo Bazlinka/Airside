@@ -16,8 +16,9 @@ Shader "Airside/SettlementLights"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             float _AirsideSettlementNight;
+            float _AirsideHorizonScale;
             struct A { float4 positionOS:POSITION; float3 mode:NORMAL; float2 uv:TEXCOORD0; float4 colour:COLOR; };
-            struct V { float4 positionCS:SV_POSITION; float2 uv:TEXCOORD0; float3 colour:TEXCOORD1; float mode:TEXCOORD2; float fog:TEXCOORD3; };
+            struct V { float4 positionCS:SV_POSITION; float2 uv:TEXCOORD0; float3 colour:TEXCOORD1; float mode:TEXCOORD2; float fog:TEXCOORD3; float distanceWS:TEXCOORD4; };
             V vert(A a)
             {
                 V o;float3 p=TransformObjectToWorld(a.positionOS.xyz);
@@ -30,13 +31,15 @@ Shader "Airside/SettlementLights"
                       +UNITY_MATRIX_I_V._m01_m11_m21*a.uv.y*radius;
                 }
                 o.positionCS=TransformWorldToHClip(p);o.uv=a.uv;o.colour=a.colour.rgb;
-                o.mode=a.mode.y;o.fog=ComputeFogFactor(o.positionCS.z);return o;
+                o.mode=a.mode.y;o.fog=ComputeFogFactor(o.positionCS.z);
+                o.distanceWS=length(p-GetCameraPositionWS());return o;
             }
             half4 frag(V i):SV_Target
             {
                 float radial=saturate(1-dot(i.uv,i.uv));
                 float weight=i.mode<-.5 ? 1 : radial*radial;
-                float strength=_AirsideSettlementNight*weight;
+                float strength=_AirsideSettlementNight*weight
+                    *(1-smoothstep(40000,55000,i.distanceWS/max(1,_AirsideHorizonScale)));
                 if(i.mode>1.5) strength=.3; // Restrained pole silhouette; no emissive metal.
                 float3 colour=i.colour*strength;
                 colour=MixFogColor(colour,half3(0,0,0),i.fog);

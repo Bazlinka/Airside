@@ -276,10 +276,6 @@ namespace Airside.Presentation
                 // The original detailed meshes own Adelaide. This landscape tucks under them.
                 if (Math.Abs(wx)<=96000 && Math.Abs(wz)<=96000) y-=12;
                 vertices[z*n+x]=new Vector3(x*stride,(float)y,z*stride);
-                if(!coarse && x<cells && z<cells && (Math.Abs(wx)>96000 || Math.Abs(wz)>96000)
-                    && cover!=null && cover.TryClass(lat,lon,out var settlement) && settlement==AdelaideFarLandCover.Built)
-                    settlementLights.Glow(new Vector3(x*stride,(float)y+5,z*stride),2,
-                        new Color(1,.70f,.36f).linear*.7f,20);
                 if (land && cover != null && CoverColour(cover,lat,lon,coarse,out var coverColour))
                 {
                     colors[z*n+x]=coverColour;
@@ -298,6 +294,29 @@ namespace Airside.Presentation
                 if(Math.Abs(wx)<95000 && Math.Abs(wz)<95000) continue;
                 triangles.Add(a);triangles.Add(c);triangles.Add(b);
                 triangles.Add(b);triangles.Add(c);triangles.Add(d);
+            }
+            if(!coarse)
+            {
+                // Lighting density is geographic, independent of the altitude-driven terrain LOD.
+                // Sampling only coarse mesh vertices missed small towns and changed lights in cruise.
+                const int lightStep=500;
+                for(var z=lightStep/2;z<tileMetres;z+=lightStep)
+                for(var x=lightStep/2;x<tileMetres;x+=lightStep)
+                {
+                    var wx=tx*(double)tileMetres+x;var wz=tz*(double)tileMetres+z;
+                    if(Math.Abs(wx)<=96000 && Math.Abs(wz)<=96000) continue;
+                    YpadFrame.ToLatLon(wx,wz,out var lat,out var lon);
+                    var cover=_approachCover!=null && _approachCover.TryClass(lat,lon,out _) ? _approachCover
+                        : _nationalCover!=null && _nationalCover.TryClass(lat,lon,out _) ? _nationalCover : _cover;
+                    if(cover==null || !cover.TryClass(lat,lon,out var cls) || cls!=AdelaideFarLandCover.Built) continue;
+                    var gx=x/stride;var gz=z/stride;var ix=(int)gx;var iz=(int)gz;
+                    var u=gx-ix;var v=gz-iz;
+                    var a=vertices[iz*n+ix].y;var b=vertices[iz*n+ix+1].y;
+                    var c=vertices[(iz+1)*n+ix].y;var d=vertices[(iz+1)*n+ix+1].y;
+                    // Drape on the actual rendered triangle, rather than beneath a coarse hills mesh.
+                    var y=u+v<=1 ? a+(b-a)*u+(c-a)*v : d+(c-d)*(1-u)+(b-d)*(1-v);
+                    settlementLights.Glow(new Vector3(x,y+5,z),2,new Color(1,.70f,.36f).linear*.7f,20);
+                }
             }
             var mesh=new Mesh {name=coarse ? $"SA coarse terrain {tx},{tz}" : $"SA terrain {tx},{tz}"};
             mesh.vertices=vertices;mesh.colors=colors;mesh.SetTriangles(triangles,0);

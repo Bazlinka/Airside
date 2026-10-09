@@ -6,7 +6,7 @@
   "buffers": [
     {
       "uri": "mdl_737_8_narrowbody_v01.bin",
-      "byteLength": 1990228
+      "byteLength": 1994836
     }
   ],
   "bufferViews": [
@@ -2384,6 +2384,30 @@
       "buffer": 0,
       "byteOffset": 1988212,
       "byteLength": 2016,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1990228,
+      "byteLength": 1536,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1991764,
+      "byteLength": 768,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1992532,
+      "byteLength": 1536,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 1994068,
+      "byteLength": 768,
       "target": 34963
     }
   ],
@@ -6743,6 +6767,50 @@
       "componentType": 5123,
       "count": 1008,
       "type": "SCALAR"
+    },
+    {
+      "bufferView": 396,
+      "componentType": 5126,
+      "count": 128,
+      "type": "VEC3",
+      "max": [
+        -4.490000247955322,
+        3.989999771118164,
+        -14.1850004196167
+      ],
+      "min": [
+        -6.2099995613098145,
+        2.270000457763672,
+        -14.495501518249512
+      ]
+    },
+    {
+      "bufferView": 397,
+      "componentType": 5123,
+      "count": 384,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 398,
+      "componentType": 5126,
+      "count": 128,
+      "type": "VEC3",
+      "max": [
+        6.2099995613098145,
+        3.989999771118164,
+        -14.1850004196167
+      ],
+      "min": [
+        4.490000247955322,
+        2.270000457763672,
+        -14.495501518249512
+      ]
+    },
+    {
+      "bufferView": 399,
+      "componentType": 5123,
+      "count": 384,
+      "type": "SCALAR"
     }
   ],
   "meshes": [
@@ -9121,6 +9189,30 @@
           "mode": 4
         }
       ]
+    },
+    {
+      "name": "intake_liner_left",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 396
+          },
+          "indices": 397,
+          "mode": 4
+        }
+      ]
+    },
+    {
+      "name": "intake_liner_right",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 398
+          },
+          "indices": 399,
+          "mode": 4
+        }
+      ]
     }
   ],
   "nodes": [
@@ -9915,6 +10007,14 @@
     {
       "name": "livery_cowl_right",
       "mesh": 197
+    },
+    {
+      "name": "intake_liner_left",
+      "mesh": 198
+    },
+    {
+      "name": "intake_liner_right",
+      "mesh": 199
     }
   ],
   "scenes": [
@@ -10118,7 +10218,9 @@
         194,
         195,
         196,
-        197
+        197,
+        198,
+        199
       ]
     }
   ],

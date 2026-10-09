@@ -541,3 +541,14 @@ Existing OSM/terrain geometry, material/source registrations and approved asset
 paths remain. New pure C# builders carry metadata; no external asset/model/texture.
 Integrated with focused geometry checks; native rendering/performance unverified.
 Decision: `2026-10-09-physical-ground-detail`.
+
+
+## Dash 8 nacelle/bay repair — 9 October 2026 (task #712)
+
+AIR-006 existing exact paths/GUIDs: original procedural nacelle, fitted bay doors,
+under-wing joins and cowl-shell refit; editable FBX/glTF/bin, existing thumbnail
+and packaged mirrors. Source: `scripts/generate-air-006-dash8-q400.py --nacelles-only`;
+project-owned derivative geometry, no external artwork/assets, no attribution or
+cost. Previous git revision is the fallback. Other finished aircraft parts and
+fictional tail paint are preserved. Native baseline reproduced the gear fault;
+fixed visual validation is pending. Evidence: `docs/testing/dash8-visual-repair-2026-10-09/README.md`.

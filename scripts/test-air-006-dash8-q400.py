@@ -33,10 +33,28 @@ for fairing in ("gear_fairing_left", "gear_fairing_right"):
     assert len(fairing_vertices) > 500, f"{fairing} must retain a rounded bay profile"
     assert np.ptp(fairing_vertices, axis=0)[2] < 3.1
 
-# Open doors remain thin readable sheets below that curved bay.
+# Bay leaves follow the underside when locked; they are wide curved panels,
+# not the thin vertical plates that the runtime parents to a folding leg.
 for door in ("gear_door_left", "gear_door_right", "gear_door_inner_l", "gear_door_inner_r"):
     door_vertices, _ = meshes[door]
-    assert np.ptp(door_vertices, axis=0)[0] <= 0.11, f"{door} must stay a thin door sheet"
+    assert np.ptp(door_vertices, axis=0)[0] > 0.6, f"{door} must hinge independently"
+    assert len(door_vertices) > 1000, f"{door} must follow the curved skin"
+
+# The actual leg/tyre geometry, transformed by the runtime's aft-fold pose,
+# must fit inside the rear nacelle. The previous shell failed this enclosure.
+for side, name in ((-1, "left"), (1, "right")):
+    leg = meshes["gear_" + name][0]
+    pivot = np.array([side * 4.35, leg[:, 1].max(), -1.9])
+    for part, (v, _) in meshes.items():
+        prefixes = tuple(k + name for k in ("tire_", "wheel_", "rim_", "gear_oleo_", "gear_scissors_"))
+        if part != "gear_" + name and not part.startswith(prefixes):
+            continue
+        d = v - pivot
+        stowed = pivot + np.column_stack((d[:, 0], -d[:, 2], d[:, 1]))
+        rx, ry, cy = [np.interp(stowed[:, 2], module.NACELLE_STATIONS[:, 0],
+                              module.NACELLE_STATIONS[:, c]) for c in (1, 2, 3)]
+        ellipse = ((stowed[:, 0] - side * 4.35) / rx)**2 + ((stowed[:, 1] - cy) / ry)**2
+        assert ellipse.max() < 0.95, f"{part} protrudes from the stowed bay"
 
 assert "wing_centre_saddle" in meshes and len(meshes["wing_centre_saddle"][0]) > 2000
 
@@ -44,4 +62,4 @@ for name, (part_vertices, indices) in meshes.items():
     assert np.isfinite(part_vertices).all(), name
     assert len(indices) % 3 == 0 and int(indices.max()) < len(part_vertices), name
 
-print("PASS: AIR-006 bounds, rounded nacelle bays, thin doors, saddle and mesh integrity.")
+print("PASS: AIR-006 bounds, rounded nacelle bays, closed bay leaves, stowed wheel enclosure, saddle and mesh integrity.")

@@ -154,6 +154,14 @@ namespace Airside.Presentation
                 worldBounds.center.y, worldBounds.center.z);
         }
 
+        /// <summary>The outer and inner leaf hinge on opposite shoulders of the nacelle bay.</summary>
+        private static Vector3 NacelleDoorHingePivot(Bounds worldBounds, float centreX, bool inner)
+        {
+            var hingeOnLeft = (worldBounds.center.x < centreX) != inner;
+            return new Vector3(hingeOnLeft ? worldBounds.min.x : worldBounds.max.x,
+                worldBounds.max.y, worldBounds.center.z);
+        }
+
         /// <summary>-1 for a door hinged on its left (min X) edge, +1 on its right: the free edge swings down.</summary>
         private static float BellyDoorHingeSign(Transform door)
         {

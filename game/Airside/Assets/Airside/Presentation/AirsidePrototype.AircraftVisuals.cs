@@ -1739,7 +1739,9 @@ namespace Airside.Presentation
             "gear_nose" or "gear_left" or "gear_right"
                 or "gear_oleo_nose" or "gear_oleo_left" or "gear_oleo_right"
                 or "gear_scissors_nose" or "gear_scissors_left" or "gear_scissors_right"
-                or "gear_door_nose" or "gear_door_left" or "gear_door_right" => new Color(0.25f, 0.25f, 0.28f),
+                or "gear_door_nose" => new Color(0.25f, 0.25f, 0.28f),
+            "gear_door_left" or "gear_door_right" or "gear_door_inner_l" or "gear_door_inner_r"
+                => AircraftLiveryPaint.AirframeWhite,
             "tire_nose" or "tire_left" or "tire_right" => new Color(0.12f, 0.12f, 0.13f),
             "rim_nose" or "rim_left" or "rim_right"
                 or "wheel_nose" or "wheel_left" or "wheel_right" => new Color(0.55f, 0.56f, 0.58f),
@@ -2063,7 +2065,16 @@ namespace Airside.Presentation
                         == GearDoorKind.LegMounted)
                         articulated = false;
                     else
-                        pivot = BellyDoorHingePivot(bounds, aircraft.TransformPoint(Vector3.zero).x);
+                    {
+                        var innerBayDoor = childName.StartsWith("gear_door_inner", StringComparison.OrdinalIgnoreCase);
+                        var nacelleBayDoor = innerBayDoor || ((childName is "Gear door L" or "Gear door R")
+                            && Array.Exists(childNames20, n => n.StartsWith("gear_door_inner", StringComparison.OrdinalIgnoreCase)));
+                        // The two Dash 8 leaves hinge at opposite edges of the same nacelle,
+                        // not both at the edge furthest from the aircraft centreline.
+                        pivot = nacelleBayDoor
+                            ? NacelleDoorHingePivot(bounds, aircraft.TransformPoint(Vector3.zero).x, innerBayDoor)
+                            : BellyDoorHingePivot(bounds, aircraft.TransformPoint(Vector3.zero).x);
+                    }
                 }
                 else if (childName is "Flap L" or "Flap R"
                          || childName.StartsWith("Aileron", StringComparison.Ordinal)

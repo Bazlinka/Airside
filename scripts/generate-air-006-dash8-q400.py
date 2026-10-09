@@ -285,91 +285,103 @@ def _loft_rings(rings):
     return np.asarray(verts, np.float32), np.asarray(indices, np.uint16)
 
 
-def nacelle_pod(x):
-    """Single aerodynamic nacelle: intake lip, core, gear-bay belly, exhaust.
+# The rear bay must enclose the actual wheel envelope after the runtime's
+# 90-degree aft fold about the top of the existing leg (y=2.525, z=-1.9).
+NACELLE_STATIONS = np.array([
+    (-5.10, .09, .12, 2.34), (-4.85, .28, .35, 2.44),
+    (-4.55, .56, .66, 2.525), (-4.15, .70, .82, 2.60),
+    (-3.50, .78, 1.00, 2.68), (-2.70, .78, 1.14, 2.76),
+    (-1.80, .78, 1.10, 2.96), (-.80, .82, .98, 3.18),
+    (.30, .84, .86, 3.38), (1.50, .84, .78, 3.46),
+    (2.70, .82, .74, 3.48), (3.80, .76, .68, 3.50),
+    (4.60, .68, .60, 3.52), (5.10, .56, .50, 3.54),
+    (5.40, .38, .34, 3.56), (5.62, .12, .10, 3.58),
+], dtype=np.float32)
 
-    Stations follow the Dash 8-400 elongated nacelle that also houses the
-    rearward main gear (Airport Planning / Aeroplane General references).
-    """
-    stations = [
-        (5.62, 0.12, 0.10, 3.58),  # intake lip highlight
-        (5.40, 0.38, 0.34, 3.56),
-        (5.10, 0.56, 0.50, 3.54),
-        (4.60, 0.68, 0.60, 3.52),
-        (3.80, 0.76, 0.68, 3.50),
-        (2.70, 0.82, 0.74, 3.48),
-        (1.50, 0.84, 0.78, 3.46),
-        (0.30, 0.84, 0.86, 3.38),
-        (-0.80, 0.82, 0.98, 3.18),  # gear-bay deepen
-        (-1.80, 0.78, 1.10, 2.96),
-        (-2.70, 0.70, 1.14, 2.76),
-        (-3.50, 0.56, 1.00, 2.56),
-        (-4.15, 0.38, 0.68, 2.44),
-        (-4.65, 0.22, 0.36, 2.38),
-        (-5.10, 0.09, 0.12, 2.34),  # exhaust taper
-    ]
-    segs = 64
-    rings = []
-    for z, rx, ry, cy in stations:
-        ring = []
-        for i in range(segs):
-            ang = 2.0 * np.pi * i / segs
-            # Soft flat on the top where the wing / pylon lands.
-            top_flat = 0.88 if np.sin(ang) > 0.50 else 1.0
-            # Slight belly keel through the gear bay so doors read under the pod.
-            belly = 1.08 if (z < -0.5 and np.sin(ang) < -0.35) else 1.0
-            ring.append(
-                [
-                    x + rx * np.cos(ang),
-                    cy + ry * top_flat * belly * np.sin(ang),
-                    z,
-                ]
-            )
-        rings.append(np.asarray(ring, np.float32))
-    return _loft_rings(rings)
+
+def nacelle_surface(x, z, angle, offset=0.0):
+    rx, ry, cy = [float(np.interp(z, NACELLE_STATIONS[:, 0],
+                                 NACELLE_STATIONS[:, c])) for c in (1, 2, 3)]
+    a = np.deg2rad(angle)
+    top_flat = .88 if np.sin(a) > .50 else 1.0
+    return np.array([x + (rx + offset)*np.cos(a),
+                     cy + (ry + offset)*np.sin(a)*top_flat, z], np.float32)
+
+
+def nacelle_pod(x):
+    """Continuous nacelle with enough rear volume for the folded twin wheels."""
+    zs = np.unique(np.r_[NACELLE_STATIONS[:, 0], np.linspace(-5.10, 5.62, 55)])
+    rings = [[nacelle_surface(x, float(z), float(a))
+              for a in np.linspace(0, 360, 64, endpoint=False)] for z in zs]
+    # Shared ring vertices allow smooth lighting across the aerodynamic shell.
+    v = np.asarray(rings, np.float32).reshape(-1, 3)
+    f = []
+    for r in range(len(zs)-1):
+        for i in range(64):
+            a=r*64+i; b=r*64+(i+1)%64
+            f.extend((a,b,b+64,a,b+64,a+64))
+    for ring, reverse in ((0, True), (len(zs)-1, False)):
+        c=len(v); v=np.vstack((v, np.mean(v[ring*64:(ring+1)*64],axis=0)))
+        for i in range(64):
+            a=ring*64+i; b=ring*64+(i+1)%64
+            f.extend((c,b,a) if reverse else (c,a,b))
+    return _v05._orient_outward(v.astype(np.float32), np.asarray(f,np.uint16))
+
+
+def nacelle_gear_doors(x, side):
+    """Two closed hull-fitted bay leaves, rather than tall leg-mounted slabs."""
+    # Hinge at the outer edge of each half; runtime opens them about Z.
+    surface = lambda z, angle, offset: nacelle_surface(x,z,angle,offset)
+    outer_angle = 225.0 if side < 0 else 315.0
+    inner_angle = 315.0 if side < 0 else 225.0
+    return tuple(skin.skin_patch(surface, -2.72, angle, 1.72, skin.metres_per_degree(surface,-2.72,angle)*44.7,
+                                 front=.008, back=-.008, radius=.015,
+                                 rings=8, max_edge=.12)
+                 for angle in (outer_angle,inner_angle))
 
 
 def nacelle_wing_fillet(x, side):
-    """Blend the nacelle crown into the wing undersurface (one assembly read)."""
-    z_stations = np.linspace(-1.80, 3.40, 14)
-    segs = 28
-    rings = []
-    for z in z_stations:
-        t = float(np.clip((z + 1.80) / 5.20, 0.0, 1.0))
-        envelope = np.sin(np.pi * t) ** 0.70
-        cx = x
-        cy = 3.85 + 0.35 * envelope
-        rx = 0.55 + 0.35 * envelope
-        ry = 0.22 + 0.28 * envelope
-        ring = []
-        for i in range(segs):
-            ang = 2.0 * np.pi * i / segs
-            # Bias upward into the wing, keep a soft oval footprint.
-            y_scale = 0.45 + 0.55 * max(0.0, np.sin(ang))
-            ring.append(
-                [
-                    cx + rx * np.cos(ang),
-                    cy + ry * y_scale * np.sin(ang),
-                    float(z),
-                ]
-            )
-        rings.append(np.asarray(ring, np.float32))
-    return _loft_rings(rings)
+    """Tapered bridge wholly below the wing, with buried ends and shoulders."""
+    zs = np.linspace(-.60, 2.95, 45)
+    us = np.linspace(-1,1,25)
+    rings=[]
+    for z in zs:
+        t=(z-zs[0])/(zs[-1]-zs[0]); taper=np.sin(np.pi*t)**.7
+        top=[]; bottom=[]
+        for u in us:
+            xx=x+u*(.50+.12*taper)
+            fraction=(abs(xx)-1.55)/(6.40-1.55)
+            cy=4.52+fraction*.10; front=3.25-fraction*.40
+            chord=4.35+fraction*(2.95-4.35); thickness=.40+fraction*(.26-.40)
+            loop=_v05._section_loop(abs(xx),cy,front,chord,thickness,22,False)
+            upper=loop[:22]; lower=loop[22:]
+            wing_bottom=float(np.interp(z,lower[:,2],lower[:,1]))
+            rx=float(np.interp(z,NACELLE_STATIONS[:,0],NACELLE_STATIONS[:,1]))
+            angle=np.rad2deg(np.arccos(np.clip((xx-x)/rx,-1,1)))
+            crown=nacelle_surface(x,z,angle)[1]
+            shoulder=max(0,1-u*u)**.6*taper
+            # The bridge reaches the lower wing, never grows above its upper skin.
+            y=crown-.025+shoulder*(wing_bottom+.018-crown+.025)
+            top.append((xx,y,z)); bottom.append((xx,crown-.08,z))
+        rings.append(top+bottom[::-1])
+    v=np.asarray(rings,np.float32).reshape(-1,3); n=len(rings[0]); f=[]
+    for r in range(len(rings)-1):
+        for i in range(n):
+            a=r*n+i;b=r*n+(i+1)%n
+            f.extend((a,b,b+n,a,b+n,a+n))
+    for r,reverse in ((0,True),(len(rings)-1,False)):
+        for j in range(len(us)-1):
+            a=r*n+j;b=a+1;c=r*n+n-2-j;d=c+1
+            f.extend((a,c,b,a,d,c) if reverse else (a,b,c,a,c,d))
+    return _v05._orient_outward(v,np.asarray(f,np.uint16))
 
 
 def nacelle_gear_fairing(x):
-    """Rounded rear nacelle belly enclosing the Q400 main-gear bay."""
-    local = oval_lathe_fuselage(
-        [
-            (-3.50, 0.16, 0.18, 2.42),
-            (-2.88, 0.46, 0.44, 2.38),
-            (-2.15, 0.64, 0.56, 2.40),
-            (-1.40, 0.60, 0.54, 2.48),
-            (-0.72, 0.34, 0.32, 2.66),
-        ],
-        segments=36,
-    )
-    return translated(local, x, 0.0, 0.0)
+    """Buried bay backing, sharing the revised nacelle's enclosed wheel volume."""
+    return translated(oval_lathe_fuselage([
+        (-3.9,.12,.16,2.65),(-3.4,.32,.34,2.7),
+        (-2.5,.44,.46,2.8),(-1.6,.32,.34,2.95),
+        (-1.1,.12,.16,3.05)], segments=36),x,0,0)
 
 
 def wing_centre_saddle():
@@ -773,13 +785,7 @@ def q400_meshes():
         meshes[f"gear_scissors_{name}"] = box(
             x + side * 0.16, 1.45, -1.50, 0.09, 0.70, 0.45
         )
-        # Open main-gear doors hang below the nacelle so the bay reads clearly.
-        meshes[f"gear_door_{name}"] = box(
-            x + side * 0.72, 1.82, -1.90, 0.10, 1.88, 1.50
-        )
-        meshes[f"gear_door_inner_{name[0]}"] = box(
-            x - side * 0.48, 2.00, -1.90, 0.08, 1.42, 1.22
-        )
+        meshes[f"gear_door_{name}"], meshes[f"gear_door_inner_{name[0]}"] = nacelle_gear_doors(x, side)
         meshes[f"gear_fairing_{name}"] = nacelle_gear_fairing(x)
         # Q400 mains are twin wheels side by side on one axle across the leg (not in tandem).
         wheel_set(meshes, f"{name}_forward", x - 0.26, -1.90, 0.50, 0.34)
@@ -843,7 +849,7 @@ def validate(meshes):
     return minimum, maximum
 
 
-def repair_existing_fairing():
+def repair_existing_fairing(nacelles=False):
     """Replace only the roof meshes in the finished kit, preserving other work."""
     path = AIRCRAFT / (BASENAME + ".gltf")
     document = json.loads(path.read_text())
@@ -865,9 +871,9 @@ def repair_existing_fairing():
         if node.get("matrix") or any(k in node for k in ("translation", "rotation", "scale")):
             raise ValueError("fairing repair expects mesh-local kit vertices")
         name = node["name"]
-        if name in ("wing_fairing_left", "wing_fairing_right"):
+        if not nacelles and name in ("wing_fairing_left", "wing_fairing_right"):
             continue
-        if name == "wing_centre_saddle":
+        if not nacelles and name == "wing_centre_saddle":
             meshes[name] = wing_centre_saddle()
             continue
         primitives = document["meshes"][node["mesh"]]["primitives"]
@@ -878,6 +884,19 @@ def repair_existing_fairing():
                         read_accessor(primitive["indices"]).reshape(-1))
     if "wing_centre_saddle" not in meshes:
         raise ValueError("finished Dash 8 kit is missing its centre saddle")
+    if nacelles:
+        for side,name in ((-1.0,"left"),(1.0,"right")):
+            x=side*4.35
+            meshes["engine_"+name]=nacelle_pod(x)
+            meshes["nacelle_fillet_"+name]=nacelle_wing_fillet(x,side)
+            meshes["gear_fairing_"+name]=nacelle_gear_fairing(x)
+            meshes["gear_door_"+name],meshes["gear_door_inner_"+name[0]]=nacelle_gear_doors(x,side)
+        # Refit only cowl paint to the changed engine triangles.
+        paint_spec=importlib.util.spec_from_file_location("dash8_paint",SCRIPTS/"finish-aircraft-liveries.py")
+        paint=importlib.util.module_from_spec(paint_spec);paint_spec.loader.exec_module(paint)
+        painted=paint.finish(dict(meshes),"DH8D",paint_only=True)
+        for name in ("livery_cowl_left","livery_cowl_right"):
+            meshes[name]=painted[name]
     writer_spec = importlib.util.spec_from_file_location(
         "airside_fairing_writer", SCRIPTS / "generate-authored-fbx-turboprop-terminal.py")
     writer = importlib.util.module_from_spec(writer_spec)
@@ -889,8 +908,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--fairing-only", action="store_true",
                         help="repair the finished kit while preserving all other geometry")
-    if parser.parse_args().fairing_only:
-        repair_existing_fairing()
+    parser.add_argument("--nacelles-only", action="store_true",
+                        help="repair nacelle bays, doors and wing joins while retaining other finished parts")
+    args=parser.parse_args()
+    if args.fairing_only or args.nacelles_only:
+        repair_existing_fairing(nacelles=args.nacelles_only)
         return
     AIRCRAFT.mkdir(parents=True, exist_ok=True)
     meshes = q400_meshes()

@@ -209,7 +209,6 @@ The ground and surroundings are built from open data (OpenStreetMap, Sentinel-2,
 
 The aircraft are flown to real reference speeds on a true 3° glideslope with a flare (ADR 0044); phase durations are
 derived from those speeds, never picked. The camera orbits, zooms and pans freely, with follow and reset shortcuts.
-
 ## Visual asset contract
 
 The approved visual direction, asset paths, animation responsibilities and production order live in
@@ -239,7 +238,6 @@ true 3D assets; animation and VFX mirror simulation state and never drive it.
   (`SimulationFrozen`), not just the aircraft.
 - Exactly one `AirsidePrototype` may exist; a duplicate bootstrap destroys itself.
 - No external data or asset enters the project without a recorded licence.
-
 ## Run it
 
 Open `game/Airside` in Unity 6.3 LTS and press Play. The in-game Flight Manual

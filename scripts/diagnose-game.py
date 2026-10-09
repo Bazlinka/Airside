@@ -68,9 +68,12 @@ def execute(request):
         try:gameplay.build_preflight(app,request['revision'],'')
         except ValueError:
             print('Building requested revision once for native reproduction',flush=True)
-            build=run('bash','scripts/build-mac.sh')
-            # Unity rewrites this known generated project setting on builds; no game code reset.
-            run('git','restore','--','game/Airside/ProjectSettings/ProjectSettings.asset')
+            try:run('bash','scripts/build-mac.sh')
+            finally:
+                # Clean preflight established these files were untouched. Unity rewrites
+                # their generated metadata, including on a failed build; preserve source.
+                run('git','restore','--','game/Airside/ProjectSettings/ProjectSettings.asset',
+                    'game/Airside/Packages/packages-lock.json')
             gameplay.build_preflight(app,request['revision'],output('git','status','--porcelain','--','game','scripts'))
         plan_path=directory/'scenario.json';plan_path.write_text(json.dumps(plan,indent=2))
         # Issue probes settle weather/camera and require real frames; no substitute smoke pass.

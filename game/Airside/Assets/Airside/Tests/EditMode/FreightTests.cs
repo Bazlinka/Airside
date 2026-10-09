@@ -93,6 +93,12 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void Helicopter_CarriesACabinLoadNotAJetHold()
+        {
+            Assert.That(FreightRates.CapacityTonnes(AircraftType.Bell412), Is.LessThan(3.0));
+        }
+
+        [Test]
         public void EveryType_HasAPayloadAndAPositiveRefitCost()
         {
             foreach (var spec in AircraftCatalogue.All)

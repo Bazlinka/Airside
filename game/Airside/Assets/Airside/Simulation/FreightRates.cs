@@ -22,6 +22,8 @@ namespace Airside.Simulation
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             var id = type.Id;
+            // A helicopter lifts a cabin load, not a hold: Bell 412 useful load is about two tonnes.
+            if (id == AircraftType.Bell412.Id) return 1.5;
             if (id == AircraftType.Saab340.Id) return 3.5;
             if (id == AircraftType.Atr42.Id) return 5.0;
             if (id == AircraftType.Dash8Q400.Id) return 8.0;

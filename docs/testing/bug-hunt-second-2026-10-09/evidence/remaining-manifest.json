@@ -1,0 +1,14 @@
+{
+  "commit": "4c24425c07deab1d27a8169b353978d86c348966",
+  "rate": 40,
+  "manualPlansAreObservationOnly": true,
+  "selectedFrames": {
+    "remaining-bell-forecast.png": "manual-bell-idle-3/observe-19.png",
+    "remaining-career.png": "manual-bell-idle-3/observe-25.png",
+    "remaining-contracts.png": "manual-bell-idle-3/observe-29.png",
+    "remaining-contracts-after-scroll.png": "manual-bell-idle-3/observe-30.png",
+    "remaining-bell-profile.png": "manual-bell-idle-day/observe-11.png",
+    "remaining-bell-cargo.png": "manual-bell-idle-day/observe-16.png",
+    "remaining-rotor-blur-off.png": "rotor-blur-off/exterior.png"
+  }
+}

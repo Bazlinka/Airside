@@ -10,9 +10,9 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 Envelopes, pivots, paint, simulation and saves retained. 52 focused headless/17 native checks pass;
 Mac build/four-step parked A350 player check pass, no runtime errors. Evidence/limits: `docs/testing/fleet-refinements-2026-10-09/README.md`.
 
-**Second report-only collection (9 Oct, Codex, #751):** seven additional findings (16–22), no fixes;
-`docs/testing/bug-hunt-second-2026-10-09/README.md`. Clean 0cca70b3 native 40× private-career evidence.
-Bailey requested immediate merge before the fifteen-finding target; eight remain uncollected. Reproduce on current main before fixes.
+**Second report-only collection (9 Oct, Codex, #751/#753):** fifteen additional findings (16–30), no fixes;
+`docs/testing/bug-hunt-second-2026-10-09/README.md`. First seven: clean 0cca70b3; remaining eight: clean 4c24425c native private-career evidence, 40× allowance.
+Collection complete; QA player closed. Severity, reproduction and runner/normal-speed limits are explicit. Reproduce on current main before fixes.
 
 **Report-only bug hunt (9 Oct, Codex, #717):** 15 findings/evidence: `docs/testing/bug-hunt-2026-10-09/README.md`.
 Tested aec64616 at 40×, no fixes; capture inversion subsequently fixed. Reproduce remaining findings on current main; UX/normal-speed limits are explicit.

@@ -1,0 +1,117 @@
+Mono path[0] = '/Users/baileyfleming/.codex/worktrees/bug-hunt-50/Airside/work/builds/Airside-QA.app/Contents/Resources/Data/Managed'
+Mono config path = '/Users/baileyfleming/.codex/worktrees/bug-hunt-50/Airside/work/builds/Airside-QA.app/Contents/MonoBleedingEdge/etc'
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+Initialize engine version: 6000.3.23f1 (09d2ecc7fb28)
+[Subsystems] Discovering subsystems at path /Users/baileyfleming/.codex/worktrees/bug-hunt-50/Airside/work/builds/Airside-QA.app/Contents/Resources/Data/UnitySubsystems
+GfxDevice: creating device client; kGfxThreadingModeThreaded
+ preferred device: Apple M1 Pro (high power)
+Metal devices available: 1
+0: Apple M1 Pro (high power)
+Using device Apple M1 Pro (high power)
+Initializing Metal device caps: Apple M1 Pro
+Mac GPU Family: 2
+Apple GPU Family: 7
+MSL Version: 3.0
+Has Float MSAA: 1
+Has Float Filtering: 1
+ReadWrite Texture Tier: 2
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.097 seconds
+- Finished resetting the current domain, in  0.001 seconds
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+UnloadTime: 0.483875 ms
+Airside 4c24425c · HEAD · committed 2026-10-09 06:40 UTC · built 2026-10-09 06:45 UTC
+[Airside Parafield] Built 4 runways, 30 taxiways, 4 trainers
+[Airside agent] protocol 1 started; isolated save /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/test-save.json
+[Airside journey] started ADL-KGC rate 40; fresh soak save only
+[Airside soak] largest world renderer groups: Parafield 184, Terminal 111, Airfield 52, Adelaide 51, YPAD 43, Cloud 32, Aircraft 31, Tyre 24, Runway 19, Strobe 8, LandingLight 4, Apron 4, Spray 4, Smoke 4, Boundary 4, Beacon 4, Taxiway 2, Stand 2, Taxiways 2, Sun 2
+[Airside soak] render set: world 602 (visible), aircraft 228 (visible), world prefix none
+[Airside soak] started for 4 min in live time
+[Airside journey] real 0.0s sim 0.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside soak] hitch 6333 ms at 6.3 s (frame 2, orbit 2400 m)
+[Airside journey] real 6.3s sim 4.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+[Airside weather] Rain mist 0.00 fog enabled False shader Airside/HeightFog camera (677.63, 1838.51, 1799.65) tint RGBA(0.527, 0.586, 0.675, 1.000) layers True
+[Airside agent] PASS day Visual local time 13:30
+[Airside agent] PASS clear Visual weather Clear; operational weather unchanged
+[Airside terrain] flight terrain created in 46 ms
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/planner.png
+[Airside capture] readback 49 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/planner.png
+[Airside capture] written 122 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/planner.png
+[Airside agent] PASS planner Planner selected VH-TS1
+[Airside soak] hitch 2437 ms at 11.9 s (frame 158, orbit 178 m)
+[Airside journey] real 11.9s sim 126.4 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 16.9s sim 325.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 21.9s sim 524.4 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside agent] PASS book Booked VH-TS1 to KGC
+[Airside journey] real 26.9s sim 723.4 VH-PAX AtStand trips 0 cockpit True world -306.9,0.1,690.0 attitude (0.00, 210.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 32.0s sim 924.1 VH-PAX AtStand trips 0 cockpit True world -306.9,0.1,690.0 attitude (0.00, 210.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 37.0s sim 1124.7 VH-PAX AtStand trips 0 cockpit True world -5174.9,139.2,429.5 attitude (3.39, 266.94, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/exterior.png
+[Airside capture] readback 24 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/exterior.png
+[Airside capture] written 96 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/exterior.png
+[Airside agent] PASS exterior Entered Exterior for VH-TS1
+[Airside journey] real 42.1s sim 1327.1 VH-PAX AtStand trips 0 cockpit True world -16378.6,349.5,-169.8 attitude (3.03, 266.94, 0.00) origin 0,0 tiles 45 airport True elevation True
+[Airside journey] real 47.1s sim 1527.7 VH-PAX AtStand trips 0 cockpit True world -27488.7,457.1,-764.2 attitude (4.00, 266.94, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 52.1s sim 1727.7 VH-PAX AtStand trips 0 cockpit True world -38563.2,457.1,-1356.6 attitude (4.00, 266.94, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/flight-1.png
+[Airside capture] readback 24 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/flight-1.png
+[Airside capture] written 96 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/flight-1.png
+[Airside agent] PASS flight-1 Observed VH-TS1 Outbound
+[Airside journey] real 57.1s sim 1927.7 VH-PAX AtStand trips 0 cockpit True world -49637.6,457.1,-1949.1 attitude (4.00, 266.94, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 62.1s sim 2127.7 VH-PAX AtStand trips 0 cockpit True world -60712.1,457.1,-2541.6 attitude (4.00, 266.94, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside journey] real 67.1s sim 2327.7 VH-PAX AtStand trips 0 cockpit True world -71786.6,457.1,-3134.0 attitude (4.00, 266.94, 0.00) origin 0,0 tiles 49 airport True elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/flight-2.png
+[Airside capture] readback 39 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/flight-2.png
+[Airside capture] written 109 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/flight-2.png
+[Airside agent] PASS flight-2 Observed VH-TS1 Outbound
+[Airside journey] real 72.1s sim 2528.4 VH-PAX AtStand trips 0 cockpit True world -82897.9,457.1,-3728.4 attitude (4.00, 266.94, 0.00) origin -80000,0 tiles 49 airport False elevation True
+[Airside journey] real 77.1s sim 2729.1 VH-PAX AtStand trips 0 cockpit True world -94009.2,457.1,-4322.9 attitude (4.05, 266.94, 0.00) origin -96000,-8000 tiles 49 airport False elevation True
+[Airside journey] real 82.1s sim 2928.4 VH-PAX AtStand trips 0 cockpit True world -105046.7,331.4,-4913.3 attitude (4.94, 266.94, 0.00) origin -104000,-8000 tiles 49 airport False elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/flight-3.png
+[Airside capture] readback 26 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/flight-3.png
+[Airside capture] written 96 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/flight-3.png
+[Airside agent] PASS flight-3 Observed VH-TS1 Outbound
+[Airside journey] real 87.2s sim 3128.4 VH-PAX AtStand trips 0 cockpit True world -116121.0,116.5,-5505.8 attitude (4.82, 266.94, 0.00) origin -120000,-8000 tiles 49 airport False elevation True
+[Airside journey] real 92.2s sim 3328.4 VH-PAX AtStand trips 0 cockpit True world -124848.6,35.1,-5972.7 attitude (359.54, 266.94, 0.89) origin -128000,-8000 tiles 49 airport False elevation True
+[Airside journey] real 97.2s sim 3528.4 VH-PAX AtStand trips 0 cockpit True world -124848.6,35.1,-5972.7 attitude (0.13, 266.94, 359.49) origin -128000,-8000 tiles 49 airport False elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/flight-4.png
+[Airside capture] readback 34 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/flight-4.png
+[Airside capture] written 113 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/flight-4.png
+[Airside agent] PASS flight-4 Observed VH-TS1 Outbound
+[Airside journey] real 102.2s sim 3727.7 VH-PAX AtStand trips 0 cockpit True world -124848.6,35.1,-5972.7 attitude (359.66, 266.94, 359.70) origin -128000,-8000 tiles 49 airport False elevation True
+[Airside journey] real 107.2s sim 3928.4 VH-PAX AtStand trips 0 cockpit True world -124848.6,35.1,-5972.7 attitude (0.85, 266.94, 0.00) origin -128000,-8000 tiles 49 airport False elevation True
+[Airside journey] real 112.2s sim 4129.0 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin -128000,-8000 tiles 49 airport False elevation True
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/flight-5.png
+[Airside capture] readback 27 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/flight-5.png
+[Airside capture] written 89 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/flight-5.png
+[Airside agent] PASS flight-5 Observed VH-TS1 AtDestination
+[Airside journey] real 117.2s sim 4329.7 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin -112000,-8000 tiles 49 airport False elevation True
+[Airside agent] PASS overview Returned to overview
+[Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/menu.png
+[Airside capture] readback 28 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/menu.png
+[Airside capture] written 90 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-second-15/rotor-blur-off/menu.png
+[Airside agent] PASS menu Menu open; live airline clock continues
+[Airside agent] COMPLETE passed
+Thread 0x16f4e3000 may have been prematurely finalized
+Thread 0x16f2f3000 may have been prematurely finalized
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+Thread 0x16e317000 may have been prematurely finalized
+Thread 0x16e3a3000 may have been prematurely finalized
+Thread 0x16e42f000 may have been prematurely finalized
+Thread 0x16e4bb000 may have been prematurely finalized
+Thread 0x16e6eb000 may have been prematurely finalized
+Thread 0x16e5d3000 may have been prematurely finalized
+Thread 0x16e65f000 may have been prematurely finalized
+Thread 0x16e547000 may have been prematurely finalized
+Thread 0x16e777000 may have been prematurely finalized

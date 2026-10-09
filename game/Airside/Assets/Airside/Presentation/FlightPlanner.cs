@@ -179,7 +179,7 @@ namespace Airside.Presentation
 
         /// <summary>Same reliability and eligible contract payment rules as settlement; an estimate, not a guarantee.</summary>
         public static long ExpectedRevenue(AirlineOperations operations, Destination origin, Destination destination,
-            AircraftType type, FleetAircraft aircraft = null)
+            AircraftType type, FleetAircraft aircraft = null, SimulationTime? backAt = null)
         {
             var forecast = aircraft == null ? operations.Forecast(origin, destination, type)
                 : operations.Forecast(origin, destination, aircraft);
@@ -189,13 +189,18 @@ namespace Airside.Presentation
             var active = career.ActiveContract;
             if (active != null && career.TryFindDefinition(active.DefinitionId, out var contract)
                 && contract.MatchesAircraft(type, aircraft?.IsFreighter ?? false)
-                && contract.MatchesRoute(origin.Code, destination.Code))
+                && contract.MatchesRoute(origin.Code, destination.Code)
+                && !MissesContractDeadline(operations, backAt))
             {
                 pay += contract.PaymentPerRotation;
                 if (active.CompletedRotations + 1 >= contract.RequiredRotations) pay += contract.CompletionReward;
             }
             return pay;
         }
+
+        /// <summary>True when a flight that is back at <paramref name="backAt"/> lands after the active contract expires.</summary>
+        public static bool MissesContractDeadline(AirlineOperations operations, SimulationTime? backAt) =>
+            backAt.HasValue && operations.ContractExpiresAt() is { } expiry && backAt.Value.CompareTo(expiry) > 0;
 
         private static readonly Comparison<PlannerDestination> ByReachThenDistance = (a, b) =>
             {

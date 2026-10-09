@@ -211,7 +211,11 @@ namespace Airside.Presentation
             var changeCost = dispatch - alreadyPaid;
             var forecast = operations.Forecast(operations.Home, destination, aircraft);
             BandAndDistance += $" · {forecast.LoadText}";
-            var pay = FlightPlanner.ExpectedRevenue(operations, operations.Home, destination, type, aircraft);
+            // The contract bonus only counts if this schedule is back before the commitment expires.
+            var plannedDepart = AirlineOperations.WholeMinute(now.Advance(FlightPlanner.ClampDelay(departureDelaySeconds, aircraft, now)));
+            var plannedBack = FlightPlanner.Estimate(aircraft, operations.AirborneSeconds(aircraft, destination), plannedDepart).BackAtAdelaide;
+            var missesDeadline = FlightPlanner.MissesContractDeadline(operations, plannedBack);
+            var pay = FlightPlanner.ExpectedRevenue(operations, operations.Home, destination, type, aircraft, plannedBack);
             var active = operations.CareerState.ActiveContract;
             if (active != null
                 && operations.CareerState.TryFindDefinition(active.DefinitionId, out var contract)
@@ -222,7 +226,9 @@ namespace Airside.Presentation
                 if (active.CompletedRotations + 1 >= contract.RequiredRotations)
                     contractPay += contract.CompletionReward;
 
-                OperatingNote = contract.ReliabilityLossOnCancel > 0
+                OperatingNote = missesDeadline
+                    ? "This departure is back after the contract expires, so it pays no contract bonus"
+                    : contract.ReliabilityLossOnCancel > 0
                     ? $"Contract +${contractPay:N0} · abandoning costs {contract.ReliabilityLossOnCancel} reliability"
                     : $"Contract +${contractPay:N0} on return";
             }

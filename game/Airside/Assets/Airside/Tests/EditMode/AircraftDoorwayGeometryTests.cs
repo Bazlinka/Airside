@@ -106,6 +106,37 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void ShellAtTheGeneratorsMinimumThickness_IsStillADoor()
+        {
+            // The shipped Saab/ATR/737/Dash 8 shells have vertex pairs 0.00399995 m apart in float32: the generators'
+            // 4 mm minimum, a hair short after rounding. They must still get a doorway rather than bare hull.
+            Assert.That(AircraftDoorwayGeometry.TryBuild(Shell(), 1f, 0f, out _, out _), Is.True, "control: normal door");
+            Assert.That(AircraftDoorwayGeometry.TryBuild(NearMinimum(0.00399995f), 1f, 0f, out _, out _), Is.True,
+                "rounded 4 mm shell");
+            Assert.That(AircraftDoorwayGeometry.TryBuild(NearMinimum(0.0030f), 1f, 0f, out _, out _), Is.False,
+                "a genuinely thin plate is still not a door");
+        }
+
+        /// <summary>The door shell with its back face moved to sit exactly <paramref name="thickness"/> behind the front.</summary>
+        private static float[] NearMinimum(float thickness)
+        {
+            var shell = Shell();
+            var half = shell.Length / 6;
+            for (var i = 0; i < half; i++)
+            {
+                // Pull the back vertex along the (front - back) direction until the pair is `thickness` apart.
+                float dx = shell[i * 3] - shell[(i + half) * 3], dy = shell[i * 3 + 1] - shell[(i + half) * 3 + 1],
+                    dz = shell[i * 3 + 2] - shell[(i + half) * 3 + 2];
+                var length = (float)Math.Sqrt(dx * dx + dy * dy + dz * dz);
+                var back = (i + half) * 3;
+                shell[back] = shell[i * 3] - dx / length * thickness;
+                shell[back + 1] = shell[i * 3 + 1] - dy / length * thickness;
+                shell[back + 2] = shell[i * 3 + 2] - dz / length * thickness;
+            }
+            return shell;
+        }
+
+        [Test]
         public void NotADoorShell_IsRefused()
         {
             Assert.That(AircraftDoorwayGeometry.TryBuild(null, 1f, 0f, out _, out _), Is.False);

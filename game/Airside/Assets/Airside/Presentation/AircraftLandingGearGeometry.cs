@@ -21,7 +21,7 @@ namespace Airside.Presentation
             foreach (var v in vertices)
             {
                 var world = leg.TransformPoint(v);
-                if (world.y < highest - 0.025f) continue;
+                if (world.y < highest - Mathf.Max(0.025f, fallback.size.y * 0.04f)) continue;
                 sum += world;
                 count++;
             }

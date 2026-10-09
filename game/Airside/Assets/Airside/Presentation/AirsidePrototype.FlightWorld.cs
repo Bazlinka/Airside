@@ -298,6 +298,8 @@ namespace Airside.Presentation
             var route=ArrivalMapTrack.RouteProfile(profile.LegMetres/1000,profile.LegSeconds,aircraft.Type);
             state.Plan=RegionalDepartureHandover.PlanFor(aircraft.Type,route,climbLag,Math.Sqrt(state.OffsetX*state.OffsetX+state.OffsetZ*state.OffsetZ));
             _departureHandovers[aircraft.Registration]=state;
+            Debug.Log($"[Airside handover] {aircraft.Registration} from {destination.Code}: departure is {Math.Sqrt(state.OffsetX*state.OffsetX+state.OffsetZ*state.OffsetZ):0} m off the route; "
+                +$"eased away by {state.Plan.EndSeconds:0} s after lift-off (route climb {route.GroundSpeedKnotsAt(180):0} kt ground speed at 180 s)");
             return state;
         }
 

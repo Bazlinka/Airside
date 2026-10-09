@@ -45,6 +45,10 @@ initial PATH-only quick attempt failed, then the existing runtime was found.
 12 agent-gameplay and five diagnose-game regressions pass. Python syntax and
 `git diff --check` pass; generated presentation map/ADR index refreshed.
 No full suites, full journeys, performance pass or personal-save tests.
+The branch was rebased onto the subsequent #759 low-severity fixes; tower/rain sources
+are unchanged from the tested revision. That combined revision was not rebuilt or
+replayed; the saved native build retains the tested 7c7629f5 identity.
+
 Frame timings are affected by local concurrent work/capture overhead and do not
 establish performance. Scroll/drag/Home hit-testing was not driven by this runner;
 existing camera control code remains unchanged.

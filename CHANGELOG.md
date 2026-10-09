@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-09 — #729: the "has landed at <outstation>" toast names the outbound flight number, not the return (bug hunt #9); Adelaide arrivals keep the return number.
 - 2026-10-09 — #722: cockpit/passenger interior audio adds its AudioSource before the low-pass filter, ending the per-frame NullReference/Unity add-component spam (finding 1).
 - 2026-10-09 — #720: first-flight guide "Away" wording follows the leg (outbound / turning round / flying home) instead of always saying "on its way to" the outstation (bug hunt #3).
 

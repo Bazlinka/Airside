@@ -576,6 +576,17 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FlightNotices_LandingAtTheOutstationIsTheOutboundFlightNotTheReturn()
+        {
+            // The AtDestination event is SA100 touching down at Kingscote; SA101 is the flight home.
+            Assert.That(Airside.Presentation.FlightNotices.IsReturnLegEvent(FleetState.AtDestination), Is.False);
+            Assert.That(Airside.Presentation.FlightNotices.IsReturnLegEvent(FleetState.Outbound), Is.False);
+            Assert.That(Airside.Presentation.FlightNotices.IsReturnLegEvent(FleetState.HoldingForLanding), Is.True);
+            Assert.That(Airside.Presentation.FlightNotices.IsReturnLegEvent(FleetState.AwaitingStand), Is.True);
+            Assert.That(Airside.Presentation.FlightNotices.IsReturnLegEvent(FleetState.AtStand), Is.True);
+        }
+
+        [Test]
         public void SellAircraft_RefusesTheOnlySaab()
         {
             var (_, ops, plane) = PlayerOnly();

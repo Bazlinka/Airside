@@ -53,6 +53,30 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void ContractOffer_ArmedCardReadsConfirmSoTheSecondClickIsNotASurprise()
+        {
+            var (clock, ops, _) = HudTestAirline.Create();
+            clock.Set(new SimulationTime(60));
+            ops.Update();
+            var model = new ContractsWorkspaceModel();
+            model.Rebuild(ops, clock.Now);
+            var offer = model.Offers.FirstOrDefault(o => o.CanAccept);
+            Assert.That(offer, Is.Not.Null, "a new airline has at least one contract it can take");
+            var id = offer.Definition.Id;
+            var layout = ContractsWorkspaceLayout.Create(HudShell.WorkspaceSurface(1440f, 900f));
+
+            string ButtonText(string highlighted)
+            {
+                var list = new HudDrawList();
+                ContractsWorkspacePainter.Paint(list, model, layout, highlighted);
+                return list.Commands.First(c => c.Kind == HudDrawKind.Button && c.ActionId == HudAction.Accept(id)).Text;
+            }
+
+            Assert.That(ButtonText(null), Is.EqualTo("ACCEPT"));
+            Assert.That(ButtonText(id), Is.EqualTo("CONFIRM"));
+        }
+
+        [Test]
         public void Painters_GiveEveryButtonAnActionTheHudCanDispatch()
         {
             var (clock, ops, plane) = HudTestAirline.Create();

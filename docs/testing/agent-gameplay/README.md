@@ -1,9 +1,22 @@
 # Agent gameplay runner
 
-Hidden QA automation for Codex/agents when Bailey asks for gameplay testing. No
+Hidden QA automation for Codex/agents. Agents decide when checks are necessary and
+run them automatically under AGENTS.md; further permission is not needed. No
 player menu or control server. Explicit launch flags gate it; this is a workflow
 restriction, not authentication of an AI identity. Ordinary launch behaviour is
 unchanged. Do not make this a routine merge gate or add full runs to CI.
+
+## Automatic selection
+
+Use the smallest relevant selection for changed interactions, cameras, booking,
+cancellation or save restoration. A runtime bug that pure/compile checks cannot
+resolve also warrants a scenario. For rendered appearance, use a matching native
+review/capture and inspect its actual frames; the generic runner does not cover
+every aircraft/art feature. Use full journeys for departure/flight/arrival/return
+continuity risks or a concrete regression that focused checks cannot resolve.
+Build once if needed for those checks. Do not run every profile for each change,
+repeat unchanged results, or substitute this runner for performance/long soaks.
+Docs-only changes need no gameplay run. Record selected coverage and blockers.
 
 ## Commands
 
@@ -37,7 +50,9 @@ Build once after committing source with `bash scripts/build-mac.sh`, then reuse
 that exact build across feature selections. The runner never builds automatically,
 launches Unity or installs dependencies. It refuses missing, unstamped, stale and
 dirty builds and uncommitted game/scripts changes. `--plan` writes nothing and
-needs no build. The runtime also verifies the requested clean commit before a
+needs no build. When runtime evidence is necessary and the build is stale/missing,
+the agent builds once automatically, then reruns the selected scenario. The Python
+runner itself keeps build and execution separate. The runtime also verifies the requested clean commit before a
 feature scenario starts. Full journey reuses the same preflighted executable.
 
 Each run has a fresh directory under `work/agent-gameplay/<timestamp>-<id>/` with

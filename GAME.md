@@ -14,14 +14,12 @@ aircraft, simulation or save changes. Geometry checks pass 11/11 and C# syntax p
 Unity appearance/performance unverified. Evidence: `docs/testing/physical-ground-detail-2026-10-09.md`.
 Spatial puddles remain future work.
 
-**Agent gameplay runner (9 Oct, Codex, #696):** hidden opt-in QA batches selected
-workspaces/planner, booking/cancellation, save restoration, cameras and menu in one
-private-save session; full profile adds visual weather and a 40× regional round trip.
-`python3 scripts/agent-gameplay.py --plan` previews; default smoke requires a fresh
-stamped build. No automatic builds/full tests or player controls. Nine runner
-regressions and cached-reference Unity C# compile pass. Actual packaged scenarios,
-visual quality and performance remain unverified. Instructions/limits:
-`docs/testing/agent-gameplay/README.md`; decision `2026-10-09-agent-gameplay-runner`.
+**Agent gameplay runner (9 Oct, Codex, #696/#702):** agents automatically select necessary
+checks: workspaces/planner, booking/cancellation, saves, cameras and menu in one private-save
+session; full profile adds visual weather and a 40× round trip when warranted. Preview:
+`python3 scripts/agent-gameplay.py --plan`. Reuse a fresh stamped build; build once if needed.
+No player controls/blanket full tests. Nine regressions and C# compile pass; packaged gameplay, visuals/performance unverified.
+Instructions: `docs/testing/agent-gameplay/README.md`; decision `2026-10-09-agent-gameplay-runner`.
 
 **Cloud lighting/depth (9 Oct, Codex, #697):** volume clouds now use bounded
 sun-direction/colour scattering, two local sun-density probes and sky fill for
@@ -174,12 +172,13 @@ changed C# syntax parsed. Generated harness is current and presentation map refr
 Unity compilation, shaders, actual appearance/audio, packaging and GPU performance are
 unverified. No broad suite/build/player testing run under the standing policy.
 
-**Next:** Bailey chooses the Mac build/playtest timing. Check fog ground/climb; storm
+**Next:** agents choose necessary runtime checks/builds; Bailey chooses personal playtesting.
+Check fog ground/climb; storm
 below/inside/above, cloud silhouettes and deck crossings; cockpit/exterior and long
 journey origin shifts; live/fallback weather; quiet cruise, storm gusts, landing/gear
 thumps and Vibration off. Check lightning/thunder alignment and transparent rendering.
-Standing policy: quick relevant checks only; broad suites/builds/player reviews only
-on request; merge completed authorised work without repeated approval.
+Standing policy: necessary gameplay/builds automatic; full journeys when warranted. Broad suites/performance/long soaks on request;
+merge completed authorised work without repeated approval.
 
 **Other current context:** aircraft body realism (#651), regional departure/landing
 speeds/altitude, maps/HUD redesign, notifications/registration (#645/#663), toasts,

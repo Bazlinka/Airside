@@ -45,6 +45,7 @@ available tools, not a mandatory checklist:
 - `scripts/audit-unity-assets.py`: quick metadata/mirror check when assets change.
 
 Use quick syntax/compile checks when readily available. Report unverified Unity
-behaviour; do not start lengthy editor/build/playtest runs as a default merge gate.
+behaviour. Agents automatically choose necessary gameplay/native checks and build once
+if needed under the root policy; broad tests are not a default merge gate.
 
 New code goes in the matching folder; if nothing fits, add the folder and note it in `../../AGENTS.md`.

@@ -90,23 +90,40 @@ Airside/
 New code goes in the matching folder above. If nothing fits, add the folder and
 note it here in the same commit.
 
-## Testing and merge policy — Bailey's standing instruction (8 October 2026)
+## Testing and merge policy — Bailey's standing instruction (updated 9 October 2026)
 
-Prioritise implementation and progress. Bailey will choose when to playtest and
-report bugs. This policy replaces earlier default requirements for full test runs
-and repeated merge approval; Bailey's latest task instructions take precedence.
+Prioritise implementation and progress. Agents decide when gameplay checks are
+necessary and run them automatically; Bailey still chooses personal playtesting.
+This policy replaces earlier request-only gameplay testing and default full-suite
+requirements. Bailey's latest task instructions take precedence.
 
 - **Ordinary changes:** inspect the diff and use only quick checks relevant to the
   change. Prefer a readily available syntax/compile check for changed code and a
   small existing regression check when useful. Docs-only changes need no game tests.
-- **Do not automatically run broad testing:** no full `test-domain.sh` or
-  `test-unity.sh`, packaged builds, rendered reviews, gameplay journeys or soak runs
-  unless Bailey requests that testing/review. Do not add tests just to mirror a
-  simple implementation or repeatedly recheck an unchanged result.
-- **Keep checks bounded:** stop a local check after about 60 seconds if it stalls
-  or needs lengthy setup; record it as unverified and continue. Do not launch Unity
-  or install a runtime solely to satisfy a routine pre-merge checklist. Fix a known
-  new syntax/compile error before merging; unavailable verification is not a failure.
+- **Choose necessary gameplay checks automatically:** use runtime evidence when
+  changes affect interaction/cameras, booking/cancellation, save restoration,
+  aircraft phases/visibility or rendered appearance, or when investigating a runtime
+  bug that compile/pure checks cannot resolve. Run the smallest relevant feature
+  selection or existing native review without asking again. Inspect actual captured
+  frames when appearance matters; PNG existence alone is not visual validation.
+- **Escalate only when warranted:** run the full agent gameplay profile/round trip
+  for changes spanning departure, flight, arrival or return-to-overview, or when
+  focused checks cannot resolve a concrete regression. The profile covers named
+  scenarios, not the entire game. Do not automatically run every feature, full
+  `test-domain.sh`/`test-unity.sh` suites, performance or long soak runs; those remain
+  on request. Do not add tests to mirror simple implementation or repeat unchanged
+  evidence.
+- **Build only for needed runtime evidence:** reuse a matching clean stamped build.
+  If needed checks have no current build, build once automatically, then reuse it;
+  no repeated permission required. Preserve another tool's/user's active Unity work
+  and personal saves. Do not install a runtime or launch Unity for a routine checklist.
+- **Keep checks bounded:** stop compile/setup checks after about 60 seconds if
+  stalled or needing lengthy setup; report unavailable verification and continue.
+  Necessary builds may continue while making meaningful progress. Gameplay scenarios
+  use the runner's explicit wall-clock timeout (90 s feature session, 600 s journey
+  defaults); do not let a hung process run indefinitely. Fix known new code errors
+  and attributable gameplay failures before merging; unavailable checks are not a
+  pass. Report the blocker and unverified scope.
 - **Merge completed authorised work into `main` by default:** use a narrow branch
   and PR, push, resolve routine conflicts, then merge without asking Bailey again.
   Completed PRs should be ready, not left as drafts awaiting routine permission.
@@ -115,7 +132,11 @@ and repeated merge approval; Bailey's latest task instructions take precedence.
   tests or bypass protection. Optional pending checks and confirmed pre-existing
   failures do not require waiting or another approval. Investigate new failures
   attributable to the change before merging. Report actual blockers plainly.
-- **Agent gameplay:** reserve `scripts/agent-gameplay.py` for agent QA when Bailey asks for gameplay testing. Use selected features or `--profile full`; preview with `--plan`. It is hidden opt-in automation, not a player feature or routine merge gate. See `docs/testing/agent-gameplay/README.md` for build reuse, private saves and coverage limits.
+- **Agent gameplay:** `scripts/agent-gameplay.py` is reserved for agent QA, hidden
+  from player controls. Agents select and run it automatically when warranted by the
+  rules above; use `--features` or, when justified, `--profile full`, with `--plan`
+  available to preview. It is not a blanket merge gate. See
+  `docs/testing/agent-gameplay/README.md` for coverage and private-save limits.
 - **Be honest:** state what was checked, skipped or unverified. A merge does not
   establish a Unity compile, rendered playtest, packaged build or performance pass.
   Preserve simulation, save compatibility and other tools' active work.
@@ -129,7 +150,7 @@ and repeated merge approval; Bailey's latest task instructions take precedence.
    same system from two tools.
 3. **Keep commits narrow and reviewable** — one acceptance criterion per commit.
 4. **Follow the testing and merge policy above.** Use quick, relevant checks;
-   broad test suites and Unity/player verification run only when Bailey requests them.
+   agents automatically select necessary Unity/player checks; broad suites remain on request.
 5. **Update `GAME.md` and `CHANGELOG.md`** in the same commit as the change. `GAME.md` holds current state
    only: edit the single "Where to resume" block in place (never stack a new dated block on top) and keep
    the file under ~250 lines; the changelog entry is one line (~160 chars). Detail goes in the PR, an ADR or

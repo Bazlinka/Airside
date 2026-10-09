@@ -16,3 +16,13 @@
   production commands, not physical pointer input. Screenshots require inspection;
   acceleration does not establish performance or real-time pacing. Full profile covers
   named feature scenarios and one round trip, not every game feature.
+
+## Invocation policy update — 9 October 2026
+
+Bailey authorizes agents to decide when gameplay checks are necessary and run the
+smallest relevant scenario automatically, without waiting for a testing request.
+Build once if needed for current runtime evidence. Full journeys are warranted for
+cross-phase continuity risk or unresolved concrete regressions; broad suites,
+performance and long soaks remain on request. AGENTS.md holds the standing rule.
+No runtime/protocol or player/save change. CLI opt-in remains how an agent launches
+the tool; it no longer implies that Bailey must request each run.

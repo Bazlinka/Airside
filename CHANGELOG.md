@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-09 — Cloud shader cost cut: cheap one-octave sun-shadow probes, second probe skipped in deep shadow, fewer steps on short chords, lightning glow only during a flash (appearance and GPU timing unverified; run the agent gameplay weather profile on the Mac).
 - 2026-10-09 — Weather delay (storm ground stop, weather-held helicopters) no longer costs reliability or breaks the on-time streak; the delay breakdown still shows it (headless-tested).
 - 2026-10-09 — Agents automatically choose necessary focused gameplay checks and build once if needed; full journeys only when warranted.
 

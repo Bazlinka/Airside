@@ -31,6 +31,7 @@ AREAS = [
 ]
 
 OWNERS = {
+    "AirsidePrototype.AgentGameplay.cs": ("Flight views and traffic", "Hidden isolated agent gameplay command scenarios and evidence reports"),
     "AirsidePrototype.Parafield.cs": ("Independent airports", "Builds and updates Parafield trainer traffic and watches the airport from Operations"),
     "AirsidePrototype.Tower.cs": ("Flight views and traffic", "Control-tower cab view: click the tower to enter, 360-degree look, Esc or LEAVE TOWER to return"),
     "AirsidePrototype.OutstationView.cs": ("Flight views and traffic", "Network aircraft views: read-only timed journey rendering, camera entry/exit and return to Fleet"),

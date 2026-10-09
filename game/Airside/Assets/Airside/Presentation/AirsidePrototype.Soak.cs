@@ -72,7 +72,7 @@ namespace Airside.Presentation
         }
 
         private static string SavePath => SoakMode
-            ? Path.Combine(Application.persistentDataPath, "airline-save-soak.json")
+            ? (AgentGameplaySavePath ?? Path.Combine(Application.persistentDataPath, "airline-save-soak.json"))
             : AirlineSaveFile.DefaultPath;
 
         // Review shots for packaged-build checks (HUD fit at several window sizes, panels):
@@ -536,8 +536,10 @@ namespace Airside.Presentation
                 _soakSetPassRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "SetPass Calls Count", 1);
                 _saveProbed = true; // never offer or read the player's save
                 InitializeFlightJourneyReview(args);
+                if (!InitializeAgentGameplay()) return;
                 StartAirline("Soak Air");
                 BeginFlightJourneyReviewClock();
+                if (_agentGameplayActive) StartCoroutine(RunAgentGameplay());
                 ApplySoakRenderIsolation(args);
                 Debug.Log($"{SoakLogTag} started for {_soakMinutes:0} min in live time");
                 var followIndex = Array.IndexOf(args, ReviewAircraftFlag);
@@ -574,6 +576,8 @@ namespace Airside.Presentation
                 _soakSetPass += _soakSetPassRecorder.LastValue;
                 _soakRenderStatsSamples++;
             }
+            // Agent scenarios own dispatch and UI while operating their private save.
+            if (_agentGameplayActive) return;
             DriveReviewShot();
             if (!_soakRenderSetDescribed && Time.unscaledTime >= _soakStartedAt + 2f)
             {

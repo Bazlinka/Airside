@@ -7,6 +7,15 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Agent gameplay runner (9 Oct, Codex, #696):** hidden opt-in QA batches selected
+workspaces/planner, booking/cancellation, save restoration, cameras and menu in one
+private-save session; full profile adds visual weather and a 40× regional round trip.
+`python3 scripts/agent-gameplay.py --plan` previews; default smoke requires a fresh
+stamped build. No automatic builds/full tests or player controls. Nine runner
+regressions and cached-reference Unity C# compile pass. Actual packaged scenarios,
+visual quality and performance remain unverified. Instructions/limits:
+`docs/testing/agent-gameplay/README.md`; decision `2026-10-09-agent-gameplay-runner`.
+
 **Cloud lighting/depth (9 Oct, Codex, #697):** volume clouds now use bounded
 sun-direction/colour scattering, two local sun-density probes and sky fill for
 sunlit thin edges and deeper storm interiors. Eroded edges ease smoothly; reveal

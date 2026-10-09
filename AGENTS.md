@@ -115,6 +115,7 @@ and repeated merge approval; Bailey's latest task instructions take precedence.
   tests or bypass protection. Optional pending checks and confirmed pre-existing
   failures do not require waiting or another approval. Investigate new failures
   attributable to the change before merging. Report actual blockers plainly.
+- **Agent gameplay:** reserve `scripts/agent-gameplay.py` for agent QA when Bailey asks for gameplay testing. Use selected features or `--profile full`; preview with `--plan`. It is hidden opt-in automation, not a player feature or routine merge gate. See `docs/testing/agent-gameplay/README.md` for build reuse, private saves and coverage limits.
 - **Be honest:** state what was checked, skipped or unverified. A merge does not
   establish a Unity compile, rendered playtest, packaged build or performance pass.
   Preserve simulation, save compatibility and other tools' active work.

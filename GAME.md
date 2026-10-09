@@ -12,7 +12,6 @@ F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; c
 readable scrolling Options and current-view targeting. Operational weather, live time, economics and saves unchanged.
 Checks: 25/25 headless, 2/2 focused native, Mac build, actual title Fog/Storm interactions and airport Fog rendering.
 Evidence and remaining limits: `docs/testing/welcome-polish-2026-10-09/README.md`.
-
 **Physical ground detail (9 Oct, Codex, #693):** mapped roadside grass clears airport
 surfaces and nearby roads; coastal scrub gains varied lobes/colour and face normals.
 Drains gain flush rims/grates; taxiway wear gains tapered, varied patches. No layout,
@@ -43,7 +42,8 @@ bays now enclose the existing folded wheels and use curved, independently hinged
 white doors. Raised oval nacelle/wing pods become fitted under-wing joins; cowl
 paint, AIR-006 source/FBX, mirrors and thumbnail updated. Other finished parts,
 fictional tail paint, simulation and saves retained. Native baseline reproduces
-the fault; enclosure/mesh checks pass. Fixed native poses/player comparison pending.
+the fault; repaired native up/down/mid frames inspected, 9 native and 44 headless
+checks pass. Mac build/five-step parked-player comparison pass; no airborne journey.
 Evidence: `docs/testing/dash8-visual-repair-2026-10-09/README.md`.
 Full suites/soaks/performance skipped.
 

@@ -1,5 +1,8 @@
 # Agent gameplay runner
 
+[Verified real Mac evidence](DIAGNOSTIC_EVIDENCE_2026-10-09.md): remote success/failure,
+upright frames, source identity and remaining limits.
+
 Hidden QA automation for Codex/agents. Agents decide when checks are necessary and
 run them automatically under AGENTS.md; further permission is not needed. No
 player menu or control server. Explicit launch flags gate it; this is a workflow

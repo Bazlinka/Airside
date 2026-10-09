@@ -20,12 +20,13 @@ aircraft, simulation or save changes. Geometry checks pass 11/11 and C# syntax p
 Unity appearance/performance unverified. Evidence: `docs/testing/physical-ground-detail-2026-10-09.md`.
 Spatial puddles remain future work.
 
-**Issue diagnostics (9 Oct, Codex, #707):** reported issues now require reproduce → inspect
-real frames/state/errors → identify cause → fix → identical-scenario retest. Failed steps retain visible context.
-weather/time/camera probes and aircraft subjects extend smoke checks. Linux agents use the
-private Mac workflow via `scripts/diagnose-game.py`; dedicated runner is online, user service
-under `~/Developer/Airside-DiagnosticsRunner`. Real remote weather run captured 7 frames;
-orientation/sky-framing corrections and failed-state verification in progress. Guide: `docs/testing/agent-gameplay/README.md`.
+**Issue diagnostics (9 Oct, Codex, #707/#710/#713):** agents reproduce reported issues,
+inspect real frames/state/errors, identify cause, fix and rerun the same scenario. Linux
+agents use the private Mac via `scripts/diagnose-game.py`; dedicated user runner is online.
+Real remote verification: 10 weather steps, 7 upright sky-inclusive frames, zero runtime errors;
+intentional failed state correctly fails and returns its screenshot. Personal saves isolated.
+Mac must be awake/logged in/online. Existing CI failures match preceding main. Evidence:
+`docs/testing/agent-gameplay/DIAGNOSTIC_EVIDENCE_2026-10-09.md`; guide: `docs/testing/agent-gameplay/README.md`.
 
 **Cloud lighting/depth (9 Oct, Codex, #697):** volume clouds now use bounded
 sun-direction/colour scattering, two local sun-density probes and sky fill for

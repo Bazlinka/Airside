@@ -27,9 +27,8 @@ on:
         type: string
 permissions:
   contents: read
-concurrency:
-  group: airside-mac-diagnostics
-  cancel-in-progress: false
+# The single dedicated runner serialises jobs. A concurrency group would cancel
+# older pending requests when several agents dispatch; retain every request instead.
 jobs:
   reproduce:
     if: github.repository == 'Bazlinka/Airside' && github.event_name == 'workflow_dispatch'

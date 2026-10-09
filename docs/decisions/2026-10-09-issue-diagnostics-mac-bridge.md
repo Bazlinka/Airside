@@ -1,7 +1,7 @@
 # Issue-driven real-game diagnosis and Mac bridge
 
 - Date: 2026-10-09
-- Status: Implemented; end-to-end verification in progress.
+- Status: Implemented; real remote success/failure evidence verified on 9 October 2026.
 - Decision: A reported issue triggers reproduce → inspect evidence → identify cause
   → scoped fix → rerun the same scenario. Fixed smoke checks alone cannot close a
   diagnosis. Add custom action scenarios and related issue probes, real-frame/state/
@@ -23,3 +23,6 @@
   scenarios and inspects images/logs. Captured evidence is not automatic visual
   approval or a proven root cause. Frame timings include diagnostic/capture overhead
   and host contention. Offline/licence/rendering blockers remain explicit blockers.
+
+- Evidence: `docs/testing/agent-gameplay/DIAGNOSTIC_EVIDENCE_2026-10-09.md`. Ten weather
+  steps/seven upright frames and an intentional failed-state screenshot were inspected.

@@ -617,7 +617,7 @@ namespace Airside.Presentation
                 var next = AircraftDistinctions.Next(aircraft.CompletedTrips);
                 if (next.Flights > 0)
                     AddFact("operation/completed",
-                        $"Next distinction: {next.Title} · {next.Flights - aircraft.CompletedTrips} flights to go");
+                        $"Next distinction: {next.Title} · {next.Flights - aircraft.CompletedTrips} {(next.Flights - aircraft.CompletedTrips == 1 ? "flight" : "flights")} to go");
                 var baseLevel = operations.CareerState.BaseLevel;
                 AddFact("service/inspection", PlayerBase.MaintenanceLine(baseLevel, aircraft.Type)
                                               + " · $" + Maintenance.CheckCost(aircraft.Type, baseLevel).ToString("N0")
@@ -751,7 +751,7 @@ namespace Airside.Presentation
             var next = AircraftDistinctions.Next(aircraft.CompletedServices);
             if (next.Flights > 0)
                 AddFact("operation/completed",
-                    $"Next distinction: {next.Title} · {next.Flights - aircraft.CompletedServices} flights to go");
+                    $"Next distinction: {next.Title} · {next.Flights - aircraft.CompletedServices} {(next.Flights - aircraft.CompletedServices == 1 ? "flight" : "flights")} to go");
 
             var capability = AirlineOperations.OutstationCheckCapability(entry.Type);
             var checkCost = Maintenance.CheckCost(entry.Type, capability);

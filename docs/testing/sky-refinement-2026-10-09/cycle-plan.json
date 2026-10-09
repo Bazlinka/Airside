@@ -1,0 +1,140 @@
+{
+  "protocol": 1,
+  "steps": [
+    {
+      "id": "clear",
+      "action": "weather",
+      "value": "Clear",
+      "capture": false,
+      "settleSeconds": 15
+    },
+    {
+      "id": "east",
+      "action": "camera",
+      "value": "8,70,2400",
+      "capture": false,
+      "settleSeconds": 2
+    },
+    {
+      "id": "dawn",
+      "action": "time",
+      "value": "06:35",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "sunrise",
+      "action": "time",
+      "value": "07:00",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "day",
+      "action": "time",
+      "value": "12:00",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "west",
+      "action": "camera",
+      "value": "8,250,2400",
+      "capture": false,
+      "settleSeconds": 2
+    },
+    {
+      "id": "sunset",
+      "action": "time",
+      "value": "19:15",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "twilight",
+      "action": "time",
+      "value": "19:40",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "blue-hour",
+      "action": "time",
+      "value": "20:00",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "night",
+      "action": "time",
+      "value": "22:00",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "dusk-time",
+      "action": "time",
+      "value": "19:15",
+      "capture": false,
+      "settleSeconds": 2
+    },
+    {
+      "id": "overcast",
+      "action": "weather",
+      "value": "Overcast",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "fog",
+      "action": "weather",
+      "value": "Fog",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "follow-clear",
+      "action": "weather",
+      "value": "Clear",
+      "capture": false,
+      "settleSeconds": 15
+    },
+    {
+      "id": "follow",
+      "action": "follow",
+      "value": "",
+      "capture": false,
+      "settleSeconds": 2
+    },
+    {
+      "id": "follow-angle",
+      "action": "camera",
+      "value": "12,250,80",
+      "capture": false,
+      "settleSeconds": 2
+    },
+    {
+      "id": "follow-day",
+      "action": "time",
+      "value": "12:00",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "follow-dusk",
+      "action": "time",
+      "value": "19:15",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "follow-night",
+      "action": "time",
+      "value": "22:00",
+      "capture": true,
+      "settleSeconds": 2
+    }
+  ],
+  "expectedCommit": "bb4a17eae89b00250c5b500f714cecda2ff06d6d",
+  "issue": "Review refined sunrise sunset blue-hour sky with overview follow and weather"
+}

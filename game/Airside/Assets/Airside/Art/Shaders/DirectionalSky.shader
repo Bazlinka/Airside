@@ -5,6 +5,7 @@ Shader "Airside/DirectionalSky"
         _Zenith ("Zenith", Color) = (0.1,0.2,0.4,1)
         _Horizon ("Horizon", Color) = (0.5,0.6,0.7,1)
         _Sunset ("Sun-facing horizon", Color) = (1,0.5,0.2,1)
+        _TwilightRose ("Opposing twilight band", Color) = (0.58,0.36,0.43,1)
         _Twilight ("Twilight", Range(0,1)) = 0
         _SunDirection ("Sun direction", Vector) = (0,1,0,0)
     }
@@ -19,7 +20,7 @@ Shader "Airside/DirectionalSky"
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             CBUFFER_START(UnityPerMaterial)
-                float4 _Zenith, _Horizon, _Sunset, _SunDirection;
+                float4 _Zenith, _Horizon, _Sunset, _TwilightRose, _SunDirection;
                 float _Twilight;
             CBUFFER_END
             struct Attributes { float4 positionOS : POSITION; };
@@ -39,13 +40,20 @@ Shader "Airside/DirectionalSky"
                 half3 sky = lerp(_Horizon.rgb, _Zenith.rgb, gradient);
                 // Horizontal dot avoids a discontinuity as the sun crosses the horizon.
                 float2 sun = _SunDirection.xz / max(length(_SunDirection.xz), 0.0001);
-                float towardSun = dot(ray.xz, sun);
+                float2 viewAzimuth = ray.xz / max(length(ray.xz), 0.0001);
+                float towardSun = dot(viewAzimuth, sun);
                 float facing = smoothstep(-0.2, 0.95, towardSun);
-                float lowBand = exp(-height * 8.0);
+                // Keep amber below the upper sky. A narrow opposing rose band sits
+                // above the cooler horizon, suggesting the rising/falling earth shadow.
+                float lowBand = exp(-height * 14.0);
+                float awayFromSun = smoothstep(0.05, 0.9, -towardSun);
+                float roseBand = smoothstep(0.0, 0.04, height)
+                    * (1.0 - smoothstep(0.08, 0.24, height));
+                sky = lerp(sky, _TwilightRose.rgb, _Twilight * awayFromSun * roseBand * 0.32);
                 sky = lerp(sky, _Sunset.rgb, _Twilight * facing * lowBand * 0.88);
                 // Broad soft scattering, separate from the existing physical sun disc.
                 float aureole = pow(saturate(dot(ray, normalize(_SunDirection.xyz))), 24.0);
-                sky += _Sunset.rgb * (_Twilight * aureole * 0.12);
+                sky += _Sunset.rgb * (_Twilight * aureole * 0.08);
                 return half4(sky, 1);
             }
             ENDHLSL

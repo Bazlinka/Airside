@@ -39,17 +39,22 @@ namespace Airside.Presentation
             var clear = AtmosphereLook.For(WeatherLook.For(WeatherKind.Clear), daylight, 0f, false, ObserverHeight);
             baseSky = Color.Lerp(baseSky, ToColor(clear.Sky), aboveDeck);
             var zenith = Color.Lerp(new Color(0.025f, 0.04f, 0.085f), new Color(0.24f, 0.46f, 0.72f), visualDay);
-            zenith = Color.Lerp(zenith, new Color(0.09f, 0.14f, 0.31f), blueHour * 0.65f);
+            zenith = Color.Lerp(zenith, new Color(0.07f, 0.15f, 0.29f), blueHour * 0.65f);
             zenith = Color.Lerp(baseSky, zenith, openness);
             var horizon = Color.Lerp(baseSky, Color.Lerp(new Color(0.055f, 0.07f, 0.12f),
                 new Color(0.67f, 0.77f, 0.85f), visualDay), openness);
-            horizon = Color.Lerp(horizon, new Color(0.32f, 0.29f, 0.43f), blueHour * openness * 0.55f);
-            // Only the sun-facing low sky gets amber/rose; the opposite horizon stays lavender.
-            var sunset = Color.Lerp(new Color(0.78f, 0.34f, 0.23f), new Color(1f, 0.65f, 0.34f),
+            horizon = Color.Lerp(horizon, new Color(0.20f, 0.27f, 0.39f), blueHour * openness * 0.55f);
+            // Dawn has a softer peach edge; evening retains amber. Colour follows the
+            // existing celestial azimuth, so seasonal sunrise/sunset times stay intact.
+            var morning = PresentationCelestial.Sun.AzimuthDegrees < 180.0;
+            var sunset = Color.Lerp(new Color(0.66f, 0.30f, 0.25f),
+                morning ? new Color(0.96f, 0.61f, 0.43f) : new Color(1f, 0.61f, 0.30f),
                 Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-6f, 6f, elevation)));
+            var twilightRose = morning ? new Color(0.55f, 0.40f, 0.46f) : new Color(0.58f, 0.36f, 0.43f);
             _directionalSky.SetColor("_Zenith", Color.Lerp(zenith, Color.white, flash * 0.7f));
             _directionalSky.SetColor("_Horizon", Color.Lerp(horizon, Color.white, flash * 0.7f));
             _directionalSky.SetColor("_Sunset", sunset);
+            _directionalSky.SetColor("_TwilightRose", twilightRose);
             _directionalSky.SetVector("_SunDirection", sunDirection);
             _directionalSky.SetFloat("_Twilight", twilight);
             RenderSettings.skybox = _directionalSky;

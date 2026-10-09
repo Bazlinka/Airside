@@ -10,11 +10,13 @@ framing and low controller consoles now enclose the existing tower eye. Rain ret
 normal fleet-relative speeds and full elapsed presentation time; streaks reflect a fixed
 exposure and floating-origin recentering preserves observer motion. Simulation, saves,
 external assets and personal game unchanged. Native baseline reproduced the open roof
-and a synthetic 220 m/s observer was limited to 90 m/s. Fixed-revision identical native
-scenario is pending; quick headless check unavailable (dotnet not on PATH).
+and a synthetic 220 m/s observer was limited to 90 m/s. Fixed clean universal Mac build and identical 17-step scenario pass, zero runtime
+errors; day/night cab and rain frames inspected. Four tower and 17 runner regressions
+pass. Synthetic 220 m/s rain probe reaches 216.7 m/s (previously 90); real flight/cloud
+crossing and control hit-testing unverified.
 Decision/evidence: `docs/testing/tower-rain-2026-10-09/README.md`.
 
-**Next:** complete identical native before/after and focused tower/rain checks, then merge #756.
+**Next:** Bailey can use the validated local build for personal tower/rain playtesting.
 Other active state and prior verification limits are preserved in
 `docs/history/game-handoff-before-tower-rain-2026-10-09.md`.
 Standing policy: agents choose necessary focused runtime checks; broad suites/soaks on request.

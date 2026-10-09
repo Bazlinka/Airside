@@ -2645,12 +2645,13 @@ namespace Airside.Presentation
             _contractsWorkspace.Rebuild(_operations, _clock.Now);
             var layout = ContractsWorkspaceLayout.Create(Box(rect), _contractsWorkspace.ActiveTerms.Count);
             ContractsWorkspacePainter.Paint(_workspaceDrawList, _contractsWorkspace, layout,
-                _highlightedContractId);
+                _highlightedContractId, _contractOfferPage);
             _workspaceDrawList.Button(HudShellPainter.HeaderActionBox(Box(rect)),
                 "CAREER", HudAction.CareerRoadmap, HudButtonStyle.Secondary);
             DispatchWorkspaceAction(_hudPainter.Draw(_workspaceDrawList));
         }
 
+        private int _contractOfferPage;
         private float _abandonArmedUntil;
 
         /// <summary>Two clicks within five seconds, so a stray click never costs reliability.</summary>
@@ -2780,6 +2781,10 @@ namespace Airside.Presentation
                     return;
                 case HudAction.CancelContract:
                     AbandonContractFromHud();
+                    return;
+                case HudAction.NextOfferPage:
+                    _contractOfferPage++;
+                    PlayUiClick();
                     return;
                 case HudAction.CareerRoadmap:
                     _careerProfileView = false;

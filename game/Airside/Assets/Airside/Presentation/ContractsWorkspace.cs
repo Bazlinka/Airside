@@ -345,7 +345,7 @@ namespace Airside.Presentation
     public static class ContractsWorkspacePainter
     {
         public static void Paint(HudDrawList into, ContractsWorkspaceModel model,
-            ContractsWorkspaceLayout layout, string highlightedContractId)
+            ContractsWorkspaceLayout layout, string highlightedContractId, int offerPage = 0)
         {
             if (into == null || model == null)
                 return;
@@ -358,7 +358,7 @@ namespace Airside.Presentation
             PaintActive(into, model, layout);
             if (!layout.Divider.IsEmpty)
                 into.Hairline(layout.Divider);
-            PaintOffers(into, model, layout, highlightedContractId);
+            PaintOffers(into, model, layout, highlightedContractId, offerPage);
 
             into.Hairline(HudShell.FooterRule(layout.Surface));
             into.Text(layout.Footer.Inset(HudShell.SurfacePadding, 10f, HudShell.SurfacePadding, 0f)
@@ -433,11 +433,14 @@ namespace Airside.Presentation
         }
 
         /// <summary>The lock reason every shown offer shares, or null when they differ or any is open.</summary>
-        public static string SharedLockReason(IReadOnlyList<ContractOfferRow> offers, int shown)
+        public static string SharedLockReason(IReadOnlyList<ContractOfferRow> offers, int shown) =>
+            SharedLockReason(offers, 0, shown);
+
+        public static string SharedLockReason(IReadOnlyList<ContractOfferRow> offers, int first, int shown)
         {
             string shared = null;
             var count = 0;
-            for (var i = 0; i < offers.Count && i < shown; i++)
+            for (var i = first; i < offers.Count && i < first + shown; i++)
             {
                 var reason = offers[i].LockReason;
                 if (reason.Length == 0)
@@ -461,7 +464,7 @@ namespace Airside.Presentation
         };
 
         private static void PaintOffers(HudDrawList into, ContractsWorkspaceModel model,
-            ContractsWorkspaceLayout layout, string highlightedContractId)
+            ContractsWorkspaceLayout layout, string highlightedContractId, int offerPage)
         {
             into.Caption(layout.OffersCaption, "AVAILABLE OFFERS");
 
@@ -473,12 +476,17 @@ namespace Airside.Presentation
                 return;
             }
 
-            var shown = Math.Min(model.Offers.Count, layout.VisibleOffers);
+            // Offers that do not fit the column are reached a page at a time, never just counted.
+            var pageSize = Math.Max(1, layout.VisibleOffers);
+            var pageCount = (model.Offers.Count + pageSize - 1) / pageSize;
+            var page = pageCount <= 1 ? 0 : ((offerPage % pageCount) + pageCount) % pageCount;
+            var first = page * pageSize;
+            var shown = Math.Min(pageSize, model.Offers.Count - first);
             // ADR 0130: a reason every card shares (one contract at a time) is said once, by the caption.
-            var shared = SharedLockReason(model.Offers, shown);
+            var shared = SharedLockReason(model.Offers, first, shown);
             if (shared != null)
             {
-                var room = layout.OffersColumn.Width - 170f;
+                var room = layout.OffersColumn.Width - 170f - (pageCount > 1 ? 200f : 0f);
                 // A side sheet (ADR 0135) is narrower: the short form keeps the point.
                 var notice = HudShell.Measure(shared, 11f) <= room ? shared : shared.Split('.')[0];
                 into.Text(new HudBox(layout.OffersCaption.X + 170f, layout.OffersCaption.Y + 1f, room, 16f), notice, 11f,
@@ -489,7 +497,7 @@ namespace Airside.Presentation
             // column (OfferCardHeight) and the content centres in whatever height each card gets.
             for (var i = 0; i < shown; i++)
             {
-                var offer = model.Offers[i];
+                var offer = model.Offers[first + i];
                 var definition = offer.Definition;
                 var card = layout.OfferCard(i, shown);
                 var highlighted = offer.CanAccept && definition.Id == highlightedContractId;
@@ -562,10 +570,9 @@ namespace Airside.Presentation
                 into.Hotspot(card, HudAction.Accept(definition.Id));
             }
 
-            if (shown < model.Offers.Count)
-                into.Text(new HudBox(layout.OffersColumn.X, layout.OffersColumn.Bottom - 16f,
-                    layout.OffersColumn.Width, 16f), $"{model.Offers.Count - shown} more on offer", 11f,
-                    HudTone.Muted, HudTextStyle.Caption);
+            if (pageCount > 1)
+                into.Button(new HudBox(layout.OffersColumn.Right - 190f, layout.OffersCaption.Y - 3f, 190f, 24f),
+                    $"MORE OFFERS  {page + 1}/{pageCount}", HudAction.NextOfferPage, HudButtonStyle.Secondary);
         }
     }
 }

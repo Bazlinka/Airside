@@ -53,6 +53,7 @@ METAL = (140, 143, 148)
 
 def colour(name):
     n = name
+    if n.startswith("intake_liner_"): return (25, 28, 31)
     if n.startswith("rescue_red"):
         return SLATE
     if n == "livery_emblem": return (245, 242, 230)

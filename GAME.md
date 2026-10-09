@@ -1,16 +1,17 @@
 # Airside — current state
 
-The living status board. **Current state only.** Keep this file under ~250 lines: history, evidence and
-superseded handoffs live in [`docs/history/`](docs/history/) (the full pre-restructure log is
-[`GAME-handoff-log-through-2026-10-07.md`](docs/history/GAME-handoff-log-through-2026-10-07.md)).
+The living status board. **Current state only.** Keep under ~250 lines; history and superseded handoffs live in [`docs/history/`](docs/history/).
 Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`docs/README.md`](docs/README.md).
 
 ## Where to resume
 
-**Report-only bug hunt (9 Oct, Codex, #717):** 15 findings and selected portable evidence are in
-`docs/testing/bug-hunt-2026-10-09/README.md`. Tested build aec64616 at 40×; no fixes in this task.
-Capture inversion was subsequently fixed/verified on main; reproduce the remaining findings
-against current main before claiming scoped fixes. UX and normal-speed limits are explicit.
+**Fleet refinements (9 Oct, Codex, #716):** recessed engine mouths and skin-fitted moving control hinges;
+15 active airframes inspected in native front/side/rear/overview, 13 passenger rigs in driven roll poses.
+Envelopes, pivots, paint, simulation and saves retained. 52 focused headless/17 native checks pass;
+Mac build/four-step parked A350 player check pass, no runtime errors. Evidence/limits: `docs/testing/fleet-refinements-2026-10-09/README.md`.
+
+**Report-only bug hunt (9 Oct, Codex, #717):** 15 findings/evidence: `docs/testing/bug-hunt-2026-10-09/README.md`.
+Tested aec64616 at 40×, no fixes; capture inversion subsequently fixed. Reproduce remaining findings on current main; UX/normal-speed limits are explicit.
 
 **Welcome and comfort fixes (9 Oct, Codex, #706):** title/setup weather isolation and consistent Weather Layers;
 F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; compact/recovery welcome cards;
@@ -192,13 +193,8 @@ thumps and Vibration off. Check lightning/thunder alignment and transparent rend
 Standing policy: necessary gameplay/builds automatic; full journeys when warranted. Broad suites/performance/long soaks on request;
 merge completed authorised work without repeated approval.
 
-**Other current context:** aircraft body realism (#651), regional departure/landing
-speeds/altitude, maps/HUD redesign, notifications/registration (#645/#663), toasts,
-control-tower view, Adelaide opening and earlier lighting/audio/native changes retain
-their existing Unity/Mac verification limits. Remaining HUD surfaces and compact-window
-layout failures, WIP 787-window proposal (#543), known FlightManual page 7 failure and
-satellite JPEG mirror mismatch remain separate. The preceding status and exact other
-tools' open work are preserved in
+**Other current context:** earlier aircraft/HUD/lighting/audio work retains its recorded validation limits.
+HUD/compact-layout failures, WIP 787-window proposal (#543), FlightManual page 7 and satellite JPEG mirror mismatch remain separate. Earlier status and other tools' work:
 `docs/history/game-handoff-before-weather-realism-2026-10-08.md`.
 
 *One block, replaced at the end of each session. Updated 2026-10-09.*
@@ -250,6 +246,3 @@ Open `game/Airside` in Unity 6.3 LTS and press Play. The in-game Flight Manual
 contains the current controls and source credits; `README.md` covers first-run setup.
 Follow AGENTS.md for quick checks and merge policy. Mac build/playtest, device audio
 and flight streaming performance remain unverified until explicitly exercised.
-
-Earlier handoffs and the previous full controls/build/soak notes are preserved
-verbatim in [`docs/history/GAME-handoff-log-through-2026-10-08.md`](docs/history/GAME-handoff-log-through-2026-10-08.md).

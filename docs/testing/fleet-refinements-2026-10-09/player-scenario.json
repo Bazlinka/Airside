@@ -1,0 +1,34 @@
+{
+  "protocol": 1,
+  "aircraftType": "A359",
+  "steps": [
+    {
+      "id": "follow",
+      "action": "follow",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "front-high",
+      "action": "camera",
+      "value": "35,35,105",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "opposite-high",
+      "action": "camera",
+      "value": "35,215,105",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "overview",
+      "action": "overview",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 2
+    }
+  ]
+}

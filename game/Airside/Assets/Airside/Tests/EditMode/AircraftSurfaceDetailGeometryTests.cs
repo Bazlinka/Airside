@@ -6,6 +6,46 @@ namespace Airside.Tests
 {
     public sealed class AircraftSurfaceDetailGeometryTests
     {
+        [TestCase(false)]
+        [TestCase(true)]
+        public void HingeSeamFollowsTaperAndCantWithoutPaintingTheOppositeFace(bool vertical)
+        {
+            var skin = new[] { 0f,.2f,0f, 0f,.2f,2f, 4f,.6f,-1f, 4f,.6f,0f,
+                0f,-.2f,0f, 0f,-.2f,2f, 4f,.2f,-1f, 4f,.2f,0f };
+            var triangles = new[] { 0,1,3, 0,3,2, 4,7,5, 4,6,7,
+                0,4,5, 0,5,1, 2,3,7, 2,7,6, 0,2,6, 0,6,4, 1,5,7, 1,7,3 };
+            if (vertical)
+                for (var i = 0; i < skin.Length; i += 3)
+                { var x = skin[i]; skin[i] = skin[i+1]; skin[i+1] = x; }
+            var seam = AircraftSurfaceDetailGeometry.ControlSeam(skin, triangles, vertical);
+            Assert.That(seam.Triangles.Length, Is.GreaterThan(0));
+            for (var i = 0; i < seam.Positions.Length; i += 3)
+            {
+                var span = seam.Positions[i + (vertical ? 1 : 0)];
+                var depth = seam.Positions[i + (vertical ? 0 : 1)];
+                var top = Math.Abs(depth - (.204f + .1f*span)) < .00001f;
+                var bottom = Math.Abs(depth - (-.204f + .1f*span)) < .00001f;
+                Assert.That(top || (vertical && bottom), Is.True, "Seam must hug its actual face.");
+                Assert.That(seam.Positions[i+2], Is.LessThan(2f-.5f*span));
+            }
+        }
+
+        [Test]
+        public void OverlappingWingGetsAFittedHingeAndMissingWingGetsNoFloatingMark()
+        {
+            var skin = new[] { 0f,.2f,0f, 0f,.2f,2f, 4f,.6f,-1f, 4f,.6f,0f };
+            var triangles = new[] { 0,1,3, 0,3,2 };
+            var control = (float[])skin.Clone();
+            for (var i = 1; i < control.Length; i += 3) control[i] -= .5f;
+            var seam = AircraftSurfaceDetailGeometry.ControlSeam(control, triangles, false);
+            var projected = AircraftSurfaceDetailGeometry.ProjectUpper(seam, skin, triangles);
+            Assert.That(projected.Triangles.Length, Is.EqualTo(seam.Triangles.Length).And.GreaterThan(0));
+            for (var i = 0; i < projected.Positions.Length; i += 3)
+                Assert.That(projected.Positions[i+1], Is.EqualTo(.204f+.1f*projected.Positions[i]).Within(.00001f));
+            for (var i = 0; i < skin.Length; i += 3) skin[i] += 10f;
+            Assert.That(AircraftSurfaceDetailGeometry.ProjectUpper(seam, skin, triangles).Triangles, Is.Empty);
+        }
+
         [TestCase(-1)]
         [TestCase(1)]
         public void ClipsToCurvedFrontFaceAndNeverIncludesTheBack(int side)

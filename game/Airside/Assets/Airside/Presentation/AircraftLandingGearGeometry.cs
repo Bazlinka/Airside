@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace Airside.Presentation
 {
@@ -152,10 +151,19 @@ namespace Airside.Presentation
                 if (polygon.Count < 3) continue;
                 var first = vertices.Count;
                 foreach (var v in polygon) vertices.Add(v + normal * 0.008f);
+                var back = vertices.Count;
+                foreach (var v in polygon) vertices.Add(v + normal * 0.003f);
+                // Distinct front/back vertices keep rebaking normals from cancelling to zero.
                 for (var j = 1; j < polygon.Count - 1; j++)
                 {
                     indices.AddRange(new[] { first, first + j, first + j + 1 });
-                    indices.AddRange(new[] { first, first + j + 1, first + j });
+                    indices.AddRange(new[] { back, back + j + 1, back + j });
+                }
+                for (var j = 0; j < polygon.Count; j++)
+                {
+                    var next = (j + 1) % polygon.Count;
+                    indices.AddRange(new[] { first + j, back + j, back + next,
+                        first + j, back + next, first + next });
                 }
             }
             if (vertices.Count == 0) return;
@@ -164,16 +172,11 @@ namespace Airside.Presentation
             var leaf = new Mesh { name = name + " fitted skin" };
             leaf.SetVertices(vertices);
             leaf.SetTriangles(indices, 0);
-            // Double-sided triangles share normals; set the outward-facing underside explicitly.
-            var normals = new Vector3[vertices.Count];
-            for (var i = 0; i < normals.Length; i++) normals[i] = Vector3.down;
-            leaf.normals = normals;
+            leaf.RecalculateNormals();
             leaf.RecalculateBounds();
             door.gameObject.AddComponent<MeshFilter>().sharedMesh = leaf;
-            var material = Object.Instantiate(skin.GetComponent<Renderer>().sharedMaterial);
-            material.name = "Original fitted gear bay leaf";
-            if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", new Color(0.82f, 0.84f, 0.85f));
-            door.gameObject.AddComponent<MeshRenderer>().sharedMaterial = material;
+            door.gameObject.AddComponent<MeshRenderer>().sharedMaterial = AircraftLiveryPaint.MaterialFor(
+                name, AircraftLiveryPaint.AirframeWhite);
         }
 
         private static List<Vector3> Clip(List<Vector3> input, int axis, float edge, bool greater)

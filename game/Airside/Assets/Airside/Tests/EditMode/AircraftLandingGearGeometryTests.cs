@@ -95,6 +95,13 @@ namespace Airside.Tests
                 {
                     Assert.That(Array.Exists(transforms, t => t.name == "gear_door_nose_l"), Is.True);
                     Assert.That(Array.Exists(transforms, t => t.name == "Gear door L"), Is.True);
+                    foreach (var part in transforms)
+                    {
+                        if (!AirsideAircraftParts.IsGearDoor(part.name)) continue;
+                        var mesh = part.GetComponent<MeshFilter>().sharedMesh;
+                        foreach (var normal in mesh.normals)
+                            Assert.That(normal.sqrMagnitude, Is.GreaterThan(0.5f), "door shell normals must survive pivot rebaking");
+                    }
                 }
             }
             finally { Object.DestroyImmediate(root.gameObject); }

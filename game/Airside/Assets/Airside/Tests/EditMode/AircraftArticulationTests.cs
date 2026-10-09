@@ -276,6 +276,44 @@ namespace Airside.Tests
             Assert.That(AirsideAircraftParts.IsGearDoor(name), Is.EqualTo(expected));
         }
 
+        [Test]
+        public void GearDoors_ClearBeforeAnyLegMovement_InBothDirections()
+        {
+            for (var i = 1; i < 1000; i++)
+            {
+                var t = i / 1000f;
+                var swing = AircraftArticulation.GearLegSwing01(t);
+                if (swing > 0f && swing < 1f)
+                    Assert.That(AircraftArticulation.GearDoorOpen01(t), Is.EqualTo(1f).Within(0.0001f));
+            }
+        }
+
+        [Test]
+        public void GearCycle_ReversalAndPauseRetainTheSameContinuousStroke()
+        {
+            var cycle = new AircraftArticulation.GearCycle();
+            cycle.Step(0f, 0f, 22f);
+            cycle.Step(1f, 3.5f, 22f);
+            Assert.That(cycle.Retract, Is.EqualTo(0.5f).Within(0.0001f));
+            cycle.Step(0f, 0f, 22f);
+            Assert.That(cycle.Retract, Is.EqualTo(0.5f).Within(0.0001f), "pause holds a reversing cycle");
+            cycle.Step(0f, 2.2f, 22f);
+            Assert.That(cycle.Retract, Is.EqualTo(0.4f).Within(0.0001f), "extension continues from the current lock travel");
+        }
+
+        [Test]
+        public void GearCycle_FramePartitionDoesNotChangeThePose()
+        {
+            var fine = new AircraftArticulation.GearCycle();
+            var coarse = new AircraftArticulation.GearCycle();
+            fine.Step(1f, 0f, 22f);
+            coarse.Step(1f, 0f, 22f);
+            for (var i = 0; i < 220; i++) fine.Step(0f, 0.1f, 22f);
+            for (var i = 0; i < 22; i++) coarse.Step(0f, 1f, 22f);
+            Assert.That(fine.Retract, Is.EqualTo(coarse.Retract).Within(0.00001f));
+            Assert.That(fine.Retract, Is.EqualTo(0f).Within(0.00001f));
+        }
+
         // ---- Wheels -------------------------------------------------------------------------
 
         [Test]

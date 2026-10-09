@@ -599,3 +599,7 @@ published fee schedule, Airservices Australia's charging determination, ATR's fa
 each figure carries a confidence tier. No asset, code or prose reproduced; cost $0; no attribution requirement.
 Fallback: current `FlightEconomics` game-dollar formulas. Several lines (aircraft values, leases, crew on-costs) are
 unsourced and flagged; none may ship until replaced.
+
+## Original fitted widebody gear leaves — 2026-10-09 (#757)
+
+Runtime procedural bay leaves derived solely from the existing original Airside fuselage/fairing meshes (`AircraftLandingGearGeometry`). Source/generator: original project C#; no external visual asset or copied manufacturer geometry. Prompt: Bailey's fleet landing gear placement/doors/motion request. Licence/terms: original Airside project work, same terms as its input models. Cost: $0; attribution: Airside. Fallback: existing authored aircraft/gear meshes remain; missing or unreadable skin skips fitted leaves safely. Evidence: `docs/testing/landing-gear-2026-10-09/README.md`.

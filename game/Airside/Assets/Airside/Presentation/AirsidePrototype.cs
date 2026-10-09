@@ -4199,15 +4199,11 @@ namespace Airside.Presentation
             public Renderer Flare;
             public Transform FlarePivot;
 
-            // Landing-gear articulation (struts, trucks and belly doors). Retract is the part's own
-            // 0 (down and locked) .. 1 (up and locked) travel; the pass slews it toward the phase's target.
+            // Landing-gear articulation: struts, trucks and doors share a retained root cycle.
+            // These fields describe each part's geometry and steering, not independent clocks.
             public GearRole Role;
             public GearRetractStyle Style;
             public Quaternion Rest = Quaternion.identity;
-            public float Retract;
-            public bool RetractSeeded;
-            /// <summary>Retract units per second when lowering: slow on approach, quick otherwise.</summary>
-            public float ExtendRate = 0.35f;
             public float SteerDegrees;
             /// <summary>Belly doors: -1 when hinged on the left edge, +1 on the right (free edge swings down).</summary>
             public float DoorSign = -1f;

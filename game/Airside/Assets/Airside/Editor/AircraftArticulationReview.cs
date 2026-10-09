@@ -32,9 +32,9 @@ public static class AircraftArticulationReview
         var args = Environment.GetCommandLineArgs();
         string Arg(string key, string fallback) { var i = Array.IndexOf(args, key); return i >= 0 && i + 1 < args.Length ? args[i + 1] : fallback; }
         var output = Path.GetFullPath(Arg("-articulationOutput", "../../work/articulation-review"));
-        var only = Arg("-aircraftReviewTypes", "ATR42,SF34,DH8D,E190,A223,A320,B738,B38M,A21N,A359,A339,B789,B78X").Split(',');
-        var pose = Arg("-articulationPose", "gearup");
-        var views = Arg("-aircraftReviewViews", pose is "roll" or "landing" ? "ahead,behind,top" : "side,front,under").Split(',');
+        var only = Arg("-aircraftReviewTypes", "ATR42,SF34,DH8D,E190,A223,A320,B738,B38M,A21N,A359,A339,B789,B78X,B412,TRAINER").Split(',');
+        var poses = Arg("-articulationPoses", Arg("-articulationPose", "gearup")).Split(',');
+
         Directory.CreateDirectory(output);
         ShaderUtil.allowAsyncCompilation = false;
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -59,11 +59,23 @@ public static class AircraftArticulationReview
         var proto = typeof(AirsidePrototype);
         var viewPartsType = proto.GetNestedType("AircraftViewParts", BindingFlags.NonPublic);
         var stateType = proto.GetNestedType("AircraftArticulationState", BindingFlags.NonPublic);
+        foreach (var pose in poses)
+        {
+        var views = Arg("-aircraftReviewViews", pose is "roll" or "landing" ? "ahead,behind,top" : "side,front,under").Split(',');
         foreach (var id in only)
         {
-            if (!AircraftType.TryFromId(id, out var type)) throw new InvalidOperationException("Unknown aircraft " + id);
+            if (!AircraftType.TryFromId(id, out var type) && id != "TRAINER") throw new InvalidOperationException("Unknown aircraft " + id);
             ColorUtility.TryParseHtmlString("#1F3A93", out var accent);
-            var root = (Transform)proto.GetMethod("BuildAircraftForType", PrivateStatic)
+            Transform root;
+            if (id == "TRAINER")
+            {
+                var colour = typeof(AirsideParafieldAirport).GetMethod("PartColour", PrivateStatic);
+                if (!ArtPresentationLoader.TryInstantiate(AirsideParafieldAirport.TrainerArtPath, null, out root,
+                    part => "Parafield trainer 0 " + part,
+                    part => (Color?)colour.Invoke(null, new object[] { part, 0 })))
+                    throw new InvalidOperationException("Trainer kit unavailable");
+            }
+            else root = (Transform)proto.GetMethod("BuildAircraftForType", PrivateStatic)
                 .Invoke(null, new object[] { "Review " + id, type, accent, null });
             foreach (var lod in root.GetComponentsInChildren<LODGroup>()) lod.ForceLOD(0);
 
@@ -119,7 +131,7 @@ public static class AircraftArticulationReview
                 var rotation = Quaternion.Euler(-pitch, -yaw, 0f);
                 var framed = bounds;
                 // Gear shots frame the lower fuselage and the wheels, not the whole airframe.
-                if (pose is "gearup" or "gearmid" or "geardown" && gearBounds.HasValue)
+                if ((pose.StartsWith("gear") || pose.StartsWith("extend")) && gearBounds.HasValue)
                 {
                     framed = gearBounds.Value;
                     framed.Expand(2.5f);
@@ -144,6 +156,7 @@ public static class AircraftArticulationReview
             Object.DestroyImmediate(root.gameObject);
         }
 
+        }
         RenderTexture.active = null;
         camera.targetTexture = null;
         Object.DestroyImmediate(target);
@@ -168,18 +181,31 @@ public static class AircraftArticulationReview
                 for (var i = 0; i < 12; i++)
                     updateGear.Invoke(null, new object[] { gear, AircraftPhase.Circuit, 1f, 0.5f, 1f, 0f, null, null, type });
                 break;
+            case "gear10":
+            case "gear90":
             case "gearmid":
             {
                 // Seed fully down, then step to the progress that puts the gear half-way through its cycle.
                 updateGear.Invoke(null, GearArgs(AircraftPhase.Landing, 0.5f));
+                if (type == null || type.IsRotorcraft) break;
+                var wanted = pose == "gear10" ? 0.9f : pose == "gear90" ? 0.1f : 0.5f;
                 var best = 0f; var bestError = 9f;
                 for (var p = 0f; p <= 1f; p += 0.0005f)
                 {
-                    var error = Mathf.Abs(AirsideReusableMotion.GearBias(AircraftPhase.Takeoff, p, type) - 0.5f);
+                    var error = Mathf.Abs(AirsideReusableMotion.GearBias(AircraftPhase.Takeoff, p, type) - wanted);
                     if (error < bestError) { bestError = error; best = p; }
                 }
                 for (var i = 0; i < 80; i++)
                     updateGear.Invoke(null, new object[] { gear, AircraftPhase.Takeoff, 1f, best, 0.1f, 0f, null, null, type });
+                break;
+            }
+            case var extension when extension.StartsWith("extend"):
+            {
+                var seconds = float.Parse(extension.Substring(6), System.Globalization.CultureInfo.InvariantCulture);
+                for (var i = 0; i < 12; i++)
+                    updateGear.Invoke(null, new object[] { gear, AircraftPhase.Circuit, 1f, 0.5f, 1f, 0f, null, null, type });
+                for (var time = 0f; time < seconds - 0.001f; time += 0.05f)
+                    updateGear.Invoke(null, new object[] { gear, AircraftPhase.Approach, 1f, 0.5f, 0.05f, 0f, null, null, type });
                 break;
             }
             case var approach when approach.StartsWith("approach"):
@@ -227,7 +253,7 @@ public static class AircraftArticulationReview
             var restRotation = (Quaternion)type.GetField("RestRotation").GetValue(part);
             var restPosition = (Vector3)type.GetField("RestPosition").GetValue(part);
             var filter = transform.GetComponent<MeshFilter>();
-            if (filter == null) continue;
+            if (filter == null || filter.sharedMesh == null) continue;
             var bounds = filter.sharedMesh.bounds;
             var edge = new Vector3(bounds.center.x, bounds.center.y, bounds.min.z);
             var now = transform.TransformPoint(edge);

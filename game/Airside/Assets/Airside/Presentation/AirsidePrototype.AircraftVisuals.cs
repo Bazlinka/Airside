@@ -2052,6 +2052,8 @@ namespace Airside.Presentation
         /// </summary>
         private static void RebakeAircraftArticulatedPivots(Transform aircraft)
         {
+            AircraftLandingGearGeometry.AddMissingBayDoors(aircraft);
+            AirsideNamedChildren.Forget(aircraft);
             var namedChildren20 = AirsideNamedChildren.Get(aircraft);
             var childNames20 = AirsideNamedChildren.Names(aircraft);
             for (var childIndex20 = 0; childIndex20 < namedChildren20.Length; childIndex20++)
@@ -2069,7 +2071,7 @@ namespace Airside.Presentation
                 var articulated = true;
                 if (AirsideAircraftParts.IsGearStrut(childName))
                 {
-                    pivot.y = bounds.max.y;
+                    pivot = AircraftLandingGearGeometry.TopAttachment(child, bounds);
                 }
                 else if (AirsideAircraftParts.IsGearDoor(childName))
                 {
@@ -2167,10 +2169,18 @@ namespace Airside.Presentation
             var attached = new List<(Transform Part, int Side)>();
             var children = AirsideNamedChildren.Get(aircraft);
             var names = AirsideNamedChildren.Names(aircraft);
+            var sponsonGear = Array.Exists(names, n => n.StartsWith("Propeller", StringComparison.Ordinal))
+                && Array.Exists(children, t => t != null && t.name == "Gear L"
+                    && Mathf.Abs(aircraft.InverseTransformPoint(t.position).x) < 2.5f);
             for (var i = 0; i < children.Length; i++)
             {
                 var child = children[i];
                 var childName = names[i];
+                // ATR legs and blisters are attached to the fuselage, not its high wing.
+                // Wing flex must not lift their attachment or move the deployed contact datum.
+                if (sponsonGear && (childName is "Gear L" or "Gear R" or "Gear door L" or "Gear door R"
+                    || childName.StartsWith("Gear fairing", StringComparison.Ordinal)))
+                    continue;
                 if (childName == "Wing L")
                 {
                     wingL = child;

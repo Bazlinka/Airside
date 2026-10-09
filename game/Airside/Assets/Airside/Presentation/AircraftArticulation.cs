@@ -36,6 +36,25 @@ namespace Airside.Presentation
     /// </summary>
     public static class AircraftArticulation
     {
+        /// <summary>One presentation timeline per aircraft, retained when its part cache is rebuilt.</summary>
+        public sealed class GearCycle
+        {
+            public float Retract { get; private set; }
+            private bool _seeded;
+
+            public float Step(float target, float deltaSeconds, float extendSeconds)
+            {
+                target = Clamp(target, 0f, 1f);
+                if (!_seeded) { Retract = target; _seeded = true; }
+                else if (deltaSeconds > 0f)
+                {
+                    var rate = target < Retract ? 1f / Math.Max(1f, extendSeconds) : 1f / 7f;
+                    Retract = MoveToward(Retract, target, deltaSeconds * rate);
+                }
+                return Retract;
+            }
+        }
+
         public const float MaxElevatorUpDegrees = 25f;
         public const float MaxElevatorDownDegrees = 16f;
         public const float MaxAileronUpDegrees = 22f;
@@ -208,7 +227,7 @@ namespace Airside.Presentation
         public static float GearLegSwing01(float retract01)
         {
             var t = Clamp(retract01, 0f, 1f);
-            return SmoothStep((t - 0.1f) / 0.8f);
+            return SmoothStep((t - 0.18f) / 0.64f);
         }
 
         /// <summary>Door opening for the same travel: open before the leg moves, shut after it is stowed.</summary>
@@ -234,10 +253,10 @@ namespace Airside.Presentation
                 case GearRetractStyle.Aft:
                     return (1f, 0f, 90f * s);
                 case GearRetractStyle.Inboard:
-                    return (0f, 1f, (leftSide ? 88f : -88f) * s);
+                    return (0f, 1f, (leftSide ? 100f : -100f) * s);
                 default:
-                    // The nose leg rotates a little past horizontal so the wheel stack lies flat in its bay.
-                    return (1f, 0f, -92f * s);
+                    // The simplified straight leg folds above horizontal to enclose its tyre envelope in the bay.
+                    return (1f, 0f, -110f * s);
             }
         }
 

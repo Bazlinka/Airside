@@ -275,7 +275,7 @@ namespace Airside.Presentation
                 return GearBias(phase, progress01);
             var since = SecondsSinceLiftoff(phase, progress01, type);
             var t = Mathf.Clamp01((since - GearUpDelaySeconds) / GearCycleSeconds);
-            return Mathf.Lerp(GearDeployed, GearRetracted, Mathf.SmoothStep(0f, 1f, t));
+            return Mathf.Lerp(GearDeployed, GearRetracted, t);
         }
 
         public static float GearBias(AircraftPhase phase, float progress01 = 1f)

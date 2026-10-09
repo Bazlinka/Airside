@@ -153,7 +153,7 @@ namespace Airside.Presentation
             }
             _cockpitInterior = null;
             _cockpitView = null;
-            _cameraController?.EndCockpit();
+            if (_cameraController != null) _cameraController.EndCockpit();
             var wasRemote = _flightOriginX != 0 || _flightOriginZ != 0;
             ResetFlightWorld();
             UpdateAircraftVisual();

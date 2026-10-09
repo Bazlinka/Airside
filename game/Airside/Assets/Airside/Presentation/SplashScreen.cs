@@ -15,6 +15,7 @@ namespace Airside.Presentation
     {
         public SplashStep Step = SplashStep.Menu;
         public bool HasSave;
+        public bool SoundOn = true;
         public string SaveName = string.Empty;
         public string SaveLiveryHex;
         public string SaveTier = string.Empty;
@@ -54,17 +55,21 @@ namespace Airside.Presentation
         /// <summary>The setup wizard's card and live preview (ADR 0123).</summary>
         public AirlineSetupLayout Setup => AirlineSetupLayout.Create(Card, Viewport.Width);
 
-        public static SplashLayout Create(float width, float height, SplashStep step, bool hasSave)
+        public static SplashLayout Create(float width, float height, SplashStep step, bool hasSave, bool hasWarning = false)
         {
             var left = Math.Max(24f, Math.Min(96f, width * 0.06f));
             var cardWidth = Math.Min(CardWidth, width - left * 2f);
-            var cardHeight = step == SplashStep.NewAirline ? AirlineSetupLayout.CardHeight : hasSave ? 324f : 304f;
-            var titleHeight = step == SplashStep.NewAirline && height < 820f ? 0f : 176f;
-            var total = titleHeight + 18f + cardHeight;
+            var cardHeight = step == SplashStep.NewAirline ? AirlineSetupLayout.CardHeight
+                : hasSave ? 324f + (hasWarning ? 54f : 0f) : 304f;
+            // Keep all actions above the footer; omit the large lockup when it cannot fit.
+            var titleHeight = height < cardHeight + 176f + 18f + 84f ? 0f : 176f;
+            var gap = titleHeight > 0f ? 18f : 0f;
+            var total = titleHeight + gap + cardHeight;
             var top = Math.Max(24f, (height - total) * 0.5f - 10f);
             var title = new HudBox(left, top, Math.Min(560f, width - left * 2f), titleHeight);
-            var card = new HudBox(left, titleHeight > 0f ? title.Bottom + 18f : top, cardWidth, Math.Min(cardHeight, Math.Max(0f, height - title.Bottom - 60f)));
-            var footer = new HudBox(left, height - 40f, Math.Max(0f, width - left * 2f - 440f), 18f);
+            var cardTop = title.Bottom + gap;
+            var card = new HudBox(left, cardTop, cardWidth, Math.Min(cardHeight, Math.Max(0f, height - cardTop - 60f)));
+            var footer = new HudBox(left, height - 40f, Math.Max(0f, width - left * 2f - (width >= 1000f ? 330f : 0f)), 18f);
             return new SplashLayout(new HudBox(0f, 0f, width, height), title, card, footer);
         }
     }
@@ -117,7 +122,8 @@ namespace Airside.Presentation
                 PaintMenu(into, layout.Card, model);
             into.Text(layout.Footer, model.Step == SplashStep.NewAirline
                     ? "Enter  next      Esc  back"
-                    : model.HasSave ? "Enter  continue      F1  flight manual" : "Enter  start your airline      F1  flight manual",
+                    : (model.HasSave ? "Enter  continue" : "Enter  start your airline")
+                      + "      F1  flight manual      M  sound " + (model.SoundOn ? "on" : "off"),
                 11f, HudTone.Muted, HudTextStyle.Bold | HudTextStyle.Caption);
         }
 
@@ -162,6 +168,11 @@ namespace Airside.Presentation
                 y += 18f;
                 into.Text(new HudBox(x, y, inner, 16f), model.SavedWhen, 11f, HudTone.Muted);
                 y += 30f;
+                if (!string.IsNullOrEmpty(model.SaveError))
+                {
+                    into.Text(new HudBox(x, y, inner, 44f), model.SaveError, 12f, HudTone.Caution, HudTextStyle.Wrap);
+                    y += 54f;
+                }
                 into.Button(new HudBox(x, y, inner, 44f), "CONTINUE", Continue, HudButtonStyle.Primary);
                 y += 54f;
                 into.Button(new HudBox(x, y, inner, 36f), "NEW AIRLINE", NewAirline, HudButtonStyle.Secondary);

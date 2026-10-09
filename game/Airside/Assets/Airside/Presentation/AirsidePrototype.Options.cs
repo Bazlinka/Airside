@@ -7,6 +7,16 @@ namespace Airside.Presentation
         private readonly OptionsMenuModel _optionsModel = new();
         private HudView _optionsHudView = HudView.Overview;
         private readonly HudDrawList _optionsDrawList = new();
+        private Vector2 _optionsScroll;
+        private readonly HudDrawList _optionsRowsDrawList = new();
+
+        private void OpenOptionsMenu()
+        {
+            _menuOpen = _optionsOpen = true;
+            _optionsHudView = CurrentHudView;
+            _optionsScroll = Vector2.zero;
+            PlayUiClick();
+        }
 
         private void CloseOptionsMenu()
         {
@@ -20,8 +30,34 @@ namespace Airside.Presentation
         {
             FillOptionsModel();
             var box = OptionsMenuPainter.Panel(layout.Viewport.x, layout.Viewport.y);
-            OptionsMenuPainter.Paint(_optionsDrawList, box, _optionsModel);
+            OptionsMenuPainter.Paint(_optionsDrawList, box, _optionsModel, paintRows: false);
             var action = _hudPainter.Draw(_optionsDrawList);
+            var viewport = OptionsMenuPainter.RowsViewport(box);
+            var needsScroll = _optionsModel.Rows.Count * OptionsMenuPainter.RowHeight > viewport.Height;
+            if (!needsScroll)
+            {
+                // Preserve device-pixel text in ordinary windows; only use a clipped group when needed.
+                OptionsMenuPainter.PaintRows(_optionsRowsDrawList, viewport, _optionsModel);
+                action = _hudPainter.Draw(_optionsRowsDrawList) ?? action;
+                if (action != null) RunOptionsAction(action);
+                return;
+            }
+            var contentWidth = viewport.Width - (needsScroll ? 18f : 0f);
+            _optionsScroll = GUI.BeginScrollView(HudPainter.ToRect(viewport), _optionsScroll,
+                new Rect(0f, 0f, contentWidth, _optionsModel.Rows.Count * OptionsMenuPainter.RowHeight));
+            var deviceSpace = _hudPainter.DeviceSpace;
+            try
+            {
+                _hudPainter.DeviceSpace = false;
+                OptionsMenuPainter.PaintRows(_optionsRowsDrawList, new HudBox(0f, 0f, contentWidth,
+                    _optionsModel.Rows.Count * OptionsMenuPainter.RowHeight), _optionsModel);
+                action = _hudPainter.Draw(_optionsRowsDrawList) ?? action;
+            }
+            finally
+            {
+                _hudPainter.DeviceSpace = deviceSpace;
+                GUI.EndScrollView();
+            }
             if (action != null)
                 RunOptionsAction(action);
         }
@@ -84,7 +120,7 @@ namespace Airside.Presentation
             const string section = "options:section:";
             if (action.StartsWith(section) && int.TryParse(action.Substring(section.Length), out var index)
                 && index >= 0 && index < OptionsMenuPainter.Sections.Length)
-            { _optionsModel.Section = (OptionsSection)index; PlayUiClick(); return; }
+            { _optionsModel.Section = (OptionsSection)index; _optionsScroll = Vector2.zero; PlayUiClick(); return; }
             var s = AirsideSettings.Current;
             switch (action)
             {

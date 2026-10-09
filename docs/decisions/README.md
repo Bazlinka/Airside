@@ -339,3 +339,4 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-09 | [Recorded weather and arrival continuity](2026-10-09-recorded-weather-and-arrival-continuity.md) | Accepted — Bailey's instruction to continue fixing the audited mismatc |
 | 2026-10-09 | [Terminal doors and more people on the ground](2026-10-09-terminal-doors-and-people.md) | pure geometry and walk tests pass; the Unity assembly compiles; appear |
 | 2026-10-09 | [Weather delay is not scored against punctuality](2026-10-09-weather-delay-not-scored.md) | Accepted — Bailey's request to improve weather consequences across the |
+| 2026-10-09 | [Welcome weather isolation and small comfort fixes](2026-10-09-welcome-weather-isolation.md) | Accepted |

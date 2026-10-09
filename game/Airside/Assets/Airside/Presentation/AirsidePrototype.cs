@@ -892,11 +892,10 @@ namespace Airside.Presentation
         private void ReadSimulationControls()
         {
             var keyboard = Keyboard.current;
-            if (keyboard == null)
-                return;
-
             // Any key or click during the launch intro skips it and does nothing else.
             if (ReadIntroSkip(keyboard))
+                return;
+            if (keyboard == null)
                 return;
 
             if (keyboard.escapeKey.wasPressedThisFrame)
@@ -1325,8 +1324,7 @@ namespace Airside.Presentation
             row.y += 52f;
             if (GUI.Button(row, "Options", button))
             {
-                _optionsOpen = true;
-                PlayUiClick();
+                OpenOptionsMenu();
             }
 
             row.y += 52f;

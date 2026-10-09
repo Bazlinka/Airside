@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="75" result="Passed" total="75" passed="75" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:58Z" duration="6.1720041">
+  <test-suite type="TestSuite" id="1000" name="Airside" fullname="Airside" runstate="Runnable" testcasecount="2697" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:58Z" duration="6.172004" total="75" passed="75" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="4134" name="Airside.Tests.EditMode.dll" fullname="/Users/baileyfleming/Code/Airside-gear/game/Airside/Library/ScriptAssemblies/Airside.Tests.EditMode.dll" runstate="Runnable" testcasecount="2696" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:58Z" duration="6.164698" total="75" passed="75" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="2974" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="4135" name="Airside" fullname="Airside" runstate="Runnable" testcasecount="2696" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:58Z" duration="6.161466" total="75" passed="75" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="4136" name="Tests" fullname="Airside.Tests" runstate="Runnable" testcasecount="2696" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:58Z" duration="6.158173" total="75" passed="75" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1272" name="AircraftArticulationRigTests" fullname="Airside.Tests.AircraftArticulationRigTests" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.016843" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1281" name="BellyDoor_FreeEdgeSwingsDown_OnEitherHinge" fullname="Airside.Tests.AircraftArticulationRigTests.BellyDoor_FreeEdgeSwingsDown_OnEitherHinge" methodname="BellyDoor_FreeEdgeSwingsDown_OnEitherHinge" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="342223727" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.007321" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1275" name="ElevatorUp_RaisesTheTrailingEdge" fullname="Airside.Tests.AircraftArticulationRigTests.ElevatorUp_RaisesTheTrailingEdge" methodname="ElevatorUp_RaisesTheTrailingEdge" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1891306215" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000280" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1279" name="GearLegs_FoldTheirTipTowardTheirStowage" fullname="Airside.Tests.AircraftArticulationRigTests.GearLegs_FoldTheirTipTowardTheirStowage" methodname="GearLegs_FoldTheirTipTowardTheirStowage" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="728353325" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000474" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1273" name="ProjectConvention_NoseUpIsNegativePitch_LeftBankIsPositiveRoll" fullname="Airside.Tests.AircraftArticulationRigTests.ProjectConvention_NoseUpIsNegativePitch_LeftBankIsPositiveRoll" methodname="ProjectConvention_NoseUpIsNegativePitch_LeftBankIsPositiveRoll" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="633381643" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000228" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1278" name="RaisedSpoiler_LiftsItsTrailingEdge" fullname="Airside.Tests.AircraftArticulationRigTests.RaisedSpoiler_LiftsItsTrailingEdge" methodname="RaisedSpoiler_LiftsItsTrailingEdge" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1814247879" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000140" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1277" name="RightRoll_RightAileronUp_LeftAileronDown_RightRudder" fullname="Airside.Tests.AircraftArticulationRigTests.RightRoll_RightAileronUp_LeftAileronDown_RightRudder" methodname="RightRoll_RightAileronUp_LeftAileronDown_RightRudder" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1499006727" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000290" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1276" name="RightRudder_SwingsTheTrailingEdgeToTheRight" fullname="Airside.Tests.AircraftArticulationRigTests.RightRudder_SwingsTheTrailingEdgeToTheRight" methodname="RightRudder_SwingsTheTrailingEdgeToTheRight" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1934668424" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000193" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1274" name="TrailingEdgeDown_LowersTheTrailingEdge" fullname="Airside.Tests.AircraftArticulationRigTests.TrailingEdgeDown_LowersTheTrailingEdge" methodname="TrailingEdgeDown_LowersTheTrailingEdge" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="1856943369" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000222" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1280" name="TruckTilt_RaisesTheForwardAxle" fullname="Airside.Tests.AircraftArticulationRigTests.TruckTilt_RaisesTheForwardAxle" methodname="TruckTilt_RaisesTheForwardAxle" classname="Airside.Tests.AircraftArticulationRigTests" runstate="Runnable" seed="996842023" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000141" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1282" name="AircraftArticulationTests" fullname="Airside.Tests.AircraftArticulationTests" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" testcasecount="47" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.017306" total="47" passed="47" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1285" name="Ailerons_ReturnToNeutral_OnASteadyBank" fullname="Airside.Tests.AircraftArticulationTests.Ailerons_ReturnToNeutral_OnASteadyBank" methodname="Ailerons_ReturnToNeutral_OnASteadyBank" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="287544897" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.002336" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1284" name="Ailerons_RollLeft_LiftsLeftTrailingEdge_AndDropsTheRight" fullname="Airside.Tests.AircraftArticulationTests.Ailerons_RollLeft_LiftsLeftTrailingEdge_AndDropsTheRight" methodname="Ailerons_RollLeft_LiftsLeftTrailingEdge_AndDropsTheRight" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="44383786" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000225" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1286" name="Ailerons_StayWithinTravel" fullname="Airside.Tests.AircraftArticulationTests.Ailerons_StayWithinTravel" methodname="Ailerons_StayWithinTravel" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1785567228" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000122" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1307" name="BellyDoor_OpensFully_AndShutMeansZero" fullname="Airside.Tests.AircraftArticulationTests.BellyDoor_OpensFully_AndShutMeansZero" methodname="BellyDoor_OpensFully_AndShutMeansZero" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="142938923" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000223" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1306" name="ClassifyGearDoor_FromRealExtents" fullname="Airside.Tests.AircraftArticulationTests.ClassifyGearDoor_FromRealExtents" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.001775" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1301" name="ClassifyGearDoor_FromRealExtents(0.05f,1.42f,1.14f,LegMounted)" fullname="Airside.Tests.AircraftArticulationTests.ClassifyGearDoor_FromRealExtents(0.05f,1.42f,1.14f,LegMounted)" methodname="ClassifyGearDoor_FromRealExtents" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1418477789" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000698" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1302" name="ClassifyGearDoor_FromRealExtents(0.06f,0.62f,1.4f,LegMounted)" fullname="Airside.Tests.AircraftArticulationTests.ClassifyGearDoor_FromRealExtents(0.06f,0.62f,1.4f,LegMounted)" methodname="ClassifyGearDoor_FromRealExtents" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="471155995" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000036" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1303" name="ClassifyGearDoor_FromRealExtents(0.1f,0.84f,1.2f,LegMounted)" fullname="Airside.Tests.AircraftArticulationTests.ClassifyGearDoor_FromRealExtents(0.1f,0.84f,1.2f,LegMounted)" methodname="ClassifyGearDoor_FromRealExtents" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="948800974" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000035" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1304" name="ClassifyGearDoor_FromRealExtents(0.88f,0.06f,1.1f,Belly)" fullname="Airside.Tests.AircraftArticulationTests.ClassifyGearDoor_FromRealExtents(0.88f,0.06f,1.1f,Belly)" methodname="ClassifyGearDoor_FromRealExtents" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1230195935" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000033" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1305" name="ClassifyGearDoor_FromRealExtents(0.78f,0.08f,1.45f,Belly)" fullname="Airside.Tests.AircraftArticulationTests.ClassifyGearDoor_FromRealExtents(0.78f,0.08f,1.45f,Belly)" methodname="ClassifyGearDoor_FromRealExtents" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1002400849" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000035" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1290" name="Droop_OnlyWhenHydraulicsAreOff" fullname="Airside.Tests.AircraftArticulationTests.Droop_OnlyWhenHydraulicsAreOff" methodname="Droop_OnlyWhenHydraulicsAreOff" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="211008166" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000078" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1283" name="Elevator_IsTrailingEdgeUp_OnRotationAndFlare_AndDownOnDerotation" fullname="Airside.Tests.AircraftArticulationTests.Elevator_IsTrailingEdgeUp_OnRotationAndFlare_AndDownOnDerotation" methodname="Elevator_IsTrailingEdgeUp_OnRotationAndFlare_AndDownOnDerotation" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="38515574" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000124" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1293" name="FitHingeLine_AFlatPlate_HasNoSweep" fullname="Airside.Tests.AircraftArticulationTests.FitHingeLine_AFlatPlate_HasNoSweep" methodname="FitHingeLine_AFlatPlate_HasNoSweep" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1986547472" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000443" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1294" name="FitHingeLine_Degenerate_FallsBackToTheForwardMostVertex" fullname="Airside.Tests.AircraftArticulationTests.FitHingeLine_Degenerate_FallsBackToTheForwardMostVertex" methodname="FitHingeLine_Degenerate_FallsBackToTheForwardMostVertex" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1279509459" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000151" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1292" name="FitHingeLine_RecoversTheSweepOfAnAileron" fullname="Airside.Tests.AircraftArticulationTests.FitHingeLine_RecoversTheSweepOfAnAileron" methodname="FitHingeLine_RecoversTheSweepOfAnAileron" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="374929280" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000128" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1295" name="FitHingeLine_RejectsAnAbsurdSlant" fullname="Airside.Tests.AircraftArticulationTests.FitHingeLine_RejectsAnAbsurdSlant" methodname="FitHingeLine_RejectsAnAbsurdSlant" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1661541004" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000082" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1291" name="FlapRunsAftOnItsTracks_InProportionToDeflection" fullname="Airside.Tests.AircraftArticulationTests.FlapRunsAftOnItsTracks_InProportionToDeflection" methodname="FlapRunsAftOnItsTracks_InProportionToDeflection" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="286160764" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000137" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1330" name="GearCycle_FramePartitionDoesNotChangeThePose" fullname="Airside.Tests.AircraftArticulationTests.GearCycle_FramePartitionDoesNotChangeThePose" methodname="GearCycle_FramePartitionDoesNotChangeThePose" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="2095900134" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000231" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1329" name="GearCycle_ReversalAndPauseRetainTheSameContinuousStroke" fullname="Airside.Tests.AircraftArticulationTests.GearCycle_ReversalAndPauseRetainTheSameContinuousStroke" methodname="GearCycle_ReversalAndPauseRetainTheSameContinuousStroke" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="644877648" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000108" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1298" name="GearDoors_AreShutWhenDownOrUp_AndOpenWhileTheLegIsMoving" fullname="Airside.Tests.AircraftArticulationTests.GearDoors_AreShutWhenDownOrUp_AndOpenWhileTheLegIsMoving" methodname="GearDoors_AreShutWhenDownOrUp_AndOpenWhileTheLegIsMoving" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="608673989" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000141" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1328" name="GearDoors_ClearBeforeAnyLegMovement_InBothDirections" fullname="Airside.Tests.AircraftArticulationTests.GearDoors_ClearBeforeAnyLegMovement_InBothDirections" methodname="GearDoors_ClearBeforeAnyLegMovement_InBothDirections" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="2018940581" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000700" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1297" name="GearLeg_IsLockedAtBothEnds_AndMovesMonotonically" fullname="Airside.Tests.AircraftArticulationTests.GearLeg_IsLockedAtBothEnds_AndMovesMonotonically" methodname="GearLeg_IsLockedAtBothEnds_AndMovesMonotonically" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1294780378" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000178" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1299" name="GearRetract_RotationAxesAndDirections" fullname="Airside.Tests.AircraftArticulationTests.GearRetract_RotationAxesAndDirections" methodname="GearRetract_RotationAxesAndDirections" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="637258829" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000950" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1289" name="HingeAngles_TrailingEdgeDownAndRudderRightAreNegative" fullname="Airside.Tests.AircraftArticulationTests.HingeAngles_TrailingEdgeDownAndRudderRightAreNegative" methodname="HingeAngles_TrailingEdgeDownAndRudderRightAreNegative" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="709795096" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000140" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1327" name="IsGearDoor_BothPresentationAndKitNames" fullname="Airside.Tests.AircraftArticulationTests.IsGearDoor_BothPresentationAndKitNames" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.001954" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1318" name="IsGearDoor_BothPresentationAndKitNames(&quot;Gear door L&quot;,True)" fullname="Airside.Tests.AircraftArticulationTests.IsGearDoor_BothPresentationAndKitNames(&quot;Gear door L&quot;,True)" methodname="IsGearDoor_BothPresentationAndKitNames" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="30943072" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000267" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1319" name="IsGearDoor_BothPresentationAndKitNames(&quot;Gear door nose&quot;,True)" fullname="Airside.Tests.AircraftArticulationTests.IsGearDoor_BothPresentationAndKitNames(&quot;Gear door nose&quot;,True)" methodname="IsGearDoor_BothPresentationAndKitNames" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="228645689" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000042" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1320" name="IsGearDoor_BothPresentationAndKitNames(&quot;gear_door_inner_l&quot;,True)" fullname="Airside.Tests.AircraftArticulationTests.IsGearDoor_BothPresentationAndKitNames(&quot;gear_door_inner_l&quot;,True)" methodname="IsGearDoor_BothPresentationAndKitNames" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1580246346" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000034" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1321" name="IsGearDoor_BothPresentationAndKitNames(&quot;gear_door_nose_r&quot;,True)" fullname="Airside.Tests.AircraftArticulationTests.IsGearDoor_BothPresentationAndKitNames(&quot;gear_door_nose_r&quot;,True)" methodname="IsGearDoor_BothPresentationAndKitNames" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="2088617967" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000030" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1322" name="IsGearDoor_BothPresentationAndKitNames(&quot;Gear L&quot;,False)" fullname="Airside.Tests.AircraftArticulationTests.IsGearDoor_BothPresentationAndKitNames(&quot;Gear L&quot;,False)" methodname="IsGearDoor_BothPresentationAndKitNames" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1310991581" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000032" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1323" name="IsGearDoor_BothPresentationAndKitNames(&quot;Gear fairing L&quot;,False)" fullname="Airside.Tests.AircraftArticulationTests.IsGearDoor_BothPresentationAndKitNames(&quot;Gear fairing L&quot;,False)" methodname="IsGearDoor_BothPresentationAndKitNames" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1519396549" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000028" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1324" name="IsGearDoor_BothPresentationAndKitNames(&quot;Truck L&quot;,False)" fullname="Airside.Tests.AircraftArticulationTests.IsGearDoor_BothPresentationAndKitNames(&quot;Truck L&quot;,False)" methodname="IsGearDoor_BothPresentationAndKitNames" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1531267328" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000029" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1325" name="IsGearDoor_BothPresentationAndKitNames(&quot;&quot;,False)" fullname="Airside.Tests.AircraftArticulationTests.IsGearDoor_BothPresentationAndKitNames(&quot;&quot;,False)" methodname="IsGearDoor_BothPresentationAndKitNames" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="503252816" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000028" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1326" name="IsGearDoor_BothPresentationAndKitNames(null,False)" fullname="Airside.Tests.AircraftArticulationTests.IsGearDoor_BothPresentationAndKitNames(null,False)" methodname="IsGearDoor_BothPresentationAndKitNames" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1319840397" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000030" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="ParameterizedMethod" id="1317" name="IsGearStrut_OnlyTheThreeLegs" fullname="Airside.Tests.AircraftArticulationTests.IsGearStrut_OnlyTheThreeLegs" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.001611" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1308" name="IsGearStrut_OnlyTheThreeLegs(&quot;Gear nose&quot;,True)" fullname="Airside.Tests.AircraftArticulationTests.IsGearStrut_OnlyTheThreeLegs(&quot;Gear nose&quot;,True)" methodname="IsGearStrut_OnlyTheThreeLegs" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="390397400" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000101" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1309" name="IsGearStrut_OnlyTheThreeLegs(&quot;Gear L&quot;,True)" fullname="Airside.Tests.AircraftArticulationTests.IsGearStrut_OnlyTheThreeLegs(&quot;Gear L&quot;,True)" methodname="IsGearStrut_OnlyTheThreeLegs" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="2023424384" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000030" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1310" name="IsGearStrut_OnlyTheThreeLegs(&quot;Gear R&quot;,True)" fullname="Airside.Tests.AircraftArticulationTests.IsGearStrut_OnlyTheThreeLegs(&quot;Gear R&quot;,True)" methodname="IsGearStrut_OnlyTheThreeLegs" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="195146749" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000029" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1311" name="IsGearStrut_OnlyTheThreeLegs(&quot;Gear door L&quot;,False)" fullname="Airside.Tests.AircraftArticulationTests.IsGearStrut_OnlyTheThreeLegs(&quot;Gear door L&quot;,False)" methodname="IsGearStrut_OnlyTheThreeLegs" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1509706985" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000033" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1312" name="IsGearStrut_OnlyTheThreeLegs(&quot;Gear oleo L&quot;,False)" fullname="Airside.Tests.AircraftArticulationTests.IsGearStrut_OnlyTheThreeLegs(&quot;Gear oleo L&quot;,False)" methodname="IsGearStrut_OnlyTheThreeLegs" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="14168667" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000027" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1313" name="IsGearStrut_OnlyTheThreeLegs(&quot;Gear fairing L&quot;,False)" fullname="Airside.Tests.AircraftArticulationTests.IsGearStrut_OnlyTheThreeLegs(&quot;Gear fairing L&quot;,False)" methodname="IsGearStrut_OnlyTheThreeLegs" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1752534427" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000028" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1314" name="IsGearStrut_OnlyTheThreeLegs(&quot;Tire L&quot;,False)" fullname="Airside.Tests.AircraftArticulationTests.IsGearStrut_OnlyTheThreeLegs(&quot;Tire L&quot;,False)" methodname="IsGearStrut_OnlyTheThreeLegs" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1417262832" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000030" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1315" name="IsGearStrut_OnlyTheThreeLegs(&quot;&quot;,False)" fullname="Airside.Tests.AircraftArticulationTests.IsGearStrut_OnlyTheThreeLegs(&quot;&quot;,False)" methodname="IsGearStrut_OnlyTheThreeLegs" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1481735229" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000027" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1316" name="IsGearStrut_OnlyTheThreeLegs(null,False)" fullname="Airside.Tests.AircraftArticulationTests.IsGearStrut_OnlyTheThreeLegs(null,False)" methodname="IsGearStrut_OnlyTheThreeLegs" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1436932437" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000030" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1296" name="MainGearStyle_JetsAndSponsonLegsFoldInboard_Dash8GoesAft_SaabForward" fullname="Airside.Tests.AircraftArticulationTests.MainGearStyle_JetsAndSponsonLegsFoldInboard_Dash8GoesAft_SaabForward" methodname="MainGearStyle_JetsAndSponsonLegsFoldInboard_Dash8GoesAft_SaabForward" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="307975108" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000203" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1288" name="RollSpoilers_RaiseOnlyOnTheWingGoingDown" fullname="Airside.Tests.AircraftArticulationTests.RollSpoilers_RaiseOnlyOnTheWingGoingDown" methodname="RollSpoilers_RaiseOnlyOnTheWingGoingDown" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="948914287" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000152" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1287" name="Rudder_FollowsTheRoll_RightRollGivesRightRudder" fullname="Airside.Tests.AircraftArticulationTests.Rudder_FollowsTheRoll_RightRollGivesRightRudder" methodname="Rudder_FollowsTheRoll_RightRollGivesRightRudder" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="2132791853" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000107" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1300" name="TruckTilt_StartsAtZero_AndTipsTheForwardAxleUp" fullname="Airside.Tests.AircraftArticulationTests.TruckTilt_StartsAtZero_AndTipsTheForwardAxleUp" methodname="TruckTilt_StartsAtZero_AndTipsTheForwardAxleUp" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="1097921480" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000083" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1332" name="Wheels_FollowGroundSpeedExactly_OnceAtSpeed_AndHandleReversal" fullname="Airside.Tests.AircraftArticulationTests.Wheels_FollowGroundSpeedExactly_OnceAtSpeed_AndHandleReversal" methodname="Wheels_FollowGroundSpeedExactly_OnceAtSpeed_AndHandleReversal" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="2021248174" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000109" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1331" name="Wheels_SpinUpHardAtTouchdown_ButSpinDownGently" fullname="Airside.Tests.AircraftArticulationTests.Wheels_SpinUpHardAtTouchdown_ButSpinDownGently" methodname="Wheels_SpinUpHardAtTouchdown_ButSpinDownGently" classname="Airside.Tests.AircraftArticulationTests" runstate="Runnable" seed="862956757" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.000100" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1411" name="AircraftLandingGearGeometryTests" fullname="Airside.Tests.AircraftLandingGearGeometryTests" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:58Z" duration="5.607168" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1412" name="CantedLeg_PivotIsOnTheTopAttachment_NotTheBoundsCentre" fullname="Airside.Tests.AircraftLandingGearGeometryTests.CantedLeg_PivotIsOnTheTopAttachment_NotTheBoundsCentre" methodname="CantedLeg_PivotIsOnTheTopAttachment_NotTheBoundsCentre" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" seed="1713047008" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:52Z" duration="0.002494" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1426" name="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal" fullname="Airside.Tests.AircraftLandingGearGeometryTests.FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:58Z" duration="5.604234" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1413" name="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;ATR42&quot;)" fullname="Airside.Tests.AircraftLandingGearGeometryTests.FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;ATR42&quot;)" methodname="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" seed="655153861" result="Passed" start-time="2026-10-09 11:49:52Z" end-time="2026-10-09 11:49:53Z" duration="0.856099" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1414" name="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;SF34&quot;)" fullname="Airside.Tests.AircraftLandingGearGeometryTests.FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;SF34&quot;)" methodname="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" seed="509785379" result="Passed" start-time="2026-10-09 11:49:53Z" end-time="2026-10-09 11:49:53Z" duration="0.233200" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1415" name="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;DH8D&quot;)" fullname="Airside.Tests.AircraftLandingGearGeometryTests.FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;DH8D&quot;)" methodname="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" seed="921544455" result="Passed" start-time="2026-10-09 11:49:53Z" end-time="2026-10-09 11:49:54Z" duration="0.485960" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1416" name="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;E190&quot;)" fullname="Airside.Tests.AircraftLandingGearGeometryTests.FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;E190&quot;)" methodname="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" seed="1441225520" result="Passed" start-time="2026-10-09 11:49:54Z" end-time="2026-10-09 11:49:54Z" duration="0.283509" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1417" name="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;A223&quot;)" fullname="Airside.Tests.AircraftLandingGearGeometryTests.FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;A223&quot;)" methodname="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" seed="2020207538" result="Passed" start-time="2026-10-09 11:49:54Z" end-time="2026-10-09 11:49:54Z" duration="0.332399" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1418" name="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;A320&quot;)" fullname="Airside.Tests.AircraftLandingGearGeometryTests.FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;A320&quot;)" methodname="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" seed="1594047023" result="Passed" start-time="2026-10-09 11:49:54Z" end-time="2026-10-09 11:49:55Z" duration="0.310230" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1419" name="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;B738&quot;)" fullname="Airside.Tests.AircraftLandingGearGeometryTests.FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;B738&quot;)" methodname="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" seed="974034554" result="Passed" start-time="2026-10-09 11:49:55Z" end-time="2026-10-09 11:49:55Z" duration="0.326286" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1420" name="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;B38M&quot;)" fullname="Airside.Tests.AircraftLandingGearGeometryTests.FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;B38M&quot;)" methodname="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" seed="396266536" result="Passed" start-time="2026-10-09 11:49:55Z" end-time="2026-10-09 11:49:55Z" duration="0.315107" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1421" name="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;A21N&quot;)" fullname="Airside.Tests.AircraftLandingGearGeometryTests.FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;A21N&quot;)" methodname="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" seed="503471847" result="Passed" start-time="2026-10-09 11:49:55Z" end-time="2026-10-09 11:49:56Z" duration="0.326368" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1422" name="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;A359&quot;)" fullname="Airside.Tests.AircraftLandingGearGeometryTests.FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;A359&quot;)" methodname="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" seed="1805015261" result="Passed" start-time="2026-10-09 11:49:56Z" end-time="2026-10-09 11:49:56Z" duration="0.623940" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1423" name="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;A339&quot;)" fullname="Airside.Tests.AircraftLandingGearGeometryTests.FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;A339&quot;)" methodname="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" seed="1027938093" result="Passed" start-time="2026-10-09 11:49:56Z" end-time="2026-10-09 11:49:57Z" duration="0.487164" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1424" name="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;B789&quot;)" fullname="Airside.Tests.AircraftLandingGearGeometryTests.FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;B789&quot;)" methodname="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" seed="152327409" result="Passed" start-time="2026-10-09 11:49:57Z" end-time="2026-10-09 11:49:57Z" duration="0.509704" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1425" name="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;B78X&quot;)" fullname="Airside.Tests.AircraftLandingGearGeometryTests.FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal(&quot;B78X&quot;)" methodname="FleetCycle_CacheRebuildAndPauseDoNotJumpTheMetal" classname="Airside.Tests.AircraftLandingGearGeometryTests" runstate="Runnable" seed="538413050" result="Passed" start-time="2026-10-09 11:49:57Z" end-time="2026-10-09 11:49:58Z" duration="0.512261" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+          </test-suite>
+          <test-suite type="TestFixture" id="3346" name="ParkedAircraftAndMotionTests" fullname="Airside.Tests.ParkedAircraftAndMotionTests" classname="Airside.Tests.ParkedAircraftAndMotionTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-09 11:49:58Z" end-time="2026-10-09 11:49:58Z" duration="0.406906" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="3348" name="AlignEntry_KeepsTheStartAndTheLineBeyondTheBlend" fullname="Airside.Tests.ParkedAircraftAndMotionTests.AlignEntry_KeepsTheStartAndTheLineBeyondTheBlend" methodname="AlignEntry_KeepsTheStartAndTheLineBeyondTheBlend" classname="Airside.Tests.ParkedAircraftAndMotionTests" runstate="Runnable" seed="1921715390" result="Passed" start-time="2026-10-09 11:49:58Z" end-time="2026-10-09 11:49:58Z" duration="0.000493" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="3349" name="FlyFinal_EasesSpeedInsteadOfLurchingToTheEstimate" fullname="Airside.Tests.ParkedAircraftAndMotionTests.FlyFinal_EasesSpeedInsteadOfLurchingToTheEstimate" methodname="FlyFinal_EasesSpeedInsteadOfLurchingToTheEstimate" classname="Airside.Tests.ParkedAircraftAndMotionTests" runstate="Runnable" seed="1481470906" result="Passed" start-time="2026-10-09 11:49:58Z" end-time="2026-10-09 11:49:58Z" duration="0.002203" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="3350" name="LandingEstimate_StepwiseEqualsTheWholeEstimate" fullname="Airside.Tests.ParkedAircraftAndMotionTests.LandingEstimate_StepwiseEqualsTheWholeEstimate" methodname="LandingEstimate_StepwiseEqualsTheWholeEstimate" classname="Airside.Tests.ParkedAircraftAndMotionTests" runstate="Runnable" seed="2119633932" result="Passed" start-time="2026-10-09 11:49:58Z" end-time="2026-10-09 11:49:58Z" duration="0.335092" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="3347" name="Lineup_LeavesTheHoldingPointOnTheTaxiHeading" fullname="Airside.Tests.ParkedAircraftAndMotionTests.Lineup_LeavesTheHoldingPointOnTheTaxiHeading" methodname="Lineup_LeavesTheHoldingPointOnTheTaxiHeading" classname="Airside.Tests.ParkedAircraftAndMotionTests" runstate="Runnable" seed="273350560" result="Passed" start-time="2026-10-09 11:49:58Z" end-time="2026-10-09 11:49:58Z" duration="0.044758" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="3351" name="ShutDownEngines_StandStill" fullname="Airside.Tests.ParkedAircraftAndMotionTests.ShutDownEngines_StandStill" methodname="ShutDownEngines_StandStill" classname="Airside.Tests.ParkedAircraftAndMotionTests" runstate="Runnable" seed="1515038913" result="Passed" start-time="2026-10-09 11:49:58Z" end-time="2026-10-09 11:49:58Z" duration="0.000232" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/baileyfleming/Library/Application Support/DefaultCompany/Airside/TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -8,8 +8,9 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 **Landing gear improvements (9 Oct, Codex, #757):** actual top-attachment pivots, one retained
 gear timeline, clear door/leg sequencing, centred nose steering during fold, enclosed
 stowed wheel envelopes and widebody bogie beams carried with their axles/wheels.
-Missing widebody leaves fitted to existing bay/fuselage skin. Native fleet verification
-in progress; not yet a rendered pass. Simulation, paths, ground datums and saves retained.
+Missing widebody leaves fitted to existing bay/fuselage skin; ATR sponsons stay on the body.
+47 headless and 75 native focused checks pass; all 15 airframes inspected up/down/mid,
+with driven extension probes. Packaged journey pending. Simulation, paths, datums and saves retained.
 Evidence/limits: `docs/testing/landing-gear-2026-10-09/README.md`.
 Fleet intake/control refinements remain verified as recorded in `docs/testing/fleet-refinements-2026-10-09/README.md`.
 

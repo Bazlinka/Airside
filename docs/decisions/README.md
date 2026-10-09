@@ -335,5 +335,6 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-09 | [Ground character and restrained surface wear](2026-10-09-ground-character.md) | Accepted — Bailey requested a less perfect, more authentic ground/worl |
 | 2026-10-09 | [Linear colour rendering](2026-10-09-linear-colour-rendering.md) | Accepted — Bailey authorised the recommended first renderer improvemen |
 | 2026-10-09 | [Parked aircraft activity window](2026-10-09-parked-aircraft-activity-window.md) | Accepted — Bailey's parked-aircraft proposal and instruction to contin |
+| 2026-10-09 | [Physical ground detail on verges, drains and pavement edges](2026-10-09-physical-ground-detail.md) | Accepted — Bailey authorised the next environment improvements. |
 | 2026-10-09 | [Recorded weather and arrival continuity](2026-10-09-recorded-weather-and-arrival-continuity.md) | Accepted — Bailey's instruction to continue fixing the audited mismatc |
 | 2026-10-09 | [Terminal doors and more people on the ground](2026-10-09-terminal-doors-and-people.md) | pure geometry and walk tests pass; the Unity assembly compiles; appear |

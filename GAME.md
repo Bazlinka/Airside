@@ -7,6 +7,13 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Physical ground detail (9 Oct, Codex, #693):** mapped roadside grass clears airport
+surfaces and nearby roads; coastal scrub gains varied lobes/colour and face normals.
+Drains gain flush rims/grates; taxiway wear gains tapered, varied patches. No layout,
+aircraft, simulation or save changes. Geometry checks pass 11/11 and C# syntax parses;
+Unity appearance/performance unverified. Evidence: `docs/testing/physical-ground-detail-2026-10-09.md`.
+Spatial puddles remain future work.
+
 **Agent gameplay runner (9 Oct, Codex, #696):** hidden opt-in QA batches selected
 workspaces/planner, booking/cancellation, save restoration, cameras and menu in one
 private-save session; full profile adds visual weather and a 40× regional round trip.

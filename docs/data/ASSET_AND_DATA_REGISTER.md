@@ -539,3 +539,16 @@ replaces the two side pods and centre oval. No external source, attribution or
 licence added; zero cost. Prior git assets remain fallback. Packaged model/bin
 and thumbnail mirrors updated; native import/appearance/performance unverified.
 Evidence: `docs/testing/dash8-wing-fairing-2026-10-09.md`.
+
+
+## Physical ground detail — 9 October 2026 (#693)
+
+ART-GROUND-PHYSICAL-20261009: original procedural C# grass/scrub, drain metalwork
+and taxiway wear geometry authored by Codex for Bailey. New source files are
+`Presentation/AdelaideVergeDetail.cs` and `ApronDrainGeometry.cs`, each with its own
+metadata. No downloaded model/image/code/data or acquisition cost, no new source
+licence/attribution obligation. Existing mapped planting, OSM roads/land cover,
+terrain and their registered attribution remain applicable. Existing materials and
+previous committed geometry remain fallback. No new texture/model mirror. Focused
+checks are recorded in `docs/testing/physical-ground-detail-2026-10-09.md`; native
+appearance, lighting and performance remain unverified.

@@ -65,7 +65,9 @@ Shader "Airside/WeatherVolume"
                             lerp(lerp(hash(i+float3(0,0,1)),hash(i+float3(1,0,1)),f.x),
                                  lerp(hash(i+float3(0,1,1)),hash(i+float3(1,1,1)),f.x),f.y),f.z);
             }
-            float cloudDensity(float3 p)
+            // fine=false is the cheap form used for the sun-shadow probes: one noise octave and no
+            // lobe/streak detail. Shadows only need the broad lobes; the view ray keeps the full detail.
+            float cloudDensityLod(float3 p, bool fine)
             {
                 // A rounded bank with broken lobes, eroded by true 3D noise, never a billboard.
                 float body=1-length((p-float3(0,-0.10,0))*float3(2.5,4.4,2.7));
@@ -81,10 +83,16 @@ Shader "Airside/WeatherVolume"
                 float shape=lerp(fairShape,max(tower,anvil),_Storm);
                 if (shape < -0.4) return 0;
                 float3 drift=float3(_AirsideWeatherTime*0.013,0,_AirsideWeatherTime*0.008);
-                float n=noise(p*7+_Seed+drift)*0.7+noise(p*17+_Seed*3+drift)*0.3;
-                float lobes=0.08*sin(p.x*23+_Seed)*sin(p.z*19+_Seed);
+                float n; float lobes=0;
+                if (fine)
+                {
+                    n=noise(p*7+_Seed+drift)*0.7+noise(p*17+_Seed*3+drift)*0.3;
+                    lobes=0.08*sin(p.x*23+_Seed)*sin(p.z*19+_Seed);
+                }
+                else
+                    n=noise(p*7+_Seed+drift)*0.7+0.15;
                 float density=saturate((shape+lobes+(n-0.52)*0.32)*4);
-                if (_Cirrus > 0.001)
+                if (fine && _Cirrus > 0.001)
                 {
                     float streaks=noise(float3(p.x*3,p.y*18,p.z*32)+_Seed+drift);
                     density*=lerp(1,saturate((streaks-0.30)*2)*0.35,_Cirrus);
@@ -93,6 +101,8 @@ Shader "Airside/WeatherVolume"
                 // density is used for view absorption and sun shadowing.
                 return density*smoothstep(0,0.12,density);
             }
+            float cloudDensity(float3 p) { return cloudDensityLod(p,true); }
+            float cloudShadowDensity(float3 p) { return cloudDensityLod(p,false); }
             half4 frag(Varyings i) : SV_Target
             {
                 float3 originWS=GetCameraPositionWS();
@@ -113,8 +123,10 @@ Shader "Airside/WeatherVolume"
                 float3 sceneWS=ComputeWorldSpacePosition(screenUV,depth,UNITY_MATRIX_I_VP);
                 end=min(end,distance(originWS,sceneWS));
                 clip(end-start-0.001);
-                const int steps=16;
-                float stepLength=(end-start)/steps;
+                // Short chords (grazing edges, thin banks) need fewer samples than a full crossing.
+                float chord=end-start;
+                int steps=(int)clamp(ceil(chord/180),6,16);
+                float stepLength=chord/steps;
                 float transmittance=1;
                 float3 colour=0;
                 Light sun=GetMainLight();
@@ -148,9 +160,10 @@ Shader "Airside/WeatherVolume"
                     if(density<0.001) continue;
                     // Two fixed probes along the sun ray give both local lobe relief
                     // and broader body shadowing; no nested light-marching loop.
-                    float nearDensity=cloudDensity(p+lightOS*0.09);
-                    float bodyDensity=cloudDensity(p+lightOS*0.23);
-                    float sunDepth=(nearDensity*1.2+bodyDensity*2.2)*lerp(1,1.35,_Storm);
+                    float sunDepth=cloudShadowDensity(p+lightOS*0.09)*1.2;
+                    // A sample already deep in shadow gains nothing from the second, farther probe.
+                    if(sunDepth<2.5) sunDepth+=cloudShadowDensity(p+lightOS*0.23)*2.2;
+                    sunDepth*=lerp(1,1.35,_Storm);
                     float sunTransmission=exp(-sunDepth);
                     float heightFill=lerp(0.65,1.0,saturate(p.y+0.5));
                     float skyFill=ambient*heightFill*lerp(1,0.72,_Storm);
@@ -158,9 +171,12 @@ Shader "Airside/WeatherVolume"
                     float directLight=sunStrength*sunTransmission*0.85+edgeLight;
                     float3 sampleColour=_BaseColor.rgb*
                         (skyFill+sunTint*directLight);
-                    float3 sampleWS=originWS+directionWS*t;
-                    float glow=exp(-distance(sampleWS,_AirsideLightningPosition.xyz)/2200)*_AirsideLightningFlash;
-                    sampleColour+=float3(0.6,0.68,0.85)*glow;
+                    if(_AirsideLightningFlash>0.001)
+                    {
+                        float3 sampleWS=originWS+directionWS*t;
+                        float glow=exp(-distance(sampleWS,_AirsideLightningPosition.xyz)/2200)*_AirsideLightningFlash;
+                        sampleColour+=float3(0.6,0.68,0.85)*glow;
+                    }
                     density*=extinction;
                     float opacity=1-exp(-density*stepLength);
                     colour+=transmittance*opacity*sampleColour;

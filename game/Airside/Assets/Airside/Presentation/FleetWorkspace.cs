@@ -1318,6 +1318,11 @@ namespace Airside.Presentation
             else if (model.SelectedIsOutstation)
                 PaintRoutes(into, model, pane, content, actionTop - 6f);
 
+            // Passenger/freight role and what freight pays: drawn wherever the room allows (it used to be built and never shown).
+            if (model.RoleLine.Length > 0 && !model.SelectedIsOutstation && content + 34f <= actionTop - 6f)
+                into.Text(new HudBox(pane.X, content, pane.Width, 32f), model.RoleLine, 12f, HudTone.Muted,
+                    HudTextStyle.Wrap);
+
             var y = actionTop;
             var half = (pane.Width - 10f) * 0.5f;
             if (showPrimary)

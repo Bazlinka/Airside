@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-09 — Bug-hunt fix pass (#722-#726) closed out: findings 1/14/7 fixed, 2 not reproduced, 15 not a defect; integration run on main had zero runtime errors.
+
 - 2026-10-09 — #725: bug-hunt finding 2 (Saab right window obstructions) not reproduced on clean main at five times of day; evidence and limits recorded, no code/asset change.
 
 - 2026-10-09 — #726: bug-hunt finding 15 (ATR 42 T-tail) verified not a defect — tailplane rendered in Exterior; evidence recorded, no code/asset change.

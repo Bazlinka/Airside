@@ -1,8 +1,6 @@
 # Airside — current state
 
-The living status board. **Current state only.** Keep this file under ~250 lines: history, evidence and
-superseded handoffs live in [`docs/history/`](docs/history/) (the full pre-restructure log is
-[`GAME-handoff-log-through-2026-10-07.md`](docs/history/GAME-handoff-log-through-2026-10-07.md)).
+The living status board. **Current state only.** Keep under ~250 lines; history and superseded handoffs live in [`docs/history/`](docs/history/).
 Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`docs/README.md`](docs/README.md).
 
 ## Where to resume
@@ -250,4 +248,3 @@ Open `game/Airside` in Unity 6.3 LTS and press Play. The in-game Flight Manual
 contains the current controls and source credits; `README.md` covers first-run setup.
 Follow AGENTS.md for quick checks and merge policy. Mac build/playtest, device audio
 and flight streaming performance remain unverified until explicitly exercised.
-

@@ -26,6 +26,13 @@ namespace Airside.Presentation
         /// </summary>
         private Vector3 RainObserverVelocity()
         {
+            if (_agentGameplayActive && _agentRainVelocity.HasValue)
+            {
+                _rainObserverVelocity = Vector3.Lerp(_rainObserverVelocity,
+                    Vector3.ClampMagnitude(_agentRainVelocity.Value, RainObserverSpeedCap),
+                    1f - Mathf.Exp(-Time.unscaledDeltaTime / 0.3f));
+                return _rainObserverVelocity;
+            }
             var observer = InCockpit && _cockpitView != null ? _cockpitView
                 : _cameraController != null && _cameraController.IsFollowing ? _cameraController.FollowTarget : null;
             var dt = Time.unscaledDeltaTime;

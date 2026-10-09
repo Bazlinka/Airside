@@ -325,6 +325,7 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-08 | [Storm holds at stands and committed movements continue](2026-10-08-storm-movement-commitment.md) | Accepted — Bailey's explicit 8 October storm movement instruction |
 | 2026-10-08 | [Departure-style toast notifications](2026-10-08-toast-notifications.md) | Implemented at Bailey’s request; Unity appearance pending |
 | 2026-10-08 | [Persistent weather at flight altitude and restrained cockpit motion](2026-10-08-weather-altitude-and-restraint.md) | Accepted |
+| 2026-10-09 | [Hidden agent gameplay scenarios](2026-10-09-agent-gameplay-runner.md) | Implemented; native gameplay execution unverified. |
 | 2026-10-09 | [Aircraft presence and camera eligibility](2026-10-09-aircraft-presence-and-camera-eligibility.md) | Accepted for the continuity fixes; parked activity window remains prop |
 | 2026-10-09 | [Stable cloud coverage and visual weather variety](2026-10-09-cloud-continuity-and-variety.md) | Accepted — Bailey's cloud continuity and weather variety instruction |
 | 2026-10-09 | [Cloud lighting and depth](2026-10-09-cloud-lighting-and-depth.md) | Accepted — Bailey authorised continued renderer implementation and mer |
@@ -334,6 +335,7 @@ Nothing here has been judged superseded except where the ADR says so.
 | 2026-10-09 | [Ground character and restrained surface wear](2026-10-09-ground-character.md) | Accepted — Bailey requested a less perfect, more authentic ground/worl |
 | 2026-10-09 | [Linear colour rendering](2026-10-09-linear-colour-rendering.md) | Accepted — Bailey authorised the recommended first renderer improvemen |
 | 2026-10-09 | [Parked aircraft activity window](2026-10-09-parked-aircraft-activity-window.md) | Accepted — Bailey's parked-aircraft proposal and instruction to contin |
+| 2026-10-09 | [Physical ground detail on verges, drains and pavement edges](2026-10-09-physical-ground-detail.md) | Accepted — Bailey authorised the next environment improvements. |
 | 2026-10-09 | [Recorded weather and arrival continuity](2026-10-09-recorded-weather-and-arrival-continuity.md) | Accepted — Bailey's instruction to continue fixing the audited mismatc |
 | 2026-10-09 | [Terminal doors and more people on the ground](2026-10-09-terminal-doors-and-people.md) | pure geometry and walk tests pass; the Unity assembly compiles; appear |
 | 2026-10-09 | [Weather delay is not scored against punctuality](2026-10-09-weather-delay-not-scored.md) | Accepted — Bailey's request to improve weather consequences across the |

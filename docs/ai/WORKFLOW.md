@@ -43,7 +43,7 @@ Why: parallel work already produced ten colliding ADR numbers, a 537 KB status f
 
 ## 5. Merging
 
-Bailey has given standing permission to merge completed authorised work into `main` without asking again. The owning tool pushes a ready PR, resolves routine conflicts and merges it. Follow `AGENTS.md` for bounded checks, actual GitHub protections and incomplete work; no default broad-test or manual-approval gate.
+Bailey has given standing permission to merge completed authorised work into `main` without asking again. The owning tool pushes a ready PR, resolves routine conflicts and merges it. Follow `AGENTS.md` for bounded checks, actual GitHub protections and incomplete work. Agents automatically run necessary focused gameplay checks and build once if needed; full journeys only when warranted. No default broad-test or manual-approval gate.
 Never delete or force-push someone else's branch.
 
 ## 6. ChatGPT starter (paste at the start of a session)

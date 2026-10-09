@@ -47,12 +47,7 @@ namespace Airside.Presentation
                 AddRibbon(shoulders, taxiway.Xz, half + AirsideAdelaidePavement.TaxiSealedShoulderMetres, shoulderY, roundJoints: true);
                 foreach (var strip in TaxiwayEdgeWear.Generate(taxiway.Xz, half))
                 {
-                    AddRibbon(
-                        edgeWear,
-                        new[] { strip.StartX, strip.StartZ, strip.EndX, strip.EndZ },
-                        TaxiwayEdgeWear.WidthMetres * 0.5f,
-                        taxiY + 0.003f,
-                        roundJoints: false);
+                    AddPolygon(edgeWear,TaxiwayEdgeWear.Corners(strip),taxiY+.003f);
                 }
                 AddRibbon(centrelines, taxiway.Xz, 0.15f, paintY, roundJoints: false);
             }
@@ -166,24 +161,29 @@ namespace Airside.Presentation
 
         /// <summary>
         /// Patch repairs and drainage pits on the real apron outlines (Phase 1).
-        /// Combined into three meshes so draw cost stays fixed regardless of mark count.
+        /// Repairs, pit shadows and fitted metalwork stay in a fixed number of batches.
         /// </summary>
         private static void BuildYpadApronSurfaceWear(Transform root, float y)
         {
             var patches = new SurfaceMesh();
             var faded = new SurfaceMesh();
             var pits = new SurfaceMesh();
+            var grate = new SurfaceMesh();
             var repairIndex = 0;
             foreach (var mark in ApronSurfaceWear.All())
             {
                 var target = mark.Drainage ? pits : repairIndex++ % 3 == 0 ? patches : faded;
                 AddPolygon(target, ApronSurfaceWear.Corners(mark), mark.Drainage ? y + 0.0015f : y);
+                if (mark.Drainage)
+                    foreach (var box in ApronDrainGeometry.Boxes(mark,y+.0015f)) AddBox(grate,box);
             }
 
             SpawnSurface(root, "Apron patch repairs", patches, new Color(.39f,.40f,.40f), PreferSurfaceBasecolor("tx_concrete_apron"),
                 castShadows: false);
             SpawnSurface(root, "Apron faded repairs", faded, new Color(.48f,.475f,.45f), PreferSurfaceBasecolor("tx_concrete_apron"),
                 castShadows: false);
+            SpawnSurface(root, "Apron drain grates", grate, new Color(.28f,.29f,.275f), null,
+                castShadows: false, useTextures: false);
             SpawnSurface(root, "Apron drainage pits", pits, new Color(0.16f, 0.16f, 0.17f), null,
                 castShadows: false, useTextures: false);
         }

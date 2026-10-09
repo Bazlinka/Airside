@@ -320,6 +320,13 @@ namespace Airside.Presentation
                 return;
             }
 
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), AgentGameplayFlag) >= 0 && !SoakMode)
+            {
+                Debug.LogError("[Airside agent] isolated soak mode required");
+                enabled = false;
+                Application.Quit(2);
+                return;
+            }
             _active = this;
             if (AircraftAudioReview.TryStart(gameObject))
             {

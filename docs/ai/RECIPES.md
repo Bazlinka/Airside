@@ -4,8 +4,10 @@ Short, checked against how this repo actually works (Unity 6.3 project in `game/
 
 ## Fast loop first
 Follow the root `AGENTS.md` testing and merge policy. Use only quick relevant checks
-by default; `python3 scripts/test-quick.py --changed` is optional when useful. Full
-headless/native suites, builds and player reviews run when Bailey requests them.
+by default; `python3 scripts/test-quick.py --changed` is optional when useful. Agents
+automatically choose necessary gameplay/native checks and build once if runtime
+evidence needs a current player. Select relevant features first; full journeys only
+when lifecycle risk warrants them. Broad suites/performance/long soaks remain on request.
 Report unverified Unity behaviour. Merge completed authorised work without asking again.
 
 ## Add or change a C# file

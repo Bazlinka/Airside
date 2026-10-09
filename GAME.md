@@ -10,7 +10,9 @@ gear timeline, clear door/leg sequencing, centred nose steering during fold, enc
 stowed wheel envelopes and widebody bogie beams carried with their axles/wheels.
 Missing widebody leaves fitted to existing bay/fuselage skin; ATR sponsons stay on the body.
 47 headless and 75 native focused checks pass; all 15 airframes inspected up/down/mid,
-with driven extension probes. Packaged journey pending. Simulation, paths, datums and saves retained.
+with driven extension probes. Clean universal build/A350 view checks and 40× ADL–KGC
+round trip pass; no runtime errors. Return gear close-up/performance unverified.
+Simulation, paths, datums and saves retained.
 Evidence/limits: `docs/testing/landing-gear-2026-10-09/README.md`.
 Fleet intake/control refinements remain verified as recorded in `docs/testing/fleet-refinements-2026-10-09/README.md`.
 

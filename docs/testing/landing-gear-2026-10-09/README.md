@@ -14,7 +14,10 @@ Implementation: top-vertex fitted mounting pivot; single per-root gear timeline 
 - Extension driven at 20 fps: gear-up → approach down for 3/11/22 seconds. All-fleet sheets inspected; the widebody sources are the final welded-shell pass `49db8b11`, remaining types the unchanged gear pass `31fbeb17`. Doors open before leg movement, half-extension shows the legs emerging, and down locks precede closure. Additional 10/90% retraction frames retained locally.
 - Native tests caught a 144-degree Dash 8 hinge reversal on reclassification; the cached rest hinge sign fixes it. Alternate widebody builders initially skipped the new leaves; shared pivot setup fixes them. Visual review caught cancelling two-sided normals and per-triangle shell seams; welded closed leaves fix the finish. These failed intermediate revisions are not claimed as passes.
 - Unity metadata/mirror audit passes: 2,130 unique GUIDs, 447 runtime mirrors, 70 committed character materials.
-- Packaged flight/journey check pending. No full suite, long soak or performance certification.
+- Universal Mac build **9da8a716**, clean stamp, `Build Finished, Result: Success.`, verified x86_64/arm64.
+- Packaged full profile with `--features views --aircraft-type A359`: **passed**, five A350 follow/window/exterior/overview steps (25.11 s), no feature runtime errors; actual exterior frame inspected. The separate fresh-save Saab ADL–KGC 40× round trip passed in 242.78 s, observed departure/outbound/arrival/inbound/landing and completed overview, trip count 1, origin restored. No exceptions/errors in journey log. Approach cockpit and completed overview frames inspected. Run: `work/agent-gameplay/20261009-222329-8e221d36/`; saved summary/report in this folder.
+- Return cockpit/follow was not active in the journey log and its final frame is an overview. This is operational continuity evidence, not an exterior close-up of every gear stage in a moving player. All-fleet gear stage appearance is the native runtime-builder evidence above.
+- Later main integration adds other owners' lighting/economy records; no new gear behaviour after the tested revision. No broad suite, long soak or performance certification.
 
 The generated leaves fit existing solid kit skins; this does not rebuild detailed wheel-well interiors, hydraulic lines or type-certified mechanisms. Fitted fold angles are stylised kit values. Gear-down contact positions are preserved, rather than changing taxi routes or simulation wheelbases.
 
@@ -34,3 +37,5 @@ The generated leaves fit existing solid kit skins; this does not rebuild detaile
 ![A350 transit](after-a350-mid.png)
 
 Reference: [ATSB Saab 340 gear investigation](https://www.atsb.gov.au/sites/default/files/investigation-reports/ao-2014-189-final.pdf) confirms nose/main forward retraction. Stow angles/cycle values here fit the simplified kits; they are not manufacturer maintenance procedures.
+
+![Packaged A350 exterior](packaged-a350.png)

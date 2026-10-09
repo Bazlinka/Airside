@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-09 — Weather delay (storm ground stop, weather-held helicopters) no longer costs reliability or breaks the on-time streak; the delay breakdown still shows it (headless-tested).
 - 2026-10-09 — Agents automatically choose necessary focused gameplay checks and build once if needed; full journeys only when warranted.
 
 - 2026-10-09 — Add roadside grass, varied coastal scrub, flush apron drain grates and tapered taxiway-edge wear; retain operational clearance (Unity unverified).

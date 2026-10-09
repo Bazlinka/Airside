@@ -31,6 +31,15 @@ namespace Airside.Tests
             }
         }
 
+        [Test]
+        public void WeatherDelay_IsNotScoredAgainstPunctuality()
+        {
+            var delay = new DelayBreakdown(900, new[] { new DelayPart(DelayCause.Weather, 840), new DelayPart(DelayCause.Turnaround, 60) });
+            Assert.That(FlightEconomics.ControllableLateness(900, delay), Is.EqualTo(60));
+            Assert.That(FlightEconomics.PunctualityReliabilityDelta(FlightEconomics.ControllableLateness(900, delay)), Is.EqualTo(1));
+            Assert.That(FlightEconomics.PunctualityReliabilityDelta(900), Is.EqualTo(-1), "unexcused it would cost reliability");
+        }
+
         [TestCase(50, 12, RunwayDirection.Runway05)]
         [TestCase(230, 12, RunwayDirection.Runway23)]
         [TestCase(230, 2, RunwayDirection.Runway05)]

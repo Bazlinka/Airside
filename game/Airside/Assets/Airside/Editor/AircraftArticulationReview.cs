@@ -34,9 +34,7 @@ public static class AircraftArticulationReview
         var output = Path.GetFullPath(Arg("-articulationOutput", "../../work/articulation-review"));
         var only = Arg("-aircraftReviewTypes", "ATR42,SF34,DH8D,E190,A223,A320,B738,B38M,A21N,A359,A339,B789,B78X").Split(',');
         var poses = Arg("-articulationPoses", Arg("-articulationPose", "gearup")).Split(',');
-        foreach (var pose in poses)
-        {
-        var views = Arg("-aircraftReviewViews", pose is "roll" or "landing" ? "ahead,behind,top" : "side,front,under").Split(',');
+
         Directory.CreateDirectory(output);
         ShaderUtil.allowAsyncCompilation = false;
         EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -61,6 +59,9 @@ public static class AircraftArticulationReview
         var proto = typeof(AirsidePrototype);
         var viewPartsType = proto.GetNestedType("AircraftViewParts", BindingFlags.NonPublic);
         var stateType = proto.GetNestedType("AircraftArticulationState", BindingFlags.NonPublic);
+        foreach (var pose in poses)
+        {
+        var views = Arg("-aircraftReviewViews", pose is "roll" or "landing" ? "ahead,behind,top" : "side,front,under").Split(',');
         foreach (var id in only)
         {
             if (!AircraftType.TryFromId(id, out var type)) throw new InvalidOperationException("Unknown aircraft " + id);
@@ -146,11 +147,11 @@ public static class AircraftArticulationReview
             Object.DestroyImmediate(root.gameObject);
         }
 
+        }
         RenderTexture.active = null;
         camera.targetTexture = null;
         Object.DestroyImmediate(target);
         Debug.Log("Aircraft articulation review: " + output);
-        }
     }
 
     private static void ApplyPose(Type proto, string pose, AircraftType type, object control, object gear,

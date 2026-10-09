@@ -328,7 +328,8 @@ namespace Airside.Presentation
                 _starsMaterial.SetColor("_BaseColor", Color.white);
             if (_starsMaterial.HasProperty("_ZWrite"))
                 _starsMaterial.SetInt("_ZWrite", 0);
-            _starsMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Background;
+            // Draw after the skybox; the far-depth shader still rejects terrain/aircraft.
+            _starsMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent - 100;
             return _starsMaterial;
         }
 

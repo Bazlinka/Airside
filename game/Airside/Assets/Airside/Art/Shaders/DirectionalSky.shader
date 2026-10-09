@@ -46,9 +46,6 @@ Shader "Airside/DirectionalSky"
                 // Broad soft scattering, separate from the existing physical sun disc.
                 float aureole = pow(saturate(dot(ray, normalize(_SunDirection.xyz))), 24.0);
                 sky += _Sunset.rgb * (_Twilight * aureole * 0.12);
-                #if defined(UNITY_COLORSPACE_GAMMA)
-                    sky = LinearToSRGB(sky);
-                #endif
                 return half4(sky, 1);
             }
             ENDHLSL

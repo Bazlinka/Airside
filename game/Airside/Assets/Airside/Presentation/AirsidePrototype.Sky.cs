@@ -47,9 +47,9 @@ namespace Airside.Presentation
             // Only the sun-facing low sky gets amber/rose; the opposite horizon stays lavender.
             var sunset = Color.Lerp(new Color(0.78f, 0.34f, 0.23f), new Color(1f, 0.65f, 0.34f),
                 Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-6f, 6f, elevation)));
-            _directionalSky.SetColor("_Zenith", Color.Lerp(zenith, Color.white, flash * 0.7f).linear);
-            _directionalSky.SetColor("_Horizon", Color.Lerp(horizon, Color.white, flash * 0.7f).linear);
-            _directionalSky.SetColor("_Sunset", sunset.linear);
+            _directionalSky.SetColor("_Zenith", Color.Lerp(zenith, Color.white, flash * 0.7f));
+            _directionalSky.SetColor("_Horizon", Color.Lerp(horizon, Color.white, flash * 0.7f));
+            _directionalSky.SetColor("_Sunset", sunset);
             _directionalSky.SetVector("_SunDirection", sunDirection);
             _directionalSky.SetFloat("_Twilight", twilight);
             RenderSettings.skybox = _directionalSky;

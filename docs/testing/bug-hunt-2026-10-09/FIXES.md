@@ -50,3 +50,33 @@ stays, slot spreading).
 Not verified: no frame was captured mid-taxi (the journey review samples every 15 real seconds, a taxi leg lasts about 5 at 40x); the
 taxi paths ignore taxiways and can cross grass between runway and apron; no 1x run; other airports' aprons were not viewed natively (the
 same loader and geometry are used; headless checks only).
+
+## Finding 13: Saab return climb exceeds 250 kt CAS below 10,000 ft (#743)
+
+Reproduced on current main. Native 40x journey (Saab VH-PAX, Kingscote to Adelaide, build `23445132` = main plus dense HUD-speed trace logging only):
+the return climb peaks at HUD GS 334 kt / CAS 320 kt near 3,200 ft, 179 s after lift-off (`finding-13/speeds-before.txt`; the report saw
+GS 320 / IAS 308 at 2,698 ft). Cause: `JourneyWorld` leaves the departure model's position 5.5 km behind the route (the route profile assumes
+climb speed from the first second, the departure starts with a ground roll) and eased that offset away with a fixed two-minute smoothstep,
+adding the closing speed on top of the route's own.
+
+Fix (presentation position only; leg timing, route and arrival time unchanged): `RegionalDepartureHandover` plans the ease from the route's
+own speed profile and `FlightSpeedEnvelope.MaximumCasKnots`. It spends only 60% (then 80%, then 100%) of the headroom below the cap, taken
+at the smaller of adjacent samples because the cap changes abruptly at 10,000 ft, so the ease lasts as long as it needs (Kingscote: 475 s
+after lift-off instead of 240). It must finish 450 s before the route's profile ends, ahead of the arrival bend; a gap the headroom cannot
+carry (a route already at the cap) is spread evenly rather than overdrawn. Cached per return leg; the plan is logged once as
+`[Airside handover]`. The journey review log now also records HUD GS/CAS every 0.4 real seconds through the return climb.
+
+Native run on the fix (`1fb99dc9`, same scenario): the return climb peaks at CAS 223 kt (+161 s), steady at 216-223 kt through the ease, which
+finishes 475 s after lift-off with no jump (`finding-13/speeds-after.txt`). Round trip completed. Headless `RegionalDepartureHandoverTests`
+(real profile and departure, 8 strips): the old fixed ease exceeds the cap on the Saab (Kingscote by >5 kt, longer legs by >20 kt); the new
+ease stays 3+ kt under it at Kingscote and within 1.5 kt on the longest legs, plan continuity, the shorter descent-body profile the game uses, and
+never worse than the old ease for the ATR 42, Dash 8, 737 and A320.
+
+Not fixed / observed while verifying:
+- **Arrival blend at Adelaide still exceeds the cap** (both runs, unchanged): from about 520 s after lift-off the Saab's HUD speed climbs to
+  GS 408 kt / CAS 366 kt near the home field while `ArrivalMapTrack.LatLon` bends the great circle onto the drawn final over 40 km. Same family
+  of defect (a position blend with no velocity limit), different place; not part of finding 13 as reported.
+- Routes whose own climb already runs at the cap (Dash 8, jets on short legs) cannot absorb the gap: the new ease is better than the old one
+  (Dash 8 at Kingscote modelled about 64 kt over instead of 134) but can still exceed it. Above 10,000 ft the ATR/Saab routes also run faster
+  than their type's own climb cap (pre-existing; the ease leaves those altitudes alone).
+- Not verified: 1x; Dash 8/jets or other airports natively.

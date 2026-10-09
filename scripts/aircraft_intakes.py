@@ -1,7 +1,7 @@
 """Open authored engine mouths without changing their envelope or moving parts.
 
 Closed lathe end caps used to cover the recessed jet fans. Keep the lips and
-outside cowls, remove only coplanar faces over the opening, and fit an inward
+outside cowls, remove only end-cap faces over the opening, and fit an inward
 liner to the existing fan. Small prop/rotorcraft inlets get a recessed dark cup.
 """
 import numpy as np

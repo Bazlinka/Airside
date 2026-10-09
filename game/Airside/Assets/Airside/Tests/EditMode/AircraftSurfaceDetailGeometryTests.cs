@@ -30,6 +30,22 @@ namespace Airside.Tests
             }
         }
 
+        [Test]
+        public void OverlappingWingGetsAFittedHingeAndMissingWingGetsNoFloatingMark()
+        {
+            var skin = new[] { 0f,.2f,0f, 0f,.2f,2f, 4f,.6f,-1f, 4f,.6f,0f };
+            var triangles = new[] { 0,1,3, 0,3,2 };
+            var control = (float[])skin.Clone();
+            for (var i = 1; i < control.Length; i += 3) control[i] -= .5f;
+            var seam = AircraftSurfaceDetailGeometry.ControlSeam(control, triangles, false);
+            var projected = AircraftSurfaceDetailGeometry.ProjectUpper(seam, skin, triangles);
+            Assert.That(projected.Triangles.Length, Is.EqualTo(seam.Triangles.Length).And.GreaterThan(0));
+            for (var i = 0; i < projected.Positions.Length; i += 3)
+                Assert.That(projected.Positions[i+1], Is.EqualTo(.204f+.1f*projected.Positions[i]).Within(.00001f));
+            for (var i = 0; i < skin.Length; i += 3) skin[i] += 10f;
+            Assert.That(AircraftSurfaceDetailGeometry.ProjectUpper(seam, skin, triangles).Triangles, Is.Empty);
+        }
+
         [TestCase(-1)]
         [TestCase(1)]
         public void ClipsToCurvedFrontFaceAndNeverIncludesTheBack(int side)

@@ -55,6 +55,22 @@ namespace Airside.Presentation
                 {
                     var patch = AircraftSurfaceDetailGeometry.ControlSeam(skin, triangles, name == "rudder", trainerTail ? 0.76f : 0.06f);
                     Add(filter.transform, aircraft, new List<AircraftSurfaceDetailGeometry.Patch> { patch }, DetailName, Seam);
+                    if (name.StartsWith("flap ", StringComparison.Ordinal) || name.StartsWith("aileron ", StringComparison.Ordinal))
+                        foreach (var wing in aircraft.GetComponentsInChildren<MeshFilter>(true))
+                        {
+                            var wingName = wing.name.Replace('_', ' ').ToLowerInvariant();
+                            if (wingName is not ("wing l" or "wing r" or "wing left" or "wing right")) continue;
+                            var wingMatrix = aircraft.worldToLocalMatrix * wing.transform.localToWorldMatrix;
+                            var wingVertices = wing.sharedMesh.vertices;
+                            var wingSkin = new float[wingVertices.Length * 3];
+                            for (var j = 0; j < wingVertices.Length; j++)
+                            {
+                                var v = wingMatrix.MultiplyPoint3x4(wingVertices[j]);
+                                wingSkin[j*3] = v.x; wingSkin[j*3+1] = v.y; wingSkin[j*3+2] = v.z;
+                            }
+                            var projected = AircraftSurfaceDetailGeometry.ProjectUpper(patch, wingSkin, wing.sharedMesh.triangles);
+                            Add(wing.transform, aircraft, new List<AircraftSurfaceDetailGeometry.Patch> { projected }, DetailName + " hinge " + filter.name, Seam);
+                        }
                     continue;
                 }
                 var details = AircraftSurfaceDetailGeometry.Build(skin, triangles, door, cargo, sliding,

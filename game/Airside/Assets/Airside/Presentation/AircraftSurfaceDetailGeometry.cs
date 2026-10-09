@@ -118,7 +118,7 @@ namespace Airside.Presentation
                     valid[sample] = front > rear;
                     for (var edge = 0; edge < 2; edge++)
                     {
-                        var z = centreZ + (edge == 0 ? -0.009f : 0.009f);
+                        var z = centreZ + (edge == 0 ? -0.012f : 0.012f);
                         var depth = side == 0 ? float.MinValue : float.MaxValue;
                         for (var t = 0; t < triangles.Length; t += 3)
                         {
@@ -145,6 +145,36 @@ namespace Airside.Presentation
                 }
             }
             return new Patch(positions.ToArray(), faces.ToArray());
+        }
+
+        /// <summary>Mark a control's hinge on the wing skin covering its rest pose.</summary>
+        public static Patch ProjectUpper(Patch seam, float[] skin, int[] triangles)
+        {
+            var points = (float[])seam.Positions.Clone();
+            var valid = new bool[points.Length / 3];
+            for (var p = 0; p < points.Length; p += 3)
+            {
+                var x = points[p]; var z = points[p + 2]; var y = float.MinValue;
+                for (var t = 0; t < triangles.Length; t += 3)
+                {
+                    var a = triangles[t] * 3; var b = triangles[t + 1] * 3; var c = triangles[t + 2] * 3;
+                    var det = (skin[b+2]-skin[c+2])*(skin[a]-skin[c]) + (skin[c]-skin[b])*(skin[a+2]-skin[c+2]);
+                    if (Math.Abs(det) < 0.0000001f) continue;
+                    var u = ((skin[b+2]-skin[c+2])*(x-skin[c]) + (skin[c]-skin[b])*(z-skin[c+2]))/det;
+                    var v = ((skin[c+2]-skin[a+2])*(x-skin[c]) + (skin[a]-skin[c])*(z-skin[c+2]))/det;
+                    if (u < -0.00001f || v < -0.00001f || u+v > 1.00001f) continue;
+                    y = Math.Max(y, u*skin[a+1] + v*skin[b+1] + (1-u-v)*skin[c+1]);
+                }
+                valid[p/3] = y != float.MinValue && y > points[p+1] + .003f;
+                if (valid[p/3]) points[p+1] = y + .004f;
+            }
+            var faces = new List<int>();
+            for (var t = 0; t < seam.Triangles.Length; t += 3)
+            {
+                var a = seam.Triangles[t]; var b = seam.Triangles[t+1]; var c = seam.Triangles[t+2];
+                if (valid[a] && valid[b] && valid[c]) { faces.Add(a); faces.Add(b); faces.Add(c); }
+            }
+            return new Patch(points, faces.ToArray());
         }
 
         private static void Rect(List<Patch> target, float[] skin, int[] triangles,

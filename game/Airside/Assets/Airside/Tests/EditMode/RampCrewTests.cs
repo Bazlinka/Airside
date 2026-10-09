@@ -29,7 +29,7 @@ namespace Airside.Tests
             Crew(stage);
             Assert.That(_crew, Is.Not.Empty, $"{stage} is worked by people, not just a vehicle");
             Assert.That(_crew.Count, Is.LessThanOrEqualTo(RampCrew.MaxPerAircraft),
-                "only two ramp characters exist");
+                "the airport team remains bounded");
         }
 
         [TestCase(DeparturePrepStage.Idle)]
@@ -44,7 +44,7 @@ namespace Airside.Tests
         public void BoardingKeepsOneMarshallerClearOfTheDoor()
         {
             Crew(DeparturePrepStage.Boarding);
-            Assert.That(_crew.Count, Is.EqualTo(1), "boarding is the passengers' business");
+            Assert.That(_crew.Count, Is.EqualTo(2), "supervisors cover the door and approach");
             Assert.That(_crew[0].Role, Is.EqualTo(RampRole.Marshalling));
             var door = AircraftLayout.For(AircraftType.Boeing7378).PassengerDoor;
             var dx = _crew[0].AcrossMetres - door.X;
@@ -131,9 +131,9 @@ namespace Airside.Tests
             Assert.That(_crew[1].Task, Is.EqualTo(RampTask.BaggageCart));
         }
 
-        [TestCase(RampActivity.Arrival, RampTask.MarshalArrival, 2)]
-        [TestCase(RampActivity.Pushback, RampTask.PushbackHeadset, 2)]
-        [TestCase(RampActivity.Boarding, RampTask.BoardingSupervision, 1)]
+        [TestCase(RampActivity.Arrival, RampTask.MarshalArrival, 3)]
+        [TestCase(RampActivity.Pushback, RampTask.PushbackHeadset, 3)]
+        [TestCase(RampActivity.Boarding, RampTask.BoardingSupervision, 2)]
         public void WholeTurnActivitiesProduceAReadableTeam(RampActivity activity, RampTask firstTask, int count)
         {
             RampCrew.ForActivity(activity, 0.5, _crew);

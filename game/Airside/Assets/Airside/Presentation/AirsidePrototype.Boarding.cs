@@ -480,7 +480,7 @@ namespace Airside.Presentation
             public readonly List<CrewAction> Actions = new();
         }
 
-        private const int MaxRampCrewAircraft = 8;
+        private const int MaxRampCrewAircraft = 16;
         private readonly Dictionary<string, RampCrewSet> _rampCrewByAircraft = new(StringComparer.Ordinal);
         private readonly List<RampCrewSet> _rampCrewPool = new();
         private readonly HashSet<string> _rampCrewWanted = new(StringComparer.Ordinal);
@@ -837,7 +837,7 @@ namespace Airside.Presentation
                 || aircraft.Type.IsRotorcraft || BoardingFlow.InCheck(aircraft, _preciseTime))
                 return false;
             var onStand = Math.Max(0.0, _preciseTime - aircraft.StateStartedAt.ElapsedSeconds);
-            if (onStand < 90.0)
+            if (onStand < 90.0 && !(aircraft.Airline.IsPlayer && aircraft.Scheduled is { Cancelled: false }))
             {
                 activity = RampActivity.Arrival;
                 progress = onStand / 90.0;
@@ -990,7 +990,7 @@ namespace Airside.Presentation
         private static AnimationClip RampClip(CharacterKind kind, RampTask task) => task switch
         {
             RampTask.MarshalArrival or RampTask.WingWalk => kind.Wave ?? kind.Interact,
-            RampTask.PlaceSafetyEquipment or RampTask.BoardingSupervision or RampTask.PushbackHeadset
+            RampTask.PlaceSafetyEquipment or RampTask.EquipmentRunner or RampTask.BoardingSupervision or RampTask.PushbackHeadset
                 => kind.Idle ?? kind.Interact,
             _ => kind.Interact ?? kind.Idle
         };

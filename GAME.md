@@ -5,6 +5,17 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Working ground teams (9 Oct, Codex, #774 / PR #776):** airport-provided larger service teams;
+shared bag allowance and physical carrying trips determine minimum player baggage
+preparation, including equipment setup and clearing. Reuses shipped characters/tools.
+Fuel/catering reserve setup/clear windows within existing budgets. Ambient airlines
+receive more visible workers; their scheduling is unchanged. No hiring/economy/save-schema
+changes. 160 focused/related checks pass, final native service frames inspected;
+clean universal bbe40abd build, nine booking/save/view actions and 40× ADL–KGC
+round trip pass, zero runtime errors. Whole subsequently merged main not rebuilt.
+Decision: `2026-10-09-airport-ground-teams`; evidence: `docs/testing/ground-crew-2026-10-09.md`.
+
+
 **Landing gear improvements (9 Oct, Codex, #757):** actual top-attachment pivots, one retained
 gear timeline, clear door/leg sequencing, centred nose steering during fold, enclosed
 stowed wheel envelopes and widebody bogie beams carried with their axles/wheels.
@@ -46,8 +57,9 @@ pass. Synthetic 220 m/s rain probe reaches 216.7 m/s (previously 90); real fligh
 crossing and control hit-testing unverified.
 Decision/evidence: `docs/testing/tower-rain-2026-10-09/README.md`.
 
-**Next:** Bailey can use the stamped sky checkout build for personal sky/tower playtesting;
-its bb4a17ea identity predates the subsequent gear merge.
+**Next:** ground-team implementation complete. Bailey can use the isolated stamped ground-team
+bbe40abd build for personal playtesting; it predates the subsequent sky/economy merge.
+The separate sky bb4a17ea build/evidence retains the limits recorded above.
 Other active state and prior verification limits are preserved in
 `docs/history/game-handoff-before-tower-rain-2026-10-09.md`.
 Standing policy: agents choose necessary focused runtime checks; broad suites/soaks on request.

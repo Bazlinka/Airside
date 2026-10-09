@@ -11,7 +11,8 @@ namespace Airside.Simulation
         Bag,
         Nozzle,
         Canister,
-        Trolley
+        Trolley,
+        Cone
     }
 
     /// <summary>
@@ -139,8 +140,8 @@ namespace Airside.Simulation
     /// service door and trolleys pushed across, galley boxes carried up a turboprop's airstair,
     /// and on a turboprop the passengers' roller bags left planeside and loaded by a handler.
     ///
-    /// How many items move is set by the stage's length at a realistic pace per trip (and
-    /// never more bags than seats), so a short stage moves a few bags and a long one many.
+    /// The deterministic aircraft handling allowance is split across distinct carriers.
+    /// Their physical trips and equipment clearing determine the minimum baggage stage.
     ///
     /// A pure function of the stage clock like <see cref="BoardingFlow"/>: no state, nothing
     /// persisted, right through pause, time acceleration and reload. No UnityEngine types.
@@ -159,10 +160,6 @@ namespace Airside.Simulation
 
         /// <summary>The hi-loader's platform floor at rest (VEH-004); it rises from here to the door sill.</summary>
         public const float HiLoaderFloorMetres = 2.05f;
-
-        /// <summary>Bags loaded in a baggage stage of <paramref name="stageSeconds"/> for a walk of <paramref name="walkMetres"/>.</summary>
-        public static int BagsToLoad(AircraftType type, double stageSeconds, float walkMetres) =>
-            Clamp((int)Math.Floor((stageSeconds - 6.0) / BagCycle(walkMetres)), 1, Math.Max(1, AircraftCatalogue.TypicalSeats(type)));
 
         public static float BagCycle(float walkMetres) => Math.Max(MinBagCycleSeconds, 2f * walkMetres / CarryPace + 3f);
 
@@ -263,9 +260,27 @@ namespace Airside.Simulation
             var sills = DoorSills.For(type);
             seconds = Math.Max(1.0, seconds);
             elapsed = Math.Max(0.0, Math.Min(seconds, elapsed));
+            var lane = 0;
             foreach (var member in crew)
-                actions.Add(Act(member, activity, layout, sills, type, elapsed, seconds, scene, planesideDrops, planesideCart,
-                    hiLoader));
+            {
+                var taskTime = elapsed;
+                var taskSeconds = seconds;
+                if (activity is RampActivity.Fuel or RampActivity.Catering)
+                {
+                    taskSeconds = Math.Max(1, seconds - TurnaroundCrewWork.SetupSeconds - TurnaroundCrewWork.ClearSeconds);
+                    taskTime = Math.Clamp(elapsed - TurnaroundCrewWork.SetupSeconds, 0, taskSeconds);
+                }
+                var action = member.Task == RampTask.BaggageCart && activity == RampActivity.Baggage
+                    ? BaggageCarrier(layout, sills, type, elapsed, seconds, scene, lane++)
+                    : member.Task is RampTask.PlaceSafetyEquipment or RampTask.EquipmentRunner
+                        ? SafetyEquipment(member, layout, elapsed, seconds, scene)
+                        : Act(member, activity, layout, sills, type, taskTime, taskSeconds, scene, planesideDrops, planesideCart, hiLoader);
+                if ((activity is RampActivity.Fuel or RampActivity.Catering
+                    || activity == RampActivity.Baggage && member.Task == RampTask.BaggageHold) && action.Height < 0.05f
+                    && member.Task != RampTask.EquipmentRunner)
+                    action = ApproachAndClear(action, layout, elapsed, seconds);
+                actions.Add(action);
+            }
         }
 
         private static CrewAction Act(RampCrewMember m, RampActivity activity, AircraftLayout layout, DoorSills sills,
@@ -295,6 +310,45 @@ namespace Airside.Simulation
                 default:
                     return still;
             }
+        }
+
+        private static CrewAction ApproachAndClear(CrewAction at, AircraftLayout layout, double e, double seconds)
+        {
+            var side = at.X < 0 ? -1f : 1f;
+            var from = layout.Clear(at.X + side * 4f, at.Z, 0.35f, false);
+            if (e < TurnaroundCrewWork.SetupSeconds)
+            {
+                var t = (float)(e / TurnaroundCrewWork.SetupSeconds);
+                return new CrewAction(Lerp(from.X, at.X, t), Lerp(from.Z, at.Z, t), 0,
+                    Heading(at.X - from.X, at.Z - from.Z), true, CarriedItem.None);
+            }
+            if (e > seconds - TurnaroundCrewWork.ClearSeconds)
+            {
+                var t = (float)((e - seconds + TurnaroundCrewWork.ClearSeconds) / TurnaroundCrewWork.ClearSeconds);
+                return new CrewAction(Lerp(at.X, from.X, t), Lerp(at.Z, from.Z, t), 0,
+                    Heading(from.X - at.X, from.Z - at.Z), t < 1, CarriedItem.None);
+            }
+            return at;
+        }
+
+        private static CrewAction SafetyEquipment(RampCrewMember member, AircraftLayout layout,
+            double e, double seconds, ServiceScene scene)
+        {
+            var at = (X: member.AcrossMetres, Z: member.AlongMetres);
+            var side = at.X < 0 ? -1f : 1f;
+            var from = layout.Clear(at.X + side * 4f, at.Z, 0.35f, false);
+            // Bring a cone from the equipment bay, place it beside the work zone, collect it and clear away.
+            var arrival = TurnaroundCrewWork.SetupSeconds;
+            var clearing = Math.Max(arrival, seconds - TurnaroundCrewWork.ClearSeconds);
+            var placing = e < arrival;
+            var collecting = e >= clearing;
+            var t = placing ? (float)(e / arrival) : collecting
+                ? 1f - (float)((e - clearing) / Math.Max(1, seconds - clearing)) : 1f;
+            if (!placing && !collecting)
+                scene.Transit.Add(new TransitItem(CarriedItem.Cone, at.X, at.Z + 0.8f, 0));
+            return new CrewAction(Lerp(from.X, at.X, t), Lerp(from.Z, at.Z, t), 0,
+                Heading(collecting ? from.X - at.X : at.X - from.X, 0), placing || collecting,
+                placing || collecting ? CarriedItem.Cone : CarriedItem.None);
         }
 
         private static CrewAction FuelCoupling(AircraftLayout layout, double e, double s, ServiceScene scene)
@@ -351,13 +405,15 @@ namespace Airside.Simulation
         }
 
         private static CrewAction BaggageCarrier(AircraftLayout layout, DoorSills sills, AircraftType type, double e, double s,
-            ServiceScene scene)
+            ServiceScene scene, int lane = 0)
         {
-            var (a, b, walk) = BagRun(layout, scene, sills);
-            var cycle = BagCycle(walk);
-            var count = BagsToLoad(type, s, walk);
-            var trips = Trips(e, 3.0, cycle, count);
-            scene.TrainLoad = 1f - trips.Picked / (float)count;
+            BagRun(layout, scene, sills);
+            var (a, b) = TurnaroundCrewWork.BagLane(type, lane);
+            var cycle = TurnaroundCrewWork.BagCycle(type, lane);
+            var count = TurnaroundCrewWork.CarrierBagCount(type, lane);
+            var start = TurnaroundCrewWork.SetupSeconds + lane * TurnaroundCrewWork.CarrierStaggerSeconds;
+            var trips = Trips(e, start, cycle, count);
+            scene.TrainLoad = Math.Max(0, scene.TrainLoad - trips.Picked / (float)TurnaroundCrewWork.BagCount(type));
             var door = layout.CargoDoor;
             var side = AircraftLayout.SideOf(door);
 
@@ -371,7 +427,7 @@ namespace Airside.Simulation
             else if (!layout.IsTurboprop)
             {
                 // Put on the belt, then carried up it into the hold.
-                var since = BeltTime(e, 3.0, cycle, count);
+                var since = BeltTime(e, start, cycle, count);
                 if (since >= 0f && since < BeltSeconds)
                 {
                     var t = since / BeltSeconds;
@@ -386,7 +442,8 @@ namespace Airside.Simulation
             var facing = trips.Walking
                 ? (outbound ? Heading(b.X - a.X, b.Z - a.Z) : Heading(a.X - b.X, a.Z - b.Z))
                 : trips.Leg > 0.5f ? Heading(door.X - x, door.Z - z) : Heading(a.X - b.X, a.Z - b.Z);
-            return new CrewAction(x, z, 0f, facing, trips.Walking, trips.Carrying ? CarriedItem.Bag : CarriedItem.None);
+            return ApproachAndClear(new CrewAction(x, z, 0f, facing, trips.Walking,
+                trips.Carrying ? CarriedItem.Bag : CarriedItem.None), layout, e, s);
         }
 
         /// <summary>Seconds since the latest bag was put on the belt, or -1.</summary>

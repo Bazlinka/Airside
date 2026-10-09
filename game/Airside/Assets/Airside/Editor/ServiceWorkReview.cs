@@ -47,8 +47,13 @@ public static class ServiceWorkReview
         apron.GetComponent<Renderer>().sharedMaterial =
             AirsideMaterialLibrary.CreateShared(new Color(0.5f, 0.51f, 0.52f), AirsideMaterialLibrary.SurfaceKind.Concrete);
 
-        Frame(output, "SF34", RampActivity.Baggage, 38, 90);
-        Frame(output, "A320", RampActivity.Baggage, 44, 135);
+        var regional = TurnaroundCrewWork.BaggageSeconds(AircraftType.Saab340);
+        var jet = TurnaroundCrewWork.BaggageSeconds(AircraftType.AirbusA320200);
+        Frame(output, "SF34", RampActivity.Baggage, 6, regional);
+        Frame(output, "SF34", RampActivity.Baggage, 38, regional);
+        Frame(output, "SF34", RampActivity.Baggage, regional - 6, regional);
+        Frame(output, "A320", RampActivity.Baggage, 44, jet);
+        Frame(output, "A320", RampActivity.Baggage, jet - 6, jet);
         Frame(output, "ATR42", RampActivity.Fuel, 45, 90);
         Frame(output, "ATR42", RampActivity.Catering, 44, 75);
         Frame(output, "A320", RampActivity.Catering, 60, 112);
@@ -225,7 +230,7 @@ public static class ServiceWorkReview
         var suffix = action.Walking ? "Walk" : member.Task switch
         {
             RampTask.MarshalArrival or RampTask.WingWalk => "Wave",
-            RampTask.PlaceSafetyEquipment or RampTask.BoardingSupervision or RampTask.PushbackHeadset => "Idle_Neutral",
+            RampTask.PlaceSafetyEquipment or RampTask.EquipmentRunner or RampTask.BoardingSupervision or RampTask.PushbackHeadset => "Idle_Neutral",
             _ => "Interact"
         };
         var clip = clips.First(c => c.name.EndsWith(suffix, StringComparison.Ordinal));

@@ -48,8 +48,8 @@ namespace Airside.Tests
             foreach (var older in new[] { AircraftAcquisition.Boeing737800, AircraftAcquisition.AirbusA320200 })
             {
                 Assert.That(older.Price, Is.LessThan(AircraftAcquisition.Boeing7378.Price), older.Type.Name);
-                Assert.That(FlightEconomics.CostPerKm(older.Type),
-                    Is.GreaterThan(FlightEconomics.CostPerKm(AircraftType.Boeing7378)), older.Type.Name);
+                Assert.That(FlightCostModel.ProfileFor(older.Type).BurnKgPerBlockHour,
+                    Is.GreaterThan(FlightCostModel.ProfileFor(AircraftType.Boeing7378).BurnKgPerBlockHour), older.Type.Name);
             }
 
             // The new widebodies are cheaper ways into long-haul, and count for the widebody goal.
@@ -58,9 +58,9 @@ namespace Airside.Tests
             var goals = CareerRoadmap.Evaluate(new AirlineCareerState(), new[] { AircraftType.Saab340, AircraftType.AirbusA330900 });
             Assert.That(goals.Single(g => g.Id == "international-widebody").Complete, Is.True);
 
-            // Pay never depends on the running-cost factor.
+            // Pay follows seats and the route, never the fuel burn: sister 737s with near-equal seats pay near-equally.
             Assert.That(FlightEconomics.FlightPay(AircraftType.Boeing737800, 1200),
-                Is.EqualTo(FlightEconomics.FlightPay(AircraftType.Boeing7378, 1200)));
+                Is.EqualTo(FlightEconomics.FlightPay(AircraftType.Boeing7378, 1200)).Within(5).Percent);
         }
 
         [Test]
@@ -79,7 +79,7 @@ namespace Airside.Tests
             Assert.That(FlightEconomics.TypicalLegKm(AircraftType.AirbusA330900), Is.EqualTo(6000.0));
             Assert.That(FlightEconomics.TypicalLegKm(AircraftType.Saab340), Is.EqualTo(300.0));
 
-            ops.RestoreCareerState(a330.Price + 50_000, 100, nameof(OperatingTier.International), null, 0, 0,
+            ops.RestoreCareerState(a330.Price + 2 * FlightEconomics.DispatchCost(a330.Type, FlightEconomics.TypicalLegKm(a330.Type)), 100, nameof(OperatingTier.International), null, 0, 0,
                 System.Array.Empty<string>(), System.Array.Empty<string>(), 60, null, 0, null,
                 baseLevel: PlayerBaseLevel.International);
             model.Rebuild(ops, clock.Now, null);
@@ -90,7 +90,7 @@ namespace Airside.Tests
         public void FleetMarket_LeadsWithWhatYouCanBuyAndPages()
         {
             var (clock, ops, _) = HudTestAirline.Create();
-            ops.RestoreCareerState(500_000, 100, nameof(OperatingTier.International), null, 0, 0,
+            ops.RestoreCareerState(500_000 * FlightCostModel.LegacySaveMoneyScale, 100, nameof(OperatingTier.International), null, 0, 0,
                 System.Array.Empty<string>(), System.Array.Empty<string>(), 60, null, 0, null,
                 baseLevel: PlayerBaseLevel.International);
             var model = new FleetWorkspaceModel();

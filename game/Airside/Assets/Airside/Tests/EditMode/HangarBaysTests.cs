@@ -20,7 +20,7 @@ namespace Airside.Tests
             var planes = new List<FleetAircraft>();
             for (var i = 0; i < count; i++)
                 planes.Add(ops.AddAircraft(player, $"VH-T{i:00}", AircraftType.Saab340, AirlineOperations.AdelaideRegionalBays[i]));
-            ops.RestoreCareerState(1_000_000, 90, nameof(OperatingTier.Provisional), null, 0, 0, Array.Empty<string>(),
+            ops.RestoreCareerState(1_000_000 * FlightCostModel.LegacySaveMoneyScale, 90, nameof(OperatingTier.Provisional), null, 0, 0, Array.Empty<string>(),
                 Array.Empty<string>(), 0);
             return (ops, planes);
         }

@@ -78,13 +78,13 @@ namespace Airside.Simulation
         {
             PlayerBaseLevel.ExpandedRegional => new PlayerBaseSpec(level,
                 "Expanded regional base", "3 aircraft · regional apron and maintenance space",
-                3, 1_500, 4, OperatingTier.Provisional, false, false, requiredReliability: 75),
+                3, 50_000, 4, OperatingTier.Provisional, false, false, requiredReliability: 75),
             PlayerBaseLevel.JetGate => new PlayerBaseSpec(level,
                 "Jet-gate base", "5 aircraft · terminal-gate jet handling",
-                5, 6_000, 16, OperatingTier.Regional, true, false, requiredReliability: 80),
+                5, 200_000, 16, OperatingTier.Regional, true, false, requiredReliability: 80),
             PlayerBaseLevel.International => new PlayerBaseSpec(level,
                 "International base", "6 aircraft · widebody and long-haul handling",
-                6, 20_000, 50, OperatingTier.Domestic, true, true, requiredReliability: 88),
+                6, 700_000, 50, OperatingTier.Domestic, true, true, requiredReliability: 88),
             _ => new PlayerBaseSpec(PlayerBaseLevel.Starter,
                 "Regional starter base", "2 aircraft · a second Saab from the opening cash",
                 2, 0, 0, OperatingTier.Provisional, false, false)

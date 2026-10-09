@@ -78,9 +78,9 @@ namespace Airside.Simulation
         /// <summary>Turnaround handling per departure: a flat part plus a weight part.</summary>
         public static double Handling(double tonnes) => 150.0 + 12.0 * tonnes;
 
-        /// <summary>Monthly lease rate as a share of the aircraft's market value, and the deposit in months.</summary>
-        public const double LeaseRatePerMonth = 0.009;
-        public const int LeaseDepositMonths = 3;
+        /// <summary>Lease terms live in Domain (<see cref="LeaseTerms"/>) so the price list can use them.</summary>
+        public const double LeaseRatePerMonth = LeaseTerms.RatePerMonth;
+        public const int LeaseDepositMonths = LeaseTerms.DepositMonths;
         /// <summary>Annual insurance as a share of value, paid while the aircraft is on the books.</summary>
         public const double InsuranceRatePerYear = 0.004;
         /// <summary>Annual interest on the bank loan.</summary>
@@ -128,23 +128,42 @@ namespace Airside.Simulation
             if (type == null) throw new ArgumentNullException(nameof(type));
             return type.Id switch
             {
-                "SF34" => new Profile(540, 13.2, 520, 350, 2_000_000),
-                "ATR42" => new Profile(590, 18.6, 540, 350, 10_000_000),
-                "DH8D" => new Profile(1_000, 28.15, 700, 450, 18_000_000),
-                "B412" => new Profile(300, 5.4, 400, 250, 7_000_000),
-                "E190" => new Profile(1_800, 51, 1_000, 700, 25_000_000),
-                "A223" => new Profile(2_100, 70, 1_050, 800, 45_000_000),
-                "A320" => new Profile(2_400, 73.5, 1_100, 900, 28_000_000),
-                "B738" => new Profile(2_500, 79, 1_100, 900, 32_000_000),
-                "B38M" => new Profile(2_300, 82, 1_100, 850, 75_000_000),
-                "A21N" => new Profile(2_500, 91.89, 1_150, 900, 85_000_000),
-                "A339" => new Profile(5_500, 251, 2_600, 2_100, 140_000_000),
-                "B789" => new Profile(5_000, 254, 2_600, 2_000, 170_000_000),
-                "B78X" => new Profile(5_300, 254, 2_700, 2_100, 190_000_000),
-                "A359" => new Profile(5_600, 280, 2_700, 2_200, 200_000_000),
+                "SF34" => new Profile(540, 13.2, 520, 350, LeaseTerms.ValueAud(type)),
+                "ATR42" => new Profile(590, 18.6, 540, 350, LeaseTerms.ValueAud(type)),
+                "DH8D" => new Profile(1_000, 28.15, 700, 450, LeaseTerms.ValueAud(type)),
+                "B412" => new Profile(300, 5.4, 400, 250, LeaseTerms.ValueAud(type)),
+                "E190" => new Profile(1_800, 51, 1_000, 700, LeaseTerms.ValueAud(type)),
+                "A223" => new Profile(2_100, 70, 1_050, 800, LeaseTerms.ValueAud(type)),
+                "A320" => new Profile(2_400, 73.5, 1_100, 900, LeaseTerms.ValueAud(type)),
+                "B738" => new Profile(2_500, 79, 1_100, 900, LeaseTerms.ValueAud(type)),
+                "B38M" => new Profile(2_300, 82, 1_100, 850, LeaseTerms.ValueAud(type)),
+                "A21N" => new Profile(2_500, 91.89, 1_150, 900, LeaseTerms.ValueAud(type)),
+                "A339" => new Profile(5_500, 251, 2_600, 2_100, LeaseTerms.ValueAud(type)),
+                "B789" => new Profile(5_000, 254, 2_600, 2_000, LeaseTerms.ValueAud(type)),
+                "B78X" => new Profile(5_300, 254, 2_700, 2_100, LeaseTerms.ValueAud(type)),
+                "A359" => new Profile(5_600, 280, 2_700, 2_200, LeaseTerms.ValueAud(type)),
                 _ => throw new ArgumentException($"{type.Id} has no cost profile.", nameof(type))
             };
         }
+
+        /// <summary>
+        /// A band guessed from distance alone, for callers that price a leg without knowing the destination. Only the cost side
+        /// uses it (passenger fees follow the band); pay always uses the destination's real band. Design thresholds.
+        /// </summary>
+        public static RouteBand BandForDistance(double km) =>
+            km <= 400 ? RouteBand.Regional
+            : km <= 1_400 ? RouteBand.Domestic
+            : km <= 3_100 ? RouteBand.National
+            : km <= 3_500 ? RouteBand.Tasman
+            : km <= 5_500 ? RouteBand.Pacific
+            : RouteBand.LongHaul;
+
+        /// <summary>
+        /// Factor applied to every money amount in a save older than version 24 so existing careers keep their relative wealth
+        /// against the new price ladder (the Saab deposit is about 34 times its old price, the ATR about 52 times). Applied
+        /// once on load; amounts already at the new scale are never multiplied.
+        /// </summary>
+        public const long LegacySaveMoneyScale = 35;
 
         // ---- Demand (design; load factors informed by BITRE network 80.4%, tier C) -------------------------------------
 
@@ -159,7 +178,7 @@ namespace Airside.Simulation
         };
 
         /// <summary>Helicopter seats are charter-priced: a 13-seat rescue/utility type cannot earn airline fares (design).</summary>
-        public const double RotorcraftFareMultiplier = 4.0;
+        public const double RotorcraftFareMultiplier = 2.5;
 
         /// <summary>Hours an aircraft can be worked in a day, and the ground time between legs (design, for planning a day).</summary>
         public const double WorkingHoursPerDay = 14.0;
@@ -208,6 +227,12 @@ namespace Airside.Simulation
             public double Handling { get; }
             public double Overhead { get; }
             public double Cost => Fuel + Crew + Maintenance + Airport + Navigation + Handling + Overhead;
+
+            /// <summary>
+            /// What the player pays at dispatch: everything except the maintenance reserve, which the player pays later as an
+            /// explicit check (<see cref="CheckCost"/>) so it is not charged twice.
+            /// </summary>
+            public double DispatchCost => Cost - Maintenance;
             public double Profit => Revenue - Cost;
             public double Margin => Revenue <= 0 ? 0 : Profit / Revenue;
         }
@@ -244,6 +269,17 @@ namespace Airside.Simulation
             return Math.Max(1, (int)Math.Floor(WorkingHoursPerDay / legHours));
         }
 
+        /// <summary>
+        /// A routine check's bill: the maintenance reserve that <paramref name="intervalRotations"/> out-and-back rotations of the
+        /// type's usual leg accrue. Flights are not charged the reserve at dispatch, so a check is where it is paid.
+        /// </summary>
+        public static long CheckCost(AircraftType type, int intervalRotations)
+        {
+            var km = FlightEconomics.TypicalLegKm(type);
+            var blockHours = Leg(type, km, RouteBand.Regional).BlockHours;
+            return (long)Math.Round(blockHours * ProfileFor(type).MaintenancePerBlockHour * 2.0 * Math.Max(1, intervalRotations));
+        }
+
         // ---- Standing costs and finance ------------------------------------------------------------------------------------
 
         public static double LeasePerDay(AircraftType type) =>
@@ -255,8 +291,7 @@ namespace Airside.Simulation
         /// <summary>Standing cost of holding a leased aircraft for one day, flying or not.</summary>
         public static double StandingPerDay(AircraftType type) => LeasePerDay(type) + InsurancePerDay(type);
 
-        public static long LeaseDeposit(AircraftType type) =>
-            (long)Math.Round(ProfileFor(type).ValueAud * LeaseRatePerMonth * LeaseDepositMonths);
+        public static long LeaseDeposit(AircraftType type) => LeaseTerms.Deposit(type);
 
         public static double LoanInterestPerDay(long balance) =>
             Math.Max(0, balance) * LoanInterestPerYear / 365.0;

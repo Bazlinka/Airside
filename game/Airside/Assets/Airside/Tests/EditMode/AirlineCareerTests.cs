@@ -377,7 +377,7 @@ namespace Airside.Tests
             Assert.That(ops.CanOperate(plane, Code("MEL")), Is.False);
             Assert.That(ops.CanReach(plane, Code("MEL")), Is.True, "range still reaches Melbourne; the band does not");
 
-            ops.RestoreCareerState(50_000, 90, nameof(OperatingTier.Regional), null, 0, 0, Array.Empty<string>(),
+            ops.RestoreCareerState(50_000 * FlightCostModel.LegacySaveMoneyScale, 90, nameof(OperatingTier.Regional), null, 0, 0, Array.Empty<string>(),
                 Array.Empty<string>(), 12, baseLevel: PlayerBaseLevel.ExpandedRegional);
             Assert.That(ops.BuyAircraft(AircraftType.Dash8Q400).Accepted, Is.True);
             FleetAircraft dash = null;
@@ -395,7 +395,7 @@ namespace Airside.Tests
 
             var cost = FlightEconomics.DispatchCost(dash.Type, ops.DistanceKm(melbourne));
             var pay = RouteForecast.For(ops.Home, melbourne, dash.Type).Revenue;
-            Assert.That(ops.CareerState.Funds, Is.EqualTo(50_000 - AircraftAcquisition.Dash8Q400.Price - cost + pay
+            Assert.That(ops.CareerState.Funds, Is.EqualTo(50_000 * FlightCostModel.LegacySaveMoneyScale - AircraftAcquisition.Dash8Q400.Price - cost + pay
                 + definition.PaymentPerRotation));
             Assert.That(pay, Is.GreaterThan(FlightEconomics.FlightPay(AircraftType.Atr42,
                 ops.DistanceKm(Code("KGC")), RouteBand.Regional)));
@@ -418,7 +418,7 @@ namespace Airside.Tests
             Assert.That(AircraftAcquisition.AirbusA350900.RequiredTier, Is.EqualTo(OperatingTier.International));
 
             var (_, ops, _) = PlayerOnly();
-            ops.RestoreCareerState(200_000, 90, nameof(OperatingTier.Domestic), null, 0, 0, Array.Empty<string>(),
+            ops.RestoreCareerState(200_000 * FlightCostModel.LegacySaveMoneyScale, 90, nameof(OperatingTier.Domestic), null, 0, 0, Array.Empty<string>(),
                 Array.Empty<string>(), 42, baseLevel: PlayerBaseLevel.JetGate);
             Assert.That(ops.BuyAircraft(AircraftType.Boeing7378).Accepted, Is.True);
             Assert.That(ops.CareerState.Tier, Is.EqualTo(OperatingTier.Domestic),
@@ -431,7 +431,7 @@ namespace Airside.Tests
                 "domestic network, outstation and jet proof unlock International");
 
             // A350 still needs its own reliability/rotation floor on top of the tier.
-            ops.RestoreCareerState(ops.CareerState.Funds, 95, nameof(OperatingTier.International), null, 0, 0,
+            ops.RestoreCareerState(AircraftAcquisition.AirbusA350900.Price * 2, 95, nameof(OperatingTier.International), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 100, baseLevel: PlayerBaseLevel.International);
             Assert.That(ops.BuyAircraft(AircraftType.AirbusA350900).Accepted, Is.True,
                 "widebodies become buyable once International is open");

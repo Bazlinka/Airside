@@ -527,7 +527,7 @@ namespace Airside.Tests
         public void SellAircraft_RefundsAFractionAndRemovesItFromTheFleet()
         {
             var (_, ops, _) = PlayerOnly();
-            ops.RestoreCareerState(200_000, 100, nameof(OperatingTier.International), null, 0, 0,
+            ops.RestoreCareerState(200_000 * FlightCostModel.LegacySaveMoneyScale, 100, nameof(OperatingTier.International), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 40, baseLevel: PlayerBaseLevel.ExpandedRegional);
             Assert.That(ops.BuyAircraft(AircraftType.Atr42).Accepted, Is.True);
             var bought = ops.Fleet.Single(a => a.Type.Id == AircraftType.Atr42.Id);

@@ -17,8 +17,8 @@ namespace Airside.Simulation
         /// <summary>Reliability lost for each rotation flown with the check overdue.</summary>
         public const int OverduePenalty = 2;
 
-        /// <summary>Check cost as a share of the aircraft's list price.</summary>
-        public const double CostFraction = 0.06;
+        /// <summary>The cheapest check, whatever the type.</summary>
+        public const long MinimumCheckCost = 5_000L;
         public const double OutsourcedCostMultiplier = 1.4;
         public const double OutsourcedTimeMultiplier = 1.5;
 
@@ -51,18 +51,20 @@ namespace Airside.Simulation
                 : 2 * 3600L;
 
         /// <summary>
-        /// A Saab 340's check. Fixed rather than taken from its list price: the Saab went on sale
-        /// at a discounted $1,600 (ADR 0164), which would otherwise have cut its check to $300.
+        /// The maintenance reserve the type accrues over <see cref="IntervalRotations"/> rotations (Economy v2): flights are not
+        /// charged it at dispatch, so a check is where it is paid. See <see cref="FlightCostModel.CheckCost"/>.
         /// </summary>
-        public const long SaabCheckCost = 400L;
-
         public static long CheckCost(AircraftType type)
         {
-            if (type != null && type.Id == AircraftType.Saab340.Id)
-                return SaabCheckCost;
-            return AircraftAcquisition.TryFor(type, out var offer)
-                ? Math.Max(300L, (long)Math.Round(offer.Price * CostFraction))
-                : 400L;
+            if (type == null) return MinimumCheckCost;
+            try
+            {
+                return Math.Max(MinimumCheckCost, FlightCostModel.CheckCost(type, IntervalRotations));
+            }
+            catch (ArgumentException)
+            {
+                return MinimumCheckCost;
+            }
         }
 
         public static long CheckCost(AircraftType type, PlayerBaseLevel baseLevel)

@@ -19,7 +19,7 @@ namespace Airside.Tests
             operations.AddAirline(player);
             operations.AddAircraft(player, "VH-TST", AircraftType.Saab340,
                 AirlineOperations.AdelaideRegionalBays[0]);
-            operations.RestoreCareerState(500_000, 95, nameof(OperatingTier.Domestic), null, 0, 0,
+            operations.RestoreCareerState(500_000 * FlightCostModel.LegacySaveMoneyScale, 95, nameof(OperatingTier.Domestic), null, 0, 0,
                 Array.Empty<string>(), Array.Empty<string>(), 100,
                 baseLevel: baseLevel, manualRotations: 12);
             Assert.That(operations.OpenOutstationBase("MEL").Accepted, Is.True);

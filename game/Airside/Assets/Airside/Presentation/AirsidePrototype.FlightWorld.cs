@@ -162,6 +162,8 @@ namespace Airside.Presentation
                 && RegionalRunways.TryGet(aircraft.CurrentDestination.Value.Code,out var parkedRunway))
             {
                 RegionalFlightPath.Landing(parkedRunway,0,0,0,null,aircraft.Type,out x,out y,out z);
+                // The turnaround is spent on the mapped apron, not at the end of the landing roll.
+                if (TryTurnaroundPose(aircraft,parkedRunway,ahead,out var turnaround)) { x=turnaround.X; z=turnaround.Z; }
                 return;
             }
             TryEnroute(aircraft,out var profile,out var elapsed);
@@ -242,6 +244,27 @@ namespace Airside.Presentation
                 x+=(sx-tx)*blend;z+=(sz-tz)*blend;
                 y+=(sy-(AirsideFlightPath.GroundY+profile.AltitudeFeetAt(profile.LegSeconds-180)/EnrouteProfile.FeetPerMetre))*blend;
             }
+        }
+
+        /// <summary>
+        /// Where an aircraft turning round at a regional outstation is: taxiing in from the end of the landing roll to
+        /// the mapped apron, parked, then taxiing back to the exact point its departure roll starts from. False when
+        /// the airport has no mapped apron or the stay is too short to taxi: the aircraft stays where it stopped.
+        /// </summary>
+        private bool TryTurnaroundPose(FleetAircraft aircraft, RegionalRunway runway, double ahead, out TurnaroundPose pose)
+        {
+            pose = default;
+            if (aircraft.State != FleetState.AtDestination || !aircraft.StateEndsAt.HasValue
+                || !RegionalApron.TryFor(runway, out var spot)) return false;
+            var started = aircraft.StateStartedAt.ElapsedSeconds;
+            var duration = aircraft.StateEndsAt.Value.ElapsedSeconds - started;
+            if (duration < RegionalTurnaround.MinimumStaySeconds) return false;
+            RegionalFlightPath.Landing(runway,0,0,0,null,aircraft.Type,out var stopX,out _,out var stopZ);
+            // The departure rolls from the plain landing-roll end; arriving there keeps the hand-over seamless.
+            RegionalFlightPath.Departure(runway,0,0,aircraft.Type,out var startX,out _,out var startZ);
+            RegionalTurnaround.RunwayYaws(runway,out var landingYaw,out var departureYaw);
+            pose = RegionalTurnaround.At(stopX,stopZ,landingYaw,startX,startZ,departureYaw,spot,_preciseTime+ahead-started,duration);
+            return true;
         }
 
         private Vector3 DepartureWorldPosition(CommercialFlight flight, FleetAircraft aircraft, float progress) =>

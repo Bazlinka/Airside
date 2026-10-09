@@ -8,7 +8,7 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 **Fleet refinements (9 Oct, Codex, #716):** recessed engine mouths and skin-fitted moving control hinges;
 15 active airframes inspected in native front/side/rear/overview, 13 passenger rigs in driven roll poses.
 Envelopes, pivots, paint, simulation and saves retained. 52 focused headless/17 native checks pass;
-packaged player check pending. Evidence/limits: `docs/testing/fleet-refinements-2026-10-09/README.md`.
+Mac build/four-step parked A350 player check pass, no runtime errors. Evidence/limits: `docs/testing/fleet-refinements-2026-10-09/README.md`.
 
 **Welcome and comfort fixes (9 Oct, Codex, #706):** title/setup weather isolation and consistent Weather Layers;
 F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; compact/recovery welcome cards;

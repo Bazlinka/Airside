@@ -10,7 +10,8 @@ Adelaide/regional building facades; urban street sources/pools and mapped lamp
 extensions; distant lights only on mapped built-up land. Existing airport lighting,
 layouts, simulation and saves retained. Household occupancy and unsurveyed lamp
 spacing are inferred; regional detail remains limited to shipped OSM snapshots.
-Native build and visual checks in progress; `docs/testing/city-town-lights-2026-10-09.md`.
+Mac build and nine native steps pass, zero runtime errors; horizon fade refinement
+and focused Whyalla night probe in progress; `docs/testing/city-town-lights-2026-10-09.md`.
 
 **Directional twilight sky (9 Oct, Codex, #758):** cool zenith/horizon gradients,
 sun-facing amber/rose dawn and dusk, blue-hour evenings; broad orange fog reduced.

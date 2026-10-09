@@ -199,7 +199,8 @@ namespace Airside.Presentation
         private static void AttachTileWithLights(Transform parent, Material material, Vector2Int tile, MeshParts parts)
         {
             AttachTile(parent, material, tile, parts.ToMesh($"{ObjectName} {tile.x},{tile.y}"));
-            parts.Lights.Attach(parent, $"House windows {tile.x},{tile.y}");
+            parts.Lights.Attach(parent, $"House windows {tile.x},{tile.y}",
+                material.GetFloat("_HorizonFadeStart"), material.GetFloat("_HorizonFadeEnd"));
         }
 
         /// <summary>One mesh per <see cref="TileMetres"/> tile. <paramref name="groundHeight"/> is the world y of the land.</summary>

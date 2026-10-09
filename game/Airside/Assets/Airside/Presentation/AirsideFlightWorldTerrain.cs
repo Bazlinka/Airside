@@ -325,7 +325,7 @@ namespace Airside.Presentation
             go.AddComponent<MeshFilter>().sharedMesh=mesh;
             var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=_material;
             renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;
-            settlementLights.Attach(go.transform,"Mapped settlement lights");
+            settlementLights.Attach(go.transform,"Mapped settlement lights",40000,55000);
             return go;
         }
         /// <summary>

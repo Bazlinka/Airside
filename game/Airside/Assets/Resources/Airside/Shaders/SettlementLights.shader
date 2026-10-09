@@ -1,5 +1,10 @@
 Shader "Airside/SettlementLights"
 {
+    Properties
+    {
+        _HorizonFadeStart ("Horizon fade start", Float) = 6500
+        _HorizonFadeEnd ("Horizon fade end", Float) = 9600
+    }
     SubShader
     {
         Tags { "RenderType"="Transparent" "Queue"="Transparent" "RenderPipeline"="UniversalPipeline" }
@@ -17,6 +22,10 @@ Shader "Airside/SettlementLights"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             float _AirsideSettlementNight;
             float _AirsideHorizonScale;
+            CBUFFER_START(UnityPerMaterial)
+                float _HorizonFadeStart;
+                float _HorizonFadeEnd;
+            CBUFFER_END
             struct A { float4 positionOS:POSITION; float3 mode:NORMAL; float2 uv:TEXCOORD0; float4 colour:COLOR; };
             struct V { float4 positionCS:SV_POSITION; float2 uv:TEXCOORD0; float3 colour:TEXCOORD1; float mode:TEXCOORD2; float fog:TEXCOORD3; float distanceWS:TEXCOORD4; };
             V vert(A a)
@@ -39,7 +48,7 @@ Shader "Airside/SettlementLights"
                 float radial=saturate(1-dot(i.uv,i.uv));
                 float weight=i.mode<-.5 ? 1 : radial*radial;
                 float strength=_AirsideSettlementNight*weight
-                    *(1-smoothstep(40000,55000,i.distanceWS/max(1,_AirsideHorizonScale)));
+                    *(1-smoothstep(_HorizonFadeStart,_HorizonFadeEnd,i.distanceWS/max(1,_AirsideHorizonScale)));
                 if(i.mode>1.5) strength=.3; // Restrained pole silhouette; no emissive metal.
                 float3 colour=i.colour*strength;
                 colour=MixFogColor(colour,half3(0,0,0),i.fog);

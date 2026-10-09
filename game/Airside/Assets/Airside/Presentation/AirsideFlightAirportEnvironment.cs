@@ -64,7 +64,7 @@ namespace Airside.Presentation
             // Fixed upper bound per frame. No colliders, point lights, resource claims or individual buildings' GameObjects.
             var end=Math.Min(_map.features.Length,_cursor+24);
             for(;_cursor<end;_cursor++) Add(_map.features[_cursor],vertices,colours,triangles);
-            _lights.Attach(transform,"Mapped town lights "+_cursor);
+            _lights.Attach(transform,"Mapped town lights "+_cursor,40000,55000);
             if(vertices.Count==0) return;
             var mesh=new Mesh {name="Airport mapped geometry "+_cursor,indexFormat=IndexFormat.UInt32};
             mesh.SetVertices(vertices);mesh.SetColors(colours);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();

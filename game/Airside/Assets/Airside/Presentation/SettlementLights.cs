@@ -91,7 +91,7 @@ namespace Airside.Presentation
                     h^=h>>16;h*=2246822519u;return h^(h>>13);
                 }
             }
-            public SettlementLights Attach(Transform parent, string name)
+            public SettlementLights Attach(Transform parent, string name, float fadeStart = 6500, float fadeEnd = 9600)
             {
                 if(Count==0 || parent==null) return null;
                 var shader=Resources.Load<Shader>("Airside/Shaders/SettlementLights");
@@ -103,6 +103,8 @@ namespace Airside.Presentation
                 owner._mesh.SetColors(_colours);owner._mesh.SetTriangles(_indices,0);owner._mesh.RecalculateBounds();
                 var bounds=owner._mesh.bounds;bounds.Expand(80);owner._mesh.bounds=bounds;
                 owner._material=new Material(shader) {name="mat_"+name};
+                owner._material.SetFloat("_HorizonFadeStart",fadeStart);
+                owner._material.SetFloat("_HorizonFadeEnd",fadeEnd);
                 go.AddComponent<MeshFilter>().sharedMesh=owner._mesh;
                 var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=owner._material;
                 renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;
@@ -188,7 +190,8 @@ namespace Airside.Presentation
                     +AdelaideTerrainHeights.ReliefAbovePlain(terrain.Sample(x,z));
                 batch.Glow(new Vector3(wx,ground+5,wz),2,new Color(1,.70f,.36f).linear*.7f,20);
             }
-            foreach(var pair in batches) pair.Value.Attach(parent,$"Distant settlements {pair.Key.x},{pair.Key.y}");
+            foreach(var pair in batches) pair.Value.Attach(parent,$"Distant settlements {pair.Key.x},{pair.Key.y}",
+                AirsideAdelaideSurroundings.FarHorizonFadeStartMetres,AirsideAdelaideSurroundings.FarHorizonFadeEndMetres);
         }
 
         private void OnDestroy()

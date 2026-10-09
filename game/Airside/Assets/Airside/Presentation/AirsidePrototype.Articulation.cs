@@ -163,12 +163,18 @@ namespace Airside.Presentation
         }
 
         /// <summary>-1 for a door hinged on its left (min X) edge, +1 on its right: the free edge swings down.</summary>
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Transform,
+            System.Runtime.CompilerServices.StrongBox<float>> GearDoorSigns = new();
+
         private static float BellyDoorHingeSign(Transform door)
         {
+            if (GearDoorSigns.TryGetValue(door, out var stored)) return stored.Value;
             var renderer = door.GetComponent<Renderer>();
             if (renderer == null)
                 return -1f;
-            return door.position.x < renderer.bounds.center.x - 0.01f ? -1f : 1f;
+            var sign = door.position.x < renderer.bounds.center.x - 0.01f ? -1f : 1f;
+            GearDoorSigns.Add(door, new System.Runtime.CompilerServices.StrongBox<float>(sign));
+            return sign;
         }
 
         // ---- Landing-gear rig --------------------------------------------------------------------

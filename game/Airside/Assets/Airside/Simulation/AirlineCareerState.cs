@@ -202,7 +202,7 @@ namespace Airside.Simulation
 
         // A recovery contract underwrites its own first dispatch when cash has run out.
         // The cost still leaves the balance, and the scheduled service must settle to repay it.
-        internal bool CanUnderwriteRecoveryDispatch(long cost, string destinationCode) =>
+        public bool CanUnderwriteRecoveryDispatch(long cost, string destinationCode) =>
             cost >= 0 && ActiveContract != null
             && ActiveContract.DefinitionId.StartsWith("REC-", StringComparison.Ordinal)
             && TryFindDefinition(ActiveContract.DefinitionId, out var definition)

@@ -6,6 +6,47 @@ player menu or control server. Explicit launch flags gate it; this is a workflow
 restriction, not authentication of an AI identity. Ordinary launch behaviour is
 unchanged. Do not make this a routine merge gate or add full runs to CI.
 
+## Report an issue: real diagnosis, including Linux chats
+
+```sh
+python3 scripts/diagnose-game.py --issue "clouds look flat in the rain"
+python3 scripts/diagnose-game.py --issue "Dash 8 wing join looks detached" --aircraft-type DH8D
+python3 scripts/diagnose-game.py --issue "my precise reproduction" --scenario work/repro.json
+```
+
+On Linux, the command automatically dispatches the private Mac workflow and returns
+its actual artifacts; `--remote` also works from Mac. It tests the exact committed,
+pushed SHA. On Mac it builds/reuses that revision and executes locally. A missing
+current build is handled automatically for this issue workflow. The direct smoke
+runner remains a lower-level tool.
+
+An issue generates related starting probes, not an AI verdict. Unknown/ambiguous
+issues require the agent to provide a custom scenario rather than run unrelated
+smoke checks. Custom protocol-1 plans can sequence existing feature actions plus
+`snapshot`, `time` (HH:mm) and `camera` (pitch,yaw,distance); optional `aircraftType`
+selects/adds a subject, `expectState` checks its state after settling. Each step has
+safe unique `id`, action, value, capture bool and 0.1–15 s settleSeconds. Camera ranges:
+5–85° pitch and 10–10,000 m distance. No arbitrary command/script action is allowed.
+
+The agent must inspect PNGs and the returned state/errors, identify the cause, then
+rerun the same JSON scenario on the fixed SHA and compare. `diagnostic.json` status
+`captured` means evidence is ready, not that the reported problem is absent/fixed.
+Reports include all fleet states, subject, camera/weather/workspace, runtime errors
+and observed frame timings. Timings include host contention/capture overhead.
+
+The Mac bridge uses authenticated private GitHub workflow_dispatch and the registered
+`airside-mac-diagnostics` runner. Only that manual workflow targets it; normal CI stays
+on Linux. Its dedicated checkout avoids this working tree/active Unity project; jobs
+are serial and use disposable saves. Evidence uploads on failure too. It requires
+an awake, logged-in, connected Mac. Offline/licensing failures must be reported as
+blocked; never replace real evidence with source-only visual approval.
+
+Provisioning: `python3 scripts/setup-mac-diagnostic-runner.py --install-service`.
+Installed under `~/Developer/Airside-DiagnosticsRunner` because launchd services in
+Documents are blocked by macOS privacy controls. Stop/remove with that folder's
+`svc.sh stop` / `svc.sh uninstall`; repository registration can be removed in Actions
+runner settings. Registration credentials remain local, private and uncommitted.
+
 ## Automatic selection
 
 Use the smallest relevant selection for changed interactions, cameras, booking,

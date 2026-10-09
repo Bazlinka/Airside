@@ -52,6 +52,63 @@ def make_plan(features, commit):
     return dict(protocol=1, expectedCommit=commit, steps=steps)
 
 
+ACTIONS = {'workspace', 'planner', 'book', 'cancel', 'save', 'follow', 'view', 'overview', 'menu', 'weather', 'time', 'camera', 'snapshot'}
+
+
+def validate_plan(plan, commit):
+    if not isinstance(plan, dict) or plan.get('protocol') != 1:
+        raise ValueError('Scenario protocol must be 1')
+    steps = plan.get('steps')
+    if not isinstance(steps, list) or not 1 <= len(steps) <= 64:
+        raise ValueError('Scenario needs 1 to 64 steps')
+    ids = set()
+    for step in steps:
+        if not isinstance(step, dict) or not re.fullmatch(r'[A-Za-z0-9-]{1,80}', step.get('id', '')) or step['id'] in ids:
+            raise ValueError('Scenario IDs must be unique safe filenames')
+        ids.add(step['id'])
+        if step.get('action') not in ACTIONS: raise ValueError('Unsupported scenario action')
+        settle = step.get('settleSeconds', 0)
+        if not isinstance(settle, (int, float)) or not 0.1 <= settle <= 15:
+            raise ValueError('Scenario settle duration must be 0.1 to 15 seconds')
+        if not isinstance(step.get('capture'), bool) or not isinstance(step.get('value', ''), str):
+            raise ValueError('Invalid capture/value fields')
+        if step.get('expectState') and not re.fullmatch(r'[A-Za-z]{1,40}',step['expectState']): raise ValueError('Invalid expected state')
+        if len(step.get('value', '')) > 160: raise ValueError('Scenario value too long')
+    aircraft = plan.get('aircraftType', '')
+    if aircraft and not re.fullmatch(r'[A-Z0-9]{3,8}', aircraft): raise ValueError('Invalid aircraft type')
+    return dict(plan, expectedCommit=commit)
+
+
+def issue_plan(issue, commit, aircraft=''):
+    """Suggest reproducible probes. The agent must inspect evidence and refine this plan."""
+    text = issue.lower()
+    if any(word in text for word in ('cloud', 'weather', 'rain', 'fog', 'lighting', 'shadow')):
+        steps=[]
+        def add(id, action, value='', capture=False, settle=0.25):
+            steps.append(dict(id=id, action=action, value=value, capture=capture, settleSeconds=settle))
+        add('overview', 'overview')
+        add('daylight', 'time', '13:30')
+        add('overview-angle', 'camera', '28,140,900')
+        for weather in ('Clear', 'Cloudy', 'Rain', 'Storm', 'Fog'):
+            add('day-'+weather.lower(), 'weather', weather, True, 15)
+        add('night', 'time', '21:30', True, 2)
+        add('night-rain', 'weather', 'Rain', True, 15)
+        plan=dict(protocol=1,steps=steps)
+    elif any(word in text for word in ('plane', 'aircraft', 'wing', 'fairing', 'tail', 'livery')):
+        plan=make_plan(['views'],commit)
+        plan['steps'].insert(1,dict(id='aircraft-close',action='camera',value='24,140,30',capture=True,settleSeconds=2))
+    else:
+        features=[]
+        for words, feature in ((('save','load','reload'),'save'),(('book','cancel','flight','route'),'booking'),
+                               (('camera','view','follow'),'views'),(('menu','pause'),'menu'),(('hud','panel','map','ui'),'panels')):
+            if any(word in text for word in words): features.append(feature)
+        if not features:
+            raise ValueError('No reliable reproduction inferred; provide --scenario with issue-specific actions')
+        plan=make_plan(features,commit)
+    plan.update(issue=issue,aircraftType=aircraft)
+    return validate_plan(plan,commit)
+
+
 def build_preflight(app, expected, dirty):
     if dirty: raise ValueError('Commit game/scripts changes first; gameplay evidence must match a clean build')
     executable = app / 'Contents/MacOS/Airside'
@@ -85,6 +142,7 @@ def png_valid(path):
 
 
 def validate_report(plan, report, directory):
+    if report.get('runtimeErrors'): raise ValueError('Runtime errors were observed during the scenario')
     if report.get('protocol') != 1 or report.get('status') != 'passed': raise ValueError('Runtime scenario did not pass')
     if report.get('commit') != plan['expectedCommit'] or report.get('dirty'): raise ValueError('Runtime build identity mismatch')
     if Path(report.get('savePath', '')).resolve() != (directory/'test-save.json').resolve(): raise ValueError('Runtime save was not isolated')
@@ -145,6 +203,9 @@ def journey_verdict(text, directory):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--issue', help='Reported problem; generate related probes for agent inspection')
+    parser.add_argument('--scenario', type=Path, help='Issue-specific JSON action sequence; not restricted to presets')
+    parser.add_argument('--aircraft-type', default='', help='Select/add this aircraft for reproduction, e.g. DH8D')
     parser.add_argument('--profile', choices=('smoke', 'full'), default='smoke')
     parser.add_argument('--features', help='Comma-separated: '+', '.join(FEATURES))
     parser.add_argument('--app', type=Path, default=ROOT/'work/builds/Airside.app')
@@ -161,12 +222,19 @@ def main(argv=None):
         unknown = set(features)-set(FEATURES)
         if unknown: raise ValueError('Unknown features: '+', '.join(sorted(unknown)))
         commit = git('rev-parse', 'HEAD')
-        plan = make_plan(features, commit)
+        if args.issue and args.scenario: raise ValueError('Choose --issue or --scenario')
+        if args.scenario:
+            plan=validate_plan(json.loads(args.scenario.read_text()),commit)
+        elif args.issue:
+            plan=issue_plan(args.issue,commit,args.aircraft_type)
+        else:
+            plan=validate_plan(dict(make_plan(features,commit),aircraftType=args.aircraft_type),commit)
         if args.plan:
             print(json.dumps(dict(profile=args.profile, plan=plan, journey=args.destination if args.profile == 'full' else None,
                                   rate=40 if args.profile == 'full' else 1, featureTimeout=args.timeout, journeyTimeout=args.journey_timeout), indent=2))
             return 0
         dirty = git('status', '--porcelain', '--untracked-files=normal', '--', 'game', 'scripts')
+        if args.issue or args.scenario: features = sorted({step['action'] for step in plan['steps']})
         executable = build_preflight(args.app.resolve(), commit, dirty)
     except (ValueError, OSError, subprocess.CalledProcessError) as error:
         print(str(error), file=sys.stderr); return 2
@@ -175,7 +243,7 @@ def main(argv=None):
     scenario = run/'features'; scenario.mkdir()
     plan_path = scenario/'plan.json'; plan_path.write_text(json.dumps(plan, indent=2))
     summary = dict(protocol=1, commit=commit, profile=args.profile, status='failed', features=features,
-                   visualQuality='requires agent image inspection', performance='unverified', scenarios=[])
+                   issue=plan.get('issue',''), visualQuality='requires agent image inspection', performance='unverified', scenarios=[])
     def command(directory):
         return [str(executable), '-airsideSoak', '-airsideSoakMinutes', str((args.journey_timeout+120)/60),
                 '-airsideReviewWeather', 'Clear', '-airsideReviewTime', '13:30',
@@ -183,7 +251,9 @@ def main(argv=None):
                 '-logFile', str(directory/'player.log')]
     try:
         print(f'Agent gameplay: {run}', flush=True)
-        text, seconds = launch(command(scenario)+['-airsideAgentGameplay', str(plan_path)], scenario, args.timeout)
+        flags=['-airsideAgentGameplay',str(plan_path)]
+        if plan.get('aircraftType'): flags+=['-airsideSoakAddType',plan['aircraftType']]
+        text, seconds = launch(command(scenario)+flags, scenario, args.timeout)
         report = json.loads((scenario/'gameplay-report.json').read_text())
         checked = validate_report(plan, report, scenario)
         summary['scenarios'].append(dict(name='features', status='passed', steps=checked, realSeconds=seconds))

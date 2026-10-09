@@ -1,6 +1,7 @@
 # Changelog
 
 - 2026-10-09 — #706: isolate welcome weather and fix title shortcuts, setup codes, compact/recovery cards and Options readability/view targeting.
+- 2026-10-09 — Add issue-specific gameplay diagnostics and private Mac execution for Linux agents, with real frames/state/errors and repeatable retesting.
 
 - 2026-10-09 — Cloud shader cost cut: cheap one-octave sun-shadow probes, second probe skipped in deep shadow, fewer steps on short chords, lightning glow only during a flash (appearance and GPU timing unverified; run the agent gameplay weather profile on the Mac).
 - 2026-10-09 — Weather delay (storm ground stop, weather-held helicopters) no longer costs reliability or breaks the on-time streak; the delay breakdown still shows it (headless-tested).

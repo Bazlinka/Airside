@@ -206,7 +206,7 @@ namespace Airside.Presentation
         // force noon while debugging lighting (was pinned through the 24 h day cutover).
         private static readonly bool PinDaylightPresentation =
             AirsideBareField.HasLaunchFlag("-airsidePinDaylight");
-        private static readonly TimeSpan? ReviewLocalTime =
+        private static TimeSpan? ReviewLocalTime =
             DaylightPresentation.ReviewLocalTime(Environment.GetCommandLineArgs());
         // Mutable so multi-shot review soaks can switch clear→storm between PNGs.
         private static WeatherKind? ReviewWeather = ReviewWeatherOverride(Environment.GetCommandLineArgs());
@@ -560,6 +560,7 @@ namespace Airside.Presentation
 
         private void OnDestroy()
         {
+            Application.logMessageReceived -= RecordAgentRuntimeError;
             ExitOutstationView(false);
             ReleaseCockpitAirflow();
             if (_cockpitInterior != null)

@@ -48,5 +48,24 @@ namespace Airside.Simulation
                 _ => GuideStep.Complete
             };
         }
+
+        /// <summary>
+        /// Heading and hint for the <see cref="GuideStep.Away"/> step. The aircraft's current
+        /// destination stays the outstation for the whole trip (including the flight home), so the
+        /// wording follows the fleet state instead: outbound, turning round, or flying back.
+        /// </summary>
+        public static (string heading, string hint) AwayText(FleetState state, string registration, string outstation)
+        {
+            const string keepsFlying = "Watch it on the Map (Tab). It keeps flying while the game is closed.";
+            return state switch
+            {
+                FleetState.AtDestination => ($"{registration} is turning round",
+                    $"It has landed at {outstation} and will fly home shortly. {keepsFlying}"),
+                FleetState.Inbound => ($"Watch {registration} return",
+                    $"Flying back from {outstation} to Adelaide. {keepsFlying}"),
+                _ => ($"Follow {registration} to {outstation}",
+                    $"On its way to {outstation}. {keepsFlying}")
+            };
+        }
     }
 }

@@ -32,7 +32,9 @@ The agent must inspect PNGs and the returned state/errors, identify the cause, t
 rerun the same JSON scenario on the fixed SHA and compare. `diagnostic.json` status
 `captured` means evidence is ready, not that the reported problem is absent/fixed.
 Reports include all fleet states, subject, camera/weather/workspace, runtime errors
-and observed frame timings. Timings include host contention/capture overhead.
+and observed frame timings. Failed actions/state checks also attempt a real-frame capture
+and retain the failed subject/state; a crashed/unresponsive renderer can still block
+capture. Timings include host contention/capture overhead.
 
 The Mac bridge uses authenticated private GitHub workflow_dispatch and the registered
 `airside-mac-diagnostics` runner. Only that manual workflow targets it; normal CI stays

@@ -135,19 +135,25 @@ namespace Airside.Presentation
                 _agentGameplayResults.Add(result);
                 try { result.detail = ApplyAgentGameplayStep(step); }
                 catch (Exception e) { _agentGameplayError = e.Message; result.detail = e.Message; }
-                if (_agentGameplayError != null) break;
-                yield return new WaitForSecondsRealtime(step.settleSeconds);
-                try { VerifyAgentGameplayState(step); }
-                catch (Exception e) { _agentGameplayError = e.Message; result.detail = e.Message; }
-                if (_agentGameplayError != null) break;
-                // Capture real completed frames, not synthetic UI or a mocked renderer.
-                if (step.capture)
+                if (_agentGameplayError == null)
+                {
+                    yield return new WaitForSecondsRealtime(step.settleSeconds);
+                    try { VerifyAgentGameplayState(step); }
+                    catch (Exception e) { _agentGameplayError = e.Message; result.detail = e.Message; }
+                }
+                // Failed actions/state checks still need their visible context for diagnosis.
+                if (step.capture || _agentGameplayError != null || _agentRuntimeErrors.Count > 0)
                 {
                     result.screenshot = step.id + ".png";
                     var captured = false;
                     yield return ReviewFrameCapture.Capture(
                         Path.Combine(Path.GetDirectoryName(AgentGameplayPlanPath), result.screenshot), ok => captured = ok);
-                    if (!captured) { _agentGameplayError = "Screenshot failed: " + step.id; break; }
+                    if (!captured)
+                    {
+                        _agentGameplayError = (_agentGameplayError == null ? "" : _agentGameplayError + "; ")
+                            + "Screenshot failed: " + step.id;
+                        result.detail = _agentGameplayError;
+                    }
                 }
                 result.fleetStates = _operations.Fleet.Select(a => a.Registration + " " + a.State + " trips " + a.CompletedTrips).ToArray();
                 result.aircraft = _agentGameplayAircraft.Registration;
@@ -157,11 +163,12 @@ namespace Airside.Presentation
                 result.cameraPitch = AirsideCameraController.CurrentPitch;
                 result.cameraYaw = AirsideCameraController.CurrentYaw;
                 result.cameraDistance = AirsideCameraController.CurrentDistance;
-                if (_agentRuntimeErrors.Count > 0)
-                { _agentGameplayError = "Runtime error during scenario"; result.detail = _agentGameplayError; break; }
-                result.status = "passed";
+                if (_agentRuntimeErrors.Count > 0 && _agentGameplayError == null)
+                { _agentGameplayError = "Runtime error during scenario"; result.detail = _agentGameplayError; }
+                result.status = _agentGameplayError == null ? "passed" : "failed";
                 result.realSeconds = Time.realtimeSinceStartup - _agentGameplayStarted;
                 result.simulationSeconds = _clock.Now.ElapsedSeconds;
+                if (_agentGameplayError != null) break;
                 Debug.Log("[Airside agent] PASS " + step.id + " " + result.detail);
             }
             var frameSamples = _soakFrameMs.Take(_soakFrameSamples).Skip(1).Where(x => x > 0 && float.IsFinite(x)).OrderBy(x => x).ToArray();

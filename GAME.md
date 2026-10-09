@@ -21,7 +21,7 @@ Unity appearance/performance unverified. Evidence: `docs/testing/physical-ground
 Spatial puddles remain future work.
 
 **Issue diagnostics (9 Oct, Codex, #707):** reported issues now require reproduce → inspect
-real frames/state/errors → identify cause → fix → identical-scenario retest. Custom plans,
+real frames/state/errors → identify cause → fix → identical-scenario retest. Failed steps retain visible context.
 weather/time/camera probes and aircraft subjects extend smoke checks. Linux agents use the
 private Mac workflow via `scripts/diagnose-game.py`; dedicated runner is online, user service
 under `~/Developer/Airside-DiagnosticsRunner`. End-to-end native validation in progress;

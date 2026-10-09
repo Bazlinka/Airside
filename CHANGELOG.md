@@ -140,6 +140,8 @@ Older entries (about 1,000, through 2026-10-07) are in
 
 ## Unreleased
 
+- Fix jagged star-shaped cabin windows where livery bands crossed the window row (A350, 787-9, others): paint is now cut by each pane's outline (`scripts/cut-livery-windows.py`); Dash 8 title table refreshed.
+
 - Hide the folded airstair steps on the Saab, ATR 42 and Dash 8 until the door opens; they poked through a shut door's curved skin as a ladder (compiles; unverified in Unity).
 
 - Fix low bug-hunt findings 18, 24, 25, 27-30: waiting-to-start prep status, "1 flight", ownership goal wording, fleet role line, roster label fit, Bell markings, rotor blur opt-out (compiles; unverified in Unity).

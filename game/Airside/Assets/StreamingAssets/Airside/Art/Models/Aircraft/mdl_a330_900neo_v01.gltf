@@ -6,7 +6,7 @@
   "buffers": [
     {
       "uri": "mdl_a330_900neo_v01.bin",
-      "byteLength": 2909776
+      "byteLength": 3005824
     }
   ],
   "bufferViews": [
@@ -2833,72 +2833,72 @@
     {
       "buffer": 0,
       "byteOffset": 2670848,
-      "byteLength": 158124,
+      "byteLength": 238860,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 2828972,
-      "byteLength": 29982,
+      "byteOffset": 2909708,
+      "byteLength": 45294,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 2858956,
+      "byteOffset": 2955004,
       "byteLength": 16560,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 2875516,
+      "byteOffset": 2971564,
       "byteLength": 3540,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 2879056,
+      "byteOffset": 2975104,
       "byteLength": 10752,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 2889808,
+      "byteOffset": 2985856,
       "byteLength": 2304,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 2892112,
+      "byteOffset": 2988160,
       "byteLength": 10752,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 2902864,
+      "byteOffset": 2998912,
       "byteLength": 2304,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 2905168,
+      "byteOffset": 3001216,
       "byteLength": 1536,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 2906704,
+      "byteOffset": 3002752,
       "byteLength": 768,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 2907472,
+      "byteOffset": 3003520,
       "byteLength": 1536,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 2909008,
+      "byteOffset": 3005056,
       "byteLength": 768,
       "target": 34963
     }
@@ -8077,7 +8077,7 @@
     {
       "bufferView": 470,
       "componentType": 5126,
-      "count": 13177,
+      "count": 19905,
       "type": "VEC3",
       "max": [
         2.8339998722076416,
@@ -8093,7 +8093,7 @@
     {
       "bufferView": 471,
       "componentType": 5123,
-      "count": 14991,
+      "count": 22647,
       "type": "SCALAR"
     },
     {

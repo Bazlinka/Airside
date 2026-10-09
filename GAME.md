@@ -7,6 +7,16 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Cloud lighting/depth (9 Oct, Codex, #697):** volume clouds now use bounded
+sun-direction/colour scattering, two local sun-density probes and sky fill for
+sunlit thin edges and deeper storm interiors. Eroded edges ease smoothly; reveal
+and wrap fades thin optical depth, with premultiplied radiance compositing.
+Sixteen volumes/view samples retained; one additional density probe per occupied
+sample adds shader work. Placement, morphology, shared weather, lightning, camera
+origin/depth handling and saves unchanged. Quick source/diff checks only; native
+shader compilation, appearance and GPU cost unverified. Transparent intersection
+sorting remains a limitation. Decision: `2026-10-09-cloud-lighting-and-depth`.
+
 **Dash 8 wing-body fairing (9 Oct, Codex, #691):** the three overlapping roof
 pods are replaced by one closed, smooth crown fairing with hull-buried ends and
 wing-profile joints. Existing AIR-006 model/FBX, packaged mirrors and hangar

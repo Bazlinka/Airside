@@ -19,6 +19,21 @@ Status: approved by Bailey 9 Oct 2026 (direction); numbers below are proposals u
    recovery contract and loan offer; there is no game over and no hard lock.
 5. **Competitors** reuse this cost and revenue code (roadmap phase 2) and are not part of this change.
 
+## Amendment, 9 Oct 2026 (same day): finance, not purchase
+
+A prototype with the sourced fees showed that real prices and purchase-based growth cannot fit the 100-150 hour career, because the game runs
+on the real clock. Hours of flying to earn back an aircraft's price: Saab 340 about 715, 737-800 about 2,500, A330-900 about 7,100, before
+realistic overheads. Bailey left the choice to the team ("up to you"), and this is the chosen model:
+
+- **Aircraft are leased, not bought.** Monthly lease is 0.9% of market value, with a three-month deposit and daily insurance (0.4% a year).
+  The starter Saab 340 is owned. Growth is limited by margin, debt, gates, tier and reliability, as in a real airline, not by saving up a
+  purchase price. The existing tier and reliability gates on `AircraftOffer` still decide when a type is offered.
+- **Bank loan:** 8.5% a year, capped by tier (A$2M, 15M, 80M, 300M), with the existing recovery contract as the safety net.
+- **Opening cash** A$1.5M, enough for an ATR 42 deposit (A$270k) but not a widebody deposit (A$3.8M).
+- Tuned (tier D) constants are named in `FlightCostModel`; the tests pin ordering and viability, not the exact numbers.
+- First code: `Simulation/FlightCostModel.cs` and `FlightCostModelTests`. It is **not yet wired** into `FlightEconomics`, planner, HUD or
+  saves; the live game still uses game-dollar formulas until the v24 migration lands.
+
 ## Reason
 
 Today's flat per-flight formulas make cash a timer, not a decision (ADR `2026-10-08-flight-cost-rebalance`). Real fee

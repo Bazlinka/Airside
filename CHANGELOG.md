@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-10-09 — Economy v2: pure real-dollar FlightCostModel (sourced Adelaide/Airservices fees, leases, loan caps) with 12 tests; not yet wired into the live game.
 - 2026-10-09 — ADR: Economy v2 decision (real-dollar scale, real fees, v23->v24 save migration plan, x1000 funds); data file gains fares/values findings. Docs only.
 - 2026-10-09 — Docs: sourced real-world airline cost data (Adelaide fees, Airservices charges, fuel, crew) with confidence tiers for Economy v2; no code.
 - 2026-10-09 — Docs: roadmap for real-world-scale economy v2, competitor airlines and a walkable airport (proposal for Bailey's sign-off; no code).

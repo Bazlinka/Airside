@@ -62,6 +62,7 @@ namespace Airside.Presentation
             if (root == null)
                 yield break;
             var sinks = task.Result;
+
             var parent = new GameObject(ObjectName);
             parent.transform.SetParent(root, false);
             var asphaltMaterial = new Material(shader)
@@ -97,6 +98,7 @@ namespace Airside.Presentation
                     clock.Restart();
                 }
             }
+            yield return SettlementLights.AdelaideStreets(root, groundHeight);
         }
 
         private static Sinks BuildSinks(RoadBuildOptions options)

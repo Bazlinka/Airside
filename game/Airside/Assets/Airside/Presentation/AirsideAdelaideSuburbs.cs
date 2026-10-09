@@ -66,8 +66,14 @@ namespace Airside.Presentation
             {
                 if (!TryPrepare(root, horizonFadeStart, horizonFadeEnd, out var parent, out var material, out var data, out var trees))
                     return false;
-                foreach (var (tile, mesh) in BuildMeshes(data, trees, AirsideAdelaideSurroundings.LandHeight, sourcedTreeBudget:128))
-                    AttachTile(parent, material, tile, mesh);
+                var tiles = new Dictionary<Vector2Int, MeshParts>();
+                var remaining = 128;
+                if (trees != null)
+                    foreach (var tree in trees.Trees) AppendTree(tiles, tree, AirsideAdelaideSurroundings.LandHeight, ref remaining);
+                var corners = new float[8];
+                if (data != null)
+                    foreach (var building in data.Buildings) AppendBuilding(tiles, building, AirsideAdelaideSurroundings.LandHeight, corners);
+                foreach (var pair in tiles) AttachTileWithLights(parent, material, pair.Key, pair.Value);
                 return true;
             }
             catch (Exception e)
@@ -188,7 +194,14 @@ namespace Airside.Presentation
         }
 
         private static void AttachTile(Transform parent, Material material, Vector2Int tile, MeshParts parts) =>
+            AttachTileWithLights(parent, material, tile, parts);
+
+        private static void AttachTileWithLights(Transform parent, Material material, Vector2Int tile, MeshParts parts)
+        {
             AttachTile(parent, material, tile, parts.ToMesh($"{ObjectName} {tile.x},{tile.y}"));
+            parts.Lights.Attach(parent, $"House windows {tile.x},{tile.y}",
+                material.GetFloat("_HorizonFadeStart"), material.GetFloat("_HorizonFadeEnd"));
+        }
 
         /// <summary>One mesh per <see cref="TileMetres"/> tile. <paramref name="groundHeight"/> is the world y of the land.</summary>
         public static List<(Vector2Int Tile, Mesh Mesh)> BuildMeshes(AdelaideSuburbData data,
@@ -268,6 +281,8 @@ namespace Airside.Presentation
                     outward = -outward;
                 parts.Quad(new Vector3(p.x, baseY, p.z), new Vector3(q.x, baseY, q.z),
                     new Vector3(q.x, eaves, q.z), new Vector3(p.x, eaves, p.z), outward, wall);
+                parts.Lights.Windows(new Vector3(p.x, baseY + SinkMetres, p.z),
+                    new Vector3(q.x, baseY + SinkMetres, q.z), b.WallHeight, b.IsHipped, outward);
             }
 
             if (b.IsHipped)
@@ -428,6 +443,7 @@ namespace Airside.Presentation
         /// <summary>Flat-shaded triangles, each wound to face <c>facing</c> (Unity: normal = (b-a)×(c-a)).</summary>
         private sealed class MeshParts
         {
+            public readonly SettlementLights.Batch Lights = new();
             private readonly List<Vector3> _vertices = new();
             private readonly List<Vector3> _normals = new();
             private readonly List<Color32> _colours = new();

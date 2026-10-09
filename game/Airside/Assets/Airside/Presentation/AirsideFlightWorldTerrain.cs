@@ -204,7 +204,7 @@ namespace Airside.Presentation
                     var code=nearest.Value.Code.ToLowerInvariant();
                     _approachHeights=LoadHeights("Terrain/dem_approach_"+code+"_v01.bin");
                     _approachCover=LoadCover("Terrain/landcover_approach_"+code+"_v01.bin");
-                    _airportEnvironment=AirsideFlightAirportEnvironment.Create(nearest.Value,_material,_approachHeights ?? _nationalHeights ?? _heights);
+                    _airportEnvironment=AirsideFlightAirportEnvironment.Create(nearest.Value,_material,_approachHeights ?? _nationalHeights ?? _heights, _approachCover ?? _nationalCover ?? _cover);
                     if(_airportEnvironment!=null) _airportEnvironment.transform.SetParent(transform,false);
                 }
             }
@@ -252,6 +252,7 @@ namespace Airside.Presentation
             var vertices = new Vector3[n*n]; var colors = new Color[n*n];
             var triangles = new List<int>(cells*cells*6);
             var stride = tileMetres / cells;
+            var settlementLights = new SettlementLights.Batch();
 
             for (var z=0; z<n; z++) for (var x=0; x<n; x++)
             {
@@ -294,6 +295,29 @@ namespace Airside.Presentation
                 triangles.Add(a);triangles.Add(c);triangles.Add(b);
                 triangles.Add(b);triangles.Add(c);triangles.Add(d);
             }
+            if(!coarse)
+            {
+                // Lighting density is geographic, independent of the altitude-driven terrain LOD.
+                // Sampling only coarse mesh vertices missed small towns and changed lights in cruise.
+                const int lightStep=500;
+                for(var z=lightStep/2;z<tileMetres;z+=lightStep)
+                for(var x=lightStep/2;x<tileMetres;x+=lightStep)
+                {
+                    var wx=tx*(double)tileMetres+x;var wz=tz*(double)tileMetres+z;
+                    if(Math.Abs(wx)<=96000 && Math.Abs(wz)<=96000) continue;
+                    YpadFrame.ToLatLon(wx,wz,out var lat,out var lon);
+                    var cover=_approachCover!=null && _approachCover.TryClass(lat,lon,out _) ? _approachCover
+                        : _nationalCover!=null && _nationalCover.TryClass(lat,lon,out _) ? _nationalCover : _cover;
+                    if(cover==null || !cover.TryClass(lat,lon,out var cls) || cls!=AdelaideFarLandCover.Built) continue;
+                    var gx=x/stride;var gz=z/stride;var ix=(int)gx;var iz=(int)gz;
+                    var u=gx-ix;var v=gz-iz;
+                    var a=vertices[iz*n+ix].y;var b=vertices[iz*n+ix+1].y;
+                    var c=vertices[(iz+1)*n+ix].y;var d=vertices[(iz+1)*n+ix+1].y;
+                    // Drape on the actual rendered triangle, rather than beneath a coarse hills mesh.
+                    var y=u+v<=1 ? a+(b-a)*u+(c-a)*v : d+(c-d)*(1-u)+(b-d)*(1-v);
+                    settlementLights.Glow(new Vector3(x,y+5,z),2,new Color(1,.70f,.36f).linear*.7f,20);
+                }
+            }
             var mesh=new Mesh {name=coarse ? $"SA coarse terrain {tx},{tz}" : $"SA terrain {tx},{tz}"};
             mesh.vertices=vertices;mesh.colors=colors;mesh.SetTriangles(triangles,0);
             mesh.RecalculateNormals();mesh.RecalculateBounds();
@@ -301,6 +325,7 @@ namespace Airside.Presentation
             go.AddComponent<MeshFilter>().sharedMesh=mesh;
             var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=_material;
             renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;
+            settlementLights.Attach(go.transform,"Mapped settlement lights",40000,55000);
             return go;
         }
         /// <summary>

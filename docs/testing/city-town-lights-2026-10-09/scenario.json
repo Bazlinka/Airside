@@ -1,0 +1,69 @@
+{
+  "protocol": 1,
+  "steps": [
+    {
+      "id": "overview",
+      "action": "overview",
+      "value": "",
+      "capture": false,
+      "settleSeconds": 1
+    },
+    {
+      "id": "clear",
+      "action": "weather",
+      "value": "Clear",
+      "capture": false,
+      "settleSeconds": 15
+    },
+    {
+      "id": "wide",
+      "action": "camera",
+      "value": "45,140,4500",
+      "capture": false,
+      "settleSeconds": 15
+    },
+    {
+      "id": "day",
+      "action": "time",
+      "value": "13:30",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "dusk",
+      "action": "time",
+      "value": "18:30",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "night",
+      "action": "time",
+      "value": "21:30",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "street-close",
+      "action": "camera",
+      "value": "35,140,1800",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "city-wide",
+      "action": "camera",
+      "value": "50,260,10000",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "city-east",
+      "action": "camera",
+      "value": "35,80,10000",
+      "capture": true,
+      "settleSeconds": 2
+    }
+  ],
+  "expectedCommit": "971e4f4ae726c29aad234bcd8f4631f30e940e04"
+}

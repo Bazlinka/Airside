@@ -5,6 +5,12 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Directional twilight sky (9 Oct, Codex, #758):** cool zenith/horizon gradients,
+sun-facing amber/rose dawn and dusk, blue-hour evenings; broad orange fog reduced.
+Existing celestial clock, weather/altitude, stars, night readability and saves retained.
+Native clear dawn/day/sunset/evening/night and overcast/fog review pending on pushed revision.
+Decision: `2026-10-09-directional-twilight-sky`.
+
 **Tower cab and rain motion (9 Oct, Codex, #756):** original interior ceiling, window
 framing and low controller consoles now enclose the existing tower eye. Rain retains
 normal fleet-relative speeds and full elapsed presentation time; streaks reflect a fixed

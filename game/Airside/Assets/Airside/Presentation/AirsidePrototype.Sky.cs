@@ -11,6 +11,59 @@ namespace Airside.Presentation
 {
     public sealed partial class AirsidePrototype
     {
+        private Material _directionalSky;
+        private Material _previousSkybox;
+
+        private void UpdateDirectionalSky(Vector3 sunDirection, float elevation, float daylight, float aboveDeck, float flash)
+        {
+            if (_mainCamera == null) return;
+            if (_directionalSky == null)
+            {
+                var shader = Shader.Find("Airside/DirectionalSky");
+                if (shader == null || !shader.isSupported) return; // Keep the existing clear-colour fallback.
+                _previousSkybox = RenderSettings.skybox;
+                _directionalSky = new Material(shader) { name = "Airside directional atmosphere" };
+            }
+            var cover = ObserverSkyCover;
+            var haze = (1f - CurrentWeatherLook.Visibility) * (1f - aboveDeck);
+            // Ground fog clears above its shallow bank, just like AtmosphereLook.
+            if (CurrentWeatherLook.Precipitation < 0.05f)
+                haze *= 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(90f, 300f, ObserverHeight));
+            var openness = (1f - cover * 0.85f) * (1f - haze);
+            var visualDay = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-12f, 20f, elevation));
+            var twilight = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-12f, -2f, elevation))
+                * (1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(2f, 18f, elevation))) * openness;
+            var blueHour = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-12f, -5f, elevation))
+                * (1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-5f, 1f, elevation)));
+            var baseSky = ToColor(_atmosphere.Sky);
+            var clear = AtmosphereLook.For(WeatherLook.For(WeatherKind.Clear), daylight, 0f, false, ObserverHeight);
+            baseSky = Color.Lerp(baseSky, ToColor(clear.Sky), aboveDeck);
+            var zenith = Color.Lerp(new Color(0.025f, 0.04f, 0.085f), new Color(0.24f, 0.46f, 0.72f), visualDay);
+            zenith = Color.Lerp(zenith, new Color(0.09f, 0.14f, 0.31f), blueHour * 0.65f);
+            zenith = Color.Lerp(baseSky, zenith, openness);
+            var horizon = Color.Lerp(baseSky, Color.Lerp(new Color(0.055f, 0.07f, 0.12f),
+                new Color(0.67f, 0.77f, 0.85f), visualDay), openness);
+            horizon = Color.Lerp(horizon, new Color(0.32f, 0.29f, 0.43f), blueHour * openness * 0.55f);
+            // Only the sun-facing low sky gets amber/rose; the opposite horizon stays lavender.
+            var sunset = Color.Lerp(new Color(0.78f, 0.34f, 0.23f), new Color(1f, 0.65f, 0.34f),
+                Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-6f, 6f, elevation)));
+            _directionalSky.SetColor("_Zenith", Color.Lerp(zenith, Color.white, flash * 0.7f));
+            _directionalSky.SetColor("_Horizon", Color.Lerp(horizon, Color.white, flash * 0.7f));
+            _directionalSky.SetColor("_Sunset", sunset);
+            _directionalSky.SetVector("_SunDirection", sunDirection);
+            _directionalSky.SetFloat("_Twilight", twilight);
+            RenderSettings.skybox = _directionalSky;
+            _mainCamera.clearFlags = CameraClearFlags.Skybox;
+        }
+
+        private void ReleaseDirectionalSky()
+        {
+            if (_directionalSky == null) return;
+            if (RenderSettings.skybox == _directionalSky) RenderSettings.skybox = _previousSkybox;
+            Destroy(_directionalSky);
+            _directionalSky = null;
+        }
+
         private static WeatherKind? ReviewWeatherOverride(string[] args)
         {
             var index = Array.IndexOf(args, "-airsideReviewWeather");
@@ -681,6 +734,9 @@ namespace Airside.Presentation
                     SetRendererColor(_horizonDomeRenderer, Color.Lerp(sky, Color.white, punch * 0.7f), Color.white);
             }
 
+            UpdateDirectionalSky(sunDir, (float)sunElevation, daylight, aboveDeck, flash > 0f
+                ? flash * Mathf.Lerp(0.08f, 1f, 1f - aboveDeck) * Mathf.Lerp(0.15f, 0.55f, 1f - _lightningDistance01) : 0f);
+
             // Apron floods come up as daylight falls (presentation only).
             if (_apronLights != null)
             {
@@ -988,7 +1044,11 @@ namespace Airside.Presentation
             var daylight = PresentationDaylight;
             // Stars used to switch off at daylight 0.35 while still three-quarters bright,
             // so the whole sky blinked once every dawn and dusk. Fade them out instead.
-            var fade = StarFieldFade(daylight, ObserverSkyCover);
+            // The operational daylight ramp extends well past sunrise. Star visibility
+            // instead follows civil/nautical twilight, so a bright horizon has no white dots.
+            var nightSky = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-1f, -10f,
+                (float)PresentationCelestial.Sun.ElevationDegrees));
+            var fade = StarFieldFade(daylight, ObserverSkyCover) * nightSky;
             var show = fade > 0.002f;
             if (_starFieldRoot.gameObject.activeSelf != show)
                 _starFieldRoot.gameObject.SetActive(show);

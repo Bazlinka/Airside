@@ -1,6 +1,7 @@
 # Changelog
 
 - 2026-10-09 — #756: enclose the tower viewpoint with a cab interior; preserve full flight-relative rain speed and elapsed movement.
+- 2026-10-09 — #758: directional sunrise/sunset glow, cooler overhead sky and blue-hour evenings; reduced broad orange fog.
 
 - 2026-10-09 — #743: the return climb from an outstation eases its departure offset away within the speed envelope (Saab peak CAS 320 -> 223 kt at Kingscote), not a fixed two minutes (bug hunt #13).
 - 2026-10-09 — #742: aircraft turning round at a regional outstation (Kingscote) taxi to the mapped apron, park nose-in in their own slot and taxi back to the departure start, instead of sitting on the runway end (bug hunt #8).

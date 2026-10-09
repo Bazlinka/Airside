@@ -7,6 +7,11 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**Report-only bug hunt (9 Oct, Codex, #717):** 15 findings and selected portable evidence are in
+`docs/testing/bug-hunt-2026-10-09/README.md`. Tested build aec64616 at 40×; no fixes in this task.
+Capture inversion was subsequently fixed/verified on main; reproduce the remaining findings
+against current main before claiming scoped fixes. UX and normal-speed limits are explicit.
+
 **Welcome and comfort fixes (9 Oct, Codex, #706):** title/setup weather isolation and consistent Weather Layers;
 F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; compact/recovery welcome cards;
 readable scrolling Options and current-view targeting. Operational weather, live time, economics and saves unchanged.

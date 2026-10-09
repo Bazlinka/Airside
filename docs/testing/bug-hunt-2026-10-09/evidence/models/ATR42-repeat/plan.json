@@ -1,0 +1,28 @@
+{
+  "protocol": 1,
+  "expectedCommit": "aec646166196b269dd6c9d4a05e9059c2212060e",
+  "aircraftType": "ATR42",
+  "steps": [
+    {
+      "id": "exterior",
+      "action": "view",
+      "value": "Exterior",
+      "capture": true,
+      "settleSeconds": 5
+    },
+    {
+      "id": "angle-two",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "angle-three",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    }
+  ]
+}

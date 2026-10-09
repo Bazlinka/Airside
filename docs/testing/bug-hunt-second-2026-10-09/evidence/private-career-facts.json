@@ -1,0 +1,158 @@
+{
+  "manual-compact": {
+    "Version": 23,
+    "EpochUtcTicks": 639271138777247730,
+    "ClockSeconds": 21738,
+    "CareerFunds": 240,
+    "CareerReliability": 95,
+    "CareerTier": "Provisional",
+    "HasActiveContract": true,
+    "ContractDefinitionId": "REC-0-SF34",
+    "ContractAcceptedAtSeconds": 19678,
+    "ContractDeadlineSeconds": 0,
+    "PlayerBaseLevel": "Starter",
+    "playerAircraft": [
+      {
+        "Registration": "VH-PAX",
+        "TypeId": "SF34",
+        "State": "Maintenance",
+        "HasScheduled": false,
+        "ScheduledDepartAt": 0,
+        "PrepStartedAt": 0,
+        "CheckUntilSeconds": 30584,
+        "MaintenanceJob": {
+          "OriginStand": "BAY-1",
+          "HangarId": "OSM-105581527",
+          "ReturnStand": "",
+          "Phase": 6,
+          "RequestedAt": 18649,
+          "PhaseStartedAt": 19784,
+          "PhaseEndsAt": 30584,
+          "RepairSeconds": 10800,
+          "RepairCompleted": false
+        },
+        "IsFreighter": true
+      },
+      {
+        "Registration": "VH-PAA",
+        "TypeId": "SF34",
+        "State": "AtStand",
+        "HasScheduled": false,
+        "ScheduledDepartAt": 0,
+        "PrepStartedAt": 0,
+        "CheckUntilSeconds": 0,
+        "MaintenanceJob": {
+          "OriginStand": "",
+          "HangarId": "",
+          "ReturnStand": "",
+          "Phase": 0,
+          "RequestedAt": 0,
+          "PhaseStartedAt": 0,
+          "PhaseEndsAt": 0,
+          "RepairSeconds": 0,
+          "RepairCompleted": false
+        },
+        "IsFreighter": false
+      }
+    ]
+  },
+  "manual-jets": {
+    "Version": 23,
+    "EpochUtcTicks": 639271145492892190,
+    "ClockSeconds": 21760,
+    "CareerFunds": 13382,
+    "CareerReliability": 100,
+    "CareerTier": "Provisional",
+    "HasActiveContract": true,
+    "ContractDefinitionId": "MKT-0-2-KGC-SF34-MED",
+    "ContractAcceptedAtSeconds": 19950,
+    "ContractDeadlineSeconds": 10800,
+    "PlayerBaseLevel": "Starter",
+    "playerAircraft": [
+      {
+        "Registration": "VH-PAX",
+        "TypeId": "SF34",
+        "State": "Maintenance",
+        "HasScheduled": false,
+        "ScheduledDepartAt": 0,
+        "PrepStartedAt": 0,
+        "CheckUntilSeconds": 31354,
+        "MaintenanceJob": {
+          "OriginStand": "BAY-1",
+          "HangarId": "OSM-105581527",
+          "ReturnStand": "",
+          "Phase": 6,
+          "RequestedAt": 19418,
+          "PhaseStartedAt": 20554,
+          "PhaseEndsAt": 31354,
+          "RepairSeconds": 10800,
+          "RepairCompleted": false
+        },
+        "IsFreighter": false
+      },
+      {
+        "Registration": "VH-TS1",
+        "TypeId": "E190",
+        "State": "AtStand",
+        "HasScheduled": false,
+        "ScheduledDepartAt": 0,
+        "PrepStartedAt": 0,
+        "CheckUntilSeconds": 0,
+        "MaintenanceJob": {
+          "OriginStand": "",
+          "HangarId": "",
+          "ReturnStand": "",
+          "Phase": 0,
+          "RequestedAt": 0,
+          "PhaseStartedAt": 0,
+          "PhaseEndsAt": 0,
+          "RepairSeconds": 0,
+          "RepairCompleted": false
+        },
+        "IsFreighter": false
+      },
+      {
+        "Registration": "VH-TS2",
+        "TypeId": "A223",
+        "State": "AwaitingStand",
+        "HasScheduled": false,
+        "ScheduledDepartAt": 0,
+        "PrepStartedAt": 0,
+        "CheckUntilSeconds": 0,
+        "MaintenanceJob": {
+          "OriginStand": "",
+          "HangarId": "",
+          "ReturnStand": "",
+          "Phase": 0,
+          "RequestedAt": 0,
+          "PhaseStartedAt": 0,
+          "PhaseEndsAt": 0,
+          "RepairSeconds": 0,
+          "RepairCompleted": false
+        },
+        "IsFreighter": false
+      },
+      {
+        "Registration": "VH-TS4",
+        "TypeId": "A320",
+        "State": "AtStand",
+        "HasScheduled": false,
+        "ScheduledDepartAt": 0,
+        "PrepStartedAt": 0,
+        "CheckUntilSeconds": 0,
+        "MaintenanceJob": {
+          "OriginStand": "",
+          "HangarId": "",
+          "ReturnStand": "",
+          "Phase": 0,
+          "RequestedAt": 0,
+          "PhaseStartedAt": 0,
+          "PhaseEndsAt": 0,
+          "RepairSeconds": 0,
+          "RepairCompleted": false
+        },
+        "IsFreighter": false
+      }
+    ]
+  }
+}

@@ -49,7 +49,9 @@ Keep the existing deterministic, clock-injected structure. Replace the two linea
 
 **Loans** (new, optional, phase 3): one rolling loan with interest, a cap by tier, and the existing recovery contract as the safety net so the player cannot hard-lock.
 
-## 4. Denomination decision (needs Bailey)
+## 4. Denomination decision
+
+**Decided 9 Oct 2026: Bailey chose A (real dollars).** Scale, phasing and follow-on work: `economy-competitors-walkable-roadmap.md`.
 
 - **A. Real dollars** — multiply aircraft/base/refit prices x1000 for display and make flight costs real ($4k hop, $1.6M Saab). Immersive, but then margins must be thin and the early game needs a bigger opening float to stay playable.
 - **B. Game dollars (recommended)** — keep today's aircraft prices and scale flight costs and pay up so payback is meaningful: target **Saab payback ~120 flights, ATR ~250, 737-800 ~500 flights**, margin ~15-20% on a good route and negative on a bad one, plus a standing cost that makes an idle aircraft cost ~1-2% of its price per month.

@@ -1,0 +1,91 @@
+{
+  "protocol": 1,
+  "expectedCommit": "4c24425c07deab1d27a8169b353978d86c348966",
+  "aircraftType": "B412",
+  "steps": [
+    {
+      "id": "day",
+      "action": "time",
+      "value": "13:30",
+      "capture": false,
+      "settleSeconds": 1
+    },
+    {
+      "id": "clear",
+      "action": "weather",
+      "value": "Clear",
+      "capture": false,
+      "settleSeconds": 1
+    },
+    {
+      "id": "planner",
+      "action": "planner",
+      "value": "KGC",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "book",
+      "action": "book",
+      "value": "KGC",
+      "capture": false,
+      "settleSeconds": 15
+    },
+    {
+      "id": "exterior",
+      "action": "view",
+      "value": "Exterior",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "flight-1",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "flight-2",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "flight-3",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "flight-4",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "flight-5",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "overview",
+      "action": "overview",
+      "value": "",
+      "capture": false,
+      "settleSeconds": 1
+    },
+    {
+      "id": "menu",
+      "action": "menu",
+      "value": "open",
+      "capture": true,
+      "settleSeconds": 1
+    }
+  ]
+}

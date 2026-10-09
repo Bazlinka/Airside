@@ -1,0 +1,104 @@
+{
+  "protocol": 1,
+  "expectedCommit": "4c24425c07deab1d27a8169b353978d86c348966",
+  "steps": [
+    {
+      "id": "camera",
+      "action": "camera",
+      "value": "28,140,900",
+      "capture": false,
+      "settleSeconds": 1
+    },
+    {
+      "id": "time-day",
+      "action": "time",
+      "value": "13:30",
+      "capture": false,
+      "settleSeconds": 1
+    },
+    {
+      "id": "day-clear",
+      "action": "weather",
+      "value": "Clear",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "day-cloudy",
+      "action": "weather",
+      "value": "Cloudy",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "day-overcast",
+      "action": "weather",
+      "value": "Overcast",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "day-rain",
+      "action": "weather",
+      "value": "Rain",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "day-storm",
+      "action": "weather",
+      "value": "Storm",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "day-fog",
+      "action": "weather",
+      "value": "Fog",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "time-dusk",
+      "action": "time",
+      "value": "18:30",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "time-night",
+      "action": "time",
+      "value": "23:00",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "night-clear",
+      "action": "weather",
+      "value": "Clear",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "night-rain",
+      "action": "weather",
+      "value": "Rain",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "night-storm",
+      "action": "weather",
+      "value": "Storm",
+      "capture": true,
+      "settleSeconds": 15
+    },
+    {
+      "id": "night-fog",
+      "action": "weather",
+      "value": "Fog",
+      "capture": true,
+      "settleSeconds": 15
+    }
+  ]
+}

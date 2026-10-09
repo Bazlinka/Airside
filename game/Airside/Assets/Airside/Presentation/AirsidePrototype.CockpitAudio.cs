@@ -57,11 +57,13 @@ namespace Airside.Presentation
         {
             var host = new GameObject("Interior sound");
             host.transform.SetParent(transform, false);
-            var filter = host.AddComponent<AudioLowPassFilter>();
-            filter.cutoffFrequency = cutoff;
+            // Unity rejects (and returns null for) an audio filter added to a host that has no
+            // AudioSource/AudioListener yet, so the source must exist before its filter.
             var source = host.AddComponent<AudioSource>();
             source.playOnAwake = false; source.loop = true; source.spatialBlend = 0f;
             source.dopplerLevel = 0f; source.priority = priority; source.volume = 0f; source.clip = clip;
+            var filter = host.AddComponent<AudioLowPassFilter>();
+            if (filter != null) filter.cutoffFrequency = cutoff;
             return source;
         }
 

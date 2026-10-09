@@ -9,6 +9,7 @@
 - 2026-10-09 — #729: the "has landed at <outstation>" toast names the outbound flight number, not the return (bug hunt #9); Adelaide arrivals keep the return number.
 - 2026-10-09 — #733: a contract card armed by the first click now shows CONFIRM on its button instead of ACCEPT, signalling the deliberate second click (bug hunt #6).
 - 2026-10-09 — #739: the Adelaide radar is hidden while watching Parafield, so no unlabelled Adelaide outline/RWY sits beside the Parafield card (bug hunt #11).
+- 2026-10-09 — #744: Flight Manual now places the career ring, flights and radar bottom-left and the selected card on the right, and describes aqua/grey/amber destinations, not green (bug hunt #10).
 - 2026-10-09 — #722: cockpit/passenger interior audio adds its AudioSource before the low-pass filter, ending the per-frame NullReference/Unity add-component spam (finding 1).
 - 2026-10-09 — #720: first-flight guide "Away" wording follows the leg (outbound / turning round / flying home) instead of always saying "on its way to" the outstation (bug hunt #3).
 

@@ -47,8 +47,8 @@ namespace Airside.Presentation
                         + "and overseas routes and other bases all have to be earned."),
                     ("The screen",
                         "The rail on the left opens each page. Across the top: the time, your money, reliability and "
-                        + "tier. Bottom left is the career ring. Top right, your flights. Bottom right, the airfield "
-                        + "radar. Bottom centre, the aircraft you have selected.")
+                        + "tier. Bottom left, from the floor up: the career ring, your flights and the airfield radar. "
+                        + "The aircraft you have selected has its card on the right. Options > Views can hide the first three.")
                 }),
             new FlightManualPage("first-flight", "Your first flight",
                 "Plan it, turn it round, watch it go and bring it home.",
@@ -56,7 +56,7 @@ namespace Airside.Presentation
                 {
                     ("1 · Plan",
                         "Select your aircraft (click it or its flight tile, or press [ or ]) and press PLAN FLIGHT, or "
-                        + "open the Map with Tab. Pick a green destination and a time, then press PLAN FLIGHT again. "
+                        + "open the Map with Tab. Pick a destination and a time, then press PLAN FLIGHT again. Aqua dots are in reach, grey ones are not, and amber marks your pick or a career goal. "
                         + "Kingscote is a short first hop."),
                     ("2 · Turnaround",
                         "Fuel, catering, bags and boarding happen on their own before it leaves. The aircraft's card "

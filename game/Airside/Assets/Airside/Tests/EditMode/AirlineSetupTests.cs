@@ -195,6 +195,22 @@ namespace Airside.Tests
         }
 
         [Test]
+        public void FlightManual_DescribesTheHudWhereItReallyIs()
+        {
+            string All(string id) => string.Join(" ", FlightManual.Pages[FlightManual.IndexOf(id)].Sections
+                .Select(s => s.Body));
+            var welcome = All("welcome");
+            Assert.That(welcome, Does.Contain("Bottom left, from the floor up: the career ring, your flights and the airfield radar"));
+            Assert.That(welcome, Does.Contain("card on the right"));
+            Assert.That(welcome, Does.Not.Contain("Top right"));
+            Assert.That(welcome, Does.Not.Contain("Bottom right"));
+            Assert.That(welcome, Does.Not.Contain("Bottom centre"));
+            // Reachable destinations on the Map are aqua, not green (RouteMapWorkspacePainter.PaintNetwork).
+            Assert.That(All("first-flight"), Does.Not.Contain("green"));
+            Assert.That(All("first-flight"), Does.Contain("Aqua dots"));
+        }
+
+        [Test]
         public void FlightManual_FitsAndNavigates()
         {
             foreach (var (width, height) in HudTestAirline.Viewports)

@@ -34,7 +34,7 @@ namespace Airside.Presentation
         /// <summary>Bottom-left career ring card, or the first-flight guide while it runs.</summary>
         public Rect Objective => ToRect(Shell.Career);
 
-        /// <summary>Top-right live flight tiles. Zero-sized when there is no room.</summary>
+        /// <summary>Bottom-left "Your flights" tracker, above the career card. Zero-sized when there is no room.</summary>
         public Rect Operations => ToRect(Shell.Operations);
 
         /// <summary>The one open workspace sheet.</summary>
@@ -42,10 +42,10 @@ namespace Airside.Presentation
 
         public Rect Toast => ToRect(Shell.Toast);
 
-        /// <summary>Bottom-right airfield radar. Zero-sized when it would not fit.</summary>
+        /// <summary>Bottom-left airfield radar, above the flight tracker. Zero-sized when it would not fit.</summary>
         public Rect MiniMap => ToRect(Shell.MiniMap);
 
-        /// <summary>Bottom-centre selected-aircraft reservation. Zero-sized on very small windows.</summary>
+        /// <summary>Right-hand selected-aircraft card. Zero-sized on very small windows.</summary>
         public Rect SelectedCard => ToRect(Shell.SelectedCard);
 
         /// <summary>The region modal cards (setup, away summary, help) are centred in.</summary>

@@ -150,6 +150,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/Ownership.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/PassengerCabinProfile.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/PushbackTugTimeline.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Presentation/RegionalDepartureHandover.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RegionalFlightPath.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RegionalRunways.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Presentation/RegionalTurnaround.cs" />
@@ -365,6 +366,7 @@
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RefinedHudTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RegionalCarriersTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RegionalDepartureClimbTests.cs" />
+    <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RegionalDepartureHandoverTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RegionalTurnaroundTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/RelocationTests.cs" />
     <Compile Include="../../game/Airside/Assets/Airside/Tests/EditMode/ReviewAircraftFollowTests.cs" />

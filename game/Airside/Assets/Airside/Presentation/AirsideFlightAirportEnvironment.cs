@@ -19,8 +19,10 @@ namespace Airside.Presentation
         private double _centreX, _centreZ;
         private FlightWorldHeights _heights;
         private Material _material;
+        private FlightWorldLandCover _cover;
+        private SettlementLights.Batch _lights;
         private readonly List<Mesh> _meshes = new();
-        public static AirsideFlightAirportEnvironment Create(RegionalRunway runway, Material material, FlightWorldHeights heights)
+        public static AirsideFlightAirportEnvironment Create(RegionalRunway runway, Material material, FlightWorldHeights heights, FlightWorldLandCover cover)
         {
             var path=ArtRuntimePaths.ResolveExisting("Terrain/airport_"+runway.Code.ToLowerInvariant()+"_v01.json");
             if(path==null) return null;
@@ -30,7 +32,7 @@ namespace Airside.Presentation
                 if(map?.features==null) return null;
                 var result=new GameObject("Mapped airport "+runway.Code).AddComponent<AirsideFlightAirportEnvironment>();
                 result._map=map;result._material=new Material(material) {name="Mapped airport solid surfaces"};
-                result._material.SetFloat("_VertexSurface",1f);result._heights=heights;
+                result._material.SetFloat("_VertexSurface",1f);result._heights=heights;result._cover=cover;
                 result._centreX=(runway.Ax+runway.Bx)/2;result._centreZ=(runway.Az+runway.Bz)/2;
                 YpadFrame.ToLatLon(result._centreX,result._centreZ,out var latitude,out var longitude);
                 var longitudeScale=Math.Cos(latitude*Math.PI/180);
@@ -57,10 +59,12 @@ namespace Airside.Presentation
             transform.position=new Vector3((float)(_centreX-originX),0,(float)(_centreZ-originZ));
             gameObject.SetActive(visible);
             if(_cursor>=_map.features.Length) return;
+            _lights=new SettlementLights.Batch();
             var vertices=new List<Vector3>();var colours=new List<Color>();var triangles=new List<int>();
-            // Fixed upper bound per frame. No colliders, lighting, resource claims or individual buildings' GameObjects.
+            // Fixed upper bound per frame. No colliders, point lights, resource claims or individual buildings' GameObjects.
             var end=Math.Min(_map.features.Length,_cursor+24);
             for(;_cursor<end;_cursor++) Add(_map.features[_cursor],vertices,colours,triangles);
+            _lights.Attach(transform,"Mapped town lights "+_cursor);
             if(vertices.Count==0) return;
             var mesh=new Mesh {name="Airport mapped geometry "+_cursor,indexFormat=IndexFormat.UInt32};
             mesh.SetVertices(vertices);mesh.SetColors(colours);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();mesh.RecalculateBounds();
@@ -88,6 +92,26 @@ namespace Airside.Presentation
                 : feature.kind=="road" ? new Color(.34f,.37f,.35f) : new Color(.27f,.29f,.28f)).linear;
             if(!building && !paved)
             {
+                if(feature.kind=="road")
+                {
+                    var road=new List<Vector3>();
+                    foreach(var point in feature.points) road.Add(Position(point));
+                    // Major rural roads are dark; require built-up cover before representing a street.
+                    var next=19f;
+                    for(var i=1;i<road.Count;i++)
+                    {
+                        var a=road[i-1];var b=road[i];var flat=b-a;flat.y=0;var length=flat.magnitude;
+                        if(length<.01f) continue;
+                        for(;next<length;next+=38)
+                        {
+                            var at=Vector3.Lerp(a,b,next/length);
+                            YpadFrame.ToLatLon(at.x+_centreX,at.z+_centreZ,out var lat,out var lon);
+                            if(_cover!=null && _cover.TryClass(lat,lon,out var cls) && cls==AdelaideFarLandCover.Built)
+                                _lights.Street(at,flat/length,Mathf.Clamp(feature.width,3,60));
+                        }
+                        next-=length;
+                    }
+                }
                 for(var i=1;i<feature.points.Length;i++)
                 {
                     var a=Position(feature.points[i-1]);var b=Position(feature.points[i]);
@@ -119,6 +143,7 @@ namespace Airside.Presentation
                 var a=polygon[i];var b=polygon[(i+1)%count];a.y=averageY;b.y=averageY;
                 var ar=a;var br=b;ar.y=br.y=roofY;
                 if(building) Quad(a,b,br,ar,colour,v,c,t);
+                if(feature.kind=="building") _lights.Windows(a,b,roofY-averageY,false);
                 polygon[i]=ar;
             }
             Roof(polygon,roofColour,v,c,t);

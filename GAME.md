@@ -5,6 +5,13 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 
 ## Where to resume
 
+**City and town lights (9 Oct, Codex, #760):** warm varied windows on existing
+Adelaide/regional building facades; urban street sources/pools and mapped lamp
+extensions; distant lights only on mapped built-up land. Existing airport lighting,
+layouts, simulation and saves retained. Household occupancy and unsurveyed lamp
+spacing are inferred; regional detail remains limited to shipped OSM snapshots.
+Native build and visual checks in progress; `docs/testing/city-town-lights-2026-10-09.md`.
+
 **Fleet refinements (9 Oct, Codex, #716):** recessed engine mouths and skin-fitted moving control hinges;
 15 active airframes inspected in native front/side/rear/overview, 13 passenger rigs in driven roll poses.
 Envelopes, pivots, paint, simulation and saves retained. 52 focused headless/17 native checks pass;

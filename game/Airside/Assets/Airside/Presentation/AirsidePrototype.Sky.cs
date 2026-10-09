@@ -506,6 +506,7 @@ namespace Airside.Presentation
             var celestial = PresentationCelestial;
             var daylight = PresentationDaylight;
             CurrentDaylight = daylight;
+            Shader.SetGlobalFloat("_AirsideSettlementNight", 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.08f, .42f, daylight)));
 
             var sunElevation = PinDaylightPresentation ? 48.0 : celestial.Sun.ElevationDegrees;
             var sunAzimuth = PinDaylightPresentation ? 0.0 : celestial.Sun.AzimuthDegrees;

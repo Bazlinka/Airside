@@ -567,3 +567,15 @@ fixed native gear poses and packaged parked follow captures inspected; moving-pr
 ### Fleet intake refinement, 9 October 2026 (#716)
 
 Original project-owned geometry by Codex: `scripts/aircraft_intakes.py`, `scripts/refine-aircraft-intakes.py`; no external asset, licence fee, attribution or generated bitmap. Surgical existing-kit pass retains moving meshes and GUIDs, opens blocking engine caps and fits recessed liners. Shared aircraft writer reapplies the finish on regeneration; adapted kits can use the explicit refinement command. Editable FBXs, glTF/bin, mirrors and thumbnails remain in existing paths. Runtime hinge seams derive from actual control triangles and follow their existing rigs; primitive fallback retained. Native evidence is recorded under `docs/testing/fleet-refinements-2026-10-09/`.
+
+## City and town light presentation — 9 October 2026 (task #760)
+
+Original `SettlementLights.cs` and `Resources/Airside/Shaders/SettlementLights.shader`
+by Codex for Airside; no generated/downloaded art, no cost, no external asset.
+Placement reuses registered OSM road/building/lamp snapshots (OpenStreetMap
+contributors, ODbL) and registered ESA WorldCover built-up land classification.
+Explicit unlit-road IDs are taken from `docs/data/osm/ypad-map-2026-10-08.json`.
+Window occupancy, unsurveyed lamp spacing and distant district sources are inferred;
+they do not assert individual real household or lamp locations. Existing attribution
+retained; missing map/shader skips those lights, existing airport lights remain.
+Evidence: task #760, `2026-10-09-city-town-lights` decision.

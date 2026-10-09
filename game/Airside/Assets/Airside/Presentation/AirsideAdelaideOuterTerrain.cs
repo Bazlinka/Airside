@@ -72,6 +72,7 @@ namespace Airside.Presentation
                 renderer.sharedMaterial = material;
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
+                SettlementLights.DistantAdelaide(root, landCover, terrain);
                 return true;
             }
             catch (Exception e)

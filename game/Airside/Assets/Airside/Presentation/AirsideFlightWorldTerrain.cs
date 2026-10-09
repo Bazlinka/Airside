@@ -204,7 +204,7 @@ namespace Airside.Presentation
                     var code=nearest.Value.Code.ToLowerInvariant();
                     _approachHeights=LoadHeights("Terrain/dem_approach_"+code+"_v01.bin");
                     _approachCover=LoadCover("Terrain/landcover_approach_"+code+"_v01.bin");
-                    _airportEnvironment=AirsideFlightAirportEnvironment.Create(nearest.Value,_material,_approachHeights ?? _nationalHeights ?? _heights);
+                    _airportEnvironment=AirsideFlightAirportEnvironment.Create(nearest.Value,_material,_approachHeights ?? _nationalHeights ?? _heights, _approachCover ?? _nationalCover ?? _cover);
                     if(_airportEnvironment!=null) _airportEnvironment.transform.SetParent(transform,false);
                 }
             }
@@ -252,6 +252,7 @@ namespace Airside.Presentation
             var vertices = new Vector3[n*n]; var colors = new Color[n*n];
             var triangles = new List<int>(cells*cells*6);
             var stride = tileMetres / cells;
+            var settlementLights = new SettlementLights.Batch();
 
             for (var z=0; z<n; z++) for (var x=0; x<n; x++)
             {
@@ -275,6 +276,10 @@ namespace Airside.Presentation
                 // The original detailed meshes own Adelaide. This landscape tucks under them.
                 if (Math.Abs(wx)<=96000 && Math.Abs(wz)<=96000) y-=12;
                 vertices[z*n+x]=new Vector3(x*stride,(float)y,z*stride);
+                if(!coarse && x<cells && z<cells && (Math.Abs(wx)>96000 || Math.Abs(wz)>96000)
+                    && cover!=null && cover.TryClass(lat,lon,out var settlement) && settlement==AdelaideFarLandCover.Built)
+                    settlementLights.Glow(new Vector3(x*stride,(float)y+5,z*stride),2,
+                        new Color(1,.70f,.36f).linear*.7f,20);
                 if (land && cover != null && CoverColour(cover,lat,lon,coarse,out var coverColour))
                 {
                     colors[z*n+x]=coverColour;
@@ -301,6 +306,7 @@ namespace Airside.Presentation
             go.AddComponent<MeshFilter>().sharedMesh=mesh;
             var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=_material;
             renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;
+            settlementLights.Attach(go.transform,"Mapped settlement lights");
             return go;
         }
         /// <summary>

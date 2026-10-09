@@ -1,5 +1,8 @@
 # Changelog
 
+- 2026-10-09 — #756: enclose the tower viewpoint with a cab interior; preserve full flight-relative rain speed and elapsed movement.
+- 2026-10-09 — #758: directional sunrise/sunset glow, cooler overhead sky and blue-hour evenings; reduced broad orange fog.
+
 - 2026-10-09 — #743: the return climb from an outstation eases its departure offset away within the speed envelope (Saab peak CAS 320 -> 223 kt at Kingscote), not a fixed two minutes (bug hunt #13).
 - 2026-10-09 — #742: aircraft turning round at a regional outstation (Kingscote) taxi to the mapped apron, park nose-in in their own slot and taxi back to the departure start, instead of sitting on the runway end (bug hunt #8).
 - 2026-10-09 — #727: helicopter legs are drawn at true geographical scale and held over far destinations, so a Bell 412 booked to Kingscote reaches the real Kingscote (bug hunt #12).
@@ -139,6 +142,12 @@ Older entries (about 1,000, through 2026-10-07) are in
 ## Unreleased
 
 - 2026-10-09 — #760: add warm house windows, mapped urban street lighting and built-up district lights at dusk/night.
+
+- Fix jagged star-shaped cabin windows where livery bands crossed the window row (A350, 787-9, others): paint is now cut by each pane's outline (`scripts/cut-livery-windows.py`); Dash 8 title table refreshed.
+
+- Hide the folded airstair steps on the Saab, ATR 42 and Dash 8 until the door opens; they poked through a shut door's curved skin as a ladder (compiles; unverified in Unity).
+
+- Fix low bug-hunt findings 18, 24, 25, 27-30: waiting-to-start prep status, "1 flight", ownership goal wording, fleet role line, roster label fit, Bell markings, rotor blur opt-out (compiles; unverified in Unity).
 
 - Fix bug-hunt findings 16, 17, 19-23 and 26: contract bonus forecast, pinned booking time, recovery dispatch, tier gate, overview restore, check-aware contracts, Bell payload, offer paging (unverified in Unity).
 

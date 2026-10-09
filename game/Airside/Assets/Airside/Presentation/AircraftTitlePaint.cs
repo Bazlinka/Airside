@@ -161,7 +161,7 @@ namespace Airside.Presentation
             if (Is(type, AircraftType.Saab340))
                 return new AircraftIdentityMarkingLayout(0.91f, 2.02f, 5.19f, 0.98f, 1.93f, -4.21f, 0.078f, 0.040f, 39.23f, 33.61f, 6.71f);
             if (Is(type, AircraftType.Dash8Q400))
-                return new AircraftIdentityMarkingLayout(1.11f, 2.34f, 10.63f, 1.18f, 2.23f, -9.27f, 0.092f, 0.047f, 37.17f, 31.91f, 6.48f);
+                return new AircraftIdentityMarkingLayout(1.11f, 2.34f, 10.63f, 1.18f, 2.23f, -9.27f, 0.092f, 0.047f, 37.17f, 31.91f, 6.08f);
             if (Is(type, AircraftType.EmbraerE190))
                 return new AircraftIdentityMarkingLayout(1.21f, 3.80f, -4.39f, 1.31f, 3.66f, -27.69f, 0.113f, 0.053f, 36.71f, 30.53f, 12.32f);
             if (Is(type, AircraftType.AirbusA220300))
@@ -183,6 +183,11 @@ namespace Airside.Presentation
             if (Is(type, AircraftType.Boeing78710))
                 return new AircraftIdentityMarkingLayout(2.36f, 7.34f, -8.95f, 2.54f, 7.04f, -57.75f, 0.233f, 0.101f, 34.77f, 28.07f, 23.22f);
             // </generated title layout>
+            // The Bell's cabin is glazed and its sliding doors are large, so its marks sit on the tail boom
+            // (authored in generate-air-017-bell-412.py: boom half-width ~0.4-0.6 m, centre height ~2.1-2.4 m).
+            // Placed from those numbers, not fitted to the mesh; check at the exterior camera.
+            if (Is(type, AircraftType.Bell412))
+                return new AircraftIdentityMarkingLayout(0.60f, 2.22f, -3.40f, 0.44f, 2.38f, -6.60f, 0.028f, 0.022f, 0f, 0f, 3.0f);
             // Unknown or primitive-fallback types: the ATR's regional fuselage.
             return For(AircraftType.Atr42);
         }

@@ -261,8 +261,10 @@ namespace Airside.Presentation
             }
 
             // The blur shows once the rotor is quick enough to smear, a soft ghost on top of the blades.
-            SetRotorDisc(rig.MainDisc, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.3f, 0.9f, speed)) * 0.34f);
-            SetRotorDisc(rig.TailDisc, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.3f, 0.9f, speed)) * 0.4f);
+            // The shared blur opt-out hides the discs too; the blades keep turning.
+            var blur = AirsideSettings.Current.PropellerBlur ? Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.3f, 0.9f, speed)) : 0f;
+            SetRotorDisc(rig.MainDisc, blur * 0.34f);
+            SetRotorDisc(rig.TailDisc, blur * 0.4f);
         }
 
         private static void SetRotorDisc(Renderer disc, float alpha)

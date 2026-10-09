@@ -563,6 +563,7 @@ namespace Airside.Presentation
             Application.logMessageReceived -= RecordAgentRuntimeError;
             ExitOutstationView(false);
             ReleaseCockpitAirflow();
+            ReleaseDirectionalSky();
             if (_cockpitInterior != null)
             {
                 _cockpitInterior.Leave();
@@ -1578,6 +1579,7 @@ namespace Airside.Presentation
                         // folds down and out until its steps rest on the apron.
                         var target = Mathf.Lerp(0f, parts[i].OpenDegrees, passenger);
                         ShowDoorway(parts[i].Doorway, passenger);
+                        ShowAirstairSteps(parts[i].Transform, passenger);
                         euler.z = timed ? target : Mathf.MoveTowards(Signed(euler.z), target, Time.unscaledDeltaTime * 55f);
                         break;
                     }
@@ -1602,6 +1604,19 @@ namespace Airside.Presentation
             }
 
             static float Signed(float degrees) => degrees > 180f ? degrees - 360f : degrees;
+        }
+
+        /// <summary>Shows the folded airstair's steps only once the door is open (they sit inside a curved door shell).</summary>
+        private static void ShowAirstairSteps(Transform door, float open)
+        {
+            if (door == null || !door.TryGetComponent<AirstairDoor>(out var airstair) || airstair.Steps.Length == 0)
+                return;
+            var show = open > DoorwayOpenThreshold;
+            if (airstair.Steps[0] != null && airstair.Steps[0].enabled == show)
+                return;
+            foreach (var step in airstair.Steps)
+                if (step != null)
+                    step.enabled = show;
         }
 
         /// <summary>Sim-rate presentation dt — freezes when paused, scales with the selected rate.</summary>

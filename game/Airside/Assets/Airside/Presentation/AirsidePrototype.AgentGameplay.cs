@@ -27,6 +27,7 @@ namespace Airside.Presentation
             }
         }
         private bool _agentGameplayActive;
+        private Vector3? _agentRainVelocity;
         private FleetAircraft _agentGameplayAircraft;
         private AgentGameplayPlan _agentGameplayPlan;
         private readonly List<AgentGameplayResult> _agentGameplayResults = new();
@@ -68,6 +69,8 @@ namespace Airside.Presentation
             public string aircraft, state, weather, workspace;
             public string[] fleetStates;
             public float cameraPitch, cameraYaw, cameraDistance;
+            public bool inTower;
+            public float rainObserverSpeed, rainTravelMetres;
         }
         [Serializable] private sealed class AgentGameplayReport
         {
@@ -100,7 +103,7 @@ namespace Airside.Presentation
                         || !step.id.All(c => char.IsLetterOrDigit(c) || c == '-') || !ids.Add(step.id)
                         || !float.IsFinite(step.settleSeconds) || step.settleSeconds < 0.1f || step.settleSeconds > 15f)
                         throw new ArgumentException("Invalid step ID or settle duration");
-                    if (!new[] { "workspace", "planner", "book", "cancel", "save", "follow", "view", "overview", "menu", "weather", "time", "camera", "snapshot" }.Contains(step.action))
+                    if (!new[] { "workspace", "planner", "book", "cancel", "save", "follow", "view", "overview", "menu", "weather", "time", "camera", "snapshot", "tower", "tower-look", "rain-motion" }.Contains(step.action))
                         throw new ArgumentException("Unknown agent gameplay action: " + step.action);
                 }
                 Application.logMessageReceived += RecordAgentRuntimeError;
@@ -163,6 +166,9 @@ namespace Airside.Presentation
                 result.cameraPitch = AirsideCameraController.CurrentPitch;
                 result.cameraYaw = AirsideCameraController.CurrentYaw;
                 result.cameraDistance = AirsideCameraController.CurrentDistance;
+                result.inTower = InTower;
+                result.rainObserverSpeed = _rainObserverVelocity.magnitude;
+                result.rainTravelMetres = _rainFlowMetres.magnitude;
                 if (_agentRuntimeErrors.Count > 0 && _agentGameplayError == null)
                 { _agentGameplayError = "Runtime error during scenario"; result.detail = _agentGameplayError; }
                 result.status = _agentGameplayError == null ? "passed" : "failed";
@@ -205,6 +211,8 @@ namespace Airside.Presentation
         {
             if (!string.IsNullOrEmpty(step.expectState) && _agentGameplayAircraft.State.ToString() != step.expectState)
                 throw new InvalidOperationException("Expected " + step.expectState + "; observed " + _agentGameplayAircraft.State);
+            if ((step.action == "tower" || step.action == "tower-look") && !InTower)
+                throw new InvalidOperationException("Tower view lost before capture");
             if (step.action == "follow" && !_cameraController.IsFollowing)
                 throw new InvalidOperationException("Follow lost before capture");
             if (step.action == "view" && (!InCockpit || _cockpitAircraftId != _agentGameplayAircraft.Registration
@@ -265,6 +273,22 @@ namespace Airside.Presentation
                     if (!TryFollowFleetAircraft(aircraft.Registration) || !_cameraController.IsFollowing)
                         throw new InvalidOperationException("Follow failed");
                     return "Following " + aircraft.Registration;
+                case "tower":
+                    ExitCockpit(true);
+                    _cameraController.ReleaseFollow();
+                    if (!EnterTower() || !InTower) throw new InvalidOperationException("Tower unavailable");
+                    return "Entered control tower cab";
+                case "tower-look":
+                    var angles = step.value.Split(',');
+                    if (angles.Length != 2) throw new ArgumentException("Tower look needs pitch,yaw");
+                    _cameraController.ApplyAgentTowerLook(float.Parse(angles[0], CultureInfo.InvariantCulture),
+                        float.Parse(angles[1], CultureInfo.InvariantCulture));
+                    return "Tower look " + step.value;
+                case "rain-motion":
+                    var speed = float.Parse(step.value, CultureInfo.InvariantCulture);
+                    if (!float.IsFinite(speed) || speed < 0 || speed > 300) throw new ArgumentException("Rain probe speed 0–300 m/s");
+                    _agentRainVelocity = _mainCamera.transform.forward * speed;
+                    return "Synthetic rain observer velocity " + speed + " m/s; not a flight";
                 case "view":
                     if (!Enum.TryParse(step.value, out AircraftViewMode view) || !EnterFlightView(aircraft, view)
                         || _cockpitAircraftId != aircraft.Registration || _aircraftViewMode != view)

@@ -112,8 +112,9 @@ namespace Airside.Presentation
 
             var night = Rgb.Lerp(Night, new Rgb(0.07f, 0.08f, 0.10f), cover * 0.6f);
             var sky = Rgb.Lerp(night, day, daylight);
-            // Dusk colour shows through a clear sky and is smothered by cloud.
-            sky = Rgb.Lerp(sky, Dusk, warm * 0.55f * (1f - cover * 0.75f));
+            // A little dusk warmth remains in horizon haze. Directional sky owns the
+            // stronger sun-facing glow; fog must not turn the whole field orange.
+            sky = Rgb.Lerp(sky, Dusk, warm * 0.12f * (1f - cover * 0.75f));
 
             var haze = Rgb.Lerp(sky, new Rgb(0.86f, 0.87f, 0.87f), daylight * 0.2f * (1f - gloom));
             var fog = Rgb.Lerp(sky, haze, 0.5f);

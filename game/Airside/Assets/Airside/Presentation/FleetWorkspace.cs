@@ -617,7 +617,7 @@ namespace Airside.Presentation
                 var next = AircraftDistinctions.Next(aircraft.CompletedTrips);
                 if (next.Flights > 0)
                     AddFact("operation/completed",
-                        $"Next distinction: {next.Title} · {next.Flights - aircraft.CompletedTrips} flights to go");
+                        $"Next distinction: {next.Title} · {next.Flights - aircraft.CompletedTrips} {(next.Flights - aircraft.CompletedTrips == 1 ? "flight" : "flights")} to go");
                 var baseLevel = operations.CareerState.BaseLevel;
                 AddFact("service/inspection", PlayerBase.MaintenanceLine(baseLevel, aircraft.Type)
                                               + " · $" + Maintenance.CheckCost(aircraft.Type, baseLevel).ToString("N0")
@@ -751,7 +751,7 @@ namespace Airside.Presentation
             var next = AircraftDistinctions.Next(aircraft.CompletedServices);
             if (next.Flights > 0)
                 AddFact("operation/completed",
-                    $"Next distinction: {next.Title} · {next.Flights - aircraft.CompletedServices} flights to go");
+                    $"Next distinction: {next.Title} · {next.Flights - aircraft.CompletedServices} {(next.Flights - aircraft.CompletedServices == 1 ? "flight" : "flights")} to go");
 
             var capability = AirlineOperations.OutstationCheckCapability(entry.Type);
             var checkCost = Maintenance.CheckCost(entry.Type, capability);
@@ -1210,8 +1210,15 @@ namespace Airside.Presentation
             into.Text(body.Offset(regWidth + typeWidth, 0f).WithWidth(body.Width - regWidth - typeWidth),
                 row.Status, 12f, row.StatusTone, HudTextStyle.Bold, alpha: alpha);
             if (standWidth > 0f)
-                into.Text(new HudBox(box.Right - standWidth, box.Y + 7f, standWidth - 6f, 18f), row.Stand,
-                    12f, HudTone.Muted, HudTextStyle.Regular, HudAlign.Right, alpha: alpha);
+            {
+                // A long stand label shrinks, then abbreviates, instead of overflowing past the box edge.
+                var standText = row.Stand ?? string.Empty;
+                if (HudShell.Measure(standText, 11f) > standWidth - 6f)
+                    standText = standText.Replace("Helipad spot ", "Pad ");
+                into.Text(new HudBox(box.Right - standWidth, box.Y + 7f, standWidth - 6f, 18f), standText,
+                    HudShell.FitFontSize(standText, 12f, standWidth - 6f, 10f), HudTone.Muted, HudTextStyle.Regular,
+                    HudAlign.Right, alpha: alpha);
+            }
             into.Text(new HudBox(box.X + 12f, box.Y + 29f, box.Width - 18f, 18f),
                 row.TypeName + " · " + FleetStatusText.NameOf(row.BaseCode) + " base", 11f, HudTone.Muted, alpha: alpha);
             into.Hotspot(box, HudAction.Select(row.Registration));
@@ -1317,6 +1324,11 @@ namespace Airside.Presentation
                 content = PaintPrep(into, model, pane, content);
             else if (model.SelectedIsOutstation)
                 PaintRoutes(into, model, pane, content, actionTop - 6f);
+
+            // Passenger/freight role and what freight pays: drawn wherever the room allows (it used to be built and never shown).
+            if (model.RoleLine.Length > 0 && !model.SelectedIsOutstation && content + 34f <= actionTop - 6f)
+                into.Text(new HudBox(pane.X, content, pane.Width, 32f), model.RoleLine, 12f, HudTone.Muted,
+                    HudTextStyle.Wrap);
 
             var y = actionTop;
             var half = (pane.Width - 10f) * 0.5f;

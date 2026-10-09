@@ -15,6 +15,12 @@ namespace Airside.Presentation
         public float RunMetres;
         /// <summary>-1 left side, +1 right side.</summary>
         public int Side;
+        /// <summary>
+        /// Treads, rails and posts. The door shell is curved (0.16-0.29 m deep) and these sit within a few
+        /// centimetres of its outermost edge, so while the door is shut they poked through the skin as a
+        /// ladder on the fuselage. They are hidden until the door is open.
+        /// </summary>
+        public Renderer[] Steps = System.Array.Empty<Renderer>();
     }
 
     /// <summary>
@@ -105,6 +111,15 @@ namespace Airside.Presentation
                         new Vector3(0.58f, 0.035f, 0.035f), AirstairRail);
                 }
             }
+
+            var stepRenderers = new List<Renderer>();
+            foreach (Transform child in door)
+                if (child.name.StartsWith("Airstair ", StringComparison.Ordinal) && child.TryGetComponent<Renderer>(out var stepRenderer))
+                {
+                    stepRenderer.enabled = false;
+                    stepRenderers.Add(stepRenderer);
+                }
+            marker.Steps = stepRenderers.ToArray();
 
             AirsideNamedChildren.Forget(aircraft);
         }

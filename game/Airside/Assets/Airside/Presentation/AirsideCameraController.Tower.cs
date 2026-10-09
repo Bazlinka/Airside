@@ -16,6 +16,16 @@ namespace Airside.Presentation
             return true;
         }
 
+        public void ApplyAgentTowerLook(float pitch, float yaw)
+        {
+            if (!AirsideBareField.HasLaunchFlag("-airsideAgentGameplay") || !IsTower)
+                throw new System.InvalidOperationException("Agent tower review required");
+            if (!float.IsFinite(pitch) || !float.IsFinite(yaw) || pitch < -50 || pitch > 30)
+                throw new System.ArgumentException("Invalid tower look");
+            _cockpitPitch = _cockpitShownPitch = pitch;
+            _cockpitYaw = _cockpitShownYaw = yaw;
+        }
+
         private float ClampTowerPitch(float pitch) => Mathf.Clamp(pitch, -50f, 30f);
     }
 }

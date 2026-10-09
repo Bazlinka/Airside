@@ -108,7 +108,7 @@ namespace Airside.Simulation
             goals.Add(Held("regional-reliability", 70, ProvisionalHeldFlights, OperatingTier.Provisional, career));
             // Regional → Domestic: a small regional network with its own base.
             goals.Add(new CareerGoalStatus("regional-network", "Serve 4 regional towns", OperatingTier.Regional, regional, 4));
-            goals.Add(new CareerGoalStatus("regional-fleet", "Fly 3 aircraft", OperatingTier.Regional, fleetCount, 3));
+            goals.Add(new CareerGoalStatus("regional-fleet", "Own 3 aircraft", OperatingTier.Regional, fleetCount, 3));
             goals.Add(new CareerGoalStatus("regional-base", "Expand the Adelaide base", OperatingTier.Regional,
                 career.BaseLevel >= PlayerBaseLevel.ExpandedRegional ? 1 : 0, 1));
             goals.Add(new CareerGoalStatus("regional-service", "Complete 30 flights", OperatingTier.Regional,
@@ -116,7 +116,7 @@ namespace Airside.Simulation
             goals.Add(Held("domestic-reliability", 80, HeldFlights, OperatingTier.Regional, career));
             // Domestic → International: jets, interstate cities and a second base.
             goals.Add(new CareerGoalStatus("domestic-network", "Serve 3 interstate cities", OperatingTier.Domestic, domestic, 3));
-            goals.Add(new CareerGoalStatus("domestic-jet", "Fly a jet", OperatingTier.Domestic, hasJet, 1));
+            goals.Add(new CareerGoalStatus("domestic-jet", "Own a jet", OperatingTier.Domestic, hasJet, 1));
             goals.Add(new CareerGoalStatus("domestic-base", "Open an outstation base", OperatingTier.Domestic,
                 career.OutstationBases.Count, 1));
             goals.Add(new CareerGoalStatus("domestic-service", "Complete 75 flights", OperatingTier.Domestic,
@@ -125,10 +125,10 @@ namespace Airside.Simulation
             // International → established airline (the finale; see FinaleReady).
             goals.Add(new CareerGoalStatus("international-network", "Serve 3 overseas cities",
                 OperatingTier.International, international, FinalInternationalDestinations));
-            goals.Add(new CareerGoalStatus("international-widebody", "Fly a widebody", OperatingTier.International, hasWidebody, 1));
+            goals.Add(new CareerGoalStatus("international-widebody", "Own a widebody", OperatingTier.International, hasWidebody, 1));
             goals.Add(new CareerGoalStatus("international-bases", "Run 3 bases", OperatingTier.International,
                 career.BaseCount, FinalBases));
-            goals.Add(new CareerGoalStatus("established-fleet", "Fly 18 aircraft", OperatingTier.International,
+            goals.Add(new CareerGoalStatus("established-fleet", "Own 18 aircraft", OperatingTier.International,
                 fleetCount, FinalFleet));
             goals.Add(new CareerGoalStatus("established-network", "Serve 12 destinations", OperatingTier.International,
                 career.ServedDestinations.Count, FinalDestinations));

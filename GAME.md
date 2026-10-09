@@ -11,210 +11,22 @@ Existing celestial clock, weather/altitude, stars, night readability and saves r
 Native clear dawn/day/sunset/evening/night and overcast/fog review pending on pushed revision.
 Decision: `2026-10-09-directional-twilight-sky`.
 
-**Fleet refinements (9 Oct, Codex, #716):** recessed engine mouths and skin-fitted moving control hinges;
-15 active airframes inspected in native front/side/rear/overview, 13 passenger rigs in driven roll poses.
-Envelopes, pivots, paint, simulation and saves retained. 52 focused headless/17 native checks pass;
-Mac build/four-step parked A350 player check pass, no runtime errors. Evidence/limits: `docs/testing/fleet-refinements-2026-10-09/README.md`.
+**Tower cab and rain motion (9 Oct, Codex, #756):** original interior ceiling, window
+framing and low controller consoles now enclose the existing tower eye. Rain retains
+normal fleet-relative speeds and full elapsed presentation time; streaks reflect a fixed
+exposure and floating-origin recentering preserves observer motion. Simulation, saves,
+external assets and personal game unchanged. Native baseline reproduced the open roof
+and a synthetic 220 m/s observer was limited to 90 m/s. Fixed clean universal Mac build and identical 17-step scenario pass, zero runtime
+errors; day/night cab and rain frames inspected. Four tower and 17 runner regressions
+pass. Synthetic 220 m/s rain probe reaches 216.7 m/s (previously 90); real flight/cloud
+crossing and control hit-testing unverified.
+Decision/evidence: `docs/testing/tower-rain-2026-10-09/README.md`.
 
-**Second report-only collection (9 Oct, Codex, #751/#753):** fifteen additional findings (16–30), no fixes;
-`docs/testing/bug-hunt-second-2026-10-09/README.md`. First seven: clean 0cca70b3; remaining eight: clean 4c24425c native private-career evidence, 40× allowance.
-Collection complete; QA player closed. Severity, reproduction and runner/normal-speed limits are explicit. Reproduce on current main before fixes.
-Code fixes (Claude, no tests or native runs, per Bailey): high/medium findings 16, 17, 19, 20, 21, 22, 23, 26 (one commit each). Unverified in Unity and not compiled;
-#26 adds a MORE OFFERS pager and #23 sets the Bell 412 freight payload to 1.5 t (judgement). Low findings (18, 24, 25, 27-30) untouched.
-
-**Report-only bug hunt (9 Oct, Codex, #717):** 15 findings/evidence: `docs/testing/bug-hunt-2026-10-09/README.md`.
-Tested aec64616 at 40×, no fixes; capture inversion subsequently fixed. Reproduce remaining findings on current main; UX/normal-speed limits are explicit.
-Fix pass (Claude, issues #722/#723/#724/#725/#726 = findings 1/14/7/2/15): #1 interior audio sources now exist before their low-pass filters (fixed, #728); #7 (#730) doorway shells at the generators' exact 4 mm minimum thickness are accepted again (float32 rounding rejected them); #14 (#731) quit from exterior no longer throws in `EndCockpit` (destroyed camera controller skipped at teardown); #15 (#726) not a defect: the ATR 42 horizontal stabiliser is rendered in Exterior (record `docs/testing/bug-hunt-2026-10-09/fix-pass/`); #2 (#725) not reproduced on clean main (original was a dirty-stamped build; evidence `docs/testing/bug-hunt-2026-10-09/fix-pass/`). Integration run on main e9d9db19 (ATR 42 and Saab windows/exterior/quit): 0 runtime errors, no audio, doorway or EndCockpit errors; open-door hollow and Kingscote window context unverified.
-Fix status, second pass (Claude, one PR each; Unity unverified, quick headless/syntax checks only): #3 first-flight guide Away wording follows
-Outbound/AtDestination/Inbound (#721); #9 outstation landing toast keeps the outbound flight number (#732); #6 an armed contract card's button reads
-CONFIRM (#734); #11 the Adelaide radar is hidden while watching Parafield (#740); #10 Flight Manual HUD placements and destination colours corrected (#745);
-#5 a celebration card is modal: HUD, hotkeys and world clicks behind it are inert, Enter/Esc/button close it (#738). The native runner cannot click or enter
-the Parafield watch, so 5/6/11 need a hand check (GUI.enabled tint behind the card, CONFIRM fit, no radar at Parafield).
-Flight findings (Claude): #12 Bell legs drawn at true geographical scale and held over far sites (#727, native 40× run passed); #8 turnaround moves to the mapped apron and back (#742, native 40× round trip passed); #13 return-climb hand-over now stays inside the speed cap (#743; the arrival bend at Adelaide still reaches CAS 366, unfixed). Records: `docs/testing/bug-hunt-2026-10-09/FIXES.md`.
-
-**Welcome and comfort fixes (9 Oct, Codex, #706):** title/setup weather isolation and consistent Weather Layers;
-F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; compact/recovery welcome cards;
-readable scrolling Options and current-view targeting. Operational weather, live time, economics and saves unchanged.
-Checks: 25/25 headless, 2/2 focused native, Mac build, actual title Fog/Storm interactions and airport Fog rendering.
-Evidence and remaining limits: `docs/testing/welcome-polish-2026-10-09/README.md`.
-**Physical ground detail (9 Oct, Codex, #693):** mapped roadside grass clears airport
-surfaces and nearby roads; coastal scrub gains varied lobes/colour and face normals.
-Drains gain flush rims/grates; taxiway wear gains tapered, varied patches. No layout,
-aircraft, simulation or save changes. Geometry checks pass 11/11 and C# syntax parses;
-Unity appearance/performance unverified. Evidence: `docs/testing/physical-ground-detail-2026-10-09.md`.
-Spatial puddles remain future work.
-
-**Issue diagnostics (9 Oct, Codex, #707/#710/#713):** agents reproduce reported issues,
-inspect real frames/state/errors, identify cause, fix and rerun the same scenario. Linux
-agents use the private Mac via `scripts/diagnose-game.py`; dedicated user runner is online.
-Real remote verification: 10 weather steps, 7 upright sky-inclusive frames, zero runtime errors;
-intentional failed state correctly fails and returns its screenshot. Personal saves isolated.
-Mac must be awake/logged in/online. Existing CI failures match preceding main. Evidence:
-`docs/testing/agent-gameplay/DIAGNOSTIC_EVIDENCE_2026-10-09.md`; guide: `docs/testing/agent-gameplay/README.md`.
-
-**Cloud lighting/depth (9 Oct, Codex, #697):** volume clouds now use bounded
-sun-direction/colour scattering, two local sun-density probes and sky fill for
-sunlit thin edges and deeper storm interiors. Eroded edges ease smoothly; reveal
-and wrap fades thin optical depth, with premultiplied radiance compositing.
-Sixteen volumes/view samples retained; one additional density probe per occupied
-sample adds shader work. Placement, morphology, shared weather, lightning, camera
-origin/depth handling and saves unchanged. Quick source/diff checks only; native
-shader compilation, appearance and GPU cost unverified. Transparent intersection
-sorting remains a limitation. Decision: `2026-10-09-cloud-lighting-and-depth`.
-
-**Dash 8 finish (9 Oct, Codex, #691/#712):** the crown fairing is retained; nacelle
-bays now enclose the existing folded wheels and use curved, independently hinged
-white doors. Raised oval nacelle/wing pods become fitted under-wing joins; cowl
-paint, AIR-006 source/FBX, mirrors and thumbnail updated. Other finished parts,
-fictional tail paint, simulation and saves retained. Native baseline reproduces
-the fault; repaired native up/down/mid frames inspected, 9 native and 44 headless
-checks pass. Mac build/five-step parked-player comparison pass; no airborne journey.
-Evidence: `docs/testing/dash8-visual-repair-2026-10-09/README.md`.
-Full suites/soaks/performance skipped.
-
-**Flight tracker and HUD views (9 Oct, Claude):** after booking, a "Your flights" card (bottom-left) follows each planned or moving flight through
-Booked, Ready, Taxi, Flying, Landing, Arrived; the booked aircraft is selected without moving the camera. Aircraft labels, airport map, tracker and
-career card can be shown per view (overview / follow) from Options > Views; L and N toggle for the current view. ADR `2026-10-09-flight-tracker-and-hud-views.md`.
-Headless draw-list/layout/step tests pass; **Unity unverified** (check the card's position with the map and selected card at 800x600, clicking a row,
-the Views tab, and that the first-flight guide still shows with the career card hidden).
-
-**Ground character (9 Oct, Codex, #687):** grass/soil gains local bare/matted islands,
-dry/damp variation and interrupted mowing. Pavement differentiates sparse asphalt
-repairs/sealed cracks from concrete slab joints and age variation; fine detail is
-filtered and fades with distance. Shared absolute-world character retains the
-Adelaide edge handover. Apron patches have varied size/age and stay wholly inside
-the mapped apron. Terrain heights, operational layouts, markings and saves retained.
-Focused apron checks pass 4/4, changed C# 9 syntax parses and generated harness is
-current. Native shaders, wet/dry/day/night appearance and GPU performance remain
-unverified; no player build or full suite run. Evidence: `docs/testing/ground-character-2026-10-09.md`.
-Decision: `2026-10-09-ground-character`.
-
-**Connected aircraft tails (9 Oct, Codex, #684):** all 15 active airframes plus the
-A320 authored fallback now have curved hull-fitted fin/stabiliser roots and tapered
-aerofoils. Rudder/elevator hinges share the fixed surface geometry; T-tails retain
-a centre bullet. Per-type profiles correct stabiliser proportions, with unchanged
-rotors, wings, engines, landing gear, simulation and saves. Runtime models, editable
-FBXs, packaged mirrors and hangar thumbnails updated. Geometry checks and actual
-side/rear/top asset renders: `docs/testing/aircraft-tails-2026-10-09/`. Native Unity
-import, lighting, control deflection and performance remain unverified.
-Decision: `2026-10-09-connected-aircraft-tails`.
-
-**Weather clock (9 Oct, Claude):** `Weather` read local hour from `AirlineClock.Default`, so saves with another epoch had fog hours
-hours off the HUD clock (civil helicopters held in fog). `AirlineOperations.Clock` now calls `Weather.UseClock`. Weather
-sequences differ from before for non-default-epoch saves; saves unchanged. Quick headless tests only; Unity unverified.
-
-**Linear renderer (9 Oct, Codex, #681):** Unity now uses Linear colour rendering.
-Existing linear mesh palettes and Gamma fallback shader branch are retained. The
-far land-cover palette/calibration now match sRGB-decoded satellite imagery and
-material tint; crop variants retain their relative colour differences. HDR/ACES,
-AA, shadows, weather geometry, simulation and saves are unchanged. Palette generation,
-Python syntax and diff/source checks pass. Unity/shader compilation, Mac appearance
-and GPU timings remain unverified. Compare day/dusk/night aircraft, glass, lamps,
-wet pavement and the satellite-to-land-cover handover before judging the visual gain.
-Decision: `2026-10-09-linear-colour-rendering`.
-
-**Aircraft continuity (9 Oct, Codex, #672):** full route poses are now available to
-ordinary overview/follow views, rather than hiding departures after the local climb
-projection ends. Ordinary follow streams journey terrain and shifts the render origin.
-Aircraft identity lookup includes every physically present fleet view independently
-of follow-cycle filtering; direct follow can select a present aircraft outside that cycle.
-Parked models remain visible and explicitly selectable. Active-aircraft counts and
-automatic camera cycling now use a two-hour window before published departure; overdue
-weather waits and moving aircraft stay active. Fleet inventory retains idle aircraft.
-Long-idle known outstation ground aircraft likewise activate near their next departure.
-Audit coverage and remaining limitations: `docs/testing/aircraft-continuity-2026-10-09.md`.
-Established final poses now survive missing/postponed ETAs in a continuous holding
-orbit (#677), climbing to at least 1.5 km. A usable ETA rejoins through bounded pose
-slew; real clearance retains the held pose through the handoff. Map/follow/selected
-status use the actual held pose. This represents existing operational delays; it does
-not grant runway/stand/curfew clearance or create a new saved state. Focused holding
-and approach checks pass 16/16; changed C# syntax parses. Rendered holding/rejoin and
-terrain performance remain unverified. Save v23 now retains final/holding pose and
-phase, guarded by registration/type/destination/state/start-time after offline catch-up;
-changed journeys are not resurrected. Old saves rebuild their unsaved presentation.
-Live-feed expiry and unsupported outstation presentation retain explicit limits.
-
-**Shared operational weather and reload continuity (9 Oct, Codex, #679):** validated
-live weather/wind samples enter a saved timeline at processed simulation time. Ground
-stops, runway/rotor wind rules, final-entry commitment, sky/rain and wind motion read
-that same timeline. Expiry, disabling live weather and unknown offline periods fall
-back to the deterministic forecast. Historical samples replay on catch-up; expiry is
-an explicit event boundary. Save v23 adds flat optional observation/arrival records;
-v1–22 retain their prior forecast and rebuild presentation. Review-only weather pins
-remain cosmetic. Focused continuity, save, Operations, runway and hold checks pass
-53/53; new Unity JsonUtility round-trip test is added but unrun here. Unity compile,
-serialization, actual weather releases, reload/holding appearance and performance
-remain unverified.
-
-**Cloud continuity/weather variety (9 Oct, Codex, #674):** clouds recycle/fade around
-the watched area, not the orbiting lens. The wider footprint keeps storm bodies away
-from wrap seams; the volume proxy survives a far-plane-clipped exit face. Thin high
-wisps, cumulus, broad stratiform banks and storm towers share persistent geometry and
-smooth morphology. Authored rain includes drizzle/showers/continuous-rain profiles;
-weather summaries reflect continuous live conditions too. The existing operational
-weather enum/chain, RNG and save schema are unchanged. Original shader source only;
-sixteen-volume budget and atlas fallback retained. Decision: `2026-10-09-cloud-continuity-and-variety`.
-Focused coverage/profile regressions pass 11/11; changed Unity-facing C# syntax
-parses and the generated headless harness is current. Native shader compilation,
-orbit/pan/zoom appearance and GPU performance remain unverified.
-
-**Terminal doors and more people (9 Oct, Claude):** each regional-stand walk now starts at a terminal door (`AdelaideTerminalDoors`, six doors on
-the OSM terminal outline; airside doors are derived, not surveyed) with a sliding-glass door prop, a six-person boarding queue and a gate agent at the
-door, 18 landside walkers (OSM entrances, car-park bays) and airside staff (`AdelaideAmbientPeople`), person cap 110 with distance-throttled posing.
-ADR `2026-10-09-terminal-doors-and-people.md`. Pure tests pass and the whole Presentation assembly compiles against Unity's own libraries
-(quick compile recipe in the PR); look and frame time in the Mac build unverified. Aerobridge and bus flows unchanged. Still open from the 8 Oct
-HUD/map work (ADR `2026-10-08-hud-chrome-redesign.md`): unredesigned screens (selected-aircraft card, movements board, radar, Fleet detail,
-Career layout, setup/menu), and two layout tests failing on main in compact windows
-(`Contracts_LayoutKeepsBothColumnsInsideTheSurface`, `GrowingOverview_LastAircraftRemainsReachableInCompactWindows`).
-
-**Storm movement commitment (8 Oct, Codex, #670):** ready fixed-wing departures wait
-at their gate/bay; taxi-released departures continue under normal runway/traffic rules.
-An inbound already on the shared 32 km extended final before storm onset keeps its
-arrival timer/estimate and joins landing rather than disappearing when that timer is
-postponed. Later inbounds remain held before final. No save schema/camera/rendering
-changes; curfew, separation and rotorcraft rules retained. Cockpit exit restores
-exterior rendering; no fault found there. Native cockpit→tower and storm landing
-appearance remains unverified. Focused checks: 48/48 pass; a larger arrival-estimate
-selection hit the 60 s limit and remains unverified. Decision: `2026-10-08-storm-movement-commitment`.
-
-**Night final visibility (8 Oct, Codex, #668):** aircraft flares use an original additive
-light-source shader with the same haze transmission as runway point lights, rather than
-URP surface fog. Distant halos sit outside the fuselage in camera depth and use corrected
-projected size. Night airborne position/strobe glows remain inside 6 km for side-on finals;
-individual landing flares still carry the close nose-on approach. Graphics toggles,
-weather attenuation, lamp policy, simulation and saves stay unchanged. Source/geometry
-checks and Roslyn C# syntax pass; asset metadata passes except the known satellite
-JPEG mirror mismatch. Native shader compilation and Mac night overview/tower/follow appearance
-(clear/fog, head-on/side/aft and near/far handoff) remain unverified.
-
-**Weather and aircraft vibration (8 Oct, Codex, #666):** sixteen bounded cloud volumes now
-include broad storm towers/anvils reaching roughly 10 km; lit deck tops remain below a
-high observer. Fog clears above its shallow ground bank; rain, wipers, interior audio,
-sky and cloud immersion share observer altitude across camera views. Cloud geometry
-and noise survive flight-origin shifts; integrated wind travel and 12-second weather
-transitions reduce jumps. Lightning follows displayed storms, glows within clouds and
-has a brief channel with independent distance-delayed thunder. Rapid duplicate camera
-shake and continuous trackpad/joint tapping removed; reduced engine/runway buzz,
-slow weather gusts and discrete landing/gear contact retained. Vibration switch remains.
-No operations, schedule, economy, saves or new external assets changed.
-Decision/limits: `docs/decisions/2026-10-08-weather-altitude-and-restraint.md`.
-
-**Checks:** 90 focused headless regressions and six static shader/producer contracts pass;
-changed C# syntax parsed. Generated harness is current and presentation map refreshed.
-Unity compilation, shaders, actual appearance/audio, packaging and GPU performance are
-unverified. No broad suite/build/player testing run under the standing policy.
-
-**Next:** agents choose necessary runtime checks/builds; Bailey chooses personal playtesting.
-Check fog ground/climb; storm
-below/inside/above, cloud silhouettes and deck crossings; cockpit/exterior and long
-journey origin shifts; live/fallback weather; quiet cruise, storm gusts, landing/gear
-thumps and Vibration off. Check lightning/thunder alignment and transparent rendering.
-Standing policy: necessary gameplay/builds automatic; full journeys when warranted. Broad suites/performance/long soaks on request;
-merge completed authorised work without repeated approval.
-
-**Other current context:** earlier aircraft/HUD/lighting/audio work retains its recorded validation limits.
-HUD/compact-layout failures, WIP 787-window proposal (#543), FlightManual page 7 and satellite JPEG mirror mismatch remain separate. Earlier status and other tools' work:
-`docs/history/game-handoff-before-weather-realism-2026-10-08.md`.
+**Next:** Bailey can use the validated local build for personal tower/rain playtesting.
+Other active state and prior verification limits are preserved in
+`docs/history/game-handoff-before-tower-rain-2026-10-09.md`.
+Standing policy: agents choose necessary focused runtime checks; broad suites/soaks on request.
+Personal saves/running game and generated pipeline/package edits must be preserved.
 
 *One block, replaced at the end of each session. Updated 2026-10-09.*
 

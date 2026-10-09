@@ -52,7 +52,7 @@ def make_plan(features, commit):
     return dict(protocol=1, expectedCommit=commit, steps=steps)
 
 
-ACTIONS = {'workspace', 'planner', 'book', 'cancel', 'save', 'follow', 'view', 'overview', 'menu', 'weather', 'time', 'camera', 'snapshot'}
+ACTIONS = {'workspace', 'planner', 'book', 'cancel', 'save', 'follow', 'view', 'overview', 'menu', 'weather', 'time', 'camera', 'snapshot', 'tower', 'tower-look', 'rain-motion'}
 
 
 def validate_plan(plan, commit):

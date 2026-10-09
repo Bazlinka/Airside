@@ -150,33 +150,70 @@ namespace Airside.Presentation
                 polygon = Clip(polygon, 2, maxZ, false);
                 if (polygon.Count < 3) continue;
                 var first = vertices.Count;
-                foreach (var v in polygon) vertices.Add(v + normal * 0.008f);
-                var back = vertices.Count;
-                foreach (var v in polygon) vertices.Add(v + normal * 0.003f);
-                // Distinct front/back vertices keep rebaking normals from cancelling to zero.
+                foreach (var v in polygon) vertices.Add(v);
                 for (var j = 1; j < polygon.Count - 1; j++)
-                {
                     indices.AddRange(new[] { first, first + j, first + j + 1 });
-                    indices.AddRange(new[] { back, back + j + 1, back + j });
-                }
-                for (var j = 0; j < polygon.Count; j++)
-                {
-                    var next = (j + 1) % polygon.Count;
-                    indices.AddRange(new[] { first + j, back + j, back + next,
-                        first + j, back + next, first + next });
-                }
             }
             if (vertices.Count == 0) return;
             var door = new GameObject(name).transform;
             door.SetParent(aircraft, false);
-            var leaf = new Mesh { name = name + " fitted skin" };
-            leaf.SetVertices(vertices);
-            leaf.SetTriangles(indices, 0);
-            leaf.RecalculateNormals();
-            leaf.RecalculateBounds();
+            var leaf = BuildLeafShell(vertices, indices, name);
             door.gameObject.AddComponent<MeshFilter>().sharedMesh = leaf;
+            door.gameObject.AddComponent<AirsideGeneratedMeshOwner>().Mesh = leaf;
             door.gameObject.AddComponent<MeshRenderer>().sharedMaterial = AircraftLiveryPaint.MaterialFor(
                 name, AircraftLiveryPaint.AirframeWhite);
+        }
+
+        private static Mesh BuildLeafShell(List<Vector3> source, List<int> faces, string name)
+        {
+            // Weld the clipped triangle edges before thickening: internal side walls on each
+            // individual triangle caused sparkling coplanar seams on the curved closed leaves.
+            var vertices = new List<Vector3>();
+            var triangles = new List<int>();
+            var map = new Dictionary<Vector3Int, int>();
+            foreach (var index in faces)
+            {
+                var v = source[index];
+                var key = new Vector3Int(Mathf.RoundToInt(v.x * 10000f), Mathf.RoundToInt(v.y * 10000f),
+                    Mathf.RoundToInt(v.z * 10000f));
+                if (!map.TryGetValue(key, out var compact))
+                {
+                    compact = vertices.Count;
+                    map.Add(key, compact);
+                    vertices.Add(v);
+                }
+                triangles.Add(compact);
+            }
+            var leaf = new Mesh { name = name + " fitted skin" };
+            leaf.SetVertices(vertices);
+            leaf.SetTriangles(triangles, 0);
+            leaf.RecalculateNormals();
+            var normals = leaf.normals;
+            var count = vertices.Count;
+            var edges = new Dictionary<(int, int), (int Count, int A, int B)>();
+            for (var i = 0; i < triangles.Count; i += 3)
+                for (var j = 0; j < 3; j++)
+                {
+                    var a = triangles[i + j];
+                    var b = triangles[i + (j + 1) % 3];
+                    var key = (Mathf.Min(a, b), Mathf.Max(a, b));
+                    edges.TryGetValue(key, out var old);
+                    edges[key] = (old.Count + 1, a, b);
+                }
+            for (var i = 0; i < count; i++) vertices.Add(vertices[i] + normals[i] * 0.004f);
+            for (var i = 0; i < count; i++) vertices[i] += normals[i] * 0.012f;
+            var front = triangles.ToArray();
+            for (var i = 0; i < front.Length; i += 3)
+                triangles.AddRange(new[] { front[i] + count, front[i + 2] + count, front[i + 1] + count });
+            foreach (var edge in edges.Values)
+                if (edge.Count == 1)
+                    triangles.AddRange(new[] { edge.A, edge.A + count, edge.B + count,
+                        edge.A, edge.B + count, edge.B });
+            leaf.SetVertices(vertices);
+            leaf.SetTriangles(triangles, 0);
+            leaf.RecalculateNormals();
+            leaf.RecalculateBounds();
+            return leaf;
         }
 
         private static List<Vector3> Clip(List<Vector3> input, int axis, float edge, bool greater)

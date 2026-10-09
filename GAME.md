@@ -16,6 +16,7 @@ Fix pass (Claude, issues #722/#723/#724/#725/#726 = findings 1/14/7/2/15): #1 in
 Fix status (Claude, one PR each; Unity unverified, quick headless checks only): #3 guide Away wording follows
 Outbound/AtDestination/Inbound (#720). #9 outstation landing toast keeps the outbound flight number (#729).
 Outbound/AtDestination/Inbound (#720). #6 an armed contract card's button reads CONFIRM instead of ACCEPT (#733).
+Outbound/AtDestination/Inbound (#720). #11 the Adelaide radar is hidden while watching Parafield (#739).
 
 **Welcome and comfort fixes (9 Oct, Codex, #706):** title/setup weather isolation and consistent Weather Layers;
 F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; compact/recovery welcome cards;

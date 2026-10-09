@@ -1,0 +1,127 @@
+[
+  {
+    "path": "evidence/manual40/observe-16.png",
+    "sha256": "89e69dcb26d86694e30415d49c5315618477cc656c7332fbc3996f17773084e1",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40/observe-16.png"
+  },
+  {
+    "path": "evidence/manual40/observe-19.png",
+    "sha256": "29b056efa499b15b2e566e771571970c4d650bbcbdb3ca0b28000dd3b41218e1",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40/observe-19.png"
+  },
+  {
+    "path": "evidence/manual40/observe-20.png",
+    "sha256": "ced4dfef24ca892945d6872c640b43fffca227d9b32a5f1acd38662494a5c4b2",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40/observe-20.png"
+  },
+  {
+    "path": "evidence/manual40/plan.json",
+    "sha256": "5cbf3c58e67e13584b6c4c285df16242ffcdf1666831672b069bd4498b6ff6d4",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40/plan.json"
+  },
+  {
+    "path": "evidence/manual40/gameplay-report.json",
+    "sha256": "11bbb05406f2a3fac217d3e184bc97891219e51e0a2d0f0648850ca8eb1dd23b",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40/gameplay-report.json"
+  },
+  {
+    "path": "evidence/manual40b/observe-23.png",
+    "sha256": "ea874625270618881dbe481f2ee21cbd692b1bd0be317f338bc0e005c8b9859a",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40b/observe-23.png"
+  },
+  {
+    "path": "evidence/manual40b/observe-24.png",
+    "sha256": "a23135de3cb7de514345638bc48978a2863e9d863eaf924b8227f720e8f24505",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40b/observe-24.png"
+  },
+  {
+    "path": "evidence/manual40b/observe-34.png",
+    "sha256": "12a332fec179a06d3d0d29aaeda4a53ff878fb4592be39a97ed3def924d1d7b7",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40b/observe-34.png"
+  },
+  {
+    "path": "evidence/manual40b/observe-35.png",
+    "sha256": "cec34a30a558a89d3c41b5e7be86b9736486d518b1b23f5947087b652a4644db",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40b/observe-35.png"
+  },
+  {
+    "path": "evidence/manual40b/plan.json",
+    "sha256": "05b637608446b2536c5aa7fb5fb485ab9955b94fbaeb0faea99f7523a3c798c7",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40b/plan.json"
+  },
+  {
+    "path": "evidence/manual40b/gameplay-report.json",
+    "sha256": "1cb12813b4c455206d22a2e5ede7ce80512e23ecd0643a25f6950f38898160a5",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40b/gameplay-report.json"
+  },
+  {
+    "path": "evidence/manual-heli/observe-06.png",
+    "sha256": "07e15264d0a3cd4d79f24f5e13d465c18b7111e882e8fc637ba3729cd4f721da",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual-heli/observe-06.png"
+  },
+  {
+    "path": "evidence/manual-heli/observe-27.png",
+    "sha256": "f434de81edd9c727223c59babba821c0687bd2098dd0518fc6ca613feabd04d0",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual-heli/observe-27.png"
+  },
+  {
+    "path": "evidence/manual-heli/plan.json",
+    "sha256": "05b637608446b2536c5aa7fb5fb485ab9955b94fbaeb0faea99f7523a3c798c7",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual-heli/plan.json"
+  },
+  {
+    "path": "evidence/manual-heli/gameplay-report.json",
+    "sha256": "5fc82b0fb67ca738d1ad06554ca1673c408dae452103a76ce834cdf6e174bacc",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual-heli/gameplay-report.json"
+  },
+  {
+    "path": "evidence/manual-quit/plan.json",
+    "sha256": "ad8d9423260917ccaffc02ec901900af1c4ee321ed2c2b9f6d8b0df0b9cdc65b",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual-quit/plan.json"
+  },
+  {
+    "path": "evidence/manual-quit/gameplay-report.json",
+    "sha256": "78673b53d4d41e7bc3b24f587c110360c1be0f30a1de28ddf74c0e9ab949a901",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual-quit/gameplay-report.json"
+  },
+  {
+    "path": "evidence/models/ATR42/exterior.png",
+    "sha256": "17261be3af3b67c3a2a0b0fdec12c1406b8546520a45301d902f798f87038524",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/models/ATR42/exterior.png"
+  },
+  {
+    "path": "evidence/models/ATR42/upright/exterior.png",
+    "sha256": "701983439611e1d5374d045dc6fd5b7d44a1fc900ee971c3a6e3cf61bcd549e8",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/models/ATR42/upright/exterior.png"
+  },
+  {
+    "path": "evidence/models/ATR42/plan.json",
+    "sha256": "2179e9c4a2e1edcc4eeb1a98a25ff1cdc1a207cd588761f95045c26f9f666530",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/models/ATR42/plan.json"
+  },
+  {
+    "path": "evidence/models/ATR42/gameplay-report.json",
+    "sha256": "cb9b87f97ac4430cfaf05bbfa5deefb699404cc185a7a60983bf4bcca3ab0edd",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/models/ATR42/gameplay-report.json"
+  },
+  {
+    "path": "evidence/models/ATR42-repeat/upright/angle-two.png",
+    "sha256": "1f935660f1c4cf40e3aa592603e327cc90fc6a8ace8312d5b48a44bafb2adf7a",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/models/ATR42-repeat/upright/angle-two.png"
+  },
+  {
+    "path": "evidence/models/ATR42-repeat/upright/angle-three.png",
+    "sha256": "3eb4acdc4a3d7840f4e2048c1a6a6842e86cb4cfa222dab5c8479442c6303de6",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/models/ATR42-repeat/upright/angle-three.png"
+  },
+  {
+    "path": "evidence/models/ATR42-repeat/plan.json",
+    "sha256": "84e8d1baa61815c12d177fc77f97506167d0676cf8efe756c265f90ea120cc98",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/models/ATR42-repeat/plan.json"
+  },
+  {
+    "path": "evidence/models/ATR42-repeat/gameplay-report.json",
+    "sha256": "cafbd64804ccabf344aaff31ad95f23c3af12db251e47bfa885143ca25b4d3be",
+    "source": "/Users/baileyfleming/Code/Airside/work/bug-hunt-50/models/ATR42-repeat/gameplay-report.json"
+  }
+]

@@ -1,0 +1,238 @@
+Selected excerpts of original player.log; omitted lines are not evidence of an error-free run.
+Source SHA256: abf23f335f727186b90385a5f5ac7fa2096eeacd110fafd7c1a20b40710628ed
+
+[omitted]
+1: Mono path[0] = '/Users/baileyfleming/.codex/worktrees/bug-hunt-50/Airside/work/builds/Airside.app/Contents/Resources/Data/Managed'
+2: Mono config path = '/Users/baileyfleming/.codex/worktrees/bug-hunt-50/Airside/work/builds/Airside.app/Contents/MonoBleedingEdge/etc'
+3: Input System module state changed to: Initialized.
+4: [Physics::Module] Initialized fallback backend.
+5: [Physics::Module] Id: 0xdecafbad
+6: Initialize engine version: 6000.3.23f1 (09d2ecc7fb28)
+7: [Subsystems] Discovering subsystems at path /Users/baileyfleming/.codex/worktrees/bug-hunt-50/Airside/work/builds/Airside.app/Contents/Resources/Data/UnitySubsystems
+8: GfxDevice: creating device client; kGfxThreadingModeThreaded
+9:  preferred device: Apple M1 Pro (high power)
+10: Metal devices available: 1
+11: 0: Apple M1 Pro (high power)
+12: Using device Apple M1 Pro (high power)
+13: Initializing Metal device caps: Apple M1 Pro
+14: Mac GPU Family: 2
+15: Apple GPU Family: 7
+16: MSL Version: 3.0
+17: Has Float MSAA: 1
+18: Has Float Filtering: 1
+19: ReadWrite Texture Tier: 2
+20: Begin MonoManager ReloadAssembly
+21: - Loaded All Assemblies, in  0.078 seconds
+22: - Finished resetting the current domain, in  0.001 seconds
+23: [Physics::Module] Selected backend.
+24: [Physics::Module] Name: PhysX
+25: [Physics::Module] Id: 0xf2b8ea05
+26: [Physics::Module] SDK Version: 4.1.2
+27: [Physics::Module] Integration Version: 1.0.0
+28: [Physics::Module] Threading Mode: Multi-Threaded
+29: UnloadTime: 0.432333 ms
+30: Airside aec64616 · HEAD · committed 2026-10-09 01:07 UTC · built 2026-10-09 01:27 UTC
+31: [Airside Parafield] Built 4 runways, 30 taxiways, 4 trainers
+32: Doorway: CabinDoor on Commercial AS-101 is not a front/back door shell (290 vertices); it opens onto bare hull.
+33: Doorway: Cargo door on Commercial AS-101 is not a front/back door shell (402 vertices); it opens onto bare hull.
+34: [Airside agent] protocol 1 started; isolated save /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40/test-save.json
+35: [Airside journey] started ADL-KGC rate 40; fresh soak save only
+36: [Airside soak] largest world renderer groups: Parafield 184, Terminal 111, Airfield 52, Adelaide 49, YPAD 43, Cloud 32, Tyre 24, Runway 19, Aircraft 15, Strobe 8, Spray 4, Smoke 4, LandingLight 4, Beacon 4, Boundary 4, Apron 4, Sun 2, Taxiways 2, Coast 2, Tower 2
+37: [Airside soak] render set: world 584 (visible), aircraft 197 (visible), world prefix none
+38: [Airside soak] started for 12 min in live time
+39: Doorway: CabinDoor on Commercial VH-PAX is not a front/back door shell (274 vertices); it opens onto bare hull.
+40: Doorway: Cargo door frame on Commercial VH-PAX is not a front/back door shell (306 vertices); it opens onto bare hull.
+41: Doorway: Cargo door on Commercial VH-PAX is not a front/back door shell (290 vertices); it opens onto bare hull.
+42: Doorway: CabinDoor on Commercial VH-FDA is not a front/back door shell (274 vertices); it opens onto bare hull.
+43: Doorway: Cargo door frame on Commercial VH-FDA is not a front/back door shell (306 vertices); it opens onto bare hull.
+44: Doorway: Cargo door on Commercial VH-FDA is not a front/back door shell (290 vertices); it opens onto bare hull.
+45: Doorway: CabinDoor on Commercial VH-ZRC is not a front/back door shell (274 vertices); it opens onto bare hull.
+46: Doorway: Cargo door frame on Commercial VH-ZRC is not a front/back door shell (306 vertices); it opens onto bare hull.
+47: Doorway: Cargo door on Commercial VH-ZRC is not a front/back door shell (290 vertices); it opens onto bare hull.
+48: Doorway: CabinDoor on Commercial VH-ZRD is not a front/back door shell (274 vertices); it opens onto bare hull.
+49: Doorway: Cargo door frame on Commercial VH-ZRD is not a front/back door shell (306 vertices); it opens onto bare hull.
+50: Doorway: Cargo door on Commercial VH-ZRD is not a front/back door shell (290 vertices); it opens onto bare hull.
+51: Doorway: CabinDoor on Commercial VH-ZRE is not a front/back door shell (274 vertices); it opens onto bare hull.
+52: Doorway: Cargo door frame on Commercial VH-ZRE is not a front/back door shell (306 vertices); it opens onto bare hull.
+53: Doorway: Cargo door on Commercial VH-ZRE is not a front/back door shell (290 vertices); it opens onto bare hull.
+54: Doorway: CabinDoor on Commercial VH-ZRF is not a front/back door shell (274 vertices); it opens onto bare hull.
+55: Doorway: Cargo door frame on Commercial VH-ZRF is not a front/back door shell (306 vertices); it opens onto bare hull.
+56: Doorway: Cargo door on Commercial VH-ZRF is not a front/back door shell (290 vertices); it opens onto bare hull.
+57: Doorway: CabinDoor on Commercial VH-ZRG is not a front/back door shell (274 vertices); it opens onto bare hull.
+58: Doorway: Cargo door frame on Commercial VH-ZRG is not a front/back door shell (306 vertices); it opens onto bare hull.
+59: Doorway: Cargo door on Commercial VH-ZRG is not a front/back door shell (290 vertices); it opens onto bare hull.
+60: Doorway: CabinDoor on Commercial VH-ZRH is not a front/back door shell (274 vertices); it opens onto bare hull.
+61: Doorway: Cargo door frame on Commercial VH-ZRH is not a front/back door shell (306 vertices); it opens onto bare hull.
+62: Doorway: Cargo door on Commercial VH-ZRH is not a front/back door shell (290 vertices); it opens onto bare hull.
+63: Doorway: Cargo door frame on Commercial VH-QOK is not a front/back door shell (386 vertices); it opens onto bare hull.
+64: Doorway: Cargo door on Commercial VH-QOK is not a front/back door shell (370 vertices); it opens onto bare hull.
+65: Doorway: Cargo door frame on Commercial VH-QOL is not a front/back door shell (386 vertices); it opens onto bare hull.
+66: Doorway: Cargo door on Commercial VH-QOL is not a front/back door shell (370 vertices); it opens onto bare hull.
+67: Doorway: Cargo door frame on Commercial VH-QOM is not a front/back door shell (386 vertices); it opens onto bare hull.
+68: Doorway: Cargo door on Commercial VH-QOM is not a front/back door shell (370 vertices); it opens onto bare hull.
+69: Doorway: Cargo door frame on Commercial VH-QON is not a front/back door shell (386 vertices); it opens onto bare hull.
+70: Doorway: Cargo door on Commercial VH-QON is not a front/back door shell (370 vertices); it opens onto bare hull.
+71: Doorway: CabinDoor on Commercial VH-8IA is not a front/back door shell (370 vertices); it opens onto bare hull.
+72: Doorway: CabinDoor on Commercial VH-8IB is not a front/back door shell (370 vertices); it opens onto bare hull.
+73: Doorway: CabinDoor on Commercial VH-8IC is not a front/back door shell (370 vertices); it opens onto bare hull.
+74: Doorway: CabinDoor on Commercial VH-VZX is not a front/back door shell (370 vertices); it opens onto bare hull.
+75: Doorway: CabinDoor on Commercial VH-VZY is not a front/back door shell (370 vertices); it opens onto bare hull.
+76: Doorway: CabinDoor on Commercial VH-VZZ is not a front/back door shell (370 vertices); it opens onto bare hull.
+77: Doorway: CabinDoor on Commercial VH-VFH is not a front/back door shell (370 vertices); it opens onto bare hull.
+78: Doorway: CabinDoor on Commercial VH-VFI is not a front/back door shell (370 vertices); it opens onto bare hull.
+79: Doorway: CabinDoor on Commercial ZK-NNA is not a front/back door shell (370 vertices); it opens onto bare hull.
+80: Doorway: CabinDoor on Commercial 9V-SCA is not a front/back door shell (354 vertices); it opens onto bare hull.
+81: Doorway: CabinDoor on Commercial 9M-MAB is not a front/back door shell (354 vertices); it opens onto bare hull.
+82: Doorway: CabinDoor on Commercial A6-EVA is not a front/back door shell (354 vertices); it opens onto bare hull.
+83: Doorway: CabinDoor on Commercial A7-ANC is not a front/back door shell (354 vertices); it opens onto bare hull.
+84: Doorway: CabinDoor on Commercial DQ-FAE is not a front/back door shell (370 vertices); it opens onto bare hull.
+85: Doorway: CabinDoor on Commercial VH-8ID is not a front/back door shell (370 vertices); it opens onto bare hull.
+86: Doorway: CabinDoor on Commercial VH-8IE is not a front/back door shell (370 vertices); it opens onto bare hull.
+87: Doorway: CabinDoor on Commercial VH-8IF is not a front/back door shell (370 vertices); it opens onto bare hull.
+88: Doorway: CabinDoor on Commercial VH-8IG is not a front/back door shell (370 vertices); it opens onto bare hull.
+89: Doorway: CabinDoor on Commercial VH-VZU is not a front/back door shell (370 vertices); it opens onto bare hull.
+90: Doorway: CabinDoor on Commercial VH-VZV is not a front/back door shell (370 vertices); it opens onto bare hull.
+91: Doorway: CabinDoor on Commercial VH-VZW is not a front/back door shell (370 vertices); it opens onto bare hull.
+92: Doorway: CabinDoor on Commercial VH-VZR is not a front/back door shell (370 vertices); it opens onto bare hull.
+93: Doorway: CabinDoor on Commercial VH-VZS is not a front/back door shell (370 vertices); it opens onto bare hull.
+94: Doorway: CabinDoor on Commercial VH-VZT is not a front/back door shell (370 vertices); it opens onto bare hull.
+95: Doorway: CabinDoor on Commercial VH-VFJ is not a front/back door shell (370 vertices); it opens onto bare hull.
+96: Doorway: CabinDoor on Commercial VH-VFK is not a front/back door shell (370 vertices); it opens onto bare hull.
+97: Doorway: CabinDoor on Commercial VH-VFL is not a front/back door shell (370 vertices); it opens onto bare hull.
+98: Doorway: CabinDoor on Commercial VH-FQF is not a front/back door shell (370 vertices); it opens onto bare hull.
+99: Doorway: CabinDoor on Commercial VH-FDH is not a front/back door shell (370 vertices); it opens onto bare hull.
+100: [Airside journey] real 0.0s sim 0.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+101: Doorway: CabinDoor on Sky QF1533 is not a front/back door shell (370 vertices); it opens onto bare hull.
+102: [Airside soak] hitch 4767 ms at 4.8 s (frame 2, orbit 2400 m)
+103: [Airside weather] Rain mist 0.00 fog enabled False shader Airside/HeightFog camera (677.63, 1838.51, 1799.65) tint RGBA(0.581, 0.699, 0.825, 1.000) layers True
+104: [Airside journey] real 5.0s sim 12.4 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+105: [Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40/book.png
+106: [Airside capture] readback 75 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40/book.png
+107: [Airside capture] written 206 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40/book.png
+108: [Airside agent] PASS book Booked VH-PAX to KGC
+109: Doorway: CabinDoor on Sky VOZVH-8IE is not a front/back door shell (370 vertices); it opens onto bare hull.
+110: [Airside journey] real 10.0s sim 210.8 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+111: Thread 0x16f783000 may have been prematurely finalized
+112: [Airside journey] real 15.1s sim 413.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+113: Doorway: CabinDoor on Sky VA588 is not a front/back door shell (370 vertices); it opens onto bare hull.
+114: Doorway: CabinDoor on Sky QF14 is not a front/back door shell (354 vertices); it opens onto bare hull.
+115: Doorway: CabinDoor on Sky QFAVH-VZZ is not a front/back door shell (370 vertices); it opens onto bare hull.
+116: Doorway: CabinDoor on Sky QF1524 is not a front/back door shell (370 vertices); it opens onto bare hull.
+117: [Airside journey] real 20.1s sim 614.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+118: [Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40/observe-01.png
+119: [Airside capture] readback 53 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40/observe-01.png
+120: [Airside capture] written 149 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40/observe-01.png
+
+[omitted]
+420: [Airside journey] real 379.8s sim 14987.7 VH-PAX AtStand trips 1 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 49 airport True elevation True
+421: [Airside cockpit] review entered VH-PAX AtStand eng L0.000/R0.000
+422: Adding component failed. Add required component of type 'AudioListener' or 'AudioSource' to the game object 'Interior sound' first.
+423: NullReferenceException: Object reference not set to an instance of an object
+424:   at Airside.Presentation.AirsidePrototype.InteriorSource (UnityEngine.AudioClip clip, System.Int32 priority, System.Single cutoff) [0x00022] in <25be71211a2947dc800abac144b5d268>:0 
+425:   at Airside.Presentation.AirsidePrototype.UpdateCockpitAirflow () [0x00105] in <25be71211a2947dc800abac144b5d268>:0 
+426:   at Airside.Presentation.AirsidePrototype.UpdateSoundscape () [0x00215] in <25be71211a2947dc800abac144b5d268>:0 
+427:   at Airside.Presentation.AirsidePrototype.Update () [0x001fe] in <25be71211a2947dc800abac144b5d268>:0 
+428: 
+429: Adding component failed. Add required component of type 'AudioListener' or 'AudioSource' to the game object 'Interior sound' first.
+430: NullReferenceException: Object reference not set to an instance of an object
+431:   at Airside.Presentation.AirsidePrototype.InteriorSource (UnityEngine.AudioClip clip, System.Int32 priority, System.Single cutoff) [0x00022] in <25be71211a2947dc800abac144b5d268>:0 
+432:   at Airside.Presentation.AirsidePrototype.UpdateCockpitAirflow () [0x00105] in <25be71211a2947dc800abac144b5d268>:0 
+433:   at Airside.Presentation.AirsidePrototype.UpdateSoundscape () [0x00215] in <25be71211a2947dc800abac144b5d268>:0 
+434:   at Airside.Presentation.AirsidePrototype.Update () [0x001fe] in <25be71211a2947dc800abac144b5d268>:0 
+435: 
+436: Adding component failed. Add required component of type 'AudioListener' or 'AudioSource' to the game object 'Interior sound' first.
+437: NullReferenceException: Object reference not set to an instance of an object
+438:   at Airside.Presentation.AirsidePrototype.InteriorSource (UnityEngine.AudioClip clip, System.Int32 priority, System.Single cutoff) [0x00022] in <25be71211a2947dc800abac144b5d268>:0 
+439:   at Airside.Presentation.AirsidePrototype.UpdateCockpitAirflow () [0x00105] in <25be71211a2947dc800abac144b5d268>:0 
+440:   at Airside.Presentation.AirsidePrototype.UpdateSoundscape () [0x00215] in <25be71211a2947dc800abac144b5d268>:0 
+441:   at Airside.Presentation.AirsidePrototype.Update () [0x001fe] in <25be71211a2947dc800abac144b5d268>:0 
+442: 
+443: Adding component failed. Add required component of type 'AudioListener' or 'AudioSource' to the game object 'Interior sound' first.
+444: NullReferenceException: Object reference not set to an instance of an object
+445:   at Airside.Presentation.AirsidePrototype.InteriorSource (UnityEngine.AudioClip clip, System.Int32 priority, System.Single cutoff) [0x00022] in <25be71211a2947dc800abac144b5d268>:0 
+446:   at Airside.Presentation.AirsidePrototype.UpdateCockpitAirflow () [0x00105] in <25be71211a2947dc800abac144b5d268>:0 
+447:   at Airside.Presentation.AirsidePrototype.UpdateSoundscape () [0x00215] in <25be71211a2947dc800abac144b5d268>:0 
+448:   at Airside.Presentation.AirsidePrototype.Update () [0x001fe] in <25be71211a2947dc800abac144b5d268>:0 
+449: 
+
+[omitted]
+2086:   at Airside.Presentation.AirsidePrototype.UpdateCockpitAirflow () [0x00105] in <25be71211a2947dc800abac144b5d268>:0 
+2087:   at Airside.Presentation.AirsidePrototype.UpdateSoundscape () [0x00215] in <25be71211a2947dc800abac144b5d268>:0 
+2088:   at Airside.Presentation.AirsidePrototype.Update () [0x001fe] in <25be71211a2947dc800abac144b5d268>:0 
+2089: 
+2090: Adding component failed. Add required component of type 'AudioListener' or 'AudioSource' to the game object 'Interior sound' first.
+2091: NullReferenceException: Object reference not set to an instance of an object
+2092:   at Airside.Presentation.AirsidePrototype.InteriorSource (UnityEngine.AudioClip clip, System.Int32 priority, System.Single cutoff) [0x00022] in <25be71211a2947dc800abac144b5d268>:0 
+2093:   at Airside.Presentation.AirsidePrototype.UpdateCockpitAirflow () [0x00105] in <25be71211a2947dc800abac144b5d268>:0 
+2094:   at Airside.Presentation.AirsidePrototype.UpdateSoundscape () [0x00215] in <25be71211a2947dc800abac144b5d268>:0 
+2095:   at Airside.Presentation.AirsidePrototype.Update () [0x001fe] in <25be71211a2947dc800abac144b5d268>:0 
+2096: 
+2097: [Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40/observe-25.png
+2098: Adding component failed. Add required component of type 'AudioListener' or 'AudioSource' to the game object 'Interior sound' first.
+2099: NullReferenceException: Object reference not set to an instance of an object
+2100:   at Airside.Presentation.AirsidePrototype.InteriorSource (UnityEngine.AudioClip clip, System.Int32 priority, System.Single cutoff) [0x00022] in <25be71211a2947dc800abac144b5d268>:0 
+2101:   at Airside.Presentation.AirsidePrototype.UpdateCockpitAirflow () [0x00105] in <25be71211a2947dc800abac144b5d268>:0 
+2102:   at Airside.Presentation.AirsidePrototype.UpdateSoundscape () [0x00215] in <25be71211a2947dc800abac144b5d268>:0 
+2103:   at Airside.Presentation.AirsidePrototype.Update () [0x001fe] in <25be71211a2947dc800abac144b5d268>:0 
+2104: 
+2105: Adding component failed. Add required component of type 'AudioListener' or 'AudioSource' to the game object 'Interior sound' first.
+2106: NullReferenceException: Object reference not set to an instance of an object
+2107:   at Airside.Presentation.AirsidePrototype.InteriorSource (UnityEngine.AudioClip clip, System.Int32 priority, System.Single cutoff) [0x00022] in <25be71211a2947dc800abac144b5d268>:0 
+2108:   at Airside.Presentation.AirsidePrototype.UpdateCockpitAirflow () [0x00105] in <25be71211a2947dc800abac144b5d268>:0 
+2109:   at Airside.Presentation.AirsidePrototype.UpdateSoundscape () [0x00215] in <25be71211a2947dc800abac144b5d268>:0 
+2110:   at Airside.Presentation.AirsidePrototype.Update () [0x001fe] in <25be71211a2947dc800abac144b5d268>:0 
+2111: 
+2112: [Airside capture] readback 18 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40/observe-25.png
+2113: Adding component failed. Add required component of type 'AudioListener' or 'AudioSource' to the game object 'Interior sound' first.
+2114: NullReferenceException: Object reference not set to an instance of an object
+2115:   at Airside.Presentation.AirsidePrototype.InteriorSource (UnityEngine.AudioClip clip, System.Int32 priority, System.Single cutoff) [0x00022] in <25be71211a2947dc800abac144b5d268>:0 
+2116:   at Airside.Presentation.AirsidePrototype.UpdateCockpitAirflow () [0x00105] in <25be71211a2947dc800abac144b5d268>:0 
+2117:   at Airside.Presentation.AirsidePrototype.UpdateSoundscape () [0x00215] in <25be71211a2947dc800abac144b5d268>:0 
+2118:   at Airside.Presentation.AirsidePrototype.Update () [0x001fe] in <25be71211a2947dc800abac144b5d268>:0 
+2119: 
+2120: Adding component failed. Add required component of type 'AudioListener' or 'AudioSource' to the game object 'Interior sound' first.
+2121: NullReferenceException: Object reference not set to an instance of an object
+2122:   at Airside.Presentation.AirsidePrototype.InteriorSource (UnityEngine.AudioClip clip, System.Int32 priority, System.Single cutoff) [0x00022] in <25be71211a2947dc800abac144b5d268>:0 
+2123:   at Airside.Presentation.AirsidePrototype.UpdateCockpitAirflow () [0x00105] in <25be71211a2947dc800abac144b5d268>:0 
+2124:   at Airside.Presentation.AirsidePrototype.UpdateSoundscape () [0x00215] in <25be71211a2947dc800abac144b5d268>:0 
+2125:   at Airside.Presentation.AirsidePrototype.Update () [0x001fe] in <25be71211a2947dc800abac144b5d268>:0 
+2126: 
+2127: Adding component failed. Add required component of type 'AudioListener' or 'AudioSource' to the game object 'Interior sound' first.
+2128: NullReferenceException: Object reference not set to an instance of an object
+2129:   at Airside.Presentation.AirsidePrototype.InteriorSource (UnityEngine.AudioClip clip, System.Int32 priority, System.Single cutoff) [0x00022] in <25be71211a2947dc800abac144b5d268>:0 
+2130:   at Airside.Presentation.AirsidePrototype.UpdateCockpitAirflow () [0x00105] in <25be71211a2947dc800abac144b5d268>:0 
+2131:   at Airside.Presentation.AirsidePrototype.UpdateSoundscape () [0x00215] in <25be71211a2947dc800abac144b5d268>:0 
+2132:   at Airside.Presentation.AirsidePrototype.Update () [0x001fe] in <25be71211a2947dc800abac144b5d268>:0 
+2133: 
+2134: Adding component failed. Add required component of type 'AudioListener' or 'AudioSource' to the game object 'Interior sound' first.
+2135: NullReferenceException: Object reference not set to an instance of an object
+2136:   at Airside.Presentation.AirsidePrototype.InteriorSource (UnityEngine.AudioClip clip, System.Int32 priority, System.Single cutoff) [0x00022] in <25be71211a2947dc800abac144b5d268>:0 
+2137:   at Airside.Presentation.AirsidePrototype.UpdateCockpitAirflow () [0x00105] in <25be71211a2947dc800abac144b5d268>:0 
+2138:   at Airside.Presentation.AirsidePrototype.UpdateSoundscape () [0x00215] in <25be71211a2947dc800abac144b5d268>:0 
+2139:   at Airside.Presentation.AirsidePrototype.Update () [0x001fe] in <25be71211a2947dc800abac144b5d268>:0 
+2140: 
+2141: Adding component failed. Add required component of type 'AudioListener' or 'AudioSource' to the game object 'Interior sound' first.
+2142: NullReferenceException: Object reference not set to an instance of an object
+2143:   at Airside.Presentation.AirsidePrototype.InteriorSource (UnityEngine.AudioClip clip, System.Int32 priority, System.Single cutoff) [0x00022] in <25be71211a2947dc800abac144b5d268>:0 
+2144:   at Airside.Presentation.AirsidePrototype.UpdateCockpitAirflow () [0x00105] in <25be71211a2947dc800abac144b5d268>:0 
+2145:   at Airside.Presentation.AirsidePrototype.UpdateSoundscape () [0x00215] in <25be71211a2947dc800abac144b5d268>:0 
+2146:   at Airside.Presentation.AirsidePrototype.Update () [0x001fe] in <25be71211a2947dc800abac144b5d268>:0 
+2147: 
+2148: [Airside capture] written 84 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual40/observe-25.png
+2149: [Airside agent] COMPLETE failed
+2150: Thread 0x16f9ff000 may have been prematurely finalized
+2151: Thread 0x7026b93000 may have been prematurely finalized
+2152: [Physics::Module] Cleanup current backend.
+2153: [Physics::Module] Id: 0xf2b8ea05
+2154: Input System module state changed to: ShutdownInProgress.
+2155: Input System polling thread exited.
+2156: Input System module state changed to: Shutdown.
+2157: Thread 0x16e7a7000 may have been prematurely finalized
+2158: Thread 0x16e8bf000 may have been prematurely finalized
+2159: Thread 0x16e833000 may have been prematurely finalized
+2160: Thread 0x16e94b000 may have been prematurely finalized
+2161: Thread 0x16ea63000 may have been prematurely finalized
+2162: Thread 0x16e9d7000 may have been prematurely finalized
+2163: Thread 0x16eaef000 may have been prematurely finalized
+2164: Thread 0x16eb7b000 may have been prematurely finalized
+2165: Thread 0x16ec07000 may have been prematurely finalized

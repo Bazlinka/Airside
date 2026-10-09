@@ -1,0 +1,143 @@
+Selected excerpts of original player.log; omitted lines are not evidence of an error-free run.
+Source SHA256: 16d713f48b20dbe90f977f284690e5433431f6c4964e6fa1917f915394cb891a
+
+[omitted]
+1: Mono path[0] = '/Users/baileyfleming/.codex/worktrees/bug-hunt-50/Airside/work/builds/Airside.app/Contents/Resources/Data/Managed'
+2: Mono config path = '/Users/baileyfleming/.codex/worktrees/bug-hunt-50/Airside/work/builds/Airside.app/Contents/MonoBleedingEdge/etc'
+3: Input System module state changed to: Initialized.
+4: [Physics::Module] Initialized fallback backend.
+5: [Physics::Module] Id: 0xdecafbad
+6: Initialize engine version: 6000.3.23f1 (09d2ecc7fb28)
+7: [Subsystems] Discovering subsystems at path /Users/baileyfleming/.codex/worktrees/bug-hunt-50/Airside/work/builds/Airside.app/Contents/Resources/Data/UnitySubsystems
+8: GfxDevice: creating device client; kGfxThreadingModeThreaded
+9:  preferred device: Apple M1 Pro (high power)
+10: Metal devices available: 1
+11: 0: Apple M1 Pro (high power)
+12: Using device Apple M1 Pro (high power)
+13: Initializing Metal device caps: Apple M1 Pro
+14: Mac GPU Family: 2
+15: Apple GPU Family: 7
+16: MSL Version: 3.0
+17: Has Float MSAA: 1
+18: Has Float Filtering: 1
+19: ReadWrite Texture Tier: 2
+20: Begin MonoManager ReloadAssembly
+21: - Loaded All Assemblies, in  0.104 seconds
+22: - Finished resetting the current domain, in  0.002 seconds
+23: [Physics::Module] Selected backend.
+24: [Physics::Module] Name: PhysX
+25: [Physics::Module] Id: 0xf2b8ea05
+26: [Physics::Module] SDK Version: 4.1.2
+27: [Physics::Module] Integration Version: 1.0.0
+28: [Physics::Module] Threading Mode: Multi-Threaded
+29: UnloadTime: 0.372125 ms
+30: Airside aec64616 · HEAD · committed 2026-10-09 01:07 UTC · built 2026-10-09 01:27 UTC
+31: [Airside Parafield] Built 4 runways, 30 taxiways, 4 trainers
+32: Doorway: CabinDoor on Commercial AS-101 is not a front/back door shell (290 vertices); it opens onto bare hull.
+33: Doorway: Cargo door on Commercial AS-101 is not a front/back door shell (402 vertices); it opens onto bare hull.
+34: [Airside agent] protocol 1 started; isolated save /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual-quit/test-save.json
+35: [Airside journey] started ADL-KGC rate 40; fresh soak save only
+36: [Airside soak] largest world renderer groups: Parafield 184, Terminal 111, Airfield 52, Adelaide 49, YPAD 43, Cloud 32, Tyre 24, Runway 19, Aircraft 15, Strobe 8, Boundary 4, LandingLight 4, Beacon 4, Apron 4, Smoke 4, Spray 4, Taxiways 2, Taxiway 2, Stand 2, Rubber 2
+37: [Airside soak] render set: world 584 (visible), aircraft 197 (visible), world prefix none
+38: [Airside soak] started for 12 min in live time
+39: Doorway: CabinDoor on Commercial VH-PAX is not a front/back door shell (274 vertices); it opens onto bare hull.
+40: Doorway: Cargo door frame on Commercial VH-PAX is not a front/back door shell (306 vertices); it opens onto bare hull.
+41: Doorway: Cargo door on Commercial VH-PAX is not a front/back door shell (290 vertices); it opens onto bare hull.
+42: Doorway: CabinDoor on Commercial VH-FDA is not a front/back door shell (274 vertices); it opens onto bare hull.
+43: Doorway: Cargo door frame on Commercial VH-FDA is not a front/back door shell (306 vertices); it opens onto bare hull.
+44: Doorway: Cargo door on Commercial VH-FDA is not a front/back door shell (290 vertices); it opens onto bare hull.
+45: Doorway: CabinDoor on Commercial VH-ZRC is not a front/back door shell (274 vertices); it opens onto bare hull.
+46: Doorway: Cargo door frame on Commercial VH-ZRC is not a front/back door shell (306 vertices); it opens onto bare hull.
+47: Doorway: Cargo door on Commercial VH-ZRC is not a front/back door shell (290 vertices); it opens onto bare hull.
+48: Doorway: CabinDoor on Commercial VH-ZRD is not a front/back door shell (274 vertices); it opens onto bare hull.
+49: Doorway: Cargo door frame on Commercial VH-ZRD is not a front/back door shell (306 vertices); it opens onto bare hull.
+50: Doorway: Cargo door on Commercial VH-ZRD is not a front/back door shell (290 vertices); it opens onto bare hull.
+51: Doorway: CabinDoor on Commercial VH-ZRE is not a front/back door shell (274 vertices); it opens onto bare hull.
+52: Doorway: Cargo door frame on Commercial VH-ZRE is not a front/back door shell (306 vertices); it opens onto bare hull.
+53: Doorway: Cargo door on Commercial VH-ZRE is not a front/back door shell (290 vertices); it opens onto bare hull.
+54: Doorway: CabinDoor on Commercial VH-ZRF is not a front/back door shell (274 vertices); it opens onto bare hull.
+55: Doorway: Cargo door frame on Commercial VH-ZRF is not a front/back door shell (306 vertices); it opens onto bare hull.
+56: Doorway: Cargo door on Commercial VH-ZRF is not a front/back door shell (290 vertices); it opens onto bare hull.
+57: Doorway: CabinDoor on Commercial VH-ZRG is not a front/back door shell (274 vertices); it opens onto bare hull.
+58: Doorway: Cargo door frame on Commercial VH-ZRG is not a front/back door shell (306 vertices); it opens onto bare hull.
+59: Doorway: Cargo door on Commercial VH-ZRG is not a front/back door shell (290 vertices); it opens onto bare hull.
+60: Doorway: CabinDoor on Commercial VH-ZRH is not a front/back door shell (274 vertices); it opens onto bare hull.
+61: Doorway: Cargo door frame on Commercial VH-ZRH is not a front/back door shell (306 vertices); it opens onto bare hull.
+62: Doorway: Cargo door on Commercial VH-ZRH is not a front/back door shell (290 vertices); it opens onto bare hull.
+63: Doorway: Cargo door frame on Commercial VH-QOK is not a front/back door shell (386 vertices); it opens onto bare hull.
+64: Doorway: Cargo door on Commercial VH-QOK is not a front/back door shell (370 vertices); it opens onto bare hull.
+65: Doorway: Cargo door frame on Commercial VH-QOL is not a front/back door shell (386 vertices); it opens onto bare hull.
+66: Doorway: Cargo door on Commercial VH-QOL is not a front/back door shell (370 vertices); it opens onto bare hull.
+67: Doorway: Cargo door frame on Commercial VH-QOM is not a front/back door shell (386 vertices); it opens onto bare hull.
+68: Doorway: Cargo door on Commercial VH-QOM is not a front/back door shell (370 vertices); it opens onto bare hull.
+69: Doorway: Cargo door frame on Commercial VH-QON is not a front/back door shell (386 vertices); it opens onto bare hull.
+70: Doorway: Cargo door on Commercial VH-QON is not a front/back door shell (370 vertices); it opens onto bare hull.
+71: Doorway: CabinDoor on Commercial VH-8IA is not a front/back door shell (370 vertices); it opens onto bare hull.
+72: Doorway: CabinDoor on Commercial VH-8IB is not a front/back door shell (370 vertices); it opens onto bare hull.
+73: Doorway: CabinDoor on Commercial VH-8IC is not a front/back door shell (370 vertices); it opens onto bare hull.
+74: Doorway: CabinDoor on Commercial VH-VZX is not a front/back door shell (370 vertices); it opens onto bare hull.
+75: Doorway: CabinDoor on Commercial VH-VZY is not a front/back door shell (370 vertices); it opens onto bare hull.
+76: Doorway: CabinDoor on Commercial VH-VZZ is not a front/back door shell (370 vertices); it opens onto bare hull.
+77: Doorway: CabinDoor on Commercial VH-VFH is not a front/back door shell (370 vertices); it opens onto bare hull.
+78: Doorway: CabinDoor on Commercial VH-VFI is not a front/back door shell (370 vertices); it opens onto bare hull.
+79: Doorway: CabinDoor on Commercial ZK-NNA is not a front/back door shell (370 vertices); it opens onto bare hull.
+80: Doorway: CabinDoor on Commercial 9V-SCA is not a front/back door shell (354 vertices); it opens onto bare hull.
+81: Doorway: CabinDoor on Commercial 9M-MAB is not a front/back door shell (354 vertices); it opens onto bare hull.
+82: Doorway: CabinDoor on Commercial A6-EVA is not a front/back door shell (354 vertices); it opens onto bare hull.
+83: Doorway: CabinDoor on Commercial A7-ANC is not a front/back door shell (354 vertices); it opens onto bare hull.
+84: Doorway: CabinDoor on Commercial DQ-FAE is not a front/back door shell (370 vertices); it opens onto bare hull.
+85: Doorway: CabinDoor on Commercial VH-8ID is not a front/back door shell (370 vertices); it opens onto bare hull.
+86: Doorway: CabinDoor on Commercial VH-8IE is not a front/back door shell (370 vertices); it opens onto bare hull.
+87: Doorway: CabinDoor on Commercial VH-8IF is not a front/back door shell (370 vertices); it opens onto bare hull.
+88: Doorway: CabinDoor on Commercial VH-8IG is not a front/back door shell (370 vertices); it opens onto bare hull.
+89: Doorway: CabinDoor on Commercial VH-VZU is not a front/back door shell (370 vertices); it opens onto bare hull.
+90: Doorway: CabinDoor on Commercial VH-VZV is not a front/back door shell (370 vertices); it opens onto bare hull.
+91: Doorway: CabinDoor on Commercial VH-VZW is not a front/back door shell (370 vertices); it opens onto bare hull.
+92: Doorway: CabinDoor on Commercial VH-VZR is not a front/back door shell (370 vertices); it opens onto bare hull.
+93: Doorway: CabinDoor on Commercial VH-VZS is not a front/back door shell (370 vertices); it opens onto bare hull.
+94: Doorway: CabinDoor on Commercial VH-VZT is not a front/back door shell (370 vertices); it opens onto bare hull.
+95: Doorway: CabinDoor on Commercial VH-VFJ is not a front/back door shell (370 vertices); it opens onto bare hull.
+96: Doorway: CabinDoor on Commercial VH-VFK is not a front/back door shell (370 vertices); it opens onto bare hull.
+97: Doorway: CabinDoor on Commercial VH-VFL is not a front/back door shell (370 vertices); it opens onto bare hull.
+98: Doorway: CabinDoor on Commercial VH-FQF is not a front/back door shell (370 vertices); it opens onto bare hull.
+99: Doorway: CabinDoor on Commercial VH-FDH is not a front/back door shell (370 vertices); it opens onto bare hull.
+100: [Airside journey] real 0.0s sim 0.1 VH-PAX AtStand trips 0 cockpit False world 0.0,0.0,0.0 attitude (0.00, 0.00, 0.00) origin 0,0 tiles 0 airport True elevation False
+101: Doorway: CabinDoor on Sky QF1533 is not a front/back door shell (370 vertices); it opens onto bare hull.
+102: Thread 0x16cb0b000 may have been prematurely finalized
+103: [Airside soak] hitch 4833 ms at 4.8 s (frame 2, orbit 2400 m)
+104: [Airside weather] Rain mist 0.00 fog enabled False shader Airside/HeightFog camera (677.63, 1838.51, 1799.65) tint RGBA(0.581, 0.699, 0.825, 1.000) layers True
+105: [Airside terrain] flight terrain created in 47 ms
+106: [Airside journey] real 5.0s sim 8.1 VH-PAX AtStand trips 0 cockpit True world 995.9,0.7,489.6 attitude (0.00, 192.87, 0.00) origin 0,0 tiles 2 airport True elevation True
+107: Doorway: CabinDoor on Sky VOZVH-8IE is not a front/back door shell (370 vertices); it opens onto bare hull.
+108: [Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual-quit/exterior.png
+109: [Airside capture] readback 36 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual-quit/exterior.png
+110: [Airside journey] real 10.0s sim 208.6 VH-PAX AtStand trips 0 cockpit True world 995.9,0.7,489.6 attitude (0.00, 192.87, 0.00) origin 0,0 tiles 49 airport True elevation True
+111: [Airside capture] written 109 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual-quit/exterior.png
+112: [Airside agent] PASS exterior Entered Exterior for VH-PAX
+113: [Airside capture] request /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual-quit/quit-ready.png
+114: [Airside capture] readback 39 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual-quit/quit-ready.png
+115: [Airside capture] written 112 ms /Users/baileyfleming/Code/Airside/work/bug-hunt-50/manual-quit/quit-ready.png
+116: [Airside agent] PASS quit-ready Observed VH-PAX AtStand
+117: [Airside agent] COMPLETE passed
+118: Thread 0x16cd87000 may have been prematurely finalized
+119: NullReferenceException: Object reference not set to an instance of an object.
+120:   at UnityEngine.Bindings.ThrowHelper.ThrowNullReferenceException (System.Object obj) [0x00018] in <0d5fdb3eb0c94f02b63a0d2925584ef3>:0 
+121:   at UnityEngine.Component.get_transform () [0x00006] in <0d5fdb3eb0c94f02b63a0d2925584ef3>:0 
+122:   at Airside.Presentation.AirsideCameraController.EndCockpit () [0x00009] in <25be71211a2947dc800abac144b5d268>:0 
+123:   at Airside.Presentation.AirsidePrototype.OnDestroy () [0x00051] in <25be71211a2947dc800abac144b5d268>:0 
+124: 
+125: Thread 0x178393000 may have been prematurely finalized
+126: [Physics::Module] Cleanup current backend.
+127: [Physics::Module] Id: 0xf2b8ea05
+128: Input System module state changed to: ShutdownInProgress.
+129: Input System polling thread exited.
+130: Input System module state changed to: Shutdown.
+131: Thread 0x16bb2f000 may have been prematurely finalized
+132: Thread 0x16bbbb000 may have been prematurely finalized
+133: Thread 0x16bc47000 may have been prematurely finalized
+134: Thread 0x16bcd3000 may have been prematurely finalized
+135: Thread 0x16bd5f000 may have been prematurely finalized
+136: Thread 0x16bdeb000 may have been prematurely finalized
+137: Thread 0x16be77000 may have been prematurely finalized
+138: Thread 0x16bf03000 may have been prematurely finalized
+139: Thread 0x16bf8f000 may have been prematurely finalized

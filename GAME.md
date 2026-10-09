@@ -10,6 +10,9 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 Envelopes, pivots, paint, simulation and saves retained. 52 focused headless/17 native checks pass;
 Mac build/four-step parked A350 player check pass, no runtime errors. Evidence/limits: `docs/testing/fleet-refinements-2026-10-09/README.md`.
 
+**Report-only bug hunt (9 Oct, Codex, #717):** 15 findings/evidence: `docs/testing/bug-hunt-2026-10-09/README.md`.
+Tested aec64616 at 40×, no fixes; capture inversion subsequently fixed. Reproduce remaining findings on current main; UX/normal-speed limits are explicit.
+
 **Welcome and comfort fixes (9 Oct, Codex, #706):** title/setup weather isolation and consistent Weather Layers;
 F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; compact/recovery welcome cards;
 readable scrolling Options and current-view targeting. Operational weather, live time, economics and saves unchanged.
@@ -190,13 +193,8 @@ thumps and Vibration off. Check lightning/thunder alignment and transparent rend
 Standing policy: necessary gameplay/builds automatic; full journeys when warranted. Broad suites/performance/long soaks on request;
 merge completed authorised work without repeated approval.
 
-**Other current context:** aircraft body realism (#651), regional departure/landing
-speeds/altitude, maps/HUD redesign, notifications/registration (#645/#663), toasts,
-control-tower view, Adelaide opening and earlier lighting/audio/native changes retain
-their existing Unity/Mac verification limits. Remaining HUD surfaces and compact-window
-layout failures, WIP 787-window proposal (#543), known FlightManual page 7 failure and
-satellite JPEG mirror mismatch remain separate. The preceding status and exact other
-tools' open work are preserved in
+**Other current context:** earlier aircraft/HUD/lighting/audio work retains its recorded validation limits.
+HUD/compact-layout failures, WIP 787-window proposal (#543), FlightManual page 7 and satellite JPEG mirror mismatch remain separate. Earlier status and other tools' work:
 `docs/history/game-handoff-before-weather-realism-2026-10-08.md`.
 
 *One block, replaced at the end of each session. Updated 2026-10-09.*

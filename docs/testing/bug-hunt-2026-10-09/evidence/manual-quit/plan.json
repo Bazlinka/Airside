@@ -1,0 +1,20 @@
+{
+  "protocol": 1,
+  "expectedCommit": "aec646166196b269dd6c9d4a05e9059c2212060e",
+  "steps": [
+    {
+      "id": "exterior",
+      "action": "view",
+      "value": "Exterior",
+      "capture": true,
+      "settleSeconds": 5
+    },
+    {
+      "id": "quit-ready",
+      "action": "snapshot",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 2
+    }
+  ]
+}

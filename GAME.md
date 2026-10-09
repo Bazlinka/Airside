@@ -10,6 +10,10 @@ Working rules are in [`AGENTS.md`](AGENTS.md); the one-page map of docs is [`doc
 Envelopes, pivots, paint, simulation and saves retained. 52 focused headless/17 native checks pass;
 Mac build/four-step parked A350 player check pass, no runtime errors. Evidence/limits: `docs/testing/fleet-refinements-2026-10-09/README.md`.
 
+**Second report-only collection (9 Oct, Codex, #751):** seven additional findings (16–22), no fixes;
+`docs/testing/bug-hunt-second-2026-10-09/README.md`. Clean 0cca70b3 native 40× private-career evidence.
+Bailey requested immediate merge before the fifteen-finding target; eight remain uncollected. Reproduce on current main before fixes.
+
 **Report-only bug hunt (9 Oct, Codex, #717):** 15 findings/evidence: `docs/testing/bug-hunt-2026-10-09/README.md`.
 Tested aec64616 at 40×, no fixes; capture inversion subsequently fixed. Reproduce remaining findings on current main; UX/normal-speed limits are explicit.
 Fix pass (Claude, issues #722/#723/#724/#725/#726 = findings 1/14/7/2/15): #1 interior audio sources now exist before their low-pass filters (fixed, #728); #7 (#730) doorway shells at the generators' exact 4 mm minimum thickness are accepted again (float32 rounding rejected them); #14 (#731) quit from exterior no longer throws in `EndCockpit` (destroyed camera controller skipped at teardown); #15 (#726) not a defect: the ATR 42 horizontal stabiliser is rendered in Exterior (record `docs/testing/bug-hunt-2026-10-09/fix-pass/`); #2 (#725) not reproduced on clean main (original was a dirty-stamped build; evidence `docs/testing/bug-hunt-2026-10-09/fix-pass/`). Integration run on main e9d9db19 (ATR 42 and Saab windows/exterior/quit): 0 runtime errors, no audio, doorway or EndCockpit errors; open-door hollow and Kingscote window context unverified.

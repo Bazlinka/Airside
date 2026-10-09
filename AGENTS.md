@@ -66,6 +66,7 @@ Airside/
     audit-aircraft-geometry.py
                              Floating-part / door-flush audit and multi-view z-buffered renders of the
                              runtime aircraft glTFs; test-aircraft-connectivity.py runs it as a check
+    cut-livery-windows.py   Cuts the cabin window outlines out of the livery paint shells in place (paint no longer covers panes; --check fails if it does)
     generate-aircraft-title-layout.py
                              Fits each type's fuselage title/registration to its mesh (--check);
                              test-aircraft-paint.py and render-aircraft-paint.py verify the paint

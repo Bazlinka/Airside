@@ -6,7 +6,7 @@
   "buffers": [
     {
       "uri": "mdl_dash8_q400_v01.bin",
-      "byteLength": 2597748
+      "byteLength": 2643324
     }
   ],
   "bufferViews": [
@@ -2329,72 +2329,72 @@
     {
       "buffer": 0,
       "byteOffset": 2300968,
-      "byteLength": 103332,
+      "byteLength": 143880,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 2404300,
-      "byteLength": 20874,
+      "byteOffset": 2444848,
+      "byteLength": 25902,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 2425176,
+      "byteOffset": 2470752,
       "byteLength": 18720,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 2443896,
+      "byteOffset": 2489472,
       "byteLength": 4068,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 2447964,
+      "byteOffset": 2493540,
       "byteLength": 61440,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 2509404,
+      "byteOffset": 2554980,
       "byteLength": 10752,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 2520156,
+      "byteOffset": 2565732,
       "byteLength": 61440,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 2581596,
+      "byteOffset": 2627172,
       "byteLength": 10752,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 2592348,
+      "byteOffset": 2637924,
       "byteLength": 1548,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 2593896,
+      "byteOffset": 2639472,
       "byteLength": 1152,
       "target": 34963
     },
     {
       "buffer": 0,
-      "byteOffset": 2595048,
+      "byteOffset": 2640624,
       "byteLength": 1548,
       "target": 34962
     },
     {
       "buffer": 0,
-      "byteOffset": 2596596,
+      "byteOffset": 2642172,
       "byteLength": 1152,
       "target": 34963
     }
@@ -6649,7 +6649,7 @@
     {
       "bufferView": 386,
       "componentType": 5126,
-      "count": 8611,
+      "count": 11990,
       "type": "VEC3",
       "max": [
         1.374000072479248,
@@ -6665,7 +6665,7 @@
     {
       "bufferView": 387,
       "componentType": 5123,
-      "count": 10437,
+      "count": 12951,
       "type": "SCALAR"
     },
     {

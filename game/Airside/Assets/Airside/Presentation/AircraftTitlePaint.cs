@@ -161,7 +161,7 @@ namespace Airside.Presentation
             if (Is(type, AircraftType.Saab340))
                 return new AircraftIdentityMarkingLayout(0.91f, 2.02f, 5.19f, 0.98f, 1.93f, -4.21f, 0.078f, 0.040f, 39.23f, 33.61f, 6.71f);
             if (Is(type, AircraftType.Dash8Q400))
-                return new AircraftIdentityMarkingLayout(1.11f, 2.34f, 10.63f, 1.18f, 2.23f, -9.27f, 0.092f, 0.047f, 37.17f, 31.91f, 6.48f);
+                return new AircraftIdentityMarkingLayout(1.11f, 2.34f, 10.63f, 1.18f, 2.23f, -9.27f, 0.092f, 0.047f, 37.17f, 31.91f, 6.08f);
             if (Is(type, AircraftType.EmbraerE190))
                 return new AircraftIdentityMarkingLayout(1.21f, 3.80f, -4.39f, 1.31f, 3.66f, -27.69f, 0.113f, 0.053f, 36.71f, 30.53f, 12.32f);
             if (Is(type, AircraftType.AirbusA220300))

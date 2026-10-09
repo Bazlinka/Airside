@@ -34,6 +34,23 @@ realistic overheads. Bailey left the choice to the team ("up to you"), and this 
 - First code: `Simulation/FlightCostModel.cs` and `FlightCostModelTests`. It is **not yet wired** into `FlightEconomics`, planner, HUD or
   saves; the live game still uses game-dollar formulas until the v24 migration lands.
 
+### Pacing check (economy-only simulation, 9 Oct 2026)
+
+`EconomyPacingTests` plays a competent, ambitious lessee through 150 open hours using only `FlightCostModel`, with stand-ins for bases
+(fleet caps 3 / 8 / 14 / 20 by tier) and route saturation (each extra aircraft of a type earns 80% of the last). Baseline fuel:
+
+| Open hour | Fleet | Loan | Net per open hour | Mix |
+|---:|---:|---:|---:|---|
+| 8 | 3 | 0 | A$1.3k | Saab + 2 ATR 42 |
+| 35 | 8 | A$0.2M | A$2.3k | + Dash 8 |
+| 70 | 14 | A$10M | A$14.9k | + A321neo, A220, A320 |
+| 110 | 20 | A$38M | A$54k | + two 787-10, two A350, 787-9, A330-900 |
+
+Cash never goes negative. At half revenue the fleet reaches 15 by hour 150, so money matters but tiers and bases still pace growth. Doubled fuel
+price slows it without breaking it. First draft constants made money irrelevant (margins 26-53%), so overhead rose to 30% of revenue and crew
+on-costs to 1.35x. Real margins are still lower than the game's; the CareerBot run must set the final level. Limits: this is not CareerBot, it
+ignores contracts, reliability, curfew timing and base purchase costs, and every input is a tier D design value.
+
 ## Reason
 
 Today's flat per-flight formulas make cash a timer, not a decision (ADR `2026-10-08-flight-cost-rebalance`). Real fee

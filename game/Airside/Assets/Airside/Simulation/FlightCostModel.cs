@@ -70,7 +70,10 @@ namespace Airside.Simulation
         public const double GroundAndCircuitHours = 0.35;
 
         /// <summary>Sales, admin, insurance, IT and similar costs as a share of revenue.</summary>
-        public const double OverheadRate = 0.18;
+        public const double OverheadRate = 0.30;
+
+        /// <summary>Crew on-costs on top of salary: super, allowances, training, rostering slack (design).</summary>
+        public const double CrewOnCostFactor = 1.35;
 
         /// <summary>Turnaround handling per departure: a flat part plus a weight part.</summary>
         public static double Handling(double tonnes) => 150.0 + 12.0 * tonnes;
@@ -225,7 +228,7 @@ namespace Airside.Simulation
             var revenue = passengers * Fare(band, km) * (type.IsRotorcraft ? RotorcraftFareMultiplier : 1.0);
 
             var fuel = blockHours * profile.BurnKgPerBlockHour * fuelPerKg;
-            var crew = blockHours * profile.CrewPerBlockHour;
+            var crew = blockHours * profile.CrewPerBlockHour * CrewOnCostFactor;
             var maintenance = blockHours * profile.MaintenancePerBlockHour;
             var airport = passengers * PassengerFee(band) * 2.0;
             var navigation = TerminalNavigation(profile.Tonnes) + Arff(profile.Tonnes) + EnRoute(profile.Tonnes, km);

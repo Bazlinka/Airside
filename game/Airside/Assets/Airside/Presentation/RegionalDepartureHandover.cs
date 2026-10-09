@@ -26,8 +26,16 @@ namespace Airside.Presentation
         /// <summary>Stay a little under the cap so sampling between profile points never touches it.</summary>
         public const double CapMargin = 0.96;
 
-        /// <summary>Share of the headroom under the cap the ease may use.</summary>
-        public const double HeadroomShare = 0.6;
+        /// <summary>
+        /// Shares of the headroom under the cap the ease may use, tried in turn: the gentlest that closes the gap in time wins.
+        /// </summary>
+        private static readonly double[] HeadroomShares = { 0.6, 0.8, 1.0 };
+
+        /// <summary>
+        /// The arrival at the home field bends the route onto the drawn final over its last tens of kilometres; the ease
+        /// must be over this long before the route's profile ends, so the two never overlap.
+        /// </summary>
+        public const double ArrivalBlendReserveSeconds = 450.0;
 
         private const double Step = 5.0;
         private const double TaperSeconds = 30.0;
@@ -49,53 +57,49 @@ namespace Airside.Presentation
         private static Plan Build(AircraftType type, EnrouteProfile route, double lagSeconds, double gap)
         {
             var start = RegionalFlightPath.DepartureSeconds;
-            // The landing terminal blend begins this long before touchdown; the ease must be over before it.
-            var latest = Math.Min(MaximumEndSeconds, route.LegSeconds - RegionalFlightPath.TerminalSeconds - 420.0);
+            if (gap < 1.0)
+                return new Plan(start, Step, new[] { 0.0, 0.0 }, MinimumBlendSeconds);
+            var latest = Math.Min(MaximumEndSeconds, route.LegSeconds - ArrivalBlendReserveSeconds);
             latest = Math.Max(start + MinimumBlendSeconds, latest);
-            var count = (int)Math.Ceiling((latest - start) / Step) + 1;
-            var headroom = new double[count];
+            var count = (int)Math.Floor((latest - start) / Step) + 1;
+            var room = new double[count];
             for (var i = 0; i < count; i++)
             {
                 var t = start + i * Step;
-                var room = CapMetresPerSecond(type, route, lagSeconds, t) - route.GroundSpeedKnotsAt(t) * CircuitProfile.KnotsToMetresPerSecond;
-                headroom[i] = Math.Max(0.0, room) * HeadroomShare;
+                room[i] = Math.Max(0.0, CapMetresPerSecond(type, route, lagSeconds, t)
+                                        - route.GroundSpeedKnotsAt(t) * CircuitProfile.KnotsToMetresPerSecond);
             }
 
-            if (gap < 1.0)
-                return new Plan(start, Step, new[] { 0.0, 0.0 }, MinimumBlendSeconds);
-
-            // Smallest end time whose tapered headroom adds up to the gap; failing that, the latest end, scaled to close.
-            var best = -1;
-            double[] cumulative = null;
-            for (var end = (int)Math.Ceiling(MinimumBlendSeconds / Step); end < count; end++)
+            // The gentlest share of the headroom that carries the gap away before the latest end.
+            foreach (var share in HeadroomShares)
             {
-                var sums = Cumulative(headroom, end);
-                if (sums[end] >= gap)
+                var headroom = new double[count];
+                for (var i = 0; i < count; i++)
+                    headroom[i] = room[i] * share;
+                for (var end = (int)Math.Ceiling(MinimumBlendSeconds / Step); end < count; end++)
                 {
-                    best = end;
-                    cumulative = sums;
-                    break;
+                    var sums = Cumulative(headroom, end);
+                    if (sums[end] >= gap)
+                        return Finish(start, sums, end);
                 }
             }
 
-            if (best < 0)
-            {
-                best = count - 1;
-                cumulative = Cumulative(headroom, best);
-                if (cumulative[best] < 1e-6)
-                {
-                    // No headroom at all: close at an even pace rather than never.
-                    for (var i = 0; i < count; i++)
-                        cumulative[i] = gap * i / best;
-                }
-            }
+            // The headroom cannot carry it: spread it evenly over the whole window, the smallest peak added speed there is
+            // (a long leg whose route already runs at the cap, never worse than the old two-minute ease).
+            var even = new double[count];
+            for (var i = 0; i < count; i++)
+                even[i] = 1.0;
+            return Finish(start, Cumulative(even, count - 1), count - 1);
+        }
 
-            var total = cumulative[best];
-            var keep = new double[best + 1];
-            for (var i = 0; i <= best; i++)
+        private static Plan Finish(double start, double[] cumulative, int end)
+        {
+            var total = cumulative[end];
+            var keep = new double[end + 1];
+            for (var i = 0; i <= end; i++)
                 keep[i] = 1.0 - cumulative[i] / total;
-            keep[best] = 0.0;
-            return new Plan(start, Step, keep, best * Step);
+            keep[end] = 0.0;
+            return new Plan(start, Step, keep, end * Step);
         }
 
         /// <summary>Running total of the headroom, tapered in over the first seconds and out over the last.</summary>
@@ -105,7 +109,7 @@ namespace Airside.Presentation
             var taper = (int)Math.Max(1, TaperSeconds / Step);
             for (var i = 1; i <= end && i < headroom.Length; i++)
             {
-                var mid = 0.5 * (headroom[i - 1] + headroom[i]);
+                var mid = Math.Min(headroom[i - 1], headroom[i]);
                 var weight = Smooth(i / (double)taper) * Smooth((end - (i - 0.5)) / taper);
                 sums[i] = sums[i - 1] + mid * weight * Step;
             }
@@ -126,7 +130,12 @@ namespace Airside.Presentation
         {
             var feet = RegionalFlightPath.ClimbAltitudeFeet(route, elapsedSeconds, lagSeconds);
             var metres = FlightAtmosphere.AltitudeMetres(feet);
+            // The rule at stake is the 250 kt calibrated cap below 10,000 ft. Above it a climbing aircraft may go faster
+            // (jets accelerate to their climb speed), but a turboprop's own limit can sit below what its route already
+            // flies, so never allow less than 250 there: the ease then has a little room instead of none.
             var cas = FlightSpeedEnvelope.MaximumCasKnots(type, metres * EnrouteProfile.FeetPerMetre);
+            if (feet > EnrouteProfile.TransitionAltitudeFeet)
+                cas = Math.Max(cas, FlightSpeedEnvelope.MaxCasBelowTenThousandKnots);
             return FlightAtmosphere.TrueKnots(cas, metres) * CapMargin * CircuitProfile.KnotsToMetresPerSecond;
         }
 

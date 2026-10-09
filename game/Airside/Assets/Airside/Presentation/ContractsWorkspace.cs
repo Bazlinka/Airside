@@ -555,7 +555,8 @@ namespace Airside.Presentation
                 var right = new HudBox(card.Right - rightWidth - 16f, contentY - 4f, rightWidth, 26f);
                 into.Text(right, $"${total:N0}", 22f, offer.CanAccept ? HudTone.Positive : HudTone.Muted,
                     HudTextStyle.Bold, HudAlign.Right);
-                into.Button(new HudBox(right.X, right.Y + 30f, rightWidth, 30f), "ACCEPT",
+                // The first click only arms a card (AcceptContractFromHud), so say what the next click does.
+                into.Button(new HudBox(right.X, right.Y + 30f, rightWidth, 30f), highlighted ? "CONFIRM" : "ACCEPT",
                     HudAction.Accept(definition.Id),
                     highlighted ? HudButtonStyle.Primary : HudButtonStyle.Secondary, offer.CanAccept);
                 into.Hotspot(card, HudAction.Accept(definition.Id));

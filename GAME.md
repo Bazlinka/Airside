@@ -15,6 +15,7 @@ Tested aec64616 at 40×, no fixes; capture inversion subsequently fixed. Reprodu
 Fix pass (Claude, issues #722/#723/#724/#725/#726 = findings 1/14/7/2/15): #1 interior audio sources now exist before their low-pass filters (fixed, #728); #7 (#730) doorway shells at the generators' exact 4 mm minimum thickness are accepted again (float32 rounding rejected them); #14 (#731) quit from exterior no longer throws in `EndCockpit` (destroyed camera controller skipped at teardown); #15 (#726) not a defect: the ATR 42 horizontal stabiliser is rendered in Exterior (record `docs/testing/bug-hunt-2026-10-09/fix-pass/`); #2 (#725) not reproduced on clean main (original was a dirty-stamped build; evidence `docs/testing/bug-hunt-2026-10-09/fix-pass/`).
 Fix status (Claude, one PR each; Unity unverified, quick headless checks only): #3 guide Away wording follows
 Outbound/AtDestination/Inbound (#720). #9 outstation landing toast keeps the outbound flight number (#729).
+Outbound/AtDestination/Inbound (#720). #6 an armed contract card's button reads CONFIRM instead of ACCEPT (#733).
 
 **Welcome and comfort fixes (9 Oct, Codex, #706):** title/setup weather isolation and consistent Weather Layers;
 F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; compact/recovery welcome cards;

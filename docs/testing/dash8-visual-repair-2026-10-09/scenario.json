@@ -1,0 +1,41 @@
+{
+  "protocol": 1,
+  "aircraftType": "DH8D",
+  "steps": [
+    {
+      "id": "follow",
+      "action": "follow",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "side",
+      "action": "camera",
+      "value": "5,90,27",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "front",
+      "action": "camera",
+      "value": "18,35,34",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "opposite",
+      "action": "camera",
+      "value": "5,270,27",
+      "capture": true,
+      "settleSeconds": 2
+    },
+    {
+      "id": "overview",
+      "action": "overview",
+      "value": "",
+      "capture": true,
+      "settleSeconds": 2
+    }
+  ]
+}

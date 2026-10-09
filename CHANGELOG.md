@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-10-09 — #712: enclose Dash 8 folded wheels, fit curved nacelle doors with independent hinges and smooth the under-wing joins.
+
 - 2026-10-09 — Mac diagnostic frames retain upright orientation; weather probes include the sky; queued remote requests are kept rather than replaced.
 
 - 2026-10-09 — Failed diagnostic actions/state checks capture their visible context; remote agents use the Mac bridge before claiming runtime verification.

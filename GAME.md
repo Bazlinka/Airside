@@ -12,7 +12,6 @@ F1/manual and M/sound shortcuts; mouse-only intro skip; ASCII/deletable codes; c
 readable scrolling Options and current-view targeting. Operational weather, live time, economics and saves unchanged.
 Checks: 25/25 headless, 2/2 focused native, Mac build, actual title Fog/Storm interactions and airport Fog rendering.
 Evidence and remaining limits: `docs/testing/welcome-polish-2026-10-09/README.md`.
-
 **Physical ground detail (9 Oct, Codex, #693):** mapped roadside grass clears airport
 surfaces and nearby roads; coastal scrub gains varied lobes/colour and face normals.
 Drains gain flush rims/grates; taxiway wear gains tapered, varied patches. No layout,
@@ -38,14 +37,15 @@ origin/depth handling and saves unchanged. Quick source/diff checks only; native
 shader compilation, appearance and GPU cost unverified. Transparent intersection
 sorting remains a limitation. Decision: `2026-10-09-cloud-lighting-and-depth`.
 
-**Dash 8 wing-body fairing (9 Oct, Codex, #691):** the three overlapping roof
-pods are replaced by one closed, smooth crown fairing with hull-buried ends and
-wing-profile joints. Existing AIR-006 model/FBX, packaged mirrors and hangar
-thumbnail updated; every other finished model node is preserved exactly.
-Focused manifold/winding/end-cap/wing-join checks pass; Unity import, native
-appearance and performance remain unverified. Full suites/builds were skipped.
-Evidence: `docs/testing/dash8-wing-fairing-2026-10-09.md`. Existing duplicate-file
-metadata and Sentinel texture mirror audit failures remain outside this scope.
+**Dash 8 finish (9 Oct, Codex, #691/#712):** the crown fairing is retained; nacelle
+bays now enclose the existing folded wheels and use curved, independently hinged
+white doors. Raised oval nacelle/wing pods become fitted under-wing joins; cowl
+paint, AIR-006 source/FBX, mirrors and thumbnail updated. Other finished parts,
+fictional tail paint, simulation and saves retained. Native baseline reproduces
+the fault; repaired native up/down/mid frames inspected, 9 native and 44 headless
+checks pass. Mac build/five-step parked-player comparison pass; no airborne journey.
+Evidence: `docs/testing/dash8-visual-repair-2026-10-09/README.md`.
+Full suites/soaks/performance skipped.
 
 **Flight tracker and HUD views (9 Oct, Claude):** after booking, a "Your flights" card (bottom-left) follows each planned or moving flight through
 Booked, Ready, Taxi, Flying, Landing, Arrived; the booked aircraft is selected without moving the camera. Aircraft labels, airport map, tracker and

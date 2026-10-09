@@ -164,6 +164,17 @@ namespace Airside.Presentation
                 return true;
             }
 
+            // A celebration card is modal: Tab, H, T, C, the view and speed keys used to act on the
+            // page behind it. Enter closes it (Esc: TryCloseAirlineOverlay); F1 still opens the manual.
+            if (CelebrationOpen)
+            {
+                if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)
+                    DismissCelebration();
+                if (keyboard.f1Key.wasPressedThisFrame)
+                    ToggleControlsHelp();
+                return true;
+            }
+
             if (keyboard.tabKey.wasPressedThisFrame)
                 TogglePlanner();
             if (keyboard.leftBracketKey.wasPressedThisFrame)
@@ -196,7 +207,7 @@ namespace Airside.Presentation
                 // The Esc menu owns the keyboard too: the camera reads WASD/QE/ZX itself, so without
                 // this the view kept panning and orbiting behind the open menu.
                 _cameraController.KeyboardCaptured =
-                    _menuOpen || AirlineModalOpen || _controlsHelpOpen
+                    _menuOpen || AirlineModalOpen || _controlsHelpOpen || CelebrationOpen
                     || GUIUtility.keyboardControl != 0;
             // The pause menu is itself modal. Drawing the airline setup, away summary or
             // workspace panels behind it produced overlapping labels and live buttons.
@@ -259,6 +270,13 @@ namespace Airside.Presentation
             if (_activeWorkspace != HudWorkspace.Contracts)
                 _highlightedContractId = null;
 
+            // A celebration card is modal. It is drawn last (on top), but IMGUI gives a click to the
+            // first control drawn, so the buttons and cards under it took the click instead.
+            // Everything drawn until the card is inert (the same trick the title screen uses behind Options).
+            var hudWasEnabled = GUI.enabled;
+            if (CelebrationOpen)
+                GUI.enabled = false;
+
             // Under every panel, so a tag never sits on top of a button.
             DrawFieldTags(small);
             DrawShellChrome(layout, placement);
@@ -304,6 +322,7 @@ namespace Airside.Presentation
             DrawMiniMap(FieldMiniMap.PanelFor(layout, placement), panel, small);
             if (overview)
                 DrawSelectionHudCard(layout, placement);
+            GUI.enabled = hudWasEnabled;
             DrawCelebration(layout);
             DrawToast(placement.Toast);
         }
@@ -503,6 +522,13 @@ namespace Airside.Presentation
             if (AirlineModalOpen)
             {
                 // Modal panels: the whole screen belongs to the HUD until dismissed.
+                _hudPanels.Add(new Rect(0f, 0f, layout.Viewport.x, layout.Viewport.y));
+                return;
+            }
+
+            if (CelebrationOpen)
+            {
+                // Modal card: pointer drags and scrolls must not orbit, pan or zoom the view behind it.
                 _hudPanels.Add(new Rect(0f, 0f, layout.Viewport.x, layout.Viewport.y));
                 return;
             }
@@ -1004,6 +1030,18 @@ namespace Airside.Presentation
             _lastFundsDirection = direction;
         }
 
+        /// <summary>A celebration card is waiting or on screen: it owns the HUD's input until closed.</summary>
+        private bool CelebrationOpen => _celebrations.Count > 0;
+
+        private void DismissCelebration()
+        {
+            if (_celebrations.Count == 0)
+                return;
+            _celebrations.Dequeue();
+            _celebrationShownAt = -1f;
+            PlayUiClick();
+        }
+
         private void Celebrate(CelebrationCard card)
         {
             if (card != null)
@@ -1031,11 +1069,7 @@ namespace Airside.Presentation
             _hudPanels.Add(new Rect(panel.X, panel.Y, panel.Width, panel.Height));
             var clicked = _hudPainter.Draw(_celebrationDrawList);
             if (clicked == CelebrationPainter.Close || now - _celebrationShownAt > CelebrationAutoCloseSeconds)
-            {
-                _celebrations.Dequeue();
-                _celebrationShownAt = -1f;
-                PlayUiClick();
-            }
+                DismissCelebration();
 
             return true;
         }
@@ -1496,6 +1530,13 @@ namespace Airside.Presentation
         /// <summary>Esc closes whichever overlay is open before it touches the selection.</summary>
         private bool TryCloseAirlineOverlay()
         {
+            // Esc closes a celebration card before it touches the page behind.
+            if (CelebrationOpen)
+            {
+                DismissCelebration();
+                return true;
+            }
+
             if (_activeWorkspace == HudWorkspace.None && !_devToolsOpen)
                 return false;
             _activeWorkspace = HudWorkspace.None;

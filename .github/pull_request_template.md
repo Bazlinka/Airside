@@ -8,7 +8,7 @@
 <!-- Quick relevant checks and their real results. Broad suites/builds are not required unless Bailey requests them; follow AGENTS.md. -->
 
 ## Not verified
-<!-- Be explicit. Cloud tools cannot run Unity: say "unverified in Unity" and list what to check on the Mac (look, performance, UnityEngine tests). -->
+<!-- Be explicit. For runtime issues, use scripts/diagnose-game.py; Linux agents dispatch the private Mac. Link the actual run/evidence and state what was inspected. If execution is blocked, report the specific blocker and remaining checks; never claim a visual pass from source checks. -->
 
 ## Docs updated
 - [ ] `GAME.md` "Where to resume" block replaced (not stacked) — if state changed

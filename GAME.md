@@ -24,8 +24,8 @@ Spatial puddles remain future work.
 real frames/state/errors → identify cause → fix → identical-scenario retest. Failed steps retain visible context.
 weather/time/camera probes and aircraft subjects extend smoke checks. Linux agents use the
 private Mac workflow via `scripts/diagnose-game.py`; dedicated runner is online, user service
-under `~/Developer/Airside-DiagnosticsRunner`. End-to-end native validation in progress;
-captured evidence is not a visual pass. Guide: `docs/testing/agent-gameplay/README.md`.
+under `~/Developer/Airside-DiagnosticsRunner`. Real remote weather run captured 7 frames;
+orientation/sky-framing corrections and failed-state verification in progress. Guide: `docs/testing/agent-gameplay/README.md`.
 
 **Cloud lighting/depth (9 Oct, Codex, #697):** volume clouds now use bounded
 sun-direction/colour scattering, two local sun-density probes and sky fill for

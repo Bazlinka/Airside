@@ -29,6 +29,9 @@ namespace Airside.Presentation
             var width = Screen.width;
             var height = Screen.height;
             var target = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32);
+            // Native Metal readback uses the opposite row order to PNG encoding.
+            // Verified against the real player HUD; keep other backends unchanged.
+            var flipRows = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Metal;
             Task write = null;
             string failure = null;
             var abandoned = false;
@@ -53,8 +56,23 @@ namespace Airside.Presentation
                         var pixels = request.GetData<byte>().ToArray();
                         Debug.Log($"[Airside capture] readback {timer.Elapsed.TotalMilliseconds:0} ms {path}");
                         write = BackgroundCaptureWrite.Start(path, () =>
-                            ImageConversion.EncodeArrayToPNG(pixels, GraphicsFormat.R8G8B8A8_UNorm,
-                                (uint)width, (uint)height));
+                        {
+                            if (flipRows)
+                            {
+                                var stride = checked(width * 4);
+                                var row = new byte[stride];
+                                for (var y = 0; y < height / 2; y++)
+                                {
+                                    var top = y * stride;
+                                    var bottom = (height - 1 - y) * stride;
+                                    Buffer.BlockCopy(pixels, top, row, 0, stride);
+                                    Buffer.BlockCopy(pixels, bottom, pixels, top, stride);
+                                    Buffer.BlockCopy(row, 0, pixels, bottom, stride);
+                                }
+                            }
+                            return ImageConversion.EncodeArrayToPNG(pixels, GraphicsFormat.R8G8B8A8_UNorm,
+                                (uint)width, (uint)height);
+                        });
                     }
                     catch (Exception e) { failure = e.Message; }
                     finally

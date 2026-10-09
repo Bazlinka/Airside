@@ -88,7 +88,7 @@ def issue_plan(issue, commit, aircraft=''):
             steps.append(dict(id=id, action=action, value=value, capture=capture, settleSeconds=settle))
         add('overview', 'overview')
         add('daylight', 'time', '13:30')
-        add('overview-angle', 'camera', '28,140,900')
+        add('overview-angle', 'camera', '8,140,2400')
         for weather in ('Clear', 'Cloudy', 'Rain', 'Storm', 'Fog'):
             add('day-'+weather.lower(), 'weather', weather, True, 15)
         add('night', 'time', '21:30', True, 2)
